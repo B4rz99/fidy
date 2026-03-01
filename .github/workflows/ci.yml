@@ -61,7 +61,7 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Snyk dependency scan
-        uses: snyk/actions/node@master
+        uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
