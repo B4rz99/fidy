@@ -1,0 +1,9 @@
+{
+  "name": "@fidy/landing",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'Landing page not yet initialized'",
+    "build": "echo 'Landing page not yet initialized'"
+  }
+}
