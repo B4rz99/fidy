@@ -1,5 +1,5 @@
 ---
-name: commiting-changes
+name: committing-changes
 description: Run all CI checks locally and commit if everything passes. Use this before every commit.
 ---
 

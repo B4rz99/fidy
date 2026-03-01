@@ -4,7 +4,7 @@ The role of this file is to describe common mistakes and confusion points that a
 
 ## Committing Changes
 
-Before committing, use the `commiting-changes` skill.
+Before committing, use the `committing-changes` skill.
 
 ## Tech Stack
 
