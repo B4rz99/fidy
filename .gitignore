@@ -1,23 +1,76 @@
+# Dependencies
 node_modules/
+
+# Expo
 .expo/
+web-build/
+expo-env.d.ts
+
+# Build outputs
 dist/
 build/
-*.log
-.DS_Store
+out/
+
+# Native (if prebuild or ejected)
+android/
+ios/
+
+# EAS
+.eas/
+
+# Environment variables
+.env
 .env.local
 .env.staging
 .env.production
-.env
+.env.development
+.env.test
+.env.*.local
+
+# MCP (contains tokens)
 .mcp.json
+
+# Supabase local
 .supabase/
+
+# Next.js
 .next/
-out/
-.eas/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+bun-debug.log*
+
+# Snyk
 snyk-results.json
+
+# Cache
 .turbo/
+.metro-cache/
+.cache/
+
+# Test coverage
 coverage/
+
+# Code signing & certificates
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+google-services.json
+GoogleService-Info.plist
+
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
 *.swp
 *.swo
 *~
-.vscode/
-.idea/
+*.orig
