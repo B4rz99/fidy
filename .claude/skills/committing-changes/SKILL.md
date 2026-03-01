@@ -5,6 +5,14 @@ description: Run all CI checks locally and commit if everything passes. Use this
 
 Before committing any changes, you MUST run every CI job locally in this order. If any step fails, stop, fix the issue, and start over from step 1.
 
+## Step 0 — Pull Rebase
+
+```bash
+git pull --rebase origin main
+```
+
+Ensure your branch is up to date with the main branch before running checks or committing.
+
 ## Step 1 — Lint
 
 ```bash
@@ -39,13 +47,23 @@ type(scope): message
 ```
 - `type` must be one of: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `perf`, `ci`
 - `scope` is required (e.g. `mobile`, `ci`, `auth`)
-- Example: `feat(auth): add login screen`
+- **Keep the header short and high-level** (under 50 chars after the scope). No implementation details.
+- Example: `ci(workflow): exclude main from CI triggers`
 
 **Body format** (optional):
 - If a body is included, every line must be a bullet point starting with `- `
+- **Keep bullet points concise** — a few words each, no full sentences
 - No prose paragraphs
 
 **Never include** `Co-Authored-By` lines.
+
+## Step 5 — Push
+
+Always push after committing. Never create a pull request.
+
+```bash
+git push -u origin <branch-name>
+```
 
 ## Conventions
 
