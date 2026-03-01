@@ -8,8 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "reset-project": "node ./scripts/reset-project.js",
-    "lint": "expo lint",
+"lint": "expo lint",
     "test": "bun test"
   },
   "dependencies": {
