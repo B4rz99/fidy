@@ -7,7 +7,15 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!**/node_modules", "!**/.expo", "!**/dist", "!**/build", "!**/.next"]
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/.expo",
+      "!**/dist",
+      "!**/build",
+      "!**/.next",
+      "!.claude"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -50,5 +58,22 @@
       "enabled": true,
       "indentWidth": 2
     }
-  }
+  },
+  "css": {
+    "linter": {
+      "enabled": true
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.css"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noUnknownAtRules": "off"
+          }
+        }
+      }
+    }
+  ]
 }
