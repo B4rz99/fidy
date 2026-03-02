@@ -1,0 +1,7 @@
+{
+  "enabledPlugins": {
+    "context7@claude-plugins-official": true,
+    "supabase@claude-plugins-official": true,
+    "expo-app-design@expo-plugins": true
+  }
+}

@@ -1,2 +1,1 @@
-// dashboard — V2 placeholder
-export {};
+export { HomeScreen } from "./components/HomeScreen";
