@@ -11,7 +11,7 @@ export function FidyLogo({ size = "default" }: FidyLogoProps) {
   const isSmall = size === "small";
   const fontSize = isSmall ? 32 : 64;
   const coinSize = isSmall ? 8 : 14;
-  const coinTop = isSmall ? 0 : 0;
+  const coinTop = 0;
   const coinLeft = isSmall ? 10 : 21;
 
   const textColor = isDark ? "#F0F0F0" : "#1A1A1A";

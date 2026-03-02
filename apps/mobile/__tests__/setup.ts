@@ -93,8 +93,12 @@ vi.mock("date-fns", () => ({
 }));
 
 // Mock expo-router
+export const mockReplace = vi.fn();
+export const mockPush = vi.fn();
+export const mockBack = vi.fn();
+
 vi.mock("expo-router", () => ({
-  useRouter: () => ({ replace: vi.fn(), push: vi.fn(), back: vi.fn() }),
+  useRouter: () => ({ replace: mockReplace, push: mockPush, back: mockBack }),
 }));
 
 // Mock @expo/vector-icons/Ionicons
