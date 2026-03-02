@@ -5,14 +5,17 @@
   "private": true,
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "test": "bun test"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@expo-google-fonts/poppins": "^0.4.1",
     "@expo/vector-icons": "^15.0.3",
     "@fidy/schemas": "workspace:*",
     "@fidy/types": "workspace:*",
@@ -32,21 +35,28 @@
     "expo-symbols": "~1.0.8",
     "expo-system-ui": "~6.0.9",
     "expo-web-browser": "~15.0.10",
+    "lucide-react-native": "^0.575.0",
     "nativewind": "^4.2.2",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "react-native": "0.84.1",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-css-interop": "0.2.2",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
-    "react-native-screens": "~4.16.0",
+    "react-native-screens": "4.16.0",
+    "react-native-svg": "15.12.1",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.5.1",
     "tailwindcss": "3.4.19"
   },
   "devDependencies": {
-    "@types/react": "19.2.4",
+    "@babel/plugin-transform-react-jsx": "^7.28.6",
+    "@types/react": "~19.1.10",
+    "@vitest/coverage-v8": "^4.0.18",
+    "babel-preset-expo": "~54.0.10",
     "eslint": "^9.25.0",
-    "eslint-config-expo": "~10.0.0"
+    "eslint-config-expo": "~10.0.0",
+    "vitest": "^4.0.18"
   }
 }

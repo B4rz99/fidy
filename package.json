@@ -12,7 +12,8 @@
     "mobile:android": "bun run --cwd apps/mobile android",
     "mobile:web": "bun run --cwd apps/mobile web",
     "landing": "bun run --cwd apps/landing dev",
-    "test": "bun test",
+    "test": "bun run --cwd apps/mobile test",
+    "test:coverage": "bun run --cwd apps/mobile test:coverage",
     "lint": "bunx biome check .",
     "format": "bunx biome format --write ."
   },
