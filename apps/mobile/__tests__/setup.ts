@@ -5,7 +5,9 @@ import { vi } from "vitest";
 vi.mock("react-native", () => ({
   View: "View",
   Text: "Text",
+  TextInput: "TextInput",
   Pressable: "Pressable",
+  Keyboard: { dismiss: vi.fn() },
   useColorScheme: () => "light",
 }));
 
@@ -35,10 +37,70 @@ vi.mock("lucide-react-native", () => ({
   Zap: "Zap",
   TrendingUp: "TrendingUp",
   Bell: "Bell",
+  Utensils: "Utensils",
+  Receipt: "Receipt",
+  Ellipsis: "Ellipsis",
+  ChevronLeft: "ChevronLeft",
+  Calendar: "Calendar",
+  X: "X",
 }));
 
 // Mock nativewind/preset (needed for tailwind config import)
 vi.mock("nativewind/preset", () => ({ default: {} }));
+
+// Mock expo-haptics
+vi.mock("expo-haptics", () => ({
+  impactAsync: vi.fn(),
+  notificationAsync: vi.fn(),
+  selectionAsync: vi.fn(),
+  ImpactFeedbackStyle: { Light: "Light", Medium: "Medium", Heavy: "Heavy" },
+  NotificationFeedbackType: {
+    Success: "Success",
+    Warning: "Warning",
+    Error: "Error",
+  },
+}));
+
+// Mock @gorhom/bottom-sheet
+vi.mock("@gorhom/bottom-sheet", () => ({
+  default: "BottomSheet",
+  BottomSheetModal: "BottomSheetModal",
+  BottomSheetModalProvider: "BottomSheetModalProvider",
+  BottomSheetView: "BottomSheetView",
+  BottomSheetTextInput: "BottomSheetTextInput",
+  BottomSheetBackdrop: "BottomSheetBackdrop",
+}));
+
+// Mock react-native-reanimated
+vi.mock("react-native-reanimated", () => {
+  const Animated = {
+    View: "Animated.View",
+  };
+  return {
+    default: Animated,
+    FadeIn: { duration: () => ({ duration: () => "FadeIn" }) },
+    FadeOut: { duration: () => ({ duration: () => "FadeOut" }) },
+  };
+});
+
+// Mock date-fns
+vi.mock("date-fns", () => ({
+  format: (date: Date, fmt: string) => {
+    if (fmt === "MMM d, yyyy") return "Mar 1, 2026";
+    return date.toISOString();
+  },
+  isToday: () => true,
+}));
+
+// Mock expo-router
+vi.mock("expo-router", () => ({
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn(), back: vi.fn() }),
+}));
+
+// Mock @expo/vector-icons/Ionicons
+vi.mock("@expo/vector-icons/Ionicons", () => ({
+  default: "Ionicons",
+}));
 
 // Mock react-native-svg
 vi.mock("react-native-svg", () => ({
