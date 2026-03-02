@@ -28,6 +28,8 @@ export default defineConfig({
       include: [
         "features/**/lib/**",
         "features/**/data/**",
+        "features/transactions/schema.ts",
+        "features/transactions/store.ts",
         "shared/constants/theme.ts",
         "shared/hooks/use-theme-color.ts",
         "shared/components/navigation/tab-config.ts",
