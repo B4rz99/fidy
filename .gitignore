@@ -64,6 +64,13 @@ coverage/
 google-services.json
 GoogleService-Info.plist
 
+# Spec (local-only)
+docs/Spec.md
+
+# Symlinked skills (local-only)
+.claude/skills/ui-designer
+.claude/skills/ux-designer
+
 # macOS
 .DS_Store
 

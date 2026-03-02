@@ -33,5 +33,5 @@ commit-msg:
 pre-push:
   commands:
     tests:
-      run: bun run test --passWithNoTests
+      run: bun run test
       skip_output: false
