@@ -10,6 +10,7 @@ export const Colors = {
     peachLight: "#F5E1C8",
     accentGreenLight: "#D4EDBA",
     chartBg: "#F5E1C8",
+    borderSubtle: "#EBEBEB",
     nav: "#1A1A1A",
   },
   dark: {
@@ -23,6 +24,7 @@ export const Colors = {
     peachLight: "#2A1F1A",
     accentGreenLight: "#1A2E12",
     chartBg: "#2A1F1A",
+    borderSubtle: "#2C2C2E",
     nav: "#1C1C1E",
   },
   chart: {
@@ -30,6 +32,7 @@ export const Colors = {
     transport: "#E8A090",
     shopping: "#1A1A1A",
     bills: "#8BBAE8",
+    income: "#F5C842",
     other: "#B8A9D4",
   },
 };
