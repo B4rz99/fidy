@@ -1,11 +1,13 @@
-import { Text, View } from "react-native";
+import { Sparkles } from "lucide-react-native";
+import { ComingSoonScreen } from "@/shared/components/ComingSoonScreen";
 
 export default function AiTab() {
   return (
-    <View className="flex-1 items-center justify-center bg-page dark:bg-page-dark">
-      <Text className="font-poppins-semibold text-section text-primary dark:text-primary-dark">
-        AI Advisor
-      </Text>
-    </View>
+    <ComingSoonScreen
+      Icon={Sparkles}
+      headerTitle="AI Advisor"
+      headline="Your AI Advisor is on its way"
+      description="Smart insights about your spending, budgets, and savings — powered by AI"
+    />
   );
 }

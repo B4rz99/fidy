@@ -1,11 +1,13 @@
-import { Text, View } from "react-native";
+import { Target } from "lucide-react-native";
+import { ComingSoonScreen } from "@/shared/components/ComingSoonScreen";
 
 export default function GoalsTab() {
   return (
-    <View className="flex-1 items-center justify-center bg-page dark:bg-page-dark">
-      <Text className="font-poppins-semibold text-section text-primary dark:text-primary-dark">
-        Goals
-      </Text>
-    </View>
+    <ComingSoonScreen
+      Icon={Target}
+      headerTitle="Goals"
+      headline="Goals are on their way"
+      description="Set savings targets, track your progress, and reach your financial goals"
+    />
   );
 }
