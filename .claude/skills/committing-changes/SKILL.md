@@ -8,7 +8,7 @@ Before committing any changes, you MUST run every CI job locally in this order. 
 ## Step 0 — Pull Rebase
 
 ```bash
-git pull --rebase origin main
+git pull --rebase --autostash origin main
 ```
 
 Ensure your branch is up to date with the main branch before running checks or committing.
@@ -32,7 +32,7 @@ bun run --cwd apps/mobile typecheck
 ## Step 3 — Tests
 
 ```bash
-bun test --passWithNoTests
+cd apps/mobile && npx vitest run
 ```
 
 ## Step 4 — Commit
@@ -68,4 +68,4 @@ git push -u origin <branch-name>
 ## Conventions
 
 - All devDependencies must use **exact pinned versions** (no `^` or `~`). When adding a new package, use `bun add -d -E <package>` to pin exactly.
-- When fixing issues after an initial commit, use `git commit --amend --no-edit` to fold the fix into the previous commit instead of creating a new one. Then force push with `git push --force`.
+- When fixing issues after a PR review, create a new commit (do not amend). This keeps the review history clear and avoids force pushes.
