@@ -13,8 +13,8 @@ describe("Tab layout", () => {
     expect(layoutSource).toContain('name="add"');
   });
 
-  test("has correct tab order: index, ai, add, wallet, menu", () => {
+  test("has correct tab order: index, ai, add, goals, menu", () => {
     const screens = Array.from(layoutSource.matchAll(/name="(\w+)"/g), (m) => m[1]);
-    expect(screens).toEqual(["index", "ai", "add", "wallet", "menu"]);
+    expect(screens).toEqual(["index", "ai", "add", "goals", "menu"]);
   });
 });
