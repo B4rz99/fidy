@@ -64,8 +64,8 @@ coverage/
 google-services.json
 GoogleService-Info.plist
 
-# Spec (local-only)
-docs/Spec.md
+# Docs (local-only)
+docs/
 
 # Symlinked skills (local-only)
 .claude/skills/ui-designer
