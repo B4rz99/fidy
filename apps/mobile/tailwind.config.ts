@@ -54,6 +54,7 @@ const config: Config = {
         label: ["13px", { lineHeight: "18px" }],
         body: ["14px", { lineHeight: "20px" }],
         section: ["16px", { lineHeight: "22px" }],
+        title: ["18px", { lineHeight: "24px" }],
         logo: ["22px", { lineHeight: "28px" }],
         balance: ["32px", { lineHeight: "40px" }],
       },
