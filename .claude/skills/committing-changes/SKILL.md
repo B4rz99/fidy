@@ -65,10 +65,12 @@ Push to the feature branch after committing. Main is protected — direct pushes
 git push -u origin <branch-name>
 ```
 
-Then create a pull request targeting `main`. The PR title and body **must match the commit message exactly** (header → title, body → description):
+Then create a pull request targeting `main`. The PR title and body **must match the commit message exactly** (header → title, body → description). Do NOT use `--fill` — it breaks with multiple commits. Instead, explicitly pass the commit message:
 
 ```bash
-gh pr create --fill
+TITLE=$(git log -1 --format=%s)
+BODY=$(git log -1 --format=%b)
+gh pr create --title "$TITLE" --body "$BODY"
 ```
 
 ## Conventions
