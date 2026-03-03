@@ -2,10 +2,10 @@ import { describe, expect, test } from "vitest";
 import { TAB_CONFIG } from "@/shared/components/navigation/tab-config";
 
 describe("TAB_CONFIG", () => {
-  test("includes index, ai, wallet, and menu routes", () => {
+  test("includes index, ai, goals, and menu routes", () => {
     expect(TAB_CONFIG).toHaveProperty("index");
     expect(TAB_CONFIG).toHaveProperty("ai");
-    expect(TAB_CONFIG).toHaveProperty("wallet");
+    expect(TAB_CONFIG).toHaveProperty("goals");
     expect(TAB_CONFIG).toHaveProperty("menu");
   });
 
@@ -20,7 +20,7 @@ describe("TAB_CONFIG", () => {
   test("has correct labels", () => {
     expect(TAB_CONFIG.index.label).toBe("HOME");
     expect(TAB_CONFIG.ai.label).toBe("AI");
-    expect(TAB_CONFIG.wallet.label).toBe("WALLET");
+    expect(TAB_CONFIG.goals.label).toBe("GOALS");
     expect(TAB_CONFIG.menu.label).toBe("MENU");
   });
 

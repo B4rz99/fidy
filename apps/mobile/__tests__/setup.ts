@@ -21,7 +21,7 @@ vi.mock("react-native-safe-area-context", () => ({
 vi.mock("lucide-react-native", () => ({
   Home: "Home",
   Menu: "Menu",
-  Wallet: "Wallet",
+  Target: "Target",
   Clock: "Clock",
   Sparkles: "Sparkles",
   Plus: "Plus",
