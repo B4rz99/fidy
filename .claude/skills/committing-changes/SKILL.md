@@ -73,6 +73,25 @@ BODY=$(git log -1 --format=%b)
 gh pr create --title "$TITLE" --body "$BODY"
 ```
 
+## Step 6 — Merge (only when the user explicitly asks)
+
+**NEVER merge on your own.** Only run this step when the user tells you to merge.
+
+Use squash merge so the merge commit on `main` matches the PR title and body:
+
+```bash
+PR_NUM=$(gh pr view --json number -q .number)
+TITLE=$(gh pr view "$PR_NUM" --json title -q .title)
+BODY=$(gh pr view "$PR_NUM" --json body -q .body)
+gh pr merge "$PR_NUM" --squash --subject "$TITLE" --body "$BODY"
+```
+
+After merging, switch back to `main` and pull:
+
+```bash
+git checkout main && git pull
+```
+
 ## Conventions
 
 - All devDependencies must use **exact pinned versions** (no `^` or `~`). When adding a new package, use `bun add -d -E <package>` to pin exactly.
