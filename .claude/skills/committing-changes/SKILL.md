@@ -57,12 +57,18 @@ type(scope): message
 
 **Never include** `Co-Authored-By` lines.
 
-## Step 5 — Push
+## Step 5 — Push & PR
 
-Always push after committing. Never create a pull request.
+Push to the feature branch after committing. Main is protected — direct pushes are not allowed.
 
 ```bash
 git push -u origin <branch-name>
+```
+
+Then create a pull request targeting `main`. The PR title and body **must match the commit message exactly** (header → title, body → description):
+
+```bash
+gh pr create --fill
 ```
 
 ## Conventions
