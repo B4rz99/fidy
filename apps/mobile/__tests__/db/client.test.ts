@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("expo-sqlite", () => ({
-  openDatabaseSync: vi.fn(() => ({ execSync: vi.fn() })),
+  openDatabaseSync: vi.fn(() => ({ execSync: vi.fn(), closeSync: vi.fn() })),
 }));
 
 vi.mock("drizzle-orm/expo-sqlite", () => ({

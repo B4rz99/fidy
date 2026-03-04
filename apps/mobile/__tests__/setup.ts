@@ -85,7 +85,7 @@ vi.mock("react-native-reanimated", () => {
 
 // Mock expo-sqlite
 vi.mock("expo-sqlite", () => ({
-  openDatabaseSync: vi.fn(() => ({})),
+  openDatabaseSync: vi.fn(() => ({ execSync: vi.fn(), closeSync: vi.fn() })),
 }));
 
 // Mock date-fns

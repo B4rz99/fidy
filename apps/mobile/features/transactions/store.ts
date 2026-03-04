@@ -1,9 +1,5 @@
-import type { ExpoSQLiteDatabase } from "drizzle-orm/expo-sqlite";
-
-// biome-ignore lint/suspicious/noExplicitAny: drizzle generic varies by caller
-type AnyDb = ExpoSQLiteDatabase<any>;
-
 import { create } from "zustand";
+import type { AnyDb } from "@/shared/db/client";
 import { parseIsoDate, toIsoDate } from "@/shared/lib/format-date";
 import type { CategoryId } from "./lib/categories";
 import { amountToCents } from "./lib/format-amount";
@@ -159,15 +155,17 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
     },
 
     removeTransaction: async (id) => {
-      if (!dbRef) return;
-      try {
-        await deleteTransactionRepo(dbRef, id);
-        set((state) => ({
-          transactions: state.transactions.filter((tx) => tx.id !== id),
-        }));
-      } catch {
-        // DB delete failed — keep UI state unchanged
+      if (dbRef) {
+        try {
+          await deleteTransactionRepo(dbRef, id);
+        } catch {
+          // DB delete failed — keep UI state unchanged
+          return;
+        }
       }
+      set((state) => ({
+        transactions: state.transactions.filter((tx) => tx.id !== id),
+      }));
     },
 
     resetForm: () => set({ ...INITIAL_FORM, date: new Date() }),
