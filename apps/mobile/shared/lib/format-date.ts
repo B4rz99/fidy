@@ -15,3 +15,12 @@ export function toIsoDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
+
+/**
+ * Parses an ISO date string (YYYY-MM-DD) into a local Date (midnight local time).
+ * Avoids `new Date("YYYY-MM-DD")` which parses as UTC and shifts dates in negative UTC offsets.
+ */
+export function parseIsoDate(isoDate: string): Date {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}

@@ -212,4 +212,34 @@ describe("useTransactionStore", () => {
     expect(useTransactionStore.getState().transactions).toHaveLength(0);
     expect(deleteTransactionRepo).toHaveBeenCalledWith(mockDb, txs[0].id);
   });
+
+  it("saveTransaction returns error when DB insert fails", async () => {
+    vi.mocked(insertTransaction).mockRejectedValueOnce(new Error("disk full"));
+
+    const store = useTransactionStore.getState();
+    store.setDigits("500");
+    store.setCategoryId("food");
+
+    const result = await store.saveTransaction();
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe("Failed to save transaction");
+    }
+    expect(useTransactionStore.getState().transactions).toHaveLength(0);
+  });
+
+  it("removeTransaction keeps UI state when DB delete fails", async () => {
+    const store = useTransactionStore.getState();
+    store.setDigits("100");
+    store.setCategoryId("food");
+    await store.saveTransaction();
+
+    const txs = useTransactionStore.getState().transactions;
+    expect(txs).toHaveLength(1);
+
+    vi.mocked(deleteTransactionRepo).mockRejectedValueOnce(new Error("db error"));
+    await useTransactionStore.getState().removeTransaction(txs[0].id);
+
+    expect(useTransactionStore.getState().transactions).toHaveLength(1);
+  });
 });

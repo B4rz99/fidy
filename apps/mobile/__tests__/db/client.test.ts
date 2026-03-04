@@ -33,4 +33,14 @@ describe("getDb", () => {
     getDb();
     expect(openDatabaseSync).toHaveBeenCalledWith("fidy.db");
   });
+
+  it("sets SQLCipher encryption key after opening", () => {
+    const mockExecSync = vi.fn();
+    vi.mocked(openDatabaseSync).mockReturnValueOnce({
+      execSync: mockExecSync,
+    } as unknown as ReturnType<typeof openDatabaseSync>);
+
+    getDb();
+    expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("PRAGMA key"));
+  });
 });

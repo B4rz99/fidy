@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDateDisplay, toIsoDate } from "@/shared/lib/format-date";
+import { formatDateDisplay, parseIsoDate, toIsoDate } from "@/shared/lib/format-date";
 
 describe("formatDateDisplay", () => {
   it("converts ISO date to DD-MM-YYYY", () => {
@@ -24,5 +24,19 @@ describe("toIsoDate", () => {
   it("pads single-digit month and day", () => {
     const date = new Date(2026, 0, 5); // Jan 5, 2026
     expect(toIsoDate(date)).toBe("2026-01-05");
+  });
+});
+
+describe("parseIsoDate", () => {
+  it("parses ISO date string to local midnight", () => {
+    const date = parseIsoDate("2026-03-04");
+    expect(date.getFullYear()).toBe(2026);
+    expect(date.getMonth()).toBe(2); // March = 2
+    expect(date.getDate()).toBe(4);
+  });
+
+  it("roundtrips with toIsoDate", () => {
+    const iso = "2026-01-15";
+    expect(toIsoDate(parseIsoDate(iso))).toBe(iso);
   });
 });

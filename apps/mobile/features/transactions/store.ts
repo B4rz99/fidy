@@ -4,7 +4,7 @@ import type { ExpoSQLiteDatabase } from "drizzle-orm/expo-sqlite";
 type AnyDb = ExpoSQLiteDatabase<any>;
 
 import { create } from "zustand";
-import { toIsoDate } from "@/shared/lib/format-date";
+import { parseIsoDate, toIsoDate } from "@/shared/lib/format-date";
 import type { CategoryId } from "./lib/categories";
 import { amountToCents } from "./lib/format-amount";
 import {
@@ -17,6 +17,8 @@ import { createTransactionSchema } from "./schema";
 
 type SheetStep = 1 | 2;
 
+// Module-level ref: Zustand doesn't serialize DB connections, so we keep it outside the store.
+// The repository layer stays pure (DB passed as param); this is the only impure bridge.
 let dbRef: AnyDb | null = null;
 
 type AddTransactionState = {
@@ -114,16 +116,20 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
         createdAt: new Date(),
       };
 
-      if (dbRef) {
-        await insertTransaction(dbRef, {
-          id: transaction.id,
-          type: transaction.type,
-          amountCents: transaction.amountCents,
-          categoryId: transaction.categoryId,
-          description: transaction.description || null,
-          date: toIsoDate(transaction.date),
-          createdAt: transaction.createdAt.toISOString(),
-        });
+      try {
+        if (dbRef) {
+          await insertTransaction(dbRef, {
+            id: transaction.id,
+            type: transaction.type,
+            amountCents: transaction.amountCents,
+            categoryId: transaction.categoryId,
+            description: transaction.description || null,
+            date: toIsoDate(transaction.date),
+            createdAt: transaction.createdAt.toISOString(),
+          });
+        }
+      } catch {
+        return { success: false as const, error: "Failed to save transaction" };
       }
 
       set((state) => ({
@@ -135,26 +141,33 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
 
     loadTransactions: async () => {
       if (!dbRef) return;
-      const rows = await getAllTransactions(dbRef);
-      const transactions: StoredTransaction[] = rows.map((row) => ({
-        id: row.id,
-        type: row.type as TransactionType,
-        amountCents: row.amountCents,
-        categoryId: row.categoryId as CategoryId,
-        description: row.description ?? "",
-        date: new Date(row.date),
-        createdAt: new Date(row.createdAt),
-      }));
-      set({ transactions });
+      try {
+        const rows = await getAllTransactions(dbRef);
+        const transactions: StoredTransaction[] = rows.map((row) => ({
+          id: row.id,
+          type: row.type as TransactionType,
+          amountCents: row.amountCents,
+          categoryId: row.categoryId as CategoryId,
+          description: row.description ?? "",
+          date: parseIsoDate(row.date),
+          createdAt: new Date(row.createdAt),
+        }));
+        set({ transactions });
+      } catch {
+        // DB read failed — keep existing in-memory state
+      }
     },
 
     removeTransaction: async (id) => {
-      if (dbRef) {
+      if (!dbRef) return;
+      try {
         await deleteTransactionRepo(dbRef, id);
+        set((state) => ({
+          transactions: state.transactions.filter((tx) => tx.id !== id),
+        }));
+      } catch {
+        // DB delete failed — keep UI state unchanged
       }
-      set((state) => ({
-        transactions: state.transactions.filter((tx) => tx.id !== id),
-      }));
     },
 
     resetForm: () => set({ ...INITIAL_FORM, date: new Date() }),

@@ -33,7 +33,10 @@ export default function RootLayout() {
   useEffect(() => {
     if (migrationsReady) {
       useTransactionStore.getState().initStore(db);
-      useTransactionStore.getState().loadTransactions();
+      useTransactionStore
+        .getState()
+        .loadTransactions()
+        .catch(() => {});
     }
   }, [migrationsReady, db]);
 
