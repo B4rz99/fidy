@@ -38,6 +38,7 @@ describe("getDb", () => {
     const mockExecSync = vi.fn();
     vi.mocked(openDatabaseSync).mockReturnValueOnce({
       execSync: mockExecSync,
+      closeSync: vi.fn(),
     } as unknown as ReturnType<typeof openDatabaseSync>);
 
     getDb();

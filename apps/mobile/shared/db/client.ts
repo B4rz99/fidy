@@ -22,9 +22,10 @@ export function getDb() {
 }
 
 export function resetDb() {
-  if (sqliteRef) {
-    sqliteRef.closeSync();
+  try {
+    sqliteRef?.closeSync();
+  } finally {
     sqliteRef = null;
+    db = null;
   }
-  db = null;
 }
