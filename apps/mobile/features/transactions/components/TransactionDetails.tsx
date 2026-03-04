@@ -47,8 +47,8 @@ export const TransactionDetails = () => {
   const displayAmount = formatAmount(digits);
   const dateLabel = getDateLabel(date);
 
-  const handleSave = () => {
-    const result = saveTransaction();
+  const handleSave = async () => {
+    const result = await saveTransaction();
     if (result.success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       closeSheet();
