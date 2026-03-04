@@ -71,6 +71,9 @@ docs/
 .claude/skills/ui-designer
 .claude/skills/ux-designer
 
+# Worktrees
+.worktrees/
+
 # macOS
 .DS_Store
 

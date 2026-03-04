@@ -1,9 +1,25 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/features/transactions/lib/repository", () => ({
+  insertTransaction: vi.fn(),
+  getAllTransactions: vi.fn().mockResolvedValue([]),
+  deleteTransaction: vi.fn(),
+}));
+
+import {
+  deleteTransaction as deleteTransactionRepo,
+  getAllTransactions,
+  insertTransaction,
+} from "@/features/transactions/lib/repository";
 import { useTransactionStore } from "@/features/transactions/store";
+
+// biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
+const mockDb = {} as any;
 
 describe("useTransactionStore", () => {
   beforeEach(() => {
-    // Reset store between tests
+    vi.clearAllMocks();
+    useTransactionStore.getState().initStore(mockDb);
     useTransactionStore.setState({
       isOpen: false,
       step: 1,
@@ -79,13 +95,13 @@ describe("useTransactionStore", () => {
     expect(useTransactionStore.getState().date).toEqual(newDate);
   });
 
-  it("saveTransaction succeeds with valid data", () => {
+  it("saveTransaction succeeds with valid data and persists to DB", async () => {
     const store = useTransactionStore.getState();
     store.setDigits("4520");
     store.setCategoryId("food");
     store.setDescription("Groceries");
 
-    const result = store.saveTransaction();
+    const result = await store.saveTransaction();
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.transaction.amountCents).toBe(4520);
@@ -95,38 +111,45 @@ describe("useTransactionStore", () => {
     }
 
     expect(useTransactionStore.getState().transactions).toHaveLength(1);
+    expect(insertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        amountCents: 4520,
+        categoryId: "food",
+        type: "expense",
+      })
+    );
   });
 
-  it("saveTransaction fails with zero amount", () => {
+  it("saveTransaction fails with zero amount", async () => {
     const store = useTransactionStore.getState();
     store.setCategoryId("food");
-    // digits is empty → amountCents = 0
 
-    const result = store.saveTransaction();
+    const result = await store.saveTransaction();
     expect(result.success).toBe(false);
+    expect(insertTransaction).not.toHaveBeenCalled();
   });
 
-  it("saveTransaction defaults to 'other' when no category selected", () => {
+  it("saveTransaction defaults to 'other' when no category selected", async () => {
     const store = useTransactionStore.getState();
     store.setDigits("1000");
-    // categoryId is null
 
-    const result = store.saveTransaction();
+    const result = await store.saveTransaction();
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.transaction.categoryId).toBe("other");
     }
   });
 
-  it("saveTransaction prepends to transaction list", () => {
+  it("saveTransaction prepends to transaction list", async () => {
     const store = useTransactionStore.getState();
     store.setDigits("100");
     store.setCategoryId("food");
-    store.saveTransaction();
+    await store.saveTransaction();
 
     store.setDigits("200");
     store.setCategoryId("bills");
-    store.saveTransaction();
+    await store.saveTransaction();
 
     const txs = useTransactionStore.getState().transactions;
     expect(txs).toHaveLength(2);
@@ -134,7 +157,7 @@ describe("useTransactionStore", () => {
     expect(txs[1].amountCents).toBe(100);
   });
 
-  it("resetForm clears form but keeps transactions and open state", () => {
+  it("resetForm clears form but keeps transactions and open state", async () => {
     const store = useTransactionStore.getState();
     store.openSheet();
     store.setDigits("4520");
@@ -142,14 +165,81 @@ describe("useTransactionStore", () => {
     store.setStep(2);
 
     store.setDigits("100");
-    store.saveTransaction();
+    await store.saveTransaction();
 
     store.resetForm();
     const state = useTransactionStore.getState();
     expect(state.digits).toBe("");
     expect(state.step).toBe(1);
     expect(state.categoryId).toBeNull();
-    // Transactions are preserved — resetForm only clears form state
     expect(state.transactions).toHaveLength(1);
+  });
+
+  it("loadTransactions reads from DB and sets state", async () => {
+    vi.mocked(getAllTransactions).mockResolvedValueOnce([
+      {
+        id: "tx-1",
+        type: "expense",
+        amountCents: 1000,
+        categoryId: "food",
+        description: "Lunch",
+        date: "2026-03-04",
+        createdAt: "2026-03-04T10:00:00.000Z",
+      },
+    ]);
+
+    await useTransactionStore.getState().loadTransactions();
+
+    const txs = useTransactionStore.getState().transactions;
+    expect(txs).toHaveLength(1);
+    expect(txs[0].id).toBe("tx-1");
+    expect(txs[0].date).toBeInstanceOf(Date);
+    expect(txs[0].createdAt).toBeInstanceOf(Date);
+    expect(getAllTransactions).toHaveBeenCalledWith(mockDb);
+  });
+
+  it("deleteTransaction removes from DB and state", async () => {
+    const store = useTransactionStore.getState();
+    store.setDigits("100");
+    store.setCategoryId("food");
+    await store.saveTransaction();
+
+    const txs = useTransactionStore.getState().transactions;
+    expect(txs).toHaveLength(1);
+
+    await useTransactionStore.getState().removeTransaction(txs[0].id);
+
+    expect(useTransactionStore.getState().transactions).toHaveLength(0);
+    expect(deleteTransactionRepo).toHaveBeenCalledWith(mockDb, txs[0].id);
+  });
+
+  it("saveTransaction returns error when DB insert fails", async () => {
+    vi.mocked(insertTransaction).mockRejectedValueOnce(new Error("disk full"));
+
+    const store = useTransactionStore.getState();
+    store.setDigits("500");
+    store.setCategoryId("food");
+
+    const result = await store.saveTransaction();
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe("Failed to save transaction");
+    }
+    expect(useTransactionStore.getState().transactions).toHaveLength(0);
+  });
+
+  it("removeTransaction keeps UI state when DB delete fails", async () => {
+    const store = useTransactionStore.getState();
+    store.setDigits("100");
+    store.setCategoryId("food");
+    await store.saveTransaction();
+
+    const txs = useTransactionStore.getState().transactions;
+    expect(txs).toHaveLength(1);
+
+    vi.mocked(deleteTransactionRepo).mockRejectedValueOnce(new Error("db error"));
+    await useTransactionStore.getState().removeTransaction(txs[0].id);
+
+    expect(useTransactionStore.getState().transactions).toHaveLength(1);
   });
 });

@@ -1,10 +1,21 @@
 import { create } from "zustand";
+import type { AnyDb } from "@/shared/db/client";
+import { parseIsoDate, toIsoDate } from "@/shared/lib/format-date";
 import type { CategoryId } from "./lib/categories";
 import { amountToCents } from "./lib/format-amount";
+import {
+  deleteTransaction as deleteTransactionRepo,
+  getAllTransactions,
+  insertTransaction,
+} from "./lib/repository";
 import type { CreateTransactionInput, StoredTransaction, TransactionType } from "./schema";
 import { createTransactionSchema } from "./schema";
 
 type SheetStep = 1 | 2;
+
+// Module-level ref: Zustand doesn't serialize DB connections, so we keep it outside the store.
+// The repository layer stays pure (DB passed as param); this is the only impure bridge.
+let dbRef: AnyDb | null = null;
 
 type AddTransactionState = {
   // Sheet visibility
@@ -18,11 +29,12 @@ type AddTransactionState = {
   description: string;
   date: Date;
 
-  // Saved transactions (in-memory for now)
+  // Persisted transactions (UI cache from DB)
   transactions: StoredTransaction[];
 };
 
 type AddTransactionActions = {
+  initStore: (db: AnyDb) => void;
   openSheet: () => void;
   closeSheet: () => void;
   setStep: (step: SheetStep) => void;
@@ -31,9 +43,11 @@ type AddTransactionActions = {
   setCategoryId: (id: CategoryId) => void;
   setDescription: (desc: string) => void;
   setDate: (date: Date) => void;
-  saveTransaction: () =>
-    | { success: true; transaction: StoredTransaction }
-    | { success: false; error: string };
+  saveTransaction: () => Promise<
+    { success: true; transaction: StoredTransaction } | { success: false; error: string }
+  >;
+  loadTransactions: () => Promise<void>;
+  removeTransaction: (id: string) => Promise<void>;
   resetForm: () => void;
 };
 
@@ -55,6 +69,10 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
     date: new Date(),
     transactions: [],
 
+    initStore: (db) => {
+      dbRef = db;
+    },
+
     openSheet: () => set({ isOpen: true, ...INITIAL_FORM, date: new Date() }),
     closeSheet: () => set({ isOpen: false, ...INITIAL_FORM, date: new Date() }),
     setStep: (step) => set({ step }),
@@ -64,7 +82,7 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
     setDescription: (description) => set({ description }),
     setDate: (date) => set({ date }),
 
-    saveTransaction: () => {
+    saveTransaction: async () => {
       const { type, digits, categoryId, description, date } = get();
       const amountCents = amountToCents(digits);
 
@@ -94,11 +112,60 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
         createdAt: new Date(),
       };
 
+      try {
+        if (dbRef) {
+          await insertTransaction(dbRef, {
+            id: transaction.id,
+            type: transaction.type,
+            amountCents: transaction.amountCents,
+            categoryId: transaction.categoryId,
+            description: transaction.description || null,
+            date: toIsoDate(transaction.date),
+            createdAt: transaction.createdAt.toISOString(),
+          });
+        }
+      } catch {
+        return { success: false as const, error: "Failed to save transaction" };
+      }
+
       set((state) => ({
         transactions: [transaction, ...state.transactions],
       }));
 
       return { success: true as const, transaction };
+    },
+
+    loadTransactions: async () => {
+      if (!dbRef) return;
+      try {
+        const rows = await getAllTransactions(dbRef);
+        const transactions: StoredTransaction[] = rows.map((row) => ({
+          id: row.id,
+          type: row.type as TransactionType,
+          amountCents: row.amountCents,
+          categoryId: row.categoryId as CategoryId,
+          description: row.description ?? "",
+          date: parseIsoDate(row.date),
+          createdAt: new Date(row.createdAt),
+        }));
+        set({ transactions });
+      } catch {
+        // DB read failed — keep existing in-memory state
+      }
+    },
+
+    removeTransaction: async (id) => {
+      if (dbRef) {
+        try {
+          await deleteTransactionRepo(dbRef, id);
+        } catch {
+          // DB delete failed — keep UI state unchanged
+          return;
+        }
+      }
+      set((state) => ({
+        transactions: state.transactions.filter((tx) => tx.id !== id),
+      }));
     },
 
     resetForm: () => set({ ...INITIAL_FORM, date: new Date() }),
