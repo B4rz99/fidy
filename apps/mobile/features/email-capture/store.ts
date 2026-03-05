@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db/client";
 import { generateId } from "@/shared/lib/generate-id";
-import { DEFAULT_BANK_SENDERS } from "./lib/bank-senders";
+import { fetchBankSenders } from "./lib/bank-senders";
 import type { EmailAccountRow, ProcessedEmailRow } from "./lib/repository";
 import {
   deleteEmailAccount,
@@ -114,7 +114,8 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     try {
       const { accounts } = get();
       const stubParseFn = async () => null;
-      const senderEmails = DEFAULT_BANK_SENDERS.map((s) => s.email);
+      const senders = await fetchBankSenders();
+      const senderEmails = senders.map((s) => s.email);
 
       for (const account of accounts) {
         try {
@@ -126,7 +127,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
               : await fetchOutlookEmails(outlookClientId, since, senderEmails);
 
           if (rawEmails.length > 0) {
-            await processEmails(dbRef!, userIdRef!, rawEmails, DEFAULT_BANK_SENDERS, stubParseFn);
+            await processEmails(dbRef!, userIdRef!, rawEmails, senders, stubParseFn);
           }
 
           await updateLastFetchedAt(dbRef!, account.id, new Date().toISOString());

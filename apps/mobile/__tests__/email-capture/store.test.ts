@@ -27,6 +27,14 @@ vi.mock("@/features/email-capture/services/email-pipeline", () => ({
     .mockResolvedValue({ filtered: 0, skippedDuplicate: 0, saved: 0, failed: 0 }),
 }));
 
+vi.mock("@/features/email-capture/lib/bank-senders", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/features/email-capture/lib/bank-senders")>();
+  return {
+    ...actual,
+    fetchBankSenders: vi.fn().mockResolvedValue(actual.DEFAULT_BANK_SENDERS),
+  };
+});
+
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: vi.fn(() => "ea-generated"),
 }));
