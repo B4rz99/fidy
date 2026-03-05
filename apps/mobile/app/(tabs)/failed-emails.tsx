@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
+import { useTransactionStore } from "@/features/transactions/store";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 
 export default function FailedEmailsScreen() {
@@ -11,6 +12,7 @@ export default function FailedEmailsScreen() {
   const router = useRouter();
   const failedEmails = useEmailCaptureStore((s) => s.failedEmails);
   const dismissFailedEmail = useEmailCaptureStore((s) => s.dismissFailedEmail);
+  const openSheet = useTransactionStore((s) => s.openSheet);
   const primaryColor = useThemeColor("primary");
 
   return (
@@ -30,7 +32,9 @@ export default function FailedEmailsScreen() {
           </View>
 
           <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
-            {"These bank emails couldn't be processed automatically. You can add them as transactions manually."}
+            {
+              "These bank emails couldn't be processed automatically. You can add them as transactions manually."
+            }
           </Text>
 
           <View style={{ gap: 10 }}>
@@ -39,6 +43,7 @@ export default function FailedEmailsScreen() {
                 key={email.id}
                 email={email}
                 onDismiss={() => dismissFailedEmail(email.id)}
+                onAddManually={openSheet}
               />
             ))}
           </View>
@@ -57,9 +62,11 @@ export default function FailedEmailsScreen() {
 function FailedEmailCard({
   email,
   onDismiss,
+  onAddManually,
 }: {
   email: ProcessedEmailRow;
   onDismiss: () => void;
+  onAddManually: () => void;
 }) {
   const redColor = useThemeColor("accentRed");
   const primaryColor = useThemeColor("primary");
@@ -107,6 +114,7 @@ function FailedEmailCard({
 
       <View className="flex-row" style={{ gap: 10 }}>
         <Pressable
+          onPress={onAddManually}
           className="flex-1 h-10 flex-row items-center justify-center rounded-[10px] bg-peach-btn dark:bg-peach-btn-dark"
           style={{ gap: 6 }}
         >

@@ -13,8 +13,8 @@ import {
 } from "./lib/repository";
 import type { EmailProvider } from "./schema";
 import { processEmails } from "./services/email-pipeline";
-import { connectGmail, fetchGmailEmails } from "./services/gmail-adapter";
-import { connectOutlook, fetchOutlookEmails } from "./services/outlook-adapter";
+import { connectGmail, disconnectGmail, fetchGmailEmails } from "./services/gmail-adapter";
+import { connectOutlook, disconnectOutlook, fetchOutlookEmails } from "./services/outlook-adapter";
 
 let dbRef: AnyDb | null = null;
 let userIdRef: string | null = null;
@@ -94,6 +94,11 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
   disconnectEmail: async (id) => {
     if (!dbRef) return;
+    const account = get().accounts.find((a) => a.id === id);
+    if (account) {
+      if (account.provider === "gmail") await disconnectGmail();
+      else if (account.provider === "outlook") await disconnectOutlook();
+    }
     await deleteEmailAccount(dbRef, id);
     set((state) => ({
       accounts: state.accounts.filter((a) => a.id !== id),
