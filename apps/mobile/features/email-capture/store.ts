@@ -1,12 +1,17 @@
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db/client";
+import { generateId } from "@/shared/lib/generate-id";
 import type { EmailAccountRow, ProcessedEmailRow } from "./lib/repository";
 import {
   deleteEmailAccount,
   dismissProcessedEmail,
   getEmailAccounts,
   getFailedEmails,
+  insertEmailAccount,
 } from "./lib/repository";
+import type { EmailProvider } from "./schema";
+import { connectGmail } from "./services/gmail-adapter";
+import { connectOutlook } from "./services/outlook-adapter";
 
 let dbRef: AnyDb | null = null;
 let userIdRef: string | null = null;
@@ -25,7 +30,7 @@ type EmailCaptureActions = {
   loadFailedEmails: () => Promise<void>;
   dismissBanner: () => void;
   dismissFailedEmail: (id: string) => Promise<void>;
-  connectEmail: () => void;
+  connectEmail: (provider: EmailProvider, clientId: string) => Promise<void>;
   disconnectEmail: (id: string) => Promise<void>;
 };
 
@@ -62,8 +67,25 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     set({ failedEmails: updated, failedCount: updated.length });
   },
 
-  connectEmail: () => {
-    // Stub — will be implemented when OAuth flow is added
+  connectEmail: async (provider, clientId) => {
+    if (!dbRef || !userIdRef) return;
+
+    const result =
+      provider === "gmail" ? await connectGmail(clientId) : await connectOutlook(clientId);
+
+    if (!result.success) return;
+
+    const row: EmailAccountRow = {
+      id: generateId("ea"),
+      userId: userIdRef,
+      provider,
+      email: result.email,
+      lastFetchedAt: null,
+      createdAt: new Date().toISOString(),
+    };
+
+    await insertEmailAccount(dbRef, row);
+    set((state) => ({ accounts: [...state.accounts, row] }));
   },
 
   disconnectEmail: async (id) => {

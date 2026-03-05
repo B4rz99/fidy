@@ -8,12 +8,27 @@ vi.mock("@/features/email-capture/lib/repository", () => ({
   dismissProcessedEmail: vi.fn(),
 }));
 
+vi.mock("@/features/email-capture/services/gmail-adapter", () => ({
+  connectGmail: vi.fn(),
+}));
+
+vi.mock("@/features/email-capture/services/outlook-adapter", () => ({
+  connectOutlook: vi.fn(),
+}));
+
+vi.mock("@/shared/lib/generate-id", () => ({
+  generateId: vi.fn(() => "ea-generated"),
+}));
+
 import {
   deleteEmailAccount,
   dismissProcessedEmail,
   getEmailAccounts,
   getFailedEmails,
+  insertEmailAccount,
 } from "@/features/email-capture/lib/repository";
+import { connectGmail } from "@/features/email-capture/services/gmail-adapter";
+import { connectOutlook } from "@/features/email-capture/services/outlook-adapter";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 
 // biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
@@ -114,6 +129,51 @@ describe("useEmailCaptureStore", () => {
     expect(dismissProcessedEmail).toHaveBeenCalledWith(mockDb, "pe-1");
     expect(useEmailCaptureStore.getState().failedEmails).toHaveLength(0);
     expect(useEmailCaptureStore.getState().failedCount).toBe(0);
+  });
+
+  it("connectEmail calls Gmail adapter and saves account", async () => {
+    vi.mocked(connectGmail).mockResolvedValueOnce({
+      success: true,
+      email: "user@gmail.com",
+    });
+
+    await useEmailCaptureStore.getState().connectEmail("gmail", "client-id");
+
+    expect(connectGmail).toHaveBeenCalledWith("client-id");
+    expect(insertEmailAccount).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        provider: "gmail",
+        email: "user@gmail.com",
+        userId: mockUserId,
+      })
+    );
+    expect(useEmailCaptureStore.getState().accounts).toHaveLength(1);
+  });
+
+  it("connectEmail calls Outlook adapter for outlook provider", async () => {
+    vi.mocked(connectOutlook).mockResolvedValueOnce({
+      success: true,
+      email: "user@outlook.com",
+    });
+
+    await useEmailCaptureStore.getState().connectEmail("outlook", "client-id");
+
+    expect(connectOutlook).toHaveBeenCalledWith("client-id");
+    expect(insertEmailAccount).toHaveBeenCalled();
+    expect(useEmailCaptureStore.getState().accounts).toHaveLength(1);
+  });
+
+  it("connectEmail does not save account on failure", async () => {
+    vi.mocked(connectGmail).mockResolvedValueOnce({
+      success: false,
+      error: "cancelled",
+    });
+
+    await useEmailCaptureStore.getState().connectEmail("gmail", "client-id");
+
+    expect(insertEmailAccount).not.toHaveBeenCalled();
+    expect(useEmailCaptureStore.getState().accounts).toHaveLength(0);
   });
 
   it("disconnectEmail removes from DB and state", async () => {

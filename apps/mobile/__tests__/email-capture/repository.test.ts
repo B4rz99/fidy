@@ -59,6 +59,25 @@ describe("email capture repository", () => {
     });
   });
 
+  it("getEmailAccount returns single account by id", async () => {
+    const mockRow = { id: "ea-1", userId: "user-1", provider: "gmail", email: "test@gmail.com" };
+    mockWhere.mockResolvedValueOnce([mockRow]);
+
+    const { getEmailAccount } = await import("@/features/email-capture/lib/repository");
+    const result = await getEmailAccount(mockDb, "ea-1");
+
+    expect(result).toEqual(mockRow);
+  });
+
+  it("getEmailAccount returns null when not found", async () => {
+    mockWhere.mockResolvedValueOnce([]);
+
+    const { getEmailAccount } = await import("@/features/email-capture/lib/repository");
+    const result = await getEmailAccount(mockDb, "nonexistent");
+
+    expect(result).toBeNull();
+  });
+
   it("getEmailAccounts returns accounts for userId", async () => {
     const mockRows = [{ id: "ea-1", userId: "user-1", provider: "gmail", email: "test@gmail.com" }];
     mockWhere.mockResolvedValueOnce(mockRows);

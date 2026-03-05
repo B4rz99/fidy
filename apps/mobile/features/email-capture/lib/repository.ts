@@ -9,6 +9,11 @@ export async function insertEmailAccount(db: AnyDb, row: EmailAccountRow) {
   await db.insert(emailAccounts).values(row);
 }
 
+export async function getEmailAccount(db: AnyDb, id: string) {
+  const rows = await db.select().from(emailAccounts).where(eq(emailAccounts.id, id));
+  return rows[0] ?? null;
+}
+
 export async function getEmailAccounts(db: AnyDb, userId: string) {
   return db.select().from(emailAccounts).where(eq(emailAccounts.userId, userId));
 }
