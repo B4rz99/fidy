@@ -1,6 +1,4 @@
 import type { Session } from "@supabase/supabase-js";
-import { makeRedirectUri } from "expo-auth-session";
-import { openAuthSessionAsync } from "expo-web-browser";
 import { create } from "zustand";
 import { getSupabase } from "@/shared/lib/supabase";
 
@@ -19,7 +17,15 @@ type AuthActions = {
   signOut: () => Promise<void>;
 };
 
-const redirectUri = makeRedirectUri({ scheme: "fidy", path: "auth/callback" });
+let cachedRedirectUri: string | null = null;
+
+async function getRedirectUri() {
+  if (!cachedRedirectUri) {
+    const { makeRedirectUri } = await import("expo-auth-session");
+    cachedRedirectUri = makeRedirectUri({ scheme: "fidy", path: "auth/callback" });
+  }
+  return cachedRedirectUri;
+}
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   session: null,
@@ -43,6 +49,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   signIn: async (provider) => {
     set({ isSigningIn: true });
     try {
+      const redirectUri = await getRedirectUri();
+      const { openAuthSessionAsync } = await import("expo-web-browser");
       const supabase = getSupabase();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
