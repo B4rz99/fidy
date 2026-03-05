@@ -9,7 +9,7 @@ describe("email capture schemas", () => {
   it("validates a raw email", () => {
     const valid = rawEmailSchema.safeParse({
       externalId: "msg-123",
-      from: "notificaciones@bancolombia.com.co",
+      from: "alertasynotificaciones@notificacionesbancolombia.com",
       subject: "Compra aprobada",
       body: "Su compra por $50,000 en EXITO fue aprobada",
       receivedAt: "2026-03-05T10:00:00Z",
