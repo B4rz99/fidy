@@ -14,6 +14,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useAuthStore } from "@/features/auth/store";
+import { useEmailCapture } from "@/features/email-capture/hooks/useEmailCapture";
 import { useSync } from "@/features/sync/hooks/useSync";
 import { useTransactionStore } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db/client";
@@ -36,6 +37,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
   }, [migrationsReady, db, userId]);
 
   useSync(migrationsReady ? db : null, userId);
+  useEmailCapture(migrationsReady ? db : null, userId);
 
   useEffect(() => {
     if (migrationsReady || migrationsError) {

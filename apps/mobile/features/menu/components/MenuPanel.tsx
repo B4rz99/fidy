@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { Calendar } from "lucide-react-native";
+import { Calendar, Mail } from "lucide-react-native";
 import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
@@ -51,6 +51,11 @@ export function MenuPanel() {
     router.push("/(tabs)/calendar");
   };
 
+  const handleConnectedAccounts = () => {
+    closeMenu();
+    router.push("/connected-accounts" as never);
+  };
+
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={isOpen ? "auto" : "none"}>
       <Animated.View style={[styles.backdrop, backdropStyle]}>
@@ -70,6 +75,13 @@ export function MenuPanel() {
         <Pressable style={[styles.menuItem, { backgroundColor: itemBg }]} onPress={handleCalendar}>
           <Calendar size={20} color={primaryColor} />
           <Text style={[styles.menuItemText, { color: primaryColor }]}>Calendar</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.menuItem, { backgroundColor: itemBg, marginTop: 8 }]}
+          onPress={handleConnectedAccounts}
+        >
+          <Mail size={20} color={primaryColor} />
+          <Text style={[styles.menuItemText, { color: primaryColor }]}>Connected Accounts</Text>
         </Pressable>
       </Animated.View>
     </View>

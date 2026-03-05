@@ -11,11 +11,13 @@ vi.mock("@/features/email-capture/lib/repository", () => ({
 
 vi.mock("@/features/email-capture/services/gmail-adapter", () => ({
   connectGmail: vi.fn(),
+  disconnectGmail: vi.fn().mockResolvedValue(undefined),
   fetchGmailEmails: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("@/features/email-capture/services/outlook-adapter", () => ({
   connectOutlook: vi.fn(),
+  disconnectOutlook: vi.fn().mockResolvedValue(undefined),
   fetchOutlookEmails: vi.fn().mockResolvedValue([]),
 }));
 

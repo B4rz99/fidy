@@ -42,6 +42,8 @@ export default function TabsLayout() {
         <Tabs.Screen name="goals" options={{ title: "Goals" }} />
         <Tabs.Screen name="menu" options={{ title: "Menu" }} />
         <Tabs.Screen name="calendar" options={{ href: null }} />
+        <Tabs.Screen name="connected-accounts" options={{ href: null }} />
+        <Tabs.Screen name="failed-emails" options={{ href: null }} />
       </Tabs>
       <AddTransactionSheet />
       <MenuPanel />

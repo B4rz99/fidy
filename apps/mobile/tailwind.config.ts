@@ -41,6 +41,12 @@ const config: Config = {
         "login-google-border-dark": "#3A3A3C",
         "login-ms": "#F3F2EE",
         "login-ms-dark": "#2C2C2E",
+        "border-subtle": "#EBEBEB",
+        "border-subtle-dark": "#2C2C2E",
+        "accent-red-light": "#D45B5B11",
+        "accent-red-light-dark": "#E0606011",
+        "peach-btn": "#FAE3D9",
+        "peach-btn-dark": "#2A1F1A",
       },
       fontFamily: {
         "poppins-medium": ["Poppins_500Medium"],
