@@ -100,18 +100,21 @@ export async function processEmails(
       continue;
     }
 
+    const validated = validation.data;
     const source = email.provider === "gmail" ? "email_gmail" : "email_outlook";
     const txId = generateId("tx");
     const now = new Date().toISOString();
 
+    // TODO: Step 5 — deduplicate by amount + date + description (deferred)
+
     await insertTransaction(db, {
       id: txId,
       userId,
-      type: parsed.type,
-      amountCents: parsed.amountCents,
-      categoryId: parsed.categoryId,
-      description: parsed.description,
-      date: parsed.date,
+      type: validated.type,
+      amountCents: validated.amountCents,
+      categoryId: validated.categoryId,
+      description: validated.description,
+      date: validated.date,
       source,
       createdAt: now,
       updatedAt: now,

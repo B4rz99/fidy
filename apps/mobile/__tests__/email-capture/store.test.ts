@@ -293,5 +293,45 @@ describe("useEmailCaptureStore", () => {
       expect(fetchGmailEmails).not.toHaveBeenCalled();
       expect(fetchOutlookEmails).not.toHaveBeenCalled();
     });
+
+    it("skips when already fetching", async () => {
+      useEmailCaptureStore.setState({ isFetching: true, accounts: [] });
+
+      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+
+      expect(fetchGmailEmails).not.toHaveBeenCalled();
+    });
+
+    it("continues processing other accounts when one fails", async () => {
+      useEmailCaptureStore.setState({
+        accounts: [
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "test@gmail.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+          {
+            id: "ea-2",
+            userId: mockUserId,
+            provider: "outlook",
+            email: "test@outlook.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      vi.mocked(fetchGmailEmails).mockRejectedValueOnce(new Error("network error"));
+      vi.mocked(fetchOutlookEmails).mockResolvedValueOnce([]);
+      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+
+      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+
+      expect(fetchOutlookEmails).toHaveBeenCalled();
+      expect(useEmailCaptureStore.getState().isFetching).toBe(false);
+    });
   });
 });

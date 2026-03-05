@@ -102,27 +102,32 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
   fetchAndProcess: async (gmailClientId, outlookClientId) => {
     if (!dbRef || !userIdRef) return;
+    if (get().isFetching) return;
 
     set({ isFetching: true });
 
     try {
       const { accounts } = get();
       const stubParseFn = async () => null;
+      const senderEmails = DEFAULT_BANK_SENDERS.map((s) => s.email);
 
       for (const account of accounts) {
-        const since = account.lastFetchedAt ?? new Date(0).toISOString();
-        const senderEmails = DEFAULT_BANK_SENDERS.map((s) => s.email);
+        try {
+          const since = account.lastFetchedAt ?? new Date(0).toISOString();
 
-        const rawEmails =
-          account.provider === "gmail"
-            ? await fetchGmailEmails(gmailClientId, since, senderEmails)
-            : await fetchOutlookEmails(outlookClientId, since, senderEmails);
+          const rawEmails =
+            account.provider === "gmail"
+              ? await fetchGmailEmails(gmailClientId, since, senderEmails)
+              : await fetchOutlookEmails(outlookClientId, since, senderEmails);
 
-        if (rawEmails.length > 0) {
-          await processEmails(dbRef, userIdRef, rawEmails, DEFAULT_BANK_SENDERS, stubParseFn);
+          if (rawEmails.length > 0) {
+            await processEmails(dbRef!, userIdRef!, rawEmails, DEFAULT_BANK_SENDERS, stubParseFn);
+          }
+
+          await updateLastFetchedAt(dbRef!, account.id, new Date().toISOString());
+        } catch {
+          // Continue processing remaining accounts
         }
-
-        await updateLastFetchedAt(dbRef, account.id, new Date().toISOString());
       }
 
       const failedEmails = await getFailedEmails(dbRef);
