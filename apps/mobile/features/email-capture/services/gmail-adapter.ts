@@ -42,6 +42,9 @@ async function getValidToken(clientId: string): Promise<string | null> {
 
   const data = await refreshResponse.json();
   await SecureStore.setItemAsync(TOKEN_KEY, data.access_token);
+  if (data.refresh_token) {
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.refresh_token);
+  }
   return data.access_token;
 }
 

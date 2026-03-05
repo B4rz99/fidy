@@ -141,16 +141,16 @@ describe("gmail adapter", () => {
       });
     });
 
-    it("refreshes expired token and retries", async () => {
+    it("refreshes expired token and persists rotated refresh token", async () => {
       // getValidToken: token exists but profile check fails (expired)
       mockGetItemAsync.mockResolvedValueOnce("expired-token");
       mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
       // refresh token exists
       mockGetItemAsync.mockResolvedValueOnce("refresh-token");
-      // refresh succeeds
+      // refresh succeeds with rotated refresh token
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ access_token: "new-token" }),
+        json: () => Promise.resolve({ access_token: "new-token", refresh_token: "new-refresh" }),
       });
 
       // list messages
@@ -182,6 +182,7 @@ describe("gmail adapter", () => {
 
       expect(emails).toHaveLength(1);
       expect(mockSetItemAsync).toHaveBeenCalledWith("email-gmail-token", "new-token");
+      expect(mockSetItemAsync).toHaveBeenCalledWith("email-gmail-refresh-token", "new-refresh");
     });
 
     it("decodes UTF-8 body correctly", async () => {
