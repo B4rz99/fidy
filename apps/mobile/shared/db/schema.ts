@@ -23,6 +23,19 @@ export const emailAccounts = sqliteTable("email_accounts", {
   createdAt: text("created_at").notNull(),
 });
 
+export const processedEmails = sqliteTable("processed_emails", {
+  id: text("id").primaryKey(),
+  externalId: text("external_id").notNull(),
+  provider: text("provider").notNull(),
+  status: text("status").notNull(),
+  failureReason: text("failure_reason"),
+  subject: text("subject").notNull(),
+  rawBodyPreview: text("raw_body_preview"),
+  receivedAt: text("received_at").notNull(),
+  transactionId: text("transaction_id"),
+  createdAt: text("created_at").notNull(),
+});
+
 export const syncQueue = sqliteTable("sync_queue", {
   id: text("id").primaryKey(),
   tableName: text("table_name").notNull(),
