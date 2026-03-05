@@ -26,6 +26,7 @@ function createMockSupabase(queryResult: { data: any; error: any } = { data: [],
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     gt: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockResolvedValue(queryResult),
   };
@@ -191,7 +192,7 @@ describe("syncEngine", () => {
       const { syncPull } = await import("@/features/sync/services/syncEngine");
       await syncPull(mockDb, mockSupabase, "user-1");
 
-      expect(mockSupabase._chain.gt).toHaveBeenCalled();
+      expect(mockSupabase._chain.gte).toHaveBeenCalled();
       expect(mockSetSyncMeta).not.toHaveBeenCalled();
     });
 

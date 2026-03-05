@@ -111,7 +111,7 @@ export async function syncPull(
   let query = supabase.from("transactions").select("*").eq("user_id", userId);
 
   if (lastSyncAt) {
-    query = query.gt("updated_at", lastSyncAt);
+    query = query.gte("updated_at", lastSyncAt);
   }
 
   const { data, error } = await query.order("updated_at", { ascending: true }).limit(1000);

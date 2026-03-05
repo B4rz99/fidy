@@ -11,13 +11,13 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useAuthStore } from "@/features/auth/store";
 import { useSync } from "@/features/sync/hooks/useSync";
 import { useTransactionStore } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db/client";
-import { getDb, resetDb } from "@/shared/db/client";
+import { getDb } from "@/shared/db/client";
 import migrations from "../drizzle/migrations";
 
 SplashScreen.preventAutoHideAsync();
@@ -54,16 +54,6 @@ export default function RootLayout() {
   const session = useAuthStore((s) => s.session);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
   const userId = session?.user?.id ?? null;
-  const prevUserIdRef = useRef<string | null>(userId);
-
-  useEffect(() => {
-    const prev = prevUserIdRef.current;
-    prevUserIdRef.current = userId;
-
-    if (prev && prev !== userId) {
-      resetDb();
-    }
-  }, [userId]);
 
   const [fontsLoaded, fontsError] = useFonts({
     Poppins_500Medium,
