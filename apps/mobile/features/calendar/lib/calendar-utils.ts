@@ -5,6 +5,7 @@ import {
   format,
   getDay,
   getDaysInMonth,
+  startOfDay,
   startOfMonth,
 } from "date-fns";
 import type { Bill } from "../schema";
@@ -96,6 +97,8 @@ export function formatMonthYear(date: Date): string {
  */
 export function getNextOccurrence(bill: Bill, from: Date): Date {
   const start = bill.startDate;
+  // Normalize to midnight so a bill due today isn't skipped
+  from = startOfDay(from);
   switch (bill.frequency) {
     case "weekly": {
       const dayDiff = (getDay(start) - getDay(from) + 7) % 7;

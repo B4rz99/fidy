@@ -65,8 +65,7 @@ describe("createBillSchema", () => {
     expect(createBillSchema.safeParse(valid).success).toBe(true);
   });
 
-  test("rejects input with id field", () => {
-    // createBillSchema omits id — extra fields are stripped but still valid
+  test("strips id field from parsed output", () => {
     const result = createBillSchema.safeParse({ ...valid, id: "bill-1" });
     expect(result.success).toBe(true);
     if (result.success) {
