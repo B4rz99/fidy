@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db/client";
 import { generateId } from "@/shared/lib/generate-id";
+import { DEFAULT_BANK_SENDERS } from "./lib/bank-senders";
 import type { EmailAccountRow, ProcessedEmailRow } from "./lib/repository";
 import {
   deleteEmailAccount,
@@ -8,10 +9,12 @@ import {
   getEmailAccounts,
   getFailedEmails,
   insertEmailAccount,
+  updateLastFetchedAt,
 } from "./lib/repository";
 import type { EmailProvider } from "./schema";
-import { connectGmail } from "./services/gmail-adapter";
-import { connectOutlook } from "./services/outlook-adapter";
+import { processEmails } from "./services/email-pipeline";
+import { connectGmail, fetchGmailEmails } from "./services/gmail-adapter";
+import { connectOutlook, fetchOutlookEmails } from "./services/outlook-adapter";
 
 let dbRef: AnyDb | null = null;
 let userIdRef: string | null = null;
@@ -32,6 +35,7 @@ type EmailCaptureActions = {
   dismissFailedEmail: (id: string) => Promise<void>;
   connectEmail: (provider: EmailProvider, clientId: string) => Promise<void>;
   disconnectEmail: (id: string) => Promise<void>;
+  fetchAndProcess: (gmailClientId: string, outlookClientId: string) => Promise<void>;
 };
 
 export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActions>((set, get) => ({
@@ -94,5 +98,37 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     set((state) => ({
       accounts: state.accounts.filter((a) => a.id !== id),
     }));
+  },
+
+  fetchAndProcess: async (gmailClientId, outlookClientId) => {
+    if (!dbRef || !userIdRef) return;
+
+    set({ isFetching: true });
+
+    try {
+      const { accounts } = get();
+      const stubParseFn = async () => null;
+
+      for (const account of accounts) {
+        const since = account.lastFetchedAt ?? new Date(0).toISOString();
+        const senderEmails = DEFAULT_BANK_SENDERS.map((s) => s.email);
+
+        const rawEmails =
+          account.provider === "gmail"
+            ? await fetchGmailEmails(gmailClientId, since, senderEmails)
+            : await fetchOutlookEmails(outlookClientId, since, senderEmails);
+
+        if (rawEmails.length > 0) {
+          await processEmails(dbRef, userIdRef, rawEmails, DEFAULT_BANK_SENDERS, stubParseFn);
+        }
+
+        await updateLastFetchedAt(dbRef, account.id, new Date().toISOString());
+      }
+
+      const failedEmails = await getFailedEmails(dbRef);
+      set({ failedEmails, failedCount: failedEmails.length });
+    } finally {
+      set({ isFetching: false });
+    }
   },
 }));
