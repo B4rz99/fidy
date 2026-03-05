@@ -1,6 +1,7 @@
 import {
   addDays,
   addWeeks,
+  differenceInCalendarDays,
   differenceInWeeks,
   format,
   getDay,
@@ -37,24 +38,15 @@ export function getMonthGrid(year: number, month: number): CalendarDay[][] {
   const totalCells = startOffset + daysInMonth;
   const numWeeks = Math.ceil(totalCells / 7);
 
-  const grid: CalendarDay[][] = [];
-
-  for (let week = 0; week < numWeeks; week++) {
-    const row: CalendarDay[] = [];
-    for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+  return Array.from({ length: numWeeks }, (_, week) =>
+    Array.from({ length: 7 }, (_, dayOfWeek) => {
       const cellIndex = week * 7 + dayOfWeek;
       const dayNum = cellIndex - startOffset + 1;
-
-      if (dayNum < 1 || dayNum > daysInMonth) {
-        row.push({ day: null, date: null });
-      } else {
-        row.push({ day: dayNum, date: new Date(year, month, dayNum) });
-      }
-    }
-    grid.push(row);
-  }
-
-  return grid;
+      return dayNum < 1 || dayNum > daysInMonth
+        ? { day: null, date: null }
+        : { day: dayNum, date: new Date(year, month, dayNum) };
+    })
+  );
 }
 
 /**
@@ -98,32 +90,32 @@ export function formatMonthYear(date: Date): string {
 export function getNextOccurrence(bill: Bill, from: Date): Date {
   const start = bill.startDate;
   // Normalize to midnight so a bill due today isn't skipped
-  from = startOfDay(from);
+  const normalizedFrom = startOfDay(from);
   switch (bill.frequency) {
     case "weekly": {
-      const dayDiff = (getDay(start) - getDay(from) + 7) % 7;
-      const next = addDays(from, dayDiff === 0 ? 0 : dayDiff);
-      return next >= from ? next : addWeeks(next, 1);
+      const dayDiff = (getDay(start) - getDay(normalizedFrom) + 7) % 7;
+      const next = addDays(normalizedFrom, dayDiff === 0 ? 0 : dayDiff);
+      return next >= normalizedFrom ? next : addWeeks(next, 1);
     }
     case "biweekly": {
-      let next = start;
-      while (next < from) next = addWeeks(next, 2);
-      return next;
+      const daysDiff = differenceInCalendarDays(normalizedFrom, start);
+      const periods = daysDiff <= 0 ? 0 : Math.ceil(daysDiff / 14);
+      return addWeeks(start, periods * 2);
     }
     case "monthly": {
       const day = start.getDate();
-      const y = from.getFullYear();
-      const m = from.getMonth();
+      const y = normalizedFrom.getFullYear();
+      const m = normalizedFrom.getMonth();
       const candidate = new Date(y, m, clampDay(day, y, m));
-      if (candidate >= from) return candidate;
+      if (candidate >= normalizedFrom) return candidate;
       return new Date(y, m + 1, clampDay(day, y, m + 1));
     }
     case "yearly": {
       const day = start.getDate();
       const sm = start.getMonth();
-      const y = from.getFullYear();
+      const y = normalizedFrom.getFullYear();
       const candidate = new Date(y, sm, clampDay(day, y, sm));
-      if (candidate >= from) return candidate;
+      if (candidate >= normalizedFrom) return candidate;
       return new Date(y + 1, sm, clampDay(day, y + 1, sm));
     }
   }
