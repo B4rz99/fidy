@@ -8,7 +8,7 @@ import {
 } from "@expo-google-fonts/poppins";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Redirect, Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -43,11 +43,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
     }
   }, [migrationsReady, migrationsError]);
 
-  if (!migrationsReady && !migrationsError) {
-    return null;
-  }
-
-  return <Stack.Screen name="(tabs)" />;
+  return null;
 }
 
 export default function RootLayout() {
@@ -87,12 +83,17 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Stack screenOptions={{ headerShown: false }}>
-        {db && userId ? (
-          <AuthenticatedShell db={db} userId={userId} />
-        ) : (
-          <Stack.Screen name="(auth)" />
-        )}
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
       </Stack>
+      {db && userId ? (
+        <>
+          <AuthenticatedShell db={db} userId={userId} />
+          <Redirect href="/(tabs)" />
+        </>
+      ) : (
+        <Redirect href="/(auth)" />
+      )}
       <StatusBar style="auto" />
     </GestureHandlerRootView>
   );
