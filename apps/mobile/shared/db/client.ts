@@ -5,18 +5,21 @@ import { openDatabaseSync } from "expo-sqlite";
 // biome-ignore lint/suspicious/noExplicitAny: drizzle generic varies by caller
 export type AnyDb = ExpoSQLiteDatabase<any>;
 
-const DB_NAME = "fidy.db";
-// TODO: move to secure storage when auth is added
-const DB_KEY = "fidy-dev-key-2026";
-
 let db: ReturnType<typeof drizzle> | null = null;
 let sqliteRef: ReturnType<typeof openDatabaseSync> | null = null;
+let currentUserId: string | null = null;
 
-export function getDb() {
+export function getDb(userId: string) {
+  if (db && currentUserId !== userId) {
+    throw new Error(`DB already open for user "${currentUserId}". Call resetDb() first.`);
+  }
   if (!db) {
-    sqliteRef = openDatabaseSync(DB_NAME);
-    sqliteRef.execSync(`PRAGMA key = '${DB_KEY}'`);
+    const dbName = `fidy-${userId}.db`;
+    const dbKey = `fidy-key-${userId}`;
+    sqliteRef = openDatabaseSync(dbName);
+    sqliteRef.execSync(`PRAGMA key = '${dbKey}'`);
     db = drizzle(sqliteRef);
+    currentUserId = userId;
   }
   return db;
 }
@@ -27,5 +30,6 @@ export function resetDb() {
   } finally {
     sqliteRef = null;
     db = null;
+    currentUserId = null;
   }
 }

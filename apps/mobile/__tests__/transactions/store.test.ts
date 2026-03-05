@@ -3,23 +3,26 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: vi.fn(),
   getAllTransactions: vi.fn().mockResolvedValue([]),
-  deleteTransaction: vi.fn(),
+  softDeleteTransaction: vi.fn(),
+  enqueueSync: vi.fn(),
 }));
 
 import {
-  deleteTransaction as deleteTransactionRepo,
+  enqueueSync,
   getAllTransactions,
   insertTransaction,
+  softDeleteTransaction,
 } from "@/features/transactions/lib/repository";
 import { useTransactionStore } from "@/features/transactions/store";
 
 // biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
 const mockDb = {} as any;
+const mockUserId = "user-1";
 
 describe("useTransactionStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useTransactionStore.getState().initStore(mockDb);
+    useTransactionStore.getState().initStore(mockDb, mockUserId);
     useTransactionStore.setState({
       isOpen: false,
       step: 1,
@@ -108,6 +111,9 @@ describe("useTransactionStore", () => {
       expect(result.transaction.categoryId).toBe("food");
       expect(result.transaction.description).toBe("Groceries");
       expect(result.transaction.type).toBe("expense");
+      expect(result.transaction.userId).toBe(mockUserId);
+      expect(result.transaction.updatedAt).toBeInstanceOf(Date);
+      expect(result.transaction.deletedAt).toBeNull();
     }
 
     expect(useTransactionStore.getState().transactions).toHaveLength(1);
@@ -117,6 +123,24 @@ describe("useTransactionStore", () => {
         amountCents: 4520,
         categoryId: "food",
         type: "expense",
+        userId: mockUserId,
+        updatedAt: expect.any(String),
+      })
+    );
+  });
+
+  it("saveTransaction enqueues sync entry after insert", async () => {
+    const store = useTransactionStore.getState();
+    store.setDigits("1000");
+    store.setCategoryId("food");
+
+    await store.saveTransaction();
+
+    expect(enqueueSync).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        tableName: "transactions",
+        operation: "insert",
       })
     );
   });
@@ -179,12 +203,15 @@ describe("useTransactionStore", () => {
     vi.mocked(getAllTransactions).mockResolvedValueOnce([
       {
         id: "tx-1",
+        userId: mockUserId,
         type: "expense",
         amountCents: 1000,
         categoryId: "food",
         description: "Lunch",
         date: "2026-03-04",
         createdAt: "2026-03-04T10:00:00.000Z",
+        updatedAt: "2026-03-04T10:00:00.000Z",
+        deletedAt: null,
       },
     ]);
 
@@ -193,12 +220,15 @@ describe("useTransactionStore", () => {
     const txs = useTransactionStore.getState().transactions;
     expect(txs).toHaveLength(1);
     expect(txs[0].id).toBe("tx-1");
+    expect(txs[0].userId).toBe(mockUserId);
     expect(txs[0].date).toBeInstanceOf(Date);
     expect(txs[0].createdAt).toBeInstanceOf(Date);
-    expect(getAllTransactions).toHaveBeenCalledWith(mockDb);
+    expect(txs[0].updatedAt).toBeInstanceOf(Date);
+    expect(txs[0].deletedAt).toBeNull();
+    expect(getAllTransactions).toHaveBeenCalledWith(mockDb, mockUserId);
   });
 
-  it("deleteTransaction removes from DB and state", async () => {
+  it("removeTransaction soft-deletes from DB, enqueues sync, and removes from state", async () => {
     const store = useTransactionStore.getState();
     store.setDigits("100");
     store.setCategoryId("food");
@@ -210,7 +240,15 @@ describe("useTransactionStore", () => {
     await useTransactionStore.getState().removeTransaction(txs[0].id);
 
     expect(useTransactionStore.getState().transactions).toHaveLength(0);
-    expect(deleteTransactionRepo).toHaveBeenCalledWith(mockDb, txs[0].id);
+    expect(softDeleteTransaction).toHaveBeenCalledWith(mockDb, txs[0].id);
+    expect(enqueueSync).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        tableName: "transactions",
+        rowId: txs[0].id,
+        operation: "delete",
+      })
+    );
   });
 
   it("saveTransaction returns error when DB insert fails", async () => {
@@ -228,7 +266,7 @@ describe("useTransactionStore", () => {
     expect(useTransactionStore.getState().transactions).toHaveLength(0);
   });
 
-  it("removeTransaction keeps UI state when DB delete fails", async () => {
+  it("removeTransaction keeps UI state when DB operation fails", async () => {
     const store = useTransactionStore.getState();
     store.setDigits("100");
     store.setCategoryId("food");
@@ -237,7 +275,7 @@ describe("useTransactionStore", () => {
     const txs = useTransactionStore.getState().transactions;
     expect(txs).toHaveLength(1);
 
-    vi.mocked(deleteTransactionRepo).mockRejectedValueOnce(new Error("db error"));
+    vi.mocked(softDeleteTransaction).mockRejectedValueOnce(new Error("db error"));
     await useTransactionStore.getState().removeTransaction(txs[0].id);
 
     expect(useTransactionStore.getState().transactions).toHaveLength(1);
