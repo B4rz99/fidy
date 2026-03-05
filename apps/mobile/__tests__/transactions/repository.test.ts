@@ -183,6 +183,67 @@ describe("transaction repository", () => {
     expect(result).toBe("2026-03-04T10:00:00.000Z");
   });
 
+  it("getTransactionById returns the row when found", async () => {
+    const mockRow = {
+      id: "tx-1",
+      userId: "user-1",
+      type: "expense",
+      amountCents: 1000,
+      categoryId: "food",
+      description: null,
+      date: "2026-03-04",
+      createdAt: "2026-03-04T10:00:00.000Z",
+      updatedAt: "2026-03-04T10:00:00.000Z",
+      deletedAt: null,
+    };
+    mockWhere.mockResolvedValueOnce([mockRow]);
+
+    const { getTransactionById } = await import("@/features/transactions/lib/repository");
+    const result = await getTransactionById(mockDb, "tx-1");
+
+    expect(mockSelect).toHaveBeenCalled();
+    expect(result).toEqual(mockRow);
+  });
+
+  it("getTransactionById returns null when not found", async () => {
+    mockWhere.mockResolvedValueOnce([]);
+
+    const { getTransactionById } = await import("@/features/transactions/lib/repository");
+    const result = await getTransactionById(mockDb, "tx-nonexistent");
+
+    expect(result).toBeNull();
+  });
+
+  it("upsertTransaction calls insert with onConflictDoUpdate", async () => {
+    const { upsertTransaction } = await import("@/features/transactions/lib/repository");
+
+    const row = {
+      id: "tx-1",
+      userId: "user-1",
+      type: "expense" as const,
+      amountCents: 2000,
+      categoryId: "food",
+      description: "Updated",
+      date: "2026-03-04",
+      createdAt: "2026-03-04T10:00:00.000Z",
+      updatedAt: "2026-03-04T12:00:00.000Z",
+    };
+
+    await upsertTransaction(mockDb, row);
+
+    expect(mockInsert).toHaveBeenCalled();
+    expect(mockValues).toHaveBeenCalledWith(row);
+    expect(mockOnConflictDoUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        set: expect.objectContaining({
+          type: row.type,
+          amountCents: row.amountCents,
+          description: row.description,
+        }),
+      })
+    );
+  });
+
   it("getSyncMeta returns null for missing key", async () => {
     mockWhere.mockResolvedValueOnce([]);
 

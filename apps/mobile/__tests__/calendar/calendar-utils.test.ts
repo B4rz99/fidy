@@ -143,6 +143,12 @@ describe("getBillsForDate", () => {
     expect(getBillsForDate([bill], new Date(2026, 3, 22))).toEqual([]);
   });
 
+  test("excludes bill with unknown frequency", () => {
+    // biome-ignore lint/suspicious/noExplicitAny: testing unknown frequency branch
+    const bill = makeBill({ frequency: "unknown" as any });
+    expect(getBillsForDate([bill], new Date(2026, 0, 15))).toEqual([]);
+  });
+
   // BUG 1a: monthly bill starting Jan 31 should match Apr 30 (last valid day)
   test("monthly bill day-31 matches on Apr 30 (day overflow clamped)", () => {
     const bill = makeBill({ startDate: new Date(2025, 0, 31) }); // Jan 31

@@ -48,6 +48,43 @@ describe("buildTransaction", () => {
   });
 });
 
+describe("toStoredTransaction branch coverage", () => {
+  test("handles null description by defaulting to empty string", () => {
+    const row = {
+      id: "tx-nd",
+      userId: "user-1",
+      type: "expense",
+      amountCents: 500,
+      categoryId: "food",
+      description: null,
+      date: "2026-03-01",
+      createdAt: "2026-03-01T10:00:00.000Z",
+      updatedAt: "2026-03-01T10:00:00.000Z",
+      deletedAt: null,
+    };
+    const result = toStoredTransaction(row);
+    expect(result.description).toBe("");
+  });
+
+  test("handles non-null deletedAt by converting to Date", () => {
+    const row = {
+      id: "tx-da",
+      userId: "user-1",
+      type: "expense",
+      amountCents: 500,
+      categoryId: "food",
+      description: "Test",
+      date: "2026-03-01",
+      createdAt: "2026-03-01T10:00:00.000Z",
+      updatedAt: "2026-03-01T10:00:00.000Z",
+      deletedAt: "2026-03-02T10:00:00.000Z",
+    };
+    const result = toStoredTransaction(row);
+    expect(result.deletedAt).toBeInstanceOf(Date);
+    expect(result.deletedAt?.toISOString()).toBe("2026-03-02T10:00:00.000Z");
+  });
+});
+
 describe("toStoredTransaction / toTransactionRow round-trip", () => {
   const stored: StoredTransaction = {
     id: "tx-rt",

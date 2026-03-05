@@ -35,6 +35,14 @@ describe("useTransactionStore", () => {
     });
   });
 
+  it("saveTransaction returns error when store is not initialized", async () => {
+    // Reset module-level refs by creating a fresh store state without initStore
+    // biome-ignore lint/suspicious/noExplicitAny: testing uninitialized store guard
+    useTransactionStore.getState().initStore(null as any, null as any);
+    const result = await useTransactionStore.getState().saveTransaction();
+    expect(result).toEqual({ success: false, error: "Store not initialized" });
+  });
+
   it("starts closed with default form values", () => {
     const state = useTransactionStore.getState();
     expect(state.isOpen).toBe(false);
