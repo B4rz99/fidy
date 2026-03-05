@@ -113,6 +113,50 @@ vi.mock("@expo/vector-icons/Ionicons", () => ({
   default: "Ionicons",
 }));
 
+// Mock @supabase/supabase-js
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: vi.fn(() => ({
+    auth: {
+      getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
+      onAuthStateChange: vi.fn(() => ({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      })),
+      signInWithOAuth: vi.fn(),
+      signOut: vi.fn(),
+    },
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({ data: [], error: null })),
+      upsert: vi.fn(() => ({ error: null })),
+      delete: vi.fn(() => ({ error: null })),
+    })),
+  })),
+}));
+
+// Mock expo-secure-store
+vi.mock("expo-secure-store", () => ({
+  getItemAsync: vi.fn(),
+  setItemAsync: vi.fn(),
+  deleteItemAsync: vi.fn(),
+}));
+
+// Mock @react-native-community/netinfo
+vi.mock("@react-native-community/netinfo", () => ({
+  addEventListener: vi.fn(() => vi.fn()),
+  fetch: vi.fn(() => Promise.resolve({ isConnected: true })),
+}));
+
+// Mock expo-auth-session
+vi.mock("expo-auth-session", () => ({
+  makeRedirectUri: vi.fn(() => "fidy://auth/callback"),
+}));
+
+// Mock expo-web-browser
+vi.mock("expo-web-browser", () => ({
+  openAuthSessionAsync: vi.fn(() => Promise.resolve({ type: "dismiss" })),
+  maybeCompleteAuthSession: vi.fn(),
+  openBrowserAsync: vi.fn(),
+}));
+
 // Mock react-native-svg
 vi.mock("react-native-svg", () => ({
   default: "Svg",
