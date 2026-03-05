@@ -1,21 +1,23 @@
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db/client";
 import { parseIsoDate, toIsoDate } from "@/shared/lib/format-date";
+import { generateId } from "@/shared/lib/generate-id";
 import type { CategoryId } from "./lib/categories";
 import { amountToCents } from "./lib/format-amount";
 import {
-  deleteTransaction as deleteTransactionRepo,
+  enqueueSync,
   getAllTransactions,
   insertTransaction,
+  softDeleteTransaction,
 } from "./lib/repository";
 import type { CreateTransactionInput, StoredTransaction, TransactionType } from "./schema";
 import { createTransactionSchema } from "./schema";
 
 type SheetStep = 1 | 2;
 
-// Module-level ref: Zustand doesn't serialize DB connections, so we keep it outside the store.
-// The repository layer stays pure (DB passed as param); this is the only impure bridge.
+// Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
+let userIdRef: string | null = null;
 
 type AddTransactionState = {
   // Sheet visibility
@@ -34,7 +36,7 @@ type AddTransactionState = {
 };
 
 type AddTransactionActions = {
-  initStore: (db: AnyDb) => void;
+  initStore: (db: AnyDb, userId: string) => void;
   openSheet: () => void;
   closeSheet: () => void;
   setStep: (step: SheetStep) => void;
@@ -69,8 +71,9 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
     date: new Date(),
     transactions: [],
 
-    initStore: (db) => {
+    initStore: (db, userId) => {
       dbRef = db;
+      userIdRef = userId;
     },
 
     openSheet: () => set({ isOpen: true, ...INITIAL_FORM, date: new Date() }),
@@ -83,6 +86,10 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
     setDate: (date) => set({ date }),
 
     saveTransaction: async () => {
+      if (!dbRef || !userIdRef) {
+        return { success: false as const, error: "Store not initialized" };
+      }
+
       const { type, digits, categoryId, description, date } = get();
       const amountCents = amountToCents(digits);
 
@@ -102,28 +109,40 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
         };
       }
 
+      const now = new Date();
       const transaction: StoredTransaction = {
-        id: `tx-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        id: generateId("tx"),
+        userId: userIdRef,
         type: result.data.type,
         amountCents: result.data.amountCents,
         categoryId: result.data.categoryId as CategoryId,
         description: result.data.description ?? "",
         date: result.data.date,
-        createdAt: new Date(),
+        createdAt: now,
+        updatedAt: now,
+        deletedAt: null,
       };
 
       try {
-        if (dbRef) {
-          await insertTransaction(dbRef, {
-            id: transaction.id,
-            type: transaction.type,
-            amountCents: transaction.amountCents,
-            categoryId: transaction.categoryId,
-            description: transaction.description || null,
-            date: toIsoDate(transaction.date),
-            createdAt: transaction.createdAt.toISOString(),
-          });
-        }
+        await insertTransaction(dbRef, {
+          id: transaction.id,
+          userId: transaction.userId,
+          type: transaction.type,
+          amountCents: transaction.amountCents,
+          categoryId: transaction.categoryId,
+          description: transaction.description || null,
+          date: toIsoDate(transaction.date),
+          createdAt: transaction.createdAt.toISOString(),
+          updatedAt: transaction.updatedAt.toISOString(),
+        });
+
+        await enqueueSync(dbRef, {
+          id: generateId("sq"),
+          tableName: "transactions",
+          rowId: transaction.id,
+          operation: "insert",
+          createdAt: now.toISOString(),
+        });
       } catch {
         return { success: false as const, error: "Failed to save transaction" };
       }
@@ -136,17 +155,20 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
     },
 
     loadTransactions: async () => {
-      if (!dbRef) return;
+      if (!dbRef || !userIdRef) return;
       try {
-        const rows = await getAllTransactions(dbRef);
+        const rows = await getAllTransactions(dbRef, userIdRef);
         const transactions: StoredTransaction[] = rows.map((row) => ({
           id: row.id,
+          userId: row.userId,
           type: row.type as TransactionType,
           amountCents: row.amountCents,
           categoryId: row.categoryId as CategoryId,
           description: row.description ?? "",
           date: parseIsoDate(row.date),
           createdAt: new Date(row.createdAt),
+          updatedAt: new Date(row.updatedAt),
+          deletedAt: row.deletedAt ? new Date(row.deletedAt) : null,
         }));
         set({ transactions });
       } catch {
@@ -157,9 +179,16 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
     removeTransaction: async (id) => {
       if (dbRef) {
         try {
-          await deleteTransactionRepo(dbRef, id);
+          await softDeleteTransaction(dbRef, id);
+          await enqueueSync(dbRef, {
+            id: generateId("sq"),
+            tableName: "transactions",
+            rowId: id,
+            operation: "delete",
+            createdAt: new Date().toISOString(),
+          });
         } catch {
-          // DB delete failed — keep UI state unchanged
+          // DB operation failed — keep UI state unchanged
           return;
         }
       }

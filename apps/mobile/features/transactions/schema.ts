@@ -20,10 +20,13 @@ export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 
 export type StoredTransaction = {
   readonly id: string;
+  readonly userId: string;
   readonly type: TransactionType;
   readonly amountCents: number;
   readonly categoryId: CategoryId;
   readonly description: string;
   readonly date: Date;
   readonly createdAt: Date;
+  readonly updatedAt: Date;
+  readonly deletedAt: Date | null;
 };

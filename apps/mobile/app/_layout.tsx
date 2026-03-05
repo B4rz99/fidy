@@ -19,8 +19,11 @@ import migrations from "../drizzle/migrations";
 
 SplashScreen.preventAutoHideAsync();
 
+// TODO: replace with auth user ID in Task 10
+const TEMP_USER_ID = "local-user";
+
 export default function RootLayout() {
-  const db = getDb();
+  const db = getDb(TEMP_USER_ID);
   const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
 
   const [fontsLoaded, fontsError] = useFonts({
@@ -32,7 +35,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (migrationsReady) {
-      useTransactionStore.getState().initStore(db);
+      useTransactionStore.getState().initStore(db, TEMP_USER_ID);
       useTransactionStore
         .getState()
         .loadTransactions()
