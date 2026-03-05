@@ -6,14 +6,23 @@ vi.mock("@/features/email-capture/lib/repository", () => ({
   deleteEmailAccount: vi.fn(),
   getFailedEmails: vi.fn().mockResolvedValue([]),
   dismissProcessedEmail: vi.fn(),
+  updateLastFetchedAt: vi.fn(),
 }));
 
 vi.mock("@/features/email-capture/services/gmail-adapter", () => ({
   connectGmail: vi.fn(),
+  fetchGmailEmails: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("@/features/email-capture/services/outlook-adapter", () => ({
   connectOutlook: vi.fn(),
+  fetchOutlookEmails: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("@/features/email-capture/services/email-pipeline", () => ({
+  processEmails: vi
+    .fn()
+    .mockResolvedValue({ filtered: 0, skippedDuplicate: 0, saved: 0, failed: 0 }),
 }));
 
 vi.mock("@/shared/lib/generate-id", () => ({
@@ -26,9 +35,14 @@ import {
   getEmailAccounts,
   getFailedEmails,
   insertEmailAccount,
+  updateLastFetchedAt,
 } from "@/features/email-capture/lib/repository";
-import { connectGmail } from "@/features/email-capture/services/gmail-adapter";
-import { connectOutlook } from "@/features/email-capture/services/outlook-adapter";
+import { processEmails } from "@/features/email-capture/services/email-pipeline";
+import { connectGmail, fetchGmailEmails } from "@/features/email-capture/services/gmail-adapter";
+import {
+  connectOutlook,
+  fetchOutlookEmails,
+} from "@/features/email-capture/services/outlook-adapter";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 
 // biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
@@ -194,5 +208,142 @@ describe("useEmailCaptureStore", () => {
 
     expect(deleteEmailAccount).toHaveBeenCalledWith(mockDb, "ea-1");
     expect(useEmailCaptureStore.getState().accounts).toHaveLength(0);
+  });
+
+  describe("fetchAndProcess", () => {
+    it("fetches Gmail emails and runs pipeline", async () => {
+      useEmailCaptureStore.setState({
+        accounts: [
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "test@gmail.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      const mockRawEmails = [
+        {
+          externalId: "ext-1",
+          from: "bank@example.com",
+          subject: "Alert",
+          body: "body",
+          receivedAt: "2026-03-05T10:00:00Z",
+          provider: "gmail" as const,
+        },
+      ];
+      vi.mocked(fetchGmailEmails).mockResolvedValueOnce(mockRawEmails);
+      vi.mocked(processEmails).mockResolvedValueOnce({
+        filtered: 0,
+        skippedDuplicate: 0,
+        saved: 1,
+        failed: 0,
+      });
+      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+
+      await useEmailCaptureStore.getState().fetchAndProcess("gmail-client-id", "outlook-client-id");
+
+      expect(fetchGmailEmails).toHaveBeenCalled();
+      expect(processEmails).toHaveBeenCalled();
+      expect(updateLastFetchedAt).toHaveBeenCalled();
+      expect(useEmailCaptureStore.getState().isFetching).toBe(false);
+    });
+
+    it("fetches Outlook emails for outlook accounts", async () => {
+      useEmailCaptureStore.setState({
+        accounts: [
+          {
+            id: "ea-2",
+            userId: mockUserId,
+            provider: "outlook",
+            email: "test@outlook.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      vi.mocked(fetchOutlookEmails).mockResolvedValueOnce([]);
+      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+
+      await useEmailCaptureStore.getState().fetchAndProcess("gmail-client-id", "outlook-client-id");
+
+      expect(fetchOutlookEmails).toHaveBeenCalled();
+    });
+
+    it("sets isFetching during execution", async () => {
+      useEmailCaptureStore.setState({ accounts: [] });
+      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+
+      const promise = useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+      expect(useEmailCaptureStore.getState().isFetching).toBe(true);
+
+      await promise;
+      expect(useEmailCaptureStore.getState().isFetching).toBe(false);
+    });
+
+    it("does nothing when db or userId is not set", async () => {
+      useEmailCaptureStore.getState().initStore(null as any, null as any);
+
+      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+
+      expect(fetchGmailEmails).not.toHaveBeenCalled();
+      expect(fetchOutlookEmails).not.toHaveBeenCalled();
+    });
+
+    it("skips when already fetching", async () => {
+      useEmailCaptureStore.setState({
+        isFetching: true,
+        accounts: [
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "test@gmail.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+
+      expect(fetchGmailEmails).not.toHaveBeenCalled();
+    });
+
+    it("continues processing other accounts when one fails", async () => {
+      useEmailCaptureStore.setState({
+        accounts: [
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "test@gmail.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+          {
+            id: "ea-2",
+            userId: mockUserId,
+            provider: "outlook",
+            email: "test@outlook.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      vi.mocked(fetchGmailEmails).mockRejectedValueOnce(new Error("network error"));
+      vi.mocked(fetchOutlookEmails).mockResolvedValueOnce([]);
+      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+
+      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+
+      expect(fetchOutlookEmails).toHaveBeenCalled();
+      expect(useEmailCaptureStore.getState().isFetching).toBe(false);
+    });
   });
 });
