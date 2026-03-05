@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { useRouter } from "expo-router";
 import { ChevronLeft, Info, Plus, TriangleAlert } from "lucide-react-native";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -70,14 +71,9 @@ function FailedEmailCard({
 }) {
   const redColor = useThemeColor("accentRed");
   const primaryColor = useThemeColor("primary");
+  const borderColor = useThemeColor("borderSubtle");
 
-  const dateStr = email.receivedAt
-    ? new Date(email.receivedAt).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : "";
+  const dateStr = email.receivedAt ? format(new Date(email.receivedAt), "MMM d, yyyy") : "";
 
   return (
     <View className="rounded-chart bg-card p-4 dark:bg-card-dark" style={{ gap: 12 }}>
@@ -127,7 +123,7 @@ function FailedEmailCard({
         <Pressable
           onPress={onDismiss}
           className="flex-1 h-10 items-center justify-center rounded-[10px]"
-          style={{ borderWidth: 1, borderColor: "#EBEBEB" }}
+          style={{ borderWidth: 1, borderColor }}
         >
           <Text className="font-poppins-medium text-label text-tertiary dark:text-tertiary-dark">
             Dismiss

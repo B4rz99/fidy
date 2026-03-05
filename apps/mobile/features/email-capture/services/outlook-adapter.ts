@@ -1,14 +1,12 @@
 import * as SecureStore from "expo-secure-store";
-import type { RawEmail } from "../schema";
+import type { ConnectResult, RawEmail } from "../schema";
+import { EMAIL_REDIRECT_URI } from "../schema";
 
 const TOKEN_KEY = "email-outlook-token";
 const REFRESH_TOKEN_KEY = "email-outlook-refresh-token";
-const REDIRECT_URI = "fidy://email/callback";
 const AUTH_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
 const TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 const SCOPE = "Mail.Read";
-
-type ConnectResult = { success: true; email: string } | { success: false; error: string };
 
 export async function isOutlookConnected(): Promise<boolean> {
   const token = await SecureStore.getItemAsync(TOKEN_KEY);
@@ -54,13 +52,13 @@ export async function connectOutlook(clientId: string): Promise<ConnectResult> {
 
   const params = new URLSearchParams({
     client_id: clientId,
-    redirect_uri: REDIRECT_URI,
+    redirect_uri: EMAIL_REDIRECT_URI,
     response_type: "code",
     scope: `${SCOPE} User.Read`,
     prompt: "consent",
   });
 
-  const result = await openAuthSessionAsync(`${AUTH_URL}?${params}`, REDIRECT_URI);
+  const result = await openAuthSessionAsync(`${AUTH_URL}?${params}`, EMAIL_REDIRECT_URI);
 
   if (result.type !== "success" || !result.url) {
     return { success: false, error: "cancelled" };
@@ -77,7 +75,7 @@ export async function connectOutlook(clientId: string): Promise<ConnectResult> {
     body: new URLSearchParams({
       code,
       client_id: clientId,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: EMAIL_REDIRECT_URI,
       grant_type: "authorization_code",
       scope: `${SCOPE} User.Read`,
     }).toString(),

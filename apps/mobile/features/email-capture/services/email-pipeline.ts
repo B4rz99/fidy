@@ -4,7 +4,7 @@ import type { AnyDb } from "@/shared/db/client";
 import { generateId } from "@/shared/lib/generate-id";
 import type { BankSender } from "../lib/bank-senders";
 import { isBankSender } from "../lib/bank-senders";
-import { getProcessedEmailByExternalId, insertProcessedEmail } from "../lib/repository";
+import { getProcessedExternalIds, insertProcessedEmail } from "../lib/repository";
 import type { RawEmail } from "../schema";
 
 export type ParsedTransaction = {
@@ -44,14 +44,16 @@ export async function processEmails(
     failed: 0,
   };
 
+  const allExternalIds = rawEmails.map((e) => e.externalId);
+  const processedIds = await getProcessedExternalIds(db, allExternalIds);
+
   for (const email of rawEmails) {
     if (!isBankSender(email.from, senders)) {
       result.filtered++;
       continue;
     }
 
-    const existing = await getProcessedEmailByExternalId(db, email.externalId);
-    if (existing) {
+    if (processedIds.has(email.externalId)) {
       result.skippedDuplicate++;
       continue;
     }

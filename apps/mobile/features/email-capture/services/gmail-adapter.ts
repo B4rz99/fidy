@@ -1,14 +1,12 @@
 import * as SecureStore from "expo-secure-store";
-import type { RawEmail } from "../schema";
+import type { ConnectResult, RawEmail } from "../schema";
+import { EMAIL_REDIRECT_URI } from "../schema";
 
 const TOKEN_KEY = "email-gmail-token";
 const REFRESH_TOKEN_KEY = "email-gmail-refresh-token";
-const REDIRECT_URI = "fidy://email/callback";
 const AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
-
-type ConnectResult = { success: true; email: string } | { success: false; error: string };
 
 export async function isGmailConnected(): Promise<boolean> {
   const token = await SecureStore.getItemAsync(TOKEN_KEY);
@@ -53,14 +51,14 @@ export async function connectGmail(clientId: string): Promise<ConnectResult> {
 
   const params = new URLSearchParams({
     client_id: clientId,
-    redirect_uri: REDIRECT_URI,
+    redirect_uri: EMAIL_REDIRECT_URI,
     response_type: "code",
     scope: SCOPE,
     access_type: "offline",
     prompt: "consent",
   });
 
-  const result = await openAuthSessionAsync(`${AUTH_URL}?${params}`, REDIRECT_URI);
+  const result = await openAuthSessionAsync(`${AUTH_URL}?${params}`, EMAIL_REDIRECT_URI);
 
   if (result.type !== "success" || !result.url) {
     return { success: false, error: "cancelled" };
@@ -77,7 +75,7 @@ export async function connectGmail(clientId: string): Promise<ConnectResult> {
     body: new URLSearchParams({
       code,
       client_id: clientId,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: EMAIL_REDIRECT_URI,
       grant_type: "authorization_code",
     }).toString(),
   });
@@ -133,19 +131,25 @@ export async function fetchGmailEmails(
 
   if (messageIds.length === 0) return [];
 
+  const Concurrency = 5;
   const emails: RawEmail[] = [];
 
-  for (const id of messageIds) {
-    const msgResponse = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`,
-      { headers: { Authorization: `Bearer ${token}` } }
+  for (let i = 0; i < messageIds.length; i += Concurrency) {
+    const batch = messageIds.slice(i, i + Concurrency);
+    const results = await Promise.allSettled(
+      batch.map(async (id) => {
+        const msgResponse = await fetch(
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!msgResponse.ok) return null;
+        const msg = await msgResponse.json();
+        return parseGmailMessage(id, msg);
+      })
     );
-
-    if (!msgResponse.ok) continue;
-
-    const msg = await msgResponse.json();
-    const parsed = parseGmailMessage(id, msg);
-    if (parsed) emails.push(parsed);
+    for (const r of results) {
+      if (r.status === "fulfilled" && r.value) emails.push(r.value);
+    }
   }
 
   return emails;

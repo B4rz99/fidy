@@ -3,7 +3,7 @@ name: committing-changes
 description: Run all CI checks locally and commit if everything passes. Use this before every commit.
 ---
 
-Before committing any changes, you MUST run every CI job locally in this order. If any step fails, stop, fix the issue, and start over from step 1.
+Before committing any changes, you MUST run every step in this order. If any step fails, stop, fix the issue, and start over from step 1.
 
 ## Step 0 — Pull Rebase
 
@@ -13,14 +13,22 @@ git pull --rebase --autostash origin main
 
 Ensure your branch is up to date with the main branch before running checks or committing.
 
-## Step 1 — Lint
+## Step 1 — Code Review
+
+Invoke the `/requesting-code-review` skill to review the current changes against the plan/requirements. Fix any Critical or Important issues found before proceeding. Minor issues can be noted and skipped.
+
+## Step 2 — Simplify
+
+Invoke the `/simplify` skill on all changed files. This reviews for code reuse, quality, and efficiency. Fix any issues it finds. If either step 1 or step 2 produced code changes, you must continue to step 3 to validate them.
+
+## Step 3 — Lint
 
 ```bash
 bunx biome check .
 bun run --cwd apps/mobile lint
 ```
 
-## Step 2 — Type Check
+## Step 4 — Type Check
 
 ```bash
 bun run --cwd packages/types typecheck
@@ -29,13 +37,13 @@ bun run --cwd packages/utils typecheck
 bun run --cwd apps/mobile typecheck
 ```
 
-## Step 3 — Tests
+## Step 5 — Tests
 
 ```bash
 cd apps/mobile && npx vitest run
 ```
 
-## Step 4 — Commit
+## Step 6 — Commit
 
 Only proceed here if all steps above passed with no errors.
 
@@ -57,7 +65,7 @@ type(scope): message
 
 **Never include** `Co-Authored-By` lines.
 
-## Step 5 — Push & PR
+## Step 7 — Push & PR
 
 Push to the feature branch after committing. Main is protected — direct pushes are not allowed.
 
@@ -73,7 +81,7 @@ BODY=$(git log -1 --format=%b)
 gh pr create --title "$TITLE" --body "$BODY"
 ```
 
-## Step 6 — Merge (only when the user explicitly asks)
+## Step 8 — Merge (only when the user explicitly asks)
 
 **NEVER merge on your own.** Only run this step when the user tells you to merge.
 

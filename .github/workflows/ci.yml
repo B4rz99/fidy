@@ -78,7 +78,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Both scanners need full git history
+          fetch-depth: 0
+      - name: Fetch base ref
+        run: git fetch origin ${{ github.event.pull_request.base.ref }}
       - name: Gitleaks — pattern-based secret scan
         uses: gitleaks/gitleaks-action@v2
         env:

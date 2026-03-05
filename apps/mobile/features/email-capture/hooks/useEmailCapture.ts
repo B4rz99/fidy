@@ -21,10 +21,6 @@ export function useEmailCapture(db: AnyDb | null, userId: string | null) {
       .loadAccounts()
       .then(() => runFetch())
       .catch(() => {});
-    useEmailCaptureStore
-      .getState()
-      .loadFailedEmails()
-      .catch(() => {});
 
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") runFetch();
