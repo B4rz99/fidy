@@ -15,6 +15,37 @@ export async function isOutlookConnected(): Promise<boolean> {
   return token != null;
 }
 
+async function getValidToken(clientId: string): Promise<string | null> {
+  const token = await SecureStore.getItemAsync(TOKEN_KEY);
+  if (!token) return null;
+
+  const testResponse = await fetch("https://graph.microsoft.com/v1.0/me", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (testResponse.ok) return token;
+
+  const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+  if (!refreshToken) return null;
+
+  const refreshResponse = await fetch(TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+      scope: `${SCOPE} User.Read`,
+    }).toString(),
+  });
+
+  if (!refreshResponse.ok) return null;
+
+  const data = await refreshResponse.json();
+  await SecureStore.setItemAsync(TOKEN_KEY, data.access_token);
+  return data.access_token;
+}
+
 export async function connectOutlook(clientId: string): Promise<ConnectResult> {
   const { openAuthSessionAsync } = await import("expo-web-browser");
 
@@ -68,7 +99,11 @@ export async function connectOutlook(clientId: string): Promise<ConnectResult> {
   }
 
   const profile = await profileResponse.json();
-  return { success: true, email: profile.mail };
+  const email = profile.mail || profile.userPrincipalName;
+  if (!email) {
+    return { success: false, error: "no_email_found" };
+  }
+  return { success: true, email };
 }
 
 export async function disconnectOutlook(): Promise<void> {
@@ -77,10 +112,11 @@ export async function disconnectOutlook(): Promise<void> {
 }
 
 export async function fetchOutlookEmails(
+  clientId: string,
   since: string,
   senderEmails: string[]
 ): Promise<RawEmail[]> {
-  const token = await SecureStore.getItemAsync(TOKEN_KEY);
+  const token = await getValidToken(clientId);
   if (!token) return [];
 
   const senderFilter = senderEmails.map((e) => `from/emailAddress/address eq '${e}'`).join(" or ");

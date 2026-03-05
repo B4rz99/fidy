@@ -15,6 +15,36 @@ export async function isGmailConnected(): Promise<boolean> {
   return token != null;
 }
 
+async function getValidToken(clientId: string): Promise<string | null> {
+  const token = await SecureStore.getItemAsync(TOKEN_KEY);
+  if (!token) return null;
+
+  const testResponse = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (testResponse.ok) return token;
+
+  const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+  if (!refreshToken) return null;
+
+  const refreshResponse = await fetch(TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+    }).toString(),
+  });
+
+  if (!refreshResponse.ok) return null;
+
+  const data = await refreshResponse.json();
+  await SecureStore.setItemAsync(TOKEN_KEY, data.access_token);
+  return data.access_token;
+}
+
 export async function connectGmail(clientId: string): Promise<ConnectResult> {
   const { openAuthSessionAsync } = await import("expo-web-browser");
 
@@ -76,8 +106,12 @@ export async function disconnectGmail(): Promise<void> {
   await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
 }
 
-export async function fetchGmailEmails(since: string, senderEmails: string[]): Promise<RawEmail[]> {
-  const token = await SecureStore.getItemAsync(TOKEN_KEY);
+export async function fetchGmailEmails(
+  clientId: string,
+  since: string,
+  senderEmails: string[]
+): Promise<RawEmail[]> {
+  const token = await getValidToken(clientId);
   if (!token) return [];
 
   const epoch = Math.floor(new Date(since).getTime() / 1000);
@@ -147,7 +181,9 @@ function extractPlainText(payload: GmailPayload): string {
 
 function decodeBase64Url(data: string): string {
   const base64 = data.replace(/-/g, "+").replace(/_/g, "/");
-  return atob(base64);
+  const binary = atob(base64);
+  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
 }
 
 function parseGmailMessage(id: string, msg: { payload: GmailPayload }): RawEmail | null {
@@ -162,12 +198,17 @@ function parseGmailMessage(id: string, msg: { payload: GmailPayload }): RawEmail
   const emailMatch = from.match(/<(.+?)>/) ?? [null, from];
   const emailAddress = emailMatch[1] ?? from;
 
+  const parsedDate = new Date(dateStr);
+  const receivedAt = Number.isNaN(parsedDate.getTime())
+    ? new Date().toISOString()
+    : parsedDate.toISOString();
+
   return {
     externalId: id,
     from: emailAddress,
     subject,
     body,
-    receivedAt: new Date(dateStr).toISOString(),
+    receivedAt,
     provider: "gmail",
   };
 }
