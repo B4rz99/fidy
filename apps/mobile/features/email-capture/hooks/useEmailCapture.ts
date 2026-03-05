@@ -8,14 +8,6 @@ export function useEmailCapture(db: AnyDb | null, userId: string | null) {
     if (!db || !userId) return;
 
     useEmailCaptureStore.getState().initStore(db, userId);
-    useEmailCaptureStore
-      .getState()
-      .loadAccounts()
-      .catch(() => {});
-    useEmailCaptureStore
-      .getState()
-      .loadFailedEmails()
-      .catch(() => {});
 
     const runFetch = () => {
       useEmailCaptureStore
@@ -24,7 +16,15 @@ export function useEmailCapture(db: AnyDb | null, userId: string | null) {
         .catch(() => {});
     };
 
-    runFetch();
+    useEmailCaptureStore
+      .getState()
+      .loadAccounts()
+      .then(() => runFetch())
+      .catch(() => {});
+    useEmailCaptureStore
+      .getState()
+      .loadFailedEmails()
+      .catch(() => {});
 
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") runFetch();
