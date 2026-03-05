@@ -295,7 +295,19 @@ describe("useEmailCaptureStore", () => {
     });
 
     it("skips when already fetching", async () => {
-      useEmailCaptureStore.setState({ isFetching: true, accounts: [] });
+      useEmailCaptureStore.setState({
+        isFetching: true,
+        accounts: [
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "test@gmail.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
 
       await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
 

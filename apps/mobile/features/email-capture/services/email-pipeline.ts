@@ -106,6 +106,8 @@ export async function processEmails(
     const now = new Date().toISOString();
 
     // TODO: Step 5 — deduplicate by amount + date + description (deferred)
+    // TODO: Wrap insert + enqueue + markProcessed in db.transaction() for atomicity
+    //       Requires widening AnyDb to accept ExpoSQLiteTransaction
 
     await insertTransaction(db, {
       id: txId,
