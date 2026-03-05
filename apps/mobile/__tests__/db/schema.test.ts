@@ -21,7 +21,7 @@ describe("transactions table schema", () => {
     expect(names).toContain("createdAt");
     expect(names).toContain("updatedAt");
     expect(names).toContain("deletedAt");
-    expect(names).toHaveLength(10);
+    expect(names).toHaveLength(11);
   });
 
   it("id is primary key", () => {
@@ -42,6 +42,11 @@ describe("transactions table schema", () => {
   it("userId is not null", () => {
     const cols = getTableColumns(transactions);
     expect(cols.userId.notNull).toBe(true);
+  });
+
+  it("has source column", () => {
+    expect(transactions.source).toBeDefined();
+    expect(transactions.source.name).toBe("source");
   });
 });
 

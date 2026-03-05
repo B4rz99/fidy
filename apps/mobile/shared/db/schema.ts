@@ -11,6 +11,7 @@ export const transactions = sqliteTable("transactions", {
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
   deletedAt: text("deleted_at"),
+  source: text("source").notNull().default("manual"),
 });
 
 export const syncQueue = sqliteTable("sync_queue", {
