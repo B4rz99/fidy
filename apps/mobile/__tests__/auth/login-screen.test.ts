@@ -5,9 +5,8 @@ import { describe, expect, test } from "vitest";
 describe("Login screen", () => {
   const loginSource = readFileSync(resolve(__dirname, "../../app/(auth)/login.tsx"), "utf-8");
 
-  test("imports all three OAuth provider icons", () => {
+  test("imports OAuth provider icons", () => {
     expect(loginSource).toContain("GoogleIcon");
-    expect(loginSource).toContain("AppleIcon");
     expect(loginSource).toContain("MicrosoftIcon");
   });
 

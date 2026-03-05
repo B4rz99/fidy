@@ -7,8 +7,12 @@ vi.mock("react-native", () => ({
   Text: "Text",
   TextInput: "TextInput",
   Pressable: "Pressable",
+  ActivityIndicator: "ActivityIndicator",
   Keyboard: { dismiss: vi.fn() },
   useColorScheme: () => "light",
+  AppState: {
+    addEventListener: vi.fn(() => ({ remove: vi.fn() })),
+  },
 }));
 
 // Mock react-native-safe-area-context
@@ -141,13 +145,10 @@ vi.mock("expo-secure-store", () => ({
 
 // Mock @react-native-community/netinfo
 vi.mock("@react-native-community/netinfo", () => ({
-  addEventListener: vi.fn(() => vi.fn()),
-  fetch: vi.fn(() => Promise.resolve({ isConnected: true })),
-}));
-
-// Mock expo-auth-session
-vi.mock("expo-auth-session", () => ({
-  makeRedirectUri: vi.fn(() => "fidy://auth/callback"),
+  default: {
+    addEventListener: vi.fn(() => vi.fn()),
+    fetch: vi.fn(() => Promise.resolve({ isConnected: true })),
+  },
 }));
 
 // Mock expo-web-browser

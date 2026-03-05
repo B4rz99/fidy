@@ -11,7 +11,7 @@ let currentUserId: string | null = null;
 
 export function getDb(userId: string) {
   if (db && currentUserId !== userId) {
-    throw new Error(`DB already open for user "${currentUserId}". Call resetDb() first.`);
+    resetDb();
   }
   if (!db) {
     const dbName = `fidy-${userId}.db`;

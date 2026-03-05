@@ -60,8 +60,18 @@ describe("getDb", () => {
     expect(openDatabaseSync).toHaveBeenCalledTimes(2);
   });
 
-  it("throws when called with a different userId without resetDb", () => {
+  it("auto-resets when called with a different userId", () => {
+    const mockCloseSync = vi.fn();
+    vi.mocked(openDatabaseSync).mockReturnValueOnce({
+      execSync: vi.fn(),
+      closeSync: mockCloseSync,
+    } as unknown as ReturnType<typeof openDatabaseSync>);
+
     getDb("user-123");
-    expect(() => getDb("user-456")).toThrow("Call resetDb() first");
+    const db2 = getDb("user-456");
+
+    expect(mockCloseSync).toHaveBeenCalled();
+    expect(db2).toBeDefined();
+    expect(openDatabaseSync).toHaveBeenCalledWith("fidy-user-456.db");
   });
 });

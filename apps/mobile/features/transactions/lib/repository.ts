@@ -32,6 +32,24 @@ export async function getTransactionById(db: AnyDb, id: string) {
   return rows[0] ?? null;
 }
 
+export async function upsertTransaction(db: AnyDb, row: TransactionRow) {
+  await db
+    .insert(transactions)
+    .values(row)
+    .onConflictDoUpdate({
+      target: transactions.id,
+      set: {
+        type: row.type,
+        amountCents: row.amountCents,
+        categoryId: row.categoryId,
+        description: row.description,
+        date: row.date,
+        updatedAt: row.updatedAt,
+        deletedAt: row.deletedAt,
+      },
+    });
+}
+
 export type SyncQueueEntry = {
   id: string;
   tableName: SyncTableName;

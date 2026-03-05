@@ -13,18 +13,47 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useAuthStore } from "@/features/auth/store";
+import { useSync } from "@/features/sync/hooks/useSync";
 import { useTransactionStore } from "@/features/transactions/store";
+import type { AnyDb } from "@/shared/db/client";
 import { getDb } from "@/shared/db/client";
 import migrations from "../drizzle/migrations";
 
 SplashScreen.preventAutoHideAsync();
 
-// TODO: replace with auth user ID in Task 10
-const TEMP_USER_ID = "local-user";
+function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
+  const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
+
+  useEffect(() => {
+    if (migrationsReady) {
+      useTransactionStore.getState().initStore(db, userId);
+      useTransactionStore
+        .getState()
+        .loadTransactions()
+        .catch(() => {});
+    }
+  }, [migrationsReady, db, userId]);
+
+  useSync(migrationsReady ? db : null, userId);
+
+  useEffect(() => {
+    if (migrationsReady || migrationsError) {
+      SplashScreen.hideAsync();
+    }
+  }, [migrationsReady, migrationsError]);
+
+  if (!migrationsReady && !migrationsError) {
+    return null;
+  }
+
+  return <Stack.Screen name="(tabs)" />;
+}
 
 export default function RootLayout() {
-  const db = getDb(TEMP_USER_ID);
-  const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
+  const session = useAuthStore((s) => s.session);
+  const isAuthLoading = useAuthStore((s) => s.isLoading);
+  const userId = session?.user?.id ?? null;
 
   const [fontsLoaded, fontsError] = useFonts({
     Poppins_500Medium,
@@ -34,34 +63,35 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (migrationsReady) {
-      useTransactionStore.getState().initStore(db, TEMP_USER_ID);
-      useTransactionStore
-        .getState()
-        .loadTransactions()
-        .catch(() => {});
-    }
-  }, [migrationsReady, db]);
+    useAuthStore.getState().restoreSession();
+  }, []);
 
   useEffect(() => {
-    if ((fontsLoaded || fontsError) && (migrationsReady || migrationsError)) {
-      SplashScreen.hideAsync();
+    if ((fontsLoaded || fontsError) && !isAuthLoading) {
+      if (!userId) {
+        SplashScreen.hideAsync();
+      }
     }
-  }, [fontsLoaded, fontsError, migrationsReady, migrationsError]);
+  }, [fontsLoaded, fontsError, isAuthLoading, userId]);
 
   if (!fontsLoaded && !fontsError) {
     return null;
   }
 
-  if (!migrationsReady && !migrationsError) {
+  if (isAuthLoading) {
     return null;
   }
+
+  const db = userId ? getDb(userId) : null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
+        {db && userId ? (
+          <AuthenticatedShell db={db} userId={userId} />
+        ) : (
+          <Stack.Screen name="(auth)" />
+        )}
       </Stack>
       <StatusBar style="auto" />
     </GestureHandlerRootView>
