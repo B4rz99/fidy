@@ -14,6 +14,15 @@ export const transactions = sqliteTable("transactions", {
   source: text("source").notNull().default("manual"),
 });
 
+export const emailAccounts = sqliteTable("email_accounts", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  provider: text("provider").notNull(),
+  email: text("email").notNull(),
+  lastFetchedAt: text("last_fetched_at"),
+  createdAt: text("created_at").notNull(),
+});
+
 export const syncQueue = sqliteTable("sync_queue", {
   id: text("id").primaryKey(),
   tableName: text("table_name").notNull(),
