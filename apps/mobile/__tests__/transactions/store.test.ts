@@ -212,6 +212,7 @@ describe("useTransactionStore", () => {
         createdAt: "2026-03-04T10:00:00.000Z",
         updatedAt: "2026-03-04T10:00:00.000Z",
         deletedAt: null,
+        source: "manual",
       },
     ]);
 

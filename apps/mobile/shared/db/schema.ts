@@ -11,6 +11,29 @@ export const transactions = sqliteTable("transactions", {
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
   deletedAt: text("deleted_at"),
+  source: text("source").notNull().default("manual"),
+});
+
+export const emailAccounts = sqliteTable("email_accounts", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  provider: text("provider").notNull(),
+  email: text("email").notNull(),
+  lastFetchedAt: text("last_fetched_at"),
+  createdAt: text("created_at").notNull(),
+});
+
+export const processedEmails = sqliteTable("processed_emails", {
+  id: text("id").primaryKey(),
+  externalId: text("external_id").notNull(),
+  provider: text("provider").notNull(),
+  status: text("status").notNull(),
+  failureReason: text("failure_reason"),
+  subject: text("subject").notNull(),
+  rawBodyPreview: text("raw_body_preview"),
+  receivedAt: text("received_at").notNull(),
+  transactionId: text("transaction_id"),
+  createdAt: text("created_at").notNull(),
 });
 
 export const syncQueue = sqliteTable("sync_queue", {

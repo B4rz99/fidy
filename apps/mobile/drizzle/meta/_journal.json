@@ -15,6 +15,27 @@
       "when": 1772684969982,
       "tag": "0001_brown_stone_men",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1772719891092,
+      "tag": "0002_blue_maria_hill",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1772720026459,
+      "tag": "0003_brave_the_professor",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1772720200210,
+      "tag": "0004_wooden_toro",
+      "breakpoints": true
     }
   ]
 }
