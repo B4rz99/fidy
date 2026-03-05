@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import type { CalendarDay } from "../lib/calendar-utils";
 import { getBillsForDate, getMonthGrid, WEEKDAY_LABELS } from "../lib/calendar-utils";
 import type { Bill } from "../schema";
 import { CalendarDayCell } from "./CalendarDayCell";
@@ -17,18 +18,16 @@ export function CalendarGrid({ currentMonth, bills, onBillPress }: Props) {
 
   const grid = useMemo(() => getMonthGrid(year, month), [year, month]);
 
-  const billsByDate = useMemo(() => {
-    const map = new Map<string, Bill[]>();
-    for (const week of grid) {
-      for (const cell of week) {
-        if (cell.date) {
-          const key = cell.date.toISOString();
-          map.set(key, getBillsForDate(bills, cell.date));
-        }
-      }
-    }
-    return map;
-  }, [grid, bills]);
+  const billsByDate = useMemo(
+    () =>
+      new Map(
+        grid
+          .flat()
+          .filter((cell): cell is CalendarDay & { date: Date } => cell.date !== null)
+          .map((cell) => [cell.date.toISOString(), getBillsForDate(bills, cell.date)] as const)
+      ),
+    [grid, bills]
+  );
 
   const borderColor = useThemeColor("borderSubtle");
   const cardBg = useThemeColor("card");

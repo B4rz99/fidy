@@ -51,6 +51,10 @@ function toSupabaseRow(row: {
   };
 }
 
+function shouldUpdateLocal(serverUpdatedAt: string, localUpdatedAt: string | undefined): boolean {
+  return !localUpdatedAt || serverUpdatedAt > localUpdatedAt;
+}
+
 function fromSupabaseRow(row: SupabaseTransactionRow) {
   return {
     id: row.id,
@@ -66,6 +70,20 @@ function fromSupabaseRow(row: SupabaseTransactionRow) {
   };
 }
 
+async function processEntry(
+  db: AnyDb,
+  supabase: SupabaseClient,
+  entry: { id: string; tableName: string; rowId: string }
+): Promise<string | null> {
+  if (entry.tableName !== "transactions") return null;
+
+  const row = await getTransactionById(db, entry.rowId);
+  if (!row) return entry.id;
+
+  const { error } = await supabase.from("transactions").upsert(toSupabaseRow(row));
+  return error ? null : entry.id;
+}
+
 export async function syncPush(
   db: AnyDb,
   supabase: SupabaseClient,
@@ -74,27 +92,12 @@ export async function syncPush(
   const entries = await getQueuedSyncEntries(db);
   if (entries.length === 0) return;
 
-  const processedIds: string[] = [];
-
-  for (const entry of entries) {
-    try {
-      if (entry.tableName === "transactions") {
-        const row = await getTransactionById(db, entry.rowId);
-        if (!row) {
-          processedIds.push(entry.id);
-          continue;
-        }
-
-        const { error } = await supabase.from("transactions").upsert(toSupabaseRow(row));
-
-        if (!error) {
-          processedIds.push(entry.id);
-        }
-      }
-    } catch {
-      // Keep in queue for retry
-    }
-  }
+  const results = await Promise.allSettled(entries.map((e) => processEntry(db, supabase, e)));
+  const processedIds = results
+    .filter(
+      (r): r is PromiseFulfilledResult<string> => r.status === "fulfilled" && r.value !== null
+    )
+    .map((r) => r.value);
 
   if (processedIds.length > 0) {
     await clearSyncEntries(db, processedIds);
@@ -108,11 +111,8 @@ export async function syncPull(
 ): Promise<boolean> {
   const lastSyncAt = await getSyncMeta(db, LAST_SYNC_AT);
 
-  let query = supabase.from("transactions").select("*").eq("user_id", userId);
-
-  if (lastSyncAt) {
-    query = query.gte("updated_at", lastSyncAt);
-  }
+  const baseQuery = supabase.from("transactions").select("*").eq("user_id", userId);
+  const query = lastSyncAt ? baseQuery.gte("updated_at", lastSyncAt) : baseQuery;
 
   const { data, error } = await query.order("updated_at", { ascending: true }).limit(1000);
   if (error || !data) return false;
@@ -122,7 +122,7 @@ export async function syncPull(
   for (const serverRow of rows) {
     const localRow = await getTransactionById(db, serverRow.id);
 
-    if (!localRow || serverRow.updated_at > localRow.updatedAt) {
+    if (shouldUpdateLocal(serverRow.updated_at, localRow?.updatedAt)) {
       await upsertTransaction(db, fromSupabaseRow(serverRow));
     }
   }

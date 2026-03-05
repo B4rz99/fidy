@@ -18,3 +18,14 @@ Tools already chosen:
 - Drizzle ORM
 - Zod
 - date-fns
+
+## Code Style: Functional Programming
+
+All code in the financial core (`lib/`, schemas, utils) MUST follow functional programming patterns. Infrastructure edges (stores, hooks, DB clients) are exempt where idiomatic React/Zustand patterns require it.
+
+- No mutable variables (`let`, `var`) in pure logic — use `const` only
+- No `.push()` accumulation — use `.map()`, `.filter()`, `.reduce()`, `Array.from()`
+- No parameter reassignment — create new `const` bindings instead
+- No `while`/`for` loops — use declarative alternatives or recursion
+- Separate pure functions from side effects: pure logic in `lib/`, effects in stores/hooks
+- Pure functions take all dependencies as parameters (no reaching into module state)

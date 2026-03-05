@@ -16,21 +16,16 @@ export const computeRadius = (size: number, strokeWidth: number): number =>
 export const computeCircumference = (size: number, strokeWidth: number): number =>
   2 * Math.PI * computeRadius(size, strokeWidth);
 
-export const computeArcs = (
-  segments: readonly Segment[],
-  circumference: number
-): readonly Arc[] => {
-  const arcs: Arc[] = [];
-  let accumulated = 0;
-  for (const segment of segments) {
+export const computeArcs = (segments: readonly Segment[], circumference: number): readonly Arc[] =>
+  segments.map((segment, i) => {
     const dash = (circumference * segment.percentage) / 100;
-    arcs.push({
+    const precedingRotation = segments
+      .slice(0, i)
+      .reduce((sum, s) => sum + (s.percentage / 100) * 360, 0);
+    return {
       offset: circumference - dash,
       dash,
-      rotation: accumulated - 90,
+      rotation: precedingRotation - 90,
       color: segment.color,
-    });
-    accumulated += (dash / circumference) * 360;
-  }
-  return arcs;
-};
+    };
+  });
