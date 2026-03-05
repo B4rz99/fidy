@@ -69,6 +69,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
           }
         }
       }
+    } catch {
+      // Sign-in failed — silently reset
     } finally {
       set({ isSigningIn: false });
     }
