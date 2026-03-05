@@ -242,7 +242,8 @@ describe("getNextOccurrence", () => {
     const bill = makeBill({ frequency: "yearly", startDate: new Date(2025, 5, 15) });
     const afternoon = new Date(2026, 5, 15, 18, 0, 0); // Jun 15 at 6pm
     const next = getNextOccurrence(bill, afternoon);
-    expect(next.getMonth()).toBe(5); // June, not next year
+    expect(next.getFullYear()).toBe(2026);
+    expect(next.getMonth()).toBe(5);
     expect(next.getDate()).toBe(15);
   });
 });
