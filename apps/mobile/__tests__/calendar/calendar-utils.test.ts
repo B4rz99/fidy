@@ -229,6 +229,7 @@ describe("getNextOccurrence", () => {
     expect(next.getDate()).toBe(28); // Clamped
   });
 
+
   // Bill due today should not skip to next period when called mid-day
   test("monthly bill due today returns today even when called in the afternoon", () => {
     const bill = makeBill({ startDate: new Date(2025, 0, 15) }); // 15th monthly
