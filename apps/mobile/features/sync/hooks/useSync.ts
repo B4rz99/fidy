@@ -22,6 +22,8 @@ export function useSync(db: AnyDb | null, userId: string | null) {
       try {
         await fullSync(db, supabase, userId);
         await useTransactionStore.getState().loadTransactions();
+      } catch (error) {
+        console.warn("[sync] background sync failed:", error);
       } finally {
         isSyncing.current = false;
       }

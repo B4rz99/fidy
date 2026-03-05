@@ -114,7 +114,7 @@ export async function syncPull(
     query = query.gt("updated_at", lastSyncAt);
   }
 
-  const { data, error } = await query;
+  const { data, error } = await query.order("updated_at", { ascending: true }).limit(1000);
   if (error || !data) return false;
 
   const rows = data as SupabaseTransactionRow[];

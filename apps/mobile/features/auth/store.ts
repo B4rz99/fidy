@@ -17,15 +17,7 @@ type AuthActions = {
   signOut: () => Promise<void>;
 };
 
-let cachedRedirectUri: string | null = null;
-
-async function getRedirectUri() {
-  if (!cachedRedirectUri) {
-    const { makeRedirectUri } = await import("expo-auth-session");
-    cachedRedirectUri = makeRedirectUri({ scheme: "fidy", path: "auth/callback" });
-  }
-  return cachedRedirectUri;
-}
+const REDIRECT_URI = "fidy://auth/callback";
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   session: null,
@@ -49,17 +41,16 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   signIn: async (provider) => {
     set({ isSigningIn: true });
     try {
-      const redirectUri = await getRedirectUri();
       const { openAuthSessionAsync } = await import("expo-web-browser");
       const supabase = getSupabase();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: redirectUri, skipBrowserRedirect: true },
+        options: { redirectTo: REDIRECT_URI, skipBrowserRedirect: true },
       });
       if (error || !data.url) {
         return;
       }
-      const result = await openAuthSessionAsync(data.url, redirectUri);
+      const result = await openAuthSessionAsync(data.url, REDIRECT_URI);
       if (result.type === "success" && result.url) {
         const url = new URL(result.url);
         const params = new URLSearchParams(url.hash.slice(1));
@@ -78,7 +69,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
         }
       }
     } catch {
-      // Sign-in failed — silently reset
+      // Sign-in failed
     } finally {
       set({ isSigningIn: false });
     }
@@ -89,7 +80,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       const supabase = getSupabase();
       await supabase.auth.signOut();
     } catch {
-      // Clear local state regardless of network errors
+      // Clear local state regardless
     }
     set({ session: null });
   },

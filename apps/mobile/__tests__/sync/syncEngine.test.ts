@@ -25,10 +25,12 @@ function createMockSupabase(queryResult: { data: any; error: any } = { data: [],
   const chain = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
-    gt: vi.fn().mockResolvedValue(queryResult),
+    gt: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue(queryResult),
   };
-  // When gt is not called (no lastSyncAt), eq should also resolve
-  chain.eq.mockReturnValue({ ...chain, ...queryResult });
+  // When gt is not called (no lastSyncAt), eq should also resolve via order().limit()
+  chain.eq.mockReturnValue({ ...chain });
   chain.select.mockReturnValue(chain);
 
   return {

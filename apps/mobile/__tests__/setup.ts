@@ -151,11 +151,6 @@ vi.mock("@react-native-community/netinfo", () => ({
   },
 }));
 
-// Mock expo-auth-session
-vi.mock("expo-auth-session", () => ({
-  makeRedirectUri: vi.fn(() => "fidy://auth/callback"),
-}));
-
 // Mock expo-web-browser
 vi.mock("expo-web-browser", () => ({
   openAuthSessionAsync: vi.fn(() => Promise.resolve({ type: "dismiss" })),
