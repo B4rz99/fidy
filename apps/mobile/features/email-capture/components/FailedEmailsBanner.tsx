@@ -4,7 +4,7 @@ import { useThemeColor } from "@/shared/hooks/use-theme-color";
 import { useEmailCaptureStore } from "../store";
 
 export const FailedEmailsBanner = ({ onPress }: { onPress: () => void }) => {
-  const failedCount = useEmailCaptureStore((s) => s.failedCount);
+  const failedCount = useEmailCaptureStore((s) => s.failedEmails.length);
   const iconColor = useThemeColor("accentRed");
 
   if (failedCount === 0) return null;

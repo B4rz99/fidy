@@ -13,6 +13,7 @@ export const EmailConnectBanner = ({
   const dismissBanner = useEmailCaptureStore((s) => s.dismissBanner);
   const iconColor = useThemeColor("accentRed");
   const closeColor = useThemeColor("tertiary");
+  const borderColor = useThemeColor("borderSubtle");
 
   if (accounts.length > 0 || bannerDismissed) return null;
 
@@ -38,7 +39,7 @@ export const EmailConnectBanner = ({
         <Pressable
           onPress={() => onConnect("gmail")}
           className="flex-1 flex-row items-center justify-center rounded-icon bg-peach-btn dark:bg-peach-btn-dark"
-          style={{ height: 44, gap: 8, borderWidth: 1, borderColor: "#EBEBEB" }}
+          style={{ height: 44, gap: 8, borderWidth: 1, borderColor }}
         >
           <Mail size={18} color={iconColor} />
           <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
@@ -49,7 +50,7 @@ export const EmailConnectBanner = ({
         <Pressable
           onPress={() => onConnect("outlook")}
           className="flex-1 flex-row items-center justify-center rounded-icon bg-peach-btn dark:bg-peach-btn-dark"
-          style={{ height: 44, gap: 8, borderWidth: 1, borderColor: "#EBEBEB" }}
+          style={{ height: 44, gap: 8, borderWidth: 1, borderColor }}
         >
           <Mail size={18} color="#4A90D9" />
           <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">

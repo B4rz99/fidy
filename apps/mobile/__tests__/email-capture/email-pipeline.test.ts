@@ -3,13 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { BankSender } from "@/features/email-capture/lib/bank-senders";
 import type { RawEmail } from "@/features/email-capture/schema";
 
-const mockGetProcessedEmailByExternalId = vi.fn();
+const mockGetProcessedExternalIds = vi.fn().mockResolvedValue(new Set<string>());
 const mockInsertProcessedEmail = vi.fn();
 const mockInsertTransaction = vi.fn();
 const mockEnqueueSync = vi.fn();
 
 vi.mock("@/features/email-capture/lib/repository", () => ({
-  getProcessedEmailByExternalId: (...args: unknown[]) => mockGetProcessedEmailByExternalId(...args),
+  getProcessedExternalIds: (...args: unknown[]) => mockGetProcessedExternalIds(...args),
   insertProcessedEmail: (...args: unknown[]) => mockInsertProcessedEmail(...args),
 }));
 
@@ -55,7 +55,7 @@ describe("email processing pipeline", () => {
       idCounter++;
       return `${prefix}-${idCounter}`;
     });
-    mockGetProcessedEmailByExternalId.mockResolvedValue(null);
+    mockGetProcessedExternalIds.mockResolvedValue(new Set<string>());
     mockInsertProcessedEmail.mockResolvedValue(undefined);
     mockInsertTransaction.mockResolvedValue(undefined);
     mockEnqueueSync.mockResolvedValue(undefined);
@@ -73,11 +73,7 @@ describe("email processing pipeline", () => {
   });
 
   it("skips already processed emails", async () => {
-    mockGetProcessedEmailByExternalId.mockResolvedValueOnce({
-      id: "pe-1",
-      externalId: "ext-1",
-      status: "success",
-    });
+    mockGetProcessedExternalIds.mockResolvedValueOnce(new Set(["ext-1"]));
 
     const emails = [makeRawEmail()];
     const parseFn = vi.fn();

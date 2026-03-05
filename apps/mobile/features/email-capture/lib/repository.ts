@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db/client";
 import { emailAccounts, processedEmails } from "@/shared/db/schema";
 
@@ -36,6 +36,15 @@ export async function getProcessedEmailByExternalId(db: AnyDb, externalId: strin
     .from(processedEmails)
     .where(eq(processedEmails.externalId, externalId));
   return rows[0] ?? null;
+}
+
+export async function getProcessedExternalIds(db: AnyDb, externalIds: string[]) {
+  if (externalIds.length === 0) return new Set<string>();
+  const rows = await db
+    .select({ externalId: processedEmails.externalId })
+    .from(processedEmails)
+    .where(inArray(processedEmails.externalId, externalIds));
+  return new Set(rows.map((r) => r.externalId));
 }
 
 export async function getFailedEmails(db: AnyDb) {

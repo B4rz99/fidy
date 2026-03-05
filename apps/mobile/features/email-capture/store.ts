@@ -22,7 +22,6 @@ let userIdRef: string | null = null;
 type EmailCaptureState = {
   accounts: EmailAccountRow[];
   failedEmails: ProcessedEmailRow[];
-  failedCount: number;
   isFetching: boolean;
   bannerDismissed: boolean;
 };
@@ -41,7 +40,6 @@ type EmailCaptureActions = {
 export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActions>((set, get) => ({
   accounts: [],
   failedEmails: [],
-  failedCount: 0,
   isFetching: false,
   bannerDismissed: false,
 
@@ -59,7 +57,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
   loadFailedEmails: async () => {
     if (!dbRef) return;
     const failedEmails = await getFailedEmails(dbRef);
-    set({ failedEmails, failedCount: failedEmails.length });
+    set({ failedEmails });
   },
 
   dismissBanner: () => set({ bannerDismissed: true }),
@@ -68,7 +66,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     if (!dbRef) return;
     await dismissProcessedEmail(dbRef, id);
     const updated = get().failedEmails.filter((e) => e.id !== id);
-    set({ failedEmails: updated, failedCount: updated.length });
+    set({ failedEmails: updated });
   },
 
   connectEmail: async (provider, clientId) => {
@@ -137,7 +135,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       }
 
       const failedEmails = await getFailedEmails(dbRef);
-      set({ failedEmails, failedCount: failedEmails.length });
+      set({ failedEmails });
     } finally {
       set({ isFetching: false });
     }

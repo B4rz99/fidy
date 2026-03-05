@@ -66,7 +66,6 @@ describe("useEmailCaptureStore", () => {
     useEmailCaptureStore.setState({
       accounts: [],
       failedEmails: [],
-      failedCount: 0,
       isFetching: false,
       bannerDismissed: false,
     });
@@ -76,7 +75,6 @@ describe("useEmailCaptureStore", () => {
     const state = useEmailCaptureStore.getState();
     expect(state.accounts).toEqual([]);
     expect(state.failedEmails).toEqual([]);
-    expect(state.failedCount).toBe(0);
     expect(state.isFetching).toBe(false);
     expect(state.bannerDismissed).toBe(false);
   });
@@ -121,7 +119,7 @@ describe("useEmailCaptureStore", () => {
 
     expect(getFailedEmails).toHaveBeenCalledWith(mockDb);
     expect(useEmailCaptureStore.getState().failedEmails).toEqual(mockFailed);
-    expect(useEmailCaptureStore.getState().failedCount).toBe(1);
+    expect(useEmailCaptureStore.getState().failedEmails).toHaveLength(1);
   });
 
   it("dismissBanner sets bannerDismissed to true", () => {
@@ -145,14 +143,12 @@ describe("useEmailCaptureStore", () => {
           createdAt: "2026-03-05T10:00:00Z",
         },
       ],
-      failedCount: 1,
     });
 
     await useEmailCaptureStore.getState().dismissFailedEmail("pe-1");
 
     expect(dismissProcessedEmail).toHaveBeenCalledWith(mockDb, "pe-1");
     expect(useEmailCaptureStore.getState().failedEmails).toHaveLength(0);
-    expect(useEmailCaptureStore.getState().failedCount).toBe(0);
   });
 
   it("connectEmail calls Gmail adapter and saves account", async () => {
