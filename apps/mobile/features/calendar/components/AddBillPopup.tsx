@@ -34,7 +34,8 @@ export function AddBillPopup() {
   if (popup !== "addBill") return null;
 
   const handleAdd = () => {
-    addBill(name, amount, frequency, category);
+    const success = addBill(name, amount, frequency, category);
+    if (!success) return;
     setName("");
     setAmount("");
     setFrequency("monthly");

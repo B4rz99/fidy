@@ -23,9 +23,11 @@ export default function TabsLayout() {
           tabPress: (e) => {
             if (e.target?.startsWith(ADD_TAB_PREFIX)) {
               e.preventDefault();
+              if (useMenuStore.getState().isOpen) closeMenu();
               openSheet();
             } else if (e.target?.startsWith(MENU_TAB_PREFIX)) {
               e.preventDefault();
+              if (useTransactionStore.getState().isOpen) closeSheet();
               openMenu();
             } else {
               if (useTransactionStore.getState().isOpen) closeSheet();

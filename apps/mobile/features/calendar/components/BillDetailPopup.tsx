@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { Receipt, X } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { CATEGORY_MAP } from "@/features/transactions/lib/categories";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 import { getNextOccurrence } from "../lib/calendar-utils";
 import { useCalendarStore } from "../store";
@@ -49,7 +50,7 @@ export function BillDetailPopup() {
 
         {/* Details grid */}
         <View style={styles.detailsGrid}>
-          <DetailRow label="Category" value={bill.categoryId} />
+          <DetailRow label="Category" value={CATEGORY_MAP[bill.categoryId].label} />
           <DetailRow label="Frequency" value={bill.frequency} />
           <DetailRow label="Next Payment" value={nextPaymentStr} />
           <DetailRow

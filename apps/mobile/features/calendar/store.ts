@@ -1,8 +1,9 @@
 import { addMonths, subMonths } from "date-fns";
 import { create } from "zustand";
 import type { CategoryId } from "@/features/transactions/lib/categories";
+import { generateId } from "@/shared/lib/generate-id";
 import { MOCK_BILLS } from "./data/mock-bills";
-import type { Bill, BillFrequency } from "./schema";
+import { type Bill, type BillFrequency, createBillSchema } from "./schema";
 
 type PopupType = "none" | "addBill" | "billDetail";
 
@@ -19,7 +20,12 @@ type CalendarActions = {
   openAddBill: () => void;
   openBillDetail: (id: string) => void;
   closePopup: () => void;
-  addBill: (name: string, amount: string, frequency: BillFrequency, category: CategoryId) => void;
+  addBill: (
+    name: string,
+    amount: string,
+    frequency: BillFrequency,
+    category: CategoryId
+  ) => boolean;
 };
 
 export const useCalendarStore = create<CalendarState & CalendarActions>((set) => ({
@@ -36,19 +42,23 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set) =>
   closePopup: () => set({ popup: "none", selectedBillId: null }),
 
   addBill: (name, amount, frequency, category) => {
-    if (!name || !amount) return;
-
     const cents = Math.round(parseFloat(amount) * 100);
-    if (Number.isNaN(cents) || cents <= 0) return;
+    if (Number.isNaN(cents)) return false;
 
-    const newBill: Bill = {
-      id: `bill-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    const result = createBillSchema.safeParse({
       name,
       amountCents: cents,
       frequency,
       categoryId: category,
       startDate: new Date(),
       isActive: true,
+    });
+
+    if (!result.success) return false;
+
+    const newBill: Bill = {
+      id: generateId("bill"),
+      ...result.data,
     };
 
     set((s) => ({
@@ -56,5 +66,6 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set) =>
       popup: "none",
       selectedBillId: null,
     }));
+    return true;
   },
 }));
