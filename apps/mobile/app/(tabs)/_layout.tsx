@@ -1,13 +1,18 @@
 import { Tabs } from "expo-router";
+import { MenuPanel } from "@/features/menu/components/MenuPanel";
+import { useMenuStore } from "@/features/menu/store";
 import { AddTransactionSheet } from "@/features/transactions/components/AddTransactionSheet";
 import { useTransactionStore } from "@/features/transactions/store";
 import { CustomTabBar } from "@/shared/components/navigation/CustomTabBar";
 
 const ADD_TAB_PREFIX = "add-";
+const MENU_TAB_PREFIX = "menu-";
 
 export default function TabsLayout() {
   const openSheet = useTransactionStore((s) => s.openSheet);
   const closeSheet = useTransactionStore((s) => s.closeSheet);
+  const openMenu = useMenuStore((s) => s.openMenu);
+  const closeMenu = useMenuStore((s) => s.closeMenu);
 
   return (
     <>
@@ -18,9 +23,15 @@ export default function TabsLayout() {
           tabPress: (e) => {
             if (e.target?.startsWith(ADD_TAB_PREFIX)) {
               e.preventDefault();
+              if (useMenuStore.getState().isOpen) closeMenu();
               openSheet();
-            } else if (useTransactionStore.getState().isOpen) {
-              closeSheet();
+            } else if (e.target?.startsWith(MENU_TAB_PREFIX)) {
+              e.preventDefault();
+              if (useTransactionStore.getState().isOpen) closeSheet();
+              openMenu();
+            } else {
+              if (useTransactionStore.getState().isOpen) closeSheet();
+              if (useMenuStore.getState().isOpen) closeMenu();
             }
           },
         }}
@@ -30,8 +41,10 @@ export default function TabsLayout() {
         <Tabs.Screen name="add" options={{ title: "Add" }} />
         <Tabs.Screen name="goals" options={{ title: "Goals" }} />
         <Tabs.Screen name="menu" options={{ title: "Menu" }} />
+        <Tabs.Screen name="calendar" options={{ href: null }} />
       </Tabs>
       <AddTransactionSheet />
+      <MenuPanel />
     </>
   );
 }
