@@ -119,8 +119,11 @@ export async function fetchOutlookEmails(
   const token = await getValidToken(clientId);
   if (!token) return [];
 
-  const senderFilter = senderEmails.map((e) => `from/emailAddress/address eq '${e}'`).join(" or ");
-  const dateFilter = `receivedDateTime ge ${since}`;
+  const sanitize = (e: string) => e.replace(/'/g, "''");
+  const senderFilter = senderEmails
+    .map((e) => `from/emailAddress/address eq '${sanitize(e)}'`)
+    .join(" or ");
+  const dateFilter = `receivedDateTime ge '${since}'`;
   const filter = `(${senderFilter}) and ${dateFilter}`;
 
   const response = await fetch(
