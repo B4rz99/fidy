@@ -66,6 +66,7 @@ export function CalendarGrid({ currentMonth, bills, onBillPress }: Props) {
 const styles = StyleSheet.create({
   container: {
     borderRadius: 12,
+    borderCurve: "continuous",
     borderWidth: 1,
     overflow: "hidden",
   },

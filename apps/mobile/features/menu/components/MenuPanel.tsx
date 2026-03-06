@@ -2,7 +2,12 @@ import { useRouter } from "expo-router";
 import { Calendar, Mail } from "lucide-react-native";
 import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 import { useMenuStore } from "../store";
@@ -14,46 +19,36 @@ const TAB_BAR_CLEARANCE = 100;
 export function MenuPanel() {
   const isOpen = useMenuStore((s) => s.isOpen);
   const closeMenu = useMenuStore((s) => s.closeMenu);
-  const router = useRouter();
+  const { push } = useRouter();
   const insets = useSafeAreaInsets();
 
   const panelBg = useThemeColor("nav");
   const itemBg = useThemeColor("peachLight");
   const primaryColor = useThemeColor("primary");
 
-  const backdropOpacity = useSharedValue(0);
-  const translateX = useSharedValue(PANEL_WIDTH + 32);
-  const panelOpacity = useSharedValue(0);
+  const isOpenAnimated = useSharedValue(0);
 
   useEffect(() => {
-    if (isOpen) {
-      backdropOpacity.value = withTiming(1, { duration: 250 });
-      translateX.value = withTiming(0, { duration: 300 });
-      panelOpacity.value = withTiming(1, { duration: 300 });
-    } else {
-      backdropOpacity.value = withTiming(0, { duration: 200 });
-      translateX.value = withTiming(PANEL_WIDTH + 32, { duration: 250 });
-      panelOpacity.value = withTiming(0, { duration: 200 });
-    }
-  }, [isOpen, backdropOpacity, translateX, panelOpacity]);
+    isOpenAnimated.set(withTiming(isOpen ? 1 : 0, { duration: 300 }));
+  }, [isOpen, isOpenAnimated]);
 
   const backdropStyle = useAnimatedStyle(() => ({
-    opacity: backdropOpacity.value,
+    opacity: isOpenAnimated.get(),
   }));
 
   const panelStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-    opacity: panelOpacity.value,
+    transform: [{ translateX: interpolate(isOpenAnimated.get(), [0, 1], [PANEL_WIDTH + 32, 0]) }],
+    opacity: isOpenAnimated.get(),
   }));
 
   const handleCalendar = () => {
     closeMenu();
-    router.push("/(tabs)/calendar");
+    push("/(tabs)/calendar");
   };
 
   const handleConnectedAccounts = () => {
     closeMenu();
-    router.push("/connected-accounts" as never);
+    push("/connected-accounts" as never);
   };
 
   return (
@@ -77,7 +72,7 @@ export function MenuPanel() {
           <Text style={[styles.menuItemText, { color: primaryColor }]}>Calendar</Text>
         </Pressable>
         <Pressable
-          style={[styles.menuItem, { backgroundColor: itemBg, marginTop: 8 }]}
+          style={[styles.menuItem, { backgroundColor: itemBg }]}
           onPress={handleConnectedAccounts}
         >
           <Mail size={20} color={primaryColor} />
@@ -98,18 +93,17 @@ const styles = StyleSheet.create({
     right: 16,
     width: PANEL_WIDTH,
     borderRadius: 20,
+    borderCurve: "continuous",
     padding: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 32,
-    elevation: 24,
+    gap: 8,
+    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     borderRadius: 12,
+    borderCurve: "continuous",
     paddingVertical: 14,
     paddingHorizontal: 16,
   },

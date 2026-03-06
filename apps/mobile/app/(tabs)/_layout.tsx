@@ -1,16 +1,13 @@
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { MenuPanel } from "@/features/menu/components/MenuPanel";
 import { useMenuStore } from "@/features/menu/store";
-import { AddTransactionSheet } from "@/features/transactions/components/AddTransactionSheet";
-import { useTransactionStore } from "@/features/transactions/store";
 import { CustomTabBar } from "@/shared/components/navigation/CustomTabBar";
 
 const ADD_TAB_PREFIX = "add-";
 const MENU_TAB_PREFIX = "menu-";
 
 export default function TabsLayout() {
-  const openSheet = useTransactionStore((s) => s.openSheet);
-  const closeSheet = useTransactionStore((s) => s.closeSheet);
+  const { push } = useRouter();
   const openMenu = useMenuStore((s) => s.openMenu);
   const closeMenu = useMenuStore((s) => s.closeMenu);
 
@@ -24,13 +21,11 @@ export default function TabsLayout() {
             if (e.target?.startsWith(ADD_TAB_PREFIX)) {
               e.preventDefault();
               if (useMenuStore.getState().isOpen) closeMenu();
-              openSheet();
+              push("/add-transaction");
             } else if (e.target?.startsWith(MENU_TAB_PREFIX)) {
               e.preventDefault();
-              if (useTransactionStore.getState().isOpen) closeSheet();
               openMenu();
             } else {
-              if (useTransactionStore.getState().isOpen) closeSheet();
               if (useMenuStore.getState().isOpen) closeMenu();
             }
           },
@@ -45,7 +40,6 @@ export default function TabsLayout() {
         <Tabs.Screen name="connected-accounts" options={{ href: null }} />
         <Tabs.Screen name="failed-emails" options={{ href: null }} />
       </Tabs>
-      <AddTransactionSheet />
       <MenuPanel />
     </>
   );

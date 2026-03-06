@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { Bell } from "lucide-react-native";
-import { ScrollView, Text, View } from "react-native";
+import { Platform, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EmailConnectBanner } from "@/features/email-capture/components/EmailConnectBanner";
 import { FailedEmailsBanner } from "@/features/email-capture/components/FailedEmailsBanner";
@@ -27,14 +27,18 @@ const TAB_BAR_CLEARANCE = 100;
 
 export const HomeScreen = () => {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
+  const { push } = useRouter();
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
 
   return (
     <View className="flex-1 bg-page dark:bg-page-dark">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: insets.top, paddingBottom: TAB_BAR_CLEARANCE }}
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{
+          paddingTop: Platform.OS === "android" ? insets.top : 0,
+          paddingBottom: TAB_BAR_CLEARANCE,
+        }}
         className="flex-1 px-5"
       >
         <View className="gap-4">
@@ -45,7 +49,7 @@ export const HomeScreen = () => {
               connectEmail(provider, clientId);
             }}
           />
-          <FailedEmailsBanner onPress={() => router.push("/failed-emails" as never)} />
+          <FailedEmailsBanner onPress={() => push("/failed-emails" as never)} />
           <BalanceSection />
           <ChartSection />
           <TransactionsPreview />

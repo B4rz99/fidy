@@ -1,4 +1,5 @@
 import * as Haptics from "expo-haptics";
+import { useRouter } from "expo-router";
 import { Calendar, ChevronLeft } from "lucide-react-native";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useShallow } from "zustand/react/shallow";
@@ -10,6 +11,7 @@ import { useTransactionStore } from "../store";
 import { CategoryPill } from "./CategoryPill";
 
 export const TransactionDetails = () => {
+  const { back } = useRouter();
   const {
     type,
     digits,
@@ -20,7 +22,7 @@ export const TransactionDetails = () => {
     setCategoryId,
     setDescription,
     saveTransaction,
-    closeSheet,
+    resetForm,
   } = useTransactionStore(
     useShallow((s) => ({
       type: s.type,
@@ -32,7 +34,7 @@ export const TransactionDetails = () => {
       setCategoryId: s.setCategoryId,
       setDescription: s.setDescription,
       saveTransaction: s.saveTransaction,
-      closeSheet: s.closeSheet,
+      resetForm: s.resetForm,
     }))
   );
 
@@ -51,7 +53,8 @@ export const TransactionDetails = () => {
     const result = await saveTransaction();
     if (result.success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      closeSheet();
+      resetForm();
+      back();
     }
   };
 
