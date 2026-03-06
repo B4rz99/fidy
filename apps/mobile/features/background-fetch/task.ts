@@ -19,6 +19,7 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
     const db = getDb(userId);
     const store = useEmailCaptureStore.getState();
     store.initStore(db, userId);
+    await store.loadAccounts();
 
     await store.fetchAndProcess(GMAIL_CLIENT_ID, OUTLOOK_CLIENT_ID);
     return BackgroundTask.BackgroundTaskResult.Success;

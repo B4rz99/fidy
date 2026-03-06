@@ -53,18 +53,13 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
   bannerDismissed: false,
 
   initStore: (db, userId) => {
-    console.log("[email-capture] initStore called", { userId });
     dbRef = db;
     userIdRef = userId;
   },
 
   loadAccounts: async () => {
-    if (!dbRef || !userIdRef) {
-      console.warn("[email-capture] loadAccounts skipped: not initialized");
-      return;
-    }
+    if (!dbRef || !userIdRef) return;
     const accounts = await getEmailAccounts(dbRef, userIdRef);
-    console.log("[email-capture] loaded accounts:", accounts.length);
     set({ accounts });
   },
 
@@ -90,44 +85,24 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
   },
 
   connectEmail: async (provider, clientId) => {
-    console.log("[email-capture] connectEmail called", {
+    if (!dbRef || !userIdRef) return;
+
+    const result =
+      provider === "gmail" ? await connectGmail(clientId) : await connectOutlook(clientId);
+
+    if (!result.success) return;
+
+    const row: EmailAccountRow = {
+      id: generateId("ea"),
+      userId: userIdRef,
       provider,
-      clientId: clientId ? "***" : "(empty)",
-    });
-    if (!dbRef || !userIdRef) {
-      console.warn("[email-capture] connectEmail aborted: db or userId not initialized", {
-        dbRef: !!dbRef,
-        userIdRef: !!userIdRef,
-      });
-      return;
-    }
+      email: result.email,
+      lastFetchedAt: null,
+      createdAt: new Date().toISOString(),
+    };
 
-    try {
-      console.log("[email-capture] starting OAuth flow for", provider);
-      const result =
-        provider === "gmail" ? await connectGmail(clientId) : await connectOutlook(clientId);
-
-      if (!result.success) {
-        console.warn("[email-capture] OAuth failed:", result.error);
-        return;
-      }
-
-      console.log("[email-capture] OAuth success, email:", result.email);
-      const row: EmailAccountRow = {
-        id: generateId("ea"),
-        userId: userIdRef,
-        provider,
-        email: result.email,
-        lastFetchedAt: null,
-        createdAt: new Date().toISOString(),
-      };
-
-      await insertEmailAccount(dbRef, row);
-      console.log("[email-capture] account saved to DB:", row.id);
-      set((state) => ({ accounts: [...state.accounts, row] }));
-    } catch (err) {
-      console.error("[email-capture] connectEmail error:", err);
-    }
+    await insertEmailAccount(dbRef, row);
+    set((state) => ({ accounts: [...state.accounts, row] }));
   },
 
   disconnectEmail: async (id) => {

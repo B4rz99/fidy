@@ -28,17 +28,10 @@ import migrations from "../drizzle/migrations";
 SplashScreen.preventAutoHideAsync();
 
 function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
-  console.log("[shell] AuthenticatedShell render", { userId });
   const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
-  console.log("[shell] migrations state", {
-    migrationsReady,
-    migrationsError: migrationsError?.message ?? null,
-  });
 
   useEffect(() => {
-    console.log("[shell] migrationsReady effect fired", { migrationsReady });
     if (migrationsReady) {
-      console.log("[shell] calling initStore for transactions + email-capture");
       useTransactionStore.getState().initStore(db, userId);
       useEmailCaptureStore.getState().initStore(db, userId);
       useTransactionStore
@@ -60,9 +53,6 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
   useEmailCapture(migrationsReady ? db : null, userId);
 
   useEffect(() => {
-    if (migrationsError) {
-      console.error("[shell] migration failed:", migrationsError);
-    }
     if (migrationsReady || migrationsError) {
       SplashScreen.hideAsync();
     }
@@ -118,7 +108,6 @@ export default function RootLayout() {
   }
 
   const db = userId ? getDb(userId) : null;
-  console.log("[layout] render", { userId: !!userId, db: !!db });
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

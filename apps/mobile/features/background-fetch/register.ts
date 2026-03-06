@@ -7,7 +7,7 @@ export async function registerBackgroundTask(): Promise<void> {
   if (isRegistered) return;
 
   await BackgroundTask.registerTaskAsync(BACKGROUND_TASK_NAME, {
-    minimumInterval: 15 * 60, // 15 minutes
+    minimumInterval: 15, // minutes
   });
 }
 

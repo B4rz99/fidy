@@ -1,6 +1,9 @@
 // biome-ignore-all lint/style/useNamingConvention: mock exports must match library API names
 import { vi } from "vitest";
 
+process.env.EXPO_PUBLIC_GMAIL_CLIENT_ID = "test-gmail-client-id.apps.googleusercontent.com";
+process.env.EXPO_PUBLIC_OUTLOOK_CLIENT_ID = "test-outlook-client-id";
+
 // Mock react-native (Flow syntax not supported outside RN bundler)
 vi.mock("react-native", () => ({
   View: "View",
