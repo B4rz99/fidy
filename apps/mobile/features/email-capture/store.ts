@@ -1,5 +1,8 @@
+import { eq } from "drizzle-orm";
 import { create } from "zustand";
+import { enqueueSync } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db/client";
+import { transactions } from "@/shared/db/schema";
 import { generateId } from "@/shared/lib/generate-id";
 import { fetchBankSenders } from "./lib/bank-senders";
 import type { EmailAccountRow, ProcessedEmailRow } from "./lib/repository";
@@ -8,8 +11,10 @@ import {
   dismissProcessedEmail,
   getEmailAccounts,
   getFailedEmails,
+  getNeedsReviewEmails,
   insertEmailAccount,
   updateLastFetchedAt,
+  updateProcessedEmailStatus,
 } from "./lib/repository";
 import type { EmailProvider } from "./schema";
 import { processEmails } from "./services/email-pipeline";
@@ -22,6 +27,7 @@ let userIdRef: string | null = null;
 type EmailCaptureState = {
   accounts: EmailAccountRow[];
   failedEmails: ProcessedEmailRow[];
+  needsReviewEmails: ProcessedEmailRow[];
   isFetching: boolean;
   bannerDismissed: boolean;
 };
@@ -30,16 +36,19 @@ type EmailCaptureActions = {
   initStore: (db: AnyDb, userId: string) => void;
   loadAccounts: () => Promise<void>;
   loadFailedEmails: () => Promise<void>;
+  loadNeedsReview: () => Promise<void>;
   dismissBanner: () => void;
   dismissFailedEmail: (id: string) => Promise<void>;
   connectEmail: (provider: EmailProvider, clientId: string) => Promise<void>;
   disconnectEmail: (id: string) => Promise<void>;
   fetchAndProcess: (gmailClientId: string, outlookClientId: string) => Promise<void>;
+  confirmReview: (processedEmailId: string, categoryId: string) => Promise<void>;
 };
 
 export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActions>((set, get) => ({
   accounts: [],
   failedEmails: [],
+  needsReviewEmails: [],
   isFetching: false,
   bannerDismissed: false,
 
@@ -58,6 +67,12 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     if (!dbRef) return;
     const failedEmails = await getFailedEmails(dbRef);
     set({ failedEmails });
+  },
+
+  loadNeedsReview: async () => {
+    if (!dbRef) return;
+    const needsReviewEmails = await getNeedsReviewEmails(dbRef);
+    set({ needsReviewEmails });
   },
 
   dismissBanner: () => set({ bannerDismissed: true }),
@@ -111,7 +126,6 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
     try {
       const { accounts } = get();
-      const stubParseFn = async () => null;
       const senders = await fetchBankSenders();
       const senderEmails = senders.map((s) => s.email);
 
@@ -125,7 +139,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
               : await fetchOutlookEmails(outlookClientId, since, senderEmails);
 
           if (rawEmails.length > 0) {
-            await processEmails(dbRef!, userIdRef!, rawEmails, senders, stubParseFn);
+            await processEmails(dbRef!, userIdRef!, rawEmails, senders);
           }
 
           await updateLastFetchedAt(dbRef!, account.id, new Date().toISOString());
@@ -135,9 +149,52 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       }
 
       const failedEmails = await getFailedEmails(dbRef);
-      set({ failedEmails });
+      const needsReviewEmails = await getNeedsReviewEmails(dbRef);
+      set({ failedEmails, needsReviewEmails });
     } finally {
       set({ isFetching: false });
     }
+  },
+
+  confirmReview: async (processedEmailId, categoryId) => {
+    if (!dbRef || !userIdRef) return;
+
+    const processedEmail = get().needsReviewEmails.find((e) => e.id === processedEmailId);
+    if (!processedEmail || !processedEmail.transactionId) return;
+
+    const now = new Date().toISOString();
+
+    // Update the transaction's categoryId
+    await dbRef
+      .update(transactions)
+      .set({ categoryId, updatedAt: now })
+      .where(eq(transactions.id, processedEmail.transactionId));
+
+    // Enqueue sync for the updated transaction
+    await enqueueSync(dbRef, {
+      id: generateId("sq"),
+      tableName: "transactions",
+      rowId: processedEmail.transactionId,
+      operation: "update",
+      createdAt: now,
+    });
+
+    // Note: merchant rule insertion requires the original sender email address,
+    // which is not stored in processed_emails. The pipeline already caches rules
+    // for high-confidence results. For confirmed reviews, we skip rule caching
+    // since the sender email is unavailable from the processed record.
+
+    // Update the processed email status to "success"
+    await updateProcessedEmailStatus(
+      dbRef,
+      processedEmailId,
+      "success",
+      processedEmail.transactionId
+    );
+
+    // Remove from needsReviewEmails state
+    set((state) => ({
+      needsReviewEmails: state.needsReviewEmails.filter((e) => e.id !== processedEmailId),
+    }));
   },
 }));

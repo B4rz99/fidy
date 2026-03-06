@@ -10,12 +10,12 @@ describe("CATEGORY_ROWS", () => {
     expect(CATEGORY_ROWS).toHaveLength(2);
   });
 
-  it("first row has 3 categories", () => {
-    expect(CATEGORY_ROWS[0]).toHaveLength(3);
+  it("first row has 5 categories", () => {
+    expect(CATEGORY_ROWS[0]).toHaveLength(5);
   });
 
-  it("second row has 3 categories", () => {
-    expect(CATEGORY_ROWS[1]).toHaveLength(3);
+  it("second row has 5 categories", () => {
+    expect(CATEGORY_ROWS[1]).toHaveLength(5);
   });
 
   it("contains all category IDs from CATEGORIES", () => {
@@ -27,7 +27,7 @@ describe("CATEGORY_ROWS", () => {
 
 describe("CATEGORY_ROW_KEYS", () => {
   it("produces dash-joined id strings for each row", () => {
-    expect(CATEGORY_ROW_KEYS[0]).toBe("food-transport-shopping");
-    expect(CATEGORY_ROW_KEYS[1]).toBe("bills-income-other");
+    expect(CATEGORY_ROW_KEYS[0]).toBe("food-transport-entertainment-health-education");
+    expect(CATEGORY_ROW_KEYS[1]).toBe("home-clothing-services-transfer-other");
   });
 });

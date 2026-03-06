@@ -23,7 +23,18 @@ describe("Colors", () => {
 
   test("chart has exactly the expected keys", () => {
     const chartKeys = Object.keys(Colors.chart).sort();
-    expect(chartKeys).toEqual(["bills", "food", "income", "other", "shopping", "transport"]);
+    expect(chartKeys).toEqual([
+      "clothing",
+      "education",
+      "entertainment",
+      "food",
+      "health",
+      "home",
+      "other",
+      "services",
+      "transfer",
+      "transport",
+    ]);
   });
 
   test("all chart values are valid hex", () => {

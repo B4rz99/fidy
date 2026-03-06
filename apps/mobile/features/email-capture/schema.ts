@@ -3,7 +3,12 @@ import { z } from "zod";
 export const emailProviderSchema = z.enum(["gmail", "outlook"]);
 export type EmailProvider = z.infer<typeof emailProviderSchema>;
 
-export const processedEmailStatusSchema = z.enum(["success", "failed", "skipped_duplicate"]);
+export const processedEmailStatusSchema = z.enum([
+  "success",
+  "failed",
+  "skipped_duplicate",
+  "needs_review",
+]);
 export type ProcessedEmailStatus = z.infer<typeof processedEmailStatusSchema>;
 
 export const rawEmailSchema = z.object({

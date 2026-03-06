@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { emailAccounts, processedEmails } from "@/shared/db/schema";
+import { processedEmailStatusSchema } from "../../features/email-capture/schema";
 
 describe("emailAccounts schema", () => {
   it("has required columns", () => {
@@ -9,6 +10,19 @@ describe("emailAccounts schema", () => {
     expect(emailAccounts.email).toBeDefined();
     expect(emailAccounts.lastFetchedAt).toBeDefined();
     expect(emailAccounts.createdAt).toBeDefined();
+  });
+});
+
+describe("processedEmailStatusSchema", () => {
+  it("accepts needs_review status", () => {
+    const result = processedEmailStatusSchema.safeParse("needs_review");
+    expect(result.success).toBe(true);
+  });
+
+  it("still accepts existing statuses", () => {
+    expect(processedEmailStatusSchema.safeParse("success").success).toBe(true);
+    expect(processedEmailStatusSchema.safeParse("failed").success).toBe(true);
+    expect(processedEmailStatusSchema.safeParse("skipped_duplicate").success).toBe(true);
   });
 });
 

@@ -28,7 +28,7 @@ export const CategoryPill = ({ category, isSelected, onPress }: CategoryPillProp
       onPress={handlePress}
       accessibilityRole="button"
       accessibilityState={{ selected: isSelected }}
-      accessibilityLabel={category.label}
+      accessibilityLabel={category.label.en}
     >
       <Icon size={16} color={isSelected ? "#FFFFFF" : category.color} />
       <Text
@@ -36,7 +36,7 @@ export const CategoryPill = ({ category, isSelected, onPress }: CategoryPillProp
         style={{ color: isSelected ? "#FFFFFF" : primary }}
         numberOfLines={1}
       >
-        {category.label}
+        {category.label.en}
       </Text>
     </Pressable>
   );

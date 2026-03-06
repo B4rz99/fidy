@@ -91,7 +91,7 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     userId: "user-1",
     type: "income",
     amountCents: 5000,
-    categoryId: "income",
+    categoryId: "transfer",
     description: "Monthly",
     date: new Date(2026, 2, 1),
     createdAt: new Date(2026, 2, 1, 10, 0, 0),

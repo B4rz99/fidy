@@ -155,7 +155,7 @@ describe("useTransactionStore", () => {
     await store.saveTransaction();
 
     store.setDigits("200");
-    store.setCategoryId("bills");
+    store.setCategoryId("services");
     await store.saveTransaction();
 
     const txs = useTransactionStore.getState().transactions;

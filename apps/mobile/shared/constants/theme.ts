@@ -30,9 +30,13 @@ export const Colors = {
   chart: {
     food: "#7CB243",
     transport: "#E8A090",
-    shopping: "#1A1A1A",
-    bills: "#8BBAE8",
-    income: "#F5C842",
+    entertainment: "#F5C842",
+    health: "#E06060",
+    education: "#5B9BD5",
+    home: "#8BBAE8",
+    clothing: "#1A1A1A",
+    services: "#F0A04B",
+    transfer: "#6DC4B0",
     other: "#B8A9D4",
   },
 };

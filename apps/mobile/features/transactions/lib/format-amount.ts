@@ -37,3 +37,39 @@ export function amountToCents(formatted: string): number {
 export function centsToDisplay(cents: number): string {
   return formatAmount(String(cents));
 }
+
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
+
+const currencyFormatterNoDecimals = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
+
+/**
+ * Formats cents as a currency string using Intl.
+ * 4520 → "$45.20"
+ */
+export function formatCents(cents: number): string {
+  return currencyFormatter.format(cents / 100);
+}
+
+/**
+ * Formats cents as a rounded currency string.
+ * 4520 → "$45"
+ */
+export function formatCentsRounded(cents: number): string {
+  return currencyFormatterNoDecimals.format(cents / 100);
+}
+
+/**
+ * Formats cents as a signed currency string.
+ * (4520, "income") → "+$45.20", (4520, "expense") → "-$45.20"
+ */
+export function formatSignedAmount(cents: number, type: "expense" | "income"): string {
+  const formatted = currencyFormatter.format(cents / 100);
+  return type === "income" ? `+${formatted}` : `-${formatted}`;
+}
