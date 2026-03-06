@@ -15,11 +15,16 @@ export async function getLlmContext(): Promise<LlamaContext> {
     model: MODEL_PATH,
     n_ctx: 2048,
     n_threads: 4,
-  }).then((ctx) => {
-    contextRef = ctx;
-    initPromise = null;
-    return ctx;
-  });
+  })
+    .then((ctx) => {
+      contextRef = ctx;
+      initPromise = null;
+      return ctx;
+    })
+    .catch((err) => {
+      initPromise = null;
+      throw err;
+    });
 
   return initPromise;
 }

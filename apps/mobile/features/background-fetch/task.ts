@@ -1,17 +1,29 @@
-import * as BackgroundFetch from "expo-background-fetch";
+import * as BackgroundTask from "expo-background-task";
 import * as TaskManager from "expo-task-manager";
+import { GMAIL_CLIENT_ID, OUTLOOK_CLIENT_ID } from "@/features/email-capture/schema";
 import { releaseLlmContext } from "@/features/email-capture/services/llm-context";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
+import { getDb } from "@/shared/db/client";
+import { getSupabase } from "@/shared/lib/supabase";
 
-export const BACKGROUND_FETCH_TASK = "FIDY_EMAIL_FETCH";
+export const BACKGROUND_TASK_NAME = "FIDY_EMAIL_FETCH";
 
-TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
+TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
   try {
-    // Adapters own their config — clientId params are unused in background context
-    await useEmailCaptureStore.getState().fetchAndProcess("", "");
-    return BackgroundFetch.BackgroundFetchResult.NewData;
+    const { data, error } = await getSupabase().auth.getSession();
+    if (error || !data.session) {
+      return BackgroundTask.BackgroundTaskResult.Failed;
+    }
+
+    const userId = data.session.user.id;
+    const db = getDb(userId);
+    const store = useEmailCaptureStore.getState();
+    store.initStore(db, userId);
+
+    await store.fetchAndProcess(GMAIL_CLIENT_ID, OUTLOOK_CLIENT_ID);
+    return BackgroundTask.BackgroundTaskResult.Success;
   } catch {
-    return BackgroundFetch.BackgroundFetchResult.Failed;
+    return BackgroundTask.BackgroundTaskResult.Failed;
   } finally {
     releaseLlmContext();
   }

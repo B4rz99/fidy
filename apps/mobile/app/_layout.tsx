@@ -15,9 +15,10 @@ import { useEffect } from "react";
 import { AppState } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useAuthStore } from "@/features/auth/store";
-import { registerBackgroundFetch } from "@/features/background-fetch/register";
+import { registerBackgroundTask } from "@/features/background-fetch/register";
 import { useEmailCapture } from "@/features/email-capture/hooks/useEmailCapture";
 import { releaseLlmContext } from "@/features/email-capture/services/llm-context";
+import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { useSync } from "@/features/sync/hooks/useSync";
 import { useTransactionStore } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db/client";
@@ -27,16 +28,24 @@ import migrations from "../drizzle/migrations";
 SplashScreen.preventAutoHideAsync();
 
 function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
+  console.log("[shell] AuthenticatedShell render", { userId });
   const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
+  console.log("[shell] migrations state", {
+    migrationsReady,
+    migrationsError: migrationsError?.message ?? null,
+  });
 
   useEffect(() => {
+    console.log("[shell] migrationsReady effect fired", { migrationsReady });
     if (migrationsReady) {
+      console.log("[shell] calling initStore for transactions + email-capture");
       useTransactionStore.getState().initStore(db, userId);
+      useEmailCaptureStore.getState().initStore(db, userId);
       useTransactionStore
         .getState()
         .loadTransactions()
         .catch(() => {});
-      registerBackgroundFetch().catch(() => {});
+      registerBackgroundTask().catch(() => {});
     }
   }, [migrationsReady, db, userId]);
 
@@ -51,6 +60,9 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
   useEmailCapture(migrationsReady ? db : null, userId);
 
   useEffect(() => {
+    if (migrationsError) {
+      console.error("[shell] migration failed:", migrationsError);
+    }
     if (migrationsReady || migrationsError) {
       SplashScreen.hideAsync();
     }
@@ -106,6 +118,7 @@ export default function RootLayout() {
   }
 
   const db = userId ? getDb(userId) : null;
+  console.log("[layout] render", { userId: !!userId, db: !!db });
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

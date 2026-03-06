@@ -26,4 +26,8 @@ export type TransactionSource = z.infer<typeof transactionSourceSchema>;
 
 export const EMAIL_REDIRECT_URI = "fidy://email/callback";
 
+export const GMAIL_CLIENT_ID = process.env.EXPO_PUBLIC_GMAIL_CLIENT_ID ?? "";
+export const GMAIL_REDIRECT_URI = `com.googleusercontent.apps.${GMAIL_CLIENT_ID.split(".")[0]}:/oauth2redirect`;
+export const OUTLOOK_CLIENT_ID = process.env.EXPO_PUBLIC_OUTLOOK_CLIENT_ID ?? "";
+
 export type ConnectResult = { success: true; email: string } | { success: false; error: string };

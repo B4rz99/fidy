@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { ChevronLeft, Mail } from "lucide-react-native";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GMAIL_CLIENT_ID, OUTLOOK_CLIENT_ID } from "@/features/email-capture/schema";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 
@@ -35,7 +36,7 @@ export default function ConnectedAccountsScreen() {
               <ChevronLeft size={24} color={primaryColor} />
             </Pressable>
             <Text className="font-poppins-bold text-title text-primary dark:text-primary-dark">
-              Connected Accounts
+              Connected Mails
             </Text>
           </View>
 
@@ -48,7 +49,7 @@ export default function ConnectedAccountsScreen() {
             account={gmailAccount}
             greenColor={greenColor}
             tertiaryColor={tertiaryColor}
-            onConnect={() => connectEmail("gmail", "")}
+            onConnect={() => connectEmail("gmail", GMAIL_CLIENT_ID)}
             onDisconnect={() => gmailAccount && disconnectEmail(gmailAccount.id)}
           />
 
@@ -57,7 +58,7 @@ export default function ConnectedAccountsScreen() {
             account={outlookAccount}
             greenColor={greenColor}
             tertiaryColor={tertiaryColor}
-            onConnect={() => connectEmail("outlook", "")}
+            onConnect={() => connectEmail("outlook", OUTLOOK_CLIENT_ID)}
             onDisconnect={() => outlookAccount && disconnectEmail(outlookAccount.id)}
           />
         </View>

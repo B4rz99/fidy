@@ -164,11 +164,11 @@ vi.mock("llama.rn", () => ({
   initLlama: vi.fn(),
 }));
 
-// Mock expo-background-fetch
-vi.mock("expo-background-fetch", () => ({
+// Mock expo-background-task
+vi.mock("expo-background-task", () => ({
   registerTaskAsync: vi.fn(),
   unregisterTaskAsync: vi.fn(),
-  BackgroundFetchResult: { NewData: 1, NoData: 2, Failed: 3 },
+  BackgroundTaskResult: { Success: 1, Failed: 2 },
 }));
 
 // Mock expo-task-manager

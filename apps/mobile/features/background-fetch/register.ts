@@ -1,20 +1,18 @@
-import * as BackgroundFetch from "expo-background-fetch";
+import * as BackgroundTask from "expo-background-task";
 import * as TaskManager from "expo-task-manager";
-import { BACKGROUND_FETCH_TASK } from "./task";
+import { BACKGROUND_TASK_NAME } from "./task";
 
-export async function registerBackgroundFetch(): Promise<void> {
-  const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_FETCH_TASK);
+export async function registerBackgroundTask(): Promise<void> {
+  const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_TASK_NAME);
   if (isRegistered) return;
 
-  await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
+  await BackgroundTask.registerTaskAsync(BACKGROUND_TASK_NAME, {
     minimumInterval: 15 * 60, // 15 minutes
-    stopOnTerminate: false,
-    startOnBoot: true,
   });
 }
 
-export async function unregisterBackgroundFetch(): Promise<void> {
-  const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_FETCH_TASK);
+export async function unregisterBackgroundTask(): Promise<void> {
+  const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_TASK_NAME);
   if (!isRegistered) return;
-  await BackgroundFetch.unregisterTaskAsync(BACKGROUND_FETCH_TASK);
+  await BackgroundTask.unregisterTaskAsync(BACKGROUND_TASK_NAME);
 }

@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import type { ConnectResult, RawEmail } from "../schema";
-import { EMAIL_REDIRECT_URI } from "../schema";
+import { GMAIL_REDIRECT_URI } from "../schema";
 
 const TOKEN_KEY = "email-gmail-token";
 const REFRESH_TOKEN_KEY = "email-gmail-refresh-token";
@@ -47,58 +47,73 @@ async function getValidToken(clientId: string): Promise<string | null> {
 }
 
 export async function connectGmail(clientId: string): Promise<ConnectResult> {
+  console.log("[gmail] connectGmail called, clientId length:", clientId.length);
   const { openAuthSessionAsync } = await import("expo-web-browser");
 
   const params = new URLSearchParams({
     client_id: clientId,
-    redirect_uri: EMAIL_REDIRECT_URI,
+    redirect_uri: GMAIL_REDIRECT_URI,
     response_type: "code",
     scope: SCOPE,
     access_type: "offline",
     prompt: "consent",
   });
 
-  const result = await openAuthSessionAsync(`${AUTH_URL}?${params}`, EMAIL_REDIRECT_URI);
+  const authUrl = `${AUTH_URL}?${params}`;
+  console.log("[gmail] opening auth session, redirect:", GMAIL_REDIRECT_URI);
+  const result = await openAuthSessionAsync(authUrl, GMAIL_REDIRECT_URI);
+  console.log("[gmail] auth session result type:", result.type);
 
   if (result.type !== "success" || !result.url) {
+    console.warn("[gmail] auth not successful:", result.type);
     return { success: false, error: "cancelled" };
   }
 
+  console.log("[gmail] callback URL:", result.url.slice(0, 80) + "...");
   const code = new URL(result.url).searchParams.get("code");
   if (!code) {
+    console.warn("[gmail] no code in callback URL");
     return { success: false, error: "no_code" };
   }
 
+  console.log("[gmail] exchanging code for token...");
   const tokenResponse = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       code,
       client_id: clientId,
-      redirect_uri: EMAIL_REDIRECT_URI,
+      redirect_uri: GMAIL_REDIRECT_URI,
       grant_type: "authorization_code",
     }).toString(),
   });
 
   if (!tokenResponse.ok) {
+    const errBody = await tokenResponse.text().catch(() => "");
+    console.error("[gmail] token exchange failed:", tokenResponse.status, errBody);
     return { success: false, error: "token_exchange_failed" };
   }
 
   const tokens = await tokenResponse.json();
+  console.log("[gmail] token exchange OK, has refresh:", !!tokens.refresh_token);
   await SecureStore.setItemAsync(TOKEN_KEY, tokens.access_token);
   if (tokens.refresh_token) {
     await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, tokens.refresh_token);
   }
 
+  console.log("[gmail] fetching profile...");
   const profileResponse = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   });
 
   if (!profileResponse.ok) {
+    const errBody = await profileResponse.text().catch(() => "");
+    console.error("[gmail] profile fetch failed:", profileResponse.status, errBody);
     return { success: false, error: "profile_fetch_failed" };
   }
 
   const profile = await profileResponse.json();
+  console.log("[gmail] connected successfully:", profile.emailAddress);
   return { success: true, email: profile.emailAddress };
 }
 
