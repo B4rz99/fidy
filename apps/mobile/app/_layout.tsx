@@ -8,7 +8,7 @@ import {
 } from "@expo-google-fonts/poppins";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useFonts } from "expo-font";
-import { Redirect, Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -52,6 +52,8 @@ export default function RootLayout() {
   const session = useAuthStore((s) => s.session);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
   const userId = session?.user?.id ?? null;
+  const router = useRouter();
+  const segments = useSegments();
 
   const [fontsLoaded, fontsError] = useFonts({
     Poppins_500Medium,
@@ -72,6 +74,18 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontsError, isAuthLoading, userId]);
 
+  useEffect(() => {
+    if (isAuthLoading || (!fontsLoaded && !fontsError)) return;
+
+    const inAuthGroup = segments[0] === "(auth)";
+
+    if (userId && inAuthGroup) {
+      router.replace("/(tabs)");
+    } else if (!userId && !inAuthGroup) {
+      router.replace("/(auth)");
+    }
+  }, [userId, segments, isAuthLoading, fontsLoaded, fontsError, router]);
+
   if (!fontsLoaded && !fontsError) {
     return null;
   }
@@ -88,14 +102,7 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
       </Stack>
-      {db && userId ? (
-        <>
-          <AuthenticatedShell db={db} userId={userId} />
-          <Redirect href="/(tabs)" />
-        </>
-      ) : (
-        <Redirect href="/(auth)" />
-      )}
+      {db && userId && <AuthenticatedShell db={db} userId={userId} />}
       <StatusBar style="auto" />
     </GestureHandlerRootView>
   );
