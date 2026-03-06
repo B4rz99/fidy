@@ -11,18 +11,15 @@ import {
 } from "./lib/repository";
 import type { StoredTransaction, TransactionType } from "./schema";
 
-type SheetStep = 1 | 2;
+type FormStep = 1 | 2;
 
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
 let userIdRef: string | null = null;
 
 type AddTransactionState = {
-  // Sheet visibility
-  isOpen: boolean;
-  step: SheetStep;
-
   // Form fields
+  step: FormStep;
   type: TransactionType;
   digits: string;
   categoryId: CategoryId | null;
@@ -35,9 +32,7 @@ type AddTransactionState = {
 
 type AddTransactionActions = {
   initStore: (db: AnyDb, userId: string) => void;
-  openSheet: () => void;
-  closeSheet: () => void;
-  setStep: (step: SheetStep) => void;
+  setStep: (step: FormStep) => void;
   setType: (type: TransactionType) => void;
   setDigits: (digits: string) => void;
   setCategoryId: (id: CategoryId) => void;
@@ -64,7 +59,6 @@ const INITIAL_FORM: Pick<
 
 export const useTransactionStore = create<AddTransactionState & AddTransactionActions>(
   (set, get) => ({
-    isOpen: false,
     ...INITIAL_FORM,
     date: new Date(),
     transactions: [],
@@ -74,8 +68,6 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
       userIdRef = userId;
     },
 
-    openSheet: () => set({ isOpen: true, ...INITIAL_FORM, date: new Date() }),
-    closeSheet: () => set({ isOpen: false, ...INITIAL_FORM, date: new Date() }),
     setStep: (step) => set({ step }),
     setType: (type) => set({ type }),
     setDigits: (digits) => set({ digits }),

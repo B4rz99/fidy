@@ -24,7 +24,6 @@ describe("useTransactionStore", () => {
     vi.clearAllMocks();
     useTransactionStore.getState().initStore(mockDb, mockUserId);
     useTransactionStore.setState({
-      isOpen: false,
       step: 1,
       type: "expense",
       digits: "",
@@ -43,38 +42,14 @@ describe("useTransactionStore", () => {
     expect(result).toEqual({ success: false, error: "Store not initialized" });
   });
 
-  it("starts closed with default form values", () => {
+  it("starts with default form values", () => {
     const state = useTransactionStore.getState();
-    expect(state.isOpen).toBe(false);
     expect(state.step).toBe(1);
     expect(state.type).toBe("expense");
     expect(state.digits).toBe("");
     expect(state.categoryId).toBeNull();
     expect(state.description).toBe("");
     expect(state.transactions).toEqual([]);
-  });
-
-  it("openSheet resets form and opens", () => {
-    const store = useTransactionStore.getState();
-    store.setDigits("1234");
-    store.setStep(2);
-    store.openSheet();
-
-    const state = useTransactionStore.getState();
-    expect(state.isOpen).toBe(true);
-    expect(state.step).toBe(1);
-    expect(state.digits).toBe("");
-  });
-
-  it("closeSheet resets form and closes", () => {
-    const store = useTransactionStore.getState();
-    store.openSheet();
-    store.setDigits("500");
-    store.closeSheet();
-
-    const state = useTransactionStore.getState();
-    expect(state.isOpen).toBe(false);
-    expect(state.digits).toBe("");
   });
 
   it("setType toggles between expense and income", () => {
@@ -189,9 +164,8 @@ describe("useTransactionStore", () => {
     expect(txs[1].amountCents).toBe(100);
   });
 
-  it("resetForm clears form but keeps transactions and open state", async () => {
+  it("resetForm clears form but keeps transactions", async () => {
     const store = useTransactionStore.getState();
-    store.openSheet();
     store.setDigits("4520");
     store.setCategoryId("food");
     store.setStep(2);

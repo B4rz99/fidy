@@ -65,14 +65,9 @@ vi.mock("expo-haptics", () => ({
   },
 }));
 
-// Mock @gorhom/bottom-sheet
-vi.mock("@gorhom/bottom-sheet", () => ({
-  default: "BottomSheet",
-  BottomSheetModal: "BottomSheetModal",
-  BottomSheetModalProvider: "BottomSheetModalProvider",
-  BottomSheetView: "BottomSheetView",
-  BottomSheetTextInput: "BottomSheetTextInput",
-  BottomSheetBackdrop: "BottomSheetBackdrop",
+// Mock @shopify/flash-list
+vi.mock("@shopify/flash-list", () => ({
+  FlashList: "FlashList",
 }));
 
 // Mock react-native-reanimated

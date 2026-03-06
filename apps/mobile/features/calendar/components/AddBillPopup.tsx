@@ -140,6 +140,7 @@ const styles = StyleSheet.create({
   card: {
     width: 345,
     borderRadius: 20,
+    borderCurve: "continuous",
     borderWidth: 1,
     padding: 24,
     gap: 16,
@@ -160,6 +161,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderRadius: 10,
+    borderCurve: "continuous",
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -173,6 +175,7 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderRadius: 8,
+    borderCurve: "continuous",
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -183,6 +186,7 @@ const styles = StyleSheet.create({
   },
   addButton: {
     borderRadius: 12,
+    borderCurve: "continuous",
     paddingVertical: 14,
     alignItems: "center",
   },

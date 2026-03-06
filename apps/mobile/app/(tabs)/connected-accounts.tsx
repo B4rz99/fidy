@@ -1,14 +1,14 @@
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "expo-router";
 import { ChevronLeft, Mail } from "lucide-react-native";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 
 export default function ConnectedAccountsScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
+  const { back } = useRouter();
   const accounts = useEmailCaptureStore((s) => s.accounts);
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
   const disconnectEmail = useEmailCaptureStore((s) => s.disconnectEmail);
@@ -22,12 +22,16 @@ export default function ConnectedAccountsScreen() {
   return (
     <View className="flex-1 bg-page dark:bg-page-dark">
       <ScrollView
-        contentContainerStyle={{ paddingTop: insets.top, paddingBottom: 40 }}
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{
+          paddingTop: Platform.OS === "android" ? insets.top : 0,
+          paddingBottom: 40,
+        }}
         className="flex-1 px-5"
       >
         <View style={{ gap: 24 }}>
           <View className="flex-row items-center" style={{ gap: 12 }}>
-            <Pressable onPress={() => router.back()} hitSlop={12}>
+            <Pressable onPress={() => back()} hitSlop={12}>
               <ChevronLeft size={24} color={primaryColor} />
             </Pressable>
             <Text className="font-poppins-bold text-title text-primary dark:text-primary-dark">

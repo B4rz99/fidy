@@ -1,61 +1,76 @@
+import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
 import { ChevronLeft, Info, Plus, TriangleAlert } from "lucide-react-native";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { useCallback } from "react";
+import { Platform, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
-import { useTransactionStore } from "@/features/transactions/store";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
+
+const ItemSeparator = () => <View style={{ height: 10 }} />;
 
 export default function FailedEmailsScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
+  const { back, push } = useRouter();
   const failedEmails = useEmailCaptureStore((s) => s.failedEmails);
   const dismissFailedEmail = useEmailCaptureStore((s) => s.dismissFailedEmail);
-  const openSheet = useTransactionStore((s) => s.openSheet);
   const primaryColor = useThemeColor("primary");
+
+  const handleAddManually = useCallback(() => {
+    push("/add-transaction");
+  }, [push]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: ProcessedEmailRow }) => (
+      <FailedEmailCard
+        email={item}
+        onDismiss={() => dismissFailedEmail(item.id)}
+        onAddManually={handleAddManually}
+      />
+    ),
+    [dismissFailedEmail, handleAddManually]
+  );
 
   return (
     <View className="flex-1 bg-page dark:bg-page-dark">
-      <ScrollView
-        contentContainerStyle={{ paddingTop: insets.top, paddingBottom: 40 }}
-        className="flex-1 px-5"
-      >
-        <View style={{ gap: 20 }}>
-          <View className="flex-row items-center" style={{ gap: 12 }}>
-            <Pressable onPress={() => router.back()} hitSlop={12}>
-              <ChevronLeft size={24} color={primaryColor} />
-            </Pressable>
-            <Text className="font-poppins-bold text-title text-primary dark:text-primary-dark">
-              Unprocessed Emails
+      <FlashList
+        data={failedEmails}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        estimatedItemSize={150}
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{
+          paddingTop: Platform.OS === "android" ? insets.top : 0,
+          paddingBottom: 40,
+          paddingHorizontal: 20,
+        }}
+        ItemSeparatorComponent={ItemSeparator}
+        ListHeaderComponent={
+          <View style={{ gap: 20, paddingBottom: 10 }}>
+            <View className="flex-row items-center" style={{ gap: 12 }}>
+              <Pressable onPress={() => back()} hitSlop={12}>
+                <ChevronLeft size={24} color={primaryColor} />
+              </Pressable>
+              <Text className="font-poppins-bold text-title text-primary dark:text-primary-dark">
+                Unprocessed Emails
+              </Text>
+            </View>
+
+            <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
+              {
+                "These bank emails couldn't be processed automatically. You can add them as transactions manually."
+              }
             </Text>
           </View>
-
-          <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
-            {
-              "These bank emails couldn't be processed automatically. You can add them as transactions manually."
-            }
+        }
+        ListEmptyComponent={
+          <Text className="font-poppins-medium text-label text-tertiary dark:text-tertiary-dark text-center pt-8">
+            No unprocessed emails
           </Text>
-
-          <View style={{ gap: 10 }}>
-            {failedEmails.map((email) => (
-              <FailedEmailCard
-                key={email.id}
-                email={email}
-                onDismiss={() => dismissFailedEmail(email.id)}
-                onAddManually={openSheet}
-              />
-            ))}
-          </View>
-
-          {failedEmails.length === 0 && (
-            <Text className="font-poppins-medium text-label text-tertiary dark:text-tertiary-dark text-center pt-8">
-              No unprocessed emails
-            </Text>
-          )}
-        </View>
-      </ScrollView>
+        }
+      />
     </View>
   );
 }
@@ -96,7 +111,7 @@ function FailedEmailCard({
         {email.subject}
       </Text>
 
-      {email.failureReason && (
+      {email.failureReason ? (
         <View
           className="flex-row items-center rounded-lg bg-accent-red-light px-2.5 dark:bg-accent-red-light-dark"
           style={{ gap: 6, paddingVertical: 4 }}
@@ -106,7 +121,7 @@ function FailedEmailCard({
             {formatReason(email.failureReason)}
           </Text>
         </View>
-      )}
+      ) : null}
 
       <View className="flex-row" style={{ gap: 10 }}>
         <Pressable
