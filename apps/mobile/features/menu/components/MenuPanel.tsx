@@ -37,9 +37,7 @@ export function MenuPanel() {
   }));
 
   const panelStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: interpolate(isOpenAnimated.get(), [0, 1], [PANEL_WIDTH + 32, 0]) },
-    ],
+    transform: [{ translateX: interpolate(isOpenAnimated.get(), [0, 1], [PANEL_WIDTH + 32, 0]) }],
     opacity: isOpenAnimated.get(),
   }));
 
