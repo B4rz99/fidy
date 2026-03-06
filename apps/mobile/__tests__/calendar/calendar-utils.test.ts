@@ -16,7 +16,7 @@ const makeBill = (overrides: Partial<Bill> = {}): Bill => ({
   name: "Test",
   amountCents: 1000,
   frequency: "monthly",
-  categoryId: "bills",
+  categoryId: "services",
   startDate: new Date(2025, 0, 15),
   isActive: true,
   ...overrides,

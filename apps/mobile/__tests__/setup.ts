@@ -1,6 +1,9 @@
 // biome-ignore-all lint/style/useNamingConvention: mock exports must match library API names
 import { vi } from "vitest";
 
+process.env.EXPO_PUBLIC_GMAIL_CLIENT_ID = "test-gmail-client-id.apps.googleusercontent.com";
+process.env.EXPO_PUBLIC_OUTLOOK_CLIENT_ID = "test-outlook-client-id";
+
 // Mock react-native (Flow syntax not supported outside RN bundler)
 vi.mock("react-native", () => ({
   View: "View",
@@ -30,19 +33,25 @@ vi.mock("lucide-react-native", () => ({
   Target: "Target",
   Plus: "Plus",
   Banknote: "Banknote",
+  ArrowLeftRight: "ArrowLeftRight",
   Car: "Car",
+  Clapperboard: "Clapperboard",
   Coffee: "Coffee",
   Film: "Film",
+  GraduationCap: "GraduationCap",
   HeartPulse: "HeartPulse",
+  House: "House",
   Music: "Music",
+  Receipt: "Receipt",
+  Shirt: "Shirt",
   ShoppingBag: "ShoppingBag",
   Smartphone: "Smartphone",
-  Wifi: "Wifi",
-  Zap: "Zap",
   TrendingUp: "TrendingUp",
-  Bell: "Bell",
   Utensils: "Utensils",
-  Receipt: "Receipt",
+  Wifi: "Wifi",
+  Wrench: "Wrench",
+  Zap: "Zap",
+  Bell: "Bell",
   Ellipsis: "Ellipsis",
   ChevronLeft: "ChevronLeft",
   Calendar: "Calendar",
@@ -153,6 +162,24 @@ vi.mock("expo-web-browser", () => ({
   openBrowserAsync: vi.fn(),
 }));
 
+// Mock llama.rn
+vi.mock("llama.rn", () => ({
+  initLlama: vi.fn(),
+}));
+
+// Mock expo-background-task
+vi.mock("expo-background-task", () => ({
+  registerTaskAsync: vi.fn(),
+  unregisterTaskAsync: vi.fn(),
+  BackgroundTaskResult: { Success: 1, Failed: 2 },
+}));
+
+// Mock expo-task-manager
+vi.mock("expo-task-manager", () => ({
+  defineTask: vi.fn(),
+  isTaskRegisteredAsync: vi.fn().mockResolvedValue(false),
+}));
+
 // Mock react-native-svg
 vi.mock("react-native-svg", () => ({
   default: "Svg",
@@ -163,6 +190,7 @@ vi.mock("react-native-svg", () => ({
   G: "G",
   Text: "SvgText",
   Line: "Line",
+  Polyline: "Polyline",
   Defs: "Defs",
   LinearGradient: "LinearGradient",
   Stop: "Stop",

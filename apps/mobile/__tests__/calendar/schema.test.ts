@@ -17,7 +17,7 @@ describe("billSchema", () => {
     name: "Netflix",
     amountCents: 1599,
     frequency: "monthly",
-    categoryId: "bills",
+    categoryId: "services",
     startDate: new Date(2025, 0, 15),
     isActive: true,
   };
@@ -56,7 +56,7 @@ describe("createBillSchema", () => {
     name: "Netflix",
     amountCents: 1599,
     frequency: "monthly",
-    categoryId: "bills",
+    categoryId: "services",
     startDate: new Date(2025, 0, 15),
     isActive: true,
   };

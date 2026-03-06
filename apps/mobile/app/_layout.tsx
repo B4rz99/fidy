@@ -12,9 +12,13 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { AppState } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useAuthStore } from "@/features/auth/store";
+import { registerBackgroundTask } from "@/features/background-fetch/register";
 import { useEmailCapture } from "@/features/email-capture/hooks/useEmailCapture";
+import { releaseLlmContext } from "@/features/email-capture/services/llm-context";
+import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { useSync } from "@/features/sync/hooks/useSync";
 import { useTransactionStore } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db/client";
@@ -29,12 +33,21 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
   useEffect(() => {
     if (migrationsReady) {
       useTransactionStore.getState().initStore(db, userId);
+      useEmailCaptureStore.getState().initStore(db, userId);
       useTransactionStore
         .getState()
         .loadTransactions()
         .catch(() => {});
+      registerBackgroundTask().catch(() => {});
     }
   }, [migrationsReady, db, userId]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "background") releaseLlmContext();
+    });
+    return () => sub.remove();
+  }, []);
 
   useSync(migrationsReady ? db : null, userId);
   useEmailCapture(migrationsReady ? db : null, userId);

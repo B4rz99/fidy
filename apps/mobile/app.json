@@ -10,7 +10,16 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.obarbozaa.Fidy"
+      "bundleIdentifier": "com.obarbozaa.Fidy",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.282682681790-630ti7lmdsjcm32o31m1kq50q20727pn"
+            ]
+          }
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -29,7 +38,12 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      ["expo-sqlite", { "useSQLCipher": true }],
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -41,7 +55,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-background-task"
     ],
     "experiments": {
       "typedRoutes": true,

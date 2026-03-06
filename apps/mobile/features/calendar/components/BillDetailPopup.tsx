@@ -50,7 +50,7 @@ export function BillDetailPopup() {
 
         {/* Details grid */}
         <View style={styles.detailsGrid}>
-          <DetailRow label="Category" value={CATEGORY_MAP[bill.categoryId].label} />
+          <DetailRow label="Category" value={CATEGORY_MAP[bill.categoryId].label.en} />
           <DetailRow label="Frequency" value={bill.frequency} />
           <DetailRow label="Next Payment" value={nextPaymentStr} />
           <DetailRow

@@ -22,7 +22,7 @@ export function AddBillPopup() {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [frequency, setFrequency] = useState<BillFrequency>("monthly");
-  const [category, setCategory] = useState<CategoryId>("bills");
+  const [category, setCategory] = useState<CategoryId>("services");
 
   const cardBg = useThemeColor("card");
   const borderColor = useThemeColor("borderSubtle");
@@ -39,7 +39,7 @@ export function AddBillPopup() {
     setName("");
     setAmount("");
     setFrequency("monthly");
-    setCategory("bills");
+    setCategory("services");
   };
 
   return (
@@ -120,7 +120,7 @@ export function AddBillPopup() {
                       { color: category === c.id ? "#FFFFFF" : primaryColor },
                     ]}
                   >
-                    {c.label}
+                    {c.label.en}
                   </Text>
                 </Pressable>
               ))}

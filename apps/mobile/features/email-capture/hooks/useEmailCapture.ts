@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { AppState } from "react-native";
 import type { AnyDb } from "@/shared/db/client";
+import { GMAIL_CLIENT_ID, OUTLOOK_CLIENT_ID } from "../schema";
 import { useEmailCaptureStore } from "../store";
 
 export function useEmailCapture(db: AnyDb | null, userId: string | null) {
@@ -12,7 +13,7 @@ export function useEmailCapture(db: AnyDb | null, userId: string | null) {
     const runFetch = () => {
       useEmailCaptureStore
         .getState()
-        .fetchAndProcess("", "")
+        .fetchAndProcess(GMAIL_CLIENT_ID, OUTLOOK_CLIENT_ID)
         .catch(() => {});
     };
 

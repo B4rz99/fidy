@@ -55,6 +55,23 @@ export async function getFailedEmails(db: AnyDb) {
     .orderBy(desc(processedEmails.receivedAt));
 }
 
+export async function getNeedsReviewEmails(db: AnyDb) {
+  return db
+    .select()
+    .from(processedEmails)
+    .where(eq(processedEmails.status, "needs_review"))
+    .orderBy(desc(processedEmails.receivedAt));
+}
+
+export async function updateProcessedEmailStatus(
+  db: AnyDb,
+  id: string,
+  status: string,
+  transactionId: string | null
+) {
+  await db.update(processedEmails).set({ status, transactionId }).where(eq(processedEmails.id, id));
+}
+
 export async function dismissProcessedEmail(db: AnyDb, id: string) {
   await db.delete(processedEmails).where(eq(processedEmails.id, id));
 }

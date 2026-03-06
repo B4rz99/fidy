@@ -51,54 +51,54 @@ describe("useCalendarStore", () => {
   // ─── addBill ───
 
   test("addBill with valid data adds bill and returns true", () => {
-    const result = useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "bills");
+    const result = useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services");
     expect(result).toBe(true);
     expect(useCalendarStore.getState().bills).toHaveLength(1);
     const bill = useCalendarStore.getState().bills[0];
     expect(bill.name).toBe("Netflix");
     expect(bill.amountCents).toBe(1599);
     expect(bill.frequency).toBe("monthly");
-    expect(bill.categoryId).toBe("bills");
+    expect(bill.categoryId).toBe("services");
     expect(bill.isActive).toBe(true);
   });
 
   test("addBill closes popup on success", () => {
     useCalendarStore.getState().openAddBill();
-    useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "bills");
+    useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services");
     expect(useCalendarStore.getState().popup).toBe("none");
   });
 
   // Bug 2: addBill should return false on validation failure
   test("addBill returns false for empty name", () => {
-    const result = useCalendarStore.getState().addBill("", "15.99", "monthly", "bills");
+    const result = useCalendarStore.getState().addBill("", "15.99", "monthly", "services");
     expect(result).toBe(false);
     expect(useCalendarStore.getState().bills).toHaveLength(0);
   });
 
   test("addBill returns false for empty amount", () => {
-    const result = useCalendarStore.getState().addBill("Netflix", "", "monthly", "bills");
+    const result = useCalendarStore.getState().addBill("Netflix", "", "monthly", "services");
     expect(result).toBe(false);
   });
 
   test("addBill returns false for zero amount", () => {
-    const result = useCalendarStore.getState().addBill("Netflix", "0", "monthly", "bills");
+    const result = useCalendarStore.getState().addBill("Netflix", "0", "monthly", "services");
     expect(result).toBe(false);
   });
 
   test("addBill returns false for negative amount", () => {
-    const result = useCalendarStore.getState().addBill("Netflix", "-5", "monthly", "bills");
+    const result = useCalendarStore.getState().addBill("Netflix", "-5", "monthly", "services");
     expect(result).toBe(false);
   });
 
   test("addBill returns false for non-numeric amount", () => {
-    const result = useCalendarStore.getState().addBill("Netflix", "abc", "monthly", "bills");
+    const result = useCalendarStore.getState().addBill("Netflix", "abc", "monthly", "services");
     expect(result).toBe(false);
   });
 
   // Bug 3: addBill should validate through createBillSchema (frequency + categoryId)
   test("addBill validates frequency via schema", () => {
     // @ts-expect-error testing invalid frequency
-    const result = useCalendarStore.getState().addBill("Netflix", "15.99", "daily", "bills");
+    const result = useCalendarStore.getState().addBill("Netflix", "15.99", "daily", "services");
     expect(result).toBe(false);
     expect(useCalendarStore.getState().bills).toHaveLength(0);
   });

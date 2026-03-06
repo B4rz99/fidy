@@ -5,8 +5,10 @@ vi.mock("@/features/email-capture/lib/repository", () => ({
   insertEmailAccount: vi.fn(),
   deleteEmailAccount: vi.fn(),
   getFailedEmails: vi.fn().mockResolvedValue([]),
+  getNeedsReviewEmails: vi.fn().mockResolvedValue([]),
   dismissProcessedEmail: vi.fn(),
   updateLastFetchedAt: vi.fn(),
+  updateProcessedEmailStatus: vi.fn(),
 }));
 
 vi.mock("@/features/email-capture/services/gmail-adapter", () => ({
@@ -24,7 +26,7 @@ vi.mock("@/features/email-capture/services/outlook-adapter", () => ({
 vi.mock("@/features/email-capture/services/email-pipeline", () => ({
   processEmails: vi
     .fn()
-    .mockResolvedValue({ filtered: 0, skippedDuplicate: 0, saved: 0, failed: 0 }),
+    .mockResolvedValue({ filtered: 0, skippedDuplicate: 0, saved: 0, failed: 0, needsReview: 0 }),
 }));
 
 vi.mock("@/features/email-capture/lib/bank-senders", async (importOriginal) => {
@@ -35,6 +37,18 @@ vi.mock("@/features/email-capture/lib/bank-senders", async (importOriginal) => {
   };
 });
 
+vi.mock("@/features/transactions/lib/repository", () => ({
+  enqueueSync: vi.fn(),
+}));
+
+vi.mock("drizzle-orm", () => ({
+  eq: vi.fn((...args: unknown[]) => ({ type: "eq", args })),
+}));
+
+vi.mock("@/shared/db/schema", () => ({
+  transactions: { id: "id", categoryId: "category_id", updatedAt: "updated_at" },
+}));
+
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: vi.fn(() => "ea-generated"),
 }));
@@ -44,8 +58,10 @@ import {
   dismissProcessedEmail,
   getEmailAccounts,
   getFailedEmails,
+  getNeedsReviewEmails,
   insertEmailAccount,
   updateLastFetchedAt,
+  updateProcessedEmailStatus,
 } from "@/features/email-capture/lib/repository";
 import { processEmails } from "@/features/email-capture/services/email-pipeline";
 import { connectGmail, fetchGmailEmails } from "@/features/email-capture/services/gmail-adapter";
@@ -56,7 +72,9 @@ import {
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 
 // biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
-const mockDb = {} as any;
+const mockDb = {
+  update: vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) }),
+} as any;
 const mockUserId = "user-1";
 
 describe("useEmailCaptureStore", () => {
@@ -66,6 +84,7 @@ describe("useEmailCaptureStore", () => {
     useEmailCaptureStore.setState({
       accounts: [],
       failedEmails: [],
+      needsReviewEmails: [],
       isFetching: false,
       bannerDismissed: false,
     });
@@ -75,6 +94,7 @@ describe("useEmailCaptureStore", () => {
     const state = useEmailCaptureStore.getState();
     expect(state.accounts).toEqual([]);
     expect(state.failedEmails).toEqual([]);
+    expect(state.needsReviewEmails).toEqual([]);
     expect(state.isFetching).toBe(false);
     expect(state.bannerDismissed).toBe(false);
   });
@@ -110,6 +130,7 @@ describe("useEmailCaptureStore", () => {
         rawBodyPreview: null,
         receivedAt: "2026-03-05T10:00:00Z",
         transactionId: null,
+        confidence: null,
         createdAt: "2026-03-05T10:00:00Z",
       },
     ];
@@ -120,6 +141,30 @@ describe("useEmailCaptureStore", () => {
     expect(getFailedEmails).toHaveBeenCalledWith(mockDb);
     expect(useEmailCaptureStore.getState().failedEmails).toEqual(mockFailed);
     expect(useEmailCaptureStore.getState().failedEmails).toHaveLength(1);
+  });
+
+  it("loadNeedsReview fetches from DB and sets state", async () => {
+    const mockReview = [
+      {
+        id: "pe-2",
+        externalId: "msg-2",
+        provider: "gmail",
+        status: "needs_review",
+        failureReason: null,
+        subject: "Compra aprobada",
+        rawBodyPreview: null,
+        receivedAt: "2026-03-05T10:00:00Z",
+        transactionId: "tx-1",
+        confidence: 0.5,
+        createdAt: "2026-03-05T10:00:00Z",
+      },
+    ];
+    vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce(mockReview);
+
+    await useEmailCaptureStore.getState().loadNeedsReview();
+
+    expect(getNeedsReviewEmails).toHaveBeenCalledWith(mockDb);
+    expect(useEmailCaptureStore.getState().needsReviewEmails).toEqual(mockReview);
   });
 
   it("dismissBanner sets bannerDismissed to true", () => {
@@ -247,8 +292,10 @@ describe("useEmailCaptureStore", () => {
         skippedDuplicate: 0,
         saved: 1,
         failed: 0,
+        needsReview: 0,
       });
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
       await useEmailCaptureStore.getState().fetchAndProcess("gmail-client-id", "outlook-client-id");
 
@@ -274,6 +321,7 @@ describe("useEmailCaptureStore", () => {
 
       vi.mocked(fetchOutlookEmails).mockResolvedValueOnce([]);
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
       await useEmailCaptureStore.getState().fetchAndProcess("gmail-client-id", "outlook-client-id");
 
@@ -283,6 +331,7 @@ describe("useEmailCaptureStore", () => {
     it("sets isFetching during execution", async () => {
       useEmailCaptureStore.setState({ accounts: [] });
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
       const promise = useEmailCaptureStore.getState().fetchAndProcess("g", "o");
       expect(useEmailCaptureStore.getState().isFetching).toBe(true);
@@ -292,6 +341,7 @@ describe("useEmailCaptureStore", () => {
     });
 
     it("does nothing when db or userId is not set", async () => {
+      // biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
       useEmailCaptureStore.getState().initStore(null as any, null as any);
 
       await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
@@ -345,11 +395,93 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(fetchGmailEmails).mockRejectedValueOnce(new Error("network error"));
       vi.mocked(fetchOutlookEmails).mockResolvedValueOnce([]);
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
       await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
 
       expect(fetchOutlookEmails).toHaveBeenCalled();
       expect(useEmailCaptureStore.getState().isFetching).toBe(false);
+    });
+
+    it("calls processEmails without parseFn parameter", async () => {
+      useEmailCaptureStore.setState({
+        accounts: [
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "test@gmail.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      const mockRawEmails = [
+        {
+          externalId: "ext-1",
+          from: "bank@example.com",
+          subject: "Alert",
+          body: "body",
+          receivedAt: "2026-03-05T10:00:00Z",
+          provider: "gmail" as const,
+        },
+      ];
+      vi.mocked(fetchGmailEmails).mockResolvedValueOnce(mockRawEmails);
+      vi.mocked(processEmails).mockResolvedValueOnce({
+        filtered: 0,
+        skippedDuplicate: 0,
+        saved: 1,
+        failed: 0,
+        needsReview: 0,
+      });
+      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+
+      await useEmailCaptureStore.getState().fetchAndProcess("gmail-client-id", "outlook-client-id");
+
+      // processEmails should be called with 4 args (no parseFn)
+      expect(processEmails).toHaveBeenCalledWith(
+        mockDb,
+        mockUserId,
+        mockRawEmails,
+        expect.any(Array)
+      );
+    });
+  });
+
+  describe("confirmReview", () => {
+    it("updates transaction and removes from needsReviewEmails", async () => {
+      useEmailCaptureStore.setState({
+        needsReviewEmails: [
+          {
+            id: "pe-1",
+            externalId: "msg-1",
+            provider: "gmail",
+            status: "needs_review",
+            failureReason: null,
+            subject: "Compra aprobada",
+            rawBodyPreview: null,
+            receivedAt: "2026-03-05T10:00:00Z",
+            transactionId: "tx-1",
+            confidence: 0.5,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      await useEmailCaptureStore.getState().confirmReview("pe-1", "food");
+
+      expect(updateProcessedEmailStatus).toHaveBeenCalledWith(mockDb, "pe-1", "success", "tx-1");
+      expect(useEmailCaptureStore.getState().needsReviewEmails).toHaveLength(0);
+    });
+
+    it("does nothing when processed email not found", async () => {
+      useEmailCaptureStore.setState({ needsReviewEmails: [] });
+
+      await useEmailCaptureStore.getState().confirmReview("nonexistent", "food");
+
+      expect(updateProcessedEmailStatus).not.toHaveBeenCalled();
     });
   });
 });

@@ -86,7 +86,7 @@ describe("gmail adapter", () => {
         url: "fidy://email/callback?code=auth-code",
       });
 
-      mockFetch.mockResolvedValueOnce({ ok: false, status: 400 });
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 400, text: () => Promise.resolve("") });
 
       const result = await connectGmail(CLIENT_ID);
       expect(result).toEqual({ success: false, error: "token_exchange_failed" });

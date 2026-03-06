@@ -37,12 +37,32 @@ describe("tailwind <-> Colors sync", () => {
     expect(twColors["chart-transport"]).toBe(Colors.chart.transport);
   });
 
-  test("chart-shopping matches Colors.chart.shopping", () => {
-    expect(twColors["chart-shopping"]).toBe(Colors.chart.shopping);
+  test("chart-entertainment matches Colors.chart.entertainment", () => {
+    expect(twColors["chart-entertainment"]).toBe(Colors.chart.entertainment);
   });
 
-  test("chart-bills matches Colors.chart.bills", () => {
-    expect(twColors["chart-bills"]).toBe(Colors.chart.bills);
+  test("chart-health matches Colors.chart.health", () => {
+    expect(twColors["chart-health"]).toBe(Colors.chart.health);
+  });
+
+  test("chart-education matches Colors.chart.education", () => {
+    expect(twColors["chart-education"]).toBe(Colors.chart.education);
+  });
+
+  test("chart-home matches Colors.chart.home", () => {
+    expect(twColors["chart-home"]).toBe(Colors.chart.home);
+  });
+
+  test("chart-clothing matches Colors.chart.clothing", () => {
+    expect(twColors["chart-clothing"]).toBe(Colors.chart.clothing);
+  });
+
+  test("chart-services matches Colors.chart.services", () => {
+    expect(twColors["chart-services"]).toBe(Colors.chart.services);
+  });
+
+  test("chart-transfer matches Colors.chart.transfer", () => {
+    expect(twColors["chart-transfer"]).toBe(Colors.chart.transfer);
   });
 
   test("chart-other matches Colors.chart.other", () => {

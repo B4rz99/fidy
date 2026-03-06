@@ -19,7 +19,7 @@ describe("createTransactionSchema", () => {
     const result = createTransactionSchema.safeParse({
       ...validInput,
       type: "income",
-      categoryId: "income",
+      categoryId: "transfer",
     });
     expect(result.success).toBe(true);
   });

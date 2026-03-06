@@ -76,7 +76,7 @@ export function MenuPanel() {
           onPress={handleConnectedAccounts}
         >
           <Mail size={20} color={primaryColor} />
-          <Text style={[styles.menuItemText, { color: primaryColor }]}>Connected Accounts</Text>
+          <Text style={[styles.menuItemText, { color: primaryColor }]}>Connected Mails</Text>
         </Pressable>
       </Animated.View>
     </View>
