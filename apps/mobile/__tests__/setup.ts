@@ -162,11 +162,6 @@ vi.mock("expo-web-browser", () => ({
   openBrowserAsync: vi.fn(),
 }));
 
-// Mock llama.rn
-vi.mock("llama.rn", () => ({
-  initLlama: vi.fn(),
-}));
-
 // Mock expo-background-task
 vi.mock("expo-background-task", () => ({
   registerTaskAsync: vi.fn(),

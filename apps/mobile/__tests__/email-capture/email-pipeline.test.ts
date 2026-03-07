@@ -9,8 +9,7 @@ const mockInsertTransaction = vi.fn();
 const mockEnqueueSync = vi.fn();
 const mockLookupMerchantRule = vi.fn().mockResolvedValue(null);
 const mockInsertMerchantRule = vi.fn();
-const mockGetLlmContext = vi.fn().mockResolvedValue({});
-const mockParseEmailWithLlm = vi.fn().mockResolvedValue(null);
+const mockParseEmailApi = vi.fn().mockResolvedValue(null);
 
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getProcessedExternalIds: (...args: unknown[]) => mockGetProcessedExternalIds(...args),
@@ -27,18 +26,9 @@ vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
   insertMerchantRule: (...args: unknown[]) => mockInsertMerchantRule(...args),
 }));
 
-vi.mock("@/features/email-capture/services/llm-context", () => ({
-  getLlmContext: (...args: unknown[]) => mockGetLlmContext(...args),
+vi.mock("@/features/email-capture/services/parse-email-api", () => ({
+  parseEmailApi: (...args: unknown[]) => mockParseEmailApi(...args),
 }));
-
-vi.mock("@/features/email-capture/services/llm-parser", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/features/email-capture/services/llm-parser")>();
-  return {
-    ...actual,
-    parseEmailWithLlm: (...args: unknown[]) => mockParseEmailWithLlm(...args),
-  };
-});
 
 const mockGenerateId = vi.fn();
 vi.mock("@/shared/lib/generate-id", () => ({
@@ -83,8 +73,7 @@ describe("email processing pipeline", () => {
     mockEnqueueSync.mockResolvedValue(undefined);
     mockLookupMerchantRule.mockResolvedValue(null);
     mockInsertMerchantRule.mockResolvedValue(undefined);
-    mockGetLlmContext.mockResolvedValue({});
-    mockParseEmailWithLlm.mockResolvedValue(null);
+    mockParseEmailApi.mockResolvedValue(null);
   });
 
   it("filters out emails from unknown senders", async () => {
@@ -92,7 +81,7 @@ describe("email processing pipeline", () => {
 
     const result = await processEmails(mockDb, USER_ID, emails, SENDERS);
 
-    expect(mockParseEmailWithLlm).not.toHaveBeenCalled();
+    expect(mockParseEmailApi).not.toHaveBeenCalled();
     expect(result.filtered).toBe(1);
     expect(result.saved).toBe(0);
   });
@@ -104,13 +93,13 @@ describe("email processing pipeline", () => {
 
     const result = await processEmails(mockDb, USER_ID, emails, SENDERS);
 
-    expect(mockParseEmailWithLlm).not.toHaveBeenCalled();
+    expect(mockParseEmailApi).not.toHaveBeenCalled();
     expect(result.skippedDuplicate).toBe(1);
   });
 
   it("marks email as failed when LLM returns null", async () => {
     const emails = [makeRawEmail()];
-    mockParseEmailWithLlm.mockResolvedValueOnce(null);
+    mockParseEmailApi.mockResolvedValueOnce(null);
 
     const result = await processEmails(mockDb, USER_ID, emails, SENDERS);
 
@@ -128,7 +117,7 @@ describe("email processing pipeline", () => {
 
   it("saves transaction and caches merchant rule when LLM returns high confidence", async () => {
     const emails = [makeRawEmail()];
-    mockParseEmailWithLlm.mockResolvedValueOnce({
+    mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
       amountCents: 5000000,
       categoryId: "other",
@@ -171,7 +160,7 @@ describe("email processing pipeline", () => {
 
   it("saves transaction as needs_review when LLM returns low confidence", async () => {
     const emails = [makeRawEmail()];
-    mockParseEmailWithLlm.mockResolvedValueOnce({
+    mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
       amountCents: 5000000,
       categoryId: "other",
@@ -201,7 +190,7 @@ describe("email processing pipeline", () => {
   it("uses cached category from merchant rule hit", async () => {
     const emails = [makeRawEmail()];
     mockLookupMerchantRule.mockResolvedValueOnce("food");
-    mockParseEmailWithLlm.mockResolvedValueOnce({
+    mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
       amountCents: 5000000,
       categoryId: "other",
@@ -237,7 +226,7 @@ describe("email processing pipeline", () => {
 
   it("marks email as failed when Zod validation fails", async () => {
     const emails = [makeRawEmail()];
-    mockParseEmailWithLlm.mockResolvedValueOnce({
+    mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
       amountCents: -100,
       categoryId: "other",
@@ -266,7 +255,7 @@ describe("email processing pipeline", () => {
       makeRawEmail({ externalId: "ext-3" }),
     ];
 
-    mockParseEmailWithLlm
+    mockParseEmailApi
       .mockResolvedValueOnce({
         type: "expense",
         amountCents: 5000000,
@@ -282,12 +271,12 @@ describe("email processing pipeline", () => {
     expect(result.filtered).toBe(1);
     expect(result.saved).toBe(1);
     expect(result.failed).toBe(1);
-    expect(mockParseEmailWithLlm).toHaveBeenCalledTimes(2);
+    expect(mockParseEmailApi).toHaveBeenCalledTimes(2);
   });
 
   it("sets source to email_outlook for outlook provider", async () => {
     const emails = [makeRawEmail({ provider: "outlook" })];
-    mockParseEmailWithLlm.mockResolvedValueOnce({
+    mockParseEmailApi.mockResolvedValueOnce({
       type: "income",
       amountCents: 100000,
       categoryId: "transfer",
@@ -307,7 +296,7 @@ describe("email processing pipeline", () => {
 
   it("marks email as failed when LLM throws", async () => {
     const emails = [makeRawEmail()];
-    mockParseEmailWithLlm.mockRejectedValueOnce(new Error("LLM timeout"));
+    mockParseEmailApi.mockRejectedValueOnce(new Error("LLM timeout"));
 
     const result = await processEmails(mockDb, USER_ID, emails, SENDERS);
 
