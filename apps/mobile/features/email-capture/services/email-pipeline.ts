@@ -6,8 +6,8 @@ import { isBankSender } from "../lib/bank-senders";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
 import { getProcessedExternalIds, insertProcessedEmail } from "../lib/repository";
 import type { RawEmail } from "../schema";
-import { getLlmContext } from "./llm-context";
-import { type LlmParsedTransaction, llmOutputSchema, parseEmailWithLlm } from "./llm-parser";
+import { type LlmParsedTransaction, llmOutputSchema } from "./llm-parser";
+import { parseEmailApi } from "./parse-email-api";
 
 export type PipelineResult = {
   filtered: number;
@@ -32,8 +32,7 @@ async function parseEmail(
 ): Promise<LlmParsedTransaction | null> {
   const keyword = extractKeyword(email.subject);
   const cachedCategoryId = await lookupMerchantRule(db, userId, email.from, keyword);
-  const context = await getLlmContext();
-  const llmResult = await parseEmailWithLlm(email.body, context);
+  const llmResult = await parseEmailApi(email.body);
   if (!llmResult) return null;
 
   if (cachedCategoryId) {
