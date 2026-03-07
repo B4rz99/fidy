@@ -39,7 +39,6 @@ export default function FailedEmailsScreen() {
         data={failedEmails}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        estimatedItemSize={150}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
           paddingTop: Platform.OS === "android" ? insets.top : 0,

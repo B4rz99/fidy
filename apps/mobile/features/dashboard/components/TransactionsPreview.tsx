@@ -39,7 +39,6 @@ export const TransactionsPreview = () => {
         data={previewTransactions}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
-        estimatedItemSize={60}
         scrollEnabled={false}
       />
     </View>

@@ -75,7 +75,3 @@ export async function updateProcessedEmailStatus(
 export async function dismissProcessedEmail(db: AnyDb, id: string) {
   await db.delete(processedEmails).where(eq(processedEmails.id, id));
 }
-
-export async function clearAllProcessedEmails(db: AnyDb) {
-  await db.delete(processedEmails);
-}
