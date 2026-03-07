@@ -170,7 +170,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
       if (allEmails.length > 0) {
         let lastRefreshedSaved = 0;
-        await processEmails(dbRef!, userIdRef!, allEmails, senders, (progress) => {
+        await processEmails(dbRef!, userIdRef!, allEmails, (progress) => {
           set({ progress });
           // Refresh transactions on home screen only when new ones are saved
           if (progress.saved > lastRefreshedSaved) {

@@ -422,7 +422,7 @@ describe("useEmailCaptureStore", () => {
       expect(useEmailCaptureStore.getState().isFetching).toBe(false);
     });
 
-    it("calls processEmails without parseFn parameter", async () => {
+    it("calls processEmails with correct arguments", async () => {
       useEmailCaptureStore.setState({
         accounts: [
           {
@@ -463,7 +463,6 @@ describe("useEmailCaptureStore", () => {
         mockDb,
         mockUserId,
         mockRawEmails,
-        expect.any(Array),
         expect.any(Function)
       );
     });

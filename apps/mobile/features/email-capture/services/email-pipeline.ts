@@ -1,8 +1,6 @@
 import { enqueueSync, insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db/client";
 import { generateId } from "@/shared/lib/generate-id";
-import type { BankSender } from "../lib/bank-senders";
-import { isBankSender } from "../lib/bank-senders";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
 import { getProcessedExternalIds, insertProcessedEmail } from "../lib/repository";
 import type { RawEmail } from "../schema";
@@ -102,7 +100,6 @@ export async function processEmails(
   db: AnyDb,
   userId: string,
   rawEmails: RawEmail[],
-  senders: readonly BankSender[],
   onProgress?: ProgressCallback
 ): Promise<PipelineResult> {
   const result: PipelineResult = {
@@ -116,12 +113,8 @@ export async function processEmails(
   const allExternalIds = rawEmails.map((e) => e.externalId);
   const processedIds = await getProcessedExternalIds(db, allExternalIds);
 
-  // Filter to only emails that need processing
+  // Skip already-processed emails (fetch stage already filtered by sender)
   const toProcess = rawEmails.filter((email) => {
-    if (!isBankSender(email.from, senders)) {
-      result.filtered++;
-      return false;
-    }
     if (processedIds.has(email.externalId)) {
       result.skippedDuplicate++;
       return false;
