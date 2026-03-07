@@ -16,7 +16,7 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.75.0
 
       - name: Deploy parse-email
         run: supabase functions deploy parse-email --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
