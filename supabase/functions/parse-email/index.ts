@@ -1,6 +1,6 @@
 // biome-ignore-all lint/style/useNamingConvention: OpenAI SDK and API field names
 import OpenAI from "https://deno.land/x/openai@v4.24.0/mod.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 // Keep in sync with apps/mobile/features/transactions/lib/categories.ts
 const CATEGORY_IDS = [
@@ -16,28 +16,67 @@ const CATEGORY_IDS = [
   "other",
 ] as const;
 
-const CLASSIFY_SYSTEM = `Pick the best category for this merchant. Respond with ONLY valid JSON: {"categoryId":"<id>"}
-Categories: ${CATEGORY_IDS.join(", ")}`;
+const CATEGORY_GUIDE = `- food: groceries, restaurants, bakeries, coffee, food delivery (Éxito, Carulla, D1, Rappi, McDonald's, Juan Valdez, Ara, Crepes, PPC, Frisby)
+- transport: taxis, gas stations (EDS), tolls, airlines (Uber, DiDi, Terpel, EDS, peajes, Avianca, LATAM)
+- entertainment: movies, streaming, games, bars (Netflix, Spotify, Cine Colombia)
+- health: pharmacies, doctors, gym (Farmatodo, Droguería, Bodytech, clínica, hospital)
+- education: tuition, courses, books (universidad, fundación, Platzi)
+- home: rent, utilities, internet, furniture (EPM, Codensa, Claro hogar, Homecenter, arriendo)
+- clothing: apparel, shoes (Zara, Falabella, Tennis, Arturo Calle)
+- services: insurance, phone plan, subscriptions (Claro móvil, seguros, MetLife, notaría)
+- transfer: money transfers (Nequi, Daviplata, PSE, transferencia)
+- other: anything unclear`;
 
-const FULL_PARSE_SYSTEM = `You are a JSON extractor for Colombian bank transaction emails. Respond with ONLY a JSON object. No explanation, no text before or after.
+const CLASSIFY_SYSTEM = `Pick the best category for this Colombian merchant.
 
-Required JSON format:
-{"type":"expense"|"income","amountCents":number,"categoryId":"string","description":"string","date":"YYYY-MM-DD","confidence":number}
+${CATEGORY_GUIDE}`;
+
+const FULL_PARSE_SYSTEM = `Extract transaction data from this Colombian bank email.
 
 Rules:
 - All amounts are in Colombian Pesos (COP). Commas and dots are thousands separators UNLESS followed by exactly 2 digits at the end, which means centavos. Examples: 7,500 = 7500 pesos = 750000 cents. 50,000 = 50000 pesos = 5000000 cents.
 - amountCents: amount in centavos (pesos × 100)
-- categoryId: one of [${CATEGORY_IDS.join(", ")}]
-- description: short merchant/description from the email
-- date: transaction date in YYYY-MM-DD format
-- confidence: 0 to 1, how certain you are about the extraction
-- type: "expense" for purchases/payments, "income" for deposits/transfers received`;
+- description: ONLY the merchant/business name, cleaned up (e.g. "EDS La Castellana", "Farmatodo", "MetLife Colombia")
+- date: transaction date in YYYY-MM-DD
+- confidence: 0 to 1
+- type: "expense" for purchases/payments, "income" for deposits/transfers received
 
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL") ?? "",
-  Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-);
+Category guide — pick based on the MERCHANT NAME:
+${CATEGORY_GUIDE}`;
+
+const CLASSIFY_SCHEMA = {
+  name: "classify_result",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      categoryId: { type: "string", enum: [...CATEGORY_IDS] },
+    },
+    required: ["categoryId"],
+    additionalProperties: false,
+  },
+};
+
+const FULL_PARSE_SCHEMA = {
+  name: "transaction",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      type: { type: "string", enum: ["expense", "income"] },
+      amountCents: { type: "integer" },
+      categoryId: { type: "string", enum: [...CATEGORY_IDS] },
+      description: { type: "string" },
+      date: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
+      confidence: { type: "number", minimum: 0, maximum: 1 },
+    },
+    required: ["type", "amountCents", "categoryId", "description", "date", "confidence"],
+    additionalProperties: false,
+  },
+};
+
 const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
+const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -52,9 +91,12 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return jsonResponse({ success: false, error: "missing_auth" }, 401);
     }
-
-    const { error: authError } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
-    if (authError) {
+    const token = authHeader.replace("Bearer ", "");
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(token);
+    if (authError || !user) {
       return jsonResponse({ success: false, error: "invalid_auth" }, 401);
     }
 
@@ -70,15 +112,17 @@ Deno.serve(async (req) => {
     }
 
     const systemPrompt = mode === "classify" ? CLASSIFY_SYSTEM : FULL_PARSE_SYSTEM;
+    const jsonSchema = mode === "classify" ? CLASSIFY_SCHEMA : FULL_PARSE_SCHEMA;
+    // Truncate to focus on transaction details, skip legal/footer noise
+    const truncatedBody = body.length > 2000 ? body.slice(0, 2000) : body;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-5-nano",
+      model: "gpt-5-nano-2025-08-07",
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: body },
+        { role: "user", content: truncatedBody },
       ],
-      response_format: { type: "json_object" },
-      temperature: 0.1,
+      response_format: { type: "json_schema", json_schema: jsonSchema },
     });
 
     const text = completion.choices[0]?.message?.content;
@@ -89,7 +133,8 @@ Deno.serve(async (req) => {
     const data = JSON.parse(text);
     return jsonResponse({ success: true, data });
   } catch (err) {
-    console.error("parse-email error:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("parse-email error:", message);
     return jsonResponse({ success: false, error: "internal_error" }, 500);
   }
 });

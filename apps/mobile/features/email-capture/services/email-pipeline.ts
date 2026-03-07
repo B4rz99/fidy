@@ -1,12 +1,10 @@
 import { enqueueSync, insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db/client";
 import { generateId } from "@/shared/lib/generate-id";
-import type { BankSender } from "../lib/bank-senders";
-import { isBankSender } from "../lib/bank-senders";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
 import { getProcessedExternalIds, insertProcessedEmail } from "../lib/repository";
 import type { RawEmail } from "../schema";
-import { type LlmParsedTransaction, llmOutputSchema } from "./llm-parser";
+import type { LlmParsedTransaction } from "./llm-parser";
 import { parseEmailApi } from "./parse-email-api";
 
 export type PipelineResult = {
@@ -18,28 +16,28 @@ export type PipelineResult = {
 };
 
 /**
- * Extract a keyword from the email subject for merchant rule matching.
- * Uses first 3 words of the subject, lowercased and trimmed.
+ * Normalize merchant name for cache lookup.
+ * "EDS LA CASTELLANA" → "eds la castellana"
  */
-function extractKeyword(subject: string): string {
-  return subject.split(/\s+/).slice(0, 3).join(" ").toLowerCase().trim();
+function normalizeMerchant(description: string): string {
+  return description.toLowerCase().trim();
 }
 
-type ParseResult = { parsed: LlmParsedTransaction; keyword: string };
-
-async function parseEmail(db: AnyDb, userId: string, email: RawEmail): Promise<ParseResult | null> {
-  const keyword = extractKeyword(email.subject);
-  const [cachedCategoryId, llmResult] = await Promise.all([
-    lookupMerchantRule(db, userId, email.from, keyword),
-    parseEmailApi(email.body),
-  ]);
+async function parseEmail(
+  db: AnyDb,
+  userId: string,
+  email: RawEmail
+): Promise<LlmParsedTransaction | null> {
+  const llmResult = await parseEmailApi(email.body);
   if (!llmResult) return null;
 
-  const parsed = cachedCategoryId
+  // Check if we have a cached category for this merchant name
+  const merchantKey = normalizeMerchant(llmResult.description);
+  const cachedCategoryId = await lookupMerchantRule(db, userId, email.from, merchantKey);
+
+  return cachedCategoryId
     ? { ...llmResult, categoryId: cachedCategoryId, confidence: 1.0 }
     : llmResult;
-
-  return { parsed, keyword };
 }
 
 async function saveTransaction(
@@ -91,11 +89,18 @@ async function saveTransaction(
   return txId;
 }
 
+export type ProgressCallback = (progress: {
+  total: number;
+  completed: number;
+  saved: number;
+  failed: number;
+}) => void;
+
 export async function processEmails(
   db: AnyDb,
   userId: string,
   rawEmails: RawEmail[],
-  senders: readonly BankSender[]
+  onProgress?: ProgressCallback
 ): Promise<PipelineResult> {
   const result: PipelineResult = {
     filtered: 0,
@@ -108,78 +113,86 @@ export async function processEmails(
   const allExternalIds = rawEmails.map((e) => e.externalId);
   const processedIds = await getProcessedExternalIds(db, allExternalIds);
 
-  for (const email of rawEmails) {
-    if (!isBankSender(email.from, senders)) {
-      result.filtered++;
-      continue;
-    }
-
+  // Skip already-processed emails (fetch stage already filtered by sender)
+  const toProcess = rawEmails.filter((email) => {
     if (processedIds.has(email.externalId)) {
       result.skippedDuplicate++;
-      continue;
+      return false;
     }
+    return true;
+  });
 
-    let parseResult: ParseResult | null = null;
-    let parseError = false;
+  let completed = 0;
+  const total = toProcess.length;
+  onProgress?.({ total, completed: 0, saved: 0, failed: 0 });
 
-    try {
-      parseResult = await parseEmail(db, userId, email);
-    } catch {
-      parseError = true;
+  // Worker pool: 5 concurrent workers, each grabs next email, parses + saves, reports progress 1 by 1
+  const Concurrency = 5;
+  let nextIdx = 0;
+
+  async function worker(): Promise<void> {
+    while (nextIdx < toProcess.length) {
+      const email = toProcess[nextIdx++];
+
+      let parsed: LlmParsedTransaction | null = null;
+      let parseError = false;
+      try {
+        parsed = await parseEmail(db, userId, email);
+      } catch (err) {
+        console.warn(`[EmailCapture] parse threw for "${email.subject}":`, err);
+        parseError = true;
+      }
+
+      if (!parsed) {
+        const status = parseError ? "failed" : "skipped";
+        const failureReason = parseError ? "parse_error" : null;
+
+        if (parseError) {
+          console.warn(`[EmailCapture] FAILED "${email.subject}" from ${email.from}: parse_error`);
+          result.failed++;
+        } else {
+          result.filtered++;
+        }
+
+        await insertProcessedEmail(db, {
+          id: generateId("pe"),
+          externalId: email.externalId,
+          provider: email.provider,
+          status,
+          failureReason,
+          subject: email.subject,
+          rawBodyPreview: email.body.slice(0, 500),
+          receivedAt: email.receivedAt,
+          transactionId: null,
+          confidence: null,
+          createdAt: new Date().toISOString(),
+        });
+        completed++;
+        onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
+        continue;
+      }
+
+      // parseEmailApi already validates via llmOutputSchema.safeParse
+      if (parsed.confidence < 0.7) {
+        await saveTransaction(db, userId, parsed, email, "needs_review");
+        result.needsReview++;
+        completed++;
+        onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
+        continue;
+      }
+
+      await saveTransaction(db, userId, parsed, email, "success");
+
+      const merchantKey = normalizeMerchant(parsed.description);
+      await insertMerchantRule(db, userId, email.from, merchantKey, parsed.categoryId);
+
+      result.saved++;
+      completed++;
+      onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
     }
-
-    if (!parseResult) {
-      result.failed++;
-      await insertProcessedEmail(db, {
-        id: generateId("pe"),
-        externalId: email.externalId,
-        provider: email.provider,
-        status: "failed",
-        failureReason: parseError ? "parse_error" : "parse_failed",
-        subject: email.subject,
-        rawBodyPreview: email.body.slice(0, 500),
-        receivedAt: email.receivedAt,
-        transactionId: null,
-        confidence: null,
-        createdAt: new Date().toISOString(),
-      });
-      continue;
-    }
-
-    const validation = llmOutputSchema.safeParse(parseResult.parsed);
-    if (!validation.success) {
-      result.failed++;
-      await insertProcessedEmail(db, {
-        id: generateId("pe"),
-        externalId: email.externalId,
-        provider: email.provider,
-        status: "failed",
-        failureReason: `validation: ${validation.error.issues[0]?.message ?? "invalid"}`,
-        subject: email.subject,
-        rawBodyPreview: email.body.slice(0, 500),
-        receivedAt: email.receivedAt,
-        transactionId: null,
-        confidence: null,
-        createdAt: new Date().toISOString(),
-      });
-      continue;
-    }
-
-    const validated = validation.data;
-
-    if (validated.confidence < 0.7) {
-      await saveTransaction(db, userId, validated, email, "needs_review");
-      result.needsReview++;
-      continue;
-    }
-
-    await saveTransaction(db, userId, validated, email, "success");
-
-    // Cache merchant rule for future lookups
-    await insertMerchantRule(db, userId, email.from, parseResult.keyword, validated.categoryId);
-
-    result.saved++;
   }
+
+  await Promise.all(Array.from({ length: Math.min(Concurrency, total) }, () => worker()));
 
   return result;
 }

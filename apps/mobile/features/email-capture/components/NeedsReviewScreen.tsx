@@ -60,7 +60,6 @@ export default function NeedsReviewScreen() {
           data={needsReview}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
-          estimatedItemSize={220}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
           ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
           ListHeaderComponent={

@@ -6,6 +6,7 @@ export type EmailProvider = z.infer<typeof emailProviderSchema>;
 export const processedEmailStatusSchema = z.enum([
   "success",
   "failed",
+  "skipped",
   "skipped_duplicate",
   "needs_review",
 ]);
