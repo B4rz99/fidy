@@ -2,6 +2,7 @@
 import OpenAI from "https://deno.land/x/openai@v4.24.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Keep in sync with apps/mobile/features/transactions/lib/categories.ts
 const CATEGORY_IDS = [
   "food",
   "transport",
@@ -32,37 +33,36 @@ Rules:
 - confidence: 0 to 1, how certain you are about the extraction
 - type: "expense" for purchases/payments, "income" for deposits/transfers received`;
 
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL") ?? "",
+  Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+);
+const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ success: false, error: "missing_auth" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonResponse({ success: false, error: "missing_auth" }, 401);
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const { error: authError } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
     if (authError) {
-      return new Response(JSON.stringify({ success: false, error: "invalid_auth" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonResponse({ success: false, error: "invalid_auth" }, 401);
     }
 
     const { body, mode } = await req.json();
 
     if (!body || !mode || !["classify", "full_parse"].includes(mode)) {
-      return new Response(JSON.stringify({ success: false, error: "invalid_request" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonResponse({ success: false, error: "invalid_request" }, 400);
     }
-
-    const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
 
     const systemPrompt = mode === "classify" ? CLASSIFY_SYSTEM : FULL_PARSE_SYSTEM;
 
@@ -76,16 +76,17 @@ Deno.serve(async (req) => {
       temperature: 0.1,
     });
 
-    const text = completion.choices[0]?.message?.content ?? "";
-    const data = JSON.parse(text);
+    const text = completion.choices[0]?.message?.content;
+    if (!text) {
+      return jsonResponse({ success: false, error: "empty_llm_response" }, 502);
+    }
 
-    return new Response(JSON.stringify({ success: true, data }), {
-      headers: { "Content-Type": "application/json" },
-    });
+    const data = JSON.parse(text);
+    return jsonResponse({ success: true, data });
   } catch (err) {
-    return new Response(
-      JSON.stringify({ success: false, error: err instanceof Error ? err.message : "unknown" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+    return jsonResponse(
+      { success: false, error: err instanceof Error ? err.message : "unknown" },
+      500
     );
   }
 });

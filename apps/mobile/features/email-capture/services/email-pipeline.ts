@@ -25,21 +25,21 @@ function extractKeyword(subject: string): string {
   return subject.split(/\s+/).slice(0, 3).join(" ").toLowerCase().trim();
 }
 
-async function parseEmail(
-  db: AnyDb,
-  userId: string,
-  email: RawEmail
-): Promise<LlmParsedTransaction | null> {
+type ParseResult = { parsed: LlmParsedTransaction; keyword: string };
+
+async function parseEmail(db: AnyDb, userId: string, email: RawEmail): Promise<ParseResult | null> {
   const keyword = extractKeyword(email.subject);
-  const cachedCategoryId = await lookupMerchantRule(db, userId, email.from, keyword);
-  const llmResult = await parseEmailApi(email.body);
+  const [cachedCategoryId, llmResult] = await Promise.all([
+    lookupMerchantRule(db, userId, email.from, keyword),
+    parseEmailApi(email.body),
+  ]);
   if (!llmResult) return null;
 
-  if (cachedCategoryId) {
-    return { ...llmResult, categoryId: cachedCategoryId, confidence: 1.0 };
-  }
+  const parsed = cachedCategoryId
+    ? { ...llmResult, categoryId: cachedCategoryId, confidence: 1.0 }
+    : llmResult;
 
-  return llmResult;
+  return { parsed, keyword };
 }
 
 async function saveTransaction(
@@ -119,16 +119,16 @@ export async function processEmails(
       continue;
     }
 
-    let parsed: LlmParsedTransaction | null = null;
+    let parseResult: ParseResult | null = null;
     let parseError = false;
 
     try {
-      parsed = await parseEmail(db, userId, email);
+      parseResult = await parseEmail(db, userId, email);
     } catch {
       parseError = true;
     }
 
-    if (!parsed) {
+    if (!parseResult) {
       result.failed++;
       await insertProcessedEmail(db, {
         id: generateId("pe"),
@@ -146,7 +146,7 @@ export async function processEmails(
       continue;
     }
 
-    const validation = llmOutputSchema.safeParse(parsed);
+    const validation = llmOutputSchema.safeParse(parseResult.parsed);
     if (!validation.success) {
       result.failed++;
       await insertProcessedEmail(db, {
@@ -176,8 +176,7 @@ export async function processEmails(
     await saveTransaction(db, userId, validated, email, "success");
 
     // Cache merchant rule for future lookups
-    const keyword = extractKeyword(email.subject);
-    await insertMerchantRule(db, userId, email.from, keyword, validated.categoryId);
+    await insertMerchantRule(db, userId, email.from, parseResult.keyword, validated.categoryId);
 
     result.saved++;
   }

@@ -5,7 +5,7 @@ import { type LlmParsedTransaction, llmOutputSchema } from "./llm-parser";
 export function stripPii(text: string): string {
   return text
     .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "[EMAIL]")
-    .replace(/\+?\d[\d\s-]{8,14}\d/g, "[PHONE]")
+    .replace(/\+\d[\d\s-]{8,14}\d/g, "[PHONE]")
     .replace(/\*{1,4}\d{4}/g, "[CARD]");
 }
 

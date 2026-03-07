@@ -19,9 +19,15 @@ describe("stripPii", () => {
     expect(stripPii("Contact user@example.com for info")).toBe("Contact [EMAIL] for info");
   });
 
-  it("removes phone numbers", () => {
+  it("removes international phone numbers", () => {
     expect(stripPii("Call +57 300 123 4567")).toBe("Call [PHONE]");
-    expect(stripPii("Tel: 3001234567")).toBe("Tel: [PHONE]");
+    expect(stripPii("Tel: +573001234567")).toBe("Tel: [PHONE]");
+  });
+
+  it("preserves plain digit sequences (account numbers, amounts)", () => {
+    expect(stripPii("Cuenta 1234567890")).toBe("Cuenta 1234567890");
+    expect(stripPii("Monto: 3001234567")).toBe("Monto: 3001234567");
+    expect(stripPii("CC 1037654321")).toBe("CC 1037654321");
   });
 
   it("removes masked card numbers", () => {
