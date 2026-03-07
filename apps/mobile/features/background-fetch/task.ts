@@ -1,7 +1,6 @@
 import * as BackgroundTask from "expo-background-task";
 import * as TaskManager from "expo-task-manager";
 import { GMAIL_CLIENT_ID, OUTLOOK_CLIENT_ID } from "@/features/email-capture/schema";
-import { releaseLlmContext } from "@/features/email-capture/services/llm-context";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { getDb } from "@/shared/db/client";
 import { getSupabase } from "@/shared/lib/supabase";
@@ -25,7 +24,5 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch {
     return BackgroundTask.BackgroundTaskResult.Failed;
-  } finally {
-    releaseLlmContext();
   }
 });
