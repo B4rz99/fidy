@@ -153,7 +153,7 @@ describe("email processing pipeline", () => {
       mockDb,
       USER_ID,
       "notificaciones@bancolombia.com.co",
-      "compra aprobada",
+      "compra en exito",
       "other"
     );
   });
@@ -206,7 +206,7 @@ describe("email processing pipeline", () => {
       mockDb,
       USER_ID,
       "notificaciones@bancolombia.com.co",
-      "compra aprobada"
+      "compra en exito"
     );
     // Should override LLM categoryId with cached one
     expect(mockInsertTransaction).toHaveBeenCalledWith(
@@ -224,16 +224,9 @@ describe("email processing pipeline", () => {
     );
   });
 
-  it("marks email as failed when Zod validation fails", async () => {
+  it("marks email as failed when parseEmailApi returns null (validation done in API layer)", async () => {
     const emails = [makeRawEmail()];
-    mockParseEmailApi.mockResolvedValueOnce({
-      type: "expense",
-      amountCents: -100,
-      categoryId: "other",
-      description: "Bad",
-      date: "2026-03-05",
-      confidence: 0.9,
-    });
+    mockParseEmailApi.mockResolvedValueOnce(null);
 
     const result = await processEmails(mockDb, USER_ID, emails, SENDERS);
 
@@ -243,7 +236,7 @@ describe("email processing pipeline", () => {
       mockDb,
       expect.objectContaining({
         status: "failed",
-        failureReason: expect.stringContaining("validation"),
+        failureReason: "parse_failed",
       })
     );
   });

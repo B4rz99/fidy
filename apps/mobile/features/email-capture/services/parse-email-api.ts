@@ -31,14 +31,21 @@ export async function classifyMerchantApi(merchant: string): Promise<string> {
 export async function parseEmailApi(emailBody: string): Promise<LlmParsedTransaction | null> {
   try {
     const stripped = stripPii(emailBody);
+    const supabase = getSupabase();
 
-    const { data, error } = await getSupabase().functions.invoke("parse-email", {
-      body: { body: stripped, mode: "full_parse" },
+    const { data, error } = await supabase.functions.invoke("parse-email", {
+      body: { body: stripped.slice(0, 2000), mode: "full_parse" },
     });
 
-    if (error || !data?.success) return null;
+    if (error || !data?.success) {
+      console.warn("[parseEmailApi] failed:", error?.message ?? "unknown");
+      return null;
+    }
 
     const result = llmOutputSchema.safeParse(data.data);
+    if (!result.success) {
+      console.warn("[parseEmailApi] validation failed:", result.error.issues[0]?.message);
+    }
     return result.success ? result.data : null;
   } catch {
     return null;

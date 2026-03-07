@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { create } from "zustand";
 import { enqueueSync } from "@/features/transactions/lib/repository";
+import { useTransactionStore } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db/client";
 import { transactions } from "@/shared/db/schema";
 import { generateId } from "@/shared/lib/generate-id";
@@ -17,7 +18,7 @@ import {
   updateProcessedEmailStatus,
 } from "./lib/repository";
 import type { EmailProvider } from "./schema";
-import { processEmails } from "./services/email-pipeline";
+import { type ProgressCallback, processEmails } from "./services/email-pipeline";
 import { connectGmail, disconnectGmail, fetchGmailEmails } from "./services/gmail-adapter";
 import { connectOutlook, disconnectOutlook, fetchOutlookEmails } from "./services/outlook-adapter";
 
@@ -29,6 +30,7 @@ type EmailCaptureState = {
   failedEmails: ProcessedEmailRow[];
   needsReviewEmails: ProcessedEmailRow[];
   isFetching: boolean;
+  progress: Parameters<ProgressCallback>[0] | null;
   bannerDismissed: boolean;
 };
 
@@ -50,6 +52,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
   failedEmails: [],
   needsReviewEmails: [],
   isFetching: false,
+  progress: null,
   bannerDismissed: false,
 
   initStore: (db, userId) => {
@@ -119,40 +122,80 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
   },
 
   fetchAndProcess: async (gmailClientId, outlookClientId) => {
-    if (!dbRef || !userIdRef) return;
-    if (get().isFetching) return;
+    if (!dbRef || !userIdRef) {
+      console.warn("[EmailCapture] fetchAndProcess: no db or userId");
+      return;
+    }
+    if (get().isFetching) {
+      console.warn("[EmailCapture] fetchAndProcess: already fetching, skipping");
+      return;
+    }
 
     set({ isFetching: true });
+    console.log("[EmailCapture] fetchAndProcess: starting");
 
     try {
       const { accounts } = get();
-      const senders = await fetchBankSenders();
-      const senderEmails = senders.map((s) => s.email);
-
-      for (const account of accounts) {
-        try {
-          const since = account.lastFetchedAt ?? new Date(0).toISOString();
-
-          const rawEmails =
-            account.provider === "gmail"
-              ? await fetchGmailEmails(gmailClientId, since, senderEmails)
-              : await fetchOutlookEmails(outlookClientId, since, senderEmails);
-
-          if (rawEmails.length > 0) {
-            await processEmails(dbRef!, userIdRef!, rawEmails, senders);
-          }
-
-          await updateLastFetchedAt(dbRef!, account.id, new Date().toISOString());
-        } catch {
-          // Continue processing remaining accounts
-        }
+      if (accounts.length === 0) {
+        console.warn("[EmailCapture] no connected accounts");
+        return;
       }
 
-      const failedEmails = await getFailedEmails(dbRef);
-      const needsReviewEmails = await getNeedsReviewEmails(dbRef);
+      const senders = await fetchBankSenders();
+      const senderEmails = senders.map((s) => s.email);
+      console.log(`[EmailCapture] ${senderEmails.length} bank sender emails`);
+
+      // Fetch emails from all accounts in parallel
+      const fetchResults = await Promise.all(
+        accounts.map(async (account) => {
+          try {
+            const since = account.lastFetchedAt ?? new Date(0).toISOString();
+            const rawEmails =
+              account.provider === "gmail"
+                ? await fetchGmailEmails(gmailClientId, since, senderEmails)
+                : await fetchOutlookEmails(outlookClientId, since, senderEmails);
+            console.log(`[EmailCapture] ${account.provider}: ${rawEmails.length} emails`);
+            return { account, rawEmails };
+          } catch (err) {
+            console.warn(`[EmailCapture] ${account.provider} fetch error:`, err);
+            return { account, rawEmails: [] as import("./schema").RawEmail[] };
+          }
+        })
+      );
+
+      const allEmails = fetchResults.flatMap((r) => r.rawEmails);
+      console.log(`[EmailCapture] total emails to process: ${allEmails.length}`);
+
+      if (allEmails.length > 0) {
+        let lastRefreshedSaved = 0;
+        const pipelineResult = await processEmails(dbRef!, userIdRef!, allEmails, senders, (progress) => {
+          set({ progress });
+          // Refresh transactions on home screen only when new ones are saved
+          if (progress.saved > lastRefreshedSaved) {
+            lastRefreshedSaved = progress.saved;
+            useTransactionStore.getState().loadTransactions();
+          }
+        });
+        console.log("[EmailCapture] pipeline result:", pipelineResult);
+      }
+
+      // Update lastFetchedAt for all accounts
+      const now = new Date().toISOString();
+      await Promise.all(fetchResults.map((r) => updateLastFetchedAt(dbRef!, r.account.id, now)));
+
+      const [failedEmails, needsReviewEmails] = await Promise.all([
+        getFailedEmails(dbRef),
+        getNeedsReviewEmails(dbRef),
+      ]);
       set({ failedEmails, needsReviewEmails });
+
+      // Refresh home screen transactions
+      await useTransactionStore.getState().loadTransactions();
+    } catch (err) {
+      console.warn("[EmailCapture] fetchAndProcess error:", err);
     } finally {
-      set({ isFetching: false });
+      set({ isFetching: false, progress: null });
+      console.log("[EmailCapture] fetchAndProcess: done");
     }
   },
 

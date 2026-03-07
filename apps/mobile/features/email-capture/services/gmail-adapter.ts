@@ -113,7 +113,10 @@ export async function fetchGmailEmails(
   senderEmails: string[]
 ): Promise<RawEmail[]> {
   const token = await getValidToken(clientId);
-  if (!token) return [];
+  if (!token) {
+    console.warn("[Gmail] no valid token, skipping fetch");
+    return [];
+  }
 
   const epoch = Math.floor(new Date(since).getTime() / 1000);
   const fromQuery = senderEmails.map((e) => `from:${e}`).join(" OR ");
@@ -163,27 +166,50 @@ function getHeader(headers: GmailHeader[], name: string): string {
   return headers.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value ?? "";
 }
 
-function extractPlainText(payload: GmailPayload): string {
+function extractBodyText(payload: GmailPayload): string {
+  // Try top-level body first
   if (payload.body?.data) {
     return decodeBase64Url(payload.body.data);
   }
-  if (payload.parts) {
-    for (const part of payload.parts) {
-      if (part.mimeType === "text/plain" && part.body?.data) {
-        return decodeBase64Url(part.body.data);
-      }
+
+  if (!payload.parts) return "";
+
+  // Prefer text/plain
+  const plain = findPartByMime(payload.parts, "text/plain");
+  if (plain) return plain;
+
+  // Fall back to text/html with tags stripped (bank emails are often HTML-only)
+  const html = findPartByMime(payload.parts, "text/html");
+  if (html) return stripHtml(html);
+
+  return "";
+}
+
+function findPartByMime(parts: GmailPart[], mime: string): string | null {
+  for (const part of parts) {
+    if (part.mimeType === mime && part.body?.data) {
+      return decodeBase64Url(part.body.data);
     }
-    for (const part of payload.parts) {
-      if (part.parts) {
-        const nested = extractPlainText({
-          headers: [],
-          parts: part.parts,
-        });
-        if (nested) return nested;
-      }
+    if (part.parts) {
+      const nested = findPartByMime(part.parts, mime);
+      if (nested) return nested;
     }
   }
-  return "";
+  return null;
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&#?\w+;/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function decodeBase64Url(data: string): string {
@@ -198,7 +224,7 @@ function parseGmailMessage(id: string, msg: { payload: GmailPayload }): RawEmail
   const from = getHeader(headers, "From");
   const subject = getHeader(headers, "Subject");
   const dateStr = getHeader(headers, "Date");
-  const body = extractPlainText(msg.payload);
+  const body = extractBodyText(msg.payload);
 
   if (!from || !subject) return null;
 

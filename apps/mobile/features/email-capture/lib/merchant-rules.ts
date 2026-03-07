@@ -22,6 +22,10 @@ export async function lookupMerchantRule(
   return rows[0]?.categoryId ?? null;
 }
 
+export async function clearAllMerchantRules(db: AnyDb): Promise<void> {
+  await db.delete(merchantRules);
+}
+
 export async function insertMerchantRule(
   db: AnyDb,
   userId: string,

@@ -24,13 +24,15 @@ export async function fetchBankSenders(): Promise<readonly BankSender[]> {
     const { data, error } = await getSupabase().from("bank_senders").select("bank, email");
 
     if (error || !data || data.length === 0) {
+      console.warn("[BankSenders] fetch failed or empty, using defaults:", error?.message);
       return cachedSenders ?? DEFAULT_BANK_SENDERS;
     }
 
     cachedSenders = data.map((row) => ({ bank: row.bank, email: row.email }));
     cachedAt = Date.now();
     return cachedSenders;
-  } catch {
+  } catch (err) {
+    console.warn("[BankSenders] exception, using defaults:", err);
     return cachedSenders ?? DEFAULT_BANK_SENDERS;
   }
 }
