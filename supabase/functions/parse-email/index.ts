@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/useNamingConvention: OpenAI SDK and API field names
 import OpenAI from "https://deno.land/x/openai@v4.24.0/mod.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 // Keep in sync with apps/mobile/features/transactions/lib/categories.ts
 const CATEGORY_IDS = [
@@ -63,11 +64,11 @@ const FULL_PARSE_SCHEMA = {
     type: "object",
     properties: {
       type: { type: "string", enum: ["expense", "income"] },
-      amountCents: { type: "number" },
+      amountCents: { type: "integer" },
       categoryId: { type: "string", enum: [...CATEGORY_IDS] },
       description: { type: "string" },
-      date: { type: "string" },
-      confidence: { type: "number" },
+      date: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
+      confidence: { type: "number", minimum: 0, maximum: 1 },
     },
     required: ["type", "amountCents", "categoryId", "description", "date", "confidence"],
     additionalProperties: false,
@@ -75,6 +76,7 @@ const FULL_PARSE_SCHEMA = {
 };
 
 const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
+const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -83,10 +85,21 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
-// Deployed with --no-verify-jwt due to ES256/HS256 mismatch between Supabase Auth and gateway.
-// The supabase-js client still sends the user's JWT; re-enable verification once Supabase fixes the algorithm.
 Deno.serve(async (req) => {
   try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return jsonResponse({ success: false, error: "missing_auth" }, 401);
+    }
+    const token = authHeader.replace("Bearer ", "");
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return jsonResponse({ success: false, error: "invalid_auth" }, 401);
+    }
+
     const { body, mode } = await req.json();
 
     if (

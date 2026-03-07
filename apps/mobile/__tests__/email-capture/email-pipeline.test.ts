@@ -97,20 +97,21 @@ describe("email processing pipeline", () => {
     expect(result.skippedDuplicate).toBe(1);
   });
 
-  it("marks email as failed when LLM returns null", async () => {
+  it("skips non-transaction email when LLM returns null", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce(null);
 
     const result = await processEmails(mockDb, USER_ID, emails, SENDERS);
 
-    expect(result.failed).toBe(1);
+    expect(result.filtered).toBe(1);
+    expect(result.failed).toBe(0);
     expect(result.saved).toBe(0);
     expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
         externalId: "ext-1",
-        status: "failed",
-        failureReason: "parse_failed",
+        status: "skipped",
+        failureReason: null,
       })
     );
   });
@@ -224,23 +225,6 @@ describe("email processing pipeline", () => {
     );
   });
 
-  it("marks email as failed when parseEmailApi returns null (validation done in API layer)", async () => {
-    const emails = [makeRawEmail()];
-    mockParseEmailApi.mockResolvedValueOnce(null);
-
-    const result = await processEmails(mockDb, USER_ID, emails, SENDERS);
-
-    expect(result.failed).toBe(1);
-    expect(result.saved).toBe(0);
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({
-        status: "failed",
-        failureReason: "parse_failed",
-      })
-    );
-  });
-
   it("processes multiple emails in a batch", async () => {
     const emails = [
       makeRawEmail({ externalId: "ext-1" }),
@@ -261,9 +245,9 @@ describe("email processing pipeline", () => {
 
     const result = await processEmails(mockDb, USER_ID, emails, SENDERS);
 
-    expect(result.filtered).toBe(1);
+    expect(result.filtered).toBe(2);
     expect(result.saved).toBe(1);
-    expect(result.failed).toBe(1);
+    expect(result.failed).toBe(0);
     expect(mockParseEmailApi).toHaveBeenCalledTimes(2);
   });
 

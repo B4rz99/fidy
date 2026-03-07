@@ -151,16 +151,22 @@ export async function processEmails(
       }
 
       if (!parsed) {
-        console.warn(
-          `[EmailCapture] FAILED "${email.subject}" from ${email.from}: ${parseError ? "parse_error" : "parse_failed"}`
-        );
-        result.failed++;
+        const status = parseError ? "failed" : "skipped";
+        const failureReason = parseError ? "parse_error" : null;
+
+        if (parseError) {
+          console.warn(`[EmailCapture] FAILED "${email.subject}" from ${email.from}: parse_error`);
+          result.failed++;
+        } else {
+          result.filtered++;
+        }
+
         await insertProcessedEmail(db, {
           id: generateId("pe"),
           externalId: email.externalId,
           provider: email.provider,
-          status: "failed",
-          failureReason: parseError ? "parse_error" : "parse_failed",
+          status,
+          failureReason,
           subject: email.subject,
           rawBodyPreview: email.body.slice(0, 500),
           receivedAt: email.receivedAt,

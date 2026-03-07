@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_BANK_SENDERS,
+  extractDomain,
   fetchBankSenders,
   isBankSender,
   resetBankSendersCache,
@@ -34,11 +35,18 @@ describe("bank senders", () => {
     );
   });
 
-  it("isBankSender returns true for known senders", () => {
-    expect(isBankSender("davibankinforma@davibank.com", DEFAULT_BANK_SENDERS)).toBe(true);
+  it("extractDomain extracts domain from email", () => {
+    expect(extractDomain("user@example.com")).toBe("example.com");
+    expect(extractDomain("BBVA@bbvanet.com.co")).toBe("bbvanet.com.co");
   });
 
-  it("isBankSender returns false for unknown senders", () => {
+  it("isBankSender matches by domain", () => {
+    expect(isBankSender("davibankinforma@davibank.com", DEFAULT_BANK_SENDERS)).toBe(true);
+    // Different address, same domain — should still match
+    expect(isBankSender("alertas@davibank.com", DEFAULT_BANK_SENDERS)).toBe(true);
+  });
+
+  it("isBankSender returns false for unknown domains", () => {
     expect(isBankSender("promo@random.com", DEFAULT_BANK_SENDERS)).toBe(false);
   });
 
@@ -48,25 +56,42 @@ describe("bank senders", () => {
 });
 
 describe("fetchBankSenders", () => {
-  it("returns remote senders on success", async () => {
+  it("merges remote senders with defaults", async () => {
     const remote = [{ bank: "RemoteBank", email: "remote@bank.com" }];
     mockSelect.mockResolvedValue({ data: remote, error: null });
 
     const result = await fetchBankSenders();
 
-    expect(result).toEqual([{ bank: "RemoteBank", email: "remote@bank.com" }]);
+    // Remote senders + defaults that aren't already in remote
+    expect(result).toContainEqual({ bank: "RemoteBank", email: "remote@bank.com" });
+    expect(result.length).toBe(1 + DEFAULT_BANK_SENDERS.length);
   });
 
-  it("caches remote senders for subsequent calls", async () => {
+  it("deduplicates when remote overlaps with defaults", async () => {
+    const remote = [
+      { bank: "Davibank", email: "davibankinforma@davibank.com" },
+      { bank: "NewBank", email: "info@newbank.com" },
+    ];
+    mockSelect.mockResolvedValue({ data: remote, error: null });
+
+    const result = await fetchBankSenders();
+
+    // Davibank is in both remote and defaults — should appear once
+    const davibankEntries = result.filter((s) => s.email === "davibankinforma@davibank.com");
+    expect(davibankEntries).toHaveLength(1);
+    expect(result).toContainEqual({ bank: "NewBank", email: "info@newbank.com" });
+  });
+
+  it("caches merged senders for subsequent calls", async () => {
     const remote = [{ bank: "Cached", email: "cached@bank.com" }];
     mockSelect.mockResolvedValue({ data: remote, error: null });
 
-    await fetchBankSenders();
+    const first = await fetchBankSenders();
 
     mockSelect.mockResolvedValue({ data: null, error: { message: "offline" } });
-    const result = await fetchBankSenders();
+    const second = await fetchBankSenders();
 
-    expect(result).toEqual([{ bank: "Cached", email: "cached@bank.com" }]);
+    expect(second).toEqual(first);
   });
 
   it("falls back to defaults on Supabase error with no cache", async () => {
@@ -96,11 +121,11 @@ describe("fetchBankSenders", () => {
   it("falls back to cache on network exception when cache exists", async () => {
     const remote = [{ bank: "First", email: "first@bank.com" }];
     mockSelect.mockResolvedValue({ data: remote, error: null });
-    await fetchBankSenders();
+    const first = await fetchBankSenders();
 
     mockSelect.mockRejectedValue(new Error("network error"));
     const result = await fetchBankSenders();
 
-    expect(result).toEqual([{ bank: "First", email: "first@bank.com" }]);
+    expect(result).toEqual(first);
   });
 });

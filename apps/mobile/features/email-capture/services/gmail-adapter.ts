@@ -127,7 +127,11 @@ export async function fetchGmailEmails(
     { headers: { Authorization: `Bearer ${token}` } }
   );
 
-  if (!listResponse.ok) return [];
+  if (!listResponse.ok) {
+    const text = await listResponse.text();
+    console.warn(`[Gmail] list failed ${listResponse.status}: ${text.slice(0, 200)}`);
+    return [];
+  }
 
   const listData = await listResponse.json();
   const messageIds: string[] = (listData.messages ?? []).map((m: { id: string }) => m.id);

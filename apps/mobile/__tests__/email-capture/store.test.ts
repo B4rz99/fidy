@@ -331,11 +331,24 @@ describe("useEmailCaptureStore", () => {
     it("sets isFetching during execution", async () => {
       useEmailCaptureStore.setState({
         accounts: [
-          { id: "ea-1", userId: mockUserId, provider: "gmail", email: "u@g.com", lastFetchedAt: null, createdAt: "" },
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "u@g.com",
+            lastFetchedAt: null,
+            createdAt: "",
+          },
         ],
       });
       vi.mocked(fetchGmailEmails).mockResolvedValueOnce([]);
-      vi.mocked(processEmails).mockResolvedValueOnce({ filtered: 0, skippedDuplicate: 0, saved: 0, failed: 0, needsReview: 0 });
+      vi.mocked(processEmails).mockResolvedValueOnce({
+        filtered: 0,
+        skippedDuplicate: 0,
+        saved: 0,
+        failed: 0,
+        needsReview: 0,
+      });
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
       vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 

@@ -31,23 +31,25 @@ export async function classifyMerchantApi(merchant: string): Promise<string> {
 export async function parseEmailApi(emailBody: string): Promise<LlmParsedTransaction | null> {
   try {
     const stripped = stripPii(emailBody);
+    const truncated = stripped.slice(0, 2000);
     const supabase = getSupabase();
 
     const { data, error } = await supabase.functions.invoke("parse-email", {
-      body: { body: stripped.slice(0, 2000), mode: "full_parse" },
+      body: { body: truncated, mode: "full_parse" },
     });
 
     if (error || !data?.success) {
-      console.warn("[parseEmailApi] failed:", error?.message ?? "unknown");
+      console.warn("[parseEmailApi] edge fn failed:", error?.message ?? "unknown", data);
       return null;
     }
 
     const result = llmOutputSchema.safeParse(data.data);
     if (!result.success) {
-      console.warn("[parseEmailApi] validation failed:", result.error.issues[0]?.message);
+      console.warn("[parseEmailApi] validation failed:", result.error.issues);
     }
     return result.success ? result.data : null;
-  } catch {
+  } catch (err) {
+    console.warn("[parseEmailApi] exception:", err);
     return null;
   }
 }

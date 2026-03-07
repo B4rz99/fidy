@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { ChevronLeft, Mail } from "lucide-react-native";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GMAIL_CLIENT_ID, OUTLOOK_CLIENT_ID } from "@/features/email-capture/schema";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 

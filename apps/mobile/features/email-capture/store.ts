@@ -132,7 +132,6 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     }
 
     set({ isFetching: true });
-    console.log("[EmailCapture] fetchAndProcess: starting");
 
     try {
       const { accounts } = get();
@@ -143,32 +142,35 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
       const senders = await fetchBankSenders();
       const senderEmails = senders.map((s) => s.email);
-      console.log(`[EmailCapture] ${senderEmails.length} bank sender emails`);
+
+      // Always look back at least 30 days; dedup by externalId prevents re-processing
+      const minSince = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
       // Fetch emails from all accounts in parallel
       const fetchResults = await Promise.all(
         accounts.map(async (account) => {
           try {
-            const since = account.lastFetchedAt ?? new Date(0).toISOString();
+            const since =
+              account.lastFetchedAt && account.lastFetchedAt < minSince
+                ? account.lastFetchedAt
+                : minSince;
             const rawEmails =
               account.provider === "gmail"
                 ? await fetchGmailEmails(gmailClientId, since, senderEmails)
                 : await fetchOutlookEmails(outlookClientId, since, senderEmails);
-            console.log(`[EmailCapture] ${account.provider}: ${rawEmails.length} emails`);
-            return { account, rawEmails };
+            return { account, rawEmails, fetchOk: true };
           } catch (err) {
             console.warn(`[EmailCapture] ${account.provider} fetch error:`, err);
-            return { account, rawEmails: [] as import("./schema").RawEmail[] };
+            return { account, rawEmails: [] as import("./schema").RawEmail[], fetchOk: false };
           }
         })
       );
 
       const allEmails = fetchResults.flatMap((r) => r.rawEmails);
-      console.log(`[EmailCapture] total emails to process: ${allEmails.length}`);
 
       if (allEmails.length > 0) {
         let lastRefreshedSaved = 0;
-        const pipelineResult = await processEmails(dbRef!, userIdRef!, allEmails, senders, (progress) => {
+        await processEmails(dbRef!, userIdRef!, allEmails, senders, (progress) => {
           set({ progress });
           // Refresh transactions on home screen only when new ones are saved
           if (progress.saved > lastRefreshedSaved) {
@@ -176,12 +178,15 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
             useTransactionStore.getState().loadTransactions();
           }
         });
-        console.log("[EmailCapture] pipeline result:", pipelineResult);
       }
 
-      // Update lastFetchedAt for all accounts
+      // Update lastFetchedAt only for accounts whose fetch succeeded
       const now = new Date().toISOString();
-      await Promise.all(fetchResults.map((r) => updateLastFetchedAt(dbRef!, r.account.id, now)));
+      await Promise.all(
+        fetchResults
+          .filter((r) => r.fetchOk)
+          .map((r) => updateLastFetchedAt(dbRef!, r.account.id, now))
+      );
 
       const [failedEmails, needsReviewEmails] = await Promise.all([
         getFailedEmails(dbRef),
@@ -195,7 +200,6 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       console.warn("[EmailCapture] fetchAndProcess error:", err);
     } finally {
       set({ isFetching: false, progress: null });
-      console.log("[EmailCapture] fetchAndProcess: done");
     }
   },
 
