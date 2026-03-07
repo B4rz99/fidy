@@ -6,6 +6,10 @@ export function stripPii(text: string): string {
   return text
     .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "[EMAIL]")
     .replace(/\+\d[\d\s-]{8,14}\d/g, "[PHONE]")
+    .replace(/\b\d{4}[\s-]\d{4}[\s-]\d{4}[\s-]\d{4}\b/g, "[CARD]")
+    .replace(/\b\d{15,16}\b/g, "[CARD]")
+    .replace(/\d{4}[\s-]*[*Xx]{2,}[\s-]*[*Xx]{2,}[\s-]*\d{4}/g, "[CARD]")
+    .replace(/[*Xx]{2,4}[\s.-]*[*Xx]{2,4}[\s.-]*[*Xx]{2,4}[\s.-]*\d{4}/g, "[CARD]")
     .replace(/\*{1,4}\d{4}/g, "[CARD]");
 }
 

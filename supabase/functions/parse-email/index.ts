@@ -60,7 +60,12 @@ Deno.serve(async (req) => {
 
     const { body, mode } = await req.json();
 
-    if (!body || !mode || !["classify", "full_parse"].includes(mode)) {
+    if (
+      typeof body !== "string" ||
+      body.trim().length === 0 ||
+      !mode ||
+      !["classify", "full_parse"].includes(mode)
+    ) {
       return jsonResponse({ success: false, error: "invalid_request" }, 400);
     }
 
@@ -84,9 +89,7 @@ Deno.serve(async (req) => {
     const data = JSON.parse(text);
     return jsonResponse({ success: true, data });
   } catch (err) {
-    return jsonResponse(
-      { success: false, error: err instanceof Error ? err.message : "unknown" },
-      500
-    );
+    console.error("parse-email error:", err);
+    return jsonResponse({ success: false, error: "internal_error" }, 500);
   }
 });

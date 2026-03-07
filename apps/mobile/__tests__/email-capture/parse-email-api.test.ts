@@ -33,6 +33,13 @@ describe("stripPii", () => {
   it("removes masked card numbers", () => {
     expect(stripPii("Card *1234")).toBe("Card [CARD]");
     expect(stripPii("Tarjeta ****5678")).toBe("Tarjeta [CARD]");
+    expect(stripPii("XXXX XXXX XXXX 1234")).toBe("[CARD]");
+    expect(stripPii("4567 XXXX XXXX 1234")).toBe("[CARD]");
+  });
+
+  it("removes full card numbers", () => {
+    expect(stripPii("Tarjeta 4567 1234 5678 9012")).toBe("Tarjeta [CARD]");
+    expect(stripPii("Card 4567123456789012")).toBe("Card [CARD]");
   });
 
   it("preserves amounts and merchant names", () => {
