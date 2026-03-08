@@ -10,8 +10,15 @@ vi.mock("react-native", () => ({
   Text: "Text",
   TextInput: "TextInput",
   Pressable: "Pressable",
+  ScrollView: "ScrollView",
+  Switch: "Switch",
   ActivityIndicator: "ActivityIndicator",
   Keyboard: { dismiss: vi.fn() },
+  Linking: {
+    openSettings: vi.fn(),
+    sendIntent: vi.fn(() => Promise.resolve()),
+  },
+  Platform: { OS: "ios", select: (obj: Record<string, unknown>) => obj.ios },
   useColorScheme: () => "light",
   AppState: {
     addEventListener: vi.fn(() => ({ remove: vi.fn() })),
@@ -54,7 +61,11 @@ vi.mock("lucide-react-native", () => ({
   Bell: "Bell",
   Ellipsis: "Ellipsis",
   ChevronLeft: "ChevronLeft",
+  ChevronRight: "ChevronRight",
   Calendar: "Calendar",
+  ExternalLink: "ExternalLink",
+  Mail: "Mail",
+  MessageSquare: "MessageSquare",
   X: "X",
 }));
 
@@ -189,4 +200,19 @@ vi.mock("react-native-svg", () => ({
   Defs: "Defs",
   LinearGradient: "LinearGradient",
   Stop: "Stop",
+}));
+
+// Mock expo-android-notification-listener-service
+vi.mock("expo-android-notification-listener-service", () => ({
+  addListener: vi.fn(() => ({ remove: vi.fn() })),
+  setAllowedPackages: vi.fn(),
+  isPermissionGranted: vi.fn(() => Promise.resolve(false)),
+}));
+
+// Mock expo native module bridge (used by local expo-app-intents module)
+vi.mock("expo", () => ({
+  requireNativeModule: vi.fn(() => ({
+    isAvailable: vi.fn(() => false),
+    addListener: vi.fn(() => ({ remove: vi.fn() })),
+  })),
 }));

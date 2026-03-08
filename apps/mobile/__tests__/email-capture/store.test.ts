@@ -24,9 +24,14 @@ vi.mock("@/features/email-capture/services/outlook-adapter", () => ({
 }));
 
 vi.mock("@/features/email-capture/services/email-pipeline", () => ({
-  processEmails: vi
-    .fn()
-    .mockResolvedValue({ filtered: 0, skippedDuplicate: 0, saved: 0, failed: 0, needsReview: 0 }),
+  processEmails: vi.fn().mockResolvedValue({
+    filtered: 0,
+    skippedDuplicate: 0,
+    skippedCrossSource: 0,
+    saved: 0,
+    failed: 0,
+    needsReview: 0,
+  }),
 }));
 
 vi.mock("@/features/email-capture/lib/bank-senders", async (importOriginal) => {
@@ -290,6 +295,7 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(processEmails).mockResolvedValueOnce({
         filtered: 0,
         skippedDuplicate: 0,
+        skippedCrossSource: 0,
         saved: 1,
         failed: 0,
         needsReview: 0,
@@ -345,6 +351,7 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(processEmails).mockResolvedValueOnce({
         filtered: 0,
         skippedDuplicate: 0,
+        skippedCrossSource: 0,
         saved: 0,
         failed: 0,
         needsReview: 0,
@@ -450,6 +457,7 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(processEmails).mockResolvedValueOnce({
         filtered: 0,
         skippedDuplicate: 0,
+        skippedCrossSource: 0,
         saved: 1,
         failed: 0,
         needsReview: 0,

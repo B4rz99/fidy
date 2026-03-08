@@ -9,6 +9,11 @@ const mockEnqueueSync = vi.fn();
 const mockLookupMerchantRule = vi.fn().mockResolvedValue(null);
 const mockInsertMerchantRule = vi.fn();
 const mockParseEmailApi = vi.fn().mockResolvedValue(null);
+const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);
+
+vi.mock("@/features/capture-sources/lib/dedup", () => ({
+  findDuplicateTransaction: (...args: unknown[]) => mockFindDuplicateTransaction(...args),
+}));
 
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getProcessedExternalIds: (...args: unknown[]) => mockGetProcessedExternalIds(...args),
@@ -68,6 +73,7 @@ describe("email processing pipeline", () => {
     mockLookupMerchantRule.mockResolvedValue(null);
     mockInsertMerchantRule.mockResolvedValue(undefined);
     mockParseEmailApi.mockResolvedValue(null);
+    mockFindDuplicateTransaction.mockResolvedValue(null);
   });
 
   it("skips already processed emails", async () => {
@@ -279,6 +285,7 @@ describe("email processing pipeline", () => {
     expect(result).toEqual({
       filtered: 0,
       skippedDuplicate: 0,
+      skippedCrossSource: 0,
       saved: 0,
       failed: 0,
       needsReview: 0,

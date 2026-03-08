@@ -15,6 +15,10 @@ import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useAuthStore } from "@/features/auth/store";
 import { registerBackgroundTask } from "@/features/background-fetch/register";
+import { useApplePayCapture } from "@/features/capture-sources/hooks/useApplePayCapture";
+import { useNotificationCapture } from "@/features/capture-sources/hooks/useNotificationCapture";
+import { useSmsDetection } from "@/features/capture-sources/hooks/useSmsDetection";
+import { useCaptureSourcesStore } from "@/features/capture-sources/store";
 import { useEmailCapture } from "@/features/email-capture/hooks/useEmailCapture";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { useSync } from "@/features/sync/hooks/useSync";
@@ -32,6 +36,11 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
     if (migrationsReady) {
       useTransactionStore.getState().initStore(db, userId);
       useEmailCaptureStore.getState().initStore(db, userId);
+      useCaptureSourcesStore.getState().initStore(db, userId);
+      useCaptureSourcesStore
+        .getState()
+        .hydrate()
+        .catch(() => {});
       useTransactionStore
         .getState()
         .loadTransactions()
@@ -42,6 +51,9 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
 
   useSync(migrationsReady ? db : null, userId);
   useEmailCapture(migrationsReady ? db : null, userId);
+  useNotificationCapture(migrationsReady ? db : null, userId);
+  useApplePayCapture(migrationsReady ? db : null, userId);
+  useSmsDetection(migrationsReady ? db : null, userId);
 
   useEffect(() => {
     if (migrationsReady || migrationsError) {

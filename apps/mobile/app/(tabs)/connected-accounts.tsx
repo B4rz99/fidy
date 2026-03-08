@@ -3,6 +3,8 @@ import { useRouter } from "expo-router";
 import { ChevronLeft, Mail } from "lucide-react-native";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ApplePaySetupCard } from "@/features/capture-sources/components/ApplePaySetupCard";
+import { NotificationSetupCard } from "@/features/capture-sources/components/NotificationSetupCard";
 import { GMAIL_CLIENT_ID, OUTLOOK_CLIENT_ID } from "@/features/email-capture/schema";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
@@ -36,14 +38,15 @@ export default function ConnectedAccountsScreen() {
               <ChevronLeft size={24} color={primaryColor} />
             </Pressable>
             <Text className="font-poppins-bold text-title text-primary dark:text-primary-dark">
-              Connected Mails
+              Connected Accounts
             </Text>
           </View>
 
           <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
-            Manage your connected email accounts for automatic bank transaction capture.
+            Manage your connected accounts and capture sources for automatic transaction tracking.
           </Text>
 
+          {/* Email accounts */}
           <AccountCard
             provider="Gmail"
             account={gmailAccount}
@@ -61,6 +64,10 @@ export default function ConnectedAccountsScreen() {
             onConnect={() => connectEmail("outlook", OUTLOOK_CLIENT_ID)}
             onDisconnect={() => outlookAccount && disconnectEmail(outlookAccount.id)}
           />
+
+          {/* Platform-specific capture sources */}
+          {Platform.OS === "android" && <NotificationSetupCard />}
+          {Platform.OS === "ios" && <ApplePaySetupCard />}
         </View>
       </ScrollView>
     </View>
