@@ -67,12 +67,13 @@ GoogleService-Info.plist
 # Docs (local-only)
 docs/
 
-# Symlinked skills (local-only)
-.claude/skills/ui-designer
-.claude/skills/ux-designer
+# Other AI agent skills (local-only, not used by Claude Code)
+.agents/
+skills-lock.json
 
 # Worktrees
 .worktrees/
+.claude/worktrees/
 
 # macOS
 .DS_Store
