@@ -22,7 +22,15 @@ export const rawEmailSchema = z.object({
 });
 export type RawEmail = z.infer<typeof rawEmailSchema>;
 
-export const transactionSourceSchema = z.enum(["manual", "email_gmail", "email_outlook"]);
+export const transactionSourceSchema = z.enum([
+  "manual",
+  "email_gmail",
+  "email_outlook",
+  "notification_android",
+  "google_pay",
+  "apple_pay",
+  "sms_detected",
+]);
 export type TransactionSource = z.infer<typeof transactionSourceSchema>;
 
 export const EMAIL_REDIRECT_URI = "fidy://email/callback";

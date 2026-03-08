@@ -83,3 +83,49 @@ export const merchantRules = sqliteTable(
     index("idx_merchant_lookup").on(table.userId, table.senderEmail),
   ]
 );
+
+export const notificationSources = sqliteTable(
+  "notification_sources",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    packageName: text("package_name").notNull(),
+    label: text("label").notNull(),
+    isEnabled: integer("is_enabled", { mode: "boolean" }).notNull().default(true),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [uniqueIndex("uq_notification_source").on(table.userId, table.packageName)]
+);
+
+export const processedCaptures = sqliteTable(
+  "processed_captures",
+  {
+    id: text("id").primaryKey(),
+    fingerprintHash: text("fingerprint_hash").notNull(),
+    source: text("source").notNull(),
+    status: text("status").notNull(),
+    rawText: text("raw_text"),
+    transactionId: text("transaction_id"),
+    confidence: real("confidence"),
+    receivedAt: text("received_at").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("uq_capture_fingerprint").on(table.fingerprintHash),
+    index("idx_capture_source").on(table.source),
+  ]
+);
+
+export const detectedSmsEvents = sqliteTable(
+  "detected_sms_events",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    senderLabel: text("sender_label").notNull(),
+    detectedAt: text("detected_at").notNull(),
+    dismissed: integer("dismissed", { mode: "boolean" }).notNull().default(false),
+    linkedTransactionId: text("linked_transaction_id"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [index("idx_sms_events_user_dismissed").on(table.userId, table.dismissed)]
+);

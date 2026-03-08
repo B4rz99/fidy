@@ -44,6 +44,19 @@ Rules:
 Category guide — pick based on the MERCHANT NAME:
 ${CATEGORY_GUIDE}`;
 
+const NOTIFICATION_PARSE_SYSTEM = `Extract transaction data from this Colombian bank push notification.
+
+The text is short (1-2 lines). Apply the same rules:
+- All amounts are in Colombian Pesos (COP). Commas and dots are thousands separators UNLESS followed by exactly 2 digits at the end, which means centavos.
+- amountCents: amount in centavos (pesos × 100)
+- description: ONLY the merchant/business name, cleaned up
+- date: transaction date in YYYY-MM-DD (use today if not stated)
+- confidence: 0 to 1
+- type: "expense" for purchases/payments, "income" for deposits/transfers received
+
+Category guide — pick based on the MERCHANT NAME:
+${CATEGORY_GUIDE}`;
+
 const CLASSIFY_SCHEMA = {
   name: "classify_result",
   strict: true,
@@ -106,15 +119,21 @@ Deno.serve(async (req) => {
       typeof body !== "string" ||
       body.trim().length === 0 ||
       !mode ||
-      !["classify", "full_parse"].includes(mode)
+      !["classify", "full_parse", "parse_notification"].includes(mode)
     ) {
       return jsonResponse({ success: false, error: "invalid_request" }, 400);
     }
 
-    const systemPrompt = mode === "classify" ? CLASSIFY_SYSTEM : FULL_PARSE_SYSTEM;
+    const systemPrompt =
+      mode === "classify"
+        ? CLASSIFY_SYSTEM
+        : mode === "parse_notification"
+          ? NOTIFICATION_PARSE_SYSTEM
+          : FULL_PARSE_SYSTEM;
     const jsonSchema = mode === "classify" ? CLASSIFY_SCHEMA : FULL_PARSE_SCHEMA;
+    const maxLength = mode === "parse_notification" ? 500 : 2000;
     // Truncate to focus on transaction details, skip legal/footer noise
-    const truncatedBody = body.length > 2000 ? body.slice(0, 2000) : body;
+    const truncatedBody = body.length > maxLength ? body.slice(0, maxLength) : body;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-5-nano-2025-08-07",

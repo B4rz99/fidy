@@ -1,6 +1,8 @@
+import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
 import { enqueueSync, insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db/client";
 import { generateId } from "@/shared/lib/generate-id";
+import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
 import { getProcessedExternalIds, insertProcessedEmail } from "../lib/repository";
 import type { RawEmail } from "../schema";
@@ -10,18 +12,11 @@ import { parseEmailApi } from "./parse-email-api";
 export type PipelineResult = {
   filtered: number;
   skippedDuplicate: number;
+  skippedCrossSource: number;
   saved: number;
   failed: number;
   needsReview: number;
 };
-
-/**
- * Normalize merchant name for cache lookup.
- * "EDS LA CASTELLANA" → "eds la castellana"
- */
-function normalizeMerchant(description: string): string {
-  return description.toLowerCase().trim();
-}
 
 async function parseEmail(
   db: AnyDb,
@@ -105,6 +100,7 @@ export async function processEmails(
   const result: PipelineResult = {
     filtered: 0,
     skippedDuplicate: 0,
+    skippedCrossSource: 0,
     saved: 0,
     failed: 0,
     needsReview: 0,
@@ -167,6 +163,34 @@ export async function processEmails(
           confidence: null,
           createdAt: new Date().toISOString(),
         });
+        completed++;
+        onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
+        continue;
+      }
+
+      // Cross-source dedup: skip if this transaction was already captured via notification/Apple Pay
+      const existingTxId = await findDuplicateTransaction(
+        db,
+        userId,
+        parsed.amountCents,
+        parsed.date,
+        parsed.description
+      );
+      if (existingTxId) {
+        await insertProcessedEmail(db, {
+          id: generateId("pe"),
+          externalId: email.externalId,
+          provider: email.provider,
+          status: "skipped_duplicate",
+          failureReason: null,
+          subject: email.subject,
+          rawBodyPreview: email.body.slice(0, 500),
+          receivedAt: email.receivedAt,
+          transactionId: existingTxId,
+          confidence: parsed.confidence,
+          createdAt: new Date().toISOString(),
+        });
+        result.skippedCrossSource++;
         completed++;
         onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
         continue;

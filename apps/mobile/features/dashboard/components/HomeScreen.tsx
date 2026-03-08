@@ -3,6 +3,7 @@ import { Bell } from "lucide-react-native";
 import { useMemo } from "react";
 import { Platform, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { DetectedTransactionsBanner } from "@/features/capture-sources/components/DetectedTransactionsBanner";
 import { EmailConnectBanner } from "@/features/email-capture/components/EmailConnectBanner";
 import { FailedEmailsBanner } from "@/features/email-capture/components/FailedEmailsBanner";
 import { GMAIL_CLIENT_ID, OUTLOOK_CLIENT_ID } from "@/features/email-capture/schema";
@@ -80,6 +81,9 @@ export const HomeScreen = () => {
           />
           <FailedEmailsBanner onPress={() => push("/failed-emails" as never)} />
           <NeedsReviewBanner onPress={() => push("/needs-review" as never)} />
+          {Platform.OS === "ios" && (
+            <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
+          )}
           <BalanceSection balanceCents={balanceCents} />
           <ChartSection
             categorySpending={categorySpending}

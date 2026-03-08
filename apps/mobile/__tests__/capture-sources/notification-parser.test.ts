@@ -1,0 +1,161 @@
+import { describe, expect, it } from "vitest";
+import { parseNotificationLocally } from "@/features/capture-sources/lib/notification-parser";
+
+describe("parseNotificationLocally", () => {
+  describe("Bancolombia notifications", () => {
+    it("parses purchase notification", () => {
+      const result = parseNotificationLocally(
+        "Bancolombia le informa compra por $50,000 en EDS LA CASTELLANA. "
+      );
+      expect(result).toEqual({
+        amountCents: 5000000,
+        merchant: "EDS LA CASTELLANA",
+        type: "expense",
+      });
+    });
+
+    it("parses transfer out notification", () => {
+      const result = parseNotificationLocally(
+        "Bancolombia le informa transferencia por $100,000 a JUAN PEREZ. "
+      );
+      expect(result).toEqual({
+        amountCents: 10000000,
+        merchant: "JUAN PEREZ",
+        type: "expense",
+      });
+    });
+
+    it("parses transfer in notification", () => {
+      const result = parseNotificationLocally(
+        "Bancolombia le informa transferencia por $200,000 de MARIA GARCIA. "
+      );
+      expect(result).toEqual({
+        amountCents: 20000000,
+        merchant: "MARIA GARCIA",
+        type: "income",
+      });
+    });
+
+    it("parses deposit notification", () => {
+      const result = parseNotificationLocally("Bancolombia le informa depósito por $500,000. ");
+      expect(result).toEqual({
+        amountCents: 50000000,
+        merchant: "Depósito",
+        type: "income",
+      });
+    });
+  });
+
+  describe("BBVA notifications", () => {
+    it("parses purchase notification", () => {
+      const result = parseNotificationLocally("BBVA: Compra aprobada por $35,000 en FALABELLA. ");
+      expect(result).toEqual({
+        amountCents: 3500000,
+        merchant: "FALABELLA",
+        type: "expense",
+      });
+    });
+  });
+
+  describe("Nequi notifications", () => {
+    it("parses sent money notification", () => {
+      const result = parseNotificationLocally("Enviaste $20,000 a Maria Garcia. ");
+      expect(result).toEqual({
+        amountCents: 2000000,
+        merchant: "Maria Garcia",
+        type: "expense",
+      });
+    });
+
+    it("parses received money notification", () => {
+      const result = parseNotificationLocally("Recibiste $30,000 de Pedro Lopez. ");
+      expect(result).toEqual({
+        amountCents: 3000000,
+        merchant: "Pedro Lopez",
+        type: "income",
+      });
+    });
+  });
+
+  describe("Daviplata notifications", () => {
+    it("parses payment notification", () => {
+      const result = parseNotificationLocally("Daviplata: Pagaste $15,000 en TIENDA XYZ. ");
+      expect(result).toEqual({
+        amountCents: 1500000,
+        merchant: "TIENDA XYZ",
+        type: "expense",
+      });
+    });
+  });
+
+  describe("Google Wallet notifications", () => {
+    it("parses English payment notification", () => {
+      const result = parseNotificationLocally("Payment of $25,000 at STARBUCKS. ");
+      expect(result).toEqual({
+        amountCents: 2500000,
+        merchant: "STARBUCKS",
+        type: "expense",
+      });
+    });
+
+    it("parses Spanish payment notification", () => {
+      const result = parseNotificationLocally("Pago de $7,500 en FARMATODO. ");
+      expect(result).toEqual({
+        amountCents: 750000,
+        merchant: "FARMATODO",
+        type: "expense",
+      });
+    });
+  });
+
+  describe("amount parsing edge cases", () => {
+    it("handles dot as thousands separator", () => {
+      const result = parseNotificationLocally(
+        "Bancolombia le informa compra por $50.000 en EXITO. "
+      );
+      expect(result).toEqual({
+        amountCents: 5000000,
+        merchant: "EXITO",
+        type: "expense",
+      });
+    });
+
+    it("handles no separators", () => {
+      const result = parseNotificationLocally(
+        "Bancolombia le informa compra por $50000 en EXITO. "
+      );
+      expect(result).toEqual({
+        amountCents: 5000000,
+        merchant: "EXITO",
+        type: "expense",
+      });
+    });
+
+    it("handles large amounts with multiple separators", () => {
+      const result = parseNotificationLocally(
+        "Bancolombia le informa compra por $1,500,000 en HOMECENTER. "
+      );
+      expect(result).toEqual({
+        amountCents: 150000000,
+        merchant: "HOMECENTER",
+        type: "expense",
+      });
+    });
+  });
+
+  describe("no match", () => {
+    it("returns null for empty string", () => {
+      expect(parseNotificationLocally("")).toBeNull();
+    });
+
+    it("returns null for unrelated notification", () => {
+      expect(parseNotificationLocally("Tu paquete de MercadoLibre esta en camino")).toBeNull();
+    });
+
+    it("returns null for notification without amount", () => {
+      expect(
+        parseNotificationLocally("Bancolombia le informa que su clave fue cambiada")
+      ).toBeNull();
+    });
+  });
+});
