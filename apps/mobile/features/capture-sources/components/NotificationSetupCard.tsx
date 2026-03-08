@@ -20,6 +20,7 @@ export const NotificationSetupCard = () => {
   const togglePackage = useCaptureSourcesStore((s) => s.togglePackage);
 
   const iconColor = useThemeColor("accentGreen");
+  const warningColor = useThemeColor("accentRed");
   const secondaryColor = useThemeColor("secondary");
   const borderColor = useThemeColor("borderSubtle");
 
@@ -53,7 +54,7 @@ export const NotificationSetupCard = () => {
               width: 8,
               height: 8,
               borderRadius: 4,
-              backgroundColor: isPermissionGranted ? iconColor : "#F5A623",
+              backgroundColor: isPermissionGranted ? iconColor : warningColor,
             }}
           />
           <Text className="font-poppins-medium text-label text-primary dark:text-primary-dark">
@@ -67,10 +68,10 @@ export const NotificationSetupCard = () => {
             className="flex-row items-center"
             style={{ gap: 4 }}
           >
-            <Text className="font-poppins-semibold text-label" style={{ color: "#F5A623" }}>
+            <Text className="font-poppins-semibold text-label" style={{ color: warningColor }}>
               Grant Access
             </Text>
-            <ExternalLink size={14} color="#F5A623" />
+            <ExternalLink size={14} color={warningColor} />
           </Pressable>
         )}
       </View>

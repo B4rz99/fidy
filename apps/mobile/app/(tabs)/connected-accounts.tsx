@@ -38,7 +38,7 @@ export default function ConnectedAccountsScreen() {
               <ChevronLeft size={24} color={primaryColor} />
             </Pressable>
             <Text className="font-poppins-bold text-title text-primary dark:text-primary-dark">
-              Connected Sources
+              Connected Accounts
             </Text>
           </View>
 
