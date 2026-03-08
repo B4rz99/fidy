@@ -45,4 +45,7 @@ jobs:
 
       - name: Build
         working-directory: apps/mobile
-        run: eas build --platform ${{ inputs.platform }} --profile ${{ inputs.profile }} --non-interactive
+        env:
+          EAS_PLATFORM: ${{ inputs.platform }}
+          EAS_PROFILE: ${{ inputs.profile }}
+        run: eas build --platform "$EAS_PLATFORM" --profile "$EAS_PROFILE" --non-interactive
