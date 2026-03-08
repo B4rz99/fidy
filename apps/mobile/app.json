@@ -57,9 +57,7 @@
           }
         }
       ],
-      "expo-background-task",
-      "expo-android-notification-listener-service",
-      "./modules/expo-app-intents"
+      "expo-background-task"
     ],
     "experiments": {
       "typedRoutes": true,

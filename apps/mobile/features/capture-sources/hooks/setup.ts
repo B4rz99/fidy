@@ -1,8 +1,3 @@
-import {
-  addDetectBankSmsListener,
-  addLogTransactionListener,
-  isAvailable,
-} from "@/modules/expo-app-intents";
 import type { AnyDb } from "@/shared/db/client";
 import { generateId } from "@/shared/lib/generate-id";
 import { insertDetectedSmsEvent } from "../lib/repository";
@@ -11,24 +6,31 @@ import { processNotification } from "../services/notification-pipeline";
 
 const noop = () => {};
 
-export function setupApplePayCapture(db: AnyDb, userId: string): () => void {
-  if (!isAvailable()) return noop;
+// Dynamic import to avoid Android bundle crash — this module calls
+// requireNativeModule("ExpoAppIntents") which only exists on iOS.
+const loadAppIntents = () =>
+  import("@/modules/expo-app-intents") as Promise<typeof import("@/modules/expo-app-intents")>;
 
-  const subscription = addLogTransactionListener((event) => {
+export async function setupApplePayCapture(db: AnyDb, userId: string): Promise<() => void> {
+  const mod = await loadAppIntents();
+  if (!mod.isAvailable()) return noop;
+
+  const subscription = mod.addLogTransactionListener((event) => {
     processApplePayIntent(db, userId, event).catch(() => {});
   });
 
   return () => subscription.remove();
 }
 
-export function setupSmsDetection(
+export async function setupSmsDetection(
   db: AnyDb,
   userId: string,
   refreshDetectedSms: () => void
-): () => void {
-  if (!isAvailable()) return noop;
+): Promise<() => void> {
+  const mod = await loadAppIntents();
+  if (!mod.isAvailable()) return noop;
 
-  const subscription = addDetectBankSmsListener((event) => {
+  const subscription = mod.addDetectBankSmsListener((event) => {
     insertDetectedSmsEvent(db, {
       id: generateId("sms"),
       userId,
@@ -37,8 +39,9 @@ export function setupSmsDetection(
       dismissed: false,
       linkedTransactionId: null,
       createdAt: new Date().toISOString(),
-    }).catch(() => {});
-    refreshDetectedSms();
+    })
+      .then(() => refreshDetectedSms())
+      .catch(() => {});
   });
 
   return () => subscription.remove();

@@ -2,18 +2,14 @@ import {
   type LlmParsedTransaction,
   llmOutputSchema,
 } from "@/features/email-capture/services/llm-parser";
-import { stripPii } from "@/features/email-capture/services/parse-email-api";
 import { getSupabase } from "@/shared/lib/supabase";
 
 export async function parseNotificationApi(
-  notificationText: string
+  sanitizedText: string
 ): Promise<LlmParsedTransaction | null> {
   try {
-    const stripped = stripPii(notificationText);
-    const truncated = stripped.slice(0, 500);
-
     const { data, error } = await getSupabase().functions.invoke("parse-email", {
-      body: { body: truncated, mode: "parse_notification" },
+      body: { body: sanitizedText, mode: "parse_notification" },
     });
 
     if (error || !data?.success) {

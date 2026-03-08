@@ -11,13 +11,15 @@ export function useNotificationCapture(db: AnyDb | null, userId: string | null) 
     if (Platform.OS !== "android" || !db || !userId || enabledPackages.length === 0) return;
     let cancelled = false;
     let cleanup: (() => void) | undefined;
-    setupNotificationCapture(db, userId, enabledPackages).then((c) => {
-      if (cancelled) {
-        c();
-      } else {
-        cleanup = c;
-      }
-    });
+    setupNotificationCapture(db, userId, enabledPackages)
+      .then((c) => {
+        if (cancelled) {
+          c();
+        } else {
+          cleanup = c;
+        }
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
       cleanup?.();

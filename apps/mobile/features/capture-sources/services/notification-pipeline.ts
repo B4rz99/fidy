@@ -15,6 +15,9 @@ import type { NotificationData } from "../schema";
 import { resolveSource } from "../schema";
 import { parseNotificationApi } from "./parse-notification-api";
 
+/** In-flight fingerprints guard against concurrent duplicate processing. */
+const inFlightFingerprints = new Set<string>();
+
 export type NotificationPipelineResult = {
   saved: boolean;
   skippedDuplicate: boolean;
@@ -30,16 +33,16 @@ export async function processNotification(
   const sanitizedText = stripPii(notificationText).slice(0, 500);
   const receivedAt = new Date(notification.timestamp).toISOString();
   const source = resolveSource(notification.packageName);
-  const today = toIsoDate(new Date());
+  const notificationDate = toIsoDate(new Date(notification.timestamp));
 
   // Try local regex parse first
   const localResult = parseNotificationLocally(notificationText);
 
   // If local parse fails, try cloud LLM
   const parsed = localResult
-    ? { ...localResult, categoryId: "other", date: today, confidence: 0.8 }
+    ? { ...localResult, categoryId: "other", date: notificationDate, confidence: 0.8 }
     : await (async () => {
-        const llm = await parseNotificationApi(notificationText);
+        const llm = await parseNotificationApi(sanitizedText);
         return llm
           ? {
               amountCents: llm.amountCents,
@@ -70,83 +73,94 @@ export async function processNotification(
   // Check fingerprint dedup
   const fingerprint = captureFingerprint(source, parsed.amountCents, parsed.date, parsed.merchant);
 
+  // Guard against concurrent processing of the same fingerprint
+  if (inFlightFingerprints.has(fingerprint)) {
+    return { saved: false, skippedDuplicate: true, transactionId: null };
+  }
+
   const alreadyProcessed = await isCaptureProcessed(db, fingerprint);
   if (alreadyProcessed) {
     return { saved: false, skippedDuplicate: true, transactionId: null };
   }
 
-  // Cross-source dedup
-  const existingTxId = await findDuplicateTransaction(
-    db,
-    userId,
-    parsed.amountCents,
-    parsed.date,
-    parsed.merchant
-  );
+  inFlightFingerprints.add(fingerprint);
 
-  if (existingTxId) {
+  try {
+    // Cross-source dedup
+    const existingTxId = await findDuplicateTransaction(
+      db,
+      userId,
+      parsed.amountCents,
+      parsed.date,
+      parsed.merchant
+    );
+
+    if (existingTxId) {
+      await insertProcessedCapture(db, {
+        id: generateId("pc"),
+        fingerprintHash: fingerprint,
+        source,
+        status: "skipped_duplicate",
+        rawText: sanitizedText,
+        transactionId: existingTxId,
+        confidence: parsed.confidence,
+        receivedAt: receivedAt,
+        createdAt: new Date().toISOString(),
+      });
+      return { saved: false, skippedDuplicate: true, transactionId: existingTxId };
+    }
+
+    // Check merchant rules cache
+    const syntheticSender = `notification://${notification.packageName}`;
+    const merchantKey = normalizeMerchant(parsed.merchant);
+    const cachedCategoryId = await lookupMerchantRule(db, userId, syntheticSender, merchantKey);
+    const finalCategoryId = cachedCategoryId ?? parsed.categoryId;
+
+    // Save transaction
+    const txId = generateId("tx");
+    const now = new Date().toISOString();
+
+    await insertTransaction(db, {
+      id: txId,
+      userId,
+      type: parsed.type,
+      amountCents: parsed.amountCents,
+      categoryId: finalCategoryId,
+      description: parsed.merchant,
+      date: parsed.date,
+      source,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await enqueueSync(db, {
+      id: generateId("sq"),
+      tableName: "transactions",
+      rowId: txId,
+      operation: "insert",
+      createdAt: now,
+    });
+
+    // Record in processedCaptures
     await insertProcessedCapture(db, {
       id: generateId("pc"),
       fingerprintHash: fingerprint,
       source,
-      status: "skipped_duplicate",
+      status: "success",
       rawText: sanitizedText,
-      transactionId: existingTxId,
+      transactionId: txId,
       confidence: parsed.confidence,
       receivedAt: receivedAt,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
     });
-    return { saved: false, skippedDuplicate: true, transactionId: existingTxId };
+
+    // Cache merchant rule if confidence >= 0.7
+    if (parsed.confidence >= 0.7) {
+      await insertMerchantRule(db, userId, syntheticSender, merchantKey, finalCategoryId);
+    }
+
+    return { saved: true, skippedDuplicate: false, transactionId: txId };
+  } finally {
+    inFlightFingerprints.delete(fingerprint);
   }
-
-  // Check merchant rules cache
-  const syntheticSender = `notification://${notification.packageName}`;
-  const merchantKey = normalizeMerchant(parsed.merchant);
-  const cachedCategoryId = await lookupMerchantRule(db, userId, syntheticSender, merchantKey);
-  const finalCategoryId = cachedCategoryId ?? parsed.categoryId;
-
-  // Save transaction
-  const txId = generateId("tx");
-  const now = new Date().toISOString();
-
-  await insertTransaction(db, {
-    id: txId,
-    userId,
-    type: parsed.type,
-    amountCents: parsed.amountCents,
-    categoryId: finalCategoryId,
-    description: parsed.merchant,
-    date: parsed.date,
-    source,
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  await enqueueSync(db, {
-    id: generateId("sq"),
-    tableName: "transactions",
-    rowId: txId,
-    operation: "insert",
-    createdAt: now,
-  });
-
-  // Record in processedCaptures
-  await insertProcessedCapture(db, {
-    id: generateId("pc"),
-    fingerprintHash: fingerprint,
-    source,
-    status: "success",
-    rawText: sanitizedText,
-    transactionId: txId,
-    confidence: parsed.confidence,
-    receivedAt: receivedAt,
-    createdAt: now,
-  });
-
-  // Cache merchant rule if confidence >= 0.7
-  if (parsed.confidence >= 0.7) {
-    await insertMerchantRule(db, userId, syntheticSender, merchantKey, finalCategoryId);
-  }
-
-  return { saved: true, skippedDuplicate: false, transactionId: txId };
 }

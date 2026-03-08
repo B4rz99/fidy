@@ -9,6 +9,21 @@ export function useSmsDetection(db: AnyDb | null, userId: string | null) {
 
   useEffect(() => {
     if (Platform.OS !== "ios" || !db || !userId) return;
-    return setupSmsDetection(db, userId, refreshDetectedSms);
+
+    let cleanup: (() => void) | undefined;
+    let cancelled = false;
+
+    setupSmsDetection(db, userId, refreshDetectedSms).then((teardown) => {
+      if (cancelled) {
+        teardown();
+      } else {
+        cleanup = teardown;
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      cleanup?.();
+    };
   }, [db, userId, refreshDetectedSms]);
 }

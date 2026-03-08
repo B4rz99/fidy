@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db/client";
 import { processedCaptures, transactions } from "@/shared/db/schema";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
@@ -50,7 +50,8 @@ export async function findDuplicateTransaction(
       and(
         eq(transactions.userId, userId),
         eq(transactions.amountCents, amountCents),
-        eq(transactions.date, date)
+        eq(transactions.date, date),
+        isNull(transactions.deletedAt)
       )
     );
 

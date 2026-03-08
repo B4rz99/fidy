@@ -6,6 +6,7 @@ vi.mock("drizzle-orm", () => ({
   and: vi.fn((...args: any[]) => ({ op: "and", args })),
   gte: vi.fn((_col, val) => ({ op: "gte", val })),
   lte: vi.fn((_col, val) => ({ op: "lte", val })),
+  isNull: vi.fn((_col) => ({ op: "isNull" })),
 }));
 
 const mockSelect = vi.fn().mockReturnThis();

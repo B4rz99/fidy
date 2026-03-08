@@ -6,7 +6,16 @@ vi.mock("drizzle-orm", () => ({
   and: vi.fn((...args: any[]) => ({ and: args })),
   desc: vi.fn((...args: any[]) => ({ desc: args })),
   gte: vi.fn((...args: any[]) => ({ gte: args })),
+  lt: vi.fn((...args: any[]) => ({ lt: args })),
   count: vi.fn(() => "count(*)"),
+}));
+
+vi.mock("date-fns", () => ({
+  addDays: vi.fn((date: Date, days: number) => {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+  }),
 }));
 
 vi.mock("@/shared/db/schema", () => ({

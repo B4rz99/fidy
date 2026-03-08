@@ -17,7 +17,7 @@ function parseAmount(raw: string): number | null {
 const BANCOLOMBIA_PURCHASE = /compra\s+por\s+\$?([\d.,]+)\s+en\s+(.+?)(?:\.\s|$)/i;
 const BANCOLOMBIA_TRANSFER_OUT = /transferencia\s+por\s+\$?([\d.,]+)\s+a\s+(.+?)(?:\.\s|$)/i;
 const BANCOLOMBIA_TRANSFER_IN = /transferencia\s+por\s+\$?([\d.,]+)\s+de\s+(.+?)(?:\.\s|$)/i;
-const BANCOLOMBIA_DEPOSIT = /(?:dep[oó]sito|abono)\s+por\s+\$?([\d]+(?:[.,]\d{3})*)/i;
+const BANCOLOMBIA_DEPOSIT = /(?:dep[oó]sito|abono)\s+por\s+\$?([\d]+(?:[.,]\d+)*)/i;
 
 const BBVA_PURCHASE = /compra\s+(?:aprobada\s+)?por\s+\$?([\d.,]+)\s+en\s+(.+?)(?:\.\s|$)/i;
 

@@ -1,4 +1,5 @@
-import { and, count, desc, eq, gte } from "drizzle-orm";
+import { addDays } from "date-fns";
+import { and, count, desc, eq, gte, lt } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db/client";
 import { detectedSmsEvents, notificationSources, processedCaptures } from "@/shared/db/schema";
 import { toIsoDate } from "@/shared/lib/format-date";
@@ -85,7 +86,9 @@ export async function getUndismissedSmsEvents(db: AnyDb, userId: string) {
 }
 
 export async function getTodaySmsEventCount(db: AnyDb, userId: string): Promise<number> {
-  const today = toIsoDate(new Date());
+  const now = new Date();
+  const today = toIsoDate(now);
+  const tomorrow = toIsoDate(addDays(now, 1));
   const rows = await db
     .select({ total: count() })
     .from(detectedSmsEvents)
@@ -93,7 +96,8 @@ export async function getTodaySmsEventCount(db: AnyDb, userId: string): Promise<
       and(
         eq(detectedSmsEvents.userId, userId),
         eq(detectedSmsEvents.dismissed, false),
-        gte(detectedSmsEvents.detectedAt, today)
+        gte(detectedSmsEvents.detectedAt, today),
+        lt(detectedSmsEvents.detectedAt, tomorrow)
       )
     );
   return rows[0]?.total ?? 0;

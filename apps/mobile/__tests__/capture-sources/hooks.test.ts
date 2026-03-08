@@ -53,11 +53,11 @@ describe("setupApplePayCapture", () => {
     mockIsAvailable.mockReturnValue(true);
   });
 
-  it("registers listener and returns cleanup function", () => {
+  it("registers listener and returns cleanup function", async () => {
     const mockRemove = vi.fn();
     mockAddLogTransactionListener.mockReturnValueOnce({ remove: mockRemove });
 
-    const cleanup = setupApplePayCapture(mockDb, USER_ID);
+    const cleanup = await setupApplePayCapture(mockDb, USER_ID);
 
     expect(mockAddLogTransactionListener).toHaveBeenCalledTimes(1);
     expect(typeof cleanup).toBe("function");
@@ -66,23 +66,23 @@ describe("setupApplePayCapture", () => {
     expect(mockRemove).toHaveBeenCalled();
   });
 
-  it("returns no-op when module is not available", () => {
+  it("returns no-op when module is not available", async () => {
     mockIsAvailable.mockReturnValue(false);
 
-    const cleanup = setupApplePayCapture(mockDb, USER_ID);
+    const cleanup = await setupApplePayCapture(mockDb, USER_ID);
 
     expect(mockAddLogTransactionListener).not.toHaveBeenCalled();
     cleanup(); // should not throw
   });
 
-  it("calls processApplePayIntent when listener fires", () => {
+  it("calls processApplePayIntent when listener fires", async () => {
     let capturedListener: (event: any) => void = () => {};
     mockAddLogTransactionListener.mockImplementationOnce((listener: any) => {
       capturedListener = listener;
       return { remove: vi.fn() };
     });
 
-    setupApplePayCapture(mockDb, USER_ID);
+    await setupApplePayCapture(mockDb, USER_ID);
     capturedListener({ amount: 50000, merchant: "Farmatodo" });
 
     expect(mockProcessApplePayIntent).toHaveBeenCalledWith(mockDb, USER_ID, {
@@ -98,11 +98,11 @@ describe("setupSmsDetection", () => {
     mockIsAvailable.mockReturnValue(true);
   });
 
-  it("registers listener and returns cleanup function", () => {
+  it("registers listener and returns cleanup function", async () => {
     const mockRemove = vi.fn();
     mockAddDetectBankSmsListener.mockReturnValueOnce({ remove: mockRemove });
 
-    const cleanup = setupSmsDetection(mockDb, USER_ID, mockRefreshDetectedSms);
+    const cleanup = await setupSmsDetection(mockDb, USER_ID, mockRefreshDetectedSms);
 
     expect(mockAddDetectBankSmsListener).toHaveBeenCalledTimes(1);
 
@@ -110,14 +110,14 @@ describe("setupSmsDetection", () => {
     expect(mockRemove).toHaveBeenCalled();
   });
 
-  it("inserts SMS event when listener fires", () => {
+  it("inserts SMS event when listener fires", async () => {
     let capturedListener: (event: any) => void = () => {};
     mockAddDetectBankSmsListener.mockImplementationOnce((listener: any) => {
       capturedListener = listener;
       return { remove: vi.fn() };
     });
 
-    setupSmsDetection(mockDb, USER_ID, mockRefreshDetectedSms);
+    await setupSmsDetection(mockDb, USER_ID, mockRefreshDetectedSms);
     capturedListener({ senderName: "Bancolombia", timestamp: "2026-03-07T14:30:00Z" });
 
     expect(mockInsertDetectedSmsEvent).toHaveBeenCalledWith(
