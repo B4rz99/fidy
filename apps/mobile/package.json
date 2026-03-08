@@ -12,7 +12,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "build:dev": "eas build --profile development --platform all",
+    "build:preview": "eas build --profile preview --platform all",
+    "build:preview:ios": "eas build --profile preview --platform ios",
+    "build:preview:android": "eas build --profile preview --platform android",
+    "build:prod": "eas build --profile production --platform all"
   },
   "dependencies": {
     "@expo-google-fonts/poppins": "^0.4.1",
@@ -68,6 +73,7 @@
     "babel-plugin-inline-import": "3.0.0",
     "babel-preset-expo": "~54.0.10",
     "drizzle-kit": "0.31.9",
+    "eas-cli": "18.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
     "vitest": "^4.0.18"
