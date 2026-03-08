@@ -19,7 +19,7 @@ export function useNotificationCapture(db: AnyDb | null, userId: string | null) 
           cleanup = c;
         }
       })
-      .catch(() => {});
+      .catch((err) => console.warn("[NotificationCapture] setup failed:", err));
     return () => {
       cancelled = true;
       cleanup?.();

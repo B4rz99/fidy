@@ -1,16 +1,21 @@
 import { requireNativeModule } from "expo";
 
+export type ExpoAppIntentsModule = {
+  isAvailable: () => boolean;
+  addListener: (eventName: string, listener: (...args: never[]) => void) => { remove: () => void };
+};
+
 // Lazy getter — defers requireNativeModule until first use so importing this
 // file on Android does not crash before isAvailable() is checked.
-let _module: ReturnType<typeof requireNativeModule> | null = null;
+let _module: ExpoAppIntentsModule | null = null;
 
-const ExpoAppIntentsModule = new Proxy({} as ReturnType<typeof requireNativeModule>, {
-  get(_target, prop) {
+const ExpoAppIntentsProxy = new Proxy({} as ExpoAppIntentsModule, {
+  get(_target, prop: string) {
     if (!_module) {
-      _module = requireNativeModule("ExpoAppIntents");
+      _module = requireNativeModule<ExpoAppIntentsModule>("ExpoAppIntents");
     }
-    return (_module as Record<string | symbol, unknown>)[prop];
+    return _module[prop as keyof ExpoAppIntentsModule];
   },
 });
 
-export default ExpoAppIntentsModule;
+export default ExpoAppIntentsProxy;

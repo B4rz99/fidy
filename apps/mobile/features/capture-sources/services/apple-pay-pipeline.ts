@@ -36,14 +36,13 @@ export async function processApplePayIntent(
     return { saved: false, skippedDuplicate: true, transactionId: null };
   }
 
-  const alreadyProcessed = await isCaptureProcessed(db, fingerprint);
-  if (alreadyProcessed) {
-    return { saved: false, skippedDuplicate: true, transactionId: null };
-  }
-
   inFlightFingerprints.add(fingerprint);
 
   try {
+    const alreadyProcessed = await isCaptureProcessed(db, fingerprint);
+    if (alreadyProcessed) {
+      return { saved: false, skippedDuplicate: true, transactionId: null };
+    }
     // Cross-source dedup
     const existingTxId = await findDuplicateTransaction(
       db,

@@ -13,13 +13,15 @@ export function useSmsDetection(db: AnyDb | null, userId: string | null) {
     let cleanup: (() => void) | undefined;
     let cancelled = false;
 
-    setupSmsDetection(db, userId, refreshDetectedSms).then((teardown) => {
-      if (cancelled) {
-        teardown();
-      } else {
-        cleanup = teardown;
-      }
-    });
+    setupSmsDetection(db, userId, refreshDetectedSms)
+      .then((teardown) => {
+        if (cancelled) {
+          teardown();
+        } else {
+          cleanup = teardown;
+        }
+      })
+      .catch((err) => console.warn("[SmsDetection] setup failed:", err));
 
     return () => {
       cancelled = true;

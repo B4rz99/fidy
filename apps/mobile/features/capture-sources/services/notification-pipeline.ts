@@ -73,19 +73,19 @@ export async function processNotification(
   // Check fingerprint dedup
   const fingerprint = captureFingerprint(source, parsed.amountCents, parsed.date, parsed.merchant);
 
-  // Guard against concurrent processing of the same fingerprint
+  // Guard against concurrent processing of the same fingerprint.
+  // Add synchronously before any await to close the race window.
   if (inFlightFingerprints.has(fingerprint)) {
-    return { saved: false, skippedDuplicate: true, transactionId: null };
-  }
-
-  const alreadyProcessed = await isCaptureProcessed(db, fingerprint);
-  if (alreadyProcessed) {
     return { saved: false, skippedDuplicate: true, transactionId: null };
   }
 
   inFlightFingerprints.add(fingerprint);
 
   try {
+    const alreadyProcessed = await isCaptureProcessed(db, fingerprint);
+    if (alreadyProcessed) {
+      return { saved: false, skippedDuplicate: true, transactionId: null };
+    }
     // Cross-source dedup
     const existingTxId = await findDuplicateTransaction(
       db,
