@@ -39,7 +39,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
 
   return (
     <View
-      className="flex-row items-end gap-2 bg-card dark:bg-card-dark"
+      className="flex-row items-center gap-2 bg-card dark:bg-card-dark"
       style={{
         paddingTop: 8,
         paddingBottom: keyboardVisible ? 8 : TAB_BAR_CLEARANCE,
