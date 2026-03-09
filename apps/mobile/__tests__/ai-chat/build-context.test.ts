@@ -46,7 +46,7 @@ describe("buildChatContext", () => {
 
     const result = buildChatContext(txs, memories, "2026-03");
 
-    expect(result.summary.balance).toBe(435000);
+    expect(result.summary.balanceCents).toBe(435000);
     expect(result.summary.currentMonthSpending).toEqual([
       { categoryId: "food", totalCents: 30000 },
       { categoryId: "transport", totalCents: 15000 },
@@ -61,7 +61,7 @@ describe("buildChatContext", () => {
   it("handles empty transactions", () => {
     const result = buildChatContext([], [], "2026-03");
 
-    expect(result.summary.balance).toBe(0);
+    expect(result.summary.balanceCents).toBe(0);
     expect(result.summary.currentMonthSpending).toEqual([]);
     expect(result.summary.previousMonthSpending).toEqual([]);
     expect(result.transactions).toEqual([]);

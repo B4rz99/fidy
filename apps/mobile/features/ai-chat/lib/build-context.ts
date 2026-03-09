@@ -14,7 +14,7 @@ type TransactionContext = {
 type ChatContext = {
   readonly transactions: readonly TransactionContext[];
   readonly summary: {
-    readonly balance: number;
+    readonly balanceCents: number;
     readonly currentMonthSpending: readonly {
       readonly categoryId: string;
       readonly totalCents: number;
@@ -55,7 +55,7 @@ export function buildChatContext(
       date: toIsoDate(tx.date),
     })),
     summary: {
-      balance: deriveBalance(transactions),
+      balanceCents: deriveBalance(transactions),
       currentMonthSpending: deriveSpendingByCategory(relevantTransactions, currentMonth),
       previousMonthSpending: deriveSpendingByCategory(relevantTransactions, prevMonth),
     },

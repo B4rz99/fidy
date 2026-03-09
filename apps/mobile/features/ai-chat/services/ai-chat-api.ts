@@ -1,3 +1,4 @@
+import { fetch } from "expo/fetch";
 import { getSupabase } from "@/shared/lib/supabase";
 import type { ExtractedMemory } from "../schema";
 
