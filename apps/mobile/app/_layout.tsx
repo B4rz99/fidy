@@ -13,6 +13,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useChatStore } from "@/features/ai-chat/store";
 import { useAuthStore } from "@/features/auth/store";
 import { registerBackgroundTask } from "@/features/background-fetch/register";
 import { useApplePayCapture } from "@/features/capture-sources/hooks/useApplePayCapture";
@@ -37,6 +38,12 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
       useTransactionStore.getState().initStore(db, userId);
       useEmailCaptureStore.getState().initStore(db, userId);
       useCaptureSourcesStore.getState().initStore(db, userId);
+      useChatStore.getState().initStore(db, userId);
+      useChatStore
+        .getState()
+        .loadSessions()
+        .then(() => useChatStore.getState().cleanupExpiredSessions())
+        .catch(() => {});
       useCaptureSourcesStore
         .getState()
         .hydrate()

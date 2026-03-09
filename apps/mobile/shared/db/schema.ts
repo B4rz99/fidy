@@ -129,3 +129,46 @@ export const detectedSmsEvents = sqliteTable(
   },
   (table) => [index("idx_sms_events_user_dismissed").on(table.userId, table.dismissed)]
 );
+
+export const chatSessions = sqliteTable(
+  "chat_sessions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    title: text("title").notNull(),
+    createdAt: text("created_at").notNull(),
+    expiresAt: text("expires_at").notNull(),
+    deletedAt: text("deleted_at"),
+  },
+  (table) => [
+    index("idx_chat_sessions_user_created").on(table.userId, table.createdAt),
+    index("idx_chat_sessions_expires").on(table.expiresAt),
+  ]
+);
+
+export const chatMessages = sqliteTable(
+  "chat_messages",
+  {
+    id: text("id").primaryKey(),
+    sessionId: text("session_id").notNull(),
+    role: text("role").notNull(),
+    content: text("content").notNull(),
+    action: text("action"),
+    actionStatus: text("action_status"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [index("idx_chat_messages_session_created").on(table.sessionId, table.createdAt)]
+);
+
+export const userMemories = sqliteTable(
+  "user_memories",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    fact: text("fact").notNull(),
+    category: text("category").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [index("idx_user_memories_user").on(table.userId)]
+);

@@ -30,6 +30,8 @@ export default defineConfig({
         "features/**/data/**",
         "features/transactions/schema.ts",
         "features/transactions/store.ts",
+        "features/ai-chat/schema.ts",
+        "features/ai-chat/lib/**",
         "features/calendar/schema.ts",
         "features/calendar/store.ts",
         "features/menu/store.ts",
