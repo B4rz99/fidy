@@ -30,7 +30,7 @@ const makeMemory = (overrides: Partial<UserMemory>): UserMemory => ({
 });
 
 describe("buildChatContext", () => {
-  it("returns correctly shaped context with transactions and memories", () => {
+  it("converts cents to COP in summary", () => {
     const txs = [
       makeTx({ type: "income", amountCents: 500000, date: new Date(2026, 2, 1) }),
       makeTx({ id: "tx_2", amountCents: 30000, categoryId: "food", date: new Date(2026, 2, 2) }),
@@ -46,24 +46,80 @@ describe("buildChatContext", () => {
 
     const result = buildChatContext(txs, memories, "2026-03");
 
-    expect(result.summary.balanceCents).toBe(435000);
+    expect(result.summary.balance).toBe(4350);
     expect(result.summary.currentMonthSpending).toEqual([
-      { categoryId: "food", totalCents: 30000 },
-      { categoryId: "transport", totalCents: 15000 },
+      { categoryId: "food", total: 300 },
+      { categoryId: "transport", total: 150 },
     ]);
-    expect(result.summary.previousMonthSpending).toEqual([
-      { categoryId: "food", totalCents: 20000 },
-    ]);
+    expect(result.summary.previousMonthSpending).toEqual([{ categoryId: "food", total: 200 }]);
     expect(result.memories).toEqual([{ fact: "Gets paid on the 15th", category: "habit" }]);
     expect(result.transactions).toHaveLength(4);
+  });
+
+  it("converts transaction amounts to COP", () => {
+    const txs = [
+      makeTx({
+        type: "expense",
+        amountCents: 5000,
+        categoryId: "food",
+        description: "Lunch",
+        date: new Date(2026, 2, 1),
+      }),
+    ];
+    const result = buildChatContext(txs, [], "2026-03");
+
+    expect(result.transactions[0]).toEqual({
+      type: "expense",
+      amount: 50,
+      categoryId: "food",
+      description: "Lunch",
+      date: "2026-03-01",
+    });
+  });
+
+  it("computes month-over-month deltas", () => {
+    const txs = [
+      makeTx({ amountCents: 30000, categoryId: "food", date: new Date(2026, 2, 2) }),
+      makeTx({
+        id: "tx_2",
+        amountCents: 15000,
+        categoryId: "transport",
+        date: new Date(2026, 2, 3),
+      }),
+      makeTx({ id: "tx_3", amountCents: 20000, categoryId: "food", date: new Date(2026, 1, 15) }),
+      makeTx({
+        id: "tx_4",
+        amountCents: 10000,
+        categoryId: "health",
+        date: new Date(2026, 1, 10),
+      }),
+    ];
+
+    const result = buildChatContext(txs, [], "2026-03");
+    const deltas = result.summary.monthOverMonthDeltas;
+
+    const foodDelta = deltas.find((d) => d.categoryId === "food");
+    expect(foodDelta).toEqual({ categoryId: "food", current: 300, previous: 200, delta: 100 });
+
+    const transportDelta = deltas.find((d) => d.categoryId === "transport");
+    expect(transportDelta).toEqual({
+      categoryId: "transport",
+      current: 150,
+      previous: 0,
+      delta: 150,
+    });
+
+    const healthDelta = deltas.find((d) => d.categoryId === "health");
+    expect(healthDelta).toEqual({ categoryId: "health", current: 0, previous: 100, delta: -100 });
   });
 
   it("handles empty transactions", () => {
     const result = buildChatContext([], [], "2026-03");
 
-    expect(result.summary.balanceCents).toBe(0);
+    expect(result.summary.balance).toBe(0);
     expect(result.summary.currentMonthSpending).toEqual([]);
     expect(result.summary.previousMonthSpending).toEqual([]);
+    expect(result.summary.monthOverMonthDeltas).toEqual([]);
     expect(result.transactions).toEqual([]);
     expect(result.memories).toEqual([]);
   });
@@ -85,26 +141,5 @@ describe("buildChatContext", () => {
     const result = buildChatContext(txs, [], "2026-03");
 
     expect(result.transactions).toHaveLength(2);
-  });
-
-  it("maps transactions to context shape", () => {
-    const txs = [
-      makeTx({
-        type: "expense",
-        amountCents: 5000,
-        categoryId: "food",
-        description: "Lunch",
-        date: new Date(2026, 2, 1),
-      }),
-    ];
-    const result = buildChatContext(txs, [], "2026-03");
-
-    expect(result.transactions[0]).toEqual({
-      type: "expense",
-      amountCents: 5000,
-      categoryId: "food",
-      description: "Lunch",
-      date: "2026-03-01",
-    });
   });
 });
