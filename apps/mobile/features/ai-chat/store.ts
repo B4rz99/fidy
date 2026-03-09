@@ -181,7 +181,9 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     const actionStatus: ActionStatus | null = action
       ? action.type === "add"
         ? "confirmed"
-        : "pending"
+        : action.type === "delete"
+          ? "pending"
+          : null
       : null;
 
     const msg: ChatMessage = {
