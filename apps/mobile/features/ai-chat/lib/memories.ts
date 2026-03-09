@@ -5,5 +5,11 @@ export function deduplicateMemories(
   newFacts: readonly ExtractedMemory[]
 ): readonly ExtractedMemory[] {
   const existingLower = new Set(existing.map((m) => m.fact.toLowerCase()));
-  return newFacts.filter((f) => !existingLower.has(f.fact.toLowerCase()));
+  const seen = new Set<string>();
+  return newFacts.filter((f) => {
+    const lower = f.fact.toLowerCase();
+    if (existingLower.has(lower) || seen.has(lower)) return false;
+    seen.add(lower);
+    return true;
+  });
 }

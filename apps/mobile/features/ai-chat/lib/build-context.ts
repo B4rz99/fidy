@@ -56,8 +56,8 @@ export function buildChatContext(
     })),
     summary: {
       balance: deriveBalance(transactions),
-      currentMonthSpending: deriveSpendingByCategory(transactions, currentMonth),
-      previousMonthSpending: deriveSpendingByCategory(transactions, prevMonth),
+      currentMonthSpending: deriveSpendingByCategory(relevantTransactions, currentMonth),
+      previousMonthSpending: deriveSpendingByCategory(relevantTransactions, prevMonth),
     },
     memories: memories.map((m) => ({ fact: m.fact, category: m.category })),
   };

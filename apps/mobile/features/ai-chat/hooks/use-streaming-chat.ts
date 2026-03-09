@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { useTransactionStore } from "@/features/transactions/store";
 import { parseIsoDate, toIsoDate } from "@/shared/lib/format-date";
 import { buildChatContext } from "../lib/build-context";
@@ -7,21 +7,22 @@ import type { ChatAction } from "../schema";
 import { streamChat } from "../services/ai-chat-api";
 import { useChatStore } from "../store";
 
-export function useStreamingChat() {
-  const abortRef = useRef<AbortController | null>(null);
+let activeController: AbortController | null = null;
 
-  const {
-    messages,
-    currentSessionId,
-    memories,
-    isStreaming,
-    streamingContent,
-    createSession,
-    addUserMessage,
-    addAssistantMessage,
-    setStreaming,
-    setStreamingContent,
-  } = useChatStore();
+function resetStreamState(): void {
+  useChatStore.getState().setStreaming(false);
+  useChatStore.getState().setStreamingContent("");
+  activeController = null;
+}
+
+export function cancelActiveStream(): void {
+  activeController?.abort();
+  resetStreamState();
+}
+
+export function useStreamingChat() {
+  const isStreaming = useChatStore((s) => s.isStreaming);
+  const streamingContent = useChatStore((s) => s.streamingContent);
 
   const executeAction = useCallback(async (action: ChatAction) => {
     switch (action.type) {
@@ -32,8 +33,11 @@ export function useStreamingChat() {
         store.setCategoryId(action.data.categoryId);
         store.setDescription(action.data.description);
         store.setDate(parseIsoDate(action.data.date));
-        await store.saveTransaction();
-        store.resetForm();
+        try {
+          await store.saveTransaction();
+        } finally {
+          store.resetForm();
+        }
         break;
       }
       case "edit": {
@@ -47,85 +51,78 @@ export function useStreamingChat() {
     async (text: string) => {
       if (isStreaming || !text.trim()) return;
 
-      let sessionId = currentSessionId;
+      const store = useChatStore.getState();
+
+      let sessionId = store.currentSessionId;
       if (!sessionId) {
-        sessionId = await createSession(text);
+        sessionId = await store.createSession(text);
       }
 
-      await addUserMessage(text);
+      await store.addUserMessage(text);
 
       const currentMonth = toIsoDate(new Date()).slice(0, 7);
       const context = buildChatContext(
         useTransactionStore.getState().transactions,
-        memories,
+        store.memories,
         currentMonth
       );
 
       const allMessages = [
-        ...messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+        ...store.messages.map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        })),
         { role: "user" as const, content: text },
       ];
 
-      setStreaming(true);
-      setStreamingContent("");
+      store.setStreaming(true);
+      store.setStreamingContent("");
 
       const controller = new AbortController();
-      abortRef.current = controller;
+      activeController = controller;
 
       let accumulated = "";
 
-      await streamChat(
-        allMessages,
-        context,
-        {
-          onChunk: (chunk) => {
-            accumulated += chunk;
-            setStreamingContent(accumulated);
-          },
-          onDone: async () => {
-            const action = parseActionFromResponse(accumulated);
-            await addAssistantMessage(accumulated, action);
+      try {
+        await streamChat(
+          allMessages,
+          context,
+          {
+            onChunk: (chunk) => {
+              accumulated += chunk;
+              useChatStore.getState().setStreamingContent(accumulated);
+            },
+            onDone: async () => {
+              const action = parseActionFromResponse(accumulated);
+              await useChatStore.getState().addAssistantMessage(accumulated, action);
 
-            // Auto-execute add/edit actions immediately (no confirmation needed)
-            if (action && action.type !== "delete") {
-              await executeAction(action);
-            }
+              if (action && action.type === "add") {
+                await executeAction(action);
+              }
 
-            setStreaming(false);
-            setStreamingContent("");
-            abortRef.current = null;
+              resetStreamState();
+            },
+            onError: async (error) => {
+              const errorMessage =
+                accumulated || `I'm sorry, something went wrong. Please try again. (${error})`;
+              await useChatStore.getState().addAssistantMessage(errorMessage);
+              resetStreamState();
+            },
           },
-          onError: async (error) => {
-            const errorMessage =
-              accumulated || `I'm sorry, something went wrong. Please try again. (${error})`;
-            await addAssistantMessage(errorMessage);
-            setStreaming(false);
-            setStreamingContent("");
-            abortRef.current = null;
-          },
-        },
-        controller.signal
-      );
+          controller.signal
+        );
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          const errorMessage =
+            accumulated ||
+            `I'm sorry, something went wrong. Please try again. (${err instanceof Error ? err.message : "Unknown error"})`;
+          await useChatStore.getState().addAssistantMessage(errorMessage);
+        }
+        resetStreamState();
+      }
     },
-    [
-      isStreaming,
-      currentSessionId,
-      messages,
-      memories,
-      createSession,
-      addUserMessage,
-      addAssistantMessage,
-      executeAction,
-      setStreaming,
-      setStreamingContent,
-    ]
+    [isStreaming, executeAction]
   );
 
-  const cancelStream = useCallback(() => {
-    abortRef.current?.abort();
-    setStreaming(false);
-    setStreamingContent("");
-  }, [setStreaming, setStreamingContent]);
-
-  return { sendMessage, cancelStream, isStreaming, streamingContent };
+  return { sendMessage, cancelStream: cancelActiveStream, isStreaming, streamingContent };
 }

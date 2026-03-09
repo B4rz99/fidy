@@ -50,7 +50,12 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
     async (messageId: string) => {
       const msg = messages.find((m) => m.id === messageId);
       if (msg?.action?.type === "delete") {
-        await useTransactionStore.getState().removeTransaction(msg.action.transactionId);
+        try {
+          await useTransactionStore.getState().removeTransaction(msg.action.transactionId);
+        } catch {
+          updateActionStatus(messageId, "dismissed");
+          return;
+        }
       }
       updateActionStatus(messageId, "confirmed");
     },

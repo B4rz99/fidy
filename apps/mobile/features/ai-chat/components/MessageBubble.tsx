@@ -72,24 +72,22 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
         </View>
       )}
 
-      {message.action &&
-        message.actionStatus === "confirmed" &&
-        message.action.type !== "delete" && (
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 6,
-              paddingLeft: 36,
-              marginTop: 4,
-            }}
-          >
-            <CircleCheck size={14} color={accentGreen} />
-            <Text className="font-poppins-semibold text-caption" style={{ color: accentGreen }}>
-              Added
-            </Text>
-          </View>
-        )}
+      {message.action && message.actionStatus === "confirmed" && message.action.type === "add" && (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 6,
+            paddingLeft: 36,
+            marginTop: 4,
+          }}
+        >
+          <CircleCheck size={14} color={accentGreen} />
+          <Text className="font-poppins-semibold text-caption" style={{ color: accentGreen }}>
+            Added
+          </Text>
+        </View>
+      )}
 
       {message.action && message.actionStatus === "pending" && message.action.type === "delete" && (
         <View style={{ paddingLeft: 36, marginTop: 8 }}>

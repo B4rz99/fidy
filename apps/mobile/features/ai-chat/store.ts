@@ -57,6 +57,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   initStore: (db, userId) => {
     dbRef = db;
     userIdRef = userId;
+    set({ sessions: [], currentSessionId: null, messages: [], memories: [] });
   },
 
   loadSessions: async () => {
@@ -178,9 +179,9 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     if (!currentSessionId) throw new Error("No active session");
 
     const actionStatus: ActionStatus | null = action
-      ? action.type === "delete"
-        ? "pending"
-        : "confirmed"
+      ? action.type === "add"
+        ? "confirmed"
+        : "pending"
       : null;
 
     const msg: ChatMessage = {
@@ -307,9 +308,15 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
 
     if (expired.length > 0) {
       const expiredIds = new Set(expired.map((s) => s.id));
-      set((state) => ({
-        sessions: state.sessions.filter((s) => !expiredIds.has(s.id)),
-      }));
+      set((state) => {
+        const isActiveExpired = state.currentSessionId
+          ? expiredIds.has(state.currentSessionId)
+          : false;
+        return {
+          sessions: state.sessions.filter((s) => !expiredIds.has(s.id)),
+          ...(isActiveExpired ? { currentSessionId: null, messages: [] } : {}),
+        };
+      });
     }
 
     return expired;

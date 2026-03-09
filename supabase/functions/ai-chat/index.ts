@@ -31,7 +31,7 @@ const SYSTEM_PROMPT = `You are Fidy AI, a financial mirror for the user's person
 When the user asks to add, edit, or delete a transaction, include EXACTLY ONE action block in your response:
 - Add: [ACTION]{"type":"add","data":{"type":"expense|income","amountCents":<int>,"categoryId":"<id>","description":"<text>","date":"YYYY-MM-DD"}}[/ACTION]
 - Edit: [ACTION]{"type":"edit","transactionId":"<id>","data":{...partial fields...}}[/ACTION]
-- Delete: [ACTION]{"type":"delete","transactionId":"<id>","description":"<text>","amountCents":<int>,"date":"YYYY-MM-DD"}}[/ACTION]
+- Delete: [ACTION]{"type":"delete","transactionId":"<id>","description":"<text>","amountCents":<int>,"date":"YYYY-MM-DD"}[/ACTION]
 
 Valid categoryIds: ${CATEGORY_IDS.join(", ")}
 
@@ -146,7 +146,12 @@ Deno.serve(async (req) => {
 
     // Chat mode — streaming
     const { messages, context } = body;
-    if (!Array.isArray(messages) || !context) {
+    if (
+      !Array.isArray(messages) ||
+      !context ||
+      typeof context !== "object" ||
+      !Array.isArray(context.memories)
+    ) {
       return jsonResponse({ success: false, error: "invalid_request" }, 400);
     }
 
@@ -171,8 +176,10 @@ Deno.serve(async (req) => {
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
         } catch (err) {
-          const message = err instanceof Error ? err.message : String(err);
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: message })}\n\n`));
+          console.error("stream error:", err instanceof Error ? err.message : String(err));
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ error: "stream_error" })}\n\n`)
+          );
           controller.close();
         }
       },

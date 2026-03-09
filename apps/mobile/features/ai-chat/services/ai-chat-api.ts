@@ -37,12 +37,19 @@ export async function streamChat(
   const headers = await getAuthHeaders();
   const url = `${getBaseUrl()}/functions/v1/ai-chat`;
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ messages, context }),
-    signal,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ messages, context }),
+      signal,
+    });
+  } catch (err) {
+    if (signal?.aborted) return;
+    callbacks.onError(err instanceof Error ? err.message : "Network error");
+    return;
+  }
 
   if (!response.ok) {
     callbacks.onError(`HTTP ${response.status}`);
@@ -56,14 +63,16 @@ export async function streamChat(
   }
 
   const decoder = new TextDecoder();
+  let buffer = "";
 
   try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const text = decoder.decode(value, { stream: true });
-      const lines = text.split("\n");
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
 
       for (const line of lines) {
         if (!line.startsWith("data: ")) continue;

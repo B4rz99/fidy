@@ -17,7 +17,7 @@ export const addActionSchema = z.object({
     amountCents: z.number().int().positive(),
     categoryId: categoryIdSchema,
     description: z.string(),
-    date: z.string(),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   }),
 });
 
@@ -28,7 +28,10 @@ export const editActionSchema = z.object({
     amountCents: z.number().int().positive().optional(),
     categoryId: categoryIdSchema.optional(),
     description: z.string().optional(),
-    date: z.string().optional(),
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
   }),
 });
 
@@ -37,7 +40,7 @@ export const deleteActionSchema = z.object({
   transactionId: z.string(),
   description: z.string(),
   amountCents: z.number().int().positive(),
-  date: z.string(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 export const chatActionSchema = z.discriminatedUnion("type", [

@@ -63,4 +63,19 @@ describe("deduplicateMemories", () => {
   it("handles both empty", () => {
     expect(deduplicateMemories([], [])).toEqual([]);
   });
+
+  it("deduplicates within newFacts batch", () => {
+    const newFacts: readonly ExtractedMemory[] = [
+      { fact: "Works from home", category: "situation" },
+      { fact: "works from home", category: "situation" },
+      { fact: "Has a dog", category: "preference" },
+    ];
+
+    const result = deduplicateMemories([], newFacts);
+
+    expect(result).toEqual([
+      { fact: "Works from home", category: "situation" },
+      { fact: "Has a dog", category: "preference" },
+    ]);
+  });
 });
