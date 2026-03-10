@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { deriveConversationTitle, findExpiredSessions } from "../../features/ai-chat/lib/sessions";
+import {
+  deriveConversationTitle,
+  findExpiredSessions,
+  formatCleanupMessage,
+} from "../../features/ai-chat/lib/sessions";
 import type { ChatSession } from "../../features/ai-chat/schema";
 
 const makeSession = (overrides: Partial<ChatSession>): ChatSession => ({
@@ -72,5 +76,19 @@ describe("findExpiredSessions", () => {
 
   it("returns empty array for empty input", () => {
     expect(findExpiredSessions([], "2026-03-10T00:00:00.000Z")).toEqual([]);
+  });
+});
+
+describe("formatCleanupMessage", () => {
+  it("returns singular message for 1 session", () => {
+    expect(formatCleanupMessage(1)).toBe("1 expired conversation was removed");
+  });
+
+  it("returns plural message for multiple sessions", () => {
+    expect(formatCleanupMessage(3)).toBe("3 expired conversations were removed");
+  });
+
+  it("returns null for 0 sessions", () => {
+    expect(formatCleanupMessage(0)).toBeNull();
   });
 });

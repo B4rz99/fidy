@@ -1,13 +1,13 @@
 import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
-import { MessageSquare, Plus, Trash2 } from "lucide-react-native";
+import { MessageSquare, Plus, Trash2, X } from "lucide-react-native";
 import { memo, useCallback, useEffect } from "react";
 import { Platform, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { useSessionCleanup } from "../hooks/use-session-cleanup";
 import type { ChatSession } from "../schema";
 import { useChatStore } from "../store";
-import { ExpiredSessionsBanner } from "./ExpiredSessionsBanner";
 
 type ConversationListProps = {
   readonly onSelectSession: (id: string) => void;
@@ -74,6 +74,8 @@ export function ConversationList({
   const deleteSession = useChatStore((s) => s.deleteSession);
 
   const accentGreen = useThemeColor("accentGreen");
+  const tertiary = useThemeColor("tertiary");
+  const { message: cleanupMessage, dismiss: dismissCleanup } = useSessionCleanup();
 
   useEffect(() => {
     loadSessions();
@@ -112,7 +114,7 @@ export function ConversationList({
         }}
         ItemSeparatorComponent={ItemSeparator}
         ListHeaderComponent={
-          <View style={{ paddingBottom: 16, gap: 12 }}>
+          <View style={{ paddingBottom: 16 }}>
             <View
               style={{
                 flexDirection: "row",
@@ -152,7 +154,30 @@ export function ConversationList({
                 </Pressable>
               </View>
             </View>
-            <ExpiredSessionsBanner />
+            {cleanupMessage != null && (
+              <View
+                className="bg-card dark:bg-card-dark"
+                style={{
+                  marginTop: 12,
+                  borderRadius: 12,
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <Text
+                  className="font-poppins-medium text-label text-tertiary dark:text-tertiary-dark"
+                  style={{ flex: 1 }}
+                >
+                  {cleanupMessage}
+                </Text>
+                <Pressable onPress={dismissCleanup} hitSlop={12} style={{ padding: 2 }}>
+                  <X size={16} color={tertiary} />
+                </Pressable>
+              </View>
+            )}
           </View>
         }
         ListEmptyComponent={

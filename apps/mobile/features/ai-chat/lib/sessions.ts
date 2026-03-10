@@ -13,3 +13,10 @@ export function findExpiredSessions(
 ): readonly ChatSession[] {
   return sessions.filter((s) => s.deletedAt === null && s.expiresAt < now);
 }
+
+export function formatCleanupMessage(count: number): string | null {
+  if (count === 0) return null;
+  return count === 1
+    ? "1 expired conversation was removed"
+    : `${count} expired conversations were removed`;
+}
