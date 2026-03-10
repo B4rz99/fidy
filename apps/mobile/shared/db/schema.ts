@@ -1,5 +1,40 @@
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
+export const bills = sqliteTable(
+  "bills",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    name: text("name").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    frequency: text("frequency").notNull(),
+    categoryId: text("category_id").notNull(),
+    startDate: text("start_date").notNull(),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("idx_bills_user").on(table.userId),
+    index("idx_bills_user_active").on(table.userId, table.isActive),
+  ]
+);
+
+export const billPayments = sqliteTable(
+  "bill_payments",
+  {
+    id: text("id").primaryKey(),
+    billId: text("bill_id").notNull(),
+    dueDate: text("due_date").notNull(),
+    paidAt: text("paid_at").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("idx_bill_payments_bill").on(table.billId),
+    uniqueIndex("uq_bill_payment_occurrence").on(table.billId, table.dueDate),
+  ]
+);
+
 export const transactions = sqliteTable(
   "transactions",
   {

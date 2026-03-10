@@ -13,9 +13,21 @@ describe("Tab layout", () => {
     expect(layoutSource).toContain('name="add"');
   });
 
-  test("has correct tab order: index, ai, add, goals, menu, calendar", () => {
-    const screens = Array.from(layoutSource.matchAll(/name="(\w+)"/g), (m) => m[1]);
-    expect(screens).toEqual(["index", "ai", "add", "goals", "menu", "calendar"]);
+  test("has correct tab order: index, ai, add, calendar, menu", () => {
+    const screens = Array.from(layoutSource.matchAll(/name="([\w-]+)"/g), (m) => m[1]);
+    expect(screens).toEqual([
+      "index",
+      "ai",
+      "add",
+      "calendar",
+      "menu",
+      "connected-accounts",
+      "failed-emails",
+    ]);
+  });
+
+  test("does not include goals tab", () => {
+    expect(layoutSource).not.toContain('name="goals"');
   });
 
   // Bug 4: pressing ADD should close menu

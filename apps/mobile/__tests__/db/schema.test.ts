@@ -1,6 +1,6 @@
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { syncMeta, syncQueue, transactions } from "@/shared/db/schema";
+import { billPayments, bills, syncMeta, syncQueue, transactions } from "@/shared/db/schema";
 
 describe("transactions table schema", () => {
   it("is named 'transactions'", () => {
@@ -85,5 +85,71 @@ describe("syncMeta table schema", () => {
   it("key is primary key", () => {
     const cols = getTableColumns(syncMeta);
     expect(cols.key.primary).toBe(true);
+  });
+});
+
+describe("bills table schema", () => {
+  it("is named 'bills'", () => {
+    expect(getTableName(bills)).toBe("bills");
+  });
+
+  it("has all required columns", () => {
+    const cols = getTableColumns(bills);
+    const names = Object.keys(cols);
+
+    expect(names).toContain("id");
+    expect(names).toContain("userId");
+    expect(names).toContain("name");
+    expect(names).toContain("amountCents");
+    expect(names).toContain("frequency");
+    expect(names).toContain("categoryId");
+    expect(names).toContain("startDate");
+    expect(names).toContain("isActive");
+    expect(names).toContain("createdAt");
+    expect(names).toContain("updatedAt");
+    expect(names).toHaveLength(10);
+  });
+
+  it("id is primary key", () => {
+    const cols = getTableColumns(bills);
+    expect(cols.id.primary).toBe(true);
+  });
+
+  it("userId is not null", () => {
+    const cols = getTableColumns(bills);
+    expect(cols.userId.notNull).toBe(true);
+  });
+
+  it("isActive defaults to true", () => {
+    const cols = getTableColumns(bills);
+    expect(cols.isActive.hasDefault).toBe(true);
+  });
+});
+
+describe("billPayments table schema", () => {
+  it("is named 'bill_payments'", () => {
+    expect(getTableName(billPayments)).toBe("bill_payments");
+  });
+
+  it("has all required columns", () => {
+    const cols = getTableColumns(billPayments);
+    const names = Object.keys(cols);
+
+    expect(names).toContain("id");
+    expect(names).toContain("billId");
+    expect(names).toContain("dueDate");
+    expect(names).toContain("paidAt");
+    expect(names).toContain("createdAt");
+    expect(names).toHaveLength(5);
+  });
+
+  it("id is primary key", () => {
+    const cols = getTableColumns(billPayments);
+    expect(cols.id.primary).toBe(true);
+  });
+
+  it("billId is not null", () => {
+    const cols = getTableColumns(billPayments);
+    expect(cols.billId.notNull).toBe(true);
   });
 });

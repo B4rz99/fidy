@@ -1,46 +1,57 @@
+import { Check } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 import type { Bill } from "../schema";
 
 type Props = {
   day: number | null;
+  date: Date | null;
   bills: Bill[];
-  onBillPress: (id: string) => void;
+  paidBillIds: ReadonlySet<string>;
+  onDayPress: (date: Date) => void;
 };
 
 const MAX_VISIBLE_TAGS = 2;
 
-export function CalendarDayCell({ day, bills, onBillPress }: Props) {
+export function CalendarDayCell({ day, date, bills, paidBillIds, onDayPress }: Props) {
   const primaryColor = useThemeColor("primary");
   const peachBg = useThemeColor("peachLight");
   const tertiaryColor = useThemeColor("tertiary");
+  const accentGreen = useThemeColor("accentGreen");
+  const accentGreenLight = useThemeColor("accentGreenLight");
 
-  if (day === null) {
+  if (day === null || !date) {
     return <View style={styles.cell} />;
   }
 
   const visibleBills = bills.slice(0, MAX_VISIBLE_TAGS);
 
   return (
-    <View style={styles.cell}>
+    <Pressable style={styles.cell} onPress={() => onDayPress(date)}>
       <Text style={[styles.dayNumber, { color: primaryColor }]}>{day}</Text>
-      {visibleBills.map((bill) => (
-        <Pressable
-          key={bill.id}
-          style={[styles.tag, { backgroundColor: peachBg }]}
-          onPress={() => onBillPress(bill.id)}
-        >
-          <Text style={[styles.tagText, { color: primaryColor }]} numberOfLines={1}>
-            {bill.name}
-          </Text>
-        </Pressable>
-      ))}
+      {visibleBills.map((bill) => {
+        const paid = paidBillIds.has(bill.id);
+        return (
+          <View
+            key={bill.id}
+            style={[styles.tag, { backgroundColor: paid ? accentGreenLight : peachBg }]}
+          >
+            {paid && <Check size={7} color={accentGreen} />}
+            <Text
+              style={[styles.tagText, { color: paid ? accentGreen : primaryColor }]}
+              numberOfLines={1}
+            >
+              {bill.name}
+            </Text>
+          </View>
+        );
+      })}
       {bills.length > MAX_VISIBLE_TAGS && (
         <Text style={[styles.moreText, { color: tertiaryColor }]}>
           +{bills.length - MAX_VISIBLE_TAGS}
         </Text>
       )}
-    </View>
+    </Pressable>
   );
 }
 
@@ -58,6 +69,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   tag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
     borderRadius: 6,
     paddingHorizontal: 4,
     paddingVertical: 1,

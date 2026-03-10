@@ -1,26 +1,33 @@
+import { useRouter } from "expo-router";
 import { Plus } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 import { useCalendarStore } from "../store";
-import { AddBillPopup } from "./AddBillPopup";
-import { BillDetailPopup } from "./BillDetailPopup";
 import { CalendarGrid } from "./CalendarGrid";
 import { MonthNavigator } from "./MonthNavigator";
 
 export function CalendarScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const currentMonth = useCalendarStore((s) => s.currentMonth);
   const bills = useCalendarStore((s) => s.bills);
+  const payments = useCalendarStore((s) => s.payments);
   const nextMonth = useCalendarStore((s) => s.nextMonth);
   const prevMonth = useCalendarStore((s) => s.prevMonth);
-  const openAddBill = useCalendarStore((s) => s.openAddBill);
-  const openBillDetail = useCalendarStore((s) => s.openBillDetail);
 
   const pageBg = useThemeColor("page");
   const primaryColor = useThemeColor("primary");
   const peachBg = useThemeColor("peachLight");
   const borderColor = useThemeColor("borderSubtle");
+
+  const handleDayPress = (date: Date) => {
+    router.push({ pathname: "/day-detail", params: { date: date.toISOString() } });
+  };
+
+  const handleAddBill = () => {
+    router.push("/add-bill");
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: pageBg, paddingTop: insets.top }]}>
@@ -29,7 +36,7 @@ export function CalendarScreen() {
         <Text style={[styles.title, { color: primaryColor }]}>Calendar</Text>
         <Pressable
           style={[styles.addButton, { backgroundColor: peachBg, borderColor }]}
-          onPress={openAddBill}
+          onPress={handleAddBill}
         >
           <Plus size={20} color={primaryColor} />
         </Pressable>
@@ -40,12 +47,13 @@ export function CalendarScreen() {
 
       {/* Calendar grid */}
       <View style={styles.gridWrapper}>
-        <CalendarGrid currentMonth={currentMonth} bills={bills} onBillPress={openBillDetail} />
+        <CalendarGrid
+          currentMonth={currentMonth}
+          bills={bills}
+          payments={payments}
+          onDayPress={handleDayPress}
+        />
       </View>
-
-      {/* Popups */}
-      <AddBillPopup />
-      <BillDetailPopup />
     </View>
   );
 }

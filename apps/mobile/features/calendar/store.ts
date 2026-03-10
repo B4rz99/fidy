@@ -1,47 +1,113 @@
-import { addMonths, subMonths } from "date-fns";
+import { addMonths, endOfMonth, startOfMonth, subMonths } from "date-fns";
 import { create } from "zustand";
-import type { CategoryId } from "@/features/transactions/lib/categories";
+import type { AnyDb } from "@/shared/db/client";
+import { toIsoDate } from "@/shared/lib/format-date";
 import { generateId } from "@/shared/lib/generate-id";
-import { MOCK_BILLS } from "./data/mock-bills";
-import { type Bill, type BillFrequency, createBillSchema } from "./schema";
+import { requestNotificationPermissions, scheduleBillNotifications } from "./lib/notifications";
+import {
+  deleteBill as dbDeleteBill,
+  deleteBillPayment as dbDeleteBillPayment,
+  updateBill as dbUpdateBill,
+  getAllBills,
+  getBillPaymentsForMonth,
+  insertBill,
+  insertBillPayment,
+} from "./lib/repository";
+import {
+  type Bill,
+  type BillFrequency,
+  type BillPayment,
+  createBillSchema,
+  fromBillRow,
+  toBillRow,
+} from "./schema";
 
-type PopupType = "none" | "addBill" | "billDetail";
+// Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
+let dbRef: AnyDb | null = null;
+let userIdRef: string | null = null;
 
 type CalendarState = {
   currentMonth: Date;
   bills: Bill[];
-  selectedBillId: string | null;
-  popup: PopupType;
+  payments: BillPayment[];
+  isLoading: boolean;
 };
 
 type CalendarActions = {
+  initStore: (db: AnyDb, userId: string) => void;
   nextMonth: () => void;
   prevMonth: () => void;
-  openAddBill: () => void;
-  openBillDetail: (id: string) => void;
-  closePopup: () => void;
+  loadBills: () => Promise<void>;
+  loadPaymentsForMonth: () => Promise<void>;
   addBill: (
     name: string,
     amount: string,
     frequency: BillFrequency,
-    category: CategoryId
-  ) => boolean;
+    category: string
+  ) => Promise<boolean>;
+  updateBill: (
+    id: string,
+    fields: Partial<
+      Pick<Bill, "name" | "amountCents" | "frequency" | "categoryId" | "startDate" | "isActive">
+    >
+  ) => Promise<void>;
+  deleteBill: (id: string) => Promise<void>;
+  markBillPaid: (billId: string, dueDate: string) => Promise<void>;
+  unmarkBillPaid: (billId: string, dueDate: string) => Promise<void>;
 };
 
-export const useCalendarStore = create<CalendarState & CalendarActions>((set) => ({
+export const useCalendarStore = create<CalendarState & CalendarActions>((set, get) => ({
   currentMonth: new Date(),
-  bills: MOCK_BILLS,
-  selectedBillId: null,
-  popup: "none",
+  bills: [],
+  payments: [],
+  isLoading: false,
 
-  nextMonth: () => set((s) => ({ currentMonth: addMonths(s.currentMonth, 1) })),
-  prevMonth: () => set((s) => ({ currentMonth: subMonths(s.currentMonth, 1) })),
+  initStore: (db, userId) => {
+    dbRef = db;
+    userIdRef = userId;
+  },
 
-  openAddBill: () => set({ popup: "addBill" }),
-  openBillDetail: (id) => set({ popup: "billDetail", selectedBillId: id }),
-  closePopup: () => set({ popup: "none", selectedBillId: null }),
+  nextMonth: () => {
+    set((s) => ({ currentMonth: addMonths(s.currentMonth, 1) }));
+    get()
+      .loadPaymentsForMonth()
+      .catch(() => {});
+  },
 
-  addBill: (name, amount, frequency, category) => {
+  prevMonth: () => {
+    set((s) => ({ currentMonth: subMonths(s.currentMonth, 1) }));
+    get()
+      .loadPaymentsForMonth()
+      .catch(() => {});
+  },
+
+  loadBills: async () => {
+    if (!dbRef || !userIdRef) return;
+    set({ isLoading: true });
+    try {
+      const rows = await getAllBills(dbRef, userIdRef);
+      set({ bills: rows.map(fromBillRow), isLoading: false });
+    } catch {
+      set({ isLoading: false });
+    }
+  },
+
+  loadPaymentsForMonth: async () => {
+    if (!dbRef) return;
+    const { currentMonth } = get();
+    const startIso = toIsoDate(startOfMonth(currentMonth));
+    const endIso = toIsoDate(endOfMonth(currentMonth));
+    try {
+      const rows = await getBillPaymentsForMonth(dbRef, startIso, endIso);
+      set({ payments: rows as BillPayment[] });
+    } catch {
+      // keep existing payments on error
+    }
+  },
+
+  addBill: async (name, amount, frequency, category) => {
+    if (!dbRef || !userIdRef) return false;
+
     const cents = Math.round(parseFloat(amount) * 100);
     if (Number.isNaN(cents)) return false;
 
@@ -61,11 +127,69 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set) =>
       ...result.data,
     };
 
+    try {
+      await insertBill(dbRef, toBillRow(newBill, userIdRef));
+    } catch {
+      return false;
+    }
+
     set((s) => ({
       bills: [...s.bills, newBill],
-      popup: "none",
-      selectedBillId: null,
     }));
+
+    // Schedule notifications (best-effort, don't block the add)
+    requestNotificationPermissions()
+      .then((granted) => (granted ? scheduleBillNotifications(newBill) : undefined))
+      .catch(() => {});
+
     return true;
+  },
+
+  updateBill: async (id, fields) => {
+    if (!dbRef) return;
+
+    const dbFields = Object.fromEntries(
+      Object.entries(fields)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => [k, k === "startDate" && v instanceof Date ? v.toISOString() : v])
+    );
+
+    await dbUpdateBill(dbRef, id, dbFields);
+    set((s) => ({
+      bills: s.bills.map((b) => (b.id === id ? { ...b, ...fields } : b)),
+    }));
+  },
+
+  deleteBill: async (id) => {
+    if (!dbRef) return;
+    await dbDeleteBill(dbRef, id);
+    set((s) => ({
+      bills: s.bills.filter((b) => b.id !== id),
+      payments: s.payments.filter((p) => p.billId !== id),
+    }));
+  },
+
+  markBillPaid: async (billId, dueDate) => {
+    if (!dbRef) return;
+    const now = new Date().toISOString();
+    const payment: BillPayment = {
+      id: generateId("pay"),
+      billId,
+      dueDate,
+      paidAt: now,
+      createdAt: now,
+    };
+    await insertBillPayment(dbRef, payment);
+    set((s) => ({
+      payments: [...s.payments, payment],
+    }));
+  },
+
+  unmarkBillPaid: async (billId, dueDate) => {
+    if (!dbRef) return;
+    await dbDeleteBillPayment(dbRef, billId, dueDate);
+    set((s) => ({
+      payments: s.payments.filter((p) => !(p.billId === billId && p.dueDate === dueDate)),
+    }));
   },
 }));

@@ -34,9 +34,8 @@ export default function TabsLayout() {
         <Tabs.Screen name="index" options={{ title: "Home" }} />
         <Tabs.Screen name="ai" options={{ title: "AI" }} />
         <Tabs.Screen name="add" options={{ title: "Add" }} />
-        <Tabs.Screen name="goals" options={{ title: "Goals" }} />
+        <Tabs.Screen name="calendar" options={{ title: "Calendar" }} />
         <Tabs.Screen name="menu" options={{ title: "Menu" }} />
-        <Tabs.Screen name="calendar" options={{ href: null }} />
         <Tabs.Screen name="connected-accounts" options={{ href: null }} />
         <Tabs.Screen name="failed-emails" options={{ href: null }} />
       </Tabs>

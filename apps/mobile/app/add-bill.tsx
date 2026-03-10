@@ -1,28 +1,44 @@
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import type { BillFrequency } from "@/features/calendar/schema";
+import { FREQUENCIES } from "@/features/calendar/schema";
+import { useCalendarStore } from "@/features/calendar/store";
 import type { CategoryId } from "@/features/transactions/lib/categories";
 import { CATEGORIES } from "@/features/transactions/lib/categories";
+import { centsToDisplay } from "@/features/transactions/lib/format-amount";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
-import type { BillFrequency } from "../schema";
-import { useCalendarStore } from "../store";
-import { PopupOverlay } from "./PopupOverlay";
 
-const FREQUENCIES: { value: BillFrequency; label: string }[] = [
-  { value: "weekly", label: "Weekly" },
-  { value: "biweekly", label: "Biweekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "yearly", label: "Yearly" },
-];
-
-export function AddBillPopup() {
-  const popup = useCalendarStore((s) => s.popup);
-  const closePopup = useCalendarStore((s) => s.closePopup);
+export default function AddBillScreen() {
+  const router = useRouter();
+  const { billId } = useLocalSearchParams<{ billId?: string }>();
+  const bills = useCalendarStore((s) => s.bills);
   const addBill = useCalendarStore((s) => s.addBill);
+  const updateBillAction = useCalendarStore((s) => s.updateBill);
 
-  const [name, setName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [frequency, setFrequency] = useState<BillFrequency>("monthly");
-  const [category, setCategory] = useState<CategoryId>("services");
+  const existingBill = billId ? bills.find((b) => b.id === billId) : undefined;
+  const isEdit = !!existingBill;
+
+  const [name, setName] = useState(existingBill?.name ?? "");
+  const [amount, setAmount] = useState(
+    existingBill ? centsToDisplay(existingBill.amountCents).replace("$", "") : ""
+  );
+  const [frequency, setFrequency] = useState<BillFrequency>(existingBill?.frequency ?? "monthly");
+  const [category, setCategory] = useState<CategoryId>(
+    (existingBill?.categoryId as CategoryId) ?? "services"
+  );
+
+  const amountRef = useRef<TextInput>(null);
 
   const cardBg = useThemeColor("card");
   const borderColor = useThemeColor("borderSubtle");
@@ -31,21 +47,56 @@ export function AddBillPopup() {
   const accentGreen = useThemeColor("accentGreen");
   const pageBg = useThemeColor("page");
 
-  if (popup !== "addBill") return null;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only re-sync when the bill identity changes
+  useEffect(() => {
+    if (existingBill) {
+      setName(existingBill.name);
+      setAmount(centsToDisplay(existingBill.amountCents).replace("$", ""));
+      setFrequency(existingBill.frequency);
+      setCategory(existingBill.categoryId as CategoryId);
+    }
+  }, [existingBill?.id]);
 
-  const handleAdd = () => {
-    const success = addBill(name, amount, frequency, category);
-    if (!success) return;
-    setName("");
-    setAmount("");
-    setFrequency("monthly");
-    setCategory("services");
+  const handleSave = async () => {
+    if (isEdit && existingBill) {
+      const cents = Math.round(parseFloat(amount) * 100);
+      if (Number.isNaN(cents) || cents <= 0) return;
+      await updateBillAction(existingBill.id, {
+        name,
+        amountCents: cents,
+        frequency,
+        categoryId: category,
+      });
+      router.back();
+    } else {
+      const success = await addBill(name, amount, frequency, category);
+      if (success) router.back();
+    }
+  };
+
+  const handleFrequencyPress = (value: BillFrequency) => {
+    Keyboard.dismiss();
+    setFrequency(value);
+  };
+
+  const handleCategoryPress = (id: CategoryId) => {
+    Keyboard.dismiss();
+    setCategory(id);
   };
 
   return (
-    <PopupOverlay onClose={closePopup}>
-      <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
-        <Text style={[styles.title, { color: primaryColor }]}>Add Bill</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        style={[styles.container, { backgroundColor: cardBg }]}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={[styles.title, { color: primaryColor }]}>
+          {isEdit ? "Edit Bill" : "Add Bill"}
+        </Text>
 
         <View style={styles.formGrid}>
           <View style={styles.inputGroup}>
@@ -56,18 +107,22 @@ export function AddBillPopup() {
               onChangeText={setName}
               placeholder="Netflix"
               placeholderTextColor={secondaryColor}
+              returnKeyType="next"
+              onSubmitEditing={() => amountRef.current?.focus()}
             />
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: secondaryColor }]}>Amount</Text>
             <TextInput
+              ref={amountRef}
               style={[styles.input, { backgroundColor: pageBg, color: primaryColor, borderColor }]}
               value={amount}
               onChangeText={setAmount}
               placeholder="9.99"
               placeholderTextColor={secondaryColor}
               keyboardType="decimal-pad"
+              returnKeyType="done"
             />
           </View>
 
@@ -84,7 +139,7 @@ export function AddBillPopup() {
                       borderColor,
                     },
                   ]}
-                  onPress={() => setFrequency(f.value)}
+                  onPress={() => handleFrequencyPress(f.value)}
                 >
                   <Text
                     style={[
@@ -112,7 +167,7 @@ export function AddBillPopup() {
                       borderColor,
                     },
                   ]}
-                  onPress={() => setCategory(c.id)}
+                  onPress={() => handleCategoryPress(c.id)}
                 >
                   <Text
                     style={[
@@ -128,20 +183,22 @@ export function AddBillPopup() {
           </View>
         </View>
 
-        <Pressable style={[styles.addButton, { backgroundColor: accentGreen }]} onPress={handleAdd}>
-          <Text style={styles.addButtonText}>Add</Text>
+        <Pressable
+          style={[styles.saveButton, { backgroundColor: accentGreen }]}
+          onPress={handleSave}
+        >
+          <Text style={styles.saveButtonText}>{isEdit ? "Save Changes" : "Add"}</Text>
         </Pressable>
-      </View>
-    </PopupOverlay>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    width: 345,
-    borderRadius: 20,
-    borderCurve: "continuous",
-    borderWidth: 1,
+  container: {
+    flex: 1,
+  },
+  content: {
     padding: 24,
     gap: 16,
   },
@@ -167,6 +224,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontFamily: "Poppins_500Medium",
     fontSize: 14,
+    minHeight: 44,
   },
   chipRow: {
     flexDirection: "row",
@@ -179,18 +237,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 6,
+    minHeight: 44,
+    justifyContent: "center",
   },
   chipText: {
     fontFamily: "Poppins_500Medium",
     fontSize: 12,
   },
-  addButton: {
+  saveButton: {
     borderRadius: 12,
     borderCurve: "continuous",
     paddingVertical: 14,
     alignItems: "center",
+    minHeight: 48,
   },
-  addButtonText: {
+  saveButtonText: {
     fontFamily: "Poppins_700Bold",
     fontSize: 16,
     color: "#FFFFFF",

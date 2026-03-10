@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { billFrequency, billSchema, createBillSchema } from "@/features/calendar/schema";
+import {
+  billFrequency,
+  billPaymentSchema,
+  billSchema,
+  createBillSchema,
+  fromBillRow,
+  toBillRow,
+} from "@/features/calendar/schema";
 
 describe("billFrequency", () => {
   test.each(["weekly", "biweekly", "monthly", "yearly"])("accepts '%s'", (f) => {
@@ -79,5 +86,71 @@ describe("createBillSchema", () => {
 
   test("rejects invalid categoryId", () => {
     expect(createBillSchema.safeParse({ ...valid, categoryId: "invalid" }).success).toBe(false);
+  });
+});
+
+describe("toBillRow / fromBillRow", () => {
+  const bill = {
+    id: "bill-1",
+    name: "Netflix",
+    amountCents: 1599,
+    frequency: "monthly" as const,
+    categoryId: "services" as const,
+    startDate: new Date(2025, 0, 15),
+    isActive: true,
+  };
+
+  test("toBillRow converts Date to ISO string", () => {
+    const row = toBillRow(bill, "user-1");
+    expect(typeof row.startDate).toBe("string");
+    expect(row.startDate).toBe(new Date(2025, 0, 15).toISOString());
+  });
+
+  test("toBillRow adds userId, createdAt, updatedAt", () => {
+    const row = toBillRow(bill, "user-1");
+    expect(row.userId).toBe("user-1");
+    expect(typeof row.createdAt).toBe("string");
+    expect(typeof row.updatedAt).toBe("string");
+  });
+
+  test("fromBillRow converts ISO string back to Date", () => {
+    const row = toBillRow(bill, "user-1");
+    const restored = fromBillRow(row);
+    expect(restored.startDate).toBeInstanceOf(Date);
+    expect(restored.startDate.getTime()).toBe(bill.startDate.getTime());
+  });
+
+  test("roundtrip preserves all bill fields", () => {
+    const row = toBillRow(bill, "user-1");
+    const restored = fromBillRow(row);
+    expect(restored.id).toBe(bill.id);
+    expect(restored.name).toBe(bill.name);
+    expect(restored.amountCents).toBe(bill.amountCents);
+    expect(restored.frequency).toBe(bill.frequency);
+    expect(restored.categoryId).toBe(bill.categoryId);
+    expect(restored.isActive).toBe(bill.isActive);
+  });
+});
+
+describe("billPaymentSchema", () => {
+  test("accepts valid bill payment", () => {
+    const valid = {
+      id: "pay-1",
+      billId: "bill-1",
+      dueDate: "2025-01-15",
+      paidAt: "2025-01-14T10:00:00.000Z",
+      createdAt: "2025-01-14T10:00:00.000Z",
+    };
+    expect(billPaymentSchema.safeParse(valid).success).toBe(true);
+  });
+
+  test("rejects missing billId", () => {
+    const invalid = {
+      id: "pay-1",
+      dueDate: "2025-01-15",
+      paidAt: "2025-01-14T10:00:00.000Z",
+      createdAt: "2025-01-14T10:00:00.000Z",
+    };
+    expect(billPaymentSchema.safeParse(invalid).success).toBe(false);
   });
 });

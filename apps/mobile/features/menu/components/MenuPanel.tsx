@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { Calendar, Mail } from "lucide-react-native";
+import { Mail } from "lucide-react-native";
 import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -41,11 +41,6 @@ export function MenuPanel() {
     opacity: isOpenAnimated.get(),
   }));
 
-  const handleCalendar = () => {
-    closeMenu();
-    push("/(tabs)/calendar");
-  };
-
   const handleConnectedAccounts = () => {
     closeMenu();
     push("/connected-accounts" as never);
@@ -67,10 +62,6 @@ export function MenuPanel() {
           panelStyle,
         ]}
       >
-        <Pressable style={[styles.menuItem, { backgroundColor: itemBg }]} onPress={handleCalendar}>
-          <Calendar size={20} color={primaryColor} />
-          <Text style={[styles.menuItemText, { color: primaryColor }]}>Calendar</Text>
-        </Pressable>
         <Pressable
           style={[styles.menuItem, { backgroundColor: itemBg }]}
           onPress={handleConnectedAccounts}

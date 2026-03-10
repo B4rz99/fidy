@@ -1,18 +1,20 @@
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { toIsoDate } from "@/shared/lib/format-date";
 import type { CalendarDay } from "../lib/calendar-utils";
 import { getBillsForDate, getMonthGrid, WEEKDAY_LABELS } from "../lib/calendar-utils";
-import type { Bill } from "../schema";
+import type { Bill, BillPayment } from "../schema";
 import { CalendarDayCell } from "./CalendarDayCell";
 
 type Props = {
   currentMonth: Date;
   bills: Bill[];
-  onBillPress: (id: string) => void;
+  payments: BillPayment[];
+  onDayPress: (date: Date) => void;
 };
 
-export function CalendarGrid({ currentMonth, bills, onBillPress }: Props) {
+export function CalendarGrid({ currentMonth, bills, payments, onDayPress }: Props) {
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
 
@@ -28,6 +30,22 @@ export function CalendarGrid({ currentMonth, bills, onBillPress }: Props) {
       ),
     [grid, bills]
   );
+
+  const paidBillIdsByDate = useMemo(() => {
+    const map = new Map<string, ReadonlySet<string>>();
+    for (const cell of grid.flat()) {
+      if (!cell.date) continue;
+      const dateKey = toIsoDate(cell.date);
+      const cellBills = billsByDate.get(cell.date.toISOString()) ?? [];
+      const paidIds = new Set(
+        cellBills
+          .filter((b) => payments.some((p) => p.billId === b.id && p.dueDate === dateKey))
+          .map((b) => b.id)
+      );
+      map.set(cell.date.toISOString(), paidIds);
+    }
+    return map;
+  }, [grid, billsByDate, payments]);
 
   const borderColor = useThemeColor("borderSubtle");
   const cardBg = useThemeColor("card");
@@ -53,8 +71,14 @@ export function CalendarGrid({ currentMonth, bills, onBillPress }: Props) {
             <CalendarDayCell
               key={cell.day ?? `empty-${dayIdx}`}
               day={cell.day}
+              date={cell.date}
               bills={cell.date ? (billsByDate.get(cell.date.toISOString()) ?? []) : []}
-              onBillPress={onBillPress}
+              paidBillIds={
+                cell.date
+                  ? (paidBillIdsByDate.get(cell.date.toISOString()) ?? new Set())
+                  : new Set()
+              }
+              onDayPress={onDayPress}
             />
           ))}
         </View>
