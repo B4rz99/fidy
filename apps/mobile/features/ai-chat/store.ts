@@ -27,6 +27,7 @@ type ChatState = {
   memories: UserMemory[];
   isStreaming: boolean;
   streamingContent: string;
+  expiredSessionCount: number;
 };
 
 type ChatActions = {
@@ -44,6 +45,7 @@ type ChatActions = {
   deleteMemory: (id: string) => Promise<void>;
   extractAndSaveMemories: () => Promise<void>;
   cleanupExpiredSessions: () => Promise<readonly ChatSession[]>;
+  dismissExpiredBanner: () => void;
 };
 
 export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
@@ -53,11 +55,18 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   memories: [],
   isStreaming: false,
   streamingContent: "",
+  expiredSessionCount: 0,
 
   initStore: (db, userId) => {
     dbRef = db;
     userIdRef = userId;
-    set({ sessions: [], currentSessionId: null, messages: [], memories: [] });
+    set({
+      sessions: [],
+      currentSessionId: null,
+      messages: [],
+      memories: [],
+      expiredSessionCount: 0,
+    });
   },
 
   loadSessions: async () => {
@@ -316,6 +325,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
           : false;
         return {
           sessions: state.sessions.filter((s) => !expiredIds.has(s.id)),
+          expiredSessionCount: expired.length,
           ...(isActiveExpired ? { currentSessionId: null, messages: [] } : {}),
         };
       });
@@ -323,4 +333,6 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
 
     return expired;
   },
+
+  dismissExpiredBanner: () => set({ expiredSessionCount: 0 }),
 }));
