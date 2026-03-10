@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 import type { ChatSession } from "../schema";
 import { useChatStore } from "../store";
+import { ExpiredSessionsBanner } from "./ExpiredSessionsBanner";
 
 type ConversationListProps = {
   readonly onSelectSession: (id: string) => void;
@@ -111,7 +112,7 @@ export function ConversationList({
         }}
         ItemSeparatorComponent={ItemSeparator}
         ListHeaderComponent={
-          <View style={{ paddingBottom: 16 }}>
+          <View style={{ paddingBottom: 16, gap: 12 }}>
             <View
               style={{
                 flexDirection: "row",
@@ -151,6 +152,7 @@ export function ConversationList({
                 </Pressable>
               </View>
             </View>
+            <ExpiredSessionsBanner />
           </View>
         }
         ListEmptyComponent={
