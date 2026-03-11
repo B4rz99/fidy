@@ -58,18 +58,21 @@ export default function AddBillScreen() {
   }, [existingBill?.id]);
 
   const handleSave = async () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+
     if (isEdit && existingBill) {
-      const cents = Math.round(parseFloat(amount) * 100);
+      const cents = Math.round(parseFloat(amount.replace(/,/g, "")) * 100);
       if (Number.isNaN(cents) || cents <= 0) return;
       await updateBillAction(existingBill.id, {
-        name,
+        name: trimmedName,
         amountCents: cents,
         frequency,
         categoryId: category,
       });
       router.back();
     } else {
-      const success = await addBill(name, amount, frequency, category);
+      const success = await addBill(trimmedName, amount, frequency, category);
       if (success) router.back();
     }
   };

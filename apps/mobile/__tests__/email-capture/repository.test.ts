@@ -175,4 +175,50 @@ describe("email capture repository", () => {
     expect(mockDelete).toHaveBeenCalled();
     expect(mockDeleteWhere).toHaveBeenCalled();
   });
+
+  it("getProcessedExternalIds returns empty Set for empty array", async () => {
+    const { getProcessedExternalIds } = await import("@/features/email-capture/lib/repository");
+    const result = await getProcessedExternalIds(mockDb, []);
+
+    expect(result).toEqual(new Set());
+    expect(mockSelect).not.toHaveBeenCalled();
+  });
+
+  it("getProcessedExternalIds queries DB and returns Set for non-empty array", async () => {
+    const mockRows = [{ externalId: "msg-1" }, { externalId: "msg-2" }];
+    mockWhere.mockResolvedValueOnce(mockRows);
+
+    const { getProcessedExternalIds } = await import("@/features/email-capture/lib/repository");
+    const result = await getProcessedExternalIds(mockDb, ["msg-1", "msg-2", "msg-3"]);
+
+    expect(mockSelect).toHaveBeenCalled();
+    expect(mockFrom).toHaveBeenCalled();
+    expect(mockWhere).toHaveBeenCalled();
+    expect(result).toEqual(new Set(["msg-1", "msg-2"]));
+  });
+
+  it("getNeedsReviewEmails returns emails with needs_review status", async () => {
+    const mockRows = [
+      { id: "pe-1", status: "needs_review", subject: "Review this" },
+      { id: "pe-2", status: "needs_review", subject: "And this" },
+    ];
+    mockWhere.mockReturnValueOnce({ orderBy: mockOrderBy });
+    mockOrderBy.mockResolvedValueOnce(mockRows);
+
+    const { getNeedsReviewEmails } = await import("@/features/email-capture/lib/repository");
+    const result = await getNeedsReviewEmails(mockDb);
+
+    expect(mockSelect).toHaveBeenCalled();
+    expect(result).toEqual(mockRows);
+  });
+
+  it("updateProcessedEmailStatus updates status and transactionId", async () => {
+    const { updateProcessedEmailStatus } = await import("@/features/email-capture/lib/repository");
+
+    await updateProcessedEmailStatus(mockDb, "pe-1", "success", "tx-1");
+
+    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockSet).toHaveBeenCalledWith({ status: "success", transactionId: "tx-1" });
+    expect(mockUpdateWhere).toHaveBeenCalled();
+  });
 });

@@ -142,4 +142,21 @@ describe("buildChatContext", () => {
 
     expect(result.transactions).toHaveLength(2);
   });
+
+  it("handles January currentMonth with year rollback for previousMonth", () => {
+    const txs = [
+      makeTx({ amountCents: 10000, categoryId: "food", date: new Date(2026, 0, 15) }), // Jan 2026 - current
+      makeTx({
+        id: "tx_2",
+        amountCents: 20000,
+        categoryId: "food",
+        date: new Date(2025, 11, 10),
+      }), // Dec 2025 - previous
+    ];
+    const result = buildChatContext(txs, [], "2026-01");
+
+    expect(result.transactions).toHaveLength(2);
+    expect(result.summary.currentMonthSpending).toEqual([{ categoryId: "food", total: 100 }]);
+    expect(result.summary.previousMonthSpending).toEqual([{ categoryId: "food", total: 200 }]);
+  });
 });

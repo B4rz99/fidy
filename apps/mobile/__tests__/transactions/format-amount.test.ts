@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   amountToCents,
   centsToDisplay,
+  cleanDigitInput,
   formatAmount,
+  formatCents,
+  formatSignedAmount,
 } from "@/features/transactions/lib/format-amount";
 
 describe("formatAmount", () => {
@@ -68,5 +71,35 @@ describe("centsToDisplay", () => {
 
   it("handles single-digit cents", () => {
     expect(centsToDisplay(5)).toBe("$0.05");
+  });
+});
+
+describe("formatCents", () => {
+  it("formats cents as currency with no decimals", () => {
+    expect(formatCents(6740000)).toBe("$67,400");
+  });
+});
+
+describe("formatSignedAmount", () => {
+  it("returns negative sign for expense", () => {
+    expect(formatSignedAmount(6740000, "expense")).toBe("-$67,400");
+  });
+
+  it("returns positive sign for income", () => {
+    expect(formatSignedAmount(6740000, "income")).toBe("+$67,400");
+  });
+});
+
+describe("cleanDigitInput", () => {
+  it("strips non-digit characters", () => {
+    expect(cleanDigitInput("abc123def456")).toBe("123456");
+  });
+
+  it("caps at 8 digits", () => {
+    expect(cleanDigitInput("12345678901")).toBe("12345678");
+  });
+
+  it("returns empty string for empty input", () => {
+    expect(cleanDigitInput("")).toBe("");
   });
 });

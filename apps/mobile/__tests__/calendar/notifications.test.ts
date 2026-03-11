@@ -11,7 +11,13 @@ vi.mock("expo-notifications", () => ({
   SchedulableTriggerInputTypes: { DATE: "date" },
 }));
 
-import { computeUpcomingOccurrences } from "@/features/calendar/lib/notifications";
+import * as Notifications from "expo-notifications";
+import {
+  cancelBillNotifications,
+  computeUpcomingOccurrences,
+  requestNotificationPermissions,
+  scheduleBillNotifications,
+} from "@/features/calendar/lib/notifications";
 import type { Bill } from "@/features/calendar/schema";
 
 const makeBill = (overrides: Partial<Bill> = {}): Bill => ({
@@ -68,5 +74,62 @@ describe("computeUpcomingOccurrences", () => {
   test("returns empty array for 0 count", () => {
     const bill = makeBill();
     expect(computeUpcomingOccurrences(bill, 0, new Date())).toEqual([]);
+  });
+});
+
+describe("scheduleBillNotifications", () => {
+  test("returns notification IDs from scheduleNotificationAsync", async () => {
+    const bill = makeBill({ startDate: new Date(2099, 0, 15) });
+    const ids = await scheduleBillNotifications(bill);
+    expect(ids.length).toBeGreaterThan(0);
+    for (const id of ids) {
+      expect(id).toBe("notif-1");
+    }
+    expect(Notifications.scheduleNotificationAsync).toHaveBeenCalled();
+  });
+});
+
+describe("cancelBillNotifications", () => {
+  test("calls cancelScheduledNotificationAsync for each ID", async () => {
+    const ids = ["id-a", "id-b", "id-c"];
+    await cancelBillNotifications(ids);
+    expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledTimes(ids.length);
+    expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith("id-a");
+    expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith("id-b");
+    expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith("id-c");
+  });
+});
+
+describe("requestNotificationPermissions", () => {
+  test("returns true immediately when already granted", async () => {
+    vi.mocked(Notifications.getPermissionsAsync).mockResolvedValueOnce({
+      status: "granted",
+    } as never);
+    const result = await requestNotificationPermissions();
+    expect(result).toBe(true);
+    expect(Notifications.requestPermissionsAsync).not.toHaveBeenCalled();
+  });
+
+  test("requests permissions and returns true when granted after prompt", async () => {
+    vi.mocked(Notifications.getPermissionsAsync).mockResolvedValueOnce({
+      status: "undetermined",
+    } as never);
+    vi.mocked(Notifications.requestPermissionsAsync).mockResolvedValueOnce({
+      status: "granted",
+    } as never);
+    const result = await requestNotificationPermissions();
+    expect(result).toBe(true);
+    expect(Notifications.requestPermissionsAsync).toHaveBeenCalled();
+  });
+
+  test("returns false when permissions denied", async () => {
+    vi.mocked(Notifications.getPermissionsAsync).mockResolvedValueOnce({
+      status: "denied",
+    } as never);
+    vi.mocked(Notifications.requestPermissionsAsync).mockResolvedValueOnce({
+      status: "denied",
+    } as never);
+    const result = await requestNotificationPermissions();
+    expect(result).toBe(false);
   });
 });

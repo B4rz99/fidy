@@ -139,4 +139,249 @@ describe("useCalendarStore", () => {
   test("does not have selectedBillId state", () => {
     expect("selectedBillId" in useCalendarStore.getState()).toBe(false);
   });
+
+  // ─── loadBills ───
+
+  test("loadBills populates bills from DB rows", async () => {
+    const { getAllBills } = await import("@/features/calendar/lib/repository");
+    vi.mocked(getAllBills).mockResolvedValueOnce([
+      {
+        id: "bill-1",
+        userId: "user-1",
+        name: "Netflix",
+        amountCents: 1599,
+        frequency: "monthly",
+        categoryId: "services",
+        startDate: "2026-01-15T00:00:00.000Z",
+        isActive: true,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+    ]);
+
+    await useCalendarStore.getState().loadBills();
+
+    const { bills, isLoading } = useCalendarStore.getState();
+    expect(isLoading).toBe(false);
+    expect(bills).toHaveLength(1);
+    expect(bills[0].name).toBe("Netflix");
+    expect(bills[0].startDate).toBeInstanceOf(Date);
+    expect(bills[0].isActive).toBe(true);
+  });
+
+  test("loadBills sets isLoading false on error", async () => {
+    const { getAllBills } = await import("@/features/calendar/lib/repository");
+    vi.mocked(getAllBills).mockRejectedValueOnce(new Error("DB error"));
+
+    await useCalendarStore.getState().loadBills();
+
+    expect(useCalendarStore.getState().isLoading).toBe(false);
+  });
+
+  test("loadBills does nothing without initStore", async () => {
+    const { getAllBills } = await import("@/features/calendar/lib/repository");
+    vi.mocked(getAllBills).mockClear();
+    useCalendarStore.getState().initStore(null as never, null as never);
+
+    await useCalendarStore.getState().loadBills();
+
+    expect(getAllBills).not.toHaveBeenCalled();
+  });
+
+  // ─── addBill error path ───
+
+  test("addBill returns false when insertBill throws", async () => {
+    const { insertBill } = await import("@/features/calendar/lib/repository");
+    vi.mocked(insertBill).mockRejectedValueOnce(new Error("DB write error"));
+
+    const result = await useCalendarStore
+      .getState()
+      .addBill("Netflix", "15.99", "monthly", "services");
+
+    expect(result).toBe(false);
+    expect(useCalendarStore.getState().bills).toHaveLength(0);
+  });
+
+  // ─── updateBill ───
+
+  test("updateBill updates bill in state", async () => {
+    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services");
+    const billId = useCalendarStore.getState().bills[0].id;
+
+    await useCalendarStore.getState().updateBill(billId, { name: "Hulu" });
+
+    const updated = useCalendarStore.getState().bills[0];
+    expect(updated.name).toBe("Hulu");
+  });
+
+  test("updateBill converts startDate Date to ISO string for DB", async () => {
+    const { updateBill: dbUpdateBill } = await import("@/features/calendar/lib/repository");
+    vi.mocked(dbUpdateBill).mockClear();
+
+    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services");
+    const billId = useCalendarStore.getState().bills[0].id;
+    const newDate = new Date("2026-06-01T00:00:00.000Z");
+
+    await useCalendarStore.getState().updateBill(billId, { startDate: newDate });
+
+    expect(dbUpdateBill).toHaveBeenCalledWith(
+      mockDb,
+      billId,
+      expect.objectContaining({ startDate: "2026-06-01T00:00:00.000Z" })
+    );
+  });
+
+  test("updateBill does nothing without initStore", async () => {
+    const { updateBill: dbUpdateBill } = await import("@/features/calendar/lib/repository");
+    vi.mocked(dbUpdateBill).mockClear();
+    useCalendarStore.getState().initStore(null as never, null as never);
+
+    await useCalendarStore.getState().updateBill("bill-1", { name: "Hulu" });
+
+    expect(dbUpdateBill).not.toHaveBeenCalled();
+  });
+
+  // ─── deleteBill ───
+
+  test("deleteBill removes bill and its payments from state", async () => {
+    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services");
+    const billId = useCalendarStore.getState().bills[0].id;
+
+    // Manually add a payment for this bill
+    useCalendarStore.setState((s) => ({
+      payments: [
+        ...s.payments,
+        {
+          id: "pay-1",
+          billId,
+          dueDate: "2026-03-15",
+          paidAt: "2026-03-10T00:00:00.000Z",
+          createdAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    await useCalendarStore.getState().deleteBill(billId);
+
+    expect(useCalendarStore.getState().bills).toHaveLength(0);
+    expect(useCalendarStore.getState().payments).toHaveLength(0);
+  });
+
+  test("deleteBill does nothing without initStore", async () => {
+    const { deleteBill: dbDeleteBill } = await import("@/features/calendar/lib/repository");
+    vi.mocked(dbDeleteBill).mockClear();
+    useCalendarStore.getState().initStore(null as never, null as never);
+
+    await useCalendarStore.getState().deleteBill("bill-1");
+
+    expect(dbDeleteBill).not.toHaveBeenCalled();
+  });
+
+  // ─── markBillPaid ───
+
+  test("markBillPaid adds payment to state and calls insertBillPayment", async () => {
+    const { insertBillPayment } = await import("@/features/calendar/lib/repository");
+    vi.mocked(insertBillPayment).mockClear();
+
+    await useCalendarStore.getState().markBillPaid("bill-1", "2026-03-15");
+
+    const { payments } = useCalendarStore.getState();
+    expect(payments).toHaveLength(1);
+    expect(payments[0].billId).toBe("bill-1");
+    expect(payments[0].dueDate).toBe("2026-03-15");
+    expect(payments[0].paidAt).toBeDefined();
+    expect(insertBillPayment).toHaveBeenCalledTimes(1);
+  });
+
+  test("markBillPaid does nothing without initStore", async () => {
+    const { insertBillPayment } = await import("@/features/calendar/lib/repository");
+    vi.mocked(insertBillPayment).mockClear();
+    useCalendarStore.getState().initStore(null as never, null as never);
+
+    await useCalendarStore.getState().markBillPaid("bill-1", "2026-03-15");
+
+    expect(insertBillPayment).not.toHaveBeenCalled();
+    expect(useCalendarStore.getState().payments).toHaveLength(0);
+  });
+
+  // ─── unmarkBillPaid ───
+
+  test("unmarkBillPaid removes matching payment from state", async () => {
+    const { deleteBillPayment } = await import("@/features/calendar/lib/repository");
+    vi.mocked(deleteBillPayment).mockClear();
+
+    // Seed a payment in state
+    useCalendarStore.setState({
+      payments: [
+        {
+          id: "pay-1",
+          billId: "bill-1",
+          dueDate: "2026-03-15",
+          paidAt: "2026-03-10T00:00:00.000Z",
+          createdAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+    });
+
+    await useCalendarStore.getState().unmarkBillPaid("bill-1", "2026-03-15");
+
+    expect(useCalendarStore.getState().payments).toHaveLength(0);
+    expect(deleteBillPayment).toHaveBeenCalledWith(mockDb, "bill-1", "2026-03-15");
+  });
+
+  test("unmarkBillPaid does nothing without initStore", async () => {
+    const { deleteBillPayment } = await import("@/features/calendar/lib/repository");
+    vi.mocked(deleteBillPayment).mockClear();
+    useCalendarStore.getState().initStore(null as never, null as never);
+
+    await useCalendarStore.getState().unmarkBillPaid("bill-1", "2026-03-15");
+
+    expect(deleteBillPayment).not.toHaveBeenCalled();
+  });
+
+  // ─── loadPaymentsForMonth ───
+
+  test("loadPaymentsForMonth populates payments from DB", async () => {
+    const { getBillPaymentsForMonth } = await import("@/features/calendar/lib/repository");
+    vi.mocked(getBillPaymentsForMonth).mockResolvedValueOnce([
+      {
+        id: "pay-1",
+        billId: "bill-1",
+        dueDate: "2026-03-15",
+        paidAt: "2026-03-10T00:00:00.000Z",
+        createdAt: "2026-03-10T00:00:00.000Z",
+      },
+    ]);
+
+    await useCalendarStore.getState().loadPaymentsForMonth();
+
+    const { payments } = useCalendarStore.getState();
+    expect(payments).toHaveLength(1);
+    expect(payments[0].billId).toBe("bill-1");
+  });
+
+  test("loadPaymentsForMonth preserves existing payments on error", async () => {
+    const { getBillPaymentsForMonth } = await import("@/features/calendar/lib/repository");
+
+    // Seed existing payments
+    useCalendarStore.setState({
+      payments: [
+        {
+          id: "pay-existing",
+          billId: "bill-1",
+          dueDate: "2026-03-15",
+          paidAt: "2026-03-10T00:00:00.000Z",
+          createdAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+    });
+
+    vi.mocked(getBillPaymentsForMonth).mockRejectedValueOnce(new Error("DB error"));
+
+    await useCalendarStore.getState().loadPaymentsForMonth();
+
+    const { payments } = useCalendarStore.getState();
+    expect(payments).toHaveLength(1);
+    expect(payments[0].id).toBe("pay-existing");
+  });
 });
