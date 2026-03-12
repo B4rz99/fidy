@@ -23,7 +23,7 @@ vi.mock("@/features/transactions/lib/repository", () => ({
 import { useCalendarStore } from "@/features/calendar/store";
 import { useTransactionStore } from "@/features/transactions/store";
 
-const mockDb = {} as never;
+const mockDb = { transaction: (fn: (tx: unknown) => void) => fn(mockDb) } as never;
 const mockUserId = "user-1";
 const testDate = new Date(2026, 2, 15);
 

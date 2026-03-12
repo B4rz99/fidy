@@ -202,31 +202,35 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
       deletedAt: null,
     };
 
+    const payment: BillPayment = {
+      id: generateId("pay"),
+      billId,
+      dueDate,
+      paidAt: nowIso,
+      transactionId: txId,
+      createdAt: nowIso,
+    };
+
     try {
-      await insertTransaction(dbRef, toTransactionRow(transaction));
-      await enqueueSync(dbRef, {
-        id: generateId("sq"),
-        tableName: "transactions",
-        rowId: txId,
-        operation: "insert",
-        createdAt: nowIso,
+      // expo-sqlite's Drizzle driver is synchronous (BaseSQLiteDatabase<'sync'>),
+      // so async repository functions execute DB work synchronously — no await needed.
+      dbRef.transaction((tx) => {
+        const db = tx as unknown as AnyDb;
+        insertTransaction(db, toTransactionRow(transaction));
+        enqueueSync(db, {
+          id: generateId("sq"),
+          tableName: "transactions",
+          rowId: txId,
+          operation: "insert",
+          createdAt: nowIso,
+        });
+        insertBillPayment(db, payment);
       });
 
-      const payment: BillPayment = {
-        id: generateId("pay"),
-        billId,
-        dueDate,
-        paidAt: nowIso,
-        transactionId: txId,
-        createdAt: nowIso,
-      };
-      await insertBillPayment(dbRef, payment);
-
       set((s) => ({ payments: [...s.payments, payment] }));
-
       useTransactionStore.getState().addToCache(transaction);
     } catch {
-      // DB write failed — don't update in-memory state
+      // Transaction rolled back — state unchanged
     }
   },
 
@@ -234,22 +238,29 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     if (!dbRef) return;
 
     const payment = get().payments.find((p) => p.billId === billId && p.dueDate === dueDate);
+    const nowIso = new Date().toISOString();
 
     try {
-      // Soft-delete the linked transaction if it exists
+      // expo-sqlite's Drizzle driver is synchronous (BaseSQLiteDatabase<'sync'>),
+      // so async repository functions execute DB work synchronously — no await needed.
+      dbRef.transaction((tx) => {
+        const db = tx as unknown as AnyDb;
+        if (payment?.transactionId) {
+          softDeleteTransaction(db, payment.transactionId);
+          enqueueSync(db, {
+            id: generateId("sq"),
+            tableName: "transactions",
+            rowId: payment.transactionId,
+            operation: "delete",
+            createdAt: nowIso,
+          });
+        }
+        dbDeleteBillPayment(db, billId, dueDate);
+      });
+
       if (payment?.transactionId) {
-        await softDeleteTransaction(dbRef, payment.transactionId);
-        await enqueueSync(dbRef, {
-          id: generateId("sq"),
-          tableName: "transactions",
-          rowId: payment.transactionId,
-          operation: "delete",
-          createdAt: new Date().toISOString(),
-        });
         useTransactionStore.getState().removeFromCache(payment.transactionId);
       }
-
-      await dbDeleteBillPayment(dbRef, billId, dueDate);
       set((s) => ({
         payments: s.payments.filter((p) => !(p.billId === billId && p.dueDate === dueDate)),
       }));
