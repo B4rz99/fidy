@@ -233,7 +233,8 @@ describe("useCalendarStore", () => {
     expect(dbUpdateBill).toHaveBeenCalledWith(
       mockDb,
       billId,
-      expect.objectContaining({ startDate: "2026-06-01T00:00:00.000Z" })
+      expect.objectContaining({ startDate: "2026-06-01T00:00:00.000Z" }),
+      expect.any(String)
     );
   });
 
@@ -495,7 +496,7 @@ describe("useCalendarStore", () => {
 
     await useCalendarStore.getState().unmarkBillPaid("bill-1", "2026-03-15");
 
-    expect(softDeleteTransaction).toHaveBeenCalledWith(mockDb, "tx-linked");
+    expect(softDeleteTransaction).toHaveBeenCalledWith(mockDb, "tx-linked", expect.any(String));
     expect(enqueueSync).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({

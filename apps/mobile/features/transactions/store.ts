@@ -132,13 +132,14 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
     removeTransaction: async (id) => {
       if (dbRef) {
         try {
-          await softDeleteTransaction(dbRef, id);
+          const now = new Date().toISOString();
+          await softDeleteTransaction(dbRef, id, now);
           await enqueueSync(dbRef, {
             id: generateId("sq"),
             tableName: "transactions",
             rowId: id,
             operation: "delete",
-            createdAt: new Date().toISOString(),
+            createdAt: now,
           });
         } catch {
           // DB operation failed — keep UI state unchanged

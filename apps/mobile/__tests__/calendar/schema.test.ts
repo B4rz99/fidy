@@ -101,27 +101,28 @@ describe("toBillRow / fromBillRow", () => {
   };
 
   test("toBillRow converts Date to ISO string", () => {
-    const row = toBillRow(bill, "user-1");
+    const row = toBillRow(bill, "user-1", "2026-03-04T10:00:00.000Z");
     expect(typeof row.startDate).toBe("string");
     expect(row.startDate).toBe(new Date(2025, 0, 15).toISOString());
   });
 
-  test("toBillRow adds userId, createdAt, updatedAt", () => {
-    const row = toBillRow(bill, "user-1");
+  test("toBillRow adds userId, createdAt, updatedAt from now param", () => {
+    const now = "2026-03-04T10:00:00.000Z";
+    const row = toBillRow(bill, "user-1", now);
     expect(row.userId).toBe("user-1");
-    expect(typeof row.createdAt).toBe("string");
-    expect(typeof row.updatedAt).toBe("string");
+    expect(row.createdAt).toBe(now);
+    expect(row.updatedAt).toBe(now);
   });
 
   test("fromBillRow converts ISO string back to Date", () => {
-    const row = toBillRow(bill, "user-1");
+    const row = toBillRow(bill, "user-1", "2026-03-04T10:00:00.000Z");
     const restored = fromBillRow(row);
     expect(restored.startDate).toBeInstanceOf(Date);
     expect(restored.startDate.getTime()).toBe(bill.startDate.getTime());
   });
 
   test("roundtrip preserves all bill fields", () => {
-    const row = toBillRow(bill, "user-1");
+    const row = toBillRow(bill, "user-1", "2026-03-04T10:00:00.000Z");
     const restored = fromBillRow(row);
     expect(restored.id).toBe(bill.id);
     expect(restored.name).toBe(bill.name);

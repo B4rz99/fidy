@@ -145,7 +145,8 @@ describe("email processing pipeline", () => {
       USER_ID,
       "notificaciones@bancolombia.com.co",
       "compra en exito",
-      "other"
+      "other",
+      expect.any(String)
     );
   });
 

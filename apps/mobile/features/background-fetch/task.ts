@@ -1,9 +1,9 @@
 import * as BackgroundTask from "expo-background-task";
 import * as TaskManager from "expo-task-manager";
-import { GMAIL_CLIENT_ID, OUTLOOK_CLIENT_ID } from "@/features/email-capture/schema";
+import { getGmailClientId, getOutlookClientId } from "@/features/email-capture/schema";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { getDb } from "@/shared/db/client";
-import { getSupabase } from "@/shared/lib/supabase";
+import { getSupabase } from "@/shared/db/supabase";
 
 export const BACKGROUND_TASK_NAME = "FIDY_EMAIL_FETCH";
 
@@ -20,7 +20,7 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
     store.initStore(db, userId);
     await store.loadAccounts();
 
-    await store.fetchAndProcess(GMAIL_CLIENT_ID, OUTLOOK_CLIENT_ID);
+    await store.fetchAndProcess(getGmailClientId(), getOutlookClientId());
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch {
     return BackgroundTask.BackgroundTaskResult.Failed;

@@ -27,7 +27,8 @@ export async function insertMerchantRule(
   userId: string,
   senderEmail: string,
   keyword: string,
-  categoryId: string
+  categoryId: string,
+  now: string
 ): Promise<void> {
   await db
     .insert(merchantRules)
@@ -37,7 +38,7 @@ export async function insertMerchantRule(
       senderEmail,
       keyword,
       categoryId,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
     })
     .onConflictDoNothing();
 }

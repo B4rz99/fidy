@@ -7,34 +7,33 @@ export type SyncTableName = "transactions";
 
 export type TransactionRow = typeof transactions.$inferInsert;
 
-export async function insertTransaction(db: AnyDb, row: TransactionRow) {
-  await db.insert(transactions).values(row);
+export function insertTransaction(db: AnyDb, row: TransactionRow) {
+  db.insert(transactions).values(row).run();
 }
 
-export async function getAllTransactions(db: AnyDb, userId: string) {
+export function getAllTransactions(db: AnyDb, userId: string) {
   return db
     .select()
     .from(transactions)
     .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
-    .orderBy(desc(transactions.date));
+    .orderBy(desc(transactions.date))
+    .all();
 }
 
-export async function softDeleteTransaction(db: AnyDb, id: string) {
-  const now = new Date().toISOString();
-  await db
-    .update(transactions)
+export function softDeleteTransaction(db: AnyDb, id: string, now: string) {
+  db.update(transactions)
     .set({ deletedAt: now, updatedAt: now })
-    .where(eq(transactions.id, id));
+    .where(eq(transactions.id, id))
+    .run();
 }
 
-export async function getTransactionById(db: AnyDb, id: string) {
-  const rows = await db.select().from(transactions).where(eq(transactions.id, id));
+export function getTransactionById(db: AnyDb, id: string) {
+  const rows = db.select().from(transactions).where(eq(transactions.id, id)).all();
   return rows[0] ?? null;
 }
 
-export async function upsertTransaction(db: AnyDb, row: TransactionRow) {
-  await db
-    .insert(transactions)
+export function upsertTransaction(db: AnyDb, row: TransactionRow) {
+  db.insert(transactions)
     .values(row)
     .onConflictDoUpdate({
       target: transactions.id,
@@ -47,7 +46,8 @@ export async function upsertTransaction(db: AnyDb, row: TransactionRow) {
         updatedAt: row.updatedAt,
         deletedAt: row.deletedAt,
       },
-    });
+    })
+    .run();
 }
 
 export type SyncQueueEntry = {
@@ -58,27 +58,27 @@ export type SyncQueueEntry = {
   createdAt: string;
 };
 
-export async function enqueueSync(db: AnyDb, entry: SyncQueueEntry) {
-  await db.insert(syncQueue).values(entry);
+export function enqueueSync(db: AnyDb, entry: SyncQueueEntry) {
+  db.insert(syncQueue).values(entry).run();
 }
 
-export async function getQueuedSyncEntries(db: AnyDb) {
-  return db.select().from(syncQueue);
+export function getQueuedSyncEntries(db: AnyDb) {
+  return db.select().from(syncQueue).all();
 }
 
-export async function clearSyncEntries(db: AnyDb, ids: string[]) {
+export function clearSyncEntries(db: AnyDb, ids: string[]) {
   if (ids.length === 0) return;
-  await db.delete(syncQueue).where(inArray(syncQueue.id, ids));
+  db.delete(syncQueue).where(inArray(syncQueue.id, ids)).run();
 }
 
-export async function getSyncMeta(db: AnyDb, key: string) {
-  const rows = await db.select().from(syncMeta).where(eq(syncMeta.key, key));
+export function getSyncMeta(db: AnyDb, key: string) {
+  const rows = db.select().from(syncMeta).where(eq(syncMeta.key, key)).all();
   return rows[0]?.value ?? null;
 }
 
-export async function setSyncMeta(db: AnyDb, key: string, value: string) {
-  await db
-    .insert(syncMeta)
+export function setSyncMeta(db: AnyDb, key: string, value: string) {
+  db.insert(syncMeta)
     .values({ key, value })
-    .onConflictDoUpdate({ target: syncMeta.key, set: { value } });
+    .onConflictDoUpdate({ target: syncMeta.key, set: { value } })
+    .run();
 }

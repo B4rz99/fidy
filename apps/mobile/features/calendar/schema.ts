@@ -40,7 +40,8 @@ export type BillPayment = z.infer<typeof billPaymentSchema>;
 /** Convert a Bill (runtime, with Date) to a DB row (with ISO strings). */
 export function toBillRow(
   bill: Bill,
-  userId: string
+  userId: string,
+  now: string
 ): {
   id: string;
   userId: string;
@@ -53,7 +54,6 @@ export function toBillRow(
   createdAt: string;
   updatedAt: string;
 } {
-  const now = new Date().toISOString();
   return {
     id: bill.id,
     userId,

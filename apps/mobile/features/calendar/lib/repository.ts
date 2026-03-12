@@ -5,39 +5,40 @@ import { billPayments, bills } from "@/shared/db/schema";
 export type BillRow = typeof bills.$inferInsert;
 export type BillPaymentRow = typeof billPayments.$inferInsert;
 
-export async function insertBill(db: AnyDb, row: BillRow) {
-  await db.insert(bills).values(row);
+export function insertBill(db: AnyDb, row: BillRow) {
+  db.insert(bills).values(row).run();
 }
 
-export async function getAllBills(db: AnyDb, userId: string) {
-  return db.select().from(bills).where(eq(bills.userId, userId));
+export function getAllBills(db: AnyDb, userId: string) {
+  return db.select().from(bills).where(eq(bills.userId, userId)).all();
 }
 
-export async function updateBill(db: AnyDb, id: string, fields: Partial<BillRow>) {
-  await db
-    .update(bills)
-    .set({ ...fields, updatedAt: new Date().toISOString() })
-    .where(eq(bills.id, id));
+export function updateBill(db: AnyDb, id: string, fields: Partial<BillRow>, now: string) {
+  db.update(bills)
+    .set({ ...fields, updatedAt: now })
+    .where(eq(bills.id, id))
+    .run();
 }
 
-export async function deleteBill(db: AnyDb, id: string) {
-  await db.delete(billPayments).where(eq(billPayments.billId, id));
-  await db.delete(bills).where(eq(bills.id, id));
+export function deleteBill(db: AnyDb, id: string) {
+  db.delete(billPayments).where(eq(billPayments.billId, id)).run();
+  db.delete(bills).where(eq(bills.id, id)).run();
 }
 
-export async function insertBillPayment(db: AnyDb, row: BillPaymentRow) {
-  await db.insert(billPayments).values(row);
+export function insertBillPayment(db: AnyDb, row: BillPaymentRow) {
+  db.insert(billPayments).values(row).run();
 }
 
-export async function getBillPaymentsForMonth(db: AnyDb, startIso: string, endIso: string) {
+export function getBillPaymentsForMonth(db: AnyDb, startIso: string, endIso: string) {
   return db
     .select()
     .from(billPayments)
-    .where(between(billPayments.dueDate, startIso, endIso));
+    .where(between(billPayments.dueDate, startIso, endIso))
+    .all();
 }
 
-export async function deleteBillPayment(db: AnyDb, billId: string, dueDate: string) {
-  await db
-    .delete(billPayments)
-    .where(and(eq(billPayments.billId, billId), eq(billPayments.dueDate, dueDate)));
+export function deleteBillPayment(db: AnyDb, billId: string, dueDate: string) {
+  db.delete(billPayments)
+    .where(and(eq(billPayments.billId, billId), eq(billPayments.dueDate, dueDate)))
+    .run();
 }

@@ -137,7 +137,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     };
 
     try {
-      await insertBill(dbRef, toBillRow(newBill, userIdRef));
+      await insertBill(dbRef, toBillRow(newBill, userIdRef, new Date().toISOString()));
     } catch {
       return false;
     }
@@ -163,7 +163,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
         .map(([k, v]) => [k, k === "startDate" && v instanceof Date ? v.toISOString() : v])
     );
 
-    await dbUpdateBill(dbRef, id, dbFields);
+    await dbUpdateBill(dbRef, id, dbFields, new Date().toISOString());
     set((s) => ({
       bills: s.bills.map((b) => (b.id === id ? { ...b, ...fields } : b)),
     }));
@@ -212,8 +212,6 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     };
 
     try {
-      // expo-sqlite's Drizzle driver is synchronous (BaseSQLiteDatabase<'sync'>),
-      // so async repository functions execute DB work synchronously — no await needed.
       dbRef.transaction((tx) => {
         const db = tx as unknown as AnyDb;
         insertTransaction(db, toTransactionRow(transaction));
@@ -241,12 +239,10 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     const nowIso = new Date().toISOString();
 
     try {
-      // expo-sqlite's Drizzle driver is synchronous (BaseSQLiteDatabase<'sync'>),
-      // so async repository functions execute DB work synchronously — no await needed.
       dbRef.transaction((tx) => {
         const db = tx as unknown as AnyDb;
         if (payment?.transactionId) {
-          softDeleteTransaction(db, payment.transactionId);
+          softDeleteTransaction(db, payment.transactionId, nowIso);
           enqueueSync(db, {
             id: generateId("sq"),
             tableName: "transactions",

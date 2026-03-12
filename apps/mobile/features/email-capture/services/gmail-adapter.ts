@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import type { ConnectResult, RawEmail } from "../schema";
-import { GMAIL_REDIRECT_URI } from "../schema";
+import { getGmailRedirectUri } from "../schema";
 
 const TOKEN_KEY = "email-gmail-token";
 const REFRESH_TOKEN_KEY = "email-gmail-refresh-token";
@@ -51,14 +51,14 @@ export async function connectGmail(clientId: string): Promise<ConnectResult> {
 
   const params = new URLSearchParams({
     client_id: clientId,
-    redirect_uri: GMAIL_REDIRECT_URI,
+    redirect_uri: getGmailRedirectUri(),
     response_type: "code",
     scope: SCOPE,
     access_type: "offline",
     prompt: "consent",
   });
 
-  const result = await openAuthSessionAsync(`${AUTH_URL}?${params}`, GMAIL_REDIRECT_URI);
+  const result = await openAuthSessionAsync(`${AUTH_URL}?${params}`, getGmailRedirectUri());
 
   if (result.type !== "success" || !result.url) {
     return { success: false, error: "cancelled" };
@@ -75,7 +75,7 @@ export async function connectGmail(clientId: string): Promise<ConnectResult> {
     body: new URLSearchParams({
       code,
       client_id: clientId,
-      redirect_uri: GMAIL_REDIRECT_URI,
+      redirect_uri: getGmailRedirectUri(),
       grant_type: "authorization_code",
     }).toString(),
   });

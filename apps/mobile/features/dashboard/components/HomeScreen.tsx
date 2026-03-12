@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DetectedTransactionsBanner } from "@/features/capture-sources/components/DetectedTransactionsBanner";
 import { EmailConnectBanner } from "@/features/email-capture/components/EmailConnectBanner";
 import { FailedEmailsBanner } from "@/features/email-capture/components/FailedEmailsBanner";
-import { GMAIL_CLIENT_ID, OUTLOOK_CLIENT_ID } from "@/features/email-capture/schema";
+import { getGmailClientId, getOutlookClientId } from "@/features/email-capture/schema";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import {
   deriveBalance,
@@ -75,7 +75,7 @@ export const HomeScreen = () => {
           <Header />
           <EmailConnectBanner
             onConnect={(provider) => {
-              const clientId = provider === "gmail" ? GMAIL_CLIENT_ID : OUTLOOK_CLIENT_ID;
+              const clientId = provider === "gmail" ? getGmailClientId() : getOutlookClientId();
               connectEmail(provider, clientId);
             }}
           />

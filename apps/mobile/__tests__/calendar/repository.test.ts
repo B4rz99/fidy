@@ -9,35 +9,35 @@ const repoSource = readFileSync(
 
 describe("calendar repository", () => {
   test("exports insertBill function", () => {
-    expect(repoSource).toContain("export async function insertBill");
+    expect(repoSource).toContain("export function insertBill");
   });
 
   test("exports getAllBills function", () => {
-    expect(repoSource).toContain("export async function getAllBills");
+    expect(repoSource).toContain("export function getAllBills");
   });
 
   test("exports updateBill function", () => {
-    expect(repoSource).toContain("export async function updateBill");
+    expect(repoSource).toContain("export function updateBill");
   });
 
   test("exports deleteBill function", () => {
-    expect(repoSource).toContain("export async function deleteBill");
+    expect(repoSource).toContain("export function deleteBill");
   });
 
   test("exports insertBillPayment function", () => {
-    expect(repoSource).toContain("export async function insertBillPayment");
+    expect(repoSource).toContain("export function insertBillPayment");
   });
 
   test("exports getBillPaymentsForMonth function", () => {
-    expect(repoSource).toContain("export async function getBillPaymentsForMonth");
+    expect(repoSource).toContain("export function getBillPaymentsForMonth");
   });
 
   test("exports deleteBillPayment function", () => {
-    expect(repoSource).toContain("export async function deleteBillPayment");
+    expect(repoSource).toContain("export function deleteBillPayment");
   });
 
   test("takes db as first parameter (dependency injection pattern)", () => {
-    const fns = repoSource.match(/export async function \w+\(db: AnyDb/g);
+    const fns = repoSource.match(/export function \w+\(db: AnyDb/g);
     expect(fns).not.toBeNull();
     expect(fns?.length).toBeGreaterThanOrEqual(7);
   });

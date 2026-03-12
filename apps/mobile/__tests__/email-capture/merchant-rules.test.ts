@@ -55,7 +55,14 @@ describe("merchant-rules", () => {
   describe("insertMerchantRule", () => {
     it("calls insert with correct values", async () => {
       mockOnConflictDoNothing.mockResolvedValue(undefined);
-      await insertMerchantRule(mockDb, "user1", "noreply@bank.com", "restaurant", "food");
+      await insertMerchantRule(
+        mockDb,
+        "user1",
+        "noreply@bank.com",
+        "restaurant",
+        "food",
+        "2026-03-07T10:00:00Z"
+      );
       expect(mockDb.insert).toHaveBeenCalled();
     });
   });

@@ -26,7 +26,8 @@ export async function upsertNotificationSource(
   userId: string,
   packageName: string,
   label: string,
-  isEnabled: boolean
+  isEnabled: boolean,
+  now: string
 ) {
   await db
     .insert(notificationSources)
@@ -36,7 +37,7 @@ export async function upsertNotificationSource(
       packageName,
       label,
       isEnabled,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
     })
     .onConflictDoUpdate({
       target: [notificationSources.userId, notificationSources.packageName],
@@ -85,8 +86,7 @@ export async function getUndismissedSmsEvents(db: AnyDb, userId: string) {
     .orderBy(desc(detectedSmsEvents.detectedAt));
 }
 
-export async function getTodaySmsEventCount(db: AnyDb, userId: string): Promise<number> {
-  const now = new Date();
+export async function getTodaySmsEventCount(db: AnyDb, userId: string, now: Date): Promise<number> {
   const today = toIsoDate(now);
   const tomorrow = toIsoDate(addDays(now, 1));
   const rows = await db

@@ -158,7 +158,8 @@ describe("processApplePayIntent", () => {
       USER_ID,
       "applepay://wallet",
       "farmatodo",
-      "health"
+      "health",
+      expect.any(String)
     );
   });
 

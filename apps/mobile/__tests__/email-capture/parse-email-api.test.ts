@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockInvoke = vi.fn();
 
-vi.mock("@/shared/lib/supabase", () => ({
+vi.mock("@/shared/db/supabase", () => ({
   getSupabase: () => ({
     functions: { invoke: mockInvoke },
   }),

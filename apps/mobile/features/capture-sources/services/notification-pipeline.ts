@@ -156,7 +156,7 @@ export async function processNotification(
 
     // Cache merchant rule if confidence >= 0.7
     if (parsed.confidence >= 0.7) {
-      await insertMerchantRule(db, userId, syntheticSender, merchantKey, finalCategoryId);
+      await insertMerchantRule(db, userId, syntheticSender, merchantKey, finalCategoryId, now);
     }
 
     return { saved: true, skippedDuplicate: false, transactionId: txId };

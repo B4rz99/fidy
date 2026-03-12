@@ -5,7 +5,6 @@ import { useTransactionStore } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db/client";
 import { transactions } from "@/shared/db/schema";
 import { generateId } from "@/shared/lib/generate-id";
-import { fetchBankSenders } from "./lib/bank-senders";
 import type { EmailAccountRow, ProcessedEmailRow } from "./lib/repository";
 import {
   deleteEmailAccount,
@@ -18,6 +17,7 @@ import {
   updateProcessedEmailStatus,
 } from "./lib/repository";
 import type { EmailProvider } from "./schema";
+import { fetchBankSenders } from "./services/bank-senders-cache";
 import { type ProgressCallback, processEmails } from "./services/email-pipeline";
 import { connectGmail, disconnectGmail, fetchGmailEmails } from "./services/gmail-adapter";
 import { connectOutlook, disconnectOutlook, fetchOutlookEmails } from "./services/outlook-adapter";

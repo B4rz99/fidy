@@ -41,8 +41,18 @@ function requireEnv(name: string): string {
   return value;
 }
 
-export const GMAIL_CLIENT_ID = requireEnv("EXPO_PUBLIC_GMAIL_CLIENT_ID");
-export const GMAIL_REDIRECT_URI = `com.googleusercontent.apps.${GMAIL_CLIENT_ID.split(".")[0]}:/oauth2redirect`;
-export const OUTLOOK_CLIENT_ID = requireEnv("EXPO_PUBLIC_OUTLOOK_CLIENT_ID");
+/** Lazy env accessors — evaluated on first call, not at import time. */
+export function getGmailClientId(): string {
+  return requireEnv("EXPO_PUBLIC_GMAIL_CLIENT_ID");
+}
+
+export function getGmailRedirectUri(): string {
+  const clientId = getGmailClientId();
+  return `com.googleusercontent.apps.${clientId.split(".")[0]}:/oauth2redirect`;
+}
+
+export function getOutlookClientId(): string {
+  return requireEnv("EXPO_PUBLIC_OUTLOOK_CLIENT_ID");
+}
 
 export type ConnectResult = { success: true; email: string } | { success: false; error: string };

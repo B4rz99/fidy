@@ -5,21 +5,23 @@ describe("getDateLabel", () => {
     vi.resetModules();
   });
 
-  it("returns 'Today, ...' when date is today", async () => {
+  it("returns 'Today, ...' when date equals now", async () => {
     vi.doMock("date-fns", () => ({
       format: () => "Mar 2, 2026",
-      isToday: () => true,
+      isSameDay: () => true,
     }));
     const { getDateLabel } = await import("@/features/transactions/lib/format-date");
-    expect(getDateLabel(new Date())).toBe("Today, Mar 2, 2026");
+    const now = new Date("2026-03-02");
+    expect(getDateLabel(now, now)).toBe("Today, Mar 2, 2026");
   });
 
   it("returns plain date when not today", async () => {
     vi.doMock("date-fns", () => ({
       format: () => "Feb 28, 2026",
-      isToday: () => false,
+      isSameDay: () => false,
     }));
     const { getDateLabel } = await import("@/features/transactions/lib/format-date");
-    expect(getDateLabel(new Date("2026-02-28"))).toBe("Feb 28, 2026");
+    const now = new Date("2026-03-02");
+    expect(getDateLabel(new Date("2026-02-28"), now)).toBe("Feb 28, 2026");
   });
 });

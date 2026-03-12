@@ -82,7 +82,14 @@ export const useCaptureSourcesStore = create<CaptureSourcesState & CaptureSource
       const knownPkg = KNOWN_BANK_PACKAGES.find((p) => p.packageName === packageName);
       const label = knownPkg?.label ?? packageName;
 
-      await upsertNotificationSource(dbRef, userIdRef, packageName, label, enabled);
+      await upsertNotificationSource(
+        dbRef,
+        userIdRef,
+        packageName,
+        label,
+        enabled,
+        new Date().toISOString()
+      );
 
       const updated = enabled
         ? [...get().enabledPackages, packageName]
@@ -98,7 +105,7 @@ export const useCaptureSourcesStore = create<CaptureSourcesState & CaptureSource
 
     refreshDetectedSms: async () => {
       if (!dbRef || !userIdRef) return;
-      const detectedSmsCount = await getTodaySmsEventCount(dbRef, userIdRef);
+      const detectedSmsCount = await getTodaySmsEventCount(dbRef, userIdRef, new Date());
       set({ detectedSmsCount });
     },
   })

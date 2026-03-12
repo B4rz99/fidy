@@ -223,7 +223,7 @@ describe("useTransactionStore", () => {
     await useTransactionStore.getState().removeTransaction(txs[0].id);
 
     expect(useTransactionStore.getState().transactions).toHaveLength(0);
-    expect(softDeleteTransaction).toHaveBeenCalledWith(mockDb, txs[0].id);
+    expect(softDeleteTransaction).toHaveBeenCalledWith(mockDb, txs[0].id, expect.any(String));
     expect(enqueueSync).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({

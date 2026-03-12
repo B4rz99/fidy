@@ -208,7 +208,14 @@ export async function processEmails(
       await saveTransaction(db, userId, parsed, email, "success");
 
       const merchantKey = normalizeMerchant(parsed.description);
-      await insertMerchantRule(db, userId, email.from, merchantKey, parsed.categoryId);
+      await insertMerchantRule(
+        db,
+        userId,
+        email.from,
+        merchantKey,
+        parsed.categoryId,
+        new Date().toISOString()
+      );
 
       result.saved++;
       completed++;
