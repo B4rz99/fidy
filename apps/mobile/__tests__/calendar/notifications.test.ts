@@ -2,16 +2,6 @@ import { describe, expect, test, vi } from "vitest";
 
 vi.unmock("date-fns");
 
-vi.mock("expo-notifications", () => ({
-  scheduleNotificationAsync: vi.fn().mockResolvedValue("notif-1"),
-  cancelScheduledNotificationAsync: vi.fn().mockResolvedValue(undefined),
-  getPermissionsAsync: vi.fn().mockResolvedValue({ status: "granted" }),
-  requestPermissionsAsync: vi.fn().mockResolvedValue({ status: "granted" }),
-  // biome-ignore lint/style/useNamingConvention: expo-notifications API uses PascalCase enum
-  SchedulableTriggerInputTypes: { DATE: "date" },
-}));
-
-import * as Notifications from "expo-notifications";
 import {
   cancelBillNotifications,
   computeUpcomingOccurrences,
@@ -77,58 +67,22 @@ describe("computeUpcomingOccurrences", () => {
   });
 });
 
-describe("scheduleBillNotifications", () => {
-  test("returns notification IDs from scheduleNotificationAsync", async () => {
-    const bill = makeBill({ startDate: new Date(2099, 0, 15) });
+describe("scheduleBillNotifications (no-op)", () => {
+  test("returns empty array", async () => {
+    const bill = makeBill();
     const ids = await scheduleBillNotifications(bill);
-    expect(ids.length).toBeGreaterThan(0);
-    for (const id of ids) {
-      expect(id).toBe("notif-1");
-    }
-    expect(Notifications.scheduleNotificationAsync).toHaveBeenCalled();
+    expect(ids).toEqual([]);
   });
 });
 
-describe("cancelBillNotifications", () => {
-  test("calls cancelScheduledNotificationAsync for each ID", async () => {
-    const ids = ["id-a", "id-b", "id-c"];
-    await cancelBillNotifications(ids);
-    expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledTimes(ids.length);
-    expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith("id-a");
-    expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith("id-b");
-    expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith("id-c");
+describe("cancelBillNotifications (no-op)", () => {
+  test("resolves without error", async () => {
+    await expect(cancelBillNotifications(["id-a", "id-b"])).resolves.toBeUndefined();
   });
 });
 
-describe("requestNotificationPermissions", () => {
-  test("returns true immediately when already granted", async () => {
-    vi.mocked(Notifications.getPermissionsAsync).mockResolvedValueOnce({
-      status: "granted",
-    } as never);
-    const result = await requestNotificationPermissions();
-    expect(result).toBe(true);
-    expect(Notifications.requestPermissionsAsync).not.toHaveBeenCalled();
-  });
-
-  test("requests permissions and returns true when granted after prompt", async () => {
-    vi.mocked(Notifications.getPermissionsAsync).mockResolvedValueOnce({
-      status: "undetermined",
-    } as never);
-    vi.mocked(Notifications.requestPermissionsAsync).mockResolvedValueOnce({
-      status: "granted",
-    } as never);
-    const result = await requestNotificationPermissions();
-    expect(result).toBe(true);
-    expect(Notifications.requestPermissionsAsync).toHaveBeenCalled();
-  });
-
-  test("returns false when permissions denied", async () => {
-    vi.mocked(Notifications.getPermissionsAsync).mockResolvedValueOnce({
-      status: "denied",
-    } as never);
-    vi.mocked(Notifications.requestPermissionsAsync).mockResolvedValueOnce({
-      status: "denied",
-    } as never);
+describe("requestNotificationPermissions (no-op)", () => {
+  test("returns false", async () => {
     const result = await requestNotificationPermissions();
     expect(result).toBe(false);
   });

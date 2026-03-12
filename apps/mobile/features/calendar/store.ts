@@ -43,7 +43,8 @@ type CalendarActions = {
     name: string,
     amount: string,
     frequency: BillFrequency,
-    category: string
+    category: string,
+    startDate: Date
   ) => Promise<boolean>;
   updateBill: (
     id: string,
@@ -105,7 +106,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     }
   },
 
-  addBill: async (name, amount, frequency, category) => {
+  addBill: async (name, amount, frequency, category, startDate) => {
     if (!dbRef || !userIdRef) return false;
 
     const cents = Math.round(parseFloat(amount) * 100);
@@ -116,7 +117,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
       amountCents: cents,
       frequency,
       categoryId: category,
-      startDate: new Date(),
+      startDate,
       isActive: true,
     });
 

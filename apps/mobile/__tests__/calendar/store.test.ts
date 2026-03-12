@@ -2,15 +2,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.unmock("date-fns");
 
-vi.mock("expo-notifications", () => ({
-  scheduleNotificationAsync: vi.fn().mockResolvedValue("notif-1"),
-  cancelScheduledNotificationAsync: vi.fn().mockResolvedValue(undefined),
-  getPermissionsAsync: vi.fn().mockResolvedValue({ status: "granted" }),
-  requestPermissionsAsync: vi.fn().mockResolvedValue({ status: "granted" }),
-  // biome-ignore lint/style/useNamingConvention: expo-notifications API uses PascalCase enum
-  SchedulableTriggerInputTypes: { DATE: "date" },
-}));
-
 // Mock the repository module
 vi.mock("@/features/calendar/lib/repository", () => ({
   insertBill: vi.fn().mockResolvedValue(undefined),
@@ -26,6 +17,7 @@ import { useCalendarStore } from "@/features/calendar/store";
 
 const mockDb = {} as never;
 const mockUserId = "user-1";
+const testDate = new Date(2026, 2, 15);
 
 describe("useCalendarStore", () => {
   beforeEach(() => {
@@ -62,7 +54,7 @@ describe("useCalendarStore", () => {
   test("addBill with valid data adds bill and returns true", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "15.99", "monthly", "services");
+      .addBill("Netflix", "15.99", "monthly", "services", testDate);
     expect(result).toBe(true);
     expect(useCalendarStore.getState().bills).toHaveLength(1);
     const bill = useCalendarStore.getState().bills[0];
@@ -74,32 +66,38 @@ describe("useCalendarStore", () => {
   });
 
   test("addBill returns false for empty name", async () => {
-    const result = await useCalendarStore.getState().addBill("", "15.99", "monthly", "services");
+    const result = await useCalendarStore
+      .getState()
+      .addBill("", "15.99", "monthly", "services", testDate);
     expect(result).toBe(false);
     expect(useCalendarStore.getState().bills).toHaveLength(0);
   });
 
   test("addBill returns false for empty amount", async () => {
-    const result = await useCalendarStore.getState().addBill("Netflix", "", "monthly", "services");
+    const result = await useCalendarStore
+      .getState()
+      .addBill("Netflix", "", "monthly", "services", testDate);
     expect(result).toBe(false);
   });
 
   test("addBill returns false for zero amount", async () => {
-    const result = await useCalendarStore.getState().addBill("Netflix", "0", "monthly", "services");
+    const result = await useCalendarStore
+      .getState()
+      .addBill("Netflix", "0", "monthly", "services", testDate);
     expect(result).toBe(false);
   });
 
   test("addBill returns false for negative amount", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "-5", "monthly", "services");
+      .addBill("Netflix", "-5", "monthly", "services", testDate);
     expect(result).toBe(false);
   });
 
   test("addBill returns false for non-numeric amount", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "abc", "monthly", "services");
+      .addBill("Netflix", "abc", "monthly", "services", testDate);
     expect(result).toBe(false);
   });
 
@@ -107,7 +105,7 @@ describe("useCalendarStore", () => {
     const result = await useCalendarStore
       .getState()
       // @ts-expect-error testing invalid frequency
-      .addBill("Netflix", "15.99", "daily", "services");
+      .addBill("Netflix", "15.99", "daily", "services", testDate);
     expect(result).toBe(false);
     expect(useCalendarStore.getState().bills).toHaveLength(0);
   });
@@ -115,7 +113,7 @@ describe("useCalendarStore", () => {
   test("addBill validates categoryId via schema", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "15.99", "monthly", "invalid");
+      .addBill("Netflix", "15.99", "monthly", "invalid", testDate);
     expect(result).toBe(false);
     expect(useCalendarStore.getState().bills).toHaveLength(0);
   });
@@ -196,7 +194,7 @@ describe("useCalendarStore", () => {
 
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "15.99", "monthly", "services");
+      .addBill("Netflix", "15.99", "monthly", "services", testDate);
 
     expect(result).toBe(false);
     expect(useCalendarStore.getState().bills).toHaveLength(0);
@@ -205,7 +203,7 @@ describe("useCalendarStore", () => {
   // ─── updateBill ───
 
   test("updateBill updates bill in state", async () => {
-    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services");
+    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services", testDate);
     const billId = useCalendarStore.getState().bills[0].id;
 
     await useCalendarStore.getState().updateBill(billId, { name: "Hulu" });
@@ -218,7 +216,7 @@ describe("useCalendarStore", () => {
     const { updateBill: dbUpdateBill } = await import("@/features/calendar/lib/repository");
     vi.mocked(dbUpdateBill).mockClear();
 
-    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services");
+    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services", testDate);
     const billId = useCalendarStore.getState().bills[0].id;
     const newDate = new Date("2026-06-01T00:00:00.000Z");
 
@@ -244,7 +242,7 @@ describe("useCalendarStore", () => {
   // ─── deleteBill ───
 
   test("deleteBill removes bill and its payments from state", async () => {
-    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services");
+    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services", testDate);
     const billId = useCalendarStore.getState().bills[0].id;
 
     // Manually add a payment for this bill

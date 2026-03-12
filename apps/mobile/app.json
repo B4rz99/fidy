@@ -58,7 +58,7 @@
         }
       ],
       "expo-background-task",
-      "expo-notifications"
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

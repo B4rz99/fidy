@@ -1,6 +1,4 @@
-import { addDays, subDays } from "date-fns";
-import * as Notifications from "expo-notifications";
-import { centsToDisplay } from "@/features/transactions/lib/format-amount";
+import { addDays } from "date-fns";
 import type { Bill } from "../schema";
 import { getNextOccurrence } from "./calendar-utils";
 
@@ -17,69 +15,22 @@ export function computeUpcomingOccurrences(bill: Bill, count: number, from: Date
   }, []);
 }
 
-type ReminderSpec = {
-  title: string;
-  body: string;
-  triggerDate: Date;
-};
-
 /**
- * Build reminder specs (7-day + 1-day) for a list of due dates.
- * Pure function — produces the notification payloads without scheduling.
+ * Schedule bill notifications — no-op until expo-notifications is available.
+ * Requires a paid Apple Developer account for push notification entitlements.
  */
-function buildReminderSpecs(bill: Bill, occurrences: Date[]): ReminderSpec[] {
-  const now = new Date();
-  const amount = centsToDisplay(bill.amountCents);
-
-  return occurrences.flatMap((dueDate) => {
-    const sevenDays: ReminderSpec = {
-      title: `${bill.name} due in 7 days`,
-      body: `${amount} payment coming up on ${dueDate.toLocaleDateString()}`,
-      triggerDate: subDays(dueDate, 7),
-    };
-    const oneDay: ReminderSpec = {
-      title: `${bill.name} due tomorrow`,
-      body: `${amount} payment due on ${dueDate.toLocaleDateString()}`,
-      triggerDate: subDays(dueDate, 1),
-    };
-    return [sevenDays, oneDay].filter((r) => r.triggerDate > now);
-  });
+export async function scheduleBillNotifications(_bill: Bill): Promise<string[]> {
+  return [];
 }
 
 /**
- * Schedule 7-day and 1-day reminder notifications for the next 3 occurrences of a bill.
- * Returns an array of scheduled notification identifiers.
+ * Cancel bill notifications — no-op.
  */
-export async function scheduleBillNotifications(bill: Bill): Promise<string[]> {
-  const occurrences = computeUpcomingOccurrences(bill, 3, new Date());
-  const specs = buildReminderSpecs(bill, occurrences);
-
-  const ids = await Promise.all(
-    specs.map((spec) =>
-      Notifications.scheduleNotificationAsync({
-        content: { title: spec.title, body: spec.body },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: spec.triggerDate },
-      })
-    )
-  );
-
-  return ids;
-}
+export async function cancelBillNotifications(_ids: string[]): Promise<void> {}
 
 /**
- * Cancel previously scheduled notifications by their identifiers.
- */
-export async function cancelBillNotifications(ids: string[]): Promise<void> {
-  await Promise.all(ids.map((id) => Notifications.cancelScheduledNotificationAsync(id)));
-}
-
-/**
- * Request notification permissions. Returns true if granted.
+ * Request notification permissions — no-op, returns false.
  */
 export async function requestNotificationPermissions(): Promise<boolean> {
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  if (existingStatus === "granted") return true;
-
-  const { status } = await Notifications.requestPermissionsAsync();
-  return status === "granted";
+  return false;
 }

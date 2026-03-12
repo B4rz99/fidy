@@ -1,3 +1,4 @@
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -37,6 +38,7 @@ export default function AddBillScreen() {
   const [category, setCategory] = useState<CategoryId>(
     (existingBill?.categoryId as CategoryId) ?? "services"
   );
+  const [startDate, setStartDate] = useState(existingBill?.startDate ?? new Date());
 
   const amountRef = useRef<TextInput>(null);
 
@@ -54,6 +56,7 @@ export default function AddBillScreen() {
       setAmount(centsToDisplay(existingBill.amountCents).replace("$", ""));
       setFrequency(existingBill.frequency);
       setCategory(existingBill.categoryId as CategoryId);
+      setStartDate(existingBill.startDate);
     }
   }, [existingBill?.id]);
 
@@ -69,10 +72,11 @@ export default function AddBillScreen() {
         amountCents: cents,
         frequency,
         categoryId: category,
+        startDate,
       });
       router.back();
     } else {
-      const success = await addBill(trimmedName, amount, frequency, category);
+      const success = await addBill(trimmedName, amount, frequency, category, startDate);
       if (success) router.back();
     }
   };
@@ -158,6 +162,19 @@ export default function AddBillScreen() {
           </View>
 
           <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, { color: secondaryColor }]}>Start Date</Text>
+            <DateTimePicker
+              value={startDate}
+              mode="date"
+              display="compact"
+              onChange={(_event, date) => {
+                if (date) setStartDate(date);
+              }}
+              style={styles.datePicker}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: secondaryColor }]}>Category</Text>
             <View style={styles.chipRow}>
               {CATEGORIES.map((c) => (
@@ -228,6 +245,9 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     fontSize: 14,
     minHeight: 44,
+  },
+  datePicker: {
+    alignSelf: "flex-start",
   },
   chipRow: {
     flexDirection: "row",
