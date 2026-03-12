@@ -139,8 +139,9 @@ describe("billPayments table schema", () => {
     expect(names).toContain("billId");
     expect(names).toContain("dueDate");
     expect(names).toContain("paidAt");
+    expect(names).toContain("transactionId");
     expect(names).toContain("createdAt");
-    expect(names).toHaveLength(5);
+    expect(names).toHaveLength(6);
   });
 
   it("id is primary key", () => {

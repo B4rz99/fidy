@@ -27,6 +27,7 @@ export const billPayments = sqliteTable(
     billId: text("bill_id").notNull(),
     dueDate: text("due_date").notNull(),
     paidAt: text("paid_at").notNull(),
+    transactionId: text("transaction_id"),
     createdAt: text("created_at").notNull(),
   },
   (table) => [

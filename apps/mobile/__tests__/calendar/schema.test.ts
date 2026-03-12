@@ -139,6 +139,7 @@ describe("billPaymentSchema", () => {
       billId: "bill-1",
       dueDate: "2025-01-15",
       paidAt: "2025-01-14T10:00:00.000Z",
+      transactionId: null,
       createdAt: "2025-01-14T10:00:00.000Z",
     };
     expect(billPaymentSchema.safeParse(valid).success).toBe(true);

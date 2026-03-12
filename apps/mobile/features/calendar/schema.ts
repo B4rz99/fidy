@@ -31,6 +31,7 @@ export const billPaymentSchema = z.object({
   billId: z.string(),
   dueDate: z.string(),
   paidAt: z.string(),
+  transactionId: z.string().nullable(),
   createdAt: z.string(),
 });
 

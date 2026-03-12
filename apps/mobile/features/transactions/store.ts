@@ -43,6 +43,8 @@ type AddTransactionActions = {
   >;
   loadTransactions: () => Promise<void>;
   removeTransaction: (id: string) => Promise<void>;
+  addToCache: (tx: StoredTransaction) => void;
+  removeFromCache: (id: string) => void;
   resetForm: () => void;
 };
 
@@ -147,6 +149,11 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
         transactions: state.transactions.filter((tx) => tx.id !== id),
       }));
     },
+
+    addToCache: (tx) => set((s) => ({ transactions: [tx, ...s.transactions] })),
+
+    removeFromCache: (id) =>
+      set((s) => ({ transactions: s.transactions.filter((t) => t.id !== id) })),
 
     resetForm: () => set({ ...INITIAL_FORM, date: new Date() }),
   })

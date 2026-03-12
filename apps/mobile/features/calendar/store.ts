@@ -1,7 +1,15 @@
 import { addMonths, endOfMonth, startOfMonth, subMonths } from "date-fns";
 import { create } from "zustand";
+import { toTransactionRow } from "@/features/transactions/lib/build-transaction";
+import {
+  enqueueSync,
+  insertTransaction,
+  softDeleteTransaction,
+} from "@/features/transactions/lib/repository";
+import type { StoredTransaction } from "@/features/transactions/schema";
+import { useTransactionStore } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db/client";
-import { toIsoDate } from "@/shared/lib/format-date";
+import { parseIsoDate, toIsoDate } from "@/shared/lib/format-date";
 import { generateId } from "@/shared/lib/generate-id";
 import { requestNotificationPermissions, scheduleBillNotifications } from "./lib/notifications";
 import {
@@ -171,26 +179,82 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
   },
 
   markBillPaid: async (billId, dueDate) => {
-    if (!dbRef) return;
-    const now = new Date().toISOString();
-    const payment: BillPayment = {
-      id: generateId("pay"),
-      billId,
-      dueDate,
-      paidAt: now,
+    if (!dbRef || !userIdRef) return;
+
+    const bill = get().bills.find((b) => b.id === billId);
+    if (!bill) return;
+
+    const now = new Date();
+    const nowIso = now.toISOString();
+
+    // Create an expense transaction for this bill payment
+    const txId = generateId("tx");
+    const transaction: StoredTransaction = {
+      id: txId,
+      userId: userIdRef,
+      type: "expense",
+      amountCents: bill.amountCents,
+      categoryId: bill.categoryId,
+      description: bill.name,
+      date: parseIsoDate(dueDate),
       createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
     };
-    await insertBillPayment(dbRef, payment);
-    set((s) => ({
-      payments: [...s.payments, payment],
-    }));
+
+    try {
+      await insertTransaction(dbRef, toTransactionRow(transaction));
+      await enqueueSync(dbRef, {
+        id: generateId("sq"),
+        tableName: "transactions",
+        rowId: txId,
+        operation: "insert",
+        createdAt: nowIso,
+      });
+
+      const payment: BillPayment = {
+        id: generateId("pay"),
+        billId,
+        dueDate,
+        paidAt: nowIso,
+        transactionId: txId,
+        createdAt: nowIso,
+      };
+      await insertBillPayment(dbRef, payment);
+
+      set((s) => ({ payments: [...s.payments, payment] }));
+
+      useTransactionStore.getState().addToCache(transaction);
+    } catch {
+      // DB write failed — don't update in-memory state
+    }
   },
 
   unmarkBillPaid: async (billId, dueDate) => {
     if (!dbRef) return;
-    await dbDeleteBillPayment(dbRef, billId, dueDate);
-    set((s) => ({
-      payments: s.payments.filter((p) => !(p.billId === billId && p.dueDate === dueDate)),
-    }));
+
+    const payment = get().payments.find((p) => p.billId === billId && p.dueDate === dueDate);
+
+    try {
+      // Soft-delete the linked transaction if it exists
+      if (payment?.transactionId) {
+        await softDeleteTransaction(dbRef, payment.transactionId);
+        await enqueueSync(dbRef, {
+          id: generateId("sq"),
+          tableName: "transactions",
+          rowId: payment.transactionId,
+          operation: "delete",
+          createdAt: new Date().toISOString(),
+        });
+        useTransactionStore.getState().removeFromCache(payment.transactionId);
+      }
+
+      await dbDeleteBillPayment(dbRef, billId, dueDate);
+      set((s) => ({
+        payments: s.payments.filter((p) => !(p.billId === billId && p.dueDate === dueDate)),
+      }));
+    } catch {
+      // DB operation failed — keep state unchanged
+    }
   },
 }));
