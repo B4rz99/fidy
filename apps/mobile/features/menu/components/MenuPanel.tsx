@@ -9,12 +9,11 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 import { useMenuStore } from "../store";
 
 const PANEL_WIDTH = 200;
-// Distance from bottom of screen to clear the tab bar
-const TAB_BAR_CLEARANCE = 100;
 
 export function MenuPanel() {
   const isOpen = useMenuStore((s) => s.isOpen);

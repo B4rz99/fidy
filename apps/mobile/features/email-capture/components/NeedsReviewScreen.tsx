@@ -1,15 +1,13 @@
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
 import { useCallback } from "react";
-import { Platform, Pressable, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Text, View } from "react-native";
 import { useTransactionStore } from "@/features/transactions/store";
+import { ScreenLayout } from "@/shared/components/ScreenLayout";
 import { useEmailCaptureStore } from "../store";
 import { NeedsReviewCard } from "./NeedsReviewCard";
 
 export default function NeedsReviewScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const needsReview = useEmailCaptureStore((s) => s.needsReviewEmails);
   const confirmReview = useEmailCaptureStore((s) => s.confirmReview);
@@ -33,19 +31,7 @@ export default function NeedsReviewScreen() {
   const keyExtractor = useCallback((item: (typeof needsReview)[number]) => item.id, []);
 
   return (
-    <View
-      className="flex-1 bg-page dark:bg-page-dark"
-      style={{ paddingTop: Platform.OS === "android" ? insets.top : insets.top }}
-    >
-      <View className="flex-row items-center px-5 pb-4 pt-2" style={{ gap: 12 }}>
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <ArrowLeft size={24} color="#1A1A1A" />
-        </Pressable>
-        <Text className="font-poppins-semibold text-lg text-primary dark:text-primary-dark">
-          Review Transactions
-        </Text>
-      </View>
-
+    <ScreenLayout title="Review Transactions" variant="sub" onBack={() => router.back()}>
       {needsReview.length === 0 ? (
         <View className="flex-1 items-center justify-center px-10">
           <Text className="font-poppins-semibold text-base text-primary dark:text-primary-dark">
@@ -60,7 +46,7 @@ export default function NeedsReviewScreen() {
           data={needsReview}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
           ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
           ListHeaderComponent={
             <View className="mb-4 rounded-xl p-3" style={{ backgroundColor: "#FFF3E0" }}>
@@ -75,6 +61,6 @@ export default function NeedsReviewScreen() {
           }
         />
       )}
-    </View>
+    </ScreenLayout>
   );
 }

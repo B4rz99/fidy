@@ -1,22 +1,20 @@
 import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
-import { ChevronLeft, Info, Plus, TriangleAlert } from "lucide-react-native";
+import { Info, Plus, TriangleAlert } from "lucide-react-native";
 import { useCallback } from "react";
-import { Platform, Pressable, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Pressable, Text, View } from "react-native";
 import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
+import { ScreenLayout } from "@/shared/components/ScreenLayout";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 
 const ItemSeparator = () => <View style={{ height: 10 }} />;
 
 export default function FailedEmailsScreen() {
-  const insets = useSafeAreaInsets();
   const { back, push } = useRouter();
   const failedEmails = useEmailCaptureStore((s) => s.failedEmails);
   const dismissFailedEmail = useEmailCaptureStore((s) => s.dismissFailedEmail);
-  const primaryColor = useThemeColor("primary");
 
   const handleAddManually = useCallback(() => {
     push("/add-transaction");
@@ -34,29 +32,19 @@ export default function FailedEmailsScreen() {
   );
 
   return (
-    <View className="flex-1 bg-page dark:bg-page-dark">
+    <ScreenLayout title="Unprocessed Emails" variant="sub" onBack={() => back()}>
       <FlashList
         data={failedEmails}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
-          paddingTop: Platform.OS === "android" ? insets.top : 0,
           paddingBottom: 40,
-          paddingHorizontal: 20,
+          paddingHorizontal: 16,
         }}
         ItemSeparatorComponent={ItemSeparator}
         ListHeaderComponent={
-          <View style={{ gap: 20, paddingBottom: 10 }}>
-            <View className="flex-row items-center" style={{ gap: 12 }}>
-              <Pressable onPress={() => back()} hitSlop={12}>
-                <ChevronLeft size={24} color={primaryColor} />
-              </Pressable>
-              <Text className="font-poppins-bold text-title text-primary dark:text-primary-dark">
-                Unprocessed Emails
-              </Text>
-            </View>
-
+          <View style={{ paddingBottom: 10 }}>
             <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
               {
                 "These bank emails couldn't be processed automatically. You can add them as transactions manually."
@@ -70,7 +58,7 @@ export default function FailedEmailsScreen() {
           </Text>
         }
       />
-    </View>
+    </ScreenLayout>
   );
 }
 

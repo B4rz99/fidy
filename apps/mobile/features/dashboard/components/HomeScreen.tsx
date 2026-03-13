@@ -1,8 +1,7 @@
 import { useRouter } from "expo-router";
 import { Bell } from "lucide-react-native";
 import { useMemo } from "react";
-import { Platform, ScrollView, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Platform, ScrollView, View } from "react-native";
 import { DetectedTransactionsBanner } from "@/features/capture-sources/components/DetectedTransactionsBanner";
 import { EmailConnectBanner } from "@/features/email-capture/components/EmailConnectBanner";
 import { FailedEmailsBanner } from "@/features/email-capture/components/FailedEmailsBanner";
@@ -14,6 +13,7 @@ import {
   deriveSpendingByCategory,
 } from "@/features/transactions/lib/derive";
 import { useTransactionStore } from "@/features/transactions/store";
+import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 import { toIsoDate } from "@/shared/lib/format-date";
 import { BalanceSection } from "./BalanceSection";
@@ -21,23 +21,12 @@ import { ChartSection } from "./ChartSection";
 import { NeedsReviewBanner } from "./NeedsReviewBanner";
 import { TransactionsPreview } from "./TransactionsPreview";
 
-const Header = () => {
+const BellAction = () => {
   const iconColor = useThemeColor("primary");
-
-  return (
-    <View className="flex-row items-center justify-between">
-      <Text className="font-poppins-extrabold text-logo text-primary dark:text-primary-dark">
-        fidy
-      </Text>
-      <Bell size={22} color={iconColor} />
-    </View>
-  );
+  return <Bell size={22} color={iconColor} />;
 };
 
-const TAB_BAR_CLEARANCE = 100;
-
 export const HomeScreen = () => {
-  const insets = useSafeAreaInsets();
   const { push } = useRouter();
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
   const transactions = useTransactionStore((s) => s.transactions);
@@ -61,18 +50,14 @@ export const HomeScreen = () => {
   );
 
   return (
-    <View className="flex-1 bg-page dark:bg-page-dark">
+    <ScreenLayout title="fidy" rightActions={<BellAction />}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{
-          paddingTop: Platform.OS === "android" ? insets.top : 0,
-          paddingBottom: TAB_BAR_CLEARANCE,
-        }}
-        className="flex-1 px-5"
+        contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }}
+        className="flex-1 px-4"
       >
         <View className="gap-4">
-          <Header />
           <EmailConnectBanner
             onConnect={(provider) => {
               const clientId = provider === "gmail" ? getGmailClientId() : getOutlookClientId();
@@ -93,6 +78,6 @@ export const HomeScreen = () => {
           <TransactionsPreview />
         </View>
       </ScrollView>
-    </View>
+    </ScreenLayout>
   );
 };

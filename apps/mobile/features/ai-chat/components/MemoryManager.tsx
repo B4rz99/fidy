@@ -1,8 +1,8 @@
 import { FlashList } from "@shopify/flash-list";
-import { ChevronLeft, Trash2 } from "lucide-react-native";
+import { Trash2 } from "lucide-react-native";
 import { memo, useCallback, useEffect } from "react";
-import { Platform, Pressable, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Pressable, Text, View } from "react-native";
+import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 import type { UserMemory } from "../schema";
 import { useChatStore } from "../store";
@@ -69,11 +69,9 @@ const MemoryCard = memo(function MemoryCardInner({
 });
 
 export function MemoryManager({ onBack }: MemoryManagerProps) {
-  const insets = useSafeAreaInsets();
   const memories = useChatStore((s) => s.memories);
   const loadMemories = useChatStore((s) => s.loadMemories);
   const deleteMemory = useChatStore((s) => s.deleteMemory);
-  const primary = useThemeColor("primary");
 
   useEffect(() => {
     loadMemories();
@@ -94,7 +92,7 @@ export function MemoryManager({ onBack }: MemoryManagerProps) {
   );
 
   return (
-    <View className="flex-1 bg-page dark:bg-page-dark">
+    <ScreenLayout title="Memories" variant="sub" onBack={onBack}>
       <FlashList
         data={memories}
         renderItem={renderItem}
@@ -102,21 +100,12 @@ export function MemoryManager({ onBack }: MemoryManagerProps) {
         estimatedItemSize={80}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
-          paddingTop: Platform.OS === "android" ? insets.top : 0,
-          paddingBottom: 100,
-          paddingHorizontal: 20,
+          paddingBottom: TAB_BAR_CLEARANCE,
+          paddingHorizontal: 16,
         }}
         ItemSeparatorComponent={ItemSeparator}
         ListHeaderComponent={
-          <View style={{ gap: 20, paddingBottom: 16 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              <Pressable onPress={onBack} hitSlop={12}>
-                <ChevronLeft size={24} color={primary} />
-              </Pressable>
-              <Text className="font-poppins-bold text-title text-primary dark:text-primary-dark">
-                Memories
-              </Text>
-            </View>
+          <View style={{ paddingBottom: 16 }}>
             <Text className="font-poppins-medium text-label text-tertiary dark:text-tertiary-dark leading-relaxed">
               Things Fidy AI remembers about you. Delete any memory you'd like it to forget.
             </Text>
@@ -133,6 +122,6 @@ export function MemoryManager({ onBack }: MemoryManagerProps) {
           </View>
         }
       />
-    </View>
+    </ScreenLayout>
   );
 }

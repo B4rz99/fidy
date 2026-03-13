@@ -13,6 +13,7 @@ vi.mock("expo", () => ({
 }));
 
 vi.mock("react-native", () => ({
+  // biome-ignore lint/style/useNamingConvention: matches React Native API
   Platform: { OS: "ios" },
 }));
 
@@ -78,6 +79,7 @@ describe("expo-app-intents on Android", () => {
     vi.resetModules();
 
     vi.doMock("react-native", () => ({
+      // biome-ignore lint/style/useNamingConvention: matches React Native API
       Platform: { OS: "android" },
     }));
     vi.doMock("expo", () => ({

@@ -78,7 +78,10 @@ const EXTRACT_MEMORIES_SCHEMA = {
 
 const MODEL = "gpt-5-nano-2025-08-07";
 const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
-const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL") ?? "",
+  Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+);
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
