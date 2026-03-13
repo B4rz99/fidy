@@ -35,15 +35,11 @@ export type TransactionSource = z.infer<typeof transactionSourceSchema>;
 
 export const EMAIL_REDIRECT_URI = "fidy://email/callback";
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing ${name}`);
-  return value;
-}
-
-/** Lazy env accessors — evaluated on first call, not at import time. */
+/** Lazy env accessors — must use static process.env.X access for Metro inlining. */
 export function getGmailClientId(): string {
-  return requireEnv("EXPO_PUBLIC_GMAIL_CLIENT_ID");
+  const value = process.env.EXPO_PUBLIC_GMAIL_CLIENT_ID;
+  if (!value) throw new Error("Missing EXPO_PUBLIC_GMAIL_CLIENT_ID");
+  return value;
 }
 
 export function getGmailRedirectUri(): string {
@@ -52,7 +48,9 @@ export function getGmailRedirectUri(): string {
 }
 
 export function getOutlookClientId(): string {
-  return requireEnv("EXPO_PUBLIC_OUTLOOK_CLIENT_ID");
+  const value = process.env.EXPO_PUBLIC_OUTLOOK_CLIENT_ID;
+  if (!value) throw new Error("Missing EXPO_PUBLIC_OUTLOOK_CLIENT_ID");
+  return value;
 }
 
 export type ConnectResult = { success: true; email: string } | { success: false; error: string };
