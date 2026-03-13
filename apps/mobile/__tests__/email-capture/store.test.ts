@@ -57,7 +57,7 @@ vi.mock("@/features/transactions/lib/repository", () => ({
 const mockLoadTransactions = vi.fn();
 vi.mock("@/features/transactions/store", () => ({
   useTransactionStore: {
-    getState: () => ({ loadTransactions: mockLoadTransactions }),
+    getState: () => ({ loadTransactions: mockLoadTransactions, loadInitialData: mockLoadTransactions }),
   },
 }));
 

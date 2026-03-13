@@ -2,14 +2,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: vi.fn(),
-  getAllTransactions: vi.fn().mockResolvedValue([]),
   softDeleteTransaction: vi.fn(),
   enqueueSync: vi.fn(),
+  getBalance: vi.fn().mockReturnValue(0),
+  getCategorySpending: vi.fn().mockReturnValue([]),
+  getDailySpending: vi.fn().mockReturnValue([]),
+  getTransactionPage: vi.fn().mockReturnValue([]),
 }));
 
 import {
   enqueueSync,
-  getAllTransactions,
+  getBalance,
+  getCategorySpending,
+  getDailySpending,
+  getTransactionPage,
   insertTransaction,
   softDeleteTransaction,
 } from "@/features/transactions/lib/repository";
@@ -31,6 +37,12 @@ describe("useTransactionStore", () => {
       description: "",
       date: new Date(),
       transactions: [],
+      cursor: null,
+      hasMore: false,
+      isLoadingMore: false,
+      balanceCents: 0,
+      categorySpending: [],
+      dailySpending: [],
     });
   });
 
@@ -50,6 +62,9 @@ describe("useTransactionStore", () => {
     expect(state.categoryId).toBeNull();
     expect(state.description).toBe("");
     expect(state.transactions).toEqual([]);
+    expect(state.balanceCents).toBe(0);
+    expect(state.categorySpending).toEqual([]);
+    expect(state.dailySpending).toEqual([]);
   });
 
   it("setType toggles between expense and income", () => {
@@ -164,6 +179,18 @@ describe("useTransactionStore", () => {
     expect(txs[1].amountCents).toBe(100);
   });
 
+  it("saveTransaction refreshes aggregates", async () => {
+    vi.mocked(getBalance).mockReturnValue(5000);
+
+    const store = useTransactionStore.getState();
+    store.setDigits("100");
+    store.setCategoryId("food");
+    await store.saveTransaction();
+
+    expect(getBalance).toHaveBeenCalled();
+    expect(useTransactionStore.getState().balanceCents).toBe(5000);
+  });
+
   it("resetForm clears form but keeps transactions", async () => {
     const store = useTransactionStore.getState();
     store.setDigits("4520");
@@ -181,34 +208,69 @@ describe("useTransactionStore", () => {
     expect(state.transactions).toHaveLength(1);
   });
 
-  it("loadTransactions reads from DB and sets state", async () => {
-    vi.mocked(getAllTransactions).mockResolvedValueOnce([
-      {
-        id: "tx-1",
-        userId: mockUserId,
-        type: "expense",
-        amountCents: 1000,
-        categoryId: "food",
-        description: "Lunch",
-        date: "2026-03-04",
-        createdAt: "2026-03-04T10:00:00.000Z",
-        updatedAt: "2026-03-04T10:00:00.000Z",
-        deletedAt: null,
-        source: "manual",
-      },
-    ]);
+  it("loadTransactions calls loadInitialData which fetches aggregates and first page", async () => {
+    vi.mocked(getBalance).mockReturnValue(12000);
+    vi.mocked(getCategorySpending).mockReturnValue([{ categoryId: "food", totalCents: 3000 }]);
+    vi.mocked(getDailySpending).mockReturnValue([{ date: "2026-03-10", totalCents: 2000 }]);
+    vi.mocked(getTransactionPage).mockReturnValue([]);
 
     await useTransactionStore.getState().loadTransactions();
 
-    const txs = useTransactionStore.getState().transactions;
-    expect(txs).toHaveLength(1);
-    expect(txs[0].id).toBe("tx-1");
-    expect(txs[0].userId).toBe(mockUserId);
-    expect(txs[0].date).toBeInstanceOf(Date);
-    expect(txs[0].createdAt).toBeInstanceOf(Date);
-    expect(txs[0].updatedAt).toBeInstanceOf(Date);
-    expect(txs[0].deletedAt).toBeNull();
-    expect(getAllTransactions).toHaveBeenCalledWith(mockDb, mockUserId);
+    expect(getBalance).toHaveBeenCalledWith(mockDb, mockUserId);
+    expect(getCategorySpending).toHaveBeenCalled();
+    expect(getDailySpending).toHaveBeenCalled();
+    expect(getTransactionPage).toHaveBeenCalledWith(mockDb, mockUserId, null, 50);
+
+    const state = useTransactionStore.getState();
+    expect(state.balanceCents).toBe(12000);
+    expect(state.categorySpending).toEqual([{ categoryId: "food", totalCents: 3000 }]);
+    expect(state.dailySpending).toEqual([{ date: "2026-03-10", totalCents: 2000 }]);
+    expect(state.hasMore).toBe(false);
+  });
+
+  it("loadNextPage appends transactions and advances cursor", () => {
+    const fakeTx = {
+      id: "tx-50",
+      userId: mockUserId,
+      type: "expense" as const,
+      amountCents: 1000,
+      categoryId: "food" as const,
+      description: "test",
+      date: new Date(2026, 2, 10),
+      createdAt: new Date(2026, 2, 10),
+      updatedAt: new Date(2026, 2, 10),
+      deletedAt: null,
+    };
+
+    // Set up state as if first page was loaded with 50 items
+    useTransactionStore.setState({
+      transactions: [fakeTx],
+      cursor: { date: "2026-03-10", createdAt: "2026-03-10T00:00:00.000Z", id: "tx-50" },
+      hasMore: true,
+      isLoadingMore: false,
+    });
+
+    vi.mocked(getTransactionPage).mockReturnValue([
+      { ...fakeTx, id: "tx-51" },
+    ]);
+
+    useTransactionStore.getState().loadNextPage();
+
+    const state = useTransactionStore.getState();
+    expect(state.transactions).toHaveLength(2);
+    expect(state.isLoadingMore).toBe(false);
+    expect(getTransactionPage).toHaveBeenCalledWith(
+      mockDb,
+      mockUserId,
+      { date: "2026-03-10", createdAt: "2026-03-10T00:00:00.000Z", id: "tx-50" },
+      50
+    );
+  });
+
+  it("loadNextPage does nothing when hasMore is false", () => {
+    useTransactionStore.setState({ hasMore: false });
+    useTransactionStore.getState().loadNextPage();
+    expect(getTransactionPage).not.toHaveBeenCalled();
   });
 
   it("removeTransaction soft-deletes from DB, enqueues sync, and removes from state", async () => {

@@ -1,13 +1,18 @@
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db/client";
 import { generateId } from "@/shared/lib/generate-id";
+import { toIsoDate } from "@/shared/lib/format-date";
 import { buildTransaction, toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
 import type { CategoryId } from "./lib/categories";
 import {
   enqueueSync,
-  getAllTransactions,
+  getBalance,
+  getCategorySpending,
+  getDailySpending,
+  getTransactionPage,
   insertTransaction,
   softDeleteTransaction,
+  type TransactionCursor,
 } from "./lib/repository";
 import type { StoredTransaction, TransactionType } from "./schema";
 
@@ -16,6 +21,21 @@ type FormStep = 1 | 2;
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
 let userIdRef: string | null = null;
+
+const computeAggregates = () => {
+  if (!dbRef || !userIdRef) return {};
+  const now = new Date();
+  const monthStart = toIsoDate(new Date(now.getFullYear(), now.getMonth(), 1));
+  const monthEnd = toIsoDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+  const thirtyDaysAgo = toIsoDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30));
+  const todayStr = toIsoDate(now);
+
+  return {
+    balanceCents: getBalance(dbRef, userIdRef),
+    categorySpending: getCategorySpending(dbRef, userIdRef, monthStart, monthEnd),
+    dailySpending: getDailySpending(dbRef, userIdRef, thirtyDaysAgo, todayStr),
+  };
+};
 
 type AddTransactionState = {
   // Form fields
@@ -26,8 +46,18 @@ type AddTransactionState = {
   description: string;
   date: Date;
 
-  // Persisted transactions (UI cache from DB)
+  // Persisted transactions (UI cache from DB — accumulated pages)
   transactions: StoredTransaction[];
+
+  // Pagination state
+  cursor: TransactionCursor;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+
+  // Pre-computed aggregates
+  balanceCents: number;
+  categorySpending: readonly { categoryId: string; totalCents: number }[];
+  dailySpending: readonly { date: string; totalCents: number }[];
 };
 
 type AddTransactionActions = {
@@ -41,7 +71,9 @@ type AddTransactionActions = {
   saveTransaction: () => Promise<
     { success: true; transaction: StoredTransaction } | { success: false; error: string }
   >;
+  loadInitialData: () => void;
   loadTransactions: () => Promise<void>;
+  loadNextPage: () => void;
   removeTransaction: (id: string) => Promise<void>;
   addToCache: (tx: StoredTransaction) => void;
   removeFromCache: (id: string) => void;
@@ -64,6 +96,12 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
     ...INITIAL_FORM,
     date: new Date(),
     transactions: [],
+    cursor: null,
+    hasMore: false,
+    isLoadingMore: false,
+    balanceCents: 0,
+    categorySpending: [],
+    dailySpending: [],
 
     initStore: (db, userId) => {
       dbRef = db;
@@ -114,19 +152,51 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
 
       set((state) => ({
         transactions: [transaction, ...state.transactions],
+        ...computeAggregates(),
       }));
 
       return { success: true as const, transaction };
     },
 
-    loadTransactions: async () => {
+    loadInitialData: () => {
       if (!dbRef || !userIdRef) return;
-      try {
-        const rows = await getAllTransactions(dbRef, userIdRef);
-        set({ transactions: rows.map(toStoredTransaction) });
-      } catch {
-        // DB read failed — keep existing in-memory state
-      }
+      const aggregates = computeAggregates();
+      const page = getTransactionPage(dbRef, userIdRef, null, 50);
+
+      const lastTx = page.at(-1);
+      const cursor: TransactionCursor = lastTx
+        ? { date: toIsoDate(lastTx.date), createdAt: lastTx.createdAt.toISOString(), id: lastTx.id }
+        : null;
+
+      set({
+        transactions: page,
+        cursor,
+        hasMore: page.length === 50,
+        ...aggregates,
+      });
+    },
+
+    loadTransactions: async () => {
+      get().loadInitialData();
+    },
+
+    loadNextPage: () => {
+      const { isLoadingMore, hasMore, cursor, transactions } = get();
+      if (isLoadingMore || !hasMore || !dbRef || !userIdRef) return;
+      set({ isLoadingMore: true });
+
+      const page = getTransactionPage(dbRef, userIdRef, cursor, 50);
+      const lastTx = page.at(-1);
+      const newCursor: TransactionCursor = lastTx
+        ? { date: toIsoDate(lastTx.date), createdAt: lastTx.createdAt.toISOString(), id: lastTx.id }
+        : cursor;
+
+      set({
+        transactions: [...transactions, ...page],
+        cursor: newCursor,
+        hasMore: page.length === 50,
+        isLoadingMore: false,
+      });
     },
 
     removeTransaction: async (id) => {
@@ -148,13 +218,23 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
       }
       set((state) => ({
         transactions: state.transactions.filter((tx) => tx.id !== id),
+        ...computeAggregates(),
       }));
     },
 
-    addToCache: (tx) => set((s) => ({ transactions: [tx, ...s.transactions] })),
+    // Precondition: tx must already be persisted to DB (computeAggregates re-queries SQL)
+    addToCache: (tx) =>
+      set((s) => ({
+        transactions: [tx, ...s.transactions],
+        ...computeAggregates(),
+      })),
 
+    // Precondition: tx must already be soft-deleted in DB (computeAggregates re-queries SQL)
     removeFromCache: (id) =>
-      set((s) => ({ transactions: s.transactions.filter((t) => t.id !== id) })),
+      set((s) => ({
+        transactions: s.transactions.filter((t) => t.id !== id),
+        ...computeAggregates(),
+      })),
 
     resetForm: () => set({ ...INITIAL_FORM, date: new Date() }),
   })
