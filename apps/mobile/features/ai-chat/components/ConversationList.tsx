@@ -2,8 +2,8 @@ import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { MessageSquare, Plus, Trash2, X } from "lucide-react-native";
 import { memo, useCallback, useEffect } from "react";
-import { Platform, Pressable, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Pressable, Text, View } from "react-native";
+import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 import { useSessionCleanup } from "../hooks/use-session-cleanup";
 import type { ChatSession } from "../schema";
@@ -63,17 +63,58 @@ const SessionCard = memo(function SessionCardInner({
   );
 });
 
+function HeaderActions({
+  onOpenMemories,
+  onNewChat,
+}: {
+  readonly onOpenMemories: () => void;
+  readonly onNewChat: () => void;
+}) {
+  const accentGreen = useThemeColor("accentGreen");
+
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+      <Pressable
+        onPress={onOpenMemories}
+        className="bg-peach-light dark:bg-peach-light-dark"
+        style={{
+          borderRadius: 16,
+          borderCurve: "continuous",
+          paddingVertical: 6,
+          paddingHorizontal: 14,
+        }}
+      >
+        <Text className="font-poppins-semibold text-label" style={{ color: accentGreen }}>
+          Memories
+        </Text>
+      </Pressable>
+      <Pressable
+        onPress={onNewChat}
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 16,
+          borderCurve: "continuous",
+          backgroundColor: accentGreen,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Plus size={18} color="#FFFFFF" />
+      </Pressable>
+    </View>
+  );
+}
+
 export function ConversationList({
   onSelectSession,
   onNewChat,
   onOpenMemories,
 }: ConversationListProps) {
-  const insets = useSafeAreaInsets();
   const sessions = useChatStore((s) => s.sessions);
   const loadSessions = useChatStore((s) => s.loadSessions);
   const deleteSession = useChatStore((s) => s.deleteSession);
 
-  const accentGreen = useThemeColor("accentGreen");
   const tertiary = useThemeColor("tertiary");
   const { message: cleanupMessage, dismiss: dismissCleanup } = useSessionCleanup();
 
@@ -100,7 +141,10 @@ export function ConversationList({
   );
 
   return (
-    <View className="flex-1 bg-page dark:bg-page-dark">
+    <ScreenLayout
+      title="AI Chat"
+      rightActions={<HeaderActions onOpenMemories={onOpenMemories} onNewChat={onNewChat} />}
+    >
       <FlashList
         data={sessions}
         renderItem={renderItem}
@@ -108,58 +152,18 @@ export function ConversationList({
         estimatedItemSize={72}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
-          paddingTop: Platform.OS === "android" ? insets.top : 0,
-          paddingBottom: 100,
-          paddingHorizontal: 20,
+          paddingBottom: TAB_BAR_CLEARANCE,
+          paddingHorizontal: 16,
         }}
         ItemSeparatorComponent={ItemSeparator}
         ListHeaderComponent={
-          <View style={{ paddingBottom: 16 }}>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <Text className="font-poppins-bold text-logo text-primary dark:text-primary-dark">
-                AI Chat
-              </Text>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                <Pressable
-                  onPress={onOpenMemories}
-                  className="bg-peach-light dark:bg-peach-light-dark"
-                  style={{
-                    borderRadius: 16,
-                    paddingVertical: 6,
-                    paddingHorizontal: 14,
-                  }}
-                >
-                  <Text className="font-poppins-semibold text-label" style={{ color: accentGreen }}>
-                    Memories
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={onNewChat}
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 16,
-                    backgroundColor: accentGreen,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Plus size={18} color="#FFFFFF" />
-                </Pressable>
-              </View>
-            </View>
-            {cleanupMessage != null && (
+          cleanupMessage != null ? (
+            <View style={{ paddingBottom: 16 }}>
               <View
                 className="bg-card dark:bg-card-dark"
                 style={{
-                  marginTop: 12,
                   borderRadius: 12,
+                  borderCurve: "continuous",
                   paddingVertical: 10,
                   paddingHorizontal: 14,
                   flexDirection: "row",
@@ -177,8 +181,8 @@ export function ConversationList({
                   <X size={16} color={tertiary} />
                 </Pressable>
               </View>
-            )}
-          </View>
+            </View>
+          ) : null
         }
         ListEmptyComponent={
           <View style={{ alignItems: "center", paddingTop: 60, gap: 8 }}>
@@ -191,6 +195,6 @@ export function ConversationList({
           </View>
         }
       />
-    </View>
+    </ScreenLayout>
   );
 }

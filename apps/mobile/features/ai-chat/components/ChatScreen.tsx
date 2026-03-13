@@ -1,12 +1,11 @@
 import { FlashList } from "@shopify/flash-list";
 import { memo, useCallback, useRef } from "react";
-import { Keyboard, KeyboardAvoidingView, Platform, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Keyboard, KeyboardAvoidingView, View } from "react-native";
+import { HEADER_HEIGHT, ScreenLayout } from "@/shared/components/ScreenLayout";
 import { useTransactionStore } from "@/features/transactions/store";
 import { useStreamingChat } from "../hooks/use-streaming-chat";
 import type { ChatMessage } from "../schema";
 import { useChatStore } from "../store";
-import { ChatHeader } from "./ChatHeader";
 import { ChatInput } from "./ChatInput";
 import { MessageBubble } from "./MessageBubble";
 import { StarterSuggestions } from "./StarterSuggestions";
@@ -33,7 +32,6 @@ const MemoizedMessageBubble = memo(function MemoizedBubble({
 });
 
 export function ChatScreen({ onBack }: ChatScreenProps) {
-  const insets = useSafeAreaInsets();
   const listRef = useRef<FlashList<ChatMessage>>(null);
 
   const messages = useChatStore((s) => s.messages);
@@ -100,14 +98,12 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
   const isEmpty = messages.length === 0 && !isStreaming;
 
   return (
-    <View className="flex-1 bg-page dark:bg-page-dark">
+    <ScreenLayout title={title} variant="sub" onBack={onBack}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={0}
+        behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={HEADER_HEIGHT}
       >
-        <ChatHeader title={title} onBack={onBack} topInset={insets.top} />
-
         {isEmpty ? (
           <View
             style={{ flex: 1 }}
@@ -145,6 +141,6 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
 
         <ChatInput onSend={handleSend} disabled={isStreaming} />
       </KeyboardAvoidingView>
-    </View>
+    </ScreenLayout>
   );
 }

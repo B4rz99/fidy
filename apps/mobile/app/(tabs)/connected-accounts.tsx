@@ -1,21 +1,19 @@
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "expo-router";
-import { ChevronLeft, Mail } from "lucide-react-native";
+import { Mail } from "lucide-react-native";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ApplePaySetupCard } from "@/features/capture-sources/components/ApplePaySetupCard";
 import { NotificationSetupCard } from "@/features/capture-sources/components/NotificationSetupCard";
+import { ScreenLayout } from "@/shared/components/ScreenLayout";
 import { getGmailClientId, getOutlookClientId } from "@/features/email-capture/schema";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 
 export default function ConnectedAccountsScreen() {
-  const insets = useSafeAreaInsets();
   const { back } = useRouter();
   const accounts = useEmailCaptureStore((s) => s.accounts);
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
   const disconnectEmail = useEmailCaptureStore((s) => s.disconnectEmail);
-  const primaryColor = useThemeColor("primary");
   const greenColor = useThemeColor("accentGreen");
   const tertiaryColor = useThemeColor("tertiary");
 
@@ -23,25 +21,13 @@ export default function ConnectedAccountsScreen() {
   const outlookAccount = accounts.find((a) => a.provider === "outlook");
 
   return (
-    <View className="flex-1 bg-page dark:bg-page-dark">
+    <ScreenLayout title="Connected Accounts" variant="sub" onBack={() => back()}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{
-          paddingTop: Platform.OS === "android" ? insets.top : 0,
-          paddingBottom: 40,
-        }}
-        className="flex-1 px-5"
+        contentContainerStyle={{ paddingBottom: 40 }}
+        className="flex-1 px-4"
       >
         <View style={{ gap: 24 }}>
-          <View className="flex-row items-center" style={{ gap: 12 }}>
-            <Pressable onPress={() => back()} hitSlop={12}>
-              <ChevronLeft size={24} color={primaryColor} />
-            </Pressable>
-            <Text className="font-poppins-bold text-title text-primary dark:text-primary-dark">
-              Connected Accounts
-            </Text>
-          </View>
-
           <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
             Manage your connected accounts and capture sources for automatic transaction tracking.
           </Text>
@@ -70,7 +56,7 @@ export default function ConnectedAccountsScreen() {
           {Platform.OS === "ios" && <ApplePaySetupCard />}
         </View>
       </ScrollView>
-    </View>
+    </ScreenLayout>
   );
 }
 

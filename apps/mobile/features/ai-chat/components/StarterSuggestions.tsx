@@ -59,7 +59,7 @@ export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
               borderWidth: 1,
               borderColor: borderSubtle,
               paddingVertical: 12,
-              paddingHorizontal: 20,
+              paddingHorizontal: 16,
               alignItems: "center",
               justifyContent: "center",
             }}
