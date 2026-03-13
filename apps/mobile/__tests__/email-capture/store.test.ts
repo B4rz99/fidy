@@ -91,13 +91,12 @@ import {
   fetchOutlookEmails,
 } from "@/features/email-capture/services/outlook-adapter";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
-import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 
 const mockSelectWhere = vi.fn().mockResolvedValue([{ description: "Compra en Exito" }]);
-// biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
 const mockDb = {
   update: vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) }),
   select: vi.fn().mockReturnValue({ from: vi.fn().mockReturnValue({ where: mockSelectWhere }) }),
+  // biome-ignore lint/suspicious/noExplicitAny: mock DB object for testing
 } as any;
 const mockUserId = "user-1";
 

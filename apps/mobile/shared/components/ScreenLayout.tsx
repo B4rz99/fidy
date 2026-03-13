@@ -31,7 +31,7 @@ export function ScreenLayout({
       <View style={{ paddingTop: process.env.EXPO_OS === "web" ? 0 : insets.top }}>
         <View className="px-4 flex-row items-center justify-between h-12">
           <View className="flex-row items-center" style={{ gap: 12 }}>
-            {!isTab && (
+            {!isTab && onBack != null && (
               <Pressable onPress={onBack} hitSlop={12}>
                 <ChevronLeft size={24} color={primaryColor} />
               </Pressable>

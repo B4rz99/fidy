@@ -27,6 +27,7 @@ const mockDb = {
       onConflictDoUpdate: mockOnConflictDoUpdate,
     })),
   })),
+  // biome-ignore lint/suspicious/noExplicitAny: mock DB object for testing
 } as any;
 
 import {

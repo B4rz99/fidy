@@ -89,7 +89,10 @@ const FULL_PARSE_SCHEMA = {
 };
 
 const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
-const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL") ?? "",
+  Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+);
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
