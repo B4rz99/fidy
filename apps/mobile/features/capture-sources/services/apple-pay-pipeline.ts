@@ -69,9 +69,8 @@ export async function processApplePayIntent(
     }
 
     // Check merchant rules cache
-    const syntheticSender = "applepay://wallet";
     const merchantKey = normalizeMerchant(intent.merchant);
-    const cachedCategoryId = await lookupMerchantRule(db, userId, syntheticSender, merchantKey);
+    const cachedCategoryId = await lookupMerchantRule(db, userId, merchantKey);
 
     // If no cached category, classify via LLM
     const categoryId = cachedCategoryId ?? (await classifyMerchantApi(intent.merchant));
@@ -115,7 +114,7 @@ export async function processApplePayIntent(
     });
 
     // Always cache merchant rule (Apple Pay data is high confidence)
-    await insertMerchantRule(db, userId, syntheticSender, merchantKey, categoryId);
+    await insertMerchantRule(db, userId, merchantKey, categoryId, now);
 
     return { saved: true, skippedDuplicate: false, transactionId: txId };
   } finally {

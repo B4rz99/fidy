@@ -25,6 +25,7 @@
     "@fidy/schemas": "workspace:*",
     "@fidy/types": "workspace:*",
     "@fidy/utils": "workspace:*",
+    "@react-native-community/datetimepicker": "8.4.4",
     "@react-native-community/netinfo": "^12.0.1",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",

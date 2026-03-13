@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { AppState } from "react-native";
 import { useTransactionStore } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db/client";
-import { getSupabase } from "@/shared/lib/supabase";
+import { getSupabase } from "@/shared/db/supabase";
 import { isOnline, onConnectivityChange } from "../services/networkMonitor";
 import { fullSync } from "../services/syncEngine";
 

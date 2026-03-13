@@ -16,6 +16,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useChatStore } from "@/features/ai-chat/store";
 import { useAuthStore } from "@/features/auth/store";
 import { registerBackgroundTask } from "@/features/background-fetch/register";
+import { useCalendarStore } from "@/features/calendar/store";
 import { useApplePayCapture } from "@/features/capture-sources/hooks/useApplePayCapture";
 import { useNotificationCapture } from "@/features/capture-sources/hooks/useNotificationCapture";
 import { useSmsDetection } from "@/features/capture-sources/hooks/useSmsDetection";
@@ -39,6 +40,11 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
       useEmailCaptureStore.getState().initStore(db, userId);
       useCaptureSourcesStore.getState().initStore(db, userId);
       useChatStore.getState().initStore(db, userId);
+      useCalendarStore.getState().initStore(db, userId);
+      Promise.all([
+        useCalendarStore.getState().loadBills(),
+        useCalendarStore.getState().loadPaymentsForMonth(),
+      ]).catch(() => {});
       useChatStore
         .getState()
         .loadSessions()
@@ -125,6 +131,14 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="add-transaction" options={{ presentation: "formSheet" }} />
+        <Stack.Screen
+          name="add-bill"
+          options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+        />
+        <Stack.Screen
+          name="day-detail"
+          options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+        />
       </Stack>
       {db && userId && <AuthenticatedShell db={db} userId={userId} />}
       <StatusBar style="auto" />

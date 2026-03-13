@@ -47,7 +47,7 @@ export const TransactionDetails = () => {
 
   const amountColor = type === "expense" ? accentRed : accentGreen;
   const displayAmount = formatAmount(digits);
-  const dateLabel = getDateLabel(date);
+  const dateLabel = getDateLabel(date, new Date());
 
   const handleSave = async () => {
     const result = await saveTransaction();

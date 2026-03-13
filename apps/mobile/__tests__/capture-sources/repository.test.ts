@@ -135,7 +135,14 @@ describe("capture-sources repository", () => {
   it("upsertNotificationSource calls db.insert with onConflictDoUpdate", async () => {
     const { upsertNotificationSource } = await import("@/features/capture-sources/lib/repository");
 
-    await upsertNotificationSource(mockDb, "user-1", "com.bank.app", "Bank App", true);
+    await upsertNotificationSource(
+      mockDb,
+      "user-1",
+      "com.bank.app",
+      "Bank App",
+      true,
+      "2026-03-07T10:00:00Z"
+    );
 
     expect(mockInsert).toHaveBeenCalled();
     expect(mockValues).toHaveBeenCalledWith(
@@ -184,7 +191,7 @@ describe("capture-sources repository", () => {
     mockWhere.mockResolvedValueOnce([{ total: 5 }]);
 
     const { getTodaySmsEventCount } = await import("@/features/capture-sources/lib/repository");
-    const result = await getTodaySmsEventCount(mockDb, "user-1");
+    const result = await getTodaySmsEventCount(mockDb, "user-1", new Date("2026-03-07T10:00:00Z"));
 
     expect(mockSelect).toHaveBeenCalled();
     expect(mockFrom).toHaveBeenCalled();
@@ -196,7 +203,7 @@ describe("capture-sources repository", () => {
     mockWhere.mockResolvedValueOnce([{ total: 0 }]);
 
     const { getTodaySmsEventCount } = await import("@/features/capture-sources/lib/repository");
-    const result = await getTodaySmsEventCount(mockDb, "user-1");
+    const result = await getTodaySmsEventCount(mockDb, "user-1", new Date("2026-03-07T10:00:00Z"));
 
     expect(result).toBe(0);
   });

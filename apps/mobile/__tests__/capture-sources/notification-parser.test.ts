@@ -158,4 +158,21 @@ describe("parseNotificationLocally", () => {
       ).toBeNull();
     });
   });
+
+  describe("edge cases", () => {
+    it("returns null when amount cannot be parsed", () => {
+      const result = parseNotificationLocally("Bancolombia le informa compra por $abc en STORE. ");
+      expect(result).toBeNull();
+    });
+
+    it("returns null when parsed amount is zero", () => {
+      const result = parseNotificationLocally("Bancolombia le informa compra por $0 en STORE. ");
+      expect(result).toBeNull();
+    });
+
+    it("returns null when merchant is empty", () => {
+      const result = parseNotificationLocally("Bancolombia le informa compra por $50000 en . ");
+      expect(result).toBeNull();
+    });
+  });
 });

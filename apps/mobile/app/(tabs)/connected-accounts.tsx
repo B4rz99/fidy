@@ -5,7 +5,7 @@ import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ApplePaySetupCard } from "@/features/capture-sources/components/ApplePaySetupCard";
 import { NotificationSetupCard } from "@/features/capture-sources/components/NotificationSetupCard";
-import { GMAIL_CLIENT_ID, OUTLOOK_CLIENT_ID } from "@/features/email-capture/schema";
+import { getGmailClientId, getOutlookClientId } from "@/features/email-capture/schema";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 
@@ -52,7 +52,7 @@ export default function ConnectedAccountsScreen() {
             account={gmailAccount}
             greenColor={greenColor}
             tertiaryColor={tertiaryColor}
-            onConnect={() => connectEmail("gmail", GMAIL_CLIENT_ID)}
+            onConnect={() => connectEmail("gmail", getGmailClientId())}
             onDisconnect={() => gmailAccount && disconnectEmail(gmailAccount.id)}
           />
 
@@ -61,7 +61,7 @@ export default function ConnectedAccountsScreen() {
             account={outlookAccount}
             greenColor={greenColor}
             tertiaryColor={tertiaryColor}
-            onConnect={() => connectEmail("outlook", OUTLOOK_CLIENT_ID)}
+            onConnect={() => connectEmail("outlook", getOutlookClientId())}
             onDisconnect={() => outlookAccount && disconnectEmail(outlookAccount.id)}
           />
 

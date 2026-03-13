@@ -111,9 +111,8 @@ export async function processNotification(
     }
 
     // Check merchant rules cache
-    const syntheticSender = `notification://${notification.packageName}`;
     const merchantKey = normalizeMerchant(parsed.merchant);
-    const cachedCategoryId = await lookupMerchantRule(db, userId, syntheticSender, merchantKey);
+    const cachedCategoryId = await lookupMerchantRule(db, userId, merchantKey);
     const finalCategoryId = cachedCategoryId ?? parsed.categoryId;
 
     // Save transaction
@@ -156,7 +155,7 @@ export async function processNotification(
 
     // Cache merchant rule if confidence >= 0.7
     if (parsed.confidence >= 0.7) {
-      await insertMerchantRule(db, userId, syntheticSender, merchantKey, finalCategoryId);
+      await insertMerchantRule(db, userId, merchantKey, finalCategoryId, now);
     }
 
     return { saved: true, skippedDuplicate: false, transactionId: txId };

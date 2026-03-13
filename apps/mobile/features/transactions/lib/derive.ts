@@ -16,14 +16,14 @@ export function deriveSpendingByCategory(
 ): readonly CategorySpending[] {
   const grouped = transactions
     .filter((tx) => tx.type === "expense" && toIsoDate(tx.date).startsWith(month))
-    .reduce<Record<string, number>>((acc, tx) => {
-      const current = acc[tx.categoryId] ?? 0;
-      return { ...acc, [tx.categoryId]: current + tx.amountCents };
-    }, {});
+    .reduce((acc, tx) => {
+      acc.set(tx.categoryId, (acc.get(tx.categoryId) ?? 0) + tx.amountCents);
+      return acc;
+    }, new Map<string, number>());
 
-  return Object.entries(grouped)
-    .map(([categoryId, totalCents]) => ({ categoryId, totalCents }))
-    .sort((a, b) => b.totalCents - a.totalCents);
+  return Array.from(grouped, ([categoryId, totalCents]) => ({ categoryId, totalCents })).sort(
+    (a, b) => b.totalCents - a.totalCents
+  );
 }
 
 type DailySpending = { readonly date: string; readonly totalCents: number };
@@ -38,13 +38,13 @@ export function deriveDailySpending(
       const isoDate = toIsoDate(tx.date);
       return tx.type === "expense" && isoDate >= startDate && isoDate <= endDate;
     })
-    .reduce<Record<string, number>>((acc, tx) => {
+    .reduce((acc, tx) => {
       const isoDate = toIsoDate(tx.date);
-      const current = acc[isoDate] ?? 0;
-      return { ...acc, [isoDate]: current + tx.amountCents };
-    }, {});
+      acc.set(isoDate, (acc.get(isoDate) ?? 0) + tx.amountCents);
+      return acc;
+    }, new Map<string, number>());
 
-  return Object.entries(grouped)
-    .map(([date, totalCents]) => ({ date, totalCents }))
-    .sort((a, b) => a.date.localeCompare(b.date));
+  return Array.from(grouped, ([date, totalCents]) => ({ date, totalCents })).sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
 }

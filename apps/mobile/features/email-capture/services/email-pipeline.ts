@@ -28,7 +28,7 @@ async function parseEmail(
 
   // Check if we have a cached category for this merchant name
   const merchantKey = normalizeMerchant(llmResult.description);
-  const cachedCategoryId = await lookupMerchantRule(db, userId, email.from, merchantKey);
+  const cachedCategoryId = await lookupMerchantRule(db, userId, merchantKey);
 
   return cachedCategoryId
     ? { ...llmResult, categoryId: cachedCategoryId, confidence: 1.0 }
@@ -208,7 +208,13 @@ export async function processEmails(
       await saveTransaction(db, userId, parsed, email, "success");
 
       const merchantKey = normalizeMerchant(parsed.description);
-      await insertMerchantRule(db, userId, email.from, merchantKey, parsed.categoryId);
+      await insertMerchantRule(
+        db,
+        userId,
+        merchantKey,
+        parsed.categoryId,
+        new Date().toISOString()
+      );
 
       result.saved++;
       completed++;

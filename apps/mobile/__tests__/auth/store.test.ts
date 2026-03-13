@@ -14,7 +14,7 @@ const mockSignInWithOAuth = vi.fn(() =>
 const mockSignOut = vi.fn(() => Promise.resolve({ error: null }));
 const mockGetSession = vi.fn(() => Promise.resolve({ data: { session: null }, error: null }));
 
-vi.mock("@/shared/lib/supabase", () => ({
+vi.mock("@/shared/db/supabase", () => ({
   getSupabase: () => ({
     auth: {
       getSession: mockGetSession,

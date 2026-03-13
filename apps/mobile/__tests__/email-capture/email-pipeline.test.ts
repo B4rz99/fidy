@@ -143,9 +143,9 @@ describe("email processing pipeline", () => {
     expect(mockInsertMerchantRule).toHaveBeenCalledWith(
       mockDb,
       USER_ID,
-      "notificaciones@bancolombia.com.co",
       "compra en exito",
-      "other"
+      "other",
+      expect.any(String)
     );
   });
 
@@ -193,12 +193,7 @@ describe("email processing pipeline", () => {
     const result = await processEmails(mockDb, USER_ID, emails);
 
     expect(result.saved).toBe(1);
-    expect(mockLookupMerchantRule).toHaveBeenCalledWith(
-      mockDb,
-      USER_ID,
-      "notificaciones@bancolombia.com.co",
-      "compra en exito"
-    );
+    expect(mockLookupMerchantRule).toHaveBeenCalledWith(mockDb, USER_ID, "compra en exito");
     // Should override LLM categoryId with cached one
     expect(mockInsertTransaction).toHaveBeenCalledWith(
       mockDb,

@@ -43,6 +43,8 @@ type AddTransactionActions = {
   >;
   loadTransactions: () => Promise<void>;
   removeTransaction: (id: string) => Promise<void>;
+  addToCache: (tx: StoredTransaction) => void;
+  removeFromCache: (id: string) => void;
   resetForm: () => void;
 };
 
@@ -130,13 +132,14 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
     removeTransaction: async (id) => {
       if (dbRef) {
         try {
-          await softDeleteTransaction(dbRef, id);
+          const now = new Date().toISOString();
+          await softDeleteTransaction(dbRef, id, now);
           await enqueueSync(dbRef, {
             id: generateId("sq"),
             tableName: "transactions",
             rowId: id,
             operation: "delete",
-            createdAt: new Date().toISOString(),
+            createdAt: now,
           });
         } catch {
           // DB operation failed — keep UI state unchanged
@@ -147,6 +150,11 @@ export const useTransactionStore = create<AddTransactionState & AddTransactionAc
         transactions: state.transactions.filter((tx) => tx.id !== id),
       }));
     },
+
+    addToCache: (tx) => set((s) => ({ transactions: [tx, ...s.transactions] })),
+
+    removeFromCache: (id) =>
+      set((s) => ({ transactions: s.transactions.filter((t) => t.id !== id) })),
 
     resetForm: () => set({ ...INITIAL_FORM, date: new Date() }),
   })

@@ -78,7 +78,8 @@ describe("useCaptureSourcesStore", () => {
         USER_ID,
         "com.nequi.MobileApp",
         "Nequi",
-        true
+        true,
+        expect.any(String)
       );
       expect(useCaptureSourcesStore.getState().enabledPackages).toContain("com.nequi.MobileApp");
     });
@@ -94,7 +95,8 @@ describe("useCaptureSourcesStore", () => {
         USER_ID,
         "com.nequi.MobileApp",
         "Nequi",
-        false
+        false,
+        expect.any(String)
       );
       expect(useCaptureSourcesStore.getState().enabledPackages).not.toContain(
         "com.nequi.MobileApp"
@@ -130,7 +132,7 @@ describe("useCaptureSourcesStore", () => {
       useCaptureSourcesStore.getState().initStore(mockDb, USER_ID);
       await useCaptureSourcesStore.getState().refreshDetectedSms();
 
-      expect(mockGetTodaySmsEventCount).toHaveBeenCalledWith(mockDb, USER_ID);
+      expect(mockGetTodaySmsEventCount).toHaveBeenCalledWith(mockDb, USER_ID, expect.any(Date));
       expect(useCaptureSourcesStore.getState().detectedSmsCount).toBe(3);
     });
 

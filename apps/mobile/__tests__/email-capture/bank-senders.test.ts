@@ -2,16 +2,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_BANK_SENDERS,
   extractDomain,
-  fetchBankSenders,
   isBankSender,
-  resetBankSendersCache,
 } from "@/features/email-capture/lib/bank-senders";
+import {
+  fetchBankSenders,
+  resetBankSendersCache,
+} from "@/features/email-capture/services/bank-senders-cache";
 
-vi.mock("@/shared/lib/supabase", () => ({
+vi.mock("@/shared/db/supabase", () => ({
   getSupabase: vi.fn(),
 }));
 
-import { getSupabase } from "@/shared/lib/supabase";
+import { getSupabase } from "@/shared/db/supabase";
 
 const mockFrom = vi.fn();
 const mockSelect = vi.fn();

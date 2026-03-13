@@ -1,0 +1,1 @@
+ALTER TABLE `bill_payments` ADD `transaction_id` text;

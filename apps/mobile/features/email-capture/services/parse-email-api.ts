@@ -1,5 +1,5 @@
 import { CATEGORY_IDS } from "@/features/transactions/lib/categories";
-import { getSupabase } from "@/shared/lib/supabase";
+import { getSupabase } from "@/shared/db/supabase";
 import { type LlmParsedTransaction, llmOutputSchema } from "./llm-parser";
 
 export function stripPii(text: string): string {

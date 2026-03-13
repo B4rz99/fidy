@@ -14,7 +14,7 @@ vi.mock("expo-secure-store", () => ({
 }));
 
 import { createClient } from "@supabase/supabase-js";
-import { getSupabase, resetSupabase } from "@/shared/lib/supabase";
+import { getSupabase, resetSupabase } from "@/shared/db/supabase";
 
 describe("getSupabase", () => {
   beforeEach(() => {
