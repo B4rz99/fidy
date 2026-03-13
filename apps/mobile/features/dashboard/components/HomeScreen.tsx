@@ -16,7 +16,6 @@ import { useTransactionStore } from "@/features/transactions/store";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 import { toIsoDate } from "@/shared/lib/format-date";
-import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
 import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";
 import { NeedsReviewBanner } from "./NeedsReviewBanner";
