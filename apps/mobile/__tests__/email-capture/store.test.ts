@@ -34,6 +34,14 @@ vi.mock("@/features/email-capture/services/email-pipeline", () => ({
   }),
 }));
 
+vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
+  insertMerchantRule: vi.fn(),
+}));
+
+vi.mock("@/shared/lib/normalize-merchant", () => ({
+  normalizeMerchant: vi.fn((s: string) => s.toLowerCase()),
+}));
+
 vi.mock("@/features/email-capture/lib/bank-senders", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/features/email-capture/lib/bank-senders")>();
   return {
@@ -44,6 +52,13 @@ vi.mock("@/features/email-capture/lib/bank-senders", async (importOriginal) => {
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   enqueueSync: vi.fn(),
+}));
+
+const mockLoadTransactions = vi.fn();
+vi.mock("@/features/transactions/store", () => ({
+  useTransactionStore: {
+    getState: () => ({ loadTransactions: mockLoadTransactions }),
+  },
 }));
 
 vi.mock("drizzle-orm", () => ({
@@ -58,6 +73,7 @@ vi.mock("@/shared/lib/generate-id", () => ({
   generateId: vi.fn(() => "ea-generated"),
 }));
 
+import { insertMerchantRule } from "@/features/email-capture/lib/merchant-rules";
 import {
   deleteEmailAccount,
   dismissProcessedEmail,
@@ -75,10 +91,13 @@ import {
   fetchOutlookEmails,
 } from "@/features/email-capture/services/outlook-adapter";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
+import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 
+const mockSelectWhere = vi.fn().mockResolvedValue([{ description: "Compra en Exito" }]);
 // biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
 const mockDb = {
   update: vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) }),
+  select: vi.fn().mockReturnValue({ from: vi.fn().mockReturnValue({ where: mockSelectWhere }) }),
 } as any;
 const mockUserId = "user-1";
 
@@ -500,6 +519,16 @@ describe("useEmailCaptureStore", () => {
 
       expect(updateProcessedEmailStatus).toHaveBeenCalledWith(mockDb, "pe-1", "success", "tx-1");
       expect(useEmailCaptureStore.getState().needsReviewEmails).toHaveLength(0);
+      // Verify merchant rule was saved
+      expect(insertMerchantRule).toHaveBeenCalledWith(
+        mockDb,
+        mockUserId,
+        "compra en exito",
+        "food",
+        expect.any(String)
+      );
+      // Verify transactions were reloaded
+      expect(mockLoadTransactions).toHaveBeenCalled();
     });
 
     it("does nothing when processed email not found", async () => {

@@ -5,6 +5,8 @@ import { useTransactionStore } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db/client";
 import { transactions } from "@/shared/db/schema";
 import { generateId } from "@/shared/lib/generate-id";
+import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
+import { insertMerchantRule } from "./lib/merchant-rules";
 import type { EmailAccountRow, ProcessedEmailRow } from "./lib/repository";
 import {
   deleteEmailAccount,
@@ -122,7 +124,9 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
   },
 
   fetchAndProcess: async (gmailClientId, outlookClientId) => {
-    if (!dbRef || !userIdRef) {
+    const db = dbRef;
+    const userId = userIdRef;
+    if (!db || !userId) {
       console.warn("[EmailCapture] fetchAndProcess: no db or userId");
       return;
     }
@@ -170,7 +174,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
       if (allEmails.length > 0) {
         let lastRefreshedSaved = 0;
-        await processEmails(dbRef!, userIdRef!, allEmails, (progress) => {
+        await processEmails(db, userId, allEmails, (progress) => {
           set({ progress });
           // Refresh transactions on home screen only when new ones are saved
           if (progress.saved > lastRefreshedSaved) {
@@ -183,14 +187,12 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       // Update lastFetchedAt only for accounts whose fetch succeeded
       const now = new Date().toISOString();
       await Promise.all(
-        fetchResults
-          .filter((r) => r.fetchOk)
-          .map((r) => updateLastFetchedAt(dbRef!, r.account.id, now))
+        fetchResults.filter((r) => r.fetchOk).map((r) => updateLastFetchedAt(db, r.account.id, now))
       );
 
       const [failedEmails, needsReviewEmails] = await Promise.all([
-        getFailedEmails(dbRef),
-        getNeedsReviewEmails(dbRef),
+        getFailedEmails(db),
+        getNeedsReviewEmails(db),
       ]);
       set({ failedEmails, needsReviewEmails });
 
@@ -204,7 +206,9 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
   },
 
   confirmReview: async (processedEmailId, categoryId) => {
-    if (!dbRef || !userIdRef) return;
+    const db = dbRef;
+    const userId = userIdRef;
+    if (!db || !userId) return;
 
     const processedEmail = get().needsReviewEmails.find((e) => e.id === processedEmailId);
     if (!processedEmail || !processedEmail.transactionId) return;
@@ -212,13 +216,13 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     const now = new Date().toISOString();
 
     // Update the transaction's categoryId
-    await dbRef
+    await db
       .update(transactions)
       .set({ categoryId, updatedAt: now })
       .where(eq(transactions.id, processedEmail.transactionId));
 
     // Enqueue sync for the updated transaction
-    await enqueueSync(dbRef, {
+    await enqueueSync(db, {
       id: generateId("sq"),
       tableName: "transactions",
       rowId: processedEmail.transactionId,
@@ -226,22 +230,24 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       createdAt: now,
     });
 
-    // Note: merchant rule insertion requires the original sender email address,
-    // which is not stored in processed_emails. The pipeline already caches rules
-    // for high-confidence results. For confirmed reviews, we skip rule caching
-    // since the sender email is unavailable from the processed record.
+    // Cache merchant rule so future transactions from this merchant auto-categorize
+    const txRows = await db
+      .select({ description: transactions.description })
+      .from(transactions)
+      .where(eq(transactions.id, processedEmail.transactionId));
+    const description = txRows[0]?.description;
+    if (description) {
+      const merchantKey = normalizeMerchant(description);
+      await insertMerchantRule(db, userId, merchantKey, categoryId, now);
+    }
 
     // Update the processed email status to "success"
-    await updateProcessedEmailStatus(
-      dbRef,
-      processedEmailId,
-      "success",
-      processedEmail.transactionId
-    );
+    await updateProcessedEmailStatus(db, processedEmailId, "success", processedEmail.transactionId);
 
-    // Remove from needsReviewEmails state
+    // Remove from needsReviewEmails state and refresh home screen
     set((state) => ({
       needsReviewEmails: state.needsReviewEmails.filter((e) => e.id !== processedEmailId),
     }));
+    await useTransactionStore.getState().loadTransactions();
   },
 }));

@@ -109,14 +109,13 @@ export const merchantRules = sqliteTable(
   {
     id: text("id").primaryKey(),
     userId: text("user_id").notNull(),
-    senderEmail: text("sender_email").notNull(),
     keyword: text("keyword").notNull(),
     categoryId: text("category_id").notNull(),
     createdAt: text("created_at").notNull(),
   },
   (table) => [
-    uniqueIndex("uq_merchant_rule").on(table.userId, table.senderEmail, table.keyword),
-    index("idx_merchant_lookup").on(table.userId, table.senderEmail),
+    uniqueIndex("uq_merchant_rule_v2").on(table.userId, table.keyword),
+    index("idx_merchant_lookup_v2").on(table.userId),
   ]
 );
 

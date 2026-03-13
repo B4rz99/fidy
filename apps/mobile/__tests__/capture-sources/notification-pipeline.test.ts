@@ -195,7 +195,6 @@ describe("processNotification", () => {
     expect(mockInsertMerchantRule).toHaveBeenCalledWith(
       mockDb,
       USER_ID,
-      "notification://com.todo1.mobile.co.bancolombia",
       "eds la castellana",
       expect.any(String),
       expect.any(String)

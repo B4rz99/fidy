@@ -156,7 +156,6 @@ describe("processApplePayIntent", () => {
     expect(mockInsertMerchantRule).toHaveBeenCalledWith(
       mockDb,
       USER_ID,
-      "applepay://wallet",
       "farmatodo",
       "health",
       expect.any(String)

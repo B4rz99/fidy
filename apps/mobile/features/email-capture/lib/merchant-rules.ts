@@ -6,26 +6,18 @@ import { generateId } from "@/shared/lib/generate-id";
 export async function lookupMerchantRule(
   db: AnyDb,
   userId: string,
-  senderEmail: string,
   keyword: string
 ): Promise<string | null> {
   const rows = await db
     .select({ categoryId: merchantRules.categoryId })
     .from(merchantRules)
-    .where(
-      and(
-        eq(merchantRules.userId, userId),
-        eq(merchantRules.senderEmail, senderEmail),
-        eq(merchantRules.keyword, keyword)
-      )
-    );
+    .where(and(eq(merchantRules.userId, userId), eq(merchantRules.keyword, keyword)));
   return rows[0]?.categoryId ?? null;
 }
 
 export async function insertMerchantRule(
   db: AnyDb,
   userId: string,
-  senderEmail: string,
   keyword: string,
   categoryId: string,
   now: string
@@ -35,10 +27,12 @@ export async function insertMerchantRule(
     .values({
       id: generateId("mr"),
       userId,
-      senderEmail,
       keyword,
       categoryId,
       createdAt: now,
     })
-    .onConflictDoNothing();
+    .onConflictDoUpdate({
+      target: [merchantRules.userId, merchantRules.keyword],
+      set: { categoryId, createdAt: now },
+    });
 }
