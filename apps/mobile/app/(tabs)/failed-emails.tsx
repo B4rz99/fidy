@@ -5,8 +5,8 @@ import { Info, Plus, TriangleAlert } from "lucide-react-native";
 import { useCallback } from "react";
 import { Pressable, Text, View } from "react-native";
 import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
-import { ScreenLayout } from "@/shared/components/ScreenLayout";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
+import { ScreenLayout } from "@/shared/components/ScreenLayout";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 
 const ItemSeparator = () => <View style={{ height: 10 }} />;

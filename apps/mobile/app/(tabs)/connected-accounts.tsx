@@ -4,9 +4,9 @@ import { Mail } from "lucide-react-native";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { ApplePaySetupCard } from "@/features/capture-sources/components/ApplePaySetupCard";
 import { NotificationSetupCard } from "@/features/capture-sources/components/NotificationSetupCard";
-import { ScreenLayout } from "@/shared/components/ScreenLayout";
 import { getGmailClientId, getOutlookClientId } from "@/features/email-capture/schema";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
+import { ScreenLayout } from "@/shared/components/ScreenLayout";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 
 export default function ConnectedAccountsScreen() {
