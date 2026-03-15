@@ -67,6 +67,10 @@ vi.mock("lucide-react-native", () => ({
   Mail: "Mail",
   MessageSquare: "MessageSquare",
   X: "X",
+  BarChart3: "BarChart3",
+  Search: "Search",
+  CheckCircle: "CheckCircle",
+  TriangleAlert: "TriangleAlert",
 }));
 
 // Mock nativewind/preset (needed for tailwind config import)
@@ -99,6 +103,12 @@ vi.mock("react-native-reanimated", () => {
     default: Animated,
     FadeIn: { duration: () => ({ duration: () => "FadeIn" }) },
     FadeOut: { duration: () => ({ duration: () => "FadeOut" }) },
+    // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
+    useAnimatedStyle: (fn: any) => fn(),
+    // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
+    useSharedValue: (init: any) => ({ value: init }),
+    // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
+    withTiming: (val: any) => val,
   };
 });
 

@@ -48,16 +48,17 @@ vi.mock("@/shared/lib/normalize-merchant", () => ({
 }));
 
 // Mock passes through real implementations for progress-phases
-const mockIsFirstFetchForAny = vi.fn(
-  (accounts: Array<{ lastFetchedAt: string | null }>) =>
-    accounts.some((a) => a.lastFetchedAt === null)
+const mockIsFirstFetchForAny = vi.fn((accounts: Array<{ lastFetchedAt: string | null }>) =>
+  accounts.some((a) => a.lastFetchedAt === null)
 );
 const mockShouldShowProgress = vi.fn(
   (emailCount: number, isFirst: boolean, _threshold = 5) => isFirst || emailCount >= _threshold
 );
 vi.mock("@/features/email-capture/lib/progress-phases", () => ({
-  isFirstFetchForAny: (...args: unknown[]) => mockIsFirstFetchForAny(...args as [Array<{ lastFetchedAt: string | null }>]),
-  shouldShowProgress: (...args: unknown[]) => mockShouldShowProgress(...(args as [number, boolean, number])),
+  isFirstFetchForAny: (...args: unknown[]) =>
+    mockIsFirstFetchForAny(...(args as [Array<{ lastFetchedAt: string | null }>])),
+  shouldShowProgress: (...args: unknown[]) =>
+    mockShouldShowProgress(...(args as [number, boolean, number])),
 }));
 
 vi.mock("@/features/email-capture/lib/bank-senders", async (importOriginal) => {

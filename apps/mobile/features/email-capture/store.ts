@@ -7,6 +7,8 @@ import { transactions } from "@/shared/db/schema";
 import { generateId } from "@/shared/lib/generate-id";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { insertMerchantRule } from "./lib/merchant-rules";
+import type { ProgressPhase } from "./lib/progress-phases";
+import { isFirstFetchForAny, shouldShowProgress } from "./lib/progress-phases";
 import type { EmailAccountRow, ProcessedEmailRow } from "./lib/repository";
 import {
   deleteEmailAccount,
