@@ -140,9 +140,7 @@ export async function syncPull(
   // so it gets retried on the next pull. If the earliest row failed,
   // don't advance at all — the entire batch will be retried.
   if (earliestFailure) {
-    const safeTimestamps = rows
-      .map((r) => r.updated_at)
-      .filter((ts) => ts < earliestFailure);
+    const safeTimestamps = rows.map((r) => r.updated_at).filter((ts) => ts < earliestFailure);
     if (safeTimestamps.length > 0) {
       const safeCursor = safeTimestamps.reduce((max, ts) => (ts > max ? ts : max));
       await setSyncMeta(db, LAST_SYNC_AT, safeCursor);
