@@ -11,6 +11,7 @@ type ScreenLayoutProps = {
   title: string;
   variant?: "tab" | "sub";
   rightActions?: ReactNode;
+  headerOverlay?: ReactNode;
   onBack?: () => void;
   children: ReactNode;
 };
@@ -19,6 +20,7 @@ export function ScreenLayout({
   title,
   variant = "tab",
   rightActions,
+  headerOverlay,
   onBack,
   children,
 }: ScreenLayoutProps) {
@@ -47,6 +49,7 @@ export function ScreenLayout({
               {title}
             </Text>
           </View>
+          {headerOverlay}
           {rightActions}
         </View>
       </View>

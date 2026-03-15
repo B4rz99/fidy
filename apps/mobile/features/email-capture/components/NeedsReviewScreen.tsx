@@ -1,6 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { Text, View } from "react-native";
 import { useTransactionStore } from "@/features/transactions/store";
 import { ScreenLayout } from "@/shared/components/ScreenLayout";
@@ -11,7 +11,18 @@ export default function NeedsReviewScreen() {
   const router = useRouter();
   const needsReview = useEmailCaptureStore((s) => s.needsReviewEmails);
   const confirmReview = useEmailCaptureStore((s) => s.confirmReview);
-  const transactions = useTransactionStore((s) => s.transactions);
+  const getTransaction = useTransactionStore((s) => s.getTransactionById);
+
+  // Pre-fetch all needed transactions once, not per-cell
+  const txMap = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof getTransaction>>();
+    needsReview.forEach((item) => {
+      if (item.transactionId) {
+        map.set(item.transactionId, getTransaction(item.transactionId));
+      }
+    });
+    return map;
+  }, [needsReview, getTransaction]);
 
   const handleConfirm = useCallback(
     (processedEmailId: string, categoryId: string) => {
@@ -22,10 +33,16 @@ export default function NeedsReviewScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: (typeof needsReview)[number] }) => {
-      const tx = transactions.find((t) => t.id === item.transactionId);
-      return <NeedsReviewCard processedEmail={item} transaction={tx} onConfirm={handleConfirm} />;
+      const tx = item.transactionId ? txMap.get(item.transactionId) : null;
+      return (
+        <NeedsReviewCard
+          processedEmail={item}
+          transaction={tx ?? undefined}
+          onConfirm={handleConfirm}
+        />
+      );
     },
-    [transactions, handleConfirm]
+    [txMap, handleConfirm]
   );
 
   const keyExtractor = useCallback((item: (typeof needsReview)[number]) => item.id, []);

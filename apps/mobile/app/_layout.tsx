@@ -56,7 +56,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
         .catch(() => {});
       useTransactionStore
         .getState()
-        .loadTransactions()
+        .loadInitialPage()
         .catch(() => {});
       registerBackgroundTask().catch(() => {});
     }

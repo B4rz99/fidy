@@ -44,7 +44,17 @@ describe("buildChatContext", () => {
     ];
     const memories = [makeMemory({})];
 
-    const result = buildChatContext(txs, memories, "2026-03");
+    const result = buildChatContext(
+      txs,
+      memories,
+      "2026-03",
+      435000, // balance in cents (500000 - 30000 - 15000 - 20000)
+      [
+        { categoryId: "food", totalCents: 30000 },
+        { categoryId: "transport", totalCents: 15000 },
+      ],
+      [{ categoryId: "food", totalCents: 20000 }]
+    );
 
     expect(result.summary.balance).toBe(4350);
     expect(result.summary.currentMonthSpending).toEqual([
@@ -66,7 +76,14 @@ describe("buildChatContext", () => {
         date: new Date(2026, 2, 1),
       }),
     ];
-    const result = buildChatContext(txs, [], "2026-03");
+    const result = buildChatContext(
+      txs,
+      [],
+      "2026-03",
+      -5000,
+      [{ categoryId: "food", totalCents: 5000 }],
+      []
+    );
 
     expect(result.transactions[0]).toEqual({
       type: "expense",
@@ -95,7 +112,20 @@ describe("buildChatContext", () => {
       }),
     ];
 
-    const result = buildChatContext(txs, [], "2026-03");
+    const result = buildChatContext(
+      txs,
+      [],
+      "2026-03",
+      -75000,
+      [
+        { categoryId: "food", totalCents: 30000 },
+        { categoryId: "transport", totalCents: 15000 },
+      ],
+      [
+        { categoryId: "food", totalCents: 20000 },
+        { categoryId: "health", totalCents: 10000 },
+      ]
+    );
     const deltas = result.summary.monthOverMonthDeltas;
 
     const foodDelta = deltas.find((d) => d.categoryId === "food");
@@ -114,7 +144,7 @@ describe("buildChatContext", () => {
   });
 
   it("handles empty transactions", () => {
-    const result = buildChatContext([], [], "2026-03");
+    const result = buildChatContext([], [], "2026-03", 0, [], []);
 
     expect(result.summary.balance).toBe(0);
     expect(result.summary.currentMonthSpending).toEqual([]);
@@ -126,37 +156,27 @@ describe("buildChatContext", () => {
 
   it("handles empty memories with transactions", () => {
     const txs = [makeTx({ amountCents: 5000 })];
-    const result = buildChatContext(txs, [], "2026-03");
+    const result = buildChatContext(
+      txs,
+      [],
+      "2026-03",
+      -5000,
+      [{ categoryId: "food", totalCents: 5000 }],
+      []
+    );
 
     expect(result.memories).toEqual([]);
     expect(result.transactions).toHaveLength(1);
   });
 
-  it("filters transactions to current and previous month", () => {
+  it("passes through all provided transactions without filtering", () => {
     const txs = [
-      makeTx({ date: new Date(2026, 2, 1) }), // March - current
-      makeTx({ id: "tx_2", date: new Date(2026, 1, 15) }), // Feb - previous
-      makeTx({ id: "tx_3", date: new Date(2026, 0, 10) }), // Jan - excluded
+      makeTx({ date: new Date(2026, 2, 1) }), // March — current month
+      makeTx({ id: "tx_2", date: new Date(2026, 1, 15) }), // Feb — previous month
+      makeTx({ id: "tx_3", date: new Date(2025, 5, 10) }), // June 2025 — outside range
     ];
-    const result = buildChatContext(txs, [], "2026-03");
+    const result = buildChatContext(txs, [], "2026-03", 0, [], []);
 
-    expect(result.transactions).toHaveLength(2);
-  });
-
-  it("handles January currentMonth with year rollback for previousMonth", () => {
-    const txs = [
-      makeTx({ amountCents: 10000, categoryId: "food", date: new Date(2026, 0, 15) }), // Jan 2026 - current
-      makeTx({
-        id: "tx_2",
-        amountCents: 20000,
-        categoryId: "food",
-        date: new Date(2025, 11, 10),
-      }), // Dec 2025 - previous
-    ];
-    const result = buildChatContext(txs, [], "2026-01");
-
-    expect(result.transactions).toHaveLength(2);
-    expect(result.summary.currentMonthSpending).toEqual([{ categoryId: "food", total: 100 }]);
-    expect(result.summary.previousMonthSpending).toEqual([{ categoryId: "food", total: 200 }]);
+    expect(result.transactions).toHaveLength(3);
   });
 });

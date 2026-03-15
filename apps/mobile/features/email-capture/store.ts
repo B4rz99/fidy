@@ -179,7 +179,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
           // Refresh transactions on home screen only when new ones are saved
           if (progress.saved > lastRefreshedSaved) {
             lastRefreshedSaved = progress.saved;
-            useTransactionStore.getState().loadTransactions();
+            useTransactionStore.getState().refresh();
           }
         });
       }
@@ -197,7 +197,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       set({ failedEmails, needsReviewEmails });
 
       // Refresh home screen transactions
-      await useTransactionStore.getState().loadTransactions();
+      await useTransactionStore.getState().refresh();
     } catch (err) {
       console.warn("[EmailCapture] fetchAndProcess error:", err);
     } finally {
@@ -248,6 +248,6 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     set((state) => ({
       needsReviewEmails: state.needsReviewEmails.filter((e) => e.id !== processedEmailId),
     }));
-    await useTransactionStore.getState().loadTransactions();
+    await useTransactionStore.getState().refresh();
   },
 }));

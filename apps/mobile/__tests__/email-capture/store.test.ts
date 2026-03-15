@@ -54,10 +54,10 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   enqueueSync: vi.fn(),
 }));
 
-const mockLoadTransactions = vi.fn();
+const mockRefresh = vi.fn();
 vi.mock("@/features/transactions/store", () => ({
   useTransactionStore: {
-    getState: () => ({ loadTransactions: mockLoadTransactions }),
+    getState: () => ({ refresh: mockRefresh }),
   },
 }));
 
@@ -527,7 +527,7 @@ describe("useEmailCaptureStore", () => {
         expect.any(String)
       );
       // Verify transactions were reloaded
-      expect(mockLoadTransactions).toHaveBeenCalled();
+      expect(mockRefresh).toHaveBeenCalled();
     });
 
     it("does nothing when processed email not found", async () => {

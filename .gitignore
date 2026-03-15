@@ -67,6 +67,9 @@ GoogleService-Info.plist
 # Docs (local-only)
 docs/
 
+# Superpowers brainstorm artifacts
+.superpowers/
+
 # Other AI agent skills (local-only, not used by Claude Code)
 .agents/
 skills-lock.json

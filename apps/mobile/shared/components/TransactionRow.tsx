@@ -6,7 +6,7 @@ type TransactionRowProps = {
   icon: LucideIcon;
   iconBgColor?: string;
   name: string;
-  date: string;
+  date?: string;
   amount: string;
   category: string;
   isPositive?: boolean;
@@ -36,9 +36,11 @@ export function TransactionRow({
         <Text className="font-poppins-medium text-body text-primary dark:text-primary-dark">
           {name}
         </Text>
-        <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
-          {date}
-        </Text>
+        {date != null && (
+          <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
+            {date}
+          </Text>
+        )}
       </View>
       <View className="items-end">
         <Text
