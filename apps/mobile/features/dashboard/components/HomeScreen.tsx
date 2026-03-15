@@ -1,7 +1,14 @@
 import { useRouter } from "expo-router";
 import { Bell, Ellipsis } from "lucide-react-native";
 import { memo, useCallback, useMemo, useState } from "react";
-import { FlatList, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, Platform, View } from "react-native";
+import {
+  FlatList,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  Platform,
+  View,
+} from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { DetectedTransactionsBanner } from "@/features/capture-sources/components/DetectedTransactionsBanner";
 import { EmailConnectBanner } from "@/features/email-capture/components/EmailConnectBanner";
@@ -15,8 +22,8 @@ import type { StoredTransaction } from "@/features/transactions/schema";
 import { useTransactionStore } from "@/features/transactions/store";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
 import { TransactionRow } from "@/shared/components/TransactionRow";
-import { toIsoDate } from "@/shared/lib/format-date";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { toIsoDate } from "@/shared/lib/format-date";
 import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";
 import { CompactBalanceBar } from "./CompactBalanceBar";
