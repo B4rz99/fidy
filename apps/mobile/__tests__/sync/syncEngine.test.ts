@@ -9,6 +9,11 @@ const mockGetSyncMeta = vi.fn().mockResolvedValue(null);
 const mockSetSyncMeta = vi.fn();
 const mockUpsertTransaction = vi.fn();
 
+const mockInsertConflict = vi.fn();
+vi.mock("@/features/sync/lib/conflict-repository", () => ({
+  insertConflict: (...args: any[]) => mockInsertConflict(...args),
+}));
+
 vi.mock("@/features/transactions/lib/repository", () => ({
   getQueuedSyncEntries: (...args: any[]) => mockGetQueuedSyncEntries(...args),
   clearSyncEntries: (...args: any[]) => mockClearSyncEntries(...args),
@@ -307,6 +312,115 @@ describe("syncEngine", () => {
 
       expect(mockGetSyncMeta).toHaveBeenCalled();
       expect(mockGetQueuedSyncEntries).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("conflict logging", () => {
+    it("logs conflict when server overwrites local with different data", async () => {
+      mockGetSyncMeta.mockResolvedValueOnce(null);
+      const serverRows = [
+        {
+          id: "tx-1",
+          user_id: "user-1",
+          type: "expense",
+          amount_cents: 2000,
+          category_id: "food",
+          description: "Updated by server",
+          date: "2026-03-04",
+          created_at: "2026-03-04T10:00:00.000Z",
+          updated_at: "2026-03-04T14:00:00.000Z",
+          deleted_at: null,
+        },
+      ];
+      const mockSupabase = createMockSupabase({ data: serverRows, error: null });
+      mockGetTransactionById.mockResolvedValueOnce({
+        id: "tx-1",
+        userId: "user-1",
+        type: "expense",
+        amountCents: 1000,
+        categoryId: "food",
+        description: "Local version",
+        date: "2026-03-04",
+        createdAt: "2026-03-04T10:00:00.000Z",
+        updatedAt: "2026-03-04T10:00:00.000Z",
+        deletedAt: null,
+        source: "manual",
+      });
+
+      const { syncPull } = await import("@/features/sync/services/syncEngine");
+      await syncPull(mockDb, mockSupabase, "user-1");
+
+      expect(mockInsertConflict).toHaveBeenCalledWith(
+        mockDb,
+        expect.objectContaining({
+          transactionId: "tx-1",
+        })
+      );
+      expect(mockUpsertTransaction).toHaveBeenCalled();
+    });
+
+    it("does not log conflict when data matches (only timestamp differs)", async () => {
+      mockGetSyncMeta.mockResolvedValueOnce(null);
+      const serverRows = [
+        {
+          id: "tx-1",
+          user_id: "user-1",
+          type: "expense",
+          amount_cents: 1000,
+          category_id: "food",
+          description: "Same data",
+          date: "2026-03-04",
+          created_at: "2026-03-04T10:00:00.000Z",
+          updated_at: "2026-03-04T14:00:00.000Z",
+          deleted_at: null,
+        },
+      ];
+      const mockSupabase = createMockSupabase({ data: serverRows, error: null });
+      mockGetTransactionById.mockResolvedValueOnce({
+        id: "tx-1",
+        userId: "user-1",
+        type: "expense",
+        amountCents: 1000,
+        categoryId: "food",
+        description: "Same data",
+        date: "2026-03-04",
+        createdAt: "2026-03-04T10:00:00.000Z",
+        updatedAt: "2026-03-04T10:00:00.000Z",
+        deletedAt: null,
+        source: "manual",
+      });
+
+      const { syncPull } = await import("@/features/sync/services/syncEngine");
+      await syncPull(mockDb, mockSupabase, "user-1");
+
+      expect(mockInsertConflict).not.toHaveBeenCalled();
+      expect(mockUpsertTransaction).toHaveBeenCalled();
+    });
+
+    it("does not log conflict for new server-only transactions", async () => {
+      mockGetSyncMeta.mockResolvedValueOnce(null);
+      const serverRows = [
+        {
+          id: "tx-new",
+          user_id: "user-1",
+          type: "expense",
+          amount_cents: 5000,
+          category_id: "transport",
+          description: "New from server",
+          date: "2026-03-04",
+          created_at: "2026-03-04T10:00:00.000Z",
+          updated_at: "2026-03-04T10:00:00.000Z",
+          deleted_at: null,
+        },
+      ];
+      const mockSupabase = createMockSupabase({ data: serverRows, error: null });
+      mockGetTransactionById.mockResolvedValueOnce(null);
+
+      const { syncPull } = await import("@/features/sync/services/syncEngine");
+      await syncPull(mockDb, mockSupabase, "user-1");
+
+      expect(mockInsertConflict).not.toHaveBeenCalled();
+      expect(mockUpsertTransaction).toHaveBeenCalled();
     });
   });
 });

@@ -15,6 +15,7 @@ import { EmailConnectBanner } from "@/features/email-capture/components/EmailCon
 import { FailedEmailsBanner } from "@/features/email-capture/components/FailedEmailsBanner";
 import { getGmailClientId, getOutlookClientId } from "@/features/email-capture/schema";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
+import { SyncConflictBanner } from "@/features/sync/components/SyncConflictBanner";
 import { CATEGORY_MAP } from "@/features/transactions/lib/categories";
 import { formatSignedAmount } from "@/features/transactions/lib/format-amount";
 import { makeDateLabel } from "@/features/transactions/lib/group-by-date";
@@ -93,6 +94,7 @@ const ListHeader = memo(function ListHeader({
       />
       <FailedEmailsBanner onPress={() => push("/failed-emails" as never)} />
       <NeedsReviewBanner onPress={() => push("/needs-review" as never)} />
+      <SyncConflictBanner onPress={() => push("/sync-conflicts" as never)} />
       {Platform.OS === "ios" && (
         <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
       )}

@@ -5,6 +5,7 @@ import type { AnyDb } from "@/shared/db/client";
 import { getSupabase } from "@/shared/db/supabase";
 import { isOnline, onConnectivityChange } from "../services/networkMonitor";
 import { fullSync } from "../services/syncEngine";
+import { useSyncConflictStore } from "../store";
 
 export function useSync(db: AnyDb | null, userId: string | null) {
   const isSyncing = useRef(false);
@@ -22,6 +23,7 @@ export function useSync(db: AnyDb | null, userId: string | null) {
       try {
         await fullSync(db, supabase, userId);
         await useTransactionStore.getState().refresh();
+        useSyncConflictStore.getState().loadConflicts();
       } catch (error) {
         console.warn("[sync] background sync failed:", error);
       } finally {

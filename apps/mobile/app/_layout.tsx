@@ -24,6 +24,7 @@ import { useCaptureSourcesStore } from "@/features/capture-sources/store";
 import { useEmailCapture } from "@/features/email-capture/hooks/useEmailCapture";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { useSync } from "@/features/sync/hooks/useSync";
+import { useSyncConflictStore } from "@/features/sync/store";
 import { useTransactionStore } from "@/features/transactions/store";
 import { ErrorFallback } from "@/shared/components/ErrorFallback";
 import type { AnyDb } from "@/shared/db/client";
@@ -49,6 +50,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
       useCaptureSourcesStore.getState().initStore(db, userId);
       useChatStore.getState().initStore(db, userId);
       useCalendarStore.getState().initStore(db, userId);
+      useSyncConflictStore.getState().initStore(db);
       Promise.all([
         useCalendarStore.getState().loadBills(),
         useCalendarStore.getState().loadPaymentsForMonth(),
@@ -66,6 +68,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
         .getState()
         .loadInitialPage()
         .catch(handleRecoverableError("Failed to load transactions"));
+      useSyncConflictStore.getState().loadConflicts();
       registerBackgroundTask().catch(captureError);
     }
   }, [migrationsReady, db, userId]);

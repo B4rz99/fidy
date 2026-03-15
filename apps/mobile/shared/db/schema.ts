@@ -104,6 +104,20 @@ export const syncMeta = sqliteTable("sync_meta", {
   value: text("value").notNull(),
 });
 
+export const syncConflicts = sqliteTable(
+  "sync_conflicts",
+  {
+    id: text("id").primaryKey(),
+    transactionId: text("transaction_id").notNull(),
+    localData: text("local_data").notNull(),
+    serverData: text("server_data").notNull(),
+    detectedAt: text("detected_at").notNull(),
+    resolvedAt: text("resolved_at"),
+    resolution: text("resolution"),
+  },
+  (table) => [index("idx_sync_conflicts_resolved").on(table.resolvedAt)]
+);
+
 export const merchantRules = sqliteTable(
   "merchant_rules",
   {

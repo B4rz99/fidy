@@ -9,7 +9,10 @@ import {
   upsertTransaction,
 } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db/client";
+import { generateId } from "@/shared/lib/generate-id";
 import { captureError } from "@/shared/lib/sentry";
+import { hasDataConflict } from "../lib/conflict-detection";
+import { insertConflict } from "../lib/conflict-repository";
 
 const LAST_SYNC_AT = "last_sync_at";
 
@@ -124,9 +127,26 @@ export async function syncPull(
   for (const serverRow of rows) {
     try {
       const localRow = await getTransactionById(db, serverRow.id);
+      const mappedServerRow = fromSupabaseRow(serverRow);
 
       if (shouldUpdateLocal(serverRow.updated_at, localRow?.updatedAt)) {
-        await upsertTransaction(db, fromSupabaseRow(serverRow));
+        const isConflict = localRow != null && hasDataConflict(localRow, mappedServerRow);
+        await upsertTransaction(db, mappedServerRow);
+        // Log conflict after successful upsert to avoid duplicates on retry.
+        // Own try/catch so a conflict-logging failure doesn't affect the sync flow.
+        if (isConflict) {
+          try {
+            insertConflict(db, {
+              id: generateId("conflict"),
+              transactionId: serverRow.id,
+              localData: JSON.stringify(localRow),
+              serverData: JSON.stringify(mappedServerRow),
+              detectedAt: new Date().toISOString(),
+            });
+          } catch (conflictErr) {
+            captureError(conflictErr);
+          }
+        }
       }
     } catch (error) {
       captureError(error);

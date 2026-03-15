@@ -10,6 +10,7 @@ import m0007 from "./0007_neat_wolfpack.sql";
 import m0008 from "./0008_eminent_the_hunter.sql";
 import m0009 from "./0009_fine_groot.sql";
 import m0010 from "./0010_wakeful_tony_stark.sql";
+import m0011 from "./0011_clear_black_tarantula.sql";
 import journal from "./meta/_journal.json";
 
 export default {
@@ -26,5 +27,6 @@ export default {
     m0008,
     m0009,
     m0010,
+    m0011,
   },
 };
