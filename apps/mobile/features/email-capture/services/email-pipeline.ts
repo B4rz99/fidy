@@ -99,6 +99,7 @@ export type ProgressCallback = (progress: {
   completed: number;
   saved: number;
   failed: number;
+  needsReview: number;
 }) => void;
 
 export async function processEmails(
@@ -130,7 +131,7 @@ export async function processEmails(
 
   let completed = 0;
   const total = toProcess.length;
-  onProgress?.({ total, completed: 0, saved: 0, failed: 0 });
+  onProgress?.({ total, completed: 0, saved: 0, failed: 0, needsReview: 0 });
 
   // Worker pool: 5 concurrent workers, each grabs next email, parses + saves, reports progress 1 by 1
   const Concurrency = 5;
@@ -177,7 +178,13 @@ export async function processEmails(
             : {}),
         });
         completed++;
-        onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
+        onProgress?.({
+          total,
+          completed,
+          saved: result.saved,
+          failed: result.failed,
+          needsReview: result.needsReview,
+        });
         continue;
       }
 
@@ -205,7 +212,13 @@ export async function processEmails(
         });
         result.skippedCrossSource++;
         completed++;
-        onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
+        onProgress?.({
+          total,
+          completed,
+          saved: result.saved,
+          failed: result.failed,
+          needsReview: result.needsReview,
+        });
         continue;
       }
 
@@ -219,7 +232,13 @@ export async function processEmails(
           result.failed++;
         }
         completed++;
-        onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
+        onProgress?.({
+          total,
+          completed,
+          saved: result.saved,
+          failed: result.failed,
+          needsReview: result.needsReview,
+        });
         continue;
       }
 
@@ -230,7 +249,13 @@ export async function processEmails(
         captureError(saveErr);
         result.failed++;
         completed++;
-        onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
+        onProgress?.({
+          total,
+          completed,
+          saved: result.saved,
+          failed: result.failed,
+          needsReview: result.needsReview,
+        });
         continue;
       }
 
@@ -247,7 +272,13 @@ export async function processEmails(
         captureError(ruleErr);
       }
       completed++;
-      onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
+      onProgress?.({
+        total,
+        completed,
+        saved: result.saved,
+        failed: result.failed,
+        needsReview: result.needsReview,
+      });
     }
   }
 

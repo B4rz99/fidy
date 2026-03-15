@@ -7,6 +7,8 @@ import { transactions } from "@/shared/db/schema";
 import { generateId } from "@/shared/lib/generate-id";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { insertMerchantRule } from "./lib/merchant-rules";
+import type { ProgressPhase } from "./lib/progress-phases";
+import { isFirstFetchForAny, shouldShowProgress } from "./lib/progress-phases";
 import type { EmailAccountRow, ProcessedEmailRow } from "./lib/repository";
 import {
   deleteEmailAccount,
@@ -33,6 +35,7 @@ type EmailCaptureState = {
   needsReviewEmails: ProcessedEmailRow[];
   isFetching: boolean;
   progress: Parameters<ProgressCallback>[0] | null;
+  phase: ProgressPhase | null;
   bannerDismissed: boolean;
 };
 
@@ -46,6 +49,7 @@ type EmailCaptureActions = {
   connectEmail: (provider: EmailProvider, clientId: string) => Promise<void>;
   disconnectEmail: (id: string) => Promise<void>;
   fetchAndProcess: (gmailClientId: string, outlookClientId: string) => Promise<void>;
+  clearProgress: () => void;
   confirmReview: (processedEmailId: string, categoryId: string) => Promise<void>;
 };
 
@@ -55,6 +59,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
   needsReviewEmails: [],
   isFetching: false,
   progress: null,
+  phase: null,
   bannerDismissed: false,
 
   initStore: (db, userId) => {
@@ -81,6 +86,8 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
   },
 
   dismissBanner: () => set({ bannerDismissed: true }),
+
+  clearProgress: () => set({ phase: null, progress: null }),
 
   dismissFailedEmail: async (id) => {
     if (!dbRef) return;
@@ -135,7 +142,9 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       return;
     }
 
-    set({ isFetching: true });
+    // Clear any stale progress state from a previous run (e.g. if clearProgress
+    // wasn't called before this sync was triggered by AppState change)
+    set({ isFetching: true, phase: null, progress: null });
 
     try {
       const { accounts } = get();
@@ -172,11 +181,33 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
       const allEmails = fetchResults.flatMap((r) => r.rawEmails);
 
-      if (allEmails.length > 0) {
+      // Determine whether to show progress UI
+      const isFirst = isFirstFetchForAny(accounts);
+      const showProgress = shouldShowProgress(allEmails.length, isFirst);
+
+      // Edge case: first fetch but zero emails found
+      if (showProgress && allEmails.length === 0) {
+        set({
+          phase: "complete",
+          progress: { total: 0, completed: 0, saved: 0, failed: 0, needsReview: 0 },
+        });
+      } else if (showProgress) {
+        set({ phase: "fetching" });
+        set({ phase: "processing" });
+
         let lastRefreshedSaved = 0;
         await processEmails(db, userId, allEmails, (progress) => {
           set({ progress });
-          // Refresh transactions on home screen only when new ones are saved
+          if (progress.saved > lastRefreshedSaved) {
+            lastRefreshedSaved = progress.saved;
+            useTransactionStore.getState().refresh();
+          }
+        });
+      } else if (allEmails.length > 0) {
+        // Silent processing — no progress UI
+        let lastRefreshedSaved = 0;
+        await processEmails(db, userId, allEmails, (progress) => {
+          set({ progress });
           if (progress.saved > lastRefreshedSaved) {
             lastRefreshedSaved = progress.saved;
             useTransactionStore.getState().refresh();
@@ -192,18 +223,38 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
         fetchResults.filter((r) => r.fetchOk).map((r) => updateLastFetchedAt(db, r.account.id, now))
       );
 
+      // Update in-memory accounts to prevent stale lastFetchedAt
+      const successIds = new Set(fetchResults.filter((r) => r.fetchOk).map((r) => r.account.id));
+      set({
+        accounts: get().accounts.map((a) =>
+          successIds.has(a.id) ? { ...a, lastFetchedAt: now } : a
+        ),
+      });
+
       const [failedEmails, needsReviewEmails] = await Promise.all([
         getFailedEmails(db),
         getNeedsReviewEmails(db),
       ]);
-      set({ failedEmails, needsReviewEmails });
+
+      if (showProgress) {
+        set({ failedEmails, needsReviewEmails, phase: "complete" });
+      } else {
+        set({ failedEmails, needsReviewEmails });
+      }
 
       // Refresh home screen transactions
       await useTransactionStore.getState().refresh();
     } catch (err) {
       console.warn("[EmailCapture] fetchAndProcess error:", err);
     } finally {
-      set({ isFetching: false, progress: null });
+      // If phase is 'complete', let the component handle cleanup via clearProgress.
+      // Only force-clear on error (phase never reached 'complete').
+      const currentPhase = get().phase;
+      if (currentPhase !== "complete") {
+        set({ isFetching: false, progress: null, phase: null });
+      } else {
+        set({ isFetching: false });
+      }
     }
   },
 

@@ -12,7 +12,9 @@ import {
 import { useSharedValue } from "react-native-reanimated";
 import { DetectedTransactionsBanner } from "@/features/capture-sources/components/DetectedTransactionsBanner";
 import { EmailConnectBanner } from "@/features/email-capture/components/EmailConnectBanner";
+import { EmailProgressCard } from "@/features/email-capture/components/EmailProgressCard";
 import { FailedEmailsBanner } from "@/features/email-capture/components/FailedEmailsBanner";
+import { buildProgressDisplay } from "@/features/email-capture/lib/progress-phases";
 import { getGmailClientId, getOutlookClientId } from "@/features/email-capture/schema";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { SyncConflictBanner } from "@/features/sync/components/SyncConflictBanner";
@@ -29,6 +31,7 @@ import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";
 import { CompactBalanceBar } from "./CompactBalanceBar";
 import { DateHeader } from "./DateHeader";
+import { EmptyTransactions } from "./EmptyTransactions";
 import { NeedsReviewBanner } from "./NeedsReviewBanner";
 
 const BellAction = () => {
@@ -78,10 +81,18 @@ const ListHeader = memo(function ListHeader({
 }: ListHeaderProps) {
   const { push } = useRouter();
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
+  const phase = useEmailCaptureStore((s) => s.phase);
+  const progress = useEmailCaptureStore((s) => s.progress);
+  const clearProgress = useEmailCaptureStore((s) => s.clearProgress);
 
   const totalSpentCents = useMemo(
     () => categorySpending.reduce((sum, c) => sum + c.totalCents, 0),
     [categorySpending]
+  );
+
+  const progressDisplay = useMemo(
+    () => (phase ? buildProgressDisplay(phase, progress, []) : null),
+    [phase, progress]
   );
 
   return (
@@ -93,7 +104,10 @@ const ListHeader = memo(function ListHeader({
         }}
       />
       <FailedEmailsBanner onPress={() => push("/failed-emails" as never)} />
-      <NeedsReviewBanner onPress={() => push("/needs-review" as never)} />
+      {phase && progressDisplay && (
+        <EmailProgressCard phase={phase} display={progressDisplay} onComplete={clearProgress} />
+      )}
+      {!phase && <NeedsReviewBanner onPress={() => push("/needs-review" as never)} />}
       <SyncConflictBanner onPress={() => push("/sync-conflicts" as never)} />
       {Platform.OS === "ios" && (
         <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
@@ -117,6 +131,7 @@ export const HomeScreen = () => {
   const balanceCents = useTransactionStore((s) => s.balanceCents);
   const categorySpending = useTransactionStore((s) => s.categorySpending);
   const dailySpending = useTransactionStore((s) => s.dailySpending);
+  const phase = useEmailCaptureStore((s) => s.phase);
 
   const scrollY = useSharedValue(0);
   const [balanceBottom, setBalanceBottom] = useState(-1);
@@ -195,6 +210,7 @@ export const HomeScreen = () => {
         onScroll={handleScroll}
         scrollEventThrottle={16}
         ListHeaderComponent={listHeader}
+        ListEmptyComponent={phase === null ? <EmptyTransactions /> : undefined}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }}
       />

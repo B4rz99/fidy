@@ -47,6 +47,20 @@ vi.mock("@/shared/lib/normalize-merchant", () => ({
   normalizeMerchant: vi.fn((s: string) => s.toLowerCase()),
 }));
 
+// Mock passes through real implementations for progress-phases
+const mockIsFirstFetchForAny = vi.fn((accounts: Array<{ lastFetchedAt: string | null }>) =>
+  accounts.some((a) => a.lastFetchedAt === null)
+);
+const mockShouldShowProgress = vi.fn(
+  (emailCount: number, isFirst: boolean, _threshold = 5) => isFirst || emailCount >= _threshold
+);
+vi.mock("@/features/email-capture/lib/progress-phases", () => ({
+  isFirstFetchForAny: (...args: unknown[]) =>
+    mockIsFirstFetchForAny(...(args as [Array<{ lastFetchedAt: string | null }>])),
+  shouldShowProgress: (...args: unknown[]) =>
+    mockShouldShowProgress(...(args as [number, boolean, number])),
+}));
+
 vi.mock("@/features/email-capture/lib/bank-senders", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/features/email-capture/lib/bank-senders")>();
   return {
@@ -114,6 +128,8 @@ describe("useEmailCaptureStore", () => {
       failedEmails: [],
       needsReviewEmails: [],
       isFetching: false,
+      progress: null,
+      phase: null,
       bannerDismissed: false,
     });
   });
@@ -377,14 +393,7 @@ describe("useEmailCaptureStore", () => {
         ],
       });
       vi.mocked(fetchGmailEmails).mockResolvedValueOnce([]);
-      vi.mocked(processEmails).mockResolvedValueOnce({
-        filtered: 0,
-        skippedDuplicate: 0,
-        skippedCrossSource: 0,
-        saved: 0,
-        failed: 0,
-        needsReview: 0,
-      });
+      // No processEmails mock needed — 0 emails with first fetch goes to zero-emails early return
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
       vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
@@ -502,6 +511,287 @@ describe("useEmailCaptureStore", () => {
         mockRawEmails,
         expect.any(Function)
       );
+    });
+
+    it("sets phase to processing when showing progress", async () => {
+      useEmailCaptureStore.setState({
+        accounts: [
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "test@gmail.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      const mockRawEmails = [
+        {
+          externalId: "ext-1",
+          from: "bank@example.com",
+          subject: "Alert",
+          body: "body",
+          receivedAt: "2026-03-05T10:00:00Z",
+          provider: "gmail" as const,
+        },
+      ];
+      vi.mocked(fetchGmailEmails).mockResolvedValueOnce(mockRawEmails);
+
+      const phases: Array<string | null> = [];
+      vi.mocked(processEmails).mockImplementationOnce(async (_db, _uid, _emails, onProgress) => {
+        phases.push(useEmailCaptureStore.getState().phase);
+        onProgress?.({ total: 1, completed: 1, saved: 1, failed: 0, needsReview: 0 });
+        return {
+          filtered: 0,
+          skippedDuplicate: 0,
+          skippedCrossSource: 0,
+          saved: 1,
+          failed: 0,
+          needsReview: 0,
+        };
+      });
+      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+
+      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+
+      expect(phases).toContain("processing");
+      expect(useEmailCaptureStore.getState().phase).toBe("complete");
+    });
+
+    it("skips progress state when below threshold on subsequent sync", async () => {
+      useEmailCaptureStore.setState({
+        accounts: [
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "test@gmail.com",
+            lastFetchedAt: "2026-03-10T00:00:00Z",
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      vi.mocked(fetchGmailEmails).mockResolvedValueOnce([
+        {
+          externalId: "ext-1",
+          from: "b@b.com",
+          subject: "A",
+          body: "b",
+          receivedAt: "2026-03-10T00:00:00Z",
+          provider: "gmail",
+        },
+        {
+          externalId: "ext-2",
+          from: "b@b.com",
+          subject: "B",
+          body: "b",
+          receivedAt: "2026-03-10T00:00:00Z",
+          provider: "gmail",
+        },
+      ]);
+      vi.mocked(processEmails).mockResolvedValueOnce({
+        filtered: 0,
+        skippedDuplicate: 0,
+        skippedCrossSource: 0,
+        saved: 2,
+        failed: 0,
+        needsReview: 0,
+      });
+      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+
+      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+
+      expect(useEmailCaptureStore.getState().phase).toBeNull();
+    });
+
+    it("updates in-memory accounts lastFetchedAt after fetch", async () => {
+      useEmailCaptureStore.setState({
+        accounts: [
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "test@gmail.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      vi.mocked(fetchGmailEmails).mockResolvedValueOnce([]);
+      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+
+      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+
+      const updatedAccount = useEmailCaptureStore.getState().accounts[0];
+      expect(updatedAccount.lastFetchedAt).not.toBeNull();
+    });
+
+    it("does not clear phase when phase is complete", async () => {
+      useEmailCaptureStore.setState({
+        accounts: [
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "test@gmail.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      vi.mocked(fetchGmailEmails).mockResolvedValueOnce([
+        {
+          externalId: "ext-1",
+          from: "b@b.com",
+          subject: "A",
+          body: "b",
+          receivedAt: "2026-03-10T00:00:00Z",
+          provider: "gmail",
+        },
+      ]);
+      vi.mocked(processEmails).mockResolvedValueOnce({
+        filtered: 0,
+        skippedDuplicate: 0,
+        skippedCrossSource: 0,
+        saved: 1,
+        failed: 0,
+        needsReview: 0,
+      });
+      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+
+      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+
+      expect(useEmailCaptureStore.getState().phase).toBe("complete");
+      expect(useEmailCaptureStore.getState().isFetching).toBe(false);
+    });
+
+    it("shows progress on first fetch even with 1 email", async () => {
+      useEmailCaptureStore.setState({
+        accounts: [
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "test@gmail.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      vi.mocked(fetchGmailEmails).mockResolvedValueOnce([
+        {
+          externalId: "ext-1",
+          from: "b@b.com",
+          subject: "A",
+          body: "b",
+          receivedAt: "2026-03-10T00:00:00Z",
+          provider: "gmail",
+        },
+      ]);
+
+      const phases: Array<string | null> = [];
+      vi.mocked(processEmails).mockImplementationOnce(async (_db, _uid, _emails, onProgress) => {
+        phases.push(useEmailCaptureStore.getState().phase);
+        onProgress?.({ total: 1, completed: 1, saved: 0, failed: 0, needsReview: 0 });
+        return {
+          filtered: 1,
+          skippedDuplicate: 0,
+          skippedCrossSource: 0,
+          saved: 0,
+          failed: 0,
+          needsReview: 0,
+        };
+      });
+      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+
+      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+
+      expect(phases).toContain("processing");
+    });
+
+    it("sets complete with zero results when first fetch has 0 emails", async () => {
+      useEmailCaptureStore.setState({
+        accounts: [
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "test@gmail.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      vi.mocked(fetchGmailEmails).mockResolvedValueOnce([]);
+      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+
+      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+
+      expect(useEmailCaptureStore.getState().phase).toBe("complete");
+      expect(useEmailCaptureStore.getState().progress).toEqual(
+        expect.objectContaining({ total: 0, saved: 0 })
+      );
+      expect(processEmails).not.toHaveBeenCalled();
+    });
+
+    it("clears phase and progress on error in finally block", async () => {
+      useEmailCaptureStore.setState({
+        accounts: [
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "test@gmail.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      vi.mocked(fetchGmailEmails).mockResolvedValueOnce([
+        {
+          externalId: "ext-1",
+          from: "b@b.com",
+          subject: "A",
+          body: "b",
+          receivedAt: "2026-03-10T00:00:00Z",
+          provider: "gmail",
+        },
+      ]);
+      vi.mocked(processEmails).mockRejectedValueOnce(new Error("pipeline crash"));
+
+      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+
+      expect(useEmailCaptureStore.getState().phase).toBeNull();
+      expect(useEmailCaptureStore.getState().progress).toBeNull();
+      expect(useEmailCaptureStore.getState().isFetching).toBe(false);
+    });
+  });
+
+  describe("clearProgress", () => {
+    it("resets phase and progress to null", () => {
+      useEmailCaptureStore.setState({
+        phase: "complete",
+        progress: { total: 10, completed: 10, saved: 5, failed: 0, needsReview: 2 },
+      });
+
+      useEmailCaptureStore.getState().clearProgress();
+
+      expect(useEmailCaptureStore.getState().phase).toBeNull();
+      expect(useEmailCaptureStore.getState().progress).toBeNull();
     });
   });
 
