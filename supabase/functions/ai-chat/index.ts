@@ -339,10 +339,22 @@ Deno.serve(async (req) => {
 
       // Server-side deduplication
       const userClient = createUserClient(token);
-      const { data: existing } = await userClient
+      const { data: existing, error: existingError } = await userClient
         .from("user_memories")
         .select("fact")
         .is("deleted_at", null);
+
+      if (existingError) {
+        structuredLog({
+          request_id: requestId,
+          user_id: userId,
+          mode,
+          success: false,
+          latency_ms: Date.now() - startTime,
+          error_type: "memory_read_error",
+        });
+        return jsonResponse({ success: false, error: "memory_read_error" }, 500);
+      }
 
       const existingLower = new Set(
         (existing ?? []).map((m: { fact: string }) => m.fact.toLowerCase())
@@ -429,6 +441,21 @@ Deno.serve(async (req) => {
       userClient.from("user_memories").select("fact, category").is("deleted_at", null),
     ]);
     const contextQueryMs = Date.now() - contextStartTime;
+
+    const contextError =
+      balanceResult.error?.message ?? txResult.error?.message ?? memoriesResult.error?.message;
+    if (contextError) {
+      structuredLog({
+        request_id: requestId,
+        user_id: userId,
+        mode,
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "context_query_error",
+        context_query_ms: contextQueryMs,
+      });
+      return jsonResponse({ success: false, error: "context_query_error" }, 500);
+    }
 
     const txData = txResult.data ?? [];
     const currentSpending = computeSpendingByCategory(txData, month);
