@@ -7,7 +7,7 @@ const css = readFileSync(resolve(__dirname, "../../global.css"), "utf-8");
 
 const parseCssColor = (name: string): string | undefined => {
   const match = css.match(new RegExp(`--color-${name}:\\s*([^;]+);`));
-  return match?.[1]?.trim();
+  return match?.[1]?.trim().toUpperCase();
 };
 
 describe("global.css @theme <-> Colors sync", () => {
