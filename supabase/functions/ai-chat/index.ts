@@ -188,8 +188,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Body size limit: 10KB
-    const bodyResult = await readBodyWithLimit(req);
+    // Body size limit: 100KB (chat payloads include conversation + financial context)
+    const bodyResult = await readBodyWithLimit(req, 102400);
     if (!bodyResult.ok) {
       structuredLog({
         request_id: requestId,
