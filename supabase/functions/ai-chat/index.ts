@@ -1,6 +1,8 @@
 // biome-ignore-all lint/style/useNamingConvention: OpenAI SDK and API field names
 import OpenAI from "https://deno.land/x/openai@v4.24.0/mod.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { readBodyWithLimit } from "../_shared/body-size.ts";
+import { checkRateLimit } from "../_shared/rate-limit.ts";
 
 const CATEGORY_IDS = [
   "food",
@@ -83,10 +85,14 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_ANON_KEY") ?? ""
 );
 
-function jsonResponse(body: unknown, status = 200): Response {
+function jsonResponse(
+  body: unknown,
+  status = 200,
+  extraHeaders?: Record<string, string>
+): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...extraHeaders },
   });
 }
 
@@ -165,8 +171,52 @@ Deno.serve(async (req) => {
     }
 
     userId = user.id;
-    const body = await req.json();
-    mode = body.mode ?? "chat";
+
+    // Rate limit: 10 requests per minute per user
+    const rateResult = await checkRateLimit(userId, "ai-chat", 10);
+    if (!rateResult.allowed) {
+      structuredLog({
+        request_id: requestId,
+        user_id: userId,
+        mode: "",
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "rate_limited",
+      });
+      return jsonResponse({ success: false, error: "rate_limited" }, 429, {
+        "Retry-After": String(rateResult.retryAfterSeconds),
+      });
+    }
+
+    // Body size limit: 100KB (chat payloads include conversation + financial context)
+    const bodyResult = await readBodyWithLimit(req, 102400);
+    if (!bodyResult.ok) {
+      structuredLog({
+        request_id: requestId,
+        user_id: userId,
+        mode: "",
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "body_too_large",
+      });
+      return jsonResponse({ success: false, error: "body_too_large" }, 413);
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(bodyResult.text);
+    } catch {
+      structuredLog({
+        request_id: requestId,
+        user_id: userId,
+        mode: "",
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "invalid_json",
+      });
+      return jsonResponse({ success: false, error: "invalid_json" }, 400);
+    }
+    mode = (body.mode as string) ?? "chat";
 
     // Memory extraction mode — non-streaming
     if (mode === "extract_memories") {
