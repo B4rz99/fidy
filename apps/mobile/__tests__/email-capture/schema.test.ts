@@ -19,6 +19,11 @@ describe("processedEmailStatusSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts pending_retry status", () => {
+    const result = processedEmailStatusSchema.safeParse("pending_retry");
+    expect(result.success).toBe(true);
+  });
+
   it("still accepts existing statuses", () => {
     expect(processedEmailStatusSchema.safeParse("success").success).toBe(true);
     expect(processedEmailStatusSchema.safeParse("failed").success).toBe(true);
@@ -38,5 +43,8 @@ describe("processedEmails schema", () => {
     expect(processedEmails.receivedAt).toBeDefined();
     expect(processedEmails.transactionId).toBeDefined();
     expect(processedEmails.createdAt).toBeDefined();
+    expect(processedEmails.rawBody).toBeDefined();
+    expect(processedEmails.retryCount).toBeDefined();
+    expect(processedEmails.nextRetryAt).toBeDefined();
   });
 });

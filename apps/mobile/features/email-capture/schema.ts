@@ -9,6 +9,7 @@ export const processedEmailStatusSchema = z.enum([
   "skipped",
   "skipped_duplicate",
   "needs_review",
+  "pending_retry",
 ]);
 export type ProcessedEmailStatus = z.infer<typeof processedEmailStatusSchema>;
 

@@ -221,4 +221,63 @@ describe("email capture repository", () => {
     expect(mockSet).toHaveBeenCalledWith({ status: "success", transactionId: "tx-1" });
     expect(mockUpdateWhere).toHaveBeenCalled();
   });
+
+  it("getPendingRetryEmails returns pending_retry emails where nextRetryAt <= now", async () => {
+    const mockRows = [
+      { id: "pe-1", status: "pending_retry", rawBody: "body", retryCount: 1 },
+    ];
+    const mockLimit = vi.fn().mockResolvedValueOnce(mockRows);
+    mockWhere.mockReturnValueOnce({ orderBy: vi.fn().mockReturnValueOnce({ limit: mockLimit }) });
+
+    const { getPendingRetryEmails } = await import("@/features/email-capture/lib/repository");
+    const result = await getPendingRetryEmails(mockDb);
+
+    expect(mockSelect).toHaveBeenCalled();
+    expect(mockFrom).toHaveBeenCalled();
+    expect(mockWhere).toHaveBeenCalled();
+    expect(mockLimit).toHaveBeenCalledWith(50);
+    expect(result).toEqual(mockRows);
+  });
+
+  it("markForRetry updates status, retryCount, nextRetryAt, rawBody", async () => {
+    const { markForRetry } = await import("@/features/email-capture/lib/repository");
+
+    await markForRetry(mockDb, "pe-1", 2, "2026-03-15T13:00:00Z");
+
+    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockSet).toHaveBeenCalledWith({
+      status: "pending_retry",
+      retryCount: 2,
+      nextRetryAt: "2026-03-15T13:00:00Z",
+    });
+    expect(mockUpdateWhere).toHaveBeenCalled();
+  });
+
+  it("markPermanentlyFailed sets status=failed and clears rawBody", async () => {
+    const { markPermanentlyFailed } = await import("@/features/email-capture/lib/repository");
+
+    await markPermanentlyFailed(mockDb, "pe-1");
+
+    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockSet).toHaveBeenCalledWith({
+      status: "failed",
+      rawBody: null,
+    });
+    expect(mockUpdateWhere).toHaveBeenCalled();
+  });
+
+  it("markRetrySuccess sets status, transactionId, confidence, clears rawBody", async () => {
+    const { markRetrySuccess } = await import("@/features/email-capture/lib/repository");
+
+    await markRetrySuccess(mockDb, "pe-1", "success", "tx-5", 0.95);
+
+    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockSet).toHaveBeenCalledWith({
+      status: "success",
+      transactionId: "tx-5",
+      confidence: 0.95,
+      rawBody: null,
+    });
+    expect(mockUpdateWhere).toHaveBeenCalled();
+  });
 });

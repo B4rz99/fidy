@@ -10,6 +10,11 @@ const mockLookupMerchantRule = vi.fn().mockResolvedValue(null);
 const mockInsertMerchantRule = vi.fn();
 const mockParseEmailApi = vi.fn().mockResolvedValue(null);
 const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);
+const mockGetPendingRetryEmails = vi.fn().mockResolvedValue([]);
+const mockMarkForRetry = vi.fn();
+const mockMarkPermanentlyFailed = vi.fn();
+const mockMarkRetrySuccess = vi.fn();
+const mockUpdateProcessedEmailStatus = vi.fn();
 
 vi.mock("@/features/capture-sources/lib/dedup", () => ({
   findDuplicateTransaction: (...args: unknown[]) => mockFindDuplicateTransaction(...args),
@@ -18,6 +23,11 @@ vi.mock("@/features/capture-sources/lib/dedup", () => ({
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getProcessedExternalIds: (...args: unknown[]) => mockGetProcessedExternalIds(...args),
   insertProcessedEmail: (...args: unknown[]) => mockInsertProcessedEmail(...args),
+  getPendingRetryEmails: (...args: unknown[]) => mockGetPendingRetryEmails(...args),
+  markForRetry: (...args: unknown[]) => mockMarkForRetry(...args),
+  markPermanentlyFailed: (...args: unknown[]) => mockMarkPermanentlyFailed(...args),
+  markRetrySuccess: (...args: unknown[]) => mockMarkRetrySuccess(...args),
+  updateProcessedEmailStatus: (...args: unknown[]) => mockUpdateProcessedEmailStatus(...args),
 }));
 
 vi.mock("@/features/transactions/lib/repository", () => ({
@@ -34,12 +44,16 @@ vi.mock("@/features/email-capture/services/parse-email-api", () => ({
   parseEmailApi: (...args: unknown[]) => mockParseEmailApi(...args),
 }));
 
+vi.mock("@/shared/lib/sentry", () => ({
+  captureError: vi.fn(),
+}));
+
 const mockGenerateId = vi.fn();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: unknown[]) => mockGenerateId(...args),
 }));
 
-import { processEmails } from "@/features/email-capture/services/email-pipeline";
+import { processEmails, processRetries } from "@/features/email-capture/services/email-pipeline";
 
 const mockDb = {} as any;
 const USER_ID = "user-1";
@@ -74,6 +88,11 @@ describe("email processing pipeline", () => {
     mockInsertMerchantRule.mockResolvedValue(undefined);
     mockParseEmailApi.mockResolvedValue(null);
     mockFindDuplicateTransaction.mockResolvedValue(null);
+    mockGetPendingRetryEmails.mockResolvedValue([]);
+    mockMarkForRetry.mockResolvedValue(undefined);
+    mockMarkPermanentlyFailed.mockResolvedValue(undefined);
+    mockMarkRetrySuccess.mockResolvedValue(undefined);
+    mockUpdateProcessedEmailStatus.mockResolvedValue(undefined);
   });
 
   it("skips already processed emails", async () => {
@@ -257,7 +276,7 @@ describe("email processing pipeline", () => {
     );
   });
 
-  it("marks email as failed when LLM throws", async () => {
+  it("marks email as pending_retry with cached rawBody when LLM throws", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockRejectedValueOnce(new Error("LLM timeout"));
 
@@ -268,10 +287,34 @@ describe("email processing pipeline", () => {
     expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        status: "failed",
+        status: "pending_retry",
         failureReason: "parse_error",
+        rawBody: "Su compra por $50.000 fue aprobada",
+        retryCount: 0,
       })
     );
+    // nextRetryAt should be set
+    const call = mockInsertProcessedEmail.mock.calls[0][1];
+    expect(call.nextRetryAt).toBeTruthy();
+  });
+
+  it("marks email as skipped (not pending_retry) when LLM returns null", async () => {
+    const emails = [makeRawEmail()];
+    mockParseEmailApi.mockResolvedValueOnce(null);
+
+    const result = await processEmails(mockDb, USER_ID, emails);
+
+    expect(result.filtered).toBe(1);
+    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        status: "skipped",
+        failureReason: null,
+      })
+    );
+    // rawBody should NOT be cached for skipped emails
+    const call = mockInsertProcessedEmail.mock.calls[0][1];
+    expect(call.rawBody).toBeUndefined();
   });
 
   it("returns zero counts for empty input", async () => {
@@ -285,5 +328,211 @@ describe("email processing pipeline", () => {
       failed: 0,
       needsReview: 0,
     });
+  });
+});
+
+function makePendingRetryRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "pe-retry-1",
+    externalId: "ext-retry-1",
+    provider: "gmail",
+    status: "pending_retry",
+    failureReason: "parse_error",
+    subject: "Compra aprobada",
+    rawBodyPreview: "Su compra por $50.000...",
+    rawBody: "Su compra por $50.000 fue aprobada",
+    receivedAt: "2026-03-05T10:00:00Z",
+    transactionId: null,
+    confidence: null,
+    retryCount: 1,
+    nextRetryAt: "2026-03-15T11:00:00Z",
+    createdAt: "2026-03-05T10:00:00Z",
+    ...overrides,
+  };
+}
+
+describe("processRetries", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    let idCounter = 0;
+    mockGenerateId.mockImplementation((prefix: string) => {
+      idCounter++;
+      return `${prefix}-${idCounter}`;
+    });
+    mockGetPendingRetryEmails.mockResolvedValue([]);
+    mockMarkForRetry.mockResolvedValue(undefined);
+    mockMarkPermanentlyFailed.mockResolvedValue(undefined);
+    mockMarkRetrySuccess.mockResolvedValue(undefined);
+    mockInsertTransaction.mockResolvedValue(undefined);
+    mockEnqueueSync.mockResolvedValue(undefined);
+    mockLookupMerchantRule.mockResolvedValue(null);
+    mockInsertMerchantRule.mockResolvedValue(undefined);
+    mockParseEmailApi.mockResolvedValue(null);
+    mockUpdateProcessedEmailStatus.mockResolvedValue(undefined);
+    mockFindDuplicateTransaction.mockResolvedValue(null);
+  });
+
+  it("picks up due pending_retry emails and calls parseEmailApi with cached rawBody", async () => {
+    const row = makePendingRetryRow();
+    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    mockParseEmailApi.mockResolvedValueOnce(null);
+
+    await processRetries(mockDb, USER_ID);
+
+    expect(mockGetPendingRetryEmails).toHaveBeenCalledWith(mockDb);
+    expect(mockParseEmailApi).toHaveBeenCalledWith(row.rawBody);
+  });
+
+  it("creates transaction on successful retry", async () => {
+    const row = makePendingRetryRow();
+    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    mockParseEmailApi.mockResolvedValueOnce({
+      type: "expense",
+      amountCents: 5000000,
+      categoryId: "other",
+      description: "Compra en Exito",
+      date: "2026-03-05",
+      confidence: 0.9,
+    });
+
+    const result = await processRetries(mockDb, USER_ID);
+
+    expect(mockInsertTransaction).toHaveBeenCalled();
+    expect(mockEnqueueSync).toHaveBeenCalled();
+    expect(result.succeeded).toBe(1);
+  });
+
+  it("calls markRetrySuccess with correct status/transactionId/confidence", async () => {
+    const row = makePendingRetryRow();
+    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    mockParseEmailApi.mockResolvedValueOnce({
+      type: "expense",
+      amountCents: 5000000,
+      categoryId: "other",
+      description: "Compra en Exito",
+      date: "2026-03-05",
+      confidence: 0.9,
+    });
+
+    await processRetries(mockDb, USER_ID);
+
+    expect(mockMarkRetrySuccess).toHaveBeenCalledWith(
+      mockDb,
+      "pe-retry-1",
+      "success",
+      expect.stringMatching(/^tx-/),
+      0.9
+    );
+  });
+
+  it("marks as needs_review when confidence < 0.7 on retry", async () => {
+    const row = makePendingRetryRow();
+    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    mockParseEmailApi.mockResolvedValueOnce({
+      type: "expense",
+      amountCents: 5000000,
+      categoryId: "other",
+      description: "Compra en Exito",
+      date: "2026-03-05",
+      confidence: 0.5,
+    });
+
+    await processRetries(mockDb, USER_ID);
+
+    expect(mockMarkRetrySuccess).toHaveBeenCalledWith(
+      mockDb,
+      "pe-retry-1",
+      "needs_review",
+      expect.stringMatching(/^tx-/),
+      0.5
+    );
+  });
+
+  it("increments retryCount on failure and schedules next retry", async () => {
+    const row = makePendingRetryRow({ retryCount: 2 });
+    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    mockParseEmailApi.mockRejectedValueOnce(new Error("LLM timeout"));
+
+    const result = await processRetries(mockDb, USER_ID);
+
+    expect(mockMarkForRetry).toHaveBeenCalledWith(
+      mockDb,
+      "pe-retry-1",
+      3,
+      expect.any(String)
+    );
+    expect(result.retried).toBe(1);
+    expect(result.succeeded).toBe(0);
+  });
+
+  it("marks as permanently failed when max retries reached", async () => {
+    const row = makePendingRetryRow({ retryCount: 4 });
+    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    mockParseEmailApi.mockRejectedValueOnce(new Error("LLM timeout"));
+
+    const result = await processRetries(mockDb, USER_ID);
+
+    expect(mockMarkPermanentlyFailed).toHaveBeenCalledWith(mockDb, "pe-retry-1");
+    expect(result.permanentlyFailed).toBe(1);
+  });
+
+  it("marks as skipped when LLM returns null on retry", async () => {
+    const row = makePendingRetryRow();
+    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    mockParseEmailApi.mockResolvedValueOnce(null);
+
+    await processRetries(mockDb, USER_ID);
+
+    expect(mockUpdateProcessedEmailStatus).toHaveBeenCalledWith(
+      mockDb,
+      "pe-retry-1",
+      "skipped",
+      null
+    );
+  });
+
+  it("skips duplicate transaction from another source on retry", async () => {
+    const row = makePendingRetryRow();
+    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    mockParseEmailApi.mockResolvedValueOnce({
+      type: "expense",
+      amountCents: 5000000,
+      categoryId: "other",
+      description: "Compra en Exito",
+      date: "2026-03-05",
+      confidence: 0.9,
+    });
+    mockFindDuplicateTransaction.mockResolvedValueOnce("tx-existing");
+
+    const result = await processRetries(mockDb, USER_ID);
+
+    expect(mockInsertTransaction).not.toHaveBeenCalled();
+    expect(mockMarkRetrySuccess).toHaveBeenCalledWith(
+      mockDb,
+      "pe-retry-1",
+      "success",
+      "tx-existing",
+      0.9
+    );
+    expect(result.succeeded).toBe(1);
+  });
+
+  it("permanently fails email with missing rawBody", async () => {
+    const row = makePendingRetryRow({ rawBody: null });
+    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+
+    const result = await processRetries(mockDb, USER_ID);
+
+    expect(mockMarkPermanentlyFailed).toHaveBeenCalledWith(mockDb, "pe-retry-1");
+    expect(result.permanentlyFailed).toBe(1);
+    expect(mockParseEmailApi).not.toHaveBeenCalled();
+  });
+
+  it("returns correct counts", async () => {
+    mockGetPendingRetryEmails.mockResolvedValueOnce([]);
+
+    const result = await processRetries(mockDb, USER_ID);
+
+    expect(result).toEqual({ retried: 0, succeeded: 0, permanentlyFailed: 0 });
   });
 });

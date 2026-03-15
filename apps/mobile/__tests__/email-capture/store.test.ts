@@ -32,6 +32,11 @@ vi.mock("@/features/email-capture/services/email-pipeline", () => ({
     failed: 0,
     needsReview: 0,
   }),
+  processRetries: vi.fn().mockResolvedValue({
+    retried: 0,
+    succeeded: 0,
+    permanentlyFailed: 0,
+  }),
 }));
 
 vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
@@ -155,6 +160,9 @@ describe("useEmailCaptureStore", () => {
         transactionId: null,
         confidence: null,
         createdAt: "2026-03-05T10:00:00Z",
+        rawBody: null,
+        retryCount: 0,
+        nextRetryAt: null,
       },
     ];
     vi.mocked(getFailedEmails).mockResolvedValueOnce(mockFailed);
@@ -180,6 +188,9 @@ describe("useEmailCaptureStore", () => {
         transactionId: "tx-1",
         confidence: 0.5,
         createdAt: "2026-03-05T10:00:00Z",
+        rawBody: null,
+        retryCount: 0,
+        nextRetryAt: null,
       },
     ];
     vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce(mockReview);
