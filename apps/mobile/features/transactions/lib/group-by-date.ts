@@ -24,36 +24,24 @@ export function buildListData(transactions: readonly StoredTransaction[]): {
   readonly items: ListItem[];
   readonly stickyIndices: number[];
 } {
-  const result = transactions.reduce<{
-    readonly items: ListItem[];
-    readonly stickyIndices: number[];
-    readonly lastDateKey: string | null;
-  }>(
-    (acc, tx) => {
-      const dateKey = toIsoDate(tx.date);
+  const items: ListItem[] = [];
+  const stickyIndices: number[] = [];
 
-      if (dateKey === acc.lastDateKey) {
-        return {
-          ...acc,
-          items: [...acc.items, tx],
-        };
-      }
+  transactions.reduce<string | null>((lastDateKey, tx) => {
+    const dateKey = toIsoDate(tx.date);
 
-      const header: DateHeader = {
+    if (dateKey !== lastDateKey) {
+      stickyIndices.push(items.length);
+      items.push({
         kind: "date-header",
         label: makeDateLabel(tx.date),
         dateKey,
-      };
-      const headerIndex = acc.items.length;
+      });
+    }
 
-      return {
-        items: [...acc.items, header, tx],
-        stickyIndices: [...acc.stickyIndices, headerIndex],
-        lastDateKey: dateKey,
-      };
-    },
-    { items: [], stickyIndices: [], lastDateKey: null }
-  );
+    items.push(tx);
+    return dateKey;
+  }, null);
 
-  return { items: result.items, stickyIndices: result.stickyIndices };
+  return { items, stickyIndices };
 }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { StoredTransaction } from "@/features/transactions/schema";
 
 // Use real date-fns (global setup mocks it)

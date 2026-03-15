@@ -64,7 +64,7 @@ function computeDeltas(
 export function buildChatContext(
   recentTransactions: readonly StoredTransaction[],
   memories: readonly UserMemory[],
-  currentMonth: string,
+  _currentMonth: string,
   balanceCents: number,
   currentMonthSpending: readonly { readonly categoryId: string; readonly totalCents: number }[],
   previousMonthSpending: readonly { readonly categoryId: string; readonly totalCents: number }[]
