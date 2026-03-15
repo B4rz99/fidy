@@ -97,7 +97,6 @@ export function MemoryManager({ onBack }: MemoryManagerProps) {
         data={memories}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        estimatedItemSize={80}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
           paddingBottom: TAB_BAR_CLEARANCE,

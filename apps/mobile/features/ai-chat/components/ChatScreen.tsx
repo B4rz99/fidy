@@ -1,3 +1,4 @@
+import type { FlashListRef } from "@shopify/flash-list";
 import { FlashList } from "@shopify/flash-list";
 import { memo, useCallback, useRef } from "react";
 import { Keyboard, KeyboardAvoidingView, View } from "react-native";
@@ -32,7 +33,7 @@ const MemoizedMessageBubble = memo(function MemoizedBubble({
 });
 
 export function ChatScreen({ onBack }: ChatScreenProps) {
-  const listRef = useRef<FlashList<ChatMessage>>(null);
+  const listRef = useRef<FlashListRef<ChatMessage>>(null);
 
   const messages = useChatStore((s) => s.messages);
   const sessions = useChatStore((s) => s.sessions);
@@ -120,7 +121,6 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
             data={messages}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
-            estimatedItemSize={80}
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{
