@@ -4,6 +4,7 @@ import { getGmailClientId, getOutlookClientId } from "@/features/email-capture/s
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { getDb } from "@/shared/db/client";
 import { getSupabase } from "@/shared/db/supabase";
+import { captureError } from "@/shared/lib/sentry";
 
 export const BACKGROUND_TASK_NAME = "FIDY_EMAIL_FETCH";
 
@@ -22,7 +23,8 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
 
     await store.fetchAndProcess(getGmailClientId(), getOutlookClientId());
     return BackgroundTask.BackgroundTaskResult.Success;
-  } catch {
+  } catch (error) {
+    captureError(error);
     return BackgroundTask.BackgroundTaskResult.Failed;
   }
 });

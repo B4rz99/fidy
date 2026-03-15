@@ -9,6 +9,7 @@ import {
   upsertTransaction,
 } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db/client";
+import { captureError } from "@/shared/lib/sentry";
 
 const LAST_SYNC_AT = "last_sync_at";
 
@@ -119,15 +120,33 @@ export async function syncPull(
 
   const rows = data as SupabaseTransactionRow[];
 
+  let earliestFailure: string | null = null;
   for (const serverRow of rows) {
-    const localRow = await getTransactionById(db, serverRow.id);
+    try {
+      const localRow = await getTransactionById(db, serverRow.id);
 
-    if (shouldUpdateLocal(serverRow.updated_at, localRow?.updatedAt)) {
-      await upsertTransaction(db, fromSupabaseRow(serverRow));
+      if (shouldUpdateLocal(serverRow.updated_at, localRow?.updatedAt)) {
+        await upsertTransaction(db, fromSupabaseRow(serverRow));
+      }
+    } catch (error) {
+      captureError(error);
+      if (!earliestFailure || serverRow.updated_at < earliestFailure) {
+        earliestFailure = serverRow.updated_at;
+      }
     }
   }
 
-  if (rows.length > 0) {
+  // Only advance cursor up to (but not past) the earliest failed row
+  // so it gets retried on the next pull. If the earliest row failed,
+  // don't advance at all — the entire batch will be retried.
+  if (earliestFailure) {
+    const safeTimestamps = rows.map((r) => r.updated_at).filter((ts) => ts < earliestFailure);
+    if (safeTimestamps.length > 0) {
+      const safeCursor = safeTimestamps.reduce((max, ts) => (ts > max ? ts : max));
+      await setSyncMeta(db, LAST_SYNC_AT, safeCursor);
+    }
+    // else: earliest row failed — don't advance cursor
+  } else if (rows.length > 0) {
     const maxUpdatedAt = rows.reduce(
       (max, r) => (r.updated_at > max ? r.updated_at : max),
       rows[0].updated_at

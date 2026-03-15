@@ -4,6 +4,7 @@ import { ConversationList } from "@/features/ai-chat/components/ConversationList
 import { MemoryManager } from "@/features/ai-chat/components/MemoryManager";
 import { cancelActiveStream } from "@/features/ai-chat/hooks/use-streaming-chat";
 import { useChatStore } from "@/features/ai-chat/store";
+import { captureError } from "@/shared/lib/sentry";
 
 type AiView = "list" | "chat" | "memories";
 
@@ -27,7 +28,7 @@ export default function AiTab() {
 
   const handleBackFromChat = useCallback(() => {
     cancelActiveStream();
-    extractAndSaveMemories().catch(() => {});
+    extractAndSaveMemories().catch(captureError);
     setView("list");
   }, [extractAndSaveMemories]);
 

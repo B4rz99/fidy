@@ -1,6 +1,7 @@
 import type { ExpoSQLiteDatabase } from "drizzle-orm/expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { openDatabaseSync } from "expo-sqlite";
+import { captureError } from "@/shared/lib/sentry";
 
 // biome-ignore lint/suspicious/noExplicitAny: drizzle generic varies by caller
 export type AnyDb = ExpoSQLiteDatabase<any>;
@@ -14,12 +15,18 @@ export function getDb(userId: string) {
     resetDb();
   }
   if (!db) {
-    const dbName = `fidy-${userId}.db`;
-    const dbKey = `fidy-key-${userId}`;
-    sqliteRef = openDatabaseSync(dbName);
-    sqliteRef.execSync(`PRAGMA key = '${dbKey}'`);
-    db = drizzle(sqliteRef);
-    currentUserId = userId;
+    try {
+      const dbName = `fidy-${userId}.db`;
+      const dbKey = `fidy-key-${userId}`;
+      sqliteRef = openDatabaseSync(dbName);
+      sqliteRef.execSync(`PRAGMA key = '${dbKey}'`);
+      db = drizzle(sqliteRef);
+      currentUserId = userId;
+    } catch (error) {
+      resetDb();
+      captureError(error);
+      throw error;
+    }
   }
   return db;
 }

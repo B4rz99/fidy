@@ -1,5 +1,6 @@
 import type { AnyDb } from "@/shared/db/client";
 import { generateId } from "@/shared/lib/generate-id";
+import { captureError } from "@/shared/lib/sentry";
 import { insertDetectedSmsEvent } from "../lib/repository";
 import { processApplePayIntent } from "../services/apple-pay-pipeline";
 import { processNotification } from "../services/notification-pipeline";
@@ -16,7 +17,7 @@ export async function setupApplePayCapture(db: AnyDb, userId: string): Promise<(
   if (!mod.isAvailable()) return noop;
 
   const subscription = mod.addLogTransactionListener((event) => {
-    processApplePayIntent(db, userId, event).catch(() => {});
+    processApplePayIntent(db, userId, event).catch(captureError);
   });
 
   return () => subscription.remove();
@@ -41,7 +42,7 @@ export async function setupSmsDetection(
       createdAt: new Date().toISOString(),
     })
       .then(() => refreshDetectedSms())
-      .catch(() => {});
+      .catch(captureError);
   });
 
   return () => subscription.remove();
@@ -64,7 +65,7 @@ export async function setupNotificationCapture(
 
   const subscription = mod.addListener("onNotificationReceived", (event: unknown) => {
     processNotification(db, userId, event as Parameters<typeof processNotification>[2]).catch(
-      () => {}
+      captureError
     );
   });
 

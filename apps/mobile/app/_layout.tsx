@@ -25,11 +25,19 @@ import { useEmailCapture } from "@/features/email-capture/hooks/useEmailCapture"
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { useSync } from "@/features/sync/hooks/useSync";
 import { useTransactionStore } from "@/features/transactions/store";
+import { ErrorFallback } from "@/shared/components/ErrorFallback";
 import type { AnyDb } from "@/shared/db/client";
 import { getDb } from "@/shared/db/client";
+import { captureError, initSentry, SentryErrorBoundary, wrapWithSentry } from "@/shared/lib/sentry";
+import { handleRecoverableError } from "@/shared/lib/toast";
 import migrations from "../drizzle/migrations";
 
 SplashScreen.preventAutoHideAsync();
+
+const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN ?? process.env.SENTRY_DSN ?? "";
+if (SENTRY_DSN) {
+  initSentry(SENTRY_DSN);
+}
 
 function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
   const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
@@ -44,21 +52,21 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
       Promise.all([
         useCalendarStore.getState().loadBills(),
         useCalendarStore.getState().loadPaymentsForMonth(),
-      ]).catch(() => {});
+      ]).catch(handleRecoverableError("Failed to load calendar data"));
       useChatStore
         .getState()
         .loadSessions()
         .then(() => useChatStore.getState().cleanupExpiredSessions())
-        .catch(() => {});
+        .catch(handleRecoverableError("Failed to load chat sessions"));
       useCaptureSourcesStore
         .getState()
         .hydrate()
-        .catch(() => {});
+        .catch(handleRecoverableError("Failed to load capture sources"));
       useTransactionStore
         .getState()
         .loadInitialPage()
-        .catch(() => {});
-      registerBackgroundTask().catch(() => {});
+        .catch(handleRecoverableError("Failed to load transactions"));
+      registerBackgroundTask().catch(captureError);
     }
   }, [migrationsReady, db, userId]);
 
@@ -77,7 +85,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
   return null;
 }
 
-export default function RootLayout() {
+function RootLayout() {
   const session = useAuthStore((s) => s.session);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
   const userId = session?.user?.id ?? null;
@@ -127,21 +135,25 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="add-transaction" options={{ presentation: "formSheet" }} />
-        <Stack.Screen
-          name="add-bill"
-          options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
-        />
-        <Stack.Screen
-          name="day-detail"
-          options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
-        />
-      </Stack>
-      {db && userId && <AuthenticatedShell db={db} userId={userId} />}
+      <SentryErrorBoundary fallback={ErrorFallback}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="add-transaction" options={{ presentation: "formSheet" }} />
+          <Stack.Screen
+            name="add-bill"
+            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+          />
+          <Stack.Screen
+            name="day-detail"
+            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+          />
+        </Stack>
+        {db && userId && <AuthenticatedShell db={db} userId={userId} />}
+      </SentryErrorBoundary>
       <StatusBar style="auto" />
     </GestureHandlerRootView>
   );
 }
+
+export default wrapWithSentry(RootLayout);

@@ -101,10 +101,40 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
+function structuredLog(fields: {
+  request_id: string;
+  user_id: string;
+  mode: string;
+  success: boolean;
+  latency_ms: number;
+  error_type: string | null;
+  email_count?: number;
+}): void {
+  console.log(
+    JSON.stringify({
+      ...fields,
+      timestamp: new Date().toISOString(),
+    })
+  );
+}
+
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+  let userId = "";
+  let mode = "";
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
+      structuredLog({
+        request_id: requestId,
+        user_id: "",
+        mode: "",
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "missing_auth",
+      });
       return jsonResponse({ success: false, error: "missing_auth" }, 401);
     }
     const token = authHeader.replace("Bearer ", "");
@@ -113,17 +143,60 @@ Deno.serve(async (req) => {
       error: authError,
     } = await supabase.auth.getUser(token);
     if (authError || !user) {
+      structuredLog({
+        request_id: requestId,
+        user_id: "",
+        mode: "",
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "invalid_auth",
+      });
       return jsonResponse({ success: false, error: "invalid_auth" }, 401);
     }
 
-    const { body, mode } = await req.json();
+    userId = user.id;
+    let payload: Record<string, unknown>;
+    try {
+      payload = await req.json();
+    } catch {
+      structuredLog({
+        request_id: requestId,
+        user_id: userId,
+        mode: "",
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "invalid_json",
+      });
+      return jsonResponse({ success: false, error: "invalid_json" }, 400);
+    }
+    if (!payload || typeof payload !== "object") {
+      structuredLog({
+        request_id: requestId,
+        user_id: userId,
+        mode: "",
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "invalid_request",
+      });
+      return jsonResponse({ success: false, error: "invalid_request" }, 400);
+    }
+    const emailBody: unknown = payload.body;
+    mode = (payload.mode as string) ?? "";
 
     if (
-      typeof body !== "string" ||
-      body.trim().length === 0 ||
+      typeof emailBody !== "string" ||
+      emailBody.trim().length === 0 ||
       !mode ||
       !["classify", "full_parse", "parse_notification"].includes(mode)
     ) {
+      structuredLog({
+        request_id: requestId,
+        user_id: userId,
+        mode,
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "invalid_request",
+      });
       return jsonResponse({ success: false, error: "invalid_request" }, 400);
     }
 
@@ -136,7 +209,7 @@ Deno.serve(async (req) => {
     const jsonSchema = mode === "classify" ? CLASSIFY_SCHEMA : FULL_PARSE_SCHEMA;
     const maxLength = mode === "parse_notification" ? 500 : 2000;
     // Truncate to focus on transaction details, skip legal/footer noise
-    const truncatedBody = body.length > maxLength ? body.slice(0, maxLength) : body;
+    const truncatedBody = emailBody.length > maxLength ? emailBody.slice(0, maxLength) : emailBody;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-5-nano-2025-08-07",
@@ -149,14 +222,40 @@ Deno.serve(async (req) => {
 
     const text = completion.choices[0]?.message?.content;
     if (!text) {
+      structuredLog({
+        request_id: requestId,
+        user_id: userId,
+        mode,
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "empty_llm_response",
+      });
       return jsonResponse({ success: false, error: "empty_llm_response" }, 502);
     }
 
     const data = JSON.parse(text);
+
+    structuredLog({
+      request_id: requestId,
+      user_id: userId,
+      mode,
+      success: true,
+      latency_ms: Date.now() - startTime,
+      error_type: null,
+      email_count: 1,
+    });
+
     return jsonResponse({ success: true, data });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("parse-email error:", message);
+    structuredLog({
+      request_id: requestId,
+      user_id: userId,
+      mode,
+      success: false,
+      latency_ms: Date.now() - startTime,
+      error_type: message,
+    });
     return jsonResponse({ success: false, error: "internal_error" }, 500);
   }
 });

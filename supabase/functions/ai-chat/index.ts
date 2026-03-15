@@ -90,6 +90,23 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
+function structuredLog(fields: {
+  request_id: string;
+  user_id: string;
+  mode: string;
+  success: boolean;
+  latency_ms: number;
+  error_type: string | null;
+  message_count?: number;
+}): void {
+  console.log(
+    JSON.stringify({
+      ...fields,
+      timestamp: new Date().toISOString(),
+    })
+  );
+}
+
 function buildSystemPrompt(context: {
   transactions: unknown[];
   summary: unknown;
@@ -112,9 +129,22 @@ function buildSystemPrompt(context: {
 }
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+  let userId = "";
+  let mode = "chat";
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
+      structuredLog({
+        request_id: requestId,
+        user_id: "",
+        mode: "",
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "missing_auth",
+      });
       return jsonResponse({ success: false, error: "missing_auth" }, 401);
     }
     const token = authHeader.replace("Bearer ", "");
@@ -123,16 +153,33 @@ Deno.serve(async (req) => {
       error: authError,
     } = await supabase.auth.getUser(token);
     if (authError || !user) {
+      structuredLog({
+        request_id: requestId,
+        user_id: "",
+        mode: "",
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "invalid_auth",
+      });
       return jsonResponse({ success: false, error: "invalid_auth" }, 401);
     }
 
+    userId = user.id;
     const body = await req.json();
-    const { mode } = body;
+    mode = body.mode ?? "chat";
 
     // Memory extraction mode — non-streaming
     if (mode === "extract_memories") {
       const { messages } = body;
       if (!Array.isArray(messages) || messages.length === 0) {
+        structuredLog({
+          request_id: requestId,
+          user_id: userId,
+          mode,
+          success: false,
+          latency_ms: Date.now() - startTime,
+          error_type: "invalid_request",
+        });
         return jsonResponse({ success: false, error: "invalid_request" }, 400);
       }
 
@@ -144,10 +191,29 @@ Deno.serve(async (req) => {
 
       const text = completion.choices[0]?.message?.content;
       if (!text) {
+        structuredLog({
+          request_id: requestId,
+          user_id: userId,
+          mode,
+          success: false,
+          latency_ms: Date.now() - startTime,
+          error_type: "empty_llm_response",
+        });
         return jsonResponse({ success: false, error: "empty_llm_response" }, 502);
       }
 
       const data = JSON.parse(text);
+
+      structuredLog({
+        request_id: requestId,
+        user_id: userId,
+        mode,
+        success: true,
+        latency_ms: Date.now() - startTime,
+        error_type: null,
+        message_count: messages.length,
+      });
+
       return jsonResponse({ success: true, data: data.memories });
     }
 
@@ -159,6 +225,14 @@ Deno.serve(async (req) => {
       typeof context !== "object" ||
       !Array.isArray(context.memories)
     ) {
+      structuredLog({
+        request_id: requestId,
+        user_id: userId,
+        mode,
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "invalid_request",
+      });
       return jsonResponse({ success: false, error: "invalid_request" }, 400);
     }
 
@@ -182,8 +256,26 @@ Deno.serve(async (req) => {
           }
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
+
+          structuredLog({
+            request_id: requestId,
+            user_id: userId,
+            mode,
+            success: true,
+            latency_ms: Date.now() - startTime,
+            error_type: null,
+            message_count: messages.length,
+          });
         } catch (err) {
-          console.error("stream error:", err instanceof Error ? err.message : String(err));
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          structuredLog({
+            request_id: requestId,
+            user_id: userId,
+            mode,
+            success: false,
+            latency_ms: Date.now() - startTime,
+            error_type: errorMsg,
+          });
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify({ error: "stream_error" })}\n\n`)
           );
@@ -201,7 +293,14 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("ai-chat error:", message);
+    structuredLog({
+      request_id: requestId,
+      user_id: userId,
+      mode,
+      success: false,
+      latency_ms: Date.now() - startTime,
+      error_type: message,
+    });
     return jsonResponse({ success: false, error: "internal_error" }, 500);
   }
 });

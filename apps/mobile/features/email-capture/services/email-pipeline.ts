@@ -3,6 +3,7 @@ import { enqueueSync, insertTransaction } from "@/features/transactions/lib/repo
 import type { AnyDb } from "@/shared/db/client";
 import { generateId } from "@/shared/lib/generate-id";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
+import { captureError } from "@/shared/lib/sentry";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
 import { getProcessedExternalIds, insertProcessedEmail } from "../lib/repository";
 import type { RawEmail } from "../schema";
@@ -198,25 +199,41 @@ export async function processEmails(
 
       // parseEmailApi already validates via llmOutputSchema.safeParse
       if (parsed.confidence < 0.7) {
-        await saveTransaction(db, userId, parsed, email, "needs_review");
-        result.needsReview++;
+        try {
+          await saveTransaction(db, userId, parsed, email, "needs_review");
+          result.needsReview++;
+        } catch (saveErr) {
+          captureError(saveErr);
+          result.failed++;
+        }
         completed++;
         onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
         continue;
       }
 
-      await saveTransaction(db, userId, parsed, email, "success");
+      try {
+        await saveTransaction(db, userId, parsed, email, "success");
+        result.saved++;
+      } catch (saveErr) {
+        captureError(saveErr);
+        result.failed++;
+        completed++;
+        onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
+        continue;
+      }
 
-      const merchantKey = normalizeMerchant(parsed.description);
-      await insertMerchantRule(
-        db,
-        userId,
-        merchantKey,
-        parsed.categoryId,
-        new Date().toISOString()
-      );
-
-      result.saved++;
+      try {
+        const merchantKey = normalizeMerchant(parsed.description);
+        await insertMerchantRule(
+          db,
+          userId,
+          merchantKey,
+          parsed.categoryId,
+          new Date().toISOString()
+        );
+      } catch (ruleErr) {
+        captureError(ruleErr);
+      }
       completed++;
       onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
     }

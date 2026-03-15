@@ -26,6 +26,7 @@ ios/
 .env.development
 .env.test
 .env.*.local
+.env.sentry-build-plugin
 
 # MCP (contains tokens)
 .mcp.json

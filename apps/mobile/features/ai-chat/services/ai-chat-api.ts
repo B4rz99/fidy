@@ -1,5 +1,6 @@
 import { fetch } from "expo/fetch";
 import { getSupabase } from "@/shared/db/supabase";
+import { captureError } from "@/shared/lib/sentry";
 import type { ExtractedMemory } from "../schema";
 
 type ChatMessage = { readonly role: "user" | "assistant"; readonly content: string };
@@ -91,7 +92,11 @@ export async function streamChat(
             return;
           }
           if (parsed.content) {
-            callbacks.onChunk(parsed.content);
+            try {
+              callbacks.onChunk(parsed.content);
+            } catch (callbackErr) {
+              captureError(callbackErr);
+            }
           }
         } catch {
           // Skip malformed SSE lines
@@ -117,7 +122,8 @@ export async function extractMemories(
       return [];
     }
     return data.data;
-  } catch {
+  } catch (error) {
+    captureError(error);
     return [];
   }
 }

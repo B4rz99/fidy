@@ -179,7 +179,7 @@ describe("useCalendarStore", () => {
     const { getAllBills } = await import("@/features/calendar/lib/repository");
     vi.mocked(getAllBills).mockRejectedValueOnce(new Error("DB error"));
 
-    await useCalendarStore.getState().loadBills();
+    await expect(useCalendarStore.getState().loadBills()).rejects.toThrow("DB error");
 
     expect(useCalendarStore.getState().isLoading).toBe(false);
   });
@@ -559,7 +559,7 @@ describe("useCalendarStore", () => {
 
     vi.mocked(getBillPaymentsForMonth).mockRejectedValueOnce(new Error("DB error"));
 
-    await useCalendarStore.getState().loadPaymentsForMonth();
+    await expect(useCalendarStore.getState().loadPaymentsForMonth()).rejects.toThrow("DB error");
 
     const { payments } = useCalendarStore.getState();
     expect(payments).toHaveLength(1);
