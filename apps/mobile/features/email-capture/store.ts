@@ -20,7 +20,7 @@ import {
 } from "./lib/repository";
 import type { EmailProvider } from "./schema";
 import { fetchBankSenders } from "./services/bank-senders-cache";
-import { type ProgressCallback, processEmails } from "./services/email-pipeline";
+import { type ProgressCallback, processEmails, processRetries } from "./services/email-pipeline";
 import { connectGmail, disconnectGmail, fetchGmailEmails } from "./services/gmail-adapter";
 import { connectOutlook, disconnectOutlook, fetchOutlookEmails } from "./services/outlook-adapter";
 
@@ -183,6 +183,8 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
           }
         });
       }
+
+      await processRetries(db, userId);
 
       // Update lastFetchedAt only for accounts whose fetch succeeded
       const now = new Date().toISOString();

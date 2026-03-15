@@ -5,7 +5,16 @@ import { generateId } from "@/shared/lib/generate-id";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { captureError } from "@/shared/lib/sentry";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
-import { getProcessedExternalIds, insertProcessedEmail } from "../lib/repository";
+import {
+  getPendingRetryEmails,
+  getProcessedExternalIds,
+  insertProcessedEmail,
+  markForRetry,
+  markPermanentlyFailed,
+  markRetrySuccess,
+  updateProcessedEmailStatus,
+} from "../lib/repository";
+import { computeNextRetryAt, isMaxRetriesReached } from "../lib/retry-backoff";
 import type { RawEmail } from "../schema";
 import type { LlmParsedTransaction } from "./llm-parser";
 import { parseEmailApi } from "./parse-email-api";
@@ -19,12 +28,12 @@ export type PipelineResult = {
   needsReview: number;
 };
 
-async function parseEmail(
+async function parseBody(
   db: AnyDb,
   userId: string,
-  email: RawEmail
+  body: string
 ): Promise<LlmParsedTransaction | null> {
-  const llmResult = await parseEmailApi(email.body);
+  const llmResult = await parseEmailApi(body);
   if (!llmResult) return null;
 
   // Check if we have a cached category for this merchant name
@@ -134,14 +143,14 @@ export async function processEmails(
       let parsed: LlmParsedTransaction | null = null;
       let parseError = false;
       try {
-        parsed = await parseEmail(db, userId, email);
+        parsed = await parseBody(db, userId, email.body);
       } catch (err) {
         console.warn(`[EmailCapture] parse threw for "${email.subject}":`, err);
         parseError = true;
       }
 
       if (!parsed) {
-        const status = parseError ? "failed" : "skipped";
+        const status = parseError ? "pending_retry" : "skipped";
         const failureReason = parseError ? "parse_error" : null;
 
         if (parseError) {
@@ -163,6 +172,9 @@ export async function processEmails(
           transactionId: null,
           confidence: null,
           createdAt: new Date().toISOString(),
+          ...(parseError
+            ? { rawBody: email.body, retryCount: 0, nextRetryAt: computeNextRetryAt(0) }
+            : {}),
         });
         completed++;
         onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
@@ -240,6 +252,115 @@ export async function processEmails(
   }
 
   await Promise.all(Array.from({ length: Math.min(Concurrency, total) }, () => worker()));
+
+  return result;
+}
+
+export type RetryResult = {
+  retried: number;
+  succeeded: number;
+  permanentlyFailed: number;
+};
+
+export async function processRetries(db: AnyDb, userId: string): Promise<RetryResult> {
+  const result: RetryResult = { retried: 0, succeeded: 0, permanentlyFailed: 0 };
+  const pendingEmails = await getPendingRetryEmails(db);
+
+  for (const email of pendingEmails) {
+    if (!email.rawBody) {
+      await markPermanentlyFailed(db, email.id);
+      result.permanentlyFailed++;
+      continue;
+    }
+
+    let parsed: LlmParsedTransaction | null = null;
+    let parseError = false;
+
+    try {
+      parsed = await parseBody(db, userId, email.rawBody);
+    } catch (err) {
+      console.warn(`[EmailCapture] retry parse threw for "${email.subject}":`, err);
+      parseError = true;
+    }
+
+    if (parseError) {
+      const nextCount = email.retryCount + 1;
+      if (isMaxRetriesReached(nextCount)) {
+        await markPermanentlyFailed(db, email.id);
+        result.permanentlyFailed++;
+      } else {
+        await markForRetry(db, email.id, nextCount, computeNextRetryAt(nextCount));
+        result.retried++;
+      }
+      continue;
+    }
+
+    if (!parsed) {
+      await updateProcessedEmailStatus(db, email.id, "skipped", null);
+      continue;
+    }
+
+    // Cross-source dedup: skip if this transaction was already captured via another source
+    const existingTxId = await findDuplicateTransaction(
+      db,
+      userId,
+      parsed.amountCents,
+      parsed.date,
+      parsed.description
+    );
+    if (existingTxId) {
+      await markRetrySuccess(db, email.id, "success", existingTxId, parsed.confidence);
+      result.succeeded++;
+      continue;
+    }
+
+    // Save retry transaction
+    try {
+      const txId = generateId("tx");
+      const now = new Date().toISOString();
+      const source = email.provider === "gmail" ? "email_gmail" : "email_outlook";
+      const status = parsed.confidence < 0.7 ? "needs_review" : "success";
+
+      await insertTransaction(db, {
+        id: txId,
+        userId,
+        type: parsed.type,
+        amountCents: parsed.amountCents,
+        categoryId: parsed.categoryId,
+        description: parsed.description,
+        date: parsed.date,
+        source,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      await enqueueSync(db, {
+        id: generateId("sq"),
+        tableName: "transactions",
+        rowId: txId,
+        operation: "insert",
+        createdAt: now,
+      });
+
+      if (status === "success") {
+        const merchantKey = normalizeMerchant(parsed.description);
+        await insertMerchantRule(db, userId, merchantKey, parsed.categoryId, now);
+      }
+
+      await markRetrySuccess(db, email.id, status, txId, parsed.confidence);
+      result.succeeded++;
+    } catch (saveErr) {
+      captureError(saveErr);
+      const nextCount = email.retryCount + 1;
+      if (isMaxRetriesReached(nextCount)) {
+        await markPermanentlyFailed(db, email.id);
+        result.permanentlyFailed++;
+      } else {
+        await markForRetry(db, email.id, nextCount, computeNextRetryAt(nextCount));
+        result.retried++;
+      }
+    }
+  }
 
   return result;
 }

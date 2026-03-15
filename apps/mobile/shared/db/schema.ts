@@ -84,6 +84,9 @@ export const processedEmails = sqliteTable(
     transactionId: text("transaction_id"),
     confidence: real("confidence"),
     createdAt: text("created_at").notNull(),
+    rawBody: text("raw_body"),
+    retryCount: integer("retry_count").notNull().default(0),
+    nextRetryAt: text("next_retry_at"),
   },
   (table) => [
     uniqueIndex("uq_processed_external_id").on(table.externalId),

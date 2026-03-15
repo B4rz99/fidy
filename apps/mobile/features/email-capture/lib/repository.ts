@@ -1,4 +1,4 @@
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, lte, sql } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db/client";
 import { emailAccounts, processedEmails } from "@/shared/db/schema";
 
@@ -74,4 +74,45 @@ export async function updateProcessedEmailStatus(
 
 export async function dismissProcessedEmail(db: AnyDb, id: string) {
   await db.delete(processedEmails).where(eq(processedEmails.id, id));
+}
+
+export async function getPendingRetryEmails(db: AnyDb) {
+  return db
+    .select()
+    .from(processedEmails)
+    .where(
+      and(
+        eq(processedEmails.status, "pending_retry"),
+        lte(processedEmails.nextRetryAt, sql`strftime('%Y-%m-%dT%H:%M:%fZ', 'now')`)
+      )
+    )
+    .orderBy(desc(processedEmails.receivedAt))
+    .limit(50);
+}
+
+export async function markForRetry(db: AnyDb, id: string, retryCount: number, nextRetryAt: string) {
+  await db
+    .update(processedEmails)
+    .set({ status: "pending_retry", retryCount, nextRetryAt })
+    .where(eq(processedEmails.id, id));
+}
+
+export async function markPermanentlyFailed(db: AnyDb, id: string) {
+  await db
+    .update(processedEmails)
+    .set({ status: "failed", rawBody: null })
+    .where(eq(processedEmails.id, id));
+}
+
+export async function markRetrySuccess(
+  db: AnyDb,
+  id: string,
+  status: "success" | "needs_review",
+  transactionId: string,
+  confidence: number
+) {
+  await db
+    .update(processedEmails)
+    .set({ status, transactionId, confidence, rawBody: null })
+    .where(eq(processedEmails.id, id));
 }
