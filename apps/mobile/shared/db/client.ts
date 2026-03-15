@@ -23,6 +23,7 @@ export function getDb(userId: string) {
       db = drizzle(sqliteRef);
       currentUserId = userId;
     } catch (error) {
+      resetDb();
       captureError(error);
       throw error;
     }

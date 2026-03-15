@@ -15,7 +15,7 @@ export function ErrorFallback() {
     >
       <Image
         // biome-ignore lint/style/useNamingConvention: RN Image requires this prop name
-        source={require("../../../assets/images/icon.png")}
+        source={require("../../assets/images/icon.png")}
         style={{ width: 80, height: 80, marginBottom: 24, borderRadius: 16 }}
       />
       <Text
@@ -42,7 +42,9 @@ export function ErrorFallback() {
         {"Don't worry — your data is safe.\nPlease restart the app to continue."}
       </Text>
       <Pressable
-        onPress={() => Updates.reloadAsync()}
+        onPress={() => {
+          Updates.reloadAsync().catch(() => {});
+        }}
         style={({ pressed }) => ({
           backgroundColor: Colors.light.primary,
           paddingHorizontal: 32,

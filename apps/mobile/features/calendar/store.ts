@@ -93,8 +93,9 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     try {
       const rows = await getAllBills(dbRef, userIdRef);
       set({ bills: rows.map(fromBillRow), isLoading: false });
-    } catch {
+    } catch (error) {
       set({ isLoading: false });
+      throw error;
     }
   },
 
@@ -106,8 +107,9 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     try {
       const rows = await getBillPaymentsForMonth(dbRef, startIso, endIso);
       set({ payments: rows as BillPayment[] });
-    } catch {
+    } catch (error) {
       // keep existing payments on error
+      throw error;
     }
   },
 

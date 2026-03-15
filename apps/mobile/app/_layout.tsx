@@ -149,8 +149,8 @@ function RootLayout() {
             options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
           />
         </Stack>
+        {db && userId && <AuthenticatedShell db={db} userId={userId} />}
       </SentryErrorBoundary>
-      {db && userId && <AuthenticatedShell db={db} userId={userId} />}
       <StatusBar style="auto" />
     </GestureHandlerRootView>
   );

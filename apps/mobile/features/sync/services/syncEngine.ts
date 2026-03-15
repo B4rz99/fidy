@@ -120,6 +120,7 @@ export async function syncPull(
 
   const rows = data as SupabaseTransactionRow[];
 
+  const succeededTimestamps: string[] = [];
   for (const serverRow of rows) {
     try {
       const localRow = await getTransactionById(db, serverRow.id);
@@ -127,16 +128,14 @@ export async function syncPull(
       if (shouldUpdateLocal(serverRow.updated_at, localRow?.updatedAt)) {
         await upsertTransaction(db, fromSupabaseRow(serverRow));
       }
+      succeededTimestamps.push(serverRow.updated_at);
     } catch (error) {
       captureError(error);
     }
   }
 
-  if (rows.length > 0) {
-    const maxUpdatedAt = rows.reduce(
-      (max, r) => (r.updated_at > max ? r.updated_at : max),
-      rows[0].updated_at
-    );
+  if (succeededTimestamps.length > 0) {
+    const maxUpdatedAt = succeededTimestamps.reduce((max, ts) => (ts > max ? ts : max));
     await setSyncMeta(db, LAST_SYNC_AT, maxUpdatedAt);
   } else if (!lastSyncAt) {
     await setSyncMeta(db, LAST_SYNC_AT, new Date().toISOString());

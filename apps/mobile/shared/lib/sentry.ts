@@ -10,8 +10,7 @@ export function initSentry(dsn: string): void {
 }
 
 export function captureError(error: unknown): void {
-  const normalized = error instanceof Error ? error : new Error(String(error));
-  Sentry.captureException(normalized);
+  Sentry.captureException(error);
 }
 
 export const SentryErrorBoundary = Sentry.ErrorBoundary;

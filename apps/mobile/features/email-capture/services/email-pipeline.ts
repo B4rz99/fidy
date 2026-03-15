@@ -213,7 +213,16 @@ export async function processEmails(
 
       try {
         await saveTransaction(db, userId, parsed, email, "success");
+        result.saved++;
+      } catch (saveErr) {
+        captureError(saveErr);
+        result.failed++;
+        completed++;
+        onProgress?.({ total, completed, saved: result.saved, failed: result.failed });
+        continue;
+      }
 
+      try {
         const merchantKey = normalizeMerchant(parsed.description);
         await insertMerchantRule(
           db,
@@ -222,11 +231,8 @@ export async function processEmails(
           parsed.categoryId,
           new Date().toISOString()
         );
-
-        result.saved++;
-      } catch (saveErr) {
-        captureError(saveErr);
-        result.failed++;
+      } catch (ruleErr) {
+        captureError(ruleErr);
       }
       completed++;
       onProgress?.({ total, completed, saved: result.saved, failed: result.failed });

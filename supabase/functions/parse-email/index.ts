@@ -155,9 +155,22 @@ Deno.serve(async (req) => {
     }
 
     userId = user.id;
-    const payload = await req.json();
+    let payload: Record<string, unknown>;
+    try {
+      payload = await req.json();
+    } catch {
+      structuredLog({
+        request_id: requestId,
+        user_id: userId,
+        mode: "",
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "invalid_json",
+      });
+      return jsonResponse({ success: false, error: "invalid_json" }, 400);
+    }
     const emailBody: unknown = payload.body;
-    mode = payload.mode ?? "";
+    mode = (payload.mode as string) ?? "";
 
     if (
       typeof emailBody !== "string" ||
