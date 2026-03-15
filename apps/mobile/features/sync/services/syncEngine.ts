@@ -9,6 +9,7 @@ import {
   upsertTransaction,
 } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db/client";
+import { captureError } from "@/shared/lib/sentry";
 
 const LAST_SYNC_AT = "last_sync_at";
 
@@ -120,10 +121,14 @@ export async function syncPull(
   const rows = data as SupabaseTransactionRow[];
 
   for (const serverRow of rows) {
-    const localRow = await getTransactionById(db, serverRow.id);
+    try {
+      const localRow = await getTransactionById(db, serverRow.id);
 
-    if (shouldUpdateLocal(serverRow.updated_at, localRow?.updatedAt)) {
-      await upsertTransaction(db, fromSupabaseRow(serverRow));
+      if (shouldUpdateLocal(serverRow.updated_at, localRow?.updatedAt)) {
+        await upsertTransaction(db, fromSupabaseRow(serverRow));
+      }
+    } catch (error) {
+      captureError(error);
     }
   }
 

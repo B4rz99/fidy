@@ -1,4 +1,5 @@
 import * as SecureStore from "expo-secure-store";
+import { captureError } from "@/shared/lib/sentry";
 import type { ConnectResult, RawEmail } from "../schema";
 import { getGmailRedirectUri } from "../schema";
 
@@ -9,41 +10,51 @@ const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
 
 export async function isGmailConnected(): Promise<boolean> {
-  const token = await SecureStore.getItemAsync(TOKEN_KEY);
-  return token != null;
+  try {
+    const token = await SecureStore.getItemAsync(TOKEN_KEY);
+    return token != null;
+  } catch (error) {
+    captureError(error);
+    return false;
+  }
 }
 
 async function getValidToken(clientId: string): Promise<string | null> {
-  const token = await SecureStore.getItemAsync(TOKEN_KEY);
-  if (!token) return null;
+  try {
+    const token = await SecureStore.getItemAsync(TOKEN_KEY);
+    if (!token) return null;
 
-  const testResponse = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+    const testResponse = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-  if (testResponse.ok) return token;
+    if (testResponse.ok) return token;
 
-  const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-  if (!refreshToken) return null;
+    const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+    if (!refreshToken) return null;
 
-  const refreshResponse = await fetch(TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: clientId,
-      grant_type: "refresh_token",
-      refresh_token: refreshToken,
-    }).toString(),
-  });
+    const refreshResponse = await fetch(TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: clientId,
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+      }).toString(),
+    });
 
-  if (!refreshResponse.ok) return null;
+    if (!refreshResponse.ok) return null;
 
-  const data = await refreshResponse.json();
-  await SecureStore.setItemAsync(TOKEN_KEY, data.access_token);
-  if (data.refresh_token) {
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.refresh_token);
+    const data = await refreshResponse.json();
+    await SecureStore.setItemAsync(TOKEN_KEY, data.access_token);
+    if (data.refresh_token) {
+      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.refresh_token);
+    }
+    return data.access_token;
+  } catch (error) {
+    captureError(error);
+    return null;
   }
-  return data.access_token;
 }
 
 export async function connectGmail(clientId: string): Promise<ConnectResult> {
@@ -217,10 +228,15 @@ function stripHtml(html: string): string {
 }
 
 function decodeBase64Url(data: string): string {
-  const base64 = data.replace(/-/g, "+").replace(/_/g, "/");
-  const binary = atob(base64);
-  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
+  try {
+    const base64 = data.replace(/-/g, "+").replace(/_/g, "/");
+    const binary = atob(base64);
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  } catch (error) {
+    captureError(error);
+    return "";
+  }
 }
 
 function parseGmailMessage(id: string, msg: { payload: GmailPayload }): RawEmail | null {

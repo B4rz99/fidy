@@ -11,6 +11,7 @@ import { useTransactionStore } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db/client";
 import { parseIsoDate, toIsoDate } from "@/shared/lib/format-date";
 import { generateId } from "@/shared/lib/generate-id";
+import { captureError } from "@/shared/lib/sentry";
 import { requestNotificationPermissions, scheduleBillNotifications } from "./lib/notifications";
 import {
   deleteBill as dbDeleteBill,
@@ -78,16 +79,12 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
 
   nextMonth: () => {
     set((s) => ({ currentMonth: addMonths(s.currentMonth, 1) }));
-    get()
-      .loadPaymentsForMonth()
-      .catch(() => {});
+    get().loadPaymentsForMonth().catch(captureError);
   },
 
   prevMonth: () => {
     set((s) => ({ currentMonth: subMonths(s.currentMonth, 1) }));
-    get()
-      .loadPaymentsForMonth()
-      .catch(() => {});
+    get().loadPaymentsForMonth().catch(captureError);
   },
 
   loadBills: async () => {
@@ -149,7 +146,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     // Schedule notifications (best-effort, don't block the add)
     requestNotificationPermissions()
       .then((granted) => (granted ? scheduleBillNotifications(newBill) : undefined))
-      .catch(() => {});
+      .catch(captureError);
 
     return true;
   },

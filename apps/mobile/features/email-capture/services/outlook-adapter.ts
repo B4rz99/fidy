@@ -1,4 +1,5 @@
 import * as SecureStore from "expo-secure-store";
+import { captureError } from "@/shared/lib/sentry";
 import type { ConnectResult, RawEmail } from "../schema";
 import { EMAIL_REDIRECT_URI } from "../schema";
 
@@ -9,42 +10,52 @@ const TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 const SCOPE = "Mail.Read";
 
 export async function isOutlookConnected(): Promise<boolean> {
-  const token = await SecureStore.getItemAsync(TOKEN_KEY);
-  return token != null;
+  try {
+    const token = await SecureStore.getItemAsync(TOKEN_KEY);
+    return token != null;
+  } catch (error) {
+    captureError(error);
+    return false;
+  }
 }
 
 async function getValidToken(clientId: string): Promise<string | null> {
-  const token = await SecureStore.getItemAsync(TOKEN_KEY);
-  if (!token) return null;
+  try {
+    const token = await SecureStore.getItemAsync(TOKEN_KEY);
+    if (!token) return null;
 
-  const testResponse = await fetch("https://graph.microsoft.com/v1.0/me", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+    const testResponse = await fetch("https://graph.microsoft.com/v1.0/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-  if (testResponse.ok) return token;
+    if (testResponse.ok) return token;
 
-  const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-  if (!refreshToken) return null;
+    const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+    if (!refreshToken) return null;
 
-  const refreshResponse = await fetch(TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: clientId,
-      grant_type: "refresh_token",
-      refresh_token: refreshToken,
-      scope: `${SCOPE} User.Read`,
-    }).toString(),
-  });
+    const refreshResponse = await fetch(TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: clientId,
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+        scope: `${SCOPE} User.Read`,
+      }).toString(),
+    });
 
-  if (!refreshResponse.ok) return null;
+    if (!refreshResponse.ok) return null;
 
-  const data = await refreshResponse.json();
-  await SecureStore.setItemAsync(TOKEN_KEY, data.access_token);
-  if (data.refresh_token) {
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.refresh_token);
+    const data = await refreshResponse.json();
+    await SecureStore.setItemAsync(TOKEN_KEY, data.access_token);
+    if (data.refresh_token) {
+      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.refresh_token);
+    }
+    return data.access_token;
+  } catch (error) {
+    captureError(error);
+    return null;
   }
-  return data.access_token;
 }
 
 export async function connectOutlook(clientId: string): Promise<ConnectResult> {

@@ -175,6 +175,24 @@ vi.mock("expo-web-browser", () => ({
   openBrowserAsync: vi.fn(),
 }));
 
+// Mock @sentry/react-native
+vi.mock("@sentry/react-native", () => ({
+  init: vi.fn(),
+  captureException: vi.fn(),
+  ErrorBoundary: "SentryErrorBoundary",
+  wrap: vi.fn((component: unknown) => component),
+}));
+
+// Mock burnt
+vi.mock("burnt", () => ({
+  toast: vi.fn(),
+}));
+
+// Mock expo-updates
+vi.mock("expo-updates", () => ({
+  reloadAsync: vi.fn(),
+}));
+
 // Mock expo-background-task
 vi.mock("expo-background-task", () => ({
   registerTaskAsync: vi.fn(),

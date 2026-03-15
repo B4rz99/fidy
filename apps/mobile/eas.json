@@ -11,7 +11,8 @@
         "simulator": false
       },
       "env": {
-        "APP_ENV": "development"
+        "APP_ENV": "development",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://6701b1869738a8e1f0900bac7c8c91b5@o4511006514085888.ingest.us.sentry.io/4511046633914368"
       }
     },
     "preview": {
@@ -20,13 +21,15 @@
         "simulator": false
       },
       "env": {
-        "APP_ENV": "preview"
+        "APP_ENV": "preview",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://6701b1869738a8e1f0900bac7c8c91b5@o4511006514085888.ingest.us.sentry.io/4511046633914368"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "APP_ENV": "production"
+        "APP_ENV": "production",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://6701b1869738a8e1f0900bac7c8c91b5@o4511006514085888.ingest.us.sentry.io/4511046633914368"
       }
     }
   }
