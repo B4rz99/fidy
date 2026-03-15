@@ -30,6 +30,7 @@
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
+    "@sentry/cli": "^3.3.3",
     "@sentry/react-native": "^8.4.0",
     "@shopify/flash-list": "^1.7.5",
     "@supabase/supabase-js": "^2.98.0",
