@@ -137,15 +137,22 @@ export async function syncPull(
   }
 
   // Only advance cursor up to (but not past) the earliest failed row
-  // so it gets retried on the next pull
-  const cursorCandidates = rows.map((r) => r.updated_at);
-  const maxUpdatedAt = earliestFailure
-    ? cursorCandidates
-        .filter((ts) => ts < earliestFailure)
-        .reduce((max, ts) => (ts > max ? ts : max), "")
-    : cursorCandidates.reduce((max, ts) => (ts > max ? ts : max), "");
-
-  if (maxUpdatedAt) {
+  // so it gets retried on the next pull. If the earliest row failed,
+  // don't advance at all — the entire batch will be retried.
+  if (earliestFailure) {
+    const safeTimestamps = rows
+      .map((r) => r.updated_at)
+      .filter((ts) => ts < earliestFailure);
+    if (safeTimestamps.length > 0) {
+      const safeCursor = safeTimestamps.reduce((max, ts) => (ts > max ? ts : max));
+      await setSyncMeta(db, LAST_SYNC_AT, safeCursor);
+    }
+    // else: earliest row failed — don't advance cursor
+  } else if (rows.length > 0) {
+    const maxUpdatedAt = rows.reduce(
+      (max, r) => (r.updated_at > max ? r.updated_at : max),
+      rows[0].updated_at
+    );
     await setSyncMeta(db, LAST_SYNC_AT, maxUpdatedAt);
   } else if (!lastSyncAt) {
     await setSyncMeta(db, LAST_SYNC_AT, new Date().toISOString());
