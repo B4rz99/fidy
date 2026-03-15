@@ -144,7 +144,9 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       return;
     }
 
-    set({ isFetching: true });
+    // Clear any stale progress state from a previous run (e.g. if clearProgress
+    // wasn't called before this sync was triggered by AppState change)
+    set({ isFetching: true, phase: null, progress: null });
 
     try {
       const { accounts } = get();
