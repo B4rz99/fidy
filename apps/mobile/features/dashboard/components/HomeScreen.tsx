@@ -12,7 +12,9 @@ import {
 import { useSharedValue } from "react-native-reanimated";
 import { DetectedTransactionsBanner } from "@/features/capture-sources/components/DetectedTransactionsBanner";
 import { EmailConnectBanner } from "@/features/email-capture/components/EmailConnectBanner";
+import { EmailProgressCard } from "@/features/email-capture/components/EmailProgressCard";
 import { FailedEmailsBanner } from "@/features/email-capture/components/FailedEmailsBanner";
+import { buildProgressDisplay } from "@/features/email-capture/lib/progress-phases";
 import { getGmailClientId, getOutlookClientId } from "@/features/email-capture/schema";
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { SyncConflictBanner } from "@/features/sync/components/SyncConflictBanner";
@@ -29,8 +31,6 @@ import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";
 import { CompactBalanceBar } from "./CompactBalanceBar";
 import { DateHeader } from "./DateHeader";
-import { EmailProgressCard } from "@/features/email-capture/components/EmailProgressCard";
-import { buildProgressDisplay } from "@/features/email-capture/lib/progress-phases";
 import { EmptyTransactions } from "./EmptyTransactions";
 import { NeedsReviewBanner } from "./NeedsReviewBanner";
 

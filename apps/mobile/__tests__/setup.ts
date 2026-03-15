@@ -246,6 +246,14 @@ vi.mock("expo-android-notification-listener-service", () => ({
   isPermissionGranted: vi.fn(() => Promise.resolve(false)),
 }));
 
+// Mock @fidy/assets (monorepo package with SVG logo paths)
+vi.mock("@fidy/assets", () => ({
+  LOGO_COIN: { cx: 0, cy: 0, r: 10 },
+  LOGO_COLORS: { light: { coin: "#000", dollar: "#000", text: "#000" }, dark: { coin: "#fff", dollar: "#fff", text: "#fff" } },
+  LOGO_DOLLAR_PATH: "M0 0",
+  LOGO_TEXT_PATH: "M0 0",
+}));
+
 // Mock expo native module bridge (used by local expo-app-intents module)
 vi.mock("expo", () => ({
   requireNativeModule: vi.fn(() => ({

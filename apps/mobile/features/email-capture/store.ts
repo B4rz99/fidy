@@ -22,8 +22,6 @@ import {
 } from "./lib/repository";
 import type { EmailProvider } from "./schema";
 import { fetchBankSenders } from "./services/bank-senders-cache";
-import type { ProgressPhase } from "./lib/progress-phases";
-import { isFirstFetchForAny, shouldShowProgress } from "./lib/progress-phases";
 import { type ProgressCallback, processEmails, processRetries } from "./services/email-pipeline";
 import { connectGmail, disconnectGmail, fetchGmailEmails } from "./services/gmail-adapter";
 import { connectOutlook, disconnectOutlook, fetchOutlookEmails } from "./services/outlook-adapter";

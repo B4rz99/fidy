@@ -11,10 +11,7 @@ export const EmptyTransactions = () => {
       <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
         No transactions yet
       </Text>
-      <Text
-        className="font-poppins-medium text-caption text-center"
-        style={{ color: mutedColor }}
-      >
+      <Text className="font-poppins-medium text-caption text-center" style={{ color: mutedColor }}>
         Connect an email account or add transactions manually to get started
       </Text>
     </View>
