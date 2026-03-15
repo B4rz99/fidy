@@ -59,26 +59,13 @@ a {
 }
 
 .logo {
-  display: flex;
-  align-items: center;
-  gap: 0;
+  display: inline-block;
   text-decoration: none;
 }
 
-.logo-text {
-  font-size: 31px;
-  font-weight: 800;
-  color: var(--color-primary);
-  letter-spacing: -0.03em;
-}
-
-.logo-coin {
-  width: 8px;
-  height: 8px;
-  margin-bottom: 24px;
-  margin-left: -48px;
-  margin-right: 40px;
-  transform: translateX(0.5px);
+.logo svg {
+  width: 100px;
+  height: auto;
 }
 
 /* ── Language Pill ── */
