@@ -11,6 +11,7 @@ export const LOGO_COIN = {
   cy: 55.96,
   r: 16,
   strokeWidth: 2,
+  groupOffsetY: -7.5,
 } as const;
 
 export const LOGO_COLORS = {

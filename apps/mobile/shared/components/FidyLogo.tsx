@@ -6,7 +6,7 @@ import {
   LOGO_VIEWBOX,
 } from "@fidy/assets";
 import { useColorScheme } from "react-native";
-import Svg, { Circle, Path } from "react-native-svg";
+import Svg, { Circle, G, Path } from "react-native-svg";
 
 interface FidyLogoProps {
   size?: "default" | "small";
@@ -31,15 +31,17 @@ export function FidyLogo({ size = "default" }: FidyLogoProps) {
       accessibilityLabel="Fidy logo"
     >
       <Path d={LOGO_TEXT_PATH} fill={colors.text} />
-      <Circle
-        cx={LOGO_COIN.cx}
-        cy={LOGO_COIN.cy}
-        r={LOGO_COIN.r}
-        fill={colors.coinFill}
-        stroke={colors.coinStroke}
-        strokeWidth={LOGO_COIN.strokeWidth}
-      />
-      <Path d={LOGO_DOLLAR_PATH} fill={colors.dollar} />
+      <G translateY={LOGO_COIN.groupOffsetY}>
+        <Circle
+          cx={LOGO_COIN.cx}
+          cy={LOGO_COIN.cy}
+          r={LOGO_COIN.r}
+          fill={colors.coinFill}
+          stroke={colors.coinStroke}
+          strokeWidth={LOGO_COIN.strokeWidth}
+        />
+        <Path d={LOGO_DOLLAR_PATH} fill={colors.dollar} />
+      </G>
     </Svg>
   );
 }
