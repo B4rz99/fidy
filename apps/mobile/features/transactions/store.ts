@@ -187,13 +187,14 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
       const hasMore = rows.length > reloadSize;
       const pageData = hasMore ? rows.slice(0, reloadSize) : rows;
 
-      // Skip pages update if data hasn't changed — avoids FlashList re-layout
+      // Skip pages update if data hasn't changed — avoids FlatList re-layout
       const currentPages = get().pages;
       const sameData =
         currentPages.length === pageData.length &&
         currentPages.length > 0 &&
         currentPages[0].id === pageData[0].id &&
-        currentPages[currentPages.length - 1].id === pageData[pageData.length - 1].id;
+        currentPages[currentPages.length - 1].id === pageData[pageData.length - 1].id &&
+        currentPages[0].updatedAt.getTime() === new Date(pageData[0].updatedAt).getTime();
 
       if (!sameData) {
         set({
@@ -268,9 +269,13 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     await get().refresh();
   },
 
-  addToCache: (tx) => set((s) => ({ pages: [tx, ...s.pages] })),
+  addToCache: (tx) => set((s) => ({ pages: [tx, ...s.pages], offset: s.offset + 1 })),
 
-  removeFromCache: (id) => set((s) => ({ pages: s.pages.filter((t) => t.id !== id) })),
+  removeFromCache: (id) =>
+    set((s) => {
+      const filtered = s.pages.filter((t) => t.id !== id);
+      return { pages: filtered, offset: Math.max(0, s.offset - 1) };
+    }),
 
   resetForm: () => set({ ...INITIAL_FORM, date: new Date() }),
 

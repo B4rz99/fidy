@@ -171,11 +171,12 @@ describe("buildChatContext", () => {
 
   it("passes through all provided transactions without filtering", () => {
     const txs = [
-      makeTx({ date: new Date(2026, 2, 1) }), // March
-      makeTx({ id: "tx_2", date: new Date(2026, 1, 15) }), // Feb
+      makeTx({ date: new Date(2026, 2, 1) }), // March — current month
+      makeTx({ id: "tx_2", date: new Date(2026, 1, 15) }), // Feb — previous month
+      makeTx({ id: "tx_3", date: new Date(2025, 5, 10) }), // June 2025 — outside range
     ];
     const result = buildChatContext(txs, [], "2026-03", 0, [], []);
 
-    expect(result.transactions).toHaveLength(2);
+    expect(result.transactions).toHaveLength(3);
   });
 });

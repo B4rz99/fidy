@@ -117,7 +117,7 @@ export const HomeScreen = () => {
   const dailySpending = useTransactionStore((s) => s.dailySpending);
 
   const scrollY = useSharedValue(0);
-  const [balanceBottom, setBalanceBottom] = useState(0);
+  const [balanceBottom, setBalanceBottom] = useState(-1);
 
   // Pre-compute which transactions are the first of their date group
   const dateBreaks = useMemo(() => {
@@ -172,8 +172,6 @@ export const HomeScreen = () => {
     [balanceCents, categorySpending, dailySpending, handleBalanceLayout]
   );
 
-  const listFooter = useMemo(() => <View style={{ height: TAB_BAR_CLEARANCE }} />, []);
-
   return (
     <ScreenLayout
       title="fidy"
@@ -195,7 +193,6 @@ export const HomeScreen = () => {
         onScroll={handleScroll}
         scrollEventThrottle={16}
         ListHeaderComponent={listHeader}
-        ListFooterComponent={listFooter}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }}
       />

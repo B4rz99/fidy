@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import type { StoredTransaction } from "@/features/transactions/schema";
 import { useTransactionStore } from "@/features/transactions/store";
 import { parseIsoDate, toIsoDate } from "@/shared/lib/format-date";
 import { buildChatContext } from "../lib/build-context";
@@ -61,7 +62,18 @@ export function useStreamingChat() {
       await store.addUserMessage(text);
 
       const currentMonth = toIsoDate(new Date()).slice(0, 7);
-      const chatData = useTransactionStore.getState().getChatData(currentMonth);
+      const chatData = (() => {
+        try {
+          return useTransactionStore.getState().getChatData(currentMonth);
+        } catch {
+          return {
+            recentTransactions: [] as StoredTransaction[],
+            balanceCents: 0,
+            categorySpending: [] as { categoryId: string; totalCents: number }[],
+            previousMonthSpending: [] as { categoryId: string; totalCents: number }[],
+          };
+        }
+      })();
       const context = buildChatContext(
         chatData.recentTransactions,
         store.memories,

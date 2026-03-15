@@ -17,19 +17,23 @@ type CompactBalanceBarProps = {
 export function CompactBalanceBar({ balanceCents, scrollY, threshold }: CompactBalanceBarProps) {
   const primaryColor = useThemeColor("primary");
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [threshold - 20, threshold], [0, 1], Extrapolation.CLAMP),
-    transform: [
-      {
-        translateY: interpolate(
-          scrollY.value,
-          [threshold - 20, threshold],
-          [-10, 0],
-          Extrapolation.CLAMP
-        ),
-      },
-    ],
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    // Hide until layout is measured (threshold < 0 means not yet measured)
+    if (threshold < 0) return { opacity: 0 };
+    return {
+      opacity: interpolate(scrollY.value, [threshold - 20, threshold], [0, 1], Extrapolation.CLAMP),
+      transform: [
+        {
+          translateY: interpolate(
+            scrollY.value,
+            [threshold - 20, threshold],
+            [-10, 0],
+            Extrapolation.CLAMP
+          ),
+        },
+      ],
+    };
+  });
 
   return (
     <Animated.View style={animatedStyle}>

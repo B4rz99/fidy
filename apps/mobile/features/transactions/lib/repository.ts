@@ -25,7 +25,7 @@ export function getTransactionsPaginated(db: AnyDb, userId: string, limit: numbe
     .select()
     .from(transactions)
     .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
-    .orderBy(desc(transactions.date))
+    .orderBy(desc(transactions.date), desc(transactions.createdAt))
     .limit(limit + 1)
     .offset(offset)
     .all();
