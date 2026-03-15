@@ -14,7 +14,6 @@ export function ErrorFallback() {
       }}
     >
       <Image
-        // biome-ignore lint/style/useNamingConvention: RN Image requires this prop name
         source={require("../../assets/images/icon.png")}
         style={{ width: 80, height: 80, marginBottom: 24, borderRadius: 16 }}
       />

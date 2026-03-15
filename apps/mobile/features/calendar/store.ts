@@ -104,13 +104,8 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     const { currentMonth } = get();
     const startIso = toIsoDate(startOfMonth(currentMonth));
     const endIso = toIsoDate(endOfMonth(currentMonth));
-    try {
-      const rows = await getBillPaymentsForMonth(dbRef, startIso, endIso);
-      set({ payments: rows as BillPayment[] });
-    } catch (error) {
-      // keep existing payments on error
-      throw error;
-    }
+    const rows = await getBillPaymentsForMonth(dbRef, startIso, endIso);
+    set({ payments: rows as BillPayment[] });
   },
 
   addBill: async (name, amount, frequency, category, startDate) => {
