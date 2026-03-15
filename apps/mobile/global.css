@@ -1,3 +1,85 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+@import "nativewind/theme";
+
+@theme {
+  /* Colors — light variants (used as default) */
+  --color-page: #FAEBD7;
+  --color-page-dark: #0D0D0D;
+  --color-primary: #1A1A1A;
+  --color-primary-dark: #F0F0F0;
+  --color-secondary: #6D6D6D;
+  --color-secondary-dark: #9A9A9A;
+  --color-tertiary: #929292;
+  --color-tertiary-dark: #5E5E5E;
+  --color-accent-green: #7CB243;
+  --color-accent-green-dark: #8BC34A;
+  --color-accent-green-light: #D4EDBA;
+  --color-accent-green-light-dark: #1A2E12;
+  --color-accent-red: #D45B5B;
+  --color-accent-red-dark: #E06060;
+  --color-accent-red-light: #D45B5B11;
+  --color-accent-red-light-dark: #E0606011;
+  --color-card: #FFFFFF;
+  --color-card-dark: #1C1C1E;
+  --color-peach-light: #F5E1C8;
+  --color-peach-light-dark: #2A1F1A;
+  --color-peach-btn: #FAE3D9;
+  --color-peach-btn-dark: #2A1F1A;
+  --color-chart-bg: #F5E1C8;
+  --color-chart-bg-dark: #2A1F1A;
+  --color-nav: #1A1A1A;
+  --color-nav-dark: #1C1C1E;
+  --color-login-bg: #EDECEA;
+  --color-login-bg-dark: #0D0D0D;
+  --color-login-google: #FFFFFF;
+  --color-login-google-dark: #1C1C1E;
+  --color-login-google-border: #E5E2DC;
+  --color-login-google-border-dark: #3A3A3C;
+  --color-login-ms: #F3F2EE;
+  --color-login-ms-dark: #2C2C2E;
+  --color-border-subtle: #EBEBEB;
+  --color-border-subtle-dark: #2C2C2E;
+
+  /* Chart category colors */
+  --color-chart-food: #7CB243;
+  --color-chart-transport: #E8A090;
+  --color-chart-entertainment: #F5C842;
+  --color-chart-health: #E06060;
+  --color-chart-education: #5B9BD5;
+  --color-chart-home: #8BBAE8;
+  --color-chart-clothing: #1A1A1A;
+  --color-chart-services: #F0A04B;
+  --color-chart-transfer: #6DC4B0;
+  --color-chart-other: #B8A9D4;
+
+  /* Font families */
+  --font-poppins-medium: "Poppins_500Medium";
+  --font-poppins-semibold: "Poppins_600SemiBold";
+  --font-poppins-bold: "Poppins_700Bold";
+  --font-poppins-extrabold: "Poppins_800ExtraBold";
+
+  /* Font sizes (with line heights) */
+  --text-nav: 10px;
+  --text-nav--line-height: 14px;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+  --text-label: 13px;
+  --text-label--line-height: 18px;
+  --text-body: 14px;
+  --text-body--line-height: 20px;
+  --text-section: 16px;
+  --text-section--line-height: 22px;
+  --text-title: 18px;
+  --text-title--line-height: 24px;
+  --text-logo: 22px;
+  --text-logo--line-height: 28px;
+  --text-balance: 32px;
+  --text-balance--line-height: 40px;
+
+  /* Border radius */
+  --radius-icon: 12px;
+  --radius-chart: 16px;
+  --radius-nav-pill: 36px;
+}

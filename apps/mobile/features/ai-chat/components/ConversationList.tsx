@@ -149,7 +149,6 @@ export function ConversationList({
         data={sessions}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        estimatedItemSize={72}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
           paddingBottom: TAB_BAR_CLEARANCE,

@@ -73,9 +73,6 @@ vi.mock("lucide-react-native", () => ({
   TriangleAlert: "TriangleAlert",
 }));
 
-// Mock nativewind/preset (needed for tailwind config import)
-vi.mock("nativewind/preset", () => ({ default: {} }));
-
 // Mock expo-haptics
 vi.mock("expo-haptics", () => ({
   impactAsync: vi.fn(),
