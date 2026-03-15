@@ -223,9 +223,7 @@ describe("email capture repository", () => {
   });
 
   it("getPendingRetryEmails returns pending_retry emails where nextRetryAt <= now", async () => {
-    const mockRows = [
-      { id: "pe-1", status: "pending_retry", rawBody: "body", retryCount: 1 },
-    ];
+    const mockRows = [{ id: "pe-1", status: "pending_retry", rawBody: "body", retryCount: 1 }];
     const mockLimit = vi.fn().mockResolvedValueOnce(mockRows);
     mockWhere.mockReturnValueOnce({ orderBy: vi.fn().mockReturnValueOnce({ limit: mockLimit }) });
 

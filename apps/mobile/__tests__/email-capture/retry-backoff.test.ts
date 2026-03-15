@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { computeNextRetryAt, isMaxRetriesReached } from "@/features/email-capture/lib/retry-backoff";
+import {
+  computeNextRetryAt,
+  isMaxRetriesReached,
+} from "@/features/email-capture/lib/retry-backoff";
 
 const FIXED_NOW = new Date("2026-03-15T12:00:00.000Z");
 
