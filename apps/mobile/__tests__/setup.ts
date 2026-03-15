@@ -158,6 +158,13 @@ vi.mock("expo-secure-store", () => ({
   getItemAsync: vi.fn(),
   setItemAsync: vi.fn(),
   deleteItemAsync: vi.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+}));
+
+// Mock expo-crypto
+vi.mock("expo-crypto", () => ({
+  getRandomBytes: vi.fn(() => new Uint8Array(32)),
 }));
 
 // Mock @react-native-community/netinfo
