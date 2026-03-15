@@ -1,0 +1,6 @@
+{
+  "buildCommand": "",
+  "outputDirectory": ".",
+  "cleanUrls": true,
+  "redirects": [{ "source": "/", "destination": "/es", "statusCode": 302 }]
+}
