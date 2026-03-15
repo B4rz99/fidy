@@ -85,6 +85,13 @@
       "when": 1773556897757,
       "tag": "0011_clear_black_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1773583998917,
+      "tag": "0012_clear_zarda",
+      "breakpoints": true
     }
   ]
 }
