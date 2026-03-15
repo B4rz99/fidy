@@ -96,11 +96,13 @@ export const ConflictCard = memo(function ConflictCard({
     });
   }
 
-  if (localData.deletedAt !== serverData.deletedAt) {
+  const localDeleted = localData.deletedAt != null;
+  const serverDeleted = serverData.deletedAt != null;
+  if (localDeleted !== serverDeleted) {
     diffs.push({
       label: "Status",
-      localValue: localData.deletedAt ? "Deleted" : "Active",
-      serverValue: serverData.deletedAt ? "Deleted" : "Active",
+      localValue: localDeleted ? "Deleted" : "Active",
+      serverValue: serverDeleted ? "Deleted" : "Active",
     });
   }
 

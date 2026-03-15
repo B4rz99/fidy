@@ -132,15 +132,20 @@ export async function syncPull(
       if (shouldUpdateLocal(serverRow.updated_at, localRow?.updatedAt)) {
         const isConflict = localRow != null && hasDataConflict(localRow, mappedServerRow);
         await upsertTransaction(db, mappedServerRow);
-        // Log conflict only after successful upsert to avoid duplicates on retry
+        // Log conflict after successful upsert to avoid duplicates on retry.
+        // Own try/catch so a conflict-logging failure doesn't affect the sync flow.
         if (isConflict) {
-          insertConflict(db, {
-            id: generateId("conflict"),
-            transactionId: serverRow.id,
-            localData: JSON.stringify(localRow),
-            serverData: JSON.stringify(mappedServerRow),
-            detectedAt: new Date().toISOString(),
-          });
+          try {
+            insertConflict(db, {
+              id: generateId("conflict"),
+              transactionId: serverRow.id,
+              localData: JSON.stringify(localRow),
+              serverData: JSON.stringify(mappedServerRow),
+              detectedAt: new Date().toISOString(),
+            });
+          } catch (conflictErr) {
+            captureError(conflictErr);
+          }
         }
       }
     } catch (error) {
