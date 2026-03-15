@@ -77,9 +77,3 @@ export type UserMemory = {
   readonly createdAt: string;
   readonly updatedAt: string;
 };
-
-export const extractedMemorySchema = z.object({
-  fact: z.string(),
-  category: memoryCategory,
-});
-export type ExtractedMemory = z.infer<typeof extractedMemorySchema>;

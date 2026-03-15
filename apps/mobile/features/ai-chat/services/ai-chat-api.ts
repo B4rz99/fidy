@@ -1,19 +1,21 @@
 import { fetch } from "expo/fetch";
 import { getSupabase } from "@/shared/db/supabase";
 import { captureError } from "@/shared/lib/sentry";
-import type { ExtractedMemory } from "../schema";
 
 type ChatMessage = { readonly role: "user" | "assistant"; readonly content: string };
-type ChatContext = {
-  readonly transactions: readonly unknown[];
-  readonly summary: unknown;
-  readonly memories: readonly { readonly fact: string; readonly category: string }[];
-};
 
 type StreamCallbacks = {
   readonly onChunk: (text: string) => void;
   readonly onDone: () => void;
   readonly onError: (error: string) => void;
+};
+
+export type SavedMemory = {
+  readonly id: string;
+  readonly fact: string;
+  readonly category: string;
+  // biome-ignore lint/style/useNamingConvention: Supabase column name
+  readonly created_at: string;
 };
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
@@ -32,7 +34,6 @@ function getBaseUrl(): string {
 
 export async function streamChat(
   messages: readonly ChatMessage[],
-  context: ChatContext,
   callbacks: StreamCallbacks,
   signal?: AbortSignal
 ): Promise<void> {
@@ -44,7 +45,7 @@ export async function streamChat(
     response = await fetch(url, {
       method: "POST",
       headers,
-      body: JSON.stringify({ messages, context }),
+      body: JSON.stringify({ messages }),
       signal,
     });
   } catch (err) {
@@ -112,7 +113,7 @@ export async function streamChat(
 
 export async function extractMemories(
   messages: readonly ChatMessage[]
-): Promise<readonly ExtractedMemory[]> {
+): Promise<readonly SavedMemory[]> {
   try {
     const { data, error } = await getSupabase().functions.invoke("ai-chat", {
       body: { mode: "extract_memories", messages },
