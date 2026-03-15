@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, between, desc, eq, inArray, isNull, like, or, sql, sum } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db/client";
 import { syncMeta, syncQueue, transactions } from "@/shared/db/schema";
 
@@ -16,6 +16,98 @@ export function getAllTransactions(db: AnyDb, userId: string) {
     .select()
     .from(transactions)
     .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
+    .orderBy(desc(transactions.date))
+    .all();
+}
+
+export function getTransactionsPaginated(db: AnyDb, userId: string, limit: number, offset: number) {
+  return db
+    .select()
+    .from(transactions)
+    .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
+    .orderBy(desc(transactions.date))
+    .limit(limit + 1)
+    .offset(offset)
+    .all();
+}
+
+export function getBalanceAggregate(db: AnyDb, userId: string): number {
+  const row = db
+    .select({
+      balance: sql<number>`SUM(CASE WHEN ${transactions.type} = 'income' THEN ${transactions.amountCents} ELSE -${transactions.amountCents} END)`,
+    })
+    .from(transactions)
+    .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
+    .get();
+  return row?.balance ?? 0;
+}
+
+export function getSpendingByCategoryAggregate(
+  db: AnyDb,
+  userId: string,
+  month: string
+): Array<{ categoryId: string; totalCents: number }> {
+  return db
+    .select({
+      categoryId: transactions.categoryId,
+      totalCents: sum(transactions.amountCents).mapWith(Number),
+    })
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        eq(transactions.type, "expense"),
+        isNull(transactions.deletedAt),
+        like(transactions.date, `${month}%`)
+      )
+    )
+    .groupBy(transactions.categoryId)
+    .all();
+}
+
+export function getDailySpendingAggregate(
+  db: AnyDb,
+  userId: string,
+  startDate: string,
+  endDate: string
+): Array<{ date: string; totalCents: number }> {
+  return db
+    .select({
+      date: transactions.date,
+      totalCents: sum(transactions.amountCents).mapWith(Number),
+    })
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        eq(transactions.type, "expense"),
+        isNull(transactions.deletedAt),
+        between(transactions.date, startDate, endDate)
+      )
+    )
+    .groupBy(transactions.date)
+    .all();
+}
+
+export function getRecentTransactions(
+  db: AnyDb,
+  userId: string,
+  currentMonth: string,
+  previousMonth: string
+) {
+  return db
+    .select()
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        isNull(transactions.deletedAt),
+        or(
+          like(transactions.date, `${currentMonth}%`),
+          like(transactions.date, `${previousMonth}%`)
+        )
+      )
+    )
     .orderBy(desc(transactions.date))
     .all();
 }

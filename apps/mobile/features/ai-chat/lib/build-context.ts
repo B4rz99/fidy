@@ -1,4 +1,3 @@
-import { deriveBalance, deriveSpendingByCategory } from "@/features/transactions/lib/derive";
 import type { StoredTransaction } from "@/features/transactions/schema";
 import { toIsoDate } from "@/shared/lib/format-date";
 import type { UserMemory } from "../schema";
@@ -40,13 +39,6 @@ function centsToCop(cents: number): number {
   return cents / CENTS_PER_COP;
 }
 
-function previousMonth(month: string): string {
-  const [year, m] = month.split("-").map(Number);
-  const prevMonth = m === 1 ? 12 : m - 1;
-  const prevYear = m === 1 ? year - 1 : year;
-  return `${prevYear}-${String(prevMonth).padStart(2, "0")}`;
-}
-
 function computeDeltas(
   current: readonly { readonly categoryId: string; readonly totalCents: number }[],
   previous: readonly { readonly categoryId: string; readonly totalCents: number }[]
@@ -70,22 +62,15 @@ function computeDeltas(
 }
 
 export function buildChatContext(
-  transactions: readonly StoredTransaction[],
+  recentTransactions: readonly StoredTransaction[],
   memories: readonly UserMemory[],
-  currentMonth: string
+  currentMonth: string,
+  balanceCents: number,
+  currentMonthSpending: readonly { readonly categoryId: string; readonly totalCents: number }[],
+  previousMonthSpending: readonly { readonly categoryId: string; readonly totalCents: number }[]
 ): ChatContext {
-  const prevMonth = previousMonth(currentMonth);
-
-  const relevantTransactions = transactions.filter((tx) => {
-    const isoDate = toIsoDate(tx.date);
-    return isoDate.startsWith(currentMonth) || isoDate.startsWith(prevMonth);
-  });
-
-  const currentSpendingCents = deriveSpendingByCategory(relevantTransactions, currentMonth);
-  const previousSpendingCents = deriveSpendingByCategory(relevantTransactions, prevMonth);
-
   return {
-    transactions: relevantTransactions.map((tx) => ({
+    transactions: recentTransactions.map((tx) => ({
       type: tx.type,
       amount: centsToCop(tx.amountCents),
       categoryId: tx.categoryId,
@@ -93,16 +78,16 @@ export function buildChatContext(
       date: toIsoDate(tx.date),
     })),
     summary: {
-      balance: centsToCop(deriveBalance(transactions)),
-      currentMonthSpending: currentSpendingCents.map((c) => ({
+      balance: centsToCop(balanceCents),
+      currentMonthSpending: currentMonthSpending.map((c) => ({
         categoryId: c.categoryId,
         total: centsToCop(c.totalCents),
       })),
-      previousMonthSpending: previousSpendingCents.map((c) => ({
+      previousMonthSpending: previousMonthSpending.map((c) => ({
         categoryId: c.categoryId,
         total: centsToCop(c.totalCents),
       })),
-      monthOverMonthDeltas: computeDeltas(currentSpendingCents, previousSpendingCents),
+      monthOverMonthDeltas: computeDeltas(currentMonthSpending, previousMonthSpending),
     },
     memories: memories.map((m) => ({ fact: m.fact, category: m.category })),
   };

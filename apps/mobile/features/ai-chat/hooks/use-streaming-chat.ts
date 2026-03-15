@@ -61,10 +61,14 @@ export function useStreamingChat() {
       await store.addUserMessage(text);
 
       const currentMonth = toIsoDate(new Date()).slice(0, 7);
+      const chatData = useTransactionStore.getState().getChatData(currentMonth);
       const context = buildChatContext(
-        useTransactionStore.getState().transactions,
+        chatData.recentTransactions,
         store.memories,
-        currentMonth
+        currentMonth,
+        chatData.balanceCents,
+        chatData.categorySpending,
+        chatData.previousMonthSpending
       );
 
       const allMessages = [

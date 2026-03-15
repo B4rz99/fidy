@@ -2,14 +2,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: vi.fn(),
-  getAllTransactions: vi.fn().mockResolvedValue([]),
+  getTransactionsPaginated: vi.fn().mockReturnValue([]),
+  getBalanceAggregate: vi.fn().mockReturnValue(0),
+  getSpendingByCategoryAggregate: vi.fn().mockReturnValue([]),
+  getDailySpendingAggregate: vi.fn().mockReturnValue([]),
+  getRecentTransactions: vi.fn().mockReturnValue([]),
+  getTransactionById: vi.fn().mockReturnValue(null),
   softDeleteTransaction: vi.fn(),
   enqueueSync: vi.fn(),
 }));
 
 import {
   enqueueSync,
-  getAllTransactions,
+  getBalanceAggregate,
+  getTransactionsPaginated,
   insertTransaction,
   softDeleteTransaction,
 } from "@/features/transactions/lib/repository";
@@ -30,12 +36,17 @@ describe("useTransactionStore", () => {
       categoryId: null,
       description: "",
       date: new Date(),
-      transactions: [],
+      pages: [],
+      offset: 0,
+      hasMore: true,
+      isLoadingMore: false,
+      balanceCents: 0,
+      categorySpending: [],
+      dailySpending: [],
     });
   });
 
   it("saveTransaction returns error when store is not initialized", async () => {
-    // Reset module-level refs by creating a fresh store state without initStore
     // biome-ignore lint/suspicious/noExplicitAny: testing uninitialized store guard
     useTransactionStore.getState().initStore(null as any, null as any);
     const result = await useTransactionStore.getState().saveTransaction();
@@ -49,7 +60,7 @@ describe("useTransactionStore", () => {
     expect(state.digits).toBe("");
     expect(state.categoryId).toBeNull();
     expect(state.description).toBe("");
-    expect(state.transactions).toEqual([]);
+    expect(state.pages).toEqual([]);
   });
 
   it("setType toggles between expense and income", () => {
@@ -99,7 +110,6 @@ describe("useTransactionStore", () => {
       expect(result.transaction.deletedAt).toBeNull();
     }
 
-    expect(useTransactionStore.getState().transactions).toHaveLength(1);
     expect(insertTransaction).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
@@ -128,6 +138,18 @@ describe("useTransactionStore", () => {
     );
   });
 
+  it("saveTransaction calls refresh after successful save", async () => {
+    const store = useTransactionStore.getState();
+    store.setDigits("1000");
+    store.setCategoryId("food");
+
+    await store.saveTransaction();
+
+    // refresh calls getTransactionsPaginated and aggregate functions
+    expect(getTransactionsPaginated).toHaveBeenCalled();
+    expect(getBalanceAggregate).toHaveBeenCalled();
+  });
+
   it("saveTransaction fails with zero amount", async () => {
     const store = useTransactionStore.getState();
     store.setCategoryId("food");
@@ -148,41 +170,37 @@ describe("useTransactionStore", () => {
     }
   });
 
-  it("saveTransaction prepends to transaction list", async () => {
-    const store = useTransactionStore.getState();
-    store.setDigits("100");
-    store.setCategoryId("food");
-    await store.saveTransaction();
+  it("resetForm clears form but keeps pages", async () => {
+    useTransactionStore.setState({
+      digits: "4520",
+      categoryId: "food",
+      step: 2,
+      pages: [
+        {
+          id: "tx-1",
+          userId: mockUserId,
+          type: "expense",
+          amountCents: 100,
+          categoryId: "food",
+          description: "Test",
+          date: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          deletedAt: null,
+        },
+      ],
+    });
 
-    store.setDigits("200");
-    store.setCategoryId("services");
-    await store.saveTransaction();
-
-    const txs = useTransactionStore.getState().transactions;
-    expect(txs).toHaveLength(2);
-    expect(txs[0].amountCents).toBe(200);
-    expect(txs[1].amountCents).toBe(100);
-  });
-
-  it("resetForm clears form but keeps transactions", async () => {
-    const store = useTransactionStore.getState();
-    store.setDigits("4520");
-    store.setCategoryId("food");
-    store.setStep(2);
-
-    store.setDigits("100");
-    await store.saveTransaction();
-
-    store.resetForm();
+    useTransactionStore.getState().resetForm();
     const state = useTransactionStore.getState();
     expect(state.digits).toBe("");
     expect(state.step).toBe(1);
     expect(state.categoryId).toBeNull();
-    expect(state.transactions).toHaveLength(1);
+    expect(state.pages).toHaveLength(1);
   });
 
-  it("loadTransactions reads from DB and sets state", async () => {
-    vi.mocked(getAllTransactions).mockResolvedValueOnce([
+  it("loadInitialPage reads paginated data from DB", async () => {
+    vi.mocked(getTransactionsPaginated).mockReturnValueOnce([
       {
         id: "tx-1",
         userId: mockUserId,
@@ -198,40 +216,136 @@ describe("useTransactionStore", () => {
       },
     ]);
 
-    await useTransactionStore.getState().loadTransactions();
+    await useTransactionStore.getState().loadInitialPage();
 
-    const txs = useTransactionStore.getState().transactions;
-    expect(txs).toHaveLength(1);
-    expect(txs[0].id).toBe("tx-1");
-    expect(txs[0].userId).toBe(mockUserId);
-    expect(txs[0].date).toBeInstanceOf(Date);
-    expect(txs[0].createdAt).toBeInstanceOf(Date);
-    expect(txs[0].updatedAt).toBeInstanceOf(Date);
-    expect(txs[0].deletedAt).toBeNull();
-    expect(getAllTransactions).toHaveBeenCalledWith(mockDb, mockUserId);
+    const state = useTransactionStore.getState();
+    expect(state.pages).toHaveLength(1);
+    expect(state.pages[0].id).toBe("tx-1");
+    expect(state.pages[0].date).toBeInstanceOf(Date);
+    expect(state.hasMore).toBe(false);
+    expect(state.offset).toBe(1);
+    expect(getTransactionsPaginated).toHaveBeenCalledWith(mockDb, mockUserId, 30, 0);
   });
 
-  it("removeTransaction soft-deletes from DB, enqueues sync, and removes from state", async () => {
-    const store = useTransactionStore.getState();
-    store.setDigits("100");
-    store.setCategoryId("food");
-    await store.saveTransaction();
+  it("loadInitialPage sets hasMore when more rows exist", async () => {
+    // Return 31 rows (PAGE_SIZE + 1) to indicate more exist
+    const rows = Array.from({ length: 31 }, (_, i) => ({
+      id: `tx-${i}`,
+      userId: mockUserId,
+      type: "expense",
+      amountCents: 1000,
+      categoryId: "food",
+      description: `Item ${i}`,
+      date: "2026-03-04",
+      createdAt: "2026-03-04T10:00:00.000Z",
+      updatedAt: "2026-03-04T10:00:00.000Z",
+      deletedAt: null,
+      source: "manual",
+    }));
+    vi.mocked(getTransactionsPaginated).mockReturnValueOnce(rows);
 
-    const txs = useTransactionStore.getState().transactions;
-    expect(txs).toHaveLength(1);
+    await useTransactionStore.getState().loadInitialPage();
 
-    await useTransactionStore.getState().removeTransaction(txs[0].id);
+    const state = useTransactionStore.getState();
+    expect(state.pages).toHaveLength(30);
+    expect(state.hasMore).toBe(true);
+    expect(state.offset).toBe(30);
+  });
 
-    expect(useTransactionStore.getState().transactions).toHaveLength(0);
-    expect(softDeleteTransaction).toHaveBeenCalledWith(mockDb, txs[0].id, expect.any(String));
+  it("loadNextPage appends more transactions", async () => {
+    // Set up initial state with first page loaded
+    useTransactionStore.setState({
+      pages: [
+        {
+          id: "tx-0",
+          userId: mockUserId,
+          type: "expense",
+          amountCents: 100,
+          categoryId: "food",
+          description: "First",
+          date: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          deletedAt: null,
+        },
+      ],
+      offset: 1,
+      hasMore: true,
+      isLoadingMore: false,
+    });
+
+    vi.mocked(getTransactionsPaginated).mockReturnValueOnce([
+      {
+        id: "tx-1",
+        userId: mockUserId,
+        type: "expense",
+        amountCents: 200,
+        categoryId: "food",
+        description: "Second",
+        date: "2026-03-03",
+        createdAt: "2026-03-03T10:00:00.000Z",
+        updatedAt: "2026-03-03T10:00:00.000Z",
+        deletedAt: null,
+        source: "manual",
+      },
+    ]);
+
+    await useTransactionStore.getState().loadNextPage();
+
+    const state = useTransactionStore.getState();
+    expect(state.pages).toHaveLength(2);
+    expect(state.pages[1].id).toBe("tx-1");
+    expect(state.hasMore).toBe(false);
+    expect(state.isLoadingMore).toBe(false);
+  });
+
+  it("loadNextPage does nothing when hasMore is false", async () => {
+    useTransactionStore.setState({ hasMore: false });
+
+    await useTransactionStore.getState().loadNextPage();
+
+    expect(getTransactionsPaginated).not.toHaveBeenCalled();
+  });
+
+  it("loadNextPage does nothing when already loading", async () => {
+    useTransactionStore.setState({ hasMore: true, isLoadingMore: true });
+
+    await useTransactionStore.getState().loadNextPage();
+
+    expect(getTransactionsPaginated).not.toHaveBeenCalled();
+  });
+
+  it("removeTransaction soft-deletes from DB, enqueues sync, and refreshes", async () => {
+    useTransactionStore.setState({
+      pages: [
+        {
+          id: "tx-1",
+          userId: mockUserId,
+          type: "expense",
+          amountCents: 100,
+          categoryId: "food",
+          description: "Test",
+          date: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          deletedAt: null,
+        },
+      ],
+    });
+
+    await useTransactionStore.getState().removeTransaction("tx-1");
+
+    expect(softDeleteTransaction).toHaveBeenCalledWith(mockDb, "tx-1", expect.any(String));
     expect(enqueueSync).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
         tableName: "transactions",
-        rowId: txs[0].id,
+        rowId: "tx-1",
         operation: "delete",
       })
     );
+    // refresh was called
+    expect(getTransactionsPaginated).toHaveBeenCalled();
   });
 
   it("saveTransaction returns error when DB insert fails", async () => {
@@ -246,21 +360,71 @@ describe("useTransactionStore", () => {
     if (!result.success) {
       expect(result.error).toBe("Failed to save transaction");
     }
-    expect(useTransactionStore.getState().transactions).toHaveLength(0);
   });
 
   it("removeTransaction keeps UI state when DB operation fails", async () => {
-    const store = useTransactionStore.getState();
-    store.setDigits("100");
-    store.setCategoryId("food");
-    await store.saveTransaction();
-
-    const txs = useTransactionStore.getState().transactions;
-    expect(txs).toHaveLength(1);
+    useTransactionStore.setState({
+      pages: [
+        {
+          id: "tx-1",
+          userId: mockUserId,
+          type: "expense",
+          amountCents: 100,
+          categoryId: "food",
+          description: "Test",
+          date: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          deletedAt: null,
+        },
+      ],
+    });
 
     vi.mocked(softDeleteTransaction).mockRejectedValueOnce(new Error("db error"));
-    await useTransactionStore.getState().removeTransaction(txs[0].id);
+    await useTransactionStore.getState().removeTransaction("tx-1");
 
-    expect(useTransactionStore.getState().transactions).toHaveLength(1);
+    expect(useTransactionStore.getState().pages).toHaveLength(1);
+  });
+
+  it("addToCache prepends to pages", () => {
+    const tx = {
+      id: "tx-new",
+      userId: mockUserId,
+      type: "expense" as const,
+      amountCents: 500,
+      categoryId: "food" as const,
+      description: "New",
+      date: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+    };
+
+    useTransactionStore.getState().addToCache(tx);
+
+    expect(useTransactionStore.getState().pages[0].id).toBe("tx-new");
+  });
+
+  it("removeFromCache filters from pages", () => {
+    useTransactionStore.setState({
+      pages: [
+        {
+          id: "tx-1",
+          userId: mockUserId,
+          type: "expense",
+          amountCents: 100,
+          categoryId: "food",
+          description: "Test",
+          date: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          deletedAt: null,
+        },
+      ],
+    });
+
+    useTransactionStore.getState().removeFromCache("tx-1");
+
+    expect(useTransactionStore.getState().pages).toHaveLength(0);
   });
 });

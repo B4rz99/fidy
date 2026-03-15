@@ -11,7 +11,7 @@ export default function NeedsReviewScreen() {
   const router = useRouter();
   const needsReview = useEmailCaptureStore((s) => s.needsReviewEmails);
   const confirmReview = useEmailCaptureStore((s) => s.confirmReview);
-  const transactions = useTransactionStore((s) => s.transactions);
+  const getTransaction = useTransactionStore((s) => s.getTransactionById);
 
   const handleConfirm = useCallback(
     (processedEmailId: string, categoryId: string) => {
@@ -22,10 +22,16 @@ export default function NeedsReviewScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: (typeof needsReview)[number] }) => {
-      const tx = transactions.find((t) => t.id === item.transactionId);
-      return <NeedsReviewCard processedEmail={item} transaction={tx} onConfirm={handleConfirm} />;
+      const tx = item.transactionId ? getTransaction(item.transactionId) : null;
+      return (
+        <NeedsReviewCard
+          processedEmail={item}
+          transaction={tx ?? undefined}
+          onConfirm={handleConfirm}
+        />
+      );
     },
-    [transactions, handleConfirm]
+    [getTransaction, handleConfirm]
   );
 
   const keyExtractor = useCallback((item: (typeof needsReview)[number]) => item.id, []);

@@ -284,7 +284,7 @@ describe("useCalendarStore", () => {
 
     // Seed payment with a linked transaction
     useTransactionStore.setState({
-      transactions: [
+      pages: [
         {
           id: "tx-linked",
           userId: "user-1",
@@ -317,7 +317,7 @@ describe("useCalendarStore", () => {
 
     // Past transactions should NOT be deleted — they represent real expenses
     expect(softDeleteTransaction).not.toHaveBeenCalled();
-    expect(useTransactionStore.getState().transactions).toHaveLength(1);
+    expect(useTransactionStore.getState().pages).toHaveLength(1);
   });
 
   test("deleteBill does nothing without initStore", async () => {
@@ -379,14 +379,14 @@ describe("useCalendarStore", () => {
   });
 
   test("markBillPaid updates transaction store state", async () => {
-    useTransactionStore.setState({ transactions: [] });
+    useTransactionStore.setState({ pages: [] });
 
     await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services", testDate);
     const billId = useCalendarStore.getState().bills[0].id;
 
     await useCalendarStore.getState().markBillPaid(billId, "2026-03-15");
 
-    const txs = useTransactionStore.getState().transactions;
+    const txs = useTransactionStore.getState().pages;
     expect(txs).toHaveLength(1);
     expect(txs[0].type).toBe("expense");
     expect(txs[0].amountCents).toBe(1599);
@@ -466,7 +466,7 @@ describe("useCalendarStore", () => {
 
     // Seed a payment with a transactionId
     useTransactionStore.setState({
-      transactions: [
+      pages: [
         {
           id: "tx-linked",
           userId: "user-1",
@@ -505,7 +505,7 @@ describe("useCalendarStore", () => {
         operation: "delete",
       })
     );
-    expect(useTransactionStore.getState().transactions).toHaveLength(0);
+    expect(useTransactionStore.getState().pages).toHaveLength(0);
   });
 
   test("unmarkBillPaid does nothing without initStore", async () => {
