@@ -73,10 +73,12 @@ a {
 }
 
 .logo-coin {
-  width: 16px;
-  height: 16px;
-  margin-bottom: 12px;
-  margin-left: -2px;
+  width: 8px;
+  height: 8px;
+  margin-bottom: 24px;
+  margin-left: -48px;
+  margin-right: 40px;
+  transform: translateX(0.5px);
 }
 
 /* ── Language Pill ── */
