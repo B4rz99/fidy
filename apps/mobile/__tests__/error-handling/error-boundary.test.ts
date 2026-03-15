@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/useNamingConvention: mock exports must match library API names
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
