@@ -1,5 +1,5 @@
-import { FlashList } from "@shopify/flash-list";
 import type { FlashListRef } from "@shopify/flash-list";
+import { FlashList } from "@shopify/flash-list";
 import { memo, useCallback, useRef } from "react";
 import { Keyboard, KeyboardAvoidingView, View } from "react-native";
 import { useTransactionStore } from "@/features/transactions/store";
