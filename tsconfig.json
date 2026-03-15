@@ -7,6 +7,7 @@
     "skipLibCheck": true
   },
   "references": [
+    { "path": "./packages/assets" },
     { "path": "./packages/types" },
     { "path": "./packages/schemas" },
     { "path": "./packages/utils" }
