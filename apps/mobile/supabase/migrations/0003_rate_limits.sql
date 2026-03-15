@@ -39,9 +39,5 @@ $$;
 -- Only service role (Edge Functions) may call this function
 revoke execute on function public.check_rate_limit from public, anon, authenticated;
 
--- TODO: enable cleanup before launch — rows grow ~1M/day with active users
--- Hourly cleanup (uncomment if pg_cron is enabled)
--- select cron.schedule('cleanup-rate-limits', '0 * * * *',
---   $$delete from public.rate_limits
---     where window_key < to_char(now() - interval '1 hour', 'YYYY-MM-DD"T"HH24:MI')$$
--- );
+-- Stale row cleanup is handled by probabilistic self-cleanup in the RPC
+-- (see 0005_rate_limit_self_cleanup.sql)
