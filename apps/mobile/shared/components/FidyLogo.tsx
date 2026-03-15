@@ -31,7 +31,7 @@ export function FidyLogo({ size = "default" }: FidyLogoProps) {
       accessibilityLabel="Fidy logo"
     >
       <Path d={LOGO_TEXT_PATH} fill={colors.text} />
-      <G translateY={LOGO_COIN.groupOffsetY}>
+      <G transform={`translate(0, ${LOGO_COIN.groupOffsetY})`}>
         <Circle
           cx={LOGO_COIN.cx}
           cy={LOGO_COIN.cy}
