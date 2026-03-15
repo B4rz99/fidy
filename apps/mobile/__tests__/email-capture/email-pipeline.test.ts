@@ -317,6 +317,53 @@ describe("email processing pipeline", () => {
     expect(call.rawBody).toBeUndefined();
   });
 
+  it("includes needsReview in progress callback", async () => {
+    const emails = [makeRawEmail({ externalId: "ext-1" }), makeRawEmail({ externalId: "ext-2" })];
+    // First email: low confidence → needs_review
+    mockParseEmailApi.mockResolvedValueOnce({
+      type: "expense",
+      amountCents: 5000000,
+      categoryId: "other",
+      description: "Compra 1",
+      date: "2026-03-05",
+      confidence: 0.5,
+    });
+    // Second email: high confidence → saved
+    mockParseEmailApi.mockResolvedValueOnce({
+      type: "expense",
+      amountCents: 3000000,
+      categoryId: "food",
+      description: "Compra 2",
+      date: "2026-03-05",
+      confidence: 0.9,
+    });
+
+    const progressCalls: Array<{
+      total: number;
+      completed: number;
+      saved: number;
+      failed: number;
+      needsReview: number;
+    }> = [];
+
+    await processEmails(mockDb, USER_ID, emails, (p) => progressCalls.push(p));
+
+    // Initial call + one per email
+    expect(progressCalls.length).toBeGreaterThanOrEqual(3);
+    // First call is initial: all zeros
+    expect(progressCalls[0]).toEqual(
+      expect.objectContaining({ total: 2, completed: 0, saved: 0, failed: 0, needsReview: 0 })
+    );
+    // After first email (needs_review): needsReview = 1
+    const afterFirst = progressCalls[1];
+    expect(afterFirst.needsReview).toBe(1);
+    expect(afterFirst.saved).toBe(0);
+    // After second email (saved): saved = 1
+    const last = progressCalls[progressCalls.length - 1];
+    expect(last.needsReview).toBe(1);
+    expect(last.saved).toBe(1);
+  });
+
   it("returns zero counts for empty input", async () => {
     const result = await processEmails(mockDb, USER_ID, []);
 
