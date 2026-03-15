@@ -71,5 +71,5 @@ export const buildProgressDisplay = (
 export const shouldMorphToBanner = (needsReviewCount: number): boolean => needsReviewCount > 0;
 
 export const isFirstFetchForAny = (
-  accounts: ReadonlyArray<{ lastFetchedAt: string | null }>
-): boolean => accounts.some((a) => a.lastFetchedAt === null);
+  accounts: ReadonlyArray<{ lastFetchedAt?: string | null }>
+): boolean => accounts.some((a) => a.lastFetchedAt == null);
