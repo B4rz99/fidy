@@ -31,8 +31,8 @@ export async function checkRateLimit(
       return { allowed: true, count: 0 };
     }
 
-    const row = data?.[0] ?? data;
-    if (!row) {
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row || typeof row.allowed !== "boolean") {
       console.error("Rate limit RPC returned no data, failing open");
       return { allowed: true, count: 0 };
     }

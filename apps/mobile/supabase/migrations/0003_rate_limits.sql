@@ -25,6 +25,7 @@ create or replace function public.check_rate_limit(
 returns table (current_count integer, allowed boolean)
 language sql
 security definer
+set search_path = public
 as $$
   insert into public.rate_limits (user_id, function_name, window_key, request_count)
   values (p_user_id, p_function_name, p_window_key, 1)
@@ -34,6 +35,9 @@ as $$
     public.rate_limits.request_count as current_count,
     (public.rate_limits.request_count <= p_max_count) as allowed;
 $$;
+
+-- Only service role (Edge Functions) may call this function
+revoke execute on function public.check_rate_limit from public, anon, authenticated;
 
 -- TODO: enable cleanup before launch — rows grow ~1M/day with active users
 -- Hourly cleanup (uncomment if pg_cron is enabled)
