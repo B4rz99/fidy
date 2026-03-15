@@ -3,6 +3,7 @@ import { enqueueSync, upsertTransaction } from "@/features/transactions/lib/repo
 import { useTransactionStore } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db/client";
 import { generateId } from "@/shared/lib/generate-id";
+import { captureError } from "@/shared/lib/sentry";
 import {
   getUnresolvedConflicts,
   resolveConflict as resolveConflictDb,
@@ -63,8 +64,8 @@ export const useSyncConflictStore = create<SyncConflictState & SyncConflictActio
         detectedAt: row.detectedAt,
       }));
       set({ conflicts, conflictCount: conflicts.length });
-    } catch {
-      // DB read failed — keep existing state
+    } catch (err) {
+      captureError(err);
     }
   },
 
