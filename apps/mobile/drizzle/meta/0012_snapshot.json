@@ -53,17 +53,12 @@
       "indexes": {
         "idx_bill_payments_bill": {
           "name": "idx_bill_payments_bill",
-          "columns": [
-            "bill_id"
-          ],
+          "columns": ["bill_id"],
           "isUnique": false
         },
         "uq_bill_payment_occurrence": {
           "name": "uq_bill_payment_occurrence",
-          "columns": [
-            "bill_id",
-            "due_date"
-          ],
+          "columns": ["bill_id", "due_date"],
           "isUnique": true
         }
       },
@@ -150,17 +145,12 @@
       "indexes": {
         "idx_bills_user": {
           "name": "idx_bills_user",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "idx_bills_user_active": {
           "name": "idx_bills_user_active",
-          "columns": [
-            "user_id",
-            "is_active"
-          ],
+          "columns": ["user_id", "is_active"],
           "isUnique": false
         }
       },
@@ -225,10 +215,7 @@
       "indexes": {
         "idx_chat_messages_session_created": {
           "name": "idx_chat_messages_session_created",
-          "columns": [
-            "session_id",
-            "created_at"
-          ],
+          "columns": ["session_id", "created_at"],
           "isUnique": false
         }
       },
@@ -286,17 +273,12 @@
       "indexes": {
         "idx_chat_sessions_user_created": {
           "name": "idx_chat_sessions_user_created",
-          "columns": [
-            "user_id",
-            "created_at"
-          ],
+          "columns": ["user_id", "created_at"],
           "isUnique": false
         },
         "idx_chat_sessions_expires": {
           "name": "idx_chat_sessions_expires",
-          "columns": [
-            "expires_at"
-          ],
+          "columns": ["expires_at"],
           "isUnique": false
         }
       },
@@ -362,10 +344,7 @@
       "indexes": {
         "idx_sms_events_user_dismissed": {
           "name": "idx_sms_events_user_dismissed",
-          "columns": [
-            "user_id",
-            "dismissed"
-          ],
+          "columns": ["user_id", "dismissed"],
           "isUnique": false
         }
       },
@@ -423,9 +402,7 @@
       "indexes": {
         "idx_email_accounts_user": {
           "name": "idx_email_accounts_user",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -476,17 +453,12 @@
       "indexes": {
         "uq_merchant_rule_v2": {
           "name": "uq_merchant_rule_v2",
-          "columns": [
-            "user_id",
-            "keyword"
-          ],
+          "columns": ["user_id", "keyword"],
           "isUnique": true
         },
         "idx_merchant_lookup_v2": {
           "name": "idx_merchant_lookup_v2",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -545,10 +517,7 @@
       "indexes": {
         "uq_notification_source": {
           "name": "uq_notification_source",
-          "columns": [
-            "user_id",
-            "package_name"
-          ],
+          "columns": ["user_id", "package_name"],
           "isUnique": true
         }
       },
@@ -627,16 +596,12 @@
       "indexes": {
         "uq_capture_fingerprint": {
           "name": "uq_capture_fingerprint",
-          "columns": [
-            "fingerprint_hash"
-          ],
+          "columns": ["fingerprint_hash"],
           "isUnique": true
         },
         "idx_capture_source": {
           "name": "idx_capture_source",
-          "columns": [
-            "source"
-          ],
+          "columns": ["source"],
           "isUnique": false
         }
       },
@@ -751,16 +716,12 @@
       "indexes": {
         "uq_processed_external_id": {
           "name": "uq_processed_external_id",
-          "columns": [
-            "external_id"
-          ],
+          "columns": ["external_id"],
           "isUnique": true
         },
         "idx_processed_status": {
           "name": "idx_processed_status",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         }
       },
@@ -825,9 +786,7 @@
       "indexes": {
         "idx_sync_conflicts_resolved": {
           "name": "idx_sync_conflicts_resolved",
-          "columns": [
-            "resolved_at"
-          ],
+          "columns": ["resolved_at"],
           "isUnique": false
         }
       },
@@ -990,18 +949,12 @@
       "indexes": {
         "idx_transactions_user_date": {
           "name": "idx_transactions_user_date",
-          "columns": [
-            "user_id",
-            "date"
-          ],
+          "columns": ["user_id", "date"],
           "isUnique": false
         },
         "idx_transactions_user_category": {
           "name": "idx_transactions_user_category",
-          "columns": [
-            "user_id",
-            "category_id"
-          ],
+          "columns": ["user_id", "category_id"],
           "isUnique": false
         }
       },
@@ -1059,9 +1012,7 @@
       "indexes": {
         "idx_user_memories_user": {
           "name": "idx_user_memories_user",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
