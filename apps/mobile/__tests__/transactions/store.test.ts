@@ -271,7 +271,6 @@ describe("useTransactionStore", () => {
       ],
       offset: 1,
       hasMore: true,
-
     });
 
     vi.mocked(getTransactionsPaginated).mockReturnValueOnce([
