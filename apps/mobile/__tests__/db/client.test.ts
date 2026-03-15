@@ -8,6 +8,22 @@ vi.mock("drizzle-orm/expo-sqlite", () => ({
   drizzle: vi.fn((sqliteDb: unknown) => ({ _: "drizzle-instance", sqliteDb })),
 }));
 
+vi.mock("expo-secure-store", () => ({
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  deleteItemAsync: vi.fn(),
+}));
+
+vi.mock("expo-crypto", () => ({
+  getRandomBytes: vi.fn(() => new Uint8Array(32)),
+}));
+
+vi.mock("@/shared/lib/sentry", () => ({
+  captureError: vi.fn(),
+}));
+
+import { getRandomBytes } from "expo-crypto";
+import { deleteItemAsync, getItem, setItem } from "expo-secure-store";
 import { openDatabaseSync } from "expo-sqlite";
 import { getDb, resetDb } from "@/shared/db/client";
 
@@ -34,7 +50,25 @@ describe("getDb", () => {
     expect(openDatabaseSync).toHaveBeenCalledWith("fidy-user-123.db");
   });
 
-  it("sets SQLCipher encryption key derived from userId", () => {
+  it("generates and stores a random encryption key on first call", () => {
+    getDb("user-123");
+    expect(getRandomBytes).toHaveBeenCalledWith(32);
+    expect(setItem).toHaveBeenCalledWith(
+      "fidy-db-key-user-123",
+      expect.stringMatching(/^[0-9a-f]{64}$/)
+    );
+  });
+
+  it("reuses stored key from SecureStore on subsequent init", () => {
+    const storedKey = "ab".repeat(32);
+    vi.mocked(getItem).mockReturnValueOnce(storedKey);
+
+    getDb("user-123");
+    expect(getRandomBytes).not.toHaveBeenCalled();
+    expect(setItem).not.toHaveBeenCalled();
+  });
+
+  it("uses raw hex PRAGMA key syntax", () => {
     const mockExecSync = vi.fn();
     vi.mocked(openDatabaseSync).mockReturnValueOnce({
       execSync: mockExecSync,
@@ -42,7 +76,24 @@ describe("getDb", () => {
     } as unknown as ReturnType<typeof openDatabaseSync>);
 
     getDb("user-123");
-    expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining("PRAGMA key"));
+    expect(mockExecSync).toHaveBeenCalledWith(
+      expect.stringMatching(/^PRAGMA key = "x'[0-9a-f]{64}'"$/)
+    );
+  });
+
+  it("uses separate SecureStore keys per userId", () => {
+    getDb("user-123");
+    resetDb();
+    vi.clearAllMocks();
+    getDb("user-456");
+
+    expect(getItem).toHaveBeenCalledWith("fidy-db-key-user-456");
+  });
+
+  it("resetDb does not delete encryption key", () => {
+    getDb("user-123");
+    resetDb();
+    expect(deleteItemAsync).not.toHaveBeenCalled();
   });
 
   it("resets and closes the connection on resetDb", () => {

@@ -14,6 +14,15 @@ vi.mock("drizzle-orm/expo-sqlite", () => ({
   drizzle: vi.fn((sqliteDb: unknown) => ({ _: "drizzle-instance", sqliteDb })),
 }));
 
+vi.mock("expo-secure-store", () => ({
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+}));
+
+vi.mock("expo-crypto", () => ({
+  getRandomBytes: vi.fn(() => new Uint8Array(32)),
+}));
+
 import { openDatabaseSync } from "expo-sqlite";
 import { getDb, resetDb } from "@/shared/db/client";
 
