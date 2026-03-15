@@ -62,14 +62,16 @@ export function useStreamingChat() {
       await store.addUserMessage(text);
 
       const currentMonth = toIsoDate(new Date()).slice(0, 7);
+      const txStore = useTransactionStore.getState();
       const chatData = (() => {
         try {
-          return useTransactionStore.getState().getChatData(currentMonth);
+          return txStore.getChatData(currentMonth);
         } catch {
+          // DB read failed — fall back to cached store aggregates
           return {
             recentTransactions: [] as StoredTransaction[],
-            balanceCents: 0,
-            categorySpending: [] as { categoryId: string; totalCents: number }[],
+            balanceCents: txStore.balanceCents,
+            categorySpending: txStore.categorySpending,
             previousMonthSpending: [] as { categoryId: string; totalCents: number }[],
           };
         }

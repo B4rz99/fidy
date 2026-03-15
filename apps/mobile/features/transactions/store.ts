@@ -189,12 +189,9 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
 
       // Skip pages update if data hasn't changed — avoids FlatList re-layout
       const currentPages = get().pages;
-      const sameData =
-        currentPages.length === pageData.length &&
-        currentPages.length > 0 &&
-        currentPages[0].id === pageData[0].id &&
-        currentPages[currentPages.length - 1].id === pageData[pageData.length - 1].id &&
-        currentPages[0].updatedAt.getTime() === new Date(pageData[0].updatedAt).getTime();
+      const currentKey = currentPages.map((p) => `${p.id}:${p.updatedAt.getTime()}`).join(",");
+      const newKey = pageData.map((r) => `${r.id}:${new Date(r.updatedAt).getTime()}`).join(",");
+      const sameData = currentKey === newKey;
 
       if (!sameData) {
         set({
@@ -274,7 +271,8 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
   removeFromCache: (id) =>
     set((s) => {
       const filtered = s.pages.filter((t) => t.id !== id);
-      return { pages: filtered, offset: Math.max(0, s.offset - 1) };
+      const removed = filtered.length < s.pages.length;
+      return { pages: filtered, offset: removed ? Math.max(0, s.offset - 1) : s.offset };
     }),
 
   resetForm: () => set({ ...INITIAL_FORM, date: new Date() }),
