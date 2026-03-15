@@ -14,7 +14,7 @@ export function isDateHeader(item: ListItem): item is DateHeader {
   return "kind" in item && item.kind === "date-header";
 }
 
-function makeDateLabel(date: Date): string {
+export function makeDateLabel(date: Date): string {
   if (isToday(date)) return "Today";
   if (isYesterday(date)) return "Yesterday";
   return format(date, "MMMM d");

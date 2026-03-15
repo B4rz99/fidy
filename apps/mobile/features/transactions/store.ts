@@ -48,7 +48,6 @@ type TransactionState = {
   pages: StoredTransaction[];
   offset: number;
   hasMore: boolean;
-  isLoadingMore: boolean;
 
   // Aggregate data (from SQL)
   balanceCents: number;
@@ -108,7 +107,6 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
   pages: [],
   offset: 0,
   hasMore: true,
-  isLoadingMore: false,
   balanceCents: 0,
   categorySpending: [],
   dailySpending: [],
@@ -135,7 +133,6 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
         pages: pageData.map(toStoredTransaction),
         offset: pageData.length,
         hasMore,
-        isLoadingMore: false,
       });
       get().loadAggregates();
     } catch {
@@ -145,10 +142,9 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
 
   loadNextPage: async () => {
     if (!dbRef || !userIdRef) return;
-    const { hasMore, isLoadingMore, offset } = get();
-    if (!hasMore || isLoadingMore) return;
+    const { hasMore, offset } = get();
+    if (!hasMore) return;
 
-    set({ isLoadingMore: true });
     try {
       const rows = getTransactionsPaginated(dbRef, userIdRef, PAGE_SIZE, offset);
       const moreAvailable = rows.length > PAGE_SIZE;
@@ -157,10 +153,9 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
         pages: [...s.pages, ...pageData.map(toStoredTransaction)],
         offset: s.offset + pageData.length,
         hasMore: moreAvailable,
-        isLoadingMore: false,
       }));
     } catch {
-      set({ isLoadingMore: false });
+      // DB read failed — keep existing state
     }
   },
 
@@ -184,7 +179,33 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
   },
 
   refresh: async () => {
-    await get().loadInitialPage();
+    if (!dbRef || !userIdRef) return;
+    try {
+      const currentOffset = get().offset;
+      const reloadSize = Math.max(currentOffset, PAGE_SIZE);
+      const rows = getTransactionsPaginated(dbRef, userIdRef, reloadSize, 0);
+      const hasMore = rows.length > reloadSize;
+      const pageData = hasMore ? rows.slice(0, reloadSize) : rows;
+
+      // Skip pages update if data hasn't changed — avoids FlashList re-layout
+      const currentPages = get().pages;
+      const sameData =
+        currentPages.length === pageData.length &&
+        currentPages.length > 0 &&
+        currentPages[0].id === pageData[0].id &&
+        currentPages[currentPages.length - 1].id === pageData[pageData.length - 1].id;
+
+      if (!sameData) {
+        set({
+          pages: pageData.map(toStoredTransaction),
+          offset: pageData.length,
+          hasMore,
+        });
+      }
+      get().loadAggregates();
+    } catch {
+      // Refresh failed — keep existing state
+    }
   },
 
   saveTransaction: async () => {

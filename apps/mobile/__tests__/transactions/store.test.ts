@@ -39,7 +39,7 @@ describe("useTransactionStore", () => {
       pages: [],
       offset: 0,
       hasMore: true,
-      isLoadingMore: false,
+
       balanceCents: 0,
       categorySpending: [],
       dailySpending: [],
@@ -271,7 +271,7 @@ describe("useTransactionStore", () => {
       ],
       offset: 1,
       hasMore: true,
-      isLoadingMore: false,
+
     });
 
     vi.mocked(getTransactionsPaginated).mockReturnValueOnce([
@@ -296,19 +296,10 @@ describe("useTransactionStore", () => {
     expect(state.pages).toHaveLength(2);
     expect(state.pages[1].id).toBe("tx-1");
     expect(state.hasMore).toBe(false);
-    expect(state.isLoadingMore).toBe(false);
   });
 
   it("loadNextPage does nothing when hasMore is false", async () => {
     useTransactionStore.setState({ hasMore: false });
-
-    await useTransactionStore.getState().loadNextPage();
-
-    expect(getTransactionsPaginated).not.toHaveBeenCalled();
-  });
-
-  it("loadNextPage does nothing when already loading", async () => {
-    useTransactionStore.setState({ hasMore: true, isLoadingMore: true });
 
     await useTransactionStore.getState().loadNextPage();
 

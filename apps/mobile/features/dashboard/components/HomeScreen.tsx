@@ -1,9 +1,8 @@
-import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { Bell, Ellipsis } from "lucide-react-native";
 import { memo, useCallback, useMemo, useState } from "react";
-import { type LayoutChangeEvent, Platform, View } from "react-native";
-import { useAnimatedScrollHandler, useSharedValue } from "react-native-reanimated";
+import { FlatList, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, Platform, View } from "react-native";
+import { useSharedValue } from "react-native-reanimated";
 import { DetectedTransactionsBanner } from "@/features/capture-sources/components/DetectedTransactionsBanner";
 import { EmailConnectBanner } from "@/features/email-capture/components/EmailConnectBanner";
 import { FailedEmailsBanner } from "@/features/email-capture/components/FailedEmailsBanner";
@@ -11,15 +10,12 @@ import { getGmailClientId, getOutlookClientId } from "@/features/email-capture/s
 import { useEmailCaptureStore } from "@/features/email-capture/store";
 import { CATEGORY_MAP } from "@/features/transactions/lib/categories";
 import { formatSignedAmount } from "@/features/transactions/lib/format-amount";
-import {
-  buildListData,
-  isDateHeader,
-  type ListItem,
-} from "@/features/transactions/lib/group-by-date";
+import { makeDateLabel } from "@/features/transactions/lib/group-by-date";
 import type { StoredTransaction } from "@/features/transactions/schema";
 import { useTransactionStore } from "@/features/transactions/store";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
 import { TransactionRow } from "@/shared/components/TransactionRow";
+import { toIsoDate } from "@/shared/lib/format-date";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";
@@ -32,17 +28,26 @@ const BellAction = () => {
   return <Bell size={22} color={iconColor} />;
 };
 
-const TransactionItem = memo(function TransactionItem({ tx }: { tx: StoredTransaction }) {
+const TransactionItem = memo(function TransactionItem({
+  tx,
+  showDateHeader,
+}: {
+  tx: StoredTransaction;
+  showDateHeader: boolean;
+}) {
   const category = CATEGORY_MAP[tx.categoryId];
   return (
-    <View className="px-4">
-      <TransactionRow
-        icon={category?.icon ?? Ellipsis}
-        name={tx.description || "Unknown"}
-        amount={formatSignedAmount(tx.amountCents, tx.type)}
-        category={category?.label.en ?? "Other"}
-        isPositive={tx.type === "income"}
-      />
+    <View>
+      {showDateHeader && <DateHeader label={makeDateLabel(tx.date)} />}
+      <View className="px-4">
+        <TransactionRow
+          icon={category?.icon ?? Ellipsis}
+          name={tx.description || "Unknown"}
+          amount={formatSignedAmount(tx.amountCents, tx.type)}
+          category={category?.label.en ?? "Other"}
+          isPositive={tx.type === "income"}
+        />
+      </View>
     </View>
   );
 });
@@ -99,7 +104,6 @@ const ListHeader = memo(function ListHeader({
 export const HomeScreen = () => {
   const pages = useTransactionStore((s) => s.pages);
   const hasMore = useTransactionStore((s) => s.hasMore);
-  const isLoadingMore = useTransactionStore((s) => s.isLoadingMore);
   const loadNextPage = useTransactionStore((s) => s.loadNextPage);
   const balanceCents = useTransactionStore((s) => s.balanceCents);
   const categorySpending = useTransactionStore((s) => s.categorySpending);
@@ -108,13 +112,26 @@ export const HomeScreen = () => {
   const scrollY = useSharedValue(0);
   const [balanceBottom, setBalanceBottom] = useState(0);
 
-  const { items, stickyIndices } = useMemo(() => buildListData(pages), [pages]);
+  // Pre-compute which transactions are the first of their date group
+  const dateBreaks = useMemo(() => {
+    const breaks = new Set<string>();
+    let lastDateKey: string | null = null;
+    pages.forEach((tx) => {
+      const dateKey = toIsoDate(tx.date);
+      if (dateKey !== lastDateKey) {
+        breaks.add(tx.id);
+        lastDateKey = dateKey;
+      }
+    });
+    return breaks;
+  }, [pages]);
 
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollY.value = event.contentOffset.y;
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      scrollY.value = event.nativeEvent.contentOffset.y;
     },
-  });
+    [scrollY]
+  );
 
   const handleBalanceLayout = useCallback((e: LayoutChangeEvent) => {
     const newBottom = e.nativeEvent.layout.y + e.nativeEvent.layout.height;
@@ -122,28 +139,19 @@ export const HomeScreen = () => {
   }, []);
 
   const handleEndReached = useCallback(() => {
-    if (hasMore && !isLoadingMore) {
+    if (hasMore) {
       loadNextPage();
     }
-  }, [hasMore, isLoadingMore, loadNextPage]);
+  }, [hasMore, loadNextPage]);
 
-  const renderItem = useCallback(({ item }: { item: ListItem }) => {
-    if (isDateHeader(item)) {
-      return <DateHeader label={item.label} />;
-    }
-    return <TransactionItem tx={item} />;
-  }, []);
+  const renderItem = useCallback(
+    ({ item }: { item: StoredTransaction }) => {
+      return <TransactionItem tx={item} showDateHeader={dateBreaks.has(item.id)} />;
+    },
+    [dateBreaks]
+  );
 
-  const keyExtractor = useCallback((item: ListItem) => {
-    if (isDateHeader(item)) {
-      return `header-${item.dateKey}`;
-    }
-    return item.id;
-  }, []);
-
-  const getItemType = useCallback((item: ListItem) => {
-    return isDateHeader(item) ? "date-header" : "transaction";
-  }, []);
+  const keyExtractor = useCallback((item: StoredTransaction) => item.id, []);
 
   const listHeader = useMemo(
     () => (
@@ -171,19 +179,18 @@ export const HomeScreen = () => {
         />
       }
     >
-      <FlashList
-        data={items}
+      <FlatList
+        data={pages}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
-        getItemType={getItemType}
-        stickyHeaderIndices={stickyIndices}
         onEndReached={handleEndReached}
-        onEndReachedThreshold={1.5}
-        onScroll={scrollHandler}
+        onEndReachedThreshold={0.1}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         ListHeaderComponent={listHeader}
         ListFooterComponent={listFooter}
-        estimatedItemSize={64}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }}
       />
     </ScreenLayout>
   );
