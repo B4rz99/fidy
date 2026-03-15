@@ -411,18 +411,6 @@ a {
   color: var(--color-accent-green-dark);
 }
 
-/* ── Termly Placeholder ── */
-.termly-placeholder {
-  background: var(--color-card);
-  border: 2px dashed var(--color-border);
-  border-radius: 12px;
-  padding: 32px;
-  text-align: center;
-  color: var(--color-secondary);
-  font-size: 16px;
-  margin-bottom: 32px;
-}
-
 /* ── Disclaimer Callout ── */
 .disclaimer-callout {
   display: flex;
