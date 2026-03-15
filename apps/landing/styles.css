@@ -1,5 +1,7 @@
 /* ── Reset ── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -7,19 +9,19 @@
 
 /* ── Design Tokens ── */
 :root {
-  --color-page: #FAEBD7;
-  --color-primary: #1A1A1A;
-  --color-secondary: #6D6D6D;
+  --color-page: #faebd7;
+  --color-primary: #1a1a1a;
+  --color-secondary: #6d6d6d;
   --color-tertiary: #929292;
-  --color-accent-green: #7CB243;
-  --color-accent-green-dark: #5A8C30;
-  --color-accent-red: #D45B5B;
-  --color-card: #FFFFFF;
-  --color-border: #EBEBEB;
-  --color-callout-bg: #FFF8F0;
-  --color-callout-border: #E8A090;
-  --color-contact-bg: #F0EDE6;
-  --font-family: 'Poppins', sans-serif;
+  --color-accent-green: #7cb243;
+  --color-accent-green-dark: #5a8c30;
+  --color-accent-red: #d45b5b;
+  --color-card: #ffffff;
+  --color-border: #ebebeb;
+  --color-callout-bg: #fff8f0;
+  --color-callout-border: #e8a090;
+  --color-contact-bg: #f0ede6;
+  --font-family: "Poppins", sans-serif;
   --max-width: 960px;
   --shadow-card: 0 1px 3px rgba(26, 26, 26, 0.04), 0 1px 2px rgba(26, 26, 26, 0.02);
 }
@@ -38,7 +40,9 @@ body {
   outline-offset: 2px;
 }
 
-a { color: inherit; }
+a {
+  color: inherit;
+}
 
 .container {
   max-width: var(--max-width);
@@ -162,7 +166,7 @@ a { color: inherit; }
   font-family: var(--font-family);
   font-size: 16px;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #ffffff;
   background: var(--color-accent-green);
   border: none;
   border-radius: 0 8px 8px 0;
@@ -240,7 +244,7 @@ a { color: inherit; }
   width: 40px;
   height: 40px;
   background: var(--color-accent-green);
-  color: #FFFFFF;
+  color: #ffffff;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -343,13 +347,15 @@ a { color: inherit; }
   margin-bottom: 8px;
 }
 
-.legal p, .legal li {
+.legal p,
+.legal li {
   font-size: 16px;
   color: var(--color-secondary);
   margin-bottom: 16px;
 }
 
-.legal ul, .legal ol {
+.legal ul,
+.legal ol {
   padding-left: 24px;
 }
 
@@ -360,7 +366,8 @@ a { color: inherit; }
   font-size: 16px;
 }
 
-.legal th, .legal td {
+.legal th,
+.legal td {
   text-align: left;
   padding: 8px 16px;
   border-bottom: 1px solid var(--color-border);
