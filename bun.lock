@@ -21,6 +21,7 @@
       "dependencies": {
         "@expo-google-fonts/poppins": "^0.4.1",
         "@expo/vector-icons": "^15.0.3",
+        "@fidy/assets": "workspace:*",
         "@fidy/schemas": "workspace:*",
         "@fidy/types": "workspace:*",
         "@fidy/utils": "workspace:*",
@@ -83,6 +84,10 @@
         "eslint-config-expo": "~10.0.0",
         "vitest": "^4.0.18",
       },
+    },
+    "packages/assets": {
+      "name": "@fidy/assets",
+      "version": "1.0.0",
     },
     "packages/schemas": {
       "name": "@fidy/schemas",
@@ -475,6 +480,8 @@
     "@expo/ws-tunnel": ["@expo/ws-tunnel@1.0.6", "", {}, "sha512-nDRbLmSrJar7abvUjp3smDwH8HcbZcoOEa5jVPUv9/9CajgmWw20JNRwTuBRzWIWIkEJDkz20GoNA+tSwUqk0Q=="],
 
     "@expo/xcpretty": ["@expo/xcpretty@4.4.1", "", { "dependencies": { "@babel/code-frame": "^7.20.0", "chalk": "^4.1.0", "js-yaml": "^4.1.0" }, "bin": { "excpretty": "build/cli.js" } }, "sha512-KZNxZvnGCtiM2aYYZ6Wz0Ix5r47dAvpNLApFtZWnSoERzAdOMzVBOPysBoM0JlF6FKWZ8GPqgn6qt3dV/8Zlpg=="],
+
+    "@fidy/assets": ["@fidy/assets@workspace:packages/assets"],
 
     "@fidy/landing": ["@fidy/landing@workspace:apps/landing"],
 
