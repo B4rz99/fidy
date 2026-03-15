@@ -83,19 +83,14 @@ export async function getPendingRetryEmails(db: AnyDb) {
     .where(
       and(
         eq(processedEmails.status, "pending_retry"),
-        lte(processedEmails.nextRetryAt, sql`datetime('now')`)
+        lte(processedEmails.nextRetryAt, sql`strftime('%Y-%m-%dT%H:%M:%fZ', 'now')`)
       )
     )
     .orderBy(desc(processedEmails.receivedAt))
     .limit(50);
 }
 
-export async function markForRetry(
-  db: AnyDb,
-  id: string,
-  retryCount: number,
-  nextRetryAt: string
-) {
+export async function markForRetry(db: AnyDb, id: string, retryCount: number, nextRetryAt: string) {
   await db
     .update(processedEmails)
     .set({ status: "pending_retry", retryCount, nextRetryAt })

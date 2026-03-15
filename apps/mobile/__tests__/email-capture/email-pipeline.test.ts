@@ -455,12 +455,7 @@ describe("processRetries", () => {
 
     const result = await processRetries(mockDb, USER_ID);
 
-    expect(mockMarkForRetry).toHaveBeenCalledWith(
-      mockDb,
-      "pe-retry-1",
-      3,
-      expect.any(String)
-    );
+    expect(mockMarkForRetry).toHaveBeenCalledWith(mockDb, "pe-retry-1", 3, expect.any(String));
     expect(result.retried).toBe(1);
     expect(result.succeeded).toBe(0);
   });
@@ -526,6 +521,45 @@ describe("processRetries", () => {
     expect(mockMarkPermanentlyFailed).toHaveBeenCalledWith(mockDb, "pe-retry-1");
     expect(result.permanentlyFailed).toBe(1);
     expect(mockParseEmailApi).not.toHaveBeenCalled();
+  });
+
+  it("schedules retry with backoff when save fails", async () => {
+    const row = makePendingRetryRow({ retryCount: 1 });
+    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    mockParseEmailApi.mockResolvedValueOnce({
+      type: "expense",
+      amountCents: 5000000,
+      categoryId: "other",
+      description: "Compra en Exito",
+      date: "2026-03-05",
+      confidence: 0.9,
+    });
+    mockInsertTransaction.mockRejectedValueOnce(new Error("DB constraint error"));
+
+    const result = await processRetries(mockDb, USER_ID);
+
+    expect(mockMarkForRetry).toHaveBeenCalledWith(mockDb, "pe-retry-1", 2, expect.any(String));
+    expect(result.retried).toBe(1);
+    expect(result.succeeded).toBe(0);
+  });
+
+  it("permanently fails when save fails at max retries", async () => {
+    const row = makePendingRetryRow({ retryCount: 4 });
+    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    mockParseEmailApi.mockResolvedValueOnce({
+      type: "expense",
+      amountCents: 5000000,
+      categoryId: "other",
+      description: "Compra en Exito",
+      date: "2026-03-05",
+      confidence: 0.9,
+    });
+    mockInsertTransaction.mockRejectedValueOnce(new Error("DB constraint error"));
+
+    const result = await processRetries(mockDb, USER_ID);
+
+    expect(mockMarkPermanentlyFailed).toHaveBeenCalledWith(mockDb, "pe-retry-1");
+    expect(result.permanentlyFailed).toBe(1);
   });
 
   it("returns correct counts", async () => {

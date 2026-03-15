@@ -262,10 +262,7 @@ export type RetryResult = {
   permanentlyFailed: number;
 };
 
-export async function processRetries(
-  db: AnyDb,
-  userId: string
-): Promise<RetryResult> {
+export async function processRetries(db: AnyDb, userId: string): Promise<RetryResult> {
   const result: RetryResult = { retried: 0, succeeded: 0, permanentlyFailed: 0 };
   const pendingEmails = await getPendingRetryEmails(db);
 
@@ -354,10 +351,16 @@ export async function processRetries(
       result.succeeded++;
     } catch (saveErr) {
       captureError(saveErr);
-      result.retried++;
+      const nextCount = email.retryCount + 1;
+      if (isMaxRetriesReached(nextCount)) {
+        await markPermanentlyFailed(db, email.id);
+        result.permanentlyFailed++;
+      } else {
+        await markForRetry(db, email.id, nextCount, computeNextRetryAt(nextCount));
+        result.retried++;
+      }
     }
   }
 
   return result;
 }
-
