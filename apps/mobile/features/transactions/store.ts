@@ -8,7 +8,6 @@ import {
   enqueueSync,
   getBalanceAggregate,
   getDailySpendingAggregate,
-  getRecentTransactions,
   getSpendingByCategoryAggregate,
   getTransactionById,
   getTransactionsPaginated,
@@ -74,21 +73,8 @@ type TransactionActions = {
   addToCache: (tx: StoredTransaction) => void;
   removeFromCache: (id: string) => void;
   resetForm: () => void;
-  getChatData: (currentMonth: string) => {
-    recentTransactions: StoredTransaction[];
-    balanceCents: number;
-    categorySpending: CategorySpendingItem[];
-    previousMonthSpending: CategorySpendingItem[];
-  };
   getTransactionById: (id: string) => StoredTransaction | null;
 };
-
-function previousMonth(month: string): string {
-  const [year, m] = month.split("-").map(Number);
-  const prevMonth = m === 1 ? 12 : m - 1;
-  const prevYear = m === 1 ? year - 1 : year;
-  return `${prevYear}-${String(prevMonth).padStart(2, "0")}`;
-}
 
 const INITIAL_FORM: Pick<
   TransactionState,
@@ -276,26 +262,6 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     }),
 
   resetForm: () => set({ ...INITIAL_FORM, date: new Date() }),
-
-  getChatData: (currentMonth) => {
-    if (!dbRef || !userIdRef) {
-      return {
-        recentTransactions: [],
-        balanceCents: get().balanceCents,
-        categorySpending: get().categorySpending,
-        previousMonthSpending: [],
-      };
-    }
-    const prevMonth = previousMonth(currentMonth);
-    const recentRows = getRecentTransactions(dbRef, userIdRef, currentMonth, prevMonth);
-    const prevMonthSpending = getSpendingByCategoryAggregate(dbRef, userIdRef, prevMonth);
-    return {
-      recentTransactions: recentRows.map(toStoredTransaction),
-      balanceCents: get().balanceCents,
-      categorySpending: get().categorySpending,
-      previousMonthSpending: prevMonthSpending,
-    };
-  },
 
   getTransactionById: (id) => {
     if (!dbRef) return null;

@@ -85,6 +85,76 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_ANON_KEY") ?? ""
 );
 
+function createUserClient(token: string) {
+  return createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+}
+
+const CENTS_PER_COP = 100;
+
+function centsToCop(cents: number): number {
+  return cents / CENTS_PER_COP;
+}
+
+function currentMonthString(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function previousMonthString(month: string): string {
+  const [year, m] = month.split("-").map(Number);
+  const prevM = m === 1 ? 12 : m - 1;
+  const prevY = m === 1 ? year - 1 : year;
+  return `${prevY}-${String(prevM).padStart(2, "0")}`;
+}
+
+function nextMonthString(month: string): string {
+  const [year, m] = month.split("-").map(Number);
+  const nextM = m === 12 ? 1 : m + 1;
+  const nextY = m === 12 ? year + 1 : year;
+  return `${nextY}-${String(nextM).padStart(2, "0")}`;
+}
+
+type CategorySpending = { categoryId: string; total: number };
+type CategoryDelta = { categoryId: string; current: number; previous: number; delta: number };
+
+function computeSpendingByCategory(
+  transactions: { category_id: string; amount_cents: number; type: string; date: string }[],
+  month: string
+): CategorySpending[] {
+  const start = `${month}-01`;
+  const end = `${nextMonthString(month)}-01`;
+  const map = new Map<string, number>();
+  for (const t of transactions) {
+    if (t.type === "expense" && t.date >= start && t.date < end) {
+      map.set(t.category_id, (map.get(t.category_id) ?? 0) + t.amount_cents);
+    }
+  }
+  return Array.from(map.entries()).map(([categoryId, totalCents]) => ({
+    categoryId,
+    total: centsToCop(totalCents),
+  }));
+}
+
+function computeDeltas(current: CategorySpending[], previous: CategorySpending[]): CategoryDelta[] {
+  const prevMap = new Map(previous.map((p) => [p.categoryId, p.total]));
+  const allCategories = new Set([
+    ...current.map((c) => c.categoryId),
+    ...previous.map((p) => p.categoryId),
+  ]);
+  return Array.from(allCategories).map((categoryId) => {
+    const currentTotal = current.find((c) => c.categoryId === categoryId)?.total ?? 0;
+    const previousTotal = prevMap.get(categoryId) ?? 0;
+    return {
+      categoryId,
+      current: currentTotal,
+      previous: previousTotal,
+      delta: currentTotal - previousTotal,
+    };
+  });
+}
+
 function jsonResponse(
   body: unknown,
   status = 200,
@@ -104,6 +174,7 @@ function structuredLog(fields: {
   latency_ms: number;
   error_type: string | null;
   message_count?: number;
+  context_query_ms?: number;
 }): void {
   console.log(
     JSON.stringify({
@@ -252,7 +323,67 @@ Deno.serve(async (req) => {
         return jsonResponse({ success: false, error: "empty_llm_response" }, 502);
       }
 
-      const data = JSON.parse(text);
+      const extracted: { fact: string; category: string }[] = JSON.parse(text).memories;
+      if (extracted.length === 0) {
+        structuredLog({
+          request_id: requestId,
+          user_id: userId,
+          mode,
+          success: true,
+          latency_ms: Date.now() - startTime,
+          error_type: null,
+          message_count: messages.length,
+        });
+        return jsonResponse({ success: true, data: [] });
+      }
+
+      // Server-side deduplication
+      const userClient = createUserClient(token);
+      const { data: existing } = await userClient
+        .from("user_memories")
+        .select("fact")
+        .is("deleted_at", null);
+
+      const existingLower = new Set(
+        (existing ?? []).map((m: { fact: string }) => m.fact.toLowerCase())
+      );
+      const seen = new Set<string>();
+      const newFacts = extracted.filter((f) => {
+        const lower = f.fact.toLowerCase();
+        if (existingLower.has(lower) || seen.has(lower)) return false;
+        seen.add(lower);
+        return true;
+      });
+
+      if (newFacts.length === 0) {
+        structuredLog({
+          request_id: requestId,
+          user_id: userId,
+          mode,
+          success: true,
+          latency_ms: Date.now() - startTime,
+          error_type: null,
+          message_count: messages.length,
+        });
+        return jsonResponse({ success: true, data: [] });
+      }
+
+      const { data: inserted, error: insertError } = await userClient
+        .from("user_memories")
+        .insert(newFacts.map((f) => ({ user_id: userId, fact: f.fact, category: f.category })))
+        .select("id, fact, category, created_at");
+
+      if (insertError) {
+        structuredLog({
+          request_id: requestId,
+          user_id: userId,
+          mode,
+          success: false,
+          latency_ms: Date.now() - startTime,
+          error_type: insertError.message,
+        });
+        return jsonResponse({ success: false, error: "memory_insert_failed" }, 500);
+      }
 
       structuredLog({
         request_id: requestId,
@@ -264,17 +395,12 @@ Deno.serve(async (req) => {
         message_count: messages.length,
       });
 
-      return jsonResponse({ success: true, data: data.memories });
+      return jsonResponse({ success: true, data: inserted ?? [] });
     }
 
     // Chat mode — streaming
-    const { messages, context } = body;
-    if (
-      !Array.isArray(messages) ||
-      !context ||
-      typeof context !== "object" ||
-      !Array.isArray(context.memories)
-    ) {
+    const { messages } = body;
+    if (!Array.isArray(messages) || messages.length === 0) {
       structuredLog({
         request_id: requestId,
         user_id: userId,
@@ -285,6 +411,53 @@ Deno.serve(async (req) => {
       });
       return jsonResponse({ success: false, error: "invalid_request" }, 400);
     }
+
+    // Server-side context building
+    const userClient = createUserClient(token);
+    const month = currentMonthString();
+    const prevMonth = previousMonthString(month);
+
+    const contextStartTime = Date.now();
+    const [balanceResult, txResult, memoriesResult] = await Promise.all([
+      userClient.rpc("get_user_balance"),
+      userClient
+        .from("transactions")
+        .select("type, amount_cents, category_id, description, date")
+        .is("deleted_at", null)
+        .gte("date", `${prevMonth}-01`)
+        .order("date", { ascending: false }),
+      userClient.from("user_memories").select("fact, category").is("deleted_at", null),
+    ]);
+    const contextQueryMs = Date.now() - contextStartTime;
+
+    const txData = txResult.data ?? [];
+    const currentSpending = computeSpendingByCategory(txData, month);
+    const prevSpending = computeSpendingByCategory(txData, prevMonth);
+
+    const context = {
+      transactions: txData.map(
+        (t: {
+          type: string;
+          amount_cents: number;
+          category_id: string;
+          description: string;
+          date: string;
+        }) => ({
+          type: t.type,
+          amount: centsToCop(t.amount_cents),
+          categoryId: t.category_id,
+          description: t.description,
+          date: t.date,
+        })
+      ),
+      summary: {
+        balance: centsToCop((balanceResult.data as number) ?? 0),
+        currentMonthSpending: currentSpending,
+        previousMonthSpending: prevSpending,
+        monthOverMonthDeltas: computeDeltas(currentSpending, prevSpending),
+      },
+      memories: (memoriesResult.data ?? []) as { fact: string; category: string }[],
+    };
 
     const systemPrompt = buildSystemPrompt(context);
 
@@ -315,6 +488,7 @@ Deno.serve(async (req) => {
             latency_ms: Date.now() - startTime,
             error_type: null,
             message_count: messages.length,
+            context_query_ms: contextQueryMs,
           });
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : String(err);

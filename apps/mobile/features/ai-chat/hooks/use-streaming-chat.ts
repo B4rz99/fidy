@@ -1,8 +1,6 @@
 import { useCallback } from "react";
-import type { StoredTransaction } from "@/features/transactions/schema";
 import { useTransactionStore } from "@/features/transactions/store";
-import { parseIsoDate, toIsoDate } from "@/shared/lib/format-date";
-import { buildChatContext } from "../lib/build-context";
+import { parseIsoDate } from "@/shared/lib/format-date";
 import { parseActionFromResponse } from "../lib/parse-action";
 import type { ChatAction } from "../schema";
 import { streamChat } from "../services/ai-chat-api";
@@ -61,30 +59,6 @@ export function useStreamingChat() {
 
       await store.addUserMessage(text);
 
-      const currentMonth = toIsoDate(new Date()).slice(0, 7);
-      const txStore = useTransactionStore.getState();
-      const chatData = (() => {
-        try {
-          return txStore.getChatData(currentMonth);
-        } catch {
-          // DB read failed — fall back to cached store aggregates
-          return {
-            recentTransactions: [] as StoredTransaction[],
-            balanceCents: txStore.balanceCents,
-            categorySpending: txStore.categorySpending,
-            previousMonthSpending: [] as { categoryId: string; totalCents: number }[],
-          };
-        }
-      })();
-      const context = buildChatContext(
-        chatData.recentTransactions,
-        store.memories,
-        currentMonth,
-        chatData.balanceCents,
-        chatData.categorySpending,
-        chatData.previousMonthSpending
-      );
-
       const allMessages = [
         ...store.messages.map((m) => ({
           role: m.role as "user" | "assistant",
@@ -104,7 +78,6 @@ export function useStreamingChat() {
       try {
         await streamChat(
           allMessages,
-          context,
           {
             onChunk: (chunk) => {
               accumulated += chunk;

@@ -1,18 +1,12 @@
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db/client";
-import { chatMessages, chatSessions, userMemories } from "@/shared/db/schema";
+import { chatMessages, chatSessions } from "@/shared/db/schema";
+import { getSupabase } from "@/shared/db/supabase";
 import { generateId } from "@/shared/lib/generate-id";
-import { deduplicateMemories } from "./lib/memories";
+import { captureError } from "@/shared/lib/sentry";
 import { deriveConversationTitle, findExpiredSessions } from "./lib/sessions";
-import type {
-  ActionStatus,
-  ChatAction,
-  ChatMessage,
-  ChatSession,
-  ExtractedMemory,
-  UserMemory,
-} from "./schema";
+import type { ActionStatus, ChatAction, ChatMessage, ChatSession, UserMemory } from "./schema";
 import { extractMemories } from "./services/ai-chat-api";
 
 let dbRef: AnyDb | null = null;
@@ -237,34 +231,50 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   setStreamingContent: (streamingContent) => set({ streamingContent }),
 
   loadMemories: async () => {
-    if (!dbRef || !userIdRef) return;
-    const rows = await dbRef.select().from(userMemories).where(eq(userMemories.userId, userIdRef));
-
+    if (!userIdRef) return;
+    const userId = userIdRef;
+    const { data, error } = await getSupabase()
+      .from("user_memories")
+      .select("id, fact, category, created_at")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+    if (error) {
+      captureError(error);
+      return;
+    }
+    if (!data) return;
     set({
-      memories: rows.map((r) => ({
-        id: r.id,
-        userId: r.userId,
-        fact: r.fact,
-        category: r.category as UserMemory["category"],
-        createdAt: r.createdAt,
-        updatedAt: r.updatedAt,
-      })),
+      memories: data.map(
+        // biome-ignore lint/style/useNamingConvention: Supabase column name
+        (r: { id: string; fact: string; category: string; created_at: string }) => ({
+          id: r.id,
+          userId,
+          fact: r.fact,
+          category: r.category as UserMemory["category"],
+          createdAt: r.created_at,
+          updatedAt: r.created_at,
+        })
+      ),
     });
   },
 
   deleteMemory: async (id) => {
-    if (!dbRef) return;
-    await dbRef.delete(userMemories).where(eq(userMemories.id, id));
-    set((state) => ({
-      memories: state.memories.filter((m) => m.id !== id),
-    }));
+    const { error } = await getSupabase()
+      .from("user_memories")
+      // biome-ignore lint/style/useNamingConvention: Supabase column name
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      captureError(error);
+      return;
+    }
+    set((state) => ({ memories: state.memories.filter((m) => m.id !== id) }));
   },
 
   extractAndSaveMemories: async () => {
-    if (!dbRef || !userIdRef) return;
-    const db = dbRef;
+    if (!userIdRef) return;
     const userId = userIdRef;
-    const { messages, memories } = get();
+    const { messages } = get();
     if (messages.length < 2) return;
 
     const conversationMessages = messages.map((m) => ({
@@ -272,35 +282,21 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
       content: m.content,
     }));
 
-    const extracted: readonly ExtractedMemory[] = await extractMemories(conversationMessages);
-    if (extracted.length === 0) return;
-
-    const newFacts = deduplicateMemories(memories, extracted);
-    if (newFacts.length === 0) return;
-
-    const now = new Date().toISOString();
-    const newMemories: UserMemory[] = newFacts.map((f) => ({
-      id: generateId("um"),
-      userId,
-      fact: f.fact,
-      category: f.category,
-      createdAt: now,
-      updatedAt: now,
-    }));
-
-    await db.insert(userMemories).values(
-      newMemories.map((m) => ({
-        id: m.id,
-        userId: m.userId,
-        fact: m.fact,
-        category: m.category,
-        createdAt: m.createdAt,
-        updatedAt: m.updatedAt,
-      }))
-    );
+    const saved = await extractMemories(conversationMessages);
+    if (saved.length === 0) return;
 
     set((state) => ({
-      memories: [...state.memories, ...newMemories],
+      memories: [
+        ...state.memories,
+        ...saved.map((s) => ({
+          id: s.id,
+          userId,
+          fact: s.fact,
+          category: s.category as UserMemory["category"],
+          createdAt: s.created_at,
+          updatedAt: s.created_at,
+        })),
+      ],
     }));
   },
 
