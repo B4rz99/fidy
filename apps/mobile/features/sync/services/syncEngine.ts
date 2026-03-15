@@ -120,7 +120,7 @@ export async function syncPull(
 
   const rows = data as SupabaseTransactionRow[];
 
-  const succeededTimestamps: string[] = [];
+  let earliestFailure: string | null = null;
   for (const serverRow of rows) {
     try {
       const localRow = await getTransactionById(db, serverRow.id);
@@ -128,14 +128,24 @@ export async function syncPull(
       if (shouldUpdateLocal(serverRow.updated_at, localRow?.updatedAt)) {
         await upsertTransaction(db, fromSupabaseRow(serverRow));
       }
-      succeededTimestamps.push(serverRow.updated_at);
     } catch (error) {
       captureError(error);
+      if (!earliestFailure || serverRow.updated_at < earliestFailure) {
+        earliestFailure = serverRow.updated_at;
+      }
     }
   }
 
-  if (succeededTimestamps.length > 0) {
-    const maxUpdatedAt = succeededTimestamps.reduce((max, ts) => (ts > max ? ts : max));
+  // Only advance cursor up to (but not past) the earliest failed row
+  // so it gets retried on the next pull
+  const cursorCandidates = rows.map((r) => r.updated_at);
+  const maxUpdatedAt = earliestFailure
+    ? cursorCandidates
+        .filter((ts) => ts < earliestFailure)
+        .reduce((max, ts) => (ts > max ? ts : max), "")
+    : cursorCandidates.reduce((max, ts) => (ts > max ? ts : max), "");
+
+  if (maxUpdatedAt) {
     await setSyncMeta(db, LAST_SYNC_AT, maxUpdatedAt);
   } else if (!lastSyncAt) {
     await setSyncMeta(db, LAST_SYNC_AT, new Date().toISOString());

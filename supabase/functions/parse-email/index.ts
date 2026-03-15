@@ -169,6 +169,17 @@ Deno.serve(async (req) => {
       });
       return jsonResponse({ success: false, error: "invalid_json" }, 400);
     }
+    if (!payload || typeof payload !== "object") {
+      structuredLog({
+        request_id: requestId,
+        user_id: userId,
+        mode: "",
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "invalid_request",
+      });
+      return jsonResponse({ success: false, error: "invalid_request" }, 400);
+    }
     const emailBody: unknown = payload.body;
     mode = (payload.mode as string) ?? "";
 
