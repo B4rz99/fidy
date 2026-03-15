@@ -363,24 +363,40 @@ a {
   width: 100%;
   border-collapse: collapse;
   margin: 16px 0;
-  font-size: 16px;
+  font-size: 15px;
+  background: var(--color-card);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 
 .legal th,
 .legal td {
   text-align: left;
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 12px 16px;
 }
 
 .legal th {
   font-weight: 700;
-  color: var(--color-primary);
-  background: var(--color-card);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-secondary);
+  background: var(--color-primary);
+  color: var(--color-page);
 }
 
 .legal td {
-  color: var(--color-secondary);
+  color: var(--color-primary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.legal tr:last-child td {
+  border-bottom: none;
+}
+
+.legal tr:nth-child(even) td {
+  background: rgba(0, 0, 0, 0.02);
 }
 
 .legal .addendum {
