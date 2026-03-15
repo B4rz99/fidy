@@ -5,4 +5,4 @@ const config = getDefaultConfig(__dirname);
 
 config.resolver.sourceExts.push("sql");
 
-module.exports = withNativeWind(config);
+module.exports = withNativeWind(config, { input: "./global.css" });
