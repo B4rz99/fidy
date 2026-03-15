@@ -1,7 +1,7 @@
-import * as Crypto from "expo-crypto";
-import * as SecureStore from "expo-secure-store";
 import type { ExpoSQLiteDatabase } from "drizzle-orm/expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
+import * as Crypto from "expo-crypto";
+import * as SecureStore from "expo-secure-store";
 import { openDatabaseSync } from "expo-sqlite";
 import { captureError } from "@/shared/lib/sentry";
 
@@ -16,9 +16,7 @@ function getOrCreateEncryptionKey(userId: string): string {
   if (existing && HEX_KEY_PATTERN.test(existing)) return existing;
 
   const randomBytes = Crypto.getRandomBytes(32);
-  const hexKey = Array.from(randomBytes, (b) =>
-    b.toString(16).padStart(2, "0"),
-  ).join("");
+  const hexKey = Array.from(randomBytes, (b) => b.toString(16).padStart(2, "0")).join("");
   SecureStore.setItem(storeKey, hexKey);
   return hexKey;
 }

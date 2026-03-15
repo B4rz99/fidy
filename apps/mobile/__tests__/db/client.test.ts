@@ -22,9 +22,9 @@ vi.mock("@/shared/lib/sentry", () => ({
   captureError: vi.fn(),
 }));
 
-import { openDatabaseSync } from "expo-sqlite";
-import { getItem, setItem, deleteItemAsync } from "expo-secure-store";
 import { getRandomBytes } from "expo-crypto";
+import { deleteItemAsync, getItem, setItem } from "expo-secure-store";
+import { openDatabaseSync } from "expo-sqlite";
 import { getDb, resetDb } from "@/shared/db/client";
 
 describe("getDb", () => {
@@ -55,7 +55,7 @@ describe("getDb", () => {
     expect(getRandomBytes).toHaveBeenCalledWith(32);
     expect(setItem).toHaveBeenCalledWith(
       "fidy-db-key-user-123",
-      expect.stringMatching(/^[0-9a-f]{64}$/),
+      expect.stringMatching(/^[0-9a-f]{64}$/)
     );
   });
 
@@ -77,7 +77,7 @@ describe("getDb", () => {
 
     getDb("user-123");
     expect(mockExecSync).toHaveBeenCalledWith(
-      expect.stringMatching(/^PRAGMA key = "x'[0-9a-f]{64}'"$/),
+      expect.stringMatching(/^PRAGMA key = "x'[0-9a-f]{64}'"$/)
     );
   });
 
