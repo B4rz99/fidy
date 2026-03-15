@@ -77,7 +77,7 @@ export const useSyncConflictStore = create<SyncConflictState & SyncConflictActio
     const now = new Date().toISOString();
 
     if (resolution === "local") {
-      upsertTransaction(dbRef, conflict.localData);
+      upsertTransaction(dbRef, { ...conflict.localData, updatedAt: now });
       enqueueSync(dbRef, {
         id: generateId("sq"),
         tableName: "transactions",

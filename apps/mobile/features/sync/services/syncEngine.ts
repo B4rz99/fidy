@@ -130,7 +130,10 @@ export async function syncPull(
       const mappedServerRow = fromSupabaseRow(serverRow);
 
       if (shouldUpdateLocal(serverRow.updated_at, localRow?.updatedAt)) {
-        if (localRow && hasDataConflict(localRow, mappedServerRow)) {
+        const isConflict = localRow != null && hasDataConflict(localRow, mappedServerRow);
+        await upsertTransaction(db, mappedServerRow);
+        // Log conflict only after successful upsert to avoid duplicates on retry
+        if (isConflict) {
           insertConflict(db, {
             id: generateId("conflict"),
             transactionId: serverRow.id,
@@ -139,7 +142,6 @@ export async function syncPull(
             detectedAt: new Date().toISOString(),
           });
         }
-        await upsertTransaction(db, mappedServerRow);
       }
     } catch (error) {
       captureError(error);

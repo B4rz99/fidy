@@ -96,6 +96,14 @@ export const ConflictCard = memo(function ConflictCard({
     });
   }
 
+  if (localData.deletedAt !== serverData.deletedAt) {
+    diffs.push({
+      label: "Status",
+      localValue: localData.deletedAt ? "Deleted" : "Active",
+      serverValue: serverData.deletedAt ? "Deleted" : "Active",
+    });
+  }
+
   return (
     <View className="rounded-xl bg-chart-bg p-4 dark:bg-chart-bg-dark">
       <Text className="mb-1 font-poppins-semibold text-body text-primary dark:text-primary-dark">
