@@ -32,6 +32,7 @@ describe("stripPii", () => {
     expect(stripPii("C.E. 654321")).toBe("[ID]");
     expect(stripPii("Cedula 1037654321")).toBe("[ID]");
     expect(stripPii("cédula: 1037654321")).toBe("[ID]");
+    expect(stripPii("cc 1037654321")).toBe("[ID]");
   });
 
   it("removes NIT (business tax ID)", () => {

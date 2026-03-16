@@ -9,7 +9,7 @@ export function stripPii(text: string): string {
       .replace(/\+\d[\d\s-]{8,14}\d/g, "[PHONE]")
       // ID patterns must run before local phone — cedulas starting with 601-608 would otherwise match phones
       .replace(
-        /\b(?:C\.?\s?C\.?|T\.?\s?I\.?|C\.?\s?E\.?|[Cc][eé]dula)\s*:?\s*#?\s*\d{6,11}\b/g,
+        /\b(?:C\.?\s?C\.?|T\.?\s?I\.?|C\.?\s?E\.?|[Cc][eé]dula)\s*:?\s*#?\s*\d{6,11}\b/gi,
         "[ID]"
       )
       .replace(/\bNIT\s*:?\s*\d{3}\.?\d{3}\.?\d{3,4}-?\d?\b/gi, "[ID]")
