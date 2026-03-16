@@ -18,6 +18,7 @@ import { useCalendarStore } from "@/features/calendar/store";
 import type { CategoryId } from "@/features/transactions/lib/categories";
 import { CATEGORIES } from "@/features/transactions/lib/categories";
 import { centsToDisplay } from "@/features/transactions/lib/format-amount";
+import { useAsyncGuard } from "@/shared/hooks/use-async-guard";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 
 export default function AddBillScreen() {
@@ -60,26 +61,29 @@ export default function AddBillScreen() {
     }
   }, [existingBill?.id]);
 
-  const handleSave = async () => {
-    const trimmedName = name.trim();
-    if (!trimmedName) return;
+  const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
-    if (isEdit && existingBill) {
-      const cents = Math.round(parseFloat(amount.replace(/,/g, "")) * 100);
-      if (Number.isNaN(cents) || cents <= 0) return;
-      await updateBillAction(existingBill.id, {
-        name: trimmedName,
-        amountCents: cents,
-        frequency,
-        categoryId: category,
-        startDate,
-      });
-      router.back();
-    } else {
-      const success = await addBill(trimmedName, amount, frequency, category, startDate);
-      if (success) router.back();
-    }
-  };
+  const handleSave = () =>
+    guardedSave(async () => {
+      const trimmedName = name.trim();
+      if (!trimmedName) return;
+
+      if (isEdit && existingBill) {
+        const cents = Math.round(parseFloat(amount.replace(/,/g, "")) * 100);
+        if (Number.isNaN(cents) || cents <= 0) return;
+        await updateBillAction(existingBill.id, {
+          name: trimmedName,
+          amountCents: cents,
+          frequency,
+          categoryId: category,
+          startDate,
+        });
+        router.back();
+      } else {
+        const success = await addBill(trimmedName, amount, frequency, category, startDate);
+        if (success) router.back();
+      }
+    });
 
   const handleFrequencyPress = (value: BillFrequency) => {
     Keyboard.dismiss();
@@ -204,8 +208,9 @@ export default function AddBillScreen() {
         </View>
 
         <Pressable
-          style={[styles.saveButton, { backgroundColor: accentGreen }]}
+          style={[styles.saveButton, { backgroundColor: accentGreen, opacity: isSaving ? 0.5 : 1 }]}
           onPress={handleSave}
+          disabled={isSaving}
         >
           <Text style={styles.saveButtonText}>{isEdit ? "Save Changes" : "Add"}</Text>
         </Pressable>

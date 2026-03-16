@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { Calendar, ChevronLeft } from "lucide-react-native";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useShallow } from "zustand/react/shallow";
+import { useAsyncGuard } from "@/shared/hooks/use-async-guard";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
 import { CATEGORY_ROW_KEYS, CATEGORY_ROWS } from "../lib/categories";
 import { formatAmount } from "../lib/format-amount";
@@ -49,14 +50,17 @@ export const TransactionDetails = () => {
   const displayAmount = formatAmount(digits);
   const dateLabel = getDateLabel(date, new Date());
 
-  const handleSave = async () => {
-    const result = await saveTransaction();
-    if (result.success) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      resetForm();
-      back();
-    }
-  };
+  const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
+
+  const handleSave = () =>
+    guardedSave(async () => {
+      const result = await saveTransaction();
+      if (result.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        resetForm();
+        back();
+      }
+    });
 
   return (
     <View className="flex-1 gap-4">
@@ -119,8 +123,9 @@ export const TransactionDetails = () => {
       <View className="mt-auto">
         <Pressable
           className="h-[52px] w-full items-center justify-center rounded-xl"
-          style={{ backgroundColor: accentGreen }}
+          style={{ backgroundColor: accentGreen, opacity: isSaving ? 0.5 : 1 }}
           onPress={handleSave}
+          disabled={isSaving}
           accessibilityRole="button"
           accessibilityLabel="Save Transaction"
         >
