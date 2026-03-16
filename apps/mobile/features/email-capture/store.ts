@@ -22,9 +22,8 @@ import {
 } from "./lib/repository";
 import type { EmailProvider } from "./schema";
 import { fetchBankSenders } from "./services/bank-senders-cache";
+import { getAdapter } from "./services/email-adapter";
 import { type ProgressCallback, processEmails, processRetries } from "./services/email-pipeline";
-import { connectGmail, disconnectGmail, fetchGmailEmails } from "./services/gmail-adapter";
-import { connectOutlook, disconnectOutlook, fetchOutlookEmails } from "./services/outlook-adapter";
 
 let dbRef: AnyDb | null = null;
 let userIdRef: string | null = null;
@@ -99,8 +98,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
   connectEmail: async (provider, clientId) => {
     if (!dbRef || !userIdRef) return;
 
-    const result =
-      provider === "gmail" ? await connectGmail(clientId) : await connectOutlook(clientId);
+    const result = await getAdapter(provider).connect(clientId);
 
     if (!result.success) return;
 
@@ -121,8 +119,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     if (!dbRef) return;
     const account = get().accounts.find((a) => a.id === id);
     if (account) {
-      if (account.provider === "gmail") await disconnectGmail();
-      else if (account.provider === "outlook") await disconnectOutlook();
+      await getAdapter(account.provider as EmailProvider).disconnect();
     }
     await deleteEmailAccount(dbRef, id);
     set((state) => ({
@@ -159,6 +156,11 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       // Always look back at least 30 days; dedup by externalId prevents re-processing
       const minSince = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
+      const clientIds: Record<EmailProvider, string> = {
+        gmail: gmailClientId,
+        outlook: outlookClientId,
+      };
+
       // Fetch emails from all accounts in parallel
       const fetchResults = await Promise.all(
         accounts.map(async (account) => {
@@ -167,10 +169,11 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
               account.lastFetchedAt && account.lastFetchedAt < minSince
                 ? account.lastFetchedAt
                 : minSince;
-            const rawEmails =
-              account.provider === "gmail"
-                ? await fetchGmailEmails(gmailClientId, since, senderEmails)
-                : await fetchOutlookEmails(outlookClientId, since, senderEmails);
+            const rawEmails = await getAdapter(account.provider as EmailProvider).fetchEmails(
+              clientIds[account.provider as EmailProvider],
+              since,
+              senderEmails
+            );
             return { account, rawEmails, fetchOk: true };
           } catch (err) {
             console.warn(`[EmailCapture] ${account.provider} fetch error:`, err);
