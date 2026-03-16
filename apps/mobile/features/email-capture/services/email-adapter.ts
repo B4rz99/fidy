@@ -50,65 +50,70 @@ export function createAdapter(config: EmailProviderConfig, fetchFn: FetchEmailsF
   };
 
   const connect = async (clientId: string): Promise<ConnectResult> => {
-    const { openAuthSessionAsync } = await import("expo-web-browser");
+    try {
+      const { openAuthSessionAsync } = await import("expo-web-browser");
 
-    const redirectUri = config.getRedirectUri();
-    const params = new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      response_type: "code",
-      scope: config.scope,
-      ...config.extraAuthParams,
-    });
-
-    const result = await openAuthSessionAsync(`${config.authUrl}?${params}`, redirectUri);
-
-    if (result.type !== "success" || !result.url) {
-      return { success: false, error: "cancelled" };
-    }
-
-    const code = new URL(result.url).searchParams.get("code");
-    if (!code) {
-      return { success: false, error: "no_code" };
-    }
-
-    const tokenResponse = await fetch(config.tokenUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        code,
+      const redirectUri = config.getRedirectUri();
+      const params = new URLSearchParams({
         client_id: clientId,
         redirect_uri: redirectUri,
-        grant_type: "authorization_code",
-        ...config.extraTokenExchangeParams,
-      }).toString(),
-    });
+        response_type: "code",
+        scope: config.scope,
+        ...config.extraAuthParams,
+      });
 
-    if (!tokenResponse.ok) {
-      return { success: false, error: "token_exchange_failed" };
+      const result = await openAuthSessionAsync(`${config.authUrl}?${params}`, redirectUri);
+
+      if (result.type !== "success" || !result.url) {
+        return { success: false, error: "cancelled" };
+      }
+
+      const code = new URL(result.url).searchParams.get("code");
+      if (!code) {
+        return { success: false, error: "no_code" };
+      }
+
+      const tokenResponse = await fetch(config.tokenUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          code,
+          client_id: clientId,
+          redirect_uri: redirectUri,
+          grant_type: "authorization_code",
+          ...config.extraTokenExchangeParams,
+        }).toString(),
+      });
+
+      if (!tokenResponse.ok) {
+        return { success: false, error: "token_exchange_failed" };
+      }
+
+      const tokens = await tokenResponse.json();
+      await SecureStore.setItemAsync(config.tokenKey, tokens.access_token);
+      if (tokens.refresh_token) {
+        await SecureStore.setItemAsync(config.refreshTokenKey, tokens.refresh_token);
+      }
+
+      const profileResponse = await fetch(config.profileUrl, {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
+      });
+
+      if (!profileResponse.ok) {
+        return { success: false, error: "profile_fetch_failed" };
+      }
+
+      const profile = await profileResponse.json();
+      const email = config.extractEmail(profile);
+      if (!email) {
+        return { success: false, error: "no_email_found" };
+      }
+
+      return { success: true, email };
+    } catch (error) {
+      captureError(error);
+      return { success: false, error: "cancelled" };
     }
-
-    const tokens = await tokenResponse.json();
-    await SecureStore.setItemAsync(config.tokenKey, tokens.access_token);
-    if (tokens.refresh_token) {
-      await SecureStore.setItemAsync(config.refreshTokenKey, tokens.refresh_token);
-    }
-
-    const profileResponse = await fetch(config.profileUrl, {
-      headers: { Authorization: `Bearer ${tokens.access_token}` },
-    });
-
-    if (!profileResponse.ok) {
-      return { success: false, error: "profile_fetch_failed" };
-    }
-
-    const profile = await profileResponse.json();
-    const email = config.extractEmail(profile);
-    if (!email) {
-      return { success: false, error: "no_email_found" };
-    }
-
-    return { success: true, email };
   };
 
   const getValidToken = async (clientId: string): Promise<string | null> => {
@@ -186,7 +191,7 @@ const outlookConfig: EmailProviderConfig = {
   refreshTokenKey: "email-outlook-refresh-token",
   authUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
   tokenUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-  scope: "Mail.Read",
+  scope: "Mail.Read User.Read",
   getRedirectUri: () => EMAIL_REDIRECT_URI,
   profileUrl: "https://graph.microsoft.com/v1.0/me",
   extractEmail: (profile) =>
@@ -202,5 +207,7 @@ const adapters: Record<EmailProvider, EmailAdapter> = {
 };
 
 export function getAdapter(provider: EmailProvider): EmailAdapter {
-  return adapters[provider];
+  const adapter = adapters[provider];
+  if (!adapter) throw new Error(`Unknown email provider: ${provider}`);
+  return adapter;
 }
