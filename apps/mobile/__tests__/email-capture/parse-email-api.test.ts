@@ -24,10 +24,44 @@ describe("stripPii", () => {
     expect(stripPii("Tel: +573001234567")).toBe("Tel: [PHONE]");
   });
 
-  it("preserves plain digit sequences (account numbers, amounts)", () => {
-    expect(stripPii("Cuenta 1234567890")).toBe("Cuenta 1234567890");
+  it("removes Colombian ID numbers (CC, TI, CE, Cédula)", () => {
+    expect(stripPii("CC 1037654321")).toBe("[ID]");
+    expect(stripPii("C.C. 1037654321")).toBe("[ID]");
+    expect(stripPii("TI 12345678")).toBe("[ID]");
+    expect(stripPii("T.I. 12345678")).toBe("[ID]");
+    expect(stripPii("C.E. 654321")).toBe("[ID]");
+    expect(stripPii("Cedula 1037654321")).toBe("[ID]");
+    expect(stripPii("cédula: 1037654321")).toBe("[ID]");
+    expect(stripPii("cc 1037654321")).toBe("[ID]");
+  });
+
+  it("removes NIT (business tax ID)", () => {
+    expect(stripPii("NIT 900.123.456-7")).toBe("[ID]");
+    expect(stripPii("NIT: 900123456")).toBe("[ID]");
+    expect(stripPii("NIT 9001234567")).toBe("[ID]");
+  });
+
+  it("removes bank account numbers", () => {
+    expect(stripPii("Cuenta 1234567890")).toBe("[ACCOUNT]");
+    expect(stripPii("Cta. Ahorros 1234567890")).toBe("[ACCOUNT]");
+    expect(stripPii("No. Cuenta 0987654321")).toBe("[ACCOUNT]");
+  });
+
+  it("removes Colombian local phone numbers", () => {
+    expect(stripPii("Tel: (601) 123 4567")).toBe("Tel: [PHONE]");
+    expect(stripPii("Llame al 604 1234567")).toBe("Llame al [PHONE]");
+  });
+
+  it("strips cedula before phone pattern can match (CC starting with 601)", () => {
+    expect(stripPii("CC 6011234567")).toBe("[ID]");
+  });
+
+  it("strips cedula but preserves amount in same text", () => {
+    expect(stripPii("CC 1037654321 compra por $50,000")).toBe("[ID] compra por $50,000");
+  });
+
+  it("preserves bare digit sequences (amounts without prefix)", () => {
     expect(stripPii("Monto: 3001234567")).toBe("Monto: 3001234567");
-    expect(stripPii("CC 1037654321")).toBe("CC 1037654321");
   });
 
   it("removes masked card numbers", () => {
