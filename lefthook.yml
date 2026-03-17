@@ -32,6 +32,9 @@ commit-msg:
 
 pre-push:
   commands:
+    lint:
+      run: bun run --cwd apps/mobile lint
+      skip_output: false
     tests:
       run: bun run test
       skip_output: false
