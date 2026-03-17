@@ -18,7 +18,7 @@ Tools already chosen:
 - Drizzle ORM
 - Zod
 - date-fns
-- expo-localization + i18n-js (i18n)
+- expo-localization + i18n-js (i18n) — see `adding-i18n-strings` skill for conventions
 
 ## Code Style: Functional Programming
 
@@ -56,15 +56,3 @@ Follow existing `getBalanceAggregate()` pattern in repository. Use SQL `GROUP BY
 
 ### Direct unit tests for pure functions
 New derivation/pure functions get direct unit tests with fixture data. File-source reading pattern (`readFileSync` test pattern) stays for navigation/layout tests only.
-
-### i18n: Spanish-first with English fallback
-All user-facing strings must use the i18n system in `shared/i18n/`. Default locale is `"es"` (Spanish), with `"en"` (English) as fallback. Key conventions:
-- Strings go in `shared/i18n/locales/es.ts` and `en.ts` — **both files must stay in parity** (enforced by key-parity test)
-- Components use `const { t, locale } = useTranslation()` from `shared/hooks/use-translation.ts`
-- Category labels: `getCategoryLabel(category, locale)` from `shared/i18n/locale-helpers.ts`
-- Date formatting: pass `{ locale: getDateFnsLocale(locale) }` to all date-fns `format()` calls
-- Pure functions that return user-facing strings accept `t` as a parameter (never import i18n directly in `lib/`)
-- Translation keys use dot-separated flat structure: `"section.key"` (e.g., `"bills.addBill"`, `"common.save"`)
-- Plurals: `t("key", { count: n })` with `{ one: "...", other: "..." }` in locale files
-- Interpolation: `t("key", { varName: value })` with `%{varName}` in locale strings
-- `FREQUENCIES` in calendar schema uses `labelKey` (translation key) instead of `label` (raw string)
