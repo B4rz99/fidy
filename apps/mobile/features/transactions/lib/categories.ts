@@ -70,7 +70,7 @@ export const CATEGORIES: readonly Category[] = [
   { id: "other", label: { en: "Other", es: "Otro" }, icon: Ellipsis, color: Colors.chart.other },
 ] as const;
 
-export const CATEGORY_MAP: Record<string, Category> = Object.fromEntries(
+export const CATEGORY_MAP: Record<string, Category | undefined> = Object.fromEntries(
   CATEGORIES.map((c) => [c.id, c])
 );
 

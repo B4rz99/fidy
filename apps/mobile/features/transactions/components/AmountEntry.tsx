@@ -9,7 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useShallow } from "zustand/react/shallow";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
-import { cleanDigitInput, digitsToCents } from "../lib/format-amount";
+import { cleanDigitInput, digitsToCents, formatDollars } from "../lib/format-amount";
 import { useTransactionStore } from "../store";
 import { TypeToggle } from "./TypeToggle";
 
@@ -52,11 +52,7 @@ export const AmountEntry = () => {
 
   const amountColor = type === "expense" ? accentRed : accentGreen;
   const hasDigits = digits.length > 0;
-  const displayAmount = hasDigits
-    ? `$${digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`
-    : isFocused
-      ? "$"
-      : "$0";
+  const displayAmount = hasDigits ? formatDollars(digits) : isFocused ? "$" : "$0";
   const canProceed = digitsToCents(digits) > 0;
   const buttonBg = canProceed ? accentGreen : "#CCCCCC";
 

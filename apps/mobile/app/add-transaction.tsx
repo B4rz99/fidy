@@ -65,7 +65,7 @@ export default function AddTransactionModal() {
   const borderSubtle = useThemeColor("borderSubtle");
 
   const amountColor = type === "expense" ? accentRed : accentGreen;
-  const displayAmount = digits.length > 0 ? formatDollars(digits) : "$0";
+  const displayAmount = digits.length > 0 ? formatDollars(digits) : "$";
   const canSave = digitsToCents(digits) > 0;
   const buttonBg = canSave ? accentGreen : "#CCCCCC";
   const dateLabel = useMemo(() => getDateLabel(date, new Date()), [date]);
