@@ -8,6 +8,7 @@ import {
 } from "@expo-google-fonts/poppins";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useFonts } from "expo-font";
+import { getLocales } from "expo-localization";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -28,6 +29,7 @@ import { useSync, useSyncConflictStore } from "@/features/sync";
 import { useTransactionStore } from "@/features/transactions";
 import { ErrorFallback } from "@/shared/components";
 import { type AnyDb, getDb } from "@/shared/db";
+import { useLocaleStore } from "@/shared/i18n";
 import {
   captureError,
   handleRecoverableError,
@@ -36,6 +38,9 @@ import {
   wrapWithSentry,
 } from "@/shared/lib";
 import migrations from "../drizzle/migrations";
+
+// Init locale synchronously before first render
+useLocaleStore.getState().initLocale(getLocales()[0]?.languageTag ?? "es");
 
 SplashScreen.preventAutoHideAsync();
 

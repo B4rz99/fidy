@@ -10,12 +10,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Mail } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useMenuStore } from "../store";
 
 const PANEL_WIDTH = 200;
 
 export function MenuPanel() {
+  const { t } = useTranslation();
   const isOpen = useMenuStore((s) => s.isOpen);
   const closeMenu = useMenuStore((s) => s.closeMenu);
   const { push } = useRouter();
@@ -66,7 +67,9 @@ export function MenuPanel() {
           onPress={handleConnectedAccounts}
         >
           <Mail size={20} color={primaryColor} />
-          <Text style={[styles.menuItemText, { color: primaryColor }]}>Connected Mails</Text>
+          <Text style={[styles.menuItemText, { color: primaryColor }]}>
+            {t("menu.connectedMails")}
+          </Text>
         </Pressable>
       </Animated.View>
     </View>

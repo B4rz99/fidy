@@ -80,15 +80,23 @@ describe("findExpiredSessions", () => {
 });
 
 describe("formatCleanupMessage", () => {
-  it("returns singular message for 1 session", () => {
+  it("returns singular message for 1 session (no t)", () => {
     expect(formatCleanupMessage(1)).toBe("1 expired conversation was removed");
   });
 
-  it("returns plural message for multiple sessions", () => {
+  it("returns plural message for multiple sessions (no t)", () => {
     expect(formatCleanupMessage(3)).toBe("3 expired conversations were removed");
   });
 
   it("returns null for 0 sessions", () => {
     expect(formatCleanupMessage(0)).toBeNull();
+  });
+
+  it("uses t() for localized message when provided", async () => {
+    const { default: i18n } = await import("../../shared/i18n/i18n");
+    i18n.locale = "es";
+    const t = i18n.t.bind(i18n) as (key: string, options?: Record<string, unknown>) => string;
+    expect(formatCleanupMessage(1, t)).toBe("1 conversación expirada fue eliminada");
+    expect(formatCleanupMessage(3, t)).toBe("3 conversaciones expiradas fueron eliminadas");
   });
 });

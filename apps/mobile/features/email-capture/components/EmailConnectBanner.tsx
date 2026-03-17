@@ -1,6 +1,6 @@
 import { Mail, X } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useEmailCaptureStore } from "../store";
 
 export const EmailConnectBanner = ({
@@ -8,6 +8,7 @@ export const EmailConnectBanner = ({
 }: {
   onConnect: (provider: "gmail" | "outlook") => void;
 }) => {
+  const { t } = useTranslation();
   const accounts = useEmailCaptureStore((s) => s.accounts);
   const bannerDismissed = useEmailCaptureStore((s) => s.bannerDismissed);
   const dismissBanner = useEmailCaptureStore((s) => s.dismissBanner);
@@ -23,7 +24,7 @@ export const EmailConnectBanner = ({
         <View className="flex-row items-center" style={{ gap: 10 }}>
           <Mail size={22} color={iconColor} />
           <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-            Auto-capture transactions
+            {t("emailCapture.autoCapture")}
           </Text>
         </View>
         <Pressable onPress={dismissBanner} hitSlop={12}>
@@ -32,7 +33,7 @@ export const EmailConnectBanner = ({
       </View>
 
       <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
-        Connect your email to automatically capture bank transactions.
+        {t("emailCapture.connectDescription")}
       </Text>
 
       <View className="flex-row" style={{ gap: 10 }}>

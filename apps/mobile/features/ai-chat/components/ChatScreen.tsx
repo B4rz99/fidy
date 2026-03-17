@@ -4,6 +4,7 @@ import { memo, useCallback, useRef } from "react";
 import { useTransactionStore } from "@/features/transactions";
 import { HEADER_HEIGHT, ScreenLayout } from "@/shared/components";
 import { Keyboard, KeyboardAvoidingView, View } from "@/shared/components/rn";
+import { useTranslation } from "@/shared/hooks";
 import { useStreamingChat } from "../hooks/use-streaming-chat";
 import type { ChatMessage } from "../schema";
 import { useChatStore } from "../store";
@@ -33,6 +34,7 @@ const MemoizedMessageBubble = memo(function MemoizedBubble({
 });
 
 export function ChatScreen({ onBack }: ChatScreenProps) {
+  const { t } = useTranslation();
   const listRef = useRef<FlashListRef<ChatMessage>>(null);
 
   const messages = useChatStore((s) => s.messages);
@@ -43,7 +45,7 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
   const { sendMessage, isStreaming, streamingContent } = useStreamingChat();
 
   const currentSession = sessions.find((s) => s.id === currentSessionId);
-  const title = currentSession?.title ?? "Fidy AI";
+  const title = currentSession?.title ?? t("aiChat.fidyAi");
 
   const handleConfirmAction = useCallback(
     async (messageId: string) => {

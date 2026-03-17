@@ -19,6 +19,8 @@ type ProgressData = {
   readonly needsReview: number;
 };
 
+import type { TranslateFn } from "@/shared/i18n/types";
+
 export const shouldShowProgress = (
   emailCount: number,
   isFirstFetch: boolean,
@@ -28,15 +30,16 @@ export const shouldShowProgress = (
 export const buildProgressDisplay = (
   phase: ProgressPhase,
   progress: ProgressData | null,
-  _providerNames: ReadonlyArray<string>
+  _providerNames: ReadonlyArray<string>,
+  t?: TranslateFn
 ): ProgressDisplay => {
   const base = { phase } as const;
 
   if (phase === "fetching") {
     return {
       ...base,
-      title: "Fetching your emails...",
-      subtitle: "Reading the last 30 days",
+      title: t ? t("progress.fetchingTitle") : "Fetching your emails...",
+      subtitle: t ? t("progress.fetchingSubtitle") : "Reading the last 30 days",
       fractionComplete: 0,
       transactionsFound: 0,
       needsReview: 0,
@@ -48,8 +51,10 @@ export const buildProgressDisplay = (
   if (phase === "processing") {
     return {
       ...base,
-      title: "Scanning emails...",
-      subtitle: `${p.completed} of ${p.total}`,
+      title: t ? t("progress.scanningTitle") : "Scanning emails...",
+      subtitle: t
+        ? t("progress.processingSubtitle", { completed: p.completed, total: p.total })
+        : `${p.completed} of ${p.total}`,
       fractionComplete: p.total === 0 ? 0 : p.completed / p.total,
       transactionsFound: p.saved,
       needsReview: p.needsReview,
@@ -57,11 +62,16 @@ export const buildProgressDisplay = (
   }
 
   // phase === "complete"
-  const failedSuffix = p.failed > 0 ? ` (${p.failed} couldn't be read)` : "";
+  const failedSuffix =
+    p.failed > 0
+      ? t
+        ? t("progress.failedSuffix", { failed: p.failed })
+        : ` (${p.failed} couldn't be read)`
+      : "";
   return {
     ...base,
-    title: "Import complete!",
-    subtitle: `Found ${p.saved} transactions from ${p.total} emails${failedSuffix}`,
+    title: t ? t("progress.completeTitle") : "Import complete!",
+    subtitle: `${t ? t("progress.completeSubtitle", { saved: p.saved, total: p.total }) : `Found ${p.saved} transactions from ${p.total} emails`}${failedSuffix}`,
     fractionComplete: 1,
     transactionsFound: p.saved,
     needsReview: p.needsReview,

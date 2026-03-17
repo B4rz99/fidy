@@ -8,7 +8,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { CheckCircle, Mail, Search, TriangleAlert } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { ProgressDisplay, ProgressPhase } from "../lib/progress-phases";
 import { shouldMorphToBanner } from "../lib/progress-phases";
 
@@ -24,6 +24,7 @@ const NEEDS_REVIEW_BG = "#FFF3E0";
 const NEEDS_REVIEW_ICON = "#E65100";
 
 export const EmailProgressCard = ({ phase, display, onComplete }: EmailProgressCardProps) => {
+  const { t } = useTranslation();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const barWidth = useSharedValue(0);
   const morphProgress = useSharedValue(0);
@@ -80,9 +81,7 @@ export const EmailProgressCard = ({ phase, display, onComplete }: EmailProgressC
           className="font-poppins-semibold text-body"
           style={{ color: isMorphing ? "#1A1A1A" : primaryColor }}
         >
-          {isMorphing
-            ? `${display.needsReview} ${display.needsReview === 1 ? "transaction needs" : "transactions need"} review`
-            : display.title}
+          {isMorphing ? t("needsReview.count", { count: display.needsReview }) : display.title}
         </Text>
       </View>
 
@@ -113,8 +112,7 @@ export const EmailProgressCard = ({ phase, display, onComplete }: EmailProgressC
             </Text>
             {display.transactionsFound > 0 && (
               <Text className="font-poppins-medium" style={{ color: accentGreen, fontSize: 12 }}>
-                {display.transactionsFound}{" "}
-                {display.transactionsFound === 1 ? "transaction" : "transactions"} found
+                {t("progress.transactionsFound", { count: display.transactionsFound })}
               </Text>
             )}
           </View>
@@ -133,7 +131,7 @@ export const EmailProgressCard = ({ phase, display, onComplete }: EmailProgressC
       )}
       {isMorphing && (
         <Text className="font-poppins-medium text-caption" style={{ color: "#6D6D6D" }}>
-          Low confidence parses
+          {t("needsReview.lowConfidence")}
         </Text>
       )}
     </Animated.View>

@@ -8,7 +8,8 @@ import {
   Text,
   View,
 } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getCategoryLabel } from "@/shared/i18n";
 import { CategoryRow } from "./CategoryRow";
 import { DonutChart } from "./DonutChart";
 import { SpendingLineChart } from "./SpendingLineChart";
@@ -38,13 +39,13 @@ const toSegments = (categories: readonly CategorySpendingItem[], totalSpentCents
     };
   });
 
-const toCategoryRows = (categories: readonly CategorySpendingItem[]) =>
+const toCategoryRows = (categories: readonly CategorySpendingItem[], locale: string) =>
   categories.map((c) => {
     const cat = CATEGORY_MAP[c.categoryId as keyof typeof CATEGORY_MAP];
     return {
       categoryId: c.categoryId,
       color: cat?.color ?? "#B8A9D4",
-      name: cat?.label.en ?? c.categoryId,
+      name: cat ? getCategoryLabel(cat, locale) : c.categoryId,
       amount: formatCentsRounded(c.totalCents),
     };
   });
@@ -76,12 +77,13 @@ export const ChartSection = ({
   dailySpending,
   totalSpentCents,
 }: ChartSectionProps) => {
+  const { t, locale } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const [slideWidth, setSlideWidth] = useState(0);
   const secondaryColor = useThemeColor("secondary");
 
   const segments = toSegments(categorySpending, totalSpentCents);
-  const rows = toCategoryRows(categorySpending);
+  const rows = toCategoryRows(categorySpending, locale);
 
   const dailyTotal = dailySpending.reduce((sum, d) => sum + d.totalCents, 0);
   const dayCount = dailySpending.length === 0 ? 1 : dailySpending.length;
@@ -116,7 +118,7 @@ export const ChartSection = ({
               <DonutChart
                 segments={segments}
                 centerLabel={formatCentsRounded(totalSpentCents)}
-                centerSubLabel="spent"
+                centerSubLabel={t("chart.spent")}
               />
               <View className="flex-1 justify-center gap-2.5">
                 {rows.map((row) => (
@@ -135,20 +137,20 @@ export const ChartSection = ({
               <SpendingLineChart data={dailySpending} width={LINE_CHART_WIDTH} height={100} />
               <View className="flex-1 justify-center gap-1.5">
                 <Text className="font-poppins-bold text-body text-primary dark:text-primary-dark">
-                  Daily Spending
+                  {t("chart.dailySpending")}
                 </Text>
                 <Text
                   className="font-poppins-medium text-caption"
                   style={{ color: secondaryColor }}
                 >
-                  Last 30 days
+                  {t("chart.last30Days")}
                 </Text>
                 <View className="mt-2 gap-1">
                   <Text
                     className="font-poppins-medium text-caption"
                     style={{ color: secondaryColor }}
                   >
-                    Avg/day
+                    {t("chart.avgPerDay")}
                   </Text>
                   <Text className="font-poppins-bold text-body text-primary dark:text-primary-dark">
                     {formatCentsRounded(avgPerDay)}
@@ -159,7 +161,7 @@ export const ChartSection = ({
                     className="font-poppins-medium text-caption"
                     style={{ color: secondaryColor }}
                   >
-                    This month total
+                    {t("chart.thisMonthTotal")}
                   </Text>
                   <Text className="font-poppins-bold text-body text-primary dark:text-primary-dark">
                     {formatCentsRounded(totalSpentCents)}

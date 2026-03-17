@@ -12,7 +12,7 @@ describe("getDateLabel", () => {
     }));
     const { getDateLabel } = await import("@/features/transactions/lib/format-date");
     const now = new Date("2026-03-02");
-    expect(getDateLabel(now, now)).toBe("Today, Mar 2, 2026");
+    expect(getDateLabel(now, now, "Today")).toBe("Today, Mar 2, 2026");
   });
 
   it("returns plain date when not today", async () => {
@@ -22,6 +22,16 @@ describe("getDateLabel", () => {
     }));
     const { getDateLabel } = await import("@/features/transactions/lib/format-date");
     const now = new Date("2026-03-02");
-    expect(getDateLabel(new Date("2026-02-28"), now)).toBe("Feb 28, 2026");
+    expect(getDateLabel(new Date("2026-02-28"), now, "Today")).toBe("Feb 28, 2026");
+  });
+
+  it("uses custom today label", async () => {
+    vi.doMock("date-fns", () => ({
+      format: () => "2 mar 2026",
+      isSameDay: () => true,
+    }));
+    const { getDateLabel } = await import("@/features/transactions/lib/format-date");
+    const now = new Date("2026-03-02");
+    expect(getDateLabel(now, now, "Hoy")).toBe("Hoy, 2 mar 2026");
   });
 });

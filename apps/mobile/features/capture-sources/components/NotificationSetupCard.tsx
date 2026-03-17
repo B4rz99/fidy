@@ -1,6 +1,6 @@
 import { Bell, ExternalLink } from "@/shared/components/icons";
 import { Linking, Platform, Pressable, Switch, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { KNOWN_BANK_PACKAGES } from "../schema";
 import { useCaptureSourcesStore } from "../store";
 
@@ -15,6 +15,7 @@ const openNotificationListenerSettings = () => {
 };
 
 export const NotificationSetupCard = () => {
+  const { t } = useTranslation();
   const enabledPackages = useCaptureSourcesStore((s) => s.enabledPackages);
   const isPermissionGranted = useCaptureSourcesStore((s) => s.isNotificationPermissionGranted);
   const togglePackage = useCaptureSourcesStore((s) => s.togglePackage);
@@ -30,13 +31,13 @@ export const NotificationSetupCard = () => {
       <View className="flex-row items-center" style={{ gap: 10 }}>
         <Bell size={22} color={iconColor} />
         <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-          Notification Capture
+          {t("notificationCapture.title")}
         </Text>
       </View>
 
       {/* Description */}
       <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
-        Automatically capture transactions from your bank app notifications.
+        {t("notificationCapture.description")}
       </Text>
 
       {/* Permission status */}
@@ -58,7 +59,9 @@ export const NotificationSetupCard = () => {
             }}
           />
           <Text className="font-poppins-medium text-label text-primary dark:text-primary-dark">
-            {isPermissionGranted ? "Listening" : "Permission required"}
+            {isPermissionGranted
+              ? t("notificationCapture.listening")
+              : t("notificationCapture.permissionRequired")}
           </Text>
         </View>
 
@@ -69,7 +72,7 @@ export const NotificationSetupCard = () => {
             style={{ gap: 4 }}
           >
             <Text className="font-poppins-semibold text-label" style={{ color: warningColor }}>
-              Grant Access
+              {t("notificationCapture.grantAccess")}
             </Text>
             <ExternalLink size={14} color={warningColor} />
           </Pressable>

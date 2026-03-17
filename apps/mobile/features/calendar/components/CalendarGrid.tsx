@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { toIsoDate } from "@/shared/lib";
 import type { CalendarDay } from "../lib/calendar-utils";
-import { getBillsForDate, getMonthGrid, WEEKDAY_LABELS } from "../lib/calendar-utils";
+import { getBillsForDate, getMonthGrid } from "../lib/calendar-utils";
 import type { Bill, BillPayment } from "../schema";
 import { CalendarDayCell } from "./CalendarDayCell";
 
@@ -15,8 +15,22 @@ type Props = {
 };
 
 export function CalendarGrid({ currentMonth, bills, payments, onDayPress }: Props) {
+  const { t, locale } = useTranslation();
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: locale triggers recompute when language changes
+  const weekdayLabels = useMemo(
+    () => [
+      t("calendar.weekdays.mon"),
+      t("calendar.weekdays.tue"),
+      t("calendar.weekdays.wed"),
+      t("calendar.weekdays.thu"),
+      t("calendar.weekdays.fri"),
+      t("calendar.weekdays.sat"),
+      t("calendar.weekdays.sun"),
+    ],
+    [t, locale]
+  );
 
   const grid = useMemo(() => getMonthGrid(year, month), [year, month]);
 
@@ -55,7 +69,7 @@ export function CalendarGrid({ currentMonth, bills, payments, onDayPress }: Prop
     <View style={[styles.container, { borderColor, backgroundColor: cardBg }]}>
       {/* Weekday header */}
       <View style={styles.headerRow}>
-        {WEEKDAY_LABELS.map((label, i) => (
+        {weekdayLabels.map((label, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: static weekday labels never reorder
           <View key={i} style={styles.headerCell}>
             <Text style={[styles.headerText, { color: tertiaryColor }]}>{label}</Text>

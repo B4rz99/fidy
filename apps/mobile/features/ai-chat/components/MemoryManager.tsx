@@ -3,19 +3,12 @@ import { memo, useCallback, useEffect } from "react";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Trash2 } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { UserMemory } from "../schema";
 import { useChatStore } from "../store";
 
 type MemoryManagerProps = {
   readonly onBack: () => void;
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
-  habit: "Habit",
-  preference: "Preference",
-  situation: "Situation",
-  goal: "Goal",
 };
 
 const ItemSeparator = () => <View style={{ height: 8 }} />;
@@ -27,7 +20,13 @@ const MemoryCard = memo(function MemoryCardInner({
   readonly memory: UserMemory;
   readonly onDelete: () => void;
 }) {
+  const { t } = useTranslation();
   const accentRed = useThemeColor("accentRed");
+  const translated = t(`aiChat.memoryCategories.${memory.category}`);
+  const categoryLabel =
+    typeof translated === "string" && !translated.startsWith("[missing")
+      ? translated
+      : memory.category;
 
   return (
     <View
@@ -57,7 +56,7 @@ const MemoryCard = memo(function MemoryCardInner({
             className="font-poppins-medium text-tertiary dark:text-tertiary-dark"
             style={{ fontSize: 11 }}
           >
-            {CATEGORY_LABELS[memory.category] ?? memory.category}
+            {categoryLabel}
           </Text>
         </View>
       </View>
@@ -69,6 +68,7 @@ const MemoryCard = memo(function MemoryCardInner({
 });
 
 export function MemoryManager({ onBack }: MemoryManagerProps) {
+  const { t } = useTranslation();
   const memories = useChatStore((s) => s.memories);
   const loadMemories = useChatStore((s) => s.loadMemories);
   const deleteMemory = useChatStore((s) => s.deleteMemory);
@@ -92,7 +92,7 @@ export function MemoryManager({ onBack }: MemoryManagerProps) {
   );
 
   return (
-    <ScreenLayout title="Memories" variant="sub" onBack={onBack}>
+    <ScreenLayout title={t("aiChat.memories")} variant="sub" onBack={onBack}>
       <FlashList
         data={memories}
         renderItem={renderItem}
@@ -106,17 +106,17 @@ export function MemoryManager({ onBack }: MemoryManagerProps) {
         ListHeaderComponent={
           <View style={{ paddingBottom: 16 }}>
             <Text className="font-poppins-medium text-label text-tertiary dark:text-tertiary-dark leading-relaxed">
-              Things Fidy AI remembers about you. Delete any memory you&apos;d like it to forget.
+              {t("aiChat.memoriesDescription")}
             </Text>
           </View>
         }
         ListEmptyComponent={
           <View style={{ alignItems: "center", paddingTop: 60, gap: 8 }}>
             <Text className="font-poppins-medium text-body text-tertiary dark:text-tertiary-dark text-center">
-              No memories yet
+              {t("aiChat.noMemories")}
             </Text>
             <Text className="font-poppins-medium text-label text-tertiary dark:text-tertiary-dark text-center">
-              Fidy AI will learn about you as you chat
+              {t("aiChat.noMemoriesHint")}
             </Text>
           </View>
         }

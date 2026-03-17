@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getDateFnsLocale } from "@/shared/i18n";
 import { formatMonthYear } from "../lib/calendar-utils";
 
 type Props = {
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function MonthNavigator({ currentMonth, onPrev, onNext }: Props) {
+  const { locale } = useTranslation();
   const primaryColor = useThemeColor("primary");
 
   return (
@@ -18,7 +20,7 @@ export function MonthNavigator({ currentMonth, onPrev, onNext }: Props) {
         <ChevronLeft size={24} color={primaryColor} />
       </Pressable>
       <Text style={[styles.monthText, { color: primaryColor }]}>
-        {formatMonthYear(currentMonth)}
+        {formatMonthYear(currentMonth, getDateFnsLocale(locale))}
       </Text>
       <Pressable onPress={onNext} hitSlop={12}>
         <ChevronRight size={24} color={primaryColor} />

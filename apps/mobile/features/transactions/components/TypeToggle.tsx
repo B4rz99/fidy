@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { TransactionType } from "../schema";
 
 type TypeToggleProps = {
@@ -9,6 +9,7 @@ type TypeToggleProps = {
 };
 
 export const TypeToggle = ({ value, onChange }: TypeToggleProps) => {
+  const { t } = useTranslation();
   const accentRed = useThemeColor("accentRed");
   const accentGreen = useThemeColor("accentGreen");
   const secondary = useThemeColor("secondary");
@@ -33,7 +34,7 @@ export const TypeToggle = ({ value, onChange }: TypeToggleProps) => {
           className="font-poppins-semibold text-[14px]"
           style={{ color: value === "expense" ? "#FFFFFF" : secondary }}
         >
-          Expense
+          {t("transactions.expense")}
         </Text>
       </Pressable>
       <Pressable
@@ -47,7 +48,7 @@ export const TypeToggle = ({ value, onChange }: TypeToggleProps) => {
           className="font-poppins-semibold text-[14px]"
           style={{ color: value === "income" ? "#FFFFFF" : secondary }}
         >
-          Income
+          {t("transactions.income")}
         </Text>
       </Pressable>
     </View>

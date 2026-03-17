@@ -4,11 +4,11 @@ import { categoryIdSchema } from "@/features/transactions";
 export const billFrequency = z.enum(["weekly", "biweekly", "monthly", "yearly"]);
 export type BillFrequency = z.infer<typeof billFrequency>;
 
-export const FREQUENCIES: { value: BillFrequency; label: string }[] = [
-  { value: "weekly", label: "Weekly" },
-  { value: "biweekly", label: "Biweekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "yearly", label: "Yearly" },
+export const FREQUENCIES: { value: BillFrequency; labelKey: string }[] = [
+  { value: "weekly", labelKey: "bills.weekly" },
+  { value: "biweekly", labelKey: "bills.biweekly" },
+  { value: "monthly", labelKey: "bills.monthly" },
+  { value: "yearly", labelKey: "bills.yearly" },
 ];
 
 export const billSchema = z.object({

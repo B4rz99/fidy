@@ -1,6 +1,6 @@
 import { ChevronRight, GitMerge } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useSyncConflictStore } from "../store";
 
 type SyncConflictBannerProps = {
@@ -8,6 +8,7 @@ type SyncConflictBannerProps = {
 };
 
 export const SyncConflictBanner = ({ onPress }: SyncConflictBannerProps) => {
+  const { t } = useTranslation();
   const count = useSyncConflictStore((s) => s.conflictCount);
   const peachBg = useThemeColor("peachLight");
   const accentRed = useThemeColor("accentRed");
@@ -25,10 +26,10 @@ export const SyncConflictBanner = ({ onPress }: SyncConflictBannerProps) => {
         <GitMerge size={18} color={accentRed} />
         <View>
           <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-            {count} sync {count === 1 ? "conflict needs" : "conflicts need"} review
+            {t("syncConflicts.count", { count })}
           </Text>
           <Text className="font-poppins-medium text-caption" style={{ color: secondaryColor }}>
-            Changes from another device
+            {t("syncConflicts.changesFromDevice")}
           </Text>
         </View>
       </View>

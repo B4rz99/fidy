@@ -22,10 +22,12 @@ import {
 import { FidyNumpad } from "@/shared/components";
 import { Calendar } from "@/shared/components/icons";
 import { Pressable, ScrollView, Text, TextInput, View } from "@/shared/components/rn";
-import { useAsyncGuard, useThemeColor } from "@/shared/hooks";
+import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { getDateFnsLocale } from "@/shared/i18n";
 
 export default function AddTransactionModal() {
   const { back } = useRouter();
+  const { t, locale } = useTranslation();
   const {
     type,
     digits,
@@ -70,7 +72,10 @@ export default function AddTransactionModal() {
   const displayAmount = digits.length > 0 ? formatDollars(digits) : "$";
   const canSave = digitsToCents(digits) > 0;
   const buttonBg = canSave ? accentGreen : "#CCCCCC";
-  const dateLabel = useMemo(() => getDateLabel(date, new Date()), [date]);
+  const dateLabel = useMemo(
+    () => getDateLabel(date, new Date(), t("dates.today"), getDateFnsLocale(locale)),
+    [date, t, locale]
+  );
 
   // Stable ref for digits so handleKey doesn't change on every keystroke
   const digitsRef = useRef(digits);
@@ -175,7 +180,7 @@ export default function AddTransactionModal() {
             color: secondary,
           }}
         >
-          Category
+          {t("common.category")}
         </Text>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
           {CATEGORIES.map((cat) => (
@@ -203,7 +208,7 @@ export default function AddTransactionModal() {
             borderWidth: 1,
             borderColor: borderSubtle,
           }}
-          placeholder="Description (optional)"
+          placeholder={t("transactions.descriptionOptional")}
           placeholderTextColor={tertiary}
           value={description}
           onChangeText={setDescription}
@@ -247,7 +252,7 @@ export default function AddTransactionModal() {
         onPress={canSave ? handleSave : undefined}
         disabled={!canSave || isSaving}
         accessibilityRole="button"
-        accessibilityLabel="Save Transaction"
+        accessibilityLabel={t("transactions.saveTransaction")}
       >
         <Text
           style={{
@@ -256,7 +261,7 @@ export default function AddTransactionModal() {
             color: "#FFFFFF",
           }}
         >
-          Save Transaction
+          {t("transactions.saveTransaction")}
         </Text>
       </Pressable>
 

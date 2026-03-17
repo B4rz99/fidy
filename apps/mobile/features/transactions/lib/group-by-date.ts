@@ -1,3 +1,4 @@
+import type { Locale } from "date-fns";
 import { format, isToday, isYesterday } from "date-fns";
 import { toIsoDate } from "@/shared/lib";
 import type { StoredTransaction } from "../schema";
@@ -14,13 +15,23 @@ export function isDateHeader(item: ListItem): item is DateHeader {
   return "kind" in item && item.kind === "date-header";
 }
 
-export function makeDateLabel(date: Date): string {
-  if (isToday(date)) return "Today";
-  if (isYesterday(date)) return "Yesterday";
-  return format(date, "MMMM d");
+export function makeDateLabel(
+  date: Date,
+  todayLabel = "Today",
+  yesterdayLabel = "Yesterday",
+  dateFnsLocale?: Locale
+): string {
+  if (isToday(date)) return todayLabel;
+  if (isYesterday(date)) return yesterdayLabel;
+  return format(date, "MMMM d", dateFnsLocale ? { locale: dateFnsLocale } : undefined);
 }
 
-export function buildListData(transactions: readonly StoredTransaction[]): {
+export function buildListData(
+  transactions: readonly StoredTransaction[],
+  todayLabel = "Today",
+  yesterdayLabel = "Yesterday",
+  dateFnsLocale?: Locale
+): {
   readonly items: ListItem[];
   readonly stickyIndices: number[];
 } {
@@ -34,7 +45,7 @@ export function buildListData(transactions: readonly StoredTransaction[]): {
       stickyIndices.push(items.length);
       items.push({
         kind: "date-header",
-        label: makeDateLabel(tx.date),
+        label: makeDateLabel(tx.date, todayLabel, yesterdayLabel, dateFnsLocale),
         dateKey,
       });
     }

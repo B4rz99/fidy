@@ -1,3 +1,4 @@
+import type { Locale } from "date-fns";
 import {
   addDays,
   addWeeks,
@@ -80,8 +81,8 @@ export function getBillsForDate(bills: Bill[], date: Date): Bill[] {
   });
 }
 
-export function formatMonthYear(date: Date): string {
-  return format(date, "MMMM yyyy");
+export function formatMonthYear(date: Date, dateFnsLocale?: Locale): string {
+  return format(date, "MMMM yyyy", dateFnsLocale ? { locale: dateFnsLocale } : undefined);
 }
 
 /**

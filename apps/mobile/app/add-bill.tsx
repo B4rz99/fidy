@@ -19,10 +19,12 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
-import { useAsyncGuard, useThemeColor } from "@/shared/hooks";
+import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { getCategoryLabel } from "@/shared/i18n";
 
 export default function AddBillScreen() {
   const router = useRouter();
+  const { t, locale } = useTranslation();
   const { billId } = useLocalSearchParams<{ billId?: string }>();
   const bills = useCalendarStore((s) => s.bills);
   const addBill = useCalendarStore((s) => s.addBill);
@@ -110,12 +112,12 @@ export default function AddBillScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={[styles.title, { color: primaryColor }]}>
-          {isEdit ? "Edit Bill" : "Add Bill"}
+          {isEdit ? t("bills.editBill") : t("bills.addBill")}
         </Text>
 
         <View style={styles.formGrid}>
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: secondaryColor }]}>Name</Text>
+            <Text style={[styles.inputLabel, { color: secondaryColor }]}>{t("common.name")}</Text>
             <TextInput
               style={[styles.input, { backgroundColor: pageBg, color: primaryColor, borderColor }]}
               value={name}
@@ -128,7 +130,7 @@ export default function AddBillScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: secondaryColor }]}>Amount</Text>
+            <Text style={[styles.inputLabel, { color: secondaryColor }]}>{t("common.amount")}</Text>
             <TextInput
               ref={amountRef}
               style={[styles.input, { backgroundColor: pageBg, color: primaryColor, borderColor }]}
@@ -142,7 +144,9 @@ export default function AddBillScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: secondaryColor }]}>Frequency</Text>
+            <Text style={[styles.inputLabel, { color: secondaryColor }]}>
+              {t("bills.frequency")}
+            </Text>
             <View style={styles.chipRow}>
               {FREQUENCIES.map((f) => (
                 <Pressable
@@ -162,7 +166,7 @@ export default function AddBillScreen() {
                       { color: frequency === f.value ? "#FFFFFF" : primaryColor },
                     ]}
                   >
-                    {f.label}
+                    {t(f.labelKey)}
                   </Text>
                 </Pressable>
               ))}
@@ -170,7 +174,9 @@ export default function AddBillScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: secondaryColor }]}>Start Date</Text>
+            <Text style={[styles.inputLabel, { color: secondaryColor }]}>
+              {t("bills.startDate")}
+            </Text>
             <DateTimePicker
               value={startDate}
               mode="date"
@@ -183,7 +189,9 @@ export default function AddBillScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: secondaryColor }]}>Category</Text>
+            <Text style={[styles.inputLabel, { color: secondaryColor }]}>
+              {t("common.category")}
+            </Text>
             <View style={styles.chipRow}>
               {CATEGORIES.map((c) => (
                 <Pressable
@@ -203,7 +211,7 @@ export default function AddBillScreen() {
                       { color: category === c.id ? "#FFFFFF" : primaryColor },
                     ]}
                   >
-                    {c.label.en}
+                    {getCategoryLabel(c, locale)}
                   </Text>
                 </Pressable>
               ))}
@@ -216,7 +224,9 @@ export default function AddBillScreen() {
           onPress={handleSave}
           disabled={isSaving}
         >
-          <Text style={styles.saveButtonText}>{isEdit ? "Save Changes" : "Add"}</Text>
+          <Text style={styles.saveButtonText}>
+            {isEdit ? t("bills.saveChanges") : t("bills.add")}
+          </Text>
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
