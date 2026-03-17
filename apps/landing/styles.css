@@ -168,6 +168,18 @@ a {
   background: var(--color-accent-green-dark);
 }
 
+.waitlist-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.waitlist-success {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-accent-green-dark);
+  padding: 12px 0;
+}
+
 /* ── Features ── */
 .features {
   display: grid;

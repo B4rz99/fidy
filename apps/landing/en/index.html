@@ -33,8 +33,11 @@
       <section class="hero">
         <h1>Finally, total control of your money</h1>
         <p>Know exactly where your money goes. Without tracking a thing.</p>
-        <form class="waitlist-form">
-          <input type="email" placeholder="Your email address">
+        <form class="waitlist-form" data-locale="en"
+              data-msg-success="You're on the list! We'll let you know when Fidy is ready."
+              data-msg-duplicate="You're already on the list! We'll be in touch soon."
+              data-msg-error="Something went wrong, please try again.">
+          <input type="email" placeholder="Your email address" required>
           <button type="submit">Join the waitlist</button>
         </form>
       </section>
@@ -87,5 +90,6 @@
       <p>&copy; 2026 Fidy &middot; obarbozaa@gmail.com</p>
     </footer>
   </div>
+<script src="../waitlist.js"></script>
 </body>
 </html>
