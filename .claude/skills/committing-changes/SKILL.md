@@ -40,7 +40,7 @@ bun run --cwd apps/mobile typecheck
 ## Step 5 — Tests
 
 ```bash
-cd apps/mobile && npx vitest run
+cd apps/mobile && bunx vitest run
 ```
 
 ## Step 6 — Commit
