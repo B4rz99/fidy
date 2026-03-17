@@ -1,22 +1,27 @@
+import { useMemo } from "react";
 import { Sparkles } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
-
-const SUGGESTIONS = [
-  "How much did I spend this month?",
-  "What's my biggest expense?",
-  "Compare my spending to last month",
-  "Add a food expense for today",
-] as const;
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 type StarterSuggestionsProps = {
   readonly onSelect: (text: string) => void;
 };
 
 export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
+  const { t, locale } = useTranslation();
   const accentGreenLight = useThemeColor("accentGreenLight");
   const accentGreen = useThemeColor("accentGreen");
   const borderSubtle = useThemeColor("borderSubtle");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: locale triggers recompute when language changes
+  const suggestions = useMemo(
+    () => [
+      t("aiChat.suggestions.monthSpending"),
+      t("aiChat.suggestions.biggestExpense"),
+      t("aiChat.suggestions.compareMonths"),
+      t("aiChat.suggestions.addExpense"),
+    ],
+    [t, locale]
+  );
 
   return (
     <View
@@ -42,14 +47,14 @@ export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
           <Sparkles size={24} color={accentGreen} />
         </View>
         <Text className="font-poppins-bold text-title text-primary dark:text-primary-dark">
-          Fidy AI
+          {t("aiChat.fidyAi")}
         </Text>
         <Text className="font-poppins-medium text-body text-tertiary dark:text-tertiary-dark text-center">
-          Ask me anything about your finances
+          {t("aiChat.askAnything")}
         </Text>
       </View>
       <View style={{ width: "100%", gap: 10 }}>
-        {SUGGESTIONS.map((suggestion) => (
+        {suggestions.map((suggestion) => (
           <Pressable
             key={suggestion}
             onPress={() => onSelect(suggestion)}

@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/useNamingConvention: OAuth/API response fixtures use snake_case keys
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockGetItemAsync = vi.fn();

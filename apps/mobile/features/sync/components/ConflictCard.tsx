@@ -1,7 +1,8 @@
 import { memo } from "react";
 import { CATEGORY_MAP, formatSignedAmount } from "@/features/transactions";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getCategoryLabel } from "@/shared/i18n";
 import type { SyncConflict } from "../store";
 
 type ConflictCardProps = {
@@ -47,9 +48,9 @@ const DiffRow = memo(function DiffRow({
   );
 });
 
-function getCategoryLabel(categoryId: string): string {
+function resolveCategoryLabel(categoryId: string, locale: string): string {
   const cat = CATEGORY_MAP[categoryId as keyof typeof CATEGORY_MAP];
-  return cat?.label.en ?? categoryId;
+  return cat ? getCategoryLabel(cat, locale) : categoryId;
 }
 
 export const ConflictCard = memo(function ConflictCard({
@@ -57,6 +58,7 @@ export const ConflictCard = memo(function ConflictCard({
   onKeepLocal,
   onAcceptServer,
 }: ConflictCardProps) {
+  const { t, locale } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
   const peachBg = useThemeColor("peachLight");
@@ -66,7 +68,7 @@ export const ConflictCard = memo(function ConflictCard({
 
   if (localData.amountCents !== serverData.amountCents) {
     diffs.push({
-      label: "Amount",
+      label: t("common.amount"),
       localValue: formatSignedAmount(localData.amountCents, localData.type as "expense" | "income"),
       serverValue: formatSignedAmount(
         serverData.amountCents,
@@ -77,23 +79,23 @@ export const ConflictCard = memo(function ConflictCard({
 
   if (localData.categoryId !== serverData.categoryId) {
     diffs.push({
-      label: "Category",
-      localValue: getCategoryLabel(localData.categoryId),
-      serverValue: getCategoryLabel(serverData.categoryId),
+      label: t("common.category"),
+      localValue: resolveCategoryLabel(localData.categoryId, locale),
+      serverValue: resolveCategoryLabel(serverData.categoryId, locale),
     });
   }
 
   if (localData.description !== serverData.description) {
     diffs.push({
-      label: "Description",
-      localValue: localData.description ?? "(none)",
-      serverValue: serverData.description ?? "(none)",
+      label: t("common.description"),
+      localValue: localData.description ?? t("common.none"),
+      serverValue: serverData.description ?? t("common.none"),
     });
   }
 
   if (localData.date !== serverData.date) {
     diffs.push({
-      label: "Date",
+      label: t("common.date"),
       localValue: localData.date,
       serverValue: serverData.date,
     });
@@ -101,7 +103,7 @@ export const ConflictCard = memo(function ConflictCard({
 
   if (localData.type !== serverData.type) {
     diffs.push({
-      label: "Type",
+      label: t("common.type"),
       localValue: localData.type,
       serverValue: serverData.type,
     });
@@ -111,24 +113,24 @@ export const ConflictCard = memo(function ConflictCard({
   const serverDeleted = serverData.deletedAt != null;
   if (localDeleted !== serverDeleted) {
     diffs.push({
-      label: "Status",
-      localValue: localDeleted ? "Deleted" : "Active",
-      serverValue: serverDeleted ? "Deleted" : "Active",
+      label: t("common.status"),
+      localValue: localDeleted ? t("common.deleted") : t("common.active"),
+      serverValue: serverDeleted ? t("common.deleted") : t("common.active"),
     });
   }
 
   return (
     <View className="rounded-xl p-4" style={{ backgroundColor: peachBg }}>
       <Text className="mb-2 font-poppins-semibold text-body text-primary dark:text-primary-dark">
-        {localData.description || serverData.description || "Transaction"}
+        {localData.description || serverData.description || t("common.transaction")}
       </Text>
 
       <View className="mb-1 flex-row" style={{ gap: 8, paddingLeft: 80 + 8 }}>
         <Text className="flex-1 font-poppins-medium text-caption text-tertiary dark:text-tertiary-dark">
-          Your version
+          {t("syncConflicts.yourVersion")}
         </Text>
         <Text className="flex-1 font-poppins-medium text-caption text-tertiary dark:text-tertiary-dark">
-          Synced version
+          {t("syncConflicts.syncedVersion")}
         </Text>
       </View>
 
@@ -143,7 +145,7 @@ export const ConflictCard = memo(function ConflictCard({
           style={{ backgroundColor: `${accentRed}20` }}
         >
           <Text className="font-poppins-semibold text-body" style={{ color: accentRed }}>
-            Keep mine
+            {t("syncConflicts.keepMine")}
           </Text>
         </Pressable>
         <Pressable
@@ -152,7 +154,7 @@ export const ConflictCard = memo(function ConflictCard({
           style={{ backgroundColor: `${accentGreen}20` }}
         >
           <Text className="font-poppins-semibold text-body" style={{ color: accentGreen }}>
-            Accept synced
+            {t("syncConflicts.acceptSynced")}
           </Text>
         </Pressable>
       </View>

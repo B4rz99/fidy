@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useLocaleStore } from "@/shared/i18n/store";
 import { formatCleanupMessage } from "../lib/sessions";
 import { useChatStore } from "../store";
 
@@ -8,7 +9,7 @@ export function useSessionCleanup() {
 
   useEffect(() => {
     cleanupExpiredSessions().then((expired) => {
-      setMessage(formatCleanupMessage(expired.length));
+      setMessage(formatCleanupMessage(expired.length, useLocaleStore.getState().t));
     });
   }, [cleanupExpiredSessions]);
 

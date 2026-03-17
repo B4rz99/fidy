@@ -1,7 +1,8 @@
 import * as Haptics from "expo-haptics";
 import { memo } from "react";
 import { Pressable } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getCategoryLabel } from "@/shared/i18n";
 import type { Category } from "../lib/categories";
 
 type CategoryPillProps = {
@@ -11,6 +12,7 @@ type CategoryPillProps = {
 };
 
 export const CategoryPill = memo(({ category, isSelected, onPress }: CategoryPillProps) => {
+  const { locale } = useTranslation();
   const peachLight = useThemeColor("peachLight");
   const Icon = category.icon;
 
@@ -28,7 +30,7 @@ export const CategoryPill = memo(({ category, isSelected, onPress }: CategoryPil
       onPress={handlePress}
       accessibilityRole="button"
       accessibilityState={{ selected: isSelected }}
-      accessibilityLabel={category.label.en}
+      accessibilityLabel={getCategoryLabel(category, locale)}
     >
       <Icon size={16} color={isSelected ? "#FFFFFF" : category.color} />
     </Pressable>

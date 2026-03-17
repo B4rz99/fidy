@@ -4,12 +4,14 @@ import { type BillPayment, getBillsForDate, useCalendarStore } from "@/features/
 import { centsToDisplay } from "@/features/transactions";
 import { Check, Pencil, Trash2 } from "@/shared/components/icons";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getDateFnsLocale } from "@/shared/i18n";
 import { toIsoDate } from "@/shared/lib";
 
 export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
   const router = useRouter();
+  const { t, locale } = useTranslation();
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
   const markBillPaid = useCalendarStore((s) => s.markBillPaid);
@@ -47,10 +49,10 @@ export default function DayDetailScreen() {
   };
 
   const handleDelete = (billId: string, billName: string) => {
-    Alert.alert("Delete Bill", `Are you sure you want to delete "${billName}"?`, [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("bills.deleteBill"), t("bills.deleteBillConfirm", { billName }), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
           await deleteBill(billId);
@@ -64,11 +66,15 @@ export default function DayDetailScreen() {
       style={[styles.container, { backgroundColor: cardBg }]}
       contentContainerStyle={styles.content}
     >
-      <Text style={[styles.title, { color: primaryColor }]}>{format(dateObj, "EEEE, MMM d")}</Text>
+      <Text style={[styles.title, { color: primaryColor }]}>
+        {format(dateObj, "EEEE, PP", { locale: getDateFnsLocale(locale) })}
+      </Text>
 
       {billsForDate.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={[styles.emptyText, { color: secondaryColor }]}>No bills on this day</Text>
+          <Text style={[styles.emptyText, { color: secondaryColor }]}>
+            {t("bills.noBillsOnDay")}
+          </Text>
         </View>
       ) : (
         <View style={styles.billList}>

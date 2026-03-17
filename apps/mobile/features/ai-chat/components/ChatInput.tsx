@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { TAB_BAR_CLEARANCE } from "@/shared/components";
 import { SendHorizonal } from "@/shared/components/icons";
 import { Keyboard, Platform, Pressable, TextInput, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 type ChatInputProps = {
   readonly onSend: (text: string) => void;
@@ -10,6 +10,7 @@ type ChatInputProps = {
 };
 
 export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
+  const { t } = useTranslation();
   const [text, setText] = useState("");
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const borderSubtle = useThemeColor("borderSubtle");
@@ -54,7 +55,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
         <TextInput
           className="flex-1 text-primary dark:text-primary-dark"
           style={{ fontFamily: "poppins-medium", fontSize: 14, maxHeight: 100, padding: 0 }}
-          placeholder="Ask about your finances..."
+          placeholder={t("aiChat.placeholder")}
           placeholderTextColor={tertiary}
           value={text}
           onChangeText={setText}

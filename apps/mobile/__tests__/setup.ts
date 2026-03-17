@@ -125,6 +125,7 @@ vi.mock("expo-sqlite", () => ({
 // Mock date-fns
 vi.mock("date-fns", () => ({
   format: (date: Date, fmt: string) => {
+    if (fmt === "PP") return "Mar 1, 2026";
     if (fmt === "MMM d, yyyy") return "Mar 1, 2026";
     if (fmt === "yyyy-MM-dd") return "2026-03-01";
     if (fmt === "MMMM d") return "March 1";

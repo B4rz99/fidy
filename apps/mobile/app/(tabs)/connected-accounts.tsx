@@ -9,10 +9,12 @@ import {
 import { ScreenLayout } from "@/shared/components";
 import { Mail } from "@/shared/components/icons";
 import { Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getDateFnsLocale } from "@/shared/i18n";
 
 export default function ConnectedAccountsScreen() {
   const { back } = useRouter();
+  const { t } = useTranslation();
   const accounts = useEmailCaptureStore((s) => s.accounts);
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
   const disconnectEmail = useEmailCaptureStore((s) => s.disconnectEmail);
@@ -23,7 +25,7 @@ export default function ConnectedAccountsScreen() {
   const outlookAccount = accounts.find((a) => a.provider === "outlook");
 
   return (
-    <ScreenLayout title="Connected Accounts" variant="sub" onBack={() => back()}>
+    <ScreenLayout title={t("connectedAccounts.title")} variant="sub" onBack={() => back()}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ paddingBottom: 40 }}
@@ -31,7 +33,7 @@ export default function ConnectedAccountsScreen() {
       >
         <View style={{ gap: 24 }}>
           <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
-            Manage your connected accounts and capture sources for automatic transaction tracking.
+            {t("connectedAccounts.subtitle")}
           </Text>
 
           {/* Email accounts */}
@@ -79,6 +81,7 @@ function AccountCard({
   onConnect,
   onDisconnect,
 }: AccountCardProps) {
+  const { t, locale } = useTranslation();
   const iconColor = useThemeColor("primary");
 
   if (account) {
@@ -93,7 +96,7 @@ function AccountCard({
           </View>
           <View className="rounded-lg bg-accent-green-light px-2.5 py-1 dark:bg-accent-green-light-dark">
             <Text className="font-poppins-semibold text-[11px] text-accent-green dark:text-accent-green-dark">
-              Connected
+              {t("connectedAccounts.connected")}
             </Text>
           </View>
         </View>
@@ -104,8 +107,13 @@ function AccountCard({
 
         <Text className="font-poppins-medium text-caption text-tertiary dark:text-tertiary-dark">
           {account.lastFetchedAt
-            ? `Last synced: ${formatDistanceToNow(new Date(account.lastFetchedAt), { addSuffix: true })}`
-            : "Not synced yet"}
+            ? t("connectedAccounts.lastSynced", {
+                time: formatDistanceToNow(new Date(account.lastFetchedAt), {
+                  addSuffix: true,
+                  locale: getDateFnsLocale(locale),
+                }),
+              })
+            : t("connectedAccounts.notSyncedYet")}
         </Text>
 
         <Pressable
@@ -114,7 +122,7 @@ function AccountCard({
           style={{ borderWidth: 1, borderColor: "#D45B5B33" }}
         >
           <Text className="font-poppins-medium text-label text-accent-red dark:text-accent-red-dark">
-            Disconnect
+            {t("connectedAccounts.disconnect")}
           </Text>
         </Pressable>
       </View>
@@ -134,13 +142,13 @@ function AccountCard({
         </View>
         <View className="rounded-lg bg-peach-btn px-2.5 py-1 dark:bg-peach-btn-dark">
           <Text className="font-poppins-semibold text-[11px] text-tertiary dark:text-tertiary-dark">
-            Not connected
+            {t("connectedAccounts.notConnected")}
           </Text>
         </View>
       </View>
 
       <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
-        Connect your {provider} account to capture bank emails.
+        {t("connectedAccounts.connectDescription", { provider })}
       </Text>
 
       <Pressable
@@ -150,7 +158,7 @@ function AccountCard({
       >
         <Mail size={18} color={iconColor} />
         <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-          Connect {provider}
+          {t("connectedAccounts.connectProvider", { provider })}
         </Text>
       </Pressable>
     </View>

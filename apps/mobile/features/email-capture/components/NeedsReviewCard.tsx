@@ -8,6 +8,8 @@ import {
   type StoredTransaction,
 } from "@/features/transactions";
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { useTranslation } from "@/shared/hooks";
+import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import type { ProcessedEmailRow } from "../lib/repository";
 
 type NeedsReviewCardProps = {
@@ -21,6 +23,7 @@ export const NeedsReviewCard = ({
   transaction,
   onConfirm,
 }: NeedsReviewCardProps) => {
+  const { t, locale } = useTranslation();
   const suggestedCategory: CategoryId =
     transaction?.categoryId && isValidCategoryId(transaction.categoryId)
       ? transaction.categoryId
@@ -42,10 +45,10 @@ export const NeedsReviewCard = ({
       <View className="flex-row items-center justify-between">
         <View className="flex-1 gap-0.5">
           <Text className="font-poppins-medium text-caption" style={{ color: "#6D6D6D" }}>
-            {processedEmail.subject ?? "Bank notification"}
+            {processedEmail.subject ?? t("needsReview.bankNotification")}
           </Text>
           <Text className="font-poppins-semibold text-base text-primary dark:text-primary-dark">
-            {transaction.description || "Unknown"}
+            {transaction.description || t("common.unknown")}
           </Text>
         </View>
         <View className="items-end gap-0.5">
@@ -59,13 +62,13 @@ export const NeedsReviewCard = ({
             {formatSignedAmount(transaction.amountCents, transaction.type)}
           </Text>
           <Text className="font-poppins-medium text-caption" style={{ color: "#6D6D6D" }}>
-            {format(transaction.date, "MMM d, yyyy")}
+            {format(transaction.date, "PP", { locale: getDateFnsLocale(locale) })}
           </Text>
         </View>
       </View>
 
       <Text className="font-poppins-medium text-caption" style={{ color: "#6D6D6D" }}>
-        Category
+        {t("common.category")}
       </Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -96,7 +99,7 @@ export const NeedsReviewCard = ({
                     fontWeight: isSelected ? "600" : "500",
                   }}
                 >
-                  {cat.label.en}
+                  {getCategoryLabel(cat, locale)}
                 </Text>
               </Pressable>
             );
@@ -110,7 +113,7 @@ export const NeedsReviewCard = ({
           className="flex-1 items-center justify-center rounded-xl"
           style={{ backgroundColor: "#7cb243", height: 40 }}
         >
-          <Text className="font-poppins-semibold text-sm text-white">Confirm</Text>
+          <Text className="font-poppins-semibold text-sm text-white">{t("common.confirm")}</Text>
         </Pressable>
       </View>
     </View>

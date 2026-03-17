@@ -14,8 +14,11 @@ export function findExpiredSessions(
   return sessions.filter((s) => s.deletedAt === null && s.expiresAt < now);
 }
 
-export function formatCleanupMessage(count: number): string | null {
+import type { TranslateFn } from "@/shared/i18n/types";
+
+export function formatCleanupMessage(count: number, t?: TranslateFn): string | null {
   if (count === 0) return null;
+  if (t) return t("aiChat.cleanupMessage", { count });
   return count === 1
     ? "1 expired conversation was removed"
     : `${count} expired conversations were removed`;

@@ -29,7 +29,8 @@ import {
   Platform,
   View,
 } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { toIsoDate } from "@/shared/lib";
 import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";
@@ -50,16 +51,26 @@ const TransactionItem = memo(function TransactionItem({
   tx: StoredTransaction;
   showDateHeader: boolean;
 }) {
+  const { t, locale } = useTranslation();
   const category = CATEGORY_MAP[tx.categoryId];
   return (
     <View>
-      {showDateHeader && <DateHeader label={makeDateLabel(tx.date)} />}
+      {showDateHeader && (
+        <DateHeader
+          label={makeDateLabel(
+            tx.date,
+            t("dates.today"),
+            t("dates.yesterday"),
+            getDateFnsLocale(locale)
+          )}
+        />
+      )}
       <View className="px-4">
         <TransactionRow
           icon={category?.icon ?? Ellipsis}
-          name={tx.description || "Unknown"}
+          name={tx.description || t("common.unknown")}
           amount={formatSignedAmount(tx.amountCents, tx.type)}
-          category={category?.label.en ?? "Other"}
+          category={category ? getCategoryLabel(category, locale) : t("common.other")}
           isPositive={tx.type === "income"}
         />
       </View>
@@ -84,6 +95,7 @@ const ListHeader = memo(function ListHeader({
   onBalanceLayout,
 }: ListHeaderProps) {
   const { push } = useRouter();
+  const { t, locale } = useTranslation();
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
   const phase = useEmailCaptureStore((s) => s.phase);
   const progress = useEmailCaptureStore((s) => s.progress);
@@ -94,9 +106,10 @@ const ListHeader = memo(function ListHeader({
     [categorySpending]
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: locale triggers recompute when language changes
   const progressDisplay = useMemo(
-    () => (phase ? buildProgressDisplay(phase, progress, []) : null),
-    [phase, progress]
+    () => (phase ? buildProgressDisplay(phase, progress, [], t) : null),
+    [phase, progress, t, locale]
   );
 
   return (

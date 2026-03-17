@@ -1,12 +1,14 @@
 import { Tabs, useRouter } from "expo-router";
 import { MenuPanel, useMenuStore } from "@/features/menu";
 import { CustomTabBar } from "@/shared/components";
+import { useTranslation } from "@/shared/hooks";
 
 const ADD_TAB_PREFIX = "add-";
 const MENU_TAB_PREFIX = "menu-";
 
 export default function TabsLayout() {
   const { push } = useRouter();
+  const { t } = useTranslation();
   const openMenu = useMenuStore((s) => s.openMenu);
   const closeMenu = useMenuStore((s) => s.closeMenu);
 
@@ -30,11 +32,11 @@ export default function TabsLayout() {
           },
         }}
       >
-        <Tabs.Screen name="index" options={{ title: "Home" }} />
-        <Tabs.Screen name="ai" options={{ title: "AI" }} />
-        <Tabs.Screen name="add" options={{ title: "Add" }} />
-        <Tabs.Screen name="calendar" options={{ title: "Calendar" }} />
-        <Tabs.Screen name="menu" options={{ title: "Menu" }} />
+        <Tabs.Screen name="index" options={{ title: t("tabs.home") }} />
+        <Tabs.Screen name="ai" options={{ title: t("tabs.ai") }} />
+        <Tabs.Screen name="add" options={{ title: t("tabs.add") }} />
+        <Tabs.Screen name="calendar" options={{ title: t("tabs.calendar") }} />
+        <Tabs.Screen name="menu" options={{ title: t("tabs.menu") }} />
         <Tabs.Screen name="connected-accounts" options={{ href: null }} />
         <Tabs.Screen name="failed-emails" options={{ href: null }} />
       </Tabs>

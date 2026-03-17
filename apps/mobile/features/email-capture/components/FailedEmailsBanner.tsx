@@ -1,9 +1,10 @@
 import { TriangleAlert } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useEmailCaptureStore } from "../store";
 
 export const FailedEmailsBanner = ({ onPress }: { onPress: () => void }) => {
+  const { t } = useTranslation();
   const failedCount = useEmailCaptureStore((s) => s.failedEmails.length);
   const iconColor = useThemeColor("accentRed");
 
@@ -18,10 +19,10 @@ export const FailedEmailsBanner = ({ onPress }: { onPress: () => void }) => {
       <TriangleAlert size={20} color={iconColor} />
       <View className="flex-1">
         <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-          {failedCount} unprocessed {failedCount === 1 ? "email" : "emails"}
+          {t("emailCapture.unprocessedEmails", { count: failedCount })}
         </Text>
         <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
-          Tap to review and add manually
+          {t("emailCapture.tapToReview")}
         </Text>
       </View>
     </Pressable>

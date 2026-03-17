@@ -1,9 +1,10 @@
 import { ChevronRight, MessageSquare } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useCaptureSourcesStore } from "../store";
 
 export const DetectedTransactionsBanner = ({ onPress }: { onPress: () => void }) => {
+  const { t } = useTranslation();
   const count = useCaptureSourcesStore((s) => s.detectedSmsCount);
   const bannerBg = useThemeColor("accentGreenLight");
   const iconColor = useThemeColor("accentGreen");
@@ -20,10 +21,10 @@ export const DetectedTransactionsBanner = ({ onPress }: { onPress: () => void })
         <MessageSquare size={18} color={iconColor} />
         <View>
           <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-            {count} {count === 1 ? "movimiento bancario" : "movimientos bancarios"} hoy
+            {t("detectedTransactions.count", { count })}
           </Text>
           <Text className="font-poppins-medium text-caption" style={{ color: secondaryColor }}>
-            SMS detectados - toca para revisar
+            {t("detectedTransactions.subtitle")}
           </Text>
         </View>
       </View>

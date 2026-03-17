@@ -1,21 +1,8 @@
+import { useMemo } from "react";
 import { MessageSquare, Smartphone } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useCaptureSourcesStore } from "../store";
-
-const APPLE_PAY_STEPS = [
-  "Abre la app Atajos en tu iPhone",
-  "Toca Automatizacion > + > Transaccion",
-  "Selecciona tu tarjeta y toca Siguiente",
-  "Busca 'Fidy' > 'Registrar transaccion' > Activa 'Ejecutar inmediatamente'",
-] as const;
-
-const SMS_STEPS = [
-  "Abre la app Atajos en tu iPhone",
-  "Toca Automatizacion > + > Mensaje",
-  "Selecciona los numeros de tu banco y toca Siguiente",
-  "Busca 'Fidy' > 'Detectar SMS bancario' > Activa 'Ejecutar inmediatamente'",
-] as const;
 
 const StepList = ({
   steps,
@@ -52,7 +39,29 @@ const StepList = ({
 );
 
 export const ApplePaySetupCard = () => {
+  const { t, locale } = useTranslation();
   const isApplePaySetupComplete = useCaptureSourcesStore((s) => s.isApplePaySetupComplete);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: locale triggers recompute when language changes
+  const applePaySteps = useMemo(
+    () => [
+      t("applePay.steps.0"),
+      t("applePay.steps.1"),
+      t("applePay.steps.2"),
+      t("applePay.steps.3"),
+    ],
+    [t, locale]
+  );
+  // biome-ignore lint/correctness/useExhaustiveDependencies: locale triggers recompute when language changes
+  const smsSteps = useMemo(
+    () => [
+      t("smsDetection.steps.0"),
+      t("smsDetection.steps.1"),
+      t("smsDetection.steps.2"),
+      t("smsDetection.steps.3"),
+    ],
+    [t, locale]
+  );
 
   const secondaryColor = useThemeColor("secondary");
   const greenColor = useThemeColor("accentGreen");
@@ -85,16 +94,16 @@ export const ApplePaySetupCard = () => {
                 color: isApplePaySetupComplete ? greenColor : tertiaryColor,
               }}
             >
-              {isApplePaySetupComplete ? "Connected" : "Not set up"}
+              {isApplePaySetupComplete ? t("applePay.connected") : t("applePay.notSetUp")}
             </Text>
           </View>
         </View>
 
         <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
-          Captura automatica de transacciones cuando pagas con Apple Pay.
+          {t("applePay.description")}
         </Text>
 
-        <StepList steps={APPLE_PAY_STEPS} circleBg={peachLightBg} circleText={primaryColor} />
+        <StepList steps={applePaySteps} circleBg={peachLightBg} circleText={primaryColor} />
       </View>
 
       {/* SMS Detection */}
@@ -102,15 +111,15 @@ export const ApplePaySetupCard = () => {
         <View className="flex-row items-center" style={{ gap: 10 }}>
           <MessageSquare size={22} color={greenColor} />
           <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-            Deteccion de SMS bancarios
+            {t("smsDetection.title")}
           </Text>
         </View>
 
         <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
-          Detecta cuando recibes SMS de tu banco para recordarte registrar la transaccion.
+          {t("smsDetection.description")}
         </Text>
 
-        <StepList steps={SMS_STEPS} circleBg={greenLightBg} circleText={greenColor} />
+        <StepList steps={smsSteps} circleBg={greenLightBg} circleText={greenColor} />
       </View>
     </View>
   );

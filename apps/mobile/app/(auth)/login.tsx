@@ -2,9 +2,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GoogleIcon, MicrosoftIcon, OAuthButton, useAuthStore } from "@/features/auth";
 import { FidyLogo } from "@/shared/components";
 import { ActivityIndicator, Text, View } from "@/shared/components/rn";
+import { useTranslation } from "@/shared/hooks";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const isSigningIn = useAuthStore((s) => s.isSigningIn);
 
   return (
@@ -16,7 +18,7 @@ export default function LoginScreen() {
         <View className="items-center gap-4">
           <FidyLogo />
           <Text className="font-poppins-medium text-[18px] text-secondary dark:text-secondary-dark">
-            your finances, simplified.
+            {t("login.tagline")}
           </Text>
         </View>
 
@@ -29,14 +31,14 @@ export default function LoginScreen() {
           <View className="gap-3 w-full">
             <OAuthButton
               icon={<GoogleIcon />}
-              label="Continue with Google"
+              label={t("login.continueWithGoogle")}
               onPress={() => useAuthStore.getState().signIn("google")}
               containerClassName="bg-login-google dark:bg-login-google-dark border border-login-google-border dark:border-login-google-border-dark"
               textClassName="text-primary dark:text-primary-dark"
             />
             <OAuthButton
               icon={<MicrosoftIcon />}
-              label="Continue with Microsoft"
+              label={t("login.continueWithMicrosoft")}
               onPress={() => useAuthStore.getState().signIn("azure")}
               containerClassName="bg-login-ms dark:bg-login-ms-dark"
               textClassName="text-primary dark:text-primary-dark"
@@ -46,7 +48,7 @@ export default function LoginScreen() {
 
         {/* Legal Text */}
         <Text className="text-center font-poppins-medium text-caption text-tertiary dark:text-tertiary-dark">
-          By continuing, you agree to our Terms of Service{"\n"}and Privacy Policy.
+          {t("login.legalText")}
         </Text>
 
         <View className="h-4" />

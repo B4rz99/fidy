@@ -10,13 +10,12 @@ describe("Login screen", () => {
     expect(loginSource).toContain("MicrosoftIcon");
   });
 
-  test("renders tagline text", () => {
-    expect(loginSource).toContain("your finances, simplified.");
+  test("renders tagline via i18n", () => {
+    expect(loginSource).toContain('t("login.tagline")');
   });
 
-  test("renders legal text", () => {
-    expect(loginSource).toContain("Terms of Service");
-    expect(loginSource).toContain("Privacy Policy");
+  test("renders legal text via i18n", () => {
+    expect(loginSource).toContain('t("login.legalText")');
   });
 
   test("uses FidyLogo component", () => {

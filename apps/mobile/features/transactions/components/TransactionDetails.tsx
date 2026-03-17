@@ -3,7 +3,8 @@ import { useRouter } from "expo-router";
 import { useShallow } from "zustand/react/shallow";
 import { Calendar, ChevronLeft } from "@/shared/components/icons";
 import { Pressable, Text, TextInput, View } from "@/shared/components/rn";
-import { useAsyncGuard, useThemeColor } from "@/shared/hooks";
+import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { getDateFnsLocale } from "@/shared/i18n";
 import { CATEGORIES } from "../lib/categories";
 import { formatDollars } from "../lib/format-amount";
 import { getDateLabel } from "../lib/format-date";
@@ -12,6 +13,7 @@ import { CategoryPill } from "./CategoryPill";
 
 export const TransactionDetails = () => {
   const { back } = useRouter();
+  const { t, locale } = useTranslation();
   const {
     type,
     digits,
@@ -47,7 +49,7 @@ export const TransactionDetails = () => {
 
   const amountColor = type === "expense" ? accentRed : accentGreen;
   const displayAmount = formatDollars(digits);
-  const dateLabel = getDateLabel(date, new Date());
+  const dateLabel = getDateLabel(date, new Date(), t("dates.today"), getDateFnsLocale(locale));
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
@@ -68,7 +70,7 @@ export const TransactionDetails = () => {
         className="flex-row items-center justify-center gap-2"
         onPress={() => setStep(1)}
         accessibilityRole="button"
-        accessibilityLabel="Edit amount"
+        accessibilityLabel={t("common.amount")}
       >
         <ChevronLeft size={24} color={amountColor} />
         <Text className="font-poppins-bold text-[28px]" style={{ color: amountColor }}>
@@ -79,7 +81,7 @@ export const TransactionDetails = () => {
       {/* Category section */}
       <View className="gap-3">
         <Text className="font-poppins-medium text-[13px]" style={{ color: secondary }}>
-          Category
+          {t("common.category")}
         </Text>
         <View className="flex-row flex-wrap gap-2">
           {CATEGORIES.map((cat) => (
@@ -101,7 +103,7 @@ export const TransactionDetails = () => {
           borderWidth: 1,
           borderColor: borderSubtle,
         }}
-        placeholder="Add a description (optional)"
+        placeholder={t("transactions.descriptionOptional")}
         placeholderTextColor={tertiary}
         value={description}
         onChangeText={setDescription}
@@ -124,9 +126,11 @@ export const TransactionDetails = () => {
           onPress={handleSave}
           disabled={isSaving}
           accessibilityRole="button"
-          accessibilityLabel="Save Transaction"
+          accessibilityLabel={t("transactions.saveTransaction")}
         >
-          <Text className="font-poppins-semibold text-section text-white">Save Transaction</Text>
+          <Text className="font-poppins-semibold text-section text-white">
+            {t("transactions.saveTransaction")}
+          </Text>
         </Pressable>
       </View>
     </View>

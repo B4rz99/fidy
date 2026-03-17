@@ -20,8 +20,8 @@ describe("day-detail formSheet screen", () => {
     expect(source).toContain("getBillsForDate");
   });
 
-  test("shows empty state when no bills", () => {
-    expect(source).toContain("No bills");
+  test("shows empty state via i18n", () => {
+    expect(source).toContain('t("bills.noBillsOnDay")');
   });
 
   test("has mark paid/unpaid toggle", () => {

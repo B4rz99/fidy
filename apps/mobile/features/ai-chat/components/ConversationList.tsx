@@ -4,7 +4,8 @@ import { memo, useCallback, useEffect } from "react";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { MessageSquare, Plus, Trash2, X } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getDateFnsLocale } from "@/shared/i18n";
 import { useSessionCleanup } from "../hooks/use-session-cleanup";
 import type { ChatSession } from "../schema";
 import { useChatStore } from "../store";
@@ -26,10 +27,13 @@ const SessionCard = memo(function SessionCardInner({
   readonly onSelect: () => void;
   readonly onDelete: () => void;
 }) {
+  const { locale } = useTranslation();
   const tertiary = useThemeColor("tertiary");
   const accentRed = useThemeColor("accentRed");
 
-  const dateStr = format(new Date(session.createdAt), "MMM d, yyyy");
+  const dateStr = format(new Date(session.createdAt), "PP", {
+    locale: getDateFnsLocale(locale),
+  });
 
   return (
     <Pressable
@@ -70,6 +74,7 @@ function HeaderActions({
   readonly onOpenMemories: () => void;
   readonly onNewChat: () => void;
 }) {
+  const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
 
   return (
@@ -85,7 +90,7 @@ function HeaderActions({
         }}
       >
         <Text className="font-poppins-semibold text-label" style={{ color: accentGreen }}>
-          Memories
+          {t("aiChat.memories")}
         </Text>
       </Pressable>
       <Pressable
@@ -111,6 +116,7 @@ export function ConversationList({
   onNewChat,
   onOpenMemories,
 }: ConversationListProps) {
+  const { t } = useTranslation();
   const sessions = useChatStore((s) => s.sessions);
   const loadSessions = useChatStore((s) => s.loadSessions);
   const deleteSession = useChatStore((s) => s.deleteSession);
@@ -142,7 +148,7 @@ export function ConversationList({
 
   return (
     <ScreenLayout
-      title="AI Chat"
+      title={t("aiChat.title")}
       rightActions={<HeaderActions onOpenMemories={onOpenMemories} onNewChat={onNewChat} />}
     >
       <FlashList
@@ -186,10 +192,10 @@ export function ConversationList({
         ListEmptyComponent={
           <View style={{ alignItems: "center", paddingTop: 60, gap: 8 }}>
             <Text className="font-poppins-medium text-body text-tertiary dark:text-tertiary-dark text-center">
-              No conversations yet
+              {t("aiChat.noConversations")}
             </Text>
             <Text className="font-poppins-medium text-label text-tertiary dark:text-tertiary-dark text-center">
-              Tap + to start a new chat
+              {t("aiChat.tapToStart")}
             </Text>
           </View>
         }

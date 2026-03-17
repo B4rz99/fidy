@@ -6,12 +6,14 @@ import { type ProcessedEmailRow, useEmailCaptureStore } from "@/features/email-c
 import { ScreenLayout } from "@/shared/components";
 import { Info, Plus, TriangleAlert } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getDateFnsLocale } from "@/shared/i18n";
 
 const ItemSeparator = () => <View style={{ height: 10 }} />;
 
 export default function FailedEmailsScreen() {
   const { back, push } = useRouter();
+  const { t } = useTranslation();
   const failedEmails = useEmailCaptureStore((s) => s.failedEmails);
   const dismissFailedEmail = useEmailCaptureStore((s) => s.dismissFailedEmail);
 
@@ -31,7 +33,7 @@ export default function FailedEmailsScreen() {
   );
 
   return (
-    <ScreenLayout title="Unprocessed Emails" variant="sub" onBack={() => back()}>
+    <ScreenLayout title={t("failedEmails.title")} variant="sub" onBack={() => back()}>
       <FlashList
         data={failedEmails}
         renderItem={renderItem}
@@ -45,15 +47,13 @@ export default function FailedEmailsScreen() {
         ListHeaderComponent={
           <View style={{ paddingBottom: 10 }}>
             <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">
-              {
-                "These bank emails couldn't be processed automatically. You can add them as transactions manually."
-              }
+              {t("failedEmails.subtitle")}
             </Text>
           </View>
         }
         ListEmptyComponent={
           <Text className="font-poppins-medium text-label text-tertiary dark:text-tertiary-dark text-center pt-8">
-            No unprocessed emails
+            {t("failedEmails.empty")}
           </Text>
         }
       />
@@ -70,11 +70,14 @@ function FailedEmailCard({
   onDismiss: () => void;
   onAddManually: () => void;
 }) {
+  const { t, locale } = useTranslation();
   const redColor = useThemeColor("accentRed");
   const primaryColor = useThemeColor("primary");
   const borderColor = useThemeColor("borderSubtle");
 
-  const dateStr = email.receivedAt ? format(new Date(email.receivedAt), "MMM d, yyyy") : "";
+  const dateStr = email.receivedAt
+    ? format(new Date(email.receivedAt), "PP", { locale: getDateFnsLocale(locale) })
+    : "";
 
   return (
     <View className="rounded-chart bg-card p-4 dark:bg-card-dark" style={{ gap: 12 }}>
@@ -104,7 +107,7 @@ function FailedEmailCard({
         >
           <Info size={14} color={redColor} />
           <Text className="font-poppins-medium text-[11px] text-accent-red dark:text-accent-red-dark">
-            {formatReason(email.failureReason)}
+            {formatReason(email.failureReason, t)}
           </Text>
         </View>
       ) : null}
@@ -117,7 +120,7 @@ function FailedEmailCard({
         >
           <Plus size={16} color={primaryColor} />
           <Text className="font-poppins-semibold text-label text-primary dark:text-primary-dark">
-            Add manually
+            {t("failedEmails.addManually")}
           </Text>
         </Pressable>
 
@@ -127,7 +130,7 @@ function FailedEmailCard({
           style={{ borderWidth: 1, borderColor }}
         >
           <Text className="font-poppins-medium text-label text-tertiary dark:text-tertiary-dark">
-            Dismiss
+            {t("common.dismiss")}
           </Text>
         </Pressable>
       </View>
@@ -135,9 +138,9 @@ function FailedEmailCard({
   );
 }
 
-function formatReason(reason: string): string {
-  if (reason === "parse_failed") return "Could not extract transaction data";
-  if (reason === "parse_error") return "Error while processing email";
+function formatReason(reason: string, t: (key: string) => string): string {
+  if (reason === "parse_failed") return t("failedEmails.parseFailedReason");
+  if (reason === "parse_error") return t("failedEmails.parseErrorReason");
   if (reason.startsWith("validation:")) return reason.replace("validation: ", "");
   return reason;
 }
