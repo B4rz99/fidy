@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { Platform } from "react-native";
-import type { AnyDb } from "@/shared/db/client";
+import { Platform } from "@/shared/components/rn";
+import type { AnyDb } from "@/shared/db";
 import { setupApplePayCapture } from "./setup";
 
 export function useApplePayCapture(db: AnyDb | null, userId: string | null) {

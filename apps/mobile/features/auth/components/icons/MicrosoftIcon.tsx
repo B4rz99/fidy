@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { View } from "@/shared/components/rn";
 
 export function MicrosoftIcon() {
   return (

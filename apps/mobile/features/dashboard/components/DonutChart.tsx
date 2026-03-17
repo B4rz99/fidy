@@ -1,6 +1,6 @@
-import { Text, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 import {
   computeArcs,
   computeCircumference,

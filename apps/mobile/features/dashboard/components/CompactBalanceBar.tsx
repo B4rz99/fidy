@@ -1,12 +1,12 @@
-import { Text } from "react-native";
 import Animated, {
   Extrapolation,
   interpolate,
   type SharedValue,
   useAnimatedStyle,
 } from "react-native-reanimated";
-import { formatCents } from "@/features/transactions/lib/format-amount";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { formatCents } from "@/features/transactions";
+import { Text } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 
 type CompactBalanceBarProps = {
   readonly balanceCents: number;

@@ -1,6 +1,6 @@
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { ChevronLeft, ChevronRight } from "@/shared/components/icons";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 import { formatMonthYear } from "../lib/calendar-utils";
 
 type Props = {

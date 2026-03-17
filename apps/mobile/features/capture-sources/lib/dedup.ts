@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db/client";
-import { processedCaptures, transactions } from "@/shared/db/schema";
-import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
+import type { AnyDb } from "@/shared/db";
+import { processedCaptures, transactions } from "@/shared/db";
+import { normalizeMerchant } from "@/shared/lib";
 
 /**
  * Creates a fingerprint hash for deduplication across capture sources.

@@ -1,6 +1,6 @@
-import { MessageSquare, Smartphone } from "lucide-react-native";
-import { Text, View } from "react-native";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { MessageSquare, Smartphone } from "@/shared/components/icons";
+import { Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 import { useCaptureSourcesStore } from "../store";
 
 const APPLE_PAY_STEPS = [

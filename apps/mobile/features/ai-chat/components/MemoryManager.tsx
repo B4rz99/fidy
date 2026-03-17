@@ -1,9 +1,9 @@
 import { FlashList } from "@shopify/flash-list";
-import { Trash2 } from "lucide-react-native";
 import { memo, useCallback, useEffect } from "react";
-import { Pressable, Text, View } from "react-native";
-import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { Trash2 } from "@/shared/components/icons";
+import { Pressable, Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 import type { UserMemory } from "../schema";
 import { useChatStore } from "../store";
 
@@ -106,7 +106,7 @@ export function MemoryManager({ onBack }: MemoryManagerProps) {
         ListHeaderComponent={
           <View style={{ paddingBottom: 16 }}>
             <Text className="font-poppins-medium text-label text-tertiary dark:text-tertiary-dark leading-relaxed">
-              Things Fidy AI remembers about you. Delete any memory you'd like it to forget.
+              Things Fidy AI remembers about you. Delete any memory you&apos;d like it to forget.
             </Text>
           </View>
         }

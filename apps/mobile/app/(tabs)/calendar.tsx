@@ -1,4 +1,4 @@
-import { CalendarScreen } from "@/features/calendar/components/CalendarScreen";
+import { CalendarScreen } from "@/features/calendar";
 
 export default function CalendarTab() {
   return <CalendarScreen />;

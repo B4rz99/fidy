@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { memo } from "react";
-import { Pressable } from "react-native";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Pressable } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 import type { Category } from "../lib/categories";
 
 type CategoryPillProps = {

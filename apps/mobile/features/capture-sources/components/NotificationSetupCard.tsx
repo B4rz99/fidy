@@ -1,6 +1,6 @@
-import { Bell, ExternalLink } from "lucide-react-native";
-import { Linking, Platform, Pressable, Switch, Text, View } from "react-native";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Bell, ExternalLink } from "@/shared/components/icons";
+import { Linking, Platform, Pressable, Switch, Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 import { KNOWN_BANK_PACKAGES } from "../schema";
 import { useCaptureSourcesStore } from "../store";
 

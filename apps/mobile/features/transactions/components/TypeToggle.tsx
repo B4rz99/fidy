@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
-import { Pressable, Text, View } from "react-native";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Pressable, Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 import type { TransactionType } from "../schema";
 
 type TypeToggleProps = {

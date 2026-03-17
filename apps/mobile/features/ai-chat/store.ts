@@ -1,10 +1,7 @@
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import { create } from "zustand";
-import type { AnyDb } from "@/shared/db/client";
-import { chatMessages, chatSessions } from "@/shared/db/schema";
-import { getSupabase } from "@/shared/db/supabase";
-import { generateId } from "@/shared/lib/generate-id";
-import { captureError } from "@/shared/lib/sentry";
+import { type AnyDb, chatMessages, chatSessions, getSupabase } from "@/shared/db";
+import { captureError, generateId } from "@/shared/lib";
 import { deriveConversationTitle, findExpiredSessions } from "./lib/sessions";
 import type { ActionStatus, ChatAction, ChatMessage, ChatSession, UserMemory } from "./schema";
 import { extractMemories } from "./services/ai-chat-api";

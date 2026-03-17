@@ -1,6 +1,13 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
+import { type BillFrequency, FREQUENCIES, useCalendarStore } from "@/features/calendar";
+import {
+  CATEGORIES,
+  type CategoryId,
+  centsToDisplay,
+  isValidCategoryId,
+} from "@/features/transactions";
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -11,15 +18,8 @@ import {
   Text,
   TextInput,
   View,
-} from "react-native";
-import type { BillFrequency } from "@/features/calendar/schema";
-import { FREQUENCIES } from "@/features/calendar/schema";
-import { useCalendarStore } from "@/features/calendar/store";
-import type { CategoryId } from "@/features/transactions/lib/categories";
-import { CATEGORIES, isValidCategoryId } from "@/features/transactions/lib/categories";
-import { centsToDisplay } from "@/features/transactions/lib/format-amount";
-import { useAsyncGuard } from "@/shared/hooks/use-async-guard";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+} from "@/shared/components/rn";
+import { useAsyncGuard, useThemeColor } from "@/shared/hooks";
 
 export default function AddBillScreen() {
   const router = useRouter();

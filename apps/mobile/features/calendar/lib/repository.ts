@@ -1,6 +1,6 @@
 import { and, between, eq } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db/client";
-import { billPayments, bills } from "@/shared/db/schema";
+import type { AnyDb } from "@/shared/db";
+import { billPayments, bills } from "@/shared/db";
 
 export type BillRow = typeof bills.$inferInsert;
 export type BillPaymentRow = typeof billPayments.$inferInsert;

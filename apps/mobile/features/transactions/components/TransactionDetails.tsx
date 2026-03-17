@@ -1,10 +1,9 @@
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import { Calendar, ChevronLeft } from "lucide-react-native";
-import { Pressable, Text, TextInput, View } from "react-native";
 import { useShallow } from "zustand/react/shallow";
-import { useAsyncGuard } from "@/shared/hooks/use-async-guard";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Calendar, ChevronLeft } from "@/shared/components/icons";
+import { Pressable, Text, TextInput, View } from "@/shared/components/rn";
+import { useAsyncGuard, useThemeColor } from "@/shared/hooks";
 import { CATEGORIES } from "../lib/categories";
 import { formatDollars } from "../lib/format-amount";
 import { getDateLabel } from "../lib/format-date";

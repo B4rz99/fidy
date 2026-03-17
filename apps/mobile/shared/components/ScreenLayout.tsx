@@ -1,8 +1,8 @@
-import { ChevronLeft } from "lucide-react-native";
 import type { ReactNode } from "react";
-import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { ChevronLeft } from "@/shared/components/icons";
+import { Pressable, Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 
 export const TAB_BAR_CLEARANCE = 96;
 export const HEADER_HEIGHT = 48;

@@ -1,4 +1,4 @@
-import { parseIsoDate, toIsoDate } from "@/shared/lib/format-date";
+import { parseIsoDate, toIsoDate } from "@/shared/lib";
 import type { CreateTransactionInput, StoredTransaction, TransactionType } from "../schema";
 import { createTransactionSchema } from "../schema";
 import type { CategoryId } from "./categories";

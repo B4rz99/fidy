@@ -1,6 +1,6 @@
-import { ChevronRight, TriangleAlert } from "lucide-react-native";
-import { Pressable, Text, View } from "react-native";
-import { useEmailCaptureStore } from "@/features/email-capture/store";
+import { useEmailCaptureStore } from "@/features/email-capture";
+import { ChevronRight, TriangleAlert } from "@/shared/components/icons";
+import { Pressable, Text, View } from "@/shared/components/rn";
 
 export const NeedsReviewBanner = ({ onPress }: { onPress: () => void }) => {
   const count = useEmailCaptureStore((s) => s.needsReviewEmails.length);

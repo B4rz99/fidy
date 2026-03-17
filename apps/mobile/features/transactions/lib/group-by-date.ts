@@ -1,5 +1,5 @@
 import { format, isToday, isYesterday } from "date-fns";
-import { toIsoDate } from "@/shared/lib/format-date";
+import { toIsoDate } from "@/shared/lib";
 import type { StoredTransaction } from "../schema";
 
 export type DateHeader = {

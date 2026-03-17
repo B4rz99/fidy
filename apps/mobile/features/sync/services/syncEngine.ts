@@ -7,10 +7,9 @@ import {
   getTransactionById,
   setSyncMeta,
   upsertTransaction,
-} from "@/features/transactions/lib/repository";
-import type { AnyDb } from "@/shared/db/client";
-import { generateId } from "@/shared/lib/generate-id";
-import { captureError } from "@/shared/lib/sentry";
+} from "@/features/transactions";
+import type { AnyDb } from "@/shared/db";
+import { captureError, generateId } from "@/shared/lib";
 import { hasDataConflict } from "../lib/conflict-detection";
 import { insertConflict } from "../lib/conflict-repository";
 

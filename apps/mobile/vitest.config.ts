@@ -15,6 +15,7 @@ export default defineConfig({
     include: ["__tests__/**/*.test.ts"],
     server: {
       deps: {
+        inline: [/expo-sqlite/],
         external: [
           /react-native/,
           /react-native-safe-area-context/,

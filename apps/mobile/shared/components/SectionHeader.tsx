@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "@/shared/components/rn";
 
 type SectionHeaderProps = {
   title: string;

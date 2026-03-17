@@ -1,9 +1,8 @@
 import { addDays } from "date-fns";
 import { and, count, desc, eq, gte, lt } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db/client";
-import { detectedSmsEvents, notificationSources, processedCaptures } from "@/shared/db/schema";
-import { toIsoDate } from "@/shared/lib/format-date";
-import { generateId } from "@/shared/lib/generate-id";
+import type { AnyDb } from "@/shared/db";
+import { detectedSmsEvents, notificationSources, processedCaptures } from "@/shared/db";
+import { generateId, toIsoDate } from "@/shared/lib";
 
 // -- notificationSources CRUD --
 

@@ -1,7 +1,7 @@
-import { Trash2 } from "lucide-react-native";
-import { Pressable, Text, View } from "react-native";
-import { formatCents } from "@/features/transactions/lib/format-amount";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { formatCents } from "@/features/transactions";
+import { Trash2 } from "@/shared/components/icons";
+import { Pressable, Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 import type { ChatAction } from "../schema";
 
 type ActionCardProps = {

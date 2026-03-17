@@ -1,4 +1,4 @@
-import { getSupabase } from "@/shared/db/supabase";
+import { getSupabase } from "@/shared/db";
 import { type BankSender, DEFAULT_BANK_SENDERS } from "../lib/bank-senders";
 
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour

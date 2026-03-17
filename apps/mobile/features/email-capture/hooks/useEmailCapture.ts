@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { AppState } from "react-native";
-import type { AnyDb } from "@/shared/db/client";
-import { handleRecoverableError } from "@/shared/lib/toast";
+import { AppState } from "@/shared/components/rn";
+import type { AnyDb } from "@/shared/db";
+import { handleRecoverableError } from "@/shared/lib";
 import { getGmailClientId, getOutlookClientId } from "../schema";
 import { useEmailCaptureStore } from "../store";
 

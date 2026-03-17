@@ -1,8 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import { Calendar } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -11,16 +9,20 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useShallow } from "zustand/react/shallow";
-import { CategoryPill } from "@/features/transactions/components/CategoryPill";
-import { TypeToggle } from "@/features/transactions/components/TypeToggle";
-import { CATEGORIES } from "@/features/transactions/lib/categories";
-import { digitsToCents, formatDollars } from "@/features/transactions/lib/format-amount";
-import { getDateLabel } from "@/features/transactions/lib/format-date";
-import { handleNumpadPress } from "@/features/transactions/lib/handle-numpad-press";
-import { useTransactionStore } from "@/features/transactions/store";
-import { FidyNumpad } from "@/shared/components/FidyNumpad";
-import { useAsyncGuard } from "@/shared/hooks/use-async-guard";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import {
+  CATEGORIES,
+  CategoryPill,
+  digitsToCents,
+  formatDollars,
+  getDateLabel,
+  handleNumpadPress,
+  TypeToggle,
+  useTransactionStore,
+} from "@/features/transactions";
+import { FidyNumpad } from "@/shared/components";
+import { Calendar } from "@/shared/components/icons";
+import { Pressable, ScrollView, Text, TextInput, View } from "@/shared/components/rn";
+import { useAsyncGuard, useThemeColor } from "@/shared/hooks";
 
 export default function AddTransactionModal() {
   const { back } = useRouter();

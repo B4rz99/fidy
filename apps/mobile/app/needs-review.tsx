@@ -1,3 +1,3 @@
-import NeedsReviewScreen from "@/features/email-capture/components/NeedsReviewScreen";
+import { NeedsReviewScreen } from "@/features/email-capture";
 
 export default NeedsReviewScreen;

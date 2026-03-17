@@ -1,6 +1,6 @@
 import { desc, eq, isNull } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db/client";
-import { syncConflicts } from "@/shared/db/schema";
+import type { AnyDb } from "@/shared/db";
+import { syncConflicts } from "@/shared/db";
 
 export type ConflictRow = typeof syncConflicts.$inferInsert;
 

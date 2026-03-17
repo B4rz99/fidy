@@ -1,4 +1,4 @@
-import { captureError } from "@/shared/lib/sentry";
+import { captureError } from "@/shared/lib";
 import type { RawEmail } from "../schema";
 
 export async function fetchGmailEmailsWithToken(

@@ -1,0 +1,1 @@
+export { registerBackgroundTask } from "./register";

@@ -1,13 +1,11 @@
 import { format } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Check, Pencil, Trash2 } from "lucide-react-native";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { getBillsForDate } from "@/features/calendar/lib/calendar-utils";
-import type { BillPayment } from "@/features/calendar/schema";
-import { useCalendarStore } from "@/features/calendar/store";
-import { centsToDisplay } from "@/features/transactions/lib/format-amount";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
-import { toIsoDate } from "@/shared/lib/format-date";
+import { type BillPayment, getBillsForDate, useCalendarStore } from "@/features/calendar";
+import { centsToDisplay } from "@/features/transactions";
+import { Check, Pencil, Trash2 } from "@/shared/components/icons";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
+import { toIsoDate } from "@/shared/lib";
 
 export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();

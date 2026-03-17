@@ -1,6 +1,6 @@
-import { Sparkles } from "lucide-react-native";
-import { Pressable, Text, View } from "react-native";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Sparkles } from "@/shared/components/icons";
+import { Pressable, Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 
 const SUGGESTIONS = [
   "How much did I spend this month?",

@@ -1,10 +1,7 @@
-import { ActivityIndicator, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { GoogleIcon } from "@/features/auth/components/icons/GoogleIcon";
-import { MicrosoftIcon } from "@/features/auth/components/icons/MicrosoftIcon";
-import { OAuthButton } from "@/features/auth/components/OAuthButton";
-import { useAuthStore } from "@/features/auth/store";
-import { FidyLogo } from "@/shared/components/FidyLogo";
+import { GoogleIcon, MicrosoftIcon, OAuthButton, useAuthStore } from "@/features/auth";
+import { FidyLogo } from "@/shared/components";
+import { ActivityIndicator, Text, View } from "@/shared/components/rn";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();

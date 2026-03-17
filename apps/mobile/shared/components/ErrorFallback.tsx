@@ -1,5 +1,5 @@
 import * as Updates from "expo-updates";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable, Text, View } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 
 export function ErrorFallback() {

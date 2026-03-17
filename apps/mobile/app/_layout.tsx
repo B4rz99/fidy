@@ -13,24 +13,28 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useChatStore } from "@/features/ai-chat/store";
-import { useAuthStore } from "@/features/auth/store";
-import { registerBackgroundTask } from "@/features/background-fetch/register";
-import { useCalendarStore } from "@/features/calendar/store";
-import { useApplePayCapture } from "@/features/capture-sources/hooks/useApplePayCapture";
-import { useNotificationCapture } from "@/features/capture-sources/hooks/useNotificationCapture";
-import { useSmsDetection } from "@/features/capture-sources/hooks/useSmsDetection";
-import { useCaptureSourcesStore } from "@/features/capture-sources/store";
-import { useEmailCapture } from "@/features/email-capture/hooks/useEmailCapture";
-import { useEmailCaptureStore } from "@/features/email-capture/store";
-import { useSync } from "@/features/sync/hooks/useSync";
-import { useSyncConflictStore } from "@/features/sync/store";
-import { useTransactionStore } from "@/features/transactions/store";
-import { ErrorFallback } from "@/shared/components/ErrorFallback";
-import type { AnyDb } from "@/shared/db/client";
-import { getDb } from "@/shared/db/client";
-import { captureError, initSentry, SentryErrorBoundary, wrapWithSentry } from "@/shared/lib/sentry";
-import { handleRecoverableError } from "@/shared/lib/toast";
+import { useChatStore } from "@/features/ai-chat";
+import { useAuthStore } from "@/features/auth";
+import { registerBackgroundTask } from "@/features/background-fetch";
+import { useCalendarStore } from "@/features/calendar";
+import {
+  useApplePayCapture,
+  useCaptureSourcesStore,
+  useNotificationCapture,
+  useSmsDetection,
+} from "@/features/capture-sources";
+import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
+import { useSync, useSyncConflictStore } from "@/features/sync";
+import { useTransactionStore } from "@/features/transactions";
+import { ErrorFallback } from "@/shared/components";
+import { type AnyDb, getDb } from "@/shared/db";
+import {
+  captureError,
+  handleRecoverableError,
+  initSentry,
+  SentryErrorBoundary,
+  wrapWithSentry,
+} from "@/shared/lib";
 import migrations from "../drizzle/migrations";
 
 SplashScreen.preventAutoHideAsync();

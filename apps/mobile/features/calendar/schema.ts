@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { categoryIdSchema } from "@/features/transactions/schema";
+import { categoryIdSchema } from "@/features/transactions";
 
 export const billFrequency = z.enum(["weekly", "biweekly", "monthly", "yearly"]);
 export type BillFrequency = z.infer<typeof billFrequency>;

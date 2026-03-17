@@ -1,6 +1,6 @@
 import { useCallback } from "react";
-import { useTransactionStore } from "@/features/transactions/store";
-import { parseIsoDate } from "@/shared/lib/format-date";
+import { useTransactionStore } from "@/features/transactions";
+import { parseIsoDate } from "@/shared/lib";
 import { parseActionFromResponse } from "../lib/parse-action";
 import type { ChatAction } from "../schema";
 import { streamChat } from "../services/ai-chat-api";

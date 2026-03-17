@@ -1,6 +1,5 @@
-import type { AnyDb } from "@/shared/db/client";
-import { generateId } from "@/shared/lib/generate-id";
-import { captureError } from "@/shared/lib/sentry";
+import type { AnyDb } from "@/shared/db";
+import { captureError, generateId } from "@/shared/lib";
 import { insertDetectedSmsEvent } from "../lib/repository";
 import { processApplePayIntent } from "../services/apple-pay-pipeline";
 import { processNotification } from "../services/notification-pipeline";

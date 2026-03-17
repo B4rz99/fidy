@@ -1,3 +1,3 @@
-import ConflictResolutionScreen from "@/features/sync/components/ConflictResolutionScreen";
+import { ConflictResolutionScreen } from "@/features/sync";
 
 export default ConflictResolutionScreen;

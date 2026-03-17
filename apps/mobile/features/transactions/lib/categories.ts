@@ -1,4 +1,3 @@
-import type { LucideIcon } from "lucide-react-native";
 import {
   ArrowLeftRight,
   Car,
@@ -7,10 +6,11 @@ import {
   GraduationCap,
   HeartPulse,
   House,
+  type LucideIcon,
   Shirt,
   Utensils,
   Wrench,
-} from "lucide-react-native";
+} from "@/shared/components/icons";
 import { Colors } from "@/shared/constants/theme";
 
 export type CategoryId = string;

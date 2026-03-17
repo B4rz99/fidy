@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { Text, View } from "@/shared/components/rn";
 
 export default function OnboardingScreen() {
   return (

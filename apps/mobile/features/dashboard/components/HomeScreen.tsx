@@ -1,6 +1,26 @@
 import { useRouter } from "expo-router";
-import { Bell, Ellipsis } from "lucide-react-native";
 import { memo, useCallback, useMemo, useState } from "react";
+import { useSharedValue } from "react-native-reanimated";
+import { DetectedTransactionsBanner } from "@/features/capture-sources";
+import {
+  buildProgressDisplay,
+  EmailConnectBanner,
+  EmailProgressCard,
+  FailedEmailsBanner,
+  getGmailClientId,
+  getOutlookClientId,
+  useEmailCaptureStore,
+} from "@/features/email-capture";
+import { SyncConflictBanner } from "@/features/sync";
+import {
+  CATEGORY_MAP,
+  formatSignedAmount,
+  makeDateLabel,
+  type StoredTransaction,
+  useTransactionStore,
+} from "@/features/transactions";
+import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
+import { Bell, Ellipsis } from "@/shared/components/icons";
 import {
   FlatList,
   type LayoutChangeEvent,
@@ -8,25 +28,9 @@ import {
   type NativeSyntheticEvent,
   Platform,
   View,
-} from "react-native";
-import { useSharedValue } from "react-native-reanimated";
-import { DetectedTransactionsBanner } from "@/features/capture-sources/components/DetectedTransactionsBanner";
-import { EmailConnectBanner } from "@/features/email-capture/components/EmailConnectBanner";
-import { EmailProgressCard } from "@/features/email-capture/components/EmailProgressCard";
-import { FailedEmailsBanner } from "@/features/email-capture/components/FailedEmailsBanner";
-import { buildProgressDisplay } from "@/features/email-capture/lib/progress-phases";
-import { getGmailClientId, getOutlookClientId } from "@/features/email-capture/schema";
-import { useEmailCaptureStore } from "@/features/email-capture/store";
-import { SyncConflictBanner } from "@/features/sync/components/SyncConflictBanner";
-import { CATEGORY_MAP } from "@/features/transactions/lib/categories";
-import { formatSignedAmount } from "@/features/transactions/lib/format-amount";
-import { makeDateLabel } from "@/features/transactions/lib/group-by-date";
-import type { StoredTransaction } from "@/features/transactions/schema";
-import { useTransactionStore } from "@/features/transactions/store";
-import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
-import { TransactionRow } from "@/shared/components/TransactionRow";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
-import { toIsoDate } from "@/shared/lib/format-date";
+} from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
+import { toIsoDate } from "@/shared/lib";
 import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";
 import { CompactBalanceBar } from "./CompactBalanceBar";

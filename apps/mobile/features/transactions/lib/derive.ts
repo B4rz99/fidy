@@ -1,4 +1,4 @@
-import { toIsoDate } from "@/shared/lib/format-date";
+import { toIsoDate } from "@/shared/lib";
 import type { StoredTransaction } from "../schema";
 
 export function deriveBalance(transactions: readonly StoredTransaction[]): number {

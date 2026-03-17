@@ -1,9 +1,9 @@
 import type { FlashListRef } from "@shopify/flash-list";
 import { FlashList } from "@shopify/flash-list";
 import { memo, useCallback, useRef } from "react";
-import { Keyboard, KeyboardAvoidingView, View } from "react-native";
-import { useTransactionStore } from "@/features/transactions/store";
-import { HEADER_HEIGHT, ScreenLayout } from "@/shared/components/ScreenLayout";
+import { useTransactionStore } from "@/features/transactions";
+import { HEADER_HEIGHT, ScreenLayout } from "@/shared/components";
+import { Keyboard, KeyboardAvoidingView, View } from "@/shared/components/rn";
 import { useStreamingChat } from "../hooks/use-streaming-chat";
 import type { ChatMessage } from "../schema";
 import { useChatStore } from "../store";

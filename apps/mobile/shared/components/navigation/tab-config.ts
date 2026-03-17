@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react-native";
-import { Calendar, Home, Menu, Sparkles } from "lucide-react-native";
+import type { LucideIcon } from "@/shared/components/icons";
+import { Calendar, Home, Menu, Sparkles } from "@/shared/components/icons";
 
 export const TAB_CONFIG: Record<string, { icon: LucideIcon; label: string }> = {
   index: { icon: Home, label: "HOME" },

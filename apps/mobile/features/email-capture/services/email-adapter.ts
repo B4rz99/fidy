@@ -1,5 +1,5 @@
 import * as SecureStore from "expo-secure-store";
-import { captureError } from "@/shared/lib/sentry";
+import { captureError } from "@/shared/lib";
 import type { ConnectResult, EmailProvider, RawEmail } from "../schema";
 import { EMAIL_REDIRECT_URI, getGmailRedirectUri } from "../schema";
 import { fetchGmailEmailsWithToken } from "./gmail-adapter";

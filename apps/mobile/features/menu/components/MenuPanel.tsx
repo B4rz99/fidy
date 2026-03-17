@@ -1,7 +1,5 @@
 import { useRouter } from "expo-router";
-import { Mail } from "lucide-react-native";
 import { useEffect } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -9,8 +7,10 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { TAB_BAR_CLEARANCE } from "@/shared/components";
+import { Mail } from "@/shared/components/icons";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 import { useMenuStore } from "../store";
 
 const PANEL_WIDTH = 200;

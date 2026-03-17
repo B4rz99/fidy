@@ -1,6 +1,6 @@
-import { TriangleAlert } from "lucide-react-native";
-import { Pressable, Text, View } from "react-native";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { TriangleAlert } from "@/shared/components/icons";
+import { Pressable, Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 import { useEmailCaptureStore } from "../store";
 
 export const FailedEmailsBanner = ({ onPress }: { onPress: () => void }) => {
