@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Supabase anon keys are public by design (role: anon, embedded in clients)"
+paths = ["apps/landing/waitlist.js"]
