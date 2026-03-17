@@ -33,7 +33,10 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
       monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
     // SDK 55 properties not yet in @expo/config-types
-    ...({ edgeToEdgeEnabled: true, predictiveBackGestureEnabled: false } as Record<string, unknown>),
+    ...({ edgeToEdgeEnabled: true, predictiveBackGestureEnabled: false } as Record<
+      string,
+      unknown
+    >),
   },
   web: {
     output: "static",

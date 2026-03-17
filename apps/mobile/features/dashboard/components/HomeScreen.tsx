@@ -30,7 +30,7 @@ import {
   View,
 } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { getDateFnsLocale, getCategoryLabel } from "@/shared/i18n";
+import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { toIsoDate } from "@/shared/lib";
 import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";

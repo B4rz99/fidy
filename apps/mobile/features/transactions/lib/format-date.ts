@@ -12,10 +12,6 @@ export function getDateLabel(
   todayLabel: string,
   dateFnsLocale?: Locale
 ): string {
-  const formatted = format(
-    date,
-    "PP",
-    dateFnsLocale ? { locale: dateFnsLocale } : undefined
-  );
+  const formatted = format(date, "PP", dateFnsLocale ? { locale: dateFnsLocale } : undefined);
   return isSameDay(date, now) ? `${todayLabel}, ${formatted}` : formatted;
 }
