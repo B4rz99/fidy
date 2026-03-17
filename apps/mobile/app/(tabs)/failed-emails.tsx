@@ -1,13 +1,12 @@
 import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
-import { Info, Plus, TriangleAlert } from "lucide-react-native";
+import { Info, Plus, TriangleAlert } from "@/shared/components/icons";
 import { useCallback } from "react";
-import { Pressable, Text, View } from "react-native";
-import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
-import { useEmailCaptureStore } from "@/features/email-capture/store";
-import { ScreenLayout } from "@/shared/components/ScreenLayout";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Pressable, Text, View } from "@/shared/components/rn";
+import { type ProcessedEmailRow, useEmailCaptureStore } from "@/features/email-capture";
+import { ScreenLayout } from "@/shared/components";
+import { useThemeColor } from "@/shared/hooks";
 
 const ItemSeparator = () => <View style={{ height: 10 }} />;
 

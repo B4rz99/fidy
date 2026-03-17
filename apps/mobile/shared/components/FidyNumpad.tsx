@@ -1,8 +1,8 @@
 import * as Haptics from "expo-haptics";
-import { Delete } from "lucide-react-native";
+import { Delete } from "@/shared/components/icons";
 import { memo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 
 type FidyNumpadProps = {
   onKeyPress: (key: string) => void;

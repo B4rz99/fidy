@@ -1,7 +1,6 @@
 import { Tabs, useRouter } from "expo-router";
-import { MenuPanel } from "@/features/menu/components/MenuPanel";
-import { useMenuStore } from "@/features/menu/store";
-import { CustomTabBar } from "@/shared/components/navigation/CustomTabBar";
+import { MenuPanel, useMenuStore } from "@/features/menu";
+import { CustomTabBar } from "@/shared/components";
 
 const ADD_TAB_PREFIX = "add-";
 const MENU_TAB_PREFIX = "menu-";

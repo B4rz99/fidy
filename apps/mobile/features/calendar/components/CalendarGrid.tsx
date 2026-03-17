@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
-import { toIsoDate } from "@/shared/lib/format-date";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
+import { toIsoDate } from "@/shared/lib";
 import type { CalendarDay } from "../lib/calendar-utils";
 import { getBillsForDate, getMonthGrid, WEEKDAY_LABELS } from "../lib/calendar-utils";
 import type { Bill, BillPayment } from "../schema";

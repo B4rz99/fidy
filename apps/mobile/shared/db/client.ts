@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
 import { openDatabaseSync } from "expo-sqlite";
-import { captureError } from "@/shared/lib/sentry";
+import { captureError } from "@/shared/lib";
 
 // biome-ignore lint/suspicious/noExplicitAny: drizzle generic varies by caller
 export type AnyDb = ExpoSQLiteDatabase<any>;

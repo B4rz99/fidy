@@ -1,7 +1,7 @@
-import { Sparkles } from "lucide-react-native";
+import { Sparkles } from "@/shared/components/icons";
 import { memo } from "react";
-import { Text, View } from "react-native";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 
 type StreamingBubbleProps = {
   readonly content: string;

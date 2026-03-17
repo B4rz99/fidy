@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, lte, sql } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db/client";
-import { emailAccounts, processedEmails } from "@/shared/db/schema";
+import type { AnyDb } from "@/shared/db";
+import { emailAccounts, processedEmails } from "@/shared/db";
 
 export type EmailAccountRow = typeof emailAccounts.$inferInsert;
 export type ProcessedEmailRow = typeof processedEmails.$inferInsert;

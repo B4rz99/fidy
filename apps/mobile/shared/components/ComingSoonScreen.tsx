@@ -1,7 +1,7 @@
-import type { LucideIcon } from "lucide-react-native";
-import { Text, View } from "react-native";
+import type { LucideIcon } from "@/shared/components/icons";
+import { Text, View } from "@/shared/components/rn";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { useThemeColor } from "@/shared/hooks";
 
 type ComingSoonScreenProps = {
   // biome-ignore lint/style/useNamingConvention: PascalCase required for React component prop

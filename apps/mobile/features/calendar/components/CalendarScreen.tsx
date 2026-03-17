@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
-import { Plus } from "lucide-react-native";
-import { Pressable, View } from "react-native";
-import { ScreenLayout } from "@/shared/components/ScreenLayout";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Plus } from "@/shared/components/icons";
+import { Pressable, View } from "@/shared/components/rn";
+import { ScreenLayout } from "@/shared/components";
+import { useThemeColor } from "@/shared/hooks";
 import { useCalendarStore } from "../store";
 import { CalendarGrid } from "./CalendarGrid";
 import { MonthNavigator } from "./MonthNavigator";

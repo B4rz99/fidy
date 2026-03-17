@@ -1,6 +1,6 @@
-import { Platform } from "react-native";
+import { Platform } from "@/shared/components/rn";
 import { create } from "zustand";
-import type { AnyDb } from "@/shared/db/client";
+import type { AnyDb } from "@/shared/db";
 import {
   getEnabledPackages,
   getTodaySmsEventCount,

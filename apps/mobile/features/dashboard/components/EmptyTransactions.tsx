@@ -1,6 +1,6 @@
-import { BarChart3 } from "lucide-react-native";
-import { Text, View } from "react-native";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { BarChart3 } from "@/shared/components/icons";
+import { Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 
 export const EmptyTransactions = () => {
   const mutedColor = useThemeColor("secondary");

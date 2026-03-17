@@ -1,6 +1,6 @@
-import { Plus } from "lucide-react-native";
-import { Pressable, View } from "react-native";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Plus } from "@/shared/components/icons";
+import { Pressable, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 
 type AddNavButtonProps = {
   onPress: () => void;

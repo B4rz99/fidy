@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { createAsyncGuard } from "@/shared/lib/create-async-guard";
+import { createAsyncGuard } from "@/shared/lib";
 
 /**
  * React hook wrapping createAsyncGuard with reactive state for UI feedback.

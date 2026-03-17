@@ -1,13 +1,13 @@
 import { format } from "date-fns";
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import {
   CATEGORIES,
   type CategoryId,
+  type StoredTransaction,
+  formatSignedAmount,
   isValidCategoryId,
-} from "@/features/transactions/lib/categories";
-import { formatSignedAmount } from "@/features/transactions/lib/format-amount";
-import type { StoredTransaction } from "@/features/transactions/schema";
+} from "@/features/transactions";
 import type { ProcessedEmailRow } from "../lib/repository";
 
 type NeedsReviewCardProps = {

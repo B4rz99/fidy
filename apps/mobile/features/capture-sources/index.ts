@@ -1,3 +1,10 @@
+export { ApplePaySetupCard } from "./components/ApplePaySetupCard";
+export { DetectedTransactionsBanner } from "./components/DetectedTransactionsBanner";
+export { NotificationSetupCard } from "./components/NotificationSetupCard";
+export { useApplePayCapture } from "./hooks/useApplePayCapture";
+export { useNotificationCapture } from "./hooks/useNotificationCapture";
+export { useSmsDetection } from "./hooks/useSmsDetection";
+export { findDuplicateTransaction } from "./lib/dedup";
 export type {
   ApplePayIntentData,
   NotificationData,
@@ -11,3 +18,4 @@ export {
   resolveSource,
   smsDetectionDataSchema,
 } from "./schema";
+export { useCaptureSourcesStore } from "./store";

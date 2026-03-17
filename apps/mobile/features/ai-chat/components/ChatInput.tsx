@@ -1,8 +1,8 @@
-import { SendHorizonal } from "lucide-react-native";
+import { SendHorizonal } from "@/shared/components/icons";
 import { useCallback, useEffect, useState } from "react";
-import { Keyboard, Platform, Pressable, TextInput, View } from "react-native";
-import { TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Keyboard, Platform, Pressable, TextInput, View } from "@/shared/components/rn";
+import { TAB_BAR_CLEARANCE } from "@/shared/components";
+import { useThemeColor } from "@/shared/hooks";
 
 type ChatInputProps = {
   readonly onSend: (text: string) => void;

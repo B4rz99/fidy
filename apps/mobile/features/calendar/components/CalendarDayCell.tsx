@@ -1,6 +1,6 @@
-import { Check } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Check } from "@/shared/components/icons";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 import type { Bill } from "../schema";
 
 type Props = {

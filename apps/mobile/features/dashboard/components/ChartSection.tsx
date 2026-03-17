@@ -6,10 +6,9 @@ import {
   ScrollView,
   Text,
   View,
-} from "react-native";
-import { CATEGORY_MAP } from "@/features/transactions/lib/categories";
-import { formatCentsRounded } from "@/features/transactions/lib/format-amount";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+} from "@/shared/components/rn";
+import { CATEGORY_MAP, formatCentsRounded } from "@/features/transactions";
+import { useThemeColor } from "@/shared/hooks";
 import { CategoryRow } from "./CategoryRow";
 import { DonutChart } from "./DonutChart";
 import { SpendingLineChart } from "./SpendingLineChart";

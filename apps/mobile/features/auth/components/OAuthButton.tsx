@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "@/shared/components/rn";
 
 // biome-ignore lint/style/useNamingConvention: OAuth is a proper noun
 interface OAuthButtonProps {

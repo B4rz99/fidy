@@ -1,8 +1,8 @@
 import { and, between, desc, eq, inArray, isNull, like, or, sql, sum } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db/client";
-import { syncMeta, syncQueue, transactions } from "@/shared/db/schema";
+import type { AnyDb } from "@/shared/db";
+import { syncMeta, syncQueue, transactions } from "@/shared/db";
 
-export type { SyncOperation, SyncQueueEntry, SyncTableName } from "@/shared/db/enqueue-sync";
+export type { SyncOperation, SyncQueueEntry, SyncTableName } from "@/shared/db";
 
 export type TransactionRow = typeof transactions.$inferInsert;
 
@@ -141,7 +141,7 @@ export function upsertTransaction(db: AnyDb, row: TransactionRow) {
     .run();
 }
 
-export { enqueueSync } from "@/shared/db/enqueue-sync";
+export { enqueueSync } from "@/shared/db";
 
 export function getQueuedSyncEntries(db: AnyDb) {
   return db.select().from(syncQueue).all();

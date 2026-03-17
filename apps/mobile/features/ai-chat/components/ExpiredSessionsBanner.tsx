@@ -1,5 +1,5 @@
-import { Clock, X } from "lucide-react-native";
-import { Pressable, Text, View } from "react-native";
+import { Clock, X } from "@/shared/components/icons";
+import { Pressable, Text, View } from "@/shared/components/rn";
 import { useChatStore } from "../store";
 
 export function ExpiredSessionsBanner() {

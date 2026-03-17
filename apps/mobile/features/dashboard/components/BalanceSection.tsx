@@ -1,7 +1,7 @@
-import { TrendingUp } from "lucide-react-native";
-import { Text, View } from "react-native";
-import { formatCents } from "@/features/transactions/lib/format-amount";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { TrendingUp } from "@/shared/components/icons";
+import { Text, View } from "@/shared/components/rn";
+import { formatCents } from "@/features/transactions";
+import { useThemeColor } from "@/shared/hooks";
 
 type BalanceSectionProps = {
   readonly balanceCents: number;

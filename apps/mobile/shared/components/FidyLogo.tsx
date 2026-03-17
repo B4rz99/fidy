@@ -5,7 +5,7 @@ import {
   LOGO_TEXT_PATH,
   LOGO_VIEWBOX,
 } from "@fidy/assets";
-import { useColorScheme } from "react-native";
+import { useColorScheme } from "@/shared/hooks";
 import Svg, { Circle, G, Path } from "react-native-svg";
 
 interface FidyLogoProps {

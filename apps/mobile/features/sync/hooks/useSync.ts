@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
-import { AppState } from "react-native";
-import { useTransactionStore } from "@/features/transactions/store";
-import type { AnyDb } from "@/shared/db/client";
-import { getSupabase } from "@/shared/db/supabase";
+import { AppState } from "@/shared/components/rn";
+import { useTransactionStore } from "@/features/transactions";
+import type { AnyDb } from "@/shared/db";
+import { getSupabase } from "@/shared/db";
 import { isOnline, onConnectivityChange } from "../services/networkMonitor";
 import { fullSync } from "../services/syncEngine";
 import { useSyncConflictStore } from "../store";

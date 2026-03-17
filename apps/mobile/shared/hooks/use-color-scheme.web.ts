@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useColorScheme as useRnColorScheme } from "react-native";
+import { useColorScheme as useRnColorScheme } from "@/shared/components/rn";
 
 /**
  * To support static rendering, this value needs to be re-calculated on the client side for web

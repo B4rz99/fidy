@@ -1,15 +1,12 @@
 import {
+  classifyMerchantApi,
   insertMerchantRule,
   lookupMerchantRule,
-} from "@/features/email-capture/lib/merchant-rules";
-import { classifyMerchantApi } from "@/features/email-capture/services/parse-email-api";
-import { isValidCategoryId } from "@/features/transactions/lib/categories";
-import { insertTransaction } from "@/features/transactions/lib/repository";
-import type { AnyDb } from "@/shared/db/client";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
-import { toIsoDate } from "@/shared/lib/format-date";
-import { generateId } from "@/shared/lib/generate-id";
-import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
+} from "@/features/email-capture";
+import { insertTransaction, isValidCategoryId } from "@/features/transactions";
+import type { AnyDb } from "@/shared/db";
+import { enqueueSync } from "@/shared/db";
+import { generateId, normalizeMerchant, toIsoDate } from "@/shared/lib";
 import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
 import { insertProcessedCapture } from "../lib/repository";
 import type { ApplePayIntentData } from "../schema";

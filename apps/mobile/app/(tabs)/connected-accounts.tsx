@@ -1,13 +1,11 @@
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "expo-router";
-import { Mail } from "lucide-react-native";
-import { Platform, Pressable, ScrollView, Text, View } from "react-native";
-import { ApplePaySetupCard } from "@/features/capture-sources/components/ApplePaySetupCard";
-import { NotificationSetupCard } from "@/features/capture-sources/components/NotificationSetupCard";
-import { getGmailClientId, getOutlookClientId } from "@/features/email-capture/schema";
-import { useEmailCaptureStore } from "@/features/email-capture/store";
-import { ScreenLayout } from "@/shared/components/ScreenLayout";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Mail } from "@/shared/components/icons";
+import { Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { ApplePaySetupCard, NotificationSetupCard } from "@/features/capture-sources";
+import { getGmailClientId, getOutlookClientId, useEmailCaptureStore } from "@/features/email-capture";
+import { ScreenLayout } from "@/shared/components";
+import { useThemeColor } from "@/shared/hooks";
 
 export default function ConnectedAccountsScreen() {
   const { back } = useRouter();

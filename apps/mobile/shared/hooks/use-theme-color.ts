@@ -1,4 +1,4 @@
-import { useColorScheme } from "react-native";
+import { useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 
 export const useThemeColor = (colorName: keyof typeof Colors.light): string => {

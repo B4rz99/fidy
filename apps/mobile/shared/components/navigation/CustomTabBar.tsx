@@ -1,5 +1,5 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { View } from "react-native";
+import { View } from "@/shared/components/rn";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AddNavButton } from "./AddNavButton";
 import { NavItem } from "./NavItem";

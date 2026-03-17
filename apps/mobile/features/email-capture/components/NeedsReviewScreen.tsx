@@ -1,9 +1,9 @@
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
-import { Text, View } from "react-native";
-import { useTransactionStore } from "@/features/transactions/store";
-import { ScreenLayout } from "@/shared/components/ScreenLayout";
+import { Text, View } from "@/shared/components/rn";
+import { useTransactionStore } from "@/features/transactions";
+import { ScreenLayout } from "@/shared/components";
 import { useEmailCaptureStore } from "../store";
 import { NeedsReviewCard } from "./NeedsReviewCard";
 

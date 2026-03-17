@@ -1,11 +1,9 @@
 import { eq } from "drizzle-orm";
 import { create } from "zustand";
-import { useTransactionStore } from "@/features/transactions/store";
-import type { AnyDb } from "@/shared/db/client";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
-import { transactions } from "@/shared/db/schema";
-import { generateId } from "@/shared/lib/generate-id";
-import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
+import { useTransactionStore } from "@/features/transactions";
+import type { AnyDb } from "@/shared/db";
+import { enqueueSync, transactions } from "@/shared/db";
+import { generateId, normalizeMerchant } from "@/shared/lib";
 import { insertMerchantRule } from "./lib/merchant-rules";
 import type { ProgressPhase } from "./lib/progress-phases";
 import { isFirstFetchForAny, shouldShowProgress } from "./lib/progress-phases";

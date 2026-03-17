@@ -1,10 +1,10 @@
 import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
-import { MessageSquare, Plus, Trash2, X } from "lucide-react-native";
+import { MessageSquare, Plus, Trash2, X } from "@/shared/components/icons";
 import { memo, useCallback, useEffect } from "react";
-import { Pressable, Text, View } from "react-native";
-import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Pressable, Text, View } from "@/shared/components/rn";
+import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { useThemeColor } from "@/shared/hooks";
 import { useSessionCleanup } from "../hooks/use-session-cleanup";
 import type { ChatSession } from "../schema";
 import { useChatStore } from "../store";

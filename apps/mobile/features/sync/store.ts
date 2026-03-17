@@ -1,10 +1,8 @@
 import { create } from "zustand";
-import { upsertTransaction } from "@/features/transactions/lib/repository";
-import { useTransactionStore } from "@/features/transactions/store";
-import type { AnyDb } from "@/shared/db/client";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
-import { generateId } from "@/shared/lib/generate-id";
-import { captureError } from "@/shared/lib/sentry";
+import { upsertTransaction, useTransactionStore } from "@/features/transactions";
+import type { AnyDb } from "@/shared/db";
+import { enqueueSync } from "@/shared/db";
+import { captureError, generateId } from "@/shared/lib";
 import {
   getUnresolvedConflicts,
   resolveConflict as resolveConflictDb,

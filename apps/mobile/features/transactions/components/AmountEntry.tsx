@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -8,7 +8,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useShallow } from "zustand/react/shallow";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { useThemeColor } from "@/shared/hooks";
 import { cleanDigitInput, digitsToCents, formatDollars } from "../lib/format-amount";
 import { useTransactionStore } from "../store";
 import { TypeToggle } from "./TypeToggle";

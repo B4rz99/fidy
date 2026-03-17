@@ -1,10 +1,8 @@
 import * as BackgroundTask from "expo-background-task";
 import * as TaskManager from "expo-task-manager";
-import { getGmailClientId, getOutlookClientId } from "@/features/email-capture/schema";
-import { useEmailCaptureStore } from "@/features/email-capture/store";
-import { getDb } from "@/shared/db/client";
-import { getSupabase } from "@/shared/db/supabase";
-import { captureError } from "@/shared/lib/sentry";
+import { getGmailClientId, getOutlookClientId, useEmailCaptureStore } from "@/features/email-capture";
+import { getDb, getSupabase } from "@/shared/db";
+import { captureError } from "@/shared/lib";
 
 export const BACKGROUND_TASK_NAME = "FIDY_EMAIL_FETCH";
 

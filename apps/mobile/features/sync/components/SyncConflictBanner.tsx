@@ -1,6 +1,6 @@
-import { ChevronRight, GitMerge } from "lucide-react-native";
-import { Pressable, Text, View } from "react-native";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { ChevronRight, GitMerge } from "@/shared/components/icons";
+import { Pressable, Text, View } from "@/shared/components/rn";
+import { useThemeColor } from "@/shared/hooks";
 import { useSyncConflictStore } from "../store";
 
 type SyncConflictBannerProps = {

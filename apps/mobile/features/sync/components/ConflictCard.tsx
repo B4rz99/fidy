@@ -1,8 +1,7 @@
 import { memo } from "react";
-import { Pressable, Text, View } from "react-native";
-import { CATEGORY_MAP } from "@/features/transactions/lib/categories";
-import { formatSignedAmount } from "@/features/transactions/lib/format-amount";
-import { useThemeColor } from "@/shared/hooks/use-theme-color";
+import { Pressable, Text, View } from "@/shared/components/rn";
+import { CATEGORY_MAP, formatSignedAmount } from "@/features/transactions";
+import { useThemeColor } from "@/shared/hooks";
 import type { SyncConflict } from "../store";
 
 type ConflictCardProps = {

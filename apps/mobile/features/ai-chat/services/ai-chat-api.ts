@@ -1,6 +1,6 @@
 import { fetch } from "expo/fetch";
-import { getSupabase } from "@/shared/db/supabase";
-import { captureError } from "@/shared/lib/sentry";
+import { getSupabase } from "@/shared/db";
+import { captureError } from "@/shared/lib";
 
 type ChatMessage = { readonly role: "user" | "assistant"; readonly content: string };
 

@@ -1,11 +1,8 @@
-import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
-import { isValidCategoryId } from "@/features/transactions/lib/categories";
-import { insertTransaction } from "@/features/transactions/lib/repository";
-import type { AnyDb } from "@/shared/db/client";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
-import { generateId } from "@/shared/lib/generate-id";
-import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
-import { captureError } from "@/shared/lib/sentry";
+import { findDuplicateTransaction } from "@/features/capture-sources";
+import { insertTransaction, isValidCategoryId } from "@/features/transactions";
+import type { AnyDb } from "@/shared/db";
+import { enqueueSync } from "@/shared/db";
+import { captureError, generateId, normalizeMerchant } from "@/shared/lib";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
 import {
   getPendingRetryEmails,

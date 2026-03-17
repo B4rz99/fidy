@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db/client";
-import { merchantRules } from "@/shared/db/schema";
-import { generateId } from "@/shared/lib/generate-id";
+import type { AnyDb } from "@/shared/db";
+import { merchantRules } from "@/shared/db";
+import { generateId } from "@/shared/lib";
 
 export async function lookupMerchantRule(
   db: AnyDb,

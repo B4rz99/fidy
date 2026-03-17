@@ -1,5 +1,5 @@
-import type { AnyDb } from "@/shared/db/client";
-import { syncQueue } from "@/shared/db/schema";
+import type { AnyDb } from "./client";
+import { syncQueue } from "./schema";
 
 export type SyncOperation = "insert" | "update" | "delete";
 export type SyncTableName = "transactions";

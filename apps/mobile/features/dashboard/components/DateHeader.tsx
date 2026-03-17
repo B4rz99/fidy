@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Text, View } from "react-native";
+import { Text, View } from "@/shared/components/rn";
 
 type DateHeaderProps = {
   readonly label: string;
