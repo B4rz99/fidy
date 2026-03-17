@@ -3,8 +3,10 @@ import {
   lookupMerchantRule,
 } from "@/features/email-capture/lib/merchant-rules";
 import { stripPii } from "@/features/email-capture/services/parse-email-api";
-import { enqueueSync, insertTransaction } from "@/features/transactions/lib/repository";
+import { isValidCategoryId } from "@/features/transactions/lib/categories";
+import { insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db/client";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
 import { toIsoDate } from "@/shared/lib/format-date";
 import { generateId } from "@/shared/lib/generate-id";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
@@ -113,7 +115,8 @@ export async function processNotification(
     // Check merchant rules cache
     const merchantKey = normalizeMerchant(parsed.merchant);
     const cachedCategoryId = await lookupMerchantRule(db, userId, merchantKey);
-    const finalCategoryId = cachedCategoryId ?? parsed.categoryId;
+    const rawCategoryId = cachedCategoryId ?? parsed.categoryId;
+    const finalCategoryId = isValidCategoryId(rawCategoryId) ? rawCategoryId : "other";
 
     // Save transaction
     const txId = generateId("tx");

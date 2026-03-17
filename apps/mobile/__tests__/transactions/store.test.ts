@@ -9,17 +9,20 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   getRecentTransactions: vi.fn().mockReturnValue([]),
   getTransactionById: vi.fn().mockReturnValue(null),
   softDeleteTransaction: vi.fn(),
+}));
+
+vi.mock("@/shared/db/enqueue-sync", () => ({
   enqueueSync: vi.fn(),
 }));
 
 import {
-  enqueueSync,
   getBalanceAggregate,
   getTransactionsPaginated,
   insertTransaction,
   softDeleteTransaction,
 } from "@/features/transactions/lib/repository";
 import { useTransactionStore } from "@/features/transactions/store";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
 
 // biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
 const mockDb = {} as any;
@@ -101,7 +104,7 @@ describe("useTransactionStore", () => {
     const result = await store.saveTransaction();
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.transaction.amountCents).toBe(4520);
+      expect(result.transaction.amountCents).toBe(452000);
       expect(result.transaction.categoryId).toBe("food");
       expect(result.transaction.description).toBe("Groceries");
       expect(result.transaction.type).toBe("expense");
@@ -113,7 +116,7 @@ describe("useTransactionStore", () => {
     expect(insertTransaction).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        amountCents: 4520,
+        amountCents: 452000,
         categoryId: "food",
         type: "expense",
         userId: mockUserId,

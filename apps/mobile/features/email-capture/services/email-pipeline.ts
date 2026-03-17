@@ -1,6 +1,8 @@
 import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
-import { enqueueSync, insertTransaction } from "@/features/transactions/lib/repository";
+import { isValidCategoryId } from "@/features/transactions/lib/categories";
+import { insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db/client";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
 import { generateId } from "@/shared/lib/generate-id";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { captureError } from "@/shared/lib/sentry";
@@ -56,12 +58,14 @@ async function saveTransaction(
   const txId = generateId("tx");
   const now = new Date().toISOString();
 
+  const categoryId = isValidCategoryId(validated.categoryId) ? validated.categoryId : "other";
+
   await insertTransaction(db, {
     id: txId,
     userId,
     type: validated.type,
     amountCents: validated.amountCents,
-    categoryId: validated.categoryId,
+    categoryId,
     description: validated.description,
     date: validated.date,
     source,

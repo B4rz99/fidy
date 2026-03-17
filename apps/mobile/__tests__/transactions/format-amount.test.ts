@@ -3,8 +3,10 @@ import {
   amountToCents,
   centsToDisplay,
   cleanDigitInput,
+  digitsToCents,
   formatAmount,
   formatCents,
+  formatDollars,
   formatSignedAmount,
 } from "@/features/transactions/lib/format-amount";
 
@@ -87,6 +89,38 @@ describe("formatSignedAmount", () => {
 
   it("returns positive sign for income", () => {
     expect(formatSignedAmount(6740000, "income")).toBe("+$67,400");
+  });
+});
+
+describe("formatDollars", () => {
+  it("returns $0 for empty string", () => {
+    expect(formatDollars("")).toBe("$0");
+  });
+
+  it("formats single digit", () => {
+    expect(formatDollars("5")).toBe("$5");
+  });
+
+  it("formats with commas", () => {
+    expect(formatDollars("10000")).toBe("$10,000");
+  });
+
+  it("strips leading zeros", () => {
+    expect(formatDollars("007")).toBe("$7");
+  });
+});
+
+describe("digitsToCents", () => {
+  it("converts dollar digits to cents", () => {
+    expect(digitsToCents("100")).toBe(10000);
+  });
+
+  it("returns 0 for empty string", () => {
+    expect(digitsToCents("")).toBe(0);
+  });
+
+  it("handles large amounts", () => {
+    expect(digitsToCents("10000")).toBe(1000000);
   });
 });
 

@@ -1,7 +1,11 @@
 import { format } from "date-fns";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { CATEGORIES, type CategoryId } from "@/features/transactions/lib/categories";
+import {
+  CATEGORIES,
+  type CategoryId,
+  isValidCategoryId,
+} from "@/features/transactions/lib/categories";
 import { formatSignedAmount } from "@/features/transactions/lib/format-amount";
 import type { StoredTransaction } from "@/features/transactions/schema";
 import type { ProcessedEmailRow } from "../lib/repository";
@@ -17,7 +21,10 @@ export const NeedsReviewCard = ({
   transaction,
   onConfirm,
 }: NeedsReviewCardProps) => {
-  const suggestedCategory: CategoryId = (transaction?.categoryId as CategoryId) ?? "other";
+  const suggestedCategory: CategoryId =
+    transaction?.categoryId && isValidCategoryId(transaction.categoryId)
+      ? transaction.categoryId
+      : "other";
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>(suggestedCategory);
 
   useEffect(() => {

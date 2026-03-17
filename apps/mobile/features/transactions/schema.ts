@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { CATEGORIES, type CategoryId } from "./lib/categories";
+import { type CategoryId, isValidCategoryId } from "./lib/categories";
 
 export const transactionTypeSchema = z.enum(["expense", "income"]);
 export type TransactionType = z.infer<typeof transactionTypeSchema>;
 
-const categoryIds = CATEGORIES.map((c) => c.id) as [CategoryId, ...CategoryId[]];
-export const categoryIdSchema = z.enum(categoryIds);
+export const categoryIdSchema = z.string().refine(isValidCategoryId, {
+  message: "Invalid category ID",
+});
 
 export const createTransactionSchema = z.object({
   type: transactionTypeSchema,

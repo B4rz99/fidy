@@ -16,8 +16,11 @@ vi.mock("@/features/calendar/lib/repository", () => ({
 // Mock the transaction repository module
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: vi.fn().mockResolvedValue(undefined),
-  enqueueSync: vi.fn().mockResolvedValue(undefined),
   softDeleteTransaction: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/shared/db/enqueue-sync", () => ({
+  enqueueSync: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { useCalendarStore } from "@/features/calendar/store";
@@ -394,7 +397,7 @@ describe("useCalendarStore", () => {
   });
 
   test("markBillPaid enqueues sync for the transaction", async () => {
-    const { enqueueSync } = await import("@/features/transactions/lib/repository");
+    const { enqueueSync } = await import("@/shared/db/enqueue-sync");
     vi.mocked(enqueueSync).mockClear();
 
     await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services", testDate);
@@ -460,7 +463,7 @@ describe("useCalendarStore", () => {
 
   test("unmarkBillPaid soft-deletes the linked transaction", async () => {
     const { softDeleteTransaction } = await import("@/features/transactions/lib/repository");
-    const { enqueueSync } = await import("@/features/transactions/lib/repository");
+    const { enqueueSync } = await import("@/shared/db/enqueue-sync");
     vi.mocked(softDeleteTransaction).mockClear();
     vi.mocked(enqueueSync).mockClear();
 

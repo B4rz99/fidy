@@ -13,17 +13,7 @@ import {
 } from "lucide-react-native";
 import { Colors } from "@/shared/constants/theme";
 
-export type CategoryId =
-  | "food"
-  | "transport"
-  | "entertainment"
-  | "health"
-  | "education"
-  | "home"
-  | "clothing"
-  | "services"
-  | "transfer"
-  | "other";
+export type CategoryId = string;
 
 export type Category = {
   readonly id: CategoryId;
@@ -80,10 +70,16 @@ export const CATEGORIES: readonly Category[] = [
   { id: "other", label: { en: "Other", es: "Otro" }, icon: Ellipsis, color: Colors.chart.other },
 ] as const;
 
-export const CATEGORY_MAP = Object.fromEntries(CATEGORIES.map((c) => [c.id, c])) as Record<
-  CategoryId,
-  Category
->;
+export const CATEGORY_MAP: Record<string, Category> = Object.fromEntries(
+  CATEGORIES.map((c) => [c.id, c])
+);
+
+export const DEFAULT_CATEGORY_IDS: ReadonlySet<string> = new Set(CATEGORIES.map((c) => c.id));
+
+export const isValidCategoryId = (
+  id: string,
+  validIds: ReadonlySet<string> = DEFAULT_CATEGORY_IDS
+): id is CategoryId => validIds.has(id);
 
 export const CATEGORY_IDS = CATEGORIES.map((c) => c.id);
 

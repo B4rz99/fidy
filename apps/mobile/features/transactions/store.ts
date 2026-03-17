@@ -1,11 +1,11 @@
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db/client";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
 import { toIsoDate } from "@/shared/lib/format-date";
 import { generateId } from "@/shared/lib/generate-id";
 import { buildTransaction, toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
 import type { CategoryId } from "./lib/categories";
 import {
-  enqueueSync,
   getBalanceAggregate,
   getDailySpendingAggregate,
   getSpendingByCategoryAggregate,
