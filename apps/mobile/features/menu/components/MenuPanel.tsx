@@ -1,7 +1,5 @@
 import { useRouter } from "expo-router";
-import { Mail } from "@/shared/components/icons";
 import { useEffect } from "react";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -10,6 +8,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TAB_BAR_CLEARANCE } from "@/shared/components";
+import { Mail } from "@/shared/components/icons";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { useMenuStore } from "../store";
 

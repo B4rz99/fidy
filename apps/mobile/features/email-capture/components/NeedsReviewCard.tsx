@@ -1,13 +1,13 @@
 import { format } from "date-fns";
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import {
   CATEGORIES,
   type CategoryId,
-  type StoredTransaction,
   formatSignedAmount,
   isValidCategoryId,
+  type StoredTransaction,
 } from "@/features/transactions";
+import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import type { ProcessedEmailRow } from "../lib/repository";
 
 type NeedsReviewCardProps = {

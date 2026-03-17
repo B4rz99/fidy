@@ -1,11 +1,11 @@
 import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
-import { Info, Plus, TriangleAlert } from "@/shared/components/icons";
 import { useCallback } from "react";
-import { Pressable, Text, View } from "@/shared/components/rn";
 import { type ProcessedEmailRow, useEmailCaptureStore } from "@/features/email-capture";
 import { ScreenLayout } from "@/shared/components";
+import { Info, Plus, TriangleAlert } from "@/shared/components/icons";
+import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 
 const ItemSeparator = () => <View style={{ height: 10 }} />;

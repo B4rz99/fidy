@@ -1,6 +1,6 @@
+import { formatCents } from "@/features/transactions";
 import { TrendingUp } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
-import { formatCents } from "@/features/transactions";
 import { useThemeColor } from "@/shared/hooks";
 
 type BalanceSectionProps = {

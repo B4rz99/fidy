@@ -1,8 +1,8 @@
 import { FlashList } from "@shopify/flash-list";
-import { Trash2 } from "@/shared/components/icons";
 import { memo, useCallback, useEffect } from "react";
-import { Pressable, Text, View } from "@/shared/components/rn";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { Trash2 } from "@/shared/components/icons";
+import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import type { UserMemory } from "../schema";
 import { useChatStore } from "../store";

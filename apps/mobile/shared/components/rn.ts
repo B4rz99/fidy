@@ -1,3 +1,12 @@
+export type {
+  LayoutChangeEvent,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  OpaqueColorValue,
+  StyleProp,
+  TextStyle,
+  ViewStyle,
+} from "react-native";
 export {
   ActivityIndicator,
   Alert,
@@ -16,13 +25,4 @@ export {
   TextInput,
   useColorScheme,
   View,
-} from "react-native";
-export type {
-  LayoutChangeEvent,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  OpaqueColorValue,
-  StyleProp,
-  TextStyle,
-  ViewStyle,
 } from "react-native";

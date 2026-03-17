@@ -1,6 +1,26 @@
 import { useRouter } from "expo-router";
-import { Bell, Ellipsis } from "@/shared/components/icons";
 import { memo, useCallback, useMemo, useState } from "react";
+import { useSharedValue } from "react-native-reanimated";
+import { DetectedTransactionsBanner } from "@/features/capture-sources";
+import {
+  buildProgressDisplay,
+  EmailConnectBanner,
+  EmailProgressCard,
+  FailedEmailsBanner,
+  getGmailClientId,
+  getOutlookClientId,
+  useEmailCaptureStore,
+} from "@/features/email-capture";
+import { SyncConflictBanner } from "@/features/sync";
+import {
+  CATEGORY_MAP,
+  formatSignedAmount,
+  makeDateLabel,
+  type StoredTransaction,
+  useTransactionStore,
+} from "@/features/transactions";
+import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
+import { Bell, Ellipsis } from "@/shared/components/icons";
 import {
   FlatList,
   type LayoutChangeEvent,
@@ -9,26 +29,6 @@ import {
   Platform,
   View,
 } from "@/shared/components/rn";
-import { useSharedValue } from "react-native-reanimated";
-import { DetectedTransactionsBanner } from "@/features/capture-sources";
-import {
-  EmailConnectBanner,
-  EmailProgressCard,
-  FailedEmailsBanner,
-  buildProgressDisplay,
-  getGmailClientId,
-  getOutlookClientId,
-  useEmailCaptureStore,
-} from "@/features/email-capture";
-import { SyncConflictBanner } from "@/features/sync";
-import {
-  CATEGORY_MAP,
-  type StoredTransaction,
-  formatSignedAmount,
-  makeDateLabel,
-  useTransactionStore,
-} from "@/features/transactions";
-import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
 import { useThemeColor } from "@/shared/hooks";
 import { toIsoDate } from "@/shared/lib";
 import { BalanceSection } from "./BalanceSection";

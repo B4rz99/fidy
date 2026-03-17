@@ -1,7 +1,7 @@
-import { SendHorizonal } from "@/shared/components/icons";
 import { useCallback, useEffect, useState } from "react";
-import { Keyboard, Platform, Pressable, TextInput, View } from "@/shared/components/rn";
 import { TAB_BAR_CLEARANCE } from "@/shared/components";
+import { SendHorizonal } from "@/shared/components/icons";
+import { Keyboard, Platform, Pressable, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 
 type ChatInputProps = {

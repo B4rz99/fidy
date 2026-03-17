@@ -1,5 +1,11 @@
 import { useCallback, useState } from "react";
-import { cancelActiveStream, ChatScreen, ConversationList, MemoryManager, useChatStore } from "@/features/ai-chat";
+import {
+  ChatScreen,
+  ConversationList,
+  cancelActiveStream,
+  MemoryManager,
+  useChatStore,
+} from "@/features/ai-chat";
 import { captureError } from "@/shared/lib";
 
 type AiView = "list" | "chat" | "memories";

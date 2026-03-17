@@ -1,8 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import { Calendar } from "@/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "@/shared/components/rn";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -11,8 +9,19 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useShallow } from "zustand/react/shallow";
-import { CATEGORIES, CategoryPill, digitsToCents, formatDollars, getDateLabel, handleNumpadPress, TypeToggle, useTransactionStore } from "@/features/transactions";
+import {
+  CATEGORIES,
+  CategoryPill,
+  digitsToCents,
+  formatDollars,
+  getDateLabel,
+  handleNumpadPress,
+  TypeToggle,
+  useTransactionStore,
+} from "@/features/transactions";
 import { FidyNumpad } from "@/shared/components";
+import { Calendar } from "@/shared/components/icons";
+import { Pressable, ScrollView, Text, TextInput, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor } from "@/shared/hooks";
 
 export default function AddTransactionModal() {

@@ -1,6 +1,6 @@
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { LucideIcon } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeColor } from "@/shared/hooks";
 
 type ComingSoonScreenProps = {

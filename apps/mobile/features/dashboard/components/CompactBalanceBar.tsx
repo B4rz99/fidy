@@ -1,4 +1,3 @@
-import { Text } from "@/shared/components/rn";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -6,6 +5,7 @@ import Animated, {
   useAnimatedStyle,
 } from "react-native-reanimated";
 import { formatCents } from "@/features/transactions";
+import { Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 
 type CompactBalanceBarProps = {

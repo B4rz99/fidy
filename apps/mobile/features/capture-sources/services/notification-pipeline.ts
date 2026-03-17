@@ -1,8 +1,4 @@
-import {
-  insertMerchantRule,
-  lookupMerchantRule,
-  stripPii,
-} from "@/features/email-capture";
+import { insertMerchantRule, lookupMerchantRule, stripPii } from "@/features/email-capture";
 import { insertTransaction, isValidCategoryId } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";

@@ -1,6 +1,6 @@
 import { memo } from "react";
-import { Pressable, Text, View } from "@/shared/components/rn";
 import { CATEGORY_MAP, formatSignedAmount } from "@/features/transactions";
+import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import type { SyncConflict } from "../store";
 

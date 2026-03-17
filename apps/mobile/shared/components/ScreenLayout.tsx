@@ -1,7 +1,7 @@
-import { ChevronLeft } from "@/shared/components/icons";
 import type { ReactNode } from "react";
-import { Pressable, Text, View } from "@/shared/components/rn";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ChevronLeft } from "@/shared/components/icons";
+import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 
 export const TAB_BAR_CLEARANCE = 96;

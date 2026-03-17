@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
-import { Delete } from "@/shared/components/icons";
 import { memo } from "react";
+import { Delete } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 

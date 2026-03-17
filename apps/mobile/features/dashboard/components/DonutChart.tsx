@@ -1,5 +1,5 @@
-import { Text, View } from "@/shared/components/rn";
 import Svg, { Circle } from "react-native-svg";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import {
   computeArcs,

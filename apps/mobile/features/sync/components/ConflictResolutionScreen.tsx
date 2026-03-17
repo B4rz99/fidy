@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { FlatList, Text, View } from "@/shared/components/rn";
 import { ScreenLayout } from "@/shared/components";
+import { FlatList, Text, View } from "@/shared/components/rn";
 import type { SyncConflict } from "../store";
 import { useSyncConflictStore } from "../store";
 import { ConflictCard } from "./ConflictCard";

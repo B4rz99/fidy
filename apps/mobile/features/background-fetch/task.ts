@@ -1,6 +1,10 @@
 import * as BackgroundTask from "expo-background-task";
 import * as TaskManager from "expo-task-manager";
-import { getGmailClientId, getOutlookClientId, useEmailCaptureStore } from "@/features/email-capture";
+import {
+  getGmailClientId,
+  getOutlookClientId,
+  useEmailCaptureStore,
+} from "@/features/email-capture";
 import { getDb, getSupabase } from "@/shared/db";
 import { captureError } from "@/shared/lib";
 

@@ -17,13 +17,24 @@ import { useChatStore } from "@/features/ai-chat";
 import { useAuthStore } from "@/features/auth";
 import { registerBackgroundTask } from "@/features/background-fetch";
 import { useCalendarStore } from "@/features/calendar";
-import { useApplePayCapture, useNotificationCapture, useSmsDetection, useCaptureSourcesStore } from "@/features/capture-sources";
+import {
+  useApplePayCapture,
+  useCaptureSourcesStore,
+  useNotificationCapture,
+  useSmsDetection,
+} from "@/features/capture-sources";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
 import { useSync, useSyncConflictStore } from "@/features/sync";
 import { useTransactionStore } from "@/features/transactions";
 import { ErrorFallback } from "@/shared/components";
 import { type AnyDb, getDb } from "@/shared/db";
-import { captureError, handleRecoverableError, initSentry, SentryErrorBoundary, wrapWithSentry } from "@/shared/lib";
+import {
+  captureError,
+  handleRecoverableError,
+  initSentry,
+  SentryErrorBoundary,
+  wrapWithSentry,
+} from "@/shared/lib";
 import migrations from "../drizzle/migrations";
 
 SplashScreen.preventAutoHideAsync();

@@ -1,3 +1,5 @@
+export { CategoryPill } from "./components/CategoryPill";
+export { TypeToggle } from "./components/TypeToggle";
 export { toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
 export type { Category, CategoryId } from "./lib/categories";
 export { CATEGORIES, CATEGORY_IDS, CATEGORY_MAP, isValidCategoryId } from "./lib/categories";
@@ -26,5 +28,3 @@ export {
 export type { CreateTransactionInput, StoredTransaction, TransactionType } from "./schema";
 export { categoryIdSchema } from "./schema";
 export { useTransactionStore } from "./store";
-export { CategoryPill } from "./components/CategoryPill";
-export { TypeToggle } from "./components/TypeToggle";

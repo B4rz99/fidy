@@ -1,6 +1,4 @@
-import { CheckCircle, Mail, Search, TriangleAlert } from "@/shared/components/icons";
 import { useEffect, useRef } from "react";
-import { Text, View } from "@/shared/components/rn";
 import Animated, {
   FadeIn,
   FadeOut,
@@ -8,6 +6,8 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { CheckCircle, Mail, Search, TriangleAlert } from "@/shared/components/icons";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import type { ProgressDisplay, ProgressPhase } from "../lib/progress-phases";
 import { shouldMorphToBanner } from "../lib/progress-phases";

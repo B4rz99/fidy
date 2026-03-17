@@ -1,10 +1,14 @@
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "expo-router";
+import { ApplePaySetupCard, NotificationSetupCard } from "@/features/capture-sources";
+import {
+  getGmailClientId,
+  getOutlookClientId,
+  useEmailCaptureStore,
+} from "@/features/email-capture";
+import { ScreenLayout } from "@/shared/components";
 import { Mail } from "@/shared/components/icons";
 import { Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
-import { ApplePaySetupCard, NotificationSetupCard } from "@/features/capture-sources";
-import { getGmailClientId, getOutlookClientId, useEmailCaptureStore } from "@/features/email-capture";
-import { ScreenLayout } from "@/shared/components";
 import { useThemeColor } from "@/shared/hooks";
 
 export default function ConnectedAccountsScreen() {

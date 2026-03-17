@@ -1,6 +1,6 @@
+import { useEmailCaptureStore } from "@/features/email-capture";
 import { ChevronRight, TriangleAlert } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useEmailCaptureStore } from "@/features/email-capture";
 
 export const NeedsReviewBanner = ({ onPress }: { onPress: () => void }) => {
   const count = useEmailCaptureStore((s) => s.needsReviewEmails.length);

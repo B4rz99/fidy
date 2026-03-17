@@ -1,5 +1,4 @@
 import {
-  type LucideIcon,
   ArrowLeftRight,
   Car,
   Clapperboard,
@@ -7,6 +6,7 @@ import {
   GraduationCap,
   HeartPulse,
   House,
+  type LucideIcon,
   Shirt,
   Utensils,
   Wrench,

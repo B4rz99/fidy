@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { AppState } from "@/shared/components/rn";
 import { useTransactionStore } from "@/features/transactions";
+import { AppState } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
 import { getSupabase } from "@/shared/db";
 import { isOnline, onConnectivityChange } from "../services/networkMonitor";

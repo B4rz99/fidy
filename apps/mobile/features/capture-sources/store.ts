@@ -1,5 +1,5 @@
-import { Platform } from "@/shared/components/rn";
 import { create } from "zustand";
+import { Platform } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
 import {
   getEnabledPackages,

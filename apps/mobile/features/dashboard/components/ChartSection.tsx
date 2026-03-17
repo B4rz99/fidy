@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { CATEGORY_MAP, formatCentsRounded } from "@/features/transactions";
 import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
@@ -7,7 +8,6 @@ import {
   Text,
   View,
 } from "@/shared/components/rn";
-import { CATEGORY_MAP, formatCentsRounded } from "@/features/transactions";
 import { useThemeColor } from "@/shared/hooks";
 import { CategoryRow } from "./CategoryRow";
 import { DonutChart } from "./DonutChart";

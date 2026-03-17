@@ -1,8 +1,8 @@
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
+import { useShallow } from "zustand/react/shallow";
 import { Calendar, ChevronLeft } from "@/shared/components/icons";
 import { Pressable, Text, TextInput, View } from "@/shared/components/rn";
-import { useShallow } from "zustand/react/shallow";
 import { useAsyncGuard, useThemeColor } from "@/shared/hooks";
 import { CATEGORIES } from "../lib/categories";
 import { formatDollars } from "../lib/format-amount";

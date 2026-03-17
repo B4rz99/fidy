@@ -1,7 +1,4 @@
-import {
-  type LlmParsedTransaction,
-  llmOutputSchema,
-} from "@/features/email-capture";
+import { type LlmParsedTransaction, llmOutputSchema } from "@/features/email-capture";
 import { getSupabase } from "@/shared/db";
 
 export async function parseNotificationApi(

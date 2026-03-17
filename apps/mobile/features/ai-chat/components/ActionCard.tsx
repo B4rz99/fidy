@@ -1,6 +1,6 @@
+import { formatCents } from "@/features/transactions";
 import { Trash2 } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { formatCents } from "@/features/transactions";
 import { useThemeColor } from "@/shared/hooks";
 import type { ChatAction } from "../schema";
 
