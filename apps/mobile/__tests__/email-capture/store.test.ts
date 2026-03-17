@@ -67,7 +67,7 @@ vi.mock("@/features/email-capture/lib/bank-senders", async (importOriginal) => {
   };
 });
 
-vi.mock("@/features/transactions/lib/repository", () => ({
+vi.mock("@/shared/db/enqueue-sync", () => ({
   enqueueSync: vi.fn(),
 }));
 

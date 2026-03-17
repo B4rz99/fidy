@@ -28,6 +28,9 @@ vi.mock("@/features/email-capture/lib/repository", () => ({
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: unknown[]) => mockInsertTransaction(...args),
+}));
+
+vi.mock("@/shared/db/enqueue-sync", () => ({
   enqueueSync: (...args: unknown[]) => mockEnqueueSync(...args),
 }));
 

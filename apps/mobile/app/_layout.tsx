@@ -142,7 +142,10 @@ function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="add-transaction" options={{ presentation: "formSheet" }} />
+          <Stack.Screen
+            name="add-transaction"
+            options={{ presentation: "formSheet", sheetAllowedDetents: [0.53] }}
+          />
           <Stack.Screen
             name="add-bill"
             options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}

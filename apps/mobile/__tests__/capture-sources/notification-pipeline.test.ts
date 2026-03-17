@@ -14,6 +14,9 @@ const mockStripPii = vi.fn().mockImplementation((t: string) => t);
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
+}));
+
+vi.mock("@/shared/db/enqueue-sync", () => ({
   enqueueSync: (...args: any[]) => mockEnqueueSync(...args),
 }));
 

@@ -1,6 +1,8 @@
 import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
-import { enqueueSync, insertTransaction } from "@/features/transactions/lib/repository";
+import { isValidCategoryId } from "@/features/transactions/lib/categories";
+import { insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db/client";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
 import { generateId } from "@/shared/lib/generate-id";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { captureError } from "@/shared/lib/sentry";
@@ -56,12 +58,14 @@ async function saveTransaction(
   const txId = generateId("tx");
   const now = new Date().toISOString();
 
+  const categoryId = isValidCategoryId(validated.categoryId) ? validated.categoryId : "other";
+
   await insertTransaction(db, {
     id: txId,
     userId,
     type: validated.type,
     amountCents: validated.amountCents,
-    categoryId: validated.categoryId,
+    categoryId,
     description: validated.description,
     date: validated.date,
     source,
@@ -261,11 +265,14 @@ export async function processEmails(
 
       try {
         const merchantKey = normalizeMerchant(parsed.description);
+        const validatedCategoryId = isValidCategoryId(parsed.categoryId)
+          ? parsed.categoryId
+          : "other";
         await insertMerchantRule(
           db,
           userId,
           merchantKey,
-          parsed.categoryId,
+          validatedCategoryId,
           new Date().toISOString()
         );
       } catch (ruleErr) {
@@ -351,13 +358,14 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
       const now = new Date().toISOString();
       const source = email.provider === "gmail" ? "email_gmail" : "email_outlook";
       const status = parsed.confidence < 0.7 ? "needs_review" : "success";
+      const retryCategoryId = isValidCategoryId(parsed.categoryId) ? parsed.categoryId : "other";
 
       await insertTransaction(db, {
         id: txId,
         userId,
         type: parsed.type,
         amountCents: parsed.amountCents,
-        categoryId: parsed.categoryId,
+        categoryId: retryCategoryId,
         description: parsed.description,
         date: parsed.date,
         source,
@@ -375,7 +383,7 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
 
       if (status === "success") {
         const merchantKey = normalizeMerchant(parsed.description);
-        await insertMerchantRule(db, userId, merchantKey, parsed.categoryId, now);
+        await insertMerchantRule(db, userId, merchantKey, retryCategoryId, now);
       }
 
       await markRetrySuccess(db, email.id, status, txId, parsed.confidence);

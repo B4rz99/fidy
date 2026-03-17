@@ -3,8 +3,10 @@ import {
   lookupMerchantRule,
 } from "@/features/email-capture/lib/merchant-rules";
 import { classifyMerchantApi } from "@/features/email-capture/services/parse-email-api";
-import { enqueueSync, insertTransaction } from "@/features/transactions/lib/repository";
+import { isValidCategoryId } from "@/features/transactions/lib/categories";
+import { insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db/client";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
 import { toIsoDate } from "@/shared/lib/format-date";
 import { generateId } from "@/shared/lib/generate-id";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
@@ -73,7 +75,8 @@ export async function processApplePayIntent(
     const cachedCategoryId = await lookupMerchantRule(db, userId, merchantKey);
 
     // If no cached category, classify via LLM
-    const categoryId = cachedCategoryId ?? (await classifyMerchantApi(intent.merchant));
+    const rawCategoryId = cachedCategoryId ?? (await classifyMerchantApi(intent.merchant));
+    const categoryId = isValidCategoryId(rawCategoryId) ? rawCategoryId : "other";
 
     // Save transaction
     const txId = generateId("tx");

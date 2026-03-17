@@ -1,14 +1,11 @@
 import { addMonths, endOfMonth, startOfMonth, subMonths } from "date-fns";
 import { create } from "zustand";
 import { toTransactionRow } from "@/features/transactions/lib/build-transaction";
-import {
-  enqueueSync,
-  insertTransaction,
-  softDeleteTransaction,
-} from "@/features/transactions/lib/repository";
+import { insertTransaction, softDeleteTransaction } from "@/features/transactions/lib/repository";
 import type { StoredTransaction } from "@/features/transactions/schema";
 import { useTransactionStore } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db/client";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
 import { parseIsoDate, toIsoDate } from "@/shared/lib/format-date";
 import { generateId } from "@/shared/lib/generate-id";
 import { captureError } from "@/shared/lib/sentry";

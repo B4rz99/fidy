@@ -11,6 +11,9 @@ export const Colors = {
     accentGreenLight: "#D4EDBA",
     chartBg: "#F5E1C8",
     borderSubtle: "#EBEBEB",
+    peach: "#6D6D6D",
+    numpadKey: "#fdf3ee",
+    numpadSpecialKey: "#fae3d9",
     nav: "#1A1A1A",
   },
   dark: {
@@ -25,6 +28,9 @@ export const Colors = {
     accentGreenLight: "#1A2E12",
     chartBg: "#2A1F1A",
     borderSubtle: "#2C2C2E",
+    peach: "#E8A090",
+    numpadKey: "#2A1F1A",
+    numpadSpecialKey: "#3A2820",
     nav: "#1C1C1E",
   },
   chart: {

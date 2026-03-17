@@ -2,8 +2,7 @@ import { and, between, desc, eq, inArray, isNull, like, or, sql, sum } from "dri
 import type { AnyDb } from "@/shared/db/client";
 import { syncMeta, syncQueue, transactions } from "@/shared/db/schema";
 
-export type SyncOperation = "insert" | "update" | "delete";
-export type SyncTableName = "transactions";
+export type { SyncOperation, SyncQueueEntry, SyncTableName } from "@/shared/db/enqueue-sync";
 
 export type TransactionRow = typeof transactions.$inferInsert;
 
@@ -142,17 +141,7 @@ export function upsertTransaction(db: AnyDb, row: TransactionRow) {
     .run();
 }
 
-export type SyncQueueEntry = {
-  id: string;
-  tableName: SyncTableName;
-  rowId: string;
-  operation: SyncOperation;
-  createdAt: string;
-};
-
-export function enqueueSync(db: AnyDb, entry: SyncQueueEntry) {
-  db.insert(syncQueue).values(entry).run();
-}
+export { enqueueSync } from "@/shared/db/enqueue-sync";
 
 export function getQueuedSyncEntries(db: AnyDb) {
   return db.select().from(syncQueue).all();

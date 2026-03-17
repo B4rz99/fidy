@@ -16,7 +16,7 @@ import type { BillFrequency } from "@/features/calendar/schema";
 import { FREQUENCIES } from "@/features/calendar/schema";
 import { useCalendarStore } from "@/features/calendar/store";
 import type { CategoryId } from "@/features/transactions/lib/categories";
-import { CATEGORIES } from "@/features/transactions/lib/categories";
+import { CATEGORIES, isValidCategoryId } from "@/features/transactions/lib/categories";
 import { centsToDisplay } from "@/features/transactions/lib/format-amount";
 import { useAsyncGuard } from "@/shared/hooks/use-async-guard";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
@@ -37,7 +37,9 @@ export default function AddBillScreen() {
   );
   const [frequency, setFrequency] = useState<BillFrequency>(existingBill?.frequency ?? "monthly");
   const [category, setCategory] = useState<CategoryId>(
-    (existingBill?.categoryId as CategoryId) ?? "services"
+    existingBill?.categoryId && isValidCategoryId(existingBill.categoryId)
+      ? existingBill.categoryId
+      : "services"
   );
   const [startDate, setStartDate] = useState(existingBill?.startDate ?? new Date());
 
@@ -56,7 +58,9 @@ export default function AddBillScreen() {
       setName(existingBill.name);
       setAmount(centsToDisplay(existingBill.amountCents).replace("$", ""));
       setFrequency(existingBill.frequency);
-      setCategory(existingBill.categoryId as CategoryId);
+      setCategory(
+        isValidCategoryId(existingBill.categoryId) ? existingBill.categoryId : "services"
+      );
       setStartDate(existingBill.startDate);
     }
   }, [existingBill?.id]);

@@ -6,8 +6,8 @@ describe("CategoryPill component", () => {
     expect(mod.CategoryPill).toBeDefined();
   });
 
-  it("CategoryPill is a function component", async () => {
+  it("CategoryPill is a memoized component", async () => {
     const mod = await import("@/features/transactions/components/CategoryPill");
-    expect(typeof mod.CategoryPill).toBe("function");
+    expect(mod.CategoryPill).toHaveProperty("$$typeof");
   });
 });

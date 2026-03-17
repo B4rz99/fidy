@@ -1,8 +1,10 @@
+export const MAX_AMOUNT_DIGITS = 8;
+
 /**
- * Strips non-digit characters and caps at 8 digits for amount input.
+ * Strips non-digit characters and caps at MAX_AMOUNT_DIGITS digits for amount input.
  */
 export function cleanDigitInput(text: string): string {
-  return text.replace(/[^0-9]/g, "").slice(0, 8);
+  return text.replace(/[^0-9]/g, "").slice(0, MAX_AMOUNT_DIGITS);
 }
 
 /**
@@ -28,6 +30,27 @@ export function formatAmount(digits: string): string {
 export function amountToCents(formatted: string): number {
   const cleaned = formatted.replace(/[^0-9]/g, "");
   return Number.parseInt(cleaned, 10) || 0;
+}
+
+/**
+ * Formats raw digit input as a whole-dollar display string.
+ * "10000" → "$10,000", "" → "$0"
+ */
+export function formatDollars(digits: string): string {
+  const cleaned = digits.replace(/[^0-9]/g, "");
+  if (cleaned.length === 0) return "$0";
+  const dollars = cleaned.replace(/^0+/, "") || "0";
+  const withCommas = dollars.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `$${withCommas}`;
+}
+
+/**
+ * Converts raw digit input (whole dollars) to cents.
+ * "10000" → 1000000, "100" → 10000
+ */
+export function digitsToCents(digits: string): number {
+  const cleaned = digits.replace(/[^0-9]/g, "");
+  return (Number.parseInt(cleaned, 10) || 0) * 100;
 }
 
 /**

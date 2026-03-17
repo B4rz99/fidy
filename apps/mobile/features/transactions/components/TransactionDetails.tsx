@@ -5,8 +5,8 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { useShallow } from "zustand/react/shallow";
 import { useAsyncGuard } from "@/shared/hooks/use-async-guard";
 import { useThemeColor } from "@/shared/hooks/use-theme-color";
-import { CATEGORY_ROW_KEYS, CATEGORY_ROWS } from "../lib/categories";
-import { formatAmount } from "../lib/format-amount";
+import { CATEGORIES } from "../lib/categories";
+import { formatDollars } from "../lib/format-amount";
 import { getDateLabel } from "../lib/format-date";
 import { useTransactionStore } from "../store";
 import { CategoryPill } from "./CategoryPill";
@@ -47,7 +47,7 @@ export const TransactionDetails = () => {
   const borderSubtle = useThemeColor("borderSubtle");
 
   const amountColor = type === "expense" ? accentRed : accentGreen;
-  const displayAmount = formatAmount(digits);
+  const displayAmount = formatDollars(digits);
   const dateLabel = getDateLabel(date, new Date());
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
@@ -63,7 +63,7 @@ export const TransactionDetails = () => {
     });
 
   return (
-    <View className="flex-1 gap-4">
+    <View className="gap-4">
       {/* Amount display — tap to go back */}
       <Pressable
         className="flex-row items-center justify-center gap-2"
@@ -82,18 +82,16 @@ export const TransactionDetails = () => {
         <Text className="font-poppins-medium text-[13px]" style={{ color: secondary }}>
           Category
         </Text>
-        {CATEGORY_ROWS.map((row, i) => (
-          <View key={CATEGORY_ROW_KEYS[i]} className="flex-row gap-2">
-            {row.map((cat) => (
-              <CategoryPill
-                key={cat.id}
-                category={cat}
-                isSelected={categoryId === cat.id}
-                onPress={() => setCategoryId(cat.id)}
-              />
-            ))}
-          </View>
-        ))}
+        <View className="flex-row flex-wrap gap-2">
+          {CATEGORIES.map((cat) => (
+            <CategoryPill
+              key={cat.id}
+              category={cat}
+              isSelected={categoryId === cat.id}
+              onPress={() => setCategoryId(cat.id)}
+            />
+          ))}
+        </View>
       </View>
 
       {/* Description input */}
@@ -119,8 +117,8 @@ export const TransactionDetails = () => {
         </Text>
       </View>
 
-      {/* Save button pushed to bottom */}
-      <View className="mt-auto">
+      {/* Save button */}
+      <View>
         <Pressable
           className="h-[52px] w-full items-center justify-center rounded-xl"
           style={{ backgroundColor: accentGreen, opacity: isSaving ? 0.5 : 1 }}

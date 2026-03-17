@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { create } from "zustand";
-import { enqueueSync } from "@/features/transactions/lib/repository";
 import { useTransactionStore } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db/client";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
 import { transactions } from "@/shared/db/schema";
 import { generateId } from "@/shared/lib/generate-id";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";

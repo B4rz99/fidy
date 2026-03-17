@@ -83,7 +83,7 @@ export function fromBillRow(row: {
     name: row.name,
     amountCents: row.amountCents,
     frequency: row.frequency as BillFrequency,
-    categoryId: row.categoryId as z.infer<typeof categoryIdSchema>,
+    categoryId: row.categoryId,
     startDate: new Date(row.startDate),
     isActive: row.isActive,
   };

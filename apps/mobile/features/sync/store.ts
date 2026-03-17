@@ -1,7 +1,8 @@
 import { create } from "zustand";
-import { enqueueSync, upsertTransaction } from "@/features/transactions/lib/repository";
+import { upsertTransaction } from "@/features/transactions/lib/repository";
 import { useTransactionStore } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db/client";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
 import { generateId } from "@/shared/lib/generate-id";
 import { captureError } from "@/shared/lib/sentry";
 import {

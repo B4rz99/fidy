@@ -23,7 +23,7 @@ describe("buildTransaction", () => {
     if (!result.success) return;
     expect(result.transaction.id).toBe("tx-1");
     expect(result.transaction.userId).toBe("user-1");
-    expect(result.transaction.amountCents).toBe(1234);
+    expect(result.transaction.amountCents).toBe(123400);
     expect(result.transaction.categoryId).toBe("food");
     expect(result.transaction.createdAt).toBe(NOW);
     expect(result.transaction.updatedAt).toBe(NOW);
