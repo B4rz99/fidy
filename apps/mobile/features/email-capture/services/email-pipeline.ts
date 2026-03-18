@@ -1,4 +1,4 @@
-import { findDuplicateTransaction } from "@/features/capture-sources";
+import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
 import { insertTransaction, isValidCategoryId } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
