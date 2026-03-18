@@ -373,6 +373,49 @@ const es = {
     },
     subtitle: "SMS detectados - toca para revisar",
   },
+
+  // Onboarding
+  onboarding: {
+    welcome: {
+      hero: "Tus finanzas, en piloto automático",
+      subtitle: "Conecta tu correo y deja que Fidy capture tus transacciones automáticamente.",
+      getStarted: "Comenzar",
+      alreadyHaveAccount: "Ya tengo una cuenta",
+    },
+    connectEmail: {
+      title: "Conecta tu correo",
+      description:
+        "Escanearemos tu bandeja de entrada en busca de correos bancarios y capturaremos transacciones automáticamente.",
+      trustBadge: "Tus datos se quedan en tu dispositivo",
+      skipForNow: "Omitir por ahora",
+    },
+    syncing: {
+      processing: "Sincronizando tus transacciones...",
+      transactionsFound: {
+        one: "%{count} transacción encontrada",
+        other: "%{count} transacciones encontradas",
+      },
+      recentCaptures: "Capturas recientes",
+      helperText: "Esto puede tomar un momento",
+      continue: "Continuar",
+    },
+    budgetSetup: {
+      title: "Configura tus primeros presupuestos",
+      subtitle: "Basado en tus gastos recientes",
+      perMonth: "/mes",
+      basedOnSpending: "Basado en los gastos del mes pasado",
+      saveBudgets: "Guardar Presupuestos",
+      skipForNow: "Omitir por ahora",
+      noSuggestions:
+        "Aún no hay datos de gastos — puedes configurar presupuestos después desde la pestaña de Presupuestos.",
+    },
+    complete: {
+      title: "¡Todo listo!",
+      stats:
+        "Encontramos %{transactionCount} transacciones y configuramos %{budgetCount} presupuestos para ti.",
+      goToDashboard: "Ir al Panel",
+    },
+  },
 } as const;
 
 export default es;
