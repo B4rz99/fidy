@@ -31,10 +31,10 @@ export function useSync(db: AnyDb | null, userId: string | null): boolean {
       if (!online) return;
       isSyncing.current = true;
       try {
-        await fullSync(db, supabase, userId);
+        const pullOk = await fullSync(db, supabase, userId);
         await useTransactionStore.getState().refresh();
         useSyncConflictStore.getState().loadConflicts();
-        markInitialDone();
+        if (pullOk) markInitialDone();
       } catch (error) {
         console.warn("[sync] background sync failed:", error);
       } finally {

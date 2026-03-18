@@ -296,20 +296,22 @@ describe("syncEngine", () => {
       const mockSupabase = createMockSupabase({ data: [], error: null });
 
       const { fullSync } = await import("@/features/sync/services/syncEngine");
-      await fullSync(mockDb, mockSupabase, "user-1");
+      const result = await fullSync(mockDb, mockSupabase, "user-1");
 
+      expect(result).toBe(true);
       expect(mockGetSyncMeta).toHaveBeenCalled();
       expect(mockGetQueuedSyncEntries).toHaveBeenCalled();
       expect(mockSetSyncMeta).toHaveBeenCalled();
     });
 
-    it("skips push when pull fails", async () => {
+    it("skips push when pull fails and returns false", async () => {
       mockGetSyncMeta.mockResolvedValueOnce(null);
       const mockSupabase = createMockSupabase({ data: null, error: { message: "fail" } });
 
       const { fullSync } = await import("@/features/sync/services/syncEngine");
-      await fullSync(mockDb, mockSupabase, "user-1");
+      const result = await fullSync(mockDb, mockSupabase, "user-1");
 
+      expect(result).toBe(false);
       expect(mockGetSyncMeta).toHaveBeenCalled();
       expect(mockGetQueuedSyncEntries).not.toHaveBeenCalled();
     });
