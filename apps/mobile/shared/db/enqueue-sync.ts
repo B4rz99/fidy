@@ -2,7 +2,7 @@ import type { AnyDb } from "./client";
 import { syncQueue } from "./schema";
 
 export type SyncOperation = "insert" | "update" | "delete";
-export type SyncTableName = "transactions";
+export type SyncTableName = "transactions" | "budgets";
 
 export type SyncQueueEntry = {
   id: string;
