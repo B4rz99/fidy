@@ -102,6 +102,8 @@ const es = {
       used: "%{percent}% usado",
     },
     alerts: {
+      nearLimitTitle: "Advertencia de presupuesto",
+      overBudgetTitle: "¡Presupuesto superado!",
       nearLimit: "%{category} está al %{percent}% del presupuesto",
       overBudget: "%{category} excedió el presupuesto al %{percent}%",
     },
