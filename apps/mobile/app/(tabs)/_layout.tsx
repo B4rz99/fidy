@@ -24,7 +24,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="index" options={{ title: t("tabs.home") }} />
       <Tabs.Screen name="ai" options={{ title: t("tabs.ai") }} />
       <Tabs.Screen name="add" options={{ title: t("tabs.add") }} />
-      <Tabs.Screen name="calendar" options={{ title: t("tabs.calendar") }} />
+      <Tabs.Screen name="budgets" options={{ title: t("tabs.budgets") }} />
       <Tabs.Screen name="menu" options={{ title: t("tabs.settings") }} />
       <Tabs.Screen name="connected-accounts" options={{ href: null }} />
       <Tabs.Screen name="failed-emails" options={{ href: null }} />

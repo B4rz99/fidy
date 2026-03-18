@@ -188,6 +188,15 @@ function RootLayout() {
             name="delete-account"
             options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
           />
+          <Stack.Screen
+            name="create-budget"
+            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+          />
+          <Stack.Screen
+            name="auto-suggest-budgets"
+            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+          />
+          <Stack.Screen name="bills-calendar" />
           <Stack.Screen name="search" />
         </Stack>
         {db && userId && <AuthenticatedShell db={db} userId={userId} />}

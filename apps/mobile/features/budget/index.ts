@@ -1,3 +1,4 @@
+export { BudgetListScreen } from "./components/BudgetListScreen";
 export type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./lib/derive";
 export {
   deriveAutoSuggestBudgets,
@@ -18,4 +19,3 @@ export {
 export type { Budget, CreateBudgetInput } from "./schema";
 export { createBudgetSchema } from "./schema";
 export { useBudgetStore } from "./store";
-export { BudgetListScreen } from "./components/BudgetListScreen";

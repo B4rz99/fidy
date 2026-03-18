@@ -43,6 +43,7 @@ export {
   TriangleAlert,
   User,
   Utensils,
+  Wallet,
   Wrench,
   X,
 } from "lucide-react-native";
