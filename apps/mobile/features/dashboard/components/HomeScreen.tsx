@@ -1,6 +1,5 @@
-import { useRouter } from "expo-router";
-import { memo, useCallback, useMemo, useState } from "react";
-import { useSharedValue } from "react-native-reanimated";
+import { Stack, useRouter } from "expo-router";
+import { memo, useCallback, useMemo } from "react";
 import { DetectedTransactionsBanner } from "@/features/capture-sources";
 import {
   EmailConnectBanner,
@@ -9,7 +8,7 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture";
-import { SearchAction } from "@/features/search";
+import { SearchAction, useSearchStore } from "@/features/search";
 import { SyncConflictBanner } from "@/features/sync";
 import {
   CATEGORY_MAP,
@@ -20,35 +19,35 @@ import {
 } from "@/features/transactions";
 import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
 import { Bell, Ellipsis } from "@/shared/components/icons";
-import {
-  FlatList,
-  type LayoutChangeEvent,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-  Platform,
-  View,
-} from "@/shared/components/rn";
+import { Alert, FlatList, Platform, Pressable, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { toIsoDate } from "@/shared/lib";
 import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";
-import { CompactBalanceBar } from "./CompactBalanceBar";
 import { DateHeader } from "./DateHeader";
 import { EmptyTransactions } from "./EmptyTransactions";
 import { NeedsReviewBanner } from "./NeedsReviewBanner";
 
 const BellAction = () => {
   const iconColor = useThemeColor("primary");
-  return <Bell size={22} color={iconColor} />;
+  return (
+    <Pressable hitSlop={12}>
+      <Bell size={22} color={iconColor} />
+    </Pressable>
+  );
 };
 
 const TransactionItem = memo(function TransactionItem({
   tx,
   showDateHeader,
+  onEdit,
+  onDelete,
 }: {
   tx: StoredTransaction;
   showDateHeader: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   const { t, locale } = useTranslation();
   const category = CATEGORY_MAP[tx.categoryId];
@@ -71,6 +70,8 @@ const TransactionItem = memo(function TransactionItem({
           amount={formatSignedAmount(tx.amountCents, tx.type)}
           category={category ? getCategoryLabel(category, locale) : t("common.other")}
           isPositive={tx.type === "income"}
+          onEdit={onEdit}
+          onDelete={onDelete}
         />
       </View>
     </View>
@@ -84,14 +85,12 @@ type ListHeaderProps = {
     readonly totalCents: number;
   }[];
   readonly dailySpending: readonly { readonly date: string; readonly totalCents: number }[];
-  readonly onBalanceLayout: (e: LayoutChangeEvent) => void;
 };
 
 const ListHeader = memo(function ListHeader({
   balanceCents,
   categorySpending,
   dailySpending,
-  onBalanceLayout,
 }: ListHeaderProps) {
   const { push } = useRouter();
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
@@ -115,9 +114,7 @@ const ListHeader = memo(function ListHeader({
       {Platform.OS === "ios" && (
         <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
       )}
-      <View onLayout={onBalanceLayout}>
-        <BalanceSection balanceCents={balanceCents} />
-      </View>
+      <BalanceSection balanceCents={balanceCents} />
       <ChartSection
         categorySpending={categorySpending}
         dailySpending={dailySpending}
@@ -128,17 +125,19 @@ const ListHeader = memo(function ListHeader({
 });
 
 export const HomeScreen = () => {
+  const { push } = useRouter();
+  const { t } = useTranslation();
   const pages = useTransactionStore((s) => s.pages);
   const hasMore = useTransactionStore((s) => s.hasMore);
   const loadNextPage = useTransactionStore((s) => s.loadNextPage);
   const balanceCents = useTransactionStore((s) => s.balanceCents);
   const categorySpending = useTransactionStore((s) => s.categorySpending);
   const dailySpending = useTransactionStore((s) => s.dailySpending);
+  const editTransaction = useTransactionStore((s) => s.editTransaction);
+  const deleteTransaction = useTransactionStore((s) => s.deleteTransaction);
   // phase gates ListEmptyComponent — suppresses "No transactions" during first sync
   const phase = useEmailCaptureStore((s) => s.phase);
-
-  const scrollY = useSharedValue(0);
-  const [balanceBottom, setBalanceBottom] = useState(-1);
+  const setQuery = useSearchStore((s) => s.setQuery);
 
   // Pre-compute which transactions are the first of their date group
   const dateBreaks = useMemo(() => {
@@ -154,29 +153,46 @@ export const HomeScreen = () => {
     return breaks;
   }, [pages]);
 
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      scrollY.value = event.nativeEvent.contentOffset.y;
-    },
-    [scrollY]
-  );
-
-  const handleBalanceLayout = useCallback((e: LayoutChangeEvent) => {
-    const newBottom = e.nativeEvent.layout.y + e.nativeEvent.layout.height;
-    setBalanceBottom((prev) => (prev === newBottom ? prev : newBottom));
-  }, []);
-
   const handleEndReached = useCallback(() => {
     if (hasMore) {
       loadNextPage();
     }
   }, [hasMore, loadNextPage]);
 
+  const handleEdit = useCallback(
+    (id: string) => {
+      editTransaction(id);
+      push("/(tabs)/add" as never);
+    },
+    [editTransaction, push]
+  );
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      Alert.alert(t("transactions.deleteConfirmTitle"), t("transactions.deleteConfirmMessage"), [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.delete"),
+          style: "destructive",
+          onPress: () => deleteTransaction(id),
+        },
+      ]);
+    },
+    [t, deleteTransaction]
+  );
+
   const renderItem = useCallback(
     ({ item }: { item: StoredTransaction }) => {
-      return <TransactionItem tx={item} showDateHeader={dateBreaks.has(item.id)} />;
+      return (
+        <TransactionItem
+          tx={item}
+          showDateHeader={dateBreaks.has(item.id)}
+          onEdit={() => handleEdit(item.id)}
+          onDelete={() => handleDelete(item.id)}
+        />
+      );
     },
-    [dateBreaks]
+    [dateBreaks, handleEdit, handleDelete]
   );
 
   const keyExtractor = useCallback((item: StoredTransaction) => item.id, []);
@@ -187,41 +203,53 @@ export const HomeScreen = () => {
         balanceCents={balanceCents}
         categorySpending={categorySpending}
         dailySpending={dailySpending}
-        onBalanceLayout={handleBalanceLayout}
       />
     ),
-    [balanceCents, categorySpending, dailySpending, handleBalanceLayout]
+    [balanceCents, categorySpending, dailySpending]
   );
 
   return (
     <ScreenLayout
       title="fidy"
       rightActions={
-        <View className="flex-row items-center" style={{ gap: 12 }}>
-          <SearchAction />
-          <BellAction />
-        </View>
-      }
-      headerOverlay={
-        <CompactBalanceBar
-          balanceCents={balanceCents}
-          scrollY={scrollY}
-          threshold={balanceBottom}
-        />
+        Platform.OS !== "ios" ? (
+          <View className="flex-row items-center" style={{ gap: 12 }}>
+            <SearchAction />
+            <BellAction />
+          </View>
+        ) : undefined
       }
     >
+      {Platform.OS === "ios" && (
+        <Stack.Screen
+          options={{
+            title: "fidy",
+            headerLargeTitle: true,
+            headerRight: () => <BellAction />,
+            headerSearchBarOptions: {
+              placeholder: t("search.placeholder"),
+              onChangeText: (e: { nativeEvent: { text: string } }) => {
+                setQuery(e.nativeEvent.text);
+              },
+              onSearchButtonPress: () => {
+                push("/search" as never);
+              },
+            },
+          }}
+        />
+      )}
       <FlatList
         data={pages}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.1}
-        onScroll={handleScroll}
         scrollEventThrottle={16}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={phase === null ? <EmptyTransactions /> : undefined}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }}
+        contentInsetAdjustmentBehavior="automatic"
       />
     </ScreenLayout>
   );

@@ -12,8 +12,8 @@ describe("ScreenLayout", () => {
     expect(source).toContain("export function ScreenLayout");
   });
 
-  test("exports TAB_BAR_CLEARANCE constant equal to 96", () => {
-    expect(source).toContain("TAB_BAR_CLEARANCE = 96");
+  test("exports platform-aware TAB_BAR_CLEARANCE (0 on iOS, 96 on Android)", () => {
+    expect(source).toContain('Platform.OS === "ios" ? 0 : 96');
   });
 
   test("exports HEADER_HEIGHT constant equal to 48", () => {
@@ -59,9 +59,8 @@ describe("ScreenLayout", () => {
     expect(source).toContain("useSafeAreaInsets");
   });
 
-  test("uses process.env.EXPO_OS instead of Platform.OS", () => {
-    expect(source).toContain("process.env.EXPO_OS");
-    expect(source).not.toContain("Platform.OS");
+  test("uses Platform for platform-specific rendering", () => {
+    expect(source).toContain("Platform");
   });
 
   test("supports both light and dark mode", () => {

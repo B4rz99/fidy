@@ -1,9 +1,10 @@
 import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
+import { Stack } from "expo-router";
 import { memo, useCallback, useEffect } from "react";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { MessageSquare, Plus, Trash2, X } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { useSessionCleanup } from "../hooks/use-session-cleanup";
@@ -149,8 +150,22 @@ export function ConversationList({
   return (
     <ScreenLayout
       title={t("aiChat.title")}
-      rightActions={<HeaderActions onOpenMemories={onOpenMemories} onNewChat={onNewChat} />}
+      rightActions={
+        Platform.OS !== "ios" ? (
+          <HeaderActions onOpenMemories={onOpenMemories} onNewChat={onNewChat} />
+        ) : undefined
+      }
     >
+      {Platform.OS === "ios" && (
+        <Stack.Screen
+          options={{
+            title: t("aiChat.title"),
+            headerRight: () => (
+              <HeaderActions onOpenMemories={onOpenMemories} onNewChat={onNewChat} />
+            ),
+          }}
+        />
+      )}
       <FlashList
         data={sessions}
         renderItem={renderItem}

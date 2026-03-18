@@ -1,5 +1,5 @@
 import Constants from "expo-constants";
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { openBrowserAsync } from "expo-web-browser";
 import { useAuthStore } from "@/features/auth";
 import { useEmailCaptureStore } from "@/features/email-capture";
@@ -22,7 +22,7 @@ import {
   Palette,
   Shield,
 } from "@/shared/components/icons";
-import { Linking, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { Linking, Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { SettingsRow } from "./SettingsRow";
 import { SettingsSection } from "./SettingsSection";
@@ -61,6 +61,7 @@ export function SettingsScreen() {
 
   return (
     <ScreenLayout variant="tab" title={t("settings.title")}>
+      {Platform.OS === "ios" && <Stack.Screen options={{ title: t("settings.title") }} />}
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
@@ -74,7 +75,7 @@ export function SettingsScreen() {
         {/* ACCOUNT */}
         <SettingsSection label={t("settings.accountSection")}>
           <Pressable
-            onPress={() => router.push("/(tabs)/profile")}
+            onPress={() => router.push("/profile")}
             className="flex-row items-center"
             style={{
               height: 64,
@@ -131,7 +132,7 @@ export function SettingsScreen() {
             subtitle={t("settings.connectedEmailsCount", {
               count: connectedCount,
             })}
-            onPress={() => router.push("/(tabs)/connected-accounts")}
+            onPress={() => router.push("/connected-accounts")}
           />
           <SettingsRow
             icon={Bell}

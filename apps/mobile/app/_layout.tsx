@@ -31,6 +31,8 @@ import { useSettingsStore } from "@/features/settings";
 import { useSync, useSyncConflictStore } from "@/features/sync";
 import { useTransactionStore } from "@/features/transactions";
 import { ErrorFallback } from "@/shared/components";
+import { Platform, useColorScheme } from "@/shared/components/rn";
+import { Colors } from "@/shared/constants/theme";
 import { type AnyDb, getDb } from "@/shared/db";
 import { useLocaleStore } from "@/shared/i18n";
 import {
@@ -41,6 +43,8 @@ import {
   wrapWithSentry,
 } from "@/shared/lib";
 import migrations from "../drizzle/migrations";
+
+const SHEET = { headerShown: false, presentation: "formSheet" } as const;
 
 // Init locale synchronously before first render
 useLocaleStore.getState().initLocale(getLocales()[0]?.languageTag ?? "es");
@@ -117,6 +121,8 @@ function RootLayout() {
   const userId = session?.user?.id ?? null;
   const router = useRouter();
   const segments = useSegments();
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
   const [fontsLoaded, fontsError] = useFonts({
     Poppins_500Medium,
@@ -166,28 +172,53 @@ function RootLayout() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen
-            name="add-transaction"
-            options={{ presentation: "formSheet", sheetAllowedDetents: [0.53] }}
-          />
-          <Stack.Screen
             name="add-bill"
-            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
           />
           <Stack.Screen
             name="day-detail"
-            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
           />
-          <Stack.Screen
-            name="theme-picker"
-            options={{ presentation: "formSheet", sheetAllowedDetents: [0.24] }}
-          />
+          <Stack.Screen name="theme-picker" options={{ ...SHEET, sheetAllowedDetents: [0.24] }} />
           <Stack.Screen
             name="language-picker"
-            options={{ presentation: "formSheet", sheetAllowedDetents: [0.18] }}
+            options={{ ...SHEET, sheetAllowedDetents: [0.18] }}
           />
           <Stack.Screen
             name="delete-account"
-            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+          />
+          <Stack.Screen
+            name="search"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
+          />
+          <Stack.Screen
+            name="connected-accounts"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
+          />
+          <Stack.Screen
+            name="failed-emails"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
+          />
+          <Stack.Screen
+            name="profile"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
           />
           <Stack.Screen
             name="create-budget"
@@ -198,7 +229,6 @@ function RootLayout() {
             options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
           />
           <Stack.Screen name="bills-calendar" />
-          <Stack.Screen name="search" />
         </Stack>
         {db && userId && <AuthenticatedShell db={db} userId={userId} />}
       </SentryErrorBoundary>

@@ -6,6 +6,7 @@ const en = {
     delete: "Delete",
     confirm: "Confirm",
     dismiss: "Dismiss",
+    edit: "Edit",
     category: "Category",
     description: "Description",
     amount: "Amount",
@@ -15,6 +16,7 @@ const en = {
     active: "Active",
     deleted: "Deleted",
     unknown: "Unknown",
+    addTransaction: "Add transaction",
     transaction: "Transaction",
     none: "(none)",
     name: "Name",
@@ -40,6 +42,8 @@ const en = {
     descriptionOptional: "Description (optional)",
     noTransactionsYet: "No transactions yet",
     noTransactionsHint: "Connect an email account or add transactions manually to get started",
+    deleteConfirmTitle: "Delete Transaction",
+    deleteConfirmMessage: "Are you sure you want to delete this transaction?",
   },
 
   // Bills / Calendar
