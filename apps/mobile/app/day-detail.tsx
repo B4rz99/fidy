@@ -1,12 +1,12 @@
 import { format } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { type BillPayment, getBillsForDate, useCalendarStore } from "@/features/calendar";
-import { formatMoney } from "@/shared/lib/format-money";
 import { Check, Pencil, Trash2 } from "@/shared/components/icons";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { toIsoDate } from "@/shared/lib";
+import { formatMoney } from "@/shared/lib/format-money";
 
 export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();

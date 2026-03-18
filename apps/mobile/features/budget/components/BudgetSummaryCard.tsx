@@ -1,6 +1,6 @@
-import { formatMoney } from "@/shared/lib/format-money";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { formatMoney } from "@/shared/lib/format-money";
 import { ProgressBar } from "./ProgressBar";
 
 type Props = {
@@ -22,9 +22,7 @@ export function BudgetSummaryCard({ totalBudget, totalSpent, percentUsed }: Prop
         <Text style={[styles.label, { color: secondaryColor }]}>
           {t("budgets.summary.totalBudget")}
         </Text>
-        <Text style={[styles.amount, { color: primaryColor }]}>
-          {formatMoney(totalBudget)}
-        </Text>
+        <Text style={[styles.amount, { color: primaryColor }]}>{formatMoney(totalBudget)}</Text>
       </View>
 
       <ProgressBar percent={percentUsed} />

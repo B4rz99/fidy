@@ -3,10 +3,10 @@ import { useMemo } from "react";
 import { useCalendarStore } from "@/features/calendar";
 import { getNextOccurrence } from "@/features/calendar/lib/calendar-utils";
 import { CATEGORY_MAP } from "@/features/transactions";
-import { formatMoney } from "@/shared/lib/format-money";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+import { formatMoney } from "@/shared/lib/format-money";
 
 const MAX_UPCOMING_BILLS = 3;
 

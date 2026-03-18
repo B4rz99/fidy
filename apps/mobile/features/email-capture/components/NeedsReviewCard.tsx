@@ -6,10 +6,10 @@ import {
   isValidCategoryId,
   type StoredTransaction,
 } from "@/features/transactions";
-import { formatSignedMoney } from "@/shared/lib/format-money";
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
+import { formatSignedMoney } from "@/shared/lib/format-money";
 import type { ProcessedEmailRow } from "../lib/repository";
 
 type NeedsReviewCardProps = {

@@ -9,7 +9,11 @@ import Animated, {
 import { useShallow } from "zustand/react/shallow";
 import { Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
-import { cleanDigitInput, formatInputDisplay, parseDigitsToAmount } from "~/shared/lib/format-money";
+import {
+  cleanDigitInput,
+  formatInputDisplay,
+  parseDigitsToAmount,
+} from "@/shared/lib/format-money";
 import { useTransactionStore } from "../store";
 import { TypeToggle } from "./TypeToggle";
 

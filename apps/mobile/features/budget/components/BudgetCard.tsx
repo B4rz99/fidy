@@ -1,9 +1,9 @@
 import { memo } from "react";
 import { CATEGORY_MAP } from "@/features/transactions";
-import { formatMoney } from "@/shared/lib/format-money";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+import { formatMoney } from "@/shared/lib/format-money";
 import type { BudgetProgress } from "../lib/derive";
 import { ProgressBar } from "./ProgressBar";
 

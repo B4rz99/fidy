@@ -43,13 +43,7 @@ export async function processApplePayIntent(
       return { saved: false, skippedDuplicate: true, transactionId: null };
     }
     // Cross-source dedup
-    const existingTxId = await findDuplicateTransaction(
-      db,
-      userId,
-      amount,
-      today,
-      intent.merchant
-    );
+    const existingTxId = await findDuplicateTransaction(db, userId, amount, today, intent.merchant);
 
     if (existingTxId) {
       const now = new Date().toISOString();

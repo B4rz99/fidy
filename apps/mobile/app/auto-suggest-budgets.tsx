@@ -2,7 +2,6 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useBudgetStore } from "@/features/budget";
 import { CATEGORY_MAP } from "@/features/transactions";
-import { formatMoney, parseDigitsToAmount } from "@/shared/lib/format-money";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -16,6 +15,7 @@ import {
 } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+import { formatMoney, parseDigitsToAmount } from "@/shared/lib/format-money";
 
 export default function AutoSuggestBudgetsScreen() {
   const router = useRouter();
@@ -28,17 +28,13 @@ export default function AutoSuggestBudgetsScreen() {
     () => new Set(autoSuggestions.map((s) => s.categoryId))
   );
   const [editedAmounts, setEditedAmounts] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmount)])
-    )
+    Object.fromEntries(autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmount)]))
   );
 
   useEffect(() => {
     setSelectedIds(new Set(autoSuggestions.map((s) => s.categoryId)));
     setEditedAmounts(
-      Object.fromEntries(
-        autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmount)])
-      )
+      Object.fromEntries(autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmount)]))
     );
   }, [autoSuggestions]);
 

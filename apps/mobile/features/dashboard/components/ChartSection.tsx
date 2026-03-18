@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
 import { CATEGORY_MAP } from "@/features/transactions";
-import { formatMoney } from "@/shared/lib/format-money";
 import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
@@ -11,6 +10,7 @@ import {
 } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+import { formatMoney } from "@/shared/lib/format-money";
 import { CategoryRow } from "./CategoryRow";
 import { DonutChart } from "./DonutChart";
 import { SpendingLineChart } from "./SpendingLineChart";

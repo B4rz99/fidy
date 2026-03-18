@@ -15,11 +15,11 @@ import {
   handleNumpadPress,
   isValidCategoryId,
 } from "@/features/transactions";
-import { formatInputDisplay, formatMoney, parseDigitsToAmount } from "@/shared/lib/format-money";
 import { FidyNumpad } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+import { formatInputDisplay, formatMoney, parseDigitsToAmount } from "@/shared/lib/format-money";
 
 export default function CreateBudgetScreen() {
   const router = useRouter();
@@ -41,9 +41,7 @@ export default function CreateBudgetScreen() {
       : ""
   );
   // digits = raw whole-peso string (e.g. "18900" for $18.900 COP)
-  const [digits, setDigits] = useState(
-    existingBudget ? String(existingBudget.amount) : ""
-  );
+  const [digits, setDigits] = useState(existingBudget ? String(existingBudget.amount) : "");
   const digitsRef = useRef(digits);
   digitsRef.current = digits;
 

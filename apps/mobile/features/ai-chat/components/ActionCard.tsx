@@ -1,7 +1,7 @@
-import { formatMoney } from "@/shared/lib/format-money";
 import { Trash2 } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
+import { formatMoney } from "@/shared/lib/format-money";
 import type { ChatAction } from "../schema";
 
 type ActionCardProps = {

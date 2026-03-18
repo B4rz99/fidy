@@ -1,9 +1,9 @@
 import { memo } from "react";
 import { CATEGORY_MAP } from "@/features/transactions";
-import { formatSignedMoney } from "@/shared/lib/format-money";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+import { formatSignedMoney } from "@/shared/lib/format-money";
 import type { SyncConflict } from "../store";
 
 type ConflictCardProps = {
@@ -71,10 +71,7 @@ export const ConflictCard = memo(function ConflictCard({
     diffs.push({
       label: t("common.amount"),
       localValue: formatSignedMoney(localData.amount, localData.type as "expense" | "income"),
-      serverValue: formatSignedMoney(
-        serverData.amount,
-        serverData.type as "expense" | "income"
-      ),
+      serverValue: formatSignedMoney(serverData.amount, serverData.type as "expense" | "income"),
     });
   }
 
