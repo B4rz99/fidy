@@ -1,9 +1,10 @@
 import type { FlashListRef } from "@shopify/flash-list";
 import { FlashList } from "@shopify/flash-list";
 import { memo, useCallback, useRef } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTransactionStore } from "@/features/transactions";
 import { HEADER_HEIGHT, ScreenLayout } from "@/shared/components";
-import { Keyboard, KeyboardAvoidingView, View } from "@/shared/components/rn";
+import { Keyboard, KeyboardAvoidingView, Platform, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { useStreamingChat } from "../hooks/use-streaming-chat";
 import type { ChatMessage } from "../schema";
@@ -36,6 +37,7 @@ const MemoizedMessageBubble = memo(function MemoizedBubble({
 export function ChatScreen({ onBack }: ChatScreenProps) {
   const { t } = useTranslation();
   const listRef = useRef<FlashListRef<ChatMessage>>(null);
+  const { top: safeTop } = useSafeAreaInsets();
 
   const messages = useChatStore((s) => s.messages);
   const sessions = useChatStore((s) => s.sessions);
@@ -104,8 +106,8 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
     <ScreenLayout title={title} variant="sub" onBack={onBack}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={HEADER_HEIGHT}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? safeTop + 54 : HEADER_HEIGHT}
       >
         {isEmpty ? (
           <View

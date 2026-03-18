@@ -1,9 +1,10 @@
 import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
+import { Stack } from "expo-router";
 import { memo, useCallback, useEffect } from "react";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { MessageSquare, Plus, Trash2, X } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { useSessionCleanup } from "../hooks/use-session-cleanup";
@@ -13,7 +14,6 @@ import { useChatStore } from "../store";
 type ConversationListProps = {
   readonly onSelectSession: (id: string) => void;
   readonly onNewChat: () => void;
-  readonly onOpenMemories: () => void;
 };
 
 const ItemSeparator = () => <View style={{ height: 10 }} />;
@@ -67,55 +67,17 @@ const SessionCard = memo(function SessionCardInner({
   );
 });
 
-function HeaderActions({
-  onOpenMemories,
-  onNewChat,
-}: {
-  readonly onOpenMemories: () => void;
-  readonly onNewChat: () => void;
-}) {
-  const { t } = useTranslation();
-  const accentGreen = useThemeColor("accentGreen");
+function NewChatButton({ onPress }: { readonly onPress: () => void }) {
+  const iconColor = useThemeColor("primary");
 
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-      <Pressable
-        onPress={onOpenMemories}
-        className="bg-peach-light dark:bg-peach-light-dark"
-        style={{
-          borderRadius: 16,
-          borderCurve: "continuous",
-          paddingVertical: 6,
-          paddingHorizontal: 14,
-        }}
-      >
-        <Text className="font-poppins-semibold text-label" style={{ color: accentGreen }}>
-          {t("aiChat.memories")}
-        </Text>
-      </Pressable>
-      <Pressable
-        onPress={onNewChat}
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 16,
-          borderCurve: "continuous",
-          backgroundColor: accentGreen,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Plus size={18} color="#FFFFFF" />
-      </Pressable>
-    </View>
+    <Pressable onPress={onPress} hitSlop={12}>
+      <Plus size={24} color={iconColor} />
+    </Pressable>
   );
 }
 
-export function ConversationList({
-  onSelectSession,
-  onNewChat,
-  onOpenMemories,
-}: ConversationListProps) {
+export function ConversationList({ onSelectSession, onNewChat }: ConversationListProps) {
   const { t } = useTranslation();
   const sessions = useChatStore((s) => s.sessions);
   const loadSessions = useChatStore((s) => s.loadSessions);
@@ -149,8 +111,16 @@ export function ConversationList({
   return (
     <ScreenLayout
       title={t("aiChat.title")}
-      rightActions={<HeaderActions onOpenMemories={onOpenMemories} onNewChat={onNewChat} />}
+      rightActions={Platform.OS !== "ios" ? <NewChatButton onPress={onNewChat} /> : undefined}
     >
+      {Platform.OS === "ios" && (
+        <Stack.Screen
+          options={{
+            title: t("aiChat.title"),
+            headerRight: () => <NewChatButton onPress={onNewChat} />,
+          }}
+        />
+      )}
       <FlashList
         data={sessions}
         renderItem={renderItem}

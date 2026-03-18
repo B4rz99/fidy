@@ -8,11 +8,13 @@ export type {
   ViewStyle,
 } from "react-native";
 export {
+  ActionSheetIOS,
   ActivityIndicator,
   Alert,
   AppState,
   FlatList,
   Image,
+  InteractionManager,
   Keyboard,
   KeyboardAvoidingView,
   Linking,

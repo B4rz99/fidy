@@ -1,7 +1,7 @@
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { ScreenLayout } from "@/shared/components";
 import { Plus } from "@/shared/components/icons";
-import { Pressable, View } from "@/shared/components/rn";
+import { Platform, Pressable, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useCalendarStore } from "../store";
 import { CalendarGrid } from "./CalendarGrid";
@@ -52,8 +52,16 @@ export function CalendarScreen() {
   return (
     <ScreenLayout
       title={t("calendar.title")}
-      rightActions={<AddBillButton onPress={handleAddBill} />}
+      rightActions={Platform.OS !== "ios" ? <AddBillButton onPress={handleAddBill} /> : undefined}
     >
+      {Platform.OS === "ios" && (
+        <Stack.Screen
+          options={{
+            title: t("calendar.title"),
+            headerRight: () => <AddBillButton onPress={handleAddBill} />,
+          }}
+        />
+      )}
       <View className="flex-1 px-4">
         <MonthNavigator currentMonth={currentMonth} onPrev={prevMonth} onNext={nextMonth} />
         <View className="flex-1">

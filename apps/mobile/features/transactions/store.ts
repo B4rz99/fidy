@@ -12,6 +12,7 @@ import {
   getTransactionsPaginated,
   insertTransaction,
   softDeleteTransaction,
+  upsertTransaction,
 } from "./lib/repository";
 import type { StoredTransaction, TransactionType } from "./schema";
 
@@ -69,10 +70,20 @@ type TransactionActions = {
   loadAggregates: () => void;
   refresh: () => Promise<void>;
   removeTransaction: (id: string) => Promise<void>;
+  editTransaction: (id: string) => void;
+  updateTransaction: (
+    id: string
+  ) => Promise<
+    { success: true; transaction: StoredTransaction } | { success: false; error: string }
+  >;
+  deleteTransaction: (id: string) => Promise<void>;
   addToCache: (tx: StoredTransaction) => void;
   removeFromCache: (id: string) => void;
   resetForm: () => void;
   getTransactionById: (id: string) => StoredTransaction | null;
+
+  // Edit mode
+  editingId: string | null;
 };
 
 const INITIAL_FORM: Pick<
@@ -95,6 +106,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
   balanceCents: 0,
   categorySpending: [],
   dailySpending: [],
+  editingId: null,
 
   initStore: (db, userId) => {
     dbRef = db;
@@ -251,6 +263,65 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     await get().refresh();
   },
 
+  editTransaction: (id) => {
+    if (!dbRef) return;
+    const row = getTransactionById(dbRef, id);
+    if (!row) return;
+    const tx = toStoredTransaction(row);
+    set({
+      editingId: id,
+      type: tx.type,
+      digits: String(tx.amountCents / 100),
+      categoryId: tx.categoryId as CategoryId,
+      description: tx.description,
+      date: tx.date,
+    });
+  },
+
+  updateTransaction: async (id) => {
+    if (!dbRef || !userIdRef) {
+      return { success: false as const, error: "Store not initialized" };
+    }
+
+    const { type, digits, categoryId, description, date } = get();
+    const now = new Date();
+
+    const result = buildTransaction(
+      { type, digits, categoryId, description, date },
+      userIdRef,
+      id,
+      now
+    );
+    if (!result.success) {
+      return { success: false as const, error: result.error };
+    }
+
+    const { transaction } = result;
+
+    try {
+      upsertTransaction(dbRef, toTransactionRow(transaction));
+
+      await enqueueSync(dbRef, {
+        id: generateId("sq"),
+        tableName: "transactions",
+        rowId: id,
+        operation: "update",
+        createdAt: now.toISOString(),
+      });
+    } catch {
+      return { success: false as const, error: "Failed to update transaction" };
+    }
+
+    set({ editingId: null });
+    await get().refresh();
+
+    return { success: true as const, transaction };
+  },
+
+  deleteTransaction: async (id) => {
+    await get().removeTransaction(id);
+  },
+
   addToCache: (tx) => set((s) => ({ pages: [tx, ...s.pages], offset: s.offset + 1 })),
 
   removeFromCache: (id) =>
@@ -260,7 +331,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
       return { pages: filtered, offset: removed ? Math.max(0, s.offset - 1) : s.offset };
     }),
 
-  resetForm: () => set({ ...INITIAL_FORM, date: new Date() }),
+  resetForm: () => set({ ...INITIAL_FORM, date: new Date(), editingId: null }),
 
   getTransactionById: (id) => {
     if (!dbRef) return null;

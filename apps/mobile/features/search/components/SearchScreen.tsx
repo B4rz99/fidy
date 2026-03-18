@@ -8,7 +8,7 @@ import {
 } from "@/features/transactions";
 import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
 import { Ellipsis } from "@/shared/components/icons";
-import { FlatList, Text, TextInput, View } from "@/shared/components/rn";
+import { FlatList, InteractionManager, Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { toIsoDate } from "@/shared/lib";
@@ -80,6 +80,7 @@ export const SearchScreen = () => {
   const executeSearch = useSearchStore((s) => s.executeSearch);
   const reset = useSearchStore((s) => s.reset);
 
+  const [ready, setReady] = useState(false);
   const [inputText, setInputText] = useState("");
   const [activePanel, setActivePanel] = useState<FilterKey | null>(null);
   const [minDigits, setMinDigits] = useState("");
@@ -87,15 +88,14 @@ export const SearchScreen = () => {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<TextInput>(null);
 
-  // Auto-focus on mount
+  // Defer everything until the push transition animation finishes
   useEffect(() => {
-    const timer = setTimeout(() => inputRef.current?.focus(), 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Run initial search on mount
-  useEffect(() => {
-    executeSearch();
+    const handle = InteractionManager.runAfterInteractions(() => {
+      setReady(true);
+      executeSearch();
+      inputRef.current?.focus();
+    });
+    return () => handle.cancel();
   }, [executeSearch]);
 
   // Clean up on unmount
@@ -243,53 +243,57 @@ export const SearchScreen = () => {
 
   return (
     <ScreenLayout title={t("search.title")} variant="sub" onBack={back}>
-      <View className="px-4 pb-2">
-        <TextInput
-          ref={inputRef}
-          className="h-10 rounded-lg px-3 font-poppins-medium text-body"
-          style={{ backgroundColor: peachLight, color: primary }}
-          value={inputText}
-          onChangeText={handleTextChange}
-          placeholder={t("search.placeholder")}
-          placeholderTextColor={secondary}
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="search"
-        />
-      </View>
-      <FlatList
-        data={results}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        onEndReached={handleEndReached}
-        onEndReachedThreshold={0.3}
-        ListHeaderComponent={
-          <>
-            <FilterChipRow
-              filters={filters}
-              activePanel={activePanel}
-              onTogglePanel={handleTogglePanel}
-              onClearAll={handleClearAll}
+      {!ready ? null : (
+        <>
+          <View className="px-4 pb-2">
+            <TextInput
+              ref={inputRef}
+              className="h-10 rounded-lg px-3 font-poppins-medium text-body"
+              style={{ backgroundColor: peachLight, color: primary }}
+              value={inputText}
+              onChangeText={handleTextChange}
+              placeholder={t("search.placeholder")}
+              placeholderTextColor={secondary}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="search"
             />
-            {filterPanel && (
-              <View
-                className="mx-4 mb-3 rounded-xl bg-card dark:bg-card-dark"
-                style={{ overflow: "hidden" }}
-              >
-                {filterPanel}
-              </View>
-            )}
-            {showSummary && <ResultsSummary summary={summary} />}
-          </>
-        }
-        ListEmptyComponent={
-          hasActiveFilters(filters) ? (
-            <SearchEmptyState onClearFilters={handleClearAll} />
-          ) : undefined
-        }
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }}
-      />
+          </View>
+          <FlatList
+            data={results}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            onEndReached={handleEndReached}
+            onEndReachedThreshold={0.3}
+            ListHeaderComponent={
+              <>
+                <FilterChipRow
+                  filters={filters}
+                  activePanel={activePanel}
+                  onTogglePanel={handleTogglePanel}
+                  onClearAll={handleClearAll}
+                />
+                {filterPanel && (
+                  <View
+                    className="mx-4 mb-3 rounded-xl bg-card dark:bg-card-dark"
+                    style={{ overflow: "hidden" }}
+                  >
+                    {filterPanel}
+                  </View>
+                )}
+                {showSummary && <ResultsSummary summary={summary} />}
+              </>
+            }
+            ListEmptyComponent={
+              hasActiveFilters(filters) ? (
+                <SearchEmptyState onClearFilters={handleClearAll} />
+              ) : undefined
+            }
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }}
+          />
+        </>
+      )}
     </ScreenLayout>
   );
 };

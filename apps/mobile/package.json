@@ -41,6 +41,7 @@
     "expo": "^55.0.0",
     "expo-android-notification-listener-service": "^1.1.0",
     "expo-background-task": "~55.0.9",
+    "expo-blur": "~55.0.10",
     "expo-constants": "~55.0.7",
     "expo-crypto": "~55.0.9",
     "expo-font": "~55.0.4",

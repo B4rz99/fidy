@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { TAB_BAR_CLEARANCE } from "@/shared/components";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SendHorizonal } from "@/shared/components/icons";
 import { Keyboard, Platform, Pressable, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -13,6 +13,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   const { t } = useTranslation();
   const [text, setText] = useState("");
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const { bottom: safeBottom } = useSafeAreaInsets();
   const borderSubtle = useThemeColor("borderSubtle");
   const tertiary = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
@@ -42,7 +43,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
       className="flex-row items-center gap-2 bg-card dark:bg-card-dark"
       style={{
         paddingTop: 8,
-        paddingBottom: keyboardVisible ? 8 : TAB_BAR_CLEARANCE,
+        paddingBottom: keyboardVisible ? 8 : Math.max(safeBottom, 8),
         paddingHorizontal: 16,
         borderTopWidth: 1,
         borderTopColor: borderSubtle,

@@ -1,9 +1,9 @@
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useCallback } from "react";
 import { MonthNavigator } from "@/features/calendar/components/MonthNavigator";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Wallet } from "@/shared/components/icons";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useBudgetStore } from "../store";
 import { BudgetCard } from "./BudgetCard";
@@ -12,15 +12,10 @@ import { UpcomingBillsSection } from "./UpcomingBillsSection";
 
 function AddBudgetButton({ onPress }: { readonly onPress: () => void }) {
   const primaryColor = useThemeColor("primary");
-  const peachBg = useThemeColor("peachLight");
-  const borderColor = useThemeColor("borderSubtle");
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.addButton, { backgroundColor: peachBg, borderColor }]}
-    >
-      <Plus size={20} color={primaryColor} />
+    <Pressable onPress={onPress} hitSlop={12}>
+      <Plus size={24} color={primaryColor} />
     </Pressable>
   );
 }
@@ -70,8 +65,18 @@ export function BudgetListScreen() {
   return (
     <ScreenLayout
       title={t("budgets.title")}
-      rightActions={<AddBudgetButton onPress={handleAddBudget} />}
+      rightActions={
+        Platform.OS !== "ios" ? <AddBudgetButton onPress={handleAddBudget} /> : undefined
+      }
     >
+      {Platform.OS === "ios" && (
+        <Stack.Screen
+          options={{
+            title: t("budgets.title"),
+            headerRight: () => <AddBudgetButton onPress={handleAddBudget} />,
+          }}
+        />
+      )}
       <View style={styles.content}>
         <MonthNavigator currentMonth={monthAsDate} onPrev={prevMonth} onNext={nextMonth} />
 

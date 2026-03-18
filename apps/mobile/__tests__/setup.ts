@@ -15,6 +15,7 @@ vi.mock("react-native", () => ({
   Switch: "Switch",
   Image: "Image",
   ActivityIndicator: "ActivityIndicator",
+  ActionSheetIOS: { showActionSheetWithOptions: vi.fn() },
   Alert: { alert: vi.fn() },
   Appearance: { setColorScheme: vi.fn() },
   StyleSheet: { create: (styles: Record<string, unknown>) => styles },
@@ -65,6 +66,7 @@ vi.mock("lucide-react-native", () => ({
   Wrench: "Wrench",
   Zap: "Zap",
   Bell: "Bell",
+  Brain: "Brain",
   Ellipsis: "Ellipsis",
   ChevronLeft: "ChevronLeft",
   ChevronRight: "ChevronRight",
@@ -262,6 +264,19 @@ vi.mock("@fidy/assets", () => ({
   },
   LOGO_DOLLAR_PATH: "M0 0",
   LOGO_TEXT_PATH: "M0 0",
+}));
+
+// Mock expo-notifications
+vi.mock("expo-notifications", () => ({
+  scheduleNotificationAsync: vi.fn(),
+  cancelScheduledNotificationAsync: vi.fn(),
+  getPermissionsAsync: vi.fn(() =>
+    Promise.resolve({ status: "undetermined", granted: false, canAskAgain: true })
+  ),
+  requestPermissionsAsync: vi.fn(() =>
+    Promise.resolve({ status: "granted", granted: true, canAskAgain: true })
+  ),
+  setNotificationHandler: vi.fn(),
 }));
 
 // Mock expo native module bridge (used by local expo-app-intents module)

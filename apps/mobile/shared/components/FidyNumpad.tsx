@@ -70,12 +70,12 @@ const styles = StyleSheet.create({
   container: {
     gap: 6,
     paddingTop: 8,
-    paddingBottom: 0,
+    paddingBottom: 8,
   },
   row: {
     flexDirection: "row",
     gap: 6,
-    height: 42,
+    height: 52,
   },
   key: {
     flex: 1,
