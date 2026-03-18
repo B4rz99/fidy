@@ -95,11 +95,12 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
     }
   }, [migrationsReady, db, userId]);
 
-  useSync(migrationsReady ? db : null, userId);
-  useEmailCapture(migrationsReady ? db : null, userId);
-  useNotificationCapture(migrationsReady ? db : null, userId);
-  useApplePayCapture(migrationsReady ? db : null, userId);
-  useSmsDetection(migrationsReady ? db : null, userId);
+  const initialSyncDone = useSync(migrationsReady ? db : null, userId);
+  const captureDb = initialSyncDone ? db : null;
+  useEmailCapture(captureDb, userId);
+  useNotificationCapture(captureDb, userId);
+  useApplePayCapture(captureDb, userId);
+  useSmsDetection(captureDb, userId);
 
   useEffect(() => {
     if (migrationsReady || migrationsError) {
