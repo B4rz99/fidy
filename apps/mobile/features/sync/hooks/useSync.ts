@@ -28,20 +28,17 @@ export function useSync(db: AnyDb | null, userId: string | null): boolean {
     const runSync = async () => {
       if (isSyncing.current) return;
       const online = await isOnline();
-      if (!online) {
-        markInitialDone();
-        return;
-      }
+      if (!online) return;
       isSyncing.current = true;
       try {
         await fullSync(db, supabase, userId);
         await useTransactionStore.getState().refresh();
         useSyncConflictStore.getState().loadConflicts();
+        markInitialDone();
       } catch (error) {
         console.warn("[sync] background sync failed:", error);
       } finally {
         isSyncing.current = false;
-        markInitialDone();
       }
     };
 

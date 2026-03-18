@@ -96,7 +96,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
   }, [migrationsReady, db, userId]);
 
   const initialSyncDone = useSync(migrationsReady ? db : null, userId);
-  const captureDb = initialSyncDone ? db : null;
+  const captureDb = initialSyncDone && migrationsReady ? db : null;
   useEmailCapture(captureDb, userId);
   useNotificationCapture(captureDb, userId);
   useApplePayCapture(captureDb, userId);
