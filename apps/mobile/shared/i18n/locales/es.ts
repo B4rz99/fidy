@@ -28,6 +28,8 @@ const es = {
     add: "Agregar",
     calendar: "Calendario",
     settings: "Ajustes",
+    budgets: "Presupuestos",
+    menu: "Menú",
   },
 
   // Transactions
@@ -69,6 +71,55 @@ const es = {
       fri: "V",
       sat: "S",
       sun: "D",
+    },
+  },
+
+  // Presupuestos
+  budgets: {
+    title: "Presupuestos",
+    empty: {
+      title: "Aún no hay presupuestos",
+      subtitle: "Establece límites de gasto y controla tu dinero",
+      autoSetup: "Configurar desde el mes pasado",
+      createManually: "Crear manualmente",
+    },
+    create: {
+      title: "Crear Presupuesto",
+      selectCategory: "Selecciona una categoría",
+      enterAmount: "Monto del presupuesto mensual",
+      lastMonthHint: "Gastaste %{amount} en %{category} el mes pasado",
+    },
+    edit: {
+      title: "Editar Presupuesto",
+    },
+    card: {
+      remaining: "%{amount} restante",
+      over: "%{amount} sobre el presupuesto",
+      used: "%{percent}% usado",
+    },
+    summary: {
+      totalBudget: "Presupuesto Total",
+      used: "%{percent}% usado",
+    },
+    alerts: {
+      nearLimit: "%{category} está al %{percent}% del presupuesto",
+      overBudget: "%{category} excedió el presupuesto al %{percent}%",
+    },
+    autoSuggest: {
+      title: "Configurar Presupuestos",
+      subtitle: "Basado en los gastos del mes pasado",
+      skipAll: "Omitir",
+      acceptSelected: "Aceptar seleccionados",
+    },
+    upcomingBills: {
+      title: "Próximos Gastos Fijos",
+      seeAll: "Ver todos",
+      noBills: "No hay gastos fijos próximos",
+    },
+    copyForward: {
+      prompt: "¿Copiar presupuestos del mes pasado?",
+      accept: "Copiar presupuestos",
+      skip: "Empezar de cero",
     },
   },
 
