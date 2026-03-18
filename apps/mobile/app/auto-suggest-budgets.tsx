@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useBudgetStore } from "@/features/budget";
-import { CATEGORY_MAP, formatCents } from "@/features/transactions";
+import { CATEGORY_MAP, digitsToCents, formatCents } from "@/features/transactions";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -71,8 +71,8 @@ export default function AutoSuggestBudgetsScreen() {
       const budgets = new Map<string, number>();
       selectedIds.forEach((categoryId) => {
         const raw = editedAmounts[categoryId] ?? "0";
-        const cents = Math.round(parseFloat(raw.replace(",", ".")) * 100);
-        if (!Number.isNaN(cents) && cents > 0) {
+        const cents = digitsToCents(raw);
+        if (cents > 0) {
           budgets.set(categoryId, cents);
         }
       });
@@ -141,7 +141,7 @@ export default function AutoSuggestBudgetsScreen() {
                     ]}
                     value={editedAmounts[suggestion.categoryId] ?? ""}
                     onChangeText={(v) => handleAmountChange(suggestion.categoryId, v)}
-                    keyboardType="decimal-pad"
+                    keyboardType="number-pad"
                     editable={isSelected}
                     selectTextOnFocus
                   />

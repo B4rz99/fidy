@@ -44,7 +44,7 @@ export default function CreateBudgetScreen() {
   );
   // digits = raw whole-dollar string (e.g. "18900" for $18,900 COP)
   const [digits, setDigits] = useState(
-    existingBudget ? String(existingBudget.amountCents / 100) : ""
+    existingBudget ? String(Math.round(existingBudget.amountCents / 100)) : ""
   );
   const digitsRef = useRef(digits);
   digitsRef.current = digits;
@@ -74,7 +74,7 @@ export default function CreateBudgetScreen() {
   useEffect(() => {
     if (existingBudget) {
       setCategory(isValidCategoryId(existingBudget.categoryId) ? existingBudget.categoryId : "");
-      setDigits(String(existingBudget.amountCents / 100));
+      setDigits(String(Math.round(existingBudget.amountCents / 100)));
     }
   }, [existingBudget?.id]);
 
