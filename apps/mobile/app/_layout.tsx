@@ -25,6 +25,7 @@ import {
   useSmsDetection,
 } from "@/features/capture-sources";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
+import { useSearchStore } from "@/features/search";
 import { useSync, useSyncConflictStore } from "@/features/sync";
 import { useTransactionStore } from "@/features/transactions";
 import { ErrorFallback } from "@/shared/components";
@@ -55,6 +56,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
   useEffect(() => {
     if (migrationsReady) {
       useTransactionStore.getState().initStore(db, userId);
+      useSearchStore.getState().initStore(db, userId);
       useEmailCaptureStore.getState().initStore(db, userId);
       useCaptureSourcesStore.getState().initStore(db, userId);
       useChatStore.getState().initStore(db, userId);
@@ -163,6 +165,7 @@ function RootLayout() {
             name="day-detail"
             options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
           />
+          <Stack.Screen name="search" />
         </Stack>
         {db && userId && <AuthenticatedShell db={db} userId={userId} />}
       </SentryErrorBoundary>
