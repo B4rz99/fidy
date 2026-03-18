@@ -264,6 +264,24 @@ vi.mock("@fidy/assets", () => ({
   LOGO_TEXT_PATH: "M0 0",
 }));
 
+// Mock @react-native-menu/menu
+vi.mock("@react-native-menu/menu", () => ({
+  MenuView: "MenuView",
+}));
+
+// Mock expo-notifications
+vi.mock("expo-notifications", () => ({
+  scheduleNotificationAsync: vi.fn(),
+  cancelScheduledNotificationAsync: vi.fn(),
+  getPermissionsAsync: vi.fn(() =>
+    Promise.resolve({ status: "undetermined", granted: false, canAskAgain: true })
+  ),
+  requestPermissionsAsync: vi.fn(() =>
+    Promise.resolve({ status: "granted", granted: true, canAskAgain: true })
+  ),
+  setNotificationHandler: vi.fn(),
+}));
+
 // Mock expo native module bridge (used by local expo-app-intents module)
 vi.mock("expo", () => ({
   requireNativeModule: vi.fn(() => ({
