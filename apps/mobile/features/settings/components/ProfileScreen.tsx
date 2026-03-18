@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { useAuthStore } from "@/features/auth";
 import { getUserInitials } from "@/features/settings/lib/settings-links";
 import { ScreenLayout } from "@/shared/components";
-import { LogOut } from "@/shared/components/icons";
+import { Brain, LogOut } from "@/shared/components/icons";
 import { Alert, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
@@ -35,11 +35,7 @@ export function ProfileScreen() {
   };
 
   return (
-    <ScreenLayout
-      variant="sub"
-      title={t("settings.profileTitle")}
-      onBack={() => router.back()}
-    >
+    <ScreenLayout variant="sub" title={t("settings.profileTitle")} onBack={() => router.back()}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
@@ -74,6 +70,23 @@ export function ProfileScreen() {
 
         {/* Actions */}
         <View style={{ gap: 16, marginTop: 32 }} className="items-center">
+          {/* AI Memories */}
+          <Pressable
+            onPress={() => router.push("/ai-memories")}
+            className="flex-row items-center justify-center bg-card dark:bg-card-dark rounded-2xl w-full"
+            style={{
+              height: 52,
+              gap: 8,
+              borderWidth: 1,
+              borderColor: borderColor,
+            }}
+          >
+            <Brain size={20} color={secondaryColor} />
+            <Text className="font-poppins-semibold text-sm text-primary dark:text-primary-dark">
+              {t("aiChat.memories")}
+            </Text>
+          </Pressable>
+
           {/* Log Out Button */}
           <Pressable
             onPress={handleLogOut}

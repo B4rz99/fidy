@@ -8,6 +8,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useShallow } from "zustand/react/shallow";
 import {
   CATEGORIES,
@@ -19,15 +20,16 @@ import {
   TypeToggle,
   useTransactionStore,
 } from "@/features/transactions";
-import { FidyNumpad, ScreenLayout } from "@/shared/components";
+import { FidyNumpad } from "@/shared/components";
 import { Calendar } from "@/shared/components/icons";
-import { Pressable, ScrollView, Text, TextInput, View } from "@/shared/components/rn";
+import { Platform, Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 
 export default function AddTransactionScreen() {
   const { navigate } = useRouter();
   const { t, locale } = useTranslation();
+  const { bottom: safeBottom } = useSafeAreaInsets();
   const {
     type,
     digits,
@@ -63,13 +65,11 @@ export default function AddTransactionScreen() {
   const isEditing = editingId != null;
 
   useEffect(() => {
-    // Only reset form when entering add mode (not edit mode)
     if (!isEditing) {
       resetForm();
     }
   }, [resetForm, isEditing]);
 
-  const cardColor = useThemeColor("card");
   const accentRed = useThemeColor("accentRed");
   const accentGreen = useThemeColor("accentGreen");
   const secondary = useThemeColor("secondary");
@@ -126,32 +126,20 @@ export default function AddTransactionScreen() {
     [setDigits]
   );
 
-  const title = isEditing ? t("common.edit") : t("tabs.add");
   const saveLabel = isEditing ? t("common.save") : t("transactions.saveTransaction");
 
   return (
-    <ScreenLayout title={title} variant="tab">
-      <ScrollView
-        style={{ flex: 1, backgroundColor: cardColor }}
-        contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: "center",
-          paddingHorizontal: 24,
-          gap: 8,
-          paddingTop: 0,
-        }}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
+    <View style={{ flex: 1 }} className="bg-page dark:bg-page-dark">
+      {/* Top zone: amount display + metadata */}
+      <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 24, gap: 12 }}>
         {/* Type toggle + Amount */}
-        <View style={{ alignItems: "center", gap: 2 }}>
+        <View style={{ alignItems: "center", gap: 4 }}>
           <TypeToggle value={type} onChange={setType} />
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
             <Text
               style={{
                 fontFamily: "Poppins_700Bold",
-                fontSize: 32,
+                fontSize: 40,
                 color: amountColor,
               }}
             >
@@ -161,7 +149,7 @@ export default function AddTransactionScreen() {
               style={[
                 {
                   width: 2,
-                  height: 28,
+                  height: 32,
                   marginLeft: 2,
                   borderRadius: 1,
                   backgroundColor: amountColor,
@@ -173,17 +161,10 @@ export default function AddTransactionScreen() {
         </View>
 
         {/* Categories */}
-        <View style={{ gap: 4 }}>
-          <Text
-            style={{
-              fontFamily: "Poppins_500Medium",
-              fontSize: 12,
-              color: secondary,
-            }}
+        <View style={{ alignItems: "center", gap: 6 }}>
+          <View
+            style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 6 }}
           >
-            {t("common.category")}
-          </Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
             {CATEGORIES.map((cat) => (
               <CategoryPill
                 key={cat.id}
@@ -239,11 +220,21 @@ export default function AddTransactionScreen() {
             </Text>
           </View>
         </View>
+      </View>
 
+      {/* Bottom zone: save button + numpad, pinned to bottom */}
+      <View
+        style={{
+          paddingHorizontal: 16,
+          paddingTop: 8,
+          paddingBottom: Platform.OS === "ios" ? safeBottom : 16,
+          gap: 8,
+        }}
+      >
         {/* Save button */}
         <Pressable
           style={{
-            height: 44,
+            height: 48,
             borderRadius: 12,
             backgroundColor: buttonBg,
             alignItems: "center",
@@ -258,7 +249,7 @@ export default function AddTransactionScreen() {
           <Text
             style={{
               fontFamily: "Poppins_600SemiBold",
-              fontSize: 14,
+              fontSize: 15,
               color: "#FFFFFF",
             }}
           >
@@ -268,7 +259,7 @@ export default function AddTransactionScreen() {
 
         {/* Custom numpad */}
         <FidyNumpad onKeyPress={handleKey} />
-      </ScrollView>
-    </ScreenLayout>
+      </View>
+    </View>
   );
 }

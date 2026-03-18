@@ -14,7 +14,6 @@ import { useChatStore } from "../store";
 type ConversationListProps = {
   readonly onSelectSession: (id: string) => void;
   readonly onNewChat: () => void;
-  readonly onOpenMemories: () => void;
 };
 
 const ItemSeparator = () => <View style={{ height: 10 }} />;
@@ -68,55 +67,17 @@ const SessionCard = memo(function SessionCardInner({
   );
 });
 
-function HeaderActions({
-  onOpenMemories,
-  onNewChat,
-}: {
-  readonly onOpenMemories: () => void;
-  readonly onNewChat: () => void;
-}) {
-  const { t } = useTranslation();
-  const accentGreen = useThemeColor("accentGreen");
+function NewChatButton({ onPress }: { readonly onPress: () => void }) {
+  const iconColor = useThemeColor("primary");
 
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-      <Pressable
-        onPress={onOpenMemories}
-        className="bg-peach-light dark:bg-peach-light-dark"
-        style={{
-          borderRadius: 16,
-          borderCurve: "continuous",
-          paddingVertical: 6,
-          paddingHorizontal: 14,
-        }}
-      >
-        <Text className="font-poppins-semibold text-label" style={{ color: accentGreen }}>
-          {t("aiChat.memories")}
-        </Text>
-      </Pressable>
-      <Pressable
-        onPress={onNewChat}
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 16,
-          borderCurve: "continuous",
-          backgroundColor: accentGreen,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Plus size={18} color="#FFFFFF" />
-      </Pressable>
-    </View>
+    <Pressable onPress={onPress} hitSlop={12}>
+      <Plus size={24} color={iconColor} />
+    </Pressable>
   );
 }
 
-export function ConversationList({
-  onSelectSession,
-  onNewChat,
-  onOpenMemories,
-}: ConversationListProps) {
+export function ConversationList({ onSelectSession, onNewChat }: ConversationListProps) {
   const { t } = useTranslation();
   const sessions = useChatStore((s) => s.sessions);
   const loadSessions = useChatStore((s) => s.loadSessions);
@@ -150,19 +111,13 @@ export function ConversationList({
   return (
     <ScreenLayout
       title={t("aiChat.title")}
-      rightActions={
-        Platform.OS !== "ios" ? (
-          <HeaderActions onOpenMemories={onOpenMemories} onNewChat={onNewChat} />
-        ) : undefined
-      }
+      rightActions={Platform.OS !== "ios" ? <NewChatButton onPress={onNewChat} /> : undefined}
     >
       {Platform.OS === "ios" && (
         <Stack.Screen
           options={{
             title: t("aiChat.title"),
-            headerRight: () => (
-              <HeaderActions onOpenMemories={onOpenMemories} onNewChat={onNewChat} />
-            ),
+            headerRight: () => <NewChatButton onPress={onNewChat} />,
           }}
         />
       )}

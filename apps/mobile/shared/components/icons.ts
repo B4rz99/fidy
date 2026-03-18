@@ -3,6 +3,7 @@ export {
   ArrowLeftRight,
   BarChart3,
   Bell,
+  Brain,
   Calendar,
   Car,
   Check,

@@ -229,6 +229,14 @@ function RootLayout() {
             options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
           />
           <Stack.Screen name="bills-calendar" />
+          <Stack.Screen
+            name="ai-memories"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
+          />
         </Stack>
         {db && userId && <AuthenticatedShell db={db} userId={userId} />}
       </SentryErrorBoundary>

@@ -90,9 +90,5 @@ export function TransactionRow({
 
   if (!hasActions) return content;
 
-  return (
-    <Pressable onLongPress={handleLongPress}>
-      {content}
-    </Pressable>
-  );
+  return <Pressable onLongPress={handleLongPress}>{content}</Pressable>;
 }

@@ -13,15 +13,10 @@ describe("AI tab", () => {
     expect(source).toContain("ChatScreen");
   });
 
-  test("imports MemoryManager component", () => {
-    expect(source).toContain("MemoryManager");
-  });
-
   test("manages view state for navigation", () => {
     expect(source).toContain("AiView");
     expect(source).toContain('"list"');
     expect(source).toContain('"chat"');
-    expect(source).toContain('"memories"');
   });
 
   test("extracts memories when leaving chat", () => {

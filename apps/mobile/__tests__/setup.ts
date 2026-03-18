@@ -66,6 +66,7 @@ vi.mock("lucide-react-native", () => ({
   Wrench: "Wrench",
   Zap: "Zap",
   Bell: "Bell",
+  Brain: "Brain",
   Ellipsis: "Ellipsis",
   ChevronLeft: "ChevronLeft",
   ChevronRight: "ChevronRight",

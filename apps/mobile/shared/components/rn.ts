@@ -14,6 +14,7 @@ export {
   AppState,
   FlatList,
   Image,
+  InteractionManager,
   Keyboard,
   KeyboardAvoidingView,
   Linking,

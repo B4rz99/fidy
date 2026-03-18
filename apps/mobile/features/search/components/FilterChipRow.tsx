@@ -61,7 +61,7 @@ export const FilterChipRow = ({
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
-      className="pt-2 pb-8"
+      className="pt-2 pb-3"
     >
       {CHIPS.map((chip) => {
         const isActive = chip.isActive(filters);

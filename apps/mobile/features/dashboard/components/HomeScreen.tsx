@@ -8,7 +8,7 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture";
-import { SearchAction, useSearchStore } from "@/features/search";
+import { SearchAction } from "@/features/search";
 import { SyncConflictBanner } from "@/features/sync";
 import {
   CATEGORY_MAP,
@@ -18,8 +18,8 @@ import {
   useTransactionStore,
 } from "@/features/transactions";
 import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
-import { Bell, Ellipsis } from "@/shared/components/icons";
-import { Alert, FlatList, Platform, Pressable, View } from "@/shared/components/rn";
+import { Ellipsis } from "@/shared/components/icons";
+import { Alert, FlatList, Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { toIsoDate } from "@/shared/lib";
@@ -28,15 +28,6 @@ import { ChartSection } from "./ChartSection";
 import { DateHeader } from "./DateHeader";
 import { EmptyTransactions } from "./EmptyTransactions";
 import { NeedsReviewBanner } from "./NeedsReviewBanner";
-
-const BellAction = () => {
-  const iconColor = useThemeColor("primary");
-  return (
-    <Pressable hitSlop={12}>
-      <Bell size={22} color={iconColor} />
-    </Pressable>
-  );
-};
 
 const TransactionItem = memo(function TransactionItem({
   tx,
@@ -137,7 +128,7 @@ export const HomeScreen = () => {
   const deleteTransaction = useTransactionStore((s) => s.deleteTransaction);
   // phase gates ListEmptyComponent — suppresses "No transactions" during first sync
   const phase = useEmailCaptureStore((s) => s.phase);
-  const setQuery = useSearchStore((s) => s.setQuery);
+  const primaryColor = useThemeColor("primary");
 
   // Pre-compute which transactions are the first of their date group
   const dateBreaks = useMemo(() => {
@@ -209,32 +200,22 @@ export const HomeScreen = () => {
   );
 
   return (
-    <ScreenLayout
-      title="fidy"
-      rightActions={
-        Platform.OS !== "ios" ? (
-          <View className="flex-row items-center" style={{ gap: 12 }}>
-            <SearchAction />
-            <BellAction />
-          </View>
-        ) : undefined
-      }
-    >
+    <ScreenLayout title="fidy" rightActions={Platform.OS !== "ios" ? <SearchAction /> : undefined}>
       {Platform.OS === "ios" && (
         <Stack.Screen
           options={{
-            title: "fidy",
-            headerLargeTitle: true,
-            headerRight: () => <BellAction />,
-            headerSearchBarOptions: {
-              placeholder: t("search.placeholder"),
-              onChangeText: (e: { nativeEvent: { text: string } }) => {
-                setQuery(e.nativeEvent.text);
-              },
-              onSearchButtonPress: () => {
-                push("/search" as never);
-              },
-            },
+            headerTitle: () => (
+              <Text
+                style={{
+                  fontFamily: "Poppins_800ExtraBold",
+                  fontSize: 20,
+                  color: primaryColor,
+                }}
+              >
+                fidy
+              </Text>
+            ),
+            headerRight: () => <SearchAction />,
           }}
         />
       )}

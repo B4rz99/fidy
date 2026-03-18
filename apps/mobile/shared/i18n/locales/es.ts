@@ -241,7 +241,7 @@ const es = {
   aiChat: {
     title: "Chat IA",
     fidyAi: "Fidy IA",
-    memories: "Memorias",
+    memories: "Memoria",
     noConversations: "Aún no hay conversaciones",
     tapToStart: "Toca + para iniciar un nuevo chat",
     placeholder: "Pregunta sobre tus finanzas...",

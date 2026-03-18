@@ -32,11 +32,7 @@ export default function ConnectedAccountsScreen() {
   const outlookAccount = accounts.find((a) => a.provider === "outlook");
 
   return (
-    <ScreenLayout
-      title={t("connectedAccounts.title")}
-      variant="sub"
-      onBack={() => back()}
-    >
+    <ScreenLayout title={t("connectedAccounts.title")} variant="sub" onBack={() => back()}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ paddingBottom: 40 }}

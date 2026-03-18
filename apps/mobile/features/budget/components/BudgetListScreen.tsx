@@ -12,15 +12,10 @@ import { UpcomingBillsSection } from "./UpcomingBillsSection";
 
 function AddBudgetButton({ onPress }: { readonly onPress: () => void }) {
   const primaryColor = useThemeColor("primary");
-  const peachBg = useThemeColor("peachLight");
-  const borderColor = useThemeColor("borderSubtle");
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.addButton, { backgroundColor: peachBg, borderColor }]}
-    >
-      <Plus size={20} color={primaryColor} />
+    <Pressable onPress={onPress} hitSlop={12}>
+      <Plus size={24} color={primaryColor} />
     </Pressable>
   );
 }

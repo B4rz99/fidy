@@ -11,7 +11,6 @@ export default function HomeStackLayout() {
         headerShown: Platform.OS === "ios",
         headerStyle: { backgroundColor: theme.page },
         headerTintColor: theme.primary,
-        headerLargeTitle: true,
       }}
     />
   );

@@ -1,4 +1,7 @@
-import { insertMerchantRule, lookupMerchantRule } from "@/features/email-capture/lib/merchant-rules";
+import {
+  insertMerchantRule,
+  lookupMerchantRule,
+} from "@/features/email-capture/lib/merchant-rules";
 import { classifyMerchantApi } from "@/features/email-capture/services/parse-email-api";
 import { insertTransaction, isValidCategoryId } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";

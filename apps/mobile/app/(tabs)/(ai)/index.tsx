@@ -1,14 +1,8 @@
 import { useCallback, useState } from "react";
-import {
-  ChatScreen,
-  ConversationList,
-  cancelActiveStream,
-  MemoryManager,
-  useChatStore,
-} from "@/features/ai-chat";
+import { ChatScreen, ConversationList, cancelActiveStream, useChatStore } from "@/features/ai-chat";
 import { captureError } from "@/shared/lib";
 
-type AiView = "list" | "chat" | "memories";
+type AiView = "list" | "chat";
 
 export default function AiTab() {
   const [view, setView] = useState<AiView>("list");
@@ -34,26 +28,10 @@ export default function AiTab() {
     setView("list");
   }, [extractAndSaveMemories]);
 
-  const handleOpenMemories = useCallback(() => {
-    setView("memories");
-  }, []);
-
-  const handleBackFromMemories = useCallback(() => {
-    setView("list");
-  }, []);
-
   switch (view) {
     case "chat":
       return <ChatScreen onBack={handleBackFromChat} />;
-    case "memories":
-      return <MemoryManager onBack={handleBackFromMemories} />;
     default:
-      return (
-        <ConversationList
-          onSelectSession={handleSelectSession}
-          onNewChat={handleNewChat}
-          onOpenMemories={handleOpenMemories}
-        />
-      );
+      return <ConversationList onSelectSession={handleSelectSession} onNewChat={handleNewChat} />;
   }
 }
