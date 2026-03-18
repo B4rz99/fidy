@@ -1,10 +1,53 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useBudgetStore } from "@/features/budget";
 import { CATEGORY_MAP, formatCents } from "@/features/transactions";
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "@/shared/components/rn";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+
+function Toggle({
+  value,
+  onValueChange,
+}: {
+  value?: boolean;
+  onValueChange?: (v: boolean) => void;
+}) {
+  const accentGreen = useThemeColor("accentGreen");
+  const tertiaryColor = useThemeColor("tertiary");
+  const isOn = value === true;
+  const progress = useSharedValue(isOn ? 1 : 0);
+
+  useEffect(() => {
+    progress.set(withTiming(isOn ? 1 : 0, { duration: 200 }));
+  }, [isOn, progress]);
+
+  const trackStyle = useAnimatedStyle(() => ({
+    backgroundColor: progress.get() > 0.5 ? accentGreen : tertiaryColor,
+  }));
+
+  const knobStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: progress.get() * 20 }],
+  }));
+
+  return (
+    <Pressable onPress={() => onValueChange?.(!isOn)}>
+      <Animated.View style={[styles.toggleTrack, trackStyle]}>
+        <Animated.View style={[styles.toggleKnob, knobStyle]} />
+      </Animated.View>
+    </Pressable>
+  );
+}
 
 export default function AutoSuggestBudgetsScreen() {
   const router = useRouter();
@@ -16,9 +59,20 @@ export default function AutoSuggestBudgetsScreen() {
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
     () => new Set(autoSuggestions.map((s) => s.categoryId))
   );
+  const [editedAmounts, setEditedAmounts] = useState<Record<string, string>>(
+    () =>
+      Object.fromEntries(
+        autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmountCents / 100)])
+      )
+  );
 
   useEffect(() => {
     setSelectedIds(new Set(autoSuggestions.map((s) => s.categoryId)));
+    setEditedAmounts(
+      Object.fromEntries(
+        autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmountCents / 100)])
+      )
+    );
   }, [autoSuggestions]);
 
   const cardBg = useThemeColor("card");
@@ -26,6 +80,7 @@ export default function AutoSuggestBudgetsScreen() {
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
+  const pageBg = useThemeColor("page");
 
   const { isBusy, run: guardedRun } = useAsyncGuard();
 
@@ -41,11 +96,22 @@ export default function AutoSuggestBudgetsScreen() {
     });
   };
 
+  const handleAmountChange = (categoryId: string, value: string) => {
+    setEditedAmounts((prev) => ({ ...prev, [categoryId]: value }));
+  };
+
   const handleAccept = () =>
     guardedRun(async () => {
-      const ids = Array.from(selectedIds);
-      if (ids.length > 0) {
-        await acceptSuggestions(ids);
+      const budgets = new Map<string, number>();
+      selectedIds.forEach((categoryId) => {
+        const raw = editedAmounts[categoryId] ?? "0";
+        const cents = Math.round(parseFloat(raw.replace(",", ".")) * 100);
+        if (!Number.isNaN(cents) && cents > 0) {
+          budgets.set(categoryId, cents);
+        }
+      });
+      if (budgets.size > 0) {
+        await acceptSuggestions(budgets);
       }
       router.back();
     });
@@ -55,72 +121,100 @@ export default function AutoSuggestBudgetsScreen() {
   };
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: cardBg }]}
-      contentContainerStyle={styles.scrollContent}
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <Text style={[styles.title, { color: primaryColor }]}>{t("budgets.autoSuggest.title")}</Text>
-      <Text style={[styles.subtitle, { color: secondaryColor }]}>
-        {t("budgets.autoSuggest.subtitle")}
-      </Text>
+      <ScrollView
+        style={[styles.container, { backgroundColor: cardBg }]}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={[styles.title, { color: primaryColor }]}>
+          {t("budgets.autoSuggest.title")}
+        </Text>
+        <Text style={[styles.subtitle, { color: secondaryColor }]}>
+          {t("budgets.autoSuggest.subtitle")}
+        </Text>
 
-      <View style={styles.list}>
-        {autoSuggestions.map((suggestion) => {
-          const category = CATEGORY_MAP[suggestion.categoryId];
-          const CategoryIcon = category?.icon;
-          const categoryLabel = category
-            ? getCategoryLabel(category, locale)
-            : suggestion.categoryId;
-          const isSelected = selectedIds.has(suggestion.categoryId);
+        <View style={styles.list}>
+          {autoSuggestions.map((suggestion) => {
+            const category = CATEGORY_MAP[suggestion.categoryId];
+            const CategoryIcon = category?.icon;
+            const categoryLabel = category
+              ? getCategoryLabel(category, locale)
+              : suggestion.categoryId;
+            const isSelected = selectedIds.has(suggestion.categoryId);
 
-          return (
-            <View key={suggestion.categoryId} style={[styles.row, { borderColor }]}>
-              <View style={styles.rowLeft}>
-                {CategoryIcon && <CategoryIcon size={18} color={category?.color ?? primaryColor} />}
-                <View>
-                  <Text style={[styles.categoryName, { color: primaryColor }]}>
-                    {categoryLabel}
-                  </Text>
-                  <Text style={[styles.suggestedAmount, { color: secondaryColor }]}>
-                    {formatCents(suggestion.suggestedAmountCents)}
-                  </Text>
+            return (
+              <View key={suggestion.categoryId} style={[styles.row, { borderColor }]}>
+                <View style={styles.rowLeft}>
+                  {CategoryIcon && <CategoryIcon size={18} color={category?.color ?? primaryColor} />}
+                  <View>
+                    <Text style={[styles.categoryName, { color: primaryColor }]}>
+                      {categoryLabel}
+                    </Text>
+                    <Text style={[styles.lastMonthLabel, { color: secondaryColor }]}>
+                      {formatCents(suggestion.suggestedAmountCents)} {t("search.lastMonth").toLowerCase()}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.rowRight}>
+                  <TextInput
+                    style={[
+                      styles.amountInput,
+                      {
+                        backgroundColor: isSelected ? pageBg : pageBg,
+                        color: isSelected ? primaryColor : secondaryColor,
+                        borderColor,
+                        opacity: isSelected ? 1 : 0.4,
+                      },
+                    ]}
+                    value={editedAmounts[suggestion.categoryId] ?? ""}
+                    onChangeText={(v) => handleAmountChange(suggestion.categoryId, v)}
+                    keyboardType="decimal-pad"
+                    editable={isSelected}
+                    selectTextOnFocus
+                  />
+                  <Toggle
+                    value={isSelected}
+                    onValueChange={() => handleToggle(suggestion.categoryId)}
+                  />
                 </View>
               </View>
-              <Switch
-                value={isSelected}
-                onValueChange={() => handleToggle(suggestion.categoryId)}
-                trackColor={{ true: accentGreen }}
-              />
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
 
-      {autoSuggestions.length === 0 && (
-        <Text style={[styles.emptyText, { color: secondaryColor }]}>
-          {t("budgets.autoSuggest.noSuggestions")}
-        </Text>
-      )}
-
-      <View style={styles.actions}>
-        <Pressable
-          style={[styles.acceptButton, { backgroundColor: accentGreen, opacity: isBusy ? 0.5 : 1 }]}
-          onPress={handleAccept}
-          disabled={isBusy}
-        >
-          <Text style={styles.acceptButtonText}>{t("budgets.autoSuggest.acceptSelected")}</Text>
-        </Pressable>
-        <Pressable onPress={handleSkip}>
-          <Text style={[styles.skipText, { color: secondaryColor }]}>
-            {t("budgets.autoSuggest.skipAll")}
+        {autoSuggestions.length === 0 && (
+          <Text style={[styles.emptyText, { color: secondaryColor }]}>
+            {t("budgets.autoSuggest.noSuggestions")}
           </Text>
-        </Pressable>
-      </View>
-    </ScrollView>
+        )}
+
+        <View style={styles.actions}>
+          <Pressable
+            style={[styles.acceptButton, { backgroundColor: accentGreen, opacity: isBusy ? 0.5 : 1 }]}
+            onPress={handleAccept}
+            disabled={isBusy}
+          >
+            <Text style={styles.acceptButtonText}>{t("budgets.autoSuggest.acceptSelected")}</Text>
+          </Pressable>
+          <Pressable onPress={handleSkip}>
+            <Text style={[styles.skipText, { color: secondaryColor }]}>
+              {t("budgets.autoSuggest.skipAll")}
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
@@ -150,14 +244,32 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    flex: 1,
+  },
+  rowRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   categoryName: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 14,
   },
-  suggestedAmount: {
+  lastMonthLabel: {
     fontFamily: "Poppins_500Medium",
-    fontSize: 12,
+    fontSize: 10,
+  },
+  amountInput: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 14,
+    borderRadius: 8,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    minWidth: 64,
+    textAlign: "right",
+    minHeight: 36,
   },
   emptyText: {
     fontFamily: "Poppins_500Medium",
@@ -186,5 +298,18 @@ const styles = StyleSheet.create({
   skipText: {
     fontFamily: "Poppins_500Medium",
     fontSize: 14,
+  },
+  toggleTrack: {
+    width: 48,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    paddingHorizontal: 3,
+  },
+  toggleKnob: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#FFFFFF",
   },
 });

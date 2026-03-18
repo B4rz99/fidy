@@ -60,7 +60,7 @@ type BudgetActions = {
   deleteBudget: (id: string) => Promise<void>;
   copyBudgetsForward: (targetMonth: string) => Promise<void>;
   loadAutoSuggestions: () => void;
-  acceptSuggestions: (categoryIds: string[]) => Promise<void>;
+  acceptSuggestions: (budgets: ReadonlyMap<string, number>) => Promise<void>;
   acknowledgeAlert: (budgetId: string, threshold: 80 | 100) => void;
 };
 
@@ -263,22 +263,23 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     }
   },
 
-  acceptSuggestions: async (categoryIds) => {
+  acceptSuggestions: async (budgetsByCategory) => {
     if (!dbRef || !userIdRef) return;
     const userId = userIdRef;
-    const { autoSuggestions, currentMonth } = get();
+    const { currentMonth } = get();
     const now = new Date().toISOString();
-    const selectedSuggestions = autoSuggestions.filter((s) => categoryIds.includes(s.categoryId));
+    const entries = Array.from(budgetsByCategory.entries());
+    if (entries.length === 0) return;
     try {
       dbRef.transaction((tx) => {
         const db = tx as unknown as AnyDb;
-        selectedSuggestions.forEach((s) => {
+        entries.forEach(([categoryId, amountCents]) => {
           const id = generateId("bgt");
           insertBudget(db, {
             id,
             userId,
-            categoryId: s.categoryId,
-            amountCents: s.suggestedAmountCents,
+            categoryId,
+            amountCents,
             month: currentMonth,
             createdAt: now,
             updatedAt: now,
