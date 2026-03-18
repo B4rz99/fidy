@@ -111,6 +111,7 @@ const en = {
       subtitle: "Based on last month's spending",
       skipAll: "Skip",
       acceptSelected: "Accept selected",
+      noSuggestions: "No spending data from last month",
     },
     upcomingBills: {
       title: "Upcoming Bills",

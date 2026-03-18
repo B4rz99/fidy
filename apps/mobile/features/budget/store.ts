@@ -1,6 +1,6 @@
 import { addMonths, format, subMonths } from "date-fns";
 import { create } from "zustand";
-import { useTransactionStore } from "@/features/transactions";
+import { CATEGORY_MAP, useTransactionStore } from "@/features/transactions";
 import { getSpendingByCategoryAggregate } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
@@ -12,6 +12,7 @@ import {
   deriveBudgetProgress,
   deriveBudgetSummary,
 } from "./lib/derive";
+import { scheduleBudgetAlert } from "./lib/notifications";
 import {
   copyBudgetsToMonth,
   getBudgetsForMonth,
@@ -112,7 +113,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
 
   refreshProgress: () => {
     if (!dbRef || !userIdRef) return;
-    const { budgets, acknowledgedAlerts, currentMonth } = get();
+    const { budgets, acknowledgedAlerts, currentMonth, pendingAlerts: previousAlerts } = get();
     try {
       const spending = getSpendingByCategoryAggregate(dbRef, userIdRef, currentMonth);
       const spendingMap = new Map(spending.map((s) => [s.categoryId, s.totalCents]));
@@ -120,8 +121,19 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
         deriveBudgetProgress(b, spendingMap.get(b.categoryId) ?? 0)
       );
       const summary = deriveBudgetSummary(progresses);
-      const pendingAlerts = deriveBudgetAlerts(progresses, acknowledgedAlerts);
-      set({ budgetProgress: progresses, summary, pendingAlerts });
+      const newPendingAlerts = deriveBudgetAlerts(progresses, acknowledgedAlerts);
+      set({ budgetProgress: progresses, summary, pendingAlerts: newPendingAlerts });
+
+      // Schedule push notifications for truly new alerts (best-effort, don't block)
+      const previousKeys = new Set(previousAlerts.map((a) => `${a.budgetId}:${a.threshold}`));
+      const freshAlerts = newPendingAlerts.filter(
+        (a) => !previousKeys.has(`${a.budgetId}:${a.threshold}`)
+      );
+      freshAlerts.forEach((alert) => {
+        const category = CATEGORY_MAP[alert.categoryId];
+        const name = category?.label.en ?? alert.categoryId;
+        scheduleBudgetAlert(alert, name).catch(() => {});
+      });
     } catch {
       // Query failed — keep existing state
     }
@@ -194,20 +206,23 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
 
   copyBudgetsForward: async (targetMonth) => {
     if (!dbRef || !userIdRef) return;
-    const db = dbRef;
+    const userId = userIdRef;
     const now = new Date().toISOString();
     try {
-      const newIds = copyBudgetsToMonth(db, userIdRef, get().currentMonth, targetMonth, now, () =>
-        generateId("bgt")
-      );
-      // Enqueue sync for each copied budget
-      newIds.forEach((newId) => {
-        enqueueSync(db, {
-          id: generateId("sq"),
-          tableName: "budgets",
-          rowId: newId,
-          operation: "insert",
-          createdAt: now,
+      dbRef.transaction((tx) => {
+        const db = tx as unknown as AnyDb;
+        const newIds = copyBudgetsToMonth(db, userId, get().currentMonth, targetMonth, now, () =>
+          generateId("bgt")
+        );
+        // Enqueue sync for each copied budget
+        newIds.forEach((newId) => {
+          enqueueSync(db, {
+            id: generateId("sq"),
+            tableName: "budgets",
+            rowId: newId,
+            operation: "insert",
+            createdAt: now,
+          });
         });
       });
     } catch {
@@ -235,30 +250,32 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
 
   acceptSuggestions: async (categoryIds) => {
     if (!dbRef || !userIdRef) return;
-    const db = dbRef;
     const userId = userIdRef;
     const { autoSuggestions, currentMonth } = get();
     const now = new Date().toISOString();
     const selectedSuggestions = autoSuggestions.filter((s) => categoryIds.includes(s.categoryId));
     try {
-      selectedSuggestions.forEach((s) => {
-        const id = generateId("bgt");
-        insertBudget(db, {
-          id,
-          userId,
-          categoryId: s.categoryId,
-          amountCents: s.suggestedAmountCents,
-          month: currentMonth,
-          createdAt: now,
-          updatedAt: now,
-          deletedAt: null,
-        });
-        enqueueSync(db, {
-          id: generateId("sq"),
-          tableName: "budgets",
-          rowId: id,
-          operation: "insert",
-          createdAt: now,
+      dbRef.transaction((tx) => {
+        const db = tx as unknown as AnyDb;
+        selectedSuggestions.forEach((s) => {
+          const id = generateId("bgt");
+          insertBudget(db, {
+            id,
+            userId,
+            categoryId: s.categoryId,
+            amountCents: s.suggestedAmountCents,
+            month: currentMonth,
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+          });
+          enqueueSync(db, {
+            id: generateId("sq"),
+            tableName: "budgets",
+            rowId: id,
+            operation: "insert",
+            createdAt: now,
+          });
         });
       });
     } catch {

@@ -112,6 +112,7 @@ const es = {
       subtitle: "Basado en los gastos del mes pasado",
       skipAll: "Omitir",
       acceptSelected: "Aceptar seleccionados",
+      noSuggestions: "Sin datos de gastos del mes pasado",
     },
     upcomingBills: {
       title: "Próximos Gastos Fijos",

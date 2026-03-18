@@ -19,14 +19,16 @@ export function ProgressBar({ percent, height = 8 }: Props) {
     progress.value = withTiming(Math.min(percent, 100) / 100, { duration: 600 });
   }, [percent, progress]);
 
+  // Determine bar color outside the worklet — it depends on React props, not shared values
+  const barColor = percent >= 100 ? accentRed : accentGreen;
+
   const animatedStyle = useAnimatedStyle(() => ({
     width: `${progress.value * 100}%`,
-    backgroundColor: percent >= 100 ? accentRed : accentGreen,
   }));
 
   return (
     <View style={[styles.track, { height, backgroundColor: borderColor }]}>
-      <Animated.View style={[styles.fill, { height }, animatedStyle]} />
+      <Animated.View style={[styles.fill, { height, backgroundColor: barColor }, animatedStyle]} />
     </View>
   );
 }

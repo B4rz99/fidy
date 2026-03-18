@@ -94,7 +94,7 @@ export default function AutoSuggestBudgetsScreen() {
 
       {autoSuggestions.length === 0 && (
         <Text style={[styles.emptyText, { color: secondaryColor }]}>
-          {t("budgets.upcomingBills.noBills")}
+          {t("budgets.autoSuggest.noSuggestions")}
         </Text>
       )}
 
