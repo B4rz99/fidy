@@ -3,9 +3,7 @@ import { memo, useCallback, useMemo, useState } from "react";
 import { useSharedValue } from "react-native-reanimated";
 import { DetectedTransactionsBanner } from "@/features/capture-sources";
 import {
-  buildProgressDisplay,
   EmailConnectBanner,
-  EmailProgressCard,
   FailedEmailsBanner,
   getGmailClientId,
   getOutlookClientId,
@@ -96,21 +94,11 @@ const ListHeader = memo(function ListHeader({
   onBalanceLayout,
 }: ListHeaderProps) {
   const { push } = useRouter();
-  const { t, locale } = useTranslation();
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
-  const phase = useEmailCaptureStore((s) => s.phase);
-  const progress = useEmailCaptureStore((s) => s.progress);
-  const clearProgress = useEmailCaptureStore((s) => s.clearProgress);
 
   const totalSpentCents = useMemo(
     () => categorySpending.reduce((sum, c) => sum + c.totalCents, 0),
     [categorySpending]
-  );
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: locale triggers recompute when language changes
-  const progressDisplay = useMemo(
-    () => (phase ? buildProgressDisplay(phase, progress, [], t) : null),
-    [phase, progress, t, locale]
   );
 
   return (
@@ -122,10 +110,7 @@ const ListHeader = memo(function ListHeader({
         }}
       />
       <FailedEmailsBanner onPress={() => push("/failed-emails" as never)} />
-      {phase && progressDisplay && (
-        <EmailProgressCard phase={phase} display={progressDisplay} onComplete={clearProgress} />
-      )}
-      {!phase && <NeedsReviewBanner onPress={() => push("/needs-review" as never)} />}
+      <NeedsReviewBanner onPress={() => push("/needs-review" as never)} />
       <SyncConflictBanner onPress={() => push("/sync-conflicts" as never)} />
       {Platform.OS === "ios" && (
         <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
@@ -149,6 +134,7 @@ export const HomeScreen = () => {
   const balanceCents = useTransactionStore((s) => s.balanceCents);
   const categorySpending = useTransactionStore((s) => s.categorySpending);
   const dailySpending = useTransactionStore((s) => s.dailySpending);
+  // phase gates ListEmptyComponent — suppresses "No transactions" during first sync
   const phase = useEmailCaptureStore((s) => s.phase);
 
   const scrollY = useSharedValue(0);

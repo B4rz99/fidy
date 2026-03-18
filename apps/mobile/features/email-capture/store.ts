@@ -25,6 +25,7 @@ import { type ProgressCallback, processEmails, processRetries } from "./services
 
 let dbRef: AnyDb | null = null;
 let userIdRef: string | null = null;
+let autoClearTimer: ReturnType<typeof setTimeout> | null = null;
 
 type EmailCaptureState = {
   accounts: EmailAccountRow[];
@@ -46,7 +47,6 @@ type EmailCaptureActions = {
   connectEmail: (provider: EmailProvider, clientId: string) => Promise<void>;
   disconnectEmail: (id: string) => Promise<void>;
   fetchAndProcess: (gmailClientId: string, outlookClientId: string) => Promise<void>;
-  clearProgress: () => void;
   confirmReview: (processedEmailId: string, categoryId: string) => Promise<void>;
 };
 
@@ -83,8 +83,6 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
   },
 
   dismissBanner: () => set({ bannerDismissed: true }),
-
-  clearProgress: () => set({ phase: null, progress: null }),
 
   dismissFailedEmail: async (id) => {
     if (!dbRef) return;
@@ -137,8 +135,11 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       return;
     }
 
-    // Clear any stale progress state from a previous run (e.g. if clearProgress
-    // wasn't called before this sync was triggered by AppState change)
+    // Clear any stale progress/timer from a previous run
+    if (autoClearTimer) {
+      clearTimeout(autoClearTimer);
+      autoClearTimer = null;
+    }
     set({ isFetching: true, phase: null, progress: null });
 
     try {
@@ -193,7 +194,6 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
           progress: { total: 0, completed: 0, saved: 0, failed: 0, needsReview: 0 },
         });
       } else if (showProgress) {
-        set({ phase: "fetching" });
         set({ phase: "processing" });
 
         let lastRefreshedSaved = 0;
@@ -248,13 +248,19 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     } catch (err) {
       console.warn("[EmailCapture] fetchAndProcess error:", err);
     } finally {
-      // If phase is 'complete', let the component handle cleanup via clearProgress.
-      // Only force-clear on error (phase never reached 'complete').
+      // On error (phase never reached 'complete'), clear immediately.
+      // On success, auto-clear after 2s so Connected Accounts can show the transition.
       const currentPhase = get().phase;
       if (currentPhase !== "complete") {
         set({ isFetching: false, progress: null, phase: null });
       } else {
         set({ isFetching: false });
+        autoClearTimer = setTimeout(() => {
+          autoClearTimer = null;
+          if (get().phase === "complete") {
+            set({ phase: null, progress: null });
+          }
+        }, 2000);
       }
     }
   },
