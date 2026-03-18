@@ -3,10 +3,10 @@ import { useCallback, useEffect, useState } from "react";
 import {
   CATEGORIES,
   type CategoryId,
-  formatSignedAmount,
   isValidCategoryId,
   type StoredTransaction,
 } from "@/features/transactions";
+import { formatSignedMoney } from "@/shared/lib/format-money";
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
@@ -59,7 +59,7 @@ export const NeedsReviewCard = ({
                 : "text-accent-red dark:text-accent-red-dark"
             }`}
           >
-            {formatSignedAmount(transaction.amountCents, transaction.type)}
+            {formatSignedMoney(transaction.amount, transaction.type)}
           </Text>
           <Text className="font-poppins-medium text-caption" style={{ color: "#6D6D6D" }}>
             {format(transaction.date, "PP", { locale: getDateFnsLocale(locale) })}

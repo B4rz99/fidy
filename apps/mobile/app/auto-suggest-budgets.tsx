@@ -1,7 +1,8 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useBudgetStore } from "@/features/budget";
-import { CATEGORY_MAP, digitsToCents, formatCents } from "@/features/transactions";
+import { CATEGORY_MAP } from "@/features/transactions";
+import { formatMoney, parseDigitsToAmount } from "@/shared/lib/format-money";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -28,7 +29,7 @@ export default function AutoSuggestBudgetsScreen() {
   );
   const [editedAmounts, setEditedAmounts] = useState<Record<string, string>>(() =>
     Object.fromEntries(
-      autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmountCents / 100)])
+      autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmount)])
     )
   );
 
@@ -36,7 +37,7 @@ export default function AutoSuggestBudgetsScreen() {
     setSelectedIds(new Set(autoSuggestions.map((s) => s.categoryId)));
     setEditedAmounts(
       Object.fromEntries(
-        autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmountCents / 100)])
+        autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmount)])
       )
     );
   }, [autoSuggestions]);
@@ -71,9 +72,9 @@ export default function AutoSuggestBudgetsScreen() {
       const budgets = new Map<string, number>();
       selectedIds.forEach((categoryId) => {
         const raw = editedAmounts[categoryId] ?? "0";
-        const cents = digitsToCents(raw);
-        if (cents > 0) {
-          budgets.set(categoryId, cents);
+        const amount = parseDigitsToAmount(raw);
+        if (amount > 0) {
+          budgets.set(categoryId, amount);
         }
       });
       if (budgets.size > 0) {
@@ -123,7 +124,7 @@ export default function AutoSuggestBudgetsScreen() {
                       {categoryLabel}
                     </Text>
                     <Text style={[styles.lastMonthLabel, { color: secondaryColor }]}>
-                      {formatCents(suggestion.suggestedAmountCents)}{" "}
+                      {formatMoney(suggestion.suggestedAmount)}{" "}
                       {t("search.lastMonth").toLowerCase()}
                     </Text>
                   </View>

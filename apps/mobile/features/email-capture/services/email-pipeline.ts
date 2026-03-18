@@ -61,7 +61,7 @@ async function saveTransaction(
     id: txId,
     userId,
     type: validated.type,
-    amountCents: validated.amountCents,
+    amount: validated.amount,
     categoryId,
     description: validated.description,
     date: validated.date,
@@ -193,7 +193,7 @@ export async function processEmails(
       const existingTxId = await findDuplicateTransaction(
         db,
         userId,
-        parsed.amountCents,
+        parsed.amount,
         parsed.date,
         parsed.description
       );
@@ -339,7 +339,7 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
     const existingTxId = await findDuplicateTransaction(
       db,
       userId,
-      parsed.amountCents,
+      parsed.amount,
       parsed.date,
       parsed.description
     );
@@ -361,7 +361,7 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
         id: txId,
         userId,
         type: parsed.type,
-        amountCents: parsed.amountCents,
+        amount: parsed.amount,
         categoryId: retryCategoryId,
         description: parsed.description,
         date: parsed.date,

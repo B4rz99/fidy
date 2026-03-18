@@ -1,5 +1,6 @@
 import { memo } from "react";
-import { CATEGORY_MAP, formatCents } from "@/features/transactions";
+import { CATEGORY_MAP } from "@/features/transactions";
+import { formatMoney } from "@/shared/lib/format-money";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
@@ -26,8 +27,8 @@ function BudgetCardInner({ progress, onPress }: Props) {
   const badgeColor = progress.isOverBudget ? accentRed : accentGreen;
 
   const remainingText = progress.isOverBudget
-    ? t("budgets.card.over", { amount: formatCents(Math.abs(progress.remainingCents)) })
-    : t("budgets.card.remaining", { amount: formatCents(progress.remainingCents) });
+    ? t("budgets.card.over", { amount: formatMoney(Math.abs(progress.remaining)) })
+    : t("budgets.card.remaining", { amount: formatMoney(progress.remaining) });
 
   const handlePress = () => onPress(progress.budgetId);
 
@@ -52,7 +53,7 @@ function BudgetCardInner({ progress, onPress }: Props) {
 
       <View style={styles.footer}>
         <Text style={[styles.spentText, { color: secondaryColor }]}>
-          {formatCents(progress.spentCents)} / {formatCents(progress.amountCents)}
+          {formatMoney(progress.spent)} / {formatMoney(progress.amount)}
         </Text>
         <Text
           style={[

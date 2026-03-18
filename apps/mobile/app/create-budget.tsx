@@ -12,12 +12,10 @@ import {
   CATEGORIES,
   type CategoryId,
   CategoryPill,
-  digitsToCents,
-  formatCents,
-  formatDollars,
   handleNumpadPress,
   isValidCategoryId,
 } from "@/features/transactions";
+import { formatInputDisplay, formatMoney, parseDigitsToAmount } from "@/shared/lib/format-money";
 import { FidyNumpad } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -42,9 +40,9 @@ export default function CreateBudgetScreen() {
       ? existingBudget.categoryId
       : ""
   );
-  // digits = raw whole-dollar string (e.g. "18900" for $18,900 COP)
+  // digits = raw whole-peso string (e.g. "18900" for $18.900 COP)
   const [digits, setDigits] = useState(
-    existingBudget ? String(Math.round(existingBudget.amountCents / 100)) : ""
+    existingBudget ? String(existingBudget.amount) : ""
   );
   const digitsRef = useRef(digits);
   digitsRef.current = digits;
@@ -74,7 +72,7 @@ export default function CreateBudgetScreen() {
   useEffect(() => {
     if (existingBudget) {
       setCategory(isValidCategoryId(existingBudget.categoryId) ? existingBudget.categoryId : "");
-      setDigits(String(Math.round(existingBudget.amountCents / 100)));
+      setDigits(String(existingBudget.amount));
     }
   }, [existingBudget?.id]);
 
@@ -88,21 +86,21 @@ export default function CreateBudgetScreen() {
     [existingCategoryIds]
   );
 
-  const displayAmount = digits.length > 0 ? formatDollars(digits) : "$";
+  const displayAmount = digits.length > 0 ? formatInputDisplay(digits) : "$";
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
   const handleSave = () =>
     guardedSave(async () => {
-      const cents = digitsToCents(digits);
-      if (cents <= 0) return;
+      const amount = parseDigitsToAmount(digits);
+      if (amount <= 0) return;
 
       if (isEdit && existingBudget) {
-        await updateBudget(existingBudget.id, cents);
+        await updateBudget(existingBudget.id, amount);
         router.back();
       } else {
         if (!category) return;
-        const success = await createBudget(category, cents);
+        const success = await createBudget(category, amount);
         if (success) router.back();
       }
     });
@@ -127,7 +125,7 @@ export default function CreateBudgetScreen() {
     const suggestion = autoSuggestions.find((s) => s.categoryId === category);
     if (!suggestion) return null;
     return t("budgets.create.lastMonthHint", {
-      amount: formatCents(suggestion.suggestedAmountCents),
+      amount: formatMoney(suggestion.suggestedAmount),
       category: catLabel,
     });
   }, [category, locale, t, autoSuggestions]);

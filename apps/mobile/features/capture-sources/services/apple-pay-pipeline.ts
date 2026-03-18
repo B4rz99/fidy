@@ -24,12 +24,12 @@ export async function processApplePayIntent(
   userId: string,
   intent: ApplePayIntentData
 ): Promise<ApplePayPipelineResult> {
-  const amountCents = Math.round(parseFloat((intent.amount * 100).toFixed(2)));
+  const amount = Math.round(intent.amount);
   const today = toIsoDate(new Date());
   const source = "apple_pay" as const;
 
   // Check fingerprint dedup
-  const fingerprint = captureFingerprint(source, amountCents, today, intent.merchant);
+  const fingerprint = captureFingerprint(source, amount, today, intent.merchant);
 
   if (inFlightFingerprints.has(fingerprint)) {
     return { saved: false, skippedDuplicate: true, transactionId: null };
@@ -46,7 +46,7 @@ export async function processApplePayIntent(
     const existingTxId = await findDuplicateTransaction(
       db,
       userId,
-      amountCents,
+      amount,
       today,
       intent.merchant
     );
@@ -83,7 +83,7 @@ export async function processApplePayIntent(
       id: txId,
       userId,
       type: "expense",
-      amountCents,
+      amount,
       categoryId,
       description: intent.merchant,
       date: today,

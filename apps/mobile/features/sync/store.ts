@@ -14,7 +14,7 @@ type TransactionSnapshot = {
   readonly id: string;
   readonly userId: string;
   readonly type: string;
-  readonly amountCents: number;
+  readonly amount: number;
   readonly categoryId: string;
   readonly description: string | null;
   readonly date: string;

@@ -41,7 +41,7 @@ type BudgetState = {
   currentMonth: string; // YYYY-MM format
   budgets: Budget[];
   budgetProgress: BudgetProgress[];
-  summary: { totalBudgetCents: number; totalSpentCents: number; percentUsed: number };
+  summary: { totalBudget: number; totalSpent: number; percentUsed: number };
   autoSuggestions: BudgetSuggestion[];
   acknowledgedAlerts: Set<string>; // "budgetId:threshold" keys
   pendingAlerts: readonly BudgetAlert[];
@@ -55,8 +55,8 @@ type BudgetActions = {
   prevMonth: () => void;
   loadBudgets: () => Promise<void>;
   refreshProgress: () => void;
-  createBudget: (categoryId: string, amountCents: number) => Promise<boolean>;
-  updateBudget: (id: string, amountCents: number) => Promise<void>;
+  createBudget: (categoryId: string, amount: number) => Promise<boolean>;
+  updateBudget: (id: string, amount: number) => Promise<void>;
   deleteBudget: (id: string) => Promise<void>;
   copyBudgetsForward: (targetMonth: string) => Promise<void>;
   loadAutoSuggestions: () => void;
@@ -68,7 +68,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
   currentMonth: formatMonth(new Date()),
   budgets: [],
   budgetProgress: [],
-  summary: { totalBudgetCents: 0, totalSpentCents: 0, percentUsed: 0 },
+  summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
   autoSuggestions: [],
   acknowledgedAlerts: new Set(),
   pendingAlerts: [],
@@ -124,7 +124,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     const { budgets, acknowledgedAlerts, currentMonth, pendingAlerts: previousAlerts } = get();
     try {
       const spending = getSpendingByCategoryAggregate(dbRef, userIdRef, currentMonth);
-      const spendingMap = new Map(spending.map((s) => [s.categoryId, s.totalCents]));
+      const spendingMap = new Map(spending.map((s) => [s.categoryId, s.total]));
       const progresses = budgets.map((b) =>
         deriveBudgetProgress(b, spendingMap.get(b.categoryId) ?? 0)
       );
@@ -148,11 +148,11 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     }
   },
 
-  createBudget: async (categoryId, amountCents) => {
+  createBudget: async (categoryId, amount) => {
     if (!dbRef || !userIdRef) return false;
     const validation = createBudgetSchema.safeParse({
       categoryId,
-      amountCents,
+      amount,
       month: get().currentMonth,
     });
     if (!validation.success) return false;
@@ -163,7 +163,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
         id,
         userId: userIdRef,
         categoryId,
-        amountCents,
+        amount,
         month: get().currentMonth,
         createdAt: now,
         updatedAt: now,
@@ -183,11 +183,11 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     return true;
   },
 
-  updateBudget: async (id, amountCents) => {
+  updateBudget: async (id, amount) => {
     if (!dbRef) return;
     const now = new Date().toISOString();
     try {
-      updateBudgetAmount(dbRef, id, amountCents, now);
+      updateBudgetAmount(dbRef, id, amount, now);
       enqueueSync(dbRef, {
         id: generateId("sq"),
         tableName: "budgets",
@@ -273,13 +273,13 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     try {
       dbRef.transaction((tx) => {
         const db = tx as unknown as AnyDb;
-        entries.forEach(([categoryId, amountCents]) => {
+        entries.forEach(([categoryId, amount]) => {
           const id = generateId("bgt");
           insertBudget(db, {
             id,
             userId,
             categoryId,
-            amountCents,
+            amount,
             month: currentMonth,
             createdAt: now,
             updatedAt: now,

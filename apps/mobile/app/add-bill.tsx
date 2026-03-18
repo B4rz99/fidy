@@ -5,9 +5,9 @@ import { type BillFrequency, FREQUENCIES, useCalendarStore } from "@/features/ca
 import {
   CATEGORIES,
   type CategoryId,
-  centsToDisplay,
   isValidCategoryId,
 } from "@/features/transactions";
+import { formatMoney } from "@/shared/lib/format-money";
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -35,7 +35,7 @@ export default function AddBillScreen() {
 
   const [name, setName] = useState(existingBill?.name ?? "");
   const [amount, setAmount] = useState(
-    existingBill ? centsToDisplay(existingBill.amountCents).replace("$", "") : ""
+    existingBill ? String(existingBill.amount) : ""
   );
   const [frequency, setFrequency] = useState<BillFrequency>(existingBill?.frequency ?? "monthly");
   const [category, setCategory] = useState<CategoryId>(
@@ -58,7 +58,7 @@ export default function AddBillScreen() {
   useEffect(() => {
     if (existingBill) {
       setName(existingBill.name);
-      setAmount(centsToDisplay(existingBill.amountCents).replace("$", ""));
+      setAmount(String(existingBill.amount));
       setFrequency(existingBill.frequency);
       setCategory(
         isValidCategoryId(existingBill.categoryId) ? existingBill.categoryId : "services"
@@ -75,11 +75,11 @@ export default function AddBillScreen() {
       if (!trimmedName) return;
 
       if (isEdit && existingBill) {
-        const cents = Math.round(parseFloat(amount.replace(/,/g, "")) * 100);
-        if (Number.isNaN(cents) || cents <= 0) return;
+        const amountValue = Math.round(parseFloat(amount.replace(/,/g, "")));
+        if (Number.isNaN(amountValue) || amountValue <= 0) return;
         await updateBillAction(existingBill.id, {
           name: trimmedName,
-          amountCents: cents,
+          amount: amountValue,
           frequency,
           categoryId: category,
           startDate,

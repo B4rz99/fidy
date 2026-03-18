@@ -2,17 +2,17 @@ import { useRouter } from "expo-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CATEGORY_MAP,
-  formatSignedAmount,
   makeDateLabel,
   type StoredTransaction,
 } from "@/features/transactions";
+import { formatSignedMoney } from "@/shared/lib/format-money";
 import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
 import { Ellipsis } from "@/shared/components/icons";
 import { FlatList, InteractionManager, Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { toIsoDate } from "@/shared/lib";
-import { amountDigitsToCents } from "../lib/amount-utils";
+import { amountDigitsToAmount } from "../lib/amount-utils";
 import { hasActiveFilters } from "../lib/filters";
 import type { SearchFilters } from "../lib/types";
 import { useSearchStore } from "../store";
@@ -53,7 +53,7 @@ const SearchTransactionItem = memo(function SearchTransactionItem({
         <TransactionRow
           icon={category?.icon ?? Ellipsis}
           name={tx.description || t("common.unknown")}
-          amount={formatSignedAmount(tx.amountCents, tx.type)}
+          amount={formatSignedMoney(tx.amount, tx.type)}
           category={category ? getCategoryLabel(category, locale) : t("common.other")}
           isPositive={tx.type === "income"}
         />
@@ -144,7 +144,7 @@ export const SearchScreen = () => {
   const handleMinChange = useCallback(
     (digits: string) => {
       setMinDigits(digits);
-      setFilters({ amountMinCents: amountDigitsToCents(digits) });
+      setFilters({ amountMin: amountDigitsToAmount(digits) });
     },
     [setFilters]
   );
@@ -152,7 +152,7 @@ export const SearchScreen = () => {
   const handleMaxChange = useCallback(
     (digits: string) => {
       setMaxDigits(digits);
-      setFilters({ amountMaxCents: amountDigitsToCents(digits) });
+      setFilters({ amountMax: amountDigitsToAmount(digits) });
     },
     [setFilters]
   );

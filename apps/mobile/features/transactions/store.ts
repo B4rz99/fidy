@@ -26,12 +26,12 @@ let userIdRef: string | null = null;
 
 type CategorySpendingItem = {
   readonly categoryId: string;
-  readonly totalCents: number;
+  readonly total: number;
 };
 
 type DailySpendingItem = {
   readonly date: string;
-  readonly totalCents: number;
+  readonly total: number;
 };
 
 type TransactionState = {
@@ -49,7 +49,7 @@ type TransactionState = {
   hasMore: boolean;
 
   // Aggregate data (from SQL)
-  balanceCents: number;
+  balance: number;
   categorySpending: CategorySpendingItem[];
   dailySpending: DailySpendingItem[];
 };
@@ -103,7 +103,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
   pages: [],
   offset: 0,
   hasMore: true,
-  balanceCents: 0,
+  balance: 0,
   categorySpending: [],
   dailySpending: [],
   editingId: null,
@@ -165,11 +165,11 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
       const startDate = toIsoDate(thirtyDaysAgo);
       const endDate = toIsoDate(now);
 
-      const balanceCents = getBalanceAggregate(dbRef, userIdRef);
+      const balance = getBalanceAggregate(dbRef, userIdRef);
       const categorySpending = getSpendingByCategoryAggregate(dbRef, userIdRef, currentMonth);
       const dailySpending = getDailySpendingAggregate(dbRef, userIdRef, startDate, endDate);
 
-      set({ balanceCents, categorySpending, dailySpending });
+      set({ balance, categorySpending, dailySpending });
     } catch {
       // Aggregate query failed — keep existing state
     }
@@ -271,7 +271,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     set({
       editingId: id,
       type: tx.type,
-      digits: String(tx.amountCents / 100),
+      digits: String(tx.amount),
       categoryId: tx.categoryId as CategoryId,
       description: tx.description,
       date: tx.date,

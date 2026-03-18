@@ -56,7 +56,7 @@ type CalendarActions = {
   updateBill: (
     id: string,
     fields: Partial<
-      Pick<Bill, "name" | "amountCents" | "frequency" | "categoryId" | "startDate" | "isActive">
+      Pick<Bill, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
     >
   ) => Promise<void>;
   deleteBill: (id: string) => Promise<void>;
@@ -109,12 +109,12 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
   addBill: async (name, amount, frequency, category, startDate) => {
     if (!dbRef || !userIdRef) return false;
 
-    const cents = Math.round(parseFloat(amount) * 100);
-    if (Number.isNaN(cents)) return false;
+    const amountValue = Math.round(parseFloat(amount));
+    if (Number.isNaN(amountValue)) return false;
 
     const result = createBillSchema.safeParse({
       name,
-      amountCents: cents,
+      amount: amountValue,
       frequency,
       categoryId: category,
       startDate,
@@ -185,7 +185,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
       id: txId,
       userId: userIdRef,
       type: "expense",
-      amountCents: bill.amountCents,
+      amount: bill.amount,
       categoryId: bill.categoryId,
       description: bill.name,
       date: parseIsoDate(dueDate),

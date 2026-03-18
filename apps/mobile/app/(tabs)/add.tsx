@@ -13,13 +13,12 @@ import { useShallow } from "zustand/react/shallow";
 import {
   CATEGORIES,
   CategoryPill,
-  digitsToCents,
-  formatDollars,
   getDateLabel,
   handleNumpadPress,
   TypeToggle,
   useTransactionStore,
 } from "@/features/transactions";
+import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib/format-money";
 import { FidyNumpad } from "@/shared/components";
 import { Calendar } from "@/shared/components/icons";
 import { Platform, Pressable, Text, TextInput, View } from "@/shared/components/rn";
@@ -78,8 +77,8 @@ export default function AddTransactionScreen() {
   const borderSubtle = useThemeColor("borderSubtle");
 
   const amountColor = type === "expense" ? accentRed : accentGreen;
-  const displayAmount = digits.length > 0 ? formatDollars(digits) : "$";
-  const canSave = digitsToCents(digits) > 0;
+  const displayAmount = digits.length > 0 ? formatInputDisplay(digits) : "$";
+  const canSave = parseDigitsToAmount(digits) > 0;
   const buttonBg = canSave ? accentGreen : "#CCCCCC";
   const dateLabel = useMemo(
     () => getDateLabel(date, new Date(), t("dates.today"), getDateFnsLocale(locale)),

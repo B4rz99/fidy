@@ -1,15 +1,15 @@
-import { formatCents } from "@/features/transactions";
+import { formatMoney } from "@/shared/lib/format-money";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { ProgressBar } from "./ProgressBar";
 
 type Props = {
-  readonly totalBudgetCents: number;
-  readonly totalSpentCents: number;
+  readonly totalBudget: number;
+  readonly totalSpent: number;
   readonly percentUsed: number;
 };
 
-export function BudgetSummaryCard({ totalBudgetCents, totalSpentCents, percentUsed }: Props) {
+export function BudgetSummaryCard({ totalBudget, totalSpent, percentUsed }: Props) {
   const { t } = useTranslation();
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
@@ -23,7 +23,7 @@ export function BudgetSummaryCard({ totalBudgetCents, totalSpentCents, percentUs
           {t("budgets.summary.totalBudget")}
         </Text>
         <Text style={[styles.amount, { color: primaryColor }]}>
-          {formatCents(totalBudgetCents)}
+          {formatMoney(totalBudget)}
         </Text>
       </View>
 
@@ -31,7 +31,7 @@ export function BudgetSummaryCard({ totalBudgetCents, totalSpentCents, percentUs
 
       <View style={styles.footer}>
         <Text style={[styles.spentText, { color: secondaryColor }]}>
-          {formatCents(totalSpentCents)} / {formatCents(totalBudgetCents)}
+          {formatMoney(totalSpent)} / {formatMoney(totalBudget)}
         </Text>
         <Text style={[styles.usedText, { color: secondaryColor }]}>
           {t("budgets.summary.used", { percent: percentUsed })}
