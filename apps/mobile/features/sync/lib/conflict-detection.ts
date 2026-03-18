@@ -1,5 +1,5 @@
 type TransactionRow = {
-  readonly amountCents: number;
+  readonly amount: number;
   readonly categoryId: string;
   readonly description: string | null;
   readonly date: string;
@@ -9,7 +9,7 @@ type TransactionRow = {
 
 export function hasDataConflict(local: TransactionRow, server: TransactionRow): boolean {
   return (
-    local.amountCents !== server.amountCents ||
+    local.amount !== server.amount ||
     local.categoryId !== server.categoryId ||
     local.description !== server.description ||
     local.date !== server.date ||

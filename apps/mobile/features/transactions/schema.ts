@@ -10,8 +10,8 @@ export const categoryIdSchema = z.string().refine(isValidCategoryId, {
 
 export const createTransactionSchema = z.object({
   type: transactionTypeSchema,
-  /** Amount in cents — must be positive */
-  amountCents: z.number().int().positive(),
+  /** Amount in whole currency units — must be positive */
+  amount: z.number().int().positive(),
   categoryId: categoryIdSchema,
   description: z.string().trim().max(200).optional(),
   date: z.date(),
@@ -23,7 +23,7 @@ export type StoredTransaction = {
   readonly id: string;
   readonly userId: string;
   readonly type: TransactionType;
-  readonly amountCents: number;
+  readonly amount: number;
   readonly categoryId: CategoryId;
   readonly description: string;
   readonly date: Date;

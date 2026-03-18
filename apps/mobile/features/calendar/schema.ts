@@ -14,7 +14,7 @@ export const FREQUENCIES: { value: BillFrequency; labelKey: string }[] = [
 export const billSchema = z.object({
   id: z.string(),
   name: z.string().min(1),
-  amountCents: z.number().int().positive(),
+  amount: z.number().int().positive(),
   frequency: billFrequency,
   categoryId: categoryIdSchema,
   startDate: z.date(),
@@ -46,7 +46,7 @@ export function toBillRow(
   id: string;
   userId: string;
   name: string;
-  amountCents: number;
+  amount: number;
   frequency: string;
   categoryId: string;
   startDate: string;
@@ -58,7 +58,7 @@ export function toBillRow(
     id: bill.id,
     userId,
     name: bill.name,
-    amountCents: bill.amountCents,
+    amount: bill.amount,
     frequency: bill.frequency,
     categoryId: bill.categoryId,
     startDate: bill.startDate.toISOString(),
@@ -72,7 +72,7 @@ export function toBillRow(
 export function fromBillRow(row: {
   id: string;
   name: string;
-  amountCents: number;
+  amount: number;
   frequency: string;
   categoryId: string;
   startDate: string;
@@ -81,7 +81,7 @@ export function fromBillRow(row: {
   return {
     id: row.id,
     name: row.name,
-    amountCents: row.amountCents,
+    amount: row.amount,
     frequency: row.frequency as BillFrequency,
     categoryId: row.categoryId,
     startDate: new Date(row.startDate),

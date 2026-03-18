@@ -11,7 +11,7 @@ export function insertBudget(db: AnyDb, row: BudgetRow) {
       target: [budgets.userId, budgets.categoryId, budgets.month],
       set: {
         id: row.id,
-        amountCents: row.amountCents,
+        amount: row.amount,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         deletedAt: null,
@@ -33,8 +33,8 @@ export function getBudgetById(db: AnyDb, id: string) {
   return rows[0] ?? null;
 }
 
-export function updateBudgetAmount(db: AnyDb, id: string, amountCents: number, now: string) {
-  db.update(budgets).set({ amountCents, updatedAt: now }).where(eq(budgets.id, id)).run();
+export function updateBudgetAmount(db: AnyDb, id: string, amount: number, now: string) {
+  db.update(budgets).set({ amount, updatedAt: now }).where(eq(budgets.id, id)).run();
 }
 
 export function softDeleteBudget(db: AnyDb, id: string, now: string) {
@@ -61,7 +61,7 @@ export function copyBudgetsToMonth(
         id: newId,
         userId: b.userId,
         categoryId: b.categoryId,
-        amountCents: b.amountCents,
+        amount: b.amount,
         month: targetMonth,
         createdAt: now,
         updatedAt: now,

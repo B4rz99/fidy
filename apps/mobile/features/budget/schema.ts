@@ -6,7 +6,7 @@ const monthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
 
 export const createBudgetSchema = z.object({
   categoryId: categoryIdSchema,
-  amountCents: z.number().int().positive(),
+  amount: z.number().int().positive(),
   month: monthSchema,
 });
 
@@ -17,7 +17,7 @@ export type Budget = {
   readonly id: string;
   readonly userId: string;
   readonly categoryId: string;
-  readonly amountCents: number;
+  readonly amount: number;
   readonly month: string;
   readonly createdAt: string;
   readonly updatedAt: string;
