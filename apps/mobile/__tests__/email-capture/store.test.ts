@@ -635,51 +635,53 @@ describe("useEmailCaptureStore", () => {
     it("auto-clears phase after 2s timeout when phase is complete", async () => {
       vi.useFakeTimers();
 
-      useEmailCaptureStore.setState({
-        accounts: [
+      try {
+        useEmailCaptureStore.setState({
+          accounts: [
+            {
+              id: "ea-1",
+              userId: mockUserId,
+              provider: "gmail",
+              email: "test@gmail.com",
+              lastFetchedAt: null,
+              createdAt: "2026-03-05T10:00:00Z",
+            },
+          ],
+        });
+
+        mockAdapter.fetchEmails.mockResolvedValueOnce([
           {
-            id: "ea-1",
-            userId: mockUserId,
+            externalId: "ext-1",
+            from: "b@b.com",
+            subject: "A",
+            body: "b",
+            receivedAt: "2026-03-10T00:00:00Z",
             provider: "gmail",
-            email: "test@gmail.com",
-            lastFetchedAt: null,
-            createdAt: "2026-03-05T10:00:00Z",
           },
-        ],
-      });
+        ]);
+        vi.mocked(processEmails).mockResolvedValueOnce({
+          filtered: 0,
+          skippedDuplicate: 0,
+          skippedCrossSource: 0,
+          saved: 1,
+          failed: 0,
+          needsReview: 0,
+        });
+        vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+        vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
-      mockAdapter.fetchEmails.mockResolvedValueOnce([
-        {
-          externalId: "ext-1",
-          from: "b@b.com",
-          subject: "A",
-          body: "b",
-          receivedAt: "2026-03-10T00:00:00Z",
-          provider: "gmail",
-        },
-      ]);
-      vi.mocked(processEmails).mockResolvedValueOnce({
-        filtered: 0,
-        skippedDuplicate: 0,
-        skippedCrossSource: 0,
-        saved: 1,
-        failed: 0,
-        needsReview: 0,
-      });
-      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
-      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+        await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
 
-      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+        // Phase should be "complete" immediately after
+        expect(useEmailCaptureStore.getState().phase).toBe("complete");
 
-      // Phase should be "complete" immediately after
-      expect(useEmailCaptureStore.getState().phase).toBe("complete");
-
-      // After 2s, phase should auto-clear
-      vi.advanceTimersByTime(2000);
-      expect(useEmailCaptureStore.getState().phase).toBeNull();
-      expect(useEmailCaptureStore.getState().progress).toBeNull();
-
-      vi.useRealTimers();
+        // After 2s, phase should auto-clear
+        vi.advanceTimersByTime(2000);
+        expect(useEmailCaptureStore.getState().phase).toBeNull();
+        expect(useEmailCaptureStore.getState().progress).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("preserves complete phase immediately after fetchAndProcess", async () => {
