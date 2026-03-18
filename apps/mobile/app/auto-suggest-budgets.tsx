@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useBudgetStore } from "@/features/budget";
 import { CATEGORY_MAP, formatCents } from "@/features/transactions";
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "@/shared/components/rn";
@@ -16,6 +16,10 @@ export default function AutoSuggestBudgetsScreen() {
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
     () => new Set(autoSuggestions.map((s) => s.categoryId))
   );
+
+  useEffect(() => {
+    setSelectedIds(new Set(autoSuggestions.map((s) => s.categoryId)));
+  }, [autoSuggestions]);
 
   const cardBg = useThemeColor("card");
   const borderColor = useThemeColor("borderSubtle");

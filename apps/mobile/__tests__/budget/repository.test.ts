@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockRun = vi.fn();
 const mockAll = vi.fn().mockReturnValue([]);
+const mockOnConflictDoUpdate = vi.fn().mockReturnThis();
 const mockValues = vi.fn().mockReturnThis();
 const mockInsert = vi.fn(() => ({ values: mockValues }));
 const mockSelect = vi.fn().mockReturnThis();
@@ -25,7 +26,8 @@ describe("budget repository", () => {
     vi.clearAllMocks();
     mockRun.mockReturnValue(undefined);
     mockAll.mockReturnValue([]);
-    mockValues.mockReturnValue({ run: mockRun });
+    mockOnConflictDoUpdate.mockReturnValue({ run: mockRun });
+    mockValues.mockReturnValue({ onConflictDoUpdate: mockOnConflictDoUpdate });
     mockSelect.mockReturnValue({ from: mockFrom });
     mockFrom.mockReturnValue({ where: mockWhere, all: mockAll });
     mockWhere.mockReturnValue({ all: mockAll });
@@ -54,6 +56,35 @@ describe("budget repository", () => {
 
       expect(mockInsert).toHaveBeenCalled();
       expect(mockValues).toHaveBeenCalledWith(row);
+      expect(mockOnConflictDoUpdate).toHaveBeenCalled();
+      expect(mockRun).toHaveBeenCalled();
+    });
+
+    it("uses onConflictDoUpdate to un-delete a soft-deleted budget", async () => {
+      const { insertBudget } = await import("@/features/budget/lib/repository");
+
+      const row = {
+        id: "budget-new",
+        userId: "user-1",
+        categoryId: "food",
+        amountCents: 60000,
+        month: "2026-03",
+        createdAt: "2026-03-10T00:00:00.000Z",
+        updatedAt: "2026-03-10T00:00:00.000Z",
+        deletedAt: null,
+      };
+
+      insertBudget(mockDb, row);
+
+      expect(mockOnConflictDoUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          set: expect.objectContaining({
+            id: row.id,
+            amountCents: row.amountCents,
+            deletedAt: null,
+          }),
+        })
+      );
       expect(mockRun).toHaveBeenCalled();
     });
   });
@@ -180,9 +211,8 @@ describe("budget repository", () => {
         },
       ];
 
-      // First call to getBudgetsForMonth returns source budgets
-      mockAll.mockReturnValueOnce(sourceRows);
-      // Subsequent insert calls return undefined (run returns undefined)
+      // First call: getBudgetsForMonth(source), second call: getBudgetsForMonth(target) → empty
+      mockAll.mockReturnValueOnce(sourceRows).mockReturnValueOnce([]);
 
       const { copyBudgetsToMonth } = await import("@/features/budget/lib/repository");
 
@@ -200,7 +230,8 @@ describe("budget repository", () => {
     });
 
     it("returns empty array when source month has no budgets", async () => {
-      mockAll.mockReturnValueOnce([]);
+      // First call: source → empty; second call: target → empty
+      mockAll.mockReturnValueOnce([]).mockReturnValueOnce([]);
 
       const { copyBudgetsToMonth } = await import("@/features/budget/lib/repository");
       const generateId = vi.fn(() => "new-id");
@@ -233,7 +264,8 @@ describe("budget repository", () => {
           deletedAt: null,
         },
       ];
-      mockAll.mockReturnValueOnce(activeRows);
+      // First call: source → activeRows; second call: target → empty
+      mockAll.mockReturnValueOnce(activeRows).mockReturnValueOnce([]);
 
       const { copyBudgetsToMonth } = await import("@/features/budget/lib/repository");
       let counter = 0;
@@ -256,6 +288,70 @@ describe("budget repository", () => {
           categoryId: "food",
           amountCents: 50000,
           deletedAt: null,
+        })
+      );
+    });
+
+    it("skips categories that already exist in the target month", async () => {
+      const sourceRows = [
+        {
+          id: "budget-1",
+          userId: "user-1",
+          categoryId: "food",
+          amountCents: 50000,
+          month: "2026-02",
+          createdAt: "2026-02-01T00:00:00.000Z",
+          updatedAt: "2026-02-01T00:00:00.000Z",
+          deletedAt: null,
+        },
+        {
+          id: "budget-2",
+          userId: "user-1",
+          categoryId: "transport",
+          amountCents: 20000,
+          month: "2026-02",
+          createdAt: "2026-02-01T00:00:00.000Z",
+          updatedAt: "2026-02-01T00:00:00.000Z",
+          deletedAt: null,
+        },
+      ];
+      const existingTargetRows = [
+        {
+          id: "budget-existing",
+          userId: "user-1",
+          categoryId: "food",
+          amountCents: 45000,
+          month: "2026-03",
+          createdAt: "2026-03-01T00:00:00.000Z",
+          updatedAt: "2026-03-01T00:00:00.000Z",
+          deletedAt: null,
+        },
+      ];
+
+      // First call: source → sourceRows; second call: target → existingTargetRows
+      mockAll.mockReturnValueOnce(sourceRows).mockReturnValueOnce(existingTargetRows);
+
+      const { copyBudgetsToMonth } = await import("@/features/budget/lib/repository");
+      let counter = 0;
+      const generateId = vi.fn(() => `new-${++counter}`);
+
+      const newIds = copyBudgetsToMonth(
+        mockDb,
+        "user-1",
+        "2026-02",
+        "2026-03",
+        "2026-03-01T00:00:00.000Z",
+        generateId
+      );
+
+      // Only "transport" should be copied; "food" already exists in target
+      expect(newIds).toHaveLength(1);
+      expect(generateId).toHaveBeenCalledTimes(1);
+      expect(mockInsert).toHaveBeenCalledTimes(1);
+      expect(mockValues).toHaveBeenCalledWith(
+        expect.objectContaining({
+          categoryId: "transport",
+          month: "2026-03",
         })
       );
     });

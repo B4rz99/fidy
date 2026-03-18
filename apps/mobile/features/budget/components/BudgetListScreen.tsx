@@ -43,7 +43,11 @@ export function BudgetListScreen() {
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
 
-  const monthAsDate = new Date(`${currentMonth}-01`);
+  const monthAsDate = new Date(
+    Number.parseInt(currentMonth.slice(0, 4), 10),
+    Number.parseInt(currentMonth.slice(5, 7), 10) - 1,
+    1
+  );
 
   const handleAddBudget = () => {
     router.push("/create-budget");

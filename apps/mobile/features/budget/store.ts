@@ -31,6 +31,12 @@ let unsubscribeTxStore: (() => void) | null = null;
 
 const formatMonth = (date: Date): string => format(date, "yyyy-MM");
 
+/** Parse "YYYY-MM" to a local-time Date (1st of month). Avoids UTC date-only parsing pitfall. */
+const parseMonth = (month: string): Date => {
+  const [y, m] = month.split("-").map(Number);
+  return new Date(y, m - 1, 1);
+};
+
 type BudgetState = {
   currentMonth: string; // YYYY-MM format
   budgets: Budget[];
@@ -89,13 +95,13 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
   },
 
   nextMonth: () => {
-    const current = new Date(`${get().currentMonth}-01`);
+    const current = parseMonth(get().currentMonth);
     const next = addMonths(current, 1);
     get().setMonth(formatMonth(next));
   },
 
   prevMonth: () => {
-    const current = new Date(`${get().currentMonth}-01`);
+    const current = parseMonth(get().currentMonth);
     const prev = subMonths(current, 1);
     get().setMonth(formatMonth(prev));
   },
@@ -246,7 +252,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     if (!dbRef || !userIdRef) return;
     const { currentMonth, budgets } = get();
     try {
-      const currentDate = new Date(`${currentMonth}-01`);
+      const currentDate = parseMonth(currentMonth);
       const prevMonth = formatMonth(subMonths(currentDate, 1));
       const prevSpending = getSpendingByCategoryAggregate(dbRef, userIdRef, prevMonth);
       const existingCategoryIds = new Set(budgets.map((b) => b.categoryId));

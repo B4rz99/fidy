@@ -5,7 +5,19 @@ import { budgets } from "@/shared/db";
 export type BudgetRow = typeof budgets.$inferInsert;
 
 export function insertBudget(db: AnyDb, row: BudgetRow) {
-  db.insert(budgets).values(row).run();
+  db.insert(budgets)
+    .values(row)
+    .onConflictDoUpdate({
+      target: [budgets.userId, budgets.categoryId, budgets.month],
+      set: {
+        id: row.id,
+        amountCents: row.amountCents,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        deletedAt: null,
+      },
+    })
+    .run();
 }
 
 export function getBudgetsForMonth(db: AnyDb, userId: string, month: string) {
@@ -38,18 +50,23 @@ export function copyBudgetsToMonth(
   generateId: () => string
 ): string[] {
   const sourceBudgets = getBudgetsForMonth(db, userId, sourceMonth);
-  return sourceBudgets.map((b) => {
-    const newId = generateId();
-    insertBudget(db, {
-      id: newId,
-      userId: b.userId,
-      categoryId: b.categoryId,
-      amountCents: b.amountCents,
-      month: targetMonth,
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
+  const existingTargetBudgets = getBudgetsForMonth(db, userId, targetMonth);
+  const existingCategoryIds = new Set(existingTargetBudgets.map((b) => b.categoryId));
+
+  return sourceBudgets
+    .filter((b) => !existingCategoryIds.has(b.categoryId))
+    .map((b) => {
+      const newId = generateId();
+      insertBudget(db, {
+        id: newId,
+        userId: b.userId,
+        categoryId: b.categoryId,
+        amountCents: b.amountCents,
+        month: targetMonth,
+        createdAt: now,
+        updatedAt: now,
+        deletedAt: null,
+      });
+      return newId;
     });
-    return newId;
-  });
 }

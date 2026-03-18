@@ -76,7 +76,7 @@ export default function CreateBudgetScreen() {
 
   const handleSave = () =>
     guardedSave(async () => {
-      const cents = Math.round(parseFloat(amount.replace(/,/g, "")) * 100);
+      const cents = Math.round(parseFloat(amount.replace(",", ".")) * 100);
       if (Number.isNaN(cents) || cents <= 0) return;
 
       if (isEdit && existingBudget) {
