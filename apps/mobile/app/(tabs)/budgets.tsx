@@ -1,4 +1,4 @@
-import { BudgetListScreen } from "@/features/budget/components/BudgetListScreen";
+import { BudgetListScreen } from "@/features/budget";
 
 export default function BudgetsTab() {
   return <BudgetListScreen />;

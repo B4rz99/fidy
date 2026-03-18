@@ -1,7 +1,5 @@
 import { useRouter } from "expo-router";
-import { useCalendarStore } from "@/features/calendar";
-import { CalendarGrid } from "@/features/calendar/components/CalendarGrid";
-import { MonthNavigator } from "@/features/calendar/components/MonthNavigator";
+import { CalendarGrid, MonthNavigator, useCalendarStore } from "@/features/calendar";
 import { ScreenLayout } from "@/shared/components";
 import { View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
