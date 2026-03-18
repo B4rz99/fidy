@@ -26,6 +26,7 @@ import {
 } from "@/features/capture-sources";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
 import { useSearchStore } from "@/features/search";
+import { useSettingsStore } from "@/features/settings";
 import { useSync, useSyncConflictStore } from "@/features/sync";
 import { useTransactionStore } from "@/features/transactions";
 import { ErrorFallback } from "@/shared/components";
@@ -80,6 +81,10 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
         .loadInitialPage()
         .catch(handleRecoverableError("Failed to load transactions"));
       useSyncConflictStore.getState().loadConflicts();
+      useSettingsStore
+        .getState()
+        .hydrate()
+        .catch(handleRecoverableError("Failed to hydrate settings"));
       registerBackgroundTask().catch(captureError);
     }
   }, [migrationsReady, db, userId]);
@@ -163,6 +168,18 @@ function RootLayout() {
           />
           <Stack.Screen
             name="day-detail"
+            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+          />
+          <Stack.Screen
+            name="theme-picker"
+            options={{ presentation: "formSheet", sheetAllowedDetents: [0.24] }}
+          />
+          <Stack.Screen
+            name="language-picker"
+            options={{ presentation: "formSheet", sheetAllowedDetents: [0.18] }}
+          />
+          <Stack.Screen
+            name="delete-account"
             options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
           />
           <Stack.Screen name="search" />

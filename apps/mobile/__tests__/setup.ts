@@ -16,6 +16,7 @@ vi.mock("react-native", () => ({
   Image: "Image",
   ActivityIndicator: "ActivityIndicator",
   Alert: { alert: vi.fn() },
+  Appearance: { setColorScheme: vi.fn() },
   StyleSheet: { create: (styles: Record<string, unknown>) => styles },
   Keyboard: { dismiss: vi.fn() },
   KeyboardAvoidingView: "KeyboardAvoidingView",
@@ -171,9 +172,9 @@ vi.mock("@supabase/supabase-js", () => ({
 
 // Mock expo-secure-store
 vi.mock("expo-secure-store", () => ({
-  getItemAsync: vi.fn(),
-  setItemAsync: vi.fn(),
-  deleteItemAsync: vi.fn(),
+  getItemAsync: vi.fn(() => Promise.resolve(null)),
+  setItemAsync: vi.fn(() => Promise.resolve()),
+  deleteItemAsync: vi.fn(() => Promise.resolve()),
   getItem: vi.fn(),
   setItem: vi.fn(),
 }));

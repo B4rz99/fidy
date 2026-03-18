@@ -22,7 +22,7 @@ describe("TAB_CONFIG", () => {
     expect(TAB_CONFIG.index.label).toBe("HOME");
     expect(TAB_CONFIG.ai.label).toBe("AI");
     expect(TAB_CONFIG.calendar.label).toBe("CALENDAR");
-    expect(TAB_CONFIG.menu.label).toBe("MENU");
+    expect(TAB_CONFIG.menu.label).toBe("MORE");
   });
 
   test("every entry has icon property", () => {

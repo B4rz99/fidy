@@ -27,7 +27,7 @@ const en = {
     ai: "AI",
     add: "Add",
     calendar: "Calendar",
-    menu: "Menu",
+    settings: "Settings",
   },
 
   // Transactions
@@ -208,9 +208,43 @@ const en = {
     },
   },
 
-  // Menu
-  menu: {
-    connectedMails: "Connected Mails",
+  // Settings
+  settings: {
+    title: "Settings",
+    accountSection: "ACCOUNT",
+    preferencesSection: "PREFERENCES",
+    connectionsSection: "CONNECTIONS",
+    appSection: "APP",
+    theme: "Theme",
+    themeSystem: "System",
+    themeLight: "Light",
+    themeDark: "Dark",
+    language: "Language",
+    languageEnglish: "English",
+    languageSpanish: "Español",
+    connectedEmails: "Connected Emails",
+    connectedEmailsCount: {
+      one: "%{count} account",
+      other: "%{count} accounts",
+    },
+    notifications: "Notifications",
+    helpSupport: "Help & Support",
+    privacyPolicy: "Privacy Policy",
+    termsOfService: "Terms of Service",
+    version: "Version",
+    deleteAccount: "Delete Account",
+    deleteAccountTitle: "Delete Account",
+    deleteAccountWarning:
+      "This will permanently delete your account and all your data. This action cannot be undone.",
+    deleteAccountUnsyncedWarning: {
+      one: "You have %{count} unsynced change that will be lost.",
+      other: "You have %{count} unsynced changes that will be lost.",
+    },
+    deleteAccountConfirm: "Delete My Account",
+    profileTitle: "Profile",
+    logout: "Log Out",
+    logoutConfirmTitle: "Log Out",
+    logoutConfirmMessage: "Are you sure you want to log out?",
   },
 
   // Notification Capture

@@ -5,7 +5,7 @@ import type { ExpoConfig } from "expo/config";
 const config: ExpoConfig & { newArchEnabled?: boolean } = {
   name: "Fidy",
   slug: "Fidy",
-  version: "1.0.0",
+  version: "0.0.1",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: "fidy",
