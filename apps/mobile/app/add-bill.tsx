@@ -2,12 +2,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { type BillFrequency, FREQUENCIES, useCalendarStore } from "@/features/calendar";
-import {
-  CATEGORIES,
-  type CategoryId,
-  isValidCategoryId,
-} from "@/features/transactions";
-import { formatMoney } from "@/shared/lib/format-money";
+import { CATEGORIES, type CategoryId, isValidCategoryId } from "@/features/transactions";
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -34,9 +29,7 @@ export default function AddBillScreen() {
   const isEdit = !!existingBill;
 
   const [name, setName] = useState(existingBill?.name ?? "");
-  const [amount, setAmount] = useState(
-    existingBill ? String(existingBill.amount) : ""
-  );
+  const [amount, setAmount] = useState(existingBill ? String(existingBill.amount) : "");
   const [frequency, setFrequency] = useState<BillFrequency>(existingBill?.frequency ?? "monthly");
   const [category, setCategory] = useState<CategoryId>(
     existingBill?.categoryId && isValidCategoryId(existingBill.categoryId)
