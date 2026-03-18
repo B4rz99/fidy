@@ -178,9 +178,14 @@ export async function syncPull(
   return true;
 }
 
-export async function fullSync(db: AnyDb, supabase: SupabaseClient, userId: string): Promise<void> {
+export async function fullSync(
+  db: AnyDb,
+  supabase: SupabaseClient,
+  userId: string
+): Promise<boolean> {
   const pullOk = await syncPull(db, supabase, userId);
   if (pullOk) {
     await syncPush(db, supabase, userId);
   }
+  return pullOk;
 }

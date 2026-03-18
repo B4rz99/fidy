@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTransactionStore } from "@/features/transactions";
 import { AppState } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
@@ -7,13 +7,23 @@ import { isOnline, onConnectivityChange } from "../services/networkMonitor";
 import { fullSync } from "../services/syncEngine";
 import { useSyncConflictStore } from "../store";
 
-export function useSync(db: AnyDb | null, userId: string | null) {
+export function useSync(db: AnyDb | null, userId: string | null): boolean {
   const isSyncing = useRef(false);
+  const [initialSyncDone, setInitialSyncDone] = useState(false);
 
   useEffect(() => {
     if (!db || !userId) return;
 
+    setInitialSyncDone(false);
     const supabase = getSupabase();
+    const hasCompletedInitialRun = { current: false };
+
+    const markInitialDone = () => {
+      if (!hasCompletedInitialRun.current) {
+        hasCompletedInitialRun.current = true;
+        setInitialSyncDone(true);
+      }
+    };
 
     const runSync = async () => {
       if (isSyncing.current) return;
@@ -21,9 +31,10 @@ export function useSync(db: AnyDb | null, userId: string | null) {
       if (!online) return;
       isSyncing.current = true;
       try {
-        await fullSync(db, supabase, userId);
+        const pullOk = await fullSync(db, supabase, userId);
         await useTransactionStore.getState().refresh();
         useSyncConflictStore.getState().loadConflicts();
+        if (pullOk) markInitialDone();
       } catch (error) {
         console.warn("[sync] background sync failed:", error);
       } finally {
@@ -46,4 +57,6 @@ export function useSync(db: AnyDb | null, userId: string | null) {
       unsubscribeNet();
     };
   }, [db, userId]);
+
+  return initialSyncDone;
 }
