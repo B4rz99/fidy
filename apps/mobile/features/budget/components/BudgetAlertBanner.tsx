@@ -13,15 +13,17 @@ type Props = {
 export function BudgetAlertBanner({ alert, onDismiss }: Props) {
   const { t, locale } = useTranslation();
   const accentRed = useThemeColor("accentRed");
-  const accentGreenLight = useThemeColor("accentGreenLight");
+  const accentGreen = useThemeColor("accentGreen");
+  const primaryColor = useThemeColor("primary");
 
   const category = CATEGORY_MAP[alert.categoryId];
   const categoryLabel = category ? getCategoryLabel(category, locale) : alert.categoryId;
 
   const isOverBudget = alert.threshold === 100;
-  const backgroundColor = isOverBudget ? accentRed : accentGreenLight;
-  const textColor = isOverBudget ? "#FFFFFF" : "#000000";
-  const iconColor = isOverBudget ? "#FFFFFF" : accentRed;
+  // Over budget: solid red. Near limit: soft pastel green (15% opacity)
+  const backgroundColor = isOverBudget ? `${accentRed}20` : `${accentGreen}18`;
+  const textColor = primaryColor;
+  const iconColor = isOverBudget ? accentRed : accentGreen;
 
   const message = isOverBudget
     ? t("budgets.alerts.overBudget", { category: categoryLabel, percent: alert.percentUsed })
@@ -30,7 +32,7 @@ export function BudgetAlertBanner({ alert, onDismiss }: Props) {
   const handleDismiss = () => onDismiss(alert.budgetId, alert.threshold);
 
   return (
-    <View style={[styles.banner, { backgroundColor }]}>
+    <View style={[styles.banner, { backgroundColor, borderColor: iconColor, borderWidth: 1 }]}>
       <TriangleAlert size={18} color={iconColor} />
       <Text style={[styles.text, { color: textColor }]} numberOfLines={2}>
         {message}

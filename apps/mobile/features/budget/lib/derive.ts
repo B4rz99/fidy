@@ -68,9 +68,23 @@ export function deriveBudgetSummary(progresses: readonly BudgetProgress[]): {
 }
 
 /**
+ * Rounds cents UP to the nearest "clean" COP amount.
+ * COP amounts are whole numbers (no centavos in practice), so rounding
+ * targets scale with magnitude:
+ *   < 100,000 COP  → nearest 1,000 COP   (100,000 centavos)
+ *   < 1,000,000 COP → nearest 10,000 COP  (1,000,000 centavos)
+ *   >= 1,000,000 COP → nearest 100,000 COP (10,000,000 centavos)
+ */
+const roundUpCop = (cents: number): number => {
+  const cop = cents / 100;
+  const unit = cop < 100_000 ? 1_000 : cop < 1_000_000 ? 10_000 : 100_000;
+  return Math.ceil(cop / unit) * unit * 100;
+};
+
+/**
  * Pure derivation: suggest budgets for categories that have prior-month spending
  * but no existing budget this month.
- * Suggested amount is rounded UP to the nearest 100 cents.
+ * Suggested amount is rounded UP to the nearest clean COP amount.
  */
 export function deriveAutoSuggestBudgets(
   lastMonthSpending: readonly { readonly categoryId: string; readonly totalCents: number }[],
@@ -80,7 +94,7 @@ export function deriveAutoSuggestBudgets(
     .filter((s) => !existingBudgetCategoryIds.has(s.categoryId))
     .map((s) => ({
       categoryId: s.categoryId,
-      suggestedAmountCents: Math.ceil(s.totalCents / 100) * 100,
+      suggestedAmountCents: roundUpCop(s.totalCents),
     }));
 }
 

@@ -1,6 +1,5 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useBudgetStore } from "@/features/budget";
 import { CATEGORY_MAP, formatCents } from "@/features/transactions";
 import {
@@ -9,45 +8,13 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
 } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-
-function Toggle({
-  value,
-  onValueChange,
-}: {
-  value?: boolean;
-  onValueChange?: (v: boolean) => void;
-}) {
-  const accentGreen = useThemeColor("accentGreen");
-  const tertiaryColor = useThemeColor("tertiary");
-  const isOn = value === true;
-  const progress = useSharedValue(isOn ? 1 : 0);
-
-  useEffect(() => {
-    progress.set(withTiming(isOn ? 1 : 0, { duration: 200 }));
-  }, [isOn, progress]);
-
-  const trackStyle = useAnimatedStyle(() => ({
-    backgroundColor: progress.get() > 0.5 ? accentGreen : tertiaryColor,
-  }));
-
-  const knobStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: progress.get() * 20 }],
-  }));
-
-  return (
-    <Pressable onPress={() => onValueChange?.(!isOn)}>
-      <Animated.View style={[styles.toggleTrack, trackStyle]}>
-        <Animated.View style={[styles.toggleKnob, knobStyle]} />
-      </Animated.View>
-    </Pressable>
-  );
-}
 
 export default function AutoSuggestBudgetsScreen() {
   const router = useRouter();
@@ -59,11 +26,10 @@ export default function AutoSuggestBudgetsScreen() {
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
     () => new Set(autoSuggestions.map((s) => s.categoryId))
   );
-  const [editedAmounts, setEditedAmounts] = useState<Record<string, string>>(
-    () =>
-      Object.fromEntries(
-        autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmountCents / 100)])
-      )
+  const [editedAmounts, setEditedAmounts] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmountCents / 100)])
+    )
   );
 
   useEffect(() => {
@@ -149,13 +115,16 @@ export default function AutoSuggestBudgetsScreen() {
             return (
               <View key={suggestion.categoryId} style={[styles.row, { borderColor }]}>
                 <View style={styles.rowLeft}>
-                  {CategoryIcon && <CategoryIcon size={18} color={category?.color ?? primaryColor} />}
+                  {CategoryIcon && (
+                    <CategoryIcon size={18} color={category?.color ?? primaryColor} />
+                  )}
                   <View>
                     <Text style={[styles.categoryName, { color: primaryColor }]}>
                       {categoryLabel}
                     </Text>
                     <Text style={[styles.lastMonthLabel, { color: secondaryColor }]}>
-                      {formatCents(suggestion.suggestedAmountCents)} {t("search.lastMonth").toLowerCase()}
+                      {formatCents(suggestion.suggestedAmountCents)}{" "}
+                      {t("search.lastMonth").toLowerCase()}
                     </Text>
                   </View>
                 </View>
@@ -176,9 +145,10 @@ export default function AutoSuggestBudgetsScreen() {
                     editable={isSelected}
                     selectTextOnFocus
                   />
-                  <Toggle
+                  <Switch
                     value={isSelected}
                     onValueChange={() => handleToggle(suggestion.categoryId)}
+                    trackColor={{ true: accentGreen }}
                   />
                 </View>
               </View>
@@ -194,7 +164,10 @@ export default function AutoSuggestBudgetsScreen() {
 
         <View style={styles.actions}>
           <Pressable
-            style={[styles.acceptButton, { backgroundColor: accentGreen, opacity: isBusy ? 0.5 : 1 }]}
+            style={[
+              styles.acceptButton,
+              { backgroundColor: accentGreen, opacity: isBusy ? 0.5 : 1 },
+            ]}
             onPress={handleAccept}
             disabled={isBusy}
           >
@@ -298,18 +271,5 @@ const styles = StyleSheet.create({
   skipText: {
     fontFamily: "Poppins_500Medium",
     fontSize: 14,
-  },
-  toggleTrack: {
-    width: 48,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: "center",
-    paddingHorizontal: 3,
-  },
-  toggleKnob: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: "#FFFFFF",
   },
 });

@@ -1,23 +1,25 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { useBudgetStore } from "@/features/budget";
 import {
   CATEGORIES,
   type CategoryId,
+  CategoryPill,
+  digitsToCents,
   formatCents,
+  formatDollars,
+  handleNumpadPress,
   isValidCategoryId,
 } from "@/features/transactions";
-import {
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "@/shared/components/rn";
+import { FidyNumpad } from "@/shared/components";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 
@@ -40,25 +42,39 @@ export default function CreateBudgetScreen() {
       ? existingBudget.categoryId
       : ""
   );
-  const [amount, setAmount] = useState(
+  // digits = raw whole-dollar string (e.g. "18900" for $18,900 COP)
+  const [digits, setDigits] = useState(
     existingBudget ? String(existingBudget.amountCents / 100) : ""
   );
+  const digitsRef = useRef(digits);
+  digitsRef.current = digits;
 
-  const amountRef = useRef<TextInput>(null);
+  // Blinking cursor
+  const cursorOpacity = useSharedValue(1);
+  useEffect(() => {
+    cursorOpacity.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 0 }),
+        withTiming(1, { duration: 530 }),
+        withTiming(0, { duration: 0 }),
+        withTiming(0, { duration: 530 })
+      ),
+      -1
+    );
+  }, [cursorOpacity]);
+  const cursorStyle = useAnimatedStyle(() => ({ opacity: cursorOpacity.value }));
 
   const cardBg = useThemeColor("card");
-  const borderColor = useThemeColor("borderSubtle");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
-  const pageBg = useThemeColor("page");
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: only re-sync when the budget identity changes
   useEffect(() => {
     if (existingBudget) {
       setCategory(isValidCategoryId(existingBudget.categoryId) ? existingBudget.categoryId : "");
-      setAmount(String(existingBudget.amountCents / 100));
+      setDigits(String(existingBudget.amountCents / 100));
     }
   }, [existingBudget?.id]);
 
@@ -72,12 +88,14 @@ export default function CreateBudgetScreen() {
     [existingCategoryIds]
   );
 
+  const displayAmount = digits.length > 0 ? formatDollars(digits) : "$";
+
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
   const handleSave = () =>
     guardedSave(async () => {
-      const cents = Math.round(parseFloat(amount.replace(",", ".")) * 100);
-      if (Number.isNaN(cents) || cents <= 0) return;
+      const cents = digitsToCents(digits);
+      if (cents <= 0) return;
 
       if (isEdit && existingBudget) {
         await updateBudget(existingBudget.id, cents);
@@ -96,10 +114,9 @@ export default function CreateBudgetScreen() {
       router.back();
     });
 
-  const handleCategoryPress = (id: CategoryId) => {
-    Keyboard.dismiss();
-    setCategory(id);
-  };
+  const handleKey = useCallback((key: string) => {
+    setDigits(handleNumpadPress(digitsRef.current, key));
+  }, []);
 
   // Hint: last month spending for selected category
   const lastMonthHint = useMemo(() => {
@@ -116,100 +133,80 @@ export default function CreateBudgetScreen() {
   }, [category, locale, t, autoSuggestions]);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    <ScrollView
+      style={[styles.container, { backgroundColor: cardBg }]}
+      contentContainerStyle={styles.scrollContent}
     >
-      <ScrollView
-        style={[styles.container, { backgroundColor: cardBg }]}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={[styles.title, { color: primaryColor }]}>
-          {isEdit ? t("budgets.edit.title") : t("budgets.create.title")}
-        </Text>
+      <Text style={[styles.title, { color: primaryColor }]}>
+        {isEdit ? t("budgets.edit.title") : t("budgets.create.title")}
+      </Text>
 
-        <View style={styles.formGrid}>
-          {!isEdit && (
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: secondaryColor }]}>
-                {t("budgets.create.selectCategory")}
-              </Text>
-              <View style={styles.chipRow}>
-                {availableCategories.map((c) => (
-                  <Pressable
-                    key={c.id}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor: category === c.id ? accentGreen : pageBg,
-                        borderColor,
-                      },
-                    ]}
-                    onPress={() => handleCategoryPress(c.id)}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        { color: category === c.id ? "#FFFFFF" : primaryColor },
-                      ]}
-                    >
-                      {getCategoryLabel(c, locale)}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-          )}
-
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: secondaryColor }]}>
-              {t("budgets.create.enterAmount")}
-            </Text>
-            <TextInput
-              ref={amountRef}
-              style={[styles.input, { backgroundColor: pageBg, color: primaryColor, borderColor }]}
-              value={amount}
-              onChangeText={setAmount}
-              placeholder="0"
-              placeholderTextColor={secondaryColor}
-              keyboardType="decimal-pad"
-              returnKeyType="done"
-            />
-            {lastMonthHint && (
-              <Text style={[styles.hint, { color: secondaryColor }]}>{lastMonthHint}</Text>
-            )}
+      {!isEdit && (
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: secondaryColor }]}>
+            {t("budgets.create.selectCategory")}
+          </Text>
+          <View style={styles.chipRow}>
+            {availableCategories.map((c) => (
+              <CategoryPill
+                key={c.id}
+                category={c}
+                isSelected={category === c.id}
+                onPress={() => setCategory(c.id)}
+              />
+            ))}
           </View>
         </View>
+      )}
 
+      <View style={styles.amountSection}>
+        <Text style={[styles.inputLabel, { color: secondaryColor }]}>
+          {t("budgets.create.enterAmount")}
+        </Text>
+        <View style={styles.amountRow}>
+          <Text style={[styles.amountDisplay, { color: primaryColor }]}>{displayAmount}</Text>
+          <Animated.View
+            style={[
+              {
+                width: 2,
+                height: 28,
+                marginLeft: 2,
+                borderRadius: 1,
+                backgroundColor: primaryColor,
+              },
+              cursorStyle,
+            ]}
+          />
+        </View>
+        {lastMonthHint && (
+          <Text style={[styles.hint, { color: secondaryColor }]}>{lastMonthHint}</Text>
+        )}
+      </View>
+
+      <Pressable
+        style={[styles.saveButton, { backgroundColor: accentGreen, opacity: isSaving ? 0.5 : 1 }]}
+        onPress={handleSave}
+        disabled={isSaving}
+      >
+        <Text style={styles.saveButtonText}>{t("common.save")}</Text>
+      </Pressable>
+
+      {isEdit && (
         <Pressable
-          style={[styles.saveButton, { backgroundColor: accentGreen, opacity: isSaving ? 0.5 : 1 }]}
-          onPress={handleSave}
+          style={[styles.deleteButton, { borderColor: accentRed }]}
+          onPress={handleDelete}
           disabled={isSaving}
         >
-          <Text style={styles.saveButtonText}>{t("common.save")}</Text>
+          <Text style={[styles.deleteButtonText, { color: accentRed }]}>{t("common.delete")}</Text>
         </Pressable>
+      )}
 
-        {isEdit && (
-          <Pressable
-            style={[styles.deleteButton, { borderColor: accentRed }]}
-            onPress={handleDelete}
-            disabled={isSaving}
-          >
-            <Text style={[styles.deleteButtonText, { color: accentRed }]}>
-              {t("common.delete")}
-            </Text>
-          </Pressable>
-        )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <FidyNumpad onKeyPress={handleKey} />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
   container: {
     flex: 1,
   },
@@ -221,9 +218,6 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_700Bold",
     fontSize: 18,
   },
-  formGrid: {
-    gap: 12,
-  },
   inputGroup: {
     gap: 4,
   },
@@ -231,39 +225,29 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     fontSize: 12,
   },
-  input: {
-    borderRadius: 10,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontFamily: "Poppins_500Medium",
-    fontSize: 14,
-    minHeight: 44,
+  amountSection: {
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 8,
+  },
+  amountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  amountDisplay: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 32,
   },
   hint: {
     fontFamily: "Poppins_500Medium",
     fontSize: 11,
     fontStyle: "italic",
-    marginTop: 2,
   },
   chipRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 6,
-  },
-  chip: {
-    borderRadius: 8,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    minHeight: 44,
-    justifyContent: "center",
-  },
-  chipText: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 12,
+    gap: 8,
   },
   saveButton: {
     borderRadius: 12,

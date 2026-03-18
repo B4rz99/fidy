@@ -121,10 +121,11 @@ describe("deriveBudgetSummary", () => {
 });
 
 describe("deriveAutoSuggestBudgets", () => {
+  // COP amounts in centavos: 18,900 COP = 1,890,000 centavos
   const spending = [
-    { categoryId: "food", totalCents: 45000 },
-    { categoryId: "transport", totalCents: 15234 },
-    { categoryId: "entertainment", totalCents: 30000 },
+    { categoryId: "food", totalCents: 1890000 }, // 18,900 COP
+    { categoryId: "transport", totalCents: 523400 }, // 5,234 COP
+    { categoryId: "entertainment", totalCents: 18750000 }, // 187,500 COP
   ];
 
   it("suggests budgets for categories with spending", () => {
@@ -142,17 +143,48 @@ describe("deriveAutoSuggestBudgets", () => {
     expect(result[0].categoryId).toBe("transport");
   });
 
-  it("rounds suggested amounts up to nearest 100 cents (15234 → 15300)", () => {
+  it("rounds < 100k COP up to nearest 1,000 COP (18,900 → 19,000)", () => {
     const result = deriveAutoSuggestBudgets(
-      [{ categoryId: "transport", totalCents: 15234 }],
+      [{ categoryId: "food", totalCents: 1890000 }], // 18,900 COP
       new Set()
     );
-    expect(result[0].suggestedAmountCents).toBe(15300);
+    // 19,000 COP = 1,900,000 centavos
+    expect(result[0].suggestedAmountCents).toBe(1900000);
   });
 
-  it("does not round exact multiples of 100", () => {
-    const result = deriveAutoSuggestBudgets([{ categoryId: "food", totalCents: 45000 }], new Set());
-    expect(result[0].suggestedAmountCents).toBe(45000);
+  it("rounds < 100k COP (5,234 → 6,000)", () => {
+    const result = deriveAutoSuggestBudgets(
+      [{ categoryId: "transport", totalCents: 523400 }], // 5,234 COP
+      new Set()
+    );
+    // 6,000 COP = 600,000 centavos
+    expect(result[0].suggestedAmountCents).toBe(600000);
+  });
+
+  it("rounds 100k-1M COP up to nearest 10,000 COP (187,500 → 190,000)", () => {
+    const result = deriveAutoSuggestBudgets(
+      [{ categoryId: "entertainment", totalCents: 18750000 }], // 187,500 COP
+      new Set()
+    );
+    // 190,000 COP = 19,000,000 centavos
+    expect(result[0].suggestedAmountCents).toBe(19000000);
+  });
+
+  it("rounds >= 1M COP up to nearest 100,000 COP (1,850,000 → 1,900,000)", () => {
+    const result = deriveAutoSuggestBudgets(
+      [{ categoryId: "home", totalCents: 185000000 }], // 1,850,000 COP
+      new Set()
+    );
+    // 1,900,000 COP = 190,000,000 centavos
+    expect(result[0].suggestedAmountCents).toBe(190000000);
+  });
+
+  it("does not round exact multiples", () => {
+    const result = deriveAutoSuggestBudgets(
+      [{ categoryId: "food", totalCents: 2000000 }], // 20,000 COP exact
+      new Set()
+    );
+    expect(result[0].suggestedAmountCents).toBe(2000000);
   });
 
   it("returns empty array when no spending data", () => {
