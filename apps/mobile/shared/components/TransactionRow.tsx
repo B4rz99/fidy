@@ -1,6 +1,6 @@
-import * as ContextMenu from "zeego/context-menu";
+import { useCallback } from "react";
 import type { LucideIcon } from "@/shared/components/icons";
-import { Text, View } from "@/shared/components/rn";
+import { ActionSheetIOS, Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 type TransactionRowProps = {
@@ -29,6 +29,29 @@ export function TransactionRow({
   const defaultIconBg = useThemeColor("peachLight");
   const iconColor = useThemeColor("tertiary");
   const { t } = useTranslation();
+
+  const handleLongPress = useCallback(() => {
+    if (Platform.OS !== "ios") return;
+
+    const options = [
+      ...(onEdit ? [t("common.edit")] : []),
+      ...(onDelete ? [t("common.delete")] : []),
+      t("common.cancel"),
+    ];
+    const cancelButtonIndex = options.length - 1;
+    const destructiveButtonIndex = onDelete ? options.indexOf(t("common.delete")) : undefined;
+
+    ActionSheetIOS.showActionSheetWithOptions(
+      { options, cancelButtonIndex, destructiveButtonIndex },
+      (buttonIndex) => {
+        const selected = options[buttonIndex];
+        if (selected === t("common.edit")) onEdit?.();
+        if (selected === t("common.delete")) onDelete?.();
+      }
+    );
+  }, [onEdit, onDelete, t]);
+
+  const hasActions = (onEdit || onDelete) && Platform.OS === "ios";
 
   const content = (
     <View className="flex-row items-center py-3">
@@ -65,30 +88,11 @@ export function TransactionRow({
     </View>
   );
 
-  if (!onEdit && !onDelete) return content;
+  if (!hasActions) return content;
 
   return (
-    <ContextMenu.Root>
-      <ContextMenu.Trigger>{content}</ContextMenu.Trigger>
-      <ContextMenu.Content>
-        {onEdit && (
-          <ContextMenu.Item key="edit" textValue={t("common.edit")} onSelect={onEdit}>
-            <ContextMenu.ItemTitle>{t("common.edit")}</ContextMenu.ItemTitle>
-            <ContextMenu.ItemIcon ios={{ name: "pencil" }} />
-          </ContextMenu.Item>
-        )}
-        {onDelete && (
-          <ContextMenu.Item
-            key="delete"
-            textValue={t("common.delete")}
-            onSelect={onDelete}
-            destructive
-          >
-            <ContextMenu.ItemTitle>{t("common.delete")}</ContextMenu.ItemTitle>
-            <ContextMenu.ItemIcon ios={{ name: "trash" }} />
-          </ContextMenu.Item>
-        )}
-      </ContextMenu.Content>
-    </ContextMenu.Root>
+    <Pressable onLongPress={handleLongPress}>
+      {content}
+    </Pressable>
   );
 }

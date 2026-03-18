@@ -21,7 +21,7 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 
 export default function ConnectedAccountsScreen() {
-  const { navigate } = useRouter();
+  const { back } = useRouter();
   const { t } = useTranslation();
   const accounts = useEmailCaptureStore((s) => s.accounts);
   const isFetching = useEmailCaptureStore((s) => s.isFetching);
@@ -35,7 +35,7 @@ export default function ConnectedAccountsScreen() {
     <ScreenLayout
       title={t("connectedAccounts.title")}
       variant="sub"
-      onBack={() => navigate("/(tabs)/menu")}
+      onBack={() => back()}
     >
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"

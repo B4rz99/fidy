@@ -38,7 +38,7 @@ export function ProfileScreen() {
     <ScreenLayout
       variant="sub"
       title={t("settings.profileTitle")}
-      onBack={() => router.navigate("/(tabs)/menu")}
+      onBack={() => router.back()}
     >
       <ScrollView
         className="flex-1"

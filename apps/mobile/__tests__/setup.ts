@@ -15,6 +15,7 @@ vi.mock("react-native", () => ({
   Switch: "Switch",
   Image: "Image",
   ActivityIndicator: "ActivityIndicator",
+  ActionSheetIOS: { showActionSheetWithOptions: vi.fn() },
   Alert: { alert: vi.fn() },
   Appearance: { setColorScheme: vi.fn() },
   StyleSheet: { create: (styles: Record<string, unknown>) => styles },
@@ -262,11 +263,6 @@ vi.mock("@fidy/assets", () => ({
   },
   LOGO_DOLLAR_PATH: "M0 0",
   LOGO_TEXT_PATH: "M0 0",
-}));
-
-// Mock @react-native-menu/menu
-vi.mock("@react-native-menu/menu", () => ({
-  MenuView: "MenuView",
 }));
 
 // Mock expo-notifications
