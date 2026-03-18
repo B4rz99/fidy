@@ -16,7 +16,6 @@ export function ProfileScreen() {
   const initials = getUserInitials(fullName, email);
 
   const accentGreen = useThemeColor("accentGreen");
-  const accentRed = useThemeColor("accentRed");
   const secondaryColor = useThemeColor("secondary");
   const borderColor = useThemeColor("borderSubtle");
 

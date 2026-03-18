@@ -15,9 +15,7 @@ export function SettingsSection({ label, children }: SettingsSectionProps) {
       >
         {label}
       </Text>
-      <View className="bg-card dark:bg-card-dark rounded-2xl overflow-hidden">
-        {children}
-      </View>
+      <View className="bg-card dark:bg-card-dark rounded-2xl overflow-hidden">{children}</View>
     </View>
   );
 }

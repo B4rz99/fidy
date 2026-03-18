@@ -13,7 +13,7 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 
 export default function ConnectedAccountsScreen() {
-  const { back, navigate } = useRouter();
+  const { navigate } = useRouter();
   const { t } = useTranslation();
   const accounts = useEmailCaptureStore((s) => s.accounts);
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
