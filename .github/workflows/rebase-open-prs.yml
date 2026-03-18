@@ -29,7 +29,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT_REBASE }}
         run: |
-          pr_data=$(gh pr list --base main --state open \
+          pr_data=$(gh pr list --base main --state open --limit 999 \
             --json number,headRefName,isCrossRepository \
             --jq '.[] | select(.isCrossRepository == false) | "\(.number) \(.headRefName)"')
 
