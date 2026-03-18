@@ -16,3 +16,4 @@ export {
 } from "./lib/repository";
 export type { Budget, CreateBudgetInput } from "./schema";
 export { createBudgetSchema } from "./schema";
+export { useBudgetStore } from "./store";
