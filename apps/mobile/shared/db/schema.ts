@@ -224,3 +224,21 @@ export const userMemories = sqliteTable(
   },
   (table) => [index("idx_user_memories_user").on(table.userId)]
 );
+
+export const budgets = sqliteTable(
+  "budgets",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    categoryId: text("category_id").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    month: text("month").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+    deletedAt: text("deleted_at"),
+  },
+  (table) => [
+    uniqueIndex("uq_budget_user_category_month").on(table.userId, table.categoryId, table.month),
+    index("idx_budgets_user_month").on(table.userId, table.month),
+  ]
+);

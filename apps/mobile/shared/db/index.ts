@@ -5,6 +5,7 @@ export { enqueueSync } from "./enqueue-sync";
 export {
   billPayments,
   bills,
+  budgets,
   chatMessages,
   chatSessions,
   detectedSmsEvents,
