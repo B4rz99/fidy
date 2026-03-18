@@ -632,7 +632,57 @@ describe("useEmailCaptureStore", () => {
       expect(updatedAccount.lastFetchedAt).not.toBeNull();
     });
 
-    it("does not clear phase when phase is complete", async () => {
+    it("auto-clears phase after 2s timeout when phase is complete", async () => {
+      vi.useFakeTimers();
+
+      useEmailCaptureStore.setState({
+        accounts: [
+          {
+            id: "ea-1",
+            userId: mockUserId,
+            provider: "gmail",
+            email: "test@gmail.com",
+            lastFetchedAt: null,
+            createdAt: "2026-03-05T10:00:00Z",
+          },
+        ],
+      });
+
+      mockAdapter.fetchEmails.mockResolvedValueOnce([
+        {
+          externalId: "ext-1",
+          from: "b@b.com",
+          subject: "A",
+          body: "b",
+          receivedAt: "2026-03-10T00:00:00Z",
+          provider: "gmail",
+        },
+      ]);
+      vi.mocked(processEmails).mockResolvedValueOnce({
+        filtered: 0,
+        skippedDuplicate: 0,
+        skippedCrossSource: 0,
+        saved: 1,
+        failed: 0,
+        needsReview: 0,
+      });
+      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+
+      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+
+      // Phase should be "complete" immediately after
+      expect(useEmailCaptureStore.getState().phase).toBe("complete");
+
+      // After 2s, phase should auto-clear
+      vi.advanceTimersByTime(2000);
+      expect(useEmailCaptureStore.getState().phase).toBeNull();
+      expect(useEmailCaptureStore.getState().progress).toBeNull();
+
+      vi.useRealTimers();
+    });
+
+    it("preserves complete phase immediately after fetchAndProcess", async () => {
       useEmailCaptureStore.setState({
         accounts: [
           {
@@ -777,20 +827,6 @@ describe("useEmailCaptureStore", () => {
       expect(useEmailCaptureStore.getState().phase).toBeNull();
       expect(useEmailCaptureStore.getState().progress).toBeNull();
       expect(useEmailCaptureStore.getState().isFetching).toBe(false);
-    });
-  });
-
-  describe("clearProgress", () => {
-    it("resets phase and progress to null", () => {
-      useEmailCaptureStore.setState({
-        phase: "complete",
-        progress: { total: 10, completed: 10, saved: 5, failed: 0, needsReview: 2 },
-      });
-
-      useEmailCaptureStore.getState().clearProgress();
-
-      expect(useEmailCaptureStore.getState().phase).toBeNull();
-      expect(useEmailCaptureStore.getState().progress).toBeNull();
     });
   });
 

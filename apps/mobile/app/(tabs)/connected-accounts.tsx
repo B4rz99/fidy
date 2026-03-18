@@ -1,5 +1,13 @@
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "expo-router";
+import { useEffect } from "react";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { ApplePaySetupCard, NotificationSetupCard } from "@/features/capture-sources";
 import {
   getGmailClientId,
@@ -16,10 +24,9 @@ export default function ConnectedAccountsScreen() {
   const { navigate } = useRouter();
   const { t } = useTranslation();
   const accounts = useEmailCaptureStore((s) => s.accounts);
+  const isFetching = useEmailCaptureStore((s) => s.isFetching);
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
   const disconnectEmail = useEmailCaptureStore((s) => s.disconnectEmail);
-  const greenColor = useThemeColor("accentGreen");
-  const tertiaryColor = useThemeColor("tertiary");
 
   const gmailAccount = accounts.find((a) => a.provider === "gmail");
   const outlookAccount = accounts.find((a) => a.provider === "outlook");
@@ -44,8 +51,7 @@ export default function ConnectedAccountsScreen() {
           <AccountCard
             provider="Gmail"
             account={gmailAccount}
-            greenColor={greenColor}
-            tertiaryColor={tertiaryColor}
+            isSyncing={isFetching && !!gmailAccount}
             onConnect={() => connectEmail("gmail", getGmailClientId())}
             onDisconnect={() => gmailAccount && disconnectEmail(gmailAccount.id)}
           />
@@ -53,8 +59,7 @@ export default function ConnectedAccountsScreen() {
           <AccountCard
             provider="Outlook"
             account={outlookAccount}
-            greenColor={greenColor}
-            tertiaryColor={tertiaryColor}
+            isSyncing={isFetching && !!outlookAccount}
             onConnect={() => connectEmail("outlook", getOutlookClientId())}
             onDisconnect={() => outlookAccount && disconnectEmail(outlookAccount.id)}
           />
@@ -71,29 +76,45 @@ export default function ConnectedAccountsScreen() {
 type AccountCardProps = {
   provider: string;
   account: { email: string; lastFetchedAt?: string | null } | undefined;
-  greenColor: string;
-  tertiaryColor: string;
+  isSyncing: boolean;
   onConnect: () => void;
   onDisconnect: () => void;
 };
 
-function AccountCard({
-  provider,
-  account,
-  greenColor,
-  tertiaryColor,
-  onConnect,
-  onDisconnect,
-}: AccountCardProps) {
+function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: AccountCardProps) {
   const { t, locale } = useTranslation();
   const iconColor = useThemeColor("primary");
+  const greenColor = useThemeColor("accentGreen");
+  const tertiaryColor = useThemeColor("tertiary");
+
+  const dotOpacity = useSharedValue(1);
+
+  useEffect(() => {
+    if (isSyncing) {
+      dotOpacity.value = withRepeat(
+        withSequence(withTiming(0.3, { duration: 600 }), withTiming(1, { duration: 600 })),
+        -1
+      );
+    } else {
+      dotOpacity.value = withTiming(1, { duration: 300 });
+    }
+  }, [isSyncing, dotOpacity]);
+
+  const dotAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: dotOpacity.value,
+  }));
 
   if (account) {
     return (
       <View className="rounded-chart bg-card p-5 dark:bg-card-dark" style={{ gap: 14 }}>
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center" style={{ gap: 12 }}>
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: greenColor }} />
+            <Animated.View
+              style={[
+                { width: 10, height: 10, borderRadius: 5, backgroundColor: greenColor },
+                dotAnimatedStyle,
+              ]}
+            />
             <Text className="font-poppins-semibold text-section text-primary dark:text-primary-dark">
               {provider}
             </Text>
@@ -110,14 +131,16 @@ function AccountCard({
         </Text>
 
         <Text className="font-poppins-medium text-caption text-tertiary dark:text-tertiary-dark">
-          {account.lastFetchedAt
-            ? t("connectedAccounts.lastSynced", {
-                time: formatDistanceToNow(new Date(account.lastFetchedAt), {
-                  addSuffix: true,
-                  locale: getDateFnsLocale(locale),
-                }),
-              })
-            : t("connectedAccounts.notSyncedYet")}
+          {isSyncing
+            ? t("connectedAccounts.syncing")
+            : account.lastFetchedAt
+              ? t("connectedAccounts.lastSynced", {
+                  time: formatDistanceToNow(new Date(account.lastFetchedAt), {
+                    addSuffix: true,
+                    locale: getDateFnsLocale(locale),
+                  }),
+                })
+              : t("connectedAccounts.notSyncedYet")}
         </Text>
 
         <Pressable

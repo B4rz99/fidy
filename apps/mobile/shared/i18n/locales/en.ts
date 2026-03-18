@@ -152,6 +152,7 @@ const en = {
     disconnect: "Disconnect",
     lastSynced: "Last synced: %{time}",
     notSyncedYet: "Not synced yet",
+    syncing: "Syncing...",
   },
 
   // Failed Emails
