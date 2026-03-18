@@ -259,7 +259,7 @@ const es = {
     clearAll: "Limpiar todo",
     noResults: "No hay transacciones",
     clearFilters: "Limpiar filtros",
-    resultsSummary: "%{count} transacciones . %{total} total",
+    resultsSummary: "%{count} transacciones · %{total} total",
     today: "Hoy",
     thisWeek: "Esta semana",
     thisMonth: "Este mes",

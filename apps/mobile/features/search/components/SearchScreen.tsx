@@ -133,6 +133,7 @@ export const SearchScreen = () => {
   );
 
   const handleClearAll = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     setInputText("");
     setMinDigits("");
     setMaxDigits("");

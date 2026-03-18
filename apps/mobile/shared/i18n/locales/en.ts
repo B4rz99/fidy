@@ -258,7 +258,7 @@ const en = {
     clearAll: "Clear all",
     noResults: "No transactions match",
     clearFilters: "Clear filters",
-    resultsSummary: "%{count} transactions . %{total} total",
+    resultsSummary: "%{count} transactions · %{total} total",
     today: "Today",
     thisWeek: "This week",
     thisMonth: "This month",
