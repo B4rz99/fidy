@@ -4,6 +4,7 @@ import { CATEGORY_MAP, useTransactionStore } from "@/features/transactions";
 import { getSpendingByCategoryAggregate } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
+import { getCategoryLabel, useLocaleStore } from "@/shared/i18n";
 import { generateId } from "@/shared/lib";
 import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./lib/derive";
 import {
@@ -21,6 +22,7 @@ import {
   updateBudgetAmount,
 } from "./lib/repository";
 import type { Budget } from "./schema";
+import { createBudgetSchema } from "./schema";
 
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
@@ -129,9 +131,10 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
       const freshAlerts = newPendingAlerts.filter(
         (a) => !previousKeys.has(`${a.budgetId}:${a.threshold}`)
       );
+      const locale = useLocaleStore.getState().locale;
       freshAlerts.forEach((alert) => {
         const category = CATEGORY_MAP[alert.categoryId];
-        const name = category?.label.en ?? alert.categoryId;
+        const name = category ? getCategoryLabel(category, locale) : alert.categoryId;
         scheduleBudgetAlert(alert, name).catch(() => {});
       });
     } catch {
@@ -141,6 +144,12 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
 
   createBudget: async (categoryId, amountCents) => {
     if (!dbRef || !userIdRef) return false;
+    const validation = createBudgetSchema.safeParse({
+      categoryId,
+      amountCents,
+      month: get().currentMonth,
+    });
+    if (!validation.success) return false;
     const now = new Date().toISOString();
     const id = generateId("bgt");
     try {

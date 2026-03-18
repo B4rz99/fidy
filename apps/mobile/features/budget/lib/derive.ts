@@ -27,7 +27,11 @@ export function deriveBudgetProgress(
   spentCents: number
 ): BudgetProgress {
   const percentUsed =
-    budget.amountCents > 0 ? Math.round((spentCents / budget.amountCents) * 100) : 0;
+    budget.amountCents > 0
+      ? Math.round((spentCents / budget.amountCents) * 100)
+      : spentCents > 0
+        ? 100
+        : 0;
   const remainingCents = budget.amountCents - spentCents;
   return {
     budgetId: budget.id,
@@ -55,7 +59,11 @@ export function deriveBudgetSummary(progresses: readonly BudgetProgress[]): {
     { totalBudgetCents: 0, totalSpentCents: 0 }
   );
   const percentUsed =
-    totalBudgetCents > 0 ? Math.round((totalSpentCents / totalBudgetCents) * 100) : 0;
+    totalBudgetCents > 0
+      ? Math.round((totalSpentCents / totalBudgetCents) * 100)
+      : totalSpentCents > 0
+        ? 100
+        : 0;
   return { totalBudgetCents, totalSpentCents, percentUsed };
 }
 

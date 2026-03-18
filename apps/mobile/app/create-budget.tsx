@@ -27,6 +27,7 @@ export default function CreateBudgetScreen() {
   const { budgetId } = useLocalSearchParams<{ budgetId?: string }>();
 
   const budgets = useBudgetStore((s) => s.budgets);
+  const autoSuggestions = useBudgetStore((s) => s.autoSuggestions);
   const createBudget = useBudgetStore((s) => s.createBudget);
   const updateBudget = useBudgetStore((s) => s.updateBudget);
   const deleteBudget = useBudgetStore((s) => s.deleteBudget);
@@ -106,16 +107,13 @@ export default function CreateBudgetScreen() {
     const cat = CATEGORIES.find((c) => c.id === category);
     if (!cat) return null;
     const catLabel = getCategoryLabel(cat, locale);
-    // We can't easily access last month spending without db/userId here,
-    // but the store already loads autoSuggestions which has this data
-    const suggestions = useBudgetStore.getState().autoSuggestions;
-    const suggestion = suggestions.find((s) => s.categoryId === category);
+    const suggestion = autoSuggestions.find((s) => s.categoryId === category);
     if (!suggestion) return null;
     return t("budgets.create.lastMonthHint", {
       amount: formatCents(suggestion.suggestedAmountCents),
       category: catLabel,
     });
-  }, [category, locale, t]);
+  }, [category, locale, t, autoSuggestions]);
 
   return (
     <KeyboardAvoidingView
