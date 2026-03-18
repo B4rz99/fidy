@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { type ThemePreference, useSettingsStore } from "@/features/settings/store";
+import { type ThemePreference, useSettingsStore } from "@/features/settings";
 import { Check } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";

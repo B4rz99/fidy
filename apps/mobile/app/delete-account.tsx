@@ -1,8 +1,7 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/features/auth";
-import { getUnsyncedCount } from "@/features/settings/lib/check-unsynced";
-import { useSettingsStore } from "@/features/settings/store";
+import { getUnsyncedCount, useSettingsStore } from "@/features/settings";
 import { TriangleAlert } from "@/shared/components/icons";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
