@@ -2,24 +2,21 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { useSettingsStore } from "@/features/settings/store";
 
 describe("useSettingsStore", () => {
+  test("has correct initial defaults", () => {
+    // Mutate to non-defaults first to prove getInitialState is independent
+    useSettingsStore.setState({ themePreference: "dark", notificationsEnabled: false, isDeleting: true });
+    const initial = useSettingsStore.getInitialState();
+    expect(initial.themePreference).toBe("system");
+    expect(initial.notificationsEnabled).toBe(true);
+    expect(initial.isDeleting).toBe(false);
+  });
+
   beforeEach(() => {
     useSettingsStore.setState({
       themePreference: "system",
       notificationsEnabled: true,
       isDeleting: false,
     });
-  });
-
-  test("default themePreference is system", () => {
-    expect(useSettingsStore.getState().themePreference).toBe("system");
-  });
-
-  test("default notificationsEnabled is true", () => {
-    expect(useSettingsStore.getState().notificationsEnabled).toBe(true);
-  });
-
-  test("default isDeleting is false", () => {
-    expect(useSettingsStore.getState().isDeleting).toBe(false);
   });
 
   test("setThemePreference updates state", () => {

@@ -17,8 +17,7 @@ type SettingsActions = {
   hydrate: () => Promise<void>;
 };
 
-const toColorScheme = (pref: ThemePreference) =>
-  pref === "system" ? "unspecified" : pref;
+const toColorScheme = (pref: ThemePreference) => (pref === "system" ? "unspecified" : pref);
 
 export const useSettingsStore = create<SettingsState & SettingsActions>((set) => ({
   themePreference: "system",

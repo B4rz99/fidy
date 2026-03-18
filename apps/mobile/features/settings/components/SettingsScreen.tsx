@@ -3,15 +3,14 @@ import { useRouter } from "expo-router";
 import { openBrowserAsync } from "expo-web-browser";
 import { useAuthStore } from "@/features/auth";
 import { useEmailCaptureStore } from "@/features/email-capture";
-import { useSettingsStore } from "@/features/settings/store";
 import {
   buildPrivacyUrl,
   buildTermsUrl,
   buildWhatsAppUrl,
   getUserInitials,
 } from "@/features/settings/lib/settings-links";
-import { SettingsRow } from "./SettingsRow";
-import { SettingsSection } from "./SettingsSection";
+import { useSettingsStore } from "@/features/settings/store";
+import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import {
   Bell,
   ChevronRight,
@@ -23,15 +22,10 @@ import {
   Palette,
   Shield,
 } from "@/shared/components/icons";
-import {
-  Linking,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from "@/shared/components/rn";
-import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { Linking, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { SettingsRow } from "./SettingsRow";
+import { SettingsSection } from "./SettingsSection";
 
 const THEME_LABEL_KEYS: Record<string, string> = {
   system: "settings.themeSystem",
@@ -96,10 +90,7 @@ export function SettingsScreen() {
                 backgroundColor: accentGreen,
               }}
             >
-              <Text
-                className="font-poppins-semibold text-white"
-                style={{ fontSize: 14 }}
-              >
+              <Text className="font-poppins-semibold text-white" style={{ fontSize: 14 }}>
                 {initials}
               </Text>
             </View>
@@ -157,9 +148,7 @@ export function SettingsScreen() {
           <SettingsRow
             icon={HelpCircle}
             label={t("settings.helpSupport")}
-            onPress={() =>
-              Linking.openURL(buildWhatsAppUrl("573003632142"))
-            }
+            onPress={() => Linking.openURL(buildWhatsAppUrl("573003632142"))}
           />
           <SettingsRow
             icon={Shield}
@@ -179,7 +168,6 @@ export function SettingsScreen() {
             isLast
           />
         </SettingsSection>
-
       </ScrollView>
     </ScreenLayout>
   );

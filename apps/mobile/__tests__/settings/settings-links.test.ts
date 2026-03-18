@@ -49,7 +49,15 @@ describe("getUserInitials", () => {
     expect(getUserInitials("Oscar", "oscar@fidy.app")).toBe("O");
   });
 
-  test("returns first and last initials for multi-word name", () => {
+  test("returns first two initials for multi-word name", () => {
     expect(getUserInitials("Oscar Alberto Barboza Alfaro", "oscar@fidy.app")).toBe("OA");
+  });
+
+  test("falls back to email initial for whitespace-only name", () => {
+    expect(getUserInitials("   ", "oscar@fidy.app")).toBe("O");
+  });
+
+  test("falls back to email initial for empty string name", () => {
+    expect(getUserInitials("", "oscar@fidy.app")).toBe("O");
   });
 });

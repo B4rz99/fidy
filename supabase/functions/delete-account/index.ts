@@ -3,13 +3,13 @@ import { checkRateLimit } from "../_shared/rate-limit.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
-  Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+  Deno.env.get("SUPABASE_ANON_KEY") ?? ""
 );
 
 function jsonResponse(
   body: unknown,
   status = 200,
-  extraHeaders?: Record<string, string>,
+  extraHeaders?: Record<string, string>
 ): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -28,6 +28,10 @@ Deno.serve(async (req) => {
         "Access-Control-Allow-Headers": "Authorization, Content-Type",
       },
     });
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse({ success: false, error: "method_not_allowed" }, 405);
   }
 
   try {
@@ -49,8 +53,13 @@ Deno.serve(async (req) => {
 
     const userId = user.id;
 
-    // Rate limit: 3 requests per minute (strict)
-    const rateResult = await checkRateLimit(userId, "delete-account", 3);
+    // Rate limit: 3 requests per minute (fail-closed for destructive endpoint)
+    let rateResult: { allowed: boolean; retryAfterSeconds?: number };
+    try {
+      rateResult = await checkRateLimit(userId, "delete-account", 3);
+    } catch {
+      return jsonResponse({ success: false, error: "rate_limit_unavailable" }, 503);
+    }
     if (!rateResult.allowed) {
       return jsonResponse({ success: false, error: "rate_limited" }, 429, {
         "Retry-After": String(rateResult.retryAfterSeconds),
@@ -60,7 +69,7 @@ Deno.serve(async (req) => {
     // Service-role client for admin operations
     const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
     // Delete user (CASCADE on foreign keys handles data cleanup)

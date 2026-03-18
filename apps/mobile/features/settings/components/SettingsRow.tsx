@@ -46,7 +46,13 @@ function Toggle({
     <Pressable onPress={() => onValueChange?.(!isOn)}>
       <Animated.View
         style={[
-          { width: 48, height: 28, borderRadius: 14, justifyContent: "center", paddingHorizontal: 3 },
+          {
+            width: 48,
+            height: 28,
+            borderRadius: 14,
+            justifyContent: "center",
+            paddingHorizontal: 3,
+          },
           trackStyle,
         ]}
       >
@@ -95,18 +101,14 @@ export function SettingsRow({
     >
       <Icon size={24} color={iconColor} />
       <View className="flex-1" style={{ gap: 2 }}>
-        <Text className={`font-poppins text-sm ${textColorClass}`}>
-          {label}
-        </Text>
+        <Text className={`font-poppins text-sm ${textColorClass}`}>{label}</Text>
         {subtitle ? (
           <Text className="font-poppins text-xs text-secondary dark:text-secondary-dark">
             {subtitle}
           </Text>
         ) : null}
       </View>
-      {accessory === "chevron" ? (
-        <ChevronRight size={18} color={tertiaryColor} />
-      ) : null}
+      {accessory === "chevron" ? <ChevronRight size={18} color={tertiaryColor} /> : null}
       {accessory === "switch" ? (
         <Toggle value={switchValue} onValueChange={onSwitchChange} />
       ) : null}
@@ -118,9 +120,5 @@ export function SettingsRow({
     </View>
   );
 
-  return onPress ? (
-    <Pressable onPress={onPress}>{content}</Pressable>
-  ) : (
-    content
-  );
+  return onPress ? <Pressable onPress={onPress}>{content}</Pressable> : content;
 }

@@ -1,9 +1,9 @@
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/features/auth";
 import { getUserInitials } from "@/features/settings/lib/settings-links";
+import { ScreenLayout } from "@/shared/components";
 import { LogOut } from "@/shared/components/icons";
 import { Alert, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
-import { ScreenLayout } from "@/shared/components";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 export function ProfileScreen() {
@@ -36,7 +36,11 @@ export function ProfileScreen() {
   };
 
   return (
-    <ScreenLayout variant="sub" title={t("settings.profileTitle")} onBack={() => router.navigate("/(tabs)/menu")}>
+    <ScreenLayout
+      variant="sub"
+      title={t("settings.profileTitle")}
+      onBack={() => router.navigate("/(tabs)/menu")}
+    >
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
@@ -55,10 +59,7 @@ export function ProfileScreen() {
               backgroundColor: accentGreen,
             }}
           >
-            <Text
-              className="font-poppins-bold text-white"
-              style={{ fontSize: 28 }}
-            >
+            <Text className="font-poppins-bold text-white" style={{ fontSize: 28 }}>
               {initials}
             </Text>
           </View>
@@ -93,9 +94,7 @@ export function ProfileScreen() {
 
           {/* Delete Account Text Button */}
           <Pressable onPress={handleDeleteAccount}>
-            <Text
-              className="font-poppins text-sm text-accent-red dark:text-accent-red-dark"
-            >
+            <Text className="font-poppins text-sm text-accent-red dark:text-accent-red-dark">
               {t("settings.deleteAccount")}
             </Text>
           </Pressable>

@@ -1,3 +1,4 @@
+import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
 import i18n from "./i18n";
 import { resolveLanguage } from "./resolve-language";
@@ -16,7 +17,8 @@ export const useLocaleStore = create<LocaleState & LocaleActions>((set) => ({
   locale: i18n.locale,
 
   initLocale: (deviceLocale: string) => {
-    const resolved = resolveLanguage(deviceLocale);
+    const stored = SecureStore.getItem("locale_preference");
+    const resolved = stored ?? resolveLanguage(deviceLocale);
     i18n.locale = resolved;
     set({ locale: resolved });
   },
@@ -24,6 +26,7 @@ export const useLocaleStore = create<LocaleState & LocaleActions>((set) => ({
   setLocale: (locale: string) => {
     i18n.locale = locale;
     set({ locale });
+    SecureStore.setItemAsync("locale_preference", locale).catch(() => {});
   },
 
   t: i18n.t.bind(i18n),

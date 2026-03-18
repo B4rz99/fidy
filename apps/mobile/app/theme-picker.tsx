@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
+import { type ThemePreference, useSettingsStore } from "@/features/settings/store";
 import { Check } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { type ThemePreference, useSettingsStore } from "@/features/settings/store";
 
 const OPTIONS: { key: ThemePreference; labelKey: string }[] = [
   { key: "system", labelKey: "settings.themeSystem" },
@@ -24,7 +24,10 @@ export default function ThemePickerSheet() {
   };
 
   return (
-    <View className="flex-1 bg-card dark:bg-card-dark" style={{ paddingHorizontal: 24, paddingTop: 24 }}>
+    <View
+      className="flex-1 bg-card dark:bg-card-dark"
+      style={{ paddingHorizontal: 24, paddingTop: 24 }}
+    >
       <Text
         className="font-poppins-semibold text-primary dark:text-primary-dark"
         style={{ fontSize: 16, textAlign: "center", marginBottom: 20 }}
@@ -51,9 +54,7 @@ export default function ThemePickerSheet() {
           >
             {t(option.labelKey)}
           </Text>
-          {current === option.key ? (
-            <Check size={22} color={accentGreen} />
-          ) : null}
+          {current === option.key ? <Check size={22} color={accentGreen} /> : null}
         </Pressable>
       ))}
     </View>

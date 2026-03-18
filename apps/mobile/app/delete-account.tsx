@@ -1,12 +1,12 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { TriangleAlert } from "@/shared/components/icons";
-import { ActivityIndicator, Alert, Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useAuthStore } from "@/features/auth";
 import { getUnsyncedCount } from "@/features/settings/lib/check-unsynced";
 import { useSettingsStore } from "@/features/settings/store";
+import { TriangleAlert } from "@/shared/components/icons";
+import { ActivityIndicator, Alert, Pressable, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 export default function DeleteAccountSheet() {
   const { t } = useTranslation();
@@ -45,7 +45,14 @@ export default function DeleteAccountSheet() {
       style={{ paddingHorizontal: 24, paddingTop: 24, alignItems: "center", gap: 16 }}
     >
       <View
-        style={{ width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center", backgroundColor: `${accentRed}1A` }}
+        style={{
+          width: 64,
+          height: 64,
+          borderRadius: 32,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: `${accentRed}1A`,
+        }}
       >
         <TriangleAlert size={32} color={accentRed} />
       </View>
@@ -81,7 +88,10 @@ export default function DeleteAccountSheet() {
             justifyContent: "center",
           }}
         >
-          <Text className="font-poppins-semibold text-primary dark:text-primary-dark" style={{ fontSize: 15 }}>
+          <Text
+            className="font-poppins-semibold text-primary dark:text-primary-dark"
+            style={{ fontSize: 15 }}
+          >
             {t("common.cancel")}
           </Text>
         </Pressable>

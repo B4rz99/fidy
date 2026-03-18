@@ -81,7 +81,10 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
         .loadInitialPage()
         .catch(handleRecoverableError("Failed to load transactions"));
       useSyncConflictStore.getState().loadConflicts();
-      useSettingsStore.getState().hydrate().catch(handleRecoverableError("Failed to hydrate settings"));
+      useSettingsStore
+        .getState()
+        .hydrate()
+        .catch(handleRecoverableError("Failed to hydrate settings"));
       registerBackgroundTask().catch(captureError);
     }
   }, [migrationsReady, db, userId]);

@@ -22,7 +22,10 @@ export default function LanguagePickerSheet() {
   };
 
   return (
-    <View className="flex-1 bg-card dark:bg-card-dark" style={{ paddingHorizontal: 24, paddingTop: 24 }}>
+    <View
+      className="flex-1 bg-card dark:bg-card-dark"
+      style={{ paddingHorizontal: 24, paddingTop: 24 }}
+    >
       <Text
         className="font-poppins-semibold text-primary dark:text-primary-dark"
         style={{ fontSize: 16, textAlign: "center", marginBottom: 20 }}
@@ -49,9 +52,7 @@ export default function LanguagePickerSheet() {
           >
             {option.label}
           </Text>
-          {locale.startsWith(option.locale) ? (
-            <Check size={22} color={accentGreen} />
-          ) : null}
+          {locale.startsWith(option.locale) ? <Check size={22} color={accentGreen} /> : null}
         </Pressable>
       ))}
     </View>
