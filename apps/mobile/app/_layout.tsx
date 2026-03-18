@@ -17,6 +17,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useChatStore } from "@/features/ai-chat";
 import { useAuthStore } from "@/features/auth";
 import { registerBackgroundTask } from "@/features/background-fetch";
+import { useBudgetStore } from "@/features/budget";
 import { useCalendarStore } from "@/features/calendar";
 import {
   useApplePayCapture,
@@ -62,11 +63,16 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
       useCaptureSourcesStore.getState().initStore(db, userId);
       useChatStore.getState().initStore(db, userId);
       useCalendarStore.getState().initStore(db, userId);
+      useBudgetStore.getState().initStore(db, userId);
       useSyncConflictStore.getState().initStore(db);
       Promise.all([
         useCalendarStore.getState().loadBills(),
         useCalendarStore.getState().loadPaymentsForMonth(),
       ]).catch(handleRecoverableError("Failed to load calendar data"));
+      useBudgetStore
+        .getState()
+        .loadBudgets()
+        .catch(handleRecoverableError("Failed to load budgets"));
       useChatStore
         .getState()
         .loadSessions()
@@ -182,6 +188,15 @@ function RootLayout() {
             name="delete-account"
             options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
           />
+          <Stack.Screen
+            name="create-budget"
+            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+          />
+          <Stack.Screen
+            name="auto-suggest-budgets"
+            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+          />
+          <Stack.Screen name="bills-calendar" />
           <Stack.Screen name="search" />
         </Stack>
         {db && userId && <AuthenticatedShell db={db} userId={userId} />}

@@ -1,8 +1,6 @@
-import { useEffect } from "react";
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import type { LucideIcon } from "@/shared/components/icons";
 import { ChevronRight } from "@/shared/components/icons";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Pressable, StyleSheet, Switch, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 
 type SettingsRowProps = {
@@ -18,55 +16,6 @@ type SettingsRowProps = {
   isLast?: boolean;
 };
 
-function Toggle({
-  value,
-  onValueChange,
-}: {
-  value?: boolean;
-  onValueChange?: (v: boolean) => void;
-}) {
-  const accentGreen = useThemeColor("accentGreen");
-  const tertiaryColor = useThemeColor("tertiary");
-  const isOn = value === true;
-  const progress = useSharedValue(isOn ? 1 : 0);
-
-  useEffect(() => {
-    progress.set(withTiming(isOn ? 1 : 0, { duration: 200 }));
-  }, [isOn, progress]);
-
-  const trackStyle = useAnimatedStyle(() => ({
-    backgroundColor: progress.get() > 0.5 ? accentGreen : tertiaryColor,
-  }));
-
-  const knobStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: progress.get() * 20 }],
-  }));
-
-  return (
-    <Pressable onPress={() => onValueChange?.(!isOn)}>
-      <Animated.View
-        style={[
-          {
-            width: 48,
-            height: 28,
-            borderRadius: 14,
-            justifyContent: "center",
-            paddingHorizontal: 3,
-          },
-          trackStyle,
-        ]}
-      >
-        <Animated.View
-          style={[
-            { width: 22, height: 22, borderRadius: 11, backgroundColor: "#FFFFFF" },
-            knobStyle,
-          ]}
-        />
-      </Animated.View>
-    </Pressable>
-  );
-}
-
 export function SettingsRow({
   icon: Icon,
   label,
@@ -81,6 +30,7 @@ export function SettingsRow({
 }: SettingsRowProps) {
   const secondaryColor = useThemeColor("secondary");
   const tertiaryColor = useThemeColor("tertiary");
+  const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
   const borderColor = useThemeColor("borderSubtle");
   const iconColor = destructive ? accentRed : secondaryColor;
@@ -92,9 +42,10 @@ export function SettingsRow({
     <View
       className="flex-row items-center"
       style={{
-        height: 56,
+        minHeight: 56,
         gap: 12,
         paddingHorizontal: 16,
+        paddingVertical: 12,
         borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
         borderBottomColor: isLast ? "transparent" : borderColor,
       }}
@@ -110,7 +61,11 @@ export function SettingsRow({
       </View>
       {accessory === "chevron" ? <ChevronRight size={18} color={tertiaryColor} /> : null}
       {accessory === "switch" ? (
-        <Toggle value={switchValue} onValueChange={onSwitchChange} />
+        <Switch
+          value={switchValue}
+          onValueChange={onSwitchChange}
+          trackColor={{ true: accentGreen }}
+        />
       ) : null}
       {accessory === "text" && rightText ? (
         <Text className="font-poppins text-xs text-tertiary dark:text-tertiary-dark">

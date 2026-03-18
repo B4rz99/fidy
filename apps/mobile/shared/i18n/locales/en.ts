@@ -28,6 +28,8 @@ const en = {
     add: "Add",
     calendar: "Calendar",
     settings: "Settings",
+    budgets: "Budgets",
+    menu: "Menu",
   },
 
   // Transactions
@@ -68,6 +70,58 @@ const en = {
       fri: "F",
       sat: "S",
       sun: "S",
+    },
+  },
+
+  // Budgets
+  budgets: {
+    title: "Budgets",
+    empty: {
+      title: "No budgets yet",
+      subtitle: "Set spending limits and track your money",
+      autoSetup: "Auto-setup from last month",
+      createManually: "Create manually",
+    },
+    create: {
+      title: "Create Budget",
+      selectCategory: "Select a category",
+      enterAmount: "Monthly budget amount",
+      lastMonthHint: "You spent %{amount} on %{category} last month",
+    },
+    edit: {
+      title: "Edit Budget",
+    },
+    card: {
+      remaining: "%{amount} remaining",
+      over: "%{amount} over budget",
+      used: "%{percent}% used",
+    },
+    summary: {
+      totalBudget: "Total Budget",
+      used: "%{percent}% used",
+    },
+    alerts: {
+      nearLimitTitle: "Budget warning",
+      overBudgetTitle: "Budget exceeded!",
+      nearLimit: "%{category} is at %{percent}% of budget",
+      overBudget: "%{category} is over budget at %{percent}%",
+    },
+    autoSuggest: {
+      title: "Auto-setup Budgets",
+      subtitle: "Based on last month's spending",
+      skipAll: "Skip",
+      acceptSelected: "Accept selected",
+      noSuggestions: "No spending data from last month",
+    },
+    upcomingBills: {
+      title: "Upcoming Bills",
+      seeAll: "See all",
+      noBills: "No upcoming bills",
+    },
+    copyForward: {
+      prompt: "Copy budgets from last month?",
+      accept: "Copy budgets",
+      skip: "Start fresh",
     },
   },
 

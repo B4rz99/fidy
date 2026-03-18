@@ -13,13 +13,13 @@ describe("Tab layout", () => {
     expect(layoutSource).toContain('name="add"');
   });
 
-  test("has correct tab order: index, ai, add, calendar, menu, connected-accounts, failed-emails, profile", () => {
+  test("has correct tab order: index, ai, add, budgets, menu, connected-accounts, failed-emails, profile", () => {
     const screens = Array.from(layoutSource.matchAll(/name="([\w-]+)"/g), (m) => m[1]);
     expect(screens).toEqual([
       "index",
       "ai",
       "add",
-      "calendar",
+      "budgets",
       "menu",
       "connected-accounts",
       "failed-emails",
