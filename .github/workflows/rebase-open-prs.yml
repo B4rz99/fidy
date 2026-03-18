@@ -1,0 +1,74 @@
+name: Rebase Open PRs
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: rebase-open-prs
+  cancel-in-progress: true
+
+jobs:
+  rebase:
+    name: Rebase open PRs onto main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT_REBASE }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Rebase each open PR
+        env:
+          GH_TOKEN: ${{ secrets.PAT_REBASE }}
+        run: |
+          pr_data=$(gh pr list --base main --state open --limit 999 \
+            --json number,headRefName,isCrossRepository \
+            --jq '.[] | select(.isCrossRepository == false) | "\(.number) \(.headRefName)"')
+
+          if [ -z "$pr_data" ]; then
+            echo "No open non-fork PRs targeting main. Nothing to do."
+            exit 0
+          fi
+
+          while IFS=' ' read -r pr branch; do
+            echo "::group::PR #$pr ($branch)"
+
+            git fetch origin "$branch"
+
+            # Check if already up-to-date (branch already contains latest main)
+            if git merge-base --is-ancestor origin/main "origin/$branch" 2>/dev/null; then
+              echo "Already up-to-date. Skipping."
+              echo "::endgroup::"
+              continue
+            fi
+
+            # Attempt rebase
+            git checkout -B "$branch" "origin/$branch"
+
+            if ! git rebase origin/main; then
+              git rebase --abort
+              echo "::warning::PR #$pr ($branch) has conflicts — leaving comment."
+              gh pr comment "$pr" --body $'⚠️ **Auto-rebase failed** — this branch has conflicts with `main`.\n\nPlease rebase manually:\n```\ngit fetch origin\ngit rebase origin/main\n# resolve conflicts\ngit push --force-with-lease\n```'
+              echo "::endgroup::"
+              continue
+            fi
+
+            # Force-push with lease
+            if ! git push --force-with-lease origin "$branch"; then
+              echo "::warning::PR #$pr ($branch) push failed — leaving comment."
+              gh pr comment "$pr" --body $'⚠️ **Auto-rebase push failed** — the branch may have been updated concurrently.\n\nPlease rebase manually:\n```\ngit fetch origin\ngit rebase origin/main\ngit push --force-with-lease\n```'
+              echo "::endgroup::"
+              continue
+            fi
+
+            echo "Successfully rebased PR #$pr ($branch)."
+            echo "::endgroup::"
+          done <<< "$pr_data"
