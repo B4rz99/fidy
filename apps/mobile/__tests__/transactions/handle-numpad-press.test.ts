@@ -14,16 +14,16 @@ describe("handleNumpadPress", () => {
     expect(handleNumpadPress("5", "000")).toBe("5000");
   });
 
-  it("caps at 8 digits when appending a single digit", () => {
-    expect(handleNumpadPress("12345678", "9")).toBe("12345678");
+  it("caps at 11 digits when appending a single digit", () => {
+    expect(handleNumpadPress("12345678901", "9")).toBe("12345678901");
   });
 
-  it("caps at 8 digits when appending 000", () => {
-    expect(handleNumpadPress("123456", "000")).toBe("12345600");
+  it("caps at 11 digits when appending 000", () => {
+    expect(handleNumpadPress("12345678", "000")).toBe("12345678000");
   });
 
-  it("truncates 000 if it would exceed 8 digits", () => {
-    expect(handleNumpadPress("1234567", "000")).toBe("12345670");
+  it("truncates 000 if it would exceed 11 digits", () => {
+    expect(handleNumpadPress("1234567890", "000")).toBe("12345678900");
   });
 
   it("deletes last digit", () => {

@@ -65,12 +65,12 @@ describe("useCalendarStore", () => {
   test("addBill with valid data adds bill and returns true", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "15.99", "monthly", "services", testDate);
+      .addBill("Netflix", "35000", "monthly", "services", testDate);
     expect(result).toBe(true);
     expect(useCalendarStore.getState().bills).toHaveLength(1);
     const bill = useCalendarStore.getState().bills[0];
     expect(bill.name).toBe("Netflix");
-    expect(bill.amountCents).toBe(1599);
+    expect(bill.amount).toBe(35000);
     expect(bill.frequency).toBe("monthly");
     expect(bill.categoryId).toBe("services");
     expect(bill.isActive).toBe(true);
@@ -79,7 +79,7 @@ describe("useCalendarStore", () => {
   test("addBill returns false for empty name", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("", "15.99", "monthly", "services", testDate);
+      .addBill("", "35000", "monthly", "services", testDate);
     expect(result).toBe(false);
     expect(useCalendarStore.getState().bills).toHaveLength(0);
   });
@@ -116,7 +116,7 @@ describe("useCalendarStore", () => {
     const result = await useCalendarStore
       .getState()
       // @ts-expect-error testing invalid frequency
-      .addBill("Netflix", "15.99", "daily", "services", testDate);
+      .addBill("Netflix", "35000", "daily", "services", testDate);
     expect(result).toBe(false);
     expect(useCalendarStore.getState().bills).toHaveLength(0);
   });
@@ -124,7 +124,7 @@ describe("useCalendarStore", () => {
   test("addBill validates categoryId via schema", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "15.99", "monthly", "invalid", testDate);
+      .addBill("Netflix", "35000", "monthly", "invalid", testDate);
     expect(result).toBe(false);
     expect(useCalendarStore.getState().bills).toHaveLength(0);
   });
@@ -158,7 +158,7 @@ describe("useCalendarStore", () => {
         id: "bill-1",
         userId: "user-1",
         name: "Netflix",
-        amountCents: 1599,
+        amount: 35000,
         frequency: "monthly",
         categoryId: "services",
         startDate: "2026-01-15T00:00:00.000Z",
@@ -205,7 +205,7 @@ describe("useCalendarStore", () => {
 
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "15.99", "monthly", "services", testDate);
+      .addBill("Netflix", "35000", "monthly", "services", testDate);
 
     expect(result).toBe(false);
     expect(useCalendarStore.getState().bills).toHaveLength(0);
@@ -214,7 +214,7 @@ describe("useCalendarStore", () => {
   // ─── updateBill ───
 
   test("updateBill updates bill in state", async () => {
-    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services", testDate);
+    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
     const billId = useCalendarStore.getState().bills[0].id;
 
     await useCalendarStore.getState().updateBill(billId, { name: "Hulu" });
@@ -227,7 +227,7 @@ describe("useCalendarStore", () => {
     const { updateBill: dbUpdateBill } = await import("@/features/calendar/lib/repository");
     vi.mocked(dbUpdateBill).mockClear();
 
-    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services", testDate);
+    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
     const billId = useCalendarStore.getState().bills[0].id;
     const newDate = new Date("2026-06-01T00:00:00.000Z");
 
@@ -254,7 +254,7 @@ describe("useCalendarStore", () => {
   // ─── deleteBill ───
 
   test("deleteBill removes bill and its payments from state", async () => {
-    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services", testDate);
+    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
     const billId = useCalendarStore.getState().bills[0].id;
 
     // Manually add a payment for this bill
@@ -282,7 +282,7 @@ describe("useCalendarStore", () => {
     const { softDeleteTransaction } = await import("@/features/transactions/lib/repository");
     vi.mocked(softDeleteTransaction).mockClear();
 
-    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services", testDate);
+    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
     const billId = useCalendarStore.getState().bills[0].id;
 
     // Seed payment with a linked transaction
@@ -292,7 +292,7 @@ describe("useCalendarStore", () => {
           id: "tx-linked",
           userId: "user-1",
           type: "expense",
-          amountCents: 1599,
+          amount: 35000,
           categoryId: "services",
           description: "Netflix",
           date: new Date(2026, 2, 15),
@@ -340,7 +340,7 @@ describe("useCalendarStore", () => {
     vi.mocked(insertBillPayment).mockClear();
 
     // Seed a bill so markBillPaid can look it up
-    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services", testDate);
+    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
     const billId = useCalendarStore.getState().bills[0].id;
 
     await useCalendarStore.getState().markBillPaid(billId, "2026-03-15");
@@ -357,7 +357,7 @@ describe("useCalendarStore", () => {
     const { insertTransaction } = await import("@/features/transactions/lib/repository");
     vi.mocked(insertTransaction).mockClear();
 
-    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services", testDate);
+    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
     const billId = useCalendarStore.getState().bills[0].id;
 
     await useCalendarStore.getState().markBillPaid(billId, "2026-03-15");
@@ -365,13 +365,13 @@ describe("useCalendarStore", () => {
     expect(insertTransaction).toHaveBeenCalledTimes(1);
     const txRow = vi.mocked(insertTransaction).mock.calls[0][1];
     expect(txRow.type).toBe("expense");
-    expect(txRow.amountCents).toBe(1599);
+    expect(txRow.amount).toBe(35000);
     expect(txRow.categoryId).toBe("services");
     expect(txRow.description).toBe("Netflix");
   });
 
   test("markBillPaid stores transactionId on payment", async () => {
-    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services", testDate);
+    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
     const billId = useCalendarStore.getState().bills[0].id;
 
     await useCalendarStore.getState().markBillPaid(billId, "2026-03-15");
@@ -384,7 +384,7 @@ describe("useCalendarStore", () => {
   test("markBillPaid updates transaction store state", async () => {
     useTransactionStore.setState({ pages: [] });
 
-    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services", testDate);
+    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
     const billId = useCalendarStore.getState().bills[0].id;
 
     await useCalendarStore.getState().markBillPaid(billId, "2026-03-15");
@@ -392,7 +392,7 @@ describe("useCalendarStore", () => {
     const txs = useTransactionStore.getState().pages;
     expect(txs).toHaveLength(1);
     expect(txs[0].type).toBe("expense");
-    expect(txs[0].amountCents).toBe(1599);
+    expect(txs[0].amount).toBe(35000);
     expect(txs[0].description).toBe("Netflix");
   });
 
@@ -400,7 +400,7 @@ describe("useCalendarStore", () => {
     const { enqueueSync } = await import("@/shared/db/enqueue-sync");
     vi.mocked(enqueueSync).mockClear();
 
-    await useCalendarStore.getState().addBill("Netflix", "15.99", "monthly", "services", testDate);
+    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
     const billId = useCalendarStore.getState().bills[0].id;
 
     await useCalendarStore.getState().markBillPaid(billId, "2026-03-15");
@@ -474,7 +474,7 @@ describe("useCalendarStore", () => {
           id: "tx-linked",
           userId: "user-1",
           type: "expense",
-          amountCents: 1599,
+          amount: 35000,
           categoryId: "services",
           description: "Netflix",
           date: new Date(2026, 2, 15),

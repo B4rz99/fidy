@@ -132,7 +132,7 @@ describe("email processing pipeline", () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 5000000,
+      amount: 50000,
       categoryId: "other",
       description: "Compra en Exito",
       date: "2026-03-05",
@@ -149,7 +149,7 @@ describe("email processing pipeline", () => {
       expect.objectContaining({
         userId: USER_ID,
         type: "expense",
-        amountCents: 5000000,
+        amount: 50000,
         source: "email_gmail",
       })
     );
@@ -175,7 +175,7 @@ describe("email processing pipeline", () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 5000000,
+      amount: 50000,
       categoryId: "other",
       description: "Compra en Exito",
       date: "2026-03-05",
@@ -205,7 +205,7 @@ describe("email processing pipeline", () => {
     mockLookupMerchantRule.mockResolvedValueOnce("food");
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 5000000,
+      amount: 50000,
       categoryId: "other",
       description: "Compra en Exito",
       date: "2026-03-05",
@@ -242,7 +242,7 @@ describe("email processing pipeline", () => {
     mockParseEmailApi
       .mockResolvedValueOnce({
         type: "expense",
-        amountCents: 5000000,
+        amount: 50000,
         categoryId: "other",
         description: "Compra 1",
         date: "2026-03-05",
@@ -263,7 +263,7 @@ describe("email processing pipeline", () => {
     const emails = [makeRawEmail({ provider: "outlook" })];
     mockParseEmailApi.mockResolvedValueOnce({
       type: "income",
-      amountCents: 100000,
+      amount: 1000,
       categoryId: "transfer",
       description: "Deposito",
       date: "2026-03-05",
@@ -325,7 +325,7 @@ describe("email processing pipeline", () => {
     // First email: low confidence → needs_review
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 5000000,
+      amount: 50000,
       categoryId: "other",
       description: "Compra 1",
       date: "2026-03-05",
@@ -334,7 +334,7 @@ describe("email processing pipeline", () => {
     // Second email: high confidence → saved
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 3000000,
+      amount: 30000,
       categoryId: "food",
       description: "Compra 2",
       date: "2026-03-05",
@@ -438,7 +438,7 @@ describe("processRetries", () => {
     mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 5000000,
+      amount: 50000,
       categoryId: "other",
       description: "Compra en Exito",
       date: "2026-03-05",
@@ -457,7 +457,7 @@ describe("processRetries", () => {
     mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 5000000,
+      amount: 50000,
       categoryId: "other",
       description: "Compra en Exito",
       date: "2026-03-05",
@@ -480,7 +480,7 @@ describe("processRetries", () => {
     mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 5000000,
+      amount: 50000,
       categoryId: "other",
       description: "Compra en Exito",
       date: "2026-03-05",
@@ -541,7 +541,7 @@ describe("processRetries", () => {
     mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 5000000,
+      amount: 50000,
       categoryId: "other",
       description: "Compra en Exito",
       date: "2026-03-05",
@@ -578,7 +578,7 @@ describe("processRetries", () => {
     mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 5000000,
+      amount: 50000,
       categoryId: "other",
       description: "Compra en Exito",
       date: "2026-03-05",
@@ -598,7 +598,7 @@ describe("processRetries", () => {
     mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 5000000,
+      amount: 50000,
       categoryId: "other",
       description: "Compra en Exito",
       date: "2026-03-05",

@@ -45,7 +45,7 @@ describe("budget repository", () => {
         id: "budget-1",
         userId: "user-1",
         categoryId: "food",
-        amountCents: 50000,
+        amount: 50000,
         month: "2026-03",
         createdAt: "2026-03-01T00:00:00.000Z",
         updatedAt: "2026-03-01T00:00:00.000Z",
@@ -67,7 +67,7 @@ describe("budget repository", () => {
         id: "budget-new",
         userId: "user-1",
         categoryId: "food",
-        amountCents: 60000,
+        amount: 60000,
         month: "2026-03",
         createdAt: "2026-03-10T00:00:00.000Z",
         updatedAt: "2026-03-10T00:00:00.000Z",
@@ -80,7 +80,7 @@ describe("budget repository", () => {
         expect.objectContaining({
           set: expect.objectContaining({
             id: row.id,
-            amountCents: row.amountCents,
+            amount: row.amount,
             deletedAt: null,
           }),
         })
@@ -96,7 +96,7 @@ describe("budget repository", () => {
           id: "budget-1",
           userId: "user-1",
           categoryId: "food",
-          amountCents: 50000,
+          amount: 50000,
           month: "2026-03",
           createdAt: "2026-03-01T00:00:00.000Z",
           updatedAt: "2026-03-01T00:00:00.000Z",
@@ -131,7 +131,7 @@ describe("budget repository", () => {
         id: "budget-1",
         userId: "user-1",
         categoryId: "food",
-        amountCents: 50000,
+        amount: 50000,
         month: "2026-03",
         createdAt: "2026-03-01T00:00:00.000Z",
         updatedAt: "2026-03-01T00:00:00.000Z",
@@ -157,14 +157,14 @@ describe("budget repository", () => {
   });
 
   describe("updateBudgetAmount", () => {
-    it("sets amountCents and updatedAt", async () => {
+    it("sets amount and updatedAt", async () => {
       const { updateBudgetAmount } = await import("@/features/budget/lib/repository");
 
       updateBudgetAmount(mockDb, "budget-1", 75000, "2026-03-15T00:00:00.000Z");
 
       expect(mockUpdate).toHaveBeenCalled();
       expect(mockSet).toHaveBeenCalledWith({
-        amountCents: 75000,
+        amount: 75000,
         updatedAt: "2026-03-15T00:00:00.000Z",
       });
       expect(mockRun).toHaveBeenCalled();
@@ -193,7 +193,7 @@ describe("budget repository", () => {
           id: "budget-1",
           userId: "user-1",
           categoryId: "food",
-          amountCents: 50000,
+          amount: 50000,
           month: "2026-02",
           createdAt: "2026-02-01T00:00:00.000Z",
           updatedAt: "2026-02-01T00:00:00.000Z",
@@ -203,7 +203,7 @@ describe("budget repository", () => {
           id: "budget-2",
           userId: "user-1",
           categoryId: "transport",
-          amountCents: 20000,
+          amount: 20000,
           month: "2026-02",
           createdAt: "2026-02-01T00:00:00.000Z",
           updatedAt: "2026-02-01T00:00:00.000Z",
@@ -257,7 +257,7 @@ describe("budget repository", () => {
           id: "budget-1",
           userId: "user-1",
           categoryId: "food",
-          amountCents: 50000,
+          amount: 50000,
           month: "2026-02",
           createdAt: "2026-02-01T00:00:00.000Z",
           updatedAt: "2026-02-01T00:00:00.000Z",
@@ -286,7 +286,7 @@ describe("budget repository", () => {
         expect.objectContaining({
           month: "2026-03",
           categoryId: "food",
-          amountCents: 50000,
+          amount: 50000,
           deletedAt: null,
         })
       );
@@ -298,7 +298,7 @@ describe("budget repository", () => {
           id: "budget-1",
           userId: "user-1",
           categoryId: "food",
-          amountCents: 50000,
+          amount: 50000,
           month: "2026-02",
           createdAt: "2026-02-01T00:00:00.000Z",
           updatedAt: "2026-02-01T00:00:00.000Z",
@@ -308,7 +308,7 @@ describe("budget repository", () => {
           id: "budget-2",
           userId: "user-1",
           categoryId: "transport",
-          amountCents: 20000,
+          amount: 20000,
           month: "2026-02",
           createdAt: "2026-02-01T00:00:00.000Z",
           updatedAt: "2026-02-01T00:00:00.000Z",
@@ -320,7 +320,7 @@ describe("budget repository", () => {
           id: "budget-existing",
           userId: "user-1",
           categoryId: "food",
-          amountCents: 45000,
+          amount: 45000,
           month: "2026-03",
           createdAt: "2026-03-01T00:00:00.000Z",
           updatedAt: "2026-03-01T00:00:00.000Z",

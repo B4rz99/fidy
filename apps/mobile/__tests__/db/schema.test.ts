@@ -14,7 +14,7 @@ describe("transactions table schema", () => {
     expect(names).toContain("id");
     expect(names).toContain("userId");
     expect(names).toContain("type");
-    expect(names).toContain("amountCents");
+    expect(names).toContain("amount");
     expect(names).toContain("categoryId");
     expect(names).toContain("description");
     expect(names).toContain("date");
@@ -100,7 +100,7 @@ describe("bills table schema", () => {
     expect(names).toContain("id");
     expect(names).toContain("userId");
     expect(names).toContain("name");
-    expect(names).toContain("amountCents");
+    expect(names).toContain("amount");
     expect(names).toContain("frequency");
     expect(names).toContain("categoryId");
     expect(names).toContain("startDate");

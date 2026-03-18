@@ -28,8 +28,8 @@ describe("MOCK_BILLS", () => {
 
   test("all amounts are positive integers", () => {
     for (const bill of MOCK_BILLS) {
-      expect(Number.isInteger(bill.amountCents)).toBe(true);
-      expect(bill.amountCents).toBeGreaterThan(0);
+      expect(Number.isInteger(bill.amount)).toBe(true);
+      expect(bill.amount).toBeGreaterThan(0);
     }
   });
 });

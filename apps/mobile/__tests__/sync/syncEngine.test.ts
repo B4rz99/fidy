@@ -79,7 +79,7 @@ describe("syncEngine", () => {
         id: "tx-1",
         userId: "user-1",
         type: "expense",
-        amountCents: 1500,
+        amount: 1500,
         categoryId: "food",
         description: "Lunch",
         date: "2026-03-04",
@@ -98,7 +98,7 @@ describe("syncEngine", () => {
         expect.objectContaining({
           id: "tx-1",
           user_id: "user-1",
-          amount_cents: 1500,
+          amount: 1500,
         })
       );
       expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-1"]);
@@ -118,7 +118,7 @@ describe("syncEngine", () => {
         id: "tx-1",
         userId: "user-1",
         type: "expense",
-        amountCents: 1500,
+        amount: 1500,
         categoryId: "food",
         description: null,
         date: "2026-03-04",
@@ -163,7 +163,7 @@ describe("syncEngine", () => {
           id: "tx-remote-1",
           user_id: "user-1",
           type: "income",
-          amount_cents: 5000,
+          amount: 5000,
           category_id: "salary",
           description: "Pay",
           date: "2026-03-04",
@@ -208,7 +208,7 @@ describe("syncEngine", () => {
           id: "tx-1",
           user_id: "user-1",
           type: "expense",
-          amount_cents: 1000,
+          amount: 1000,
           category_id: "food",
           description: null,
           date: "2026-03-04",
@@ -222,7 +222,7 @@ describe("syncEngine", () => {
         id: "tx-1",
         userId: "user-1",
         type: "expense",
-        amountCents: 2000,
+        amount: 2000,
         categoryId: "food",
         description: null,
         date: "2026-03-04",
@@ -244,7 +244,7 @@ describe("syncEngine", () => {
           id: "tx-1",
           user_id: "user-1",
           type: "expense",
-          amount_cents: 3000,
+          amount: 3000,
           category_id: "food",
           description: "Updated",
           date: "2026-03-04",
@@ -258,7 +258,7 @@ describe("syncEngine", () => {
         id: "tx-1",
         userId: "user-1",
         type: "expense",
-        amountCents: 1000,
+        amount: 1000,
         categoryId: "food",
         description: null,
         date: "2026-03-04",
@@ -272,7 +272,7 @@ describe("syncEngine", () => {
 
       expect(mockUpsertTransaction).toHaveBeenCalledWith(
         mockDb,
-        expect.objectContaining({ id: "tx-1", amountCents: 3000, description: "Updated" })
+        expect.objectContaining({ id: "tx-1", amount: 3000, description: "Updated" })
       );
     });
 
@@ -325,7 +325,7 @@ describe("syncEngine", () => {
           id: "tx-1",
           user_id: "user-1",
           type: "expense",
-          amount_cents: 2000,
+          amount: 2000,
           category_id: "food",
           description: "Updated by server",
           date: "2026-03-04",
@@ -339,7 +339,7 @@ describe("syncEngine", () => {
         id: "tx-1",
         userId: "user-1",
         type: "expense",
-        amountCents: 1000,
+        amount: 1000,
         categoryId: "food",
         description: "Local version",
         date: "2026-03-04",
@@ -368,7 +368,7 @@ describe("syncEngine", () => {
           id: "tx-1",
           user_id: "user-1",
           type: "expense",
-          amount_cents: 1000,
+          amount: 1000,
           category_id: "food",
           description: "Same data",
           date: "2026-03-04",
@@ -382,7 +382,7 @@ describe("syncEngine", () => {
         id: "tx-1",
         userId: "user-1",
         type: "expense",
-        amountCents: 1000,
+        amount: 1000,
         categoryId: "food",
         description: "Same data",
         date: "2026-03-04",
@@ -406,7 +406,7 @@ describe("syncEngine", () => {
           id: "tx-new",
           user_id: "user-1",
           type: "expense",
-          amount_cents: 5000,
+          amount: 5000,
           category_id: "transport",
           description: "New from server",
           date: "2026-03-04",

@@ -92,7 +92,7 @@ describe("processNotification", () => {
       expect.objectContaining({
         userId: USER_ID,
         type: "expense",
-        amountCents: 5000000,
+        amount: 50000,
         description: "EDS LA CASTELLANA",
         source: "notification_android",
       })
@@ -110,7 +110,7 @@ describe("processNotification", () => {
   it("falls through to LLM when local regex fails", async () => {
     mockParseNotificationApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 3500000,
+      amount: 35000,
       categoryId: "food",
       description: "Restaurante XYZ",
       date: "2026-03-07",
@@ -128,7 +128,7 @@ describe("processNotification", () => {
     expect(mockInsertTransaction).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        amountCents: 3500000,
+        amount: 35000,
         categoryId: "food",
         description: "Restaurante XYZ",
       })

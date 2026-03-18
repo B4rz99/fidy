@@ -56,7 +56,7 @@ function serverRow(overrides: Record<string, unknown> = {}) {
     id: "tx-1",
     user_id: USER_ID,
     type: "expense",
-    amount_cents: 2000,
+    amount: 2000,
     category_id: "food",
     description: "Server merchant",
     date: "2026-03-10",
@@ -73,7 +73,7 @@ function insertLocalTx(overrides: Record<string, unknown> = {}) {
     id: "tx-1",
     userId: USER_ID,
     type: "expense",
-    amountCents: 1000,
+    amount: 1000,
     categoryId: "food",
     description: "Local merchant",
     date: "2026-03-10",
@@ -110,10 +110,10 @@ function mockSupabase(rows: Record<string, unknown>[]) {
 
 describe("syncPull integration (real SQLite)", () => {
   it("server newer → upserts and logs conflict", async () => {
-    insertLocalTx({ amountCents: 1000, updatedAt: "2026-03-10T10:00:00.000Z" });
+    insertLocalTx({ amount: 1000, updatedAt: "2026-03-10T10:00:00.000Z" });
 
     const supabase = mockSupabase([
-      serverRow({ amount_cents: 2000, updated_at: "2026-03-10T14:00:00.000Z" }),
+      serverRow({ amount: 2000, updated_at: "2026-03-10T14:00:00.000Z" }),
     ]);
 
     const ok = await syncPull(db as any, supabase, USER_ID);
@@ -122,7 +122,7 @@ describe("syncPull integration (real SQLite)", () => {
     // Local row should now have the server's amount
     const tx = getTransactionById(db as any, "tx-1");
     expect(tx).not.toBeNull();
-    expect(tx!.amountCents).toBe(2000);
+    expect(tx!.amount).toBe(2000);
 
     // A conflict should be logged
     const conflicts = getUnresolvedConflicts(db as any);
@@ -131,15 +131,15 @@ describe("syncPull integration (real SQLite)", () => {
 
     const localData = JSON.parse(conflicts[0].localData);
     const serverData = JSON.parse(conflicts[0].serverData);
-    expect(localData.amountCents).toBe(1000);
-    expect(serverData.amountCents).toBe(2000);
+    expect(localData.amount).toBe(1000);
+    expect(serverData.amount).toBe(2000);
   });
 
   it("local newer → preserved, no conflict", async () => {
-    insertLocalTx({ amountCents: 1000, updatedAt: "2026-03-10T14:00:00.000Z" });
+    insertLocalTx({ amount: 1000, updatedAt: "2026-03-10T14:00:00.000Z" });
 
     const supabase = mockSupabase([
-      serverRow({ amount_cents: 2000, updated_at: "2026-03-10T10:00:00.000Z" }),
+      serverRow({ amount: 2000, updated_at: "2026-03-10T10:00:00.000Z" }),
     ]);
 
     const ok = await syncPull(db as any, supabase, USER_ID);
@@ -147,7 +147,7 @@ describe("syncPull integration (real SQLite)", () => {
 
     // Local data should be unchanged
     const tx = getTransactionById(db as any, "tx-1");
-    expect(tx!.amountCents).toBe(1000);
+    expect(tx!.amount).toBe(1000);
     expect(tx!.description).toBe("Local merchant");
 
     // No conflicts
@@ -164,7 +164,7 @@ describe("syncPull integration (real SQLite)", () => {
     const tx = getTransactionById(db as any, "tx-new");
     expect(tx).not.toBeNull();
     expect(tx!.description).toBe("Cloud-only");
-    expect(tx!.amountCents).toBe(2000);
+    expect(tx!.amount).toBe(2000);
 
     const conflicts = getUnresolvedConflicts(db as any);
     expect(conflicts).toHaveLength(0);
@@ -172,7 +172,7 @@ describe("syncPull integration (real SQLite)", () => {
 
   it("same data, newer timestamp → upserts without conflict", async () => {
     insertLocalTx({
-      amountCents: 2000,
+      amount: 2000,
       categoryId: "food",
       description: "Server merchant",
       date: "2026-03-10",
@@ -183,7 +183,7 @@ describe("syncPull integration (real SQLite)", () => {
 
     const supabase = mockSupabase([
       serverRow({
-        amount_cents: 2000,
+        amount: 2000,
         category_id: "food",
         description: "Server merchant",
         date: "2026-03-10",

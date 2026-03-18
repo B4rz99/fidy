@@ -4,7 +4,7 @@ import { createTransactionSchema } from "@/features/transactions/schema";
 describe("createTransactionSchema", () => {
   const validInput = {
     type: "expense" as const,
-    amountCents: 4520,
+    amount: 4520,
     categoryId: "food" as const,
     description: "Groceries",
     date: new Date("2026-03-01"),
@@ -33,7 +33,7 @@ describe("createTransactionSchema", () => {
   it("rejects zero amount", () => {
     const result = createTransactionSchema.safeParse({
       ...validInput,
-      amountCents: 0,
+      amount: 0,
     });
     expect(result.success).toBe(false);
   });
@@ -41,15 +41,15 @@ describe("createTransactionSchema", () => {
   it("rejects negative amount", () => {
     const result = createTransactionSchema.safeParse({
       ...validInput,
-      amountCents: -100,
+      amount: -100,
     });
     expect(result.success).toBe(false);
   });
 
-  it("rejects fractional cents", () => {
+  it("rejects fractional amount", () => {
     const result = createTransactionSchema.safeParse({
       ...validInput,
-      amountCents: 45.5,
+      amount: 45.5,
     });
     expect(result.success).toBe(false);
   });

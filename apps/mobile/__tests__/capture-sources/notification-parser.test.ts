@@ -8,7 +8,7 @@ describe("parseNotificationLocally", () => {
         "Bancolombia le informa compra por $50,000 en EDS LA CASTELLANA. "
       );
       expect(result).toEqual({
-        amountCents: 5000000,
+        amount: 50000,
         merchant: "EDS LA CASTELLANA",
         type: "expense",
       });
@@ -19,7 +19,7 @@ describe("parseNotificationLocally", () => {
         "Bancolombia le informa transferencia por $100,000 a JUAN PEREZ. "
       );
       expect(result).toEqual({
-        amountCents: 10000000,
+        amount: 100000,
         merchant: "JUAN PEREZ",
         type: "expense",
       });
@@ -30,7 +30,7 @@ describe("parseNotificationLocally", () => {
         "Bancolombia le informa transferencia por $200,000 de MARIA GARCIA. "
       );
       expect(result).toEqual({
-        amountCents: 20000000,
+        amount: 200000,
         merchant: "MARIA GARCIA",
         type: "income",
       });
@@ -39,7 +39,7 @@ describe("parseNotificationLocally", () => {
     it("parses deposit notification", () => {
       const result = parseNotificationLocally("Bancolombia le informa depósito por $500,000. ");
       expect(result).toEqual({
-        amountCents: 50000000,
+        amount: 500000,
         merchant: "Depósito",
         type: "income",
       });
@@ -50,7 +50,7 @@ describe("parseNotificationLocally", () => {
     it("parses purchase notification", () => {
       const result = parseNotificationLocally("BBVA: Compra aprobada por $35,000 en FALABELLA. ");
       expect(result).toEqual({
-        amountCents: 3500000,
+        amount: 35000,
         merchant: "FALABELLA",
         type: "expense",
       });
@@ -61,7 +61,7 @@ describe("parseNotificationLocally", () => {
     it("parses sent money notification", () => {
       const result = parseNotificationLocally("Enviaste $20,000 a Maria Garcia. ");
       expect(result).toEqual({
-        amountCents: 2000000,
+        amount: 20000,
         merchant: "Maria Garcia",
         type: "expense",
       });
@@ -70,7 +70,7 @@ describe("parseNotificationLocally", () => {
     it("parses received money notification", () => {
       const result = parseNotificationLocally("Recibiste $30,000 de Pedro Lopez. ");
       expect(result).toEqual({
-        amountCents: 3000000,
+        amount: 30000,
         merchant: "Pedro Lopez",
         type: "income",
       });
@@ -81,7 +81,7 @@ describe("parseNotificationLocally", () => {
     it("parses payment notification", () => {
       const result = parseNotificationLocally("Daviplata: Pagaste $15,000 en TIENDA XYZ. ");
       expect(result).toEqual({
-        amountCents: 1500000,
+        amount: 15000,
         merchant: "TIENDA XYZ",
         type: "expense",
       });
@@ -92,7 +92,7 @@ describe("parseNotificationLocally", () => {
     it("parses English payment notification", () => {
       const result = parseNotificationLocally("Payment of $25,000 at STARBUCKS. ");
       expect(result).toEqual({
-        amountCents: 2500000,
+        amount: 25000,
         merchant: "STARBUCKS",
         type: "expense",
       });
@@ -101,7 +101,7 @@ describe("parseNotificationLocally", () => {
     it("parses Spanish payment notification", () => {
       const result = parseNotificationLocally("Pago de $7,500 en FARMATODO. ");
       expect(result).toEqual({
-        amountCents: 750000,
+        amount: 7500,
         merchant: "FARMATODO",
         type: "expense",
       });
@@ -114,7 +114,7 @@ describe("parseNotificationLocally", () => {
         "Bancolombia le informa compra por $50.000 en EXITO. "
       );
       expect(result).toEqual({
-        amountCents: 5000000,
+        amount: 50000,
         merchant: "EXITO",
         type: "expense",
       });
@@ -125,7 +125,7 @@ describe("parseNotificationLocally", () => {
         "Bancolombia le informa compra por $50000 en EXITO. "
       );
       expect(result).toEqual({
-        amountCents: 5000000,
+        amount: 50000,
         merchant: "EXITO",
         type: "expense",
       });
@@ -136,7 +136,7 @@ describe("parseNotificationLocally", () => {
         "Bancolombia le informa compra por $1,500,000 en HOMECENTER. "
       );
       expect(result).toEqual({
-        amountCents: 150000000,
+        amount: 1500000,
         merchant: "HOMECENTER",
         type: "expense",
       });

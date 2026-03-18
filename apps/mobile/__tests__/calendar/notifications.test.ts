@@ -13,7 +13,7 @@ import type { Bill } from "@/features/calendar/schema";
 const makeBill = (overrides: Partial<Bill> = {}): Bill => ({
   id: "bill-1",
   name: "Netflix",
-  amountCents: 1599,
+  amount: 35000,
   frequency: "monthly",
   categoryId: "services",
   startDate: new Date(2025, 0, 15),
