@@ -11,6 +11,7 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture";
+import { SearchAction } from "@/features/search";
 import { SyncConflictBanner } from "@/features/sync";
 import {
   CATEGORY_MAP,
@@ -209,7 +210,12 @@ export const HomeScreen = () => {
   return (
     <ScreenLayout
       title="fidy"
-      rightActions={<BellAction />}
+      rightActions={
+        <View className="flex-row items-center" style={{ gap: 12 }}>
+          <SearchAction />
+          <BellAction />
+        </View>
+      }
       headerOverlay={
         <CompactBalanceBar
           balanceCents={balanceCents}

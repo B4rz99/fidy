@@ -247,6 +247,30 @@ const en = {
     ],
   },
 
+  // Search
+  search: {
+    title: "Search",
+    placeholder: "Search transactions...",
+    category: "Category",
+    dateRange: "Date range",
+    amount: "Amount",
+    type: "Type",
+    clearAll: "Clear all",
+    noResults: "No transactions match",
+    clearFilters: "Clear filters",
+    resultsSummary: "%{count} transactions · %{total} total",
+    today: "Today",
+    thisWeek: "This week",
+    thisMonth: "This month",
+    lastMonth: "Last month",
+    customRange: "Custom range",
+    from: "From",
+    to: "To",
+    min: "Min",
+    max: "Max",
+    allTypes: "All",
+  },
+
   // Detected Transactions Banner
   detectedTransactions: {
     count: {

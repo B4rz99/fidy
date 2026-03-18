@@ -248,6 +248,30 @@ const es = {
     ],
   },
 
+  // Search
+  search: {
+    title: "Buscar",
+    placeholder: "Buscar transacciones...",
+    category: "Categoría",
+    dateRange: "Rango de fechas",
+    amount: "Monto",
+    type: "Tipo",
+    clearAll: "Limpiar todo",
+    noResults: "No hay transacciones",
+    clearFilters: "Limpiar filtros",
+    resultsSummary: "%{count} transacciones · %{total} total",
+    today: "Hoy",
+    thisWeek: "Esta semana",
+    thisMonth: "Este mes",
+    lastMonth: "Mes pasado",
+    customRange: "Rango personalizado",
+    from: "Desde",
+    to: "Hasta",
+    min: "Mín",
+    max: "Máx",
+    allTypes: "Todos",
+  },
+
   // Detected Transactions Banner (already Spanish)
   detectedTransactions: {
     count: {
