@@ -13,7 +13,7 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 
 export default function ConnectedAccountsScreen() {
-  const { back } = useRouter();
+  const { back, navigate } = useRouter();
   const { t } = useTranslation();
   const accounts = useEmailCaptureStore((s) => s.accounts);
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
@@ -25,7 +25,7 @@ export default function ConnectedAccountsScreen() {
   const outlookAccount = accounts.find((a) => a.provider === "outlook");
 
   return (
-    <ScreenLayout title={t("connectedAccounts.title")} variant="sub" onBack={() => back()}>
+    <ScreenLayout title={t("connectedAccounts.title")} variant="sub" onBack={() => navigate("/(tabs)/menu")}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ paddingBottom: 40 }}

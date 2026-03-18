@@ -27,7 +27,7 @@ const es = {
     ai: "IA",
     add: "Agregar",
     calendar: "Calendario",
-    menu: "Menú",
+    settings: "Ajustes",
   },
 
   // Transactions
@@ -209,9 +209,43 @@ const es = {
     },
   },
 
-  // Menu
-  menu: {
-    connectedMails: "Correos Conectados",
+  // Settings
+  settings: {
+    title: "Ajustes",
+    accountSection: "CUENTA",
+    preferencesSection: "PREFERENCIAS",
+    connectionsSection: "CONEXIONES",
+    appSection: "APLICACIÓN",
+    theme: "Tema",
+    themeSystem: "Sistema",
+    themeLight: "Claro",
+    themeDark: "Oscuro",
+    language: "Idioma",
+    languageEnglish: "English",
+    languageSpanish: "Español",
+    connectedEmails: "Correos Conectados",
+    connectedEmailsCount: {
+      one: "%{count} cuenta",
+      other: "%{count} cuentas",
+    },
+    notifications: "Notificaciones",
+    helpSupport: "Ayuda y Soporte",
+    privacyPolicy: "Política de Privacidad",
+    termsOfService: "Términos de Servicio",
+    version: "Versión",
+    deleteAccount: "Eliminar Cuenta",
+    deleteAccountTitle: "Eliminar Cuenta",
+    deleteAccountWarning:
+      "Esto eliminará permanentemente tu cuenta y todos tus datos. Esta acción no se puede deshacer.",
+    deleteAccountUnsyncedWarning: {
+      one: "Tienes %{count} cambio sin sincronizar que se perderá.",
+      other: "Tienes %{count} cambios sin sincronizar que se perderán.",
+    },
+    deleteAccountConfirm: "Eliminar Mi Cuenta",
+    profileTitle: "Perfil",
+    logout: "Cerrar Sesión",
+    logoutConfirmTitle: "Cerrar Sesión",
+    logoutConfirmMessage: "¿Estás seguro de que quieres cerrar sesión?",
   },
 
   // Notification Capture

@@ -13,7 +13,7 @@ describe("Tab layout", () => {
     expect(layoutSource).toContain('name="add"');
   });
 
-  test("has correct tab order: index, ai, add, calendar, menu", () => {
+  test("has correct tab order: index, ai, add, calendar, menu, connected-accounts, failed-emails, profile", () => {
     const screens = Array.from(layoutSource.matchAll(/name="([\w-]+)"/g), (m) => m[1]);
     expect(screens).toEqual([
       "index",
@@ -23,6 +23,7 @@ describe("Tab layout", () => {
       "menu",
       "connected-accounts",
       "failed-emails",
+      "profile",
     ]);
   });
 
@@ -30,15 +31,11 @@ describe("Tab layout", () => {
     expect(layoutSource).not.toContain('name="goals"');
   });
 
-  // Bug 4: pressing ADD should close menu
-  test("ADD branch closes the menu overlay", () => {
-    // The ADD_TAB_PREFIX branch should call closeMenu
-    const addBranch = layoutSource.match(/ADD_TAB_PREFIX\)[\s\S]*?else if/);
-    expect(addBranch?.[0]).toContain("closeMenu");
+  test("ADD branch navigates to add-transaction modal", () => {
+    expect(layoutSource).toContain('push("/add-transaction")');
   });
 
-  test("ADD branch navigates to add-transaction modal", () => {
-    const addBranch = layoutSource.match(/ADD_TAB_PREFIX\)[\s\S]*?else if/);
-    expect(addBranch?.[0]).toContain('push("/add-transaction")');
+  test("does not reference MenuPanel", () => {
+    expect(layoutSource).not.toContain("MenuPanel");
   });
 });
