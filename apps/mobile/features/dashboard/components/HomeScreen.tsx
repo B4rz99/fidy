@@ -18,11 +18,10 @@ import {
 } from "@/features/transactions";
 import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
 import { Ellipsis } from "@/shared/components/icons";
-import { Alert, FlatList, Platform, Pressable, Text, View } from "@/shared/components/rn";
+import { Alert, FlatList, Platform, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
-import { toIsoDate } from "@/shared/lib";
-import { formatSignedMoney } from "@/shared/lib";
+import { formatSignedMoney, toIsoDate } from "@/shared/lib";
 import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";
 import { DateHeader } from "./DateHeader";
