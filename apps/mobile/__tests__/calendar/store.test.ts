@@ -98,10 +98,10 @@ describe("useCalendarStore", () => {
     expect(result).toBe(false);
   });
 
-  test("addBill returns false for negative amount", async () => {
+  test("addBill returns false for zero amount", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "-5", "monthly", "services", testDate);
+      .addBill("Netflix", "0", "monthly", "services", testDate);
     expect(result).toBe(false);
   });
 

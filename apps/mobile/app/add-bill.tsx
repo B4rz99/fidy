@@ -129,10 +129,10 @@ export default function AddBillScreen() {
               ref={amountRef}
               style={[styles.input, { backgroundColor: pageBg, color: primaryColor, borderColor }]}
               value={amount}
-              onChangeText={setAmount}
-              placeholder="9.99"
+              onChangeText={(v) => setAmount(v.replace(/[^0-9]/g, ""))}
+              placeholder="50000"
               placeholderTextColor={secondaryColor}
-              keyboardType="decimal-pad"
+              keyboardType="number-pad"
               returnKeyType="done"
             />
           </View>

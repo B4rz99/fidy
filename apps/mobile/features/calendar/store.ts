@@ -109,8 +109,9 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
   addBill: async (name, amount, frequency, category, startDate) => {
     if (!dbRef || !userIdRef) return false;
 
-    const amountValue = Number.parseInt(amount, 10);
-    if (Number.isNaN(amountValue) || amountValue <= 0) return false;
+    const cleaned = amount.replace(/[^0-9]/g, "");
+    const amountValue = Number.parseInt(cleaned, 10) || 0;
+    if (amountValue <= 0) return false;
 
     const result = createBillSchema.safeParse({
       name,
