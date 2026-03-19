@@ -32,7 +32,6 @@ export {
   Palette,
   Pencil,
   Plus,
-  RotateCcw,
   Search,
   SendHorizonal,
   Settings,

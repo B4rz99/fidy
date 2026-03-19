@@ -3,7 +3,6 @@ import { Stack, useRouter } from "expo-router";
 import { openBrowserAsync } from "expo-web-browser";
 import { useAuthStore } from "@/features/auth";
 import { useEmailCaptureStore } from "@/features/email-capture";
-import { resetOnboarding } from "@/features/onboarding";
 import {
   buildPrivacyUrl,
   buildTermsUrl,
@@ -21,7 +20,6 @@ import {
   Info,
   Mail,
   Palette,
-  RotateCcw,
   Shield,
 } from "@/shared/components/icons";
 import { Linking, Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
@@ -172,22 +170,6 @@ export function SettingsScreen() {
             isLast
           />
         </SettingsSection>
-
-        {/* DEV TOOLS — only visible in development builds */}
-        {__DEV__ ? (
-          <SettingsSection label="DEV TOOLS">
-            <SettingsRow
-              icon={RotateCcw}
-              label="Reset Onboarding"
-              onPress={async () => {
-                await resetOnboarding();
-                await useAuthStore.getState().restoreSession();
-              }}
-              destructive
-              isLast
-            />
-          </SettingsSection>
-        ) : null}
       </ScrollView>
     </ScreenLayout>
   );
