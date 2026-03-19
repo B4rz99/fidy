@@ -70,6 +70,7 @@ export function SettingsScreen() {
           paddingBottom: TAB_BAR_CLEARANCE,
           gap: 24,
         }}
+        contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
         {/* ACCOUNT */}

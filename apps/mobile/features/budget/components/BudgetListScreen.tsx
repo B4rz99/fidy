@@ -82,6 +82,7 @@ export function BudgetListScreen() {
 
         <ScrollView
           contentContainerStyle={[styles.scrollContent, { paddingBottom: TAB_BAR_CLEARANCE }]}
+          contentInsetAdjustmentBehavior="automatic"
           showsVerticalScrollIndicator={false}
         >
           {hasBudgets ? (

@@ -117,6 +117,7 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
         <Stack.Screen
           options={{
             title: t("aiChat.title"),
+            headerLeft: () => null,
             headerRight: () => <NewChatButton onPress={onNewChat} />,
           }}
         />

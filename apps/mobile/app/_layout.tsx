@@ -12,7 +12,7 @@ import { getLocales } from "expo-localization";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useChatStore } from "@/features/ai-chat";
 import { useAuthStore } from "@/features/auth";
@@ -26,6 +26,11 @@ import {
   useSmsDetection,
 } from "@/features/capture-sources";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
+import {
+  clearOnboardingFromStore,
+  getOnboardingCompleteFromStore,
+  isOnboardingComplete,
+} from "@/features/onboarding";
 import { useSearchStore } from "@/features/search";
 import { useSettingsStore } from "@/features/settings";
 import { useSync, useSyncConflictStore } from "@/features/sync";
@@ -124,6 +129,11 @@ function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
+  // Onboarding completion: check SecureStore first, then session metadata
+  const [onboardingComplete, setOnboardingComplete] = useState(() =>
+    getOnboardingCompleteFromStore()
+  );
+
   const [fontsLoaded, fontsError] = useFonts({
     Poppins_500Medium,
     Poppins_600SemiBold,
@@ -135,6 +145,19 @@ function RootLayout() {
     useAuthStore.getState().restoreSession();
   }, []);
 
+  // Re-check onboarding status when session changes
+  useEffect(() => {
+    if (session) {
+      const fromStore = getOnboardingCompleteFromStore();
+      const fromSession = isOnboardingComplete(session);
+      setOnboardingComplete(fromStore || fromSession);
+    } else {
+      // User signed out — clear local onboarding flag so a new user gets onboarding
+      clearOnboardingFromStore();
+      setOnboardingComplete(false);
+    }
+  }, [session]);
+
   useEffect(() => {
     if ((fontsLoaded || fontsError) && !isAuthLoading) {
       if (!userId) {
@@ -143,17 +166,21 @@ function RootLayout() {
     }
   }, [fontsLoaded, fontsError, isAuthLoading, userId]);
 
+  // Three-state routing: no user → login, user + not onboarded → onboarding, user + onboarded → tabs
   useEffect(() => {
     if (isAuthLoading || (!fontsLoaded && !fontsError)) return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    const inOnboarding = (segments as string[])[1] === "onboarding";
 
-    if (userId && inAuthGroup) {
-      router.replace("/(tabs)");
-    } else if (!userId && !inAuthGroup) {
+    if (!userId && !inAuthGroup) {
       router.replace("/(auth)");
+    } else if (userId && !onboardingComplete && !inOnboarding) {
+      router.replace("/(auth)/onboarding");
+    } else if (userId && onboardingComplete && inAuthGroup) {
+      router.replace("/(tabs)");
     }
-  }, [userId, segments, isAuthLoading, fontsLoaded, fontsError, router]);
+  }, [userId, segments, isAuthLoading, fontsLoaded, fontsError, router, onboardingComplete]);
 
   if (!fontsLoaded && !fontsError) {
     return null;
@@ -228,7 +255,14 @@ function RootLayout() {
             name="auto-suggest-budgets"
             options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
           />
-          <Stack.Screen name="bills-calendar" />
+          <Stack.Screen
+            name="bills-calendar"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
+          />
           <Stack.Screen
             name="ai-memories"
             options={{
@@ -238,7 +272,7 @@ function RootLayout() {
             }}
           />
         </Stack>
-        {db && userId && <AuthenticatedShell db={db} userId={userId} />}
+        {db && userId && onboardingComplete && <AuthenticatedShell db={db} userId={userId} />}
       </SentryErrorBoundary>
       <StatusBar style="auto" />
     </GestureHandlerRootView>
