@@ -312,7 +312,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
       return { success: false as const, error: "Failed to update transaction" };
     }
 
-    set({ editingId: null });
+    get().resetForm();
     await get().refresh();
 
     return { success: true as const, transaction };

@@ -63,12 +63,6 @@ export default function AddTransactionScreen() {
 
   const isEditing = editingId != null;
 
-  useEffect(() => {
-    if (!isEditing) {
-      resetForm();
-    }
-  }, [resetForm, isEditing]);
-
   const accentRed = useThemeColor("accentRed");
   const accentGreen = useThemeColor("accentGreen");
   const secondary = useThemeColor("secondary");
@@ -113,8 +107,8 @@ export default function AddTransactionScreen() {
       const result = isEditing ? await updateTransaction(editingId) : await saveTransaction();
       if (result.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        resetForm();
-        navigate("/(tabs)");
+        if (!isEditing) resetForm();
+        navigate("/(tabs)" as never);
       }
     });
 

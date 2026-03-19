@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   CATEGORIES,
   type CategoryId,
@@ -28,11 +28,12 @@ export const NeedsReviewCard = ({
     transaction?.categoryId && isValidCategoryId(transaction.categoryId)
       ? transaction.categoryId
       : "other";
+  const [prevSuggested, setPrevSuggested] = useState(suggestedCategory);
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>(suggestedCategory);
-
-  useEffect(() => {
+  if (suggestedCategory !== prevSuggested) {
+    setPrevSuggested(suggestedCategory);
     setSelectedCategory(suggestedCategory);
-  }, [suggestedCategory]);
+  }
 
   const handleConfirm = useCallback(() => {
     onConfirm(processedEmail.id, selectedCategory);

@@ -31,6 +31,21 @@ All code in the financial core (`lib/`, schemas, utils) MUST follow functional p
 - Separate pure functions from side effects: pure logic in `lib/`, effects in stores/hooks
 - Pure functions take all dependencies as parameters (no reaching into module state)
 
+## Code Style: Avoid Unnecessary useEffect
+
+Follow React's ["You Might Not Need an Effect"](https://react.dev/learn/you-might-not-need-an-effect) guidelines. Before reaching for `useEffect`, use these alternatives:
+
+1. **Derive inline** — if the value can be computed from props/state, compute it during render (a `const`, `useMemo`, or the "adjust during render" pattern)
+2. **Key prop reset** — to reset a component when a prop changes, render it with `key={prop}` so React remounts with fresh state
+3. **Event handlers** — side effects caused by user actions belong in the handler that triggered them, not in an effect that watches for state changes
+4. **`useMountEffect`** — for true mount-only work (app bootstrap, one-time loads), use `shared/hooks/useMountEffect` instead of `useEffect(..., [])`
+5. **TanStack Query** — for data fetching, prefer `useQuery`/`useMutation`
+
+**Allowed useEffect cases:**
+- Subscriptions / listeners that return a cleanup function
+- Reanimated animations (`withRepeat`, `withSequence`)
+- App bootstrap in `_layout.tsx` (routing, splash screen)
+
 ## Architectural Decisions
 
 ### Calendar-month budgets only

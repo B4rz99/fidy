@@ -7,7 +7,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import { useBudgetStore } from "@/features/budget";
+import { type Budget, type BudgetSuggestion, useBudgetStore } from "@/features/budget";
 import {
   CATEGORIES,
   type CategoryId,
@@ -21,18 +21,24 @@ import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatInputDisplay, formatMoney, parseDigitsToAmount } from "@/shared/lib";
 
-export default function CreateBudgetScreen() {
-  const router = useRouter();
+function CreateBudgetForm({
+  existingBudget,
+  existingCategoryIds,
+  autoSuggestions,
+  onCreateBudget,
+  onUpdateBudget,
+  onDeleteBudget,
+  onDone,
+}: {
+  readonly existingBudget: Budget | undefined;
+  readonly existingCategoryIds: ReadonlySet<string>;
+  readonly autoSuggestions: readonly BudgetSuggestion[];
+  readonly onCreateBudget: (categoryId: string, amount: number) => Promise<boolean>;
+  readonly onUpdateBudget: (id: string, amount: number) => Promise<void>;
+  readonly onDeleteBudget: (id: string) => Promise<void>;
+  readonly onDone: () => void;
+}) {
   const { t, locale } = useTranslation();
-  const { budgetId } = useLocalSearchParams<{ budgetId?: string }>();
-
-  const budgets = useBudgetStore((s) => s.budgets);
-  const autoSuggestions = useBudgetStore((s) => s.autoSuggestions);
-  const createBudget = useBudgetStore((s) => s.createBudget);
-  const updateBudget = useBudgetStore((s) => s.updateBudget);
-  const deleteBudget = useBudgetStore((s) => s.deleteBudget);
-
-  const existingBudget = budgetId ? budgets.find((b) => b.id === budgetId) : undefined;
   const isEdit = !!existingBudget;
 
   const [category, setCategory] = useState<CategoryId>(
@@ -66,19 +72,6 @@ export default function CreateBudgetScreen() {
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: only re-sync when the budget identity changes
-  useEffect(() => {
-    if (existingBudget) {
-      setCategory(isValidCategoryId(existingBudget.categoryId) ? existingBudget.categoryId : "");
-      setDigits(String(existingBudget.amount));
-    }
-  }, [existingBudget?.id]);
-
-  const existingCategoryIds = useMemo(
-    () => new Set(budgets.filter((b) => b.id !== budgetId).map((b) => b.categoryId)),
-    [budgets, budgetId]
-  );
-
   const availableCategories = useMemo(
     () => CATEGORIES.filter((c) => !existingCategoryIds.has(c.id)),
     [existingCategoryIds]
@@ -94,20 +87,20 @@ export default function CreateBudgetScreen() {
       if (amount <= 0) return;
 
       if (isEdit && existingBudget) {
-        await updateBudget(existingBudget.id, amount);
-        router.back();
+        await onUpdateBudget(existingBudget.id, amount);
+        onDone();
       } else {
         if (!category) return;
-        const success = await createBudget(category, amount);
-        if (success) router.back();
+        const success = await onCreateBudget(category, amount);
+        if (success) onDone();
       }
     });
 
   const handleDelete = () =>
     guardedSave(async () => {
       if (!existingBudget) return;
-      await deleteBudget(existingBudget.id);
-      router.back();
+      await onDeleteBudget(existingBudget.id);
+      onDone();
     });
 
   const handleKey = useCallback((key: string) => {
@@ -199,6 +192,37 @@ export default function CreateBudgetScreen() {
 
       <FidyNumpad onKeyPress={handleKey} />
     </ScrollView>
+  );
+}
+
+export default function CreateBudgetScreen() {
+  const router = useRouter();
+  const { budgetId } = useLocalSearchParams<{ budgetId?: string }>();
+
+  const budgets = useBudgetStore((s) => s.budgets);
+  const autoSuggestions = useBudgetStore((s) => s.autoSuggestions);
+  const createBudget = useBudgetStore((s) => s.createBudget);
+  const updateBudget = useBudgetStore((s) => s.updateBudget);
+  const deleteBudget = useBudgetStore((s) => s.deleteBudget);
+
+  const existingBudget = budgetId ? budgets.find((b) => b.id === budgetId) : undefined;
+
+  const existingCategoryIds = useMemo(
+    () => new Set(budgets.filter((b) => b.id !== budgetId).map((b) => b.categoryId)),
+    [budgets, budgetId]
+  );
+
+  return (
+    <CreateBudgetForm
+      key={existingBudget?.id ?? "new"}
+      existingBudget={existingBudget}
+      existingCategoryIds={existingCategoryIds}
+      autoSuggestions={autoSuggestions}
+      onCreateBudget={createBudget}
+      onUpdateBudget={updateBudget}
+      onDeleteBudget={deleteBudget}
+      onDone={() => router.back()}
+    />
   );
 }
 

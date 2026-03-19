@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { useBudgetStore } from "@/features/budget";
+import { useBudgetStore, useSuggestionSelection } from "@/features/budget";
 import { CATEGORY_MAP } from "@/features/transactions";
 import {
   Pressable,
@@ -10,9 +9,9 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
-import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useAsyncGuard, useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { formatMoney, parseDigitsToAmount } from "@/shared/lib";
+import { formatMoney } from "@/shared/lib";
 import { useOnboardingStore } from "../store";
 
 export function BudgetSetupStep() {
@@ -32,47 +31,16 @@ export function BudgetSetupStep() {
   const { isBusy, run: guardedRun } = useAsyncGuard();
 
   // Load suggestions on mount
-  useEffect(() => {
+  useMountEffect(() => {
     loadAutoSuggestions();
-  }, [loadAutoSuggestions]);
+  });
 
-  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
-    () => new Set(autoSuggestions.map((s) => s.categoryId))
-  );
-  const [editedAmounts, setEditedAmounts] = useState<Record<string, string>>(() =>
-    Object.fromEntries(autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmount)]))
-  );
-
-  // Update local state when suggestions load
-  useEffect(() => {
-    setSelectedIds(new Set(autoSuggestions.map((s) => s.categoryId)));
-    setEditedAmounts(
-      Object.fromEntries(autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmount)]))
-    );
-  }, [autoSuggestions]);
-
-  const handleToggle = (categoryId: string) => {
-    setSelectedIds((prev) =>
-      prev.has(categoryId)
-        ? new Set(Array.from(prev).filter((id) => id !== categoryId))
-        : new Set([...prev, categoryId])
-    );
-  };
-
-  const handleAmountChange = (categoryId: string, value: string) => {
-    setEditedAmounts((prev) => ({ ...prev, [categoryId]: value }));
-  };
+  const { selectedIds, editedAmounts, handleToggle, handleAmountChange, buildBudgetMap } =
+    useSuggestionSelection(autoSuggestions);
 
   const handleSave = () =>
     guardedRun(async () => {
-      const budgets = new Map(
-        Array.from(selectedIds)
-          .map(
-            (categoryId) =>
-              [categoryId, parseDigitsToAmount(editedAmounts[categoryId] ?? "0")] as const
-          )
-          .filter(([, amount]) => amount > 0)
-      );
+      const budgets = buildBudgetMap();
       if (budgets.size > 0) {
         await acceptSuggestions(budgets);
       }

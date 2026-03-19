@@ -1,6 +1,5 @@
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { useBudgetStore } from "@/features/budget";
+import { useBudgetStore, useSuggestionSelection } from "@/features/budget";
 import { CATEGORY_MAP } from "@/features/transactions";
 import {
   KeyboardAvoidingView,
@@ -15,7 +14,7 @@ import {
 } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { formatMoney, parseDigitsToAmount } from "@/shared/lib";
+import { formatMoney } from "@/shared/lib";
 
 export default function AutoSuggestBudgetsScreen() {
   const router = useRouter();
@@ -24,19 +23,8 @@ export default function AutoSuggestBudgetsScreen() {
   const autoSuggestions = useBudgetStore((s) => s.autoSuggestions);
   const acceptSuggestions = useBudgetStore((s) => s.acceptSuggestions);
 
-  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
-    () => new Set(autoSuggestions.map((s) => s.categoryId))
-  );
-  const [editedAmounts, setEditedAmounts] = useState<Record<string, string>>(() =>
-    Object.fromEntries(autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmount)]))
-  );
-
-  useEffect(() => {
-    setSelectedIds(new Set(autoSuggestions.map((s) => s.categoryId)));
-    setEditedAmounts(
-      Object.fromEntries(autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmount)]))
-    );
-  }, [autoSuggestions]);
+  const { selectedIds, editedAmounts, handleToggle, handleAmountChange, buildBudgetMap } =
+    useSuggestionSelection(autoSuggestions);
 
   const cardBg = useThemeColor("card");
   const borderColor = useThemeColor("borderSubtle");
@@ -47,32 +35,9 @@ export default function AutoSuggestBudgetsScreen() {
 
   const { isBusy, run: guardedRun } = useAsyncGuard();
 
-  const handleToggle = (categoryId: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(categoryId)) {
-        next.delete(categoryId);
-      } else {
-        next.add(categoryId);
-      }
-      return next;
-    });
-  };
-
-  const handleAmountChange = (categoryId: string, value: string) => {
-    setEditedAmounts((prev) => ({ ...prev, [categoryId]: value }));
-  };
-
   const handleAccept = () =>
     guardedRun(async () => {
-      const budgets = new Map<string, number>();
-      selectedIds.forEach((categoryId) => {
-        const raw = editedAmounts[categoryId] ?? "0";
-        const amount = parseDigitsToAmount(raw);
-        if (amount > 0) {
-          budgets.set(categoryId, amount);
-        }
-      });
+      const budgets = buildBudgetMap();
       if (budgets.size > 0) {
         await acceptSuggestions(budgets);
       }

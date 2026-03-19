@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useColorScheme as useRnColorScheme } from "@/shared/components/rn";
+import { useMountEffect } from "./use-mount-effect";
 
 /**
  * To support static rendering, this value needs to be re-calculated on the client side for web
@@ -7,9 +8,9 @@ import { useColorScheme as useRnColorScheme } from "@/shared/components/rn";
 export function useColorScheme() {
   const [hasHydrated, setHasHydrated] = useState(false);
 
-  useEffect(() => {
+  useMountEffect(() => {
     setHasHydrated(true);
-  }, []);
+  });
 
   const colorScheme = useRnColorScheme();
 

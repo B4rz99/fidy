@@ -39,6 +39,7 @@ import { ErrorFallback } from "@/shared/components";
 import { Platform, useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 import { type AnyDb, getDb } from "@/shared/db";
+import { useMountEffect } from "@/shared/hooks";
 import { useLocaleStore } from "@/shared/i18n";
 import {
   captureError,
@@ -141,9 +142,9 @@ function RootLayout() {
     Poppins_800ExtraBold,
   });
 
-  useEffect(() => {
+  useMountEffect(() => {
     useAuthStore.getState().restoreSession();
-  }, []);
+  });
 
   // Re-check onboarding status when session changes
   useEffect(() => {
@@ -178,7 +179,7 @@ function RootLayout() {
     } else if (userId && !onboardingComplete && !inOnboarding) {
       router.replace("/(auth)/onboarding");
     } else if (userId && onboardingComplete && inAuthGroup) {
-      router.replace("/(tabs)");
+      router.replace("/(tabs)" as never);
     }
   }, [userId, segments, isAuthLoading, fontsLoaded, fontsError, router, onboardingComplete]);
 
