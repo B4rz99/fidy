@@ -3,7 +3,7 @@ import { Stack, useRouter } from "expo-router";
 import { openBrowserAsync } from "expo-web-browser";
 import { useAuthStore } from "@/features/auth";
 import { useEmailCaptureStore } from "@/features/email-capture";
-import { clearOnboardingFromStore } from "@/features/onboarding";
+import { resetOnboarding } from "@/features/onboarding";
 import {
   buildPrivacyUrl,
   buildTermsUrl,
@@ -179,9 +179,9 @@ export function SettingsScreen() {
             <SettingsRow
               icon={RotateCcw}
               label="Reset Onboarding"
-              onPress={() => {
-                clearOnboardingFromStore();
-                useAuthStore.getState().restoreSession();
+              onPress={async () => {
+                await resetOnboarding();
+                await useAuthStore.getState().restoreSession();
               }}
               destructive
               isLast

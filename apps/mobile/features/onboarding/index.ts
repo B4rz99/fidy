@@ -9,5 +9,6 @@ export {
   getOnboardingCompleteFromStore,
   isOnboardingComplete,
   markOnboardingComplete,
+  resetOnboarding,
 } from "./lib/check-onboarding";
 export { TOTAL_STEPS, useOnboardingStore } from "./store";
