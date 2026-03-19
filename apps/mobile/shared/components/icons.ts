@@ -31,6 +31,7 @@ export {
   MessageSquare,
   Palette,
   Pencil,
+  RotateCcw,
   Plus,
   Search,
   SendHorizonal,

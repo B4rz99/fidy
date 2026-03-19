@@ -3,6 +3,7 @@ import { Stack, useRouter } from "expo-router";
 import { openBrowserAsync } from "expo-web-browser";
 import { useAuthStore } from "@/features/auth";
 import { useEmailCaptureStore } from "@/features/email-capture";
+import { clearOnboardingFromStore } from "@/features/onboarding";
 import {
   buildPrivacyUrl,
   buildTermsUrl,
@@ -20,6 +21,7 @@ import {
   Info,
   Mail,
   Palette,
+  RotateCcw,
   Shield,
 } from "@/shared/components/icons";
 import { Linking, Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
@@ -70,6 +72,7 @@ export function SettingsScreen() {
           paddingBottom: TAB_BAR_CLEARANCE,
           gap: 24,
         }}
+        contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
         {/* ACCOUNT */}
@@ -169,6 +172,22 @@ export function SettingsScreen() {
             isLast
           />
         </SettingsSection>
+
+        {/* DEV TOOLS — only visible in development builds */}
+        {__DEV__ ? (
+          <SettingsSection label="DEV TOOLS">
+            <SettingsRow
+              icon={RotateCcw}
+              label="Reset Onboarding"
+              onPress={() => {
+                clearOnboardingFromStore();
+                useAuthStore.getState().restoreSession();
+              }}
+              destructive
+              isLast
+            />
+          </SettingsSection>
+        ) : null}
       </ScrollView>
     </ScreenLayout>
   );

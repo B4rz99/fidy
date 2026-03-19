@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { ProgressBar } from "@/features/budget/components/ProgressBar";
 import {
   getGmailClientId,
@@ -20,13 +21,16 @@ export function SyncProgressStep() {
   const phase = useEmailCaptureStore((s) => s.phase);
   const isFetching = useEmailCaptureStore((s) => s.isFetching);
 
-  const recentTransactions = useTransactionStore((s) => s.pages.slice(0, 3));
+  const recentTransactions = useTransactionStore(useShallow((s) => s.pages.slice(0, 3)));
 
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
 
   const fetchStarted = useRef(false);
+  // Snapshot final values so they persist after the store clears progress
+  const finalPercent = useRef(0);
+  const finalSavedCount = useRef(0);
 
   // Start fetch on mount if we have accounts
   useEffect(() => {
@@ -36,14 +40,25 @@ export function SyncProgressStep() {
     }
   }, [accounts.length, fetchAndProcess]);
 
-  const percent = progress
+  const livePercent = progress
     ? progress.total > 0
       ? Math.round((progress.completed / progress.total) * 100)
       : 0
     : 0;
 
-  const isComplete = phase === "complete";
-  const savedCount = progress?.saved ?? 0;
+  // Keep the high-water mark so the bar doesn't reset when the store clears progress
+  if (livePercent > finalPercent.current) {
+    finalPercent.current = livePercent;
+  }
+  if (progress && progress.saved > finalSavedCount.current) {
+    finalSavedCount.current = progress.saved;
+  }
+
+  // Fetch is done when: it was started and is no longer fetching
+  // (covers both progress-shown and silent-processing paths)
+  const fetchDone = fetchStarted.current && !isFetching;
+  const percent = fetchDone ? 100 : finalPercent.current;
+  const savedCount = finalSavedCount.current;
 
   return (
     <View style={styles.container}>
@@ -80,7 +95,7 @@ export function SyncProgressStep() {
           </View>
         ) : null}
 
-        {!isComplete ? (
+        {!fetchDone ? (
           <Text style={[styles.helperText, { color: secondaryColor }]}>
             {t("onboarding.syncing.helperText")}
           </Text>
@@ -92,11 +107,11 @@ export function SyncProgressStep() {
           styles.primaryButton,
           {
             backgroundColor: accentGreen,
-            opacity: isComplete && !isFetching ? 1 : 0.5,
+            opacity: fetchDone ? 1 : 0.5,
           },
         ]}
         onPress={nextStep}
-        disabled={!isComplete || isFetching}
+        disabled={!fetchDone}
       >
         <Text style={styles.primaryButtonText}>{t("onboarding.syncing.continue")}</Text>
       </Pressable>

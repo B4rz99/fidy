@@ -255,7 +255,14 @@ function RootLayout() {
             name="auto-suggest-budgets"
             options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
           />
-          <Stack.Screen name="bills-calendar" />
+          <Stack.Screen
+            name="bills-calendar"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
+          />
           <Stack.Screen
             name="ai-memories"
             options={{
