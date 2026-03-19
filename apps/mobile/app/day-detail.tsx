@@ -6,7 +6,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/c
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { toIsoDate } from "@/shared/lib";
-import { formatMoney } from "@/shared/lib/format-money";
+import { formatMoney } from "@/shared/lib";
 
 export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();

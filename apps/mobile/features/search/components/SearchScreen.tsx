@@ -7,7 +7,7 @@ import { FlatList, InteractionManager, Text, TextInput, View } from "@/shared/co
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { toIsoDate } from "@/shared/lib";
-import { formatSignedMoney } from "@/shared/lib/format-money";
+import { formatSignedMoney } from "@/shared/lib";
 import { amountDigitsToAmount } from "../lib/amount-utils";
 import { hasActiveFilters } from "../lib/filters";
 import type { SearchFilters } from "../lib/types";

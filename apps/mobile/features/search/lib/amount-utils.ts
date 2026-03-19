@@ -1,4 +1,4 @@
-import { parseDigitsToAmount } from "@/shared/lib/format-money";
+import { parseDigitsToAmount } from "@/shared/lib";
 
 /** Convert display digits to an amount for filter, or null if empty. */
 export function amountDigitsToAmount(digits: string): number | null {

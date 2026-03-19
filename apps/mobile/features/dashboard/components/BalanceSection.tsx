@@ -1,7 +1,7 @@
 import { TrendingUp } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
-import { formatMoney } from "@/shared/lib/format-money";
+import { formatMoney } from "@/shared/lib";
 
 type BalanceSectionProps = {
   readonly balance: number;

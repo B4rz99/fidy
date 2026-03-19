@@ -1,5 +1,5 @@
 import { parseIsoDate, toIsoDate } from "@/shared/lib";
-import { parseDigitsToAmount } from "@/shared/lib/format-money";
+import { parseDigitsToAmount } from "@/shared/lib";
 import type { CreateTransactionInput, StoredTransaction, TransactionType } from "../schema";
 import { createTransactionSchema } from "../schema";
 import type { CategoryId } from "./categories";

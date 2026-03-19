@@ -3,7 +3,7 @@ import { CATEGORY_MAP } from "@/features/transactions";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { formatMoney } from "@/shared/lib/format-money";
+import { formatMoney } from "@/shared/lib";
 import type { BudgetProgress } from "../lib/derive";
 import { ProgressBar } from "./ProgressBar";
 

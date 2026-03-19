@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { formatMoney, parseDigitsToAmount } from "@/shared/lib/format-money";
+import { formatMoney, parseDigitsToAmount } from "@/shared/lib";
 import { useOnboardingStore } from "../store";
 
 export function BudgetSetupStep() {

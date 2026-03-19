@@ -16,7 +16,7 @@ import {
 } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { parseDigitsToAmount } from "@/shared/lib/format-money";
+import { parseDigitsToAmount } from "@/shared/lib";
 
 export default function AddBillScreen() {
   const router = useRouter();

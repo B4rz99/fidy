@@ -22,7 +22,7 @@ import { Alert, FlatList, Platform, Pressable, Text, View } from "@/shared/compo
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { toIsoDate } from "@/shared/lib";
-import { formatSignedMoney } from "@/shared/lib/format-money";
+import { formatSignedMoney } from "@/shared/lib";
 import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";
 import { DateHeader } from "./DateHeader";

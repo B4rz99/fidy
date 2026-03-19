@@ -9,7 +9,7 @@ import {
 import { useTransactionStore } from "@/features/transactions";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { formatMoney } from "@/shared/lib/format-money";
+import { formatMoney } from "@/shared/lib";
 import { useOnboardingStore } from "../store";
 
 export function SyncProgressStep() {

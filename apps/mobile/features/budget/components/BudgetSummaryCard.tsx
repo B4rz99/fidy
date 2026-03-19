@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { formatMoney } from "@/shared/lib/format-money";
+import { formatMoney } from "@/shared/lib";
 import { ProgressBar } from "./ProgressBar";
 
 type Props = {

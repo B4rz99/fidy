@@ -19,7 +19,7 @@ import { FidyNumpad } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { formatInputDisplay, formatMoney, parseDigitsToAmount } from "@/shared/lib/format-money";
+import { formatInputDisplay, formatMoney, parseDigitsToAmount } from "@/shared/lib";
 
 export default function CreateBudgetScreen() {
   const router = useRouter();

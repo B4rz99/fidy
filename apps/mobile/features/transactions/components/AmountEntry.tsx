@@ -13,7 +13,7 @@ import {
   cleanDigitInput,
   formatInputDisplay,
   parseDigitsToAmount,
-} from "@/shared/lib/format-money";
+} from "@/shared/lib";
 import { useTransactionStore } from "../store";
 import { TypeToggle } from "./TypeToggle";
 

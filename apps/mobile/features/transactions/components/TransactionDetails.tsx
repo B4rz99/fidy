@@ -5,7 +5,7 @@ import { Calendar, ChevronLeft } from "@/shared/components/icons";
 import { Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
-import { formatInputDisplay } from "@/shared/lib/format-money";
+import { formatInputDisplay } from "@/shared/lib";
 import { CATEGORIES } from "../lib/categories";
 import { getDateLabel } from "../lib/format-date";
 import { useTransactionStore } from "../store";

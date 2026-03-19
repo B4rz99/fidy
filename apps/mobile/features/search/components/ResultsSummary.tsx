@@ -1,6 +1,6 @@
 import { Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
-import { formatMoney } from "@/shared/lib/format-money";
+import { formatMoney } from "@/shared/lib";
 import type { SearchSummary } from "../lib/types";
 
 type ResultsSummaryProps = {

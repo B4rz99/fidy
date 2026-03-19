@@ -9,7 +9,7 @@ import {
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
-import { formatSignedMoney } from "@/shared/lib/format-money";
+import { formatSignedMoney } from "@/shared/lib";
 import type { ProcessedEmailRow } from "../lib/repository";
 
 type NeedsReviewCardProps = {

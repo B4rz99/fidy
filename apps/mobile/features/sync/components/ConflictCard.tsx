@@ -3,7 +3,7 @@ import { CATEGORY_MAP } from "@/features/transactions";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { formatSignedMoney } from "@/shared/lib/format-money";
+import { formatSignedMoney } from "@/shared/lib";
 import type { SyncConflict } from "../store";
 
 type ConflictCardProps = {
