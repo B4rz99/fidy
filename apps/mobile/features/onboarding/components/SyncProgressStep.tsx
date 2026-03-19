@@ -18,7 +18,6 @@ export function SyncProgressStep() {
   const accounts = useEmailCaptureStore((s) => s.accounts);
   const fetchAndProcess = useEmailCaptureStore((s) => s.fetchAndProcess);
   const progress = useEmailCaptureStore((s) => s.progress);
-  const phase = useEmailCaptureStore((s) => s.phase);
   const isFetching = useEmailCaptureStore((s) => s.isFetching);
 
   const recentTransactions = useTransactionStore(useShallow((s) => s.pages.slice(0, 3)));
