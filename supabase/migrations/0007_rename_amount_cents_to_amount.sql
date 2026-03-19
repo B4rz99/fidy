@@ -1,7 +1,7 @@
 -- Rename column from centavos to direct pesos
 ALTER TABLE public.transactions RENAME COLUMN amount_cents TO amount;
 
--- Convert existing centavo values to pesos
+-- Convert existing values from centavos to pesos
 UPDATE public.transactions SET amount = amount / 100;
 
 -- Recreate get_user_balance function with new column name
