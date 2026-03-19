@@ -16,6 +16,7 @@ import {
 } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+import { parseDigitsToAmount } from "@/shared/lib/format-money";
 
 export default function AddBillScreen() {
   const router = useRouter();
@@ -68,8 +69,8 @@ export default function AddBillScreen() {
       if (!trimmedName) return;
 
       if (isEdit && existingBill) {
-        const amountValue = Math.round(parseFloat(amount.replace(/,/g, "")));
-        if (Number.isNaN(amountValue) || amountValue <= 0) return;
+        const amountValue = parseDigitsToAmount(amount);
+        if (amountValue <= 0) return;
         await updateBillAction(existingBill.id, {
           name: trimmedName,
           amount: amountValue,

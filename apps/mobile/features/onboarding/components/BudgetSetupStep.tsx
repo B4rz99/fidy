@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useBudgetStore } from "@/features/budget";
-import { CATEGORY_MAP, digitsToCents, formatCents } from "@/features/transactions";
+import { CATEGORY_MAP } from "@/features/transactions";
 import {
   Pressable,
   ScrollView,
@@ -12,6 +12,7 @@ import {
 } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+import { formatMoney, parseDigitsToAmount } from "@/shared/lib/format-money";
 import { useOnboardingStore } from "../store";
 
 export function BudgetSetupStep() {
@@ -39,18 +40,14 @@ export function BudgetSetupStep() {
     () => new Set(autoSuggestions.map((s) => s.categoryId))
   );
   const [editedAmounts, setEditedAmounts] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmountCents / 100)])
-    )
+    Object.fromEntries(autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmount)]))
   );
 
   // Update local state when suggestions load
   useEffect(() => {
     setSelectedIds(new Set(autoSuggestions.map((s) => s.categoryId)));
     setEditedAmounts(
-      Object.fromEntries(
-        autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmountCents / 100)])
-      )
+      Object.fromEntries(autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmount)]))
     );
   }, [autoSuggestions]);
 
@@ -71,9 +68,10 @@ export function BudgetSetupStep() {
       const budgets = new Map(
         Array.from(selectedIds)
           .map(
-            (categoryId) => [categoryId, digitsToCents(editedAmounts[categoryId] ?? "0")] as const
+            (categoryId) =>
+              [categoryId, parseDigitsToAmount(editedAmounts[categoryId] ?? "0")] as const
           )
-          .filter(([, cents]) => cents > 0)
+          .filter(([, amount]) => amount > 0)
       );
       if (budgets.size > 0) {
         await acceptSuggestions(budgets);
@@ -116,7 +114,7 @@ export function BudgetSetupStep() {
                         {categoryLabel}
                       </Text>
                       <Text style={[styles.lastMonthLabel, { color: secondaryColor }]}>
-                        {formatCents(suggestion.suggestedAmountCents)}{" "}
+                        {formatMoney(suggestion.suggestedAmount)}{" "}
                         {t("onboarding.budgetSetup.basedOnSpending").toLowerCase()}
                       </Text>
                     </View>

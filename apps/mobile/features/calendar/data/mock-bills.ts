@@ -4,7 +4,7 @@ export const MOCK_BILLS: Bill[] = [
   {
     id: "bill-1",
     name: "Netflix",
-    amount: 1599,
+    amount: 17900,
     frequency: "monthly",
     categoryId: "services",
     startDate: new Date(2025, 0, 15),
@@ -13,7 +13,7 @@ export const MOCK_BILLS: Bill[] = [
   {
     id: "bill-2",
     name: "Spotify",
-    amount: 999,
+    amount: 15900,
     frequency: "monthly",
     categoryId: "services",
     startDate: new Date(2025, 1, 3),
@@ -22,7 +22,7 @@ export const MOCK_BILLS: Bill[] = [
   {
     id: "bill-3",
     name: "Electric",
-    amount: 8500,
+    amount: 85000,
     frequency: "monthly",
     categoryId: "services",
     startDate: new Date(2025, 0, 20),
@@ -31,7 +31,7 @@ export const MOCK_BILLS: Bill[] = [
   {
     id: "bill-4",
     name: "Gym",
-    amount: 4999,
+    amount: 120000,
     frequency: "monthly",
     categoryId: "services",
     startDate: new Date(2025, 2, 1),
@@ -40,7 +40,7 @@ export const MOCK_BILLS: Bill[] = [
   {
     id: "bill-5",
     name: "Cloud Storage",
-    amount: 299,
+    amount: 5900,
     frequency: "monthly",
     categoryId: "services",
     startDate: new Date(2025, 0, 10),
@@ -49,7 +49,7 @@ export const MOCK_BILLS: Bill[] = [
   {
     id: "bill-6",
     name: "Insurance",
-    amount: 15000,
+    amount: 450000,
     frequency: "yearly",
     categoryId: "services",
     startDate: new Date(2025, 2, 22),
@@ -58,7 +58,7 @@ export const MOCK_BILLS: Bill[] = [
   {
     id: "bill-7",
     name: "Internet",
-    amount: 5999,
+    amount: 75000,
     frequency: "monthly",
     categoryId: "services",
     startDate: new Date(2025, 0, 28),
