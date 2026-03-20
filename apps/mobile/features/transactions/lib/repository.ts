@@ -88,6 +88,26 @@ export function getDailySpendingAggregate(
     .all();
 }
 
+/** Get monthly income/expense totals for projection calculations. */
+export function getMonthlyTotalsByType(
+  db: AnyDb,
+  userId: string,
+  months: number
+): Array<{ month: string; type: string; total: number }> {
+  return db
+    .select({
+      month: sql<string>`strftime('%Y-%m', ${transactions.date})`,
+      type: transactions.type,
+      total: sum(transactions.amount).mapWith(Number),
+    })
+    .from(transactions)
+    .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
+    .groupBy(sql`strftime('%Y-%m', ${transactions.date})`, transactions.type)
+    .orderBy(desc(sql`strftime('%Y-%m', ${transactions.date})`))
+    .limit(months * 2) // *2 because each month can have both income and expense rows
+    .all();
+}
+
 export function getRecentTransactions(
   db: AnyDb,
   userId: string,

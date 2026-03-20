@@ -39,6 +39,7 @@ export {
   Shirt,
   Smartphone,
   Sparkles,
+  Target,
   Trash2,
   TrendingUp,
   TriangleAlert,

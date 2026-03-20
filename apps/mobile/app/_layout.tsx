@@ -26,6 +26,7 @@ import {
   useSmsDetection,
 } from "@/features/capture-sources";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
+import { useGoalStore } from "@/features/goals";
 import {
   clearOnboardingFromStore,
   getOnboardingCompleteFromStore,
@@ -74,6 +75,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
       useChatStore.getState().initStore(db, userId);
       useCalendarStore.getState().initStore(db, userId);
       useBudgetStore.getState().initStore(db, userId);
+      useGoalStore.getState().initStore(db, userId);
       useSyncConflictStore.getState().initStore(db);
       Promise.all([
         useCalendarStore.getState().loadBills(),
@@ -83,6 +85,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
         .getState()
         .loadBudgets()
         .catch(handleRecoverableError("Failed to load budgets"));
+      useGoalStore.getState().loadGoals().catch(handleRecoverableError("Failed to load goals"));
       useChatStore
         .getState()
         .loadSessions()
@@ -254,6 +257,26 @@ function RootLayout() {
           />
           <Stack.Screen
             name="auto-suggest-budgets"
+            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+          />
+          <Stack.Screen
+            name="goal-detail"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
+          />
+          <Stack.Screen
+            name="create-goal"
+            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+          />
+          <Stack.Screen
+            name="add-payment"
+            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+          />
+          <Stack.Screen
+            name="edit-goal"
             options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
           />
           <Stack.Screen

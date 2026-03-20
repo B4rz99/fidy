@@ -178,16 +178,87 @@ function structuredLog(fields: {
   );
 }
 
+type GoalSummary = {
+  name: string;
+  type: string;
+  targetAmount: number;
+  currentAmount: number;
+  progressPct: number;
+};
+
+async function fetchGoalsContext(
+  userClient: ReturnType<typeof createClient>
+): Promise<GoalSummary[]> {
+  try {
+    const { data: goals, error: goalsError } = await userClient
+      .from("goals")
+      .select("id, name, type, target_amount, target_date")
+      .is("deleted_at", null);
+
+    if (goalsError || !goals || goals.length === 0) return [];
+
+    const { data: contributions, error: contribError } = await userClient
+      .from("goal_contributions")
+      .select("goal_id, amount")
+      .is("deleted_at", null)
+      .in(
+        "goal_id",
+        goals.map((g: { id: string }) => g.id)
+      );
+
+    if (contribError) return [];
+
+    const totals = (contributions ?? []).reduce((acc, c) => {
+      const contrib = c as { goal_id: string; amount: number };
+      acc.set(contrib.goal_id, (acc.get(contrib.goal_id) ?? 0) + contrib.amount);
+      return acc;
+    }, new Map<string, number>());
+
+    return goals.map(
+      (g: {
+        id: string;
+        name: string;
+        type: string;
+        target_amount: number;
+        target_date: string | null;
+      }) => {
+        const current = totals.get(g.id) ?? 0;
+        const progressPct = g.target_amount > 0 ? Math.round((current / g.target_amount) * 100) : 0;
+        return {
+          name: g.name,
+          type: g.type,
+          targetAmount: g.target_amount,
+          currentAmount: current,
+          progressPct,
+        };
+      }
+    );
+  } catch {
+    return [];
+  }
+}
+
+function formatGoalLine(g: GoalSummary): string {
+  const amounts = `$${g.currentAmount.toLocaleString("es-CO")} / $${g.targetAmount.toLocaleString("es-CO")} (${g.progressPct}%)`;
+  return `- "${g.name}" (${g.type}): ${amounts}`;
+}
+
 function buildSystemPrompt(context: {
   transactions: unknown[];
   summary: unknown;
   memories: { fact: string; category: string }[];
+  goals: GoalSummary[];
 }): string {
   const parts = [SYSTEM_PROMPT];
 
   if (context.memories.length > 0) {
     const memoryLines = context.memories.map((m) => `- [${m.category}] ${m.fact}`).join("\n");
     parts.push(`\n## What you know about this user\n${memoryLines}`);
+  }
+
+  if (context.goals.length > 0) {
+    const goalLines = context.goals.map(formatGoalLine).join("\n");
+    parts.push(`\n## User's Financial Goals\n${goalLines}`);
   }
 
   parts.push(`\n## Current financial context\n${JSON.stringify(context.summary)}`);
@@ -424,7 +495,7 @@ Deno.serve(async (req) => {
     const prevMonth = previousMonthString(month);
 
     const contextStartTime = Date.now();
-    const [balanceResult, txResult, memoriesResult] = await Promise.all([
+    const [balanceResult, txResult, memoriesResult, goals] = await Promise.all([
       userClient.rpc("get_user_balance"),
       userClient
         .from("transactions")
@@ -433,6 +504,7 @@ Deno.serve(async (req) => {
         .gte("date", `${prevMonth}-01`)
         .order("date", { ascending: false }),
       userClient.from("user_memories").select("fact, category").is("deleted_at", null),
+      fetchGoalsContext(userClient),
     ]);
     const contextQueryMs = Date.now() - contextStartTime;
 
@@ -478,6 +550,7 @@ Deno.serve(async (req) => {
         monthOverMonthDeltas: computeDeltas(currentSpending, prevSpending),
       },
       memories: (memoriesResult.data ?? []) as { fact: string; category: string }[],
+      goals,
     };
 
     const systemPrompt = buildSystemPrompt(context);
