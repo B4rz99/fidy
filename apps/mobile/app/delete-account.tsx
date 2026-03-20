@@ -1,11 +1,11 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo } from "react";
 import { useAuthStore } from "@/features/auth";
 import { getUnsyncedCount, useSettingsStore } from "@/features/settings";
 import { TriangleAlert } from "@/shared/components/icons";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
-import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 export default function DeleteAccountSheet() {
   const { t } = useTranslation();
@@ -16,16 +16,15 @@ export default function DeleteAccountSheet() {
   const deleteAccount = useSettingsStore((s) => s.deleteAccount);
   const accentRed = useThemeColor("accentRed");
   const borderColor = useThemeColor("borderSubtle");
-  const [unsyncedCount, setUnsyncedCount] = useState(0);
-  useMountEffect(() => {
-    if (userId) {
-      try {
-        setUnsyncedCount(getUnsyncedCount(getDb(userId)));
-      } catch {
-        // DB may not be available
-      }
+  // getDb is a cached lookup here — DB is already open from AuthenticatedShell
+  const unsyncedCount = useMemo(() => {
+    if (!userId) return 0;
+    try {
+      return getUnsyncedCount(getDb(userId));
+    } catch {
+      return 0;
     }
-  });
+  }, [userId]);
 
   const handleDelete = async () => {
     try {
