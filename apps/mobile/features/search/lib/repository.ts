@@ -14,12 +14,8 @@ function buildSearchConditions(userId: string, filters: SearchFilters) {
       : []),
     ...(filters.dateFrom !== null ? [gte(transactions.date, filters.dateFrom)] : []),
     ...(filters.dateTo !== null ? [lte(transactions.date, filters.dateTo)] : []),
-    ...(filters.amountMinCents !== null
-      ? [gte(transactions.amountCents, filters.amountMinCents)]
-      : []),
-    ...(filters.amountMaxCents !== null
-      ? [lte(transactions.amountCents, filters.amountMaxCents)]
-      : []),
+    ...(filters.amountMin !== null ? [gte(transactions.amount, filters.amountMin)] : []),
+    ...(filters.amountMax !== null ? [lte(transactions.amount, filters.amountMax)] : []),
     ...(filters.type !== "all" ? [eq(transactions.type, filters.type)] : []),
   ];
 }
@@ -51,10 +47,10 @@ export function searchTransactionsAggregate(
   const row = db
     .select({
       count: count(),
-      totalCents: sql<number>`COALESCE(SUM(${transactions.amountCents}), 0)`,
+      total: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
     })
     .from(transactions)
     .where(and(...conditions))
     .get();
-  return { count: row?.count ?? 0, totalCents: row?.totalCents ?? 0 };
+  return { count: row?.count ?? 0, total: row?.total ?? 0 };
 }

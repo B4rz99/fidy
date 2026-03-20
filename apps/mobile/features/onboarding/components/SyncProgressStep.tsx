@@ -6,9 +6,10 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture";
-import { formatCents, useTransactionStore } from "@/features/transactions";
+import { useTransactionStore } from "@/features/transactions";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { formatMoney } from "@/shared/lib";
 import { useOnboardingStore } from "../store";
 
 export function SyncProgressStep() {
@@ -87,7 +88,7 @@ export function SyncProgressStep() {
                   {tx.description || t("common.transaction")}
                 </Text>
                 <Text style={[styles.previewAmount, { color: primaryColor }]}>
-                  {formatCents(tx.amountCents)}
+                  {formatMoney(tx.amount)}
                 </Text>
               </View>
             ))}

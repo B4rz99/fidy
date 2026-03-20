@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useAuthStore } from "@/features/auth";
 import { getUnsyncedCount, useSettingsStore } from "@/features/settings";
 import { TriangleAlert } from "@/shared/components/icons";
@@ -16,16 +16,13 @@ export default function DeleteAccountSheet() {
   const deleteAccount = useSettingsStore((s) => s.deleteAccount);
   const accentRed = useThemeColor("accentRed");
   const borderColor = useThemeColor("borderSubtle");
-  const [unsyncedCount, setUnsyncedCount] = useState(0);
-
-  useEffect(() => {
-    if (userId) {
-      try {
-        const db = getDb(userId);
-        setUnsyncedCount(getUnsyncedCount(db));
-      } catch {
-        // DB may not be available
-      }
+  // getDb is a cached lookup here — DB is already open from AuthenticatedShell
+  const unsyncedCount = useMemo(() => {
+    if (!userId) return 0;
+    try {
+      return getUnsyncedCount(getDb(userId));
+    } catch {
+      return 0;
     }
   }, [userId]);
 

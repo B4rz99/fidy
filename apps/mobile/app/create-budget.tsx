@@ -7,14 +7,11 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import { useBudgetStore } from "@/features/budget";
+import { type Budget, type BudgetSuggestion, useBudgetStore } from "@/features/budget";
 import {
   CATEGORIES,
   type CategoryId,
   CategoryPill,
-  digitsToCents,
-  formatCents,
-  formatDollars,
   handleNumpadPress,
   isValidCategoryId,
 } from "@/features/transactions";
@@ -22,19 +19,26 @@ import { FidyNumpad } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+import { formatInputDisplay, formatMoney, parseDigitsToAmount } from "@/shared/lib";
 
-export default function CreateBudgetScreen() {
-  const router = useRouter();
+function CreateBudgetForm({
+  existingBudget,
+  existingCategoryIds,
+  autoSuggestions,
+  onCreateBudget,
+  onUpdateBudget,
+  onDeleteBudget,
+  onDone,
+}: {
+  readonly existingBudget: Budget | undefined;
+  readonly existingCategoryIds: ReadonlySet<string>;
+  readonly autoSuggestions: readonly BudgetSuggestion[];
+  readonly onCreateBudget: (categoryId: string, amount: number) => Promise<boolean>;
+  readonly onUpdateBudget: (id: string, amount: number) => Promise<void>;
+  readonly onDeleteBudget: (id: string) => Promise<void>;
+  readonly onDone: () => void;
+}) {
   const { t, locale } = useTranslation();
-  const { budgetId } = useLocalSearchParams<{ budgetId?: string }>();
-
-  const budgets = useBudgetStore((s) => s.budgets);
-  const autoSuggestions = useBudgetStore((s) => s.autoSuggestions);
-  const createBudget = useBudgetStore((s) => s.createBudget);
-  const updateBudget = useBudgetStore((s) => s.updateBudget);
-  const deleteBudget = useBudgetStore((s) => s.deleteBudget);
-
-  const existingBudget = budgetId ? budgets.find((b) => b.id === budgetId) : undefined;
   const isEdit = !!existingBudget;
 
   const [category, setCategory] = useState<CategoryId>(
@@ -42,10 +46,8 @@ export default function CreateBudgetScreen() {
       ? existingBudget.categoryId
       : ""
   );
-  // digits = raw whole-dollar string (e.g. "18900" for $18,900 COP)
-  const [digits, setDigits] = useState(
-    existingBudget ? String(Math.round(existingBudget.amountCents / 100)) : ""
-  );
+  // digits = raw whole-peso string (e.g. "18900" for $18.900 COP)
+  const [digits, setDigits] = useState(existingBudget ? String(existingBudget.amount) : "");
   const digitsRef = useRef(digits);
   digitsRef.current = digits;
 
@@ -70,48 +72,35 @@ export default function CreateBudgetScreen() {
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: only re-sync when the budget identity changes
-  useEffect(() => {
-    if (existingBudget) {
-      setCategory(isValidCategoryId(existingBudget.categoryId) ? existingBudget.categoryId : "");
-      setDigits(String(Math.round(existingBudget.amountCents / 100)));
-    }
-  }, [existingBudget?.id]);
-
-  const existingCategoryIds = useMemo(
-    () => new Set(budgets.filter((b) => b.id !== budgetId).map((b) => b.categoryId)),
-    [budgets, budgetId]
-  );
-
   const availableCategories = useMemo(
     () => CATEGORIES.filter((c) => !existingCategoryIds.has(c.id)),
     [existingCategoryIds]
   );
 
-  const displayAmount = digits.length > 0 ? formatDollars(digits) : "$";
+  const displayAmount = digits.length > 0 ? formatInputDisplay(digits) : "$";
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
   const handleSave = () =>
     guardedSave(async () => {
-      const cents = digitsToCents(digits);
-      if (cents <= 0) return;
+      const amount = parseDigitsToAmount(digits);
+      if (amount <= 0) return;
 
       if (isEdit && existingBudget) {
-        await updateBudget(existingBudget.id, cents);
-        router.back();
+        await onUpdateBudget(existingBudget.id, amount);
+        onDone();
       } else {
         if (!category) return;
-        const success = await createBudget(category, cents);
-        if (success) router.back();
+        const success = await onCreateBudget(category, amount);
+        if (success) onDone();
       }
     });
 
   const handleDelete = () =>
     guardedSave(async () => {
       if (!existingBudget) return;
-      await deleteBudget(existingBudget.id);
-      router.back();
+      await onDeleteBudget(existingBudget.id);
+      onDone();
     });
 
   const handleKey = useCallback((key: string) => {
@@ -127,7 +116,7 @@ export default function CreateBudgetScreen() {
     const suggestion = autoSuggestions.find((s) => s.categoryId === category);
     if (!suggestion) return null;
     return t("budgets.create.lastMonthHint", {
-      amount: formatCents(suggestion.suggestedAmountCents),
+      amount: formatMoney(suggestion.suggestedAmount),
       category: catLabel,
     });
   }, [category, locale, t, autoSuggestions]);
@@ -203,6 +192,37 @@ export default function CreateBudgetScreen() {
 
       <FidyNumpad onKeyPress={handleKey} />
     </ScrollView>
+  );
+}
+
+export default function CreateBudgetScreen() {
+  const router = useRouter();
+  const { budgetId } = useLocalSearchParams<{ budgetId?: string }>();
+
+  const budgets = useBudgetStore((s) => s.budgets);
+  const autoSuggestions = useBudgetStore((s) => s.autoSuggestions);
+  const createBudget = useBudgetStore((s) => s.createBudget);
+  const updateBudget = useBudgetStore((s) => s.updateBudget);
+  const deleteBudget = useBudgetStore((s) => s.deleteBudget);
+
+  const existingBudget = budgetId ? budgets.find((b) => b.id === budgetId) : undefined;
+
+  const existingCategoryIds = useMemo(
+    () => new Set(budgets.filter((b) => b.id !== budgetId).map((b) => b.categoryId)),
+    [budgets, budgetId]
+  );
+
+  return (
+    <CreateBudgetForm
+      key={existingBudget?.id ?? "new"}
+      existingBudget={existingBudget}
+      existingCategoryIds={existingCategoryIds}
+      autoSuggestions={autoSuggestions}
+      onCreateBudget={createBudget}
+      onUpdateBudget={updateBudget}
+      onDeleteBudget={deleteBudget}
+      onDone={() => router.back()}
+    />
   );
 }
 

@@ -83,7 +83,7 @@ describe("processApplePayIntent", () => {
       expect.objectContaining({
         userId: USER_ID,
         type: "expense",
-        amountCents: 5000000,
+        amount: 50000,
         description: "Farmatodo",
         source: "apple_pay",
       })
@@ -91,12 +91,12 @@ describe("processApplePayIntent", () => {
     expect(mockEnqueueSync).toHaveBeenCalled();
   });
 
-  it("converts amount to centavos correctly", async () => {
+  it("converts amount to pesos correctly", async () => {
     await processApplePayIntent(mockDb, USER_ID, makeIntent({ amount: 7500.5 }));
 
     expect(mockInsertTransaction).toHaveBeenCalledWith(
       mockDb,
-      expect.objectContaining({ amountCents: 750050 })
+      expect.objectContaining({ amount: 7501 })
     );
   });
 

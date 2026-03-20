@@ -7,22 +7,20 @@ import {
   deriveBudgetSummary,
 } from "@/features/budget/lib/derive";
 
-const makeBudget = (
-  overrides: { id?: string; categoryId?: string; amountCents?: number } = {}
-) => ({
+const makeBudget = (overrides: { id?: string; categoryId?: string; amount?: number } = {}) => ({
   id: "budget-1",
   categoryId: "food",
-  amountCents: 500000,
+  amount: 500000,
   ...overrides,
 });
 
 const makeProgress = (overrides: Partial<BudgetProgress> = {}): BudgetProgress => ({
   budgetId: "budget-1",
   categoryId: "food",
-  amountCents: 500000,
-  spentCents: 350000,
+  amount: 500000,
+  spent: 350000,
   percentUsed: 70,
-  remainingCents: 150000,
+  remaining: 150000,
   isOverBudget: false,
   isNearLimit: false,
   ...overrides,
@@ -36,21 +34,21 @@ describe("deriveBudgetProgress", () => {
     expect(result.isNearLimit).toBe(false);
   });
 
-  it("returns correct remainingCents", () => {
+  it("returns correct remaining", () => {
     const result = deriveBudgetProgress(makeBudget(), 350000);
-    expect(result.remainingCents).toBe(150000);
-    expect(result.spentCents).toBe(350000);
-    expect(result.amountCents).toBe(500000);
+    expect(result.remaining).toBe(150000);
+    expect(result.spent).toBe(350000);
+    expect(result.amount).toBe(500000);
   });
 
   it("sets isOverBudget=true when spent > amount", () => {
-    const result = deriveBudgetProgress(makeBudget({ amountCents: 100000 }), 120000);
+    const result = deriveBudgetProgress(makeBudget({ amount: 100000 }), 120000);
     expect(result.isOverBudget).toBe(true);
-    expect(result.remainingCents).toBe(-20000);
+    expect(result.remaining).toBe(-20000);
   });
 
   it("sets isNearLimit=true at exactly 80%", () => {
-    const result = deriveBudgetProgress(makeBudget({ amountCents: 500000 }), 400000);
+    const result = deriveBudgetProgress(makeBudget({ amount: 500000 }), 400000);
     expect(result.percentUsed).toBe(80);
     expect(result.isNearLimit).toBe(true);
     expect(result.isOverBudget).toBe(false);
@@ -58,26 +56,26 @@ describe("deriveBudgetProgress", () => {
 
   it("sets isNearLimit=false at 79%", () => {
     // 79% of 500000 = 395000
-    const result = deriveBudgetProgress(makeBudget({ amountCents: 500000 }), 395000);
+    const result = deriveBudgetProgress(makeBudget({ amount: 500000 }), 395000);
     expect(result.percentUsed).toBe(79);
     expect(result.isNearLimit).toBe(false);
   });
 
   it("handles zero spending (0%)", () => {
-    const result = deriveBudgetProgress(makeBudget({ amountCents: 500000 }), 0);
+    const result = deriveBudgetProgress(makeBudget({ amount: 500000 }), 0);
     expect(result.percentUsed).toBe(0);
-    expect(result.spentCents).toBe(0);
+    expect(result.spent).toBe(0);
     expect(result.isOverBudget).toBe(false);
     expect(result.isNearLimit).toBe(false);
-    expect(result.remainingCents).toBe(500000);
+    expect(result.remaining).toBe(500000);
   });
 
   it("handles spending equal to budget (100%, isOverBudget=false, isNearLimit=true)", () => {
-    const result = deriveBudgetProgress(makeBudget({ amountCents: 500000 }), 500000);
+    const result = deriveBudgetProgress(makeBudget({ amount: 500000 }), 500000);
     expect(result.percentUsed).toBe(100);
     expect(result.isOverBudget).toBe(false);
     expect(result.isNearLimit).toBe(true);
-    expect(result.remainingCents).toBe(0);
+    expect(result.remaining).toBe(0);
   });
 
   it("includes budgetId and categoryId from budget", () => {
@@ -93,39 +91,39 @@ describe("deriveBudgetProgress", () => {
 describe("deriveBudgetSummary", () => {
   it("totals all budgets and spent amounts correctly", () => {
     const progresses: BudgetProgress[] = [
-      makeProgress({ amountCents: 500000, spentCents: 350000 }),
+      makeProgress({ amount: 500000, spent: 350000 }),
       makeProgress({
         budgetId: "budget-2",
         categoryId: "transport",
-        amountCents: 200000,
-        spentCents: 80000,
+        amount: 200000,
+        spent: 80000,
         percentUsed: 40,
-        remainingCents: 120000,
+        remaining: 120000,
         isOverBudget: false,
         isNearLimit: false,
       }),
     ];
     const result = deriveBudgetSummary(progresses);
-    expect(result.totalBudgetCents).toBe(700000);
-    expect(result.totalSpentCents).toBe(430000);
+    expect(result.totalBudget).toBe(700000);
+    expect(result.totalSpent).toBe(430000);
     // 430000 / 700000 ≈ 61.4% → rounded to 61
     expect(result.percentUsed).toBe(61);
   });
 
   it("returns zeros for empty array", () => {
     const result = deriveBudgetSummary([]);
-    expect(result.totalBudgetCents).toBe(0);
-    expect(result.totalSpentCents).toBe(0);
+    expect(result.totalBudget).toBe(0);
+    expect(result.totalSpent).toBe(0);
     expect(result.percentUsed).toBe(0);
   });
 });
 
 describe("deriveAutoSuggestBudgets", () => {
-  // COP amounts in centavos: 18,900 COP = 1,890,000 centavos
+  // COP amounts in pesos directly
   const spending = [
-    { categoryId: "food", totalCents: 1890000 }, // 18,900 COP
-    { categoryId: "transport", totalCents: 523400 }, // 5,234 COP
-    { categoryId: "entertainment", totalCents: 18750000 }, // 187,500 COP
+    { categoryId: "food", total: 18900 }, // 18,900 COP
+    { categoryId: "transport", total: 5234 }, // 5,234 COP
+    { categoryId: "entertainment", total: 187500 }, // 187,500 COP
   ];
 
   it("suggests budgets for categories with spending", () => {
@@ -145,46 +143,42 @@ describe("deriveAutoSuggestBudgets", () => {
 
   it("rounds < 100k COP up to nearest 1,000 COP (18,900 → 19,000)", () => {
     const result = deriveAutoSuggestBudgets(
-      [{ categoryId: "food", totalCents: 1890000 }], // 18,900 COP
+      [{ categoryId: "food", total: 18900 }], // 18,900 COP
       new Set()
     );
-    // 19,000 COP = 1,900,000 centavos
-    expect(result[0].suggestedAmountCents).toBe(1900000);
+    expect(result[0].suggestedAmount).toBe(19000);
   });
 
   it("rounds < 100k COP (5,234 → 6,000)", () => {
     const result = deriveAutoSuggestBudgets(
-      [{ categoryId: "transport", totalCents: 523400 }], // 5,234 COP
+      [{ categoryId: "transport", total: 5234 }], // 5,234 COP
       new Set()
     );
-    // 6,000 COP = 600,000 centavos
-    expect(result[0].suggestedAmountCents).toBe(600000);
+    expect(result[0].suggestedAmount).toBe(6000);
   });
 
   it("rounds 100k-1M COP up to nearest 10,000 COP (187,500 → 190,000)", () => {
     const result = deriveAutoSuggestBudgets(
-      [{ categoryId: "entertainment", totalCents: 18750000 }], // 187,500 COP
+      [{ categoryId: "entertainment", total: 187500 }], // 187,500 COP
       new Set()
     );
-    // 190,000 COP = 19,000,000 centavos
-    expect(result[0].suggestedAmountCents).toBe(19000000);
+    expect(result[0].suggestedAmount).toBe(190000);
   });
 
   it("rounds >= 1M COP up to nearest 100,000 COP (1,850,000 → 1,900,000)", () => {
     const result = deriveAutoSuggestBudgets(
-      [{ categoryId: "home", totalCents: 185000000 }], // 1,850,000 COP
+      [{ categoryId: "home", total: 1850000 }], // 1,850,000 COP
       new Set()
     );
-    // 1,900,000 COP = 190,000,000 centavos
-    expect(result[0].suggestedAmountCents).toBe(190000000);
+    expect(result[0].suggestedAmount).toBe(1900000);
   });
 
   it("does not round exact multiples", () => {
     const result = deriveAutoSuggestBudgets(
-      [{ categoryId: "food", totalCents: 2000000 }], // 20,000 COP exact
+      [{ categoryId: "food", total: 20000 }], // 20,000 COP exact
       new Set()
     );
-    expect(result[0].suggestedAmountCents).toBe(2000000);
+    expect(result[0].suggestedAmount).toBe(20000);
   });
 
   it("returns empty array when no spending data", () => {

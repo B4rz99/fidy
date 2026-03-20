@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { CATEGORY_MAP, formatCentsRounded } from "@/features/transactions";
+import { CATEGORY_MAP } from "@/features/transactions";
 import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
@@ -10,31 +10,32 @@ import {
 } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+import { formatMoney } from "@/shared/lib";
 import { CategoryRow } from "./CategoryRow";
 import { DonutChart } from "./DonutChart";
 import { SpendingLineChart } from "./SpendingLineChart";
 
 type CategorySpendingItem = {
   readonly categoryId: string;
-  readonly totalCents: number;
+  readonly total: number;
 };
 
 type DailySpendingItem = {
   readonly date: string;
-  readonly totalCents: number;
+  readonly total: number;
 };
 
 type ChartSectionProps = {
   readonly categorySpending: readonly CategorySpendingItem[];
   readonly dailySpending: readonly DailySpendingItem[];
-  readonly totalSpentCents: number;
+  readonly totalSpent: number;
 };
 
-const toSegments = (categories: readonly CategorySpendingItem[], totalSpentCents: number) =>
+const toSegments = (categories: readonly CategorySpendingItem[], totalSpent: number) =>
   categories.map((c) => {
     const cat = CATEGORY_MAP[c.categoryId as keyof typeof CATEGORY_MAP];
     return {
-      percentage: totalSpentCents === 0 ? 0 : (c.totalCents / totalSpentCents) * 100,
+      percentage: totalSpent === 0 ? 0 : (c.total / totalSpent) * 100,
       color: cat?.color ?? "#B8A9D4",
     };
   });
@@ -46,7 +47,7 @@ const toCategoryRows = (categories: readonly CategorySpendingItem[], locale: str
       categoryId: c.categoryId,
       color: cat?.color ?? "#B8A9D4",
       name: cat ? getCategoryLabel(cat, locale) : c.categoryId,
-      amount: formatCentsRounded(c.totalCents),
+      amount: formatMoney(c.total),
     };
   });
 
@@ -75,17 +76,17 @@ const CarouselDots = ({ activeIndex }: { readonly activeIndex: number }) => {
 export const ChartSection = ({
   categorySpending,
   dailySpending,
-  totalSpentCents,
+  totalSpent,
 }: ChartSectionProps) => {
   const { t, locale } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const [slideWidth, setSlideWidth] = useState(0);
   const secondaryColor = useThemeColor("secondary");
 
-  const segments = toSegments(categorySpending, totalSpentCents);
+  const segments = toSegments(categorySpending, totalSpent);
   const rows = toCategoryRows(categorySpending, locale);
 
-  const dailyTotal = dailySpending.reduce((sum, d) => sum + d.totalCents, 0);
+  const dailyTotal = dailySpending.reduce((sum, d) => sum + d.total, 0);
   const dayCount = dailySpending.length === 0 ? 1 : dailySpending.length;
   const avgPerDay = Math.round(dailyTotal / dayCount);
 
@@ -117,7 +118,7 @@ export const ChartSection = ({
             <View style={{ width: slideWidth }} className="flex-row gap-4">
               <DonutChart
                 segments={segments}
-                centerLabel={formatCentsRounded(totalSpentCents)}
+                centerLabel={formatMoney(totalSpent)}
                 centerSubLabel={t("chart.spent")}
               />
               <View className="flex-1 justify-center gap-2.5">
@@ -153,7 +154,7 @@ export const ChartSection = ({
                     {t("chart.avgPerDay")}
                   </Text>
                   <Text className="font-poppins-bold text-body text-primary dark:text-primary-dark">
-                    {formatCentsRounded(avgPerDay)}
+                    {formatMoney(avgPerDay)}
                   </Text>
                 </View>
                 <View className="mt-1 gap-1">
@@ -164,7 +165,7 @@ export const ChartSection = ({
                     {t("chart.thisMonthTotal")}
                   </Text>
                   <Text className="font-poppins-bold text-body text-primary dark:text-primary-dark">
-                    {formatCentsRounded(totalSpentCents)}
+                    {formatMoney(totalSpent)}
                   </Text>
                 </View>
               </View>

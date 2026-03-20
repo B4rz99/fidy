@@ -9,7 +9,7 @@ import Animated, {
 import { useShallow } from "zustand/react/shallow";
 import { Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
-import { cleanDigitInput, digitsToCents, formatDollars } from "../lib/format-amount";
+import { cleanDigitInput, formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
 import { useTransactionStore } from "../store";
 import { TypeToggle } from "./TypeToggle";
 
@@ -52,8 +52,8 @@ export const AmountEntry = () => {
 
   const amountColor = type === "expense" ? accentRed : accentGreen;
   const hasDigits = digits.length > 0;
-  const displayAmount = hasDigits ? formatDollars(digits) : isFocused ? "$" : "$0";
-  const canProceed = digitsToCents(digits) > 0;
+  const displayAmount = hasDigits ? formatInputDisplay(digits) : isFocused ? "$" : "$0";
+  const canProceed = parseDigitsToAmount(digits) > 0;
   const buttonBg = canProceed ? accentGreen : "#CCCCCC";
 
   const handleChangeText = (text: string) => {

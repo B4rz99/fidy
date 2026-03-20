@@ -4,7 +4,7 @@ import { parseActionFromResponse } from "../../features/ai-chat/lib/parse-action
 describe("parseActionFromResponse", () => {
   it("extracts add action from mixed text", () => {
     const text =
-      'Sure, I\'ll add that for you. [ACTION]{"type":"add","data":{"type":"expense","amountCents":5000000,"categoryId":"food","description":"Almuerzo","date":"2026-03-05"}}[/ACTION]';
+      'Sure, I\'ll add that for you. [ACTION]{"type":"add","data":{"type":"expense","amount":50000,"categoryId":"food","description":"Almuerzo","date":"2026-03-05"}}[/ACTION]';
 
     const result = parseActionFromResponse(text);
 
@@ -12,7 +12,7 @@ describe("parseActionFromResponse", () => {
       type: "add",
       data: {
         type: "expense",
-        amountCents: 5000000,
+        amount: 50000,
         categoryId: "food",
         description: "Almuerzo",
         date: "2026-03-05",
@@ -22,7 +22,7 @@ describe("parseActionFromResponse", () => {
 
   it("extracts delete action", () => {
     const text =
-      'I\'ll delete that transaction. [ACTION]{"type":"delete","transactionId":"tx-123","description":"Uber","amountCents":1500000,"date":"2026-03-01"}[/ACTION] Done!';
+      'I\'ll delete that transaction. [ACTION]{"type":"delete","transactionId":"tx-123","description":"Uber","amount":15000,"date":"2026-03-01"}[/ACTION] Done!';
 
     const result = parseActionFromResponse(text);
 
@@ -30,21 +30,21 @@ describe("parseActionFromResponse", () => {
       type: "delete",
       transactionId: "tx-123",
       description: "Uber",
-      amountCents: 1500000,
+      amount: 15000,
       date: "2026-03-01",
     });
   });
 
   it("extracts edit action", () => {
     const text =
-      '[ACTION]{"type":"edit","transactionId":"tx-456","data":{"amountCents":2000000}}[/ACTION]';
+      '[ACTION]{"type":"edit","transactionId":"tx-456","data":{"amount":20000}}[/ACTION]';
 
     const result = parseActionFromResponse(text);
 
     expect(result).toEqual({
       type: "edit",
       transactionId: "tx-456",
-      data: { amountCents: 2000000 },
+      data: { amount: 20000 },
     });
   });
 
@@ -65,7 +65,7 @@ describe("parseActionFromResponse", () => {
 
   it("extracts text content without action block", () => {
     const text =
-      'Here is the result. [ACTION]{"type":"add","data":{"type":"expense","amountCents":1000,"categoryId":"food","description":"test","date":"2026-03-01"}}[/ACTION] All done.';
+      'Here is the result. [ACTION]{"type":"add","data":{"type":"expense","amount":10000,"categoryId":"food","description":"test","date":"2026-03-01"}}[/ACTION] All done.';
 
     const result = parseActionFromResponse(text);
     expect(result).not.toBeNull();

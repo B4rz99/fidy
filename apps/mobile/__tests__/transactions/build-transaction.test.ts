@@ -23,7 +23,7 @@ describe("buildTransaction", () => {
     if (!result.success) return;
     expect(result.transaction.id).toBe("tx-1");
     expect(result.transaction.userId).toBe("user-1");
-    expect(result.transaction.amountCents).toBe(123400);
+    expect(result.transaction.amount).toBe(1234);
     expect(result.transaction.categoryId).toBe("food");
     expect(result.transaction.createdAt).toBe(NOW);
     expect(result.transaction.updatedAt).toBe(NOW);
@@ -54,7 +54,7 @@ describe("toStoredTransaction branch coverage", () => {
       id: "tx-nd",
       userId: "user-1",
       type: "expense",
-      amountCents: 500,
+      amount: 500,
       categoryId: "food",
       description: null,
       date: "2026-03-01",
@@ -71,7 +71,7 @@ describe("toStoredTransaction branch coverage", () => {
       id: "tx-da",
       userId: "user-1",
       type: "expense",
-      amountCents: 500,
+      amount: 500,
       categoryId: "food",
       description: "Test",
       date: "2026-03-01",
@@ -90,7 +90,7 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     id: "tx-rt",
     userId: "user-1",
     type: "income",
-    amountCents: 5000,
+    amount: 5000,
     categoryId: "transfer",
     description: "Monthly",
     date: new Date(2026, 2, 1),
@@ -104,7 +104,7 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     expect(row.id).toBe("tx-rt");
     expect(row.userId).toBe("user-1");
     expect(row.type).toBe("income");
-    expect(row.amountCents).toBe(5000);
+    expect(row.amount).toBe(5000);
     expect(row.date).toBe("2026-03-01");
     expect(typeof row.createdAt).toBe("string");
   });
@@ -115,7 +115,7 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     expect(roundTripped.id).toBe(stored.id);
     expect(roundTripped.userId).toBe(stored.userId);
     expect(roundTripped.type).toBe(stored.type);
-    expect(roundTripped.amountCents).toBe(stored.amountCents);
+    expect(roundTripped.amount).toBe(stored.amount);
     expect(roundTripped.categoryId).toBe(stored.categoryId);
     expect(roundTripped.description).toBe(stored.description);
     expect(roundTripped.date.getFullYear()).toBe(stored.date.getFullYear());

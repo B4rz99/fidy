@@ -1,13 +1,13 @@
-import { formatCents } from "@/features/transactions";
 import { TrendingUp } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
+import { formatMoney } from "@/shared/lib";
 
 type BalanceSectionProps = {
-  readonly balanceCents: number;
+  readonly balance: number;
 };
 
-export const BalanceSection = ({ balanceCents }: BalanceSectionProps) => {
+export const BalanceSection = ({ balance }: BalanceSectionProps) => {
   const greenColor = useThemeColor("accentGreen");
 
   return (
@@ -16,7 +16,7 @@ export const BalanceSection = ({ balanceCents }: BalanceSectionProps) => {
         TOTAL BALANCE
       </Text>
       <Text className="font-poppins-bold text-balance text-primary dark:text-primary-dark">
-        {formatCents(balanceCents)}
+        {formatMoney(balance)}
       </Text>
       <View className="flex-row items-center gap-1">
         <TrendingUp size={14} color={greenColor} />

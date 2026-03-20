@@ -1,9 +1,8 @@
-import { parseIsoDate, toIsoDate } from "@/shared/lib";
+import { parseDigitsToAmount, parseIsoDate, toIsoDate } from "@/shared/lib";
 import type { CreateTransactionInput, StoredTransaction, TransactionType } from "../schema";
 import { createTransactionSchema } from "../schema";
 import type { CategoryId } from "./categories";
 import { isValidCategoryId } from "./categories";
-import { digitsToCents } from "./format-amount";
 import type { TransactionRow } from "./repository";
 
 type BuildInput = {
@@ -20,11 +19,11 @@ export function buildTransaction(
   id: string,
   now: Date
 ): { success: true; transaction: StoredTransaction } | { success: false; error: string } {
-  const amountCents = digitsToCents(input.digits);
+  const amount = parseDigitsToAmount(input.digits);
 
   const raw: CreateTransactionInput = {
     type: input.type,
-    amountCents,
+    amount,
     categoryId: input.categoryId ?? "other",
     description: input.description || undefined,
     date: input.date,
@@ -44,7 +43,7 @@ export function buildTransaction(
       id,
       userId,
       type: result.data.type,
-      amountCents: result.data.amountCents,
+      amount: result.data.amount,
       categoryId: result.data.categoryId,
       description: result.data.description ?? "",
       date: result.data.date,
@@ -60,7 +59,7 @@ export function toStoredTransaction(row: TransactionRow): StoredTransaction {
     id: row.id,
     userId: row.userId,
     type: row.type as TransactionType,
-    amountCents: row.amountCents,
+    amount: row.amount,
     categoryId: isValidCategoryId(row.categoryId) ? row.categoryId : "other",
     description: row.description ?? "",
     date: parseIsoDate(row.date),
@@ -75,7 +74,7 @@ export function toTransactionRow(tx: StoredTransaction): TransactionRow {
     id: tx.id,
     userId: tx.userId,
     type: tx.type,
-    amountCents: tx.amountCents,
+    amount: tx.amount,
     categoryId: tx.categoryId,
     description: tx.description || null,
     date: toIsoDate(tx.date),

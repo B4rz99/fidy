@@ -1,15 +1,15 @@
 import { format } from "date-fns";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   CATEGORIES,
   type CategoryId,
-  formatSignedAmount,
   isValidCategoryId,
   type StoredTransaction,
 } from "@/features/transactions";
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
+import { formatSignedMoney } from "@/shared/lib";
 import type { ProcessedEmailRow } from "../lib/repository";
 
 type NeedsReviewCardProps = {
@@ -28,11 +28,12 @@ export const NeedsReviewCard = ({
     transaction?.categoryId && isValidCategoryId(transaction.categoryId)
       ? transaction.categoryId
       : "other";
+  const [prevSuggested, setPrevSuggested] = useState(suggestedCategory);
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>(suggestedCategory);
-
-  useEffect(() => {
+  if (suggestedCategory !== prevSuggested) {
+    setPrevSuggested(suggestedCategory);
     setSelectedCategory(suggestedCategory);
-  }, [suggestedCategory]);
+  }
 
   const handleConfirm = useCallback(() => {
     onConfirm(processedEmail.id, selectedCategory);
@@ -59,7 +60,7 @@ export const NeedsReviewCard = ({
                 : "text-accent-red dark:text-accent-red-dark"
             }`}
           >
-            {formatSignedAmount(transaction.amountCents, transaction.type)}
+            {formatSignedMoney(transaction.amount, transaction.type)}
           </Text>
           <Text className="font-poppins-medium text-caption" style={{ color: "#6D6D6D" }}>
             {format(transaction.date, "PP", { locale: getDateFnsLocale(locale) })}

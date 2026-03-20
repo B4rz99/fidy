@@ -1,6 +1,6 @@
 import Svg, { Defs, Line, LinearGradient, Polyline, Stop } from "react-native-svg";
 
-type DataPoint = { readonly date: string; readonly totalCents: number };
+type DataPoint = { readonly date: string; readonly total: number };
 
 type SpendingLineChartProps = {
   readonly data: readonly DataPoint[];
@@ -16,21 +16,21 @@ const buildPoints = (data: readonly DataPoint[], width: number, height: number):
   const count = data.length;
   if (count === 0) return "";
 
-  const maxCents = data.reduce((max, d) => Math.max(max, d.totalCents), 0);
-  const safeMax = maxCents === 0 ? 1 : maxCents;
+  const maxTotal = data.reduce((max, d) => Math.max(max, d.total), 0);
+  const safeMax = maxTotal === 0 ? 1 : maxTotal;
   const plotW = width - PADDING_X * 2;
   const plotH = height - PADDING_TOP - PADDING_BOTTOM;
 
   if (count === 1) {
     const x = width / 2;
-    const y = PADDING_TOP + plotH * (1 - data[0].totalCents / safeMax);
+    const y = PADDING_TOP + plotH * (1 - data[0].total / safeMax);
     return `${x},${y}`;
   }
 
   return data
     .map((d, i) => {
       const x = PADDING_X + (i / (count - 1)) * plotW;
-      const y = PADDING_TOP + plotH * (1 - d.totalCents / safeMax);
+      const y = PADDING_TOP + plotH * (1 - d.total / safeMax);
       return `${x},${y}`;
     })
     .join(" ");

@@ -1,9 +1,9 @@
 import { FlashList } from "@shopify/flash-list";
-import { memo, useCallback, useEffect } from "react";
+import { memo, useCallback } from "react";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Trash2 } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import type { UserMemory } from "../schema";
 import { useChatStore } from "../store";
 
@@ -73,9 +73,9 @@ export function MemoryManager({ onBack }: MemoryManagerProps) {
   const loadMemories = useChatStore((s) => s.loadMemories);
   const deleteMemory = useChatStore((s) => s.deleteMemory);
 
-  useEffect(() => {
+  useMountEffect(() => {
     loadMemories();
-  }, [loadMemories]);
+  });
 
   const handleDelete = useCallback(
     (id: string) => {

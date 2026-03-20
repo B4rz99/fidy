@@ -13,8 +13,6 @@ import { useShallow } from "zustand/react/shallow";
 import {
   CATEGORIES,
   CategoryPill,
-  digitsToCents,
-  formatDollars,
   getDateLabel,
   handleNumpadPress,
   TypeToggle,
@@ -25,6 +23,7 @@ import { Calendar } from "@/shared/components/icons";
 import { Platform, Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
+import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
 
 export default function AddTransactionScreen() {
   const { navigate } = useRouter();
@@ -64,12 +63,6 @@ export default function AddTransactionScreen() {
 
   const isEditing = editingId != null;
 
-  useEffect(() => {
-    if (!isEditing) {
-      resetForm();
-    }
-  }, [resetForm, isEditing]);
-
   const accentRed = useThemeColor("accentRed");
   const accentGreen = useThemeColor("accentGreen");
   const secondary = useThemeColor("secondary");
@@ -78,8 +71,8 @@ export default function AddTransactionScreen() {
   const borderSubtle = useThemeColor("borderSubtle");
 
   const amountColor = type === "expense" ? accentRed : accentGreen;
-  const displayAmount = digits.length > 0 ? formatDollars(digits) : "$";
-  const canSave = digitsToCents(digits) > 0;
+  const displayAmount = digits.length > 0 ? formatInputDisplay(digits) : "$";
+  const canSave = parseDigitsToAmount(digits) > 0;
   const buttonBg = canSave ? accentGreen : "#CCCCCC";
   const dateLabel = useMemo(
     () => getDateLabel(date, new Date(), t("dates.today"), getDateFnsLocale(locale)),
@@ -114,8 +107,8 @@ export default function AddTransactionScreen() {
       const result = isEditing ? await updateTransaction(editingId) : await saveTransaction();
       if (result.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        resetForm();
-        navigate("/(tabs)");
+        if (!isEditing) resetForm();
+        navigate("/(tabs)" as never);
       }
     });
 

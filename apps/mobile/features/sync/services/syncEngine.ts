@@ -19,7 +19,7 @@ type SupabaseTransactionRow = {
   id: string;
   user_id: string;
   type: string;
-  amount_cents: number;
+  amount: number;
   category_id: string;
   description: string | null;
   date: string;
@@ -32,7 +32,7 @@ function toSupabaseRow(row: {
   id: string;
   userId: string;
   type: string;
-  amountCents: number;
+  amount: number;
   categoryId: string;
   description: string | null;
   date: string;
@@ -44,7 +44,7 @@ function toSupabaseRow(row: {
     id: row.id,
     user_id: row.userId,
     type: row.type,
-    amount_cents: row.amountCents,
+    amount: row.amount,
     category_id: row.categoryId,
     description: row.description,
     date: row.date,
@@ -63,7 +63,7 @@ function fromSupabaseRow(row: SupabaseTransactionRow) {
     id: row.id,
     userId: row.user_id,
     type: row.type,
-    amountCents: row.amount_cents,
+    amount: row.amount,
     categoryId: row.category_id,
     description: row.description,
     date: row.date,

@@ -1,6 +1,6 @@
-import { formatCents } from "@/features/transactions";
 import { Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
+import { formatMoney } from "@/shared/lib";
 import type { SearchSummary } from "../lib/types";
 
 type ResultsSummaryProps = {
@@ -15,7 +15,7 @@ export const ResultsSummary = ({ summary }: ResultsSummaryProps) => {
       <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
         {t("search.resultsSummary", {
           count: summary.count,
-          total: formatCents(summary.totalCents),
+          total: formatMoney(summary.total),
         })}
       </Text>
     </View>

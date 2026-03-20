@@ -93,7 +93,7 @@ describe("pipeline worker save error path", () => {
     // First email: LLM returns valid result but insertTransaction throws
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 5000000,
+      amount: 50000,
       categoryId: "food",
       description: "Exito",
       date: "2026-03-05",
@@ -104,7 +104,7 @@ describe("pipeline worker save error path", () => {
     // Second email: LLM returns valid result, save succeeds
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 3000000,
+      amount: 30000,
       categoryId: "transport",
       description: "Uber",
       date: "2026-03-05",

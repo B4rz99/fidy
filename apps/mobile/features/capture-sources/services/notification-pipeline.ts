@@ -44,7 +44,7 @@ export async function processNotification(
         const llm = await parseNotificationApi(sanitizedText);
         return llm
           ? {
-              amountCents: llm.amountCents,
+              amount: llm.amount,
               merchant: llm.description,
               type: llm.type,
               categoryId: llm.categoryId,
@@ -70,7 +70,7 @@ export async function processNotification(
   }
 
   // Check fingerprint dedup
-  const fingerprint = captureFingerprint(source, parsed.amountCents, parsed.date, parsed.merchant);
+  const fingerprint = captureFingerprint(source, parsed.amount, parsed.date, parsed.merchant);
 
   // Guard against concurrent processing of the same fingerprint.
   // Add synchronously before any await to close the race window.
@@ -89,7 +89,7 @@ export async function processNotification(
     const existingTxId = await findDuplicateTransaction(
       db,
       userId,
-      parsed.amountCents,
+      parsed.amount,
       parsed.date,
       parsed.merchant
     );
@@ -123,7 +123,7 @@ export async function processNotification(
       id: txId,
       userId,
       type: parsed.type,
-      amountCents: parsed.amountCents,
+      amount: parsed.amount,
       categoryId: finalCategoryId,
       description: parsed.merchant,
       date: parsed.date,

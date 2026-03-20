@@ -1,4 +1,4 @@
-import { MAX_AMOUNT_DIGITS } from "./format-amount";
+import { MAX_AMOUNT_DIGITS } from "@/shared/lib";
 
 export const handleNumpadPress = (currentDigits: string, key: string): string => {
   if (key === "delete") {

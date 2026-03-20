@@ -3,14 +3,14 @@ export type SearchFilters = {
   readonly categoryIds: readonly string[];
   readonly dateFrom: string | null; // ISO "YYYY-MM-DD"
   readonly dateTo: string | null;
-  readonly amountMinCents: number | null;
-  readonly amountMaxCents: number | null;
+  readonly amountMin: number | null;
+  readonly amountMax: number | null;
   readonly type: "all" | "expense" | "income";
 };
 
 export type SearchSummary = {
   readonly count: number;
-  readonly totalCents: number;
+  readonly total: number;
 };
 
 export const EMPTY_FILTERS: SearchFilters = {
@@ -18,7 +18,7 @@ export const EMPTY_FILTERS: SearchFilters = {
   categoryIds: [],
   dateFrom: null,
   dateTo: null,
-  amountMinCents: null,
-  amountMaxCents: null,
+  amountMin: null,
+  amountMax: null,
   type: "all",
 };

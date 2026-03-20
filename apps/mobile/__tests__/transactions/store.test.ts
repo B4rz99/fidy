@@ -43,7 +43,7 @@ describe("useTransactionStore", () => {
       offset: 0,
       hasMore: true,
 
-      balanceCents: 0,
+      balance: 0,
       categorySpending: [],
       dailySpending: [],
     });
@@ -104,7 +104,7 @@ describe("useTransactionStore", () => {
     const result = await store.saveTransaction();
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.transaction.amountCents).toBe(452000);
+      expect(result.transaction.amount).toBe(4520);
       expect(result.transaction.categoryId).toBe("food");
       expect(result.transaction.description).toBe("Groceries");
       expect(result.transaction.type).toBe("expense");
@@ -116,7 +116,7 @@ describe("useTransactionStore", () => {
     expect(insertTransaction).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        amountCents: 452000,
+        amount: 4520,
         categoryId: "food",
         type: "expense",
         userId: mockUserId,
@@ -183,7 +183,7 @@ describe("useTransactionStore", () => {
           id: "tx-1",
           userId: mockUserId,
           type: "expense",
-          amountCents: 100,
+          amount: 100,
           categoryId: "food",
           description: "Test",
           date: new Date(),
@@ -208,7 +208,7 @@ describe("useTransactionStore", () => {
         id: "tx-1",
         userId: mockUserId,
         type: "expense",
-        amountCents: 1000,
+        amount: 1000,
         categoryId: "food",
         description: "Lunch",
         date: "2026-03-04",
@@ -236,7 +236,7 @@ describe("useTransactionStore", () => {
       id: `tx-${i}`,
       userId: mockUserId,
       type: "expense",
-      amountCents: 1000,
+      amount: 1000,
       categoryId: "food",
       description: `Item ${i}`,
       date: "2026-03-04",
@@ -263,7 +263,7 @@ describe("useTransactionStore", () => {
           id: "tx-0",
           userId: mockUserId,
           type: "expense",
-          amountCents: 100,
+          amount: 100,
           categoryId: "food",
           description: "First",
           date: new Date(),
@@ -281,7 +281,7 @@ describe("useTransactionStore", () => {
         id: "tx-1",
         userId: mockUserId,
         type: "expense",
-        amountCents: 200,
+        amount: 200,
         categoryId: "food",
         description: "Second",
         date: "2026-03-03",
@@ -315,7 +315,7 @@ describe("useTransactionStore", () => {
           id: "tx-1",
           userId: mockUserId,
           type: "expense",
-          amountCents: 100,
+          amount: 100,
           categoryId: "food",
           description: "Test",
           date: new Date(),
@@ -362,7 +362,7 @@ describe("useTransactionStore", () => {
           id: "tx-1",
           userId: mockUserId,
           type: "expense",
-          amountCents: 100,
+          amount: 100,
           categoryId: "food",
           description: "Test",
           date: new Date(),
@@ -384,7 +384,7 @@ describe("useTransactionStore", () => {
       id: "tx-new",
       userId: mockUserId,
       type: "expense" as const,
-      amountCents: 500,
+      amount: 500,
       categoryId: "food" as const,
       description: "New",
       date: new Date(),
@@ -405,7 +405,7 @@ describe("useTransactionStore", () => {
           id: "tx-1",
           userId: mockUserId,
           type: "expense",
-          amountCents: 100,
+          amount: 100,
           categoryId: "food",
           description: "Test",
           date: new Date(),

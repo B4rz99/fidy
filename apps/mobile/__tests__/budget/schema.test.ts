@@ -4,7 +4,7 @@ import { createBudgetSchema } from "@/features/budget/schema";
 describe("createBudgetSchema", () => {
   const valid = {
     categoryId: "food",
-    amountCents: 50000,
+    amount: 50000,
     month: "2026-03",
   };
 
@@ -23,15 +23,15 @@ describe("createBudgetSchema", () => {
   });
 
   test("rejects zero amount", () => {
-    expect(createBudgetSchema.safeParse({ ...valid, amountCents: 0 }).success).toBe(false);
+    expect(createBudgetSchema.safeParse({ ...valid, amount: 0 }).success).toBe(false);
   });
 
   test("rejects negative amount", () => {
-    expect(createBudgetSchema.safeParse({ ...valid, amountCents: -100 }).success).toBe(false);
+    expect(createBudgetSchema.safeParse({ ...valid, amount: -100 }).success).toBe(false);
   });
 
   test("rejects non-integer amount", () => {
-    expect(createBudgetSchema.safeParse({ ...valid, amountCents: 100.5 }).success).toBe(false);
+    expect(createBudgetSchema.safeParse({ ...valid, amount: 100.5 }).success).toBe(false);
   });
 
   test("rejects invalid month format — single digit month", () => {

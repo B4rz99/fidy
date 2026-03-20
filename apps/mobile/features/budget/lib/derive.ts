@@ -1,10 +1,10 @@
 export type BudgetProgress = {
   readonly budgetId: string;
   readonly categoryId: string;
-  readonly amountCents: number;
-  readonly spentCents: number;
+  readonly amount: number;
+  readonly spent: number;
   readonly percentUsed: number; // 0–100+ (can exceed 100)
-  readonly remainingCents: number; // negative if over budget
+  readonly remaining: number; // negative if over budget
   readonly isOverBudget: boolean;
   readonly isNearLimit: boolean; // >= 80%
 };
@@ -18,67 +18,58 @@ export type BudgetAlert = {
 
 export type BudgetSuggestion = {
   readonly categoryId: string;
-  readonly suggestedAmountCents: number;
+  readonly suggestedAmount: number;
 };
 
 /** Pure derivation: compute progress for a single budget given its total spent. */
 export function deriveBudgetProgress(
-  budget: { readonly id: string; readonly categoryId: string; readonly amountCents: number },
-  spentCents: number
+  budget: { readonly id: string; readonly categoryId: string; readonly amount: number },
+  spent: number
 ): BudgetProgress {
   const percentUsed =
-    budget.amountCents > 0
-      ? Math.round((spentCents / budget.amountCents) * 100)
-      : spentCents > 0
-        ? 100
-        : 0;
-  const remainingCents = budget.amountCents - spentCents;
+    budget.amount > 0 ? Math.round((spent / budget.amount) * 100) : spent > 0 ? 100 : 0;
+  const remaining = budget.amount - spent;
   return {
     budgetId: budget.id,
     categoryId: budget.categoryId,
-    amountCents: budget.amountCents,
-    spentCents,
+    amount: budget.amount,
+    spent,
     percentUsed,
-    remainingCents,
-    isOverBudget: spentCents > budget.amountCents,
+    remaining,
+    isOverBudget: spent > budget.amount,
     isNearLimit: percentUsed >= 80,
   };
 }
 
 /** Pure derivation: aggregate totals across all budget progresses. */
 export function deriveBudgetSummary(progresses: readonly BudgetProgress[]): {
-  readonly totalBudgetCents: number;
-  readonly totalSpentCents: number;
+  readonly totalBudget: number;
+  readonly totalSpent: number;
   readonly percentUsed: number;
 } {
-  const { totalBudgetCents, totalSpentCents } = progresses.reduce(
+  const { totalBudget, totalSpent } = progresses.reduce(
     (acc, p) => ({
-      totalBudgetCents: acc.totalBudgetCents + p.amountCents,
-      totalSpentCents: acc.totalSpentCents + p.spentCents,
+      totalBudget: acc.totalBudget + p.amount,
+      totalSpent: acc.totalSpent + p.spent,
     }),
-    { totalBudgetCents: 0, totalSpentCents: 0 }
+    { totalBudget: 0, totalSpent: 0 }
   );
   const percentUsed =
-    totalBudgetCents > 0
-      ? Math.round((totalSpentCents / totalBudgetCents) * 100)
-      : totalSpentCents > 0
-        ? 100
-        : 0;
-  return { totalBudgetCents, totalSpentCents, percentUsed };
+    totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : totalSpent > 0 ? 100 : 0;
+  return { totalBudget, totalSpent, percentUsed };
 }
 
 /**
- * Rounds cents UP to the nearest "clean" COP amount.
+ * Rounds an amount UP to the nearest "clean" COP amount.
  * COP amounts are whole numbers (no centavos in practice), so rounding
  * targets scale with magnitude:
- *   < 100,000 COP  → nearest 1,000 COP   (100,000 centavos)
- *   < 1,000,000 COP → nearest 10,000 COP  (1,000,000 centavos)
- *   >= 1,000,000 COP → nearest 100,000 COP (10,000,000 centavos)
+ *   < 100,000 COP  → nearest 1,000 COP
+ *   < 1,000,000 COP → nearest 10,000 COP
+ *   >= 1,000,000 COP → nearest 100,000 COP
  */
-const roundUpCop = (cents: number): number => {
-  const cop = cents / 100;
-  const unit = cop < 100_000 ? 1_000 : cop < 1_000_000 ? 10_000 : 100_000;
-  return Math.ceil(cop / unit) * unit * 100;
+const roundUpCop = (amount: number): number => {
+  const unit = amount < 100_000 ? 1_000 : amount < 1_000_000 ? 10_000 : 100_000;
+  return Math.ceil(amount / unit) * unit;
 };
 
 /**
@@ -87,14 +78,14 @@ const roundUpCop = (cents: number): number => {
  * Suggested amount is rounded UP to the nearest clean COP amount.
  */
 export function deriveAutoSuggestBudgets(
-  lastMonthSpending: readonly { readonly categoryId: string; readonly totalCents: number }[],
+  lastMonthSpending: readonly { readonly categoryId: string; readonly total: number }[],
   existingBudgetCategoryIds: ReadonlySet<string>
 ): readonly BudgetSuggestion[] {
   return lastMonthSpending
     .filter((s) => !existingBudgetCategoryIds.has(s.categoryId))
     .map((s) => ({
       categoryId: s.categoryId,
-      suggestedAmountCents: roundUpCop(s.totalCents),
+      suggestedAmount: roundUpCop(s.total),
     }));
 }
 

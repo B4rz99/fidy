@@ -5,8 +5,8 @@ import { Calendar, ChevronLeft } from "@/shared/components/icons";
 import { Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
+import { formatInputDisplay } from "@/shared/lib";
 import { CATEGORIES } from "../lib/categories";
-import { formatDollars } from "../lib/format-amount";
 import { getDateLabel } from "../lib/format-date";
 import { useTransactionStore } from "../store";
 import { CategoryPill } from "./CategoryPill";
@@ -48,7 +48,7 @@ export const TransactionDetails = () => {
   const borderSubtle = useThemeColor("borderSubtle");
 
   const amountColor = type === "expense" ? accentRed : accentGreen;
-  const displayAmount = formatDollars(digits);
+  const displayAmount = formatInputDisplay(digits);
   const dateLabel = getDateLabel(date, new Date(), t("dates.today"), getDateFnsLocale(locale));
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();

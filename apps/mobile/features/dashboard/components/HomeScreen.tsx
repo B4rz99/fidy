@@ -12,17 +12,16 @@ import { SearchAction } from "@/features/search";
 import { SyncConflictBanner } from "@/features/sync";
 import {
   CATEGORY_MAP,
-  formatSignedAmount,
   makeDateLabel,
   type StoredTransaction,
   useTransactionStore,
 } from "@/features/transactions";
 import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
 import { Ellipsis } from "@/shared/components/icons";
-import { Alert, FlatList, Platform, Pressable, Text, View } from "@/shared/components/rn";
+import { Alert, FlatList, Platform, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
-import { toIsoDate } from "@/shared/lib";
+import { formatSignedMoney, toIsoDate } from "@/shared/lib";
 import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";
 import { DateHeader } from "./DateHeader";
@@ -58,7 +57,7 @@ const TransactionItem = memo(function TransactionItem({
         <TransactionRow
           icon={category?.icon ?? Ellipsis}
           name={tx.description || t("common.unknown")}
-          amount={formatSignedAmount(tx.amountCents, tx.type)}
+          amount={formatSignedMoney(tx.amount, tx.type)}
           category={category ? getCategoryLabel(category, locale) : t("common.other")}
           isPositive={tx.type === "income"}
           onEdit={onEdit}
@@ -70,24 +69,24 @@ const TransactionItem = memo(function TransactionItem({
 });
 
 type ListHeaderProps = {
-  readonly balanceCents: number;
+  readonly balance: number;
   readonly categorySpending: readonly {
     readonly categoryId: string;
-    readonly totalCents: number;
+    readonly total: number;
   }[];
-  readonly dailySpending: readonly { readonly date: string; readonly totalCents: number }[];
+  readonly dailySpending: readonly { readonly date: string; readonly total: number }[];
 };
 
 const ListHeader = memo(function ListHeader({
-  balanceCents,
+  balance,
   categorySpending,
   dailySpending,
 }: ListHeaderProps) {
   const { push } = useRouter();
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
 
-  const totalSpentCents = useMemo(
-    () => categorySpending.reduce((sum, c) => sum + c.totalCents, 0),
+  const totalSpent = useMemo(
+    () => categorySpending.reduce((sum, c) => sum + c.total, 0),
     [categorySpending]
   );
 
@@ -105,11 +104,11 @@ const ListHeader = memo(function ListHeader({
       {Platform.OS === "ios" && (
         <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
       )}
-      <BalanceSection balanceCents={balanceCents} />
+      <BalanceSection balance={balance} />
       <ChartSection
         categorySpending={categorySpending}
         dailySpending={dailySpending}
-        totalSpentCents={totalSpentCents}
+        totalSpent={totalSpent}
       />
     </View>
   );
@@ -121,7 +120,7 @@ export const HomeScreen = () => {
   const pages = useTransactionStore((s) => s.pages);
   const hasMore = useTransactionStore((s) => s.hasMore);
   const loadNextPage = useTransactionStore((s) => s.loadNextPage);
-  const balanceCents = useTransactionStore((s) => s.balanceCents);
+  const balance = useTransactionStore((s) => s.balance);
   const categorySpending = useTransactionStore((s) => s.categorySpending);
   const dailySpending = useTransactionStore((s) => s.dailySpending);
   const editTransaction = useTransactionStore((s) => s.editTransaction);
@@ -191,12 +190,12 @@ export const HomeScreen = () => {
   const listHeader = useMemo(
     () => (
       <ListHeader
-        balanceCents={balanceCents}
+        balance={balance}
         categorySpending={categorySpending}
         dailySpending={dailySpending}
       />
     ),
-    [balanceCents, categorySpending, dailySpending]
+    [balance, categorySpending, dailySpending]
   );
 
   return (

@@ -32,12 +32,12 @@ const SYSTEM_PROMPT = `You are Fidy AI, a financial mirror for the user's person
 - Be concise and factual.
 
 ## Transaction Mutations
-IMPORTANT: Action block amounts use CENTS (COP × 100). If the user says $50.000 COP, the amountCents value is 5000000. This is different from the context values which are already in COP.
+Action block amounts are in whole COP (pesos). If the user says $50.000 COP, the amount value is 50000.
 
 When the user asks to add, edit, or delete a transaction, include EXACTLY ONE action block in your response:
-- Add: [ACTION]{"type":"add","data":{"type":"expense|income","amountCents":<int COP×100>,"categoryId":"<id>","description":"<text>","date":"YYYY-MM-DD"}}[/ACTION]
+- Add: [ACTION]{"type":"add","data":{"type":"expense|income","amount":<int COP>,"categoryId":"<id>","description":"<text>","date":"YYYY-MM-DD"}}[/ACTION]
 - Edit: [ACTION]{"type":"edit","transactionId":"<id>","data":{...partial fields...}}[/ACTION]
-- Delete: [ACTION]{"type":"delete","transactionId":"<id>","description":"<text>","amountCents":<int COP×100>,"date":"YYYY-MM-DD"}[/ACTION]
+- Delete: [ACTION]{"type":"delete","transactionId":"<id>","description":"<text>","amount":<int COP>,"date":"YYYY-MM-DD"}[/ACTION]
 
 Valid categoryIds: ${CATEGORY_IDS.join(", ")}
 
@@ -91,12 +91,6 @@ function createUserClient(token: string) {
   });
 }
 
-const CENTS_PER_COP = 100;
-
-function centsToCop(cents: number): number {
-  return cents / CENTS_PER_COP;
-}
-
 function currentMonthString(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -120,7 +114,7 @@ type CategorySpending = { categoryId: string; total: number };
 type CategoryDelta = { categoryId: string; current: number; previous: number; delta: number };
 
 function computeSpendingByCategory(
-  transactions: { category_id: string; amount_cents: number; type: string; date: string }[],
+  transactions: { category_id: string; amount: number; type: string; date: string }[],
   month: string
 ): CategorySpending[] {
   const start = `${month}-01`;
@@ -128,12 +122,12 @@ function computeSpendingByCategory(
   const map = new Map<string, number>();
   for (const t of transactions) {
     if (t.type === "expense" && t.date >= start && t.date < end) {
-      map.set(t.category_id, (map.get(t.category_id) ?? 0) + t.amount_cents);
+      map.set(t.category_id, (map.get(t.category_id) ?? 0) + t.amount);
     }
   }
-  return Array.from(map.entries()).map(([categoryId, totalCents]) => ({
+  return Array.from(map.entries()).map(([categoryId, total]) => ({
     categoryId,
-    total: centsToCop(totalCents),
+    total,
   }));
 }
 
@@ -434,7 +428,7 @@ Deno.serve(async (req) => {
       userClient.rpc("get_user_balance"),
       userClient
         .from("transactions")
-        .select("type, amount_cents, category_id, description, date")
+        .select("type, amount, category_id, description, date")
         .is("deleted_at", null)
         .gte("date", `${prevMonth}-01`)
         .order("date", { ascending: false }),
@@ -465,20 +459,20 @@ Deno.serve(async (req) => {
       transactions: txData.map(
         (t: {
           type: string;
-          amount_cents: number;
+          amount: number;
           category_id: string;
           description: string;
           date: string;
         }) => ({
           type: t.type,
-          amount: centsToCop(t.amount_cents),
+          amount: t.amount,
           categoryId: t.category_id,
           description: t.description,
           date: t.date,
         })
       ),
       summary: {
-        balance: centsToCop((balanceResult.data as number) ?? 0),
+        balance: (balanceResult.data as number) ?? 0,
         currentMonthSpending: currentSpending,
         previousMonthSpending: prevSpending,
         monthOverMonthDeltas: computeDeltas(currentSpending, prevSpending),

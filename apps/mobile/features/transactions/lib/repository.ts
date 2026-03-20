@@ -33,7 +33,7 @@ export function getTransactionsPaginated(db: AnyDb, userId: string, limit: numbe
 export function getBalanceAggregate(db: AnyDb, userId: string): number {
   const row = db
     .select({
-      balance: sql<number>`SUM(CASE WHEN ${transactions.type} = 'income' THEN ${transactions.amountCents} ELSE -${transactions.amountCents} END)`,
+      balance: sql<number>`SUM(CASE WHEN ${transactions.type} = 'income' THEN ${transactions.amount} ELSE -${transactions.amount} END)`,
     })
     .from(transactions)
     .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
@@ -45,11 +45,11 @@ export function getSpendingByCategoryAggregate(
   db: AnyDb,
   userId: string,
   month: string
-): Array<{ categoryId: string; totalCents: number }> {
+): Array<{ categoryId: string; total: number }> {
   return db
     .select({
       categoryId: transactions.categoryId,
-      totalCents: sum(transactions.amountCents).mapWith(Number),
+      total: sum(transactions.amount).mapWith(Number),
     })
     .from(transactions)
     .where(
@@ -69,11 +69,11 @@ export function getDailySpendingAggregate(
   userId: string,
   startDate: string,
   endDate: string
-): Array<{ date: string; totalCents: number }> {
+): Array<{ date: string; total: number }> {
   return db
     .select({
       date: transactions.date,
-      totalCents: sum(transactions.amountCents).mapWith(Number),
+      total: sum(transactions.amount).mapWith(Number),
     })
     .from(transactions)
     .where(
@@ -130,7 +130,7 @@ export function upsertTransaction(db: AnyDb, row: TransactionRow) {
       target: transactions.id,
       set: {
         type: row.type,
-        amountCents: row.amountCents,
+        amount: row.amount,
         categoryId: row.categoryId,
         description: row.description,
         date: row.date,

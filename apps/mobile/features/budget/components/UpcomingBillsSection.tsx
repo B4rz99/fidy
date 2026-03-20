@@ -2,10 +2,11 @@ import { useRouter } from "expo-router";
 import { useMemo } from "react";
 import { useCalendarStore } from "@/features/calendar";
 import { getNextOccurrence } from "@/features/calendar/lib/calendar-utils";
-import { CATEGORY_MAP, formatCents } from "@/features/transactions";
+import { CATEGORY_MAP } from "@/features/transactions";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+import { formatMoney } from "@/shared/lib";
 
 const MAX_UPCOMING_BILLS = 3;
 
@@ -84,7 +85,7 @@ export function UpcomingBillsSection() {
                   </View>
                 </View>
                 <Text style={[styles.billAmount, { color: primaryColor }]}>
-                  {formatCents(bill.amountCents)}
+                  {formatMoney(bill.amount)}
                 </Text>
               </View>
             );

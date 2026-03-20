@@ -22,7 +22,7 @@ describe("billSchema", () => {
   const valid = {
     id: "bill-1",
     name: "Netflix",
-    amountCents: 1599,
+    amount: 35000,
     frequency: "monthly",
     categoryId: "services",
     startDate: new Date(2025, 0, 15),
@@ -38,15 +38,15 @@ describe("billSchema", () => {
   });
 
   test("rejects zero amount", () => {
-    expect(billSchema.safeParse({ ...valid, amountCents: 0 }).success).toBe(false);
+    expect(billSchema.safeParse({ ...valid, amount: 0 }).success).toBe(false);
   });
 
   test("rejects negative amount", () => {
-    expect(billSchema.safeParse({ ...valid, amountCents: -100 }).success).toBe(false);
+    expect(billSchema.safeParse({ ...valid, amount: -100 }).success).toBe(false);
   });
 
   test("rejects non-integer amount", () => {
-    expect(billSchema.safeParse({ ...valid, amountCents: 15.99 }).success).toBe(false);
+    expect(billSchema.safeParse({ ...valid, amount: 15.99 }).success).toBe(false);
   });
 
   test("rejects invalid categoryId", () => {
@@ -61,7 +61,7 @@ describe("billSchema", () => {
 describe("createBillSchema", () => {
   const valid = {
     name: "Netflix",
-    amountCents: 1599,
+    amount: 35000,
     frequency: "monthly",
     categoryId: "services",
     startDate: new Date(2025, 0, 15),
@@ -93,7 +93,7 @@ describe("toBillRow / fromBillRow", () => {
   const bill = {
     id: "bill-1",
     name: "Netflix",
-    amountCents: 1599,
+    amount: 35000,
     frequency: "monthly" as const,
     categoryId: "services" as const,
     startDate: new Date(2025, 0, 15),
@@ -126,7 +126,7 @@ describe("toBillRow / fromBillRow", () => {
     const restored = fromBillRow(row);
     expect(restored.id).toBe(bill.id);
     expect(restored.name).toBe(bill.name);
-    expect(restored.amountCents).toBe(bill.amountCents);
+    expect(restored.amount).toBe(bill.amount);
     expect(restored.frequency).toBe(bill.frequency);
     expect(restored.categoryId).toBe(bill.categoryId);
     expect(restored.isActive).toBe(bill.isActive);

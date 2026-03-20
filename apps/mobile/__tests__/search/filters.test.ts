@@ -37,12 +37,12 @@ describe("hasActiveFilters", () => {
     expect(hasActiveFilters(withFilters({ dateTo: "2026-03-31" }))).toBe(true);
   });
 
-  it("returns true when amountMinCents is set", () => {
-    expect(hasActiveFilters(withFilters({ amountMinCents: 100 }))).toBe(true);
+  it("returns true when amountMin is set", () => {
+    expect(hasActiveFilters(withFilters({ amountMin: 100 }))).toBe(true);
   });
 
-  it("returns true when amountMaxCents is set", () => {
-    expect(hasActiveFilters(withFilters({ amountMaxCents: 5000 }))).toBe(true);
+  it("returns true when amountMax is set", () => {
+    expect(hasActiveFilters(withFilters({ amountMax: 5000 }))).toBe(true);
   });
 
   it("returns true when type is expense", () => {
@@ -82,7 +82,7 @@ describe("countActiveFilters", () => {
   });
 
   it("counts amount range as one dimension", () => {
-    expect(countActiveFilters(withFilters({ amountMinCents: 100, amountMaxCents: 5000 }))).toBe(1);
+    expect(countActiveFilters(withFilters({ amountMin: 100, amountMax: 5000 }))).toBe(1);
   });
 
   it("counts type as one dimension", () => {
@@ -94,7 +94,7 @@ describe("countActiveFilters", () => {
       query: "coffee",
       categoryIds: ["food"],
       dateFrom: "2026-03-01",
-      amountMinCents: 100,
+      amountMin: 100,
       type: "expense",
     });
     expect(countActiveFilters(allActive)).toBe(5);

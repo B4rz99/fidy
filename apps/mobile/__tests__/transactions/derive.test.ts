@@ -12,7 +12,7 @@ const makeTx = (overrides: Partial<StoredTransaction>): StoredTransaction => ({
   id: "tx_1",
   userId: "u1",
   type: "expense",
-  amountCents: 1000,
+  amount: 1000,
   categoryId: "food",
   description: "test",
   date: new Date(2026, 2, 1),
@@ -23,11 +23,11 @@ const makeTx = (overrides: Partial<StoredTransaction>): StoredTransaction => ({
 });
 
 describe("deriveBalance", () => {
-  it("returns income minus expenses in cents", () => {
+  it("returns income minus expenses", () => {
     const txs = [
-      makeTx({ type: "income", amountCents: 5000 }),
-      makeTx({ id: "tx_2", type: "expense", amountCents: 2000 }),
-      makeTx({ id: "tx_3", type: "expense", amountCents: 1000 }),
+      makeTx({ type: "income", amount: 5000 }),
+      makeTx({ id: "tx_2", type: "expense", amount: 2000 }),
+      makeTx({ id: "tx_3", type: "expense", amount: 1000 }),
     ];
     expect(deriveBalance(txs)).toBe(2000);
   });
@@ -40,21 +40,21 @@ describe("deriveBalance", () => {
 describe("deriveSpendingByCategory", () => {
   it("groups expenses by category for given month", () => {
     const txs = [
-      makeTx({ categoryId: "food", amountCents: 1000, date: new Date(2026, 2, 1) }),
-      makeTx({ id: "tx_2", categoryId: "food", amountCents: 2000, date: new Date(2026, 2, 15) }),
+      makeTx({ categoryId: "food", amount: 1000, date: new Date(2026, 2, 1) }),
+      makeTx({ id: "tx_2", categoryId: "food", amount: 2000, date: new Date(2026, 2, 15) }),
       makeTx({
         id: "tx_3",
         categoryId: "transport",
-        amountCents: 500,
+        amount: 500,
         date: new Date(2026, 2, 10),
       }),
-      makeTx({ id: "tx_4", categoryId: "food", amountCents: 999, date: new Date(2026, 1, 28) }), // different month
-      makeTx({ id: "tx_5", type: "income", amountCents: 9999, date: new Date(2026, 2, 1) }), // income excluded
+      makeTx({ id: "tx_4", categoryId: "food", amount: 999, date: new Date(2026, 1, 28) }), // different month
+      makeTx({ id: "tx_5", type: "income", amount: 9999, date: new Date(2026, 2, 1) }), // income excluded
     ];
     const result = deriveSpendingByCategory(txs, "2026-03");
     expect(result).toEqual([
-      { categoryId: "food", totalCents: 3000 },
-      { categoryId: "transport", totalCents: 500 },
+      { categoryId: "food", total: 3000 },
+      { categoryId: "transport", total: 500 },
     ]);
   });
 
@@ -67,15 +67,15 @@ describe("deriveSpendingByCategory", () => {
 describe("deriveDailySpending", () => {
   it("sums expenses per day within date range", () => {
     const txs = [
-      makeTx({ amountCents: 1000, date: new Date(2026, 2, 1) }),
-      makeTx({ id: "tx_2", amountCents: 500, date: new Date(2026, 2, 1) }),
-      makeTx({ id: "tx_3", amountCents: 2000, date: new Date(2026, 2, 2) }),
-      makeTx({ id: "tx_4", type: "income", amountCents: 9999, date: new Date(2026, 2, 1) }), // excluded
+      makeTx({ amount: 1000, date: new Date(2026, 2, 1) }),
+      makeTx({ id: "tx_2", amount: 500, date: new Date(2026, 2, 1) }),
+      makeTx({ id: "tx_3", amount: 2000, date: new Date(2026, 2, 2) }),
+      makeTx({ id: "tx_4", type: "income", amount: 9999, date: new Date(2026, 2, 1) }), // excluded
     ];
     const result = deriveDailySpending(txs, "2026-03-01", "2026-03-02");
     expect(result).toEqual([
-      { date: "2026-03-01", totalCents: 1500 },
-      { date: "2026-03-02", totalCents: 2000 },
+      { date: "2026-03-01", total: 1500 },
+      { date: "2026-03-02", total: 2000 },
     ]);
   });
 

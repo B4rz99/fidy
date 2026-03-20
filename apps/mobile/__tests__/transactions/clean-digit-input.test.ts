@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanDigitInput } from "@/features/transactions/lib/format-amount";
+import { cleanDigitInput } from "@/shared/lib/format-money";
 
 describe("cleanDigitInput", () => {
   it("passes through plain digits unchanged", () => {
@@ -14,8 +14,8 @@ describe("cleanDigitInput", () => {
     expect(cleanDigitInput("abc!@#123")).toBe("123");
   });
 
-  it("limits output to 8 digits", () => {
-    expect(cleanDigitInput("123456789")).toBe("12345678");
+  it("limits output to 11 digits", () => {
+    expect(cleanDigitInput("123456789012")).toBe("12345678901");
   });
 
   it("returns empty string for empty input", () => {
@@ -27,6 +27,6 @@ describe("cleanDigitInput", () => {
   });
 
   it("strips then limits combined", () => {
-    expect(cleanDigitInput("a1b2c3d4e5f6g7h8i9")).toBe("12345678");
+    expect(cleanDigitInput("a1b2c3d4e5f6g7h8i9j0k1l2")).toBe("12345678901");
   });
 });

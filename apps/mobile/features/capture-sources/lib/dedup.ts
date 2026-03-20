@@ -9,11 +9,11 @@ import { normalizeMerchant } from "@/shared/lib";
  */
 export function captureFingerprint(
   source: string,
-  amountCents: number,
+  amount: number,
   date: string,
   merchant: string
 ): string {
-  return `${source}:${amountCents}:${date}:${normalizeMerchant(merchant)}`;
+  return `${source}:${amount}:${date}:${normalizeMerchant(merchant)}`;
 }
 
 /**
@@ -35,7 +35,7 @@ export async function isCaptureProcessed(db: AnyDb, fingerprintHash: string): Pr
 export async function findDuplicateTransaction(
   db: AnyDb,
   userId: string,
-  amountCents: number,
+  amount: number,
   date: string,
   merchant: string
 ): Promise<string | null> {
@@ -49,7 +49,7 @@ export async function findDuplicateTransaction(
     .where(
       and(
         eq(transactions.userId, userId),
-        eq(transactions.amountCents, amountCents),
+        eq(transactions.amount, amount),
         eq(transactions.date, date),
         isNull(transactions.deletedAt)
       )

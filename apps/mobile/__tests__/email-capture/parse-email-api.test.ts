@@ -128,7 +128,7 @@ describe("parseEmailApi", () => {
         success: true,
         data: {
           type: "expense",
-          amountCents: 5000000,
+          amount: 50000,
           categoryId: "food",
           description: "Exito",
           date: "2026-03-05",
@@ -140,7 +140,7 @@ describe("parseEmailApi", () => {
 
     const result = await parseEmailApi("Compra user@email.com por $50,000");
     expect(result).not.toBeNull();
-    expect(result?.amountCents).toBe(5000000);
+    expect(result?.amount).toBe(50000);
     expect(mockInvoke).toHaveBeenCalledWith("parse-email", {
       body: { body: "Compra [EMAIL] por $50,000", mode: "full_parse" },
     });
@@ -162,7 +162,7 @@ describe("parseEmailApi", () => {
         success: true,
         data: {
           type: "expense",
-          amountCents: -100,
+          amount: -100,
           categoryId: "food",
           description: "Bad",
           date: "2026-03-05",

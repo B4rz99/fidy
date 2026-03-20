@@ -1,13 +1,8 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
-import { type BillFrequency, FREQUENCIES, useCalendarStore } from "@/features/calendar";
-import {
-  CATEGORIES,
-  type CategoryId,
-  centsToDisplay,
-  isValidCategoryId,
-} from "@/features/transactions";
+import { useRef, useState } from "react";
+import { type Bill, type BillFrequency, FREQUENCIES, useCalendarStore } from "@/features/calendar";
+import { CATEGORIES, type CategoryId, isValidCategoryId } from "@/features/transactions";
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -21,22 +16,39 @@ import {
 } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+import { parseDigitsToAmount } from "@/shared/lib";
 
-export default function AddBillScreen() {
-  const router = useRouter();
+function AddBillForm({
+  existingBill,
+  onAddBill,
+  onUpdateBill,
+  onDone,
+}: {
+  readonly existingBill: Bill | undefined;
+  readonly onAddBill: (
+    name: string,
+    amount: string,
+    frequency: BillFrequency,
+    categoryId: CategoryId,
+    startDate: Date
+  ) => Promise<boolean>;
+  readonly onUpdateBill: (
+    id: string,
+    data: {
+      name: string;
+      amount: number;
+      frequency: BillFrequency;
+      categoryId: string;
+      startDate: Date;
+    }
+  ) => Promise<void>;
+  readonly onDone: () => void;
+}) {
   const { t, locale } = useTranslation();
-  const { billId } = useLocalSearchParams<{ billId?: string }>();
-  const bills = useCalendarStore((s) => s.bills);
-  const addBill = useCalendarStore((s) => s.addBill);
-  const updateBillAction = useCalendarStore((s) => s.updateBill);
-
-  const existingBill = billId ? bills.find((b) => b.id === billId) : undefined;
   const isEdit = !!existingBill;
 
   const [name, setName] = useState(existingBill?.name ?? "");
-  const [amount, setAmount] = useState(
-    existingBill ? centsToDisplay(existingBill.amountCents).replace("$", "") : ""
-  );
+  const [amount, setAmount] = useState(existingBill ? String(existingBill.amount) : "");
   const [frequency, setFrequency] = useState<BillFrequency>(existingBill?.frequency ?? "monthly");
   const [category, setCategory] = useState<CategoryId>(
     existingBill?.categoryId && isValidCategoryId(existingBill.categoryId)
@@ -54,19 +66,6 @@ export default function AddBillScreen() {
   const accentGreen = useThemeColor("accentGreen");
   const pageBg = useThemeColor("page");
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: only re-sync when the bill identity changes
-  useEffect(() => {
-    if (existingBill) {
-      setName(existingBill.name);
-      setAmount(centsToDisplay(existingBill.amountCents).replace("$", ""));
-      setFrequency(existingBill.frequency);
-      setCategory(
-        isValidCategoryId(existingBill.categoryId) ? existingBill.categoryId : "services"
-      );
-      setStartDate(existingBill.startDate);
-    }
-  }, [existingBill?.id]);
-
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
   const handleSave = () =>
@@ -75,19 +74,19 @@ export default function AddBillScreen() {
       if (!trimmedName) return;
 
       if (isEdit && existingBill) {
-        const cents = Math.round(parseFloat(amount.replace(/,/g, "")) * 100);
-        if (Number.isNaN(cents) || cents <= 0) return;
-        await updateBillAction(existingBill.id, {
+        const amountValue = parseDigitsToAmount(amount);
+        if (amountValue <= 0) return;
+        await onUpdateBill(existingBill.id, {
           name: trimmedName,
-          amountCents: cents,
+          amount: amountValue,
           frequency,
           categoryId: category,
           startDate,
         });
-        router.back();
+        onDone();
       } else {
-        const success = await addBill(trimmedName, amount, frequency, category, startDate);
-        if (success) router.back();
+        const success = await onAddBill(trimmedName, amount, frequency, category, startDate);
+        if (success) onDone();
       }
     });
 
@@ -135,10 +134,10 @@ export default function AddBillScreen() {
               ref={amountRef}
               style={[styles.input, { backgroundColor: pageBg, color: primaryColor, borderColor }]}
               value={amount}
-              onChangeText={setAmount}
-              placeholder="9.99"
+              onChangeText={(v) => setAmount(v.replace(/[^0-9]/g, ""))}
+              placeholder="50000"
               placeholderTextColor={secondaryColor}
-              keyboardType="decimal-pad"
+              keyboardType="number-pad"
               returnKeyType="done"
             />
           </View>
@@ -230,6 +229,26 @@ export default function AddBillScreen() {
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+export default function AddBillScreen() {
+  const router = useRouter();
+  const { billId } = useLocalSearchParams<{ billId?: string }>();
+  const bills = useCalendarStore((s) => s.bills);
+  const addBill = useCalendarStore((s) => s.addBill);
+  const updateBill = useCalendarStore((s) => s.updateBill);
+
+  const existingBill = billId ? bills.find((b) => b.id === billId) : undefined;
+
+  return (
+    <AddBillForm
+      key={existingBill?.id ?? "new"}
+      existingBill={existingBill}
+      onAddBill={addBill}
+      onUpdateBill={updateBill}
+      onDone={() => router.back()}
+    />
   );
 }
 

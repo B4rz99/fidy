@@ -39,8 +39,8 @@ describe("conflict repository", () => {
     const row = {
       id: "conflict-1",
       transactionId: "tx-1",
-      localData: '{"amountCents":1000}',
-      serverData: '{"amountCents":2000}',
+      localData: '{"amount":1000}',
+      serverData: '{"amount":2000}',
       detectedAt: "2026-03-15T10:00:00.000Z",
     };
 

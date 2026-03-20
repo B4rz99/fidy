@@ -1,11 +1,11 @@
 import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { Stack } from "expo-router";
-import { memo, useCallback, useEffect } from "react";
+import { memo, useCallback } from "react";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { MessageSquare, Plus, Trash2, X } from "@/shared/components/icons";
 import { Platform, Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { useSessionCleanup } from "../hooks/use-session-cleanup";
 import type { ChatSession } from "../schema";
@@ -86,9 +86,9 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
   const tertiary = useThemeColor("tertiary");
   const { message: cleanupMessage, dismiss: dismissCleanup } = useSessionCleanup();
 
-  useEffect(() => {
+  useMountEffect(() => {
     loadSessions();
-  }, [loadSessions]);
+  });
 
   const handleDelete = useCallback(
     (id: string) => {

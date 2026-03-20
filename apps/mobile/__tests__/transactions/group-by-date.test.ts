@@ -9,7 +9,7 @@ function makeTx(overrides: Partial<StoredTransaction> & { date: Date }): StoredT
     id: `tx-${Math.random().toString(36).slice(2, 8)}`,
     userId: "user-1",
     type: "expense",
-    amountCents: 1000,
+    amount: 1000,
     categoryId: "food",
     description: "Test",
     createdAt: new Date(),

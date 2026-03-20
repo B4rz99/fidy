@@ -26,7 +26,7 @@ describe("search repository", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAll.mockReturnValue([]);
-    mockGet.mockReturnValue({ count: 0, totalCents: 0 });
+    mockGet.mockReturnValue({ count: 0, total: 0 });
     mockSelect.mockReturnValue({ from: mockFrom });
     mockFrom.mockReturnValue({ where: mockWhere });
     mockWhere.mockReturnValue({
@@ -61,14 +61,14 @@ describe("search repository", () => {
     expect(mockOffset).toHaveBeenCalledWith(60);
   });
 
-  it("searchTransactionsAggregate returns count and totalCents", async () => {
-    mockGet.mockReturnValueOnce({ count: 5, totalCents: 15000 });
+  it("searchTransactionsAggregate returns count and total", async () => {
+    mockGet.mockReturnValueOnce({ count: 5, total: 15000 });
 
     const { searchTransactionsAggregate } = await import("../../features/search/lib/repository");
 
     const result = searchTransactionsAggregate(mockDb, "user-1", EMPTY_FILTERS);
 
-    expect(result).toEqual({ count: 5, totalCents: 15000 });
+    expect(result).toEqual({ count: 5, total: 15000 });
   });
 
   it("searchTransactionsAggregate returns zeros when no results", async () => {
@@ -78,7 +78,7 @@ describe("search repository", () => {
 
     const result = searchTransactionsAggregate(mockDb, "user-1", EMPTY_FILTERS);
 
-    expect(result).toEqual({ count: 0, totalCents: 0 });
+    expect(result).toEqual({ count: 0, total: 0 });
   });
 
   it("applies query filter via LIKE when query is non-empty", async () => {
@@ -131,7 +131,7 @@ describe("search repository", () => {
     searchTransactionsPaginated(
       mockDb,
       "user-1",
-      withFilters({ amountMinCents: 100, amountMaxCents: 5000 }),
+      withFilters({ amountMin: 100, amountMax: 5000 }),
       30,
       0
     );
@@ -157,8 +157,8 @@ describe("search repository", () => {
 
   it("returns rows from paginated query", async () => {
     const mockRows = [
-      { id: "tx-1", description: "Coffee", amountCents: 500 },
-      { id: "tx-2", description: "Lunch", amountCents: 1500 },
+      { id: "tx-1", description: "Coffee", amount: 500 },
+      { id: "tx-2", description: "Lunch", amount: 1500 },
     ];
     mockAll.mockReturnValueOnce(mockRows);
 

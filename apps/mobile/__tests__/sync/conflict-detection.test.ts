@@ -4,7 +4,7 @@ const makeRow = (overrides = {}) => ({
   id: "tx-1",
   userId: "user-1",
   type: "expense",
-  amountCents: 1000,
+  amount: 1000,
   categoryId: "food",
   description: "Coffee",
   date: "2026-03-10",
@@ -35,9 +35,9 @@ describe("hasDataConflict", () => {
     );
   });
 
-  it("returns true when amountCents differs", async () => {
+  it("returns true when amount differs", async () => {
     const { hasDataConflict } = await import("@/features/sync/lib/conflict-detection");
-    expect(hasDataConflict(makeRow(), makeRow({ amountCents: 2000 }))).toBe(true);
+    expect(hasDataConflict(makeRow(), makeRow({ amount: 2000 }))).toBe(true);
   });
 
   it("returns true when categoryId differs", async () => {

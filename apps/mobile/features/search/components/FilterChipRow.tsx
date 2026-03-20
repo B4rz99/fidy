@@ -33,7 +33,7 @@ const CHIPS: readonly ChipConfig[] = [
   {
     key: "amount",
     labelKey: "search.amount",
-    isActive: (f) => f.amountMinCents !== null || f.amountMaxCents !== null,
+    isActive: (f) => f.amountMin !== null || f.amountMax !== null,
   },
   {
     key: "type",

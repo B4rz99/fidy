@@ -174,7 +174,7 @@ describe("retry queue integration (real SQLite)", () => {
 
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
-      amountCents: 5000000,
+      amount: 50000,
       categoryId: "other",
       description: "Compra en Exito",
       date: "2026-03-05",
@@ -193,7 +193,7 @@ describe("retry queue integration (real SQLite)", () => {
     // Verify transaction was created in DB
     const txRows = await db.select().from(transactions);
     expect(txRows).toHaveLength(1);
-    expect(txRows[0].amountCents).toBe(5000000);
+    expect(txRows[0].amount).toBe(50000);
     expect(txRows[0].source).toBe("email_gmail");
 
     // Verify sync queue entry

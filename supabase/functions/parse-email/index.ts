@@ -36,8 +36,8 @@ ${CATEGORY_GUIDE}`;
 const FULL_PARSE_SYSTEM = `Extract transaction data from this Colombian bank email.
 
 Rules:
-- All amounts are in Colombian Pesos (COP). Commas and dots are thousands separators UNLESS followed by exactly 2 digits at the end, which means centavos. Examples: 7,500 = 7500 pesos = 750000 cents. 50,000 = 50000 pesos = 5000000 cents.
-- amountCents: amount in centavos (pesos × 100)
+- All amounts are in Colombian Pesos (COP). Commas and dots are thousands separators. Return amount as whole pesos (integer, no centavos). Examples: 7,500 = 7500, 50,000 = 50000.
+- amount: amount in whole pesos (integer)
 - description: ONLY the merchant/business name, cleaned up (e.g. "EDS La Castellana", "Farmatodo", "MetLife Colombia")
 - date: transaction date in YYYY-MM-DD
 - confidence: 0 to 1
@@ -49,8 +49,8 @@ ${CATEGORY_GUIDE}`;
 const NOTIFICATION_PARSE_SYSTEM = `Extract transaction data from this Colombian bank push notification.
 
 The text is short (1-2 lines). Apply the same rules:
-- All amounts are in Colombian Pesos (COP). Commas and dots are thousands separators UNLESS followed by exactly 2 digits at the end, which means centavos.
-- amountCents: amount in centavos (pesos × 100)
+- All amounts are in Colombian Pesos (COP). Commas and dots are thousands separators. Return amount as whole pesos (integer, no centavos).
+- amount: amount in whole pesos (integer)
 - description: ONLY the merchant/business name, cleaned up
 - date: transaction date in YYYY-MM-DD (use today if not stated)
 - confidence: 0 to 1
@@ -79,13 +79,13 @@ const FULL_PARSE_SCHEMA = {
     type: "object",
     properties: {
       type: { type: "string", enum: ["expense", "income"] },
-      amountCents: { type: "integer" },
+      amount: { type: "integer" },
       categoryId: { type: "string", enum: [...CATEGORY_IDS] },
       description: { type: "string" },
       date: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
       confidence: { type: "number", minimum: 0, maximum: 1 },
     },
-    required: ["type", "amountCents", "categoryId", "description", "date", "confidence"],
+    required: ["type", "amount", "categoryId", "description", "date", "confidence"],
     additionalProperties: false,
   },
 };

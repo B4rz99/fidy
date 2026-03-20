@@ -1,5 +1,5 @@
 export type LocalParseResult = {
-  amountCents: number;
+  amount: number;
   merchant: string;
   type: "expense" | "income";
 };
@@ -10,8 +10,7 @@ function parseAmount(raw: string): number | null {
   const match = normalized.match(/^(\d+)(?:[.,](\d{1,2}))?$/);
   if (!match) return null;
   const pesos = parseInt(match[1], 10);
-  const centavos = match[2] ? parseInt(match[2].padEnd(2, "0"), 10) : 0;
-  return pesos * 100 + centavos;
+  return pesos;
 }
 
 const BANCOLOMBIA_PURCHASE = /compra\s+por\s+\$?([\d.,]+)\s+en\s+(.+?)(?:\.\s|$)/i;
@@ -59,8 +58,8 @@ function tryParseEntry(combined: string, entry: PatternEntry): LocalParseResult 
   if (!match) return null;
 
   const rawAmount = match[entry.amountGroup];
-  const amountCents = parseAmount(rawAmount);
-  if (!amountCents || amountCents <= 0) return null;
+  const amount = parseAmount(rawAmount);
+  if (!amount || amount <= 0) return null;
 
   const rawMerchant =
     entry.merchantGroup === -1
@@ -69,7 +68,7 @@ function tryParseEntry(combined: string, entry: PatternEntry): LocalParseResult 
 
   if (rawMerchant.length === 0) return null;
 
-  return { amountCents, merchant: rawMerchant, type: entry.type };
+  return { amount, merchant: rawMerchant, type: entry.type };
 }
 
 export function parseNotificationLocally(text: string): LocalParseResult | null {

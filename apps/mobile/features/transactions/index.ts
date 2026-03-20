@@ -9,14 +9,6 @@ export {
   CATEGORY_ROWS,
   isValidCategoryId,
 } from "./lib/categories";
-export {
-  centsToDisplay,
-  digitsToCents,
-  formatCents,
-  formatCentsRounded,
-  formatDollars,
-  formatSignedAmount,
-} from "./lib/format-amount";
 export { getDateLabel } from "./lib/format-date";
 export { makeDateLabel } from "./lib/group-by-date";
 export { handleNumpadPress } from "./lib/handle-numpad-press";

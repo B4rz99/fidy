@@ -14,7 +14,7 @@ export const addActionSchema = z.object({
   type: z.literal("add"),
   data: z.object({
     type: transactionTypeSchema,
-    amountCents: z.number().int().positive(),
+    amount: z.number().int().positive(),
     categoryId: categoryIdSchema,
     description: z.string(),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -25,7 +25,7 @@ export const editActionSchema = z.object({
   type: z.literal("edit"),
   transactionId: z.string(),
   data: z.object({
-    amountCents: z.number().int().positive().optional(),
+    amount: z.number().int().positive().optional(),
     categoryId: categoryIdSchema.optional(),
     description: z.string().optional(),
     date: z
@@ -39,7 +39,7 @@ export const deleteActionSchema = z.object({
   type: z.literal("delete"),
   transactionId: z.string(),
   description: z.string(),
-  amountCents: z.number().int().positive(),
+  amount: z.number().int().positive(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 

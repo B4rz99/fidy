@@ -88,8 +88,8 @@ export function BudgetListScreen() {
           {hasBudgets ? (
             <View style={styles.budgetContent}>
               <BudgetSummaryCard
-                totalBudgetCents={summary.totalBudgetCents}
-                totalSpentCents={summary.totalSpentCents}
+                totalBudget={summary.totalBudget}
+                totalSpent={summary.totalSpent}
                 percentUsed={summary.percentUsed}
               />
 

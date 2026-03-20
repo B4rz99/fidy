@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import { useBudgetStore } from "@/features/budget";
-import { CATEGORY_MAP, digitsToCents, formatCents } from "@/features/transactions";
+import { useBudgetStore, useSuggestionSelection } from "@/features/budget";
+import { CATEGORY_MAP } from "@/features/transactions";
 import {
   Pressable,
   ScrollView,
@@ -10,8 +9,9 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
-import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useAsyncGuard, useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
+import { formatMoney } from "@/shared/lib";
 import { useOnboardingStore } from "../store";
 
 export function BudgetSetupStep() {
@@ -31,50 +31,16 @@ export function BudgetSetupStep() {
   const { isBusy, run: guardedRun } = useAsyncGuard();
 
   // Load suggestions on mount
-  useEffect(() => {
+  useMountEffect(() => {
     loadAutoSuggestions();
-  }, [loadAutoSuggestions]);
+  });
 
-  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
-    () => new Set(autoSuggestions.map((s) => s.categoryId))
-  );
-  const [editedAmounts, setEditedAmounts] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmountCents / 100)])
-    )
-  );
-
-  // Update local state when suggestions load
-  useEffect(() => {
-    setSelectedIds(new Set(autoSuggestions.map((s) => s.categoryId)));
-    setEditedAmounts(
-      Object.fromEntries(
-        autoSuggestions.map((s) => [s.categoryId, String(s.suggestedAmountCents / 100)])
-      )
-    );
-  }, [autoSuggestions]);
-
-  const handleToggle = (categoryId: string) => {
-    setSelectedIds((prev) =>
-      prev.has(categoryId)
-        ? new Set(Array.from(prev).filter((id) => id !== categoryId))
-        : new Set([...prev, categoryId])
-    );
-  };
-
-  const handleAmountChange = (categoryId: string, value: string) => {
-    setEditedAmounts((prev) => ({ ...prev, [categoryId]: value }));
-  };
+  const { selectedIds, editedAmounts, handleToggle, handleAmountChange, buildBudgetMap } =
+    useSuggestionSelection(autoSuggestions);
 
   const handleSave = () =>
     guardedRun(async () => {
-      const budgets = new Map(
-        Array.from(selectedIds)
-          .map(
-            (categoryId) => [categoryId, digitsToCents(editedAmounts[categoryId] ?? "0")] as const
-          )
-          .filter(([, cents]) => cents > 0)
-      );
+      const budgets = buildBudgetMap();
       if (budgets.size > 0) {
         await acceptSuggestions(budgets);
       }
@@ -116,7 +82,7 @@ export function BudgetSetupStep() {
                         {categoryLabel}
                       </Text>
                       <Text style={[styles.lastMonthLabel, { color: secondaryColor }]}>
-                        {formatCents(suggestion.suggestedAmountCents)}{" "}
+                        {formatMoney(suggestion.suggestedAmount)}{" "}
                         {t("onboarding.budgetSetup.basedOnSpending").toLowerCase()}
                       </Text>
                     </View>

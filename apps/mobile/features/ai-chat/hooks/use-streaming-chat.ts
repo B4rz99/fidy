@@ -28,7 +28,7 @@ export function useStreamingChat() {
       case "add": {
         const store = useTransactionStore.getState();
         store.setType(action.data.type);
-        store.setDigits(String(action.data.amountCents));
+        store.setDigits(String(action.data.amount));
         store.setCategoryId(action.data.categoryId);
         store.setDescription(action.data.description);
         store.setDate(parseIsoDate(action.data.date));

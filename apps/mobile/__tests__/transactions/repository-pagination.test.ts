@@ -36,7 +36,7 @@ describe("getTransactionsPaginated", () => {
         id: "tx-1",
         userId: "user-1",
         type: "expense",
-        amountCents: 1000,
+        amount: 1000,
         categoryId: "food",
         description: "Coffee",
         date: "2026-03-14",
@@ -139,8 +139,8 @@ describe("getSpendingByCategoryAggregate", () => {
 
   it("returns spending grouped by category", async () => {
     const mockResult = [
-      { categoryId: "food", totalCents: 3500 },
-      { categoryId: "transport", totalCents: 1200 },
+      { categoryId: "food", total: 3500 },
+      { categoryId: "transport", total: 1200 },
     ];
     mockAll.mockReturnValueOnce(mockResult);
 
@@ -185,8 +185,8 @@ describe("getDailySpendingAggregate", () => {
 
   it("returns spending grouped by date", async () => {
     const mockResult = [
-      { date: "2026-03-13", totalCents: 2500 },
-      { date: "2026-03-14", totalCents: 1800 },
+      { date: "2026-03-13", total: 2500 },
+      { date: "2026-03-14", total: 1800 },
     ];
     mockAll.mockReturnValueOnce(mockResult);
 
@@ -222,7 +222,7 @@ describe("getRecentTransactions", () => {
         id: "tx-1",
         userId: "user-1",
         type: "expense",
-        amountCents: 1000,
+        amount: 1000,
         categoryId: "food",
         description: "Coffee",
         date: "2026-03-14",
