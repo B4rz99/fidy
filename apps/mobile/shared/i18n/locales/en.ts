@@ -205,7 +205,7 @@ const en = {
       projectedDate: "You'd reach your goal by %{date}",
     },
     smartCard: {
-      moreGoals: "%{count} more goals",
+      moreGoals: { one: "%{count} more goal", other: "%{count} more goals" },
     },
     celebration: {
       quarter: "25% there! Keep going!",

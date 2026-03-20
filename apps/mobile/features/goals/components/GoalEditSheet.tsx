@@ -59,7 +59,9 @@ export function GoalEditSheet() {
           targetAmount: parsedAmount,
           targetDate: targetDate || null,
           interestRatePercent:
-            goalType === "debt" && interestRate ? Number.parseFloat(interestRate) : null,
+            goalType === "debt" && interestRate
+              ? (Number.isFinite(Number.parseFloat(interestRate)) ? Number.parseFloat(interestRate) : null)
+              : null,
         });
 
         back();

@@ -178,10 +178,10 @@ const es = {
       addPayment: "Agregar Pago",
       noContributions: "Aún no hay contribuciones",
       contributionNote: "Nota: %{note}",
-      recommendation: "Recomendacion de Fidy",
+      recommendation: "Recomendación de Fidy",
       recommendationText: "Ahorra %{amount}/mes para alcanzar tu meta para %{date}.",
       recommendationTextNoDate: "Ahorra %{amount}/mes para alcanzar tu meta.",
-      askFidy: "Preguntale a Fidy por mas ideas",
+      askFidy: "Pregúntale a Fidy por más ideas",
       manualPayment: "Pago manual",
     },
     payment: {
@@ -207,7 +207,7 @@ const es = {
       projectedDate: "Alcanzarías tu meta para %{date}",
     },
     smartCard: {
-      moreGoals: "%{count} metas más",
+      moreGoals: { one: "%{count} meta más", other: "%{count} metas más" },
     },
     celebration: {
       quarter: "¡25% alcanzado! ¡Sigue así!",

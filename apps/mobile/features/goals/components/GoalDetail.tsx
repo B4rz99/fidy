@@ -272,8 +272,8 @@ export function GoalDetailScreen() {
   }, [push]);
 
   const handleAskFidy = useCallback(() => {
-    // Future: navigate to AI chat (Task 11)
-  }, []);
+    push("/(tabs)/(ai)" as never);
+  }, [push]);
 
   // Find the selected goal
   const goalData = goals.find((g) => g.goal.id === selectedGoalId);

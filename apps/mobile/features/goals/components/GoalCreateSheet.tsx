@@ -42,7 +42,7 @@ export function GoalCreateSheet() {
           name: name.trim(),
           type: goalType,
           targetAmount: parsedAmount,
-          targetDate: targetDate || undefined,
+          targetDate: targetDate.trim() || undefined,
           interestRatePercent:
             goalType === "debt" && interestRate ? Number.parseFloat(interestRate) : undefined,
         });

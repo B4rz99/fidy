@@ -101,6 +101,7 @@ export function AddPaymentSheet() {
           placeholderTextColor={tertiaryColor}
           value={note}
           onChangeText={setNote}
+          maxLength={200}
         />
       </View>
 

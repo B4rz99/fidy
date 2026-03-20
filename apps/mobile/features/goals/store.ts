@@ -7,7 +7,12 @@ import { generateId } from "@/shared/lib";
 
 // Import from goals feature
 import type { GoalProgress, GoalProjection, InstallmentProgress } from "./lib/derive";
-import { deriveGoalProgress, deriveGoalProjection, deriveInstallmentProgress } from "./lib/derive";
+import {
+  deriveDebtProjection,
+  deriveGoalProgress,
+  deriveGoalProjection,
+  deriveInstallmentProgress,
+} from "./lib/derive";
 import {
   getContributionMonthCount,
   getContributionsForGoal,
@@ -107,7 +112,26 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
       const goalsWithProgress: GoalWithProgress[] = goalRows.map((goal) => {
         const currentAmount = getGoalCurrentAmount(db, goal.id);
         const progress = deriveGoalProgress(goal, currentAmount);
-        const projection = deriveGoalProjection(goal, currentAmount, monthlyTotals);
+        const savingsProjection = deriveGoalProjection(goal, currentAmount, monthlyTotals);
+
+        // For debt goals with interest, use amortization-based projection
+        const projection: GoalProjection =
+          goal.type === "debt" && goal.interestRatePercent != null && savingsProjection.netMonthlySavings > 0
+            ? (() => {
+                const debtResult = deriveDebtProjection(goal, currentAmount, savingsProjection.netMonthlySavings);
+                if (debtResult.status === "ok" || debtResult.status === "zero_rate") {
+                  return {
+                    projectedDate: debtResult.projectedDate,
+                    monthsToGo: debtResult.monthsToGo,
+                    confidence: savingsProjection.confidence,
+                    netMonthlySavings: savingsProjection.netMonthlySavings,
+                  };
+                }
+                // payment_too_low or complete — fall back to savings projection
+                return savingsProjection;
+              })()
+            : savingsProjection;
+
         const contributionMonths = getContributionMonthCount(db, goal.id);
         const installments = deriveInstallmentProgress(
           goal.targetAmount,
@@ -201,6 +225,9 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
     } catch {
       return;
     }
+    if (get().selectedGoalId === id) {
+      set({ selectedGoalId: null, selectedGoalContributions: [] });
+    }
     await get().loadGoals();
   },
 
@@ -281,7 +308,19 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
       const updated = goals.map((g) => {
         const currentAmount = getGoalCurrentAmount(db, g.goal.id);
         const progress = deriveGoalProgress(g.goal, currentAmount);
-        const projection = deriveGoalProjection(g.goal, currentAmount, monthlyTotals);
+        const savingsProj = deriveGoalProjection(g.goal, currentAmount, monthlyTotals);
+
+        const projection: GoalProjection =
+          g.goal.type === "debt" && g.goal.interestRatePercent != null && savingsProj.netMonthlySavings > 0
+            ? (() => {
+                const dr = deriveDebtProjection(g.goal, currentAmount, savingsProj.netMonthlySavings);
+                if (dr.status === "ok" || dr.status === "zero_rate") {
+                  return { projectedDate: dr.projectedDate, monthsToGo: dr.monthsToGo, confidence: savingsProj.confidence, netMonthlySavings: savingsProj.netMonthlySavings };
+                }
+                return savingsProj;
+              })()
+            : savingsProj;
+
         const contributionMonths = getContributionMonthCount(db, g.goal.id);
         const installments = deriveInstallmentProgress(
           g.goal.targetAmount,
