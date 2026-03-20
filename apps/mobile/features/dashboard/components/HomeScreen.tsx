@@ -8,7 +8,7 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture";
-import { GoalSmartCard } from "@/features/goals/components/GoalSmartCard";
+import { GoalSmartCard } from "@/features/goals";
 import { SearchAction } from "@/features/search";
 import { SyncConflictBanner } from "@/features/sync";
 import {

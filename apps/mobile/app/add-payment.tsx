@@ -1,4 +1,4 @@
-import { AddPaymentSheet } from "@/features/goals/components/AddPaymentSheet";
+import { AddPaymentSheet } from "@/features/goals";
 
 export default function AddPaymentRoute() {
   return <AddPaymentSheet />;
