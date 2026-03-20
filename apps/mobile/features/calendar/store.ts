@@ -9,7 +9,13 @@ import {
 } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
-import { captureError, generateId, parseIsoDate, toIsoDate } from "@/shared/lib";
+import {
+  captureError,
+  generateId,
+  parseDigitsToAmount,
+  parseIsoDate,
+  toIsoDate,
+} from "@/shared/lib";
 import { requestNotificationPermissions, scheduleBillNotifications } from "./lib/notifications";
 import {
   deleteBill as dbDeleteBill,
@@ -109,8 +115,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
   addBill: async (name, amount, frequency, category, startDate) => {
     if (!dbRef || !userIdRef) return false;
 
-    const cleaned = amount.replace(/[^0-9]/g, "");
-    const amountValue = Number.parseInt(cleaned, 10) || 0;
+    const amountValue = parseDigitsToAmount(amount);
     if (amountValue <= 0) return false;
 
     const result = createBillSchema.safeParse({

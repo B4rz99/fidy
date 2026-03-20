@@ -98,11 +98,13 @@ describe("useCalendarStore", () => {
     expect(result).toBe(false);
   });
 
-  test("addBill returns false for zero amount", async () => {
+  test("addBill strips non-digit chars and uses remaining digits", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "0", "monthly", "services", testDate);
-    expect(result).toBe(false);
+      .addBill("Netflix", "50.000", "monthly", "services", testDate);
+    expect(result).toBe(true);
+    const bills = useCalendarStore.getState().bills;
+    expect(bills[0].amount).toBe(50000);
   });
 
   test("addBill returns false for non-numeric amount", async () => {
