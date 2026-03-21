@@ -12,7 +12,6 @@ import {
 import type {
   CategoryId,
   EmailAccountId,
-  IsoDateTime,
   ProcessedEmailId,
   TransactionId,
   UserId,
@@ -315,7 +314,12 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     }
 
     // Update the processed email status to "success"
-    await updateProcessedEmailStatus(db, processedEmailId as ProcessedEmailId, "success", processedEmail.transactionId as TransactionId);
+    await updateProcessedEmailStatus(
+      db,
+      processedEmailId as ProcessedEmailId,
+      "success",
+      processedEmail.transactionId as TransactionId
+    );
 
     // Remove from needsReviewEmails state and refresh home screen
     set((state) => ({

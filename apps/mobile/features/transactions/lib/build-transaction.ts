@@ -6,7 +6,7 @@ import type {
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
-import type { CreateTransactionInput, StoredTransaction, TransactionType } from "../schema";
+import type { StoredTransaction, TransactionType } from "../schema";
 import { createTransactionSchema } from "../schema";
 import { isValidCategoryId } from "./categories";
 import type { TransactionRow } from "./repository";

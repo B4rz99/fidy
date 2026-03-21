@@ -14,13 +14,7 @@ import {
   toIsoDate,
   toIsoDateTime,
 } from "@/shared/lib";
-import type {
-  CategoryId,
-  CopAmount,
-  IsoDateTime,
-  TransactionId,
-  UserId,
-} from "@/shared/types/branded";
+import type { CategoryId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
 import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
 import { insertProcessedCapture } from "../lib/repository";
 import type { ApplePayIntentData } from "../schema";

@@ -3,7 +3,7 @@ import { and, count, desc, eq, gte, lt } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { detectedSmsEvents, notificationSources, processedCaptures } from "@/shared/db";
 import { generateNotificationSourceId, toIsoDate } from "@/shared/lib";
-import type { DetectedSmsEventId, IsoDate, IsoDateTime, UserId } from "@/shared/types/branded";
+import type { DetectedSmsEventId, IsoDateTime, UserId } from "@/shared/types/branded";
 
 // -- notificationSources CRUD --
 

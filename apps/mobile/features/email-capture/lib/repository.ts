@@ -17,18 +17,12 @@ export async function insertEmailAccount(db: AnyDb, row: EmailAccountRow) {
 }
 
 export async function getEmailAccount(db: AnyDb, id: EmailAccountId) {
-  const rows = await db
-    .select()
-    .from(emailAccounts)
-    .where(eq(emailAccounts.id, id));
+  const rows = await db.select().from(emailAccounts).where(eq(emailAccounts.id, id));
   return rows[0] ?? null;
 }
 
 export async function getEmailAccounts(db: AnyDb, userId: UserId) {
-  return db
-    .select()
-    .from(emailAccounts)
-    .where(eq(emailAccounts.userId, userId));
+  return db.select().from(emailAccounts).where(eq(emailAccounts.userId, userId));
 }
 
 export async function deleteEmailAccount(db: AnyDb, id: EmailAccountId) {
@@ -36,10 +30,7 @@ export async function deleteEmailAccount(db: AnyDb, id: EmailAccountId) {
 }
 
 export async function updateLastFetchedAt(db: AnyDb, id: EmailAccountId, timestamp: IsoDateTime) {
-  await db
-    .update(emailAccounts)
-    .set({ lastFetchedAt: timestamp })
-    .where(eq(emailAccounts.id, id));
+  await db.update(emailAccounts).set({ lastFetchedAt: timestamp }).where(eq(emailAccounts.id, id));
 }
 
 export async function insertProcessedEmail(db: AnyDb, row: ProcessedEmailRow) {
@@ -85,10 +76,7 @@ export async function updateProcessedEmailStatus(
   status: string,
   transactionId: TransactionId | null
 ) {
-  await db
-    .update(processedEmails)
-    .set({ status, transactionId })
-    .where(eq(processedEmails.id, id));
+  await db.update(processedEmails).set({ status, transactionId }).where(eq(processedEmails.id, id));
 }
 
 export async function dismissProcessedEmail(db: AnyDb, id: ProcessedEmailId) {
@@ -109,7 +97,12 @@ export async function getPendingRetryEmails(db: AnyDb) {
     .limit(50);
 }
 
-export async function markForRetry(db: AnyDb, id: ProcessedEmailId, retryCount: number, nextRetryAt: IsoDateTime) {
+export async function markForRetry(
+  db: AnyDb,
+  id: ProcessedEmailId,
+  retryCount: number,
+  nextRetryAt: IsoDateTime
+) {
   await db
     .update(processedEmails)
     .set({ status: "pending_retry", retryCount, nextRetryAt })

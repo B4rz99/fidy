@@ -79,7 +79,12 @@ describe("conflict repository", () => {
   it("resolveConflict updates with resolvedAt and resolution", async () => {
     const { resolveConflict } = await import("@/features/sync/lib/conflict-repository");
 
-    resolveConflict(mockDb, "conflict-1" as SyncConflictId, "local", "2026-03-15T12:00:00.000Z" as IsoDateTime);
+    resolveConflict(
+      mockDb,
+      "conflict-1" as SyncConflictId,
+      "local",
+      "2026-03-15T12:00:00.000Z" as IsoDateTime
+    );
 
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith({

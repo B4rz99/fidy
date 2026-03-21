@@ -12,7 +12,7 @@ import {
 } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { captureError, generateSyncConflictId, toIsoDateTime } from "@/shared/lib";
-import type { BudgetId, IsoDateTime, SyncQueueId, TransactionId } from "@/shared/types/branded";
+import type { BudgetId, SyncQueueId, TransactionId } from "@/shared/types/branded";
 import { hasDataConflict } from "../lib/conflict-detection";
 import { insertConflict } from "../lib/conflict-repository";
 

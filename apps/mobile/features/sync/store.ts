@@ -3,7 +3,7 @@ import { upsertTransaction, useTransactionStore } from "@/features/transactions"
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import { captureError, generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
-import type { IsoDateTime, SyncConflictId } from "@/shared/types/branded";
+import type { SyncConflictId } from "@/shared/types/branded";
 import {
   getUnresolvedConflicts,
   resolveConflict as resolveConflictDb,

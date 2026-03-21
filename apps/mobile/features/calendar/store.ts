@@ -25,7 +25,6 @@ import type {
   CategoryId,
   CopAmount,
   IsoDate,
-  IsoDateTime,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";

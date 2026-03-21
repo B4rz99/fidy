@@ -110,7 +110,11 @@ describe("email capture repository", () => {
   it("updateLastFetchedAt updates the timestamp", async () => {
     const { updateLastFetchedAt } = await import("@/features/email-capture/lib/repository");
 
-    await updateLastFetchedAt(mockDb, "ea-1" as EmailAccountId, "2026-03-05T12:00:00Z" as IsoDateTime);
+    await updateLastFetchedAt(
+      mockDb,
+      "ea-1" as EmailAccountId,
+      "2026-03-05T12:00:00Z" as IsoDateTime
+    );
 
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith({ lastFetchedAt: "2026-03-05T12:00:00Z" });
@@ -222,7 +226,12 @@ describe("email capture repository", () => {
   it("updateProcessedEmailStatus updates status and transactionId", async () => {
     const { updateProcessedEmailStatus } = await import("@/features/email-capture/lib/repository");
 
-    await updateProcessedEmailStatus(mockDb, "pe-1" as ProcessedEmailId, "success", "tx-1" as TransactionId);
+    await updateProcessedEmailStatus(
+      mockDb,
+      "pe-1" as ProcessedEmailId,
+      "success",
+      "tx-1" as TransactionId
+    );
 
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith({ status: "success", transactionId: "tx-1" });
@@ -247,7 +256,12 @@ describe("email capture repository", () => {
   it("markForRetry updates status, retryCount, nextRetryAt, rawBody", async () => {
     const { markForRetry } = await import("@/features/email-capture/lib/repository");
 
-    await markForRetry(mockDb, "pe-1" as ProcessedEmailId, 2, "2026-03-15T13:00:00Z" as IsoDateTime);
+    await markForRetry(
+      mockDb,
+      "pe-1" as ProcessedEmailId,
+      2,
+      "2026-03-15T13:00:00Z" as IsoDateTime
+    );
 
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith({
@@ -274,7 +288,13 @@ describe("email capture repository", () => {
   it("markRetrySuccess sets status, transactionId, confidence, clears rawBody", async () => {
     const { markRetrySuccess } = await import("@/features/email-capture/lib/repository");
 
-    await markRetrySuccess(mockDb, "pe-1" as ProcessedEmailId, "success", "tx-5" as TransactionId, 0.95);
+    await markRetrySuccess(
+      mockDb,
+      "pe-1" as ProcessedEmailId,
+      "success",
+      "tx-5" as TransactionId,
+      0.95
+    );
 
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith({

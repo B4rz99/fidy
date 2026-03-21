@@ -365,7 +365,13 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
       parsed.description
     );
     if (existingTxId) {
-      await markRetrySuccess(db, email.id, "success", existingTxId as TransactionId, parsed.confidence);
+      await markRetrySuccess(
+        db,
+        email.id,
+        "success",
+        existingTxId as TransactionId,
+        parsed.confidence
+      );
       result.succeeded++;
       continue;
     }
