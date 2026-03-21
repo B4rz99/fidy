@@ -655,4 +655,16 @@ describe("deriveGoalPaceGuidance", () => {
       expect(result.amountBehind).toBe(Math.round(500_000.5));
     }
   });
+
+  it("returns pace_ahead with amountAhead 0 when today is before createdAt (elapsedDays clamped to 0)", () => {
+    // today (FIXED_NOW = 2026-03-19) is before createdAt (2026-06-01)
+    const goal = {
+      targetAmount: 1_000_000,
+      targetDate: "2027-06-01",
+      createdAt: "2026-06-01T00:00:00.000Z",
+    };
+    const result = deriveGoalPaceGuidance(goal, 0, true, FIXED_NOW);
+    // elapsedDays = max(0, negative) = 0 → expectedNow = 0 → delta = 0 → pace_ahead with 0
+    expect(result).toEqual({ type: "pace_ahead", amountAhead: 0 });
+  });
 });

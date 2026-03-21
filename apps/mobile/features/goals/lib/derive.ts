@@ -333,7 +333,7 @@ export function deriveGoalPaceGuidance(
   const totalDays = differenceInDays(end, start);
   if (totalDays <= 0) return null;
 
-  const elapsedDays = Math.min(differenceInDays(today, start), totalDays);
+  const elapsedDays = Math.max(0, Math.min(differenceInDays(today, start), totalDays));
   const expectedNow = goal.targetAmount * (elapsedDays / totalDays);
   const delta = currentAmount - expectedNow;
 
