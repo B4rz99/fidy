@@ -9,7 +9,7 @@ vi.mock("@/features/categories/lib/repository", () => ({
 
 // Mock the icon-map
 vi.mock("@/features/categories/lib/icon-map", () => ({
-  ICON_MAP: { Zap: () => null, PawPrint: () => null },
+  ICON_MAP: { Zap: () => null, PawPrint: () => null, ShoppingCart: () => null },
 }));
 
 // Mock enqueueSync
@@ -28,13 +28,10 @@ vi.mock("@/shared/lib", async (importOriginal) => {
   };
 });
 
+import { getUserCategoriesForUser, insertUserCategory } from "@/features/categories/lib/repository";
 import { CATEGORIES } from "@/features/transactions/lib/categories";
-import {
-  getUserCategoriesForUser,
-  insertUserCategory,
-} from "@/features/categories/lib/repository";
 import { enqueueSync } from "@/shared/db/enqueue-sync";
-import type { UserId } from "@/shared/types/branded";
+import type { IsoDateTime, UserCategoryId, UserId } from "@/shared/types/branded";
 
 const mockDb = {
   insert: vi.fn(),
@@ -52,9 +49,7 @@ describe("useCategoriesStore", () => {
   });
 
   async function getStore() {
-    const { useCategoriesStore } = await import(
-      "@/features/categories/store"
-    );
+    const { useCategoriesStore } = await import("@/features/categories/store");
     return useCategoriesStore;
   }
 
@@ -95,13 +90,13 @@ describe("useCategoriesStore", () => {
 
   it("after loading user categories, allCategories includes them", async () => {
     const fakeRow = {
-      id: "ucat-custom-1",
-      userId: "user-1",
+      id: "ucat-custom-1" as UserCategoryId,
+      userId: "user-1" as UserId,
       name: "Groceries",
       iconName: "Zap",
       colorHex: "#FF5722",
-      createdAt: "2026-03-01T00:00:00.000Z",
-      updatedAt: "2026-03-01T00:00:00.000Z",
+      createdAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
+      updatedAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
       deletedAt: null,
     };
     vi.mocked(getUserCategoriesForUser).mockReturnValue([fakeRow]);
@@ -124,13 +119,13 @@ describe("useCategoriesStore", () => {
 
   it("isValidCategoryId returns true for user category ID after load", async () => {
     const fakeRow = {
-      id: "ucat-custom-1",
-      userId: "user-1",
+      id: "ucat-custom-1" as UserCategoryId,
+      userId: "user-1" as UserId,
       name: "Pets",
       iconName: "PawPrint",
       colorHex: "#9C27B0",
-      createdAt: "2026-03-01T00:00:00.000Z",
-      updatedAt: "2026-03-01T00:00:00.000Z",
+      createdAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
+      updatedAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
       deletedAt: null,
     };
     vi.mocked(getUserCategoriesForUser).mockReturnValue([fakeRow]);
@@ -145,13 +140,13 @@ describe("useCategoriesStore", () => {
 
   it("uses Ellipsis fallback icon for unrecognized iconName", async () => {
     const fakeRow = {
-      id: "ucat-custom-2",
-      userId: "user-1",
+      id: "ucat-custom-2" as UserCategoryId,
+      userId: "user-1" as UserId,
       name: "Unknown Icon",
       iconName: "NonExistentIcon",
       colorHex: "#607D8B",
-      createdAt: "2026-03-01T00:00:00.000Z",
-      updatedAt: "2026-03-01T00:00:00.000Z",
+      createdAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
+      updatedAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
       deletedAt: null,
     };
     vi.mocked(getUserCategoriesForUser).mockReturnValue([fakeRow]);

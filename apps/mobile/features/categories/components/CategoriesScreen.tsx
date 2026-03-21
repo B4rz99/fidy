@@ -1,13 +1,20 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
+import { CATEGORIES } from "@/features/transactions/lib/categories";
+import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import type { LucideIcon } from "@/shared/components/icons";
 import { Plus } from "@/shared/components/icons";
-import { Pressable, ScrollView, StyleSheet, Text, useColorScheme, View } from "@/shared/components/rn";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+} from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n/locale-helpers";
-import { CATEGORIES } from "@/features/transactions/lib/categories";
 import { SettingsSection } from "../../settings/components/SettingsSection";
-import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { useCategoriesStore } from "../store";
 
 const CLOTHING_DARK_COLOR = "#E0E0E0";
@@ -110,10 +117,7 @@ export function CategoriesScreen() {
         </SettingsSection>
 
         {/* Add category button */}
-        <Pressable
-          onPress={handleAddPress}
-          style={[styles.addButton, { backgroundColor: cardBg }]}
-        >
+        <Pressable onPress={handleAddPress} style={[styles.addButton, { backgroundColor: cardBg }]}>
           <Plus size={20} color={accentGreen} />
           <Text
             className="font-poppins-semibold"

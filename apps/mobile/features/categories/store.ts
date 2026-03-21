@@ -5,6 +5,7 @@ import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import { generateSyncQueueId, generateUserCategoryId, toIsoDateTime } from "@/shared/lib";
 import type { CategoryId, UserId } from "@/shared/types/branded";
+import { MAX_NAME_LENGTH, MIN_NAME_LENGTH } from "./lib/constants";
 import { ICON_MAP } from "./lib/icon-map";
 import { getUserCategoriesForUser, insertUserCategory } from "./lib/repository";
 
@@ -12,8 +13,7 @@ import { getUserCategoriesForUser, insertUserCategory } from "./lib/repository";
 let dbRef: AnyDb | null = null;
 let userIdRef: UserId | null = null;
 
-const MIN_NAME_LENGTH = 2;
-const MAX_NAME_LENGTH = 32;
+const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
 
 type CategoriesState = {
   userCategories: Category[];
@@ -34,7 +34,8 @@ const toCategory = (row: {
   iconName: string;
   colorHex: string;
 }): Category => ({
-  id: row.id as unknown as CategoryId,
+  // UserCategoryId and CategoryId are both Brand<string, _>; cast via string is safe since allCategoryIds operates on plain strings
+  id: row.id as string as CategoryId,
   label: { en: row.name, es: row.name },
   icon: ICON_MAP[row.iconName] ?? Ellipsis,
   color: row.colorHex,
@@ -73,6 +74,8 @@ export const useCategoriesStore = create<CategoriesState & CategoriesActions>((s
 
     const trimmedName = input.name.trim();
     if (trimmedName.length < MIN_NAME_LENGTH || trimmedName.length > MAX_NAME_LENGTH) return false;
+    if (!(input.iconName in ICON_MAP)) return false;
+    if (!HEX_COLOR_REGEX.test(input.colorHex)) return false;
 
     const now = toIsoDateTime(new Date());
     const id = generateUserCategoryId();

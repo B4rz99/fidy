@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { Ellipsis, Check, type LucideIcon } from "@/shared/components/icons";
+import { Check, Ellipsis, type LucideIcon } from "@/shared/components/icons";
 import {
   FlatList,
   Keyboard,
@@ -12,17 +12,11 @@ import {
   View,
 } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { COLOR_SWATCHES, MAX_NAME_LENGTH, MIN_NAME_LENGTH } from "../lib/constants";
 import { ICON_MAP, SELECTABLE_ICONS } from "../lib/icon-map";
 import { useCategoriesStore } from "../store";
 
-const COLOR_SWATCHES = [
-  "#D45B5B", "#F57C00", "#FFCA28", "#7CB243", "#8BBAE8",
-  "#B8A9D4", "#E8A090", "#26A69A", "#78909C", "#8D6E63",
-] as const;
-
 const ICON_GRID_COLUMNS = 6;
-const MIN_NAME_LENGTH = 2;
-const MAX_NAME_LENGTH = 32;
 
 // ─── Memoized sub-components ────────────────────────────────────────
 
@@ -140,9 +134,7 @@ export function CreateCategorySheet() {
   }, [name, selectedIcon, selectedColor, guardedCreate, router]);
 
   // Derive preview icon
-  const PreviewIcon: LucideIcon = selectedIcon
-    ? (ICON_MAP[selectedIcon] ?? Ellipsis)
-    : Ellipsis;
+  const PreviewIcon: LucideIcon = selectedIcon ? (ICON_MAP[selectedIcon] ?? Ellipsis) : Ellipsis;
 
   const renderIconCell = useCallback(
     ({ item }: { item: (typeof SELECTABLE_ICONS)[number] }) => (
@@ -157,7 +149,7 @@ export function CreateCategorySheet() {
         onPress={handleIconSelect}
       />
     ),
-    [selectedIcon, selectedColor, accentGreen, secondaryColor, borderColor, handleIconSelect],
+    [selectedIcon, selectedColor, accentGreen, secondaryColor, borderColor, handleIconSelect]
   );
 
   return (
@@ -170,18 +162,11 @@ export function CreateCategorySheet() {
       <View style={[styles.grabBar, { backgroundColor: tertiaryColor, opacity: 0.3 }]} />
 
       {/* Title */}
-      <Text style={[styles.title, { color: primaryColor }]}>
-        {t("categories.create.title")}
-      </Text>
+      <Text style={[styles.title, { color: primaryColor }]}>{t("categories.create.title")}</Text>
 
       {/* Preview pill */}
       <View style={styles.previewRow}>
-        <View
-          style={[
-            styles.previewPill,
-            { backgroundColor: selectedColor ?? accentGreen },
-          ]}
-        >
+        <View style={[styles.previewPill, { backgroundColor: selectedColor ?? accentGreen }]}>
           <PreviewIcon size={20} color="#FFFFFF" />
           <Text style={styles.previewText}>
             {trimmedName.length > 0 ? trimmedName : t("categories.create.namePlaceholder")}
@@ -251,9 +236,7 @@ export function CreateCategorySheet() {
         onPress={handleCreate}
         disabled={!isFormValid || isBusy}
       >
-        <Text style={styles.createButtonText}>
-          {t("categories.create.submit")}
-        </Text>
+        <Text style={styles.createButtonText}>{t("categories.create.submit")}</Text>
       </Pressable>
     </ScrollView>
   );

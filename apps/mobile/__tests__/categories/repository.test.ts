@@ -1,10 +1,6 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type {
-  IsoDateTime,
-  UserCategoryId,
-  UserId,
-} from "@/shared/types/branded";
+import type { IsoDateTime, UserCategoryId, UserId } from "@/shared/types/branded";
 
 const mockRun = vi.fn();
 const mockAll = vi.fn().mockReturnValue([]);
@@ -35,9 +31,7 @@ describe("user categories repository", () => {
 
   describe("insertUserCategory", () => {
     it("calls db.insert with the correct row", async () => {
-      const { insertUserCategory } = await import(
-        "@/features/categories/lib/repository"
-      );
+      const { insertUserCategory } = await import("@/features/categories/lib/repository");
 
       const row = {
         id: "ucat-1" as UserCategoryId,
@@ -74,9 +68,7 @@ describe("user categories repository", () => {
       ];
       mockAll.mockReturnValueOnce(mockRows);
 
-      const { getUserCategoriesForUser } = await import(
-        "@/features/categories/lib/repository"
-      );
+      const { getUserCategoriesForUser } = await import("@/features/categories/lib/repository");
       const result = getUserCategoriesForUser(mockDb, "user-1" as UserId);
 
       expect(mockSelect).toHaveBeenCalled();
@@ -89,9 +81,7 @@ describe("user categories repository", () => {
     it("returns empty array when no categories found", async () => {
       mockAll.mockReturnValueOnce([]);
 
-      const { getUserCategoriesForUser } = await import(
-        "@/features/categories/lib/repository"
-      );
+      const { getUserCategoriesForUser } = await import("@/features/categories/lib/repository");
       const result = getUserCategoriesForUser(mockDb, "user-1" as UserId);
 
       expect(result).toEqual([]);

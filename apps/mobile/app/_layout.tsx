@@ -19,13 +19,13 @@ import { useAuthStore } from "@/features/auth";
 import { registerBackgroundTask } from "@/features/background-fetch";
 import { useBudgetStore } from "@/features/budget";
 import { useCalendarStore } from "@/features/calendar";
-import { useCategoriesStore } from "@/features/categories";
 import {
   useApplePayCapture,
   useCaptureSourcesStore,
   useNotificationCapture,
   useSmsDetection,
 } from "@/features/capture-sources";
+import { useCategoriesStore } from "@/features/categories";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
 import { useGoalStore } from "@/features/goals";
 import {
