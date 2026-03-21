@@ -22,6 +22,8 @@ vi.mock("@/features/email-capture/services/parse-email-api", () => ({
 
 vi.mock("@/shared/lib/sentry", () => ({
   captureError: vi.fn(),
+  capturePipelineEvent: vi.fn(),
+  captureWarning: vi.fn(),
 }));
 
 const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);

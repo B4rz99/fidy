@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { processedCaptures, transactions } from "@/shared/db";
-import { normalizeMerchant } from "@/shared/lib";
+import { merchantsMatch, normalizeMerchant } from "@/shared/lib";
 import type { CopAmount, IsoDate, UserId } from "@/shared/types/branded";
 
 /**
@@ -58,7 +58,7 @@ export async function findDuplicateTransaction(
 
   const match = rows.find((row) => {
     const desc = normalizeMerchant(row.description ?? "");
-    return desc === normalized;
+    return merchantsMatch(desc, normalized);
   });
 
   return match?.id ?? null;

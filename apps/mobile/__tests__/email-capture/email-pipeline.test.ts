@@ -49,6 +49,8 @@ vi.mock("@/features/email-capture/services/parse-email-api", () => ({
 
 vi.mock("@/shared/lib/sentry", () => ({
   captureError: vi.fn(),
+  capturePipelineEvent: vi.fn(),
+  captureWarning: vi.fn(),
 }));
 
 const mockGenerateId = vi.fn();
@@ -381,6 +383,29 @@ describe("email processing pipeline", () => {
       failed: 0,
       needsReview: 0,
     });
+  });
+
+  it("deduplicates emails with the same externalId within a batch", async () => {
+    // Same externalId appearing twice (e.g., same Gmail account connected twice)
+    const emails = [
+      makeRawEmail({ externalId: "ext-dup", body: "Compra por $64.000 en CHERNIKA SAS" }),
+      makeRawEmail({ externalId: "ext-dup", body: "Compra por $64.000 en CHERNIKA SAS" }),
+    ];
+    mockParseEmailApi.mockResolvedValue({
+      type: "expense",
+      amount: 64000,
+      categoryId: "other",
+      description: "CHERNIKA SAS",
+      date: "2026-03-20",
+      confidence: 0.9,
+    });
+
+    const result = await processEmails(mockDb, USER_ID, emails);
+
+    // Only ONE transaction should be created, second email should be skipped as duplicate
+    expect(mockInsertTransaction).toHaveBeenCalledTimes(1);
+    expect(result.saved + result.needsReview + result.filtered).toBeLessThanOrEqual(1);
+    expect(result.skippedDuplicate).toBeGreaterThanOrEqual(1);
   });
 });
 

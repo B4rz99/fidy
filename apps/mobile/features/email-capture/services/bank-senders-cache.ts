@@ -1,4 +1,5 @@
 import { getSupabase } from "@/shared/db";
+import { captureWarning } from "@/shared/lib";
 import { type BankSender, DEFAULT_BANK_SENDERS } from "../lib/bank-senders";
 
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -28,7 +29,9 @@ export async function fetchBankSenders(): Promise<readonly BankSender[]> {
     const { data, error } = await getSupabase().from("bank_senders").select("bank, email");
 
     if (error || !data || data.length === 0) {
-      console.warn("[BankSenders] fetch failed or empty, using defaults:", error?.message);
+      captureWarning("bank_senders_fetch_failed", {
+        errorMessage: error?.message ?? "empty_result",
+      });
       return cache.fallback();
     }
 
@@ -39,7 +42,9 @@ export async function fetchBankSenders(): Promise<readonly BankSender[]> {
     cache.set(merged);
     return merged;
   } catch (err) {
-    console.warn("[BankSenders] exception, using defaults:", err);
+    captureWarning("bank_senders_exception", {
+      errorType: err instanceof Error ? err.message : "unknown",
+    });
     return cache.fallback();
   }
 }

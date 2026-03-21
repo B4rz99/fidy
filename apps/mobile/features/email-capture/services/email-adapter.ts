@@ -1,7 +1,7 @@
 // biome-ignore-all lint/style/useNamingConvention: OAuth/HTTP APIs use snake_case parameter names
 import { CryptoDigestAlgorithm, digest, getRandomBytes } from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
-import { captureError } from "@/shared/lib";
+import { captureError, captureWarning } from "@/shared/lib";
 import type { ConnectResult, EmailProvider, RawEmail } from "../schema";
 import { EMAIL_REDIRECT_URI, getGmailRedirectUri } from "../schema";
 import { fetchGmailEmailsWithToken } from "./gmail-adapter";
@@ -160,7 +160,13 @@ export function createAdapter(config: EmailProviderConfig, fetchFn: FetchEmailsF
         }).toString(),
       });
 
-      if (!refreshResponse.ok) return null;
+      if (!refreshResponse.ok) {
+        captureWarning("email_token_refresh_failed", {
+          provider: config.provider,
+          httpStatus: refreshResponse.status,
+        });
+        return null;
+      }
 
       const data = await refreshResponse.json();
       await SecureStore.setItemAsync(config.tokenKey, data.access_token);

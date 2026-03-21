@@ -7,6 +7,7 @@ import { insertTransaction, isValidCategoryId } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
+  capturePipelineEvent,
   generateProcessedCaptureId,
   generateSyncQueueId,
   generateTransactionId,
@@ -46,6 +47,7 @@ export async function processNotification(
   const localResult = parseNotificationLocally(notificationText);
 
   // If local parse fails, try cloud LLM
+  const parseMethod = localResult ? "regex" : "llm";
   const parsed = localResult
     ? { ...localResult, categoryId: "other", date: notificationDate, confidence: 0.8 }
     : await (async () => {
@@ -74,6 +76,14 @@ export async function processNotification(
       receivedAt: receivedAt,
       createdAt: toIsoDateTime(new Date()),
     });
+    capturePipelineEvent({
+      source: "notification",
+      bankSource: source,
+      parseMethod,
+      saved: 0,
+      skippedDuplicate: 0,
+      parseFailed: 1,
+    });
     return { saved: false, skippedDuplicate: false, transactionId: null };
   }
 
@@ -83,6 +93,14 @@ export async function processNotification(
   // Guard against concurrent processing of the same fingerprint.
   // Add synchronously before any await to close the race window.
   if (inFlightFingerprints.has(fingerprint)) {
+    capturePipelineEvent({
+      source: "notification",
+      bankSource: source,
+      parseMethod,
+      saved: 0,
+      skippedDuplicate: 1,
+      parseFailed: 0,
+    });
     return { saved: false, skippedDuplicate: true, transactionId: null };
   }
 
@@ -91,6 +109,14 @@ export async function processNotification(
   try {
     const alreadyProcessed = await isCaptureProcessed(db, fingerprint);
     if (alreadyProcessed) {
+      capturePipelineEvent({
+        source: "notification",
+        bankSource: source,
+        parseMethod,
+        saved: 0,
+        skippedDuplicate: 1,
+        parseFailed: 0,
+      });
       return { saved: false, skippedDuplicate: true, transactionId: null };
     }
     // Cross-source dedup
@@ -113,6 +139,14 @@ export async function processNotification(
         confidence: parsed.confidence,
         receivedAt: receivedAt,
         createdAt: toIsoDateTime(new Date()),
+      });
+      capturePipelineEvent({
+        source: "notification",
+        bankSource: source,
+        parseMethod,
+        saved: 0,
+        skippedDuplicate: 1,
+        parseFailed: 0,
       });
       return { saved: false, skippedDuplicate: true, transactionId: existingTxId };
     }
@@ -166,6 +200,13 @@ export async function processNotification(
       await insertMerchantRule(db, userId, merchantKey, finalCategoryId, now);
     }
 
+    capturePipelineEvent({
+      source: "notification",
+      bankSource: source,
+      saved: 1,
+      skippedDuplicate: 0,
+      parseFailed: 0,
+    });
     return { saved: true, skippedDuplicate: false, transactionId: txId };
   } finally {
     inFlightFingerprints.delete(fingerprint);

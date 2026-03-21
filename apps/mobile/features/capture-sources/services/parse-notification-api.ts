@@ -3,6 +3,7 @@ import {
   llmOutputSchema,
 } from "@/features/email-capture/services/llm-parser";
 import { getSupabase } from "@/shared/db";
+import { captureWarning } from "@/shared/lib";
 
 export async function parseNotificationApi(
   sanitizedText: string
@@ -13,17 +14,24 @@ export async function parseNotificationApi(
     });
 
     if (error || !data?.success) {
-      console.warn("[parseNotificationApi] edge fn failed:", error?.message ?? "unknown", data);
+      captureWarning("parse_notification_api_failed", {
+        errorMessage: error?.message ?? "unknown",
+        hasData: !!data,
+      });
       return null;
     }
 
     const result = llmOutputSchema.safeParse(data.data);
     if (!result.success) {
-      console.warn("[parseNotificationApi] validation failed:", result.error.issues);
+      captureWarning("parse_notification_validation_failed", {
+        issueCount: result.error.issues.length,
+      });
     }
     return result.success ? result.data : null;
   } catch (err) {
-    console.warn("[parseNotificationApi] exception:", err);
+    captureWarning("parse_notification_api_exception", {
+      errorType: err instanceof Error ? err.message : "unknown",
+    });
     return null;
   }
 }

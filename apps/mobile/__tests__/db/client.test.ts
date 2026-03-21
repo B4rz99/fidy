@@ -20,6 +20,8 @@ vi.mock("expo-crypto", () => ({
 
 vi.mock("@/shared/lib/sentry", () => ({
   captureError: vi.fn(),
+  capturePipelineEvent: vi.fn(),
+  captureWarning: vi.fn(),
 }));
 
 import { getRandomBytes } from "expo-crypto";

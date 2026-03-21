@@ -4,6 +4,8 @@ import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
   captureError,
+  capturePipelineEvent,
+  captureWarning,
   generateProcessedEmailId,
   generateSyncQueueId,
   generateTransactionId,
@@ -126,15 +128,22 @@ export async function processEmails(
   rawEmails: RawEmail[],
   onProgress?: ProgressCallback
 ): Promise<PipelineResult> {
-  const allExternalIds = rawEmails.map((e) => e.externalId);
+  // Deduplicate by externalId within the batch (same account connected twice
+  // or same email forwarded across providers produces duplicate entries)
+  const uniqueEmails = Array.from(
+    new Map(rawEmails.map((email) => [email.externalId, email])).values()
+  );
+  const dedupedInBatch = rawEmails.length - uniqueEmails.length;
+
+  const allExternalIds = uniqueEmails.map((e) => e.externalId);
   const processedIds = await getProcessedExternalIds(db, allExternalIds);
 
-  const toProcess = rawEmails.filter((email) => !processedIds.has(email.externalId));
-  const skippedDuplicate = rawEmails.length - toProcess.length;
+  const toProcess = uniqueEmails.filter((email) => !processedIds.has(email.externalId));
+  const skippedAlreadyProcessed = uniqueEmails.length - toProcess.length;
 
   const result: PipelineResult = {
     filtered: 0,
-    skippedDuplicate,
+    skippedDuplicate: dedupedInBatch + skippedAlreadyProcessed,
     skippedCrossSource: 0,
     saved: 0,
     failed: 0,
@@ -158,7 +167,10 @@ export async function processEmails(
       try {
         parsed = await parseBody(db, userId, email.body);
       } catch (err) {
-        console.warn(`[EmailCapture] parse threw for "${email.subject}":`, err);
+        captureWarning("email_parse_exception", {
+          provider: email.provider,
+          errorType: err instanceof Error ? err.message : "unknown",
+        });
         parseError = true;
       }
 
@@ -167,7 +179,6 @@ export async function processEmails(
         const failureReason = parseError ? "parse_error" : null;
 
         if (parseError) {
-          console.warn(`[EmailCapture] FAILED "${email.subject}" from ${email.from}: parse_error`);
           result.failed++;
         } else {
           result.filtered++;
@@ -303,6 +314,19 @@ export async function processEmails(
 
   await Promise.all(Array.from({ length: Math.min(Concurrency, total) }, () => worker()));
 
+  const uniqueProviders = new Set(rawEmails.map((e) => e.provider)).size;
+  capturePipelineEvent({
+    source: "email",
+    batchSize: rawEmails.length,
+    uniqueProviders,
+    dedupedInBatch,
+    skippedAlreadyProcessed,
+    skippedCrossSource: result.skippedCrossSource,
+    saved: result.saved,
+    failed: result.failed,
+    needsReview: result.needsReview,
+  });
+
   return result;
 }
 
@@ -329,7 +353,10 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
     try {
       parsed = await parseBody(db, userId, email.rawBody);
     } catch (err) {
-      console.warn(`[EmailCapture] retry parse threw for "${email.subject}":`, err);
+      captureWarning("email_retry_parse_exception", {
+        provider: email.provider,
+        errorType: err instanceof Error ? err.message : "unknown",
+      });
       parseError = true;
     }
 

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Platform } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
+import { captureError } from "@/shared/lib";
 import { useCaptureSourcesStore } from "../store";
 import { setupSmsDetection } from "./setup";
 
@@ -21,7 +22,7 @@ export function useSmsDetection(db: AnyDb | null, userId: string | null) {
           cleanup = teardown;
         }
       })
-      .catch((err) => console.warn("[SmsDetection] setup failed:", err));
+      .catch(captureError);
 
     return () => {
       cancelled = true;

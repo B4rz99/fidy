@@ -238,6 +238,11 @@ vi.mock("expo-web-browser", () => ({
 vi.mock("@sentry/react-native", () => ({
   init: vi.fn(),
   captureException: vi.fn(),
+  captureMessage: vi.fn(),
+  setUser: vi.fn(),
+  withScope: vi.fn((cb: (scope: unknown) => void) =>
+    cb({ setContext: vi.fn(), setLevel: vi.fn() })
+  ),
   ErrorBoundary: "SentryErrorBoundary",
   wrap: vi.fn((component: unknown) => component),
 }));

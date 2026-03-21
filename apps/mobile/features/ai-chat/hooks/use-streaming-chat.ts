@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useTransactionStore } from "@/features/transactions";
-import { parseIsoDate } from "@/shared/lib";
+import { captureWarning, parseIsoDate } from "@/shared/lib";
 import type { IsoDate } from "@/shared/types/branded";
 import { parseActionFromResponse } from "../lib/parse-action";
 import type { ChatAction } from "../schema";
@@ -89,7 +89,14 @@ export function useStreamingChat() {
               await useChatStore.getState().addAssistantMessage(accumulated, action);
 
               if (action && action.type === "add") {
-                await executeAction(action);
+                try {
+                  await executeAction(action);
+                } catch (actionErr) {
+                  captureWarning("ai_action_failed", {
+                    actionType: action.type,
+                    errorType: actionErr instanceof Error ? actionErr.message : "unknown",
+                  });
+                }
               }
 
               resetStreamState();

@@ -4,6 +4,8 @@ import { useTransactionStore } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync, transactions } from "@/shared/db";
 import {
+  captureError,
+  captureWarning,
   generateEmailAccountId,
   generateSyncQueueId,
   normalizeMerchant,
@@ -110,6 +112,10 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
     if (!result.success) return;
 
+    // Prevent connecting the same email address twice
+    const alreadyConnected = get().accounts.some((a) => a.email === result.email);
+    if (alreadyConnected) return;
+
     const row: EmailAccountRow = {
       id: generateEmailAccountId(),
       userId: userIdRef as UserId,
@@ -187,7 +193,10 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
             );
             return { account, rawEmails, fetchOk: true };
           } catch (err) {
-            console.warn(`[EmailCapture] ${account.provider} fetch error:`, err);
+            captureWarning("email_adapter_fetch_failed", {
+              provider: account.provider,
+              errorType: err instanceof Error ? err.message : "unknown",
+            });
             return { account, rawEmails: [] as import("./schema").RawEmail[], fetchOk: false };
           }
         })
@@ -258,7 +267,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       // Refresh home screen transactions
       await useTransactionStore.getState().refresh();
     } catch (err) {
-      console.warn("[EmailCapture] fetchAndProcess error:", err);
+      captureError(err);
     } finally {
       // On error (phase never reached 'complete'), clear immediately.
       // On success, auto-clear after 2s so Connected Accounts can show the transition.

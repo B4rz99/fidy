@@ -29,6 +29,14 @@ export {
   generateUserCategoryId,
   generateUserMemoryId,
 } from "./generate-id";
-export { normalizeMerchant } from "./normalize-merchant";
-export { captureError, initSentry, SentryErrorBoundary, wrapWithSentry } from "./sentry";
+export { merchantsMatch, normalizeMerchant } from "./normalize-merchant";
+export {
+  captureError,
+  capturePipelineEvent,
+  captureWarning,
+  initSentry,
+  SentryErrorBoundary,
+  setSentryUser,
+  wrapWithSentry,
+} from "./sentry";
 export { handleRecoverableError, showErrorToast } from "./toast";
