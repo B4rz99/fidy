@@ -19,6 +19,7 @@ import { useAuthStore } from "@/features/auth";
 import { registerBackgroundTask } from "@/features/background-fetch";
 import { useBudgetStore } from "@/features/budget";
 import { useCalendarStore } from "@/features/calendar";
+import { useCategoriesStore } from "@/features/categories";
 import {
   useApplePayCapture,
   useCaptureSourcesStore,
@@ -77,6 +78,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       useCalendarStore.getState().initStore(db, userId);
       useBudgetStore.getState().initStore(db, userId);
       useGoalStore.getState().initStore(db, userId);
+      useCategoriesStore.getState().initStore(db, userId);
       useSyncConflictStore.getState().initStore(db);
       Promise.all([
         useCalendarStore.getState().loadBills(),
@@ -87,6 +89,10 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
         .loadBudgets()
         .catch(handleRecoverableError("Failed to load budgets"));
       useGoalStore.getState().loadGoals().catch(handleRecoverableError("Failed to load goals"));
+      useCategoriesStore
+        .getState()
+        .loadUserCategories()
+        .catch(handleRecoverableError("Failed to load user categories"));
       useChatStore
         .getState()
         .loadSessions()
@@ -295,6 +301,18 @@ function RootLayout() {
               headerStyle: { backgroundColor: theme.page },
               headerTintColor: theme.primary,
             }}
+          />
+          <Stack.Screen
+            name="categories"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
+          />
+          <Stack.Screen
+            name="create-category"
+            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
           />
         </Stack>
         {db && userId && onboardingComplete && (
