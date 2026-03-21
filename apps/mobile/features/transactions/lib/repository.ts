@@ -94,10 +94,10 @@ export function getMonthlyTotalsByType(
   userId: string,
   months: number
 ): Array<{ month: string; type: string; total: number }> {
-  // Compute cutoff date: first day of (months) months ago
-  const cutoff = new Date();
-  cutoff.setDate(1);
-  cutoff.setMonth(cutoff.getMonth() - months);
+  // Compute cutoff: first day of the oldest month in the window.
+  // With months=3 in March 2026 we want Jan, Feb, Mar → cutoff = 2026-01.
+  const now = new Date();
+  const cutoff = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
   const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, "0")}`;
 
   return db

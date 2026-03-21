@@ -5,7 +5,11 @@ const goalTypeSchema = z.enum(["savings", "debt"]);
 const isoDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
-  .refine((val) => !Number.isNaN(new Date(val).getTime()), "Invalid calendar date");
+  .refine((val) => {
+    const [y, m, d] = val.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
+  }, "Invalid calendar date");
 
 export const createGoalSchema = z.object({
   name: z.string().min(1).max(100),

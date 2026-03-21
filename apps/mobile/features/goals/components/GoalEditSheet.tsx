@@ -27,7 +27,7 @@ import { useGoalStore } from "../store";
 
 export function GoalEditSheet() {
   const { back } = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   const selectedGoalId = useGoalStore((s) => s.selectedGoalId);
   const goals = useGoalStore((s) => s.goals);
@@ -49,12 +49,10 @@ export function GoalEditSheet() {
   const [digits, setDigits] = useState(goal?.targetAmount != null ? String(goal.targetAmount) : "");
   const digitsRef = useRef(digits);
   digitsRef.current = digits;
-  const [interestDigits, setInterestDigits] = useState(
+  const [interestRate, setInterestRate] = useState(
     goal?.interestRatePercent != null ? String(goal.interestRatePercent) : ""
   );
-  const interestDigitsRef = useRef(interestDigits);
-  interestDigitsRef.current = interestDigits;
-  const [numpadTarget, setNumpadTarget] = useState<"amount" | "interestRate" | null>(null);
+  const [numpadTarget, setNumpadTarget] = useState<"amount" | null>(null);
   const [targetDate, setTargetDate] = useState<Date | null>(
     goal?.targetDate ? parseIsoDate(goal.targetDate) : null
   );
@@ -84,8 +82,6 @@ export function GoalEditSheet() {
     (key: string) => {
       if (numpadTarget === "amount") {
         setDigits(handleNumpadPress(digitsRef.current, key));
-      } else if (numpadTarget === "interestRate") {
-        setInterestDigits(handleNumpadPress(interestDigitsRef.current, key));
       }
     },
     [numpadTarget]
@@ -98,12 +94,13 @@ export function GoalEditSheet() {
         const parsedAmount = parseDigitsToAmount(digits);
         if (!name.trim() || parsedAmount <= 0) return;
 
+        const parsedRate = Number.parseFloat(interestRate);
         await updateGoal(selectedGoalId, {
           name: name.trim(),
           targetAmount: parsedAmount,
           targetDate: targetDate ? toIsoDate(targetDate) : null,
           interestRatePercent:
-            goalType === "debt" && interestDigits ? parseDigitsToAmount(interestDigits) : null,
+            goalType === "debt" && Number.isFinite(parsedRate) ? parsedRate : null,
         });
         back();
       }),
@@ -113,7 +110,7 @@ export function GoalEditSheet() {
       digits,
       goalType,
       targetDate,
-      interestDigits,
+      interestRate,
       updateGoal,
       back,
       guardedSave,
@@ -182,31 +179,30 @@ export function GoalEditSheet() {
 
       {/* 2. Interest rate — debt only (SECOND) */}
       {goalType === "debt" ? (
-        <Pressable
-          style={styles.amountSection}
-          onPress={() => {
-            Keyboard.dismiss();
-            setShowDatePicker(false);
-            setNumpadTarget("interestRate");
-          }}
-        >
+        <View style={styles.fieldGroup}>
           <Text style={[styles.fieldLabel, { color: primaryColor }]}>
             {t("goals.create.interestRate")}
           </Text>
-          <View style={styles.amountRow}>
-            {interestDigits.length > 0 ? (
-              <Text style={[styles.interestDisplay, { color: primaryColor }]}>
-                {interestDigits}
-              </Text>
-            ) : null}
-            {numpadTarget === "interestRate" ? (
-              <Animated.View
-                style={[styles.cursorSmall, { backgroundColor: primaryColor }, cursorStyle]}
-              />
-            ) : null}
-            <Text style={[styles.interestDisplay, { color: primaryColor }]}>%</Text>
+          <View style={styles.interestInputRow}>
+            <TextInput
+              style={[
+                styles.input,
+                styles.interestInput,
+                { backgroundColor: cardBg, borderColor, color: primaryColor },
+              ]}
+              keyboardType="decimal-pad"
+              placeholder="0"
+              placeholderTextColor={tertiaryColor}
+              value={interestRate}
+              onChangeText={setInterestRate}
+              onFocus={() => {
+                setNumpadTarget(null);
+                setShowDatePicker(false);
+              }}
+            />
+            <Text style={[styles.interestSuffix, { color: primaryColor }]}>%</Text>
           </View>
-        </Pressable>
+        </View>
       ) : null}
 
       {/* 3. Goal name (THIRD) */}
@@ -242,13 +238,24 @@ export function GoalEditSheet() {
         >
           <Text style={[styles.dateText, { color: targetDate ? primaryColor : tertiaryColor }]}>
             {targetDate
-              ? targetDate.toLocaleDateString("es-CO", {
+              ? targetDate.toLocaleDateString(locale, {
                   year: "numeric",
                   month: "long",
                   day: "numeric",
                 })
               : t("goals.create.targetDate")}
           </Text>
+          {targetDate != null ? (
+            <Pressable
+              onPress={() => {
+                setTargetDate(null);
+                setShowDatePicker(false);
+              }}
+              hitSlop={8}
+            >
+              <Text style={{ color: accentRed, fontSize: 14 }}>✕</Text>
+            </Pressable>
+          ) : null}
         </Pressable>
         {showDatePicker ? (
           <DateTimePicker
@@ -303,14 +310,15 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     fontSize: 14,
   },
-  dateButton: { justifyContent: "center" },
+  dateButton: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   dateText: { fontFamily: "Poppins_500Medium", fontSize: 14 },
   amountSection: { alignItems: "center", gap: 4, paddingVertical: 8 },
   amountRow: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
   amountDisplay: { fontFamily: "Poppins_700Bold", fontSize: 32 },
-  interestDisplay: { fontFamily: "Poppins_700Bold", fontSize: 24 },
+  interestInputRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  interestInput: { flex: 1 },
+  interestSuffix: { fontFamily: "Poppins_700Bold", fontSize: 18 },
   cursor: { width: 2, height: 28, marginLeft: 2, borderRadius: 1 },
-  cursorSmall: { width: 2, height: 22, marginLeft: 2, marginRight: 2, borderRadius: 1 },
   saveButton: {
     borderRadius: 12,
     borderCurve: "continuous",

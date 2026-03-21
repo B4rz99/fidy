@@ -141,8 +141,8 @@ async function processEntry(
     return ok ? entry.id : null;
   }
 
-  // Unknown table — clear entry to prevent queue buildup
-  return entry.id;
+  // Unknown table — keep in queue for future handler
+  return null;
 }
 
 export async function syncPush(
