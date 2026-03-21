@@ -12,8 +12,7 @@ import {
   Wrench,
 } from "@/shared/components/icons";
 import { Colors } from "@/shared/constants/theme";
-
-export type CategoryId = string;
+import type { CategoryId } from "@/shared/types/branded";
 
 export type Category = {
   readonly id: CategoryId;
@@ -23,51 +22,66 @@ export type Category = {
 };
 
 export const CATEGORIES: readonly Category[] = [
-  { id: "food", label: { en: "Food", es: "Comida" }, icon: Utensils, color: Colors.chart.food },
   {
-    id: "transport",
+    id: "food" as CategoryId,
+    label: { en: "Food", es: "Comida" },
+    icon: Utensils,
+    color: Colors.chart.food,
+  },
+  {
+    id: "transport" as CategoryId,
     label: { en: "Transport", es: "Transporte" },
     icon: Car,
     color: Colors.chart.transport,
   },
   {
-    id: "entertainment",
+    id: "entertainment" as CategoryId,
     label: { en: "Entertainment", es: "Entretenimiento" },
     icon: Clapperboard,
     color: Colors.chart.entertainment,
   },
   {
-    id: "health",
+    id: "health" as CategoryId,
     label: { en: "Health", es: "Salud" },
     icon: HeartPulse,
     color: Colors.chart.health,
   },
   {
-    id: "education",
+    id: "education" as CategoryId,
     label: { en: "Education", es: "Educación" },
     icon: GraduationCap,
     color: Colors.chart.education,
   },
-  { id: "home", label: { en: "Home", es: "Hogar" }, icon: House, color: Colors.chart.home },
   {
-    id: "clothing",
+    id: "home" as CategoryId,
+    label: { en: "Home", es: "Hogar" },
+    icon: House,
+    color: Colors.chart.home,
+  },
+  {
+    id: "clothing" as CategoryId,
     label: { en: "Clothing", es: "Ropa" },
     icon: Shirt,
     color: Colors.chart.clothing,
   },
   {
-    id: "services",
+    id: "services" as CategoryId,
     label: { en: "Services", es: "Servicios" },
     icon: Wrench,
     color: Colors.chart.services,
   },
   {
-    id: "transfer",
+    id: "transfer" as CategoryId,
     label: { en: "Transfer", es: "Transferencia" },
     icon: ArrowLeftRight,
     color: Colors.chart.transfer,
   },
-  { id: "other", label: { en: "Other", es: "Otro" }, icon: Ellipsis, color: Colors.chart.other },
+  {
+    id: "other" as CategoryId,
+    label: { en: "Other", es: "Otro" },
+    icon: Ellipsis,
+    color: Colors.chart.other,
+  },
 ] as const;
 
 export const CATEGORY_MAP: Record<string, Category | undefined> = Object.fromEntries(

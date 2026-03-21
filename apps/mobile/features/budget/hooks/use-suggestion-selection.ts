@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { parseDigitsToAmount } from "@/shared/lib";
+import type { CategoryId, CopAmount } from "@/shared/types/branded";
 import type { BudgetSuggestion } from "../lib/derive";
 
 export function useSuggestionSelection(autoSuggestions: readonly BudgetSuggestion[]) {
@@ -29,12 +30,15 @@ export function useSuggestionSelection(autoSuggestions: readonly BudgetSuggestio
     setAmountOverrides((prev) => ({ ...prev, [categoryId]: value }));
   };
 
-  const buildBudgetMap = () =>
+  const buildBudgetMap = (): ReadonlyMap<CategoryId, CopAmount> =>
     new Map(
       Array.from(selectedIds)
         .map(
           (categoryId) =>
-            [categoryId, parseDigitsToAmount(editedAmounts[categoryId] ?? "0")] as const
+            [
+              categoryId,
+              parseDigitsToAmount(editedAmounts[categoryId] ?? "0") as CopAmount,
+            ] as const
         )
         .filter(([, amount]) => amount > 0)
     );

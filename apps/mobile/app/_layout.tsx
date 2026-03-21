@@ -49,6 +49,7 @@ import {
   SentryErrorBoundary,
   wrapWithSentry,
 } from "@/shared/lib";
+import type { UserId } from "@/shared/types/branded";
 import migrations from "../drizzle/migrations";
 
 const SHEET = { headerShown: false, presentation: "formSheet" } as const;
@@ -63,7 +64,7 @@ if (SENTRY_DSN) {
   initSentry(SENTRY_DSN);
 }
 
-function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: string }) {
+function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
   const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
 
   useEffect(() => {
@@ -296,7 +297,9 @@ function RootLayout() {
             }}
           />
         </Stack>
-        {db && userId && onboardingComplete && <AuthenticatedShell db={db} userId={userId} />}
+        {db && userId && onboardingComplete && (
+          <AuthenticatedShell db={db} userId={userId as UserId} />
+        )}
       </SentryErrorBoundary>
       <StatusBar style="auto" />
     </GestureHandlerRootView>

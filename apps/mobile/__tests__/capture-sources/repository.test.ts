@@ -1,5 +1,12 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type {
+  DetectedSmsEventId,
+  IsoDateTime,
+  ProcessedCaptureId,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 vi.mock("drizzle-orm", () => ({
   eq: vi.fn((...args: any[]) => ({ eq: args })),
@@ -26,6 +33,7 @@ vi.mock("@/shared/db/schema", () => ({
 
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: vi.fn(() => "ns-mock-id"),
+  generateNotificationSourceId: () => "ns-mock-id",
 }));
 
 const mockOnConflictDoNothing = vi.fn().mockResolvedValue(undefined);
@@ -71,15 +79,15 @@ describe("capture-sources repository", () => {
     const { insertProcessedCapture } = await import("@/features/capture-sources/lib/repository");
 
     const row = {
-      id: "pc-1",
+      id: "pc-1" as ProcessedCaptureId,
       fingerprintHash: "abc123",
       source: "sms",
       status: "success",
       rawText: "Compra aprobada",
-      transactionId: "tx-1",
+      transactionId: "tx-1" as TransactionId,
       confidence: 0.95,
-      receivedAt: "2026-03-07T10:00:00Z",
-      createdAt: "2026-03-07T10:00:00Z",
+      receivedAt: "2026-03-07T10:00:00Z" as IsoDateTime,
+      createdAt: "2026-03-07T10:00:00Z" as IsoDateTime,
     };
 
     await insertProcessedCapture(mockDb, row);
@@ -170,13 +178,13 @@ describe("capture-sources repository", () => {
     const { insertDetectedSmsEvent } = await import("@/features/capture-sources/lib/repository");
 
     const row = {
-      id: "sms-1",
-      userId: "user-1",
+      id: "sms-1" as DetectedSmsEventId,
+      userId: "user-1" as UserId,
       senderLabel: "BankBot",
-      detectedAt: "2026-03-07T10:00:00Z",
+      detectedAt: "2026-03-07T10:00:00Z" as IsoDateTime,
       dismissed: false,
       linkedTransactionId: null,
-      createdAt: "2026-03-07T10:00:00Z",
+      createdAt: "2026-03-07T10:00:00Z" as IsoDateTime,
     };
 
     await insertDetectedSmsEvent(mockDb, row);

@@ -2,6 +2,7 @@ import { TrendingUp } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
+import type { CopAmount } from "@/shared/types/branded";
 
 type BalanceSectionProps = {
   readonly balance: number;
@@ -16,7 +17,7 @@ export const BalanceSection = ({ balance }: BalanceSectionProps) => {
         TOTAL BALANCE
       </Text>
       <Text className="font-poppins-bold text-balance text-primary dark:text-primary-dark">
-        {formatMoney(balance)}
+        {formatMoney(balance as CopAmount)}
       </Text>
       <View className="flex-row items-center gap-1">
         <TrendingUp size={14} color={greenColor} />

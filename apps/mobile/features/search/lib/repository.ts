@@ -1,21 +1,26 @@
 import { and, count, desc, eq, gte, inArray, isNull, like, lte, sql } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { transactions } from "@/shared/db";
+import type { CategoryId, CopAmount, IsoDate, UserId } from "@/shared/types/branded";
 import type { SearchFilters, SearchSummary } from "./types";
 
 function buildSearchConditions(userId: string, filters: SearchFilters) {
   const trimmedQuery = filters.query.trim();
   return [
-    eq(transactions.userId, userId),
+    eq(transactions.userId, userId as UserId),
     isNull(transactions.deletedAt),
     ...(trimmedQuery.length > 0 ? [like(transactions.description, `%${trimmedQuery}%`)] : []),
     ...(filters.categoryIds.length > 0
-      ? [inArray(transactions.categoryId, [...filters.categoryIds])]
+      ? [inArray(transactions.categoryId, [...filters.categoryIds] as CategoryId[])]
       : []),
-    ...(filters.dateFrom !== null ? [gte(transactions.date, filters.dateFrom)] : []),
-    ...(filters.dateTo !== null ? [lte(transactions.date, filters.dateTo)] : []),
-    ...(filters.amountMin !== null ? [gte(transactions.amount, filters.amountMin)] : []),
-    ...(filters.amountMax !== null ? [lte(transactions.amount, filters.amountMax)] : []),
+    ...(filters.dateFrom !== null ? [gte(transactions.date, filters.dateFrom as IsoDate)] : []),
+    ...(filters.dateTo !== null ? [lte(transactions.date, filters.dateTo as IsoDate)] : []),
+    ...(filters.amountMin !== null
+      ? [gte(transactions.amount, filters.amountMin as CopAmount)]
+      : []),
+    ...(filters.amountMax !== null
+      ? [lte(transactions.amount, filters.amountMax as CopAmount)]
+      : []),
     ...(filters.type !== "all" ? [eq(transactions.type, filters.type)] : []),
   ];
 }

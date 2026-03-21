@@ -36,6 +36,7 @@ vi.mock("@/features/capture-sources/lib/repository", () => ({
 
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (prefix: string) => `${prefix}-1`,
+  generateDetectedSmsEventId: () => "sms-1",
 }));
 
 import {

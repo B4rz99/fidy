@@ -11,11 +11,23 @@ import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
   captureError,
-  generateId,
+  generateBillId,
+  generateBillPaymentId,
+  generateSyncQueueId,
+  generateTransactionId,
   parseDigitsToAmount,
   parseIsoDate,
   toIsoDate,
+  toIsoDateTime,
 } from "@/shared/lib";
+import type {
+  BillId,
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 import { requestNotificationPermissions, scheduleBillNotifications } from "./lib/notifications";
 import {
   deleteBill as dbDeleteBill,
@@ -37,7 +49,7 @@ import {
 
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
-let userIdRef: string | null = null;
+let userIdRef: UserId | null = null;
 
 type CalendarState = {
   currentMonth: Date;
@@ -47,7 +59,7 @@ type CalendarState = {
 };
 
 type CalendarActions = {
-  initStore: (db: AnyDb, userId: string) => void;
+  initStore: (db: AnyDb, userId: UserId) => void;
   nextMonth: () => void;
   prevMonth: () => void;
   loadBills: () => Promise<void>;
@@ -56,18 +68,18 @@ type CalendarActions = {
     name: string,
     amount: string,
     frequency: BillFrequency,
-    category: string,
+    category: CategoryId,
     startDate: Date
   ) => Promise<boolean>;
   updateBill: (
-    id: string,
+    id: BillId,
     fields: Partial<
       Pick<Bill, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
     >
   ) => Promise<void>;
-  deleteBill: (id: string) => Promise<void>;
-  markBillPaid: (billId: string, dueDate: string) => Promise<void>;
-  unmarkBillPaid: (billId: string, dueDate: string) => Promise<void>;
+  deleteBill: (id: BillId) => Promise<void>;
+  markBillPaid: (billId: BillId, dueDate: IsoDate) => Promise<void>;
+  unmarkBillPaid: (billId: BillId, dueDate: IsoDate) => Promise<void>;
 };
 
 export const useCalendarStore = create<CalendarState & CalendarActions>((set, get) => ({
@@ -130,12 +142,12 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     if (!result.success) return false;
 
     const newBill: Bill = {
-      id: generateId("bill"),
+      id: generateBillId(),
       ...result.data,
     };
 
     try {
-      await insertBill(dbRef, toBillRow(newBill, userIdRef, new Date().toISOString()));
+      await insertBill(dbRef, toBillRow(newBill, userIdRef, toIsoDateTime(new Date())));
     } catch {
       return false;
     }
@@ -161,7 +173,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
         .map(([k, v]) => [k, k === "startDate" && v instanceof Date ? v.toISOString() : v])
     );
 
-    await dbUpdateBill(dbRef, id, dbFields, new Date().toISOString());
+    await dbUpdateBill(dbRef, id, dbFields, toIsoDateTime(new Date()));
     set((s) => ({
       bills: s.bills.map((b) => (b.id === id ? { ...b, ...fields } : b)),
     }));
@@ -183,16 +195,16 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     if (!bill) return;
 
     const now = new Date();
-    const nowIso = now.toISOString();
+    const nowIso = toIsoDateTime(now);
 
     // Create an expense transaction for this bill payment
-    const txId = generateId("tx");
+    const txId = generateTransactionId();
     const transaction: StoredTransaction = {
       id: txId,
       userId: userIdRef,
       type: "expense",
-      amount: bill.amount,
-      categoryId: bill.categoryId,
+      amount: bill.amount as CopAmount,
+      categoryId: bill.categoryId as CategoryId,
       description: bill.name,
       date: parseIsoDate(dueDate),
       createdAt: now,
@@ -201,7 +213,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     };
 
     const payment: BillPayment = {
-      id: generateId("pay"),
+      id: generateBillPaymentId(),
       billId,
       dueDate,
       paidAt: nowIso,
@@ -214,7 +226,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
         const db = tx as unknown as AnyDb;
         insertTransaction(db, toTransactionRow(transaction));
         enqueueSync(db, {
-          id: generateId("sq"),
+          id: generateSyncQueueId(),
           tableName: "transactions",
           rowId: txId,
           operation: "insert",
@@ -234,15 +246,15 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     if (!dbRef) return;
 
     const payment = get().payments.find((p) => p.billId === billId && p.dueDate === dueDate);
-    const nowIso = new Date().toISOString();
+    const nowIso = toIsoDateTime(new Date());
 
     try {
       dbRef.transaction((tx) => {
         const db = tx as unknown as AnyDb;
         if (payment?.transactionId) {
-          softDeleteTransaction(db, payment.transactionId, nowIso);
+          softDeleteTransaction(db, payment.transactionId as TransactionId, nowIso);
           enqueueSync(db, {
-            id: generateId("sq"),
+            id: generateSyncQueueId(),
             tableName: "transactions",
             rowId: payment.transactionId,
             operation: "delete",
@@ -253,7 +265,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
       });
 
       if (payment?.transactionId) {
-        useTransactionStore.getState().removeFromCache(payment.transactionId);
+        useTransactionStore.getState().removeFromCache(payment.transactionId as TransactionId);
       }
       set((s) => ({
         payments: s.payments.filter((p) => !(p.billId === billId && p.dueDate === dueDate)),

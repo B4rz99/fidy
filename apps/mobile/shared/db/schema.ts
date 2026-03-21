@@ -1,18 +1,41 @@
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import type {
+  BillId,
+  BillPaymentId,
+  BudgetId,
+  CategoryId,
+  ChatMessageId,
+  ChatSessionId,
+  CopAmount,
+  DetectedSmsEventId,
+  EmailAccountId,
+  IsoDate,
+  IsoDateTime,
+  MerchantRuleId,
+  Month,
+  NotificationSourceId,
+  ProcessedCaptureId,
+  ProcessedEmailId,
+  SyncConflictId,
+  SyncQueueId,
+  TransactionId,
+  UserId,
+  UserMemoryId,
+} from "@/shared/types/branded";
 
 export const bills = sqliteTable(
   "bills",
   {
-    id: text("id").primaryKey(),
-    userId: text("user_id").notNull(),
+    id: text("id").$type<BillId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
     name: text("name").notNull(),
-    amount: integer("amount").notNull(),
+    amount: integer("amount").$type<CopAmount>().notNull(),
     frequency: text("frequency").notNull(),
-    categoryId: text("category_id").notNull(),
-    startDate: text("start_date").notNull(),
+    categoryId: text("category_id").$type<CategoryId>().notNull(),
+    startDate: text("start_date").$type<IsoDate>().notNull(),
     isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
   },
   (table) => [
     index("idx_bills_user").on(table.userId),
@@ -23,12 +46,12 @@ export const bills = sqliteTable(
 export const billPayments = sqliteTable(
   "bill_payments",
   {
-    id: text("id").primaryKey(),
-    billId: text("bill_id").notNull(),
-    dueDate: text("due_date").notNull(),
-    paidAt: text("paid_at").notNull(),
-    transactionId: text("transaction_id"),
-    createdAt: text("created_at").notNull(),
+    id: text("id").$type<BillPaymentId>().primaryKey(),
+    billId: text("bill_id").$type<BillId>().notNull(),
+    dueDate: text("due_date").$type<IsoDate>().notNull(),
+    paidAt: text("paid_at").$type<IsoDateTime>().notNull(),
+    transactionId: text("transaction_id").$type<TransactionId>(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
   },
   (table) => [
     index("idx_bill_payments_bill").on(table.billId),
@@ -39,16 +62,16 @@ export const billPayments = sqliteTable(
 export const transactions = sqliteTable(
   "transactions",
   {
-    id: text("id").primaryKey(),
-    userId: text("user_id").notNull(),
+    id: text("id").$type<TransactionId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
     type: text("type").notNull(),
-    amount: integer("amount").notNull(),
-    categoryId: text("category_id").notNull(),
+    amount: integer("amount").$type<CopAmount>().notNull(),
+    categoryId: text("category_id").$type<CategoryId>().notNull(),
     description: text("description"),
-    date: text("date").notNull(),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull(),
-    deletedAt: text("deleted_at"),
+    date: text("date").$type<IsoDate>().notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
     source: text("source").notNull().default("manual"),
   },
   (table) => [
@@ -60,12 +83,12 @@ export const transactions = sqliteTable(
 export const emailAccounts = sqliteTable(
   "email_accounts",
   {
-    id: text("id").primaryKey(),
-    userId: text("user_id").notNull(),
+    id: text("id").$type<EmailAccountId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
     provider: text("provider").notNull(),
     email: text("email").notNull(),
-    lastFetchedAt: text("last_fetched_at"),
-    createdAt: text("created_at").notNull(),
+    lastFetchedAt: text("last_fetched_at").$type<IsoDateTime>(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
   },
   (table) => [index("idx_email_accounts_user").on(table.userId)]
 );
@@ -73,20 +96,20 @@ export const emailAccounts = sqliteTable(
 export const processedEmails = sqliteTable(
   "processed_emails",
   {
-    id: text("id").primaryKey(),
+    id: text("id").$type<ProcessedEmailId>().primaryKey(),
     externalId: text("external_id").notNull(),
     provider: text("provider").notNull(),
     status: text("status").notNull(),
     failureReason: text("failure_reason"),
     subject: text("subject").notNull(),
     rawBodyPreview: text("raw_body_preview"),
-    receivedAt: text("received_at").notNull(),
-    transactionId: text("transaction_id"),
+    receivedAt: text("received_at").$type<IsoDateTime>().notNull(),
+    transactionId: text("transaction_id").$type<TransactionId>(),
     confidence: real("confidence"),
-    createdAt: text("created_at").notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
     rawBody: text("raw_body"),
     retryCount: integer("retry_count").notNull().default(0),
-    nextRetryAt: text("next_retry_at"),
+    nextRetryAt: text("next_retry_at").$type<IsoDateTime>(),
   },
   (table) => [
     uniqueIndex("uq_processed_external_id").on(table.externalId),
@@ -95,11 +118,11 @@ export const processedEmails = sqliteTable(
 );
 
 export const syncQueue = sqliteTable("sync_queue", {
-  id: text("id").primaryKey(),
+  id: text("id").$type<SyncQueueId>().primaryKey(),
   tableName: text("table_name").notNull(),
   rowId: text("row_id").notNull(),
   operation: text("operation").notNull(),
-  createdAt: text("created_at").notNull(),
+  createdAt: text("created_at").$type<IsoDateTime>().notNull(),
 });
 
 export const syncMeta = sqliteTable("sync_meta", {
@@ -110,12 +133,12 @@ export const syncMeta = sqliteTable("sync_meta", {
 export const syncConflicts = sqliteTable(
   "sync_conflicts",
   {
-    id: text("id").primaryKey(),
-    transactionId: text("transaction_id").notNull(),
+    id: text("id").$type<SyncConflictId>().primaryKey(),
+    transactionId: text("transaction_id").$type<TransactionId>().notNull(),
     localData: text("local_data").notNull(),
     serverData: text("server_data").notNull(),
-    detectedAt: text("detected_at").notNull(),
-    resolvedAt: text("resolved_at"),
+    detectedAt: text("detected_at").$type<IsoDateTime>().notNull(),
+    resolvedAt: text("resolved_at").$type<IsoDateTime>(),
     resolution: text("resolution"),
   },
   (table) => [index("idx_sync_conflicts_resolved").on(table.resolvedAt)]
@@ -124,11 +147,11 @@ export const syncConflicts = sqliteTable(
 export const merchantRules = sqliteTable(
   "merchant_rules",
   {
-    id: text("id").primaryKey(),
-    userId: text("user_id").notNull(),
+    id: text("id").$type<MerchantRuleId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
     keyword: text("keyword").notNull(),
-    categoryId: text("category_id").notNull(),
-    createdAt: text("created_at").notNull(),
+    categoryId: text("category_id").$type<CategoryId>().notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
   },
   (table) => [
     uniqueIndex("uq_merchant_rule_v2").on(table.userId, table.keyword),
@@ -139,12 +162,12 @@ export const merchantRules = sqliteTable(
 export const notificationSources = sqliteTable(
   "notification_sources",
   {
-    id: text("id").primaryKey(),
-    userId: text("user_id").notNull(),
+    id: text("id").$type<NotificationSourceId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
     packageName: text("package_name").notNull(),
     label: text("label").notNull(),
     isEnabled: integer("is_enabled", { mode: "boolean" }).notNull().default(true),
-    createdAt: text("created_at").notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
   },
   (table) => [uniqueIndex("uq_notification_source").on(table.userId, table.packageName)]
 );
@@ -152,15 +175,15 @@ export const notificationSources = sqliteTable(
 export const processedCaptures = sqliteTable(
   "processed_captures",
   {
-    id: text("id").primaryKey(),
+    id: text("id").$type<ProcessedCaptureId>().primaryKey(),
     fingerprintHash: text("fingerprint_hash").notNull(),
     source: text("source").notNull(),
     status: text("status").notNull(),
     rawText: text("raw_text"),
-    transactionId: text("transaction_id"),
+    transactionId: text("transaction_id").$type<TransactionId>(),
     confidence: real("confidence"),
-    receivedAt: text("received_at").notNull(),
-    createdAt: text("created_at").notNull(),
+    receivedAt: text("received_at").$type<IsoDateTime>().notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
   },
   (table) => [
     uniqueIndex("uq_capture_fingerprint").on(table.fingerprintHash),
@@ -171,13 +194,13 @@ export const processedCaptures = sqliteTable(
 export const detectedSmsEvents = sqliteTable(
   "detected_sms_events",
   {
-    id: text("id").primaryKey(),
-    userId: text("user_id").notNull(),
+    id: text("id").$type<DetectedSmsEventId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
     senderLabel: text("sender_label").notNull(),
-    detectedAt: text("detected_at").notNull(),
+    detectedAt: text("detected_at").$type<IsoDateTime>().notNull(),
     dismissed: integer("dismissed", { mode: "boolean" }).notNull().default(false),
-    linkedTransactionId: text("linked_transaction_id"),
-    createdAt: text("created_at").notNull(),
+    linkedTransactionId: text("linked_transaction_id").$type<TransactionId>(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
   },
   (table) => [index("idx_sms_events_user_dismissed").on(table.userId, table.dismissed)]
 );
@@ -185,12 +208,12 @@ export const detectedSmsEvents = sqliteTable(
 export const chatSessions = sqliteTable(
   "chat_sessions",
   {
-    id: text("id").primaryKey(),
-    userId: text("user_id").notNull(),
+    id: text("id").$type<ChatSessionId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
     title: text("title").notNull(),
-    createdAt: text("created_at").notNull(),
-    expiresAt: text("expires_at").notNull(),
-    deletedAt: text("deleted_at"),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    expiresAt: text("expires_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
   },
   (table) => [
     index("idx_chat_sessions_user_created").on(table.userId, table.createdAt),
@@ -201,13 +224,13 @@ export const chatSessions = sqliteTable(
 export const chatMessages = sqliteTable(
   "chat_messages",
   {
-    id: text("id").primaryKey(),
-    sessionId: text("session_id").notNull(),
+    id: text("id").$type<ChatMessageId>().primaryKey(),
+    sessionId: text("session_id").$type<ChatSessionId>().notNull(),
     role: text("role").notNull(),
     content: text("content").notNull(),
     action: text("action"),
     actionStatus: text("action_status"),
-    createdAt: text("created_at").notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
   },
   (table) => [index("idx_chat_messages_session_created").on(table.sessionId, table.createdAt)]
 );
@@ -215,12 +238,12 @@ export const chatMessages = sqliteTable(
 export const userMemories = sqliteTable(
   "user_memories",
   {
-    id: text("id").primaryKey(),
-    userId: text("user_id").notNull(),
+    id: text("id").$type<UserMemoryId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
     fact: text("fact").notNull(),
     category: text("category").notNull(),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
   },
   (table) => [index("idx_user_memories_user").on(table.userId)]
 );
@@ -228,14 +251,14 @@ export const userMemories = sqliteTable(
 export const budgets = sqliteTable(
   "budgets",
   {
-    id: text("id").primaryKey(),
-    userId: text("user_id").notNull(),
-    categoryId: text("category_id").notNull(),
-    amount: integer("amount").notNull(),
-    month: text("month").notNull(),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull(),
-    deletedAt: text("deleted_at"),
+    id: text("id").$type<BudgetId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    categoryId: text("category_id").$type<CategoryId>().notNull(),
+    amount: integer("amount").$type<CopAmount>().notNull(),
+    month: text("month").$type<Month>().notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
   },
   (table) => [
     uniqueIndex("uq_budget_user_category_month").on(table.userId, table.categoryId, table.month),

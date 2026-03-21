@@ -1,5 +1,16 @@
 import { z } from "zod";
 import { categoryIdSchema } from "@/features/transactions";
+import { toIsoDate } from "@/shared/lib";
+import type {
+  BillId,
+  BillPaymentId,
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 export const billFrequency = z.enum(["weekly", "biweekly", "monthly", "yearly"]);
 export type BillFrequency = z.infer<typeof billFrequency>;
@@ -35,33 +46,40 @@ export const billPaymentSchema = z.object({
   createdAt: z.string(),
 });
 
-export type BillPayment = z.infer<typeof billPaymentSchema>;
+export type BillPayment = {
+  readonly id: BillPaymentId;
+  readonly billId: BillId;
+  readonly dueDate: IsoDate;
+  readonly paidAt: IsoDateTime;
+  readonly transactionId: TransactionId | null;
+  readonly createdAt: IsoDateTime;
+};
 
 /** Convert a Bill (runtime, with Date) to a DB row (with ISO strings). */
 export function toBillRow(
   bill: Bill,
-  userId: string,
-  now: string
+  userId: UserId,
+  now: IsoDateTime
 ): {
-  id: string;
-  userId: string;
+  id: BillId;
+  userId: UserId;
   name: string;
-  amount: number;
+  amount: CopAmount;
   frequency: string;
-  categoryId: string;
-  startDate: string;
+  categoryId: CategoryId;
+  startDate: IsoDate;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: IsoDateTime;
+  updatedAt: IsoDateTime;
 } {
   return {
-    id: bill.id,
+    id: bill.id as BillId,
     userId,
     name: bill.name,
-    amount: bill.amount,
+    amount: bill.amount as CopAmount,
     frequency: bill.frequency,
-    categoryId: bill.categoryId,
-    startDate: bill.startDate.toISOString(),
+    categoryId: bill.categoryId as CategoryId,
+    startDate: toIsoDate(bill.startDate),
     isActive: bill.isActive,
     createdAt: now,
     updatedAt: now,
@@ -83,7 +101,7 @@ export function fromBillRow(row: {
     name: row.name,
     amount: row.amount,
     frequency: row.frequency as BillFrequency,
-    categoryId: row.categoryId,
+    categoryId: row.categoryId as CategoryId,
     startDate: new Date(row.startDate),
     isActive: row.isActive,
   };

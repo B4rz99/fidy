@@ -5,13 +5,14 @@ import {
   formatCleanupMessage,
 } from "../../features/ai-chat/lib/sessions";
 import type { ChatSession } from "../../features/ai-chat/schema";
+import type { ChatSessionId, IsoDateTime, UserId } from "../../shared/types/branded";
 
 const makeSession = (overrides: Partial<ChatSession>): ChatSession => ({
-  id: "sess_1",
-  userId: "u1",
+  id: "sess_1" as ChatSessionId,
+  userId: "u1" as UserId,
   title: "Test session",
-  createdAt: "2026-02-01T00:00:00.000Z",
-  expiresAt: "2026-03-03T00:00:00.000Z",
+  createdAt: "2026-02-01T00:00:00.000Z" as IsoDateTime,
+  expiresAt: "2026-03-03T00:00:00.000Z" as IsoDateTime,
   deletedAt: null,
   ...overrides,
 });
@@ -39,11 +40,20 @@ describe("deriveConversationTitle", () => {
 
 describe("findExpiredSessions", () => {
   it("returns only sessions past their expiresAt", () => {
-    const now = "2026-03-10T00:00:00.000Z";
+    const now = "2026-03-10T00:00:00.000Z" as IsoDateTime;
     const sessions = [
-      makeSession({ id: "s1", expiresAt: "2026-03-05T00:00:00.000Z" }), // expired
-      makeSession({ id: "s2", expiresAt: "2026-03-15T00:00:00.000Z" }), // not expired
-      makeSession({ id: "s3", expiresAt: "2026-03-09T23:59:59.999Z" }), // expired
+      makeSession({
+        id: "s1" as ChatSessionId,
+        expiresAt: "2026-03-05T00:00:00.000Z" as IsoDateTime,
+      }), // expired
+      makeSession({
+        id: "s2" as ChatSessionId,
+        expiresAt: "2026-03-15T00:00:00.000Z" as IsoDateTime,
+      }), // not expired
+      makeSession({
+        id: "s3" as ChatSessionId,
+        expiresAt: "2026-03-09T23:59:59.999Z" as IsoDateTime,
+      }), // expired
     ];
 
     const result = findExpiredSessions(sessions, now);
@@ -52,14 +62,17 @@ describe("findExpiredSessions", () => {
   });
 
   it("excludes already-deleted sessions", () => {
-    const now = "2026-03-10T00:00:00.000Z";
+    const now = "2026-03-10T00:00:00.000Z" as IsoDateTime;
     const sessions = [
       makeSession({
-        id: "s1",
-        expiresAt: "2026-03-05T00:00:00.000Z",
-        deletedAt: "2026-03-06T00:00:00.000Z",
+        id: "s1" as ChatSessionId,
+        expiresAt: "2026-03-05T00:00:00.000Z" as IsoDateTime,
+        deletedAt: "2026-03-06T00:00:00.000Z" as IsoDateTime,
       }),
-      makeSession({ id: "s2", expiresAt: "2026-03-05T00:00:00.000Z" }),
+      makeSession({
+        id: "s2" as ChatSessionId,
+        expiresAt: "2026-03-05T00:00:00.000Z" as IsoDateTime,
+      }),
     ];
 
     const result = findExpiredSessions(sessions, now);
@@ -68,14 +81,14 @@ describe("findExpiredSessions", () => {
   });
 
   it("returns empty array when nothing expired", () => {
-    const now = "2026-03-01T00:00:00.000Z";
-    const sessions = [makeSession({ expiresAt: "2026-03-15T00:00:00.000Z" })];
+    const now = "2026-03-01T00:00:00.000Z" as IsoDateTime;
+    const sessions = [makeSession({ expiresAt: "2026-03-15T00:00:00.000Z" as IsoDateTime })];
 
     expect(findExpiredSessions(sessions, now)).toEqual([]);
   });
 
   it("returns empty array for empty input", () => {
-    expect(findExpiredSessions([], "2026-03-10T00:00:00.000Z")).toEqual([]);
+    expect(findExpiredSessions([], "2026-03-10T00:00:00.000Z" as IsoDateTime)).toEqual([]);
   });
 });
 

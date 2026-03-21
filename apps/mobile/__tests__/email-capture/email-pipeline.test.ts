@@ -54,6 +54,9 @@ vi.mock("@/shared/lib/sentry", () => ({
 const mockGenerateId = vi.fn();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: unknown[]) => mockGenerateId(...args),
+  generateTransactionId: () => mockGenerateId("tx"),
+  generateProcessedEmailId: () => mockGenerateId("pe"),
+  generateSyncQueueId: () => mockGenerateId("sq"),
 }));
 
 import { processEmails, processRetries } from "@/features/email-capture/services/email-pipeline";

@@ -6,32 +6,33 @@ import {
   formatSignedMoney,
   parseDigitsToAmount,
 } from "@/shared/lib/format-money";
+import type { CopAmount } from "@/shared/types/branded";
 
 describe("formatMoney", () => {
   it("formats thousands with dot separator", () => {
-    expect(formatMoney(50000)).toBe("$50.000");
+    expect(formatMoney(50000 as CopAmount)).toBe("$50.000");
   });
 
   it("formats zero", () => {
-    expect(formatMoney(0)).toBe("$0");
+    expect(formatMoney(0 as CopAmount)).toBe("$0");
   });
 
   it("formats millions", () => {
-    expect(formatMoney(1500000)).toBe("$1.500.000");
+    expect(formatMoney(1500000 as CopAmount)).toBe("$1.500.000");
   });
 
   it("formats small amounts without separator", () => {
-    expect(formatMoney(500)).toBe("$500");
+    expect(formatMoney(500 as CopAmount)).toBe("$500");
   });
 });
 
 describe("formatSignedMoney", () => {
   it("prepends minus for expenses", () => {
-    expect(formatSignedMoney(50000, "expense")).toBe("-$50.000");
+    expect(formatSignedMoney(50000 as CopAmount, "expense")).toBe("-$50.000");
   });
 
   it("prepends plus for income", () => {
-    expect(formatSignedMoney(50000, "income")).toBe("+$50.000");
+    expect(formatSignedMoney(50000 as CopAmount, "income")).toBe("+$50.000");
   });
 });
 

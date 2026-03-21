@@ -1,6 +1,7 @@
 import { desc, eq, isNull } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { syncConflicts } from "@/shared/db";
+import type { IsoDateTime, SyncConflictId } from "@/shared/types/branded";
 
 export type ConflictRow = typeof syncConflicts.$inferInsert;
 
@@ -17,6 +18,11 @@ export function getUnresolvedConflicts(db: AnyDb) {
     .all();
 }
 
-export function resolveConflict(db: AnyDb, id: string, resolution: string, resolvedAt: string) {
+export function resolveConflict(
+  db: AnyDb,
+  id: SyncConflictId,
+  resolution: string,
+  resolvedAt: IsoDateTime
+) {
   db.update(syncConflicts).set({ resolvedAt, resolution }).where(eq(syncConflicts.id, id)).run();
 }

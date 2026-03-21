@@ -1,9 +1,15 @@
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
-import { generateId, toIsoDate } from "@/shared/lib";
+import {
+  generateSyncQueueId,
+  generateTransactionId,
+  toIsoDate,
+  toIsoDateTime,
+  toMonth,
+} from "@/shared/lib";
+import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
 import { buildTransaction, toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
-import type { CategoryId } from "./lib/categories";
 import {
   getBalanceAggregate,
   getDailySpendingAggregate,
@@ -22,16 +28,16 @@ const PAGE_SIZE = 30;
 
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
-let userIdRef: string | null = null;
+let userIdRef: UserId | null = null;
 
 type CategorySpendingItem = {
-  readonly categoryId: string;
-  readonly total: number;
+  readonly categoryId: CategoryId;
+  readonly total: CopAmount;
 };
 
 type DailySpendingItem = {
-  readonly date: string;
-  readonly total: number;
+  readonly date: IsoDate;
+  readonly total: CopAmount;
 };
 
 type TransactionState = {
@@ -55,7 +61,7 @@ type TransactionState = {
 };
 
 type TransactionActions = {
-  initStore: (db: AnyDb, userId: string) => void;
+  initStore: (db: AnyDb, userId: UserId) => void;
   setStep: (step: FormStep) => void;
   setType: (type: TransactionType) => void;
   setDigits: (digits: string) => void;
@@ -69,21 +75,21 @@ type TransactionActions = {
   loadNextPage: () => Promise<void>;
   loadAggregates: () => void;
   refresh: () => Promise<void>;
-  removeTransaction: (id: string) => Promise<void>;
-  editTransaction: (id: string) => void;
+  removeTransaction: (id: TransactionId) => Promise<void>;
+  editTransaction: (id: TransactionId) => void;
   updateTransaction: (
-    id: string
+    id: TransactionId
   ) => Promise<
     { success: true; transaction: StoredTransaction } | { success: false; error: string }
   >;
-  deleteTransaction: (id: string) => Promise<void>;
+  deleteTransaction: (id: TransactionId) => Promise<void>;
   addToCache: (tx: StoredTransaction) => void;
-  removeFromCache: (id: string) => void;
+  removeFromCache: (id: TransactionId) => void;
   resetForm: () => void;
-  getTransactionById: (id: string) => StoredTransaction | null;
+  getTransactionById: (id: TransactionId) => StoredTransaction | null;
 
   // Edit mode
-  editingId: string | null;
+  editingId: TransactionId | null;
 };
 
 const INITIAL_FORM: Pick<
@@ -160,7 +166,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     if (!dbRef || !userIdRef) return;
     try {
       const now = new Date();
-      const currentMonth = toIsoDate(now).slice(0, 7);
+      const currentMonth = toMonth(now);
       const thirtyDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
       const startDate = toIsoDate(thirtyDaysAgo);
       const endDate = toIsoDate(now);
@@ -209,7 +215,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     }
 
     const { type, digits, categoryId, description, date } = get();
-    const id = generateId("tx");
+    const id = generateTransactionId();
     const now = new Date();
 
     const result = buildTransaction(
@@ -228,11 +234,11 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
       await insertTransaction(dbRef, toTransactionRow(transaction));
 
       await enqueueSync(dbRef, {
-        id: generateId("sq"),
+        id: generateSyncQueueId(),
         tableName: "transactions",
         rowId: transaction.id,
         operation: "insert",
-        createdAt: now.toISOString(),
+        createdAt: toIsoDateTime(now),
       });
     } catch {
       return { success: false as const, error: "Failed to save transaction" };
@@ -246,10 +252,10 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
   removeTransaction: async (id) => {
     if (dbRef) {
       try {
-        const now = new Date().toISOString();
+        const now = toIsoDateTime(new Date());
         await softDeleteTransaction(dbRef, id, now);
         await enqueueSync(dbRef, {
-          id: generateId("sq"),
+          id: generateSyncQueueId(),
           tableName: "transactions",
           rowId: id,
           operation: "delete",
@@ -272,7 +278,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
       editingId: id,
       type: tx.type,
       digits: String(tx.amount),
-      categoryId: tx.categoryId as CategoryId,
+      categoryId: tx.categoryId,
       description: tx.description,
       date: tx.date,
     });
@@ -302,11 +308,11 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
       upsertTransaction(dbRef, toTransactionRow(transaction));
 
       await enqueueSync(dbRef, {
-        id: generateId("sq"),
+        id: generateSyncQueueId(),
         tableName: "transactions",
         rowId: id,
         operation: "update",
-        createdAt: now.toISOString(),
+        createdAt: toIsoDateTime(now),
       });
     } catch {
       return { success: false as const, error: "Failed to update transaction" };

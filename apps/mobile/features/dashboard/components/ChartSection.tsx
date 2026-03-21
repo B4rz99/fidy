@@ -11,6 +11,7 @@ import {
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney } from "@/shared/lib";
+import type { CopAmount } from "@/shared/types/branded";
 import { CategoryRow } from "./CategoryRow";
 import { DonutChart } from "./DonutChart";
 import { SpendingLineChart } from "./SpendingLineChart";
@@ -47,7 +48,7 @@ const toCategoryRows = (categories: readonly CategorySpendingItem[], locale: str
       categoryId: c.categoryId,
       color: cat?.color ?? "#B8A9D4",
       name: cat ? getCategoryLabel(cat, locale) : c.categoryId,
-      amount: formatMoney(c.total),
+      amount: formatMoney(c.total as CopAmount),
     };
   });
 
@@ -118,7 +119,7 @@ export const ChartSection = ({
             <View style={{ width: slideWidth }} className="flex-row gap-4">
               <DonutChart
                 segments={segments}
-                centerLabel={formatMoney(totalSpent)}
+                centerLabel={formatMoney(totalSpent as CopAmount)}
                 centerSubLabel={t("chart.spent")}
               />
               <View className="flex-1 justify-center gap-2.5">
@@ -154,7 +155,7 @@ export const ChartSection = ({
                     {t("chart.avgPerDay")}
                   </Text>
                   <Text className="font-poppins-bold text-body text-primary dark:text-primary-dark">
-                    {formatMoney(avgPerDay)}
+                    {formatMoney(avgPerDay as CopAmount)}
                   </Text>
                 </View>
                 <View className="mt-1 gap-1">
@@ -165,7 +166,7 @@ export const ChartSection = ({
                     {t("chart.thisMonthTotal")}
                   </Text>
                   <Text className="font-poppins-bold text-body text-primary dark:text-primary-dark">
-                    {formatMoney(totalSpent)}
+                    {formatMoney(totalSpent as CopAmount)}
                   </Text>
                 </View>
               </View>

@@ -1,6 +1,16 @@
 import { and, between, desc, eq, inArray, isNull, like, or, sql, sum } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { syncMeta, syncQueue, transactions } from "@/shared/db";
+import type {
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  Month,
+  SyncQueueId,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 export type { SyncOperation, SyncQueueEntry, SyncTableName } from "@/shared/db";
 
@@ -10,7 +20,7 @@ export function insertTransaction(db: AnyDb, row: TransactionRow) {
   db.insert(transactions).values(row).run();
 }
 
-export function getAllTransactions(db: AnyDb, userId: string) {
+export function getAllTransactions(db: AnyDb, userId: UserId) {
   return db
     .select()
     .from(transactions)
@@ -19,7 +29,7 @@ export function getAllTransactions(db: AnyDb, userId: string) {
     .all();
 }
 
-export function getTransactionsPaginated(db: AnyDb, userId: string, limit: number, offset: number) {
+export function getTransactionsPaginated(db: AnyDb, userId: UserId, limit: number, offset: number) {
   return db
     .select()
     .from(transactions)
@@ -30,7 +40,7 @@ export function getTransactionsPaginated(db: AnyDb, userId: string, limit: numbe
     .all();
 }
 
-export function getBalanceAggregate(db: AnyDb, userId: string): number {
+export function getBalanceAggregate(db: AnyDb, userId: UserId): CopAmount {
   const row = db
     .select({
       balance: sql<number>`SUM(CASE WHEN ${transactions.type} = 'income' THEN ${transactions.amount} ELSE -${transactions.amount} END)`,
@@ -38,18 +48,18 @@ export function getBalanceAggregate(db: AnyDb, userId: string): number {
     .from(transactions)
     .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
     .get();
-  return row?.balance ?? 0;
+  return (row?.balance ?? 0) as CopAmount;
 }
 
 export function getSpendingByCategoryAggregate(
   db: AnyDb,
-  userId: string,
-  month: string
-): Array<{ categoryId: string; total: number }> {
+  userId: UserId,
+  month: Month
+): Array<{ categoryId: CategoryId; total: CopAmount }> {
   return db
     .select({
       categoryId: transactions.categoryId,
-      total: sum(transactions.amount).mapWith(Number),
+      total: sum(transactions.amount).mapWith((val) => Number(val) as CopAmount),
     })
     .from(transactions)
     .where(
@@ -66,14 +76,14 @@ export function getSpendingByCategoryAggregate(
 
 export function getDailySpendingAggregate(
   db: AnyDb,
-  userId: string,
-  startDate: string,
-  endDate: string
-): Array<{ date: string; total: number }> {
+  userId: UserId,
+  startDate: IsoDate,
+  endDate: IsoDate
+): Array<{ date: IsoDate; total: CopAmount }> {
   return db
     .select({
       date: transactions.date,
-      total: sum(transactions.amount).mapWith(Number),
+      total: sum(transactions.amount).mapWith((val) => Number(val) as CopAmount),
     })
     .from(transactions)
     .where(
@@ -91,7 +101,7 @@ export function getDailySpendingAggregate(
 /** Get monthly income/expense totals for projection calculations. */
 export function getMonthlyTotalsByType(
   db: AnyDb,
-  userId: string,
+  userId: UserId,
   months: number
 ): Array<{ month: string; type: string; total: number }> {
   // Compute cutoff: first day of the oldest month in the window.
@@ -121,9 +131,9 @@ export function getMonthlyTotalsByType(
 
 export function getRecentTransactions(
   db: AnyDb,
-  userId: string,
-  currentMonth: string,
-  previousMonth: string
+  userId: UserId,
+  currentMonth: Month,
+  previousMonth: Month
 ) {
   return db
     .select()
@@ -142,14 +152,14 @@ export function getRecentTransactions(
     .all();
 }
 
-export function softDeleteTransaction(db: AnyDb, id: string, now: string) {
+export function softDeleteTransaction(db: AnyDb, id: TransactionId, now: IsoDateTime) {
   db.update(transactions)
     .set({ deletedAt: now, updatedAt: now })
     .where(eq(transactions.id, id))
     .run();
 }
 
-export function getTransactionById(db: AnyDb, id: string) {
+export function getTransactionById(db: AnyDb, id: TransactionId) {
   const rows = db.select().from(transactions).where(eq(transactions.id, id)).all();
   return rows[0] ?? null;
 }
@@ -178,7 +188,7 @@ export function getQueuedSyncEntries(db: AnyDb) {
   return db.select().from(syncQueue).all();
 }
 
-export function clearSyncEntries(db: AnyDb, ids: string[]) {
+export function clearSyncEntries(db: AnyDb, ids: SyncQueueId[]) {
   if (ids.length === 0) return;
   db.delete(syncQueue).where(inArray(syncQueue.id, ids)).run();
 }

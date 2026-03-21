@@ -5,7 +5,8 @@ import { getSpendingByCategoryAggregate } from "@/features/transactions/lib/repo
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import { getCategoryLabel, useLocaleStore } from "@/shared/i18n";
-import { generateId } from "@/shared/lib";
+import { generateBudgetId, generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
+import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
 import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./lib/derive";
 import {
   deriveAutoSuggestBudgets,
@@ -26,19 +27,19 @@ import { createBudgetSchema } from "./schema";
 
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
-let userIdRef: string | null = null;
+let userIdRef: UserId | null = null;
 let unsubscribeTxStore: (() => void) | null = null;
 
-const formatMonth = (date: Date): string => format(date, "yyyy-MM");
+const formatMonth = (date: Date): Month => format(date, "yyyy-MM") as Month;
 
 /** Parse "YYYY-MM" to a local-time Date (1st of month). Avoids UTC date-only parsing pitfall. */
-const parseMonth = (month: string): Date => {
+const parseMonth = (month: Month): Date => {
   const [y, m] = month.split("-").map(Number);
   return new Date(y, m - 1, 1);
 };
 
 type BudgetState = {
-  currentMonth: string; // YYYY-MM format
+  currentMonth: Month;
   budgets: Budget[];
   budgetProgress: BudgetProgress[];
   summary: { totalBudget: number; totalSpent: number; percentUsed: number };
@@ -49,19 +50,19 @@ type BudgetState = {
 };
 
 type BudgetActions = {
-  initStore: (db: AnyDb, userId: string) => void;
-  setMonth: (month: string) => void;
+  initStore: (db: AnyDb, userId: UserId) => void;
+  setMonth: (month: Month) => void;
   nextMonth: () => void;
   prevMonth: () => void;
   loadBudgets: () => Promise<void>;
   refreshProgress: () => void;
-  createBudget: (categoryId: string, amount: number) => Promise<boolean>;
-  updateBudget: (id: string, amount: number) => Promise<void>;
-  deleteBudget: (id: string) => Promise<void>;
-  copyBudgetsForward: (targetMonth: string) => Promise<void>;
+  createBudget: (categoryId: CategoryId, amount: CopAmount) => Promise<boolean>;
+  updateBudget: (id: BudgetId, amount: CopAmount) => Promise<void>;
+  deleteBudget: (id: BudgetId) => Promise<void>;
+  copyBudgetsForward: (targetMonth: Month) => Promise<void>;
   loadAutoSuggestions: () => void;
-  acceptSuggestions: (budgets: ReadonlyMap<string, number>) => Promise<void>;
-  acknowledgeAlert: (budgetId: string, threshold: 80 | 100) => void;
+  acceptSuggestions: (budgets: ReadonlyMap<CategoryId, CopAmount>) => Promise<void>;
+  acknowledgeAlert: (budgetId: BudgetId, threshold: 80 | 100) => void;
 };
 
 export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => ({
@@ -126,7 +127,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
       const spending = getSpendingByCategoryAggregate(dbRef, userIdRef, currentMonth);
       const spendingMap = new Map(spending.map((s) => [s.categoryId, s.total]));
       const progresses = budgets.map((b) =>
-        deriveBudgetProgress(b, spendingMap.get(b.categoryId) ?? 0)
+        deriveBudgetProgress(b, spendingMap.get(b.categoryId) ?? (0 as CopAmount))
       );
       const summary = deriveBudgetSummary(progresses);
       const newPendingAlerts = deriveBudgetAlerts(progresses, acknowledgedAlerts);
@@ -156,8 +157,8 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
       month: get().currentMonth,
     });
     if (!validation.success) return false;
-    const now = new Date().toISOString();
-    const id = generateId("bgt");
+    const now = toIsoDateTime(new Date());
+    const id = generateBudgetId();
     try {
       insertBudget(dbRef, {
         id,
@@ -170,7 +171,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
         deletedAt: null,
       });
       enqueueSync(dbRef, {
-        id: generateId("sq"),
+        id: generateSyncQueueId(),
         tableName: "budgets",
         rowId: id,
         operation: "insert",
@@ -185,11 +186,11 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
 
   updateBudget: async (id, amount) => {
     if (!dbRef) return;
-    const now = new Date().toISOString();
+    const now = toIsoDateTime(new Date());
     try {
       updateBudgetAmount(dbRef, id, amount, now);
       enqueueSync(dbRef, {
-        id: generateId("sq"),
+        id: generateSyncQueueId(),
         tableName: "budgets",
         rowId: id,
         operation: "update",
@@ -203,11 +204,11 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
 
   deleteBudget: async (id) => {
     if (!dbRef) return;
-    const now = new Date().toISOString();
+    const now = toIsoDateTime(new Date());
     try {
       softDeleteBudget(dbRef, id, now);
       enqueueSync(dbRef, {
-        id: generateId("sq"),
+        id: generateSyncQueueId(),
         tableName: "budgets",
         rowId: id,
         operation: "delete",
@@ -222,17 +223,17 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
   copyBudgetsForward: async (targetMonth) => {
     if (!dbRef || !userIdRef) return;
     const userId = userIdRef;
-    const now = new Date().toISOString();
+    const now = toIsoDateTime(new Date());
     try {
       dbRef.transaction((tx) => {
         const db = tx as unknown as AnyDb;
         const newIds = copyBudgetsToMonth(db, userId, get().currentMonth, targetMonth, now, () =>
-          generateId("bgt")
+          generateBudgetId()
         );
         // Enqueue sync for each copied budget
         newIds.forEach((newId) => {
           enqueueSync(db, {
-            id: generateId("sq"),
+            id: generateSyncQueueId(),
             tableName: "budgets",
             rowId: newId,
             operation: "insert",
@@ -256,7 +257,10 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
       const prevMonth = formatMonth(subMonths(currentDate, 1));
       const prevSpending = getSpendingByCategoryAggregate(dbRef, userIdRef, prevMonth);
       const existingCategoryIds = new Set(budgets.map((b) => b.categoryId));
-      const suggestions = deriveAutoSuggestBudgets(prevSpending, existingCategoryIds);
+      const suggestions = deriveAutoSuggestBudgets(
+        prevSpending,
+        existingCategoryIds as ReadonlySet<CategoryId>
+      );
       set({ autoSuggestions: suggestions as BudgetSuggestion[] });
     } catch {
       // Query failed — keep existing suggestions
@@ -267,17 +271,17 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     if (!dbRef || !userIdRef) return;
     const userId = userIdRef;
     const { currentMonth } = get();
-    const now = new Date().toISOString();
+    const now = toIsoDateTime(new Date());
     const entries = Array.from(budgetsByCategory.entries());
     if (entries.length === 0) return;
     try {
       dbRef.transaction((tx) => {
         const db = tx as unknown as AnyDb;
         entries.forEach(([categoryId, amount]) => {
-          const id = generateId("bgt");
+          const id = generateBudgetId();
           insertBudget(db, {
             id,
-            userId,
+            userId: userId,
             categoryId,
             amount,
             month: currentMonth,
@@ -286,7 +290,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
             deletedAt: null,
           });
           enqueueSync(db, {
-            id: generateId("sq"),
+            id: generateSyncQueueId(),
             tableName: "budgets",
             rowId: id,
             operation: "insert",

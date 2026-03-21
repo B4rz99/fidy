@@ -40,7 +40,7 @@ export function AddPaymentSheet() {
   digitsRef.current = digits;
   const [numpadActive, setNumpadActive] = useState(true);
   const [note, setNote] = useState("");
-  const [date, setDate] = useState(toIsoDate(new Date()));
+  const [date, setDate] = useState<string>(toIsoDate(new Date()));
 
   // Blinking cursor
   const cursorOpacity = useSharedValue(1);

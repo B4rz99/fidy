@@ -10,13 +10,14 @@ import {
   WEEKDAY_LABELS,
 } from "@/features/calendar/lib/calendar-utils";
 import type { Bill } from "@/features/calendar/schema";
+import type { CategoryId } from "@/shared/types/branded";
 
 const makeBill = (overrides: Partial<Bill> = {}): Bill => ({
   id: "b1",
   name: "Test",
   amount: 50000,
   frequency: "monthly",
-  categoryId: "services",
+  categoryId: "services" as CategoryId,
   startDate: new Date(2025, 0, 15),
   isActive: true,
   ...overrides,

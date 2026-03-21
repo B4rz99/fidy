@@ -2,7 +2,22 @@ import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
 import { insertTransaction, isValidCategoryId } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
-import { captureError, generateId, normalizeMerchant } from "@/shared/lib";
+import {
+  captureError,
+  generateProcessedEmailId,
+  generateSyncQueueId,
+  generateTransactionId,
+  normalizeMerchant,
+  toIsoDateTime,
+} from "@/shared/lib";
+import type {
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
 import {
   getPendingRetryEmails,
@@ -52,26 +67,28 @@ async function saveTransaction(
   status: "success" | "needs_review"
 ): Promise<string> {
   const source = email.provider === "gmail" ? "email_gmail" : "email_outlook";
-  const txId = generateId("tx");
-  const now = new Date().toISOString();
+  const txId = generateTransactionId();
+  const now = toIsoDateTime(new Date());
 
-  const categoryId = isValidCategoryId(validated.categoryId) ? validated.categoryId : "other";
+  const categoryId = isValidCategoryId(validated.categoryId)
+    ? validated.categoryId
+    : ("other" as CategoryId);
 
   await insertTransaction(db, {
     id: txId,
-    userId,
+    userId: userId as UserId,
     type: validated.type,
-    amount: validated.amount,
-    categoryId,
+    amount: validated.amount as CopAmount,
+    categoryId: categoryId as CategoryId,
     description: validated.description,
-    date: validated.date,
+    date: validated.date as IsoDate,
     source,
     createdAt: now,
     updatedAt: now,
   });
 
   await enqueueSync(db, {
-    id: generateId("sq"),
+    id: generateSyncQueueId(),
     tableName: "transactions",
     rowId: txId,
     operation: "insert",
@@ -79,14 +96,14 @@ async function saveTransaction(
   });
 
   await insertProcessedEmail(db, {
-    id: generateId("pe"),
+    id: generateProcessedEmailId(),
     externalId: email.externalId,
     provider: email.provider,
     status,
     failureReason: null,
     subject: email.subject,
     rawBodyPreview: email.body.slice(0, 500),
-    receivedAt: email.receivedAt,
+    receivedAt: email.receivedAt as IsoDateTime,
     transactionId: txId,
     confidence: validated.confidence,
     createdAt: now,
@@ -163,19 +180,23 @@ export async function processEmails(
         }
 
         await insertProcessedEmail(db, {
-          id: generateId("pe"),
+          id: generateProcessedEmailId(),
           externalId: email.externalId,
           provider: email.provider,
           status,
           failureReason,
           subject: email.subject,
           rawBodyPreview: email.body.slice(0, 500),
-          receivedAt: email.receivedAt,
+          receivedAt: email.receivedAt as IsoDateTime,
           transactionId: null,
           confidence: null,
-          createdAt: new Date().toISOString(),
+          createdAt: toIsoDateTime(new Date()),
           ...(parseError
-            ? { rawBody: email.body, retryCount: 0, nextRetryAt: computeNextRetryAt(0) }
+            ? {
+                rawBody: email.body,
+                retryCount: 0,
+                nextRetryAt: computeNextRetryAt(0) as IsoDateTime,
+              }
             : {}),
         });
         completed++;
@@ -199,17 +220,17 @@ export async function processEmails(
       );
       if (existingTxId) {
         await insertProcessedEmail(db, {
-          id: generateId("pe"),
+          id: generateProcessedEmailId(),
           externalId: email.externalId,
           provider: email.provider,
           status: "skipped_duplicate",
           failureReason: null,
           subject: email.subject,
           rawBodyPreview: email.body.slice(0, 500),
-          receivedAt: email.receivedAt,
-          transactionId: existingTxId,
+          receivedAt: email.receivedAt as IsoDateTime,
+          transactionId: existingTxId as TransactionId,
           confidence: parsed.confidence,
-          createdAt: new Date().toISOString(),
+          createdAt: toIsoDateTime(new Date()),
         });
         result.skippedCrossSource++;
         completed++;
@@ -344,34 +365,42 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
       parsed.description
     );
     if (existingTxId) {
-      await markRetrySuccess(db, email.id, "success", existingTxId, parsed.confidence);
+      await markRetrySuccess(
+        db,
+        email.id,
+        "success",
+        existingTxId as TransactionId,
+        parsed.confidence
+      );
       result.succeeded++;
       continue;
     }
 
     // Save retry transaction
     try {
-      const txId = generateId("tx");
-      const now = new Date().toISOString();
+      const txId = generateTransactionId();
+      const now = toIsoDateTime(new Date());
       const source = email.provider === "gmail" ? "email_gmail" : "email_outlook";
       const status = parsed.confidence < 0.7 ? "needs_review" : "success";
-      const retryCategoryId = isValidCategoryId(parsed.categoryId) ? parsed.categoryId : "other";
+      const retryCategoryId = isValidCategoryId(parsed.categoryId)
+        ? parsed.categoryId
+        : ("other" as CategoryId);
 
       await insertTransaction(db, {
         id: txId,
-        userId,
+        userId: userId as UserId,
         type: parsed.type,
-        amount: parsed.amount,
-        categoryId: retryCategoryId,
+        amount: parsed.amount as CopAmount,
+        categoryId: retryCategoryId as CategoryId,
         description: parsed.description,
-        date: parsed.date,
+        date: parsed.date as IsoDate,
         source,
         createdAt: now,
         updatedAt: now,
       });
 
       await enqueueSync(db, {
-        id: generateId("sq"),
+        id: generateSyncQueueId(),
         tableName: "transactions",
         rowId: txId,
         operation: "insert",

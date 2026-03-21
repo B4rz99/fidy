@@ -2,6 +2,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { processedCaptures, transactions } from "@/shared/db";
 import { normalizeMerchant } from "@/shared/lib";
+import type { CopAmount, IsoDate, UserId } from "@/shared/types/branded";
 
 /**
  * Creates a fingerprint hash for deduplication across capture sources.
@@ -48,9 +49,9 @@ export async function findDuplicateTransaction(
     .from(transactions)
     .where(
       and(
-        eq(transactions.userId, userId),
-        eq(transactions.amount, amount),
-        eq(transactions.date, date),
+        eq(transactions.userId, userId as UserId),
+        eq(transactions.amount, amount as CopAmount),
+        eq(transactions.date, date as IsoDate),
         isNull(transactions.deletedAt)
       )
     );

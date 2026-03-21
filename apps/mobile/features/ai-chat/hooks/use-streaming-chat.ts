@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useTransactionStore } from "@/features/transactions";
 import { parseIsoDate } from "@/shared/lib";
+import type { IsoDate } from "@/shared/types/branded";
 import { parseActionFromResponse } from "../lib/parse-action";
 import type { ChatAction } from "../schema";
 import { streamChat } from "../services/ai-chat-api";
@@ -31,7 +32,7 @@ export function useStreamingChat() {
         store.setDigits(String(action.data.amount));
         store.setCategoryId(action.data.categoryId);
         store.setDescription(action.data.description);
-        store.setDate(parseIsoDate(action.data.date));
+        store.setDate(parseIsoDate(action.data.date as IsoDate));
         try {
           await store.saveTransaction();
         } finally {

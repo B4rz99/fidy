@@ -17,6 +17,7 @@ import {
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { parseDigitsToAmount } from "@/shared/lib";
+import type { BillId } from "@/shared/types/branded";
 
 function AddBillForm({
   existingBill,
@@ -33,14 +34,10 @@ function AddBillForm({
     startDate: Date
   ) => Promise<boolean>;
   readonly onUpdateBill: (
-    id: string,
-    data: {
-      name: string;
-      amount: number;
-      frequency: BillFrequency;
-      categoryId: string;
-      startDate: Date;
-    }
+    id: BillId,
+    data: Partial<
+      Pick<Bill, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
+    >
   ) => Promise<void>;
   readonly onDone: () => void;
 }) {
@@ -53,7 +50,7 @@ function AddBillForm({
   const [category, setCategory] = useState<CategoryId>(
     existingBill?.categoryId && isValidCategoryId(existingBill.categoryId)
       ? existingBill.categoryId
-      : "services"
+      : ("services" as CategoryId)
   );
   const [startDate, setStartDate] = useState(existingBill?.startDate ?? new Date());
 
@@ -76,7 +73,7 @@ function AddBillForm({
       if (isEdit && existingBill) {
         const amountValue = parseDigitsToAmount(amount);
         if (amountValue <= 0) return;
-        await onUpdateBill(existingBill.id, {
+        await onUpdateBill(existingBill.id as BillId, {
           name: trimmedName,
           amount: amountValue,
           frequency,

@@ -3,7 +3,8 @@ import { useTransactionStore } from "@/features/transactions";
 import { getMonthlyTotalsByType } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
-import { generateId } from "@/shared/lib";
+import { generateId, generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
+import type { UserId } from "@/shared/types/branded";
 
 // Import from goals feature
 import type { GoalProgress, GoalProjection, InstallmentProgress } from "./lib/derive";
@@ -107,7 +108,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
     set({ isLoading: true });
     try {
       const goalRows = getGoalsForUser(db, userIdRef) as Goal[];
-      const monthlyTotals = getMonthlyTotalsByType(db, userIdRef, 3);
+      const monthlyTotals = getMonthlyTotalsByType(db, userIdRef as UserId, 3);
 
       const goalsWithProgress: GoalWithProgress[] = goalRows.map((goal) => {
         const currentAmount = getGoalCurrentAmount(db, goal.id);
@@ -175,7 +176,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
     if (!dbRef || !userIdRef) return false;
     const validation = createGoalSchema.safeParse(input);
     if (!validation.success) return false;
-    const now = new Date().toISOString();
+    const now = toIsoDateTime(new Date());
     const id = generateId("gl");
     try {
       insertGoal(dbRef, {
@@ -193,7 +194,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
         deletedAt: null,
       });
       enqueueSync(dbRef, {
-        id: generateId("sq"),
+        id: generateSyncQueueId(),
         tableName: "goals",
         rowId: id,
         operation: "insert",
@@ -208,11 +209,11 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
 
   updateGoal: async (id, data) => {
     if (!dbRef) return;
-    const now = new Date().toISOString();
+    const now = toIsoDateTime(new Date());
     try {
       updateGoal(dbRef, id, data, now);
       enqueueSync(dbRef, {
-        id: generateId("sq"),
+        id: generateSyncQueueId(),
         tableName: "goals",
         rowId: id,
         operation: "update",
@@ -226,11 +227,11 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
 
   deleteGoal: async (id) => {
     if (!dbRef) return;
-    const now = new Date().toISOString();
+    const now = toIsoDateTime(new Date());
     try {
       softDeleteGoal(dbRef, id, now);
       enqueueSync(dbRef, {
-        id: generateId("sq"),
+        id: generateSyncQueueId(),
         tableName: "goals",
         rowId: id,
         operation: "delete",
@@ -249,7 +250,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
     if (!dbRef || !userIdRef) return false;
     const validation = addContributionSchema.safeParse(input);
     if (!validation.success) return false;
-    const now = new Date().toISOString();
+    const now = toIsoDateTime(new Date());
     const id = generateId("gc");
     try {
       insertContribution(dbRef, {
@@ -264,7 +265,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
         deletedAt: null,
       });
       enqueueSync(dbRef, {
-        id: generateId("sq"),
+        id: generateSyncQueueId(),
         tableName: "goalContributions",
         rowId: id,
         operation: "insert",
@@ -283,11 +284,11 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
 
   deleteContribution: async (id) => {
     if (!dbRef) return;
-    const now = new Date().toISOString();
+    const now = toIsoDateTime(new Date());
     try {
       softDeleteContribution(dbRef, id, now);
       enqueueSync(dbRef, {
-        id: generateId("sq"),
+        id: generateSyncQueueId(),
         tableName: "goalContributions",
         rowId: id,
         operation: "delete",
@@ -317,7 +318,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
     const db = dbRef;
     if (!db || !userIdRef) return;
     try {
-      const monthlyTotals = getMonthlyTotalsByType(db, userIdRef, 3);
+      const monthlyTotals = getMonthlyTotalsByType(db, userIdRef as UserId, 3);
       const { goals } = get();
       const updated = goals.map((g) => {
         const currentAmount = getGoalCurrentAmount(db, g.goal.id);

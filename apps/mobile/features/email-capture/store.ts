@@ -3,7 +3,19 @@ import { create } from "zustand";
 import { useTransactionStore } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync, transactions } from "@/shared/db";
-import { generateId, normalizeMerchant } from "@/shared/lib";
+import {
+  generateEmailAccountId,
+  generateSyncQueueId,
+  normalizeMerchant,
+  toIsoDateTime,
+} from "@/shared/lib";
+import type {
+  CategoryId,
+  EmailAccountId,
+  ProcessedEmailId,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 import { insertMerchantRule } from "./lib/merchant-rules";
 import type { ProgressPhase } from "./lib/progress-phases";
 import { isFirstFetchForAny, shouldShowProgress } from "./lib/progress-phases";
@@ -66,7 +78,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
   loadAccounts: async () => {
     if (!dbRef || !userIdRef) return;
-    const accounts = await getEmailAccounts(dbRef, userIdRef);
+    const accounts = await getEmailAccounts(dbRef, userIdRef as UserId);
     set({ accounts });
   },
 
@@ -86,7 +98,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
   dismissFailedEmail: async (id) => {
     if (!dbRef) return;
-    await dismissProcessedEmail(dbRef, id);
+    await dismissProcessedEmail(dbRef, id as ProcessedEmailId);
     const updated = get().failedEmails.filter((e) => e.id !== id);
     set({ failedEmails: updated });
   },
@@ -99,12 +111,12 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     if (!result.success) return;
 
     const row: EmailAccountRow = {
-      id: generateId("ea"),
-      userId: userIdRef,
+      id: generateEmailAccountId(),
+      userId: userIdRef as UserId,
       provider,
       email: result.email,
       lastFetchedAt: null,
-      createdAt: new Date().toISOString(),
+      createdAt: toIsoDateTime(new Date()),
     };
 
     await insertEmailAccount(dbRef, row);
@@ -117,7 +129,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     if (account) {
       await getAdapter(account.provider as EmailProvider).disconnect();
     }
-    await deleteEmailAccount(dbRef, id);
+    await deleteEmailAccount(dbRef, id as EmailAccountId);
     set((state) => ({
       accounts: state.accounts.filter((a) => a.id !== id),
     }));
@@ -219,7 +231,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       await processRetries(db, userId);
 
       // Update lastFetchedAt only for accounts whose fetch succeeded
-      const now = new Date().toISOString();
+      const now = toIsoDateTime(new Date());
       await Promise.all(
         fetchResults.filter((r) => r.fetchOk).map((r) => updateLastFetchedAt(db, r.account.id, now))
       );
@@ -273,17 +285,17 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     const processedEmail = get().needsReviewEmails.find((e) => e.id === processedEmailId);
     if (!processedEmail || !processedEmail.transactionId) return;
 
-    const now = new Date().toISOString();
+    const now = toIsoDateTime(new Date());
 
     // Update the transaction's categoryId
     await db
       .update(transactions)
-      .set({ categoryId, updatedAt: now })
+      .set({ categoryId: categoryId as CategoryId, updatedAt: now })
       .where(eq(transactions.id, processedEmail.transactionId));
 
     // Enqueue sync for the updated transaction
     await enqueueSync(db, {
-      id: generateId("sq"),
+      id: generateSyncQueueId(),
       tableName: "transactions",
       rowId: processedEmail.transactionId,
       operation: "update",
@@ -302,7 +314,12 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     }
 
     // Update the processed email status to "success"
-    await updateProcessedEmailStatus(db, processedEmailId, "success", processedEmail.transactionId);
+    await updateProcessedEmailStatus(
+      db,
+      processedEmailId as ProcessedEmailId,
+      "success",
+      processedEmail.transactionId as TransactionId
+    );
 
     // Remove from needsReviewEmails state and refresh home screen
     set((state) => ({

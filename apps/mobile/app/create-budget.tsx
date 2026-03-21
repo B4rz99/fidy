@@ -20,6 +20,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/componen
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatInputDisplay, formatMoney, parseDigitsToAmount } from "@/shared/lib";
+import type { BudgetId, CopAmount } from "@/shared/types/branded";
 
 function CreateBudgetForm({
   existingBudget,
@@ -33,9 +34,9 @@ function CreateBudgetForm({
   readonly existingBudget: Budget | undefined;
   readonly existingCategoryIds: ReadonlySet<string>;
   readonly autoSuggestions: readonly BudgetSuggestion[];
-  readonly onCreateBudget: (categoryId: string, amount: number) => Promise<boolean>;
-  readonly onUpdateBudget: (id: string, amount: number) => Promise<void>;
-  readonly onDeleteBudget: (id: string) => Promise<void>;
+  readonly onCreateBudget: (categoryId: CategoryId, amount: CopAmount) => Promise<boolean>;
+  readonly onUpdateBudget: (id: BudgetId, amount: CopAmount) => Promise<void>;
+  readonly onDeleteBudget: (id: BudgetId) => Promise<void>;
   readonly onDone: () => void;
 }) {
   const { t, locale } = useTranslation();
@@ -44,7 +45,7 @@ function CreateBudgetForm({
   const [category, setCategory] = useState<CategoryId>(
     existingBudget?.categoryId && isValidCategoryId(existingBudget.categoryId)
       ? existingBudget.categoryId
-      : ""
+      : ("" as CategoryId)
   );
   // digits = raw whole-peso string (e.g. "18900" for $18.900 COP)
   const [digits, setDigits] = useState(existingBudget ? String(existingBudget.amount) : "");
@@ -83,7 +84,7 @@ function CreateBudgetForm({
 
   const handleSave = () =>
     guardedSave(async () => {
-      const amount = parseDigitsToAmount(digits);
+      const amount = parseDigitsToAmount(digits) as CopAmount;
       if (amount <= 0) return;
 
       if (isEdit && existingBudget) {

@@ -1,4 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type {
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: vi.fn(),
@@ -26,7 +34,7 @@ import { enqueueSync } from "@/shared/db/enqueue-sync";
 
 // biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
 const mockDb = {} as any;
-const mockUserId = "user-1";
+const mockUserId = "user-1" as UserId;
 
 describe("useTransactionStore", () => {
   beforeEach(() => {
@@ -80,7 +88,7 @@ describe("useTransactionStore", () => {
   });
 
   it("setCategoryId updates category", () => {
-    useTransactionStore.getState().setCategoryId("food");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
     expect(useTransactionStore.getState().categoryId).toBe("food");
   });
 
@@ -98,7 +106,7 @@ describe("useTransactionStore", () => {
   it("saveTransaction succeeds with valid data and persists to DB", async () => {
     const store = useTransactionStore.getState();
     store.setDigits("4520");
-    store.setCategoryId("food");
+    store.setCategoryId("food" as CategoryId);
     store.setDescription("Groceries");
 
     const result = await store.saveTransaction();
@@ -128,7 +136,7 @@ describe("useTransactionStore", () => {
   it("saveTransaction enqueues sync entry after insert", async () => {
     const store = useTransactionStore.getState();
     store.setDigits("1000");
-    store.setCategoryId("food");
+    store.setCategoryId("food" as CategoryId);
 
     await store.saveTransaction();
 
@@ -144,7 +152,7 @@ describe("useTransactionStore", () => {
   it("saveTransaction calls refresh after successful save", async () => {
     const store = useTransactionStore.getState();
     store.setDigits("1000");
-    store.setCategoryId("food");
+    store.setCategoryId("food" as CategoryId);
 
     await store.saveTransaction();
 
@@ -155,7 +163,7 @@ describe("useTransactionStore", () => {
 
   it("saveTransaction fails with zero amount", async () => {
     const store = useTransactionStore.getState();
-    store.setCategoryId("food");
+    store.setCategoryId("food" as CategoryId);
 
     const result = await store.saveTransaction();
     expect(result.success).toBe(false);
@@ -176,15 +184,15 @@ describe("useTransactionStore", () => {
   it("resetForm clears form but keeps pages", async () => {
     useTransactionStore.setState({
       digits: "4520",
-      categoryId: "food",
+      categoryId: "food" as CategoryId,
       step: 2,
       pages: [
         {
-          id: "tx-1",
+          id: "tx-1" as TransactionId,
           userId: mockUserId,
           type: "expense",
-          amount: 100,
-          categoryId: "food",
+          amount: 100 as CopAmount,
+          categoryId: "food" as CategoryId,
           description: "Test",
           date: new Date(),
           createdAt: new Date(),
@@ -205,15 +213,15 @@ describe("useTransactionStore", () => {
   it("loadInitialPage reads paginated data from DB", async () => {
     vi.mocked(getTransactionsPaginated).mockReturnValueOnce([
       {
-        id: "tx-1",
+        id: "tx-1" as TransactionId,
         userId: mockUserId,
         type: "expense",
-        amount: 1000,
-        categoryId: "food",
+        amount: 1000 as CopAmount,
+        categoryId: "food" as CategoryId,
         description: "Lunch",
-        date: "2026-03-04",
-        createdAt: "2026-03-04T10:00:00.000Z",
-        updatedAt: "2026-03-04T10:00:00.000Z",
+        date: "2026-03-04" as IsoDate,
+        createdAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+        updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
         deletedAt: null,
         source: "manual",
       },
@@ -233,15 +241,15 @@ describe("useTransactionStore", () => {
   it("loadInitialPage sets hasMore when more rows exist", async () => {
     // Return 31 rows (PAGE_SIZE + 1) to indicate more exist
     const rows = Array.from({ length: 31 }, (_, i) => ({
-      id: `tx-${i}`,
+      id: `tx-${i}` as TransactionId,
       userId: mockUserId,
       type: "expense",
-      amount: 1000,
-      categoryId: "food",
+      amount: 1000 as CopAmount,
+      categoryId: "food" as CategoryId,
       description: `Item ${i}`,
-      date: "2026-03-04",
-      createdAt: "2026-03-04T10:00:00.000Z",
-      updatedAt: "2026-03-04T10:00:00.000Z",
+      date: "2026-03-04" as IsoDate,
+      createdAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+      updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
       deletedAt: null,
       source: "manual",
     }));
@@ -260,11 +268,11 @@ describe("useTransactionStore", () => {
     useTransactionStore.setState({
       pages: [
         {
-          id: "tx-0",
+          id: "tx-0" as TransactionId,
           userId: mockUserId,
           type: "expense",
-          amount: 100,
-          categoryId: "food",
+          amount: 100 as CopAmount,
+          categoryId: "food" as CategoryId,
           description: "First",
           date: new Date(),
           createdAt: new Date(),
@@ -278,15 +286,15 @@ describe("useTransactionStore", () => {
 
     vi.mocked(getTransactionsPaginated).mockReturnValueOnce([
       {
-        id: "tx-1",
+        id: "tx-1" as TransactionId,
         userId: mockUserId,
         type: "expense",
-        amount: 200,
-        categoryId: "food",
+        amount: 200 as CopAmount,
+        categoryId: "food" as CategoryId,
         description: "Second",
-        date: "2026-03-03",
-        createdAt: "2026-03-03T10:00:00.000Z",
-        updatedAt: "2026-03-03T10:00:00.000Z",
+        date: "2026-03-03" as IsoDate,
+        createdAt: "2026-03-03T10:00:00.000Z" as IsoDateTime,
+        updatedAt: "2026-03-03T10:00:00.000Z" as IsoDateTime,
         deletedAt: null,
         source: "manual",
       },
@@ -312,11 +320,11 @@ describe("useTransactionStore", () => {
     useTransactionStore.setState({
       pages: [
         {
-          id: "tx-1",
+          id: "tx-1" as TransactionId,
           userId: mockUserId,
           type: "expense",
-          amount: 100,
-          categoryId: "food",
+          amount: 100 as CopAmount,
+          categoryId: "food" as CategoryId,
           description: "Test",
           date: new Date(),
           createdAt: new Date(),
@@ -326,7 +334,7 @@ describe("useTransactionStore", () => {
       ],
     });
 
-    await useTransactionStore.getState().removeTransaction("tx-1");
+    await useTransactionStore.getState().removeTransaction("tx-1" as TransactionId);
 
     expect(softDeleteTransaction).toHaveBeenCalledWith(mockDb, "tx-1", expect.any(String));
     expect(enqueueSync).toHaveBeenCalledWith(
@@ -346,7 +354,7 @@ describe("useTransactionStore", () => {
 
     const store = useTransactionStore.getState();
     store.setDigits("500");
-    store.setCategoryId("food");
+    store.setCategoryId("food" as CategoryId);
 
     const result = await store.saveTransaction();
     expect(result.success).toBe(false);
@@ -359,11 +367,11 @@ describe("useTransactionStore", () => {
     useTransactionStore.setState({
       pages: [
         {
-          id: "tx-1",
+          id: "tx-1" as TransactionId,
           userId: mockUserId,
           type: "expense",
-          amount: 100,
-          categoryId: "food",
+          amount: 100 as CopAmount,
+          categoryId: "food" as CategoryId,
           description: "Test",
           date: new Date(),
           createdAt: new Date(),
@@ -374,18 +382,18 @@ describe("useTransactionStore", () => {
     });
 
     vi.mocked(softDeleteTransaction).mockRejectedValueOnce(new Error("db error"));
-    await useTransactionStore.getState().removeTransaction("tx-1");
+    await useTransactionStore.getState().removeTransaction("tx-1" as TransactionId);
 
     expect(useTransactionStore.getState().pages).toHaveLength(1);
   });
 
   it("addToCache prepends to pages", () => {
     const tx = {
-      id: "tx-new",
+      id: "tx-new" as TransactionId,
       userId: mockUserId,
       type: "expense" as const,
-      amount: 500,
-      categoryId: "food" as const,
+      amount: 500 as CopAmount,
+      categoryId: "food" as CategoryId,
       description: "New",
       date: new Date(),
       createdAt: new Date(),
@@ -402,11 +410,11 @@ describe("useTransactionStore", () => {
     useTransactionStore.setState({
       pages: [
         {
-          id: "tx-1",
+          id: "tx-1" as TransactionId,
           userId: mockUserId,
           type: "expense",
-          amount: 100,
-          categoryId: "food",
+          amount: 100 as CopAmount,
+          categoryId: "food" as CategoryId,
           description: "Test",
           date: new Date(),
           createdAt: new Date(),
@@ -416,7 +424,7 @@ describe("useTransactionStore", () => {
       ],
     });
 
-    useTransactionStore.getState().removeFromCache("tx-1");
+    useTransactionStore.getState().removeFromCache("tx-1" as TransactionId);
 
     expect(useTransactionStore.getState().pages).toHaveLength(0);
   });

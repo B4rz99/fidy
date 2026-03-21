@@ -15,6 +15,7 @@ vi.mock("@/features/capture-sources/lib/repository", () => ({
 
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (prefix: string) => `${prefix}-1`,
+  generateNotificationSourceId: () => "ns-1",
 }));
 
 import { useCaptureSourcesStore } from "@/features/capture-sources/store";

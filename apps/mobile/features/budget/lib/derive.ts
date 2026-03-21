@@ -1,34 +1,36 @@
+import type { BudgetId, CategoryId, CopAmount } from "@/shared/types/branded";
+
 export type BudgetProgress = {
-  readonly budgetId: string;
-  readonly categoryId: string;
-  readonly amount: number;
-  readonly spent: number;
+  readonly budgetId: BudgetId;
+  readonly categoryId: CategoryId;
+  readonly amount: CopAmount;
+  readonly spent: CopAmount;
   readonly percentUsed: number; // 0–100+ (can exceed 100)
-  readonly remaining: number; // negative if over budget
+  readonly remaining: CopAmount; // negative if over budget
   readonly isOverBudget: boolean;
   readonly isNearLimit: boolean; // >= 80%
 };
 
 export type BudgetAlert = {
-  readonly budgetId: string;
-  readonly categoryId: string;
+  readonly budgetId: BudgetId;
+  readonly categoryId: CategoryId;
   readonly threshold: 80 | 100;
   readonly percentUsed: number;
 };
 
 export type BudgetSuggestion = {
-  readonly categoryId: string;
-  readonly suggestedAmount: number;
+  readonly categoryId: CategoryId;
+  readonly suggestedAmount: CopAmount;
 };
 
 /** Pure derivation: compute progress for a single budget given its total spent. */
 export function deriveBudgetProgress(
-  budget: { readonly id: string; readonly categoryId: string; readonly amount: number },
-  spent: number
+  budget: { readonly id: BudgetId; readonly categoryId: CategoryId; readonly amount: CopAmount },
+  spent: CopAmount
 ): BudgetProgress {
   const percentUsed =
     budget.amount > 0 ? Math.round((spent / budget.amount) * 100) : spent > 0 ? 100 : 0;
-  const remaining = budget.amount - spent;
+  const remaining = (budget.amount - spent) as CopAmount;
   return {
     budgetId: budget.id,
     categoryId: budget.categoryId,
@@ -78,14 +80,14 @@ const roundUpCop = (amount: number): number => {
  * Suggested amount is rounded UP to the nearest clean COP amount.
  */
 export function deriveAutoSuggestBudgets(
-  lastMonthSpending: readonly { readonly categoryId: string; readonly total: number }[],
-  existingBudgetCategoryIds: ReadonlySet<string>
+  lastMonthSpending: readonly { readonly categoryId: CategoryId; readonly total: CopAmount }[],
+  existingBudgetCategoryIds: ReadonlySet<CategoryId>
 ): readonly BudgetSuggestion[] {
   return lastMonthSpending
     .filter((s) => !existingBudgetCategoryIds.has(s.categoryId))
     .map((s) => ({
       categoryId: s.categoryId,
-      suggestedAmount: roundUpCop(s.total),
+      suggestedAmount: roundUpCop(s.total) as CopAmount,
     }));
 }
 

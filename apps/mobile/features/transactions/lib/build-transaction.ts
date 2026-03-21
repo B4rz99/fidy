@@ -1,7 +1,13 @@
 import { parseDigitsToAmount, parseIsoDate, toIsoDate } from "@/shared/lib";
-import type { CreateTransactionInput, StoredTransaction, TransactionType } from "../schema";
+import type {
+  CategoryId,
+  CopAmount,
+  IsoDateTime,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
+import type { StoredTransaction, TransactionType } from "../schema";
 import { createTransactionSchema } from "../schema";
-import type { CategoryId } from "./categories";
 import { isValidCategoryId } from "./categories";
 import type { TransactionRow } from "./repository";
 
@@ -15,16 +21,16 @@ type BuildInput = {
 
 export function buildTransaction(
   input: BuildInput,
-  userId: string,
-  id: string,
+  userId: UserId,
+  id: TransactionId,
   now: Date
 ): { success: true; transaction: StoredTransaction } | { success: false; error: string } {
   const amount = parseDigitsToAmount(input.digits);
 
-  const raw: CreateTransactionInput = {
+  const raw = {
     type: input.type,
-    amount,
-    categoryId: input.categoryId ?? "other",
+    amount: amount as number,
+    categoryId: (input.categoryId ?? "other") as string,
     description: input.description || undefined,
     date: input.date,
   };
@@ -43,7 +49,7 @@ export function buildTransaction(
       id,
       userId,
       type: result.data.type,
-      amount: result.data.amount,
+      amount: result.data.amount as CopAmount,
       categoryId: result.data.categoryId,
       description: result.data.description ?? "",
       date: result.data.date,
@@ -60,7 +66,7 @@ export function toStoredTransaction(row: TransactionRow): StoredTransaction {
     userId: row.userId,
     type: row.type as TransactionType,
     amount: row.amount,
-    categoryId: isValidCategoryId(row.categoryId) ? row.categoryId : "other",
+    categoryId: isValidCategoryId(row.categoryId) ? row.categoryId : ("other" as CategoryId),
     description: row.description ?? "",
     date: parseIsoDate(row.date),
     createdAt: new Date(row.createdAt),
@@ -78,7 +84,7 @@ export function toTransactionRow(tx: StoredTransaction): TransactionRow {
     categoryId: tx.categoryId,
     description: tx.description || null,
     date: toIsoDate(tx.date),
-    createdAt: tx.createdAt.toISOString(),
-    updatedAt: tx.updatedAt.toISOString(),
+    createdAt: tx.createdAt.toISOString() as IsoDateTime,
+    updatedAt: tx.updatedAt.toISOString() as IsoDateTime,
   };
 }

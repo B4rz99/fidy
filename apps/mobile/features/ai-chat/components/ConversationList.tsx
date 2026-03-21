@@ -7,12 +7,13 @@ import { MessageSquare, Plus, Trash2, X } from "@/shared/components/icons";
 import { Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
+import type { ChatSessionId } from "@/shared/types/branded";
 import { useSessionCleanup } from "../hooks/use-session-cleanup";
 import type { ChatSession } from "../schema";
 import { useChatStore } from "../store";
 
 type ConversationListProps = {
-  readonly onSelectSession: (id: string) => void;
+  readonly onSelectSession: (id: ChatSessionId) => void;
   readonly onNewChat: () => void;
 };
 
@@ -91,7 +92,7 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
   });
 
   const handleDelete = useCallback(
-    (id: string) => {
+    (id: ChatSessionId) => {
       deleteSession(id);
     },
     [deleteSession]

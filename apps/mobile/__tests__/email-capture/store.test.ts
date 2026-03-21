@@ -1,4 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type {
+  EmailAccountId,
+  IsoDateTime,
+  ProcessedEmailId,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getEmailAccounts: vi.fn().mockResolvedValue([]),
@@ -88,6 +95,8 @@ vi.mock("@/shared/db/schema", () => ({
 
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: vi.fn(() => "ea-generated"),
+  generateEmailAccountId: () => "ea-generated",
+  generateSyncQueueId: () => "sq-generated",
 }));
 
 import { insertMerchantRule } from "@/features/email-capture/lib/merchant-rules";
@@ -112,6 +121,47 @@ const mockDb = {
   // biome-ignore lint/suspicious/noExplicitAny: mock DB object for testing
 } as any;
 const mockUserId = "user-1";
+
+/** Helper to build a typed email account object for tests */
+function makeAccount(
+  overrides: {
+    id?: string;
+    provider?: string;
+    email?: string;
+    lastFetchedAt?: string | null;
+    createdAt?: string;
+  } = {}
+) {
+  return {
+    id: (overrides.id ?? "ea-1") as EmailAccountId,
+    userId: mockUserId as UserId,
+    provider: overrides.provider ?? "gmail",
+    email: overrides.email ?? "test@gmail.com",
+    lastFetchedAt: (overrides.lastFetchedAt ?? null) as IsoDateTime | null,
+    createdAt: (overrides.createdAt ?? "2026-03-05T10:00:00Z") as IsoDateTime,
+  };
+}
+
+/** Helper to build a typed processed email object for tests */
+function makeProcessedEmail(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "pe-1" as ProcessedEmailId,
+    externalId: "msg-1",
+    provider: "gmail",
+    status: "failed",
+    failureReason: null as string | null,
+    subject: "Test",
+    rawBodyPreview: null as string | null,
+    receivedAt: "2026-03-05T10:00:00Z" as IsoDateTime,
+    transactionId: null as TransactionId | null,
+    confidence: null as number | null,
+    createdAt: "2026-03-05T10:00:00Z" as IsoDateTime,
+    rawBody: null as string | null,
+    retryCount: 0,
+    nextRetryAt: null as IsoDateTime | null,
+    ...overrides,
+  };
+}
 
 describe("useEmailCaptureStore", () => {
   beforeEach(() => {
@@ -138,16 +188,7 @@ describe("useEmailCaptureStore", () => {
   });
 
   it("loadAccounts fetches from DB and sets state", async () => {
-    const mockAccounts = [
-      {
-        id: "ea-1",
-        userId: mockUserId,
-        provider: "gmail",
-        email: "test@gmail.com",
-        lastFetchedAt: null,
-        createdAt: "2026-03-05T10:00:00Z",
-      },
-    ];
+    const mockAccounts = [makeAccount()];
     vi.mocked(getEmailAccounts).mockResolvedValueOnce(mockAccounts);
 
     await useEmailCaptureStore.getState().loadAccounts();
@@ -157,24 +198,7 @@ describe("useEmailCaptureStore", () => {
   });
 
   it("loadFailedEmails fetches from DB and sets state", async () => {
-    const mockFailed = [
-      {
-        id: "pe-1",
-        externalId: "msg-1",
-        provider: "gmail",
-        status: "failed",
-        failureReason: "parse error",
-        subject: "Compra",
-        rawBodyPreview: null,
-        receivedAt: "2026-03-05T10:00:00Z",
-        transactionId: null,
-        confidence: null,
-        createdAt: "2026-03-05T10:00:00Z",
-        rawBody: null,
-        retryCount: 0,
-        nextRetryAt: null,
-      },
-    ];
+    const mockFailed = [makeProcessedEmail({ failureReason: "parse error", subject: "Compra" })];
     vi.mocked(getFailedEmails).mockResolvedValueOnce(mockFailed);
 
     await useEmailCaptureStore.getState().loadFailedEmails();
@@ -186,22 +210,14 @@ describe("useEmailCaptureStore", () => {
 
   it("loadNeedsReview fetches from DB and sets state", async () => {
     const mockReview = [
-      {
-        id: "pe-2",
+      makeProcessedEmail({
+        id: "pe-2" as ProcessedEmailId,
         externalId: "msg-2",
-        provider: "gmail",
         status: "needs_review",
-        failureReason: null,
         subject: "Compra aprobada",
-        rawBodyPreview: null,
-        receivedAt: "2026-03-05T10:00:00Z",
-        transactionId: "tx-1",
+        transactionId: "tx-1" as TransactionId,
         confidence: 0.5,
-        createdAt: "2026-03-05T10:00:00Z",
-        rawBody: null,
-        retryCount: 0,
-        nextRetryAt: null,
-      },
+      }),
     ];
     vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce(mockReview);
 
@@ -218,20 +234,7 @@ describe("useEmailCaptureStore", () => {
 
   it("dismissFailedEmail removes from DB and state", async () => {
     useEmailCaptureStore.setState({
-      failedEmails: [
-        {
-          id: "pe-1",
-          externalId: "msg-1",
-          provider: "gmail",
-          status: "failed",
-          failureReason: null,
-          subject: "Test",
-          rawBodyPreview: null,
-          receivedAt: "2026-03-05T10:00:00Z",
-          transactionId: null,
-          createdAt: "2026-03-05T10:00:00Z",
-        },
-      ],
+      failedEmails: [makeProcessedEmail()],
     });
 
     await useEmailCaptureStore.getState().dismissFailedEmail("pe-1");
@@ -289,16 +292,7 @@ describe("useEmailCaptureStore", () => {
 
   it("disconnectEmail removes from DB and state", async () => {
     useEmailCaptureStore.setState({
-      accounts: [
-        {
-          id: "ea-1",
-          userId: mockUserId,
-          provider: "gmail",
-          email: "test@gmail.com",
-          lastFetchedAt: null,
-          createdAt: "2026-03-05T10:00:00Z",
-        },
-      ],
+      accounts: [makeAccount()],
     });
 
     await useEmailCaptureStore.getState().disconnectEmail("ea-1");
@@ -312,16 +306,7 @@ describe("useEmailCaptureStore", () => {
   describe("fetchAndProcess", () => {
     it("fetches emails and runs pipeline", async () => {
       useEmailCaptureStore.setState({
-        accounts: [
-          {
-            id: "ea-1",
-            userId: mockUserId,
-            provider: "gmail",
-            email: "test@gmail.com",
-            lastFetchedAt: null,
-            createdAt: "2026-03-05T10:00:00Z",
-          },
-        ],
+        accounts: [makeAccount()],
       });
 
       const mockRawEmails = [
@@ -356,16 +341,7 @@ describe("useEmailCaptureStore", () => {
 
     it("fetches emails for outlook accounts", async () => {
       useEmailCaptureStore.setState({
-        accounts: [
-          {
-            id: "ea-2",
-            userId: mockUserId,
-            provider: "outlook",
-            email: "test@outlook.com",
-            lastFetchedAt: null,
-            createdAt: "2026-03-05T10:00:00Z",
-          },
-        ],
+        accounts: [makeAccount({ id: "ea-2", provider: "outlook", email: "test@outlook.com" })],
       });
 
       mockAdapter.fetchEmails.mockResolvedValueOnce([]);
@@ -380,16 +356,7 @@ describe("useEmailCaptureStore", () => {
 
     it("sets isFetching during execution", async () => {
       useEmailCaptureStore.setState({
-        accounts: [
-          {
-            id: "ea-1",
-            userId: mockUserId,
-            provider: "gmail",
-            email: "u@g.com",
-            lastFetchedAt: null,
-            createdAt: "",
-          },
-        ],
+        accounts: [makeAccount({ email: "u@g.com", createdAt: "" })],
       });
       mockAdapter.fetchEmails.mockResolvedValueOnce([]);
       // No processEmails mock needed — 0 emails with first fetch goes to zero-emails early return
@@ -415,16 +382,7 @@ describe("useEmailCaptureStore", () => {
     it("skips when already fetching", async () => {
       useEmailCaptureStore.setState({
         isFetching: true,
-        accounts: [
-          {
-            id: "ea-1",
-            userId: mockUserId,
-            provider: "gmail",
-            email: "test@gmail.com",
-            lastFetchedAt: null,
-            createdAt: "2026-03-05T10:00:00Z",
-          },
-        ],
+        accounts: [makeAccount()],
       });
 
       await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
@@ -435,22 +393,8 @@ describe("useEmailCaptureStore", () => {
     it("continues processing other accounts when one fails", async () => {
       useEmailCaptureStore.setState({
         accounts: [
-          {
-            id: "ea-1",
-            userId: mockUserId,
-            provider: "gmail",
-            email: "test@gmail.com",
-            lastFetchedAt: null,
-            createdAt: "2026-03-05T10:00:00Z",
-          },
-          {
-            id: "ea-2",
-            userId: mockUserId,
-            provider: "outlook",
-            email: "test@outlook.com",
-            lastFetchedAt: null,
-            createdAt: "2026-03-05T10:00:00Z",
-          },
+          makeAccount(),
+          makeAccount({ id: "ea-2", provider: "outlook", email: "test@outlook.com" }),
         ],
       });
 
@@ -468,16 +412,7 @@ describe("useEmailCaptureStore", () => {
 
     it("calls processEmails with correct arguments", async () => {
       useEmailCaptureStore.setState({
-        accounts: [
-          {
-            id: "ea-1",
-            userId: mockUserId,
-            provider: "gmail",
-            email: "test@gmail.com",
-            lastFetchedAt: null,
-            createdAt: "2026-03-05T10:00:00Z",
-          },
-        ],
+        accounts: [makeAccount()],
       });
 
       const mockRawEmails = [
@@ -514,16 +449,7 @@ describe("useEmailCaptureStore", () => {
 
     it("sets phase to processing when showing progress", async () => {
       useEmailCaptureStore.setState({
-        accounts: [
-          {
-            id: "ea-1",
-            userId: mockUserId,
-            provider: "gmail",
-            email: "test@gmail.com",
-            lastFetchedAt: null,
-            createdAt: "2026-03-05T10:00:00Z",
-          },
-        ],
+        accounts: [makeAccount()],
       });
 
       const mockRawEmails = [
@@ -562,16 +488,7 @@ describe("useEmailCaptureStore", () => {
 
     it("skips progress state when below threshold on subsequent sync", async () => {
       useEmailCaptureStore.setState({
-        accounts: [
-          {
-            id: "ea-1",
-            userId: mockUserId,
-            provider: "gmail",
-            email: "test@gmail.com",
-            lastFetchedAt: "2026-03-10T00:00:00Z",
-            createdAt: "2026-03-05T10:00:00Z",
-          },
-        ],
+        accounts: [makeAccount({ lastFetchedAt: "2026-03-10T00:00:00Z" })],
       });
 
       mockAdapter.fetchEmails.mockResolvedValueOnce([
@@ -610,16 +527,7 @@ describe("useEmailCaptureStore", () => {
 
     it("updates in-memory accounts lastFetchedAt after fetch", async () => {
       useEmailCaptureStore.setState({
-        accounts: [
-          {
-            id: "ea-1",
-            userId: mockUserId,
-            provider: "gmail",
-            email: "test@gmail.com",
-            lastFetchedAt: null,
-            createdAt: "2026-03-05T10:00:00Z",
-          },
-        ],
+        accounts: [makeAccount()],
       });
 
       mockAdapter.fetchEmails.mockResolvedValueOnce([]);
@@ -637,16 +545,7 @@ describe("useEmailCaptureStore", () => {
 
       try {
         useEmailCaptureStore.setState({
-          accounts: [
-            {
-              id: "ea-1",
-              userId: mockUserId,
-              provider: "gmail",
-              email: "test@gmail.com",
-              lastFetchedAt: null,
-              createdAt: "2026-03-05T10:00:00Z",
-            },
-          ],
+          accounts: [makeAccount()],
         });
 
         mockAdapter.fetchEmails.mockResolvedValueOnce([
@@ -686,16 +585,7 @@ describe("useEmailCaptureStore", () => {
 
     it("preserves complete phase immediately after fetchAndProcess", async () => {
       useEmailCaptureStore.setState({
-        accounts: [
-          {
-            id: "ea-1",
-            userId: mockUserId,
-            provider: "gmail",
-            email: "test@gmail.com",
-            lastFetchedAt: null,
-            createdAt: "2026-03-05T10:00:00Z",
-          },
-        ],
+        accounts: [makeAccount()],
       });
 
       mockAdapter.fetchEmails.mockResolvedValueOnce([
@@ -727,16 +617,7 @@ describe("useEmailCaptureStore", () => {
 
     it("shows progress on first fetch even with 1 email", async () => {
       useEmailCaptureStore.setState({
-        accounts: [
-          {
-            id: "ea-1",
-            userId: mockUserId,
-            provider: "gmail",
-            email: "test@gmail.com",
-            lastFetchedAt: null,
-            createdAt: "2026-03-05T10:00:00Z",
-          },
-        ],
+        accounts: [makeAccount()],
       });
 
       mockAdapter.fetchEmails.mockResolvedValueOnce([
@@ -773,16 +654,7 @@ describe("useEmailCaptureStore", () => {
 
     it("sets complete with zero results when first fetch has 0 emails", async () => {
       useEmailCaptureStore.setState({
-        accounts: [
-          {
-            id: "ea-1",
-            userId: mockUserId,
-            provider: "gmail",
-            email: "test@gmail.com",
-            lastFetchedAt: null,
-            createdAt: "2026-03-05T10:00:00Z",
-          },
-        ],
+        accounts: [makeAccount()],
       });
 
       mockAdapter.fetchEmails.mockResolvedValueOnce([]);
@@ -800,16 +672,7 @@ describe("useEmailCaptureStore", () => {
 
     it("clears phase and progress on error in finally block", async () => {
       useEmailCaptureStore.setState({
-        accounts: [
-          {
-            id: "ea-1",
-            userId: mockUserId,
-            provider: "gmail",
-            email: "test@gmail.com",
-            lastFetchedAt: null,
-            createdAt: "2026-03-05T10:00:00Z",
-          },
-        ],
+        accounts: [makeAccount()],
       });
 
       mockAdapter.fetchEmails.mockResolvedValueOnce([
@@ -836,19 +699,12 @@ describe("useEmailCaptureStore", () => {
     it("updates transaction and removes from needsReviewEmails", async () => {
       useEmailCaptureStore.setState({
         needsReviewEmails: [
-          {
-            id: "pe-1",
-            externalId: "msg-1",
-            provider: "gmail",
+          makeProcessedEmail({
             status: "needs_review",
-            failureReason: null,
             subject: "Compra aprobada",
-            rawBodyPreview: null,
-            receivedAt: "2026-03-05T10:00:00Z",
-            transactionId: "tx-1",
+            transactionId: "tx-1" as TransactionId,
             confidence: 0.5,
-            createdAt: "2026-03-05T10:00:00Z",
-          },
+          }),
         ],
       });
 

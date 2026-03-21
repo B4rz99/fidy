@@ -1,5 +1,6 @@
 import type { AnyDb } from "@/shared/db";
-import { captureError, generateId } from "@/shared/lib";
+import { captureError, generateDetectedSmsEventId, toIsoDateTime } from "@/shared/lib";
+import type { IsoDateTime, UserId } from "@/shared/types/branded";
 import { insertDetectedSmsEvent } from "../lib/repository";
 import { processApplePayIntent } from "../services/apple-pay-pipeline";
 import { processNotification } from "../services/notification-pipeline";
@@ -32,13 +33,13 @@ export async function setupSmsDetection(
 
   const subscription = mod.addDetectBankSmsListener((event) => {
     insertDetectedSmsEvent(db, {
-      id: generateId("sms"),
-      userId,
+      id: generateDetectedSmsEventId(),
+      userId: userId as UserId,
       senderLabel: event.senderName,
-      detectedAt: event.timestamp,
+      detectedAt: event.timestamp as IsoDateTime,
       dismissed: false,
       linkedTransactionId: null,
-      createdAt: new Date().toISOString(),
+      createdAt: toIsoDateTime(new Date()),
     })
       .then(() => refreshDetectedSms())
       .catch(captureError);

@@ -27,7 +27,7 @@ export const NeedsReviewCard = ({
   const suggestedCategory: CategoryId =
     transaction?.categoryId && isValidCategoryId(transaction.categoryId)
       ? transaction.categoryId
-      : "other";
+      : ("other" as CategoryId);
   const [prevSuggested, setPrevSuggested] = useState(suggestedCategory);
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>(suggestedCategory);
   if (suggestedCategory !== prevSuggested) {
