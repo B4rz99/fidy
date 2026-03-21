@@ -16,30 +16,30 @@ export async function insertEmailAccount(db: AnyDb, row: EmailAccountRow) {
   await db.insert(emailAccounts).values(row);
 }
 
-export async function getEmailAccount(db: AnyDb, id: string) {
+export async function getEmailAccount(db: AnyDb, id: EmailAccountId) {
   const rows = await db
     .select()
     .from(emailAccounts)
-    .where(eq(emailAccounts.id, id as EmailAccountId));
+    .where(eq(emailAccounts.id, id));
   return rows[0] ?? null;
 }
 
-export async function getEmailAccounts(db: AnyDb, userId: string) {
+export async function getEmailAccounts(db: AnyDb, userId: UserId) {
   return db
     .select()
     .from(emailAccounts)
-    .where(eq(emailAccounts.userId, userId as UserId));
+    .where(eq(emailAccounts.userId, userId));
 }
 
-export async function deleteEmailAccount(db: AnyDb, id: string) {
-  await db.delete(emailAccounts).where(eq(emailAccounts.id, id as EmailAccountId));
+export async function deleteEmailAccount(db: AnyDb, id: EmailAccountId) {
+  await db.delete(emailAccounts).where(eq(emailAccounts.id, id));
 }
 
-export async function updateLastFetchedAt(db: AnyDb, id: string, timestamp: string) {
+export async function updateLastFetchedAt(db: AnyDb, id: EmailAccountId, timestamp: IsoDateTime) {
   await db
     .update(emailAccounts)
-    .set({ lastFetchedAt: timestamp as IsoDateTime })
-    .where(eq(emailAccounts.id, id as EmailAccountId));
+    .set({ lastFetchedAt: timestamp })
+    .where(eq(emailAccounts.id, id));
 }
 
 export async function insertProcessedEmail(db: AnyDb, row: ProcessedEmailRow) {
@@ -81,18 +81,18 @@ export async function getNeedsReviewEmails(db: AnyDb) {
 
 export async function updateProcessedEmailStatus(
   db: AnyDb,
-  id: string,
+  id: ProcessedEmailId,
   status: string,
-  transactionId: string | null
+  transactionId: TransactionId | null
 ) {
   await db
     .update(processedEmails)
-    .set({ status, transactionId: transactionId as TransactionId | null })
-    .where(eq(processedEmails.id, id as ProcessedEmailId));
+    .set({ status, transactionId })
+    .where(eq(processedEmails.id, id));
 }
 
-export async function dismissProcessedEmail(db: AnyDb, id: string) {
-  await db.delete(processedEmails).where(eq(processedEmails.id, id as ProcessedEmailId));
+export async function dismissProcessedEmail(db: AnyDb, id: ProcessedEmailId) {
+  await db.delete(processedEmails).where(eq(processedEmails.id, id));
 }
 
 export async function getPendingRetryEmails(db: AnyDb) {
@@ -109,29 +109,29 @@ export async function getPendingRetryEmails(db: AnyDb) {
     .limit(50);
 }
 
-export async function markForRetry(db: AnyDb, id: string, retryCount: number, nextRetryAt: string) {
+export async function markForRetry(db: AnyDb, id: ProcessedEmailId, retryCount: number, nextRetryAt: IsoDateTime) {
   await db
     .update(processedEmails)
-    .set({ status: "pending_retry", retryCount, nextRetryAt: nextRetryAt as IsoDateTime })
-    .where(eq(processedEmails.id, id as ProcessedEmailId));
+    .set({ status: "pending_retry", retryCount, nextRetryAt })
+    .where(eq(processedEmails.id, id));
 }
 
-export async function markPermanentlyFailed(db: AnyDb, id: string) {
+export async function markPermanentlyFailed(db: AnyDb, id: ProcessedEmailId) {
   await db
     .update(processedEmails)
     .set({ status: "failed", rawBody: null })
-    .where(eq(processedEmails.id, id as ProcessedEmailId));
+    .where(eq(processedEmails.id, id));
 }
 
 export async function markRetrySuccess(
   db: AnyDb,
-  id: string,
+  id: ProcessedEmailId,
   status: "success" | "needs_review",
-  transactionId: string,
+  transactionId: TransactionId,
   confidence: number
 ) {
   await db
     .update(processedEmails)
-    .set({ status, transactionId: transactionId as TransactionId, confidence, rawBody: null })
-    .where(eq(processedEmails.id, id as ProcessedEmailId));
+    .set({ status, transactionId, confidence, rawBody: null })
+    .where(eq(processedEmails.id, id));
 }

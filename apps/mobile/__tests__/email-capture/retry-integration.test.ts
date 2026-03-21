@@ -38,7 +38,7 @@ import {
 } from "@/features/email-capture/lib/repository";
 import { processRetries } from "@/features/email-capture/services/email-pipeline";
 import { processedEmails, syncQueue, transactions } from "@/shared/db/schema";
-import type { IsoDateTime, ProcessedEmailId } from "@/shared/types/branded";
+import type { IsoDateTime, ProcessedEmailId, TransactionId } from "@/shared/types/branded";
 
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
@@ -157,7 +157,7 @@ describe("retry queue integration (real SQLite)", () => {
   it("markRetrySuccess sets status/transactionId/confidence and clears rawBody", async () => {
     insertRetryEmail({ nextRetryAt: new Date().toISOString() as IsoDateTime });
 
-    await markRetrySuccess(db as any, "pe-retry-1" as ProcessedEmailId, "success", "tx-42", 0.95);
+    await markRetrySuccess(db as any, "pe-retry-1" as ProcessedEmailId, "success", "tx-42" as TransactionId, 0.95);
 
     const [row] = await db
       .select()

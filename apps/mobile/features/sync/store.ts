@@ -3,7 +3,7 @@ import { upsertTransaction, useTransactionStore } from "@/features/transactions"
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import { captureError, generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
-import type { IsoDateTime } from "@/shared/types/branded";
+import type { IsoDateTime, SyncConflictId } from "@/shared/types/branded";
 import {
   getUnresolvedConflicts,
   resolveConflict as resolveConflictDb,
@@ -89,7 +89,7 @@ export const useSyncConflictStore = create<SyncConflictState & SyncConflictActio
       });
     }
 
-    resolveConflictDb(dbRef, id, resolution, now);
+    resolveConflictDb(dbRef, id as SyncConflictId, resolution, now);
     get().loadConflicts();
     await useTransactionStore.getState().refresh();
   },

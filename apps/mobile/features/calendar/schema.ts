@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { categoryIdSchema } from "@/features/transactions";
+import { toIsoDate } from "@/shared/lib";
 import type {
   BillId,
   BillPaymentId,
@@ -78,7 +79,7 @@ export function toBillRow(
     amount: bill.amount as CopAmount,
     frequency: bill.frequency,
     categoryId: bill.categoryId as CategoryId,
-    startDate: bill.startDate.toISOString().slice(0, 10) as IsoDate,
+    startDate: toIsoDate(bill.startDate),
     isActive: bill.isActive,
     createdAt: now,
     updatedAt: now,

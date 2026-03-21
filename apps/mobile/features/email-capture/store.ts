@@ -9,7 +9,14 @@ import {
   normalizeMerchant,
   toIsoDateTime,
 } from "@/shared/lib";
-import type { CategoryId, IsoDateTime, UserId } from "@/shared/types/branded";
+import type {
+  CategoryId,
+  EmailAccountId,
+  IsoDateTime,
+  ProcessedEmailId,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 import { insertMerchantRule } from "./lib/merchant-rules";
 import type { ProgressPhase } from "./lib/progress-phases";
 import { isFirstFetchForAny, shouldShowProgress } from "./lib/progress-phases";
@@ -72,7 +79,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
   loadAccounts: async () => {
     if (!dbRef || !userIdRef) return;
-    const accounts = await getEmailAccounts(dbRef, userIdRef);
+    const accounts = await getEmailAccounts(dbRef, userIdRef as UserId);
     set({ accounts });
   },
 
@@ -92,7 +99,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
   dismissFailedEmail: async (id) => {
     if (!dbRef) return;
-    await dismissProcessedEmail(dbRef, id);
+    await dismissProcessedEmail(dbRef, id as ProcessedEmailId);
     const updated = get().failedEmails.filter((e) => e.id !== id);
     set({ failedEmails: updated });
   },
@@ -123,7 +130,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     if (account) {
       await getAdapter(account.provider as EmailProvider).disconnect();
     }
-    await deleteEmailAccount(dbRef, id);
+    await deleteEmailAccount(dbRef, id as EmailAccountId);
     set((state) => ({
       accounts: state.accounts.filter((a) => a.id !== id),
     }));
@@ -225,7 +232,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       await processRetries(db, userId);
 
       // Update lastFetchedAt only for accounts whose fetch succeeded
-      const now = new Date().toISOString();
+      const now = toIsoDateTime(new Date());
       await Promise.all(
         fetchResults.filter((r) => r.fetchOk).map((r) => updateLastFetchedAt(db, r.account.id, now))
       );
@@ -234,7 +241,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       const successIds = new Set(fetchResults.filter((r) => r.fetchOk).map((r) => r.account.id));
       set({
         accounts: get().accounts.map((a) =>
-          successIds.has(a.id) ? { ...a, lastFetchedAt: now as IsoDateTime } : a
+          successIds.has(a.id) ? { ...a, lastFetchedAt: now } : a
         ),
       });
 
@@ -308,7 +315,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     }
 
     // Update the processed email status to "success"
-    await updateProcessedEmailStatus(db, processedEmailId, "success", processedEmail.transactionId);
+    await updateProcessedEmailStatus(db, processedEmailId as ProcessedEmailId, "success", processedEmail.transactionId as TransactionId);
 
     // Remove from needsReviewEmails state and refresh home screen
     set((state) => ({

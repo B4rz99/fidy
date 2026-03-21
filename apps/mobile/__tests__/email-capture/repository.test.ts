@@ -71,7 +71,7 @@ describe("email capture repository", () => {
     mockWhere.mockResolvedValueOnce([mockRow]);
 
     const { getEmailAccount } = await import("@/features/email-capture/lib/repository");
-    const result = await getEmailAccount(mockDb, "ea-1");
+    const result = await getEmailAccount(mockDb, "ea-1" as EmailAccountId);
 
     expect(result).toEqual(mockRow);
   });
@@ -80,7 +80,7 @@ describe("email capture repository", () => {
     mockWhere.mockResolvedValueOnce([]);
 
     const { getEmailAccount } = await import("@/features/email-capture/lib/repository");
-    const result = await getEmailAccount(mockDb, "nonexistent");
+    const result = await getEmailAccount(mockDb, "nonexistent" as EmailAccountId);
 
     expect(result).toBeNull();
   });
@@ -90,7 +90,7 @@ describe("email capture repository", () => {
     mockWhere.mockResolvedValueOnce(mockRows);
 
     const { getEmailAccounts } = await import("@/features/email-capture/lib/repository");
-    const result = await getEmailAccounts(mockDb, "user-1");
+    const result = await getEmailAccounts(mockDb, "user-1" as UserId);
 
     expect(mockSelect).toHaveBeenCalled();
     expect(mockFrom).toHaveBeenCalled();
@@ -101,7 +101,7 @@ describe("email capture repository", () => {
   it("deleteEmailAccount deletes by id", async () => {
     const { deleteEmailAccount } = await import("@/features/email-capture/lib/repository");
 
-    await deleteEmailAccount(mockDb, "ea-1");
+    await deleteEmailAccount(mockDb, "ea-1" as EmailAccountId);
 
     expect(mockDelete).toHaveBeenCalled();
     expect(mockDeleteWhere).toHaveBeenCalled();
@@ -110,7 +110,7 @@ describe("email capture repository", () => {
   it("updateLastFetchedAt updates the timestamp", async () => {
     const { updateLastFetchedAt } = await import("@/features/email-capture/lib/repository");
 
-    await updateLastFetchedAt(mockDb, "ea-1", "2026-03-05T12:00:00Z");
+    await updateLastFetchedAt(mockDb, "ea-1" as EmailAccountId, "2026-03-05T12:00:00Z" as IsoDateTime);
 
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith({ lastFetchedAt: "2026-03-05T12:00:00Z" });
@@ -177,7 +177,7 @@ describe("email capture repository", () => {
   it("dismissProcessedEmail deletes by id", async () => {
     const { dismissProcessedEmail } = await import("@/features/email-capture/lib/repository");
 
-    await dismissProcessedEmail(mockDb, "pe-1");
+    await dismissProcessedEmail(mockDb, "pe-1" as ProcessedEmailId);
 
     expect(mockDelete).toHaveBeenCalled();
     expect(mockDeleteWhere).toHaveBeenCalled();
@@ -222,7 +222,7 @@ describe("email capture repository", () => {
   it("updateProcessedEmailStatus updates status and transactionId", async () => {
     const { updateProcessedEmailStatus } = await import("@/features/email-capture/lib/repository");
 
-    await updateProcessedEmailStatus(mockDb, "pe-1", "success", "tx-1");
+    await updateProcessedEmailStatus(mockDb, "pe-1" as ProcessedEmailId, "success", "tx-1" as TransactionId);
 
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith({ status: "success", transactionId: "tx-1" });
@@ -247,7 +247,7 @@ describe("email capture repository", () => {
   it("markForRetry updates status, retryCount, nextRetryAt, rawBody", async () => {
     const { markForRetry } = await import("@/features/email-capture/lib/repository");
 
-    await markForRetry(mockDb, "pe-1", 2, "2026-03-15T13:00:00Z");
+    await markForRetry(mockDb, "pe-1" as ProcessedEmailId, 2, "2026-03-15T13:00:00Z" as IsoDateTime);
 
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith({
@@ -261,7 +261,7 @@ describe("email capture repository", () => {
   it("markPermanentlyFailed sets status=failed and clears rawBody", async () => {
     const { markPermanentlyFailed } = await import("@/features/email-capture/lib/repository");
 
-    await markPermanentlyFailed(mockDb, "pe-1");
+    await markPermanentlyFailed(mockDb, "pe-1" as ProcessedEmailId);
 
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith({
@@ -274,7 +274,7 @@ describe("email capture repository", () => {
   it("markRetrySuccess sets status, transactionId, confidence, clears rawBody", async () => {
     const { markRetrySuccess } = await import("@/features/email-capture/lib/repository");
 
-    await markRetrySuccess(mockDb, "pe-1", "success", "tx-5", 0.95);
+    await markRetrySuccess(mockDb, "pe-1" as ProcessedEmailId, "success", "tx-5" as TransactionId, 0.95);
 
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith({

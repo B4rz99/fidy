@@ -18,9 +18,9 @@ export function getUnresolvedConflicts(db: AnyDb) {
     .all();
 }
 
-export function resolveConflict(db: AnyDb, id: string, resolution: string, resolvedAt: string) {
+export function resolveConflict(db: AnyDb, id: SyncConflictId, resolution: string, resolvedAt: IsoDateTime) {
   db.update(syncConflicts)
-    .set({ resolvedAt: resolvedAt as IsoDateTime, resolution })
-    .where(eq(syncConflicts.id, id as SyncConflictId))
+    .set({ resolvedAt, resolution })
+    .where(eq(syncConflicts.id, id))
     .run();
 }
