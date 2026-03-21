@@ -6,14 +6,7 @@ import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import { getCategoryLabel, useLocaleStore } from "@/shared/i18n";
 import { generateBudgetId, generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
-import type {
-  BudgetId,
-  CategoryId,
-  CopAmount,
-  IsoDateTime,
-  Month,
-  UserId,
-} from "@/shared/types/branded";
+import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
 import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./lib/derive";
 import {
   deriveAutoSuggestBudgets,
