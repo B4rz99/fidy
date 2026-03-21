@@ -14,7 +14,8 @@ import type {
 // Factories
 // ---------------------------------------------------------------------------
 
-const WEEK_START = new Date("2026-03-16"); // Monday
+// Use local noon to avoid UTC-midnight timezone drift on date-fns getDate()
+const WEEK_START = new Date("2026-03-16T12:00:00"); // Monday
 
 const makeTx = (overrides: Partial<StoredTransaction> = {}): StoredTransaction => ({
   id: "tx-1" as TransactionId,
@@ -23,7 +24,7 @@ const makeTx = (overrides: Partial<StoredTransaction> = {}): StoredTransaction =
   amount: 100_000 as CopAmount,
   categoryId: "food" as CategoryId,
   description: "",
-  date: new Date("2026-03-16"),
+  date: new Date("2026-03-16T12:00:00"),
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
@@ -77,7 +78,7 @@ describe("deriveWeeklyMoves", () => {
     );
     // Current week: high spend — but still no anomaly due to < 5 prior
     const currentWeekTx = makeTx({
-      date: new Date("2026-03-16"),
+      date: new Date("2026-03-16T12:00:00"),
       amount: 1_000_000 as CopAmount,
     });
     const result = deriveWeeklyMoves([...prior, currentWeekTx], [], WEEK_START);
@@ -92,7 +93,7 @@ describe("deriveWeeklyMoves", () => {
       makeTx({ date: priorDate(i % 5), amount: 100_000 as CopAmount })
     );
     const currentWeekTx = makeTx({
-      date: new Date("2026-03-16"),
+      date: new Date("2026-03-16T12:00:00"),
       amount: 140_000 as CopAmount,
     });
     const result = deriveWeeklyMoves([...prior, currentWeekTx], [], WEEK_START);
@@ -108,7 +109,7 @@ describe("deriveWeeklyMoves", () => {
       makeTx({ date: priorDate(i), amount: 100_000 as CopAmount })
     );
     const currentWeekTx = makeTx({
-      date: new Date("2026-03-17"), // within current week (Mon–Sun: 2026-03-16 to 2026-03-22)
+      date: new Date("2026-03-17T12:00:00"), // within current week (Mon–Sun: 2026-03-16 to 2026-03-22)
       amount: 200_000 as CopAmount,
     });
     const result = deriveWeeklyMoves([...prior, currentWeekTx], [], WEEK_START);
@@ -126,7 +127,7 @@ describe("deriveWeeklyMoves", () => {
 
   // Test 5 — no budget progresses → no pace moves
   it("emits no budget pace moves when progresses array is empty", () => {
-    const txs = [makeTx({ date: new Date("2026-03-16"), amount: 200_000 as CopAmount })];
+    const txs = [makeTx({ date: new Date("2026-03-16T12:00:00"), amount: 200_000 as CopAmount })];
     const result = deriveWeeklyMoves(txs, [], WEEK_START);
     expect(result.filter((m) => m.type === "budget_pace")).toHaveLength(0);
   });
@@ -150,7 +151,7 @@ describe("deriveWeeklyMoves", () => {
     // projected = 0 (spent) + 100_000 × 16 = 1_600_000 > 500_000
     // impact = 1_600_000 − 500_000 = 1_100_000
     const currentWeekTx = makeTx({
-      date: new Date("2026-03-16"),
+      date: new Date("2026-03-16T12:00:00"),
       amount: 700_000 as CopAmount,
     });
     const progress = makeProgress({
@@ -210,7 +211,7 @@ describe("deriveWeeklyMoves", () => {
 
     const txs = categories.map((categoryId, i) =>
       makeTx({
-        date: new Date("2026-03-16"),
+        date: new Date("2026-03-16T12:00:00"),
         categoryId,
         amount: weeklyAmounts[i],
       })
@@ -246,7 +247,7 @@ describe("deriveWeeklyMoves", () => {
       makeTx({ date: priorDate(i), amount: 100_000 as CopAmount })
     );
     const currentWeekTx = makeTx({
-      date: new Date("2026-03-16"),
+      date: new Date("2026-03-16T12:00:00"),
       amount: 300_000 as CopAmount,
       categoryId: "food" as CategoryId,
     });
