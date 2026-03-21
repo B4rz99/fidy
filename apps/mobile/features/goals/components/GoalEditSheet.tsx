@@ -75,13 +75,16 @@ export function GoalEditSheet() {
 
   const displayAmount = digits.length > 0 ? formatInputDisplay(digits) : "$";
 
-  const handleKey = useCallback((key: string) => {
-    if (numpadTarget === "amount") {
-      setDigits(handleNumpadPress(digitsRef.current, key));
-    } else if (numpadTarget === "interestRate") {
-      setInterestDigits(handleNumpadPress(interestDigitsRef.current, key));
-    }
-  }, [numpadTarget]);
+  const handleKey = useCallback(
+    (key: string) => {
+      if (numpadTarget === "amount") {
+        setDigits(handleNumpadPress(digitsRef.current, key));
+      } else if (numpadTarget === "interestRate") {
+        setInterestDigits(handleNumpadPress(interestDigitsRef.current, key));
+      }
+    },
+    [numpadTarget]
+  );
 
   const handleSave = useCallback(
     () =>
@@ -95,13 +98,21 @@ export function GoalEditSheet() {
           targetAmount: parsedAmount,
           targetDate: targetDate || null,
           interestRatePercent:
-            goalType === "debt" && interestDigits
-              ? parseDigitsToAmount(interestDigits)
-              : null,
+            goalType === "debt" && interestDigits ? parseDigitsToAmount(interestDigits) : null,
         });
         back();
       }),
-    [selectedGoalId, name, digits, goalType, targetDate, interestDigits, updateGoal, back, guardedSave]
+    [
+      selectedGoalId,
+      name,
+      digits,
+      goalType,
+      targetDate,
+      interestDigits,
+      updateGoal,
+      back,
+      guardedSave,
+    ]
   );
 
   const handleDelete = useCallback(() => {
@@ -152,7 +163,10 @@ export function GoalEditSheet() {
       {/* Target amount — FidyNumpad display */}
       <Pressable
         style={styles.amountSection}
-        onPress={() => { Keyboard.dismiss(); setNumpadTarget("amount"); }}
+        onPress={() => {
+          Keyboard.dismiss();
+          setNumpadTarget("amount");
+        }}
       >
         <Text style={[styles.fieldLabel, { color: primaryColor }]}>
           {t("goals.create.targetAmount")}
@@ -162,7 +176,13 @@ export function GoalEditSheet() {
           {numpadTarget === "amount" ? (
             <Animated.View
               style={[
-                { width: 2, height: 28, marginLeft: 2, borderRadius: 1, backgroundColor: primaryColor },
+                {
+                  width: 2,
+                  height: 28,
+                  marginLeft: 2,
+                  borderRadius: 1,
+                  backgroundColor: primaryColor,
+                },
                 cursorStyle,
               ]}
             />
@@ -189,7 +209,10 @@ export function GoalEditSheet() {
       {goalType === "debt" ? (
         <Pressable
           style={styles.amountSection}
-          onPress={() => { Keyboard.dismiss(); setNumpadTarget("interestRate"); }}
+          onPress={() => {
+            Keyboard.dismiss();
+            setNumpadTarget("interestRate");
+          }}
         >
           <Text style={[styles.fieldLabel, { color: primaryColor }]}>
             {t("goals.create.interestRate")}
@@ -201,7 +224,13 @@ export function GoalEditSheet() {
             {numpadTarget === "interestRate" ? (
               <Animated.View
                 style={[
-                  { width: 2, height: 22, marginLeft: 2, borderRadius: 1, backgroundColor: primaryColor },
+                  {
+                    width: 2,
+                    height: 22,
+                    marginLeft: 2,
+                    borderRadius: 1,
+                    backgroundColor: primaryColor,
+                  },
                   cursorStyle,
                 ]}
               />

@@ -262,6 +262,7 @@ describe("retry queue integration (real SQLite)", () => {
       .prepare(
         "SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now') as now_iso, datetime('now') as now_plain"
       )
+      // biome-ignore lint/style/useNamingConvention: SQL column aliases
       .all() as Array<{ now_iso: string; now_plain: string }>;
 
     // ISO format should have T separator and Z suffix
@@ -273,6 +274,7 @@ describe("retry queue integration (real SQLite)", () => {
     const pastIso = new Date(Date.now() - 60_000).toISOString();
     const [cmp] = sqlite
       .prepare("SELECT ? <= strftime('%Y-%m-%dT%H:%M:%fZ', 'now') as is_due")
+      // biome-ignore lint/style/useNamingConvention: SQL column alias
       .all(pastIso) as Array<{ is_due: number }>;
     expect(cmp.is_due).toBe(1);
 
@@ -280,6 +282,7 @@ describe("retry queue integration (real SQLite)", () => {
     const futureIso = new Date(Date.now() + 600_000).toISOString();
     const [cmp2] = sqlite
       .prepare("SELECT ? <= strftime('%Y-%m-%dT%H:%M:%fZ', 'now') as is_due")
+      // biome-ignore lint/style/useNamingConvention: SQL column alias
       .all(futureIso) as Array<{ is_due: number }>;
     expect(cmp2.is_due).toBe(0);
   });

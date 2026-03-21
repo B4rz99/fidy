@@ -15,8 +15,10 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
     supportsTablet: true,
     bundleIdentifier: "com.obarbozaa.Fidy",
     infoPlist: {
+      // biome-ignore lint/style/useNamingConvention: Apple plist key
       CFBundleURLTypes: [
         {
+          // biome-ignore lint/style/useNamingConvention: Apple plist key
           CFBundleURLSchemes: [
             "com.googleusercontent.apps.282682681790-630ti7lmdsjcm32o31m1kq50q20727pn",
           ],
@@ -45,6 +47,7 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
   plugins: [
     "expo-router",
     "expo-secure-store",
+    // biome-ignore lint/style/useNamingConvention: expo-sqlite config key
     ["expo-sqlite", { useSQLCipher: true }],
     [
       "expo-splash-screen",

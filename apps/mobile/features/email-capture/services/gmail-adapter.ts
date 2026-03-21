@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/useNamingConvention: Gmail API uses snake_case
 import { captureError } from "@/shared/lib";
 import type { RawEmail } from "../schema";
 

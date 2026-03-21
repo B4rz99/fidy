@@ -9,7 +9,15 @@ import Animated, {
 } from "react-native-reanimated";
 import { handleNumpadPress } from "@/features/transactions";
 import { FidyNumpad } from "@/shared/components";
-import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
+import {
+  Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
 import type { GoalType } from "../schema";
@@ -64,13 +72,16 @@ export function GoalCreateSheet() {
   const estimatedMonths =
     projectionMonths > 0 && amount > 0 ? Math.ceil(amount / projectionMonths) : null;
 
-  const handleKey = useCallback((key: string) => {
-    if (numpadTarget === "amount") {
-      setDigits(handleNumpadPress(digitsRef.current, key));
-    } else if (numpadTarget === "interestRate") {
-      setInterestDigits(handleNumpadPress(interestDigitsRef.current, key));
-    }
-  }, [numpadTarget]);
+  const handleKey = useCallback(
+    (key: string) => {
+      if (numpadTarget === "amount") {
+        setDigits(handleNumpadPress(digitsRef.current, key));
+      } else if (numpadTarget === "interestRate") {
+        setInterestDigits(handleNumpadPress(interestDigitsRef.current, key));
+      }
+    },
+    [numpadTarget]
+  );
 
   const handleCreate = useCallback(
     () =>
@@ -84,9 +95,7 @@ export function GoalCreateSheet() {
           targetAmount: parsedAmount,
           targetDate: targetDate.trim() || undefined,
           interestRatePercent:
-            goalType === "debt" && interestDigits
-              ? parseDigitsToAmount(interestDigits)
-              : undefined,
+            goalType === "debt" && interestDigits ? parseDigitsToAmount(interestDigits) : undefined,
         });
 
         if (success) {
@@ -173,7 +182,13 @@ export function GoalCreateSheet() {
           {numpadTarget === "amount" ? (
             <Animated.View
               style={[
-                { width: 2, height: 28, marginLeft: 2, borderRadius: 1, backgroundColor: primaryColor },
+                {
+                  width: 2,
+                  height: 28,
+                  marginLeft: 2,
+                  borderRadius: 1,
+                  backgroundColor: primaryColor,
+                },
                 cursorStyle,
               ]}
             />
@@ -200,7 +215,10 @@ export function GoalCreateSheet() {
       {goalType === "debt" ? (
         <Pressable
           style={styles.amountSection}
-          onPress={() => { Keyboard.dismiss(); setNumpadTarget("interestRate"); }}
+          onPress={() => {
+            Keyboard.dismiss();
+            setNumpadTarget("interestRate");
+          }}
         >
           <Text style={[styles.fieldLabel, { color: primaryColor }]}>
             {t("goals.create.interestRate")}
@@ -212,7 +230,13 @@ export function GoalCreateSheet() {
             {numpadTarget === "interestRate" ? (
               <Animated.View
                 style={[
-                  { width: 2, height: 22, marginLeft: 2, borderRadius: 1, backgroundColor: primaryColor },
+                  {
+                    width: 2,
+                    height: 22,
+                    marginLeft: 2,
+                    borderRadius: 1,
+                    backgroundColor: primaryColor,
+                  },
                   cursorStyle,
                 ]}
               />

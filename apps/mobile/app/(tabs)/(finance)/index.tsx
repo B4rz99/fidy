@@ -28,12 +28,7 @@ function SegmentControl({
         ]}
         onPress={() => onSwitch("budgets")}
       >
-        <Text
-          style={[
-            styles.segmentText,
-            { color: active === "budgets" ? "#FFFFFF" : secondary },
-          ]}
-        >
+        <Text style={[styles.segmentText, { color: active === "budgets" ? "#FFFFFF" : secondary }]}>
           {t("budgets.title")}
         </Text>
       </Pressable>
@@ -44,12 +39,7 @@ function SegmentControl({
         ]}
         onPress={() => onSwitch("goals")}
       >
-        <Text
-          style={[
-            styles.segmentText,
-            { color: active === "goals" ? "#FFFFFF" : secondary },
-          ]}
-        >
+        <Text style={[styles.segmentText, { color: active === "goals" ? "#FFFFFF" : secondary }]}>
           {t("goals.title")}
         </Text>
       </Pressable>
@@ -59,16 +49,13 @@ function SegmentControl({
 
 export default function FinanceScreen() {
   const [activeTab, setActiveTab] = useState<FinanceTab>("budgets");
-  const { t } = useTranslation();
 
   return (
     <View style={styles.container}>
       {Platform.OS === "ios" && (
         <Stack.Screen
           options={{
-            headerTitle: () => (
-              <SegmentControl active={activeTab} onSwitch={setActiveTab} />
-            ),
+            headerTitle: () => <SegmentControl active={activeTab} onSwitch={setActiveTab} />,
           }}
         />
       )}

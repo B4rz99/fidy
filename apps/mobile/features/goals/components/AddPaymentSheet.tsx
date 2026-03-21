@@ -9,7 +9,15 @@ import Animated, {
 } from "react-native-reanimated";
 import { handleNumpadPress } from "@/features/transactions";
 import { FidyNumpad } from "@/shared/components";
-import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
+import {
+  Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, parseDigitsToAmount, toIsoDate } from "@/shared/lib";
 import { useGoalStore } from "../store";
@@ -90,14 +98,23 @@ export function AddPaymentSheet() {
       {/* Amount display with cursor — tappable to activate numpad */}
       <Pressable
         style={styles.amountSection}
-        onPress={() => { Keyboard.dismiss(); setNumpadActive(true); }}
+        onPress={() => {
+          Keyboard.dismiss();
+          setNumpadActive(true);
+        }}
       >
         <View style={styles.amountRow}>
           <Text style={[styles.amountDisplay, { color: primaryColor }]}>{displayAmount}</Text>
           {numpadActive ? (
             <Animated.View
               style={[
-                { width: 2, height: 28, marginLeft: 2, borderRadius: 1, backgroundColor: primaryColor },
+                {
+                  width: 2,
+                  height: 28,
+                  marginLeft: 2,
+                  borderRadius: 1,
+                  backgroundColor: primaryColor,
+                },
                 cursorStyle,
               ]}
             />
