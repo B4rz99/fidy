@@ -5,10 +5,14 @@ import { isValidCategoryId } from "./lib/categories";
 export const transactionTypeSchema = z.enum(["expense", "income"]);
 export type TransactionType = z.infer<typeof transactionTypeSchema>;
 
-export const categoryIdSchema = z
-  .string()
-  .refine(isValidCategoryId, { message: "Invalid category ID" })
-  .transform((s) => s as CategoryId);
+export function makeCategoryIdSchema(isValid: (id: string) => boolean) {
+  return z
+    .string()
+    .refine(isValid, { message: "Invalid category ID" })
+    .transform((s) => s as CategoryId);
+}
+
+export const categoryIdSchema = makeCategoryIdSchema(isValidCategoryId);
 
 export const createTransactionSchema = z.object({
   type: transactionTypeSchema,
