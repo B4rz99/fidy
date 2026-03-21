@@ -1,5 +1,5 @@
-import { Text } from "@/shared/components/rn";
+import { CreateCategorySheet } from "@/features/categories";
 
 export default function CreateCategoryRoute() {
-  return <Text>Create Category</Text>;
+  return <CreateCategorySheet />;
 }

@@ -1,5 +1,3 @@
-import { Text } from "@/shared/components/rn";
+import { CategoriesScreen } from "@/features/categories";
 
-export default function CategoriesScreen() {
-  return <Text>Categories</Text>;
-}
+export default CategoriesScreen;
