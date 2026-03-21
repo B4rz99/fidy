@@ -40,7 +40,7 @@ All code in the financial core (`lib/`, schemas, utils) MUST follow functional p
 Every function must be **atomic**: it does one thing, takes explicit inputs, and returns a result without modifying anything outside its scope.
 
 - A function's entire effect is captured in its return value — no mutating closure variables, module state, or parameters
-- Build results declaratively (`[...cond && [item]].filter(Boolean)`, `.reduce()` with spread) instead of `const arr = []; arr.push(…)`
+- Build results declaratively (`[cond && item, ...].filter(Boolean)`, `.reduce()` with spread) instead of `const arr = []; arr.push(…)`
 - Move inherently stateful utilities (mutexes, caches, counters) out of `lib/` into `shared/hooks/` or `shared/db/` — `lib/` is pure-only territory
 - Streaming/worker-pool I/O idioms (`while` + `ReadableStream`, `nextIdx++` for concurrent workers) are acceptable **only** in `services/` with a comment explaining why
 - When a function needs mutable accumulation for performance (e.g., 1000+ items), use a local `const arr: T[] = []` inside the function and never leak it — but prefer immutable patterns first
