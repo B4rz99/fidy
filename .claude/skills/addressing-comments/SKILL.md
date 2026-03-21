@@ -85,7 +85,7 @@ gh api repos/OWNER/REPO/pulls/PR_NUMBER/comments/COMMENT_ID/replies \
 
 ### Step 5: Verify and push
 
-**Before pushing, count:** number of unique comments = number of replies posted. If they don't match, you missed one. Go back.
+**Before pushing, count:** total comments (including duplicates) = number of replies posted. If they don't match, you missed one. Go back.
 
 Push code fixes after all replies are posted.
 
