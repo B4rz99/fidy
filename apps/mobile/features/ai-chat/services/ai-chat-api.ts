@@ -66,6 +66,7 @@ export async function streamChat(
   }
 
   const decoder = new TextDecoder();
+  // FP exemption: streaming SSE requires imperative buffering.
   let buffer = "";
 
   try {

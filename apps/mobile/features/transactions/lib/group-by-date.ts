@@ -35,21 +35,20 @@ export function buildListData(
   readonly items: ListItem[];
   readonly stickyIndices: number[];
 } {
+  // Local mutation for O(n) performance on the render path (CLAUDE.md performance exemption).
   const items: ListItem[] = [];
   const stickyIndices: number[] = [];
 
-  transactions.reduce<string | null>((lastDateKey, tx) => {
+  transactions.reduce<string | null>((prev, tx) => {
     const dateKey = toIsoDate(tx.date);
-
-    if (dateKey !== lastDateKey) {
+    if (dateKey !== prev) {
       stickyIndices.push(items.length);
       items.push({
-        kind: "date-header",
+        kind: "date-header" as const,
         label: makeDateLabel(tx.date, todayLabel, yesterdayLabel, dateFnsLocale),
         dateKey,
       });
     }
-
     items.push(tx);
     return dateKey;
   }, null);

@@ -126,33 +126,27 @@ export async function processEmails(
   rawEmails: RawEmail[],
   onProgress?: ProgressCallback
 ): Promise<PipelineResult> {
+  const allExternalIds = rawEmails.map((e) => e.externalId);
+  const processedIds = await getProcessedExternalIds(db, allExternalIds);
+
+  const toProcess = rawEmails.filter((email) => !processedIds.has(email.externalId));
+  const skippedDuplicate = rawEmails.length - toProcess.length;
+
   const result: PipelineResult = {
     filtered: 0,
-    skippedDuplicate: 0,
+    skippedDuplicate,
     skippedCrossSource: 0,
     saved: 0,
     failed: 0,
     needsReview: 0,
   };
 
-  const allExternalIds = rawEmails.map((e) => e.externalId);
-  const processedIds = await getProcessedExternalIds(db, allExternalIds);
-
-  // Skip already-processed emails (fetch stage already filtered by sender)
-  const toProcess = rawEmails.filter((email) => {
-    if (processedIds.has(email.externalId)) {
-      result.skippedDuplicate++;
-      return false;
-    }
-    return true;
-  });
-
-  let completed = 0;
   const total = toProcess.length;
   onProgress?.({ total, completed: 0, saved: 0, failed: 0, needsReview: 0 });
 
-  // Worker pool: 5 concurrent workers, each grabs next email, parses + saves, reports progress 1 by 1
+  // FP exemption: worker pool requires shared mutable state for real-time onProgress across workers.
   const Concurrency = 5;
+  let completed = 0;
   let nextIdx = 0;
 
   async function worker(): Promise<void> {

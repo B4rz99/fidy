@@ -28,10 +28,13 @@ export async function fetchGmailEmailsWithToken(
   if (messageIds.length === 0) return [];
 
   const Concurrency = 5;
-  const emails: RawEmail[] = [];
+  const chunks = Array.from({ length: Math.ceil(messageIds.length / Concurrency) }, (_, i) =>
+    messageIds.slice(i * Concurrency, (i + 1) * Concurrency)
+  );
 
-  for (let i = 0; i < messageIds.length; i += Concurrency) {
-    const batch = messageIds.slice(i, i + Concurrency);
+  // Batches must be sequential to respect Gmail API rate limits.
+  const emails = await chunks.reduce<Promise<RawEmail[]>>(async (accPromise, batch) => {
+    const acc = await accPromise;
     const results = await Promise.allSettled(
       batch.map(async (id) => {
         const msgResponse = await fetch(
@@ -43,10 +46,12 @@ export async function fetchGmailEmailsWithToken(
         return parseGmailMessage(id, msg);
       })
     );
-    for (const r of results) {
-      if (r.status === "fulfilled" && r.value) emails.push(r.value);
-    }
-  }
+    const fulfilled = results
+      .filter((r): r is PromiseFulfilledResult<RawEmail | null> => r.status === "fulfilled")
+      .map((r) => r.value)
+      .filter((v): v is RawEmail => v != null);
+    return [...acc, ...fulfilled];
+  }, Promise.resolve([]));
 
   return emails;
 }

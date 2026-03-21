@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { createAsyncGuard } from "@/shared/lib/create-async-guard";
+import { createAsyncGuard } from "@/shared/hooks/create-async-guard";
 
 describe("createAsyncGuard", () => {
   test("tryAcquire succeeds when idle", () => {

@@ -207,6 +207,7 @@ export async function syncPull(
 
   const rows = data as SupabaseTransactionRow[];
 
+  // FP exemption: each row may depend on prior upserts for conflict detection.
   let earliestFailure: string | null = null;
   for (const serverRow of rows) {
     try {
