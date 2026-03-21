@@ -1,4 +1,6 @@
-import { addMonths } from "date-fns";
+import { addMonths, differenceInDays } from "date-fns";
+import { parseIsoDate } from "@/shared/lib/format-date";
+import type { CopAmount, IsoDate } from "@/shared/types/branded";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -318,4 +320,51 @@ export function deriveGoalAlerts(
       const prev = previousProjections.get(g.id) ?? 0;
       return { goalId: g.id, goalName: g.name, shiftMonths: current - prev };
     });
+}
+
+// ---------------------------------------------------------------------------
+// 8. deriveGoalPaceGuidance
+// ---------------------------------------------------------------------------
+
+export type GoalPaceGuidance =
+  | { readonly type: "pace_ahead"; readonly amountAhead: CopAmount }
+  | {
+      readonly type: "pace_behind";
+      readonly amountBehind: CopAmount;
+      readonly reason: "no_contributions" | "below_pace";
+    };
+
+export function deriveGoalPaceGuidance(
+  goal: {
+    readonly targetAmount: number;
+    readonly targetDate: string | null;
+    readonly createdAt: string;
+  },
+  currentAmount: number,
+  hasContributions: boolean,
+  today: Date = new Date()
+): GoalPaceGuidance | null {
+  if (currentAmount >= goal.targetAmount) return null;
+  if (goal.targetDate === null) return null;
+  // amountBehind is 0 as a sentinel; consumers must check reason === "no_contributions"
+  // to distinguish from an actual zero-delta below-pace scenario
+  if (!hasContributions) {
+    return { type: "pace_behind", amountBehind: 0 as CopAmount, reason: "no_contributions" };
+  }
+
+  // createdAt is always stored as UTC ISO 8601 via toIsoDateTime(); slice(0,10) extracts the
+  // UTC calendar date "YYYY-MM-DD" which is the canonical start of the goal timeline.
+  // targetDate is validated as YYYY-MM-DD by Zod before storage, so the cast is safe.
+  const start = parseIsoDate(goal.createdAt.slice(0, 10) as IsoDate);
+  const end = parseIsoDate(goal.targetDate as IsoDate);
+  const totalDays = differenceInDays(end, start);
+  if (totalDays <= 0) return null;
+
+  const elapsedDays = Math.max(0, Math.min(differenceInDays(today, start), totalDays));
+  const expectedNow = goal.targetAmount * (elapsedDays / totalDays);
+  const delta = currentAmount - expectedNow;
+
+  return delta >= 0
+    ? { type: "pace_ahead", amountAhead: Math.round(delta) as CopAmount }
+    : { type: "pace_behind", amountBehind: Math.round(-delta) as CopAmount, reason: "below_pace" };
 }

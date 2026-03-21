@@ -15,6 +15,7 @@ import {
   deriveBudgetNudges,
   deriveDebtProjection,
   deriveGoalAlerts,
+  deriveGoalPaceGuidance,
   deriveGoalProgress,
   deriveGoalProjection,
   deriveInstallmentProgress,
@@ -538,5 +539,132 @@ describe("deriveGoalAlerts", () => {
     expect(result).toHaveLength(2);
     expect(result.find((a) => a.goalId === "g1")?.shiftMonths).toBe(2);
     expect(result.find((a) => a.goalId === "g3")?.shiftMonths).toBe(-3);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// deriveGoalPaceGuidance
+// ---------------------------------------------------------------------------
+
+describe("deriveGoalPaceGuidance", () => {
+  it("returns null when goal is complete (currentAmount >= targetAmount)", () => {
+    const goal = {
+      targetAmount: 1_000_000,
+      targetDate: "2027-01-01",
+      createdAt: "2025-01-01T00:00:00.000Z",
+    };
+    const result = deriveGoalPaceGuidance(goal, 1_000_000, true, FIXED_NOW);
+    expect(result).toBeNull();
+  });
+
+  it("returns null when targetDate is null", () => {
+    const goal = {
+      targetAmount: 1_000_000,
+      targetDate: null,
+      createdAt: "2025-01-01T00:00:00.000Z",
+    };
+    const result = deriveGoalPaceGuidance(goal, 0, true, FIXED_NOW);
+    expect(result).toBeNull();
+  });
+
+  it("returns pace_behind with reason 'no_contributions' when hasContributions is false", () => {
+    const goal = {
+      targetAmount: 1_000_000,
+      targetDate: "2027-01-01",
+      createdAt: "2025-01-01T00:00:00.000Z",
+    };
+    const result = deriveGoalPaceGuidance(goal, 0, false, FIXED_NOW);
+    expect(result).toEqual({ type: "pace_behind", amountBehind: 0, reason: "no_contributions" });
+  });
+
+  it("returns pace_ahead with amountAhead 0 when exactly on pace (midpoint)", () => {
+    // FIXED_NOW = 2026-03-19 (today)
+    // createdAt 2025-03-19 (1 year ago), targetDate 2027-03-19 (1 year from now)
+    // totalDays = 730, elapsedDays = 365, ratio = 0.5, expected = 1_000_000
+    const goal = {
+      targetAmount: 2_000_000,
+      targetDate: "2027-03-19",
+      createdAt: "2025-03-19T00:00:00.000Z",
+    };
+    const result = deriveGoalPaceGuidance(goal, 1_000_000, true, FIXED_NOW);
+    expect(result).toEqual({ type: "pace_ahead", amountAhead: 0 });
+  });
+
+  it("returns pace_ahead with correct amountAhead when ahead of pace", () => {
+    // createdAt 2025-03-19, targetDate 2027-03-19, FIXED_NOW 2026-03-19
+    // totalDays = 730, elapsedDays = 365, expected = 500_000
+    // currentAmount = 750_000 → 250_000 ahead
+    const goal = {
+      targetAmount: 1_000_000,
+      targetDate: "2027-03-19",
+      createdAt: "2025-03-19T00:00:00.000Z",
+    };
+    const result = deriveGoalPaceGuidance(goal, 750_000, true, FIXED_NOW);
+    expect(result).toEqual({ type: "pace_ahead", amountAhead: 250_000 });
+  });
+
+  it("returns pace_behind with correct amountBehind and reason 'below_pace' when behind pace", () => {
+    // createdAt 2025-03-19, targetDate 2027-03-19, FIXED_NOW 2026-03-19
+    // expected = 500_000, currentAmount = 250_000 → 250_000 behind
+    const goal = {
+      targetAmount: 1_000_000,
+      targetDate: "2027-03-19",
+      createdAt: "2025-03-19T00:00:00.000Z",
+    };
+    const result = deriveGoalPaceGuidance(goal, 250_000, true, FIXED_NOW);
+    expect(result).toEqual({ type: "pace_behind", amountBehind: 250_000, reason: "below_pace" });
+  });
+
+  it("returns pace_behind when today is past target date and goal not complete", () => {
+    // targetDate in the past → elapsedDays clamped to totalDays → expectedNow = targetAmount
+    const goal = {
+      targetAmount: 1_000_000,
+      targetDate: "2025-01-01",
+      createdAt: "2024-01-01T00:00:00.000Z",
+    };
+    const result = deriveGoalPaceGuidance(goal, 500_000, true, FIXED_NOW);
+    expect(result).toEqual({ type: "pace_behind", amountBehind: 500_000, reason: "below_pace" });
+  });
+
+  it("returns null when totalDays <= 0 (createdAt === targetDate)", () => {
+    const goal = {
+      targetAmount: 1_000_000,
+      targetDate: "2025-03-19",
+      createdAt: "2025-03-19T00:00:00.000Z",
+    };
+    const result = deriveGoalPaceGuidance(goal, 0, true, FIXED_NOW);
+    expect(result).toBeNull();
+  });
+
+  it("rounds fractional delta to a whole integer (COP has no cents)", () => {
+    // createdAt 2025-03-19, targetDate 2027-03-19, FIXED_NOW 2026-03-19
+    // totalDays = 730, elapsedDays = 365, ratio = 0.5
+    // expected = 1_000_001 * 0.5 = 500_000.5, delta = 0 - 500_000.5 = -500_000.5
+    // amountBehind = Math.round(500_000.5) = 500_001
+    const goal = {
+      targetAmount: 1_000_001,
+      targetDate: "2027-03-19",
+      createdAt: "2025-03-19T00:00:00.000Z",
+    };
+    const result = deriveGoalPaceGuidance(goal, 0, true, FIXED_NOW);
+    expect(result).not.toBeNull();
+    expect(result?.type).toBe("pace_behind");
+    if (result?.type === "pace_behind") {
+      expect(result.reason).toBe("below_pace");
+      expect(Number.isInteger(result.amountBehind)).toBe(true);
+      expect(result.amountBehind).toBe(Math.round(500_000.5));
+    }
+  });
+
+  it("returns pace_ahead with amountAhead 0 when today is before createdAt (elapsedDays clamped to 0)", () => {
+    // today (FIXED_NOW = 2026-03-19) is before createdAt (2026-06-01)
+    const goal = {
+      targetAmount: 1_000_000,
+      targetDate: "2027-06-01",
+      createdAt: "2026-06-01T00:00:00.000Z",
+    };
+    const result = deriveGoalPaceGuidance(goal, 0, true, FIXED_NOW);
+    // elapsedDays = max(0, negative) = 0 → expectedNow = 0 → delta = 0 → pace_ahead with 0
+    expect(result).toEqual({ type: "pace_ahead", amountAhead: 0 });
   });
 });
