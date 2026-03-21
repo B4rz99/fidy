@@ -119,12 +119,12 @@ function computeSpendingByCategory(
 ): CategorySpending[] {
   const start = `${month}-01`;
   const end = `${nextMonthString(month)}-01`;
-  const map = new Map<string, number>();
-  for (const t of transactions) {
-    if (t.type === "expense" && t.date >= start && t.date < end) {
-      map.set(t.category_id, (map.get(t.category_id) ?? 0) + t.amount);
-    }
-  }
+  const map = transactions
+    .filter((t) => t.type === "expense" && t.date >= start && t.date < end)
+    .reduce(
+      (acc, t) => acc.set(t.category_id, (acc.get(t.category_id) ?? 0) + t.amount),
+      new Map<string, number>()
+    );
   return Array.from(map.entries()).map(([categoryId, total]) => ({
     categoryId,
     total,

@@ -66,63 +66,49 @@ export const ConflictCard = memo(function ConflictCard({
   const peachBg = useThemeColor("peachLight");
   const { localData, serverData } = conflict;
 
-  const diffs: Omit<DiffRowProps, "accentRed" | "accentGreen">[] = [];
-
-  if (localData.amount !== serverData.amount) {
-    diffs.push({
-      label: t("common.amount"),
-      localValue: formatSignedMoney(
-        localData.amount as CopAmount,
-        localData.type as "expense" | "income"
-      ),
-      serverValue: formatSignedMoney(
-        serverData.amount as CopAmount,
-        serverData.type as "expense" | "income"
-      ),
-    });
-  }
-
-  if (localData.categoryId !== serverData.categoryId) {
-    diffs.push({
-      label: t("common.category"),
-      localValue: resolveCategoryLabel(localData.categoryId, locale),
-      serverValue: resolveCategoryLabel(serverData.categoryId, locale),
-    });
-  }
-
-  if (localData.description !== serverData.description) {
-    diffs.push({
-      label: t("common.description"),
-      localValue: localData.description ?? t("common.none"),
-      serverValue: serverData.description ?? t("common.none"),
-    });
-  }
-
-  if (localData.date !== serverData.date) {
-    diffs.push({
-      label: t("common.date"),
-      localValue: localData.date,
-      serverValue: serverData.date,
-    });
-  }
-
-  if (localData.type !== serverData.type) {
-    diffs.push({
-      label: t("common.type"),
-      localValue: localData.type,
-      serverValue: serverData.type,
-    });
-  }
-
   const localDeleted = localData.deletedAt != null;
   const serverDeleted = serverData.deletedAt != null;
-  if (localDeleted !== serverDeleted) {
-    diffs.push({
-      label: t("common.status"),
-      localValue: localDeleted ? t("common.deleted") : t("common.active"),
-      serverValue: serverDeleted ? t("common.deleted") : t("common.active"),
-    });
-  }
+
+  const diffs = (
+    [
+      localData.amount !== serverData.amount && {
+        label: t("common.amount"),
+        localValue: formatSignedMoney(
+          localData.amount as CopAmount,
+          localData.type as "expense" | "income"
+        ),
+        serverValue: formatSignedMoney(
+          serverData.amount as CopAmount,
+          serverData.type as "expense" | "income"
+        ),
+      },
+      localData.categoryId !== serverData.categoryId && {
+        label: t("common.category"),
+        localValue: resolveCategoryLabel(localData.categoryId, locale),
+        serverValue: resolveCategoryLabel(serverData.categoryId, locale),
+      },
+      localData.description !== serverData.description && {
+        label: t("common.description"),
+        localValue: localData.description ?? t("common.none"),
+        serverValue: serverData.description ?? t("common.none"),
+      },
+      localData.date !== serverData.date && {
+        label: t("common.date"),
+        localValue: localData.date,
+        serverValue: serverData.date,
+      },
+      localData.type !== serverData.type && {
+        label: t("common.type"),
+        localValue: localData.type,
+        serverValue: serverData.type,
+      },
+      localDeleted !== serverDeleted && {
+        label: t("common.status"),
+        localValue: localDeleted ? t("common.deleted") : t("common.active"),
+        serverValue: serverDeleted ? t("common.deleted") : t("common.active"),
+      },
+    ] as const
+  ).filter((d): d is Omit<DiffRowProps, "accentRed" | "accentGreen"> => d !== false);
 
   return (
     <View className="rounded-xl p-4" style={{ backgroundColor: peachBg }}>

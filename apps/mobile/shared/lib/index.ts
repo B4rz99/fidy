@@ -1,4 +1,3 @@
-export { createAsyncGuard } from "./create-async-guard";
 export type { CurrencyConfig } from "./currency";
 export { getActiveCurrency } from "./currency";
 export { formatDateDisplay, parseIsoDate, toIsoDate, toIsoDateTime, toMonth } from "./format-date";
