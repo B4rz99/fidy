@@ -126,18 +126,22 @@ vi.mock("expo-sqlite", () => ({
 }));
 
 // Mock date-fns
-vi.mock("date-fns", () => ({
-  format: (date: Date, fmt: string) => {
-    if (fmt === "PP") return "Mar 1, 2026";
-    if (fmt === "MMM d, yyyy") return "Mar 1, 2026";
-    if (fmt === "yyyy-MM-dd") return "2026-03-01";
-    if (fmt === "MMMM d") return "March 1";
-    return date.toISOString();
-  },
-  parse: (dateStr: string, _fmt: string, _ref: Date) => new Date(dateStr),
-  isToday: () => true,
-  isYesterday: () => false,
-}));
+vi.mock("date-fns", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("date-fns")>();
+  return {
+    ...actual,
+    format: (date: Date, fmt: string) => {
+      if (fmt === "PP") return "Mar 1, 2026";
+      if (fmt === "MMM d, yyyy") return "Mar 1, 2026";
+      if (fmt === "yyyy-MM-dd") return "2026-03-01";
+      if (fmt === "MMMM d") return "March 1";
+      return date.toISOString();
+    },
+    parse: (dateStr: string, _fmt: string, _ref: Date) => new Date(dateStr),
+    isToday: () => true,
+    isYesterday: () => false,
+  };
+});
 
 // Mock expo-router
 export const mockReplace = vi.fn();
