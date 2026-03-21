@@ -7,9 +7,15 @@ import { generateId, generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 
 // Import from goals feature
-import type { GoalProgress, GoalProjection, InstallmentProgress } from "./lib/derive";
+import type {
+  GoalPaceGuidance,
+  GoalProgress,
+  GoalProjection,
+  InstallmentProgress,
+} from "./lib/derive";
 import {
   deriveDebtProjection,
+  deriveGoalPaceGuidance,
   deriveGoalProgress,
   deriveGoalProjection,
   deriveInstallmentProgress,
@@ -39,6 +45,7 @@ export type GoalWithProgress = {
   readonly progress: GoalProgress;
   readonly projection: GoalProjection;
   readonly installments: InstallmentProgress;
+  readonly paceGuidance: GoalPaceGuidance | null;
 };
 
 type GoalState = {
@@ -153,7 +160,8 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
           projection.netMonthlySavings,
           contributionMonths
         );
-        return { goal, currentAmount, progress, projection, installments };
+        const paceGuidance = deriveGoalPaceGuidance(goal, currentAmount, contributionMonths > 0);
+        return { goal, currentAmount, progress, projection, installments, paceGuidance };
       });
 
       set({ goals: goalsWithProgress, isLoading: false });
@@ -361,7 +369,8 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
           projection.netMonthlySavings,
           contributionMonths
         );
-        return { goal: g.goal, currentAmount, progress, projection, installments };
+        const paceGuidance = deriveGoalPaceGuidance(g.goal, currentAmount, contributionMonths > 0);
+        return { goal: g.goal, currentAmount, progress, projection, installments, paceGuidance };
       });
       set({ goals: updated });
     } catch {

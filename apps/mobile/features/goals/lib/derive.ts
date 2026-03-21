@@ -1,4 +1,6 @@
-import { addMonths } from "date-fns";
+import { addMonths, differenceInDays } from "date-fns";
+import { parseIsoDate } from "@/shared/lib/format-date";
+import type { CopAmount, IsoDate } from "@/shared/types/branded";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -297,6 +299,48 @@ export function deriveBudgetNudges(
 // ---------------------------------------------------------------------------
 // 7. deriveGoalAlerts
 // ---------------------------------------------------------------------------
+
+export type GoalPaceGuidance =
+  | { readonly type: "pace_ahead"; readonly amountAhead: CopAmount }
+  | {
+      readonly type: "pace_behind";
+      readonly amountBehind: CopAmount;
+      readonly reason: "no_contributions" | "below_pace";
+    };
+
+// ---------------------------------------------------------------------------
+// 8. deriveGoalPaceGuidance
+// ---------------------------------------------------------------------------
+
+export function deriveGoalPaceGuidance(
+  goal: {
+    readonly targetAmount: number;
+    readonly targetDate: string | null;
+    readonly createdAt: string;
+  },
+  currentAmount: number,
+  hasContributions: boolean,
+  today: Date = new Date()
+): GoalPaceGuidance | null {
+  if (currentAmount >= goal.targetAmount) return null;
+  if (goal.targetDate === null) return null;
+  if (!hasContributions) {
+    return { type: "pace_behind", amountBehind: 0 as CopAmount, reason: "no_contributions" };
+  }
+
+  const start = parseIsoDate(goal.createdAt.slice(0, 10) as IsoDate);
+  const end = parseIsoDate(goal.targetDate.slice(0, 10) as IsoDate);
+  const totalDays = differenceInDays(end, start);
+  if (totalDays <= 0) return null;
+
+  const elapsedDays = Math.min(differenceInDays(today, start), totalDays);
+  const expectedNow = goal.targetAmount * (elapsedDays / totalDays);
+  const delta = currentAmount - expectedNow;
+
+  return delta >= 0
+    ? { type: "pace_ahead", amountAhead: Math.round(delta) as CopAmount }
+    : { type: "pace_behind", amountBehind: Math.round(-delta) as CopAmount, reason: "below_pace" };
+}
 
 export function deriveGoalAlerts(
   goals: readonly {
