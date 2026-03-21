@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/useNamingConvention: snake_case matches Supabase Postgres column names
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getBudgetById } from "@/features/budget";
 import { getContributionById, getGoalById } from "@/features/goals";
 import {
   clearSyncEntries,
@@ -74,6 +75,26 @@ function fromSupabaseRow(row: SupabaseTransactionRow) {
   };
 }
 
+async function processBudgetEntry(
+  db: AnyDb,
+  supabase: SupabaseClient,
+  rowId: string
+): Promise<boolean> {
+  const row = getBudgetById(db, rowId);
+  if (!row) return true;
+  const { error } = await supabase.from("budgets").upsert({
+    id: row.id,
+    user_id: row.userId,
+    category_id: row.categoryId,
+    amount: row.amount,
+    month: row.month,
+    created_at: row.createdAt,
+    updated_at: row.updatedAt,
+    deleted_at: row.deletedAt,
+  });
+  return !error;
+}
+
 async function processGoalEntry(
   db: AnyDb,
   supabase: SupabaseClient,
@@ -129,6 +150,11 @@ async function processEntry(
     if (!row) return entry.id;
     const { error } = await supabase.from("transactions").upsert(toSupabaseRow(row));
     return error ? null : entry.id;
+  }
+
+  if (entry.tableName === "budgets") {
+    const ok = await processBudgetEntry(db, supabase, entry.rowId);
+    return ok ? entry.id : null;
   }
 
   if (entry.tableName === "goals") {
