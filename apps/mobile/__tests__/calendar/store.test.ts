@@ -10,8 +10,6 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
-vi.unmock("date-fns");
-
 // Mock the calendar repository module
 vi.mock("@/features/calendar/lib/repository", () => ({
   insertBill: vi.fn().mockResolvedValue(undefined),
