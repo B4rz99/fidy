@@ -160,11 +160,7 @@ describe("useCategoriesStore", () => {
     const icon = state.allCategories[10].icon;
     expect(icon).toBeDefined();
     // Must NOT be any of the ICON_MAP mock values — proves fallback was used
-    const mockIcons = Object.values({
-      Zap: () => null,
-      PawPrint: () => null,
-      ShoppingCart: () => null,
-    });
+    const mockIcons: Array<() => null> = [() => null, () => null, () => null];
     expect(mockIcons).not.toContain(icon);
   });
 

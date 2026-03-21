@@ -155,31 +155,6 @@ const en = {
     },
   },
 
-  // Categories
-  categories: {
-    title: "Categories",
-    settingsRow: "Categories",
-    builtInSection: "DEFAULT",
-    customSection: "CUSTOM",
-    addCategory: "+ Add category",
-    noCustomCategories: "No custom categories yet",
-    create: {
-      title: "New category",
-      nameLabel: "Category name",
-      namePlaceholder: "e.g. Pets",
-      iconLabel: "Choose an icon",
-      colorLabel: "Choose a color",
-      submit: "Create category",
-    },
-    errors: {
-      nameTooShort: "Name must be at least 2 characters",
-      nameTooLong: "Name must be under 32 characters",
-      iconRequired: "Please select an icon",
-      colorRequired: "Please select a color",
-      saveFailed: "Could not save category",
-    },
-  },
-
   // Goals
   goals: {
     title: "Goals",

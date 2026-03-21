@@ -70,7 +70,9 @@ export const useCategoriesStore = create<CategoriesState & CategoriesActions>((s
   },
 
   createUserCategory: async (input) => {
-    if (!dbRef || !userIdRef) return false;
+    const db = dbRef;
+    const userId = userIdRef;
+    if (!db || !userId) return false;
 
     const trimmedName = input.name.trim();
     if (trimmedName.length < MIN_NAME_LENGTH || trimmedName.length > MAX_NAME_LENGTH) return false;
@@ -81,10 +83,10 @@ export const useCategoriesStore = create<CategoriesState & CategoriesActions>((s
     const id = generateUserCategoryId();
 
     try {
-      dbRef.transaction((tx) => {
+      db.transaction((tx) => {
         insertUserCategory(tx as AnyDb, {
           id,
-          userId: userIdRef!,
+          userId,
           name: trimmedName,
           iconName: input.iconName,
           colorHex: input.colorHex,
