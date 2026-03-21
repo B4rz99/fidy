@@ -18,10 +18,10 @@
     fetch(`${supabaseUrl}/rest/v1/waitlist_emails`, {
       method: "POST",
       headers: {
-        apikey: anonKey,
-        Authorization: `Bearer ${anonKey}`,
+        "apikey": anonKey,
+        "Authorization": `Bearer ${anonKey}`,
         "Content-Type": "application/json",
-        Prefer: "return=minimal",
+        "Prefer": "return=minimal",
       },
       body: JSON.stringify({ email: email, locale: locale }),
     })

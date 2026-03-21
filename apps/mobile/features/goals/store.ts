@@ -116,9 +116,15 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
 
         // For debt goals with interest, use amortization-based projection
         const projection: GoalProjection =
-          goal.type === "debt" && goal.interestRatePercent != null && savingsProjection.netMonthlySavings > 0
+          goal.type === "debt" &&
+          goal.interestRatePercent != null &&
+          savingsProjection.netMonthlySavings > 0
             ? (() => {
-                const debtResult = deriveDebtProjection(goal, currentAmount, savingsProjection.netMonthlySavings);
+                const debtResult = deriveDebtProjection(
+                  goal,
+                  currentAmount,
+                  savingsProjection.netMonthlySavings
+                );
                 if (debtResult.status === "ok" || debtResult.status === "zero_rate") {
                   return {
                     projectedDate: debtResult.projectedDate,
@@ -127,7 +133,15 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
                     netMonthlySavings: savingsProjection.netMonthlySavings,
                   };
                 }
-                // payment_too_low or complete — fall back to savings projection
+                if (debtResult.status === "payment_too_low") {
+                  return {
+                    projectedDate: null,
+                    monthsToGo: null,
+                    confidence: savingsProjection.confidence,
+                    netMonthlySavings: savingsProjection.netMonthlySavings,
+                  };
+                }
+                // complete — fall back to savings projection
                 return savingsProjection;
               })()
             : savingsProjection;
@@ -311,11 +325,30 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
         const savingsProj = deriveGoalProjection(g.goal, currentAmount, monthlyTotals);
 
         const projection: GoalProjection =
-          g.goal.type === "debt" && g.goal.interestRatePercent != null && savingsProj.netMonthlySavings > 0
+          g.goal.type === "debt" &&
+          g.goal.interestRatePercent != null &&
+          savingsProj.netMonthlySavings > 0
             ? (() => {
-                const dr = deriveDebtProjection(g.goal, currentAmount, savingsProj.netMonthlySavings);
+                const dr = deriveDebtProjection(
+                  g.goal,
+                  currentAmount,
+                  savingsProj.netMonthlySavings
+                );
                 if (dr.status === "ok" || dr.status === "zero_rate") {
-                  return { projectedDate: dr.projectedDate, monthsToGo: dr.monthsToGo, confidence: savingsProj.confidence, netMonthlySavings: savingsProj.netMonthlySavings };
+                  return {
+                    projectedDate: dr.projectedDate,
+                    monthsToGo: dr.monthsToGo,
+                    confidence: savingsProj.confidence,
+                    netMonthlySavings: savingsProj.netMonthlySavings,
+                  };
+                }
+                if (dr.status === "payment_too_low") {
+                  return {
+                    projectedDate: null,
+                    monthsToGo: null,
+                    confidence: savingsProj.confidence,
+                    netMonthlySavings: savingsProj.netMonthlySavings,
+                  };
                 }
                 return savingsProj;
               })()

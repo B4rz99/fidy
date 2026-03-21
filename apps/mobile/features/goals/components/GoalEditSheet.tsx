@@ -1,7 +1,17 @@
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
+import { handleNumpadPress } from "@/features/transactions";
+import { FidyNumpad } from "@/shared/components";
 import {
   Alert,
+  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,6 +20,7 @@ import {
   View,
 } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
 import { useGoalStore } from "../store";
 
 export function GoalEditSheet() {
@@ -23,65 +34,78 @@ export function GoalEditSheet() {
 
   const cardBg = useThemeColor("card");
   const primaryColor = useThemeColor("primary");
-  const _secondaryColor = useThemeColor("secondary");
   const tertiaryColor = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
   const borderColor = useThemeColor("borderSubtle");
   const accentRed = useThemeColor("accentRed");
 
-  // Find the selected goal to pre-fill
   const goalData = goals.find((g) => g.goal.id === selectedGoalId);
   const goal = goalData?.goal;
 
   const goalType = goal?.type ?? "savings";
   const [name, setName] = useState(goal?.name ?? "");
-  const [amountText, setAmountText] = useState(
-    goal?.targetAmount != null ? String(goal.targetAmount) : ""
-  );
-  const [targetDate, setTargetDate] = useState(goal?.targetDate ?? "");
-  const [interestRate, setInterestRate] = useState(
+  const [digits, setDigits] = useState(goal?.targetAmount != null ? String(goal.targetAmount) : "");
+  const digitsRef = useRef(digits);
+  digitsRef.current = digits;
+  const [interestDigits, setInterestDigits] = useState(
     goal?.interestRatePercent != null ? String(goal.interestRatePercent) : ""
   );
+  const interestDigitsRef = useRef(interestDigits);
+  interestDigitsRef.current = interestDigits;
+  const [numpadTarget, setNumpadTarget] = useState<"amount" | "interestRate" | null>(null);
+  const [targetDate, setTargetDate] = useState(goal?.targetDate ?? "");
+
+  // Blinking cursor
+  const cursorOpacity = useSharedValue(1);
+  useEffect(() => {
+    cursorOpacity.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 0 }),
+        withTiming(1, { duration: 530 }),
+        withTiming(0, { duration: 0 }),
+        withTiming(0, { duration: 530 })
+      ),
+      -1
+    );
+  }, [cursorOpacity]);
+  const cursorStyle = useAnimatedStyle(() => ({ opacity: cursorOpacity.value }));
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
   const { isBusy: isDeleting, run: guardedDelete } = useAsyncGuard();
+
+  const displayAmount = digits.length > 0 ? formatInputDisplay(digits) : "$";
+
+  const handleKey = useCallback((key: string) => {
+    if (numpadTarget === "amount") {
+      setDigits(handleNumpadPress(digitsRef.current, key));
+    } else if (numpadTarget === "interestRate") {
+      setInterestDigits(handleNumpadPress(interestDigitsRef.current, key));
+    }
+  }, [numpadTarget]);
 
   const handleSave = useCallback(
     () =>
       guardedSave(async () => {
         if (selectedGoalId == null) return;
-
-        const parsedAmount = Number.parseInt(amountText.replace(/\D/g, ""), 10);
-        if (!name.trim() || !parsedAmount || parsedAmount <= 0) return;
+        const parsedAmount = parseDigitsToAmount(digits);
+        if (!name.trim() || parsedAmount <= 0) return;
 
         await updateGoal(selectedGoalId, {
           name: name.trim(),
           targetAmount: parsedAmount,
           targetDate: targetDate || null,
           interestRatePercent:
-            goalType === "debt" && interestRate
-              ? (Number.isFinite(Number.parseFloat(interestRate)) ? Number.parseFloat(interestRate) : null)
+            goalType === "debt" && interestDigits
+              ? parseDigitsToAmount(interestDigits)
               : null,
         });
-
         back();
       }),
-    [
-      selectedGoalId,
-      name,
-      amountText,
-      goalType,
-      targetDate,
-      interestRate,
-      updateGoal,
-      back,
-      guardedSave,
-    ]
+    [selectedGoalId, name, digits, goalType, targetDate, interestDigits, updateGoal, back, guardedSave]
   );
 
   const handleDelete = useCallback(() => {
     if (selectedGoalId == null || goal == null) return;
-
     Alert.alert(
       t("goals.edit.deleteConfirmTitle"),
       t("goals.edit.deleteConfirmMessage", { goalName: goal.name }),
@@ -100,9 +124,7 @@ export function GoalEditSheet() {
     );
   }, [selectedGoalId, goal, deleteGoal, back, guardedDelete, t]);
 
-  if (goal == null) {
-    return null;
-  }
+  if (goal == null) return null;
 
   return (
     <ScrollView
@@ -110,7 +132,6 @@ export function GoalEditSheet() {
       contentContainerStyle={styles.scrollContent}
       keyboardShouldPersistTaps="handled"
     >
-      {/* Title */}
       <Text style={[styles.title, { color: primaryColor }]}>{t("goals.edit.title")}</Text>
 
       {/* Goal name */}
@@ -124,23 +145,30 @@ export function GoalEditSheet() {
           placeholderTextColor={tertiaryColor}
           value={name}
           onChangeText={setName}
+          onFocus={() => setNumpadTarget(null)}
         />
       </View>
 
-      {/* Target amount */}
-      <View style={styles.fieldGroup}>
+      {/* Target amount — FidyNumpad display */}
+      <Pressable
+        style={styles.amountSection}
+        onPress={() => { Keyboard.dismiss(); setNumpadTarget("amount"); }}
+      >
         <Text style={[styles.fieldLabel, { color: primaryColor }]}>
           {t("goals.create.targetAmount")}
         </Text>
-        <TextInput
-          style={[styles.input, { backgroundColor: cardBg, borderColor, color: primaryColor }]}
-          placeholder="COP $0"
-          placeholderTextColor={tertiaryColor}
-          value={amountText}
-          onChangeText={setAmountText}
-          keyboardType="numeric"
-        />
-      </View>
+        <View style={styles.amountRow}>
+          <Text style={[styles.amountDisplay, { color: primaryColor }]}>{displayAmount}</Text>
+          {numpadTarget === "amount" ? (
+            <Animated.View
+              style={[
+                { width: 2, height: 28, marginLeft: 2, borderRadius: 1, backgroundColor: primaryColor },
+                cursorStyle,
+              ]}
+            />
+          ) : null}
+        </View>
+      </Pressable>
 
       {/* Target date */}
       <View style={styles.fieldGroup}>
@@ -153,27 +181,36 @@ export function GoalEditSheet() {
           placeholderTextColor={tertiaryColor}
           value={targetDate}
           onChangeText={setTargetDate}
+          onFocus={() => setNumpadTarget(null)}
         />
       </View>
 
       {/* Interest rate (debt only) */}
       {goalType === "debt" ? (
-        <View style={styles.fieldGroup}>
+        <Pressable
+          style={styles.amountSection}
+          onPress={() => { Keyboard.dismiss(); setNumpadTarget("interestRate"); }}
+        >
           <Text style={[styles.fieldLabel, { color: primaryColor }]}>
             {t("goals.create.interestRate")}
           </Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: cardBg, borderColor, color: primaryColor }]}
-            placeholder="0"
-            placeholderTextColor={tertiaryColor}
-            value={interestRate}
-            onChangeText={setInterestRate}
-            keyboardType="numeric"
-          />
-        </View>
+          <View style={styles.amountRow}>
+            <Text style={[styles.amountDisplay, { color: primaryColor, fontSize: 24 }]}>
+              {interestDigits.length > 0 ? `${interestDigits}%` : "0%"}
+            </Text>
+            {numpadTarget === "interestRate" ? (
+              <Animated.View
+                style={[
+                  { width: 2, height: 22, marginLeft: 2, borderRadius: 1, backgroundColor: primaryColor },
+                  cursorStyle,
+                ]}
+              />
+            ) : null}
+          </View>
+        </Pressable>
       ) : null}
 
-      {/* Save changes button */}
+      {/* Save button */}
       <Pressable
         style={[styles.saveButton, { backgroundColor: accentGreen, opacity: isSaving ? 0.5 : 1 }]}
         onPress={handleSave}
@@ -182,7 +219,7 @@ export function GoalEditSheet() {
         <Text style={styles.saveButtonText}>{t("goals.edit.saveChanges")}</Text>
       </Pressable>
 
-      {/* Delete goal button */}
+      {/* Delete button */}
       <Pressable
         style={[styles.deleteButton, { borderColor: accentRed, opacity: isDeleting ? 0.5 : 1 }]}
         onPress={handleDelete}
@@ -192,31 +229,18 @@ export function GoalEditSheet() {
           {t("goals.edit.deleteGoal")}
         </Text>
       </Pressable>
+
+      {numpadTarget != null ? <FidyNumpad onKeyPress={handleKey} /> : null}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 24,
-    gap: 16,
-  },
-  title: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 18,
-    textAlign: "center",
-  },
-  fieldGroup: {
-    gap: 4,
-  },
-  fieldLabel: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 12,
-    fontStyle: "italic",
-  },
+  container: { flex: 1 },
+  scrollContent: { padding: 24, gap: 16 },
+  title: { fontFamily: "Poppins_700Bold", fontSize: 18, textAlign: "center" },
+  fieldGroup: { gap: 4 },
+  fieldLabel: { fontFamily: "Poppins_500Medium", fontSize: 12, fontStyle: "italic" },
   input: {
     height: 48,
     borderRadius: 12,
@@ -226,6 +250,9 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     fontSize: 14,
   },
+  amountSection: { alignItems: "center", gap: 4, paddingVertical: 8 },
+  amountRow: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
+  amountDisplay: { fontFamily: "Poppins_700Bold", fontSize: 32 },
   saveButton: {
     borderRadius: 12,
     borderCurve: "continuous",
@@ -233,11 +260,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     minHeight: 48,
   },
-  saveButtonText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 16,
-    color: "#FFFFFF",
-  },
+  saveButtonText: { fontFamily: "Poppins_700Bold", fontSize: 16, color: "#FFFFFF" },
   deleteButton: {
     borderRadius: 12,
     borderCurve: "continuous",
@@ -246,8 +269,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     minHeight: 48,
   },
-  deleteButtonText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 16,
-  },
+  deleteButtonText: { fontFamily: "Poppins_700Bold", fontSize: 16 },
 });

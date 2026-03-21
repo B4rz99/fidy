@@ -232,7 +232,7 @@ describe("retry queue integration (real SQLite)", () => {
     expect(pe.rawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
 
     // nextRetryAt should be in the future
-    const nextRetry = new Date(pe.nextRetryAt!);
+    const nextRetry = new Date(pe.nextRetryAt ?? "");
     expect(nextRetry.getTime()).toBeGreaterThan(Date.now());
   });
 
@@ -262,7 +262,7 @@ describe("retry queue integration (real SQLite)", () => {
       .prepare(
         "SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now') as now_iso, datetime('now') as now_plain"
       )
-      .all() as { now_iso: string; now_plain: string }[];
+      .all() as Array<{ now_iso: string; now_plain: string }>;
 
     // ISO format should have T separator and Z suffix
     expect(row.now_iso).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
@@ -273,14 +273,14 @@ describe("retry queue integration (real SQLite)", () => {
     const pastIso = new Date(Date.now() - 60_000).toISOString();
     const [cmp] = sqlite
       .prepare("SELECT ? <= strftime('%Y-%m-%dT%H:%M:%fZ', 'now') as is_due")
-      .all(pastIso) as { is_due: number }[];
+      .all(pastIso) as Array<{ is_due: number }>;
     expect(cmp.is_due).toBe(1);
 
     // A future ISO timestamp should NOT be due
     const futureIso = new Date(Date.now() + 600_000).toISOString();
     const [cmp2] = sqlite
       .prepare("SELECT ? <= strftime('%Y-%m-%dT%H:%M:%fZ', 'now') as is_due")
-      .all(futureIso) as { is_due: number }[];
+      .all(futureIso) as Array<{ is_due: number }>;
     expect(cmp2.is_due).toBe(0);
   });
 });

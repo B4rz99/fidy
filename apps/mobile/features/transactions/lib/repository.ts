@@ -94,6 +94,12 @@ export function getMonthlyTotalsByType(
   userId: string,
   months: number
 ): Array<{ month: string; type: string; total: number }> {
+  // Compute cutoff date: first day of (months) months ago
+  const cutoff = new Date();
+  cutoff.setDate(1);
+  cutoff.setMonth(cutoff.getMonth() - months);
+  const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, "0")}`;
+
   return db
     .select({
       month: sql<string>`strftime('%Y-%m', ${transactions.date})`,
@@ -101,10 +107,15 @@ export function getMonthlyTotalsByType(
       total: sum(transactions.amount).mapWith(Number),
     })
     .from(transactions)
-    .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        isNull(transactions.deletedAt),
+        sql`strftime('%Y-%m', ${transactions.date}) >= ${cutoffStr}`
+      )
+    )
     .groupBy(sql`strftime('%Y-%m', ${transactions.date})`, transactions.type)
     .orderBy(desc(sql`strftime('%Y-%m', ${transactions.date})`))
-    .limit(months * 2) // *2 because each month can have both income and expense rows
     .all();
 }
 

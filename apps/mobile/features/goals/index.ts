@@ -29,6 +29,7 @@ export {
 } from "./lib/derive";
 export type { GoalContributionRow, GoalRow } from "./lib/repository";
 export {
+  getContributionById,
   getContributionMonthCount,
   getContributionsForGoal,
   getGoalById,

@@ -1,13 +1,17 @@
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
+import { handleNumpadPress } from "@/features/transactions";
+import { FidyNumpad } from "@/shared/components";
+import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
-import { toIsoDate } from "@/shared/lib";
-import {
-  cleanDigitInput,
-  formatInputDisplay,
-  parseDigitsToAmount,
-} from "@/shared/lib/format-money";
+import { formatInputDisplay, parseDigitsToAmount, toIsoDate } from "@/shared/lib";
 import { useGoalStore } from "../store";
 
 export function AddPaymentSheet() {
@@ -19,27 +23,45 @@ export function AddPaymentSheet() {
 
   const cardBg = useThemeColor("card");
   const primaryColor = useThemeColor("primary");
-  const secondaryColor = useThemeColor("secondary");
   const tertiaryColor = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
   const borderColor = useThemeColor("borderSubtle");
 
-  const [amountDigits, setAmountDigits] = useState("");
+  const [digits, setDigits] = useState("");
+  const digitsRef = useRef(digits);
+  digitsRef.current = digits;
+  const [numpadActive, setNumpadActive] = useState(true);
   const [note, setNote] = useState("");
   const [date, setDate] = useState(toIsoDate(new Date()));
 
+  // Blinking cursor
+  const cursorOpacity = useSharedValue(1);
+  useEffect(() => {
+    cursorOpacity.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 0 }),
+        withTiming(1, { duration: 530 }),
+        withTiming(0, { duration: 0 }),
+        withTiming(0, { duration: 530 })
+      ),
+      -1
+    );
+  }, [cursorOpacity]);
+  const cursorStyle = useAnimatedStyle(() => ({ opacity: cursorOpacity.value }));
+
   const { isBusy: isAdding, run: guardedAdd } = useAsyncGuard();
 
-  const handleAmountChange = useCallback((text: string) => {
-    setAmountDigits(cleanDigitInput(text));
+  const displayAmount = digits.length > 0 ? formatInputDisplay(digits) : "$";
+
+  const handleKey = useCallback((key: string) => {
+    setDigits(handleNumpadPress(digitsRef.current, key));
   }, []);
 
   const handleAddPayment = useCallback(
     () =>
       guardedAdd(async () => {
         if (selectedGoalId == null) return;
-
-        const amount = parseDigitsToAmount(amountDigits);
+        const amount = parseDigitsToAmount(digits);
         if (amount <= 0) return;
 
         const success = await addContribution({
@@ -53,10 +75,8 @@ export function AddPaymentSheet() {
           back();
         }
       }),
-    [selectedGoalId, amountDigits, note, date, addContribution, back, guardedAdd]
+    [selectedGoalId, digits, note, date, addContribution, back, guardedAdd]
   );
-
-  const displayAmount = amountDigits ? formatInputDisplay(amountDigits) : "";
 
   return (
     <ScrollView
@@ -67,28 +87,23 @@ export function AddPaymentSheet() {
       {/* Title */}
       <Text style={[styles.title, { color: primaryColor }]}>{t("goals.payment.title")}</Text>
 
-      {/* Amount display */}
-      <View style={styles.amountDisplayContainer}>
-        <Text style={[styles.amountDisplay, { color: primaryColor }]}>
-          {displayAmount || "COP $0"}
-        </Text>
-      </View>
-
-      {/* Amount input */}
-      <View style={styles.fieldGroup}>
-        <Text style={[styles.fieldLabel, { color: primaryColor }]}>
-          {t("goals.payment.amount")}
-        </Text>
-        <TextInput
-          style={[styles.input, { backgroundColor: cardBg, borderColor, color: primaryColor }]}
-          placeholder="COP $0"
-          placeholderTextColor={tertiaryColor}
-          value={amountDigits}
-          onChangeText={handleAmountChange}
-          keyboardType="numeric"
-          autoFocus
-        />
-      </View>
+      {/* Amount display with cursor — tappable to activate numpad */}
+      <Pressable
+        style={styles.amountSection}
+        onPress={() => { Keyboard.dismiss(); setNumpadActive(true); }}
+      >
+        <View style={styles.amountRow}>
+          <Text style={[styles.amountDisplay, { color: primaryColor }]}>{displayAmount}</Text>
+          {numpadActive ? (
+            <Animated.View
+              style={[
+                { width: 2, height: 28, marginLeft: 2, borderRadius: 1, backgroundColor: primaryColor },
+                cursorStyle,
+              ]}
+            />
+          ) : null}
+        </View>
+      </Pressable>
 
       {/* Note (optional) */}
       <View style={styles.fieldGroup}>
@@ -101,6 +116,7 @@ export function AddPaymentSheet() {
           placeholderTextColor={tertiaryColor}
           value={note}
           onChangeText={setNote}
+          onFocus={() => setNumpadActive(false)}
           maxLength={200}
         />
       </View>
@@ -114,6 +130,7 @@ export function AddPaymentSheet() {
           placeholderTextColor={tertiaryColor}
           value={date}
           onChangeText={setDate}
+          onFocus={() => setNumpadActive(false)}
         />
       </View>
 
@@ -126,43 +143,20 @@ export function AddPaymentSheet() {
         <Text style={styles.ctaButtonText}>{t("goals.payment.addPaymentCta")}</Text>
       </Pressable>
 
-      {/* Subtle hint */}
-      <Text style={[styles.hint, { color: secondaryColor }]}>
-        {displayAmount ? displayAmount : ""}
-      </Text>
+      {numpadActive ? <FidyNumpad onKeyPress={handleKey} /> : null}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 24,
-    gap: 16,
-  },
-  title: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 18,
-    textAlign: "center",
-  },
-  amountDisplayContainer: {
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  amountDisplay: {
-    fontFamily: "Poppins_800ExtraBold",
-    fontSize: 28,
-  },
-  fieldGroup: {
-    gap: 4,
-  },
-  fieldLabel: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 12,
-    fontStyle: "italic",
-  },
+  container: { flex: 1 },
+  scrollContent: { padding: 24, gap: 16 },
+  title: { fontFamily: "Poppins_700Bold", fontSize: 18, textAlign: "center" },
+  amountSection: { alignItems: "center", paddingVertical: 8 },
+  amountRow: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
+  amountDisplay: { fontFamily: "Poppins_700Bold", fontSize: 32 },
+  fieldGroup: { gap: 4 },
+  fieldLabel: { fontFamily: "Poppins_500Medium", fontSize: 12, fontStyle: "italic" },
   input: {
     height: 48,
     borderRadius: 12,
@@ -179,14 +173,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     minHeight: 48,
   },
-  ctaButtonText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 16,
-    color: "#FFFFFF",
-  },
-  hint: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 12,
-    textAlign: "center",
-  },
+  ctaButtonText: { fontFamily: "Poppins_700Bold", fontSize: 16, color: "#FFFFFF" },
 });

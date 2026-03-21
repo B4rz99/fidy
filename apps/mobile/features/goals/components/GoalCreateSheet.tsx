@@ -1,7 +1,17 @@
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
+import { handleNumpadPress } from "@/features/transactions";
+import { FidyNumpad } from "@/shared/components";
+import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
 import type { GoalType } from "../schema";
 import { useGoalStore } from "../store";
 
@@ -20,23 +30,53 @@ export function GoalCreateSheet() {
 
   const [goalType, setGoalType] = useState<GoalType>("savings");
   const [name, setName] = useState("");
-  const [amountText, setAmountText] = useState("");
+  const [digits, setDigits] = useState("");
+  const digitsRef = useRef(digits);
+  digitsRef.current = digits;
+  const [interestDigits, setInterestDigits] = useState("");
+  const interestDigitsRef = useRef(interestDigits);
+  interestDigitsRef.current = interestDigits;
+  const [numpadTarget, setNumpadTarget] = useState<"amount" | "interestRate" | null>("amount");
   const [targetDate, setTargetDate] = useState("");
-  const [interestRate, setInterestRate] = useState("");
+
+  // Blinking cursor
+  const cursorOpacity = useSharedValue(1);
+  useEffect(() => {
+    cursorOpacity.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 0 }),
+        withTiming(1, { duration: 530 }),
+        withTiming(0, { duration: 0 }),
+        withTiming(0, { duration: 530 })
+      ),
+      -1
+    );
+  }, [cursorOpacity]);
+  const cursorStyle = useAnimatedStyle(() => ({ opacity: cursorOpacity.value }));
 
   const { isBusy: isCreating, run: guardedCreate } = useAsyncGuard();
 
-  // Derive projection hint from store's existing projection data
+  const displayAmount = digits.length > 0 ? formatInputDisplay(digits) : "$";
+  const amount = parseDigitsToAmount(digits);
+
+  // Derive projection hint
   const projectionMonths = goals.length > 0 ? goals[0].projection.netMonthlySavings : 0;
-  const amount = Number.parseInt(amountText.replace(/\D/g, ""), 10) || 0;
   const estimatedMonths =
     projectionMonths > 0 && amount > 0 ? Math.ceil(amount / projectionMonths) : null;
+
+  const handleKey = useCallback((key: string) => {
+    if (numpadTarget === "amount") {
+      setDigits(handleNumpadPress(digitsRef.current, key));
+    } else if (numpadTarget === "interestRate") {
+      setInterestDigits(handleNumpadPress(interestDigitsRef.current, key));
+    }
+  }, [numpadTarget]);
 
   const handleCreate = useCallback(
     () =>
       guardedCreate(async () => {
-        const parsedAmount = Number.parseInt(amountText.replace(/\D/g, ""), 10);
-        if (!name.trim() || !parsedAmount || parsedAmount <= 0) return;
+        const parsedAmount = parseDigitsToAmount(digits);
+        if (!name.trim() || parsedAmount <= 0) return;
 
         const success = await createGoal({
           name: name.trim(),
@@ -44,14 +84,16 @@ export function GoalCreateSheet() {
           targetAmount: parsedAmount,
           targetDate: targetDate.trim() || undefined,
           interestRatePercent:
-            goalType === "debt" && interestRate ? Number.parseFloat(interestRate) : undefined,
+            goalType === "debt" && interestDigits
+              ? parseDigitsToAmount(interestDigits)
+              : undefined,
         });
 
         if (success) {
           back();
         }
       }),
-    [name, amountText, goalType, targetDate, interestRate, createGoal, back, guardedCreate]
+    [name, digits, goalType, targetDate, interestDigits, createGoal, back, guardedCreate]
   );
 
   return (
@@ -111,23 +153,33 @@ export function GoalCreateSheet() {
           placeholderTextColor={tertiaryColor}
           value={name}
           onChangeText={setName}
+          onFocus={() => setNumpadTarget(null)}
         />
       </View>
 
-      {/* Target amount */}
-      <View style={styles.fieldGroup}>
+      {/* Target amount — FidyNumpad display */}
+      <Pressable
+        style={styles.amountSection}
+        onPress={() => {
+          Keyboard.dismiss();
+          setNumpadTarget("amount");
+        }}
+      >
         <Text style={[styles.fieldLabel, { color: primaryColor }]}>
           {t("goals.create.targetAmount")}
         </Text>
-        <TextInput
-          style={[styles.input, { backgroundColor: cardBg, borderColor, color: primaryColor }]}
-          placeholder="COP $0"
-          placeholderTextColor={tertiaryColor}
-          value={amountText}
-          onChangeText={setAmountText}
-          keyboardType="numeric"
-        />
-      </View>
+        <View style={styles.amountRow}>
+          <Text style={[styles.amountDisplay, { color: primaryColor }]}>{displayAmount}</Text>
+          {numpadTarget === "amount" ? (
+            <Animated.View
+              style={[
+                { width: 2, height: 28, marginLeft: 2, borderRadius: 1, backgroundColor: primaryColor },
+                cursorStyle,
+              ]}
+            />
+          ) : null}
+        </View>
+      </Pressable>
 
       {/* Target date */}
       <View style={styles.fieldGroup}>
@@ -140,24 +192,33 @@ export function GoalCreateSheet() {
           placeholderTextColor={tertiaryColor}
           value={targetDate}
           onChangeText={setTargetDate}
+          onFocus={() => setNumpadTarget(null)}
         />
       </View>
 
       {/* Interest rate (debt only) */}
       {goalType === "debt" ? (
-        <View style={styles.fieldGroup}>
+        <Pressable
+          style={styles.amountSection}
+          onPress={() => { Keyboard.dismiss(); setNumpadTarget("interestRate"); }}
+        >
           <Text style={[styles.fieldLabel, { color: primaryColor }]}>
             {t("goals.create.interestRate")}
           </Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: cardBg, borderColor, color: primaryColor }]}
-            placeholder="0"
-            placeholderTextColor={tertiaryColor}
-            value={interestRate}
-            onChangeText={setInterestRate}
-            keyboardType="numeric"
-          />
-        </View>
+          <View style={styles.amountRow}>
+            <Text style={[styles.amountDisplay, { color: primaryColor, fontSize: 24 }]}>
+              {interestDigits.length > 0 ? `${interestDigits}%` : "0%"}
+            </Text>
+            {numpadTarget === "interestRate" ? (
+              <Animated.View
+                style={[
+                  { width: 2, height: 22, marginLeft: 2, borderRadius: 1, backgroundColor: primaryColor },
+                  cursorStyle,
+                ]}
+              />
+            ) : null}
+          </View>
+        </Pressable>
       ) : null}
 
       {/* Projection hint */}
@@ -178,6 +239,8 @@ export function GoalCreateSheet() {
       >
         <Text style={styles.createButtonText}>{t("goals.create.title")}</Text>
       </Pressable>
+
+      {numpadTarget != null ? <FidyNumpad onKeyPress={handleKey} /> : null}
     </ScrollView>
   );
 }
@@ -226,6 +289,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontFamily: "Poppins_500Medium",
     fontSize: 14,
+  },
+  amountSection: {
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 8,
+  },
+  amountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  amountDisplay: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 32,
   },
   projectionHint: {
     fontFamily: "Poppins_500Medium",

@@ -53,6 +53,11 @@ export function insertContribution(db: AnyDb, row: GoalContributionRow) {
   db.insert(goalContributions).values(row).run();
 }
 
+export function getContributionById(db: AnyDb, id: string) {
+  const rows = db.select().from(goalContributions).where(eq(goalContributions.id, id)).all();
+  return rows[0] ?? null;
+}
+
 export function getContributionsForGoal(db: AnyDb, goalId: string) {
   return db
     .select()

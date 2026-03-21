@@ -2,7 +2,10 @@ import { z } from "zod";
 
 const goalTypeSchema = z.enum(["savings", "debt"]);
 
-const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const isoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((val) => !Number.isNaN(new Date(val).getTime()), "Invalid calendar date");
 
 export const createGoalSchema = z.object({
   name: z.string().min(1).max(100),
