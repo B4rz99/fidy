@@ -46,6 +46,10 @@ Follow React's ["You Might Not Need an Effect"](https://react.dev/learn/you-migh
 - Reanimated animations (`withRepeat`, `withSequence`)
 - App bootstrap in `_layout.tsx` (routing, splash screen)
 
+## Code Style: Branded Types
+
+All IDs, temporal strings, and money amounts use branded types from `shared/types/branded.ts`. Never use plain `string` or `number` for these in function signatures. Use typed ID generators (`generateTransactionId()`, etc.), temporal constructors (`toIsoDate()`, `toMonth()`, `toIsoDateTime()`), and `$type<>()` on Drizzle schema columns. New entities need a branded type, a typed generator, and Drizzle `$type<>()` annotations.
+
 ## Architectural Decisions
 
 ### Calendar-month budgets only
