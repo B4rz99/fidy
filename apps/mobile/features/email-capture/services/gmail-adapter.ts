@@ -33,7 +33,7 @@ export async function fetchGmailEmailsWithToken(
   );
 
   // Batches must be sequential to respect Gmail API rate limits.
-  const emails = await chunks.reduce<Promise<readonly RawEmail[]>>(async (accPromise, batch) => {
+  const emails = await chunks.reduce<Promise<RawEmail[]>>(async (accPromise, batch) => {
     const acc = await accPromise;
     const results = await Promise.allSettled(
       batch.map(async (id) => {
