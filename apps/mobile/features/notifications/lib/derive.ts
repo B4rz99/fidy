@@ -1,4 +1,4 @@
-import { addDays, differenceInDays, getDate, getDaysInMonth } from "date-fns";
+import { addDays, differenceInDays, endOfDay, getDate, getDaysInMonth, startOfDay } from "date-fns";
 import type { BudgetProgress } from "@/features/budget/lib/derive";
 import { computeMedian } from "@/features/goals/lib/derive";
 import type { StoredTransaction } from "@/features/transactions/schema";
@@ -36,7 +36,7 @@ const groupCurrentWeekExpenses = (
   weekStart: Date
 ): ReadonlyMap<CategoryId, CopAmount> => {
   const weekStartMs = weekStart.getTime();
-  const weekEndMs = addDays(weekStart, 6).getTime();
+  const weekEndMs = endOfDay(addDays(weekStart, 6)).getTime();
 
   return expenses.reduce<Map<CategoryId, CopAmount>>((acc, tx) => {
     const txTime = tx.date.getTime();
@@ -153,10 +153,12 @@ export function deriveWeeklyMoves(
   budgetProgresses: readonly BudgetProgress[],
   weekStart: Date
 ): readonly WeeklyMove[] {
+  // Normalize to midnight so time-of-day on weekStart doesn't misclassify transactions
+  const normalizedWeekStart = startOfDay(weekStart);
   const expenses = transactions.filter((tx) => tx.type === "expense");
-  const currentWeekByCategory = groupCurrentWeekExpenses(expenses, weekStart);
-  const anomalies = detectAnomalies(expenses, weekStart, currentWeekByCategory);
-  const paces = detectBudgetPaces(currentWeekByCategory, budgetProgresses, weekStart);
+  const currentWeekByCategory = groupCurrentWeekExpenses(expenses, normalizedWeekStart);
+  const anomalies = detectAnomalies(expenses, normalizedWeekStart, currentWeekByCategory);
+  const paces = detectBudgetPaces(currentWeekByCategory, budgetProgresses, normalizedWeekStart);
 
   return [...anomalies, ...paces].sort((a, b) => b.impact - a.impact).slice(0, 3);
 }

@@ -249,6 +249,35 @@ describe("deriveWeeklyMoves", () => {
     expect(result.filter((m) => m.type === "anomaly")).toHaveLength(0);
   });
 
+  // Test 12 — weekStart with non-midnight time: early-morning tx on weekStart day → current week
+  it("counts a transaction at 6am on weekStart day as current week even when weekStart is noon", () => {
+    // weekStart passed as noon; 6am same day should still be current week after normalization
+    const weekStartNoon = new Date("2026-03-16T12:00:00");
+    const earlyTx = makeTx({
+      date: new Date("2026-03-16T06:00:00"), // 6am — before noon weekStart
+      amount: 700_000 as CopAmount,
+    });
+    const progress = makeProgress({ amount: 100_000 as CopAmount, spent: 0 as CopAmount });
+    const result = deriveWeeklyMoves([earlyTx], [progress], weekStartNoon);
+    // If 6am tx counted as current week: weekDailyRate = 100_000/day → pace fires
+    // If wrongly counted as prior: weekDailyRate = 0 → no pace
+    expect(result.filter((m) => m.type === "budget_pace")).toHaveLength(1);
+  });
+
+  // Test 13 — weekStart with non-midnight time: Sunday evening tx → current week
+  it("counts a Sunday evening transaction as current week even when weekStart is noon", () => {
+    const weekStartNoon = new Date("2026-03-16T12:00:00");
+    const sundayEveningTx = makeTx({
+      date: new Date("2026-03-22T20:00:00"), // 8pm Sunday — after Sunday noon (old weekEnd)
+      amount: 700_000 as CopAmount,
+    });
+    const progress = makeProgress({ amount: 100_000 as CopAmount, spent: 0 as CopAmount });
+    const result = deriveWeeklyMoves([sundayEveningTx], [progress], weekStartNoon);
+    // If Sunday evening counted as current week: pace fires
+    // If wrongly excluded: no pace
+    expect(result.filter((m) => m.type === "budget_pace")).toHaveLength(1);
+  });
+
   // Test 10 — same category fires both anomaly and pace → both appear (no dedup)
   it("emits both AnomalyMove and BudgetPaceMove for the same category when both conditions are met", () => {
     // 5 prior transactions in "food" at 100_000 each (one per bucket)
