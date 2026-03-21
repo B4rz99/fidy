@@ -1,9 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { StoredTransaction } from "@/features/transactions/schema";
 import type { CategoryId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
-
-// Use real date-fns (global setup mocks it)
-vi.unmock("date-fns");
 
 function makeTx(overrides: Partial<StoredTransaction> & { date: Date }): StoredTransaction {
   return {

@@ -526,6 +526,49 @@ const en = {
       goToDashboard: "Go to Dashboard",
     },
   },
+
+  // Guidance
+  guidance: {
+    budgetAlert80: {
+      food: "You have %{remaining} left for %{daysLeft} days. Cooking at home a few times this week could help stretch what's left.",
+      transport:
+        "You have %{remaining} left for %{daysLeft} days. Using public transit or combining trips where you can might save you a good chunk.",
+      entertainment:
+        "You have %{remaining} left for %{daysLeft} days. A free evening in or a walk could make that budget go a little further.",
+      health:
+        "You have %{remaining} left for %{daysLeft} days. If any appointments can wait until next month, that could free up a bit.",
+      education:
+        "You have %{remaining} left for %{daysLeft} days. Knowing which payments are due soon could help you plan the rest of the month.",
+      home: "You have %{remaining} left for %{daysLeft} days. Any home purchases that can wait until next month would help stretch what's left.",
+      clothing:
+        "You have %{remaining} left for %{daysLeft} days. Any clothing that can wait until next month would help stay within budget.",
+      services:
+        "You have %{remaining} left for %{daysLeft} days. Checking for any subscriptions you can pause could free up a bit of room.",
+      transfer:
+        "You have %{remaining} left for %{daysLeft} days. Keeping transfers to what's necessary this week would help stay within budget.",
+      other:
+        "You have %{remaining} left for %{daysLeft} days. A quick look at recent purchases might show where there's a bit of room to adjust.",
+    },
+    budgetAlert100: {
+      food: "You've gone %{overAmount} over. Cooking at home a few days this week could help bring it back down.",
+      transport:
+        "You've gone %{overAmount} over. Combining errands and sharing rides where you can will help.",
+      entertainment:
+        "You've gone %{overAmount} over. Free options — walks, home streaming, parks — can carry you to next month.",
+      health:
+        "You've gone %{overAmount} over. If any check-ups can wait until next month, that would help balance it out.",
+      education:
+        "You've gone %{overAmount} over. See if any upcoming payments can shift to next month.",
+      home: "You've gone %{overAmount} over. Holding off on home improvements until next month would close the gap.",
+      clothing:
+        "You've gone %{overAmount} over. Skipping new clothing this month would help recover the difference.",
+      services:
+        "You've gone %{overAmount} over. Pausing a subscription or two this month could make a real dent.",
+      transfer: "You've gone %{overAmount} over. Non-urgent transfers can wait until next month.",
+      other:
+        "You've gone %{overAmount} over. Taking a close look at recent purchases might reveal some easy wins.",
+    },
+  },
 } as const;
 
 export default en;

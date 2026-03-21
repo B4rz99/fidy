@@ -2,6 +2,10 @@
 
 The role of this file is to describe common mistakes and confusion points that agents might encounter as they work in this project. If you ever encounter something in the project that surprises you, please alert the developer working with you and indicate that this is the case in this CLAUDE.md file to help prevent future agents from having the same issue
 
+### Vitest: avoid async `importOriginal` in global setup mocks (⚠️ AGENT SURPRISE)
+
+The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async (importOriginal) => ...)` for heavy modules like `date-fns`. The async `importOriginal` call creates module-loading contention across parallel Vitest workers, causing intermittent timeouts in tests that dynamically import large module trees (e.g. `syncEngine.ts` → budget + goals + transactions). Fix: remove the global mock entirely, or provide a synchronous factory. Tests needing deterministic behavior should mock at the file level with `vi.doMock` or `vi.mock`.
+
 ## Opening MRs
 
 Before committing, use the `opening-mr` skill.

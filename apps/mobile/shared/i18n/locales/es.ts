@@ -531,6 +531,50 @@ const es = {
       goToDashboard: "Ir al Panel",
     },
   },
+
+  // Guidance
+  guidance: {
+    budgetAlert80: {
+      food: "Te quedan %{remaining} para %{daysLeft} días. Cocinar en casa unos días esta semana podría hacer rendir lo que queda.",
+      transport:
+        "Te quedan %{remaining} para %{daysLeft} días. Usar transporte público o combinar viajes donde puedas podría ahorrarte bastante.",
+      entertainment:
+        "Te quedan %{remaining} para %{daysLeft} días. Una tarde en casa o un paseo podría hacer rendir ese presupuesto un poco más.",
+      health:
+        "Te quedan %{remaining} para %{daysLeft} días. Si alguna cita puede esperar al próximo mes, eso podría liberar un poco.",
+      education:
+        "Te quedan %{remaining} para %{daysLeft} días. Saber cuáles pagos vienen pronto podría ayudarte a planear el resto del mes.",
+      home: "Te quedan %{remaining} para %{daysLeft} días. Las compras del hogar que puedan esperar al próximo mes ayudarían a hacer rendir lo que queda.",
+      clothing:
+        "Te quedan %{remaining} para %{daysLeft} días. La ropa que pueda esperar hasta el próximo mes ayudaría a mantenerse dentro del presupuesto.",
+      services:
+        "Te quedan %{remaining} para %{daysLeft} días. Revisar si hay suscripciones que puedas pausar podría liberar algo de espacio.",
+      transfer:
+        "Te quedan %{remaining} para %{daysLeft} días. Limitar transferencias a lo necesario esta semana ayudaría a mantenerse dentro del presupuesto.",
+      other:
+        "Te quedan %{remaining} para %{daysLeft} días. Una mirada rápida a los gastos recientes podría mostrar dónde hay un poco de margen.",
+    },
+    budgetAlert100: {
+      food: "Te pasaste %{overAmount}. Cocinar en casa unos días esta semana podría ayudar a recuperar el balance.",
+      transport:
+        "Te pasaste %{overAmount}. Combinar diligencias y compartir viajes donde puedas te ayudará.",
+      entertainment:
+        "Te pasaste %{overAmount}. Opciones gratuitas — caminar, streaming en casa, parques — pueden llevarte al próximo mes.",
+      health:
+        "Te pasaste %{overAmount}. Si algún chequeo puede esperar al próximo mes, eso ayudaría a balancear.",
+      education:
+        "Te pasaste %{overAmount}. Revisa si algún pago próximo puede aplazarse al mes siguiente.",
+      home: "Te pasaste %{overAmount}. Aplazar mejoras del hogar hasta el próximo mes ayudaría a cerrar la diferencia.",
+      clothing:
+        "Te pasaste %{overAmount}. Saltarte compras de ropa este mes ayudaría a recuperar la diferencia.",
+      services:
+        "Te pasaste %{overAmount}. Pausar una o dos suscripciones este mes podría marcar la diferencia.",
+      transfer:
+        "Te pasaste %{overAmount}. Las transferencias no urgentes pueden esperar hasta el próximo mes.",
+      other:
+        "Te pasaste %{overAmount}. Revisar compras recientes de cerca podría revelar algunos ahorros fáciles.",
+    },
+  },
 } as const;
 
 export default es;
