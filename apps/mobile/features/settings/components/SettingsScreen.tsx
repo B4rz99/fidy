@@ -21,6 +21,7 @@ import {
   Mail,
   Palette,
   Shield,
+  Tag,
 } from "@/shared/components/icons";
 import { Linking, Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -121,6 +122,11 @@ export function SettingsScreen() {
             label={t("settings.language")}
             subtitle={languageLabel}
             onPress={() => router.push("/language-picker")}
+          />
+          <SettingsRow
+            icon={Tag}
+            label={t("categories.settingsRow")}
+            onPress={() => router.push("/categories")}
             isLast
           />
         </SettingsSection>

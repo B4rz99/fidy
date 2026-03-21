@@ -57,7 +57,7 @@ const groupPriorWeeksByCategory = (
   weekStart: Date
 ): ReadonlyMap<CategoryId, ReadonlyMap<number, CopAmount>> =>
   priorExpenses.reduce<Map<CategoryId, Map<number, CopAmount>>>((acc, tx) => {
-    const daysApart = differenceInDays(weekStart, tx.date);
+    const daysApart = differenceInDays(startOfDay(weekStart), startOfDay(tx.date));
     const bucket = Math.floor((daysApart - 1) / 7);
     const catMap = acc.get(tx.categoryId) ?? new Map<number, CopAmount>();
     catMap.set(bucket, ((catMap.get(bucket) ?? 0) + tx.amount) as CopAmount);

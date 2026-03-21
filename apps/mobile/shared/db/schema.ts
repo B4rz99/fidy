@@ -19,6 +19,7 @@ import type {
   SyncConflictId,
   SyncQueueId,
   TransactionId,
+  UserCategoryId,
   UserId,
   UserMemoryId,
 } from "@/shared/types/branded";
@@ -303,4 +304,19 @@ export const goalContributions = sqliteTable(
     index("idx_goal_contributions_goal_date").on(table.goalId, table.date),
     index("idx_goal_contributions_user").on(table.userId),
   ]
+);
+
+export const userCategories = sqliteTable(
+  "user_categories",
+  {
+    id: text("id").$type<UserCategoryId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    name: text("name").notNull(),
+    iconName: text("icon_name").notNull(),
+    colorHex: text("color_hex").notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [index("idx_user_categories_user").on(table.userId)]
 );

@@ -79,6 +79,31 @@ const es = {
     },
   },
 
+  // Categorías
+  categories: {
+    title: "Categorías",
+    settingsRow: "Categorías",
+    builtInSection: "PREDETERMINADAS",
+    customSection: "PERSONALIZADAS",
+    addCategory: "Agregar categoría",
+    noCustomCategories: "Aún no hay categorías personalizadas",
+    create: {
+      title: "Nueva categoría",
+      nameLabel: "Nombre de la categoría",
+      namePlaceholder: "ej. Mascotas",
+      iconLabel: "Elige un ícono",
+      colorLabel: "Elige un color",
+      submit: "Crear categoría",
+    },
+    errors: {
+      nameTooShort: "El nombre debe tener al menos 2 caracteres",
+      nameTooLong: "El nombre debe tener menos de 32 caracteres",
+      iconRequired: "Por favor selecciona un ícono",
+      colorRequired: "Por favor selecciona un color",
+      saveFailed: "No se pudo guardar la categoría",
+    },
+  },
+
   // Presupuestos
   budgets: {
     title: "Presupuestos",
@@ -128,31 +153,6 @@ const es = {
       prompt: "¿Copiar presupuestos del mes pasado?",
       accept: "Copiar presupuestos",
       skip: "Empezar de cero",
-    },
-  },
-
-  // Categorías
-  categories: {
-    title: "Categorías",
-    settingsRow: "Categorías",
-    builtInSection: "PREDETERMINADAS",
-    customSection: "PERSONALIZADAS",
-    addCategory: "+ Agregar categoría",
-    noCustomCategories: "Aún no hay categorías personalizadas",
-    create: {
-      title: "Nueva categoría",
-      nameLabel: "Nombre de la categoría",
-      namePlaceholder: "ej. Mascotas",
-      iconLabel: "Elige un ícono",
-      colorLabel: "Elige un color",
-      submit: "Crear categoría",
-    },
-    errors: {
-      nameTooShort: "El nombre debe tener al menos 2 caracteres",
-      nameTooLong: "El nombre debe tener menos de 32 caracteres",
-      iconRequired: "Por favor selecciona un ícono",
-      colorRequired: "Por favor selecciona un color",
-      saveFailed: "No se pudo guardar la categoría",
     },
   },
 

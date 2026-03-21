@@ -25,9 +25,10 @@ describe("BudgetListScreen banner wiring", () => {
   });
 
   it("renders banners before BudgetSummaryCard", () => {
-    const bannerPos = src.indexOf("BudgetAlertBanner");
-    const summaryPos = src.indexOf("BudgetSummaryCard");
+    const bannerPos = src.indexOf("<BudgetAlertBanner");
+    const summaryPos = src.indexOf("<BudgetSummaryCard");
     expect(bannerPos).toBeGreaterThan(0);
+    expect(summaryPos).toBeGreaterThan(0);
     expect(bannerPos).toBeLessThan(summaryPos);
   });
 });

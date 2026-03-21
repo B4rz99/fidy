@@ -27,6 +27,7 @@ export {
   generateSyncConflictId,
   generateSyncQueueId,
   generateTransactionId,
+  generateUserCategoryId,
   generateUserMemoryId,
 } from "./generate-id";
 export { normalizeMerchant } from "./normalize-merchant";
