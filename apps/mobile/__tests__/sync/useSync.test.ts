@@ -1,8 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
+import type { useSync } from "@/features/sync/hooks/useSync";
+
+let _useSync: typeof useSync;
 
 describe("useSync", () => {
-  it("exports useSync as a function", async () => {
+  beforeAll(async () => {
     const mod = await import("@/features/sync/hooks/useSync");
-    expect(typeof mod.useSync).toBe("function");
+    _useSync = mod.useSync;
+  }, 30000);
+
+  it("exports useSync as a function", () => {
+    expect(typeof _useSync).toBe("function");
   });
 });

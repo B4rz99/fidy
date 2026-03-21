@@ -34,20 +34,19 @@ export function BudgetAlertBanner({ alert, onDismiss }: Props) {
 
   const remaining = formatMoney(Math.abs(alert.remainingAmount) as CopAmount);
   const overAmount = remaining;
-  const daysLeft = alert.daysLeft;
 
   const handleDismiss = () => onDismiss(alert.budgetId, alert.threshold);
 
   return (
     <View style={[styles.banner, { backgroundColor: bannerBg }]}>
-      <View style={[styles.iconCircle, { backgroundColor: circleBg, width: 32, height: 32 }]}>
+      <View style={[styles.iconCircle, { backgroundColor: circleBg }]}>
         {CategoryIcon && <CategoryIcon size={16} color={iconColor} />}
       </View>
       <View style={styles.content}>
         <Text style={[styles.title, { color: primaryColor }]}>{title}</Text>
         {alert.suggestionKey !== undefined && (
           <Text style={[styles.suggestion, { color: secondaryColor }]}>
-            {t(alert.suggestionKey, { remaining, daysLeft, overAmount })}
+            {t(alert.suggestionKey, { remaining, daysLeft: alert.daysLeft, overAmount })}
           </Text>
         )}
       </View>
@@ -68,6 +67,8 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   iconCircle: {
+    width: 32,
+    height: 32,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",

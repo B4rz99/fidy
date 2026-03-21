@@ -37,11 +37,16 @@ describe("guidance i18n keys", () => {
     expect(key).toContain("%{overAmount}");
   });
 
-  it.each(CATEGORIES)("es has budgetAlert80.%s", (cat) => {
-    expect(esGuidance?.budgetAlert80?.[cat]).toBeDefined();
+  it.each(CATEGORIES)("es has budgetAlert80.%s with required placeholders", (cat) => {
+    const key = esGuidance?.budgetAlert80?.[cat];
+    expect(key).toBeDefined();
+    expect(key).toContain("%{remaining}");
+    expect(key).toContain("%{daysLeft}");
   });
 
-  it.each(CATEGORIES)("es has budgetAlert100.%s", (cat) => {
-    expect(esGuidance?.budgetAlert100?.[cat]).toBeDefined();
+  it.each(CATEGORIES)("es has budgetAlert100.%s with required placeholder", (cat) => {
+    const key = esGuidance?.budgetAlert100?.[cat];
+    expect(key).toBeDefined();
+    expect(key).toContain("%{overAmount}");
   });
 });

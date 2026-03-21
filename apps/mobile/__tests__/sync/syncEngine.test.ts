@@ -1,6 +1,7 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db/supabase need flexible typing
 // biome-ignore-all lint/style/useNamingConvention: snake_case matches Supabase API column names
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import type { fullSync, syncPull, syncPush } from "@/features/sync/services/syncEngine";
 
 const mockGetQueuedSyncEntries = vi.fn().mockResolvedValue([]);
 const mockClearSyncEntries = vi.fn();
@@ -48,7 +49,18 @@ function createMockSupabase(queryResult: { data: any; error: any } = { data: [],
   } as any;
 }
 
+let _syncPush: typeof syncPush;
+let _syncPull: typeof syncPull;
+let _fullSync: typeof fullSync;
+
 describe("syncEngine", () => {
+  beforeAll(async () => {
+    const mod = await import("@/features/sync/services/syncEngine");
+    _syncPush = mod.syncPush;
+    _syncPull = mod.syncPull;
+    _fullSync = mod.fullSync;
+  }, 30000);
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -58,8 +70,7 @@ describe("syncEngine", () => {
       mockGetQueuedSyncEntries.mockResolvedValueOnce([]);
       const mockSupabase = createMockSupabase();
 
-      const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, "user-1");
+      await _syncPush(mockDb, mockSupabase, "user-1");
 
       expect(mockSupabase.from).not.toHaveBeenCalled();
       expect(mockClearSyncEntries).not.toHaveBeenCalled();
@@ -90,8 +101,7 @@ describe("syncEngine", () => {
       mockUpsert.mockReturnValueOnce({ error: null });
       const mockSupabase = createMockSupabase();
 
-      const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, "user-1");
+      await _syncPush(mockDb, mockSupabase, "user-1");
 
       expect(mockSupabase.from).toHaveBeenCalledWith("transactions");
       expect(mockUpsert).toHaveBeenCalledWith(
@@ -129,8 +139,7 @@ describe("syncEngine", () => {
       mockUpsert.mockReturnValueOnce({ error: { message: "network error" } });
       const mockSupabase = createMockSupabase();
 
-      const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, "user-1");
+      await _syncPush(mockDb, mockSupabase, "user-1");
 
       expect(mockClearSyncEntries).not.toHaveBeenCalled();
     });
@@ -148,8 +157,7 @@ describe("syncEngine", () => {
       mockGetTransactionById.mockResolvedValueOnce(null);
       const mockSupabase = createMockSupabase();
 
-      const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, "user-1");
+      await _syncPush(mockDb, mockSupabase, "user-1");
 
       expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-1"]);
     });
@@ -175,8 +183,7 @@ describe("syncEngine", () => {
       const mockSupabase = createMockSupabase({ data: serverRows, error: null });
       mockGetTransactionById.mockResolvedValueOnce(null);
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      const result = await syncPull(mockDb, mockSupabase, "user-1");
+      const result = await _syncPull(mockDb, mockSupabase, "user-1");
 
       expect(result).toBe(true);
       expect(mockUpsertTransaction).toHaveBeenCalledWith(
@@ -194,8 +201,7 @@ describe("syncEngine", () => {
       mockGetSyncMeta.mockResolvedValueOnce("2026-03-04T10:00:00.000Z");
       const mockSupabase = createMockSupabase({ data: [], error: null });
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      await syncPull(mockDb, mockSupabase, "user-1");
+      await _syncPull(mockDb, mockSupabase, "user-1");
 
       expect(mockSupabase._chain.gte).toHaveBeenCalled();
       expect(mockSetSyncMeta).not.toHaveBeenCalled();
@@ -231,8 +237,7 @@ describe("syncEngine", () => {
         deletedAt: null,
       });
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      await syncPull(mockDb, mockSupabase, "user-1");
+      await _syncPull(mockDb, mockSupabase, "user-1");
 
       expect(mockUpsertTransaction).not.toHaveBeenCalled();
     });
@@ -267,8 +272,7 @@ describe("syncEngine", () => {
         deletedAt: null,
       });
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      await syncPull(mockDb, mockSupabase, "user-1");
+      await _syncPull(mockDb, mockSupabase, "user-1");
 
       expect(mockUpsertTransaction).toHaveBeenCalledWith(
         mockDb,
@@ -280,8 +284,7 @@ describe("syncEngine", () => {
       mockGetSyncMeta.mockResolvedValueOnce(null);
       const mockSupabase = createMockSupabase({ data: null, error: { message: "fail" } });
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      const result = await syncPull(mockDb, mockSupabase, "user-1");
+      const result = await _syncPull(mockDb, mockSupabase, "user-1");
 
       expect(result).toBe(false);
       expect(mockUpsertTransaction).not.toHaveBeenCalled();
@@ -295,8 +298,7 @@ describe("syncEngine", () => {
       mockGetQueuedSyncEntries.mockResolvedValueOnce([]);
       const mockSupabase = createMockSupabase({ data: [], error: null });
 
-      const { fullSync } = await import("@/features/sync/services/syncEngine");
-      const result = await fullSync(mockDb, mockSupabase, "user-1");
+      const result = await _fullSync(mockDb, mockSupabase, "user-1");
 
       expect(result).toBe(true);
       expect(mockGetSyncMeta).toHaveBeenCalled();
@@ -308,8 +310,7 @@ describe("syncEngine", () => {
       mockGetSyncMeta.mockResolvedValueOnce(null);
       const mockSupabase = createMockSupabase({ data: null, error: { message: "fail" } });
 
-      const { fullSync } = await import("@/features/sync/services/syncEngine");
-      const result = await fullSync(mockDb, mockSupabase, "user-1");
+      const result = await _fullSync(mockDb, mockSupabase, "user-1");
 
       expect(result).toBe(false);
       expect(mockGetSyncMeta).toHaveBeenCalled();
@@ -349,8 +350,7 @@ describe("syncEngine", () => {
         source: "manual",
       });
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      await syncPull(mockDb, mockSupabase, "user-1");
+      await _syncPull(mockDb, mockSupabase, "user-1");
 
       expect(mockInsertConflict).toHaveBeenCalledWith(
         mockDb,
@@ -392,8 +392,7 @@ describe("syncEngine", () => {
         source: "manual",
       });
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      await syncPull(mockDb, mockSupabase, "user-1");
+      await _syncPull(mockDb, mockSupabase, "user-1");
 
       expect(mockInsertConflict).not.toHaveBeenCalled();
       expect(mockUpsertTransaction).toHaveBeenCalled();
@@ -418,8 +417,7 @@ describe("syncEngine", () => {
       const mockSupabase = createMockSupabase({ data: serverRows, error: null });
       mockGetTransactionById.mockResolvedValueOnce(null);
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      await syncPull(mockDb, mockSupabase, "user-1");
+      await _syncPull(mockDb, mockSupabase, "user-1");
 
       expect(mockInsertConflict).not.toHaveBeenCalled();
       expect(mockUpsertTransaction).toHaveBeenCalled();
