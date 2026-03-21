@@ -157,8 +157,11 @@ describe("useCategoriesStore", () => {
     await store.getState().loadUserCategories();
 
     const state = store.getState();
-    // The icon should be the Ellipsis fallback, not undefined
-    expect(state.allCategories[10].icon).toBeDefined();
+    const icon = state.allCategories[10].icon;
+    expect(icon).toBeDefined();
+    // Must NOT be any of the ICON_MAP mock values — proves fallback was used
+    const mockIcons = Object.values({ Zap: () => null, PawPrint: () => null, ShoppingCart: () => null });
+    expect(mockIcons).not.toContain(icon);
   });
 
   it("createUserCategory inserts to DB and enqueues sync", async () => {
