@@ -224,9 +224,11 @@ export function GoalCreateSheet() {
             {t("goals.create.interestRate")}
           </Text>
           <View style={styles.amountRow}>
-            <Text style={[styles.amountDisplay, { color: primaryColor, fontSize: 24 }]}>
-              {interestDigits.length > 0 ? `${interestDigits}%` : "0%"}
-            </Text>
+            {interestDigits.length > 0 ? (
+              <Text style={[styles.amountDisplay, { color: primaryColor, fontSize: 24 }]}>
+                {interestDigits}
+              </Text>
+            ) : null}
             {numpadTarget === "interestRate" ? (
               <Animated.View
                 style={[
@@ -234,12 +236,16 @@ export function GoalCreateSheet() {
                     width: 2,
                     height: 22,
                     marginLeft: 2,
+                    marginRight: 2,
                     borderRadius: 1,
                     backgroundColor: primaryColor,
                   },
                   cursorStyle,
                 ]}
               />
+            ) : null}
+            {interestDigits.length > 0 ? (
+              <Text style={[styles.amountDisplay, { color: tertiaryColor, fontSize: 24 }]}>%</Text>
             ) : null}
           </View>
         </Pressable>
