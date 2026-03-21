@@ -11,6 +11,7 @@ export default defineConfig({
     environment: "node",
     globals: false,
     clearMocks: true,
+    testTimeout: 60000,
     setupFiles: ["./__tests__/setup.ts"],
     include: ["__tests__/**/*.test.ts"],
     server: {
