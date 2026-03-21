@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CategoryId } from "@/shared/types/branded";
 
-vi.unmock("date-fns");
-vi.unmock("date-fns/locale");
-
 describe("i18n core", () => {
   beforeEach(() => {
     vi.resetModules();

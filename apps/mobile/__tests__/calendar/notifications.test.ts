@@ -1,6 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
-
-vi.unmock("date-fns");
+import { describe, expect, test } from "vitest";
 
 import {
   cancelBillNotifications,
