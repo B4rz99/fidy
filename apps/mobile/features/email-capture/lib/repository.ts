@@ -1,6 +1,13 @@
 import { and, desc, eq, inArray, lte, sql } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { emailAccounts, processedEmails } from "@/shared/db";
+import type {
+  EmailAccountId,
+  IsoDateTime,
+  ProcessedEmailId,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 export type EmailAccountRow = typeof emailAccounts.$inferInsert;
 export type ProcessedEmailRow = typeof processedEmails.$inferInsert;
@@ -10,20 +17,29 @@ export async function insertEmailAccount(db: AnyDb, row: EmailAccountRow) {
 }
 
 export async function getEmailAccount(db: AnyDb, id: string) {
-  const rows = await db.select().from(emailAccounts).where(eq(emailAccounts.id, id));
+  const rows = await db
+    .select()
+    .from(emailAccounts)
+    .where(eq(emailAccounts.id, id as EmailAccountId));
   return rows[0] ?? null;
 }
 
 export async function getEmailAccounts(db: AnyDb, userId: string) {
-  return db.select().from(emailAccounts).where(eq(emailAccounts.userId, userId));
+  return db
+    .select()
+    .from(emailAccounts)
+    .where(eq(emailAccounts.userId, userId as UserId));
 }
 
 export async function deleteEmailAccount(db: AnyDb, id: string) {
-  await db.delete(emailAccounts).where(eq(emailAccounts.id, id));
+  await db.delete(emailAccounts).where(eq(emailAccounts.id, id as EmailAccountId));
 }
 
 export async function updateLastFetchedAt(db: AnyDb, id: string, timestamp: string) {
-  await db.update(emailAccounts).set({ lastFetchedAt: timestamp }).where(eq(emailAccounts.id, id));
+  await db
+    .update(emailAccounts)
+    .set({ lastFetchedAt: timestamp as IsoDateTime })
+    .where(eq(emailAccounts.id, id as EmailAccountId));
 }
 
 export async function insertProcessedEmail(db: AnyDb, row: ProcessedEmailRow) {
@@ -69,11 +85,14 @@ export async function updateProcessedEmailStatus(
   status: string,
   transactionId: string | null
 ) {
-  await db.update(processedEmails).set({ status, transactionId }).where(eq(processedEmails.id, id));
+  await db
+    .update(processedEmails)
+    .set({ status, transactionId: transactionId as TransactionId | null })
+    .where(eq(processedEmails.id, id as ProcessedEmailId));
 }
 
 export async function dismissProcessedEmail(db: AnyDb, id: string) {
-  await db.delete(processedEmails).where(eq(processedEmails.id, id));
+  await db.delete(processedEmails).where(eq(processedEmails.id, id as ProcessedEmailId));
 }
 
 export async function getPendingRetryEmails(db: AnyDb) {
@@ -93,15 +112,15 @@ export async function getPendingRetryEmails(db: AnyDb) {
 export async function markForRetry(db: AnyDb, id: string, retryCount: number, nextRetryAt: string) {
   await db
     .update(processedEmails)
-    .set({ status: "pending_retry", retryCount, nextRetryAt })
-    .where(eq(processedEmails.id, id));
+    .set({ status: "pending_retry", retryCount, nextRetryAt: nextRetryAt as IsoDateTime })
+    .where(eq(processedEmails.id, id as ProcessedEmailId));
 }
 
 export async function markPermanentlyFailed(db: AnyDb, id: string) {
   await db
     .update(processedEmails)
     .set({ status: "failed", rawBody: null })
-    .where(eq(processedEmails.id, id));
+    .where(eq(processedEmails.id, id as ProcessedEmailId));
 }
 
 export async function markRetrySuccess(
@@ -113,6 +132,6 @@ export async function markRetrySuccess(
 ) {
   await db
     .update(processedEmails)
-    .set({ status, transactionId, confidence, rawBody: null })
-    .where(eq(processedEmails.id, id));
+    .set({ status, transactionId: transactionId as TransactionId, confidence, rawBody: null })
+    .where(eq(processedEmails.id, id as ProcessedEmailId));
 }

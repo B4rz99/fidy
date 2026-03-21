@@ -1,5 +1,13 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type {
+  BudgetId,
+  CategoryId,
+  CopAmount,
+  IsoDateTime,
+  Month,
+  UserId,
+} from "@/shared/types/branded";
 
 const mockRun = vi.fn();
 const mockAll = vi.fn().mockReturnValue([]);
@@ -42,13 +50,13 @@ describe("budget repository", () => {
       const { insertBudget } = await import("@/features/budget/lib/repository");
 
       const row = {
-        id: "budget-1",
-        userId: "user-1",
-        categoryId: "food",
-        amount: 50000,
-        month: "2026-03",
-        createdAt: "2026-03-01T00:00:00.000Z",
-        updatedAt: "2026-03-01T00:00:00.000Z",
+        id: "budget-1" as BudgetId,
+        userId: "user-1" as UserId,
+        categoryId: "food" as CategoryId,
+        amount: 50000 as CopAmount,
+        month: "2026-03" as Month,
+        createdAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
+        updatedAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
         deletedAt: null,
       };
 
@@ -64,13 +72,13 @@ describe("budget repository", () => {
       const { insertBudget } = await import("@/features/budget/lib/repository");
 
       const row = {
-        id: "budget-new",
-        userId: "user-1",
-        categoryId: "food",
-        amount: 60000,
-        month: "2026-03",
-        createdAt: "2026-03-10T00:00:00.000Z",
-        updatedAt: "2026-03-10T00:00:00.000Z",
+        id: "budget-new" as BudgetId,
+        userId: "user-1" as UserId,
+        categoryId: "food" as CategoryId,
+        amount: 60000 as CopAmount,
+        month: "2026-03" as Month,
+        createdAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
+        updatedAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
         deletedAt: null,
       };
 
@@ -106,7 +114,7 @@ describe("budget repository", () => {
       mockAll.mockReturnValueOnce(mockRows);
 
       const { getBudgetsForMonth } = await import("@/features/budget/lib/repository");
-      const result = getBudgetsForMonth(mockDb, "user-1", "2026-03");
+      const result = getBudgetsForMonth(mockDb, "user-1" as UserId, "2026-03" as Month);
 
       expect(mockSelect).toHaveBeenCalled();
       expect(mockFrom).toHaveBeenCalled();
@@ -119,7 +127,7 @@ describe("budget repository", () => {
       mockAll.mockReturnValueOnce([]);
 
       const { getBudgetsForMonth } = await import("@/features/budget/lib/repository");
-      const result = getBudgetsForMonth(mockDb, "user-1", "2026-03");
+      const result = getBudgetsForMonth(mockDb, "user-1" as UserId, "2026-03" as Month);
 
       expect(result).toEqual([]);
     });
@@ -140,7 +148,7 @@ describe("budget repository", () => {
       mockAll.mockReturnValueOnce([mockRow]);
 
       const { getBudgetById } = await import("@/features/budget/lib/repository");
-      const result = getBudgetById(mockDb, "budget-1");
+      const result = getBudgetById(mockDb, "budget-1" as BudgetId);
 
       expect(mockSelect).toHaveBeenCalled();
       expect(result).toEqual(mockRow);
@@ -150,7 +158,7 @@ describe("budget repository", () => {
       mockAll.mockReturnValueOnce([]);
 
       const { getBudgetById } = await import("@/features/budget/lib/repository");
-      const result = getBudgetById(mockDb, "nonexistent");
+      const result = getBudgetById(mockDb, "nonexistent" as BudgetId);
 
       expect(result).toBeNull();
     });
@@ -160,7 +168,12 @@ describe("budget repository", () => {
     it("sets amount and updatedAt", async () => {
       const { updateBudgetAmount } = await import("@/features/budget/lib/repository");
 
-      updateBudgetAmount(mockDb, "budget-1", 75000, "2026-03-15T00:00:00.000Z");
+      updateBudgetAmount(
+        mockDb,
+        "budget-1" as BudgetId,
+        75000 as CopAmount,
+        "2026-03-15T00:00:00.000Z" as IsoDateTime
+      );
 
       expect(mockUpdate).toHaveBeenCalled();
       expect(mockSet).toHaveBeenCalledWith({
@@ -175,7 +188,7 @@ describe("budget repository", () => {
     it("sets deletedAt and updatedAt", async () => {
       const { softDeleteBudget } = await import("@/features/budget/lib/repository");
 
-      softDeleteBudget(mockDb, "budget-1", "2026-03-15T00:00:00.000Z");
+      softDeleteBudget(mockDb, "budget-1" as BudgetId, "2026-03-15T00:00:00.000Z" as IsoDateTime);
 
       expect(mockUpdate).toHaveBeenCalled();
       expect(mockSet).toHaveBeenCalledWith({
@@ -217,10 +230,17 @@ describe("budget repository", () => {
       const { copyBudgetsToMonth } = await import("@/features/budget/lib/repository");
 
       let idCounter = 0;
-      const generateId = vi.fn(() => `new-budget-${++idCounter}`);
+      const generateId = vi.fn(() => `new-budget-${++idCounter}` as BudgetId);
       const now = "2026-03-01T00:00:00.000Z";
 
-      const newIds = copyBudgetsToMonth(mockDb, "user-1", "2026-02", "2026-03", now, generateId);
+      const newIds = copyBudgetsToMonth(
+        mockDb,
+        "user-1" as UserId,
+        "2026-02" as Month,
+        "2026-03" as Month,
+        now as IsoDateTime,
+        generateId
+      );
 
       expect(newIds).toHaveLength(2);
       expect(newIds).toEqual(["new-budget-1", "new-budget-2"]);
@@ -234,14 +254,14 @@ describe("budget repository", () => {
       mockAll.mockReturnValueOnce([]).mockReturnValueOnce([]);
 
       const { copyBudgetsToMonth } = await import("@/features/budget/lib/repository");
-      const generateId = vi.fn(() => "new-id");
+      const generateId = vi.fn(() => "new-id" as BudgetId);
 
       const newIds = copyBudgetsToMonth(
         mockDb,
-        "user-1",
-        "2026-02",
-        "2026-03",
-        "2026-03-01T00:00:00.000Z",
+        "user-1" as UserId,
+        "2026-02" as Month,
+        "2026-03" as Month,
+        "2026-03-01T00:00:00.000Z" as IsoDateTime,
         generateId
       );
 
@@ -269,14 +289,14 @@ describe("budget repository", () => {
 
       const { copyBudgetsToMonth } = await import("@/features/budget/lib/repository");
       let counter = 0;
-      const generateId = vi.fn(() => `new-${++counter}`);
+      const generateId = vi.fn(() => `new-${++counter}` as BudgetId);
 
       const newIds = copyBudgetsToMonth(
         mockDb,
-        "user-1",
-        "2026-02",
-        "2026-03",
-        "2026-03-01T00:00:00.000Z",
+        "user-1" as UserId,
+        "2026-02" as Month,
+        "2026-03" as Month,
+        "2026-03-01T00:00:00.000Z" as IsoDateTime,
         generateId
       );
 
@@ -333,14 +353,14 @@ describe("budget repository", () => {
 
       const { copyBudgetsToMonth } = await import("@/features/budget/lib/repository");
       let counter = 0;
-      const generateId = vi.fn(() => `new-${++counter}`);
+      const generateId = vi.fn(() => `new-${++counter}` as BudgetId);
 
       const newIds = copyBudgetsToMonth(
         mockDb,
-        "user-1",
-        "2026-02",
-        "2026-03",
-        "2026-03-01T00:00:00.000Z",
+        "user-1" as UserId,
+        "2026-02" as Month,
+        "2026-03" as Month,
+        "2026-03-01T00:00:00.000Z" as IsoDateTime,
         generateId
       );
 

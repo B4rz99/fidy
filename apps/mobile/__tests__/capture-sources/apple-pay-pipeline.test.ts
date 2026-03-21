@@ -41,6 +41,9 @@ vi.mock("@/features/capture-sources/lib/repository", () => ({
 const mockGenerateId = vi.fn();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: any[]) => mockGenerateId(...args),
+  generateTransactionId: () => mockGenerateId("tx"),
+  generateProcessedCaptureId: () => mockGenerateId("pc"),
+  generateSyncQueueId: () => mockGenerateId("sq"),
 }));
 
 import type { ApplePayIntentData } from "@/features/capture-sources/schema";

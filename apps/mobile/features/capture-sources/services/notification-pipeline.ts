@@ -6,7 +6,15 @@ import { stripPii } from "@/features/email-capture/services/parse-email-api";
 import { insertTransaction, isValidCategoryId } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
-import { generateId, normalizeMerchant, toIsoDate } from "@/shared/lib";
+import {
+  generateProcessedCaptureId,
+  generateSyncQueueId,
+  generateTransactionId,
+  normalizeMerchant,
+  toIsoDate,
+  toIsoDateTime,
+} from "@/shared/lib";
+import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
 import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
 import { parseNotificationLocally } from "../lib/notification-parser";
 import { insertProcessedCapture } from "../lib/repository";
@@ -30,7 +38,7 @@ export async function processNotification(
 ): Promise<NotificationPipelineResult> {
   const notificationText = notification.bigText ?? notification.text ?? notification.title ?? "";
   const sanitizedText = stripPii(notificationText).slice(0, 500);
-  const receivedAt = new Date(notification.timestamp).toISOString();
+  const receivedAt = toIsoDateTime(new Date(notification.timestamp));
   const source = resolveSource(notification.packageName);
   const notificationDate = toIsoDate(new Date(notification.timestamp));
 
@@ -56,7 +64,7 @@ export async function processNotification(
 
   if (!parsed) {
     await insertProcessedCapture(db, {
-      id: generateId("pc"),
+      id: generateProcessedCaptureId(),
       fingerprintHash: `failed:${notification.packageName}:${notification.timestamp}`,
       source,
       status: "failed",
@@ -64,7 +72,7 @@ export async function processNotification(
       transactionId: null,
       confidence: null,
       receivedAt: receivedAt,
-      createdAt: new Date().toISOString(),
+      createdAt: toIsoDateTime(new Date()),
     });
     return { saved: false, skippedDuplicate: false, transactionId: null };
   }
@@ -96,15 +104,15 @@ export async function processNotification(
 
     if (existingTxId) {
       await insertProcessedCapture(db, {
-        id: generateId("pc"),
+        id: generateProcessedCaptureId(),
         fingerprintHash: fingerprint,
         source,
         status: "skipped_duplicate",
         rawText: sanitizedText,
-        transactionId: existingTxId,
+        transactionId: existingTxId as TransactionId,
         confidence: parsed.confidence,
         receivedAt: receivedAt,
-        createdAt: new Date().toISOString(),
+        createdAt: toIsoDateTime(new Date()),
       });
       return { saved: false, skippedDuplicate: true, transactionId: existingTxId };
     }
@@ -116,24 +124,24 @@ export async function processNotification(
     const finalCategoryId = isValidCategoryId(rawCategoryId) ? rawCategoryId : "other";
 
     // Save transaction
-    const txId = generateId("tx");
-    const now = new Date().toISOString();
+    const txId = generateTransactionId();
+    const now = toIsoDateTime(new Date());
 
     await insertTransaction(db, {
       id: txId,
-      userId,
+      userId: userId as UserId,
       type: parsed.type,
-      amount: parsed.amount,
-      categoryId: finalCategoryId,
+      amount: parsed.amount as CopAmount,
+      categoryId: finalCategoryId as CategoryId,
       description: parsed.merchant,
-      date: parsed.date,
+      date: parsed.date as IsoDate,
       source,
       createdAt: now,
       updatedAt: now,
     });
 
     await enqueueSync(db, {
-      id: generateId("sq"),
+      id: generateSyncQueueId(),
       tableName: "transactions",
       rowId: txId,
       operation: "insert",
@@ -142,7 +150,7 @@ export async function processNotification(
 
     // Record in processedCaptures
     await insertProcessedCapture(db, {
-      id: generateId("pc"),
+      id: generateProcessedCaptureId(),
       fingerprintHash: fingerprint,
       source,
       status: "success",

@@ -19,6 +19,7 @@ import { useTransactionStore } from "@/features/transactions";
 import { StyleSheet, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useThemeColor } from "@/shared/hooks";
+import type { UserId } from "@/shared/types/branded";
 import migrations from "../../drizzle/migrations";
 
 export default function OnboardingScreen() {
@@ -39,8 +40,8 @@ export default function OnboardingScreen() {
   useEffect(() => {
     if (migrationsReady && db && userId && !storesReady) {
       useEmailCaptureStore.getState().initStore(db, userId);
-      useTransactionStore.getState().initStore(db, userId);
-      useBudgetStore.getState().initStore(db, userId);
+      useTransactionStore.getState().initStore(db, userId as UserId);
+      useBudgetStore.getState().initStore(db, userId as UserId);
       Promise.all([
         useEmailCaptureStore.getState().loadAccounts(),
         useTransactionStore.getState().loadInitialPage(),

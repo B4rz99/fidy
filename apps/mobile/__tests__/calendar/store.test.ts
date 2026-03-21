@@ -1,4 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type {
+  BillId,
+  BillPaymentId,
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 vi.unmock("date-fns");
 
@@ -27,7 +37,7 @@ import { useCalendarStore } from "@/features/calendar/store";
 import { useTransactionStore } from "@/features/transactions/store";
 
 const mockDb = { transaction: (fn: (tx: unknown) => void) => fn(mockDb) } as never;
-const mockUserId = "user-1";
+const mockUserId = "user-1" as UserId;
 const testDate = new Date(2026, 2, 15);
 
 describe("useCalendarStore", () => {
@@ -65,7 +75,7 @@ describe("useCalendarStore", () => {
   test("addBill with valid data adds bill and returns true", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "35000", "monthly", "services", testDate);
+      .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
     expect(result).toBe(true);
     expect(useCalendarStore.getState().bills).toHaveLength(1);
     const bill = useCalendarStore.getState().bills[0];
@@ -79,7 +89,7 @@ describe("useCalendarStore", () => {
   test("addBill returns false for empty name", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("", "35000", "monthly", "services", testDate);
+      .addBill("", "35000", "monthly", "services" as CategoryId, testDate);
     expect(result).toBe(false);
     expect(useCalendarStore.getState().bills).toHaveLength(0);
   });
@@ -87,21 +97,21 @@ describe("useCalendarStore", () => {
   test("addBill returns false for empty amount", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "", "monthly", "services", testDate);
+      .addBill("Netflix", "", "monthly", "services" as CategoryId, testDate);
     expect(result).toBe(false);
   });
 
   test("addBill returns false for zero amount", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "0", "monthly", "services", testDate);
+      .addBill("Netflix", "0", "monthly", "services" as CategoryId, testDate);
     expect(result).toBe(false);
   });
 
   test("addBill strips non-digit chars and uses remaining digits", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "50.000", "monthly", "services", testDate);
+      .addBill("Netflix", "50.000", "monthly", "services" as CategoryId, testDate);
     expect(result).toBe(true);
     const bills = useCalendarStore.getState().bills;
     expect(bills[0].amount).toBe(50000);
@@ -110,7 +120,7 @@ describe("useCalendarStore", () => {
   test("addBill returns false for non-numeric amount", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "abc", "monthly", "services", testDate);
+      .addBill("Netflix", "abc", "monthly", "services" as CategoryId, testDate);
     expect(result).toBe(false);
   });
 
@@ -126,7 +136,7 @@ describe("useCalendarStore", () => {
   test("addBill validates categoryId via schema", async () => {
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "35000", "monthly", "invalid", testDate);
+      .addBill("Netflix", "35000", "monthly", "invalid" as CategoryId, testDate);
     expect(result).toBe(false);
     expect(useCalendarStore.getState().bills).toHaveLength(0);
   });
@@ -157,16 +167,16 @@ describe("useCalendarStore", () => {
     const { getAllBills } = await import("@/features/calendar/lib/repository");
     vi.mocked(getAllBills).mockResolvedValueOnce([
       {
-        id: "bill-1",
-        userId: "user-1",
+        id: "bill-1" as BillId,
+        userId: "user-1" as UserId,
         name: "Netflix",
-        amount: 35000,
+        amount: 35000 as CopAmount,
         frequency: "monthly",
-        categoryId: "services",
-        startDate: "2026-01-15T00:00:00.000Z",
+        categoryId: "services" as CategoryId,
+        startDate: "2026-01-15T00:00:00.000Z" as IsoDate,
         isActive: true,
-        createdAt: "2026-01-01T00:00:00.000Z",
-        updatedAt: "2026-01-01T00:00:00.000Z",
+        createdAt: "2026-01-01T00:00:00.000Z" as IsoDateTime,
+        updatedAt: "2026-01-01T00:00:00.000Z" as IsoDateTime,
       },
     ]);
 
@@ -207,7 +217,7 @@ describe("useCalendarStore", () => {
 
     const result = await useCalendarStore
       .getState()
-      .addBill("Netflix", "35000", "monthly", "services", testDate);
+      .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
 
     expect(result).toBe(false);
     expect(useCalendarStore.getState().bills).toHaveLength(0);
@@ -216,8 +226,10 @@ describe("useCalendarStore", () => {
   // ─── updateBill ───
 
   test("updateBill updates bill in state", async () => {
-    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
-    const billId = useCalendarStore.getState().bills[0].id;
+    await useCalendarStore
+      .getState()
+      .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
+    const billId = useCalendarStore.getState().bills[0].id as BillId;
 
     await useCalendarStore.getState().updateBill(billId, { name: "Hulu" });
 
@@ -229,8 +241,10 @@ describe("useCalendarStore", () => {
     const { updateBill: dbUpdateBill } = await import("@/features/calendar/lib/repository");
     vi.mocked(dbUpdateBill).mockClear();
 
-    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
-    const billId = useCalendarStore.getState().bills[0].id;
+    await useCalendarStore
+      .getState()
+      .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
+    const billId = useCalendarStore.getState().bills[0].id as BillId;
     const newDate = new Date("2026-06-01T00:00:00.000Z");
 
     await useCalendarStore.getState().updateBill(billId, { startDate: newDate });
@@ -248,7 +262,7 @@ describe("useCalendarStore", () => {
     vi.mocked(dbUpdateBill).mockClear();
     useCalendarStore.getState().initStore(null as never, null as never);
 
-    await useCalendarStore.getState().updateBill("bill-1", { name: "Hulu" });
+    await useCalendarStore.getState().updateBill("bill-1" as BillId, { name: "Hulu" });
 
     expect(dbUpdateBill).not.toHaveBeenCalled();
   });
@@ -256,20 +270,22 @@ describe("useCalendarStore", () => {
   // ─── deleteBill ───
 
   test("deleteBill removes bill and its payments from state", async () => {
-    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
-    const billId = useCalendarStore.getState().bills[0].id;
+    await useCalendarStore
+      .getState()
+      .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
+    const billId = useCalendarStore.getState().bills[0].id as BillId;
 
     // Manually add a payment for this bill
     useCalendarStore.setState((s) => ({
       payments: [
         ...s.payments,
         {
-          id: "pay-1",
+          id: "pay-1" as BillPaymentId,
           billId,
-          dueDate: "2026-03-15",
-          paidAt: "2026-03-10T00:00:00.000Z",
+          dueDate: "2026-03-15" as IsoDate,
+          paidAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
           transactionId: null,
-          createdAt: "2026-03-10T00:00:00.000Z",
+          createdAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
         },
       ],
     }));
@@ -284,18 +300,20 @@ describe("useCalendarStore", () => {
     const { softDeleteTransaction } = await import("@/features/transactions/lib/repository");
     vi.mocked(softDeleteTransaction).mockClear();
 
-    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
-    const billId = useCalendarStore.getState().bills[0].id;
+    await useCalendarStore
+      .getState()
+      .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
+    const billId = useCalendarStore.getState().bills[0].id as BillId;
 
     // Seed payment with a linked transaction
     useTransactionStore.setState({
       pages: [
         {
-          id: "tx-linked",
-          userId: "user-1",
+          id: "tx-linked" as TransactionId,
+          userId: "user-1" as UserId,
           type: "expense",
-          amount: 35000,
-          categoryId: "services",
+          amount: 35000 as CopAmount,
+          categoryId: "services" as CategoryId,
           description: "Netflix",
           date: new Date(2026, 2, 15),
           createdAt: new Date(),
@@ -308,12 +326,12 @@ describe("useCalendarStore", () => {
       payments: [
         ...s.payments,
         {
-          id: "pay-1",
+          id: "pay-1" as BillPaymentId,
           billId,
-          dueDate: "2026-03-15",
-          paidAt: "2026-03-10T00:00:00.000Z",
-          transactionId: "tx-linked",
-          createdAt: "2026-03-10T00:00:00.000Z",
+          dueDate: "2026-03-15" as IsoDate,
+          paidAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
+          transactionId: "tx-linked" as TransactionId,
+          createdAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
         },
       ],
     }));
@@ -330,7 +348,7 @@ describe("useCalendarStore", () => {
     vi.mocked(dbDeleteBill).mockClear();
     useCalendarStore.getState().initStore(null as never, null as never);
 
-    await useCalendarStore.getState().deleteBill("bill-1");
+    await useCalendarStore.getState().deleteBill("bill-1" as BillId);
 
     expect(dbDeleteBill).not.toHaveBeenCalled();
   });
@@ -342,10 +360,12 @@ describe("useCalendarStore", () => {
     vi.mocked(insertBillPayment).mockClear();
 
     // Seed a bill so markBillPaid can look it up
-    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
-    const billId = useCalendarStore.getState().bills[0].id;
+    await useCalendarStore
+      .getState()
+      .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
+    const billId = useCalendarStore.getState().bills[0].id as BillId;
 
-    await useCalendarStore.getState().markBillPaid(billId, "2026-03-15");
+    await useCalendarStore.getState().markBillPaid(billId, "2026-03-15" as IsoDate);
 
     const { payments } = useCalendarStore.getState();
     expect(payments).toHaveLength(1);
@@ -359,10 +379,12 @@ describe("useCalendarStore", () => {
     const { insertTransaction } = await import("@/features/transactions/lib/repository");
     vi.mocked(insertTransaction).mockClear();
 
-    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
-    const billId = useCalendarStore.getState().bills[0].id;
+    await useCalendarStore
+      .getState()
+      .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
+    const billId = useCalendarStore.getState().bills[0].id as BillId;
 
-    await useCalendarStore.getState().markBillPaid(billId, "2026-03-15");
+    await useCalendarStore.getState().markBillPaid(billId, "2026-03-15" as IsoDate);
 
     expect(insertTransaction).toHaveBeenCalledTimes(1);
     const txRow = vi.mocked(insertTransaction).mock.calls[0][1];
@@ -373,23 +395,27 @@ describe("useCalendarStore", () => {
   });
 
   test("markBillPaid stores transactionId on payment", async () => {
-    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
-    const billId = useCalendarStore.getState().bills[0].id;
+    await useCalendarStore
+      .getState()
+      .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
+    const billId = useCalendarStore.getState().bills[0].id as BillId;
 
-    await useCalendarStore.getState().markBillPaid(billId, "2026-03-15");
+    await useCalendarStore.getState().markBillPaid(billId, "2026-03-15" as IsoDate);
 
     const { payments } = useCalendarStore.getState();
     expect(payments[0].transactionId).toBeDefined();
-    expect(payments[0].transactionId).toMatch(/^tx-/);
+    expect(payments[0].transactionId).toMatch(/^txn-/);
   });
 
   test("markBillPaid updates transaction store state", async () => {
     useTransactionStore.setState({ pages: [] });
 
-    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
-    const billId = useCalendarStore.getState().bills[0].id;
+    await useCalendarStore
+      .getState()
+      .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
+    const billId = useCalendarStore.getState().bills[0].id as BillId;
 
-    await useCalendarStore.getState().markBillPaid(billId, "2026-03-15");
+    await useCalendarStore.getState().markBillPaid(billId, "2026-03-15" as IsoDate);
 
     const txs = useTransactionStore.getState().pages;
     expect(txs).toHaveLength(1);
@@ -402,10 +428,12 @@ describe("useCalendarStore", () => {
     const { enqueueSync } = await import("@/shared/db/enqueue-sync");
     vi.mocked(enqueueSync).mockClear();
 
-    await useCalendarStore.getState().addBill("Netflix", "35000", "monthly", "services", testDate);
-    const billId = useCalendarStore.getState().bills[0].id;
+    await useCalendarStore
+      .getState()
+      .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
+    const billId = useCalendarStore.getState().bills[0].id as BillId;
 
-    await useCalendarStore.getState().markBillPaid(billId, "2026-03-15");
+    await useCalendarStore.getState().markBillPaid(billId, "2026-03-15" as IsoDate);
 
     expect(enqueueSync).toHaveBeenCalledWith(
       mockDb,
@@ -420,7 +448,9 @@ describe("useCalendarStore", () => {
     const { insertTransaction } = await import("@/features/transactions/lib/repository");
     vi.mocked(insertTransaction).mockClear();
 
-    await useCalendarStore.getState().markBillPaid("nonexistent-bill", "2026-03-15");
+    await useCalendarStore
+      .getState()
+      .markBillPaid("nonexistent-bill" as BillId, "2026-03-15" as IsoDate);
 
     expect(insertTransaction).not.toHaveBeenCalled();
     expect(useCalendarStore.getState().payments).toHaveLength(0);
@@ -431,7 +461,7 @@ describe("useCalendarStore", () => {
     vi.mocked(insertBillPayment).mockClear();
     useCalendarStore.getState().initStore(null as never, null as never);
 
-    await useCalendarStore.getState().markBillPaid("bill-1", "2026-03-15");
+    await useCalendarStore.getState().markBillPaid("bill-1" as BillId, "2026-03-15" as IsoDate);
 
     expect(insertBillPayment).not.toHaveBeenCalled();
     expect(useCalendarStore.getState().payments).toHaveLength(0);
@@ -447,17 +477,17 @@ describe("useCalendarStore", () => {
     useCalendarStore.setState({
       payments: [
         {
-          id: "pay-1",
-          billId: "bill-1",
-          dueDate: "2026-03-15",
-          paidAt: "2026-03-10T00:00:00.000Z",
+          id: "pay-1" as BillPaymentId,
+          billId: "bill-1" as BillId,
+          dueDate: "2026-03-15" as IsoDate,
+          paidAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
           transactionId: null,
-          createdAt: "2026-03-10T00:00:00.000Z",
+          createdAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
         },
       ],
     });
 
-    await useCalendarStore.getState().unmarkBillPaid("bill-1", "2026-03-15");
+    await useCalendarStore.getState().unmarkBillPaid("bill-1" as BillId, "2026-03-15" as IsoDate);
 
     expect(useCalendarStore.getState().payments).toHaveLength(0);
     expect(deleteBillPayment).toHaveBeenCalledWith(mockDb, "bill-1", "2026-03-15");
@@ -473,11 +503,11 @@ describe("useCalendarStore", () => {
     useTransactionStore.setState({
       pages: [
         {
-          id: "tx-linked",
-          userId: "user-1",
+          id: "tx-linked" as TransactionId,
+          userId: "user-1" as UserId,
           type: "expense",
-          amount: 35000,
-          categoryId: "services",
+          amount: 35000 as CopAmount,
+          categoryId: "services" as CategoryId,
           description: "Netflix",
           date: new Date(2026, 2, 15),
           createdAt: new Date(),
@@ -489,17 +519,17 @@ describe("useCalendarStore", () => {
     useCalendarStore.setState({
       payments: [
         {
-          id: "pay-1",
-          billId: "bill-1",
-          dueDate: "2026-03-15",
-          paidAt: "2026-03-10T00:00:00.000Z",
-          transactionId: "tx-linked",
-          createdAt: "2026-03-10T00:00:00.000Z",
+          id: "pay-1" as BillPaymentId,
+          billId: "bill-1" as BillId,
+          dueDate: "2026-03-15" as IsoDate,
+          paidAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
+          transactionId: "tx-linked" as TransactionId,
+          createdAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
         },
       ],
     });
 
-    await useCalendarStore.getState().unmarkBillPaid("bill-1", "2026-03-15");
+    await useCalendarStore.getState().unmarkBillPaid("bill-1" as BillId, "2026-03-15" as IsoDate);
 
     expect(softDeleteTransaction).toHaveBeenCalledWith(mockDb, "tx-linked", expect.any(String));
     expect(enqueueSync).toHaveBeenCalledWith(
@@ -518,7 +548,7 @@ describe("useCalendarStore", () => {
     vi.mocked(deleteBillPayment).mockClear();
     useCalendarStore.getState().initStore(null as never, null as never);
 
-    await useCalendarStore.getState().unmarkBillPaid("bill-1", "2026-03-15");
+    await useCalendarStore.getState().unmarkBillPaid("bill-1" as BillId, "2026-03-15" as IsoDate);
 
     expect(deleteBillPayment).not.toHaveBeenCalled();
   });
@@ -529,12 +559,12 @@ describe("useCalendarStore", () => {
     const { getBillPaymentsForMonth } = await import("@/features/calendar/lib/repository");
     vi.mocked(getBillPaymentsForMonth).mockResolvedValueOnce([
       {
-        id: "pay-1",
-        billId: "bill-1",
-        dueDate: "2026-03-15",
-        paidAt: "2026-03-10T00:00:00.000Z",
+        id: "pay-1" as BillPaymentId,
+        billId: "bill-1" as BillId,
+        dueDate: "2026-03-15" as IsoDate,
+        paidAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
         transactionId: null,
-        createdAt: "2026-03-10T00:00:00.000Z",
+        createdAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
       },
     ]);
 
@@ -552,12 +582,12 @@ describe("useCalendarStore", () => {
     useCalendarStore.setState({
       payments: [
         {
-          id: "pay-existing",
-          billId: "bill-1",
-          dueDate: "2026-03-15",
-          paidAt: "2026-03-10T00:00:00.000Z",
+          id: "pay-existing" as BillPaymentId,
+          billId: "bill-1" as BillId,
+          dueDate: "2026-03-15" as IsoDate,
+          paidAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
           transactionId: null,
-          createdAt: "2026-03-10T00:00:00.000Z",
+          createdAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
         },
       ],
     });

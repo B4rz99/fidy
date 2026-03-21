@@ -1,5 +1,14 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type {
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  SyncQueueId,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 const mockRun = vi.fn();
 const mockAll = vi.fn().mockReturnValue([]);
@@ -49,15 +58,15 @@ describe("transaction repository", () => {
     const { insertTransaction } = await import("@/features/transactions/lib/repository");
 
     insertTransaction(mockDb, {
-      id: "tx-123",
-      userId: "user-1",
+      id: "tx-123" as TransactionId,
+      userId: "user-1" as UserId,
       type: "expense",
-      amount: 4520,
-      categoryId: "food",
+      amount: 4520 as CopAmount,
+      categoryId: "food" as CategoryId,
       description: "Groceries",
-      date: "2026-03-04",
-      createdAt: "2026-03-04T10:00:00.000Z",
-      updatedAt: "2026-03-04T10:00:00.000Z",
+      date: "2026-03-04" as IsoDate,
+      createdAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+      updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
     });
 
     expect(mockInsert).toHaveBeenCalled();
@@ -93,7 +102,7 @@ describe("transaction repository", () => {
     mockAll.mockReturnValueOnce(mockRows);
 
     const { getAllTransactions } = await import("@/features/transactions/lib/repository");
-    const result = getAllTransactions(mockDb, "user-1");
+    const result = getAllTransactions(mockDb, "user-1" as UserId);
 
     expect(mockSelect).toHaveBeenCalled();
     expect(mockFrom).toHaveBeenCalled();
@@ -106,7 +115,11 @@ describe("transaction repository", () => {
   it("softDeleteTransaction sets deletedAt and updatedAt", async () => {
     const { softDeleteTransaction } = await import("@/features/transactions/lib/repository");
 
-    softDeleteTransaction(mockDb, "tx-123", "2026-03-04T10:00:00.000Z");
+    softDeleteTransaction(
+      mockDb,
+      "tx-123" as TransactionId,
+      "2026-03-04T10:00:00.000Z" as IsoDateTime
+    );
 
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith(
@@ -122,11 +135,11 @@ describe("transaction repository", () => {
     const { enqueueSync } = await import("@/features/transactions/lib/repository");
 
     enqueueSync(mockDb, {
-      id: "sq-1",
+      id: "sq-1" as SyncQueueId,
       tableName: "transactions",
       rowId: "tx-123",
       operation: "insert",
-      createdAt: "2026-03-04T10:00:00.000Z",
+      createdAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
     });
 
     expect(mockInsert).toHaveBeenCalled();
@@ -156,7 +169,7 @@ describe("transaction repository", () => {
   it("clearSyncEntries deletes entries by id in a single query", async () => {
     const { clearSyncEntries } = await import("@/features/transactions/lib/repository");
 
-    clearSyncEntries(mockDb, ["sq-1", "sq-2"]);
+    clearSyncEntries(mockDb, ["sq-1" as SyncQueueId, "sq-2" as SyncQueueId]);
 
     expect(mockDelete).toHaveBeenCalledTimes(1);
     expect(mockDeleteWhere).toHaveBeenCalledTimes(1);
@@ -210,7 +223,7 @@ describe("transaction repository", () => {
     mockAll.mockReturnValueOnce([mockRow]);
 
     const { getTransactionById } = await import("@/features/transactions/lib/repository");
-    const result = getTransactionById(mockDb, "tx-1");
+    const result = getTransactionById(mockDb, "tx-1" as TransactionId);
 
     expect(mockSelect).toHaveBeenCalled();
     expect(result).toEqual(mockRow);
@@ -220,7 +233,7 @@ describe("transaction repository", () => {
     mockAll.mockReturnValueOnce([]);
 
     const { getTransactionById } = await import("@/features/transactions/lib/repository");
-    const result = getTransactionById(mockDb, "tx-nonexistent");
+    const result = getTransactionById(mockDb, "tx-nonexistent" as TransactionId);
 
     expect(result).toBeNull();
   });
@@ -229,15 +242,15 @@ describe("transaction repository", () => {
     const { upsertTransaction } = await import("@/features/transactions/lib/repository");
 
     const row = {
-      id: "tx-1",
-      userId: "user-1",
+      id: "tx-1" as TransactionId,
+      userId: "user-1" as UserId,
       type: "expense" as const,
-      amount: 2000,
-      categoryId: "food",
+      amount: 2000 as CopAmount,
+      categoryId: "food" as CategoryId,
       description: "Updated",
-      date: "2026-03-04",
-      createdAt: "2026-03-04T10:00:00.000Z",
-      updatedAt: "2026-03-04T12:00:00.000Z",
+      date: "2026-03-04" as IsoDate,
+      createdAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+      updatedAt: "2026-03-04T12:00:00.000Z" as IsoDateTime,
     };
 
     upsertTransaction(mockDb, row);

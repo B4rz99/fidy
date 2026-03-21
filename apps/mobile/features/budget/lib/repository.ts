@@ -1,6 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { budgets } from "@/shared/db";
+import type { BudgetId, CopAmount, IsoDateTime, Month, UserId } from "@/shared/types/branded";
 
 export type BudgetRow = typeof budgets.$inferInsert;
 
@@ -20,7 +21,7 @@ export function insertBudget(db: AnyDb, row: BudgetRow) {
     .run();
 }
 
-export function getBudgetsForMonth(db: AnyDb, userId: string, month: string) {
+export function getBudgetsForMonth(db: AnyDb, userId: UserId, month: Month) {
   return db
     .select()
     .from(budgets)
@@ -28,27 +29,27 @@ export function getBudgetsForMonth(db: AnyDb, userId: string, month: string) {
     .all();
 }
 
-export function getBudgetById(db: AnyDb, id: string) {
+export function getBudgetById(db: AnyDb, id: BudgetId) {
   const rows = db.select().from(budgets).where(eq(budgets.id, id)).all();
   return rows[0] ?? null;
 }
 
-export function updateBudgetAmount(db: AnyDb, id: string, amount: number, now: string) {
+export function updateBudgetAmount(db: AnyDb, id: BudgetId, amount: CopAmount, now: IsoDateTime) {
   db.update(budgets).set({ amount, updatedAt: now }).where(eq(budgets.id, id)).run();
 }
 
-export function softDeleteBudget(db: AnyDb, id: string, now: string) {
+export function softDeleteBudget(db: AnyDb, id: BudgetId, now: IsoDateTime) {
   db.update(budgets).set({ deletedAt: now, updatedAt: now }).where(eq(budgets.id, id)).run();
 }
 
 export function copyBudgetsToMonth(
   db: AnyDb,
-  userId: string,
-  sourceMonth: string,
-  targetMonth: string,
-  now: string,
-  generateId: () => string
-): string[] {
+  userId: UserId,
+  sourceMonth: Month,
+  targetMonth: Month,
+  now: IsoDateTime,
+  generateId: () => BudgetId
+): BudgetId[] {
   const sourceBudgets = getBudgetsForMonth(db, userId, sourceMonth);
   const existingTargetBudgets = getBudgetsForMonth(db, userId, targetMonth);
   const existingCategoryIds = new Set(existingTargetBudgets.map((b) => b.categoryId));

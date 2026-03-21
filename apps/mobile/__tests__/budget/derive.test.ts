@@ -6,21 +6,22 @@ import {
   deriveBudgetProgress,
   deriveBudgetSummary,
 } from "@/features/budget/lib/derive";
+import type { BudgetId, CategoryId, CopAmount } from "@/shared/types/branded";
 
 const makeBudget = (overrides: { id?: string; categoryId?: string; amount?: number } = {}) => ({
-  id: "budget-1",
-  categoryId: "food",
-  amount: 500000,
-  ...overrides,
+  id: "budget-1" as BudgetId,
+  categoryId: "food" as CategoryId,
+  amount: 500000 as CopAmount,
+  ...(overrides as { id?: BudgetId; categoryId?: CategoryId; amount?: CopAmount }),
 });
 
 const makeProgress = (overrides: Partial<BudgetProgress> = {}): BudgetProgress => ({
-  budgetId: "budget-1",
-  categoryId: "food",
-  amount: 500000,
-  spent: 350000,
+  budgetId: "budget-1" as BudgetId,
+  categoryId: "food" as CategoryId,
+  amount: 500000 as CopAmount,
+  spent: 350000 as CopAmount,
   percentUsed: 70,
-  remaining: 150000,
+  remaining: 150000 as CopAmount,
   isOverBudget: false,
   isNearLimit: false,
   ...overrides,
@@ -28,27 +29,27 @@ const makeProgress = (overrides: Partial<BudgetProgress> = {}): BudgetProgress =
 
 describe("deriveBudgetProgress", () => {
   it("returns 70% when 350000 spent of 500000", () => {
-    const result = deriveBudgetProgress(makeBudget(), 350000);
+    const result = deriveBudgetProgress(makeBudget(), 350000 as CopAmount);
     expect(result.percentUsed).toBe(70);
     expect(result.isOverBudget).toBe(false);
     expect(result.isNearLimit).toBe(false);
   });
 
   it("returns correct remaining", () => {
-    const result = deriveBudgetProgress(makeBudget(), 350000);
+    const result = deriveBudgetProgress(makeBudget(), 350000 as CopAmount);
     expect(result.remaining).toBe(150000);
     expect(result.spent).toBe(350000);
     expect(result.amount).toBe(500000);
   });
 
   it("sets isOverBudget=true when spent > amount", () => {
-    const result = deriveBudgetProgress(makeBudget({ amount: 100000 }), 120000);
+    const result = deriveBudgetProgress(makeBudget({ amount: 100000 }), 120000 as CopAmount);
     expect(result.isOverBudget).toBe(true);
     expect(result.remaining).toBe(-20000);
   });
 
   it("sets isNearLimit=true at exactly 80%", () => {
-    const result = deriveBudgetProgress(makeBudget({ amount: 500000 }), 400000);
+    const result = deriveBudgetProgress(makeBudget({ amount: 500000 }), 400000 as CopAmount);
     expect(result.percentUsed).toBe(80);
     expect(result.isNearLimit).toBe(true);
     expect(result.isOverBudget).toBe(false);
@@ -56,13 +57,13 @@ describe("deriveBudgetProgress", () => {
 
   it("sets isNearLimit=false at 79%", () => {
     // 79% of 500000 = 395000
-    const result = deriveBudgetProgress(makeBudget({ amount: 500000 }), 395000);
+    const result = deriveBudgetProgress(makeBudget({ amount: 500000 }), 395000 as CopAmount);
     expect(result.percentUsed).toBe(79);
     expect(result.isNearLimit).toBe(false);
   });
 
   it("handles zero spending (0%)", () => {
-    const result = deriveBudgetProgress(makeBudget({ amount: 500000 }), 0);
+    const result = deriveBudgetProgress(makeBudget({ amount: 500000 }), 0 as CopAmount);
     expect(result.percentUsed).toBe(0);
     expect(result.spent).toBe(0);
     expect(result.isOverBudget).toBe(false);
@@ -71,7 +72,7 @@ describe("deriveBudgetProgress", () => {
   });
 
   it("handles spending equal to budget (100%, isOverBudget=false, isNearLimit=true)", () => {
-    const result = deriveBudgetProgress(makeBudget({ amount: 500000 }), 500000);
+    const result = deriveBudgetProgress(makeBudget({ amount: 500000 }), 500000 as CopAmount);
     expect(result.percentUsed).toBe(100);
     expect(result.isOverBudget).toBe(false);
     expect(result.isNearLimit).toBe(true);
@@ -81,7 +82,7 @@ describe("deriveBudgetProgress", () => {
   it("includes budgetId and categoryId from budget", () => {
     const result = deriveBudgetProgress(
       makeBudget({ id: "budget-42", categoryId: "transport" }),
-      10000
+      10000 as CopAmount
     );
     expect(result.budgetId).toBe("budget-42");
     expect(result.categoryId).toBe("transport");
@@ -91,14 +92,14 @@ describe("deriveBudgetProgress", () => {
 describe("deriveBudgetSummary", () => {
   it("totals all budgets and spent amounts correctly", () => {
     const progresses: BudgetProgress[] = [
-      makeProgress({ amount: 500000, spent: 350000 }),
+      makeProgress({ amount: 500000 as CopAmount, spent: 350000 as CopAmount }),
       makeProgress({
-        budgetId: "budget-2",
-        categoryId: "transport",
-        amount: 200000,
-        spent: 80000,
+        budgetId: "budget-2" as BudgetId,
+        categoryId: "transport" as CategoryId,
+        amount: 200000 as CopAmount,
+        spent: 80000 as CopAmount,
         percentUsed: 40,
-        remaining: 120000,
+        remaining: 120000 as CopAmount,
         isOverBudget: false,
         isNearLimit: false,
       }),
@@ -121,9 +122,9 @@ describe("deriveBudgetSummary", () => {
 describe("deriveAutoSuggestBudgets", () => {
   // COP amounts in pesos directly
   const spending = [
-    { categoryId: "food", total: 18900 }, // 18,900 COP
-    { categoryId: "transport", total: 5234 }, // 5,234 COP
-    { categoryId: "entertainment", total: 187500 }, // 187,500 COP
+    { categoryId: "food" as CategoryId, total: 18900 as CopAmount }, // 18,900 COP
+    { categoryId: "transport" as CategoryId, total: 5234 as CopAmount }, // 5,234 COP
+    { categoryId: "entertainment" as CategoryId, total: 187500 as CopAmount }, // 187,500 COP
   ];
 
   it("suggests budgets for categories with spending", () => {
@@ -135,7 +136,7 @@ describe("deriveAutoSuggestBudgets", () => {
   });
 
   it("excludes categories that already have budgets", () => {
-    const existing = new Set(["food", "entertainment"]);
+    const existing = new Set<CategoryId>(["food" as CategoryId, "entertainment" as CategoryId]);
     const result = deriveAutoSuggestBudgets(spending, existing);
     expect(result).toHaveLength(1);
     expect(result[0].categoryId).toBe("transport");
@@ -143,7 +144,7 @@ describe("deriveAutoSuggestBudgets", () => {
 
   it("rounds < 100k COP up to nearest 1,000 COP (18,900 → 19,000)", () => {
     const result = deriveAutoSuggestBudgets(
-      [{ categoryId: "food", total: 18900 }], // 18,900 COP
+      [{ categoryId: "food" as CategoryId, total: 18900 as CopAmount }], // 18,900 COP
       new Set()
     );
     expect(result[0].suggestedAmount).toBe(19000);
@@ -151,7 +152,7 @@ describe("deriveAutoSuggestBudgets", () => {
 
   it("rounds < 100k COP (5,234 → 6,000)", () => {
     const result = deriveAutoSuggestBudgets(
-      [{ categoryId: "transport", total: 5234 }], // 5,234 COP
+      [{ categoryId: "transport" as CategoryId, total: 5234 as CopAmount }], // 5,234 COP
       new Set()
     );
     expect(result[0].suggestedAmount).toBe(6000);
@@ -159,7 +160,7 @@ describe("deriveAutoSuggestBudgets", () => {
 
   it("rounds 100k-1M COP up to nearest 10,000 COP (187,500 → 190,000)", () => {
     const result = deriveAutoSuggestBudgets(
-      [{ categoryId: "entertainment", total: 187500 }], // 187,500 COP
+      [{ categoryId: "entertainment" as CategoryId, total: 187500 as CopAmount }], // 187,500 COP
       new Set()
     );
     expect(result[0].suggestedAmount).toBe(190000);
@@ -167,7 +168,7 @@ describe("deriveAutoSuggestBudgets", () => {
 
   it("rounds >= 1M COP up to nearest 100,000 COP (1,850,000 → 1,900,000)", () => {
     const result = deriveAutoSuggestBudgets(
-      [{ categoryId: "home", total: 1850000 }], // 1,850,000 COP
+      [{ categoryId: "home" as CategoryId, total: 1850000 as CopAmount }], // 1,850,000 COP
       new Set()
     );
     expect(result[0].suggestedAmount).toBe(1900000);
@@ -175,7 +176,7 @@ describe("deriveAutoSuggestBudgets", () => {
 
   it("does not round exact multiples", () => {
     const result = deriveAutoSuggestBudgets(
-      [{ categoryId: "food", total: 20000 }], // 20,000 COP exact
+      [{ categoryId: "food" as CategoryId, total: 20000 as CopAmount }], // 20,000 COP exact
       new Set()
     );
     expect(result[0].suggestedAmount).toBe(20000);
@@ -187,7 +188,11 @@ describe("deriveAutoSuggestBudgets", () => {
   });
 
   it("returns empty array when all categories already have budgets", () => {
-    const existing = new Set(["food", "transport", "entertainment"]);
+    const existing = new Set<CategoryId>([
+      "food" as CategoryId,
+      "transport" as CategoryId,
+      "entertainment" as CategoryId,
+    ]);
     const result = deriveAutoSuggestBudgets(spending, existing);
     expect(result).toHaveLength(0);
   });

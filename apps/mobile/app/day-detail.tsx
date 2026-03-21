@@ -6,6 +6,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/c
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { formatMoney, toIsoDate } from "@/shared/lib";
+import type { BillId, CopAmount } from "@/shared/types/branded";
 
 export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
@@ -34,7 +35,7 @@ export default function DayDetailScreen() {
   const isPaymentPaid = (billId: string): BillPayment | undefined =>
     payments.find((p) => p.billId === billId && p.dueDate === dueDateStr);
 
-  const handleTogglePaid = async (billId: string) => {
+  const handleTogglePaid = async (billId: BillId) => {
     const existing = isPaymentPaid(billId);
     if (existing) {
       await unmarkBillPaid(billId, dueDateStr);
@@ -47,7 +48,7 @@ export default function DayDetailScreen() {
     router.push({ pathname: "/add-bill", params: { billId } });
   };
 
-  const handleDelete = (billId: string, billName: string) => {
+  const handleDelete = (billId: BillId, billName: string) => {
     Alert.alert(t("bills.deleteBill"), t("bills.deleteBillConfirm", { billName }), [
       { text: t("common.cancel"), style: "cancel" },
       {
@@ -95,14 +96,14 @@ export default function DayDetailScreen() {
                     {bill.name}
                   </Text>
                   <Text style={[styles.billAmount, { color: secondaryColor }]}>
-                    {formatMoney(bill.amount)}
+                    {formatMoney(bill.amount as CopAmount)}
                   </Text>
                 </View>
 
                 <View style={styles.actions}>
                   <Pressable
                     style={[styles.actionButton, { backgroundColor: paid ? accentGreen : peachBg }]}
-                    onPress={() => handleTogglePaid(bill.id)}
+                    onPress={() => handleTogglePaid(bill.id as BillId)}
                     hitSlop={8}
                   >
                     <Check size={16} color={paid ? "#FFFFFF" : primaryColor} />
@@ -118,7 +119,7 @@ export default function DayDetailScreen() {
 
                   <Pressable
                     style={[styles.actionButton, { backgroundColor: peachBg }]}
-                    onPress={() => handleDelete(bill.id, bill.name)}
+                    onPress={() => handleDelete(bill.id as BillId, bill.name)}
                     hitSlop={8}
                   >
                     <Trash2 size={16} color={accentRed} />

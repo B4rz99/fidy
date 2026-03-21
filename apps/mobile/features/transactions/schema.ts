@@ -1,12 +1,14 @@
 import { z } from "zod";
-import { type CategoryId, isValidCategoryId } from "./lib/categories";
+import type { CategoryId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
+import { isValidCategoryId } from "./lib/categories";
 
 export const transactionTypeSchema = z.enum(["expense", "income"]);
 export type TransactionType = z.infer<typeof transactionTypeSchema>;
 
-export const categoryIdSchema = z.string().refine(isValidCategoryId, {
-  message: "Invalid category ID",
-});
+export const categoryIdSchema = z
+  .string()
+  .refine(isValidCategoryId, { message: "Invalid category ID" })
+  .transform((s) => s as CategoryId);
 
 export const createTransactionSchema = z.object({
   type: transactionTypeSchema,
@@ -20,10 +22,10 @@ export const createTransactionSchema = z.object({
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 
 export type StoredTransaction = {
-  readonly id: string;
-  readonly userId: string;
+  readonly id: TransactionId;
+  readonly userId: UserId;
   readonly type: TransactionType;
-  readonly amount: number;
+  readonly amount: CopAmount;
   readonly categoryId: CategoryId;
   readonly description: string;
   readonly date: Date;

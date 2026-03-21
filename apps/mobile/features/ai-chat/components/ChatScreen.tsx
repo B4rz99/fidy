@@ -6,6 +6,7 @@ import { useTransactionStore } from "@/features/transactions";
 import { HEADER_HEIGHT, ScreenLayout } from "@/shared/components";
 import { Keyboard, KeyboardAvoidingView, Platform, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
+import type { ChatMessageId } from "@/shared/types/branded";
 import { useStreamingChat } from "../hooks/use-streaming-chat";
 import type { ChatMessage } from "../schema";
 import { useChatStore } from "../store";
@@ -26,8 +27,8 @@ const MemoizedMessageBubble = memo(function MemoizedBubble({
   onDismiss,
 }: {
   readonly message: ChatMessage;
-  readonly onConfirm: (id: string) => void;
-  readonly onDismiss: (id: string) => void;
+  readonly onConfirm: (id: ChatMessageId) => void;
+  readonly onDismiss: (id: ChatMessageId) => void;
 }) {
   return (
     <MessageBubble message={message} onConfirmAction={onConfirm} onDismissAction={onDismiss} />
@@ -50,7 +51,7 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
   const title = currentSession?.title ?? t("aiChat.fidyAi");
 
   const handleConfirmAction = useCallback(
-    async (messageId: string) => {
+    async (messageId: ChatMessageId) => {
       const msg = messages.find((m) => m.id === messageId);
       if (msg?.action?.type === "delete") {
         try {
@@ -66,7 +67,7 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
   );
 
   const handleDismissAction = useCallback(
-    (messageId: string) => {
+    (messageId: ChatMessageId) => {
       updateActionStatus(messageId, "dismissed");
     },
     [updateActionStatus]

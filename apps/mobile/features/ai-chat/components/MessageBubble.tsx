@@ -2,14 +2,15 @@ import { memo } from "react";
 import { CircleCheck, Sparkles } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
+import type { ChatMessageId } from "@/shared/types/branded";
 import { ACTION_BLOCK_REGEX } from "../lib/parse-action";
 import type { ChatMessage } from "../schema";
 import { ActionCard } from "./ActionCard";
 
 type MessageBubbleProps = {
   readonly message: ChatMessage;
-  readonly onConfirmAction?: (messageId: string) => void;
-  readonly onDismissAction?: (messageId: string) => void;
+  readonly onConfirmAction?: (messageId: ChatMessageId) => void;
+  readonly onDismissAction?: (messageId: ChatMessageId) => void;
 };
 
 function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: MessageBubbleProps) {

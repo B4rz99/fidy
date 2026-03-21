@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { ChatScreen, ConversationList, cancelActiveStream, useChatStore } from "@/features/ai-chat";
 import { captureError } from "@/shared/lib";
+import type { ChatSessionId } from "@/shared/types/branded";
 
 type AiView = "list" | "chat";
 
@@ -10,7 +11,7 @@ export default function AiTab() {
   const extractAndSaveMemories = useChatStore((s) => s.extractAndSaveMemories);
 
   const handleSelectSession = useCallback(
-    async (id: string) => {
+    async (id: ChatSessionId) => {
       await selectSession(id);
       setView("chat");
     },

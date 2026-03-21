@@ -11,7 +11,8 @@ import {
   upsertTransaction,
 } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
-import { captureError, generateId } from "@/shared/lib";
+import { captureError, generateSyncConflictId, toIsoDateTime } from "@/shared/lib";
+import type { BudgetId, IsoDateTime, SyncQueueId, TransactionId } from "@/shared/types/branded";
 import { hasDataConflict } from "../lib/conflict-detection";
 import { insertConflict } from "../lib/conflict-repository";
 
@@ -80,7 +81,7 @@ async function processBudgetEntry(
   supabase: SupabaseClient,
   rowId: string
 ): Promise<boolean> {
-  const row = getBudgetById(db, rowId);
+  const row = getBudgetById(db, rowId as BudgetId);
   if (!row) return true;
   const { error } = await supabase.from("budgets").upsert({
     id: row.id,
@@ -146,7 +147,7 @@ async function processEntry(
   entry: { id: string; tableName: string; rowId: string }
 ): Promise<string | null> {
   if (entry.tableName === "transactions") {
-    const row = await getTransactionById(db, entry.rowId);
+    const row = await getTransactionById(db, entry.rowId as TransactionId);
     if (!row) return entry.id;
     const { error } = await supabase.from("transactions").upsert(toSupabaseRow(row));
     return error ? null : entry.id;
@@ -187,7 +188,7 @@ export async function syncPush(
     .map((r) => r.value);
 
   if (processedIds.length > 0) {
-    await clearSyncEntries(db, processedIds);
+    await clearSyncEntries(db, processedIds as SyncQueueId[]);
   }
 }
 
@@ -209,22 +210,23 @@ export async function syncPull(
   let earliestFailure: string | null = null;
   for (const serverRow of rows) {
     try {
-      const localRow = await getTransactionById(db, serverRow.id);
+      const localRow = await getTransactionById(db, serverRow.id as TransactionId);
       const mappedServerRow = fromSupabaseRow(serverRow);
 
       if (shouldUpdateLocal(serverRow.updated_at, localRow?.updatedAt)) {
-        const isConflict = localRow != null && hasDataConflict(localRow, mappedServerRow);
-        await upsertTransaction(db, mappedServerRow);
+        const isConflict =
+          localRow != null && hasDataConflict(localRow, mappedServerRow as typeof localRow);
+        await upsertTransaction(db, mappedServerRow as Parameters<typeof upsertTransaction>[1]);
         // Log conflict after successful upsert to avoid duplicates on retry.
         // Own try/catch so a conflict-logging failure doesn't affect the sync flow.
         if (isConflict) {
           try {
             insertConflict(db, {
-              id: generateId("conflict"),
-              transactionId: serverRow.id,
+              id: generateSyncConflictId(),
+              transactionId: serverRow.id as TransactionId,
               localData: JSON.stringify(localRow),
               serverData: JSON.stringify(mappedServerRow),
-              detectedAt: new Date().toISOString(),
+              detectedAt: toIsoDateTime(new Date()),
             });
           } catch (conflictErr) {
             captureError(conflictErr);

@@ -1,7 +1,7 @@
 export { createAsyncGuard } from "./create-async-guard";
 export type { CurrencyConfig } from "./currency";
 export { getActiveCurrency } from "./currency";
-export { formatDateDisplay, parseIsoDate, toIsoDate } from "./format-date";
+export { formatDateDisplay, parseIsoDate, toIsoDate, toIsoDateTime, toMonth } from "./format-date";
 export {
   cleanDigitInput,
   formatInputDisplay,
@@ -10,7 +10,25 @@ export {
   MAX_AMOUNT_DIGITS,
   parseDigitsToAmount,
 } from "./format-money";
-export { buildId, generateId } from "./generate-id";
+export {
+  buildId,
+  generateBillId,
+  generateBillPaymentId,
+  generateBudgetId,
+  generateChatMessageId,
+  generateChatSessionId,
+  generateDetectedSmsEventId,
+  generateEmailAccountId,
+  generateId,
+  generateMerchantRuleId,
+  generateNotificationSourceId,
+  generateProcessedCaptureId,
+  generateProcessedEmailId,
+  generateSyncConflictId,
+  generateSyncQueueId,
+  generateTransactionId,
+  generateUserMemoryId,
+} from "./generate-id";
 export { normalizeMerchant } from "./normalize-merchant";
 export { captureError, initSentry, SentryErrorBoundary, wrapWithSentry } from "./sentry";
 export { handleRecoverableError, showErrorToast } from "./toast";

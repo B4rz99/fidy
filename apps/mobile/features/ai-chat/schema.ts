@@ -1,4 +1,13 @@
 import { z } from "zod";
+import type {
+  ChatMessageId,
+  ChatSessionId,
+  IsoDate,
+  IsoDateTime,
+  TransactionId,
+  UserId,
+  UserMemoryId,
+} from "@/shared/types/branded";
 import { categoryIdSchema, transactionTypeSchema } from "../transactions/schema";
 
 export const memoryCategory = z.enum(["habit", "preference", "situation", "goal"]);
@@ -17,13 +26,16 @@ export const addActionSchema = z.object({
     amount: z.number().int().positive(),
     categoryId: categoryIdSchema,
     description: z.string(),
-    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .transform((s) => s as IsoDate),
   }),
 });
 
 export const editActionSchema = z.object({
   type: z.literal("edit"),
-  transactionId: z.string(),
+  transactionId: z.string().transform((s) => s as TransactionId),
   data: z.object({
     amount: z.number().int().positive().optional(),
     categoryId: categoryIdSchema.optional(),
@@ -31,16 +43,20 @@ export const editActionSchema = z.object({
     date: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .transform((s) => s as IsoDate)
       .optional(),
   }),
 });
 
 export const deleteActionSchema = z.object({
   type: z.literal("delete"),
-  transactionId: z.string(),
+  transactionId: z.string().transform((s) => s as TransactionId),
   description: z.string(),
   amount: z.number().int().positive(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .transform((s) => s as IsoDate),
 });
 
 export const chatActionSchema = z.discriminatedUnion("type", [
@@ -51,29 +67,29 @@ export const chatActionSchema = z.discriminatedUnion("type", [
 export type ChatAction = z.infer<typeof chatActionSchema>;
 
 export type ChatSession = {
-  readonly id: string;
-  readonly userId: string;
+  readonly id: ChatSessionId;
+  readonly userId: UserId;
   readonly title: string;
-  readonly createdAt: string;
-  readonly expiresAt: string;
-  readonly deletedAt: string | null;
+  readonly createdAt: IsoDateTime;
+  readonly expiresAt: IsoDateTime;
+  readonly deletedAt: IsoDateTime | null;
 };
 
 export type ChatMessage = {
-  readonly id: string;
-  readonly sessionId: string;
+  readonly id: ChatMessageId;
+  readonly sessionId: ChatSessionId;
   readonly role: ChatRole;
   readonly content: string;
   readonly action: ChatAction | null;
   readonly actionStatus: ActionStatus | null;
-  readonly createdAt: string;
+  readonly createdAt: IsoDateTime;
 };
 
 export type UserMemory = {
-  readonly id: string;
-  readonly userId: string;
+  readonly id: UserMemoryId;
+  readonly userId: UserId;
   readonly fact: string;
   readonly category: MemoryCategory;
-  readonly createdAt: string;
-  readonly updatedAt: string;
+  readonly createdAt: IsoDateTime;
+  readonly updatedAt: IsoDateTime;
 };

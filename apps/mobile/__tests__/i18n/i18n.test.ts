@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { CategoryId } from "@/shared/types/branded";
 
 vi.unmock("date-fns");
 vi.unmock("date-fns/locale");
@@ -54,7 +55,7 @@ describe("getCategoryLabel", () => {
   it("returns Spanish label when locale is 'es'", async () => {
     const { getCategoryLabel } = await import("@/shared/i18n/locale-helpers");
     const foodCategory = {
-      id: "food",
+      id: "food" as CategoryId,
       label: { en: "Food", es: "Comida" },
       icon: {} as never,
       color: "#000",
@@ -65,7 +66,7 @@ describe("getCategoryLabel", () => {
   it("returns English label when locale is 'en'", async () => {
     const { getCategoryLabel } = await import("@/shared/i18n/locale-helpers");
     const foodCategory = {
-      id: "food",
+      id: "food" as CategoryId,
       label: { en: "Food", es: "Comida" },
       icon: {} as never,
       color: "#000",
@@ -76,7 +77,7 @@ describe("getCategoryLabel", () => {
   it("defaults to Spanish for unknown locale", async () => {
     const { getCategoryLabel } = await import("@/shared/i18n/locale-helpers");
     const cat = {
-      id: "food",
+      id: "food" as CategoryId,
       label: { en: "Food", es: "Comida" },
       icon: {} as never,
       color: "#000",

@@ -22,6 +22,7 @@ import { Alert, FlatList, Platform, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { formatSignedMoney, toIsoDate } from "@/shared/lib";
+import type { TransactionId } from "@/shared/types/branded";
 import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";
 import { DateHeader } from "./DateHeader";
@@ -150,7 +151,7 @@ export const HomeScreen = () => {
   }, [hasMore, loadNextPage]);
 
   const handleEdit = useCallback(
-    (id: string) => {
+    (id: TransactionId) => {
       editTransaction(id);
       push("/(tabs)/add" as never);
     },
@@ -158,7 +159,7 @@ export const HomeScreen = () => {
   );
 
   const handleDelete = useCallback(
-    (id: string) => {
+    (id: TransactionId) => {
       Alert.alert(t("transactions.deleteConfirmTitle"), t("transactions.deleteConfirmMessage"), [
         { text: t("common.cancel"), style: "cancel" },
         {

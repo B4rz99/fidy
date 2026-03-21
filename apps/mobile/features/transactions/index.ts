@@ -1,7 +1,8 @@
+export type { CategoryId } from "@/shared/types/branded";
 export { CategoryPill } from "./components/CategoryPill";
 export { TypeToggle } from "./components/TypeToggle";
 export { toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
-export type { Category, CategoryId } from "./lib/categories";
+export type { Category } from "./lib/categories";
 export {
   CATEGORIES,
   CATEGORY_IDS,

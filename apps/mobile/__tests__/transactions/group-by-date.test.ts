@@ -1,16 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 import type { StoredTransaction } from "@/features/transactions/schema";
+import type { CategoryId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
 
 // Use real date-fns (global setup mocks it)
 vi.unmock("date-fns");
 
 function makeTx(overrides: Partial<StoredTransaction> & { date: Date }): StoredTransaction {
   return {
-    id: `tx-${Math.random().toString(36).slice(2, 8)}`,
-    userId: "user-1",
+    id: `tx-${Math.random().toString(36).slice(2, 8)}` as TransactionId,
+    userId: "user-1" as UserId,
     type: "expense",
-    amount: 1000,
-    categoryId: "food",
+    amount: 1000 as CopAmount,
+    categoryId: "food" as CategoryId,
     description: "Test",
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -41,8 +42,8 @@ describe("buildListData", () => {
 
   it("groups multiple transactions on the same date under one header", async () => {
     const { buildListData } = await import("@/features/transactions/lib/group-by-date");
-    const tx1 = makeTx({ id: "tx-1", date: new Date(2026, 2, 10) });
-    const tx2 = makeTx({ id: "tx-2", date: new Date(2026, 2, 10) });
+    const tx1 = makeTx({ id: "tx-1" as TransactionId, date: new Date(2026, 2, 10) });
+    const tx2 = makeTx({ id: "tx-2" as TransactionId, date: new Date(2026, 2, 10) });
     const result = buildListData([tx1, tx2]);
 
     expect(result.items).toHaveLength(3); // 1 header + 2 transactions
@@ -54,8 +55,8 @@ describe("buildListData", () => {
 
   it("creates separate headers for different dates", async () => {
     const { buildListData } = await import("@/features/transactions/lib/group-by-date");
-    const tx1 = makeTx({ id: "tx-1", date: new Date(2026, 2, 14) });
-    const tx2 = makeTx({ id: "tx-2", date: new Date(2026, 2, 13) });
+    const tx1 = makeTx({ id: "tx-1" as TransactionId, date: new Date(2026, 2, 14) });
+    const tx2 = makeTx({ id: "tx-2" as TransactionId, date: new Date(2026, 2, 13) });
     const result = buildListData([tx1, tx2]);
 
     // header1, tx1, header2, tx2
@@ -104,10 +105,10 @@ describe("buildListData", () => {
 
   it("computes stickyIndices correctly for multiple date groups", async () => {
     const { buildListData } = await import("@/features/transactions/lib/group-by-date");
-    const tx1 = makeTx({ id: "tx-1", date: new Date(2026, 2, 14) });
-    const tx2 = makeTx({ id: "tx-2", date: new Date(2026, 2, 14) });
-    const tx3 = makeTx({ id: "tx-3", date: new Date(2026, 2, 13) });
-    const tx4 = makeTx({ id: "tx-4", date: new Date(2026, 2, 12) });
+    const tx1 = makeTx({ id: "tx-1" as TransactionId, date: new Date(2026, 2, 14) });
+    const tx2 = makeTx({ id: "tx-2" as TransactionId, date: new Date(2026, 2, 14) });
+    const tx3 = makeTx({ id: "tx-3" as TransactionId, date: new Date(2026, 2, 13) });
+    const tx4 = makeTx({ id: "tx-4" as TransactionId, date: new Date(2026, 2, 12) });
     const result = buildListData([tx1, tx2, tx3, tx4]);
 
     // [header@0, tx1, tx2, header@3, tx3, header@5, tx4]
@@ -116,8 +117,8 @@ describe("buildListData", () => {
 
   it("does not mutate the input array", async () => {
     const { buildListData } = await import("@/features/transactions/lib/group-by-date");
-    const tx1 = makeTx({ id: "tx-1", date: new Date(2026, 2, 14) });
-    const tx2 = makeTx({ id: "tx-2", date: new Date(2026, 2, 13) });
+    const tx1 = makeTx({ id: "tx-1" as TransactionId, date: new Date(2026, 2, 14) });
+    const tx2 = makeTx({ id: "tx-2" as TransactionId, date: new Date(2026, 2, 13) });
     const input = [tx1, tx2];
     const inputCopy = [...input];
 

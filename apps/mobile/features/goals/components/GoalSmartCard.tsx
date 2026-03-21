@@ -3,6 +3,7 @@ import { memo, useCallback, useMemo } from "react";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
+import type { CopAmount } from "@/shared/types/branded";
 import { useGoalStore } from "../store";
 
 export const GoalSmartCard = memo(function GoalSmartCard() {
@@ -97,7 +98,8 @@ export const GoalSmartCard = memo(function GoalSmartCard() {
             opacity: 0.8,
           }}
         >
-          {formatMoney(topGoal.currentAmount)} / {formatMoney(topGoal.goal.targetAmount)}
+          {formatMoney(topGoal.currentAmount as CopAmount)} /{" "}
+          {formatMoney(topGoal.goal.targetAmount as CopAmount)}
         </Text>
         {moreCount > 0 ? (
           <Text

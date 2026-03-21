@@ -6,7 +6,21 @@ import { classifyMerchantApi } from "@/features/email-capture/services/parse-ema
 import { insertTransaction, isValidCategoryId } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
-import { generateId, normalizeMerchant, toIsoDate } from "@/shared/lib";
+import {
+  generateProcessedCaptureId,
+  generateSyncQueueId,
+  generateTransactionId,
+  normalizeMerchant,
+  toIsoDate,
+  toIsoDateTime,
+} from "@/shared/lib";
+import type {
+  CategoryId,
+  CopAmount,
+  IsoDateTime,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
 import { insertProcessedCapture } from "../lib/repository";
 import type { ApplePayIntentData } from "../schema";
@@ -46,14 +60,14 @@ export async function processApplePayIntent(
     const existingTxId = await findDuplicateTransaction(db, userId, amount, today, intent.merchant);
 
     if (existingTxId) {
-      const now = new Date().toISOString();
+      const now = toIsoDateTime(new Date());
       await insertProcessedCapture(db, {
-        id: generateId("pc"),
+        id: generateProcessedCaptureId(),
         fingerprintHash: fingerprint,
         source,
         status: "skipped_duplicate",
         rawText: `${intent.merchant} $${intent.amount}`,
-        transactionId: existingTxId,
+        transactionId: existingTxId as TransactionId,
         confidence: 1.0,
         receivedAt: now,
         createdAt: now,
@@ -70,15 +84,15 @@ export async function processApplePayIntent(
     const categoryId = isValidCategoryId(rawCategoryId) ? rawCategoryId : "other";
 
     // Save transaction
-    const txId = generateId("tx");
-    const now = new Date().toISOString();
+    const txId = generateTransactionId();
+    const now = toIsoDateTime(new Date());
 
     await insertTransaction(db, {
       id: txId,
-      userId,
+      userId: userId as UserId,
       type: "expense",
-      amount,
-      categoryId,
+      amount: amount as CopAmount,
+      categoryId: categoryId as CategoryId,
       description: intent.merchant,
       date: today,
       source,
@@ -87,7 +101,7 @@ export async function processApplePayIntent(
     });
 
     await enqueueSync(db, {
-      id: generateId("sq"),
+      id: generateSyncQueueId(),
       tableName: "transactions",
       rowId: txId,
       operation: "insert",
@@ -96,7 +110,7 @@ export async function processApplePayIntent(
 
     // Record in processedCaptures
     await insertProcessedCapture(db, {
-      id: generateId("pc"),
+      id: generateProcessedCaptureId(),
       fingerprintHash: fingerprint,
       source,
       status: "success",

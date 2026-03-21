@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney } from "@/shared/lib";
+import type { CopAmount } from "@/shared/types/branded";
 
 const MAX_UPCOMING_BILLS = 3;
 
@@ -85,7 +86,7 @@ export function UpcomingBillsSection() {
                   </View>
                 </View>
                 <Text style={[styles.billAmount, { color: primaryColor }]}>
-                  {formatMoney(bill.amount)}
+                  {formatMoney(bill.amount as CopAmount)}
                 </Text>
               </View>
             );

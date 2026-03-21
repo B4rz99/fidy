@@ -1,5 +1,12 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type {
+  EmailAccountId,
+  IsoDateTime,
+  ProcessedEmailId,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 const mockValues = vi.fn().mockReturnThis();
 const mockInsert = vi.fn(() => ({ values: mockValues }));
@@ -40,12 +47,12 @@ describe("email capture repository", () => {
     const { insertEmailAccount } = await import("@/features/email-capture/lib/repository");
 
     await insertEmailAccount(mockDb, {
-      id: "ea-1",
-      userId: "user-1",
+      id: "ea-1" as EmailAccountId,
+      userId: "user-1" as UserId,
       provider: "gmail",
       email: "test@gmail.com",
       lastFetchedAt: null,
-      createdAt: "2026-03-05T10:00:00Z",
+      createdAt: "2026-03-05T10:00:00Z" as IsoDateTime,
     });
 
     expect(mockInsert).toHaveBeenCalled();
@@ -114,16 +121,16 @@ describe("email capture repository", () => {
     const { insertProcessedEmail } = await import("@/features/email-capture/lib/repository");
 
     await insertProcessedEmail(mockDb, {
-      id: "pe-1",
+      id: "pe-1" as ProcessedEmailId,
       externalId: "msg-123",
       provider: "gmail",
       status: "success",
       failureReason: null,
       subject: "Compra aprobada",
       rawBodyPreview: "Su compra...",
-      receivedAt: "2026-03-05T10:00:00Z",
-      transactionId: "tx-1",
-      createdAt: "2026-03-05T10:00:00Z",
+      receivedAt: "2026-03-05T10:00:00Z" as IsoDateTime,
+      transactionId: "tx-1" as TransactionId,
+      createdAt: "2026-03-05T10:00:00Z" as IsoDateTime,
     });
 
     expect(mockInsert).toHaveBeenCalled();

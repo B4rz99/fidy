@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
+import type { CopAmount } from "@/shared/types/branded";
 import type { GoalWithProgress } from "../store";
 
 type GoalCardProps = {
@@ -51,7 +52,7 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
           {goal.name}
         </Text>
         <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 13, color: accentGreen }}>
-          {formatMoney(goal.targetAmount)}
+          {formatMoney(goal.targetAmount as CopAmount)}
         </Text>
       </View>
 
@@ -102,7 +103,7 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
           }}
           numberOfLines={1}
         >
-          {formatMoney(currentAmount)}
+          {formatMoney(currentAmount as CopAmount)}
         </Text>
       </View>
 

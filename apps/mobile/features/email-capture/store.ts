@@ -3,7 +3,13 @@ import { create } from "zustand";
 import { useTransactionStore } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync, transactions } from "@/shared/db";
-import { generateId, normalizeMerchant } from "@/shared/lib";
+import {
+  generateEmailAccountId,
+  generateSyncQueueId,
+  normalizeMerchant,
+  toIsoDateTime,
+} from "@/shared/lib";
+import type { CategoryId, IsoDateTime, UserId } from "@/shared/types/branded";
 import { insertMerchantRule } from "./lib/merchant-rules";
 import type { ProgressPhase } from "./lib/progress-phases";
 import { isFirstFetchForAny, shouldShowProgress } from "./lib/progress-phases";
@@ -99,12 +105,12 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     if (!result.success) return;
 
     const row: EmailAccountRow = {
-      id: generateId("ea"),
-      userId: userIdRef,
+      id: generateEmailAccountId(),
+      userId: userIdRef as UserId,
       provider,
       email: result.email,
       lastFetchedAt: null,
-      createdAt: new Date().toISOString(),
+      createdAt: toIsoDateTime(new Date()),
     };
 
     await insertEmailAccount(dbRef, row);
@@ -228,7 +234,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       const successIds = new Set(fetchResults.filter((r) => r.fetchOk).map((r) => r.account.id));
       set({
         accounts: get().accounts.map((a) =>
-          successIds.has(a.id) ? { ...a, lastFetchedAt: now } : a
+          successIds.has(a.id) ? { ...a, lastFetchedAt: now as IsoDateTime } : a
         ),
       });
 
@@ -273,17 +279,17 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     const processedEmail = get().needsReviewEmails.find((e) => e.id === processedEmailId);
     if (!processedEmail || !processedEmail.transactionId) return;
 
-    const now = new Date().toISOString();
+    const now = toIsoDateTime(new Date());
 
     // Update the transaction's categoryId
     await db
       .update(transactions)
-      .set({ categoryId, updatedAt: now })
+      .set({ categoryId: categoryId as CategoryId, updatedAt: now })
       .where(eq(transactions.id, processedEmail.transactionId));
 
     // Enqueue sync for the updated transaction
     await enqueueSync(db, {
-      id: generateId("sq"),
+      id: generateSyncQueueId(),
       tableName: "transactions",
       rowId: processedEmail.transactionId,
       operation: "update",

@@ -1,5 +1,6 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { IsoDateTime, SyncConflictId, TransactionId } from "@/shared/types/branded";
 
 const mockRun = vi.fn();
 const mockAll = vi.fn().mockReturnValue([]);
@@ -37,11 +38,11 @@ describe("conflict repository", () => {
   it("insertConflict calls db.insert with correct values", async () => {
     const { insertConflict } = await import("@/features/sync/lib/conflict-repository");
     const row = {
-      id: "conflict-1",
-      transactionId: "tx-1",
+      id: "conflict-1" as SyncConflictId,
+      transactionId: "tx-1" as TransactionId,
       localData: '{"amount":1000}',
       serverData: '{"amount":2000}',
-      detectedAt: "2026-03-15T10:00:00.000Z",
+      detectedAt: "2026-03-15T10:00:00.000Z" as IsoDateTime,
     };
 
     insertConflict(mockDb, row);

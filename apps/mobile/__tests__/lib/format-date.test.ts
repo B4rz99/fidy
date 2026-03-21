@@ -1,17 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { formatDateDisplay, parseIsoDate, toIsoDate } from "@/shared/lib/format-date";
+import type { IsoDate } from "@/shared/types/branded";
 
 describe("formatDateDisplay", () => {
   it("converts ISO date to DD-MM-YYYY", () => {
-    expect(formatDateDisplay("2026-03-04")).toBe("04-03-2026");
+    expect(formatDateDisplay("2026-03-04" as IsoDate)).toBe("04-03-2026");
   });
 
   it("handles single-digit day and month", () => {
-    expect(formatDateDisplay("2026-01-05")).toBe("05-01-2026");
+    expect(formatDateDisplay("2026-01-05" as IsoDate)).toBe("05-01-2026");
   });
 
   it("handles end of year", () => {
-    expect(formatDateDisplay("2025-12-31")).toBe("31-12-2025");
+    expect(formatDateDisplay("2025-12-31" as IsoDate)).toBe("31-12-2025");
   });
 });
 
@@ -29,14 +30,14 @@ describe("toIsoDate", () => {
 
 describe("parseIsoDate", () => {
   it("parses ISO date string to local midnight", () => {
-    const date = parseIsoDate("2026-03-04");
+    const date = parseIsoDate("2026-03-04" as IsoDate);
     expect(date.getFullYear()).toBe(2026);
     expect(date.getMonth()).toBe(2); // March = 2
     expect(date.getDate()).toBe(4);
   });
 
   it("roundtrips with toIsoDate", () => {
-    const iso = "2026-01-15";
+    const iso = "2026-01-15" as IsoDate;
     expect(toIsoDate(parseIsoDate(iso))).toBe(iso);
   });
 });

@@ -2,7 +2,8 @@ import { create } from "zustand";
 import { upsertTransaction, useTransactionStore } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
-import { captureError, generateId } from "@/shared/lib";
+import { captureError, generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
+import type { IsoDateTime } from "@/shared/types/branded";
 import {
   getUnresolvedConflicts,
   resolveConflict as resolveConflictDb,
@@ -73,12 +74,14 @@ export const useSyncConflictStore = create<SyncConflictState & SyncConflictActio
     const conflict = get().conflicts.find((c) => c.id === id);
     if (!conflict) return;
 
-    const now = new Date().toISOString();
+    const now = toIsoDateTime(new Date());
 
     if (resolution === "local") {
-      upsertTransaction(dbRef, { ...conflict.localData, updatedAt: now });
+      upsertTransaction(dbRef, { ...conflict.localData, updatedAt: now } as Parameters<
+        typeof upsertTransaction
+      >[1]);
       enqueueSync(dbRef, {
-        id: generateId("sq"),
+        id: generateSyncQueueId(),
         tableName: "transactions",
         rowId: conflict.transactionId,
         operation: "update",

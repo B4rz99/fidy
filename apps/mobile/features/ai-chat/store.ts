@@ -1,19 +1,31 @@
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import { create } from "zustand";
 import { type AnyDb, chatMessages, chatSessions, getSupabase } from "@/shared/db";
-import { captureError, generateId } from "@/shared/lib";
+import {
+  captureError,
+  generateChatMessageId,
+  generateChatSessionId,
+  toIsoDateTime,
+} from "@/shared/lib";
+import type {
+  ChatMessageId,
+  ChatSessionId,
+  IsoDateTime,
+  UserId,
+  UserMemoryId,
+} from "@/shared/types/branded";
 import { deriveConversationTitle, findExpiredSessions } from "./lib/sessions";
 import type { ActionStatus, ChatAction, ChatMessage, ChatSession, UserMemory } from "./schema";
 import { extractMemories } from "./services/ai-chat-api";
 
 let dbRef: AnyDb | null = null;
-let userIdRef: string | null = null;
+let userIdRef: UserId | null = null;
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 type ChatState = {
   sessions: ChatSession[];
-  currentSessionId: string | null;
+  currentSessionId: ChatSessionId | null;
   messages: ChatMessage[];
   memories: UserMemory[];
   isStreaming: boolean;
@@ -22,18 +34,18 @@ type ChatState = {
 };
 
 type ChatActions = {
-  initStore: (db: AnyDb, userId: string) => void;
+  initStore: (db: AnyDb, userId: UserId) => void;
   loadSessions: () => Promise<void>;
-  createSession: (firstMessage: string) => Promise<string>;
-  deleteSession: (id: string) => Promise<void>;
-  selectSession: (id: string) => Promise<void>;
+  createSession: (firstMessage: string) => Promise<ChatSessionId>;
+  deleteSession: (id: ChatSessionId) => Promise<void>;
+  selectSession: (id: ChatSessionId) => Promise<void>;
   addUserMessage: (content: string) => Promise<ChatMessage>;
   addAssistantMessage: (content: string, action?: ChatAction | null) => Promise<ChatMessage>;
-  updateActionStatus: (messageId: string, status: ActionStatus) => Promise<void>;
+  updateActionStatus: (messageId: ChatMessageId, status: ActionStatus) => Promise<void>;
   setStreaming: (isStreaming: boolean) => void;
   setStreamingContent: (content: string) => void;
   loadMemories: () => Promise<void>;
-  deleteMemory: (id: string) => Promise<void>;
+  deleteMemory: (id: UserMemoryId) => Promise<void>;
   extractAndSaveMemories: () => Promise<void>;
   cleanupExpiredSessions: () => Promise<readonly ChatSession[]>;
   dismissExpiredBanner: () => void;
@@ -82,14 +94,16 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
 
   createSession: async (firstMessage) => {
     if (!dbRef || !userIdRef) throw new Error("Store not initialized");
-    const id = generateId("cs");
+    const id = generateChatSessionId();
     const now = new Date();
+    const nowIso = toIsoDateTime(now);
+    const expiresIso = toIsoDateTime(new Date(now.getTime() + THIRTY_DAYS_MS));
     const session: ChatSession = {
       id,
       userId: userIdRef,
       title: deriveConversationTitle(firstMessage),
-      createdAt: now.toISOString(),
-      expiresAt: new Date(now.getTime() + THIRTY_DAYS_MS).toISOString(),
+      createdAt: nowIso,
+      expiresAt: expiresIso,
       deletedAt: null,
     };
 
@@ -112,7 +126,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
 
   deleteSession: async (id) => {
     if (!dbRef) return;
-    const now = new Date().toISOString();
+    const now = toIsoDateTime(new Date());
     await dbRef.update(chatSessions).set({ deletedAt: now }).where(eq(chatSessions.id, id));
 
     set((state) => ({
@@ -150,13 +164,13 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     if (!currentSessionId) throw new Error("No active session");
 
     const msg: ChatMessage = {
-      id: generateId("cm"),
+      id: generateChatMessageId(),
       sessionId: currentSessionId,
       role: "user",
       content,
       action: null,
       actionStatus: null,
-      createdAt: new Date().toISOString(),
+      createdAt: toIsoDateTime(new Date()),
     };
 
     await dbRef.insert(chatMessages).values({
@@ -187,13 +201,13 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
       : null;
 
     const msg: ChatMessage = {
-      id: generateId("cm"),
+      id: generateChatMessageId(),
       sessionId: currentSessionId,
       role: "assistant",
       content,
       action,
       actionStatus,
-      createdAt: new Date().toISOString(),
+      createdAt: toIsoDateTime(new Date()),
     };
 
     await dbRef.insert(chatMessages).values({
@@ -244,12 +258,12 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
       memories: data.map(
         // biome-ignore lint/style/useNamingConvention: Supabase column name
         (r: { id: string; fact: string; category: string; created_at: string }) => ({
-          id: r.id,
+          id: r.id as UserMemoryId,
           userId,
           fact: r.fact,
           category: r.category as UserMemory["category"],
-          createdAt: r.created_at,
-          updatedAt: r.created_at,
+          createdAt: r.created_at as IsoDateTime,
+          updatedAt: r.created_at as IsoDateTime,
         })
       ),
     });
@@ -286,12 +300,12 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
       memories: [
         ...state.memories,
         ...saved.map((s) => ({
-          id: s.id,
+          id: s.id as UserMemoryId,
           userId,
           fact: s.fact,
           category: s.category as UserMemory["category"],
-          createdAt: s.created_at,
-          updatedAt: s.created_at,
+          createdAt: s.created_at as IsoDateTime,
+          updatedAt: s.created_at as IsoDateTime,
         })),
       ],
     }));
@@ -301,7 +315,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     if (!dbRef) return [];
     const db = dbRef;
     const { sessions } = get();
-    const now = new Date().toISOString();
+    const now = toIsoDateTime(new Date());
     const expired = findExpiredSessions(sessions, now);
 
     await Promise.all(

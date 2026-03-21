@@ -1,3 +1,4 @@
+import type { CopAmount } from "@/shared/types/branded";
 import { type CurrencyConfig, getActiveCurrency } from "./currency";
 
 export const MAX_AMOUNT_DIGITS = 11;
@@ -28,16 +29,16 @@ export const cleanDigitInput = (text: string): string =>
  * Parses a raw digit string to a numeric amount.
  * "50000" → 50000, "" → 0
  */
-export const parseDigitsToAmount = (digits: string): number => {
+export const parseDigitsToAmount = (digits: string): CopAmount => {
   const cleaned = digits.replace(/[^0-9]/g, "");
-  return Number.parseInt(cleaned, 10) || 0;
+  return (Number.parseInt(cleaned, 10) || 0) as CopAmount;
 };
 
 /**
  * Formats a numeric amount as a currency display string.
  * 50000 → "$50.000", 0 → "$0"
  */
-export const formatMoney = (amount: number, config?: CurrencyConfig): string =>
+export const formatMoney = (amount: CopAmount, config?: CurrencyConfig): string =>
   stripCurrencySpace(getFormatter(config).format(amount));
 
 /**
@@ -45,7 +46,7 @@ export const formatMoney = (amount: number, config?: CurrencyConfig): string =>
  * (50000, "expense") → "-$50.000", (50000, "income") → "+$50.000"
  */
 export const formatSignedMoney = (
-  amount: number,
+  amount: CopAmount,
   type: "expense" | "income",
   config?: CurrencyConfig
 ): string => {

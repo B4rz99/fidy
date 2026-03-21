@@ -1,3 +1,4 @@
+import type { IsoDateTime } from "@/shared/types/branded";
 import type { ChatSession } from "../schema";
 
 const MAX_TITLE_LENGTH = 50;
@@ -9,7 +10,7 @@ export function deriveConversationTitle(firstMessage: string): string {
 
 export function findExpiredSessions(
   sessions: readonly ChatSession[],
-  now: string
+  now: IsoDateTime
 ): readonly ChatSession[] {
   return sessions.filter((s) => s.deletedAt === null && s.expiresAt < now);
 }

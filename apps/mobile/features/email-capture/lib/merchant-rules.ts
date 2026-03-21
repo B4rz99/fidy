@@ -1,7 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { merchantRules } from "@/shared/db";
-import { generateId } from "@/shared/lib";
+import { generateMerchantRuleId } from "@/shared/lib";
+import type { CategoryId, IsoDateTime, UserId } from "@/shared/types/branded";
 
 export async function lookupMerchantRule(
   db: AnyDb,
@@ -11,7 +12,7 @@ export async function lookupMerchantRule(
   const rows = await db
     .select({ categoryId: merchantRules.categoryId })
     .from(merchantRules)
-    .where(and(eq(merchantRules.userId, userId), eq(merchantRules.keyword, keyword)));
+    .where(and(eq(merchantRules.userId, userId as UserId), eq(merchantRules.keyword, keyword)));
   return rows[0]?.categoryId ?? null;
 }
 
@@ -25,14 +26,14 @@ export async function insertMerchantRule(
   await db
     .insert(merchantRules)
     .values({
-      id: generateId("mr"),
-      userId,
+      id: generateMerchantRuleId(),
+      userId: userId as UserId,
       keyword,
-      categoryId,
-      createdAt: now,
+      categoryId: categoryId as CategoryId,
+      createdAt: now as IsoDateTime,
     })
     .onConflictDoUpdate({
       target: [merchantRules.userId, merchantRules.keyword],
-      set: { categoryId, createdAt: now },
+      set: { categoryId: categoryId as CategoryId, createdAt: now as IsoDateTime },
     });
 }

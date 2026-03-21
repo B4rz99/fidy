@@ -7,6 +7,7 @@ import {
   fromBillRow,
   toBillRow,
 } from "@/features/calendar/schema";
+import type { CategoryId, IsoDateTime, UserId } from "@/shared/types/branded";
 
 describe("billFrequency", () => {
   test.each(["weekly", "biweekly", "monthly", "yearly"])("accepts '%s'", (f) => {
@@ -95,34 +96,37 @@ describe("toBillRow / fromBillRow", () => {
     name: "Netflix",
     amount: 35000,
     frequency: "monthly" as const,
-    categoryId: "services" as const,
+    categoryId: "services" as CategoryId,
     startDate: new Date(2025, 0, 15),
     isActive: true,
   };
 
-  test("toBillRow converts Date to ISO string", () => {
-    const row = toBillRow(bill, "user-1", "2026-03-04T10:00:00.000Z");
+  test("toBillRow converts Date to ISO date string", () => {
+    const row = toBillRow(bill, "user-1" as UserId, "2026-03-04T10:00:00.000Z" as IsoDateTime);
     expect(typeof row.startDate).toBe("string");
-    expect(row.startDate).toBe(new Date(2025, 0, 15).toISOString());
+    expect(row.startDate).toBe(new Date(2025, 0, 15).toISOString().slice(0, 10));
   });
 
   test("toBillRow adds userId, createdAt, updatedAt from now param", () => {
-    const now = "2026-03-04T10:00:00.000Z";
-    const row = toBillRow(bill, "user-1", now);
+    const now = "2026-03-04T10:00:00.000Z" as IsoDateTime;
+    const row = toBillRow(bill, "user-1" as UserId, now);
     expect(row.userId).toBe("user-1");
     expect(row.createdAt).toBe(now);
     expect(row.updatedAt).toBe(now);
   });
 
-  test("fromBillRow converts ISO string back to Date", () => {
-    const row = toBillRow(bill, "user-1", "2026-03-04T10:00:00.000Z");
+  test("fromBillRow converts ISO date string back to Date", () => {
+    const row = toBillRow(bill, "user-1" as UserId, "2026-03-04T10:00:00.000Z" as IsoDateTime);
     const restored = fromBillRow(row);
     expect(restored.startDate).toBeInstanceOf(Date);
-    expect(restored.startDate.getTime()).toBe(bill.startDate.getTime());
+    // toBillRow stores date-only (YYYY-MM-DD); new Date("YYYY-MM-DD") parses as UTC midnight
+    expect(restored.startDate.getUTCFullYear()).toBe(2025);
+    expect(restored.startDate.getUTCMonth()).toBe(0); // January
+    expect(restored.startDate.getUTCDate()).toBe(15);
   });
 
   test("roundtrip preserves all bill fields", () => {
-    const row = toBillRow(bill, "user-1", "2026-03-04T10:00:00.000Z");
+    const row = toBillRow(bill, "user-1" as UserId, "2026-03-04T10:00:00.000Z" as IsoDateTime);
     const restored = fromBillRow(row);
     expect(restored.id).toBe(bill.id);
     expect(restored.name).toBe(bill.name);

@@ -9,13 +9,14 @@ import {
   scheduleBillNotifications,
 } from "@/features/calendar/lib/notifications";
 import type { Bill } from "@/features/calendar/schema";
+import type { CategoryId } from "@/shared/types/branded";
 
 const makeBill = (overrides: Partial<Bill> = {}): Bill => ({
   id: "bill-1",
   name: "Netflix",
   amount: 35000,
   frequency: "monthly",
-  categoryId: "services",
+  categoryId: "services" as CategoryId,
   startDate: new Date(2025, 0, 15),
   isActive: true,
   ...overrides,

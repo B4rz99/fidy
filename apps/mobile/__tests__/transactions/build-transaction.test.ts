@@ -5,6 +5,14 @@ import {
   toTransactionRow,
 } from "@/features/transactions/lib/build-transaction";
 import type { StoredTransaction } from "@/features/transactions/schema";
+import type {
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 const NOW = new Date(2026, 2, 5, 12, 0, 0);
 
@@ -12,13 +20,13 @@ describe("buildTransaction", () => {
   const validInput = {
     type: "expense" as const,
     digits: "1234",
-    categoryId: "food" as const,
+    categoryId: "food" as CategoryId,
     description: "Lunch",
     date: new Date(2026, 2, 5),
   };
 
   test("returns success with valid input", () => {
-    const result = buildTransaction(validInput, "user-1", "tx-1", NOW);
+    const result = buildTransaction(validInput, "user-1" as UserId, "tx-1" as TransactionId, NOW);
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.transaction.id).toBe("tx-1");
@@ -31,19 +39,34 @@ describe("buildTransaction", () => {
   });
 
   test("returns error for zero amount", () => {
-    const result = buildTransaction({ ...validInput, digits: "0" }, "user-1", "tx-2", NOW);
+    const result = buildTransaction(
+      { ...validInput, digits: "0" },
+      "user-1" as UserId,
+      "tx-2" as TransactionId,
+      NOW
+    );
     expect(result.success).toBe(false);
   });
 
   test("defaults categoryId to 'other' when null", () => {
-    const result = buildTransaction({ ...validInput, categoryId: null }, "user-1", "tx-3", NOW);
+    const result = buildTransaction(
+      { ...validInput, categoryId: null },
+      "user-1" as UserId,
+      "tx-3" as TransactionId,
+      NOW
+    );
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.transaction.categoryId).toBe("other");
   });
 
   test("returns error for non-numeric digits", () => {
-    const result = buildTransaction({ ...validInput, digits: "abc" }, "user-1", "tx-4", NOW);
+    const result = buildTransaction(
+      { ...validInput, digits: "abc" },
+      "user-1" as UserId,
+      "tx-4" as TransactionId,
+      NOW
+    );
     expect(result.success).toBe(false);
   });
 });
@@ -51,15 +74,15 @@ describe("buildTransaction", () => {
 describe("toStoredTransaction branch coverage", () => {
   test("handles null description by defaulting to empty string", () => {
     const row = {
-      id: "tx-nd",
-      userId: "user-1",
+      id: "tx-nd" as TransactionId,
+      userId: "user-1" as UserId,
       type: "expense",
-      amount: 500,
-      categoryId: "food",
+      amount: 500 as CopAmount,
+      categoryId: "food" as CategoryId,
       description: null,
-      date: "2026-03-01",
-      createdAt: "2026-03-01T10:00:00.000Z",
-      updatedAt: "2026-03-01T10:00:00.000Z",
+      date: "2026-03-01" as IsoDate,
+      createdAt: "2026-03-01T10:00:00.000Z" as IsoDateTime,
+      updatedAt: "2026-03-01T10:00:00.000Z" as IsoDateTime,
       deletedAt: null,
     };
     const result = toStoredTransaction(row);
@@ -68,16 +91,16 @@ describe("toStoredTransaction branch coverage", () => {
 
   test("handles non-null deletedAt by converting to Date", () => {
     const row = {
-      id: "tx-da",
-      userId: "user-1",
+      id: "tx-da" as TransactionId,
+      userId: "user-1" as UserId,
       type: "expense",
-      amount: 500,
-      categoryId: "food",
+      amount: 500 as CopAmount,
+      categoryId: "food" as CategoryId,
       description: "Test",
-      date: "2026-03-01",
-      createdAt: "2026-03-01T10:00:00.000Z",
-      updatedAt: "2026-03-01T10:00:00.000Z",
-      deletedAt: "2026-03-02T10:00:00.000Z",
+      date: "2026-03-01" as IsoDate,
+      createdAt: "2026-03-01T10:00:00.000Z" as IsoDateTime,
+      updatedAt: "2026-03-01T10:00:00.000Z" as IsoDateTime,
+      deletedAt: "2026-03-02T10:00:00.000Z" as IsoDateTime,
     };
     const result = toStoredTransaction(row);
     expect(result.deletedAt).toBeInstanceOf(Date);
@@ -87,11 +110,11 @@ describe("toStoredTransaction branch coverage", () => {
 
 describe("toStoredTransaction / toTransactionRow round-trip", () => {
   const stored: StoredTransaction = {
-    id: "tx-rt",
-    userId: "user-1",
+    id: "tx-rt" as TransactionId,
+    userId: "user-1" as UserId,
     type: "income",
-    amount: 5000,
-    categoryId: "transfer",
+    amount: 5000 as CopAmount,
+    categoryId: "transfer" as CategoryId,
     description: "Monthly",
     date: new Date(2026, 2, 1),
     createdAt: new Date(2026, 2, 1, 10, 0, 0),

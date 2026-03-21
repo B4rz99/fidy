@@ -23,6 +23,7 @@ import {
 } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, parseDigitsToAmount, parseIsoDate, toIsoDate } from "@/shared/lib";
+import type { IsoDate } from "@/shared/types/branded";
 import { useGoalStore } from "../store";
 
 export function GoalEditSheet() {
@@ -54,7 +55,7 @@ export function GoalEditSheet() {
   );
   const [numpadTarget, setNumpadTarget] = useState<"amount" | null>(null);
   const [targetDate, setTargetDate] = useState<Date | null>(
-    goal?.targetDate ? parseIsoDate(goal.targetDate) : null
+    goal?.targetDate ? parseIsoDate(goal.targetDate as IsoDate) : null
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
 

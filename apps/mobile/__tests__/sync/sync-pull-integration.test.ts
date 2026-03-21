@@ -28,6 +28,14 @@ import {
   getTransactionById,
   insertTransaction,
 } from "@/features/transactions/lib/repository";
+import type {
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
@@ -70,15 +78,15 @@ function serverRow(overrides: Record<string, unknown> = {}) {
 /** Insert a camelCase local transaction directly via the repository. */
 function insertLocalTx(overrides: Record<string, unknown> = {}) {
   const row = {
-    id: "tx-1",
-    userId: USER_ID,
+    id: "tx-1" as TransactionId,
+    userId: USER_ID as UserId,
     type: "expense",
-    amount: 1000,
-    categoryId: "food",
+    amount: 1000 as CopAmount,
+    categoryId: "food" as CategoryId,
     description: "Local merchant",
-    date: "2026-03-10",
-    createdAt: "2026-03-10T08:00:00.000Z",
-    updatedAt: "2026-03-10T10:00:00.000Z",
+    date: "2026-03-10" as IsoDate,
+    createdAt: "2026-03-10T08:00:00.000Z" as IsoDateTime,
+    updatedAt: "2026-03-10T10:00:00.000Z" as IsoDateTime,
     deletedAt: null,
     source: "manual",
     ...overrides,
@@ -120,7 +128,7 @@ describe("syncPull integration (real SQLite)", () => {
     expect(ok).toBe(true);
 
     // Local row should now have the server's amount
-    const tx = getTransactionById(db as any, "tx-1");
+    const tx = getTransactionById(db as any, "tx-1" as TransactionId);
     expect(tx).not.toBeNull();
     expect(tx!.amount).toBe(2000);
 
@@ -146,7 +154,7 @@ describe("syncPull integration (real SQLite)", () => {
     expect(ok).toBe(true);
 
     // Local data should be unchanged
-    const tx = getTransactionById(db as any, "tx-1");
+    const tx = getTransactionById(db as any, "tx-1" as TransactionId);
     expect(tx!.amount).toBe(1000);
     expect(tx!.description).toBe("Local merchant");
 
@@ -161,7 +169,7 @@ describe("syncPull integration (real SQLite)", () => {
     const ok = await syncPull(db as any, supabase, USER_ID);
     expect(ok).toBe(true);
 
-    const tx = getTransactionById(db as any, "tx-new");
+    const tx = getTransactionById(db as any, "tx-new" as TransactionId);
     expect(tx).not.toBeNull();
     expect(tx!.description).toBe("Cloud-only");
     expect(tx!.amount).toBe(2000);
@@ -197,7 +205,7 @@ describe("syncPull integration (real SQLite)", () => {
     expect(ok).toBe(true);
 
     // Timestamp should be updated
-    const tx = getTransactionById(db as any, "tx-1");
+    const tx = getTransactionById(db as any, "tx-1" as TransactionId);
     expect(tx!.updatedAt).toBe("2026-03-10T14:00:00.000Z");
 
     // No conflict since data is identical
