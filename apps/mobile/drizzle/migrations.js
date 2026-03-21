@@ -14,6 +14,7 @@ import m0011 from "./0011_clear_black_tarantula.sql";
 import m0012 from "./0012_clear_zarda.sql";
 import m0013 from "./0013_rare_crystal.sql";
 import m0014 from "./0014_rename_amount_cents.sql";
+import m0015 from "./0015_violet_vengeance.sql";
 import journal from "./meta/_journal.json";
 
 export default {
@@ -34,5 +35,6 @@ export default {
     m0012,
     m0013,
     m0014,
+    m0015,
   },
 };

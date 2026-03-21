@@ -1,5 +1,7 @@
 // biome-ignore-all lint/style/useNamingConvention: snake_case matches Supabase Postgres column names
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getBudgetById } from "@/features/budget";
+import { getContributionById, getGoalById } from "@/features/goals";
 import {
   clearSyncEntries,
   getQueuedSyncEntries,
@@ -73,18 +75,100 @@ function fromSupabaseRow(row: SupabaseTransactionRow) {
   };
 }
 
+async function processBudgetEntry(
+  db: AnyDb,
+  supabase: SupabaseClient,
+  rowId: string
+): Promise<boolean> {
+  const row = getBudgetById(db, rowId);
+  if (!row) return true;
+  const { error } = await supabase.from("budgets").upsert({
+    id: row.id,
+    user_id: row.userId,
+    category_id: row.categoryId,
+    amount: row.amount,
+    month: row.month,
+    created_at: row.createdAt,
+    updated_at: row.updatedAt,
+    deleted_at: row.deletedAt,
+  });
+  return !error;
+}
+
+async function processGoalEntry(
+  db: AnyDb,
+  supabase: SupabaseClient,
+  rowId: string
+): Promise<boolean> {
+  const row = getGoalById(db, rowId);
+  if (!row) return true; // row deleted locally, mark as processed
+  const { error } = await supabase.from("goals").upsert({
+    id: row.id,
+    user_id: row.userId,
+    name: row.name,
+    type: row.type,
+    target_amount: row.targetAmount,
+    target_date: row.targetDate,
+    interest_rate_percent: row.interestRatePercent,
+    icon_name: row.iconName,
+    color_hex: row.colorHex,
+    created_at: row.createdAt,
+    updated_at: row.updatedAt,
+    deleted_at: row.deletedAt,
+  });
+  return !error;
+}
+
+async function processContributionEntry(
+  db: AnyDb,
+  supabase: SupabaseClient,
+  rowId: string
+): Promise<boolean> {
+  const row = getContributionById(db, rowId);
+  if (!row) return true;
+  const { error } = await supabase.from("goal_contributions").upsert({
+    id: row.id,
+    goal_id: row.goalId,
+    user_id: row.userId,
+    amount: row.amount,
+    note: row.note,
+    date: row.date,
+    created_at: row.createdAt,
+    updated_at: row.updatedAt,
+    deleted_at: row.deletedAt,
+  });
+  return !error;
+}
+
 async function processEntry(
   db: AnyDb,
   supabase: SupabaseClient,
   entry: { id: string; tableName: string; rowId: string }
 ): Promise<string | null> {
-  if (entry.tableName !== "transactions") return null;
+  if (entry.tableName === "transactions") {
+    const row = await getTransactionById(db, entry.rowId);
+    if (!row) return entry.id;
+    const { error } = await supabase.from("transactions").upsert(toSupabaseRow(row));
+    return error ? null : entry.id;
+  }
 
-  const row = await getTransactionById(db, entry.rowId);
-  if (!row) return entry.id;
+  if (entry.tableName === "budgets") {
+    const ok = await processBudgetEntry(db, supabase, entry.rowId);
+    return ok ? entry.id : null;
+  }
 
-  const { error } = await supabase.from("transactions").upsert(toSupabaseRow(row));
-  return error ? null : entry.id;
+  if (entry.tableName === "goals") {
+    const ok = await processGoalEntry(db, supabase, entry.rowId);
+    return ok ? entry.id : null;
+  }
+
+  if (entry.tableName === "goalContributions") {
+    const ok = await processContributionEntry(db, supabase, entry.rowId);
+    return ok ? entry.id : null;
+  }
+
+  // Unknown table — keep in queue for future handler
+  return null;
 }
 
 export async function syncPush(

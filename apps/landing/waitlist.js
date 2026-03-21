@@ -19,8 +19,10 @@
       method: "POST",
       headers: {
         apikey: anonKey,
+        // biome-ignore lint/style/useNamingConvention: HTTP header
         Authorization: `Bearer ${anonKey}`,
         "Content-Type": "application/json",
+        // biome-ignore lint/style/useNamingConvention: HTTP header
         Prefer: "return=minimal",
       },
       body: JSON.stringify({ email: email, locale: locale }),

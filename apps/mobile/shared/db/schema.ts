@@ -242,3 +242,42 @@ export const budgets = sqliteTable(
     index("idx_budgets_user_month").on(table.userId, table.month),
   ]
 );
+
+export const goals = sqliteTable(
+  "goals",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    name: text("name").notNull(),
+    type: text("type").notNull(),
+    targetAmount: integer("target_amount").notNull(),
+    targetDate: text("target_date"),
+    interestRatePercent: real("interest_rate_percent"),
+    iconName: text("icon_name"),
+    colorHex: text("color_hex"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+    deletedAt: text("deleted_at"),
+  },
+  (table) => [index("idx_goals_user").on(table.userId)]
+);
+
+export const goalContributions = sqliteTable(
+  "goal_contributions",
+  {
+    id: text("id").primaryKey(),
+    goalId: text("goal_id").notNull(),
+    userId: text("user_id").notNull(),
+    amount: integer("amount").notNull(),
+    note: text("note"),
+    date: text("date").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+    deletedAt: text("deleted_at"),
+  },
+  (table) => [
+    index("idx_goal_contributions_goal").on(table.goalId),
+    index("idx_goal_contributions_goal_date").on(table.goalId, table.date),
+    index("idx_goal_contributions_user").on(table.userId),
+  ]
+);

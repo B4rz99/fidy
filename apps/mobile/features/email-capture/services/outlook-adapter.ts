@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/useNamingConvention: Outlook API uses snake_case
 import type { RawEmail } from "../schema";
 
 export async function fetchOutlookEmailsWithToken(

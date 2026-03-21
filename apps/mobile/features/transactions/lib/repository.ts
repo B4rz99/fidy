@@ -88,6 +88,37 @@ export function getDailySpendingAggregate(
     .all();
 }
 
+/** Get monthly income/expense totals for projection calculations. */
+export function getMonthlyTotalsByType(
+  db: AnyDb,
+  userId: string,
+  months: number
+): Array<{ month: string; type: string; total: number }> {
+  // Compute cutoff: first day of the oldest month in the window.
+  // With months=3 in March 2026 we want Jan, Feb, Mar → cutoff = 2026-01.
+  const now = new Date();
+  const cutoff = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+  const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, "0")}`;
+
+  return db
+    .select({
+      month: sql<string>`strftime('%Y-%m', ${transactions.date})`,
+      type: transactions.type,
+      total: sum(transactions.amount).mapWith(Number),
+    })
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        isNull(transactions.deletedAt),
+        sql`strftime('%Y-%m', ${transactions.date}) >= ${cutoffStr}`
+      )
+    )
+    .groupBy(sql`strftime('%Y-%m', ${transactions.date})`, transactions.type)
+    .orderBy(desc(sql`strftime('%Y-%m', ${transactions.date})`))
+    .all();
+}
+
 export function getRecentTransactions(
   db: AnyDb,
   userId: string,

@@ -10,6 +10,8 @@ export {
   chatSessions,
   detectedSmsEvents,
   emailAccounts,
+  goalContributions,
+  goals,
   merchantRules,
   notificationSources,
   processedCaptures,

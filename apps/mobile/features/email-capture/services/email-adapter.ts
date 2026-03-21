@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/useNamingConvention: OAuth/HTTP APIs use snake_case parameter names
 import * as SecureStore from "expo-secure-store";
 import { captureError } from "@/shared/lib";
 import type { ConnectResult, EmailProvider, RawEmail } from "../schema";

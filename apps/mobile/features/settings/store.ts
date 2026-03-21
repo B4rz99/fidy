@@ -41,6 +41,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
       const response = await fetch(`${supabaseUrl}/functions/v1/delete-account`, {
         method: "POST",
         headers: {
+          // biome-ignore lint/style/useNamingConvention: HTTP header
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
