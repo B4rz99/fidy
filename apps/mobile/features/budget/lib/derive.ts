@@ -1,4 +1,5 @@
-import type { BudgetId, CategoryId, CopAmount } from "@/shared/types/branded";
+import { differenceInCalendarDays, endOfMonth } from "date-fns";
+import type { BudgetId, CategoryId, CopAmount, Month } from "@/shared/types/branded";
 
 export type BudgetProgress = {
   readonly budgetId: BudgetId;
@@ -16,6 +17,9 @@ export type BudgetAlert = {
   readonly categoryId: CategoryId;
   readonly threshold: 80 | 100;
   readonly percentUsed: number;
+  readonly suggestionKey: string | undefined;
+  readonly daysLeft: number;
+  readonly remainingAmount: CopAmount;
 };
 
 export type BudgetSuggestion = {
@@ -92,12 +96,49 @@ export function deriveAutoSuggestBudgets(
 }
 
 /**
+ * Pure helper: returns the number of calendar days remaining in the given
+ * budget month, clamped to 0 (never negative).
+ */
+export const computeDaysLeft = (month: Month, today: Date): number => {
+  const [year, m] = month.split("-").map(Number);
+  return Math.max(0, differenceInCalendarDays(endOfMonth(new Date(year, m - 1, 1)), today));
+};
+
+/**
+ * Category IDs that have dedicated suggestion i18n keys (guidance.budgetAlertNN.xxx).
+ * Intentionally separate from CATEGORIES — custom categories (#8) won't have suggestions.
+ */
+const SUGGESTION_CATEGORY_IDS: ReadonlySet<string> = new Set([
+  "food",
+  "transport",
+  "entertainment",
+  "health",
+  "education",
+  "home",
+  "clothing",
+  "services",
+  "transfer",
+  "other",
+]);
+
+/**
+ * Returns the i18n key for a budget alert suggestion if the category is known,
+ * otherwise returns undefined.
+ */
+const getSuggestionKey = (threshold: 80 | 100, categoryId: CategoryId): string | undefined =>
+  SUGGESTION_CATEGORY_IDS.has(categoryId)
+    ? `guidance.budgetAlert${threshold}.${categoryId}`
+    : undefined;
+
+/**
  * Pure derivation: generate alerts for budgets that have crossed 80% or 100%.
  * Acknowledged alerts (keyed as "budgetId:threshold") are excluded.
+ * daysLeft must be >= 0 (caller is responsible — use computeDaysLeft).
  */
 export function deriveBudgetAlerts(
   progresses: readonly BudgetProgress[],
-  acknowledgedAlerts: ReadonlySet<string>
+  acknowledgedAlerts: ReadonlySet<string>,
+  daysLeft: number
 ): readonly BudgetAlert[] {
   return progresses.flatMap((p) =>
     ([80, 100] as const)
@@ -108,6 +149,9 @@ export function deriveBudgetAlerts(
         categoryId: p.categoryId,
         threshold,
         percentUsed: p.percentUsed,
+        suggestionKey: getSuggestionKey(threshold, p.categoryId),
+        daysLeft,
+        remainingAmount: p.remaining,
       }))
   );
 }

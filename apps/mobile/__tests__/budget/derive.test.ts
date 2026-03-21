@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { BudgetProgress } from "@/features/budget/lib/derive";
 import {
+  computeDaysLeft,
   deriveAutoSuggestBudgets,
   deriveBudgetAlerts,
   deriveBudgetProgress,
   deriveBudgetSummary,
 } from "@/features/budget/lib/derive";
-import type { BudgetId, CategoryId, CopAmount } from "@/shared/types/branded";
+import type { BudgetId, CategoryId, CopAmount, Month } from "@/shared/types/branded";
 
 const makeBudget = (overrides: { id?: string; categoryId?: string; amount?: number } = {}) => ({
   id: "budget-1" as BudgetId,
@@ -201,7 +202,7 @@ describe("deriveAutoSuggestBudgets", () => {
 describe("deriveBudgetAlerts", () => {
   it("returns alert for budget at 80%", () => {
     const progresses = [makeProgress({ percentUsed: 80, isNearLimit: true })];
-    const result = deriveBudgetAlerts(progresses, new Set());
+    const result = deriveBudgetAlerts(progresses, new Set(), 15);
     expect(result).toHaveLength(1);
     expect(result[0].threshold).toBe(80);
     expect(result[0].budgetId).toBe("budget-1");
@@ -211,7 +212,7 @@ describe("deriveBudgetAlerts", () => {
 
   it("returns alert for budget at 100%+", () => {
     const progresses = [makeProgress({ percentUsed: 110, isOverBudget: true, isNearLimit: true })];
-    const result = deriveBudgetAlerts(progresses, new Set());
+    const result = deriveBudgetAlerts(progresses, new Set(), 15);
     // Both 80 and 100 thresholds crossed
     expect(result).toHaveLength(2);
     expect(result.map((a) => a.threshold)).toContain(80);
@@ -221,21 +222,21 @@ describe("deriveBudgetAlerts", () => {
   it("excludes acknowledged alerts", () => {
     const progresses = [makeProgress({ percentUsed: 80, isNearLimit: true })];
     const acknowledged = new Set(["budget-1:80"]);
-    const result = deriveBudgetAlerts(progresses, acknowledged);
+    const result = deriveBudgetAlerts(progresses, acknowledged, 15);
     expect(result).toHaveLength(0);
   });
 
   it("only excludes the specific acknowledged threshold, not all", () => {
     const progresses = [makeProgress({ percentUsed: 110, isOverBudget: true, isNearLimit: true })];
     const acknowledged = new Set(["budget-1:80"]);
-    const result = deriveBudgetAlerts(progresses, acknowledged);
+    const result = deriveBudgetAlerts(progresses, acknowledged, 15);
     expect(result).toHaveLength(1);
     expect(result[0].threshold).toBe(100);
   });
 
   it("returns both 80 and 100 alerts for same budget if both crossed", () => {
     const progresses = [makeProgress({ percentUsed: 100, isNearLimit: true, isOverBudget: false })];
-    const result = deriveBudgetAlerts(progresses, new Set());
+    const result = deriveBudgetAlerts(progresses, new Set(), 15);
     expect(result).toHaveLength(2);
     const thresholds = result.map((a) => a.threshold);
     expect(thresholds).toContain(80);
@@ -244,12 +245,78 @@ describe("deriveBudgetAlerts", () => {
 
   it("returns empty when all under 80%", () => {
     const progresses = [makeProgress({ percentUsed: 70, isNearLimit: false })];
-    const result = deriveBudgetAlerts(progresses, new Set());
+    const result = deriveBudgetAlerts(progresses, new Set(), 15);
     expect(result).toHaveLength(0);
   });
 
   it("returns empty array for empty progresses", () => {
-    const result = deriveBudgetAlerts([], new Set());
+    const result = deriveBudgetAlerts([], new Set(), 15);
     expect(result).toHaveLength(0);
+  });
+
+  it("includes suggestionKey for known category", () => {
+    const progresses = [makeProgress({ percentUsed: 80, isNearLimit: true })];
+    const result = deriveBudgetAlerts(progresses, new Set(), 15);
+    expect(result[0].suggestionKey).toBe("guidance.budgetAlert80.food");
+  });
+
+  it("returns undefined suggestionKey for unknown category", () => {
+    const progresses = [
+      makeProgress({ percentUsed: 80, isNearLimit: true, categoryId: "custom-cat" as CategoryId }),
+    ];
+    const result = deriveBudgetAlerts(progresses, new Set(), 15);
+    expect(result[0].suggestionKey).toBeUndefined();
+  });
+
+  it("passes daysLeft through to alerts", () => {
+    const progresses = [makeProgress({ percentUsed: 80, isNearLimit: true })];
+    const result = deriveBudgetAlerts(progresses, new Set(), 0);
+    expect(result[0].daysLeft).toBe(0);
+  });
+
+  it("includes suggestionKey for non-food category at 100%", () => {
+    const progresses = [
+      makeProgress({
+        percentUsed: 110,
+        isOverBudget: true,
+        isNearLimit: true,
+        categoryId: "transport" as CategoryId,
+      }),
+    ];
+    const result = deriveBudgetAlerts(progresses, new Set(), 15);
+    const alert100 = result.find((a) => a.threshold === 100);
+    expect(alert100?.suggestionKey).toBe("guidance.budgetAlert100.transport");
+  });
+
+  it("includes remainingAmount from progress", () => {
+    const progresses = [
+      makeProgress({ percentUsed: 80, isNearLimit: true, remaining: 100000 as CopAmount }),
+    ];
+    const result = deriveBudgetAlerts(progresses, new Set(), 15);
+    expect(result[0].remainingAmount).toBe(100000);
+  });
+
+  it("includes correct suggestionKey for 100% threshold", () => {
+    const progresses = [makeProgress({ percentUsed: 100, isNearLimit: true, isOverBudget: false })];
+    const result = deriveBudgetAlerts(progresses, new Set(), 15);
+    const alert100 = result.find((a) => a.threshold === 100);
+    expect(alert100?.suggestionKey).toBe("guidance.budgetAlert100.food");
+  });
+});
+
+describe("computeDaysLeft", () => {
+  it("returns days remaining in month", () => {
+    // March 21 → March 31 = 10 days left
+    expect(computeDaysLeft("2026-03" as Month, new Date(2026, 2, 21))).toBe(10);
+  });
+
+  it("returns 0 on last day of month", () => {
+    // March 31 is the last day → 0 days left
+    expect(computeDaysLeft("2026-03" as Month, new Date(2026, 2, 31))).toBe(0);
+  });
+
+  it("clamps to 0 for past months", () => {
+    // January 2026 is in the past relative to March 15, 2026 → 0
+    expect(computeDaysLeft("2026-01" as Month, new Date(2026, 2, 15))).toBe(0);
   });
 });

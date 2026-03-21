@@ -9,6 +9,7 @@ import { generateBudgetId, generateSyncQueueId, toIsoDateTime } from "@/shared/l
 import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
 import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./lib/derive";
 import {
+  computeDaysLeft,
   deriveAutoSuggestBudgets,
   deriveBudgetAlerts,
   deriveBudgetProgress,
@@ -130,7 +131,8 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
         deriveBudgetProgress(b, spendingMap.get(b.categoryId) ?? (0 as CopAmount))
       );
       const summary = deriveBudgetSummary(progresses);
-      const newPendingAlerts = deriveBudgetAlerts(progresses, acknowledgedAlerts);
+      const daysLeft = computeDaysLeft(currentMonth, new Date());
+      const newPendingAlerts = deriveBudgetAlerts(progresses, acknowledgedAlerts, daysLeft);
       set({ budgetProgress: progresses, summary, pendingAlerts: newPendingAlerts });
 
       // Schedule push notifications for truly new alerts (best-effort, don't block)
