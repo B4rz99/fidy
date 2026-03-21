@@ -85,7 +85,7 @@ const es = {
     settingsRow: "Categorías",
     builtInSection: "PREDETERMINADAS",
     customSection: "PERSONALIZADAS",
-    addCategory: "+ Agregar categoría",
+    addCategory: "Agregar categoría",
     noCustomCategories: "Aún no hay categorías personalizadas",
     create: {
       title: "Nueva categoría",

@@ -84,7 +84,7 @@ const en = {
     settingsRow: "Categories",
     builtInSection: "DEFAULT",
     customSection: "CUSTOM",
-    addCategory: "+ Add category",
+    addCategory: "Add category",
     noCustomCategories: "No custom categories yet",
     create: {
       title: "New category",

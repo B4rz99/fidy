@@ -157,6 +157,9 @@ export function CreateCategorySheet() {
       style={[styles.container, { backgroundColor: pageBg }]}
       contentContainerStyle={styles.scrollContent}
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
+      automaticallyAdjustKeyboardInsets
+      bounces={false}
     >
       {/* Sheet handle bar */}
       <View style={[styles.grabBar, { backgroundColor: tertiaryColor, opacity: 0.3 }]} />
@@ -202,6 +205,7 @@ export function CreateCategorySheet() {
           keyExtractor={iconKeyExtractor}
           numColumns={ICON_GRID_COLUMNS}
           scrollEnabled={false}
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.iconGridContent}
           columnWrapperStyle={styles.iconGridRow}
         />
@@ -293,7 +297,7 @@ const styles = StyleSheet.create({
   },
   iconGridContent: { gap: 8 },
   iconGridRow: { gap: 8, justifyContent: "flex-start" },
-  iconCellWrapper: { flex: 1, maxWidth: 44, alignItems: "center" },
+  iconCellWrapper: { flex: 1, alignItems: "center" },
   iconCell: {
     width: 44,
     height: 44,

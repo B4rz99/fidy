@@ -36,6 +36,7 @@ import type { IsoDateTime, UserCategoryId, UserId } from "@/shared/types/branded
 const mockDb = {
   insert: vi.fn(),
   select: vi.fn(),
+  transaction: vi.fn((fn: (tx: any) => void) => fn(mockDb)),
 } as any;
 
 describe("useCategoriesStore", () => {

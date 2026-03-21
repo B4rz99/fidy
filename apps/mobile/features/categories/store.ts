@@ -74,30 +74,32 @@ export const useCategoriesStore = create<CategoriesState & CategoriesActions>((s
 
     const trimmedName = input.name.trim();
     if (trimmedName.length < MIN_NAME_LENGTH || trimmedName.length > MAX_NAME_LENGTH) return false;
-    if (!(input.iconName in ICON_MAP)) return false;
+    if (!Object.hasOwn(ICON_MAP, input.iconName)) return false;
     if (!HEX_COLOR_REGEX.test(input.colorHex)) return false;
 
     const now = toIsoDateTime(new Date());
     const id = generateUserCategoryId();
 
     try {
-      insertUserCategory(dbRef, {
-        id,
-        userId: userIdRef,
-        name: trimmedName,
-        iconName: input.iconName,
-        colorHex: input.colorHex,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
-      });
+      dbRef.transaction((tx) => {
+        insertUserCategory(tx as AnyDb, {
+          id,
+          userId: userIdRef!,
+          name: trimmedName,
+          iconName: input.iconName,
+          colorHex: input.colorHex,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+        });
 
-      enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "userCategories",
-        rowId: id,
-        operation: "insert",
-        createdAt: now,
+        enqueueSync(tx as AnyDb, {
+          id: generateSyncQueueId(),
+          tableName: "userCategories",
+          rowId: id,
+          operation: "insert",
+          createdAt: now,
+        });
       });
     } catch {
       return false;
