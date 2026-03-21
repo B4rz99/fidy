@@ -31,21 +31,17 @@ export type WeeklyMove = AnomalyMove | BudgetPaceMove;
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Groups expenses that fall within [weekStart, weekStart + 6 days] by categoryId,
- * summing amounts per category.
- */
 const groupCurrentWeekExpenses = (
   expenses: readonly StoredTransaction[],
   weekStart: Date
-): ReadonlyMap<CategoryId, number> => {
+): ReadonlyMap<CategoryId, CopAmount> => {
   const weekStartMs = weekStart.getTime();
   const weekEndMs = addDays(weekStart, 6).getTime();
 
-  return expenses.reduce<Map<CategoryId, number>>((acc, tx) => {
+  return expenses.reduce<Map<CategoryId, CopAmount>>((acc, tx) => {
     const txTime = tx.date.getTime();
     if (txTime >= weekStartMs && txTime <= weekEndMs) {
-      acc.set(tx.categoryId, (acc.get(tx.categoryId) ?? 0) + tx.amount);
+      acc.set(tx.categoryId, ((acc.get(tx.categoryId) ?? 0) + tx.amount) as CopAmount);
     }
     return acc;
   }, new Map());
@@ -59,12 +55,12 @@ const groupCurrentWeekExpenses = (
 const groupPriorWeeksByCategory = (
   priorExpenses: readonly StoredTransaction[],
   weekStart: Date
-): ReadonlyMap<CategoryId, ReadonlyMap<number, number>> =>
-  priorExpenses.reduce<Map<CategoryId, Map<number, number>>>((acc, tx) => {
+): ReadonlyMap<CategoryId, ReadonlyMap<number, CopAmount>> =>
+  priorExpenses.reduce<Map<CategoryId, Map<number, CopAmount>>>((acc, tx) => {
     const daysApart = differenceInDays(weekStart, tx.date);
     const bucket = Math.floor((daysApart - 1) / 7);
-    const catMap = acc.get(tx.categoryId) ?? new Map<number, number>();
-    catMap.set(bucket, (catMap.get(bucket) ?? 0) + tx.amount);
+    const catMap = acc.get(tx.categoryId) ?? new Map<number, CopAmount>();
+    catMap.set(bucket, ((catMap.get(bucket) ?? 0) + tx.amount) as CopAmount);
     acc.set(tx.categoryId, catMap);
     return acc;
   }, new Map());
@@ -77,7 +73,7 @@ const groupPriorWeeksByCategory = (
 const detectAnomalies = (
   expenses: readonly StoredTransaction[],
   weekStart: Date,
-  currentWeekByCategory: ReadonlyMap<CategoryId, number>
+  currentWeekByCategory: ReadonlyMap<CategoryId, CopAmount>
 ): readonly AnomalyMove[] => {
   const weekStartMs = weekStart.getTime();
   const priorExpenses = expenses.filter((tx) => tx.date.getTime() < weekStartMs);
@@ -119,7 +115,7 @@ const detectAnomalies = (
  * Emits a BudgetPaceMove when projected spend exceeds the budget amount.
  */
 const detectBudgetPaces = (
-  currentWeekByCategory: ReadonlyMap<CategoryId, number>,
+  currentWeekByCategory: ReadonlyMap<CategoryId, CopAmount>,
   budgetProgresses: readonly BudgetProgress[],
   weekStart: Date
 ): readonly BudgetPaceMove[] => {

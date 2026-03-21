@@ -4,7 +4,7 @@ The role of this file is to describe common mistakes and confusion points that a
 
 ### Worktree vitest sync test timeouts (⚠️ AGENT SURPRISE)
 
-When running `vitest run` (the full suite) in a fresh worktree after `bun install`, the `__tests__/sync/syncEngine.test.ts` and `__tests__/sync/useSync.test.ts` tests **consistently time out at 5000ms** when more than ~50 test files are included in the run. They pass in isolation (`npx vitest run __tests__/sync/`). This is a pre-existing environmental issue in worktrees — CI on `main` passes. Root cause: the global `date-fns` mock in `__tests__/setup.ts` uses `importOriginal` which creates async module-loading contention under vitest parallelism when many files are loaded simultaneously. Do NOT attempt to fix the sync tests themselves — the issue is environmental.
+When running `vitest run` (the full suite) in a fresh worktree after `bun install`, the `__tests__/sync/syncEngine.test.ts` and `__tests__/sync/useSync.test.ts` tests **consistently time out at 5000ms** when more than ~50 test files are included in the run. They pass in isolation (`bunx vitest run __tests__/sync/`). This is a pre-existing environmental issue in worktrees — CI on `main` passes. Root cause: the global `date-fns` mock in `__tests__/setup.ts` uses `importOriginal` which creates async module-loading contention under vitest parallelism when many files are loaded simultaneously. Do NOT attempt to fix the sync tests themselves — the issue is environmental.
 
 ## Opening MRs
 

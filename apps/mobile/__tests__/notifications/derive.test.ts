@@ -234,6 +234,21 @@ describe("deriveWeeklyMoves", () => {
     expect(impacts).toEqual([...impacts].sort((a, b) => b - a));
   });
 
+  // Test 11 — boundary: thisWeekSpend === exactly 1.5× median → no anomaly (strict >)
+  it("emits no anomaly when this-week spend equals exactly 1.5× the median (boundary)", () => {
+    // 5 prior transactions each in its own bucket at 100_000 → median = 100_000
+    // 1.5 × 100_000 = 150_000; current week spend = 150_000 (equal, not greater) → no anomaly
+    const prior = Array.from({ length: 5 }, (_, i) =>
+      makeTx({ date: priorDate(i), amount: 100_000 as CopAmount })
+    );
+    const currentWeekTx = makeTx({
+      date: new Date("2026-03-17T12:00:00"),
+      amount: 150_000 as CopAmount,
+    });
+    const result = deriveWeeklyMoves([...prior, currentWeekTx], [], WEEK_START);
+    expect(result.filter((m) => m.type === "anomaly")).toHaveLength(0);
+  });
+
   // Test 10 — same category fires both anomaly and pace → both appear (no dedup)
   it("emits both AnomalyMove and BudgetPaceMove for the same category when both conditions are met", () => {
     // 5 prior transactions in "food" at 100_000 each (one per bucket)
