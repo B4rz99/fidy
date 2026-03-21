@@ -17,6 +17,12 @@ vi.mock("expo-web-browser", () => ({
   openAuthSessionAsync: (...args: unknown[]) => mockOpenAuthSession(...args),
 }));
 
+vi.mock("expo-crypto", () => ({
+  getRandomBytes: (size: number) => new Uint8Array(size),
+  digest: async () => new ArrayBuffer(32),
+  CryptoDigestAlgorithm: { SHA256: "SHA-256" },
+}));
+
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
