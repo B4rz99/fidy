@@ -18,6 +18,7 @@ export type NotificationSourceId = Brand<string, "NotificationSourceId">;
 export type ProcessedCaptureId = Brand<string, "ProcessedCaptureId">;
 export type ProcessedEmailId = Brand<string, "ProcessedEmailId">;
 export type DetectedSmsEventId = Brand<string, "DetectedSmsEventId">;
+export type UserCategoryId = Brand<string, "UserCategoryId">;
 
 // Temporal
 export type Month = Brand<string, "Month">; // "YYYY-MM"

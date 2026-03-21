@@ -13,6 +13,7 @@ import type {
   SyncConflictId,
   SyncQueueId,
   TransactionId,
+  UserCategoryId,
   UserMemoryId,
 } from "@/shared/types/branded";
 
@@ -86,4 +87,8 @@ export function generateProcessedEmailId(): ProcessedEmailId {
 
 export function generateDetectedSmsEventId(): DetectedSmsEventId {
   return generateId("sms") as DetectedSmsEventId;
+}
+
+export function generateUserCategoryId(): UserCategoryId {
+  return generateId("ucat") as UserCategoryId;
 }
