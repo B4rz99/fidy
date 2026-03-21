@@ -1,10 +1,24 @@
 // biome-ignore-all lint/style/useNamingConvention: OAuth/HTTP APIs use snake_case parameter names
+import { CryptoDigestAlgorithm, digest, getRandomBytes } from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
 import { captureError } from "@/shared/lib";
 import type { ConnectResult, EmailProvider, RawEmail } from "../schema";
 import { EMAIL_REDIRECT_URI, getGmailRedirectUri } from "../schema";
 import { fetchGmailEmailsWithToken } from "./gmail-adapter";
 import { fetchOutlookEmailsWithToken } from "./outlook-adapter";
+
+function base64UrlEncode(bytes: Uint8Array): string {
+  const binary = Array.from(bytes, (b) => String.fromCharCode(b)).join("");
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+async function generatePkce(): Promise<{ codeVerifier: string; codeChallenge: string }> {
+  const codeVerifier = base64UrlEncode(getRandomBytes(48));
+  const verifierBytes = new TextEncoder().encode(codeVerifier);
+  const challengeHash = await digest(CryptoDigestAlgorithm.SHA256, verifierBytes);
+  const codeChallenge = base64UrlEncode(new Uint8Array(challengeHash));
+  return { codeVerifier, codeChallenge };
+}
 
 export type EmailProviderConfig = {
   provider: EmailProvider;
@@ -55,12 +69,15 @@ export function createAdapter(config: EmailProviderConfig, fetchFn: FetchEmailsF
       const { openAuthSessionAsync } = await import("expo-web-browser");
 
       const redirectUri = config.getRedirectUri();
+      const { codeVerifier, codeChallenge } = await generatePkce();
       const params = new URLSearchParams({
         client_id: clientId,
         redirect_uri: redirectUri,
         response_type: "code",
         scope: config.scope,
         ...config.extraAuthParams,
+        code_challenge: codeChallenge,
+        code_challenge_method: "S256",
       });
 
       const result = await openAuthSessionAsync(`${config.authUrl}?${params}`, redirectUri);
@@ -83,6 +100,7 @@ export function createAdapter(config: EmailProviderConfig, fetchFn: FetchEmailsF
           redirect_uri: redirectUri,
           grant_type: "authorization_code",
           ...config.extraTokenExchangeParams,
+          code_verifier: codeVerifier,
         }).toString(),
       });
 
