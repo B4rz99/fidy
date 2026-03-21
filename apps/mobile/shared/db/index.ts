@@ -20,6 +20,7 @@ export {
   syncMeta,
   syncQueue,
   transactions,
+  userCategories,
   userMemories,
 } from "./schema";
 export { getSupabase, resetSupabase } from "./supabase";
