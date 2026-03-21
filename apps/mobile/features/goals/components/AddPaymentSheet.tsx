@@ -92,6 +92,9 @@ export function AddPaymentSheet() {
       contentContainerStyle={styles.scrollContent}
       keyboardShouldPersistTaps="handled"
     >
+      {/* Grab bar */}
+      <View style={[styles.grabBar, { backgroundColor: borderColor }]} />
+
       {/* Title */}
       <Text style={[styles.title, { color: primaryColor }]}>{t("goals.payment.title")}</Text>
 
@@ -167,6 +170,7 @@ export function AddPaymentSheet() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  grabBar: { width: 36, height: 5, borderRadius: 3, alignSelf: "center" },
   scrollContent: { padding: 24, gap: 16 },
   title: { fontFamily: "Poppins_700Bold", fontSize: 18, textAlign: "center" },
   amountSection: { alignItems: "center", paddingVertical: 8 },

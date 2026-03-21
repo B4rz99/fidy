@@ -21,6 +21,7 @@ export default defineConfig({
           /react-native-safe-area-context/,
           /react-native-svg/,
           /@react-navigation/,
+          /@react-native-community/,
         ],
       },
     },

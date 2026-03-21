@@ -8,7 +8,6 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture";
-import { GoalSmartCard } from "@/features/goals";
 import { SearchAction } from "@/features/search";
 import { SyncConflictBanner } from "@/features/sync";
 import {
@@ -111,7 +110,6 @@ const ListHeader = memo(function ListHeader({
         dailySpending={dailySpending}
         totalSpent={totalSpent}
       />
-      <GoalSmartCard />
     </View>
   );
 });

@@ -186,6 +186,11 @@ vi.mock("expo-crypto", () => ({
   getRandomBytes: vi.fn(() => new Uint8Array(32)),
 }));
 
+// Mock @react-native-community/datetimepicker
+vi.mock("@react-native-community/datetimepicker", () => ({
+  default: "DateTimePicker",
+}));
+
 // Mock @react-native-community/netinfo
 vi.mock("@react-native-community/netinfo", () => ({
   default: {
