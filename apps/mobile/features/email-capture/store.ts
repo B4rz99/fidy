@@ -113,7 +113,9 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     if (!result.success) return;
 
     // Prevent connecting the same email address twice
-    const alreadyConnected = get().accounts.some((a) => a.email === result.email);
+    const alreadyConnected = get().accounts.some(
+      (a) => a.email.toLowerCase() === result.email.toLowerCase()
+    );
     if (alreadyConnected) return;
 
     const row: EmailAccountRow = {

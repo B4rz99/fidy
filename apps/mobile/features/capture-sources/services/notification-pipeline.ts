@@ -203,6 +203,7 @@ export async function processNotification(
     capturePipelineEvent({
       source: "notification",
       bankSource: source,
+      parseMethod,
       saved: 1,
       skippedDuplicate: 0,
       parseFailed: 0,
