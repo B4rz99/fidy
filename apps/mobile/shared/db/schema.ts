@@ -13,6 +13,7 @@ import type {
   IsoDateTime,
   MerchantRuleId,
   Month,
+  NotificationId,
   NotificationSourceId,
   ProcessedCaptureId,
   ProcessedEmailId,
@@ -319,4 +320,26 @@ export const userCategories = sqliteTable(
     deletedAt: text("deleted_at").$type<IsoDateTime>(),
   },
   (table) => [index("idx_user_categories_user").on(table.userId)]
+);
+
+export const notifications = sqliteTable(
+  "notifications",
+  {
+    id: text("id").$type<NotificationId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    type: text("type").notNull(),
+    dedupKey: text("dedup_key").notNull(),
+    categoryId: text("category_id").$type<CategoryId>(),
+    goalId: text("goal_id"),
+    titleKey: text("title_key").notNull(),
+    messageKey: text("message_key").notNull(),
+    params: text("params"),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [
+    index("idx_notifications_user_created").on(table.userId, table.createdAt),
+    uniqueIndex("uq_notification_dedup").on(table.userId, table.dedupKey),
+  ]
 );

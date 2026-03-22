@@ -7,6 +7,7 @@ import type {
   DetectedSmsEventId,
   EmailAccountId,
   MerchantRuleId,
+  NotificationId,
   NotificationSourceId,
   ProcessedCaptureId,
   ProcessedEmailId,
@@ -91,4 +92,8 @@ export function generateDetectedSmsEventId(): DetectedSmsEventId {
 
 export function generateUserCategoryId(): UserCategoryId {
   return generateId("ucat") as UserCategoryId;
+}
+
+export function generateNotificationId(): NotificationId {
+  return generateId("nf") as NotificationId;
 }

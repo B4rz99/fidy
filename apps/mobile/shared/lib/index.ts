@@ -20,6 +20,7 @@ export {
   generateEmailAccountId,
   generateId,
   generateMerchantRuleId,
+  generateNotificationId,
   generateNotificationSourceId,
   generateProcessedCaptureId,
   generateProcessedEmailId,
