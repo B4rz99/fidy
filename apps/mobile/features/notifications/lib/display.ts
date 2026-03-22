@@ -51,8 +51,14 @@ const CATEGORY_BG_COLORS: Record<string, string> = {
 
 type TranslationFn = (key: string, params?: Record<string, unknown>) => string;
 
-const parseParams = (params: string | null): Record<string, unknown> =>
-  params ? (JSON.parse(params) as Record<string, unknown>) : {};
+const parseParams = (params: string | null): Record<string, unknown> => {
+  if (!params) return {};
+  try {
+    return JSON.parse(params) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+};
 
 const getCategoryVisuals = (categoryId: CategoryId | null) => {
   const key = categoryId ?? "other";

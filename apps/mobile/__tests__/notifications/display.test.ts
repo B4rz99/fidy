@@ -288,7 +288,12 @@ describe("groupNotificationsBySection", () => {
       type: "spending_anomaly",
       createdAt: "2026-03-18T12:00:00.000Z" as IsoDateTime,
     });
-    const result = groupNotificationsBySection([display], Today, mockT);
-    expect(result[0].label).toBe("notifications.weeklyMovesHeader");
+    let capturedParams: Record<string, unknown> | undefined;
+    const capturingT = (key: string, params?: Record<string, unknown>): string => {
+      capturedParams = params;
+      return key;
+    };
+    groupNotificationsBySection([display], Today, capturingT);
+    expect(capturedParams).toEqual({ weekRange: "Mar 16\u201322" });
   });
 });

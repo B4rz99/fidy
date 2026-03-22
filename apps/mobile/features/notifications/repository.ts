@@ -5,8 +5,8 @@ import type { IsoDateTime, UserId } from "@/shared/types/branded";
 
 export type NotificationRow = typeof notifications.$inferInsert;
 
-export function insertNotification(db: AnyDb, row: NotificationRow) {
-  db.insert(notifications).values(row).onConflictDoNothing().run();
+export function insertNotification(db: AnyDb, row: NotificationRow): { changes: number } {
+  return db.insert(notifications).values(row).onConflictDoNothing().run();
 }
 
 export function getNotifications(db: AnyDb, userId: UserId) {

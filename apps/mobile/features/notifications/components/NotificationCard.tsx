@@ -82,7 +82,11 @@ export const NotificationCard = React.memo(function NotificationCard({
   }, [notification.route, onPress]);
 
   return (
-    <Pressable onPress={handlePress} style={[styles.container, { backgroundColor: cardColor }]}>
+    <Pressable
+      onPress={notification.route ? handlePress : undefined}
+      disabled={!notification.route}
+      style={[styles.container, { backgroundColor: cardColor }]}
+    >
       <View style={[styles.iconCircle, { backgroundColor: notification.iconBgColor }]}>
         <IconComponent size={16} color={notification.iconColor} />
       </View>
@@ -98,7 +102,7 @@ export const NotificationCard = React.memo(function NotificationCard({
 
       <View style={styles.rightColumn}>
         <Text style={[styles.timestamp, { color: tertiaryColor }]}>{relativeTime}</Text>
-        <ChevronRight size={14} color={tertiaryColor} />
+        {notification.route ? <ChevronRight size={14} color={tertiaryColor} /> : null}
       </View>
     </Pressable>
   );

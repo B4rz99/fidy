@@ -11,7 +11,7 @@ import {
   insertNotification as insertNotificationRow,
 } from "./repository";
 
-const LAST_VISITED_KEY = "notification_last_visited";
+const lastVisitedKey = (userId: UserId) => `notification_last_visited_${userId}`;
 
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
@@ -51,7 +51,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
     let lastVisitedAt: IsoDateTime | null = null;
     try {
-      const stored = await SecureStore.getItemAsync(LAST_VISITED_KEY);
+      const stored = await SecureStore.getItemAsync(lastVisitedKey(userId));
       lastVisitedAt = stored ? (stored as IsoDateTime) : null;
     } catch {
       // SecureStore may fail in tests — default to null
@@ -77,7 +77,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
     const now = toIsoDateTime(new Date());
     const id = generateNotificationId();
     try {
-      insertNotificationRow(dbRef, {
+      const result = insertNotificationRow(dbRef, {
         id,
         userId: userIdRef,
         type: input.type,
@@ -91,6 +91,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
         updatedAt: now,
         deletedAt: null,
       });
+      if (result.changes === 0) return;
       enqueueSync(dbRef, {
         id: generateSyncQueueId(),
         tableName: "notifications",
@@ -106,7 +107,8 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
   markVisited: () => {
     const now = toIsoDateTime(new Date());
-    SecureStore.setItemAsync(LAST_VISITED_KEY, now).catch(() => {});
+    if (!userIdRef) return;
+    SecureStore.setItemAsync(lastVisitedKey(userIdRef), now).catch(() => {});
     set({ newCount: 0 });
   },
 }));
