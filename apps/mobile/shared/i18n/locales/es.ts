@@ -575,6 +575,37 @@ const es = {
         "Te pasaste %{overAmount}. Revisar compras recientes de cerca podría revelar algunos ahorros fáciles.",
     },
   },
+  notifications: {
+    // Títulos
+    budgetWarning: "%{category} — cerca de tu límite",
+    budgetExceeded: "%{category} — presupuesto excedido",
+    spendingAnomaly: "%{category} — %{multiplier}x tu promedio",
+    budgetPace: "%{category} — en camino a exceder",
+    goalMilestone: "%{goalName} — ¡%{percent}% ahorrado!",
+
+    // Mensajes
+    budgetWarningMsg: "$%{remaining} restantes para %{daysLeft} días",
+    budgetExceededMsg: "$%{overAmount} de más — considera pausar hasta el próximo mes",
+    spendingAnomalyMsg: "Tu gasto semanal es más alto de lo usual",
+    budgetPaceMsg: "Proyectado $%{projected} vs $%{budget} presupuesto",
+    goalMilestoneMsg: "Has ahorrado el %{percent}% de tu meta",
+
+    // Encabezados de sección
+    weeklyMovesHeader: "TUS MOVIMIENTOS · %{weekRange}",
+    earlierHeader: "ANTERIORES",
+
+    // Estado vacío
+    emptyTitle: "Nada nuevo por ahora",
+    emptySubtitle: "Te avisaremos cuando tus presupuestos o metas necesiten atención",
+
+    // Placeholder primera semana (G8)
+    firstWeekTitle: "Conociéndote",
+    firstWeekMessage:
+      "Fidy está conociendo tus gastos. Dame una semana y tendré tus primeros Movimientos listos.",
+
+    // Pantalla
+    title: "Notificaciones",
+  },
 } as const;
 
 export default es;
