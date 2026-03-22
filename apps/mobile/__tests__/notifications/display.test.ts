@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type {
-  NotificationDisplay,
-  StoredNotification,
-} from "@/features/notifications/lib/types";
+import type { NotificationDisplay, StoredNotification } from "@/features/notifications/lib/types";
 import type { CategoryId, IsoDateTime, NotificationId, UserId } from "@/shared/types/branded";
 
 // ---------------------------------------------------------------------------
@@ -188,7 +185,7 @@ describe("groupNotificationsBySection", () => {
   });
 
   it("returns empty array for empty input", () => {
-    const result = groupNotificationsBySection([], Today);
+    const result = groupNotificationsBySection([], Today, mockT);
     expect(result).toEqual([]);
   });
 
@@ -197,10 +194,9 @@ describe("groupNotificationsBySection", () => {
       type: "spending_anomaly",
       createdAt: "2026-03-18T12:00:00.000Z" as IsoDateTime,
     });
-    const result = groupNotificationsBySection([display], Today);
+    const result = groupNotificationsBySection([display], Today, mockT);
     expect(result).toHaveLength(1);
-    expect(result[0].label).toContain("Mar 16");
-    expect(result[0].label).toContain("22");
+    expect(result[0].label).toBe("notifications.weeklyMovesHeader");
     expect(result[0].notifications).toHaveLength(1);
   });
 
@@ -209,9 +205,9 @@ describe("groupNotificationsBySection", () => {
       type: "budget_pace",
       createdAt: "2026-03-17T10:00:00.000Z" as IsoDateTime,
     });
-    const result = groupNotificationsBySection([display], Today);
+    const result = groupNotificationsBySection([display], Today, mockT);
     expect(result).toHaveLength(1);
-    expect(result[0].label).toContain("Mar 16");
+    expect(result[0].label).toBe("notifications.weeklyMovesHeader");
   });
 
   it("groups budget_alert into EARLIER section", () => {
@@ -219,9 +215,9 @@ describe("groupNotificationsBySection", () => {
       type: "budget_alert",
       createdAt: "2026-03-18T12:00:00.000Z" as IsoDateTime,
     });
-    const result = groupNotificationsBySection([display], Today);
+    const result = groupNotificationsBySection([display], Today, mockT);
     expect(result).toHaveLength(1);
-    expect(result[0].label).toBe("EARLIER");
+    expect(result[0].label).toBe("notifications.earlierHeader");
   });
 
   it("groups goal_milestone into EARLIER section", () => {
@@ -229,9 +225,9 @@ describe("groupNotificationsBySection", () => {
       type: "goal_milestone",
       createdAt: "2026-03-18T12:00:00.000Z" as IsoDateTime,
     });
-    const result = groupNotificationsBySection([display], Today);
+    const result = groupNotificationsBySection([display], Today, mockT);
     expect(result).toHaveLength(1);
-    expect(result[0].label).toBe("EARLIER");
+    expect(result[0].label).toBe("notifications.earlierHeader");
   });
 
   it("groups spending_anomaly from prior week into EARLIER section", () => {
@@ -239,9 +235,9 @@ describe("groupNotificationsBySection", () => {
       type: "spending_anomaly",
       createdAt: "2026-03-10T12:00:00.000Z" as IsoDateTime, // prior week
     });
-    const result = groupNotificationsBySection([display], Today);
+    const result = groupNotificationsBySection([display], Today, mockT);
     expect(result).toHaveLength(1);
-    expect(result[0].label).toBe("EARLIER");
+    expect(result[0].label).toBe("notifications.earlierHeader");
   });
 
   it("creates both sections when applicable, weekly moves first", () => {
@@ -255,10 +251,10 @@ describe("groupNotificationsBySection", () => {
       type: "budget_alert",
       createdAt: "2026-03-18T12:00:00.000Z" as IsoDateTime,
     });
-    const result = groupNotificationsBySection([weeklyMove, earlier], Today);
+    const result = groupNotificationsBySection([weeklyMove, earlier], Today, mockT);
     expect(result).toHaveLength(2);
-    expect(result[0].label).toContain("Mar 16");
-    expect(result[1].label).toBe("EARLIER");
+    expect(result[0].label).toBe("notifications.weeklyMovesHeader");
+    expect(result[1].label).toBe("notifications.earlierHeader");
   });
 
   it("sorts notifications within each section by createdAt DESC", () => {
@@ -272,7 +268,7 @@ describe("groupNotificationsBySection", () => {
       type: "budget_pace",
       createdAt: "2026-03-18T14:00:00.000Z" as IsoDateTime,
     });
-    const result = groupNotificationsBySection([older, newer], Today);
+    const result = groupNotificationsBySection([older, newer], Today, mockT);
     expect(result[0].notifications[0].id).toBe("nf-2");
     expect(result[0].notifications[1].id).toBe("nf-1");
   });
@@ -282,9 +278,9 @@ describe("groupNotificationsBySection", () => {
       type: "budget_alert",
       createdAt: "2026-03-15T12:00:00.000Z" as IsoDateTime,
     });
-    const result = groupNotificationsBySection([display], Today);
+    const result = groupNotificationsBySection([display], Today, mockT);
     expect(result).toHaveLength(1);
-    expect(result[0].label).toBe("EARLIER");
+    expect(result[0].label).toBe("notifications.earlierHeader");
   });
 
   it("formats week range as 'Mar 16–22' for the week of March 16-22", () => {
@@ -292,7 +288,7 @@ describe("groupNotificationsBySection", () => {
       type: "spending_anomaly",
       createdAt: "2026-03-18T12:00:00.000Z" as IsoDateTime,
     });
-    const result = groupNotificationsBySection([display], Today);
-    expect(result[0].label).toMatch(/Mar 16.22/);
+    const result = groupNotificationsBySection([display], Today, mockT);
+    expect(result[0].label).toBe("notifications.weeklyMovesHeader");
   });
 });

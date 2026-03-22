@@ -5,8 +5,8 @@ import {
   BarChart3,
   Car,
   ChevronRight,
-  X as CloseIcon,
   Clapperboard,
+  X as CloseIcon,
   Ellipsis,
   GraduationCap,
   HeartPulse,
@@ -47,6 +47,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 function formatRelativeTime(createdAt: string, now: Date): string {
   const diff = now.getTime() - new Date(createdAt).getTime();
   const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "1m";
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h`;

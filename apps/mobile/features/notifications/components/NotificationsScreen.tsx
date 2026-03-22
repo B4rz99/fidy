@@ -21,7 +21,7 @@ export const NotificationsScreen = () => {
 
   const sections = useMemo(() => {
     const displays = notifications.map((n) => deriveNotificationDisplay(n, t));
-    return groupNotificationsBySection(displays, new Date());
+    return groupNotificationsBySection(displays, new Date(), t);
   }, [notifications, t]);
 
   const handlePress = useCallback(
@@ -39,7 +39,7 @@ export const NotificationsScreen = () => {
         <ScrollView>
           {sections.map((section) => (
             <NotificationSection
-              key={section.title}
+              key={section.label}
               section={section}
               onNotificationPress={handlePress}
             />

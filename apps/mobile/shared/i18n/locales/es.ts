@@ -584,10 +584,10 @@ const es = {
     goalMilestone: "%{goalName} — ¡%{percent}% ahorrado!",
 
     // Mensajes
-    budgetWarningMsg: "$%{remaining} restantes para %{daysLeft} días",
-    budgetExceededMsg: "$%{overAmount} de más — considera pausar hasta el próximo mes",
+    budgetWarningMsg: "%{remaining} restantes para %{daysLeft} días",
+    budgetExceededMsg: "%{overAmount} de más — considera pausar hasta el próximo mes",
     spendingAnomalyMsg: "Tu gasto semanal es más alto de lo usual",
-    budgetPaceMsg: "Proyectado $%{projected} vs $%{budget} presupuesto",
+    budgetPaceMsg: "Proyectado %{projected} vs %{budget} presupuesto",
     goalMilestoneMsg: "Has ahorrado el %{percent}% de tu meta",
 
     // Encabezados de sección

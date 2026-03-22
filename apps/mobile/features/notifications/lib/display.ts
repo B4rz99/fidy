@@ -137,7 +137,8 @@ const sortByCreatedAtDesc = (
 
 export const groupNotificationsBySection = (
   notifications: readonly NotificationDisplay[],
-  today: Date
+  today: Date,
+  t: TranslationFn
 ): readonly NotificationSection[] => {
   if (notifications.length === 0) return [];
 
@@ -159,7 +160,7 @@ export const groupNotificationsBySection = (
     ...(weeklyMoves.length > 0
       ? [
           {
-            label: `YOUR MONEY MOVES \u00B7 ${weekRange}`,
+            label: t("notifications.weeklyMovesHeader", { weekRange }),
             notifications: sortByCreatedAtDesc(weeklyMoves),
           },
         ]
@@ -167,7 +168,7 @@ export const groupNotificationsBySection = (
     ...(earlier.length > 0
       ? [
           {
-            label: "EARLIER",
+            label: t("notifications.earlierHeader"),
             notifications: sortByCreatedAtDesc(earlier),
           },
         ]
