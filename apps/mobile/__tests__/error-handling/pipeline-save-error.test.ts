@@ -6,6 +6,8 @@ const mockCaptureError = vi.fn();
 
 vi.mock("@/shared/lib/sentry", () => ({
   captureError: (...args: unknown[]) => mockCaptureError(...args),
+  capturePipelineEvent: vi.fn(),
+  captureWarning: vi.fn(),
 }));
 
 const mockGetProcessedExternalIds = vi.fn().mockResolvedValue(new Set<string>());

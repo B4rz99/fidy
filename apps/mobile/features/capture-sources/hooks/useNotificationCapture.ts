@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Platform } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
+import { captureError } from "@/shared/lib";
 import { useCaptureSourcesStore } from "../store";
 import { setupNotificationCapture } from "./setup";
 
@@ -19,7 +20,7 @@ export function useNotificationCapture(db: AnyDb | null, userId: string | null) 
           cleanup = c;
         }
       })
-      .catch((err) => console.warn("[NotificationCapture] setup failed:", err));
+      .catch(captureError);
     return () => {
       cancelled = true;
       cleanup?.();

@@ -1,5 +1,5 @@
 // biome-ignore-all lint/style/useNamingConvention: Gmail API uses snake_case
-import { captureError } from "@/shared/lib";
+import { captureError, captureWarning } from "@/shared/lib";
 import type { RawEmail } from "../schema";
 
 export async function fetchGmailEmailsWithToken(
@@ -17,8 +17,7 @@ export async function fetchGmailEmailsWithToken(
   );
 
   if (!listResponse.ok) {
-    const text = await listResponse.text();
-    console.warn(`[Gmail] list failed ${listResponse.status}: ${text.slice(0, 200)}`);
+    captureWarning("gmail_api_list_failed", { httpStatus: listResponse.status });
     return [];
   }
 

@@ -148,4 +148,64 @@ describe("findDuplicateTransaction", () => {
 
     expect(result).toBeNull();
   });
+
+  it("matches when DB description contains the incoming merchant (substring)", async () => {
+    mockWhere.mockResolvedValueOnce([{ id: "tx-sub-1", description: "BOLD Natural Medical" }]);
+
+    const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
+    const result = await findDuplicateTransaction(
+      mockDb,
+      "user-1",
+      100000,
+      "2026-03-21",
+      "Natural Medical"
+    );
+
+    expect(result).toBe("tx-sub-1");
+  });
+
+  it("matches when incoming merchant contains the DB description (substring)", async () => {
+    mockWhere.mockResolvedValueOnce([{ id: "tx-sub-2", description: "HARISSA" }]);
+
+    const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
+    const result = await findDuplicateTransaction(
+      mockDb,
+      "user-1",
+      160100,
+      "2026-03-20",
+      "HARISSA HF2"
+    );
+
+    expect(result).toBe("tx-sub-2");
+  });
+
+  it("does not substring-match when DB description is very short (< 3 chars)", async () => {
+    mockWhere.mockResolvedValueOnce([{ id: "tx-short", description: "AB" }]);
+
+    const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
+    const result = await findDuplicateTransaction(
+      mockDb,
+      "user-1",
+      5000,
+      "2026-03-07",
+      "ABC Store"
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it("handles null description in DB row without false match", async () => {
+    mockWhere.mockResolvedValueOnce([{ id: "tx-null", description: null }]);
+
+    const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
+    const result = await findDuplicateTransaction(
+      mockDb,
+      "user-1",
+      5000,
+      "2026-03-07",
+      "Uber Eats"
+    );
+
+    expect(result).toBeNull();
+  });
 });

@@ -1,6 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
 import { getSupabase } from "@/shared/db";
+import { captureWarning } from "@/shared/lib";
 
 // biome-ignore lint/style/useNamingConvention: OAuth is a proper noun
 type OAuthProvider = "google" | "azure";
@@ -29,11 +30,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       const supabase = getSupabase();
       const { data, error } = await supabase.auth.getSession();
       if (error || !data.session) {
+        if (error) captureWarning("auth_restore_failed", { errorMessage: error.message });
         set({ session: null, isLoading: false });
         return;
       }
       set({ session: data.session, isLoading: false });
-    } catch {
+    } catch (err) {
+      captureWarning("auth_restore_exception", {
+        errorType: err instanceof Error ? err.message : "unknown",
+      });
       set({ session: null, isLoading: false });
     }
   },
@@ -68,8 +73,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
           }
         }
       }
-    } catch {
-      // Sign-in failed
+    } catch (err) {
+      captureWarning("auth_signin_failed", {
+        errorType: err instanceof Error ? err.message : "unknown",
+      });
     } finally {
       set({ isSigningIn: false });
     }

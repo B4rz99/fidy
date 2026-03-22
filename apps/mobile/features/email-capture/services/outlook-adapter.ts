@@ -1,4 +1,5 @@
 // biome-ignore-all lint/style/useNamingConvention: Outlook API uses snake_case
+import { captureWarning } from "@/shared/lib";
 import type { RawEmail } from "../schema";
 
 export async function fetchOutlookEmailsWithToken(
@@ -18,7 +19,10 @@ export async function fetchOutlookEmailsWithToken(
     { headers: { Authorization: `Bearer ${token}` } }
   );
 
-  if (!response.ok) return [];
+  if (!response.ok) {
+    captureWarning("outlook_api_list_failed", { httpStatus: response.status });
+    return [];
+  }
 
   const data = await response.json();
   const messages: OutlookMessage[] = data.value ?? [];

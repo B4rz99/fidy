@@ -290,6 +290,24 @@ describe("useEmailCaptureStore", () => {
     expect(useEmailCaptureStore.getState().accounts).toHaveLength(0);
   });
 
+  it("connectEmail rejects duplicate email address", async () => {
+    // Pre-existing account with user@gmail.com
+    useEmailCaptureStore.setState({
+      accounts: [makeAccount({ email: "user@gmail.com" })],
+    });
+
+    mockAdapter.connect.mockResolvedValueOnce({
+      success: true,
+      email: "user@gmail.com",
+    });
+
+    await useEmailCaptureStore.getState().connectEmail("gmail", "client-id");
+
+    // Should NOT insert a duplicate account
+    expect(insertEmailAccount).not.toHaveBeenCalled();
+    expect(useEmailCaptureStore.getState().accounts).toHaveLength(1);
+  });
+
   it("disconnectEmail removes from DB and state", async () => {
     useEmailCaptureStore.setState({
       accounts: [makeAccount()],

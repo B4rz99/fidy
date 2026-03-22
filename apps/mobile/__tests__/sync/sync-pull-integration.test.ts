@@ -19,6 +19,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/shared/lib/sentry", () => ({
   captureError: vi.fn(),
+  capturePipelineEvent: vi.fn(),
+  captureWarning: vi.fn(),
 }));
 
 import { getUnresolvedConflicts } from "@/features/sync/lib/conflict-repository";

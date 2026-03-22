@@ -11,7 +11,13 @@ import {
   upsertTransaction,
 } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
-import { captureError, generateSyncConflictId, toIsoDateTime } from "@/shared/lib";
+import {
+  captureError,
+  capturePipelineEvent,
+  captureWarning,
+  generateSyncConflictId,
+  toIsoDateTime,
+} from "@/shared/lib";
 import type { BudgetId, SyncQueueId, TransactionId } from "@/shared/types/branded";
 import { hasDataConflict } from "../lib/conflict-detection";
 import { insertConflict } from "../lib/conflict-repository";
@@ -150,25 +156,36 @@ async function processEntry(
     const row = await getTransactionById(db, entry.rowId as TransactionId);
     if (!row) return entry.id;
     const { error } = await supabase.from("transactions").upsert(toSupabaseRow(row));
+    if (error) {
+      captureWarning("sync_push_entry_failed", {
+        tableName: entry.tableName,
+        errorMessage: error.message,
+        errorCode: error.code ?? "unknown",
+      });
+    }
     return error ? null : entry.id;
   }
 
   if (entry.tableName === "budgets") {
     const ok = await processBudgetEntry(db, supabase, entry.rowId);
+    if (!ok) captureWarning("sync_push_entry_failed", { tableName: "budgets" });
     return ok ? entry.id : null;
   }
 
   if (entry.tableName === "goals") {
     const ok = await processGoalEntry(db, supabase, entry.rowId);
+    if (!ok) captureWarning("sync_push_entry_failed", { tableName: "goals" });
     return ok ? entry.id : null;
   }
 
   if (entry.tableName === "goalContributions") {
     const ok = await processContributionEntry(db, supabase, entry.rowId);
+    if (!ok) captureWarning("sync_push_entry_failed", { tableName: "goalContributions" });
     return ok ? entry.id : null;
   }
 
   // Unknown table — keep in queue for future handler
+  captureWarning("sync_push_unknown_table", { tableName: entry.tableName });
   return null;
 }
 
@@ -190,6 +207,13 @@ export async function syncPush(
   if (processedIds.length > 0) {
     await clearSyncEntries(db, processedIds as SyncQueueId[]);
   }
+
+  capturePipelineEvent({
+    source: "sync_push",
+    queued: entries.length,
+    succeeded: processedIds.length,
+    failed: entries.length - processedIds.length,
+  });
 }
 
 export async function syncPull(
@@ -203,12 +227,20 @@ export async function syncPull(
   const query = lastSyncAt ? baseQuery.gte("updated_at", lastSyncAt) : baseQuery;
 
   const { data, error } = await query.order("updated_at", { ascending: true }).limit(1000);
-  if (error || !data) return false;
+  if (error || !data) {
+    captureWarning("sync_pull_fetch_failed", {
+      errorMessage: error?.message ?? "no_data",
+      errorCode: error?.code ?? "unknown",
+    });
+    return false;
+  }
 
   const rows = data as SupabaseTransactionRow[];
 
   // FP exemption: each row may depend on prior upserts for conflict detection.
   let earliestFailure: string | null = null;
+  let failedCount = 0;
+  let conflictCount = 0;
   for (const serverRow of rows) {
     try {
       const localRow = await getTransactionById(db, serverRow.id as TransactionId);
@@ -221,6 +253,7 @@ export async function syncPull(
         // Log conflict after successful upsert to avoid duplicates on retry.
         // Own try/catch so a conflict-logging failure doesn't affect the sync flow.
         if (isConflict) {
+          conflictCount++;
           try {
             insertConflict(db, {
               id: generateSyncConflictId(),
@@ -236,11 +269,20 @@ export async function syncPull(
       }
     } catch (error) {
       captureError(error);
+      failedCount++;
       if (!earliestFailure || serverRow.updated_at < earliestFailure) {
         earliestFailure = serverRow.updated_at;
       }
     }
   }
+
+  capturePipelineEvent({
+    source: "sync_pull",
+    rowsFetched: rows.length,
+    rowsApplied: rows.length - failedCount,
+    conflicts: conflictCount,
+    failed: failedCount,
+  });
 
   // Only advance cursor up to (but not past) the earliest failed row
   // so it gets retried on the next pull. If the earliest row failed,

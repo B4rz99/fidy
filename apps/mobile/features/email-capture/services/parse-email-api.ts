@@ -1,5 +1,6 @@
 import { CATEGORY_IDS } from "@/features/transactions";
 import { getSupabase } from "@/shared/db";
+import { captureWarning } from "@/shared/lib";
 import { type LlmParsedTransaction, llmOutputSchema } from "./llm-parser";
 
 export function stripPii(text: string): string {
@@ -32,7 +33,13 @@ export async function classifyMerchantApi(merchant: string): Promise<string> {
       body: { body: merchant, mode: "classify" },
     });
 
-    if (error || !data?.success) return "other";
+    if (error || !data?.success) {
+      captureWarning("classify_merchant_failed", {
+        hasError: !!error,
+        errorMessage: error?.message ?? "unknown",
+      });
+      return "other";
+    }
 
     const categoryId = data.data?.categoryId;
     return CATEGORY_IDS.includes(categoryId) ? categoryId : "other";
@@ -52,17 +59,24 @@ export async function parseEmailApi(emailBody: string): Promise<LlmParsedTransac
     });
 
     if (error || !data?.success) {
-      console.warn("[parseEmailApi] edge fn failed:", error?.message ?? "unknown", data);
+      captureWarning("parse_email_api_failed", {
+        errorMessage: error?.message ?? "unknown",
+        hasData: !!data,
+      });
       return null;
     }
 
     const result = llmOutputSchema.safeParse(data.data);
     if (!result.success) {
-      console.warn("[parseEmailApi] validation failed:", result.error.issues);
+      captureWarning("parse_email_validation_failed", {
+        issueCount: result.error.issues.length,
+      });
     }
     return result.success ? result.data : null;
   } catch (err) {
-    console.warn("[parseEmailApi] exception:", err);
+    captureWarning("parse_email_api_exception", {
+      errorType: err instanceof Error ? err.message : "unknown",
+    });
     return null;
   }
 }

@@ -48,6 +48,7 @@ import {
   handleRecoverableError,
   initSentry,
   SentryErrorBoundary,
+  setSentryUser,
   wrapWithSentry,
 } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
@@ -123,6 +124,9 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
   useSmsDetection(captureDb, userId);
 
   useEffect(() => {
+    if (migrationsError) {
+      captureError(migrationsError);
+    }
     if (migrationsReady || migrationsError) {
       SplashScreen.hideAsync();
     }
@@ -158,6 +162,7 @@ function RootLayout() {
 
   // Re-check onboarding status when session changes
   useEffect(() => {
+    setSentryUser(userId);
     if (session) {
       const fromStore = getOnboardingCompleteFromStore();
       const fromSession = isOnboardingComplete(session);
@@ -167,7 +172,7 @@ function RootLayout() {
       clearOnboardingFromStore();
       setOnboardingComplete(false);
     }
-  }, [session]);
+  }, [session, userId]);
 
   useEffect(() => {
     if ((fontsLoaded || fontsError) && !isAuthLoading) {

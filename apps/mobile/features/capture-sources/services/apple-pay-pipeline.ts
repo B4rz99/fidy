@@ -7,6 +7,7 @@ import { insertTransaction, isValidCategoryId } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
+  capturePipelineEvent,
   generateProcessedCaptureId,
   generateSyncQueueId,
   generateTransactionId,
@@ -40,6 +41,7 @@ export async function processApplePayIntent(
   const fingerprint = captureFingerprint(source, amount, today, intent.merchant);
 
   if (inFlightFingerprints.has(fingerprint)) {
+    capturePipelineEvent({ source: "apple_pay", saved: 0, skippedDuplicate: 1 });
     return { saved: false, skippedDuplicate: true, transactionId: null };
   }
 
@@ -48,6 +50,7 @@ export async function processApplePayIntent(
   try {
     const alreadyProcessed = await isCaptureProcessed(db, fingerprint);
     if (alreadyProcessed) {
+      capturePipelineEvent({ source: "apple_pay", saved: 0, skippedDuplicate: 1 });
       return { saved: false, skippedDuplicate: true, transactionId: null };
     }
     // Cross-source dedup
@@ -66,6 +69,7 @@ export async function processApplePayIntent(
         receivedAt: now,
         createdAt: now,
       });
+      capturePipelineEvent({ source: "apple_pay", saved: 0, skippedDuplicate: 1 });
       return { saved: false, skippedDuplicate: true, transactionId: existingTxId };
     }
 
@@ -118,6 +122,7 @@ export async function processApplePayIntent(
     // Always cache merchant rule (Apple Pay data is high confidence)
     await insertMerchantRule(db, userId, merchantKey, categoryId, now);
 
+    capturePipelineEvent({ source: "apple_pay", saved: 1, skippedDuplicate: 0 });
     return { saved: true, skippedDuplicate: false, transactionId: txId };
   } finally {
     inFlightFingerprints.delete(fingerprint);
