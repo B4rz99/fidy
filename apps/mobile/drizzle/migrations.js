@@ -16,6 +16,7 @@ import m0013 from "./0013_rare_crystal.sql";
 import m0014 from "./0014_rename_amount_cents.sql";
 import m0015 from "./0015_violet_vengeance.sql";
 import m0016 from "./0016_high_outlaw_kid.sql";
+import m0017 from "./0017_nostalgic_blade.sql";
 import journal from "./meta/_journal.json";
 
 export default {
@@ -38,5 +39,6 @@ export default {
     m0014,
     m0015,
     m0016,
+    m0017,
   },
 };

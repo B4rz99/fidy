@@ -283,15 +283,18 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
     } catch {
       return false;
     }
+    const goalBefore = get().goals.find((g) => g.goal.id === input.goalId);
+    const percentBefore = goalBefore?.progress.percentComplete ?? 0;
+
     await get().loadGoals();
 
-    // Detect goal milestone crossings
-    const goal = get().goals.find((g) => g.goal.id === input.goalId);
-    if (goal) {
-      const percent = goal.progress.percentComplete;
+    // Detect goal milestone crossings — only fire for NEWLY crossed milestones
+    const goalAfter = get().goals.find((g) => g.goal.id === input.goalId);
+    if (goalAfter) {
+      const percentAfter = goalAfter.progress.percentComplete;
       const milestones = [25, 50, 75, 100] as const;
       milestones.forEach((milestone) => {
-        if (percent >= milestone) {
+        if (percentBefore < milestone && percentAfter >= milestone) {
           useNotificationStore.getState().insertNotification({
             type: "goal_milestone",
             dedupKey: `goal_milestone:${input.goalId}:${milestone}`,
@@ -300,7 +303,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
             titleKey: "notifications.goalMilestone",
             messageKey: "notifications.goalMilestoneMsg",
             params: JSON.stringify({
-              goalName: goal.goal.name,
+              goalName: goalAfter.goal.name,
               percent: milestone,
             }),
           });

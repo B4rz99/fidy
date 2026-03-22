@@ -22,6 +22,7 @@ export {
   Platform,
   Pressable,
   ScrollView,
+  SectionList,
   StyleSheet,
   Switch,
   Text,

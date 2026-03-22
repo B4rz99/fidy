@@ -1,18 +1,20 @@
 import { useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { ScreenLayout } from "@/shared/components";
-import { ScrollView } from "@/shared/components/rn";
-import { useMountEffect, useTranslation } from "@/shared/hooks";
+import { SectionList, StyleSheet, Text } from "@/shared/components/rn";
+import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { deriveNotificationDisplay, groupNotificationsBySection } from "../lib/display";
+import type { NotificationDisplay } from "../lib/types";
 import { useNotificationStore } from "../store";
+import { NotificationCard } from "./NotificationCard";
 import { NotificationEmptyState } from "./NotificationEmptyState";
-import { NotificationSection } from "./NotificationSection";
 
 export const NotificationsScreen = () => {
   const router = useRouter();
   const { t } = useTranslation();
   const notifications = useNotificationStore((s) => s.notifications);
   const isLoading = useNotificationStore((s) => s.isLoading);
+  const tertiaryColor = useThemeColor("tertiary");
 
   useMountEffect(() => {
     useNotificationStore.getState().markVisited();
@@ -21,7 +23,8 @@ export const NotificationsScreen = () => {
 
   const sections = useMemo(() => {
     const displays = notifications.map((n) => deriveNotificationDisplay(n, t));
-    return groupNotificationsBySection(displays, new Date(), t);
+    const grouped = groupNotificationsBySection(displays, new Date(), t);
+    return grouped.map((s) => ({ title: s.label, data: s.notifications as NotificationDisplay[] }));
   }, [notifications, t]);
 
   const handlePress = useCallback(
@@ -36,16 +39,31 @@ export const NotificationsScreen = () => {
       {!isLoading && sections.length === 0 ? (
         <NotificationEmptyState />
       ) : (
-        <ScrollView>
-          {sections.map((section) => (
-            <NotificationSection
-              key={section.label}
-              section={section}
-              onNotificationPress={handlePress}
-            />
-          ))}
-        </ScrollView>
+        <SectionList
+          sections={sections}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <NotificationCard notification={item} onPress={handlePress} />}
+          renderSectionHeader={({ section }) => (
+            <Text style={[styles.sectionLabel, { color: tertiaryColor }]}>{section.title}</Text>
+          )}
+          contentContainerStyle={styles.listContent}
+          stickySectionHeadersEnabled={false}
+        />
       )}
     </ScreenLayout>
   );
 };
+
+const styles = StyleSheet.create({
+  sectionLabel: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    marginBottom: 12,
+    marginTop: 20,
+  },
+  listContent: {
+    paddingBottom: 32,
+  },
+});
