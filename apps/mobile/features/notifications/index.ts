@@ -3,6 +3,7 @@ export { NotificationCard } from "./components/NotificationCard";
 export { NotificationEmptyState } from "./components/NotificationEmptyState";
 export { NotificationFirstWeek } from "./components/NotificationFirstWeek";
 export { NotificationSection } from "./components/NotificationSection";
+export { NotificationsScreen } from "./components/NotificationsScreen";
 export type {
   NotificationDisplay,
   NotificationSection as NotificationSectionType,
