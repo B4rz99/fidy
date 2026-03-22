@@ -1,11 +1,12 @@
 import { addMonths, format, subMonths } from "date-fns";
 import { create } from "zustand";
+import { useNotificationStore } from "@/features/notifications";
 import { CATEGORY_MAP, useTransactionStore } from "@/features/transactions";
 import { getSpendingByCategoryAggregate } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import { getCategoryLabel, useLocaleStore } from "@/shared/i18n";
-import { generateBudgetId, generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
+import { formatMoney, generateBudgetId, generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
 import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
 import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./lib/derive";
 import {
@@ -145,6 +146,33 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
         const category = CATEGORY_MAP[alert.categoryId];
         const name = category ? getCategoryLabel(category, locale) : alert.categoryId;
         scheduleBudgetAlert(alert, name).catch(() => {});
+      });
+
+      // Insert in-app notifications for fresh budget alerts
+      freshAlerts.forEach((alert) => {
+        const category = CATEGORY_MAP[alert.categoryId];
+        const categoryName = category ? getCategoryLabel(category, locale) : alert.categoryId;
+        const remaining = formatMoney(Math.abs(alert.remainingAmount) as CopAmount);
+
+        useNotificationStore.getState().insertNotification({
+          type: "budget_alert",
+          dedupKey: `budget_alert:${alert.categoryId}:${alert.threshold}:${get().currentMonth}`,
+          categoryId: alert.categoryId,
+          goalId: null,
+          titleKey:
+            alert.threshold === 80 ? "notifications.budgetWarning" : "notifications.budgetExceeded",
+          messageKey:
+            alert.threshold === 80
+              ? "notifications.budgetWarningMsg"
+              : "notifications.budgetExceededMsg",
+          params: JSON.stringify({
+            category: categoryName,
+            remaining,
+            daysLeft: alert.daysLeft,
+            overAmount: remaining,
+            threshold: alert.threshold,
+          }),
+        });
       });
     } catch {
       // Query failed — keep existing state
