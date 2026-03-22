@@ -2,7 +2,15 @@ import { Bell } from "@/shared/components/icons";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
-export const NotificationEmptyState = () => {
+type NotificationEmptyStateProps = {
+  readonly titleKey?: string;
+  readonly subtitleKey?: string;
+};
+
+export const NotificationEmptyState = ({
+  titleKey = "notifications.emptyTitle",
+  subtitleKey = "notifications.emptySubtitle",
+}: NotificationEmptyStateProps) => {
   const { t } = useTranslation();
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
@@ -16,10 +24,8 @@ export const NotificationEmptyState = () => {
         <View style={[styles.circle, { backgroundColor: accentGreenLight }]}>
           <Bell size={40} color={accentGreen} />
         </View>
-        <Text style={[styles.title, { color: primaryColor }]}>{t("notifications.emptyTitle")}</Text>
-        <Text style={[styles.subtitle, { color: secondaryColor }]}>
-          {t("notifications.emptySubtitle")}
-        </Text>
+        <Text style={[styles.title, { color: primaryColor }]}>{t(titleKey)}</Text>
+        <Text style={[styles.subtitle, { color: secondaryColor }]}>{t(subtitleKey)}</Text>
       </View>
       <View style={styles.spacer} />
     </View>

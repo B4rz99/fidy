@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback } from "react";
 import type { LucideIcon } from "@/shared/components/icons";
 import {
   ArrowLeftRight,
@@ -73,10 +73,7 @@ export const NotificationCard = React.memo(function NotificationCard({
 
   const IconComponent = ICON_MAP[notification.iconName] ?? TriangleAlert;
 
-  const relativeTime = useMemo(
-    () => formatRelativeTime(notification.createdAt, new Date()),
-    [notification.createdAt]
-  );
+  const relativeTime = formatRelativeTime(notification.createdAt, new Date());
 
   const handlePress = useCallback(() => {
     if (notification.route) {
