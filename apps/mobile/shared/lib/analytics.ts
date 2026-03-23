@@ -1,7 +1,7 @@
-import PostHog from 'posthog-react-native';
+import PostHog from "posthog-react-native";
 
-const posthog = new PostHog(process.env.EXPO_PUBLIC_POSTHOG_API_KEY ?? '', {
-  host: 'https://us.i.posthog.com',
+const posthog = new PostHog(process.env.EXPO_PUBLIC_POSTHOG_API_KEY ?? "", {
+  host: "https://us.i.posthog.com",
 });
 
 export function identifyUser(userId: string): void {
@@ -14,78 +14,78 @@ export function resetAnalyticsUser(): void {
 
 // Transactions
 export function trackTransactionCreated(props: {
-  type: 'expense' | 'income';
+  type: "expense" | "income";
   category: string;
-  source: 'manual' | 'email' | 'apple_pay' | 'notification';
+  source: "manual" | "email" | "apple_pay" | "notification";
 }): void {
-  posthog.capture('transaction_created', props);
+  posthog.capture("transaction_created", props);
 }
 
 export function trackTransactionEdited(props: { category: string }): void {
-  posthog.capture('transaction_edited', props);
+  posthog.capture("transaction_edited", props);
 }
 
 export function trackTransactionDeleted(): void {
-  posthog.capture('transaction_deleted');
+  posthog.capture("transaction_deleted");
 }
 
 // Budgets
 export function trackBudgetCreated(props: { category: string }): void {
-  posthog.capture('budget_created', props);
+  posthog.capture("budget_created", props);
 }
 
 export function trackBudgetAlertViewed(props: { threshold: 80 | 100; category: string }): void {
-  posthog.capture('budget_alert_viewed', props);
+  posthog.capture("budget_alert_viewed", props);
 }
 
 export function trackBudgetSuggestionAccepted(props: { count: number }): void {
-  posthog.capture('budget_suggestion_accepted', props);
+  posthog.capture("budget_suggestion_accepted", props);
 }
 
 export function trackBudgetSuggestionRejected(): void {
-  posthog.capture('budget_suggestion_rejected');
+  posthog.capture("budget_suggestion_rejected");
 }
 
 // Goals
 export function trackGoalCreated(): void {
-  posthog.capture('goal_created');
+  posthog.capture("goal_created");
 }
 
 export function trackGoalContributionAdded(): void {
-  posthog.capture('goal_contribution_added');
+  posthog.capture("goal_contribution_added");
 }
 
 export function trackGoalMilestoneReached(): void {
-  posthog.capture('goal_milestone_reached');
+  posthog.capture("goal_milestone_reached");
 }
 
 // Bills
-export function trackBillCreated(props: { frequency: 'monthly' | 'biweekly' | 'weekly' }): void {
-  posthog.capture('bill_created', props);
+export function trackBillCreated(props: { frequency: "monthly" | "biweekly" | "weekly" }): void {
+  posthog.capture("bill_created", props);
 }
 
 export function trackBillPaymentRecorded(): void {
-  posthog.capture('bill_payment_recorded');
+  posthog.capture("bill_payment_recorded");
 }
 
 // AI
 export function trackAiChatOpened(): void {
-  posthog.capture('ai_chat_opened');
+  posthog.capture("ai_chat_opened");
 }
 
 export function trackAiMessageSent(): void {
-  posthog.capture('ai_message_sent');
+  posthog.capture("ai_message_sent");
 }
 
 export function trackAiMemoryViewed(): void {
-  posthog.capture('ai_memory_viewed');
+  posthog.capture("ai_memory_viewed");
 }
 
 // Notifications
 export function trackNotificationCenterOpened(): void {
-  posthog.capture('notification_center_opened');
+  posthog.capture("notification_center_opened");
 }
 
 export function trackNotificationTapped(props: { type: string }): void {
-  posthog.capture('notification_tapped', props);
+  posthog.capture("notification_tapped", props);
 }
