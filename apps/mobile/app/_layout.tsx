@@ -263,6 +263,10 @@ function RootLayout() {
             options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
           />
           <Stack.Screen
+            name="enable-notifications"
+            options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+          />
+          <Stack.Screen
             name="notifications"
             options={{
               headerShown: Platform.OS === "ios",

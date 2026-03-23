@@ -54,6 +54,7 @@ type BudgetState = {
   autoSuggestions: BudgetSuggestion[];
   acknowledgedAlerts: Set<string>; // "budgetId:threshold" keys
   pendingAlerts: readonly BudgetAlert[];
+  pendingPermissionRequest: boolean;
   isLoading: boolean;
 };
 
@@ -71,6 +72,7 @@ type BudgetActions = {
   loadAutoSuggestions: () => void;
   acceptSuggestions: (budgets: ReadonlyMap<CategoryId, CopAmount>) => Promise<void>;
   acknowledgeAlert: (budgetId: BudgetId, threshold: 80 | 100) => void;
+  clearPendingPermissionRequest: () => void;
 };
 
 export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => ({
@@ -81,6 +83,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
   autoSuggestions: [],
   acknowledgedAlerts: new Set(),
   pendingAlerts: [],
+  pendingPermissionRequest: false,
   isLoading: false,
 
   initStore: (db, userId) => {
@@ -148,11 +151,28 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
         (a) => !previousKeys.has(`${a.budgetId}:${a.threshold}`)
       );
       const locale = useLocaleStore.getState().locale;
-      freshAlerts.forEach((alert) => {
-        const category = CATEGORY_MAP[alert.categoryId];
-        const name = category ? getCategoryLabel(category, locale) : alert.categoryId;
-        scheduleBudgetAlert(alert, name).catch(() => {});
-      });
+      // Schedule the first fresh alert to detect permission state; schedule rest only on "scheduled"
+      if (freshAlerts.length > 0) {
+        const firstAlert = freshAlerts[0];
+        const firstCategory = CATEGORY_MAP[firstAlert.categoryId];
+        const firstName = firstCategory
+          ? getCategoryLabel(firstCategory, locale)
+          : firstAlert.categoryId;
+        scheduleBudgetAlert(firstAlert, firstName)
+          .then((result) => {
+            if (result.type === "needs_permission") {
+              set({ pendingPermissionRequest: true });
+              return;
+            }
+            // Schedule remaining alerts (permission already confirmed as granted)
+            freshAlerts.slice(1).forEach((alert) => {
+              const category = CATEGORY_MAP[alert.categoryId];
+              const name = category ? getCategoryLabel(category, locale) : alert.categoryId;
+              scheduleBudgetAlert(alert, name).catch(() => {});
+            });
+          })
+          .catch(() => {});
+      }
 
       // Insert in-app notifications for fresh budget alerts
       freshAlerts.forEach((alert) => {
@@ -348,5 +368,9 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
         (a) => !(a.budgetId === budgetId && a.threshold === threshold)
       ),
     }));
+  },
+
+  clearPendingPermissionRequest: () => {
+    set({ pendingPermissionRequest: false });
   },
 }));

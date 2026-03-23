@@ -1,5 +1,5 @@
 import { Stack, useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { MonthNavigator } from "@/features/calendar/components/MonthNavigator";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Wallet } from "@/shared/components/icons";
@@ -30,6 +30,16 @@ export function BudgetListScreen() {
   const summary = useBudgetStore((s) => s.summary);
   const nextMonth = useBudgetStore((s) => s.nextMonth);
   const prevMonth = useBudgetStore((s) => s.prevMonth);
+  const pendingPermissionRequest = useBudgetStore((s) => s.pendingPermissionRequest);
+  const clearPendingPermissionRequest = useBudgetStore((s) => s.clearPendingPermissionRequest);
+
+  // Navigate to pre-permission screen when store signals it (subscription pattern)
+  useEffect(() => {
+    if (pendingPermissionRequest) {
+      clearPendingPermissionRequest();
+      router.push("/enable-notifications");
+    }
+  }, [pendingPermissionRequest, clearPendingPermissionRequest, router]);
 
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
