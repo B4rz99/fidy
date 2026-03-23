@@ -112,11 +112,13 @@ async function saveTransaction(
     createdAt: now,
   });
 
-  trackTransactionCreated({
-    type: validated.type,
-    category: String(categoryId),
-    source: "email",
-  });
+  if (status === "success") {
+    trackTransactionCreated({
+      type: validated.type,
+      category: String(categoryId),
+      source: "email",
+    });
+  }
 
   return txId;
 }
@@ -440,11 +442,13 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
         await insertMerchantRule(db, userId, merchantKey, retryCategoryId, now);
       }
 
-      trackTransactionCreated({
-        type: parsed.type,
-        category: String(retryCategoryId),
-        source: "email",
-      });
+      if (status === "success") {
+        trackTransactionCreated({
+          type: parsed.type,
+          category: String(retryCategoryId),
+          source: "email",
+        });
+      }
 
       await markRetrySuccess(db, email.id, status, txId, parsed.confidence);
       result.succeeded++;

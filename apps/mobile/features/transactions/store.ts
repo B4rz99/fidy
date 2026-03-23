@@ -317,14 +317,14 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
         operation: "update",
         createdAt: toIsoDateTime(now),
       });
+
+      trackTransactionEdited({ category: String(transaction.categoryId) });
     } catch {
       return { success: false as const, error: "Failed to update transaction" };
     }
 
     get().resetForm();
     await get().refresh();
-
-    trackTransactionEdited({ category: String(transaction.categoryId) });
 
     return { success: true as const, transaction };
   },
