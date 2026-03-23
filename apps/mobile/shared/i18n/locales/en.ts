@@ -188,6 +188,9 @@ const en = {
       almostThere: "Almost there!",
       completed: "Completed!",
       addPayment: "+ Add Payment",
+      paceAhead: "↑ Ahead %{amount}",
+      paceBehind: "↓ Behind %{amount}",
+      startSaving: "Start saving",
     },
     detail: {
       contributions: "Contributions",

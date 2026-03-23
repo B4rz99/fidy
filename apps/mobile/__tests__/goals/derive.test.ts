@@ -15,12 +15,14 @@ import {
   deriveBudgetNudges,
   deriveDebtProjection,
   deriveGoalAlerts,
+  deriveGoalCardStatus,
   deriveGoalPaceGuidance,
   deriveGoalProgress,
   deriveGoalProjection,
   deriveInstallmentProgress,
   deriveMonthlyMilestones,
 } from "@/features/goals/lib/derive";
+import type { CopAmount } from "@/shared/types/branded";
 
 // ---------------------------------------------------------------------------
 // deriveGoalProgress
@@ -666,5 +668,77 @@ describe("deriveGoalPaceGuidance", () => {
     const result = deriveGoalPaceGuidance(goal, 0, true, FIXED_NOW);
     // elapsedDays = max(0, negative) = 0 → expectedNow = 0 → delta = 0 → pace_ahead with 0
     expect(result).toEqual({ type: "pace_ahead", amountAhead: 0 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// deriveGoalCardStatus
+// ---------------------------------------------------------------------------
+
+describe("deriveGoalCardStatus", () => {
+  it("returns completed when isComplete is true", () => {
+    const progress = { percentComplete: 100, remaining: 0, isComplete: true };
+    const result = deriveGoalCardStatus(progress, null);
+    expect(result).toEqual({ kind: "completed" });
+  });
+
+  it("returns pace_ahead with amount when paceGuidance is pace_ahead", () => {
+    const progress = { percentComplete: 60, remaining: 400_000, isComplete: false };
+    const paceGuidance = { type: "pace_ahead" as const, amountAhead: 320_000 as CopAmount };
+    const result = deriveGoalCardStatus(progress, paceGuidance);
+    expect(result).toEqual({ kind: "pace_ahead", amount: 320_000 });
+  });
+
+  it("returns pace_behind with amount when paceGuidance is pace_behind with reason below_pace", () => {
+    const progress = { percentComplete: 30, remaining: 700_000, isComplete: false };
+    const paceGuidance = {
+      type: "pace_behind" as const,
+      amountBehind: 450_000 as CopAmount,
+      reason: "below_pace" as const,
+    };
+    const result = deriveGoalCardStatus(progress, paceGuidance);
+    expect(result).toEqual({ kind: "pace_behind", amount: 450_000 });
+  });
+
+  it("returns start_saving when paceGuidance is pace_behind with reason no_contributions", () => {
+    const progress = { percentComplete: 0, remaining: 1_000_000, isComplete: false };
+    const paceGuidance = {
+      type: "pace_behind" as const,
+      amountBehind: 0 as CopAmount,
+      reason: "no_contributions" as const,
+    };
+    const result = deriveGoalCardStatus(progress, paceGuidance);
+    expect(result).toEqual({ kind: "start_saving" });
+  });
+
+  it("returns almost_there when no paceGuidance and percentComplete >= 75", () => {
+    const progress = { percentComplete: 80, remaining: 200_000, isComplete: false };
+    const result = deriveGoalCardStatus(progress, null);
+    expect(result).toEqual({ kind: "almost_there" });
+  });
+
+  it("returns null when no paceGuidance and percentComplete < 75", () => {
+    const progress = { percentComplete: 40, remaining: 600_000, isComplete: false };
+    const result = deriveGoalCardStatus(progress, null);
+    expect(result).toBeNull();
+  });
+
+  it("returns almost_there when percentComplete is exactly 75 (boundary hit)", () => {
+    const progress = { percentComplete: 75, remaining: 250_000, isComplete: false };
+    const result = deriveGoalCardStatus(progress, null);
+    expect(result).toEqual({ kind: "almost_there" });
+  });
+
+  it("returns null when percentComplete is 74 (just below boundary)", () => {
+    const progress = { percentComplete: 74, remaining: 260_000, isComplete: false };
+    const result = deriveGoalCardStatus(progress, null);
+    expect(result).toBeNull();
+  });
+
+  it("returns completed when isComplete is true even with non-null paceGuidance (completed always wins)", () => {
+    const progress = { percentComplete: 100, remaining: 0, isComplete: true };
+    const paceGuidance = { type: "pace_ahead" as const, amountAhead: 100_000 as CopAmount };
+    const result = deriveGoalCardStatus(progress, paceGuidance);
+    expect(result).toEqual({ kind: "completed" });
   });
 });
