@@ -158,8 +158,9 @@ export const groupNotificationsBySection = (
   const weeklyMoves = notifications.filter(isCurrentWeekMove);
   const earlier = notifications.filter((n) => !isCurrentWeekMove(n));
 
+  const sameMonth = weekStart.getMonth() === weekEnd.getMonth();
   const startLabel = format(weekStart, "MMM d");
-  const endLabel = format(weekEnd, "d");
+  const endLabel = sameMonth ? format(weekEnd, "d") : format(weekEnd, "MMM d");
   const weekRange = `${startLabel}\u2013${endLabel}`;
 
   const sections: readonly NotificationSection[] = [
