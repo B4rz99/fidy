@@ -37,7 +37,11 @@ function AndroidTabs() {
   const { t } = useTranslation();
 
   return (
-    <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <CustomTabBar {...props} />}>
+    <Tabs
+      screenOptions={{ headerShown: false }}
+      initialRouteName="(index)"
+      tabBar={(props) => <CustomTabBar {...props} />}
+    >
       <Tabs.Screen name="(index)" options={{ title: t("tabs.home") }} />
       <Tabs.Screen name="(ai)" options={{ title: t("tabs.ai") }} />
       <Tabs.Screen name="add" options={{ title: t("tabs.add") }} />

@@ -61,7 +61,9 @@ export const NotificationsScreen = () => {
           options={{
             headerRight: () => (
               <Pressable onPress={handleClearAll} hitSlop={12}>
-                <Text style={[styles.clearButton, { color: accentRed }]}>{t("common.clearAll")}</Text>
+                <Text style={[styles.clearButton, { color: accentRed }]}>
+                  {t("common.clearAll")}
+                </Text>
               </Pressable>
             ),
           }}

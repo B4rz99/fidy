@@ -31,7 +31,6 @@ export function BudgetListScreen() {
   const nextMonth = useBudgetStore((s) => s.nextMonth);
   const prevMonth = useBudgetStore((s) => s.prevMonth);
 
-
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");

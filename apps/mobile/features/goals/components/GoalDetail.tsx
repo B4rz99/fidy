@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { Stack, useRouter } from "expo-router";
-import Svg, { Circle as SvgCircle } from "react-native-svg";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import Svg, { Circle as SvgCircle } from "react-native-svg";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatDateDisplay, formatMoney } from "@/shared/lib";

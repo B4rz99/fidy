@@ -117,8 +117,19 @@ export const useNotificationStore = create<NotificationState & NotificationActio
   clearAll: () => {
     if (!dbRef || !userIdRef) return;
     const now = toIsoDateTime(new Date());
+    const currentNotifications = get().notifications;
     try {
       softDeleteAllNotifications(dbRef, userIdRef, now);
+      // Enqueue sync for each deleted notification
+      currentNotifications.forEach((n) => {
+        enqueueSync(dbRef!, {
+          id: generateSyncQueueId(),
+          tableName: "notifications",
+          rowId: n.id,
+          operation: "delete",
+          createdAt: now,
+        });
+      });
     } catch {
       return;
     }

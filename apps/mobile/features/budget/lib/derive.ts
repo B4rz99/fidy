@@ -142,7 +142,12 @@ export function deriveBudgetAlerts(
 ): readonly BudgetAlert[] {
   return progresses.flatMap((p) => {
     // If over 100%, only show the 100% alert — the 80% alert is superseded
-    const applicableThresholds = p.percentUsed >= 100 ? ([100] as const) : p.percentUsed >= 80 ? ([80] as const) : ([] as const);
+    const applicableThresholds =
+      p.percentUsed >= 100
+        ? ([100] as const)
+        : p.percentUsed >= 80
+          ? ([80] as const)
+          : ([] as const);
     return applicableThresholds
       .filter((threshold) => !acknowledgedAlerts.has(`${p.budgetId}:${threshold}`))
       .map((threshold) => ({

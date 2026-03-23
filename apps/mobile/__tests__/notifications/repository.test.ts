@@ -106,12 +106,17 @@ describe("notification repository", () => {
   });
 
   describe("countNotificationsSince", () => {
-    it("returns 0 when since is null", async () => {
+    it("counts all non-deleted notifications when since is null", async () => {
+      mockGet.mockReturnValueOnce({ count: 3 });
+
       const { countNotificationsSince } = await import("@/features/notifications/repository");
       const result = countNotificationsSince(mockDb, "user-1" as UserId, null);
 
-      expect(result).toBe(0);
-      expect(mockSelect).not.toHaveBeenCalled();
+      expect(mockSelect).toHaveBeenCalled();
+      expect(mockFrom).toHaveBeenCalled();
+      expect(mockWhere).toHaveBeenCalled();
+      expect(mockGet).toHaveBeenCalled();
+      expect(result).toBe(3);
     });
 
     it("returns count when since is provided", async () => {

@@ -227,7 +227,14 @@ export const HomeScreen = () => {
               </Text>
             ),
             headerRight: () => (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 20, paddingHorizontal: 4 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 20,
+                  paddingHorizontal: 4,
+                }}
+              >
                 <SearchAction />
                 <BellAction />
               </View>

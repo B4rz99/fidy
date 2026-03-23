@@ -24,21 +24,16 @@ export function countNotificationsSince(
   userId: UserId,
   since: IsoDateTime | null
 ): number {
-  if (since === null) {
-    return 0;
-  }
+  const whereConditions =
+    since === null
+      ? and(eq(notifications.userId, userId), isNull(notifications.deletedAt))
+      : and(
+          eq(notifications.userId, userId),
+          gt(notifications.createdAt, since),
+          isNull(notifications.deletedAt)
+        );
 
-  const result = db
-    .select({ count: count() })
-    .from(notifications)
-    .where(
-      and(
-        eq(notifications.userId, userId),
-        gt(notifications.createdAt, since),
-        isNull(notifications.deletedAt)
-      )
-    )
-    .get();
+  const result = db.select({ count: count() }).from(notifications).where(whereConditions).get();
 
   return result?.count ?? 0;
 }
