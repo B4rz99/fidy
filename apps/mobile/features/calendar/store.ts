@@ -19,6 +19,8 @@ import {
   parseIsoDate,
   toIsoDate,
   toIsoDateTime,
+  trackBillCreated,
+  trackBillPaymentRecorded,
 } from "@/shared/lib";
 import type {
   BillId,
@@ -156,6 +158,8 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
       bills: [...s.bills, newBill],
     }));
 
+    trackBillCreated({ frequency });
+
     // Schedule notifications (best-effort, don't block the add)
     requestNotificationPermissions()
       .then((granted) => (granted ? scheduleBillNotifications(newBill) : undefined))
@@ -237,6 +241,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
 
       set((s) => ({ payments: [...s.payments, payment] }));
       useTransactionStore.getState().addToCache(transaction);
+      trackBillPaymentRecorded();
     } catch {
       // Transaction rolled back — state unchanged
     }
