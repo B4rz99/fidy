@@ -635,6 +635,23 @@ const es = {
       notNow: "Ahora No",
     },
   },
+
+  // Analíticas
+  analytics: {
+    title: "Analíticas",
+    incomeLabel: "Ingresos",
+    expensesLabel: "Gastos",
+    netPrefix: "Neto: ",
+    spendingByCategory: "Gastos por Categoría",
+    vsPreviousPeriod: {
+      W: "vs 7 días anteriores",
+      M: "vs 30 días anteriores",
+      Q: "vs 90 días anteriores",
+      Y: "vs 365 días anteriores",
+    },
+    totalSpending: "Gasto total",
+    noData: "No hay suficientes datos para este periodo",
+  },
 } as const;
 
 export default es;
