@@ -28,6 +28,7 @@ import {
 } from "@/features/capture-sources";
 import { useCategoriesStore } from "@/features/categories";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
+import { useAnalyticsStore } from "@/features/analytics";
 import { useGoalStore } from "@/features/goals";
 import { registerPushToken, useNotificationStore } from "@/features/notifications";
 import {
@@ -82,6 +83,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       useCalendarStore.getState().initStore(db, userId);
       useBudgetStore.getState().initStore(db, userId);
       useGoalStore.getState().initStore(db, userId);
+      useAnalyticsStore.getState().initStore(db, userId);
       useCategoriesStore.getState().initStore(db, userId);
       useNotificationStore.getState().initStore(db, userId);
       useSyncConflictStore.getState().initStore(db);
@@ -94,6 +96,10 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
         .loadBudgets()
         .catch(handleRecoverableError("Failed to load budgets"));
       useGoalStore.getState().loadGoals().catch(handleRecoverableError("Failed to load goals"));
+      useAnalyticsStore
+        .getState()
+        .loadAnalytics()
+        .catch(handleRecoverableError("Failed to load analytics"));
       useCategoriesStore
         .getState()
         .loadUserCategories()

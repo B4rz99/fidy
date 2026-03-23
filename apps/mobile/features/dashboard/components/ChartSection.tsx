@@ -4,6 +4,7 @@ import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  Pressable,
   ScrollView,
   Text,
   View,
@@ -30,6 +31,7 @@ type ChartSectionProps = {
   readonly categorySpending: readonly CategorySpendingItem[];
   readonly dailySpending: readonly DailySpendingItem[];
   readonly totalSpent: number;
+  readonly onPress?: () => void;
 };
 
 const toSegments = (categories: readonly CategorySpendingItem[], totalSpent: number) =>
@@ -78,6 +80,7 @@ export const ChartSection = ({
   categorySpending,
   dailySpending,
   totalSpent,
+  onPress,
 }: ChartSectionProps) => {
   const { t, locale } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
@@ -105,7 +108,7 @@ export const ChartSection = ({
   );
 
   return (
-    <View className="rounded-chart bg-chart-bg p-4 dark:bg-chart-bg-dark">
+    <Pressable onPress={onPress} className="rounded-chart bg-chart-bg p-4 dark:bg-chart-bg-dark">
       <View onLayout={handleLayout}>
         {slideWidth > 0 && (
           <ScrollView
@@ -175,6 +178,6 @@ export const ChartSection = ({
         )}
       </View>
       <CarouselDots activeIndex={activeIndex} />
-    </View>
+    </Pressable>
   );
 };

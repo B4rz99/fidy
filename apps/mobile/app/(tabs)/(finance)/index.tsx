@@ -1,11 +1,12 @@
 import { Stack } from "expo-router";
 import { useState } from "react";
+import { AnalyticsScreen } from "@/features/analytics";
 import { BudgetListScreen } from "@/features/budget";
 import { GoalsListScreen } from "@/features/goals";
 import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
-type FinanceTab = "budgets" | "goals";
+type FinanceTab = "budgets" | "goals" | "analytics";
 
 function SegmentControl({
   active,
@@ -19,30 +20,30 @@ function SegmentControl({
   const accentGreen = useThemeColor("accentGreen");
   const secondary = useThemeColor("secondary");
 
+  const tabs: ReadonlyArray<{ key: FinanceTab; label: string }> = [
+    { key: "budgets", label: t("budgets.title") },
+    { key: "goals", label: t("goals.title") },
+    { key: "analytics", label: t("analytics.title") },
+  ];
+
   return (
     <View style={[styles.segmentContainer, { backgroundColor: card }]}>
-      <Pressable
-        style={[
-          styles.segmentButton,
-          active === "budgets" ? { backgroundColor: accentGreen } : undefined,
-        ]}
-        onPress={() => onSwitch("budgets")}
-      >
-        <Text style={[styles.segmentText, { color: active === "budgets" ? "#FFFFFF" : secondary }]}>
-          {t("budgets.title")}
-        </Text>
-      </Pressable>
-      <Pressable
-        style={[
-          styles.segmentButton,
-          active === "goals" ? { backgroundColor: accentGreen } : undefined,
-        ]}
-        onPress={() => onSwitch("goals")}
-      >
-        <Text style={[styles.segmentText, { color: active === "goals" ? "#FFFFFF" : secondary }]}>
-          {t("goals.title")}
-        </Text>
-      </Pressable>
+      {tabs.map((tab) => (
+        <Pressable
+          key={tab.key}
+          style={[
+            styles.segmentButton,
+            active === tab.key ? { backgroundColor: accentGreen } : undefined,
+          ]}
+          onPress={() => onSwitch(tab.key)}
+        >
+          <Text
+            style={[styles.segmentText, { color: active === tab.key ? "#FFFFFF" : secondary }]}
+          >
+            {tab.label}
+          </Text>
+        </Pressable>
+      ))}
     </View>
   );
 }
@@ -64,7 +65,9 @@ export default function FinanceScreen() {
           <SegmentControl active={activeTab} onSwitch={setActiveTab} />
         </View>
       )}
-      {activeTab === "budgets" ? <BudgetListScreen /> : <GoalsListScreen />}
+      {activeTab === "budgets" && <BudgetListScreen />}
+      {activeTab === "goals" && <GoalsListScreen />}
+      {activeTab === "analytics" && <AnalyticsScreen />}
     </View>
   );
 }
@@ -77,7 +80,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderRadius: 12,
     padding: 4,
-    width: 220,
+    width: 300,
   },
   segmentButton: {
     flex: 1,
