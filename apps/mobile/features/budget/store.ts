@@ -1,6 +1,7 @@
 import { addMonths, format, subMonths } from "date-fns";
 import { create } from "zustand";
 import { useNotificationStore } from "@/features/notifications";
+import { useSettingsStore } from "@/features/settings/store";
 import { CATEGORY_MAP, useTransactionStore } from "@/features/transactions";
 import { getSpendingByCategoryAggregate } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
@@ -153,12 +154,14 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
       const locale = useLocaleStore.getState().locale;
       // Schedule the first fresh alert to detect permission state; schedule rest only on "scheduled"
       if (freshAlerts.length > 0) {
+        const budgetAlertsEnabled =
+          useSettingsStore.getState().notificationPreferences.budgetAlerts;
         const firstAlert = freshAlerts[0];
         const firstCategory = CATEGORY_MAP[firstAlert.categoryId];
         const firstName = firstCategory
           ? getCategoryLabel(firstCategory, locale)
           : firstAlert.categoryId;
-        scheduleBudgetAlert(firstAlert, firstName)
+        scheduleBudgetAlert(firstAlert, firstName, budgetAlertsEnabled)
           .then((result) => {
             if (result.type === "needs_permission") {
               set({ pendingPermissionRequest: true });
@@ -168,7 +171,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
             freshAlerts.slice(1).forEach((alert) => {
               const category = CATEGORY_MAP[alert.categoryId];
               const name = category ? getCategoryLabel(category, locale) : alert.categoryId;
-              scheduleBudgetAlert(alert, name).catch(() => {});
+              scheduleBudgetAlert(alert, name, budgetAlertsEnabled).catch(() => {});
             });
           })
           .catch(() => {});
