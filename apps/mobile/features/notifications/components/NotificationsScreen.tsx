@@ -2,10 +2,12 @@ import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuthStore } from "@/features/auth";
 import { ScreenLayout } from "@/shared/components";
 import { Pressable, SectionList, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { deriveNotificationDisplay, groupNotificationsBySection } from "../lib/display";
+import { isFirstWeek } from "../lib/first-week";
 import type { NotificationDisplay } from "../lib/types";
 import { useNotificationStore } from "../store";
 import { NotificationCard } from "./NotificationCard";
@@ -20,6 +22,8 @@ export const NotificationsScreen = () => {
   const accentRed = useThemeColor("accentRed");
   const { bottom } = useSafeAreaInsets();
   const hasNotifications = notifications.length > 0;
+  const accountCreatedAt = useAuthStore((s) => s.session?.user.created_at ?? "");
+  const firstWeek = isFirstWeek(accountCreatedAt, new Date());
 
   const handleClearAll = useCallback(() => {
     useNotificationStore.getState().clearAll();
@@ -70,7 +74,10 @@ export const NotificationsScreen = () => {
         />
       )}
       {!isLoading && sections.length === 0 ? (
-        <NotificationEmptyState />
+        <NotificationEmptyState
+          titleKey={firstWeek ? "notifications.firstWeekTitle" : "notifications.emptyTitle"}
+          subtitleKey={firstWeek ? "notifications.firstWeekMessage" : "notifications.emptySubtitle"}
+        />
       ) : (
         <SectionList
           sections={sections}
