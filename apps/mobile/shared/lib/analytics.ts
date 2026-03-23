@@ -60,7 +60,7 @@ export function trackGoalMilestoneReached(): void {
 }
 
 // Bills
-export function trackBillCreated(props: { frequency: "monthly" | "biweekly" | "weekly" }): void {
+export function trackBillCreated(props: { frequency: "monthly" | "biweekly" | "weekly" | "yearly" }): void {
   posthog.capture("bill_created", props);
 }
 
