@@ -351,6 +351,14 @@ function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="notification-preferences"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
+          />
+          <Stack.Screen
             name="categories"
             options={{
               headerShown: Platform.OS === "ios",

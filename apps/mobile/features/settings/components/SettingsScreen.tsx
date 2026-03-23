@@ -46,8 +46,7 @@ export function SettingsScreen() {
   const connectedCount = useEmailCaptureStore((s) => s.accounts.length);
 
   const themePreference = useSettingsStore((s) => s.themePreference);
-  const notificationsEnabled = useSettingsStore((s) => s.notificationsEnabled);
-  const setNotificationsEnabled = useSettingsStore((s) => s.setNotificationsEnabled);
+  const areAllNotificationsOff = useSettingsStore((s) => s.areAllNotificationsOff);
 
   const accentGreen = useThemeColor("accentGreen");
   const tertiaryColor = useThemeColor("tertiary");
@@ -144,9 +143,8 @@ export function SettingsScreen() {
           <SettingsRow
             icon={Bell}
             label={t("settings.notifications")}
-            accessory="switch"
-            switchValue={notificationsEnabled}
-            onSwitchChange={setNotificationsEnabled}
+            subtitle={areAllNotificationsOff ? t("settings.off") : t("settings.on")}
+            onPress={() => router.push("/notification-preferences")}
             isLast
           />
         </SettingsSection>

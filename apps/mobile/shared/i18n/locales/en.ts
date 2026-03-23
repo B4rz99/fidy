@@ -405,6 +405,8 @@ const en = {
       other: "%{count} accounts",
     },
     notifications: "Notifications",
+    on: "On",
+    off: "Off",
     helpSupport: "Help & Support",
     privacyPolicy: "Privacy Policy",
     termsOfService: "Terms of Service",

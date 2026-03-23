@@ -407,6 +407,8 @@ const es = {
       other: "%{count} cuentas",
     },
     notifications: "Notificaciones",
+    on: "Activadas",
+    off: "Desactivadas",
     helpSupport: "Ayuda y Soporte",
     privacyPolicy: "Política de Privacidad",
     termsOfService: "Términos de Servicio",
