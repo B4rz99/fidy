@@ -241,10 +241,10 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
 
       set((s) => ({ payments: [...s.payments, payment] }));
       useTransactionStore.getState().addToCache(transaction);
-      trackBillPaymentRecorded();
     } catch {
-      // Transaction rolled back — state unchanged
+      return; // Transaction rolled back — state unchanged
     }
+    trackBillPaymentRecorded();
   },
 
   unmarkBillPaid: async (billId, dueDate) => {

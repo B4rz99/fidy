@@ -44,8 +44,10 @@ export default function AutoSuggestBudgetsScreen() {
       const budgets = buildBudgetMap();
       if (budgets.size > 0) {
         await acceptSuggestions(budgets);
+        trackBudgetSuggestionAccepted({ count: budgets.size });
+      } else {
+        trackBudgetSuggestionRejected();
       }
-      trackBudgetSuggestionAccepted({ count: budgets.size });
       router.back();
     });
 
