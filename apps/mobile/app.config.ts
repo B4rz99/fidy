@@ -61,7 +61,13 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
     ],
     "expo-background-task",
     "expo-localization",
-    "expo-notifications",
+    [
+      "expo-notifications",
+      {
+        icon: "./assets/images/notification-icon.png",
+        color: "#7CB243",
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,
