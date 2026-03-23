@@ -2,21 +2,6 @@ import * as Notifications from "expo-notifications";
 import i18n from "../../../shared/i18n/i18n";
 import type { BudgetAlert } from "./derive";
 
-let handlerConfigured = false;
-
-function ensureHandlerConfigured() {
-  if (handlerConfigured) return;
-  handlerConfigured = true;
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: false,
-      shouldSetBadge: false,
-    }),
-  });
-}
-
 export async function requestBudgetNotificationPermissions(): Promise<boolean> {
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   if (existingStatus === "granted") return true;
@@ -31,8 +16,6 @@ export async function scheduleBudgetAlert(
   try {
     const { status } = await Notifications.getPermissionsAsync();
     if (status !== "granted") return null;
-
-    ensureHandlerConfigured();
 
     const title =
       alert.threshold === 100

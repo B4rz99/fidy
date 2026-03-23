@@ -1,5 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
+import * as Notifications from "expo-notifications";
 import { create } from "zustand";
+import { deletePushToken, PROJECT_ID } from "@/features/notifications/services/push-token";
 import { getSupabase } from "@/shared/db";
 import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
 
@@ -85,6 +87,16 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   },
 
   signOut: async () => {
+    // Best-effort push token cleanup before signing out
+    try {
+      const { data: token } = await Notifications.getExpoPushTokenAsync({
+        projectId: PROJECT_ID,
+      });
+      await deletePushToken(token);
+    } catch {
+      // Don't block signout on token cleanup failure
+    }
+
     try {
       const supabase = getSupabase();
       await supabase.auth.signOut();

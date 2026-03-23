@@ -9,6 +9,7 @@ import {
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useFonts } from "expo-font";
 import { getLocales } from "expo-localization";
+import * as Notifications from "expo-notifications";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -29,6 +30,7 @@ import { useCategoriesStore } from "@/features/categories";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
 import { useGoalStore } from "@/features/goals";
 import { useNotificationStore } from "@/features/notifications";
+import { registerPushToken } from "@/features/notifications/services/push-token";
 import {
   clearOnboardingFromStore,
   getOnboardingCompleteFromStore,
@@ -124,6 +126,33 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
   useNotificationCapture(captureDb, userId);
   useApplePayCapture(captureDb, userId);
   useSmsDetection(captureDb, userId);
+
+  // Global notification handler + push token / response listeners
+  useEffect(() => {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      }),
+    });
+
+    registerPushToken(userId).catch(captureError);
+
+    const tokenSub = Notifications.addPushTokenListener(() => {
+      registerPushToken(userId).catch(captureError);
+    });
+
+    const responseSub = Notifications.addNotificationResponseReceivedListener((_response) => {
+      // Deep linking will be wired in Step 6 — parse response.notification.request.content.data.route
+    });
+
+    return () => {
+      tokenSub.remove();
+      responseSub.remove();
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (migrationsError) {
