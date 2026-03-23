@@ -1,6 +1,11 @@
 import { useCallback } from "react";
 import { useTransactionStore } from "@/features/transactions";
-import { captureWarning, parseIsoDate, trackTransactionCreated } from "@/shared/lib";
+import {
+  captureWarning,
+  parseIsoDate,
+  trackAiMessageSent,
+  trackTransactionCreated,
+} from "@/shared/lib";
 import type { IsoDate } from "@/shared/types/branded";
 import { parseActionFromResponse } from "../lib/parse-action";
 import type { ChatAction } from "../schema";
@@ -66,6 +71,7 @@ export function useStreamingChat() {
       }
 
       await store.addUserMessage(text);
+      trackAiMessageSent();
 
       const allMessages = [
         ...store.messages.map((m) => ({

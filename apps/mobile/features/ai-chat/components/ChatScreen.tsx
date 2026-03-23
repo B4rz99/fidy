@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTransactionStore } from "@/features/transactions";
 import { HEADER_HEIGHT, ScreenLayout } from "@/shared/components";
 import { Keyboard, KeyboardAvoidingView, Platform, View } from "@/shared/components/rn";
-import { useTranslation } from "@/shared/hooks";
+import { useMountEffect, useTranslation } from "@/shared/hooks";
+import { trackAiChatOpened } from "@/shared/lib";
 import type { ChatMessageId } from "@/shared/types/branded";
 import { useStreamingChat } from "../hooks/use-streaming-chat";
 import type { ChatMessage } from "../schema";
@@ -37,6 +38,7 @@ const MemoizedMessageBubble = memo(function MemoizedBubble({
 
 export function ChatScreen({ onBack }: ChatScreenProps) {
   const { t } = useTranslation();
+  useMountEffect(() => trackAiChatOpened());
   const listRef = useRef<FlashListRef<ChatMessage>>(null);
   const { top: safeTop } = useSafeAreaInsets();
 
