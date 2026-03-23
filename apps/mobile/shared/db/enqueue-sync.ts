@@ -8,7 +8,8 @@ export type SyncTableName =
   | "budgets"
   | "goals"
   | "goalContributions"
-  | "userCategories";
+  | "userCategories"
+  | "notifications";
 
 export type SyncQueueEntry = {
   id: SyncQueueId;

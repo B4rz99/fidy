@@ -21,6 +21,7 @@ const en = {
     none: "(none)",
     name: "Name",
     other: "Other",
+    clearAll: "Clear all",
   },
 
   // Tab navigation
@@ -568,6 +569,37 @@ const en = {
       other:
         "You've gone %{overAmount} over. Taking a close look at recent purchases might reveal some easy wins.",
     },
+  },
+  notifications: {
+    // Titles
+    budgetWarning: "%{category} — near your limit",
+    budgetExceeded: "%{category} — over budget",
+    spendingAnomaly: "%{category} — %{multiplier}x your average",
+    budgetPace: "%{category} — on pace to exceed",
+    goalMilestone: "%{goalName} — %{percent}% saved!",
+
+    // Messages
+    budgetWarningMsg: "%{remaining} left for %{daysLeft} days",
+    budgetExceededMsg: "%{overAmount} over — consider pausing until next month",
+    spendingAnomalyMsg: "Your weekly spending is higher than usual",
+    budgetPaceMsg: "Projected %{projected} vs %{budget} budget",
+    goalMilestoneMsg: "You've saved %{percent}% of your goal",
+
+    // Section headers
+    weeklyMovesHeader: "YOUR MONEY MOVES · %{weekRange}",
+    earlierHeader: "EARLIER",
+
+    // Empty state
+    emptyTitle: "Nothing new right now",
+    emptySubtitle: "We'll let you know when your budgets or goals need attention",
+
+    // First-week placeholder (G8)
+    firstWeekTitle: "Getting to know you",
+    firstWeekMessage:
+      "Fidy is getting to know your spending. Give me about a week and I'll have your first Money Moves ready.",
+
+    // Screen
+    title: "Notifications",
   },
 } as const;
 

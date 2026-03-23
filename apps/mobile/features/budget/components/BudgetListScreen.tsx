@@ -6,7 +6,6 @@ import { Plus, Wallet } from "@/shared/components/icons";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useBudgetStore } from "../store";
-import { BudgetAlertBanner } from "./BudgetAlertBanner";
 import { BudgetCard } from "./BudgetCard";
 import { BudgetSummaryCard } from "./BudgetSummaryCard";
 import { UpcomingBillsSection } from "./UpcomingBillsSection";
@@ -31,8 +30,6 @@ export function BudgetListScreen() {
   const summary = useBudgetStore((s) => s.summary);
   const nextMonth = useBudgetStore((s) => s.nextMonth);
   const prevMonth = useBudgetStore((s) => s.prevMonth);
-  const pendingAlerts = useBudgetStore((s) => s.pendingAlerts);
-  const acknowledgeAlert = useBudgetStore((s) => s.acknowledgeAlert);
 
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
@@ -90,14 +87,6 @@ export function BudgetListScreen() {
         >
           {hasBudgets ? (
             <View style={styles.budgetContent}>
-              {pendingAlerts.map((alert) => (
-                <BudgetAlertBanner
-                  key={`${alert.budgetId}:${alert.threshold}`}
-                  alert={alert}
-                  onDismiss={acknowledgeAlert}
-                />
-              ))}
-
               <BudgetSummaryCard
                 totalBudget={summary.totalBudget}
                 totalSpent={summary.totalSpent}

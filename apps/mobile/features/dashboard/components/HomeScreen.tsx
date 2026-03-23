@@ -8,6 +8,7 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture";
+import { BellAction } from "@/features/notifications";
 import { SearchAction } from "@/features/search";
 import { SyncConflictBanner } from "@/features/sync";
 import {
@@ -200,7 +201,17 @@ export const HomeScreen = () => {
   );
 
   return (
-    <ScreenLayout title="fidy" rightActions={Platform.OS !== "ios" ? <SearchAction /> : undefined}>
+    <ScreenLayout
+      title="fidy"
+      rightActions={
+        Platform.OS !== "ios" ? (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+            <SearchAction />
+            <BellAction />
+          </View>
+        ) : undefined
+      }
+    >
       {Platform.OS === "ios" && (
         <Stack.Screen
           options={{
@@ -215,7 +226,19 @@ export const HomeScreen = () => {
                 fidy
               </Text>
             ),
-            headerRight: () => <SearchAction />,
+            headerRight: () => (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 20,
+                  paddingHorizontal: 4,
+                }}
+              >
+                <SearchAction />
+                <BellAction />
+              </View>
+            ),
           }}
         />
       )}

@@ -140,9 +140,15 @@ export function deriveBudgetAlerts(
   acknowledgedAlerts: ReadonlySet<string>,
   daysLeft: number
 ): readonly BudgetAlert[] {
-  return progresses.flatMap((p) =>
-    ([80, 100] as const)
-      .filter((threshold) => p.percentUsed >= threshold)
+  return progresses.flatMap((p) => {
+    // If over 100%, only show the 100% alert — the 80% alert is superseded
+    const applicableThresholds =
+      p.percentUsed >= 100
+        ? ([100] as const)
+        : p.percentUsed >= 80
+          ? ([80] as const)
+          : ([] as const);
+    return applicableThresholds
       .filter((threshold) => !acknowledgedAlerts.has(`${p.budgetId}:${threshold}`))
       .map((threshold) => ({
         budgetId: p.budgetId,
@@ -152,6 +158,6 @@ export function deriveBudgetAlerts(
         suggestionKey: getSuggestionKey(threshold, p.categoryId),
         daysLeft,
         remainingAmount: p.remaining,
-      }))
-  );
+      }));
+  });
 }

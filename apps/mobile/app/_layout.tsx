@@ -28,6 +28,7 @@ import {
 import { useCategoriesStore } from "@/features/categories";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
 import { useGoalStore } from "@/features/goals";
+import { useNotificationStore } from "@/features/notifications";
 import {
   clearOnboardingFromStore,
   getOnboardingCompleteFromStore,
@@ -80,6 +81,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       useBudgetStore.getState().initStore(db, userId);
       useGoalStore.getState().initStore(db, userId);
       useCategoriesStore.getState().initStore(db, userId);
+      useNotificationStore.getState().initStore(db, userId);
       useSyncConflictStore.getState().initStore(db);
       Promise.all([
         useCalendarStore.getState().loadBills(),
@@ -230,6 +232,14 @@ function RootLayout() {
           <Stack.Screen
             name="delete-account"
             options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+          />
+          <Stack.Screen
+            name="notifications"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
           />
           <Stack.Screen
             name="search"

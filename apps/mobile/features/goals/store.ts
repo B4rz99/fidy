@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { useNotificationStore } from "@/features/notifications";
 import { useTransactionStore } from "@/features/transactions";
 import { getMonthlyTotalsByType } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
@@ -282,7 +283,34 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
     } catch {
       return false;
     }
+    const goalBefore = get().goals.find((g) => g.goal.id === input.goalId);
+    const percentBefore = goalBefore?.progress.percentComplete ?? 0;
+
     await get().loadGoals();
+
+    // Detect goal milestone crossings — only fire for NEWLY crossed milestones
+    const goalAfter = get().goals.find((g) => g.goal.id === input.goalId);
+    if (goalAfter) {
+      const percentAfter = goalAfter.progress.percentComplete;
+      const milestones = [25, 50, 75, 100] as const;
+      milestones.forEach((milestone) => {
+        if (percentBefore < milestone && percentAfter >= milestone) {
+          useNotificationStore.getState().insertNotification({
+            type: "goal_milestone",
+            dedupKey: `goal_milestone:${input.goalId}:${milestone}`,
+            categoryId: null,
+            goalId: input.goalId,
+            titleKey: "notifications.goalMilestone",
+            messageKey: "notifications.goalMilestoneMsg",
+            params: JSON.stringify({
+              goalName: goalAfter.goal.name,
+              percent: milestone,
+            }),
+          });
+        }
+      });
+    }
+
     // Refresh contributions if viewing this goal
     if (get().selectedGoalId === input.goalId) {
       get().loadGoalContributions(input.goalId);
