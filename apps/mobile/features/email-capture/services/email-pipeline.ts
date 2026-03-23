@@ -11,8 +11,8 @@ import {
   generateTransactionId,
   normalizeMerchant,
   toIsoDateTime,
+  trackTransactionCreated,
 } from "@/shared/lib";
-import { trackTransactionCreated } from "@/shared/lib/analytics";
 import type {
   CategoryId,
   CopAmount,

@@ -1,8 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
 import { getSupabase } from "@/shared/db";
-import { captureWarning } from "@/shared/lib";
-import { identifyUser, resetAnalyticsUser } from "@/shared/lib/analytics";
+import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
 
 // biome-ignore lint/style/useNamingConvention: OAuth is a proper noun
 type OAuthProvider = "google" | "azure";

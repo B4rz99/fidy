@@ -1,3 +1,24 @@
+export {
+  identifyUser,
+  resetAnalyticsUser,
+  trackAiChatOpened,
+  trackAiMemoryViewed,
+  trackAiMessageSent,
+  trackBillCreated,
+  trackBillPaymentRecorded,
+  trackBudgetAlertViewed,
+  trackBudgetCreated,
+  trackBudgetSuggestionAccepted,
+  trackBudgetSuggestionRejected,
+  trackGoalContributionAdded,
+  trackGoalCreated,
+  trackGoalMilestoneReached,
+  trackNotificationCenterOpened,
+  trackNotificationTapped,
+  trackTransactionCreated,
+  trackTransactionDeleted,
+  trackTransactionEdited,
+} from "./analytics";
 export type { CurrencyConfig } from "./currency";
 export { getActiveCurrency } from "./currency";
 export { formatDateDisplay, parseIsoDate, toIsoDate, toIsoDateTime, toMonth } from "./format-date";

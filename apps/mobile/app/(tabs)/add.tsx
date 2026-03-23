@@ -23,8 +23,7 @@ import { Calendar } from "@/shared/components/icons";
 import { Platform, Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
-import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
-import { trackTransactionCreated } from "@/shared/lib/analytics";
+import { formatInputDisplay, parseDigitsToAmount, trackTransactionCreated } from "@/shared/lib";
 
 export default function AddTransactionScreen() {
   const { navigate } = useRouter();

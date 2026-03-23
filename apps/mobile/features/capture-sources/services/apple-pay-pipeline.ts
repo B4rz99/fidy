@@ -14,8 +14,8 @@ import {
   normalizeMerchant,
   toIsoDate,
   toIsoDateTime,
+  trackTransactionCreated,
 } from "@/shared/lib";
-import { trackTransactionCreated } from "@/shared/lib/analytics";
 import type { CategoryId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
 import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
 import { insertProcessedCapture } from "../lib/repository";

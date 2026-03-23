@@ -7,8 +7,9 @@ import {
   toIsoDate,
   toIsoDateTime,
   toMonth,
+  trackTransactionDeleted,
+  trackTransactionEdited,
 } from "@/shared/lib";
-import { trackTransactionDeleted, trackTransactionEdited } from "@/shared/lib/analytics";
 import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
 import { buildTransaction, toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
 import {
