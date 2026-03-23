@@ -30,17 +30,12 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
 
   const renderStatus = () => {
     if (cardStatus === null) return null;
-    if (cardStatus.kind === "completed") {
+    if (cardStatus.kind === "completed" || cardStatus.kind === "almost_there") {
+      const label =
+        cardStatus.kind === "completed" ? t("goals.card.completed") : t("goals.card.almostThere");
       return (
         <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: accentGreen }}>
-          {t("goals.card.completed")}
-        </Text>
-      );
-    }
-    if (cardStatus.kind === "almost_there") {
-      return (
-        <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: accentGreen }}>
-          {t("goals.card.almostThere")}
+          {label}
         </Text>
       );
     }

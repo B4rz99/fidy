@@ -390,7 +390,6 @@ export function deriveGoalCardStatus(
     if (paceGuidance.type === "pace_ahead") {
       return { kind: "pace_ahead", amount: paceGuidance.amountAhead };
     }
-    // paceGuidance is now narrowed to pace_behind
     if (paceGuidance.reason === "no_contributions") {
       return { kind: "start_saving" };
     }
