@@ -6,7 +6,7 @@ import { getSpendingByCategoryAggregate } from "@/features/transactions/lib/repo
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import { getCategoryLabel, useLocaleStore } from "@/shared/i18n";
-import { formatMoney, generateBudgetId, generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
+import { formatMoney, generateBudgetId, generateSyncQueueId, toIsoDateTime, trackBudgetCreated } from "@/shared/lib";
 import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
 import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./lib/derive";
 import {
@@ -210,6 +210,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     } catch {
       return false;
     }
+    trackBudgetCreated({ category: String(categoryId) });
     await get().loadBudgets();
     return true;
   },

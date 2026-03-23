@@ -1,9 +1,9 @@
 import { CATEGORY_MAP } from "@/features/transactions";
 import { X } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { formatMoney } from "@/shared/lib";
+import { formatMoney, trackBudgetAlertViewed } from "@/shared/lib";
 import type { BudgetId, CopAmount } from "@/shared/types/branded";
 import type { BudgetAlert } from "../lib/derive";
 
@@ -18,6 +18,8 @@ export function BudgetAlertBanner({ alert, onDismiss }: Props) {
   const accentGreen = useThemeColor("accentGreen");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
+
+  useMountEffect(() => trackBudgetAlertViewed({ threshold: alert.threshold, category: String(alert.categoryId) }));
 
   const category = CATEGORY_MAP[alert.categoryId];
   const CategoryIcon = category?.icon;

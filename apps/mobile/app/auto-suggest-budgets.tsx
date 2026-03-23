@@ -14,7 +14,7 @@ import {
 } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { formatMoney } from "@/shared/lib";
+import { formatMoney, trackBudgetSuggestionAccepted, trackBudgetSuggestionRejected } from "@/shared/lib";
 
 export default function AutoSuggestBudgetsScreen() {
   const router = useRouter();
@@ -38,13 +38,16 @@ export default function AutoSuggestBudgetsScreen() {
   const handleAccept = () =>
     guardedRun(async () => {
       const budgets = buildBudgetMap();
+      const selectedCount = selectedIds.size;
       if (budgets.size > 0) {
         await acceptSuggestions(budgets);
       }
+      trackBudgetSuggestionAccepted({ count: selectedCount });
       router.back();
     });
 
   const handleSkip = () => {
+    trackBudgetSuggestionRejected();
     router.back();
   };
 
