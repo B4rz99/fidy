@@ -390,10 +390,11 @@ export function deriveGoalCardStatus(
     if (paceGuidance.type === "pace_ahead") {
       return { kind: "pace_ahead", amount: paceGuidance.amountAhead };
     }
-    if (paceGuidance.reason === "below_pace") {
-      return { kind: "pace_behind", amount: paceGuidance.amountBehind };
+    // paceGuidance is now narrowed to pace_behind
+    if (paceGuidance.reason === "no_contributions") {
+      return { kind: "start_saving" };
     }
-    return { kind: "start_saving" };
+    return { kind: "pace_behind", amount: paceGuidance.amountBehind };
   }
 
   if (progress.percentComplete >= 75) return { kind: "almost_there" };
