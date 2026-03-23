@@ -4,7 +4,14 @@ import { useTransactionStore } from "@/features/transactions";
 import { getMonthlyTotalsByType } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
-import { generateId, generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
+import {
+  generateId,
+  generateSyncQueueId,
+  toIsoDateTime,
+  trackGoalContributionAdded,
+  trackGoalCreated,
+  trackGoalMilestoneReached,
+} from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 
 // Import from goals feature
@@ -212,6 +219,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
     } catch {
       return false;
     }
+    trackGoalCreated();
     await get().loadGoals();
     return true;
   },
@@ -283,6 +291,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
     } catch {
       return false;
     }
+    trackGoalContributionAdded();
     const goalBefore = get().goals.find((g) => g.goal.id === input.goalId);
     const percentBefore = goalBefore?.progress.percentComplete ?? 0;
 
@@ -307,6 +316,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
               percent: milestone,
             }),
           });
+          trackGoalMilestoneReached();
         }
       });
     }

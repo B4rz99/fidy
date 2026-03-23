@@ -22,6 +22,7 @@ import {
 } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
+import { trackNotificationTapped } from "@/shared/lib";
 import type { NotificationDisplay } from "../lib/types";
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -77,9 +78,10 @@ export const NotificationCard = React.memo(function NotificationCard({
 
   const handlePress = useCallback(() => {
     if (notification.route) {
+      trackNotificationTapped({ type: notification.type });
       onPress(notification.route);
     }
-  }, [notification.route, onPress]);
+  }, [notification.route, notification.type, onPress]);
 
   return (
     <Pressable

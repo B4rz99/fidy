@@ -1,6 +1,11 @@
 import { useCallback } from "react";
 import { useTransactionStore } from "@/features/transactions";
-import { captureWarning, parseIsoDate } from "@/shared/lib";
+import {
+  captureWarning,
+  parseIsoDate,
+  trackAiMessageSent,
+  trackTransactionCreated,
+} from "@/shared/lib";
 import type { IsoDate } from "@/shared/types/branded";
 import { parseActionFromResponse } from "../lib/parse-action";
 import type { ChatAction } from "../schema";
@@ -34,7 +39,14 @@ export function useStreamingChat() {
         store.setDescription(action.data.description);
         store.setDate(parseIsoDate(action.data.date as IsoDate));
         try {
-          await store.saveTransaction();
+          const result = await store.saveTransaction();
+          if (result.success) {
+            trackTransactionCreated({
+              type: action.data.type,
+              category: String(action.data.categoryId),
+              source: "ai_chat",
+            });
+          }
         } finally {
           store.resetForm();
         }
@@ -59,6 +71,7 @@ export function useStreamingChat() {
       }
 
       await store.addUserMessage(text);
+      trackAiMessageSent();
 
       const allMessages = [
         ...store.messages.map((m) => ({

@@ -14,6 +14,7 @@ import {
   normalizeMerchant,
   toIsoDate,
   toIsoDateTime,
+  trackTransactionCreated,
 } from "@/shared/lib";
 import type { CategoryId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
 import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
@@ -121,6 +122,12 @@ export async function processApplePayIntent(
 
     // Always cache merchant rule (Apple Pay data is high confidence)
     await insertMerchantRule(db, userId, merchantKey, categoryId, now);
+
+    trackTransactionCreated({
+      type: "expense",
+      category: String(categoryId),
+      source: "apple_pay",
+    });
 
     capturePipelineEvent({ source: "apple_pay", saved: 1, skippedDuplicate: 0 });
     return { saved: true, skippedDuplicate: false, transactionId: txId };

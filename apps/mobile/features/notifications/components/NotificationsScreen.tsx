@@ -6,6 +6,7 @@ import { useAuthStore } from "@/features/auth";
 import { ScreenLayout } from "@/shared/components";
 import { Pressable, SectionList, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
+import { trackNotificationCenterOpened } from "@/shared/lib";
 import { deriveNotificationDisplay, groupNotificationsBySection } from "../lib/display";
 import { isFirstWeek } from "../lib/first-week";
 import type { NotificationDisplay } from "../lib/types";
@@ -30,6 +31,7 @@ export const NotificationsScreen = () => {
   }, []);
 
   useMountEffect(() => {
+    trackNotificationCenterOpened();
     useNotificationStore.getState().markVisited();
     useNotificationStore.getState().loadNotifications();
   });

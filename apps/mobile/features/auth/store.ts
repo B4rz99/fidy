@@ -1,7 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
 import { getSupabase } from "@/shared/db";
-import { captureWarning } from "@/shared/lib";
+import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
 
 // biome-ignore lint/style/useNamingConvention: OAuth is a proper noun
 type OAuthProvider = "google" | "azure";
@@ -34,6 +34,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
         set({ session: null, isLoading: false });
         return;
       }
+      identifyUser(data.session.user.id);
       set({ session: data.session, isLoading: false });
     } catch (err) {
       captureWarning("auth_restore_exception", {
@@ -69,6 +70,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
             refresh_token: refreshToken,
           });
           if (sessionData.session) {
+            identifyUser(sessionData.session.user.id);
             set({ session: sessionData.session, isLoading: false });
           }
         }
@@ -89,6 +91,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     } catch {
       // Clear local state regardless
     }
+    resetAnalyticsUser();
     set({ session: null });
   },
 }));

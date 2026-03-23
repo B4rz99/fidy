@@ -324,3 +324,12 @@ vi.mock("expo", () => ({
     addListener: vi.fn(() => ({ remove: vi.fn() })),
   })),
 }));
+
+// Mock posthog-react-native (native module, not transformable in Vitest node env)
+vi.mock("posthog-react-native", () => ({
+  default: class {
+    identify = vi.fn();
+    capture = vi.fn();
+    reset = vi.fn();
+  },
+}));

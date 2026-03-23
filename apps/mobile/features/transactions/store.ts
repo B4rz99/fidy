@@ -7,6 +7,8 @@ import {
   toIsoDate,
   toIsoDateTime,
   toMonth,
+  trackTransactionDeleted,
+  trackTransactionEdited,
 } from "@/shared/lib";
 import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
 import { buildTransaction, toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
@@ -261,6 +263,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
           operation: "delete",
           createdAt: now,
         });
+        trackTransactionDeleted();
       } catch {
         // DB operation failed — keep UI state unchanged
         return;
@@ -318,6 +321,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
       return { success: false as const, error: "Failed to update transaction" };
     }
 
+    trackTransactionEdited({ category: String(transaction.categoryId) });
     get().resetForm();
     await get().refresh();
 

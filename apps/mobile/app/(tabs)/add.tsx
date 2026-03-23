@@ -23,7 +23,7 @@ import { Calendar } from "@/shared/components/icons";
 import { Platform, Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
-import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
+import { formatInputDisplay, parseDigitsToAmount, trackTransactionCreated } from "@/shared/lib";
 
 export default function AddTransactionScreen() {
   const { navigate } = useRouter();
@@ -107,7 +107,14 @@ export default function AddTransactionScreen() {
       const result = isEditing ? await updateTransaction(editingId) : await saveTransaction();
       if (result.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        if (!isEditing) resetForm();
+        if (!isEditing) {
+          trackTransactionCreated({
+            type,
+            category: String(categoryId ?? ""),
+            source: "manual",
+          });
+          resetForm();
+        }
         navigate("/(tabs)" as never);
       }
     });
