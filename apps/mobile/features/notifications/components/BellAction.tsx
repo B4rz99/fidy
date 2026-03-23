@@ -29,11 +29,12 @@ export const BellAction = () => {
 const styles = StyleSheet.create({
   container: {
     position: "relative",
+    padding: 4,
   },
   badge: {
     position: "absolute",
-    top: -4,
-    right: -6,
+    top: 0,
+    right: -2,
     width: 16,
     height: 16,
     borderRadius: 8,

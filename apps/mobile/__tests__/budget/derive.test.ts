@@ -210,13 +210,11 @@ describe("deriveBudgetAlerts", () => {
     expect(result[0].percentUsed).toBe(80);
   });
 
-  it("returns alert for budget at 100%+", () => {
+  it("returns only 100% alert when budget is over 100% (80% is superseded)", () => {
     const progresses = [makeProgress({ percentUsed: 110, isOverBudget: true, isNearLimit: true })];
     const result = deriveBudgetAlerts(progresses, new Set(), 15);
-    // Both 80 and 100 thresholds crossed
-    expect(result).toHaveLength(2);
-    expect(result.map((a) => a.threshold)).toContain(80);
-    expect(result.map((a) => a.threshold)).toContain(100);
+    expect(result).toHaveLength(1);
+    expect(result[0].threshold).toBe(100);
   });
 
   it("excludes acknowledged alerts", () => {
@@ -234,13 +232,11 @@ describe("deriveBudgetAlerts", () => {
     expect(result[0].threshold).toBe(100);
   });
 
-  it("returns both 80 and 100 alerts for same budget if both crossed", () => {
+  it("returns only 100% alert when exactly at 100% (80% superseded)", () => {
     const progresses = [makeProgress({ percentUsed: 100, isNearLimit: true, isOverBudget: false })];
     const result = deriveBudgetAlerts(progresses, new Set(), 15);
-    expect(result).toHaveLength(2);
-    const thresholds = result.map((a) => a.threshold);
-    expect(thresholds).toContain(80);
-    expect(thresholds).toContain(100);
+    expect(result).toHaveLength(1);
+    expect(result[0].threshold).toBe(100);
   });
 
   it("returns empty when all under 80%", () => {

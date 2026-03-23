@@ -1,7 +1,9 @@
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
+import { Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenLayout } from "@/shared/components";
-import { SectionList, StyleSheet, Text } from "@/shared/components/rn";
+import { Pressable, SectionList, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { deriveNotificationDisplay, groupNotificationsBySection } from "../lib/display";
 import type { NotificationDisplay } from "../lib/types";
@@ -15,6 +17,13 @@ export const NotificationsScreen = () => {
   const notifications = useNotificationStore((s) => s.notifications);
   const isLoading = useNotificationStore((s) => s.isLoading);
   const tertiaryColor = useThemeColor("tertiary");
+  const accentRed = useThemeColor("accentRed");
+  const { bottom } = useSafeAreaInsets();
+  const hasNotifications = notifications.length > 0;
+
+  const handleClearAll = useCallback(() => {
+    useNotificationStore.getState().clearAll();
+  }, []);
 
   useMountEffect(() => {
     useNotificationStore.getState().markVisited();
@@ -35,7 +44,29 @@ export const NotificationsScreen = () => {
   );
 
   return (
-    <ScreenLayout title={t("notifications.title")} variant="sub" onBack={() => router.back()}>
+    <ScreenLayout
+      title={t("notifications.title")}
+      variant="sub"
+      onBack={() => router.back()}
+      rightActions={
+        hasNotifications ? (
+          <Pressable onPress={handleClearAll} hitSlop={12}>
+            <Text style={[styles.clearButton, { color: accentRed }]}>{t("common.clearAll")}</Text>
+          </Pressable>
+        ) : undefined
+      }
+    >
+      {Platform.OS === "ios" && hasNotifications && (
+        <Stack.Screen
+          options={{
+            headerRight: () => (
+              <Pressable onPress={handleClearAll} hitSlop={12}>
+                <Text style={[styles.clearButton, { color: accentRed }]}>{t("common.clearAll")}</Text>
+              </Pressable>
+            ),
+          }}
+        />
+      )}
       {!isLoading && sections.length === 0 ? (
         <NotificationEmptyState />
       ) : (
@@ -46,7 +77,9 @@ export const NotificationsScreen = () => {
           renderSectionHeader={({ section }) => (
             <Text style={[styles.sectionLabel, { color: tertiaryColor }]}>{section.title}</Text>
           )}
-          contentContainerStyle={styles.listContent}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          contentContainerStyle={[styles.listContent, { paddingBottom: bottom + 16 }]}
+          contentInsetAdjustmentBehavior="automatic"
           stickySectionHeadersEnabled={false}
         />
       )}
@@ -63,7 +96,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginTop: 20,
   },
+  separator: {
+    height: 12,
+  },
+  clearButton: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 14,
+  },
   listContent: {
-    paddingBottom: 32,
+    paddingHorizontal: 16,
   },
 });

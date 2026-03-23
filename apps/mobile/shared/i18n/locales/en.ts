@@ -21,6 +21,7 @@ const en = {
     none: "(none)",
     name: "Name",
     other: "Other",
+    clearAll: "Clear all",
   },
 
   // Tab navigation

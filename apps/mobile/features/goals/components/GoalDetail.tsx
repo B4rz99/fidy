@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { Stack, useRouter } from "expo-router";
+import Svg, { Circle as SvgCircle } from "react-native-svg";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -47,11 +48,38 @@ function ProgressRing({ percent }: { readonly percent: number }) {
   const accentGreenLight = useThemeColor("accentGreenLight");
   const primaryColor = useThemeColor("primary");
 
+  const size = 96;
+  const strokeWidth = 4;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const clampedPercent = Math.min(Math.max(percent, 0), 100);
+  const strokeDashoffset = circumference * (1 - clampedPercent / 100);
+
   return (
-    <View style={[styles.ringOuter, { borderColor: accentGreenLight }]}>
-      <View
-        style={[styles.ringFill, { borderColor: accentGreen, borderTopColor: "transparent" }]}
-      />
+    <View style={styles.ringContainer}>
+      <Svg width={size} height={size}>
+        <SvgCircle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={accentGreenLight}
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
+        <SvgCircle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={accentGreen}
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          rotation={-90}
+          origin={`${size / 2}, ${size / 2}`}
+        />
+      </Svg>
       <Text style={[styles.ringText, { color: primaryColor }]}>{percent}%</Text>
     </View>
   );
@@ -502,22 +530,14 @@ const styles = StyleSheet.create({
   },
 
   // Progress ring
-  ringOuter: {
+  ringContainer: {
     width: 96,
     height: 96,
-    borderRadius: 48,
-    borderWidth: 4,
     alignItems: "center",
     justifyContent: "center",
   },
-  ringFill: {
-    position: "absolute",
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 4,
-  },
   ringText: {
+    position: "absolute",
     fontFamily: "Poppins_800ExtraBold",
     fontSize: 20,
   },

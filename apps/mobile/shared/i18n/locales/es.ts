@@ -21,6 +21,7 @@ const es = {
     none: "(ninguno)",
     name: "Nombre",
     other: "Otro",
+    clearAll: "Limpiar todo",
   },
 
   // Tab navigation

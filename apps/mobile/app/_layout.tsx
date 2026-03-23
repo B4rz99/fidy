@@ -234,6 +234,14 @@ function RootLayout() {
             options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
           />
           <Stack.Screen
+            name="notifications"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
+          />
+          <Stack.Screen
             name="search"
             options={{
               headerShown: Platform.OS === "ios",

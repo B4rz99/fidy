@@ -205,10 +205,10 @@ export const HomeScreen = () => {
       title="fidy"
       rightActions={
         Platform.OS !== "ios" ? (
-          <>
-            <BellAction />
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
             <SearchAction />
-          </>
+            <BellAction />
+          </View>
         ) : undefined
       }
     >
@@ -227,10 +227,10 @@ export const HomeScreen = () => {
               </Text>
             ),
             headerRight: () => (
-              <>
-                <BellAction />
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 20, paddingHorizontal: 4 }}>
                 <SearchAction />
-              </>
+                <BellAction />
+              </View>
             ),
           }}
         />

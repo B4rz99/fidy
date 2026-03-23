@@ -42,3 +42,10 @@ export function countNotificationsSince(
 
   return result?.count ?? 0;
 }
+
+export function softDeleteAllNotifications(db: AnyDb, userId: UserId, now: IsoDateTime) {
+  db.update(notifications)
+    .set({ deletedAt: now, updatedAt: now })
+    .where(and(eq(notifications.userId, userId), isNull(notifications.deletedAt)))
+    .run();
+}

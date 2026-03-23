@@ -9,6 +9,7 @@ import {
   countNotificationsSince,
   getNotifications,
   insertNotification as insertNotificationRow,
+  softDeleteAllNotifications,
 } from "./repository";
 
 const lastVisitedKey = (userId: UserId) => `notification_last_visited_${userId}`;
@@ -38,6 +39,7 @@ type NotificationActions = {
   loadNotifications: () => void;
   insertNotification: (input: InsertNotificationInput) => void;
   markVisited: () => void;
+  clearAll: () => void;
 };
 
 export const useNotificationStore = create<NotificationState & NotificationActions>((set, get) => ({
@@ -110,5 +112,16 @@ export const useNotificationStore = create<NotificationState & NotificationActio
     if (!userIdRef) return;
     SecureStore.setItemAsync(lastVisitedKey(userIdRef), now).catch(() => {});
     set({ newCount: 0 });
+  },
+
+  clearAll: () => {
+    if (!dbRef || !userIdRef) return;
+    const now = toIsoDateTime(new Date());
+    try {
+      softDeleteAllNotifications(dbRef, userIdRef, now);
+    } catch {
+      return;
+    }
+    set({ notifications: [], newCount: 0 });
   },
 }));
