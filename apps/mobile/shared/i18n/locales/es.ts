@@ -609,6 +609,29 @@ const es = {
 
     // Pantalla
     title: "Notificaciones",
+
+    // Preferencias
+    preferences: {
+      title: "Preferencias de Notificaciones",
+      masterToggle: "Todas las Notificaciones",
+      budgetAlerts: "Alertas de Presupuesto",
+      budgetAlertsDesc: "Cuando te acerques o excedas tu presupuesto",
+      goalMilestones: "Hitos de Metas",
+      goalMilestonesDesc: "Actualizaciones sobre tus metas de ahorro y deuda",
+      spendingAnomalies: "Alertas de Gasto",
+      spendingAnomaliesDesc: "Patrones de gasto inusuales detectados",
+      weeklyDigest: "Resumen Semanal",
+      weeklyDigestDesc: "Resumen semanal cada domingo en la noche",
+    },
+
+    // Pantalla de pre-permiso
+    enableNotifications: {
+      title: "Mantente al Día con tus Finanzas",
+      description:
+        "Fidy puede alertarte cuando te acerques a tu límite de presupuesto, celebrar los hitos de tus metas, y enviarte un resumen semanal de tus finanzas.",
+      enable: "Activar Notificaciones",
+      notNow: "Ahora No",
+    },
   },
 } as const;
 

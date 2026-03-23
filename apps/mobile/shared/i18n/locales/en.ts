@@ -603,6 +603,29 @@ const en = {
 
     // Screen
     title: "Notifications",
+
+    // Preferences
+    preferences: {
+      title: "Notification Preferences",
+      masterToggle: "All Notifications",
+      budgetAlerts: "Budget Alerts",
+      budgetAlertsDesc: "When you approach or exceed your budget",
+      goalMilestones: "Goal Milestones",
+      goalMilestonesDesc: "Updates on your savings and debt goals",
+      spendingAnomalies: "Spending Alerts",
+      spendingAnomaliesDesc: "Unusual spending patterns detected",
+      weeklyDigest: "Weekly Digest",
+      weeklyDigestDesc: "Sunday evening summary of your week",
+    },
+
+    // Pre-permission screen
+    enableNotifications: {
+      title: "Stay on Top of Your Finances",
+      description:
+        "Fidy can alert you when you're approaching your budget limit, celebrate your goal milestones, and send a weekly summary of your finances.",
+      enable: "Enable Notifications",
+      notNow: "Not Now",
+    },
   },
 } as const;
 

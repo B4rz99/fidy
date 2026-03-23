@@ -61,6 +61,7 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
     ],
     "expo-background-task",
     "expo-localization",
+    "expo-notifications",
   ],
   experiments: {
     typedRoutes: true,
