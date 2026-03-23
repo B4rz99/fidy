@@ -189,6 +189,9 @@ const es = {
       almostThere: "¡Ya casi!",
       completed: "¡Completado!",
       addPayment: "+ Agregar Pago",
+      paceAhead: "↑ Adelante %{amount}",
+      paceBehind: "↓ Atrás %{amount}",
+      startSaving: "Empieza a ahorrar",
     },
     detail: {
       contributions: "Contribuciones",
