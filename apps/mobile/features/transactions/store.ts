@@ -317,7 +317,6 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
         operation: "update",
         createdAt: toIsoDateTime(now),
       });
-
     } catch {
       return { success: false as const, error: "Failed to update transaction" };
     }

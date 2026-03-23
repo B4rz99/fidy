@@ -19,7 +19,9 @@ export function BudgetAlertBanner({ alert, onDismiss }: Props) {
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
 
-  useMountEffect(() => trackBudgetAlertViewed({ threshold: alert.threshold, category: String(alert.categoryId) }));
+  useMountEffect(() =>
+    trackBudgetAlertViewed({ threshold: alert.threshold, category: String(alert.categoryId) })
+  );
 
   const category = CATEGORY_MAP[alert.categoryId];
   const CategoryIcon = category?.icon;
