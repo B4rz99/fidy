@@ -1,3 +1,4 @@
+-- Version 20260310000000 is synthetic; migration was applied manually via dashboard, actual apply date unknown.
 -- User memories table (server-side, replaces local SQLite user_memories)
 create table public.user_memories (
   id uuid primary key default gen_random_uuid(),
