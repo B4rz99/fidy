@@ -368,3 +368,35 @@ export function deriveGoalPaceGuidance(
     ? { type: "pace_ahead", amountAhead: Math.round(delta) as CopAmount }
     : { type: "pace_behind", amountBehind: Math.round(-delta) as CopAmount, reason: "below_pace" };
 }
+
+// ---------------------------------------------------------------------------
+// 9. deriveGoalCardStatus
+// ---------------------------------------------------------------------------
+
+export type GoalCardStatus =
+  | { readonly kind: "completed" }
+  | { readonly kind: "pace_ahead"; readonly amount: CopAmount }
+  | { readonly kind: "pace_behind"; readonly amount: CopAmount }
+  | { readonly kind: "start_saving" }
+  | { readonly kind: "almost_there" };
+
+export function deriveGoalCardStatus(
+  progress: GoalProgress,
+  paceGuidance: GoalPaceGuidance | null
+): GoalCardStatus | null {
+  if (progress.isComplete) return { kind: "completed" };
+
+  if (paceGuidance !== null) {
+    if (paceGuidance.type === "pace_ahead") {
+      return { kind: "pace_ahead", amount: paceGuidance.amountAhead };
+    }
+    if (paceGuidance.reason === "below_pace") {
+      return { kind: "pace_behind", amount: paceGuidance.amountBehind };
+    }
+    return { kind: "start_saving" };
+  }
+
+  if (progress.percentComplete >= 75) return { kind: "almost_there" };
+
+  return null;
+}
