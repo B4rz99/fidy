@@ -38,6 +38,15 @@ export function countNotificationsSince(
   return result?.count ?? 0;
 }
 
+export function getAllNotificationIds(db: AnyDb, userId: UserId): readonly string[] {
+  return db
+    .select({ id: notifications.id })
+    .from(notifications)
+    .where(and(eq(notifications.userId, userId), isNull(notifications.deletedAt)))
+    .all()
+    .map((r) => r.id);
+}
+
 export function softDeleteAllNotifications(db: AnyDb, userId: UserId, now: IsoDateTime) {
   db.update(notifications)
     .set({ deletedAt: now, updatedAt: now })

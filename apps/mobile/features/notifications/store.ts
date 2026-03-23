@@ -7,6 +7,7 @@ import type { CategoryId, IsoDateTime, UserId } from "@/shared/types/branded";
 import type { NotificationType, StoredNotification } from "./lib/types";
 import {
   countNotificationsSince,
+  getAllNotificationIds,
   getNotifications,
   insertNotification as insertNotificationRow,
   softDeleteAllNotifications,
@@ -117,15 +118,14 @@ export const useNotificationStore = create<NotificationState & NotificationActio
   clearAll: () => {
     if (!dbRef || !userIdRef) return;
     const now = toIsoDateTime(new Date());
-    const currentNotifications = get().notifications;
     try {
+      const allIds = getAllNotificationIds(dbRef, userIdRef);
       softDeleteAllNotifications(dbRef, userIdRef, now);
-      // Enqueue sync for each deleted notification
-      currentNotifications.forEach((n) => {
+      allIds.forEach((id) => {
         enqueueSync(dbRef!, {
           id: generateSyncQueueId(),
           tableName: "notifications",
-          rowId: n.id,
+          rowId: id,
           operation: "delete",
           createdAt: now,
         });
