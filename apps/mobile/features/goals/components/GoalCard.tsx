@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import type { CopAmount } from "@/shared/types/branded";
+import { deriveGoalCardStatus } from "../lib/derive";
 import type { GoalWithProgress } from "../store";
 
 type GoalCardProps = {
@@ -18,17 +19,54 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
+  const accentRed = useThemeColor("accentRed");
   const borderColor = useThemeColor("borderSubtle");
 
-  const { goal, currentAmount, progress, installments } = goalWithProgress;
+  const { goal, currentAmount, progress, installments, paceGuidance } = goalWithProgress;
 
   const progressWidth = Math.min(progress.percentComplete, 100);
 
-  const statusText = progress.isComplete
-    ? t("goals.card.completed")
-    : progress.percentComplete >= 75
-      ? t("goals.card.almostThere")
-      : null;
+  const cardStatus = deriveGoalCardStatus(progress, paceGuidance);
+
+  const renderStatus = () => {
+    if (cardStatus === null) return null;
+    if (cardStatus.kind === "completed" || cardStatus.kind === "almost_there") {
+      const label =
+        cardStatus.kind === "completed" ? t("goals.card.completed") : t("goals.card.almostThere");
+      return (
+        <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: accentGreen }}>
+          {label}
+        </Text>
+      );
+    }
+    // Pace chip variants
+    const chipColor =
+      cardStatus.kind === "pace_ahead"
+        ? accentGreen
+        : cardStatus.kind === "pace_behind"
+          ? accentRed
+          : secondaryColor;
+    const chipLabel =
+      cardStatus.kind === "pace_ahead"
+        ? t("goals.card.paceAhead", { amount: formatMoney(cardStatus.amount) })
+        : cardStatus.kind === "pace_behind"
+          ? t("goals.card.paceBehind", { amount: formatMoney(cardStatus.amount) })
+          : t("goals.card.startSaving");
+    return (
+      <View
+        style={{
+          paddingVertical: 3,
+          paddingHorizontal: 8,
+          borderRadius: 8,
+          backgroundColor: `${chipColor}26`,
+        }}
+      >
+        <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 11, color: chipColor }}>
+          {chipLabel}
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <Pressable
@@ -66,11 +104,7 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
               })
             : ""}
         </Text>
-        {statusText != null ? (
-          <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: accentGreen }}>
-            {statusText}
-          </Text>
-        ) : null}
+        {renderStatus()}
       </View>
 
       {/* Progress bar */}
