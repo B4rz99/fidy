@@ -12,7 +12,6 @@ export function resetAnalyticsUser(): void {
   posthog.reset();
 }
 
-// Transactions
 export function trackTransactionCreated(props: {
   type: "expense" | "income";
   category: string;
@@ -29,7 +28,6 @@ export function trackTransactionDeleted(): void {
   posthog.capture("transaction_deleted");
 }
 
-// Budgets
 export function trackBudgetCreated(props: { category: string }): void {
   posthog.capture("budget_created", props);
 }
@@ -46,7 +44,6 @@ export function trackBudgetSuggestionRejected(): void {
   posthog.capture("budget_suggestion_rejected");
 }
 
-// Goals
 export function trackGoalCreated(): void {
   posthog.capture("goal_created");
 }
@@ -59,7 +56,6 @@ export function trackGoalMilestoneReached(): void {
   posthog.capture("goal_milestone_reached");
 }
 
-// Bills
 export function trackBillCreated(props: {
   frequency: "monthly" | "biweekly" | "weekly" | "yearly";
 }): void {
@@ -70,7 +66,6 @@ export function trackBillPaymentRecorded(): void {
   posthog.capture("bill_payment_recorded");
 }
 
-// AI
 export function trackAiChatOpened(): void {
   posthog.capture("ai_chat_opened");
 }
@@ -83,7 +78,6 @@ export function trackAiMemoryViewed(): void {
   posthog.capture("ai_memory_viewed");
 }
 
-// Notifications
 export function trackNotificationCenterOpened(): void {
   posthog.capture("notification_center_opened");
 }

@@ -440,9 +440,6 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
       if (status === "success") {
         const merchantKey = normalizeMerchant(parsed.description);
         await insertMerchantRule(db, userId, merchantKey, retryCategoryId, now);
-      }
-
-      if (status === "success") {
         trackTransactionCreated({
           type: parsed.type,
           category: String(retryCategoryId),
