@@ -8,6 +8,7 @@ import {
   toIsoDateTime,
   toMonth,
 } from "@/shared/lib";
+import { trackTransactionDeleted, trackTransactionEdited } from "@/shared/lib/analytics";
 import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
 import { buildTransaction, toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
 import {
@@ -261,6 +262,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
           operation: "delete",
           createdAt: now,
         });
+        trackTransactionDeleted();
       } catch {
         // DB operation failed — keep UI state unchanged
         return;
@@ -320,6 +322,8 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
 
     get().resetForm();
     await get().refresh();
+
+    trackTransactionEdited({ category: String(transaction.categoryId) });
 
     return { success: true as const, transaction };
   },

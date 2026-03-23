@@ -15,6 +15,7 @@ import {
   toIsoDate,
   toIsoDateTime,
 } from "@/shared/lib";
+import { trackTransactionCreated } from "@/shared/lib/analytics";
 import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
 import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
 import { parseNotificationLocally } from "../lib/notification-parser";
@@ -199,6 +200,12 @@ export async function processNotification(
     if (parsed.confidence >= 0.7) {
       await insertMerchantRule(db, userId, merchantKey, finalCategoryId, now);
     }
+
+    trackTransactionCreated({
+      type: parsed.type,
+      category: String(finalCategoryId),
+      source: "notification",
+    });
 
     capturePipelineEvent({
       source: "notification",

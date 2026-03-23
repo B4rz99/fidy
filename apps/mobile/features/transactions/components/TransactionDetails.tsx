@@ -6,6 +6,7 @@ import { Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { formatInputDisplay } from "@/shared/lib";
+import { trackTransactionCreated } from "@/shared/lib/analytics";
 import { CATEGORIES } from "../lib/categories";
 import { getDateLabel } from "../lib/format-date";
 import { useTransactionStore } from "../store";
@@ -58,6 +59,11 @@ export const TransactionDetails = () => {
       const result = await saveTransaction();
       if (result.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        trackTransactionCreated({
+          type,
+          category: String(categoryId ?? ""),
+          source: "manual",
+        });
         resetForm();
         back();
       }

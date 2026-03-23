@@ -12,6 +12,7 @@ import {
   normalizeMerchant,
   toIsoDateTime,
 } from "@/shared/lib";
+import { trackTransactionCreated } from "@/shared/lib/analytics";
 import type {
   CategoryId,
   CopAmount,
@@ -109,6 +110,12 @@ async function saveTransaction(
     transactionId: txId,
     confidence: validated.confidence,
     createdAt: now,
+  });
+
+  trackTransactionCreated({
+    type: validated.type,
+    category: String(categoryId),
+    source: "email",
   });
 
   return txId;
@@ -432,6 +439,12 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
         const merchantKey = normalizeMerchant(parsed.description);
         await insertMerchantRule(db, userId, merchantKey, retryCategoryId, now);
       }
+
+      trackTransactionCreated({
+        type: parsed.type,
+        category: String(retryCategoryId),
+        source: "email",
+      });
 
       await markRetrySuccess(db, email.id, status, txId, parsed.confidence);
       result.succeeded++;
