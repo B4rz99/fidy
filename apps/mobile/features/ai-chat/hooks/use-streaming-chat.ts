@@ -39,7 +39,7 @@ export function useStreamingChat() {
             trackTransactionCreated({
               type: action.data.type,
               category: String(action.data.categoryId),
-              source: "manual",
+              source: "ai_chat",
             });
           }
         } finally {

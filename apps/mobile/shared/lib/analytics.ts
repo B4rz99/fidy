@@ -16,7 +16,7 @@ export function resetAnalyticsUser(): void {
 export function trackTransactionCreated(props: {
   type: "expense" | "income";
   category: string;
-  source: "manual" | "email" | "apple_pay" | "notification";
+  source: "manual" | "email" | "apple_pay" | "notification" | "ai_chat";
 }): void {
   posthog.capture("transaction_created", props);
 }
