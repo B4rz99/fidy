@@ -55,6 +55,7 @@ export async function scheduleBudgetAlert(
           budgetId: alert.budgetId,
           categoryId: alert.categoryId,
           threshold: alert.threshold,
+          route: "/(tabs)/(finance)",
         },
       },
       trigger: null, // immediate

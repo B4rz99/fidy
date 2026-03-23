@@ -10,7 +10,7 @@ import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useFonts } from "expo-font";
 import { getLocales } from "expo-localization";
 import * as Notifications from "expo-notifications";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { type Href, Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
@@ -70,6 +70,7 @@ if (SENTRY_DSN) {
 }
 
 function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
+  const router = useRouter();
   const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
 
   useEffect(() => {
@@ -144,15 +145,19 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       registerPushToken(userId).catch(captureError);
     });
 
-    const responseSub = Notifications.addNotificationResponseReceivedListener((_response) => {
-      // Deep linking will be wired in Step 6 — parse response.notification.request.content.data.route
+    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data;
+      const route = data?.route;
+      if (typeof route === "string" && route.startsWith("/")) {
+        router.push(route as Href);
+      }
     });
 
     return () => {
       tokenSub.remove();
       responseSub.remove();
     };
-  }, [userId]);
+  }, [userId, router]);
 
   useEffect(() => {
     if (migrationsError) {
