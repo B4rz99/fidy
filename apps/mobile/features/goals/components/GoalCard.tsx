@@ -28,6 +28,51 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
 
   const cardStatus = deriveGoalCardStatus(progress, paceGuidance);
 
+  const renderStatus = () => {
+    if (cardStatus === null) return null;
+    if (cardStatus.kind === "completed") {
+      return (
+        <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: accentGreen }}>
+          {t("goals.card.completed")}
+        </Text>
+      );
+    }
+    if (cardStatus.kind === "almost_there") {
+      return (
+        <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: accentGreen }}>
+          {t("goals.card.almostThere")}
+        </Text>
+      );
+    }
+    // Pace chip variants
+    const chipColor =
+      cardStatus.kind === "pace_ahead"
+        ? accentGreen
+        : cardStatus.kind === "pace_behind"
+          ? accentRed
+          : secondaryColor;
+    const chipLabel =
+      cardStatus.kind === "pace_ahead"
+        ? t("goals.card.paceAhead", { amount: formatMoney(cardStatus.amount) })
+        : cardStatus.kind === "pace_behind"
+          ? t("goals.card.paceBehind", { amount: formatMoney(cardStatus.amount) })
+          : t("goals.card.startSaving");
+    return (
+      <View
+        style={{
+          paddingVertical: 3,
+          paddingHorizontal: 8,
+          borderRadius: 8,
+          backgroundColor: `${chipColor}26`,
+        }}
+      >
+        <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 11, color: chipColor }}>
+          {chipLabel}
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <Pressable
       style={{
@@ -64,56 +109,7 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
               })
             : ""}
         </Text>
-        {cardStatus === null ? null : cardStatus.kind === "completed" ? (
-          <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: accentGreen }}>
-            {t("goals.card.completed")}
-          </Text>
-        ) : cardStatus.kind === "almost_there" ? (
-          <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: accentGreen }}>
-            {t("goals.card.almostThere")}
-          </Text>
-        ) : cardStatus.kind === "pace_ahead" ? (
-          <View
-            style={{
-              paddingVertical: 3,
-              paddingHorizontal: 8,
-              borderRadius: 8,
-              backgroundColor: `${accentGreen}26`,
-            }}
-          >
-            <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 11, color: accentGreen }}>
-              {t("goals.card.paceAhead", { amount: formatMoney(cardStatus.amount) })}
-            </Text>
-          </View>
-        ) : cardStatus.kind === "pace_behind" ? (
-          <View
-            style={{
-              paddingVertical: 3,
-              paddingHorizontal: 8,
-              borderRadius: 8,
-              backgroundColor: `${accentRed}26`,
-            }}
-          >
-            <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 11, color: accentRed }}>
-              {t("goals.card.paceBehind", { amount: formatMoney(cardStatus.amount) })}
-            </Text>
-          </View>
-        ) : cardStatus.kind === "start_saving" ? (
-          <View
-            style={{
-              paddingVertical: 3,
-              paddingHorizontal: 8,
-              borderRadius: 8,
-              backgroundColor: `${secondaryColor}26`,
-            }}
-          >
-            <Text
-              style={{ fontFamily: "Poppins_600SemiBold", fontSize: 11, color: secondaryColor }}
-            >
-              {t("goals.card.startSaving")}
-            </Text>
-          </View>
-        ) : null}
+        {renderStatus()}
       </View>
 
       {/* Progress bar */}
