@@ -3,10 +3,10 @@ import type { BudgetAlert } from "@/features/budget/lib/derive";
 import type { BudgetId, CategoryId, CopAmount } from "@/shared/types/branded";
 
 // --- expo-secure-store mock ---
-const mockGetItemAsync = vi.fn(() => Promise.resolve(null));
+const mockGetItemAsync = vi.fn((_key?: string) => Promise.resolve(null));
 
 vi.mock("expo-secure-store", () => ({
-  getItemAsync: (...args: unknown[]) => mockGetItemAsync(...args),
+  getItemAsync: (key: string) => mockGetItemAsync(key),
   setItemAsync: vi.fn(() => Promise.resolve()),
 }));
 
@@ -14,14 +14,14 @@ vi.mock("expo-secure-store", () => ({
 const mockGetPermissionsAsync = vi.fn(() =>
   Promise.resolve({ status: "granted", granted: true, canAskAgain: true })
 );
-const mockScheduleNotificationAsync = vi.fn(() => Promise.resolve("notif-id-123"));
+const mockScheduleNotificationAsync = vi.fn((_input?: unknown) => Promise.resolve("notif-id-123"));
 
 vi.mock("expo-notifications", () => ({
-  getPermissionsAsync: (...args: unknown[]) => mockGetPermissionsAsync(...args),
+  getPermissionsAsync: () => mockGetPermissionsAsync(),
   requestPermissionsAsync: vi.fn(() =>
     Promise.resolve({ status: "granted", granted: true, canAskAgain: true })
   ),
-  scheduleNotificationAsync: (...args: unknown[]) => mockScheduleNotificationAsync(...args),
+  scheduleNotificationAsync: (input: unknown) => mockScheduleNotificationAsync(input),
   cancelScheduledNotificationAsync: vi.fn(),
   setNotificationHandler: vi.fn(),
   getExpoPushTokenAsync: vi.fn(() => Promise.resolve({ data: "ExponentPushToken[mock]" })),
@@ -97,7 +97,7 @@ describe("scheduleBudgetAlert", () => {
       granted: false,
       canAskAgain: true,
     });
-    mockGetItemAsync.mockResolvedValue("true"); // hasSeenPrePermission = true
+    mockGetItemAsync.mockResolvedValue("true" as unknown as null); // hasSeenPrePermission = true
 
     const { scheduleBudgetAlert } = await import("@/features/budget/lib/notifications");
 

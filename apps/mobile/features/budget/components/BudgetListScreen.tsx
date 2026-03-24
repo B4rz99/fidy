@@ -33,7 +33,9 @@ export function BudgetListScreen() {
   const pendingPermissionRequest = useBudgetStore((s) => s.pendingPermissionRequest);
   const clearPendingPermissionRequest = useBudgetStore((s) => s.clearPendingPermissionRequest);
 
-  // Navigate to pre-permission screen when store signals it (subscription pattern)
+  // Navigate to pre-permission screen when store signals it.
+  // Uses useEffect because the store's refreshProgress() is async/deep in the derivation
+  // chain and cannot call router.push() directly — this is a Zustand subscription pattern.
   useEffect(() => {
     if (pendingPermissionRequest) {
       clearPendingPermissionRequest();

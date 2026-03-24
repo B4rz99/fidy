@@ -25,12 +25,12 @@ vi.mock("@/shared/db/supabase", () => ({
 }));
 
 // --- expo-notifications mock ---
-const mockGetExpoPushTokenAsync = vi.fn(() => Promise.resolve({ data: MOCK_TOKEN }));
-const mockGetDevicePushTokenAsync = vi.fn();
+const mockGetExpoPushTokenAsync = vi.fn((_opts?: unknown) => Promise.resolve({ data: MOCK_TOKEN }));
+const mockGetDevicePushTokenAsync = vi.fn((_opts?: unknown) => Promise.resolve());
 
 vi.mock("expo-notifications", () => ({
-  getExpoPushTokenAsync: (...args: unknown[]) => mockGetExpoPushTokenAsync(...args),
-  getDevicePushTokenAsync: (...args: unknown[]) => mockGetDevicePushTokenAsync(...args),
+  getExpoPushTokenAsync: (opts?: unknown) => mockGetExpoPushTokenAsync(opts),
+  getDevicePushTokenAsync: (opts?: unknown) => mockGetDevicePushTokenAsync(opts),
   setNotificationHandler: vi.fn(),
   getPermissionsAsync: vi.fn(() =>
     Promise.resolve({ status: "granted", granted: true, canAskAgain: true })
@@ -94,7 +94,7 @@ describe("push-token service", () => {
 
     it("returns null when Supabase upsert fails", async () => {
       mockUpsert.mockResolvedValueOnce({
-        error: { message: "DB error" },
+        error: { message: "DB error" } as unknown as null,
       });
 
       const { registerPushToken } = await import("@/features/notifications/services/push-token");

@@ -7,7 +7,7 @@
 // Cron setup (pg_cron — configure via Supabase dashboard or migration):
 //   SELECT cron.schedule(
 //     'weekly-digest',
-//     '0 14 * * 0',  -- Every Sunday at 14:00 UTC (9:00 AM COT)
+//     '0 0 * * 0',  -- Every Sunday at 00:00 UTC (Sunday 7:00 PM COT)
 //     $$SELECT net.http_post(
 //       url := '<SUPABASE_URL>/functions/v1/weekly-digest',
 //       headers := jsonb_build_object(
