@@ -7,7 +7,7 @@ create table public.push_devices (
   app_version text,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null,
-  unique (user_id, expo_push_token)
+  unique (expo_push_token)
 );
 
 alter table public.push_devices enable row level security;
@@ -34,14 +34,14 @@ create policy "Users can manage own notification preferences"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
--- Weekly digest cron (Sunday midnight UTC = Sunday 7pm COT)
+-- Weekly digest cron (Sunday 7pm COT = Monday 00:00 UTC)
 -- Requires pg_cron and pg_net extensions (enabled by default on Supabase)
 -- Prerequisites: store secrets in vault before running this migration:
 --   INSERT INTO vault.secrets (name, secret) VALUES ('project_url', 'https://<ref>.supabase.co');
 --   INSERT INTO vault.secrets (name, secret) VALUES ('service_role_key', '<key>');
 select cron.schedule(
   'weekly-digest',
-  '0 0 * * 0',
+  '0 0 * * 1',
   $$
   select net.http_post(
     url := (select decrypted_secret from vault.decrypted_secrets where name = 'project_url') || '/functions/v1/weekly-digest',

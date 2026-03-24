@@ -87,15 +87,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   },
 
   signOut: async () => {
-    // Best-effort push token cleanup before signing out
-    try {
-      const { data: token } = await Notifications.getExpoPushTokenAsync({
-        projectId: PROJECT_ID,
-      });
-      await deletePushToken(token);
-    } catch {
-      // Don't block signout on token cleanup failure
-    }
+    // Fire-and-forget push token cleanup — don't block signout
+    Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID })
+      .then(({ data: token }) => deletePushToken(token))
+      .catch(() => {});
 
     try {
       const supabase = getSupabase();

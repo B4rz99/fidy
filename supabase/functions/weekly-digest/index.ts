@@ -7,7 +7,7 @@
 // Cron setup (pg_cron — configure via Supabase dashboard or migration):
 //   SELECT cron.schedule(
 //     'weekly-digest',
-//     '0 0 * * 0',  -- Every Sunday at 00:00 UTC (Sunday 7:00 PM COT)
+//     '0 0 * * 1',  -- Every Monday at 00:00 UTC (Sunday 7:00 PM COT)
 //     $$SELECT net.http_post(
 //       url := '<SUPABASE_URL>/functions/v1/weekly-digest',
 //       headers := jsonb_build_object(
@@ -72,32 +72,32 @@ type UserDevice = {
 };
 
 async function fetchEligibleDevices(): Promise<readonly UserDevice[]> {
-  // Step 1: Get user IDs with weekly_digest enabled
-  const { data: prefRows, error: prefError } = await serviceClient
+  // Get all devices, then exclude users who explicitly disabled weekly_digest.
+  // Users without a notification_preferences row are treated as opted-in (all defaults = true).
+  const { data: devices, error: devError } = await serviceClient
+    .from("push_devices")
+    .select("user_id, expo_push_token");
+
+  if (devError) {
+    console.error("Failed to fetch push devices:", devError.message);
+    return [];
+  }
+
+  if (!devices || devices.length === 0) return [];
+
+  // Get users who explicitly opted out of weekly digest
+  const { data: optedOut, error: prefError } = await serviceClient
     .from("notification_preferences")
     .select("user_id")
-    .eq("weekly_digest", true);
+    .eq("weekly_digest", false);
 
   if (prefError) {
     console.error("Failed to fetch digest preferences:", prefError.message);
     return [];
   }
 
-  const eligibleUserIds = (prefRows ?? []).map((r: { user_id: string }) => r.user_id);
-  if (eligibleUserIds.length === 0) return [];
-
-  // Step 2: Get push tokens for those users
-  const { data, error } = await serviceClient
-    .from("push_devices")
-    .select("user_id, expo_push_token")
-    .in("user_id", eligibleUserIds);
-
-  if (error) {
-    console.error("Failed to fetch push devices:", error.message);
-    return [];
-  }
-
-  return data ?? [];
+  const optedOutIds = new Set((optedOut ?? []).map((r: { user_id: string }) => r.user_id));
+  return devices.filter((d: UserDevice) => !optedOutIds.has(d.user_id));
 }
 
 type TransactionRow = {
@@ -349,14 +349,21 @@ Deno.serve(async (req) => {
     const batches = chunk(allMessages, 100);
     let totalSent = 0;
 
+    let totalFailed = 0;
     for (const batch of batches) {
       const tickets = await sendPushBatch(batch);
-      await cleanupStaleTokens(tickets, batch);
-      totalSent += batch.length;
+      if (tickets.length === 0) {
+        // sendPushBatch returned [] on non-2xx — count entire batch as failed
+        totalFailed += batch.length;
+      } else {
+        await cleanupStaleTokens(tickets, batch);
+        totalSent += tickets.filter((t) => t.status === "ok").length;
+        totalFailed += tickets.filter((t) => t.status === "error").length;
+      }
     }
 
-    console.log(`Weekly digest sent to ${totalSent} devices`);
-    return jsonResponse({ success: true, sent: totalSent });
+    console.log(`Weekly digest: ${totalSent} sent, ${totalFailed} failed`);
+    return jsonResponse({ success: totalFailed === 0, sent: totalSent, failed: totalFailed });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Weekly digest error:", message);

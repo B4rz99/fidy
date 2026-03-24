@@ -167,6 +167,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
               set({ pendingPermissionRequest: true });
               return;
             }
+            if (result.type !== "scheduled") return;
             // Schedule remaining alerts (permission already confirmed as granted)
             freshAlerts.slice(1).forEach((alert) => {
               const category = CATEGORY_MAP[alert.categoryId];
