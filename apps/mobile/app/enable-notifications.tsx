@@ -69,7 +69,8 @@ export default function EnableNotificationsSheet() {
       >
         {t("notifications.enableNotifications.description")}
       </Text>
-      <View style={{ width: "100%", gap: 12, marginTop: 8 }}>
+      <View style={{ flex: 1 }} />
+      <View style={{ width: "100%", gap: 12, paddingBottom: 24 }}>
         <Pressable
           onPress={handleEnable}
           disabled={isRequesting}
