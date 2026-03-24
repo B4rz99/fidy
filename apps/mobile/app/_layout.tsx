@@ -29,8 +29,7 @@ import {
 import { useCategoriesStore } from "@/features/categories";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
 import { useGoalStore } from "@/features/goals";
-import { useNotificationStore } from "@/features/notifications";
-import { registerPushToken } from "@/features/notifications/services/push-token";
+import { registerPushToken, useNotificationStore } from "@/features/notifications";
 import {
   clearOnboardingFromStore,
   getOnboardingCompleteFromStore,
