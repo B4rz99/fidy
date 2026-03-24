@@ -76,7 +76,8 @@ async function fetchEligibleDevices(): Promise<readonly UserDevice[]> {
   // Users without a notification_preferences row are treated as opted-in (all defaults = true).
   const { data: devices, error: devError } = await serviceClient
     .from("push_devices")
-    .select("user_id, expo_push_token");
+    .select("user_id, expo_push_token, updated_at")
+    .order("updated_at", { ascending: false });
 
   if (devError) {
     console.error("Failed to fetch push devices:", devError.message);
@@ -97,7 +98,16 @@ async function fetchEligibleDevices(): Promise<readonly UserDevice[]> {
   }
 
   const optedOutIds = new Set((optedOut ?? []).map((r: { user_id: string }) => r.user_id));
-  return devices.filter((d: UserDevice) => !optedOutIds.has(d.user_id));
+  const eligible = devices.filter((d: UserDevice) => !optedOutIds.has(d.user_id));
+
+  // Deduplicate: if multiple users share a token (e.g. failed signOut cleanup),
+  // keep only the most recent registration (ordered by updated_at desc above).
+  const seenTokens = new Set<string>();
+  return eligible.filter((d: UserDevice) => {
+    if (seenTokens.has(d.expo_push_token)) return false;
+    seenTokens.add(d.expo_push_token);
+    return true;
+  });
 }
 
 type TransactionRow = {

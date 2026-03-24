@@ -7,7 +7,7 @@ create table public.push_devices (
   app_version text,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null,
-  unique (expo_push_token)
+  unique (user_id, expo_push_token)
 );
 
 alter table public.push_devices enable row level security;

@@ -30,7 +30,7 @@ export async function registerPushToken(userId: UserId): Promise<string | null> 
         // biome-ignore lint/style/useNamingConvention: Supabase column name
         updated_at: new Date().toISOString(),
       },
-      { onConflict: "expo_push_token" }
+      { onConflict: "user_id,expo_push_token" }
     );
 
     if (error) {

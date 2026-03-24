@@ -76,7 +76,7 @@ describe("push-token service", () => {
           platform: "ios",
           app_version: "1.2.3",
         }),
-        { onConflict: "expo_push_token" }
+        { onConflict: "user_id,expo_push_token" }
       );
       expect(token).toBe(MOCK_TOKEN);
     });

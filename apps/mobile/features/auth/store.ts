@@ -87,10 +87,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   },
 
   signOut: async () => {
-    // Fire-and-forget push token cleanup — don't block signout
-    Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID })
-      .then(({ data: token }) => deletePushToken(token))
-      .catch(() => {});
+    // Clean up push token while session is still valid (RLS needs auth).
+    // Capped at 2s so signout isn't blocked indefinitely by network issues.
+    await Promise.race([
+      Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID })
+        .then(({ data: token }) => deletePushToken(token))
+        .catch(() => {}),
+      new Promise((resolve) => setTimeout(resolve, 2000)),
+    ]);
 
     try {
       const supabase = getSupabase();
