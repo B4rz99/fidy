@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useAuthStore } from "@/features/auth";
 import { PRE_PERMISSION_KEY, registerPushToken } from "@/features/notifications";
 import { Bell } from "@/shared/components/icons";
-import { ActivityIndicator, Pressable, Text, View } from "@/shared/components/rn";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
@@ -41,9 +41,9 @@ export default function EnableNotificationsSheet() {
   };
 
   return (
-    <View
+    <ScrollView
       className="flex-1 bg-card dark:bg-card-dark"
-      style={{ paddingHorizontal: 24, paddingTop: 24, alignItems: "center", gap: 16 }}
+      contentContainerStyle={{ padding: 24, alignItems: "center", gap: 16 }}
     >
       <View
         style={{
@@ -69,8 +69,7 @@ export default function EnableNotificationsSheet() {
       >
         {t("notifications.enableNotifications.description")}
       </Text>
-      <View style={{ flex: 1 }} />
-      <View style={{ width: "100%", gap: 12, paddingBottom: 24 }}>
+      <View style={{ width: "100%", gap: 12 }}>
         <Pressable
           onPress={handleEnable}
           disabled={isRequesting}
@@ -111,6 +110,6 @@ export default function EnableNotificationsSheet() {
           </Text>
         </Pressable>
       </View>
-    </View>
+    </ScrollView>
   );
 }
