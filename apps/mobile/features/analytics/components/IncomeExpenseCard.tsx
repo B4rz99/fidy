@@ -38,6 +38,7 @@ const IncomeExpenseCard = memo(function IncomeExpenseCard({ data }: IncomeExpens
         <Text style={[styles.label, { color: secondaryColor }]}>{t("analytics.incomeLabel")}</Text>
         <View style={styles.barContainer}>
           <View style={[styles.bar, { backgroundColor: accentGreen, flex: incomeFlex }]} />
+          <View style={{ flex: 1 - incomeFlex }} />
         </View>
         <Text style={[styles.amountText, { color: accentGreen }]}>{formatMoney(income)}</Text>
       </View>
@@ -48,6 +49,7 @@ const IncomeExpenseCard = memo(function IncomeExpenseCard({ data }: IncomeExpens
         </Text>
         <View style={styles.barContainer}>
           <View style={[styles.bar, { backgroundColor: accentRed, flex: expensesFlex }]} />
+          <View style={{ flex: 1 - expensesFlex }} />
         </View>
         <Text style={[styles.amountText, { color: accentRed }]}>{formatMoney(expenses)}</Text>
       </View>

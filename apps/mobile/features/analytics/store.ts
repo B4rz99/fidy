@@ -20,6 +20,8 @@ import { getIncomeExpenseForPeriod, getSpendingByCategoryForPeriod } from "./lib
 let dbRef: AnyDb | null = null;
 let userIdRef: UserId | null = null;
 let unsubscribeTxStore: (() => void) | null = null;
+// Track previous pages reference to skip form-field state changes
+let prevPagesRef: unknown = null;
 
 type AnalyticsState = {
   readonly period: AnalyticsPeriod;
@@ -47,8 +49,12 @@ export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set,
     userIdRef = userId;
     // Subscribe to transaction store changes to auto-refresh analytics
     if (unsubscribeTxStore) unsubscribeTxStore();
+    prevPagesRef = useTransactionStore.getState().pages;
     unsubscribeTxStore = useTransactionStore.subscribe(() => {
-      // When transactions change and we have data loaded, refresh analytics
+      // Only refresh when transaction data changes, not form field edits
+      const currentPages = useTransactionStore.getState().pages;
+      if (currentPages === prevPagesRef) return;
+      prevPagesRef = currentPages;
       if (get().incomeExpense !== null) {
         get()
           .loadAnalytics()
