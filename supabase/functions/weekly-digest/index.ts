@@ -97,17 +97,19 @@ async function fetchEligibleDevices(): Promise<readonly UserDevice[]> {
     return [];
   }
 
-  const optedOutIds = new Set((optedOut ?? []).map((r: { user_id: string }) => r.user_id));
-  const eligible = devices.filter((d: UserDevice) => !optedOutIds.has(d.user_id));
-
-  // Deduplicate: if multiple users share a token (e.g. failed signOut cleanup),
-  // keep only the most recent registration (ordered by updated_at desc above).
+  // Deduplicate tokens FIRST: if multiple users share a token (e.g. failed signOut
+  // cleanup), keep only the most recent registration (ordered by updated_at desc).
+  // This must happen before opt-out filtering so the latest owner's preference wins.
   const seenTokens = new Set<string>();
-  return eligible.filter((d: UserDevice) => {
+  const latestPerToken = devices.filter((d: UserDevice) => {
     if (seenTokens.has(d.expo_push_token)) return false;
     seenTokens.add(d.expo_push_token);
     return true;
   });
+
+  // Then filter out users who explicitly opted out of weekly digest.
+  const optedOutIds = new Set((optedOut ?? []).map((r: { user_id: string }) => r.user_id));
+  return latestPerToken.filter((d: UserDevice) => !optedOutIds.has(d.user_id));
 }
 
 type TransactionRow = {
