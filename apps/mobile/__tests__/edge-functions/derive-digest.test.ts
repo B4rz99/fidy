@@ -28,7 +28,7 @@ describe("deriveDigestMessage", () => {
   it("produces title and body with spending and top categories", () => {
     const result = deriveDigestMessage(makeData());
     expect(result.title).toBe("Your Week in Review");
-    expect(result.body).toContain("You spent $1,500,000 this week");
+    expect(result.body).toContain("You spent $1.500.000 this week");
     expect(result.body).toContain("mostly on Food and Transport");
   });
 
@@ -54,7 +54,7 @@ describe("deriveDigestMessage", () => {
   // Test 5 — With goal contributions
   it("includes goal savings when goalContributionsThisWeek > 0", () => {
     const result = deriveDigestMessage(makeData({ goalContributionsThisWeek: 250_000 }));
-    expect(result.body).toContain("saved $250,000");
+    expect(result.body).toContain("saved $250.000");
     expect(result.body).toContain("goals");
   });
 

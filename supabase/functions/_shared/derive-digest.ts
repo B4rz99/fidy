@@ -24,8 +24,8 @@ export type DigestMessage = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Format a COP amount as "$1,234,567" (whole numbers, comma separator). */
-const formatCop = (amount: number): string => `$${Math.round(amount).toLocaleString("en-US")}`;
+/** Format a COP amount as "$1.234.567" (whole numbers, period separator — Colombian convention). */
+const formatCop = (amount: number): string => `$${Math.round(amount).toLocaleString("es-CO")}`;
 
 const buildCategorySegment = (
   categories: readonly { readonly name: string; readonly amount: number }[]
