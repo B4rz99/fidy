@@ -82,10 +82,7 @@ export function computePeriodRange(period: AnalyticsPeriod, today: Date): Period
 /**
  * Pure derivation: compute income/expense summary including net and sign.
  */
-export function deriveIncomeExpense(
-  income: CopAmount,
-  expenses: CopAmount
-): IncomeExpenseResult {
+export function deriveIncomeExpense(income: CopAmount, expenses: CopAmount): IncomeExpenseResult {
   const net = (income - expenses) as CopAmount;
   return {
     income,

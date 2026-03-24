@@ -1,4 +1,7 @@
 // Types
+
+// Components
+export { AnalyticsScreen } from "./components/AnalyticsScreen";
 export type {
   AnalyticsPeriod,
   CategoryBreakdownItem,
@@ -6,7 +9,6 @@ export type {
   PeriodDelta,
   PeriodRange,
 } from "./lib/derive";
-
 // Pure derivations
 export {
   computePeriodRange,
@@ -14,15 +16,10 @@ export {
   deriveIncomeExpense,
   derivePeriodDelta,
 } from "./lib/derive";
-
 // Repository
 export {
   getIncomeExpenseForPeriod,
   getSpendingByCategoryForPeriod,
 } from "./lib/repository";
-
 // Store
 export { useAnalyticsStore } from "./store";
-
-// Components
-export { AnalyticsScreen } from "./components/AnalyticsScreen";

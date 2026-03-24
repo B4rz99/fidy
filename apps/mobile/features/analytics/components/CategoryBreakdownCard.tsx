@@ -1,8 +1,8 @@
 import { memo } from "react";
-import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { CATEGORY_MAP } from "@/features/transactions";
-import { getCategoryLabel } from "@/shared/i18n/locale-helpers";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney } from "@/shared/lib";
 import type { CategoryBreakdownItem } from "../lib/derive";
 
@@ -36,26 +36,15 @@ const CategoryBreakdownCard = memo(function CategoryBreakdownCard({
 
         return (
           <View key={item.categoryId} style={styles.row}>
-            {/* Dot */}
             <View style={[styles.dot, { backgroundColor: color }]} />
-
-            {/* Label */}
             <Text style={[styles.label, { color: secondaryColor }]} numberOfLines={1}>
               {label}
             </Text>
-
-            {/* Bar */}
             <View style={styles.barContainer}>
               <View style={[styles.bar, { backgroundColor: color, flex: barFlex }]} />
               <View style={{ flex: 1 - barFlex }} />
             </View>
-
-            {/* Amount */}
-            <Text style={[styles.amount, { color: primaryColor }]}>
-              {formatMoney(item.total)}
-            </Text>
-
-            {/* Percent */}
+            <Text style={[styles.amount, { color: primaryColor }]}>{formatMoney(item.total)}</Text>
             <Text style={[styles.percent, { color: tertiaryColor }]}>{item.percent}%</Text>
           </View>
         );
@@ -103,8 +92,6 @@ const styles = StyleSheet.create({
   },
   bar: {
     height: BAR_HEIGHT,
-    borderRadius: 8,
-    borderCurve: "continuous",
   },
   amount: {
     fontFamily: "Poppins_500Medium",

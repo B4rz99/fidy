@@ -1,8 +1,8 @@
 import { memo } from "react";
-import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { CATEGORY_MAP } from "@/features/transactions";
-import { getCategoryLabel } from "@/shared/i18n/locale-helpers";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney } from "@/shared/lib";
 import type { CopAmount } from "@/shared/types/branded";
 import type { AnalyticsPeriod, PeriodDelta } from "../lib/derive";
@@ -41,7 +41,6 @@ const PeriodDeltaCard = memo(function PeriodDeltaCard({ period, data }: PeriodDe
         {t(`analytics.vsPreviousPeriod.${period}`)}
       </Text>
 
-      {/* Total spending row */}
       <View style={styles.row}>
         <Text style={[styles.label, { color: secondaryColor }]}>
           {t("analytics.totalSpending")}
@@ -49,7 +48,6 @@ const PeriodDeltaCard = memo(function PeriodDeltaCard({ period, data }: PeriodDe
         <Text style={[styles.deltaText, { color: totalColor }]}>{totalPercentText}</Text>
       </View>
 
-      {/* Category delta rows */}
       {categoryDeltas.map((item) => {
         const category = CATEGORY_MAP[item.categoryId];
         const label = category ? getCategoryLabel(category, locale) : String(item.categoryId);

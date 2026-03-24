@@ -30,10 +30,7 @@ const PeriodSelector = memo(function PeriodSelector({
           <Pressable
             key={period}
             onPress={() => onSelect(period)}
-            style={[
-              styles.segment,
-              isActive && { backgroundColor: accentGreen },
-            ]}
+            style={[styles.segment, isActive && { backgroundColor: accentGreen }]}
           >
             <Text
               style={[
@@ -74,16 +71,12 @@ export function AnalyticsScreen() {
 
       {showEmpty ? (
         <View style={styles.emptyState}>
-          <Text style={[styles.emptyText, { color: secondaryColor }]}>
-            {t("analytics.noData")}
-          </Text>
+          <Text style={[styles.emptyText, { color: secondaryColor }]}>{t("analytics.noData")}</Text>
         </View>
       ) : (
         <>
           {incomeExpense != null && <IncomeExpenseCard data={incomeExpense} />}
-          {categoryBreakdown.length > 0 && (
-            <CategoryBreakdownCard data={categoryBreakdown} />
-          )}
+          {categoryBreakdown.length > 0 && <CategoryBreakdownCard data={categoryBreakdown} />}
           {periodDelta != null && <PeriodDeltaCard period={period} data={periodDelta} />}
         </>
       )}

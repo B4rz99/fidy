@@ -16,7 +16,6 @@ const AMOUNT_MIN_WIDTH = 72;
 const IncomeExpenseCard = memo(function IncomeExpenseCard({ data }: IncomeExpenseCardProps) {
   const { t } = useTranslation();
   const cardBg = useThemeColor("card");
-  const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
@@ -35,44 +34,25 @@ const IncomeExpenseCard = memo(function IncomeExpenseCard({ data }: IncomeExpens
 
   return (
     <View style={[styles.card, { backgroundColor: cardBg }]}>
-      {/* Income row */}
       <View style={styles.row}>
         <Text style={[styles.label, { color: secondaryColor }]}>{t("analytics.incomeLabel")}</Text>
         <View style={styles.barContainer}>
-          <View
-            style={[
-              styles.bar,
-              { backgroundColor: accentGreen, flex: incomeFlex },
-            ]}
-          />
+          <View style={[styles.bar, { backgroundColor: accentGreen, flex: incomeFlex }]} />
         </View>
-        <Text style={[styles.amountText, { color: accentGreen }]}>
-          {formatMoney(income)}
-        </Text>
+        <Text style={[styles.amountText, { color: accentGreen }]}>{formatMoney(income)}</Text>
       </View>
 
-      {/* Expense row */}
       <View style={styles.row}>
         <Text style={[styles.label, { color: secondaryColor }]}>
           {t("analytics.expensesLabel")}
         </Text>
         <View style={styles.barContainer}>
-          <View
-            style={[
-              styles.bar,
-              { backgroundColor: accentRed, flex: expensesFlex },
-            ]}
-          />
+          <View style={[styles.bar, { backgroundColor: accentRed, flex: expensesFlex }]} />
         </View>
-        <Text style={[styles.amountText, { color: accentRed }]}>
-          {formatMoney(expenses)}
-        </Text>
+        <Text style={[styles.amountText, { color: accentRed }]}>{formatMoney(expenses)}</Text>
       </View>
 
-      {/* Net row */}
-      <View style={styles.netRow}>
-        <Text style={[styles.netText, { color: netColor }]}>{netText}</Text>
-      </View>
+      <Text style={[styles.netText, { color: netColor }]}>{netText}</Text>
     </View>
   );
 });
@@ -107,8 +87,6 @@ const styles = StyleSheet.create({
   },
   bar: {
     height: BAR_HEIGHT,
-    borderRadius: 12,
-    borderCurve: "continuous",
   },
   amountText: {
     width: AMOUNT_MIN_WIDTH,
@@ -116,10 +94,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "right",
   },
-  netRow: {
-    alignItems: "center",
-  },
   netText: {
+    alignSelf: "center",
     fontFamily: "Poppins_600SemiBold",
     fontSize: 13,
   },
