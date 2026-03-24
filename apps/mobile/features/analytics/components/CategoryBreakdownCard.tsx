@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   },
   percent: {
     width: PERCENT_WIDTH,
-    fontFamily: "Poppins_400Regular",
+    fontFamily: "Poppins_500Medium",
     fontSize: 11,
     textAlign: "right",
   },
