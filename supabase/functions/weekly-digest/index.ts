@@ -4,7 +4,9 @@
 // Sends a weekly spending summary push notification to all users with
 // weekly_digest enabled and at least one registered push device.
 //
-// Deploy with: supabase functions deploy weekly-digest --no-verify-jwt
+// Deploy with:
+//   supabase functions deploy weekly-digest --no-verify-jwt
+//   supabase secrets set CRON_SECRET=<same-value-as-vault-cron_secret>
 //
 // Cron setup (pg_cron — see migration 0008_push_notifications.sql):
 //   '0 0 * * 1' -- Every Monday at 00:00 UTC (Sunday 7:00 PM COT)
@@ -20,6 +22,8 @@ const serviceClient = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 );
+
+const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -297,6 +301,11 @@ Deno.serve(async (req) => {
 
   if (req.method !== "POST") {
     return jsonResponse({ success: false, error: "method_not_allowed" }, 405);
+  }
+
+  // Verify shared secret from pg_cron (prevents unauthorized invocations)
+  if (CRON_SECRET && req.headers.get("x-cron-secret") !== CRON_SECRET) {
+    return jsonResponse({ success: false, error: "unauthorized" }, 401);
   }
 
   try {
