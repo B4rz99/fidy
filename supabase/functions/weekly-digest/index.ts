@@ -11,7 +11,7 @@
 //     $$SELECT net.http_post(
 //       url := '<SUPABASE_URL>/functions/v1/weekly-digest',
 //       headers := jsonb_build_object(
-//         'Authorization', 'Bearer ' || '<SUPABASE_SERVICE_ROLE_KEY>',
+//         'Authorization', 'Bearer ' || '<SUPABASE_ANON_KEY>',
 //         'Content-Type', 'application/json'
 //       ),
 //       body := '{}'::jsonb
