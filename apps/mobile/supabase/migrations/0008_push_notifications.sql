@@ -36,19 +36,16 @@ create policy "Users can manage own notification preferences"
 
 -- Weekly digest cron (Sunday 7pm COT = Monday 00:00 UTC)
 -- Requires pg_cron and pg_net extensions (enabled by default on Supabase)
--- Prerequisites: store secrets in vault before running this migration:
+-- The weekly-digest Edge Function must be deployed with --no-verify-jwt
+-- Prerequisite: store project URL in vault before running this migration:
 --   SELECT vault.create_secret('https://<ref>.supabase.co', 'project_url');
---   SELECT vault.create_secret('<anon-key>', 'anon_key');
 select cron.schedule(
   'weekly-digest',
   '0 0 * * 1',
   $$
   select net.http_post(
     url := (select decrypted_secret from vault.decrypted_secrets where name = 'project_url') || '/functions/v1/weekly-digest',
-    headers := jsonb_build_object(
-      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'anon_key'),
-      'Content-Type', 'application/json'
-    ),
+    headers := '{"Content-Type": "application/json"}'::jsonb,
     body := '{}'::jsonb
   );
   $$

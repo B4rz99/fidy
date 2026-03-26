@@ -4,19 +4,10 @@
 // Sends a weekly spending summary push notification to all users with
 // weekly_digest enabled and at least one registered push device.
 //
-// Cron setup (pg_cron — configure via Supabase dashboard or migration):
-//   SELECT cron.schedule(
-//     'weekly-digest',
-//     '0 0 * * 1',  -- Every Monday at 00:00 UTC (Sunday 7:00 PM COT)
-//     $$SELECT net.http_post(
-//       url := '<SUPABASE_URL>/functions/v1/weekly-digest',
-//       headers := jsonb_build_object(
-//         'Authorization', 'Bearer ' || '<SUPABASE_ANON_KEY>',
-//         'Content-Type', 'application/json'
-//       ),
-//       body := '{}'::jsonb
-//     )$$
-//   );
+// Deploy with: supabase functions deploy weekly-digest --no-verify-jwt
+//
+// Cron setup (pg_cron — see migration 0008_push_notifications.sql):
+//   '0 0 * * 1' -- Every Monday at 00:00 UTC (Sunday 7:00 PM COT)
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { deriveDigestMessage, type WeeklyDigestData } from "../_shared/derive-digest.ts";
