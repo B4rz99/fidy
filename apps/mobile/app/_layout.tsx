@@ -16,6 +16,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useChatStore } from "@/features/ai-chat";
+import { useAnalyticsStore } from "@/features/analytics";
 import { useAuthStore } from "@/features/auth";
 import { registerBackgroundTask } from "@/features/background-fetch";
 import { useBudgetStore } from "@/features/budget";
@@ -28,7 +29,6 @@ import {
 } from "@/features/capture-sources";
 import { useCategoriesStore } from "@/features/categories";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
-import { useAnalyticsStore } from "@/features/analytics";
 import { useGoalStore } from "@/features/goals";
 import { registerPushToken, useNotificationStore } from "@/features/notifications";
 import {

@@ -151,9 +151,9 @@ describe("deriveCategoryBreakdown", () => {
     const spending = makeCategorySpending([{ categoryId: "food", total: 500000 }]);
     const result = deriveCategoryBreakdown(spending, 500000 as CopAmount);
     expect(result).toHaveLength(1);
-    expect(result[0]!.percent).toBe(100);
-    expect(result[0]!.categoryId).toBe("food");
-    expect(result[0]!.total).toBe(500000);
+    expect(result[0]?.percent).toBe(100);
+    expect(result[0]?.categoryId).toBe("food");
+    expect(result[0]?.total).toBe(500000);
   });
 
   it("computes correct percents for multiple categories", () => {
@@ -164,9 +164,9 @@ describe("deriveCategoryBreakdown", () => {
     ]);
     const result = deriveCategoryBreakdown(spending, 500000 as CopAmount);
     const byId = new Map(result.map((item) => [item.categoryId, item]));
-    expect(byId.get("food" as CategoryId)!.percent).toBe(60);
-    expect(byId.get("transport" as CategoryId)!.percent).toBe(20);
-    expect(byId.get("entertainment" as CategoryId)!.percent).toBe(20);
+    expect(byId.get("food" as CategoryId)?.percent).toBe(60);
+    expect(byId.get("transport" as CategoryId)?.percent).toBe(20);
+    expect(byId.get("entertainment" as CategoryId)?.percent).toBe(20);
   });
 
   it("returns percent=0 for all categories when totalExpenses is 0", () => {
@@ -190,9 +190,9 @@ describe("deriveCategoryBreakdown", () => {
       { categoryId: "entertainment", total: 50000 },
     ]);
     const result = deriveCategoryBreakdown(spending, 550000 as CopAmount);
-    expect(result[0]!.categoryId).toBe("food");
-    expect(result[1]!.categoryId).toBe("transport");
-    expect(result[2]!.categoryId).toBe("entertainment");
+    expect(result[0]?.categoryId).toBe("food");
+    expect(result[1]?.categoryId).toBe("transport");
+    expect(result[2]?.categoryId).toBe("entertainment");
   });
 
   it("preserves already-sorted input order (still sorted desc)", () => {
@@ -201,8 +201,8 @@ describe("deriveCategoryBreakdown", () => {
       { categoryId: "transport", total: 200000 },
     ]);
     const result = deriveCategoryBreakdown(spending, 700000 as CopAmount);
-    expect(result[0]!.categoryId).toBe("food");
-    expect(result[1]!.categoryId).toBe("transport");
+    expect(result[0]?.categoryId).toBe("food");
+    expect(result[1]?.categoryId).toBe("transport");
   });
 
   it("rounds percents to nearest integer", () => {
@@ -306,10 +306,10 @@ describe("derivePeriodDelta", () => {
       }
     );
     expect(result.categoryDeltas).toHaveLength(1);
-    expect(result.categoryDeltas[0]!.categoryId).toBe("food");
-    expect(result.categoryDeltas[0]!.delta).toBe(300000);
-    expect(result.categoryDeltas[0]!.deltaPercent).toBe(100);
-    expect(result.categoryDeltas[0]!.increased).toBe(true);
+    expect(result.categoryDeltas[0]?.categoryId).toBe("food");
+    expect(result.categoryDeltas[0]?.delta).toBe(300000);
+    expect(result.categoryDeltas[0]?.deltaPercent).toBe(100);
+    expect(result.categoryDeltas[0]?.increased).toBe(true);
   });
 
   it("computes correct per-category deltas for multiple categories", () => {
@@ -330,10 +330,10 @@ describe("derivePeriodDelta", () => {
       }
     );
     const byId = new Map(result.categoryDeltas.map((d) => [d.categoryId, d]));
-    expect(byId.get("food" as CategoryId)!.delta).toBe(100000);
-    expect(byId.get("food" as CategoryId)!.increased).toBe(true);
-    expect(byId.get("transport" as CategoryId)!.delta).toBe(0);
-    expect(byId.get("transport" as CategoryId)!.increased).toBe(false);
+    expect(byId.get("food" as CategoryId)?.delta).toBe(100000);
+    expect(byId.get("food" as CategoryId)?.increased).toBe(true);
+    expect(byId.get("transport" as CategoryId)?.delta).toBe(0);
+    expect(byId.get("transport" as CategoryId)?.increased).toBe(false);
   });
 
   it("returns empty categoryDeltas when current has no category spending", () => {
@@ -359,6 +359,6 @@ describe("derivePeriodDelta", () => {
         categorySpending: makeCategorySpending([{ categoryId: "food", total: 400000 }]),
       }
     );
-    expect(result.categoryDeltas[0]!.deltaPercent).toBe(50);
+    expect(result.categoryDeltas[0]?.deltaPercent).toBe(50);
   });
 });
