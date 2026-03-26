@@ -27,3 +27,8 @@ jobs:
         run: supabase functions deploy ai-chat --no-verify-jwt --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy weekly-digest
+        run: supabase functions deploy weekly-digest --no-verify-jwt --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
