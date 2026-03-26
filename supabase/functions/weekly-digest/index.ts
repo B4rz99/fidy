@@ -303,8 +303,9 @@ Deno.serve(async (req) => {
     return jsonResponse({ success: false, error: "method_not_allowed" }, 405);
   }
 
-  // Verify shared secret from pg_cron (prevents unauthorized invocations)
-  if (CRON_SECRET && req.headers.get("x-cron-secret") !== CRON_SECRET) {
+  // Verify shared secret from pg_cron (prevents unauthorized invocations).
+  // Fails closed: if CRON_SECRET is not configured, all requests are rejected.
+  if (!CRON_SECRET || req.headers.get("x-cron-secret") !== CRON_SECRET) {
     return jsonResponse({ success: false, error: "unauthorized" }, 401);
   }
 
