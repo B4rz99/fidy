@@ -6,21 +6,21 @@ describe("useSettingsStore", () => {
     // Mutate to non-defaults first to prove getInitialState is independent
     useSettingsStore.setState({
       themePreference: "dark",
-      notificationsEnabled: false,
       isDeleting: true,
     });
     const initial = useSettingsStore.getInitialState();
     expect(initial.themePreference).toBe("system");
-    expect(initial.notificationsEnabled).toBe(true);
+    expect(initial.notificationPreferences).toEqual({
+      budgetAlerts: true,
+      goalMilestones: true,
+      spendingAnomalies: true,
+      weeklyDigest: true,
+    });
     expect(initial.isDeleting).toBe(false);
   });
 
   beforeEach(() => {
-    useSettingsStore.setState({
-      themePreference: "system",
-      notificationsEnabled: true,
-      isDeleting: false,
-    });
+    useSettingsStore.setState(useSettingsStore.getInitialState());
   });
 
   test("setThemePreference updates state", () => {
@@ -33,8 +33,9 @@ describe("useSettingsStore", () => {
     expect(useSettingsStore.getState().themePreference).toBe("light");
   });
 
-  test("setNotificationsEnabled updates state", () => {
-    useSettingsStore.getState().setNotificationsEnabled(false);
-    expect(useSettingsStore.getState().notificationsEnabled).toBe(false);
+  test("setNotificationPreference updates one preference", () => {
+    useSettingsStore.getState().setNotificationPreference("budgetAlerts", false);
+    expect(useSettingsStore.getState().notificationPreferences.budgetAlerts).toBe(false);
+    expect(useSettingsStore.getState().notificationPreferences.goalMilestones).toBe(true);
   });
 });

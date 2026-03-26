@@ -1,39 +1,37 @@
 import * as Notifications from "expo-notifications";
+import * as SecureStore from "expo-secure-store";
+import { determineAlertAction, PRE_PERMISSION_KEY } from "@/features/notifications/lib/permission";
 import i18n from "../../../shared/i18n/i18n";
 import type { BudgetAlert } from "./derive";
 
-let handlerConfigured = false;
+export type ScheduleResult =
+  | { readonly type: "scheduled"; readonly id: string }
+  | { readonly type: "needs_permission" }
+  | { readonly type: "skipped" };
 
-function ensureHandlerConfigured() {
-  if (handlerConfigured) return;
-  handlerConfigured = true;
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: false,
-      shouldSetBadge: false,
-    }),
-  });
-}
-
-export async function requestBudgetNotificationPermissions(): Promise<boolean> {
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  if (existingStatus === "granted") return true;
-  const { status } = await Notifications.requestPermissionsAsync();
-  return status === "granted";
+async function readHasSeenPrePermission(): Promise<boolean> {
+  try {
+    const value = await SecureStore.getItemAsync(PRE_PERMISSION_KEY);
+    return value === "true";
+  } catch {
+    return false;
+  }
 }
 
 export async function scheduleBudgetAlert(
   alert: BudgetAlert,
-  categoryName: string
-): Promise<string | null> {
+  categoryName: string,
+  notificationsEnabled = true
+): Promise<ScheduleResult> {
   try {
     const { status } = await Notifications.getPermissionsAsync();
-    if (status !== "granted") return null;
+    const hasSeenPrePermission = await readHasSeenPrePermission();
+    const action = determineAlertAction(status, hasSeenPrePermission, notificationsEnabled);
 
-    ensureHandlerConfigured();
+    if (action.type === "pre_permission") return { type: "needs_permission" };
+    if (action.type === "skip") return { type: "skipped" };
 
+    // action.type === "send" — schedule the notification
     const title =
       alert.threshold === 100
         ? i18n.t("budgets.alerts.overBudgetTitle")
@@ -57,13 +55,14 @@ export async function scheduleBudgetAlert(
           budgetId: alert.budgetId,
           categoryId: alert.categoryId,
           threshold: alert.threshold,
+          route: "/(tabs)/(finance)",
         },
       },
       trigger: null, // immediate
     });
 
-    return id;
+    return { type: "scheduled", id };
   } catch {
-    return null;
+    return { type: "skipped" };
   }
 }

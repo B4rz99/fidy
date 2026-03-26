@@ -1,5 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
+import * as Notifications from "expo-notifications";
 import { create } from "zustand";
+import { deletePushToken, PROJECT_ID } from "@/features/notifications/services/push-token";
 import { getSupabase } from "@/shared/db";
 import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
 
@@ -85,6 +87,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   },
 
   signOut: async () => {
+    // Clean up push token while session is still valid (RLS needs auth).
+    // Capped at 2s so signout isn't blocked indefinitely by network issues.
+    await Promise.race([
+      Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID })
+        .then(({ data: token }) => deletePushToken(token))
+        .catch(() => {}),
+      new Promise((resolve) => setTimeout(resolve, 2000)),
+    ]);
+
     try {
       const supabase = getSupabase();
       await supabase.auth.signOut();

@@ -315,6 +315,19 @@ vi.mock("expo-notifications", () => ({
     Promise.resolve({ status: "granted", granted: true, canAskAgain: true })
   ),
   setNotificationHandler: vi.fn(),
+  getExpoPushTokenAsync: vi.fn(() => Promise.resolve({ data: "ExponentPushToken[mock]" })),
+  addPushTokenListener: vi.fn(() => ({ remove: vi.fn() })),
+  addNotificationResponseReceivedListener: vi.fn(() => ({ remove: vi.fn() })),
+}));
+
+// Mock expo-constants
+vi.mock("expo-constants", () => ({
+  default: {
+    expoConfig: {
+      version: "0.0.1",
+      extra: { eas: { projectId: "test-project-id" } },
+    },
+  },
 }));
 
 // Mock expo native module bridge (used by local expo-app-intents module)

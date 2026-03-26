@@ -1,9 +1,11 @@
 import { create } from "zustand";
 import { useNotificationStore } from "@/features/notifications";
+import { scheduleLocalPush } from "@/features/notifications/services/local-push";
 import { useTransactionStore } from "@/features/transactions";
 import { getMonthlyTotalsByType } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
+import { i18n } from "@/shared/i18n";
 import {
   generateId,
   generateSyncQueueId,
@@ -317,6 +319,17 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
             }),
           });
           trackGoalMilestoneReached();
+
+          // Best-effort local push (preference guard inside scheduleLocalPush)
+          scheduleLocalPush({
+            title: i18n.t("notifications.goalMilestone", {
+              goalName: goalAfter.goal.name,
+              percent: milestone,
+            }),
+            body: i18n.t("notifications.goalMilestoneMsg", { percent: milestone }),
+            data: { route: `/goal-detail?id=${input.goalId}` },
+            preferenceKey: "goalMilestones",
+          }).catch(() => {});
         }
       });
     }

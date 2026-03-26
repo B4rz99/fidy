@@ -9,7 +9,8 @@ import {
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useFonts } from "expo-font";
 import { getLocales } from "expo-localization";
-import { Stack, useRouter, useSegments } from "expo-router";
+import * as Notifications from "expo-notifications";
+import { type Href, Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
@@ -28,7 +29,7 @@ import {
 import { useCategoriesStore } from "@/features/categories";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
 import { useGoalStore } from "@/features/goals";
-import { useNotificationStore } from "@/features/notifications";
+import { registerPushToken, useNotificationStore } from "@/features/notifications";
 import {
   clearOnboardingFromStore,
   getOnboardingCompleteFromStore,
@@ -68,6 +69,7 @@ if (SENTRY_DSN) {
 }
 
 function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
+  const router = useRouter();
   const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
 
   useEffect(() => {
@@ -124,6 +126,37 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
   useNotificationCapture(captureDb, userId);
   useApplePayCapture(captureDb, userId);
   useSmsDetection(captureDb, userId);
+
+  // Global notification handler + push token / response listeners
+  useEffect(() => {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      }),
+    });
+
+    registerPushToken(userId).catch(captureError);
+
+    const tokenSub = Notifications.addPushTokenListener(() => {
+      registerPushToken(userId).catch(captureError);
+    });
+
+    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data;
+      const route = data?.route;
+      if (typeof route === "string" && route.startsWith("/")) {
+        router.push(route as Href);
+      }
+    });
+
+    return () => {
+      tokenSub.remove();
+      responseSub.remove();
+    };
+  }, [userId, router]);
 
   useEffect(() => {
     if (migrationsError) {
@@ -234,6 +267,10 @@ function RootLayout() {
             options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
           />
           <Stack.Screen
+            name="enable-notifications"
+            options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+          />
+          <Stack.Screen
             name="notifications"
             options={{
               headerShown: Platform.OS === "ios",
@@ -311,6 +348,14 @@ function RootLayout() {
           />
           <Stack.Screen
             name="ai-memories"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
+          />
+          <Stack.Screen
+            name="notification-preferences"
             options={{
               headerShown: Platform.OS === "ios",
               headerStyle: { backgroundColor: theme.page },

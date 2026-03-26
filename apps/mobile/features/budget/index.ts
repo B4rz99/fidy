@@ -7,7 +7,8 @@ export {
   deriveBudgetProgress,
   deriveBudgetSummary,
 } from "./lib/derive";
-export { requestBudgetNotificationPermissions, scheduleBudgetAlert } from "./lib/notifications";
+export type { ScheduleResult } from "./lib/notifications";
+export { scheduleBudgetAlert } from "./lib/notifications";
 export type { BudgetRow } from "./lib/repository";
 export {
   copyBudgetsToMonth,

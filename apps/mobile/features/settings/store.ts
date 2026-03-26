@@ -4,24 +4,77 @@ import { create } from "zustand";
 
 export type ThemePreference = "system" | "light" | "dark";
 
+export type NotificationPreferences = {
+  readonly budgetAlerts: boolean;
+  readonly goalMilestones: boolean;
+  readonly spendingAnomalies: boolean;
+  readonly weeklyDigest: boolean;
+};
+
+const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
+  budgetAlerts: true,
+  goalMilestones: true,
+  spendingAnomalies: true,
+  weeklyDigest: true,
+};
+
 type SettingsState = {
   themePreference: ThemePreference;
-  notificationsEnabled: boolean;
+  notificationPreferences: NotificationPreferences;
+  areAllNotificationsOff: boolean;
   isDeleting: boolean;
 };
 
 type SettingsActions = {
   setThemePreference: (pref: ThemePreference) => void;
-  setNotificationsEnabled: (enabled: boolean) => void;
+  setNotificationPreference: (key: keyof NotificationPreferences, value: boolean) => void;
+  setAllNotifications: (enabled: boolean) => void;
   deleteAccount: (supabaseUrl: string, token: string) => Promise<void>;
   hydrate: () => Promise<void>;
 };
 
+const PREFS_KEY = "notification_preferences";
+
 const toColorScheme = (pref: ThemePreference) => (pref === "system" ? "unspecified" : pref);
 
-export const useSettingsStore = create<SettingsState & SettingsActions>((set) => ({
+const computeAllOff = (prefs: NotificationPreferences): boolean =>
+  !prefs.budgetAlerts && !prefs.goalMilestones && !prefs.spendingAnomalies && !prefs.weeklyDigest;
+
+const persistPreferences = (prefs: NotificationPreferences): void => {
+  SecureStore.setItemAsync(PREFS_KEY, JSON.stringify(prefs)).catch(() => {});
+  // Best-effort Supabase dual write (lazy import to avoid circular deps)
+  import("@/shared/db/supabase")
+    .then(async ({ getSupabase }) => {
+      const supabase = getSupabase();
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) return;
+      const { error } = await supabase.from("notification_preferences").upsert(
+        {
+          // biome-ignore lint/style/useNamingConvention: Supabase column name
+          user_id: data.user.id,
+          // biome-ignore lint/style/useNamingConvention: Supabase column name
+          budget_alerts: prefs.budgetAlerts,
+          // biome-ignore lint/style/useNamingConvention: Supabase column name
+          goal_milestones: prefs.goalMilestones,
+          // biome-ignore lint/style/useNamingConvention: Supabase column name
+          spending_anomalies: prefs.spendingAnomalies,
+          // biome-ignore lint/style/useNamingConvention: Supabase column name
+          weekly_digest: prefs.weeklyDigest,
+        },
+        { onConflict: "user_id" }
+      );
+      if (error) {
+        const { captureWarning } = await import("@/shared/lib");
+        captureWarning("notification_prefs_sync_failed", { errorMessage: error.message });
+      }
+    })
+    .catch(() => {});
+};
+
+export const useSettingsStore = create<SettingsState & SettingsActions>((set, get) => ({
   themePreference: "system",
-  notificationsEnabled: true,
+  notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
+  areAllNotificationsOff: false,
   isDeleting: false,
 
   setThemePreference: (pref) => {
@@ -30,9 +83,27 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
     SecureStore.setItemAsync("theme_preference", pref).catch(() => {});
   },
 
-  // Placeholder: only toggles local UI state until push notifications are wired up
-  setNotificationsEnabled: (enabled) => {
-    set({ notificationsEnabled: enabled });
+  setNotificationPreference: (key, value) => {
+    const updated = { ...get().notificationPreferences, [key]: value };
+    set({
+      notificationPreferences: updated,
+      areAllNotificationsOff: computeAllOff(updated),
+    });
+    persistPreferences(updated);
+  },
+
+  setAllNotifications: (enabled) => {
+    const updated: NotificationPreferences = {
+      budgetAlerts: enabled,
+      goalMilestones: enabled,
+      spendingAnomalies: enabled,
+      weeklyDigest: enabled,
+    };
+    set({
+      notificationPreferences: updated,
+      areAllNotificationsOff: computeAllOff(updated),
+    });
+    persistPreferences(updated);
   },
 
   deleteAccount: async (supabaseUrl, token) => {
@@ -61,10 +132,26 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
 
   hydrate: async () => {
     try {
-      const stored = await SecureStore.getItemAsync("theme_preference");
-      if (stored === "light" || stored === "dark" || stored === "system") {
-        set({ themePreference: stored });
-        Appearance.setColorScheme(toColorScheme(stored));
+      const [storedTheme, storedPrefs] = await Promise.all([
+        SecureStore.getItemAsync("theme_preference"),
+        SecureStore.getItemAsync(PREFS_KEY),
+      ]);
+
+      if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
+        set({ themePreference: storedTheme });
+        Appearance.setColorScheme(toColorScheme(storedTheme));
+      }
+
+      if (storedPrefs) {
+        const raw: unknown = JSON.parse(storedPrefs);
+        const parsed: NotificationPreferences = {
+          ...DEFAULT_NOTIFICATION_PREFERENCES,
+          ...(typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {}),
+        };
+        set({
+          notificationPreferences: parsed,
+          areAllNotificationsOff: computeAllOff(parsed),
+        });
       }
     } catch {
       // SecureStore unavailable (e.g., in tests)
