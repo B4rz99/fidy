@@ -1,6 +1,7 @@
 import { memo } from "react";
+import type { ViewStyle } from "react-native";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import type { AnalyticsPeriod } from "../lib/derive";
 import { useAnalyticsStore } from "../store";
 import { CategoryBreakdownCard } from "./CategoryBreakdownCard";
@@ -57,13 +58,24 @@ export function AnalyticsScreen() {
   const periodDelta = useAnalyticsStore((s) => s.periodDelta);
   const isLoading = useAnalyticsStore((s) => s.isLoading);
   const setPeriod = useAnalyticsStore((s) => s.setPeriod);
+  const loadAnalytics = useAnalyticsStore((s) => s.loadAnalytics);
 
+  // Load data on mount if boot-time load failed or hasn't completed
+  useMountEffect(() => {
+    if (!incomeExpense && !isLoading) {
+      loadAnalytics().catch(() => {});
+    }
+  });
+
+  const pageBg = useThemeColor("page");
   const secondaryColor = useThemeColor("secondary");
   const showEmpty = !incomeExpense && !isLoading;
 
+  const scrollBg: ViewStyle = { backgroundColor: pageBg };
+
   return (
     <ScrollView
-      style={styles.scrollView}
+      style={[styles.scrollView, scrollBg]}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >

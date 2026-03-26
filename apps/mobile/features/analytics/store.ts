@@ -124,7 +124,8 @@ export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set,
       );
 
       set({ incomeExpense, categoryBreakdown, periodDelta, isLoading: false });
-    } catch {
+    } catch (error) {
+      console.error("[analytics] loadAnalytics failed:", error);
       set({ isLoading: false });
     }
   },

@@ -1,8 +1,10 @@
-import { Stack } from "expo-router";
-import { useState } from "react";
+import { Stack, useRouter } from "expo-router";
+import { useMemo, useState } from "react";
 import { AnalyticsScreen } from "@/features/analytics";
 import { BudgetListScreen } from "@/features/budget";
 import { GoalsListScreen } from "@/features/goals";
+import { useGoalStore } from "@/features/goals";
+import { Plus } from "@/shared/components/icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
@@ -20,7 +22,7 @@ function SegmentControl({
   const accentGreen = useThemeColor("accentGreen");
   const secondary = useThemeColor("secondary");
 
-  const tabs: ReadonlyArray<{ key: FinanceTab; label: string }> = [
+  const tabs: readonly { key: FinanceTab; label: string }[] = [
     { key: "budgets", label: t("budgets.title") },
     { key: "goals", label: t("goals.title") },
     { key: "analytics", label: t("analytics.title") },
@@ -37,9 +39,7 @@ function SegmentControl({
           ]}
           onPress={() => onSwitch(tab.key)}
         >
-          <Text
-            style={[styles.segmentText, { color: active === tab.key ? "#FFFFFF" : secondary }]}
-          >
+          <Text style={[styles.segmentText, { color: active === tab.key ? "#FFFFFF" : secondary }]}>
             {tab.label}
           </Text>
         </Pressable>
@@ -48,8 +48,40 @@ function SegmentControl({
   );
 }
 
+function useHeaderRight(activeTab: FinanceTab) {
+  const router = useRouter();
+  const primaryColor = useThemeColor("primary");
+  const accentGreen = useThemeColor("accentGreen");
+  const goals = useGoalStore((s) => s.goals);
+
+  return useMemo(() => {
+    if (activeTab === "budgets") {
+      return function AddBudgetAction() {
+        return (
+          <Pressable onPress={() => router.push("/create-budget")} hitSlop={12}>
+            <Plus size={24} color={primaryColor} />
+          </Pressable>
+        );
+      };
+    }
+    if (activeTab === "goals" && goals.length > 0) {
+      return function AddGoalAction() {
+        return (
+          <Pressable onPress={() => router.push("/create-goal")} hitSlop={12}>
+            <Plus size={24} color={accentGreen} />
+          </Pressable>
+        );
+      };
+    }
+    return function NoAction() {
+      return null;
+    };
+  }, [activeTab, goals.length, primaryColor, accentGreen, router]);
+}
+
 export default function FinanceScreen() {
   const [activeTab, setActiveTab] = useState<FinanceTab>("budgets");
+  const headerRight = useHeaderRight(activeTab);
 
   return (
     <View style={styles.container}>
@@ -57,6 +89,7 @@ export default function FinanceScreen() {
         <Stack.Screen
           options={{
             headerTitle: () => <SegmentControl active={activeTab} onSwitch={setActiveTab} />,
+            headerRight,
           }}
         />
       )}

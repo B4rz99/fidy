@@ -107,7 +107,7 @@ export function deriveCategoryBreakdown(
       total: item.total,
       percent: totalExpenses === 0 ? 0 : Math.round((item.total / totalExpenses) * 100),
     }))
-    .toSorted((a, b) => b.total - a.total);
+    .sort((a, b) => b.total - a.total);
 }
 
 /**

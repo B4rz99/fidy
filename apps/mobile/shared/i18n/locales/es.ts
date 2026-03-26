@@ -636,9 +636,9 @@ const es = {
     },
   },
 
-  // Analíticas
+  // Analítica
   analytics: {
-    title: "Analíticas",
+    title: "Analítica",
     incomeLabel: "Ingresos",
     expensesLabel: "Gastos",
     netPrefix: "Neto: ",

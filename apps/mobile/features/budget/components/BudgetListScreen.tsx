@@ -1,4 +1,4 @@
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect } from "react";
 import { MonthNavigator } from "@/features/calendar/components/MonthNavigator";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
@@ -81,14 +81,6 @@ export function BudgetListScreen() {
         Platform.OS !== "ios" ? <AddBudgetButton onPress={handleAddBudget} /> : undefined
       }
     >
-      {Platform.OS === "ios" && (
-        <Stack.Screen
-          options={{
-            title: t("budgets.title"),
-            headerRight: () => <AddBudgetButton onPress={handleAddBudget} />,
-          }}
-        />
-      )}
       <View style={styles.content}>
         <MonthNavigator currentMonth={monthAsDate} onPrev={prevMonth} onNext={nextMonth} />
 
