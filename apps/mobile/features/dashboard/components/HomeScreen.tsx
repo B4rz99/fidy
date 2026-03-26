@@ -111,6 +111,7 @@ const ListHeader = memo(function ListHeader({
         categorySpending={categorySpending}
         dailySpending={dailySpending}
         totalSpent={totalSpent}
+        onPress={() => push("/analytics" as never)}
       />
     </View>
   );

@@ -1,11 +1,13 @@
-import { Stack } from "expo-router";
-import { useState } from "react";
+import { Stack, useRouter } from "expo-router";
+import { useMemo, useState } from "react";
+import { AnalyticsScreen } from "@/features/analytics";
 import { BudgetListScreen } from "@/features/budget";
-import { GoalsListScreen } from "@/features/goals";
+import { GoalsListScreen, useGoalStore } from "@/features/goals";
+import { Plus } from "@/shared/components/icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
-type FinanceTab = "budgets" | "goals";
+type FinanceTab = "budgets" | "goals" | "analytics";
 
 function SegmentControl({
   active,
@@ -19,36 +21,66 @@ function SegmentControl({
   const accentGreen = useThemeColor("accentGreen");
   const secondary = useThemeColor("secondary");
 
+  const tabs: readonly { key: FinanceTab; label: string }[] = [
+    { key: "budgets", label: t("budgets.title") },
+    { key: "goals", label: t("goals.title") },
+    { key: "analytics", label: t("analytics.title") },
+  ];
+
   return (
     <View style={[styles.segmentContainer, { backgroundColor: card }]}>
-      <Pressable
-        style={[
-          styles.segmentButton,
-          active === "budgets" ? { backgroundColor: accentGreen } : undefined,
-        ]}
-        onPress={() => onSwitch("budgets")}
-      >
-        <Text style={[styles.segmentText, { color: active === "budgets" ? "#FFFFFF" : secondary }]}>
-          {t("budgets.title")}
-        </Text>
-      </Pressable>
-      <Pressable
-        style={[
-          styles.segmentButton,
-          active === "goals" ? { backgroundColor: accentGreen } : undefined,
-        ]}
-        onPress={() => onSwitch("goals")}
-      >
-        <Text style={[styles.segmentText, { color: active === "goals" ? "#FFFFFF" : secondary }]}>
-          {t("goals.title")}
-        </Text>
-      </Pressable>
+      {tabs.map((tab) => (
+        <Pressable
+          key={tab.key}
+          style={[
+            styles.segmentButton,
+            active === tab.key ? { backgroundColor: accentGreen } : undefined,
+          ]}
+          onPress={() => onSwitch(tab.key)}
+        >
+          <Text style={[styles.segmentText, { color: active === tab.key ? "#FFFFFF" : secondary }]}>
+            {tab.label}
+          </Text>
+        </Pressable>
+      ))}
     </View>
   );
 }
 
+function useHeaderRight(activeTab: FinanceTab) {
+  const router = useRouter();
+  const primaryColor = useThemeColor("primary");
+  const accentGreen = useThemeColor("accentGreen");
+  const goals = useGoalStore((s) => s.goals);
+
+  return useMemo(() => {
+    if (activeTab === "budgets") {
+      return function AddBudgetAction() {
+        return (
+          <Pressable onPress={() => router.push("/create-budget")} hitSlop={12}>
+            <Plus size={24} color={primaryColor} />
+          </Pressable>
+        );
+      };
+    }
+    if (activeTab === "goals" && goals.length > 0) {
+      return function AddGoalAction() {
+        return (
+          <Pressable onPress={() => router.push("/create-goal")} hitSlop={12}>
+            <Plus size={24} color={accentGreen} />
+          </Pressable>
+        );
+      };
+    }
+    return function NoAction() {
+      return null;
+    };
+  }, [activeTab, goals.length, primaryColor, accentGreen, router]);
+}
+
 export default function FinanceScreen() {
   const [activeTab, setActiveTab] = useState<FinanceTab>("budgets");
+  const headerRight = useHeaderRight(activeTab);
 
   return (
     <View style={styles.container}>
@@ -56,6 +88,7 @@ export default function FinanceScreen() {
         <Stack.Screen
           options={{
             headerTitle: () => <SegmentControl active={activeTab} onSwitch={setActiveTab} />,
+            headerRight,
           }}
         />
       )}
@@ -64,7 +97,9 @@ export default function FinanceScreen() {
           <SegmentControl active={activeTab} onSwitch={setActiveTab} />
         </View>
       )}
-      {activeTab === "budgets" ? <BudgetListScreen /> : <GoalsListScreen />}
+      {activeTab === "budgets" && <BudgetListScreen />}
+      {activeTab === "goals" && <GoalsListScreen />}
+      {activeTab === "analytics" && <AnalyticsScreen />}
     </View>
   );
 }
@@ -77,7 +112,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderRadius: 12,
     padding: 4,
-    width: 220,
+    width: 300,
   },
   segmentButton: {
     flex: 1,

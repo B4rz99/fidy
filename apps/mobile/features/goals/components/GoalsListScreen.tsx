@@ -1,4 +1,4 @@
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Target } from "@/shared/components/icons";
@@ -102,17 +102,6 @@ export function GoalsListScreen() {
         hasGoals && Platform.OS !== "ios" ? <AddGoalButton onPress={handleCreateGoal} /> : undefined
       }
     >
-      {Platform.OS === "ios" && (
-        <Stack.Screen
-          options={{
-            title: t("goals.title"),
-            ...(hasGoals
-              ? { headerRight: () => <AddGoalButton onPress={handleCreateGoal} /> }
-              : {}),
-          }}
-        />
-      )}
-
       {!hasGoals && !isLoading ? (
         <GoalsEmpty onCreateGoal={handleCreateGoal} />
       ) : (
