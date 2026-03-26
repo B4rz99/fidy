@@ -11,9 +11,7 @@ import type { CategoryId, CopAmount } from "@/shared/types/branded";
 // Fixture builders
 // ---------------------------------------------------------------------------
 
-const makeCategorySpending = (
-  items: ReadonlyArray<{ categoryId: string; total: number }>
-) =>
+const makeCategorySpending = (items: ReadonlyArray<{ categoryId: string; total: number }>) =>
   items.map((item) => ({
     categoryId: item.categoryId as CategoryId,
     total: item.total as CopAmount,
@@ -177,7 +175,7 @@ describe("deriveCategoryBreakdown", () => {
       { categoryId: "transport", total: 0 },
     ]);
     const result = deriveCategoryBreakdown(spending, 0 as CopAmount);
-    result.forEach((item) => expect(item.percent).toBe(0));
+    expect(result.every((item) => item.percent === 0)).toBe(true);
   });
 
   it("returns empty array when spending is empty", () => {
@@ -215,7 +213,7 @@ describe("deriveCategoryBreakdown", () => {
       { categoryId: "other", total: 100000 },
     ]);
     const result = deriveCategoryBreakdown(spending, 300000 as CopAmount);
-    result.forEach((item) => expect(item.percent).toBe(33));
+    expect(result.every((item) => item.percent === 33)).toBe(true);
   });
 });
 

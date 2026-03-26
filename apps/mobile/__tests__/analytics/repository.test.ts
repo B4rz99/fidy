@@ -23,16 +23,19 @@ describe("analytics repository", () => {
     mockGet.mockReturnValue(null);
     mockSelect.mockReturnValue({ from: mockFrom });
     mockFrom.mockReturnValue({ where: mockWhere, all: mockAll, get: mockGet });
-    mockWhere.mockReturnValue({ all: mockAll, get: mockGet, groupBy: mockGroupBy, orderBy: mockOrderBy });
+    mockWhere.mockReturnValue({
+      all: mockAll,
+      get: mockGet,
+      groupBy: mockGroupBy,
+      orderBy: mockOrderBy,
+    });
     mockGroupBy.mockReturnValue({ all: mockAll, orderBy: mockOrderBy });
     mockOrderBy.mockReturnValue({ all: mockAll });
   });
 
   describe("getIncomeExpenseForPeriod", () => {
     it("calls db.select, from, where, and get", async () => {
-      const { getIncomeExpenseForPeriod } = await import(
-        "@/features/analytics/lib/repository"
-      );
+      const { getIncomeExpenseForPeriod } = await import("@/features/analytics/lib/repository");
 
       getIncomeExpenseForPeriod(
         mockDb,
@@ -50,9 +53,7 @@ describe("analytics repository", () => {
     it("returns zero defaults when db returns null", async () => {
       mockGet.mockReturnValueOnce(null);
 
-      const { getIncomeExpenseForPeriod } = await import(
-        "@/features/analytics/lib/repository"
-      );
+      const { getIncomeExpenseForPeriod } = await import("@/features/analytics/lib/repository");
 
       const result = getIncomeExpenseForPeriod(
         mockDb,
@@ -67,9 +68,7 @@ describe("analytics repository", () => {
     it("returns zero defaults when row fields are null", async () => {
       mockGet.mockReturnValueOnce({ income: null, expenses: null });
 
-      const { getIncomeExpenseForPeriod } = await import(
-        "@/features/analytics/lib/repository"
-      );
+      const { getIncomeExpenseForPeriod } = await import("@/features/analytics/lib/repository");
 
       const result = getIncomeExpenseForPeriod(
         mockDb,
@@ -84,9 +83,7 @@ describe("analytics repository", () => {
     it("returns income and expenses from db row", async () => {
       mockGet.mockReturnValueOnce({ income: 500000, expenses: 350000 });
 
-      const { getIncomeExpenseForPeriod } = await import(
-        "@/features/analytics/lib/repository"
-      );
+      const { getIncomeExpenseForPeriod } = await import("@/features/analytics/lib/repository");
 
       const result = getIncomeExpenseForPeriod(
         mockDb,
