@@ -4,19 +4,12 @@
 // Sends a weekly spending summary push notification to all users with
 // weekly_digest enabled and at least one registered push device.
 //
-// Cron setup (pg_cron — configure via Supabase dashboard or migration):
-//   SELECT cron.schedule(
-//     'weekly-digest',
-//     '0 0 * * 1',  -- Every Monday at 00:00 UTC (Sunday 7:00 PM COT)
-//     $$SELECT net.http_post(
-//       url := '<SUPABASE_URL>/functions/v1/weekly-digest',
-//       headers := jsonb_build_object(
-//         'Authorization', 'Bearer ' || '<SUPABASE_SERVICE_ROLE_KEY>',
-//         'Content-Type', 'application/json'
-//       ),
-//       body := '{}'::jsonb
-//     )$$
-//   );
+// Deploy with:
+//   supabase functions deploy weekly-digest --no-verify-jwt
+//   supabase secrets set CRON_SECRET=<same-value-as-vault-cron_secret>
+//
+// Cron setup (pg_cron — see migration 0008_push_notifications.sql):
+//   '0 0 * * 1' -- Every Monday at 00:00 UTC (Sunday 7:00 PM COT)
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { deriveDigestMessage, type WeeklyDigestData } from "../_shared/derive-digest.ts";
@@ -29,6 +22,8 @@ const serviceClient = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 );
+
+const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -306,6 +301,12 @@ Deno.serve(async (req) => {
 
   if (req.method !== "POST") {
     return jsonResponse({ success: false, error: "method_not_allowed" }, 405);
+  }
+
+  // Verify shared secret from pg_cron (prevents unauthorized invocations).
+  // Fails closed: if CRON_SECRET is not configured, all requests are rejected.
+  if (!CRON_SECRET || req.headers.get("x-cron-secret") !== CRON_SECRET) {
+    return jsonResponse({ success: false, error: "unauthorized" }, 401);
   }
 
   try {
