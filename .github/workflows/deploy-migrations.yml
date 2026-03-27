@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "apps/mobile/supabase/migrations/**"
+  workflow_dispatch:
 
 jobs:
   migrate:
@@ -19,11 +20,11 @@ jobs:
           version: 2.75.0
 
       - name: Link project
-        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }} --project-dir apps/mobile
+        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }} --workdir apps/mobile
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Apply migrations
-        run: supabase db push --project-dir apps/mobile
+        run: supabase db push --workdir apps/mobile
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
