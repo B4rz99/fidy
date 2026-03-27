@@ -1,18 +1,22 @@
 import { memo, useCallback, useState } from "react";
 import type { CategoryBreakdownItem } from "@/features/analytics/lib/derive";
+import { CATEGORY_MAP } from "@/features/transactions";
 import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  Pressable,
   ScrollView,
   Text,
   View,
 } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney } from "@/shared/lib";
 import type { CopAmount } from "@/shared/types/branded";
 import type { DashboardPeriod } from "../lib/derive";
-import { CategoryBarChart } from "./CategoryBarChart";
+import { CategoryRow } from "./CategoryRow";
+import { DonutChart } from "./DonutChart";
 import { SpendingLineChart } from "./SpendingLineChart";
 
 const TOTAL_LABEL_KEYS: Record<DashboardPeriod, string> = {
@@ -30,9 +34,26 @@ type ChartSectionProps = {
   readonly period: DashboardPeriod;
   readonly categoryBreakdown: ReadonlyArray<CategoryBreakdownItem>;
   readonly dailySpending: readonly DailySpendingItem[];
-  readonly totalSpent: number;
-  readonly onCategoryPress: () => void;
+  readonly totalSpent: CopAmount;
+  readonly onChartPress: () => void;
 };
+
+const toSegments = (categories: ReadonlyArray<CategoryBreakdownItem>) =>
+  categories.map((c) => ({
+    percentage: c.percent,
+    color: CATEGORY_MAP[c.categoryId as keyof typeof CATEGORY_MAP]?.color ?? "#B8A9D4",
+  }));
+
+const toCategoryRows = (categories: ReadonlyArray<CategoryBreakdownItem>, locale: string) =>
+  categories.map((c) => {
+    const cat = CATEGORY_MAP[c.categoryId as keyof typeof CATEGORY_MAP];
+    return {
+      categoryId: c.categoryId,
+      color: cat?.color ?? "#B8A9D4",
+      name: cat ? getCategoryLabel(cat, locale) : c.categoryId,
+      amount: formatMoney(c.total),
+    };
+  });
 
 const LINE_CHART_WIDTH = 140;
 
@@ -61,12 +82,15 @@ export const ChartSection = memo(function ChartSection({
   categoryBreakdown,
   dailySpending,
   totalSpent,
-  onCategoryPress,
+  onChartPress,
 }: ChartSectionProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const [slideWidth, setSlideWidth] = useState(0);
   const secondaryColor = useThemeColor("secondary");
+
+  const segments = toSegments(categoryBreakdown);
+  const rows = toCategoryRows(categoryBreakdown, locale);
 
   const dailyTotal = dailySpending.reduce((sum, d) => sum + d.total, 0);
   const dayCount = dailySpending.length === 0 ? 1 : dailySpending.length;
@@ -86,7 +110,10 @@ export const ChartSection = memo(function ChartSection({
   );
 
   return (
-    <View className="gap-4">
+    <Pressable
+      onPress={onChartPress}
+      className="rounded-chart bg-chart-bg p-4 dark:bg-chart-bg-dark"
+    >
       <View onLayout={handleLayout}>
         {slideWidth > 0 && (
           <ScrollView
@@ -96,16 +123,27 @@ export const ChartSection = memo(function ChartSection({
             onMomentumScrollEnd={handleScrollEnd}
             decelerationRate="fast"
           >
-            {/* Slide 1: Category Bar Chart */}
-            <View style={{ width: slideWidth }}>
-              <CategoryBarChart categories={categoryBreakdown} onPress={onCategoryPress} />
+            {/* Slide 1: Donut Chart */}
+            <View style={{ width: slideWidth }} className="flex-row gap-4">
+              <DonutChart
+                segments={segments}
+                centerLabel={formatMoney(totalSpent)}
+                centerSubLabel={t("chart.spent")}
+              />
+              <View className="flex-1 justify-center gap-2.5">
+                {rows.map((row) => (
+                  <CategoryRow
+                    key={row.categoryId}
+                    color={row.color}
+                    name={row.name}
+                    amount={row.amount}
+                  />
+                ))}
+              </View>
             </View>
 
             {/* Slide 2: Line Chart */}
-            <View
-              style={{ width: slideWidth }}
-              className="flex-row gap-4 rounded-chart bg-chart-bg p-4 dark:bg-chart-bg-dark"
-            >
+            <View style={{ width: slideWidth }} className="flex-row gap-4">
               <SpendingLineChart data={dailySpending} width={LINE_CHART_WIDTH} height={100} />
               <View className="flex-1 justify-center gap-1.5">
                 <Text className="font-poppins-bold text-body text-primary dark:text-primary-dark">
@@ -136,7 +174,7 @@ export const ChartSection = memo(function ChartSection({
                     {t(TOTAL_LABEL_KEYS[period])}
                   </Text>
                   <Text className="font-poppins-bold text-body text-primary dark:text-primary-dark">
-                    {formatMoney(totalSpent as CopAmount)}
+                    {formatMoney(totalSpent)}
                   </Text>
                 </View>
               </View>
@@ -145,6 +183,6 @@ export const ChartSection = memo(function ChartSection({
         )}
       </View>
       <CarouselDots activeIndex={activeIndex} />
-    </View>
+    </Pressable>
   );
 });

@@ -1,13 +1,12 @@
 import { Stack, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { AnalyticsScreen } from "@/features/analytics";
 import { BudgetListScreen } from "@/features/budget";
 import { GoalsListScreen, useGoalStore } from "@/features/goals";
 import { Plus } from "@/shared/components/icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
-type FinanceTab = "budgets" | "goals" | "analytics";
+type FinanceTab = "budgets" | "goals";
 
 function SegmentControl({
   active,
@@ -24,7 +23,6 @@ function SegmentControl({
   const tabs: readonly { key: FinanceTab; label: string }[] = [
     { key: "budgets", label: t("budgets.title") },
     { key: "goals", label: t("goals.title") },
-    { key: "analytics", label: t("analytics.title") },
   ];
 
   return (
@@ -99,7 +97,6 @@ export default function FinanceScreen() {
       )}
       {activeTab === "budgets" && <BudgetListScreen />}
       {activeTab === "goals" && <GoalsListScreen />}
-      {activeTab === "analytics" && <AnalyticsScreen />}
     </View>
   );
 }

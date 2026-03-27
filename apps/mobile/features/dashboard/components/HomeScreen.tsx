@@ -81,7 +81,7 @@ type ListHeaderProps = {
   readonly dailySpending: ReadonlyArray<{ readonly date: string; readonly total: number }>;
   readonly totalSpent: CopAmount;
   readonly onPeriodChange: (period: DashboardPeriod) => void;
-  readonly onCategoryPress: () => void;
+  readonly onChartPress: () => void;
 };
 
 const ListHeader = memo(function ListHeader({
@@ -91,7 +91,7 @@ const ListHeader = memo(function ListHeader({
   dailySpending,
   totalSpent,
   onPeriodChange,
-  onCategoryPress,
+  onChartPress,
 }: ListHeaderProps) {
   const { push } = useRouter();
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
@@ -117,7 +117,7 @@ const ListHeader = memo(function ListHeader({
         categoryBreakdown={categoryBreakdown}
         dailySpending={dailySpending}
         totalSpent={totalSpent}
-        onCategoryPress={onCategoryPress}
+        onChartPress={onChartPress}
       />
     </View>
   );
@@ -207,7 +207,7 @@ export const HomeScreen = () => {
         dailySpending={periodDailySpending}
         totalSpent={periodSpent}
         onPeriodChange={setPeriod}
-        onCategoryPress={() => push("/analytics" as never)}
+        onChartPress={() => push("/analytics" as never)}
       />
     ),
     [period, periodSpent, periodCategorySpending, periodDailySpending, setPeriod, push]
