@@ -21,7 +21,14 @@ export {
 } from "./analytics";
 export type { CurrencyConfig } from "./currency";
 export { getActiveCurrency } from "./currency";
-export { formatDateDisplay, parseIsoDate, toIsoDate, toIsoDateTime, toMonth } from "./format-date";
+export {
+  formatDateDisplay,
+  offsetDate,
+  parseIsoDate,
+  toIsoDate,
+  toIsoDateTime,
+  toMonth,
+} from "./format-date";
 export {
   cleanDigitInput,
   formatInputDisplay,

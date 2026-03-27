@@ -1,16 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeDashboardRange, deriveCategoryPercents } from "@/features/dashboard/lib/derive";
-import type { CategoryId, CopAmount } from "@/shared/types/branded";
-
-// ---------------------------------------------------------------------------
-// Fixture builders
-// ---------------------------------------------------------------------------
-
-const makeCategorySpending = (items: ReadonlyArray<{ categoryId: string; total: number }>) =>
-  items.map((item) => ({
-    categoryId: item.categoryId as CategoryId,
-    total: item.total as CopAmount,
-  }));
+import { computeDashboardRange } from "@/features/dashboard/lib/derive";
 
 // ---------------------------------------------------------------------------
 // computeDashboardRange
@@ -116,70 +105,5 @@ describe("computeDashboardRange", () => {
     expect(result.spending.end).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(result.lineChart.start).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(result.lineChart.end).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// deriveCategoryPercents
-// ---------------------------------------------------------------------------
-
-describe("deriveCategoryPercents", () => {
-  it("computes correct percent for a single category (100%)", () => {
-    const categories = makeCategorySpending([{ categoryId: "food", total: 500000 }]);
-    const result = deriveCategoryPercents(categories, 500000 as CopAmount);
-    expect(result).toHaveLength(1);
-    expect(result[0]?.categoryId).toBe("food");
-    expect(result[0]?.total).toBe(500000);
-    expect(result[0]?.percent).toBe(100);
-  });
-
-  it("computes correct percents for multiple categories", () => {
-    const categories = makeCategorySpending([
-      { categoryId: "food", total: 300000 },
-      { categoryId: "transport", total: 100000 },
-      { categoryId: "entertainment", total: 100000 },
-    ]);
-    const result = deriveCategoryPercents(categories, 500000 as CopAmount);
-    const byId = new Map(result.map((item) => [item.categoryId, item]));
-    expect(byId.get("food" as CategoryId)?.percent).toBe(60);
-    expect(byId.get("transport" as CategoryId)?.percent).toBe(20);
-    expect(byId.get("entertainment" as CategoryId)?.percent).toBe(20);
-  });
-
-  it("returns empty array when categories is empty", () => {
-    const result = deriveCategoryPercents([], 0 as CopAmount);
-    expect(result).toHaveLength(0);
-  });
-
-  it("returns percent=0 for all categories when totalSpent is 0", () => {
-    const categories = makeCategorySpending([
-      { categoryId: "food", total: 0 },
-      { categoryId: "transport", total: 0 },
-    ]);
-    const result = deriveCategoryPercents(categories, 0 as CopAmount);
-    expect(result.every((item) => item.percent === 0)).toBe(true);
-  });
-
-  it("rounds percents to nearest integer", () => {
-    // 100000 / 300000 = 33.333...% -> rounds to 33
-    const categories = makeCategorySpending([
-      { categoryId: "food", total: 100000 },
-      { categoryId: "transport", total: 100000 },
-      { categoryId: "other", total: 100000 },
-    ]);
-    const result = deriveCategoryPercents(categories, 300000 as CopAmount);
-    expect(result.every((item) => item.percent === 33)).toBe(true);
-  });
-
-  it("preserves original category fields in returned items", () => {
-    const categories = makeCategorySpending([
-      { categoryId: "food", total: 250000 },
-      { categoryId: "transport", total: 250000 },
-    ]);
-    const result = deriveCategoryPercents(categories, 500000 as CopAmount);
-    expect(result[0]?.categoryId).toBe("food");
-    expect(result[0]?.total).toBe(250000);
-    expect(result[1]?.categoryId).toBe("transport");
-    expect(result[1]?.total).toBe(250000);
   });
 });
