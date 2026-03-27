@@ -48,9 +48,17 @@ const toSegments = (categories: ReadonlyArray<CategoryBreakdownItem>) => {
     percentage: c.percent,
     color: CATEGORY_MAP[c.categoryId as keyof typeof CATEGORY_MAP]?.color ?? REMAINDER_COLOR,
   }));
-  return otherPercent > 0
-    ? [...segments, { percentage: otherPercent, color: REMAINDER_COLOR }]
-    : segments;
+  const all =
+    otherPercent > 0
+      ? [...segments, { percentage: otherPercent, color: REMAINDER_COLOR }]
+      : segments;
+  // Adjust last segment so rounded percentages always sum to 100
+  const sum = all.reduce((s, seg) => s + seg.percentage, 0);
+  if (all.length > 0 && sum !== 100 && sum > 0) {
+    const last = all[all.length - 1];
+    return [...all.slice(0, -1), { ...last, percentage: last.percentage + (100 - sum) }];
+  }
+  return all;
 };
 
 const toCategoryRows = (

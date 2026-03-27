@@ -49,7 +49,11 @@ export const useDashboardStore = create<DashboardState & DashboardActions>((set,
       const currentPages = useTransactionStore.getState().pages;
       if (currentPages === prevPagesRef) return;
       prevPagesRef = currentPages;
-      get().loadDashboard();
+      try {
+        get().loadDashboard();
+      } catch (error) {
+        console.error("[dashboard] auto-refresh failed:", error);
+      }
     });
   },
 
