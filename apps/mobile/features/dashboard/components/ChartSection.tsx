@@ -38,22 +38,49 @@ type ChartSectionProps = {
   readonly onChartPress: () => void;
 };
 
-const toSegments = (categories: ReadonlyArray<CategoryBreakdownItem>) =>
-  categories.map((c) => ({
-    percentage: c.percent,
-    color: CATEGORY_MAP[c.categoryId as keyof typeof CATEGORY_MAP]?.color ?? "#B8A9D4",
-  }));
+const MAX_VISIBLE = 5;
+const OTHER_COLOR = "#B8A9D4";
 
-const toCategoryRows = (categories: ReadonlyArray<CategoryBreakdownItem>, locale: string) =>
-  categories.map((c) => {
+const toSegments = (categories: ReadonlyArray<CategoryBreakdownItem>) => {
+  const top = categories.slice(0, MAX_VISIBLE);
+  const otherPercent = categories.slice(MAX_VISIBLE).reduce((sum, c) => sum + c.percent, 0);
+  const segments = top.map((c) => ({
+    percentage: c.percent,
+    color: CATEGORY_MAP[c.categoryId as keyof typeof CATEGORY_MAP]?.color ?? OTHER_COLOR,
+  }));
+  return otherPercent > 0
+    ? [...segments, { percentage: otherPercent, color: OTHER_COLOR }]
+    : segments;
+};
+
+const toCategoryRows = (
+  categories: ReadonlyArray<CategoryBreakdownItem>,
+  locale: string,
+  t: (key: string) => string
+) => {
+  const top = categories.slice(0, MAX_VISIBLE);
+  const otherTotal = categories.slice(MAX_VISIBLE).reduce((sum, c) => sum + c.total, 0);
+  const rows = top.map((c) => {
     const cat = CATEGORY_MAP[c.categoryId as keyof typeof CATEGORY_MAP];
     return {
       categoryId: c.categoryId,
-      color: cat?.color ?? "#B8A9D4",
+      color: cat?.color ?? OTHER_COLOR,
       name: cat ? getCategoryLabel(cat, locale) : c.categoryId,
       amount: formatMoney(c.total),
     };
   });
+  return otherTotal > 0
+    ? [
+        ...rows,
+        {
+          categoryId: "_other",
+          color: OTHER_COLOR,
+          name: t("common.other"),
+          amount: formatMoney(otherTotal as CopAmount),
+        },
+      ]
+    : rows;
+};
 
 const LINE_CHART_WIDTH = 140;
 
@@ -90,7 +117,7 @@ export const ChartSection = memo(function ChartSection({
   const secondaryColor = useThemeColor("secondary");
 
   const segments = toSegments(categoryBreakdown);
-  const rows = toCategoryRows(categoryBreakdown, locale);
+  const rows = toCategoryRows(categoryBreakdown, locale, t);
 
   const dailyTotal = dailySpending.reduce((sum, d) => sum + d.total, 0);
   const dayCount = dailySpending.length === 0 ? 1 : dailySpending.length;
