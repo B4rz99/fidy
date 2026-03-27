@@ -1,4 +1,4 @@
-import { toIsoDate } from "@/shared/lib/format-date";
+import { offsetDate, toIsoDate } from "@/shared/lib/format-date";
 import type { CategoryId, CopAmount, IsoDate } from "@/shared/types/branded";
 
 export type AnalyticsPeriod = "W" | "M" | "Q" | "Y";
@@ -32,10 +32,6 @@ export type PeriodDelta = {
     readonly increased: boolean;
   }>;
 };
-
-/** Returns a Date offset by `days` relative to `base` (negative = in the past). */
-const offsetDate = (base: Date, days: number): Date =>
-  new Date(base.getFullYear(), base.getMonth(), base.getDate() + days);
 
 /**
  * Computes a percentage change from `prev` to `curr`, rounded to nearest integer.

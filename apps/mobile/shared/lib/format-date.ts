@@ -42,3 +42,10 @@ export function toMonth(date: Date): Month {
 export function toIsoDateTime(date: Date): IsoDateTime {
   return date.toISOString() as IsoDateTime;
 }
+
+/**
+ * Returns a Date offset by `days` relative to `base` (negative = in the past).
+ */
+export function offsetDate(base: Date, days: number): Date {
+  return new Date(base.getFullYear(), base.getMonth(), base.getDate() + days);
+}

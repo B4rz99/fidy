@@ -646,6 +646,16 @@ const en = {
     totalSpending: "Total spending",
     noData: "Not enough data for this period",
   },
+
+  dashboard: {
+    spentToday: "Spent today",
+    spentThisWeek: "Spent this week",
+    spentThisMonth: "Spent this month",
+    today: "Today",
+    week: "Week",
+    month: "Month",
+    byCategory: "By category",
+  },
 } as const;
 
 export default en;
