@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import type { CategoryBreakdownItem } from "@/features/analytics/lib/derive";
 import {
   type LayoutChangeEvent,
@@ -11,6 +11,7 @@ import {
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import type { CopAmount } from "@/shared/types/branded";
+import type { DashboardPeriod } from "../lib/derive";
 import { CategoryBarChart } from "./CategoryBarChart";
 import { SpendingLineChart } from "./SpendingLineChart";
 
@@ -20,6 +21,7 @@ type DailySpendingItem = {
 };
 
 type ChartSectionProps = {
+  readonly period: DashboardPeriod;
   readonly categoryBreakdown: ReadonlyArray<CategoryBreakdownItem>;
   readonly dailySpending: readonly DailySpendingItem[];
   readonly totalSpent: number;
@@ -48,12 +50,13 @@ const CarouselDots = ({ activeIndex }: { readonly activeIndex: number }) => {
   );
 };
 
-export const ChartSection = ({
+export const ChartSection = memo(function ChartSection({
+  period,
   categoryBreakdown,
   dailySpending,
   totalSpent,
   onCategoryPress,
-}: ChartSectionProps) => {
+}: ChartSectionProps) {
   const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const [slideWidth, setSlideWidth] = useState(0);
@@ -106,7 +109,7 @@ export const ChartSection = ({
                   className="font-poppins-medium text-caption"
                   style={{ color: secondaryColor }}
                 >
-                  {t("chart.last30Days")}
+                  {period === "month" ? t("chart.last30Days") : t("chart.last7Days")}
                 </Text>
                 <View className="mt-2 gap-1">
                   <Text
@@ -138,4 +141,4 @@ export const ChartSection = ({
       <CarouselDots activeIndex={activeIndex} />
     </View>
   );
-};
+});

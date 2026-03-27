@@ -351,6 +351,7 @@ const es = {
   chart: {
     dailySpending: "Gasto Diario",
     last30Days: "Últimos 30 días",
+    last7Days: "Últimos 7 días",
     avgPerDay: "Prom/día",
     thisMonthTotal: "Total del mes",
     spent: "gastado",

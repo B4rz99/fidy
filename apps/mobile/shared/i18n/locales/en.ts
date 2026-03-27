@@ -349,6 +349,7 @@ const en = {
   chart: {
     dailySpending: "Daily Spending",
     last30Days: "Last 30 days",
+    last7Days: "Last 7 days",
     avgPerDay: "Avg/day",
     thisMonthTotal: "This month total",
     spent: "spent",

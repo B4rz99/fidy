@@ -1,5 +1,6 @@
 import { Stack, useRouter } from "expo-router";
 import { memo, useCallback, useMemo } from "react";
+import type { CategoryBreakdownItem } from "@/features/analytics/lib/derive";
 import { DetectedTransactionsBanner } from "@/features/capture-sources";
 import {
   EmailConnectBanner,
@@ -24,6 +25,7 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { formatSignedMoney, toIsoDate } from "@/shared/lib";
 import type { CopAmount, TransactionId } from "@/shared/types/branded";
+import type { DashboardPeriod } from "../lib/derive";
 import { useDashboardStore } from "../store";
 import { ChartSection } from "./ChartSection";
 import { DateHeader } from "./DateHeader";
@@ -73,14 +75,12 @@ const TransactionItem = memo(function TransactionItem({
 });
 
 type ListHeaderProps = {
-  readonly period: import("../lib/derive").DashboardPeriod;
+  readonly period: DashboardPeriod;
   readonly spentAmount: CopAmount;
-  readonly categoryBreakdown: ReadonlyArray<
-    import("@/features/analytics/lib/derive").CategoryBreakdownItem
-  >;
+  readonly categoryBreakdown: ReadonlyArray<CategoryBreakdownItem>;
   readonly dailySpending: ReadonlyArray<{ readonly date: string; readonly total: number }>;
-  readonly totalSpent: number;
-  readonly onPeriodChange: (period: import("../lib/derive").DashboardPeriod) => void;
+  readonly totalSpent: CopAmount;
+  readonly onPeriodChange: (period: DashboardPeriod) => void;
   readonly onCategoryPress: () => void;
 };
 
@@ -113,6 +113,7 @@ const ListHeader = memo(function ListHeader({
       <PeriodToggle activePeriod={period} onSelect={onPeriodChange} />
       <HeroCard period={period} spentAmount={spentAmount} />
       <ChartSection
+        period={period}
         categoryBreakdown={categoryBreakdown}
         dailySpending={dailySpending}
         totalSpent={totalSpent}
@@ -138,11 +139,6 @@ export const HomeScreen = () => {
   // phase gates ListEmptyComponent — suppresses "No transactions" during first sync
   const phase = useEmailCaptureStore((s) => s.phase);
   const primaryColor = useThemeColor("primary");
-
-  const totalSpent = useMemo(
-    () => periodCategorySpending.reduce((sum, c) => sum + c.total, 0),
-    [periodCategorySpending]
-  );
 
   // Pre-compute which transactions are the first of their date group
   const dateBreaks = useMemo(() => {
@@ -209,12 +205,12 @@ export const HomeScreen = () => {
         spentAmount={periodSpent}
         categoryBreakdown={periodCategorySpending}
         dailySpending={periodDailySpending}
-        totalSpent={totalSpent}
+        totalSpent={periodSpent}
         onPeriodChange={setPeriod}
         onCategoryPress={() => push("/analytics" as never)}
       />
     ),
-    [period, periodSpent, periodCategorySpending, periodDailySpending, totalSpent, setPeriod, push]
+    [period, periodSpent, periodCategorySpending, periodDailySpending, setPeriod, push]
   );
 
   return (
