@@ -1,3 +1,4 @@
+import { InteractionManager } from "react-native";
 import { create } from "zustand";
 import type { CategoryBreakdownItem } from "@/features/analytics/lib/derive";
 import { deriveCategoryBreakdown } from "@/features/analytics/lib/derive";
@@ -18,9 +19,8 @@ let userIdRef: UserId | null = null;
 let unsubscribeTxStore: (() => void) | null = null;
 // Track previous pages reference to skip form-field state changes
 let prevPagesRef: unknown = null;
-// Debounce timer for period switches — avoids queuing N×3 SQL queries on rapid taps
-let periodDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-const PERIOD_DEBOUNCE_MS = 120;
+// Cancellable handle for deferred period data load
+let pendingLoad: { cancel(): void } | null = null;
 
 type DashboardState = {
   readonly period: DashboardPeriod;
@@ -63,12 +63,16 @@ export const useDashboardStore = create<DashboardState & DashboardActions>((set,
   setPeriod: (period) => {
     // Update period immediately for instant toggle feedback
     set({ period });
-    // Debounce the expensive SQL queries — rapid taps only run queries once
-    if (periodDebounceTimer) clearTimeout(periodDebounceTimer);
-    periodDebounceTimer = setTimeout(() => {
-      periodDebounceTimer = null;
-      get().loadDashboard();
-    }, PERIOD_DEBOUNCE_MS);
+    // Cancel any pending load and defer queries until interactions settle
+    if (pendingLoad) pendingLoad.cancel();
+    pendingLoad = InteractionManager.runAfterInteractions(() => {
+      pendingLoad = null;
+      try {
+        get().loadDashboard();
+      } catch (error) {
+        console.error("[dashboard] setPeriod load failed:", error);
+      }
+    });
   },
 
   loadDashboard: () => {
