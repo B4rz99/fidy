@@ -24,13 +24,12 @@ type DashboardState = {
   readonly periodSpent: CopAmount;
   readonly periodCategorySpending: ReadonlyArray<CategoryBreakdownItem>;
   readonly periodDailySpending: ReadonlyArray<{ date: IsoDate; total: CopAmount }>;
-  readonly isLoading: boolean;
 };
 
 type DashboardActions = {
   initStore(db: AnyDb, userId: UserId): void;
   setPeriod(period: DashboardPeriod): void;
-  loadDashboard(): Promise<void>;
+  loadDashboard(): void;
 };
 
 export const useDashboardStore = create<DashboardState & DashboardActions>((set, get) => ({
@@ -38,7 +37,6 @@ export const useDashboardStore = create<DashboardState & DashboardActions>((set,
   periodSpent: 0 as CopAmount,
   periodCategorySpending: [],
   periodDailySpending: [],
-  isLoading: false,
 
   initStore: (db, userId) => {
     dbRef = db;
@@ -51,51 +49,61 @@ export const useDashboardStore = create<DashboardState & DashboardActions>((set,
       const currentPages = useTransactionStore.getState().pages;
       if (currentPages === prevPagesRef) return;
       prevPagesRef = currentPages;
-      if (!get().isLoading) {
-        get()
-          .loadDashboard()
-          .catch(() => {});
-      }
+      get().loadDashboard();
     });
   },
 
   setPeriod: (period) => {
-    set({ period });
-    get()
-      .loadDashboard()
-      .catch(() => {});
+    if (!dbRef || !userIdRef) {
+      set({ period });
+      return;
+    }
+    // Compute everything synchronously and set in a single call to avoid
+    // double re-renders (period change + data change as separate updates).
+    const { spending, lineChart } = computeDashboardRange(period, new Date());
+    const incomeExpense = getIncomeExpenseForPeriod(dbRef, userIdRef, spending.start, spending.end);
+    const categorySpending = getSpendingByCategoryForPeriod(
+      dbRef,
+      userIdRef,
+      spending.start,
+      spending.end
+    );
+    const dailySpending = getDailySpendingAggregate(
+      dbRef,
+      userIdRef,
+      lineChart.start,
+      lineChart.end
+    );
+    const periodSpent = incomeExpense.expenses;
+    set({
+      period,
+      periodSpent,
+      periodCategorySpending: deriveCategoryBreakdown(categorySpending, periodSpent),
+      periodDailySpending: dailySpending,
+    });
   },
 
-  loadDashboard: async () => {
+  loadDashboard: () => {
     if (!dbRef || !userIdRef) return;
-    const db = dbRef;
-    const userId = userIdRef;
-    set({ isLoading: true });
-    try {
-      const { spending, lineChart } = computeDashboardRange(get().period, new Date());
-
-      // Not parallel — synchronous SQLite must be called sequentially
-      const incomeExpense = getIncomeExpenseForPeriod(db, userId, spending.start, spending.end);
-      const categorySpending = getSpendingByCategoryForPeriod(
-        db,
-        userId,
-        spending.start,
-        spending.end
-      );
-      const dailySpending = getDailySpendingAggregate(db, userId, lineChart.start, lineChart.end);
-
-      const periodSpent = incomeExpense.expenses;
-      const periodCategorySpending = deriveCategoryBreakdown(categorySpending, periodSpent);
-
-      set({
-        periodSpent,
-        periodCategorySpending,
-        periodDailySpending: dailySpending,
-        isLoading: false,
-      });
-    } catch (error) {
-      console.error("[dashboard] loadDashboard failed:", error);
-      set({ isLoading: false });
-    }
+    const { spending, lineChart } = computeDashboardRange(get().period, new Date());
+    const incomeExpense = getIncomeExpenseForPeriod(dbRef, userIdRef, spending.start, spending.end);
+    const categorySpending = getSpendingByCategoryForPeriod(
+      dbRef,
+      userIdRef,
+      spending.start,
+      spending.end
+    );
+    const dailySpending = getDailySpendingAggregate(
+      dbRef,
+      userIdRef,
+      lineChart.start,
+      lineChart.end
+    );
+    const periodSpent = incomeExpense.expenses;
+    set({
+      periodSpent,
+      periodCategorySpending: deriveCategoryBreakdown(categorySpending, periodSpent),
+      periodDailySpending: dailySpending,
+    });
   },
 }));

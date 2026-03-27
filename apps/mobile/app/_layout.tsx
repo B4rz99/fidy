@@ -102,10 +102,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
         .getState()
         .loadAnalytics()
         .catch(handleRecoverableError("Failed to load analytics"));
-      useDashboardStore
-        .getState()
-        .loadDashboard()
-        .catch(handleRecoverableError("Failed to load dashboard"));
+      useDashboardStore.getState().loadDashboard();
       useCategoriesStore
         .getState()
         .loadUserCategories()
