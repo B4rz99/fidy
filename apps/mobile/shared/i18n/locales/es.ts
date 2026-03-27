@@ -354,6 +354,8 @@ const es = {
     last7Days: "Últimos 7 días",
     avgPerDay: "Prom/día",
     thisMonthTotal: "Total del mes",
+    todayTotal: "Total de hoy",
+    thisWeekTotal: "Total de la semana",
     spent: "gastado",
   },
 

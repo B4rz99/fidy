@@ -352,6 +352,8 @@ const en = {
     last7Days: "Last 7 days",
     avgPerDay: "Avg/day",
     thisMonthTotal: "This month total",
+    todayTotal: "Today's total",
+    thisWeekTotal: "This week total",
     spent: "spent",
   },
 

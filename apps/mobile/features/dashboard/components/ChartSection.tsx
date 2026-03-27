@@ -15,6 +15,12 @@ import type { DashboardPeriod } from "../lib/derive";
 import { CategoryBarChart } from "./CategoryBarChart";
 import { SpendingLineChart } from "./SpendingLineChart";
 
+const TOTAL_LABEL_KEYS: Record<DashboardPeriod, string> = {
+  today: "chart.todayTotal",
+  week: "chart.thisWeekTotal",
+  month: "chart.thisMonthTotal",
+};
+
 type DailySpendingItem = {
   readonly date: string;
   readonly total: number;
@@ -127,7 +133,7 @@ export const ChartSection = memo(function ChartSection({
                     className="font-poppins-medium text-caption"
                     style={{ color: secondaryColor }}
                   >
-                    {t("chart.thisMonthTotal")}
+                    {t(TOTAL_LABEL_KEYS[period])}
                   </Text>
                   <Text className="font-poppins-bold text-body text-primary dark:text-primary-dark">
                     {formatMoney(totalSpent as CopAmount)}
