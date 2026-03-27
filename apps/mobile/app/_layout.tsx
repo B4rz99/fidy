@@ -28,6 +28,7 @@ import {
   useSmsDetection,
 } from "@/features/capture-sources";
 import { useCategoriesStore } from "@/features/categories";
+import { useDashboardStore } from "@/features/dashboard/store";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
 import { useGoalStore } from "@/features/goals";
 import { registerPushToken, useNotificationStore } from "@/features/notifications";
@@ -84,6 +85,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       useBudgetStore.getState().initStore(db, userId);
       useGoalStore.getState().initStore(db, userId);
       useAnalyticsStore.getState().initStore(db, userId);
+      useDashboardStore.getState().initStore(db, userId);
       useCategoriesStore.getState().initStore(db, userId);
       useNotificationStore.getState().initStore(db, userId);
       useSyncConflictStore.getState().initStore(db);
@@ -100,6 +102,10 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
         .getState()
         .loadAnalytics()
         .catch(handleRecoverableError("Failed to load analytics"));
+      useDashboardStore
+        .getState()
+        .loadDashboard()
+        .catch(handleRecoverableError("Failed to load dashboard"));
       useCategoriesStore
         .getState()
         .loadUserCategories()

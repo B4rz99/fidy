@@ -23,12 +23,14 @@ import { Alert, FlatList, Platform, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { formatSignedMoney, toIsoDate } from "@/shared/lib";
-import type { TransactionId } from "@/shared/types/branded";
-import { BalanceSection } from "./BalanceSection";
+import type { CopAmount, TransactionId } from "@/shared/types/branded";
+import { useDashboardStore } from "../store";
 import { ChartSection } from "./ChartSection";
 import { DateHeader } from "./DateHeader";
 import { EmptyTransactions } from "./EmptyTransactions";
+import { HeroCard } from "./HeroCard";
 import { NeedsReviewBanner } from "./NeedsReviewBanner";
+import { PeriodToggle } from "./PeriodToggle";
 
 const TransactionItem = memo(function TransactionItem({
   tx,
@@ -71,26 +73,28 @@ const TransactionItem = memo(function TransactionItem({
 });
 
 type ListHeaderProps = {
-  readonly balance: number;
-  readonly categorySpending: readonly {
-    readonly categoryId: string;
-    readonly total: number;
-  }[];
-  readonly dailySpending: readonly { readonly date: string; readonly total: number }[];
+  readonly period: import("../lib/derive").DashboardPeriod;
+  readonly spentAmount: CopAmount;
+  readonly categoryBreakdown: ReadonlyArray<
+    import("@/features/analytics/lib/derive").CategoryBreakdownItem
+  >;
+  readonly dailySpending: ReadonlyArray<{ readonly date: string; readonly total: number }>;
+  readonly totalSpent: number;
+  readonly onPeriodChange: (period: import("../lib/derive").DashboardPeriod) => void;
+  readonly onCategoryPress: () => void;
 };
 
 const ListHeader = memo(function ListHeader({
-  balance,
-  categorySpending,
+  period,
+  spentAmount,
+  categoryBreakdown,
   dailySpending,
+  totalSpent,
+  onPeriodChange,
+  onCategoryPress,
 }: ListHeaderProps) {
   const { push } = useRouter();
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
-
-  const totalSpent = useMemo(
-    () => categorySpending.reduce((sum, c) => sum + c.total, 0),
-    [categorySpending]
-  );
 
   return (
     <View className="gap-4 px-4">
@@ -106,12 +110,13 @@ const ListHeader = memo(function ListHeader({
       {Platform.OS === "ios" && (
         <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
       )}
-      <BalanceSection balance={balance} />
+      <PeriodToggle activePeriod={period} onSelect={onPeriodChange} />
+      <HeroCard period={period} spentAmount={spentAmount} />
       <ChartSection
-        categorySpending={categorySpending}
+        categoryBreakdown={categoryBreakdown}
         dailySpending={dailySpending}
         totalSpent={totalSpent}
-        onPress={() => push("/analytics" as never)}
+        onCategoryPress={onCategoryPress}
       />
     </View>
   );
@@ -123,14 +128,21 @@ export const HomeScreen = () => {
   const pages = useTransactionStore((s) => s.pages);
   const hasMore = useTransactionStore((s) => s.hasMore);
   const loadNextPage = useTransactionStore((s) => s.loadNextPage);
-  const balance = useTransactionStore((s) => s.balance);
-  const categorySpending = useTransactionStore((s) => s.categorySpending);
-  const dailySpending = useTransactionStore((s) => s.dailySpending);
   const editTransaction = useTransactionStore((s) => s.editTransaction);
   const deleteTransaction = useTransactionStore((s) => s.deleteTransaction);
+  const period = useDashboardStore((s) => s.period);
+  const periodSpent = useDashboardStore((s) => s.periodSpent);
+  const periodCategorySpending = useDashboardStore((s) => s.periodCategorySpending);
+  const periodDailySpending = useDashboardStore((s) => s.periodDailySpending);
+  const setPeriod = useDashboardStore((s) => s.setPeriod);
   // phase gates ListEmptyComponent — suppresses "No transactions" during first sync
   const phase = useEmailCaptureStore((s) => s.phase);
   const primaryColor = useThemeColor("primary");
+
+  const totalSpent = useMemo(
+    () => periodCategorySpending.reduce((sum, c) => sum + c.total, 0),
+    [periodCategorySpending]
+  );
 
   // Pre-compute which transactions are the first of their date group
   const dateBreaks = useMemo(() => {
@@ -193,12 +205,16 @@ export const HomeScreen = () => {
   const listHeader = useMemo(
     () => (
       <ListHeader
-        balance={balance}
-        categorySpending={categorySpending}
-        dailySpending={dailySpending}
+        period={period}
+        spentAmount={periodSpent}
+        categoryBreakdown={periodCategorySpending}
+        dailySpending={periodDailySpending}
+        totalSpent={totalSpent}
+        onPeriodChange={setPeriod}
+        onCategoryPress={() => push("/analytics" as never)}
       />
     ),
-    [balance, categorySpending, dailySpending]
+    [period, periodSpent, periodCategorySpending, periodDailySpending, totalSpent, setPeriod, push]
   );
 
   return (
