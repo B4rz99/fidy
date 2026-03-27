@@ -53,14 +53,8 @@ const toSegments = (categories: ReadonlyArray<CategoryBreakdownItem>) => {
     : segments;
 };
 
-const toCategoryRows = (
-  categories: ReadonlyArray<CategoryBreakdownItem>,
-  locale: string,
-  t: (key: string) => string
-) => {
-  const top = categories.slice(0, MAX_VISIBLE);
-  const otherTotal = categories.slice(MAX_VISIBLE).reduce((sum, c) => sum + c.total, 0);
-  const rows = top.map((c) => {
+const toCategoryRows = (categories: ReadonlyArray<CategoryBreakdownItem>, locale: string) =>
+  categories.slice(0, MAX_VISIBLE).map((c) => {
     const cat = CATEGORY_MAP[c.categoryId as keyof typeof CATEGORY_MAP];
     return {
       categoryId: c.categoryId,
@@ -69,18 +63,6 @@ const toCategoryRows = (
       amount: formatMoney(c.total),
     };
   });
-  return otherTotal > 0
-    ? [
-        ...rows,
-        {
-          categoryId: "_other",
-          color: OTHER_COLOR,
-          name: t("common.other"),
-          amount: formatMoney(otherTotal as CopAmount),
-        },
-      ]
-    : rows;
-};
 
 const LINE_CHART_WIDTH = 140;
 
@@ -117,7 +99,7 @@ export const ChartSection = memo(function ChartSection({
   const secondaryColor = useThemeColor("secondary");
 
   const segments = toSegments(categoryBreakdown);
-  const rows = toCategoryRows(categoryBreakdown, locale, t);
+  const rows = toCategoryRows(categoryBreakdown, locale);
 
   const dailyTotal = dailySpending.reduce((sum, d) => sum + d.total, 0);
   const dayCount = dailySpending.length === 0 ? 1 : dailySpending.length;
