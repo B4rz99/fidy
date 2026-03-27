@@ -28,7 +28,7 @@ import {
   useSmsDetection,
 } from "@/features/capture-sources";
 import { useCategoriesStore } from "@/features/categories";
-import { useDashboardStore } from "@/features/dashboard/store";
+import { useDashboardStore } from "@/features/dashboard";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
 import { useGoalStore } from "@/features/goals";
 import { registerPushToken, useNotificationStore } from "@/features/notifications";
