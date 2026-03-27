@@ -18,6 +18,9 @@ let userIdRef: UserId | null = null;
 let unsubscribeTxStore: (() => void) | null = null;
 // Track previous pages reference to skip form-field state changes
 let prevPagesRef: unknown = null;
+// Debounce timer for period switches — avoids queuing N×3 SQL queries on rapid taps
+let periodDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+const PERIOD_DEBOUNCE_MS = 120;
 
 type DashboardState = {
   readonly period: DashboardPeriod;
@@ -58,33 +61,14 @@ export const useDashboardStore = create<DashboardState & DashboardActions>((set,
   },
 
   setPeriod: (period) => {
-    if (!dbRef || !userIdRef) {
-      set({ period });
-      return;
-    }
-    // Compute everything synchronously and set in a single call to avoid
-    // double re-renders (period change + data change as separate updates).
-    const { spending, lineChart } = computeDashboardRange(period, new Date());
-    const incomeExpense = getIncomeExpenseForPeriod(dbRef, userIdRef, spending.start, spending.end);
-    const categorySpending = getSpendingByCategoryForPeriod(
-      dbRef,
-      userIdRef,
-      spending.start,
-      spending.end
-    );
-    const dailySpending = getDailySpendingAggregate(
-      dbRef,
-      userIdRef,
-      lineChart.start,
-      lineChart.end
-    );
-    const periodSpent = incomeExpense.expenses;
-    set({
-      period,
-      periodSpent,
-      periodCategorySpending: deriveCategoryBreakdown(categorySpending, periodSpent),
-      periodDailySpending: dailySpending,
-    });
+    // Update period immediately for instant toggle feedback
+    set({ period });
+    // Debounce the expensive SQL queries — rapid taps only run queries once
+    if (periodDebounceTimer) clearTimeout(periodDebounceTimer);
+    periodDebounceTimer = setTimeout(() => {
+      periodDebounceTimer = null;
+      get().loadDashboard();
+    }, PERIOD_DEBOUNCE_MS);
   },
 
   loadDashboard: () => {
