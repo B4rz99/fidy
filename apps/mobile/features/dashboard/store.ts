@@ -1,4 +1,3 @@
-import { InteractionManager } from "react-native";
 import { create } from "zustand";
 import type { CategoryBreakdownItem } from "@/features/analytics/lib/derive";
 import { deriveCategoryBreakdown } from "@/features/analytics/lib/derive";
@@ -19,8 +18,9 @@ let userIdRef: UserId | null = null;
 let unsubscribeTxStore: (() => void) | null = null;
 // Track previous pages reference to skip form-field state changes
 let prevPagesRef: unknown = null;
-// Cancellable handle for deferred period data load
-let pendingLoad: { cancel(): void } | null = null;
+// Debounce rapid period switches so only the last tap triggers SQL queries
+let periodDebounce: ReturnType<typeof setTimeout> | null = null;
+const PERIOD_DEBOUNCE_MS = 150;
 
 type DashboardState = {
   readonly period: DashboardPeriod;
@@ -61,18 +61,32 @@ export const useDashboardStore = create<DashboardState & DashboardActions>((set,
   },
 
   setPeriod: (period) => {
-    // Update period immediately for instant toggle feedback
+    // Immediate visual feedback — toggle highlights the new period instantly
     set({ period });
-    // Cancel any pending load and defer queries until interactions settle
-    if (pendingLoad) pendingLoad.cancel();
-    pendingLoad = InteractionManager.runAfterInteractions(() => {
-      pendingLoad = null;
-      try {
-        get().loadDashboard();
-      } catch (error) {
-        console.error("[dashboard] setPeriod load failed:", error);
-      }
-    });
+
+    // Debounce the expensive SQL queries so rapid tap-cycling only runs
+    // queries once for the final period, not for every intermediate tap.
+    if (periodDebounce) clearTimeout(periodDebounce);
+    if (!dbRef || !userIdRef) return;
+    const db = dbRef;
+    const userId = userIdRef;
+    periodDebounce = setTimeout(() => {
+      const { spending, lineChart } = computeDashboardRange(period, new Date());
+      const incomeExpense = getIncomeExpenseForPeriod(db, userId, spending.start, spending.end);
+      const categorySpending = getSpendingByCategoryForPeriod(
+        db,
+        userId,
+        spending.start,
+        spending.end
+      );
+      const dailySpending = getDailySpendingAggregate(db, userId, lineChart.start, lineChart.end);
+      const periodSpent = incomeExpense.expenses;
+      set({
+        periodSpent,
+        periodCategorySpending: deriveCategoryBreakdown(categorySpending, periodSpent),
+        periodDailySpending: dailySpending,
+      });
+    }, PERIOD_DEBOUNCE_MS);
   },
 
   loadDashboard: () => {
