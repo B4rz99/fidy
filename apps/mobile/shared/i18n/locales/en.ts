@@ -658,6 +658,7 @@ const en = {
     week: "Week",
     month: "Month",
     byCategory: "By category",
+    moreCategories: { one: "+%{count} more", other: "+%{count} more" },
   },
 } as const;
 

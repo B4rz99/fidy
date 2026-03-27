@@ -39,30 +39,48 @@ type ChartSectionProps = {
 };
 
 const MAX_VISIBLE = 5;
-const OTHER_COLOR = "#B8A9D4";
+const REMAINDER_COLOR = "#D4D4D4";
 
 const toSegments = (categories: ReadonlyArray<CategoryBreakdownItem>) => {
   const top = categories.slice(0, MAX_VISIBLE);
   const otherPercent = categories.slice(MAX_VISIBLE).reduce((sum, c) => sum + c.percent, 0);
   const segments = top.map((c) => ({
     percentage: c.percent,
-    color: CATEGORY_MAP[c.categoryId as keyof typeof CATEGORY_MAP]?.color ?? OTHER_COLOR,
+    color: CATEGORY_MAP[c.categoryId as keyof typeof CATEGORY_MAP]?.color ?? REMAINDER_COLOR,
   }));
   return otherPercent > 0
-    ? [...segments, { percentage: otherPercent, color: OTHER_COLOR }]
+    ? [...segments, { percentage: otherPercent, color: REMAINDER_COLOR }]
     : segments;
 };
 
-const toCategoryRows = (categories: ReadonlyArray<CategoryBreakdownItem>, locale: string) =>
-  categories.slice(0, MAX_VISIBLE).map((c) => {
+const toCategoryRows = (
+  categories: ReadonlyArray<CategoryBreakdownItem>,
+  locale: string,
+  t: (key: string, options?: Record<string, unknown>) => string
+) => {
+  const top = categories.slice(0, MAX_VISIBLE);
+  const rest = categories.slice(MAX_VISIBLE);
+  const rows = top.map((c) => {
     const cat = CATEGORY_MAP[c.categoryId as keyof typeof CATEGORY_MAP];
     return {
       categoryId: c.categoryId,
-      color: cat?.color ?? OTHER_COLOR,
+      color: cat?.color ?? REMAINDER_COLOR,
       name: cat ? getCategoryLabel(cat, locale) : c.categoryId,
       amount: formatMoney(c.total),
     };
   });
+  if (rest.length === 0) return rows;
+  const restTotal = rest.reduce((sum, c) => sum + c.total, 0);
+  return [
+    ...rows,
+    {
+      categoryId: "_remainder",
+      color: REMAINDER_COLOR,
+      name: t("dashboard.moreCategories", { count: rest.length }),
+      amount: formatMoney(restTotal as CopAmount),
+    },
+  ];
+};
 
 const LINE_CHART_WIDTH = 140;
 
@@ -99,7 +117,7 @@ export const ChartSection = memo(function ChartSection({
   const secondaryColor = useThemeColor("secondary");
 
   const segments = toSegments(categoryBreakdown);
-  const rows = toCategoryRows(categoryBreakdown, locale);
+  const rows = toCategoryRows(categoryBreakdown, locale, t);
 
   const dailyTotal = dailySpending.reduce((sum, d) => sum + d.total, 0);
   const dayCount = dailySpending.length === 0 ? 1 : dailySpending.length;
