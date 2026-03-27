@@ -652,6 +652,16 @@ const es = {
     totalSpending: "Gasto total",
     noData: "No hay suficientes datos para este periodo",
   },
+
+  dashboard: {
+    spentToday: "Gastado hoy",
+    spentThisWeek: "Gastado esta semana",
+    spentThisMonth: "Gastado este mes",
+    today: "Hoy",
+    week: "Semana",
+    month: "Mes",
+    byCategory: "Por categoría",
+  },
 } as const;
 
 export default es;
