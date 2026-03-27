@@ -1,4 +1,3 @@
-import { memo } from "react";
 import { useBudgetStore } from "@/features/budget";
 import { ProgressBar } from "@/features/budget/components/ProgressBar";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
@@ -6,11 +5,7 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import type { CopAmount } from "@/shared/types/branded";
 import type { DashboardPeriod } from "../lib/derive";
-
-type Props = {
-  readonly period: DashboardPeriod;
-  readonly spentAmount: CopAmount;
-};
+import { useDashboardStore } from "../store";
 
 const PERIOD_LABEL_KEYS: Record<DashboardPeriod, string> = {
   today: "dashboard.spentToday",
@@ -18,8 +13,10 @@ const PERIOD_LABEL_KEYS: Record<DashboardPeriod, string> = {
   month: "dashboard.spentThisMonth",
 };
 
-export const HeroCard = memo(function HeroCard({ period, spentAmount }: Props) {
+export function HeroCard() {
   const { t } = useTranslation();
+  const period = useDashboardStore((s) => s.period);
+  const spentAmount = useDashboardStore((s) => s.periodSpent);
   const summary = useBudgetStore((s) => s.summary);
   const chartBg = useThemeColor("chartBg");
   const secondaryColor = useThemeColor("secondary");
@@ -41,7 +38,7 @@ export const HeroCard = memo(function HeroCard({ period, spentAmount }: Props) {
       </Text>
     </View>
   );
-});
+}
 
 const styles = StyleSheet.create({
   card: {

@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import type { CategoryBreakdownItem } from "@/features/analytics/lib/derive";
 import { CATEGORY_MAP } from "@/features/transactions";
 import {
@@ -15,6 +15,7 @@ import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney } from "@/shared/lib";
 import type { CopAmount } from "@/shared/types/branded";
 import type { DashboardPeriod } from "../lib/derive";
+import { useDashboardStore } from "../store";
 import { CategoryRow } from "./CategoryRow";
 import { DonutChart } from "./DonutChart";
 import { SpendingLineChart } from "./SpendingLineChart";
@@ -25,16 +26,7 @@ const TOTAL_LABEL_KEYS: Record<DashboardPeriod, string> = {
   month: "chart.thisMonthTotal",
 };
 
-type DailySpendingItem = {
-  readonly date: string;
-  readonly total: number;
-};
-
 type ChartSectionProps = {
-  readonly period: DashboardPeriod;
-  readonly categoryBreakdown: ReadonlyArray<CategoryBreakdownItem>;
-  readonly dailySpending: readonly DailySpendingItem[];
-  readonly totalSpent: CopAmount;
   readonly onChartPress: () => void;
 };
 
@@ -112,14 +104,12 @@ const CarouselDots = ({ activeIndex }: { readonly activeIndex: number }) => {
   );
 };
 
-export const ChartSection = memo(function ChartSection({
-  period,
-  categoryBreakdown,
-  dailySpending,
-  totalSpent,
-  onChartPress,
-}: ChartSectionProps) {
+export function ChartSection({ onChartPress }: ChartSectionProps) {
   const { t, locale } = useTranslation();
+  const period = useDashboardStore((s) => s.period);
+  const categoryBreakdown = useDashboardStore((s) => s.periodCategorySpending);
+  const dailySpending = useDashboardStore((s) => s.periodDailySpending);
+  const totalSpent = useDashboardStore((s) => s.periodSpent);
   const [activeIndex, setActiveIndex] = useState(0);
   const [slideWidth, setSlideWidth] = useState(0);
   const secondaryColor = useThemeColor("secondary");
@@ -220,4 +210,4 @@ export const ChartSection = memo(function ChartSection({
       <CarouselDots activeIndex={activeIndex} />
     </Pressable>
   );
-});
+}

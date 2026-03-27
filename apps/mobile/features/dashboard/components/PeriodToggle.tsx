@@ -1,7 +1,7 @@
-import { memo } from "react";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { DashboardPeriod } from "../lib/derive";
+import { useDashboardStore } from "../store";
 
 const PERIODS: readonly DashboardPeriod[] = ["today", "week", "month"];
 
@@ -11,25 +11,22 @@ const PERIOD_KEYS: Record<DashboardPeriod, string> = {
   month: "dashboard.month",
 };
 
-type Props = {
-  readonly activePeriod: DashboardPeriod;
-  readonly onSelect: (period: DashboardPeriod) => void;
-};
-
-export const PeriodToggle = memo(function PeriodToggle({ activePeriod, onSelect }: Props) {
+export function PeriodToggle() {
   const { t } = useTranslation();
+  const period = useDashboardStore((s) => s.period);
+  const setPeriod = useDashboardStore((s) => s.setPeriod);
   const peachLight = useThemeColor("peachLight");
   const accentGreen = useThemeColor("accentGreen");
   const secondaryColor = useThemeColor("secondary");
 
   return (
     <View style={[styles.selectorContainer, { backgroundColor: peachLight }]}>
-      {PERIODS.map((period) => {
-        const isActive = period === activePeriod;
+      {PERIODS.map((p) => {
+        const isActive = p === period;
         return (
           <Pressable
-            key={period}
-            onPress={() => onSelect(period)}
+            key={p}
+            onPress={() => setPeriod(p)}
             style={[styles.segment, isActive && { backgroundColor: accentGreen }]}
           >
             <Text
@@ -39,14 +36,14 @@ export const PeriodToggle = memo(function PeriodToggle({ activePeriod, onSelect 
                 isActive && styles.segmentTextActive,
               ]}
             >
-              {t(PERIOD_KEYS[period])}
+              {t(PERIOD_KEYS[p])}
             </Text>
           </Pressable>
         );
       })}
     </View>
   );
-});
+}
 
 const styles = StyleSheet.create({
   selectorContainer: {

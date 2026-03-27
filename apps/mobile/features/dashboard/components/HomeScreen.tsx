@@ -1,6 +1,5 @@
 import { Stack, useRouter } from "expo-router";
 import { memo, useCallback, useMemo } from "react";
-import type { CategoryBreakdownItem } from "@/features/analytics/lib/derive";
 import { DetectedTransactionsBanner } from "@/features/capture-sources";
 import {
   EmailConnectBanner,
@@ -24,9 +23,7 @@ import { Alert, FlatList, Platform, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { formatSignedMoney, toIsoDate } from "@/shared/lib";
-import type { CopAmount, TransactionId } from "@/shared/types/branded";
-import type { DashboardPeriod } from "../lib/derive";
-import { useDashboardStore } from "../store";
+import type { TransactionId } from "@/shared/types/branded";
 import { ChartSection } from "./ChartSection";
 import { DateHeader } from "./DateHeader";
 import { EmptyTransactions } from "./EmptyTransactions";
@@ -75,24 +72,10 @@ const TransactionItem = memo(function TransactionItem({
 });
 
 type ListHeaderProps = {
-  readonly period: DashboardPeriod;
-  readonly spentAmount: CopAmount;
-  readonly categoryBreakdown: ReadonlyArray<CategoryBreakdownItem>;
-  readonly dailySpending: ReadonlyArray<{ readonly date: string; readonly total: number }>;
-  readonly totalSpent: CopAmount;
-  readonly onPeriodChange: (period: DashboardPeriod) => void;
   readonly onChartPress: () => void;
 };
 
-const ListHeader = memo(function ListHeader({
-  period,
-  spentAmount,
-  categoryBreakdown,
-  dailySpending,
-  totalSpent,
-  onPeriodChange,
-  onChartPress,
-}: ListHeaderProps) {
+const ListHeader = memo(function ListHeader({ onChartPress }: ListHeaderProps) {
   const { push } = useRouter();
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
 
@@ -110,15 +93,9 @@ const ListHeader = memo(function ListHeader({
       {Platform.OS === "ios" && (
         <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
       )}
-      <PeriodToggle activePeriod={period} onSelect={onPeriodChange} />
-      <HeroCard period={period} spentAmount={spentAmount} />
-      <ChartSection
-        period={period}
-        categoryBreakdown={categoryBreakdown}
-        dailySpending={dailySpending}
-        totalSpent={totalSpent}
-        onChartPress={onChartPress}
-      />
+      <PeriodToggle />
+      <HeroCard />
+      <ChartSection onChartPress={onChartPress} />
     </View>
   );
 });
@@ -131,11 +108,6 @@ export const HomeScreen = () => {
   const loadNextPage = useTransactionStore((s) => s.loadNextPage);
   const editTransaction = useTransactionStore((s) => s.editTransaction);
   const deleteTransaction = useTransactionStore((s) => s.deleteTransaction);
-  const period = useDashboardStore((s) => s.period);
-  const periodSpent = useDashboardStore((s) => s.periodSpent);
-  const periodCategorySpending = useDashboardStore((s) => s.periodCategorySpending);
-  const periodDailySpending = useDashboardStore((s) => s.periodDailySpending);
-  const setPeriod = useDashboardStore((s) => s.setPeriod);
   // phase gates ListEmptyComponent — suppresses "No transactions" during first sync
   const phase = useEmailCaptureStore((s) => s.phase);
   const primaryColor = useThemeColor("primary");
@@ -198,19 +170,11 @@ export const HomeScreen = () => {
 
   const keyExtractor = useCallback((item: StoredTransaction) => item.id, []);
 
+  const handleChartPress = useCallback(() => push("/analytics" as never), [push]);
+
   const listHeader = useMemo(
-    () => (
-      <ListHeader
-        period={period}
-        spentAmount={periodSpent}
-        categoryBreakdown={periodCategorySpending}
-        dailySpending={periodDailySpending}
-        totalSpent={periodSpent}
-        onPeriodChange={setPeriod}
-        onChartPress={() => push("/analytics" as never)}
-      />
-    ),
-    [period, periodSpent, periodCategorySpending, periodDailySpending, setPeriod, push]
+    () => <ListHeader onChartPress={handleChartPress} />,
+    [handleChartPress]
   );
 
   return (
