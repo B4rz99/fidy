@@ -383,7 +383,9 @@ describe("useTransactionStore", () => {
     });
 
     vi.mocked(softDeleteTransaction).mockRejectedValueOnce(new Error("db error"));
-    await useTransactionStore.getState().removeTransaction("tx-1" as TransactionId);
+    await expect(
+      useTransactionStore.getState().removeTransaction("tx-1" as TransactionId)
+    ).rejects.toThrow("db error");
 
     expect(useTransactionStore.getState().pages).toHaveLength(1);
   });

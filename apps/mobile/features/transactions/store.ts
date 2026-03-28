@@ -83,6 +83,18 @@ type TransactionActions = {
   ) => Promise<
     { success: true; transaction: StoredTransaction } | { success: false; error: string }
   >;
+  updateTransactionDirect: (
+    id: TransactionId,
+    fields: {
+      type: TransactionType;
+      digits: string;
+      categoryId: CategoryId | null;
+      description: string;
+      date: Date;
+    }
+  ) => Promise<
+    { success: true; transaction: StoredTransaction } | { success: false; error: string }
+  >;
   deleteTransaction: (id: TransactionId) => Promise<void>;
   addToCache: (tx: StoredTransaction) => void;
   removeFromCache: (id: TransactionId) => void;
@@ -252,21 +264,16 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
 
   removeTransaction: async (id) => {
     if (dbRef) {
-      try {
-        const now = toIsoDateTime(new Date());
-        await softDeleteTransaction(dbRef, id, now);
-        await enqueueSync(dbRef, {
-          id: generateSyncQueueId(),
-          tableName: "transactions",
-          rowId: id,
-          operation: "delete",
-          createdAt: now,
-        });
-        trackTransactionDeleted();
-      } catch {
-        // DB operation failed — keep UI state unchanged
-        return;
-      }
+      const now = toIsoDateTime(new Date());
+      await softDeleteTransaction(dbRef, id, now);
+      await enqueueSync(dbRef, {
+        id: generateSyncQueueId(),
+        tableName: "transactions",
+        rowId: id,
+        operation: "delete",
+        createdAt: now,
+      });
+      trackTransactionDeleted();
     }
     await get().refresh();
   },
@@ -322,6 +329,40 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
 
     trackTransactionEdited({ category: String(transaction.categoryId) });
     get().resetForm();
+    await get().refresh();
+
+    return { success: true as const, transaction };
+  },
+
+  updateTransactionDirect: async (id, fields) => {
+    if (!dbRef || !userIdRef) {
+      return { success: false as const, error: "Store not initialized" };
+    }
+
+    const now = new Date();
+
+    const result = buildTransaction(fields, userIdRef, id, now);
+    if (!result.success) {
+      return { success: false as const, error: result.error };
+    }
+
+    const { transaction } = result;
+
+    try {
+      upsertTransaction(dbRef, toTransactionRow(transaction));
+
+      await enqueueSync(dbRef, {
+        id: generateSyncQueueId(),
+        tableName: "transactions",
+        rowId: id,
+        operation: "update",
+        createdAt: toIsoDateTime(now),
+      });
+    } catch {
+      return { success: false as const, error: "Failed to update transaction" };
+    }
+
+    trackTransactionEdited({ category: String(transaction.categoryId) });
     await get().refresh();
 
     return { success: true as const, transaction };

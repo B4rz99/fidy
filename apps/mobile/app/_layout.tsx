@@ -388,6 +388,15 @@ function RootLayout() {
             name="create-category"
             options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
           />
+          <Stack.Screen
+            name="edit-transaction"
+            options={{
+              ...SHEET,
+              sheetAllowedDetents: [0.65],
+              gestureEnabled: false,
+              sheetGrabberVisible: false,
+            }}
+          />
         </Stack>
         {db && userId && onboardingComplete && (
           <AuthenticatedShell db={db} userId={userId as UserId} />

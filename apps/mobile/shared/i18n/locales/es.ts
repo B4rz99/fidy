@@ -6,6 +6,7 @@ const es = {
     delete: "Eliminar",
     confirm: "Confirmar",
     dismiss: "Descartar",
+    close: "Cerrar",
     edit: "Editar",
     category: "Categoría",
     description: "Descripción",
@@ -52,6 +53,10 @@ const es = {
       "Conecta una cuenta de correo o agrega transacciones manualmente para comenzar",
     deleteConfirmTitle: "Eliminar Transacción",
     deleteConfirmMessage: "¿Estás seguro de que quieres eliminar esta transacción?",
+    editTransaction: "Editar Transacción",
+    deleteTransaction: "Eliminar",
+    updateFailed: "No se pudo actualizar la transacción",
+    deleteFailed: "No se pudo eliminar la transacción",
   },
 
   // Bills / Calendar
