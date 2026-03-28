@@ -9,22 +9,33 @@ import { trackTransactionCreated } from "@/shared/lib";
 export default function AddTransactionScreen() {
   const { navigate } = useRouter();
   const { t } = useTranslation();
-  const { type, digits, categoryId, description, date, setType, setDigits, setCategoryId, setDescription, saveTransaction, resetForm } =
-    useTransactionStore(
-      useShallow((s) => ({
-        type: s.type,
-        digits: s.digits,
-        categoryId: s.categoryId,
-        description: s.description,
-        date: s.date,
-        setType: s.setType,
-        setDigits: s.setDigits,
-        setCategoryId: s.setCategoryId,
-        setDescription: s.setDescription,
-        saveTransaction: s.saveTransaction,
-        resetForm: s.resetForm,
-      }))
-    );
+  const {
+    type,
+    digits,
+    categoryId,
+    description,
+    date,
+    setType,
+    setDigits,
+    setCategoryId,
+    setDescription,
+    saveTransaction,
+    resetForm,
+  } = useTransactionStore(
+    useShallow((s) => ({
+      type: s.type,
+      digits: s.digits,
+      categoryId: s.categoryId,
+      description: s.description,
+      date: s.date,
+      setType: s.setType,
+      setDigits: s.setDigits,
+      setCategoryId: s.setCategoryId,
+      setDescription: s.setDescription,
+      saveTransaction: s.saveTransaction,
+      resetForm: s.resetForm,
+    }))
+  );
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
