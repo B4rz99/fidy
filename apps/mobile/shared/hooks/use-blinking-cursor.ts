@@ -18,7 +18,6 @@ export function useBlinkingCursor(): {
 } {
   const cursorOpacity = useSharedValue(1);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: animation runs once on mount
   useEffect(() => {
     cursorOpacity.value = withRepeat(
       withSequence(
