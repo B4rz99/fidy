@@ -48,42 +48,40 @@ module.exports = defineConfig([
   },
 
   // ── Strict rules (all TS files) ─────────────────────────────────────
-  // Rules start as "warn" so this PR can land before auto-fixes.
-  // A follow-up PR upgrades all "warn" → "error" after fixes are merged.
   {
     files: ["**/*.ts", "**/*.tsx"],
     rules: {
       // — Type-aware rules (highest value) —
-      "@typescript-eslint/no-floating-promises": "warn",
-      "@typescript-eslint/no-misused-promises": "warn",
-      "@typescript-eslint/await-thenable": "warn",
-      "@typescript-eslint/no-unnecessary-condition": "warn",
-      "@typescript-eslint/switch-exhaustiveness-check": "warn",
-      "@typescript-eslint/no-unsafe-assignment": "warn",
-      "@typescript-eslint/no-unsafe-call": "warn",
-      "@typescript-eslint/no-unsafe-member-access": "warn",
-      "@typescript-eslint/no-unsafe-return": "warn",
-      "@typescript-eslint/no-unsafe-argument": "warn",
-      "@typescript-eslint/restrict-template-expressions": "warn",
-      "@typescript-eslint/prefer-nullish-coalescing": "warn",
-      "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/await-thenable": "error",
+      "@typescript-eslint/no-unnecessary-condition": "error",
+      "@typescript-eslint/switch-exhaustiveness-check": "error",
+      "@typescript-eslint/no-unsafe-assignment": "error",
+      "@typescript-eslint/no-unsafe-call": "error",
+      "@typescript-eslint/no-unsafe-member-access": "error",
+      "@typescript-eslint/no-unsafe-return": "error",
+      "@typescript-eslint/no-unsafe-argument": "error",
+      "@typescript-eslint/restrict-template-expressions": "error",
+      "@typescript-eslint/prefer-nullish-coalescing": "error",
+      "@typescript-eslint/no-unnecessary-type-assertion": "error",
 
       // — Syntax-only rules —
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-non-null-assertion": "warn",
-      "@typescript-eslint/prefer-optional-chain": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-non-null-assertion": "error",
+      "@typescript-eslint/prefer-optional-chain": "error",
       "@typescript-eslint/consistent-type-imports": [
-        "warn",
+        "error",
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
 
       // — FP-mandate rules (align with CLAUDE.md) —
-      "no-param-reassign": "warn",
-      "prefer-const": "warn",
+      "no-param-reassign": "error",
+      "prefer-const": "error",
       "no-var": "error",
 
       // — React rules —
-      "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/exhaustive-deps": "error",
     },
   },
 
@@ -94,7 +92,7 @@ module.exports = defineConfig([
     ignores: ["shared/hooks/**", "__tests__/**"],
     rules: {
       "no-restricted-imports": [
-        "warn",
+        "error",
         {
           paths: [
             {
@@ -121,7 +119,7 @@ module.exports = defineConfig([
   {
     files: ["shared/hooks/**/*.ts", "shared/hooks/**/*.tsx"],
     rules: {
-      "no-restricted-imports": ["warn", { patterns: BARREL_PATTERNS }],
+      "no-restricted-imports": ["error", { patterns: BARREL_PATTERNS }],
     },
   },
 
