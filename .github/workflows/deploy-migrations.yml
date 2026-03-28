@@ -25,6 +25,6 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Apply migrations
-        run: supabase db push --workdir apps/mobile
+        run: supabase db push --include-all --workdir apps/mobile
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
