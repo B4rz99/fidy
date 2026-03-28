@@ -11,9 +11,19 @@
 
 import { resolve } from "node:path";
 import Database from "better-sqlite3";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  getPendingRetryEmails,
+  markForRetry,
+  markPermanentlyFailed,
+  markRetrySuccess,
+} from "@/features/email-capture/lib/repository";
+import { processRetries } from "@/features/email-capture/services/email-pipeline";
+import { processedEmails, syncQueue, transactions } from "@/shared/db/schema";
+import type { IsoDateTime, ProcessedEmailId, TransactionId } from "@/shared/types/branded";
 
 const mockParseEmailApi = vi.fn();
 vi.mock("@/features/email-capture/services/parse-email-api", () => ({
@@ -30,17 +40,6 @@ const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);
 vi.mock("@/features/capture-sources/lib/dedup", () => ({
   findDuplicateTransaction: (...args: unknown[]) => mockFindDuplicateTransaction(...args),
 }));
-
-import { eq } from "drizzle-orm";
-import {
-  getPendingRetryEmails,
-  markForRetry,
-  markPermanentlyFailed,
-  markRetrySuccess,
-} from "@/features/email-capture/lib/repository";
-import { processRetries } from "@/features/email-capture/services/email-pipeline";
-import { processedEmails, syncQueue, transactions } from "@/shared/db/schema";
-import type { IsoDateTime, ProcessedEmailId, TransactionId } from "@/shared/types/branded";
 
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
@@ -99,8 +98,8 @@ describe("retry queue integration (real SQLite)", () => {
     const results = await getPendingRetryEmails(db as any);
 
     expect(results).toHaveLength(1);
-    expect(results[0].id).toBe("pe-retry-1");
-    expect(results[0].rawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
+    expect(results[0]?.id).toBe("pe-retry-1");
+    expect(results[0]?.rawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
   });
 
   it("getPendingRetryEmails excludes emails with nextRetryAt in the future", async () => {
@@ -137,10 +136,10 @@ describe("retry queue integration (real SQLite)", () => {
       .select()
       .from(processedEmails)
       .where(eq(processedEmails.id, "pe-retry-1" as ProcessedEmailId));
-    expect(row.retryCount).toBe(2);
-    expect(row.nextRetryAt).toBe(futureTime);
-    expect(row.rawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
-    expect(row.status).toBe("pending_retry");
+    expect(row?.retryCount).toBe(2);
+    expect(row?.nextRetryAt).toBe(futureTime);
+    expect(row?.rawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
+    expect(row?.status).toBe("pending_retry");
   });
 
   it("markPermanentlyFailed sets status=failed and clears rawBody", async () => {
@@ -152,8 +151,8 @@ describe("retry queue integration (real SQLite)", () => {
       .select()
       .from(processedEmails)
       .where(eq(processedEmails.id, "pe-retry-1" as ProcessedEmailId));
-    expect(row.status).toBe("failed");
-    expect(row.rawBody).toBeNull();
+    expect(row?.status).toBe("failed");
+    expect(row?.rawBody).toBeNull();
   });
 
   it("markRetrySuccess sets status/transactionId/confidence and clears rawBody", async () => {
@@ -171,10 +170,10 @@ describe("retry queue integration (real SQLite)", () => {
       .select()
       .from(processedEmails)
       .where(eq(processedEmails.id, "pe-retry-1" as ProcessedEmailId));
-    expect(row.status).toBe("success");
-    expect(row.transactionId).toBe("tx-42");
-    expect(row.confidence).toBe(0.95);
-    expect(row.rawBody).toBeNull();
+    expect(row?.status).toBe("success");
+    expect(row?.transactionId).toBe("tx-42");
+    expect(row?.confidence).toBe(0.95);
+    expect(row?.rawBody).toBeNull();
   });
 
   it("full flow: pending_retry email → successful retry → transaction created", async () => {
@@ -202,22 +201,22 @@ describe("retry queue integration (real SQLite)", () => {
     // Verify transaction was created in DB
     const txRows = await db.select().from(transactions);
     expect(txRows).toHaveLength(1);
-    expect(txRows[0].amount).toBe(50000);
-    expect(txRows[0].source).toBe("email_gmail");
+    expect(txRows[0]?.amount).toBe(50000);
+    expect(txRows[0]?.source).toBe("email_gmail");
 
     // Verify sync queue entry
     const syncRows = await db.select().from(syncQueue);
     expect(syncRows).toHaveLength(1);
-    expect(syncRows[0].tableName).toBe("transactions");
+    expect(syncRows[0]?.tableName).toBe("transactions");
 
     // Verify processed email was updated
     const [pe] = await db
       .select()
       .from(processedEmails)
       .where(eq(processedEmails.id, "pe-retry-1" as ProcessedEmailId));
-    expect(pe.status).toBe("success");
-    expect(pe.rawBody).toBeNull();
-    expect(pe.transactionId).toBe(txRows[0].id);
+    expect(pe?.status).toBe("success");
+    expect(pe?.rawBody).toBeNull();
+    expect(pe?.transactionId).toBe(txRows[0]?.id);
   });
 
   it("full flow: pending_retry email → parse fails again → rescheduled with backoff", async () => {
@@ -236,12 +235,12 @@ describe("retry queue integration (real SQLite)", () => {
       .select()
       .from(processedEmails)
       .where(eq(processedEmails.id, "pe-retry-1" as ProcessedEmailId));
-    expect(pe.retryCount).toBe(3);
-    expect(pe.status).toBe("pending_retry");
-    expect(pe.rawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
+    expect(pe?.retryCount).toBe(3);
+    expect(pe?.status).toBe("pending_retry");
+    expect(pe?.rawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
 
     // nextRetryAt should be in the future
-    const nextRetry = new Date(pe.nextRetryAt ?? "");
+    const nextRetry = new Date(pe?.nextRetryAt ?? "");
     expect(nextRetry.getTime()).toBeGreaterThan(Date.now());
   });
 
@@ -259,8 +258,8 @@ describe("retry queue integration (real SQLite)", () => {
       .select()
       .from(processedEmails)
       .where(eq(processedEmails.id, "pe-retry-1" as ProcessedEmailId));
-    expect(pe.status).toBe("failed");
-    expect(pe.rawBody).toBeNull();
+    expect(pe?.status).toBe("failed");
+    expect(pe?.rawBody).toBeNull();
   });
 
   it("ISO timestamp comparison is correct in SQLite", () => {
@@ -272,27 +271,27 @@ describe("retry queue integration (real SQLite)", () => {
         "SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now') as now_iso, datetime('now') as now_plain"
       )
       // biome-ignore lint/style/useNamingConvention: SQL column aliases
-      .all() as Array<{ now_iso: string; now_plain: string }>;
+      .all() as { now_iso: string; now_plain: string }[];
 
     // ISO format should have T separator and Z suffix
-    expect(row.now_iso).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    expect(row?.now_iso).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
     // Plain datetime should NOT have T or Z
-    expect(row.now_plain).not.toContain("T");
+    expect(row?.now_plain).not.toContain("T");
 
     // An ISO timestamp should correctly compare against strftime ISO output
     const pastIso = new Date(Date.now() - 60_000).toISOString();
     const [cmp] = sqlite
       .prepare("SELECT ? <= strftime('%Y-%m-%dT%H:%M:%fZ', 'now') as is_due")
       // biome-ignore lint/style/useNamingConvention: SQL column alias
-      .all(pastIso) as Array<{ is_due: number }>;
-    expect(cmp.is_due).toBe(1);
+      .all(pastIso) as { is_due: number }[];
+    expect(cmp?.is_due).toBe(1);
 
     // A future ISO timestamp should NOT be due
     const futureIso = new Date(Date.now() + 600_000).toISOString();
     const [cmp2] = sqlite
       .prepare("SELECT ? <= strftime('%Y-%m-%dT%H:%M:%fZ', 'now') as is_due")
       // biome-ignore lint/style/useNamingConvention: SQL column alias
-      .all(futureIso) as Array<{ is_due: number }>;
-    expect(cmp2.is_due).toBe(0);
+      .all(futureIso) as { is_due: number }[];
+    expect(cmp2?.is_due).toBe(0);
   });
 });

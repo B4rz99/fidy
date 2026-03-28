@@ -11,7 +11,7 @@ import type { CategoryId, CopAmount } from "@/shared/types/branded";
 // Fixture builders
 // ---------------------------------------------------------------------------
 
-const makeCategorySpending = (items: ReadonlyArray<{ categoryId: string; total: number }>) =>
+const makeCategorySpending = (items: readonly { categoryId: string; total: number }[]) =>
   items.map((item) => ({
     categoryId: item.categoryId as CategoryId,
     total: item.total as CopAmount,

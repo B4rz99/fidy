@@ -27,24 +27,26 @@ function extractPropertyKeys(source: string): string[] {
     /FULL_PARSE_SCHEMA\s*=\s*\{[\s\S]*?properties:\s*\{([\s\S]*?)\},\s*\n\s*required:/
   );
   if (!propsMatch) return [];
-  const propsBlock = propsMatch[1];
+  const propsBlock = propsMatch[1] ?? "";
   // Match only top-level property keys: `keyName: { type:` pattern
   const keyMatches = propsBlock.matchAll(/(\w+)\s*:\s*\{/g);
-  return [...keyMatches].map((m) => m[1]);
+  return [...keyMatches].map((m) => m[1] ?? "").filter(Boolean);
 }
 
 /** Extract required field names from FULL_PARSE_SCHEMA */
 function extractRequired(source: string): string[] {
   const reqMatch = source.match(/FULL_PARSE_SCHEMA[\s\S]*?required:\s*\[([\s\S]*?)\]/);
   if (!reqMatch) return [];
-  return [...reqMatch[1].matchAll(/"(\w+)"/g)].map((m) => m[1]);
+  const reqBlock = reqMatch[1] ?? "";
+  return [...reqBlock.matchAll(/"(\w+)"/g)].map((m) => m[1] ?? "").filter(Boolean);
 }
 
 /** Extract CATEGORY_IDS array values from the Edge Function source */
 function extractCategoryIds(source: string): string[] {
   const catMatch = source.match(/const CATEGORY_IDS\s*=\s*\[([\s\S]*?)\]\s*as const/);
   if (!catMatch) return [];
-  return [...catMatch[1].matchAll(/"(\w+)"/g)].map((m) => m[1]);
+  const catBlock = catMatch[1] ?? "";
+  return [...catBlock.matchAll(/"(\w+)"/g)].map((m) => m[1] ?? "").filter(Boolean);
 }
 
 /** Extract type enum values from FULL_PARSE_SCHEMA */
@@ -53,7 +55,8 @@ function extractTypeEnum(source: string): string[] {
     /FULL_PARSE_SCHEMA[\s\S]*?type:\s*\{\s*type:\s*"string",\s*enum:\s*\[([\s\S]*?)\]/
   );
   if (!typeMatch) return [];
-  return [...typeMatch[1].matchAll(/"(\w+)"/g)].map((m) => m[1]);
+  const typeBlock = typeMatch[1] ?? "";
+  return [...typeBlock.matchAll(/"(\w+)"/g)].map((m) => m[1] ?? "").filter(Boolean);
 }
 
 // ---------------------------------------------------------------------------

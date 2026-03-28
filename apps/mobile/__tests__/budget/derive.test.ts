@@ -140,7 +140,7 @@ describe("deriveAutoSuggestBudgets", () => {
     const existing = new Set<CategoryId>(["food" as CategoryId, "entertainment" as CategoryId]);
     const result = deriveAutoSuggestBudgets(spending, existing);
     expect(result).toHaveLength(1);
-    expect(result[0].categoryId).toBe("transport");
+    expect(result[0]?.categoryId).toBe("transport");
   });
 
   it("rounds < 100k COP up to nearest 1,000 COP (18,900 → 19,000)", () => {
@@ -148,7 +148,7 @@ describe("deriveAutoSuggestBudgets", () => {
       [{ categoryId: "food" as CategoryId, total: 18900 as CopAmount }], // 18,900 COP
       new Set()
     );
-    expect(result[0].suggestedAmount).toBe(19000);
+    expect(result[0]?.suggestedAmount).toBe(19000);
   });
 
   it("rounds < 100k COP (5,234 → 6,000)", () => {
@@ -156,7 +156,7 @@ describe("deriveAutoSuggestBudgets", () => {
       [{ categoryId: "transport" as CategoryId, total: 5234 as CopAmount }], // 5,234 COP
       new Set()
     );
-    expect(result[0].suggestedAmount).toBe(6000);
+    expect(result[0]?.suggestedAmount).toBe(6000);
   });
 
   it("rounds 100k-1M COP up to nearest 10,000 COP (187,500 → 190,000)", () => {
@@ -164,7 +164,7 @@ describe("deriveAutoSuggestBudgets", () => {
       [{ categoryId: "entertainment" as CategoryId, total: 187500 as CopAmount }], // 187,500 COP
       new Set()
     );
-    expect(result[0].suggestedAmount).toBe(190000);
+    expect(result[0]?.suggestedAmount).toBe(190000);
   });
 
   it("rounds >= 1M COP up to nearest 100,000 COP (1,850,000 → 1,900,000)", () => {
@@ -172,7 +172,7 @@ describe("deriveAutoSuggestBudgets", () => {
       [{ categoryId: "home" as CategoryId, total: 1850000 as CopAmount }], // 1,850,000 COP
       new Set()
     );
-    expect(result[0].suggestedAmount).toBe(1900000);
+    expect(result[0]?.suggestedAmount).toBe(1900000);
   });
 
   it("does not round exact multiples", () => {
@@ -180,7 +180,7 @@ describe("deriveAutoSuggestBudgets", () => {
       [{ categoryId: "food" as CategoryId, total: 20000 as CopAmount }], // 20,000 COP exact
       new Set()
     );
-    expect(result[0].suggestedAmount).toBe(20000);
+    expect(result[0]?.suggestedAmount).toBe(20000);
   });
 
   it("returns empty array when no spending data", () => {
@@ -204,17 +204,17 @@ describe("deriveBudgetAlerts", () => {
     const progresses = [makeProgress({ percentUsed: 80, isNearLimit: true })];
     const result = deriveBudgetAlerts(progresses, new Set(), 15);
     expect(result).toHaveLength(1);
-    expect(result[0].threshold).toBe(80);
-    expect(result[0].budgetId).toBe("budget-1");
-    expect(result[0].categoryId).toBe("food");
-    expect(result[0].percentUsed).toBe(80);
+    expect(result[0]?.threshold).toBe(80);
+    expect(result[0]?.budgetId).toBe("budget-1");
+    expect(result[0]?.categoryId).toBe("food");
+    expect(result[0]?.percentUsed).toBe(80);
   });
 
   it("returns only 100% alert when budget is over 100% (80% is superseded)", () => {
     const progresses = [makeProgress({ percentUsed: 110, isOverBudget: true, isNearLimit: true })];
     const result = deriveBudgetAlerts(progresses, new Set(), 15);
     expect(result).toHaveLength(1);
-    expect(result[0].threshold).toBe(100);
+    expect(result[0]?.threshold).toBe(100);
   });
 
   it("excludes acknowledged alerts", () => {
@@ -229,14 +229,14 @@ describe("deriveBudgetAlerts", () => {
     const acknowledged = new Set(["budget-1:80"]);
     const result = deriveBudgetAlerts(progresses, acknowledged, 15);
     expect(result).toHaveLength(1);
-    expect(result[0].threshold).toBe(100);
+    expect(result[0]?.threshold).toBe(100);
   });
 
   it("returns only 100% alert when exactly at 100% (80% superseded)", () => {
     const progresses = [makeProgress({ percentUsed: 100, isNearLimit: true, isOverBudget: false })];
     const result = deriveBudgetAlerts(progresses, new Set(), 15);
     expect(result).toHaveLength(1);
-    expect(result[0].threshold).toBe(100);
+    expect(result[0]?.threshold).toBe(100);
   });
 
   it("returns empty when all under 80%", () => {
@@ -253,7 +253,7 @@ describe("deriveBudgetAlerts", () => {
   it("includes suggestionKey for known category", () => {
     const progresses = [makeProgress({ percentUsed: 80, isNearLimit: true })];
     const result = deriveBudgetAlerts(progresses, new Set(), 15);
-    expect(result[0].suggestionKey).toBe("guidance.budgetAlert80.food");
+    expect(result[0]?.suggestionKey).toBe("guidance.budgetAlert80.food");
   });
 
   it("returns undefined suggestionKey for unknown category", () => {
@@ -261,13 +261,13 @@ describe("deriveBudgetAlerts", () => {
       makeProgress({ percentUsed: 80, isNearLimit: true, categoryId: "custom-cat" as CategoryId }),
     ];
     const result = deriveBudgetAlerts(progresses, new Set(), 15);
-    expect(result[0].suggestionKey).toBeUndefined();
+    expect(result[0]?.suggestionKey).toBeUndefined();
   });
 
   it("passes daysLeft through to alerts", () => {
     const progresses = [makeProgress({ percentUsed: 80, isNearLimit: true })];
     const result = deriveBudgetAlerts(progresses, new Set(), 0);
-    expect(result[0].daysLeft).toBe(0);
+    expect(result[0]?.daysLeft).toBe(0);
   });
 
   it("includes suggestionKey for non-food category at 100%", () => {
@@ -289,7 +289,7 @@ describe("deriveBudgetAlerts", () => {
       makeProgress({ percentUsed: 80, isNearLimit: true, remaining: 100000 as CopAmount }),
     ];
     const result = deriveBudgetAlerts(progresses, new Set(), 15);
-    expect(result[0].remainingAmount).toBe(100000);
+    expect(result[0]?.remainingAmount).toBe(100000);
   });
 
   it("includes correct suggestionKey for 100% threshold", () => {

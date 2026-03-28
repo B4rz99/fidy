@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  addDetectBankSmsListener,
+  addLogTransactionListener,
+  isAvailable,
+} from "@/modules/expo-app-intents";
+
 const { mockAddListener, mockIsAvailable } = vi.hoisted(() => ({
   mockAddListener: vi.fn(() => ({ remove: vi.fn() })),
   mockIsAvailable: vi.fn(() => true),
@@ -16,12 +22,6 @@ vi.mock("react-native", () => ({
   // biome-ignore lint/style/useNamingConvention: matches React Native API
   Platform: { OS: "ios" },
 }));
-
-import {
-  addDetectBankSmsListener,
-  addLogTransactionListener,
-  isAvailable,
-} from "@/modules/expo-app-intents";
 
 describe("expo-app-intents JS API", () => {
   beforeEach(() => {

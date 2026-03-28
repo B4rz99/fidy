@@ -196,8 +196,8 @@ describe("groupNotificationsBySection", () => {
     });
     const result = groupNotificationsBySection([display], Today, mockT);
     expect(result).toHaveLength(1);
-    expect(result[0].label).toBe("notifications.weeklyMovesHeader");
-    expect(result[0].notifications).toHaveLength(1);
+    expect(result[0]?.label).toBe("notifications.weeklyMovesHeader");
+    expect(result[0]?.notifications).toHaveLength(1);
   });
 
   it("groups budget_pace from current week into weekly moves section", () => {
@@ -207,7 +207,7 @@ describe("groupNotificationsBySection", () => {
     });
     const result = groupNotificationsBySection([display], Today, mockT);
     expect(result).toHaveLength(1);
-    expect(result[0].label).toBe("notifications.weeklyMovesHeader");
+    expect(result[0]?.label).toBe("notifications.weeklyMovesHeader");
   });
 
   it("groups budget_alert into EARLIER section", () => {
@@ -217,7 +217,7 @@ describe("groupNotificationsBySection", () => {
     });
     const result = groupNotificationsBySection([display], Today, mockT);
     expect(result).toHaveLength(1);
-    expect(result[0].label).toBe("notifications.earlierHeader");
+    expect(result[0]?.label).toBe("notifications.earlierHeader");
   });
 
   it("groups goal_milestone into EARLIER section", () => {
@@ -227,7 +227,7 @@ describe("groupNotificationsBySection", () => {
     });
     const result = groupNotificationsBySection([display], Today, mockT);
     expect(result).toHaveLength(1);
-    expect(result[0].label).toBe("notifications.earlierHeader");
+    expect(result[0]?.label).toBe("notifications.earlierHeader");
   });
 
   it("groups spending_anomaly from prior week into EARLIER section", () => {
@@ -237,7 +237,7 @@ describe("groupNotificationsBySection", () => {
     });
     const result = groupNotificationsBySection([display], Today, mockT);
     expect(result).toHaveLength(1);
-    expect(result[0].label).toBe("notifications.earlierHeader");
+    expect(result[0]?.label).toBe("notifications.earlierHeader");
   });
 
   it("creates both sections when applicable, weekly moves first", () => {
@@ -253,8 +253,8 @@ describe("groupNotificationsBySection", () => {
     });
     const result = groupNotificationsBySection([weeklyMove, earlier], Today, mockT);
     expect(result).toHaveLength(2);
-    expect(result[0].label).toBe("notifications.weeklyMovesHeader");
-    expect(result[1].label).toBe("notifications.earlierHeader");
+    expect(result[0]?.label).toBe("notifications.weeklyMovesHeader");
+    expect(result[1]?.label).toBe("notifications.earlierHeader");
   });
 
   it("sorts notifications within each section by createdAt DESC", () => {
@@ -269,8 +269,8 @@ describe("groupNotificationsBySection", () => {
       createdAt: "2026-03-18T14:00:00.000Z" as IsoDateTime,
     });
     const result = groupNotificationsBySection([older, newer], Today, mockT);
-    expect(result[0].notifications[0].id).toBe("nf-2");
-    expect(result[0].notifications[1].id).toBe("nf-1");
+    expect(result[0]?.notifications[0]?.id).toBe("nf-2");
+    expect(result[0]?.notifications[1]?.id).toBe("nf-1");
   });
 
   it("omits weekly moves section when no qualifying notifications exist", () => {
@@ -280,7 +280,7 @@ describe("groupNotificationsBySection", () => {
     });
     const result = groupNotificationsBySection([display], Today, mockT);
     expect(result).toHaveLength(1);
-    expect(result[0].label).toBe("notifications.earlierHeader");
+    expect(result[0]?.label).toBe("notifications.earlierHeader");
   });
 
   it("formats week range as 'Mar 16–22' for the week of March 16-22", () => {

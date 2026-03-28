@@ -1,6 +1,12 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  setupApplePayCapture,
+  setupNotificationCapture,
+  setupSmsDetection,
+} from "@/features/capture-sources/hooks/setup";
+
 const mockAddLogTransactionListener = vi.fn().mockReturnValue({ remove: vi.fn() });
 const mockAddDetectBankSmsListener = vi.fn().mockReturnValue({ remove: vi.fn() });
 const mockIsAvailable = vi.fn().mockReturnValue(true);
@@ -38,12 +44,6 @@ vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (prefix: string) => `${prefix}-1`,
   generateDetectedSmsEventId: () => "sms-1",
 }));
-
-import {
-  setupApplePayCapture,
-  setupNotificationCapture,
-  setupSmsDetection,
-} from "@/features/capture-sources/hooks/setup";
 
 const mockDb = {} as any;
 const USER_ID = "user-1";
