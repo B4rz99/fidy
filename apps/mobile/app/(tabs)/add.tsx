@@ -1,13 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef } from "react";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
+import { useCallback, useMemo, useRef } from "react";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useShallow } from "zustand/react/shallow";
 import {
@@ -21,7 +15,7 @@ import {
 import { FidyNumpad } from "@/shared/components";
 import { Calendar } from "@/shared/components/icons";
 import { Platform, Pressable, Text, TextInput, View } from "@/shared/components/rn";
-import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { formatInputDisplay, parseDigitsToAmount, trackTransactionCreated } from "@/shared/lib";
 
@@ -82,31 +76,15 @@ export default function AddTransactionScreen() {
   const digitsRef = useRef(digits);
   digitsRef.current = digits;
 
-  const cursorOpacity = useSharedValue(1);
-
-  useEffect(() => {
-    cursorOpacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 0 }),
-        withTiming(1, { duration: 530 }),
-        withTiming(0, { duration: 0 }),
-        withTiming(0, { duration: 530 })
-      ),
-      -1
-    );
-  }, [cursorOpacity]);
-
-  const cursorStyle = useAnimatedStyle(() => ({
-    opacity: cursorOpacity.value,
-  }));
+  const { cursorStyle } = useBlinkingCursor();
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
-  const handleSave = () =>
-    guardedSave(async () => {
+  const handleSave = () => {
+    void guardedSave(async () => {
       const result = isEditing ? await updateTransaction(editingId) : await saveTransaction();
       if (result.success) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         if (!isEditing) {
           trackTransactionCreated({
             type,
@@ -118,6 +96,7 @@ export default function AddTransactionScreen() {
         navigate("/(tabs)" as never);
       }
     });
+  };
 
   const handleKey = useCallback(
     (key: string) => {
