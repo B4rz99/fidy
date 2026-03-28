@@ -6,6 +6,7 @@ import {
 } from "@/features/transactions/lib/build-transaction";
 import type { StoredTransaction } from "@/features/transactions/schema";
 import type {
+  AccountId,
   CategoryId,
   CopAmount,
   IsoDate,
@@ -23,6 +24,7 @@ describe("buildTransaction", () => {
     categoryId: "food" as CategoryId,
     description: "Lunch",
     date: new Date(2026, 2, 5),
+    accountId: "acct-test" as AccountId,
   };
 
   test("returns success with valid input", () => {
@@ -120,6 +122,9 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     createdAt: new Date(2026, 2, 1, 10, 0, 0),
     updatedAt: new Date(2026, 2, 1, 10, 0, 0),
     deletedAt: null,
+    accountId: "acct-test" as AccountId,
+    linkedTransactionId: null,
+    needsAccountReview: false,
   };
 
   test("toTransactionRow produces correct DB row", () => {

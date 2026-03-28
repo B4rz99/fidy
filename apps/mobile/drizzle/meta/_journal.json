@@ -134,6 +134,13 @@
       "when": 1774280598654,
       "tag": "0018_notification_dedup_partial",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1774676765936,
+      "tag": "0019_accounts_and_transaction_columns",
+      "breakpoints": true
     }
   ]
 }

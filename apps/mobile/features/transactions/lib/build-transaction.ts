@@ -1,5 +1,6 @@
 import { parseDigitsToAmount, parseIsoDate, toIsoDate } from "@/shared/lib";
 import type {
+  AccountId,
   CategoryId,
   CopAmount,
   IsoDateTime,
@@ -17,6 +18,7 @@ type BuildInput = {
   categoryId: CategoryId | null;
   description: string;
   date: Date;
+  accountId: AccountId;
 };
 
 export function buildTransaction(
@@ -56,6 +58,9 @@ export function buildTransaction(
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
+      accountId: input.accountId,
+      linkedTransactionId: null,
+      needsAccountReview: false,
     },
   };
 }
@@ -72,6 +77,9 @@ export function toStoredTransaction(row: TransactionRow): StoredTransaction {
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
     deletedAt: row.deletedAt ? new Date(row.deletedAt) : null,
+    accountId: (row.accountId ?? "") as AccountId,
+    linkedTransactionId: (row.linkedTransactionId ?? null) as TransactionId | null,
+    needsAccountReview: Boolean(row.needsAccountReview),
   };
 }
 
@@ -86,5 +94,6 @@ export function toTransactionRow(tx: StoredTransaction): TransactionRow {
     date: toIsoDate(tx.date),
     createdAt: tx.createdAt.toISOString() as IsoDateTime,
     updatedAt: tx.updatedAt.toISOString() as IsoDateTime,
+    accountId: tx.accountId,
   };
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type {
+  AccountId,
   CategoryId,
   CopAmount,
   IsoDate,
@@ -27,6 +28,9 @@ const makeTx = (overrides: Partial<StoredTransaction>): StoredTransaction => ({
   createdAt: NOW,
   updatedAt: NOW,
   deletedAt: null,
+  accountId: "" as AccountId,
+  linkedTransactionId: null,
+  needsAccountReview: false,
   ...overrides,
 });
 

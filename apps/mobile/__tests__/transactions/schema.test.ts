@@ -57,7 +57,7 @@ describe("createTransactionSchema", () => {
   it("rejects invalid type", () => {
     const result = createTransactionSchema.safeParse({
       ...validInput,
-      type: "transfer",
+      type: "invalid_type",
     });
     expect(result.success).toBe(false);
   });

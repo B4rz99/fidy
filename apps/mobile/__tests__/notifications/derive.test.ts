@@ -3,6 +3,7 @@ import type { BudgetProgress } from "@/features/budget/lib/derive";
 import { deriveWeeklyMoves } from "@/features/notifications/lib/derive";
 import type { StoredTransaction } from "@/features/transactions/schema";
 import type {
+  AccountId,
   BudgetId,
   CategoryId,
   CopAmount,
@@ -28,6 +29,9 @@ const makeTx = (overrides: Partial<StoredTransaction> = {}): StoredTransaction =
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
+  accountId: "" as AccountId,
+  linkedTransactionId: null,
+  needsAccountReview: false,
   ...overrides,
 });
 
