@@ -66,6 +66,7 @@ vi.mock("@/features/accounts", () => ({
 vi.mock("@/features/email-capture/lib/bank-senders", () => ({
   extractDomain: vi.fn().mockReturnValue("unknown.com"),
   isBankSender: vi.fn().mockReturnValue(false),
+  // biome-ignore lint/style/useNamingConvention: must match the actual export name
   DEFAULT_BANK_SENDERS: [],
 }));
 
