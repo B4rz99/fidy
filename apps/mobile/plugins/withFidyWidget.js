@@ -8,15 +8,13 @@
  *  4. Configures build settings, frameworks, and embed phase
  */
 
-import * as fs from "node:fs";
-import * as path from "node:path";
-import {
-  type ConfigPlugin,
+const fs = require("node:fs");
+const path = require("node:path");
+const {
   createRunOncePlugin,
   withEntitlementsPlist,
   withXcodeProject,
-  type XcodeProject,
-} from "@expo/config-plugins";
+} = require("@expo/config-plugins");
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -44,7 +42,7 @@ const ALL_EXTENSION_FILES = [...SWIFT_FILES, "Info.plist", "widget.entitlements"
 // ---------------------------------------------------------------------------
 
 /** Copy widget source files from targets/widget/ into ios/FidyWidgetExtension/ */
-const copyWidgetFiles = (projectRoot: string): void => {
+const copyWidgetFiles = (projectRoot) => {
   const sourceDir = path.join(projectRoot, "targets", "widget");
   const destDir = path.join(projectRoot, "ios", EXTENSION_NAME);
 
@@ -59,16 +57,10 @@ const copyWidgetFiles = (projectRoot: string): void => {
 // Xcode helpers
 // ---------------------------------------------------------------------------
 
-/** Generate a deterministic-ish UUID for Xcode PBX objects. */
-const generateUuid = (project: XcodeProject): string => project.generateUuid() as string;
+const generateUuid = (project) => project.generateUuid();
 
-/**
- * Add the widget extension target, build settings, frameworks, and embed phase
- * to the Xcode project.
- */
 // Xcode build setting keys use SCREAMING_SNAKE_CASE by convention.
-// useNamingConvention warns on these keys — unavoidable for Xcode interop.
-const EXTENSION_BUILD_SETTINGS: Record<string, string> = {
+const EXTENSION_BUILD_SETTINGS = {
   ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: '""',
   ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: '""',
   CLANG_ANALYZER_NONNULL: "YES",
@@ -82,7 +74,7 @@ const EXTENSION_BUILD_SETTINGS: Record<string, string> = {
   CODE_SIGN_STYLE: "Automatic",
   CURRENT_PROJECT_VERSION: "1",
   DEBUG_INFORMATION_FORMAT: '"dwarf-with-dsym"',
-  DEVELOPMENT_TEAM: DEVELOPMENT_TEAM,
+  DEVELOPMENT_TEAM,
   GCC_C_LANGUAGE_STANDARD: "gnu17",
   GENERATE_INFOPLIST_FILE: "NO",
   INFOPLIST_FILE: `${EXTENSION_NAME}/Info.plist`,
@@ -96,12 +88,12 @@ const EXTENSION_BUILD_SETTINGS: Record<string, string> = {
   PRODUCT_NAME: '"$(TARGET_NAME)"',
   SKIP_INSTALL: "YES",
   SWIFT_EMIT_LOC_STRINGS: "YES",
-  SWIFT_VERSION: SWIFT_VERSION,
+  SWIFT_VERSION,
   TARGETED_DEVICE_FAMILY: '"1,2"',
 };
 
 /** Reconcile build settings on the extension's Debug/Release configurations. */
-const reconcileBuildSettings = (project: XcodeProject): void => {
+const reconcileBuildSettings = (project) => {
   const configurations = project.pbxXCBuildConfigurationSection();
   for (const key of Object.keys(configurations)) {
     const config = configurations[key];
@@ -117,18 +109,14 @@ const reconcileBuildSettings = (project: XcodeProject): void => {
   }
 };
 
-const addWidgetExtensionTarget = (project: XcodeProject): void => {
-  // ------------------------------------------------------------------
+const addWidgetExtensionTarget = (project) => {
   // 0. Check if the target already exists
-  // ------------------------------------------------------------------
   const existingTargets = project.pbxNativeTargetSection();
   const targetExists = Object.values(existingTargets).some(
-    (t) => typeof t === "object" && t !== null && (t as { name?: string }).name === EXTENSION_NAME
+    (t) => typeof t === "object" && t !== null && t.name === EXTENSION_NAME
   );
 
-  // ------------------------------------------------------------------
   // 1. Create structural elements only if the target doesn't exist
-  // ------------------------------------------------------------------
   if (!targetExists) {
     const target = project.addTarget(
       EXTENSION_NAME,
@@ -137,7 +125,6 @@ const addWidgetExtensionTarget = (project: XcodeProject): void => {
       EXTENSION_BUNDLE_ID
     );
 
-    // Add Swift source files to the target's Sources build phase
     const sourcesBuildPhaseUuid = generateUuid(project);
     project.addBuildPhase(
       SWIFT_FILES.map((f) => `${EXTENSION_NAME}/${f}`),
@@ -148,7 +135,6 @@ const addWidgetExtensionTarget = (project: XcodeProject): void => {
       sourcesBuildPhaseUuid
     );
 
-    // Add a PBXGroup for the extension files
     const groupUuid = generateUuid(project);
     const extensionGroup = project.addPbxGroup(
       ALL_EXTENSION_FILES,
@@ -160,7 +146,6 @@ const addWidgetExtensionTarget = (project: XcodeProject): void => {
     const mainGroupId = project.getFirstProject().firstProject.mainGroup;
     project.addToPbxGroup(extensionGroup.uuid, mainGroupId);
 
-    // Add Frameworks build phase and link WidgetKit + SwiftUI
     const frameworksBuildPhaseUuid = generateUuid(project);
     project.addBuildPhase(
       [],
@@ -180,7 +165,6 @@ const addWidgetExtensionTarget = (project: XcodeProject): void => {
       link: true,
     });
 
-    // Embed the extension in the main app
     const mainTarget = project.getFirstTarget();
     const embedPhaseUuid = generateUuid(project);
     project.addBuildPhase(
@@ -193,10 +177,7 @@ const addWidgetExtensionTarget = (project: XcodeProject): void => {
     );
   }
 
-  // ------------------------------------------------------------------
-  // 2. Always reconcile build settings (handles plugin config changes
-  //    on non-clean prebuilds)
-  // ------------------------------------------------------------------
+  // 2. Always reconcile build settings
   reconcileBuildSettings(project);
 };
 
@@ -204,12 +185,10 @@ const addWidgetExtensionTarget = (project: XcodeProject): void => {
 // Plugin composition
 // ---------------------------------------------------------------------------
 
-/** Add App Group to the main app entitlements. */
-const withAppGroupEntitlement: ConfigPlugin = (config) =>
+const withAppGroupEntitlement = (config) =>
   withEntitlementsPlist(config, (modConfig) => {
     const entitlements = modConfig.modResults;
-    const existingGroups: string[] =
-      (entitlements["com.apple.security.application-groups"] as string[]) ?? [];
+    const existingGroups = entitlements["com.apple.security.application-groups"] ?? [];
 
     if (!existingGroups.includes(APP_GROUP)) {
       entitlements["com.apple.security.application-groups"] = [...existingGroups, APP_GROUP];
@@ -218,8 +197,7 @@ const withAppGroupEntitlement: ConfigPlugin = (config) =>
     return modConfig;
   });
 
-/** Copy files + mutate the Xcode project to include the widget extension. */
-const withWidgetExtensionTarget: ConfigPlugin = (config) =>
+const withWidgetExtensionTarget = (config) =>
   withXcodeProject(config, (modConfig) => {
     const projectRoot = modConfig.modRequest.projectRoot;
     const project = modConfig.modResults;
@@ -230,11 +208,10 @@ const withWidgetExtensionTarget: ConfigPlugin = (config) =>
     return modConfig;
   });
 
-/** Root plugin — composes entitlement + Xcode project modifications. */
-const withFidyWidget: ConfigPlugin = (config) => {
+const withFidyWidget = (config) => {
   const configWithEntitlements = withAppGroupEntitlement(config);
   const configWithExtension = withWidgetExtensionTarget(configWithEntitlements);
   return configWithExtension;
 };
 
-export default createRunOncePlugin(withFidyWidget, "withFidyWidget", "1.0.0");
+module.exports = createRunOncePlugin(withFidyWidget, "withFidyWidget", "1.0.0");
