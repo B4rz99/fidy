@@ -11,18 +11,13 @@ export function useSmsDetection(db: AnyDb | null, userId: string | null) {
   useSubscription(
     () => {
       if (!db || !userId) return;
-      let cleanup: (() => void) | undefined;
       const onRefresh = () => {
         void refreshDetectedSms();
       };
-      setupSmsDetection(db, userId, onRefresh)
-        .then((fn) => {
-          cleanup = fn;
-        })
-        .catch((error: unknown) => {
-          captureError(error);
-        });
-      return () => cleanup?.();
+      return setupSmsDetection(db, userId, onRefresh).catch((error: unknown) => {
+        captureError(error);
+        return () => {};
+      });
     },
     [db, userId, refreshDetectedSms],
     Platform.OS === "ios" && db != null && userId != null

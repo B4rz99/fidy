@@ -83,19 +83,14 @@ export const SearchScreen = () => {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<TextInput>(null);
 
-  // Defer everything until the push transition animation finishes
   useMountEffect(() => {
     const handle = InteractionManager.runAfterInteractions(() => {
       setReady(true);
       executeSearch();
       inputRef.current?.focus();
     });
-    return () => handle.cancel();
-  });
-
-  // Clean up on unmount
-  useMountEffect(() => {
     return () => {
+      handle.cancel();
       if (debounceRef.current) clearTimeout(debounceRef.current);
       reset();
     };
