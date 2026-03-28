@@ -11,7 +11,12 @@ type CustomTabBarProps = BottomTabBarProps & {
   onVoicePress?: () => void;
 };
 
-export const CustomTabBar = ({ state, descriptors, navigation, onVoicePress }: CustomTabBarProps) => {
+export const CustomTabBar = ({
+  state,
+  descriptors,
+  navigation,
+  onVoicePress,
+}: CustomTabBarProps) => {
   const insets = useSafeAreaInsets();
 
   return (
