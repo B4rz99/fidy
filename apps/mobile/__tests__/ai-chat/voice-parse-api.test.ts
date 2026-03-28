@@ -24,8 +24,8 @@ vi.mock("@/shared/lib", () => ({
   captureError: vi.fn(),
 }));
 
-import { voiceParse } from "../../features/ai-chat/services/ai-chat-api";
 import { fetch as expoFetch } from "expo/fetch";
+import { voiceParse } from "../../features/ai-chat/services/ai-chat-api";
 
 const mockFetch = expoFetch as ReturnType<typeof vi.fn>;
 
