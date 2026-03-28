@@ -14,6 +14,7 @@ export function ErrorFallback() {
       }}
     >
       <Image
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- static asset require
         source={require("../../assets/images/icon.png")}
         style={{ width: 80, height: 80, marginBottom: 24, borderRadius: 16 }}
       />

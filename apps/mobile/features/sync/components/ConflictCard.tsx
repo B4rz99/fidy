@@ -51,7 +51,7 @@ const DiffRow = memo(function DiffRow({
 });
 
 function resolveCategoryLabel(categoryId: string, locale: string): string {
-  const cat = CATEGORY_MAP[categoryId as keyof typeof CATEGORY_MAP];
+  const cat = CATEGORY_MAP[categoryId];
   return cat ? getCategoryLabel(cat, locale) : categoryId;
 }
 
@@ -113,7 +113,7 @@ export const ConflictCard = memo(function ConflictCard({
   return (
     <View className="rounded-xl p-4" style={{ backgroundColor: peachBg }}>
       <Text className="mb-2 font-poppins-semibold text-body text-primary dark:text-primary-dark">
-        {localData.description || serverData.description || t("common.transaction")}
+        {localData.description ?? serverData.description ?? t("common.transaction")}
       </Text>
 
       <View className="mb-1 flex-row" style={{ gap: 8, paddingLeft: 80 + 8 }}>

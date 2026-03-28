@@ -11,9 +11,19 @@
 
 import { resolve } from "node:path";
 import Database from "better-sqlite3";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  getPendingRetryEmails,
+  markForRetry,
+  markPermanentlyFailed,
+  markRetrySuccess,
+} from "@/features/email-capture/lib/repository";
+import { processRetries } from "@/features/email-capture/services/email-pipeline";
+import { processedEmails, syncQueue, transactions } from "@/shared/db/schema";
+import type { IsoDateTime, ProcessedEmailId, TransactionId } from "@/shared/types/branded";
 
 const mockParseEmailApi = vi.fn();
 vi.mock("@/features/email-capture/services/parse-email-api", () => ({
@@ -30,17 +40,6 @@ const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);
 vi.mock("@/features/capture-sources/lib/dedup", () => ({
   findDuplicateTransaction: (...args: unknown[]) => mockFindDuplicateTransaction(...args),
 }));
-
-import { eq } from "drizzle-orm";
-import {
-  getPendingRetryEmails,
-  markForRetry,
-  markPermanentlyFailed,
-  markRetrySuccess,
-} from "@/features/email-capture/lib/repository";
-import { processRetries } from "@/features/email-capture/services/email-pipeline";
-import { processedEmails, syncQueue, transactions } from "@/shared/db/schema";
-import type { IsoDateTime, ProcessedEmailId, TransactionId } from "@/shared/types/branded";
 
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
@@ -272,7 +271,7 @@ describe("retry queue integration (real SQLite)", () => {
         "SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now') as now_iso, datetime('now') as now_plain"
       )
       // biome-ignore lint/style/useNamingConvention: SQL column aliases
-      .all() as Array<{ now_iso: string; now_plain: string }>;
+      .all() as { now_iso: string; now_plain: string }[];
 
     // ISO format should have T separator and Z suffix
     expect(row?.now_iso).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
@@ -284,7 +283,7 @@ describe("retry queue integration (real SQLite)", () => {
     const [cmp] = sqlite
       .prepare("SELECT ? <= strftime('%Y-%m-%dT%H:%M:%fZ', 'now') as is_due")
       // biome-ignore lint/style/useNamingConvention: SQL column alias
-      .all(pastIso) as Array<{ is_due: number }>;
+      .all(pastIso) as { is_due: number }[];
     expect(cmp?.is_due).toBe(1);
 
     // A future ISO timestamp should NOT be due
@@ -292,7 +291,7 @@ describe("retry queue integration (real SQLite)", () => {
     const [cmp2] = sqlite
       .prepare("SELECT ? <= strftime('%Y-%m-%dT%H:%M:%fZ', 'now') as is_due")
       // biome-ignore lint/style/useNamingConvention: SQL column alias
-      .all(futureIso) as Array<{ is_due: number }>;
+      .all(futureIso) as { is_due: number }[];
     expect(cmp2?.is_due).toBe(0);
   });
 });

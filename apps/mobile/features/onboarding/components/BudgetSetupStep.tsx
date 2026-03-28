@@ -64,7 +64,7 @@ export function BudgetSetupStep() {
         {autoSuggestions.length > 0 ? (
           <View style={styles.list}>
             {autoSuggestions.map((suggestion) => {
-              const category = CATEGORY_MAP[suggestion.categoryId];
+              const category = CATEGORY_MAP[suggestion.categoryId] ?? null;
               const CategoryIcon = category?.icon;
               const categoryLabel = category
                 ? getCategoryLabel(category, locale)
@@ -74,8 +74,8 @@ export function BudgetSetupStep() {
               return (
                 <View key={suggestion.categoryId} style={[styles.row, { borderColor }]}>
                   <View style={styles.rowLeft}>
-                    {CategoryIcon ? (
-                      <CategoryIcon size={18} color={category?.color ?? primaryColor} />
+                    {category && CategoryIcon ? (
+                      <CategoryIcon size={18} color={category.color} />
                     ) : null}
                     <View>
                       <Text style={[styles.categoryName, { color: primaryColor }]}>
@@ -127,7 +127,9 @@ export function BudgetSetupStep() {
             styles.primaryButton,
             { backgroundColor: accentGreen, opacity: isBusy ? 0.5 : 1 },
           ]}
-          onPress={handleSave}
+          onPress={() => {
+            void handleSave();
+          }}
           disabled={isBusy}
         >
           <Text style={styles.primaryButtonText}>{t("onboarding.budgetSetup.saveBudgets")}</Text>

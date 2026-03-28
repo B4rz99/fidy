@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { useCalendarStore } from "@/features/calendar/store";
+import { useTransactionStore } from "@/features/transactions/store";
 import type {
   BillId,
   BillPaymentId,
@@ -10,29 +12,26 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
-// Mock the calendar repository module
+// Mock the calendar repository module (all fns are synchronous Drizzle wrappers)
 vi.mock("@/features/calendar/lib/repository", () => ({
-  insertBill: vi.fn().mockResolvedValue(undefined),
-  getAllBills: vi.fn().mockResolvedValue([]),
-  updateBill: vi.fn().mockResolvedValue(undefined),
-  deleteBill: vi.fn().mockResolvedValue(undefined),
-  insertBillPayment: vi.fn().mockResolvedValue(undefined),
-  getBillPaymentsForMonth: vi.fn().mockResolvedValue([]),
-  deleteBillPayment: vi.fn().mockResolvedValue(undefined),
+  insertBill: vi.fn(),
+  getAllBills: vi.fn().mockReturnValue([]),
+  updateBill: vi.fn(),
+  deleteBill: vi.fn(),
+  insertBillPayment: vi.fn(),
+  getBillPaymentsForMonth: vi.fn().mockReturnValue([]),
+  deleteBillPayment: vi.fn(),
 }));
 
-// Mock the transaction repository module
+// Mock the transaction repository module (all fns are synchronous Drizzle wrappers)
 vi.mock("@/features/transactions/lib/repository", () => ({
-  insertTransaction: vi.fn().mockResolvedValue(undefined),
-  softDeleteTransaction: vi.fn().mockResolvedValue(undefined),
+  insertTransaction: vi.fn(),
+  softDeleteTransaction: vi.fn(),
 }));
 
 vi.mock("@/shared/db/enqueue-sync", () => ({
-  enqueueSync: vi.fn().mockResolvedValue(undefined),
+  enqueueSync: vi.fn(),
 }));
-
-import { useCalendarStore } from "@/features/calendar/store";
-import { useTransactionStore } from "@/features/transactions/store";
 
 const mockDb = { transaction: (fn: (tx: unknown) => void) => fn(mockDb) } as never;
 const mockUserId = "user-1" as UserId;
@@ -163,7 +162,7 @@ describe("useCalendarStore", () => {
 
   test("loadBills populates bills from DB rows", async () => {
     const { getAllBills } = await import("@/features/calendar/lib/repository");
-    vi.mocked(getAllBills).mockResolvedValueOnce([
+    vi.mocked(getAllBills).mockReturnValueOnce([
       {
         id: "bill-1" as BillId,
         userId: "user-1" as UserId,

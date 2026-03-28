@@ -13,7 +13,7 @@ import type { UserId } from "@/shared/types/branded";
 export default function EnableNotificationsSheet() {
   const { t } = useTranslation();
   const router = useRouter();
-  const userId = useAuthStore((s) => s.session?.user?.id);
+  const userId = useAuthStore((s) => s.session?.user.id);
   const accentGreen = useThemeColor("accentGreen");
   const borderColor = useThemeColor("borderSubtle");
   const [isRequesting, setIsRequesting] = useState(false);
@@ -71,7 +71,9 @@ export default function EnableNotificationsSheet() {
       </Text>
       <View style={{ width: "100%", gap: 12 }}>
         <Pressable
-          onPress={handleEnable}
+          onPress={() => {
+            void handleEnable();
+          }}
           disabled={isRequesting}
           style={{
             height: 48,
@@ -91,7 +93,9 @@ export default function EnableNotificationsSheet() {
           )}
         </Pressable>
         <Pressable
-          onPress={handleNotNow}
+          onPress={() => {
+            void handleNotNow();
+          }}
           disabled={isRequesting}
           style={{
             height: 48,

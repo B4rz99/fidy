@@ -2,10 +2,10 @@
 // biome-ignore-all lint/style/useNamingConvention: snake_case matches Supabase API column names
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockGetQueuedSyncEntries = vi.fn().mockResolvedValue([]);
+const mockGetQueuedSyncEntries = vi.fn().mockReturnValue([]);
 const mockClearSyncEntries = vi.fn();
-const mockGetTransactionById = vi.fn().mockResolvedValue(null);
-const mockGetSyncMeta = vi.fn().mockResolvedValue(null);
+const mockGetTransactionById = vi.fn().mockReturnValue(null);
+const mockGetSyncMeta = vi.fn().mockReturnValue(null);
 const mockSetSyncMeta = vi.fn();
 const mockUpsertTransaction = vi.fn();
 
@@ -55,7 +55,7 @@ describe("syncEngine", () => {
 
   describe("syncPush", () => {
     it("does nothing when sync queue is empty", async () => {
-      mockGetQueuedSyncEntries.mockResolvedValueOnce([]);
+      mockGetQueuedSyncEntries.mockReturnValueOnce([]);
       const mockSupabase = createMockSupabase();
 
       const { syncPush } = await import("@/features/sync/services/syncEngine");
@@ -66,7 +66,7 @@ describe("syncEngine", () => {
     });
 
     it("upserts transaction row to supabase and clears queue on success", async () => {
-      mockGetQueuedSyncEntries.mockResolvedValueOnce([
+      mockGetQueuedSyncEntries.mockReturnValueOnce([
         {
           id: "sq-1",
           tableName: "transactions",
@@ -75,7 +75,7 @@ describe("syncEngine", () => {
           createdAt: "2026-03-04T10:00:00.000Z",
         },
       ]);
-      mockGetTransactionById.mockResolvedValueOnce({
+      mockGetTransactionById.mockReturnValueOnce({
         id: "tx-1",
         userId: "user-1",
         type: "expense",
@@ -105,7 +105,7 @@ describe("syncEngine", () => {
     });
 
     it("keeps entry in queue when supabase returns error", async () => {
-      mockGetQueuedSyncEntries.mockResolvedValueOnce([
+      mockGetQueuedSyncEntries.mockReturnValueOnce([
         {
           id: "sq-1",
           tableName: "transactions",
@@ -114,7 +114,7 @@ describe("syncEngine", () => {
           createdAt: "2026-03-04T10:00:00.000Z",
         },
       ]);
-      mockGetTransactionById.mockResolvedValueOnce({
+      mockGetTransactionById.mockReturnValueOnce({
         id: "tx-1",
         userId: "user-1",
         type: "expense",
@@ -136,7 +136,7 @@ describe("syncEngine", () => {
     });
 
     it("clears queue entry when local row is missing", async () => {
-      mockGetQueuedSyncEntries.mockResolvedValueOnce([
+      mockGetQueuedSyncEntries.mockReturnValueOnce([
         {
           id: "sq-1",
           tableName: "transactions",
@@ -145,7 +145,7 @@ describe("syncEngine", () => {
           createdAt: "2026-03-04T10:00:00.000Z",
         },
       ]);
-      mockGetTransactionById.mockResolvedValueOnce(null);
+      mockGetTransactionById.mockReturnValueOnce(null);
       const mockSupabase = createMockSupabase();
 
       const { syncPush } = await import("@/features/sync/services/syncEngine");
@@ -157,7 +157,7 @@ describe("syncEngine", () => {
 
   describe("syncPull", () => {
     it("fetches all rows on first sync and sets last_sync_at to max updated_at", async () => {
-      mockGetSyncMeta.mockResolvedValueOnce(null);
+      mockGetSyncMeta.mockReturnValueOnce(null);
       const serverRows = [
         {
           id: "tx-remote-1",
@@ -173,7 +173,7 @@ describe("syncEngine", () => {
         },
       ];
       const mockSupabase = createMockSupabase({ data: serverRows, error: null });
-      mockGetTransactionById.mockResolvedValueOnce(null);
+      mockGetTransactionById.mockReturnValueOnce(null);
 
       const { syncPull } = await import("@/features/sync/services/syncEngine");
       const result = await syncPull(mockDb, mockSupabase, "user-1");
@@ -191,7 +191,7 @@ describe("syncEngine", () => {
     });
 
     it("uses last_sync_at for incremental pull and skips setSyncMeta when no rows", async () => {
-      mockGetSyncMeta.mockResolvedValueOnce("2026-03-04T10:00:00.000Z");
+      mockGetSyncMeta.mockReturnValueOnce("2026-03-04T10:00:00.000Z");
       const mockSupabase = createMockSupabase({ data: [], error: null });
 
       const { syncPull } = await import("@/features/sync/services/syncEngine");
@@ -202,7 +202,7 @@ describe("syncEngine", () => {
     });
 
     it("skips upsert when local row is newer (LWW)", async () => {
-      mockGetSyncMeta.mockResolvedValueOnce(null);
+      mockGetSyncMeta.mockReturnValueOnce(null);
       const serverRows = [
         {
           id: "tx-1",
@@ -218,7 +218,7 @@ describe("syncEngine", () => {
         },
       ];
       const mockSupabase = createMockSupabase({ data: serverRows, error: null });
-      mockGetTransactionById.mockResolvedValueOnce({
+      mockGetTransactionById.mockReturnValueOnce({
         id: "tx-1",
         userId: "user-1",
         type: "expense",
@@ -238,7 +238,7 @@ describe("syncEngine", () => {
     });
 
     it("upserts when server row is newer", async () => {
-      mockGetSyncMeta.mockResolvedValueOnce(null);
+      mockGetSyncMeta.mockReturnValueOnce(null);
       const serverRows = [
         {
           id: "tx-1",
@@ -254,7 +254,7 @@ describe("syncEngine", () => {
         },
       ];
       const mockSupabase = createMockSupabase({ data: serverRows, error: null });
-      mockGetTransactionById.mockResolvedValueOnce({
+      mockGetTransactionById.mockReturnValueOnce({
         id: "tx-1",
         userId: "user-1",
         type: "expense",
@@ -277,7 +277,7 @@ describe("syncEngine", () => {
     });
 
     it("returns false on supabase error and skips upsert", async () => {
-      mockGetSyncMeta.mockResolvedValueOnce(null);
+      mockGetSyncMeta.mockReturnValueOnce(null);
       const mockSupabase = createMockSupabase({ data: null, error: { message: "fail" } });
 
       const { syncPull } = await import("@/features/sync/services/syncEngine");
@@ -291,8 +291,8 @@ describe("syncEngine", () => {
 
   describe("fullSync", () => {
     it("calls syncPull then syncPush when pull succeeds", async () => {
-      mockGetSyncMeta.mockResolvedValueOnce(null);
-      mockGetQueuedSyncEntries.mockResolvedValueOnce([]);
+      mockGetSyncMeta.mockReturnValueOnce(null);
+      mockGetQueuedSyncEntries.mockReturnValueOnce([]);
       const mockSupabase = createMockSupabase({ data: [], error: null });
 
       const { fullSync } = await import("@/features/sync/services/syncEngine");
@@ -305,7 +305,7 @@ describe("syncEngine", () => {
     });
 
     it("skips push when pull fails and returns false", async () => {
-      mockGetSyncMeta.mockResolvedValueOnce(null);
+      mockGetSyncMeta.mockReturnValueOnce(null);
       const mockSupabase = createMockSupabase({ data: null, error: { message: "fail" } });
 
       const { fullSync } = await import("@/features/sync/services/syncEngine");
@@ -319,7 +319,7 @@ describe("syncEngine", () => {
 
   describe("conflict logging", () => {
     it("logs conflict when server overwrites local with different data", async () => {
-      mockGetSyncMeta.mockResolvedValueOnce(null);
+      mockGetSyncMeta.mockReturnValueOnce(null);
       const serverRows = [
         {
           id: "tx-1",
@@ -335,7 +335,7 @@ describe("syncEngine", () => {
         },
       ];
       const mockSupabase = createMockSupabase({ data: serverRows, error: null });
-      mockGetTransactionById.mockResolvedValueOnce({
+      mockGetTransactionById.mockReturnValueOnce({
         id: "tx-1",
         userId: "user-1",
         type: "expense",
@@ -362,7 +362,7 @@ describe("syncEngine", () => {
     });
 
     it("does not log conflict when data matches (only timestamp differs)", async () => {
-      mockGetSyncMeta.mockResolvedValueOnce(null);
+      mockGetSyncMeta.mockReturnValueOnce(null);
       const serverRows = [
         {
           id: "tx-1",
@@ -378,7 +378,7 @@ describe("syncEngine", () => {
         },
       ];
       const mockSupabase = createMockSupabase({ data: serverRows, error: null });
-      mockGetTransactionById.mockResolvedValueOnce({
+      mockGetTransactionById.mockReturnValueOnce({
         id: "tx-1",
         userId: "user-1",
         type: "expense",
@@ -400,7 +400,7 @@ describe("syncEngine", () => {
     });
 
     it("does not log conflict for new server-only transactions", async () => {
-      mockGetSyncMeta.mockResolvedValueOnce(null);
+      mockGetSyncMeta.mockReturnValueOnce(null);
       const serverRows = [
         {
           id: "tx-new",
@@ -416,7 +416,7 @@ describe("syncEngine", () => {
         },
       ];
       const mockSupabase = createMockSupabase({ data: serverRows, error: null });
-      mockGetTransactionById.mockResolvedValueOnce(null);
+      mockGetTransactionById.mockReturnValueOnce(null);
 
       const { syncPull } = await import("@/features/sync/services/syncEngine");
       await syncPull(mockDb, mockSupabase, "user-1");

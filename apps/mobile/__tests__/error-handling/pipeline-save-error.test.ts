@@ -2,6 +2,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { RawEmail } from "@/features/email-capture/schema";
 
+import { processEmails } from "@/features/email-capture/services/email-pipeline";
+
 const mockCaptureError = vi.fn();
 
 vi.mock("@/shared/lib/sentry", () => ({
@@ -52,8 +54,6 @@ vi.mock("@/shared/lib/generate-id", () => ({
   generateProcessedEmailId: () => mockGenerateId("pe"),
   generateSyncQueueId: () => mockGenerateId("sq"),
 }));
-
-import { processEmails } from "@/features/email-capture/services/email-pipeline";
 
 const mockDb = {} as any;
 const USER_ID = "user-1";

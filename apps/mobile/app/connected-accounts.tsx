@@ -41,16 +41,24 @@ export default function ConnectedAccountsScreen() {
             provider="Gmail"
             account={gmailAccount}
             isSyncing={isFetching && !!gmailAccount}
-            onConnect={() => connectEmail("gmail", getGmailClientId())}
-            onDisconnect={() => gmailAccount && disconnectEmail(gmailAccount.id)}
+            onConnect={() => {
+              void connectEmail("gmail", getGmailClientId());
+            }}
+            onDisconnect={() => {
+              if (gmailAccount) void disconnectEmail(gmailAccount.id);
+            }}
           />
 
           <AccountCard
             provider="Outlook"
             account={outlookAccount}
             isSyncing={isFetching && !!outlookAccount}
-            onConnect={() => connectEmail("outlook", getOutlookClientId())}
-            onDisconnect={() => outlookAccount && disconnectEmail(outlookAccount.id)}
+            onConnect={() => {
+              void connectEmail("outlook", getOutlookClientId());
+            }}
+            onDisconnect={() => {
+              if (outlookAccount) void disconnectEmail(outlookAccount.id);
+            }}
           />
 
           {/* Platform-specific capture sources */}

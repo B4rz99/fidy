@@ -275,7 +275,9 @@ export function GoalCreateSheet() {
           styles.createButton,
           { backgroundColor: accentGreen, opacity: isCreating ? 0.5 : 1 },
         ]}
-        onPress={handleCreate}
+        onPress={() => {
+          void handleCreate();
+        }}
         disabled={isCreating}
       >
         <Text style={styles.createButtonText}>{t("goals.create.title")}</Text>

@@ -1,6 +1,12 @@
 // biome-ignore-all lint/style/useNamingConvention: OAuth/API response fixtures use snake_case keys
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type {
+  EmailProviderConfig,
+  FetchEmailsFn,
+} from "@/features/email-capture/services/email-adapter";
+import { createAdapter, getAdapter } from "@/features/email-capture/services/email-adapter";
+
 const mockGetItemAsync = vi.fn();
 const mockSetItemAsync = vi.fn();
 const mockDeleteItemAsync = vi.fn();
@@ -26,12 +32,6 @@ vi.mock("expo-crypto", () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-import type {
-  EmailProviderConfig,
-  FetchEmailsFn,
-} from "@/features/email-capture/services/email-adapter";
-import { createAdapter } from "@/features/email-capture/services/email-adapter";
-
 const testConfig: EmailProviderConfig = {
   provider: "gmail",
   tokenKey: "test-token",
@@ -41,7 +41,7 @@ const testConfig: EmailProviderConfig = {
   scope: "read",
   getRedirectUri: () => "fidy://test/callback",
   profileUrl: "https://profile.example.com/me",
-  extractEmail: (profile) => (profile.email as string) ?? null,
+  extractEmail: (profile) => (typeof profile.email === "string" ? profile.email : null),
   extraAuthParams: {},
   extraTokenExchangeParams: {},
   extraRefreshParams: {},
@@ -365,8 +365,6 @@ describe("createAdapter", () => {
     });
   });
 });
-
-import { getAdapter } from "@/features/email-capture/services/email-adapter";
 
 describe("getAdapter", () => {
   it("returns a gmail adapter with isConnected callable", async () => {

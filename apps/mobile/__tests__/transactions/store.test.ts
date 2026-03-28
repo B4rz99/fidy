@@ -1,4 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  getBalanceAggregate,
+  getSpendingByCategoryAggregate,
+  getTransactionsPaginated,
+  insertTransaction,
+  softDeleteTransaction,
+} from "@/features/transactions/lib/repository";
+import { useTransactionStore } from "@/features/transactions/store";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
 import type {
   CategoryId,
   CopAmount,
@@ -22,16 +31,6 @@ vi.mock("@/features/transactions/lib/repository", () => ({
 vi.mock("@/shared/db/enqueue-sync", () => ({
   enqueueSync: vi.fn(),
 }));
-
-import {
-  getBalanceAggregate,
-  getSpendingByCategoryAggregate,
-  getTransactionsPaginated,
-  insertTransaction,
-  softDeleteTransaction,
-} from "@/features/transactions/lib/repository";
-import { useTransactionStore } from "@/features/transactions/store";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
 
 // biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
 const mockDb = {} as any;
@@ -351,7 +350,9 @@ describe("useTransactionStore", () => {
   });
 
   it("saveTransaction returns error when DB insert fails", async () => {
-    vi.mocked(insertTransaction).mockRejectedValueOnce(new Error("disk full"));
+    vi.mocked(insertTransaction).mockImplementationOnce(() => {
+      throw new Error("disk full");
+    });
 
     const store = useTransactionStore.getState();
     store.setDigits("500");
@@ -382,7 +383,9 @@ describe("useTransactionStore", () => {
       ],
     });
 
-    vi.mocked(softDeleteTransaction).mockRejectedValueOnce(new Error("db error"));
+    vi.mocked(softDeleteTransaction).mockImplementationOnce(() => {
+      throw new Error("db error");
+    });
     await useTransactionStore.getState().removeTransaction("tx-1" as TransactionId);
 
     expect(useTransactionStore.getState().pages).toHaveLength(1);

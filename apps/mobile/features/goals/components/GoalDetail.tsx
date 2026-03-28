@@ -213,7 +213,7 @@ function ContributionRowInner({
           {formatDateDisplay(contribution.date as IsoDate)}
         </Text>
         <Text style={[styles.contributionNote, { color: secondaryColor }]}>
-          {contribution.note != null ? contribution.note : t("goals.detail.manualPayment")}
+          {contribution.note ?? t("goals.detail.manualPayment")}
         </Text>
       </View>
       <Text style={[styles.contributionAmount, { color: accentGreen }]}>
@@ -331,10 +331,10 @@ export function GoalDetailScreen() {
   const { goal, currentAmount, progress, projection } = goalData;
 
   // Compute running totals for contribution history
-  const contributionsWithRunning: Array<{ contribution: GoalContribution; runningTotal: number }> =
+  const contributionsWithRunning: { contribution: GoalContribution; runningTotal: number }[] =
     (() => {
       const reversed = [...contributions].reverse();
-      const result: Array<{ contribution: GoalContribution; runningTotal: number }> = [];
+      const result: { contribution: GoalContribution; runningTotal: number }[] = [];
       reversed.forEach((c) => {
         const prevTotal = result.length > 0 ? (result[result.length - 1]?.runningTotal ?? 0) : 0;
         result.push({ contribution: c, runningTotal: prevTotal + c.amount });

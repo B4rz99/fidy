@@ -9,11 +9,11 @@ import {
   resetBankSendersCache,
 } from "@/features/email-capture/services/bank-senders-cache";
 
+import { getSupabase } from "@/shared/db/supabase";
+
 vi.mock("@/shared/db/supabase", () => ({
   getSupabase: vi.fn(),
 }));
-
-import { getSupabase } from "@/shared/db/supabase";
 
 const mockFrom = vi.fn();
 const mockSelect = vi.fn();

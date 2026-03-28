@@ -1,4 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { insertMerchantRule } from "@/features/email-capture/lib/merchant-rules";
+import {
+  deleteEmailAccount,
+  dismissProcessedEmail,
+  getEmailAccounts,
+  getFailedEmails,
+  getNeedsReviewEmails,
+  insertEmailAccount,
+  updateLastFetchedAt,
+  updateProcessedEmailStatus,
+} from "@/features/email-capture/lib/repository";
+import { getAdapter } from "@/features/email-capture/services/email-adapter";
+import { processEmails } from "@/features/email-capture/services/email-pipeline";
+import { useEmailCaptureStore } from "@/features/email-capture/store";
 import type {
   EmailAccountId,
   IsoDateTime,
@@ -53,7 +67,7 @@ vi.mock("@/shared/lib/normalize-merchant", () => ({
 }));
 
 // Mock passes through real implementations for progress-phases
-const mockIsFirstFetchForAny = vi.fn((accounts: Array<{ lastFetchedAt: string | null }>) =>
+const mockIsFirstFetchForAny = vi.fn((accounts: { lastFetchedAt: string | null }[]) =>
   accounts.some((a) => a.lastFetchedAt === null)
 );
 const mockShouldShowProgress = vi.fn(
@@ -61,12 +75,13 @@ const mockShouldShowProgress = vi.fn(
 );
 vi.mock("@/features/email-capture/lib/progress-phases", () => ({
   isFirstFetchForAny: (...args: unknown[]) =>
-    mockIsFirstFetchForAny(...(args as [Array<{ lastFetchedAt: string | null }>])),
+    mockIsFirstFetchForAny(...(args as [{ lastFetchedAt: string | null }[]])),
   shouldShowProgress: (...args: unknown[]) =>
     mockShouldShowProgress(...(args as [number, boolean, number])),
 }));
 
 vi.mock("@/features/email-capture/lib/bank-senders", async (importOriginal) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   const actual = await importOriginal<typeof import("@/features/email-capture/lib/bank-senders")>();
   return {
     ...actual,
@@ -98,21 +113,6 @@ vi.mock("@/shared/lib/generate-id", () => ({
   generateEmailAccountId: () => "ea-generated",
   generateSyncQueueId: () => "sq-generated",
 }));
-
-import { insertMerchantRule } from "@/features/email-capture/lib/merchant-rules";
-import {
-  deleteEmailAccount,
-  dismissProcessedEmail,
-  getEmailAccounts,
-  getFailedEmails,
-  getNeedsReviewEmails,
-  insertEmailAccount,
-  updateLastFetchedAt,
-  updateProcessedEmailStatus,
-} from "@/features/email-capture/lib/repository";
-import { getAdapter } from "@/features/email-capture/services/email-adapter";
-import { processEmails } from "@/features/email-capture/services/email-pipeline";
-import { useEmailCaptureStore } from "@/features/email-capture/store";
 
 const mockSelectWhere = vi.fn().mockResolvedValue([{ description: "Compra en Exito" }]);
 const mockDb = {
@@ -482,7 +482,7 @@ describe("useEmailCaptureStore", () => {
       ];
       mockAdapter.fetchEmails.mockResolvedValueOnce(mockRawEmails);
 
-      const phases: Array<string | null> = [];
+      const phases: (string | null)[] = [];
       vi.mocked(processEmails).mockImplementationOnce(async (_db, _uid, _emails, onProgress) => {
         phases.push(useEmailCaptureStore.getState().phase);
         onProgress?.({ total: 1, completed: 1, saved: 1, failed: 0, needsReview: 0 });
@@ -649,7 +649,7 @@ describe("useEmailCaptureStore", () => {
         },
       ]);
 
-      const phases: Array<string | null> = [];
+      const phases: (string | null)[] = [];
       vi.mocked(processEmails).mockImplementationOnce(async (_db, _uid, _emails, onProgress) => {
         phases.push(useEmailCaptureStore.getState().phase);
         onProgress?.({ total: 1, completed: 1, saved: 0, failed: 0, needsReview: 0 });

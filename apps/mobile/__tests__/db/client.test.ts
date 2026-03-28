@@ -1,4 +1,8 @@
+import { getRandomBytes } from "expo-crypto";
+import { deleteItemAsync, getItem, setItem } from "expo-secure-store";
+import { openDatabaseSync } from "expo-sqlite";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getDb, resetDb } from "@/shared/db/client";
 
 vi.mock("expo-sqlite", () => ({
   openDatabaseSync: vi.fn(() => ({ execSync: vi.fn(), closeSync: vi.fn() })),
@@ -23,11 +27,6 @@ vi.mock("@/shared/lib/sentry", () => ({
   capturePipelineEvent: vi.fn(),
   captureWarning: vi.fn(),
 }));
-
-import { getRandomBytes } from "expo-crypto";
-import { deleteItemAsync, getItem, setItem } from "expo-secure-store";
-import { openDatabaseSync } from "expo-sqlite";
-import { getDb, resetDb } from "@/shared/db/client";
 
 describe("getDb", () => {
   beforeEach(() => {

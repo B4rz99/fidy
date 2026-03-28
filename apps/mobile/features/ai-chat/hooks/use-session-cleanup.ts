@@ -9,7 +9,7 @@ export function useSessionCleanup() {
   const cleanupExpiredSessions = useChatStore((s) => s.cleanupExpiredSessions);
 
   useMountEffect(() => {
-    cleanupExpiredSessions().then((expired) => {
+    void cleanupExpiredSessions().then((expired) => {
       setMessage(formatCleanupMessage(expired.length, useLocaleStore.getState().t));
     });
   });

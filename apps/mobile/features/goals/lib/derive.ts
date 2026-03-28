@@ -1,5 +1,5 @@
 import { addMonths, differenceInDays } from "date-fns";
-import { parseIsoDate } from "@/shared/lib/format-date";
+import { parseIsoDate } from "@/shared/lib";
 import type { CopAmount, IsoDate } from "@/shared/types/branded";
 
 // ---------------------------------------------------------------------------

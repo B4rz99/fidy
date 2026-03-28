@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BudgetProgress } from "@/features/budget/lib/derive";
+import type { WeeklyMove } from "@/features/notifications/lib/derive";
 import { deriveWeeklyMoves } from "@/features/notifications/lib/derive";
 import type { StoredTransaction } from "@/features/transactions/schema";
 import type {
@@ -9,6 +10,15 @@ import type {
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
+
+// ---------------------------------------------------------------------------
+// Type predicates for discriminated union narrowing in filter()
+// ---------------------------------------------------------------------------
+
+const isAnomaly = (m: WeeklyMove): m is Extract<WeeklyMove, { type: "anomaly" }> =>
+  m.type === "anomaly";
+const isBudgetPace = (m: WeeklyMove): m is Extract<WeeklyMove, { type: "budget_pace" }> =>
+  m.type === "budget_pace";
 
 // ---------------------------------------------------------------------------
 // Factories
@@ -113,16 +123,14 @@ describe("deriveWeeklyMoves", () => {
       amount: 200_000 as CopAmount,
     });
     const result = deriveWeeklyMoves([...prior, currentWeekTx], [], WEEK_START);
-    const anomalies = result.filter((m) => m.type === "anomaly");
+    const anomalies = result.filter(isAnomaly);
     expect(anomalies).toHaveLength(1);
     const anomaly = anomalies[0]!;
     expect(anomaly.type).toBe("anomaly");
-    if (anomaly.type === "anomaly") {
-      expect(anomaly.categoryId).toBe("food");
-      expect(anomaly.weeklySpend).toBe(200_000);
-      expect(anomaly.medianWeeklySpend).toBe(100_000);
-      expect(anomaly.impact).toBe(100_000); // 200_000 − 100_000
-    }
+    expect(anomaly.categoryId).toBe("food");
+    expect(anomaly.weeklySpend).toBe(200_000);
+    expect(anomaly.medianWeeklySpend).toBe(100_000);
+    expect(anomaly.impact).toBe(100_000); // 200_000 − 100_000
   });
 
   // Test 5 — no budget progresses → no pace moves
@@ -159,19 +167,17 @@ describe("deriveWeeklyMoves", () => {
       spent: 0 as CopAmount,
     });
     const result = deriveWeeklyMoves([currentWeekTx], [progress], WEEK_START);
-    const paces = result.filter((m) => m.type === "budget_pace");
+    const paces = result.filter(isBudgetPace);
     expect(paces).toHaveLength(1);
     const pace = paces[0]!;
     expect(pace.type).toBe("budget_pace");
-    if (pace.type === "budget_pace") {
-      expect(pace.budgetId).toBe("b1");
-      expect(pace.categoryId).toBe("food");
-      expect(pace.budgetAmount).toBe(500_000);
-      // projected = 0 + (700_000/7) × 16 = 1_600_000
-      expect(pace.projectedSpend).toBe(1_600_000);
-      // impact = 1_600_000 − 500_000 = 1_100_000
-      expect(pace.impact).toBe(1_100_000);
-    }
+    expect(pace.budgetId).toBe("b1");
+    expect(pace.categoryId).toBe("food");
+    expect(pace.budgetAmount).toBe(500_000);
+    // projected = 0 + (700_000/7) × 16 = 1_600_000
+    expect(pace.projectedSpend).toBe(1_600_000);
+    // impact = 1_600_000 − 500_000 = 1_100_000
+    expect(pace.impact).toBe(1_100_000);
   });
 
   // Test 8 — thisWeekSpend = 0 → weekDailyRate = 0, projected = spent, no alert if under budget
@@ -303,16 +309,14 @@ describe("deriveWeeklyMoves", () => {
 
     const result = deriveWeeklyMoves([...prior, currentWeekTx], [progress], WEEK_START);
 
-    const anomalies = result.filter((m) => m.type === "anomaly");
-    const paces = result.filter((m) => m.type === "budget_pace");
+    const anomalies = result.filter(isAnomaly);
+    const paces = result.filter(isBudgetPace);
 
     expect(anomalies).toHaveLength(1);
     expect(paces).toHaveLength(1);
 
     // Verify they both refer to "food"
     expect(anomalies[0]?.categoryId).toBe("food");
-    if (paces[0]?.type === "budget_pace") {
-      expect(paces[0]?.categoryId).toBe("food");
-    }
+    expect(paces[0]?.categoryId).toBe("food");
   });
 });

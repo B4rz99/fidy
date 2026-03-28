@@ -1,15 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 
-// Restore real date-fns (global setup mocks it without addMonths)
-vi.mock("date-fns", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("date-fns")>();
-  return { ...actual };
-});
-
-// Freeze "today" so projected dates are deterministic
-const FIXED_NOW = new Date("2026-03-19T12:00:00.000Z");
-vi.useFakeTimers({ now: FIXED_NOW });
-
 import {
   computeMedian,
   deriveBudgetNudges,
@@ -23,6 +13,17 @@ import {
   deriveMonthlyMilestones,
 } from "@/features/goals/lib/derive";
 import type { CopAmount } from "@/shared/types/branded";
+
+// Restore real date-fns (global setup mocks it without addMonths)
+vi.mock("date-fns", async (importOriginal) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+  const actual = await importOriginal<typeof import("date-fns")>();
+  return { ...actual };
+});
+
+// Freeze "today" so projected dates are deterministic
+const FIXED_NOW = new Date("2026-03-19T12:00:00.000Z");
+vi.useFakeTimers({ now: FIXED_NOW });
 
 // ---------------------------------------------------------------------------
 // deriveGoalProgress

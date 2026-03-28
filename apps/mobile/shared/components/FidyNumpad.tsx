@@ -22,7 +22,7 @@ export const FidyNumpad = memo(({ onKeyPress }: FidyNumpadProps) => {
   const specialText = useThemeColor("peach");
 
   const handlePress = (key: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onKeyPress(key);
   };
 

@@ -23,7 +23,7 @@ export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps)
     })?.key ?? null;
 
   const handlePreset = (key: string) => {
-    Haptics.selectionAsync();
+    void Haptics.selectionAsync();
     if (activePresetKey === key) {
       onChangeRange(null, null);
       return;

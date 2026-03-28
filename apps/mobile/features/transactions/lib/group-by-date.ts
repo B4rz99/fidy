@@ -12,7 +12,7 @@ export type DateHeader = {
 export type ListItem = DateHeader | StoredTransaction;
 
 export function isDateHeader(item: ListItem): item is DateHeader {
-  return "kind" in item && item.kind === "date-header";
+  return "kind" in item;
 }
 
 export function makeDateLabel(

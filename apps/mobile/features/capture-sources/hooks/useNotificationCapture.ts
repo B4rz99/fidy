@@ -17,6 +17,6 @@ export function useNotificationCapture(db: AnyDb | null, userId: string | null) 
       });
     },
     [db, userId, enabledPackages],
-    Platform.OS === "android" && db != null && userId != null && enabledPackages.length > 0,
+    Platform.OS === "android" && db != null && userId != null && enabledPackages.length > 0
   );
 }

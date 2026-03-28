@@ -22,14 +22,7 @@ import {
   trackBillCreated,
   trackBillPaymentRecorded,
 } from "@/shared/lib";
-import type {
-  BillId,
-  CategoryId,
-  CopAmount,
-  IsoDate,
-  TransactionId,
-  UserId,
-} from "@/shared/types/branded";
+import type { BillId, CategoryId, CopAmount, IsoDate, UserId } from "@/shared/types/branded";
 import { requestNotificationPermissions, scheduleBillNotifications } from "./lib/notifications";
 import {
   deleteBill as dbDeleteBill,
@@ -109,7 +102,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     if (!dbRef || !userIdRef) return;
     set({ isLoading: true });
     try {
-      const rows = await getAllBills(dbRef, userIdRef);
+      const rows = getAllBills(dbRef, userIdRef);
       set({ bills: rows.map(fromBillRow), isLoading: false });
     } catch (error) {
       set({ isLoading: false });
@@ -122,7 +115,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     const { currentMonth } = get();
     const startIso = toIsoDate(startOfMonth(currentMonth));
     const endIso = toIsoDate(endOfMonth(currentMonth));
-    const rows = await getBillPaymentsForMonth(dbRef, startIso, endIso);
+    const rows = getBillPaymentsForMonth(dbRef, startIso, endIso);
     set({ payments: rows as BillPayment[] });
   },
 
@@ -149,7 +142,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     };
 
     try {
-      await insertBill(dbRef, toBillRow(newBill, userIdRef, toIsoDateTime(new Date())));
+      insertBill(dbRef, toBillRow(newBill, userIdRef, toIsoDateTime(new Date())));
     } catch {
       return false;
     }
@@ -173,11 +166,11 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
 
     const dbFields = Object.fromEntries(
       Object.entries(fields)
-        .filter(([, v]) => v !== undefined)
+        .filter(([, v]) => v != null) // eslint-disable-line @typescript-eslint/no-unnecessary-condition -- Partial<> fields may be undefined at runtime
         .map(([k, v]) => [k, k === "startDate" && v instanceof Date ? v.toISOString() : v])
     );
 
-    await dbUpdateBill(dbRef, id, dbFields, toIsoDateTime(new Date()));
+    dbUpdateBill(dbRef, id, dbFields, toIsoDateTime(new Date()));
     set((s) => ({
       bills: s.bills.map((b) => (b.id === id ? { ...b, ...fields } : b)),
     }));
@@ -185,7 +178,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
 
   deleteBill: async (id) => {
     if (!dbRef) return;
-    await dbDeleteBill(dbRef, id);
+    dbDeleteBill(dbRef, id);
     set((s) => ({
       bills: s.bills.filter((b) => b.id !== id),
       payments: s.payments.filter((p) => p.billId !== id),
@@ -208,7 +201,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
       userId: userIdRef,
       type: "expense",
       amount: bill.amount as CopAmount,
-      categoryId: bill.categoryId as CategoryId,
+      categoryId: bill.categoryId,
       description: bill.name,
       date: parseIsoDate(dueDate),
       createdAt: now,
@@ -257,7 +250,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
       dbRef.transaction((tx) => {
         const db = tx as unknown as AnyDb;
         if (payment?.transactionId) {
-          softDeleteTransaction(db, payment.transactionId as TransactionId, nowIso);
+          softDeleteTransaction(db, payment.transactionId, nowIso);
           enqueueSync(db, {
             id: generateSyncQueueId(),
             tableName: "transactions",
@@ -270,7 +263,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
       });
 
       if (payment?.transactionId) {
-        useTransactionStore.getState().removeFromCache(payment.transactionId as TransactionId);
+        useTransactionStore.getState().removeFromCache(payment.transactionId);
       }
       set((s) => ({
         payments: s.payments.filter((p) => !(p.billId === billId && p.dueDate === dueDate)),

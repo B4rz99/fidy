@@ -64,12 +64,12 @@ function CreateBudgetForm({
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
-  const handleSave = () =>
-    guardedSave(async () => {
-      const amount = parseDigitsToAmount(digits) as CopAmount;
+  const handleSave = () => {
+    void guardedSave(async () => {
+      const amount = parseDigitsToAmount(digits);
       if (amount <= 0) return;
 
-      if (isEdit && existingBudget) {
+      if (isEdit) {
         await onUpdateBudget(existingBudget.id, amount);
         onDone();
       } else {
@@ -78,13 +78,15 @@ function CreateBudgetForm({
         if (success) onDone();
       }
     });
+  };
 
-  const handleDelete = () =>
-    guardedSave(async () => {
+  const handleDelete = () => {
+    void guardedSave(async () => {
       if (!existingBudget) return;
       await onDeleteBudget(existingBudget.id);
       onDone();
     });
+  };
 
   const handleKey = useCallback((key: string) => {
     setDigits(handleNumpadPress(digitsRef.current, key));

@@ -15,11 +15,10 @@ export function useAnimatedProgress(
   duration = 600
 ): {
   progress: SharedValue<number>;
-  animatedStyle: { width: string };
+  animatedStyle: ReturnType<typeof useAnimatedStyle>;
 } {
   const progress = useSharedValue(0);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     progress.value = withTiming(value, { duration });
   }, [value, progress, duration]);

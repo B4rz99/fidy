@@ -63,7 +63,7 @@ export function useSync(db: AnyDb | null, userId: string | null): boolean {
       };
     },
     [db, userId],
-    db != null && userId != null,
+    db != null && userId != null
   );
 
   return initialSyncDone;

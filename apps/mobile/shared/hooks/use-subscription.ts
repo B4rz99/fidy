@@ -14,7 +14,7 @@ import { useEffect } from "react";
  */
 export function useSubscription(
   subscribe: () => void | (() => void) | Promise<() => void>,
-  deps: ReadonlyArray<unknown>,
+  deps: readonly unknown[],
   enabled = true
 ): void {
   // biome-ignore lint/correctness/useExhaustiveDependencies: caller controls deps
@@ -47,5 +47,6 @@ export function useSubscription(
       cancelled = true;
       syncCleanup?.();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- subscribe is intentionally excluded; callers manage deps via spread
   }, [enabled, ...deps]);
 }

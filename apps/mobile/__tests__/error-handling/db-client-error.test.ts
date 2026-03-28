@@ -1,4 +1,6 @@
+import { openDatabaseSync } from "expo-sqlite";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getDb, resetDb } from "@/shared/db/client";
 
 const mockCaptureError = vi.fn();
 
@@ -22,9 +24,6 @@ vi.mock("expo-secure-store", () => ({
 vi.mock("expo-crypto", () => ({
   getRandomBytes: vi.fn(() => new Uint8Array(32)),
 }));
-
-import { openDatabaseSync } from "expo-sqlite";
-import { getDb, resetDb } from "@/shared/db/client";
 
 describe("getDb error path", () => {
   beforeEach(() => {

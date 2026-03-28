@@ -10,6 +10,6 @@ export function useApplePayCapture(db: AnyDb | null, userId: string | null) {
       return setupApplePayCapture(db, userId);
     },
     [db, userId],
-    Platform.OS === "ios" && db != null && userId != null,
+    Platform.OS === "ios" && db != null && userId != null
   );
 }

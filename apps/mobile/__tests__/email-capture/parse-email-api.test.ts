@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  classifyMerchantApi,
+  parseEmailApi,
+  stripPii,
+} from "@/features/email-capture/services/parse-email-api";
+
 const mockInvoke = vi.fn();
 
 vi.mock("@/shared/db/supabase", () => ({
@@ -7,12 +13,6 @@ vi.mock("@/shared/db/supabase", () => ({
     functions: { invoke: mockInvoke },
   }),
 }));
-
-import {
-  classifyMerchantApi,
-  parseEmailApi,
-  stripPii,
-} from "@/features/email-capture/services/parse-email-api";
 
 describe("stripPii", () => {
   it("removes email addresses", () => {

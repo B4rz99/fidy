@@ -60,9 +60,9 @@ import migrations from "../drizzle/migrations";
 const SHEET = { headerShown: false, presentation: "formSheet" } as const;
 
 // Init locale synchronously before first render
-useLocaleStore.getState().initLocale(getLocales()[0]?.languageTag ?? "es");
+useLocaleStore.getState().initLocale(getLocales()[0]?.languageTag ?? "es"); // eslint-disable-line @typescript-eslint/no-unnecessary-condition -- getLocales() CAN return empty array per Expo docs
 
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync();
 
 const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN ?? process.env.SENTRY_DSN ?? "";
 if (SENTRY_DSN) {
@@ -85,7 +85,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       useGoalStore.getState().initStore(db, userId);
       useAnalyticsStore.getState().initStore(db, userId);
       useCategoriesStore.getState().initStore(db, userId);
-      useNotificationStore.getState().initStore(db, userId);
+      void useNotificationStore.getState().initStore(db, userId);
       useSyncConflictStore.getState().initStore(db);
       Promise.all([
         useCalendarStore.getState().loadBills(),
@@ -181,7 +181,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
 function RootLayout() {
   const session = useAuthStore((s) => s.session);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
-  const userId = session?.user?.id ?? null;
+  const userId = session?.user.id ?? null;
   const router = useRouter();
   const segments = useSegments();
   const colorScheme = useColorScheme();
@@ -203,7 +203,7 @@ function RootLayout() {
   });
 
   useMountEffect(() => {
-    useAuthStore.getState().restoreSession();
+    void useAuthStore.getState().restoreSession();
   });
 
   // Side effects when session changes: set Sentry user, clear onboarding on sign-out

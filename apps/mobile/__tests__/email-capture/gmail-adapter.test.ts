@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { fetchGmailEmailsWithToken } from "@/features/email-capture/services/gmail-adapter";
+
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
-
-import { fetchGmailEmailsWithToken } from "@/features/email-capture/services/gmail-adapter";
 
 describe("gmail adapter", () => {
   beforeEach(() => {

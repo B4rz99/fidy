@@ -11,6 +11,7 @@ export {
   ActionSheetIOS,
   ActivityIndicator,
   Alert,
+  Appearance,
   AppState,
   FlatList,
   Image,

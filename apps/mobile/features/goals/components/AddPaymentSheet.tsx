@@ -139,7 +139,9 @@ export function AddPaymentSheet() {
       {/* Add payment button */}
       <Pressable
         style={[styles.ctaButton, { backgroundColor: accentGreen, opacity: isAdding ? 0.5 : 1 }]}
-        onPress={handleAddPayment}
+        onPress={() => {
+          void handleAddPayment();
+        }}
         disabled={isAdding}
       >
         <Text style={styles.ctaButtonText}>{t("goals.payment.addPaymentCta")}</Text>

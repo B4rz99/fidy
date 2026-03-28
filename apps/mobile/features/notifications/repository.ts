@@ -1,6 +1,6 @@
 import { and, count, desc, eq, gt, isNull } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
-import { notifications } from "@/shared/db/schema";
+import { notifications } from "@/shared/db";
 import type { IsoDateTime, UserId } from "@/shared/types/branded";
 
 export type NotificationRow = typeof notifications.$inferInsert;

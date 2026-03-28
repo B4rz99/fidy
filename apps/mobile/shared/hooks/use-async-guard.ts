@@ -8,7 +8,7 @@ import { createAsyncGuard } from "./create-async-guard";
  */
 export function useAsyncGuard() {
   const guardRef = useRef<ReturnType<typeof createAsyncGuard> | null>(null);
-  if (!guardRef.current) guardRef.current = createAsyncGuard();
+  guardRef.current ??= createAsyncGuard();
   const guard = guardRef.current;
 
   const [isBusy, setIsBusy] = useState(false);

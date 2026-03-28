@@ -114,11 +114,12 @@ export function GoalEditSheet() {
         {
           text: t("common.delete"),
           style: "destructive",
-          onPress: () =>
-            guardedDelete(async () => {
+          onPress: () => {
+            void guardedDelete(async () => {
               await deleteGoal(selectedGoalId);
               back();
-            }),
+            });
+          },
         },
       ]
     );
@@ -259,7 +260,9 @@ export function GoalEditSheet() {
       {/* Save button */}
       <Pressable
         style={[styles.saveButton, { backgroundColor: accentGreen, opacity: isSaving ? 0.5 : 1 }]}
-        onPress={handleSave}
+        onPress={() => {
+          void handleSave();
+        }}
         disabled={isSaving}
       >
         <Text style={styles.saveButtonText}>{t("goals.edit.saveChanges")}</Text>

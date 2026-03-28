@@ -1,9 +1,12 @@
 import { addMonths, format, subMonths } from "date-fns";
 import { create } from "zustand";
 import { useNotificationStore } from "@/features/notifications";
-import { useSettingsStore } from "@/features/settings/store";
-import { CATEGORY_MAP, useTransactionStore } from "@/features/transactions";
-import { getSpendingByCategoryAggregate } from "@/features/transactions/lib/repository";
+import { useSettingsStore } from "@/features/settings";
+import {
+  CATEGORY_MAP,
+  getSpendingByCategoryAggregate,
+  useTransactionStore,
+} from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import { getCategoryLabel, useLocaleStore } from "@/shared/i18n";

@@ -25,7 +25,9 @@ export default function FailedEmailsScreen() {
     ({ item }: { item: ProcessedEmailRow }) => (
       <FailedEmailCard
         email={item}
-        onDismiss={() => dismissFailedEmail(item.id)}
+        onDismiss={() => {
+          void dismissFailedEmail(item.id);
+        }}
         onAddManually={handleAddManually}
       />
     ),

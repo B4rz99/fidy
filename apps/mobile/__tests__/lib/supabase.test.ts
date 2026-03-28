@@ -1,4 +1,6 @@
+import { createClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getSupabase, resetSupabase } from "@/shared/db/supabase";
 
 process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
 process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
@@ -12,9 +14,6 @@ vi.mock("expo-secure-store", () => ({
   setItemAsync: vi.fn(),
   deleteItemAsync: vi.fn(),
 }));
-
-import { createClient } from "@supabase/supabase-js";
-import { getSupabase, resetSupabase } from "@/shared/db/supabase";
 
 describe("getSupabase", () => {
   beforeEach(() => {

@@ -11,5 +11,6 @@ export type {
   NotificationType,
   StoredNotification,
 } from "./lib/types";
-export { registerPushToken } from "./services/push-token";
+export { scheduleLocalPush } from "./services/local-push";
+export { deletePushToken, PROJECT_ID, registerPushToken } from "./services/push-token";
 export { useNotificationStore } from "./store";

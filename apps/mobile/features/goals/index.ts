@@ -20,6 +20,7 @@ export type {
   MonthlyTotal,
 } from "./lib/derive";
 export {
+  computeMedian,
   deriveBudgetNudges,
   deriveDebtProjection,
   deriveGoalAlerts,

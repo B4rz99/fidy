@@ -26,9 +26,12 @@ export async function fetchBankSenders(): Promise<readonly BankSender[]> {
   if (cached) return cached;
 
   try {
-    const { data, error } = await getSupabase().from("bank_senders").select("bank, email");
+    type BankSenderRow = { bank: string; email: string };
 
-    if (error || !data || data.length === 0) {
+    const { data, error } = await getSupabase().from("bank_senders").select("bank, email");
+    const rows = data as BankSenderRow[] | null;
+
+    if (error != null || rows == null || rows.length === 0) {
       captureWarning("bank_senders_fetch_failed", {
         errorMessage: error?.message ?? "empty_result",
       });
@@ -36,9 +39,12 @@ export async function fetchBankSenders(): Promise<readonly BankSender[]> {
     }
 
     // Merge remote + defaults so hardcoded senders always work
-    const remoteEmails = new Set(data.map((r) => r.email.toLowerCase()));
+    const remoteEmails = new Set(rows.map((r) => r.email.toLowerCase()));
     const missing = DEFAULT_BANK_SENDERS.filter((s) => !remoteEmails.has(s.email.toLowerCase()));
-    const merged = [...data.map((row) => ({ bank: row.bank, email: row.email })), ...missing];
+    const merged: BankSender[] = [
+      ...rows.map((row) => ({ bank: row.bank, email: row.email })),
+      ...missing,
+    ];
     cache.set(merged);
     return merged;
   } catch (err) {

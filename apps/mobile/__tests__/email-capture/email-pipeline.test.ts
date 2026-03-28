@@ -2,6 +2,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { RawEmail } from "@/features/email-capture/schema";
 
+import { processEmails, processRetries } from "@/features/email-capture/services/email-pipeline";
+
 const mockGetProcessedExternalIds = vi.fn().mockResolvedValue(new Set<string>());
 const mockInsertProcessedEmail = vi.fn();
 const mockInsertTransaction = vi.fn();
@@ -60,8 +62,6 @@ vi.mock("@/shared/lib/generate-id", () => ({
   generateProcessedEmailId: () => mockGenerateId("pe"),
   generateSyncQueueId: () => mockGenerateId("sq"),
 }));
-
-import { processEmails, processRetries } from "@/features/email-capture/services/email-pipeline";
 
 const mockDb = {} as any;
 const USER_ID = "user-1";
@@ -346,13 +346,13 @@ describe("email processing pipeline", () => {
       confidence: 0.9,
     });
 
-    const progressCalls: Array<{
+    const progressCalls: {
       total: number;
       completed: number;
       saved: number;
       failed: number;
       needsReview: number;
-    }> = [];
+    }[] = [];
 
     await processEmails(mockDb, USER_ID, emails, (p) => progressCalls.push(p));
 
@@ -612,7 +612,9 @@ describe("processRetries", () => {
       date: "2026-03-05",
       confidence: 0.9,
     });
-    mockInsertTransaction.mockRejectedValueOnce(new Error("DB constraint error"));
+    mockInsertTransaction.mockImplementationOnce(() => {
+      throw new Error("DB constraint error");
+    });
 
     const result = await processRetries(mockDb, USER_ID);
 
@@ -632,7 +634,9 @@ describe("processRetries", () => {
       date: "2026-03-05",
       confidence: 0.9,
     });
-    mockInsertTransaction.mockRejectedValueOnce(new Error("DB constraint error"));
+    mockInsertTransaction.mockImplementationOnce(() => {
+      throw new Error("DB constraint error");
+    });
 
     const result = await processRetries(mockDb, USER_ID);
 

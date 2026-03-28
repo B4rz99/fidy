@@ -25,7 +25,7 @@ import migrations from "../../drizzle/migrations";
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const session = useAuthStore((s) => s.session);
-  const userId = session?.user?.id ?? null;
+  const userId = session?.user.id ?? null;
   const step = useOnboardingStore((s) => s.step);
   const pageBg = useThemeColor("page");
 

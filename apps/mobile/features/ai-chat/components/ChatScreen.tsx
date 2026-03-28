@@ -59,18 +59,18 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
         try {
           await useTransactionStore.getState().removeTransaction(msg.action.transactionId);
         } catch {
-          updateActionStatus(messageId, "dismissed");
+          void updateActionStatus(messageId, "dismissed");
           return;
         }
       }
-      updateActionStatus(messageId, "confirmed");
+      void updateActionStatus(messageId, "confirmed");
     },
     [messages, updateActionStatus]
   );
 
   const handleDismissAction = useCallback(
     (messageId: ChatMessageId) => {
-      updateActionStatus(messageId, "dismissed");
+      void updateActionStatus(messageId, "dismissed");
     },
     [updateActionStatus]
   );
@@ -79,7 +79,9 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
     ({ item }: { item: ChatMessage }) => (
       <MemoizedMessageBubble
         message={item}
-        onConfirm={handleConfirmAction}
+        onConfirm={(id) => {
+          void handleConfirmAction(id);
+        }}
         onDismiss={handleDismissAction}
       />
     ),
@@ -88,7 +90,7 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
 
   const handleSend = useCallback(
     (text: string) => {
-      sendMessage(text);
+      void sendMessage(text);
       setTimeout(() => {
         listRef.current?.scrollToEnd({ animated: true });
       }, 100);

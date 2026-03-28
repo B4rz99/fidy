@@ -1,8 +1,4 @@
-import {
-  insertMerchantRule,
-  lookupMerchantRule,
-} from "@/features/email-capture/lib/merchant-rules";
-import { stripPii } from "@/features/email-capture/services/parse-email-api";
+import { insertMerchantRule, lookupMerchantRule, stripPii } from "@/features/email-capture";
 import { insertTransaction, isValidCategoryId } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
@@ -38,7 +34,7 @@ export async function processNotification(
   userId: string,
   notification: NotificationData
 ): Promise<NotificationPipelineResult> {
-  const notificationText = notification.bigText ?? notification.text ?? notification.title ?? "";
+  const notificationText = notification.bigText ?? notification.text;
   const sanitizedText = stripPii(notificationText).slice(0, 500);
   const receivedAt = toIsoDateTime(new Date(notification.timestamp));
   const source = resolveSource(notification.packageName);
@@ -162,7 +158,7 @@ export async function processNotification(
     const txId = generateTransactionId();
     const now = toIsoDateTime(new Date());
 
-    await insertTransaction(db, {
+    insertTransaction(db, {
       id: txId,
       userId: userId as UserId,
       type: parsed.type,
@@ -175,7 +171,7 @@ export async function processNotification(
       updatedAt: now,
     });
 
-    await enqueueSync(db, {
+    enqueueSync(db, {
       id: generateSyncQueueId(),
       tableName: "transactions",
       rowId: txId,

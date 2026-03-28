@@ -39,10 +39,9 @@ const StepList = ({
 );
 
 export const ApplePaySetupCard = () => {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const isApplePaySetupComplete = useCaptureSourcesStore((s) => s.isApplePaySetupComplete);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: locale triggers recompute when language changes
   const applePaySteps = useMemo(
     () => [
       t("applePay.steps.0"),
@@ -50,9 +49,8 @@ export const ApplePaySetupCard = () => {
       t("applePay.steps.2"),
       t("applePay.steps.3"),
     ],
-    [t, locale]
+    [t]
   );
-  // biome-ignore lint/correctness/useExhaustiveDependencies: locale triggers recompute when language changes
   const smsSteps = useMemo(
     () => [
       t("smsDetection.steps.0"),
@@ -60,7 +58,7 @@ export const ApplePaySetupCard = () => {
       t("smsDetection.steps.2"),
       t("smsDetection.steps.3"),
     ],
-    [t, locale]
+    [t]
   );
 
   const secondaryColor = useThemeColor("secondary");

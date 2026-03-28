@@ -1,4 +1,4 @@
-import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
+import { findDuplicateTransaction } from "@/features/capture-sources";
 import { insertTransaction, isValidCategoryId } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
@@ -77,12 +77,12 @@ async function saveTransaction(
     ? validated.categoryId
     : ("other" as CategoryId);
 
-  await insertTransaction(db, {
+  insertTransaction(db, {
     id: txId,
     userId: userId as UserId,
     type: validated.type,
     amount: validated.amount as CopAmount,
-    categoryId: categoryId as CategoryId,
+    categoryId: categoryId,
     description: validated.description,
     date: validated.date as IsoDate,
     source,
@@ -90,7 +90,7 @@ async function saveTransaction(
     updatedAt: now,
   });
 
-  await enqueueSync(db, {
+  enqueueSync(db, {
     id: generateSyncQueueId(),
     tableName: "transactions",
     rowId: txId,
@@ -211,7 +211,7 @@ export async function processEmails(
             ? {
                 rawBody: email.body,
                 retryCount: 0,
-                nextRetryAt: computeNextRetryAt(0) as IsoDateTime,
+                nextRetryAt: computeNextRetryAt(0),
               }
             : {}),
         });
@@ -418,12 +418,12 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
         ? parsed.categoryId
         : ("other" as CategoryId);
 
-      await insertTransaction(db, {
+      insertTransaction(db, {
         id: txId,
         userId: userId as UserId,
         type: parsed.type,
         amount: parsed.amount as CopAmount,
-        categoryId: retryCategoryId as CategoryId,
+        categoryId: retryCategoryId,
         description: parsed.description,
         date: parsed.date as IsoDate,
         source,
@@ -431,7 +431,7 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
         updatedAt: now,
       });
 
-      await enqueueSync(db, {
+      enqueueSync(db, {
         id: generateSyncQueueId(),
         tableName: "transactions",
         rowId: txId,

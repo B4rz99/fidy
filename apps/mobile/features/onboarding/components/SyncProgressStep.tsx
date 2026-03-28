@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { ProgressBar } from "@/features/budget/components/ProgressBar";
+import { ProgressBar } from "@/features/budget";
 import {
   getGmailClientId,
   getOutlookClientId,

@@ -32,14 +32,18 @@ export default function LoginScreen() {
             <OAuthButton
               icon={<GoogleIcon />}
               label={t("login.continueWithGoogle")}
-              onPress={() => useAuthStore.getState().signIn("google")}
+              onPress={() => {
+                void useAuthStore.getState().signIn("google");
+              }}
               containerClassName="bg-login-google dark:bg-login-google-dark border border-login-google-border dark:border-login-google-border-dark"
               textClassName="text-primary dark:text-primary-dark"
             />
             <OAuthButton
               icon={<MicrosoftIcon />}
               label={t("login.continueWithMicrosoft")}
-              onPress={() => useAuthStore.getState().signIn("azure")}
+              onPress={() => {
+                void useAuthStore.getState().signIn("azure");
+              }}
               containerClassName="bg-login-ms dark:bg-login-ms-dark"
               textClassName="text-primary dark:text-primary-dark"
             />

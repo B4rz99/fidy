@@ -3,6 +3,10 @@ const { defineConfig } = require("eslint/config");
 const expoConfig = require("eslint-config-expo/flat");
 const tseslint = require("typescript-eslint");
 
+// __dirname is available here because this file is CommonJS (require/module.exports)
+// eslint-disable-next-line no-undef
+const rootDir = __dirname;
+
 module.exports = defineConfig([
   expoConfig,
   {
@@ -18,7 +22,7 @@ module.exports = defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         projectService: true,
-        tsconfigRootDir: __dirname,
+        tsconfigRootDir: rootDir,
       },
     },
   },

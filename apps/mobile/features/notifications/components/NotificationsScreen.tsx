@@ -1,10 +1,9 @@
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
-import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@/features/auth";
 import { ScreenLayout } from "@/shared/components";
-import { Pressable, SectionList, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Platform, Pressable, SectionList, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { trackNotificationCenterOpened } from "@/shared/lib";
 import { deriveNotificationDisplay, groupNotificationsBySection } from "../lib/display";

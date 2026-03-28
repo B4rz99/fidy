@@ -1,8 +1,8 @@
 import {
+  classifyMerchantApi,
   insertMerchantRule,
   lookupMerchantRule,
-} from "@/features/email-capture/lib/merchant-rules";
-import { classifyMerchantApi } from "@/features/email-capture/services/parse-email-api";
+} from "@/features/email-capture";
 import { insertTransaction, isValidCategoryId } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
@@ -86,7 +86,7 @@ export async function processApplePayIntent(
     const txId = generateTransactionId();
     const now = toIsoDateTime(new Date());
 
-    await insertTransaction(db, {
+    insertTransaction(db, {
       id: txId,
       userId: userId as UserId,
       type: "expense",
@@ -99,7 +99,7 @@ export async function processApplePayIntent(
       updatedAt: now,
     });
 
-    await enqueueSync(db, {
+    enqueueSync(db, {
       id: generateSyncQueueId(),
       tableName: "transactions",
       rowId: txId,

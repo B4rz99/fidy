@@ -34,6 +34,6 @@ export function useEmailCapture(db: AnyDb | null, userId: string | null) {
       };
     },
     [db, userId],
-    db != null && userId != null,
+    db != null && userId != null
   );
 }

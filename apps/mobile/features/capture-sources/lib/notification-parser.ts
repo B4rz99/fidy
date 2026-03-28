@@ -38,7 +38,7 @@ type PatternEntry = {
   merchantGroup: number;
 };
 
-const PATTERNS: ReadonlyArray<PatternEntry> = [
+const PATTERNS: readonly PatternEntry[] = [
   { pattern: BANCOLOMBIA_PURCHASE, type: "expense", amountGroup: 1, merchantGroup: 2 },
   { pattern: BANCOLOMBIA_TRANSFER_OUT, type: "expense", amountGroup: 1, merchantGroup: 2 },
   { pattern: BANCOLOMBIA_TRANSFER_IN, type: "income", amountGroup: 1, merchantGroup: 2 },

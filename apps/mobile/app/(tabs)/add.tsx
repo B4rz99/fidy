@@ -80,11 +80,11 @@ export default function AddTransactionScreen() {
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
-  const handleSave = () =>
-    guardedSave(async () => {
+  const handleSave = () => {
+    void guardedSave(async () => {
       const result = isEditing ? await updateTransaction(editingId) : await saveTransaction();
       if (result.success) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         if (!isEditing) {
           trackTransactionCreated({
             type,
@@ -96,6 +96,7 @@ export default function AddTransactionScreen() {
         navigate("/(tabs)" as never);
       }
     });
+  };
 
   const handleKey = useCallback(
     (key: string) => {

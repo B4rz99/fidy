@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  insertMerchantRule,
+  lookupMerchantRule,
+} from "../../features/email-capture/lib/merchant-rules";
+
 vi.mock("drizzle-orm", () => ({
   and: vi.fn((...args: unknown[]) => args),
   eq: vi.fn((col: unknown, val: unknown) => ({ col, val })),
@@ -29,11 +34,6 @@ const mockDb = {
   })),
   // biome-ignore lint/suspicious/noExplicitAny: mock DB object for testing
 } as any;
-
-import {
-  insertMerchantRule,
-  lookupMerchantRule,
-} from "../../features/email-capture/lib/merchant-rules";
 
 describe("merchant-rules", () => {
   beforeEach(() => vi.clearAllMocks());

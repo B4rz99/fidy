@@ -22,7 +22,7 @@ function BudgetCardInner({ progress, onPress }: Props) {
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
 
-  const category = CATEGORY_MAP[progress.categoryId];
+  const category = CATEGORY_MAP[progress.categoryId] ?? null;
   const CategoryIcon = category?.icon;
   const categoryLabel = category ? getCategoryLabel(category, locale) : progress.categoryId;
   const badgeColor = progress.isOverBudget ? accentRed : accentGreen;
@@ -40,7 +40,7 @@ function BudgetCardInner({ progress, onPress }: Props) {
     >
       <View style={styles.header}>
         <View style={styles.categoryRow}>
-          {CategoryIcon && <CategoryIcon size={18} color={category?.color ?? primaryColor} />}
+          {category && CategoryIcon && <CategoryIcon size={18} color={category.color} />}
           <Text style={[styles.categoryName, { color: primaryColor }]}>{categoryLabel}</Text>
         </View>
         <View style={[styles.badge, { backgroundColor: badgeColor }]}>

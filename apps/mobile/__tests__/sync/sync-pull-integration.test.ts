@@ -17,12 +17,6 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/shared/lib/sentry", () => ({
-  captureError: vi.fn(),
-  capturePipelineEvent: vi.fn(),
-  captureWarning: vi.fn(),
-}));
-
 import { getUnresolvedConflicts } from "@/features/sync/lib/conflict-repository";
 import { syncPull } from "@/features/sync/services/syncEngine";
 import {
@@ -38,6 +32,12 @@ import type {
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
+
+vi.mock("@/shared/lib/sentry", () => ({
+  captureError: vi.fn(),
+  capturePipelineEvent: vi.fn(),
+  captureWarning: vi.fn(),
+}));
 
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
