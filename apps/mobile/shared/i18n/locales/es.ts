@@ -37,6 +37,17 @@ const es = {
     menu: "Menú",
   },
 
+  voice: {
+    listening: "Escuchando...",
+    understanding: "Procesando...",
+    confirm: "Confirmar",
+    tryAgain: "Intentar de nuevo",
+    couldNotUnderstand: "No pude entender",
+    connectToInternet: "Conéctate a internet para procesar la voz",
+    micPermissionDenied: "Se necesita acceso al micrófono — actívalo en Configuración",
+    speechNotAvailable: "El reconocimiento de voz no está disponible en este dispositivo",
+  },
+
   // Dashboard
   dashboard: {
     spentThisMonth: "Gastado este mes",
