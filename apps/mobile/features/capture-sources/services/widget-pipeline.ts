@@ -1,3 +1,4 @@
+import { isValidCategoryId } from "@/features/transactions/lib/categories";
 import { upsertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
@@ -43,14 +44,19 @@ export async function processWidgetTransactions(db: AnyDb, userId: UserId): Prom
         const now = toIsoDateTime(new Date());
         const amount = Math.round(item.amount) as CopAmount;
         const date = toIsoDate(new Date(item.createdAt));
+        const categoryId = (
+          item.category && isValidCategoryId(item.category) ? item.category : "other"
+        ) as CategoryId;
+        const type = item.type === "income" ? "income" : "expense";
+        const description = item.description ?? "";
 
         upsertTransaction(db, {
           id: txId,
           userId,
-          type: "expense",
+          type,
           amount,
-          categoryId: "other" as CategoryId,
-          description: "",
+          categoryId,
+          description,
           date,
           source: "widget",
           createdAt: now,
@@ -66,8 +72,8 @@ export async function processWidgetTransactions(db: AnyDb, userId: UserId): Prom
         });
 
         trackTransactionCreated({
-          type: "expense",
-          category: "other",
+          type,
+          category: categoryId,
           source: "widget",
         });
 

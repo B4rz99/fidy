@@ -33,6 +33,8 @@ const SWIFT_FILES = [
   "QuickExpenseIntent.swift",
   "QuickExpenseControl.swift",
   "FidyWidgetBundle.swift",
+  "FidyCategory.swift",
+  "TransactionKind.swift",
 ];
 
 const ALL_EXTENSION_FILES = [...SWIFT_FILES, "Info.plist", "widget.entitlements"];

@@ -4,6 +4,9 @@ export type PendingWidgetTransaction = {
   id: string;
   amount: number;
   createdAt: string;
+  category?: string;
+  type?: string;
+  description?: string;
 };
 
 export type ExpoAppIntentsModule = {

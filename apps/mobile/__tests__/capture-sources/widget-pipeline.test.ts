@@ -176,4 +176,78 @@ describe("processWidgetTransactions", () => {
       expect.objectContaining({ amount: 15001 })
     );
   });
+
+  it("uses category from pending item when valid", async () => {
+    mockGetPendingTransactions.mockResolvedValue([
+      { id: "cat-test", amount: 8000, createdAt: "2026-03-27T10:00:00Z", category: "food" },
+    ]);
+
+    await processWidgetTransactions(mockDb, USER_ID);
+
+    expect(mockUpsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({ categoryId: "food" })
+    );
+  });
+
+  it("falls back to 'other' when category is invalid", async () => {
+    mockGetPendingTransactions.mockResolvedValue([
+      { id: "bad-cat", amount: 5000, createdAt: "2026-03-27T10:00:00Z", category: "invalid" },
+    ]);
+
+    await processWidgetTransactions(mockDb, USER_ID);
+
+    expect(mockUpsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({ categoryId: "other" })
+    );
+  });
+
+  it("uses type=income when specified", async () => {
+    mockGetPendingTransactions.mockResolvedValue([
+      { id: "income-test", amount: 50000, createdAt: "2026-03-27T10:00:00Z", type: "income" },
+    ]);
+
+    await processWidgetTransactions(mockDb, USER_ID);
+
+    expect(mockUpsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({ type: "income" })
+    );
+  });
+
+  it("uses description from pending item", async () => {
+    mockGetPendingTransactions.mockResolvedValue([
+      {
+        id: "desc-test",
+        amount: 12000,
+        createdAt: "2026-03-27T10:00:00Z",
+        description: "Coffee at Juan Valdez",
+      },
+    ]);
+
+    await processWidgetTransactions(mockDb, USER_ID);
+
+    expect(mockUpsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({ description: "Coffee at Juan Valdez" })
+    );
+  });
+
+  it("defaults optional fields when absent (backward compatible)", async () => {
+    mockGetPendingTransactions.mockResolvedValue([
+      { id: "compat-test", amount: 10000, createdAt: "2026-03-27T10:00:00Z" },
+    ]);
+
+    await processWidgetTransactions(mockDb, USER_ID);
+
+    expect(mockUpsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        type: "expense",
+        categoryId: "other",
+        description: "",
+      })
+    );
+  });
 });

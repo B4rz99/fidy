@@ -9,6 +9,15 @@ struct QuickExpenseIntent: AppIntent {
     @Parameter(title: "Amount")
     var amount: Int
 
+    @Parameter(title: "Category", default: .other)
+    var category: FidyCategory?
+
+    @Parameter(title: "Type", default: .expense)
+    var type: TransactionKind?
+
+    @Parameter(title: "Description")
+    var descriptionText: String?
+
     func perform() async throws -> some IntentResult {
         guard amount > 0 else {
             throw $amount.needsValueError("Please enter a positive amount.")
@@ -31,14 +40,16 @@ struct QuickExpenseIntent: AppIntent {
         let newEntry: [String: Any] = [
             "id": UUID().uuidString,
             "amount": amount,
-            "createdAt": timestamp
+            "category": (category ?? .other).rawValue,
+            "type": (type ?? .expense).rawValue,
+            "description": descriptionText ?? "",
+            "createdAt": timestamp,
         ]
 
         let updated = existing + [newEntry]
 
         if let encoded = try? JSONSerialization.data(withJSONObject: updated) {
             defaults?.set(encoded, forKey: "pendingWidgetTransactions")
-            defaults?.synchronize()
         }
 
         return .result()
