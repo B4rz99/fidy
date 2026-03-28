@@ -24,7 +24,6 @@ vi.mock("@/shared/db/enqueue-sync", () => ({
 }));
 
 import {
-  getBalanceAggregate,
   getTransactionsPaginated,
   insertTransaction,
   softDeleteTransaction,
@@ -50,10 +49,6 @@ describe("useTransactionStore", () => {
       pages: [],
       offset: 0,
       hasMore: true,
-
-      balance: 0,
-      categorySpending: [],
-      dailySpending: [],
     });
   });
 
@@ -156,9 +151,8 @@ describe("useTransactionStore", () => {
 
     await store.saveTransaction();
 
-    // refresh calls getTransactionsPaginated and aggregate functions
+    // refresh calls getTransactionsPaginated to reload the list
     expect(getTransactionsPaginated).toHaveBeenCalled();
-    expect(getBalanceAggregate).toHaveBeenCalled();
   });
 
   it("saveTransaction fails with zero amount", async () => {

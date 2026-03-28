@@ -4,18 +4,13 @@ import { enqueueSync } from "@/shared/db";
 import {
   generateSyncQueueId,
   generateTransactionId,
-  toIsoDate,
   toIsoDateTime,
-  toMonth,
   trackTransactionDeleted,
   trackTransactionEdited,
 } from "@/shared/lib";
-import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
+import type { CategoryId, TransactionId, UserId } from "@/shared/types/branded";
 import { buildTransaction, toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
 import {
-  getBalanceAggregate,
-  getDailySpendingAggregate,
-  getSpendingByCategoryAggregate,
   getTransactionById,
   getTransactionsPaginated,
   insertTransaction,
@@ -32,16 +27,6 @@ const PAGE_SIZE = 30;
 let dbRef: AnyDb | null = null;
 let userIdRef: UserId | null = null;
 
-type CategorySpendingItem = {
-  readonly categoryId: CategoryId;
-  readonly total: CopAmount;
-};
-
-type DailySpendingItem = {
-  readonly date: IsoDate;
-  readonly total: CopAmount;
-};
-
 type TransactionState = {
   // Form fields
   step: FormStep;
@@ -55,11 +40,6 @@ type TransactionState = {
   pages: StoredTransaction[];
   offset: number;
   hasMore: boolean;
-
-  // Aggregate data (from SQL)
-  balance: number;
-  categorySpending: CategorySpendingItem[];
-  dailySpending: DailySpendingItem[];
 };
 
 type TransactionActions = {
@@ -75,7 +55,6 @@ type TransactionActions = {
   >;
   loadInitialPage: () => Promise<void>;
   loadNextPage: () => Promise<void>;
-  loadAggregates: () => void;
   refresh: () => Promise<void>;
   removeTransaction: (id: TransactionId) => Promise<void>;
   editTransaction: (id: TransactionId) => void;
@@ -111,9 +90,6 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
   pages: [],
   offset: 0,
   hasMore: true,
-  balance: 0,
-  categorySpending: [],
-  dailySpending: [],
   editingId: null,
 
   initStore: (db, userId) => {
@@ -139,7 +115,6 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
         offset: pageData.length,
         hasMore,
       });
-      get().loadAggregates();
     } catch {
       // DB read failed — keep existing state
     }
@@ -161,25 +136,6 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
       }));
     } catch {
       // DB read failed — keep existing state
-    }
-  },
-
-  loadAggregates: () => {
-    if (!dbRef || !userIdRef) return;
-    try {
-      const now = new Date();
-      const currentMonth = toMonth(now);
-      const thirtyDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
-      const startDate = toIsoDate(thirtyDaysAgo);
-      const endDate = toIsoDate(now);
-
-      const balance = getBalanceAggregate(dbRef, userIdRef);
-      const categorySpending = getSpendingByCategoryAggregate(dbRef, userIdRef, currentMonth);
-      const dailySpending = getDailySpendingAggregate(dbRef, userIdRef, startDate, endDate);
-
-      set({ balance, categorySpending, dailySpending });
-    } catch {
-      // Aggregate query failed — keep existing state
     }
   },
 
@@ -205,7 +161,6 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
           hasMore,
         });
       }
-      get().loadAggregates();
     } catch {
       // Refresh failed — keep existing state
     }
