@@ -1,13 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "expo-router";
-import { useEffect } from "react";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { ApplePaySetupCard, NotificationSetupCard } from "@/features/capture-sources";
 import {
   getGmailClientId,
@@ -17,7 +10,7 @@ import {
 import { ScreenLayout } from "@/shared/components";
 import { Mail } from "@/shared/components/icons";
 import { Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { usePulsingOpacity, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 
 export default function ConnectedAccountsScreen() {
@@ -83,22 +76,7 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
   const greenColor = useThemeColor("accentGreen");
   const tertiaryColor = useThemeColor("tertiary");
 
-  const dotOpacity = useSharedValue(1);
-
-  useEffect(() => {
-    if (isSyncing) {
-      dotOpacity.value = withRepeat(
-        withSequence(withTiming(0.3, { duration: 600 }), withTiming(1, { duration: 600 })),
-        -1
-      );
-    } else {
-      dotOpacity.value = withTiming(1, { duration: 300 });
-    }
-  }, [isSyncing, dotOpacity]);
-
-  const dotAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: dotOpacity.value,
-  }));
+  const { pulsingStyle: dotAnimatedStyle } = usePulsingOpacity(isSyncing);
 
   if (account) {
     return (

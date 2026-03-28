@@ -1,10 +1,10 @@
 import { useRouter } from "expo-router";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { MonthNavigator } from "@/features/calendar/components/MonthNavigator";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Wallet } from "@/shared/components/icons";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { useBudgetStore } from "../store";
 import { BudgetCard } from "./BudgetCard";
 import { BudgetSummaryCard } from "./BudgetSummaryCard";
@@ -34,14 +34,16 @@ export function BudgetListScreen() {
   const clearPendingPermissionRequest = useBudgetStore((s) => s.clearPendingPermissionRequest);
 
   // Navigate to pre-permission screen when store signals it.
-  // Uses useEffect because the store's refreshProgress() is async/deep in the derivation
+  // Uses useSubscription because the store's refreshProgress() is async/deep in the derivation
   // chain and cannot call router.push() directly — this is a Zustand subscription pattern.
-  useEffect(() => {
-    if (pendingPermissionRequest) {
+  useSubscription(
+    () => {
       clearPendingPermissionRequest();
       router.push("/enable-notifications");
-    }
-  }, [pendingPermissionRequest, clearPendingPermissionRequest, router]);
+    },
+    [pendingPermissionRequest, clearPendingPermissionRequest, router],
+    pendingPermissionRequest
+  );
 
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");

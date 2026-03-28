@@ -1,9 +1,9 @@
 import { format } from "date-fns";
 import { Stack, useRouter } from "expo-router";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 import Svg, { Circle as SvgCircle } from "react-native-svg";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatDateDisplay, formatMoney } from "@/shared/lib";
 import type { CopAmount, IsoDate } from "@/shared/types/branded";
 import type { GoalProjection, Milestone } from "../lib/derive";
@@ -308,20 +308,21 @@ export function GoalDetailScreen() {
   const goalData = goals.find((g) => g.goal.id === selectedGoalId);
 
   // Track previous progress percent to detect milestone crossings.
-  // Allowed useEffect: subscription/listener pattern detecting external store changes.
   const prevPercentRef = useRef<number | null>(null);
-  useEffect(() => {
-    if (goalData == null) return;
-    const currentPercent = goalData.progress.percentComplete;
-    const prevPercent = prevPercentRef.current;
-    if (prevPercent !== null && prevPercent !== currentPercent) {
-      const crossed = checkMilestoneCrossed(prevPercent, currentPercent);
-      if (crossed !== null) {
-        setCelebrationMilestone(crossed);
+  useSubscription(
+    () => {
+      if (goalData == null) return;
+      const currentPercent = goalData.progress.percentComplete;
+      const prevPercent = prevPercentRef.current;
+      if (prevPercent !== null && prevPercent !== currentPercent) {
+        const crossed = checkMilestoneCrossed(prevPercent, currentPercent);
+        if (crossed !== null) setCelebrationMilestone(crossed);
       }
-    }
-    prevPercentRef.current = currentPercent;
-  }, [goalData]);
+      prevPercentRef.current = currentPercent;
+    },
+    [goalData],
+    goalData != null
+  );
 
   if (goalData == null) {
     return null;

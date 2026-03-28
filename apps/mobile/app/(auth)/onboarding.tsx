@@ -1,6 +1,6 @@
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@/features/auth";
 import { useBudgetStore } from "@/features/budget";
@@ -18,7 +18,7 @@ import {
 import { useTransactionStore } from "@/features/transactions";
 import { StyleSheet, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
-import { useThemeColor } from "@/shared/hooks";
+import { useSubscription, useThemeColor } from "@/shared/hooks";
 import type { UserId } from "@/shared/types/branded";
 import migrations from "../../drizzle/migrations";
 
@@ -37,8 +37,9 @@ export default function OnboardingScreen() {
   const { success: migrationsReady } = useMigrations(db ?? (undefined as never), migrations);
 
   // Initialize minimal stores needed for onboarding
-  useEffect(() => {
-    if (migrationsReady && db && userId && !storesReady) {
+  useSubscription(
+    () => {
+      if (!db || !userId) return;
       useEmailCaptureStore.getState().initStore(db, userId);
       useTransactionStore.getState().initStore(db, userId as UserId);
       useBudgetStore.getState().initStore(db, userId as UserId);
@@ -50,15 +51,19 @@ export default function OnboardingScreen() {
         .finally(() => {
           setStoresReady(true);
         });
-    }
-  }, [migrationsReady, db, userId, storesReady]);
+    },
+    [db, userId],
+    migrationsReady && db != null && userId != null && !storesReady
+  );
 
   // Hide splash once ready
-  useEffect(() => {
-    if (storesReady) {
-      SplashScreen.hideAsync();
-    }
-  }, [storesReady]);
+  useSubscription(
+    () => {
+      void SplashScreen.hideAsync();
+    },
+    [],
+    storesReady
+  );
 
   if (!storesReady) {
     return <View style={[styles.container, { backgroundColor: pageBg }]} />;

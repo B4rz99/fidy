@@ -13,7 +13,7 @@ import * as Notifications from "expo-notifications";
 import { type Href, Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useChatStore } from "@/features/ai-chat";
 import { useAnalyticsStore } from "@/features/analytics";
@@ -44,7 +44,7 @@ import { ErrorFallback } from "@/shared/components";
 import { Platform, useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 import { type AnyDb, getDb } from "@/shared/db";
-import { useMountEffect } from "@/shared/hooks";
+import { useMountEffect, useSubscription } from "@/shared/hooks";
 import { useLocaleStore } from "@/shared/i18n";
 import {
   captureError,
@@ -73,8 +73,8 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
   const router = useRouter();
   const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
 
-  useEffect(() => {
-    if (migrationsReady) {
+  useSubscription(
+    () => {
       useTransactionStore.getState().initStore(db, userId);
       useSearchStore.getState().initStore(db, userId);
       useEmailCaptureStore.getState().initStore(db, userId);
@@ -122,9 +122,11 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
         .getState()
         .hydrate()
         .catch(handleRecoverableError("Failed to hydrate settings"));
-      registerBackgroundTask().catch(captureError);
-    }
-  }, [migrationsReady, db, userId]);
+      void registerBackgroundTask().catch(captureError);
+    },
+    [db, userId],
+    migrationsReady
+  );
 
   const initialSyncDone = useSync(migrationsReady ? db : null, userId);
   const captureDb = initialSyncDone && migrationsReady ? db : null;
@@ -134,7 +136,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
   useSmsDetection(captureDb, userId);
 
   // Global notification handler + push token / response listeners
-  useEffect(() => {
+  useSubscription(() => {
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowBanner: true,
@@ -144,10 +146,10 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       }),
     });
 
-    registerPushToken(userId).catch(captureError);
+    void registerPushToken(userId).catch(captureError);
 
     const tokenSub = Notifications.addPushTokenListener(() => {
-      registerPushToken(userId).catch(captureError);
+      void registerPushToken(userId).catch(captureError);
     });
 
     const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
@@ -164,14 +166,14 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
     };
   }, [userId, router]);
 
-  useEffect(() => {
-    if (migrationsError) {
-      captureError(migrationsError);
-    }
-    if (migrationsReady || migrationsError) {
-      SplashScreen.hideAsync();
-    }
-  }, [migrationsReady, migrationsError]);
+  useSubscription(
+    () => {
+      if (migrationsError) captureError(migrationsError);
+      void SplashScreen.hideAsync();
+    },
+    [migrationsReady, migrationsError],
+    migrationsReady || migrationsError != null
+  );
 
   return null;
 }
@@ -186,9 +188,12 @@ function RootLayout() {
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
   // Onboarding completion: check SecureStore first, then session metadata
-  const [onboardingComplete, setOnboardingComplete] = useState(() =>
-    getOnboardingCompleteFromStore()
-  );
+  const onboardingComplete = useMemo(() => {
+    if (session) {
+      return getOnboardingCompleteFromStore() || isOnboardingComplete(session);
+    }
+    return false;
+  }, [session]);
 
   const [fontsLoaded, fontsError] = useFonts({
     Poppins_500Medium,
@@ -201,43 +206,37 @@ function RootLayout() {
     useAuthStore.getState().restoreSession();
   });
 
-  // Re-check onboarding status when session changes
-  useEffect(() => {
+  // Side effects when session changes: set Sentry user, clear onboarding on sign-out
+  useSubscription(() => {
     setSentryUser(userId);
-    if (session) {
-      const fromStore = getOnboardingCompleteFromStore();
-      const fromSession = isOnboardingComplete(session);
-      setOnboardingComplete(fromStore || fromSession);
-    } else {
-      // User signed out — clear local onboarding flag so a new user gets onboarding
-      clearOnboardingFromStore();
-      setOnboardingComplete(false);
-    }
+    if (!session) clearOnboardingFromStore();
   }, [session, userId]);
 
-  useEffect(() => {
-    if ((fontsLoaded || fontsError) && !isAuthLoading) {
-      if (!userId) {
-        SplashScreen.hideAsync();
-      }
-    }
-  }, [fontsLoaded, fontsError, isAuthLoading, userId]);
+  useSubscription(
+    () => {
+      if (!userId) void SplashScreen.hideAsync();
+    },
+    [fontsLoaded, fontsError, isAuthLoading, userId],
+    (fontsLoaded || fontsError != null) && !isAuthLoading
+  );
 
   // Three-state routing: no user → login, user + not onboarded → onboarding, user + onboarded → tabs
-  useEffect(() => {
-    if (isAuthLoading || (!fontsLoaded && !fontsError)) return;
+  useSubscription(
+    () => {
+      const inAuthGroup = segments[0] === "(auth)";
+      const inOnboarding = (segments as string[])[1] === "onboarding";
 
-    const inAuthGroup = segments[0] === "(auth)";
-    const inOnboarding = (segments as string[])[1] === "onboarding";
-
-    if (!userId && !inAuthGroup) {
-      router.replace("/(auth)");
-    } else if (userId && !onboardingComplete && !inOnboarding) {
-      router.replace("/(auth)/onboarding");
-    } else if (userId && onboardingComplete && inAuthGroup) {
-      router.replace("/(tabs)/(index)" as never);
-    }
-  }, [userId, segments, isAuthLoading, fontsLoaded, fontsError, router, onboardingComplete]);
+      if (!userId && !inAuthGroup) {
+        router.replace("/(auth)");
+      } else if (userId && !onboardingComplete && !inOnboarding) {
+        router.replace("/(auth)/onboarding");
+      } else if (userId && onboardingComplete && inAuthGroup) {
+        router.replace("/(tabs)/(index)" as never);
+      }
+    },
+    [userId, segments, router, onboardingComplete],
+    !isAuthLoading && (fontsLoaded || fontsError != null)
+  );
 
   if (!fontsLoaded && !fontsError) {
     return null;

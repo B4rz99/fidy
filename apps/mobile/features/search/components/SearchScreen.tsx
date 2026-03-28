@@ -1,10 +1,10 @@
 import { useRouter } from "expo-router";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { CATEGORY_MAP, makeDateLabel, type StoredTransaction } from "@/features/transactions";
 import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
 import { Ellipsis } from "@/shared/components/icons";
 import { FlatList, InteractionManager, Text, TextInput, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { formatSignedMoney, toIsoDate } from "@/shared/lib";
 import { amountDigitsToAmount } from "../lib/amount-utils";
@@ -84,22 +84,22 @@ export const SearchScreen = () => {
   const inputRef = useRef<TextInput>(null);
 
   // Defer everything until the push transition animation finishes
-  useEffect(() => {
+  useMountEffect(() => {
     const handle = InteractionManager.runAfterInteractions(() => {
       setReady(true);
       executeSearch();
       inputRef.current?.focus();
     });
     return () => handle.cancel();
-  }, [executeSearch]);
+  });
 
   // Clean up on unmount
-  useEffect(() => {
+  useMountEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       reset();
     };
-  }, [reset]);
+  });
 
   const handleTextChange = useCallback(
     (text: string) => {

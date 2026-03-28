@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import Animated, {
   FadeIn,
   FadeOut,
@@ -8,7 +8,12 @@ import Animated, {
 } from "react-native-reanimated";
 import { CheckCircle, Mail, Search, TriangleAlert } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
-import { useAnimatedProgress, useThemeColor, useTranslation } from "@/shared/hooks";
+import {
+  useAnimatedProgress,
+  useSubscription,
+  useThemeColor,
+  useTranslation,
+} from "@/shared/hooks";
 import type { ProgressDisplay, ProgressPhase } from "../lib/progress-phases";
 import { shouldMorphToBanner } from "../lib/progress-phases";
 
@@ -37,20 +42,20 @@ export const EmailProgressCard = ({ phase, display, onComplete }: EmailProgressC
   const { animatedStyle: barAnimatedStyle } = useAnimatedProgress(display.fractionComplete, 300);
 
   // Handle completion phase
-  useEffect(() => {
-    if (phase !== "complete") return;
-
-    const delay = shouldMorphToBanner(display.needsReview) ? MORPH_DELAY_MS : FADE_DELAY_MS;
-
-    if (shouldMorphToBanner(display.needsReview)) {
-      morphProgress.value = withTiming(1, { duration: 400 });
-    }
-
-    timerRef.current = setTimeout(onComplete, delay);
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [phase, display.needsReview, onComplete, morphProgress]);
+  useSubscription(
+    () => {
+      const delay = shouldMorphToBanner(display.needsReview) ? MORPH_DELAY_MS : FADE_DELAY_MS;
+      if (shouldMorphToBanner(display.needsReview)) {
+        morphProgress.value = withTiming(1, { duration: 400 });
+      }
+      timerRef.current = setTimeout(onComplete, delay);
+      return () => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+      };
+    },
+    [display.needsReview, onComplete, morphProgress],
+    phase === "complete"
+  );
 
   const containerStyle = useAnimatedStyle(() => ({
     backgroundColor: morphProgress.value > 0.5 ? NEEDS_REVIEW_BG : cardBg,
