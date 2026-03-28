@@ -45,6 +45,20 @@ vi.mock("@/features/email-capture/services/parse-email-api", () => ({
   parseEmailApi: (...args: unknown[]) => mockParseEmailApi(...args),
 }));
 
+vi.mock("@/features/accounts", () => ({
+  getDefaultAccount: vi.fn().mockReturnValue(null),
+  getAccountsByUser: vi.fn().mockReturnValue([]),
+  resolveBankKeyFromDomain: vi.fn().mockReturnValue(null),
+  linkTransactionToAccount: vi.fn().mockReturnValue({ accountId: "", needsReview: true }),
+  getTransferCandidates: vi.fn().mockReturnValue([]),
+  detectTransferCounterpart: vi.fn().mockReturnValue(null),
+  linkTransferPair: vi.fn(),
+}));
+
+vi.mock("@/features/email-capture/lib/bank-senders", () => ({
+  extractDomain: vi.fn().mockReturnValue("unknown.com"),
+}));
+
 const mockGenerateId = vi.fn();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: unknown[]) => mockGenerateId(...args),
