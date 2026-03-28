@@ -40,7 +40,7 @@ public class ExpoAppIntentsModule: Module {
       }
       let idsToRemove = Set(ids)
       let remaining = array.filter { entry in
-        guard let entryId = entry["id"] as? String else { return true }
+        guard let entryId = entry["id"] as? String else { return false }
         return !idsToRemove.contains(entryId)
       }
       if remaining.isEmpty {

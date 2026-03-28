@@ -8,6 +8,6 @@ export {
   addDetectBankSmsListener,
   addLogTransactionListener,
   getPendingTransactions,
-  removePendingTransactions,
   isAvailable,
+  removePendingTransactions,
 } from "./src/index";
