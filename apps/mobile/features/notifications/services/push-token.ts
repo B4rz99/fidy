@@ -1,11 +1,12 @@
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
-import { Platform } from "react-native";
-import { getSupabase } from "@/shared/db/supabase";
+import { Platform } from "@/shared/components/rn";
+import { getSupabase } from "@/shared/db";
 import { captureWarning } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 
-export const PROJECT_ID = Constants.expoConfig?.extra?.eas?.projectId as string;
+const easConfig = Constants.expoConfig?.extra?.eas as { projectId?: string } | undefined;
+export const PROJECT_ID = easConfig?.projectId ?? "";
 
 /**
  * Register the device's push token with Supabase.

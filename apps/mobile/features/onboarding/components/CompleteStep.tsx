@@ -42,7 +42,9 @@ export function CompleteStep() {
           styles.primaryButton,
           { backgroundColor: accentGreen, opacity: isBusy || isCompleting ? 0.5 : 1 },
         ]}
-        onPress={handleComplete}
+        onPress={() => {
+          void handleComplete();
+        }}
         disabled={isBusy || isCompleting}
       >
         <Text style={styles.primaryButtonText}>{t("onboarding.complete.goToDashboard")}</Text>

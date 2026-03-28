@@ -1,4 +1,5 @@
 export { BudgetListScreen } from "./components/BudgetListScreen";
+export { ProgressBar } from "./components/ProgressBar";
 export { useSuggestionSelection } from "./hooks/use-suggestion-selection";
 export type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./lib/derive";
 export {

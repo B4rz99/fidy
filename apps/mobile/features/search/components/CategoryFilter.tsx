@@ -26,7 +26,7 @@ const FilterPill = memo(
     const Icon = category.icon;
 
     const handlePress = () => {
-      Haptics.selectionAsync();
+      void Haptics.selectionAsync();
       onPress();
     };
 

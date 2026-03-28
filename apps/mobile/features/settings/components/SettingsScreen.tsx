@@ -8,8 +8,8 @@ import {
   buildTermsUrl,
   buildWhatsAppUrl,
   getUserInitials,
-} from "@/features/settings/lib/settings-links";
-import { useSettingsStore } from "@/features/settings/store";
+  useSettingsStore,
+} from "@/features/settings";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import {
   Bell,
@@ -39,8 +39,9 @@ export function SettingsScreen() {
   const { t, locale } = useTranslation();
 
   const session = useAuthStore((s) => s.session);
-  const fullName = session?.user?.user_metadata?.full_name ?? "";
-  const email = session?.user?.email ?? "";
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- user_metadata.full_name is typed as any by Supabase
+  const fullName: string = session?.user.user_metadata.full_name ?? "";
+  const email = session?.user.email ?? "";
   const initials = getUserInitials(fullName, email);
 
   const connectedCount = useEmailCaptureStore((s) => s.accounts.length);
@@ -51,7 +52,7 @@ export function SettingsScreen() {
   const accentGreen = useThemeColor("accentGreen");
   const tertiaryColor = useThemeColor("tertiary");
 
-  const themeLabel = t(THEME_LABEL_KEYS[themePreference] ?? THEME_LABEL_KEYS.system);
+  const themeLabel = t(THEME_LABEL_KEYS[themePreference] ?? "settings.themeSystem");
 
   const languageLabel = locale.startsWith("es")
     ? t("settings.languageSpanish")
@@ -154,17 +155,23 @@ export function SettingsScreen() {
           <SettingsRow
             icon={HelpCircle}
             label={t("settings.helpSupport")}
-            onPress={() => Linking.openURL(buildWhatsAppUrl("573003632142"))}
+            onPress={() => {
+              void Linking.openURL(buildWhatsAppUrl("573003632142"));
+            }}
           />
           <SettingsRow
             icon={Shield}
             label={t("settings.privacyPolicy")}
-            onPress={() => openBrowserAsync(buildPrivacyUrl(locale))}
+            onPress={() => {
+              void openBrowserAsync(buildPrivacyUrl(locale));
+            }}
           />
           <SettingsRow
             icon={FileText}
             label={t("settings.termsOfService")}
-            onPress={() => openBrowserAsync(buildTermsUrl(locale))}
+            onPress={() => {
+              void openBrowserAsync(buildTermsUrl(locale));
+            }}
           />
           <SettingsRow
             icon={Info}

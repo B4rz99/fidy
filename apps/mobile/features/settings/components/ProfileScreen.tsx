@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/features/auth";
-import { getUserInitials } from "@/features/settings/lib/settings-links";
+import { getUserInitials } from "@/features/settings";
 import { ScreenLayout } from "@/shared/components";
 import { Brain, LogOut } from "@/shared/components/icons";
 import { Alert, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
@@ -11,8 +11,9 @@ export function ProfileScreen() {
   const { t } = useTranslation();
 
   const session = useAuthStore((s) => s.session);
-  const fullName = session?.user?.user_metadata?.full_name ?? "";
-  const email = session?.user?.email ?? "";
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- user_metadata.full_name is typed as any by Supabase
+  const fullName: string = session?.user.user_metadata.full_name ?? "";
+  const email = session?.user.email ?? "";
   const initials = getUserInitials(fullName, email);
 
   const accentGreen = useThemeColor("accentGreen");
@@ -25,7 +26,9 @@ export function ProfileScreen() {
       {
         text: t("settings.logout"),
         style: "destructive",
-        onPress: () => useAuthStore.getState().signOut(),
+        onPress: () => {
+          void useAuthStore.getState().signOut();
+        },
       },
     ]);
   };
