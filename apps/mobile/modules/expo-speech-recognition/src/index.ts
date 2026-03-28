@@ -19,15 +19,11 @@ export function stopListening(): void {
   ExpoSpeechRecognitionModule.stopListening();
 }
 
-export function addTranscriptListener(
-  listener: (event: TranscriptEvent) => void
-): Subscription {
+export function addTranscriptListener(listener: (event: TranscriptEvent) => void): Subscription {
   return ExpoSpeechRecognitionModule.addListener("onTranscript", listener);
 }
 
-export function addErrorListener(
-  listener: (event: ErrorEvent) => void
-): Subscription {
+export function addErrorListener(listener: (event: ErrorEvent) => void): Subscription {
   return ExpoSpeechRecognitionModule.addListener("onError", listener);
 }
 
