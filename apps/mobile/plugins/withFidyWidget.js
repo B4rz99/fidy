@@ -14,7 +14,7 @@ const {
   createRunOncePlugin,
   withEntitlementsPlist,
   withXcodeProject,
-} = require("@expo/config-plugins");
+} = require("expo/config-plugins");
 
 // ---------------------------------------------------------------------------
 // Constants
