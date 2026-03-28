@@ -1,14 +1,16 @@
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { TransactionForm, useTransactionStore } from "@/features/transactions";
+import { VoiceBottomSheet } from "@/features/voice";
 import { useAsyncGuard, useTranslation } from "@/shared/hooks";
 import { trackTransactionCreated } from "@/shared/lib";
 
 export default function AddTransactionScreen() {
   const { navigate } = useRouter();
   const { t } = useTranslation();
+  const [voiceVisible, setVoiceVisible] = useState(false);
   const {
     type,
     digits,
@@ -58,19 +60,26 @@ export default function AddTransactionScreen() {
   );
 
   return (
-    <TransactionForm
-      type={type}
-      digits={digits}
-      categoryId={categoryId}
-      description={description}
-      date={date}
-      saveLabel={t("transactions.saveTransaction")}
-      isSaving={isSaving}
-      onTypeChange={setType}
-      onDigitsChange={setDigits}
-      onCategoryChange={setCategoryId}
-      onDescriptionChange={setDescription}
-      onSave={handleSave}
-    />
+    <>
+      <TransactionForm
+        type={type}
+        digits={digits}
+        categoryId={categoryId}
+        description={description}
+        date={date}
+        saveLabel={t("transactions.saveTransaction")}
+        isSaving={isSaving}
+        onTypeChange={setType}
+        onDigitsChange={setDigits}
+        onCategoryChange={setCategoryId}
+        onDescriptionChange={setDescription}
+        onSave={handleSave}
+        onVoicePress={() => setVoiceVisible(true)}
+      />
+      <VoiceBottomSheet
+        visible={voiceVisible}
+        onClose={() => setVoiceVisible(false)}
+      />
+    </>
   );
 }
