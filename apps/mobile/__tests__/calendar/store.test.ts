@@ -189,7 +189,9 @@ describe("useCalendarStore", () => {
 
   test("loadBills sets isLoading false on error", async () => {
     const { getAllBills } = await import("@/features/calendar/lib/repository");
-    vi.mocked(getAllBills).mockRejectedValueOnce(new Error("DB error"));
+    vi.mocked(getAllBills).mockImplementationOnce(() => {
+      throw new Error("DB error");
+    });
 
     await expect(useCalendarStore.getState().loadBills()).rejects.toThrow("DB error");
 
@@ -210,7 +212,9 @@ describe("useCalendarStore", () => {
 
   test("addBill returns false when insertBill throws", async () => {
     const { insertBill } = await import("@/features/calendar/lib/repository");
-    vi.mocked(insertBill).mockRejectedValueOnce(new Error("DB write error"));
+    vi.mocked(insertBill).mockImplementationOnce(() => {
+      throw new Error("DB write error");
+    });
 
     const result = await useCalendarStore
       .getState()
@@ -554,7 +558,7 @@ describe("useCalendarStore", () => {
 
   test("loadPaymentsForMonth populates payments from DB", async () => {
     const { getBillPaymentsForMonth } = await import("@/features/calendar/lib/repository");
-    vi.mocked(getBillPaymentsForMonth).mockResolvedValueOnce([
+    vi.mocked(getBillPaymentsForMonth).mockReturnValueOnce([
       {
         id: "pay-1" as BillPaymentId,
         billId: "bill-1" as BillId,
@@ -589,7 +593,9 @@ describe("useCalendarStore", () => {
       ],
     });
 
-    vi.mocked(getBillPaymentsForMonth).mockRejectedValueOnce(new Error("DB error"));
+    vi.mocked(getBillPaymentsForMonth).mockImplementationOnce(() => {
+      throw new Error("DB error");
+    });
 
     await expect(useCalendarStore.getState().loadPaymentsForMonth()).rejects.toThrow("DB error");
 

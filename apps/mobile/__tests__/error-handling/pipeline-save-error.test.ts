@@ -104,7 +104,9 @@ describe("pipeline worker save error path", () => {
       date: "2026-03-05",
       confidence: 0.9,
     });
-    mockInsertTransaction.mockRejectedValueOnce(saveError);
+    mockInsertTransaction.mockImplementationOnce(() => {
+      throw saveError;
+    });
 
     // Second email: LLM returns valid result, save succeeds
     mockParseEmailApi.mockResolvedValueOnce({
