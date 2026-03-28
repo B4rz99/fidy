@@ -19,7 +19,7 @@ export function useAnimatedProgress(
 } {
   const progress = useSharedValue(0);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: value drives the animation
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     progress.value = withTiming(value, { duration });
   }, [value, progress, duration]);
