@@ -53,6 +53,22 @@ vi.mock("@/shared/lib/sentry", () => ({
   captureWarning: vi.fn(),
 }));
 
+vi.mock("@/features/accounts", () => ({
+  getDefaultAccount: vi.fn().mockReturnValue(null),
+  getAccountsByUser: vi.fn().mockReturnValue([]),
+  resolveBankKeyFromDomain: vi.fn().mockReturnValue(null),
+  linkTransactionToAccount: vi.fn().mockReturnValue({ accountId: "" as any, needsReview: true }),
+  getTransferCandidates: vi.fn().mockReturnValue([]),
+  detectTransferCounterpart: vi.fn().mockReturnValue(null),
+  linkTransferPair: vi.fn(),
+}));
+
+vi.mock("@/features/email-capture/lib/bank-senders", () => ({
+  extractDomain: vi.fn().mockReturnValue("unknown.com"),
+  isBankSender: vi.fn().mockReturnValue(false),
+  DEFAULT_BANK_SENDERS: [],
+}));
+
 const mockGenerateId = vi.fn();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: unknown[]) => mockGenerateId(...args),

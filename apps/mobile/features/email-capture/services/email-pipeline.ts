@@ -1,3 +1,13 @@
+import type { StoredAccount } from "@/features/accounts";
+import {
+  detectTransferCounterpart,
+  getAccountsByUser,
+  getDefaultAccount,
+  getTransferCandidates,
+  linkTransactionToAccount,
+  linkTransferPair,
+  resolveBankKeyFromDomain,
+} from "@/features/accounts";
 import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
 import { insertTransaction, isValidCategoryId } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
@@ -14,6 +24,7 @@ import {
   trackTransactionCreated,
 } from "@/shared/lib";
 import type {
+  AccountId,
   CategoryId,
   CopAmount,
   IsoDate,
@@ -21,6 +32,7 @@ import type {
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
+import { extractDomain } from "../lib/bank-senders";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
 import {
   getPendingRetryEmails,
@@ -67,7 +79,9 @@ async function saveTransaction(
   userId: string,
   validated: LlmParsedTransaction,
   email: RawEmail,
-  status: "success" | "needs_review"
+  status: "success" | "needs_review",
+  accountId: AccountId,
+  needsReview: boolean
 ): Promise<string> {
   const source = email.provider === "gmail" ? "email_gmail" : "email_outlook";
   const txId = generateTransactionId();
@@ -88,6 +102,8 @@ async function saveTransaction(
     source,
     createdAt: now,
     updatedAt: now,
+    accountId,
+    needsAccountReview: needsReview ? 1 : 0,
   });
 
   await enqueueSync(db, {
@@ -97,6 +113,24 @@ async function saveTransaction(
     operation: "insert",
     createdAt: now,
   });
+
+  // Transfer detection
+  const dateObj = new Date(validated.date);
+  const dayBefore = new Date(dateObj.getTime() - 86400000).toISOString().slice(0, 10);
+  const dayAfter = new Date(dateObj.getTime() + 86400000).toISOString().slice(0, 10);
+  const transferCandidates = getTransferCandidates(db, userId as UserId, dayBefore, dayAfter);
+  const counterpartId = detectTransferCounterpart(
+    {
+      type: validated.type as "expense" | "income",
+      amount: validated.amount as CopAmount,
+      accountId,
+      date: validated.date as IsoDate,
+    },
+    transferCandidates
+  );
+  if (counterpartId) {
+    linkTransferPair(db, txId, counterpartId, now);
+  }
 
   await insertProcessedEmail(db, {
     id: generateProcessedEmailId(),
@@ -258,10 +292,31 @@ export async function processEmails(
         continue;
       }
 
+      // Resolve account from email sender domain
+      const senderDomain = extractDomain(email.from);
+      const bankKey = resolveBankKeyFromDomain(senderDomain);
+      const defaultAccount = getDefaultAccount(db, userId as UserId);
+      const defaultAccountId = (defaultAccount?.id ?? "") as AccountId;
+      const userAccounts = getAccountsByUser(db, userId as UserId) as unknown as StoredAccount[];
+      const { accountId, needsReview: acctNeedsReview } = linkTransactionToAccount({
+        bankKey,
+        notificationText: email.body,
+        userAccounts,
+        defaultAccountId,
+      });
+
       // parseEmailApi already validates via llmOutputSchema.safeParse
       if (parsed.confidence < 0.7) {
         try {
-          await saveTransaction(db, userId, parsed, email, "needs_review");
+          await saveTransaction(
+            db,
+            userId,
+            parsed,
+            email,
+            "needs_review",
+            accountId,
+            acctNeedsReview
+          );
           result.needsReview++;
         } catch (saveErr) {
           captureError(saveErr);
@@ -279,7 +334,7 @@ export async function processEmails(
       }
 
       try {
-        await saveTransaction(db, userId, parsed, email, "success");
+        await saveTransaction(db, userId, parsed, email, "success", accountId, acctNeedsReview);
         result.saved++;
       } catch (saveErr) {
         captureError(saveErr);
@@ -416,6 +471,22 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
         ? parsed.categoryId
         : ("other" as CategoryId);
 
+      // Resolve account for retry — no sender email available, use default account
+      const retryDefaultAccount = getDefaultAccount(db, userId as UserId);
+      const retryDefaultAccountId = (retryDefaultAccount?.id ?? "") as AccountId;
+      const retryUserAccounts = getAccountsByUser(
+        db,
+        userId as UserId
+      ) as unknown as StoredAccount[];
+      const { accountId: retryAccountId, needsReview: retryNeedsReview } = linkTransactionToAccount(
+        {
+          bankKey: null,
+          notificationText: email.rawBodyPreview ?? "",
+          userAccounts: retryUserAccounts,
+          defaultAccountId: retryDefaultAccountId,
+        }
+      );
+
       await insertTransaction(db, {
         id: txId,
         userId: userId as UserId,
@@ -427,6 +498,8 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
         source,
         createdAt: now,
         updatedAt: now,
+        accountId: retryAccountId,
+        needsAccountReview: retryNeedsReview ? 1 : 0,
       });
 
       await enqueueSync(db, {
@@ -436,6 +509,29 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
         operation: "insert",
         createdAt: now,
       });
+
+      // Transfer detection
+      const retryDateObj = new Date(parsed.date);
+      const retryDayBefore = new Date(retryDateObj.getTime() - 86400000).toISOString().slice(0, 10);
+      const retryDayAfter = new Date(retryDateObj.getTime() + 86400000).toISOString().slice(0, 10);
+      const retryTransferCandidates = getTransferCandidates(
+        db,
+        userId as UserId,
+        retryDayBefore,
+        retryDayAfter
+      );
+      const retryCounterpartId = detectTransferCounterpart(
+        {
+          type: parsed.type as "expense" | "income",
+          amount: parsed.amount as CopAmount,
+          accountId: retryAccountId,
+          date: parsed.date as IsoDate,
+        },
+        retryTransferCandidates
+      );
+      if (retryCounterpartId) {
+        linkTransferPair(db, txId, retryCounterpartId, now);
+      }
 
       if (status === "success") {
         const merchantKey = normalizeMerchant(parsed.description);
