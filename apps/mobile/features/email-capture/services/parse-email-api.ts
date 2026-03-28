@@ -27,22 +27,28 @@ export function stripPii(text: string): string {
   );
 }
 
+type ClassifyResponse = { success: boolean; data?: { categoryId: string } };
+
 export async function classifyMerchantApi(merchant: string): Promise<string> {
   try {
-    const { data, error } = await getSupabase().functions.invoke("parse-email", {
+    const response = await getSupabase().functions.invoke<ClassifyResponse>("parse-email", {
       body: { body: merchant, mode: "classify" },
     });
+    const data = response.data;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Supabase FunctionsError types are untyped
+    const error: { message?: string } | null = response.error;
 
-    if (error || !data?.success) {
+    if (error != null || !data?.success) {
       captureWarning("classify_merchant_failed", {
-        hasError: !!error,
+        hasError: error != null,
         errorMessage: error?.message ?? "unknown",
       });
       return "other";
     }
 
     const categoryId = data.data?.categoryId;
-    return CATEGORY_IDS.includes(categoryId) ? categoryId : "other";
+    const ids: readonly string[] = CATEGORY_IDS;
+    return categoryId != null && ids.includes(categoryId) ? categoryId : "other";
   } catch {
     return "other";
   }
@@ -54,14 +60,18 @@ export async function parseEmailApi(emailBody: string): Promise<LlmParsedTransac
     const truncated = stripped.slice(0, 2000);
     const supabase = getSupabase();
 
-    const { data, error } = await supabase.functions.invoke("parse-email", {
+    type ParseEmailResponse = { success: boolean; data: unknown };
+    const response = await supabase.functions.invoke<ParseEmailResponse>("parse-email", {
       body: { body: truncated, mode: "full_parse" },
     });
+    const data = response.data;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Supabase FunctionsError types are untyped
+    const error: { message?: string } | null = response.error;
 
-    if (error || !data?.success) {
+    if (error != null || !data?.success) {
       captureWarning("parse_email_api_failed", {
         errorMessage: error?.message ?? "unknown",
-        hasData: !!data,
+        hasData: data != null,
       });
       return null;
     }

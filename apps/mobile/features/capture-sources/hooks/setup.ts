@@ -9,8 +9,7 @@ const noop = () => {};
 
 // Dynamic import to avoid Android bundle crash — this module calls
 // requireNativeModule("ExpoAppIntents") which only exists on iOS.
-const loadAppIntents = () =>
-  import("@/modules/expo-app-intents") as Promise<typeof import("@/modules/expo-app-intents")>;
+const loadAppIntents = () => import("@/modules/expo-app-intents");
 
 export async function setupApplePayCapture(db: AnyDb, userId: string): Promise<() => void> {
   const mod = await loadAppIntents();

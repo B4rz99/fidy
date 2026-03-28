@@ -23,7 +23,7 @@ const buildPoints = (data: readonly DataPoint[], width: number, height: number):
 
   if (count === 1) {
     const x = width / 2;
-    const y = PADDING_TOP + plotH * (1 - data[0].total / safeMax);
+    const y = PADDING_TOP + plotH * (1 - (data[0]?.total ?? 0) / safeMax);
     return `${x},${y}`;
   }
 

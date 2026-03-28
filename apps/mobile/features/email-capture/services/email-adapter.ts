@@ -108,7 +108,10 @@ export function createAdapter(config: EmailProviderConfig, fetchFn: FetchEmailsF
         return { success: false, error: "token_exchange_failed" };
       }
 
-      const tokens = await tokenResponse.json();
+      const tokens = (await tokenResponse.json()) as {
+        access_token: string;
+        refresh_token?: string;
+      };
       await SecureStore.setItemAsync(config.tokenKey, tokens.access_token);
       if (tokens.refresh_token) {
         await SecureStore.setItemAsync(config.refreshTokenKey, tokens.refresh_token);
@@ -122,7 +125,7 @@ export function createAdapter(config: EmailProviderConfig, fetchFn: FetchEmailsF
         return { success: false, error: "profile_fetch_failed" };
       }
 
-      const profile = await profileResponse.json();
+      const profile = (await profileResponse.json()) as Record<string, unknown>;
       const email = config.extractEmail(profile);
       if (!email) {
         return { success: false, error: "no_email_found" };
@@ -168,7 +171,10 @@ export function createAdapter(config: EmailProviderConfig, fetchFn: FetchEmailsF
         return null;
       }
 
-      const data = await refreshResponse.json();
+      const data = (await refreshResponse.json()) as {
+        access_token: string;
+        refresh_token?: string;
+      };
       await SecureStore.setItemAsync(config.tokenKey, data.access_token);
       if (data.refresh_token) {
         await SecureStore.setItemAsync(config.refreshTokenKey, data.refresh_token);
@@ -204,7 +210,8 @@ const gmailConfig: EmailProviderConfig = {
   scope: "https://www.googleapis.com/auth/gmail.readonly",
   getRedirectUri: getGmailRedirectUri,
   profileUrl: "https://gmail.googleapis.com/gmail/v1/users/me/profile",
-  extractEmail: (profile) => (profile.emailAddress as string) ?? null,
+  extractEmail: (profile) =>
+    typeof profile.emailAddress === "string" ? profile.emailAddress : null,
   extraAuthParams: { access_type: "offline", prompt: "consent" },
   extraTokenExchangeParams: {},
   extraRefreshParams: {},
@@ -219,8 +226,11 @@ const outlookConfig: EmailProviderConfig = {
   scope: "Mail.Read User.Read",
   getRedirectUri: () => EMAIL_REDIRECT_URI,
   profileUrl: "https://graph.microsoft.com/v1.0/me",
-  extractEmail: (profile) =>
-    (profile.mail as string) || (profile.userPrincipalName as string) || null,
+  extractEmail: (profile) => {
+    const mail = typeof profile.mail === "string" ? profile.mail : null;
+    const upn = typeof profile.userPrincipalName === "string" ? profile.userPrincipalName : null;
+    return mail ?? upn;
+  },
   extraAuthParams: { prompt: "consent" },
   extraTokenExchangeParams: { scope: "Mail.Read User.Read" },
   extraRefreshParams: { scope: "Mail.Read User.Read" },
@@ -232,7 +242,5 @@ const adapters: Record<EmailProvider, EmailAdapter> = {
 };
 
 export function getAdapter(provider: EmailProvider): EmailAdapter {
-  const adapter = adapters[provider];
-  if (!adapter) throw new Error(`Unknown email provider: ${provider}`);
-  return adapter;
+  return adapters[provider];
 }

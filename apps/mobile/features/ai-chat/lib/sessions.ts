@@ -1,3 +1,4 @@
+import type { TranslateFn } from "@/shared/i18n/types";
 import type { IsoDateTime } from "@/shared/types/branded";
 import type { ChatSession } from "../schema";
 
@@ -14,8 +15,6 @@ export function findExpiredSessions(
 ): readonly ChatSession[] {
   return sessions.filter((s) => s.deletedAt === null && s.expiresAt < now);
 }
-
-import type { TranslateFn } from "@/shared/i18n/types";
 
 export function formatCleanupMessage(count: number, t?: TranslateFn): string | null {
   if (count === 0) return null;

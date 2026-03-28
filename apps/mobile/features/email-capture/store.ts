@@ -32,7 +32,7 @@ import {
   updateLastFetchedAt,
   updateProcessedEmailStatus,
 } from "./lib/repository";
-import type { EmailProvider } from "./schema";
+import type { EmailProvider, RawEmail } from "./schema";
 import { fetchBankSenders } from "./services/bank-senders-cache";
 import { getAdapter } from "./services/email-adapter";
 import { type ProgressCallback, processEmails, processRetries } from "./services/email-pipeline";
@@ -199,7 +199,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
               provider: account.provider,
               errorType: err instanceof Error ? err.message : "unknown",
             });
-            return { account, rawEmails: [] as import("./schema").RawEmail[], fetchOk: false };
+            return { account, rawEmails: [] as RawEmail[], fetchOk: false };
           }
         })
       );
@@ -224,7 +224,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
           set({ progress });
           if (progress.saved > lastRefreshedSaved) {
             lastRefreshedSaved = progress.saved;
-            useTransactionStore.getState().refresh();
+            void useTransactionStore.getState().refresh();
           }
         });
       } else if (allEmails.length > 0) {
@@ -234,7 +234,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
           set({ progress });
           if (progress.saved > lastRefreshedSaved) {
             lastRefreshedSaved = progress.saved;
-            useTransactionStore.getState().refresh();
+            void useTransactionStore.getState().refresh();
           }
         });
       }
@@ -294,7 +294,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     if (!db || !userId) return;
 
     const processedEmail = get().needsReviewEmails.find((e) => e.id === processedEmailId);
-    if (!processedEmail || !processedEmail.transactionId) return;
+    if (!processedEmail?.transactionId) return;
 
     const now = toIsoDateTime(new Date());
 
@@ -305,7 +305,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       .where(eq(transactions.id, processedEmail.transactionId));
 
     // Enqueue sync for the updated transaction
-    await enqueueSync(db, {
+    enqueueSync(db, {
       id: generateSyncQueueId(),
       tableName: "transactions",
       rowId: processedEmail.transactionId,

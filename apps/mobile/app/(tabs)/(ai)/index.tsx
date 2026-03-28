@@ -32,7 +32,14 @@ export default function AiTab() {
   switch (view) {
     case "chat":
       return <ChatScreen onBack={handleBackFromChat} />;
-    default:
-      return <ConversationList onSelectSession={handleSelectSession} onNewChat={handleNewChat} />;
+    case "list":
+      return (
+        <ConversationList
+          onSelectSession={(id) => {
+            void handleSelectSession(id);
+          }}
+          onNewChat={handleNewChat}
+        />
+      );
   }
 }

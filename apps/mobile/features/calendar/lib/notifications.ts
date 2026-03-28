@@ -10,7 +10,7 @@ export function computeUpcomingOccurrences(bill: Bill, count: number, from: Date
   if (count <= 0) return [];
 
   return Array.from({ length: count }).reduce<Date[]>((acc) => {
-    const searchFrom = acc.length === 0 ? from : addDays(acc[acc.length - 1], 1);
+    const searchFrom = acc.length === 0 ? from : addDays(acc[acc.length - 1] ?? from, 1);
     return [...acc, getNextOccurrence(bill, searchFrom)];
   }, []);
 }

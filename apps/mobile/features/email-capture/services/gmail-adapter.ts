@@ -21,8 +21,8 @@ export async function fetchGmailEmailsWithToken(
     return [];
   }
 
-  const listData = await listResponse.json();
-  const messageIds: string[] = (listData.messages ?? []).map((m: { id: string }) => m.id);
+  const listData = (await listResponse.json()) as { messages?: { id: string }[] };
+  const messageIds: string[] = (listData.messages ?? []).map((m) => m.id);
 
   if (messageIds.length === 0) return [];
 
@@ -41,7 +41,7 @@ export async function fetchGmailEmailsWithToken(
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (!msgResponse.ok) return null;
-        const msg = await msgResponse.json();
+        const msg = (await msgResponse.json()) as { payload: GmailPayload };
         return parseGmailMessage(id, msg);
       })
     );
@@ -130,8 +130,8 @@ function parseGmailMessage(id: string, msg: { payload: GmailPayload }): RawEmail
 
   if (!from || !subject) return null;
 
-  const emailMatch = from.match(/<(.+?)>/) ?? [null, from];
-  const emailAddress = emailMatch[1] ?? from;
+  const emailMatch = from.match(/<(.+?)>/);
+  const emailAddress = emailMatch?.[1] ?? from;
 
   const parsedDate = new Date(dateStr);
   const receivedAt = Number.isNaN(parsedDate.getTime())

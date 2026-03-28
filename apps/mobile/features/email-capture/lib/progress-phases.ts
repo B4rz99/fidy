@@ -1,5 +1,7 @@
 // apps/mobile/features/email-capture/lib/progress-phases.ts
 
+import type { TranslateFn } from "@/shared/i18n/types";
+
 export type ProgressPhase = "fetching" | "processing" | "complete";
 
 export type ProgressDisplay = {
@@ -19,8 +21,6 @@ type ProgressData = {
   readonly needsReview: number;
 };
 
-import type { TranslateFn } from "@/shared/i18n/types";
-
 export const shouldShowProgress = (
   emailCount: number,
   isFirstFetch: boolean,
@@ -30,7 +30,7 @@ export const shouldShowProgress = (
 export const buildProgressDisplay = (
   phase: ProgressPhase,
   progress: ProgressData | null,
-  _providerNames: ReadonlyArray<string>,
+  _providerNames: readonly string[],
   t?: TranslateFn
 ): ProgressDisplay => {
   const base = { phase } as const;
@@ -81,5 +81,5 @@ export const buildProgressDisplay = (
 export const shouldMorphToBanner = (needsReviewCount: number): boolean => needsReviewCount > 0;
 
 export const isFirstFetchForAny = (
-  accounts: ReadonlyArray<{ lastFetchedAt?: string | null }>
+  accounts: readonly { lastFetchedAt?: string | null }[]
 ): boolean => accounts.some((a) => a.lastFetchedAt == null);
