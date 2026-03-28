@@ -138,6 +138,23 @@ const addWidgetExtensionTarget = (project) => {
       EXTENSION_BUNDLE_ID
     );
 
+    // Apply build settings immediately after target creation — the xcode
+    // package creates Debug/Release configs but leaves them sparse.
+    const nativeTarget = project.pbxNativeTargetSection()[target.uuid];
+    const configListId = nativeTarget?.buildConfigurationList;
+    if (configListId) {
+      const configList = project.hash.project.objects.XCConfigurationList?.[configListId];
+      if (configList?.buildConfigurations) {
+        const buildConfigs = project.hash.project.objects.XCBuildConfiguration;
+        for (const ref of configList.buildConfigurations) {
+          const config = buildConfigs?.[ref.value];
+          if (typeof config === "object" && config.buildSettings) {
+            Object.assign(config.buildSettings, EXTENSION_BUILD_SETTINGS);
+          }
+        }
+      }
+    }
+
     const sourcesBuildPhaseUuid = generateUuid(project);
     project.addBuildPhase(
       SWIFT_FILES.map((f) => `${EXTENSION_NAME}/${f}`),
