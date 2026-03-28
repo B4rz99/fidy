@@ -1,6 +1,8 @@
+import { eq } from "drizzle-orm";
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
+import { transactions } from "@/shared/db/schema";
 import { generateAccountId, generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
 import type { AccountId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
 import {
@@ -84,6 +86,44 @@ export const useAccountStore = create<AccountState & AccountActions>((set, get) 
   loadAccounts: () => {
     if (!dbRef || !userIdRef) return;
     const rows = getAccountsByUser(dbRef, userIdRef);
+
+    // Bootstrap: create default account if none exist (first run after migration)
+    if (rows.length === 0) {
+      const id = generateAccountId();
+      const now = toIsoDateTime(new Date());
+      insertAccount(dbRef, {
+        id,
+        userId: userIdRef,
+        name: "Principal",
+        type: "debit",
+        bankKey: "other",
+        identifiers: "[]",
+        initialBalance: 0 as CopAmount,
+        isDefault: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
+      enqueueSync(dbRef, {
+        id: generateSyncQueueId(),
+        tableName: "accounts",
+        rowId: id,
+        operation: "insert",
+        createdAt: now,
+      });
+      // Backfill existing transactions with default account
+      dbRef
+        .update(transactions)
+        .set({ accountId: id })
+        .where(eq(transactions.accountId, "" as AccountId))
+        .run();
+
+      // Re-read to get the newly created account
+      const refreshed = getAccountsByUser(dbRef, userIdRef);
+      const accts = refreshed.map(toStoredAccount);
+      set({ accounts: accts, defaultAccountId: id });
+      return;
+    }
+
     const accounts = rows.map(toStoredAccount);
     const defaultAcct = accounts.find((a) => a.isDefault);
     set({

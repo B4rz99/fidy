@@ -22,6 +22,14 @@ vi.mock("@/shared/db/enqueue-sync", () => ({
   enqueueSync: vi.fn(),
 }));
 
+vi.mock("@/shared/db/schema", () => ({
+  transactions: { accountId: "account_id" },
+}));
+
+vi.mock("drizzle-orm", () => ({
+  eq: vi.fn().mockReturnValue({}),
+}));
+
 import {
   getAccountsByUser,
   getReviewCount,
@@ -35,7 +43,8 @@ import { useAccountStore } from "@/features/accounts/store";
 import { enqueueSync } from "@/shared/db/enqueue-sync";
 
 // biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
-const mockDb = {} as any;
+const mockUpdateChain = { set: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ run: vi.fn() }) }) };
+const mockDb = { update: vi.fn().mockReturnValue(mockUpdateChain) } as any;
 const mockUserId = "user-1" as UserId;
 
 const makeAccountRow = (
