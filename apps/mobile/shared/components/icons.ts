@@ -39,6 +39,7 @@ export {
   LogOut,
   Mail,
   Menu,
+  Mic,
   MessageSquare,
   Monitor,
   Music,

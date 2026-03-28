@@ -1,5 +1,5 @@
 import { ActivityIndicator } from "react-native";
-import { Sparkles } from "@/shared/components/icons";
+import { Mic } from "@/shared/components/icons";
 import { Modal, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useVoiceTransaction } from "../hooks/use-voice-transaction";
@@ -46,7 +46,7 @@ export function VoiceBottomSheet({ visible, onClose }: VoiceBottomSheetProps) {
           {state.status === "listening" && (
             <View className="items-center gap-4 py-8">
               <View className="h-20 w-20 items-center justify-center rounded-full bg-accent-green/20 dark:bg-accent-green-dark/20">
-                <Sparkles size={36} color={accentGreen} />
+                <Mic size={36} color={accentGreen} />
               </View>
               <Text className="text-lg font-medium text-primary dark:text-primary-dark">
                 {t("voice.listening")}
