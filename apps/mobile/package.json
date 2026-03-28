@@ -20,6 +20,7 @@
     "build:prod": "eas build --profile production --platform all"
   },
   "dependencies": {
+    "expo-speech-recognition": "file:./modules/expo-speech-recognition",
     "@expo-google-fonts/poppins": "^0.4.1",
     "@expo/vector-icons": "^15.0.3",
     "@fidy/assets": "workspace:*",

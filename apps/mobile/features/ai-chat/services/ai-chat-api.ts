@@ -129,3 +129,26 @@ export async function extractMemories(
     return [];
   }
 }
+
+export async function voiceParse(transcript: string, locale: string): Promise<unknown> {
+  try {
+    const headers = await getAuthHeaders();
+    const url = `${getBaseUrl()}/functions/v1/ai-chat`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ mode: "voice_parse", transcript, locale }),
+    });
+
+    if (!response.ok) return null;
+
+    const json = await response.json();
+    if (!json.success || !json.data) return null;
+
+    return json.data;
+  } catch (error) {
+    captureError(error);
+    return null;
+  }
+}

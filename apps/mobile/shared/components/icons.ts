@@ -40,6 +40,7 @@ export {
   Mail,
   Menu,
   MessageSquare,
+  Mic,
   Monitor,
   Music,
   Palette,

@@ -9,7 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FidyNumpad } from "@/shared/components";
-import { Calendar, X } from "@/shared/components/icons";
+import { Calendar, Mic, X } from "@/shared/components/icons";
 import { Keyboard, Platform, Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
@@ -37,6 +37,7 @@ type TransactionFormProps = {
   readonly onSave: () => void;
   readonly onDelete?: () => void;
   readonly onClose?: () => void;
+  readonly onVoicePress?: () => void;
 };
 
 export function TransactionForm({
@@ -54,6 +55,7 @@ export function TransactionForm({
   onSave,
   onDelete,
   onClose,
+  onVoicePress,
 }: TransactionFormProps) {
   const { t, locale } = useTranslation();
   const { bottom: safeBottom } = useSafeAreaInsets();
@@ -214,6 +216,25 @@ export function TransactionForm({
               {dateLabel}
             </Text>
           </View>
+          {onVoicePress && (
+            <Pressable
+              onPress={onVoicePress}
+              hitSlop={4}
+              accessibilityRole="button"
+              accessibilityLabel={t("voice.listening")}
+              style={{
+                height: 36,
+                width: 36,
+                borderRadius: 10,
+                alignItems: "center",
+                justifyContent: "center",
+                borderWidth: 1,
+                borderColor: accentGreen,
+              }}
+            >
+              <Mic size={16} color={accentGreen} />
+            </Pressable>
+          )}
         </View>
       </View>
 

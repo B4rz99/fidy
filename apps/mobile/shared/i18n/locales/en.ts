@@ -37,6 +37,17 @@ const en = {
     menu: "Menu",
   },
 
+  voice: {
+    listening: "Listening...",
+    understanding: "Understanding...",
+    confirm: "Confirm",
+    tryAgain: "Try again",
+    couldNotUnderstand: "Couldn't understand that",
+    connectToInternet: "Connect to internet to process voice",
+    micPermissionDenied: "Microphone access needed — enable in Settings",
+    speechNotAvailable: "Speech recognition not available on this device",
+  },
+
   // Dashboard
   dashboard: {
     spentThisMonth: "Spent this month",

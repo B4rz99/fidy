@@ -78,6 +78,33 @@ const EXTRACT_MEMORIES_SCHEMA = {
   },
 };
 
+const VOICE_PARSE_PROMPT = `Parse a spoken transaction description into structured fields.
+The user speaks in Spanish or English. Extract:
+- type: "expense" or "income" (default "expense" if unclear)
+- amount: integer in whole Colombian Pesos (COP). "15 mil" = 15000, "quince mil" = 15000, "15k" = 15000
+- categoryId: one of: ${CATEGORY_IDS.join(", ")}
+- description: short label for the transaction (what was bought/received)
+- date: YYYY-MM-DD (use today's date from context if not mentioned)
+
+Return ONLY valid JSON, no markdown.`;
+
+const VOICE_PARSE_SCHEMA = {
+  name: "voice_transaction",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      type: { type: "string", enum: ["expense", "income"] },
+      amount: { type: "integer" },
+      categoryId: { type: "string", enum: [...CATEGORY_IDS] },
+      description: { type: "string" },
+      date: { type: "string" },
+    },
+    required: ["type", "amount", "categoryId", "description", "date"],
+    additionalProperties: false,
+  },
+};
+
 const MODEL = "gpt-5-nano-2025-08-07";
 const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
 const supabase = createClient(
@@ -473,6 +500,74 @@ Deno.serve(async (req) => {
       });
 
       return jsonResponse({ success: true, data: inserted ?? [] });
+    }
+
+    // Voice parse mode — non-streaming, lightweight
+    if (mode === "voice_parse") {
+      const transcript = body.transcript as string | undefined;
+      const locale = body.locale as string | undefined;
+      if (!transcript || typeof transcript !== "string" || transcript.trim().length === 0) {
+        structuredLog({
+          request_id: requestId,
+          user_id: userId,
+          mode,
+          success: false,
+          latency_ms: Date.now() - startTime,
+          error_type: "invalid_request",
+        });
+        return jsonResponse({ success: false, error: "invalid_request" }, 400);
+      }
+
+      const today = new Date().toISOString().slice(0, 10);
+      const systemContent = `${VOICE_PARSE_PROMPT}\n\nToday's date: ${today}\nUser locale: ${locale ?? "es"}`;
+
+      const completion = await openai.chat.completions.create({
+        model: MODEL,
+        messages: [
+          { role: "system", content: systemContent },
+          { role: "user", content: transcript.trim() },
+        ],
+        response_format: { type: "json_schema", json_schema: VOICE_PARSE_SCHEMA },
+      });
+
+      const text = completion.choices[0]?.message?.content;
+      if (!text) {
+        structuredLog({
+          request_id: requestId,
+          user_id: userId,
+          mode,
+          success: false,
+          latency_ms: Date.now() - startTime,
+          error_type: "empty_llm_response",
+        });
+        return jsonResponse({ success: false, error: "empty_llm_response" }, 502);
+      }
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        structuredLog({
+          request_id: requestId,
+          user_id: userId,
+          mode,
+          success: false,
+          latency_ms: Date.now() - startTime,
+          error_type: "json_parse_error",
+        });
+        return jsonResponse({ success: false, error: "json_parse_error" }, 502);
+      }
+
+      structuredLog({
+        request_id: requestId,
+        user_id: userId,
+        mode,
+        success: true,
+        latency_ms: Date.now() - startTime,
+        error_type: null,
+      });
+
+      return jsonResponse({ success: true, data: parsed });
     }
 
     // Chat mode — streaming

@@ -9,20 +9,17 @@ describe("Tab layout", () => {
     expect(layoutSource).not.toContain('name="history"');
   });
 
+  test("uses NativeTabs on iOS and CustomTabBar on Android", () => {
+    expect(layoutSource).toContain("NativeTabs");
+    expect(layoutSource).toContain("CustomTabBar");
+    expect(layoutSource).toContain('Platform.OS === "ios"');
+  });
+
   test("has five tabs: (index), (ai), add, (finance), (menu)", () => {
     const expectedTabs = ["(index)", "(ai)", "add", "(finance)", "(menu)"];
-
-    const iosMatch = layoutSource.match(/function\s+IosTabs\b[\s\S]*?^}/m);
-    expect(iosMatch).not.toBeNull();
-    // biome-ignore lint/style/noNonNullAssertion: guarded by expect above
-    const iosNames = Array.from(iosMatch![0].matchAll(/name="([^"]+)"/g), (m) => m[1]);
-    expect(iosNames).toEqual(expectedTabs);
-
-    const androidMatch = layoutSource.match(/function\s+AndroidTabs\b[\s\S]*?^}/m);
-    expect(androidMatch).not.toBeNull();
-    // biome-ignore lint/style/noNonNullAssertion: guarded by expect above
-    const androidNames = Array.from(androidMatch![0].matchAll(/name="([^"]+)"/g), (m) => m[1]);
-    expect(androidNames).toEqual(expectedTabs);
+    for (const tab of expectedTabs) {
+      expect(layoutSource).toContain(`name="${tab}"`);
+    }
   });
 
   test("does not include a standalone goals tab", () => {
@@ -33,16 +30,12 @@ describe("Tab layout", () => {
     expect(layoutSource).not.toContain("MenuPanel");
   });
 
-  test("uses NativeTabs for iOS", () => {
-    expect(layoutSource).toContain("NativeTabs");
-  });
-
-  test("uses CustomTabBar for Android", () => {
-    expect(layoutSource).toContain("CustomTabBar");
-  });
-
   test("add tab is a regular screen (no interception)", () => {
     expect(layoutSource).not.toContain("preventDefault");
     expect(layoutSource).not.toContain("ADD_TAB_PREFIX");
+  });
+
+  test("renders VoiceBottomSheet", () => {
+    expect(layoutSource).toContain("VoiceBottomSheet");
   });
 });

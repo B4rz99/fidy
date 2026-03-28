@@ -51,6 +51,7 @@
         "expo-notifications": "~55.0.13",
         "expo-router": "~55.0.5",
         "expo-secure-store": "~55.0.8",
+        "expo-speech-recognition": "file:./modules/expo-speech-recognition",
         "expo-splash-screen": "~55.0.10",
         "expo-sqlite": "~55.0.10",
         "expo-status-bar": "~55.0.4",
@@ -2283,6 +2284,8 @@
     "@expo/metro-config/postcss": ["postcss@8.4.49", "", { "dependencies": { "nanoid": "^3.3.7", "picocolors": "^1.1.1", "source-map-js": "^1.2.1" } }, "sha512-OCVPnIObs4N29kxTjzLfUryOkvZEq+pf8jTF0lg8E7uETuWHA+v7j3c/xJmiqpX450191LlmZfUKkXxkTry7nA=="],
 
     "@expo/prebuild-config/semver": ["semver@7.7.3", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q=="],
+
+    "@fidy/mobile/expo-speech-recognition": ["expo-speech-recognition@file:apps/mobile/modules/expo-speech-recognition", {}],
 
     "@istanbuljs/load-nyc-config/camelcase": ["camelcase@5.3.1", "", {}, "sha512-L28STB170nwWS63UjtlEOE3dldQApaJXZkOI1uMFfzf3rRuPegHaHesyee+YxQ+W6SvRDQV6UrdOdRiR153wJg=="],
 
