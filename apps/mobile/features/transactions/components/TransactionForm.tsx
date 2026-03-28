@@ -219,20 +219,18 @@ export function TransactionForm({
           {onVoicePress && (
             <Pressable
               onPress={onVoicePress}
-              hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={t("voice.listening")}
               style={{
-                height: 36,
-                width: 36,
-                borderRadius: 10,
+                height: 44,
+                width: 44,
+                borderRadius: 22,
                 alignItems: "center",
                 justifyContent: "center",
-                borderWidth: 1,
-                borderColor: borderSubtle,
+                backgroundColor: accentGreen,
               }}
             >
-              <Mic size={16} color={accentGreen} />
+              <Mic size={20} color="#FFFFFF" />
             </Pressable>
           )}
         </View>
