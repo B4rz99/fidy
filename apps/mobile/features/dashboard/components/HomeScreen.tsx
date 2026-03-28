@@ -142,7 +142,11 @@ export const HomeScreen = () => {
   }, [hasMore, loadNextPage]);
 
   const navigatingRef = useRef(false);
-  useFocusEffect(useCallback(() => { navigatingRef.current = false; }, []));
+  useFocusEffect(
+    useCallback(() => {
+      navigatingRef.current = false;
+    }, [])
+  );
 
   const handleEdit = useCallback(
     (id: TransactionId) => {
