@@ -275,9 +275,9 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
           createdAt: now,
         });
         trackTransactionDeleted();
-      } catch {
+      } catch (e) {
         // DB operation failed — keep UI state unchanged
-        return;
+        throw e;
       }
     }
     await get().refresh();

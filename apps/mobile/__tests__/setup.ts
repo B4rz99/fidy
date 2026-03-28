@@ -141,6 +141,21 @@ vi.mock("@shopify/flash-list", () => ({
   FlashList: "FlashList",
 }));
 
+// Mock react-native-gesture-handler
+vi.mock("react-native-gesture-handler", () => {
+  const gesture = () => ({
+    minDuration: () => gesture(),
+    onBegin: () => gesture(),
+    onStart: () => gesture(),
+    onFinalize: () => gesture(),
+  });
+  return {
+    Gesture: { LongPress: gesture },
+    GestureDetector: "GestureDetector",
+    GestureHandlerRootView: "GestureHandlerRootView",
+  };
+});
+
 // Mock react-native-reanimated
 vi.mock("react-native-reanimated", () => {
   const Animated = {
@@ -156,6 +171,13 @@ vi.mock("react-native-reanimated", () => {
     useSharedValue: (init: any) => ({ value: init }),
     // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
     withTiming: (val: any) => val,
+    // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
+    withRepeat: (val: any) => val,
+    // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
+    withSequence: (...vals: any[]) => vals[0],
+    cancelAnimation: vi.fn(),
+    // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
+    runOnJS: (fn: any) => fn,
   };
 });
 
