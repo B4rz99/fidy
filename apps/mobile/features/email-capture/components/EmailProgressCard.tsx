@@ -8,7 +8,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { CheckCircle, Mail, Search, TriangleAlert } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useAnimatedProgress, useThemeColor, useTranslation } from "@/shared/hooks";
 import type { ProgressDisplay, ProgressPhase } from "../lib/progress-phases";
 import { shouldMorphToBanner } from "../lib/progress-phases";
 
@@ -26,7 +26,6 @@ const NEEDS_REVIEW_ICON = "#E65100";
 export const EmailProgressCard = ({ phase, display, onComplete }: EmailProgressCardProps) => {
   const { t } = useTranslation();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const barWidth = useSharedValue(0);
   const morphProgress = useSharedValue(0);
 
   const cardBg = useThemeColor("card");
@@ -35,10 +34,7 @@ export const EmailProgressCard = ({ phase, display, onComplete }: EmailProgressC
   const accentGreen = useThemeColor("accentGreen");
   const borderSubtle = useThemeColor("borderSubtle");
 
-  // Animate progress bar
-  useEffect(() => {
-    barWidth.value = withTiming(display.fractionComplete, { duration: 300 });
-  }, [display.fractionComplete, barWidth]);
+  const { animatedStyle: barAnimatedStyle } = useAnimatedProgress(display.fractionComplete, 300);
 
   // Handle completion phase
   useEffect(() => {
@@ -55,10 +51,6 @@ export const EmailProgressCard = ({ phase, display, onComplete }: EmailProgressC
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [phase, display.needsReview, onComplete, morphProgress]);
-
-  const progressBarStyle = useAnimatedStyle(() => ({
-    width: `${barWidth.value * 100}%`,
-  }));
 
   const containerStyle = useAnimatedStyle(() => ({
     backgroundColor: morphProgress.value > 0.5 ? NEEDS_REVIEW_BG : cardBg,
@@ -97,7 +89,7 @@ export const EmailProgressCard = ({ phase, display, onComplete }: EmailProgressC
           >
             <Animated.View
               style={[
-                progressBarStyle,
+                barAnimatedStyle,
                 {
                   backgroundColor: accentGreen,
                   height: "100%",
