@@ -36,7 +36,7 @@ const checkMilestoneCrossed = (
   const crossed = MILESTONE_THRESHOLDS.filter(
     (threshold) => prevPercent < threshold && currentPercent >= threshold
   );
-  return crossed.length > 0 ? crossed[crossed.length - 1] : null;
+  return crossed.length > 0 ? (crossed[crossed.length - 1] ?? null) : null;
 };
 
 // ---------------------------------------------------------------------------
@@ -335,7 +335,7 @@ export function GoalDetailScreen() {
       const reversed = [...contributions].reverse();
       const result: Array<{ contribution: GoalContribution; runningTotal: number }> = [];
       reversed.forEach((c) => {
-        const prevTotal = result.length > 0 ? result[result.length - 1].runningTotal : 0;
+        const prevTotal = result.length > 0 ? (result[result.length - 1]?.runningTotal ?? 0) : 0;
         result.push({ contribution: c, runningTotal: prevTotal + c.amount });
       });
       return result.reverse();

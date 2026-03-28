@@ -366,9 +366,9 @@ describe("deriveMonthlyMilestones", () => {
 
   it("generates correct cumulative targets", () => {
     const result = deriveMonthlyMilestones(500_000, 100_000, 3);
-    expect(result[0].cumulativeTarget).toBe(600_000);
-    expect(result[1].cumulativeTarget).toBe(700_000);
-    expect(result[2].cumulativeTarget).toBe(800_000);
+    expect(result[0]?.cumulativeTarget).toBe(600_000);
+    expect(result[1]?.cumulativeTarget).toBe(700_000);
+    expect(result[2]?.cumulativeTarget).toBe(800_000);
   });
 
   it("returns empty array when monthsToGo is 0", () => {
@@ -386,9 +386,9 @@ describe("deriveMonthlyMilestones", () => {
   it("generates sequential month dates", () => {
     const result = deriveMonthlyMilestones(0, 100_000, 3);
     // From FIXED_NOW (2026-03-19), months should be Apr, May, Jun 2026
-    expect(result[0].month.getMonth()).toBe(3); // April (0-indexed)
-    expect(result[1].month.getMonth()).toBe(4); // May
-    expect(result[2].month.getMonth()).toBe(5); // June
+    expect(result[0]?.month.getMonth()).toBe(3); // April (0-indexed)
+    expect(result[1]?.month.getMonth()).toBe(4); // May
+    expect(result[2]?.month.getMonth()).toBe(5); // June
   });
 });
 
@@ -437,7 +437,7 @@ describe("deriveBudgetNudges", () => {
   it("returns top 3 categories by total spending", () => {
     const result = deriveBudgetNudges(0, 5_000_000, 500_000, spending);
     expect(result).toHaveLength(3);
-    expect(result[0].categoryId).toBe("food");
+    expect(result[0]?.categoryId).toBe("food");
   });
 
   it("calculates 15% reduction for each category", () => {
@@ -492,9 +492,9 @@ describe("deriveGoalAlerts", () => {
     const previous = new Map([["g1", 6]]);
     const result = deriveGoalAlerts(goals, previous);
     expect(result).toHaveLength(1);
-    expect(result[0].goalId).toBe("g1");
-    expect(result[0].goalName).toBe("Trip");
-    expect(result[0].shiftMonths).toBe(2); // delayed by 2 months
+    expect(result[0]?.goalId).toBe("g1");
+    expect(result[0]?.goalName).toBe("Trip");
+    expect(result[0]?.shiftMonths).toBe(2); // delayed by 2 months
   });
 
   it("generates alert when shift >= 1 month (ahead of schedule)", () => {
@@ -502,7 +502,7 @@ describe("deriveGoalAlerts", () => {
     const previous = new Map([["g1", 6]]);
     const result = deriveGoalAlerts(goals, previous);
     expect(result).toHaveLength(1);
-    expect(result[0].shiftMonths).toBe(-2); // 2 months ahead
+    expect(result[0]?.shiftMonths).toBe(-2); // 2 months ahead
   });
 
   it("does not generate alert when shift < 1 month", () => {

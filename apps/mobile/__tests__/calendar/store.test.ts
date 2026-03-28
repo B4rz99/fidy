@@ -76,7 +76,7 @@ describe("useCalendarStore", () => {
       .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
     expect(result).toBe(true);
     expect(useCalendarStore.getState().bills).toHaveLength(1);
-    const bill = useCalendarStore.getState().bills[0];
+    const bill = useCalendarStore.getState().bills[0]!;
     expect(bill.name).toBe("Netflix");
     expect(bill.amount).toBe(35000);
     expect(bill.frequency).toBe("monthly");
@@ -112,7 +112,7 @@ describe("useCalendarStore", () => {
       .addBill("Netflix", "50.000", "monthly", "services" as CategoryId, testDate);
     expect(result).toBe(true);
     const bills = useCalendarStore.getState().bills;
-    expect(bills[0].amount).toBe(50000);
+    expect(bills[0]?.amount).toBe(50000);
   });
 
   test("addBill returns false for non-numeric amount", async () => {
@@ -183,9 +183,9 @@ describe("useCalendarStore", () => {
     const { bills, isLoading } = useCalendarStore.getState();
     expect(isLoading).toBe(false);
     expect(bills).toHaveLength(1);
-    expect(bills[0].name).toBe("Netflix");
-    expect(bills[0].startDate).toBeInstanceOf(Date);
-    expect(bills[0].isActive).toBe(true);
+    expect(bills[0]?.name).toBe("Netflix");
+    expect(bills[0]?.startDate).toBeInstanceOf(Date);
+    expect(bills[0]?.isActive).toBe(true);
   });
 
   test("loadBills sets isLoading false on error", async () => {
@@ -227,11 +227,11 @@ describe("useCalendarStore", () => {
     await useCalendarStore
       .getState()
       .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
-    const billId = useCalendarStore.getState().bills[0].id as BillId;
+    const billId = useCalendarStore.getState().bills[0]?.id as BillId;
 
     await useCalendarStore.getState().updateBill(billId, { name: "Hulu" });
 
-    const updated = useCalendarStore.getState().bills[0];
+    const updated = useCalendarStore.getState().bills[0]!;
     expect(updated.name).toBe("Hulu");
   });
 
@@ -242,7 +242,7 @@ describe("useCalendarStore", () => {
     await useCalendarStore
       .getState()
       .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
-    const billId = useCalendarStore.getState().bills[0].id as BillId;
+    const billId = useCalendarStore.getState().bills[0]?.id as BillId;
     const newDate = new Date("2026-06-01T00:00:00.000Z");
 
     await useCalendarStore.getState().updateBill(billId, { startDate: newDate });
@@ -271,7 +271,7 @@ describe("useCalendarStore", () => {
     await useCalendarStore
       .getState()
       .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
-    const billId = useCalendarStore.getState().bills[0].id as BillId;
+    const billId = useCalendarStore.getState().bills[0]?.id as BillId;
 
     // Manually add a payment for this bill
     useCalendarStore.setState((s) => ({
@@ -301,7 +301,7 @@ describe("useCalendarStore", () => {
     await useCalendarStore
       .getState()
       .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
-    const billId = useCalendarStore.getState().bills[0].id as BillId;
+    const billId = useCalendarStore.getState().bills[0]?.id as BillId;
 
     // Seed payment with a linked transaction
     useTransactionStore.setState({
@@ -361,15 +361,15 @@ describe("useCalendarStore", () => {
     await useCalendarStore
       .getState()
       .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
-    const billId = useCalendarStore.getState().bills[0].id as BillId;
+    const billId = useCalendarStore.getState().bills[0]?.id as BillId;
 
     await useCalendarStore.getState().markBillPaid(billId, "2026-03-15" as IsoDate);
 
     const { payments } = useCalendarStore.getState();
     expect(payments).toHaveLength(1);
-    expect(payments[0].billId).toBe(billId);
-    expect(payments[0].dueDate).toBe("2026-03-15");
-    expect(payments[0].paidAt).toBeDefined();
+    expect(payments[0]?.billId).toBe(billId);
+    expect(payments[0]?.dueDate).toBe("2026-03-15");
+    expect(payments[0]?.paidAt).toBeDefined();
     expect(insertBillPayment).toHaveBeenCalledTimes(1);
   });
 
@@ -380,12 +380,12 @@ describe("useCalendarStore", () => {
     await useCalendarStore
       .getState()
       .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
-    const billId = useCalendarStore.getState().bills[0].id as BillId;
+    const billId = useCalendarStore.getState().bills[0]?.id as BillId;
 
     await useCalendarStore.getState().markBillPaid(billId, "2026-03-15" as IsoDate);
 
     expect(insertTransaction).toHaveBeenCalledTimes(1);
-    const txRow = vi.mocked(insertTransaction).mock.calls[0][1];
+    const txRow = vi.mocked(insertTransaction).mock.calls[0]![1];
     expect(txRow.type).toBe("expense");
     expect(txRow.amount).toBe(35000);
     expect(txRow.categoryId).toBe("services");
@@ -396,13 +396,13 @@ describe("useCalendarStore", () => {
     await useCalendarStore
       .getState()
       .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
-    const billId = useCalendarStore.getState().bills[0].id as BillId;
+    const billId = useCalendarStore.getState().bills[0]?.id as BillId;
 
     await useCalendarStore.getState().markBillPaid(billId, "2026-03-15" as IsoDate);
 
     const { payments } = useCalendarStore.getState();
-    expect(payments[0].transactionId).toBeDefined();
-    expect(payments[0].transactionId).toMatch(/^txn-/);
+    expect(payments[0]?.transactionId).toBeDefined();
+    expect(payments[0]?.transactionId).toMatch(/^txn-/);
   });
 
   test("markBillPaid updates transaction store state", async () => {
@@ -411,15 +411,15 @@ describe("useCalendarStore", () => {
     await useCalendarStore
       .getState()
       .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
-    const billId = useCalendarStore.getState().bills[0].id as BillId;
+    const billId = useCalendarStore.getState().bills[0]?.id as BillId;
 
     await useCalendarStore.getState().markBillPaid(billId, "2026-03-15" as IsoDate);
 
     const txs = useTransactionStore.getState().pages;
     expect(txs).toHaveLength(1);
-    expect(txs[0].type).toBe("expense");
-    expect(txs[0].amount).toBe(35000);
-    expect(txs[0].description).toBe("Netflix");
+    expect(txs[0]?.type).toBe("expense");
+    expect(txs[0]?.amount).toBe(35000);
+    expect(txs[0]?.description).toBe("Netflix");
   });
 
   test("markBillPaid enqueues sync for the transaction", async () => {
@@ -429,7 +429,7 @@ describe("useCalendarStore", () => {
     await useCalendarStore
       .getState()
       .addBill("Netflix", "35000", "monthly", "services" as CategoryId, testDate);
-    const billId = useCalendarStore.getState().bills[0].id as BillId;
+    const billId = useCalendarStore.getState().bills[0]?.id as BillId;
 
     await useCalendarStore.getState().markBillPaid(billId, "2026-03-15" as IsoDate);
 
@@ -570,7 +570,7 @@ describe("useCalendarStore", () => {
 
     const { payments } = useCalendarStore.getState();
     expect(payments).toHaveLength(1);
-    expect(payments[0].billId).toBe("bill-1");
+    expect(payments[0]?.billId).toBe("bill-1");
   });
 
   test("loadPaymentsForMonth preserves existing payments on error", async () => {
@@ -596,6 +596,6 @@ describe("useCalendarStore", () => {
 
     const { payments } = useCalendarStore.getState();
     expect(payments).toHaveLength(1);
-    expect(payments[0].id).toBe("pay-existing");
+    expect(payments[0]?.id).toBe("pay-existing");
   });
 });

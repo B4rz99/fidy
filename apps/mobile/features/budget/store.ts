@@ -43,7 +43,9 @@ const formatMonth = (date: Date): Month => format(date, "yyyy-MM") as Month;
 
 /** Parse "YYYY-MM" to a local-time Date (1st of month). Avoids UTC date-only parsing pitfall. */
 const parseMonth = (month: Month): Date => {
-  const [y, m] = month.split("-").map(Number);
+  const parts = month.split("-").map(Number);
+  const y = parts[0] ?? 0;
+  const m = parts[1] ?? 1;
   return new Date(y, m - 1, 1);
 };
 
@@ -153,10 +155,10 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
       );
       const locale = useLocaleStore.getState().locale;
       // Schedule the first fresh alert to detect permission state; schedule rest only on "scheduled"
-      if (freshAlerts.length > 0) {
+      const firstAlert = freshAlerts[0];
+      if (freshAlerts.length > 0 && firstAlert != null) {
         const budgetAlertsEnabled =
           useSettingsStore.getState().notificationPreferences.budgetAlerts;
-        const firstAlert = freshAlerts[0];
         const firstCategory = CATEGORY_MAP[firstAlert.categoryId];
         const firstName = firstCategory
           ? getCategoryLabel(firstCategory, locale)

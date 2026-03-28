@@ -232,8 +232,8 @@ describe("useTransactionStore", () => {
 
     const state = useTransactionStore.getState();
     expect(state.pages).toHaveLength(1);
-    expect(state.pages[0].id).toBe("tx-1");
-    expect(state.pages[0].date).toBeInstanceOf(Date);
+    expect(state.pages[0]?.id).toBe("tx-1");
+    expect(state.pages[0]?.date).toBeInstanceOf(Date);
     expect(state.hasMore).toBe(false);
     expect(state.offset).toBe(1);
     expect(getTransactionsPaginated).toHaveBeenCalledWith(mockDb, mockUserId, 30, 0);
@@ -305,7 +305,7 @@ describe("useTransactionStore", () => {
 
     const state = useTransactionStore.getState();
     expect(state.pages).toHaveLength(2);
-    expect(state.pages[1].id).toBe("tx-1");
+    expect(state.pages[1]?.id).toBe("tx-1");
     expect(state.hasMore).toBe(false);
   });
 
@@ -404,7 +404,7 @@ describe("useTransactionStore", () => {
 
     useTransactionStore.getState().addToCache(tx);
 
-    expect(useTransactionStore.getState().pages[0].id).toBe("tx-new");
+    expect(useTransactionStore.getState().pages[0]?.id).toBe("tx-new");
   });
 
   it("removeFromCache filters from pages", () => {

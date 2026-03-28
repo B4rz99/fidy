@@ -295,9 +295,10 @@ export async function syncPull(
     }
     // else: earliest row failed — don't advance cursor
   } else if (rows.length > 0) {
+    const firstUpdatedAt = rows[0]?.updated_at ?? "";
     const maxUpdatedAt = rows.reduce(
       (max, r) => (r.updated_at > max ? r.updated_at : max),
-      rows[0].updated_at
+      firstUpdatedAt
     );
     await setSyncMeta(db, LAST_SYNC_AT, maxUpdatedAt);
   } else if (!lastSyncAt) {

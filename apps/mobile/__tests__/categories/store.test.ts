@@ -110,12 +110,12 @@ describe("useCategoriesStore", () => {
     expect(state.allCategories).toHaveLength(11);
     // Built-in first, then user categories
     expect(state.allCategories.slice(0, 10)).toEqual(CATEGORIES);
-    expect(state.allCategories[10].id).toBe("ucat-custom-1");
-    expect(state.allCategories[10].label).toEqual({
+    expect(state.allCategories[10]?.id).toBe("ucat-custom-1");
+    expect(state.allCategories[10]?.label).toEqual({
       en: "Groceries",
       es: "Groceries",
     });
-    expect(state.allCategories[10].color).toBe("#FF5722");
+    expect(state.allCategories[10]?.color).toBe("#FF5722");
   });
 
   it("isValidCategoryId returns true for user category ID after load", async () => {
@@ -157,7 +157,7 @@ describe("useCategoriesStore", () => {
     await store.getState().loadUserCategories();
 
     const state = store.getState();
-    const icon = state.allCategories[10].icon;
+    const icon = state.allCategories[10]?.icon;
     expect(icon).toBeDefined();
     // Must NOT be any of the ICON_MAP mock values — proves fallback was used
     const mockIcons: Array<() => null> = [() => null, () => null, () => null];

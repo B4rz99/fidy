@@ -9,7 +9,7 @@ export function parseActionFromResponse(text: string): ChatAction | null {
   if (!match) return null;
 
   try {
-    const parsed = JSON.parse(match[1]);
+    const parsed = JSON.parse(match[1] ?? "");
     const result = chatActionSchema.safeParse(parsed);
     return result.success ? result.data : null;
   } catch {

@@ -554,7 +554,7 @@ describe("useEmailCaptureStore", () => {
 
       await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
 
-      const updatedAccount = useEmailCaptureStore.getState().accounts[0];
+      const updatedAccount = useEmailCaptureStore.getState().accounts[0]!;
       expect(updatedAccount.lastFetchedAt).not.toBeNull();
     });
 

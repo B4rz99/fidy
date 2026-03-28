@@ -302,7 +302,7 @@ describe("email processing pipeline", () => {
       })
     );
     // nextRetryAt should be set
-    const call = mockInsertProcessedEmail.mock.calls[0][1];
+    const call = mockInsertProcessedEmail.mock.calls[0]?.[1];
     expect(call.nextRetryAt).toBeTruthy();
   });
 
@@ -321,7 +321,7 @@ describe("email processing pipeline", () => {
       })
     );
     // rawBody should NOT be cached for skipped emails
-    const call = mockInsertProcessedEmail.mock.calls[0][1];
+    const call = mockInsertProcessedEmail.mock.calls[0]?.[1];
     expect(call.rawBody).toBeUndefined();
   });
 
@@ -363,11 +363,11 @@ describe("email processing pipeline", () => {
       expect.objectContaining({ total: 2, completed: 0, saved: 0, failed: 0, needsReview: 0 })
     );
     // After first email (needs_review): needsReview = 1
-    const afterFirst = progressCalls[1];
+    const afterFirst = progressCalls[1]!;
     expect(afterFirst.needsReview).toBe(1);
     expect(afterFirst.saved).toBe(0);
     // After second email (saved): saved = 1
-    const last = progressCalls[progressCalls.length - 1];
+    const last = progressCalls[progressCalls.length - 1]!;
     expect(last.needsReview).toBe(1);
     expect(last.saved).toBe(1);
   });

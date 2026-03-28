@@ -39,25 +39,25 @@ describe("computeUpcomingOccurrences", () => {
   test("returns monthly occurrences for monthly frequency", () => {
     const bill = makeBill({ frequency: "monthly", startDate: new Date(2025, 0, 15) });
     const occurrences = computeUpcomingOccurrences(bill, 3, new Date(2025, 0, 15));
-    expect(occurrences[0].getDate()).toBe(15);
-    expect(occurrences[1].getDate()).toBe(15);
-    expect(occurrences[2].getDate()).toBe(15);
+    expect(occurrences[0]?.getDate()).toBe(15);
+    expect(occurrences[1]?.getDate()).toBe(15);
+    expect(occurrences[2]?.getDate()).toBe(15);
   });
 
   test("returns weekly occurrences for weekly frequency", () => {
     const bill = makeBill({ frequency: "weekly", startDate: new Date(2025, 0, 6) }); // Monday
     const occurrences = computeUpcomingOccurrences(bill, 3, new Date(2025, 0, 6));
     // Each occurrence should be 7 days apart
-    expect(occurrences[1].getTime() - occurrences[0].getTime()).toBe(7 * 24 * 60 * 60 * 1000);
-    expect(occurrences[2].getTime() - occurrences[1].getTime()).toBe(7 * 24 * 60 * 60 * 1000);
+    expect(occurrences[1]!.getTime() - occurrences[0]!.getTime()).toBe(7 * 24 * 60 * 60 * 1000);
+    expect(occurrences[2]!.getTime() - occurrences[1]!.getTime()).toBe(7 * 24 * 60 * 60 * 1000);
   });
 
   test("returns yearly occurrences for yearly frequency", () => {
     const bill = makeBill({ frequency: "yearly", startDate: new Date(2025, 2, 22) });
     const occurrences = computeUpcomingOccurrences(bill, 3, new Date(2025, 2, 22));
-    expect(occurrences[0].getFullYear()).toBe(2025);
-    expect(occurrences[1].getFullYear()).toBe(2026);
-    expect(occurrences[2].getFullYear()).toBe(2027);
+    expect(occurrences[0]?.getFullYear()).toBe(2025);
+    expect(occurrences[1]?.getFullYear()).toBe(2026);
+    expect(occurrences[2]?.getFullYear()).toBe(2027);
   });
 
   test("returns empty array for 0 count", () => {

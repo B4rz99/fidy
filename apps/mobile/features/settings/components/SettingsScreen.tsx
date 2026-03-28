@@ -51,7 +51,7 @@ export function SettingsScreen() {
   const accentGreen = useThemeColor("accentGreen");
   const tertiaryColor = useThemeColor("tertiary");
 
-  const themeLabel = t(THEME_LABEL_KEYS[themePreference] ?? THEME_LABEL_KEYS.system);
+  const themeLabel = t(THEME_LABEL_KEYS[themePreference] ?? "settings.themeSystem");
 
   const languageLabel = locale.startsWith("es")
     ? t("settings.languageSpanish")

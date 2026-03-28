@@ -234,7 +234,7 @@ describe("createAdapter", () => {
       const adapter = createAdapter(configWithExtra, stubFetch);
       await adapter.connect("client-id");
 
-      const calledUrl = mockOpenAuthSession.mock.calls[0][0] as string;
+      const calledUrl = mockOpenAuthSession.mock.calls[0]?.[0] as string;
       expect(calledUrl).toContain("access_type=offline");
       expect(calledUrl).toContain("prompt=consent");
     });
@@ -255,7 +255,7 @@ describe("createAdapter", () => {
       const adapter = createAdapter(configWithExtra, stubFetch);
       await adapter.connect("client-id");
 
-      const body = mockFetch.mock.calls[0][1]?.body as string;
+      const body = mockFetch.mock.calls[0]?.[1]?.body as string;
       expect(body).toContain("scope=read+write");
     });
   });
@@ -360,7 +360,7 @@ describe("createAdapter", () => {
       const adapter = createAdapter(configWithRefresh, fetchFn);
       await adapter.fetchEmails("client-id", "2026-03-01", ["a@b.com"]);
 
-      const refreshBody = mockFetch.mock.calls[1][1]?.body as string;
+      const refreshBody = mockFetch.mock.calls[1]?.[1]?.body as string;
       expect(refreshBody).toContain("scope=read+User.Read");
     });
   });

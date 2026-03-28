@@ -72,12 +72,14 @@ export type GoalAlert = {
 /** Compute the median of a readonly numeric array. Pure, no mutation. */
 export function computeMedian(values: readonly number[]): number {
   if (values.length === 0) return 0;
-  if (values.length === 1) return values[0];
+  if (values.length === 1) return values[0] ?? 0;
 
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
 
-  return sorted.length % 2 === 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  return sorted.length % 2 === 1
+    ? (sorted[mid] ?? 0)
+    : ((sorted[mid - 1] ?? 0) + (sorted[mid] ?? 0)) / 2;
 }
 
 const confidenceFromMonthCount = (count: number): ConfidenceTier => {

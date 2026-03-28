@@ -132,15 +132,15 @@ describe("syncPull integration (real SQLite)", () => {
     // Local row should now have the server's amount
     const tx = getTransactionById(db as any, "tx-1" as TransactionId);
     expect(tx).not.toBeNull();
-    expect(tx!.amount).toBe(2000);
+    expect(tx?.amount).toBe(2000);
 
     // A conflict should be logged
     const conflicts = getUnresolvedConflicts(db as any);
     expect(conflicts).toHaveLength(1);
-    expect(conflicts[0].transactionId).toBe("tx-1");
+    expect(conflicts[0]?.transactionId).toBe("tx-1");
 
-    const localData = JSON.parse(conflicts[0].localData);
-    const serverData = JSON.parse(conflicts[0].serverData);
+    const localData = JSON.parse(conflicts[0]?.localData ?? "{}");
+    const serverData = JSON.parse(conflicts[0]?.serverData ?? "{}");
     expect(localData.amount).toBe(1000);
     expect(serverData.amount).toBe(2000);
   });
@@ -157,8 +157,8 @@ describe("syncPull integration (real SQLite)", () => {
 
     // Local data should be unchanged
     const tx = getTransactionById(db as any, "tx-1" as TransactionId);
-    expect(tx!.amount).toBe(1000);
-    expect(tx!.description).toBe("Local merchant");
+    expect(tx?.amount).toBe(1000);
+    expect(tx?.description).toBe("Local merchant");
 
     // No conflicts
     const conflicts = getUnresolvedConflicts(db as any);
@@ -173,8 +173,8 @@ describe("syncPull integration (real SQLite)", () => {
 
     const tx = getTransactionById(db as any, "tx-new" as TransactionId);
     expect(tx).not.toBeNull();
-    expect(tx!.description).toBe("Cloud-only");
-    expect(tx!.amount).toBe(2000);
+    expect(tx?.description).toBe("Cloud-only");
+    expect(tx?.amount).toBe(2000);
 
     const conflicts = getUnresolvedConflicts(db as any);
     expect(conflicts).toHaveLength(0);
@@ -208,7 +208,7 @@ describe("syncPull integration (real SQLite)", () => {
 
     // Timestamp should be updated
     const tx = getTransactionById(db as any, "tx-1" as TransactionId);
-    expect(tx!.updatedAt).toBe("2026-03-10T14:00:00.000Z");
+    expect(tx?.updatedAt).toBe("2026-03-10T14:00:00.000Z");
 
     // No conflict since data is identical
     const conflicts = getUnresolvedConflicts(db as any);

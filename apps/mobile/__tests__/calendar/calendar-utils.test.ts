@@ -59,9 +59,9 @@ describe("getMonthGrid", () => {
     const grid = getMonthGrid(2026, 2);
     // First 6 cells should be null (Mon-Sat padding), then day 1 on Sunday
     for (let i = 0; i < 6; i++) {
-      expect(grid[0][i].day).toBeNull();
+      expect(grid[0]?.[i]?.day).toBeNull();
     }
-    expect(grid[0][6].day).toBe(1);
+    expect(grid[0]?.[6]?.day).toBe(1);
   });
 
   test("last row pads nulls after last day of month", () => {
@@ -69,8 +69,8 @@ describe("getMonthGrid", () => {
     const grid = getMonthGrid(2026, 1);
     const lastWeek = grid[grid.length - 1];
     // Day 28 should be on Saturday (index 5), Sunday (index 6) should be null
-    expect(lastWeek[5].day).toBe(28);
-    expect(lastWeek[6].day).toBeNull();
+    expect(lastWeek![5]?.day).toBe(28);
+    expect(lastWeek![6]?.day).toBeNull();
   });
 
   test("all non-null cells have correct date objects", () => {

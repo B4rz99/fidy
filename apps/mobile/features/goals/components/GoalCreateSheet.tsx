@@ -70,7 +70,7 @@ export function GoalCreateSheet() {
   const amount = parseDigitsToAmount(digits);
 
   // Derive projection hint
-  const projectionMonths = goals.length > 0 ? goals[0].projection.netMonthlySavings : 0;
+  const projectionMonths = goals.length > 0 ? (goals[0]?.projection.netMonthlySavings ?? 0) : 0;
   const estimatedMonths =
     projectionMonths > 0 && amount > 0 ? Math.ceil(amount / projectionMonths) : null;
 

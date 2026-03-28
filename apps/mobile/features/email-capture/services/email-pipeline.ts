@@ -170,6 +170,8 @@ export async function processEmails(
   async function worker(): Promise<void> {
     while (nextIdx < toProcess.length) {
       const email = toProcess[nextIdx++];
+      // noUncheckedIndexedAccess: email is always defined here (guarded by while condition)
+      if (email == null) break;
 
       let parsed: LlmParsedTransaction | null = null;
       let parseError = false;

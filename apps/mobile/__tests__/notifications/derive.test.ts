@@ -115,7 +115,7 @@ describe("deriveWeeklyMoves", () => {
     const result = deriveWeeklyMoves([...prior, currentWeekTx], [], WEEK_START);
     const anomalies = result.filter((m) => m.type === "anomaly");
     expect(anomalies).toHaveLength(1);
-    const anomaly = anomalies[0];
+    const anomaly = anomalies[0]!;
     expect(anomaly.type).toBe("anomaly");
     if (anomaly.type === "anomaly") {
       expect(anomaly.categoryId).toBe("food");
@@ -161,7 +161,7 @@ describe("deriveWeeklyMoves", () => {
     const result = deriveWeeklyMoves([currentWeekTx], [progress], WEEK_START);
     const paces = result.filter((m) => m.type === "budget_pace");
     expect(paces).toHaveLength(1);
-    const pace = paces[0];
+    const pace = paces[0]!;
     expect(pace.type).toBe("budget_pace");
     if (pace.type === "budget_pace") {
       expect(pace.budgetId).toBe("b1");
@@ -310,9 +310,9 @@ describe("deriveWeeklyMoves", () => {
     expect(paces).toHaveLength(1);
 
     // Verify they both refer to "food"
-    expect(anomalies[0].categoryId).toBe("food");
-    if (paces[0].type === "budget_pace") {
-      expect(paces[0].categoryId).toBe("food");
+    expect(anomalies[0]?.categoryId).toBe("food");
+    if (paces[0]?.type === "budget_pace") {
+      expect(paces[0]?.categoryId).toBe("food");
     }
   });
 });
