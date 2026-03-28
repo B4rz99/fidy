@@ -4,7 +4,11 @@
     "moduleResolution": "bundler",
     "target": "ESNext",
     "module": "ESNext",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true
   },
   "references": [
     { "path": "./packages/assets" },
