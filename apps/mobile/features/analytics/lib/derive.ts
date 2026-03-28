@@ -46,9 +46,13 @@ const computeDeltaPercent = (curr: number, prev: number): number =>
 
 /** Period window sizes in days (inclusive range length - 1). */
 const PERIOD_DAYS: Record<AnalyticsPeriod, number> = {
+  // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
   W: 6,
+  // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
   M: 29,
+  // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
   Q: 89,
+  // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
   Y: 364,
 };
 

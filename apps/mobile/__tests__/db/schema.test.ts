@@ -21,7 +21,11 @@ describe("transactions table schema", () => {
     expect(names).toContain("createdAt");
     expect(names).toContain("updatedAt");
     expect(names).toContain("deletedAt");
-    expect(names).toHaveLength(11);
+    expect(names).toContain("source");
+    expect(names).toContain("accountId");
+    expect(names).toContain("linkedTransactionId");
+    expect(names).toContain("needsAccountReview");
+    expect(names).toHaveLength(14);
   });
 
   it("id is primary key", () => {

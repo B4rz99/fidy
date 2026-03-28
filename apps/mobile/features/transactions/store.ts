@@ -10,7 +10,14 @@ import {
   trackTransactionDeleted,
   trackTransactionEdited,
 } from "@/shared/lib";
-import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
+import type {
+  AccountId,
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 import { buildTransaction, toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
 import {
   getDailySpendingAggregate,
@@ -232,7 +239,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     const now = new Date();
 
     const result = buildTransaction(
-      { type, digits, categoryId, description, date },
+      { type, digits, categoryId, description, date, accountId: "" as AccountId },
       userIdRef,
       id,
       now
@@ -302,7 +309,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     const now = new Date();
 
     const result = buildTransaction(
-      { type, digits, categoryId, description, date },
+      { type, digits, categoryId, description, date, accountId: "" as AccountId },
       userIdRef,
       id,
       now

@@ -1,4 +1,4 @@
-import { and, between, desc, eq, inArray, isNull, like, or, sql, sum } from "drizzle-orm";
+import { and, between, desc, eq, inArray, isNull, like, ne, or, sql, sum } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { syncMeta, syncQueue, transactions } from "@/shared/db";
 import type {
@@ -46,7 +46,13 @@ export function getBalanceAggregate(db: AnyDb, userId: UserId): CopAmount {
       balance: sql<number>`SUM(CASE WHEN ${transactions.type} = 'income' THEN ${transactions.amount} ELSE -${transactions.amount} END)`,
     })
     .from(transactions)
-    .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        ne(transactions.type, "transfer"),
+        isNull(transactions.deletedAt)
+      )
+    )
     .get();
   return (row?.balance ?? 0) as CopAmount;
 }
@@ -121,6 +127,7 @@ export function getMonthlyTotalsByType(
     .where(
       and(
         eq(transactions.userId, userId),
+        ne(transactions.type, "transfer"),
         isNull(transactions.deletedAt),
         sql`strftime('%Y-%m', ${transactions.date}) >= ${cutoffStr}`
       )

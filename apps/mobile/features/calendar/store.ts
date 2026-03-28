@@ -23,6 +23,7 @@ import {
   trackBillPaymentRecorded,
 } from "@/shared/lib";
 import type {
+  AccountId,
   BillId,
   CategoryId,
   CopAmount,
@@ -214,6 +215,9 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
+      accountId: "" as AccountId,
+      linkedTransactionId: null,
+      needsAccountReview: false,
     };
 
     const payment: BillPayment = {

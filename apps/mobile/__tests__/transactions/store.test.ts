@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
+  AccountId,
   CategoryId,
   CopAmount,
   IsoDate,
@@ -199,6 +200,9 @@ describe("useTransactionStore", () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           deletedAt: null,
+          accountId: "" as AccountId,
+          linkedTransactionId: null,
+          needsAccountReview: false,
         },
       ],
     });
@@ -225,6 +229,9 @@ describe("useTransactionStore", () => {
         updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
         deletedAt: null,
         source: "manual",
+        accountId: "" as AccountId,
+        linkedTransactionId: null,
+        needsAccountReview: false,
       },
     ]);
 
@@ -253,6 +260,9 @@ describe("useTransactionStore", () => {
       updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
       deletedAt: null,
       source: "manual",
+      accountId: "" as AccountId,
+      linkedTransactionId: null,
+      needsAccountReview: false,
     }));
     vi.mocked(getTransactionsPaginated).mockReturnValueOnce(rows);
 
@@ -279,6 +289,9 @@ describe("useTransactionStore", () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           deletedAt: null,
+          accountId: "" as AccountId,
+          linkedTransactionId: null,
+          needsAccountReview: false,
         },
       ],
       offset: 1,
@@ -298,6 +311,9 @@ describe("useTransactionStore", () => {
         updatedAt: "2026-03-03T10:00:00.000Z" as IsoDateTime,
         deletedAt: null,
         source: "manual",
+        accountId: "" as AccountId,
+        linkedTransactionId: null,
+        needsAccountReview: false,
       },
     ]);
 
@@ -331,6 +347,9 @@ describe("useTransactionStore", () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           deletedAt: null,
+          accountId: "" as AccountId,
+          linkedTransactionId: null,
+          needsAccountReview: false,
         },
       ],
     });
@@ -378,6 +397,9 @@ describe("useTransactionStore", () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           deletedAt: null,
+          accountId: "" as AccountId,
+          linkedTransactionId: null,
+          needsAccountReview: false,
         },
       ],
     });
@@ -402,6 +424,9 @@ describe("useTransactionStore", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       deletedAt: null,
+      accountId: "" as AccountId,
+      linkedTransactionId: null,
+      needsAccountReview: false,
     };
 
     useTransactionStore.getState().addToCache(tx);
@@ -423,6 +448,9 @@ describe("useTransactionStore", () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           deletedAt: null,
+          accountId: "" as AccountId,
+          linkedTransactionId: null,
+          needsAccountReview: false,
         },
       ],
     });

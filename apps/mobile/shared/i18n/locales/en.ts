@@ -649,13 +649,52 @@ const en = {
     netPrefix: "Net: ",
     spendingByCategory: "Spending by Category",
     vsPreviousPeriod: {
+      // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
       W: "vs previous 7 days",
+      // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
       M: "vs previous 30 days",
+      // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
       Q: "vs previous 90 days",
+      // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
       Y: "vs previous 365 days",
     },
     totalSpending: "Total spending",
     noData: "Not enough data for this period",
+  },
+
+  // Accounts
+  accounts: {
+    title: "Accounts",
+    addAccount: "Add Account",
+    editAccount: "Edit Account",
+    deleteAccount: "Delete Account",
+    deleteConfirmTitle: "Delete Account",
+    deleteConfirmMessage:
+      'Are you sure you want to delete "%{accountName}"? Transactions will be moved to the default account.',
+    defaultAccount: "Default Account",
+    setAsDefault: "Set as default",
+    accountName: "Account name",
+    accountType: "Account type",
+    identifiers: "Card identifier",
+    initialBalance: "Current balance",
+    noAccountsYet: "No accounts yet",
+    noAccountsHint: "Add your bank accounts to track each one separately",
+    reviewBadge: "%{count} to review",
+    reviewQueueTitle: "Review Account",
+    reviewQueueHint: "Pick the correct account for this transaction",
+    debit: "Debit",
+    credit: "Credit",
+    wallet: "Wallet",
+    transfer: "Transfer",
+    transferLabel: "%{from} → %{to}",
+    step1Title: "Pick a Bank",
+    step2Title: "Account Details",
+    step3Title: "Confirm",
+    confirmMessage:
+      'Transactions from %{bank} with "%{identifier}" will be automatically linked to this account',
+    otherBank: "Other bank",
+    identifierPlaceholderCardName: "Card name (e.g., Visa Oro)",
+    identifierPlaceholderLast4: "Last 4 digits (e.g., *1234)",
   },
 } as const;
 

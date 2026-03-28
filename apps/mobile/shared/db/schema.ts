@@ -1,5 +1,6 @@
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import type {
+  AccountId,
   BillId,
   BillPaymentId,
   BudgetId,
@@ -75,10 +76,43 @@ export const transactions = sqliteTable(
     updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
     deletedAt: text("deleted_at").$type<IsoDateTime>(),
     source: text("source").notNull().default("manual"),
+    accountId: text("account_id")
+      .$type<AccountId>()
+      .notNull()
+      .default("" as AccountId),
+    linkedTransactionId: text("linked_transaction_id").$type<TransactionId>(),
+    needsAccountReview: integer("needs_account_review", { mode: "boolean" })
+      .notNull()
+      .default(false),
   },
   (table) => [
     index("idx_transactions_user_date").on(table.userId, table.date),
     index("idx_transactions_user_category").on(table.userId, table.categoryId),
+    index("idx_transactions_account").on(table.accountId),
+  ]
+);
+
+export const accounts = sqliteTable(
+  "accounts",
+  {
+    id: text("id").$type<AccountId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    name: text("name").notNull(),
+    type: text("type").notNull(),
+    bankKey: text("bank_key").notNull(),
+    identifiers: text("identifiers").notNull().default("[]"),
+    initialBalance: integer("initial_balance")
+      .$type<CopAmount>()
+      .notNull()
+      .default(0 as CopAmount),
+    isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [
+    index("idx_accounts_user").on(table.userId),
+    index("idx_accounts_user_bank").on(table.userId, table.bankKey),
   ]
 );
 

@@ -122,6 +122,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
       const allIds = getAllNotificationIds(dbRef, userIdRef);
       softDeleteAllNotifications(dbRef, userIdRef, now);
       allIds.forEach((id) => {
+        // biome-ignore lint/style/noNonNullAssertion: dbRef is guaranteed non-null by guard at function entry
         enqueueSync(dbRef!, {
           id: generateSyncQueueId(),
           tableName: "notifications",

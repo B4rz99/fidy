@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type {
+  AccountId,
   BillId,
   BillPaymentId,
   CategoryId,
@@ -317,6 +318,9 @@ describe("useCalendarStore", () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           deletedAt: null,
+          accountId: "" as AccountId,
+          linkedTransactionId: null,
+          needsAccountReview: false,
         },
       ],
     });
@@ -511,6 +515,9 @@ describe("useCalendarStore", () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           deletedAt: null,
+          accountId: "" as AccountId,
+          linkedTransactionId: null,
+          needsAccountReview: false,
         },
       ],
     });

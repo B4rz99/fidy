@@ -1,4 +1,5 @@
 import type {
+  AccountId,
   BillId,
   BillPaymentId,
   BudgetId,
@@ -96,4 +97,8 @@ export function generateUserCategoryId(): UserCategoryId {
 
 export function generateNotificationId(): NotificationId {
   return generateId("nf") as NotificationId;
+}
+
+export function generateAccountId(): AccountId {
+  return generateId("acct") as AccountId;
 }

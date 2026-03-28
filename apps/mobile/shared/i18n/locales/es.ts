@@ -655,13 +655,52 @@ const es = {
     netPrefix: "Neto: ",
     spendingByCategory: "Gastos por Categoría",
     vsPreviousPeriod: {
+      // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
       W: "vs 7 días anteriores",
+      // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
       M: "vs 30 días anteriores",
+      // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
       Q: "vs 90 días anteriores",
+      // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
       Y: "vs 365 días anteriores",
     },
     totalSpending: "Gasto total",
     noData: "No hay suficientes datos para este periodo",
+  },
+
+  // Cuentas
+  accounts: {
+    title: "Cuentas",
+    addAccount: "Agregar Cuenta",
+    editAccount: "Editar Cuenta",
+    deleteAccount: "Eliminar Cuenta",
+    deleteConfirmTitle: "Eliminar Cuenta",
+    deleteConfirmMessage:
+      '¿Estás seguro de eliminar "%{accountName}"? Las transacciones se moverán a la cuenta principal.',
+    defaultAccount: "Cuenta Principal",
+    setAsDefault: "Establecer como principal",
+    accountName: "Nombre de la cuenta",
+    accountType: "Tipo de cuenta",
+    identifiers: "Identificador de tarjeta",
+    initialBalance: "Saldo actual",
+    noAccountsYet: "No hay cuentas aún",
+    noAccountsHint: "Agrega tus cuentas bancarias para rastrear cada una por separado",
+    reviewBadge: "%{count} por revisar",
+    reviewQueueTitle: "Revisar Cuenta",
+    reviewQueueHint: "Elige la cuenta correcta para esta transacción",
+    debit: "Débito",
+    credit: "Crédito",
+    wallet: "Billetera",
+    transfer: "Transferencia",
+    transferLabel: "%{from} → %{to}",
+    step1Title: "Elige un Banco",
+    step2Title: "Datos de la Cuenta",
+    step3Title: "Confirmar",
+    confirmMessage:
+      'Las transacciones de %{bank} con "%{identifier}" se vincularán automáticamente a esta cuenta',
+    otherBank: "Otro banco",
+    identifierPlaceholderCardName: "Nombre de tarjeta (ej., Visa Oro)",
+    identifierPlaceholderLast4: "Últimos 4 dígitos (ej., *1234)",
   },
 } as const;
 
