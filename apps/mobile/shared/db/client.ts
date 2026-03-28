@@ -6,7 +6,7 @@ import { openDatabaseSync } from "expo-sqlite";
 import { captureError } from "@/shared/lib";
 
 // biome-ignore lint/suspicious/noExplicitAny: drizzle generic varies by caller
-export type AnyDb = ExpoSQLiteDatabase<any>;
+export type AnyDb = ExpoSQLiteDatabase<any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- drizzle schema generic varies by caller
 
 const HEX_KEY_PATTERN = /^[0-9a-f]{64}$/;
 

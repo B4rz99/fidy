@@ -16,7 +16,7 @@ export const TypeToggle = ({ value, onChange }: TypeToggleProps) => {
 
   const handlePress = (type: TransactionType) => {
     if (type !== value) {
-      Haptics.selectionAsync();
+      void Haptics.selectionAsync();
       onChange(type);
     }
   };

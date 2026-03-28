@@ -62,7 +62,7 @@ export const TransactionDetails = () => {
           category: String(categoryId ?? ""),
           source: "manual",
         });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         resetForm();
         back();
       }
@@ -128,7 +128,9 @@ export const TransactionDetails = () => {
         <Pressable
           className="h-[52px] w-full items-center justify-center rounded-xl"
           style={{ backgroundColor: accentGreen, opacity: isSaving ? 0.5 : 1 }}
-          onPress={handleSave}
+          onPress={() => {
+            void handleSave();
+          }}
           disabled={isSaving}
           accessibilityRole="button"
           accessibilityLabel={t("transactions.saveTransaction")}

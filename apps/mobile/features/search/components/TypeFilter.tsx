@@ -17,7 +17,7 @@ export const TypeFilter = ({ value, onChange }: TypeFilterProps) => {
 
   const handlePress = (type: FilterType) => {
     if (type !== value) {
-      Haptics.selectionAsync();
+      void Haptics.selectionAsync();
       onChange(type);
     }
   };

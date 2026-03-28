@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
-import { Appearance } from "react-native";
 import { create } from "zustand";
+import { Appearance } from "@/shared/components/rn";
 
 export type ThemePreference = "system" | "light" | "dark";
 
@@ -119,7 +119,8 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
       });
 
       if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- fetch response body is untyped
+        const body: { error?: string } = await response.json().catch(() => ({}));
         throw new Error(body.error ?? "delete_failed");
       }
 

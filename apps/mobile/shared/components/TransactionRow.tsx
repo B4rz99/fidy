@@ -1,10 +1,7 @@
-import * as Haptics from "expo-haptics";
-import { useMemo, useRef } from "react";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { runOnJS, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
+import { useCallback } from "react";
 import type { LucideIcon } from "@/shared/components/icons";
-import { Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { ActionSheetIOS, Platform, Pressable, Text, View } from "@/shared/components/rn";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 type TransactionRowProps = {
   icon: LucideIcon;
@@ -15,6 +12,7 @@ type TransactionRowProps = {
   category: string;
   isPositive?: boolean;
   onEdit?: () => void;
+  onDelete?: () => void;
 };
 
 export function TransactionRow({
@@ -26,38 +24,34 @@ export function TransactionRow({
   category,
   isPositive = false,
   onEdit,
+  onDelete,
 }: TransactionRowProps) {
   const defaultIconBg = useThemeColor("peachLight");
   const iconColor = useThemeColor("tertiary");
+  const { t } = useTranslation();
 
-  const pressed = useSharedValue(false);
-  const onEditRef = useRef(onEdit);
-  onEditRef.current = onEdit;
+  const handleLongPress = useCallback(() => {
+    if (Platform.OS !== "ios") return;
 
-  const longPress = useMemo(() => {
-    if (!onEdit) return null;
+    const options = [
+      ...(onEdit ? [t("common.edit")] : []),
+      ...(onDelete ? [t("common.delete")] : []),
+      t("common.cancel"),
+    ];
+    const cancelButtonIndex = options.length - 1;
+    const destructiveButtonIndex = onDelete ? options.indexOf(t("common.delete")) : undefined;
 
-    const fire = () => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      onEditRef.current?.();
-    };
+    ActionSheetIOS.showActionSheetWithOptions(
+      { options, cancelButtonIndex, destructiveButtonIndex },
+      (buttonIndex) => {
+        const selected = options[buttonIndex];
+        if (selected === t("common.edit")) onEdit?.();
+        if (selected === t("common.delete")) onDelete?.();
+      }
+    );
+  }, [onEdit, onDelete, t]);
 
-    return Gesture.LongPress()
-      .minDuration(100)
-      .onBegin(() => {
-        pressed.value = true;
-      })
-      .onStart(() => {
-        runOnJS(fire)();
-      })
-      .onFinalize(() => {
-        pressed.value = false;
-      });
-  }, [pressed, onEdit]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: pressed.value ? 0.7 : 1,
-  }));
+  const hasActions = (onEdit != null || onDelete != null) && Platform.OS === "ios";
 
   const content = (
     <View className="flex-row items-center py-3">
@@ -94,11 +88,7 @@ export function TransactionRow({
     </View>
   );
 
-  if (!longPress) return content;
+  if (!hasActions) return content;
 
-  return (
-    <GestureDetector gesture={longPress}>
-      <Animated.View style={animatedStyle}>{content}</Animated.View>
-    </GestureDetector>
-  );
+  return <Pressable onLongPress={handleLongPress}>{content}</Pressable>;
 }

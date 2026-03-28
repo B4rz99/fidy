@@ -14,6 +14,7 @@ export {
   goals,
   merchantRules,
   notificationSources,
+  notifications,
   processedCaptures,
   processedEmails,
   syncConflicts,
