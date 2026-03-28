@@ -264,21 +264,16 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
 
   removeTransaction: async (id) => {
     if (dbRef) {
-      try {
-        const now = toIsoDateTime(new Date());
-        await softDeleteTransaction(dbRef, id, now);
-        await enqueueSync(dbRef, {
-          id: generateSyncQueueId(),
-          tableName: "transactions",
-          rowId: id,
-          operation: "delete",
-          createdAt: now,
-        });
-        trackTransactionDeleted();
-      } catch (e) {
-        // DB operation failed — keep UI state unchanged
-        throw e;
-      }
+      const now = toIsoDateTime(new Date());
+      await softDeleteTransaction(dbRef, id, now);
+      await enqueueSync(dbRef, {
+        id: generateSyncQueueId(),
+        tableName: "transactions",
+        rowId: id,
+        operation: "delete",
+        createdAt: now,
+      });
+      trackTransactionDeleted();
     }
     await get().refresh();
   },
