@@ -26,7 +26,7 @@ let prevPagesRef: unknown = null;
 type AnalyticsState = {
   readonly period: AnalyticsPeriod;
   readonly incomeExpense: IncomeExpenseResult | null;
-  readonly categoryBreakdown: ReadonlyArray<CategoryBreakdownItem>;
+  readonly categoryBreakdown: readonly CategoryBreakdownItem[];
   readonly periodDelta: PeriodDelta | null;
   readonly isLoading: boolean;
 };

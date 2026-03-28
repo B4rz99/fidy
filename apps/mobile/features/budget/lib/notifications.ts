@@ -1,6 +1,6 @@
 import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
-import { determineAlertAction, PRE_PERMISSION_KEY } from "@/features/notifications/lib/permission";
+import { determineAlertAction, PRE_PERMISSION_KEY } from "@/features/notifications";
 import i18n from "../../../shared/i18n/i18n";
 import type { BudgetAlert } from "./derive";
 

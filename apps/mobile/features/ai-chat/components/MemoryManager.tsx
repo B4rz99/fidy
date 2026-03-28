@@ -75,12 +75,12 @@ export function MemoryManager({ onBack }: MemoryManagerProps) {
   const deleteMemory = useChatStore((s) => s.deleteMemory);
 
   useMountEffect(() => {
-    loadMemories();
+    void loadMemories();
   });
 
   const handleDelete = useCallback(
     (id: UserMemoryId) => {
-      deleteMemory(id);
+      void deleteMemory(id);
     },
     [deleteMemory]
   );

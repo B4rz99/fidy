@@ -1,7 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import * as Notifications from "expo-notifications";
 import { create } from "zustand";
-import { deletePushToken, PROJECT_ID } from "@/features/notifications/services/push-token";
+import { deletePushToken, PROJECT_ID } from "@/features/notifications";
 import { getSupabase } from "@/shared/db";
 import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
 

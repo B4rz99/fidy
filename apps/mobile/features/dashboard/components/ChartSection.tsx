@@ -36,7 +36,7 @@ type ChartSectionProps = {
 
 const toSegments = (categories: readonly CategorySpendingItem[], totalSpent: number) =>
   categories.map((c) => {
-    const cat = CATEGORY_MAP[c.categoryId as keyof typeof CATEGORY_MAP];
+    const cat = CATEGORY_MAP[c.categoryId];
     return {
       percentage: totalSpent === 0 ? 0 : (c.total / totalSpent) * 100,
       color: cat?.color ?? "#B8A9D4",
@@ -45,7 +45,7 @@ const toSegments = (categories: readonly CategorySpendingItem[], totalSpent: num
 
 const toCategoryRows = (categories: readonly CategorySpendingItem[], locale: string) =>
   categories.map((c) => {
-    const cat = CATEGORY_MAP[c.categoryId as keyof typeof CATEGORY_MAP];
+    const cat = CATEGORY_MAP[c.categoryId];
     return {
       categoryId: c.categoryId,
       color: cat?.color ?? "#B8A9D4",

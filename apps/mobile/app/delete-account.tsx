@@ -10,7 +10,7 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 export default function DeleteAccountSheet() {
   const { t } = useTranslation();
   const router = useRouter();
-  const userId = useAuthStore((s) => s.session?.user?.id);
+  const userId = useAuthStore((s) => s.session?.user.id);
   const accessToken = useAuthStore((s) => s.session?.access_token);
   const isDeleting = useSettingsStore((s) => s.isDeleting);
   const deleteAccount = useSettingsStore((s) => s.deleteAccount);
@@ -92,7 +92,9 @@ export default function DeleteAccountSheet() {
           </Text>
         </Pressable>
         <Pressable
-          onPress={handleDelete}
+          onPress={() => {
+            void handleDelete();
+          }}
           disabled={isDeleting}
           style={{
             height: 48,

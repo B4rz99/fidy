@@ -39,8 +39,8 @@ export default function AutoSuggestBudgetsScreen() {
 
   const { isBusy, run: guardedRun } = useAsyncGuard();
 
-  const handleAccept = () =>
-    guardedRun(async () => {
+  const handleAccept = () => {
+    void guardedRun(async () => {
       const budgets = buildBudgetMap();
       if (budgets.size > 0) {
         await acceptSuggestions(budgets);
@@ -50,6 +50,7 @@ export default function AutoSuggestBudgetsScreen() {
       }
       router.back();
     });
+  };
 
   const handleSkip = () => {
     trackBudgetSuggestionRejected();
@@ -75,7 +76,7 @@ export default function AutoSuggestBudgetsScreen() {
 
         <View style={styles.list}>
           {autoSuggestions.map((suggestion) => {
-            const category = CATEGORY_MAP[suggestion.categoryId];
+            const category = CATEGORY_MAP[suggestion.categoryId] ?? null;
             const CategoryIcon = category?.icon;
             const categoryLabel = category
               ? getCategoryLabel(category, locale)
@@ -85,9 +86,7 @@ export default function AutoSuggestBudgetsScreen() {
             return (
               <View key={suggestion.categoryId} style={[styles.row, { borderColor }]}>
                 <View style={styles.rowLeft}>
-                  {CategoryIcon && (
-                    <CategoryIcon size={18} color={category?.color ?? primaryColor} />
-                  )}
+                  {category && CategoryIcon && <CategoryIcon size={18} color={category.color} />}
                   <View>
                     <Text style={[styles.categoryName, { color: primaryColor }]}>
                       {categoryLabel}

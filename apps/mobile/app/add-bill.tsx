@@ -65,12 +65,12 @@ function AddBillForm({
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
-  const handleSave = () =>
-    guardedSave(async () => {
+  const handleSave = () => {
+    void guardedSave(async () => {
       const trimmedName = name.trim();
       if (!trimmedName) return;
 
-      if (isEdit && existingBill) {
+      if (isEdit) {
         const amountValue = parseDigitsToAmount(amount);
         if (amountValue <= 0) return;
         await onUpdateBill(existingBill.id as BillId, {
@@ -86,6 +86,7 @@ function AddBillForm({
         if (success) onDone();
       }
     });
+  };
 
   const handleFrequencyPress = (value: BillFrequency) => {
     Keyboard.dismiss();

@@ -244,9 +244,9 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     const { transaction } = result;
 
     try {
-      await insertTransaction(dbRef, toTransactionRow(transaction));
+      insertTransaction(dbRef, toTransactionRow(transaction));
 
-      await enqueueSync(dbRef, {
+      enqueueSync(dbRef, {
         id: generateSyncQueueId(),
         tableName: "transactions",
         rowId: transaction.id,
@@ -264,16 +264,20 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
 
   removeTransaction: async (id) => {
     if (dbRef) {
-      const now = toIsoDateTime(new Date());
-      await softDeleteTransaction(dbRef, id, now);
-      await enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "transactions",
-        rowId: id,
-        operation: "delete",
-        createdAt: now,
-      });
-      trackTransactionDeleted();
+      try {
+        const now = toIsoDateTime(new Date());
+        softDeleteTransaction(dbRef, id, now);
+        enqueueSync(dbRef, {
+          id: generateSyncQueueId(),
+          tableName: "transactions",
+          rowId: id,
+          operation: "delete",
+          createdAt: now,
+        });
+        trackTransactionDeleted();
+      } catch {
+        return;
+      }
     }
     await get().refresh();
   },
@@ -316,7 +320,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     try {
       upsertTransaction(dbRef, toTransactionRow(transaction));
 
-      await enqueueSync(dbRef, {
+      enqueueSync(dbRef, {
         id: generateSyncQueueId(),
         tableName: "transactions",
         rowId: id,
@@ -351,7 +355,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     try {
       upsertTransaction(dbRef, toTransactionRow(transaction));
 
-      await enqueueSync(dbRef, {
+      enqueueSync(dbRef, {
         id: generateSyncQueueId(),
         tableName: "transactions",
         rowId: id,

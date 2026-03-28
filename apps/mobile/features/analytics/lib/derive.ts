@@ -1,4 +1,4 @@
-import { toIsoDate } from "@/shared/lib/format-date";
+import { toIsoDate } from "@/shared/lib";
 import type { CategoryId, CopAmount, IsoDate } from "@/shared/types/branded";
 
 export type AnalyticsPeriod = "W" | "M" | "Q" | "Y";
@@ -25,12 +25,12 @@ export type PeriodDelta = {
   readonly totalDelta: CopAmount;
   readonly totalDeltaPercent: number;
   readonly spendingIncreased: boolean;
-  readonly categoryDeltas: ReadonlyArray<{
+  readonly categoryDeltas: readonly {
     readonly categoryId: CategoryId;
     readonly delta: CopAmount;
     readonly deltaPercent: number;
     readonly increased: boolean;
-  }>;
+  }[];
 };
 
 /** Returns a Date offset by `days` relative to `base` (negative = in the past). */
@@ -46,9 +46,13 @@ const computeDeltaPercent = (curr: number, prev: number): number =>
 
 /** Period window sizes in days (inclusive range length - 1). */
 const PERIOD_DAYS: Record<AnalyticsPeriod, number> = {
+  // biome-ignore lint/style/useNamingConvention: AnalyticsPeriod keys are single uppercase letters by design
   W: 6,
+  // biome-ignore lint/style/useNamingConvention: AnalyticsPeriod keys are single uppercase letters by design
   M: 29,
+  // biome-ignore lint/style/useNamingConvention: AnalyticsPeriod keys are single uppercase letters by design
   Q: 89,
+  // biome-ignore lint/style/useNamingConvention: AnalyticsPeriod keys are single uppercase letters by design
   Y: 364,
 };
 
@@ -98,9 +102,9 @@ export function deriveIncomeExpense(income: CopAmount, expenses: CopAmount): Inc
  * If totalExpenses is 0, all percents are 0.
  */
 export function deriveCategoryBreakdown(
-  spending: ReadonlyArray<{ readonly categoryId: CategoryId; readonly total: CopAmount }>,
+  spending: readonly { readonly categoryId: CategoryId; readonly total: CopAmount }[],
   totalExpenses: CopAmount
-): ReadonlyArray<CategoryBreakdownItem> {
+): readonly CategoryBreakdownItem[] {
   return spending
     .map((item) => ({
       categoryId: item.categoryId,
@@ -117,17 +121,17 @@ export function deriveCategoryBreakdown(
 export function derivePeriodDelta(
   current: {
     readonly totalExpenses: CopAmount;
-    readonly categorySpending: ReadonlyArray<{
+    readonly categorySpending: readonly {
       readonly categoryId: CategoryId;
       readonly total: CopAmount;
-    }>;
+    }[];
   },
   previous: {
     readonly totalExpenses: CopAmount;
-    readonly categorySpending: ReadonlyArray<{
+    readonly categorySpending: readonly {
       readonly categoryId: CategoryId;
       readonly total: CopAmount;
-    }>;
+    }[];
   }
 ): PeriodDelta {
   const totalDelta = (current.totalExpenses - previous.totalExpenses) as CopAmount;

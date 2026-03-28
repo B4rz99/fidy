@@ -3,7 +3,12 @@ import { and, count, desc, eq, gte, lt } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { detectedSmsEvents, notificationSources, processedCaptures } from "@/shared/db";
 import { generateNotificationSourceId, toIsoDate } from "@/shared/lib";
-import type { DetectedSmsEventId, IsoDateTime, UserId } from "@/shared/types/branded";
+import type {
+  DetectedSmsEventId,
+  IsoDateTime,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 // -- notificationSources CRUD --
 
@@ -123,7 +128,7 @@ export async function linkSmsEventToTransaction(db: AnyDb, id: string, transacti
   await db
     .update(detectedSmsEvents)
     .set({
-      linkedTransactionId: transactionId as import("@/shared/types/branded").TransactionId,
+      linkedTransactionId: transactionId as TransactionId,
       dismissed: true,
     })
     .where(eq(detectedSmsEvents.id, id as DetectedSmsEventId));

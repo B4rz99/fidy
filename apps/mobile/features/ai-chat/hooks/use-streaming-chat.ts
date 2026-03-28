@@ -6,7 +6,6 @@ import {
   trackAiMessageSent,
   trackTransactionCreated,
 } from "@/shared/lib";
-import type { IsoDate } from "@/shared/types/branded";
 import { parseActionFromResponse } from "../lib/parse-action";
 import type { ChatAction } from "../schema";
 import { streamChat } from "../services/ai-chat-api";
@@ -37,7 +36,7 @@ export function useStreamingChat() {
         store.setDigits(String(action.data.amount));
         store.setCategoryId(action.data.categoryId);
         store.setDescription(action.data.description);
-        store.setDate(parseIsoDate(action.data.date as IsoDate));
+        store.setDate(parseIsoDate(action.data.date));
         try {
           const result = await store.saveTransaction();
           if (result.success) {
@@ -56,6 +55,10 @@ export function useStreamingChat() {
         // Edit not yet fully wired
         break;
       }
+      case "delete": {
+        // Delete handled via updateActionStatus flow in ChatScreen
+        break;
+      }
     }
   }, []);
 
@@ -65,9 +68,8 @@ export function useStreamingChat() {
 
       const store = useChatStore.getState();
 
-      let sessionId = store.currentSessionId;
-      if (!sessionId) {
-        sessionId = await store.createSession(text);
+      if (!store.currentSessionId) {
+        await store.createSession(text);
       }
 
       await store.addUserMessage(text);
@@ -75,7 +77,7 @@ export function useStreamingChat() {
 
       const allMessages = [
         ...store.messages.map((m) => ({
-          role: m.role as "user" | "assistant",
+          role: m.role,
           content: m.content,
         })),
         { role: "user" as const, content: text },
@@ -97,28 +99,32 @@ export function useStreamingChat() {
               accumulated += chunk;
               useChatStore.getState().setStreamingContent(accumulated);
             },
-            onDone: async () => {
-              const action = parseActionFromResponse(accumulated);
-              await useChatStore.getState().addAssistantMessage(accumulated, action);
+            onDone: () => {
+              void (async () => {
+                const action = parseActionFromResponse(accumulated);
+                await useChatStore.getState().addAssistantMessage(accumulated, action);
 
-              if (action && action.type === "add") {
-                try {
-                  await executeAction(action);
-                } catch (actionErr) {
-                  captureWarning("ai_action_failed", {
-                    actionType: action.type,
-                    errorType: actionErr instanceof Error ? actionErr.message : "unknown",
-                  });
+                if (action?.type === "add") {
+                  try {
+                    await executeAction(action);
+                  } catch (actionErr) {
+                    captureWarning("ai_action_failed", {
+                      actionType: action.type,
+                      errorType: actionErr instanceof Error ? actionErr.message : "unknown",
+                    });
+                  }
                 }
-              }
 
-              resetStreamState();
+                resetStreamState();
+              })();
             },
-            onError: async (error) => {
-              const errorMessage =
-                accumulated || `I'm sorry, something went wrong. Please try again. (${error})`;
-              await useChatStore.getState().addAssistantMessage(errorMessage);
-              resetStreamState();
+            onError: (error) => {
+              void (async () => {
+                const errorMessage =
+                  accumulated || `I'm sorry, something went wrong. Please try again. (${error})`;
+                await useChatStore.getState().addAssistantMessage(errorMessage);
+                resetStreamState();
+              })();
             },
           },
           controller.signal
