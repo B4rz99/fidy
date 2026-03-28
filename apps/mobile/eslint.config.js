@@ -14,6 +14,7 @@ module.exports = defineConfig([
       "shared/components/rn.ts",
       "shared/components/icons.ts",
       "modules/**",
+      "app/_layout.tsx",
     ],
     rules: {
       "no-restricted-imports": [
