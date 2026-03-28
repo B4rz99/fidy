@@ -20,6 +20,7 @@ export function useVoiceTransaction() {
   const finalTranscriptRef = useRef("");
   const sttStartRef = useRef(0);
   const parsedRef = useRef<VoiceParseResult | null>(null);
+  const cancelledRef = useRef(false);
 
   const cleanup = useCallback(() => {
     for (const sub of subscriptionsRef.current) {
@@ -34,6 +35,9 @@ export function useVoiceTransaction() {
     const parseStart = Date.now();
     const result = await voiceParse(transcript, locale);
     const parseDurationMs = Date.now() - parseStart;
+
+    // Guard: if cancel() was called during the await, discard the result
+    if (cancelledRef.current) return;
 
     if (!result) {
       captureWarning("voice_parse_failed", {
@@ -84,6 +88,7 @@ export function useVoiceTransaction() {
     setState({ status: "listening", transcript: "" });
     finalTranscriptRef.current = "";
     sttStartRef.current = Date.now();
+    cancelledRef.current = false;
 
     const locale = useLocaleStore.getState().locale;
 
@@ -114,9 +119,9 @@ export function useVoiceTransaction() {
     mod.startListening(locale);
   }, [cleanup, parseTranscript]);
 
-  const confirm = useCallback(async () => {
+  const confirm = useCallback(async (): Promise<boolean> => {
     const parsed = parsedRef.current;
-    if (!parsed) return;
+    if (!parsed) return false;
     setState({ status: "saving" });
     const result = await saveVoiceTransaction(parsed);
     if (result.success) {
@@ -128,13 +133,14 @@ export function useVoiceTransaction() {
       });
       parsedRef.current = null;
       setState({ status: "idle" });
-    } else {
-      captureWarning("voice_save_failed", {
-        categoryId: String(parsed.categoryId),
-        amount: parsed.amount,
-      });
-      setState({ status: "error", message: "couldNotUnderstand", transcript: "" });
+      return true;
     }
+    captureWarning("voice_save_failed", {
+      categoryId: String(parsed.categoryId),
+      amount: parsed.amount,
+    });
+    setState({ status: "error", message: "couldNotUnderstand", transcript: "" });
+    return false;
   }, []);
 
   const retry = useCallback(() => {
@@ -143,6 +149,7 @@ export function useVoiceTransaction() {
   }, [cleanup, startListening]);
 
   const cancel = useCallback(() => {
+    cancelledRef.current = true;
     cleanup();
     // Stop listening if active
     import("@/modules/expo-speech-recognition").then((mod) => {

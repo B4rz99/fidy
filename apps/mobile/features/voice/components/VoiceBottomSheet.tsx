@@ -21,8 +21,8 @@ export function VoiceBottomSheet({ visible, onClose }: VoiceBottomSheetProps) {
   };
 
   const handleConfirm = async () => {
-    await confirm();
-    onClose();
+    const saved = await confirm();
+    if (saved) onClose();
   };
 
   const handleShow = () => {
