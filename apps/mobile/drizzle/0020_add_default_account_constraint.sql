@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `idx_accounts_one_default` ON `accounts` (`user_id`) WHERE `is_default` = 1 AND `deleted_at` IS NULL;

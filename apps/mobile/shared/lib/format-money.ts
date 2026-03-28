@@ -47,7 +47,7 @@ export const formatMoney = (amount: CopAmount, config?: CurrencyConfig): string 
  */
 export const formatSignedMoney = (
   amount: CopAmount,
-  type: "expense" | "income",
+  type: "expense" | "income" | "transfer",
   config?: CurrencyConfig
 ): string => {
   const formatted = formatMoney(amount, config);

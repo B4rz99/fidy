@@ -141,6 +141,13 @@
       "when": 1774676765936,
       "tag": "0019_accounts_and_transaction_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1774763165936,
+      "tag": "0020_add_default_account_constraint",
+      "breakpoints": true
     }
   ]
 }

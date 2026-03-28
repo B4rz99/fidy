@@ -81,7 +81,9 @@ export const transactions = sqliteTable(
       .notNull()
       .default("" as AccountId),
     linkedTransactionId: text("linked_transaction_id").$type<TransactionId>(),
-    needsAccountReview: integer("needs_account_review").notNull().default(0),
+    needsAccountReview: integer("needs_account_review", { mode: "boolean" })
+      .notNull()
+      .default(false),
   },
   (table) => [
     index("idx_transactions_user_date").on(table.userId, table.date),
@@ -103,7 +105,7 @@ export const accounts = sqliteTable(
       .$type<CopAmount>()
       .notNull()
       .default(0 as CopAmount),
-    isDefault: integer("is_default").notNull().default(0),
+    isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
     updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
     deletedAt: text("deleted_at").$type<IsoDateTime>(),

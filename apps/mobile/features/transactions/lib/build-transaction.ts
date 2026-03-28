@@ -79,7 +79,7 @@ export function toStoredTransaction(row: TransactionRow): StoredTransaction {
     deletedAt: row.deletedAt ? new Date(row.deletedAt) : null,
     accountId: (row.accountId ?? "") as AccountId,
     linkedTransactionId: (row.linkedTransactionId ?? null) as TransactionId | null,
-    needsAccountReview: Boolean(row.needsAccountReview),
+    needsAccountReview: row.needsAccountReview ?? false,
   };
 }
 
@@ -94,6 +94,9 @@ export function toTransactionRow(tx: StoredTransaction): TransactionRow {
     date: toIsoDate(tx.date),
     createdAt: tx.createdAt.toISOString() as IsoDateTime,
     updatedAt: tx.updatedAt.toISOString() as IsoDateTime,
+    deletedAt: tx.deletedAt ? (tx.deletedAt.toISOString() as IsoDateTime) : null,
     accountId: tx.accountId,
+    linkedTransactionId: tx.linkedTransactionId,
+    needsAccountReview: tx.needsAccountReview,
   };
 }

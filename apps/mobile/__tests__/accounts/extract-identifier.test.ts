@@ -33,4 +33,16 @@ describe("extractCardIdentifier", () => {
   it("prefers card name over last 4 digits when both present", () => {
     expect(extractCardIdentifier("Tarjeta Visa Oro *1234 compra por $50,000.")).toBe("Visa Oro");
   });
+
+  it("extracts card name with accented characters", () => {
+    expect(extractCardIdentifier("Compra con tarjeta Visa débito en Almacenes.")).toBe(
+      "Visa débito"
+    );
+  });
+
+  it("extracts card name with ñ and accented vowels", () => {
+    expect(extractCardIdentifier("Compra con tarjeta Visa Clásica por $80,000.")).toBe(
+      "Visa Clásica"
+    );
+  });
 });

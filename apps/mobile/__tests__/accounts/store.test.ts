@@ -42,15 +42,17 @@ import {
 import { useAccountStore } from "@/features/accounts/store";
 import { enqueueSync } from "@/shared/db/enqueue-sync";
 
+const mockUpdateChain = {
+  set: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ run: vi.fn() }) }),
+};
 // biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
-const mockUpdateChain = { set: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ run: vi.fn() }) }) };
 const mockDb = { update: vi.fn().mockReturnValue(mockUpdateChain) } as any;
 const mockUserId = "user-1" as UserId;
 
 const makeAccountRow = (
   overrides: Partial<{
     id: string;
-    isDefault: number;
+    isDefault: boolean;
     name: string;
   }> = {}
 ) => ({
@@ -61,7 +63,7 @@ const makeAccountRow = (
   bankKey: "bancolombia",
   identifiers: "[]",
   initialBalance: 0 as CopAmount,
-  isDefault: overrides.isDefault ?? 0,
+  isDefault: overrides.isDefault ?? false,
   createdAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
   updatedAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
   deletedAt: null,
@@ -114,8 +116,8 @@ describe("useAccountStore", () => {
 
   it("loadAccounts sets defaultAccountId when a default account exists", () => {
     vi.mocked(getAccountsByUser).mockReturnValueOnce([
-      makeAccountRow({ id: "acc-default", isDefault: 1 }),
-      makeAccountRow({ id: "acc-other", isDefault: 0 }),
+      makeAccountRow({ id: "acc-default", isDefault: true }),
+      makeAccountRow({ id: "acc-other", isDefault: false }),
     ]);
 
     useAccountStore.getState().loadAccounts();
@@ -126,7 +128,7 @@ describe("useAccountStore", () => {
 
   it("loadAccounts sets defaultAccountId to null when no default exists", () => {
     vi.mocked(getAccountsByUser).mockReturnValueOnce([
-      makeAccountRow({ id: "acc-1", isDefault: 0 }),
+      makeAccountRow({ id: "acc-1", isDefault: false }),
     ]);
 
     useAccountStore.getState().loadAccounts();
@@ -201,7 +203,7 @@ describe("useAccountStore", () => {
         bankKey: "nequi",
         identifiers: '["3001234567"]',
         initialBalance: 50000,
-        isDefault: 0,
+        isDefault: false,
         userId: mockUserId,
       })
     );

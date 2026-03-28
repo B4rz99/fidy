@@ -655,9 +655,13 @@ const es = {
     netPrefix: "Neto: ",
     spendingByCategory: "Gastos por Categoría",
     vsPreviousPeriod: {
+      // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
       W: "vs 7 días anteriores",
+      // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
       M: "vs 30 días anteriores",
+      // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
       Q: "vs 90 días anteriores",
+      // biome-ignore lint/style/useNamingConvention: key must match AnalyticsPeriod union
       Y: "vs 365 días anteriores",
     },
     totalSpending: "Gasto total",

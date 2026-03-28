@@ -1,4 +1,4 @@
-const CARD_NAME_PATTERN = /tarjeta\s+([\w\s]+?)(?:\s+en\s|\s+por\s|\s+\*|\.\s|$)/i;
+const CARD_NAME_PATTERN = /tarjeta\s+([\p{L}\p{N}\s]+?)(?:\s+en\s|\s+por\s|\s+\*|\.\s|$)/iu;
 const LAST_4_STAR_PATTERN = /\*{1,4}(\d{4})/;
 
 export function extractCardIdentifier(text: string): string | null {

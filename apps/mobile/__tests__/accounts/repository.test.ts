@@ -24,8 +24,35 @@ vi.mock("drizzle-orm", () => ({
 }));
 
 vi.mock("@/shared/db/schema", () => ({
-  accounts: "accounts",
-  transactions: "transactions",
+  accounts: {
+    id: "accounts.id",
+    userId: "accounts.userId",
+    name: "accounts.name",
+    type: "accounts.type",
+    bankKey: "accounts.bankKey",
+    identifiers: "accounts.identifiers",
+    initialBalance: "accounts.initialBalance",
+    isDefault: "accounts.isDefault",
+    createdAt: "accounts.createdAt",
+    updatedAt: "accounts.updatedAt",
+    deletedAt: "accounts.deletedAt",
+  },
+  transactions: {
+    id: "transactions.id",
+    userId: "transactions.userId",
+    type: "transactions.type",
+    amount: "transactions.amount",
+    categoryId: "transactions.categoryId",
+    description: "transactions.description",
+    date: "transactions.date",
+    createdAt: "transactions.createdAt",
+    updatedAt: "transactions.updatedAt",
+    deletedAt: "transactions.deletedAt",
+    source: "transactions.source",
+    accountId: "transactions.accountId",
+    linkedTransactionId: "transactions.linkedTransactionId",
+    needsAccountReview: "transactions.needsAccountReview",
+  },
 }));
 
 const mockRun = vi.fn();
@@ -41,6 +68,9 @@ const mockUpdate = vi.fn().mockReturnThis();
 const mockSet = vi.fn().mockReturnThis();
 const mockUpdateWhere = vi.fn().mockReturnThis();
 
+const mockTransaction = vi.fn((fn: (tx: any) => void) => fn(mockTxDb));
+const mockTxDb = {} as any;
+
 const mockDb = {
   insert: mockInsert,
   select: mockSelect,
@@ -48,6 +78,7 @@ const mockDb = {
   where: mockWhere,
   orderBy: mockOrderBy,
   update: mockUpdate,
+  transaction: mockTransaction,
 } as any;
 
 describe("accounts repository", () => {
@@ -76,6 +107,9 @@ describe("accounts repository", () => {
     mockUpdate.mockReturnValue({ set: mockSet });
     mockSet.mockReturnValue({ where: mockUpdateWhere });
     mockUpdateWhere.mockReturnValue({ run: mockRun });
+
+    // transaction db mirrors main db for update chains
+    mockTxDb.update = mockUpdate;
   });
 
   // ── insertAccount ──────────────────────────────────────────────────────────
@@ -92,7 +126,7 @@ describe("accounts repository", () => {
         bankKey: "bancolombia",
         identifiers: "[]",
         initialBalance: 0 as CopAmount,
-        isDefault: 0,
+        isDefault: false,
         createdAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
         updatedAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
         deletedAt: null,
@@ -119,7 +153,7 @@ describe("accounts repository", () => {
           bankKey: "bancolombia",
           identifiers: "[]",
           initialBalance: 0,
-          isDefault: 1,
+          isDefault: true,
           createdAt: "2026-03-01T00:00:00.000Z",
           updatedAt: "2026-03-01T00:00:00.000Z",
           deletedAt: null,
@@ -155,7 +189,7 @@ describe("accounts repository", () => {
         id: "acc-1",
         userId: "user-1",
         name: "Bancolombia",
-        isDefault: 1,
+        isDefault: true,
       };
       mockAll.mockReturnValueOnce([mockRow]);
 
@@ -189,14 +223,14 @@ describe("accounts repository", () => {
         "2026-03-15T10:00:00.000Z" as IsoDateTime
       );
 
-      // Two update calls: one to clear, one to set
+      expect(mockTransaction).toHaveBeenCalledTimes(1);
       expect(mockUpdate).toHaveBeenCalledTimes(2);
       expect(mockSet).toHaveBeenNthCalledWith(1, {
-        isDefault: 0,
+        isDefault: false,
         updatedAt: "2026-03-15T10:00:00.000Z",
       });
       expect(mockSet).toHaveBeenNthCalledWith(2, {
-        isDefault: 1,
+        isDefault: true,
         updatedAt: "2026-03-15T10:00:00.000Z",
       });
       expect(mockRun).toHaveBeenCalledTimes(2);
@@ -307,7 +341,7 @@ describe("accounts repository", () => {
       expect(mockUpdate).toHaveBeenCalled();
       expect(mockSet).toHaveBeenCalledWith({
         accountId: "acc-2",
-        needsAccountReview: 0,
+        needsAccountReview: false,
         updatedAt: "2026-03-15T10:00:00.000Z",
       });
       expect(mockRun).toHaveBeenCalled();
@@ -327,7 +361,7 @@ describe("accounts repository", () => {
         "2026-03-15T10:00:00.000Z" as IsoDateTime
       );
 
-      // Two update calls — one for each transaction
+      expect(mockTransaction).toHaveBeenCalledTimes(1);
       expect(mockUpdate).toHaveBeenCalledTimes(2);
       expect(mockSet).toHaveBeenNthCalledWith(1, {
         linkedTransactionId: "tx-b",

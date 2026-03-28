@@ -51,7 +51,7 @@ type AccountDbRow = {
   bankKey: string;
   identifiers: string;
   initialBalance: CopAmount;
-  isDefault: number;
+  isDefault: boolean;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -66,7 +66,7 @@ function toStoredAccount(row: AccountDbRow): StoredAccount {
     bankKey: row.bankKey as BankKey,
     identifiers: JSON.parse(row.identifiers) as readonly string[],
     initialBalance: row.initialBalance,
-    isDefault: row.isDefault === 1,
+    isDefault: row.isDefault,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
     deletedAt: row.deletedAt ? new Date(row.deletedAt) : null,
@@ -99,7 +99,7 @@ export const useAccountStore = create<AccountState & AccountActions>((set, get) 
         bankKey: "other",
         identifiers: "[]",
         initialBalance: 0 as CopAmount,
-        isDefault: 1,
+        isDefault: true,
         createdAt: now,
         updatedAt: now,
       });
@@ -145,7 +145,7 @@ export const useAccountStore = create<AccountState & AccountActions>((set, get) 
       bankKey: input.bankKey,
       identifiers: JSON.stringify(input.identifiers),
       initialBalance: input.initialBalance as CopAmount,
-      isDefault: 0,
+      isDefault: false,
       createdAt: now,
       updatedAt: now,
     });

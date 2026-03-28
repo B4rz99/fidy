@@ -9,6 +9,7 @@ vi.mock("@/features/categories/lib/repository", () => ({
 
 // Mock the icon-map
 vi.mock("@/features/categories/lib/icon-map", () => ({
+  // biome-ignore lint/style/useNamingConvention: Lucide icon names are PascalCase by design
   ICON_MAP: { Zap: () => null, PawPrint: () => null, ShoppingCart: () => null },
 }));
 

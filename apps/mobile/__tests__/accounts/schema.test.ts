@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  accountTypeSchema,
-  bankKeySchema,
-  createAccountSchema,
-} from "@/features/accounts/schema";
+import { accountTypeSchema, bankKeySchema, createAccountSchema } from "@/features/accounts/schema";
 
 describe("accountTypeSchema", () => {
   it("accepts valid types", () => {

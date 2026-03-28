@@ -1,5 +1,3 @@
-export { accountTypeSchema, bankKeySchema, createAccountSchema } from "./schema";
-export type { AccountType, BankKey, CreateAccountInput, StoredAccount } from "./schema";
 export {
   getAllBanks,
   getBankDefaults,
@@ -7,9 +5,8 @@ export {
   resolveBankKeyFromDomain,
   resolveBankKeyFromPackage,
 } from "./lib/bank-registry";
-export { extractCardIdentifier } from "./lib/extract-identifier";
-export { resolveAccountId } from "./lib/resolve-account";
 export { detectTransferCounterpart } from "./lib/detect-transfer";
+export { extractCardIdentifier } from "./lib/extract-identifier";
 export { linkTransactionToAccount } from "./lib/link-account";
 export {
   getAccountById,
@@ -25,3 +22,6 @@ export {
   softDeleteAccount,
   updateAccount,
 } from "./lib/repository";
+export { resolveAccountId } from "./lib/resolve-account";
+export type { AccountType, BankKey, CreateAccountInput, StoredAccount } from "./schema";
+export { accountTypeSchema, bankKeySchema, createAccountSchema } from "./schema";

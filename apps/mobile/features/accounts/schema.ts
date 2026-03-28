@@ -5,14 +5,36 @@ export const accountTypeSchema = z.enum(["debit", "credit", "wallet"]);
 export type AccountType = z.infer<typeof accountTypeSchema>;
 
 export const bankKeySchema = z.enum([
+  // Major banks
   "bancolombia",
-  "davibank",
+  "davivienda",
+  "banco_bogota",
+  "banco_popular",
+  "banco_occidente",
+  "av_villas",
   "bbva",
+  "colpatria",
+  "banco_caja_social",
+  "gnb_sudameris",
+  "citibank",
+  "banco_falabella",
+  "banco_pichincha",
+  "bancoomeva",
+  "banco_finandina",
+  "davibank",
+  "itau",
+  "mibanco",
+  "lulo_bank",
+  "nubank",
+  // Digital wallets
   "nequi",
   "daviplata",
+  "dale",
   "rappicard",
   "rappipay",
+  "tpaga",
   "google_wallet",
+  // Catch-all
   "other",
 ]);
 export type BankKey = z.infer<typeof bankKeySchema>;

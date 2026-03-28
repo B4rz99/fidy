@@ -4,7 +4,16 @@ import type { AccountId, CopAmount, IsoDate, TransactionId } from "@/shared/type
 
 type TxCandidate = Parameters<typeof detectTransferCounterpart>[1][number];
 
-const makeTx = (overrides: Partial<TxCandidate> & { id: string }): TxCandidate => ({
+type TxOverrides = {
+  readonly id: string;
+  readonly type?: TxCandidate["type"];
+  readonly amount?: number;
+  readonly accountId?: string;
+  readonly date?: IsoDate;
+  readonly linkedTransactionId?: TransactionId | null;
+};
+
+const makeTx = (overrides: TxOverrides): TxCandidate => ({
   id: overrides.id as TransactionId,
   type: overrides.type ?? "income",
   amount: (overrides.amount ?? 100000) as CopAmount,

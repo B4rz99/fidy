@@ -103,7 +103,7 @@ async function saveTransaction(
     createdAt: now,
     updatedAt: now,
     accountId,
-    needsAccountReview: needsReview ? 1 : 0,
+    needsAccountReview: needsReview,
   });
 
   await enqueueSync(db, {
@@ -130,6 +130,20 @@ async function saveTransaction(
   );
   if (counterpartId) {
     linkTransferPair(db, txId, counterpartId, now);
+    enqueueSync(db, {
+      id: generateSyncQueueId(),
+      tableName: "transactions",
+      rowId: txId,
+      operation: "update",
+      createdAt: now,
+    });
+    enqueueSync(db, {
+      id: generateSyncQueueId(),
+      tableName: "transactions",
+      rowId: counterpartId,
+      operation: "update",
+      createdAt: now,
+    });
   }
 
   await insertProcessedEmail(db, {
@@ -499,7 +513,7 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
         createdAt: now,
         updatedAt: now,
         accountId: retryAccountId,
-        needsAccountReview: retryNeedsReview ? 1 : 0,
+        needsAccountReview: retryNeedsReview,
       });
 
       await enqueueSync(db, {
@@ -531,6 +545,20 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
       );
       if (retryCounterpartId) {
         linkTransferPair(db, txId, retryCounterpartId, now);
+        enqueueSync(db, {
+          id: generateSyncQueueId(),
+          tableName: "transactions",
+          rowId: txId,
+          operation: "update",
+          createdAt: now,
+        });
+        enqueueSync(db, {
+          id: generateSyncQueueId(),
+          tableName: "transactions",
+          rowId: retryCounterpartId,
+          operation: "update",
+          createdAt: now,
+        });
       }
 
       if (status === "success") {

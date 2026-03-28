@@ -202,7 +202,7 @@ export async function processNotification(
       date: parsed.date as IsoDate,
       source,
       accountId,
-      needsAccountReview: needsReview ? 1 : 0,
+      needsAccountReview: needsReview,
       createdAt: now,
       updatedAt: now,
     });
@@ -231,6 +231,20 @@ export async function processNotification(
     );
     if (counterpartId) {
       linkTransferPair(db, txId, counterpartId, now);
+      enqueueSync(db, {
+        id: generateSyncQueueId(),
+        tableName: "transactions",
+        rowId: txId,
+        operation: "update",
+        createdAt: now,
+      });
+      enqueueSync(db, {
+        id: generateSyncQueueId(),
+        tableName: "transactions",
+        rowId: counterpartId,
+        operation: "update",
+        createdAt: now,
+      });
     }
 
     // Record in processedCaptures

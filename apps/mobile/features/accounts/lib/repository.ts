@@ -33,7 +33,9 @@ export function getDefaultAccount(db: AnyDb, userId: UserId) {
   const rows = db
     .select()
     .from(accounts)
-    .where(and(eq(accounts.userId, userId), eq(accounts.isDefault, 1), isNull(accounts.deletedAt)))
+    .where(
+      and(eq(accounts.userId, userId), eq(accounts.isDefault, true), isNull(accounts.deletedAt))
+    )
     .all();
   return rows[0] ?? null;
 }
@@ -49,11 +51,23 @@ export function setDefaultAccount(
   accountId: AccountId,
   now: IsoDateTime
 ) {
-  db.update(accounts)
-    .set({ isDefault: 0, updatedAt: now })
-    .where(and(eq(accounts.userId, userId), eq(accounts.isDefault, 1)))
-    .run();
-  db.update(accounts).set({ isDefault: 1, updatedAt: now }).where(eq(accounts.id, accountId)).run();
+  db.transaction((tx) => {
+    const txDb = tx as unknown as AnyDb;
+    txDb
+      .update(accounts)
+      .set({ isDefault: false, updatedAt: now })
+      .where(
+        and(eq(accounts.userId, userId), eq(accounts.isDefault, true), isNull(accounts.deletedAt))
+      )
+      .run();
+    txDb
+      .update(accounts)
+      .set({ isDefault: true, updatedAt: now })
+      .where(
+        and(eq(accounts.id, accountId), eq(accounts.userId, userId), isNull(accounts.deletedAt))
+      )
+      .run();
+  });
 }
 
 export function softDeleteAccount(db: AnyDb, id: AccountId, now: IsoDateTime) {
@@ -81,7 +95,7 @@ export function getReviewCount(db: AnyDb, userId: UserId): number {
     .where(
       and(
         eq(transactions.userId, userId),
-        eq(transactions.needsAccountReview, 1),
+        eq(transactions.needsAccountReview, true),
         isNull(transactions.deletedAt)
       )
     )
@@ -96,7 +110,7 @@ export function reassignTransactionAccount(
   now: IsoDateTime
 ) {
   db.update(transactions)
-    .set({ accountId, needsAccountReview: 0, updatedAt: now })
+    .set({ accountId, needsAccountReview: false, updatedAt: now })
     .where(eq(transactions.id, txId))
     .run();
 }
@@ -132,12 +146,17 @@ export function linkTransferPair(
   txB: TransactionId,
   now: IsoDateTime
 ) {
-  db.update(transactions)
-    .set({ linkedTransactionId: txB, type: "transfer", updatedAt: now })
-    .where(eq(transactions.id, txA))
-    .run();
-  db.update(transactions)
-    .set({ linkedTransactionId: txA, type: "transfer", updatedAt: now })
-    .where(eq(transactions.id, txB))
-    .run();
+  db.transaction((tx) => {
+    const txDb = tx as unknown as AnyDb;
+    txDb
+      .update(transactions)
+      .set({ linkedTransactionId: txB, type: "transfer", updatedAt: now })
+      .where(eq(transactions.id, txA))
+      .run();
+    txDb
+      .update(transactions)
+      .set({ linkedTransactionId: txA, type: "transfer", updatedAt: now })
+      .where(eq(transactions.id, txB))
+      .run();
+  });
 }
