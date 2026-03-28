@@ -11,6 +11,15 @@ const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);
 const mockCaptureFingerprint = vi.fn().mockReturnValue("test-fingerprint");
 const mockInsertProcessedCapture = vi.fn();
 const mockStripPii = vi.fn().mockImplementation((t: string) => t);
+const mockResolveBankKeyFromPackage = vi.fn().mockReturnValue(null);
+const mockGetDefaultAccount = vi.fn().mockReturnValue(null);
+const mockGetAccountsByUser = vi.fn().mockReturnValue([]);
+const mockLinkTransactionToAccount = vi
+  .fn()
+  .mockReturnValue({ accountId: "default-account-id", needsReview: false });
+const mockGetTransferCandidates = vi.fn().mockReturnValue([]);
+const mockDetectTransferCounterpart = vi.fn().mockReturnValue(null);
+const mockLinkTransferPair = vi.fn();
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
@@ -41,6 +50,16 @@ vi.mock("@/features/capture-sources/lib/repository", () => ({
 
 vi.mock("@/features/email-capture/services/parse-email-api", () => ({
   stripPii: (...args: any[]) => mockStripPii(...args),
+}));
+
+vi.mock("@/features/accounts", () => ({
+  resolveBankKeyFromPackage: (...args: any[]) => mockResolveBankKeyFromPackage(...args),
+  getDefaultAccount: (...args: any[]) => mockGetDefaultAccount(...args),
+  getAccountsByUser: (...args: any[]) => mockGetAccountsByUser(...args),
+  linkTransactionToAccount: (...args: any[]) => mockLinkTransactionToAccount(...args),
+  getTransferCandidates: (...args: any[]) => mockGetTransferCandidates(...args),
+  detectTransferCounterpart: (...args: any[]) => mockDetectTransferCounterpart(...args),
+  linkTransferPair: (...args: any[]) => mockLinkTransferPair(...args),
 }));
 
 const mockGenerateId = vi.fn();
@@ -82,6 +101,15 @@ describe("processNotification", () => {
     mockParseNotificationApi.mockResolvedValue(null);
     mockCaptureFingerprint.mockReturnValue("test-fingerprint");
     mockStripPii.mockImplementation((t: string) => t);
+    mockResolveBankKeyFromPackage.mockReturnValue(null);
+    mockGetDefaultAccount.mockReturnValue(null);
+    mockGetAccountsByUser.mockReturnValue([]);
+    mockLinkTransactionToAccount.mockReturnValue({
+      accountId: "default-account-id",
+      needsReview: false,
+    });
+    mockGetTransferCandidates.mockReturnValue([]);
+    mockDetectTransferCounterpart.mockReturnValue(null);
   });
 
   it("saves transaction when local regex parses successfully", async () => {

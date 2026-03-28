@@ -1,3 +1,13 @@
+import type { StoredAccount } from "@/features/accounts";
+import {
+  detectTransferCounterpart,
+  getAccountsByUser,
+  getDefaultAccount,
+  getTransferCandidates,
+  linkTransactionToAccount,
+  linkTransferPair,
+  resolveBankKeyFromPackage,
+} from "@/features/accounts";
 import {
   insertMerchantRule,
   lookupMerchantRule,
@@ -12,11 +22,19 @@ import {
   generateSyncQueueId,
   generateTransactionId,
   normalizeMerchant,
+  parseIsoDate,
   toIsoDate,
   toIsoDateTime,
   trackTransactionCreated,
 } from "@/shared/lib";
-import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
+import type {
+  AccountId,
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
 import { parseNotificationLocally } from "../lib/notification-parser";
 import { insertProcessedCapture } from "../lib/repository";
@@ -87,6 +105,18 @@ export async function processNotification(
     });
     return { saved: false, skippedDuplicate: false, transactionId: null };
   }
+
+  // Resolve account
+  const bankKey = resolveBankKeyFromPackage(notification.packageName);
+  const defaultAccount = getDefaultAccount(db, userId as UserId);
+  const defaultAccountId = (defaultAccount?.id ?? "") as AccountId;
+  const userAccounts = getAccountsByUser(db, userId as UserId) as unknown as StoredAccount[];
+  const { accountId, needsReview } = linkTransactionToAccount({
+    bankKey,
+    notificationText,
+    userAccounts,
+    defaultAccountId,
+  });
 
   // Check fingerprint dedup
   const fingerprint = captureFingerprint(source, parsed.amount, parsed.date, parsed.merchant);
@@ -171,6 +201,8 @@ export async function processNotification(
       description: parsed.merchant,
       date: parsed.date as IsoDate,
       source,
+      accountId,
+      needsAccountReview: needsReview ? 1 : 0,
       createdAt: now,
       updatedAt: now,
     });
@@ -182,6 +214,24 @@ export async function processNotification(
       operation: "insert",
       createdAt: now,
     });
+
+    // Transfer detection
+    const dateObj = parseIsoDate(parsed.date as IsoDate);
+    const dayBefore = toIsoDate(new Date(dateObj.getTime() - 86400000));
+    const dayAfter = toIsoDate(new Date(dateObj.getTime() + 86400000));
+    const transferCandidates = getTransferCandidates(db, userId as UserId, dayBefore, dayAfter);
+    const counterpartId = detectTransferCounterpart(
+      {
+        type: parsed.type as "expense" | "income",
+        amount: parsed.amount as CopAmount,
+        accountId,
+        date: parsed.date as IsoDate,
+      },
+      transferCandidates
+    );
+    if (counterpartId) {
+      linkTransferPair(db, txId, counterpartId, now);
+    }
 
     // Record in processedCaptures
     await insertProcessedCapture(db, {
