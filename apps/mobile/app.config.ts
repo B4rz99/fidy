@@ -24,6 +24,12 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
           ],
         },
       ],
+      // biome-ignore lint/style/useNamingConvention: Apple plist key
+      NSSpeechRecognitionUsageDescription:
+        "Fidy uses speech recognition to add transactions by voice.",
+      // biome-ignore lint/style/useNamingConvention: Apple plist key
+      NSMicrophoneUsageDescription:
+        "Fidy needs microphone access to listen for voice transaction input.",
     },
   },
   android: {
