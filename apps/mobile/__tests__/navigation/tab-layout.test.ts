@@ -3,10 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 
 describe("Tab layout", () => {
-  const layoutSource = readFileSync(
-    resolve(__dirname, "../../app/(tabs)/_layout.tsx"),
-    "utf-8",
-  );
+  const layoutSource = readFileSync(resolve(__dirname, "../../app/(tabs)/_layout.tsx"), "utf-8");
 
   test("does not include a history tab screen", () => {
     expect(layoutSource).not.toContain('name="history"');
