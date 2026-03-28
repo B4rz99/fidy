@@ -1,7 +1,6 @@
-import { useEffect } from "react";
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { StyleSheet, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useAnimatedProgress, useThemeColor } from "@/shared/hooks";
 
 type Props = {
   readonly percent: number; // 0-100+
@@ -13,18 +12,9 @@ export function ProgressBar({ percent, height = 8 }: Props) {
   const accentRed = useThemeColor("accentRed");
   const borderColor = useThemeColor("borderSubtle");
 
-  const progress = useSharedValue(0);
+  const { animatedStyle } = useAnimatedProgress(Math.min(percent, 100) / 100, 600);
 
-  useEffect(() => {
-    progress.value = withTiming(Math.min(percent, 100) / 100, { duration: 600 });
-  }, [percent, progress]);
-
-  // Determine bar color outside the worklet — it depends on React props, not shared values
   const barColor = percent >= 100 ? accentRed : accentGreen;
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    width: `${progress.value * 100}%`,
-  }));
 
   return (
     <View style={[styles.track, { height, backgroundColor: borderColor }]}>

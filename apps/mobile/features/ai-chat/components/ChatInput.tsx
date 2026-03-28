@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SendHorizonal } from "@/shared/components/icons";
 import { Keyboard, Platform, Pressable, TextInput, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 
 type ChatInputProps = {
   readonly onSend: (text: string) => void;
@@ -18,7 +18,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   const tertiary = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
 
-  useEffect(() => {
+  useSubscription(() => {
     const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
     const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
     const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));

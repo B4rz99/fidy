@@ -1,10 +1,10 @@
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { TransactionType } from "@/features/transactions";
 import { TransactionForm, useTransactionStore } from "@/features/transactions";
 import { InteractionManager } from "@/shared/components/rn";
-import { useAsyncGuard, useTranslation } from "@/shared/hooks";
+import { useAsyncGuard, useMountEffect, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
 import type { CategoryId, TransactionId } from "@/shared/types/branded";
 
@@ -29,8 +29,7 @@ export default function EditTransactionScreen() {
   const [date, setDate] = useState(new Date());
   const [loaded, setLoaded] = useState(false);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: router and getTransactionById are stable refs
-  useEffect(() => {
+  useMountEffect(() => {
     const tx = getTransactionById(transactionId as TransactionId);
     if (tx) {
       setType(tx.type);
@@ -42,13 +41,13 @@ export default function EditTransactionScreen() {
     } else {
       router.back();
     }
-  }, [transactionId]);
+  });
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
-  const handleSave = () =>
-    guardedSave(async () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  const handleSave = () => {
+    void guardedSave(async () => {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
       await afterDismiss();
       try {
@@ -66,10 +65,11 @@ export default function EditTransactionScreen() {
         showErrorToast(t("transactions.updateFailed"));
       }
     });
+  };
 
-  const handleDelete = () =>
-    guardedSave(async () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  const handleDelete = () => {
+    void guardedSave(async () => {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
       await afterDismiss();
       try {
@@ -78,6 +78,7 @@ export default function EditTransactionScreen() {
         showErrorToast(t("transactions.deleteFailed"));
       }
     });
+  };
 
   if (!loaded) return null;
 

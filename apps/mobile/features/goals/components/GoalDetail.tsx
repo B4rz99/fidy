@@ -1,9 +1,9 @@
 import { format } from "date-fns";
 import { Stack, useRouter } from "expo-router";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 import Svg, { Circle as SvgCircle } from "react-native-svg";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatDateDisplay, formatMoney } from "@/shared/lib";
 import type { CopAmount, IsoDate } from "@/shared/types/branded";
 import type { GoalProjection, Milestone } from "../lib/derive";
@@ -36,7 +36,7 @@ const checkMilestoneCrossed = (
   const crossed = MILESTONE_THRESHOLDS.filter(
     (threshold) => prevPercent < threshold && currentPercent >= threshold
   );
-  return crossed.length > 0 ? crossed[crossed.length - 1] : null;
+  return crossed.length > 0 ? (crossed[crossed.length - 1] ?? null) : null;
 };
 
 // ---------------------------------------------------------------------------
@@ -213,7 +213,7 @@ function ContributionRowInner({
           {formatDateDisplay(contribution.date as IsoDate)}
         </Text>
         <Text style={[styles.contributionNote, { color: secondaryColor }]}>
-          {contribution.note != null ? contribution.note : t("goals.detail.manualPayment")}
+          {contribution.note ?? t("goals.detail.manualPayment")}
         </Text>
       </View>
       <Text style={[styles.contributionAmount, { color: accentGreen }]}>
@@ -308,20 +308,21 @@ export function GoalDetailScreen() {
   const goalData = goals.find((g) => g.goal.id === selectedGoalId);
 
   // Track previous progress percent to detect milestone crossings.
-  // Allowed useEffect: subscription/listener pattern detecting external store changes.
   const prevPercentRef = useRef<number | null>(null);
-  useEffect(() => {
-    if (goalData == null) return;
-    const currentPercent = goalData.progress.percentComplete;
-    const prevPercent = prevPercentRef.current;
-    if (prevPercent !== null && prevPercent !== currentPercent) {
-      const crossed = checkMilestoneCrossed(prevPercent, currentPercent);
-      if (crossed !== null) {
-        setCelebrationMilestone(crossed);
+  useSubscription(
+    () => {
+      if (goalData == null) return;
+      const currentPercent = goalData.progress.percentComplete;
+      const prevPercent = prevPercentRef.current;
+      if (prevPercent !== null && prevPercent !== currentPercent) {
+        const crossed = checkMilestoneCrossed(prevPercent, currentPercent);
+        if (crossed !== null) setCelebrationMilestone(crossed);
       }
-    }
-    prevPercentRef.current = currentPercent;
-  }, [goalData]);
+      prevPercentRef.current = currentPercent;
+    },
+    [goalData],
+    goalData != null
+  );
 
   if (goalData == null) {
     return null;
@@ -330,12 +331,12 @@ export function GoalDetailScreen() {
   const { goal, currentAmount, progress, projection } = goalData;
 
   // Compute running totals for contribution history
-  const contributionsWithRunning: Array<{ contribution: GoalContribution; runningTotal: number }> =
+  const contributionsWithRunning: { contribution: GoalContribution; runningTotal: number }[] =
     (() => {
       const reversed = [...contributions].reverse();
-      const result: Array<{ contribution: GoalContribution; runningTotal: number }> = [];
+      const result: { contribution: GoalContribution; runningTotal: number }[] = [];
       reversed.forEach((c) => {
-        const prevTotal = result.length > 0 ? result[result.length - 1].runningTotal : 0;
+        const prevTotal = result.length > 0 ? (result[result.length - 1]?.runningTotal ?? 0) : 0;
         result.push({ contribution: c, runningTotal: prevTotal + c.amount });
       });
       return result.reverse();

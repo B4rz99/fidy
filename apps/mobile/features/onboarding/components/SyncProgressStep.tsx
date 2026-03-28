@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { ProgressBar } from "@/features/budget/components/ProgressBar";
 import {
@@ -8,7 +8,7 @@ import {
 } from "@/features/email-capture";
 import { useTransactionStore } from "@/features/transactions";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import { useOnboardingStore } from "../store";
 
@@ -33,12 +33,12 @@ export function SyncProgressStep() {
   const finalSavedCount = useRef(0);
 
   // Start fetch on mount if we have accounts
-  useEffect(() => {
+  useMountEffect(() => {
     if (accounts.length > 0 && !fetchStarted.current) {
       fetchStarted.current = true;
-      fetchAndProcess(getGmailClientId(), getOutlookClientId());
+      void fetchAndProcess(getGmailClientId(), getOutlookClientId());
     }
-  }, [accounts.length, fetchAndProcess]);
+  });
 
   const livePercent = progress
     ? progress.total > 0

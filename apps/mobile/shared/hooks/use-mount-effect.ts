@@ -6,5 +6,5 @@ import { type EffectCallback, useEffect } from "react";
  */
 export function useMountEffect(effect: EffectCallback) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: mount-only by design
-  useEffect(effect, []);
+  useEffect(effect, []); // eslint-disable-line react-hooks/exhaustive-deps -- mount-only by design
 }
