@@ -4,8 +4,8 @@ import AppIntents
 enum TransactionKind: String, AppEnum {
     case expense, income
 
-    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Type")
-    static var caseDisplayRepresentations: [TransactionKind: DisplayRepresentation] = [
+    static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Type")
+    static let caseDisplayRepresentations: [TransactionKind: DisplayRepresentation] = [
         .expense: "Expense",
         .income: "Income",
     ]

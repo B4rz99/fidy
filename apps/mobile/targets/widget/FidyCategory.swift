@@ -5,8 +5,8 @@ enum FidyCategory: String, AppEnum {
     case food, transport, entertainment, health, education
     case home, clothing, services, transfer, other
 
-    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Category")
-    static var caseDisplayRepresentations: [FidyCategory: DisplayRepresentation] = [
+    static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Category")
+    static let caseDisplayRepresentations: [FidyCategory: DisplayRepresentation] = [
         .food: "Food",
         .transport: "Transport",
         .entertainment: "Entertainment",
