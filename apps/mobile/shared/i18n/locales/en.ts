@@ -51,6 +51,8 @@ const en = {
     noTransactionsHint: "Connect an email account or add transactions manually to get started",
     deleteConfirmTitle: "Delete Transaction",
     deleteConfirmMessage: "Are you sure you want to delete this transaction?",
+    editTransaction: "Edit Transaction",
+    deleteTransaction: "Delete",
   },
 
   // Bills / Calendar

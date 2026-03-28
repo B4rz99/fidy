@@ -52,6 +52,8 @@ const es = {
       "Conecta una cuenta de correo o agrega transacciones manualmente para comenzar",
     deleteConfirmTitle: "Eliminar Transacción",
     deleteConfirmMessage: "¿Estás seguro de que quieres eliminar esta transacción?",
+    editTransaction: "Editar Transacción",
+    deleteTransaction: "Eliminar",
   },
 
   // Bills / Calendar
