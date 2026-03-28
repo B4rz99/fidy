@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { MonthNavigator } from "@/features/calendar/components/MonthNavigator";
+import { MonthNavigator } from "@/features/calendar";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Wallet } from "@/shared/components/icons";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
