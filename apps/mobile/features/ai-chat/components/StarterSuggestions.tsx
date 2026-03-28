@@ -8,11 +8,10 @@ type StarterSuggestionsProps = {
 };
 
 export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const accentGreenLight = useThemeColor("accentGreenLight");
   const accentGreen = useThemeColor("accentGreen");
   const borderSubtle = useThemeColor("borderSubtle");
-  // biome-ignore lint/correctness/useExhaustiveDependencies: locale triggers recompute when language changes
   const suggestions = useMemo(
     () => [
       t("aiChat.suggestions.monthSpending"),
@@ -20,7 +19,7 @@ export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
       t("aiChat.suggestions.compareMonths"),
       t("aiChat.suggestions.addExpense"),
     ],
-    [t, locale]
+    [t]
   );
 
   return (

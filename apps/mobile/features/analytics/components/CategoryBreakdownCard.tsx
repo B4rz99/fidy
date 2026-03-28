@@ -7,7 +7,7 @@ import { formatMoney } from "@/shared/lib";
 import type { CategoryBreakdownItem } from "../lib/derive";
 
 type CategoryBreakdownCardProps = {
-  readonly data: ReadonlyArray<CategoryBreakdownItem>;
+  readonly data: readonly CategoryBreakdownItem[];
 };
 
 const BAR_HEIGHT = 16;

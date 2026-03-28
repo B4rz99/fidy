@@ -92,7 +92,7 @@ const ListHeader = memo(function ListHeader({
       <EmailConnectBanner
         onConnect={(provider) => {
           const clientId = provider === "gmail" ? getGmailClientId() : getOutlookClientId();
-          connectEmail(provider, clientId);
+          void connectEmail(provider, clientId);
         }}
       />
       <FailedEmailsBanner onPress={() => push("/failed-emails" as never)} />
@@ -143,7 +143,7 @@ export const HomeScreen = () => {
 
   const handleEndReached = useCallback(() => {
     if (hasMore) {
-      loadNextPage();
+      void loadNextPage();
     }
   }, [hasMore, loadNextPage]);
 
@@ -162,7 +162,9 @@ export const HomeScreen = () => {
         {
           text: t("common.delete"),
           style: "destructive",
-          onPress: () => deleteTransaction(id),
+          onPress: () => {
+            void deleteTransaction(id);
+          },
         },
       ]);
     },

@@ -24,7 +24,7 @@ export async function fetchOutlookEmailsWithToken(
     return [];
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as { value?: OutlookMessage[] };
   const messages: OutlookMessage[] = data.value ?? [];
 
   return messages.map((msg) => ({

@@ -88,12 +88,12 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
   const { message: cleanupMessage, dismiss: dismissCleanup } = useSessionCleanup();
 
   useMountEffect(() => {
-    loadSessions();
+    void loadSessions();
   });
 
   const handleDelete = useCallback(
     (id: ChatSessionId) => {
-      deleteSession(id);
+      void deleteSession(id);
     },
     [deleteSession]
   );

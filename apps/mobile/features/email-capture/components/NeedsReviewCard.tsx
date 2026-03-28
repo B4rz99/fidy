@@ -46,7 +46,7 @@ export const NeedsReviewCard = ({
       <View className="flex-row items-center justify-between">
         <View className="flex-1 gap-0.5">
           <Text className="font-poppins-medium text-caption" style={{ color: "#6D6D6D" }}>
-            {processedEmail.subject ?? t("needsReview.bankNotification")}
+            {processedEmail.subject}
           </Text>
           <Text className="font-poppins-semibold text-base text-primary dark:text-primary-dark">
             {transaction.description || t("common.unknown")}

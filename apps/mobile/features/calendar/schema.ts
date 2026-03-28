@@ -78,7 +78,7 @@ export function toBillRow(
     name: bill.name,
     amount: bill.amount as CopAmount,
     frequency: bill.frequency,
-    categoryId: bill.categoryId as CategoryId,
+    categoryId: bill.categoryId,
     startDate: toIsoDate(bill.startDate),
     isActive: bill.isActive,
     createdAt: now,

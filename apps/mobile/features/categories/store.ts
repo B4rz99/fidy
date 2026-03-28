@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { CATEGORIES, type Category } from "@/features/transactions/lib/categories";
+import { CATEGORIES, type Category } from "@/features/transactions";
 import { Ellipsis } from "@/shared/components/icons";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
@@ -35,7 +35,7 @@ const toCategory = (row: {
   colorHex: string;
 }): Category => ({
   // UserCategoryId and CategoryId are both Brand<string, _>; cast via string is safe since allCategoryIds operates on plain strings
-  id: row.id as string as CategoryId,
+  id: row.id as CategoryId,
   label: { en: row.name, es: row.name },
   icon: ICON_MAP[row.iconName] ?? Ellipsis,
   color: row.colorHex,

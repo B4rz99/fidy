@@ -15,10 +15,9 @@ type Props = {
 };
 
 export function CalendarGrid({ currentMonth, bills, payments, onDayPress }: Props) {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
-  // biome-ignore lint/correctness/useExhaustiveDependencies: locale triggers recompute when language changes
   const weekdayLabels = useMemo(
     () => [
       t("calendar.weekdays.mon"),
@@ -29,7 +28,7 @@ export function CalendarGrid({ currentMonth, bills, payments, onDayPress }: Prop
       t("calendar.weekdays.sat"),
       t("calendar.weekdays.sun"),
     ],
-    [t, locale]
+    [t]
   );
 
   const grid = useMemo(() => getMonthGrid(year, month), [year, month]);

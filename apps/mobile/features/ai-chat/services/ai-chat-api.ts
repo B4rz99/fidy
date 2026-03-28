@@ -70,6 +70,7 @@ export async function streamChat(
   let buffer = "";
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- intentional streaming loop
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -88,14 +89,15 @@ export async function streamChat(
         }
 
         try {
-          const parsed = JSON.parse(payload);
-          if (parsed.error) {
-            callbacks.onError(parsed.error);
+          const parsed: unknown = JSON.parse(payload);
+          const record = parsed as Record<string, unknown>;
+          if (record.error) {
+            callbacks.onError(String(record.error));
             return;
           }
-          if (parsed.content) {
+          if (record.content) {
             try {
-              callbacks.onChunk(parsed.content);
+              callbacks.onChunk(String(record.content));
             } catch (callbackErr) {
               captureError(callbackErr);
             }
@@ -112,18 +114,25 @@ export async function streamChat(
   }
 }
 
+type ExtractMemoriesResponse = {
+  readonly success: boolean;
+  readonly data: readonly SavedMemory[];
+};
+
 export async function extractMemories(
   messages: readonly ChatMessage[]
 ): Promise<readonly SavedMemory[]> {
   try {
-    const { data, error } = await getSupabase().functions.invoke("ai-chat", {
+    // Supabase functions.invoke returns `{ data: any, error: any }` - cast via unknown
+    const result = (await getSupabase().functions.invoke("ai-chat", {
       body: { mode: "extract_memories", messages },
-    });
+    })) as { data: ExtractMemoriesResponse | null; error: Error | null };
+    const { data, error } = result;
 
-    if (error || !data?.success || !Array.isArray(data.data)) {
+    if (error != null || !data?.success || !Array.isArray(data.data)) {
       return [];
     }
-    return data.data;
+    return data.data as readonly SavedMemory[];
   } catch (error) {
     captureError(error);
     return [];

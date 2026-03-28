@@ -1,5 +1,5 @@
 import { memo } from "react";
-import type { ViewStyle } from "react-native";
+import type { ViewStyle } from "@/shared/components/rn";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import type { AnalyticsPeriod } from "../lib/derive";

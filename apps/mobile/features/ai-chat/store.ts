@@ -151,7 +151,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
         sessionId: r.sessionId,
         role: r.role as "user" | "assistant",
         content: r.content,
-        action: r.action ? JSON.parse(r.action) : null,
+        action: r.action ? (JSON.parse(r.action) as ChatAction) : null,
         actionStatus: r.actionStatus as ActionStatus | null,
         createdAt: r.createdAt,
       })),
@@ -253,7 +253,6 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
       captureError(error);
       return;
     }
-    if (!data) return;
     set({
       memories: data.map(
         // biome-ignore lint/style/useNamingConvention: Supabase column name
@@ -289,7 +288,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     if (messages.length < 2) return;
 
     const conversationMessages = messages.map((m) => ({
-      role: m.role as "user" | "assistant",
+      role: m.role,
       content: m.content,
     }));
 
