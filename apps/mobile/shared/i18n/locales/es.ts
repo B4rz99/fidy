@@ -359,6 +359,7 @@ const es = {
     avgPerDay: "Prom/día",
     thisMonthTotal: "Total del mes",
     spent: "gastado",
+    moreCategories: "%{count}+ más",
   },
 
   // AI Chat

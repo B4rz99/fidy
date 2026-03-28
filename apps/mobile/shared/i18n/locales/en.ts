@@ -357,6 +357,7 @@ const en = {
     avgPerDay: "Avg/day",
     thisMonthTotal: "This month total",
     spent: "spent",
+    moreCategories: "%{count}+ more",
   },
 
   // AI Chat

@@ -71,6 +71,7 @@ export function getSpendingByCategoryAggregate(
       )
     )
     .groupBy(transactions.categoryId)
+    .orderBy(desc(sum(transactions.amount)))
     .all();
 }
 
