@@ -68,6 +68,7 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
         color: "#7CB243",
       },
     ],
+    "./plugins/withFidyWidget",
   ],
   experiments: {
     typedRoutes: true,
