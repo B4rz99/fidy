@@ -3,8 +3,8 @@ import Foundation
 
 @available(iOS 18.0, *)
 struct QuickExpenseIntent: AppIntent {
-    static var title: LocalizedStringResource = "Log Quick Expense"
-    static var description = IntentDescription("Log an expense amount from Control Center.")
+    static let title: LocalizedStringResource = "Log Quick Expense"
+    static let description = IntentDescription("Log an expense amount from Control Center.")
 
     @Parameter(title: "Amount")
     var amount: Int
