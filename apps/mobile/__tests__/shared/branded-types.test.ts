@@ -1,5 +1,6 @@
-import { assertType, describe, expectTypeOf, test } from "vitest";
+import { assertType, describe, expect, expectTypeOf, it, test } from "vitest";
 import type {
+  AccountId,
   Brand,
   BudgetId,
   CopAmount,
@@ -43,5 +44,10 @@ describe("branded types", () => {
     type A = Brand<string, "A">;
     type B = Brand<string, "B">;
     expectTypeOf<A>().not.toEqualTypeOf<B>();
+  });
+
+  it("AccountId is a branded string", () => {
+    const id = "acct-123" as AccountId;
+    expect(typeof id).toBe("string");
   });
 });

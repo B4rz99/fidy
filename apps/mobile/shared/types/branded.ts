@@ -20,6 +20,7 @@ export type ProcessedEmailId = Brand<string, "ProcessedEmailId">;
 export type DetectedSmsEventId = Brand<string, "DetectedSmsEventId">;
 export type UserCategoryId = Brand<string, "UserCategoryId">;
 export type NotificationId = Brand<string, "NotificationId">;
+export type AccountId = Brand<string, "AccountId">;
 // Server-generated (Supabase gen_random_uuid()) — no client-side generator needed
 export type PushDeviceId = Brand<string, "PushDeviceId">;
 
