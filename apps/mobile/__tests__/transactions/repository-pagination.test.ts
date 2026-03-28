@@ -135,7 +135,8 @@ describe("getSpendingByCategoryAggregate", () => {
     mockSelect.mockReturnValue({ from: mockFrom });
     mockFrom.mockReturnValue({ where: mockWhere });
     mockWhere.mockReturnValue({ groupBy: mockGroupBy });
-    mockGroupBy.mockReturnValue({ all: mockAll });
+    mockGroupBy.mockReturnValue({ orderBy: mockOrderBy });
+    mockOrderBy.mockReturnValue({ all: mockAll });
   });
 
   it("returns spending grouped by category", async () => {

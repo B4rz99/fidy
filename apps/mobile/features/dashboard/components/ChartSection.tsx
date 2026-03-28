@@ -54,6 +54,8 @@ const toCategoryRows = (categories: readonly CategorySpendingItem[], locale: str
     };
   });
 
+const MAX_VISIBLE_CATEGORIES = 5;
+const OTHERS_COLOR = "#6B6B6B";
 const LINE_CHART_WIDTH = 140;
 
 const CarouselDots = ({ activeIndex }: { readonly activeIndex: number }) => {
@@ -87,8 +89,22 @@ export const ChartSection = ({
   const [slideWidth, setSlideWidth] = useState(0);
   const secondaryColor = useThemeColor("secondary");
 
-  const segments = toSegments(categorySpending, totalSpent);
-  const rows = toCategoryRows(categorySpending, locale);
+  const visible = categorySpending.slice(0, MAX_VISIBLE_CATEGORIES);
+  const remaining = categorySpending.slice(MAX_VISIBLE_CATEGORIES);
+  const remainingTotal = remaining.reduce((sum, c) => sum + c.total, 0);
+
+  const visibleSegments = toSegments(visible, totalSpent);
+  const segments =
+    remaining.length > 0
+      ? [
+          ...visibleSegments,
+          {
+            percentage: totalSpent === 0 ? 0 : (remainingTotal / totalSpent) * 100,
+            color: OTHERS_COLOR,
+          },
+        ]
+      : visibleSegments;
+  const rows = toCategoryRows(visible, locale);
 
   const dailyTotal = dailySpending.reduce((sum, d) => sum + d.total, 0);
   const dayCount = dailySpending.length === 0 ? 1 : dailySpending.length;
@@ -134,6 +150,13 @@ export const ChartSection = ({
                     amount={row.amount}
                   />
                 ))}
+                {remaining.length > 0 && (
+                  <CategoryRow
+                    color={OTHERS_COLOR}
+                    name={t("chart.moreCategories", { count: remaining.length })}
+                    amount={formatMoney(remainingTotal as CopAmount)}
+                  />
+                )}
               </View>
             </View>
 

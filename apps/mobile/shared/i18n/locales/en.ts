@@ -36,6 +36,11 @@ const en = {
     menu: "Menu",
   },
 
+  // Dashboard
+  dashboard: {
+    spentThisMonth: "Spent this month",
+  },
+
   // Transactions
   transactions: {
     expense: "Expense",
@@ -352,6 +357,7 @@ const en = {
     avgPerDay: "Avg/day",
     thisMonthTotal: "This month total",
     spent: "spent",
+    moreCategories: "%{count}+ more",
   },
 
   // AI Chat

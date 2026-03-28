@@ -13,7 +13,6 @@ import {
 import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
 import { buildTransaction, toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
 import {
-  getBalanceAggregate,
   getDailySpendingAggregate,
   getSpendingByCategoryAggregate,
   getTransactionById,
@@ -173,8 +172,8 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
       const startDate = toIsoDate(thirtyDaysAgo);
       const endDate = toIsoDate(now);
 
-      const balance = getBalanceAggregate(dbRef, userIdRef);
       const categorySpending = getSpendingByCategoryAggregate(dbRef, userIdRef, currentMonth);
+      const balance = categorySpending.reduce((sum, c) => sum + c.total, 0) as CopAmount;
       const dailySpending = getDailySpendingAggregate(dbRef, userIdRef, startDate, endDate);
 
       set({ balance, categorySpending, dailySpending });
