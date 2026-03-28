@@ -1,17 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Animated, {
-  cancelAnimation,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
+import { useCallback, useMemo, useRef, useState } from "react";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FidyNumpad } from "@/shared/components";
 import { Calendar, X } from "@/shared/components/icons";
 import { Keyboard, Platform, Pressable, Text, TextInput, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
 import type { CategoryId } from "@/shared/types/branded";
@@ -79,24 +72,7 @@ export function TransactionForm({
   const digitsRef = useRef(digits);
   digitsRef.current = digits;
 
-  const cursorOpacity = useSharedValue(1);
-
-  useEffect(() => {
-    cursorOpacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 0 }),
-        withTiming(1, { duration: 530 }),
-        withTiming(0, { duration: 0 }),
-        withTiming(0, { duration: 530 })
-      ),
-      -1
-    );
-    return () => cancelAnimation(cursorOpacity);
-  }, [cursorOpacity]);
-
-  const cursorStyle = useAnimatedStyle(() => ({
-    opacity: cursorOpacity.value,
-  }));
+  const { cursorStyle } = useBlinkingCursor();
 
   const handleKey = useCallback(
     (key: string) => {

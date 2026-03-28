@@ -1,13 +1,7 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
+import { useCallback, useRef, useState } from "react";
+import Animated from "react-native-reanimated";
 import { handleNumpadPress } from "@/features/transactions";
 import { FidyNumpad } from "@/shared/components";
 import {
@@ -21,7 +15,7 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
-import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, parseDigitsToAmount, parseIsoDate, toIsoDate } from "@/shared/lib";
 import type { IsoDate } from "@/shared/types/branded";
 import { useGoalStore } from "../store";
@@ -60,19 +54,7 @@ export function GoalEditSheet() {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Blinking cursor
-  const cursorOpacity = useSharedValue(1);
-  useEffect(() => {
-    cursorOpacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 0 }),
-        withTiming(1, { duration: 530 }),
-        withTiming(0, { duration: 0 }),
-        withTiming(0, { duration: 530 })
-      ),
-      -1
-    );
-  }, [cursorOpacity]);
-  const cursorStyle = useAnimatedStyle(() => ({ opacity: cursorOpacity.value }));
+  const { cursorStyle } = useBlinkingCursor();
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
   const { isBusy: isDeleting, run: guardedDelete } = useAsyncGuard();
@@ -132,11 +114,12 @@ export function GoalEditSheet() {
         {
           text: t("common.delete"),
           style: "destructive",
-          onPress: () =>
-            guardedDelete(async () => {
+          onPress: () => {
+            void guardedDelete(async () => {
               await deleteGoal(selectedGoalId);
               back();
-            }),
+            });
+          },
         },
       ]
     );
@@ -277,7 +260,9 @@ export function GoalEditSheet() {
       {/* Save button */}
       <Pressable
         style={[styles.saveButton, { backgroundColor: accentGreen, opacity: isSaving ? 0.5 : 1 }]}
-        onPress={handleSave}
+        onPress={() => {
+          void handleSave();
+        }}
         disabled={isSaving}
       >
         <Text style={styles.saveButtonText}>{t("goals.edit.saveChanges")}</Text>
