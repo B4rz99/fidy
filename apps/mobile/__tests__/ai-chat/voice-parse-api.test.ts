@@ -11,6 +11,7 @@ vi.mock("@/shared/db", () => ({
     auth: {
       getSession: vi.fn(() =>
         Promise.resolve({
+          // biome-ignore lint/style/useNamingConvention: Supabase API field name
           data: { session: { access_token: "test-token" } },
           error: null,
         })
@@ -88,6 +89,7 @@ describe("voiceParse", () => {
 
     const [, options] = mockFetch.mock.calls[0];
     expect(options.headers).toMatchObject({
+      // biome-ignore lint/style/useNamingConvention: HTTP header name
       Authorization: "Bearer test-token",
       "Content-Type": "application/json",
     });
@@ -123,11 +125,13 @@ describe("voiceParse", () => {
     expect(result).toBeNull();
   });
 
-  it("returns null on network error", async () => {
+  it("returns null and captures error on network error", async () => {
+    const { captureError } = await import("@/shared/lib");
     mockFetch.mockRejectedValueOnce(new Error("Network request failed"));
 
     const result = await voiceParse("test", "en-US");
 
     expect(result).toBeNull();
+    expect(captureError).toHaveBeenCalledWith(expect.any(Error));
   });
 });

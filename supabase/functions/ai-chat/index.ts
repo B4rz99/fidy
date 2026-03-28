@@ -543,7 +543,20 @@ Deno.serve(async (req) => {
         return jsonResponse({ success: false, error: "empty_llm_response" }, 502);
       }
 
-      const parsed = JSON.parse(text);
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        structuredLog({
+          request_id: requestId,
+          user_id: userId,
+          mode,
+          success: false,
+          latency_ms: Date.now() - startTime,
+          error_type: "json_parse_error",
+        });
+        return jsonResponse({ success: false, error: "json_parse_error" }, 502);
+      }
 
       structuredLog({
         request_id: requestId,

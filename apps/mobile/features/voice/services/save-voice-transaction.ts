@@ -1,6 +1,6 @@
 import { useTransactionStore } from "@/features/transactions";
 import { parseIsoDate, trackTransactionCreated } from "@/shared/lib";
-import type { VoiceParseResult } from "./voice-parse-schema";
+import type { VoiceParseResult } from "../lib/voice-parse-schema";
 
 export async function saveVoiceTransaction(
   parsed: VoiceParseResult

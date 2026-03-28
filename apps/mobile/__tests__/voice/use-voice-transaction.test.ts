@@ -30,9 +30,12 @@ vi.mock("@/features/ai-chat/services/ai-chat-api", () => ({
 vi.mock("@/shared/lib", () => ({
   captureWarning: (...args: any[]) => mockCaptureWarning(...args),
   capturePipelineEvent: (...args: any[]) => mockCapturePipelineEvent(...args),
+  captureError: vi.fn(),
+  parseIsoDate: vi.fn((d: string) => new Date(d)),
+  trackTransactionCreated: vi.fn(),
 }));
 
-vi.mock("@/features/voice/lib/save-voice-transaction", () => ({
+vi.mock("@/features/voice/services/save-voice-transaction", () => ({
   saveVoiceTransaction: (...args: any[]) => mockSaveVoiceTransaction(...args),
 }));
 
@@ -81,6 +84,7 @@ vi.mock("react", () => ({
     return [slot.value, slot.setter];
   },
   useCallback: (fn: any, _deps: any[]) => fn,
+  memo: (component: any) => component,
   useRef: (init: any) => {
     if (refIndex >= refSlots.length) {
       refSlots.push({ current: init });

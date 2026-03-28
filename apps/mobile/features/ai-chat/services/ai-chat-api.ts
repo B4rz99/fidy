@@ -130,18 +130,7 @@ export async function extractMemories(
   }
 }
 
-export type VoiceParseResult = {
-  readonly type: "expense" | "income";
-  readonly amount: number;
-  readonly categoryId: string;
-  readonly description: string;
-  readonly date: string;
-};
-
-export async function voiceParse(
-  transcript: string,
-  locale: string
-): Promise<VoiceParseResult | null> {
+export async function voiceParse(transcript: string, locale: string): Promise<unknown> {
   try {
     const headers = await getAuthHeaders();
     const url = `${getBaseUrl()}/functions/v1/ai-chat`;
@@ -157,8 +146,9 @@ export async function voiceParse(
     const json = await response.json();
     if (!json.success || !json.data) return null;
 
-    return json.data as VoiceParseResult;
-  } catch {
+    return json.data;
+  } catch (error) {
+    captureError(error);
     return null;
   }
 }

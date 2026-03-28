@@ -18,8 +18,8 @@ vi.mock("@/shared/lib", () => ({
 }));
 
 import { useTransactionStore } from "@/features/transactions";
-import { saveVoiceTransaction } from "@/features/voice/lib/save-voice-transaction";
 import type { VoiceParseResult } from "@/features/voice/lib/voice-parse-schema";
+import { saveVoiceTransaction } from "@/features/voice/services/save-voice-transaction";
 import { parseIsoDate, trackTransactionCreated } from "@/shared/lib";
 
 const mockSetType = vi.fn();

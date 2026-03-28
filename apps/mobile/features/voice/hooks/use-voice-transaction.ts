@@ -2,9 +2,9 @@ import { useCallback, useRef, useState } from "react";
 import { voiceParse } from "@/features/ai-chat/services/ai-chat-api";
 import { useLocaleStore } from "@/shared/i18n/store";
 import { capturePipelineEvent, captureWarning } from "@/shared/lib";
-import { saveVoiceTransaction } from "../lib/save-voice-transaction";
 import type { VoiceParseResult } from "../lib/voice-parse-schema";
 import { voiceParseResultSchema } from "../lib/voice-parse-schema";
+import { saveVoiceTransaction } from "../services/save-voice-transaction";
 
 type VoiceState =
   | { status: "idle" }
@@ -19,6 +19,7 @@ export function useVoiceTransaction() {
   const subscriptionsRef = useRef<Array<{ remove: () => void }>>([]);
   const finalTranscriptRef = useRef("");
   const sttStartRef = useRef(0);
+  const parsedRef = useRef<VoiceParseResult | null>(null);
 
   const cleanup = useCallback(() => {
     for (const sub of subscriptionsRef.current) {
@@ -66,6 +67,7 @@ export function useVoiceTransaction() {
       amount: validated.data.amount,
     });
 
+    parsedRef.current = validated.data;
     setState({ status: "confirm", parsed: validated.data, transcript });
   }, []);
 
@@ -113,25 +115,27 @@ export function useVoiceTransaction() {
   }, [cleanup, parseTranscript]);
 
   const confirm = useCallback(async () => {
-    if (state.status !== "confirm") return;
+    const parsed = parsedRef.current;
+    if (!parsed) return;
     setState({ status: "saving" });
-    const result = await saveVoiceTransaction(state.parsed);
+    const result = await saveVoiceTransaction(parsed);
     if (result.success) {
       capturePipelineEvent({
         source: "voice",
         outcome: "saved",
-        categoryId: String(state.parsed.categoryId),
-        amount: state.parsed.amount,
+        categoryId: String(parsed.categoryId),
+        amount: parsed.amount,
       });
+      parsedRef.current = null;
       setState({ status: "idle" });
     } else {
       captureWarning("voice_save_failed", {
-        categoryId: String(state.parsed.categoryId),
-        amount: state.parsed.amount,
+        categoryId: String(parsed.categoryId),
+        amount: parsed.amount,
       });
       setState({ status: "error", message: "couldNotUnderstand", transcript: "" });
     }
-  }, [state]);
+  }, []);
 
   const retry = useCallback(() => {
     cleanup();

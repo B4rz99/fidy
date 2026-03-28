@@ -1,6 +1,6 @@
+import { CATEGORY_MAP } from "@/features/transactions/lib/categories";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
-import { CATEGORY_MAP } from "@/features/transactions/lib/categories";
 import type { VoiceParseResult } from "../lib/voice-parse-schema";
 
 type VoiceConfirmCardProps = {
@@ -9,17 +9,12 @@ type VoiceConfirmCardProps = {
   readonly onCancel: () => void;
 };
 
-export function VoiceConfirmCard({
-  parsed,
-  onConfirm,
-  onCancel,
-}: VoiceConfirmCardProps) {
+export function VoiceConfirmCard({ parsed, onConfirm, onCancel }: VoiceConfirmCardProps) {
   const { t, locale } = useTranslation();
   const category = CATEGORY_MAP[parsed.categoryId];
   const CategoryIcon = category?.icon;
-  const categoryLabel =
-    locale === "es" ? category?.label.es : category?.label.en;
-  const formattedAmount = `$${parsed.amount.toLocaleString("es-CO")}`;
+  const categoryLabel = locale === "es" ? category?.label.es : category?.label.en;
+  const formattedAmount = `$${parsed.amount.toLocaleString(locale === "es" ? "es-CO" : "en-US")}`;
   const isExpense = parsed.type === "expense";
 
   return (
