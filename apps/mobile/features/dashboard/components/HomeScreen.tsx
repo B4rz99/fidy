@@ -1,5 +1,5 @@
 import { Stack, useRouter } from "expo-router";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo, useRef } from "react";
 import type { CategoryBreakdownItem } from "@/features/analytics/lib/derive";
 import { DetectedTransactionsBanner } from "@/features/capture-sources";
 import {
@@ -126,6 +126,12 @@ const ListHeader = memo(function ListHeader({
 export const HomeScreen = () => {
   const { push } = useRouter();
   const { t } = useTranslation();
+  // Stabilize push/t with refs so callback deps don't cascade through
+  // renderItem → FlatList re-rendering all visible items on every period switch
+  const pushRef = useRef(push);
+  pushRef.current = push;
+  const tRef = useRef(t);
+  tRef.current = t;
   const pages = useTransactionStore((s) => s.pages);
   const hasMore = useTransactionStore((s) => s.hasMore);
   const loadNextPage = useTransactionStore((s) => s.loadNextPage);
@@ -163,23 +169,27 @@ export const HomeScreen = () => {
   const handleEdit = useCallback(
     (id: TransactionId) => {
       editTransaction(id);
-      push("/(tabs)/add" as never);
+      pushRef.current("/(tabs)/add" as never);
     },
-    [editTransaction, push]
+    [editTransaction]
   );
 
   const handleDelete = useCallback(
     (id: TransactionId) => {
-      Alert.alert(t("transactions.deleteConfirmTitle"), t("transactions.deleteConfirmMessage"), [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.delete"),
-          style: "destructive",
-          onPress: () => deleteTransaction(id),
-        },
-      ]);
+      Alert.alert(
+        tRef.current("transactions.deleteConfirmTitle"),
+        tRef.current("transactions.deleteConfirmMessage"),
+        [
+          { text: tRef.current("common.cancel"), style: "cancel" },
+          {
+            text: tRef.current("common.delete"),
+            style: "destructive",
+            onPress: () => deleteTransaction(id),
+          },
+        ]
+      );
     },
-    [t, deleteTransaction]
+    [deleteTransaction]
   );
 
   const renderItem = useCallback(
@@ -198,6 +208,10 @@ export const HomeScreen = () => {
 
   const keyExtractor = useCallback((item: StoredTransaction) => item.id, []);
 
+  const handleChartPress = useCallback(() => {
+    pushRef.current("/analytics" as never);
+  }, []);
+
   const listHeader = useMemo(
     () => (
       <ListHeader
@@ -207,10 +221,10 @@ export const HomeScreen = () => {
         dailySpending={periodDailySpending}
         totalSpent={periodSpent}
         onPeriodChange={setPeriod}
-        onChartPress={() => push("/analytics" as never)}
+        onChartPress={handleChartPress}
       />
     ),
-    [period, periodSpent, periodCategorySpending, periodDailySpending, setPeriod, push]
+    [period, periodSpent, periodCategorySpending, periodDailySpending, setPeriod, handleChartPress]
   );
 
   return (
