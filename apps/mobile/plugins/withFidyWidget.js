@@ -94,7 +94,7 @@ const EXTENSION_BUILD_SETTINGS = {
 
 /** Reconcile build settings on the extension's Debug/Release configurations. */
 const reconcileBuildSettings = (project) => {
-  // Find the extension target's buildConfigurationList to get its config UUIDs
+  // Find the extension target's buildConfigurationList UUID
   const nativeTargets = project.pbxNativeTargetSection();
   let configListId = null;
   for (const val of Object.values(nativeTargets)) {
@@ -105,24 +105,19 @@ const reconcileBuildSettings = (project) => {
   }
   if (!configListId) return;
 
-  // Get the configuration UUIDs from the XCConfigurationList
-  const configLists = project.pbxXCConfigurationList();
-  const configList = configLists[configListId];
+  // Get the configuration UUIDs from the XCConfigurationList via direct hash access
+  const configLists = project.hash.project.objects.XCConfigurationList;
+  const configList = configLists?.[configListId];
   if (!configList?.buildConfigurations) return;
 
   const configUuids = new Set(configList.buildConfigurations.map((c) => c.value));
 
   // Apply build settings to those specific configurations
-  const configurations = project.pbxXCBuildConfigurationSection();
-  for (const key of Object.keys(configurations)) {
-    if (configUuids.has(key)) {
-      const config = configurations[key];
-      if (typeof config === "object") {
-        config.buildSettings = {
-          ...config.buildSettings,
-          ...EXTENSION_BUILD_SETTINGS,
-        };
-      }
+  const buildConfigs = project.hash.project.objects.XCBuildConfiguration;
+  for (const uuid of configUuids) {
+    const config = buildConfigs?.[uuid];
+    if (typeof config === "object" && config.buildSettings) {
+      Object.assign(config.buildSettings, EXTENSION_BUILD_SETTINGS);
     }
   }
 };
