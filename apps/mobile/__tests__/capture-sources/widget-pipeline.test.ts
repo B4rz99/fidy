@@ -1,14 +1,14 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockInsertTransaction = vi.fn();
+const mockUpsertTransaction = vi.fn();
 const mockEnqueueSync = vi.fn();
 const mockGetPendingTransactions = vi.fn();
-const mockClearPendingTransactions = vi.fn();
+const mockRemovePendingTransactions = vi.fn();
 const mockIsAvailable = vi.fn();
 
 vi.mock("@/features/transactions/lib/repository", () => ({
-  insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
+  upsertTransaction: (...args: any[]) => mockUpsertTransaction(...args),
 }));
 
 vi.mock("@/shared/db/enqueue-sync", () => ({
@@ -17,14 +17,13 @@ vi.mock("@/shared/db/enqueue-sync", () => ({
 
 vi.mock("@/modules/expo-app-intents", () => ({
   getPendingTransactions: (...args: any[]) => mockGetPendingTransactions(...args),
-  clearPendingTransactions: (...args: any[]) => mockClearPendingTransactions(...args),
+  removePendingTransactions: (...args: any[]) => mockRemovePendingTransactions(...args),
   isAvailable: () => mockIsAvailable(),
 }));
 
 const mockGenerateId = vi.fn();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: any[]) => mockGenerateId(...args),
-  generateTransactionId: () => mockGenerateId("tx"),
   generateSyncQueueId: () => mockGenerateId("sq"),
 }));
 
@@ -46,7 +45,7 @@ describe("processWidgetTransactions", () => {
     });
     mockIsAvailable.mockReturnValue(true);
     mockGetPendingTransactions.mockResolvedValue([]);
-    mockClearPendingTransactions.mockResolvedValue(undefined);
+    mockRemovePendingTransactions.mockResolvedValue(undefined);
   });
 
   it("early-returns when isAvailable() is false", async () => {
@@ -55,7 +54,7 @@ describe("processWidgetTransactions", () => {
     await processWidgetTransactions(mockDb, USER_ID);
 
     expect(mockGetPendingTransactions).not.toHaveBeenCalled();
-    expect(mockInsertTransaction).not.toHaveBeenCalled();
+    expect(mockUpsertTransaction).not.toHaveBeenCalled();
   });
 
   it("early-returns when pending list is empty", async () => {
@@ -63,22 +62,22 @@ describe("processWidgetTransactions", () => {
 
     await processWidgetTransactions(mockDb, USER_ID);
 
-    expect(mockInsertTransaction).not.toHaveBeenCalled();
-    expect(mockClearPendingTransactions).not.toHaveBeenCalled();
+    expect(mockUpsertTransaction).not.toHaveBeenCalled();
+    expect(mockRemovePendingTransactions).not.toHaveBeenCalled();
   });
 
   it("saves a single pending transaction with widget source", async () => {
     mockGetPendingTransactions.mockResolvedValue([
-      { amount: 25000, createdAt: "2026-03-27T10:00:00Z" },
+      { id: "abc-123", amount: 25000, createdAt: "2026-03-27T10:00:00Z" },
     ]);
 
     await processWidgetTransactions(mockDb, USER_ID);
 
-    expect(mockInsertTransaction).toHaveBeenCalledOnce();
-    expect(mockInsertTransaction).toHaveBeenCalledWith(
+    expect(mockUpsertTransaction).toHaveBeenCalledOnce();
+    expect(mockUpsertTransaction).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        id: "tx-1",
+        id: "txn-widget-abc-123",
         userId: USER_ID,
         type: "expense",
         amount: 25000,
@@ -89,9 +88,22 @@ describe("processWidgetTransactions", () => {
     );
   });
 
+  it("derives deterministic transaction ID from widget entry ID", async () => {
+    mockGetPendingTransactions.mockResolvedValue([
+      { id: "stable-uuid", amount: 10000, createdAt: "2026-03-27T10:00:00Z" },
+    ]);
+
+    await processWidgetTransactions(mockDb, USER_ID);
+
+    expect(mockUpsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({ id: "txn-widget-stable-uuid" })
+    );
+  });
+
   it("enqueues sync for each saved transaction", async () => {
     mockGetPendingTransactions.mockResolvedValue([
-      { amount: 10000, createdAt: "2026-03-27T10:00:00Z" },
+      { id: "sync-1", amount: 10000, createdAt: "2026-03-27T10:00:00Z" },
     ]);
 
     await processWidgetTransactions(mockDb, USER_ID);
@@ -101,64 +113,65 @@ describe("processWidgetTransactions", () => {
       mockDb,
       expect.objectContaining({
         tableName: "transactions",
-        rowId: "tx-1",
+        rowId: "txn-widget-sync-1",
         operation: "insert",
       })
     );
   });
 
-  it("clears pending transactions after all are processed", async () => {
+  it("removes only processed pending entries after success", async () => {
     mockGetPendingTransactions.mockResolvedValue([
-      { amount: 10000, createdAt: "2026-03-27T10:00:00Z" },
-      { amount: 20000, createdAt: "2026-03-27T11:00:00Z" },
+      { id: "id-a", amount: 10000, createdAt: "2026-03-27T10:00:00Z" },
+      { id: "id-b", amount: 20000, createdAt: "2026-03-27T11:00:00Z" },
     ]);
 
     await processWidgetTransactions(mockDb, USER_ID);
 
-    expect(mockInsertTransaction).toHaveBeenCalledTimes(2);
+    expect(mockUpsertTransaction).toHaveBeenCalledTimes(2);
     expect(mockEnqueueSync).toHaveBeenCalledTimes(2);
-    expect(mockClearPendingTransactions).toHaveBeenCalledOnce();
+    expect(mockRemovePendingTransactions).toHaveBeenCalledOnce();
+    expect(mockRemovePendingTransactions).toHaveBeenCalledWith(["id-a", "id-b"]);
   });
 
   it("processes multiple pending transactions with unique IDs", async () => {
     mockGetPendingTransactions.mockResolvedValue([
-      { amount: 10000, createdAt: "2026-03-27T10:00:00Z" },
-      { amount: 20000, createdAt: "2026-03-27T11:00:00Z" },
+      { id: "uuid-1", amount: 10000, createdAt: "2026-03-27T10:00:00Z" },
+      { id: "uuid-2", amount: 20000, createdAt: "2026-03-27T11:00:00Z" },
     ]);
 
     await processWidgetTransactions(mockDb, USER_ID);
 
-    const firstTxCall = mockInsertTransaction.mock.calls[0][1];
-    const secondTxCall = mockInsertTransaction.mock.calls[1][1];
-    expect(firstTxCall.id).toBe("tx-1");
-    expect(secondTxCall.id).toBe("tx-2");
+    const firstTxCall = mockUpsertTransaction.mock.calls[0][1];
+    const secondTxCall = mockUpsertTransaction.mock.calls[1][1];
+    expect(firstTxCall.id).toBe("txn-widget-uuid-1");
+    expect(secondTxCall.id).toBe("txn-widget-uuid-2");
     expect(firstTxCall.amount).toBe(10000);
     expect(secondTxCall.amount).toBe(20000);
   });
 
-  it("uses toIsoDate from item.createdAt for the transaction date", async () => {
+  it("derives transaction date from item.createdAt", async () => {
     mockGetPendingTransactions.mockResolvedValue([
-      { amount: 5000, createdAt: "2026-03-15T14:30:00Z" },
+      { id: "date-test", amount: 5000, createdAt: "2026-03-15T14:30:00Z" },
     ]);
 
     await processWidgetTransactions(mockDb, USER_ID);
 
-    expect(mockInsertTransaction).toHaveBeenCalledWith(
+    expect(mockUpsertTransaction).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        date: "2026-03-15",
       })
     );
   });
 
   it("rounds fractional amounts to nearest integer", async () => {
     mockGetPendingTransactions.mockResolvedValue([
-      { amount: 15000.7, createdAt: "2026-03-27T10:00:00Z" },
+      { id: "round-test", amount: 15000.7, createdAt: "2026-03-27T10:00:00Z" },
     ]);
 
     await processWidgetTransactions(mockDb, USER_ID);
 
-    expect(mockInsertTransaction).toHaveBeenCalledWith(
+    expect(mockUpsertTransaction).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({ amount: 15001 })
     );

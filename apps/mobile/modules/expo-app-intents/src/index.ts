@@ -41,6 +41,6 @@ export function getPendingTransactions() {
   return ExpoAppIntentsModule.getPendingTransactions();
 }
 
-export function clearPendingTransactions() {
-  return ExpoAppIntentsModule.clearPendingTransactions();
+export function removePendingTransactions(ids: string[]) {
+  return ExpoAppIntentsModule.removePendingTransactions(ids);
 }

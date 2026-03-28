@@ -7,7 +7,7 @@ export type {
 export {
   addDetectBankSmsListener,
   addLogTransactionListener,
-  clearPendingTransactions,
   getPendingTransactions,
+  removePendingTransactions,
   isAvailable,
 } from "./src/index";

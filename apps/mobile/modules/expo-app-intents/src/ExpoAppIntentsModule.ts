@@ -1,6 +1,7 @@
 import { requireNativeModule } from "expo";
 
 export type PendingWidgetTransaction = {
+  id: string;
   amount: number;
   createdAt: string;
 };
@@ -8,7 +9,7 @@ export type PendingWidgetTransaction = {
 export type ExpoAppIntentsModule = {
   isAvailable: () => boolean;
   getPendingTransactions: () => Promise<PendingWidgetTransaction[]>;
-  clearPendingTransactions: () => Promise<void>;
+  removePendingTransactions: (ids: string[]) => Promise<void>;
   addListener: (eventName: string, listener: (...args: never[]) => void) => { remove: () => void };
 };
 

@@ -1,16 +1,15 @@
-import { insertTransaction } from "@/features/transactions";
+import { upsertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
   captureError,
   capturePipelineEvent,
   generateSyncQueueId,
-  generateTransactionId,
   toIsoDate,
   toIsoDateTime,
   trackTransactionCreated,
 } from "@/shared/lib";
-import type { CategoryId, CopAmount, UserId } from "@/shared/types/branded";
+import type { CategoryId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
 
 // Dynamic import to avoid Android bundle crash — this module calls
 // requireNativeModule("ExpoAppIntents") which only exists on iOS.
@@ -19,6 +18,10 @@ const loadAppIntents = () =>
 
 // Guard against concurrent invocations (mount + immediate AppState "active").
 let processing = false;
+
+/** Derive a deterministic TransactionId from the widget entry UUID for idempotent retries. */
+const toTransactionId = (widgetEntryId: string): TransactionId =>
+  `txn-widget-${widgetEntryId}` as TransactionId;
 
 export async function processWidgetTransactions(db: AnyDb, userId: UserId): Promise<void> {
   if (processing) return;
@@ -32,14 +35,16 @@ export async function processWidgetTransactions(db: AnyDb, userId: UserId): Prom
     const pending = await mod.getPendingTransactions();
     if (pending.length === 0) return;
 
+    const processedIds: string[] = [];
+
     await Promise.all(
       pending.map(async (item) => {
-        const txId = generateTransactionId();
+        const txId = toTransactionId(item.id);
         const now = toIsoDateTime(new Date());
         const amount = Math.round(item.amount) as CopAmount;
         const date = toIsoDate(new Date(item.createdAt));
 
-        await insertTransaction(db, {
+        upsertTransaction(db, {
           id: txId,
           userId,
           type: "expense",
@@ -65,12 +70,14 @@ export async function processWidgetTransactions(db: AnyDb, userId: UserId): Prom
           category: "other",
           source: "widget",
         });
+
+        processedIds.push(item.id);
       })
     );
 
-    await mod.clearPendingTransactions();
+    await mod.removePendingTransactions(processedIds);
 
-    capturePipelineEvent({ source: "widget", saved: pending.length, skippedDuplicate: 0 });
+    capturePipelineEvent({ source: "widget", saved: processedIds.length, skippedDuplicate: 0 });
   } catch (error) {
     captureError(error);
   } finally {

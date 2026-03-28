@@ -10,6 +10,10 @@ struct QuickExpenseIntent: AppIntent {
     var amount: Int
 
     func perform() async throws -> some IntentResult {
+        guard amount > 0 else {
+            throw $amount.needsValueError("Please enter a positive amount.")
+        }
+
         let defaults = UserDefaults(suiteName: "group.com.obarbozaa.Fidy")
 
         let existing: [[String: Any]] = {

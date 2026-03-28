@@ -66,6 +66,17 @@ const generateUuid = (project: XcodeProject): string => project.generateUuid() a
  */
 const addWidgetExtensionTarget = (project: XcodeProject): void => {
   // ------------------------------------------------------------------
+  // 0. Idempotency guard — skip all mutations if the target already exists
+  // ------------------------------------------------------------------
+  const existingTargets = project.pbxNativeTargetSection();
+  const alreadyExists = Object.values(existingTargets).some(
+    (t) => typeof t === "object" && t !== null && (t as { name?: string }).name === EXTENSION_NAME
+  );
+  if (alreadyExists) {
+    return;
+  }
+
+  // ------------------------------------------------------------------
   // 1. Create the extension target
   // ------------------------------------------------------------------
   const target = project.addTarget(
