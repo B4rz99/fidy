@@ -117,12 +117,13 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
   clearAll: () => {
     if (!dbRef || !userIdRef) return;
+    const db = dbRef;
     const now = toIsoDateTime(new Date());
     try {
-      const allIds = getAllNotificationIds(dbRef, userIdRef);
-      softDeleteAllNotifications(dbRef, userIdRef, now);
+      const allIds = getAllNotificationIds(db, userIdRef);
+      softDeleteAllNotifications(db, userIdRef, now);
       allIds.forEach((id) => {
-        enqueueSync(dbRef!, {
+        enqueueSync(db, {
           id: generateSyncQueueId(),
           tableName: "notifications",
           rowId: id,

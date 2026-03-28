@@ -33,7 +33,12 @@ export function WelcomeStep() {
         >
           <Text style={styles.primaryButtonText}>{t("onboarding.welcome.getStarted")}</Text>
         </Pressable>
-        <Pressable onPress={handleAlreadyHaveAccount} disabled={isBusy}>
+        <Pressable
+          onPress={() => {
+            void handleAlreadyHaveAccount();
+          }}
+          disabled={isBusy}
+        >
           <Text style={[styles.linkText, { color: secondaryColor }]}>
             {t("onboarding.welcome.alreadyHaveAccount")}
           </Text>

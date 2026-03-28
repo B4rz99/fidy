@@ -1,13 +1,13 @@
 // biome-ignore-all lint/style/useNamingConvention: Supabase user_metadata uses snake_case keys
 import type { Session } from "@supabase/supabase-js";
 import * as SecureStore from "expo-secure-store";
-import { getSupabase } from "@/shared/db/supabase";
+import { getSupabase } from "@/shared/db";
 
 const SECURE_STORE_KEY = "onboarding_completed";
 
 /** Pure check — no side effects */
 export const isOnboardingComplete = (session: Session | null): boolean =>
-  session?.user?.user_metadata?.onboarding_completed === true;
+  session?.user.user_metadata.onboarding_completed === true;
 
 /** Reads SecureStore synchronously (returns cached value) */
 export const getOnboardingCompleteFromStore = (): boolean => {

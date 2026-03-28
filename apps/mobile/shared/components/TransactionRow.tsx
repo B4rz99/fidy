@@ -51,7 +51,7 @@ export function TransactionRow({
     );
   }, [onEdit, onDelete, t]);
 
-  const hasActions = (onEdit || onDelete) && Platform.OS === "ios";
+  const hasActions = (onEdit != null || onDelete != null) && Platform.OS === "ios";
 
   const content = (
     <View className="flex-row items-center py-3">

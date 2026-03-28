@@ -11,9 +11,7 @@ let _module: ExpoAppIntentsModule | null = null;
 
 const ExpoAppIntentsProxy = new Proxy({} as ExpoAppIntentsModule, {
   get(_target, prop: string) {
-    if (!_module) {
-      _module = requireNativeModule<ExpoAppIntentsModule>("ExpoAppIntents");
-    }
+    _module ??= requireNativeModule<ExpoAppIntentsModule>("ExpoAppIntents");
     return _module[prop as keyof ExpoAppIntentsModule];
   },
 });

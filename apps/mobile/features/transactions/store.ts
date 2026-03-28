@@ -232,9 +232,9 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     const { transaction } = result;
 
     try {
-      await insertTransaction(dbRef, toTransactionRow(transaction));
+      insertTransaction(dbRef, toTransactionRow(transaction));
 
-      await enqueueSync(dbRef, {
+      enqueueSync(dbRef, {
         id: generateSyncQueueId(),
         tableName: "transactions",
         rowId: transaction.id,
@@ -254,8 +254,8 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     if (dbRef) {
       try {
         const now = toIsoDateTime(new Date());
-        await softDeleteTransaction(dbRef, id, now);
-        await enqueueSync(dbRef, {
+        softDeleteTransaction(dbRef, id, now);
+        enqueueSync(dbRef, {
           id: generateSyncQueueId(),
           tableName: "transactions",
           rowId: id,
@@ -309,7 +309,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     try {
       upsertTransaction(dbRef, toTransactionRow(transaction));
 
-      await enqueueSync(dbRef, {
+      enqueueSync(dbRef, {
         id: generateSyncQueueId(),
         tableName: "transactions",
         rowId: id,

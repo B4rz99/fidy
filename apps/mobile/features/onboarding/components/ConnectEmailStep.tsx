@@ -55,14 +55,18 @@ export function ConnectEmailStep() {
           <OAuthButton
             icon={<GoogleIcon />}
             label={t("login.continueWithGoogle")}
-            onPress={() => handleConnect("gmail")}
+            onPress={() => {
+              void handleConnect("gmail");
+            }}
             containerClassName="border border-gray-300 dark:border-gray-600"
             textClassName="text-gray-800 dark:text-gray-200"
           />
           <OAuthButton
             icon={<MicrosoftIcon />}
             label={t("login.continueWithMicrosoft")}
-            onPress={() => handleConnect("outlook")}
+            onPress={() => {
+              void handleConnect("outlook");
+            }}
             containerClassName="border border-gray-300 dark:border-gray-600"
             textClassName="text-gray-800 dark:text-gray-200"
           />
