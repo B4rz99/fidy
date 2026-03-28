@@ -1,7 +1,9 @@
 import * as Haptics from "expo-haptics";
-import { useCallback } from "react";
+import { useMemo, useRef } from "react";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import type { LucideIcon } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 
 type TransactionRowProps = {
@@ -28,10 +30,34 @@ export function TransactionRow({
   const defaultIconBg = useThemeColor("peachLight");
   const iconColor = useThemeColor("tertiary");
 
-  const handleLongPress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onEdit?.();
-  }, [onEdit]);
+  const pressed = useSharedValue(false);
+  const onEditRef = useRef(onEdit);
+  onEditRef.current = onEdit;
+
+  const longPress = useMemo(() => {
+    if (!onEdit) return null;
+
+    const fire = () => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      onEditRef.current?.();
+    };
+
+    return Gesture.LongPress()
+      .minDuration(100)
+      .onBegin(() => {
+        pressed.value = true;
+      })
+      .onStart(() => {
+        runOnJS(fire)();
+      })
+      .onFinalize(() => {
+        pressed.value = false;
+      });
+  }, [pressed, onEdit]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: pressed.value ? 0.7 : 1,
+  }));
 
   const content = (
     <View className="flex-row items-center py-3">
@@ -68,7 +94,11 @@ export function TransactionRow({
     </View>
   );
 
-  if (!onEdit) return content;
+  if (!longPress) return content;
 
-  return <Pressable onLongPress={handleLongPress}>{content}</Pressable>;
+  return (
+    <GestureDetector gesture={longPress}>
+      <Animated.View style={animatedStyle}>{content}</Animated.View>
+    </GestureDetector>
+  );
 }

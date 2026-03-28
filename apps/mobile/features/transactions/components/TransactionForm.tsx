@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Animated, {
+  cancelAnimation,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -8,8 +9,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FidyNumpad } from "@/shared/components";
-import { Calendar } from "@/shared/components/icons";
-import { Platform, Pressable, Text, TextInput, View } from "@/shared/components/rn";
+import { Calendar, X } from "@/shared/components/icons";
+import { Keyboard, Platform, Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
@@ -35,6 +36,7 @@ type TransactionFormProps = {
   readonly onDescriptionChange: (text: string) => void;
   readonly onSave: () => void;
   readonly onDelete?: () => void;
+  readonly onClose?: () => void;
 };
 
 export function TransactionForm({
@@ -51,6 +53,7 @@ export function TransactionForm({
   onDescriptionChange,
   onSave,
   onDelete,
+  onClose,
 }: TransactionFormProps) {
   const { t, locale } = useTranslation();
   const { bottom: safeBottom } = useSafeAreaInsets();
@@ -71,6 +74,8 @@ export function TransactionForm({
     [date, t, locale]
   );
 
+  const [descriptionFocused, setDescriptionFocused] = useState(false);
+
   const digitsRef = useRef(digits);
   digitsRef.current = digits;
 
@@ -86,6 +91,7 @@ export function TransactionForm({
       ),
       -1
     );
+    return () => cancelAnimation(cursorOpacity);
   }, [cursorOpacity]);
 
   const cursorStyle = useAnimatedStyle(() => ({
@@ -100,7 +106,21 @@ export function TransactionForm({
   );
 
   return (
-    <View style={{ flex: 1 }} className="bg-page dark:bg-page-dark">
+    <Pressable style={{ flex: 1 }} className="bg-page dark:bg-page-dark" onPress={Keyboard.dismiss}>
+      {/* Close button (edit mode only) */}
+      {onClose && (
+        <View style={{ alignItems: "flex-end", paddingTop: 12, paddingHorizontal: 16 }}>
+          <Pressable
+            onPress={onClose}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={t("common.close")}
+          >
+            <X size={24} color={secondary} />
+          </Pressable>
+        </View>
+      )}
+
       {/* Top zone: amount display + metadata */}
       <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 24, gap: 12 }}>
         {/* Type toggle + Amount */}
@@ -116,18 +136,20 @@ export function TransactionForm({
             >
               {displayAmount}
             </Text>
-            <Animated.View
-              style={[
-                {
-                  width: 2,
-                  height: 32,
-                  marginLeft: 2,
-                  borderRadius: 1,
-                  backgroundColor: amountColor,
-                },
-                cursorStyle,
-              ]}
-            />
+            {!descriptionFocused && (
+              <Animated.View
+                style={[
+                  {
+                    width: 2,
+                    height: 32,
+                    marginLeft: 2,
+                    borderRadius: 1,
+                    backgroundColor: amountColor,
+                  },
+                  cursorStyle,
+                ]}
+              />
+            )}
           </View>
         </View>
 
@@ -165,6 +187,8 @@ export function TransactionForm({
             placeholderTextColor={tertiary}
             value={description}
             onChangeText={onDescriptionChange}
+            onFocus={() => setDescriptionFocused(true)}
+            onBlur={() => setDescriptionFocused(false)}
             maxLength={200}
           />
           <View
@@ -259,6 +283,6 @@ export function TransactionForm({
         {/* Custom numpad */}
         <FidyNumpad onKeyPress={handleKey} />
       </View>
-    </View>
+    </Pressable>
   );
 }

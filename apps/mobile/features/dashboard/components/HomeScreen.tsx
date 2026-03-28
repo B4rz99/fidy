@@ -1,5 +1,5 @@
-import { Stack, useRouter } from "expo-router";
-import { memo, useCallback, useMemo } from "react";
+import { Stack, useFocusEffect, useRouter } from "expo-router";
+import { memo, useCallback, useMemo, useRef } from "react";
 import { DetectedTransactionsBanner } from "@/features/capture-sources";
 import {
   EmailConnectBanner,
@@ -141,8 +141,13 @@ export const HomeScreen = () => {
     }
   }, [hasMore, loadNextPage]);
 
+  const navigatingRef = useRef(false);
+  useFocusEffect(useCallback(() => { navigatingRef.current = false; }, []));
+
   const handleEdit = useCallback(
     (id: TransactionId) => {
+      if (navigatingRef.current) return;
+      navigatingRef.current = true;
       push(`/edit-transaction?transactionId=${id}` as never);
     },
     [push]

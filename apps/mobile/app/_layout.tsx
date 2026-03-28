@@ -390,7 +390,12 @@ function RootLayout() {
           />
           <Stack.Screen
             name="edit-transaction"
-            options={{ ...SHEET, sheetAllowedDetents: [0.92] }}
+            options={{
+              ...SHEET,
+              sheetAllowedDetents: [0.65],
+              gestureEnabled: false,
+              sheetGrabberVisible: false,
+            }}
           />
         </Stack>
         {db && userId && onboardingComplete && (

@@ -1,10 +1,17 @@
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { TransactionType } from "@/features/transactions";
 import { TransactionForm, useTransactionStore } from "@/features/transactions";
-import { useAsyncGuard, useMountEffect, useTranslation } from "@/shared/hooks";
+import { InteractionManager } from "@/shared/components/rn";
+import { useAsyncGuard, useTranslation } from "@/shared/hooks";
+import { showErrorToast } from "@/shared/lib";
 import type { CategoryId, TransactionId } from "@/shared/types/branded";
+
+const afterDismiss = () =>
+  new Promise<void>((resolve) => {
+    InteractionManager.runAfterInteractions(() => resolve());
+  });
 
 export default function EditTransactionScreen() {
   const { transactionId } = useLocalSearchParams<{ transactionId: string }>();
@@ -22,7 +29,8 @@ export default function EditTransactionScreen() {
   const [date, setDate] = useState(new Date());
   const [loaded, setLoaded] = useState(false);
 
-  useMountEffect(() => {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: router and getTransactionById are stable refs
+  useEffect(() => {
     const tx = getTransactionById(transactionId as TransactionId);
     if (tx) {
       setType(tx.type);
@@ -34,30 +42,41 @@ export default function EditTransactionScreen() {
     } else {
       router.back();
     }
-  });
+  }, [transactionId]);
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
   const handleSave = () =>
     guardedSave(async () => {
-      const result = await updateTransactionDirect(transactionId as TransactionId, {
-        type,
-        digits,
-        categoryId,
-        description,
-        date,
-      });
-      if (result.success) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        router.back();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.back();
+      await afterDismiss();
+      try {
+        const result = await updateTransactionDirect(transactionId as TransactionId, {
+          type,
+          digits,
+          categoryId,
+          description,
+          date,
+        });
+        if (!result.success) {
+          showErrorToast(t("transactions.updateFailed"));
+        }
+      } catch {
+        showErrorToast(t("transactions.updateFailed"));
       }
     });
 
   const handleDelete = () =>
     guardedSave(async () => {
-      await deleteTransaction(transactionId as TransactionId);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
+      await afterDismiss();
+      try {
+        await deleteTransaction(transactionId as TransactionId);
+      } catch {
+        showErrorToast(t("transactions.deleteFailed"));
+      }
     });
 
   if (!loaded) return null;
@@ -77,6 +96,7 @@ export default function EditTransactionScreen() {
       onDescriptionChange={setDescription}
       onSave={handleSave}
       onDelete={handleDelete}
+      onClose={() => router.back()}
     />
   );
 }
