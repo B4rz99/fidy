@@ -100,7 +100,9 @@ export function deriveAutoSuggestBudgets(
  * budget month, clamped to 0 (never negative).
  */
 export const computeDaysLeft = (month: Month, today: Date): number => {
-  const [year, m] = month.split("-").map(Number);
+  const parts = month.split("-").map(Number);
+  const year = parts[0] ?? 0;
+  const m = parts[1] ?? 1;
   return Math.max(0, differenceInCalendarDays(endOfMonth(new Date(year, m - 1, 1)), today));
 };
 

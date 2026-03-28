@@ -6,11 +6,11 @@ import { useCaptureSourcesStore } from "../store";
 
 const openNotificationListenerSettings = () => {
   if (Platform.OS === "android") {
-    Linking.sendIntent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS").catch(() => {
-      Linking.openSettings();
+    void Linking.sendIntent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS").catch(() => {
+      void Linking.openSettings();
     });
   } else {
-    Linking.openSettings();
+    void Linking.openSettings();
   }
 };
 

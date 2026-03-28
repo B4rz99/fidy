@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
-import { useCalendarStore } from "@/features/calendar";
-import { getNextOccurrence } from "@/features/calendar/lib/calendar-utils";
+import { getNextOccurrence, useCalendarStore } from "@/features/calendar";
 import { CATEGORY_MAP } from "@/features/transactions";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -57,7 +56,7 @@ export function UpcomingBillsSection() {
       ) : (
         <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
           {upcomingBills.map(({ bill, nextDate }, index) => {
-            const category = CATEGORY_MAP[bill.categoryId];
+            const category = CATEGORY_MAP[bill.categoryId] ?? null;
             const CategoryIcon = category?.icon;
             const categoryLabel = category ? getCategoryLabel(category, locale) : bill.categoryId;
 
@@ -70,9 +69,7 @@ export function UpcomingBillsSection() {
                 ]}
               >
                 <View style={styles.billInfo}>
-                  {CategoryIcon && (
-                    <CategoryIcon size={16} color={category?.color ?? primaryColor} />
-                  )}
+                  {category && CategoryIcon && <CategoryIcon size={16} color={category.color} />}
                   <View>
                     <Text style={[styles.billName, { color: primaryColor }]}>{bill.name}</Text>
                     <Text style={[styles.billDate, { color: secondaryColor }]}>

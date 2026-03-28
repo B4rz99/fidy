@@ -1,5 +1,5 @@
-import { Stack, useFocusEffect, useRouter } from "expo-router";
-import { memo, useCallback, useMemo, useRef } from "react";
+import { Stack, useRouter } from "expo-router";
+import { memo, useCallback, useMemo } from "react";
 import { DetectedTransactionsBanner } from "@/features/capture-sources";
 import {
   EmailConnectBanner,
@@ -19,7 +19,7 @@ import {
 } from "@/features/transactions";
 import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
 import { Ellipsis } from "@/shared/components/icons";
-import { FlatList, Platform, Text, View } from "@/shared/components/rn";
+import { Alert, FlatList, Platform, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { formatSignedMoney, toIsoDate } from "@/shared/lib";
@@ -34,10 +34,12 @@ const TransactionItem = memo(function TransactionItem({
   tx,
   showDateHeader,
   onEdit,
+  onDelete,
 }: {
   tx: StoredTransaction;
   showDateHeader: boolean;
   onEdit: () => void;
+  onDelete: () => void;
 }) {
   const { t, locale } = useTranslation();
   const category = CATEGORY_MAP[tx.categoryId];
@@ -61,6 +63,7 @@ const TransactionItem = memo(function TransactionItem({
           category={category ? getCategoryLabel(category, locale) : t("common.other")}
           isPositive={tx.type === "income"}
           onEdit={onEdit}
+          onDelete={onDelete}
         />
       </View>
     </View>
@@ -89,7 +92,7 @@ const ListHeader = memo(function ListHeader({
       <EmailConnectBanner
         onConnect={(provider) => {
           const clientId = provider === "gmail" ? getGmailClientId() : getOutlookClientId();
-          connectEmail(provider, clientId);
+          void connectEmail(provider, clientId);
         }}
       />
       <FailedEmailsBanner onPress={() => push("/failed-emails" as never)} />
@@ -111,12 +114,15 @@ const ListHeader = memo(function ListHeader({
 
 export const HomeScreen = () => {
   const { push } = useRouter();
+  const { t } = useTranslation();
   const pages = useTransactionStore((s) => s.pages);
   const hasMore = useTransactionStore((s) => s.hasMore);
   const loadNextPage = useTransactionStore((s) => s.loadNextPage);
   const balance = useTransactionStore((s) => s.balance);
   const categorySpending = useTransactionStore((s) => s.categorySpending);
   const dailySpending = useTransactionStore((s) => s.dailySpending);
+  const editTransaction = useTransactionStore((s) => s.editTransaction);
+  const deleteTransaction = useTransactionStore((s) => s.deleteTransaction);
   // phase gates ListEmptyComponent — suppresses "No transactions" during first sync
   const phase = useEmailCaptureStore((s) => s.phase);
   const primaryColor = useThemeColor("primary");
@@ -137,24 +143,32 @@ export const HomeScreen = () => {
 
   const handleEndReached = useCallback(() => {
     if (hasMore) {
-      loadNextPage();
+      void loadNextPage();
     }
   }, [hasMore, loadNextPage]);
 
-  const navigatingRef = useRef(false);
-  useFocusEffect(
-    useCallback(() => {
-      navigatingRef.current = false;
-    }, [])
-  );
-
   const handleEdit = useCallback(
     (id: TransactionId) => {
-      if (navigatingRef.current) return;
-      navigatingRef.current = true;
-      push(`/edit-transaction?transactionId=${id}` as never);
+      editTransaction(id);
+      push("/(tabs)/add" as never);
     },
-    [push]
+    [editTransaction, push]
+  );
+
+  const handleDelete = useCallback(
+    (id: TransactionId) => {
+      Alert.alert(t("transactions.deleteConfirmTitle"), t("transactions.deleteConfirmMessage"), [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.delete"),
+          style: "destructive",
+          onPress: () => {
+            void deleteTransaction(id);
+          },
+        },
+      ]);
+    },
+    [t, deleteTransaction]
   );
 
   const renderItem = useCallback(
@@ -164,10 +178,11 @@ export const HomeScreen = () => {
           tx={item}
           showDateHeader={dateBreaks.has(item.id)}
           onEdit={() => handleEdit(item.id)}
+          onDelete={() => handleDelete(item.id)}
         />
       );
     },
-    [dateBreaks, handleEdit]
+    [dateBreaks, handleEdit, handleDelete]
   );
 
   const keyExtractor = useCallback((item: StoredTransaction) => item.id, []);

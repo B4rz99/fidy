@@ -23,10 +23,10 @@ export const smsDetectionDataSchema = z.object({
 });
 export type SmsDetectionData = z.infer<typeof smsDetectionDataSchema>;
 
-export const KNOWN_BANK_PACKAGES: ReadonlyArray<{
+export const KNOWN_BANK_PACKAGES: readonly {
   packageName: string;
   label: string;
-}> = [
+}[] = [
   { packageName: "com.todo1.mobile.co.bancolombia", label: "Bancolombia" },
   { packageName: "com.bbva.nxt_colombia", label: "BBVA Colombia" },
   { packageName: "com.davivienda.daviplataapp", label: "Daviplata" },
