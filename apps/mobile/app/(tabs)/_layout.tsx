@@ -1,10 +1,12 @@
 import { Tabs } from "expo-router";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
+import { useState } from "react";
+import { VoiceBottomSheet } from "@/features/voice";
 import { CustomTabBar } from "@/shared/components";
 import { Platform } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 
-function IosTabs() {
+function IosTabs({ onVoicePress: _onVoicePress }: { onVoicePress: () => void }) {
   const { t } = useTranslation();
 
   return (
@@ -33,14 +35,14 @@ function IosTabs() {
   );
 }
 
-function AndroidTabs() {
+function AndroidTabs({ onVoicePress }: { onVoicePress: () => void }) {
   const { t } = useTranslation();
 
   return (
     <Tabs
       screenOptions={{ headerShown: false }}
       initialRouteName="(index)"
-      tabBar={(props) => <CustomTabBar {...props} />}
+      tabBar={(props) => <CustomTabBar {...props} onVoicePress={onVoicePress} />}
     >
       <Tabs.Screen name="(index)" options={{ title: t("tabs.home") }} />
       <Tabs.Screen name="(ai)" options={{ title: t("tabs.ai") }} />
@@ -52,5 +54,17 @@ function AndroidTabs() {
 }
 
 export default function TabsLayout() {
-  return Platform.OS === "ios" ? <IosTabs /> : <AndroidTabs />;
+  const [voiceVisible, setVoiceVisible] = useState(false);
+  const handleVoicePress = () => setVoiceVisible(true);
+
+  return (
+    <>
+      {Platform.OS === "ios" ? (
+        <IosTabs onVoicePress={handleVoicePress} />
+      ) : (
+        <AndroidTabs onVoicePress={handleVoicePress} />
+      )}
+      <VoiceBottomSheet visible={voiceVisible} onClose={() => setVoiceVisible(false)} />
+    </>
+  );
 }

@@ -7,7 +7,11 @@ import { TAB_CONFIG } from "./tab-config";
 
 export { TAB_CONFIG };
 
-export const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
+type CustomTabBarProps = BottomTabBarProps & {
+  onVoicePress?: () => void;
+};
+
+export const CustomTabBar = ({ state, navigation, onVoicePress }: CustomTabBarProps) => {
   const insets = useSafeAreaInsets();
 
   return (
@@ -30,7 +34,7 @@ export const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
         };
 
         if (route.name === "add") {
-          return <AddNavButton key={route.key} onPress={handlePress} />;
+          return <AddNavButton key={route.key} onPress={handlePress} onLongPress={onVoicePress} />;
         }
 
         const config = TAB_CONFIG[route.name];
