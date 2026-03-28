@@ -42,6 +42,7 @@ Rules:
 - date: transaction date in YYYY-MM-DD
 - confidence: 0 to 1
 - type: "expense" for purchases/payments, "income" for deposits/transfers received
+- cardIdentifier: If the text mentions a card name (e.g., "Visa Oro", "Mastercard Black") or last 4 digits of a card (e.g., "*1234", "****5678"), extract it exactly as written. Return null/omit if not found.
 
 Category guide — pick based on the MERCHANT NAME:
 ${CATEGORY_GUIDE}`;
@@ -55,6 +56,7 @@ The text is short (1-2 lines). Apply the same rules:
 - date: transaction date in YYYY-MM-DD (use today if not stated)
 - confidence: 0 to 1
 - type: "expense" for purchases/payments, "income" for deposits/transfers received
+- cardIdentifier: If the text mentions a card name (e.g., "Visa Oro", "Mastercard Black") or last 4 digits of a card (e.g., "*1234", "****5678"), extract it exactly as written. Return null/omit if not found.
 
 Category guide — pick based on the MERCHANT NAME:
 ${CATEGORY_GUIDE}`;
@@ -84,8 +86,17 @@ const FULL_PARSE_SCHEMA = {
       description: { type: "string" },
       date: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
       confidence: { type: "number", minimum: 0, maximum: 1 },
+      cardIdentifier: { type: ["string", "null"] },
     },
-    required: ["type", "amount", "categoryId", "description", "date", "confidence"],
+    required: [
+      "type",
+      "amount",
+      "categoryId",
+      "description",
+      "date",
+      "confidence",
+      "cardIdentifier",
+    ],
     additionalProperties: false,
   },
 };

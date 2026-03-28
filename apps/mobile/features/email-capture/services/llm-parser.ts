@@ -8,6 +8,7 @@ export const llmOutputSchema = z.object({
   description: z.string(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   confidence: z.number().min(0).max(1),
+  cardIdentifier: z.string().nullable().optional(),
 });
 
 export type LlmParsedTransaction = z.infer<typeof llmOutputSchema>;
