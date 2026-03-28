@@ -20,7 +20,7 @@ export function useVoiceTransaction() {
   const finalTranscriptRef = useRef("");
   const sttStartRef = useRef(0);
   const parsedRef = useRef<VoiceParseResult | null>(null);
-  const cancelledRef = useRef(false);
+  const generationRef = useRef(0);
 
   const cleanup = useCallback(() => {
     for (const sub of subscriptionsRef.current) {
@@ -30,14 +30,15 @@ export function useVoiceTransaction() {
   }, []);
 
   const parseTranscript = useCallback(async (transcript: string) => {
+    const generation = generationRef.current;
     const locale = useLocaleStore.getState().locale;
     const sttDurationMs = Date.now() - sttStartRef.current;
     const parseStart = Date.now();
     const result = await voiceParse(transcript, locale);
     const parseDurationMs = Date.now() - parseStart;
 
-    // Guard: if cancel() was called during the await, discard the result
-    if (cancelledRef.current) return;
+    // Discard if a newer session started or cancel() was called during the await
+    if (generation !== generationRef.current) return;
 
     if (!result) {
       captureWarning("voice_parse_failed", {
@@ -85,10 +86,10 @@ export function useVoiceTransaction() {
       return;
     }
 
+    generationRef.current++;
     setState({ status: "listening", transcript: "" });
     finalTranscriptRef.current = "";
     sttStartRef.current = Date.now();
-    cancelledRef.current = false;
 
     const locale = useLocaleStore.getState().locale;
 
@@ -149,7 +150,7 @@ export function useVoiceTransaction() {
   }, [cleanup, startListening]);
 
   const cancel = useCallback(() => {
-    cancelledRef.current = true;
+    generationRef.current++;
     cleanup();
     // Stop listening if active
     import("@/modules/expo-speech-recognition").then((mod) => {
