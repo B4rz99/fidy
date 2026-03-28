@@ -235,7 +235,7 @@ function RootLayout() {
     } else if (userId && !onboardingComplete && !inOnboarding) {
       router.replace("/(auth)/onboarding");
     } else if (userId && onboardingComplete && inAuthGroup) {
-      router.replace("/(tabs)" as never);
+      router.replace("/(tabs)/(index)" as never);
     }
   }, [userId, segments, isAuthLoading, fontsLoaded, fontsError, router, onboardingComplete]);
 
