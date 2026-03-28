@@ -183,16 +183,63 @@ const addWidgetExtensionTarget = (project) => {
       link: true,
     });
 
+    // Embed the extension in the main app — create the phase with an empty
+    // file list, then manually wire the target's product reference into the
+    // phase so CocoaPods doesn't encounter an orphaned PBXFileReference.
     const mainTarget = project.getFirstTarget();
     const embedPhaseUuid = generateUuid(project);
     project.addBuildPhase(
-      [`${EXTENSION_NAME}.appex`],
+      [],
       "PBXCopyFilesBuildPhase",
       "Embed App Extensions",
       mainTarget.firstTarget.uuid,
       "app_extension",
       embedPhaseUuid
     );
+
+    // Find the target's product reference (the .appex created by addTarget)
+    const nativeTargetEntry = project.pbxNativeTargetSection()[target.uuid];
+    const productRefUuid = nativeTargetEntry?.productReference;
+
+    if (productRefUuid) {
+      // Add product to the Products group so CocoaPods can resolve its parent
+      const productsGroupKey = Object.keys(project.hash.project.objects.PBXGroup || {}).find(
+        (key) => {
+          const group = project.hash.project.objects.PBXGroup[key];
+          return typeof group === "object" && group.name === "Products";
+        }
+      );
+      if (productsGroupKey) {
+        const productsGroup = project.hash.project.objects.PBXGroup[productsGroupKey];
+        const alreadyInGroup = productsGroup.children?.some((c) => c.value === productRefUuid);
+        if (!alreadyInGroup) {
+          productsGroup.children.push({
+            value: productRefUuid,
+            comment: `${EXTENSION_NAME}.appex`,
+          });
+        }
+      }
+
+      // Add a PBXBuildFile referencing the product in the embed phase
+      const buildFileUuid = generateUuid(project);
+      project.hash.project.objects.PBXBuildFile[buildFileUuid] = {
+        isa: "PBXBuildFile",
+        fileRef: productRefUuid,
+        settings: { ATTRIBUTES: ["RemoveHeadersOnCopy"] },
+      };
+      project.hash.project.objects.PBXBuildFile[`${buildFileUuid}_comment`] =
+        `${EXTENSION_NAME}.appex in Embed App Extensions`;
+
+      // Add the build file to the embed phase's files array
+      const copyFilesPhases = project.hash.project.objects.PBXCopyFilesBuildPhase || {};
+      const embedPhase = copyFilesPhases[embedPhaseUuid];
+      if (embedPhase) {
+        embedPhase.files.push({
+          value: buildFileUuid,
+          comment: `${EXTENSION_NAME}.appex in Embed App Extensions`,
+        });
+      }
+    }
   }
 
   // 2. Always reconcile build settings
