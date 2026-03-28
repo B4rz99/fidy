@@ -153,14 +153,14 @@ async function processEntry(
   entry: { id: string; tableName: string; rowId: string }
 ): Promise<string | null> {
   if (entry.tableName === "transactions") {
-    const row = getTransactionById(db, entry.rowId as TransactionId);
+    const row = await getTransactionById(db, entry.rowId as TransactionId);
     if (!row) return entry.id;
     const { error } = await supabase.from("transactions").upsert(toSupabaseRow(row));
     if (error) {
       captureWarning("sync_push_entry_failed", {
         tableName: entry.tableName,
         errorMessage: error.message,
-        errorCode: error.code,
+        errorCode: error.code ?? "unknown",
       });
     }
     return error ? null : entry.id;
@@ -194,7 +194,7 @@ export async function syncPush(
   supabase: SupabaseClient,
   _userId: string
 ): Promise<void> {
-  const entries = getQueuedSyncEntries(db);
+  const entries = await getQueuedSyncEntries(db);
   if (entries.length === 0) return;
 
   const results = await Promise.allSettled(entries.map((e) => processEntry(db, supabase, e)));
@@ -205,7 +205,7 @@ export async function syncPush(
     .map((r) => r.value);
 
   if (processedIds.length > 0) {
-    clearSyncEntries(db, processedIds as SyncQueueId[]);
+    await clearSyncEntries(db, processedIds as SyncQueueId[]);
   }
 
   capturePipelineEvent({
@@ -221,16 +221,16 @@ export async function syncPull(
   supabase: SupabaseClient,
   userId: string
 ): Promise<boolean> {
-  const lastSyncAt = getSyncMeta(db, LAST_SYNC_AT);
+  const lastSyncAt = await getSyncMeta(db, LAST_SYNC_AT);
 
   const baseQuery = supabase.from("transactions").select("*").eq("user_id", userId);
   const query = lastSyncAt ? baseQuery.gte("updated_at", lastSyncAt) : baseQuery;
 
   const { data, error } = await query.order("updated_at", { ascending: true }).limit(1000);
-  if (error) {
+  if (error || !data) {
     captureWarning("sync_pull_fetch_failed", {
-      errorMessage: error.message,
-      errorCode: error.code,
+      errorMessage: error?.message ?? "no_data",
+      errorCode: error?.code ?? "unknown",
     });
     return false;
   }
@@ -243,13 +243,13 @@ export async function syncPull(
   let conflictCount = 0;
   for (const serverRow of rows) {
     try {
-      const localRow = getTransactionById(db, serverRow.id as TransactionId);
+      const localRow = await getTransactionById(db, serverRow.id as TransactionId);
       const mappedServerRow = fromSupabaseRow(serverRow);
 
       if (shouldUpdateLocal(serverRow.updated_at, localRow?.updatedAt)) {
         const isConflict =
           localRow != null && hasDataConflict(localRow, mappedServerRow as typeof localRow);
-        upsertTransaction(db, mappedServerRow as Parameters<typeof upsertTransaction>[1]);
+        await upsertTransaction(db, mappedServerRow as Parameters<typeof upsertTransaction>[1]);
         // Log conflict after successful upsert to avoid duplicates on retry.
         // Own try/catch so a conflict-logging failure doesn't affect the sync flow.
         if (isConflict) {
@@ -291,18 +291,17 @@ export async function syncPull(
     const safeTimestamps = rows.map((r) => r.updated_at).filter((ts) => ts < earliestFailure);
     if (safeTimestamps.length > 0) {
       const safeCursor = safeTimestamps.reduce((max, ts) => (ts > max ? ts : max));
-      setSyncMeta(db, LAST_SYNC_AT, safeCursor);
+      await setSyncMeta(db, LAST_SYNC_AT, safeCursor);
     }
     // else: earliest row failed — don't advance cursor
   } else if (rows.length > 0) {
-    const firstUpdatedAt = rows[0]?.updated_at ?? "";
     const maxUpdatedAt = rows.reduce(
       (max, r) => (r.updated_at > max ? r.updated_at : max),
-      firstUpdatedAt
+      rows[0].updated_at
     );
-    setSyncMeta(db, LAST_SYNC_AT, maxUpdatedAt);
+    await setSyncMeta(db, LAST_SYNC_AT, maxUpdatedAt);
   } else if (!lastSyncAt) {
-    setSyncMeta(db, LAST_SYNC_AT, new Date().toISOString());
+    await setSyncMeta(db, LAST_SYNC_AT, new Date().toISOString());
   }
 
   return true;
