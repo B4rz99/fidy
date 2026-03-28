@@ -4,3 +4,11 @@
 
 expo-env.d.ts
 # @end expo-cli
+
+# Un-ignore native source directories inside local Expo modules.
+# The root .gitignore blocks android/ and ios/ globally (prebuild outputs),
+# but module source files under modules/ must be tracked.
+!modules/**/android/
+!modules/**/android/**
+!modules/**/ios/
+!modules/**/ios/**
