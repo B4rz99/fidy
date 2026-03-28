@@ -1,12 +1,6 @@
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
+import { useCallback, useRef, useState } from "react";
+import Animated from "react-native-reanimated";
 import { handleNumpadPress } from "@/features/transactions";
 import { FidyNumpad } from "@/shared/components";
 import {
@@ -18,7 +12,7 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
-import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, parseDigitsToAmount, toIsoDate } from "@/shared/lib";
 import { useGoalStore } from "../store";
 
@@ -43,19 +37,7 @@ export function AddPaymentSheet() {
   const [date, setDate] = useState<string>(toIsoDate(new Date()));
 
   // Blinking cursor
-  const cursorOpacity = useSharedValue(1);
-  useEffect(() => {
-    cursorOpacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 0 }),
-        withTiming(1, { duration: 530 }),
-        withTiming(0, { duration: 0 }),
-        withTiming(0, { duration: 530 })
-      ),
-      -1
-    );
-  }, [cursorOpacity]);
-  const cursorStyle = useAnimatedStyle(() => ({ opacity: cursorOpacity.value }));
+  const { cursorStyle } = useBlinkingCursor();
 
   const { isBusy: isAdding, run: guardedAdd } = useAsyncGuard();
 

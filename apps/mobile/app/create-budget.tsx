@@ -1,12 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
+import { useCallback, useMemo, useRef, useState } from "react";
+import Animated from "react-native-reanimated";
 import { type Budget, type BudgetSuggestion, useBudgetStore } from "@/features/budget";
 import {
   CATEGORIES,
@@ -17,7 +11,7 @@ import {
 } from "@/features/transactions";
 import { FidyNumpad } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatInputDisplay, formatMoney, parseDigitsToAmount } from "@/shared/lib";
 import type { BudgetId, CopAmount } from "@/shared/types/branded";
@@ -53,19 +47,7 @@ function CreateBudgetForm({
   digitsRef.current = digits;
 
   // Blinking cursor
-  const cursorOpacity = useSharedValue(1);
-  useEffect(() => {
-    cursorOpacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 0 }),
-        withTiming(1, { duration: 530 }),
-        withTiming(0, { duration: 0 }),
-        withTiming(0, { duration: 530 })
-      ),
-      -1
-    );
-  }, [cursorOpacity]);
-  const cursorStyle = useAnimatedStyle(() => ({ opacity: cursorOpacity.value }));
+  const { cursorStyle } = useBlinkingCursor();
 
   const cardBg = useThemeColor("card");
   const primaryColor = useThemeColor("primary");
