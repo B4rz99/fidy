@@ -14,13 +14,11 @@ describe("Tab layout", () => {
 
     const iosMatch = layoutSource.match(/function\s+IosTabs\b[\s\S]*?^}/m);
     expect(iosMatch).not.toBeNull();
-    // biome-ignore lint/style/noNonNullAssertion: guarded by expect above
     const iosNames = Array.from(iosMatch![0].matchAll(/name="([^"]+)"/g), (m) => m[1]);
     expect(iosNames).toEqual(expectedTabs);
 
     const androidMatch = layoutSource.match(/function\s+AndroidTabs\b[\s\S]*?^}/m);
     expect(androidMatch).not.toBeNull();
-    // biome-ignore lint/style/noNonNullAssertion: guarded by expect above
     const androidNames = Array.from(androidMatch![0].matchAll(/name="([^"]+)"/g), (m) => m[1]);
     expect(androidNames).toEqual(expectedTabs);
   });

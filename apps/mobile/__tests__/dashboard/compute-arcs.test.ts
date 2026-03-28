@@ -37,16 +37,16 @@ describe("computeArcs", () => {
   test("single 100% segment", () => {
     const arcs = computeArcs([{ percentage: 100, color: "#FF0000" }], circumference);
     expect(arcs).toHaveLength(1);
-    expect(arcs[0].dash).toBeCloseTo(circumference, 5);
-    expect(arcs[0].offset).toBeCloseTo(0, 5);
-    expect(arcs[0].rotation).toBe(-90);
+    expect(arcs[0]?.dash).toBeCloseTo(circumference, 5);
+    expect(arcs[0]?.offset).toBeCloseTo(0, 5);
+    expect(arcs[0]?.rotation).toBe(-90);
   });
 
   test("single 50% segment", () => {
     const arcs = computeArcs([{ percentage: 50, color: "#00FF00" }], circumference);
     expect(arcs).toHaveLength(1);
-    expect(arcs[0].dash).toBeCloseTo(circumference / 2, 5);
-    expect(arcs[0].offset).toBeCloseTo(circumference / 2, 5);
+    expect(arcs[0]?.dash).toBeCloseTo(circumference / 2, 5);
+    expect(arcs[0]?.offset).toBeCloseTo(circumference / 2, 5);
   });
 
   test("two equal 50% segments", () => {
@@ -58,8 +58,8 @@ describe("computeArcs", () => {
       circumference
     );
     expect(arcs).toHaveLength(2);
-    expect(arcs[0].rotation).toBe(-90);
-    expect(arcs[1].rotation).toBeCloseTo(90, 5);
+    expect(arcs[0]?.rotation).toBe(-90);
+    expect(arcs[1]?.rotation).toBeCloseTo(90, 5);
   });
 
   test("three segments (35/25/40)", () => {
@@ -97,14 +97,14 @@ describe("computeArcs", () => {
       ],
       circumference
     );
-    expect(arcs[0].color).toBe("#AABBCC");
-    expect(arcs[1].color).toBe("#DDEEFF");
+    expect(arcs[0]?.color).toBe("#AABBCC");
+    expect(arcs[1]?.color).toBe("#DDEEFF");
   });
 
   test("handles 0% segment", () => {
     const arcs = computeArcs([{ percentage: 0, color: "#000000" }], circumference);
     expect(arcs).toHaveLength(1);
-    expect(arcs[0].dash).toBe(0);
-    expect(arcs[0].offset).toBeCloseTo(circumference, 5);
+    expect(arcs[0]?.dash).toBe(0);
+    expect(arcs[0]?.offset).toBeCloseTo(circumference, 5);
   });
 });

@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { fetchGmailEmailsWithToken } from "@/features/email-capture/services/gmail-adapter";
+
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
-
-import { fetchGmailEmailsWithToken } from "@/features/email-capture/services/gmail-adapter";
 
 describe("gmail adapter", () => {
   beforeEach(() => {
@@ -80,7 +80,7 @@ describe("gmail adapter", () => {
         "bank@example.com",
       ]);
 
-      expect(emails[0].body).toBe(utf8Text);
+      expect(emails[0]?.body).toBe(utf8Text);
     });
 
     it("handles invalid date header gracefully", async () => {
@@ -110,8 +110,8 @@ describe("gmail adapter", () => {
       ]);
 
       expect(emails).toHaveLength(1);
-      expect(emails[0].receivedAt).toBeDefined();
-      expect(() => new Date(emails[0].receivedAt)).not.toThrow();
+      expect(emails[0]?.receivedAt).toBeDefined();
+      expect(() => new Date(emails[0]!.receivedAt)).not.toThrow();
     });
 
     it("returns empty array when no messages found", async () => {

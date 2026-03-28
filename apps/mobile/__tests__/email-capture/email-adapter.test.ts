@@ -1,6 +1,12 @@
 // biome-ignore-all lint/style/useNamingConvention: OAuth/API response fixtures use snake_case keys
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type {
+  EmailProviderConfig,
+  FetchEmailsFn,
+} from "@/features/email-capture/services/email-adapter";
+import { createAdapter, getAdapter } from "@/features/email-capture/services/email-adapter";
+
 const mockGetItemAsync = vi.fn();
 const mockSetItemAsync = vi.fn();
 const mockDeleteItemAsync = vi.fn();
@@ -26,12 +32,6 @@ vi.mock("expo-crypto", () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-import type {
-  EmailProviderConfig,
-  FetchEmailsFn,
-} from "@/features/email-capture/services/email-adapter";
-import { createAdapter } from "@/features/email-capture/services/email-adapter";
-
 const testConfig: EmailProviderConfig = {
   provider: "gmail",
   tokenKey: "test-token",
@@ -41,7 +41,7 @@ const testConfig: EmailProviderConfig = {
   scope: "read",
   getRedirectUri: () => "fidy://test/callback",
   profileUrl: "https://profile.example.com/me",
-  extractEmail: (profile) => (profile.email as string) ?? null,
+  extractEmail: (profile) => (typeof profile.email === "string" ? profile.email : null),
   extraAuthParams: {},
   extraTokenExchangeParams: {},
   extraRefreshParams: {},
@@ -234,7 +234,7 @@ describe("createAdapter", () => {
       const adapter = createAdapter(configWithExtra, stubFetch);
       await adapter.connect("client-id");
 
-      const calledUrl = mockOpenAuthSession.mock.calls[0][0] as string;
+      const calledUrl = mockOpenAuthSession.mock.calls[0]?.[0] as string;
       expect(calledUrl).toContain("access_type=offline");
       expect(calledUrl).toContain("prompt=consent");
     });
@@ -255,7 +255,7 @@ describe("createAdapter", () => {
       const adapter = createAdapter(configWithExtra, stubFetch);
       await adapter.connect("client-id");
 
-      const body = mockFetch.mock.calls[0][1]?.body as string;
+      const body = mockFetch.mock.calls[0]?.[1]?.body as string;
       expect(body).toContain("scope=read+write");
     });
   });
@@ -360,13 +360,11 @@ describe("createAdapter", () => {
       const adapter = createAdapter(configWithRefresh, fetchFn);
       await adapter.fetchEmails("client-id", "2026-03-01", ["a@b.com"]);
 
-      const refreshBody = mockFetch.mock.calls[1][1]?.body as string;
+      const refreshBody = mockFetch.mock.calls[1]?.[1]?.body as string;
       expect(refreshBody).toContain("scope=read+User.Read");
     });
   });
 });
-
-import { getAdapter } from "@/features/email-capture/services/email-adapter";
 
 describe("getAdapter", () => {
   it("returns a gmail adapter with isConnected callable", async () => {

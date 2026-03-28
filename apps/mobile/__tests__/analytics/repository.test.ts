@@ -156,8 +156,8 @@ describe("analytics repository", () => {
       );
 
       expect(result).toEqual(mockRows);
-      expect(result[0].categoryId).toBe("food");
-      expect(result[0].total).toBe(200000);
+      expect(result[0]?.categoryId).toBe("food");
+      expect(result[0]?.total).toBe(200000);
     });
   });
 });

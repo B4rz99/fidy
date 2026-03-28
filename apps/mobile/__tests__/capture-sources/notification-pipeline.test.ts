@@ -1,6 +1,9 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { NotificationData } from "@/features/capture-sources/schema";
+import { processNotification } from "@/features/capture-sources/services/notification-pipeline";
+
 const mockInsertTransaction = vi.fn();
 const mockEnqueueSync = vi.fn();
 const mockLookupMerchantRule = vi.fn().mockResolvedValue(null);
@@ -50,9 +53,6 @@ vi.mock("@/shared/lib/generate-id", () => ({
   generateProcessedCaptureId: () => mockGenerateId("pc"),
   generateSyncQueueId: () => mockGenerateId("sq"),
 }));
-
-import type { NotificationData } from "@/features/capture-sources/schema";
-import { processNotification } from "@/features/capture-sources/services/notification-pipeline";
 
 const mockDb = {} as any;
 const USER_ID = "user-1";

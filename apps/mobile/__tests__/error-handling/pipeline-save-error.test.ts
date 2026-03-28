@@ -2,6 +2,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { RawEmail } from "@/features/email-capture/schema";
 
+import { processEmails } from "@/features/email-capture/services/email-pipeline";
+
 const mockCaptureError = vi.fn();
 
 vi.mock("@/shared/lib/sentry", () => ({
@@ -53,8 +55,6 @@ vi.mock("@/shared/lib/generate-id", () => ({
   generateSyncQueueId: () => mockGenerateId("sq"),
 }));
 
-import { processEmails } from "@/features/email-capture/services/email-pipeline";
-
 const mockDb = {} as any;
 const USER_ID = "user-1";
 
@@ -104,7 +104,9 @@ describe("pipeline worker save error path", () => {
       date: "2026-03-05",
       confidence: 0.9,
     });
-    mockInsertTransaction.mockRejectedValueOnce(saveError);
+    mockInsertTransaction.mockImplementationOnce(() => {
+      throw saveError;
+    });
 
     // Second email: LLM returns valid result, save succeeds
     mockParseEmailApi.mockResolvedValueOnce({

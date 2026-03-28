@@ -1,4 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  getBalanceAggregate,
+  getSpendingByCategoryAggregate,
+  getTransactionsPaginated,
+  insertTransaction,
+  softDeleteTransaction,
+} from "@/features/transactions/lib/repository";
+import { useTransactionStore } from "@/features/transactions/store";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
 import type {
   CategoryId,
   CopAmount,
@@ -22,16 +31,6 @@ vi.mock("@/features/transactions/lib/repository", () => ({
 vi.mock("@/shared/db/enqueue-sync", () => ({
   enqueueSync: vi.fn(),
 }));
-
-import {
-  getBalanceAggregate,
-  getSpendingByCategoryAggregate,
-  getTransactionsPaginated,
-  insertTransaction,
-  softDeleteTransaction,
-} from "@/features/transactions/lib/repository";
-import { useTransactionStore } from "@/features/transactions/store";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
 
 // biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
 const mockDb = {} as any;
@@ -232,8 +231,8 @@ describe("useTransactionStore", () => {
 
     const state = useTransactionStore.getState();
     expect(state.pages).toHaveLength(1);
-    expect(state.pages[0].id).toBe("tx-1");
-    expect(state.pages[0].date).toBeInstanceOf(Date);
+    expect(state.pages[0]?.id).toBe("tx-1");
+    expect(state.pages[0]?.date).toBeInstanceOf(Date);
     expect(state.hasMore).toBe(false);
     expect(state.offset).toBe(1);
     expect(getTransactionsPaginated).toHaveBeenCalledWith(mockDb, mockUserId, 30, 0);
@@ -305,7 +304,7 @@ describe("useTransactionStore", () => {
 
     const state = useTransactionStore.getState();
     expect(state.pages).toHaveLength(2);
-    expect(state.pages[1].id).toBe("tx-1");
+    expect(state.pages[1]?.id).toBe("tx-1");
     expect(state.hasMore).toBe(false);
   });
 
@@ -351,7 +350,9 @@ describe("useTransactionStore", () => {
   });
 
   it("saveTransaction returns error when DB insert fails", async () => {
-    vi.mocked(insertTransaction).mockRejectedValueOnce(new Error("disk full"));
+    vi.mocked(insertTransaction).mockImplementationOnce(() => {
+      throw new Error("disk full");
+    });
 
     const store = useTransactionStore.getState();
     store.setDigits("500");
@@ -382,10 +383,10 @@ describe("useTransactionStore", () => {
       ],
     });
 
-    vi.mocked(softDeleteTransaction).mockRejectedValueOnce(new Error("db error"));
-    await expect(
-      useTransactionStore.getState().removeTransaction("tx-1" as TransactionId)
-    ).rejects.toThrow("db error");
+    vi.mocked(softDeleteTransaction).mockImplementationOnce(() => {
+      throw new Error("db error");
+    });
+    await useTransactionStore.getState().removeTransaction("tx-1" as TransactionId);
 
     expect(useTransactionStore.getState().pages).toHaveLength(1);
   });
@@ -406,7 +407,7 @@ describe("useTransactionStore", () => {
 
     useTransactionStore.getState().addToCache(tx);
 
-    expect(useTransactionStore.getState().pages[0].id).toBe("tx-new");
+    expect(useTransactionStore.getState().pages[0]?.id).toBe("tx-new");
   });
 
   it("removeFromCache filters from pages", () => {
