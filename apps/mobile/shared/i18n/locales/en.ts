@@ -36,6 +36,11 @@ const en = {
     menu: "Menu",
   },
 
+  // Dashboard
+  dashboard: {
+    spentThisMonth: "Spent this month",
+  },
+
   // Transactions
   transactions: {
     expense: "Expense",

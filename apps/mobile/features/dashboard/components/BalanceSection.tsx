@@ -1,6 +1,5 @@
-import { TrendingUp } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import type { CopAmount } from "@/shared/types/branded";
 
@@ -9,22 +8,16 @@ type BalanceSectionProps = {
 };
 
 export const BalanceSection = ({ balance }: BalanceSectionProps) => {
-  const greenColor = useThemeColor("accentGreen");
+  const { t } = useTranslation();
 
   return (
     <View className="items-center gap-1 py-4">
       <Text className="font-poppins-medium text-label uppercase tracking-widest text-tertiary dark:text-tertiary-dark">
-        TOTAL BALANCE
+        {t("dashboard.spentThisMonth")}
       </Text>
       <Text className="font-poppins-bold text-balance text-primary dark:text-primary-dark">
         {formatMoney(balance as CopAmount)}
       </Text>
-      <View className="flex-row items-center gap-1">
-        <TrendingUp size={14} color={greenColor} />
-        <Text className="font-poppins-medium text-label text-accent-green dark:text-accent-green-dark">
-          +2.4% this month
-        </Text>
-      </View>
     </View>
   );
 };

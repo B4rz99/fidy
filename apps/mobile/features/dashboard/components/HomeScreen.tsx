@@ -87,11 +87,6 @@ const ListHeader = memo(function ListHeader({
   const { push } = useRouter();
   const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
 
-  const totalSpent = useMemo(
-    () => categorySpending.reduce((sum, c) => sum + c.total, 0),
-    [categorySpending]
-  );
-
   return (
     <View className="gap-4 px-4">
       <EmailConnectBanner
@@ -110,7 +105,7 @@ const ListHeader = memo(function ListHeader({
       <ChartSection
         categorySpending={categorySpending}
         dailySpending={dailySpending}
-        totalSpent={totalSpent}
+        totalSpent={balance}
         onPress={() => push("/analytics" as never)}
       />
     </View>

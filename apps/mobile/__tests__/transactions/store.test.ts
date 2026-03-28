@@ -25,6 +25,7 @@ vi.mock("@/shared/db/enqueue-sync", () => ({
 
 import {
   getBalanceAggregate,
+  getSpendingByCategoryAggregate,
   getTransactionsPaginated,
   insertTransaction,
   softDeleteTransaction,
@@ -158,7 +159,7 @@ describe("useTransactionStore", () => {
 
     // refresh calls getTransactionsPaginated and aggregate functions
     expect(getTransactionsPaginated).toHaveBeenCalled();
-    expect(getBalanceAggregate).toHaveBeenCalled();
+    expect(getSpendingByCategoryAggregate).toHaveBeenCalled();
   });
 
   it("saveTransaction fails with zero amount", async () => {
@@ -427,5 +428,18 @@ describe("useTransactionStore", () => {
     useTransactionStore.getState().removeFromCache("tx-1" as TransactionId);
 
     expect(useTransactionStore.getState().pages).toHaveLength(0);
+  });
+
+  it("loadAggregates derives balance from current month category spending totals", () => {
+    vi.mocked(getSpendingByCategoryAggregate).mockReturnValueOnce([
+      { categoryId: "food" as CategoryId, total: 50000 as CopAmount },
+      { categoryId: "transport" as CategoryId, total: 30000 as CopAmount },
+    ]);
+
+    useTransactionStore.getState().loadAggregates();
+
+    const state = useTransactionStore.getState();
+    expect(state.balance).toBe(80000);
+    expect(getBalanceAggregate).not.toHaveBeenCalled();
   });
 });
