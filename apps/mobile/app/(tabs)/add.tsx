@@ -76,10 +76,7 @@ export default function AddTransactionScreen() {
         onSave={handleSave}
         onVoicePress={() => setVoiceVisible(true)}
       />
-      <VoiceBottomSheet
-        visible={voiceVisible}
-        onClose={() => setVoiceVisible(false)}
-      />
+      <VoiceBottomSheet visible={voiceVisible} onClose={() => setVoiceVisible(false)} />
     </>
   );
 }
