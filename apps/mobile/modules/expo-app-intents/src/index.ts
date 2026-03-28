@@ -1,6 +1,8 @@
 import { Platform } from "react-native";
 import ExpoAppIntentsModule from "./ExpoAppIntentsModule";
 
+export type { PendingWidgetTransaction } from "./ExpoAppIntentsModule";
+
 export type LogTransactionEvent = {
   amount: number;
   merchant: string;
@@ -33,4 +35,12 @@ export function isAvailable(): boolean {
   } catch {
     return false;
   }
+}
+
+export function getPendingTransactions() {
+  return ExpoAppIntentsModule.getPendingTransactions();
+}
+
+export function removePendingTransactions(ids: string[]) {
+  return ExpoAppIntentsModule.removePendingTransactions(ids);
 }

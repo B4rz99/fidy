@@ -473,6 +473,12 @@ const es = {
     ],
   },
 
+  // Widget
+  widget: {
+    transactionSaved: "Gasto del widget guardado",
+    transactionsSaved: "%{count} gastos del widget guardados",
+  },
+
   // Search
   search: {
     title: "Buscar",

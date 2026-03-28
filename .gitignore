@@ -15,6 +15,9 @@ out/
 android/
 ios/
 
+# But track Swift source files inside local Expo modules
+!apps/mobile/modules/**/ios/
+
 # EAS
 .eas/
 

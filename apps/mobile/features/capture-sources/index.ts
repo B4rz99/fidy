@@ -4,6 +4,7 @@ export { NotificationSetupCard } from "./components/NotificationSetupCard";
 export { useApplePayCapture } from "./hooks/useApplePayCapture";
 export { useNotificationCapture } from "./hooks/useNotificationCapture";
 export { useSmsDetection } from "./hooks/useSmsDetection";
+export { useWidgetCapture } from "./hooks/useWidgetCapture";
 export { findDuplicateTransaction } from "./lib/dedup";
 export type {
   ApplePayIntentData,

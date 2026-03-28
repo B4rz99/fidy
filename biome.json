@@ -74,6 +74,16 @@
           }
         }
       }
+    },
+    {
+      "includes": ["apps/mobile/plugins/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useNamingConvention": "off"
+          }
+        }
+      }
     }
   ]
 }

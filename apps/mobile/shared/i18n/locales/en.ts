@@ -471,6 +471,12 @@ const en = {
     ],
   },
 
+  // Widget
+  widget: {
+    transactionSaved: "Widget expense saved",
+    transactionsSaved: "%{count} widget expenses saved",
+  },
+
   // Search
   search: {
     title: "Search",
