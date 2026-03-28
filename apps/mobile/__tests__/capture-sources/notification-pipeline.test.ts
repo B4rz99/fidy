@@ -60,6 +60,7 @@ vi.mock("@/features/accounts", () => ({
   getTransferCandidates: (...args: any[]) => mockGetTransferCandidates(...args),
   detectTransferCounterpart: (...args: any[]) => mockDetectTransferCounterpart(...args),
   linkTransferPair: (...args: any[]) => mockLinkTransferPair(...args),
+  toStoredAccount: (row: any) => row,
 }));
 
 const mockGenerateId = vi.fn();

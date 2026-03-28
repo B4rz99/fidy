@@ -61,6 +61,7 @@ vi.mock("@/features/accounts", () => ({
   getTransferCandidates: vi.fn().mockReturnValue([]),
   detectTransferCounterpart: vi.fn().mockReturnValue(null),
   linkTransferPair: vi.fn(),
+  toStoredAccount: (row: unknown) => row,
 }));
 
 vi.mock("@/features/email-capture/lib/bank-senders", () => ({

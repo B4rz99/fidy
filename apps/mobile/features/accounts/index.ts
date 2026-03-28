@@ -20,6 +20,7 @@ export {
   reassignTransactionAccount,
   setDefaultAccount,
   softDeleteAccount,
+  toStoredAccount,
   updateAccount,
 } from "./lib/repository";
 export { resolveAccountId } from "./lib/resolve-account";

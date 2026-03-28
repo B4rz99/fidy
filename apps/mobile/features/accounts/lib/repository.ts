@@ -2,9 +2,30 @@ import { and, desc, eq, isNull, ne, sql } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { accounts, transactions } from "@/shared/db/schema";
 import type { AccountId, IsoDateTime, TransactionId, UserId } from "@/shared/types/branded";
-import type { BankKey } from "../schema";
+import type { BankKey, StoredAccount } from "../schema";
 
 export type AccountRow = typeof accounts.$inferInsert;
+
+/** Raw row shape returned by account queries (text columns, not yet parsed). */
+type AccountDbRow = typeof accounts.$inferSelect;
+
+/** Converts a raw DB row into a domain `StoredAccount` by parsing the JSON
+ *  `identifiers` string and coercing date strings to `Date` objects. */
+export function toStoredAccount(row: AccountDbRow): StoredAccount {
+  return {
+    id: row.id,
+    userId: row.userId,
+    name: row.name,
+    type: row.type as StoredAccount["type"],
+    bankKey: row.bankKey as BankKey,
+    identifiers: JSON.parse(row.identifiers) as readonly string[],
+    initialBalance: row.initialBalance,
+    isDefault: row.isDefault,
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+    deletedAt: row.deletedAt ? new Date(row.deletedAt) : null,
+  };
+}
 
 export function insertAccount(db: AnyDb, row: AccountRow) {
   db.insert(accounts).values(row).run();

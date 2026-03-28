@@ -51,7 +51,7 @@ export const formatSignedMoney = (
   config?: CurrencyConfig
 ): string => {
   const formatted = formatMoney(amount, config);
-  return type === "income" ? `+${formatted}` : `-${formatted}`;
+  return type === "income" ? `+${formatted}` : type === "transfer" ? formatted : `-${formatted}`;
 };
 
 /**

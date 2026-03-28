@@ -1,4 +1,3 @@
-import type { StoredAccount } from "@/features/accounts";
 import {
   detectTransferCounterpart,
   getAccountsByUser,
@@ -7,6 +6,7 @@ import {
   linkTransactionToAccount,
   linkTransferPair,
   resolveBankKeyFromPackage,
+  toStoredAccount,
 } from "@/features/accounts";
 import {
   insertMerchantRule,
@@ -110,7 +110,7 @@ export async function processNotification(
   const bankKey = resolveBankKeyFromPackage(notification.packageName);
   const defaultAccount = getDefaultAccount(db, userId as UserId);
   const defaultAccountId = (defaultAccount?.id ?? "") as AccountId;
-  const userAccounts = getAccountsByUser(db, userId as UserId) as unknown as StoredAccount[];
+  const userAccounts = getAccountsByUser(db, userId as UserId).map(toStoredAccount);
   const { accountId, needsReview } = linkTransactionToAccount({
     bankKey,
     notificationText,

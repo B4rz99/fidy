@@ -1,4 +1,3 @@
-import type { StoredAccount } from "@/features/accounts";
 import {
   detectTransferCounterpart,
   getAccountsByUser,
@@ -7,6 +6,7 @@ import {
   linkTransactionToAccount,
   linkTransferPair,
   resolveBankKeyFromDomain,
+  toStoredAccount,
 } from "@/features/accounts";
 import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
 import { insertTransaction, isValidCategoryId } from "@/features/transactions";
@@ -311,7 +311,7 @@ export async function processEmails(
       const bankKey = resolveBankKeyFromDomain(senderDomain);
       const defaultAccount = getDefaultAccount(db, userId as UserId);
       const defaultAccountId = (defaultAccount?.id ?? "") as AccountId;
-      const userAccounts = getAccountsByUser(db, userId as UserId) as unknown as StoredAccount[];
+      const userAccounts = getAccountsByUser(db, userId as UserId).map(toStoredAccount);
       const { accountId, needsReview: acctNeedsReview } = linkTransactionToAccount({
         bankKey,
         notificationText: email.body,
@@ -488,10 +488,7 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
       // Resolve account for retry — no sender email available, use default account
       const retryDefaultAccount = getDefaultAccount(db, userId as UserId);
       const retryDefaultAccountId = (retryDefaultAccount?.id ?? "") as AccountId;
-      const retryUserAccounts = getAccountsByUser(
-        db,
-        userId as UserId
-      ) as unknown as StoredAccount[];
+      const retryUserAccounts = getAccountsByUser(db, userId as UserId).map(toStoredAccount);
       const { accountId: retryAccountId, needsReview: retryNeedsReview } = linkTransactionToAccount(
         {
           bankKey: null,

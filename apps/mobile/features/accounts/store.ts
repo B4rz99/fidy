@@ -13,9 +13,10 @@ import {
   reassignTransactionAccount,
   setDefaultAccount,
   softDeleteAccount,
+  toStoredAccount,
   updateAccount,
 } from "./lib/repository";
-import type { BankKey, CreateAccountInput, StoredAccount } from "./schema";
+import type { CreateAccountInput, StoredAccount } from "./schema";
 
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
@@ -42,36 +43,6 @@ type AccountActions = {
   loadReviewCount: () => void;
   reassignTransaction: (txId: TransactionId, accountId: AccountId) => void;
 };
-
-type AccountDbRow = {
-  id: AccountId;
-  userId: UserId;
-  name: string;
-  type: string;
-  bankKey: string;
-  identifiers: string;
-  initialBalance: CopAmount;
-  isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-};
-
-function toStoredAccount(row: AccountDbRow): StoredAccount {
-  return {
-    id: row.id,
-    userId: row.userId,
-    name: row.name,
-    type: row.type as StoredAccount["type"],
-    bankKey: row.bankKey as BankKey,
-    identifiers: JSON.parse(row.identifiers) as readonly string[],
-    initialBalance: row.initialBalance,
-    isDefault: row.isDefault,
-    createdAt: new Date(row.createdAt),
-    updatedAt: new Date(row.updatedAt),
-    deletedAt: row.deletedAt ? new Date(row.deletedAt) : null,
-  };
-}
 
 export const useAccountStore = create<AccountState & AccountActions>((set, get) => ({
   accounts: [],

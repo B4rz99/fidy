@@ -16,6 +16,20 @@ vi.mock("@/features/accounts/lib/repository", () => ({
   softDeleteAccount: vi.fn(),
   setDefaultAccount: vi.fn(),
   reassignTransactionAccount: vi.fn(),
+  // Real implementation — pure function with no DB deps
+  toStoredAccount: (row: Record<string, unknown>) => ({
+    id: row.id,
+    userId: row.userId,
+    name: row.name,
+    type: row.type,
+    bankKey: row.bankKey,
+    identifiers: JSON.parse(row.identifiers as string),
+    initialBalance: row.initialBalance,
+    isDefault: row.isDefault,
+    createdAt: new Date(row.createdAt as string),
+    updatedAt: new Date(row.updatedAt as string),
+    deletedAt: row.deletedAt ? new Date(row.deletedAt as string) : null,
+  }),
 }));
 
 vi.mock("@/shared/db/enqueue-sync", () => ({
