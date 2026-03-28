@@ -129,3 +129,36 @@ export async function extractMemories(
     return [];
   }
 }
+
+export type VoiceParseResult = {
+  readonly type: "expense" | "income";
+  readonly amount: number;
+  readonly categoryId: string;
+  readonly description: string;
+  readonly date: string;
+};
+
+export async function voiceParse(
+  transcript: string,
+  locale: string
+): Promise<VoiceParseResult | null> {
+  try {
+    const headers = await getAuthHeaders();
+    const url = `${getBaseUrl()}/functions/v1/ai-chat`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ mode: "voice_parse", transcript, locale }),
+    });
+
+    if (!response.ok) return null;
+
+    const json = await response.json();
+    if (!json.success || !json.data) return null;
+
+    return json.data as VoiceParseResult;
+  } catch {
+    return null;
+  }
+}
