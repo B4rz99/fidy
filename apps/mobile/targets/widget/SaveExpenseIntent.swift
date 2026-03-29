@@ -1,7 +1,6 @@
 import AppIntents
 import Foundation
 
-@available(iOS 26.0, *)
 struct SaveExpenseIntent: AppIntent {
     static let title: LocalizedStringResource = "Save Quick Expense"
 

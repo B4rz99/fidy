@@ -1,6 +1,5 @@
 import AppIntents
 
-@available(iOS 26.0, *)
 enum FidyCategory: String, AppEnum {
     case food, transport, entertainment, health, education
     case home, clothing, services, transfer, other

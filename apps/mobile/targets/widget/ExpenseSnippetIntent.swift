@@ -1,7 +1,6 @@
 import AppIntents
 import SwiftUI
 
-@available(iOS 26.0, *)
 struct ExpenseSnippetIntent: SnippetIntent {
     static let title: LocalizedStringResource = "Expense Amount Picker"
 
@@ -10,7 +9,6 @@ struct ExpenseSnippetIntent: SnippetIntent {
     }
 }
 
-@available(iOS 26.0, *)
 struct ExpenseAmountView: View {
     private let amounts = [
         5_000, 10_000, 15_000, 20_000,

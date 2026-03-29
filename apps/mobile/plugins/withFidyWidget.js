@@ -24,7 +24,7 @@ const EXTENSION_NAME = "FidyWidgetExtension";
 const EXTENSION_BUNDLE_ID = "com.obarbozaa.Fidy.WidgetExtension";
 const APP_GROUP = "group.com.obarbozaa.Fidy";
 const DEVELOPMENT_TEAM = "75P4AX2J5P";
-const DEPLOYMENT_TARGET = "18.0";
+const DEPLOYMENT_TARGET = "26.0";
 const SWIFT_VERSION = "6.0";
 
 const SWIFT_FILES = [

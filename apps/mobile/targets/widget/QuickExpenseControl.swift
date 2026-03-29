@@ -2,7 +2,6 @@ import AppIntents
 import SwiftUI
 import WidgetKit
 
-@available(iOS 26.0, *)
 struct QuickExpenseControl: ControlWidget {
     static let kind: String = "com.obarbozaa.Fidy.QuickExpenseControl"
 
