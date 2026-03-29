@@ -35,7 +35,7 @@ const SWIFT_FILES = [
   "TransactionKind.swift",
 ];
 
-const ALL_EXTENSION_FILES = [...SWIFT_FILES, "Info.plist", "widget.entitlements"];
+const ALL_EXTENSION_FILES = [...SWIFT_FILES, "widget.entitlements"];
 
 // ---------------------------------------------------------------------------
 // File copying
@@ -51,6 +51,12 @@ const copyWidgetFiles = (projectRoot) => {
   for (const file of ALL_EXTENSION_FILES) {
     fs.copyFileSync(path.join(sourceDir, file), path.join(destDir, file));
   }
+
+  // Copy Info.plist with the name addTarget() expects
+  fs.copyFileSync(
+    path.join(sourceDir, "Info.plist"),
+    path.join(destDir, `${EXTENSION_NAME}-Info.plist`)
+  );
 };
 
 // ---------------------------------------------------------------------------
@@ -76,8 +82,6 @@ const EXTENSION_BUILD_SETTINGS = {
   DEBUG_INFORMATION_FORMAT: '"dwarf-with-dsym"',
   DEVELOPMENT_TEAM,
   GCC_C_LANGUAGE_STANDARD: "gnu17",
-  GENERATE_INFOPLIST_FILE: "NO",
-  INFOPLIST_FILE: `${EXTENSION_NAME}/Info.plist`,
   INFOPLIST_KEY_CFBundleDisplayName: EXTENSION_NAME,
   INFOPLIST_KEY_NSHumanReadableCopyright: '""',
   IPHONEOS_DEPLOYMENT_TARGET: DEPLOYMENT_TARGET,
