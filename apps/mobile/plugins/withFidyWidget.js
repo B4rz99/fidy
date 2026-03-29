@@ -30,6 +30,7 @@ const SWIFT_VERSION = "6.0";
 const SWIFT_FILES = [
   "QuickExpenseIntent.swift",
   "QuickExpenseControl.swift",
+  "OpenAddTransactionIntent.swift",
   "FidyWidgetBundle.swift",
   "FidyCategory.swift",
   "TransactionKind.swift",
