@@ -6,8 +6,8 @@ struct QuickExpenseIntent: AppIntent {
     static let title: LocalizedStringResource = "Log Quick Expense"
     static let description = IntentDescription("Log an expense amount from Control Center.")
 
-    @Parameter(title: "Amount")
-    var amount: Int
+    @Parameter(title: "Amount", requestValueDialog: "How much?")
+    var amount: Int?
 
     @Parameter(title: "Category", default: .other)
     var category: FidyCategory?
@@ -27,8 +27,14 @@ struct QuickExpenseIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
-        guard amount > 0 else {
-            throw $amount.needsValueError("Please enter a positive amount.")
+        let resolvedAmount: Int
+        if let amount, amount > 0 {
+            resolvedAmount = amount
+        } else {
+            resolvedAmount = try await $amount.requestValue("How much?")
+            guard resolvedAmount > 0 else {
+                throw $amount.needsValueError("Please enter a positive amount.")
+            }
         }
 
         let defaults = UserDefaults(suiteName: "group.com.obarbozaa.Fidy")
@@ -47,7 +53,7 @@ struct QuickExpenseIntent: AppIntent {
 
         let newEntry: [String: Any] = [
             "id": UUID().uuidString,
-            "amount": amount,
+            "amount": resolvedAmount,
             "category": (category ?? .other).rawValue,
             "type": (type ?? .expense).rawValue,
             "description": descriptionText ?? "",
