@@ -35,7 +35,7 @@ const SWIFT_FILES = [
   "TransactionKind.swift",
 ];
 
-const ALL_EXTENSION_FILES = [...SWIFT_FILES, "widget.entitlements"];
+const ALL_EXTENSION_FILES = [...SWIFT_FILES, "Info.plist", "widget.entitlements"];
 
 // ---------------------------------------------------------------------------
 // File copying
@@ -76,9 +76,9 @@ const EXTENSION_BUILD_SETTINGS = {
   DEBUG_INFORMATION_FORMAT: '"dwarf-with-dsym"',
   DEVELOPMENT_TEAM,
   GCC_C_LANGUAGE_STANDARD: "gnu17",
-  GENERATE_INFOPLIST_FILE: "YES",
+  GENERATE_INFOPLIST_FILE: "NO",
+  INFOPLIST_FILE: `${EXTENSION_NAME}/Info.plist`,
   INFOPLIST_KEY_CFBundleDisplayName: EXTENSION_NAME,
-  INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier: "com.apple.widgetkit-extension",
   INFOPLIST_KEY_NSHumanReadableCopyright: '""',
   IPHONEOS_DEPLOYMENT_TARGET: DEPLOYMENT_TARGET,
   LD_RUNPATH_SEARCH_PATHS:
