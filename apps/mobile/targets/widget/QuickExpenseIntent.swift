@@ -18,6 +18,14 @@ struct QuickExpenseIntent: AppIntent {
     @Parameter(title: "Description")
     var descriptionText: String?
 
+    static var parameterSummary: some ParameterSummary {
+        Summary("Log \(\.$amount) expense") {
+            \.$category
+            \.$type
+            \.$descriptionText
+        }
+    }
+
     func perform() async throws -> some IntentResult {
         guard amount > 0 else {
             throw $amount.needsValueError("Please enter a positive amount.")
