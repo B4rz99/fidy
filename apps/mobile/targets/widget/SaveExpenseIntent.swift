@@ -2,34 +2,20 @@ import AppIntents
 import Foundation
 
 @available(iOS 26.0, *)
-struct QuickExpenseIntent: AppIntent {
-    static let title: LocalizedStringResource = "Log Quick Expense"
-    static let description = IntentDescription("Log an expense amount without opening Fidy.")
+struct SaveExpenseIntent: AppIntent {
+    static let title: LocalizedStringResource = "Save Quick Expense"
 
     @Parameter(title: "Amount")
     var amount: Int
 
-    @Parameter(title: "Category", default: .other)
-    var category: FidyCategory?
+    init() {}
 
-    @Parameter(title: "Type", default: .expense)
-    var type: TransactionKind?
-
-    @Parameter(title: "Description")
-    var descriptionText: String?
-
-    static var parameterSummary: some ParameterSummary {
-        Summary("Log \(\.$amount) expense") {
-            \.$category
-            \.$type
-            \.$descriptionText
-        }
+    init(amount: Int) {
+        self.amount = amount
     }
 
     func perform() async throws -> some IntentResult {
-        guard amount > 0 else {
-            throw $amount.needsValueError("Please enter a positive amount.")
-        }
+        guard amount > 0 else { return .result() }
 
         let defaults = UserDefaults(suiteName: "group.com.obarbozaa.Fidy")
 
@@ -43,15 +29,14 @@ struct QuickExpenseIntent: AppIntent {
 
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]
-        let timestamp = formatter.string(from: Date())
 
         let newEntry: [String: Any] = [
             "id": UUID().uuidString,
             "amount": amount,
-            "category": (category ?? .other).rawValue,
-            "type": (type ?? .expense).rawValue,
-            "description": descriptionText ?? "",
-            "createdAt": timestamp,
+            "category": "other",
+            "type": "expense",
+            "description": "",
+            "createdAt": formatter.string(from: Date()),
         ]
 
         let updated = existing + [newEntry]

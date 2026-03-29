@@ -31,6 +31,8 @@ const SWIFT_FILES = [
   "QuickExpenseIntent.swift",
   "QuickExpenseControl.swift",
   "OpenAddTransactionIntent.swift",
+  "ExpenseSnippetIntent.swift",
+  "SaveExpenseIntent.swift",
   "FidyWidgetBundle.swift",
   "FidyCategory.swift",
   "TransactionKind.swift",

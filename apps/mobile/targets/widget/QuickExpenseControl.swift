@@ -2,7 +2,7 @@ import AppIntents
 import SwiftUI
 import WidgetKit
 
-@available(iOS 18.0, *)
+@available(iOS 26.0, *)
 struct QuickExpenseControl: ControlWidget {
     static let kind: String = "com.obarbozaa.Fidy.QuickExpenseControl"
 
@@ -13,6 +13,6 @@ struct QuickExpenseControl: ControlWidget {
             }
         }
         .displayName("Log Expense")
-        .description("Opens Fidy to quickly log an expense.")
+        .description("Quickly log an expense from Control Center.")
     }
 }

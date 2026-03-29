@@ -1,6 +1,6 @@
 import AppIntents
 
-@available(iOS 18.0, *)
+@available(iOS 26.0, *)
 enum TransactionKind: String, AppEnum {
     case expense, income
 

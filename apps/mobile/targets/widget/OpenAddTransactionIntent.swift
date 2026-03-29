@@ -1,12 +1,11 @@
 import AppIntents
 
-@available(iOS 18.0, *)
+@available(iOS 26.0, *)
 struct OpenAddTransactionIntent: AppIntent {
-    static let title: LocalizedStringResource = "Open Add Transaction"
-    static let description = IntentDescription("Opens Fidy to the Add Transaction screen.")
-    static let openAppWhenRun = true
+    static let title: LocalizedStringResource = "Log Expense"
+    static let description = IntentDescription("Quickly log an expense from Control Center.")
 
-    func perform() async throws -> some IntentResult {
-        return .result()
+    func perform() async throws -> some IntentResult & ShowsSnippetIntent {
+        return .result(snippetIntent: ExpenseSnippetIntent())
     }
 }
