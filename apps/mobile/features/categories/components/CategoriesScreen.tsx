@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { CATEGORIES } from "@/features/transactions/lib/categories";
+import { CATEGORIES } from "@/features/transactions";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import type { LucideIcon } from "@/shared/components/icons";
 import { Plus } from "@/shared/components/icons";

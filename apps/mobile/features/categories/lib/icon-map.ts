@@ -78,5 +78,5 @@ export const ICON_MAP: Record<string, LucideIcon> = {
   Utensils,
 };
 
-export const SELECTABLE_ICONS: ReadonlyArray<{ readonly name: string; readonly icon: LucideIcon }> =
+export const SELECTABLE_ICONS: readonly { readonly name: string; readonly icon: LucideIcon }[] =
   Object.entries(ICON_MAP).map(([name, icon]) => ({ name, icon }));

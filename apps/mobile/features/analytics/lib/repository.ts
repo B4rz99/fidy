@@ -34,7 +34,7 @@ export function getSpendingByCategoryForPeriod(
   userId: UserId,
   startDate: IsoDate,
   endDate: IsoDate
-): ReadonlyArray<{ categoryId: CategoryId; total: CopAmount }> {
+): readonly { categoryId: CategoryId; total: CopAmount }[] {
   return db
     .select({
       categoryId: transactions.categoryId,

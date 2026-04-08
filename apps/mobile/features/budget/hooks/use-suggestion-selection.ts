@@ -35,10 +35,7 @@ export function useSuggestionSelection(autoSuggestions: readonly BudgetSuggestio
       Array.from(selectedIds)
         .map(
           (categoryId) =>
-            [
-              categoryId,
-              parseDigitsToAmount(editedAmounts[categoryId] ?? "0") as CopAmount,
-            ] as const
+            [categoryId, parseDigitsToAmount(editedAmounts[categoryId] ?? "0")] as const
         )
         .filter(([, amount]) => amount > 0)
     );

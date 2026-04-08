@@ -9,7 +9,7 @@ function parseAmount(raw: string): number | null {
   const normalized = cleaned.replace(/[.,](?=\d{3}(?:\D|$))/g, "");
   const match = normalized.match(/^(\d+)(?:[.,](\d{1,2}))?$/);
   if (!match) return null;
-  const pesos = parseInt(match[1], 10);
+  const pesos = parseInt(match[1] ?? "", 10);
   return pesos;
 }
 
@@ -38,7 +38,7 @@ type PatternEntry = {
   merchantGroup: number;
 };
 
-const PATTERNS: ReadonlyArray<PatternEntry> = [
+const PATTERNS: readonly PatternEntry[] = [
   { pattern: BANCOLOMBIA_PURCHASE, type: "expense", amountGroup: 1, merchantGroup: 2 },
   { pattern: BANCOLOMBIA_TRANSFER_OUT, type: "expense", amountGroup: 1, merchantGroup: 2 },
   { pattern: BANCOLOMBIA_TRANSFER_IN, type: "income", amountGroup: 1, merchantGroup: 2 },
@@ -57,14 +57,14 @@ function tryParseEntry(combined: string, entry: PatternEntry): LocalParseResult 
   const match = combined.match(entry.pattern);
   if (!match) return null;
 
-  const rawAmount = match[entry.amountGroup];
+  const rawAmount = match[entry.amountGroup] ?? "";
   const amount = parseAmount(rawAmount);
   if (!amount || amount <= 0) return null;
 
   const rawMerchant =
     entry.merchantGroup === -1
       ? "Depósito"
-      : match[entry.merchantGroup].trim().replace(/[.\s]+$/, "");
+      : (match[entry.merchantGroup] ?? "").trim().replace(/[.\s]+$/, "");
 
   if (rawMerchant.length === 0) return null;
 

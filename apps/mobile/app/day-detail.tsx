@@ -54,8 +54,8 @@ export default function DayDetailScreen() {
       {
         text: t("common.delete"),
         style: "destructive",
-        onPress: async () => {
-          await deleteBill(billId);
+        onPress: () => {
+          void deleteBill(billId);
         },
       },
     ]);
@@ -103,7 +103,9 @@ export default function DayDetailScreen() {
                 <View style={styles.actions}>
                   <Pressable
                     style={[styles.actionButton, { backgroundColor: paid ? accentGreen : peachBg }]}
-                    onPress={() => handleTogglePaid(bill.id as BillId)}
+                    onPress={() => {
+                      void handleTogglePaid(bill.id as BillId);
+                    }}
                     hitSlop={8}
                   >
                     <Check size={16} color={paid ? "#FFFFFF" : primaryColor} />

@@ -66,6 +66,7 @@ export const useCaptureSourcesStore = create<CaptureSourcesState & CaptureSource
     checkPermissions: async () => {
       if (Platform.OS !== "android") return;
       try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports -- conditional native module load; dynamic import() not supported for native modules
         const mod = require("expo-android-notification-listener-service") as {
           isPermissionGranted: () => Promise<boolean>;
         };

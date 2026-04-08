@@ -29,7 +29,7 @@ export default function NeedsReviewScreen() {
 
   const handleConfirm = useCallback(
     (processedEmailId: string, categoryId: string) => {
-      confirmReview(processedEmailId, categoryId);
+      void confirmReview(processedEmailId, categoryId);
     },
     [confirmReview]
   );
