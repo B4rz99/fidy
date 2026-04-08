@@ -31,8 +31,8 @@ const buildCategorySegment = (
   categories: readonly { readonly name: string; readonly amount: number }[]
 ): string => {
   if (categories.length === 0) return "";
-  if (categories.length === 1) return ` mostly on ${categories[0].name}`;
-  return ` mostly on ${categories[0].name} and ${categories[1].name}`;
+  if (categories.length === 1) return ` mostly on ${categories[0]?.name ?? ""}`;
+  return ` mostly on ${categories[0]?.name ?? ""} and ${categories[1]?.name ?? ""}`;
 };
 
 const buildBudgetSegment = (status: WeeklyDigestData["budgetStatus"]): string => {

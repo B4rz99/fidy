@@ -23,7 +23,10 @@ export function toIsoDate(date: Date): IsoDate {
  * Avoids `new Date("YYYY-MM-DD")` which parses as UTC and shifts dates in negative UTC offsets.
  */
 export function parseIsoDate(isoDate: IsoDate): Date {
-  const [year, month, day] = isoDate.split("-").map(Number);
+  const parts = isoDate.split("-").map(Number);
+  const year = parts[0] ?? 0;
+  const month = parts[1] ?? 1;
+  const day = parts[2] ?? 1;
   return new Date(year, month - 1, day);
 }
 

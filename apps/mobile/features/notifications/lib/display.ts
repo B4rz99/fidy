@@ -63,9 +63,9 @@ const parseParams = (params: string | null): Record<string, unknown> => {
 const getCategoryVisuals = (categoryId: CategoryId | null) => {
   const key = categoryId ?? "other";
   return {
-    iconName: CATEGORY_ICON_NAMES[key] ?? CATEGORY_ICON_NAMES.other,
-    iconColor: CATEGORY_CHART_COLORS[key] ?? CATEGORY_CHART_COLORS.other,
-    iconBgColor: CATEGORY_BG_COLORS[key] ?? CATEGORY_BG_COLORS.other,
+    iconName: CATEGORY_ICON_NAMES[key] ?? CATEGORY_ICON_NAMES.other ?? "ellipsis",
+    iconColor: CATEGORY_CHART_COLORS[key] ?? CATEGORY_CHART_COLORS.other ?? "#B8A9D4",
+    iconBgColor: CATEGORY_BG_COLORS[key] ?? CATEGORY_BG_COLORS.other ?? "#F3E5F5",
   };
 };
 
@@ -112,6 +112,8 @@ export const deriveNotificationDisplay = (
             ? (`/goal-detail?id=${notification.goalId}` as string | null)
             : null,
         };
+      default:
+        return { iconName: "bell", iconColor: "#1A1A1A", iconBgColor: "#F5F5F5", route: null };
     }
   })();
 

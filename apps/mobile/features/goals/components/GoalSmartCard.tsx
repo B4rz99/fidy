@@ -21,8 +21,10 @@ export const GoalSmartCard = memo(function GoalSmartCard() {
     const sorted = [...activeGoals].sort(
       (a, b) => b.progress.percentComplete - a.progress.percentComplete
     );
+    const topGoal = sorted[0];
+    if (topGoal == null) return null;
     return {
-      topGoal: sorted[0],
+      topGoal,
       moreCount: activeGoals.length - 1,
     };
   }, [goals]);

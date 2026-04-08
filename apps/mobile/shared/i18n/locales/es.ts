@@ -655,9 +655,13 @@ const es = {
     netPrefix: "Neto: ",
     spendingByCategory: "Gastos por Categoría",
     vsPreviousPeriod: {
+      // biome-ignore lint/style/useNamingConvention: AnalyticsPeriod keys are single uppercase letters by design
       W: "vs 7 días anteriores",
+      // biome-ignore lint/style/useNamingConvention: AnalyticsPeriod keys are single uppercase letters by design
       M: "vs 30 días anteriores",
+      // biome-ignore lint/style/useNamingConvention: AnalyticsPeriod keys are single uppercase letters by design
       Q: "vs 90 días anteriores",
+      // biome-ignore lint/style/useNamingConvention: AnalyticsPeriod keys are single uppercase letters by design
       Y: "vs 365 días anteriores",
     },
     totalSpending: "Gasto total",

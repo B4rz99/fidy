@@ -17,7 +17,7 @@ export const CategoryPill = memo(({ category, isSelected, onPress }: CategoryPil
   const Icon = category.icon;
 
   const handlePress = () => {
-    Haptics.selectionAsync();
+    void Haptics.selectionAsync();
     onPress();
   };
 

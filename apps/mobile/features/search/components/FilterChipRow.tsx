@@ -76,7 +76,7 @@ export const FilterChipRow = ({
               borderColor: isOpen ? primary : "transparent",
             }}
             onPress={() => {
-              Haptics.selectionAsync();
+              void Haptics.selectionAsync();
               onTogglePanel(chip.key);
             }}
           >
@@ -93,7 +93,7 @@ export const FilterChipRow = ({
         <Pressable
           className="h-8 rounded-full px-4 items-center justify-center"
           onPress={() => {
-            Haptics.selectionAsync();
+            void Haptics.selectionAsync();
             onClearAll();
           }}
         >

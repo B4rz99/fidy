@@ -1,7 +1,7 @@
 import { addDays, differenceInDays, endOfDay, getDate, getDaysInMonth, startOfDay } from "date-fns";
-import type { BudgetProgress } from "@/features/budget/lib/derive";
-import { computeMedian } from "@/features/goals/lib/derive";
-import type { StoredTransaction } from "@/features/transactions/schema";
+import type { BudgetProgress } from "@/features/budget";
+import { computeMedian } from "@/features/goals";
+import type { StoredTransaction } from "@/features/transactions";
 import type { BudgetId, CategoryId, CopAmount } from "@/shared/types/branded";
 
 // ---------------------------------------------------------------------------

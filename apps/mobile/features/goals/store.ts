@@ -1,8 +1,6 @@
 import { create } from "zustand";
-import { useNotificationStore } from "@/features/notifications";
-import { scheduleLocalPush } from "@/features/notifications/services/local-push";
-import { useTransactionStore } from "@/features/transactions";
-import { getMonthlyTotalsByType } from "@/features/transactions/lib/repository";
+import { scheduleLocalPush, useNotificationStore } from "@/features/notifications";
+import { getMonthlyTotalsByType, useTransactionStore } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import { i18n } from "@/shared/i18n";

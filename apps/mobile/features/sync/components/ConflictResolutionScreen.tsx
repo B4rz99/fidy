@@ -17,8 +17,12 @@ export default function ConflictResolutionScreen() {
     ({ item }: { item: SyncConflict }) => (
       <ConflictCard
         conflict={item}
-        onKeepLocal={() => resolveConflict(item.id, "local")}
-        onAcceptServer={() => resolveConflict(item.id, "server")}
+        onKeepLocal={() => {
+          void resolveConflict(item.id, "local");
+        }}
+        onAcceptServer={() => {
+          void resolveConflict(item.id, "server");
+        }}
       />
     ),
     [resolveConflict]

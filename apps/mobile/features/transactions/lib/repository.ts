@@ -55,7 +55,7 @@ export function getSpendingByCategoryAggregate(
   db: AnyDb,
   userId: UserId,
   month: Month
-): Array<{ categoryId: CategoryId; total: CopAmount }> {
+): { categoryId: CategoryId; total: CopAmount }[] {
   return db
     .select({
       categoryId: transactions.categoryId,
@@ -80,7 +80,7 @@ export function getDailySpendingAggregate(
   userId: UserId,
   startDate: IsoDate,
   endDate: IsoDate
-): Array<{ date: IsoDate; total: CopAmount }> {
+): { date: IsoDate; total: CopAmount }[] {
   return db
     .select({
       date: transactions.date,
@@ -104,7 +104,7 @@ export function getMonthlyTotalsByType(
   db: AnyDb,
   userId: UserId,
   months: number
-): Array<{ month: string; type: string; total: number }> {
+): { month: string; type: string; total: number }[] {
   // Compute cutoff: first day of the oldest month in the window.
   // With months=3 in March 2026 we want Jan, Feb, Mar → cutoff = 2026-01.
   const now = new Date();
