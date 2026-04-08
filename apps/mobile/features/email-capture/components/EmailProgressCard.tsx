@@ -1,5 +1,7 @@
 import { useRef } from "react";
+import type { ViewStyle } from "react-native";
 import Animated, {
+  type AnimatedStyle,
   FadeIn,
   FadeOut,
   useAnimatedStyle,
@@ -94,7 +96,7 @@ export const EmailProgressCard = ({ phase, display, onComplete }: EmailProgressC
           >
             <Animated.View
               style={[
-                barAnimatedStyle,
+                barAnimatedStyle as AnimatedStyle<ViewStyle>,
                 {
                   backgroundColor: accentGreen,
                   height: "100%",

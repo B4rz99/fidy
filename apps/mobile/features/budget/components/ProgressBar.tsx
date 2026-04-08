@@ -1,4 +1,5 @@
-import Animated from "react-native-reanimated";
+import type { ViewStyle } from "react-native";
+import Animated, { type AnimatedStyle } from "react-native-reanimated";
 import { StyleSheet, View } from "@/shared/components/rn";
 import { useAnimatedProgress, useThemeColor } from "@/shared/hooks";
 
@@ -18,7 +19,13 @@ export function ProgressBar({ percent, height = 8 }: Props) {
 
   return (
     <View style={[styles.track, { height, backgroundColor: borderColor }]}>
-      <Animated.View style={[styles.fill, { height, backgroundColor: barColor }, animatedStyle]} />
+      <Animated.View
+        style={[
+          styles.fill,
+          { height, backgroundColor: barColor },
+          animatedStyle as AnimatedStyle<ViewStyle>,
+        ]}
+      />
     </View>
   );
 }
