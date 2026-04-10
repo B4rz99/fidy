@@ -35,23 +35,17 @@ export async function processWidgetTransactions(
   db: AnyDb,
   userId: UserId
 ): Promise<WidgetPipelineResult> {
-  console.log("[WidgetPipeline] Starting processWidgetTransactions");
-
   const { isAvailable, getPendingTransactions, removePendingTransactions } = await import(
     "@/modules/expo-app-intents"
   );
 
   if (!isAvailable()) {
-    console.log("[WidgetPipeline] Module not available (likely Android)");
     return { saved: 0, skippedDuplicate: 0, errors: 0 };
   }
 
-  console.log("[WidgetPipeline] Calling getPendingTransactions...");
   const pending = await getPendingTransactions();
-  console.log(`[WidgetPipeline] Found ${pending.length} pending transactions`);
 
   if (pending.length === 0) {
-    console.log("[WidgetPipeline] No pending transactions to process");
     return { saved: 0, skippedDuplicate: 0, errors: 0 };
   }
 
