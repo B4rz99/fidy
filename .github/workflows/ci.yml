@@ -18,7 +18,7 @@ jobs:
         run: bun install
       - name: Biome check
         run: bunx biome check .
-      - name: Mobile ESLint
+      - name: Mobile ESLint (includes import/no-cycle)
         run: bun run --cwd apps/mobile lint
 
   typecheck:

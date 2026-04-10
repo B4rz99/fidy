@@ -1,10 +1,10 @@
 import { Stack, useRouter } from "expo-router";
 import { ScreenLayout } from "@/shared/components";
-import { useSettingsStore } from "../store";
 import { Bell } from "@/shared/components/icons";
 import { Platform, ScrollView, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import type { NotificationPreferences } from "../store";
+import { useSettingsStore } from "../store";
 import { SettingsRow } from "./SettingsRow";
 import { SettingsSection } from "./SettingsSection";
 

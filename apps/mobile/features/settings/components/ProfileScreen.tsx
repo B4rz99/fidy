@@ -1,10 +1,10 @@
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/features/auth";
 import { ScreenLayout } from "@/shared/components";
-import { getUserInitials } from "../lib/settings-links";
 import { Brain, LogOut } from "@/shared/components/icons";
 import { Alert, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getUserInitials } from "../lib/settings-links";
 
 export function ProfileScreen() {
   const router = useRouter();
