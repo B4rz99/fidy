@@ -89,6 +89,16 @@
           }
         }
       }
+    },
+    {
+      "includes": ["**/plugins/withFidyWidget.js"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useNamingConvention": "off"
+          }
+        }
+      }
     }
   ]
 }

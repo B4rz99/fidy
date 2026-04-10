@@ -12,10 +12,8 @@ export function useWidgetCapture(db: AnyDb | null, userId: string | null) {
 
     const uid = userId as UserId;
 
-    // Process on mount (app was just opened or hook was re-enabled)
     processWidgetTransactions(db, uid).catch(captureError);
 
-    // Process each time app returns to foreground
     const subscription = AppState.addEventListener("change", (nextState) => {
       if (nextState === "active") {
         processWidgetTransactions(db, uid).catch(captureError);

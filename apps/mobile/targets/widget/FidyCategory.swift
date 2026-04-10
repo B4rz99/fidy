@@ -1,3 +1,5 @@
+// Category raw values MUST stay in sync with the canonical JS source:
+// apps/mobile/features/transactions/lib/categories.ts
 import AppIntents
 
 enum FidyCategory: String, AppEnum {

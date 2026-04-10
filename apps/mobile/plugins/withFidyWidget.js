@@ -21,9 +21,6 @@ const {
 // ---------------------------------------------------------------------------
 
 const EXTENSION_NAME = "FidyWidgetExtension";
-const EXTENSION_BUNDLE_ID = "com.obarbozaa.Fidy.WidgetExtension";
-const APP_GROUP = "group.com.obarbozaa.Fidy";
-const DEVELOPMENT_TEAM = "75P4AX2J5P";
 const DEPLOYMENT_TARGET = "26.0";
 const SWIFT_VERSION = "6.0";
 
@@ -36,6 +33,15 @@ const SWIFT_FILES = [
 ];
 
 const ALL_EXTENSION_FILES = [...SWIFT_FILES, "widget.entitlements"];
+
+// ---------------------------------------------------------------------------
+// Config-derived values
+// ---------------------------------------------------------------------------
+
+const getDevelopmentTeam = (config) => config.ios?.developmentTeam ?? "";
+const getAppGroup = (config) => `group.${config.ios?.bundleIdentifier ?? "com.obarbozaa.Fidy"}`;
+const getExtensionBundleId = (config) =>
+  `${config.ios?.bundleIdentifier ?? "com.obarbozaa.Fidy"}.WidgetExtension`;
 
 // ---------------------------------------------------------------------------
 // File copying
@@ -66,39 +72,43 @@ const copyWidgetFiles = (projectRoot) => {
 const generateUuid = (project) => project.generateUuid();
 
 // Xcode build setting keys use SCREAMING_SNAKE_CASE by convention.
-// biome-ignore lint/style/useNamingConvention: Xcode requires SCREAMING_SNAKE_CASE for build settings
-const EXTENSION_BUILD_SETTINGS = {
-  ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: '""',
-  ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: '""',
-  CLANG_ANALYZER_NONNULL: "YES",
-  CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION: "YES_AGGRESSIVE",
-  CLANG_CXX_LANGUAGE_STANDARD: '"gnu++20"',
-  CLANG_ENABLE_OBJC_WEAK: "YES",
-  CLANG_WARN_DOCUMENTATION_COMMENTS: "YES",
-  CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER: "YES",
-  CLANG_WARN_UNGUARDED_AVAILABILITY: "YES_AGGRESSIVE",
-  CODE_SIGN_ENTITLEMENTS: `${EXTENSION_NAME}/widget.entitlements`,
-  CODE_SIGN_STYLE: "Automatic",
-  CURRENT_PROJECT_VERSION: "1",
-  DEBUG_INFORMATION_FORMAT: '"dwarf-with-dsym"',
-  DEVELOPMENT_TEAM,
-  GCC_C_LANGUAGE_STANDARD: "gnu17",
-  INFOPLIST_KEY_CFBundleDisplayName: EXTENSION_NAME,
-  INFOPLIST_KEY_NSHumanReadableCopyright: '""',
-  IPHONEOS_DEPLOYMENT_TARGET: DEPLOYMENT_TARGET,
-  LD_RUNPATH_SEARCH_PATHS:
-    '"$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"',
-  MARKETING_VERSION: "1.0",
-  PRODUCT_BUNDLE_IDENTIFIER: EXTENSION_BUNDLE_ID,
-  PRODUCT_NAME: '"$(TARGET_NAME)"',
-  SKIP_INSTALL: "YES",
-  SWIFT_EMIT_LOC_STRINGS: "YES",
-  SWIFT_VERSION,
-  TARGETED_DEVICE_FAMILY: '"1,2"',
+const buildSettings = (config) => {
+  const developmentTeam = getDevelopmentTeam(config);
+  const extensionBundleId = getExtensionBundleId(config);
+
+  return {
+    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: '""',
+    ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: '""',
+    CLANG_ANALYZER_NONNULL: "YES",
+    CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION: "YES_AGGRESSIVE",
+    CLANG_CXX_LANGUAGE_STANDARD: '"gnu++20"',
+    CLANG_ENABLE_OBJC_WEAK: "YES",
+    CLANG_WARN_DOCUMENTATION_COMMENTS: "YES",
+    CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER: "YES",
+    CLANG_WARN_UNGUARDED_AVAILABILITY: "YES_AGGRESSIVE",
+    CODE_SIGN_ENTITLEMENTS: `${EXTENSION_NAME}/widget.entitlements`,
+    CODE_SIGN_STYLE: "Automatic",
+    CURRENT_PROJECT_VERSION: "1",
+    DEBUG_INFORMATION_FORMAT: '"dwarf-with-dsym"',
+    DEVELOPMENT_TEAM: developmentTeam,
+    GCC_C_LANGUAGE_STANDARD: "gnu17",
+    INFOPLIST_KEY_CFBundleDisplayName: EXTENSION_NAME,
+    INFOPLIST_KEY_NSHumanReadableCopyright: '""',
+    IPHONEOS_DEPLOYMENT_TARGET: DEPLOYMENT_TARGET,
+    LD_RUNPATH_SEARCH_PATHS:
+      '"$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"',
+    MARKETING_VERSION: "1.0",
+    PRODUCT_BUNDLE_IDENTIFIER: extensionBundleId,
+    PRODUCT_NAME: '"$(TARGET_NAME)"',
+    SKIP_INSTALL: "YES",
+    SWIFT_EMIT_LOC_STRINGS: "YES",
+    SWIFT_VERSION,
+    TARGETED_DEVICE_FAMILY: '"1,2"',
+  };
 };
 
 /** Reconcile build settings on the extension's Debug/Release configurations. */
-const reconcileBuildSettings = (project) => {
+const reconcileBuildSettings = (project, settings) => {
   // Find the extension target's buildConfigurationList UUID
   const nativeTargets = project.pbxNativeTargetSection();
   let configListId = null;
@@ -122,12 +132,15 @@ const reconcileBuildSettings = (project) => {
   for (const uuid of configUuids) {
     const config = buildConfigs?.[uuid];
     if (typeof config === "object" && config.buildSettings) {
-      Object.assign(config.buildSettings, EXTENSION_BUILD_SETTINGS);
+      Object.assign(config.buildSettings, settings);
     }
   }
 };
 
-const addWidgetExtensionTarget = (project) => {
+const addWidgetExtensionTarget = (project, config) => {
+  const extensionBundleId = getExtensionBundleId(config);
+  const settings = buildSettings(config);
+
   // 0. Check if the target already exists
   const existingTargets = project.pbxNativeTargetSection();
   const targetExists = Object.values(existingTargets).some(
@@ -140,7 +153,7 @@ const addWidgetExtensionTarget = (project) => {
       EXTENSION_NAME,
       "app_extension",
       EXTENSION_NAME,
-      EXTENSION_BUNDLE_ID
+      extensionBundleId
     );
 
     // Apply build settings immediately after target creation — the xcode
@@ -154,7 +167,7 @@ const addWidgetExtensionTarget = (project) => {
         for (const ref of configList.buildConfigurations) {
           const config = buildConfigs?.[ref.value];
           if (typeof config === "object" && config.buildSettings) {
-            Object.assign(config.buildSettings, EXTENSION_BUILD_SETTINGS);
+            Object.assign(config.buildSettings, settings);
           }
         }
       }
@@ -260,24 +273,27 @@ const addWidgetExtensionTarget = (project) => {
   }
 
   // 2. Always reconcile build settings
-  reconcileBuildSettings(project);
+  reconcileBuildSettings(project, settings);
 };
 
 // ---------------------------------------------------------------------------
 // Plugin composition
 // ---------------------------------------------------------------------------
 
-const withAppGroupEntitlement = (config) =>
-  withEntitlementsPlist(config, (modConfig) => {
+const withAppGroupEntitlement = (config) => {
+  const appGroup = getAppGroup(config);
+
+  return withEntitlementsPlist(config, (modConfig) => {
     const entitlements = modConfig.modResults;
     const existingGroups = entitlements["com.apple.security.application-groups"] ?? [];
 
-    if (!existingGroups.includes(APP_GROUP)) {
-      entitlements["com.apple.security.application-groups"] = [...existingGroups, APP_GROUP];
+    if (!existingGroups.includes(appGroup)) {
+      entitlements["com.apple.security.application-groups"] = [...existingGroups, appGroup];
     }
 
     return modConfig;
   });
+};
 
 const withWidgetExtensionTarget = (config) =>
   withXcodeProject(config, (modConfig) => {
@@ -285,7 +301,7 @@ const withWidgetExtensionTarget = (config) =>
     const project = modConfig.modResults;
 
     copyWidgetFiles(projectRoot);
-    addWidgetExtensionTarget(project);
+    addWidgetExtensionTarget(project, config);
 
     return modConfig;
   });
