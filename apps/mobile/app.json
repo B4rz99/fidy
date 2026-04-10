@@ -68,7 +68,7 @@
       "@sentry/react-native",
       "expo-font",
       "expo-web-browser",
-      "./plugins/withFidyWidget"
+      ["./plugins/test-plugin", {}]
     ],
     "experiments": {
       "typedRoutes": true,
