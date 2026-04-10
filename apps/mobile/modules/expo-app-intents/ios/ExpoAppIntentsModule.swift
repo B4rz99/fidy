@@ -1,8 +1,14 @@
 import ExpoModulesCore
 
 public class ExpoAppIntentsModule: Module {
-  private let suiteName = "group.com.obarbozaa.Fidy"
   private let pendingTransactionsKey = "pendingWidgetTransactions"
+
+  private lazy var suiteName: String = {
+    if let infoPlistName = Bundle.main.infoDictionary?["FidyAppGroupSuiteName"] as? String {
+      return infoPlistName
+    }
+    return "group.com.obarbozaa.Fidy"
+  }()
 
   public func definition() -> ModuleDefinition {
     Name("ExpoAppIntents")

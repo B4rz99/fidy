@@ -32,7 +32,7 @@ struct QuickExpenseIntent: AppIntent {
             throw $amount.needsValueError("Please enter a positive amount.")
         }
 
-        let defaults = UserDefaults(suiteName: "group.com.obarbozaa.Fidy")
+        let defaults = UserDefaults(suiteName: APP_GROUP_SUITE_NAME)
 
         guard let defaults else {
             logger.error("UserDefaults(suiteName:) returned nil — App Group entitlement may be missing")
@@ -41,7 +41,7 @@ struct QuickExpenseIntent: AppIntent {
 
         let existing: [[String: Any]] = {
             guard
-                let data = defaults.data(forKey: "pendingWidgetTransactions"),
+                let data = defaults.data(forKey: PENDING_TRANSACTIONS_KEY),
                 let decoded = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]]
             else {
                 return []
@@ -67,7 +67,7 @@ struct QuickExpenseIntent: AppIntent {
 
         do {
             let encoded = try JSONSerialization.data(withJSONObject: updated)
-            defaults.set(encoded, forKey: "pendingWidgetTransactions")
+            defaults.set(encoded, forKey: PENDING_TRANSACTIONS_KEY)
             logger.debug("Wrote transaction \(entryId)")
         } catch {
             logger.error("JSONSerialization failed: \(error.localizedDescription)")

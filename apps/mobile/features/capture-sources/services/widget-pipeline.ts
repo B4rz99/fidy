@@ -53,7 +53,7 @@ export type WidgetPipelineResult = {
 
 export async function processWidgetTransactions(
   db: AnyDb,
-  userId: string
+  userId: UserId
 ): Promise<WidgetPipelineResult> {
   const mod = await loadAppIntents();
 
@@ -122,7 +122,7 @@ export async function processWidgetTransactions(
 
         insertTransaction(db, {
           id: txId,
-          userId: userId as UserId,
+          userId,
           type,
           amount,
           categoryId,
