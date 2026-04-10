@@ -10,6 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.obarbozaa.Fidy",
+      "developmentTeam": "75P4AX2J5P",
       "infoPlist": {
         "CFBundleURLTypes": [
           {
@@ -66,7 +67,8 @@
       ],
       "@sentry/react-native",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "./plugins/withFidyWidget"
     ],
     "experiments": {
       "typedRoutes": true,
