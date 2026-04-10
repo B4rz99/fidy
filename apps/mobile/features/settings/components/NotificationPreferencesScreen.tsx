@@ -1,6 +1,6 @@
 import { Stack, useRouter } from "expo-router";
-import { useSettingsStore } from "@/features/settings";
 import { ScreenLayout } from "@/shared/components";
+import { useSettingsStore } from "../store";
 import { Bell } from "@/shared/components/icons";
 import { Platform, ScrollView, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";

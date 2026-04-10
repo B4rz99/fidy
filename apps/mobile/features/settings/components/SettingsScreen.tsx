@@ -3,13 +3,6 @@ import { Stack, useRouter } from "expo-router";
 import { openBrowserAsync } from "expo-web-browser";
 import { useAuthStore } from "@/features/auth";
 import { useEmailCaptureStore } from "@/features/email-capture";
-import {
-  buildPrivacyUrl,
-  buildTermsUrl,
-  buildWhatsAppUrl,
-  getUserInitials,
-  useSettingsStore,
-} from "@/features/settings";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import {
   Bell,
@@ -25,6 +18,13 @@ import {
 } from "@/shared/components/icons";
 import { Linking, Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import {
+  buildPrivacyUrl,
+  buildTermsUrl,
+  buildWhatsAppUrl,
+  getUserInitials,
+} from "../lib/settings-links";
+import { useSettingsStore } from "../store";
 import { SettingsRow } from "./SettingsRow";
 import { SettingsSection } from "./SettingsSection";
 
