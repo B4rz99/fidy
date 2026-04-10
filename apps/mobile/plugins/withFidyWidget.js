@@ -66,6 +66,7 @@ const copyWidgetFiles = (projectRoot) => {
 const generateUuid = (project) => project.generateUuid();
 
 // Xcode build setting keys use SCREAMING_SNAKE_CASE by convention.
+// biome-ignore lint/style/useNamingConvention: Xcode requires SCREAMING_SNAKE_CASE for build settings
 const EXTENSION_BUILD_SETTINGS = {
   ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: '""',
   ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: '""',
