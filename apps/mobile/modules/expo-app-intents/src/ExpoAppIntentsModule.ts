@@ -1,7 +1,18 @@
 import { requireNativeModule } from "expo";
 
+export type PendingWidgetTransaction = {
+  id: string;
+  amount: number;
+  createdAt: string;
+  category?: string;
+  type?: string;
+  description?: string;
+};
+
 export type ExpoAppIntentsModule = {
   isAvailable: () => boolean;
+  getPendingTransactions: () => Promise<PendingWidgetTransaction[]>;
+  removePendingTransactions: (ids: string[]) => Promise<void>;
   addListener: (eventName: string, listener: (...args: never[]) => void) => { remove: () => void };
 };
 
@@ -11,7 +22,9 @@ let _module: ExpoAppIntentsModule | null = null;
 
 const ExpoAppIntentsProxy = new Proxy({} as ExpoAppIntentsModule, {
   get(_target, prop: string) {
-    _module ??= requireNativeModule<ExpoAppIntentsModule>("ExpoAppIntents");
+    if (!_module) {
+      _module = requireNativeModule<ExpoAppIntentsModule>("ExpoAppIntents");
+    }
     return _module[prop as keyof ExpoAppIntentsModule];
   },
 });
