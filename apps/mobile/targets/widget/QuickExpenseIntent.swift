@@ -33,7 +33,7 @@ struct QuickExpenseIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
-        log("perform() called with amount=\(amount), category=\(category.rawValue), type=\(type.rawValue)")
+        log("perform() called")
         
         guard amount > 0 else {
             log("Invalid amount: \(amount)")

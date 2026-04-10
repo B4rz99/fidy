@@ -67,8 +67,7 @@
       ],
       "@sentry/react-native",
       "expo-font",
-      "expo-web-browser",
-      ["./plugins/test-plugin", {}]
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

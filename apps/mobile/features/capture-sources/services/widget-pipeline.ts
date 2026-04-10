@@ -48,7 +48,7 @@ export async function processWidgetTransactions(
 
   console.log("[WidgetPipeline] Calling getPendingTransactions...");
   const pending = await getPendingTransactions();
-  console.log(`[WidgetPipeline] Found ${pending.length} pending transactions:`, pending);
+  console.log(`[WidgetPipeline] Found ${pending.length} pending transactions`);
 
   if (pending.length === 0) {
     console.log("[WidgetPipeline] No pending transactions to process");
