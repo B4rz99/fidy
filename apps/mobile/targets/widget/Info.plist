@@ -24,6 +24,17 @@
     <dict>
         <key>NSExtensionPointIdentifier</key>
         <string>com.apple.widgetkit-extension</string>
+        <key>NSExtensionAttributes</key>
+        <dict>
+            <key>AppIntents</key>
+            <array>
+                <dict>
+                    <key>IntentClassName</key>
+                    <string>QuickExpenseIntent</string>
+                </dict>
+            </array>
+        </dict>
     </dict>
 </dict>
 </plist>
+</content>

@@ -1,8 +1,13 @@
 import AppIntents
 import Foundation
-import os
 
-private let logger = Logger(subsystem: "com.obarbozaa.Fidy", category: "QuickExpenseIntent")
+// Using NSLog for visibility in Console app
+func log(_ message: String) {
+    NSLog("[FIDY_INTENT] \(message)")
+}
+
+// Log when this file is loaded
+log("QuickExpenseIntent.swift loaded")
 
 struct QuickExpenseIntent: AppIntent {
     static let title: LocalizedStringResource = "Log Quick Expense"
@@ -28,14 +33,17 @@ struct QuickExpenseIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
+        log("perform() called with amount=\(amount), category=\(category.rawValue), type=\(type.rawValue)")
+        
         guard amount > 0 else {
+            log("Invalid amount: \(amount)")
             throw $amount.needsValueError("Please enter a positive amount.")
         }
 
         let defaults = UserDefaults(suiteName: APP_GROUP_SUITE_NAME)
 
         guard let defaults else {
-            logger.error("UserDefaults(suiteName:) returned nil — App Group entitlement may be missing")
+            log("UserDefaults(suiteName:) returned nil — App Group entitlement may be missing")
             return .result()
         }
 
@@ -68,9 +76,14 @@ struct QuickExpenseIntent: AppIntent {
         do {
             let encoded = try JSONSerialization.data(withJSONObject: updated)
             defaults.set(encoded, forKey: PENDING_TRANSACTIONS_KEY)
-            logger.debug("Wrote transaction \(entryId)")
+            log("Wrote transaction \(entryId) to suite \(APP_GROUP_SUITE_NAME)")
+            
+            // Immediately read back to verify write succeeded
+            if let verifyData = defaults.data(forKey: PENDING_TRANSACTIONS_KEY) {
+                log("Verified write: \(verifyData.count) bytes in UserDefaults")
+            }
         } catch {
-            logger.error("JSONSerialization failed: \(error.localizedDescription)")
+            log("JSONSerialization failed: \(error.localizedDescription)")
         }
 
         return .result()

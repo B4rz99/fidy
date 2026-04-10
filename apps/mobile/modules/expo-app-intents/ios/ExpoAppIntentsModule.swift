@@ -20,18 +20,29 @@ public class ExpoAppIntentsModule: Module {
     }
 
     AsyncFunction("getPendingTransactions") { () -> [[String: Any]] in
+      print("[ExpoAppIntents] Reading from suite: \(self.suiteName), key: \(self.pendingTransactionsKey)")
+      
       guard let defaults = UserDefaults(suiteName: self.suiteName) else {
+        print("[ExpoAppIntents] ERROR: Could not access UserDefaults with suite \(self.suiteName)")
         return []
       }
+      
       guard let data = defaults.data(forKey: self.pendingTransactionsKey) else {
+        print("[ExpoAppIntents] No data found for key \(self.pendingTransactionsKey)")
         return []
       }
+      
+      print("[ExpoAppIntents] Found \(data.count) bytes of data")
+      
       guard
         let decoded = try? JSONSerialization.jsonObject(with: data),
         let array = decoded as? [[String: Any]]
       else {
+        print("[ExpoAppIntents] ERROR: Failed to decode JSON data")
         return []
       }
+      
+      print("[ExpoAppIntents] Successfully decoded \(array.count) transactions")
       return array
     }
 
