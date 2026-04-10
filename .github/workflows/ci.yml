@@ -33,6 +33,7 @@ jobs:
         run: bun install
       - name: Check shared packages
         run: |
+          bun run --cwd packages/assets typecheck
           bun run --cwd packages/types typecheck
           bun run --cwd packages/schemas typecheck
           bun run --cwd packages/utils typecheck
