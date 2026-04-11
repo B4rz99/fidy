@@ -1,6 +1,6 @@
 import * as Notifications from "expo-notifications";
-import type { NotificationPreferences } from "@/features/settings";
-import { useSettingsStore } from "@/features/settings";
+import type { NotificationPreferences } from "@/features/settings/store";
+import { useSettingsStore } from "@/features/settings/store";
 
 type LocalPushInput = {
   readonly title: string;

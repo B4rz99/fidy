@@ -82,6 +82,9 @@ module.exports = defineConfig([
 
       // — React rules —
       "react-hooks/exhaustive-deps": "error",
+
+      // — Import rules —
+      "import/no-cycle": "error",
     },
   },
 

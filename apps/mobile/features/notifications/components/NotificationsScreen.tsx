@@ -1,7 +1,7 @@
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAuthStore } from "@/features/auth";
+import { useAuthStore } from "@/features/auth/store";
 import { ScreenLayout } from "@/shared/components";
 import { Platform, Pressable, SectionList, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";

@@ -26,6 +26,7 @@ import {
   useCaptureSourcesStore,
   useNotificationCapture,
   useSmsDetection,
+  useWidgetCapture,
 } from "@/features/capture-sources";
 import { useCategoriesStore } from "@/features/categories";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
@@ -134,6 +135,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
   useNotificationCapture(captureDb, userId);
   useApplePayCapture(captureDb, userId);
   useSmsDetection(captureDb, userId);
+  useWidgetCapture(captureDb, userId);
 
   // Global notification handler + push token / response listeners
   useSubscription(() => {

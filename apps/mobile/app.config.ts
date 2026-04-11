@@ -14,6 +14,7 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.obarbozaa.Fidy",
+    ...({ developmentTeam: "75P4AX2J5P" } as Record<string, unknown>),
     infoPlist: {
       // biome-ignore lint/style/useNamingConvention: Apple plist key
       CFBundleURLTypes: [
@@ -68,6 +69,8 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
         color: "#7CB243",
       },
     ],
+    // Widget extension for Back Tap / Shortcuts
+    ["./plugins/withFidyWidget", {}],
   ],
   experiments: {
     typedRoutes: true,

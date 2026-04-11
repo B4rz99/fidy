@@ -10,6 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.obarbozaa.Fidy",
+      "developmentTeam": "75P4AX2J5P",
       "infoPlist": {
         "CFBundleURLTypes": [
           {
