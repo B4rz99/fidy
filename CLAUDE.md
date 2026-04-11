@@ -89,3 +89,12 @@ Follow existing `getBalanceAggregate()` pattern in repository. Use SQL `GROUP BY
 
 ### Direct unit tests for pure functions
 New derivation/pure functions get direct unit tests with fixture data. File-source reading pattern (`readFileSync` test pattern) stays for navigation/layout tests only.
+
+## Design System Conventions
+
+- Currency: COP (Colombian Pesos) — large whole numbers, no decimals
+- i18n: All user-facing strings go through `useTranslation()` hook — see `adding-i18n-strings` skill
+- State management: Zustand stores in `features/{feature}/stores/`
+- Navigation: Expo Router — screens in `app/`, modals as top-level routes
+- Data fetching: TanStack Query for server data, Zustand for local/derived state
+- Functional programming: pure functions in `lib/`, side effects in stores/hooks only
