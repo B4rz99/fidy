@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Read",
+        "command": "bun run .ai-security/hooks/post-tool-defender.ts"
+      },
+      {
+        "matcher": "WebFetch",
+        "command": "bun run .ai-security/hooks/post-tool-defender.ts"
+      },
+      {
+        "matcher": "Bash",
+        "command": "bun run .ai-security/hooks/post-tool-defender.ts"
+      }
+    ]
+  }
+}
