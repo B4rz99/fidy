@@ -1,0 +1,26 @@
+{
+  "$schema": "https://ocx.kdco.dev/schemas/ocx.json",
+  "registries": {
+    "kdco": {
+      "url": "https://registry.kdco.dev"
+    }
+  },
+  "lockRegistries": false,
+  "skipCompatCheck": false,
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Read",
+        "command": "bun run .ai-security/hooks/post-tool-defender.ts"
+      },
+      {
+        "matcher": "WebFetch",
+        "command": "bun run .ai-security/hooks/post-tool-defender.ts"
+      },
+      {
+        "matcher": "Bash",
+        "command": "bun run .ai-security/hooks/post-tool-defender.ts"
+      }
+    ]
+  }
+}
