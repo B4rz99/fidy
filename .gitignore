@@ -74,7 +74,9 @@ TODOS.md
 vault/
 
 # Other AI agent skills (local-only, not used by Claude Code)
-.agents/
+.agents/*
+!.agents/skills/
+!.agents/skills/**
 skills-lock.json
 .continue/
 .kiro/
