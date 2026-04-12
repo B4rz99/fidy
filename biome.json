@@ -14,7 +14,11 @@
       "!**/dist",
       "!**/build",
       "!**/.next",
-      "!.claude"
+      "!.claude",
+      "!**/.ocx",
+      "!**/apps/mobile/.continue",
+      "!**/apps/mobile/.kiro",
+      "!**/apps/mobile/.windsurf"
     ]
   },
   "formatter": {
@@ -98,6 +102,15 @@
             "useNamingConvention": "off"
           }
         }
+      }
+    },
+    {
+      "includes": [".ai-security/**", ".opencode/plugins/**"],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "enabled": false
       }
     }
   ]

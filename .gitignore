@@ -80,6 +80,9 @@ skills-lock.json
 .worktrees/
 .claude/worktrees/
 
+# Project vault (private)
+vault/
+
 # macOS
 .DS_Store
 
