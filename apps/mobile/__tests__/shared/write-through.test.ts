@@ -63,7 +63,7 @@ vi.mock("@/features/calendar/lib/repository", () => ({
 }));
 
 const mockDb = {
-  transaction: (fn: (tx: AnyDb) => unknown) => fn(mockDb as AnyDb),
+  transaction: vi.fn((fn: (tx: AnyDb) => unknown) => fn(mockDb as AnyDb)),
 } as AnyDb;
 
 async function loadModule() {
@@ -105,6 +105,7 @@ describe("write-through mutations", () => {
     });
 
     expect(result).toEqual({ success: true, didMutate: true });
+    expect(mockDb.transaction).toHaveBeenCalledOnce();
     expect(insertTransaction).toHaveBeenCalledOnce();
     expect(enqueueSync).toHaveBeenCalledWith(
       mockDb,
@@ -174,6 +175,7 @@ describe("write-through mutations", () => {
       },
     });
 
+    expect(mockDb.transaction).toHaveBeenCalledOnce();
     expect(insertTransaction).toHaveBeenCalledOnce();
     expect(insertBillPayment).toHaveBeenCalledOnce();
     expect(enqueueSync).toHaveBeenCalledWith(

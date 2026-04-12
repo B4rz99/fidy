@@ -50,6 +50,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
     dbRef = db;
     userIdRef = userId;
     mutations = createWriteThroughMutationModule(db);
+    const requestedUserId = userId;
 
     let lastVisitedAt: IsoDateTime | null = null;
     try {
@@ -59,6 +60,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
       // SecureStore may fail in tests — default to null
     }
 
+    if (userIdRef !== requestedUserId) return;
     const newCount = countNotificationsSince(db, userId, lastVisitedAt);
     set({ newCount });
   },
@@ -78,29 +80,32 @@ export const useNotificationStore = create<NotificationState & NotificationActio
     if (!dbRef || !userIdRef) return;
     const mutationModule = mutations;
     if (!mutationModule) return;
+    const requestedUserId = userIdRef;
     const now = toIsoDateTime(new Date());
     const id = generateNotificationId();
-    void mutationModule.commit({
-      kind: "notification.insert",
-      row: {
-        id,
-        userId: userIdRef,
-        type: input.type,
-        dedupKey: input.dedupKey,
-        categoryId: input.categoryId,
-        goalId: input.goalId,
-        titleKey: input.titleKey,
-        messageKey: input.messageKey,
-        params: input.params,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
-      },
-    }).then((result) => {
-      if (result.success && result.didMutate) {
-        set({ newCount: get().newCount + 1 });
-      }
-    });
+    void mutationModule
+      .commit({
+        kind: "notification.insert",
+        row: {
+          id,
+          userId: requestedUserId,
+          type: input.type,
+          dedupKey: input.dedupKey,
+          categoryId: input.categoryId,
+          goalId: input.goalId,
+          titleKey: input.titleKey,
+          messageKey: input.messageKey,
+          params: input.params,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+        },
+      })
+      .then((result) => {
+        if (result.success && result.didMutate && userIdRef === requestedUserId) {
+          set((state) => ({ newCount: state.newCount + 1 }));
+        }
+      });
   },
 
   markVisited: () => {
@@ -114,15 +119,18 @@ export const useNotificationStore = create<NotificationState & NotificationActio
     if (!dbRef || !userIdRef) return;
     const mutationModule = mutations;
     if (!mutationModule) return;
+    const requestedUserId = userIdRef;
     const now = toIsoDateTime(new Date());
-    void mutationModule.commit({
-      kind: "notification.clearAll",
-      userId: userIdRef,
-      now,
-    }).then((result) => {
-      if (result.success) {
-        set({ notifications: [], newCount: 0 });
-      }
-    });
+    void mutationModule
+      .commit({
+        kind: "notification.clearAll",
+        userId: requestedUserId,
+        now,
+      })
+      .then((result) => {
+        if (result.success && userIdRef === requestedUserId) {
+          set({ notifications: [], newCount: 0 });
+        }
+      });
   },
 }));

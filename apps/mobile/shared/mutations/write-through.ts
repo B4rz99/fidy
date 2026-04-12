@@ -502,7 +502,7 @@ export function createWriteThroughMutationModule(db: AnyDb): WriteThroughMutatio
   return {
     commit: async (command) => {
       try {
-        const result = applyCommand(db, command);
+        const result = db.transaction((tx) => applyCommand(tx as AnyDb, command));
         await runEffects(result.effects);
         return { success: true as const, didMutate: result.didMutate };
       } catch (error) {
