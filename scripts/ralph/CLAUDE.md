@@ -11,7 +11,7 @@ You are an autonomous coding agent working on a software project.
 5. Implement that single user story
 6. Run quality checks (e.g., typecheck, lint, test - use whatever your project requires)
 7. Update CLAUDE.md files if you discover reusable patterns (see below)
-8. If checks pass, commit ALL changes with message: `feat: [Story ID] - [Story Title]`
+8. If checks pass, create a local iteration commit that follows the repo's commit policy. For this repo, use a scoped commit header such as `feat(ralph): complete [Story ID]` and keep any commit body as concise `- ` bullets only. Do not open or update a PR from inside a Ralph iteration.
 9. Update the PRD to set `passes: true` for the completed story
 10. Append your progress to `progress.txt`
 

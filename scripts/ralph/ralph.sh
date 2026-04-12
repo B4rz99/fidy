@@ -46,10 +46,19 @@ if [ -f "$PRD_FILE" ] && [ -f "$LAST_BRANCH_FILE" ]; then
   
   if [ -n "$CURRENT_BRANCH" ] && [ -n "$LAST_BRANCH" ] && [ "$CURRENT_BRANCH" != "$LAST_BRANCH" ]; then
     # Archive the previous run
-    DATE=$(date +%Y-%m-%d)
+    DATE=$(date +%Y-%m-%d-%H%M%S)
     # Strip "ralph/" prefix from branch name for folder
     FOLDER_NAME=$(echo "$LAST_BRANCH" | sed 's|^ralph/||')
     ARCHIVE_FOLDER="$ARCHIVE_DIR/$DATE-$FOLDER_NAME"
+
+    # Guard against multiple archives for the same branch in the same second.
+    if [ -e "$ARCHIVE_FOLDER" ]; then
+      SUFFIX=1
+      while [ -e "${ARCHIVE_FOLDER}-${SUFFIX}" ]; do
+        SUFFIX=$((SUFFIX + 1))
+      done
+      ARCHIVE_FOLDER="${ARCHIVE_FOLDER}-${SUFFIX}"
+    fi
     
     echo "Archiving previous run: $LAST_BRANCH"
     mkdir -p "$ARCHIVE_FOLDER"

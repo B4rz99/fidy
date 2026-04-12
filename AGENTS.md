@@ -8,7 +8,7 @@ The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async 
 
 ## Opening MRs
 
-Before committing, use the `opening-mr` skill.
+Before user-driven commits, use the `opening-mr` skill.
 
 ## Agentic Workflow
 
