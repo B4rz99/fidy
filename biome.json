@@ -99,6 +99,15 @@
           }
         }
       }
+    },
+    {
+      "includes": [".ai-security/**", ".opencode/plugins/**"],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "enabled": false
+      }
     }
   ]
 }
