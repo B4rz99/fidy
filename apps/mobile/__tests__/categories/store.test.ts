@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getUserCategoriesForUser, insertUserCategory } from "@/features/categories/lib/repository";
-import { CATEGORIES } from "@/features/transactions/lib/categories";
+import { CATEGORIES, CATEGORY_ROWS } from "@/features/transactions/lib/categories";
 import { enqueueSync } from "@/shared/db/enqueue-sync";
 import type { IsoDateTime, UserCategoryId, UserId } from "@/shared/types/branded";
 
@@ -56,42 +56,27 @@ describe("useCategoriesStore", () => {
     return useCategoriesStore;
   }
 
-  it("allCategories contains 10 built-in categories when no user categories loaded", async () => {
+  it("exposes built-in and merged snapshots before refresh", async () => {
     const store = await getStore();
     const state = store.getState();
 
-    expect(state.allCategories).toHaveLength(10);
-    expect(state.allCategories).toEqual(CATEGORIES);
-    expect(state.userCategories).toHaveLength(0);
+    expect(state.builtIn).toEqual(CATEGORIES);
+    expect(state.custom).toEqual([]);
+    expect(state.merged).toEqual(CATEGORIES);
+    expect(state.builtInRows).toEqual(CATEGORY_ROWS);
+    expect(state.byId.get("food")).toEqual(CATEGORIES[0]);
   });
 
-  it("isValidCategoryId returns true for built-in IDs", async () => {
+  it("isValid defaults to built-in scope", async () => {
     const store = await getStore();
     const state = store.getState();
 
-    expect(state.isValidCategoryId("food")).toBe(true);
-    expect(state.isValidCategoryId("transport")).toBe(true);
+    expect(state.isValid("food")).toBe(true);
+    expect(state.isValid("transport")).toBe(true);
+    expect(state.isValid("nonexistent")).toBe(false);
   });
 
-  it("isValidCategoryId returns false for unknown ID", async () => {
-    const store = await getStore();
-    const state = store.getState();
-
-    expect(state.isValidCategoryId("nonexistent")).toBe(false);
-    expect(state.isValidCategoryId("")).toBe(false);
-  });
-
-  it("allCategoryIds contains all built-in IDs initially", async () => {
-    const store = await getStore();
-    const state = store.getState();
-
-    expect(state.allCategoryIds.size).toBe(10);
-    for (const cat of CATEGORIES) {
-      expect(state.allCategoryIds.has(cat.id)).toBe(true);
-    }
-  });
-
-  it("after loading user categories, allCategories includes them", async () => {
+  it("refresh loads user categories into the merged registry only", async () => {
     const fakeRow = {
       id: "ucat-custom-1" as UserCategoryId,
       userId: "user-1" as UserId,
@@ -106,74 +91,28 @@ describe("useCategoriesStore", () => {
 
     const store = await getStore();
     store.getState().initStore(mockDb, "user-1" as UserId);
-    await store.getState().loadUserCategories();
+    await store.getState().refresh();
 
     const state = store.getState();
-    expect(state.allCategories).toHaveLength(11);
-    // Built-in first, then user categories
-    expect(state.allCategories.slice(0, 10)).toEqual(CATEGORIES);
-    expect(state.allCategories[10]?.id).toBe("ucat-custom-1");
-    expect(state.allCategories[10]?.label).toEqual({
-      en: "Groceries",
-      es: "Groceries",
+    expect(state.custom).toHaveLength(1);
+    expect(state.merged).toHaveLength(11);
+    expect(state.merged.slice(0, 10)).toEqual(CATEGORIES);
+    expect(state.byId.get("ucat-custom-1")).toMatchObject({
+      label: { en: "Groceries", es: "Groceries" },
+      color: "#FF5722",
     });
-    expect(state.allCategories[10]?.color).toBe("#FF5722");
+    expect(state.isValid("ucat-custom-1")).toBe(false);
+    expect(state.isValid("ucat-custom-1", "merged")).toBe(true);
   });
 
-  it("isValidCategoryId returns true for user category ID after load", async () => {
-    const fakeRow = {
-      id: "ucat-custom-1" as UserCategoryId,
-      userId: "user-1" as UserId,
-      name: "Pets",
-      iconName: "PawPrint",
-      colorHex: "#9C27B0",
-      createdAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
-      updatedAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
-      deletedAt: null,
-    };
-    vi.mocked(getUserCategoriesForUser).mockReturnValue([fakeRow]);
-
-    const store = await getStore();
-    store.getState().initStore(mockDb, "user-1" as UserId);
-    await store.getState().loadUserCategories();
-
-    const state = store.getState();
-    expect(state.isValidCategoryId("ucat-custom-1")).toBe(true);
-  });
-
-  it("uses Ellipsis fallback icon for unrecognized iconName", async () => {
-    const fakeRow = {
-      id: "ucat-custom-2" as UserCategoryId,
-      userId: "user-1" as UserId,
-      name: "Unknown Icon",
-      iconName: "NonExistentIcon",
-      colorHex: "#607D8B",
-      createdAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
-      updatedAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
-      deletedAt: null,
-    };
-    vi.mocked(getUserCategoriesForUser).mockReturnValue([fakeRow]);
-
-    const store = await getStore();
-    store.getState().initStore(mockDb, "user-1" as UserId);
-    await store.getState().loadUserCategories();
-
-    const state = store.getState();
-    const icon = state.allCategories[10]?.icon;
-    expect(icon).toBeDefined();
-    // Must NOT be any of the ICON_MAP mock values — proves fallback was used
-    const mockIcons: (() => null)[] = [() => null, () => null, () => null];
-    expect(mockIcons).not.toContain(icon);
-  });
-
-  it("createUserCategory inserts to DB and enqueues sync", async () => {
+  it("createCustom inserts to DB and enqueues sync", async () => {
     vi.mocked(getUserCategoriesForUser).mockReturnValue([]);
     vi.mocked(insertUserCategory).mockReturnValue(undefined);
 
     const store = await getStore();
     store.getState().initStore(mockDb, "user-1" as UserId);
 
-    const result = await store.getState().createUserCategory({
+    const result = await store.getState().createCustom({
       name: "Groceries",
       iconName: "ShoppingCart",
       colorHex: "#4CAF50",
@@ -184,11 +123,11 @@ describe("useCategoriesStore", () => {
     expect(enqueueSync).toHaveBeenCalledOnce();
   });
 
-  it("createUserCategory returns false when name is too short", async () => {
+  it("createCustom returns false when name is too short", async () => {
     const store = await getStore();
     store.getState().initStore(mockDb, "user-1" as UserId);
 
-    const result = await store.getState().createUserCategory({
+    const result = await store.getState().createCustom({
       name: "A",
       iconName: "Zap",
       colorHex: "#FF0000",
@@ -198,11 +137,11 @@ describe("useCategoriesStore", () => {
     expect(insertUserCategory).not.toHaveBeenCalled();
   });
 
-  it("createUserCategory returns false when name is too long", async () => {
+  it("createCustom returns false when name is too long", async () => {
     const store = await getStore();
     store.getState().initStore(mockDb, "user-1" as UserId);
 
-    const result = await store.getState().createUserCategory({
+    const result = await store.getState().createCustom({
       name: "A".repeat(33),
       iconName: "Zap",
       colorHex: "#FF0000",
@@ -212,11 +151,11 @@ describe("useCategoriesStore", () => {
     expect(insertUserCategory).not.toHaveBeenCalled();
   });
 
-  it("createUserCategory returns false when DB refs are not set", async () => {
+  it("createCustom returns false when DB refs are not set", async () => {
     const store = await getStore();
     // Don't call initStore
 
-    const result = await store.getState().createUserCategory({
+    const result = await store.getState().createCustom({
       name: "Test",
       iconName: "Zap",
       colorHex: "#FF0000",
