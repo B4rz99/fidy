@@ -118,7 +118,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
         .getState()
         .loadInitialPage()
         .catch(handleRecoverableError("Failed to load transactions"));
-      useSyncConflictStore.getState().loadConflicts();
+      void useSyncConflictStore.getState().loadConflicts();
       useSettingsStore
         .getState()
         .hydrate()
