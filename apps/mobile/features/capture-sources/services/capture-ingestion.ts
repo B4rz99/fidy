@@ -76,32 +76,36 @@ export function createCaptureIngestionPort(
   db: AnyDb,
   deps: Partial<CaptureIngestionDeps> = {}
 ): CaptureIngestionPort {
-  async function resolveDep<Key extends keyof CaptureIngestionDeps>(
-    key: Key
-  ): Promise<CaptureIngestionDeps[Key]> {
-    const override = deps[key];
-    if (override) return override;
-    return (await loadDefaultDeps())[key];
-  }
-
   return {
     async ingest(command) {
       switch (command.kind) {
         case "notification":
-          return (await resolveDep("processNotification"))(db, command.userId, command.notification);
+          return (deps.processNotification ?? (await loadDefaultDeps()).processNotification)(
+            db,
+            command.userId,
+            command.notification
+          );
         case "apple_pay":
-          return (await resolveDep("processApplePayIntent"))(db, command.userId, command.intent);
+          return (deps.processApplePayIntent ?? (await loadDefaultDeps()).processApplePayIntent)(
+            db,
+            command.userId,
+            command.intent
+          );
         case "widget":
-          return (await resolveDep("processWidgetTransactions"))(db, command.userId);
+          return (deps.processWidgetTransactions ??
+            (await loadDefaultDeps()).processWidgetTransactions)(db, command.userId);
         case "email_batch":
-          return (await resolveDep("processEmails"))(
+          return (deps.processEmails ?? (await loadDefaultDeps()).processEmails)(
             db,
             command.userId,
             command.emails,
             command.onProgress
           );
         case "email_retry":
-          return (await resolveDep("processRetries"))(db, command.userId);
+          return (deps.processRetries ?? (await loadDefaultDeps()).processRetries)(
+            db,
+            command.userId
+          );
       }
     },
   };
