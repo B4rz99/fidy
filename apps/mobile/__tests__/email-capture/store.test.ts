@@ -1,18 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { insertMerchantRule } from "@/features/email-capture/lib/merchant-rules";
-import {
-  deleteEmailAccount,
-  dismissProcessedEmail,
-  getEmailAccounts,
-  getFailedEmails,
-  getNeedsReviewEmails,
-  insertEmailAccount,
-  updateLastFetchedAt,
-  updateProcessedEmailStatus,
-} from "@/features/email-capture/lib/repository";
-import { getAdapter } from "@/features/email-capture/services/email-adapter";
-import { processEmails } from "@/features/email-capture/services/email-pipeline";
-import { useEmailCaptureStore } from "@/features/email-capture/store";
 import type {
   EmailAccountId,
   IsoDateTime,
@@ -80,12 +66,16 @@ vi.mock("@/features/email-capture/lib/progress-phases", () => ({
     mockShouldShowProgress(...(args as [number, boolean, number])),
 }));
 
-vi.mock("@/features/email-capture/lib/bank-senders", async (importOriginal) => {
+vi.mock("@/features/email-capture/services/bank-senders-cache", async (importOriginal) => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-  const actual = await importOriginal<typeof import("@/features/email-capture/lib/bank-senders")>();
+  const actual = await importOriginal<
+    typeof import("@/features/email-capture/services/bank-senders-cache")
+  >();
   return {
     ...actual,
-    fetchBankSenders: vi.fn().mockResolvedValue(actual.DEFAULT_BANK_SENDERS),
+    fetchBankSenders: vi.fn().mockResolvedValue([
+      { bank: "Bancolombia", email: "notificaciones@bancolombia.com.co" },
+    ]),
   };
 });
 
@@ -121,6 +111,19 @@ const mockDb = {
   // biome-ignore lint/suspicious/noExplicitAny: mock DB object for testing
 } as any;
 const mockUserId = "user-1";
+
+let useEmailCaptureStore: typeof import("@/features/email-capture/store").useEmailCaptureStore;
+let getEmailAccounts: typeof import("@/features/email-capture/lib/repository").getEmailAccounts;
+let insertEmailAccount: typeof import("@/features/email-capture/lib/repository").insertEmailAccount;
+let deleteEmailAccount: typeof import("@/features/email-capture/lib/repository").deleteEmailAccount;
+let getFailedEmails: typeof import("@/features/email-capture/lib/repository").getFailedEmails;
+let getNeedsReviewEmails: typeof import("@/features/email-capture/lib/repository").getNeedsReviewEmails;
+let dismissProcessedEmail: typeof import("@/features/email-capture/lib/repository").dismissProcessedEmail;
+let updateLastFetchedAt: typeof import("@/features/email-capture/lib/repository").updateLastFetchedAt;
+let updateProcessedEmailStatus: typeof import("@/features/email-capture/lib/repository").updateProcessedEmailStatus;
+let insertMerchantRule: typeof import("@/features/email-capture/lib/merchant-rules").insertMerchantRule;
+let getAdapter: typeof import("@/features/email-capture/services/email-adapter").getAdapter;
+let processEmails: typeof import("@/features/email-capture/services/email-pipeline").processEmails;
 
 /** Helper to build a typed email account object for tests */
 function makeAccount(
@@ -164,7 +167,21 @@ function makeProcessedEmail(overrides: Record<string, unknown> = {}) {
 }
 
 describe("useEmailCaptureStore", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    ({ useEmailCaptureStore } = await import("@/features/email-capture/store"));
+    ({
+      getEmailAccounts,
+      insertEmailAccount,
+      deleteEmailAccount,
+      getFailedEmails,
+      getNeedsReviewEmails,
+      dismissProcessedEmail,
+      updateLastFetchedAt,
+      updateProcessedEmailStatus,
+    } = await import("@/features/email-capture/lib/repository"));
+    ({ insertMerchantRule } = await import("@/features/email-capture/lib/merchant-rules"));
+    ({ getAdapter } = await import("@/features/email-capture/services/email-adapter"));
+    ({ processEmails } = await import("@/features/email-capture/services/email-pipeline"));
     vi.clearAllMocks();
     useEmailCaptureStore.getState().initStore(mockDb, mockUserId);
     useEmailCaptureStore.setState({

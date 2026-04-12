@@ -1,5 +1,21 @@
-import { findDuplicateTransaction } from "@/features/capture-sources";
-import { insertTransaction, isValidCategoryId } from "@/features/transactions";
+import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
+import {
+  insertMerchantRule,
+  lookupMerchantRule,
+} from "@/features/email-capture/lib/merchant-rules";
+import {
+  getPendingRetryEmails,
+  getProcessedExternalIds,
+  insertProcessedEmail,
+  markForRetry,
+  markPermanentlyFailed,
+  markRetrySuccess,
+  updateProcessedEmailStatus,
+} from "@/features/email-capture/lib/repository";
+import type { RawEmail } from "@/features/email-capture/schema";
+import { parseEmailApi } from "@/features/email-capture/services/parse-email-api";
+import { isValidCategoryId } from "@/features/transactions/lib/categories";
+import { insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
@@ -21,20 +37,8 @@ import type {
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
-import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
-import {
-  getPendingRetryEmails,
-  getProcessedExternalIds,
-  insertProcessedEmail,
-  markForRetry,
-  markPermanentlyFailed,
-  markRetrySuccess,
-  updateProcessedEmailStatus,
-} from "../lib/repository";
 import { computeNextRetryAt, isMaxRetriesReached } from "../lib/retry-backoff";
-import type { RawEmail } from "../schema";
 import type { LlmParsedTransaction } from "./llm-parser";
-import { parseEmailApi } from "./parse-email-api";
 
 export type PipelineResult = {
   filtered: number;

@@ -1,12 +1,6 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  setupApplePayCapture,
-  setupNotificationCapture,
-  setupSmsDetection,
-} from "@/features/capture-sources/hooks/setup";
-
 const mockAddLogTransactionListener = vi.fn().mockReturnValue({ remove: vi.fn() });
 const mockAddDetectBankSmsListener = vi.fn().mockReturnValue({ remove: vi.fn() });
 const mockIsAvailable = vi.fn().mockReturnValue(true);
@@ -48,6 +42,10 @@ vi.mock("@/shared/lib/generate-id", () => ({
 const mockDb = {} as any;
 const USER_ID = "user-1";
 
+async function loadSetup() {
+  return import("@/features/capture-sources/hooks/setup");
+}
+
 describe("setupApplePayCapture", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -55,6 +53,7 @@ describe("setupApplePayCapture", () => {
   });
 
   it("registers listener and returns cleanup function", async () => {
+    const { setupApplePayCapture } = await loadSetup();
     const mockRemove = vi.fn();
     mockAddLogTransactionListener.mockReturnValueOnce({ remove: mockRemove });
 
@@ -68,6 +67,7 @@ describe("setupApplePayCapture", () => {
   });
 
   it("returns no-op when module is not available", async () => {
+    const { setupApplePayCapture } = await loadSetup();
     mockIsAvailable.mockReturnValue(false);
 
     const cleanup = await setupApplePayCapture(mockDb, USER_ID);
@@ -77,6 +77,7 @@ describe("setupApplePayCapture", () => {
   });
 
   it("calls processApplePayIntent when listener fires", async () => {
+    const { setupApplePayCapture } = await loadSetup();
     let capturedListener: (event: any) => void = () => {};
     mockAddLogTransactionListener.mockImplementationOnce((listener: any) => {
       capturedListener = listener;
@@ -100,6 +101,7 @@ describe("setupSmsDetection", () => {
   });
 
   it("registers listener and returns cleanup function", async () => {
+    const { setupSmsDetection } = await loadSetup();
     const mockRemove = vi.fn();
     mockAddDetectBankSmsListener.mockReturnValueOnce({ remove: mockRemove });
 
@@ -112,6 +114,7 @@ describe("setupSmsDetection", () => {
   });
 
   it("inserts SMS event when listener fires", async () => {
+    const { setupSmsDetection } = await loadSetup();
     let capturedListener: (event: any) => void = () => {};
     mockAddDetectBankSmsListener.mockImplementationOnce((listener: any) => {
       capturedListener = listener;
@@ -138,6 +141,7 @@ describe("setupNotificationCapture", () => {
   });
 
   it("sets allowed packages and registers listener", async () => {
+    const { setupNotificationCapture } = await loadSetup();
     const mockRemove = vi.fn();
     mockAndroidAddListener.mockReturnValueOnce({ remove: mockRemove });
     const packages = ["com.todo1.mobile.co.bancolombia"];
@@ -155,6 +159,7 @@ describe("setupNotificationCapture", () => {
   });
 
   it("calls processNotification when listener fires", async () => {
+    const { setupNotificationCapture } = await loadSetup();
     let capturedListener: (event: any) => void = () => {};
     mockAndroidAddListener.mockImplementationOnce((_event: any, listener: any) => {
       capturedListener = listener;
@@ -174,6 +179,7 @@ describe("setupNotificationCapture", () => {
   });
 
   it("returns no-op when no packages provided", async () => {
+    const { setupNotificationCapture } = await loadSetup();
     const cleanup = await setupNotificationCapture(mockDb, USER_ID, []);
 
     expect(mockAndroidAddListener).not.toHaveBeenCalled();

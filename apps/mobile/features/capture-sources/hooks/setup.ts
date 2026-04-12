@@ -1,9 +1,11 @@
+import { insertDetectedSmsEvent } from "@/features/capture-sources/lib/repository";
+import { processApplePayIntent } from "@/features/capture-sources/services/apple-pay-pipeline";
+import { processNotification } from "@/features/capture-sources/services/notification-pipeline";
 import type { AnyDb } from "@/shared/db";
 import { captureError, generateDetectedSmsEventId, toIsoDateTime } from "@/shared/lib";
 import type { IsoDateTime, UserId } from "@/shared/types/branded";
-import { insertDetectedSmsEvent } from "../lib/repository";
-import { processApplePayIntent } from "../services/apple-pay-pipeline";
-import { processNotification } from "../services/notification-pipeline";
+import type { ApplePayIntentData, NotificationData } from "../schema";
+import { createCaptureIngestionPort } from "../services/capture-ingestion";
 
 const noop = () => {};
 
@@ -12,11 +14,20 @@ const noop = () => {};
 const loadAppIntents = () => import("@/modules/expo-app-intents");
 
 export async function setupApplePayCapture(db: AnyDb, userId: string): Promise<() => void> {
+  const captureIngestion = createCaptureIngestionPort(db, {
+    processApplePayIntent,
+  });
   const mod = await loadAppIntents();
   if (!mod.isAvailable()) return noop;
 
   const subscription = mod.addLogTransactionListener((event) => {
-    processApplePayIntent(db, userId, event).catch(captureError);
+    captureIngestion
+      .ingest({
+        kind: "apple_pay",
+        userId: userId as UserId,
+        intent: event as ApplePayIntentData,
+      })
+      .catch(captureError);
   });
 
   return () => subscription.remove();
@@ -52,6 +63,9 @@ export async function setupNotificationCapture(
   userId: string,
   packages: string[]
 ): Promise<() => void> {
+  const captureIngestion = createCaptureIngestionPort(db, {
+    processNotification,
+  });
   if (packages.length === 0) return noop;
 
   // Dynamic import to avoid iOS bundle crash — this module has Android native code
@@ -63,9 +77,13 @@ export async function setupNotificationCapture(
   mod.setAllowedPackages(packages);
 
   const subscription = mod.addListener("onNotificationReceived", (event: unknown) => {
-    processNotification(db, userId, event as Parameters<typeof processNotification>[2]).catch(
-      captureError
-    );
+    captureIngestion
+      .ingest({
+        kind: "notification",
+        userId: userId as UserId,
+        notification: event as NotificationData,
+      })
+      .catch(captureError);
   });
 
   return () => subscription.remove();

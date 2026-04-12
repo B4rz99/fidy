@@ -1,10 +1,13 @@
+export {
+  insertMerchantRule,
+  lookupMerchantRule,
+} from "@/features/email-capture/lib/merchant-rules";
+export type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
 export { EmailConnectBanner } from "./components/EmailConnectBanner";
 export { FailedEmailsBanner } from "./components/FailedEmailsBanner";
 export { default as NeedsReviewScreen } from "./components/NeedsReviewScreen";
 export { useEmailCapture } from "./hooks/useEmailCapture";
 export type { BankSender } from "./lib/bank-senders";
-export { insertMerchantRule, lookupMerchantRule } from "./lib/merchant-rules";
-export type { ProcessedEmailRow } from "./lib/repository";
 export type { EmailProvider } from "./schema";
 export { getGmailClientId, getOutlookClientId } from "./schema";
 export type { LlmParsedTransaction } from "./services/llm-parser";

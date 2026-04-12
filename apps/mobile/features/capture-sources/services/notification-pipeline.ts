@@ -1,9 +1,20 @@
 import {
+  captureFingerprint,
+  findDuplicateTransaction,
+  isCaptureProcessed,
+} from "@/features/capture-sources/lib/dedup";
+import { parseNotificationLocally } from "@/features/capture-sources/lib/notification-parser";
+import { insertProcessedCapture } from "@/features/capture-sources/lib/repository";
+import type { NotificationData } from "@/features/capture-sources/schema";
+import { resolveSource } from "@/features/capture-sources/schema";
+import { parseNotificationApi } from "@/features/capture-sources/services/parse-notification-api";
+import {
   insertMerchantRule,
   lookupMerchantRule,
 } from "@/features/email-capture/lib/merchant-rules";
 import { stripPii } from "@/features/email-capture/services/parse-email-api";
-import { insertTransaction, isValidCategoryId } from "@/features/transactions";
+import { isValidCategoryId } from "@/features/transactions/lib/categories";
+import { insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
@@ -17,12 +28,6 @@ import {
   trackTransactionCreated,
 } from "@/shared/lib";
 import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
-import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
-import { parseNotificationLocally } from "../lib/notification-parser";
-import { insertProcessedCapture } from "../lib/repository";
-import type { NotificationData } from "../schema";
-import { resolveSource } from "../schema";
-import { parseNotificationApi } from "./parse-notification-api";
 
 /** In-flight fingerprints guard against concurrent duplicate processing. */
 const inFlightFingerprints = new Set<string>();

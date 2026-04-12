@@ -1,5 +1,25 @@
 import { eq } from "drizzle-orm";
 import { create } from "zustand";
+import { createCaptureIngestionPort } from "@/features/capture-sources/services/capture-ingestion";
+import { insertMerchantRule } from "@/features/email-capture/lib/merchant-rules";
+import type { ProgressPhase } from "@/features/email-capture/lib/progress-phases";
+import {
+  isFirstFetchForAny,
+  shouldShowProgress,
+} from "@/features/email-capture/lib/progress-phases";
+import type { EmailAccountRow, ProcessedEmailRow } from "@/features/email-capture/lib/repository";
+import {
+  deleteEmailAccount,
+  dismissProcessedEmail,
+  getEmailAccounts,
+  getFailedEmails,
+  getNeedsReviewEmails,
+  insertEmailAccount,
+  updateLastFetchedAt,
+  updateProcessedEmailStatus,
+} from "@/features/email-capture/lib/repository";
+import type { ProgressCallback } from "@/features/email-capture/services/email-pipeline";
+import { processEmails, processRetries } from "@/features/email-capture/services/email-pipeline";
 import { useTransactionStore } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync, transactions } from "@/shared/db";
@@ -18,24 +38,9 @@ import type {
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
-import { insertMerchantRule } from "./lib/merchant-rules";
-import type { ProgressPhase } from "./lib/progress-phases";
-import { isFirstFetchForAny, shouldShowProgress } from "./lib/progress-phases";
-import type { EmailAccountRow, ProcessedEmailRow } from "./lib/repository";
-import {
-  deleteEmailAccount,
-  dismissProcessedEmail,
-  getEmailAccounts,
-  getFailedEmails,
-  getNeedsReviewEmails,
-  insertEmailAccount,
-  updateLastFetchedAt,
-  updateProcessedEmailStatus,
-} from "./lib/repository";
 import type { EmailProvider, RawEmail } from "./schema";
 import { fetchBankSenders } from "./services/bank-senders-cache";
 import { getAdapter } from "./services/email-adapter";
-import { type ProgressCallback, processEmails, processRetries } from "./services/email-pipeline";
 
 let dbRef: AnyDb | null = null;
 let userIdRef: string | null = null;
@@ -163,6 +168,10 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     set({ isFetching: true, phase: null, progress: null });
 
     try {
+      const captureIngestion = createCaptureIngestionPort(db, {
+        processEmails,
+        processRetries,
+      });
       const { accounts } = get();
       if (accounts.length === 0) {
         console.warn("[EmailCapture] no connected accounts");
@@ -220,26 +229,39 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
         set({ phase: "processing" });
 
         let lastRefreshedSaved = 0;
-        await processEmails(db, userId, allEmails, (progress) => {
-          set({ progress });
-          if (progress.saved > lastRefreshedSaved) {
-            lastRefreshedSaved = progress.saved;
-            void useTransactionStore.getState().refresh();
-          }
+        await captureIngestion.ingest({
+          kind: "email_batch",
+          userId: userId as UserId,
+          emails: allEmails,
+          onProgress: (progress) => {
+            set({ progress });
+            if (progress.saved > lastRefreshedSaved) {
+              lastRefreshedSaved = progress.saved;
+              void useTransactionStore.getState().refresh();
+            }
+          },
         });
       } else if (allEmails.length > 0) {
         // Silent processing — no progress UI
         let lastRefreshedSaved = 0;
-        await processEmails(db, userId, allEmails, (progress) => {
-          set({ progress });
-          if (progress.saved > lastRefreshedSaved) {
-            lastRefreshedSaved = progress.saved;
-            void useTransactionStore.getState().refresh();
-          }
+        await captureIngestion.ingest({
+          kind: "email_batch",
+          userId: userId as UserId,
+          emails: allEmails,
+          onProgress: (progress) => {
+            set({ progress });
+            if (progress.saved > lastRefreshedSaved) {
+              lastRefreshedSaved = progress.saved;
+              void useTransactionStore.getState().refresh();
+            }
+          },
         });
       }
 
-      await processRetries(db, userId);
+      await captureIngestion.ingest({
+        kind: "email_retry",
+        userId: userId as UserId,
+      });
 
       // Update lastFetchedAt only for accounts whose fetch succeeded
       const now = toIsoDateTime(new Date());
