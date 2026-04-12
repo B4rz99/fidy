@@ -55,6 +55,13 @@ export type AcknowledgeBudgetAlertInput = {
   readonly alertState: BudgetAlertState;
 };
 
+export type LoadBudgetSuggestionsInput = {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly month: Month;
+  readonly existingCategoryIds: ReadonlySet<CategoryId>;
+};
+
 export type BudgetMonitoringPorts = {
   readonly getBudgetAlertsEnabled: () => boolean;
   readonly getLocale: () => string;
@@ -69,6 +76,7 @@ export type BudgetMonitoringPorts = {
 
 export type BudgetMonitoringModule = {
   readonly refreshMonth: (input: RefreshBudgetMonthInput) => Promise<BudgetMonthSnapshot>;
+  readonly loadAutoSuggestions: (input: LoadBudgetSuggestionsInput) => readonly BudgetSuggestion[];
   readonly acknowledgeAlert: (input: AcknowledgeBudgetAlertInput) => BudgetAlertState;
 };
 
@@ -81,6 +89,17 @@ const parseMonth = (month: Month): Date => {
   const year = parts[0] ?? 0;
   const monthIndex = (parts[1] ?? 1) - 1;
   return new Date(year, monthIndex, 1);
+};
+
+const deriveAutoSuggestionsForMonth = (
+  db: AnyDb,
+  userId: UserId,
+  month: Month,
+  existingCategoryIds: ReadonlySet<CategoryId>
+): readonly BudgetSuggestion[] => {
+  const previousMonth = formatMonth(subMonths(parseMonth(month), 1));
+  const previousSpending = getSpendingByCategoryAggregate(db, userId, previousMonth);
+  return deriveAutoSuggestBudgets(previousSpending, existingCategoryIds);
 };
 
 const toNotificationInput = (
@@ -197,10 +216,10 @@ export function createBudgetMonitoringModule(ports: BudgetMonitoringPorts): Budg
       );
       insertFreshAlertNotifications(labeledFreshAlerts, month, ports.insertNotification);
 
-      const previousMonth = formatMonth(subMonths(parseMonth(month), 1));
-      const previousSpending = getSpendingByCategoryAggregate(db, userId, previousMonth);
-      const autoSuggestions = deriveAutoSuggestBudgets(
-        previousSpending,
+      const autoSuggestions = deriveAutoSuggestionsForMonth(
+        db,
+        userId,
+        month,
         new Set(budgets.map((budget) => budget.categoryId))
       );
 
@@ -213,6 +232,9 @@ export function createBudgetMonitoringModule(ports: BudgetMonitoringPorts): Budg
         pendingPermissionRequest,
       };
     },
+
+    loadAutoSuggestions: ({ db, userId, month, existingCategoryIds }) =>
+      deriveAutoSuggestionsForMonth(db, userId, month, existingCategoryIds),
 
     acknowledgeAlert: ({ budgetId, threshold, alertState }) => {
       const key = alertKey(budgetId, threshold);

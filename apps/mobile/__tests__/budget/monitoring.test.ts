@@ -233,6 +233,38 @@ describe("createBudgetMonitoringModule", () => {
     expect(mockInsertNotification).toHaveBeenCalledOnce();
   });
 
+  it("loadAutoSuggestions derives suggestions without delivering alerts", () => {
+    insertBudgetRow();
+    insertExpense({
+      id: "tx-3",
+      categoryId: "entertainment" as CategoryId,
+      amount: 43234 as CopAmount,
+      date: "2026-02-12",
+      month: "2026-02" as Month,
+    });
+
+    const module = createBudgetMonitoringModule({
+      getBudgetAlertsEnabled: () => true,
+      getLocale: () => "es",
+      resolveCategoryLabel: mockResolveCategoryLabel,
+      scheduleBudgetAlert: mockScheduleBudgetAlert,
+      insertNotification: mockInsertNotification,
+    });
+
+    const suggestions = module.loadAutoSuggestions({
+      db: db as any,
+      userId: USER_ID,
+      month: CURRENT_MONTH,
+      existingCategoryIds: new Set(["food" as CategoryId]),
+    });
+
+    expect(suggestions).toEqual([
+      { categoryId: "entertainment" as CategoryId, suggestedAmount: 44000 as CopAmount },
+    ]);
+    expect(mockScheduleBudgetAlert).not.toHaveBeenCalled();
+    expect(mockInsertNotification).not.toHaveBeenCalled();
+  });
+
   it("acknowledgeAlert removes the targeted alert from pending state", () => {
     const module = createBudgetMonitoringModule({
       getBudgetAlertsEnabled: () => true,

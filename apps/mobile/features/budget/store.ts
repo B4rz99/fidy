@@ -29,6 +29,7 @@ import { createBudgetSchema } from "./schema";
 let dbRef: AnyDb | null = null;
 let userIdRef: UserId | null = null;
 let unsubscribeTxStore: (() => void) | null = null;
+let loadBudgetsRequestId = 0;
 
 const formatMonth = (date: Date): Month => format(date, "yyyy-MM") as Month;
 
@@ -123,17 +124,30 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
 
   loadBudgets: async () => {
     if (!dbRef || !userIdRef) return;
+    const requestId = ++loadBudgetsRequestId;
+    const requestedDb = dbRef;
+    const requestedUserId = userIdRef;
+    const requestedMonth = get().currentMonth;
+    const previous = {
+      pendingAlerts: get().pendingAlerts,
+      acknowledgedAlerts: get().acknowledgedAlerts,
+    };
     set({ isLoading: true });
     try {
       const snapshot = await budgetMonitoring.refreshMonth({
-        db: dbRef,
-        userId: userIdRef,
-        month: get().currentMonth,
-        previous: {
-          pendingAlerts: get().pendingAlerts,
-          acknowledgedAlerts: get().acknowledgedAlerts,
-        },
+        db: requestedDb,
+        userId: requestedUserId,
+        month: requestedMonth,
+        previous,
       });
+      if (
+        loadBudgetsRequestId !== requestId ||
+        dbRef !== requestedDb ||
+        userIdRef !== requestedUserId ||
+        get().currentMonth !== requestedMonth
+      ) {
+        return;
+      }
       set((state) => ({
         budgets: snapshot.budgets as Budget[],
         budgetProgress: snapshot.budgetProgress as BudgetProgress[],
@@ -145,7 +159,14 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
         isLoading: false,
       }));
     } catch {
-      set({ isLoading: false });
+      if (
+        loadBudgetsRequestId === requestId &&
+        dbRef === requestedDb &&
+        userIdRef === requestedUserId &&
+        get().currentMonth === requestedMonth
+      ) {
+        set({ isLoading: false });
+      }
     }
   },
 
@@ -154,7 +175,19 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
   },
 
   loadAutoSuggestions: () => {
-    void get().loadBudgets();
+    if (!dbRef || !userIdRef) return;
+    const { currentMonth, budgets } = get();
+    try {
+      const autoSuggestions = budgetMonitoring.loadAutoSuggestions({
+        db: dbRef,
+        userId: userIdRef,
+        month: currentMonth,
+        existingCategoryIds: new Set(budgets.map((budget) => budget.categoryId)),
+      });
+      set({ autoSuggestions: autoSuggestions as BudgetSuggestion[] });
+    } catch {
+      // Query failed — keep existing suggestions
+    }
   },
 
   createBudget: async (categoryId, amount) => {
