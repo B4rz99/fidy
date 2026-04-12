@@ -6,6 +6,14 @@ The role of this file is to describe common mistakes and confusion points that a
 
 The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async (importOriginal) => ...)` for heavy modules like `date-fns`. The async `importOriginal` call creates module-loading contention across parallel Vitest workers, causing intermittent timeouts in tests that dynamically import large module trees (e.g. `syncEngine.ts` → budget + goals + transactions). Fix: remove the global mock entirely, or provide a synchronous factory. Tests needing deterministic behavior should mock at the file level with `vi.doMock` or `vi.mock`.
 
+### Vault is external, not in-repo (⚠️ AGENT SURPRISE)
+
+Do NOT assume a local `./vault/` directory exists in this repo. Fidy uses external vaults configured via `OBARBOZA_VAULT_PATH` and `FIDY_VAULT_PATH`. Never hardcode those absolute paths into tracked repo files. Read from the configured vaults, and when the user says `update vault`, write project learnings back to `FIDY_VAULT_PATH`.
+
+### `.ai-hooks/` has both Bun TS hooks and a JS compatibility helper (⚠️ AGENT SURPRISE)
+
+The prompt-injection flow is split across Bun-run TypeScript hooks in `.ai-hooks/hooks/*.ts` and a CommonJS helper at `.ai-hooks/hooks/post-tool-defender-lib.js` used by `.opencode/plugins/prompt-injection-defender.js`. If you change the defender logic, keep both entry points in sync or OpenCode will silently drift from Codex behavior.
+
 ## Opening MRs
 
 Before committing, use the `opening-mr` skill.
@@ -99,15 +107,19 @@ New derivation/pure functions get direct unit tests with fixture data. File-sour
 - Data fetching: TanStack Query for server data, Zustand for local/derived state
 - Functional programming: pure functions in `lib/`, side effects in stores/hooks only
 
-## Vault
+## Vaults
 
-I also maintain a private project vault at `./vault/`. Read `vault/CLAUDE.md` for schema.
+This project uses two external vaults configured through local environment variables:
+- `OBARBOZA_VAULT_PATH` — global, cross-project context and working preferences
+- `FIDY_VAULT_PATH` — Fidy project memory and session updates
 
-The vault contains:
-- Decisions auto-logged from AI sessions
-- Meeting notes (Google Docs)
-- User feedback (Notion)
-- Experiments and outcomes
-- Competitive analysis
+Before making significant code changes, if configured, read:
+- `{OBARBOZA_VAULT_PATH}/AGENTS.md`
+- `{FIDY_VAULT_PATH}/AGENTS.md`
+- `{FIDY_VAULT_PATH}/wiki/index.md`
 
-Before making significant code changes, check `vault/wiki/index.md` for relevant decisions.
+When the user says `update vault`:
+- append a concise entry to `{FIDY_VAULT_PATH}/wiki/log.md`
+- update `{FIDY_VAULT_PATH}/wiki/index.md` if new notes were added
+- update notes under `decisions/`, `feedback/`, `meetings/`, or `experiments/` only when the session produced durable information
+- write to `OBARBOZA_VAULT_PATH` only for lessons that clearly generalize beyond Fidy

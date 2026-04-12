@@ -15,13 +15,25 @@
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-hooks/hooks/session-start-vault.ts",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Read",
         "hooks": [
           {
             "type": "command",
-            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-security/hooks/post-tool-defender.ts",
+            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-hooks/hooks/post-tool-defender.ts",
             "timeout": 5
           }
         ]
@@ -31,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-security/hooks/post-tool-defender.ts",
+            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-hooks/hooks/post-tool-defender.ts",
             "timeout": 5
           }
         ]
@@ -41,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-security/hooks/post-tool-defender.ts",
+            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-hooks/hooks/post-tool-defender.ts",
             "timeout": 5
           }
         ]
@@ -51,7 +63,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-security/hooks/post-tool-defender.ts",
+            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-hooks/hooks/post-tool-defender.ts",
             "timeout": 5
           }
         ]
@@ -61,7 +73,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-security/hooks/post-tool-defender.ts",
+            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-hooks/hooks/post-tool-defender.ts",
             "timeout": 5
           }
         ]
@@ -71,7 +83,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-security/hooks/post-tool-defender.ts",
+            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-hooks/hooks/post-tool-defender.ts",
             "timeout": 5
           }
         ]

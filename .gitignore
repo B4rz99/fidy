@@ -71,7 +71,6 @@ TODOS.md
 
 # Superpowers brainstorm artifacts
 .superpowers/
-vault/
 
 # Other AI agent skills (local-only, not used by Claude Code)
 .agents/*
