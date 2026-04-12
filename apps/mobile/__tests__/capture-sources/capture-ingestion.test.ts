@@ -87,6 +87,16 @@ describe("capture ingestion port", () => {
     expect(mockProcessWidgetTransactions).toHaveBeenCalledWith(mockDb, USER_ID);
   });
 
+  it("supports command-specific partial overrides without requiring every handler", async () => {
+    const port = createCaptureIngestionPort(mockDb, {
+      processWidgetTransactions: (...args: any[]) => mockProcessWidgetTransactions(...args),
+    });
+
+    await port.ingest({ kind: "widget", userId: USER_ID });
+
+    expect(mockProcessWidgetTransactions).toHaveBeenCalledWith(mockDb, USER_ID);
+  });
+
   it("routes email batch commands with progress callbacks intact", async () => {
     const port = createCaptureIngestionPort(mockDb, {
       processNotification: (...args: any[]) => mockProcessNotification(...args),
