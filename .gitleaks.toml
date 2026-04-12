@@ -3,8 +3,4 @@ useDefault = true
 
 [allowlist]
 description = "Supabase anon keys are public by design (role: anon, embedded in clients)"
-paths = ["apps/landing/waitlist.js"]
-
-[[allowlist]]
-description = "Security patterns file - contains detection rules, not actual secrets"
-paths = [".ai-security/hooks/patterns.yaml"]
+paths = ["apps/landing/waitlist.js", ".claude/skills/gstack/supabase/config.sh"]
