@@ -14,7 +14,11 @@
       "!**/dist",
       "!**/build",
       "!**/.next",
-      "!.claude"
+      "!.claude",
+      "!**/.ocx",
+      "!**/apps/mobile/.continue",
+      "!**/apps/mobile/.kiro",
+      "!**/apps/mobile/.windsurf"
     ]
   },
   "formatter": {
