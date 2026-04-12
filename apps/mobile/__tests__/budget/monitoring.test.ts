@@ -7,7 +7,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createBudgetMonitoringModule } from "@/features/budget/lib/monitoring";
 import { insertBudget } from "@/features/budget/lib/repository";
 import { insertTransaction } from "@/features/transactions/lib/repository";
-import type { BudgetId, CategoryId, CopAmount, IsoDateTime, Month, UserId } from "@/shared/types/branded";
+import type {
+  BudgetId,
+  CategoryId,
+  CopAmount,
+  IsoDateTime,
+  Month,
+  UserId,
+} from "@/shared/types/branded";
 
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;

@@ -1,12 +1,17 @@
 import { addMonths, format, subMonths } from "date-fns";
 import { create } from "zustand";
-import { CATEGORY_MAP, useTransactionStore } from "@/features/transactions";
 import { useNotificationStore } from "@/features/notifications";
 import { useSettingsStore } from "@/features/settings";
+import { CATEGORY_MAP, useTransactionStore } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import { getCategoryLabel, useLocaleStore } from "@/shared/i18n";
-import { generateBudgetId, generateSyncQueueId, toIsoDateTime, trackBudgetCreated } from "@/shared/lib";
+import {
+  generateBudgetId,
+  generateSyncQueueId,
+  toIsoDateTime,
+  trackBudgetCreated,
+} from "@/shared/lib";
 import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
 import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./lib/derive";
 import { createBudgetMonitoringModule } from "./lib/monitoring";
@@ -135,7 +140,8 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
         summary: snapshot.summary,
         autoSuggestions: snapshot.autoSuggestions as BudgetSuggestion[],
         pendingAlerts: snapshot.pendingAlerts,
-        pendingPermissionRequest: state.pendingPermissionRequest || snapshot.pendingPermissionRequest,
+        pendingPermissionRequest:
+          state.pendingPermissionRequest || snapshot.pendingPermissionRequest,
         isLoading: false,
       }));
     } catch {

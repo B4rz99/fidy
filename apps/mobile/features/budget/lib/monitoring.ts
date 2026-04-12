@@ -1,13 +1,10 @@
 import { format, subMonths } from "date-fns";
+import { getSpendingByCategoryAggregate } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { formatMoney } from "@/shared/lib";
-import type {
-  BudgetId,
-  CategoryId,
-  CopAmount,
-  Month,
-  UserId,
-} from "@/shared/types/branded";
+import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
+import type { Budget } from "../schema";
+import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./derive";
 import {
   computeDaysLeft,
   deriveAutoSuggestBudgets,
@@ -15,14 +12,7 @@ import {
   deriveBudgetProgress,
   deriveBudgetSummary,
 } from "./derive";
-import type {
-  BudgetAlert,
-  BudgetProgress,
-  BudgetSuggestion,
-} from "./derive";
-import type { Budget } from "../schema";
 import { getBudgetsForMonth } from "./repository";
-import { getSpendingByCategoryAggregate } from "@/features/transactions/lib/repository";
 
 export type BudgetAlertState = {
   readonly pendingAlerts: readonly BudgetAlert[];
@@ -78,16 +68,11 @@ export type BudgetMonitoringPorts = {
 };
 
 export type BudgetMonitoringModule = {
-  readonly refreshMonth: (
-    input: RefreshBudgetMonthInput
-  ) => Promise<BudgetMonthSnapshot>;
-  readonly acknowledgeAlert: (
-    input: AcknowledgeBudgetAlertInput
-  ) => BudgetAlertState;
+  readonly refreshMonth: (input: RefreshBudgetMonthInput) => Promise<BudgetMonthSnapshot>;
+  readonly acknowledgeAlert: (input: AcknowledgeBudgetAlertInput) => BudgetAlertState;
 };
 
-const alertKey = (budgetId: BudgetId, threshold: 80 | 100): string =>
-  `${budgetId}:${threshold}`;
+const alertKey = (budgetId: BudgetId, threshold: 80 | 100): string => `${budgetId}:${threshold}`;
 
 const formatMonth = (date: Date): Month => format(date, "yyyy-MM") as Month;
 
@@ -113,9 +98,7 @@ const toNotificationInput = (
     titleKey:
       alert.threshold === 80 ? "notifications.budgetWarning" : "notifications.budgetExceeded",
     messageKey:
-      alert.threshold === 80
-        ? "notifications.budgetWarningMsg"
-        : "notifications.budgetExceededMsg",
+      alert.threshold === 80 ? "notifications.budgetWarningMsg" : "notifications.budgetExceededMsg",
     params: JSON.stringify({
       category: categoryName,
       remaining,
@@ -183,9 +166,7 @@ const insertFreshAlertNotifications = (
   });
 };
 
-export function createBudgetMonitoringModule(
-  ports: BudgetMonitoringPorts
-): BudgetMonitoringModule {
+export function createBudgetMonitoringModule(ports: BudgetMonitoringPorts): BudgetMonitoringModule {
   return {
     refreshMonth: async ({ db, userId, month, previous }) => {
       const budgets = getBudgetsForMonth(db, userId, month);
