@@ -90,7 +90,9 @@ describe("useBudgetStore", () => {
       pendingPermissionRequest: false,
     };
     const freshSnapshot = {
-      budgets: [{ id: "budget-april", categoryId: "transport", month: "2026-04" as Month }] as any[],
+      budgets: [
+        { id: "budget-april", categoryId: "transport", month: "2026-04" as Month },
+      ] as any[],
       budgetProgress: [],
       summary: { totalBudget: 120000, totalSpent: 10000, percentUsed: 8 },
       autoSuggestions: [],
