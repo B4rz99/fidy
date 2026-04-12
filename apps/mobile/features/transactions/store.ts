@@ -1,8 +1,6 @@
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync } from "@/shared/db";
 import {
-  generateSyncQueueId,
   generateTransactionId,
   toIsoDate,
   toIsoDateTime,
@@ -11,15 +9,13 @@ import {
   trackTransactionEdited,
 } from "@/shared/lib";
 import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
+import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/shared/mutations";
 import { buildTransaction, toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
 import {
   getDailySpendingAggregate,
   getSpendingByCategoryAggregate,
   getTransactionById,
   getTransactionsPaginated,
-  insertTransaction,
-  softDeleteTransaction,
-  upsertTransaction,
 } from "./lib/repository";
 import type { StoredTransaction, TransactionType } from "./schema";
 
@@ -30,6 +26,7 @@ const PAGE_SIZE = 30;
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
 let userIdRef: UserId | null = null;
+let mutations: WriteThroughMutationModule | null = null;
 
 type CategorySpendingItem = {
   readonly categoryId: CategoryId;
@@ -130,6 +127,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
   initStore: (db, userId) => {
     dbRef = db;
     userIdRef = userId;
+    mutations = createWriteThroughMutationModule(db);
   },
 
   setStep: (step) => set({ step }),
@@ -243,16 +241,20 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
 
     const { transaction } = result;
 
-    try {
-      await insertTransaction(dbRef, toTransactionRow(transaction));
+    const mutationModule = mutations;
+    if (!mutationModule) {
+      return { success: false as const, error: "Store not initialized" };
+    }
 
-      await enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "transactions",
-        rowId: transaction.id,
-        operation: "insert",
-        createdAt: toIsoDateTime(now),
+    try {
+      const mutationResult = await mutationModule.commit({
+        kind: "transaction.save",
+        mode: "insert",
+        row: toTransactionRow(transaction),
       });
+      if (!mutationResult.success) {
+        return { success: false as const, error: "Failed to save transaction" };
+      }
     } catch {
       return { success: false as const, error: "Failed to save transaction" };
     }
@@ -263,16 +265,17 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
   },
 
   removeTransaction: async (id) => {
-    if (dbRef) {
-      const now = toIsoDateTime(new Date());
-      await softDeleteTransaction(dbRef, id, now);
-      await enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "transactions",
-        rowId: id,
-        operation: "delete",
-        createdAt: now,
+    const mutationModule = mutations;
+    if (dbRef && mutationModule) {
+      const now = new Date();
+      const result = await mutationModule.commit({
+        kind: "transaction.delete",
+        transactionId: id,
+        now: toIsoDateTime(now),
       });
+      if (!result.success) {
+        throw new Error(result.error);
+      }
       trackTransactionDeleted();
     }
     await get().refresh();
@@ -313,16 +316,20 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
 
     const { transaction } = result;
 
-    try {
-      upsertTransaction(dbRef, toTransactionRow(transaction));
+    const mutationModule = mutations;
+    if (!mutationModule) {
+      return { success: false as const, error: "Store not initialized" };
+    }
 
-      await enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "transactions",
-        rowId: id,
-        operation: "update",
-        createdAt: toIsoDateTime(now),
+    try {
+      const mutationResult = await mutationModule.commit({
+        kind: "transaction.save",
+        mode: "update",
+        row: toTransactionRow(transaction),
       });
+      if (!mutationResult.success) {
+        return { success: false as const, error: "Failed to update transaction" };
+      }
     } catch {
       return { success: false as const, error: "Failed to update transaction" };
     }
@@ -348,16 +355,20 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
 
     const { transaction } = result;
 
-    try {
-      upsertTransaction(dbRef, toTransactionRow(transaction));
+    const mutationModule = mutations;
+    if (!mutationModule) {
+      return { success: false as const, error: "Store not initialized" };
+    }
 
-      await enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "transactions",
-        rowId: id,
-        operation: "update",
-        createdAt: toIsoDateTime(now),
+    try {
+      const mutationResult = await mutationModule.commit({
+        kind: "transaction.save",
+        mode: "update",
+        row: toTransactionRow(transaction),
       });
+      if (!mutationResult.success) {
+        return { success: false as const, error: "Failed to update transaction" };
+      }
     } catch {
       return { success: false as const, error: "Failed to update transaction" };
     }

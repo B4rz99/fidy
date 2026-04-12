@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync } from "@/shared/db";
-import { generateSyncQueueId, generateUserCategoryId, toIsoDateTime } from "@/shared/lib";
+import { generateUserCategoryId, toIsoDateTime } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
+import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/shared/mutations";
 import { MAX_NAME_LENGTH, MIN_NAME_LENGTH } from "./lib/constants";
 import { ICON_MAP } from "./lib/icon-map";
 import {
@@ -12,11 +12,12 @@ import {
   createCategoryRegistrySnapshot,
   isCategoryIdValid,
 } from "./lib/registry";
-import { getUserCategoriesForUser, insertUserCategory } from "./lib/repository";
+import { getUserCategoriesForUser } from "./lib/repository";
 
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
 let userIdRef: UserId | null = null;
+let mutations: WriteThroughMutationModule | null = null;
 
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
 
@@ -47,6 +48,7 @@ export const useCategoriesStore = create<CategoriesState & CategoriesActions>((s
   initStore: (db, userId) => {
     dbRef = db;
     userIdRef = userId;
+    mutations = createWriteThroughMutationModule(db);
   },
 
   refresh: async () => {
@@ -74,10 +76,13 @@ export const useCategoriesStore = create<CategoriesState & CategoriesActions>((s
 
     const now = toIsoDateTime(new Date());
     const id = generateUserCategoryId();
+    const mutationModule = mutations;
+    if (!mutationModule) return false;
 
     try {
-      db.transaction((tx) => {
-        insertUserCategory(tx as AnyDb, {
+      const result = await mutationModule.commit({
+        kind: "category.save",
+        row: {
           id,
           userId,
           name: trimmedName,
@@ -86,16 +91,9 @@ export const useCategoriesStore = create<CategoriesState & CategoriesActions>((s
           createdAt: now,
           updatedAt: now,
           deletedAt: null,
-        });
-
-        enqueueSync(tx as AnyDb, {
-          id: generateSyncQueueId(),
-          tableName: "userCategories",
-          rowId: id,
-          operation: "insert",
-          createdAt: now,
-        });
+        },
       });
+      if (!result.success) return false;
     } catch {
       return false;
     }

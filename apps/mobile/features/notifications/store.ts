@@ -1,16 +1,13 @@
 import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync } from "@/shared/db";
-import { generateNotificationId, generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
+import { generateNotificationId, toIsoDateTime } from "@/shared/lib";
 import type { CategoryId, IsoDateTime, UserId } from "@/shared/types/branded";
+import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/shared/mutations";
 import type { NotificationType, StoredNotification } from "./lib/types";
 import {
   countNotificationsSince,
-  getAllNotificationIds,
   getNotifications,
-  insertNotification as insertNotificationRow,
-  softDeleteAllNotifications,
 } from "./repository";
 
 const lastVisitedKey = (userId: UserId) => `notification_last_visited_${userId}`;
@@ -18,6 +15,7 @@ const lastVisitedKey = (userId: UserId) => `notification_last_visited_${userId}`
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
 let userIdRef: UserId | null = null;
+let mutations: WriteThroughMutationModule | null = null;
 
 type InsertNotificationInput = {
   readonly type: NotificationType;
@@ -51,6 +49,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
   initStore: async (db, userId) => {
     dbRef = db;
     userIdRef = userId;
+    mutations = createWriteThroughMutationModule(db);
 
     let lastVisitedAt: IsoDateTime | null = null;
     try {
@@ -77,10 +76,13 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
   insertNotification: (input) => {
     if (!dbRef || !userIdRef) return;
+    const mutationModule = mutations;
+    if (!mutationModule) return;
     const now = toIsoDateTime(new Date());
     const id = generateNotificationId();
-    try {
-      const result = insertNotificationRow(dbRef, {
+    void mutationModule.commit({
+      kind: "notification.insert",
+      row: {
         id,
         userId: userIdRef,
         type: input.type,
@@ -93,19 +95,12 @@ export const useNotificationStore = create<NotificationState & NotificationActio
         createdAt: now,
         updatedAt: now,
         deletedAt: null,
-      });
-      if (result.changes === 0) return;
-      enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "notifications",
-        rowId: id,
-        operation: "insert",
-        createdAt: now,
-      });
-    } catch {
-      return;
-    }
-    set({ newCount: get().newCount + 1 });
+      },
+    }).then((result) => {
+      if (result.success && result.didMutate) {
+        set({ newCount: get().newCount + 1 });
+      }
+    });
   },
 
   markVisited: () => {
@@ -117,23 +112,17 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
   clearAll: () => {
     if (!dbRef || !userIdRef) return;
-    const db = dbRef;
+    const mutationModule = mutations;
+    if (!mutationModule) return;
     const now = toIsoDateTime(new Date());
-    try {
-      const allIds = getAllNotificationIds(db, userIdRef);
-      softDeleteAllNotifications(db, userIdRef, now);
-      allIds.forEach((id) => {
-        enqueueSync(db, {
-          id: generateSyncQueueId(),
-          tableName: "notifications",
-          rowId: id,
-          operation: "delete",
-          createdAt: now,
-        });
-      });
-    } catch {
-      return;
-    }
-    set({ notifications: [], newCount: 0 });
+    void mutationModule.commit({
+      kind: "notification.clearAll",
+      userId: userIdRef,
+      now,
+    }).then((result) => {
+      if (result.success) {
+        set({ notifications: [], newCount: 0 });
+      }
+    });
   },
 }));

@@ -4,24 +4,17 @@ import { useNotificationStore } from "@/features/notifications";
 import { useSettingsStore } from "@/features/settings";
 import { CATEGORY_MAP, useTransactionStore } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync } from "@/shared/db";
 import { getCategoryLabel, useLocaleStore } from "@/shared/i18n";
 import {
   generateBudgetId,
-  generateSyncQueueId,
   toIsoDateTime,
   trackBudgetCreated,
 } from "@/shared/lib";
 import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
+import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/shared/mutations";
 import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./lib/derive";
 import { createBudgetMonitoringModule } from "./lib/monitoring";
 import { scheduleBudgetAlert } from "./lib/notifications";
-import {
-  copyBudgetsToMonth,
-  insertBudget,
-  softDeleteBudget,
-  updateBudgetAmount,
-} from "./lib/repository";
 import type { Budget } from "./schema";
 import { createBudgetSchema } from "./schema";
 
@@ -30,6 +23,7 @@ let dbRef: AnyDb | null = null;
 let userIdRef: UserId | null = null;
 let unsubscribeTxStore: (() => void) | null = null;
 let loadBudgetsRequestId = 0;
+let mutations: WriteThroughMutationModule | null = null;
 
 const formatMonth = (date: Date): Month => format(date, "yyyy-MM") as Month;
 
@@ -95,6 +89,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
   initStore: (db, userId) => {
     dbRef = db;
     userIdRef = userId;
+    mutations = createWriteThroughMutationModule(db);
     // Subscribe to transaction store changes to auto-refresh progress
     if (unsubscribeTxStore) unsubscribeTxStore();
     unsubscribeTxStore = useTransactionStore.subscribe(() => {
@@ -196,26 +191,25 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
       month: get().currentMonth,
     });
     if (!validation.success) return false;
+    const mutationModule = mutations;
+    if (!mutationModule) return false;
     const now = toIsoDateTime(new Date());
     const id = generateBudgetId();
     try {
-      insertBudget(dbRef, {
-        id,
-        userId: userIdRef,
-        categoryId,
-        amount,
-        month: get().currentMonth,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
+      const result = await mutationModule.commit({
+        kind: "budget.save",
+        row: {
+          id,
+          userId: userIdRef,
+          categoryId,
+          amount,
+          month: get().currentMonth,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+        },
       });
-      enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "budgets",
-        rowId: id,
-        operation: "insert",
-        createdAt: now,
-      });
+      if (!result.success) return false;
     } catch {
       return false;
     }
@@ -226,16 +220,17 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
 
   updateBudget: async (id, amount) => {
     if (!dbRef) return;
+    const mutationModule = mutations;
+    if (!mutationModule) return;
     const now = toIsoDateTime(new Date());
     try {
-      updateBudgetAmount(dbRef, id, amount, now);
-      enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "budgets",
-        rowId: id,
-        operation: "update",
-        createdAt: now,
+      const result = await mutationModule.commit({
+        kind: "budget.update",
+        budgetId: id,
+        amount,
+        now,
       });
+      if (!result.success) return;
     } catch {
       return;
     }
@@ -244,16 +239,16 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
 
   deleteBudget: async (id) => {
     if (!dbRef) return;
+    const mutationModule = mutations;
+    if (!mutationModule) return;
     const now = toIsoDateTime(new Date());
     try {
-      softDeleteBudget(dbRef, id, now);
-      enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "budgets",
-        rowId: id,
-        operation: "delete",
-        createdAt: now,
+      const result = await mutationModule.commit({
+        kind: "budget.delete",
+        budgetId: id,
+        now,
       });
+      if (!result.success) return;
     } catch {
       return;
     }
@@ -264,23 +259,17 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     if (!dbRef || !userIdRef) return;
     const userId = userIdRef;
     const now = toIsoDateTime(new Date());
+    const mutationModule = mutations;
+    if (!mutationModule) return;
     try {
-      dbRef.transaction((tx) => {
-        const db = tx as unknown as AnyDb;
-        const newIds = copyBudgetsToMonth(db, userId, get().currentMonth, targetMonth, now, () =>
-          generateBudgetId()
-        );
-        // Enqueue sync for each copied budget
-        newIds.forEach((newId) => {
-          enqueueSync(db, {
-            id: generateSyncQueueId(),
-            tableName: "budgets",
-            rowId: newId,
-            operation: "insert",
-            createdAt: now,
-          });
-        });
+      const result = await mutationModule.commit({
+        kind: "budget.copy",
+        sourceMonth: get().currentMonth,
+        targetMonth,
+        userId,
+        now,
       });
+      if (!result.success) return;
     } catch {
       return;
     }
@@ -296,30 +285,25 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     const now = toIsoDateTime(new Date());
     const entries = Array.from(budgetsByCategory.entries());
     if (entries.length === 0) return;
+    const mutationModule = mutations;
+    if (!mutationModule) return;
     try {
-      dbRef.transaction((tx) => {
-        const db = tx as unknown as AnyDb;
-        entries.forEach(([categoryId, amount]) => {
-          const id = generateBudgetId();
-          insertBudget(db, {
-            id,
-            userId: userId,
+      const result = await mutationModule.commitBatch(
+        entries.map(([categoryId, amount]) => ({
+          kind: "budget.save",
+          row: {
+            id: generateBudgetId(),
+            userId,
             categoryId,
             amount,
             month: currentMonth,
             createdAt: now,
             updatedAt: now,
             deletedAt: null,
-          });
-          enqueueSync(db, {
-            id: generateSyncQueueId(),
-            tableName: "budgets",
-            rowId: id,
-            operation: "insert",
-            createdAt: now,
-          });
-        });
-      });
+          },
+        }))
+      );
+      if (result.some((item) => !item.success)) return;
     } catch {
       return;
     }

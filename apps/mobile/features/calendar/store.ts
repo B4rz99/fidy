@@ -1,19 +1,11 @@
 import { addMonths, endOfMonth, startOfMonth, subMonths } from "date-fns";
 import { create } from "zustand";
-import {
-  insertTransaction,
-  type StoredTransaction,
-  softDeleteTransaction,
-  toTransactionRow,
-  useTransactionStore,
-} from "@/features/transactions";
+import { type StoredTransaction, toTransactionRow, useTransactionStore } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync } from "@/shared/db";
 import {
   captureError,
   generateBillId,
   generateBillPaymentId,
-  generateSyncQueueId,
   generateTransactionId,
   parseDigitsToAmount,
   parseIsoDate,
@@ -23,15 +15,13 @@ import {
   trackBillPaymentRecorded,
 } from "@/shared/lib";
 import type { BillId, CategoryId, CopAmount, IsoDate, UserId } from "@/shared/types/branded";
+import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/shared/mutations";
 import { requestNotificationPermissions, scheduleBillNotifications } from "./lib/notifications";
 import {
-  deleteBill as dbDeleteBill,
-  deleteBillPayment as dbDeleteBillPayment,
-  updateBill as dbUpdateBill,
   getAllBills,
   getBillPaymentsForMonth,
-  insertBill,
-  insertBillPayment,
+  type BillPaymentRow,
+  type BillRow,
 } from "./lib/repository";
 import {
   type Bill,
@@ -45,6 +35,7 @@ import {
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
 let userIdRef: UserId | null = null;
+let mutations: WriteThroughMutationModule | null = null;
 
 type CalendarState = {
   currentMonth: Date;
@@ -86,6 +77,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
   initStore: (db, userId) => {
     dbRef = db;
     userIdRef = userId;
+    mutations = createWriteThroughMutationModule(db);
   },
 
   nextMonth: () => {
@@ -141,8 +133,15 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
       ...result.data,
     };
 
+    const mutationModule = mutations;
+    if (!mutationModule) return false;
+
     try {
-      insertBill(dbRef, toBillRow(newBill, userIdRef, toIsoDateTime(new Date())));
+      const result = await mutationModule.commit({
+        kind: "calendar.bill.save",
+        row: toBillRow(newBill, userIdRef, toIsoDateTime(new Date())),
+      });
+      if (!result.success) return false;
     } catch {
       return false;
     }
@@ -163,6 +162,8 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
 
   updateBill: async (id, fields) => {
     if (!dbRef) return;
+    const mutationModule = mutations;
+    if (!mutationModule) return;
 
     const dbFields = Object.fromEntries(
       Object.entries(fields)
@@ -170,7 +171,15 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
         .map(([k, v]) => [k, k === "startDate" && v instanceof Date ? v.toISOString() : v])
     );
 
-    dbUpdateBill(dbRef, id, dbFields, toIsoDateTime(new Date()));
+    const result = await mutationModule.commit({
+      kind: "calendar.bill.update",
+      billId: id,
+      fields: dbFields as Partial<
+        Pick<BillRow, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
+      >,
+      now: toIsoDateTime(new Date()),
+    });
+    if (!result.success) return;
     set((s) => ({
       bills: s.bills.map((b) => (b.id === id ? { ...b, ...fields } : b)),
     }));
@@ -178,7 +187,13 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
 
   deleteBill: async (id) => {
     if (!dbRef) return;
-    dbDeleteBill(dbRef, id);
+    const mutationModule = mutations;
+    if (!mutationModule) return;
+    const result = await mutationModule.commit({
+      kind: "calendar.bill.delete",
+      billId: id,
+    });
+    if (!result.success) return;
     set((s) => ({
       bills: s.bills.filter((b) => b.id !== id),
       payments: s.payments.filter((p) => p.billId !== id),
@@ -218,19 +233,16 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
       createdAt: nowIso,
     };
 
+    const mutationModule = mutations;
+    if (!mutationModule) return;
+
     try {
-      dbRef.transaction((tx) => {
-        const db = tx as unknown as AnyDb;
-        insertTransaction(db, toTransactionRow(transaction));
-        enqueueSync(db, {
-          id: generateSyncQueueId(),
-          tableName: "transactions",
-          rowId: txId,
-          operation: "insert",
-          createdAt: nowIso,
-        });
-        insertBillPayment(db, payment);
+      const result = await mutationModule.commit({
+        kind: "calendar.bill.markPaid",
+        transactionRow: toTransactionRow(transaction),
+        paymentRow: payment as BillPaymentRow,
       });
+      if (!result.success) return;
 
       set((s) => ({ payments: [...s.payments, payment] }));
       useTransactionStore.getState().addToCache(transaction);
@@ -244,23 +256,19 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     if (!dbRef) return;
 
     const payment = get().payments.find((p) => p.billId === billId && p.dueDate === dueDate);
+    const mutationModule = mutations;
+    if (!mutationModule) return;
     const nowIso = toIsoDateTime(new Date());
 
     try {
-      dbRef.transaction((tx) => {
-        const db = tx as unknown as AnyDb;
-        if (payment?.transactionId) {
-          softDeleteTransaction(db, payment.transactionId, nowIso);
-          enqueueSync(db, {
-            id: generateSyncQueueId(),
-            tableName: "transactions",
-            rowId: payment.transactionId,
-            operation: "delete",
-            createdAt: nowIso,
-          });
-        }
-        dbDeleteBillPayment(db, billId, dueDate);
+      const result = await mutationModule.commit({
+        kind: "calendar.bill.unmarkPaid",
+        billId,
+        dueDate,
+        transactionId: payment?.transactionId ?? null,
+        now: nowIso,
       });
+      if (!result.success) return;
 
       if (payment?.transactionId) {
         useTransactionStore.getState().removeFromCache(payment.transactionId);
