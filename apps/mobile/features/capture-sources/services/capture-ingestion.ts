@@ -92,8 +92,9 @@ export function createCaptureIngestionPort(
             command.intent
           );
         case "widget":
-          return (deps.processWidgetTransactions ??
-            (await loadDefaultDeps()).processWidgetTransactions)(db, command.userId);
+          return (
+            deps.processWidgetTransactions ?? (await loadDefaultDeps()).processWidgetTransactions
+          )(db, command.userId);
         case "email_batch":
           return (deps.processEmails ?? (await loadDefaultDeps()).processEmails)(
             db,
