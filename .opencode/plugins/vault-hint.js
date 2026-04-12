@@ -3,8 +3,8 @@ module.exports = {
   version: "1.0.0",
   executeBefore: ["tool.execute.before"],
   handler: async (context) => {
-    const fs = require("fs");
-    const path = require("path");
+    const fs = require("node:fs");
+    const path = require("node:path");
     const vaultIndex = path.join(context.cwd, "vault/wiki/index.md");
     if (fs.existsSync(vaultIndex)) {
       return {

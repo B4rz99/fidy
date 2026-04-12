@@ -1,47 +1,31 @@
-/**
- * AI Prompt Injection Defender - PostToolUse Hook
- * ================================================
- *
- * Scans tool outputs for prompt injection attempts and warns the AI assistant.
- * Works with Claude Code, Codex, and OpenCode.
- *
- * Run with: bun run post-tool-defender.ts
- */
-
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { parse as parseYaml } from "yaml";
 
-// Types
-interface Pattern {
+export interface Pattern {
   pattern: string;
   reason: string;
   severity: "high" | "medium" | "low";
 }
 
-interface Config {
+export interface Config {
   instructionOverridePatterns?: Pattern[];
   rolePlayingPatterns?: Pattern[];
   encodingPatterns?: Pattern[];
   contextManipulationPatterns?: Pattern[];
 }
 
-interface HookInput {
+export interface HookInput {
   tool_name: string;
   tool_input: Record<string, unknown>;
   tool_response?: unknown;
   tool_result?: unknown;
 }
 
-// Detection tuple: [category, reason, severity]
-type Detection = [string, string, string];
+export type Detection = [string, string, string];
 
-/**
- * Load patterns from patterns.yaml.
- */
-function loadConfig(): Config {
-  const scriptDir = dirname(Bun.main);
-  const configPath = join(scriptDir, "patterns.yaml");
+export function loadConfig(): Config {
+  const configPath = join(process.cwd(), ".ai-security/hooks/patterns.yaml");
 
   if (existsSync(configPath)) {
     try {
@@ -55,10 +39,7 @@ function loadConfig(): Config {
   return {};
 }
 
-/**
- * Extract text content from tool result based on tool type.
- */
-function extractTextContent(toolName: string, toolResult: unknown): string {
+export function extractTextContent(toolName: string, toolResult: unknown): string {
   if (toolResult === null || toolResult === undefined) {
     return "";
   }
@@ -112,10 +93,7 @@ function extractTextContent(toolName: string, toolResult: unknown): string {
   return String(toolResult);
 }
 
-/**
- * Scan text for prompt injection patterns.
- */
-function scanForInjections(text: string, config: Config): Detection[] {
+export function scanForInjections(text: string, config: Config): Detection[] {
   if (!text || text.length < 10) {
     return [];
   }
@@ -151,10 +129,11 @@ function scanForInjections(text: string, config: Config): Detection[] {
   return detections;
 }
 
-/**
- * Format detections into a warning message.
- */
-function formatWarning(detections: Detection[], toolName: string, sourceInfo: string): string {
+export function formatWarning(
+  detections: Detection[],
+  toolName: string,
+  sourceInfo: string
+): string {
   const highSeverity = detections.filter((d) => d[2] === "high");
   const mediumSeverity = detections.filter((d) => d[2] === "medium");
   const lowSeverity = detections.filter((d) => d[2] === "low");
@@ -207,10 +186,7 @@ function formatWarning(detections: Detection[], toolName: string, sourceInfo: st
   return lines.join("\n");
 }
 
-/**
- * Extract source information from tool input.
- */
-function getSourceInfo(toolName: string, toolInput: Record<string, unknown>): string {
+export function getSourceInfo(toolName: string, toolInput: Record<string, unknown>): string {
   if (toolName === "Read") {
     return String(toolInput.file_path || "unknown file");
   }
@@ -238,61 +214,3 @@ function getSourceInfo(toolName: string, toolInput: Record<string, unknown>): st
   }
   return `${toolName} output`;
 }
-
-/**
- * Main entry point for the PostToolUse hook.
- */
-async function main(): Promise<void> {
-  const config = loadConfig();
-
-  const decoder = new TextDecoder();
-  let inputText = "";
-  for await (const chunk of Bun.stdin.stream()) {
-    inputText += decoder.decode(chunk, { stream: true });
-  }
-  inputText += decoder.decode();
-
-  let input: HookInput;
-  try {
-    input = JSON.parse(inputText);
-  } catch {
-    process.exit(0);
-  }
-
-  const {
-    tool_name: toolName,
-    tool_input: toolInput,
-    tool_response: toolResponse,
-    tool_result: toolResultFallback,
-  } = input;
-  const toolResult = toolResponse ?? toolResultFallback;
-
-  const monitoredTools = new Set(["Read", "WebFetch", "Bash", "Grep", "Glob", "Task"]);
-
-  if (!monitoredTools.has(toolName)) {
-    process.exit(0);
-  }
-
-  const text = extractTextContent(toolName, toolResult);
-
-  if (!text || text.length < 10) {
-    process.exit(0);
-  }
-
-  const detections = scanForInjections(text, config);
-
-  if (detections.length > 0) {
-    const sourceInfo = getSourceInfo(toolName, toolInput);
-    const warning = formatWarning(detections, toolName, sourceInfo);
-
-    const output = {
-      decision: "block",
-      reason: warning,
-    };
-    console.log(JSON.stringify(output));
-  }
-
-  process.exit(0);
-}
-
-main().catch(() => process.exit(0));
