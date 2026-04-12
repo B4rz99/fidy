@@ -41,96 +41,98 @@ type NotificationActions = {
   clearAll: () => void;
 };
 
-export const useNotificationStore = create<NotificationState & NotificationActions>((set, _get) => ({
-  notifications: [],
-  newCount: 0,
-  isLoading: false,
+export const useNotificationStore = create<NotificationState & NotificationActions>(
+  (set, _get) => ({
+    notifications: [],
+    newCount: 0,
+    isLoading: false,
 
-  initStore: async (db, userId) => {
-    dbRef = db;
-    userIdRef = userId;
-    mutations = createWriteThroughMutationModule(db);
-    const requestedUserId = userId;
+    initStore: async (db, userId) => {
+      dbRef = db;
+      userIdRef = userId;
+      mutations = createWriteThroughMutationModule(db);
+      const requestedUserId = userId;
 
-    let lastVisitedAt: IsoDateTime | null = null;
-    try {
-      const stored = await SecureStore.getItemAsync(lastVisitedKey(userId));
-      lastVisitedAt = stored ? (stored as IsoDateTime) : null;
-    } catch {
-      // SecureStore may fail in tests — default to null
-    }
+      let lastVisitedAt: IsoDateTime | null = null;
+      try {
+        const stored = await SecureStore.getItemAsync(lastVisitedKey(userId));
+        lastVisitedAt = stored ? (stored as IsoDateTime) : null;
+      } catch {
+        // SecureStore may fail in tests — default to null
+      }
 
-    if (userIdRef !== requestedUserId) return;
-    const newCount = countNotificationsSince(db, userId, lastVisitedAt);
-    set({ newCount });
-  },
+      if (userIdRef !== requestedUserId) return;
+      const newCount = countNotificationsSince(db, userId, lastVisitedAt);
+      set({ newCount });
+    },
 
-  loadNotifications: () => {
-    if (!dbRef || !userIdRef) return;
-    set({ isLoading: true });
-    try {
-      const rows = getNotifications(dbRef, userIdRef);
-      set({ notifications: rows as readonly StoredNotification[], isLoading: false });
-    } catch {
-      set({ isLoading: false });
-    }
-  },
+    loadNotifications: () => {
+      if (!dbRef || !userIdRef) return;
+      set({ isLoading: true });
+      try {
+        const rows = getNotifications(dbRef, userIdRef);
+        set({ notifications: rows as readonly StoredNotification[], isLoading: false });
+      } catch {
+        set({ isLoading: false });
+      }
+    },
 
-  insertNotification: (input) => {
-    if (!dbRef || !userIdRef) return;
-    const mutationModule = mutations;
-    if (!mutationModule) return;
-    const requestedUserId = userIdRef;
-    const now = toIsoDateTime(new Date());
-    const id = generateNotificationId();
-    void mutationModule
-      .commit({
-        kind: "notification.insert",
-        row: {
-          id,
+    insertNotification: (input) => {
+      if (!dbRef || !userIdRef) return;
+      const mutationModule = mutations;
+      if (!mutationModule) return;
+      const requestedUserId = userIdRef;
+      const now = toIsoDateTime(new Date());
+      const id = generateNotificationId();
+      void mutationModule
+        .commit({
+          kind: "notification.insert",
+          row: {
+            id,
+            userId: requestedUserId,
+            type: input.type,
+            dedupKey: input.dedupKey,
+            categoryId: input.categoryId,
+            goalId: input.goalId,
+            titleKey: input.titleKey,
+            messageKey: input.messageKey,
+            params: input.params,
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+          },
+        })
+        .then((result) => {
+          if (result.success && result.didMutate && userIdRef === requestedUserId) {
+            set((state) => ({ newCount: state.newCount + 1 }));
+          }
+        });
+    },
+
+    markVisited: () => {
+      const now = toIsoDateTime(new Date());
+      if (!userIdRef) return;
+      SecureStore.setItemAsync(lastVisitedKey(userIdRef), now).catch(() => {});
+      set({ newCount: 0 });
+    },
+
+    clearAll: () => {
+      if (!dbRef || !userIdRef) return;
+      const mutationModule = mutations;
+      if (!mutationModule) return;
+      const requestedUserId = userIdRef;
+      const now = toIsoDateTime(new Date());
+      void mutationModule
+        .commit({
+          kind: "notification.clearAll",
           userId: requestedUserId,
-          type: input.type,
-          dedupKey: input.dedupKey,
-          categoryId: input.categoryId,
-          goalId: input.goalId,
-          titleKey: input.titleKey,
-          messageKey: input.messageKey,
-          params: input.params,
-          createdAt: now,
-          updatedAt: now,
-          deletedAt: null,
-        },
-      })
-      .then((result) => {
-        if (result.success && result.didMutate && userIdRef === requestedUserId) {
-          set((state) => ({ newCount: state.newCount + 1 }));
-        }
-      });
-  },
-
-  markVisited: () => {
-    const now = toIsoDateTime(new Date());
-    if (!userIdRef) return;
-    SecureStore.setItemAsync(lastVisitedKey(userIdRef), now).catch(() => {});
-    set({ newCount: 0 });
-  },
-
-  clearAll: () => {
-    if (!dbRef || !userIdRef) return;
-    const mutationModule = mutations;
-    if (!mutationModule) return;
-    const requestedUserId = userIdRef;
-    const now = toIsoDateTime(new Date());
-    void mutationModule
-      .commit({
-        kind: "notification.clearAll",
-        userId: requestedUserId,
-        now,
-      })
-      .then((result) => {
-        if (result.success && userIdRef === requestedUserId) {
-          set({ notifications: [], newCount: 0 });
-        }
-      });
-  },
-}));
+          now,
+        })
+        .then((result) => {
+          if (result.success && userIdRef === requestedUserId) {
+            set({ notifications: [], newCount: 0 });
+          }
+        });
+    },
+  })
+);
