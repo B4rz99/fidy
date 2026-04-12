@@ -7,6 +7,7 @@ import {
   softDeleteTransaction,
 } from "@/features/transactions/lib/repository";
 import { useTransactionStore } from "@/features/transactions/store";
+import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db/enqueue-sync";
 import type {
   CategoryId,
@@ -32,10 +33,9 @@ vi.mock("@/shared/db/enqueue-sync", () => ({
   enqueueSync: vi.fn(),
 }));
 
-// biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
 const mockDb = {
   transaction: vi.fn((fn: (tx: unknown) => unknown) => fn(mockDb)),
-} as any;
+} as unknown as AnyDb;
 const mockUserId = "user-1" as UserId;
 
 describe("useTransactionStore", () => {
