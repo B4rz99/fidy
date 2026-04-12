@@ -6,14 +6,6 @@ The role of this file is to describe common mistakes and confusion points that a
 
 The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async (importOriginal) => ...)` for heavy modules like `date-fns`. The async `importOriginal` call creates module-loading contention across parallel Vitest workers, causing intermittent timeouts in tests that dynamically import large module trees (e.g. `syncEngine.ts` → budget + goals + transactions). Fix: remove the global mock entirely, or provide a synchronous factory. Tests needing deterministic behavior should mock at the file level with `vi.doMock` or `vi.mock`.
 
-### Vault is external, not in-repo (⚠️ AGENT SURPRISE)
-
-Do NOT assume a local `./vault/` directory exists in this repo. Fidy uses external vaults configured via `OBARBOZA_VAULT_PATH` and `FIDY_VAULT_PATH`. Never hardcode those absolute paths into tracked repo files. Read from the configured vaults, and when the user says `update vault`, write project learnings back to `FIDY_VAULT_PATH`.
-
-### `.ai-hooks/` has both Bun TS hooks and a JS compatibility helper (⚠️ AGENT SURPRISE)
-
-The prompt-injection flow is split across Bun-run TypeScript hooks in `.ai-hooks/hooks/*.ts` and a CommonJS helper at `.ai-hooks/hooks/post-tool-defender-lib.js` used by `.opencode/plugins/prompt-injection-defender.js`. If you change the defender logic, keep both entry points in sync or OpenCode will silently drift from Codex behavior.
-
 ## Opening MRs
 
 Before committing, use the `opening-mr` skill.
