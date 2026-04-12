@@ -124,6 +124,38 @@ describe("useBudgetStore", () => {
     expect(store.getState().isLoading).toBe(false);
   });
 
+  it("clears loading when context changes without starting a newer refresh", async () => {
+    const deferredSnapshot = createDeferred<{
+      budgets: any[];
+      budgetProgress: any[];
+      summary: { totalBudget: number; totalSpent: number; percentUsed: number };
+      autoSuggestions: any[];
+      pendingAlerts: any[];
+      pendingPermissionRequest: boolean;
+    }>();
+
+    mockRefreshMonth.mockReturnValueOnce(deferredSnapshot.promise);
+
+    const store = await getStore();
+    store.getState().initStore(mockDb, USER_ID);
+    store.setState({ currentMonth: "2026-03" as Month });
+
+    const load = store.getState().loadBudgets();
+
+    store.getState().initStore(mockDb, "user-2" as UserId);
+    deferredSnapshot.resolve({
+      budgets: [],
+      budgetProgress: [],
+      summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
+      autoSuggestions: [],
+      pendingAlerts: [],
+      pendingPermissionRequest: false,
+    });
+    await load;
+
+    expect(store.getState().isLoading).toBe(false);
+  });
+
   it("loads auto suggestions without triggering the full refresh path", async () => {
     const suggestions = [
       {

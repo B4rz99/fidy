@@ -140,12 +140,15 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
         month: requestedMonth,
         previous,
       });
-      if (
-        loadBudgetsRequestId !== requestId ||
+      const superseded = loadBudgetsRequestId !== requestId;
+      const contextChanged =
         dbRef !== requestedDb ||
         userIdRef !== requestedUserId ||
-        get().currentMonth !== requestedMonth
-      ) {
+        get().currentMonth !== requestedMonth;
+      if (superseded || contextChanged) {
+        if (!superseded) {
+          set({ isLoading: false });
+        }
         return;
       }
       set((state) => ({
@@ -159,12 +162,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
         isLoading: false,
       }));
     } catch {
-      if (
-        loadBudgetsRequestId === requestId &&
-        dbRef === requestedDb &&
-        userIdRef === requestedUserId &&
-        get().currentMonth === requestedMonth
-      ) {
+      if (loadBudgetsRequestId === requestId) {
         set({ isLoading: false });
       }
     }
