@@ -8,6 +8,16 @@ export {
   deriveBudgetProgress,
   deriveBudgetSummary,
 } from "./lib/derive";
+export type {
+  AcknowledgeBudgetAlertInput,
+  BudgetAlertState,
+  BudgetMonitoringModule,
+  BudgetMonitoringPorts,
+  BudgetMonthSnapshot,
+  BudgetNotificationInput,
+  RefreshBudgetMonthInput,
+} from "./lib/monitoring";
+export { createBudgetMonitoringModule } from "./lib/monitoring";
 export type { ScheduleResult } from "./lib/notifications";
 export { scheduleBudgetAlert } from "./lib/notifications";
 export type { BudgetRow } from "./lib/repository";

@@ -1,35 +1,18 @@
 import { addMonths, format, subMonths } from "date-fns";
 import { create } from "zustand";
+import { CATEGORY_MAP, useTransactionStore } from "@/features/transactions";
 import { useNotificationStore } from "@/features/notifications";
 import { useSettingsStore } from "@/features/settings";
-import {
-  CATEGORY_MAP,
-  getSpendingByCategoryAggregate,
-  useTransactionStore,
-} from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import { getCategoryLabel, useLocaleStore } from "@/shared/i18n";
-import {
-  formatMoney,
-  generateBudgetId,
-  generateSyncQueueId,
-  toIsoDateTime,
-  trackBudgetCreated,
-} from "@/shared/lib";
+import { generateBudgetId, generateSyncQueueId, toIsoDateTime, trackBudgetCreated } from "@/shared/lib";
 import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
 import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./lib/derive";
-import {
-  computeDaysLeft,
-  deriveAutoSuggestBudgets,
-  deriveBudgetAlerts,
-  deriveBudgetProgress,
-  deriveBudgetSummary,
-} from "./lib/derive";
+import { createBudgetMonitoringModule } from "./lib/monitoring";
 import { scheduleBudgetAlert } from "./lib/notifications";
 import {
   copyBudgetsToMonth,
-  getBudgetsForMonth,
   insertBudget,
   softDeleteBudget,
   updateBudgetAmount,
@@ -51,6 +34,17 @@ const parseMonth = (month: Month): Date => {
   const m = parts[1] ?? 1;
   return new Date(y, m - 1, 1);
 };
+
+const budgetMonitoring = createBudgetMonitoringModule({
+  getBudgetAlertsEnabled: () => useSettingsStore.getState().notificationPreferences.budgetAlerts,
+  getLocale: () => useLocaleStore.getState().locale,
+  resolveCategoryLabel: (categoryId, locale) => {
+    const category = CATEGORY_MAP[categoryId];
+    return category ? getCategoryLabel(category, locale) : categoryId;
+  },
+  scheduleBudgetAlert,
+  insertNotification: (input) => useNotificationStore.getState().insertNotification(input),
+});
 
 type BudgetState = {
   currentMonth: Month;
@@ -98,10 +92,8 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     // Subscribe to transaction store changes to auto-refresh progress
     if (unsubscribeTxStore) unsubscribeTxStore();
     unsubscribeTxStore = useTransactionStore.subscribe(() => {
-      // When transactions change, refresh budget progress
-      if (get().budgets.length > 0) {
-        get().refreshProgress();
-      }
+      // Re-run the full month refresh so transaction changes and alert policy stay in one path.
+      void get().loadBudgets();
     });
   },
 
@@ -128,90 +120,35 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     if (!dbRef || !userIdRef) return;
     set({ isLoading: true });
     try {
-      const rows = getBudgetsForMonth(dbRef, userIdRef, get().currentMonth);
-      set({ budgets: rows as Budget[], isLoading: false });
-      get().refreshProgress();
-      get().loadAutoSuggestions();
+      const snapshot = await budgetMonitoring.refreshMonth({
+        db: dbRef,
+        userId: userIdRef,
+        month: get().currentMonth,
+        previous: {
+          pendingAlerts: get().pendingAlerts,
+          acknowledgedAlerts: get().acknowledgedAlerts,
+        },
+      });
+      set((state) => ({
+        budgets: snapshot.budgets as Budget[],
+        budgetProgress: snapshot.budgetProgress as BudgetProgress[],
+        summary: snapshot.summary,
+        autoSuggestions: snapshot.autoSuggestions as BudgetSuggestion[],
+        pendingAlerts: snapshot.pendingAlerts,
+        pendingPermissionRequest: state.pendingPermissionRequest || snapshot.pendingPermissionRequest,
+        isLoading: false,
+      }));
     } catch {
       set({ isLoading: false });
     }
   },
 
   refreshProgress: () => {
-    if (!dbRef || !userIdRef) return;
-    const { budgets, acknowledgedAlerts, currentMonth, pendingAlerts: previousAlerts } = get();
-    try {
-      const spending = getSpendingByCategoryAggregate(dbRef, userIdRef, currentMonth);
-      const spendingMap = new Map(spending.map((s) => [s.categoryId, s.total]));
-      const progresses = budgets.map((b) =>
-        deriveBudgetProgress(b, spendingMap.get(b.categoryId) ?? (0 as CopAmount))
-      );
-      const summary = deriveBudgetSummary(progresses);
-      const daysLeft = computeDaysLeft(currentMonth, new Date());
-      const newPendingAlerts = deriveBudgetAlerts(progresses, acknowledgedAlerts, daysLeft);
-      set({ budgetProgress: progresses, summary, pendingAlerts: newPendingAlerts });
+    void get().loadBudgets();
+  },
 
-      // Schedule push notifications for truly new alerts (best-effort, don't block)
-      const previousKeys = new Set(previousAlerts.map((a) => `${a.budgetId}:${a.threshold}`));
-      const freshAlerts = newPendingAlerts.filter(
-        (a) => !previousKeys.has(`${a.budgetId}:${a.threshold}`)
-      );
-      const locale = useLocaleStore.getState().locale;
-      // Schedule the first fresh alert to detect permission state; schedule rest only on "scheduled"
-      const firstAlert = freshAlerts[0];
-      if (freshAlerts.length > 0 && firstAlert != null) {
-        const budgetAlertsEnabled =
-          useSettingsStore.getState().notificationPreferences.budgetAlerts;
-        const firstCategory = CATEGORY_MAP[firstAlert.categoryId];
-        const firstName = firstCategory
-          ? getCategoryLabel(firstCategory, locale)
-          : firstAlert.categoryId;
-        scheduleBudgetAlert(firstAlert, firstName, budgetAlertsEnabled)
-          .then((result) => {
-            if (result.type === "needs_permission") {
-              set({ pendingPermissionRequest: true });
-              return;
-            }
-            if (result.type !== "scheduled") return;
-            // Schedule remaining alerts (permission already confirmed as granted)
-            freshAlerts.slice(1).forEach((alert) => {
-              const category = CATEGORY_MAP[alert.categoryId];
-              const name = category ? getCategoryLabel(category, locale) : alert.categoryId;
-              scheduleBudgetAlert(alert, name, budgetAlertsEnabled).catch(() => {});
-            });
-          })
-          .catch(() => {});
-      }
-
-      // Insert in-app notifications for fresh budget alerts
-      freshAlerts.forEach((alert) => {
-        const category = CATEGORY_MAP[alert.categoryId];
-        const categoryName = category ? getCategoryLabel(category, locale) : alert.categoryId;
-        const remaining = formatMoney(Math.abs(alert.remainingAmount) as CopAmount);
-
-        useNotificationStore.getState().insertNotification({
-          type: "budget_alert",
-          dedupKey: `budget_alert:${alert.categoryId}:${alert.threshold}:${get().currentMonth}`,
-          categoryId: alert.categoryId,
-          goalId: null,
-          titleKey:
-            alert.threshold === 80 ? "notifications.budgetWarning" : "notifications.budgetExceeded",
-          messageKey:
-            alert.threshold === 80
-              ? "notifications.budgetWarningMsg"
-              : "notifications.budgetExceededMsg",
-          params: JSON.stringify({
-            category: categoryName,
-            remaining,
-            daysLeft: alert.daysLeft,
-            overAmount: remaining,
-            threshold: alert.threshold,
-          }),
-        });
-      });
-    } catch {
-      // Query failed — keep existing state
-    }
+  loadAutoSuggestions: () => {
+    void get().loadBudgets();
   },
 
   createBudget: async (categoryId, amount) => {
@@ -315,24 +252,6 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     await get().loadBudgets();
   },
 
-  loadAutoSuggestions: () => {
-    if (!dbRef || !userIdRef) return;
-    const { currentMonth, budgets } = get();
-    try {
-      const currentDate = parseMonth(currentMonth);
-      const prevMonth = formatMonth(subMonths(currentDate, 1));
-      const prevSpending = getSpendingByCategoryAggregate(dbRef, userIdRef, prevMonth);
-      const existingCategoryIds = new Set(budgets.map((b) => b.categoryId));
-      const suggestions = deriveAutoSuggestBudgets(
-        prevSpending,
-        existingCategoryIds as ReadonlySet<CategoryId>
-      );
-      set({ autoSuggestions: suggestions as BudgetSuggestion[] });
-    } catch {
-      // Query failed — keep existing suggestions
-    }
-  },
-
   acceptSuggestions: async (budgetsByCategory) => {
     if (!dbRef || !userIdRef) return;
     const userId = userIdRef;
@@ -371,12 +290,21 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
   },
 
   acknowledgeAlert: (budgetId, threshold) => {
-    set((s) => ({
-      acknowledgedAlerts: new Set([...s.acknowledgedAlerts, `${budgetId}:${threshold}`]),
-      pendingAlerts: s.pendingAlerts.filter(
-        (a) => !(a.budgetId === budgetId && a.threshold === threshold)
-      ),
-    }));
+    set((state) => {
+      const nextState = budgetMonitoring.acknowledgeAlert({
+        budgetId,
+        threshold,
+        alertState: {
+          pendingAlerts: state.pendingAlerts,
+          acknowledgedAlerts: state.acknowledgedAlerts,
+        },
+      });
+
+      return {
+        acknowledgedAlerts: new Set(nextState.acknowledgedAlerts),
+        pendingAlerts: nextState.pendingAlerts,
+      };
+    });
   },
 
   clearPendingPermissionRequest: () => {
