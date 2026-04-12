@@ -1,4 +1,19 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh run:*)",
+      "Bash(bun run:*)",
+      "Bash(bunx biome:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)"
+    ]
+  },
   "hooks": {
     "PostToolUse": [
       {
@@ -23,6 +38,36 @@
       },
       {
         "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-security/hooks/post-tool-defender.ts",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-security/hooks/post-tool-defender.ts",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-security/hooks/post-tool-defender.ts",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
         "hooks": [
           {
             "type": "command",

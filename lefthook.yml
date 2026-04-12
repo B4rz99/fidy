@@ -33,13 +33,13 @@ commit-msg:
 pre-push:
   commands:
     root-biome:
-      run: bunx biome check .
+      run: bun run lint
       skip_output: false
     mobile-eslint:
-      run: bun run --cwd apps/mobile lint
+      run: bun run lint:mobile
       skip_output: false
     mobile-typecheck:
-      run: bun run --cwd apps/mobile typecheck
+      run: bun run typecheck
       skip_output: false
     tests:
       run: bun run test
