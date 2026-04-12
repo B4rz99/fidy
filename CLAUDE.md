@@ -98,3 +98,16 @@ New derivation/pure functions get direct unit tests with fixture data. File-sour
 - Navigation: Expo Router — screens in `app/`, modals as top-level routes
 - Data fetching: TanStack Query for server data, Zustand for local/derived state
 - Functional programming: pure functions in `lib/`, side effects in stores/hooks only
+
+## Vault
+
+I also maintain a private project vault at `./vault/`. Read `vault/CLAUDE.md` for schema.
+
+The vault contains:
+- Decisions auto-logged from AI sessions
+- Meeting notes (Google Docs)
+- User feedback (Notion)
+- Experiments and outcomes
+- Competitive analysis
+
+Before making significant code changes, check `vault/wiki/index.md` for relevant decisions.
