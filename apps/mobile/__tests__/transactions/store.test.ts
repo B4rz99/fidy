@@ -33,7 +33,9 @@ vi.mock("@/shared/db/enqueue-sync", () => ({
 }));
 
 // biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
-const mockDb = {} as any;
+const mockDb = {
+  transaction: vi.fn((fn: (tx: unknown) => unknown) => fn(mockDb)),
+} as any;
 const mockUserId = "user-1" as UserId;
 
 describe("useTransactionStore", () => {

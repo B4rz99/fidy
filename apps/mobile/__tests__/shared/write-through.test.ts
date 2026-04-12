@@ -64,7 +64,7 @@ vi.mock("@/features/calendar/lib/repository", () => ({
 
 const mockDb = {
   transaction: vi.fn((fn: (tx: AnyDb) => unknown) => fn(mockDb as AnyDb)),
-} as AnyDb;
+} as unknown as AnyDb;
 
 async function loadModule() {
   return import("@/shared/mutations");

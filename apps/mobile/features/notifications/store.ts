@@ -41,7 +41,7 @@ type NotificationActions = {
   clearAll: () => void;
 };
 
-export const useNotificationStore = create<NotificationState & NotificationActions>((set, get) => ({
+export const useNotificationStore = create<NotificationState & NotificationActions>((set, _get) => ({
   notifications: [],
   newCount: 0,
   isLoading: false,
