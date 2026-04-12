@@ -8,8 +8,8 @@
  * Run with: bun run post-tool-defender.ts
  */
 
-import { existsSync, readFileSync } from "fs";
-import { dirname, join } from "path";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { parse as parseYaml } from "yaml";
 
 // Types
@@ -27,10 +27,10 @@ interface Config {
 }
 
 interface HookInput {
-  tool_name: string;
-  tool_input: Record<string, unknown>;
-  tool_response?: unknown;
-  tool_result?: unknown;
+  toolName: string;
+  toolInput: Record<string, unknown>;
+  toolResponse?: unknown;
+  toolResult?: unknown;
 }
 
 // Detection tuple: [category, reason, severity]
@@ -142,13 +142,27 @@ function scanForInjections(text: string, config: Config): Detection[] {
         if (regex.test(text)) {
           detections.push([categoryName, reason, severity]);
         }
-      } catch {
-        continue;
-      }
+      } catch {}
     }
   }
 
   return detections;
+}
+
+function normalizeHookInput(input: Record<string, unknown>): HookInput | null {
+  const toolName = input.tool_name;
+  const toolInput = input.tool_input;
+
+  if (typeof toolName !== "string" || typeof toolInput !== "object" || toolInput === null) {
+    return null;
+  }
+
+  return {
+    toolName,
+    toolInput: toolInput as Record<string, unknown>,
+    toolResponse: input.tool_response,
+    toolResult: input.tool_result,
+  };
 }
 
 /**
@@ -252,19 +266,19 @@ async function main(): Promise<void> {
   }
   inputText += decoder.decode();
 
-  let input: HookInput;
+  let input: HookInput | null;
   try {
-    input = JSON.parse(inputText);
+    const parsed = JSON.parse(inputText) as Record<string, unknown>;
+    input = normalizeHookInput(parsed);
   } catch {
     process.exit(0);
   }
 
-  const {
-    tool_name: toolName,
-    tool_input: toolInput,
-    tool_response: toolResponse,
-    tool_result: toolResultFallback,
-  } = input;
+  if (!input) {
+    process.exit(0);
+  }
+
+  const { toolName, toolInput, toolResponse, toolResult: toolResultFallback } = input;
   const toolResult = toolResponse ?? toolResultFallback;
 
   const monitoredTools = new Set(["Read", "WebFetch", "Bash", "Grep", "Glob", "Task"]);

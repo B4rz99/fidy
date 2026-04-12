@@ -16,9 +16,10 @@
       "!**/.next",
       "!.claude",
       "!**/.ocx",
-      "!**/apps/mobile/.continue",
-      "!**/apps/mobile/.kiro",
-      "!**/apps/mobile/.windsurf"
+      "!**/.continue",
+      "!**/.kiro",
+      "!**/.windsurf",
+      "!vault"
     ]
   },
   "formatter": {

@@ -9,6 +9,7 @@
     "types": [],
     "paths": {
       "@/*": ["./*"],
+      "@fidy/assets": ["../../packages/assets/src/index.ts"],
       "@fidy/types": ["../../packages/types/src/index.ts"],
       "@fidy/schemas": ["../../packages/schemas/src/index.ts"],
       "@fidy/utils": ["../../packages/utils/src/index.ts"]

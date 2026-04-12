@@ -12,10 +12,16 @@
     "mobile:android": "bun run --cwd apps/mobile android",
     "mobile:web": "bun run --cwd apps/mobile web",
     "landing": "bun run --cwd apps/landing dev",
-    "test": "bun run --cwd apps/mobile test",
+    "build:packages": "bun run --cwd packages/assets build && bun run --cwd packages/types build && bun run --cwd packages/schemas build && bun run --cwd packages/utils build",
+    "lint:mobile": "bun run --cwd apps/mobile lint",
+    "typecheck:packages": "bun run --cwd packages/assets typecheck && bun run --cwd packages/types typecheck && bun run --cwd packages/schemas typecheck && bun run --cwd packages/utils typecheck",
+    "typecheck": "bun run build:packages && bun run typecheck:packages && bun run --cwd apps/mobile typecheck",
+    "test:mobile": "bun run --cwd apps/mobile test",
+    "test": "bun run test:mobile",
     "test:coverage": "bun run --cwd apps/mobile test:coverage",
     "lint": "bunx biome check .",
-    "format": "bunx biome format --write ."
+    "format": "bunx biome format --write .",
+    "verify": "bun run lint && bun run lint:mobile && bun run typecheck && bun run test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.4",

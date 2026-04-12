@@ -71,17 +71,20 @@ TODOS.md
 
 # Superpowers brainstorm artifacts
 .superpowers/
+vault/
 
 # Other AI agent skills (local-only, not used by Claude Code)
 .agents/
 skills-lock.json
+.continue/
+.kiro/
+.windsurf/
+.claude/settings.local.json
+apps/mobile/.claude/settings.local.json
 
 # Worktrees
 .worktrees/
 .claude/worktrees/
-
-# Project vault (private)
-vault/
 
 # macOS
 .DS_Store
