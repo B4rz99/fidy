@@ -10,8 +10,11 @@ import {
   trackGoalCreated,
   trackGoalMilestoneReached,
 } from "@/shared/lib";
+import {
+  createWriteThroughMutationModule,
+  type WriteThroughMutationModule,
+} from "@/shared/mutations";
 import type { UserId } from "@/shared/types/branded";
-import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/shared/mutations";
 
 // Import from goals feature
 import type {

@@ -2,13 +2,13 @@ import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db";
 import { generateNotificationId, toIsoDateTime } from "@/shared/lib";
-import type { CategoryId, IsoDateTime, UserId } from "@/shared/types/branded";
-import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/shared/mutations";
-import type { NotificationType, StoredNotification } from "./lib/types";
 import {
-  countNotificationsSince,
-  getNotifications,
-} from "./repository";
+  createWriteThroughMutationModule,
+  type WriteThroughMutationModule,
+} from "@/shared/mutations";
+import type { CategoryId, IsoDateTime, UserId } from "@/shared/types/branded";
+import type { NotificationType, StoredNotification } from "./lib/types";
+import { countNotificationsSince, getNotifications } from "./repository";
 
 const lastVisitedKey = (userId: UserId) => `notification_last_visited_${userId}`;
 

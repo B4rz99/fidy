@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getMutationPolicy } from "@/shared/mutations";
 import type { AnyDb } from "@/shared/db";
+import { getMutationPolicy } from "@/shared/mutations";
 import type {
   BillId,
   BillPaymentId,

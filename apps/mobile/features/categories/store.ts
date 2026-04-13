@@ -1,8 +1,11 @@
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db";
 import { generateUserCategoryId, toIsoDateTime } from "@/shared/lib";
+import {
+  createWriteThroughMutationModule,
+  type WriteThroughMutationModule,
+} from "@/shared/mutations";
 import type { UserId } from "@/shared/types/branded";
-import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/shared/mutations";
 import { MAX_NAME_LENGTH, MIN_NAME_LENGTH } from "./lib/constants";
 import { ICON_MAP } from "./lib/icon-map";
 import {

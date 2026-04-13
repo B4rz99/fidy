@@ -8,8 +8,11 @@ import {
   trackTransactionDeleted,
   trackTransactionEdited,
 } from "@/shared/lib";
+import {
+  createWriteThroughMutationModule,
+  type WriteThroughMutationModule,
+} from "@/shared/mutations";
 import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
-import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/shared/mutations";
 import { buildTransaction, toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
 import {
   getDailySpendingAggregate,

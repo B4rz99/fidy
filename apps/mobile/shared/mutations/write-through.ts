@@ -1,15 +1,10 @@
-import type { AnyDb, SyncOperation, SyncTableName } from "@/shared/db";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
-import { generateBudgetId, generateSyncQueueId } from "@/shared/lib";
-import type {
-  BillId,
-  BudgetId,
-  IsoDate,
-  IsoDateTime,
-  Month,
-  TransactionId,
-  UserId,
-} from "@/shared/types/branded";
+import {
+  type BudgetRow,
+  copyBudgetsToMonth,
+  insertBudget,
+  softDeleteBudget,
+  updateBudgetAmount,
+} from "@/features/budget/lib/repository";
 import {
   type BillPaymentRow,
   type BillRow,
@@ -19,13 +14,7 @@ import {
   insertBillPayment,
   updateBill,
 } from "@/features/calendar/lib/repository";
-import {
-  type BudgetRow,
-  copyBudgetsToMonth,
-  insertBudget,
-  softDeleteBudget,
-  updateBudgetAmount,
-} from "@/features/budget/lib/repository";
+import { insertUserCategory, type UserCategoryRow } from "@/features/categories/lib/repository";
 import {
   type GoalContributionRow,
   type GoalRow,
@@ -36,23 +25,36 @@ import {
   updateGoal,
 } from "@/features/goals/lib/repository";
 import {
-  type NotificationRow,
   getAllNotificationIds,
   insertNotification,
+  type NotificationRow,
   softDeleteAllNotifications,
 } from "@/features/notifications/repository";
-import { type UserCategoryRow, insertUserCategory } from "@/features/categories/lib/repository";
 import {
-  type TransactionRow,
   insertTransaction,
   softDeleteTransaction,
+  type TransactionRow,
   upsertTransaction,
 } from "@/features/transactions/lib/repository";
-import type { CopAmount } from "@/shared/types/branded";
+import type { AnyDb, SyncOperation, SyncTableName } from "@/shared/db";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
+import { generateBudgetId, generateSyncQueueId } from "@/shared/lib";
+import type {
+  BillId,
+  BudgetId,
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  Month,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 type MutationEffect = () => void | Promise<void>;
 
-export type MutationOutcome = { success: true; didMutate: boolean } | { success: false; error: string };
+export type MutationOutcome =
+  | { success: true; didMutate: boolean }
+  | { success: false; error: string };
 
 type TransactionSaveCommand = {
   kind: "transaction.save";
@@ -77,7 +79,12 @@ type GoalSaveCommand = {
 type GoalUpdateCommand = {
   kind: "goal.update";
   goalId: string;
-  data: Partial<Pick<GoalRow, "name" | "targetAmount" | "targetDate" | "interestRatePercent" | "iconName" | "colorHex">>;
+  data: Partial<
+    Pick<
+      GoalRow,
+      "name" | "targetAmount" | "targetDate" | "interestRatePercent" | "iconName" | "colorHex"
+    >
+  >;
   now: IsoDateTime;
   afterCommit?: readonly MutationEffect[];
 };
@@ -160,7 +167,9 @@ type CalendarBillSaveCommand = {
 type CalendarBillUpdateCommand = {
   kind: "calendar.bill.update";
   billId: BillId;
-  fields: Partial<Pick<BillRow, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">>;
+  fields: Partial<
+    Pick<BillRow, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
+  >;
   now: IsoDateTime;
   afterCommit?: readonly MutationEffect[];
 };
@@ -262,13 +271,10 @@ function toSyncEntry(
 }
 
 async function runEffects(effects: readonly MutationEffect[]) {
-  await effects.reduce(
-    async (previous, effect) => {
-      await previous;
-      await effect();
-    },
-    Promise.resolve()
-  );
+  await effects.reduce(async (previous, effect) => {
+    await previous;
+    await effect();
+  }, Promise.resolve());
 }
 
 function applyTransactionSave(db: AnyDb, command: TransactionSaveCommand): CommandEffectResult {
@@ -280,7 +286,12 @@ function applyTransactionSave(db: AnyDb, command: TransactionSaveCommand): Comma
 
   enqueueSync(
     db,
-    toSyncEntry("transactions", command.row.id, command.mode === "insert" ? "insert" : "update", command.row.updatedAt)
+    toSyncEntry(
+      "transactions",
+      command.row.id,
+      command.mode === "insert" ? "insert" : "update",
+      command.row.updatedAt
+    )
   );
 
   return { didMutate: true, effects: command.afterCommit ?? [] };
@@ -320,12 +331,7 @@ function applyGoalContributionSave(
   insertContribution(db, command.row);
   enqueueSync(
     db,
-    toSyncEntry(
-      "goalContributions",
-      command.row.id,
-      "insert",
-      command.row.updatedAt as IsoDateTime
-    )
+    toSyncEntry("goalContributions", command.row.id, "insert", command.row.updatedAt as IsoDateTime)
   );
   return { didMutate: true, effects: command.afterCommit ?? [] };
 }
@@ -433,7 +439,12 @@ function applyCalendarBillMarkPaid(
   insertTransaction(db, command.transactionRow);
   enqueueSync(
     db,
-    toSyncEntry("transactions", command.transactionRow.id, "insert", command.transactionRow.updatedAt)
+    toSyncEntry(
+      "transactions",
+      command.transactionRow.id,
+      "insert",
+      command.transactionRow.updatedAt
+    )
   );
   insertBillPayment(db, command.paymentRow);
   return { didMutate: true, effects: command.afterCommit ?? [] };
@@ -522,10 +533,7 @@ export function createWriteThroughMutationModule(db: AnyDb): WriteThroughMutatio
             (acc, command) => {
               const next = applyCommand(tx as AnyDb, command);
               return {
-                outcomes: [
-                  ...acc.outcomes,
-                  { success: true as const, didMutate: next.didMutate },
-                ],
+                outcomes: [...acc.outcomes, { success: true as const, didMutate: next.didMutate }],
                 effects: [...acc.effects, ...next.effects],
               };
             },
