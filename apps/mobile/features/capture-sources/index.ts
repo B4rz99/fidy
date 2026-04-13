@@ -19,4 +19,10 @@ export {
   resolveSource,
   smsDetectionDataSchema,
 } from "./schema";
+export {
+  type CaptureIngestionCommand,
+  type CaptureIngestionOutcome,
+  type CaptureIngestionPort,
+  createCaptureIngestionPort,
+} from "./services/capture-ingestion";
 export { useCaptureSourcesStore } from "./store";

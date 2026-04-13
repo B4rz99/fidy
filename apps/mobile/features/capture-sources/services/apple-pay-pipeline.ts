@@ -1,9 +1,17 @@
 import {
+  captureFingerprint,
+  findDuplicateTransaction,
+  isCaptureProcessed,
+} from "@/features/capture-sources/lib/dedup";
+import { insertProcessedCapture } from "@/features/capture-sources/lib/repository";
+import type { ApplePayIntentData } from "@/features/capture-sources/schema";
+import {
   insertMerchantRule,
   lookupMerchantRule,
 } from "@/features/email-capture/lib/merchant-rules";
 import { classifyMerchantApi } from "@/features/email-capture/services/parse-email-api";
-import { insertTransaction, isValidCategoryId } from "@/features/transactions";
+import { isValidCategoryId } from "@/features/transactions/lib/categories";
+import { insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
@@ -17,9 +25,6 @@ import {
   trackTransactionCreated,
 } from "@/shared/lib";
 import type { CategoryId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
-import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
-import { insertProcessedCapture } from "../lib/repository";
-import type { ApplePayIntentData } from "../schema";
 
 const inFlightFingerprints = new Set<string>();
 

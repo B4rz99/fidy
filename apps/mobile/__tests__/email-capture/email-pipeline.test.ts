@@ -2,8 +2,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { RawEmail } from "@/features/email-capture/schema";
 
-import { processEmails, processRetries } from "@/features/email-capture/services/email-pipeline";
-
 const mockGetProcessedExternalIds = vi.fn().mockResolvedValue(new Set<string>());
 const mockInsertProcessedEmail = vi.fn();
 const mockInsertTransaction = vi.fn();
@@ -66,6 +64,9 @@ vi.mock("@/shared/lib/generate-id", () => ({
 const mockDb = {} as any;
 const USER_ID = "user-1";
 
+let processEmails: typeof import("@/features/email-capture/services/email-pipeline").processEmails;
+let processRetries: typeof import("@/features/email-capture/services/email-pipeline").processRetries;
+
 function makeRawEmail(overrides: Partial<RawEmail> = {}): RawEmail {
   return {
     externalId: "ext-1",
@@ -81,7 +82,10 @@ function makeRawEmail(overrides: Partial<RawEmail> = {}): RawEmail {
 describe("email processing pipeline", () => {
   let idCounter: number;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    ({ processEmails, processRetries } = await import(
+      "@/features/email-capture/services/email-pipeline"
+    ));
     vi.clearAllMocks();
     idCounter = 0;
     mockGenerateId.mockImplementation((prefix: string) => {

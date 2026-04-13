@@ -11,8 +11,11 @@ const mockRemovePendingTransactions = vi.fn();
 const mockIsAvailable = vi.fn();
 const mockGenerateProcessedCaptureId = vi.fn();
 
-vi.mock("@/features/transactions", () => ({
+vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
+}));
+
+vi.mock("@/features/transactions/lib/categories", () => ({
   isValidCategoryId: (id: string) =>
     [
       "food",
@@ -28,7 +31,7 @@ vi.mock("@/features/transactions", () => ({
     ].includes(id),
 }));
 
-vi.mock("@/shared/db", () => ({
+vi.mock("@/shared/db/enqueue-sync", () => ({
   enqueueSync: (...args: any[]) => mockEnqueueSync(...args),
 }));
 

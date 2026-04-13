@@ -1,4 +1,11 @@
-import { insertTransaction, isValidCategoryId } from "@/features/transactions";
+import {
+  captureFingerprint,
+  findDuplicateTransaction,
+  isCaptureProcessed,
+} from "@/features/capture-sources/lib/dedup";
+import { insertProcessedCapture } from "@/features/capture-sources/lib/repository";
+import { isValidCategoryId } from "@/features/transactions/lib/categories";
+import { insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
@@ -11,8 +18,6 @@ import {
   trackTransactionCreated,
 } from "@/shared/lib";
 import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
-import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
-import { insertProcessedCapture } from "../lib/repository";
 
 // Guard against concurrent invocations (mount + immediate AppState "active").
 const inFlightFingerprints = new Set<string>();
