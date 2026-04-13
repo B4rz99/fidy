@@ -1,6 +1,5 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { CATEGORIES } from "@/features/transactions";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import type { LucideIcon } from "@/shared/components/icons";
 import { Plus } from "@/shared/components/icons";
@@ -66,7 +65,8 @@ export function CategoriesScreen() {
   const accentGreen = useThemeColor("accentGreen");
   const cardBg = useThemeColor("card");
 
-  const userCategories = useCategoriesStore((s) => s.userCategories);
+  const builtInCategories = useCategoriesStore((s) => s.builtIn);
+  const customCategories = useCategoriesStore((s) => s.custom);
 
   const handleAddPress = useCallback(() => {
     router.push("/create-category");
@@ -81,20 +81,20 @@ export function CategoriesScreen() {
       >
         {/* Built-in categories */}
         <SettingsSection label={t("categories.builtInSection")}>
-          {CATEGORIES.map((category, index) => (
+          {builtInCategories.map((category, index) => (
             <CategoryRow
               key={category.id}
               icon={category.icon}
               label={getCategoryLabel(category, locale)}
               color={resolveIconColor(category.color, isDark)}
-              isLast={index === CATEGORIES.length - 1}
+              isLast={index === builtInCategories.length - 1}
             />
           ))}
         </SettingsSection>
 
         {/* Custom categories */}
         <SettingsSection label={t("categories.customSection")}>
-          {userCategories.length === 0 ? (
+          {customCategories.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Text
                 className="font-poppins-medium text-sm text-tertiary dark:text-tertiary-dark"
@@ -104,13 +104,13 @@ export function CategoriesScreen() {
               </Text>
             </View>
           ) : (
-            userCategories.map((category, index) => (
+            customCategories.map((category, index) => (
               <CategoryRow
                 key={category.id}
                 icon={category.icon}
                 label={getCategoryLabel(category, locale)}
                 color={category.color}
-                isLast={index === userCategories.length - 1}
+                isLast={index === customCategories.length - 1}
               />
             ))
           )}

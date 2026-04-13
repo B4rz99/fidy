@@ -125,7 +125,7 @@ export function CreateCategorySheet() {
   const handleCreate = useCallback(() => {
     if (!selectedIcon || !selectedColor) return;
     void guardedCreate(async () => {
-      const success = await useCategoriesStore.getState().createUserCategory({
+      const success = await useCategoriesStore.getState().createCustom({
         name: name.trim(),
         iconName: selectedIcon,
         colorHex: selectedColor,

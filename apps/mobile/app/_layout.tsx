@@ -103,7 +103,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
         .catch(handleRecoverableError("Failed to load analytics"));
       useCategoriesStore
         .getState()
-        .loadUserCategories()
+        .refresh()
         .catch(handleRecoverableError("Failed to load user categories"));
       useChatStore
         .getState()

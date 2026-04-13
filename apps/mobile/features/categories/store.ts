@@ -1,12 +1,17 @@
 import { create } from "zustand";
-import { CATEGORIES, type Category } from "@/features/transactions";
-import { Ellipsis } from "@/shared/components/icons";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import { generateSyncQueueId, generateUserCategoryId, toIsoDateTime } from "@/shared/lib";
-import type { CategoryId, UserId } from "@/shared/types/branded";
+import type { UserId } from "@/shared/types/branded";
 import { MAX_NAME_LENGTH, MIN_NAME_LENGTH } from "./lib/constants";
 import { ICON_MAP } from "./lib/icon-map";
+import {
+  type CategoryRegistryRow,
+  type CategoryRegistryScope,
+  type CategoryRegistrySnapshot,
+  createCategoryRegistrySnapshot,
+  isCategoryIdValid,
+} from "./lib/registry";
 import { getUserCategoriesForUser, insertUserCategory } from "./lib/repository";
 
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
@@ -15,61 +20,49 @@ let userIdRef: UserId | null = null;
 
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
 
-type CategoriesState = {
-  userCategories: Category[];
-  allCategories: readonly Category[];
-  allCategoryIds: ReadonlySet<string>;
-};
+type CategoriesState = CategoryRegistrySnapshot;
 
 type CategoriesActions = {
   initStore(db: AnyDb, userId: UserId): void;
-  loadUserCategories(): Promise<void>;
-  createUserCategory(input: { name: string; iconName: string; colorHex: string }): Promise<boolean>;
-  isValidCategoryId(id: string): boolean;
+  refresh(): Promise<void>;
+  createCustom(input: { name: string; iconName: string; colorHex: string }): Promise<boolean>;
+  isValid(id: string, scope?: CategoryRegistryScope): boolean;
 };
 
-const toCategory = (row: {
+const toCustomCategoryRow = (row: {
   id: string;
   name: string;
   iconName: string;
   colorHex: string;
-}): Category => ({
-  // UserCategoryId and CategoryId are both Brand<string, _>; cast via string is safe since allCategoryIds operates on plain strings
-  id: row.id as CategoryId,
-  label: { en: row.name, es: row.name },
-  icon: ICON_MAP[row.iconName] ?? Ellipsis,
-  color: row.colorHex,
+}): CategoryRegistryRow => ({
+  id: row.id,
+  name: row.name,
+  iconName: row.iconName,
+  colorHex: row.colorHex,
 });
 
 export const useCategoriesStore = create<CategoriesState & CategoriesActions>((set, get) => ({
-  userCategories: [],
-  allCategories: CATEGORIES,
-  allCategoryIds: new Set(CATEGORIES.map((c) => c.id)),
+  ...createCategoryRegistrySnapshot([]),
 
   initStore: (db, userId) => {
     dbRef = db;
     userIdRef = userId;
   },
 
-  loadUserCategories: async () => {
+  refresh: async () => {
     const db = dbRef;
-    if (!db || !userIdRef) return;
+    const userId = userIdRef;
+    if (!db || !userId) return;
 
     try {
-      const rows = getUserCategoriesForUser(db, userIdRef);
-      const converted = rows.map(toCategory);
-      const all = [...CATEGORIES, ...converted];
-      set({
-        userCategories: converted,
-        allCategories: all,
-        allCategoryIds: new Set(all.map((c) => c.id)),
-      });
+      const rows = getUserCategoriesForUser(db, userId).map(toCustomCategoryRow);
+      set(createCategoryRegistrySnapshot(rows));
     } catch {
       // keep existing state
     }
   },
 
-  createUserCategory: async (input) => {
+  createCustom: async (input) => {
     const db = dbRef;
     const userId = userIdRef;
     if (!db || !userId) return false;
@@ -107,9 +100,9 @@ export const useCategoriesStore = create<CategoriesState & CategoriesActions>((s
       return false;
     }
 
-    await get().loadUserCategories();
+    await get().refresh();
     return true;
   },
 
-  isValidCategoryId: (id) => get().allCategoryIds.has(id),
+  isValid: (id, scope = "built_in") => isCategoryIdValid(get(), id, scope),
 }));
