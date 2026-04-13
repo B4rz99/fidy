@@ -1,5 +1,5 @@
 {
-  "name": "ai-security-hooks",
+  "name": "ai-hooks",
   "version": "1.0.0",
   "dependencies": {
     "yaml": "^2.3.4"

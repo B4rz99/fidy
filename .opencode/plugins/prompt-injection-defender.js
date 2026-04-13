@@ -8,7 +8,7 @@ module.exports = {
     const toolResult = output?.output || output?.title || "";
     if (!toolResult || toolResult.length < 10) return;
 
-    const lib = require("../.ai-security/hooks/post-tool-defender-lib.js");
+    const lib = require("../../.ai-hooks/hooks/post-tool-defender-lib.js");
 
     const config = lib.loadConfig();
     const text = typeof toolResult === "string" ? toolResult : JSON.stringify(toolResult);

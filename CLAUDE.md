@@ -99,15 +99,19 @@ New derivation/pure functions get direct unit tests with fixture data. File-sour
 - Data fetching: TanStack Query for server data, Zustand for local/derived state
 - Functional programming: pure functions in `lib/`, side effects in stores/hooks only
 
-## Vault
+## Vaults
 
-I also maintain a private project vault at `./vault/`. Read `vault/CLAUDE.md` for schema.
+This project uses two external vaults configured through local environment variables:
+- `OBARBOZA_VAULT_PATH` — global, cross-project context and working preferences
+- `FIDY_VAULT_PATH` — Fidy project memory and session updates
 
-The vault contains:
-- Decisions auto-logged from AI sessions
-- Meeting notes (Google Docs)
-- User feedback (Notion)
-- Experiments and outcomes
-- Competitive analysis
+Before making significant code changes, if configured, read:
+- `{OBARBOZA_VAULT_PATH}/AGENTS.md`
+- `{FIDY_VAULT_PATH}/AGENTS.md`
+- `{FIDY_VAULT_PATH}/wiki/index.md`
 
-Before making significant code changes, check `vault/wiki/index.md` for relevant decisions.
+When the user says `update vault`:
+- append a concise entry to `{FIDY_VAULT_PATH}/wiki/log.md`
+- update `{FIDY_VAULT_PATH}/wiki/index.md` if new notes were added
+- update notes under `decisions/`, `feedback/`, `meetings/`, or `experiments/` only when the session produced durable information
+- write to `OBARBOZA_VAULT_PATH` only for lessons that clearly generalize beyond Fidy

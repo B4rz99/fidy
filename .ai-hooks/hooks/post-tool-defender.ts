@@ -115,8 +115,8 @@ function extractTextContent(toolName: string, toolResult: unknown): string {
 /**
  * Scan text for prompt injection patterns.
  */
-function scanForInjections(text: string, config: Config): Detection[] {
-  if (!text || text.length < 10) {
+export function scanForInjections(text: string, config: Config): Detection[] {
+  if (!text) {
     return [];
   }
 

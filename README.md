@@ -29,5 +29,5 @@ Primary commands:
 ## Agent Guidance
 
 - Architecture and code-style constraints live in [CLAUDE.md](./CLAUDE.md).
-- Codex-specific security hooks live in `.codex/settings.json` and `.ai-security/`.
+- Codex-specific assistant hooks live in `.codex/settings.json` and `.ai-hooks/`.
 - Local knowledge stores and editor-specific agent folders are intentionally git-ignored.
