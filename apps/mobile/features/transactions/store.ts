@@ -1,25 +1,24 @@
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync } from "@/shared/db";
 import {
-  generateSyncQueueId,
   generateTransactionId,
   toIsoDate,
-  toIsoDateTime,
   toMonth,
   trackTransactionDeleted,
   trackTransactionEdited,
 } from "@/shared/lib";
+import {
+  createWriteThroughMutationModule,
+  type WriteThroughMutationModule,
+} from "@/shared/mutations";
 import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
-import { buildTransaction, toStoredTransaction, toTransactionRow } from "./lib/build-transaction";
+import { toStoredTransaction } from "./lib/build-transaction";
+import { createTransactionMutationService } from "./lib/mutation-service";
 import {
   getDailySpendingAggregate,
   getSpendingByCategoryAggregate,
   getTransactionById,
   getTransactionsPaginated,
-  insertTransaction,
-  softDeleteTransaction,
-  upsertTransaction,
 } from "./lib/repository";
 import type { StoredTransaction, TransactionType } from "./schema";
 
@@ -30,6 +29,7 @@ const PAGE_SIZE = 30;
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
 let userIdRef: UserId | null = null;
+let mutations: WriteThroughMutationModule | null = null;
 
 type CategorySpendingItem = {
   readonly categoryId: CategoryId;
@@ -116,276 +116,180 @@ const INITIAL_FORM: Pick<
   description: "",
 };
 
-export const useTransactionStore = create<TransactionState & TransactionActions>((set, get) => ({
-  ...INITIAL_FORM,
-  date: new Date(),
-  pages: [],
-  offset: 0,
-  hasMore: true,
-  balance: 0,
-  categorySpending: [],
-  dailySpending: [],
-  editingId: null,
+function toTransactionFormInput(
+  state: Pick<TransactionState, "type" | "digits" | "categoryId" | "description" | "date">
+) {
+  return {
+    type: state.type,
+    digits: state.digits,
+    categoryId: state.categoryId,
+    description: state.description,
+    date: state.date,
+  };
+}
 
-  initStore: (db, userId) => {
-    dbRef = db;
-    userIdRef = userId;
-  },
+export const useTransactionStore = create<TransactionState & TransactionActions>((set, get) => {
+  const mutationService = createTransactionMutationService({
+    getCommit: () => mutations?.commit ?? null,
+    getUserId: () => userIdRef,
+    refresh: () => get().refresh(),
+    resetForm: () => get().resetForm(),
+    trackDeleted: trackTransactionDeleted,
+    trackEdited: trackTransactionEdited,
+    createId: generateTransactionId,
+  });
 
-  setStep: (step) => set({ step }),
-  setType: (type) => set({ type }),
-  setDigits: (digits) => set({ digits }),
-  setCategoryId: (categoryId) => set({ categoryId }),
-  setDescription: (description) => set({ description }),
-  setDate: (date) => set({ date }),
+  return {
+    ...INITIAL_FORM,
+    date: new Date(),
+    pages: [],
+    offset: 0,
+    hasMore: true,
+    balance: 0,
+    categorySpending: [],
+    dailySpending: [],
+    editingId: null,
 
-  loadInitialPage: async () => {
-    if (!dbRef || !userIdRef) return;
-    try {
-      const rows = getTransactionsPaginated(dbRef, userIdRef, PAGE_SIZE, 0);
-      const hasMore = rows.length > PAGE_SIZE;
-      const pageData = hasMore ? rows.slice(0, PAGE_SIZE) : rows;
-      set({
-        pages: pageData.map(toStoredTransaction),
-        offset: pageData.length,
-        hasMore,
-      });
-      get().loadAggregates();
-    } catch {
-      // DB read failed — keep existing state
-    }
-  },
+    initStore: (db, userId) => {
+      dbRef = db;
+      userIdRef = userId;
+      mutations = db ? createWriteThroughMutationModule(db) : null;
+    },
 
-  loadNextPage: async () => {
-    if (!dbRef || !userIdRef) return;
-    const { hasMore, offset } = get();
-    if (!hasMore) return;
+    setStep: (step) => set({ step }),
+    setType: (type) => set({ type }),
+    setDigits: (digits) => set({ digits }),
+    setCategoryId: (categoryId) => set({ categoryId }),
+    setDescription: (description) => set({ description }),
+    setDate: (date) => set({ date }),
 
-    try {
-      const rows = getTransactionsPaginated(dbRef, userIdRef, PAGE_SIZE, offset);
-      const moreAvailable = rows.length > PAGE_SIZE;
-      const pageData = moreAvailable ? rows.slice(0, PAGE_SIZE) : rows;
-      set((s) => ({
-        pages: [...s.pages, ...pageData.map(toStoredTransaction)],
-        offset: s.offset + pageData.length,
-        hasMore: moreAvailable,
-      }));
-    } catch {
-      // DB read failed — keep existing state
-    }
-  },
-
-  loadAggregates: () => {
-    if (!dbRef || !userIdRef) return;
-    try {
-      const now = new Date();
-      const currentMonth = toMonth(now);
-      const thirtyDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
-      const startDate = toIsoDate(thirtyDaysAgo);
-      const endDate = toIsoDate(now);
-
-      const categorySpending = getSpendingByCategoryAggregate(dbRef, userIdRef, currentMonth);
-      const balance = categorySpending.reduce((sum, c) => sum + c.total, 0) as CopAmount;
-      const dailySpending = getDailySpendingAggregate(dbRef, userIdRef, startDate, endDate);
-
-      set({ balance, categorySpending, dailySpending });
-    } catch {
-      // Aggregate query failed — keep existing state
-    }
-  },
-
-  refresh: async () => {
-    if (!dbRef || !userIdRef) return;
-    try {
-      const currentOffset = get().offset;
-      const reloadSize = Math.max(currentOffset, PAGE_SIZE);
-      const rows = getTransactionsPaginated(dbRef, userIdRef, reloadSize, 0);
-      const hasMore = rows.length > reloadSize;
-      const pageData = hasMore ? rows.slice(0, reloadSize) : rows;
-
-      // Skip pages update if data hasn't changed — avoids FlatList re-layout
-      const currentPages = get().pages;
-      const currentKey = currentPages.map((p) => `${p.id}:${p.updatedAt.getTime()}`).join(",");
-      const newKey = pageData.map((r) => `${r.id}:${new Date(r.updatedAt).getTime()}`).join(",");
-      const sameData = currentKey === newKey;
-
-      if (!sameData) {
+    loadInitialPage: async () => {
+      if (!dbRef || !userIdRef) return;
+      try {
+        const rows = getTransactionsPaginated(dbRef, userIdRef, PAGE_SIZE, 0);
+        const hasMore = rows.length > PAGE_SIZE;
+        const pageData = hasMore ? rows.slice(0, PAGE_SIZE) : rows;
         set({
           pages: pageData.map(toStoredTransaction),
           offset: pageData.length,
           hasMore,
         });
+        get().loadAggregates();
+      } catch {
+        // DB read failed — keep existing state
       }
-      get().loadAggregates();
-    } catch {
-      // Refresh failed — keep existing state
-    }
-  },
+    },
 
-  saveTransaction: async () => {
-    if (!dbRef || !userIdRef) {
-      return { success: false as const, error: "Store not initialized" };
-    }
+    loadNextPage: async () => {
+      if (!dbRef || !userIdRef) return;
+      const { hasMore, offset } = get();
+      if (!hasMore) return;
 
-    const { type, digits, categoryId, description, date } = get();
-    const id = generateTransactionId();
-    const now = new Date();
+      try {
+        const rows = getTransactionsPaginated(dbRef, userIdRef, PAGE_SIZE, offset);
+        const moreAvailable = rows.length > PAGE_SIZE;
+        const pageData = moreAvailable ? rows.slice(0, PAGE_SIZE) : rows;
+        set((s) => ({
+          pages: [...s.pages, ...pageData.map(toStoredTransaction)],
+          offset: s.offset + pageData.length,
+          hasMore: moreAvailable,
+        }));
+      } catch {
+        // DB read failed — keep existing state
+      }
+    },
 
-    const result = buildTransaction(
-      { type, digits, categoryId, description, date },
-      userIdRef,
-      id,
-      now
-    );
-    if (!result.success) {
-      return { success: false as const, error: result.error };
-    }
+    loadAggregates: () => {
+      if (!dbRef || !userIdRef) return;
+      try {
+        const now = new Date();
+        const currentMonth = toMonth(now);
+        const thirtyDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+        const startDate = toIsoDate(thirtyDaysAgo);
+        const endDate = toIsoDate(now);
 
-    const { transaction } = result;
+        const categorySpending = getSpendingByCategoryAggregate(dbRef, userIdRef, currentMonth);
+        const balance = categorySpending.reduce((sum, c) => sum + c.total, 0) as CopAmount;
+        const dailySpending = getDailySpendingAggregate(dbRef, userIdRef, startDate, endDate);
 
-    try {
-      await insertTransaction(dbRef, toTransactionRow(transaction));
+        set({ balance, categorySpending, dailySpending });
+      } catch {
+        // Aggregate query failed — keep existing state
+      }
+    },
 
-      await enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "transactions",
-        rowId: transaction.id,
-        operation: "insert",
-        createdAt: toIsoDateTime(now),
+    refresh: async () => {
+      if (!dbRef || !userIdRef) return;
+      try {
+        const currentOffset = get().offset;
+        const reloadSize = Math.max(currentOffset, PAGE_SIZE);
+        const rows = getTransactionsPaginated(dbRef, userIdRef, reloadSize, 0);
+        const hasMore = rows.length > reloadSize;
+        const pageData = hasMore ? rows.slice(0, reloadSize) : rows;
+
+        // Skip pages update if data hasn't changed — avoids FlatList re-layout
+        const currentPages = get().pages;
+        const currentKey = currentPages.map((p) => `${p.id}:${p.updatedAt.getTime()}`).join(",");
+        const newKey = pageData.map((r) => `${r.id}:${new Date(r.updatedAt).getTime()}`).join(",");
+        const sameData = currentKey === newKey;
+
+        if (!sameData) {
+          set({
+            pages: pageData.map(toStoredTransaction),
+            offset: pageData.length,
+            hasMore,
+          });
+        }
+        get().loadAggregates();
+      } catch {
+        // Refresh failed — keep existing state
+      }
+    },
+
+    saveTransaction: async () => mutationService.save(toTransactionFormInput(get())),
+
+    removeTransaction: async (id) => {
+      await mutationService.remove(id);
+    },
+
+    editTransaction: (id) => {
+      if (!dbRef) return;
+      const row = getTransactionById(dbRef, id);
+      if (!row) return;
+      const tx = toStoredTransaction(row);
+      set({
+        editingId: id,
+        type: tx.type,
+        digits: String(tx.amount),
+        categoryId: tx.categoryId,
+        description: tx.description,
+        date: tx.date,
       });
-    } catch {
-      return { success: false as const, error: "Failed to save transaction" };
-    }
+    },
 
-    await get().refresh();
+    updateTransaction: async (id) => mutationService.update(id, toTransactionFormInput(get())),
 
-    return { success: true as const, transaction };
-  },
+    updateTransactionDirect: async (id, fields) => mutationService.updateDirect(id, fields),
 
-  removeTransaction: async (id) => {
-    if (dbRef) {
-      const now = toIsoDateTime(new Date());
-      await softDeleteTransaction(dbRef, id, now);
-      await enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "transactions",
-        rowId: id,
-        operation: "delete",
-        createdAt: now,
-      });
-      trackTransactionDeleted();
-    }
-    await get().refresh();
-  },
+    deleteTransaction: async (id) => {
+      await get().removeTransaction(id);
+    },
 
-  editTransaction: (id) => {
-    if (!dbRef) return;
-    const row = getTransactionById(dbRef, id);
-    if (!row) return;
-    const tx = toStoredTransaction(row);
-    set({
-      editingId: id,
-      type: tx.type,
-      digits: String(tx.amount),
-      categoryId: tx.categoryId,
-      description: tx.description,
-      date: tx.date,
-    });
-  },
+    addToCache: (tx) => set((s) => ({ pages: [tx, ...s.pages], offset: s.offset + 1 })),
 
-  updateTransaction: async (id) => {
-    if (!dbRef || !userIdRef) {
-      return { success: false as const, error: "Store not initialized" };
-    }
+    removeFromCache: (id) =>
+      set((s) => {
+        const filtered = s.pages.filter((t) => t.id !== id);
+        const removed = filtered.length < s.pages.length;
+        return { pages: filtered, offset: removed ? Math.max(0, s.offset - 1) : s.offset };
+      }),
 
-    const { type, digits, categoryId, description, date } = get();
-    const now = new Date();
+    resetForm: () => set({ ...INITIAL_FORM, date: new Date(), editingId: null }),
 
-    const result = buildTransaction(
-      { type, digits, categoryId, description, date },
-      userIdRef,
-      id,
-      now
-    );
-    if (!result.success) {
-      return { success: false as const, error: result.error };
-    }
-
-    const { transaction } = result;
-
-    try {
-      upsertTransaction(dbRef, toTransactionRow(transaction));
-
-      await enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "transactions",
-        rowId: id,
-        operation: "update",
-        createdAt: toIsoDateTime(now),
-      });
-    } catch {
-      return { success: false as const, error: "Failed to update transaction" };
-    }
-
-    trackTransactionEdited({ category: String(transaction.categoryId) });
-    get().resetForm();
-    await get().refresh();
-
-    return { success: true as const, transaction };
-  },
-
-  updateTransactionDirect: async (id, fields) => {
-    if (!dbRef || !userIdRef) {
-      return { success: false as const, error: "Store not initialized" };
-    }
-
-    const now = new Date();
-
-    const result = buildTransaction(fields, userIdRef, id, now);
-    if (!result.success) {
-      return { success: false as const, error: result.error };
-    }
-
-    const { transaction } = result;
-
-    try {
-      upsertTransaction(dbRef, toTransactionRow(transaction));
-
-      await enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "transactions",
-        rowId: id,
-        operation: "update",
-        createdAt: toIsoDateTime(now),
-      });
-    } catch {
-      return { success: false as const, error: "Failed to update transaction" };
-    }
-
-    trackTransactionEdited({ category: String(transaction.categoryId) });
-    await get().refresh();
-
-    return { success: true as const, transaction };
-  },
-
-  deleteTransaction: async (id) => {
-    await get().removeTransaction(id);
-  },
-
-  addToCache: (tx) => set((s) => ({ pages: [tx, ...s.pages], offset: s.offset + 1 })),
-
-  removeFromCache: (id) =>
-    set((s) => {
-      const filtered = s.pages.filter((t) => t.id !== id);
-      const removed = filtered.length < s.pages.length;
-      return { pages: filtered, offset: removed ? Math.max(0, s.offset - 1) : s.offset };
-    }),
-
-  resetForm: () => set({ ...INITIAL_FORM, date: new Date(), editingId: null }),
-
-  getTransactionById: (id) => {
-    if (!dbRef) return null;
-    const row = getTransactionById(dbRef, id);
-    return row ? toStoredTransaction(row) : null;
-  },
-}));
+    getTransactionById: (id) => {
+      if (!dbRef) return null;
+      const row = getTransactionById(dbRef, id);
+      return row ? toStoredTransaction(row) : null;
+    },
+  };
+});

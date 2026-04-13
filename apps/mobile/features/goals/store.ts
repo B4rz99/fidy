@@ -2,16 +2,18 @@ import { create } from "zustand";
 import { scheduleLocalPush, useNotificationStore } from "@/features/notifications";
 import { getMonthlyTotalsByType, useTransactionStore } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync } from "@/shared/db";
 import { i18n } from "@/shared/i18n";
 import {
   generateId,
-  generateSyncQueueId,
   toIsoDateTime,
   trackGoalContributionAdded,
   trackGoalCreated,
   trackGoalMilestoneReached,
 } from "@/shared/lib";
+import {
+  createWriteThroughMutationModule,
+  type WriteThroughMutationModule,
+} from "@/shared/mutations";
 import type { UserId } from "@/shared/types/branded";
 
 // Import from goals feature
@@ -33,11 +35,6 @@ import {
   getContributionsForGoal,
   getGoalCurrentAmount,
   getGoalsForUser,
-  insertContribution,
-  insertGoal,
-  softDeleteContribution,
-  softDeleteGoal,
-  updateGoal,
 } from "./lib/repository";
 import type { Goal, GoalContribution } from "./schema";
 import { addContributionSchema, createGoalSchema } from "./schema";
@@ -46,6 +43,7 @@ import { addContributionSchema, createGoalSchema } from "./schema";
 let dbRef: AnyDb | null = null;
 let userIdRef: string | null = null;
 let unsubscribeTxStore: (() => void) | null = null;
+let mutations: WriteThroughMutationModule | null = null;
 
 export type GoalWithProgress = {
   readonly goal: Goal;
@@ -108,6 +106,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
   initStore: (db, userId) => {
     dbRef = db;
     userIdRef = userId;
+    mutations = createWriteThroughMutationModule(db);
     // Subscribe to transaction store changes to auto-refresh projections
     if (unsubscribeTxStore) unsubscribeTxStore();
     unsubscribeTxStore = useTransactionStore.subscribe(() => {
@@ -192,30 +191,29 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
     if (!dbRef || !userIdRef) return false;
     const validation = createGoalSchema.safeParse(input);
     if (!validation.success) return false;
+    const mutationModule = mutations;
+    if (!mutationModule) return false;
     const now = toIsoDateTime(new Date());
     const id = generateId("gl");
     try {
-      insertGoal(dbRef, {
-        id,
-        userId: userIdRef,
-        name: input.name,
-        type: input.type,
-        targetAmount: input.targetAmount,
-        targetDate: input.targetDate ?? null,
-        interestRatePercent: input.interestRatePercent ?? null,
-        iconName: input.iconName ?? null,
-        colorHex: input.colorHex ?? null,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
+      const result = await mutationModule.commit({
+        kind: "goal.save",
+        row: {
+          id,
+          userId: userIdRef,
+          name: input.name,
+          type: input.type,
+          targetAmount: input.targetAmount,
+          targetDate: input.targetDate ?? null,
+          interestRatePercent: input.interestRatePercent ?? null,
+          iconName: input.iconName ?? null,
+          colorHex: input.colorHex ?? null,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+        },
       });
-      enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "goals",
-        rowId: id,
-        operation: "insert",
-        createdAt: now,
-      });
+      if (!result.success) return false;
     } catch {
       return false;
     }
@@ -226,16 +224,17 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
 
   updateGoal: async (id, data) => {
     if (!dbRef) return;
+    const mutationModule = mutations;
+    if (!mutationModule) return;
     const now = toIsoDateTime(new Date());
     try {
-      updateGoal(dbRef, id, data, now);
-      enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "goals",
-        rowId: id,
-        operation: "update",
-        createdAt: now,
+      const result = await mutationModule.commit({
+        kind: "goal.update",
+        goalId: id,
+        data,
+        now,
       });
+      if (!result.success) return;
     } catch {
       return;
     }
@@ -244,16 +243,16 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
 
   deleteGoal: async (id) => {
     if (!dbRef) return;
+    const mutationModule = mutations;
+    if (!mutationModule) return;
     const now = toIsoDateTime(new Date());
     try {
-      softDeleteGoal(dbRef, id, now);
-      enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "goals",
-        rowId: id,
-        operation: "delete",
-        createdAt: now,
+      const result = await mutationModule.commit({
+        kind: "goal.delete",
+        goalId: id,
+        now,
       });
+      if (!result.success) return;
     } catch {
       return;
     }
@@ -267,27 +266,26 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
     if (!dbRef || !userIdRef) return false;
     const validation = addContributionSchema.safeParse(input);
     if (!validation.success) return false;
+    const mutationModule = mutations;
+    if (!mutationModule) return false;
     const now = toIsoDateTime(new Date());
     const id = generateId("gc");
     try {
-      insertContribution(dbRef, {
-        id,
-        goalId: input.goalId,
-        userId: userIdRef,
-        amount: input.amount,
-        note: input.note ?? null,
-        date: input.date,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
+      const result = await mutationModule.commit({
+        kind: "goalContribution.save",
+        row: {
+          id,
+          goalId: input.goalId,
+          userId: userIdRef,
+          amount: input.amount,
+          note: input.note ?? null,
+          date: input.date,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+        },
       });
-      enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "goalContributions",
-        rowId: id,
-        operation: "insert",
-        createdAt: now,
-      });
+      if (!result.success) return false;
     } catch {
       return false;
     }
@@ -341,16 +339,16 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
 
   deleteContribution: async (id) => {
     if (!dbRef) return;
+    const mutationModule = mutations;
+    if (!mutationModule) return;
     const now = toIsoDateTime(new Date());
     try {
-      softDeleteContribution(dbRef, id, now);
-      enqueueSync(dbRef, {
-        id: generateSyncQueueId(),
-        tableName: "goalContributions",
-        rowId: id,
-        operation: "delete",
-        createdAt: now,
+      const result = await mutationModule.commit({
+        kind: "goalContribution.delete",
+        contributionId: id,
+        now,
       });
+      if (!result.success) return;
     } catch {
       return;
     }
