@@ -6,30 +6,12 @@ The role of this file is to describe common mistakes and confusion points that a
 
 The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async (importOriginal) => ...)` for heavy modules like `date-fns`. The async `importOriginal` call creates module-loading contention across parallel Vitest workers, causing intermittent timeouts in tests that dynamically import large module trees (e.g. `syncEngine.ts` → budget + goals + transactions). Fix: remove the global mock entirely, or provide a synchronous factory. Tests needing deterministic behavior should mock at the file level with `vi.doMock` or `vi.mock`.
 
-## Opening MRs
-
-Before user-driven commits, use the `opening-mr` skill.
-
 ## Agentic Workflow
 
 Default feature workflow:
 `grill-me` -> `superpowers:brainstorming` -> `superpowers:writing-plans` -> Ralph
 
 For Ralph implementation stories, use `superpowers:test-driven-development` unless the work is purely docs/config with no meaningful test seam.
-
-## Tech Stack
-
-This is a greenfield project called Fidy, so you are allowed to use any tool you think is best for solving the problem.
-
-Tools already chosen:
-- React Bits
-- Zustand
-- TanStack Query
-- expo-sqlite + SQLCipher
-- Drizzle ORM
-- Zod
-- date-fns
-- expo-localization + i18n-js (i18n) — see `adding-i18n-strings` skill for conventions
 
 ## Code Style: Functional Programming
 
@@ -111,14 +93,3 @@ New derivation/pure functions get direct unit tests with fixture data. File-sour
 This project uses two external vaults configured through local environment variables:
 - `OBARBOZA_VAULT_PATH` — global, cross-project context and working preferences
 - `FIDY_VAULT_PATH` — Fidy project memory and session updates
-
-Before making significant code changes, if configured, read:
-- `{OBARBOZA_VAULT_PATH}/AGENTS.md`
-- `{FIDY_VAULT_PATH}/AGENTS.md`
-- `{FIDY_VAULT_PATH}/wiki/index.md`
-
-When the user says `update vault`:
-- append a concise entry to `{FIDY_VAULT_PATH}/wiki/log.md`
-- update `{FIDY_VAULT_PATH}/wiki/index.md` if new notes were added
-- update notes under `decisions/`, `feedback/`, `meetings/`, or `experiments/` only when the session produced durable information
-- write to `OBARBOZA_VAULT_PATH` only for lessons that clearly generalize beyond Fidy
