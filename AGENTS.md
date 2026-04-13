@@ -13,6 +13,14 @@ Default feature workflow:
 
 For Ralph implementation stories, use `superpowers:test-driven-development` unless the work is purely docs/config with no meaningful test seam.
 
+## Testing Strategy
+
+Use these rules:
+- Test the deepest module that owns the behavior. Use boundary tests for orchestration. Keep direct unit tests for stable pure rules like derivations, validators, builders, and predicates.
+- If coverage drops in a store, hook, or other delegating layer after a refactor, treat it as a seam problem first. Prefer extracting and testing a deeper boundary before adding shallow tests.
+- Async store tests that depend on mutable refs like `dbRef`, `userIdRef`, or selected time ranges must cover stale completions after context changes, cross-user writes after identity changes, and loading-state cleanup when a request becomes stale.
+- Tests around `shared/mutations/write-through.ts` and its caller-owned mutation boundaries must prove transaction semantics, not just final state. `AnyDb` test doubles for those paths must implement `transaction()`.
+
 ## Code Style: Functional Programming
 
 All code in the financial core (`lib/`, schemas, utils) MUST follow functional programming patterns. Infrastructure edges (stores, hooks, DB clients) are exempt where idiomatic React/Zustand patterns require it.
