@@ -31,7 +31,7 @@ const loadConfig = () => {
 };
 
 const scanForInjections = (text, config) => {
-  if (!text || text.length < 10) {
+  if (!text) {
     return [];
   }
 
