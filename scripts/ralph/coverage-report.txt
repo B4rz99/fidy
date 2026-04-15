@@ -4,7 +4,7 @@ Updated: not yet run
 
 ## Goal
 
-- Reach at least 80% total coverage without gaming the metric
+- Reach 100% total coverage without gaming the metric
 
 ## Current Summary
 
