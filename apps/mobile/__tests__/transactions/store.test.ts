@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getBalanceAggregate,
   getSpendingByCategoryAggregate,
+  getTransactionById,
   getTransactionsPaginated,
   insertTransaction,
   softDeleteTransaction,
@@ -56,6 +57,7 @@ describe("useTransactionStore", () => {
       balance: 0,
       categorySpending: [],
       dailySpending: [],
+      editingId: null,
     });
   });
 
@@ -316,6 +318,34 @@ describe("useTransactionStore", () => {
     await useTransactionStore.getState().loadNextPage();
 
     expect(getTransactionsPaginated).not.toHaveBeenCalled();
+  });
+
+  it("editTransaction hydrates edit mode from the stored transaction row", () => {
+    vi.mocked(getTransactionById).mockReturnValueOnce({
+      id: "tx-1" as TransactionId,
+      userId: mockUserId,
+      type: "income",
+      amount: 235000 as CopAmount,
+      categoryId: "food" as CategoryId,
+      description: "Payroll correction",
+      date: "2026-04-12" as IsoDate,
+      createdAt: "2026-04-12T08:00:00.000Z" as IsoDateTime,
+      updatedAt: "2026-04-13T09:00:00.000Z" as IsoDateTime,
+      deletedAt: null,
+      source: "manual",
+    });
+
+    useTransactionStore.getState().editTransaction("tx-1" as TransactionId);
+
+    const state = useTransactionStore.getState();
+    expect(state.editingId).toBe("tx-1");
+    expect(state.type).toBe("income");
+    expect(state.digits).toBe("235000");
+    expect(state.categoryId).toBe("food");
+    expect(state.description).toBe("Payroll correction");
+    expect(state.date.getFullYear()).toBe(2026);
+    expect(state.date.getMonth()).toBe(3);
+    expect(state.date.getDate()).toBe(12);
   });
 
   it("removeTransaction soft-deletes from DB, enqueues sync, and refreshes", async () => {

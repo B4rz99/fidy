@@ -1,163 +1,147 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { CategoryId, CopAmount, IsoDate, UserId } from "@/shared/types/branded";
+// biome-ignore-all lint/suspicious/noExplicitAny: integration test uses a real SQLite DB
+import { resolve } from "node:path";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  getIncomeExpenseForPeriod,
+  getSpendingByCategoryForPeriod,
+} from "@/features/analytics/lib/repository";
+import { insertTransaction, softDeleteTransaction } from "@/features/transactions/lib/repository";
+import type {
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
-const mockAll = vi.fn().mockReturnValue([]);
-const mockGet = vi.fn().mockReturnValue(null);
-const mockSelect = vi.fn().mockReturnThis();
-const mockFrom = vi.fn().mockReturnThis();
-const mockWhere = vi.fn().mockReturnThis();
-const mockGroupBy = vi.fn().mockReturnThis();
-const mockOrderBy = vi.fn().mockReturnThis();
+let sqlite: InstanceType<typeof Database>;
+let db: ReturnType<typeof drizzle>;
 
-const mockDb = {
-  select: mockSelect,
-  from: mockFrom,
-  where: mockWhere,
-} as any;
+const USER_ID = "user-1" as UserId;
+const OTHER_USER_ID = "user-2" as UserId;
+const PERIOD_START = "2026-03-01" as IsoDate;
+const PERIOD_END = "2026-03-31" as IsoDate;
+const CREATED_AT = "2026-03-01T00:00:00.000Z" as IsoDateTime;
+const DELETED_AT = "2026-03-20T12:00:00.000Z" as IsoDateTime;
+
+beforeEach(() => {
+  sqlite = new Database(":memory:");
+  db = drizzle(sqlite);
+  migrate(db, { migrationsFolder: resolve(__dirname, "../../drizzle") });
+});
+
+afterEach(() => {
+  sqlite.close();
+});
+
+const insertTransactionRow = (
+  overrides: Partial<{
+    id: TransactionId;
+    userId: UserId;
+    type: "expense" | "income";
+    amount: CopAmount;
+    categoryId: CategoryId;
+    description: string | null;
+    date: IsoDate;
+  }> = {}
+) =>
+  insertTransaction(db as any, {
+    id: overrides.id ?? ("tx-1" as TransactionId),
+    userId: overrides.userId ?? USER_ID,
+    type: overrides.type ?? "expense",
+    amount: overrides.amount ?? (100000 as CopAmount),
+    categoryId: overrides.categoryId ?? ("other" as CategoryId),
+    description: overrides.description ?? "merchant",
+    date: overrides.date ?? PERIOD_START,
+    createdAt: CREATED_AT,
+    updatedAt: CREATED_AT,
+    deletedAt: null,
+    source: "manual",
+  });
 
 describe("analytics repository", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockAll.mockReturnValue([]);
-    mockGet.mockReturnValue(null);
-    mockSelect.mockReturnValue({ from: mockFrom });
-    mockFrom.mockReturnValue({ where: mockWhere, all: mockAll, get: mockGet });
-    mockWhere.mockReturnValue({
-      all: mockAll,
-      get: mockGet,
-      groupBy: mockGroupBy,
-      orderBy: mockOrderBy,
+  it("builds period aggregates from active in-range transactions only", () => {
+    insertTransactionRow({
+      id: "income-active" as TransactionId,
+      type: "income",
+      amount: 500000 as CopAmount,
+      categoryId: "salary" as CategoryId,
+      description: "Salary",
+      date: "2026-03-03" as IsoDate,
     });
-    mockGroupBy.mockReturnValue({ all: mockAll, orderBy: mockOrderBy });
-    mockOrderBy.mockReturnValue({ all: mockAll });
-  });
-
-  describe("getIncomeExpenseForPeriod", () => {
-    it("calls db.select, from, where, and get", async () => {
-      const { getIncomeExpenseForPeriod } = await import("@/features/analytics/lib/repository");
-
-      getIncomeExpenseForPeriod(
-        mockDb,
-        "user-1" as UserId,
-        "2026-03-01" as IsoDate,
-        "2026-03-31" as IsoDate
-      );
-
-      expect(mockSelect).toHaveBeenCalled();
-      expect(mockFrom).toHaveBeenCalled();
-      expect(mockWhere).toHaveBeenCalled();
-      expect(mockGet).toHaveBeenCalled();
+    insertTransactionRow({
+      id: "income-deleted" as TransactionId,
+      type: "income",
+      amount: 150000 as CopAmount,
+      categoryId: "salary" as CategoryId,
+      description: "Bonus",
+      date: "2026-03-04" as IsoDate,
     });
-
-    it("returns zero defaults when db returns null", async () => {
-      mockGet.mockReturnValueOnce(null);
-
-      const { getIncomeExpenseForPeriod } = await import("@/features/analytics/lib/repository");
-
-      const result = getIncomeExpenseForPeriod(
-        mockDb,
-        "user-1" as UserId,
-        "2026-03-01" as IsoDate,
-        "2026-03-31" as IsoDate
-      );
-
-      expect(result).toEqual({ income: 0, expenses: 0 });
+    insertTransactionRow({
+      id: "expense-food-1" as TransactionId,
+      type: "expense",
+      amount: 120000 as CopAmount,
+      categoryId: "food" as CategoryId,
+      description: "Groceries",
+      date: "2026-03-05" as IsoDate,
     });
-
-    it("returns zero defaults when row fields are null", async () => {
-      mockGet.mockReturnValueOnce({ income: null, expenses: null });
-
-      const { getIncomeExpenseForPeriod } = await import("@/features/analytics/lib/repository");
-
-      const result = getIncomeExpenseForPeriod(
-        mockDb,
-        "user-1" as UserId,
-        "2026-03-01" as IsoDate,
-        "2026-03-31" as IsoDate
-      );
-
-      expect(result).toEqual({ income: 0, expenses: 0 });
+    insertTransactionRow({
+      id: "expense-food-2" as TransactionId,
+      type: "expense",
+      amount: 40000 as CopAmount,
+      categoryId: "food" as CategoryId,
+      description: "Snacks",
+      date: "2026-03-15" as IsoDate,
     });
-
-    it("returns income and expenses from db row", async () => {
-      mockGet.mockReturnValueOnce({ income: 500000, expenses: 350000 });
-
-      const { getIncomeExpenseForPeriod } = await import("@/features/analytics/lib/repository");
-
-      const result = getIncomeExpenseForPeriod(
-        mockDb,
-        "user-1" as UserId,
-        "2026-03-01" as IsoDate,
-        "2026-03-31" as IsoDate
-      );
-
-      expect(result).toEqual({
-        income: 500000 as CopAmount,
-        expenses: 350000 as CopAmount,
-      });
+    insertTransactionRow({
+      id: "expense-transport" as TransactionId,
+      type: "expense",
+      amount: 80000 as CopAmount,
+      categoryId: "transport" as CategoryId,
+      description: "Taxi",
+      date: "2026-03-10" as IsoDate,
     });
-  });
-
-  describe("getSpendingByCategoryForPeriod", () => {
-    it("calls db.select, from, where, groupBy, orderBy, and all", async () => {
-      const { getSpendingByCategoryForPeriod } = await import(
-        "@/features/analytics/lib/repository"
-      );
-
-      getSpendingByCategoryForPeriod(
-        mockDb,
-        "user-1" as UserId,
-        "2026-03-01" as IsoDate,
-        "2026-03-31" as IsoDate
-      );
-
-      expect(mockSelect).toHaveBeenCalled();
-      expect(mockFrom).toHaveBeenCalled();
-      expect(mockWhere).toHaveBeenCalled();
-      expect(mockGroupBy).toHaveBeenCalled();
-      expect(mockOrderBy).toHaveBeenCalled();
-      expect(mockAll).toHaveBeenCalled();
+    insertTransactionRow({
+      id: "expense-deleted" as TransactionId,
+      type: "expense",
+      amount: 60000 as CopAmount,
+      categoryId: "subscriptions" as CategoryId,
+      description: "Streaming",
+      date: "2026-03-18" as IsoDate,
+    });
+    insertTransactionRow({
+      id: "expense-out-of-range" as TransactionId,
+      type: "expense",
+      amount: 999999 as CopAmount,
+      categoryId: "food" as CategoryId,
+      description: "February groceries",
+      date: "2026-02-28" as IsoDate,
+    });
+    insertTransactionRow({
+      id: "expense-other-user" as TransactionId,
+      userId: OTHER_USER_ID,
+      type: "expense",
+      amount: 30000 as CopAmount,
+      categoryId: "food" as CategoryId,
+      description: "Other user groceries",
+      date: "2026-03-08" as IsoDate,
     });
 
-    it("returns empty array when db returns no rows", async () => {
-      mockOrderBy.mockReturnValueOnce({ all: () => [] });
+    softDeleteTransaction(db as any, "income-deleted" as TransactionId, DELETED_AT);
+    softDeleteTransaction(db as any, "expense-deleted" as TransactionId, DELETED_AT);
 
-      const { getSpendingByCategoryForPeriod } = await import(
-        "@/features/analytics/lib/repository"
-      );
-
-      const result = getSpendingByCategoryForPeriod(
-        mockDb,
-        "user-1" as UserId,
-        "2026-03-01" as IsoDate,
-        "2026-03-31" as IsoDate
-      );
-
-      expect(result).toEqual([]);
+    expect(getIncomeExpenseForPeriod(db as any, USER_ID, PERIOD_START, PERIOD_END)).toEqual({
+      income: 500000 as CopAmount,
+      expenses: 240000 as CopAmount,
     });
 
-    it("returns category totals ordered by total descending", async () => {
-      const mockRows = [
-        { categoryId: "food" as CategoryId, total: 200000 as CopAmount },
-        { categoryId: "transport" as CategoryId, total: 80000 as CopAmount },
-      ];
-      mockOrderBy.mockReturnValueOnce({ all: () => mockRows });
-
-      const { getSpendingByCategoryForPeriod } = await import(
-        "@/features/analytics/lib/repository"
-      );
-
-      const result = getSpendingByCategoryForPeriod(
-        mockDb,
-        "user-1" as UserId,
-        "2026-03-01" as IsoDate,
-        "2026-03-31" as IsoDate
-      );
-
-      expect(result).toEqual(mockRows);
-      expect(result[0]?.categoryId).toBe("food");
-      expect(result[0]?.total).toBe(200000);
-    });
+    expect(getSpendingByCategoryForPeriod(db as any, USER_ID, PERIOD_START, PERIOD_END)).toEqual([
+      { categoryId: "food" as CategoryId, total: 160000 as CopAmount },
+      { categoryId: "transport" as CategoryId, total: 80000 as CopAmount },
+    ]);
   });
 });
