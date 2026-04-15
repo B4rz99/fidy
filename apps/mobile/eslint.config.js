@@ -62,18 +62,24 @@ module.exports = defineConfig([
       "@typescript-eslint/no-unsafe-member-access": "error",
       "@typescript-eslint/no-unsafe-return": "error",
       "@typescript-eslint/no-unsafe-argument": "error",
+      "@typescript-eslint/only-throw-error": "error",
       "@typescript-eslint/restrict-template-expressions": "error",
       "@typescript-eslint/prefer-nullish-coalescing": "error",
+      "@typescript-eslint/no-redundant-type-constituents": "error",
       "@typescript-eslint/no-unnecessary-type-assertion": "error",
 
       // — Syntax-only rules —
       "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-require-imports": "error",
       "@typescript-eslint/no-non-null-assertion": "error",
       "@typescript-eslint/prefer-optional-chain": "error",
       "@typescript-eslint/consistent-type-imports": [
         "error",
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
+      "object-shorthand": ["error", "always"],
+      "no-constant-binary-expression": "error",
+      "no-useless-catch": "error",
 
       // — FP-mandate rules (align with CLAUDE.md) —
       "no-param-reassign": "error",
@@ -85,6 +91,33 @@ module.exports = defineConfig([
 
       // — Import rules —
       "import/no-cycle": "error",
+    },
+  },
+
+  // ── Pure module FP guardrails (lib/schema/utils only) ───────────────
+  {
+    files: [
+      "features/**/lib/**/*.ts",
+      "features/**/lib/**/*.tsx",
+      "shared/lib/**/*.ts",
+      "shared/lib/**/*.tsx",
+      "features/**/schema.ts",
+      "features/**/schema/**/*.ts",
+      "features/**/utils/**/*.ts",
+      "features/**/utils/**/*.tsx",
+      "shared/utils/**/*.ts",
+      "shared/utils/**/*.tsx",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "ForStatement, ForInStatement, ForOfStatement, WhileStatement, DoWhileStatement",
+          message:
+            "Pure modules in lib/schema/utils must stay declarative. Use map/filter/reduce or recursion instead of imperative loops.",
+        },
+      ],
     },
   },
 

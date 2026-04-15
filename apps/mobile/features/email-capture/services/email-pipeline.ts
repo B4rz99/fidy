@@ -86,7 +86,7 @@ async function saveTransaction(
     userId: userId as UserId,
     type: validated.type,
     amount: validated.amount as CopAmount,
-    categoryId: categoryId,
+    categoryId,
     description: validated.description,
     date: validated.date as IsoDate,
     source,
