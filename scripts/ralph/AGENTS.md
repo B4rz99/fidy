@@ -34,7 +34,7 @@ Before anything else:
    - if stories are tied, prioritize architectural risk and integration points
 5. Implement that single story
 6. Run all relevant QA checks for this repo
-7. Update `AGENTS.md` or nearby `CLAUDE.md` files if you discover genuinely
+7. Update repo or local `AGENTS.md` files if you discover genuinely
    reusable knowledge
 8. If checks pass, create a local iteration commit
 9. Mark the story `passes: true` in `scripts/ralph/prd.json`
@@ -111,13 +111,13 @@ If you discover a **general, reusable pattern**, add it to the
 
 Only add patterns that future iterations really need.
 
-## Update AGENTS / CLAUDE
+## Update AGENTS
 
 Before committing, check whether any edited area has durable learnings worth
 preserving in:
 
 - repo `AGENTS.md`
-- nearby `CLAUDE.md`
+- nearby `AGENTS.md`
 
 Good additions:
 

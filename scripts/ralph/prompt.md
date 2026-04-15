@@ -24,7 +24,7 @@ Before anything else:
 2. Pick the next story where `passes: false`
 3. Implement that one story using tracer bullets
 4. Run the real QA checks for this repo
-5. Add reusable learnings to `AGENTS.md`, nearby `CLAUDE.md`, or
+5. Add reusable learnings to repo or nearby `AGENTS.md`, or
    `scripts/ralph/progress.txt` when appropriate
 6. If checks pass, create a local iteration commit only
 7. Mark the story passed in `scripts/ralph/prd.json`
