@@ -1,11 +1,12 @@
 #!/bin/bash
 # Ralph Wiggum - Long-running AI agent loop
-# Usage: ./ralph.sh [--tool amp|claude] [max_iterations]
+# Usage: ./ralph.sh [--tool auto|codex|amp|claude] [max_iterations]
 
 set -e
+set -o pipefail
 
 # Parse arguments
-TOOL="amp"  # Default to amp for backwards compatibility
+TOOL="auto"
 MAX_ITERATIONS=10
 
 while [[ $# -gt 0 ]]; do
@@ -29,15 +30,117 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate tool choice
-if [[ "$TOOL" != "amp" && "$TOOL" != "claude" ]]; then
-  echo "Error: Invalid tool '$TOOL'. Must be 'amp' or 'claude'."
+if [[ "$TOOL" != "auto" && "$TOOL" != "codex" && "$TOOL" != "amp" && "$TOOL" != "claude" ]]; then
+  echo "Error: Invalid tool '$TOOL'. Must be 'auto', 'codex', 'amp', or 'claude'."
   exit 1
 fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PRD_FILE="$SCRIPT_DIR/prd.json"
 PROGRESS_FILE="$SCRIPT_DIR/progress.txt"
 ARCHIVE_DIR="$SCRIPT_DIR/archive"
 LAST_BRANCH_FILE="$SCRIPT_DIR/.last-branch"
+PROMPT_FILE="$SCRIPT_DIR/prompt.md"
+INSTRUCTIONS_FILE="$SCRIPT_DIR/CLAUDE.md"
+CODEX_PROMPT_FILE="${CODEX_PROMPT_FILE:-$INSTRUCTIONS_FILE}"
+CODEX_CMD="${CODEX_CMD:-}"
+CODEX_BIN="${CODEX_BIN:-}"
+
+find_codex_bin() {
+  if [ -n "$CODEX_BIN" ] && [ -x "$CODEX_BIN" ]; then
+    echo "$CODEX_BIN"
+    return
+  fi
+
+  if command -v codex >/dev/null 2>&1; then
+    command -v codex
+    return
+  fi
+
+  if [ -x "/Applications/Codex.app/Contents/Resources/codex" ]; then
+    echo "/Applications/Codex.app/Contents/Resources/codex"
+    return
+  fi
+
+  echo ""
+}
+
+resolve_tool() {
+  if [[ "$TOOL" != "auto" ]]; then
+    echo "$TOOL"
+    return
+  fi
+
+  if [ -n "$(find_codex_bin)" ]; then
+    echo "codex"
+    return
+  fi
+
+  if command -v claude >/dev/null 2>&1; then
+    echo "claude"
+    return
+  fi
+
+  if command -v amp >/dev/null 2>&1; then
+    echo "amp"
+    return
+  fi
+
+  echo ""
+}
+
+TOOL="$(resolve_tool)"
+
+if [[ -z "$TOOL" ]]; then
+  echo "Error: No supported runner found on PATH. Install Codex CLI, Claude Code, or Amp."
+  exit 1
+fi
+
+if [[ "$TOOL" == "codex" ]]; then
+  CODEX_BIN="$(find_codex_bin)"
+  if [[ -z "$CODEX_BIN" ]]; then
+    echo "Error: Codex runner requested, but no Codex binary was found."
+    echo "Set CODEX_BIN or install Codex CLI, or use the macOS app bundle path."
+    exit 1
+  fi
+fi
+
+if [[ "$TOOL" == "amp" && ! -f "$PROMPT_FILE" ]]; then
+  PROMPT_FILE="$INSTRUCTIONS_FILE"
+fi
+
+check_prd_completion() {
+  local remaining_stories
+
+  if [ ! -f "$PRD_FILE" ]; then
+    echo "Warning: Missing PRD file at $PRD_FILE. Treating run as incomplete."
+    return 1
+  fi
+
+  if ! remaining_stories="$(jq '.userStories[]? | select(.passes == false) | { id, title }' "$PRD_FILE" 2>/dev/null)"; then
+    echo "Warning: Unable to parse $PRD_FILE. Treating run as incomplete."
+    return 1
+  fi
+
+  [ -z "$remaining_stories" ]
+}
+
+run_codex() {
+  if [ ! -f "$CODEX_PROMPT_FILE" ]; then
+    echo "Error: Missing Codex prompt file at $CODEX_PROMPT_FILE."
+    return 1
+  fi
+
+  if [ -n "$CODEX_CMD" ]; then
+    cat "$CODEX_PROMPT_FILE" | bash -lc "$CODEX_CMD"
+    return
+  fi
+
+  cat "$CODEX_PROMPT_FILE" | "$CODEX_BIN" exec - \
+    --dangerously-bypass-approvals-and-sandbox \
+    --color never \
+    -C "$REPO_ROOT"
+}
 
 # Archive previous run if branch changed
 if [ -f "$PRD_FILE" ] && [ -f "$LAST_BRANCH_FILE" ]; then
@@ -88,7 +191,17 @@ if [ ! -f "$PROGRESS_FILE" ]; then
   echo "---" >> "$PROGRESS_FILE"
 fi
 
+if check_prd_completion; then
+  echo "Ralph has no remaining tasks. All stories already pass in $PRD_FILE."
+  exit 0
+fi
+
 echo "Starting Ralph - Tool: $TOOL - Max iterations: $MAX_ITERATIONS"
+
+if [ "$MAX_ITERATIONS" -le 0 ]; then
+  echo "Nothing to do: max iterations is $MAX_ITERATIONS."
+  exit 0
+fi
 
 for i in $(seq 1 $MAX_ITERATIONS); do
   echo ""
@@ -97,18 +210,21 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo "==============================================================="
 
   # Run the selected tool with the ralph prompt
-  if [[ "$TOOL" == "amp" ]]; then
-    OUTPUT=$(cat "$SCRIPT_DIR/prompt.md" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr) || true
+  if [[ "$TOOL" == "codex" ]]; then
+    run_codex 2>&1 | tee /dev/stderr || true
+  elif [[ "$TOOL" == "amp" ]]; then
+    cat "$PROMPT_FILE" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr || true
   else
     # Claude Code: use --dangerously-skip-permissions for autonomous operation, --print for output
-    OUTPUT=$(claude --dangerously-skip-permissions --print < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
+    claude --dangerously-skip-permissions --print < "$INSTRUCTIONS_FILE" 2>&1 | tee /dev/stderr || true
   fi
   
-  # Check for completion signal
-  if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
+  # Check PRD completion after each iteration.
+  if check_prd_completion; then
     echo ""
     echo "Ralph completed all tasks!"
     echo "Completed at iteration $i of $MAX_ITERATIONS"
+    echo "Branch is ready for the full-branch finalization step (for example, /opening-mr)."
     exit 0
   fi
   
