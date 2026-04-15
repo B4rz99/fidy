@@ -1,13 +1,28 @@
 #!/bin/bash
 # Ralph Wiggum - Long-running AI agent loop
-# Usage: ./ralph.sh [--tool auto|codex|amp|claude] [max_iterations]
+# Usage: ./ralph.sh [--tool auto|codex|amp|claude] [--maintenance] [--prompt-file path] [--progress-file path] [max_iterations]
 
 set -e
 set -o pipefail
 
 # Parse arguments
 TOOL="auto"
+MODE="story"
 MAX_ITERATIONS=10
+CUSTOM_PROMPT_FILE=""
+CUSTOM_PROGRESS_FILE=""
+
+resolve_path() {
+  local input_path="$1"
+
+  if [[ -z "$input_path" ]]; then
+    echo ""
+  elif [[ "$input_path" = /* ]]; then
+    echo "$input_path"
+  else
+    echo "$PWD/$input_path"
+  fi
+}
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -17,6 +32,26 @@ while [[ $# -gt 0 ]]; do
       ;;
     --tool=*)
       TOOL="${1#*=}"
+      shift
+      ;;
+    --maintenance)
+      MODE="maintenance"
+      shift
+      ;;
+    --prompt-file)
+      CUSTOM_PROMPT_FILE="$(resolve_path "$2")"
+      shift 2
+      ;;
+    --prompt-file=*)
+      CUSTOM_PROMPT_FILE="$(resolve_path "${1#*=}")"
+      shift
+      ;;
+    --progress-file)
+      CUSTOM_PROGRESS_FILE="$(resolve_path "$2")"
+      shift 2
+      ;;
+    --progress-file=*)
+      CUSTOM_PROGRESS_FILE="$(resolve_path "${1#*=}")"
       shift
       ;;
     *)
@@ -40,11 +75,25 @@ PRD_FILE="$SCRIPT_DIR/prd.json"
 PROGRESS_FILE="$SCRIPT_DIR/progress.txt"
 ARCHIVE_DIR="$SCRIPT_DIR/archive"
 LAST_BRANCH_FILE="$SCRIPT_DIR/.last-branch"
-PROMPT_FILE="$SCRIPT_DIR/prompt.md"
-INSTRUCTIONS_FILE="$SCRIPT_DIR/CLAUDE.md"
-CODEX_PROMPT_FILE="${CODEX_PROMPT_FILE:-$INSTRUCTIONS_FILE}"
+DEFAULT_PROMPT_FILE="$SCRIPT_DIR/prompt.md"
+DEFAULT_INSTRUCTIONS_FILE="$SCRIPT_DIR/CLAUDE.md"
+PROMPT_FILE="${CUSTOM_PROMPT_FILE:-$DEFAULT_PROMPT_FILE}"
+INSTRUCTIONS_FILE="$DEFAULT_INSTRUCTIONS_FILE"
+ACTIVE_PROGRESS_FILE="$PROGRESS_FILE"
 CODEX_CMD="${CODEX_CMD:-}"
 CODEX_BIN="${CODEX_BIN:-}"
+
+if [[ "$MODE" == "maintenance" ]]; then
+  if [[ -z "$CUSTOM_PROMPT_FILE" ]]; then
+    echo "Error: Maintenance mode requires --prompt-file."
+    exit 1
+  fi
+
+  INSTRUCTIONS_FILE="$CUSTOM_PROMPT_FILE"
+  ACTIVE_PROGRESS_FILE="${CUSTOM_PROGRESS_FILE:-$SCRIPT_DIR/maintenance-progress.txt}"
+fi
+
+CODEX_PROMPT_FILE="${CODEX_PROMPT_FILE:-$INSTRUCTIONS_FILE}"
 
 find_codex_bin() {
   if [ -n "$CODEX_BIN" ] && [ -x "$CODEX_BIN" ]; then
@@ -142,61 +191,70 @@ run_codex() {
     -C "$REPO_ROOT"
 }
 
-# Archive previous run if branch changed
-if [ -f "$PRD_FILE" ] && [ -f "$LAST_BRANCH_FILE" ]; then
-  CURRENT_BRANCH=$(jq -r '.branchName // empty' "$PRD_FILE" 2>/dev/null || echo "")
-  LAST_BRANCH=$(cat "$LAST_BRANCH_FILE" 2>/dev/null || echo "")
-  
-  if [ -n "$CURRENT_BRANCH" ] && [ -n "$LAST_BRANCH" ] && [ "$CURRENT_BRANCH" != "$LAST_BRANCH" ]; then
-    # Archive the previous run
-    DATE=$(date +%Y-%m-%d-%H%M%S)
-    # Strip "ralph/" prefix from branch name for folder
-    FOLDER_NAME=$(echo "$LAST_BRANCH" | sed 's|^ralph/||')
-    ARCHIVE_FOLDER="$ARCHIVE_DIR/$DATE-$FOLDER_NAME"
+initialize_progress_file() {
+  local target_file="$1"
 
-    # Guard against multiple archives for the same branch in the same second.
-    if [ -e "$ARCHIVE_FOLDER" ]; then
-      SUFFIX=1
-      while [ -e "${ARCHIVE_FOLDER}-${SUFFIX}" ]; do
-        SUFFIX=$((SUFFIX + 1))
-      done
-      ARCHIVE_FOLDER="${ARCHIVE_FOLDER}-${SUFFIX}"
+  if [ ! -f "$target_file" ]; then
+    echo "# Ralph Progress Log" > "$target_file"
+    echo "Started: $(date)" >> "$target_file"
+    echo "---" >> "$target_file"
+  fi
+}
+
+if [[ "$MODE" == "story" ]]; then
+  # Archive previous run if branch changed
+  if [ -f "$PRD_FILE" ] && [ -f "$LAST_BRANCH_FILE" ]; then
+    CURRENT_BRANCH=$(jq -r '.branchName // empty' "$PRD_FILE" 2>/dev/null || echo "")
+    LAST_BRANCH=$(cat "$LAST_BRANCH_FILE" 2>/dev/null || echo "")
+    
+    if [ -n "$CURRENT_BRANCH" ] && [ -n "$LAST_BRANCH" ] && [ "$CURRENT_BRANCH" != "$LAST_BRANCH" ]; then
+      # Archive the previous run
+      DATE=$(date +%Y-%m-%d-%H%M%S)
+      # Strip "ralph/" prefix from branch name for folder
+      FOLDER_NAME=$(echo "$LAST_BRANCH" | sed 's|^ralph/||')
+      ARCHIVE_FOLDER="$ARCHIVE_DIR/$DATE-$FOLDER_NAME"
+
+      # Guard against multiple archives for the same branch in the same second.
+      if [ -e "$ARCHIVE_FOLDER" ]; then
+        SUFFIX=1
+        while [ -e "${ARCHIVE_FOLDER}-${SUFFIX}" ]; do
+          SUFFIX=$((SUFFIX + 1))
+        done
+        ARCHIVE_FOLDER="${ARCHIVE_FOLDER}-${SUFFIX}"
+      fi
+
+      echo "Archiving previous run: $LAST_BRANCH"
+      mkdir -p "$ARCHIVE_FOLDER"
+      [ -f "$PRD_FILE" ] && cp "$PRD_FILE" "$ARCHIVE_FOLDER/"
+      [ -f "$PROGRESS_FILE" ] && cp "$PROGRESS_FILE" "$ARCHIVE_FOLDER/"
+      echo "   Archived to: $ARCHIVE_FOLDER"
+
+      # Reset progress file for new run
+      echo "# Ralph Progress Log" > "$PROGRESS_FILE"
+      echo "Started: $(date)" >> "$PROGRESS_FILE"
+      echo "---" >> "$PROGRESS_FILE"
     fi
-    
-    echo "Archiving previous run: $LAST_BRANCH"
-    mkdir -p "$ARCHIVE_FOLDER"
-    [ -f "$PRD_FILE" ] && cp "$PRD_FILE" "$ARCHIVE_FOLDER/"
-    [ -f "$PROGRESS_FILE" ] && cp "$PROGRESS_FILE" "$ARCHIVE_FOLDER/"
-    echo "   Archived to: $ARCHIVE_FOLDER"
-    
-    # Reset progress file for new run
-    echo "# Ralph Progress Log" > "$PROGRESS_FILE"
-    echo "Started: $(date)" >> "$PROGRESS_FILE"
-    echo "---" >> "$PROGRESS_FILE"
   fi
-fi
 
-# Track current branch
-if [ -f "$PRD_FILE" ]; then
-  CURRENT_BRANCH=$(jq -r '.branchName // empty' "$PRD_FILE" 2>/dev/null || echo "")
-  if [ -n "$CURRENT_BRANCH" ]; then
-    echo "$CURRENT_BRANCH" > "$LAST_BRANCH_FILE"
+  # Track current branch
+  if [ -f "$PRD_FILE" ]; then
+    CURRENT_BRANCH=$(jq -r '.branchName // empty' "$PRD_FILE" 2>/dev/null || echo "")
+    if [ -n "$CURRENT_BRANCH" ]; then
+      echo "$CURRENT_BRANCH" > "$LAST_BRANCH_FILE"
+    fi
   fi
+
+  initialize_progress_file "$PROGRESS_FILE"
+
+  if check_prd_completion; then
+    echo "Ralph has no remaining tasks. All stories already pass in $PRD_FILE."
+    exit 0
+  fi
+else
+  initialize_progress_file "$ACTIVE_PROGRESS_FILE"
 fi
 
-# Initialize progress file if it doesn't exist
-if [ ! -f "$PROGRESS_FILE" ]; then
-  echo "# Ralph Progress Log" > "$PROGRESS_FILE"
-  echo "Started: $(date)" >> "$PROGRESS_FILE"
-  echo "---" >> "$PROGRESS_FILE"
-fi
-
-if check_prd_completion; then
-  echo "Ralph has no remaining tasks. All stories already pass in $PRD_FILE."
-  exit 0
-fi
-
-echo "Starting Ralph - Tool: $TOOL - Max iterations: $MAX_ITERATIONS"
+echo "Starting Ralph - Mode: $MODE - Tool: $TOOL - Max iterations: $MAX_ITERATIONS"
 
 if [ "$MAX_ITERATIONS" -le 0 ]; then
   echo "Nothing to do: max iterations is $MAX_ITERATIONS."
@@ -220,7 +278,7 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   fi
   
   # Check PRD completion after each iteration.
-  if check_prd_completion; then
+  if [[ "$MODE" == "story" ]] && check_prd_completion; then
     echo ""
     echo "Ralph completed all tasks!"
     echo "Completed at iteration $i of $MAX_ITERATIONS"
@@ -233,6 +291,10 @@ for i in $(seq 1 $MAX_ITERATIONS); do
 done
 
 echo ""
-echo "Ralph reached max iterations ($MAX_ITERATIONS) without completing all tasks."
-echo "Check $PROGRESS_FILE for status."
+if [[ "$MODE" == "story" ]]; then
+  echo "Ralph reached max iterations ($MAX_ITERATIONS) without completing all tasks."
+else
+  echo "Ralph reached max iterations ($MAX_ITERATIONS) in maintenance mode."
+fi
+echo "Check $ACTIVE_PROGRESS_FILE for status."
 exit 1

@@ -1,0 +1,17 @@
+# Ralph Coverage Report
+
+Updated: not yet run
+
+## Goal
+
+- Reach at least 80% total coverage without gaming the metric
+
+## Current Summary
+
+- Overall coverage: unknown
+- Highest-priority uncovered areas:
+  - not yet assessed
+
+## Notes
+
+- Prioritize business logic and risky code paths over trivial wrappers
