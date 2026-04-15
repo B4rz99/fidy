@@ -15,6 +15,7 @@ import {
   Palette,
   Shield,
   Tag,
+  Wallet,
 } from "@/shared/components/icons";
 import { Linking, Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -107,6 +108,12 @@ export function SettingsScreen() {
             </View>
             <ChevronRight size={18} color={tertiaryColor} />
           </Pressable>
+          <SettingsRow
+            icon={Wallet}
+            label={t("settings.financialAccounts")}
+            onPress={() => router.push("/accounts")}
+            isLast
+          />
         </SettingsSection>
 
         {/* PREFERENCES */}

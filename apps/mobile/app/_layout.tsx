@@ -15,7 +15,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useMemo } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { ensureDefaultAccounts } from "@/features/accounts";
+import { ensureDefaultAccounts, useAccountsStore } from "@/features/accounts";
 import { useChatStore } from "@/features/ai-chat";
 import { useAnalyticsStore } from "@/features/analytics";
 import { useAuthStore } from "@/features/auth";
@@ -80,6 +80,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
   useSubscription(
     () => {
       ensureDefaultAccounts(db, userId);
+      useAccountsStore.getState().initStore(db, userId);
       useTransactionStore.getState().initStore(db, userId);
       useSearchStore.getState().initStore(db, userId);
       useEmailCaptureStore.getState().initStore(db, userId);
@@ -100,6 +101,10 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
         .getState()
         .loadBudgets()
         .catch(handleRecoverableError("Failed to load budgets"));
+      useAccountsStore
+        .getState()
+        .refresh()
+        .catch(handleRecoverableError("Failed to load accounts"));
       useGoalStore.getState().loadGoals().catch(handleRecoverableError("Failed to load goals"));
       useAnalyticsStore
         .getState()
@@ -299,6 +304,22 @@ function RootLayout() {
           />
           <Stack.Screen
             name="search"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
+          />
+          <Stack.Screen
+            name="accounts"
+            options={{
+              headerShown: Platform.OS === "ios",
+              headerStyle: { backgroundColor: theme.page },
+              headerTintColor: theme.primary,
+            }}
+          />
+          <Stack.Screen
+            name="create-account"
             options={{
               headerShown: Platform.OS === "ios",
               headerStyle: { backgroundColor: theme.page },
