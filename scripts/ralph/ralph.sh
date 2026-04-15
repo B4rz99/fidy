@@ -88,12 +88,20 @@ if [[ "$MODE" == "maintenance" ]]; then
     echo "Error: Maintenance mode requires --prompt-file."
     exit 1
   fi
+  if [[ ! -f "$CUSTOM_PROMPT_FILE" ]]; then
+    echo "Error: Prompt file not found at $CUSTOM_PROMPT_FILE."
+    exit 1
+  fi
 
   INSTRUCTIONS_FILE="$CUSTOM_PROMPT_FILE"
   ACTIVE_PROGRESS_FILE="${CUSTOM_PROGRESS_FILE:-$SCRIPT_DIR/maintenance-progress.txt}"
 fi
 
-CODEX_PROMPT_FILE="${CODEX_PROMPT_FILE:-$INSTRUCTIONS_FILE}"
+if [[ "$MODE" == "maintenance" ]]; then
+  CODEX_PROMPT_FILE="$INSTRUCTIONS_FILE"
+else
+  CODEX_PROMPT_FILE="${CODEX_PROMPT_FILE:-$INSTRUCTIONS_FILE}"
+fi
 
 find_codex_bin() {
   if [ -n "$CODEX_BIN" ] && [ -x "$CODEX_BIN" ]; then
