@@ -15,6 +15,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useMemo } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { ensureDefaultAccounts } from "@/features/accounts";
 import { useChatStore } from "@/features/ai-chat";
 import { useAnalyticsStore } from "@/features/analytics";
 import { useAuthStore } from "@/features/auth";
@@ -76,6 +77,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
 
   useSubscription(
     () => {
+      ensureDefaultAccounts(db, userId);
       useTransactionStore.getState().initStore(db, userId);
       useSearchStore.getState().initStore(db, userId);
       useEmailCaptureStore.getState().initStore(db, userId);

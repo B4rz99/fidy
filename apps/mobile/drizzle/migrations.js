@@ -18,6 +18,7 @@ import m0015 from "./0015_violet_vengeance.sql";
 import m0016 from "./0016_high_outlaw_kid.sql";
 import m0017 from "./0017_nostalgic_blade.sql";
 import m0018 from "./0018_notification_dedup_partial.sql";
+import m0019 from "./0019_aspiring_romulus.sql";
 import journal from "./meta/_journal.json";
 
 export default {
@@ -42,5 +43,6 @@ export default {
     m0016,
     m0017,
     m0018,
+    m0019,
   },
 };

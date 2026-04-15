@@ -2,6 +2,7 @@ import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import * as SplashScreen from "expo-splash-screen";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ensureDefaultAccounts } from "@/features/accounts";
 import { useAuthStore } from "@/features/auth";
 import { useBudgetStore } from "@/features/budget";
 import { useEmailCaptureStore } from "@/features/email-capture";
@@ -40,6 +41,7 @@ export default function OnboardingScreen() {
   useSubscription(
     () => {
       if (!db || !userId) return;
+      ensureDefaultAccounts(db, userId as UserId);
       useEmailCaptureStore.getState().initStore(db, userId);
       useTransactionStore.getState().initStore(db, userId as UserId);
       useBudgetStore.getState().initStore(db, userId as UserId);

@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/useNamingConvention: snake_case matches Supabase Postgres column names
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getAccountById } from "@/features/accounts";
 import { getBudgetById } from "@/features/budget";
 import { getContributionById, getGoalById } from "@/features/goals";
 import {
@@ -147,11 +148,45 @@ async function processContributionEntry(
   return !error;
 }
 
+async function processAccountEntry(
+  db: AnyDb,
+  supabase: SupabaseClient,
+  rowId: string
+): Promise<boolean> {
+  const row = getAccountById(db, rowId as Parameters<typeof getAccountById>[1]);
+  if (!row) return true;
+  const { error } = await supabase.from("accounts").upsert({
+    id: row.id,
+    user_id: row.userId,
+    system_key: row.systemKey,
+    account_class: row.accountClass,
+    account_subtype: row.accountSubtype,
+    name: row.name,
+    institution: row.institution,
+    last4: row.last4,
+    baseline_amount: row.baselineAmount,
+    baseline_date: row.baselineDate,
+    credit_limit: row.creditLimit,
+    closing_day: row.closingDay,
+    due_day: row.dueDay,
+    archived_at: row.archivedAt,
+    created_at: row.createdAt,
+    updated_at: row.updatedAt,
+  });
+  return !error;
+}
+
 async function processEntry(
   db: AnyDb,
   supabase: SupabaseClient,
   entry: { id: string; tableName: string; rowId: string }
 ): Promise<string | null> {
+  if (entry.tableName === "accounts") {
+    const ok = await processAccountEntry(db, supabase, entry.rowId);
+    if (!ok) captureWarning("sync_push_entry_failed", { tableName: "accounts" });
+    return ok ? entry.id : null;
+  }
+
   if (entry.tableName === "transactions") {
     const row = await getTransactionById(db, entry.rowId as TransactionId);
     if (!row) return entry.id;
