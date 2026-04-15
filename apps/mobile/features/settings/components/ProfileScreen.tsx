@@ -81,7 +81,7 @@ export function ProfileScreen() {
               height: 52,
               gap: 8,
               borderWidth: 1,
-              borderColor: borderColor,
+              borderColor,
             }}
           >
             <Brain size={20} color={secondaryColor} />
@@ -98,7 +98,7 @@ export function ProfileScreen() {
               height: 52,
               gap: 8,
               borderWidth: 1,
-              borderColor: borderColor,
+              borderColor,
             }}
           >
             <LogOut size={20} color={secondaryColor} />

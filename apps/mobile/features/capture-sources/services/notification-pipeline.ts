@@ -79,7 +79,7 @@ export async function processNotification(
       rawText: sanitizedText,
       transactionId: null,
       confidence: null,
-      receivedAt: receivedAt,
+      receivedAt,
       createdAt: toIsoDateTime(new Date()),
     });
     capturePipelineEvent({
@@ -143,7 +143,7 @@ export async function processNotification(
         rawText: sanitizedText,
         transactionId: existingTxId as TransactionId,
         confidence: parsed.confidence,
-        receivedAt: receivedAt,
+        receivedAt,
         createdAt: toIsoDateTime(new Date()),
       });
       capturePipelineEvent({
@@ -197,7 +197,7 @@ export async function processNotification(
       rawText: sanitizedText,
       transactionId: txId,
       confidence: parsed.confidence,
-      receivedAt: receivedAt,
+      receivedAt,
       createdAt: now,
     });
 

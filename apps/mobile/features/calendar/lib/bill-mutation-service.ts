@@ -47,7 +47,7 @@ type CreateCalendarBillMutationServiceDeps = {
   getCommit: () => WriteThroughMutationModule["commit"] | null;
   getUserId: () => UserId | null;
   requestNotificationPermissions: () => Promise<boolean>;
-  scheduleBillNotifications: (bill: Bill) => Promise<unknown> | unknown;
+  scheduleBillNotifications: (bill: Bill) => unknown;
   reportAsyncError: (error: unknown) => void;
   addTransactionToCache: (transaction: StoredTransaction) => void;
   removeTransactionFromCache: (transactionId: TransactionId) => void;
@@ -78,7 +78,9 @@ export type CalendarBillMutationService = {
 function scheduleNotifications(deps: CreateCalendarBillMutationServiceDeps, bill: Bill) {
   void deps
     .requestNotificationPermissions()
-    .then((granted) => (granted ? deps.scheduleBillNotifications(bill) : undefined))
+    .then((granted) =>
+      granted ? Promise.resolve(deps.scheduleBillNotifications(bill)) : undefined
+    )
     .catch(deps.reportAsyncError);
 }
 

@@ -98,3 +98,4 @@ apps/mobile/.claude/settings.local.json
 *~
 *.orig
 .vercel
+scripts/ralph/.last-branch
