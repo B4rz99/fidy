@@ -1,3 +1,4 @@
+import { type AccountRow, insertAccount } from "@/features/accounts/lib/repository";
 import {
   type BudgetRow,
   copyBudgetsToMonth,
@@ -158,6 +159,12 @@ type CategorySaveCommand = {
   afterCommit?: readonly MutationEffect[];
 };
 
+type AccountSaveCommand = {
+  kind: "account.save";
+  row: AccountRow;
+  afterCommit?: readonly MutationEffect[];
+};
+
 type CalendarBillSaveCommand = {
   kind: "calendar.bill.save";
   row: BillRow;
@@ -211,6 +218,7 @@ export type MutationCommand =
   | NotificationInsertCommand
   | NotificationClearAllCommand
   | CategorySaveCommand
+  | AccountSaveCommand
   | CalendarBillSaveCommand
   | CalendarBillUpdateCommand
   | CalendarBillDeleteCommand
@@ -234,6 +242,7 @@ const MUTATION_POLICY: Record<MutationCommand["kind"], MutationPolicy> = {
   "notification.insert": "sync-backed",
   "notification.clearAll": "sync-backed",
   "category.save": "sync-backed",
+  "account.save": "sync-backed",
   "calendar.bill.save": "local-only",
   "calendar.bill.update": "local-only",
   "calendar.bill.delete": "local-only",
@@ -411,6 +420,12 @@ function applyCategorySave(db: AnyDb, command: CategorySaveCommand): CommandEffe
   return { didMutate: true, effects: command.afterCommit ?? [] };
 }
 
+function applyAccountSave(db: AnyDb, command: AccountSaveCommand): CommandEffectResult {
+  insertAccount(db, command.row);
+  enqueueSync(db, toSyncEntry("accounts", command.row.id, "insert", command.row.updatedAt));
+  return { didMutate: true, effects: command.afterCommit ?? [] };
+}
+
 function applyCalendarBillSave(db: AnyDb, command: CalendarBillSaveCommand): CommandEffectResult {
   insertBill(db, command.row);
   return { didMutate: true, effects: command.afterCommit ?? [] };
@@ -493,6 +508,8 @@ function applyCommand(db: AnyDb, command: MutationCommand): CommandEffectResult 
       return applyNotificationClearAll(db, command);
     case "category.save":
       return applyCategorySave(db, command);
+    case "account.save":
+      return applyAccountSave(db, command);
     case "calendar.bill.save":
       return applyCalendarBillSave(db, command);
     case "calendar.bill.update":

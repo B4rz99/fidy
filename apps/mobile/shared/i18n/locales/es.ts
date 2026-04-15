@@ -289,6 +289,43 @@ const es = {
     syncing: "Sincronizando...",
   },
 
+  accounts: {
+    title: "Cuentas",
+    subtitle: "Sigue el efectivo, las tarjetas y los bancos que deben guardar cada saldo.",
+    createTitle: "Crear Cuenta",
+    createSubtitle:
+      "Agrega una cuenta real para que los nuevos saldos caigan en el lugar correcto.",
+    add: "Nueva cuenta",
+    save: "Crear cuenta",
+    emptyTitle: "Aún no hay cuentas financieras",
+    emptySubtitle: "Crea tu primera cuenta para empezar a estructurar tu libro.",
+    openingBalance: "Saldo inicial",
+    subtypeLabel: "Tipo de cuenta",
+    institutionLabel: "Institución",
+    institutionPlaceholder: "ej. Bancolombia",
+    namePlaceholder: "ej. Visa Gold",
+    last4Label: "Últimos 4 dígitos",
+    last4Placeholder: "1234",
+    last4Helper: "Déjalo vacío o escribe exactamente 4 dígitos.",
+    balanceLabel: "Saldo",
+    balanceDateLabel: "Fecha del saldo",
+    creditCardFields: "Datos de la tarjeta",
+    creditLimitLabel: "Cupo",
+    closingDayLabel: "Día de corte",
+    dueDayLabel: "Día de pago",
+    dayHelper: "Usa días del calendario entre 1 y 31.",
+    subtypes: {
+      checking: "Corriente",
+      savings: "Ahorros",
+      cash: "Efectivo",
+      digitalHolding: "Holding digital",
+      creditCard: "Tarjeta de crédito",
+      loan: "Préstamo",
+      investment: "Inversión",
+      other: "Otra",
+    },
+  },
+
   // Failed Emails
   failedEmails: {
     title: "Correos No Procesados",
@@ -412,6 +449,7 @@ const es = {
     language: "Idioma",
     languageEnglish: "English",
     languageSpanish: "Español",
+    financialAccounts: "Cuentas",
     connectedEmails: "Correos Conectados",
     connectedEmailsCount: {
       one: "%{count} cuenta",
