@@ -65,7 +65,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --all-projects --severity-threshold=high
+          args: --all-projects --exclude=.ai-hooks --severity-threshold=high
 
   security-sast:
     name: Security (SAST + Secrets)

@@ -37,7 +37,7 @@
     "@supabase/supabase-js": "^2.98.0",
     "burnt": "^0.13.0",
     "date-fns": "^4.1.0",
-    "drizzle-orm": "^0.45.1",
+    "drizzle-orm": "0.45.2",
     "expo": "^55.0.0",
     "expo-android-notification-listener-service": "^1.1.0",
     "expo-background-task": "~55.0.9",
