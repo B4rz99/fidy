@@ -90,6 +90,14 @@ export const isCreditCardSubtype = (subtype: AccountSubtype) => subtype === "cre
 export const getAccountSubtypeLabelKey = (subtype: AccountSubtype) =>
   ACCOUNT_SUBTYPE_LABEL_ENTRIES.get(subtype) ?? "accounts.subtypes.other";
 
+export const hasValidCreditCardSchedule = (
+  subtype: AccountSubtype,
+  closingDay?: string,
+  dueDay?: string
+) =>
+  !isCreditCardSubtype(subtype) ||
+  (isDayOfMonthValidOrEmpty(closingDay) && isDayOfMonthValidOrEmpty(dueDay));
+
 const toCreditCardFields = (input: CreateAccountInput, subtype: AccountSubtype) =>
   isCreditCardSubtype(subtype)
     ? {
@@ -114,10 +122,10 @@ export function buildCreateAccountRow(
 
   if (!subtypeResult.success || !name || !institution) return null;
   if (!isLast4ValidOrEmpty(input.last4)) return null;
-  if (!isDayOfMonthValidOrEmpty(input.closingDay)) return null;
-  if (!isDayOfMonthValidOrEmpty(input.dueDay)) return null;
 
   const subtype = subtypeResult.data;
+  if (!hasValidCreditCardSchedule(subtype, input.closingDay, input.dueDay)) return null;
+
   const now = deps.now?.() ?? new Date();
   const createId = deps.createId ?? generateAccountId;
   const creditCardFields = toCreditCardFields(input, subtype);

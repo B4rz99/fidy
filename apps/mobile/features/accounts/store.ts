@@ -30,6 +30,7 @@ export const useAccountsStore = create<AccountsState & AccountsActions>((set, ge
     dbRef = db;
     userIdRef = userId;
     mutations = createWriteThroughMutationModule(db);
+    set({ accounts: [] });
   },
 
   refresh: async () => {
