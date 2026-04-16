@@ -13,6 +13,18 @@ let dbRef: AnyDb | null = null;
 let userIdRef: UserId | null = null;
 let mutations: WriteThroughMutationModule | null = null;
 
+function refreshAccountsSnapshot(
+  set: (partial: Partial<AccountsState & AccountsActions>) => void,
+  db: AnyDb,
+  userId: UserId
+) {
+  try {
+    set({ accounts: getActiveAccountsForUser(db, userId) });
+  } catch {
+    // Keep the existing snapshot on local DB read failures.
+  }
+}
+
 type AccountsState = {
   readonly accounts: readonly Account[];
 };
@@ -37,18 +49,14 @@ export const useAccountsStore = create<AccountsState & AccountsActions>((set, ge
     const db = dbRef;
     const userId = userIdRef;
     if (!db || !userId) return;
-
-    try {
-      set({ accounts: getActiveAccountsForUser(db, userId) });
-    } catch {
-      // Keep the existing snapshot on local DB read failures.
-    }
+    refreshAccountsSnapshot(set, db, userId);
   },
 
   createAccount: async (input) => {
+    const db = dbRef;
     const userId = userIdRef;
     const mutationModule = mutations;
-    if (!userId || !mutationModule) return false;
+    if (!db || !userId || !mutationModule) return false;
 
     const row = buildCreateAccountRow(input, userId);
     if (!row) return false;
@@ -60,7 +68,9 @@ export const useAccountsStore = create<AccountsState & AccountsActions>((set, ge
 
     if (!result.success) return false;
 
-    await get().refresh();
+    if (dbRef !== db || userIdRef !== userId) return true;
+
+    refreshAccountsSnapshot(set, db, userId);
     return true;
   },
 }));

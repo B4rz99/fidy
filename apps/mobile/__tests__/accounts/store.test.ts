@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { ensureDefaultAccounts } from "@/features/accounts";
 
@@ -240,5 +240,64 @@ describe("accounts store", () => {
       closing_day: null,
       due_day: null,
     });
+  });
+
+  it("does not refresh a newer session when an earlier createAccount finishes late", async () => {
+    seedDefaultAccounts(db, USER_ID);
+
+    const nextSqlite = new Database(":memory:");
+    const nextDb = drizzle(nextSqlite);
+    migrate(nextDb, { migrationsFolder: resolve(__dirname, "../../drizzle") });
+    seedDefaultAccounts(nextDb, "user-accounts-2");
+
+    const deferred = {
+      resolve: null as ((value: { success: true }) => void) | null,
+    };
+    const commit = vi.fn(
+      () =>
+        new Promise<{ success: true }>((resolve) => {
+          deferred.resolve = resolve;
+        })
+    );
+
+    vi.resetModules();
+    vi.doMock("@/shared/mutations", () => ({
+      createWriteThroughMutationModule: () => ({ commit }),
+    }));
+
+    const moduleId = "@/features/accounts/store";
+    const mod: AccountsStoreModule | null = await import(moduleId).catch(() => null);
+
+    expect(mod).not.toBeNull();
+    if (!mod) {
+      nextSqlite.close();
+      return;
+    }
+
+    mod.useAccountsStore.getState().initStore(db, USER_ID);
+    await mod.useAccountsStore.getState().refresh();
+    expect(mod.useAccountsStore.getState().accounts.length).toBe(2);
+
+    const pendingCreate = mod.useAccountsStore.getState().createAccount({
+      subtype: "checking",
+      name: "Race Account",
+      institution: "Nu",
+      balanceDigits: "1000",
+      balanceDate: new Date(2026, 3, 12),
+    });
+
+    mod.useAccountsStore.getState().initStore(nextDb, "user-accounts-2");
+    expect(mod.useAccountsStore.getState().accounts).toEqual([]);
+
+    expect(deferred.resolve).not.toBeNull();
+    if (!deferred.resolve) throw new Error("Commit resolver was not captured");
+    deferred.resolve({ success: true });
+
+    await expect(pendingCreate).resolves.toBe(true);
+    expect(mod.useAccountsStore.getState().accounts).toEqual([]);
+
+    vi.doUnmock("@/shared/mutations");
+    vi.resetModules();
+    nextSqlite.close();
   });
 });
