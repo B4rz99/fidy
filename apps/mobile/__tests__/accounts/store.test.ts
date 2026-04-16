@@ -5,8 +5,8 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { z } from "zod";
 import { ensureDefaultAccounts } from "@/features/accounts";
-import type { UserId } from "@/shared/types/branded";
 
 type AccountsStoreModule = {
   useAccountsStore: {
@@ -14,11 +14,11 @@ type AccountsStoreModule = {
       accounts: readonly {
         id: string;
         name: string;
-        institution: string;
-        accountClass: string;
-        accountSubtype: string;
+      institution: string;
+      accountClass: string;
+      accountSubtype: string;
       }[];
-      initStore: (db: unknown, userId: UserId) => void;
+      initStore: (db: unknown, userId: string) => void;
       refresh: () => Promise<void>;
       createAccount: (input: {
         subtype: string;
@@ -50,10 +50,34 @@ type AccountRow = {
   due_day: number | null;
 };
 
+const accountRowSchema = z.object({
+  id: z.string(),
+  system_key: z.string().nullable(),
+  account_class: z.string(),
+  account_subtype: z.string(),
+  name: z.string(),
+  institution: z.string(),
+  last4: z.string().nullable(),
+  baseline_amount: z.number(),
+  baseline_date: z.string(),
+  credit_limit: z.number().nullable(),
+  closing_day: z.number().nullable(),
+  due_day: z.number().nullable(),
+});
+const syncQueueInsertSchema = z.object({
+  table_name: z.string(),
+  operation: z.string(),
+  row_id: z.string(),
+});
+const creditCardDaySchema = z.object({
+  closing_day: z.number().nullable(),
+  due_day: z.number().nullable(),
+});
+
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
 
-const USER_ID = "user-accounts-1" as UserId;
+const USER_ID = "user-accounts-1";
 
 beforeEach(() => {
   sqlite = new Database(":memory:");
@@ -67,15 +91,15 @@ afterEach(() => {
 
 describe("accounts store", () => {
   it("clears the previous account snapshot when initStore switches sessions", async () => {
-    ensureDefaultAccounts(db as any, USER_ID);
+    ensureDefaultAccounts(db, USER_ID);
 
     const moduleId = "@/features/accounts/store";
-    const mod = (await import(moduleId).catch(() => null)) as AccountsStoreModule | null;
+    const mod: AccountsStoreModule | null = await import(moduleId).catch(() => null);
 
     expect(mod).not.toBeNull();
     if (!mod) return;
 
-    mod.useAccountsStore.getState().initStore(db as any, USER_ID);
+    mod.useAccountsStore.getState().initStore(db, USER_ID);
     await mod.useAccountsStore.getState().refresh();
 
     expect(mod.useAccountsStore.getState().accounts.length).toBe(2);
@@ -84,7 +108,7 @@ describe("accounts store", () => {
     const nextDb = drizzle(nextSqlite);
     migrate(nextDb, { migrationsFolder: resolve(__dirname, "../../drizzle") });
 
-    mod.useAccountsStore.getState().initStore(nextDb as any, "user-accounts-2" as UserId);
+    mod.useAccountsStore.getState().initStore(nextDb, "user-accounts-2");
 
     expect(mod.useAccountsStore.getState().accounts).toEqual([]);
 
@@ -92,15 +116,15 @@ describe("accounts store", () => {
   });
 
   it("creates a new financial account and refreshes the active account list", async () => {
-    ensureDefaultAccounts(db as any, USER_ID);
+    ensureDefaultAccounts(db, USER_ID);
 
     const moduleId = "@/features/accounts/store";
-    const mod = (await import(moduleId).catch(() => null)) as AccountsStoreModule | null;
+    const mod: AccountsStoreModule | null = await import(moduleId).catch(() => null);
 
     expect(mod).not.toBeNull();
     if (!mod) return;
 
-    mod.useAccountsStore.getState().initStore(db as any, USER_ID);
+    mod.useAccountsStore.getState().initStore(db, USER_ID);
     await mod.useAccountsStore.getState().refresh();
 
     expect(
@@ -130,27 +154,29 @@ describe("accounts store", () => {
         .sort()
     ).toEqual(["Cash", "Digital Holding", "Visa Gold"]);
 
-    const row = sqlite
-      .prepare(
-        `
-          select
-            id,
-            system_key,
-            account_class,
-            account_subtype,
-            name,
-            institution,
-            last4,
-            baseline_amount,
-            baseline_date,
-            credit_limit,
-            closing_day,
-            due_day
-          from accounts
-          where user_id = ? and name = ?
-        `
-      )
-      .get(USER_ID, "Visa Gold") as AccountRow | undefined;
+    const row = accountRowSchema.optional().parse(
+      sqlite
+        .prepare(
+          `
+            select
+              id,
+              system_key,
+              account_class,
+              account_subtype,
+              name,
+              institution,
+              last4,
+              baseline_amount,
+              baseline_date,
+              credit_limit,
+              closing_day,
+              due_day
+            from accounts
+            where user_id = ? and name = ?
+          `
+        )
+        .get(USER_ID, "Visa Gold")
+    );
 
     expect(row).toMatchObject({
       system_key: null,
@@ -167,15 +193,17 @@ describe("accounts store", () => {
     });
     expect(row?.id).toBeTruthy();
 
-    const syncRow = sqlite
-      .prepare(
-        `
-          select table_name, operation, row_id
-          from sync_queue
-          where table_name = 'accounts' and row_id = ?
-        `
-      )
-      .get(row?.id) as { table_name: string; operation: string; row_id: string } | undefined;
+    const syncRow = syncQueueInsertSchema.optional().parse(
+      sqlite
+        .prepare(
+          `
+            select table_name, operation, row_id
+            from sync_queue
+            where table_name = 'accounts' and row_id = ?
+          `
+        )
+        .get(row?.id)
+    );
 
     expect(syncRow).toEqual({
       table_name: "accounts",
@@ -185,15 +213,15 @@ describe("accounts store", () => {
   });
 
   it("ignores stale credit-card schedule fields when creating a non-credit-card account", async () => {
-    ensureDefaultAccounts(db as any, USER_ID);
+    ensureDefaultAccounts(db, USER_ID);
 
     const moduleId = "@/features/accounts/store";
-    const mod = (await import(moduleId).catch(() => null)) as AccountsStoreModule | null;
+    const mod: AccountsStoreModule | null = await import(moduleId).catch(() => null);
 
     expect(mod).not.toBeNull();
     if (!mod) return;
 
-    mod.useAccountsStore.getState().initStore(db as any, USER_ID);
+    mod.useAccountsStore.getState().initStore(db, USER_ID);
 
     const success = await mod.useAccountsStore.getState().createAccount({
       subtype: "checking",
@@ -207,17 +235,17 @@ describe("accounts store", () => {
 
     expect(success).toBe(true);
 
-    const row = sqlite
-      .prepare(
-        `
-          select closing_day, due_day
-          from accounts
-          where user_id = ? and name = ?
-        `
-      )
-      .get(USER_ID, "Everyday Checking") as
-      | { closing_day: number | null; due_day: number | null }
-      | undefined;
+    const row = creditCardDaySchema.optional().parse(
+      sqlite
+        .prepare(
+          `
+            select closing_day, due_day
+            from accounts
+            where user_id = ? and name = ?
+          `
+        )
+        .get(USER_ID, "Everyday Checking")
+    );
 
     expect(row).toEqual({
       closing_day: null,
