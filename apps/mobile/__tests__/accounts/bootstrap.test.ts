@@ -9,24 +9,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import * as dbSchema from "@/shared/db/schema";
 
-type AccountRow = {
-  user_id: string;
-  system_key: string | null;
-  account_class: string;
-  account_subtype: string;
-  name: string;
-  institution: string;
-  baseline_amount: number;
-  baseline_date: string;
-  archived_at: string | null;
-};
-
-type SyncQueueRow = {
-  table_name: string;
-  operation: string;
-  row_id: string;
-};
-
 const tableInfoRowSchema = z.object({ name: z.string() });
 const accountRowSchema = z.object({
   user_id: z.string(),
@@ -197,8 +179,17 @@ describe("accounts bootstrap", () => {
 
   it("upserts default accounts by system key without rewriting createdAt", async () => {
     const mod = await import("@/features/accounts/lib/repository");
+    const insertAccount = (db: unknown, row: Record<string, unknown>) =>
+      Reflect.apply(Reflect.get(mod, "insertAccount"), mod, [db, row]);
+    const upsertAccount = (db: unknown, row: Record<string, unknown>) =>
+      Reflect.apply(Reflect.get(mod, "upsertAccount"), mod, [db, row]);
+    const getAccountsBySystemKeys = (
+      db: unknown,
+      userId: string,
+      systemKeys: readonly string[]
+    ) => Reflect.apply(Reflect.get(mod, "getAccountsBySystemKeys"), mod, [db, userId, systemKeys]);
 
-    mod.insertAccount(db, {
+    insertAccount(db, {
       id: "acct-original",
       userId: USER_ID,
       systemKey: "default_cash",
@@ -217,7 +208,7 @@ describe("accounts bootstrap", () => {
       updatedAt: "2026-04-13T08:00:00.000Z",
     });
 
-    mod.upsertAccount(db, {
+    upsertAccount(db, {
       id: "acct-replacement",
       userId: USER_ID,
       systemKey: "default_cash",
@@ -236,7 +227,7 @@ describe("accounts bootstrap", () => {
       updatedAt: "2026-04-14T09:00:00.000Z",
     });
 
-    expect(mod.getAccountsBySystemKeys(db, USER_ID, ["default_cash"])).toEqual([
+    expect(getAccountsBySystemKeys(db, USER_ID, ["default_cash"])).toEqual([
       expect.objectContaining({
         id: "acct-original",
         systemKey: "default_cash",

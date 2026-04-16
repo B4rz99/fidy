@@ -56,7 +56,7 @@ function AuthenticatedOnboardingScreen({ db, userId }: { db: AnyDb; userId: User
       }
     },
     [db, userId],
-    migrationsReady && db != null && userId != null && !storesReady
+    migrationsReady && !storesReady
   );
 
   // Hide splash once ready
