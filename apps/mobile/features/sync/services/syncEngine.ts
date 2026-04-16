@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/useNamingConvention: snake_case matches Supabase Postgres column names
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getAccountById } from "@/features/accounts";
 import { getBudgetById } from "@/features/budget";
 import { getContributionById, getGoalById } from "@/features/goals";
 import {
@@ -18,11 +19,13 @@ import {
   generateSyncConflictId,
   toIsoDateTime,
 } from "@/shared/lib";
-import type { BudgetId, SyncQueueId, TransactionId } from "@/shared/types/branded";
+import type { AccountId, BudgetId, SyncQueueId, TransactionId } from "@/shared/types/branded";
 import { hasDataConflict } from "../lib/conflict-detection";
 import { insertConflict } from "../lib/conflict-repository";
 
 const LAST_SYNC_AT = "last_sync_at";
+
+const isAccountId = (value: string): value is AccountId => value.length > 0;
 
 type SupabaseTransactionRow = {
   id: string;
@@ -147,11 +150,52 @@ async function processContributionEntry(
   return !error;
 }
 
+async function processAccountEntry(
+  db: AnyDb,
+  supabase: SupabaseClient,
+  rowId: string
+): Promise<boolean> {
+  if (!isAccountId(rowId)) return true;
+  const row = getAccountById(db, rowId);
+  if (!row) return true;
+  const payload = {
+    id: row.id,
+    user_id: row.userId,
+    system_key: row.systemKey,
+    account_class: row.accountClass,
+    account_subtype: row.accountSubtype,
+    name: row.name,
+    institution: row.institution,
+    last4: row.last4,
+    baseline_amount: row.baselineAmount,
+    baseline_date: row.baselineDate,
+    credit_limit: row.creditLimit,
+    closing_day: row.closingDay,
+    due_day: row.dueDay,
+    archived_at: row.archivedAt,
+    created_at: row.createdAt,
+    updated_at: row.updatedAt,
+  };
+  const { error } =
+    row.systemKey != null
+      ? await supabase.from("accounts").upsert(payload, {
+          onConflict: "user_id,system_key",
+        })
+      : await supabase.from("accounts").upsert(payload);
+  return !error;
+}
+
 async function processEntry(
   db: AnyDb,
   supabase: SupabaseClient,
   entry: { id: string; tableName: string; rowId: string }
 ): Promise<string | null> {
+  if (entry.tableName === "accounts") {
+    const ok = await processAccountEntry(db, supabase, entry.rowId);
+    if (!ok) captureWarning("sync_push_entry_failed", { tableName: "accounts" });
+    return ok ? entry.id : null;
+  }
+
   if (entry.tableName === "transactions") {
     const row = await getTransactionById(db, entry.rowId as TransactionId);
     if (!row) return entry.id;

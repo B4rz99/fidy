@@ -15,6 +15,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useMemo } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { ensureDefaultAccounts } from "@/features/accounts";
 import { useChatStore } from "@/features/ai-chat";
 import { useAnalyticsStore } from "@/features/analytics";
 import { useAuthStore } from "@/features/auth";
@@ -70,12 +71,15 @@ if (SENTRY_DSN) {
   initSentry(SENTRY_DSN);
 }
 
+const hasAuthenticatedUserId = (value: string | null): value is UserId => value != null;
+
 function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
   const router = useRouter();
   const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
 
   useSubscription(
     () => {
+      ensureDefaultAccounts(db, userId);
       useTransactionStore.getState().initStore(db, userId);
       useSearchStore.getState().initStore(db, userId);
       useEmailCaptureStore.getState().initStore(db, userId);
@@ -399,8 +403,8 @@ function RootLayout() {
             }}
           />
         </Stack>
-        {db && userId && onboardingComplete && (
-          <AuthenticatedShell db={db} userId={userId as UserId} />
+        {db && hasAuthenticatedUserId(userId) && onboardingComplete && (
+          <AuthenticatedShell db={db} userId={userId} />
         )}
       </SentryErrorBoundary>
       <StatusBar style="auto" />
