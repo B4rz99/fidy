@@ -202,7 +202,9 @@ describe("accounts bootstrap", () => {
   });
 
   it("upserts default accounts by system key without rewriting createdAt", async () => {
-    const mod = (await import("@/features/accounts/lib/repository")) as unknown as AccountRepositoryModule;
+    const mod = (await import(
+      "@/features/accounts/lib/repository"
+    )) as unknown as AccountRepositoryModule;
 
     mod.insertAccount(db as any, {
       id: "acct-original",
