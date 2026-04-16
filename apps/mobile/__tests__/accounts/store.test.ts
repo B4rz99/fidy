@@ -66,6 +66,31 @@ afterEach(() => {
 });
 
 describe("accounts store", () => {
+  it("clears the previous account snapshot when initStore switches sessions", async () => {
+    ensureDefaultAccounts(db as any, USER_ID);
+
+    const moduleId = "@/features/accounts/store";
+    const mod = (await import(moduleId).catch(() => null)) as AccountsStoreModule | null;
+
+    expect(mod).not.toBeNull();
+    if (!mod) return;
+
+    mod.useAccountsStore.getState().initStore(db as any, USER_ID);
+    await mod.useAccountsStore.getState().refresh();
+
+    expect(mod.useAccountsStore.getState().accounts.length).toBe(2);
+
+    const nextSqlite = new Database(":memory:");
+    const nextDb = drizzle(nextSqlite);
+    migrate(nextDb, { migrationsFolder: resolve(__dirname, "../../drizzle") });
+
+    mod.useAccountsStore.getState().initStore(nextDb as any, "user-accounts-2" as UserId);
+
+    expect(mod.useAccountsStore.getState().accounts).toEqual([]);
+
+    nextSqlite.close();
+  });
+
   it("creates a new financial account and refreshes the active account list", async () => {
     ensureDefaultAccounts(db as any, USER_ID);
 
@@ -156,6 +181,47 @@ describe("accounts store", () => {
       table_name: "accounts",
       operation: "insert",
       row_id: row?.id,
+    });
+  });
+
+  it("ignores stale credit-card schedule fields when creating a non-credit-card account", async () => {
+    ensureDefaultAccounts(db as any, USER_ID);
+
+    const moduleId = "@/features/accounts/store";
+    const mod = (await import(moduleId).catch(() => null)) as AccountsStoreModule | null;
+
+    expect(mod).not.toBeNull();
+    if (!mod) return;
+
+    mod.useAccountsStore.getState().initStore(db as any, USER_ID);
+
+    const success = await mod.useAccountsStore.getState().createAccount({
+      subtype: "checking",
+      name: "Everyday Checking",
+      institution: "Nu",
+      balanceDigits: "100000",
+      balanceDate: new Date(2026, 3, 12),
+      closingDay: "99",
+      dueDay: "00",
+    });
+
+    expect(success).toBe(true);
+
+    const row = sqlite
+      .prepare(
+        `
+          select closing_day, due_day
+          from accounts
+          where user_id = ? and name = ?
+        `
+      )
+      .get(USER_ID, "Everyday Checking") as
+      | { closing_day: number | null; due_day: number | null }
+      | undefined;
+
+    expect(row).toEqual({
+      closing_day: null,
+      due_day: null,
     });
   });
 });

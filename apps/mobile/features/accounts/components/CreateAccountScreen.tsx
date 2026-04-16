@@ -18,8 +18,8 @@ import { cleanDigitInput } from "@/shared/lib";
 import {
   ACCOUNT_SUBTYPE_OPTIONS,
   getAccountSubtypeLabelKey,
+  hasValidCreditCardSchedule,
   isCreditCardSubtype,
-  isDayOfMonthValidOrEmpty,
   isLast4ValidOrEmpty,
 } from "../lib/create-account";
 import type { AccountSubtype } from "../schema";
@@ -55,14 +55,9 @@ export function CreateAccountScreen() {
 
   const isCreditCard = isCreditCardSubtype(subtype);
   const hasValidLast4 = isLast4ValidOrEmpty(last4);
-  const hasValidClosingDay = isDayOfMonthValidOrEmpty(closingDay);
-  const hasValidDueDay = isDayOfMonthValidOrEmpty(dueDay);
+  const hasValidCreditCardDays = hasValidCreditCardSchedule(subtype, closingDay, dueDay);
   const isFormValid =
-    name.trim().length > 0 &&
-    institution.trim().length > 0 &&
-    hasValidLast4 &&
-    hasValidClosingDay &&
-    hasValidDueDay;
+    name.trim().length > 0 && institution.trim().length > 0 && hasValidLast4 && hasValidCreditCardDays;
 
   const handleSave = () => {
     void guardedCreate(async () => {
@@ -267,7 +262,7 @@ export function CreateAccountScreen() {
                 />
               </View>
 
-              {!hasValidClosingDay || !hasValidDueDay ? (
+              {!hasValidCreditCardDays ? (
                 <Text style={[styles.helper, { color: tertiaryColor }]}>
                   {t("accounts.dayHelper")}
                 </Text>
