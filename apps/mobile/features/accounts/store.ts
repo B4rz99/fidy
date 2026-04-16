@@ -35,7 +35,7 @@ type AccountsActions = {
   createAccount: (input: CreateAccountInput) => Promise<boolean>;
 };
 
-export const useAccountsStore = create<AccountsState & AccountsActions>((set, get) => ({
+export const useAccountsStore = create<AccountsState & AccountsActions>((set) => ({
   accounts: [],
 
   initStore: (db, userId) => {
