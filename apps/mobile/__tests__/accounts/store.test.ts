@@ -35,21 +35,6 @@ type AccountsStoreModule = {
   };
 };
 
-type AccountRow = {
-  id: string;
-  system_key: string | null;
-  account_class: string;
-  account_subtype: string;
-  name: string;
-  institution: string;
-  last4: string | null;
-  baseline_amount: number;
-  baseline_date: string;
-  credit_limit: number | null;
-  closing_day: number | null;
-  due_day: number | null;
-};
-
 const accountRowSchema = z.object({
   id: z.string(),
   system_key: z.string().nullable(),
@@ -79,6 +64,10 @@ let db: ReturnType<typeof drizzle>;
 
 const USER_ID = "user-accounts-1";
 
+const seedDefaultAccounts = (database: unknown, userId: string) => {
+  Reflect.apply(ensureDefaultAccounts, undefined, [database, userId]);
+};
+
 beforeEach(() => {
   sqlite = new Database(":memory:");
   db = drizzle(sqlite);
@@ -91,7 +80,7 @@ afterEach(() => {
 
 describe("accounts store", () => {
   it("clears the previous account snapshot when initStore switches sessions", async () => {
-    ensureDefaultAccounts(db, USER_ID);
+    seedDefaultAccounts(db, USER_ID);
 
     const moduleId = "@/features/accounts/store";
     const mod: AccountsStoreModule | null = await import(moduleId).catch(() => null);
@@ -116,7 +105,7 @@ describe("accounts store", () => {
   });
 
   it("creates a new financial account and refreshes the active account list", async () => {
-    ensureDefaultAccounts(db, USER_ID);
+    seedDefaultAccounts(db, USER_ID);
 
     const moduleId = "@/features/accounts/store";
     const mod: AccountsStoreModule | null = await import(moduleId).catch(() => null);
@@ -213,7 +202,7 @@ describe("accounts store", () => {
   });
 
   it("ignores stale credit-card schedule fields when creating a non-credit-card account", async () => {
-    ensureDefaultAccounts(db, USER_ID);
+    seedDefaultAccounts(db, USER_ID);
 
     const moduleId = "@/features/accounts/store";
     const mod: AccountsStoreModule | null = await import(moduleId).catch(() => null);
