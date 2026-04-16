@@ -14,9 +14,9 @@ type AccountsStoreModule = {
       accounts: readonly {
         id: string;
         name: string;
-      institution: string;
-      accountClass: string;
-      accountSubtype: string;
+        institution: string;
+        accountClass: string;
+        accountSubtype: string;
       }[];
       initStore: (db: unknown, userId: string) => void;
       refresh: () => Promise<void>;
