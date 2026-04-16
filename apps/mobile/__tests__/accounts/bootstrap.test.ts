@@ -24,7 +24,11 @@ type AccountBootstrapModule = {
 type AccountRepositoryModule = {
   insertAccount: (db: unknown, row: Record<string, unknown>) => void;
   upsertAccount: (db: unknown, row: Record<string, unknown>) => void;
-  getAccountsBySystemKeys: (db: unknown, userId: UserId, systemKeys: readonly string[]) => {
+  getAccountsBySystemKeys: (
+    db: unknown,
+    userId: UserId,
+    systemKeys: readonly string[]
+  ) => {
     id: string;
     systemKey: string | null;
     name: string;
