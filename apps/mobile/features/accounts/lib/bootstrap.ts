@@ -1,6 +1,12 @@
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
-import { generateAccountId, generateSyncQueueId, toIsoDate, toIsoDateTime } from "@/shared/lib";
+import {
+  generateAccountId,
+  generateSyncQueueId,
+  parseDigitsToAmount,
+  toIsoDate,
+  toIsoDateTime,
+} from "@/shared/lib";
 import type { AccountId, SyncQueueId, UserId } from "@/shared/types/branded";
 import type { AccountSystemKey } from "../schema";
 import { type AccountRow, getAccountsBySystemKeys, insertAccount } from "./repository";
@@ -52,7 +58,7 @@ const toDefaultAccountRow = (
   name: template.name,
   institution: template.institution,
   last4: null,
-  baselineAmount: 0 as AccountRow["baselineAmount"],
+  baselineAmount: parseDigitsToAmount("0"),
   baselineDate: toIsoDate(now),
   creditLimit: null,
   closingDay: null,
@@ -83,8 +89,8 @@ export function ensureDefaultAccounts(db: AnyDb, userId: UserId, deps: Bootstrap
 
   db.transaction((tx) => {
     missingRows.forEach((row) => {
-      insertAccount(tx as AnyDb, row);
-      enqueueSync(tx as AnyDb, {
+      insertAccount(tx, row);
+      enqueueSync(tx, {
         id: createSyncId(),
         tableName: "accounts",
         rowId: row.id,

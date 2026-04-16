@@ -6,36 +6,8 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { z } from "zod";
 import * as dbSchema from "@/shared/db/schema";
-import type { UserId } from "@/shared/types/branded";
-
-type AccountBootstrapModule = {
-  ensureDefaultAccounts: (
-    db: unknown,
-    userId: UserId,
-    deps?: {
-      now?: () => Date;
-      createId?: () => string;
-      createSyncId?: () => string;
-    }
-  ) => Promise<unknown> | unknown;
-};
-
-type AccountRepositoryModule = {
-  insertAccount: (db: unknown, row: Record<string, unknown>) => void;
-  upsertAccount: (db: unknown, row: Record<string, unknown>) => void;
-  getAccountsBySystemKeys: (
-    db: unknown,
-    userId: UserId,
-    systemKeys: readonly string[]
-  ) => {
-    id: string;
-    systemKey: string | null;
-    name: string;
-    createdAt: string;
-    updatedAt: string;
-  }[];
-};
 
 type AccountRow = {
   user_id: string;
@@ -55,10 +27,28 @@ type SyncQueueRow = {
   row_id: string;
 };
 
+const tableInfoRowSchema = z.object({ name: z.string() });
+const accountRowSchema = z.object({
+  user_id: z.string(),
+  system_key: z.string().nullable(),
+  account_class: z.string(),
+  account_subtype: z.string(),
+  name: z.string(),
+  institution: z.string(),
+  baseline_amount: z.number(),
+  baseline_date: z.string(),
+  archived_at: z.string().nullable(),
+});
+const syncQueueRowSchema = z.object({
+  table_name: z.string(),
+  operation: z.string(),
+  row_id: z.string(),
+});
+
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
 
-const USER_ID = "user-1" as UserId;
+const USER_ID = "user-1";
 const FIXED_NOW = new Date("2026-04-13T12:00:00.000Z");
 const rootLayoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
 const onboardingSource = readFileSync(
@@ -82,7 +72,7 @@ describe("accounts bootstrap", () => {
   });
 
   it("creates the accounts table with baseline and archive columns in migrations", () => {
-    const columns = sqlite.pragma("table_info(accounts)") as { name: string }[];
+    const columns = z.array(tableInfoRowSchema).parse(sqlite.pragma("table_info(accounts)"));
     const columnNames = columns.map((column) => column.name);
 
     expect(columnNames).toEqual(
@@ -105,12 +95,12 @@ describe("accounts bootstrap", () => {
 
   it("bootstraps default accounts in both onboarding and the authenticated app shell", () => {
     expect(rootLayoutSource).toContain("ensureDefaultAccounts(db, userId);");
-    expect(onboardingSource).toContain("ensureDefaultAccounts(db, userId as UserId);");
+    expect(onboardingSource).toContain("ensureDefaultAccounts(db, userId);");
   });
 
   it("seeds one default cash account and one default digital holding account per user", async () => {
     const moduleId = "@/features/accounts/lib/bootstrap";
-    const mod = (await import(moduleId).catch(() => null)) as AccountBootstrapModule | null;
+    const mod = await import(moduleId).catch(() => null);
 
     expect(mod).not.toBeNull();
     if (!mod) return;
@@ -128,36 +118,38 @@ describe("accounts bootstrap", () => {
       return nextId;
     };
 
-    await mod.ensureDefaultAccounts(db as any, USER_ID, {
+    await mod.ensureDefaultAccounts(db, USER_ID, {
       now: () => FIXED_NOW,
       createId,
       createSyncId,
     });
-    await mod.ensureDefaultAccounts(db as any, USER_ID, {
+    await mod.ensureDefaultAccounts(db, USER_ID, {
       now: () => FIXED_NOW,
       createId,
       createSyncId,
     });
 
-    const rows = sqlite
-      .prepare(
-        `
-          select
-            user_id,
-            system_key,
-            account_class,
-            account_subtype,
-            name,
-            institution,
-            baseline_amount,
-            baseline_date,
-            archived_at
-          from accounts
-          where user_id = ?
-          order by system_key
-        `
-      )
-      .all(USER_ID) as AccountRow[];
+    const rows = z.array(accountRowSchema).parse(
+      sqlite
+        .prepare(
+          `
+            select
+              user_id,
+              system_key,
+              account_class,
+              account_subtype,
+              name,
+              institution,
+              baseline_amount,
+              baseline_date,
+              archived_at
+            from accounts
+            where user_id = ?
+            order by system_key
+          `
+        )
+        .all(USER_ID)
+    );
 
     expect(rows).toHaveLength(2);
     expect(rows).toEqual([
@@ -185,15 +177,17 @@ describe("accounts bootstrap", () => {
       },
     ]);
 
-    const syncRows = sqlite
-      .prepare(
-        `
-          select table_name, operation, row_id
-          from sync_queue
-          order by row_id
-        `
-      )
-      .all() as SyncQueueRow[];
+    const syncRows = z.array(syncQueueRowSchema).parse(
+      sqlite
+        .prepare(
+          `
+            select table_name, operation, row_id
+            from sync_queue
+            order by row_id
+          `
+        )
+        .all()
+    );
 
     expect(syncRows).toEqual([
       { table_name: "accounts", operation: "insert", row_id: "acct-cash" },
@@ -202,11 +196,9 @@ describe("accounts bootstrap", () => {
   });
 
   it("upserts default accounts by system key without rewriting createdAt", async () => {
-    const mod = (await import(
-      "@/features/accounts/lib/repository"
-    )) as unknown as AccountRepositoryModule;
+    const mod = await import("@/features/accounts/lib/repository");
 
-    mod.insertAccount(db as any, {
+    mod.insertAccount(db, {
       id: "acct-original",
       userId: USER_ID,
       systemKey: "default_cash",
@@ -225,7 +217,7 @@ describe("accounts bootstrap", () => {
       updatedAt: "2026-04-13T08:00:00.000Z",
     });
 
-    mod.upsertAccount(db as any, {
+    mod.upsertAccount(db, {
       id: "acct-replacement",
       userId: USER_ID,
       systemKey: "default_cash",
@@ -244,7 +236,7 @@ describe("accounts bootstrap", () => {
       updatedAt: "2026-04-14T09:00:00.000Z",
     });
 
-    expect(mod.getAccountsBySystemKeys(db as any, USER_ID, ["default_cash"])).toEqual([
+    expect(mod.getAccountsBySystemKeys(db, USER_ID, ["default_cash"])).toEqual([
       expect.objectContaining({
         id: "acct-original",
         systemKey: "default_cash",
