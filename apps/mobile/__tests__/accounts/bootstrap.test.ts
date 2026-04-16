@@ -21,6 +21,18 @@ type AccountBootstrapModule = {
   ) => Promise<unknown> | unknown;
 };
 
+type AccountRepositoryModule = {
+  insertAccount: (db: unknown, row: Record<string, unknown>) => void;
+  upsertAccount: (db: unknown, row: Record<string, unknown>) => void;
+  getAccountsBySystemKeys: (db: unknown, userId: UserId, systemKeys: readonly string[]) => {
+    id: string;
+    systemKey: string | null;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
+  }[];
+};
+
 type AccountRow = {
   user_id: string;
   system_key: string | null;
@@ -183,5 +195,121 @@ describe("accounts bootstrap", () => {
       { table_name: "accounts", operation: "insert", row_id: "acct-cash" },
       { table_name: "accounts", operation: "insert", row_id: "acct-digital" },
     ]);
+  });
+
+  it("upserts default accounts by system key without rewriting createdAt", async () => {
+    const mod = (await import("@/features/accounts/lib/repository")) as AccountRepositoryModule;
+
+    mod.insertAccount(db as any, {
+      id: "acct-original",
+      userId: USER_ID,
+      systemKey: "default_cash",
+      accountClass: "asset",
+      accountSubtype: "cash",
+      name: "Cash",
+      institution: "Fidy",
+      last4: null,
+      baselineAmount: 0,
+      baselineDate: "2026-04-13",
+      creditLimit: null,
+      closingDay: null,
+      dueDay: null,
+      archivedAt: null,
+      createdAt: "2026-04-13T08:00:00.000Z",
+      updatedAt: "2026-04-13T08:00:00.000Z",
+    });
+
+    mod.upsertAccount(db as any, {
+      id: "acct-replacement",
+      userId: USER_ID,
+      systemKey: "default_cash",
+      accountClass: "asset",
+      accountSubtype: "cash",
+      name: "Updated Cash",
+      institution: "Fidy",
+      last4: null,
+      baselineAmount: 0,
+      baselineDate: "2026-04-13",
+      creditLimit: null,
+      closingDay: null,
+      dueDay: null,
+      archivedAt: null,
+      createdAt: "2026-04-14T09:00:00.000Z",
+      updatedAt: "2026-04-14T09:00:00.000Z",
+    });
+
+    expect(mod.getAccountsBySystemKeys(db as any, USER_ID, ["default_cash"])).toEqual([
+      expect.objectContaining({
+        id: "acct-original",
+        systemKey: "default_cash",
+        name: "Updated Cash",
+        createdAt: "2026-04-13T08:00:00.000Z",
+        updatedAt: "2026-04-14T09:00:00.000Z",
+      }),
+    ]);
+  });
+
+  it("rejects invalid local enum and day-of-month values at the database layer", () => {
+    expect(() =>
+      sqlite
+        .prepare(
+          `
+            insert into accounts (
+              id, user_id, system_key, account_class, account_subtype, name, institution, last4,
+              baseline_amount, baseline_date, credit_limit, closing_day, due_day, archived_at,
+              created_at, updated_at
+            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `
+        )
+        .run(
+          "acct-invalid-class",
+          USER_ID,
+          null,
+          "weird",
+          "cash",
+          "Broken",
+          "Fidy",
+          null,
+          0,
+          "2026-04-13",
+          null,
+          null,
+          null,
+          null,
+          "2026-04-13T08:00:00.000Z",
+          "2026-04-13T08:00:00.000Z"
+        )
+    ).toThrow();
+
+    expect(() =>
+      sqlite
+        .prepare(
+          `
+            insert into accounts (
+              id, user_id, system_key, account_class, account_subtype, name, institution, last4,
+              baseline_amount, baseline_date, credit_limit, closing_day, due_day, archived_at,
+              created_at, updated_at
+            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `
+        )
+        .run(
+          "acct-invalid-metadata",
+          USER_ID,
+          null,
+          "asset",
+          "cash",
+          "Broken",
+          "Fidy",
+          "12ab",
+          0,
+          "2026-04-13",
+          -1,
+          0,
+          32,
+          null,
+          "2026-04-13T08:00:00.000Z",
+          "2026-04-13T08:00:00.000Z"
+        )
+    ).toThrow();
   });
 });

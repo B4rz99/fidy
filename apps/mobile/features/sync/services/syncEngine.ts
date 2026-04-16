@@ -155,7 +155,7 @@ async function processAccountEntry(
 ): Promise<boolean> {
   const row = getAccountById(db, rowId as Parameters<typeof getAccountById>[1]);
   if (!row) return true;
-  const { error } = await supabase.from("accounts").upsert({
+  const payload = {
     id: row.id,
     user_id: row.userId,
     system_key: row.systemKey,
@@ -172,7 +172,13 @@ async function processAccountEntry(
     archived_at: row.archivedAt,
     created_at: row.createdAt,
     updated_at: row.updatedAt,
-  });
+  };
+  const { error } =
+    row.systemKey != null
+      ? await supabase.from("accounts").upsert(payload, {
+          onConflict: "user_id,system_key",
+        })
+      : await supabase.from("accounts").upsert(payload);
   return !error;
 }
 
