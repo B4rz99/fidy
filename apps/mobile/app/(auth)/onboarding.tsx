@@ -20,6 +20,7 @@ import { useTransactionStore } from "@/features/transactions";
 import { StyleSheet, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useSubscription, useThemeColor } from "@/shared/hooks";
+import { captureError } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import migrations from "../../drizzle/migrations";
 
@@ -41,18 +42,23 @@ export default function OnboardingScreen() {
   useSubscription(
     () => {
       if (!db || !userId) return;
-      ensureDefaultAccounts(db, userId as UserId);
-      useEmailCaptureStore.getState().initStore(db, userId);
-      useTransactionStore.getState().initStore(db, userId as UserId);
-      useBudgetStore.getState().initStore(db, userId as UserId);
-      Promise.all([
-        useEmailCaptureStore.getState().loadAccounts(),
-        useTransactionStore.getState().loadInitialPage(),
-      ])
-        .catch(() => {})
-        .finally(() => {
-          setStoresReady(true);
-        });
+      try {
+        ensureDefaultAccounts(db, userId as UserId);
+        useEmailCaptureStore.getState().initStore(db, userId);
+        useTransactionStore.getState().initStore(db, userId as UserId);
+        useBudgetStore.getState().initStore(db, userId as UserId);
+        Promise.all([
+          useEmailCaptureStore.getState().loadAccounts(),
+          useTransactionStore.getState().loadInitialPage(),
+        ])
+          .catch(captureError)
+          .finally(() => {
+            setStoresReady(true);
+          });
+      } catch (error) {
+        captureError(error);
+        setStoresReady(true);
+      }
     },
     [db, userId],
     migrationsReady && db != null && userId != null && !storesReady

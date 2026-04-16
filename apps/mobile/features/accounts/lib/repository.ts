@@ -54,26 +54,38 @@ export function getAccountsBySystemKeys(
 }
 
 export function upsertAccount(db: AnyDb, row: AccountRow) {
+  const set = {
+    systemKey: row.systemKey,
+    accountClass: row.accountClass,
+    accountSubtype: row.accountSubtype,
+    name: row.name,
+    institution: row.institution,
+    last4: row.last4,
+    baselineAmount: row.baselineAmount,
+    baselineDate: row.baselineDate,
+    creditLimit: row.creditLimit,
+    closingDay: row.closingDay,
+    dueDay: row.dueDay,
+    archivedAt: row.archivedAt,
+    updatedAt: row.updatedAt,
+  } as const;
+
+  if (row.systemKey != null) {
+    db.insert(accounts)
+      .values(row)
+      .onConflictDoUpdate({
+        target: [accounts.userId, accounts.systemKey],
+        set,
+      })
+      .run();
+    return;
+  }
+
   db.insert(accounts)
     .values(row)
     .onConflictDoUpdate({
       target: accounts.id,
-      set: {
-        systemKey: row.systemKey,
-        accountClass: row.accountClass,
-        accountSubtype: row.accountSubtype,
-        name: row.name,
-        institution: row.institution,
-        last4: row.last4,
-        baselineAmount: row.baselineAmount,
-        baselineDate: row.baselineDate,
-        creditLimit: row.creditLimit,
-        closingDay: row.closingDay,
-        dueDay: row.dueDay,
-        archivedAt: row.archivedAt,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-      },
+      set,
     })
     .run();
 }

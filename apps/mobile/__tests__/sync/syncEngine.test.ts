@@ -8,6 +8,7 @@ const mockGetTransactionById = vi.fn().mockReturnValue(null);
 const mockGetSyncMeta = vi.fn().mockReturnValue(null);
 const mockSetSyncMeta = vi.fn();
 const mockUpsertTransaction = vi.fn();
+const mockGetAccountById = vi.fn().mockReturnValue(null);
 
 const mockInsertConflict = vi.fn();
 vi.mock("@/features/sync/lib/conflict-repository", () => ({
@@ -21,6 +22,10 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   getSyncMeta: (...args: any[]) => mockGetSyncMeta(...args),
   setSyncMeta: (...args: any[]) => mockSetSyncMeta(...args),
   upsertTransaction: (...args: any[]) => mockUpsertTransaction(...args),
+}));
+
+vi.mock("@/features/accounts", () => ({
+  getAccountById: (...args: any[]) => mockGetAccountById(...args),
 }));
 
 const mockDb = {} as any;
@@ -151,6 +156,52 @@ describe("syncEngine", () => {
       const { syncPush } = await import("@/features/sync/services/syncEngine");
       await syncPush(mockDb, mockSupabase, "user-1");
 
+      expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-1"]);
+    });
+
+    it("upserts default accounts using the logical system-key conflict target", async () => {
+      mockGetQueuedSyncEntries.mockReturnValueOnce([
+        {
+          id: "sq-1",
+          tableName: "accounts",
+          rowId: "acct-cash",
+          operation: "insert",
+          createdAt: "2026-03-04T10:00:00.000Z",
+        },
+      ]);
+      mockGetAccountById.mockReturnValueOnce({
+        id: "acct-cash",
+        userId: "user-1",
+        systemKey: "default_cash",
+        accountClass: "asset",
+        accountSubtype: "cash",
+        name: "Cash",
+        institution: "Fidy",
+        last4: null,
+        baselineAmount: 0,
+        baselineDate: "2026-03-04",
+        creditLimit: null,
+        closingDay: null,
+        dueDay: null,
+        archivedAt: null,
+        createdAt: "2026-03-04T10:00:00.000Z",
+        updatedAt: "2026-03-04T10:00:00.000Z",
+      });
+      mockUpsert.mockReturnValueOnce({ error: null });
+      const mockSupabase = createMockSupabase();
+
+      const { syncPush } = await import("@/features/sync/services/syncEngine");
+      await syncPush(mockDb, mockSupabase, "user-1");
+
+      expect(mockSupabase.from).toHaveBeenCalledWith("accounts");
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "acct-cash",
+          user_id: "user-1",
+          system_key: "default_cash",
+        }),
+        { onConflict: "user_id,system_key" }
+      );
       expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-1"]);
     });
   });
