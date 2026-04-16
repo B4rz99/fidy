@@ -183,11 +183,8 @@ describe("accounts bootstrap", () => {
       Reflect.apply(Reflect.get(mod, "insertAccount"), mod, [db, row]);
     const upsertAccount = (db: unknown, row: Record<string, unknown>) =>
       Reflect.apply(Reflect.get(mod, "upsertAccount"), mod, [db, row]);
-    const getAccountsBySystemKeys = (
-      db: unknown,
-      userId: string,
-      systemKeys: readonly string[]
-    ) => Reflect.apply(Reflect.get(mod, "getAccountsBySystemKeys"), mod, [db, userId, systemKeys]);
+    const getAccountsBySystemKeys = (db: unknown, userId: string, systemKeys: readonly string[]) =>
+      Reflect.apply(Reflect.get(mod, "getAccountsBySystemKeys"), mod, [db, userId, systemKeys]);
 
     insertAccount(db, {
       id: "acct-original",
