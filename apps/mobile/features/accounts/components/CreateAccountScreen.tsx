@@ -57,7 +57,10 @@ export function CreateAccountScreen() {
   const hasValidLast4 = isLast4ValidOrEmpty(last4);
   const hasValidCreditCardDays = hasValidCreditCardSchedule(subtype, closingDay, dueDay);
   const isFormValid =
-    name.trim().length > 0 && institution.trim().length > 0 && hasValidLast4 && hasValidCreditCardDays;
+    name.trim().length > 0 &&
+    institution.trim().length > 0 &&
+    hasValidLast4 &&
+    hasValidCreditCardDays;
 
   const handleSave = () => {
     void guardedCreate(async () => {
