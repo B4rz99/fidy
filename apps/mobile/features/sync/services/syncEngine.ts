@@ -19,11 +19,13 @@ import {
   generateSyncConflictId,
   toIsoDateTime,
 } from "@/shared/lib";
-import type { BudgetId, SyncQueueId, TransactionId } from "@/shared/types/branded";
+import type { AccountId, BudgetId, SyncQueueId, TransactionId } from "@/shared/types/branded";
 import { hasDataConflict } from "../lib/conflict-detection";
 import { insertConflict } from "../lib/conflict-repository";
 
 const LAST_SYNC_AT = "last_sync_at";
+
+const isAccountId = (value: string): value is AccountId => value.length > 0;
 
 type SupabaseTransactionRow = {
   id: string;
@@ -153,7 +155,8 @@ async function processAccountEntry(
   supabase: SupabaseClient,
   rowId: string
 ): Promise<boolean> {
-  const row = getAccountById(db, rowId as Parameters<typeof getAccountById>[1]);
+  if (!isAccountId(rowId)) return true;
+  const row = getAccountById(db, rowId);
   if (!row) return true;
   const payload = {
     id: row.id,

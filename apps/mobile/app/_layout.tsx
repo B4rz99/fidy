@@ -71,6 +71,8 @@ if (SENTRY_DSN) {
   initSentry(SENTRY_DSN);
 }
 
+const hasAuthenticatedUserId = (value: string | null): value is UserId => value != null;
+
 function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
   const router = useRouter();
   const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
@@ -422,8 +424,8 @@ function RootLayout() {
             }}
           />
         </Stack>
-        {db && userId && onboardingComplete && (
-          <AuthenticatedShell db={db} userId={userId as UserId} />
+        {db && hasAuthenticatedUserId(userId) && onboardingComplete && (
+          <AuthenticatedShell db={db} userId={userId} />
         )}
       </SentryErrorBoundary>
       <StatusBar style="auto" />
