@@ -308,11 +308,34 @@ run_codex() {
 
 initialize_progress_file() {
   local target_file="$1"
+  local template_file
 
   if [ ! -f "$target_file" ]; then
+    template_file="${target_file%.txt}.template.txt"
+
+    if [ -f "$template_file" ]; then
+      cp "$template_file" "$target_file"
+      return
+    fi
+
     echo "# Ralph Progress Log" > "$target_file"
     echo "Started: $(date)" >> "$target_file"
     echo "---" >> "$target_file"
+  fi
+}
+
+initialize_maintenance_files() {
+  local progress_file="$1"
+  local report_file=""
+
+  initialize_progress_file "$progress_file"
+
+  if [[ "$progress_file" == *"coverage-progress.txt" ]]; then
+    report_file="${progress_file%-progress.txt}-report.txt"
+  fi
+
+  if [[ -n "$report_file" ]]; then
+    initialize_progress_file "$report_file"
   fi
 }
 
@@ -366,7 +389,7 @@ if [[ "$MODE" == "story" ]]; then
     exit 0
   fi
 else
-  initialize_progress_file "$ACTIVE_PROGRESS_FILE"
+  initialize_maintenance_files "$ACTIVE_PROGRESS_FILE"
 fi
 
 echo "Starting Ralph - Mode: $MODE - Tool: $TOOL - Max iterations: $MAX_ITERATIONS"
