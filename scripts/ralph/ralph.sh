@@ -1,6 +1,6 @@
 #!/bin/bash
 # Ralph Wiggum - Long-running AI agent loop
-# Usage: ./ralph.sh [--tool auto|codex|amp|claude] [--maintenance] [--prompt-file path] [--progress-file path] [max_iterations]
+# Usage: ./ralph.sh [--tool auto|opencode|codex|claude] [--maintenance] [--prompt-file path] [--progress-file path] [max_iterations]
 
 set -e
 set -o pipefail
@@ -11,6 +11,7 @@ MODE="story"
 MAX_ITERATIONS=10
 CUSTOM_PROMPT_FILE=""
 CUSTOM_PROGRESS_FILE=""
+RALPH_WORKTREE_ACTIVE="${RALPH_WORKTREE_ACTIVE:-0}"
 
 resolve_path() {
   local input_path="$1"
@@ -22,6 +23,68 @@ resolve_path() {
   else
     echo "$PWD/$input_path"
   fi
+}
+
+infer_maintenance_name() {
+  local prompt_path="$1"
+  local progress_path="$2"
+  local combined="${prompt_path} ${progress_path}"
+
+  if [[ "$combined" == *"coverage"* ]]; then
+    echo "coverage"
+    return
+  fi
+
+  if [[ "$combined" == *"entropy"* ]]; then
+    echo "entropy"
+    return
+  fi
+
+  if [[ "$combined" == *"lint"* ]]; then
+    echo "lint"
+    return
+  fi
+
+  echo ""
+}
+
+map_path_to_worktree() {
+  local source_path="$1"
+  local source_root="$2"
+  local target_root="$3"
+
+  if [[ -z "$source_path" ]]; then
+    echo ""
+    return
+  fi
+
+  if [[ "$source_path" == "$source_root"* ]]; then
+    echo "$target_root${source_path#$source_root}"
+    return
+  fi
+
+  echo "$source_path"
+}
+
+ensure_maintenance_worktree() {
+  local branch_name="$1"
+  local worktree_path="$2"
+
+  if git -C "$REPO_ROOT" worktree list --porcelain | grep -Fqx "worktree $worktree_path"; then
+    return
+  fi
+
+  if [[ -e "$worktree_path" ]]; then
+    echo "Error: Worktree path already exists but is not registered: $worktree_path"
+    exit 1
+  fi
+
+  if git -C "$REPO_ROOT" show-ref --verify --quiet "refs/heads/$branch_name"; then
+    git -C "$REPO_ROOT" worktree add "$worktree_path" "$branch_name"
+    return
+  fi
+
+  git -C "$REPO_ROOT" worktree add -b "$branch_name" "$worktree_path" HEAD
 }
 
 while [[ $# -gt 0 ]]; do
@@ -65,8 +128,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate tool choice
-if [[ "$TOOL" != "auto" && "$TOOL" != "codex" && "$TOOL" != "amp" && "$TOOL" != "claude" ]]; then
-  echo "Error: Invalid tool '$TOOL'. Must be 'auto', 'codex', 'amp', or 'claude'."
+if [[ "$TOOL" != "auto" && "$TOOL" != "opencode" && "$TOOL" != "codex" && "$TOOL" != "claude" ]]; then
+  echo "Error: Invalid tool '$TOOL'. Must be 'auto', 'opencode', 'codex', or 'claude'."
   exit 1
 fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -75,7 +138,8 @@ PRD_FILE="$SCRIPT_DIR/prd.json"
 PROGRESS_FILE="$SCRIPT_DIR/progress.txt"
 ARCHIVE_DIR="$SCRIPT_DIR/archive"
 LAST_BRANCH_FILE="$SCRIPT_DIR/.last-branch"
-DEFAULT_PROMPT_FILE="$SCRIPT_DIR/prompt.md"
+DEFAULT_PROMPT_FILE="$SCRIPT_DIR/AGENTS.md"
+OPENCODE_PROMPT_FILE="$SCRIPT_DIR/prompt-opencode.md"
 DEFAULT_INSTRUCTIONS_FILE="$SCRIPT_DIR/AGENTS.md"
 PROMPT_FILE="${CUSTOM_PROMPT_FILE:-$DEFAULT_PROMPT_FILE}"
 INSTRUCTIONS_FILE="$DEFAULT_INSTRUCTIONS_FILE"
@@ -95,6 +159,30 @@ if [[ "$MODE" == "maintenance" ]]; then
 
   INSTRUCTIONS_FILE="$CUSTOM_PROMPT_FILE"
   ACTIVE_PROGRESS_FILE="${CUSTOM_PROGRESS_FILE:-$SCRIPT_DIR/maintenance-progress.txt}"
+fi
+
+if [[ "$MODE" == "maintenance" && "$RALPH_WORKTREE_ACTIVE" != "1" ]]; then
+  MAINTENANCE_NAME="$(infer_maintenance_name "$CUSTOM_PROMPT_FILE" "$ACTIVE_PROGRESS_FILE")"
+
+  if [[ -n "$MAINTENANCE_NAME" ]]; then
+    WORKTREE_PARENT="$(dirname "$REPO_ROOT")"
+    WORKTREE_PATH="$WORKTREE_PARENT/$(basename "$REPO_ROOT")-$MAINTENANCE_NAME"
+    ensure_maintenance_worktree "$MAINTENANCE_NAME" "$WORKTREE_PATH"
+
+    WORKTREE_PROMPT_FILE="$(map_path_to_worktree "$CUSTOM_PROMPT_FILE" "$REPO_ROOT" "$WORKTREE_PATH")"
+    WORKTREE_PROGRESS_FILE="$(map_path_to_worktree "$ACTIVE_PROGRESS_FILE" "$REPO_ROOT" "$WORKTREE_PATH")"
+
+    echo "Using maintenance worktree: $WORKTREE_PATH"
+    echo "Using maintenance branch: $MAINTENANCE_NAME"
+
+    exec env RALPH_WORKTREE_ACTIVE=1 \
+      "$WORKTREE_PATH/scripts/ralph/ralph.sh" \
+      --tool "$TOOL" \
+      --maintenance \
+      --prompt-file "$WORKTREE_PROMPT_FILE" \
+      --progress-file "$WORKTREE_PROGRESS_FILE" \
+      "$MAX_ITERATIONS"
+  fi
 fi
 
 if [[ "$MODE" == "maintenance" ]]; then
@@ -122,9 +210,23 @@ find_codex_bin() {
   echo ""
 }
 
+find_opencode_bin() {
+  if command -v opencode >/dev/null 2>&1; then
+    command -v opencode
+    return
+  fi
+
+  echo ""
+}
+
 resolve_tool() {
   if [[ "$TOOL" != "auto" ]]; then
     echo "$TOOL"
+    return
+  fi
+
+  if [ -n "$(find_opencode_bin)" ]; then
+    echo "opencode"
     return
   fi
 
@@ -138,18 +240,23 @@ resolve_tool() {
     return
   fi
 
-  if command -v amp >/dev/null 2>&1; then
-    echo "amp"
-    return
-  fi
-
   echo ""
 }
 
 TOOL="$(resolve_tool)"
 
 if [[ -z "$TOOL" ]]; then
-  echo "Error: No supported runner found on PATH. Install Codex CLI, Claude Code, or Amp."
+  echo "Error: No supported runner found on PATH. Install OpenCode, Codex CLI, or Claude Code."
+  exit 1
+fi
+
+if [[ "$TOOL" == "opencode" ]]; then
+  export OPENCODE_PERMISSION='{"*": "allow"}'
+  export OPENCODE_DISABLE_AUTOCOMPACT=true
+fi
+
+if [[ "$TOOL" == "opencode" ]] && [[ -z "$(find_opencode_bin)" ]]; then
+  echo "Error: OpenCode runner requested, but no opencode binary was found."
   exit 1
 fi
 
@@ -162,8 +269,8 @@ if [[ "$TOOL" == "codex" ]]; then
   fi
 fi
 
-if [[ "$TOOL" == "amp" && ! -f "$PROMPT_FILE" ]]; then
-  PROMPT_FILE="$INSTRUCTIONS_FILE"
+if [[ "$TOOL" == "opencode" && "$MODE" == "story" && -z "$CUSTOM_PROMPT_FILE" ]]; then
+  PROMPT_FILE="$OPENCODE_PROMPT_FILE"
 fi
 
 check_prd_completion() {
@@ -276,10 +383,10 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo "==============================================================="
 
   # Run the selected tool with the ralph prompt
-  if [[ "$TOOL" == "codex" ]]; then
+  if [[ "$TOOL" == "opencode" ]]; then
+    cat "$PROMPT_FILE" | opencode run --agent build - 2>&1 | tee /dev/stderr || true
+  elif [[ "$TOOL" == "codex" ]]; then
     run_codex 2>&1 | tee /dev/stderr || true
-  elif [[ "$TOOL" == "amp" ]]; then
-    cat "$PROMPT_FILE" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr || true
   else
     # Claude Code: use --dangerously-skip-permissions for autonomous operation, --print for output
     claude --dangerously-skip-permissions --print < "$INSTRUCTIONS_FILE" 2>&1 | tee /dev/stderr || true
