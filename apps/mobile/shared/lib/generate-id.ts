@@ -19,7 +19,7 @@ import type {
 } from "@/shared/types/branded";
 
 /** Pure ID builder — all inputs explicit. */
-export function buildId(prefix: string, timestamp: number, entropy: string): string {
+function buildId(prefix: string, timestamp: number, entropy: string): string {
   return `${prefix}-${timestamp}-${entropy}`;
 }
 

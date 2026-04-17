@@ -31,7 +31,6 @@ export {
   parseDigitsToAmount,
 } from "./format-money";
 export {
-  buildId,
   generateBillId,
   generateBillPaymentId,
   generateBudgetId,
