@@ -1,47 +1,6 @@
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import {
-  accounts,
-  billPayments,
-  bills,
-  syncMeta,
-  syncQueue,
-  transactions,
-} from "@/shared/db/schema";
-
-describe("accounts table schema", () => {
-  it("is named 'accounts'", () => {
-    expect(getTableName(accounts)).toBe("accounts");
-  });
-
-  it("has all required columns", () => {
-    const cols = getTableColumns(accounts);
-    const names = Object.keys(cols);
-
-    expect(names).toContain("id");
-    expect(names).toContain("userId");
-    expect(names).toContain("systemKey");
-    expect(names).toContain("accountClass");
-    expect(names).toContain("accountSubtype");
-    expect(names).toContain("name");
-    expect(names).toContain("institution");
-    expect(names).toContain("baselineAmount");
-    expect(names).toContain("baselineDate");
-    expect(names).toContain("archivedAt");
-    expect(names).toContain("createdAt");
-    expect(names).toContain("updatedAt");
-  });
-
-  it("id is primary key", () => {
-    const cols = getTableColumns(accounts);
-    expect(cols.id.primary).toBe(true);
-  });
-
-  it("archivedAt is nullable", () => {
-    const cols = getTableColumns(accounts);
-    expect(cols.archivedAt.notNull).toBe(false);
-  });
-});
+import { billPayments, bills, syncMeta, syncQueue, transactions } from "@/shared/db/schema";
 
 describe("transactions table schema", () => {
   it("is named 'transactions'", () => {

@@ -1,7 +1,6 @@
 export type Brand<T, B extends string> = T & { readonly __brand: B };
 
 // Entity IDs
-export type AccountId = Brand<string, "AccountId">;
 export type TransactionId = Brand<string, "TransactionId">;
 export type BudgetId = Brand<string, "BudgetId">;
 export type BillId = Brand<string, "BillId">;

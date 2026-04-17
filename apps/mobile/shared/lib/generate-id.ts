@@ -1,5 +1,4 @@
 import type {
-  AccountId,
   BillId,
   BillPaymentId,
   BudgetId,
@@ -30,10 +29,6 @@ export function generateId(prefix: string): string {
 }
 
 // === Typed ID generators (one per entity) ===
-
-export function generateAccountId(): AccountId {
-  return generateId("acct") as AccountId;
-}
 
 export function generateTransactionId(): TransactionId {
   return generateId("txn") as TransactionId;

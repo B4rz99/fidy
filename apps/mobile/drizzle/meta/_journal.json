@@ -134,13 +134,6 @@
       "when": 1774280598654,
       "tag": "0018_notification_dedup_partial",
       "breakpoints": true
-    },
-    {
-      "idx": 19,
-      "version": "6",
-      "when": 1776059838060,
-      "tag": "0019_aspiring_romulus",
-      "breakpoints": true
     }
   ]
 }

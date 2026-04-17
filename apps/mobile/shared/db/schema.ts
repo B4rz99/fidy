@@ -1,6 +1,5 @@
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import type {
-  AccountId,
   BillId,
   BillPaymentId,
   BudgetId,
@@ -59,44 +58,6 @@ export const billPayments = sqliteTable(
   (table) => [
     index("idx_bill_payments_bill").on(table.billId),
     uniqueIndex("uq_bill_payment_occurrence").on(table.billId, table.dueDate),
-  ]
-);
-
-export const accounts = sqliteTable(
-  "accounts",
-  {
-    id: text("id").$type<AccountId>().primaryKey(),
-    userId: text("user_id").$type<UserId>().notNull(),
-    systemKey: text("system_key").$type<"default_cash" | "default_digital_holding" | null>(),
-    accountClass: text("account_class").$type<"asset" | "liability">().notNull(),
-    accountSubtype: text("account_subtype")
-      .$type<
-        | "checking"
-        | "savings"
-        | "cash"
-        | "digital_holding"
-        | "credit_card"
-        | "loan"
-        | "investment"
-        | "other"
-      >()
-      .notNull(),
-    name: text("name").notNull(),
-    institution: text("institution").notNull(),
-    last4: text("last4"),
-    baselineAmount: integer("baseline_amount").$type<CopAmount>().notNull(),
-    baselineDate: text("baseline_date").$type<IsoDate>().notNull(),
-    creditLimit: integer("credit_limit").$type<CopAmount>(),
-    closingDay: integer("closing_day"),
-    dueDay: integer("due_day"),
-    archivedAt: text("archived_at").$type<IsoDateTime>(),
-    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
-    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
-  },
-  (table) => [
-    index("idx_accounts_user_active").on(table.userId, table.archivedAt),
-    index("idx_accounts_user_subtype").on(table.userId, table.accountSubtype),
-    uniqueIndex("uq_accounts_user_system_key").on(table.userId, table.systemKey),
   ]
 );
 
