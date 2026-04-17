@@ -229,4 +229,32 @@ describe("write-through mutations", () => {
     expect(insertBudget).toHaveBeenCalledTimes(2);
     expect(enqueueSync).toHaveBeenCalledTimes(2);
   });
+
+  it("delegates command application to an injected applier", async () => {
+    const { createGenericWriteThroughMutationModule } = await loadModule();
+    const { insertTransaction } = await import("@/features/transactions/lib/repository");
+    const applyCommand = vi.fn(() => ({ didMutate: true, effects: [] }));
+    const module = createGenericWriteThroughMutationModule(mockDb, applyCommand);
+    const now = "2026-04-12T10:00:00.000Z" as IsoDateTime;
+
+    await module.commit({
+      kind: "transaction.save",
+      mode: "insert",
+      row: {
+        id: "tx-generic-1" as TransactionId,
+        userId: "user-1" as UserId,
+        type: "expense",
+        amount: 1000 as CopAmount,
+        categoryId: "food" as CategoryId,
+        description: "Lunch",
+        date: "2026-04-12" as IsoDate,
+        createdAt: now,
+        updatedAt: now,
+        deletedAt: null,
+      },
+    });
+
+    expect(applyCommand).toHaveBeenCalledOnce();
+    expect(insertTransaction).not.toHaveBeenCalled();
+  });
 });
