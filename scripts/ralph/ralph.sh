@@ -154,6 +154,14 @@ if [[ "$TOOL" != "auto" && "$TOOL" != "opencode" && "$TOOL" != "codex" && "$TOOL
 fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+COMMON_GIT_DIR="$(git -C "$REPO_ROOT" rev-parse --git-common-dir)"
+
+if [[ "$COMMON_GIT_DIR" = /* ]]; then
+  CANONICAL_REPO_ROOT="$(cd "$COMMON_GIT_DIR/.." && pwd)"
+else
+  CANONICAL_REPO_ROOT="$(cd "$REPO_ROOT/$COMMON_GIT_DIR/.." && pwd)"
+fi
+
 PRD_FILE="$SCRIPT_DIR/prd.json"
 PROGRESS_FILE="$SCRIPT_DIR/progress.txt"
 ARCHIVE_DIR="$SCRIPT_DIR/archive"
@@ -186,8 +194,8 @@ if [[ "$MODE" == "maintenance" && "$RALPH_WORKTREE_ACTIVE" != "1" ]]; then
   MAINTENANCE_NAME="$(infer_maintenance_name "$CUSTOM_PROMPT_FILE" "$ACTIVE_PROGRESS_FILE")"
 
   if [[ -n "$MAINTENANCE_NAME" ]]; then
-    WORKTREE_PARENT="$(dirname "$REPO_ROOT")"
-    WORKTREE_PATH="$WORKTREE_PARENT/$(basename "$REPO_ROOT")-$MAINTENANCE_NAME"
+    WORKTREE_PARENT="$(dirname "$CANONICAL_REPO_ROOT")"
+    WORKTREE_PATH="$WORKTREE_PARENT/$(basename "$CANONICAL_REPO_ROOT")-$MAINTENANCE_NAME"
     ensure_maintenance_worktree "$MAINTENANCE_NAME" "$WORKTREE_PATH"
 
     WORKTREE_PROMPT_FILE="$(map_path_to_worktree "$CUSTOM_PROMPT_FILE" "$REPO_ROOT" "$WORKTREE_PATH")"
