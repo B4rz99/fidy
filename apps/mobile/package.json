@@ -13,6 +13,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:mutation": "stryker run stryker.conf.json",
+    "bundle:atlas": "EXPO_UNSTABLE_ATLAS=true expo export --platform ios --output-dir dist/export",
+    "bundle:atlas:open": "expo-atlas .expo/atlas.jsonl",
     "build:dev": "eas build --profile development --platform all",
     "build:preview": "eas build --profile preview --platform all",
     "build:preview:ios": "eas build --profile preview --platform ios",
@@ -81,6 +84,7 @@
   },
   "devDependencies": {
     "@babel/plugin-transform-react-jsx": "^7.28.6",
+    "@stryker-mutator/core": "9.6.0",
     "@types/better-sqlite3": "7.6.13",
     "@types/react": "~19.2.10",
     "@vitest/coverage-v8": "^4.0.18",
@@ -90,7 +94,9 @@
     "drizzle-kit": "0.31.9",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~55.0.0",
+    "eslint-plugin-boundaries": "6.0.2",
     "eslint-plugin-import": "^2.32.0",
+    "expo-atlas": "0.4.3",
     "typescript-eslint": "^8.57.2",
     "vitest": "^4.0.18"
   }

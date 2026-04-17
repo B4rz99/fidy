@@ -50,7 +50,7 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
-type MutationEffect = () => void | Promise<void>;
+export type MutationEffect = () => void | Promise<void>;
 
 export type MutationOutcome =
   | { success: true; didMutate: boolean }
@@ -250,12 +250,14 @@ export type WriteThroughMutationModule = {
   commitBatch: (commands: readonly MutationCommand[]) => Promise<readonly MutationOutcome[]>;
 };
 
-type CommandEffectResult = {
+export type CommandEffectResult = {
   didMutate: boolean;
   effects: readonly MutationEffect[];
 };
 
-function toSyncEntry(
+export type MutationCommandApplier = (db: AnyDb, command: MutationCommand) => CommandEffectResult;
+
+export function toSyncEntry(
   tableName: SyncTableName,
   rowId: string,
   operation: SyncOperation,
@@ -268,6 +270,10 @@ function toSyncEntry(
     operation,
     createdAt,
   };
+}
+
+export function createBudgetCopyId(): BudgetId {
+  return generateBudgetId();
 }
 
 async function runEffects(effects: readonly MutationEffect[]) {
@@ -509,7 +515,10 @@ function applyCommand(db: AnyDb, command: MutationCommand): CommandEffectResult 
   return exhaustiveCheck;
 }
 
-export function createWriteThroughMutationModule(db: AnyDb): WriteThroughMutationModule {
+export function createGenericWriteThroughMutationModule(
+  db: AnyDb,
+  applyCommand: MutationCommandApplier
+): WriteThroughMutationModule {
   return {
     commit: async (command) => {
       try {
@@ -548,4 +557,8 @@ export function createWriteThroughMutationModule(db: AnyDb): WriteThroughMutatio
       }
     },
   };
+}
+
+export function createWriteThroughMutationModule(db: AnyDb): WriteThroughMutationModule {
+  return createGenericWriteThroughMutationModule(db, applyCommand);
 }
