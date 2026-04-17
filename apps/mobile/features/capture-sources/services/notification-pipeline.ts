@@ -32,7 +32,7 @@ import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/sh
 /** In-flight fingerprints guard against concurrent duplicate processing. */
 const inFlightFingerprints = new Set<string>();
 
-export type NotificationPipelineResult = {
+type NotificationPipelineResult = {
   saved: boolean;
   skippedDuplicate: boolean;
   transactionId: string | null;
