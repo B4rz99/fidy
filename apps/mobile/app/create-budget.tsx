@@ -34,7 +34,7 @@ function CreateBudgetForm({
   readonly onDone: () => void;
 }) {
   const { t, locale } = useTranslation();
-  const isEdit = !!existingBudget;
+  const isEdit = Boolean(existingBudget);
 
   const [category, setCategory] = useState<CategoryId>(
     existingBudget?.categoryId && isValidCategoryId(existingBudget.categoryId)
@@ -69,7 +69,7 @@ function CreateBudgetForm({
       const amount = parseDigitsToAmount(digits);
       if (amount <= 0) return;
 
-      if (isEdit) {
+      if (existingBudget) {
         await onUpdateBudget(existingBudget.id, amount);
         onDone();
       } else {

@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
 import { Appearance } from "@/shared/components/rn";
+import { captureWarning } from "@/shared/lib";
 
 export type ThemePreference = "system" | "light" | "dark";
 
@@ -41,7 +42,11 @@ const computeAllOff = (prefs: NotificationPreferences): boolean =>
   !prefs.budgetAlerts && !prefs.goalMilestones && !prefs.spendingAnomalies && !prefs.weeklyDigest;
 
 const persistPreferences = (prefs: NotificationPreferences): void => {
-  SecureStore.setItemAsync(PREFS_KEY, JSON.stringify(prefs)).catch(() => {});
+  void SecureStore.setItemAsync(PREFS_KEY, JSON.stringify(prefs)).catch((error) => {
+    captureWarning("notification_prefs_persist_failed", {
+      errorMessage: error instanceof Error ? error.message : "unknown",
+    });
+  });
   // Best-effort Supabase dual write (lazy import to avoid circular deps)
   import("@/shared/db/supabase")
     .then(async ({ getSupabase }) => {
@@ -68,7 +73,11 @@ const persistPreferences = (prefs: NotificationPreferences): void => {
         captureWarning("notification_prefs_sync_failed", { errorMessage: error.message });
       }
     })
-    .catch(() => {});
+    .catch((error) => {
+      captureWarning("notification_prefs_load_failed", {
+        errorMessage: error instanceof Error ? error.message : "unknown",
+      });
+    });
 };
 
 export const useSettingsStore = create<SettingsState & SettingsActions>((set, get) => ({
@@ -80,7 +89,11 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
   setThemePreference: (pref) => {
     set({ themePreference: pref });
     Appearance.setColorScheme(toColorScheme(pref));
-    SecureStore.setItemAsync("theme_preference", pref).catch(() => {});
+    void SecureStore.setItemAsync("theme_preference", pref).catch((error) => {
+      captureWarning("theme_preference_persist_failed", {
+        errorMessage: error instanceof Error ? error.message : "unknown",
+      });
+    });
   },
 
   setNotificationPreference: (key, value) => {

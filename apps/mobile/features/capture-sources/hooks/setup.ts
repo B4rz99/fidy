@@ -7,7 +7,7 @@ import type { IsoDateTime, UserId } from "@/shared/types/branded";
 import type { ApplePayIntentData, NotificationData } from "../schema";
 import { createCaptureIngestionPort } from "../services/capture-ingestion";
 
-const noop = () => {};
+const noop = () => undefined;
 
 // Dynamic import to avoid Android bundle crash — this module calls
 // requireNativeModule("ExpoAppIntents") which only exists on iOS.

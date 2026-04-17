@@ -56,18 +56,14 @@ export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set,
       if (currentPages === prevPagesRef) return;
       prevPagesRef = currentPages;
       if (get().incomeExpense !== null) {
-        get()
-          .loadAnalytics()
-          .catch(() => {});
+        void get().loadAnalytics();
       }
     });
   },
 
   setPeriod: (period) => {
     set({ period });
-    get()
-      .loadAnalytics()
-      .catch(() => {});
+    void get().loadAnalytics();
   },
 
   loadAnalytics: async () => {

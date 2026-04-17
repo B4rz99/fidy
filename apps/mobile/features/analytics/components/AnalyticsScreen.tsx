@@ -2,6 +2,7 @@ import { memo } from "react";
 import type { ViewStyle } from "@/shared/components/rn";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
+import { captureError } from "@/shared/lib";
 import type { AnalyticsPeriod } from "../lib/derive";
 import { useAnalyticsStore } from "../store";
 import { CategoryBreakdownCard } from "./CategoryBreakdownCard";
@@ -63,7 +64,7 @@ export function AnalyticsScreen() {
   // Load data on mount if boot-time load failed or hasn't completed
   useMountEffect(() => {
     if (!incomeExpense && !isLoading) {
-      loadAnalytics().catch(() => {});
+      loadAnalytics().catch(captureError);
     }
   });
 

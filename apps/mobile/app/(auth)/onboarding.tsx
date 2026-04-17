@@ -19,6 +19,7 @@ import { useTransactionStore } from "@/features/transactions";
 import { StyleSheet, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useSubscription, useThemeColor } from "@/shared/hooks";
+import { captureError } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import migrations from "../../drizzle/migrations";
 
@@ -47,7 +48,7 @@ export default function OnboardingScreen() {
         useEmailCaptureStore.getState().loadAccounts(),
         useTransactionStore.getState().loadInitialPage(),
       ])
-        .catch(() => {})
+        .catch(captureError)
         .finally(() => {
           setStoresReady(true);
         });

@@ -37,6 +37,9 @@
     "rules": {
       "recommended": true,
       "suspicious": {
+        "noEmptyBlockStatements": "error",
+        "noDoubleEquals": "error",
+        "noDebugger": "error",
         "noDuplicateObjectKeys": "error",
         "noRedeclare": "error"
       },
@@ -44,7 +47,9 @@
         "useNamingConvention": "warn"
       },
       "correctness": {
-        "noConstAssign": "error"
+        "noConstAssign": "error",
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error"
       }
     }
   },
