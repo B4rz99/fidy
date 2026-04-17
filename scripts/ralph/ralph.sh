@@ -1,6 +1,6 @@
 #!/bin/bash
 # Ralph Wiggum - Long-running AI agent loop
-# Usage: ./ralph.sh [--tool auto|codex|amp|claude] [--maintenance] [--prompt-file path] [--progress-file path] [max_iterations]
+# Usage: ./ralph.sh [--tool auto|opencode|codex|amp|claude] [--maintenance] [--prompt-file path] [--progress-file path] [max_iterations]
 
 set -e
 set -o pipefail
@@ -65,8 +65,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate tool choice
-if [[ "$TOOL" != "auto" && "$TOOL" != "codex" && "$TOOL" != "amp" && "$TOOL" != "claude" ]]; then
-  echo "Error: Invalid tool '$TOOL'. Must be 'auto', 'codex', 'amp', or 'claude'."
+if [[ "$TOOL" != "auto" && "$TOOL" != "opencode" && "$TOOL" != "codex" && "$TOOL" != "amp" && "$TOOL" != "claude" ]]; then
+  echo "Error: Invalid tool '$TOOL'. Must be 'auto', 'opencode', 'codex', 'amp', or 'claude'."
   exit 1
 fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -76,12 +76,18 @@ PROGRESS_FILE="$SCRIPT_DIR/progress.txt"
 ARCHIVE_DIR="$SCRIPT_DIR/archive"
 LAST_BRANCH_FILE="$SCRIPT_DIR/.last-branch"
 DEFAULT_PROMPT_FILE="$SCRIPT_DIR/prompt.md"
+OPENCODE_PROMPT_FILE="$SCRIPT_DIR/prompt-opencode.md"
 DEFAULT_INSTRUCTIONS_FILE="$SCRIPT_DIR/AGENTS.md"
 PROMPT_FILE="${CUSTOM_PROMPT_FILE:-$DEFAULT_PROMPT_FILE}"
 INSTRUCTIONS_FILE="$DEFAULT_INSTRUCTIONS_FILE"
 ACTIVE_PROGRESS_FILE="$PROGRESS_FILE"
 CODEX_CMD="${CODEX_CMD:-}"
 CODEX_BIN="${CODEX_BIN:-}"
+
+if [[ "$TOOL" == "opencode" ]]; then
+  export OPENCODE_PERMISSION='{"*": "allow"}'
+  export OPENCODE_DISABLE_AUTOCOMPACT=true
+fi
 
 if [[ "$MODE" == "maintenance" ]]; then
   if [[ -z "$CUSTOM_PROMPT_FILE" ]]; then
@@ -122,9 +128,23 @@ find_codex_bin() {
   echo ""
 }
 
+find_opencode_bin() {
+  if command -v opencode >/dev/null 2>&1; then
+    command -v opencode
+    return
+  fi
+
+  echo ""
+}
+
 resolve_tool() {
   if [[ "$TOOL" != "auto" ]]; then
     echo "$TOOL"
+    return
+  fi
+
+  if [ -n "$(find_opencode_bin)" ]; then
+    echo "opencode"
     return
   fi
 
@@ -149,7 +169,12 @@ resolve_tool() {
 TOOL="$(resolve_tool)"
 
 if [[ -z "$TOOL" ]]; then
-  echo "Error: No supported runner found on PATH. Install Codex CLI, Claude Code, or Amp."
+  echo "Error: No supported runner found on PATH. Install OpenCode, Codex CLI, Claude Code, or Amp."
+  exit 1
+fi
+
+if [[ "$TOOL" == "opencode" ]] && [[ -z "$(find_opencode_bin)" ]]; then
+  echo "Error: OpenCode runner requested, but no opencode binary was found."
   exit 1
 fi
 
@@ -160,6 +185,10 @@ if [[ "$TOOL" == "codex" ]]; then
     echo "Set CODEX_BIN or install Codex CLI, or use the macOS app bundle path."
     exit 1
   fi
+fi
+
+if [[ "$TOOL" == "opencode" && "$MODE" == "story" && -z "$CUSTOM_PROMPT_FILE" ]]; then
+  PROMPT_FILE="$OPENCODE_PROMPT_FILE"
 fi
 
 if [[ "$TOOL" == "amp" && ! -f "$PROMPT_FILE" ]]; then
@@ -276,7 +305,9 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo "==============================================================="
 
   # Run the selected tool with the ralph prompt
-  if [[ "$TOOL" == "codex" ]]; then
+  if [[ "$TOOL" == "opencode" ]]; then
+    cat "$PROMPT_FILE" | opencode run --agent build - 2>&1 | tee /dev/stderr || true
+  elif [[ "$TOOL" == "codex" ]]; then
     run_codex 2>&1 | tee /dev/stderr || true
   elif [[ "$TOOL" == "amp" ]]; then
     cat "$PROMPT_FILE" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr || true
