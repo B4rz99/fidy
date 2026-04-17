@@ -58,7 +58,7 @@ map_path_to_worktree() {
     return
   fi
 
-  if [[ "$source_path" == "$source_root"* ]]; then
+  if [[ "$source_path" == "$source_root" || "$source_path" == "$source_root"/* ]]; then
     echo "$target_root${source_path#$source_root}"
     return
   fi
@@ -69,8 +69,27 @@ map_path_to_worktree() {
 ensure_maintenance_worktree() {
   local branch_name="$1"
   local worktree_path="$2"
+  local target_head
+  local current_branch
+  local worktree_status
+
+  target_head="$(git -C "$REPO_ROOT" rev-parse HEAD)"
 
   if git -C "$REPO_ROOT" worktree list --porcelain | grep -Fqx "worktree $worktree_path"; then
+    current_branch="$(git -C "$worktree_path" branch --show-current)"
+
+    if [[ "$current_branch" != "$branch_name" ]]; then
+      echo "Error: Maintenance worktree $worktree_path is on branch '$current_branch', expected '$branch_name'."
+      exit 1
+    fi
+
+    worktree_status="$(git -C "$worktree_path" status --porcelain)"
+    if [[ -n "$worktree_status" ]]; then
+      echo "Error: Maintenance worktree $worktree_path has uncommitted changes. Commit or clean it before rerunning Ralph."
+      exit 1
+    fi
+
+    git -C "$worktree_path" reset --hard "$target_head" >/dev/null
     return
   fi
 
@@ -80,11 +99,12 @@ ensure_maintenance_worktree() {
   fi
 
   if git -C "$REPO_ROOT" show-ref --verify --quiet "refs/heads/$branch_name"; then
+    git -C "$REPO_ROOT" branch -f "$branch_name" "$target_head" >/dev/null
     git -C "$REPO_ROOT" worktree add "$worktree_path" "$branch_name"
     return
   fi
 
-  git -C "$REPO_ROOT" worktree add -b "$branch_name" "$worktree_path" HEAD
+  git -C "$REPO_ROOT" worktree add -b "$branch_name" "$worktree_path" "$target_head"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -141,6 +161,7 @@ LAST_BRANCH_FILE="$SCRIPT_DIR/.last-branch"
 DEFAULT_PROMPT_FILE="$SCRIPT_DIR/AGENTS.md"
 OPENCODE_PROMPT_FILE="$SCRIPT_DIR/prompt-opencode.md"
 DEFAULT_INSTRUCTIONS_FILE="$SCRIPT_DIR/AGENTS.md"
+MAINTENANCE_INSTRUCTIONS_FILE="$SCRIPT_DIR/prompts/AGENTS.md"
 PROMPT_FILE="${CUSTOM_PROMPT_FILE:-$DEFAULT_PROMPT_FILE}"
 INSTRUCTIONS_FILE="$DEFAULT_INSTRUCTIONS_FILE"
 ACTIVE_PROGRESS_FILE="$PROGRESS_FILE"
@@ -157,7 +178,7 @@ if [[ "$MODE" == "maintenance" ]]; then
     exit 1
   fi
 
-  INSTRUCTIONS_FILE="$CUSTOM_PROMPT_FILE"
+  INSTRUCTIONS_FILE="$MAINTENANCE_INSTRUCTIONS_FILE"
   ACTIVE_PROGRESS_FILE="${CUSTOM_PROGRESS_FILE:-$SCRIPT_DIR/maintenance-progress.txt}"
 fi
 
@@ -174,6 +195,8 @@ if [[ "$MODE" == "maintenance" && "$RALPH_WORKTREE_ACTIVE" != "1" ]]; then
 
     echo "Using maintenance worktree: $WORKTREE_PATH"
     echo "Using maintenance branch: $MAINTENANCE_NAME"
+
+    cd "$WORKTREE_PATH"
 
     exec env RALPH_WORKTREE_ACTIVE=1 \
       "$WORKTREE_PATH/scripts/ralph/ralph.sh" \
