@@ -76,6 +76,22 @@ describe("scheduleBudgetAlert", () => {
     expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
   });
 
+  it("returns { type: 'needs_permission' } when SecureStore lookup fails", async () => {
+    mockGetPermissionsAsync.mockResolvedValue({
+      status: "undetermined",
+      granted: false,
+      canAskAgain: true,
+    });
+    mockGetItemAsync.mockRejectedValue(new Error("secure store unavailable"));
+
+    const { scheduleBudgetAlert } = await import("@/features/budget/lib/notifications");
+
+    const result = await scheduleBudgetAlert(MOCK_ALERT, "Food");
+
+    expect(result).toEqual({ type: "needs_permission" });
+    expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
+  });
+
   it("returns { type: 'skipped' } when permission is denied", async () => {
     mockGetPermissionsAsync.mockResolvedValue({
       status: "denied",
@@ -114,5 +130,14 @@ describe("scheduleBudgetAlert", () => {
 
     expect(result).toEqual({ type: "skipped" });
     expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
+  });
+
+  it("returns { type: 'skipped' } when scheduling the notification throws", async () => {
+    mockScheduleNotificationAsync.mockRejectedValue(new Error("schedule failed"));
+    const { scheduleBudgetAlert } = await import("@/features/budget/lib/notifications");
+
+    const result = await scheduleBudgetAlert(MOCK_ALERT, "Food");
+
+    expect(result).toEqual({ type: "skipped" });
   });
 });
