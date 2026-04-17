@@ -10,7 +10,6 @@ export { GoalsListScreen } from "./components/GoalsListScreen";
 export type {
   BudgetNudge,
   ConfidenceTier,
-  DebtProjectionResult,
   GoalAlert,
   GoalPaceGuidance,
   GoalProgress,
