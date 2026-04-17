@@ -11,7 +11,7 @@ Break a plan into independently-grabbable GitHub issues using vertical slices (t
 
 ### 1. Gather context
 
-Work from whatever is already in the conversation context. If the user passes a GitHub issue number or URL as an argument, fetch it with `gh issue view <number>` (with comments).
+Work from whatever is already in the conversation context. If the user passes a GitHub issue number or URL as an argument, fetch it with `gh issue view <number> --comments`.
 
 ### 2. Explore the codebase (optional)
 
