@@ -158,6 +158,23 @@ describe("transaction mutation service", () => {
     expect(refreshMock).toHaveBeenCalledOnce();
   });
 
+  it("returns an update error without side effects when the write-through update fails", async () => {
+    currentCommit = vi.fn().mockResolvedValue({
+      success: false,
+      error: "update failed",
+    });
+    const service = createService();
+
+    await expect(service.update("txn-9" as TransactionId, input)).resolves.toEqual({
+      success: false,
+      error: "Failed to update transaction",
+    });
+
+    expect(trackEditedMock).not.toHaveBeenCalled();
+    expect(resetFormMock).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
+  });
+
   it("throws on failed deletes and still refreshes when commits are unavailable", async () => {
     const failingCommit = vi.fn().mockResolvedValue({
       success: false,
