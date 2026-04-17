@@ -2,6 +2,7 @@
   "name": "fidy-monorepo",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "bun@1.3.10",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -11,6 +12,7 @@
     "mobile:ios": "bun run --cwd apps/mobile ios",
     "mobile:android": "bun run --cwd apps/mobile android",
     "mobile:web": "bun run --cwd apps/mobile web",
+    "mcp:xcodebuild": "xcodebuildmcp mcp",
     "landing": "bun run --cwd apps/landing dev",
     "build:packages": "bun run --cwd packages/assets build && bun run --cwd packages/types build && bun run --cwd packages/schemas build && bun run --cwd packages/utils build",
     "lint:mobile": "bun run --cwd apps/mobile lint",
@@ -27,6 +29,7 @@
     "@biomejs/biome": "2.4.4",
     "bun-types": "1.3.10",
     "lefthook": "2.1.1",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "xcodebuildmcp": "2.3.2"
   }
 }
