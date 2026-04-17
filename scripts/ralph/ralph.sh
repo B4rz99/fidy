@@ -11,6 +11,7 @@ MODE="story"
 MAX_ITERATIONS=10
 CUSTOM_PROMPT_FILE=""
 CUSTOM_PROGRESS_FILE=""
+RALPH_WORKTREE_ACTIVE="${RALPH_WORKTREE_ACTIVE:-0}"
 
 resolve_path() {
   local input_path="$1"
@@ -22,6 +23,68 @@ resolve_path() {
   else
     echo "$PWD/$input_path"
   fi
+}
+
+infer_maintenance_name() {
+  local prompt_path="$1"
+  local progress_path="$2"
+  local combined="${prompt_path} ${progress_path}"
+
+  if [[ "$combined" == *"coverage"* ]]; then
+    echo "coverage"
+    return
+  fi
+
+  if [[ "$combined" == *"entropy"* ]]; then
+    echo "entropy"
+    return
+  fi
+
+  if [[ "$combined" == *"lint"* ]]; then
+    echo "lint"
+    return
+  fi
+
+  echo ""
+}
+
+map_path_to_worktree() {
+  local source_path="$1"
+  local source_root="$2"
+  local target_root="$3"
+
+  if [[ -z "$source_path" ]]; then
+    echo ""
+    return
+  fi
+
+  if [[ "$source_path" == "$source_root"* ]]; then
+    echo "$target_root${source_path#$source_root}"
+    return
+  fi
+
+  echo "$source_path"
+}
+
+ensure_maintenance_worktree() {
+  local branch_name="$1"
+  local worktree_path="$2"
+
+  if git -C "$REPO_ROOT" worktree list --porcelain | grep -Fqx "worktree $worktree_path"; then
+    return
+  fi
+
+  if [[ -e "$worktree_path" ]]; then
+    echo "Error: Worktree path already exists but is not registered: $worktree_path"
+    exit 1
+  fi
+
+  if git -C "$REPO_ROOT" show-ref --verify --quiet "refs/heads/$branch_name"; then
+    git -C "$REPO_ROOT" worktree add "$worktree_path" "$branch_name"
+    return
+  fi
+
+  git -C "$REPO_ROOT" worktree add -b "$branch_name" "$worktree_path" HEAD
 }
 
 while [[ $# -gt 0 ]]; do
@@ -96,6 +159,30 @@ if [[ "$MODE" == "maintenance" ]]; then
 
   INSTRUCTIONS_FILE="$CUSTOM_PROMPT_FILE"
   ACTIVE_PROGRESS_FILE="${CUSTOM_PROGRESS_FILE:-$SCRIPT_DIR/maintenance-progress.txt}"
+fi
+
+if [[ "$MODE" == "maintenance" && "$RALPH_WORKTREE_ACTIVE" != "1" ]]; then
+  MAINTENANCE_NAME="$(infer_maintenance_name "$CUSTOM_PROMPT_FILE" "$ACTIVE_PROGRESS_FILE")"
+
+  if [[ -n "$MAINTENANCE_NAME" ]]; then
+    WORKTREE_PARENT="$(dirname "$REPO_ROOT")"
+    WORKTREE_PATH="$WORKTREE_PARENT/$(basename "$REPO_ROOT")-$MAINTENANCE_NAME"
+    ensure_maintenance_worktree "$MAINTENANCE_NAME" "$WORKTREE_PATH"
+
+    WORKTREE_PROMPT_FILE="$(map_path_to_worktree "$CUSTOM_PROMPT_FILE" "$REPO_ROOT" "$WORKTREE_PATH")"
+    WORKTREE_PROGRESS_FILE="$(map_path_to_worktree "$ACTIVE_PROGRESS_FILE" "$REPO_ROOT" "$WORKTREE_PATH")"
+
+    echo "Using maintenance worktree: $WORKTREE_PATH"
+    echo "Using maintenance branch: $MAINTENANCE_NAME"
+
+    exec env RALPH_WORKTREE_ACTIVE=1 \
+      "$WORKTREE_PATH/scripts/ralph/ralph.sh" \
+      --tool "$TOOL" \
+      --maintenance \
+      --prompt-file "$WORKTREE_PROMPT_FILE" \
+      --progress-file "$WORKTREE_PROGRESS_FILE" \
+      "$MAX_ITERATIONS"
+  fi
 fi
 
 if [[ "$MODE" == "maintenance" ]]; then
