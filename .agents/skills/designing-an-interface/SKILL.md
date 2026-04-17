@@ -1,6 +1,6 @@
 ---
 name: designing-an-interface
-description: Generate multiple radically different interface designs for a module using parallel sub-agents. Use when user wants to design an API, explore interface options, compare module shapes, or mentions "design it twice".
+description: Use when the user wants to explore multiple API or module interface options before implementation, compare different module shapes, or explicitly asks to "design it twice".
 ---
 
 # Design an Interface
@@ -23,7 +23,7 @@ Ask: "What does this module need to do? Who will use it?"
 
 ### 2. Generate Designs (Parallel Sub-Agents)
 
-Spawn 3+ sub-agents simultaneously using Task tool (`spawn_agent`). Each must produce a **radically different** approach.
+Launch 3+ sub-agents in parallel using `functions.task` wrapped by `multi_tool_use.parallel`. Use `subagent_type: "general"` for design generation. Each agent must produce a **radically different** approach.
 
 ```
 Prompt template for each sub-agent:
@@ -90,9 +90,9 @@ From "A Philosophy of Software Design":
 
 - Don't let sub-agents produce similar designs - enforce radical difference
 - Don't skip comparison - the value is in contrast
-- Don't implement - this is purely about interface shape
+- Don't implement when the user is clearly asking for interface exploration - this skill is for pre-implementation design, not coding
 - Don't evaluate based on implementation effort
 
 ## Next Step
 
-After the interface is chosen, suggest: "Interface is locked in. Ready to implement? Run `/tdd`."
+After the interface is chosen, ask whether the user wants to keep exploring or move into implementation. If they explicitly want implementation, suggest the `tdd` or `test-driven-development` skill.

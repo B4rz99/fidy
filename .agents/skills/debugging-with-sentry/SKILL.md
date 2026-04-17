@@ -93,9 +93,9 @@ Thrown exceptions from: migration failures, sync conflicts, transaction save err
 
 All Sentry events are tied to a user via `Sentry.setUser({ id: userId })`, set on session change in `_layout.tsx`. Filter by user ID in Sentry to see their full event trail.
 
-## Sentry MCP
+## Sentry Access
 
-A Sentry MCP server is available. Use `ToolSearch` to find `mcp__sentry` tools for querying issues, events, and user trails directly from the conversation without opening the Sentry dashboard.
+If Sentry tools are enabled in the current environment, use them directly to query issues, events, and user trails before reading code. If Sentry access is not available in the current session, say so explicitly instead of pretending the tooling exists.
 
 ## Helpers
 

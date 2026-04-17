@@ -15,15 +15,15 @@ Ensure your branch is up to date with the main branch before running checks or c
 
 ## Step 1 — Code Review
 
-Invoke the `/requesting-code-review` skill to review the current changes against the plan/requirements. Fix any Critical or Important issues found before proceeding. Minor issues can be noted and skipped.
+Review the current changes against the plan and requirements before proceeding. If a dedicated review skill exists in the current environment, use it. Otherwise, perform the review directly and fix any Critical or Important issues before proceeding. Minor issues can be noted and skipped.
 
 ## Step 2 — Simplify
 
-Invoke the `/simplify` skill on all changed files. This reviews for code reuse, quality, and efficiency. Fix any issues it finds. If either step 1 or step 2 produced code changes, you must continue to step 3 to validate them.
+Use the `simplify` skill on all changed files when available. This reviews for code reuse, quality, and efficiency. Fix any issues it finds. If either step 1 or step 2 produced code changes, you must continue to step 3 to validate them.
 
 ## Step 3 — Security Review
 
-Invoke the `/security-review` skill on all changed files. Fix any Critical or Important issues found before proceeding.
+Run a focused security review on all changed files. If a dedicated security-review skill exists in the current environment, use it. Otherwise, inspect the diff directly for secrets, trust-boundary mistakes, unsafe data handling, auth regressions, or risky side effects. Fix any Critical or Important issues found before proceeding.
 
 ## Step 4 — Lint
 
