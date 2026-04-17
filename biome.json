@@ -44,7 +44,8 @@
         "useNamingConvention": "warn"
       },
       "correctness": {
-        "noConstAssign": "error"
+        "noConstAssign": "error",
+        "noUnusedImports": "error"
       }
     }
   },
