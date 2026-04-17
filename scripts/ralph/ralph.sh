@@ -69,8 +69,11 @@ map_path_to_worktree() {
 ensure_maintenance_worktree() {
   local branch_name="$1"
   local worktree_path="$2"
+  local target_head
   local current_branch
   local worktree_status
+
+  target_head="$(git -C "$REPO_ROOT" rev-parse HEAD)"
 
   if git -C "$REPO_ROOT" worktree list --porcelain | grep -Fqx "worktree $worktree_path"; then
     current_branch="$(git -C "$worktree_path" branch --show-current)"
@@ -86,6 +89,7 @@ ensure_maintenance_worktree() {
       exit 1
     fi
 
+    git -C "$worktree_path" reset --hard "$target_head" >/dev/null
     return
   fi
 
@@ -95,11 +99,12 @@ ensure_maintenance_worktree() {
   fi
 
   if git -C "$REPO_ROOT" show-ref --verify --quiet "refs/heads/$branch_name"; then
+    git -C "$REPO_ROOT" branch -f "$branch_name" "$target_head" >/dev/null
     git -C "$REPO_ROOT" worktree add "$worktree_path" "$branch_name"
     return
   fi
 
-  git -C "$REPO_ROOT" worktree add -b "$branch_name" "$worktree_path" HEAD
+  git -C "$REPO_ROOT" worktree add -b "$branch_name" "$worktree_path" "$target_head"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -181,13 +186,7 @@ if [[ "$MODE" == "maintenance" ]]; then
     exit 1
   fi
 
-  MAINTENANCE_PROMPT_FILE=$(mktemp)
-  cat "$MAINTENANCE_INSTRUCTIONS_FILE" > "$MAINTENANCE_PROMPT_FILE"
-  printf '\n\n## Active Maintenance Prompt\n\n' >> "$MAINTENANCE_PROMPT_FILE"
-  cat "$CUSTOM_PROMPT_FILE" >> "$MAINTENANCE_PROMPT_FILE"
-  trap '[[ -n "$MAINTENANCE_PROMPT_FILE" && -f "$MAINTENANCE_PROMPT_FILE" ]] && rm -f "$MAINTENANCE_PROMPT_FILE"' EXIT
-
-  INSTRUCTIONS_FILE="$MAINTENANCE_PROMPT_FILE"
+  INSTRUCTIONS_FILE="$MAINTENANCE_INSTRUCTIONS_FILE"
   ACTIVE_PROGRESS_FILE="${CUSTOM_PROGRESS_FILE:-$SCRIPT_DIR/maintenance-progress.txt}"
 fi
 
