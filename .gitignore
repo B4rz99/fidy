@@ -99,3 +99,6 @@ apps/mobile/.claude/settings.local.json
 *.orig
 .vercel
 scripts/ralph/.last-branch
+scripts/ralph/progress.txt
+scripts/ralph/*-progress.txt
+scripts/ralph/*-report.txt
