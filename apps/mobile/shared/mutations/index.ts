@@ -1,8 +1,8 @@
+export { createWriteThroughMutationModule } from "@/mutations";
 export {
   type CommandEffectResult,
   createBudgetCopyId,
   createGenericWriteThroughMutationModule,
-  createWriteThroughMutationModule,
   getMutationPolicy,
   type MutationCommand,
   type MutationCommandApplier,

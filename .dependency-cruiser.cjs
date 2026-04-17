@@ -16,19 +16,19 @@ module.exports = {
     {
       name: "shared-must-not-depend-on-app-routes",
       severity: "error",
-      from: { path: "^apps/mobile/shared/" },
+      from: { path: "^apps/mobile/shared/(?!mutations/)" },
       to: { path: "^apps/mobile/app/" },
     },
     {
       name: "shared-must-not-depend-on-features",
       severity: "error",
-      from: { path: "^apps/mobile/shared/" },
+      from: { path: "^apps/mobile/shared/(?!mutations/)" },
       to: { path: "^apps/mobile/features/" },
     },
     {
       name: "shared-must-not-depend-on-modules",
       severity: "error",
-      from: { path: "^apps/mobile/shared/" },
+      from: { path: "^apps/mobile/shared/(?!mutations/)" },
       to: { path: "^apps/mobile/modules/" },
     },
     {

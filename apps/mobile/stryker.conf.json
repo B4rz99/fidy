@@ -7,7 +7,12 @@
   },
   "reporters": ["clear-text", "html", "progress"],
   "coverageAnalysis": "off",
-  "mutate": ["features/**/lib/**/*.ts", "features/**/data/**/*.ts", "shared/lib/**/*.ts"],
+  "mutate": [
+    "features/**/lib/**/*.ts",
+    "features/**/data/**/*.ts",
+    "shared/lib/**/*.ts",
+    "shared/mutations/**/*.ts"
+  ],
   "ignorePatterns": [
     "__tests__/**",
     ".expo/**",
