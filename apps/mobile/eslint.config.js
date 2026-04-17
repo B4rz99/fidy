@@ -77,6 +77,7 @@ module.exports = defineConfig([
         "error",
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
+      "no-implicit-coercion": "error",
       "object-shorthand": ["error", "always"],
       "no-constant-binary-expression": "error",
       "no-useless-catch": "error",

@@ -20,23 +20,25 @@ export default function EnableNotificationsSheet() {
 
   const handleEnable = async () => {
     setIsRequesting(true);
-    try {
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status === "granted" && userId) {
-        await registerPushToken(userId as UserId);
-      }
-    } catch (err) {
-      captureError(err instanceof Error ? err : new Error("Permission request failed"));
-    } finally {
-      // Mark pre-permission as seen regardless of outcome
-      await SecureStore.setItemAsync(PRE_PERMISSION_KEY, "true").catch(() => {});
-      setIsRequesting(false);
-      router.back();
+    const status = await Notifications.requestPermissionsAsync()
+      .then((result) => result.status)
+      .catch((err) => {
+        captureError(err instanceof Error ? err : new Error("Permission request failed"));
+        return null;
+      });
+
+    if (status === "granted" && userId) {
+      await registerPushToken(userId as UserId).catch(captureError);
     }
+
+    // Mark pre-permission as seen regardless of outcome.
+    await SecureStore.setItemAsync(PRE_PERMISSION_KEY, "true").catch(captureError);
+    setIsRequesting(false);
+    router.back();
   };
 
   const handleNotNow = async () => {
-    await SecureStore.setItemAsync(PRE_PERMISSION_KEY, "true").catch(() => {});
+    await SecureStore.setItemAsync(PRE_PERMISSION_KEY, "true").catch(captureError);
     router.back();
   };
 

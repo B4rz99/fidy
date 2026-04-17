@@ -13,7 +13,7 @@ export function useNotificationCapture(db: AnyDb | null, userId: string | null) 
       if (!db || !userId) return;
       return setupNotificationCapture(db, userId, enabledPackages).catch((error) => {
         captureError(error);
-        return () => {};
+        return () => undefined;
       });
     },
     [db, userId, enabledPackages],

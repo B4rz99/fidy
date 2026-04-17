@@ -78,7 +78,7 @@ describe("setupApplePayCapture", () => {
 
   it("calls processApplePayIntent when listener fires", async () => {
     const { setupApplePayCapture } = await loadSetup();
-    let capturedListener: (event: any) => void = () => {};
+    let capturedListener: (event: any) => void = vi.fn();
     mockAddLogTransactionListener.mockImplementationOnce((listener: any) => {
       capturedListener = listener;
       return { remove: vi.fn() };
@@ -115,7 +115,7 @@ describe("setupSmsDetection", () => {
 
   it("inserts SMS event when listener fires", async () => {
     const { setupSmsDetection } = await loadSetup();
-    let capturedListener: (event: any) => void = () => {};
+    let capturedListener: (event: any) => void = vi.fn();
     mockAddDetectBankSmsListener.mockImplementationOnce((listener: any) => {
       capturedListener = listener;
       return { remove: vi.fn() };
@@ -160,7 +160,7 @@ describe("setupNotificationCapture", () => {
 
   it("calls processNotification when listener fires", async () => {
     const { setupNotificationCapture } = await loadSetup();
-    let capturedListener: (event: any) => void = () => {};
+    let capturedListener: (event: any) => void = vi.fn();
     mockAndroidAddListener.mockImplementationOnce((_event: any, listener: any) => {
       capturedListener = listener;
       return { remove: vi.fn() };

@@ -317,7 +317,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
           trackGoalMilestoneReached();
 
           // Best-effort local push (preference guard inside scheduleLocalPush)
-          scheduleLocalPush({
+          void scheduleLocalPush({
             title: i18n.t("notifications.goalMilestone", {
               goalName: goalAfter.goal.name,
               percent: milestone,
@@ -325,7 +325,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
             body: i18n.t("notifications.goalMilestoneMsg", { percent: milestone }),
             data: { route: `/goal-detail?id=${input.goalId}` },
             preferenceKey: "goalMilestones",
-          }).catch(() => {});
+          });
         }
       });
     }

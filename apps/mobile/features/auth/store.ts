@@ -92,7 +92,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     await Promise.race([
       Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID })
         .then(({ data: token }) => deletePushToken(token))
-        .catch(() => {}),
+        .catch((error) => {
+          captureWarning("auth_signout_push_token_cleanup_failed", {
+            errorType: error instanceof Error ? error.message : "unknown",
+          });
+        }),
       new Promise((resolve) => setTimeout(resolve, 2000)),
     ]);
 

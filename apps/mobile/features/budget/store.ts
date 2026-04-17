@@ -99,9 +99,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
 
   setMonth: (month) => {
     set({ currentMonth: month });
-    get()
-      .loadBudgets()
-      .catch(() => {});
+    void get().loadBudgets();
   },
 
   nextMonth: () => {

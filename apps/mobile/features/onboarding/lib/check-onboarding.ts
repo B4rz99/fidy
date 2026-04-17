@@ -23,20 +23,16 @@ export const getOnboardingCompleteFromStore = (): boolean => {
 export const markOnboardingComplete = async (): Promise<void> => {
   await SecureStore.setItemAsync(SECURE_STORE_KEY, "true");
   // Best-effort: persist to Supabase for cross-device, but don't block on failure
-  getSupabase()
-    .auth.updateUser({ data: { onboarding_completed: true } })
-    .catch(() => {});
+  void getSupabase().auth.updateUser({ data: { onboarding_completed: true } });
 };
 
 /** Clears the local onboarding flag from SecureStore only (used on sign-out). */
 export const clearOnboardingFromStore = (): void => {
-  SecureStore.deleteItemAsync(SECURE_STORE_KEY).catch(() => {});
+  void SecureStore.deleteItemAsync(SECURE_STORE_KEY);
 };
 
 /** Clears onboarding from both SecureStore and Supabase metadata (dev reset only). */
 export const resetOnboarding = async (): Promise<void> => {
   await SecureStore.deleteItemAsync(SECURE_STORE_KEY);
-  await getSupabase()
-    .auth.updateUser({ data: { onboarding_completed: null } })
-    .catch(() => {});
+  void getSupabase().auth.updateUser({ data: { onboarding_completed: null } });
 };

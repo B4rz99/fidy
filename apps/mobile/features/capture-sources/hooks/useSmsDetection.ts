@@ -16,7 +16,7 @@ export function useSmsDetection(db: AnyDb | null, userId: string | null) {
       };
       return setupSmsDetection(db, userId, onRefresh).catch((error: unknown) => {
         captureError(error);
-        return () => {};
+        return () => undefined;
       });
     },
     [db, userId, refreshDetectedSms],

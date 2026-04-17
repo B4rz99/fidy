@@ -60,7 +60,7 @@ describe("createAsyncGuard", () => {
       }
     };
 
-    await failingWork().catch(() => {});
+    await expect(failingWork()).rejects.toThrow("save failed");
     expect(guard.isBusy()).toBe(false);
     expect(guard.tryAcquire()).toBe(true);
   });
