@@ -142,6 +142,15 @@ module.exports = defineConfig([
               from: { type: "app" },
               disallow: { to: { type: "feature-internal" } },
             },
+            {
+              from: { type: "feature-internal" },
+              disallow: {
+                to: {
+                  type: "feature-internal",
+                  captured: { featureName: "!{{from.captured.featureName}}" },
+                },
+              },
+            },
           ],
         },
       ],

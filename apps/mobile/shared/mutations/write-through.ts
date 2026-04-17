@@ -293,3 +293,7 @@ export function createGenericWriteThroughMutationModule(
     },
   };
 }
+
+export function createWriteThroughMutationModule(db: AnyDb): WriteThroughMutationModule {
+  return createGenericWriteThroughMutationModule(db, applyCommand);
+}
