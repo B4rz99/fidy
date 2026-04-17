@@ -67,12 +67,23 @@ Push to the feature branch after committing. Main is protected — direct pushes
 git push -u origin <branch-name>
 ```
 
-Then create a pull request targeting `main`. The PR title and body **must match the commit message exactly** (header → title, body → description). Do NOT use `--fill` — it breaks with multiple commits. Instead, explicitly pass the commit message:
+Then create a pull request targeting `main`. The PR title and body **must match the commit message exactly** (header -> title, body -> description). Do NOT use `--fill` - it breaks with multiple commits.
+
+PR body safety rules:
+- Never pass PR body text directly inside shell quotes if it may contain backticks, command substitutions, or multi-line content
+- Never paste raw terminal output into the PR body
+- Never include absolute local paths like `/Users/...`, worktree paths, temp paths, or ANSI escape sequences
+- Summarize verification results in plain language instead of dumping command output
+
+Write the PR body to a temporary markdown file and pass it with `--body-file`:
 
 ```bash
 TITLE=$(git log -1 --format=%s)
 BODY=$(git log -1 --format=%b)
-gh pr create --title "$TITLE" --body "$BODY"
+BODY_FILE=$(mktemp)
+printf '%s\n' "$BODY" > "$BODY_FILE"
+gh pr create --title "$TITLE" --body-file "$BODY_FILE"
+rm -f "$BODY_FILE"
 ```
 
 ## Step 9 — Merge (only when the user explicitly asks)
