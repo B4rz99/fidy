@@ -77,7 +77,7 @@ vi.mock("@/shared/db/enqueue-sync", () => ({
 }));
 
 const mockRefresh = vi.fn();
-vi.mock("@/features/transactions/store", () => ({
+vi.mock("@/features/transactions", () => ({
   useTransactionStore: {
     getState: () => ({ refresh: mockRefresh }),
   },

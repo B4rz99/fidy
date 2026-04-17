@@ -26,9 +26,22 @@ vi.mock("date-fns", () => ({
 }));
 
 vi.mock("@/shared/db/schema", () => ({
-  processedCaptures: "processedCaptures",
-  notificationSources: "notificationSources",
-  detectedSmsEvents: "detectedSmsEvents",
+  processedCaptures: {
+    id: "processedCaptures.id",
+    source: "processedCaptures.source",
+    receivedAt: "processedCaptures.receivedAt",
+  },
+  notificationSources: {
+    userId: "notificationSources.userId",
+    packageName: "notificationSources.packageName",
+    isEnabled: "notificationSources.isEnabled",
+  },
+  detectedSmsEvents: {
+    id: "detectedSmsEvents.id",
+    userId: "detectedSmsEvents.userId",
+    dismissed: "detectedSmsEvents.dismissed",
+    detectedAt: "detectedSmsEvents.detectedAt",
+  },
 }));
 
 vi.mock("@/shared/lib/generate-id", () => ({
@@ -99,6 +112,25 @@ describe("capture-sources repository", () => {
 
   // -- hasProcessedCaptures --
 
+  it("getProcessedCapturesBySource returns source rows newest first", async () => {
+    const rows = [
+      { id: "pc-2", source: "sms", receivedAt: "2026-03-07T11:00:00Z" },
+      { id: "pc-1", source: "sms", receivedAt: "2026-03-07T10:00:00Z" },
+    ];
+    mockOrderBy.mockResolvedValueOnce(rows);
+
+    const { getProcessedCapturesBySource } = await import(
+      "@/features/capture-sources/lib/repository"
+    );
+    const result = await getProcessedCapturesBySource(mockDb, "sms");
+
+    expect(mockSelect).toHaveBeenCalled();
+    expect(mockFrom).toHaveBeenCalled();
+    expect(mockWhere).toHaveBeenCalledWith({ eq: ["processedCaptures.source", "sms"] });
+    expect(mockOrderBy).toHaveBeenCalledWith({ desc: ["processedCaptures.receivedAt"] });
+    expect(result).toEqual(rows);
+  });
+
   it("hasProcessedCaptures returns true when records exist", async () => {
     mockLimit.mockResolvedValueOnce([{ id: "pc-1" }]);
 
@@ -122,6 +154,22 @@ describe("capture-sources repository", () => {
   });
 
   // -- getEnabledPackages --
+
+  it("getNotificationSources returns rows for the requested user", async () => {
+    const rows = [
+      { id: "ns-1", userId: "user-1", packageName: "com.bank.app", isEnabled: true },
+      { id: "ns-2", userId: "user-1", packageName: "com.wallet.app", isEnabled: false },
+    ];
+    mockWhere.mockResolvedValueOnce(rows);
+
+    const { getNotificationSources } = await import("@/features/capture-sources/lib/repository");
+    const result = await getNotificationSources(mockDb, "user-1");
+
+    expect(mockSelect).toHaveBeenCalled();
+    expect(mockFrom).toHaveBeenCalled();
+    expect(mockWhere).toHaveBeenCalledWith({ eq: ["notificationSources.userId", "user-1"] });
+    expect(result).toEqual(rows);
+  });
 
   it("getEnabledPackages returns array of package names", async () => {
     mockWhere.mockResolvedValueOnce([
