@@ -4,7 +4,6 @@ import { syncQueue } from "./schema";
 
 export type SyncOperation = "insert" | "update" | "delete";
 export type SyncTableName =
-  | "accounts"
   | "transactions"
   | "budgets"
   | "goals"

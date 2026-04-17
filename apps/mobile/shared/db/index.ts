@@ -3,7 +3,6 @@ export { getDb, resetDb } from "./client";
 export type { SyncOperation, SyncQueueEntry, SyncTableName } from "./enqueue-sync";
 export { enqueueSync } from "./enqueue-sync";
 export {
-  accounts,
   billPayments,
   bills,
   budgets,

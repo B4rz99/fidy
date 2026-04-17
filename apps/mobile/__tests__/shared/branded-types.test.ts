@@ -1,6 +1,5 @@
 import { assertType, describe, expectTypeOf, test } from "vitest";
 import type {
-  AccountId,
   Brand,
   BudgetId,
   CopAmount,
@@ -16,10 +15,6 @@ describe("branded types", () => {
 
   test("BudgetId is not assignable to TransactionId", () => {
     expectTypeOf<BudgetId>().not.toEqualTypeOf<TransactionId>();
-  });
-
-  test("AccountId is not assignable to TransactionId", () => {
-    expectTypeOf<AccountId>().not.toEqualTypeOf<TransactionId>();
   });
 
   test("plain string is not assignable to TransactionId", () => {

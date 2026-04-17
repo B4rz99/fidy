@@ -32,7 +32,6 @@ export {
 } from "./format-money";
 export {
   buildId,
-  generateAccountId,
   generateBillId,
   generateBillPaymentId,
   generateBudgetId,
