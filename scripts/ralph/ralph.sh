@@ -1,6 +1,6 @@
 #!/bin/bash
 # Ralph Wiggum - Long-running AI agent loop
-# Usage: ./ralph.sh [--tool auto|opencode|codex|amp|claude] [--maintenance] [--prompt-file path] [--progress-file path] [max_iterations]
+# Usage: ./ralph.sh [--tool auto|opencode|codex|claude] [--maintenance] [--prompt-file path] [--progress-file path] [max_iterations]
 
 set -e
 set -o pipefail
@@ -65,8 +65,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate tool choice
-if [[ "$TOOL" != "auto" && "$TOOL" != "opencode" && "$TOOL" != "codex" && "$TOOL" != "amp" && "$TOOL" != "claude" ]]; then
-  echo "Error: Invalid tool '$TOOL'. Must be 'auto', 'opencode', 'codex', 'amp', or 'claude'."
+if [[ "$TOOL" != "auto" && "$TOOL" != "opencode" && "$TOOL" != "codex" && "$TOOL" != "claude" ]]; then
+  echo "Error: Invalid tool '$TOOL'. Must be 'auto', 'opencode', 'codex', or 'claude'."
   exit 1
 fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -75,7 +75,7 @@ PRD_FILE="$SCRIPT_DIR/prd.json"
 PROGRESS_FILE="$SCRIPT_DIR/progress.txt"
 ARCHIVE_DIR="$SCRIPT_DIR/archive"
 LAST_BRANCH_FILE="$SCRIPT_DIR/.last-branch"
-DEFAULT_PROMPT_FILE="$SCRIPT_DIR/prompt.md"
+DEFAULT_PROMPT_FILE="$SCRIPT_DIR/AGENTS.md"
 OPENCODE_PROMPT_FILE="$SCRIPT_DIR/prompt-opencode.md"
 DEFAULT_INSTRUCTIONS_FILE="$SCRIPT_DIR/AGENTS.md"
 PROMPT_FILE="${CUSTOM_PROMPT_FILE:-$DEFAULT_PROMPT_FILE}"
@@ -83,11 +83,6 @@ INSTRUCTIONS_FILE="$DEFAULT_INSTRUCTIONS_FILE"
 ACTIVE_PROGRESS_FILE="$PROGRESS_FILE"
 CODEX_CMD="${CODEX_CMD:-}"
 CODEX_BIN="${CODEX_BIN:-}"
-
-if [[ "$TOOL" == "opencode" ]]; then
-  export OPENCODE_PERMISSION='{"*": "allow"}'
-  export OPENCODE_DISABLE_AUTOCOMPACT=true
-fi
 
 if [[ "$MODE" == "maintenance" ]]; then
   if [[ -z "$CUSTOM_PROMPT_FILE" ]]; then
@@ -158,19 +153,19 @@ resolve_tool() {
     return
   fi
 
-  if command -v amp >/dev/null 2>&1; then
-    echo "amp"
-    return
-  fi
-
   echo ""
 }
 
 TOOL="$(resolve_tool)"
 
 if [[ -z "$TOOL" ]]; then
-  echo "Error: No supported runner found on PATH. Install OpenCode, Codex CLI, Claude Code, or Amp."
+  echo "Error: No supported runner found on PATH. Install OpenCode, Codex CLI, or Claude Code."
   exit 1
+fi
+
+if [[ "$TOOL" == "opencode" ]]; then
+  export OPENCODE_PERMISSION='{"*": "allow"}'
+  export OPENCODE_DISABLE_AUTOCOMPACT=true
 fi
 
 if [[ "$TOOL" == "opencode" ]] && [[ -z "$(find_opencode_bin)" ]]; then
@@ -189,10 +184,6 @@ fi
 
 if [[ "$TOOL" == "opencode" && "$MODE" == "story" && -z "$CUSTOM_PROMPT_FILE" ]]; then
   PROMPT_FILE="$OPENCODE_PROMPT_FILE"
-fi
-
-if [[ "$TOOL" == "amp" && ! -f "$PROMPT_FILE" ]]; then
-  PROMPT_FILE="$INSTRUCTIONS_FILE"
 fi
 
 check_prd_completion() {
@@ -309,8 +300,6 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     cat "$PROMPT_FILE" | opencode run --agent build - 2>&1 | tee /dev/stderr || true
   elif [[ "$TOOL" == "codex" ]]; then
     run_codex 2>&1 | tee /dev/stderr || true
-  elif [[ "$TOOL" == "amp" ]]; then
-    cat "$PROMPT_FILE" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr || true
   else
     # Claude Code: use --dangerously-skip-permissions for autonomous operation, --print for output
     claude --dangerously-skip-permissions --print < "$INSTRUCTIONS_FILE" 2>&1 | tee /dev/stderr || true
