@@ -112,7 +112,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
     markVisited: () => {
       const now = toIsoDateTime(new Date());
       if (!userIdRef) return;
-      void SecureStore.setItemAsync(lastVisitedKey(userIdRef), now);
+      void SecureStore.setItemAsync(lastVisitedKey(userIdRef), now).catch(() => undefined);
       set({ newCount: 0 });
     },
 
