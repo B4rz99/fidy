@@ -2,7 +2,7 @@ import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth";
-import { useTransactionStore } from "@/features/transactions";
+import { getStoredTransactionById, refreshTransactions } from "@/features/transactions";
 import { ScreenLayout } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -15,31 +15,34 @@ export default function NeedsReviewScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
   const needsReview = useEmailCaptureStore((s) => s.needsReviewEmails);
-  const getTransaction = useTransactionStore((s) => s.getTransactionById);
 
   // Pre-fetch all needed transactions once, not per-cell
   const txMap = useMemo(() => {
-    const map = new Map<string, ReturnType<typeof getTransaction>>();
+    const map = new Map<string, ReturnType<typeof getStoredTransactionById>>();
+    if (!db || !userId) {
+      return map;
+    }
+
     needsReview.forEach((item) => {
       if (item.transactionId) {
         const transactionId = requireTransactionId(item.transactionId);
-        map.set(transactionId, getTransaction(transactionId));
+        map.set(transactionId, getStoredTransactionById(db, userId, transactionId));
       }
     });
     return map;
-  }, [needsReview, getTransaction]);
+  }, [db, needsReview, userId]);
 
   const handleConfirm = useCallback(
     (processedEmailId: string, categoryId: string) => {
       if (!userId) return;
-      const db = tryGetDb(userId);
       if (!db) return;
       void confirmReviewedEmail(db, userId, processedEmailId, categoryId, () =>
-        useTransactionStore.getState().refresh()
+        refreshTransactions(db, userId)
       );
     },
-    [userId]
+    [db, userId]
   );
 
   const renderItem = useCallback(

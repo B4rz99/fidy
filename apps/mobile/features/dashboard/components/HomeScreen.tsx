@@ -15,6 +15,9 @@ import { SearchAction } from "@/features/search";
 import { SyncConflictBanner } from "@/features/sync";
 import {
   CATEGORY_MAP,
+  deleteTransaction,
+  loadNextTransactions,
+  loadTransactionIntoForm,
   makeDateLabel,
   type StoredTransaction,
   useTransactionStore,
@@ -121,14 +124,13 @@ const ListHeader = memo(function ListHeader({
 export const HomeScreen = () => {
   const { push } = useRouter();
   const { t } = useTranslation();
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
   const pages = useTransactionStore((s) => s.pages);
   const hasMore = useTransactionStore((s) => s.hasMore);
-  const loadNextPage = useTransactionStore((s) => s.loadNextPage);
   const balance = useTransactionStore((s) => s.balance);
   const categorySpending = useTransactionStore((s) => s.categorySpending);
   const dailySpending = useTransactionStore((s) => s.dailySpending);
-  const editTransaction = useTransactionStore((s) => s.editTransaction);
-  const deleteTransaction = useTransactionStore((s) => s.deleteTransaction);
   // phase gates ListEmptyComponent — suppresses "No transactions" during first sync
   const phase = useEmailCaptureStore((s) => s.phase);
   const primaryColor = useThemeColor("primary");
@@ -148,17 +150,18 @@ export const HomeScreen = () => {
   }, [pages]);
 
   const handleEndReached = useCallback(() => {
-    if (hasMore) {
-      void loadNextPage();
-    }
-  }, [hasMore, loadNextPage]);
+    if (!db || !userId || !hasMore) return;
+    void loadNextTransactions(db, userId);
+  }, [db, hasMore, userId]);
 
   const handleEdit = useCallback(
     (id: TransactionId) => {
-      editTransaction(id);
+      if (!db || !userId) return;
+      const didLoad = loadTransactionIntoForm(db, userId, id);
+      if (!didLoad) return;
       push("/(tabs)/add" as never);
     },
-    [editTransaction, push]
+    [db, push, userId]
   );
 
   const handleDelete = useCallback(
@@ -169,12 +172,13 @@ export const HomeScreen = () => {
           text: t("common.delete"),
           style: "destructive",
           onPress: () => {
-            void deleteTransaction(id);
+            if (!db || !userId) return;
+            void deleteTransaction(db, userId, id);
           },
         },
       ]);
     },
-    [t, deleteTransaction]
+    [db, t, userId]
   );
 
   const renderItem = useCallback(

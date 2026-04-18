@@ -12,8 +12,8 @@ import { resolveConflict } from "@/features/sync/services/sync";
 import {
   getQueuedSyncEntries,
   getTransactionById,
+  initializeTransactionSession,
   insertTransaction,
-  useTransactionStore,
 } from "@/features/transactions";
 import type {
   CategoryId,
@@ -31,7 +31,7 @@ beforeEach(() => {
   sqlite = new Database(":memory:");
   db = drizzle(sqlite);
   migrate(db, { migrationsFolder: resolve(__dirname, "../../drizzle") });
-  useTransactionStore.getState().initStore(db as any, "user-1" as UserId);
+  initializeTransactionSession("user-1" as UserId);
 });
 
 afterEach(() => {
