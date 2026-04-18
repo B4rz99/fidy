@@ -1,9 +1,16 @@
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
+import { useOptionalUserId } from "@/features/auth";
 import type { TransactionType } from "@/features/transactions";
-import { TransactionForm, useTransactionStore } from "@/features/transactions";
+import {
+  deleteTransaction,
+  getStoredTransactionById,
+  TransactionForm,
+  updateTransactionDirect,
+} from "@/features/transactions";
 import { InteractionManager } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useMountEffect, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
 import { requireTransactionId } from "@/shared/types/assertions";
@@ -18,10 +25,8 @@ export default function EditTransactionScreen() {
   const { transactionId: routeTransactionId } = useLocalSearchParams<{ transactionId?: string }>();
   const router = useRouter();
   const { t } = useTranslation();
-
-  const getTransactionById = useTransactionStore((s) => s.getTransactionById);
-  const updateTransactionDirect = useTransactionStore((s) => s.updateTransactionDirect);
-  const deleteTransaction = useTransactionStore((s) => s.deleteTransaction);
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
 
   const [type, setType] = useState<TransactionType>("expense");
   const [digits, setDigits] = useState("");
@@ -35,12 +40,12 @@ export default function EditTransactionScreen() {
       : null;
 
   useMountEffect(() => {
-    if (transactionId == null) {
+    if (transactionId == null || !db || !userId) {
       router.back();
       return;
     }
 
-    const tx = getTransactionById(transactionId);
+    const tx = getStoredTransactionById(db, userId, transactionId);
     if (tx) {
       setType(tx.type);
       setDigits(String(tx.amount));
@@ -57,12 +62,15 @@ export default function EditTransactionScreen() {
 
   const handleSave = () => {
     void guardedSave(async () => {
-      if (transactionId == null) return;
+      if (transactionId == null || !db || !userId) {
+        showErrorToast(t("transactions.updateFailed"));
+        return;
+      }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
       await afterDismiss();
       try {
-        const result = await updateTransactionDirect(transactionId, {
+        const result = await updateTransactionDirect(db, userId, transactionId, {
           type,
           digits,
           categoryId,
@@ -80,12 +88,15 @@ export default function EditTransactionScreen() {
 
   const handleDelete = () => {
     void guardedSave(async () => {
-      if (transactionId == null) return;
+      if (transactionId == null || !db || !userId) {
+        showErrorToast(t("transactions.deleteFailed"));
+        return;
+      }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
       await afterDismiss();
       try {
-        await deleteTransaction(transactionId);
+        await deleteTransaction(db, userId, transactionId);
       } catch {
         showErrorToast(t("transactions.deleteFailed"));
       }

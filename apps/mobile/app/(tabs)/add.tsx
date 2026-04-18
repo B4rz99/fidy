@@ -4,17 +4,21 @@ import { useCallback, useMemo, useRef } from "react";
 import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useShallow } from "zustand/react/shallow";
+import { useOptionalUserId } from "@/features/auth";
 import {
   CATEGORIES,
   CategoryPill,
   getDateLabel,
   handleNumpadPress,
+  saveCurrentTransaction,
   TypeToggle,
+  updateCurrentTransaction,
   useTransactionStore,
 } from "@/features/transactions";
 import { FidyNumpad } from "@/shared/components";
 import { Calendar } from "@/shared/components/icons";
 import { Platform, Pressable, Text, TextInput, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { formatInputDisplay, parseDigitsToAmount, trackTransactionCreated } from "@/shared/lib";
@@ -22,6 +26,8 @@ import { formatInputDisplay, parseDigitsToAmount, trackTransactionCreated } from
 export default function AddTransactionScreen() {
   const { navigate } = useRouter();
   const { t, locale } = useTranslation();
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
   const { bottom: safeBottom } = useSafeAreaInsets();
   const {
     type,
@@ -34,8 +40,6 @@ export default function AddTransactionScreen() {
     setDigits,
     setCategoryId,
     setDescription,
-    saveTransaction,
-    updateTransaction,
     resetForm,
   } = useTransactionStore(
     useShallow((s) => ({
@@ -49,8 +53,6 @@ export default function AddTransactionScreen() {
       setDigits: s.setDigits,
       setCategoryId: s.setCategoryId,
       setDescription: s.setDescription,
-      saveTransaction: s.saveTransaction,
-      updateTransaction: s.updateTransaction,
       resetForm: s.resetForm,
     }))
   );
@@ -82,7 +84,10 @@ export default function AddTransactionScreen() {
 
   const handleSave = () => {
     void guardedSave(async () => {
-      const result = isEditing ? await updateTransaction(editingId) : await saveTransaction();
+      if (!db || !userId) return;
+      const result = isEditing
+        ? await updateCurrentTransaction(db, userId, editingId)
+        : await saveCurrentTransaction(db, userId);
       if (result.success) {
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         if (!isEditing) {

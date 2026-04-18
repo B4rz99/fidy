@@ -3,7 +3,7 @@ import { FlashList } from "@shopify/flash-list";
 import { memo, useCallback, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth";
-import { useTransactionStore } from "@/features/transactions";
+import { removeTransaction } from "@/features/transactions";
 import { HEADER_HEIGHT, ScreenLayout } from "@/shared/components";
 import { Keyboard, KeyboardAvoidingView, Platform, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -68,7 +68,8 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
       const msg = messages.find((m) => m.id === messageId);
       if (msg?.action?.type === "delete") {
         try {
-          await useTransactionStore.getState().removeTransaction(msg.action.transactionId);
+          if (!db || !userId) return;
+          await removeTransaction(db, userId, msg.action.transactionId);
         } catch {
           persistActionStatus(messageId, "dismissed");
           return;
@@ -76,7 +77,7 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
       }
       persistActionStatus(messageId, "confirmed");
     },
-    [messages, persistActionStatus]
+    [db, messages, persistActionStatus, userId]
   );
 
   const handleDismissAction = useCallback(

@@ -207,4 +207,64 @@ describe("createSyncService", () => {
     expect(refreshTransactions).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ unresolvedConflicts: 0 });
   });
+
+  it("still resolves server conflicts when localData is malformed", async () => {
+    const upsertTransaction = vi.fn();
+    const enqueueTransactionSync = vi.fn();
+    const resolveConflictRow = vi.fn();
+    const refreshTransactions = vi.fn();
+    const getConflictRows = vi
+      .fn()
+      .mockResolvedValueOnce([
+        {
+          id: "conflict-1",
+          transactionId: "tx-1",
+          localData: "{not-json",
+          serverData: JSON.stringify({
+            id: "tx-1",
+            userId: "user-1",
+            type: "expense",
+            amount: 2000,
+            categoryId: "food",
+            description: "Server merchant",
+            date: "2026-03-10",
+            createdAt: "2026-03-10T08:00:00.000Z",
+            updatedAt: "2026-03-10T14:00:00.000Z",
+            deletedAt: null,
+            source: "email",
+          }),
+          detectedAt: "2026-03-15T10:00:00.000Z",
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    const service = createSyncService({
+      isOnline: vi.fn().mockResolvedValue(true),
+      getSupabase: vi.fn(),
+      syncPull: vi.fn(),
+      syncPush: vi.fn(),
+      refreshTransactions,
+      getConflictRows,
+      upsertTransaction,
+      enqueueTransactionSync,
+      resolveConflictRow,
+    });
+
+    const result = await service.resolveConflict({
+      db: {} as never,
+      conflictId: "conflict-1" as never,
+      resolution: "server",
+    });
+
+    expect(upsertTransaction).not.toHaveBeenCalled();
+    expect(enqueueTransactionSync).not.toHaveBeenCalled();
+    expect(resolveConflictRow).toHaveBeenCalledWith(
+      {} as never,
+      "conflict-1",
+      "server",
+      expect.any(String)
+    );
+    expect(refreshTransactions).toHaveBeenCalledWith({ db: {} as never, userId: "user-1" });
+    expect(result).toEqual({ unresolvedConflicts: 0 });
+  });
 });

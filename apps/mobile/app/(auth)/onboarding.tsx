@@ -15,7 +15,7 @@ import {
   useOnboardingStore,
   WelcomeStep,
 } from "@/features/onboarding";
-import { useTransactionStore } from "@/features/transactions";
+import { initializeTransactionSession, loadInitialTransactions } from "@/features/transactions";
 import { StyleSheet, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useSubscription, useThemeColor } from "@/shared/hooks";
@@ -52,9 +52,9 @@ function AuthenticatedOnboardingScreen({
   useSubscription(
     () => {
       initializeEmailCaptureSession(userId);
-      useTransactionStore.getState().initStore(db, userId);
+      initializeTransactionSession(userId);
       initializeBudgetSession(userId);
-      Promise.all([loadEmailAccounts(db, userId), useTransactionStore.getState().loadInitialPage()])
+      Promise.all([loadEmailAccounts(db, userId), loadInitialTransactions(db, userId)])
         .catch(captureError)
         .finally(() => {
           setStoresReady(true);
