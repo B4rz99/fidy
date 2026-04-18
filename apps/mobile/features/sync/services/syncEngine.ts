@@ -18,10 +18,7 @@ import {
   generateSyncConflictId,
   toIsoDateTime,
 } from "@/shared/lib";
-import {
-  requireBudgetId,
-  requireTransactionId,
-} from "@/shared/types/assertions";
+import { requireBudgetId, requireTransactionId } from "@/shared/types/assertions";
 import type { SyncQueueId } from "@/shared/types/branded";
 import { hasDataConflict } from "../lib/conflict-detection";
 import { insertConflict } from "../lib/conflict-repository";
