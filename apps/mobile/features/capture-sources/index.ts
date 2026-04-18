@@ -25,5 +25,4 @@ export {
   type CaptureIngestionPort,
   createCaptureIngestionPort,
 } from "./services/capture-ingestion";
-export { processWidgetTransactions } from "./services/widget-pipeline";
 export { useCaptureSourcesStore } from "./store";
