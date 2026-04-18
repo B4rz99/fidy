@@ -30,8 +30,8 @@ export default function EditTransactionScreen() {
   const [date, setDate] = useState(new Date());
   const [loaded, setLoaded] = useState(false);
   const transactionId =
-    typeof routeTransactionId === "string" && routeTransactionId.length > 0
-      ? requireTransactionId(routeTransactionId)
+    typeof routeTransactionId === "string" && routeTransactionId.trim().length > 0
+      ? requireTransactionId(routeTransactionId.trim())
       : null;
 
   useMountEffect(() => {

@@ -4,11 +4,33 @@ import { processNotification } from "@/features/capture-sources/services/notific
 import type { AnyDb } from "@/shared/db";
 import { captureError, generateDetectedSmsEventId, toIsoDateTime } from "@/shared/lib";
 import { requireIsoDateTime } from "@/shared/types/assertions";
-import type { UserId } from "@/shared/types/branded";
+import type { IsoDateTime, UserId } from "@/shared/types/branded";
 import type { ApplePayIntentData, NotificationData } from "../schema";
 import { createCaptureIngestionPort } from "../services/capture-ingestion";
 
 const noop = () => undefined;
+const EPOCH_MILLISECONDS_PATTERN = /^\d{13}$/;
+const EPOCH_SECONDS_PATTERN = /^\d{10}$/;
+
+function parseSmsDetectedAt(timestamp: string): IsoDateTime | null {
+  const trimmedTimestamp = timestamp.trim();
+
+  if (trimmedTimestamp.length === 0) {
+    return null;
+  }
+
+  try {
+    return requireIsoDateTime(trimmedTimestamp);
+  } catch {
+    const parsedDate = EPOCH_MILLISECONDS_PATTERN.test(trimmedTimestamp)
+      ? new Date(Number(trimmedTimestamp))
+      : EPOCH_SECONDS_PATTERN.test(trimmedTimestamp)
+        ? new Date(Number(trimmedTimestamp) * 1000)
+        : new Date(trimmedTimestamp);
+
+    return Number.isNaN(parsedDate.getTime()) ? null : toIsoDateTime(parsedDate);
+  }
+}
 
 // Dynamic import to avoid Android bundle crash — this module calls
 // requireNativeModule("ExpoAppIntents") which only exists on iOS.
@@ -43,11 +65,18 @@ export async function setupSmsDetection(
   if (!mod.isAvailable()) return noop;
 
   const subscription = mod.addDetectBankSmsListener((event) => {
+    const detectedAt = parseSmsDetectedAt(event.timestamp);
+
+    if (detectedAt == null) {
+      captureError(new Error(`Invalid SMS detection timestamp: ${event.timestamp}`));
+      return;
+    }
+
     insertDetectedSmsEvent(db, {
       id: generateDetectedSmsEventId(),
       userId,
       senderLabel: event.senderName,
-      detectedAt: requireIsoDateTime(event.timestamp),
+      detectedAt,
       dismissed: false,
       linkedTransactionId: null,
       createdAt: toIsoDateTime(new Date()),

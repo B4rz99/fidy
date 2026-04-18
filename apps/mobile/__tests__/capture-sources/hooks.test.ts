@@ -136,6 +136,44 @@ describe("setupSmsDetection", () => {
       })
     );
   });
+
+  it("normalizes epoch-millisecond SMS timestamps before insert", async () => {
+    const { setupSmsDetection } = await loadSetup();
+    let capturedListener: (event: any) => void = vi.fn();
+    mockAddDetectBankSmsListener.mockImplementationOnce((listener: any) => {
+      capturedListener = listener;
+      return { remove: vi.fn() };
+    });
+
+    const epochTimestamp = String(Date.UTC(2026, 2, 7, 14, 30, 0));
+
+    await setupSmsDetection(mockDb, USER_ID, mockRefreshDetectedSms);
+    capturedListener({ senderName: "Bancolombia", timestamp: epochTimestamp });
+
+    expect(mockInsertDetectedSmsEvent).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        detectedAt: new Date(Number(epochTimestamp)).toISOString(),
+      })
+    );
+  });
+
+  it("ignores invalid SMS timestamps without throwing from the listener", async () => {
+    const { setupSmsDetection } = await loadSetup();
+    let capturedListener: (event: any) => void = vi.fn();
+    mockAddDetectBankSmsListener.mockImplementationOnce((listener: any) => {
+      capturedListener = listener;
+      return { remove: vi.fn() };
+    });
+
+    await setupSmsDetection(mockDb, USER_ID, mockRefreshDetectedSms);
+
+    expect(() =>
+      capturedListener({ senderName: "Bancolombia", timestamp: "not-a-real-date" })
+    ).not.toThrow();
+    expect(mockInsertDetectedSmsEvent).not.toHaveBeenCalled();
+    expect(mockRefreshDetectedSms).not.toHaveBeenCalled();
+  });
 });
 
 describe("setupNotificationCapture", () => {
