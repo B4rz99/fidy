@@ -1,23 +1,23 @@
-type SubscribeAnalyticsToTransactionsInput = {
+type SubscribeGoalsToTransactionsInput = {
   readonly subscribeTransactions: (listener: () => void) => () => void;
   readonly getTransactionDataRevision: () => number;
-  readonly hasLoadedAnalytics: () => boolean;
+  readonly hasLoadedGoals: () => boolean;
   readonly reload: () => void;
 };
 
-export function subscribeAnalyticsToTransactions({
+export function subscribeGoalsToTransactions({
   subscribeTransactions,
   getTransactionDataRevision,
-  hasLoadedAnalytics,
+  hasLoadedGoals,
   reload,
-}: SubscribeAnalyticsToTransactionsInput): () => void {
+}: SubscribeGoalsToTransactionsInput): () => void {
   let previousRevision = getTransactionDataRevision();
 
   return subscribeTransactions(() => {
     const currentRevision = getTransactionDataRevision();
     if (currentRevision === previousRevision) return;
     previousRevision = currentRevision;
-    if (!hasLoadedAnalytics()) return;
+    if (!hasLoadedGoals()) return;
     reload();
   });
 }

@@ -46,6 +46,14 @@ export function getDb(userId: string) {
   return db;
 }
 
+export function tryGetDb(userId: string) {
+  try {
+    return getDb(userId);
+  } catch {
+    return null;
+  }
+}
+
 export function resetDb() {
   try {
     sqliteRef?.closeSync();
