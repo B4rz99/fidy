@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_BANK_SENDERS,
@@ -5,27 +6,36 @@ import {
   isBankSender,
 } from "@/features/email-capture/lib/bank-senders";
 import {
-  fetchBankSenders,
-  resetBankSendersCache,
-} from "@/features/email-capture/services/bank-senders-cache";
+  bankSendersQueryKey,
+  ensureBankSenders,
+  loadBankSenders,
+} from "@/features/email-capture/queries/bank-senders";
+import { getSupabase } from "@/shared/db";
 
-import { getSupabase } from "@/shared/db/supabase";
-
-vi.mock("@/shared/db/supabase", () => ({
+vi.mock("@/shared/db", () => ({
   getSupabase: vi.fn(),
 }));
 
 const mockFrom = vi.fn();
 const mockSelect = vi.fn();
+let queryClient: QueryClient;
 
 beforeEach(() => {
-  resetBankSendersCache();
   mockSelect.mockReset();
   mockFrom.mockReset().mockReturnValue({ select: mockSelect });
   vi.mocked(getSupabase).mockReturnValue({ from: mockFrom } as never);
+  queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: Infinity,
+      },
+    },
+  });
 });
 
 afterEach(() => {
+  queryClient.clear();
   vi.restoreAllMocks();
 });
 
@@ -57,12 +67,12 @@ describe("bank senders", () => {
   });
 });
 
-describe("fetchBankSenders", () => {
+describe("loadBankSenders", () => {
   it("merges remote senders with defaults", async () => {
     const remote = [{ bank: "RemoteBank", email: "remote@bank.com" }];
     mockSelect.mockResolvedValue({ data: remote, error: null });
 
-    const result = await fetchBankSenders();
+    const result = await loadBankSenders();
 
     // Remote senders + defaults that aren't already in remote
     expect(result).toContainEqual({ bank: "RemoteBank", email: "remote@bank.com" });
@@ -76,7 +86,7 @@ describe("fetchBankSenders", () => {
     ];
     mockSelect.mockResolvedValue({ data: remote, error: null });
 
-    const result = await fetchBankSenders();
+    const result = await loadBankSenders();
 
     // Davibank is in both remote and defaults — should appear once
     const davibankEntries = result.filter((s) => s.email === "davibankinforma@davibank.com");
@@ -84,14 +94,28 @@ describe("fetchBankSenders", () => {
     expect(result).toContainEqual({ bank: "NewBank", email: "info@newbank.com" });
   });
 
+  it("throws on Supabase error", async () => {
+    mockSelect.mockResolvedValue({ data: null, error: { message: "fail" } });
+
+    await expect(loadBankSenders()).rejects.toEqual(expect.objectContaining({ message: "fail" }));
+  });
+
+  it("throws on empty response", async () => {
+    mockSelect.mockResolvedValue({ data: [], error: null });
+
+    await expect(loadBankSenders()).rejects.toThrow("empty_result");
+  });
+});
+
+describe("ensureBankSenders", () => {
   it("caches merged senders for subsequent calls", async () => {
     const remote = [{ bank: "Cached", email: "cached@bank.com" }];
     mockSelect.mockResolvedValue({ data: remote, error: null });
 
-    const first = await fetchBankSenders();
+    const first = await ensureBankSenders(queryClient);
 
     mockSelect.mockResolvedValue({ data: null, error: { message: "offline" } });
-    const second = await fetchBankSenders();
+    const second = await ensureBankSenders(queryClient);
 
     expect(second).toEqual(first);
   });
@@ -99,34 +123,37 @@ describe("fetchBankSenders", () => {
   it("falls back to defaults on Supabase error with no cache", async () => {
     mockSelect.mockResolvedValue({ data: null, error: { message: "fail" } });
 
-    const result = await fetchBankSenders();
+    const result = await ensureBankSenders(queryClient);
 
     expect(result).toBe(DEFAULT_BANK_SENDERS);
+    expect(queryClient.getQueryData(bankSendersQueryKey)).toBeUndefined();
   });
 
   it("falls back to defaults on empty response with no cache", async () => {
     mockSelect.mockResolvedValue({ data: [], error: null });
 
-    const result = await fetchBankSenders();
+    const result = await ensureBankSenders(queryClient);
 
     expect(result).toBe(DEFAULT_BANK_SENDERS);
+    expect(queryClient.getQueryData(bankSendersQueryKey)).toBeUndefined();
   });
 
   it("falls back to defaults on network exception with no cache", async () => {
     mockSelect.mockRejectedValue(new Error("network error"));
 
-    const result = await fetchBankSenders();
+    const result = await ensureBankSenders(queryClient);
 
     expect(result).toBe(DEFAULT_BANK_SENDERS);
+    expect(queryClient.getQueryData(bankSendersQueryKey)).toBeUndefined();
   });
 
   it("falls back to cache on network exception when cache exists", async () => {
     const remote = [{ bank: "First", email: "first@bank.com" }];
     mockSelect.mockResolvedValue({ data: remote, error: null });
-    const first = await fetchBankSenders();
+    const first = await ensureBankSenders(queryClient);
 
     mockSelect.mockRejectedValue(new Error("network error"));
-    const result = await fetchBankSenders();
+    const result = await ensureBankSenders(queryClient);
 
     expect(result).toEqual(first);
   });

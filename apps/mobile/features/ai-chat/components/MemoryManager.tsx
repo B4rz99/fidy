@@ -3,10 +3,10 @@ import { memo, useCallback } from "react";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Trash2 } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { UserMemoryId } from "@/shared/types/branded";
+import { useDeleteUserMemoryMutation, useUserMemoriesQuery } from "../hooks/use-user-memories";
 import type { UserMemory } from "../schema";
-import { useChatStore } from "../store";
 
 type MemoryManagerProps = {
   readonly onBack: () => void;
@@ -70,19 +70,15 @@ const MemoryCard = memo(function MemoryCardInner({
 
 export function MemoryManager({ onBack }: MemoryManagerProps) {
   const { t } = useTranslation();
-  const memories = useChatStore((s) => s.memories);
-  const loadMemories = useChatStore((s) => s.loadMemories);
-  const deleteMemory = useChatStore((s) => s.deleteMemory);
-
-  useMountEffect(() => {
-    void loadMemories();
-  });
+  const memoriesQuery = useUserMemoriesQuery();
+  const deleteMemoryMutation = useDeleteUserMemoryMutation();
+  const memories = memoriesQuery.data ?? [];
 
   const handleDelete = useCallback(
     (id: UserMemoryId) => {
-      void deleteMemory(id);
+      void deleteMemoryMutation.mutateAsync(id);
     },
-    [deleteMemory]
+    [deleteMemoryMutation]
   );
 
   const renderItem = useCallback(

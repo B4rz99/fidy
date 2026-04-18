@@ -55,6 +55,7 @@ import {
   setSentryUser,
   wrapWithSentry,
 } from "@/shared/lib";
+import { QueryProvider } from "@/shared/query";
 import type { UserId } from "@/shared/types/branded";
 import migrations from "../drizzle/migrations";
 
@@ -253,155 +254,157 @@ function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SentryErrorBoundary fallback={ErrorFallback}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="add-bill"
-            options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
-          />
-          <Stack.Screen
-            name="day-detail"
-            options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
-          />
-          <Stack.Screen name="theme-picker" options={{ ...SHEET, sheetAllowedDetents: [0.24] }} />
-          <Stack.Screen
-            name="language-picker"
-            options={{ ...SHEET, sheetAllowedDetents: [0.18] }}
-          />
-          <Stack.Screen
-            name="delete-account"
-            options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
-          />
-          <Stack.Screen
-            name="enable-notifications"
-            options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
-          />
-          <Stack.Screen
-            name="analytics"
-            options={{
-              headerShown: Platform.OS === "ios",
-              headerStyle: { backgroundColor: theme.page },
-              headerTintColor: theme.primary,
-            }}
-          />
-          <Stack.Screen
-            name="notifications"
-            options={{
-              headerShown: Platform.OS === "ios",
-              headerStyle: { backgroundColor: theme.page },
-              headerTintColor: theme.primary,
-            }}
-          />
-          <Stack.Screen
-            name="search"
-            options={{
-              headerShown: Platform.OS === "ios",
-              headerStyle: { backgroundColor: theme.page },
-              headerTintColor: theme.primary,
-            }}
-          />
-          <Stack.Screen
-            name="connected-accounts"
-            options={{
-              headerShown: Platform.OS === "ios",
-              headerStyle: { backgroundColor: theme.page },
-              headerTintColor: theme.primary,
-            }}
-          />
-          <Stack.Screen
-            name="failed-emails"
-            options={{
-              headerShown: Platform.OS === "ios",
-              headerStyle: { backgroundColor: theme.page },
-              headerTintColor: theme.primary,
-            }}
-          />
-          <Stack.Screen
-            name="profile"
-            options={{
-              headerShown: Platform.OS === "ios",
-              headerStyle: { backgroundColor: theme.page },
-              headerTintColor: theme.primary,
-            }}
-          />
-          <Stack.Screen
-            name="create-budget"
-            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
-          />
-          <Stack.Screen
-            name="auto-suggest-budgets"
-            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
-          />
-          <Stack.Screen
-            name="goal-detail"
-            options={{
-              headerShown: Platform.OS === "ios",
-              headerStyle: { backgroundColor: theme.page },
-              headerTintColor: theme.primary,
-            }}
-          />
-          <Stack.Screen
-            name="create-goal"
-            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
-          />
-          <Stack.Screen
-            name="add-payment"
-            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
-          />
-          <Stack.Screen
-            name="edit-goal"
-            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
-          />
-          <Stack.Screen
-            name="bills-calendar"
-            options={{
-              headerShown: Platform.OS === "ios",
-              headerStyle: { backgroundColor: theme.page },
-              headerTintColor: theme.primary,
-            }}
-          />
-          <Stack.Screen
-            name="ai-memories"
-            options={{
-              headerShown: Platform.OS === "ios",
-              headerStyle: { backgroundColor: theme.page },
-              headerTintColor: theme.primary,
-            }}
-          />
-          <Stack.Screen
-            name="notification-preferences"
-            options={{
-              headerShown: Platform.OS === "ios",
-              headerStyle: { backgroundColor: theme.page },
-              headerTintColor: theme.primary,
-            }}
-          />
-          <Stack.Screen
-            name="categories"
-            options={{
-              headerShown: Platform.OS === "ios",
-              headerStyle: { backgroundColor: theme.page },
-              headerTintColor: theme.primary,
-            }}
-          />
-          <Stack.Screen
-            name="create-category"
-            options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
-          />
-          <Stack.Screen
-            name="edit-transaction"
-            options={{
-              ...SHEET,
-              sheetAllowedDetents: [0.65],
-              gestureEnabled: false,
-              sheetGrabberVisible: false,
-            }}
-          />
-        </Stack>
-        {db && userId && onboardingComplete && (
-          <AuthenticatedShell db={db} userId={userId as UserId} />
-        )}
+        <QueryProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="add-bill"
+              options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="day-detail"
+              options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen name="theme-picker" options={{ ...SHEET, sheetAllowedDetents: [0.24] }} />
+            <Stack.Screen
+              name="language-picker"
+              options={{ ...SHEET, sheetAllowedDetents: [0.18] }}
+            />
+            <Stack.Screen
+              name="delete-account"
+              options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="enable-notifications"
+              options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="analytics"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="notifications"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="search"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="connected-accounts"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="failed-emails"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="profile"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="create-budget"
+              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="auto-suggest-budgets"
+              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="goal-detail"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="create-goal"
+              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="add-payment"
+              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="edit-goal"
+              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="bills-calendar"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="ai-memories"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="notification-preferences"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="categories"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="create-category"
+              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="edit-transaction"
+              options={{
+                ...SHEET,
+                sheetAllowedDetents: [0.65],
+                gestureEnabled: false,
+                sheetGrabberVisible: false,
+              }}
+            />
+          </Stack>
+          {db && userId && onboardingComplete && (
+            <AuthenticatedShell db={db} userId={userId as UserId} />
+          )}
+        </QueryProvider>
       </SentryErrorBoundary>
       <StatusBar style="auto" />
     </GestureHandlerRootView>

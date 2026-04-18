@@ -6,7 +6,6 @@ describe("useSettingsStore", () => {
     // Mutate to non-defaults first to prove getInitialState is independent
     useSettingsStore.setState({
       themePreference: "dark",
-      isDeleting: true,
     });
     const initial = useSettingsStore.getInitialState();
     expect(initial.themePreference).toBe("system");
@@ -16,7 +15,6 @@ describe("useSettingsStore", () => {
       spendingAnomalies: true,
       weeklyDigest: true,
     });
-    expect(initial.isDeleting).toBe(false);
   });
 
   beforeEach(() => {

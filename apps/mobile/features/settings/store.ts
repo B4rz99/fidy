@@ -23,14 +23,12 @@ type SettingsState = {
   themePreference: ThemePreference;
   notificationPreferences: NotificationPreferences;
   areAllNotificationsOff: boolean;
-  isDeleting: boolean;
 };
 
 type SettingsActions = {
   setThemePreference: (pref: ThemePreference) => void;
   setNotificationPreference: (key: keyof NotificationPreferences, value: boolean) => void;
   setAllNotifications: (enabled: boolean) => void;
-  deleteAccount: (supabaseUrl: string, token: string) => Promise<void>;
   hydrate: () => Promise<void>;
 };
 
@@ -47,44 +45,12 @@ const persistPreferences = (prefs: NotificationPreferences): void => {
       errorMessage: error instanceof Error ? error.message : "unknown",
     });
   });
-  // Best-effort Supabase dual write (lazy import to avoid circular deps)
-  import("@/shared/db/supabase")
-    .then(async ({ getSupabase }) => {
-      const supabase = getSupabase();
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) return;
-      const { error } = await supabase.from("notification_preferences").upsert(
-        {
-          // biome-ignore lint/style/useNamingConvention: Supabase column name
-          user_id: data.user.id,
-          // biome-ignore lint/style/useNamingConvention: Supabase column name
-          budget_alerts: prefs.budgetAlerts,
-          // biome-ignore lint/style/useNamingConvention: Supabase column name
-          goal_milestones: prefs.goalMilestones,
-          // biome-ignore lint/style/useNamingConvention: Supabase column name
-          spending_anomalies: prefs.spendingAnomalies,
-          // biome-ignore lint/style/useNamingConvention: Supabase column name
-          weekly_digest: prefs.weeklyDigest,
-        },
-        { onConflict: "user_id" }
-      );
-      if (error) {
-        const { captureWarning } = await import("@/shared/lib");
-        captureWarning("notification_prefs_sync_failed", { errorMessage: error.message });
-      }
-    })
-    .catch((error) => {
-      captureWarning("notification_prefs_load_failed", {
-        errorMessage: error instanceof Error ? error.message : "unknown",
-      });
-    });
 };
 
 export const useSettingsStore = create<SettingsState & SettingsActions>((set, get) => ({
   themePreference: "system",
   notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
   areAllNotificationsOff: false,
-  isDeleting: false,
 
   setThemePreference: (pref) => {
     set({ themePreference: pref });
@@ -117,31 +83,6 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
       areAllNotificationsOff: computeAllOff(updated),
     });
     persistPreferences(updated);
-  },
-
-  deleteAccount: async (supabaseUrl, token) => {
-    set({ isDeleting: true });
-    try {
-      const response = await fetch(`${supabaseUrl}/functions/v1/delete-account`, {
-        method: "POST",
-        headers: {
-          // biome-ignore lint/style/useNamingConvention: HTTP header
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- fetch response body is untyped
-        const body: { error?: string } = await response.json().catch(() => ({}));
-        throw new Error(body.error ?? "delete_failed");
-      }
-
-      const { useAuthStore } = await import("@/features/auth");
-      await useAuthStore.getState().signOut();
-    } finally {
-      set({ isDeleting: false });
-    }
   },
 
   hydrate: async () => {

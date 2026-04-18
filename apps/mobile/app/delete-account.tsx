@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
 import { useAuthStore } from "@/features/auth";
-import { getUnsyncedCount, useSettingsStore } from "@/features/settings";
+import { getUnsyncedCount, useDeleteAccountMutation } from "@/features/settings";
 import { TriangleAlert } from "@/shared/components/icons";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
@@ -12,8 +12,8 @@ export default function DeleteAccountSheet() {
   const router = useRouter();
   const userId = useAuthStore((s) => s.session?.user.id);
   const accessToken = useAuthStore((s) => s.session?.access_token);
-  const isDeleting = useSettingsStore((s) => s.isDeleting);
-  const deleteAccount = useSettingsStore((s) => s.deleteAccount);
+  const deleteAccountMutation = useDeleteAccountMutation();
+  const isDeleting = deleteAccountMutation.isPending;
   const accentRed = useThemeColor("accentRed");
   const borderColor = useThemeColor("borderSubtle");
   // getDb is a cached lookup here — DB is already open from AuthenticatedShell
@@ -29,7 +29,7 @@ export default function DeleteAccountSheet() {
   const handleDelete = async () => {
     try {
       const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
-      await deleteAccount(supabaseUrl, accessToken ?? "");
+      await deleteAccountMutation.mutateAsync({ supabaseUrl, token: accessToken ?? "" });
     } catch {
       Alert.alert(t("settings.deleteAccountTitle"), t("common.unknown"));
     }

@@ -86,6 +86,7 @@ apps/mobile/.claude/settings.local.json
 # Worktrees
 .worktrees/
 .claude/worktrees/
+.codex/worktrees/
 
 # macOS
 .DS_Store

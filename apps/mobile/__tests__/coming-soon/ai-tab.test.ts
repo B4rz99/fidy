@@ -20,6 +20,7 @@ describe("AI tab", () => {
   });
 
   test("extracts memories when leaving chat", () => {
-    expect(source).toContain("extractAndSaveMemories");
+    expect(source).toContain("useExtractUserMemoriesMutation");
+    expect(source).toContain("mutateAsync");
   });
 });

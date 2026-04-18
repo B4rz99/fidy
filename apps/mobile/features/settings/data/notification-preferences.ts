@@ -1,0 +1,56 @@
+import { getSupabase } from "@/shared/db";
+import type { UserId } from "@/shared/types/branded";
+import type { NotificationPreferences } from "../store";
+
+type NotificationPreferencesRow = {
+  readonly budget_alerts: boolean | null;
+  readonly goal_milestones: boolean | null;
+  readonly spending_anomalies: boolean | null;
+  readonly weekly_digest: boolean | null;
+};
+
+export const notificationPreferencesQueryKey = (userId: UserId) =>
+  ["settings", "notification-preferences", userId] as const;
+
+export function toNotificationPreferences(
+  row: NotificationPreferencesRow
+): NotificationPreferences {
+  return {
+    budgetAlerts: row.budget_alerts ?? true,
+    goalMilestones: row.goal_milestones ?? true,
+    spendingAnomalies: row.spending_anomalies ?? true,
+    weeklyDigest: row.weekly_digest ?? true,
+  };
+}
+
+export async function fetchNotificationPreferencesRemote(
+  userId: UserId
+): Promise<NotificationPreferences | null> {
+  const { data, error } = await getSupabase()
+    .from("notification_preferences")
+    .select("budget_alerts, goal_milestones, spending_anomalies, weekly_digest")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data == null ? null : toNotificationPreferences(data as NotificationPreferencesRow);
+}
+
+export async function saveNotificationPreferencesRemote(
+  userId: UserId,
+  prefs: NotificationPreferences
+): Promise<void> {
+  const { error } = await getSupabase().from("notification_preferences").upsert(
+    {
+      user_id: userId,
+      budget_alerts: prefs.budgetAlerts,
+      goal_milestones: prefs.goalMilestones,
+      spending_anomalies: prefs.spendingAnomalies,
+      weekly_digest: prefs.weeklyDigest,
+    },
+    { onConflict: "user_id" }
+  );
+
+  if (error) throw error;
+}
