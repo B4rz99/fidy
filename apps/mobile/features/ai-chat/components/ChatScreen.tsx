@@ -2,15 +2,17 @@ import type { FlashListRef } from "@shopify/flash-list";
 import { FlashList } from "@shopify/flash-list";
 import { memo, useCallback, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useOptionalUserId } from "@/features/auth";
 import { useTransactionStore } from "@/features/transactions";
 import { HEADER_HEIGHT, ScreenLayout } from "@/shared/components";
 import { Keyboard, KeyboardAvoidingView, Platform, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useMountEffect, useTranslation } from "@/shared/hooks";
-import { trackAiChatOpened } from "@/shared/lib";
+import { captureError, trackAiChatOpened } from "@/shared/lib";
 import type { ChatMessageId } from "@/shared/types/branded";
 import { useStreamingChat } from "../hooks/use-streaming-chat";
-import type { ChatMessage } from "../schema";
-import { useChatStore } from "../store";
+import type { ActionStatus, ChatMessage } from "../schema";
+import { updateChatActionStatus, useChatStore } from "../store";
 import { ChatInput } from "./ChatInput";
 import { MessageBubble } from "./MessageBubble";
 import { StarterSuggestions } from "./StarterSuggestions";
@@ -39,18 +41,27 @@ const MemoizedMessageBubble = memo(function MemoizedBubble({
 export function ChatScreen({ onBack }: ChatScreenProps) {
   const { t } = useTranslation();
   useMountEffect(() => trackAiChatOpened());
+  const userId = useOptionalUserId();
   const listRef = useRef<FlashListRef<ChatMessage>>(null);
   const { top: safeTop } = useSafeAreaInsets();
+  const db = userId ? tryGetDb(userId) : null;
 
   const messages = useChatStore((s) => s.messages);
   const sessions = useChatStore((s) => s.sessions);
   const currentSessionId = useChatStore((s) => s.currentSessionId);
-  const updateActionStatus = useChatStore((s) => s.updateActionStatus);
 
   const { sendMessage, isStreaming, streamingContent } = useStreamingChat();
 
   const currentSession = sessions.find((s) => s.id === currentSessionId);
   const title = currentSession?.title ?? t("aiChat.fidyAi");
+
+  const persistActionStatus = useCallback(
+    (messageId: ChatMessageId, status: ActionStatus) => {
+      if (!db || !userId) return;
+      void updateChatActionStatus(db, userId, messageId, status).catch(captureError);
+    },
+    [db, userId]
+  );
 
   const handleConfirmAction = useCallback(
     async (messageId: ChatMessageId) => {
@@ -59,20 +70,20 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
         try {
           await useTransactionStore.getState().removeTransaction(msg.action.transactionId);
         } catch {
-          void updateActionStatus(messageId, "dismissed");
+          persistActionStatus(messageId, "dismissed");
           return;
         }
       }
-      void updateActionStatus(messageId, "confirmed");
+      persistActionStatus(messageId, "confirmed");
     },
-    [messages, updateActionStatus]
+    [messages, persistActionStatus]
   );
 
   const handleDismissAction = useCallback(
     (messageId: ChatMessageId) => {
-      void updateActionStatus(messageId, "dismissed");
+      persistActionStatus(messageId, "dismissed");
     },
-    [updateActionStatus]
+    [persistActionStatus]
   );
 
   const renderItem = useCallback(

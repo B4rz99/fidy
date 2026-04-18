@@ -7,4 +7,17 @@ export {
   useExtractUserMemoriesMutation,
   useUserMemoriesQuery,
 } from "./hooks/use-user-memories";
-export { useChatStore } from "./store";
+export {
+  addAssistantChatMessage,
+  addUserChatMessage,
+  cleanupExpiredChatSessions,
+  createChatSession,
+  deleteChatSession,
+  dismissExpiredChatBanner,
+  initializeChatSession,
+  loadChatSessions,
+  selectChatSession,
+  startNewChat,
+  updateChatActionStatus,
+  useChatStore,
+} from "./store";
