@@ -1,8 +1,8 @@
+import { ProgressBar } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import type { CopAmount } from "@/shared/types/branded";
-import { ProgressBar } from "./ProgressBar";
 
 type Props = {
   readonly totalBudget: number;

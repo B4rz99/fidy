@@ -1,5 +1,5 @@
-import { toTransactionRow } from "@/features/transactions/lib/build-transaction";
-import type { StoredTransaction } from "@/features/transactions/schema";
+import type { StoredTransaction } from "@/features/transactions/public";
+import { toTransactionRow } from "@/features/transactions/public";
 import {
   generateBillId,
   generateBillPaymentId,
@@ -9,11 +9,11 @@ import {
   toIsoDateTime,
 } from "@/shared/lib";
 import type { WriteThroughMutationModule } from "@/shared/mutations";
+import { assertCopAmount } from "@/shared/types/assertions";
 import type {
   BillId,
   BillPaymentId,
   CategoryId,
-  CopAmount,
   IsoDate,
   TransactionId,
   UserId,
@@ -25,7 +25,7 @@ import {
   createBillSchema,
   toBillRow,
 } from "../schema";
-import type { BillPaymentRow, BillRow } from "./repository";
+import type { BillUpdateFields } from "./repository";
 
 type AddBillInput = {
   name: string;
@@ -74,6 +74,22 @@ export type CalendarBillMutationService = {
     dueDate: IsoDate
   ) => Promise<UnmarkBillPaidResult>;
 };
+
+function toBillUpdateFields(fields: UpdateBillFields): BillUpdateFields {
+  const amount = fields.amount;
+  if (amount != null) {
+    assertCopAmount(amount);
+  }
+
+  return {
+    ...(fields.name != null ? { name: fields.name } : {}),
+    ...(amount != null ? { amount } : {}),
+    ...(fields.frequency != null ? { frequency: fields.frequency } : {}),
+    ...(fields.categoryId != null ? { categoryId: fields.categoryId } : {}),
+    ...(fields.startDate != null ? { startDate: fields.startDate.toISOString() } : {}),
+    ...(fields.isActive != null ? { isActive: fields.isActive } : {}),
+  };
+}
 
 function scheduleNotifications(deps: CreateCalendarBillMutationServiceDeps, bill: Bill) {
   void deps
@@ -145,22 +161,13 @@ export function createCalendarBillMutationService(
         return false;
       }
 
-      const dbFields = Object.fromEntries(
-        Object.entries(fields)
-          .filter(([, value]) => value != null)
-          .map(([key, value]) => [
-            key,
-            key === "startDate" && value instanceof Date ? value.toISOString() : value,
-          ])
-      );
+      const dbFields = toBillUpdateFields(fields);
 
       try {
         const result = await commit({
           kind: "calendar.bill.update",
           billId: id,
-          fields: dbFields as Partial<
-            Pick<BillRow, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
-          >,
+          fields: dbFields,
           now: toIsoDateTime(now()),
         });
 
@@ -203,11 +210,13 @@ export function createCalendarBillMutationService(
       const timestamp = now();
       const nowIso = toIsoDateTime(timestamp);
       const transactionId = createTransactionId();
+      const amount = bill.amount;
+      assertCopAmount(amount);
       const transaction: StoredTransaction = {
         id: transactionId,
         userId,
         type: "expense",
-        amount: bill.amount as CopAmount,
+        amount,
         categoryId: bill.categoryId,
         description: bill.name,
         date: parseIsoDate(dueDate),
@@ -229,7 +238,7 @@ export function createCalendarBillMutationService(
         const result = await commit({
           kind: "calendar.bill.markPaid",
           transactionRow: toTransactionRow(transaction),
-          paymentRow: payment as BillPaymentRow,
+          paymentRow: payment,
         });
         if (!result.success) {
           return { success: false };

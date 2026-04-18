@@ -1,11 +1,8 @@
 import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
+import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import { generateNotificationId, toIsoDateTime } from "@/shared/lib";
-import {
-  createWriteThroughMutationModule,
-  type WriteThroughMutationModule,
-} from "@/shared/mutations";
 import type { CategoryId, IsoDateTime, UserId } from "@/shared/types/branded";
 import type { NotificationType, StoredNotification } from "./lib/types";
 import { countNotificationsSince, getNotifications } from "./repository";

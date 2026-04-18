@@ -1,10 +1,26 @@
 import { and, between, eq } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { billPayments, bills } from "@/shared/db";
-import type { BillId, IsoDate, IsoDateTime, UserId } from "@/shared/types/branded";
+import { toIsoDate } from "@/shared/lib";
+import type {
+  BillId,
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  UserId,
+} from "@/shared/types/branded";
 
 export type BillRow = typeof bills.$inferInsert;
 export type BillPaymentRow = typeof billPayments.$inferInsert;
+export type BillUpdateFields = {
+  name?: string;
+  amount?: CopAmount;
+  frequency?: BillRow["frequency"];
+  categoryId?: CategoryId;
+  startDate?: string;
+  isActive?: boolean;
+};
 
 export function insertBill(db: AnyDb, row: BillRow) {
   db.insert(bills).values(row).run();
@@ -14,9 +30,20 @@ export function getAllBills(db: AnyDb, userId: UserId) {
   return db.select().from(bills).where(eq(bills.userId, userId)).all();
 }
 
-export function updateBill(db: AnyDb, id: BillId, fields: Partial<BillRow>, now: IsoDateTime) {
+export function updateBill(db: AnyDb, id: BillId, fields: BillUpdateFields, now: IsoDateTime) {
+  const normalizedStartDate =
+    fields.startDate != null ? toIsoDate(new Date(fields.startDate)) : undefined;
+  const normalizedFields = {
+    name: fields.name,
+    amount: fields.amount,
+    frequency: fields.frequency,
+    categoryId: fields.categoryId,
+    isActive: fields.isActive,
+    ...(normalizedStartDate != null ? { startDate: normalizedStartDate } : {}),
+  };
+
   db.update(bills)
-    .set({ ...fields, updatedAt: now })
+    .set({ ...normalizedFields, updatedAt: now })
     .where(eq(bills.id, id))
     .run();
 }

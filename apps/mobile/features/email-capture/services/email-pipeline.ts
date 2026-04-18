@@ -1,21 +1,5 @@
-import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
-import {
-  insertMerchantRule,
-  lookupMerchantRule,
-} from "@/features/email-capture/lib/merchant-rules";
-import {
-  getPendingRetryEmails,
-  getProcessedExternalIds,
-  insertProcessedEmail,
-  markForRetry,
-  markPermanentlyFailed,
-  markRetrySuccess,
-  updateProcessedEmailStatus,
-} from "@/features/email-capture/lib/repository";
-import type { RawEmail } from "@/features/email-capture/schema";
-import { parseEmailApi } from "@/features/email-capture/services/parse-email-api";
-import { isValidCategoryId } from "@/features/transactions/lib/categories";
-import { insertTransaction } from "@/features/transactions/lib/repository";
+import { findDuplicateTransaction } from "@/features/capture-sources/dedup.public";
+import { insertTransaction, isValidCategoryId } from "@/features/transactions/write.public";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
@@ -29,16 +13,26 @@ import {
   toIsoDateTime,
   trackTransactionCreated,
 } from "@/shared/lib";
-import type {
-  CategoryId,
-  CopAmount,
-  IsoDate,
-  IsoDateTime,
-  TransactionId,
-  UserId,
-} from "@/shared/types/branded";
+import {
+  assertCopAmount,
+  assertIsoDate,
+  assertIsoDateTime,
+  assertUserId,
+} from "@/shared/types/assertions";
+import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
+import {
+  getPendingRetryEmails,
+  getProcessedExternalIds,
+  insertProcessedEmail,
+  markForRetry,
+  markPermanentlyFailed,
+  markRetrySuccess,
+  updateProcessedEmailStatus,
+} from "../lib/repository";
 import { computeNextRetryAt, isMaxRetriesReached } from "../lib/retry-backoff";
+import type { RawEmail } from "../schema";
 import type { LlmParsedTransaction } from "./llm-parser";
+import { parseEmailApi } from "./parse-email-api";
 
 export type PipelineResult = {
   filtered: number;
@@ -54,6 +48,7 @@ async function parseBody(
   userId: string,
   body: string
 ): Promise<LlmParsedTransaction | null> {
+  assertUserId(userId);
   const llmResult = await parseEmailApi(body);
   if (!llmResult) return null;
 
@@ -73,22 +68,30 @@ async function saveTransaction(
   email: RawEmail,
   status: "success" | "needs_review"
 ): Promise<string> {
+  assertUserId(userId);
   const source = email.provider === "gmail" ? "email_gmail" : "email_outlook";
   const txId = generateTransactionId();
   const now = toIsoDateTime(new Date());
+  const fallbackCategoryId = "other";
+  if (!isValidCategoryId(fallbackCategoryId)) {
+    throw new Error("Missing fallback category");
+  }
 
   const categoryId = isValidCategoryId(validated.categoryId)
     ? validated.categoryId
-    : ("other" as CategoryId);
+    : fallbackCategoryId;
+  assertCopAmount(validated.amount);
+  assertIsoDate(validated.date);
+  assertIsoDateTime(email.receivedAt);
 
   insertTransaction(db, {
     id: txId,
-    userId: userId as UserId,
+    userId,
     type: validated.type,
-    amount: validated.amount as CopAmount,
+    amount: validated.amount,
     categoryId,
     description: validated.description,
-    date: validated.date as IsoDate,
+    date: validated.date,
     source,
     createdAt: now,
     updatedAt: now,
@@ -110,7 +113,7 @@ async function saveTransaction(
     failureReason: null,
     subject: email.subject,
     rawBodyPreview: email.body.slice(0, 500),
-    receivedAt: email.receivedAt as IsoDateTime,
+    receivedAt: email.receivedAt,
     transactionId: txId,
     confidence: validated.confidence,
     createdAt: now,
@@ -199,6 +202,7 @@ export async function processEmails(
           result.filtered++;
         }
 
+        assertIsoDateTime(email.receivedAt);
         await insertProcessedEmail(db, {
           id: generateProcessedEmailId(),
           externalId: email.externalId,
@@ -207,7 +211,7 @@ export async function processEmails(
           failureReason,
           subject: email.subject,
           rawBodyPreview: email.body.slice(0, 500),
-          receivedAt: email.receivedAt as IsoDateTime,
+          receivedAt: email.receivedAt,
           transactionId: null,
           confidence: null,
           createdAt: toIsoDateTime(new Date()),
@@ -230,6 +234,10 @@ export async function processEmails(
         continue;
       }
 
+      assertCopAmount(parsed.amount);
+      assertIsoDate(parsed.date);
+      assertIsoDateTime(email.receivedAt);
+
       // Cross-source dedup: skip if this transaction was already captured via notification/Apple Pay
       const existingTxId = await findDuplicateTransaction(
         db,
@@ -247,8 +255,8 @@ export async function processEmails(
           failureReason: null,
           subject: email.subject,
           rawBodyPreview: email.body.slice(0, 500),
-          receivedAt: email.receivedAt as IsoDateTime,
-          transactionId: existingTxId as TransactionId,
+          receivedAt: email.receivedAt,
+          transactionId: existingTxId,
           confidence: parsed.confidence,
           createdAt: toIsoDateTime(new Date()),
         });
@@ -345,6 +353,8 @@ export async function processEmails(
   return result;
 }
 
+export type ProcessEmails = typeof processEmails;
+
 export type RetryResult = {
   retried: number;
   succeeded: number;
@@ -392,6 +402,9 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
       continue;
     }
 
+    assertCopAmount(parsed.amount);
+    assertIsoDate(parsed.date);
+
     // Cross-source dedup: skip if this transaction was already captured via another source
     const existingTxId = await findDuplicateTransaction(
       db,
@@ -401,13 +414,7 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
       parsed.description
     );
     if (existingTxId) {
-      await markRetrySuccess(
-        db,
-        email.id,
-        "success",
-        existingTxId as TransactionId,
-        parsed.confidence
-      );
+      await markRetrySuccess(db, email.id, "success", existingTxId, parsed.confidence);
       result.succeeded++;
       continue;
     }
@@ -418,18 +425,23 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
       const now = toIsoDateTime(new Date());
       const source = email.provider === "gmail" ? "email_gmail" : "email_outlook";
       const status = parsed.confidence < 0.7 ? "needs_review" : "success";
+      const fallbackCategoryId = "other";
+      if (!isValidCategoryId(fallbackCategoryId)) {
+        throw new Error("Missing fallback category");
+      }
       const retryCategoryId = isValidCategoryId(parsed.categoryId)
         ? parsed.categoryId
-        : ("other" as CategoryId);
+        : fallbackCategoryId;
+      assertUserId(userId);
 
       insertTransaction(db, {
         id: txId,
-        userId: userId as UserId,
+        userId,
         type: parsed.type,
-        amount: parsed.amount as CopAmount,
+        amount: parsed.amount,
         categoryId: retryCategoryId,
         description: parsed.description,
-        date: parsed.date as IsoDate,
+        date: parsed.date,
         source,
         createdAt: now,
         updatedAt: now,
@@ -470,3 +482,5 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
 
   return result;
 }
+
+export type ProcessRetries = typeof processRetries;

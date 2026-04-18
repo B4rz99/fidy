@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import {
   generateTransactionId,
@@ -7,10 +8,6 @@ import {
   trackTransactionDeleted,
   trackTransactionEdited,
 } from "@/shared/lib";
-import {
-  createWriteThroughMutationModule,
-  type WriteThroughMutationModule,
-} from "@/shared/mutations";
 import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
 import { toStoredTransaction } from "./lib/build-transaction";
 import { createTransactionMutationService } from "./lib/mutation-service";
@@ -153,7 +150,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     initStore: (db, userId) => {
       dbRef = db;
       userIdRef = userId;
-      mutations = db ? createWriteThroughMutationModule(db) : null;
+      mutations = createWriteThroughMutationModule(db);
     },
 
     setStep: (step) => set({ step }),

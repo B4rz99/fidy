@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { scheduleLocalPush, useNotificationStore } from "@/features/notifications";
 import { getMonthlyTotalsByType, useTransactionStore } from "@/features/transactions";
+import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import { i18n } from "@/shared/i18n";
 import {
@@ -10,10 +11,6 @@ import {
   trackGoalCreated,
   trackGoalMilestoneReached,
 } from "@/shared/lib";
-import {
-  createWriteThroughMutationModule,
-  type WriteThroughMutationModule,
-} from "@/shared/mutations";
 import type { UserId } from "@/shared/types/branded";
 
 // Import from goals feature

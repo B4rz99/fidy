@@ -1,11 +1,4 @@
-import {
-  captureFingerprint,
-  findDuplicateTransaction,
-  isCaptureProcessed,
-} from "@/features/capture-sources/lib/dedup";
-import { insertProcessedCapture } from "@/features/capture-sources/lib/repository";
-import { isValidCategoryId } from "@/features/transactions/lib/categories";
-import { insertTransaction } from "@/features/transactions/lib/repository";
+import { insertTransaction, isValidCategoryId } from "@/features/transactions/write.public";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
@@ -17,13 +10,18 @@ import {
   toIsoDateTime,
   trackTransactionCreated,
 } from "@/shared/lib";
-import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
+import { assertCopAmount, assertTransactionId } from "@/shared/types/assertions";
+import type { TransactionId, UserId } from "@/shared/types/branded";
+import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
+import { insertProcessedCapture } from "../lib/repository";
 
 // Guard against concurrent invocations (mount + immediate AppState "active").
 const inFlightFingerprints = new Set<string>();
 
 function toTransactionId(widgetEntryId: string): TransactionId {
-  return `txn-widget-${widgetEntryId}` as TransactionId;
+  const transactionId = `txn-widget-${widgetEntryId}`;
+  assertTransactionId(transactionId);
+  return transactionId;
 }
 
 function widgetFingerprint(entryId: string, amount: number, date: string): string {
@@ -63,11 +61,15 @@ export async function processWidgetTransactions(
 
   for (const item of pending) {
     const txId = toTransactionId(item.id);
-    const amount = Math.round(item.amount) as CopAmount;
-    const date = toIsoDate(new Date(item.createdAt)) as IsoDate;
-    const categoryId = (
-      item.category && isValidCategoryId(item.category) ? item.category : "other"
-    ) as CategoryId;
+    const amount = Math.round(item.amount);
+    assertCopAmount(amount);
+    const date = toIsoDate(new Date(item.createdAt));
+    const fallbackCategoryId = "other";
+    if (!isValidCategoryId(fallbackCategoryId)) {
+      throw new Error("Missing fallback category");
+    }
+    const categoryId =
+      item.category && isValidCategoryId(item.category) ? item.category : fallbackCategoryId;
     const type = item.type === "income" ? "income" : "expense";
     const description = item.description ?? "";
 
@@ -98,7 +100,7 @@ export async function processWidgetTransactions(
           source: "widget",
           status: "skipped_duplicate",
           rawText: description,
-          transactionId: existingTxId as TransactionId,
+          transactionId: existingTxId,
           confidence: null,
           receivedAt: now,
           createdAt: now,

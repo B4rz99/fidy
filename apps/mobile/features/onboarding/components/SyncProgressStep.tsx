@@ -1,12 +1,12 @@
 import { useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { ProgressBar } from "@/features/budget/components/ProgressBar";
 import {
   getGmailClientId,
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture";
 import { useTransactionStore } from "@/features/transactions";
+import { ProgressBar } from "@/shared/components";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";

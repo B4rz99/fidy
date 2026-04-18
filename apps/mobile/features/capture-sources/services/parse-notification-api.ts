@@ -1,7 +1,7 @@
 import {
   type LlmParsedTransaction,
   llmOutputSchema,
-} from "@/features/email-capture/services/llm-parser";
+} from "@/features/email-capture/llm-parser.public";
 import { getSupabase } from "@/shared/db";
 import { captureWarning } from "@/shared/lib";
 

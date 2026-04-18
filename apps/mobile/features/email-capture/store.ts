@@ -1,26 +1,8 @@
 import { eq } from "drizzle-orm";
 import { create } from "zustand";
-import { createCaptureIngestionPort } from "@/features/capture-sources/services/capture-ingestion";
-import { insertMerchantRule } from "@/features/email-capture/lib/merchant-rules";
-import type { ProgressPhase } from "@/features/email-capture/lib/progress-phases";
-import {
-  isFirstFetchForAny,
-  shouldShowProgress,
-} from "@/features/email-capture/lib/progress-phases";
-import type { EmailAccountRow, ProcessedEmailRow } from "@/features/email-capture/lib/repository";
-import {
-  deleteEmailAccount,
-  dismissProcessedEmail,
-  getEmailAccounts,
-  getFailedEmails,
-  getNeedsReviewEmails,
-  insertEmailAccount,
-  updateLastFetchedAt,
-  updateProcessedEmailStatus,
-} from "@/features/email-capture/lib/repository";
-import type { ProgressCallback } from "@/features/email-capture/services/email-pipeline";
-import { processEmails, processRetries } from "@/features/email-capture/services/email-pipeline";
+import { createCaptureIngestionPort } from "@/features/capture-sources/ingestion.public";
 import { useTransactionStore } from "@/features/transactions";
+import { isValidCategoryId } from "@/features/transactions/write.public";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync, transactions } from "@/shared/db";
 import {
@@ -31,20 +13,32 @@ import {
   normalizeMerchant,
   toIsoDateTime,
 } from "@/shared/lib";
-import type {
-  CategoryId,
-  EmailAccountId,
-  ProcessedEmailId,
-  TransactionId,
-  UserId,
-} from "@/shared/types/branded";
+import { assertEmailAccountId, assertUserId } from "@/shared/types/assertions";
+import type { UserId } from "@/shared/types/branded";
+import { insertMerchantRule } from "./lib/merchant-rules";
+import type { ProgressPhase } from "./lib/progress-phases";
+import { isFirstFetchForAny, shouldShowProgress } from "./lib/progress-phases";
+import type { EmailAccountRow, ProcessedEmailRow } from "./lib/repository";
+import {
+  deleteEmailAccount,
+  dismissProcessedEmail,
+  getEmailAccounts,
+  getFailedEmails,
+  getNeedsReviewEmails,
+  insertEmailAccount,
+  updateLastFetchedAt,
+  updateProcessedEmailStatus,
+} from "./lib/repository";
+import type { ProgressCallback } from "./pipeline.public";
+import { processEmails, processRetries } from "./pipeline.public";
 import type { EmailProvider, RawEmail } from "./schema";
 import { fetchBankSenders } from "./services/bank-senders-cache";
 import { getAdapter } from "./services/email-adapter";
 
 let dbRef: AnyDb | null = null;
-let userIdRef: string | null = null;
+let userIdRef: UserId | null = null;
 let autoClearTimer: ReturnType<typeof setTimeout> | null = null;
+const EMPTY_RAW_EMAILS: RawEmail[] = [];
 
 type EmailCaptureState = {
   accounts: EmailAccountRow[];
@@ -80,12 +74,17 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
   initStore: (db, userId) => {
     dbRef = db;
+    if (typeof userId !== "string" || userId.trim().length === 0) {
+      userIdRef = null;
+      return;
+    }
+    assertUserId(userId);
     userIdRef = userId;
   },
 
   loadAccounts: async () => {
     if (!dbRef || !userIdRef) return;
-    const accounts = await getEmailAccounts(dbRef, userIdRef as UserId);
+    const accounts = await getEmailAccounts(dbRef, userIdRef);
     set({ accounts });
   },
 
@@ -105,7 +104,9 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
   dismissFailedEmail: async (id) => {
     if (!dbRef) return;
-    await dismissProcessedEmail(dbRef, id as ProcessedEmailId);
+    const failedEmail = get().failedEmails.find((email) => email.id === id);
+    if (!failedEmail) return;
+    await dismissProcessedEmail(dbRef, failedEmail.id);
     const updated = get().failedEmails.filter((e) => e.id !== id);
     set({ failedEmails: updated });
   },
@@ -125,7 +126,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
     const row: EmailAccountRow = {
       id: generateEmailAccountId(),
-      userId: userIdRef as UserId,
+      userId: userIdRef,
       provider,
       email: result.email,
       lastFetchedAt: null,
@@ -140,9 +141,17 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     if (!dbRef) return;
     const account = get().accounts.find((a) => a.id === id);
     if (account) {
-      await getAdapter(account.provider as EmailProvider).disconnect();
+      const provider = account.provider;
+      if (provider !== "gmail" && provider !== "outlook") return;
+      await getAdapter(provider).disconnect();
+      await deleteEmailAccount(dbRef, account.id);
+      set((state) => ({
+        accounts: state.accounts.filter((a) => a.id !== id),
+      }));
+      return;
     }
-    await deleteEmailAccount(dbRef, id as EmailAccountId);
+    assertEmailAccountId(id);
+    await deleteEmailAccount(dbRef, id);
     set((state) => ({
       accounts: state.accounts.filter((a) => a.id !== id),
     }));
@@ -196,12 +205,16 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       const fetchResults = await Promise.all(
         accounts.map(async (account) => {
           try {
+            const provider = account.provider;
+            if (provider !== "gmail" && provider !== "outlook") {
+              return { account, rawEmails: EMPTY_RAW_EMAILS, fetchOk: false };
+            }
             const since =
               account.lastFetchedAt && account.lastFetchedAt < minSince
                 ? account.lastFetchedAt
                 : minSince;
-            const rawEmails = await getAdapter(account.provider as EmailProvider).fetchEmails(
-              clientIds[account.provider as EmailProvider],
+            const rawEmails = await getAdapter(provider).fetchEmails(
+              clientIds[provider],
               since,
               senderEmails
             );
@@ -211,7 +224,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
               provider: account.provider,
               errorType: err instanceof Error ? err.message : "unknown",
             });
-            return { account, rawEmails: [] as RawEmail[], fetchOk: false };
+            return { account, rawEmails: EMPTY_RAW_EMAILS, fetchOk: false };
           }
         })
       );
@@ -234,7 +247,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
         let lastRefreshedSaved = 0;
         await captureIngestion.ingest({
           kind: "email_batch",
-          userId: userId as UserId,
+          userId,
           emails: allEmails,
           onProgress: (progress) => {
             set({ progress });
@@ -249,7 +262,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
         let lastRefreshedSaved = 0;
         await captureIngestion.ingest({
           kind: "email_batch",
-          userId: userId as UserId,
+          userId,
           emails: allEmails,
           onProgress: (progress) => {
             set({ progress });
@@ -263,7 +276,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
       await captureIngestion.ingest({
         kind: "email_retry",
-        userId: userId as UserId,
+        userId,
       });
 
       // Update lastFetchedAt only for accounts whose fetch succeeded
@@ -320,13 +333,14 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
 
     const processedEmail = get().needsReviewEmails.find((e) => e.id === processedEmailId);
     if (!processedEmail?.transactionId) return;
+    if (!isValidCategoryId(categoryId)) return;
 
     const now = toIsoDateTime(new Date());
 
     // Update the transaction's categoryId
     await db
       .update(transactions)
-      .set({ categoryId: categoryId as CategoryId, updatedAt: now })
+      .set({ categoryId, updatedAt: now })
       .where(eq(transactions.id, processedEmail.transactionId));
 
     // Enqueue sync for the updated transaction
@@ -352,9 +366,9 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     // Update the processed email status to "success"
     await updateProcessedEmailStatus(
       db,
-      processedEmailId as ProcessedEmailId,
+      processedEmail.id,
       "success",
-      processedEmail.transactionId as TransactionId
+      processedEmail.transactionId
     );
 
     // Remove from needsReviewEmails state and refresh home screen

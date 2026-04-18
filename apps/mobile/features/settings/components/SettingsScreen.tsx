@@ -3,7 +3,7 @@ import { Stack, useRouter } from "expo-router";
 import { openBrowserAsync } from "expo-web-browser";
 import { useAuthStore } from "@/features/auth";
 import { useEmailCaptureStore } from "@/features/email-capture";
-import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { ScreenLayout, SettingsSection, TAB_BAR_CLEARANCE } from "@/shared/components";
 import {
   Bell,
   ChevronRight,
@@ -26,7 +26,6 @@ import {
 } from "../lib/settings-links";
 import { useSettingsStore } from "../store";
 import { SettingsRow } from "./SettingsRow";
-import { SettingsSection } from "./SettingsSection";
 
 const THEME_LABEL_KEYS: Record<string, string> = {
   system: "settings.themeSystem",

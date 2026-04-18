@@ -1,20 +1,9 @@
 import {
-  captureFingerprint,
-  findDuplicateTransaction,
-  isCaptureProcessed,
-} from "@/features/capture-sources/lib/dedup";
-import { parseNotificationLocally } from "@/features/capture-sources/lib/notification-parser";
-import { insertProcessedCapture } from "@/features/capture-sources/lib/repository";
-import type { NotificationData } from "@/features/capture-sources/schema";
-import { resolveSource } from "@/features/capture-sources/schema";
-import { parseNotificationApi } from "@/features/capture-sources/services/parse-notification-api";
-import {
   insertMerchantRule,
   lookupMerchantRule,
-} from "@/features/email-capture/lib/merchant-rules";
-import { stripPii } from "@/features/email-capture/services/parse-email-api";
-import { isValidCategoryId } from "@/features/transactions/lib/categories";
-import { insertTransaction } from "@/features/transactions/lib/repository";
+} from "@/features/email-capture/merchant-rules.public";
+import { stripPii } from "@/features/email-capture/parsing.public";
+import { insertTransaction, isValidCategoryId } from "@/features/transactions/write.public";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
@@ -27,15 +16,22 @@ import {
   toIsoDateTime,
   trackTransactionCreated,
 } from "@/shared/lib";
-import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
+import { assertCopAmount, assertIsoDate, assertUserId } from "@/shared/types/assertions";
+import type { TransactionId } from "@/shared/types/branded";
+import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
+import { parseNotificationLocally } from "../lib/notification-parser";
+import { insertProcessedCapture } from "../lib/repository";
+import type { NotificationData } from "../schema";
+import { resolveSource } from "../schema";
+import { parseNotificationApi } from "./parse-notification-api";
 
 /** In-flight fingerprints guard against concurrent duplicate processing. */
 const inFlightFingerprints = new Set<string>();
 
-type NotificationPipelineResult = {
+export type NotificationPipelineResult = {
   saved: boolean;
   skippedDuplicate: boolean;
-  transactionId: string | null;
+  transactionId: TransactionId | null;
 };
 
 export async function processNotification(
@@ -43,6 +39,7 @@ export async function processNotification(
   userId: string,
   notification: NotificationData
 ): Promise<NotificationPipelineResult> {
+  assertUserId(userId);
   const notificationText = notification.bigText ?? notification.text;
   const sanitizedText = stripPii(notificationText).slice(0, 500);
   const receivedAt = toIsoDateTime(new Date(notification.timestamp));
@@ -93,6 +90,9 @@ export async function processNotification(
     return { saved: false, skippedDuplicate: false, transactionId: null };
   }
 
+  assertCopAmount(parsed.amount);
+  assertIsoDate(parsed.date);
+
   // Check fingerprint dedup
   const fingerprint = captureFingerprint(source, parsed.amount, parsed.date, parsed.merchant);
 
@@ -141,7 +141,7 @@ export async function processNotification(
         source,
         status: "skipped_duplicate",
         rawText: sanitizedText,
-        transactionId: existingTxId as TransactionId,
+        transactionId: existingTxId,
         confidence: parsed.confidence,
         receivedAt,
         createdAt: toIsoDateTime(new Date()),
@@ -161,7 +161,11 @@ export async function processNotification(
     const merchantKey = normalizeMerchant(parsed.merchant);
     const cachedCategoryId = await lookupMerchantRule(db, userId, merchantKey);
     const rawCategoryId = cachedCategoryId ?? parsed.categoryId;
-    const finalCategoryId = isValidCategoryId(rawCategoryId) ? rawCategoryId : "other";
+    const fallbackCategoryId = "other";
+    if (!isValidCategoryId(fallbackCategoryId)) {
+      throw new Error("Missing fallback category");
+    }
+    const finalCategoryId = isValidCategoryId(rawCategoryId) ? rawCategoryId : fallbackCategoryId;
 
     // Save transaction
     const txId = generateTransactionId();
@@ -169,12 +173,12 @@ export async function processNotification(
 
     insertTransaction(db, {
       id: txId,
-      userId: userId as UserId,
+      userId,
       type: parsed.type,
-      amount: parsed.amount as CopAmount,
-      categoryId: finalCategoryId as CategoryId,
+      amount: parsed.amount,
+      categoryId: finalCategoryId,
       description: parsed.merchant,
-      date: parsed.date as IsoDate,
+      date: parsed.date,
       source,
       createdAt: now,
       updatedAt: now,

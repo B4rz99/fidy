@@ -16,19 +16,19 @@ module.exports = {
     {
       name: "shared-must-not-depend-on-app-routes",
       severity: "error",
-      from: { path: "^apps/mobile/shared/(?!mutations/)" },
+      from: { path: "^apps/mobile/shared/" },
       to: { path: "^apps/mobile/app/" },
     },
     {
       name: "shared-must-not-depend-on-features",
       severity: "error",
-      from: { path: "^apps/mobile/shared/(?!mutations/)" },
+      from: { path: "^apps/mobile/shared/" },
       to: { path: "^apps/mobile/features/" },
     },
     {
       name: "shared-must-not-depend-on-modules",
       severity: "error",
-      from: { path: "^apps/mobile/shared/(?!mutations/)" },
+      from: { path: "^apps/mobile/shared/" },
       to: { path: "^apps/mobile/modules/" },
     },
     {
@@ -50,9 +50,9 @@ module.exports = {
       to: { path: "^apps/mobile/(app|modules)/" },
     },
     {
-      name: "only-shared-or-features-may-depend-on-mutations",
+      name: "only-app-or-features-may-depend-on-mutations",
       severity: "error",
-      from: { pathNot: "^apps/mobile/(shared/mutations|features/.+|app/.+)" },
+      from: { pathNot: "^apps/mobile/(app/.+|features/.+)" },
       to: { path: "^apps/mobile/mutations/" },
     },
   ],
