@@ -31,3 +31,14 @@ Primary commands:
 - Architecture and code-style constraints live in [CLAUDE.md](./CLAUDE.md).
 - Codex-specific assistant hooks live in `.codex/settings.json` and `.ai-hooks/`.
 - Local knowledge stores and editor-specific agent folders are intentionally git-ignored.
+
+## External Vault
+
+Fidy's persistent knowledge vault lives outside this repo on the local machine.
+
+- Stable workspace link: `.context/fidy-vault`
+- Health check: `bun run vault:doctor`
+- Print path: `bun run vault:path`
+- Open in Finder: `bun run vault:open`
+
+Agents doing research, ingest, or long-lived product documentation work should read `.context/fidy-vault/AGENTS.md` and update the vault there instead of adding that material to the repo.
