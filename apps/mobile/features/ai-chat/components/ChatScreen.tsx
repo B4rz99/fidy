@@ -8,10 +8,10 @@ import { HEADER_HEIGHT, ScreenLayout } from "@/shared/components";
 import { Keyboard, KeyboardAvoidingView, Platform, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useMountEffect, useTranslation } from "@/shared/hooks";
-import { trackAiChatOpened } from "@/shared/lib";
+import { captureError, trackAiChatOpened } from "@/shared/lib";
 import type { ChatMessageId } from "@/shared/types/branded";
 import { useStreamingChat } from "../hooks/use-streaming-chat";
-import type { ChatMessage } from "../schema";
+import type { ActionStatus, ChatMessage } from "../schema";
 import { updateChatActionStatus, useChatStore } from "../store";
 import { ChatInput } from "./ChatInput";
 import { MessageBubble } from "./MessageBubble";
@@ -55,6 +55,14 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
   const currentSession = sessions.find((s) => s.id === currentSessionId);
   const title = currentSession?.title ?? t("aiChat.fidyAi");
 
+  const persistActionStatus = useCallback(
+    (messageId: ChatMessageId, status: ActionStatus) => {
+      if (!db || !userId) return;
+      void updateChatActionStatus(db, userId, messageId, status).catch(captureError);
+    },
+    [db, userId]
+  );
+
   const handleConfirmAction = useCallback(
     async (messageId: ChatMessageId) => {
       const msg = messages.find((m) => m.id === messageId);
@@ -62,23 +70,20 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
         try {
           await useTransactionStore.getState().removeTransaction(msg.action.transactionId);
         } catch {
-          if (!db || !userId) return;
-          void updateChatActionStatus(db, userId, messageId, "dismissed");
+          persistActionStatus(messageId, "dismissed");
           return;
         }
       }
-      if (!db || !userId) return;
-      void updateChatActionStatus(db, userId, messageId, "confirmed");
+      persistActionStatus(messageId, "confirmed");
     },
-    [db, messages, userId]
+    [messages, persistActionStatus]
   );
 
   const handleDismissAction = useCallback(
     (messageId: ChatMessageId) => {
-      if (!db || !userId) return;
-      void updateChatActionStatus(db, userId, messageId, "dismissed");
+      persistActionStatus(messageId, "dismissed");
     },
-    [db, userId]
+    [persistActionStatus]
   );
 
   const renderItem = useCallback(

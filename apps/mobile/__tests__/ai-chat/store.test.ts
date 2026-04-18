@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ChatMessage } from "@/features/ai-chat/schema";
 import {
   createChatSession,
   initializeChatSession,
@@ -59,7 +60,7 @@ function makeSession(overrides: { id?: string; title?: string } = {}) {
 
 function makeMessage(
   overrides: { id?: string; sessionId?: string; content?: string; createdAt?: IsoDateTime } = {}
-) {
+): ChatMessage {
   return {
     id: (overrides.id ?? "message-1") as ChatMessageId,
     sessionId: (overrides.sessionId ?? "chat-1") as ChatSessionId,
@@ -175,5 +176,30 @@ describe("ai chat store boundary", () => {
       currentSessionId: secondSessionId,
       messages: [],
     });
+  });
+
+  it("clears the previous session messages while the next session loads", async () => {
+    const deferred = createDeferred<readonly ReturnType<typeof makeMessage>[]>();
+    const orderBy = vi.fn().mockReturnValue(deferred.promise);
+    const where = vi.fn().mockReturnValue({ orderBy });
+    const from = vi.fn().mockReturnValue({ where });
+    const select = vi.fn().mockReturnValue({ from });
+    const db = { select } as never;
+
+    initializeChatSession("user-1" as UserId);
+    useChatStore.setState({
+      currentSessionId: "chat-1" as ChatSessionId,
+      messages: [makeMessage({ sessionId: "chat-1" })],
+    });
+
+    const selectPromise = selectChatSession(db, "user-1" as UserId, "chat-2" as ChatSessionId);
+
+    expect(useChatStore.getState()).toMatchObject({
+      currentSessionId: "chat-2",
+      messages: [],
+    });
+
+    deferred.resolve([makeMessage({ sessionId: "chat-2", content: "New conversation" })]);
+    await selectPromise;
   });
 });

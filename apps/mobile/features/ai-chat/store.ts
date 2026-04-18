@@ -75,7 +75,7 @@ export const useChatStore = create<ChatState & ChatActions>((set) => ({
       messages: state.currentSessionId === sessionId ? [] : state.messages,
     })),
 
-  setCurrentSessionId: (currentSessionId) => set({ currentSessionId }),
+  setCurrentSessionId: (currentSessionId) => set({ currentSessionId, messages: [] }),
 
   setMessages: (messages) => set({ messages: [...messages] }),
 
