@@ -132,24 +132,15 @@ module.exports = defineConfig([
             },
             {
               from: { type: "shared" },
-              disallow: { to: { type: ["app", "feature", "module"] } },
+              disallow: { to: { type: ["app", "feature-public", "feature-internal", "module"] } },
             },
             {
               from: { type: "module" },
-              disallow: { to: { type: ["app", "feature", "shared"] } },
+              disallow: { to: { type: ["app", "feature-public", "feature-internal", "shared"] } },
             },
             {
               from: { type: "app" },
               disallow: { to: { type: "feature-internal" } },
-            },
-            {
-              from: { type: "feature-internal" },
-              disallow: {
-                to: {
-                  type: "feature-internal",
-                  captured: { featureName: "!{{from.captured.featureName}}" },
-                },
-              },
             },
           ],
         },
