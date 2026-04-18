@@ -62,12 +62,14 @@ export default function EditTransactionScreen() {
 
   const handleSave = () => {
     void guardedSave(async () => {
-      if (transactionId == null) return;
+      if (transactionId == null || !db || !userId) {
+        showErrorToast(t("transactions.updateFailed"));
+        return;
+      }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
       await afterDismiss();
       try {
-        if (!db || !userId) return;
         const result = await updateTransactionDirect(db, userId, transactionId, {
           type,
           digits,
@@ -86,12 +88,14 @@ export default function EditTransactionScreen() {
 
   const handleDelete = () => {
     void guardedSave(async () => {
-      if (transactionId == null) return;
+      if (transactionId == null || !db || !userId) {
+        showErrorToast(t("transactions.deleteFailed"));
+        return;
+      }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
       await afterDismiss();
       try {
-        if (!db || !userId) return;
         await deleteTransaction(db, userId, transactionId);
       } catch {
         showErrorToast(t("transactions.deleteFailed"));

@@ -98,8 +98,8 @@ function loadAggregateSnapshot(
 ): TransactionAggregateSnapshot {
   const now = getNow();
   const currentMonth = toMonth(now);
-  const thirtyDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
-  const startDate = toIsoDate(thirtyDaysAgo);
+  const inclusiveThirtyDayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29);
+  const startDate = toIsoDate(inclusiveThirtyDayStart);
   const endDate = toIsoDate(now);
   const categorySpending = loadSpendingByCategory(db, userId, currentMonth);
   const balance = categorySpending.reduce((sum, category) => sum + category.total, 0);

@@ -60,6 +60,14 @@ export type SyncService = {
   ) => Promise<ResolveConflictResult>;
 };
 
+function tryParseTransactionSnapshot(value: string): TransactionSnapshot | null {
+  try {
+    return JSON.parse(value) as TransactionSnapshot;
+  } catch {
+    return null;
+  }
+}
+
 export function createSyncService({
   isOnline,
   getSupabase,
@@ -100,17 +108,20 @@ export function createSyncService({
           }
 
           const resolvedAt = toIsoDateTime(new Date());
+          const serverData = tryParseTransactionSnapshot(row.serverData);
+          const localData =
+            resolution === "local" ? (JSON.parse(row.localData) as TransactionSnapshot) : null;
+          const refreshUserId = localData?.userId ?? serverData?.userId ?? null;
 
-          const localData = JSON.parse(row.localData) as TransactionSnapshot;
-          const refreshUserId = localData.userId;
-
-          if (resolution === "local") {
+          if (resolution === "local" && localData) {
             yield* fromThunk(() => upsertTransaction(db, { ...localData, updatedAt: resolvedAt }));
             yield* fromThunk(() => enqueueTransactionSync(db, row.transactionId, resolvedAt));
           }
 
           yield* fromThunk(() => resolveConflictRow(db, conflictId, resolution, resolvedAt));
-          yield* fromThunk(() => refreshTransactions({ db, userId: refreshUserId }));
+          if (refreshUserId != null) {
+            yield* fromThunk(() => refreshTransactions({ db, userId: refreshUserId }));
+          }
 
           return {
             unresolvedConflicts: (yield* fromThunk(() => listConflicts({ db }))).length,

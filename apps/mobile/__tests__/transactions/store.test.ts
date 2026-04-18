@@ -266,6 +266,33 @@ describe("transaction boundaries", () => {
     });
   });
 
+  it("loadTransactionIntoForm ignores stale session loads without mutating the current form", () => {
+    initializeTransactionSession("user-2" as UserId);
+    useTransactionStore.setState({
+      editingId: "tx-current" as TransactionId,
+      step: 2,
+      type: "income",
+      digits: "999999",
+      categoryId: "transport" as CategoryId,
+      description: "Current draft",
+      date: new Date("2026-05-01T00:00:00.000Z"),
+    });
+
+    const loaded = loadTransactionIntoForm(mockDb, mockUserId, "tx-1" as TransactionId);
+
+    expect(loaded).toBe(false);
+    expect(getTransactionById).not.toHaveBeenCalled();
+    expect(useTransactionStore.getState()).toMatchObject({
+      activeUserId: "user-2",
+      editingId: "tx-current",
+      step: 2,
+      type: "income",
+      digits: "999999",
+      categoryId: "transport",
+      description: "Current draft",
+    });
+  });
+
   it("loadTransactionIntoForm resets stale edit state when the row is missing", () => {
     useTransactionStore.setState({
       editingId: "tx-stale" as TransactionId,

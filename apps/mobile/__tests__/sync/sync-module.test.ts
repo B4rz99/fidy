@@ -7,6 +7,7 @@ const mockSyncPull = vi.fn();
 const mockSyncPush = vi.fn();
 const mockGetUnresolvedConflicts = vi.fn();
 const mockRefreshTransactions = vi.fn();
+const mockUpsertTransaction = vi.fn();
 
 vi.mock("@/shared/db", () => ({
   getSupabase: (...args: any[]) => mockGetSupabase(...args),
@@ -14,6 +15,7 @@ vi.mock("@/shared/db", () => ({
 
 vi.mock("@/features/transactions", () => ({
   refreshTransactions: (...args: any[]) => mockRefreshTransactions(...args),
+  upsertTransaction: (...args: any[]) => mockUpsertTransaction(...args),
 }));
 
 vi.mock("@/features/sync/services/networkMonitor", () => ({
@@ -38,6 +40,7 @@ describe("sync module", () => {
     mockSyncPush.mockResolvedValue(undefined);
     mockGetUnresolvedConflicts.mockReturnValue([]);
     mockRefreshTransactions.mockResolvedValue(undefined);
+    mockUpsertTransaction.mockReset();
   });
 
   it("syncs by pulling first, then pushing queued rows when online", async () => {

@@ -119,6 +119,28 @@ describe("transaction query service", () => {
     expect(getTransactionsPaginated).toHaveBeenCalledWith(expect.anything(), mockUserId, 30, 0);
   });
 
+  it("uses an inclusive 30-day daily-spending window", () => {
+    const getDailySpendingAggregate = vi.fn().mockReturnValue([]);
+    const service = createTransactionQueryService({
+      getTransactionsPaginated: vi.fn().mockReturnValue([]),
+      getSpendingByCategoryAggregate: vi.fn().mockReturnValue([]),
+      getDailySpendingAggregate,
+      getNow: () => new Date("2026-04-12T18:00:00.000Z"),
+    });
+
+    service.loadAggregateSnapshot({
+      db: {} as never,
+      userId: mockUserId,
+    });
+
+    expect(getDailySpendingAggregate).toHaveBeenCalledWith(
+      expect.anything(),
+      mockUserId,
+      "2026-03-14",
+      "2026-04-12"
+    );
+  });
+
   it("returns null for deleted or cross-user transaction lookups", () => {
     const getTransactionById = vi
       .fn()

@@ -323,12 +323,18 @@ export async function removeTransaction(
 }
 
 export function loadTransactionIntoForm(db: AnyDb, userId: UserId, id: TransactionId): boolean {
+  const sessionId = transactionsSessionId;
+  if (!isActiveTransactionSession(userId, sessionId)) return false;
+
   try {
     const transaction = createTransactionQueryService().getStoredTransaction({
       db,
       userId,
       transactionId: id,
     });
+
+    if (!isActiveTransactionSession(userId, sessionId)) return false;
+
     if (!transaction) {
       useTransactionStore.getState().resetForm();
       return false;
