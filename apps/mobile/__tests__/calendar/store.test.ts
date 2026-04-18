@@ -253,6 +253,7 @@ describe("calendar store boundary", () => {
   });
 
   it("removes a deleted bill and its payments from state", async () => {
+    initializeCalendarSession("user-1" as UserId);
     useCalendarStore.setState({
       bills: [
         {
@@ -277,7 +278,6 @@ describe("calendar store boundary", () => {
       ],
     });
     mockDeleteBill.mockResolvedValueOnce(true);
-    initializeCalendarSession("user-1" as UserId);
 
     await deleteBill({} as never, "user-1" as UserId, "bill-1" as BillId);
 

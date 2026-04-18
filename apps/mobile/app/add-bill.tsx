@@ -247,15 +247,17 @@ function AddBillForm({
   );
 }
 
-export default function AddBillScreen() {
-  const router = useRouter();
-  const { billId } = useLocalSearchParams<{ billId?: string }>();
-  const bills = useCalendarStore((s) => s.bills);
-  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
-  const db = userId ? getDb(userId) : null;
-  const { success: migrationsReady } = useMigrations(db ?? (undefined as never), migrations);
-
-  const existingBill = billId ? bills.find((b) => b.id === billId) : undefined;
+function AuthenticatedAddBillForm({
+  existingBill,
+  userId,
+  onDone,
+}: {
+  readonly existingBill: Bill | undefined;
+  readonly userId: UserId;
+  readonly onDone: () => void;
+}) {
+  const db = getDb(userId);
+  const { success: migrationsReady } = useMigrations(db, migrations);
 
   return (
     <AddBillForm
@@ -263,14 +265,45 @@ export default function AddBillScreen() {
       existingBill={existingBill}
       canSubmit={migrationsReady}
       onAddBill={(name, amount, frequency, categoryId, startDate) => {
-        if (!userId || !db || !migrationsReady) return Promise.resolve(false);
+        if (!migrationsReady) return Promise.resolve(false);
         return addBill(db, userId, name, amount, frequency, categoryId, startDate);
       }}
       onUpdateBill={(id, data) => {
-        if (!userId || !db || !migrationsReady) return Promise.resolve(false);
+        if (!migrationsReady) return Promise.resolve(false);
         return updateBill(db, userId, id, data);
       }}
-      onDone={() => router.back()}
+      onDone={onDone}
+    />
+  );
+}
+
+export default function AddBillScreen() {
+  const router = useRouter();
+  const { billId } = useLocalSearchParams<{ billId?: string }>();
+  const bills = useCalendarStore((s) => s.bills);
+  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
+  const existingBill = billId ? bills.find((b) => b.id === billId) : undefined;
+  const handleDone = () => router.back();
+
+  if (!userId) {
+    return (
+      <AddBillForm
+        key={existingBill?.id ?? "new"}
+        existingBill={existingBill}
+        canSubmit={false}
+        onAddBill={() => Promise.resolve(false)}
+        onUpdateBill={() => Promise.resolve(false)}
+        onDone={handleDone}
+      />
+    );
+  }
+
+  return (
+    <AuthenticatedAddBillForm
+      key={existingBill?.id ?? "new"}
+      existingBill={existingBill}
+      userId={userId}
+      onDone={handleDone}
     />
   );
 }

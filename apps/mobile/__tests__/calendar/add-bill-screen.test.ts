@@ -50,7 +50,8 @@ describe("add-bill formSheet screen", () => {
   test("gates bill mutations on migration readiness", () => {
     expect(source).toContain("useMigrations");
     expect(source).toContain("canSubmit={migrationsReady}");
-    expect(source).toContain("!userId || !db || !migrationsReady");
+    expect(source).toContain("if (!migrationsReady) return Promise.resolve(false)");
+    expect(source).not.toContain("undefined as never");
   });
 
   test("dismisses keyboard on chip press", () => {
