@@ -3,7 +3,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth";
-import { useBudgetStore } from "@/features/budget";
+import { initializeBudgetSession } from "@/features/budget";
 import { useEmailCaptureStore } from "@/features/email-capture";
 import {
   BudgetSetupStep,
@@ -53,7 +53,7 @@ function AuthenticatedOnboardingScreen({
     () => {
       useEmailCaptureStore.getState().initStore(db, userId);
       useTransactionStore.getState().initStore(db, userId);
-      useBudgetStore.getState().initStore(db, userId);
+      initializeBudgetSession(userId);
       Promise.all([
         useEmailCaptureStore.getState().loadAccounts(),
         useTransactionStore.getState().loadInitialPage(),

@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
-import { useBudgetStore, useSuggestionSelection } from "@/features/budget";
+import { useOptionalUserId } from "@/features/auth";
+import { acceptBudgetSuggestions, useBudgetStore, useSuggestionSelection } from "@/features/budget";
 import { CATEGORY_MAP } from "@/features/transactions";
 import {
   KeyboardAvoidingView,
@@ -12,6 +13,7 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import {
@@ -23,9 +25,10 @@ import {
 export default function AutoSuggestBudgetsScreen() {
   const router = useRouter();
   const { t, locale } = useTranslation();
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
 
   const autoSuggestions = useBudgetStore((s) => s.autoSuggestions);
-  const acceptSuggestions = useBudgetStore((s) => s.acceptSuggestions);
 
   const { selectedIds, editedAmounts, handleToggle, handleAmountChange, buildBudgetMap } =
     useSuggestionSelection(autoSuggestions);
@@ -43,7 +46,9 @@ export default function AutoSuggestBudgetsScreen() {
     void guardedRun(async () => {
       const budgets = buildBudgetMap();
       if (budgets.size > 0) {
-        await acceptSuggestions(budgets);
+        if (!userId || !db) return;
+        const success = await acceptBudgetSuggestions(db, userId, budgets);
+        if (!success) return;
         trackBudgetSuggestionAccepted({ count: budgets.size });
       } else {
         trackBudgetSuggestionRejected();
@@ -138,7 +143,7 @@ export default function AutoSuggestBudgetsScreen() {
               { backgroundColor: accentGreen, opacity: isBusy ? 0.5 : 1 },
             ]}
             onPress={handleAccept}
-            disabled={isBusy}
+            disabled={isBusy || ((userId == null || db == null) && selectedIds.size > 0)}
           >
             <Text style={styles.acceptButtonText}>{t("budgets.autoSuggest.acceptSelected")}</Text>
           </Pressable>

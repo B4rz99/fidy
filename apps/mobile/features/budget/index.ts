@@ -30,4 +30,17 @@ export {
 } from "./lib/repository";
 export type { Budget, CreateBudgetInput } from "./schema";
 export { createBudgetSchema } from "./schema";
-export { useBudgetStore } from "./store";
+export { subscribeBudgetToTransactions } from "./services/subscribe-budget-to-transactions";
+export {
+  acceptBudgetSuggestions,
+  copyBudgetsForward,
+  createBudget,
+  deleteBudget,
+  initializeBudgetSession,
+  loadBudgetAutoSuggestions,
+  loadBudgetsForUser,
+  nextBudgetMonth,
+  prevBudgetMonth,
+  updateBudget,
+  useBudgetStore,
+} from "./store";

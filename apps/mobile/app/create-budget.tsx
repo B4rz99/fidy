@@ -1,7 +1,15 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import Animated from "react-native-reanimated";
-import { type Budget, type BudgetSuggestion, useBudgetStore } from "@/features/budget";
+import { useOptionalUserId } from "@/features/auth";
+import {
+  type Budget,
+  type BudgetSuggestion,
+  createBudget,
+  deleteBudget,
+  updateBudget,
+  useBudgetStore,
+} from "@/features/budget";
 import {
   CATEGORIES,
   type CategoryId,
@@ -11,6 +19,7 @@ import {
 } from "@/features/transactions";
 import { FidyNumpad } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatInputDisplay, formatMoney, parseDigitsToAmount } from "@/shared/lib";
@@ -23,14 +32,16 @@ function CreateBudgetForm({
   onCreateBudget,
   onUpdateBudget,
   onDeleteBudget,
+  canMutate,
   onDone,
 }: {
   readonly existingBudget: Budget | undefined;
   readonly existingCategoryIds: ReadonlySet<string>;
   readonly autoSuggestions: readonly BudgetSuggestion[];
   readonly onCreateBudget: (categoryId: CategoryId, amount: CopAmount) => Promise<boolean>;
-  readonly onUpdateBudget: (id: BudgetId, amount: CopAmount) => Promise<void>;
-  readonly onDeleteBudget: (id: BudgetId) => Promise<void>;
+  readonly onUpdateBudget: (id: BudgetId, amount: CopAmount) => Promise<boolean>;
+  readonly onDeleteBudget: (id: BudgetId) => Promise<boolean>;
+  readonly canMutate: boolean;
   readonly onDone: () => void;
 }) {
   const { t, locale } = useTranslation();
@@ -68,8 +79,8 @@ function CreateBudgetForm({
       if (amount <= 0) return;
 
       if (existingBudget) {
-        await onUpdateBudget(existingBudget.id, amount);
-        onDone();
+        const success = await onUpdateBudget(existingBudget.id, amount);
+        if (success) onDone();
         return;
       }
 
@@ -82,8 +93,8 @@ function CreateBudgetForm({
   const handleDelete = () => {
     void guardedSave(async () => {
       if (!existingBudget) return;
-      await onDeleteBudget(existingBudget.id);
-      onDone();
+      const success = await onDeleteBudget(existingBudget.id);
+      if (success) onDone();
     });
   };
 
@@ -159,7 +170,7 @@ function CreateBudgetForm({
       <Pressable
         style={[styles.saveButton, { backgroundColor: accentGreen, opacity: isSaving ? 0.5 : 1 }]}
         onPress={handleSave}
-        disabled={isSaving}
+        disabled={isSaving || !canMutate}
       >
         <Text style={styles.saveButtonText}>{t("common.save")}</Text>
       </Pressable>
@@ -168,7 +179,7 @@ function CreateBudgetForm({
         <Pressable
           style={[styles.deleteButton, { borderColor: accentRed }]}
           onPress={handleDelete}
-          disabled={isSaving}
+          disabled={isSaving || !canMutate}
         >
           <Text style={[styles.deleteButtonText, { color: accentRed }]}>{t("common.delete")}</Text>
         </Pressable>
@@ -182,14 +193,14 @@ function CreateBudgetForm({
 export default function CreateBudgetScreen() {
   const router = useRouter();
   const { budgetId } = useLocalSearchParams<{ budgetId?: string }>();
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
 
   const budgets = useBudgetStore((s) => s.budgets);
   const autoSuggestions = useBudgetStore((s) => s.autoSuggestions);
-  const createBudget = useBudgetStore((s) => s.createBudget);
-  const updateBudget = useBudgetStore((s) => s.updateBudget);
-  const deleteBudget = useBudgetStore((s) => s.deleteBudget);
 
   const existingBudget = budgetId ? budgets.find((b) => b.id === budgetId) : undefined;
+  const canMutate = userId != null && db != null;
 
   const existingCategoryIds = useMemo(
     () => new Set(budgets.filter((b) => b.id !== budgetId).map((b) => b.categoryId)),
@@ -202,9 +213,19 @@ export default function CreateBudgetScreen() {
       existingBudget={existingBudget}
       existingCategoryIds={existingCategoryIds}
       autoSuggestions={autoSuggestions}
-      onCreateBudget={createBudget}
-      onUpdateBudget={updateBudget}
-      onDeleteBudget={deleteBudget}
+      onCreateBudget={(categoryId, amount) => {
+        if (!userId || !db) return Promise.resolve(false);
+        return createBudget(db, userId, categoryId, amount);
+      }}
+      onUpdateBudget={(id, amount) => {
+        if (!userId || !db) return Promise.resolve(false);
+        return updateBudget(db, userId, id, amount);
+      }}
+      onDeleteBudget={(id) => {
+        if (!userId || !db) return Promise.resolve(false);
+        return deleteBudget(db, userId, id);
+      }}
+      canMutate={canMutate}
       onDone={() => router.back()}
     />
   );

@@ -1,4 +1,10 @@
-import { useBudgetStore, useSuggestionSelection } from "@/features/budget";
+import { useOptionalUserId } from "@/features/auth";
+import {
+  acceptBudgetSuggestions,
+  loadBudgetAutoSuggestions,
+  useBudgetStore,
+  useSuggestionSelection,
+} from "@/features/budget";
 import { CATEGORY_MAP } from "@/features/transactions";
 import {
   Pressable,
@@ -9,6 +15,7 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney } from "@/shared/lib";
@@ -17,10 +24,10 @@ import { useOnboardingStore } from "../store";
 export function BudgetSetupStep() {
   const { t, locale } = useTranslation();
   const nextStep = useOnboardingStore((s) => s.nextStep);
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
 
   const autoSuggestions = useBudgetStore((s) => s.autoSuggestions);
-  const acceptSuggestions = useBudgetStore((s) => s.acceptSuggestions);
-  const loadAutoSuggestions = useBudgetStore((s) => s.loadAutoSuggestions);
 
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
@@ -32,7 +39,8 @@ export function BudgetSetupStep() {
 
   // Load suggestions on mount
   useMountEffect(() => {
-    loadAutoSuggestions();
+    if (!userId || !db) return;
+    loadBudgetAutoSuggestions(db, userId);
   });
 
   const { selectedIds, editedAmounts, handleToggle, handleAmountChange, buildBudgetMap } =
@@ -42,7 +50,9 @@ export function BudgetSetupStep() {
     guardedRun(async () => {
       const budgets = buildBudgetMap();
       if (budgets.size > 0) {
-        await acceptSuggestions(budgets);
+        if (!userId || !db) return;
+        const success = await acceptBudgetSuggestions(db, userId, budgets);
+        if (!success) return;
       }
       nextStep();
     });
@@ -130,7 +140,7 @@ export function BudgetSetupStep() {
           onPress={() => {
             void handleSave();
           }}
-          disabled={isBusy}
+          disabled={isBusy || ((userId == null || db == null) && selectedIds.size > 0)}
         >
           <Text style={styles.primaryButtonText}>{t("onboarding.budgetSetup.saveBudgets")}</Text>
         </Pressable>

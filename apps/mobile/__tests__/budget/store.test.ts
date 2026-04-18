@@ -7,7 +7,6 @@ const mockRefreshMonth = vi.fn();
 const mockLoadAutoSuggestions = vi.fn();
 const mockAcknowledgeAlert = vi.fn();
 const mockInsertNotificationRecord = vi.fn();
-const mockSubscribe = vi.fn(() => vi.fn());
 
 vi.mock("@/features/budget/lib/monitoring", () => ({
   createBudgetMonitoringModule: mockCreateBudgetMonitoringModule.mockImplementation(() => ({
@@ -35,9 +34,6 @@ vi.mock("@/features/transactions", async (importOriginal) => {
     ...actual,
     // biome-ignore lint/style/useNamingConvention: mock matches exported constant name
     CATEGORY_MAP: {},
-    useTransactionStore: {
-      subscribe: mockSubscribe,
-    },
   };
 });
 
@@ -65,9 +61,8 @@ function createDeferred<T>() {
   return { promise, resolve, reject };
 }
 
-async function getStore() {
-  const { useBudgetStore } = await import("@/features/budget/store");
-  return useBudgetStore;
+async function getBudgetModule() {
+  return import("@/features/budget/store");
 }
 
 describe("useBudgetStore", () => {
@@ -104,23 +99,23 @@ describe("useBudgetStore", () => {
       month === ("2026-03" as Month) ? deferredMarch.promise : Promise.resolve(freshSnapshot)
     );
 
-    const store = await getStore();
-    store.getState().initStore(mockDb, USER_ID);
-    store.setState({ currentMonth: "2026-03" as Month });
+    const { initializeBudgetSession, loadBudgetsForUser, useBudgetStore } = await getBudgetModule();
+    initializeBudgetSession(USER_ID);
+    useBudgetStore.getState().setMonth("2026-03" as Month);
 
-    const staleLoad = store.getState().loadBudgets();
+    const staleLoad = loadBudgetsForUser(mockDb, USER_ID);
 
-    store.setState({ currentMonth: "2026-04" as Month });
-    const freshLoad = store.getState().loadBudgets();
+    useBudgetStore.getState().setMonth("2026-04" as Month);
+    const freshLoad = loadBudgetsForUser(mockDb, USER_ID);
 
     await freshLoad;
     deferredMarch.resolve(staleSnapshot);
     await staleLoad;
 
-    expect(store.getState().currentMonth).toBe("2026-04");
-    expect(store.getState().budgets).toEqual(freshSnapshot.budgets);
-    expect(store.getState().summary).toEqual(freshSnapshot.summary);
-    expect(store.getState().isLoading).toBe(false);
+    expect(useBudgetStore.getState().currentMonth).toBe("2026-04");
+    expect(useBudgetStore.getState().budgets).toEqual(freshSnapshot.budgets);
+    expect(useBudgetStore.getState().summary).toEqual(freshSnapshot.summary);
+    expect(useBudgetStore.getState().isLoading).toBe(false);
   });
 
   it("clears loading when context changes without starting a newer refresh", async () => {
@@ -135,13 +130,13 @@ describe("useBudgetStore", () => {
 
     mockRefreshMonth.mockReturnValueOnce(deferredSnapshot.promise);
 
-    const store = await getStore();
-    store.getState().initStore(mockDb, USER_ID);
-    store.setState({ currentMonth: "2026-03" as Month });
+    const { initializeBudgetSession, loadBudgetsForUser, useBudgetStore } = await getBudgetModule();
+    initializeBudgetSession(USER_ID);
+    useBudgetStore.getState().setMonth("2026-03" as Month);
 
-    const load = store.getState().loadBudgets();
+    const load = loadBudgetsForUser(mockDb, USER_ID);
 
-    store.getState().initStore(mockDb, "user-2" as UserId);
+    initializeBudgetSession("user-2" as UserId);
     deferredSnapshot.resolve({
       budgets: [],
       budgetProgress: [],
@@ -152,7 +147,7 @@ describe("useBudgetStore", () => {
     });
     await load;
 
-    expect(store.getState().isLoading).toBe(false);
+    expect(useBudgetStore.getState().isLoading).toBe(false);
   });
 
   it("drops stale notification side effects after the active user changes", async () => {
@@ -167,18 +162,18 @@ describe("useBudgetStore", () => {
 
     mockRefreshMonth.mockReturnValueOnce(deferredSnapshot.promise);
 
-    const store = await getStore();
-    store.getState().initStore(mockDb, USER_ID);
-    store.setState({ currentMonth: "2026-03" as Month });
+    const { initializeBudgetSession, loadBudgetsForUser, useBudgetStore } = await getBudgetModule();
+    initializeBudgetSession(USER_ID);
+    useBudgetStore.getState().setMonth("2026-03" as Month);
 
     const monitoringCallsBeforeLoad = mockCreateBudgetMonitoringModule.mock.calls.length;
-    const load = store.getState().loadBudgets();
+    const load = loadBudgetsForUser(mockDb, USER_ID);
     const initialMonitoringPorts =
       mockCreateBudgetMonitoringModule.mock.calls[monitoringCallsBeforeLoad]?.[0];
 
     expect(initialMonitoringPorts).toBeDefined();
 
-    store.getState().initStore(mockDb, "user-2" as UserId);
+    initializeBudgetSession("user-2" as UserId);
 
     initialMonitoringPorts.insertNotification({
       type: "budget_alert",
@@ -212,14 +207,15 @@ describe("useBudgetStore", () => {
     ];
     mockLoadAutoSuggestions.mockReturnValue(suggestions);
 
-    const store = await getStore();
-    store.getState().initStore(mockDb, USER_ID);
-    store.setState({
+    const { initializeBudgetSession, loadBudgetAutoSuggestions, useBudgetStore } =
+      await getBudgetModule();
+    initializeBudgetSession(USER_ID);
+    useBudgetStore.setState({
       currentMonth: "2026-03" as Month,
       budgets: [{ id: "budget-1", categoryId: "food" as CategoryId }] as any[],
     });
 
-    store.getState().loadAutoSuggestions();
+    loadBudgetAutoSuggestions(mockDb, USER_ID);
 
     expect(mockLoadAutoSuggestions).toHaveBeenCalledWith({
       db: mockDb,
@@ -228,6 +224,6 @@ describe("useBudgetStore", () => {
       existingCategoryIds: new Set(["food" as CategoryId]),
     });
     expect(mockRefreshMonth).not.toHaveBeenCalled();
-    expect(store.getState().autoSuggestions).toEqual(suggestions);
+    expect(useBudgetStore.getState().autoSuggestions).toEqual(suggestions);
   });
 });
