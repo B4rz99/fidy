@@ -6,10 +6,6 @@ The role of this file is to describe common mistakes and confusion points that a
 
 The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async (importOriginal) => ...)` for heavy modules like `date-fns`. The async `importOriginal` call creates module-loading contention across parallel Vitest workers, causing intermittent timeouts in tests that dynamically import large module trees (e.g. `syncEngine.ts` → budget + goals + transactions). Fix: remove the global mock entirely, or provide a synchronous factory. Tests needing deterministic behavior should mock at the file level with `vi.doMock` or `vi.mock`.
 
-### Ralph lint loop uses `lint-progress.txt` instead of PRD/progress bootstrap files (⚠️ AGENT SURPRISE)
-
-The generic `scripts/ralph/AGENTS.md` bootstrap mentions `scripts/ralph/prd.json` and `scripts/ralph/progress.txt`, but this repo's lint-maintenance loop only includes `scripts/ralph/lint-progress.txt` (plus the other specialized `*-progress.txt` files). For lint iterations, read `scripts/ralph/lint-progress.txt` and do not treat the missing PRD/progress files as a blocker.
-
 ## Testing Strategy
 
 Use these rules:
