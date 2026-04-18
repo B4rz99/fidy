@@ -239,6 +239,11 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
             offset: pageData.length,
             hasMore,
           });
+        } else {
+          set({
+            offset: pageData.length,
+            hasMore,
+          });
         }
         get().loadAggregates();
       } catch {
@@ -254,17 +259,25 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
 
     editTransaction: (id) => {
       if (!dbRef) return;
-      const row = getTransactionById(dbRef, id);
-      if (!row) return;
-      const tx = toStoredTransaction(row);
-      set({
-        editingId: id,
-        type: tx.type,
-        digits: String(tx.amount),
-        categoryId: tx.categoryId,
-        description: tx.description,
-        date: tx.date,
-      });
+      try {
+        const row = getTransactionById(dbRef, id);
+        if (!row) {
+          get().resetForm();
+          return;
+        }
+
+        const tx = toStoredTransaction(row);
+        set({
+          editingId: id,
+          type: tx.type,
+          digits: String(tx.amount),
+          categoryId: tx.categoryId,
+          description: tx.description,
+          date: tx.date,
+        });
+      } catch {
+        get().resetForm();
+      }
     },
 
     updateTransaction: async (id) => mutationService.update(id, toTransactionFormInput(get())),
@@ -288,8 +301,12 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
 
     getTransactionById: (id) => {
       if (!dbRef) return null;
-      const row = getTransactionById(dbRef, id);
-      return row ? toStoredTransaction(row) : null;
+      try {
+        const row = getTransactionById(dbRef, id);
+        return row ? toStoredTransaction(row) : null;
+      } catch {
+        return null;
+      }
     },
   };
 });

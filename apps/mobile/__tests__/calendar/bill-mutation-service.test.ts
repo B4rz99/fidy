@@ -226,6 +226,13 @@ describe("calendar bill mutation service", () => {
     );
   });
 
+  it("returns false when updateBill commit throws", async () => {
+    currentCommit = vi.fn().mockRejectedValue(new Error("boom"));
+    const service = createService();
+
+    await expect(service.updateBill("bill-1" as BillId, { name: "Updated" })).resolves.toBe(false);
+  });
+
   it("returns false for update and delete when commits are unavailable or fail", async () => {
     currentCommit = null;
     const service = createService();
@@ -233,6 +240,13 @@ describe("calendar bill mutation service", () => {
     await expect(service.deleteBill("bill-1" as BillId)).resolves.toBe(false);
 
     currentCommit = vi.fn().mockResolvedValue({ success: false, error: "nope" });
+    await expect(service.deleteBill("bill-1" as BillId)).resolves.toBe(false);
+  });
+
+  it("returns false when deleteBill commit throws", async () => {
+    currentCommit = vi.fn().mockRejectedValue(new Error("boom"));
+    const service = createService();
+
     await expect(service.deleteBill("bill-1" as BillId)).resolves.toBe(false);
   });
 
@@ -283,6 +297,18 @@ describe("calendar bill mutation service", () => {
     ).resolves.toEqual({ success: false });
   });
 
+  it("returns false when markBillPaid receives a failed commit result", async () => {
+    currentCommit = vi.fn().mockResolvedValue({ success: false, error: "nope" });
+    const service = createService();
+
+    await expect(
+      service.markBillPaid([bill], bill.id as BillId, "2026-04-12" as IsoDate)
+    ).resolves.toEqual({ success: false });
+
+    expect(addTransactionToCacheMock).not.toHaveBeenCalled();
+    expect(trackPaymentRecordedMock).not.toHaveBeenCalled();
+  });
+
   it("unmarks payments and only clears cache when a linked transaction exists", async () => {
     const service = createService();
     const withTransaction: BillPayment = {
@@ -325,6 +351,25 @@ describe("calendar bill mutation service", () => {
         transactionId: null,
       })
     );
+    expect(removeTransactionFromCacheMock).not.toHaveBeenCalled();
+  });
+
+  it("returns false when unmarkBillPaid receives a failed commit result", async () => {
+    currentCommit = vi.fn().mockResolvedValue({ success: false, error: "nope" });
+    const service = createService();
+    const withTransaction: BillPayment = {
+      id: "pay-1" as BillPaymentId,
+      billId: bill.id as BillId,
+      dueDate: "2026-04-12" as IsoDate,
+      paidAt: nowIso,
+      transactionId: "txn-1" as TransactionId,
+      createdAt: nowIso,
+    };
+
+    await expect(
+      service.unmarkBillPaid([withTransaction], bill.id as BillId, withTransaction.dueDate)
+    ).resolves.toEqual({ success: false });
+
     expect(removeTransactionFromCacheMock).not.toHaveBeenCalled();
   });
 });

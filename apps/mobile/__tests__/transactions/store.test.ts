@@ -320,6 +320,94 @@ describe("useTransactionStore", () => {
     expect(getTransactionsPaginated).not.toHaveBeenCalled();
   });
 
+  it("refresh updates pagination metadata even when transaction rows are unchanged", async () => {
+    useTransactionStore.setState({
+      pages: [
+        {
+          id: "tx-1" as TransactionId,
+          userId: mockUserId,
+          type: "expense",
+          amount: 1000 as CopAmount,
+          categoryId: "food" as CategoryId,
+          description: "Lunch",
+          date: new Date("2026-03-04T00:00:00.000Z"),
+          createdAt: new Date("2026-03-04T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-04T10:00:00.000Z"),
+          deletedAt: null,
+        },
+      ],
+      offset: 1,
+      hasMore: true,
+    });
+
+    vi.mocked(getTransactionsPaginated).mockReturnValueOnce([
+      {
+        id: "tx-1" as TransactionId,
+        userId: mockUserId,
+        type: "expense",
+        amount: 1000 as CopAmount,
+        categoryId: "food" as CategoryId,
+        description: "Lunch",
+        date: "2026-03-04" as IsoDate,
+        createdAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+        updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+        deletedAt: null,
+        source: "manual",
+      },
+    ]);
+
+    await useTransactionStore.getState().refresh();
+
+    expect(useTransactionStore.getState().hasMore).toBe(false);
+  });
+
+  it("refresh keeps existing pages and aggregates when the DB read fails", async () => {
+    const existingDate = new Date("2026-03-04T00:00:00.000Z");
+    const existingUpdatedAt = new Date("2026-03-04T10:00:00.000Z");
+    const existingCategorySpending = [
+      { categoryId: "food" as CategoryId, total: 42000 as CopAmount },
+    ];
+    const existingDailySpending = [{ date: "2026-03-04" as IsoDate, total: 42000 as CopAmount }];
+
+    useTransactionStore.setState({
+      pages: [
+        {
+          id: "tx-1" as TransactionId,
+          userId: mockUserId,
+          type: "expense",
+          amount: 42000 as CopAmount,
+          categoryId: "food" as CategoryId,
+          description: "Existing lunch",
+          date: existingDate,
+          createdAt: existingUpdatedAt,
+          updatedAt: existingUpdatedAt,
+          deletedAt: null,
+        },
+      ],
+      offset: 1,
+      hasMore: true,
+      balance: 42000,
+      categorySpending: existingCategorySpending,
+      dailySpending: existingDailySpending,
+    });
+
+    vi.mocked(getTransactionsPaginated).mockImplementationOnce(() => {
+      throw new Error("db read failed");
+    });
+
+    await useTransactionStore.getState().refresh();
+
+    const state = useTransactionStore.getState();
+    expect(state.pages).toHaveLength(1);
+    expect(state.pages[0]?.id).toBe("tx-1");
+    expect(state.offset).toBe(1);
+    expect(state.hasMore).toBe(true);
+    expect(state.balance).toBe(42000);
+    expect(state.categorySpending).toEqual(existingCategorySpending);
+    expect(state.dailySpending).toEqual(existingDailySpending);
+    expect(getSpendingByCategoryAggregate).not.toHaveBeenCalled();
+  });
+
   it("editTransaction hydrates edit mode from the stored transaction row", () => {
     vi.mocked(getTransactionById).mockReturnValueOnce({
       id: "tx-1" as TransactionId,
@@ -346,6 +434,68 @@ describe("useTransactionStore", () => {
     expect(state.date.getFullYear()).toBe(2026);
     expect(state.date.getMonth()).toBe(3);
     expect(state.date.getDate()).toBe(12);
+  });
+
+  it("editTransaction clears stale edit state when the requested row is missing", () => {
+    useTransactionStore.setState({
+      editingId: "tx-stale" as TransactionId,
+      step: 2,
+      type: "income",
+      digits: "235000",
+      categoryId: "food" as CategoryId,
+      description: "Stale draft",
+      date: new Date("2026-04-12T00:00:00.000Z"),
+    });
+
+    vi.mocked(getTransactionById).mockReturnValueOnce(null);
+
+    useTransactionStore.getState().editTransaction("tx-missing" as TransactionId);
+
+    const state = useTransactionStore.getState();
+    expect(state.editingId).toBeNull();
+    expect(state.step).toBe(1);
+    expect(state.type).toBe("expense");
+    expect(state.digits).toBe("");
+    expect(state.categoryId).toBeNull();
+    expect(state.description).toBe("");
+  });
+
+  it("editTransaction clears stale edit state when the DB read throws", () => {
+    useTransactionStore.setState({
+      editingId: "tx-stale" as TransactionId,
+      step: 2,
+      type: "income",
+      digits: "235000",
+      categoryId: "food" as CategoryId,
+      description: "Stale draft",
+      date: new Date("2026-04-12T00:00:00.000Z"),
+    });
+
+    vi.mocked(getTransactionById).mockImplementationOnce(() => {
+      throw new Error("db read failed");
+    });
+
+    expect(() =>
+      useTransactionStore.getState().editTransaction("tx-broken" as TransactionId)
+    ).not.toThrow();
+
+    const state = useTransactionStore.getState();
+    expect(state.editingId).toBeNull();
+    expect(state.step).toBe(1);
+    expect(state.type).toBe("expense");
+    expect(state.digits).toBe("");
+    expect(state.categoryId).toBeNull();
+    expect(state.description).toBe("");
+  });
+
+  it("getTransactionById returns null when the DB read throws", () => {
+    vi.mocked(getTransactionById).mockImplementationOnce(() => {
+      throw new Error("db read failed");
+    });
+
+    const result = useTransactionStore.getState().getTransactionById("tx-1" as TransactionId);
+
+    expect(result).toBeNull();
   });
 
   it("removeTransaction soft-deletes from DB, enqueues sync, and refreshes", async () => {

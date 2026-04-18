@@ -60,6 +60,34 @@ describe("scheduleBudgetAlert", () => {
     expect(mockScheduleNotificationAsync).toHaveBeenCalledOnce();
   });
 
+  it("schedules the over-budget copy when the alert threshold is 100", async () => {
+    const { scheduleBudgetAlert } = await import("@/features/budget/lib/notifications");
+
+    const result = await scheduleBudgetAlert(
+      {
+        ...MOCK_ALERT,
+        threshold: 100,
+        percentUsed: 112,
+      },
+      "Comida"
+    );
+
+    expect(result).toEqual({ type: "scheduled", id: "notif-id-123" });
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledWith({
+      content: {
+        title: "¡Presupuesto superado!",
+        body: "Comida excedió el presupuesto al 112%",
+        data: {
+          budgetId: "budget-1",
+          categoryId: "food",
+          threshold: 100,
+          route: "/(tabs)/(finance)",
+        },
+      },
+      trigger: null,
+    });
+  });
+
   it("returns { type: 'needs_permission' } when pre-permission is needed", async () => {
     mockGetPermissionsAsync.mockResolvedValue({
       status: "undetermined",
@@ -132,12 +160,13 @@ describe("scheduleBudgetAlert", () => {
     expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
   });
 
-  it("returns { type: 'skipped' } when scheduling the notification throws", async () => {
-    mockScheduleNotificationAsync.mockRejectedValue(new Error("schedule failed"));
+  it("returns { type: 'skipped' } when notification scheduling fails", async () => {
+    mockScheduleNotificationAsync.mockRejectedValueOnce(new Error("Expo failed"));
     const { scheduleBudgetAlert } = await import("@/features/budget/lib/notifications");
 
     const result = await scheduleBudgetAlert(MOCK_ALERT, "Food");
 
     expect(result).toEqual({ type: "skipped" });
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledOnce();
   });
 });

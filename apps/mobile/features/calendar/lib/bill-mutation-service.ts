@@ -154,16 +154,20 @@ export function createCalendarBillMutationService(
           ])
       );
 
-      const result = await commit({
-        kind: "calendar.bill.update",
-        billId: id,
-        fields: dbFields as Partial<
-          Pick<BillRow, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
-        >,
-        now: toIsoDateTime(now()),
-      });
+      try {
+        const result = await commit({
+          kind: "calendar.bill.update",
+          billId: id,
+          fields: dbFields as Partial<
+            Pick<BillRow, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
+          >,
+          now: toIsoDateTime(now()),
+        });
 
-      return result.success;
+        return result.success;
+      } catch {
+        return false;
+      }
     },
 
     deleteBill: async (id) => {
@@ -172,12 +176,16 @@ export function createCalendarBillMutationService(
         return false;
       }
 
-      const result = await commit({
-        kind: "calendar.bill.delete",
-        billId: id,
-      });
+      try {
+        const result = await commit({
+          kind: "calendar.bill.delete",
+          billId: id,
+        });
 
-      return result.success;
+        return result.success;
+      } catch {
+        return false;
+      }
     },
 
     markBillPaid: async (bills, billId, dueDate) => {
