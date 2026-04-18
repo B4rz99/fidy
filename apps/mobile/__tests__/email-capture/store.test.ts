@@ -66,17 +66,11 @@ vi.mock("@/features/email-capture/lib/progress-phases", () => ({
     mockShouldShowProgress(...(args as [number, boolean, number])),
 }));
 
-vi.mock("@/features/email-capture/services/bank-senders-cache", async (importOriginal) => {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-  const actual =
-    await importOriginal<typeof import("@/features/email-capture/services/bank-senders-cache")>();
-  return {
-    ...actual,
-    fetchBankSenders: vi
-      .fn()
-      .mockResolvedValue([{ bank: "Bancolombia", email: "notificaciones@bancolombia.com.co" }]),
-  };
-});
+vi.mock("@/features/email-capture/services/bank-senders-cache", () => ({
+  fetchBankSenders: vi
+    .fn()
+    .mockResolvedValue([{ bank: "Bancolombia", email: "notificaciones@bancolombia.com.co" }]),
+}));
 
 vi.mock("@/shared/db/enqueue-sync", () => ({
   enqueueSync: vi.fn(),

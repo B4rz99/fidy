@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "testRunner": "command",
+  "inPlace": true,
+  "commandRunner": {
+    "command": "bun run test"
+  },
+  "reporters": ["clear-text", "html", "progress"],
+  "coverageAnalysis": "off",
+  "mutate": [
+    "features/**/lib/**/*.ts",
+    "features/**/data/**/*.ts",
+    "shared/lib/**/*.ts",
+    "shared/mutations/**/*.ts"
+  ],
+  "ignorePatterns": [
+    "__tests__/**",
+    ".expo/**",
+    "android/**",
+    "dist/**",
+    "coverage/**",
+    "drizzle/**",
+    "ios/**",
+    "node_modules/**"
+  ]
+}

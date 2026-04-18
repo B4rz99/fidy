@@ -1,0 +1,23 @@
+{
+  "path": ["apps/mobile", "packages"],
+  "pattern": "**/*.{ts,tsx,js}",
+  "ignore": [
+    "**/__tests__/**",
+    "**/*.d.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/node_modules/**",
+    "**/.expo/**",
+    "**/android/**",
+    "**/coverage/**",
+    "**/dist/**",
+    "**/ios/**",
+    ".worktrees/**"
+  ],
+  "absolute": true,
+  "gitignore": true,
+  "minTokens": 80,
+  "output": "./reports/jscpd",
+  "reporters": ["console", "json"],
+  "threshold": 2
+}

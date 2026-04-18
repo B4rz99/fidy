@@ -1,5 +1,6 @@
 // https://docs.expo.dev/guides/using-eslint/
 const { defineConfig } = require("eslint/config");
+const boundaries = require("eslint-plugin-boundaries");
 const expoConfig = require("eslint-config-expo/flat");
 const tseslint = require("typescript-eslint");
 
@@ -27,8 +28,36 @@ const BARREL_PATTERNS = [
   { group: ["lucide-react-native"], message: "Import from @/shared/components/icons instead" },
 ];
 
+const BOUNDARY_ELEMENTS = [
+  {
+    type: "feature-public",
+    category: "feature",
+    pattern: "features/*/index.ts",
+    mode: "full",
+    capture: ["featureName"],
+  },
+  {
+    type: "feature-internal",
+    category: "feature",
+    pattern: "features/*/**/*.{ts,tsx}",
+    mode: "full",
+    capture: ["featureName"],
+  },
+  { type: "app", pattern: "app/**/*.{ts,tsx}", mode: "full" },
+  { type: "shared", pattern: "shared/**/*.{ts,tsx}", mode: "full" },
+  { type: "module", pattern: "modules/**/*.{ts,tsx,js}", mode: "full" },
+];
+
 module.exports = defineConfig([
   expoConfig,
+  {
+    plugins: {
+      boundaries,
+    },
+    settings: {
+      "boundaries/elements": BOUNDARY_ELEMENTS,
+    },
+  },
   {
     ignores: ["dist/*"],
   },
@@ -92,6 +121,30 @@ module.exports = defineConfig([
 
       // — Import rules —
       "import/no-cycle": "error",
+      "boundaries/dependencies": [
+        "error",
+        {
+          default: "allow",
+          rules: [
+            {
+              from: { category: "feature" },
+              disallow: { to: { type: "app" } },
+            },
+            {
+              from: { type: "shared" },
+              disallow: { to: { type: ["app", "feature-public", "feature-internal", "module"] } },
+            },
+            {
+              from: { type: "module" },
+              disallow: { to: { type: ["app", "feature-public", "feature-internal", "shared"] } },
+            },
+            {
+              from: { type: "app" },
+              disallow: { to: { type: "feature-internal" } },
+            },
+          ],
+        },
+      ],
     },
   },
 
@@ -180,6 +233,7 @@ module.exports = defineConfig([
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/restrict-template-expressions": "off",
+      "boundaries/dependencies": "off",
       "no-restricted-imports": "off",
     },
   },
