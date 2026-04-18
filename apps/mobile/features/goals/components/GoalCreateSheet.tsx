@@ -2,6 +2,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import Animated from "react-native-reanimated";
+import { useAuthStore } from "@/features/auth";
 import { handleNumpadPress } from "@/features/transactions";
 import { FidyNumpad } from "@/shared/components";
 import {
@@ -14,16 +15,18 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
+import { getDb } from "@/shared/db";
 import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, parseDigitsToAmount, toIsoDate } from "@/shared/lib";
+import type { UserId } from "@/shared/types/branded";
 import type { GoalType } from "../schema";
-import { useGoalStore } from "../store";
+import { createGoal, useGoalStore } from "../store";
 
 export function GoalCreateSheet() {
   const { back } = useRouter();
   const { t, locale } = useTranslation();
-  const createGoal = useGoalStore((s) => s.createGoal);
   const goals = useGoalStore((s) => s.goals);
+  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
 
   const cardBg = useThemeColor("card");
   const primaryColor = useThemeColor("primary");
@@ -74,7 +77,8 @@ export function GoalCreateSheet() {
         const normalizedRate = interestRate.replace(",", ".");
         const isValidRate = /^\d+(\.\d+)?$/.test(normalizedRate);
         const parsedRate = isValidRate ? Number.parseFloat(normalizedRate) : undefined;
-        const success = await createGoal({
+        if (!userId) return;
+        const success = await createGoal(getDb(userId), userId, {
           name: name.trim(),
           type: goalType,
           targetAmount: parsedAmount,
@@ -89,7 +93,7 @@ export function GoalCreateSheet() {
           back();
         }
       }),
-    [name, digits, goalType, targetDate, interestRate, createGoal, back, guardedCreate]
+    [name, digits, goalType, targetDate, interestRate, back, guardedCreate, userId]
   );
 
   const handleDateChange = useCallback((_event: unknown, date?: Date) => {
@@ -278,7 +282,7 @@ export function GoalCreateSheet() {
         onPress={() => {
           void handleCreate();
         }}
-        disabled={isCreating}
+        disabled={isCreating || userId == null}
       >
         <Text style={styles.createButtonText}>{t("goals.create.title")}</Text>
       </Pressable>

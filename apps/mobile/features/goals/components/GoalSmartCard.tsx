@@ -1,16 +1,19 @@
 import { useRouter } from "expo-router";
 import { memo, useCallback, useMemo } from "react";
+import { useAuthStore } from "@/features/auth";
 import { Pressable, Text, View } from "@/shared/components/rn";
+import { getDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
-import type { CopAmount } from "@/shared/types/branded";
-import { useGoalStore } from "../store";
+import type { CopAmount, UserId } from "@/shared/types/branded";
+import { selectGoal, useGoalStore } from "../store";
 
 export const GoalSmartCard = memo(function GoalSmartCard() {
   const { push } = useRouter();
   const { t } = useTranslation();
   const goals = useGoalStore((s) => s.goals);
   const accentGreen = useThemeColor("accentGreen");
+  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
 
   // Find best goal to display: highest progress % among active (non-complete) goals
   // Fallback: most recently created
@@ -30,11 +33,10 @@ export const GoalSmartCard = memo(function GoalSmartCard() {
   }, [goals]);
 
   const handlePress = useCallback(() => {
-    if (displayData) {
-      useGoalStore.getState().selectGoal(displayData.topGoal.goal.id);
-      push("/goal-detail" as never);
-    }
-  }, [displayData, push]);
+    if (!displayData || !userId) return;
+    void selectGoal(getDb(userId), userId, displayData.topGoal.goal.id);
+    push("/goal-detail" as never);
+  }, [displayData, push, userId]);
 
   if (!displayData) return null;
 

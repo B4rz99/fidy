@@ -2,6 +2,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import Animated from "react-native-reanimated";
+import { useAuthStore } from "@/features/auth";
 import { handleNumpadPress } from "@/features/transactions";
 import { FidyNumpad } from "@/shared/components";
 import {
@@ -15,10 +16,11 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
+import { getDb } from "@/shared/db";
 import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, parseDigitsToAmount, parseIsoDate, toIsoDate } from "@/shared/lib";
-import type { IsoDate } from "@/shared/types/branded";
-import { useGoalStore } from "../store";
+import type { IsoDate, UserId } from "@/shared/types/branded";
+import { deleteGoal, updateGoal, useGoalStore } from "../store";
 
 export function GoalEditSheet() {
   const { back } = useRouter();
@@ -26,8 +28,7 @@ export function GoalEditSheet() {
 
   const selectedGoalId = useGoalStore((s) => s.selectedGoalId);
   const goals = useGoalStore((s) => s.goals);
-  const updateGoal = useGoalStore((s) => s.updateGoal);
-  const deleteGoal = useGoalStore((s) => s.deleteGoal);
+  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
 
   const cardBg = useThemeColor("card");
   const primaryColor = useThemeColor("primary");
@@ -73,14 +74,14 @@ export function GoalEditSheet() {
   const handleSave = useCallback(
     () =>
       guardedSave(async () => {
-        if (selectedGoalId == null) return;
+        if (selectedGoalId == null || !userId) return;
         const parsedAmount = parseDigitsToAmount(digits);
         if (!name.trim() || parsedAmount <= 0) return;
 
         const normalizedRate = interestRate.replace(",", ".");
         const isValidRate = /^\d+(\.\d+)?$/.test(normalizedRate);
         const parsedRate = isValidRate ? Number.parseFloat(normalizedRate) : null;
-        await updateGoal(selectedGoalId, {
+        const success = await updateGoal(getDb(userId), userId, selectedGoalId, {
           name: name.trim(),
           targetAmount: parsedAmount,
           targetDate: targetDate ? toIsoDate(targetDate) : null,
@@ -89,23 +90,13 @@ export function GoalEditSheet() {
               ? parsedRate
               : null,
         });
-        back();
+        if (success) back();
       }),
-    [
-      selectedGoalId,
-      name,
-      digits,
-      goalType,
-      targetDate,
-      interestRate,
-      updateGoal,
-      back,
-      guardedSave,
-    ]
+    [selectedGoalId, name, digits, goalType, targetDate, interestRate, back, guardedSave, userId]
   );
 
   const handleDelete = useCallback(() => {
-    if (selectedGoalId == null || goal == null) return;
+    if (selectedGoalId == null || goal == null || !userId) return;
     Alert.alert(
       t("goals.edit.deleteConfirmTitle"),
       t("goals.edit.deleteConfirmMessage", { goalName: goal.name }),
@@ -116,14 +107,14 @@ export function GoalEditSheet() {
           style: "destructive",
           onPress: () => {
             void guardedDelete(async () => {
-              await deleteGoal(selectedGoalId);
-              back();
+              const success = await deleteGoal(getDb(userId), userId, selectedGoalId);
+              if (success) back();
             });
           },
         },
       ]
     );
-  }, [selectedGoalId, goal, deleteGoal, back, guardedDelete, t]);
+  }, [selectedGoalId, goal, back, guardedDelete, t, userId]);
 
   const handleDateChange = useCallback((_event: unknown, date?: Date) => {
     if (Platform.OS === "android") setShowDatePicker(false);
@@ -263,7 +254,7 @@ export function GoalEditSheet() {
         onPress={() => {
           void handleSave();
         }}
-        disabled={isSaving}
+        disabled={isSaving || userId == null}
       >
         <Text style={styles.saveButtonText}>{t("goals.edit.saveChanges")}</Text>
       </Pressable>
@@ -272,7 +263,7 @@ export function GoalEditSheet() {
       <Pressable
         style={[styles.deleteButton, { borderColor: accentRed, opacity: isDeleting ? 0.5 : 1 }]}
         onPress={handleDelete}
-        disabled={isDeleting}
+        disabled={isDeleting || userId == null}
       >
         <Text style={[styles.deleteButtonText, { color: accentRed }]}>
           {t("goals.edit.deleteGoal")}

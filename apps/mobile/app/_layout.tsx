@@ -39,7 +39,12 @@ import {
 } from "@/features/capture-sources";
 import { refreshCategories } from "@/features/categories";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
-import { useGoalStore } from "@/features/goals";
+import {
+  initializeGoalSession,
+  loadGoalsForUser,
+  subscribeGoalsToTransactions,
+  useGoalStore,
+} from "@/features/goals";
 import { initializeNotificationStore, registerPushToken } from "@/features/notifications";
 import {
   clearOnboardingFromStore,
@@ -90,7 +95,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       useChatStore.getState().initStore(db, userId);
       initializeCalendarSession(userId);
       useBudgetStore.getState().initStore(db, userId);
-      useGoalStore.getState().initStore(db, userId);
+      initializeGoalSession(userId);
       initializeAnalyticsSession(userId);
       void initializeNotificationStore(db, userId);
       Promise.all([loadCalendarBills(db, userId), loadCalendarPaymentsForMonth(db)]).catch(
@@ -100,7 +105,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
         .getState()
         .loadBudgets()
         .catch(handleRecoverableError("Failed to load budgets"));
-      useGoalStore.getState().loadGoals().catch(handleRecoverableError("Failed to load goals"));
+      loadGoalsForUser(db, userId).catch(handleRecoverableError("Failed to load goals"));
       loadAnalyticsForUser(db, userId).catch(handleRecoverableError("Failed to load analytics"));
       refreshCategories(db, userId).catch(handleRecoverableError("Failed to load user categories"));
       useChatStore
@@ -122,6 +127,20 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
         .catch(handleRecoverableError("Failed to hydrate settings"));
       void registerBackgroundTask().catch(captureError);
     },
+    [db, userId],
+    migrationsReady
+  );
+
+  useSubscription(
+    () =>
+      subscribeGoalsToTransactions({
+        subscribeTransactions: useTransactionStore.subscribe,
+        getTransactionPages: () => useTransactionStore.getState().pages,
+        hasLoadedGoals: () => useGoalStore.getState().goals.length > 0,
+        reload: () => {
+          void loadGoalsForUser(db, userId).catch(handleRecoverableError("Failed to load goals"));
+        },
+      }),
     [db, userId],
     migrationsReady
   );

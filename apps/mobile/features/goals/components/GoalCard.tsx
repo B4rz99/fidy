@@ -4,7 +4,7 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import type { CopAmount } from "@/shared/types/branded";
 import { deriveGoalCardStatus } from "../lib/derive";
-import type { GoalWithProgress } from "../store";
+import type { GoalWithProgress } from "../types";
 
 type GoalCardProps = {
   readonly goalWithProgress: GoalWithProgress;
