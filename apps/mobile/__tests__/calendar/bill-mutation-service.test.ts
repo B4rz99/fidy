@@ -319,6 +319,27 @@ describe("calendar bill mutation service", () => {
     expect(trackPaymentRecordedMock).not.toHaveBeenCalled();
   });
 
+  it("still returns success when post-commit side effects throw", async () => {
+    addTransactionToCacheMock.mockImplementation(() => {
+      throw new Error("cache boom");
+    });
+    const service = createService();
+
+    await expect(
+      service.markBillPaid([bill], bill.id as BillId, "2026-04-12" as IsoDate)
+    ).resolves.toEqual({
+      success: true,
+      payment: expect.objectContaining({ transactionId: "txn-generated" }),
+    });
+
+    expect(currentCommit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "calendar.bill.markPaid",
+      })
+    );
+    expect(trackPaymentRecordedMock).not.toHaveBeenCalled();
+  });
+
   it("returns false when markBillPaid receives an invalid bill amount", async () => {
     const service = createService();
 

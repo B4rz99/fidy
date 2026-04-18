@@ -100,6 +100,56 @@ function scheduleNotifications(deps: CreateCalendarBillMutationServiceDeps, bill
     .catch(deps.reportAsyncError);
 }
 
+async function commitBillPayment(
+  commit: WriteThroughMutationModule["commit"],
+  bill: Bill,
+  billId: BillId,
+  dueDate: IsoDate,
+  userId: UserId,
+  timestamp: Date,
+  createPaymentId: () => BillPaymentId,
+  createTransactionId: () => TransactionId
+): Promise<{ transaction: StoredTransaction; payment: BillPayment } | null> {
+  const nowIso = toIsoDateTime(timestamp);
+  const transactionId = createTransactionId();
+  const amount = bill.amount;
+  assertCopAmount(amount);
+
+  const transaction: StoredTransaction = {
+    id: transactionId,
+    userId,
+    type: "expense",
+    amount,
+    categoryId: bill.categoryId,
+    description: bill.name,
+    date: parseIsoDate(dueDate),
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    deletedAt: null,
+  };
+
+  const payment: BillPayment = {
+    id: createPaymentId(),
+    billId,
+    dueDate,
+    paidAt: nowIso,
+    transactionId,
+    createdAt: nowIso,
+  };
+
+  const result = await commit({
+    kind: "calendar.bill.markPaid",
+    transactionRow: toTransactionRow(transaction),
+    paymentRow: payment,
+  });
+
+  if (!result.success) {
+    return null;
+  }
+
+  return { transaction, payment };
+}
+
 export function createCalendarBillMutationService(
   deps: CreateCalendarBillMutationServiceDeps
 ): CalendarBillMutationService {
@@ -206,49 +256,35 @@ export function createCalendarBillMutationService(
         return { success: false };
       }
 
-      try {
-        const timestamp = now();
-        const nowIso = toIsoDateTime(timestamp);
-        const transactionId = createTransactionId();
-        const amount = bill.amount;
-        assertCopAmount(amount);
-        const transaction: StoredTransaction = {
-          id: transactionId,
-          userId,
-          type: "expense",
-          amount,
-          categoryId: bill.categoryId,
-          description: bill.name,
-          date: parseIsoDate(dueDate),
-          createdAt: timestamp,
-          updatedAt: timestamp,
-          deletedAt: null,
-        };
+      let commitResult: { transaction: StoredTransaction; payment: BillPayment } | null = null;
 
-        const payment: BillPayment = {
-          id: createPaymentId(),
+      try {
+        commitResult = await commitBillPayment(
+          commit,
+          bill,
           billId,
           dueDate,
-          paidAt: nowIso,
-          transactionId,
-          createdAt: nowIso,
-        };
-
-        const result = await commit({
-          kind: "calendar.bill.markPaid",
-          transactionRow: toTransactionRow(transaction),
-          paymentRow: payment,
-        });
-        if (!result.success) {
-          return { success: false };
-        }
-
-        deps.addTransactionToCache(transaction);
-        deps.trackPaymentRecorded();
-        return { success: true, payment };
+          userId,
+          now(),
+          createPaymentId,
+          createTransactionId
+        );
       } catch {
         return { success: false };
       }
+
+      if (!commitResult) {
+        return { success: false };
+      }
+
+      try {
+        deps.addTransactionToCache(commitResult.transaction);
+        deps.trackPaymentRecorded();
+      } catch (error) {
+        deps.reportAsyncError(error);
+      }
+
+      return { success: true, payment: commitResult.payment };
     },
 
     unmarkBillPaid: async (payments, billId, dueDate) => {
