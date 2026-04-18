@@ -1,6 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["./plugins/vault-hint.js"],
   "skills": {
     "paths": ["../.agents/skills"]
   }

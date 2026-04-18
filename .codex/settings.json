@@ -15,18 +15,6 @@
     ]
   },
   "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup|clear|compact",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bun run \"$CODEX_PROJECT_DIR\"/.ai-hooks/hooks/session-start-vault.ts",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Read",
