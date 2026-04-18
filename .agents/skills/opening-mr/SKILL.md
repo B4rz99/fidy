@@ -1,45 +1,45 @@
 ---
 name: opening-mr
-description: Run all CI checks locally, commit, and open a PR. Use this before every commit.
+description: Sync with main, run the required local checks, commit, push, and open a PR. Use when the user asks to open a PR or when a task explicitly requires the repo's PR workflow.
 ---
 
-Before committing any changes, you MUST run every step in this order. If any step fails, stop, fix the issue, and start over from step 1.
+Use this workflow when the user wants a PR opened. Keep it narrow: validate the current change, create the commit, push the branch, and open the PR. Do not merge unless the user asks in a separate step.
 
-## Step 0 — Pull Rebase
+If any verification step fails, fix the issue and rerun the relevant checks before committing.
+
+## Step 1 — Sync Branch
 
 ```bash
 git pull --rebase --autostash origin main
 ```
 
-Ensure your branch is up to date with the main branch before running checks or committing.
+Start from an up-to-date branch before verifying or committing.
 
-## Step 1 — Code Review
+## Step 2 — Review The Diff
 
-Review the current changes against the plan and requirements before proceeding. If a dedicated review skill exists in the current environment, use it. Otherwise, perform the review directly and fix any Critical or Important issues before proceeding. Minor issues can be noted and skipped.
+Review the current diff before proceeding. Focus on:
 
-## Step 2 — Simplify
+- correctness and regressions
+- secrets or unsafe data handling
+- whether the change matches the user request
+- whether any required follow-up verification is missing
 
-Use the `simplify` skill on all changed files when available. This reviews for code reuse, quality, and efficiency. Fix any issues it finds. If either step 1 or step 2 produced code changes, you must continue to step 3 to validate them.
+Fix important issues before moving on.
 
-## Step 3 — Security Review
+## Step 3 — Run Project Checks
 
-Run a focused security review on all changed files. If a dedicated security-review skill exists in the current environment, use it. Otherwise, inspect the diff directly for secrets, trust-boundary mistakes, unsafe data handling, auth regressions, or risky side effects. Fix any Critical or Important issues found before proceeding.
+Run the repo's required verification commands in the order the project expects. Determine the exact commands from `package.json`, lint/typecheck configs, and repo instructions such as `AGENTS.md` or `CLAUDE.md`.
 
-## Step 4 — Lint
+- Run lint.
+- Run typecheck.
+- Run tests.
+- Run any additional project-specific checks that are part of the normal local gate.
 
-Run the project's lint command(s). Check `package.json` scripts, config files (biome, eslint, etc.), or CLAUDE.md for the correct commands.
+If a command fails because dependencies are missing, install or restore the expected local setup first, then rerun the sequence cleanly.
 
-## Step 5 — Type Check
+## Step 4 — Commit
 
-Run the project's type-check command(s). Check `package.json` scripts or `tsconfig.json` for the correct commands. In monorepos, type-check all relevant packages.
-
-## Step 6 — Tests
-
-Run the project's test suite. Check `package.json` scripts or CLAUDE.md for the correct commands.
-
-## Step 7 — Commit
-
-Only proceed here if all steps above passed with no errors.
+Only commit after the required checks pass.
 
 Stage the relevant files and commit following these rules enforced by lefthook:
 
@@ -59,7 +59,7 @@ type(scope): message
 
 **Never include** `Co-Authored-By` lines.
 
-## Step 8 — Push & PR
+## Step 5 — Push And Open The PR
 
 Push to the feature branch after committing. Main is protected — direct pushes are not allowed.
 
@@ -85,27 +85,3 @@ printf '%s\n' "$BODY" > "$BODY_FILE"
 gh pr create --title "$TITLE" --body-file "$BODY_FILE"
 rm -f "$BODY_FILE"
 ```
-
-## Step 9 — Merge (only when the user explicitly asks)
-
-**NEVER merge on your own.** Only run this step when the user tells you to merge.
-
-Use squash merge so the merge commit on `main` matches the PR title and body:
-
-```bash
-PR_NUM=$(gh pr view --json number -q .number)
-TITLE=$(gh pr view "$PR_NUM" --json title -q .title)
-BODY=$(gh pr view "$PR_NUM" --json body -q .body)
-gh pr merge "$PR_NUM" --squash --subject "$TITLE" --body "$BODY"
-```
-
-After merging, switch back to `main` and pull:
-
-```bash
-git checkout main && git pull
-```
-
-## Conventions
-
-- All devDependencies must use **exact pinned versions** (no `^` or `~`).
-- When fixing issues after a PR review, create a new commit (do not amend). This keeps the review history clear and avoids force pushes.
