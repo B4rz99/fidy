@@ -25,7 +25,11 @@ import {
 import { useAuthStore } from "@/features/auth";
 import { registerBackgroundTask } from "@/features/background-fetch";
 import { useBudgetStore } from "@/features/budget";
-import { useCalendarStore } from "@/features/calendar";
+import {
+  initializeCalendarSession,
+  loadBills as loadCalendarBills,
+  loadPaymentsForMonth as loadCalendarPaymentsForMonth,
+} from "@/features/calendar";
 import {
   hydrateCaptureSources,
   useApplePayCapture,
@@ -84,15 +88,14 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       useTransactionStore.getState().initStore(db, userId);
       useEmailCaptureStore.getState().initStore(db, userId);
       useChatStore.getState().initStore(db, userId);
-      useCalendarStore.getState().initStore(db, userId);
+      initializeCalendarSession(userId);
       useBudgetStore.getState().initStore(db, userId);
       useGoalStore.getState().initStore(db, userId);
       initializeAnalyticsSession(userId);
       void initializeNotificationStore(db, userId);
-      Promise.all([
-        useCalendarStore.getState().loadBills(),
-        useCalendarStore.getState().loadPaymentsForMonth(),
-      ]).catch(handleRecoverableError("Failed to load calendar data"));
+      Promise.all([loadCalendarBills(db, userId), loadCalendarPaymentsForMonth(db)]).catch(
+        handleRecoverableError("Failed to load calendar data")
+      );
       useBudgetStore
         .getState()
         .loadBudgets()

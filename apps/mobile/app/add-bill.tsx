@@ -1,7 +1,16 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import { type Bill, type BillFrequency, FREQUENCIES, useCalendarStore } from "@/features/calendar";
+import { useAuthStore } from "@/features/auth";
+import {
+  addBill,
+  type Bill,
+  type BillFrequency,
+  FREQUENCIES,
+  updateBill,
+  useCalendarStore,
+} from "@/features/calendar";
 import { CATEGORIES, type CategoryId, isValidCategoryId } from "@/features/transactions";
 import {
   Keyboard,
@@ -14,16 +23,19 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
+import { getDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { parseDigitsToAmount } from "@/shared/lib";
-import type { BillId } from "@/shared/types/branded";
+import type { BillId, UserId } from "@/shared/types/branded";
+import migrations from "../drizzle/migrations";
 
 function AddBillForm({
   existingBill,
   onAddBill,
   onUpdateBill,
   onDone,
+  canSubmit,
 }: {
   readonly existingBill: Bill | undefined;
   readonly onAddBill: (
@@ -38,8 +50,9 @@ function AddBillForm({
     data: Partial<
       Pick<Bill, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
     >
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   readonly onDone: () => void;
+  readonly canSubmit: boolean;
 }) {
   const { t, locale } = useTranslation();
   const isEdit = Boolean(existingBill);
@@ -67,20 +80,21 @@ function AddBillForm({
 
   const handleSave = () => {
     void guardedSave(async () => {
+      if (!canSubmit) return;
       const trimmedName = name.trim();
       if (!trimmedName) return;
 
       if (existingBill) {
         const amountValue = parseDigitsToAmount(amount);
         if (amountValue <= 0) return;
-        await onUpdateBill(existingBill.id as BillId, {
+        const success = await onUpdateBill(existingBill.id as BillId, {
           name: trimmedName,
           amount: amountValue,
           frequency,
           categoryId: category,
           startDate,
         });
-        onDone();
+        if (success) onDone();
       } else {
         const success = await onAddBill(trimmedName, amount, frequency, category, startDate);
         if (success) onDone();
@@ -217,9 +231,12 @@ function AddBillForm({
         </View>
 
         <Pressable
-          style={[styles.saveButton, { backgroundColor: accentGreen, opacity: isSaving ? 0.5 : 1 }]}
+          style={[
+            styles.saveButton,
+            { backgroundColor: accentGreen, opacity: isSaving || !canSubmit ? 0.5 : 1 },
+          ]}
           onPress={handleSave}
-          disabled={isSaving}
+          disabled={isSaving || !canSubmit}
         >
           <Text style={styles.saveButtonText}>
             {isEdit ? t("bills.saveChanges") : t("bills.add")}
@@ -230,22 +247,63 @@ function AddBillForm({
   );
 }
 
-export default function AddBillScreen() {
-  const router = useRouter();
-  const { billId } = useLocalSearchParams<{ billId?: string }>();
-  const bills = useCalendarStore((s) => s.bills);
-  const addBill = useCalendarStore((s) => s.addBill);
-  const updateBill = useCalendarStore((s) => s.updateBill);
-
-  const existingBill = billId ? bills.find((b) => b.id === billId) : undefined;
+function AuthenticatedAddBillForm({
+  existingBill,
+  userId,
+  onDone,
+}: {
+  readonly existingBill: Bill | undefined;
+  readonly userId: UserId;
+  readonly onDone: () => void;
+}) {
+  const db = getDb(userId);
+  const { success: migrationsReady } = useMigrations(db, migrations);
 
   return (
     <AddBillForm
       key={existingBill?.id ?? "new"}
       existingBill={existingBill}
-      onAddBill={addBill}
-      onUpdateBill={updateBill}
-      onDone={() => router.back()}
+      canSubmit={migrationsReady}
+      onAddBill={(name, amount, frequency, categoryId, startDate) => {
+        if (!migrationsReady) return Promise.resolve(false);
+        return addBill(db, userId, name, amount, frequency, categoryId, startDate);
+      }}
+      onUpdateBill={(id, data) => {
+        if (!migrationsReady) return Promise.resolve(false);
+        return updateBill(db, userId, id, data);
+      }}
+      onDone={onDone}
+    />
+  );
+}
+
+export default function AddBillScreen() {
+  const router = useRouter();
+  const { billId } = useLocalSearchParams<{ billId?: string }>();
+  const bills = useCalendarStore((s) => s.bills);
+  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
+  const existingBill = billId ? bills.find((b) => b.id === billId) : undefined;
+  const handleDone = () => router.back();
+
+  if (!userId) {
+    return (
+      <AddBillForm
+        key={existingBill?.id ?? "new"}
+        existingBill={existingBill}
+        canSubmit={false}
+        onAddBill={() => Promise.resolve(false)}
+        onUpdateBill={() => Promise.resolve(false)}
+        onDone={handleDone}
+      />
+    );
+  }
+
+  return (
+    <AuthenticatedAddBillForm
+      key={existingBill?.id ?? "new"}
+      existingBill={existingBill}
+      userId={userId}
+      onDone={handleDone}
     />
   );
 }

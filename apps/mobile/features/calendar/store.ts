@@ -1,55 +1,125 @@
-import { addMonths, endOfMonth, startOfMonth, subMonths } from "date-fns";
+import { addMonths, subMonths } from "date-fns";
 import { create } from "zustand";
 import { useTransactionStore } from "@/features/transactions";
-import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/mutations";
+import { createWriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
-import { captureError, toIsoDate, trackBillCreated, trackBillPaymentRecorded } from "@/shared/lib";
+import { captureError, trackBillCreated, trackBillPaymentRecorded } from "@/shared/lib";
 import type { BillId, CategoryId, IsoDate, UserId } from "@/shared/types/branded";
 import { createCalendarBillMutationService } from "./lib/bill-mutation-service";
 import { requestNotificationPermissions, scheduleBillNotifications } from "./lib/notifications";
-import { getAllBills, getBillPaymentsForMonth } from "./lib/repository";
-import { type Bill, type BillFrequency, type BillPayment, fromBillRow } from "./schema";
+import type { Bill, BillFrequency, BillPayment } from "./schema";
+import { createCalendarQueryService } from "./services/create-calendar-query-service";
 
-// Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
-let dbRef: AnyDb | null = null;
-let userIdRef: UserId | null = null;
-let mutations: WriteThroughMutationModule | null = null;
+let loadBillsRequestId = 0;
+let loadPaymentsRequestId = 0;
+let calendarSessionId = 0;
+
+const calendarQueryService = createCalendarQueryService();
 
 type CalendarState = {
-  currentMonth: Date;
-  bills: Bill[];
-  payments: BillPayment[];
-  isLoading: boolean;
+  readonly activeUserId: UserId | null;
+  readonly currentMonth: Date;
+  readonly bills: Bill[];
+  readonly payments: BillPayment[];
+  readonly isLoading: boolean;
 };
 
 type CalendarActions = {
-  initStore: (db: AnyDb, userId: UserId) => void;
-  nextMonth: () => void;
-  prevMonth: () => void;
-  loadBills: () => Promise<void>;
-  loadPaymentsForMonth: () => Promise<void>;
-  addBill: (
-    name: string,
-    amount: string,
-    frequency: BillFrequency,
-    category: CategoryId,
-    startDate: Date
-  ) => Promise<boolean>;
-  updateBill: (
+  beginSession: (userId: UserId) => void;
+  setCurrentMonth: (currentMonth: Date) => void;
+  setBills: (bills: readonly Bill[]) => void;
+  setPayments: (payments: readonly BillPayment[]) => void;
+  setIsLoading: (isLoading: boolean) => void;
+  appendBill: (bill: Bill) => void;
+  replaceBill: (
     id: BillId,
     fields: Partial<
       Pick<Bill, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
     >
-  ) => Promise<void>;
-  deleteBill: (id: BillId) => Promise<void>;
-  markBillPaid: (billId: BillId, dueDate: IsoDate) => Promise<void>;
-  unmarkBillPaid: (billId: BillId, dueDate: IsoDate) => Promise<void>;
+  ) => void;
+  removeBill: (id: BillId) => void;
+  appendPayment: (payment: BillPayment) => void;
+  removePayment: (billId: BillId, dueDate: IsoDate) => void;
 };
 
-export const useCalendarStore = create<CalendarState & CalendarActions>((set, get) => {
-  const billMutations = createCalendarBillMutationService({
-    getCommit: () => mutations?.commit ?? null,
-    getUserId: () => userIdRef,
+export const useCalendarStore = create<CalendarState & CalendarActions>((set) => ({
+  activeUserId: null,
+  currentMonth: new Date(),
+  bills: [],
+  payments: [],
+  isLoading: false,
+
+  beginSession: (userId) =>
+    set({
+      activeUserId: userId,
+      bills: [],
+      payments: [],
+      isLoading: false,
+    }),
+
+  setCurrentMonth: (currentMonth) => set({ currentMonth }),
+
+  setBills: (bills) => set({ bills: [...bills], isLoading: false }),
+
+  setPayments: (payments) => set({ payments: [...payments] }),
+
+  setIsLoading: (isLoading) => set({ isLoading }),
+
+  appendBill: (bill) => set((state) => ({ bills: [...state.bills, bill] })),
+
+  replaceBill: (id, fields) =>
+    set((state) => ({
+      bills: state.bills.map((bill) => (bill.id === id ? { ...bill, ...fields } : bill)),
+    })),
+
+  removeBill: (id) =>
+    set((state) => ({
+      bills: state.bills.filter((bill) => bill.id !== id),
+      payments: state.payments.filter((payment) => payment.billId !== id),
+    })),
+
+  appendPayment: (payment) => set((state) => ({ payments: [...state.payments, payment] })),
+
+  removePayment: (billId, dueDate) =>
+    set((state) => ({
+      payments: state.payments.filter(
+        (payment) => !(payment.billId === billId && payment.dueDate === dueDate)
+      ),
+    })),
+}));
+
+function isCurrentBillsRequest(requestId: number, userId: UserId, sessionId: number): boolean {
+  return (
+    loadBillsRequestId === requestId &&
+    useCalendarStore.getState().activeUserId === userId &&
+    calendarSessionId === sessionId
+  );
+}
+
+function isCurrentPaymentsRequest(
+  requestId: number,
+  userId: UserId,
+  requestedMonth: Date,
+  sessionId: number
+): boolean {
+  return (
+    loadPaymentsRequestId === requestId &&
+    useCalendarStore.getState().activeUserId === userId &&
+    useCalendarStore.getState().currentMonth.getTime() === requestedMonth.getTime() &&
+    calendarSessionId === sessionId
+  );
+}
+
+function isActiveCalendarSession(userId: UserId, sessionId: number): boolean {
+  return calendarSessionId === sessionId && useCalendarStore.getState().activeUserId === userId;
+}
+
+function createLiveCalendarBillMutations(db: AnyDb, userId: UserId) {
+  const mutations = createWriteThroughMutationModule(db);
+
+  return createCalendarBillMutationService({
+    getCommit: () => mutations.commit,
+    getUserId: () => userId,
     requestNotificationPermissions,
     scheduleBillNotifications,
     reportAsyncError: captureError,
@@ -59,96 +129,151 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     trackCreated: trackBillCreated,
     trackPaymentRecorded: trackBillPaymentRecorded,
   });
+}
 
-  return {
-    currentMonth: new Date(),
-    bills: [],
-    payments: [],
-    isLoading: false,
+export function initializeCalendarSession(userId: UserId): void {
+  calendarSessionId += 1;
+  loadBillsRequestId += 1;
+  loadPaymentsRequestId += 1;
+  useCalendarStore.getState().beginSession(userId);
+}
 
-    initStore: (db, userId) => {
-      dbRef = db;
-      userIdRef = userId;
-      mutations = createWriteThroughMutationModule(db);
-    },
+export async function loadBills(db: AnyDb, userId: UserId): Promise<void> {
+  const requestId = ++loadBillsRequestId;
+  const sessionId = calendarSessionId;
+  useCalendarStore.getState().setIsLoading(true);
 
-    nextMonth: () => {
-      set((s) => ({ currentMonth: addMonths(s.currentMonth, 1) }));
-      get().loadPaymentsForMonth().catch(captureError);
-    },
-
-    prevMonth: () => {
-      set((s) => ({ currentMonth: subMonths(s.currentMonth, 1) }));
-      get().loadPaymentsForMonth().catch(captureError);
-    },
-
-    loadBills: async () => {
-      if (!dbRef || !userIdRef) return;
-      set({ isLoading: true });
-      try {
-        const rows = getAllBills(dbRef, userIdRef);
-        set({ bills: rows.map(fromBillRow), isLoading: false });
-      } catch (error) {
-        set({ isLoading: false });
-        throw error;
+  try {
+    const bills = await calendarQueryService.loadBills({ db, userId });
+    if (!isCurrentBillsRequest(requestId, userId, sessionId)) {
+      if (loadBillsRequestId === requestId) {
+        useCalendarStore.getState().setIsLoading(false);
       }
-    },
+      return;
+    }
+    useCalendarStore.getState().setBills(bills);
+  } catch (error) {
+    if (loadBillsRequestId === requestId) {
+      useCalendarStore.getState().setIsLoading(false);
+    }
+    throw error;
+  }
+}
 
-    loadPaymentsForMonth: async () => {
-      if (!dbRef) return;
-      const { currentMonth } = get();
-      const startIso = toIsoDate(startOfMonth(currentMonth));
-      const endIso = toIsoDate(endOfMonth(currentMonth));
-      const rows = getBillPaymentsForMonth(dbRef, startIso, endIso);
-      set({ payments: rows as BillPayment[] });
-    },
+export async function loadPaymentsForMonth(db: AnyDb): Promise<void> {
+  const userId = useCalendarStore.getState().activeUserId;
+  if (!userId) return;
 
-    addBill: async (name, amount, frequency, category, startDate) => {
-      const result = await billMutations.addBill({
-        name,
-        amount,
-        frequency,
-        categoryId: category,
-        startDate,
-      });
-      if (!result.success) return false;
+  const requestId = ++loadPaymentsRequestId;
+  const sessionId = calendarSessionId;
+  const requestedMonth = useCalendarStore.getState().currentMonth;
 
-      set((s) => ({
-        bills: [...s.bills, result.bill],
-      }));
+  const payments = await calendarQueryService.loadPaymentsForMonth({
+    db,
+    month: requestedMonth,
+  });
 
-      return true;
-    },
+  if (!isCurrentPaymentsRequest(requestId, userId, requestedMonth, sessionId)) {
+    return;
+  }
 
-    updateBill: async (id, fields) => {
-      const didUpdate = await billMutations.updateBill(id, fields);
-      if (!didUpdate) return;
-      set((s) => ({
-        bills: s.bills.map((b) => (b.id === id ? { ...b, ...fields } : b)),
-      }));
-    },
+  useCalendarStore.getState().setPayments(payments);
+}
 
-    deleteBill: async (id) => {
-      const didDelete = await billMutations.deleteBill(id);
-      if (!didDelete) return;
-      set((s) => ({
-        bills: s.bills.filter((b) => b.id !== id),
-        payments: s.payments.filter((p) => p.billId !== id),
-      }));
-    },
+export async function nextMonth(db: AnyDb): Promise<void> {
+  const next = addMonths(useCalendarStore.getState().currentMonth, 1);
+  useCalendarStore.getState().setCurrentMonth(next);
+  await loadPaymentsForMonth(db);
+}
 
-    markBillPaid: async (billId, dueDate) => {
-      const result = await billMutations.markBillPaid(get().bills, billId, dueDate);
-      if (!result.success) return;
-      set((s) => ({ payments: [...s.payments, result.payment] }));
-    },
+export async function prevMonth(db: AnyDb): Promise<void> {
+  const previous = subMonths(useCalendarStore.getState().currentMonth, 1);
+  useCalendarStore.getState().setCurrentMonth(previous);
+  await loadPaymentsForMonth(db);
+}
 
-    unmarkBillPaid: async (billId, dueDate) => {
-      const result = await billMutations.unmarkBillPaid(get().payments, billId, dueDate);
-      if (!result.success) return;
-      set((s) => ({
-        payments: s.payments.filter((p) => !(p.billId === billId && p.dueDate === dueDate)),
-      }));
-    },
-  };
-});
+export async function addBill(
+  db: AnyDb,
+  userId: UserId,
+  name: string,
+  amount: string,
+  frequency: BillFrequency,
+  categoryId: CategoryId,
+  startDate: Date
+): Promise<boolean> {
+  const sessionId = calendarSessionId;
+  const result = await createLiveCalendarBillMutations(db, userId).addBill({
+    name,
+    amount,
+    frequency,
+    categoryId,
+    startDate,
+  });
+  if (!result.success) return false;
+  if (!isActiveCalendarSession(userId, sessionId)) return false;
+
+  useCalendarStore.getState().appendBill(result.bill);
+  return true;
+}
+
+export async function updateBill(
+  db: AnyDb,
+  userId: UserId,
+  id: BillId,
+  fields: Partial<
+    Pick<Bill, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
+  >
+): Promise<boolean> {
+  const sessionId = calendarSessionId;
+  const didUpdate = await createLiveCalendarBillMutations(db, userId).updateBill(id, fields);
+  if (!didUpdate) return false;
+  if (!isActiveCalendarSession(userId, sessionId)) return false;
+
+  useCalendarStore.getState().replaceBill(id, fields);
+  return true;
+}
+
+export async function deleteBill(db: AnyDb, userId: UserId, id: BillId): Promise<void> {
+  const sessionId = calendarSessionId;
+  const didDelete = await createLiveCalendarBillMutations(db, userId).deleteBill(id);
+  if (!didDelete) return;
+  if (!isActiveCalendarSession(userId, sessionId)) return;
+
+  useCalendarStore.getState().removeBill(id);
+}
+
+export async function markBillPaid(
+  db: AnyDb,
+  userId: UserId,
+  billId: BillId,
+  dueDate: IsoDate
+): Promise<void> {
+  const sessionId = calendarSessionId;
+  const result = await createLiveCalendarBillMutations(db, userId).markBillPaid(
+    useCalendarStore.getState().bills,
+    billId,
+    dueDate
+  );
+  if (!result.success) return;
+  if (!isActiveCalendarSession(userId, sessionId)) return;
+
+  useCalendarStore.getState().appendPayment(result.payment);
+}
+
+export async function unmarkBillPaid(
+  db: AnyDb,
+  userId: UserId,
+  billId: BillId,
+  dueDate: IsoDate
+): Promise<void> {
+  const sessionId = calendarSessionId;
+  const result = await createLiveCalendarBillMutations(db, userId).unmarkBillPaid(
+    useCalendarStore.getState().payments,
+    billId,
+    dueDate
+  );
+  if (!result.success) return;
+  if (!isActiveCalendarSession(userId, sessionId)) return;
+
+  useCalendarStore.getState().removePayment(billId, dueDate);
+}
