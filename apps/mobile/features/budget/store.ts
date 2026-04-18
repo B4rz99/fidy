@@ -2,33 +2,30 @@ import { addMonths, format, subMonths } from "date-fns";
 import { create } from "zustand";
 import { insertNotificationRecord } from "@/features/notifications";
 import { useSettingsStore } from "@/features/settings";
-import { CATEGORY_MAP, useTransactionStore } from "@/features/transactions";
-import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/mutations";
+import { CATEGORY_MAP } from "@/features/transactions";
+import { createWriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import { getCategoryLabel, useLocaleStore } from "@/shared/i18n";
 import { generateBudgetId, toIsoDateTime, trackBudgetCreated } from "@/shared/lib";
 import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
 import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./lib/derive";
+import type { BudgetMonthSnapshot } from "./lib/monitoring";
 import { createBudgetMonitoringModule } from "./lib/monitoring";
 import { scheduleBudgetAlert } from "./lib/notifications";
 import type { Budget } from "./schema";
 import { createBudgetSchema } from "./schema";
 
-// Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
-let dbRef: AnyDb | null = null;
-let userIdRef: UserId | null = null;
-let unsubscribeTxStore: (() => void) | null = null;
+let budgetSessionId = 0;
 let loadBudgetsRequestId = 0;
-let mutations: WriteThroughMutationModule | null = null;
 
 const formatMonth = (date: Date): Month => format(date, "yyyy-MM") as Month;
 
 /** Parse "YYYY-MM" to a local-time Date (1st of month). Avoids UTC date-only parsing pitfall. */
 const parseMonth = (month: Month): Date => {
   const parts = month.split("-").map(Number);
-  const y = parts[0] ?? 0;
-  const m = parts[1] ?? 1;
-  return new Date(y, m - 1, 1);
+  const year = parts[0] ?? 0;
+  const monthIndex = (parts[1] ?? 1) - 1;
+  return new Date(year, monthIndex, 1);
 };
 
 const createLiveBudgetMonitoring = (
@@ -62,35 +59,35 @@ const budgetAlertStateManager = createBudgetMonitoringModule({
 });
 
 type BudgetState = {
-  currentMonth: Month;
-  budgets: Budget[];
-  budgetProgress: BudgetProgress[];
-  summary: { totalBudget: number; totalSpent: number; percentUsed: number };
-  autoSuggestions: BudgetSuggestion[];
-  acknowledgedAlerts: Set<string>; // "budgetId:threshold" keys
-  pendingAlerts: readonly BudgetAlert[];
-  pendingPermissionRequest: boolean;
-  isLoading: boolean;
+  readonly activeUserId: UserId | null;
+  readonly currentMonth: Month;
+  readonly budgets: readonly Budget[];
+  readonly budgetProgress: readonly BudgetProgress[];
+  readonly summary: {
+    readonly totalBudget: number;
+    readonly totalSpent: number;
+    readonly percentUsed: number;
+  };
+  readonly autoSuggestions: readonly BudgetSuggestion[];
+  readonly acknowledgedAlerts: ReadonlySet<string>;
+  readonly pendingAlerts: readonly BudgetAlert[];
+  readonly pendingPermissionRequest: boolean;
+  readonly hasLoadedOnce: boolean;
+  readonly isLoading: boolean;
 };
 
 type BudgetActions = {
-  initStore: (db: AnyDb, userId: UserId) => void;
+  beginSession: (userId: UserId) => void;
   setMonth: (month: Month) => void;
-  nextMonth: () => void;
-  prevMonth: () => void;
-  loadBudgets: () => Promise<void>;
-  refreshProgress: () => void;
-  createBudget: (categoryId: CategoryId, amount: CopAmount) => Promise<boolean>;
-  updateBudget: (id: BudgetId, amount: CopAmount) => Promise<void>;
-  deleteBudget: (id: BudgetId) => Promise<void>;
-  copyBudgetsForward: (targetMonth: Month) => Promise<void>;
-  loadAutoSuggestions: () => void;
-  acceptSuggestions: (budgets: ReadonlyMap<CategoryId, CopAmount>) => Promise<void>;
+  setSnapshot: (snapshot: BudgetMonthSnapshot) => void;
+  setAutoSuggestions: (autoSuggestions: readonly BudgetSuggestion[]) => void;
+  setIsLoading: (isLoading: boolean) => void;
   acknowledgeAlert: (budgetId: BudgetId, threshold: 80 | 100) => void;
   clearPendingPermissionRequest: () => void;
 };
 
-export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => ({
+export const useBudgetStore = create<BudgetState & BudgetActions>((set) => ({
+  activeUserId: null,
   currentMonth: formatMonth(new Date()),
   budgets: [],
   budgetProgress: [],
@@ -99,237 +96,44 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
   acknowledgedAlerts: new Set(),
   pendingAlerts: [],
   pendingPermissionRequest: false,
+  hasLoadedOnce: false,
   isLoading: false,
 
-  initStore: (db, userId) => {
-    dbRef = db;
-    userIdRef = userId;
-    mutations = createWriteThroughMutationModule(db);
-    // Subscribe to transaction store changes to auto-refresh progress
-    if (unsubscribeTxStore) unsubscribeTxStore();
-    unsubscribeTxStore = useTransactionStore.subscribe(() => {
-      // Re-run the full month refresh so transaction changes and alert policy stay in one path.
-      void get().loadBudgets();
-    });
-  },
+  beginSession: (userId) =>
+    set((state) => ({
+      activeUserId: userId,
+      currentMonth: state.currentMonth,
+      budgets: [],
+      budgetProgress: [],
+      summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
+      autoSuggestions: [],
+      acknowledgedAlerts: new Set(),
+      pendingAlerts: [],
+      pendingPermissionRequest: false,
+      hasLoadedOnce: false,
+      isLoading: false,
+    })),
 
-  setMonth: (month) => {
-    set({ currentMonth: month });
-    void get().loadBudgets();
-  },
+  setMonth: (currentMonth) => set({ currentMonth }),
 
-  nextMonth: () => {
-    const current = parseMonth(get().currentMonth);
-    const next = addMonths(current, 1);
-    get().setMonth(formatMonth(next));
-  },
+  setSnapshot: (snapshot) =>
+    set((state) => ({
+      budgets: snapshot.budgets as Budget[],
+      budgetProgress: snapshot.budgetProgress as BudgetProgress[],
+      summary: snapshot.summary,
+      autoSuggestions: snapshot.autoSuggestions as BudgetSuggestion[],
+      pendingAlerts: snapshot.pendingAlerts,
+      pendingPermissionRequest: state.pendingPermissionRequest || snapshot.pendingPermissionRequest,
+      hasLoadedOnce: true,
+      isLoading: false,
+    })),
 
-  prevMonth: () => {
-    const current = parseMonth(get().currentMonth);
-    const prev = subMonths(current, 1);
-    get().setMonth(formatMonth(prev));
-  },
+  setAutoSuggestions: (autoSuggestions) =>
+    set({ autoSuggestions: [...autoSuggestions] as BudgetSuggestion[] }),
 
-  loadBudgets: async () => {
-    if (!dbRef || !userIdRef) return;
-    const requestId = ++loadBudgetsRequestId;
-    const requestedDb = dbRef;
-    const requestedUserId = userIdRef;
-    const requestedMonth = get().currentMonth;
-    const isCurrentRefresh = () =>
-      loadBudgetsRequestId === requestId &&
-      dbRef === requestedDb &&
-      userIdRef === requestedUserId &&
-      get().currentMonth === requestedMonth;
-    const previous = {
-      pendingAlerts: get().pendingAlerts,
-      acknowledgedAlerts: get().acknowledgedAlerts,
-    };
-    set({ isLoading: true });
-    try {
-      const budgetMonitoring = createLiveBudgetMonitoring(
-        requestedDb,
-        requestedUserId,
-        isCurrentRefresh
-      );
-      const snapshot = await budgetMonitoring.refreshMonth({
-        db: requestedDb,
-        userId: requestedUserId,
-        month: requestedMonth,
-        previous,
-      });
-      if (!isCurrentRefresh()) {
-        if (loadBudgetsRequestId === requestId) {
-          set({ isLoading: false });
-        }
-        return;
-      }
-      set((state) => ({
-        budgets: snapshot.budgets as Budget[],
-        budgetProgress: snapshot.budgetProgress as BudgetProgress[],
-        summary: snapshot.summary,
-        autoSuggestions: snapshot.autoSuggestions as BudgetSuggestion[],
-        pendingAlerts: snapshot.pendingAlerts,
-        pendingPermissionRequest:
-          state.pendingPermissionRequest || snapshot.pendingPermissionRequest,
-        isLoading: false,
-      }));
-    } catch {
-      if (loadBudgetsRequestId === requestId) {
-        set({ isLoading: false });
-      }
-    }
-  },
+  setIsLoading: (isLoading) => set({ isLoading }),
 
-  refreshProgress: () => {
-    void get().loadBudgets();
-  },
-
-  loadAutoSuggestions: () => {
-    if (!dbRef || !userIdRef) return;
-    const { currentMonth, budgets } = get();
-    try {
-      const budgetMonitoring = createLiveBudgetMonitoring(dbRef, userIdRef, () => true);
-      const autoSuggestions = budgetMonitoring.loadAutoSuggestions({
-        db: dbRef,
-        userId: userIdRef,
-        month: currentMonth,
-        existingCategoryIds: new Set(budgets.map((budget) => budget.categoryId)),
-      });
-      set({ autoSuggestions: autoSuggestions as BudgetSuggestion[] });
-    } catch {
-      // Query failed — keep existing suggestions
-    }
-  },
-
-  createBudget: async (categoryId, amount) => {
-    if (!dbRef || !userIdRef) return false;
-    const validation = createBudgetSchema.safeParse({
-      categoryId,
-      amount,
-      month: get().currentMonth,
-    });
-    if (!validation.success) return false;
-    const mutationModule = mutations;
-    if (!mutationModule) return false;
-    const now = toIsoDateTime(new Date());
-    const id = generateBudgetId();
-    try {
-      const result = await mutationModule.commit({
-        kind: "budget.save",
-        row: {
-          id,
-          userId: userIdRef,
-          categoryId,
-          amount,
-          month: get().currentMonth,
-          createdAt: now,
-          updatedAt: now,
-          deletedAt: null,
-        },
-      });
-      if (!result.success) return false;
-    } catch {
-      return false;
-    }
-    trackBudgetCreated({ category: String(categoryId) });
-    await get().loadBudgets();
-    return true;
-  },
-
-  updateBudget: async (id, amount) => {
-    if (!dbRef) return;
-    const mutationModule = mutations;
-    if (!mutationModule) return;
-    const now = toIsoDateTime(new Date());
-    try {
-      const result = await mutationModule.commit({
-        kind: "budget.update",
-        budgetId: id,
-        amount,
-        now,
-      });
-      if (!result.success) return;
-    } catch {
-      return;
-    }
-    await get().loadBudgets();
-  },
-
-  deleteBudget: async (id) => {
-    if (!dbRef) return;
-    const mutationModule = mutations;
-    if (!mutationModule) return;
-    const now = toIsoDateTime(new Date());
-    try {
-      const result = await mutationModule.commit({
-        kind: "budget.delete",
-        budgetId: id,
-        now,
-      });
-      if (!result.success) return;
-    } catch {
-      return;
-    }
-    await get().loadBudgets();
-  },
-
-  copyBudgetsForward: async (targetMonth) => {
-    if (!dbRef || !userIdRef) return;
-    const userId = userIdRef;
-    const now = toIsoDateTime(new Date());
-    const mutationModule = mutations;
-    if (!mutationModule) return;
-    try {
-      const result = await mutationModule.commit({
-        kind: "budget.copy",
-        sourceMonth: get().currentMonth,
-        targetMonth,
-        userId,
-        now,
-      });
-      if (!result.success) return;
-    } catch {
-      return;
-    }
-    // Navigate to target month and reload
-    set({ currentMonth: targetMonth });
-    await get().loadBudgets();
-  },
-
-  acceptSuggestions: async (budgetsByCategory) => {
-    if (!dbRef || !userIdRef) return;
-    const userId = userIdRef;
-    const { currentMonth } = get();
-    const now = toIsoDateTime(new Date());
-    const entries = Array.from(budgetsByCategory.entries());
-    if (entries.length === 0) return;
-    const mutationModule = mutations;
-    if (!mutationModule) return;
-    try {
-      const result = await mutationModule.commitBatch(
-        entries.map(([categoryId, amount]) => ({
-          kind: "budget.save",
-          row: {
-            id: generateBudgetId(),
-            userId,
-            categoryId,
-            amount,
-            month: currentMonth,
-            createdAt: now,
-            updatedAt: now,
-            deletedAt: null,
-          },
-        }))
-      );
-      if (result.some((item) => !item.success)) return;
-    } catch {
-      return;
-    }
-    await get().loadBudgets();
-  },
-
-  acknowledgeAlert: (budgetId, threshold) => {
+  acknowledgeAlert: (budgetId, threshold) =>
     set((state) => {
       const nextState = budgetAlertStateManager.acknowledgeAlert({
         budgetId,
@@ -344,10 +148,254 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
         acknowledgedAlerts: new Set(nextState.acknowledgedAlerts),
         pendingAlerts: nextState.pendingAlerts,
       };
-    });
-  },
+    }),
 
   clearPendingPermissionRequest: () => {
     set({ pendingPermissionRequest: false });
   },
 }));
+
+function isCurrentBudgetRequest(
+  requestId: number,
+  userId: UserId,
+  month: Month,
+  sessionId: number
+): boolean {
+  return (
+    loadBudgetsRequestId === requestId &&
+    useBudgetStore.getState().activeUserId === userId &&
+    useBudgetStore.getState().currentMonth === month &&
+    budgetSessionId === sessionId
+  );
+}
+
+function isActiveBudgetSession(userId: UserId, sessionId: number): boolean {
+  return budgetSessionId === sessionId && useBudgetStore.getState().activeUserId === userId;
+}
+
+async function refreshBudgetsForActiveSession(
+  db: AnyDb,
+  userId: UserId,
+  sessionId: number
+): Promise<boolean> {
+  if (!isActiveBudgetSession(userId, sessionId)) return false;
+  await loadBudgetsForUser(db, userId);
+  return isActiveBudgetSession(userId, sessionId);
+}
+
+export function initializeBudgetSession(userId: UserId): void {
+  budgetSessionId += 1;
+  loadBudgetsRequestId += 1;
+  useBudgetStore.getState().beginSession(userId);
+}
+
+export async function loadBudgetsForUser(db: AnyDb, userId: UserId): Promise<void> {
+  const requestId = ++loadBudgetsRequestId;
+  const sessionId = budgetSessionId;
+  const requestedMonth = useBudgetStore.getState().currentMonth;
+  const previous = {
+    pendingAlerts: useBudgetStore.getState().pendingAlerts,
+    acknowledgedAlerts: useBudgetStore.getState().acknowledgedAlerts,
+  };
+
+  useBudgetStore.getState().setIsLoading(true);
+
+  try {
+    const snapshot = await createLiveBudgetMonitoring(db, userId, () =>
+      isCurrentBudgetRequest(requestId, userId, requestedMonth, sessionId)
+    ).refreshMonth({
+      db,
+      userId,
+      month: requestedMonth,
+      previous,
+    });
+
+    if (!isCurrentBudgetRequest(requestId, userId, requestedMonth, sessionId)) {
+      if (loadBudgetsRequestId === requestId) {
+        useBudgetStore.getState().setIsLoading(false);
+      }
+      return;
+    }
+
+    useBudgetStore.getState().setSnapshot(snapshot);
+  } catch {
+    if (loadBudgetsRequestId === requestId) {
+      useBudgetStore.getState().setIsLoading(false);
+    }
+  }
+}
+
+export async function nextBudgetMonth(db: AnyDb, userId: UserId): Promise<void> {
+  const next = formatMonth(addMonths(parseMonth(useBudgetStore.getState().currentMonth), 1));
+  useBudgetStore.getState().setMonth(next);
+  await loadBudgetsForUser(db, userId);
+}
+
+export async function prevBudgetMonth(db: AnyDb, userId: UserId): Promise<void> {
+  const previous = formatMonth(subMonths(parseMonth(useBudgetStore.getState().currentMonth), 1));
+  useBudgetStore.getState().setMonth(previous);
+  await loadBudgetsForUser(db, userId);
+}
+
+export function loadBudgetAutoSuggestions(db: AnyDb, userId: UserId): void {
+  const { currentMonth, budgets, activeUserId } = useBudgetStore.getState();
+  if (activeUserId !== userId) return;
+
+  try {
+    const autoSuggestions = createLiveBudgetMonitoring(db, userId, () => true).loadAutoSuggestions({
+      db,
+      userId,
+      month: currentMonth,
+      existingCategoryIds: new Set(budgets.map((budget) => budget.categoryId)),
+    });
+    if (useBudgetStore.getState().activeUserId !== userId) return;
+    useBudgetStore.getState().setAutoSuggestions(autoSuggestions);
+  } catch {
+    // Query failed — keep existing suggestions.
+  }
+}
+
+export async function createBudget(
+  db: AnyDb,
+  userId: UserId,
+  categoryId: CategoryId,
+  amount: CopAmount
+): Promise<boolean> {
+  const currentMonth = useBudgetStore.getState().currentMonth;
+  const validation = createBudgetSchema.safeParse({
+    categoryId,
+    amount,
+    month: currentMonth,
+  });
+  if (!validation.success) return false;
+
+  const sessionId = budgetSessionId;
+  const now = toIsoDateTime(new Date());
+
+  try {
+    const result = await createWriteThroughMutationModule(db).commit({
+      kind: "budget.save",
+      row: {
+        id: generateBudgetId(),
+        userId,
+        categoryId,
+        amount,
+        month: currentMonth,
+        createdAt: now,
+        updatedAt: now,
+        deletedAt: null,
+      },
+    });
+    if (!result.success) return false;
+  } catch {
+    return false;
+  }
+
+  trackBudgetCreated({ category: String(categoryId) });
+  return refreshBudgetsForActiveSession(db, userId, sessionId);
+}
+
+export async function updateBudget(
+  db: AnyDb,
+  userId: UserId,
+  id: BudgetId,
+  amount: CopAmount
+): Promise<boolean> {
+  const sessionId = budgetSessionId;
+  const now = toIsoDateTime(new Date());
+
+  try {
+    const result = await createWriteThroughMutationModule(db).commit({
+      kind: "budget.update",
+      budgetId: id,
+      amount,
+      now,
+    });
+    if (!result.success) return false;
+  } catch {
+    return false;
+  }
+
+  return refreshBudgetsForActiveSession(db, userId, sessionId);
+}
+
+export async function deleteBudget(db: AnyDb, userId: UserId, id: BudgetId): Promise<boolean> {
+  const sessionId = budgetSessionId;
+  const now = toIsoDateTime(new Date());
+
+  try {
+    const result = await createWriteThroughMutationModule(db).commit({
+      kind: "budget.delete",
+      budgetId: id,
+      now,
+    });
+    if (!result.success) return false;
+  } catch {
+    return false;
+  }
+
+  return refreshBudgetsForActiveSession(db, userId, sessionId);
+}
+
+export async function copyBudgetsForward(
+  db: AnyDb,
+  userId: UserId,
+  targetMonth: Month
+): Promise<boolean> {
+  const sessionId = budgetSessionId;
+  const sourceMonth = useBudgetStore.getState().currentMonth;
+  const now = toIsoDateTime(new Date());
+
+  try {
+    const result = await createWriteThroughMutationModule(db).commit({
+      kind: "budget.copy",
+      sourceMonth,
+      targetMonth,
+      userId,
+      now,
+    });
+    if (!result.success) return false;
+  } catch {
+    return false;
+  }
+
+  if (!isActiveBudgetSession(userId, sessionId)) return false;
+  useBudgetStore.getState().setMonth(targetMonth);
+  return refreshBudgetsForActiveSession(db, userId, sessionId);
+}
+
+export async function acceptBudgetSuggestions(
+  db: AnyDb,
+  userId: UserId,
+  budgetsByCategory: ReadonlyMap<CategoryId, CopAmount>
+): Promise<boolean> {
+  const entries = Array.from(budgetsByCategory.entries());
+  if (entries.length === 0) return true;
+
+  const sessionId = budgetSessionId;
+  const currentMonth = useBudgetStore.getState().currentMonth;
+  const now = toIsoDateTime(new Date());
+
+  try {
+    const result = await createWriteThroughMutationModule(db).commitBatch(
+      entries.map(([categoryId, amount]) => ({
+        kind: "budget.save" as const,
+        row: {
+          id: generateBudgetId(),
+          userId,
+          categoryId,
+          amount,
+          month: currentMonth,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+        },
+      }))
+    );
+    if (result.some((item) => !item.success)) return false;
+  } catch {
+    return false;
+  }
+
+  return refreshBudgetsForActiveSession(db, userId, sessionId);
+}

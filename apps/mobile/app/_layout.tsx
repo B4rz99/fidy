@@ -24,7 +24,12 @@ import {
 } from "@/features/analytics";
 import { useAuthStore, useOptionalUserId } from "@/features/auth";
 import { registerBackgroundTask } from "@/features/background-fetch";
-import { useBudgetStore } from "@/features/budget";
+import {
+  initializeBudgetSession,
+  loadBudgetsForUser,
+  subscribeBudgetToTransactions,
+  useBudgetStore,
+} from "@/features/budget";
 import {
   initializeCalendarSession,
   loadBills as loadCalendarBills,
@@ -94,17 +99,14 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       useEmailCaptureStore.getState().initStore(db, userId);
       useChatStore.getState().initStore(db, userId);
       initializeCalendarSession(userId);
-      useBudgetStore.getState().initStore(db, userId);
+      initializeBudgetSession(userId);
       initializeGoalSession(userId);
       initializeAnalyticsSession(userId);
       void initializeNotificationStore(db, userId);
       Promise.all([loadCalendarBills(db, userId), loadCalendarPaymentsForMonth(db)]).catch(
         handleRecoverableError("Failed to load calendar data")
       );
-      useBudgetStore
-        .getState()
-        .loadBudgets()
-        .catch(handleRecoverableError("Failed to load budgets"));
+      loadBudgetsForUser(db, userId).catch(handleRecoverableError("Failed to load budgets"));
       loadGoalsForUser(db, userId).catch(handleRecoverableError("Failed to load goals"));
       loadAnalyticsForUser(db, userId).catch(handleRecoverableError("Failed to load analytics"));
       refreshCategories(db, userId).catch(handleRecoverableError("Failed to load user categories"));
@@ -127,6 +129,22 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
         .catch(handleRecoverableError("Failed to hydrate settings"));
       void registerBackgroundTask().catch(captureError);
     },
+    [db, userId],
+    migrationsReady
+  );
+
+  useSubscription(
+    () =>
+      subscribeBudgetToTransactions({
+        subscribeTransactions: useTransactionStore.subscribe,
+        getTransactionDataRevision: () => useTransactionStore.getState().dataRevision,
+        hasLoadedBudgetState: () => useBudgetStore.getState().hasLoadedOnce,
+        reload: () => {
+          void loadBudgetsForUser(db, userId).catch(
+            handleRecoverableError("Failed to load budgets")
+          );
+        },
+      }),
     [db, userId],
     migrationsReady
   );

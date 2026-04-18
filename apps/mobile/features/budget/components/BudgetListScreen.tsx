@@ -1,11 +1,13 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
+import { useOptionalUserId } from "@/features/auth";
 import { MonthNavigator } from "@/features/calendar";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Wallet } from "@/shared/components/icons";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
-import { useBudgetStore } from "../store";
+import { nextBudgetMonth, prevBudgetMonth, useBudgetStore } from "../store";
 import { BudgetCard } from "./BudgetCard";
 import { BudgetSummaryCard } from "./BudgetSummaryCard";
 import { UpcomingBillsSection } from "./UpcomingBillsSection";
@@ -28,10 +30,9 @@ export function BudgetListScreen() {
   const budgets = useBudgetStore((s) => s.budgets);
   const budgetProgress = useBudgetStore((s) => s.budgetProgress);
   const summary = useBudgetStore((s) => s.summary);
-  const nextMonth = useBudgetStore((s) => s.nextMonth);
-  const prevMonth = useBudgetStore((s) => s.prevMonth);
   const pendingPermissionRequest = useBudgetStore((s) => s.pendingPermissionRequest);
   const clearPendingPermissionRequest = useBudgetStore((s) => s.clearPendingPermissionRequest);
+  const userId = useOptionalUserId();
 
   // Navigate to pre-permission screen when store signals it.
   // Uses useSubscription because the store's refreshProgress() is async/deep in the derivation
@@ -59,6 +60,20 @@ export function BudgetListScreen() {
     router.push("/create-budget");
   };
 
+  const handleNextMonth = useCallback(() => {
+    if (!userId) return;
+    const db = tryGetDb(userId);
+    if (!db) return;
+    void nextBudgetMonth(db, userId);
+  }, [userId]);
+
+  const handlePrevMonth = useCallback(() => {
+    if (!userId) return;
+    const db = tryGetDb(userId);
+    if (!db) return;
+    void prevBudgetMonth(db, userId);
+  }, [userId]);
+
   const handleAutoSetup = () => {
     router.push("/auto-suggest-budgets");
   };
@@ -84,7 +99,11 @@ export function BudgetListScreen() {
       }
     >
       <View style={styles.content}>
-        <MonthNavigator currentMonth={monthAsDate} onPrev={prevMonth} onNext={nextMonth} />
+        <MonthNavigator
+          currentMonth={monthAsDate}
+          onPrev={handlePrevMonth}
+          onNext={handleNextMonth}
+        />
 
         <ScrollView
           contentContainerStyle={[styles.scrollContent, { paddingBottom: TAB_BAR_CLEARANCE }]}
