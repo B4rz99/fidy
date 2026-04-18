@@ -108,6 +108,19 @@ describe("parseNotificationLocally", () => {
     });
   });
 
+  describe("generic purchase fallback", () => {
+    it("parses unknown provider purchase notifications before falling back to the API", () => {
+      const result = parseNotificationLocally(
+        "Tu compra fue aprobada por $18,900 en CAFETERIA CENTRAL. "
+      );
+      expect(result).toEqual({
+        amount: 18900,
+        merchant: "CAFETERIA CENTRAL",
+        type: "expense",
+      });
+    });
+  });
+
   describe("amount parsing edge cases", () => {
     it("handles dot as thousands separator", () => {
       const result = parseNotificationLocally(

@@ -162,6 +162,20 @@ describe("deriveNotificationDisplay", () => {
     expect(result.iconName).toBe("circle-x");
     expect(result.iconColor).toBe("#D45B5B");
   });
+
+  it("falls back gracefully when stored params JSON is invalid", () => {
+    const n = makeNotification({
+      type: "budget_alert",
+      params: "{not-valid-json",
+    });
+    const result = deriveNotificationDisplay(n, mockT);
+    expect(result.title).toBe("notifications.budget_alert.title");
+    expect(result.message).toBe("notifications.budget_alert.message");
+    expect(result.iconName).toBe("circle-x");
+    expect(result.iconColor).toBe("#D45B5B");
+    expect(result.iconBgColor).toBe("#FFEBEE");
+    expect(result.route).toBe("/(tabs)/(finance)");
+  });
 });
 
 // ---------------------------------------------------------------------------

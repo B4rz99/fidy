@@ -35,7 +35,7 @@ vi.mock("@/features/transactions", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/features/transactions")>();
   return {
     ...actual,
-    CATEGORY_MAP: {},
+    ["CATEGORY_MAP"]: {},
     useTransactionStore: {
       subscribe: mockSubscribe,
     },

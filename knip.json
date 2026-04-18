@@ -1,0 +1,40 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["package.json"],
+      "ignoreDependencies": ["bun-types"]
+    },
+    "apps/landing": {
+      "entry": ["package.json", "waitlist.js"],
+      "project": ["*.js", "*.css"]
+    },
+    "apps/mobile": {
+      "entry": [
+        "app/**/*.{ts,tsx}",
+        "app.config.ts",
+        "app.json",
+        "features/**/*.public.ts",
+        "mutations/index.ts",
+        "plugins/**/*.js"
+      ],
+      "project": ["**/*.ts", "**/*.tsx", "plugins/**/*.js"],
+      "metro": false,
+      "ignore": [
+        ".expo/**",
+        "android/**",
+        "babel.config.js",
+        "coverage/**",
+        "dist/**",
+        "ios/**",
+        "metro.config.js"
+      ],
+      "ignoreBinaries": ["eas"],
+      "ignoreDependencies": ["@sentry/cli"]
+    },
+    "packages/*": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts", "src/**/*.tsx"]
+    }
+  }
+}

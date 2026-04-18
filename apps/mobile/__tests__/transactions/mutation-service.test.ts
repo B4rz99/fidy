@@ -143,6 +143,22 @@ describe("transaction mutation service", () => {
     expect(refreshMock).toHaveBeenCalledOnce();
   });
 
+  it("returns a failed update result when the commit reports no mutation", async () => {
+    currentCommit = vi.fn().mockResolvedValue({
+      success: false,
+      error: "write-through rejected update",
+    });
+    const service = createService();
+
+    await expect(service.update("txn-9" as TransactionId, input)).resolves.toEqual({
+      success: false,
+      error: "Failed to update transaction",
+    });
+    expect(trackEditedMock).not.toHaveBeenCalled();
+    expect(resetFormMock).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
+  });
+
   it("updates transactions directly without resetting the form", async () => {
     currentCommit = vi.fn().mockResolvedValue({ success: true, didMutate: true });
     const service = createService();
@@ -170,6 +186,31 @@ describe("transaction mutation service", () => {
       error: "Failed to update transaction",
     });
 
+    expect(trackEditedMock).not.toHaveBeenCalled();
+    expect(resetFormMock).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      "update",
+      (service: ReturnType<typeof createService>) =>
+        service.update("txn-9" as TransactionId, { ...input, digits: "" }),
+    ],
+    [
+      "updateDirect",
+      (service: ReturnType<typeof createService>) =>
+        service.updateDirect("txn-9" as TransactionId, { ...input, digits: "" }),
+    ],
+  ])("returns validation failures from %s without side effects", async (_method, runMutation) => {
+    const service = createService();
+
+    const result = await runMutation(service);
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error).toEqual(expect.any(String));
+    expect(currentCommit).not.toHaveBeenCalled();
     expect(trackEditedMock).not.toHaveBeenCalled();
     expect(resetFormMock).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
