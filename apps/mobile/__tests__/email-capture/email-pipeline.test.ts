@@ -1,6 +1,7 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { RawEmail } from "@/features/email-capture/schema";
+import { processEmails, processRetries } from "@/features/email-capture/services/email-pipeline";
 import { requireUserId } from "@/shared/types/assertions";
 
 const mockGetProcessedExternalIds = vi.fn().mockResolvedValue(new Set<string>());
@@ -65,9 +66,6 @@ vi.mock("@/shared/lib/generate-id", () => ({
 const mockDb = {} as any;
 const USER_ID = requireUserId("user-1");
 
-let processEmails: typeof import("@/features/email-capture/services/email-pipeline").processEmails;
-let processRetries: typeof import("@/features/email-capture/services/email-pipeline").processRetries;
-
 function makeRawEmail(overrides: Partial<RawEmail> = {}): RawEmail {
   return {
     externalId: "ext-1",
@@ -83,10 +81,7 @@ function makeRawEmail(overrides: Partial<RawEmail> = {}): RawEmail {
 describe("email processing pipeline", () => {
   let idCounter: number;
 
-  beforeEach(async () => {
-    ({ processEmails, processRetries } = await import(
-      "@/features/email-capture/services/email-pipeline"
-    ));
+  beforeEach(() => {
     vi.clearAllMocks();
     idCounter = 0;
     mockGenerateId.mockImplementation((prefix: string) => {
