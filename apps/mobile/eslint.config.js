@@ -44,8 +44,8 @@ const BOUNDARY_ELEMENTS = [
     capture: ["featureName"],
   },
   { type: "app", pattern: "app/**/*.{ts,tsx}", mode: "full" },
-  { type: "shared", pattern: "shared/**/*.{ts,tsx}" },
-  { type: "module", pattern: "modules/**/*.{ts,tsx,js}" },
+  { type: "shared", pattern: "shared/**/*.{ts,tsx}", mode: "full" },
+  { type: "module", pattern: "modules/**/*.{ts,tsx,js}", mode: "full" },
 ];
 
 module.exports = defineConfig([

@@ -61,5 +61,8 @@ module.exports = {
     doNotFollow: {
       path: ["node_modules", "\\.expo", "\\.worktrees", "dist", "coverage"],
     },
+    tsConfig: {
+      fileName: "tsconfig.depcruise.json",
+    },
   },
 };

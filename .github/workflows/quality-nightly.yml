@@ -71,3 +71,4 @@ jobs:
         with:
           name: expo-atlas
           path: apps/mobile/.expo/atlas.jsonl
+          include-hidden-files: true
