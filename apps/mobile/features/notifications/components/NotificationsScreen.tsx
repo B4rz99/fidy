@@ -6,7 +6,7 @@ import { useAccountCreatedAt } from "@/features/auth/public";
 import { ScreenLayout } from "@/shared/components";
 import { Platform, Pressable, SectionList, StyleSheet, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
-import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useMountEffect, useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { trackNotificationCenterOpened } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import { deriveNotificationDisplay, groupNotificationsBySection } from "../lib/display";
@@ -40,11 +40,18 @@ export const NotificationsScreen = () => {
   }, [userId]);
 
   useMountEffect(() => {
-    if (!userId) return;
     trackNotificationCenterOpened();
-    markNotificationsVisited(userId);
-    loadNotificationsForUser(getDb(userId), userId);
   });
+
+  useSubscription(
+    () => {
+      if (!userId) return;
+      markNotificationsVisited(userId);
+      loadNotificationsForUser(getDb(userId), userId);
+    },
+    [userId],
+    userId != null
+  );
 
   const sections = useMemo(() => {
     const displays = notifications.map((n) => deriveNotificationDisplay(n, t));

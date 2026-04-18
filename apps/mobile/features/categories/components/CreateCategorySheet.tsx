@@ -113,6 +113,7 @@ export function CreateCategorySheet() {
 
   const trimmedName = name.trim();
   const isFormValid =
+    userId != null &&
     trimmedName.length >= MIN_NAME_LENGTH &&
     trimmedName.length <= MAX_NAME_LENGTH &&
     selectedIcon !== null &&
