@@ -10,6 +10,10 @@ The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async 
 
 `lefthook`'s default pre-push file detection can skip every command when the checkout is on detached `HEAD` or lacks a local base branch/upstream (for example, `git diff HEAD @{push}` and `git diff HEAD main` both fail). In this repo, pre-push commands should enumerate tracked files explicitly so lint/typecheck/test still run in linked worktrees and detached checkouts.
 
+### Bun workspace scripts need `--shell=bun` for parity (⚠️ AGENT SURPRISE)
+
+Workspace wrapper scripts like `bun run --cwd apps/mobile lint` can behave differently across local checkouts, worktrees, and CI because Bun's default system-shell execution does not resolve workspace binaries consistently. In this repo, root scripts that delegate into `apps/*` or `packages/*` should use `bun run --cwd <dir> --shell=bun <script>` so `expo`, `eslint`, `vitest`, and similar local bins resolve the same way everywhere.
+
 ## Testing Strategy
 
 Use these rules:
