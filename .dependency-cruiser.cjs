@@ -16,19 +16,19 @@ module.exports = {
     {
       name: "shared-must-not-depend-on-app-routes",
       severity: "error",
-      from: { path: "^apps/mobile/shared/(?!mutations/)" },
+      from: { path: "^apps/mobile/shared/" },
       to: { path: "^apps/mobile/app/" },
     },
     {
       name: "shared-must-not-depend-on-features",
       severity: "error",
-      from: { path: "^apps/mobile/shared/(?!mutations/)" },
+      from: { path: "^apps/mobile/shared/" },
       to: { path: "^apps/mobile/features/" },
     },
     {
       name: "shared-must-not-depend-on-modules",
       severity: "error",
-      from: { path: "^apps/mobile/shared/(?!mutations/)" },
+      from: { path: "^apps/mobile/shared/" },
       to: { path: "^apps/mobile/modules/" },
     },
     {
@@ -60,9 +60,6 @@ module.exports = {
     includeOnly: "^((apps/mobile)|(packages))/",
     doNotFollow: {
       path: ["node_modules", "\\.expo", "\\.worktrees", "dist", "coverage"],
-    },
-    tsConfig: {
-      fileName: "tsconfig.depcruise.json",
     },
   },
 };

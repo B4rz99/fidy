@@ -42,11 +42,7 @@ const computeAllOff = (prefs: NotificationPreferences): boolean =>
   !prefs.budgetAlerts && !prefs.goalMilestones && !prefs.spendingAnomalies && !prefs.weeklyDigest;
 
 const persistPreferences = (prefs: NotificationPreferences): void => {
-  void SecureStore.setItemAsync(PREFS_KEY, JSON.stringify(prefs)).catch((error) => {
-    captureWarning("notification_prefs_persist_failed", {
-      errorMessage: error instanceof Error ? error.message : "unknown",
-    });
-  });
+  void SecureStore.setItemAsync(PREFS_KEY, JSON.stringify(prefs));
   // Best-effort Supabase dual write (lazy import to avoid circular deps)
   import("@/shared/db/supabase")
     .then(async ({ getSupabase }) => {
@@ -89,11 +85,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
   setThemePreference: (pref) => {
     set({ themePreference: pref });
     Appearance.setColorScheme(toColorScheme(pref));
-    void SecureStore.setItemAsync("theme_preference", pref).catch((error) => {
-      captureWarning("theme_preference_persist_failed", {
-        errorMessage: error instanceof Error ? error.message : "unknown",
-      });
-    });
+    void SecureStore.setItemAsync("theme_preference", pref);
   },
 
   setNotificationPreference: (key, value) => {

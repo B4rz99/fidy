@@ -40,7 +40,7 @@ export default function ConnectedAccountsScreen() {
           <AccountCard
             provider="Gmail"
             account={gmailAccount}
-            isSyncing={isFetching && Boolean(gmailAccount)}
+            isSyncing={isFetching && !!gmailAccount}
             onConnect={() => {
               void connectEmail("gmail", getGmailClientId());
             }}
@@ -52,7 +52,7 @@ export default function ConnectedAccountsScreen() {
           <AccountCard
             provider="Outlook"
             account={outlookAccount}
-            isSyncing={isFetching && Boolean(outlookAccount)}
+            isSyncing={isFetching && !!outlookAccount}
             onConnect={() => {
               void connectEmail("outlook", getOutlookClientId());
             }}

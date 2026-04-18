@@ -44,8 +44,8 @@ const BOUNDARY_ELEMENTS = [
     capture: ["featureName"],
   },
   { type: "app", pattern: "app/**/*.{ts,tsx}", mode: "full" },
-  { type: "shared", pattern: "shared/**/*.{ts,tsx}", mode: "full" },
-  { type: "module", pattern: "modules/**/*.{ts,tsx,js}", mode: "full" },
+  { type: "shared", pattern: "shared/**/*.{ts,tsx}" },
+  { type: "module", pattern: "modules/**/*.{ts,tsx,js}" },
 ];
 
 module.exports = defineConfig([
@@ -106,7 +106,6 @@ module.exports = defineConfig([
         "error",
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
-      "no-implicit-coercion": "error",
       "object-shorthand": ["error", "always"],
       "no-constant-binary-expression": "error",
       "no-useless-catch": "error",
@@ -132,11 +131,11 @@ module.exports = defineConfig([
             },
             {
               from: { type: "shared" },
-              disallow: { to: { type: ["app", "feature-public", "feature-internal", "module"] } },
+              disallow: { to: { type: ["app", "feature", "module"] } },
             },
             {
               from: { type: "module" },
-              disallow: { to: { type: ["app", "feature-public", "feature-internal", "shared"] } },
+              disallow: { to: { type: ["app", "feature", "shared"] } },
             },
             {
               from: { type: "app" },

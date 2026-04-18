@@ -154,14 +154,6 @@ if [[ "$TOOL" != "auto" && "$TOOL" != "opencode" && "$TOOL" != "codex" && "$TOOL
 fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-COMMON_GIT_DIR="$(git -C "$REPO_ROOT" rev-parse --git-common-dir)"
-
-if [[ "$COMMON_GIT_DIR" = /* ]]; then
-  CANONICAL_REPO_ROOT="$(cd "$COMMON_GIT_DIR/.." && pwd)"
-else
-  CANONICAL_REPO_ROOT="$(cd "$REPO_ROOT/$COMMON_GIT_DIR/.." && pwd)"
-fi
-
 PRD_FILE="$SCRIPT_DIR/prd.json"
 PROGRESS_FILE="$SCRIPT_DIR/progress.txt"
 ARCHIVE_DIR="$SCRIPT_DIR/archive"
@@ -186,13 +178,7 @@ if [[ "$MODE" == "maintenance" ]]; then
     exit 1
   fi
 
-  MAINTENANCE_PROMPT_FILE=$(mktemp)
-  cat "$MAINTENANCE_INSTRUCTIONS_FILE" > "$MAINTENANCE_PROMPT_FILE"
-  printf '\n\n## Active Maintenance Prompt\n\n' >> "$MAINTENANCE_PROMPT_FILE"
-  cat "$CUSTOM_PROMPT_FILE" >> "$MAINTENANCE_PROMPT_FILE"
-  trap '[[ -n "$MAINTENANCE_PROMPT_FILE" && -f "$MAINTENANCE_PROMPT_FILE" ]] && rm -f "$MAINTENANCE_PROMPT_FILE"' EXIT
-
-  INSTRUCTIONS_FILE="$MAINTENANCE_PROMPT_FILE"
+  INSTRUCTIONS_FILE="$MAINTENANCE_INSTRUCTIONS_FILE"
   ACTIVE_PROGRESS_FILE="${CUSTOM_PROGRESS_FILE:-$SCRIPT_DIR/maintenance-progress.txt}"
 fi
 
@@ -200,8 +186,8 @@ if [[ "$MODE" == "maintenance" && "$RALPH_WORKTREE_ACTIVE" != "1" ]]; then
   MAINTENANCE_NAME="$(infer_maintenance_name "$CUSTOM_PROMPT_FILE" "$ACTIVE_PROGRESS_FILE")"
 
   if [[ -n "$MAINTENANCE_NAME" ]]; then
-    WORKTREE_PARENT="$(dirname "$CANONICAL_REPO_ROOT")"
-    WORKTREE_PATH="$WORKTREE_PARENT/$(basename "$CANONICAL_REPO_ROOT")-$MAINTENANCE_NAME"
+    WORKTREE_PARENT="$(dirname "$REPO_ROOT")"
+    WORKTREE_PATH="$WORKTREE_PARENT/$(basename "$REPO_ROOT")-$MAINTENANCE_NAME"
     ensure_maintenance_worktree "$MAINTENANCE_NAME" "$WORKTREE_PATH"
 
     WORKTREE_PROMPT_FILE="$(map_path_to_worktree "$CUSTOM_PROMPT_FILE" "$REPO_ROOT" "$WORKTREE_PATH")"
@@ -345,34 +331,11 @@ run_codex() {
 
 initialize_progress_file() {
   local target_file="$1"
-  local template_file
 
   if [ ! -f "$target_file" ]; then
-    template_file="${target_file%.txt}.template.txt"
-
-    if [ -f "$template_file" ]; then
-      cp "$template_file" "$target_file"
-      return
-    fi
-
     echo "# Ralph Progress Log" > "$target_file"
     echo "Started: $(date)" >> "$target_file"
     echo "---" >> "$target_file"
-  fi
-}
-
-initialize_maintenance_files() {
-  local progress_file="$1"
-  local report_file=""
-
-  initialize_progress_file "$progress_file"
-
-  if [[ "$progress_file" == *"coverage-progress.txt" ]]; then
-    report_file="${progress_file%-progress.txt}-report.txt"
-  fi
-
-  if [[ -n "$report_file" ]]; then
-    initialize_progress_file "$report_file"
   fi
 }
 
@@ -426,7 +389,7 @@ if [[ "$MODE" == "story" ]]; then
     exit 0
   fi
 else
-  initialize_maintenance_files "$ACTIVE_PROGRESS_FILE"
+  initialize_progress_file "$ACTIVE_PROGRESS_FILE"
 fi
 
 echo "Starting Ralph - Mode: $MODE - Tool: $TOOL - Max iterations: $MAX_ITERATIONS"

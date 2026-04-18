@@ -43,7 +43,7 @@ export function ErrorFallback() {
       </Text>
       <Pressable
         onPress={() => {
-          void Updates.reloadAsync().catch(() => undefined);
+          void Updates.reloadAsync();
         }}
         style={({ pressed }) => ({
           backgroundColor: Colors.light.primary,

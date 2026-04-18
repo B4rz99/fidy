@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { useTransactionStore } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
+import { captureError } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import type {
   AnalyticsPeriod,
@@ -56,14 +57,14 @@ export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set,
       if (currentPages === prevPagesRef) return;
       prevPagesRef = currentPages;
       if (get().incomeExpense !== null) {
-        void get().loadAnalytics();
+        get().loadAnalytics().catch(captureError);
       }
     });
   },
 
   setPeriod: (period) => {
     set({ period });
-    void get().loadAnalytics();
+    get().loadAnalytics().catch(captureError);
   },
 
   loadAnalytics: async () => {

@@ -42,7 +42,7 @@ function AddBillForm({
   readonly onDone: () => void;
 }) {
   const { t, locale } = useTranslation();
-  const isEdit = Boolean(existingBill);
+  const isEdit = !!existingBill;
 
   const [name, setName] = useState(existingBill?.name ?? "");
   const [amount, setAmount] = useState(existingBill ? String(existingBill.amount) : "");
@@ -70,7 +70,7 @@ function AddBillForm({
       const trimmedName = name.trim();
       if (!trimmedName) return;
 
-      if (existingBill) {
+      if (isEdit) {
         const amountValue = parseDigitsToAmount(amount);
         if (amountValue <= 0) return;
         await onUpdateBill(existingBill.id as BillId, {

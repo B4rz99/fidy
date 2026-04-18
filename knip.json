@@ -18,7 +18,7 @@
         "mutations/index.ts",
         "plugins/**/*.js"
       ],
-      "project": ["**/*.ts", "**/*.tsx", "plugins/**/*.js"],
+      "project": ["**/*.ts", "**/*.tsx"],
       "metro": false,
       "ignore": [
         ".expo/**",

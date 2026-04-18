@@ -26,7 +26,7 @@ export const useLocaleStore = create<LocaleState & LocaleActions>((set) => ({
   setLocale: (locale: string) => {
     i18n.locale = locale;
     set({ locale });
-    void SecureStore.setItemAsync("locale_preference", locale).catch(() => undefined);
+    void SecureStore.setItemAsync("locale_preference", locale);
   },
 
   t: i18n.t.bind(i18n),
