@@ -1,6 +1,6 @@
 import { addMonths, format, subMonths } from "date-fns";
 import { create } from "zustand";
-import { useNotificationStore } from "@/features/notifications";
+import { insertNotificationRecord } from "@/features/notifications";
 import { useSettingsStore } from "@/features/settings";
 import { CATEGORY_MAP, useTransactionStore } from "@/features/transactions";
 import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/mutations";
@@ -39,7 +39,10 @@ const budgetMonitoring = createBudgetMonitoringModule({
     return category ? getCategoryLabel(category, locale) : categoryId;
   },
   scheduleBudgetAlert,
-  insertNotification: (input) => useNotificationStore.getState().insertNotification(input),
+  insertNotification: (input) => {
+    if (!dbRef || !userIdRef) return;
+    void insertNotificationRecord(dbRef, userIdRef, input);
+  },
 });
 
 type BudgetState = {

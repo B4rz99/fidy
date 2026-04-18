@@ -87,6 +87,8 @@ describe("setupApplePayCapture", () => {
     await setupApplePayCapture(mockDb, USER_ID);
     capturedListener({ amount: 50000, merchant: "Farmatodo" });
 
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
     expect(mockProcessApplePayIntent).toHaveBeenCalledWith(mockDb, USER_ID, {
       amount: 50000,
       merchant: "Farmatodo",
@@ -174,6 +176,8 @@ describe("setupNotificationCapture", () => {
       timestamp: Date.now(),
     };
     capturedListener(notificationData);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(mockProcessNotification).toHaveBeenCalledWith(mockDb, USER_ID, notificationData);
   });

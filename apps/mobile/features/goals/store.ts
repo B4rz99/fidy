@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { scheduleLocalPush, useNotificationStore } from "@/features/notifications";
+import { insertNotificationRecord, scheduleLocalPush } from "@/features/notifications";
 import { getMonthlyTotalsByType, useTransactionStore } from "@/features/transactions";
 import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
@@ -38,7 +38,7 @@ import { addContributionSchema, createGoalSchema } from "./schema";
 
 // Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
 let dbRef: AnyDb | null = null;
-let userIdRef: string | null = null;
+let userIdRef: UserId | null = null;
 let unsubscribeTxStore: (() => void) | null = null;
 let mutations: WriteThroughMutationModule | null = null;
 
@@ -59,7 +59,7 @@ type GoalState = {
 };
 
 type GoalActions = {
-  initStore: (db: AnyDb, userId: string) => void;
+  initStore: (db: AnyDb, userId: UserId) => void;
   loadGoals: () => Promise<void>;
   loadGoalContributions: (goalId: string) => void;
   createGoal: (input: {
@@ -261,6 +261,8 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
 
   addContribution: async (input) => {
     if (!dbRef || !userIdRef) return false;
+    const db = dbRef;
+    const userId = userIdRef;
     const validation = addContributionSchema.safeParse(input);
     if (!validation.success) return false;
     const mutationModule = mutations;
@@ -273,7 +275,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
         row: {
           id,
           goalId: input.goalId,
-          userId: userIdRef,
+          userId,
           amount: input.amount,
           note: input.note ?? null,
           date: input.date,
@@ -299,7 +301,7 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
       const milestones = [25, 50, 75, 100] as const;
       milestones.forEach((milestone) => {
         if (percentBefore < milestone && percentAfter >= milestone) {
-          useNotificationStore.getState().insertNotification({
+          void insertNotificationRecord(db, userId, {
             type: "goal_milestone",
             dedupKey: `goal_milestone:${input.goalId}:${milestone}`,
             categoryId: null,

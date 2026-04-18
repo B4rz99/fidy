@@ -16,11 +16,7 @@ vi.mock("@/features/budget/lib/monitoring", () => ({
 }));
 
 vi.mock("@/features/notifications", () => ({
-  useNotificationStore: {
-    getState: () => ({
-      insertNotification: vi.fn(),
-    }),
-  },
+  insertNotificationRecord: vi.fn(),
 }));
 
 vi.mock("@/features/settings", () => ({

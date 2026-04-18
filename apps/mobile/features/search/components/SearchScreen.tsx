@@ -1,16 +1,25 @@
 import { useRouter } from "expo-router";
 import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { useAuthStore } from "@/features/auth";
 import { CATEGORY_MAP, makeDateLabel, type StoredTransaction } from "@/features/transactions";
 import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
 import { Ellipsis } from "@/shared/components/icons";
 import { FlatList, InteractionManager, Text, TextInput, View } from "@/shared/components/rn";
+import { getDb } from "@/shared/db";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { formatSignedMoney, toIsoDate } from "@/shared/lib";
 import { amountDigitsToAmount } from "../lib/amount-utils";
 import { hasActiveFilters } from "../lib/filters";
 import type { SearchFilters } from "../lib/types";
-import { useSearchStore } from "../store";
+import {
+  clearSearchFilters,
+  executeSearch,
+  loadNextSearchPage,
+  updateSearchFilters,
+  updateSearchQuery,
+  useSearchStore,
+} from "../store";
 import { AmountFilter } from "./AmountFilter";
 import { CategoryFilter } from "./CategoryFilter";
 import { DateFilter } from "./DateFilter";
@@ -63,16 +72,13 @@ export const SearchScreen = () => {
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const peachLight = useThemeColor("peachLight");
+  const userId = useAuthStore((state) => state.session?.user.id ?? null);
+  const db = userId ? getDb(userId) : null;
 
   const filters = useSearchStore((s) => s.filters);
   const results = useSearchStore((s) => s.results);
   const hasMore = useSearchStore((s) => s.hasMore);
   const summary = useSearchStore((s) => s.summary);
-  const setQuery = useSearchStore((s) => s.setQuery);
-  const setFilters = useSearchStore((s) => s.setFilters);
-  const clearFilters = useSearchStore((s) => s.clearFilters);
-  const loadNextPage = useSearchStore((s) => s.loadNextPage);
-  const executeSearch = useSearchStore((s) => s.executeSearch);
   const reset = useSearchStore((s) => s.reset);
 
   const [ready, setReady] = useState(false);
@@ -86,7 +92,9 @@ export const SearchScreen = () => {
   useMountEffect(() => {
     const handle = InteractionManager.runAfterInteractions(() => {
       setReady(true);
-      executeSearch();
+      if (db && userId) {
+        executeSearch(db, userId);
+      }
       inputRef.current?.focus();
     });
     return () => {
@@ -101,10 +109,11 @@ export const SearchScreen = () => {
       setInputText(text);
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
-        setQuery(text);
+        if (!db || !userId) return;
+        updateSearchQuery(db, userId, text);
       }, DEBOUNCE_MS);
     },
-    [setQuery]
+    [db, userId]
   );
 
   const handleTogglePanel = useCallback((key: FilterKey) => {
@@ -117,9 +126,10 @@ export const SearchScreen = () => {
       const next = current.includes(categoryId)
         ? current.filter((id) => id !== categoryId)
         : [...current, categoryId];
-      setFilters({ categoryIds: next });
+      if (!db || !userId) return;
+      updateSearchFilters(db, userId, { categoryIds: next });
     },
-    [setFilters]
+    [db, userId]
   );
 
   const handleClearAll = useCallback(() => {
@@ -128,38 +138,48 @@ export const SearchScreen = () => {
     setMinDigits("");
     setMaxDigits("");
     setActivePanel(null);
-    clearFilters();
-  }, [clearFilters]);
+    if (!db || !userId) return;
+    clearSearchFilters(db, userId);
+  }, [db, userId]);
 
   const handleMinChange = useCallback(
     (digits: string) => {
       setMinDigits(digits);
-      setFilters({ amountMin: amountDigitsToAmount(digits) });
+      if (!db || !userId) return;
+      updateSearchFilters(db, userId, { amountMin: amountDigitsToAmount(digits) });
     },
-    [setFilters]
+    [db, userId]
   );
 
   const handleMaxChange = useCallback(
     (digits: string) => {
       setMaxDigits(digits);
-      setFilters({ amountMax: amountDigitsToAmount(digits) });
+      if (!db || !userId) return;
+      updateSearchFilters(db, userId, { amountMax: amountDigitsToAmount(digits) });
     },
-    [setFilters]
+    [db, userId]
   );
 
   const handleDateRangeChange = useCallback(
-    (from: string | null, to: string | null) => setFilters({ dateFrom: from, dateTo: to }),
-    [setFilters]
+    (from: string | null, to: string | null) => {
+      if (!db || !userId) return;
+      updateSearchFilters(db, userId, { dateFrom: from, dateTo: to });
+    },
+    [db, userId]
   );
 
   const handleTypeChange = useCallback(
-    (type: SearchFilters["type"]) => setFilters({ type }),
-    [setFilters]
+    (type: SearchFilters["type"]) => {
+      if (!db || !userId) return;
+      updateSearchFilters(db, userId, { type });
+    },
+    [db, userId]
   );
 
   const handleEndReached = useCallback(() => {
-    if (hasMore) loadNextPage();
-  }, [hasMore, loadNextPage]);
+    if (!db || !userId || !hasMore) return;
+    loadNextSearchPage(db, userId);
+  }, [db, hasMore, userId]);
 
   const dateBreaks = useMemo(() => {
     const breaks = new Set<string>();

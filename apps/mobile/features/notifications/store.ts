@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
-import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/mutations";
+import { createWriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import { generateNotificationId, toIsoDateTime } from "@/shared/lib";
 import type { CategoryId, IsoDateTime, UserId } from "@/shared/types/branded";
@@ -8,11 +8,6 @@ import type { NotificationType, StoredNotification } from "./lib/types";
 import { countNotificationsSince, getNotifications } from "./repository";
 
 const lastVisitedKey = (userId: UserId) => `notification_last_visited_${userId}`;
-
-// Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
-let dbRef: AnyDb | null = null;
-let userIdRef: UserId | null = null;
-let mutations: WriteThroughMutationModule | null = null;
 
 type InsertNotificationInput = {
   readonly type: NotificationType;
@@ -28,108 +23,129 @@ type NotificationState = {
   notifications: readonly StoredNotification[];
   newCount: number;
   isLoading: boolean;
+  activeUserId: UserId | null;
 };
 
 type NotificationActions = {
-  initStore: (db: AnyDb, userId: UserId) => Promise<void>;
-  loadNotifications: () => void;
-  insertNotification: (input: InsertNotificationInput) => void;
-  markVisited: () => void;
-  clearAll: () => void;
+  beginSession: (userId: UserId) => void;
+  setNewCount: (newCount: number) => void;
+  setNotifications: (notifications: readonly StoredNotification[]) => void;
+  setIsLoading: (isLoading: boolean) => void;
+  incrementNewCount: () => void;
+  clearState: () => void;
 };
 
-export const useNotificationStore = create<NotificationState & NotificationActions>(
-  (set, _get) => ({
-    notifications: [],
-    newCount: 0,
-    isLoading: false,
+export const useNotificationStore = create<NotificationState & NotificationActions>((set) => ({
+  notifications: [],
+  newCount: 0,
+  isLoading: false,
+  activeUserId: null,
 
-    initStore: async (db, userId) => {
-      dbRef = db;
-      userIdRef = userId;
-      mutations = createWriteThroughMutationModule(db);
-      const requestedUserId = userId;
+  beginSession: (userId) =>
+    set({
+      activeUserId: userId,
+      notifications: [],
+      newCount: 0,
+      isLoading: false,
+    }),
 
-      let lastVisitedAt: IsoDateTime | null = null;
-      try {
-        const stored = await SecureStore.getItemAsync(lastVisitedKey(userId));
-        lastVisitedAt = stored ? (stored as IsoDateTime) : null;
-      } catch {
-        // SecureStore may fail in tests — default to null
-      }
+  setNewCount: (newCount) => set({ newCount }),
 
-      if (userIdRef !== requestedUserId) return;
-      const newCount = countNotificationsSince(db, userId, lastVisitedAt);
-      set({ newCount });
+  setNotifications: (notifications) => set({ notifications: [...notifications], isLoading: false }),
+
+  setIsLoading: (isLoading) => set({ isLoading }),
+
+  incrementNewCount: () => set((state) => ({ newCount: state.newCount + 1 })),
+
+  clearState: () => set({ notifications: [], newCount: 0 }),
+}));
+
+function isActiveNotificationUser(userId: UserId): boolean {
+  return useNotificationStore.getState().activeUserId === userId;
+}
+
+export async function initializeNotificationStore(db: AnyDb, userId: UserId): Promise<void> {
+  useNotificationStore.getState().beginSession(userId);
+
+  let lastVisitedAt: IsoDateTime | null = null;
+  try {
+    const stored = await SecureStore.getItemAsync(lastVisitedKey(userId));
+    lastVisitedAt = stored ? (stored as IsoDateTime) : null;
+  } catch {
+    // SecureStore may fail in tests — default to null
+  }
+
+  if (!isActiveNotificationUser(userId)) return;
+  const newCount = countNotificationsSince(db, userId, lastVisitedAt);
+  useNotificationStore.getState().setNewCount(newCount);
+}
+
+export function loadNotificationsForUser(db: AnyDb, userId: UserId): void {
+  useNotificationStore.getState().setIsLoading(true);
+
+  try {
+    const rows = getNotifications(db, userId);
+    if (!isActiveNotificationUser(userId)) {
+      useNotificationStore.getState().setIsLoading(false);
+      return;
+    }
+    useNotificationStore.getState().setNotifications(rows as readonly StoredNotification[]);
+  } catch {
+    useNotificationStore.getState().setIsLoading(false);
+  }
+}
+
+export async function insertNotificationRecord(
+  db: AnyDb,
+  userId: UserId,
+  input: InsertNotificationInput
+): Promise<void> {
+  const now = toIsoDateTime(new Date());
+  const id = generateNotificationId();
+  const mutations = createWriteThroughMutationModule(db);
+
+  const result = await mutations.commit({
+    kind: "notification.insert",
+    row: {
+      id,
+      userId,
+      type: input.type,
+      dedupKey: input.dedupKey,
+      categoryId: input.categoryId,
+      goalId: input.goalId,
+      titleKey: input.titleKey,
+      messageKey: input.messageKey,
+      params: input.params,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
     },
+  });
 
-    loadNotifications: () => {
-      if (!dbRef || !userIdRef) return;
-      set({ isLoading: true });
-      try {
-        const rows = getNotifications(dbRef, userIdRef);
-        set({ notifications: rows as readonly StoredNotification[], isLoading: false });
-      } catch {
-        set({ isLoading: false });
-      }
-    },
+  if (result.success && result.didMutate && isActiveNotificationUser(userId)) {
+    useNotificationStore.getState().incrementNewCount();
+  }
+}
 
-    insertNotification: (input) => {
-      if (!dbRef || !userIdRef) return;
-      const mutationModule = mutations;
-      if (!mutationModule) return;
-      const requestedUserId = userIdRef;
-      const now = toIsoDateTime(new Date());
-      const id = generateNotificationId();
-      void mutationModule
-        .commit({
-          kind: "notification.insert",
-          row: {
-            id,
-            userId: requestedUserId,
-            type: input.type,
-            dedupKey: input.dedupKey,
-            categoryId: input.categoryId,
-            goalId: input.goalId,
-            titleKey: input.titleKey,
-            messageKey: input.messageKey,
-            params: input.params,
-            createdAt: now,
-            updatedAt: now,
-            deletedAt: null,
-          },
-        })
-        .then((result) => {
-          if (result.success && result.didMutate && userIdRef === requestedUserId) {
-            set((state) => ({ newCount: state.newCount + 1 }));
-          }
-        });
-    },
+export function markNotificationsVisited(userId: UserId): void {
+  const now = toIsoDateTime(new Date());
+  void SecureStore.setItemAsync(lastVisitedKey(userId), now).catch(() => undefined);
 
-    markVisited: () => {
-      const now = toIsoDateTime(new Date());
-      if (!userIdRef) return;
-      void SecureStore.setItemAsync(lastVisitedKey(userIdRef), now).catch(() => undefined);
-      set({ newCount: 0 });
-    },
+  if (isActiveNotificationUser(userId)) {
+    useNotificationStore.getState().setNewCount(0);
+  }
+}
 
-    clearAll: () => {
-      if (!dbRef || !userIdRef) return;
-      const mutationModule = mutations;
-      if (!mutationModule) return;
-      const requestedUserId = userIdRef;
-      const now = toIsoDateTime(new Date());
-      void mutationModule
-        .commit({
-          kind: "notification.clearAll",
-          userId: requestedUserId,
-          now,
-        })
-        .then((result) => {
-          if (result.success && userIdRef === requestedUserId) {
-            set({ notifications: [], newCount: 0 });
-          }
-        });
-    },
-  })
-);
+export async function clearAllNotifications(db: AnyDb, userId: UserId): Promise<void> {
+  const mutations = createWriteThroughMutationModule(db);
+  const now = toIsoDateTime(new Date());
+  const result = await mutations.commit({
+    kind: "notification.clearAll",
+    userId,
+    now,
+  });
+
+  if (result.success && isActiveNotificationUser(userId)) {
+    useNotificationStore.getState().clearState();
+  }
+}

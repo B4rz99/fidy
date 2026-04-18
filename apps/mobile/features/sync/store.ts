@@ -8,46 +8,44 @@ import {
   type SyncConflict,
 } from "./services/sync";
 
-let dbRef: AnyDb | null = null;
-
 type SyncConflictState = {
   conflicts: SyncConflict[];
   conflictCount: number;
 };
 
 type SyncConflictActions = {
-  initStore: (db: AnyDb) => void;
-  loadConflicts: () => Promise<void>;
-  resolveConflict: (id: string, resolution: "local" | "server") => Promise<void>;
+  setConflicts: (conflicts: readonly SyncConflict[]) => void;
 };
 
-export const useSyncConflictStore = create<SyncConflictState & SyncConflictActions>((set, get) => ({
+export const useSyncConflictStore = create<SyncConflictState & SyncConflictActions>((set) => ({
   conflicts: [],
   conflictCount: 0,
 
-  initStore: (db) => {
-    dbRef = db;
-  },
-
-  loadConflicts: async () => {
-    if (!dbRef) return;
-    try {
-      const conflicts = [...(await listConflicts({ db: dbRef }))];
-      set({ conflicts, conflictCount: conflicts.length });
-    } catch (err) {
-      captureError(err);
-    }
-  },
-
-  resolveConflict: async (id, resolution) => {
-    if (!dbRef) return;
-    await resolveConflictBoundary({
-      db: dbRef,
-      conflictId: id as SyncConflictId,
-      resolution,
-    });
-    await get().loadConflicts();
+  setConflicts: (conflicts) => {
+    set({ conflicts: [...conflicts], conflictCount: conflicts.length });
   },
 }));
+
+export async function loadSyncConflicts(db: AnyDb): Promise<void> {
+  try {
+    const conflicts = [...(await listConflicts({ db }))];
+    useSyncConflictStore.getState().setConflicts(conflicts);
+  } catch (err) {
+    captureError(err);
+  }
+}
+
+export async function resolveSyncConflictSelection(
+  db: AnyDb,
+  id: string,
+  resolution: "local" | "server"
+): Promise<void> {
+  await resolveConflictBoundary({
+    db,
+    conflictId: id as SyncConflictId,
+    resolution,
+  });
+  await loadSyncConflicts(db);
+}
 
 export type { SyncConflict } from "./services/sync";
