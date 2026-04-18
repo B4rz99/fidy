@@ -35,7 +35,8 @@ vi.mock("@/features/transactions", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/features/transactions")>();
   return {
     ...actual,
-    ["CATEGORY_MAP"]: {},
+    // biome-ignore lint/style/useNamingConvention: exported constant name
+    CATEGORY_MAP: {},
     useTransactionStore: {
       subscribe: mockSubscribe,
     },

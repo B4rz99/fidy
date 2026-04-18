@@ -20,6 +20,18 @@ const mockUpdate = vi.fn();
 const mockInvoke = vi.fn();
 const userId = "user-1" as UserId;
 
+function makeUserMemoryRow(
+  overrides: { id?: string; fact?: string; category?: string; createdAt?: string } = {}
+) {
+  return {
+    id: overrides.id ?? "memory-1",
+    fact: overrides.fact ?? "Likes coffee",
+    category: overrides.category ?? "preference",
+    // biome-ignore lint/style/useNamingConvention: Supabase row shape
+    created_at: overrides.createdAt ?? "2026-01-01T00:00:00Z",
+  };
+}
+
 beforeEach(() => {
   mockOrder.mockReset();
   mockIs.mockReset().mockReturnValue({ order: mockOrder });
@@ -39,17 +51,7 @@ beforeEach(() => {
 
 describe("toUserMemory", () => {
   it("maps a Supabase row to UserMemory", () => {
-    expect(
-      toUserMemory(
-        {
-          id: "memory-1",
-          fact: "Likes coffee",
-          category: "preference",
-          created_at: "2026-01-01T00:00:00Z",
-        },
-        userId
-      )
-    ).toEqual({
+    expect(toUserMemory(makeUserMemoryRow(), userId)).toEqual({
       id: "memory-1",
       userId,
       fact: "Likes coffee",
@@ -64,18 +66,13 @@ describe("listUserMemories", () => {
   it("returns newest-first mapped memories", async () => {
     mockOrder.mockResolvedValue({
       data: [
-        {
+        makeUserMemoryRow({
           id: "memory-2",
           fact: "Wants to save",
           category: "goal",
-          created_at: "2026-01-02T00:00:00Z",
-        },
-        {
-          id: "memory-1",
-          fact: "Likes coffee",
-          category: "preference",
-          created_at: "2026-01-01T00:00:00Z",
-        },
+          createdAt: "2026-01-02T00:00:00Z",
+        }),
+        makeUserMemoryRow(),
       ],
       error: null,
     });
@@ -115,6 +112,7 @@ describe("softDeleteUserMemory", () => {
     await softDeleteUserMemory("memory-1" as UserMemoryId);
 
     expect(mockUpdate).toHaveBeenCalledWith(
+      // biome-ignore lint/style/useNamingConvention: Supabase column name
       expect.objectContaining({ deleted_at: expect.any(String) })
     );
     expect(mockEq).toHaveBeenCalledWith("id", "memory-1");
@@ -133,14 +131,7 @@ describe("extractMemoriesFromConversation", () => {
     mockInvoke.mockResolvedValue({
       data: {
         success: true,
-        data: [
-          {
-            id: "memory-1",
-            fact: "Prefers dark mode",
-            category: "preference",
-            created_at: "2026-01-01T00:00:00Z",
-          },
-        ],
+        data: [makeUserMemoryRow({ fact: "Prefers dark mode" })],
       },
       error: null,
     });

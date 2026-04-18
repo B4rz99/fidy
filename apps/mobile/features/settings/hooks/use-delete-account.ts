@@ -10,6 +10,7 @@ async function deleteAccountRemote({ supabaseUrl, token }: DeleteAccountInput): 
   const response = await fetch(`${supabaseUrl}/functions/v1/delete-account`, {
     method: "POST",
     headers: {
+      // biome-ignore lint/style/useNamingConvention: HTTP header
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },

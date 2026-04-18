@@ -3,9 +3,13 @@ import type { UserId } from "@/shared/types/branded";
 import type { NotificationPreferences } from "../store";
 
 type NotificationPreferencesRow = {
+  // biome-ignore lint/style/useNamingConvention: Supabase row shape
   readonly budget_alerts: boolean | null;
+  // biome-ignore lint/style/useNamingConvention: Supabase row shape
   readonly goal_milestones: boolean | null;
+  // biome-ignore lint/style/useNamingConvention: Supabase row shape
   readonly spending_anomalies: boolean | null;
+  // biome-ignore lint/style/useNamingConvention: Supabase row shape
   readonly weekly_digest: boolean | null;
 };
 
@@ -43,10 +47,15 @@ export async function saveNotificationPreferencesRemote(
 ): Promise<void> {
   const { error } = await getSupabase().from("notification_preferences").upsert(
     {
+      // biome-ignore lint/style/useNamingConvention: Supabase column name
       user_id: userId,
+      // biome-ignore lint/style/useNamingConvention: Supabase column name
       budget_alerts: prefs.budgetAlerts,
+      // biome-ignore lint/style/useNamingConvention: Supabase column name
       goal_milestones: prefs.goalMilestones,
+      // biome-ignore lint/style/useNamingConvention: Supabase column name
       spending_anomalies: prefs.spendingAnomalies,
+      // biome-ignore lint/style/useNamingConvention: Supabase column name
       weekly_digest: prefs.weeklyDigest,
     },
     { onConflict: "user_id" }

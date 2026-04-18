@@ -17,6 +17,26 @@ const mockSelect = vi.fn();
 const mockUpsert = vi.fn();
 const userId = "user-1" as UserId;
 
+function makeNotificationPreferencesRow(
+  overrides: {
+    budgetAlerts?: boolean | null;
+    goalMilestones?: boolean | null;
+    spendingAnomalies?: boolean | null;
+    weeklyDigest?: boolean | null;
+  } = {}
+) {
+  return {
+    // biome-ignore lint/style/useNamingConvention: Supabase row shape
+    budget_alerts: overrides.budgetAlerts ?? false,
+    // biome-ignore lint/style/useNamingConvention: Supabase row shape
+    goal_milestones: overrides.goalMilestones ?? true,
+    // biome-ignore lint/style/useNamingConvention: Supabase row shape
+    spending_anomalies: overrides.spendingAnomalies ?? false,
+    // biome-ignore lint/style/useNamingConvention: Supabase row shape
+    weekly_digest: overrides.weeklyDigest ?? true,
+  };
+}
+
 beforeEach(() => {
   mockMaybeSingle.mockReset();
   mockEq.mockReset().mockReturnValue({ maybeSingle: mockMaybeSingle });
@@ -29,14 +49,7 @@ beforeEach(() => {
 
 describe("notification preferences remote data", () => {
   test("maps remote row to NotificationPreferences", () => {
-    expect(
-      toNotificationPreferences({
-        budget_alerts: false,
-        goal_milestones: true,
-        spending_anomalies: false,
-        weekly_digest: true,
-      })
-    ).toEqual({
+    expect(toNotificationPreferences(makeNotificationPreferencesRow())).toEqual({
       budgetAlerts: false,
       goalMilestones: true,
       spendingAnomalies: false,
@@ -52,12 +65,7 @@ describe("notification preferences remote data", () => {
 
   test("fetchNotificationPreferencesRemote returns mapped prefs", async () => {
     mockMaybeSingle.mockResolvedValue({
-      data: {
-        budget_alerts: false,
-        goal_milestones: true,
-        spending_anomalies: false,
-        weekly_digest: true,
-      },
+      data: makeNotificationPreferencesRow(),
       error: null,
     });
 
@@ -81,10 +89,15 @@ describe("notification preferences remote data", () => {
 
     expect(mockUpsert).toHaveBeenCalledWith(
       {
+        // biome-ignore lint/style/useNamingConvention: Supabase column name
         user_id: userId,
+        // biome-ignore lint/style/useNamingConvention: Supabase column name
         budget_alerts: false,
+        // biome-ignore lint/style/useNamingConvention: Supabase column name
         goal_milestones: true,
+        // biome-ignore lint/style/useNamingConvention: Supabase column name
         spending_anomalies: false,
+        // biome-ignore lint/style/useNamingConvention: Supabase column name
         weekly_digest: true,
       },
       { onConflict: "user_id" }

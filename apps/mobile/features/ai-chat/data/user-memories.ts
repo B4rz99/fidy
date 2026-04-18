@@ -11,6 +11,7 @@ type UserMemoryRow = {
   readonly id: string;
   readonly fact: string;
   readonly category: string;
+  // biome-ignore lint/style/useNamingConvention: Supabase row shape
   readonly created_at: string;
 };
 
@@ -45,6 +46,7 @@ export async function listUserMemories(userId: UserId): Promise<readonly UserMem
 export async function softDeleteUserMemory(id: UserMemoryId): Promise<void> {
   const { error } = await getSupabase()
     .from("user_memories")
+    // biome-ignore lint/style/useNamingConvention: Supabase column name
     .update({ deleted_at: new Date().toISOString() })
     .eq("id", id);
 

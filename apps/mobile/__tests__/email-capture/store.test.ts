@@ -92,6 +92,7 @@ vi.mock("@/features/email-capture/queries/bank-senders", () => ({
 
 vi.mock("@/shared/query", () => ({
   queryClient: {},
+  // biome-ignore lint/style/useNamingConvention: exported component mock
   QueryProvider: ({ children }: { children: unknown }) => children,
 }));
 
