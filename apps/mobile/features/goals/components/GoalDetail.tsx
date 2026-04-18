@@ -5,7 +5,8 @@ import Svg, { Circle as SvgCircle } from "react-native-svg";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatDateDisplay, formatMoney } from "@/shared/lib";
-import type { CopAmount, IsoDate } from "@/shared/types/branded";
+import { requireIsoDate } from "@/shared/types/assertions";
+import type { CopAmount } from "@/shared/types/branded";
 import type { GoalProjection, Milestone } from "../lib/derive";
 import { deriveMonthlyMilestones } from "../lib/derive";
 import type { GoalContribution } from "../schema";
@@ -210,7 +211,7 @@ function ContributionRowInner({
     <View style={styles.contributionRow}>
       <View style={styles.contributionInfo}>
         <Text style={[styles.contributionDate, { color: primaryColor }]}>
-          {formatDateDisplay(contribution.date as IsoDate)}
+          {formatDateDisplay(requireIsoDate(contribution.date))}
         </Text>
         <Text style={[styles.contributionNote, { color: secondaryColor }]}>
           {contribution.note ?? t("goals.detail.manualPayment")}

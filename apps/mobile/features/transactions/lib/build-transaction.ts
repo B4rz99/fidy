@@ -1,14 +1,8 @@
-import { parseDigitsToAmount, parseIsoDate, toIsoDate } from "@/shared/lib";
-import type {
-  CategoryId,
-  CopAmount,
-  IsoDateTime,
-  TransactionId,
-  UserId,
-} from "@/shared/types/branded";
+import { parseDigitsToAmount, parseIsoDate, toIsoDate, toIsoDateTime } from "@/shared/lib";
+import type { CategoryId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
 import type { StoredTransaction, TransactionType } from "../schema";
 import { createTransactionSchema } from "../schema";
-import { isValidCategoryId } from "./categories";
+import { getBuiltInCategoryId, isValidCategoryId } from "./categories";
 import type { TransactionRow } from "./repository";
 
 type BuildInput = {
@@ -18,6 +12,8 @@ type BuildInput = {
   description: string;
   date: Date;
 };
+
+const OTHER_CATEGORY_ID = getBuiltInCategoryId("other");
 
 export function buildTransaction(
   input: BuildInput,
@@ -66,7 +62,7 @@ export function toStoredTransaction(row: TransactionRow): StoredTransaction {
     userId: row.userId,
     type: row.type as TransactionType,
     amount: row.amount,
-    categoryId: isValidCategoryId(row.categoryId) ? row.categoryId : ("other" as CategoryId),
+    categoryId: isValidCategoryId(row.categoryId) ? row.categoryId : OTHER_CATEGORY_ID,
     description: row.description ?? "",
     date: parseIsoDate(row.date),
     createdAt: new Date(row.createdAt),
@@ -84,7 +80,7 @@ export function toTransactionRow(tx: StoredTransaction): TransactionRow {
     categoryId: tx.categoryId,
     description: tx.description || null,
     date: toIsoDate(tx.date),
-    createdAt: tx.createdAt.toISOString() as IsoDateTime,
-    updatedAt: tx.updatedAt.toISOString() as IsoDateTime,
+    createdAt: toIsoDateTime(tx.createdAt),
+    updatedAt: toIsoDateTime(tx.updatedAt),
   };
 }

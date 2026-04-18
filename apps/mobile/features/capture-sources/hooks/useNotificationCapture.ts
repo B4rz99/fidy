@@ -2,10 +2,11 @@ import { Platform } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
 import { useSubscription } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
+import type { UserId } from "@/shared/types/branded";
 import { useCaptureSourcesStore } from "../store";
 import { setupNotificationCapture } from "./setup";
 
-export function useNotificationCapture(db: AnyDb | null, userId: string | null) {
+export function useNotificationCapture(db: AnyDb | null, userId: UserId | null) {
   const enabledPackages = useCaptureSourcesStore((s) => s.enabledPackages);
 
   useSubscription(

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { getBuiltInCategoryId } from "@/features/transactions";
 import {
   CATEGORIES,
   CATEGORY_IDS,
   DEFAULT_CATEGORY_IDS,
   isValidCategoryId,
-} from "../../features/transactions/lib/categories";
+} from "@/features/transactions/lib/categories";
 
 describe("categories", () => {
   it("exports exactly 10 categories", () => {
@@ -68,5 +69,16 @@ describe("categories", () => {
     for (const id of CATEGORY_IDS) {
       expect(DEFAULT_CATEGORY_IDS.has(id)).toBe(true);
     }
+  });
+});
+
+describe("getBuiltInCategoryId", () => {
+  it("returns the branded id for known built-in categories", () => {
+    expect(getBuiltInCategoryId("services")).toBe("services");
+    expect(getBuiltInCategoryId("other")).toBe("other");
+  });
+
+  it("throws for unknown built-in category keys", () => {
+    expect(() => getBuiltInCategoryId("missing")).toThrow("Unknown built-in category: missing");
   });
 });

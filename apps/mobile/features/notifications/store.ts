@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { createWriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import { generateNotificationId, toIsoDateTime } from "@/shared/lib";
+import { requireIsoDateTime } from "@/shared/types/assertions";
 import type { CategoryId, IsoDateTime, UserId } from "@/shared/types/branded";
 import type { NotificationType, StoredNotification } from "./lib/types";
 import { countNotificationsSince, getNotifications } from "./repository";
@@ -70,7 +71,7 @@ export async function initializeNotificationStore(db: AnyDb, userId: UserId): Pr
   let lastVisitedAt: IsoDateTime | null = null;
   try {
     const stored = await SecureStore.getItemAsync(lastVisitedKey(userId));
-    lastVisitedAt = stored ? (stored as IsoDateTime) : null;
+    lastVisitedAt = stored ? requireIsoDateTime(stored) : null;
   } catch {
     // SecureStore may fail in tests — default to null
   }

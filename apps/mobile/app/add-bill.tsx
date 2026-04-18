@@ -2,7 +2,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import {
   addBill,
   type Bill,
@@ -11,7 +11,12 @@ import {
   updateBill,
   useCalendarStore,
 } from "@/features/calendar";
-import { CATEGORIES, type CategoryId, isValidCategoryId } from "@/features/transactions";
+import {
+  CATEGORIES,
+  type CategoryId,
+  getBuiltInCategoryId,
+  isValidCategoryId,
+} from "@/features/transactions";
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -27,8 +32,11 @@ import { getDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { parseDigitsToAmount } from "@/shared/lib";
+import { requireBillId } from "@/shared/types/assertions";
 import type { BillId, UserId } from "@/shared/types/branded";
 import migrations from "../drizzle/migrations";
+
+const DEFAULT_BILL_CATEGORY_ID = getBuiltInCategoryId("services");
 
 function AddBillForm({
   existingBill,
@@ -63,7 +71,7 @@ function AddBillForm({
   const [category, setCategory] = useState<CategoryId>(
     existingBill?.categoryId && isValidCategoryId(existingBill.categoryId)
       ? existingBill.categoryId
-      : ("services" as CategoryId)
+      : DEFAULT_BILL_CATEGORY_ID
   );
   const [startDate, setStartDate] = useState(existingBill?.startDate ?? new Date());
 
@@ -87,7 +95,7 @@ function AddBillForm({
       if (existingBill) {
         const amountValue = parseDigitsToAmount(amount);
         if (amountValue <= 0) return;
-        const success = await onUpdateBill(existingBill.id as BillId, {
+        const success = await onUpdateBill(requireBillId(existingBill.id), {
           name: trimmedName,
           amount: amountValue,
           frequency,
@@ -281,7 +289,7 @@ export default function AddBillScreen() {
   const router = useRouter();
   const { billId } = useLocalSearchParams<{ billId?: string }>();
   const bills = useCalendarStore((s) => s.bills);
-  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
+  const userId = useOptionalUserId();
   const existingBill = billId ? bills.find((b) => b.id === billId) : undefined;
   const handleDone = () => router.back();
 

@@ -1,5 +1,9 @@
 import { findDuplicateTransaction } from "@/features/capture-sources/dedup.public";
-import { insertTransaction, isValidCategoryId } from "@/features/transactions/write.public";
+import {
+  getBuiltInCategoryId,
+  insertTransaction,
+  isValidCategoryId,
+} from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
@@ -13,12 +17,8 @@ import {
   toIsoDateTime,
   trackTransactionCreated,
 } from "@/shared/lib";
-import {
-  assertCopAmount,
-  assertIsoDate,
-  assertIsoDateTime,
-  assertUserId,
-} from "@/shared/types/assertions";
+import { assertCopAmount, assertIsoDate, assertIsoDateTime } from "@/shared/types/assertions";
+import type { UserId } from "@/shared/types/branded";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
 import {
   getPendingRetryEmails,
@@ -45,10 +45,9 @@ export type PipelineResult = {
 
 async function parseBody(
   db: AnyDb,
-  userId: string,
+  userId: UserId,
   body: string
 ): Promise<LlmParsedTransaction | null> {
-  assertUserId(userId);
   const llmResult = await parseEmailApi(body);
   if (!llmResult) return null;
 
@@ -63,19 +62,15 @@ async function parseBody(
 
 async function saveTransaction(
   db: AnyDb,
-  userId: string,
+  userId: UserId,
   validated: LlmParsedTransaction,
   email: RawEmail,
   status: "success" | "needs_review"
 ): Promise<string> {
-  assertUserId(userId);
   const source = email.provider === "gmail" ? "email_gmail" : "email_outlook";
   const txId = generateTransactionId();
   const now = toIsoDateTime(new Date());
-  const fallbackCategoryId = "other";
-  if (!isValidCategoryId(fallbackCategoryId)) {
-    throw new Error("Missing fallback category");
-  }
+  const fallbackCategoryId = getBuiltInCategoryId("other");
 
   const categoryId = isValidCategoryId(validated.categoryId)
     ? validated.categoryId
@@ -140,7 +135,7 @@ export type ProgressCallback = (progress: {
 
 export async function processEmails(
   db: AnyDb,
-  userId: string,
+  userId: UserId,
   rawEmails: RawEmail[],
   onProgress?: ProgressCallback
 ): Promise<PipelineResult> {
@@ -313,13 +308,13 @@ export async function processEmails(
         const merchantKey = normalizeMerchant(parsed.description);
         const validatedCategoryId = isValidCategoryId(parsed.categoryId)
           ? parsed.categoryId
-          : "other";
+          : getBuiltInCategoryId("other");
         await insertMerchantRule(
           db,
           userId,
           merchantKey,
           validatedCategoryId,
-          new Date().toISOString()
+          toIsoDateTime(new Date())
         );
       } catch (ruleErr) {
         captureError(ruleErr);
@@ -361,7 +356,7 @@ export type RetryResult = {
   permanentlyFailed: number;
 };
 
-export async function processRetries(db: AnyDb, userId: string): Promise<RetryResult> {
+export async function processRetries(db: AnyDb, userId: UserId): Promise<RetryResult> {
   const result: RetryResult = { retried: 0, succeeded: 0, permanentlyFailed: 0 };
   const pendingEmails = await getPendingRetryEmails(db);
 
@@ -425,14 +420,10 @@ export async function processRetries(db: AnyDb, userId: string): Promise<RetryRe
       const now = toIsoDateTime(new Date());
       const source = email.provider === "gmail" ? "email_gmail" : "email_outlook";
       const status = parsed.confidence < 0.7 ? "needs_review" : "success";
-      const fallbackCategoryId = "other";
-      if (!isValidCategoryId(fallbackCategoryId)) {
-        throw new Error("Missing fallback category");
-      }
+      const fallbackCategoryId = getBuiltInCategoryId("other");
       const retryCategoryId = isValidCategoryId(parsed.categoryId)
         ? parsed.categoryId
         : fallbackCategoryId;
-      assertUserId(userId);
 
       insertTransaction(db, {
         id: txId,

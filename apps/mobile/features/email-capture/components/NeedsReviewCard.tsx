@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import {
   CATEGORIES,
   type CategoryId,
+  getBuiltInCategoryId,
   isValidCategoryId,
   type StoredTransaction,
 } from "@/features/transactions";
@@ -18,6 +19,8 @@ type NeedsReviewCardProps = {
   readonly onConfirm: (processedEmailId: string, categoryId: string) => void;
 };
 
+const FALLBACK_CATEGORY_ID = getBuiltInCategoryId("other");
+
 export const NeedsReviewCard = ({
   processedEmail,
   transaction,
@@ -27,7 +30,7 @@ export const NeedsReviewCard = ({
   const suggestedCategory: CategoryId =
     transaction?.categoryId && isValidCategoryId(transaction.categoryId)
       ? transaction.categoryId
-      : ("other" as CategoryId);
+      : FALLBACK_CATEGORY_ID;
   const [prevSuggested, setPrevSuggested] = useState(suggestedCategory);
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>(suggestedCategory);
   if (suggestedCategory !== prevSuggested) {

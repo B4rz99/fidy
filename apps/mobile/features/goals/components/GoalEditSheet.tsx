@@ -2,7 +2,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import Animated from "react-native-reanimated";
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import { handleNumpadPress } from "@/features/transactions";
 import { FidyNumpad } from "@/shared/components";
 import {
@@ -18,8 +18,12 @@ import {
 } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
-import { formatInputDisplay, parseDigitsToAmount, parseIsoDate, toIsoDate } from "@/shared/lib";
-import type { IsoDate, UserId } from "@/shared/types/branded";
+import {
+  formatInputDisplay,
+  parseDigitsToAmount,
+  parseOptionalIsoDate,
+  toIsoDate,
+} from "@/shared/lib";
 import { deleteGoal, updateGoal, useGoalStore } from "../store";
 
 export function GoalEditSheet() {
@@ -28,7 +32,7 @@ export function GoalEditSheet() {
 
   const selectedGoalId = useGoalStore((s) => s.selectedGoalId);
   const goals = useGoalStore((s) => s.goals);
-  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
+  const userId = useOptionalUserId();
 
   const cardBg = useThemeColor("card");
   const primaryColor = useThemeColor("primary");
@@ -49,9 +53,7 @@ export function GoalEditSheet() {
     goal?.interestRatePercent != null ? String(goal.interestRatePercent) : ""
   );
   const [numpadTarget, setNumpadTarget] = useState<"amount" | null>(null);
-  const [targetDate, setTargetDate] = useState<Date | null>(
-    goal?.targetDate ? parseIsoDate(goal.targetDate as IsoDate) : null
-  );
+  const [targetDate, setTargetDate] = useState<Date | null>(parseOptionalIsoDate(goal?.targetDate));
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Blinking cursor

@@ -1,5 +1,6 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { requireUserId } from "@/shared/types/assertions";
 
 const mockAddLogTransactionListener = vi.fn().mockReturnValue({ remove: vi.fn() });
 const mockAddDetectBankSmsListener = vi.fn().mockReturnValue({ remove: vi.fn() });
@@ -40,7 +41,7 @@ vi.mock("@/shared/lib/generate-id", () => ({
 }));
 
 const mockDb = {} as any;
-const USER_ID = "user-1";
+const USER_ID = requireUserId("user-1");
 
 async function loadSetup() {
   return import("@/features/capture-sources/hooks/setup");
@@ -134,6 +135,44 @@ describe("setupSmsDetection", () => {
         detectedAt: "2026-03-07T14:30:00Z",
       })
     );
+  });
+
+  it("normalizes epoch-millisecond SMS timestamps before insert", async () => {
+    const { setupSmsDetection } = await loadSetup();
+    let capturedListener: (event: any) => void = vi.fn();
+    mockAddDetectBankSmsListener.mockImplementationOnce((listener: any) => {
+      capturedListener = listener;
+      return { remove: vi.fn() };
+    });
+
+    const epochTimestamp = String(Date.UTC(2026, 2, 7, 14, 30, 0));
+
+    await setupSmsDetection(mockDb, USER_ID, mockRefreshDetectedSms);
+    capturedListener({ senderName: "Bancolombia", timestamp: epochTimestamp });
+
+    expect(mockInsertDetectedSmsEvent).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        detectedAt: new Date(Number(epochTimestamp)).toISOString(),
+      })
+    );
+  });
+
+  it("ignores invalid SMS timestamps without throwing from the listener", async () => {
+    const { setupSmsDetection } = await loadSetup();
+    let capturedListener: (event: any) => void = vi.fn();
+    mockAddDetectBankSmsListener.mockImplementationOnce((listener: any) => {
+      capturedListener = listener;
+      return { remove: vi.fn() };
+    });
+
+    await setupSmsDetection(mockDb, USER_ID, mockRefreshDetectedSms);
+
+    expect(() =>
+      capturedListener({ senderName: "Bancolombia", timestamp: "not-a-real-date" })
+    ).not.toThrow();
+    expect(mockInsertDetectedSmsEvent).not.toHaveBeenCalled();
+    expect(mockRefreshDetectedSms).not.toHaveBeenCalled();
   });
 });
 

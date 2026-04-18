@@ -1,11 +1,18 @@
 import type {
+  BillId,
+  BudgetId,
+  CategoryId,
   CopAmount,
+  DetectedSmsEventId,
   EmailAccountId,
   IsoDate,
   IsoDateTime,
   ProcessedEmailId,
+  SyncConflictId,
+  SyncQueueId,
   TransactionId,
   UserId,
+  UserMemoryId,
 } from "@/shared/types/branded";
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -102,12 +109,40 @@ export function assertTransactionId(value: string): asserts value is Transaction
   assertNonEmptyString(value, "transactionId");
 }
 
+export function assertBillId(value: string): asserts value is BillId {
+  assertNonEmptyString(value, "billId");
+}
+
+export function assertBudgetId(value: string): asserts value is BudgetId {
+  assertNonEmptyString(value, "budgetId");
+}
+
+export function assertCategoryId(value: string): asserts value is CategoryId {
+  assertNonEmptyString(value, "categoryId");
+}
+
+export function assertDetectedSmsEventId(value: string): asserts value is DetectedSmsEventId {
+  assertNonEmptyString(value, "detectedSmsEventId");
+}
+
 export function assertEmailAccountId(value: string): asserts value is EmailAccountId {
   assertNonEmptyString(value, "emailAccountId");
 }
 
 export function assertProcessedEmailId(value: string): asserts value is ProcessedEmailId {
   assertNonEmptyString(value, "processedEmailId");
+}
+
+export function assertSyncConflictId(value: string): asserts value is SyncConflictId {
+  assertNonEmptyString(value, "syncConflictId");
+}
+
+export function assertSyncQueueId(value: string): asserts value is SyncQueueId {
+  assertNonEmptyString(value, "syncQueueId");
+}
+
+export function assertUserMemoryId(value: string): asserts value is UserMemoryId {
+  assertNonEmptyString(value, "userMemoryId");
 }
 
 export function assertCopAmount(value: number): asserts value is CopAmount {
@@ -126,4 +161,59 @@ export function assertIsoDateTime(value: string): asserts value is IsoDateTime {
   if (!isValidIsoDateTimeValue(value)) {
     throw new Error("datetime must be a valid ISO 8601 timestamp");
   }
+}
+
+export function requireUserId(value: string): UserId {
+  assertUserId(value);
+  return value;
+}
+
+export function requireTransactionId(value: string): TransactionId {
+  assertTransactionId(value);
+  return value;
+}
+
+export function requireBillId(value: string): BillId {
+  assertBillId(value);
+  return value;
+}
+
+export function requireBudgetId(value: string): BudgetId {
+  assertBudgetId(value);
+  return value;
+}
+
+export function requireCategoryId(value: string): CategoryId {
+  assertCategoryId(value);
+  return value;
+}
+
+export function requireDetectedSmsEventId(value: string): DetectedSmsEventId {
+  assertDetectedSmsEventId(value);
+  return value;
+}
+
+export function requireIsoDate(value: string): IsoDate {
+  assertIsoDate(value);
+  return value;
+}
+
+export function requireIsoDateTime(value: string): IsoDateTime {
+  assertIsoDateTime(value);
+  return value;
+}
+
+export function requireUserMemoryId(value: string): UserMemoryId {
+  assertUserMemoryId(value);
+  return value;
+}
+
+export function requireSyncConflictId(value: string): SyncConflictId {
+  assertSyncConflictId(value);
+  return value;
+}
+
+export function requireSyncQueueId(value: string): SyncQueueId {
+  assertSyncQueueId(value);
+  return value;
 }

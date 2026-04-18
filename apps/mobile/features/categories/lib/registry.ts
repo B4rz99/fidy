@@ -1,6 +1,6 @@
 import { CATEGORIES, CATEGORY_ROWS, type Category } from "@/features/transactions";
 import { Ellipsis } from "@/shared/components/icons";
-import type { CategoryId } from "@/shared/types/branded";
+import { requireCategoryId } from "@/shared/types/assertions";
 import { ICON_MAP } from "./icon-map";
 
 export type CategoryRegistryScope = "built_in" | "merged";
@@ -23,7 +23,7 @@ export type CategoryRegistrySnapshot = {
 };
 
 const toCustomCategory = (row: CategoryRegistryRow): Category => ({
-  id: row.id as unknown as CategoryId,
+  id: requireCategoryId(row.id),
   label: { en: row.name, es: row.name },
   icon: ICON_MAP[row.iconName] ?? Ellipsis,
   color: row.colorHex,

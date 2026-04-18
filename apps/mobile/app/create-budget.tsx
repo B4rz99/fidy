@@ -36,10 +36,10 @@ function CreateBudgetForm({
   const { t, locale } = useTranslation();
   const isEdit = Boolean(existingBudget);
 
-  const [category, setCategory] = useState<CategoryId>(
+  const [category, setCategory] = useState<CategoryId | null>(
     existingBudget?.categoryId && isValidCategoryId(existingBudget.categoryId)
       ? existingBudget.categoryId
-      : ("" as CategoryId)
+      : null
   );
   // digits = raw whole-peso string (e.g. "18900" for $18.900 COP)
   const [digits, setDigits] = useState(existingBudget ? String(existingBudget.amount) : "");

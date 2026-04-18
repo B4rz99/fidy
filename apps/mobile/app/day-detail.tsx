@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import {
   type BillPayment,
   deleteBill,
@@ -15,7 +15,8 @@ import { getDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { captureError, formatMoney, toIsoDate } from "@/shared/lib";
-import type { BillId, CopAmount, UserId } from "@/shared/types/branded";
+import { requireBillId } from "@/shared/types/assertions";
+import type { BillId, CopAmount } from "@/shared/types/branded";
 
 export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
@@ -23,7 +24,7 @@ export default function DayDetailScreen() {
   const { t, locale } = useTranslation();
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
-  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
+  const userId = useOptionalUserId();
 
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
@@ -88,10 +89,11 @@ export default function DayDetailScreen() {
       ) : (
         <View style={styles.billList}>
           {billsForDate.map((bill) => {
-            const paid = isPaymentPaid(bill.id);
+            const billId = requireBillId(bill.id);
+            const paid = isPaymentPaid(billId);
             return (
               <View
-                key={bill.id}
+                key={billId}
                 style={[
                   styles.billRow,
                   {
@@ -113,7 +115,7 @@ export default function DayDetailScreen() {
                   <Pressable
                     style={[styles.actionButton, { backgroundColor: paid ? accentGreen : peachBg }]}
                     onPress={() => {
-                      void handleTogglePaid(bill.id as BillId);
+                      void handleTogglePaid(billId);
                     }}
                     hitSlop={8}
                   >
@@ -122,7 +124,7 @@ export default function DayDetailScreen() {
 
                   <Pressable
                     style={[styles.actionButton, { backgroundColor: peachBg }]}
-                    onPress={() => handleEdit(bill.id)}
+                    onPress={() => handleEdit(billId)}
                     hitSlop={8}
                   >
                     <Pencil size={16} color={primaryColor} />
@@ -130,7 +132,7 @@ export default function DayDetailScreen() {
 
                   <Pressable
                     style={[styles.actionButton, { backgroundColor: peachBg }]}
-                    onPress={() => handleDelete(bill.id as BillId, bill.name)}
+                    onPress={() => handleDelete(billId, bill.name)}
                     hitSlop={8}
                   >
                     <Trash2 size={16} color={accentRed} />

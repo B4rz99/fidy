@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import type { UserId, UserMemoryId } from "@/shared/types/branded";
 import {
   extractMemoriesFromConversation,
@@ -15,18 +15,23 @@ export function userMemoriesQueryKey(userId: UserId) {
 }
 
 export function useUserMemoriesQuery() {
-  const userId = useAuthStore((state) => state.session?.user.id as UserId | undefined);
+  const userId = useOptionalUserId() ?? undefined;
 
   return useQuery({
     queryKey: userId ? userMemoriesQueryKey(userId) : (["user-memories", "anonymous"] as const),
-    queryFn: () => listUserMemories(userId as UserId),
+    queryFn: () => {
+      if (!userId) {
+        throw new Error("missing_user");
+      }
+      return listUserMemories(userId);
+    },
     enabled: userId != null,
   });
 }
 
 export function useDeleteUserMemoryMutation() {
   const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.session?.user.id as UserId | undefined);
+  const userId = useOptionalUserId() ?? undefined;
 
   return useMutation({
     mutationFn: (id: UserMemoryId) => softDeleteUserMemory(id),
@@ -58,7 +63,7 @@ export function useDeleteUserMemoryMutation() {
 
 export function useExtractUserMemoriesMutation() {
   const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.session?.user.id as UserId | undefined);
+  const userId = useOptionalUserId() ?? undefined;
 
   return useMutation({
     mutationFn: (messages: readonly ConversationMessage[]) =>

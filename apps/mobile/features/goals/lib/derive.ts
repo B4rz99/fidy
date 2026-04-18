@@ -1,6 +1,7 @@
 import { addMonths, differenceInDays } from "date-fns";
 import { parseIsoDate } from "@/shared/lib";
-import type { CopAmount, IsoDate } from "@/shared/types/branded";
+import { requireIsoDate } from "@/shared/types/assertions";
+import type { CopAmount } from "@/shared/types/branded";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -357,8 +358,8 @@ export function deriveGoalPaceGuidance(
   // createdAt is always stored as UTC ISO 8601 via toIsoDateTime(); slice(0,10) extracts the
   // UTC calendar date "YYYY-MM-DD" which is the canonical start of the goal timeline.
   // targetDate is validated as YYYY-MM-DD by Zod before storage, so the cast is safe.
-  const start = parseIsoDate(goal.createdAt.slice(0, 10) as IsoDate);
-  const end = parseIsoDate(goal.targetDate as IsoDate);
+  const start = parseIsoDate(requireIsoDate(goal.createdAt.slice(0, 10)));
+  const end = parseIsoDate(requireIsoDate(goal.targetDate));
   const totalDays = differenceInDays(end, start);
   if (totalDays <= 0) return null;
 

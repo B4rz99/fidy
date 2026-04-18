@@ -1,5 +1,6 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { requireUserId } from "@/shared/types/assertions";
 import type { SearchFilters } from "../../features/search/lib/types";
 import { EMPTY_FILTERS } from "../../features/search/lib/types";
 
@@ -16,6 +17,7 @@ const mockOffset = vi.fn().mockReturnThis();
 const mockDb = {
   select: mockSelect,
 } as any;
+const USER_ID = requireUserId("user-1");
 
 const withFilters = (overrides: Partial<SearchFilters>): SearchFilters => ({
   ...EMPTY_FILTERS,
@@ -42,7 +44,7 @@ describe("search repository", () => {
   it("searchTransactionsPaginated calls db with limit+1 for hasMore detection", async () => {
     const { searchTransactionsPaginated } = await import("../../features/search/lib/repository");
 
-    searchTransactionsPaginated(mockDb, "user-1", EMPTY_FILTERS, 30, 0);
+    searchTransactionsPaginated(mockDb, USER_ID, EMPTY_FILTERS, 30, 0);
 
     expect(mockSelect).toHaveBeenCalled();
     expect(mockFrom).toHaveBeenCalled();
@@ -56,7 +58,7 @@ describe("search repository", () => {
   it("searchTransactionsPaginated passes correct offset", async () => {
     const { searchTransactionsPaginated } = await import("../../features/search/lib/repository");
 
-    searchTransactionsPaginated(mockDb, "user-1", EMPTY_FILTERS, 30, 60);
+    searchTransactionsPaginated(mockDb, USER_ID, EMPTY_FILTERS, 30, 60);
 
     expect(mockOffset).toHaveBeenCalledWith(60);
   });
@@ -66,7 +68,7 @@ describe("search repository", () => {
 
     const { searchTransactionsAggregate } = await import("../../features/search/lib/repository");
 
-    const result = searchTransactionsAggregate(mockDb, "user-1", EMPTY_FILTERS);
+    const result = searchTransactionsAggregate(mockDb, USER_ID, EMPTY_FILTERS);
 
     expect(result).toEqual({ count: 5, total: 15000 });
   });
@@ -76,7 +78,7 @@ describe("search repository", () => {
 
     const { searchTransactionsAggregate } = await import("../../features/search/lib/repository");
 
-    const result = searchTransactionsAggregate(mockDb, "user-1", EMPTY_FILTERS);
+    const result = searchTransactionsAggregate(mockDb, USER_ID, EMPTY_FILTERS);
 
     expect(result).toEqual({ count: 0, total: 0 });
   });
@@ -84,7 +86,7 @@ describe("search repository", () => {
   it("applies query filter via LIKE when query is non-empty", async () => {
     const { searchTransactionsPaginated } = await import("../../features/search/lib/repository");
 
-    searchTransactionsPaginated(mockDb, "user-1", withFilters({ query: "coffee" }), 30, 0);
+    searchTransactionsPaginated(mockDb, USER_ID, withFilters({ query: "coffee" }), 30, 0);
 
     expect(mockWhere).toHaveBeenCalled();
   });
@@ -92,7 +94,7 @@ describe("search repository", () => {
   it("does not apply LIKE filter when query is empty", async () => {
     const { searchTransactionsPaginated } = await import("../../features/search/lib/repository");
 
-    searchTransactionsPaginated(mockDb, "user-1", EMPTY_FILTERS, 30, 0);
+    searchTransactionsPaginated(mockDb, USER_ID, EMPTY_FILTERS, 30, 0);
 
     expect(mockWhere).toHaveBeenCalled();
   });
@@ -102,7 +104,7 @@ describe("search repository", () => {
 
     searchTransactionsPaginated(
       mockDb,
-      "user-1",
+      USER_ID,
       withFilters({ categoryIds: ["food", "transport"] }),
       30,
       0
@@ -116,7 +118,7 @@ describe("search repository", () => {
 
     searchTransactionsPaginated(
       mockDb,
-      "user-1",
+      USER_ID,
       withFilters({ dateFrom: "2026-03-01", dateTo: "2026-03-31" }),
       30,
       0
@@ -130,7 +132,7 @@ describe("search repository", () => {
 
     searchTransactionsPaginated(
       mockDb,
-      "user-1",
+      USER_ID,
       withFilters({ amountMin: 100, amountMax: 5000 }),
       30,
       0
@@ -142,7 +144,7 @@ describe("search repository", () => {
   it("applies type filter when not all", async () => {
     const { searchTransactionsPaginated } = await import("../../features/search/lib/repository");
 
-    searchTransactionsPaginated(mockDb, "user-1", withFilters({ type: "expense" }), 30, 0);
+    searchTransactionsPaginated(mockDb, USER_ID, withFilters({ type: "expense" }), 30, 0);
 
     expect(mockWhere).toHaveBeenCalled();
   });
@@ -150,7 +152,7 @@ describe("search repository", () => {
   it("does not apply type filter when type is all", async () => {
     const { searchTransactionsPaginated } = await import("../../features/search/lib/repository");
 
-    searchTransactionsPaginated(mockDb, "user-1", withFilters({ type: "all" }), 30, 0);
+    searchTransactionsPaginated(mockDb, USER_ID, withFilters({ type: "all" }), 30, 0);
 
     expect(mockWhere).toHaveBeenCalled();
   });
@@ -164,13 +166,7 @@ describe("search repository", () => {
 
     const { searchTransactionsPaginated } = await import("../../features/search/lib/repository");
 
-    const result = searchTransactionsPaginated(
-      mockDb,
-      "user-1",
-      withFilters({ query: "o" }),
-      30,
-      0
-    );
+    const result = searchTransactionsPaginated(mockDb, USER_ID, withFilters({ query: "o" }), 30, 0);
 
     expect(result).toEqual(mockRows);
   });

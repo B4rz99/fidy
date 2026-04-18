@@ -1,37 +1,42 @@
+import { z } from "zod";
 import { getSupabase } from "@/shared/db";
-import type { IsoDateTime, UserId, UserMemoryId } from "@/shared/types/branded";
-import type { MemoryCategory, UserMemory } from "../schema";
+import { requireIsoDateTime, requireUserId, requireUserMemoryId } from "@/shared/types/assertions";
+import type { UserId, UserMemoryId } from "@/shared/types/branded";
+import { memoryCategory, type UserMemory } from "../schema";
 
-type UserMemoryRow = {
-  readonly id: string;
+const userMemoryRowSchema = z.object({
+  id: z.string().min(1),
   // biome-ignore lint/style/useNamingConvention: Supabase column name
-  readonly user_id: string;
-  readonly fact: string;
-  readonly category: string;
+  user_id: z.string().min(1),
+  fact: z.string(),
+  category: memoryCategory,
   // biome-ignore lint/style/useNamingConvention: Supabase column name
-  readonly created_at: string;
+  created_at: z.string(),
   // biome-ignore lint/style/useNamingConvention: Supabase column name
-  readonly updated_at: string | null;
-};
+  updated_at: z.string().nullable(),
+});
+
+type UserMemoryRow = z.infer<typeof userMemoryRowSchema>;
+const userMemoryRowsSchema = z.array(userMemoryRowSchema);
 
 type ConversationMessage = {
   readonly role: "user" | "assistant";
   readonly content: string;
 };
 
-type ExtractMemoriesResponse = {
-  readonly success: boolean;
-  readonly data: readonly UserMemoryRow[];
-};
+const extractMemoriesResponseSchema = z.object({
+  success: z.literal(true),
+  data: userMemoryRowsSchema,
+});
 
 export function toUserMemory(row: UserMemoryRow): UserMemory {
   return {
-    id: row.id as UserMemoryId,
-    userId: row.user_id as UserId,
+    id: requireUserMemoryId(row.id),
+    userId: requireUserId(row.user_id),
     fact: row.fact,
-    category: row.category as MemoryCategory,
-    createdAt: row.created_at as IsoDateTime,
-    updatedAt: (row.updated_at ?? row.created_at) as IsoDateTime,
+    category: row.category,
+    createdAt: requireIsoDateTime(row.created_at),
+    updatedAt: requireIsoDateTime(row.updated_at ?? row.created_at),
   };
 }
 
@@ -47,7 +52,7 @@ export async function listUserMemories(userId: UserId): Promise<readonly UserMem
     throw new Error(error.message);
   }
 
-  return (data as UserMemoryRow[] | null)?.map(toUserMemory) ?? [];
+  return userMemoryRowsSchema.parse(data ?? []).map(toUserMemory);
 }
 
 export async function softDeleteUserMemory(id: UserMemoryId): Promise<void> {
@@ -65,18 +70,16 @@ export async function softDeleteUserMemory(id: UserMemoryId): Promise<void> {
 export async function extractMemoriesFromConversation(
   messages: readonly ConversationMessage[]
 ): Promise<readonly UserMemory[]> {
-  const result = (await getSupabase().functions.invoke("ai-chat", {
+  const { data, error } = await getSupabase().functions.invoke("ai-chat", {
     body: { mode: "extract_memories", messages },
-  })) as {
-    readonly data: ExtractMemoriesResponse | null;
-    readonly error: Error | null;
-  };
+  });
 
-  if (result.error != null) {
-    throw result.error;
+  if (error != null) {
+    throw error;
   }
 
-  if (!result.data?.success || !Array.isArray(result.data.data)) {
+  const result = extractMemoriesResponseSchema.safeParse(data);
+  if (!result.success) {
     throw new Error("extract_memories_failed");
   }
 

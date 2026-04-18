@@ -18,7 +18,8 @@ import {
   generateSyncConflictId,
   toIsoDateTime,
 } from "@/shared/lib";
-import type { BudgetId, SyncQueueId, TransactionId } from "@/shared/types/branded";
+import { requireBudgetId, requireTransactionId } from "@/shared/types/assertions";
+import type { SyncQueueId } from "@/shared/types/branded";
 import { hasDataConflict } from "../lib/conflict-detection";
 import { insertConflict } from "../lib/conflict-repository";
 
@@ -87,7 +88,7 @@ async function processBudgetEntry(
   supabase: SupabaseClient,
   rowId: string
 ): Promise<boolean> {
-  const row = getBudgetById(db, rowId as BudgetId);
+  const row = getBudgetById(db, requireBudgetId(rowId));
   if (!row) return true;
   const { error } = await supabase.from("budgets").upsert({
     id: row.id,
@@ -150,10 +151,10 @@ async function processContributionEntry(
 async function processEntry(
   db: AnyDb,
   supabase: SupabaseClient,
-  entry: { id: string; tableName: string; rowId: string }
-): Promise<string | null> {
+  entry: { id: SyncQueueId; tableName: string; rowId: string }
+): Promise<SyncQueueId | null> {
   if (entry.tableName === "transactions") {
-    const row = await getTransactionById(db, entry.rowId as TransactionId);
+    const row = await getTransactionById(db, requireTransactionId(entry.rowId));
     if (!row) return entry.id;
     const { error } = await supabase.from("transactions").upsert(toSupabaseRow(row));
     if (error) {
@@ -200,12 +201,12 @@ export async function syncPush(
   const results = await Promise.allSettled(entries.map((e) => processEntry(db, supabase, e)));
   const processedIds = results
     .filter(
-      (r): r is PromiseFulfilledResult<string> => r.status === "fulfilled" && r.value !== null
+      (r): r is PromiseFulfilledResult<SyncQueueId> => r.status === "fulfilled" && r.value !== null
     )
     .map((r) => r.value);
 
   if (processedIds.length > 0) {
-    await clearSyncEntries(db, processedIds as SyncQueueId[]);
+    await clearSyncEntries(db, processedIds);
   }
 
   capturePipelineEvent({
@@ -243,7 +244,8 @@ export async function syncPull(
   let conflictCount = 0;
   for (const serverRow of rows) {
     try {
-      const localRow = await getTransactionById(db, serverRow.id as TransactionId);
+      const transactionId = requireTransactionId(serverRow.id);
+      const localRow = await getTransactionById(db, transactionId);
       const mappedServerRow = fromSupabaseRow(serverRow);
 
       if (shouldUpdateLocal(serverRow.updated_at, localRow?.updatedAt)) {
@@ -257,7 +259,7 @@ export async function syncPull(
           try {
             insertConflict(db, {
               id: generateSyncConflictId(),
-              transactionId: serverRow.id as TransactionId,
+              transactionId,
               localData: JSON.stringify(localRow),
               serverData: JSON.stringify(mappedServerRow),
               detectedAt: toIsoDateTime(new Date()),

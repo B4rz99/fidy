@@ -6,7 +6,8 @@ import { TransactionForm, useTransactionStore } from "@/features/transactions";
 import { InteractionManager } from "@/shared/components/rn";
 import { useAsyncGuard, useMountEffect, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
-import type { CategoryId, TransactionId } from "@/shared/types/branded";
+import { requireTransactionId } from "@/shared/types/assertions";
+import type { CategoryId } from "@/shared/types/branded";
 
 const afterDismiss = () =>
   new Promise<void>((resolve) => {
@@ -14,7 +15,7 @@ const afterDismiss = () =>
   });
 
 export default function EditTransactionScreen() {
-  const { transactionId } = useLocalSearchParams<{ transactionId: string }>();
+  const { transactionId: routeTransactionId } = useLocalSearchParams<{ transactionId?: string }>();
   const router = useRouter();
   const { t } = useTranslation();
 
@@ -28,9 +29,18 @@ export default function EditTransactionScreen() {
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date());
   const [loaded, setLoaded] = useState(false);
+  const transactionId =
+    typeof routeTransactionId === "string" && routeTransactionId.trim().length > 0
+      ? requireTransactionId(routeTransactionId.trim())
+      : null;
 
   useMountEffect(() => {
-    const tx = getTransactionById(transactionId as TransactionId);
+    if (transactionId == null) {
+      router.back();
+      return;
+    }
+
+    const tx = getTransactionById(transactionId);
     if (tx) {
       setType(tx.type);
       setDigits(String(tx.amount));
@@ -47,11 +57,12 @@ export default function EditTransactionScreen() {
 
   const handleSave = () => {
     void guardedSave(async () => {
+      if (transactionId == null) return;
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
       await afterDismiss();
       try {
-        const result = await updateTransactionDirect(transactionId as TransactionId, {
+        const result = await updateTransactionDirect(transactionId, {
           type,
           digits,
           categoryId,
@@ -69,11 +80,12 @@ export default function EditTransactionScreen() {
 
   const handleDelete = () => {
     void guardedSave(async () => {
+      if (transactionId == null) return;
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
       await afterDismiss();
       try {
-        await deleteTransaction(transactionId as TransactionId);
+        await deleteTransaction(transactionId);
       } catch {
         showErrorToast(t("transactions.deleteFailed"));
       }

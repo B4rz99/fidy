@@ -88,6 +88,16 @@ export const CATEGORY_MAP: Record<string, Category | undefined> = Object.fromEnt
   CATEGORIES.map((c) => [c.id, c])
 );
 
+export const getBuiltInCategory = (id: string): Category => {
+  const category = CATEGORY_MAP[id];
+  if (!category) {
+    throw new Error(`Unknown built-in category: ${id}`);
+  }
+  return category;
+};
+
+export const getBuiltInCategoryId = (id: string): CategoryId => getBuiltInCategory(id).id;
+
 export const DEFAULT_CATEGORY_IDS: ReadonlySet<string> = new Set(CATEGORIES.map((c) => c.id));
 
 export const isValidCategoryId = (

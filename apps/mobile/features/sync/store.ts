@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { AnyDb } from "@/shared/db";
 import { captureError } from "@/shared/lib";
-import type { SyncConflictId } from "@/shared/types/branded";
+import { requireSyncConflictId } from "@/shared/types/assertions";
 import {
   listConflicts,
   resolveConflict as resolveConflictBoundary,
@@ -42,7 +42,7 @@ export async function resolveSyncConflictSelection(
 ): Promise<void> {
   await resolveConflictBoundary({
     db,
-    conflictId: id as SyncConflictId,
+    conflictId: requireSyncConflictId(id),
     resolution,
   });
   await loadSyncConflicts(db);

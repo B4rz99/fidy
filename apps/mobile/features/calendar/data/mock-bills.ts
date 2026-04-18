@@ -1,5 +1,7 @@
-import type { CategoryId } from "@/shared/types/branded";
+import { getBuiltInCategoryId } from "@/features/transactions";
 import type { Bill } from "../schema";
+
+const SERVICES_CATEGORY_ID = getBuiltInCategoryId("services");
 
 export const MOCK_BILLS: Bill[] = [
   {
@@ -7,7 +9,7 @@ export const MOCK_BILLS: Bill[] = [
     name: "Netflix",
     amount: 17900,
     frequency: "monthly",
-    categoryId: "services" as CategoryId,
+    categoryId: SERVICES_CATEGORY_ID,
     startDate: new Date(2025, 0, 15),
     isActive: true,
   },
@@ -16,7 +18,7 @@ export const MOCK_BILLS: Bill[] = [
     name: "Spotify",
     amount: 15900,
     frequency: "monthly",
-    categoryId: "services" as CategoryId,
+    categoryId: SERVICES_CATEGORY_ID,
     startDate: new Date(2025, 1, 3),
     isActive: true,
   },
@@ -25,7 +27,7 @@ export const MOCK_BILLS: Bill[] = [
     name: "Electric",
     amount: 85000,
     frequency: "monthly",
-    categoryId: "services" as CategoryId,
+    categoryId: SERVICES_CATEGORY_ID,
     startDate: new Date(2025, 0, 20),
     isActive: true,
   },
@@ -34,7 +36,7 @@ export const MOCK_BILLS: Bill[] = [
     name: "Gym",
     amount: 120000,
     frequency: "monthly",
-    categoryId: "services" as CategoryId,
+    categoryId: SERVICES_CATEGORY_ID,
     startDate: new Date(2025, 2, 1),
     isActive: true,
   },
@@ -43,7 +45,7 @@ export const MOCK_BILLS: Bill[] = [
     name: "Cloud Storage",
     amount: 5900,
     frequency: "monthly",
-    categoryId: "services" as CategoryId,
+    categoryId: SERVICES_CATEGORY_ID,
     startDate: new Date(2025, 0, 10),
     isActive: true,
   },
@@ -52,7 +54,7 @@ export const MOCK_BILLS: Bill[] = [
     name: "Insurance",
     amount: 450000,
     frequency: "yearly",
-    categoryId: "services" as CategoryId,
+    categoryId: SERVICES_CATEGORY_ID,
     startDate: new Date(2025, 2, 22),
     isActive: true,
   },
@@ -61,7 +63,7 @@ export const MOCK_BILLS: Bill[] = [
     name: "Internet",
     amount: 75000,
     frequency: "monthly",
-    categoryId: "services" as CategoryId,
+    categoryId: SERVICES_CATEGORY_ID,
     startDate: new Date(2025, 0, 28),
     isActive: true,
   },

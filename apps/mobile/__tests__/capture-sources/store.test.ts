@@ -1,6 +1,5 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
 import {
   hydrateCaptureSources,
   refreshCaptureSourceStatus,
@@ -8,6 +7,7 @@ import {
   toggleCaptureSourcePackage,
   useCaptureSourcesStore,
 } from "@/features/capture-sources/store";
+import { requireUserId } from "@/shared/types/assertions";
 
 const mockGetEnabledPackages = vi.fn().mockResolvedValue([]);
 const mockUpsertNotificationSource = vi.fn();
@@ -27,7 +27,7 @@ vi.mock("@/shared/lib/generate-id", () => ({
 }));
 
 const mockDb = {} as any;
-const USER_ID = "user-1";
+const USER_ID = requireUserId("user-1");
 
 describe("useCaptureSourcesStore", () => {
   beforeEach(() => {

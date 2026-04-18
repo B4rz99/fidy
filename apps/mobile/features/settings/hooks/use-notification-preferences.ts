@@ -1,11 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth";
-import type { UserId } from "@/shared/types/branded";
+import { useOptionalUserId } from "@/features/auth";
 import { saveNotificationPreferences } from "../data/notification-preferences";
 import type { NotificationPreferences } from "../store";
 
 export function useNotificationPreferencesMutation() {
-  const userId = useAuthStore((state) => state.session?.user.id as UserId | undefined);
+  const userId = useOptionalUserId() ?? undefined;
 
   return useMutation({
     mutationFn: (preferences: NotificationPreferences) => {

@@ -2,18 +2,17 @@ import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import { PRE_PERMISSION_KEY, registerPushToken } from "@/features/notifications";
 import { Bell } from "@/shared/components/icons";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
-import type { UserId } from "@/shared/types/branded";
 
 export default function EnableNotificationsSheet() {
   const { t } = useTranslation();
   const router = useRouter();
-  const userId = useAuthStore((s) => s.session?.user.id);
+  const userId = useOptionalUserId();
   const accentGreen = useThemeColor("accentGreen");
   const borderColor = useThemeColor("borderSubtle");
   const [isRequesting, setIsRequesting] = useState(false);
@@ -28,7 +27,7 @@ export default function EnableNotificationsSheet() {
       });
 
     if (status === "granted" && userId) {
-      await registerPushToken(userId as UserId).catch(captureError);
+      await registerPushToken(userId).catch(captureError);
     }
 
     // Mark pre-permission as seen regardless of outcome.

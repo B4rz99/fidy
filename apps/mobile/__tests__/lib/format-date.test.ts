@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatDateDisplay, parseIsoDate, toIsoDate } from "@/shared/lib/format-date";
+import {
+  formatDateDisplay,
+  parseIsoDate,
+  parseOptionalIsoDate,
+  toIsoDate,
+} from "@/shared/lib/format-date";
 import type { IsoDate } from "@/shared/types/branded";
 
 describe("formatDateDisplay", () => {
@@ -39,5 +44,22 @@ describe("parseIsoDate", () => {
   it("roundtrips with toIsoDate", () => {
     const iso = "2026-01-15" as IsoDate;
     expect(toIsoDate(parseIsoDate(iso))).toBe(iso);
+  });
+});
+
+describe("parseOptionalIsoDate", () => {
+  it("returns null for absent values", () => {
+    expect(parseOptionalIsoDate(null)).toBeNull();
+    expect(parseOptionalIsoDate(undefined)).toBeNull();
+  });
+
+  it("parses present ISO dates", () => {
+    expect(toIsoDate(parseOptionalIsoDate("2026-04-09") ?? new Date())).toBe("2026-04-09");
+  });
+
+  it("rejects invalid optional ISO dates", () => {
+    expect(() => parseOptionalIsoDate("2026-02-30")).toThrow(
+      "date must be a valid ISO calendar date"
+    );
   });
 });

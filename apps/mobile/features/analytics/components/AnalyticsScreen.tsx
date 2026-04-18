@@ -1,11 +1,10 @@
 import { memo, useCallback } from "react";
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import type { ViewStyle } from "@/shared/components/rn";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
-import type { UserId } from "@/shared/types/branded";
 import type { AnalyticsPeriod } from "../lib/derive";
 import { loadAnalyticsForUser, selectAnalyticsPeriod, useAnalyticsStore } from "../store";
 import { CategoryBreakdownCard } from "./CategoryBreakdownCard";
@@ -61,7 +60,7 @@ export function AnalyticsScreen() {
   const categoryBreakdown = useAnalyticsStore((s) => s.categoryBreakdown);
   const periodDelta = useAnalyticsStore((s) => s.periodDelta);
   const isLoading = useAnalyticsStore((s) => s.isLoading);
-  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
+  const userId = useOptionalUserId();
 
   // Load data on mount if boot-time load failed or hasn't completed
   useMountEffect(() => {

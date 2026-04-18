@@ -2,7 +2,7 @@ import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import * as SplashScreen from "expo-splash-screen";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import { useBudgetStore } from "@/features/budget";
 import { useEmailCaptureStore } from "@/features/email-capture";
 import {
@@ -25,15 +25,14 @@ import migrations from "../../drizzle/migrations";
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
-  const session = useAuthStore((s) => s.session);
-  const userId = session?.user.id ?? null;
+  const userId = useOptionalUserId();
   const pageBg = useThemeColor("page");
 
   if (!userId) {
     return <View style={[styles.container, { backgroundColor: pageBg }]} />;
   }
 
-  return <AuthenticatedOnboardingScreen insets={insets} userId={userId as UserId} />;
+  return <AuthenticatedOnboardingScreen insets={insets} userId={userId} />;
 }
 
 function AuthenticatedOnboardingScreen({

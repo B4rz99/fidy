@@ -56,7 +56,6 @@ export const useGoalStore = create<GoalState & GoalActions>((set) => ({
       selectedGoalContributions: [],
       isLoading: false,
     }),
-
   setGoals: (goals) => set({ goals: [...goals], isLoading: false }),
 
   setSelectedGoalId: (selectedGoalId) => set({ selectedGoalId }),
@@ -65,7 +64,6 @@ export const useGoalStore = create<GoalState & GoalActions>((set) => ({
     set({ selectedGoalContributions: [...selectedGoalContributions] }),
 
   clearSelectedGoal: () => set({ selectedGoalId: null, selectedGoalContributions: [] }),
-
   setIsLoading: (isLoading) => set({ isLoading }),
 }));
 

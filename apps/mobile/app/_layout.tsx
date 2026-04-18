@@ -22,7 +22,7 @@ import {
   subscribeAnalyticsToTransactions,
   useAnalyticsStore,
 } from "@/features/analytics";
-import { useAuthStore } from "@/features/auth";
+import { useAuthStore, useOptionalUserId } from "@/features/auth";
 import { registerBackgroundTask } from "@/features/background-fetch";
 import { useBudgetStore } from "@/features/budget";
 import {
@@ -215,7 +215,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
 function RootLayout() {
   const session = useAuthStore((s) => s.session);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
-  const userId = session?.user.id ?? null;
+  const userId = useOptionalUserId();
   const router = useRouter();
   const segments = useSegments();
   const colorScheme = useColorScheme();
@@ -432,9 +432,7 @@ function RootLayout() {
               }}
             />
           </Stack>
-          {db && userId && onboardingComplete && (
-            <AuthenticatedShell db={db} userId={userId as UserId} />
-          )}
+          {db && userId && onboardingComplete && <AuthenticatedShell db={db} userId={userId} />}
         </QueryProvider>
       </SentryErrorBoundary>
       <StatusBar style="auto" />

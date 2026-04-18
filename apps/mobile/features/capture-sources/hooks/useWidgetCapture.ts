@@ -6,21 +6,20 @@ import type { UserId } from "@/shared/types/branded";
 import { createCaptureIngestionPort } from "../services/capture-ingestion";
 import { processWidgetTransactions } from "../services/widget-pipeline";
 
-export function useWidgetCapture(db: AnyDb | null, userId: string | null): void {
+export function useWidgetCapture(db: AnyDb | null, userId: UserId | null): void {
   useSubscription(
     () => {
       if (!db || !userId) {
         return;
       }
 
-      const uid = userId as UserId;
       const captureIngestion = createCaptureIngestionPort(db, {
         processWidgetTransactions,
       });
 
       const ingestWidgetTransactions = () => {
         captureIngestion
-          .ingest({ kind: "widget", userId: uid })
+          .ingest({ kind: "widget", userId })
           .catch(function handleWidgetCaptureError(err) {
             captureError(err);
           });

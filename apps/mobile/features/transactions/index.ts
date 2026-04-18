@@ -9,6 +9,7 @@ export {
   CATEGORY_IDS,
   CATEGORY_MAP,
   CATEGORY_ROWS,
+  getBuiltInCategoryId,
   isValidCategoryId,
 } from "./lib/categories";
 export { getDateLabel } from "./lib/format-date";

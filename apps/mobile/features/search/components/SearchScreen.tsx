@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { memo, useCallback, useMemo, useRef, useState } from "react";
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import { CATEGORY_MAP, makeDateLabel, type StoredTransaction } from "@/features/transactions";
 import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
 import { Ellipsis } from "@/shared/components/icons";
@@ -72,7 +72,7 @@ export const SearchScreen = () => {
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const peachLight = useThemeColor("peachLight");
-  const userId = useAuthStore((state) => state.session?.user.id ?? null);
+  const userId = useOptionalUserId();
   const db = userId ? getDb(userId) : null;
 
   const filters = useSearchStore((s) => s.filters);
