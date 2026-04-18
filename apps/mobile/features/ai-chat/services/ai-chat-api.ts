@@ -10,14 +10,6 @@ type StreamCallbacks = {
   readonly onError: (error: string) => void;
 };
 
-export type SavedMemory = {
-  readonly id: string;
-  readonly fact: string;
-  readonly category: string;
-  // biome-ignore lint/style/useNamingConvention: Supabase column name
-  readonly created_at: string;
-};
-
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const { data } = await getSupabase().auth.getSession();
   const token = data.session?.access_token ?? "";
@@ -111,30 +103,5 @@ export async function streamChat(
   } catch (err) {
     if (signal?.aborted) return;
     callbacks.onError(err instanceof Error ? err.message : "Stream error");
-  }
-}
-
-type ExtractMemoriesResponse = {
-  readonly success: boolean;
-  readonly data: readonly SavedMemory[];
-};
-
-export async function extractMemories(
-  messages: readonly ChatMessage[]
-): Promise<readonly SavedMemory[]> {
-  try {
-    // Supabase functions.invoke returns `{ data: any, error: any }` - cast via unknown
-    const result = (await getSupabase().functions.invoke("ai-chat", {
-      body: { mode: "extract_memories", messages },
-    })) as { data: ExtractMemoriesResponse | null; error: Error | null };
-    const { data, error } = result;
-
-    if (error != null || !data?.success || !Array.isArray(data.data)) {
-      return [];
-    }
-    return data.data as readonly SavedMemory[];
-  } catch (error) {
-    captureError(error);
-    return [];
   }
 }

@@ -3,6 +3,7 @@ import { ScreenLayout, SettingsSection } from "@/shared/components";
 import { Bell } from "@/shared/components/icons";
 import { Platform, ScrollView, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
+import { useNotificationPreferencesMutation } from "../hooks/use-notification-preferences";
 import type { NotificationPreferences } from "../store";
 import { useSettingsStore } from "../store";
 import { SettingsRow } from "./SettingsRow";
@@ -49,9 +50,28 @@ export function NotificationPreferencesScreen() {
   const areAllOff = useSettingsStore((s) => s.areAllNotificationsOff);
   const setPreference = useSettingsStore((s) => s.setNotificationPreference);
   const setAll = useSettingsStore((s) => s.setAllNotifications);
+  const syncPreferences = useNotificationPreferencesMutation();
 
   const allOn =
     prefs.budgetAlerts && prefs.goalMilestones && prefs.spendingAnomalies && prefs.weeklyDigest;
+
+  const handleSetPreference = (key: keyof NotificationPreferences, value: boolean) => {
+    const updated = { ...prefs, [key]: value };
+    setPreference(key, value);
+    syncPreferences.mutate(updated);
+  };
+
+  const handleSetAll = (enabled: boolean) => {
+    const updated: NotificationPreferences = {
+      budgetAlerts: enabled,
+      goalMilestones: enabled,
+      spendingAnomalies: enabled,
+      weeklyDigest: enabled,
+    };
+
+    setAll(enabled);
+    syncPreferences.mutate(updated);
+  };
 
   return (
     <ScreenLayout
@@ -80,7 +100,7 @@ export function NotificationPreferencesScreen() {
             label={t("notifications.preferences.masterToggle")}
             accessory="switch"
             switchValue={allOn}
-            onSwitchChange={(value) => setAll(value)}
+            onSwitchChange={handleSetAll}
             isLast
           />
         </SettingsSection>
@@ -99,7 +119,7 @@ export function NotificationPreferencesScreen() {
                 subtitle={t(toggle.descKey)}
                 accessory="switch"
                 switchValue={prefs[toggle.key]}
-                onSwitchChange={(value) => setPreference(toggle.key, value)}
+                onSwitchChange={(value) => handleSetPreference(toggle.key, value)}
                 isLast={toggle.isLast}
               />
             </View>

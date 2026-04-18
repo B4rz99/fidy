@@ -1,22 +1,10 @@
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import { create } from "zustand";
-import { type AnyDb, chatMessages, chatSessions, getSupabase } from "@/shared/db";
-import {
-  captureError,
-  generateChatMessageId,
-  generateChatSessionId,
-  toIsoDateTime,
-} from "@/shared/lib";
-import type {
-  ChatMessageId,
-  ChatSessionId,
-  IsoDateTime,
-  UserId,
-  UserMemoryId,
-} from "@/shared/types/branded";
+import { type AnyDb, chatMessages, chatSessions } from "@/shared/db";
+import { generateChatMessageId, generateChatSessionId, toIsoDateTime } from "@/shared/lib";
+import type { ChatMessageId, ChatSessionId, UserId } from "@/shared/types/branded";
 import { deriveConversationTitle, findExpiredSessions } from "./lib/sessions";
-import type { ActionStatus, ChatAction, ChatMessage, ChatSession, UserMemory } from "./schema";
-import { extractMemories } from "./services/ai-chat-api";
+import type { ActionStatus, ChatAction, ChatMessage, ChatSession } from "./schema";
 
 let dbRef: AnyDb | null = null;
 let userIdRef: UserId | null = null;
@@ -27,7 +15,6 @@ type ChatState = {
   sessions: ChatSession[];
   currentSessionId: ChatSessionId | null;
   messages: ChatMessage[];
-  memories: UserMemory[];
   isStreaming: boolean;
   streamingContent: string;
   expiredSessionCount: number;
@@ -44,9 +31,6 @@ type ChatActions = {
   updateActionStatus: (messageId: ChatMessageId, status: ActionStatus) => Promise<void>;
   setStreaming: (isStreaming: boolean) => void;
   setStreamingContent: (content: string) => void;
-  loadMemories: () => Promise<void>;
-  deleteMemory: (id: UserMemoryId) => Promise<void>;
-  extractAndSaveMemories: () => Promise<void>;
   cleanupExpiredSessions: () => Promise<readonly ChatSession[]>;
   dismissExpiredBanner: () => void;
 };
@@ -55,7 +39,6 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   sessions: [],
   currentSessionId: null,
   messages: [],
-  memories: [],
   isStreaming: false,
   streamingContent: "",
   expiredSessionCount: 0,
@@ -67,7 +50,6 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
       sessions: [],
       currentSessionId: null,
       messages: [],
-      memories: [],
       expiredSessionCount: 0,
     });
   },
@@ -240,75 +222,6 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
 
   setStreaming: (isStreaming) => set({ isStreaming }),
   setStreamingContent: (streamingContent) => set({ streamingContent }),
-
-  loadMemories: async () => {
-    if (!userIdRef) return;
-    const userId = userIdRef;
-    const { data, error } = await getSupabase()
-      .from("user_memories")
-      .select("id, fact, category, created_at")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false });
-    if (error) {
-      captureError(error);
-      return;
-    }
-    set({
-      memories: data.map(
-        // biome-ignore lint/style/useNamingConvention: Supabase column name
-        (r: { id: string; fact: string; category: string; created_at: string }) => ({
-          id: r.id as UserMemoryId,
-          userId,
-          fact: r.fact,
-          category: r.category as UserMemory["category"],
-          createdAt: r.created_at as IsoDateTime,
-          updatedAt: r.created_at as IsoDateTime,
-        })
-      ),
-    });
-  },
-
-  deleteMemory: async (id) => {
-    const { error } = await getSupabase()
-      .from("user_memories")
-      // biome-ignore lint/style/useNamingConvention: Supabase column name
-      .update({ deleted_at: new Date().toISOString() })
-      .eq("id", id);
-    if (error) {
-      captureError(error);
-      return;
-    }
-    set((state) => ({ memories: state.memories.filter((m) => m.id !== id) }));
-  },
-
-  extractAndSaveMemories: async () => {
-    if (!userIdRef) return;
-    const userId = userIdRef;
-    const { messages } = get();
-    if (messages.length < 2) return;
-
-    const conversationMessages = messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
-
-    const saved = await extractMemories(conversationMessages);
-    if (saved.length === 0) return;
-
-    set((state) => ({
-      memories: [
-        ...state.memories,
-        ...saved.map((s) => ({
-          id: s.id as UserMemoryId,
-          userId,
-          fact: s.fact,
-          category: s.category as UserMemory["category"],
-          createdAt: s.created_at as IsoDateTime,
-          updatedAt: s.created_at as IsoDateTime,
-        })),
-      ],
-    }));
-  },
 
   cleanupExpiredSessions: async () => {
     if (!dbRef) return [];
