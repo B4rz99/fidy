@@ -2,15 +2,17 @@ import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { Stack } from "expo-router";
 import { memo, useCallback } from "react";
+import { useOptionalUserId } from "@/features/auth";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { MessageSquare, Plus, Trash2, X } from "@/shared/components/icons";
 import { Platform, Pressable, Text, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import type { ChatSessionId } from "@/shared/types/branded";
 import { useSessionCleanup } from "../hooks/use-session-cleanup";
 import type { ChatSession } from "../schema";
-import { useChatStore } from "../store";
+import { deleteChatSession, loadChatSessions, useChatStore } from "../store";
 
 type ConversationListProps = {
   readonly onSelectSession: (id: ChatSessionId) => void;
@@ -80,22 +82,24 @@ function NewChatButton({ onPress }: { readonly onPress: () => void }) {
 
 export function ConversationList({ onSelectSession, onNewChat }: ConversationListProps) {
   const { t } = useTranslation();
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
   const sessions = useChatStore((s) => s.sessions);
-  const loadSessions = useChatStore((s) => s.loadSessions);
-  const deleteSession = useChatStore((s) => s.deleteSession);
 
   const tertiary = useThemeColor("tertiary");
   const { message: cleanupMessage, dismiss: dismissCleanup } = useSessionCleanup();
 
   useMountEffect(() => {
-    void loadSessions();
+    if (!db || !userId) return;
+    void loadChatSessions(db, userId);
   });
 
   const handleDelete = useCallback(
     (id: ChatSessionId) => {
-      void deleteSession(id);
+      if (!db || !userId) return;
+      void deleteChatSession(db, userId, id);
     },
-    [deleteSession]
+    [db, userId]
   );
 
   const renderItem = useCallback(

@@ -15,7 +15,11 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useMemo } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useChatStore } from "@/features/ai-chat";
+import {
+  cleanupExpiredChatSessions,
+  initializeChatSession,
+  loadChatSessions,
+} from "@/features/ai-chat";
 import {
   initializeAnalyticsSession,
   loadAnalyticsForUser,
@@ -101,7 +105,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
     () => {
       useTransactionStore.getState().initStore(db, userId);
       initializeEmailCaptureSession(userId);
-      useChatStore.getState().initStore(db, userId);
+      initializeChatSession(userId);
       initializeCalendarSession(userId);
       initializeBudgetSession(userId);
       initializeGoalSession(userId);
@@ -115,10 +119,8 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       loadAnalyticsForUser(db, userId).catch(handleRecoverableError("Failed to load analytics"));
       loadEmailAccounts(db, userId).catch(handleRecoverableError("Failed to load email accounts"));
       refreshCategories(db, userId).catch(handleRecoverableError("Failed to load user categories"));
-      useChatStore
-        .getState()
-        .loadSessions()
-        .then(() => useChatStore.getState().cleanupExpiredSessions())
+      loadChatSessions(db, userId)
+        .then(() => cleanupExpiredChatSessions(db, userId))
         .catch(handleRecoverableError("Failed to load chat sessions"));
       hydrateCaptureSources(db, userId).catch(
         handleRecoverableError("Failed to load capture sources")

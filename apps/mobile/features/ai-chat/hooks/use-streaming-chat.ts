@@ -1,5 +1,7 @@
 import { useCallback } from "react";
+import { useOptionalUserId } from "@/features/auth";
 import { useTransactionStore } from "@/features/transactions";
+import { tryGetDb } from "@/shared/db";
 import {
   captureWarning,
   parseIsoDate,
@@ -9,7 +11,12 @@ import {
 import { parseActionFromResponse } from "../lib/parse-action";
 import type { ChatAction } from "../schema";
 import { streamChat } from "../services/ai-chat-api";
-import { useChatStore } from "../store";
+import {
+  addAssistantChatMessage,
+  addUserChatMessage,
+  createChatSession,
+  useChatStore,
+} from "../store";
 
 let activeController: AbortController | null = null;
 
@@ -25,6 +32,8 @@ export function cancelActiveStream(): void {
 }
 
 export function useStreamingChat() {
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
   const isStreaming = useChatStore((s) => s.isStreaming);
   const streamingContent = useChatStore((s) => s.streamingContent);
 
@@ -64,15 +73,19 @@ export function useStreamingChat() {
 
   const sendMessage = useCallback(
     async (text: string) => {
-      if (isStreaming || !text.trim()) return;
+      if (isStreaming || !text.trim() || !db || !userId) return;
 
       const store = useChatStore.getState();
 
       if (!store.currentSessionId) {
-        await store.createSession(text);
+        await createChatSession(db, userId, text);
       }
 
-      await store.addUserMessage(text);
+      if (!useChatStore.getState().currentSessionId) {
+        return;
+      }
+
+      await addUserChatMessage(db, userId, text);
       trackAiMessageSent();
 
       const allMessages = [
@@ -102,7 +115,7 @@ export function useStreamingChat() {
             onDone: () => {
               void (async () => {
                 const action = parseActionFromResponse(accumulated);
-                await useChatStore.getState().addAssistantMessage(accumulated, action);
+                await addAssistantChatMessage(db, userId, accumulated, action);
 
                 if (action?.type === "add") {
                   try {
@@ -122,7 +135,7 @@ export function useStreamingChat() {
               void (async () => {
                 const errorMessage =
                   accumulated || `I'm sorry, something went wrong. Please try again. (${error})`;
-                await useChatStore.getState().addAssistantMessage(errorMessage);
+                await addAssistantChatMessage(db, userId, errorMessage);
                 resetStreamState();
               })();
             },
@@ -134,12 +147,12 @@ export function useStreamingChat() {
           const errorMessage =
             accumulated ||
             `I'm sorry, something went wrong. Please try again. (${err instanceof Error ? err.message : "Unknown error"})`;
-          await useChatStore.getState().addAssistantMessage(errorMessage);
+          await addAssistantChatMessage(db, userId, errorMessage);
         }
         resetStreamState();
       }
     },
-    [isStreaming, executeAction]
+    [db, executeAction, isStreaming, userId]
   );
 
   return { sendMessage, cancelStream: cancelActiveStream, isStreaming, streamingContent };

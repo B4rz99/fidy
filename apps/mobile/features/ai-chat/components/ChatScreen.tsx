@@ -2,15 +2,17 @@ import type { FlashListRef } from "@shopify/flash-list";
 import { FlashList } from "@shopify/flash-list";
 import { memo, useCallback, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useOptionalUserId } from "@/features/auth";
 import { useTransactionStore } from "@/features/transactions";
 import { HEADER_HEIGHT, ScreenLayout } from "@/shared/components";
 import { Keyboard, KeyboardAvoidingView, Platform, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useMountEffect, useTranslation } from "@/shared/hooks";
 import { trackAiChatOpened } from "@/shared/lib";
 import type { ChatMessageId } from "@/shared/types/branded";
 import { useStreamingChat } from "../hooks/use-streaming-chat";
 import type { ChatMessage } from "../schema";
-import { useChatStore } from "../store";
+import { updateChatActionStatus, useChatStore } from "../store";
 import { ChatInput } from "./ChatInput";
 import { MessageBubble } from "./MessageBubble";
 import { StarterSuggestions } from "./StarterSuggestions";
@@ -39,13 +41,14 @@ const MemoizedMessageBubble = memo(function MemoizedBubble({
 export function ChatScreen({ onBack }: ChatScreenProps) {
   const { t } = useTranslation();
   useMountEffect(() => trackAiChatOpened());
+  const userId = useOptionalUserId();
   const listRef = useRef<FlashListRef<ChatMessage>>(null);
   const { top: safeTop } = useSafeAreaInsets();
+  const db = userId ? tryGetDb(userId) : null;
 
   const messages = useChatStore((s) => s.messages);
   const sessions = useChatStore((s) => s.sessions);
   const currentSessionId = useChatStore((s) => s.currentSessionId);
-  const updateActionStatus = useChatStore((s) => s.updateActionStatus);
 
   const { sendMessage, isStreaming, streamingContent } = useStreamingChat();
 
@@ -59,20 +62,23 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
         try {
           await useTransactionStore.getState().removeTransaction(msg.action.transactionId);
         } catch {
-          void updateActionStatus(messageId, "dismissed");
+          if (!db || !userId) return;
+          void updateChatActionStatus(db, userId, messageId, "dismissed");
           return;
         }
       }
-      void updateActionStatus(messageId, "confirmed");
+      if (!db || !userId) return;
+      void updateChatActionStatus(db, userId, messageId, "confirmed");
     },
-    [messages, updateActionStatus]
+    [db, messages, userId]
   );
 
   const handleDismissAction = useCallback(
     (messageId: ChatMessageId) => {
-      void updateActionStatus(messageId, "dismissed");
+      if (!db || !userId) return;
+      void updateChatActionStatus(db, userId, messageId, "dismissed");
     },
-    [updateActionStatus]
+    [db, userId]
   );
 
   const renderItem = useCallback(

@@ -3,9 +3,13 @@ import {
   ChatScreen,
   ConversationList,
   cancelActiveStream,
+  selectChatSession,
+  startNewChat,
   useChatStore,
   useExtractUserMemoriesMutation,
 } from "@/features/ai-chat";
+import { useOptionalUserId } from "@/features/auth";
+import { tryGetDb } from "@/shared/db";
 import { captureError } from "@/shared/lib";
 import type { ChatSessionId } from "@/shared/types/branded";
 
@@ -13,20 +17,22 @@ type AiView = "list" | "chat";
 
 export default function AiTab() {
   const [view, setView] = useState<AiView>("list");
-  const selectSession = useChatStore((s) => s.selectSession);
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
   const messages = useChatStore((s) => s.messages);
   const extractUserMemories = useExtractUserMemoriesMutation();
 
   const handleSelectSession = useCallback(
     async (id: ChatSessionId) => {
-      await selectSession(id);
+      if (!db || !userId) return;
+      await selectChatSession(db, userId, id);
       setView("chat");
     },
-    [selectSession]
+    [db, userId]
   );
 
   const handleNewChat = useCallback(() => {
-    useChatStore.setState({ currentSessionId: null, messages: [] });
+    startNewChat();
     setView("chat");
   }, []);
 
