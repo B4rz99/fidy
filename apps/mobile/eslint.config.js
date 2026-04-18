@@ -89,6 +89,15 @@ module.exports = defineConfig([
     plugins: {
       boundaries,
     },
+    settings: {
+      "boundaries/elements": [
+        { type: "app", pattern: "app/**/*" },
+        { type: "feature-public", pattern: "features/*/index.{ts,tsx}" },
+        { type: "feature-internal", pattern: "features/*/**/*.{ts,tsx}" },
+        { type: "shared", pattern: "shared/**/*.{ts,tsx}" },
+        { type: "module", pattern: "modules/**/*.{ts,tsx}" },
+      ],
+    },
     rules: {
       // — Type-aware rules (highest value) —
       "@typescript-eslint/no-floating-promises": "error",
@@ -148,7 +157,6 @@ module.exports = defineConfig([
       // — Import rules —
       "import/no-cycle": "error",
       "boundaries/element-types": [
-      "boundaries/dependencies": [
         "error",
         {
           default: "allow",
@@ -174,24 +182,6 @@ module.exports = defineConfig([
       ],
       "import/first": "error",
       "no-duplicate-imports": ["error", { allowSeparateTypeImports: true }],
-              from: { category: "feature" },
-              disallow: { to: { type: "app" } },
-            },
-            {
-              from: { type: "shared" },
-              disallow: { to: { type: ["app", "feature-public", "feature-internal", "module"] } },
-            },
-            {
-              from: { type: "module" },
-              disallow: { to: { type: ["app", "feature-public", "feature-internal", "shared"] } },
-            },
-            {
-              from: { type: "app" },
-              disallow: { to: { type: "feature-internal" } },
-            },
-          ],
-        },
-      ],
     },
   },
 
