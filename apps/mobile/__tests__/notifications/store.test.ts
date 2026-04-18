@@ -23,7 +23,7 @@ vi.mock("@/shared/lib", () => ({
   toIsoDateTime: vi.fn(() => "2026-04-12T10:00:00.000Z"),
 }));
 
-vi.mock("@/shared/mutations", () => ({
+vi.mock("@/mutations", () => ({
   createWriteThroughMutationModule: vi.fn(() => ({
     commit: mockCommit,
   })),

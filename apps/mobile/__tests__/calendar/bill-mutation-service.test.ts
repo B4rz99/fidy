@@ -233,6 +233,16 @@ describe("calendar bill mutation service", () => {
     await expect(service.updateBill("bill-1" as BillId, { name: "Updated" })).resolves.toBe(false);
   });
 
+  it("returns false when updateBill receives an invalid amount", async () => {
+    const service = createService();
+
+    await expect(service.updateBill("bill-1" as BillId, { amount: -1 as CopAmount })).resolves.toBe(
+      false
+    );
+
+    expect(currentCommit).not.toHaveBeenCalled();
+  });
+
   it("returns false for update and delete when commits are unavailable or fail", async () => {
     currentCommit = null;
     const service = createService();
@@ -307,6 +317,98 @@ describe("calendar bill mutation service", () => {
 
     expect(addTransactionToCacheMock).not.toHaveBeenCalled();
     expect(trackPaymentRecordedMock).not.toHaveBeenCalled();
+  });
+
+  it("still returns success when post-commit side effects throw", async () => {
+    addTransactionToCacheMock.mockImplementation(() => {
+      throw new Error("cache boom");
+    });
+    const service = createService();
+
+    await expect(
+      service.markBillPaid([bill], bill.id as BillId, "2026-04-12" as IsoDate)
+    ).resolves.toEqual({
+      success: true,
+      payment: expect.objectContaining({ transactionId: "txn-generated" }),
+    });
+
+    expect(currentCommit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "calendar.bill.markPaid",
+      })
+    );
+    expect(trackPaymentRecordedMock).not.toHaveBeenCalled();
+  });
+
+  it("returns false when markBillPaid receives an invalid bill amount", async () => {
+    const service = createService();
+
+    await expect(
+      service.markBillPaid(
+        [{ ...bill, amount: -1 as CopAmount }],
+        bill.id as BillId,
+        "2026-04-12" as IsoDate
+      )
+    ).resolves.toEqual({ success: false });
+
+    expect(currentCommit).not.toHaveBeenCalled();
+    expect(addTransactionToCacheMock).not.toHaveBeenCalled();
+    expect(trackPaymentRecordedMock).not.toHaveBeenCalled();
+  });
+
+  it("loads transaction adapters from the transactions public surface", async () => {
+    vi.resetModules();
+
+    const transactionRow = { id: "txn-row" };
+    const toTransactionRowMock = vi.fn(() => transactionRow);
+
+    vi.doMock("@/features/transactions/public", () => ({
+      toTransactionRow: toTransactionRowMock,
+    }));
+    vi.doMock("@/features/transactions/lib/build-transaction", () => ({
+      toTransactionRow: () => {
+        throw new Error("bill mutation service should not import transaction internals");
+      },
+    }));
+
+    const { createCalendarBillMutationService: createServiceFromPublic } = await import(
+      "@/features/calendar/lib/bill-mutation-service"
+    );
+    const commit = vi.fn().mockResolvedValue({ success: true, didMutate: true });
+
+    const service = createServiceFromPublic({
+      getCommit: () => commit,
+      getUserId: () => "user-1" as UserId,
+      requestNotificationPermissions: async () => true,
+      scheduleBillNotifications: vi.fn(),
+      reportAsyncError: vi.fn(),
+      addTransactionToCache: vi.fn(),
+      removeTransactionFromCache: vi.fn(),
+      trackCreated: vi.fn(),
+      trackPaymentRecorded: vi.fn(),
+      now: () => now,
+      createPaymentId: () => "pay-generated" as BillPaymentId,
+      createTransactionId: () => "txn-generated" as TransactionId,
+    });
+
+    await expect(
+      service.markBillPaid([bill], bill.id as BillId, "2026-04-12" as IsoDate)
+    ).resolves.toEqual({
+      success: true,
+      payment: expect.objectContaining({ transactionId: "txn-generated" }),
+    });
+
+    expect(toTransactionRowMock).toHaveBeenCalledOnce();
+    expect(commit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "calendar.bill.markPaid",
+        transactionRow,
+      })
+    );
+
+    vi.doUnmock("@/features/transactions/public");
+    vi.doUnmock("@/features/transactions/lib/build-transaction");
+    vi.resetModules();
   });
 
   it("unmarks payments and only clears cache when a linked transaction exists", async () => {

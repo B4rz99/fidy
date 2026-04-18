@@ -1,12 +1,14 @@
 import * as Notifications from "expo-notifications";
-import type { NotificationPreferences } from "@/features/settings/store";
-import { useSettingsStore } from "@/features/settings/store";
+import {
+  isNotificationPreferenceEnabled,
+  type NotificationPreferenceKey,
+} from "@/features/settings/public";
 
 type LocalPushInput = {
   readonly title: string;
   readonly body: string;
   readonly data?: Record<string, unknown>;
-  readonly preferenceKey: keyof NotificationPreferences;
+  readonly preferenceKey: NotificationPreferenceKey;
 };
 
 /**
@@ -19,8 +21,7 @@ type LocalPushInput = {
  */
 export async function scheduleLocalPush(input: LocalPushInput): Promise<string | null> {
   try {
-    const { notificationPreferences } = useSettingsStore.getState();
-    if (!notificationPreferences[input.preferenceKey]) {
+    if (!isNotificationPreferenceEnabled(input.preferenceKey)) {
       return null;
     }
 

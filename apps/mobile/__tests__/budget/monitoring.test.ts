@@ -354,6 +354,61 @@ describe("createBudgetMonitoringModule", () => {
     );
   });
 
+  it("loads transaction aggregates from the transactions public surface", async () => {
+    vi.resetModules();
+
+    const getSpendingByCategoryAggregateMock = vi.fn(() => [
+      {
+        categoryId: "food" as CategoryId,
+        total: 85000 as CopAmount,
+      },
+    ]);
+
+    vi.doMock("@/features/transactions/public", () => ({
+      getSpendingByCategoryAggregate: getSpendingByCategoryAggregateMock,
+    }));
+    vi.doMock("@/features/transactions/lib/repository", () => ({
+      getSpendingByCategoryAggregate: () => {
+        throw new Error("budget monitoring should not import transaction internals");
+      },
+    }));
+
+    const { createBudgetMonitoringModule: createBudgetMonitoringModuleFromPublic } = await import(
+      "@/features/budget/lib/monitoring"
+    );
+
+    insertBudgetRow();
+
+    const module = createBudgetMonitoringModuleFromPublic({
+      getBudgetAlertsEnabled: () => true,
+      getLocale: () => "es",
+      resolveCategoryLabel: mockResolveCategoryLabel,
+      scheduleBudgetAlert: mockScheduleBudgetAlert,
+      insertNotification: mockInsertNotification,
+    });
+
+    const result = await module.refreshMonth({
+      db: db as any,
+      userId: USER_ID,
+      month: CURRENT_MONTH,
+      previous: {
+        pendingAlerts: [],
+        acknowledgedAlerts: new Set(),
+      },
+    });
+
+    expect(getSpendingByCategoryAggregateMock).toHaveBeenCalledWith(db, USER_ID, CURRENT_MONTH);
+    expect(result.summary).toEqual({
+      totalBudget: 100000,
+      totalSpent: 85000,
+      percentUsed: 85,
+    });
+
+    vi.doUnmock("@/features/transactions/public");
+    vi.doUnmock("@/features/transactions/lib/repository");
+    vi.resetModules();
+  });
+
   it("loadAutoSuggestions derives suggestions without delivering alerts", () => {
     insertBudgetRow();
     insertExpense({

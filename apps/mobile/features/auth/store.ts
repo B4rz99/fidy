@@ -1,7 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
-import * as Notifications from "expo-notifications";
 import { create } from "zustand";
-import { deletePushToken, PROJECT_ID } from "@/features/notifications/services/push-token";
+import { cleanupCurrentPushToken } from "@/features/notifications/public";
 import { getSupabase } from "@/shared/db";
 import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
 
@@ -90,13 +89,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     // Clean up push token while session is still valid (RLS needs auth).
     // Capped at 2s so signout isn't blocked indefinitely by network issues.
     await Promise.race([
-      Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID })
-        .then(({ data: token }) => deletePushToken(token))
-        .catch((error) => {
-          captureWarning("auth_signout_push_token_cleanup_failed", {
-            errorType: error instanceof Error ? error.message : "unknown",
-          });
-        }),
+      cleanupCurrentPushToken().catch((error) => {
+        captureWarning("auth_signout_push_token_cleanup_failed", {
+          errorType: error instanceof Error ? error.message : "unknown",
+        });
+      }),
       new Promise((resolve) => setTimeout(resolve, 2000)),
     ]);
 

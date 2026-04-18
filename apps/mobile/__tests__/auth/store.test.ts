@@ -1,9 +1,11 @@
 // biome-ignore-all lint/style/useNamingConvention: mock exports must match Supabase API names
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useAuthStore } from "@/features/auth/store";
 
 const mockUser = { id: "user-1", email: "test@example.com" };
 const mockSession = { user: mockUser, access_token: "token" };
+const { mockCleanupCurrentPushToken } = vi.hoisted(() => ({
+  mockCleanupCurrentPushToken: vi.fn(() => Promise.resolve()),
+}));
 
 const mockSetSession = vi.fn(() =>
   Promise.resolve({ data: { session: mockSession }, error: null })
@@ -38,6 +40,12 @@ vi.mock("expo-web-browser", () => ({
   openAuthSessionAsync: (url: string, redirect: string) => mockOpenAuthSession(url, redirect),
   maybeCompleteAuthSession: vi.fn(),
 }));
+
+vi.mock("@/features/notifications/public", () => ({
+  cleanupCurrentPushToken: mockCleanupCurrentPushToken,
+}));
+
+import { useAuthStore } from "@/features/auth/store";
 
 describe("useAuthStore", () => {
   beforeEach(() => {

@@ -1,10 +1,9 @@
-import type { ViewStyle } from "react-native";
 import Animated, { type AnimatedStyle } from "react-native-reanimated";
-import { StyleSheet, View } from "@/shared/components/rn";
+import { StyleSheet, View, type ViewStyle } from "@/shared/components/rn";
 import { useAnimatedProgress, useThemeColor } from "@/shared/hooks";
 
 type Props = {
-  readonly percent: number; // 0-100+
+  readonly percent: number;
   readonly height?: number;
 };
 

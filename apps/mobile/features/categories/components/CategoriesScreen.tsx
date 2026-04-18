@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { ScreenLayout, SettingsSection, TAB_BAR_CLEARANCE } from "@/shared/components";
 import type { LucideIcon } from "@/shared/components/icons";
 import { Plus } from "@/shared/components/icons";
 import {
@@ -13,7 +13,6 @@ import {
 } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n/locale-helpers";
-import { SettingsSection } from "../../settings/components/SettingsSection";
 import { useCategoriesStore } from "../store";
 
 const CLOTHING_DARK_COLOR = "#E0E0E0";

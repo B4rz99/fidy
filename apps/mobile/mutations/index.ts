@@ -1,3 +1,5 @@
+/* eslint-disable no-restricted-imports */
+
 import {
   copyBudgetsToMonth,
   insertBudget,
@@ -39,8 +41,7 @@ import {
   softDeleteTransaction,
   upsertTransaction,
 } from "@/features/transactions/lib/repository";
-import type { AnyDb } from "@/shared/db";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
+import { type AnyDb, enqueueSync } from "@/shared/db";
 import {
   type CommandEffectResult,
   createBudgetCopyId,
@@ -48,20 +49,22 @@ import {
   getMutationPolicy,
   type MutationCommand,
   type MutationCommandApplier,
+  type MutationDb,
   type MutationOutcome,
   toSyncEntry,
   type WriteThroughMutationModule,
 } from "@/shared/mutations/write-through";
-import type { IsoDateTime } from "@/shared/types/branded";
+
+import { assertIsoDateTime } from "@/shared/types/assertions";
 
 function applyTransactionSave(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "transaction.save" }>
 ): CommandEffectResult {
   if (command.mode === "insert") {
-    insertTransaction(db, command.row as RepoTransactionRow);
+    insertTransaction(db, command.row);
   } else {
-    upsertTransaction(db, command.row as RepoTransactionRow);
+    upsertTransaction(db, command.row);
   }
 
   enqueueSync(
@@ -78,7 +81,7 @@ function applyTransactionSave(
 }
 
 function applyTransactionDelete(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "transaction.delete" }>
 ): CommandEffectResult {
   softDeleteTransaction(db, command.transactionId, command.now);
@@ -87,19 +90,17 @@ function applyTransactionDelete(
 }
 
 function applyGoalSave(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "goal.save" }>
 ): CommandEffectResult {
-  insertGoal(db, command.row as RepoGoalRow);
-  enqueueSync(
-    db,
-    toSyncEntry("goals", command.row.id, "insert", command.row.updatedAt as IsoDateTime)
-  );
+  assertIsoDateTime(command.row.updatedAt);
+  insertGoal(db, command.row);
+  enqueueSync(db, toSyncEntry("goals", command.row.id, "insert", command.row.updatedAt));
   return { didMutate: true, effects: command.afterCommit ?? [] };
 }
 
 function applyGoalUpdate(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "goal.update" }>
 ): CommandEffectResult {
   updateGoal(db, command.goalId, command.data, command.now);
@@ -108,7 +109,7 @@ function applyGoalUpdate(
 }
 
 function applyGoalDelete(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "goal.delete" }>
 ): CommandEffectResult {
   softDeleteGoal(db, command.goalId, command.now);
@@ -117,19 +118,20 @@ function applyGoalDelete(
 }
 
 function applyGoalContributionSave(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "goalContribution.save" }>
 ): CommandEffectResult {
-  insertContribution(db, command.row as RepoGoalContributionRow);
+  assertIsoDateTime(command.row.updatedAt);
+  insertContribution(db, command.row);
   enqueueSync(
     db,
-    toSyncEntry("goalContributions", command.row.id, "insert", command.row.updatedAt as IsoDateTime)
+    toSyncEntry("goalContributions", command.row.id, "insert", command.row.updatedAt)
   );
   return { didMutate: true, effects: command.afterCommit ?? [] };
 }
 
 function applyGoalContributionDelete(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "goalContribution.delete" }>
 ): CommandEffectResult {
   softDeleteContribution(db, command.contributionId, command.now);
@@ -138,16 +140,16 @@ function applyGoalContributionDelete(
 }
 
 function applyBudgetSave(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "budget.save" }>
 ): CommandEffectResult {
-  insertBudget(db, command.row as RepoBudgetRow);
+  insertBudget(db, command.row);
   enqueueSync(db, toSyncEntry("budgets", command.row.id, "insert", command.row.updatedAt));
   return { didMutate: true, effects: command.afterCommit ?? [] };
 }
 
 function applyBudgetUpdate(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "budget.update" }>
 ): CommandEffectResult {
   updateBudgetAmount(db, command.budgetId, command.amount, command.now);
@@ -156,7 +158,7 @@ function applyBudgetUpdate(
 }
 
 function applyBudgetDelete(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "budget.delete" }>
 ): CommandEffectResult {
   softDeleteBudget(db, command.budgetId, command.now);
@@ -165,7 +167,7 @@ function applyBudgetDelete(
 }
 
 function applyBudgetCopy(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "budget.copy" }>
 ): CommandEffectResult {
   const copiedIds = copyBudgetsToMonth(
@@ -185,10 +187,10 @@ function applyBudgetCopy(
 }
 
 function applyNotificationInsert(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "notification.insert" }>
 ): CommandEffectResult {
-  const result = insertNotification(db, command.row as RepoNotificationRow);
+  const result = insertNotification(db, command.row);
   if (result.changes === 0) {
     return { didMutate: false, effects: command.afterCommit ?? [] };
   }
@@ -198,7 +200,7 @@ function applyNotificationInsert(
 }
 
 function applyNotificationClearAll(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "notification.clearAll" }>
 ): CommandEffectResult {
   const allIds = getAllNotificationIds(db, command.userId);
@@ -210,24 +212,24 @@ function applyNotificationClearAll(
 }
 
 function applyCategorySave(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "category.save" }>
 ): CommandEffectResult {
-  insertUserCategory(db, command.row as RepoUserCategoryRow);
+  insertUserCategory(db, command.row);
   enqueueSync(db, toSyncEntry("userCategories", command.row.id, "insert", command.row.updatedAt));
   return { didMutate: true, effects: command.afterCommit ?? [] };
 }
 
 function applyCalendarBillSave(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "calendar.bill.save" }>
 ): CommandEffectResult {
-  insertBill(db, command.row as RepoBillRow);
+  insertBill(db, command.row);
   return { didMutate: true, effects: command.afterCommit ?? [] };
 }
 
 function applyCalendarBillUpdate(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "calendar.bill.update" }>
 ): CommandEffectResult {
   updateBill(db, command.billId, command.fields, command.now);
@@ -235,7 +237,7 @@ function applyCalendarBillUpdate(
 }
 
 function applyCalendarBillDelete(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "calendar.bill.delete" }>
 ): CommandEffectResult {
   deleteBill(db, command.billId);
@@ -243,10 +245,10 @@ function applyCalendarBillDelete(
 }
 
 function applyCalendarBillMarkPaid(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "calendar.bill.markPaid" }>
 ): CommandEffectResult {
-  insertTransaction(db, command.transactionRow as RepoTransactionRow);
+  insertTransaction(db, command.transactionRow);
   enqueueSync(
     db,
     toSyncEntry(
@@ -256,12 +258,12 @@ function applyCalendarBillMarkPaid(
       command.transactionRow.updatedAt
     )
   );
-  insertBillPayment(db, command.paymentRow as RepoBillPaymentRow);
+  insertBillPayment(db, command.paymentRow);
   return { didMutate: true, effects: command.afterCommit ?? [] };
 }
 
 function applyCalendarBillUnmarkPaid(
-  db: AnyDb,
+  db: MutationDb,
   command: Extract<MutationCommand, { kind: "calendar.bill.unmarkPaid" }>
 ): CommandEffectResult {
   if (command.transactionId) {
@@ -326,6 +328,7 @@ export function createWriteThroughMutationModule(db: AnyDb): WriteThroughMutatio
 export {
   getMutationPolicy,
   type MutationOutcome,
+  type WriteThroughMutationModule,
   type RepoNotificationRow as NotificationRow,
   type RepoTransactionRow as TransactionRow,
   type RepoUserCategoryRow as UserCategoryRow,

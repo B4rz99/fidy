@@ -1,7 +1,7 @@
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAuthStore } from "@/features/auth/store";
+import { useAccountCreatedAt } from "@/features/auth/public";
 import { ScreenLayout } from "@/shared/components";
 import { Platform, Pressable, SectionList, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -22,7 +22,7 @@ export const NotificationsScreen = () => {
   const accentRed = useThemeColor("accentRed");
   const { bottom } = useSafeAreaInsets();
   const hasNotifications = notifications.length > 0;
-  const accountCreatedAt = useAuthStore((s) => s.session?.user.created_at ?? "");
+  const accountCreatedAt = useAccountCreatedAt();
   const firstWeek = isFirstWeek(accountCreatedAt, new Date());
 
   const handleClearAll = useCallback(() => {

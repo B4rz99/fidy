@@ -1,12 +1,9 @@
 import { addMonths, endOfMonth, startOfMonth, subMonths } from "date-fns";
 import { create } from "zustand";
 import { useTransactionStore } from "@/features/transactions";
+import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import { captureError, toIsoDate, trackBillCreated, trackBillPaymentRecorded } from "@/shared/lib";
-import {
-  createWriteThroughMutationModule,
-  type WriteThroughMutationModule,
-} from "@/shared/mutations";
 import type { BillId, CategoryId, IsoDate, UserId } from "@/shared/types/branded";
 import { createCalendarBillMutationService } from "./lib/bill-mutation-service";
 import { requestNotificationPermissions, scheduleBillNotifications } from "./lib/notifications";
@@ -72,7 +69,7 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set, ge
     initStore: (db, userId) => {
       dbRef = db;
       userIdRef = userId;
-      mutations = db ? createWriteThroughMutationModule(db) : null;
+      mutations = createWriteThroughMutationModule(db);
     },
 
     nextMonth: () => {

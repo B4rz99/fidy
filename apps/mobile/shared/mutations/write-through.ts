@@ -1,14 +1,21 @@
-import type { BudgetRow } from "@/features/budget/lib/repository";
-import type { BillPaymentRow, BillRow } from "@/features/calendar/lib/repository";
-import type { UserCategoryRow } from "@/features/categories/lib/repository";
-import type { GoalContributionRow, GoalRow } from "@/features/goals/lib/repository";
-import type { NotificationRow } from "@/features/notifications/repository";
-import type { TransactionRow } from "@/features/transactions/lib/repository";
-import type { AnyDb, SyncOperation, SyncTableName } from "@/shared/db";
+import type {
+  AnyDb,
+  billPayments,
+  bills,
+  budgets,
+  goalContributions,
+  goals,
+  notifications,
+  SyncOperation,
+  SyncTableName,
+  transactions,
+  userCategories,
+} from "@/shared/db";
 import { generateBudgetId, generateSyncQueueId } from "@/shared/lib";
 import type {
   BillId,
   BudgetId,
+  CategoryId,
   CopAmount,
   IsoDate,
   IsoDateTime,
@@ -22,6 +29,15 @@ export type MutationEffect = () => void | Promise<void>;
 export type MutationOutcome =
   | { success: true; didMutate: boolean }
   | { success: false; error: string };
+
+type TransactionRow = typeof transactions.$inferInsert;
+type GoalRow = typeof goals.$inferInsert;
+type GoalContributionRow = typeof goalContributions.$inferInsert;
+type BudgetRow = typeof budgets.$inferInsert;
+type NotificationRow = typeof notifications.$inferInsert;
+type UserCategoryRow = typeof userCategories.$inferInsert;
+type BillRow = typeof bills.$inferInsert;
+type BillPaymentRow = typeof billPayments.$inferInsert;
 
 type TransactionSaveCommand = {
   kind: "transaction.save";
@@ -125,6 +141,15 @@ type CategorySaveCommand = {
   afterCommit?: readonly MutationEffect[];
 };
 
+type CalendarBillUpdateFields = {
+  name?: string;
+  amount?: CopAmount;
+  frequency?: BillRow["frequency"];
+  categoryId?: CategoryId;
+  startDate?: string;
+  isActive?: boolean;
+};
+
 type CalendarBillSaveCommand = {
   kind: "calendar.bill.save";
   row: BillRow;
@@ -134,9 +159,7 @@ type CalendarBillSaveCommand = {
 type CalendarBillUpdateCommand = {
   kind: "calendar.bill.update";
   billId: BillId;
-  fields: Partial<
-    Pick<BillRow, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
-  >;
+  fields: CalendarBillUpdateFields;
   now: IsoDateTime;
   afterCommit?: readonly MutationEffect[];
 };
@@ -222,7 +245,13 @@ export type CommandEffectResult = {
   effects: readonly MutationEffect[];
 };
 
-export type MutationCommandApplier = (db: AnyDb, command: MutationCommand) => CommandEffectResult;
+type TransactionCallback = Parameters<AnyDb["transaction"]>[0];
+export type MutationDb = Parameters<TransactionCallback>[0];
+
+export type MutationCommandApplier = (
+  db: MutationDb,
+  command: MutationCommand
+) => CommandEffectResult;
 
 export function toSyncEntry(
   tableName: SyncTableName,
@@ -257,12 +286,12 @@ export function createGenericWriteThroughMutationModule(
   return {
     commit: async (command) => {
       try {
-        const result = db.transaction((tx) => applyCommand(tx as AnyDb, command));
+        const result = db.transaction((tx) => applyCommand(tx, command));
         await runEffects(result.effects);
-        return { success: true as const, didMutate: result.didMutate };
+        return { success: true, didMutate: result.didMutate };
       } catch (error) {
         return {
-          success: false as const,
+          success: false,
           error: error instanceof Error ? error.message : "Mutation failed",
         };
       }
@@ -275,9 +304,9 @@ export function createGenericWriteThroughMutationModule(
             effects: readonly MutationEffect[];
           }>(
             (acc, command) => {
-              const next = applyCommand(tx as AnyDb, command);
+              const next = applyCommand(tx, command);
               return {
-                outcomes: [...acc.outcomes, { success: true as const, didMutate: next.didMutate }],
+                outcomes: [...acc.outcomes, { success: true, didMutate: next.didMutate }],
                 effects: [...acc.effects, ...next.effects],
               };
             },
@@ -288,7 +317,7 @@ export function createGenericWriteThroughMutationModule(
         return result.outcomes;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Mutation failed";
-        return commands.map(() => ({ success: false as const, error: message }));
+        return commands.map(() => ({ success: false, error: message }));
       }
     },
   };

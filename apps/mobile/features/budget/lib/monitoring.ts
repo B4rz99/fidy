@@ -1,8 +1,9 @@
-import { format, subMonths } from "date-fns";
-import { getSpendingByCategoryAggregate } from "@/features/transactions/lib/repository";
+import { subMonths } from "date-fns";
+import { getSpendingByCategoryAggregate } from "@/features/transactions/public";
 import type { AnyDb } from "@/shared/db";
-import { formatMoney } from "@/shared/lib";
-import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
+import { formatMoney, toMonth } from "@/shared/lib";
+import { assertCopAmount } from "@/shared/types/assertions";
+import type { BudgetId, CategoryId, Month, UserId } from "@/shared/types/branded";
 import type { Budget } from "../schema";
 import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./derive";
 import {
@@ -12,6 +13,7 @@ import {
   deriveBudgetProgress,
   deriveBudgetSummary,
 } from "./derive";
+import type { ScheduleResult } from "./notifications";
 import { getBudgetsForMonth } from "./repository";
 
 export type BudgetAlertState = {
@@ -70,7 +72,7 @@ export type BudgetMonitoringPorts = {
     alert: BudgetAlert,
     categoryName: string,
     notificationsEnabled: boolean
-  ) => Promise<import("./notifications").ScheduleResult>;
+  ) => Promise<ScheduleResult>;
   readonly insertNotification: (input: BudgetNotificationInput) => void;
 };
 
@@ -82,7 +84,7 @@ export type BudgetMonitoringModule = {
 
 const alertKey = (budgetId: BudgetId, threshold: 80 | 100): string => `${budgetId}:${threshold}`;
 
-const formatMonth = (date: Date): Month => format(date, "yyyy-MM") as Month;
+const formatMonth = (date: Date): Month => toMonth(date);
 
 const parseMonth = (month: Month): Date => {
   const parts = month.split("-").map(Number);
@@ -107,7 +109,9 @@ const toNotificationInput = (
   categoryName: string,
   month: Month
 ): BudgetNotificationInput => {
-  const remaining = formatMoney(Math.abs(alert.remainingAmount) as CopAmount);
+  const remainingAmount = Math.abs(alert.remainingAmount);
+  assertCopAmount(remainingAmount);
+  const remaining = formatMoney(remainingAmount);
 
   return {
     type: "budget_alert",
@@ -191,9 +195,11 @@ export function createBudgetMonitoringModule(ports: BudgetMonitoringPorts): Budg
       const budgets = getBudgetsForMonth(db, userId, month);
       const currentSpending = getSpendingByCategoryAggregate(db, userId, month);
       const spendingMap = new Map(currentSpending.map((row) => [row.categoryId, row.total]));
-      const budgetProgress = budgets.map((budget) =>
-        deriveBudgetProgress(budget, spendingMap.get(budget.categoryId) ?? (0 as CopAmount))
-      );
+      const budgetProgress = budgets.map((budget) => {
+        const spending = spendingMap.get(budget.categoryId) ?? 0;
+        assertCopAmount(spending);
+        return deriveBudgetProgress(budget, spending);
+      });
       const summary = deriveBudgetSummary(budgetProgress);
       const daysLeft = computeDaysLeft(month, new Date());
       const pendingAlerts = deriveBudgetAlerts(

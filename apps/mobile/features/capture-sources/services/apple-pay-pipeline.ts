@@ -1,17 +1,9 @@
 import {
-  captureFingerprint,
-  findDuplicateTransaction,
-  isCaptureProcessed,
-} from "@/features/capture-sources/lib/dedup";
-import { insertProcessedCapture } from "@/features/capture-sources/lib/repository";
-import type { ApplePayIntentData } from "@/features/capture-sources/schema";
-import {
   insertMerchantRule,
   lookupMerchantRule,
-} from "@/features/email-capture/lib/merchant-rules";
-import { classifyMerchantApi } from "@/features/email-capture/services/parse-email-api";
-import { isValidCategoryId } from "@/features/transactions/lib/categories";
-import { insertTransaction } from "@/features/transactions/lib/repository";
+} from "@/features/email-capture/merchant-rules.public";
+import { classifyMerchantApi } from "@/features/email-capture/parsing.public";
+import { insertTransaction, isValidCategoryId } from "@/features/transactions/write.public";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
@@ -24,14 +16,18 @@ import {
   toIsoDateTime,
   trackTransactionCreated,
 } from "@/shared/lib";
-import type { CategoryId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
+import { assertCopAmount, assertUserId } from "@/shared/types/assertions";
+import type { TransactionId } from "@/shared/types/branded";
+import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
+import { insertProcessedCapture } from "../lib/repository";
+import type { ApplePayIntentData } from "../schema";
 
 const inFlightFingerprints = new Set<string>();
 
 export type ApplePayPipelineResult = {
   saved: boolean;
   skippedDuplicate: boolean;
-  transactionId: string | null;
+  transactionId: TransactionId | null;
 };
 
 export async function processApplePayIntent(
@@ -39,9 +35,11 @@ export async function processApplePayIntent(
   userId: string,
   intent: ApplePayIntentData
 ): Promise<ApplePayPipelineResult> {
+  assertUserId(userId);
   const amount = Math.round(intent.amount);
+  assertCopAmount(amount);
   const today = toIsoDate(new Date());
-  const source = "apple_pay" as const;
+  const source: "apple_pay" = "apple_pay";
 
   // Check fingerprint dedup
   const fingerprint = captureFingerprint(source, amount, today, intent.merchant);
@@ -70,7 +68,7 @@ export async function processApplePayIntent(
         source,
         status: "skipped_duplicate",
         rawText: `${intent.merchant} $${intent.amount}`,
-        transactionId: existingTxId as TransactionId,
+        transactionId: existingTxId,
         confidence: 1.0,
         receivedAt: now,
         createdAt: now,
@@ -85,7 +83,11 @@ export async function processApplePayIntent(
 
     // If no cached category, classify via LLM
     const rawCategoryId = cachedCategoryId ?? (await classifyMerchantApi(intent.merchant));
-    const categoryId = isValidCategoryId(rawCategoryId) ? rawCategoryId : "other";
+    const fallbackCategoryId = "other";
+    if (!isValidCategoryId(fallbackCategoryId)) {
+      throw new Error("Missing fallback category");
+    }
+    const categoryId = isValidCategoryId(rawCategoryId) ? rawCategoryId : fallbackCategoryId;
 
     // Save transaction
     const txId = generateTransactionId();
@@ -93,10 +95,10 @@ export async function processApplePayIntent(
 
     insertTransaction(db, {
       id: txId,
-      userId: userId as UserId,
+      userId,
       type: "expense",
-      amount: amount as CopAmount,
-      categoryId: categoryId as CategoryId,
+      amount,
+      categoryId,
       description: intent.merchant,
       date: today,
       source,

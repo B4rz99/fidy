@@ -2,7 +2,8 @@ import { and, eq, isNull } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { processedCaptures, transactions } from "@/shared/db";
 import { merchantsMatch, normalizeMerchant } from "@/shared/lib";
-import type { CopAmount, IsoDate, UserId } from "@/shared/types/branded";
+import { assertCopAmount, assertIsoDate, assertUserId } from "@/shared/types/assertions";
+import type { TransactionId } from "@/shared/types/branded";
 
 /**
  * Creates a fingerprint hash for deduplication across capture sources.
@@ -39,7 +40,10 @@ export async function findDuplicateTransaction(
   amount: number,
   date: string,
   merchant: string
-): Promise<string | null> {
+): Promise<TransactionId | null> {
+  assertUserId(userId);
+  assertCopAmount(amount);
+  assertIsoDate(date);
   const normalized = normalizeMerchant(merchant);
   const rows = await db
     .select({
@@ -49,9 +53,9 @@ export async function findDuplicateTransaction(
     .from(transactions)
     .where(
       and(
-        eq(transactions.userId, userId as UserId),
-        eq(transactions.amount, amount as CopAmount),
-        eq(transactions.date, date as IsoDate),
+        eq(transactions.userId, userId),
+        eq(transactions.amount, amount),
+        eq(transactions.date, date),
         isNull(transactions.deletedAt)
       )
     );

@@ -32,14 +32,26 @@ const BOUNDARY_ELEMENTS = [
   {
     type: "feature-public",
     category: "feature",
-    pattern: "features/*/index.ts",
+    pattern: ["features/*/index.ts", "features/*/*.public.ts"],
     mode: "full",
     capture: ["featureName"],
   },
   {
     type: "feature-internal",
     category: "feature",
-    pattern: "features/*/**/*.{ts,tsx}",
+    pattern: [
+      "features/*/*.ts",
+      "features/*/components/**/*.{ts,tsx}",
+      "features/*/data/**/*.{ts,tsx}",
+      "features/*/hooks/**/*.{ts,tsx}",
+      "features/*/lib/**/*.{ts,tsx}",
+      "features/*/services/**/*.{ts,tsx}",
+      "features/*/store.ts",
+      "features/*/schema.ts",
+      "features/*/schema/**/*.ts",
+      "!features/*/index.ts",
+      "!features/*/*.public.ts",
+    ],
     mode: "full",
     capture: ["featureName"],
   },
@@ -90,13 +102,7 @@ module.exports = defineConfig([
       boundaries,
     },
     settings: {
-      "boundaries/elements": [
-        { type: "app", pattern: "app/**/*" },
-        { type: "feature-public", pattern: "features/*/index.{ts,tsx}" },
-        { type: "feature-internal", pattern: "features/*/**/*.{ts,tsx}" },
-        { type: "shared", pattern: "shared/**/*.{ts,tsx}" },
-        { type: "module", pattern: "modules/**/*.{ts,tsx}" },
-      ],
+      "boundaries/elements": BOUNDARY_ELEMENTS,
     },
     rules: {
       // — Type-aware rules (highest value) —
@@ -172,6 +178,15 @@ module.exports = defineConfig([
             {
               from: "module",
               disallow: ["app", "feature-public", "feature-internal", "shared"],
+            },
+            {
+              from: { category: "feature" },
+              disallow: {
+                to: {
+                  type: "feature-internal",
+                  captured: { featureName: "!{{from.featureName}}" },
+                },
+              },
             },
             {
               from: "app",
