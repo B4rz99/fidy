@@ -2,10 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import { subscribeGoalsToTransactions } from "@/features/goals/services/subscribe-goals-to-transactions";
 
 describe("goal transaction subscription", () => {
-  it("reloads only after goals have loaded and the transaction pages reference changes", () => {
+  it("reloads only after goals have loaded and the transaction data revision changes", () => {
     let notify: () => void = () => undefined;
     let hasLoadedGoals = false;
-    let currentPages: readonly string[] = ["tx-1"];
+    let currentRevision = 0;
 
     const unsubscribe = vi.fn();
     const reload = vi.fn();
@@ -15,7 +15,7 @@ describe("goal transaction subscription", () => {
         notify = listener;
         return unsubscribe;
       },
-      getTransactionPages: () => currentPages,
+      getTransactionDataRevision: () => currentRevision,
       hasLoadedGoals: () => hasLoadedGoals,
       reload,
     });
@@ -27,7 +27,7 @@ describe("goal transaction subscription", () => {
     notify();
     expect(reload).not.toHaveBeenCalled();
 
-    currentPages = ["tx-1", "tx-2"];
+    currentRevision += 1;
     notify();
     expect(reload).toHaveBeenCalledTimes(1);
 

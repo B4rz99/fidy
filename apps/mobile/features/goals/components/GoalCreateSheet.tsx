@@ -15,7 +15,7 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
-import { getDb } from "@/shared/db";
+import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, parseDigitsToAmount, toIsoDate } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
@@ -78,7 +78,9 @@ export function GoalCreateSheet() {
         const isValidRate = /^\d+(\.\d+)?$/.test(normalizedRate);
         const parsedRate = isValidRate ? Number.parseFloat(normalizedRate) : undefined;
         if (!userId) return;
-        const success = await createGoal(getDb(userId), userId, {
+        const db = tryGetDb(userId);
+        if (!db) return;
+        const success = await createGoal(db, userId, {
           name: name.trim(),
           type: goalType,
           targetAmount: parsedAmount,

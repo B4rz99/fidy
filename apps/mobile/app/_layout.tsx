@@ -135,7 +135,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
     () =>
       subscribeGoalsToTransactions({
         subscribeTransactions: useTransactionStore.subscribe,
-        getTransactionPages: () => useTransactionStore.getState().pages,
+        getTransactionDataRevision: () => useTransactionStore.getState().dataRevision,
         hasLoadedGoals: () => useGoalStore.getState().goals.length > 0,
         reload: () => {
           void loadGoalsForUser(db, userId).catch(handleRecoverableError("Failed to load goals"));
@@ -149,7 +149,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
     () =>
       subscribeAnalyticsToTransactions({
         subscribeTransactions: useTransactionStore.subscribe,
-        getTransactionPages: () => useTransactionStore.getState().pages,
+        getTransactionDataRevision: () => useTransactionStore.getState().dataRevision,
         hasLoadedAnalytics: () => useAnalyticsStore.getState().incomeExpense !== null,
         reload: () => {
           void loadAnalyticsForUser(db, userId).catch(

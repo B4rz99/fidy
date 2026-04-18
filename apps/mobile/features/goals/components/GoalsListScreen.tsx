@@ -4,7 +4,7 @@ import { useAuthStore } from "@/features/auth";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Target } from "@/shared/components/icons";
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
-import { getDb } from "@/shared/db";
+import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { UserId } from "@/shared/types/branded";
 import { selectGoal, useGoalStore } from "../store";
@@ -71,7 +71,9 @@ export function GoalsListScreen() {
   const handleGoalPress = useCallback(
     (goalId: string) => {
       if (!userId) return;
-      void selectGoal(getDb(userId), userId, goalId);
+      const db = tryGetDb(userId);
+      if (!db) return;
+      void selectGoal(db, userId, goalId);
       router.push("/goal-detail");
     },
     [router, userId]
@@ -80,7 +82,9 @@ export function GoalsListScreen() {
   const handleAddPayment = useCallback(
     (goalId: string) => {
       if (!userId) return;
-      void selectGoal(getDb(userId), userId, goalId);
+      const db = tryGetDb(userId);
+      if (!db) return;
+      void selectGoal(db, userId, goalId);
       router.push("/add-payment");
     },
     [router, userId]

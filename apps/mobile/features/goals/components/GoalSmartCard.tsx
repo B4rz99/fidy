@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { memo, useCallback, useMemo } from "react";
 import { useAuthStore } from "@/features/auth";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { getDb } from "@/shared/db";
+import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import type { CopAmount, UserId } from "@/shared/types/branded";
@@ -34,7 +34,9 @@ export const GoalSmartCard = memo(function GoalSmartCard() {
 
   const handlePress = useCallback(() => {
     if (!displayData || !userId) return;
-    void selectGoal(getDb(userId), userId, displayData.topGoal.goal.id);
+    const db = tryGetDb(userId);
+    if (!db) return;
+    void selectGoal(db, userId, displayData.topGoal.goal.id);
     push("/goal-detail" as never);
   }, [displayData, push, userId]);
 

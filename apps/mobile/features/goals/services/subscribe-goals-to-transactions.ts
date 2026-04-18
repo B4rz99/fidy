@@ -1,22 +1,22 @@
 type SubscribeGoalsToTransactionsInput = {
   readonly subscribeTransactions: (listener: () => void) => () => void;
-  readonly getTransactionPages: () => unknown;
+  readonly getTransactionDataRevision: () => number;
   readonly hasLoadedGoals: () => boolean;
   readonly reload: () => void;
 };
 
 export function subscribeGoalsToTransactions({
   subscribeTransactions,
-  getTransactionPages,
+  getTransactionDataRevision,
   hasLoadedGoals,
   reload,
 }: SubscribeGoalsToTransactionsInput): () => void {
-  let previousPages = getTransactionPages();
+  let previousRevision = getTransactionDataRevision();
 
   return subscribeTransactions(() => {
-    const currentPages = getTransactionPages();
-    if (currentPages === previousPages) return;
-    previousPages = currentPages;
+    const currentRevision = getTransactionDataRevision();
+    if (currentRevision === previousRevision) return;
+    previousRevision = currentRevision;
     if (!hasLoadedGoals()) return;
     reload();
   });

@@ -13,7 +13,7 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
-import { getDb } from "@/shared/db";
+import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, parseDigitsToAmount, toIsoDate } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
@@ -55,10 +55,12 @@ export function AddPaymentSheet() {
       guardedAdd(async () => {
         if (selectedGoalId == null) return;
         if (!userId) return;
+        const db = tryGetDb(userId);
+        if (!db) return;
         const amount = parseDigitsToAmount(digits);
         if (amount <= 0) return;
 
-        const success = await addContribution(getDb(userId), userId, {
+        const success = await addContribution(db, userId, {
           goalId: selectedGoalId,
           amount,
           note: note.trim() || undefined,

@@ -56,6 +56,7 @@ type TransactionState = {
   balance: number;
   categorySpending: CategorySpendingItem[];
   dailySpending: DailySpendingItem[];
+  dataRevision: number;
 };
 
 type TransactionActions = {
@@ -145,6 +146,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     balance: 0,
     categorySpending: [],
     dailySpending: [],
+    dataRevision: 0,
     editingId: null,
 
     initStore: (db, userId) => {
@@ -235,11 +237,13 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
             pages: pageData.map(toStoredTransaction),
             offset: pageData.length,
             hasMore,
+            dataRevision: get().dataRevision + 1,
           });
         } else {
           set({
             offset: pageData.length,
             hasMore,
+            dataRevision: get().dataRevision + 1,
           });
         }
         get().loadAggregates();
@@ -285,13 +289,22 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
       await get().removeTransaction(id);
     },
 
-    addToCache: (tx) => set((s) => ({ pages: [tx, ...s.pages], offset: s.offset + 1 })),
+    addToCache: (tx) =>
+      set((s) => ({
+        pages: [tx, ...s.pages],
+        offset: s.offset + 1,
+        dataRevision: s.dataRevision + 1,
+      })),
 
     removeFromCache: (id) =>
       set((s) => {
         const filtered = s.pages.filter((t) => t.id !== id);
         const removed = filtered.length < s.pages.length;
-        return { pages: filtered, offset: removed ? Math.max(0, s.offset - 1) : s.offset };
+        return {
+          pages: filtered,
+          offset: removed ? Math.max(0, s.offset - 1) : s.offset,
+          dataRevision: removed ? s.dataRevision + 1 : s.dataRevision,
+        };
       }),
 
     resetForm: () => set({ ...INITIAL_FORM, date: new Date(), editingId: null }),

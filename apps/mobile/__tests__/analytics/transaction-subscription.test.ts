@@ -2,10 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import { subscribeAnalyticsToTransactions } from "@/features/analytics/services/subscribe-analytics-to-transactions";
 
 describe("analytics transaction subscription", () => {
-  it("reloads only after analytics has loaded and the transaction pages reference changes", () => {
+  it("reloads only after analytics has loaded and the transaction data revision changes", () => {
     let notify: () => void = () => undefined;
     let hasLoadedAnalytics = false;
-    let currentPages: readonly string[] = ["tx-1"];
+    let currentRevision = 0;
 
     const unsubscribe = vi.fn();
     const reload = vi.fn();
@@ -15,7 +15,7 @@ describe("analytics transaction subscription", () => {
         notify = listener;
         return unsubscribe;
       },
-      getTransactionPages: () => currentPages,
+      getTransactionDataRevision: () => currentRevision,
       hasLoadedAnalytics: () => hasLoadedAnalytics,
       reload,
     });
@@ -27,7 +27,7 @@ describe("analytics transaction subscription", () => {
     notify();
     expect(reload).not.toHaveBeenCalled();
 
-    currentPages = ["tx-1", "tx-2"];
+    currentRevision += 1;
     notify();
     expect(reload).toHaveBeenCalledTimes(1);
 

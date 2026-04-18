@@ -1,22 +1,22 @@
 type SubscribeAnalyticsToTransactionsInput = {
   readonly subscribeTransactions: (listener: () => void) => () => void;
-  readonly getTransactionPages: () => unknown;
+  readonly getTransactionDataRevision: () => number;
   readonly hasLoadedAnalytics: () => boolean;
   readonly reload: () => void;
 };
 
 export function subscribeAnalyticsToTransactions({
   subscribeTransactions,
-  getTransactionPages,
+  getTransactionDataRevision,
   hasLoadedAnalytics,
   reload,
 }: SubscribeAnalyticsToTransactionsInput): () => void {
-  let previousPages = getTransactionPages();
+  let previousRevision = getTransactionDataRevision();
 
   return subscribeTransactions(() => {
-    const currentPages = getTransactionPages();
-    if (currentPages === previousPages) return;
-    previousPages = currentPages;
+    const currentRevision = getTransactionDataRevision();
+    if (currentRevision === previousRevision) return;
+    previousRevision = currentRevision;
     if (!hasLoadedAnalytics()) return;
     reload();
   });
