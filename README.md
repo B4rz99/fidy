@@ -41,4 +41,4 @@ Fidy's persistent knowledge vault lives outside this repo on the local machine.
 - Print path: `bun run vault:path`
 - Open in Finder: `bun run vault:open`
 
-Agents doing research, ingest, or long-lived product documentation work should read `.context/fidy-vault/AGENTS.md` and update the vault there instead of adding that material to the repo.
+Agents doing research, ingest, or long-lived product documentation work should run `bun run vault:doctor` first, then read `.context/fidy-vault/AGENTS.md` and update the vault there instead of adding that material to the repo.
