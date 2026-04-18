@@ -32,8 +32,11 @@ export function deriveBudgetProgress(
   budget: { readonly id: BudgetId; readonly categoryId: CategoryId; readonly amount: CopAmount },
   spent: CopAmount
 ): BudgetProgress {
-  const percentUsed =
-    budget.amount > 0 ? Math.round((spent / budget.amount) * 100) : spent > 0 ? 100 : 0;
+  const percentUsed = (() => {
+    if (budget.amount > 0) return Math.round((spent / budget.amount) * 100);
+    if (spent > 0) return 100;
+    return 0;
+  })();
   const remaining = (budget.amount - spent) as CopAmount;
   return {
     budgetId: budget.id,
@@ -60,8 +63,11 @@ export function deriveBudgetSummary(progresses: readonly BudgetProgress[]): {
     }),
     { totalBudget: 0, totalSpent: 0 }
   );
-  const percentUsed =
-    totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : totalSpent > 0 ? 100 : 0;
+  const percentUsed = (() => {
+    if (totalBudget > 0) return Math.round((totalSpent / totalBudget) * 100);
+    if (totalSpent > 0) return 100;
+    return 0;
+  })();
   return { totalBudget, totalSpent, percentUsed };
 }
 
@@ -74,7 +80,11 @@ export function deriveBudgetSummary(progresses: readonly BudgetProgress[]): {
  *   >= 1,000,000 COP → nearest 100,000 COP
  */
 const roundUpCop = (amount: number): number => {
-  const unit = amount < 100_000 ? 1_000 : amount < 1_000_000 ? 10_000 : 100_000;
+  const unit = (() => {
+    if (amount < 100_000) return 1_000;
+    if (amount < 1_000_000) return 10_000;
+    return 100_000;
+  })();
   return Math.ceil(amount / unit) * unit;
 };
 
@@ -144,12 +154,11 @@ export function deriveBudgetAlerts(
 ): readonly BudgetAlert[] {
   return progresses.flatMap((p) => {
     // If over 100%, only show the 100% alert — the 80% alert is superseded
-    const applicableThresholds =
-      p.percentUsed >= 100
-        ? ([100] as const)
-        : p.percentUsed >= 80
-          ? ([80] as const)
-          : ([] as const);
+    const applicableThresholds = (() => {
+      if (p.percentUsed >= 100) return [100] as const;
+      if (p.percentUsed >= 80) return [80] as const;
+      return [] as const;
+    })();
     return applicableThresholds
       .filter((threshold) => !acknowledgedAlerts.has(`${p.budgetId}:${threshold}`))
       .map((threshold) => ({

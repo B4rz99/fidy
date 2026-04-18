@@ -21,6 +21,7 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
         {
           // biome-ignore lint/style/useNamingConvention: Apple plist key
           CFBundleURLSchemes: [
+            "fidy",
             "com.googleusercontent.apps.282682681790-630ti7lmdsjcm32o31m1kq50q20727pn",
           ],
         },

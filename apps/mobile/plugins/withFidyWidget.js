@@ -156,7 +156,7 @@ const reconcileBuildSettings = (project, settings) => {
   for (const uuid of configUuids) {
     const config = buildConfigs?.[uuid];
     if (typeof config === "object" && config.buildSettings) {
-      Object.assign(config.buildSettings, settings);
+      config.buildSettings = { ...config.buildSettings, ...settings };
     }
   }
 };
@@ -191,7 +191,7 @@ const addWidgetExtensionTarget = (project, config) => {
         for (const ref of configList.buildConfigurations) {
           const config = buildConfigs?.[ref.value];
           if (typeof config === "object" && config.buildSettings) {
-            Object.assign(config.buildSettings, settings);
+            config.buildSettings = { ...config.buildSettings, ...settings };
           }
         }
       }

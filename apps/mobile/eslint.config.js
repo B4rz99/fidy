@@ -33,6 +33,13 @@ module.exports = defineConfig([
     ignores: ["dist/*"],
   },
 
+  {
+    files: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],
+    rules: {
+      "prefer-object-spread": "error",
+    },
+  },
+
   // ── Type-aware parser setup ──────────────────────────────────────────
   // Note: @typescript-eslint plugin is already registered by eslint-config-expo.
   // We only need to configure the parser and parserOptions here.
@@ -77,10 +84,26 @@ module.exports = defineConfig([
         "error",
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
-      "no-implicit-coercion": "error",
       "object-shorthand": ["error", "always"],
       "no-constant-binary-expression": "error",
+      "no-self-compare": "error",
       "no-useless-catch": "error",
+      "array-callback-return": "error",
+      "no-console": "error",
+      eqeqeq: ["error", "always", { null: "ignore" }],
+      yoda: "error",
+      "no-implicit-coercion": "error",
+      curly: ["error", "multi-line"],
+      radix: "error",
+      "default-case-last": "error",
+      "no-fallthrough": "error",
+      "no-implied-eval": "error",
+      "no-else-return": "error",
+      "no-useless-return": "error",
+      "no-lonely-if": "error",
+      "no-unneeded-ternary": "error",
+      "no-nested-ternary": "error",
+      "prefer-object-has-own": "error",
 
       // — FP-mandate rules (align with CLAUDE.md) —
       "no-param-reassign": "error",
@@ -92,6 +115,8 @@ module.exports = defineConfig([
 
       // — Import rules —
       "import/no-cycle": "error",
+      "import/first": "error",
+      "no-duplicate-imports": ["error", { allowSeparateTypeImports: true }],
     },
   },
 

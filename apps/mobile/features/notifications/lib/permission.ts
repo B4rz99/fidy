@@ -28,7 +28,8 @@ export function determineAlertAction(
 ): AlertAction {
   if (!notificationsEnabled) return { type: "skip" };
   if (osPermissionStatus === "granted") return { type: "send" };
-  if (osPermissionStatus === "undetermined" && !hasSeenPrePermission)
+  if (osPermissionStatus === "undetermined" && !hasSeenPrePermission) {
     return { type: "pre_permission" };
+  }
   return { type: "skip" };
 }

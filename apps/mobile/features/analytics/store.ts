@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { useTransactionStore } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
+import { captureError } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import type {
   AnalyticsPeriod,
@@ -121,7 +122,7 @@ export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set,
 
       set({ incomeExpense, categoryBreakdown, periodDelta, isLoading: false });
     } catch (error) {
-      console.error("[analytics] loadAnalytics failed:", error);
+      captureError(error);
       set({ isLoading: false });
     }
   },

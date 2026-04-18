@@ -52,7 +52,8 @@ export const AmountEntry = () => {
 
   const amountColor = type === "expense" ? accentRed : accentGreen;
   const hasDigits = digits.length > 0;
-  const displayAmount = hasDigits ? formatInputDisplay(digits) : isFocused ? "$" : "$0";
+  const emptyDisplayAmount = isFocused ? "$" : "$0";
+  const displayAmount = hasDigits ? formatInputDisplay(digits) : emptyDisplayAmount;
   const canProceed = parseDigitsToAmount(digits) > 0;
   const buttonBg = canProceed ? accentGreen : "#CCCCCC";
 
