@@ -89,7 +89,6 @@ ensure_maintenance_worktree() {
       exit 1
     fi
 
-    git -C "$worktree_path" reset --hard "$target_head" >/dev/null
     return
   fi
 
