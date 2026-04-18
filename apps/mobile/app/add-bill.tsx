@@ -1,4 +1,5 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { useAuthStore } from "@/features/auth";
@@ -27,12 +28,14 @@ import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { parseDigitsToAmount } from "@/shared/lib";
 import type { BillId, UserId } from "@/shared/types/branded";
+import migrations from "../drizzle/migrations";
 
 function AddBillForm({
   existingBill,
   onAddBill,
   onUpdateBill,
   onDone,
+  canSubmit,
 }: {
   readonly existingBill: Bill | undefined;
   readonly onAddBill: (
@@ -49,6 +52,7 @@ function AddBillForm({
     >
   ) => Promise<boolean>;
   readonly onDone: () => void;
+  readonly canSubmit: boolean;
 }) {
   const { t, locale } = useTranslation();
   const isEdit = Boolean(existingBill);
@@ -76,6 +80,7 @@ function AddBillForm({
 
   const handleSave = () => {
     void guardedSave(async () => {
+      if (!canSubmit) return;
       const trimmedName = name.trim();
       if (!trimmedName) return;
 
@@ -226,9 +231,12 @@ function AddBillForm({
         </View>
 
         <Pressable
-          style={[styles.saveButton, { backgroundColor: accentGreen, opacity: isSaving ? 0.5 : 1 }]}
+          style={[
+            styles.saveButton,
+            { backgroundColor: accentGreen, opacity: isSaving || !canSubmit ? 0.5 : 1 },
+          ]}
           onPress={handleSave}
-          disabled={isSaving}
+          disabled={isSaving || !canSubmit}
         >
           <Text style={styles.saveButtonText}>
             {isEdit ? t("bills.saveChanges") : t("bills.add")}
@@ -244,6 +252,8 @@ export default function AddBillScreen() {
   const { billId } = useLocalSearchParams<{ billId?: string }>();
   const bills = useCalendarStore((s) => s.bills);
   const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
+  const db = userId ? getDb(userId) : null;
+  const { success: migrationsReady } = useMigrations(db ?? (undefined as never), migrations);
 
   const existingBill = billId ? bills.find((b) => b.id === billId) : undefined;
 
@@ -251,13 +261,14 @@ export default function AddBillScreen() {
     <AddBillForm
       key={existingBill?.id ?? "new"}
       existingBill={existingBill}
+      canSubmit={migrationsReady}
       onAddBill={(name, amount, frequency, categoryId, startDate) => {
-        if (!userId) return Promise.resolve(false);
-        return addBill(getDb(userId), userId, name, amount, frequency, categoryId, startDate);
+        if (!userId || !db || !migrationsReady) return Promise.resolve(false);
+        return addBill(db, userId, name, amount, frequency, categoryId, startDate);
       }}
       onUpdateBill={(id, data) => {
-        if (!userId) return Promise.resolve(false);
-        return updateBill(getDb(userId), userId, id, data);
+        if (!userId || !db || !migrationsReady) return Promise.resolve(false);
+        return updateBill(db, userId, id, data);
       }}
       onDone={() => router.back()}
     />

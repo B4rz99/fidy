@@ -47,6 +47,12 @@ describe("add-bill formSheet screen", () => {
     expect(source).toContain("if (success) onDone()");
   });
 
+  test("gates bill mutations on migration readiness", () => {
+    expect(source).toContain("useMigrations");
+    expect(source).toContain("canSubmit={migrationsReady}");
+    expect(source).toContain("!userId || !db || !migrationsReady");
+  });
+
   test("dismisses keyboard on chip press", () => {
     expect(source).toContain("Keyboard.dismiss");
   });
