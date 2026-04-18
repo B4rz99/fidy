@@ -20,25 +20,37 @@ import { StyleSheet, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useSubscription, useThemeColor } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
+import type { UserId } from "@/shared/types/branded";
 import migrations from "../../drizzle/migrations";
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const userId = useOptionalUserId();
-  const step = useOnboardingStore((s) => s.step);
   const pageBg = useThemeColor("page");
 
-  const [storesReady, setStoresReady] = useState(false);
+  if (!userId) {
+    return <View style={[styles.container, { backgroundColor: pageBg }]} />;
+  }
 
-  // Create DB for this user — useMigrations requires a non-null db,
-  // but this screen only renders when userId is set (routed from _layout.tsx)
-  const db = userId ? getDb(userId) : null;
-  const { success: migrationsReady } = useMigrations(db ?? (undefined as never), migrations);
+  return <AuthenticatedOnboardingScreen insets={insets} userId={userId} />;
+}
+
+function AuthenticatedOnboardingScreen({
+  insets,
+  userId,
+}: {
+  readonly insets: { top: number; bottom: number };
+  readonly userId: UserId;
+}) {
+  const step = useOnboardingStore((s) => s.step);
+  const pageBg = useThemeColor("page");
+  const [storesReady, setStoresReady] = useState(false);
+  const db = getDb(userId);
+  const { success: migrationsReady } = useMigrations(db, migrations);
 
   // Initialize minimal stores needed for onboarding
   useSubscription(
     () => {
-      if (!db || !userId) return;
       useEmailCaptureStore.getState().initStore(db, userId);
       useTransactionStore.getState().initStore(db, userId);
       useBudgetStore.getState().initStore(db, userId);
@@ -52,7 +64,7 @@ export default function OnboardingScreen() {
         });
     },
     [db, userId],
-    migrationsReady && db != null && userId != null && !storesReady
+    migrationsReady && !storesReady
   );
 
   // Hide splash once ready

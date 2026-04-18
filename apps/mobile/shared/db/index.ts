@@ -1,5 +1,5 @@
 export type { AnyDb } from "./client";
-export { getDb, resetDb } from "./client";
+export { getDb, resetDb, tryGetDb } from "./client";
 export type { SyncOperation, SyncQueueEntry, SyncTableName } from "./enqueue-sync";
 export { enqueueSync } from "./enqueue-sync";
 export {

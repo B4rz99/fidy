@@ -57,6 +57,7 @@ describe("useTransactionStore", () => {
       balance: 0,
       categorySpending: [],
       dailySpending: [],
+      dataRevision: 0,
       editingId: null,
     });
   });
@@ -406,6 +407,52 @@ describe("useTransactionStore", () => {
     expect(state.categorySpending).toEqual(existingCategorySpending);
     expect(state.dailySpending).toEqual(existingDailySpending);
     expect(getSpendingByCategoryAggregate).not.toHaveBeenCalled();
+  });
+
+  it("refresh increments dataRevision even when page identity is unchanged", async () => {
+    useTransactionStore.setState({
+      pages: [
+        {
+          id: "tx-1" as TransactionId,
+          userId: mockUserId,
+          type: "expense",
+          amount: 1000 as CopAmount,
+          categoryId: "food" as CategoryId,
+          description: "Lunch",
+          date: new Date("2026-03-04T00:00:00.000Z"),
+          createdAt: new Date("2026-03-04T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-04T10:00:00.000Z"),
+          deletedAt: null,
+        },
+      ],
+      offset: 1,
+      hasMore: true,
+      dataRevision: 2,
+    });
+
+    vi.mocked(getTransactionsPaginated).mockReturnValueOnce([
+      {
+        id: "tx-1" as TransactionId,
+        userId: mockUserId,
+        type: "expense",
+        amount: 1000 as CopAmount,
+        categoryId: "food" as CategoryId,
+        description: "Lunch",
+        date: "2026-03-04" as IsoDate,
+        createdAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+        updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+        deletedAt: null,
+        source: "manual",
+      },
+    ]);
+
+    await useTransactionStore.getState().refresh();
+
+    expect(useTransactionStore.getState()).toMatchObject({
+      dataRevision: 3,
+      offset: 1,
+      hasMore: false,
+    });
   });
 
   it("editTransaction hydrates edit mode from the stored transaction row", () => {

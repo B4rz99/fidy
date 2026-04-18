@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import Animated from "react-native-reanimated";
+import { useAuthStore } from "@/features/auth";
 import { handleNumpadPress } from "@/features/transactions";
 import { FidyNumpad } from "@/shared/components";
 import {
@@ -12,16 +13,18 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, parseDigitsToAmount, toIsoDate } from "@/shared/lib";
-import { useGoalStore } from "../store";
+import type { UserId } from "@/shared/types/branded";
+import { addContribution, useGoalStore } from "../store";
 
 export function AddPaymentSheet() {
   const { back } = useRouter();
   const { t } = useTranslation();
 
   const selectedGoalId = useGoalStore((s) => s.selectedGoalId);
-  const addContribution = useGoalStore((s) => s.addContribution);
+  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
 
   const cardBg = useThemeColor("card");
   const primaryColor = useThemeColor("primary");
@@ -51,10 +54,13 @@ export function AddPaymentSheet() {
     () =>
       guardedAdd(async () => {
         if (selectedGoalId == null) return;
+        if (!userId) return;
+        const db = tryGetDb(userId);
+        if (!db) return;
         const amount = parseDigitsToAmount(digits);
         if (amount <= 0) return;
 
-        const success = await addContribution({
+        const success = await addContribution(db, userId, {
           goalId: selectedGoalId,
           amount,
           note: note.trim() || undefined,
@@ -65,7 +71,7 @@ export function AddPaymentSheet() {
           back();
         }
       }),
-    [selectedGoalId, digits, note, date, addContribution, back, guardedAdd]
+    [selectedGoalId, digits, note, date, back, guardedAdd, userId]
   );
 
   return (
@@ -142,7 +148,7 @@ export function AddPaymentSheet() {
         onPress={() => {
           void handleAddPayment();
         }}
-        disabled={isAdding}
+        disabled={isAdding || userId == null}
       >
         <Text style={styles.ctaButtonText}>{t("goals.payment.addPaymentCta")}</Text>
       </Pressable>

@@ -2,7 +2,7 @@ import { getRandomBytes } from "expo-crypto";
 import { deleteItemAsync, getItem, setItem } from "expo-secure-store";
 import { openDatabaseSync } from "expo-sqlite";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getDb, resetDb } from "@/shared/db/client";
+import { getDb, resetDb, tryGetDb } from "@/shared/db/client";
 
 vi.mock("expo-sqlite", () => ({
   openDatabaseSync: vi.fn(() => ({ execSync: vi.fn(), closeSync: vi.fn() })),
@@ -125,5 +125,13 @@ describe("getDb", () => {
     expect(mockCloseSync).toHaveBeenCalled();
     expect(db2).toBeDefined();
     expect(openDatabaseSync).toHaveBeenCalledWith("fidy-user-456.db");
+  });
+
+  it("tryGetDb returns null instead of throwing when initialization fails", () => {
+    vi.mocked(openDatabaseSync).mockImplementationOnce(() => {
+      throw new Error("SQLite open failed");
+    });
+
+    expect(tryGetDb("user-123")).toBeNull();
   });
 });

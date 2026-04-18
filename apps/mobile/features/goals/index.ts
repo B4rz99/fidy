@@ -51,5 +51,12 @@ export type {
   GoalType,
 } from "./schema";
 export { addContributionSchema, createGoalSchema } from "./schema";
-export type { GoalWithProgress } from "./store";
-export { useGoalStore } from "./store";
+export { createGoalQueryService } from "./services/create-goal-query-service";
+export { subscribeGoalsToTransactions } from "./services/subscribe-goals-to-transactions";
+export {
+  initializeGoalSession,
+  loadGoalsForUser,
+  selectGoal,
+  useGoalStore,
+} from "./store";
+export type { GoalWithProgress } from "./types";
