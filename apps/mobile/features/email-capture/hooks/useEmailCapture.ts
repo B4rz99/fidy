@@ -1,27 +1,24 @@
+import { useTransactionStore } from "@/features/transactions";
 import { AppState } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
 import { useSubscription } from "@/shared/hooks";
 import { handleRecoverableError } from "@/shared/lib";
+import type { UserId } from "@/shared/types/branded";
 import { getGmailClientId, getOutlookClientId } from "../schema";
-import { useEmailCaptureStore } from "../store";
+import { fetchAndProcessEmails, loadEmailAccounts } from "../store";
 
-export function useEmailCapture(db: AnyDb | null, userId: string | null) {
+export function useEmailCapture(db: AnyDb | null, userId: UserId | null) {
   useSubscription(
     () => {
       if (!db || !userId) return;
 
-      useEmailCaptureStore.getState().initStore(db, userId);
-
       const runFetch = () => {
-        useEmailCaptureStore
-          .getState()
-          .fetchAndProcess(getGmailClientId(), getOutlookClientId())
-          .catch(handleRecoverableError("Email sync failed"));
+        fetchAndProcessEmails(db, userId, getGmailClientId(), getOutlookClientId(), () =>
+          useTransactionStore.getState().refresh()
+        ).catch(handleRecoverableError("Email sync failed"));
       };
 
-      useEmailCaptureStore
-        .getState()
-        .loadAccounts()
+      loadEmailAccounts(db, userId)
         .then(() => runFetch())
         .catch(handleRecoverableError("Email sync failed"));
 

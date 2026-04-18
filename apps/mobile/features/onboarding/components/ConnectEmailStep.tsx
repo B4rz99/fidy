@@ -1,19 +1,22 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { GoogleIcon, MicrosoftIcon, OAuthButton } from "@/features/auth";
+import { GoogleIcon, MicrosoftIcon, OAuthButton, useOptionalUserId } from "@/features/auth";
 import {
+  connectEmailAccount,
   getGmailClientId,
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { useOnboardingStore } from "../store";
 
 export function ConnectEmailStep() {
   const { t } = useTranslation();
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
   const nextStep = useOnboardingStore((s) => s.nextStep);
   const setEmailSkipped = useOnboardingStore((s) => s.setEmailSkipped);
-  const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
 
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
@@ -24,8 +27,9 @@ export function ConnectEmailStep() {
 
   const handleConnect = (provider: "gmail" | "outlook") =>
     guardedRun(async () => {
+      if (!db || !userId) return;
       const clientId = provider === "gmail" ? getGmailClientId() : getOutlookClientId();
-      await connectEmail(provider, clientId);
+      await connectEmailAccount(db, userId, provider, clientId);
       // If accounts were added, auto-advance
       const accounts = useEmailCaptureStore.getState().accounts;
       if (accounts.length > 0) {

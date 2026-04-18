@@ -12,7 +12,18 @@ import {
 } from "@/features/email-capture/lib/repository";
 import { getAdapter } from "@/features/email-capture/services/email-adapter";
 import { processEmails } from "@/features/email-capture/services/email-pipeline";
-import { useEmailCaptureStore } from "@/features/email-capture/store";
+import {
+  confirmReviewedEmail,
+  connectEmailAccount,
+  disconnectEmailAccount,
+  dismissFailedEmail,
+  fetchAndProcessEmails,
+  initializeEmailCaptureSession,
+  loadEmailAccounts,
+  loadFailedEmails,
+  loadNeedsReviewEmails,
+  useEmailCaptureStore,
+} from "@/features/email-capture/store";
 import type {
   EmailAccountId,
   IsoDateTime,
@@ -99,11 +110,6 @@ vi.mock("@/shared/db/enqueue-sync", () => ({
 }));
 
 const mockRefresh = vi.fn();
-vi.mock("@/features/transactions", () => ({
-  useTransactionStore: {
-    getState: () => ({ refresh: mockRefresh }),
-  },
-}));
 
 vi.mock("drizzle-orm", () => ({
   eq: vi.fn((...args: unknown[]) => ({ type: "eq", args })),
@@ -168,13 +174,23 @@ function makeProcessedEmail(overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe("useEmailCaptureStore", () => {
+function createDeferred<T>() {
+  let resolve: (value: T) => void = () => undefined;
+  let reject: (reason?: unknown) => void = () => undefined;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
+describe("email capture boundary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockEnsureBankSenders.mockResolvedValue([
       { bank: "Bancolombia", email: "notificaciones@bancolombia.com.co" },
     ]);
-    useEmailCaptureStore.getState().initStore(mockDb, mockUserId);
+    initializeEmailCaptureSession(mockUserId as UserId);
     useEmailCaptureStore.setState({
       accounts: [],
       failedEmails: [],
@@ -199,17 +215,33 @@ describe("useEmailCaptureStore", () => {
     const mockAccounts = [makeAccount()];
     vi.mocked(getEmailAccounts).mockResolvedValueOnce(mockAccounts);
 
-    await useEmailCaptureStore.getState().loadAccounts();
+    await loadEmailAccounts(mockDb, mockUserId as UserId);
 
     expect(getEmailAccounts).toHaveBeenCalledWith(mockDb, mockUserId);
     expect(useEmailCaptureStore.getState().accounts).toEqual(mockAccounts);
+  });
+
+  it("drops stale account results after the active user changes", async () => {
+    const deferred = createDeferred<ReturnType<typeof makeAccount>[]>();
+    vi.mocked(getEmailAccounts).mockReturnValueOnce(deferred.promise);
+
+    const load = loadEmailAccounts(mockDb, mockUserId as UserId);
+    initializeEmailCaptureSession("user-2" as UserId);
+    deferred.resolve([makeAccount()]);
+
+    await load;
+
+    expect(useEmailCaptureStore.getState()).toMatchObject({
+      activeUserId: "user-2",
+      accounts: [],
+    });
   });
 
   it("loadFailedEmails fetches from DB and sets state", async () => {
     const mockFailed = [makeProcessedEmail({ failureReason: "parse error", subject: "Compra" })];
     vi.mocked(getFailedEmails).mockResolvedValueOnce(mockFailed);
 
-    await useEmailCaptureStore.getState().loadFailedEmails();
+    await loadFailedEmails(mockDb, mockUserId as UserId);
 
     expect(getFailedEmails).toHaveBeenCalledWith(mockDb);
     expect(useEmailCaptureStore.getState().failedEmails).toEqual(mockFailed);
@@ -229,7 +261,7 @@ describe("useEmailCaptureStore", () => {
     ];
     vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce(mockReview);
 
-    await useEmailCaptureStore.getState().loadNeedsReview();
+    await loadNeedsReviewEmails(mockDb, mockUserId as UserId);
 
     expect(getNeedsReviewEmails).toHaveBeenCalledWith(mockDb);
     expect(useEmailCaptureStore.getState().needsReviewEmails).toEqual(mockReview);
@@ -245,7 +277,7 @@ describe("useEmailCaptureStore", () => {
       failedEmails: [makeProcessedEmail()],
     });
 
-    await useEmailCaptureStore.getState().dismissFailedEmail("pe-1");
+    await dismissFailedEmail(mockDb, mockUserId as UserId, "pe-1");
 
     expect(dismissProcessedEmail).toHaveBeenCalledWith(mockDb, "pe-1");
     expect(useEmailCaptureStore.getState().failedEmails).toHaveLength(0);
@@ -257,7 +289,7 @@ describe("useEmailCaptureStore", () => {
       email: "user@gmail.com",
     });
 
-    await useEmailCaptureStore.getState().connectEmail("gmail", "client-id");
+    await connectEmailAccount(mockDb, mockUserId as UserId, "gmail", "client-id");
 
     expect(getAdapter).toHaveBeenCalledWith("gmail");
     expect(mockAdapter.connect).toHaveBeenCalledWith("client-id");
@@ -278,7 +310,7 @@ describe("useEmailCaptureStore", () => {
       email: "user@outlook.com",
     });
 
-    await useEmailCaptureStore.getState().connectEmail("outlook", "client-id");
+    await connectEmailAccount(mockDb, mockUserId as UserId, "outlook", "client-id");
 
     expect(getAdapter).toHaveBeenCalledWith("outlook");
     expect(mockAdapter.connect).toHaveBeenCalledWith("client-id");
@@ -292,7 +324,7 @@ describe("useEmailCaptureStore", () => {
       error: "cancelled",
     });
 
-    await useEmailCaptureStore.getState().connectEmail("gmail", "client-id");
+    await connectEmailAccount(mockDb, mockUserId as UserId, "gmail", "client-id");
 
     expect(insertEmailAccount).not.toHaveBeenCalled();
     expect(useEmailCaptureStore.getState().accounts).toHaveLength(0);
@@ -309,7 +341,7 @@ describe("useEmailCaptureStore", () => {
       email: "user@gmail.com",
     });
 
-    await useEmailCaptureStore.getState().connectEmail("gmail", "client-id");
+    await connectEmailAccount(mockDb, mockUserId as UserId, "gmail", "client-id");
 
     // Should NOT insert a duplicate account
     expect(insertEmailAccount).not.toHaveBeenCalled();
@@ -321,7 +353,7 @@ describe("useEmailCaptureStore", () => {
       accounts: [makeAccount()],
     });
 
-    await useEmailCaptureStore.getState().disconnectEmail("ea-1");
+    await disconnectEmailAccount(mockDb, mockUserId as UserId, "ea-1");
 
     expect(getAdapter).toHaveBeenCalledWith("gmail");
     expect(mockAdapter.disconnect).toHaveBeenCalled();
@@ -334,7 +366,7 @@ describe("useEmailCaptureStore", () => {
       accounts: [makeAccount({ provider: "legacy-provider" })],
     });
 
-    await useEmailCaptureStore.getState().disconnectEmail("ea-1");
+    await disconnectEmailAccount(mockDb, mockUserId as UserId, "ea-1");
 
     expect(getAdapter).not.toHaveBeenCalled();
     expect(mockAdapter.disconnect).not.toHaveBeenCalled();
@@ -370,7 +402,13 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
       vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
-      await useEmailCaptureStore.getState().fetchAndProcess("gmail-client-id", "outlook-client-id");
+      await fetchAndProcessEmails(
+        mockDb,
+        mockUserId as UserId,
+        "gmail-client-id",
+        "outlook-client-id",
+        mockRefresh
+      );
 
       expect(mockEnsureBankSenders).toHaveBeenCalledTimes(1);
       expect(mockAdapter.fetchEmails).toHaveBeenCalled();
@@ -388,7 +426,13 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
       vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
-      await useEmailCaptureStore.getState().fetchAndProcess("gmail-client-id", "outlook-client-id");
+      await fetchAndProcessEmails(
+        mockDb,
+        mockUserId as UserId,
+        "gmail-client-id",
+        "outlook-client-id",
+        mockRefresh
+      );
 
       expect(getAdapter).toHaveBeenCalledWith("outlook");
       expect(mockAdapter.fetchEmails).toHaveBeenCalled();
@@ -403,7 +447,7 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
       vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
-      const promise = useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+      const promise = fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
       expect(useEmailCaptureStore.getState().isFetching).toBe(true);
 
       await promise;
@@ -411,10 +455,8 @@ describe("useEmailCaptureStore", () => {
     });
 
     it("does nothing when db or userId is not set", async () => {
-      // biome-ignore lint/suspicious/noExplicitAny: mock db needs flexible typing
-      useEmailCaptureStore.getState().initStore(null as any, null as any);
-
-      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+      initializeEmailCaptureSession("user-2" as UserId);
+      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
 
       expect(mockAdapter.fetchEmails).not.toHaveBeenCalled();
     });
@@ -425,7 +467,7 @@ describe("useEmailCaptureStore", () => {
         accounts: [makeAccount()],
       });
 
-      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
 
       expect(mockAdapter.fetchEmails).not.toHaveBeenCalled();
     });
@@ -444,7 +486,7 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
       vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
-      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
 
       expect(mockAdapter.fetchEmails).toHaveBeenCalledTimes(2);
       expect(useEmailCaptureStore.getState().isFetching).toBe(false);
@@ -477,7 +519,13 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
       vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
-      await useEmailCaptureStore.getState().fetchAndProcess("gmail-client-id", "outlook-client-id");
+      await fetchAndProcessEmails(
+        mockDb,
+        mockUserId as UserId,
+        "gmail-client-id",
+        "outlook-client-id",
+        mockRefresh
+      );
 
       expect(processEmails).toHaveBeenCalledWith(
         mockDb,
@@ -520,7 +568,7 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
       vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
-      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
 
       expect(phases).toContain("processing");
       expect(useEmailCaptureStore.getState().phase).toBe("complete");
@@ -560,7 +608,7 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
       vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
-      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
 
       expect(useEmailCaptureStore.getState().phase).toBeNull();
     });
@@ -574,7 +622,7 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
       vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
-      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
 
       const updatedAccount = useEmailCaptureStore.getState().accounts[0]!;
       expect(updatedAccount.lastFetchedAt).not.toBeNull();
@@ -609,7 +657,7 @@ describe("useEmailCaptureStore", () => {
         vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
         vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
-        await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+        await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
 
         // Phase should be "complete" immediately after
         expect(useEmailCaptureStore.getState().phase).toBe("complete");
@@ -649,7 +697,7 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
       vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
-      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
 
       expect(useEmailCaptureStore.getState().phase).toBe("complete");
       expect(useEmailCaptureStore.getState().isFetching).toBe(false);
@@ -687,7 +735,7 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
       vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
-      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
 
       expect(phases).toContain("processing");
     });
@@ -701,7 +749,7 @@ describe("useEmailCaptureStore", () => {
       vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
       vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
 
-      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
 
       expect(useEmailCaptureStore.getState().phase).toBe("complete");
       expect(useEmailCaptureStore.getState().progress).toEqual(
@@ -727,11 +775,58 @@ describe("useEmailCaptureStore", () => {
       ]);
       vi.mocked(processEmails).mockRejectedValueOnce(new Error("pipeline crash"));
 
-      await useEmailCaptureStore.getState().fetchAndProcess("g", "o");
+      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
 
       expect(useEmailCaptureStore.getState().phase).toBeNull();
       expect(useEmailCaptureStore.getState().progress).toBeNull();
       expect(useEmailCaptureStore.getState().isFetching).toBe(false);
+    });
+
+    it("drops stale fetch completions after the active user changes", async () => {
+      const deferred =
+        createDeferred<
+          readonly [
+            {
+              readonly externalId: string;
+              readonly from: string;
+              readonly subject: string;
+              readonly body: string;
+              readonly receivedAt: string;
+              readonly provider: "gmail";
+            },
+          ]
+        >();
+      useEmailCaptureStore.setState({
+        accounts: [makeAccount()],
+      });
+      mockAdapter.fetchEmails.mockReturnValueOnce(deferred.promise);
+
+      const fetch = fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
+      expect(useEmailCaptureStore.getState().isFetching).toBe(true);
+
+      initializeEmailCaptureSession("user-2" as UserId);
+      deferred.resolve([
+        {
+          externalId: "ext-1",
+          from: "b@b.com",
+          subject: "A",
+          body: "b",
+          receivedAt: "2026-03-10T00:00:00Z",
+          provider: "gmail",
+        },
+      ]);
+
+      await fetch;
+
+      expect(useEmailCaptureStore.getState()).toMatchObject({
+        activeUserId: "user-2",
+        accounts: [],
+        failedEmails: [],
+        needsReviewEmails: [],
+        isFetching: false,
+        phase: null,
+        progress: null,
+      });
     });
   });
 
@@ -748,7 +843,7 @@ describe("useEmailCaptureStore", () => {
         ],
       });
 
-      await useEmailCaptureStore.getState().confirmReview("pe-1", "food");
+      await confirmReviewedEmail(mockDb, mockUserId as UserId, "pe-1", "food", mockRefresh);
 
       expect(updateProcessedEmailStatus).toHaveBeenCalledWith(mockDb, "pe-1", "success", "tx-1");
       expect(useEmailCaptureStore.getState().needsReviewEmails).toHaveLength(0);
@@ -767,7 +862,7 @@ describe("useEmailCaptureStore", () => {
     it("does nothing when processed email not found", async () => {
       useEmailCaptureStore.setState({ needsReviewEmails: [] });
 
-      await useEmailCaptureStore.getState().confirmReview("nonexistent", "food");
+      await confirmReviewedEmail(mockDb, mockUserId as UserId, "nonexistent", "food");
 
       expect(updateProcessedEmailStatus).not.toHaveBeenCalled();
     });

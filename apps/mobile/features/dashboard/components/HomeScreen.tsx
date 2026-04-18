@@ -1,7 +1,9 @@
 import { Stack, useRouter } from "expo-router";
 import { memo, useCallback, useMemo } from "react";
+import { useOptionalUserId } from "@/features/auth";
 import { DetectedTransactionsBanner } from "@/features/capture-sources";
 import {
+  connectEmailAccount,
   EmailConnectBanner,
   FailedEmailsBanner,
   getGmailClientId,
@@ -20,6 +22,7 @@ import {
 import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
 import { Ellipsis } from "@/shared/components/icons";
 import { Alert, FlatList, Platform, Text, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { formatSignedMoney, toIsoDate } from "@/shared/lib";
@@ -85,14 +88,17 @@ const ListHeader = memo(function ListHeader({
   dailySpending,
 }: ListHeaderProps) {
   const { push } = useRouter();
-  const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
+  const userId = useOptionalUserId();
 
   return (
     <View className="gap-4 px-4">
       <EmailConnectBanner
         onConnect={(provider) => {
+          if (!userId) return;
+          const db = tryGetDb(userId);
+          if (!db) return;
           const clientId = provider === "gmail" ? getGmailClientId() : getOutlookClientId();
-          void connectEmail(provider, clientId);
+          void connectEmailAccount(db, userId, provider, clientId);
         }}
       />
       <FailedEmailsBanner onPress={() => push("/failed-emails" as never)} />

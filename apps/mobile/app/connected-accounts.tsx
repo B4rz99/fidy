@@ -1,8 +1,11 @@
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "expo-router";
 import Animated from "react-native-reanimated";
+import { useOptionalUserId } from "@/features/auth";
 import { ApplePaySetupCard, NotificationSetupCard } from "@/features/capture-sources";
 import {
+  connectEmailAccount,
+  disconnectEmailAccount,
   getGmailClientId,
   getOutlookClientId,
   useEmailCaptureStore,
@@ -10,16 +13,17 @@ import {
 import { ScreenLayout } from "@/shared/components";
 import { Mail } from "@/shared/components/icons";
 import { Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { usePulsingOpacity, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 
 export default function ConnectedAccountsScreen() {
   const { back } = useRouter();
   const { t } = useTranslation();
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
   const accounts = useEmailCaptureStore((s) => s.accounts);
   const isFetching = useEmailCaptureStore((s) => s.isFetching);
-  const connectEmail = useEmailCaptureStore((s) => s.connectEmail);
-  const disconnectEmail = useEmailCaptureStore((s) => s.disconnectEmail);
 
   const gmailAccount = accounts.find((a) => a.provider === "gmail");
   const outlookAccount = accounts.find((a) => a.provider === "outlook");
@@ -42,10 +46,12 @@ export default function ConnectedAccountsScreen() {
             account={gmailAccount}
             isSyncing={isFetching && Boolean(gmailAccount)}
             onConnect={() => {
-              void connectEmail("gmail", getGmailClientId());
+              if (!db || !userId) return;
+              void connectEmailAccount(db, userId, "gmail", getGmailClientId());
             }}
             onDisconnect={() => {
-              if (gmailAccount) void disconnectEmail(gmailAccount.id);
+              if (!db || !userId || !gmailAccount) return;
+              void disconnectEmailAccount(db, userId, gmailAccount.id);
             }}
           />
 
@@ -54,10 +60,12 @@ export default function ConnectedAccountsScreen() {
             account={outlookAccount}
             isSyncing={isFetching && Boolean(outlookAccount)}
             onConnect={() => {
-              void connectEmail("outlook", getOutlookClientId());
+              if (!db || !userId) return;
+              void connectEmailAccount(db, userId, "outlook", getOutlookClientId());
             }}
             onDisconnect={() => {
-              if (outlookAccount) void disconnectEmail(outlookAccount.id);
+              if (!db || !userId || !outlookAccount) return;
+              void disconnectEmailAccount(db, userId, outlookAccount.id);
             }}
           />
 
