@@ -1,5 +1,6 @@
 // https://docs.expo.dev/guides/using-eslint/
 const { defineConfig } = require("eslint/config");
+const boundaries = require("eslint-plugin-boundaries");
 const expoConfig = require("eslint-config-expo/flat");
 const tseslint = require("typescript-eslint");
 
@@ -57,6 +58,9 @@ module.exports = defineConfig([
   // ── Strict rules (all TS files) ─────────────────────────────────────
   {
     files: ["**/*.ts", "**/*.tsx"],
+    plugins: {
+      boundaries,
+    },
     rules: {
       // — Type-aware rules (highest value) —
       "@typescript-eslint/no-floating-promises": "error",
