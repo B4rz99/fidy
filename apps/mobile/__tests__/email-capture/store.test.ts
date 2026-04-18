@@ -80,10 +80,18 @@ vi.mock("@/features/email-capture/lib/progress-phases", () => ({
     mockShouldShowProgress(...(args as [number, boolean, number])),
 }));
 
-vi.mock("@/features/email-capture/services/bank-senders-cache", () => ({
-  fetchBankSenders: vi
+const { mockEnsureBankSenders } = vi.hoisted(() => ({
+  mockEnsureBankSenders: vi
     .fn()
     .mockResolvedValue([{ bank: "Bancolombia", email: "notificaciones@bancolombia.com.co" }]),
+}));
+
+vi.mock("@/features/email-capture/queries/bank-senders", () => ({
+  ensureBankSenders: mockEnsureBankSenders,
+}));
+
+vi.mock("@/shared/query", () => ({
+  queryClient: { ensureQueryData: vi.fn(), getQueryData: vi.fn() },
 }));
 
 vi.mock("@/shared/db/enqueue-sync", () => ({
@@ -163,6 +171,9 @@ function makeProcessedEmail(overrides: Record<string, unknown> = {}) {
 describe("useEmailCaptureStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockEnsureBankSenders.mockResolvedValue([
+      { bank: "Bancolombia", email: "notificaciones@bancolombia.com.co" },
+    ]);
     useEmailCaptureStore.getState().initStore(mockDb, mockUserId);
     useEmailCaptureStore.setState({
       accounts: [],
@@ -361,6 +372,7 @@ describe("useEmailCaptureStore", () => {
 
       await useEmailCaptureStore.getState().fetchAndProcess("gmail-client-id", "outlook-client-id");
 
+      expect(mockEnsureBankSenders).toHaveBeenCalledTimes(1);
       expect(mockAdapter.fetchEmails).toHaveBeenCalled();
       expect(processEmails).toHaveBeenCalled();
       expect(updateLastFetchedAt).toHaveBeenCalled();

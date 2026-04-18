@@ -1,5 +1,11 @@
 import { useCallback, useState } from "react";
-import { ChatScreen, ConversationList, cancelActiveStream, useChatStore } from "@/features/ai-chat";
+import {
+  ChatScreen,
+  ConversationList,
+  cancelActiveStream,
+  useChatStore,
+  useExtractUserMemoriesMutation,
+} from "@/features/ai-chat";
 import { captureError } from "@/shared/lib";
 import type { ChatSessionId } from "@/shared/types/branded";
 
@@ -8,7 +14,8 @@ type AiView = "list" | "chat";
 export default function AiTab() {
   const [view, setView] = useState<AiView>("list");
   const selectSession = useChatStore((s) => s.selectSession);
-  const extractAndSaveMemories = useChatStore((s) => s.extractAndSaveMemories);
+  const messages = useChatStore((s) => s.messages);
+  const extractUserMemories = useExtractUserMemoriesMutation();
 
   const handleSelectSession = useCallback(
     async (id: ChatSessionId) => {
@@ -25,9 +32,15 @@ export default function AiTab() {
 
   const handleBackFromChat = useCallback(() => {
     cancelActiveStream();
-    extractAndSaveMemories().catch(captureError);
+
+    if (messages.length >= 2) {
+      extractUserMemories
+        .mutateAsync(messages.map((message) => ({ role: message.role, content: message.content })))
+        .catch(captureError);
+    }
+
     setView("list");
-  }, [extractAndSaveMemories]);
+  }, [extractUserMemories, messages]);
 
   switch (view) {
     case "chat":

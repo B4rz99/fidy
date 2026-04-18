@@ -13,6 +13,7 @@ import {
   normalizeMerchant,
   toIsoDateTime,
 } from "@/shared/lib";
+import { queryClient } from "@/shared/query";
 import { assertEmailAccountId, assertUserId } from "@/shared/types/assertions";
 import type { UserId } from "@/shared/types/branded";
 import { insertMerchantRule } from "./lib/merchant-rules";
@@ -31,8 +32,8 @@ import {
 } from "./lib/repository";
 import type { ProgressCallback } from "./pipeline.public";
 import { processEmails, processRetries } from "./pipeline.public";
+import { ensureBankSenders } from "./queries/bank-senders";
 import type { EmailProvider, RawEmail } from "./schema";
-import { fetchBankSenders } from "./services/bank-senders-cache";
 import { getAdapter } from "./services/email-adapter";
 
 let dbRef: AnyDb | null = null;
@@ -191,7 +192,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
         return;
       }
 
-      const senders = await fetchBankSenders();
+      const senders = await ensureBankSenders(queryClient);
       const senderEmails = senders.map((s) => s.email);
 
       // Always look back at least 30 days; dedup by externalId prevents re-processing
