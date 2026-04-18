@@ -96,9 +96,3 @@ New derivation/pure functions get direct unit tests with fixture data. File-sour
 - Navigation: Expo Router — screens in `app/`, modals as top-level routes
 - Data fetching: TanStack Query for server data, Zustand for local/derived state
 - Functional programming: pure functions in `lib/`, side effects in stores/hooks only
-
-## Vaults
-
-This project uses two external vaults configured through local environment variables:
-- `OBARBOZA_VAULT_PATH` — global, cross-project context and working preferences
-- `FIDY_VAULT_PATH` — Fidy project memory and session updates
