@@ -1,19 +1,23 @@
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { useShallow } from "zustand/react/shallow";
+import { useOptionalUserId } from "@/features/auth";
 import { Calendar, ChevronLeft } from "@/shared/components/icons";
 import { Pressable, Text, TextInput, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { formatInputDisplay, trackTransactionCreated } from "@/shared/lib";
 import { CATEGORIES } from "../lib/categories";
 import { getDateLabel } from "../lib/format-date";
-import { useTransactionStore } from "../store";
+import { saveCurrentTransaction, useTransactionStore } from "../store";
 import { CategoryPill } from "./CategoryPill";
 
 export const TransactionDetails = () => {
   const { back } = useRouter();
   const { t, locale } = useTranslation();
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
   const {
     type,
     digits,
@@ -23,7 +27,6 @@ export const TransactionDetails = () => {
     setStep,
     setCategoryId,
     setDescription,
-    saveTransaction,
     resetForm,
   } = useTransactionStore(
     useShallow((s) => ({
@@ -35,7 +38,6 @@ export const TransactionDetails = () => {
       setStep: s.setStep,
       setCategoryId: s.setCategoryId,
       setDescription: s.setDescription,
-      saveTransaction: s.saveTransaction,
       resetForm: s.resetForm,
     }))
   );
@@ -55,7 +57,8 @@ export const TransactionDetails = () => {
 
   const handleSave = () =>
     guardedSave(async () => {
-      const result = await saveTransaction();
+      if (!db || !userId) return;
+      const result = await saveCurrentTransaction(db, userId);
       if (result.success) {
         trackTransactionCreated({
           type,

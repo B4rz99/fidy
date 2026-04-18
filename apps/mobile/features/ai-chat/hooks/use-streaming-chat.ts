@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth";
-import { useTransactionStore } from "@/features/transactions";
+import { saveCurrentTransaction, useTransactionStore } from "@/features/transactions";
 import { tryGetDb } from "@/shared/db";
 import {
   captureWarning,
@@ -37,39 +37,43 @@ export function useStreamingChat() {
   const isStreaming = useChatStore((s) => s.isStreaming);
   const streamingContent = useChatStore((s) => s.streamingContent);
 
-  const executeAction = useCallback(async (action: ChatAction) => {
-    switch (action.type) {
-      case "add": {
-        const store = useTransactionStore.getState();
-        store.setType(action.data.type);
-        store.setDigits(String(action.data.amount));
-        store.setCategoryId(action.data.categoryId);
-        store.setDescription(action.data.description);
-        store.setDate(parseIsoDate(action.data.date));
-        try {
-          const result = await store.saveTransaction();
-          if (result.success) {
-            trackTransactionCreated({
-              type: action.data.type,
-              category: String(action.data.categoryId),
-              source: "ai_chat",
-            });
+  const executeAction = useCallback(
+    async (action: ChatAction) => {
+      switch (action.type) {
+        case "add": {
+          const store = useTransactionStore.getState();
+          if (!db || !userId) return;
+          store.setType(action.data.type);
+          store.setDigits(String(action.data.amount));
+          store.setCategoryId(action.data.categoryId);
+          store.setDescription(action.data.description);
+          store.setDate(parseIsoDate(action.data.date));
+          try {
+            const result = await saveCurrentTransaction(db, userId);
+            if (result.success) {
+              trackTransactionCreated({
+                type: action.data.type,
+                category: String(action.data.categoryId),
+                source: "ai_chat",
+              });
+            }
+          } finally {
+            store.resetForm();
           }
-        } finally {
-          store.resetForm();
+          break;
         }
-        break;
+        case "edit": {
+          // Edit not yet fully wired
+          break;
+        }
+        case "delete": {
+          // Delete handled via updateActionStatus flow in ChatScreen
+          break;
+        }
       }
-      case "edit": {
-        // Edit not yet fully wired
-        break;
-      }
-      case "delete": {
-        // Delete handled via updateActionStatus flow in ChatScreen
-        break;
-      }
-    }
-  }, []);
+    },
+    [db, userId]
+  );
 
   const sendMessage = useCallback(
     async (text: string) => {

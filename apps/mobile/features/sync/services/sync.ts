@@ -1,7 +1,8 @@
 // biome-ignore-all lint/style/useNamingConvention: snake_case matches Supabase Postgres column names
-import { upsertTransaction, useTransactionStore } from "@/features/transactions";
+import { refreshTransactions, upsertTransaction } from "@/features/transactions";
 import { enqueueSync, getSupabase } from "@/shared/db";
 import { generateSyncQueueId } from "@/shared/lib";
+import type { UserId } from "@/shared/types/branded";
 import {
   getUnresolvedConflicts,
   resolveConflict as resolveConflictDb,
@@ -23,8 +24,8 @@ const syncService = createSyncService({
   getSupabase,
   syncPull,
   syncPush,
-  refreshTransactions: async () => {
-    await useTransactionStore.getState().refresh();
+  refreshTransactions: async ({ db, userId }) => {
+    await refreshTransactions(db, userId as UserId);
   },
   getConflictRows: async ({ db }) => getUnresolvedConflicts(db),
   upsertTransaction: async (db, row) => {

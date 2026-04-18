@@ -29,6 +29,10 @@ type EnqueueTransactionSync = (
   transactionId: string,
   createdAt: IsoDateTime
 ) => void | Promise<void>;
+type RefreshTransactions = (input: {
+  readonly db: SyncContext["db"];
+  readonly userId: string;
+}) => Promise<void>;
 type ResolveConflictRow = (
   db: SyncContext["db"],
   conflictId: ResolveTransactionConflictInput["conflictId"],
@@ -41,7 +45,7 @@ type CreateSyncServiceDeps = {
   readonly getSupabase: () => SupabaseClient;
   readonly syncPull: SyncPull;
   readonly syncPush: SyncPush;
-  readonly refreshTransactions: () => Promise<void>;
+  readonly refreshTransactions: RefreshTransactions;
   readonly getConflictRows: (input: SyncContext) => Promise<readonly ConflictRow[]>;
   readonly upsertTransaction: UpsertTransaction;
   readonly enqueueTransactionSync: EnqueueTransactionSync;
@@ -97,14 +101,16 @@ export function createSyncService({
 
           const resolvedAt = toIsoDateTime(new Date());
 
+          const localData = JSON.parse(row.localData) as TransactionSnapshot;
+          const refreshUserId = localData.userId;
+
           if (resolution === "local") {
-            const localData = JSON.parse(row.localData) as TransactionSnapshot;
             yield* fromThunk(() => upsertTransaction(db, { ...localData, updatedAt: resolvedAt }));
             yield* fromThunk(() => enqueueTransactionSync(db, row.transactionId, resolvedAt));
           }
 
           yield* fromThunk(() => resolveConflictRow(db, conflictId, resolution, resolvedAt));
-          yield* fromThunk(refreshTransactions);
+          yield* fromThunk(() => refreshTransactions({ db, userId: refreshUserId }));
 
           return {
             unresolvedConflicts: (yield* fromThunk(() => listConflicts({ db }))).length,
@@ -128,7 +134,7 @@ export function createSyncService({
           const pullOk = yield* fromThunk(() => syncPull(db, supabase, userId));
           if (pullOk) {
             yield* fromThunk(() => syncPush(db, supabase, userId));
-            yield* fromThunk(refreshTransactions);
+            yield* fromThunk(() => refreshTransactions({ db, userId }));
           }
 
           return {

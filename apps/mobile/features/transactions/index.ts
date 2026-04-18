@@ -30,4 +30,18 @@ export {
 } from "./lib/repository";
 export type { CreateTransactionInput, StoredTransaction, TransactionType } from "./schema";
 export { categoryIdSchema } from "./schema";
-export { useTransactionStore } from "./store";
+export {
+  deleteTransaction,
+  getStoredTransactionById,
+  initializeTransactionSession,
+  loadInitialTransactions,
+  loadNextTransactions,
+  loadTransactionAggregates,
+  loadTransactionIntoForm,
+  refreshTransactions,
+  removeTransaction,
+  saveCurrentTransaction,
+  updateCurrentTransaction,
+  updateTransactionDirect,
+  useTransactionStore,
+} from "./store";

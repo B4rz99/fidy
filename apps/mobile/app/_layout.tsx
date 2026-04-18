@@ -66,7 +66,11 @@ import {
 } from "@/features/onboarding";
 import { useSettingsStore } from "@/features/settings";
 import { loadSyncConflicts, useSync } from "@/features/sync";
-import { useTransactionStore } from "@/features/transactions";
+import {
+  initializeTransactionSession,
+  loadInitialTransactions,
+  useTransactionStore,
+} from "@/features/transactions";
 import { ErrorFallback } from "@/shared/components";
 import { Platform, useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
@@ -103,7 +107,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
 
   useSubscription(
     () => {
-      useTransactionStore.getState().initStore(db, userId);
+      initializeTransactionSession(userId);
       initializeEmailCaptureSession(userId);
       initializeChatSession(userId);
       initializeCalendarSession(userId);
@@ -125,10 +129,9 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       hydrateCaptureSources(db, userId).catch(
         handleRecoverableError("Failed to load capture sources")
       );
-      useTransactionStore
-        .getState()
-        .loadInitialPage()
-        .catch(handleRecoverableError("Failed to load transactions"));
+      loadInitialTransactions(db, userId).catch(
+        handleRecoverableError("Failed to load transactions")
+      );
       void loadSyncConflicts(db);
       useSettingsStore
         .getState()

@@ -1,4 +1,4 @@
-import { useTransactionStore } from "@/features/transactions";
+import { refreshTransactions } from "@/features/transactions";
 import { AppState } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
 import { useSubscription } from "@/shared/hooks";
@@ -14,7 +14,7 @@ export function useEmailCapture(db: AnyDb | null, userId: UserId | null) {
 
       const runFetch = () => {
         fetchAndProcessEmails(db, userId, getGmailClientId(), getOutlookClientId(), () =>
-          useTransactionStore.getState().refresh()
+          refreshTransactions(db, userId)
         ).catch(handleRecoverableError("Email sync failed"));
       };
 

@@ -1,23 +1,19 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: sync boundary test uses flexible mock ports
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const refreshMock = vi.fn();
 const mockGetSupabase = vi.fn();
 const mockIsOnline = vi.fn();
 const mockSyncPull = vi.fn();
 const mockSyncPush = vi.fn();
 const mockGetUnresolvedConflicts = vi.fn();
+const mockRefreshTransactions = vi.fn();
 
 vi.mock("@/shared/db", () => ({
   getSupabase: (...args: any[]) => mockGetSupabase(...args),
 }));
 
 vi.mock("@/features/transactions", () => ({
-  useTransactionStore: {
-    getState: () => ({
-      refresh: refreshMock,
-    }),
-  },
+  refreshTransactions: (...args: any[]) => mockRefreshTransactions(...args),
 }));
 
 vi.mock("@/features/sync/services/networkMonitor", () => ({
@@ -41,6 +37,7 @@ describe("sync module", () => {
     mockSyncPull.mockResolvedValue(true);
     mockSyncPush.mockResolvedValue(undefined);
     mockGetUnresolvedConflicts.mockReturnValue([]);
+    mockRefreshTransactions.mockResolvedValue(undefined);
   });
 
   it("syncs by pulling first, then pushing queued rows when online", async () => {
@@ -52,7 +49,7 @@ describe("sync module", () => {
     expect(mockIsOnline).toHaveBeenCalled();
     expect(mockSyncPull).toHaveBeenCalledWith(db, expect.any(Object), "user-1");
     expect(mockSyncPush).toHaveBeenCalledWith(db, expect.any(Object), "user-1");
-    expect(refreshMock).toHaveBeenCalledTimes(1);
+    expect(mockRefreshTransactions).toHaveBeenCalledTimes(1);
     expect(result.status).toBe("synced");
     expect(result.unresolvedConflicts).toBe(0);
   });
@@ -66,7 +63,7 @@ describe("sync module", () => {
 
     expect(mockSyncPull).not.toHaveBeenCalled();
     expect(mockSyncPush).not.toHaveBeenCalled();
-    expect(refreshMock).not.toHaveBeenCalled();
+    expect(mockRefreshTransactions).not.toHaveBeenCalled();
     expect(result.status).toBe("skipped_offline");
   });
 

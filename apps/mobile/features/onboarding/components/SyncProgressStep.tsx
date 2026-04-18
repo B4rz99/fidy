@@ -7,7 +7,7 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture";
-import { useTransactionStore } from "@/features/transactions";
+import { refreshTransactions, useTransactionStore } from "@/features/transactions";
 import { ProgressBar } from "@/shared/components";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -41,7 +41,7 @@ export function SyncProgressStep() {
     if (accounts.length > 0 && !fetchStarted.current && db && userId) {
       fetchStarted.current = true;
       void fetchAndProcessEmails(db, userId, getGmailClientId(), getOutlookClientId(), () =>
-        useTransactionStore.getState().refresh()
+        refreshTransactions(db, userId)
       );
     }
   });
