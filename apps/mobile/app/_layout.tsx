@@ -16,7 +16,12 @@ import { StatusBar } from "expo-status-bar";
 import { useMemo } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useChatStore } from "@/features/ai-chat";
-import { useAnalyticsStore } from "@/features/analytics";
+import {
+  initializeAnalyticsSession,
+  loadAnalyticsForUser,
+  subscribeAnalyticsToTransactions,
+  useAnalyticsStore,
+} from "@/features/analytics";
 import { useAuthStore } from "@/features/auth";
 import { registerBackgroundTask } from "@/features/background-fetch";
 import { useBudgetStore } from "@/features/budget";
@@ -82,7 +87,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       useCalendarStore.getState().initStore(db, userId);
       useBudgetStore.getState().initStore(db, userId);
       useGoalStore.getState().initStore(db, userId);
-      useAnalyticsStore.getState().initStore(db, userId);
+      initializeAnalyticsSession(userId);
       void initializeNotificationStore(db, userId);
       Promise.all([
         useCalendarStore.getState().loadBills(),
@@ -93,10 +98,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
         .loadBudgets()
         .catch(handleRecoverableError("Failed to load budgets"));
       useGoalStore.getState().loadGoals().catch(handleRecoverableError("Failed to load goals"));
-      useAnalyticsStore
-        .getState()
-        .loadAnalytics()
-        .catch(handleRecoverableError("Failed to load analytics"));
+      loadAnalyticsForUser(db, userId).catch(handleRecoverableError("Failed to load analytics"));
       refreshCategories(db, userId).catch(handleRecoverableError("Failed to load user categories"));
       useChatStore
         .getState()
@@ -117,6 +119,22 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
         .catch(handleRecoverableError("Failed to hydrate settings"));
       void registerBackgroundTask().catch(captureError);
     },
+    [db, userId],
+    migrationsReady
+  );
+
+  useSubscription(
+    () =>
+      subscribeAnalyticsToTransactions({
+        subscribeTransactions: useTransactionStore.subscribe,
+        getTransactionPages: () => useTransactionStore.getState().pages,
+        hasLoadedAnalytics: () => useAnalyticsStore.getState().incomeExpense !== null,
+        reload: () => {
+          void loadAnalyticsForUser(db, userId).catch(
+            handleRecoverableError("Failed to load analytics")
+          );
+        },
+      }),
     [db, userId],
     migrationsReady
   );

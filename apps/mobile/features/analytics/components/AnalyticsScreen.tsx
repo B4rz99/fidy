@@ -1,10 +1,13 @@
-import { memo } from "react";
+import { memo, useCallback } from "react";
+import { useAuthStore } from "@/features/auth";
 import type { ViewStyle } from "@/shared/components/rn";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { getDb } from "@/shared/db";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
+import type { UserId } from "@/shared/types/branded";
 import type { AnalyticsPeriod } from "../lib/derive";
-import { useAnalyticsStore } from "../store";
+import { loadAnalyticsForUser, selectAnalyticsPeriod, useAnalyticsStore } from "../store";
 import { CategoryBreakdownCard } from "./CategoryBreakdownCard";
 import { IncomeExpenseCard } from "./IncomeExpenseCard";
 import { PeriodDeltaCard } from "./PeriodDeltaCard";
@@ -58,15 +61,22 @@ export function AnalyticsScreen() {
   const categoryBreakdown = useAnalyticsStore((s) => s.categoryBreakdown);
   const periodDelta = useAnalyticsStore((s) => s.periodDelta);
   const isLoading = useAnalyticsStore((s) => s.isLoading);
-  const setPeriod = useAnalyticsStore((s) => s.setPeriod);
-  const loadAnalytics = useAnalyticsStore((s) => s.loadAnalytics);
+  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
 
   // Load data on mount if boot-time load failed or hasn't completed
   useMountEffect(() => {
-    if (!incomeExpense && !isLoading) {
-      loadAnalytics().catch(captureError);
+    if (userId && !incomeExpense && !isLoading) {
+      loadAnalyticsForUser(getDb(userId), userId).catch(captureError);
     }
   });
+
+  const handleSelectPeriod = useCallback(
+    (nextPeriod: AnalyticsPeriod) => {
+      if (!userId) return;
+      void selectAnalyticsPeriod(getDb(userId), userId, nextPeriod).catch(captureError);
+    },
+    [userId]
+  );
 
   const pageBg = useThemeColor("page");
   const secondaryColor = useThemeColor("secondary");
@@ -80,7 +90,7 @@ export function AnalyticsScreen() {
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
-      <PeriodSelector activePeriod={period} onSelect={setPeriod} />
+      <PeriodSelector activePeriod={period} onSelect={handleSelectPeriod} />
 
       {showEmpty ? (
         <View style={styles.emptyState}>
