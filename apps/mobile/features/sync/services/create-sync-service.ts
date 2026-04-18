@@ -1,6 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Effect } from "effect";
-import { fromThunk, runAppEffect } from "@/shared/effect/runtime";
+import {
+  fromPromise,
+  fromSync,
+  fromThunk,
+  makeAppTag,
+  runWithService,
+} from "@/shared/effect/runtime";
 import { toIsoDateTime } from "@/shared/lib";
 import type { IsoDateTime } from "@/shared/types/branded";
 import type {
@@ -60,12 +66,95 @@ export type SyncService = {
   ) => Promise<ResolveConflictResult>;
 };
 
+const SyncDeps = makeAppTag<CreateSyncServiceDeps>("@/features/sync/SyncDeps");
+
 function tryParseTransactionSnapshot(value: string): TransactionSnapshot | null {
   try {
     return JSON.parse(value) as TransactionSnapshot;
   } catch {
     return null;
   }
+}
+
+const getConflictRowsEffect = (db: SyncContext["db"]) =>
+  Effect.flatMap(SyncDeps, ({ getConflictRows }) => fromPromise(() => getConflictRows({ db })));
+
+const unresolvedConflictCountEffect = (db: SyncContext["db"]) =>
+  Effect.map(listConflictsEffect({ db }), (conflicts) => conflicts.length);
+
+function listConflictsEffect({ db }: SyncContext) {
+  return Effect.flatMap(getConflictRowsEffect(db), (rows) =>
+    Effect.forEach(rows, (row) =>
+      fromSync(() => ({
+        id: row.id,
+        transactionId: row.transactionId,
+        localData: JSON.parse(row.localData) as TransactionSnapshot,
+        serverData: JSON.parse(row.serverData) as TransactionSnapshot,
+        detectedAt: row.detectedAt,
+      }))
+    )
+  );
+}
+
+function resolveConflictEffect({ db, conflictId, resolution }: ResolveTransactionConflictInput) {
+  return Effect.gen(function* () {
+    const rows = yield* getConflictRowsEffect(db);
+    const row = rows.find((conflict) => conflict.id === conflictId);
+    if (!row) {
+      return {
+        unresolvedConflicts: yield* unresolvedConflictCountEffect(db),
+      };
+    }
+
+    const { upsertTransaction, enqueueTransactionSync, resolveConflictRow, refreshTransactions } =
+      yield* SyncDeps;
+    const resolvedAt = toIsoDateTime(new Date());
+    const serverData = tryParseTransactionSnapshot(row.serverData);
+    const localData =
+      resolution === "local" ? (JSON.parse(row.localData) as TransactionSnapshot) : null;
+    const refreshUserId = localData?.userId ?? serverData?.userId ?? null;
+
+    if (resolution === "local" && localData) {
+      yield* fromThunk(() => upsertTransaction(db, { ...localData, updatedAt: resolvedAt }));
+      yield* fromThunk(() => enqueueTransactionSync(db, row.transactionId, resolvedAt));
+    }
+
+    yield* fromThunk(() => resolveConflictRow(db, conflictId, resolution, resolvedAt));
+    if (refreshUserId != null) {
+      yield* fromThunk(() => refreshTransactions({ db, userId: refreshUserId }));
+    }
+
+    return {
+      unresolvedConflicts: yield* unresolvedConflictCountEffect(db),
+    };
+  });
+}
+
+function runSyncEffect({ db, userId, reason: _reason = "foreground" }: SyncInput) {
+  return Effect.gen(function* () {
+    void _reason;
+
+    const { isOnline, getSupabase, syncPull, syncPush, refreshTransactions } = yield* SyncDeps;
+    const online = yield* fromPromise(isOnline);
+    if (!online) {
+      return {
+        status: "skipped_offline" as const,
+        unresolvedConflicts: yield* unresolvedConflictCountEffect(db),
+      };
+    }
+
+    const supabase = yield* fromSync(getSupabase);
+    const pullOk = yield* fromPromise(() => syncPull(db, supabase, userId));
+    if (pullOk) {
+      yield* fromPromise(() => syncPush(db, supabase, userId));
+      yield* fromThunk(() => refreshTransactions({ db, userId }));
+    }
+
+    return {
+      status: pullOk ? ("synced" as const) : ("failed_pull" as const),
+      unresolvedConflicts: yield* unresolvedConflictCountEffect(db),
+    };
+  });
 }
 
 export function createSyncService({
@@ -79,81 +168,21 @@ export function createSyncService({
   enqueueTransactionSync,
   resolveConflictRow,
 }: CreateSyncServiceDeps): SyncService {
-  const listConflicts = async ({ db }: SyncContext): Promise<readonly SyncConflict[]> =>
-    runAppEffect(
-      fromThunk(() => getConflictRows({ db })).pipe(
-        Effect.map((rows) =>
-          rows.map((row) => ({
-            id: row.id,
-            transactionId: row.transactionId,
-            localData: JSON.parse(row.localData) as TransactionSnapshot,
-            serverData: JSON.parse(row.serverData) as TransactionSnapshot,
-            detectedAt: row.detectedAt,
-          }))
-        )
-      )
-    );
+  const deps = {
+    isOnline,
+    getSupabase,
+    syncPull,
+    syncPush,
+    refreshTransactions,
+    getConflictRows,
+    upsertTransaction,
+    enqueueTransactionSync,
+    resolveConflictRow,
+  } satisfies CreateSyncServiceDeps;
 
   return {
-    listConflicts,
-    resolveConflict: async ({ db, conflictId, resolution }) => {
-      return runAppEffect(
-        Effect.gen(function* () {
-          const rows = yield* fromThunk(() => getConflictRows({ db }));
-          const row = rows.find((conflict) => conflict.id === conflictId);
-          if (!row) {
-            return {
-              unresolvedConflicts: (yield* fromThunk(() => listConflicts({ db }))).length,
-            };
-          }
-
-          const resolvedAt = toIsoDateTime(new Date());
-          const serverData = tryParseTransactionSnapshot(row.serverData);
-          const localData =
-            resolution === "local" ? (JSON.parse(row.localData) as TransactionSnapshot) : null;
-          const refreshUserId = localData?.userId ?? serverData?.userId ?? null;
-
-          if (resolution === "local" && localData) {
-            yield* fromThunk(() => upsertTransaction(db, { ...localData, updatedAt: resolvedAt }));
-            yield* fromThunk(() => enqueueTransactionSync(db, row.transactionId, resolvedAt));
-          }
-
-          yield* fromThunk(() => resolveConflictRow(db, conflictId, resolution, resolvedAt));
-          if (refreshUserId != null) {
-            yield* fromThunk(() => refreshTransactions({ db, userId: refreshUserId }));
-          }
-
-          return {
-            unresolvedConflicts: (yield* fromThunk(() => listConflicts({ db }))).length,
-          };
-        })
-      );
-    },
-    run: async ({ db, userId, reason: _reason = "foreground" }) => {
-      return runAppEffect(
-        Effect.gen(function* () {
-          void _reason;
-          const online = yield* fromThunk(isOnline);
-          if (!online) {
-            return {
-              status: "skipped_offline" as const,
-              unresolvedConflicts: (yield* fromThunk(() => listConflicts({ db }))).length,
-            };
-          }
-
-          const supabase = yield* fromThunk(getSupabase);
-          const pullOk = yield* fromThunk(() => syncPull(db, supabase, userId));
-          if (pullOk) {
-            yield* fromThunk(() => syncPush(db, supabase, userId));
-            yield* fromThunk(() => refreshTransactions({ db, userId }));
-          }
-
-          return {
-            status: pullOk ? ("synced" as const) : ("failed_pull" as const),
-            unresolvedConflicts: (yield* fromThunk(() => listConflicts({ db }))).length,
-          };
-        })
-      );
-    },
+    listConflicts: (input) => runWithService(listConflictsEffect(input), SyncDeps, deps),
+    resolveConflict: (input) => runWithService(resolveConflictEffect(input), SyncDeps, deps),
+    run: (input) => runWithService(runSyncEffect(input), SyncDeps, deps),
   };
 }

@@ -1,22 +1,17 @@
-import { findDuplicateTransaction } from "@/features/capture-sources/dedup.public";
-import {
-  getBuiltInCategoryId,
-  insertTransaction,
-  isValidCategoryId,
-} from "@/features/transactions";
+import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
+import { getBuiltInCategoryId, isValidCategoryId } from "@/features/transactions/lib/categories";
+import { insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
+import { trackTransactionCreated } from "@/shared/lib/analytics";
+import { toIsoDateTime } from "@/shared/lib/format-date";
 import {
-  captureError,
-  capturePipelineEvent,
-  captureWarning,
   generateProcessedEmailId,
   generateSyncQueueId,
   generateTransactionId,
-  normalizeMerchant,
-  toIsoDateTime,
-  trackTransactionCreated,
-} from "@/shared/lib";
+} from "@/shared/lib/generate-id";
+import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
+import { captureError, capturePipelineEvent, captureWarning } from "@/shared/lib/sentry";
 import { assertCopAmount, assertIsoDate, assertIsoDateTime } from "@/shared/types/assertions";
 import type { UserId } from "@/shared/types/branded";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";

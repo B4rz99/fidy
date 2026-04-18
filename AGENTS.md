@@ -22,6 +22,10 @@ Fresh workspaces may not have the `.context/fidy-vault` symlink yet, even when t
 
 When a new slice branch is created from an older feature branch and that parent PR later merges to `main`, the standard `git pull --rebase --autostash origin main` flow can try to replay those already-merged commits and produce conflicts in unrelated files. In this repo, the safer recovery is: stash the current work, create a fresh branch from `origin/main`, then reapply the stash there before opening the next PR.
 
+### Vitest: avoid dynamic imports in `beforeEach` for heavy modules (⚠️ AGENT SURPRISE)
+
+Tests that `await import(...)` a large service module inside `beforeEach` can intermittently hit the 10s hook timeout during full-suite runs, even if the file passes in isolation. We hit this in `__tests__/email-capture/email-pipeline.test.ts` because the hook imported `email-pipeline.ts`, which itself pulled broad barrels like `@/features/transactions` and `@/shared/lib`. Fix: prefer static imports (or `beforeAll`) for the module under test, and narrow production imports to deep modules when the test only needs a small subset of functionality.
+
 ## External Fidy Vault
 
 The persistent Fidy knowledge vault lives outside the repo on the local machine.
