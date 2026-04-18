@@ -205,9 +205,11 @@ function completeFetchLater(requestId: number, userId: UserId, sessionId: number
 }
 
 function warnFetchMissingContext(userId: UserId): void {
+  const activeUserId = useEmailCaptureStore.getState().activeUserId;
   captureWarning("email_capture_fetch_missing_context", {
-    hasDb: true,
-    hasUserId: Boolean(userId),
+    hasActiveSession: activeUserId !== null,
+    matchesActiveSession: activeUserId === userId,
+    activeSessionUserId: activeUserId ?? "none",
   });
 }
 

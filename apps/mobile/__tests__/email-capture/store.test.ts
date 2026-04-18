@@ -32,6 +32,18 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
+const { mockCaptureWarning } = vi.hoisted(() => ({
+  mockCaptureWarning: vi.fn(),
+}));
+
+vi.mock("@/shared/lib", async () => {
+  const actual = await vi.importActual<typeof import("@/shared/lib")>("@/shared/lib");
+  return {
+    ...actual,
+    captureWarning: mockCaptureWarning,
+  };
+});
+
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getEmailAccounts: vi.fn().mockResolvedValue([]),
   insertEmailAccount: vi.fn(),
@@ -454,11 +466,16 @@ describe("email capture boundary", () => {
       expect(useEmailCaptureStore.getState().isFetching).toBe(false);
     });
 
-    it("does nothing when db or userId is not set", async () => {
+    it("warns when the requested email capture session is no longer active", async () => {
       initializeEmailCaptureSession("user-2" as UserId);
       await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
 
       expect(mockAdapter.fetchEmails).not.toHaveBeenCalled();
+      expect(mockCaptureWarning).toHaveBeenCalledWith("email_capture_fetch_missing_context", {
+        hasActiveSession: true,
+        matchesActiveSession: false,
+        activeSessionUserId: "user-2",
+      });
     });
 
     it("skips when already fetching", async () => {
