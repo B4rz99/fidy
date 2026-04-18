@@ -1,6 +1,8 @@
 import { useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { useOptionalUserId } from "@/features/auth";
 import {
+  fetchAndProcessEmails,
   getGmailClientId,
   getOutlookClientId,
   useEmailCaptureStore,
@@ -8,16 +10,18 @@ import {
 import { useTransactionStore } from "@/features/transactions";
 import { ProgressBar } from "@/shared/components";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import { useOnboardingStore } from "../store";
 
 export function SyncProgressStep() {
   const { t } = useTranslation();
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
   const nextStep = useOnboardingStore((s) => s.nextStep);
 
   const accounts = useEmailCaptureStore((s) => s.accounts);
-  const fetchAndProcess = useEmailCaptureStore((s) => s.fetchAndProcess);
   const progress = useEmailCaptureStore((s) => s.progress);
   const isFetching = useEmailCaptureStore((s) => s.isFetching);
 
@@ -34,9 +38,11 @@ export function SyncProgressStep() {
 
   // Start fetch on mount if we have accounts
   useMountEffect(() => {
-    if (accounts.length > 0 && !fetchStarted.current) {
+    if (accounts.length > 0 && !fetchStarted.current && db && userId) {
       fetchStarted.current = true;
-      void fetchAndProcess(getGmailClientId(), getOutlookClientId());
+      void fetchAndProcessEmails(db, userId, getGmailClientId(), getOutlookClientId(), () =>
+        useTransactionStore.getState().refresh()
+      );
     }
   });
 

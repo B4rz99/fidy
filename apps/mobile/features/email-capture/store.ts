@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
 import { create } from "zustand";
 import { createCaptureIngestionPort } from "@/features/capture-sources/ingestion.public";
-import { useTransactionStore } from "@/features/transactions";
 import { isValidCategoryId } from "@/features/transactions/write.public";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync, transactions } from "@/shared/db";
@@ -14,8 +13,8 @@ import {
   toIsoDateTime,
 } from "@/shared/lib";
 import { queryClient } from "@/shared/query";
-import { assertEmailAccountId, assertUserId } from "@/shared/types/assertions";
-import type { UserId } from "@/shared/types/branded";
+import { assertEmailAccountId } from "@/shared/types/assertions";
+import type { EmailAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
 import { insertMerchantRule } from "./lib/merchant-rules";
 import type { ProgressPhase } from "./lib/progress-phases";
 import { isFirstFetchForAny, shouldShowProgress } from "./lib/progress-phases";
@@ -36,35 +35,49 @@ import { ensureBankSenders } from "./queries/bank-senders";
 import type { EmailProvider, RawEmail } from "./schema";
 import { getAdapter } from "./services/email-adapter";
 
-let dbRef: AnyDb | null = null;
-let userIdRef: UserId | null = null;
-let autoClearTimer: ReturnType<typeof setTimeout> | null = null;
+type ProgressSnapshot = Parameters<ProgressCallback>[0];
+type RefreshTransactions = () => Promise<void> | void;
+
 const EMPTY_RAW_EMAILS: RawEmail[] = [];
+const COMPLETE_STATE_CLEAR_DELAY_MS = 2000;
+const noopRefreshTransactions: RefreshTransactions = () => undefined;
+
+let emailCaptureSessionId = 0;
+let loadAccountsRequestId = 0;
+let loadFailedEmailsRequestId = 0;
+let loadNeedsReviewRequestId = 0;
+let fetchAndProcessRequestId = 0;
+let autoClearTimer: ReturnType<typeof setTimeout> | null = null;
 
 type EmailCaptureState = {
-  accounts: EmailAccountRow[];
-  failedEmails: ProcessedEmailRow[];
-  needsReviewEmails: ProcessedEmailRow[];
-  isFetching: boolean;
-  progress: Parameters<ProgressCallback>[0] | null;
-  phase: ProgressPhase | null;
-  bannerDismissed: boolean;
+  readonly activeUserId: UserId | null;
+  readonly accounts: readonly EmailAccountRow[];
+  readonly failedEmails: readonly ProcessedEmailRow[];
+  readonly needsReviewEmails: readonly ProcessedEmailRow[];
+  readonly isFetching: boolean;
+  readonly progress: ProgressSnapshot | null;
+  readonly phase: ProgressPhase | null;
+  readonly bannerDismissed: boolean;
 };
 
 type EmailCaptureActions = {
-  initStore: (db: AnyDb, userId: string) => void;
-  loadAccounts: () => Promise<void>;
-  loadFailedEmails: () => Promise<void>;
-  loadNeedsReview: () => Promise<void>;
+  beginSession: (userId: UserId) => void;
+  setAccounts: (accounts: readonly EmailAccountRow[]) => void;
+  setFailedEmails: (failedEmails: readonly ProcessedEmailRow[]) => void;
+  setNeedsReviewEmails: (needsReviewEmails: readonly ProcessedEmailRow[]) => void;
+  setIsFetching: (isFetching: boolean) => void;
+  setProgress: (progress: ProgressSnapshot | null) => void;
+  setPhase: (phase: ProgressPhase | null) => void;
   dismissBanner: () => void;
-  dismissFailedEmail: (id: string) => Promise<void>;
-  connectEmail: (provider: EmailProvider, clientId: string) => Promise<void>;
-  disconnectEmail: (id: string) => Promise<void>;
-  fetchAndProcess: (gmailClientId: string, outlookClientId: string) => Promise<void>;
-  confirmReview: (processedEmailId: string, categoryId: string) => Promise<void>;
+  appendAccount: (account: EmailAccountRow) => void;
+  removeAccount: (accountId: string) => void;
+  removeFailedEmail: (processedEmailId: string) => void;
+  removeNeedsReviewEmail: (processedEmailId: string) => void;
+  markAccountsFetched: (accountIds: ReadonlySet<EmailAccountId>, fetchedAt: IsoDateTime) => void;
 };
 
-export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActions>((set, get) => ({
+export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActions>((set) => ({
+  activeUserId: null,
   accounts: [],
   failedEmails: [],
   needsReviewEmails: [],
@@ -73,310 +86,447 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
   phase: null,
   bannerDismissed: false,
 
-  initStore: (db, userId) => {
-    dbRef = db;
-    if (typeof userId !== "string" || userId.trim().length === 0) {
-      userIdRef = null;
-      return;
-    }
-    assertUserId(userId);
-    userIdRef = userId;
-  },
+  beginSession: (userId) =>
+    set({
+      activeUserId: userId,
+      accounts: [],
+      failedEmails: [],
+      needsReviewEmails: [],
+      isFetching: false,
+      progress: null,
+      phase: null,
+      bannerDismissed: false,
+    }),
 
-  loadAccounts: async () => {
-    if (!dbRef || !userIdRef) return;
-    const accounts = await getEmailAccounts(dbRef, userIdRef);
-    set({ accounts });
-  },
+  setAccounts: (accounts) => set({ accounts: [...accounts] }),
 
-  loadFailedEmails: async () => {
-    if (!dbRef) return;
-    const failedEmails = await getFailedEmails(dbRef);
-    set({ failedEmails });
-  },
+  setFailedEmails: (failedEmails) => set({ failedEmails: [...failedEmails] }),
 
-  loadNeedsReview: async () => {
-    if (!dbRef) return;
-    const needsReviewEmails = await getNeedsReviewEmails(dbRef);
-    set({ needsReviewEmails });
-  },
+  setNeedsReviewEmails: (needsReviewEmails) => set({ needsReviewEmails: [...needsReviewEmails] }),
+
+  setIsFetching: (isFetching) => set({ isFetching }),
+
+  setProgress: (progress) => set({ progress }),
+
+  setPhase: (phase) => set({ phase }),
 
   dismissBanner: () => set({ bannerDismissed: true }),
 
-  dismissFailedEmail: async (id) => {
-    if (!dbRef) return;
-    const failedEmail = get().failedEmails.find((email) => email.id === id);
-    if (!failedEmail) return;
-    await dismissProcessedEmail(dbRef, failedEmail.id);
-    const updated = get().failedEmails.filter((e) => e.id !== id);
-    set({ failedEmails: updated });
-  },
+  appendAccount: (account) => set((state) => ({ accounts: [...state.accounts, account] })),
 
-  connectEmail: async (provider, clientId) => {
-    if (!dbRef || !userIdRef) return;
+  removeAccount: (accountId) =>
+    set((state) => ({
+      accounts: state.accounts.filter((account) => account.id !== accountId),
+    })),
 
-    const result = await getAdapter(provider).connect(clientId);
+  removeFailedEmail: (processedEmailId) =>
+    set((state) => ({
+      failedEmails: state.failedEmails.filter((email) => email.id !== processedEmailId),
+    })),
 
-    if (!result.success) return;
+  removeNeedsReviewEmail: (processedEmailId) =>
+    set((state) => ({
+      needsReviewEmails: state.needsReviewEmails.filter((email) => email.id !== processedEmailId),
+    })),
 
-    // Prevent connecting the same email address twice
-    const alreadyConnected = get().accounts.some(
-      (a) => a.email.toLowerCase() === result.email.toLowerCase()
-    );
-    if (alreadyConnected) return;
+  markAccountsFetched: (accountIds, fetchedAt) =>
+    set((state) => ({
+      accounts: state.accounts.map((account) =>
+        accountIds.has(account.id) ? { ...account, lastFetchedAt: fetchedAt } : account
+      ),
+    })),
+}));
 
-    const row: EmailAccountRow = {
-      id: generateEmailAccountId(),
-      userId: userIdRef,
-      provider,
-      email: result.email,
-      lastFetchedAt: null,
-      createdAt: toIsoDateTime(new Date()),
+function clearAutoClearTimer(): void {
+  if (autoClearTimer) {
+    clearTimeout(autoClearTimer);
+    autoClearTimer = null;
+  }
+}
+
+function isActiveEmailCaptureSession(userId: UserId, sessionId: number): boolean {
+  return (
+    emailCaptureSessionId === sessionId && useEmailCaptureStore.getState().activeUserId === userId
+  );
+}
+
+function isCurrentAccountsRequest(requestId: number, userId: UserId, sessionId: number): boolean {
+  return loadAccountsRequestId === requestId && isActiveEmailCaptureSession(userId, sessionId);
+}
+
+function isCurrentFailedEmailsRequest(
+  requestId: number,
+  userId: UserId,
+  sessionId: number
+): boolean {
+  return loadFailedEmailsRequestId === requestId && isActiveEmailCaptureSession(userId, sessionId);
+}
+
+function isCurrentNeedsReviewRequest(
+  requestId: number,
+  userId: UserId,
+  sessionId: number
+): boolean {
+  return loadNeedsReviewRequestId === requestId && isActiveEmailCaptureSession(userId, sessionId);
+}
+
+function isCurrentFetchRun(requestId: number, userId: UserId, sessionId: number): boolean {
+  return fetchAndProcessRequestId === requestId && isActiveEmailCaptureSession(userId, sessionId);
+}
+
+function setFetchState(input: {
+  readonly isFetching?: boolean;
+  readonly phase?: ProgressPhase | null;
+  readonly progress?: ProgressSnapshot | null;
+}): void {
+  const state = useEmailCaptureStore.getState();
+  if (input.isFetching !== undefined) {
+    state.setIsFetching(input.isFetching);
+  }
+  if (input.phase !== undefined) {
+    state.setPhase(input.phase);
+  }
+  if (input.progress !== undefined) {
+    state.setProgress(input.progress);
+  }
+}
+
+function completeFetchLater(requestId: number, userId: UserId, sessionId: number): void {
+  clearAutoClearTimer();
+  autoClearTimer = setTimeout(() => {
+    autoClearTimer = null;
+    if (
+      isCurrentFetchRun(requestId, userId, sessionId) &&
+      useEmailCaptureStore.getState().phase === "complete"
+    ) {
+      setFetchState({ phase: null, progress: null });
+    }
+  }, COMPLETE_STATE_CLEAR_DELAY_MS);
+}
+
+function warnFetchMissingContext(userId: UserId): void {
+  const activeUserId = useEmailCaptureStore.getState().activeUserId;
+  captureWarning("email_capture_fetch_missing_context", {
+    hasActiveSession: activeUserId !== null,
+    matchesActiveSession: activeUserId === userId,
+    activeSessionUserId: activeUserId ?? "none",
+  });
+}
+
+export function initializeEmailCaptureSession(userId: UserId): void {
+  clearAutoClearTimer();
+  emailCaptureSessionId += 1;
+  loadAccountsRequestId += 1;
+  loadFailedEmailsRequestId += 1;
+  loadNeedsReviewRequestId += 1;
+  fetchAndProcessRequestId += 1;
+  useEmailCaptureStore.getState().beginSession(userId);
+}
+
+export async function loadEmailAccounts(db: AnyDb, userId: UserId): Promise<void> {
+  const requestId = ++loadAccountsRequestId;
+  const sessionId = emailCaptureSessionId;
+
+  try {
+    const accounts = await getEmailAccounts(db, userId);
+    if (!isCurrentAccountsRequest(requestId, userId, sessionId)) return;
+    useEmailCaptureStore.getState().setAccounts(accounts);
+  } catch {
+    // Keep existing state on account load failures.
+  }
+}
+
+export async function loadFailedEmails(db: AnyDb, userId: UserId): Promise<void> {
+  const requestId = ++loadFailedEmailsRequestId;
+  const sessionId = emailCaptureSessionId;
+
+  try {
+    const failedEmails = await getFailedEmails(db);
+    if (!isCurrentFailedEmailsRequest(requestId, userId, sessionId)) return;
+    useEmailCaptureStore.getState().setFailedEmails(failedEmails);
+  } catch {
+    // Keep existing state on failed-email load failures.
+  }
+}
+
+export async function loadNeedsReviewEmails(db: AnyDb, userId: UserId): Promise<void> {
+  const requestId = ++loadNeedsReviewRequestId;
+  const sessionId = emailCaptureSessionId;
+
+  try {
+    const needsReviewEmails = await getNeedsReviewEmails(db);
+    if (!isCurrentNeedsReviewRequest(requestId, userId, sessionId)) return;
+    useEmailCaptureStore.getState().setNeedsReviewEmails(needsReviewEmails);
+  } catch {
+    // Keep existing state on needs-review load failures.
+  }
+}
+
+export async function dismissFailedEmail(
+  db: AnyDb,
+  userId: UserId,
+  processedEmailId: string
+): Promise<void> {
+  const sessionId = emailCaptureSessionId;
+  const failedEmail = useEmailCaptureStore
+    .getState()
+    .failedEmails.find((email) => email.id === processedEmailId);
+  if (!failedEmail || !isActiveEmailCaptureSession(userId, sessionId)) return;
+
+  await dismissProcessedEmail(db, failedEmail.id);
+  if (!isActiveEmailCaptureSession(userId, sessionId)) return;
+  useEmailCaptureStore.getState().removeFailedEmail(processedEmailId);
+}
+
+export async function connectEmailAccount(
+  db: AnyDb,
+  userId: UserId,
+  provider: EmailProvider,
+  clientId: string
+): Promise<void> {
+  const sessionId = emailCaptureSessionId;
+  if (!isActiveEmailCaptureSession(userId, sessionId)) return;
+
+  const result = await getAdapter(provider).connect(clientId);
+  if (!result.success || !isActiveEmailCaptureSession(userId, sessionId)) return;
+
+  const alreadyConnected = useEmailCaptureStore
+    .getState()
+    .accounts.some((account) => account.email.toLowerCase() === result.email.toLowerCase());
+  if (alreadyConnected) return;
+
+  const row: EmailAccountRow = {
+    id: generateEmailAccountId(),
+    userId,
+    provider,
+    email: result.email,
+    lastFetchedAt: null,
+    createdAt: toIsoDateTime(new Date()),
+  };
+
+  await insertEmailAccount(db, row);
+  if (!isActiveEmailCaptureSession(userId, sessionId)) return;
+  useEmailCaptureStore.getState().appendAccount(row);
+}
+
+export async function disconnectEmailAccount(
+  db: AnyDb,
+  userId: UserId,
+  emailAccountId: string
+): Promise<void> {
+  const sessionId = emailCaptureSessionId;
+  if (!isActiveEmailCaptureSession(userId, sessionId)) return;
+
+  const account = useEmailCaptureStore
+    .getState()
+    .accounts.find((candidate) => candidate.id === emailAccountId);
+  if (account) {
+    const provider = account.provider;
+    if (provider === "gmail" || provider === "outlook") {
+      await getAdapter(provider).disconnect();
+      if (!isActiveEmailCaptureSession(userId, sessionId)) return;
+    }
+
+    await deleteEmailAccount(db, account.id);
+    if (!isActiveEmailCaptureSession(userId, sessionId)) return;
+    useEmailCaptureStore.getState().removeAccount(account.id);
+    return;
+  }
+
+  assertEmailAccountId(emailAccountId);
+  await deleteEmailAccount(db, emailAccountId);
+  if (!isActiveEmailCaptureSession(userId, sessionId)) return;
+  useEmailCaptureStore.getState().removeAccount(emailAccountId);
+}
+
+export async function fetchAndProcessEmails(
+  db: AnyDb,
+  userId: UserId,
+  gmailClientId: string,
+  outlookClientId: string,
+  refreshTransactions: RefreshTransactions = noopRefreshTransactions
+): Promise<void> {
+  const sessionId = emailCaptureSessionId;
+  if (!isActiveEmailCaptureSession(userId, sessionId)) {
+    warnFetchMissingContext(userId);
+    return;
+  }
+  if (useEmailCaptureStore.getState().isFetching) {
+    captureWarning("email_capture_fetch_already_running");
+    return;
+  }
+
+  const requestId = ++fetchAndProcessRequestId;
+  clearAutoClearTimer();
+  setFetchState({ isFetching: true, phase: null, progress: null });
+
+  try {
+    const accounts = useEmailCaptureStore.getState().accounts;
+    if (accounts.length === 0) {
+      captureWarning("email_capture_fetch_no_accounts");
+      return;
+    }
+
+    const captureIngestion = createCaptureIngestionPort(db, {
+      processEmails,
+      processRetries,
+    });
+    const senders = await ensureBankSenders(queryClient);
+    const senderEmails = senders.map((sender) => sender.email);
+
+    const minSince = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const clientIds: Record<EmailProvider, string> = {
+      gmail: gmailClientId,
+      outlook: outlookClientId,
     };
 
-    await insertEmailAccount(dbRef, row);
-    set((state) => ({ accounts: [...state.accounts, row] }));
-  },
-
-  disconnectEmail: async (id) => {
-    if (!dbRef) return;
-    const account = get().accounts.find((a) => a.id === id);
-    if (account) {
-      const provider = account.provider;
-      if (provider === "gmail" || provider === "outlook") {
-        await getAdapter(provider).disconnect();
-      }
-      await deleteEmailAccount(dbRef, account.id);
-      set((state) => ({
-        accounts: state.accounts.filter((a) => a.id !== id),
-      }));
-      return;
-    }
-    assertEmailAccountId(id);
-    await deleteEmailAccount(dbRef, id);
-    set((state) => ({
-      accounts: state.accounts.filter((a) => a.id !== id),
-    }));
-  },
-
-  fetchAndProcess: async (gmailClientId, outlookClientId) => {
-    const db = dbRef;
-    const userId = userIdRef;
-    if (!db || !userId) {
-      captureWarning("email_capture_fetch_missing_context", {
-        hasDb: Boolean(db),
-        hasUserId: Boolean(userId),
-      });
-      return;
-    }
-    if (get().isFetching) {
-      captureWarning("email_capture_fetch_already_running");
-      return;
-    }
-
-    // Clear any stale progress/timer from a previous run
-    if (autoClearTimer) {
-      clearTimeout(autoClearTimer);
-      autoClearTimer = null;
-    }
-    set({ isFetching: true, phase: null, progress: null });
-
-    try {
-      const captureIngestion = createCaptureIngestionPort(db, {
-        processEmails,
-        processRetries,
-      });
-      const { accounts } = get();
-      if (accounts.length === 0) {
-        captureWarning("email_capture_fetch_no_accounts");
-        return;
-      }
-
-      const senders = await ensureBankSenders(queryClient);
-      const senderEmails = senders.map((s) => s.email);
-
-      // Always look back at least 30 days; dedup by externalId prevents re-processing
-      const minSince = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
-      const clientIds: Record<EmailProvider, string> = {
-        gmail: gmailClientId,
-        outlook: outlookClientId,
-      };
-
-      // Fetch emails from all accounts in parallel
-      const fetchResults = await Promise.all(
-        accounts.map(async (account) => {
-          try {
-            const provider = account.provider;
-            if (provider !== "gmail" && provider !== "outlook") {
-              return { account, rawEmails: EMPTY_RAW_EMAILS, fetchOk: false };
-            }
-            const since =
-              account.lastFetchedAt && account.lastFetchedAt < minSince
-                ? account.lastFetchedAt
-                : minSince;
-            const rawEmails = await getAdapter(provider).fetchEmails(
-              clientIds[provider],
-              since,
-              senderEmails
-            );
-            return { account, rawEmails, fetchOk: true };
-          } catch (err) {
-            captureWarning("email_adapter_fetch_failed", {
-              provider: account.provider,
-              errorType: err instanceof Error ? err.message : "unknown",
-            });
+    const fetchResults = await Promise.all(
+      accounts.map(async (account) => {
+        try {
+          const provider = account.provider;
+          if (provider !== "gmail" && provider !== "outlook") {
             return { account, rawEmails: EMPTY_RAW_EMAILS, fetchOk: false };
           }
-        })
-      );
-
-      const allEmails = fetchResults.flatMap((r) => r.rawEmails);
-
-      // Determine whether to show progress UI
-      const isFirst = isFirstFetchForAny(accounts);
-      const showProgress = shouldShowProgress(allEmails.length, isFirst);
-
-      // Edge case: first fetch but zero emails found
-      if (showProgress && allEmails.length === 0) {
-        set({
-          phase: "complete",
-          progress: { total: 0, completed: 0, saved: 0, failed: 0, needsReview: 0 },
-        });
-      } else if (showProgress) {
-        set({ phase: "processing" });
-
-        let lastRefreshedSaved = 0;
-        await captureIngestion.ingest({
-          kind: "email_batch",
-          userId,
-          emails: allEmails,
-          onProgress: (progress) => {
-            set({ progress });
-            if (progress.saved > lastRefreshedSaved) {
-              lastRefreshedSaved = progress.saved;
-              void useTransactionStore.getState().refresh();
-            }
-          },
-        });
-      } else if (allEmails.length > 0) {
-        // Silent processing — no progress UI
-        let lastRefreshedSaved = 0;
-        await captureIngestion.ingest({
-          kind: "email_batch",
-          userId,
-          emails: allEmails,
-          onProgress: (progress) => {
-            set({ progress });
-            if (progress.saved > lastRefreshedSaved) {
-              lastRefreshedSaved = progress.saved;
-              void useTransactionStore.getState().refresh();
-            }
-          },
-        });
-      }
-
-      await captureIngestion.ingest({
-        kind: "email_retry",
-        userId,
-      });
-
-      // Update lastFetchedAt only for accounts whose fetch succeeded
-      const now = toIsoDateTime(new Date());
-      await Promise.all(
-        fetchResults.filter((r) => r.fetchOk).map((r) => updateLastFetchedAt(db, r.account.id, now))
-      );
-
-      // Update in-memory accounts to prevent stale lastFetchedAt
-      const successIds = new Set(fetchResults.filter((r) => r.fetchOk).map((r) => r.account.id));
-      set({
-        accounts: get().accounts.map((a) =>
-          successIds.has(a.id) ? { ...a, lastFetchedAt: now } : a
-        ),
-      });
-
-      const [failedEmails, needsReviewEmails] = await Promise.all([
-        getFailedEmails(db),
-        getNeedsReviewEmails(db),
-      ]);
-
-      if (showProgress) {
-        set({ failedEmails, needsReviewEmails, phase: "complete" });
-      } else {
-        set({ failedEmails, needsReviewEmails });
-      }
-
-      // Refresh home screen transactions
-      await useTransactionStore.getState().refresh();
-    } catch (err) {
-      captureError(err);
-    } finally {
-      // On error (phase never reached 'complete'), clear immediately.
-      // On success, auto-clear after 2s so Connected Accounts can show the transition.
-      const currentPhase = get().phase;
-      if (currentPhase !== "complete") {
-        set({ isFetching: false, progress: null, phase: null });
-      } else {
-        set({ isFetching: false });
-        autoClearTimer = setTimeout(() => {
-          autoClearTimer = null;
-          if (get().phase === "complete") {
-            set({ phase: null, progress: null });
-          }
-        }, 2000);
-      }
-    }
-  },
-
-  confirmReview: async (processedEmailId, categoryId) => {
-    const db = dbRef;
-    const userId = userIdRef;
-    if (!db || !userId) return;
-
-    const processedEmail = get().needsReviewEmails.find((e) => e.id === processedEmailId);
-    if (!processedEmail?.transactionId) return;
-    if (!isValidCategoryId(categoryId)) return;
-
-    const now = toIsoDateTime(new Date());
-
-    // Update the transaction's categoryId
-    await db
-      .update(transactions)
-      .set({ categoryId, updatedAt: now })
-      .where(eq(transactions.id, processedEmail.transactionId));
-
-    // Enqueue sync for the updated transaction
-    enqueueSync(db, {
-      id: generateSyncQueueId(),
-      tableName: "transactions",
-      rowId: processedEmail.transactionId,
-      operation: "update",
-      createdAt: now,
-    });
-
-    // Cache merchant rule so future transactions from this merchant auto-categorize
-    const txRows = await db
-      .select({ description: transactions.description })
-      .from(transactions)
-      .where(eq(transactions.id, processedEmail.transactionId));
-    const description = txRows[0]?.description;
-    if (description) {
-      const merchantKey = normalizeMerchant(description);
-      await insertMerchantRule(db, userId, merchantKey, categoryId, now);
-    }
-
-    // Update the processed email status to "success"
-    await updateProcessedEmailStatus(
-      db,
-      processedEmail.id,
-      "success",
-      processedEmail.transactionId
+          const since =
+            account.lastFetchedAt && account.lastFetchedAt < minSince
+              ? account.lastFetchedAt
+              : minSince;
+          const rawEmails = await getAdapter(provider).fetchEmails(
+            clientIds[provider],
+            since,
+            senderEmails
+          );
+          return { account, rawEmails, fetchOk: true };
+        } catch (error) {
+          captureWarning("email_adapter_fetch_failed", {
+            provider: account.provider,
+            errorType: error instanceof Error ? error.message : "unknown",
+          });
+          return { account, rawEmails: EMPTY_RAW_EMAILS, fetchOk: false };
+        }
+      })
     );
 
-    // Remove from needsReviewEmails state and refresh home screen
-    set((state) => ({
-      needsReviewEmails: state.needsReviewEmails.filter((e) => e.id !== processedEmailId),
-    }));
-    await useTransactionStore.getState().refresh();
-  },
-}));
+    const allEmails = fetchResults.flatMap((result) => result.rawEmails);
+    const isFirst = isFirstFetchForAny(accounts);
+    const showProgress = shouldShowProgress(allEmails.length, isFirst);
+
+    if (showProgress && allEmails.length === 0 && isCurrentFetchRun(requestId, userId, sessionId)) {
+      setFetchState({
+        phase: "complete",
+        progress: { total: 0, completed: 0, saved: 0, failed: 0, needsReview: 0 },
+      });
+    } else if (showProgress && isCurrentFetchRun(requestId, userId, sessionId)) {
+      useEmailCaptureStore.getState().setPhase("processing");
+    }
+
+    if (allEmails.length > 0) {
+      let lastRefreshedSaved = 0;
+      await captureIngestion.ingest({
+        kind: "email_batch",
+        userId,
+        emails: allEmails,
+        onProgress: (progress) => {
+          if (!isCurrentFetchRun(requestId, userId, sessionId)) return;
+          useEmailCaptureStore.getState().setProgress(progress);
+          if (progress.saved > lastRefreshedSaved) {
+            lastRefreshedSaved = progress.saved;
+            void refreshTransactions();
+          }
+        },
+      });
+    }
+
+    await captureIngestion.ingest({
+      kind: "email_retry",
+      userId,
+    });
+
+    const fetchedAt = toIsoDateTime(new Date());
+    await Promise.all(
+      fetchResults
+        .filter((result) => result.fetchOk)
+        .map((result) => updateLastFetchedAt(db, result.account.id, fetchedAt))
+    );
+
+    const updatedAccountIds = new Set(
+      fetchResults.filter((result) => result.fetchOk).map((result) => result.account.id)
+    );
+    if (isCurrentFetchRun(requestId, userId, sessionId)) {
+      useEmailCaptureStore.getState().markAccountsFetched(updatedAccountIds, fetchedAt);
+    }
+
+    const [failedEmails, needsReviewEmails] = await Promise.all([
+      getFailedEmails(db),
+      getNeedsReviewEmails(db),
+    ]);
+
+    if (isCurrentFetchRun(requestId, userId, sessionId)) {
+      useEmailCaptureStore.getState().setFailedEmails(failedEmails);
+      useEmailCaptureStore.getState().setNeedsReviewEmails(needsReviewEmails);
+      if (showProgress) {
+        useEmailCaptureStore.getState().setPhase("complete");
+      }
+      await refreshTransactions();
+    }
+  } catch (error) {
+    captureError(error);
+  } finally {
+    if (isCurrentFetchRun(requestId, userId, sessionId)) {
+      const currentPhase = useEmailCaptureStore.getState().phase;
+      if (currentPhase !== "complete") {
+        setFetchState({ isFetching: false, progress: null, phase: null });
+      } else {
+        useEmailCaptureStore.getState().setIsFetching(false);
+        completeFetchLater(requestId, userId, sessionId);
+      }
+    }
+  }
+}
+
+export async function confirmReviewedEmail(
+  db: AnyDb,
+  userId: UserId,
+  processedEmailId: string,
+  categoryId: string,
+  refreshTransactions: RefreshTransactions = noopRefreshTransactions
+): Promise<void> {
+  const sessionId = emailCaptureSessionId;
+  if (!isActiveEmailCaptureSession(userId, sessionId)) return;
+
+  const processedEmail = useEmailCaptureStore
+    .getState()
+    .needsReviewEmails.find((email) => email.id === processedEmailId);
+  if (!processedEmail?.transactionId || !isValidCategoryId(categoryId)) return;
+
+  const now = toIsoDateTime(new Date());
+
+  await db
+    .update(transactions)
+    .set({ categoryId, updatedAt: now })
+    .where(eq(transactions.id, processedEmail.transactionId));
+
+  enqueueSync(db, {
+    id: generateSyncQueueId(),
+    tableName: "transactions",
+    rowId: processedEmail.transactionId,
+    operation: "update",
+    createdAt: now,
+  });
+
+  const txRows = await db
+    .select({ description: transactions.description })
+    .from(transactions)
+    .where(eq(transactions.id, processedEmail.transactionId));
+  const description = txRows[0]?.description;
+  if (description) {
+    const merchantKey = normalizeMerchant(description);
+    await insertMerchantRule(db, userId, merchantKey, categoryId, now);
+  }
+
+  await updateProcessedEmailStatus(db, processedEmail.id, "success", processedEmail.transactionId);
+  if (!isActiveEmailCaptureSession(userId, sessionId)) return;
+
+  useEmailCaptureStore.getState().removeNeedsReviewEmail(processedEmailId);
+  await refreshTransactions();
+}

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth";
 import { initializeBudgetSession } from "@/features/budget";
-import { useEmailCaptureStore } from "@/features/email-capture";
+import { initializeEmailCaptureSession, loadEmailAccounts } from "@/features/email-capture";
 import {
   BudgetSetupStep,
   CompleteStep,
@@ -51,13 +51,10 @@ function AuthenticatedOnboardingScreen({
   // Initialize minimal stores needed for onboarding
   useSubscription(
     () => {
-      useEmailCaptureStore.getState().initStore(db, userId);
+      initializeEmailCaptureSession(userId);
       useTransactionStore.getState().initStore(db, userId);
       initializeBudgetSession(userId);
-      Promise.all([
-        useEmailCaptureStore.getState().loadAccounts(),
-        useTransactionStore.getState().loadInitialPage(),
-      ])
+      Promise.all([loadEmailAccounts(db, userId), useTransactionStore.getState().loadInitialPage()])
         .catch(captureError)
         .finally(() => {
           setStoresReady(true);

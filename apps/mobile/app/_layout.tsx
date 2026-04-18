@@ -43,7 +43,11 @@ import {
   useWidgetCapture,
 } from "@/features/capture-sources";
 import { refreshCategories } from "@/features/categories";
-import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
+import {
+  initializeEmailCaptureSession,
+  loadEmailAccounts,
+  useEmailCapture,
+} from "@/features/email-capture";
 import {
   initializeGoalSession,
   loadGoalsForUser,
@@ -96,7 +100,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
   useSubscription(
     () => {
       useTransactionStore.getState().initStore(db, userId);
-      useEmailCaptureStore.getState().initStore(db, userId);
+      initializeEmailCaptureSession(userId);
       useChatStore.getState().initStore(db, userId);
       initializeCalendarSession(userId);
       initializeBudgetSession(userId);
@@ -109,6 +113,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       loadBudgetsForUser(db, userId).catch(handleRecoverableError("Failed to load budgets"));
       loadGoalsForUser(db, userId).catch(handleRecoverableError("Failed to load goals"));
       loadAnalyticsForUser(db, userId).catch(handleRecoverableError("Failed to load analytics"));
+      loadEmailAccounts(db, userId).catch(handleRecoverableError("Failed to load email accounts"));
       refreshCategories(db, userId).catch(handleRecoverableError("Failed to load user categories"));
       useChatStore
         .getState()

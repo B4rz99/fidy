@@ -2,10 +2,16 @@ import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { type ProcessedEmailRow, useEmailCaptureStore } from "@/features/email-capture";
+import { useOptionalUserId } from "@/features/auth";
+import {
+  dismissFailedEmail,
+  type ProcessedEmailRow,
+  useEmailCaptureStore,
+} from "@/features/email-capture";
 import { ScreenLayout } from "@/shared/components";
 import { Info, Plus, TriangleAlert } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 
@@ -14,8 +20,9 @@ const ItemSeparator = () => <View style={{ height: 10 }} />;
 export default function FailedEmailsScreen() {
   const { back, push } = useRouter();
   const { t } = useTranslation();
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
   const failedEmails = useEmailCaptureStore((s) => s.failedEmails);
-  const dismissFailedEmail = useEmailCaptureStore((s) => s.dismissFailedEmail);
 
   const handleAddManually = useCallback(() => {
     push("/(tabs)/add");
@@ -26,12 +33,13 @@ export default function FailedEmailsScreen() {
       <FailedEmailCard
         email={item}
         onDismiss={() => {
-          void dismissFailedEmail(item.id);
+          if (!db || !userId) return;
+          void dismissFailedEmail(db, userId, item.id);
         }}
         onAddManually={handleAddManually}
       />
     ),
-    [dismissFailedEmail, handleAddManually]
+    [db, handleAddManually, userId]
   );
 
   return (

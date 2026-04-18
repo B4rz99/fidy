@@ -13,4 +13,15 @@ export { getGmailClientId, getOutlookClientId } from "./schema";
 export type { LlmParsedTransaction } from "./services/llm-parser";
 export { llmOutputSchema } from "./services/llm-parser";
 export { classifyMerchantApi, stripPii } from "./services/parse-email-api";
-export { useEmailCaptureStore } from "./store";
+export {
+  confirmReviewedEmail,
+  connectEmailAccount,
+  disconnectEmailAccount,
+  dismissFailedEmail,
+  fetchAndProcessEmails,
+  initializeEmailCaptureSession,
+  loadEmailAccounts,
+  loadFailedEmails,
+  loadNeedsReviewEmails,
+  useEmailCaptureStore,
+} from "./store";
