@@ -14,12 +14,17 @@ The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async 
 
 Workspace wrapper scripts like `bun run --cwd apps/mobile lint` can behave differently across local checkouts, worktrees, and CI because Bun's default system-shell execution does not resolve workspace binaries consistently. In this repo, root scripts that delegate into `apps/*` or `packages/*` should use `bun run --cwd <dir> --shell=bun <script>` so `expo`, `eslint`, `vitest`, and similar local bins resolve the same way everywhere.
 
+### Vault bridge must be initialized before reading `.context/fidy-vault` (⚠️ AGENT SURPRISE)
+
+Fresh workspaces may not have the `.context/fidy-vault` symlink yet, even when the external vault is correctly configured. Agents that try to read `.context/fidy-vault/AGENTS.md` before running `bun run vault:doctor` can fail with "No such file or directory". Fix: run `bun run vault:doctor` first, then read `.context/fidy-vault/AGENTS.md`.
+
 ## External Fidy Vault
 
 The persistent Fidy knowledge vault lives outside the repo on the local machine.
 
 - Use `.context/fidy-vault` as the stable workspace path. It is a symlink to the external vault.
-- Before doing ingest/query/lint work in the vault, read `.context/fidy-vault/AGENTS.md`.
+- Before doing ingest/query/lint work in the vault, run `bun run vault:doctor`.
+- After `vault:doctor` succeeds, read `.context/fidy-vault/AGENTS.md`.
 - The vault owns `raw/` (immutable sources), `wiki/` (LLM-maintained synthesis), `index.md`, and `log.md`.
 - When you add or revise vault knowledge, update `index.md` and append a dated entry to `log.md`.
 - `bun run vault:doctor` checks that the bridge and core files exist.

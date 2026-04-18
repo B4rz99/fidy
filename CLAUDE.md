@@ -11,7 +11,8 @@ The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async 
 The persistent Fidy knowledge vault lives outside the repo on the local machine.
 
 - Use `.context/fidy-vault` as the stable workspace path. It is a symlink to the external vault.
-- Before doing ingest/query/lint work in the vault, read `.context/fidy-vault/AGENTS.md`.
+- Before doing ingest/query/lint work in the vault, run `bun run vault:doctor`.
+- After `vault:doctor` succeeds, read `.context/fidy-vault/AGENTS.md`.
 - The vault owns `raw/` (immutable sources), `wiki/` (LLM-maintained synthesis), `index.md`, and `log.md`.
 - When you add or revise vault knowledge, update `index.md` and append a dated entry to `log.md`.
 - `bun run vault:doctor` checks that the bridge and core files exist.
