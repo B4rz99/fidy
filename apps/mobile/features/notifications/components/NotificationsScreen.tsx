@@ -1,21 +1,30 @@
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuthStore } from "@/features/auth";
 import { useAccountCreatedAt } from "@/features/auth/public";
 import { ScreenLayout } from "@/shared/components";
 import { Platform, Pressable, SectionList, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
+import { getDb } from "@/shared/db";
+import { useMountEffect, useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { trackNotificationCenterOpened } from "@/shared/lib";
+import type { UserId } from "@/shared/types/branded";
 import { deriveNotificationDisplay, groupNotificationsBySection } from "../lib/display";
 import { isFirstWeek } from "../lib/first-week";
 import type { NotificationDisplay } from "../lib/types";
-import { useNotificationStore } from "../store";
+import {
+  clearAllNotifications,
+  loadNotificationsForUser,
+  markNotificationsVisited,
+  useNotificationStore,
+} from "../store";
 import { NotificationCard } from "./NotificationCard";
 import { NotificationEmptyState } from "./NotificationEmptyState";
 
 export const NotificationsScreen = () => {
   const router = useRouter();
   const { t } = useTranslation();
+  const userId = useAuthStore((state) => state.session?.user.id as UserId | undefined);
   const notifications = useNotificationStore((s) => s.notifications);
   const isLoading = useNotificationStore((s) => s.isLoading);
   const tertiaryColor = useThemeColor("tertiary");
@@ -26,14 +35,23 @@ export const NotificationsScreen = () => {
   const firstWeek = isFirstWeek(accountCreatedAt, new Date());
 
   const handleClearAll = useCallback(() => {
-    useNotificationStore.getState().clearAll();
-  }, []);
+    if (!userId) return;
+    void clearAllNotifications(getDb(userId), userId);
+  }, [userId]);
 
   useMountEffect(() => {
     trackNotificationCenterOpened();
-    useNotificationStore.getState().markVisited();
-    useNotificationStore.getState().loadNotifications();
   });
+
+  useSubscription(
+    () => {
+      if (!userId) return;
+      markNotificationsVisited(userId);
+      loadNotificationsForUser(getDb(userId), userId);
+    },
+    [userId],
+    userId != null
+  );
 
   const sections = useMemo(() => {
     const displays = notifications.map((n) => deriveNotificationDisplay(n, t));

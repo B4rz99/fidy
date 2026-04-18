@@ -51,13 +51,12 @@ describe("useCategoriesStore", () => {
     vi.resetModules();
   });
 
-  async function getStore() {
-    const { useCategoriesStore } = await import("@/features/categories/store");
-    return useCategoriesStore;
+  async function loadCategoriesModule() {
+    return import("@/features/categories/store");
   }
 
   it("exposes built-in and merged snapshots before refresh", async () => {
-    const store = await getStore();
+    const { useCategoriesStore: store } = await loadCategoriesModule();
     const state = store.getState();
 
     expect(state.builtIn).toEqual(CATEGORIES);
@@ -68,7 +67,7 @@ describe("useCategoriesStore", () => {
   });
 
   it("isValid defaults to built-in scope", async () => {
-    const store = await getStore();
+    const { useCategoriesStore: store } = await loadCategoriesModule();
     const state = store.getState();
 
     expect(state.isValid("food")).toBe(true);
@@ -89,9 +88,8 @@ describe("useCategoriesStore", () => {
     };
     vi.mocked(getUserCategoriesForUser).mockReturnValue([fakeRow]);
 
-    const store = await getStore();
-    store.getState().initStore(mockDb, "user-1" as UserId);
-    await store.getState().refresh();
+    const { refreshCategories, useCategoriesStore: store } = await loadCategoriesModule();
+    await refreshCategories(mockDb, "user-1" as UserId);
 
     const state = store.getState();
     expect(state.custom).toHaveLength(1);
@@ -109,10 +107,8 @@ describe("useCategoriesStore", () => {
     vi.mocked(getUserCategoriesForUser).mockReturnValue([]);
     vi.mocked(insertUserCategory).mockReturnValue(undefined);
 
-    const store = await getStore();
-    store.getState().initStore(mockDb, "user-1" as UserId);
-
-    const result = await store.getState().createCustom({
+    const { createCustomCategory } = await loadCategoriesModule();
+    const result = await createCustomCategory(mockDb, "user-1" as UserId, {
       name: "Groceries",
       iconName: "ShoppingCart",
       colorHex: "#4CAF50",
@@ -124,10 +120,8 @@ describe("useCategoriesStore", () => {
   });
 
   it("createCustom returns false when name is too short", async () => {
-    const store = await getStore();
-    store.getState().initStore(mockDb, "user-1" as UserId);
-
-    const result = await store.getState().createCustom({
+    const { createCustomCategory } = await loadCategoriesModule();
+    const result = await createCustomCategory(mockDb, "user-1" as UserId, {
       name: "A",
       iconName: "Zap",
       colorHex: "#FF0000",
@@ -138,10 +132,8 @@ describe("useCategoriesStore", () => {
   });
 
   it("createCustom returns false when name is too long", async () => {
-    const store = await getStore();
-    store.getState().initStore(mockDb, "user-1" as UserId);
-
-    const result = await store.getState().createCustom({
+    const { createCustomCategory } = await loadCategoriesModule();
+    const result = await createCustomCategory(mockDb, "user-1" as UserId, {
       name: "A".repeat(33),
       iconName: "Zap",
       colorHex: "#FF0000",
@@ -151,16 +143,15 @@ describe("useCategoriesStore", () => {
     expect(insertUserCategory).not.toHaveBeenCalled();
   });
 
-  it("createCustom returns false when DB refs are not set", async () => {
-    const store = await getStore();
-    // Don't call initStore
-
-    const result = await store.getState().createCustom({
+  it("createCustom returns false when the icon is invalid", async () => {
+    const { createCustomCategory } = await loadCategoriesModule();
+    const result = await createCustomCategory(mockDb, "user-1" as UserId, {
       name: "Test",
-      iconName: "Zap",
+      iconName: "UnknownIcon",
       colorHex: "#FF0000",
     });
 
     expect(result).toBe(false);
+    expect(insertUserCategory).not.toHaveBeenCalled();
   });
 });

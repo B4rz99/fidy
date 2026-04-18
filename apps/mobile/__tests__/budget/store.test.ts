@@ -2,13 +2,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
 
+const mockCreateBudgetMonitoringModule = vi.fn();
 const mockRefreshMonth = vi.fn();
 const mockLoadAutoSuggestions = vi.fn();
 const mockAcknowledgeAlert = vi.fn();
+const mockInsertNotificationRecord = vi.fn();
 const mockSubscribe = vi.fn(() => vi.fn());
 
 vi.mock("@/features/budget/lib/monitoring", () => ({
-  createBudgetMonitoringModule: vi.fn(() => ({
+  createBudgetMonitoringModule: mockCreateBudgetMonitoringModule.mockImplementation(() => ({
     refreshMonth: mockRefreshMonth,
     loadAutoSuggestions: mockLoadAutoSuggestions,
     acknowledgeAlert: mockAcknowledgeAlert,
@@ -16,11 +18,7 @@ vi.mock("@/features/budget/lib/monitoring", () => ({
 }));
 
 vi.mock("@/features/notifications", () => ({
-  useNotificationStore: {
-    getState: () => ({
-      insertNotification: vi.fn(),
-    }),
-  },
+  insertNotificationRecord: (...args: unknown[]) => mockInsertNotificationRecord(...args),
 }));
 
 vi.mock("@/features/settings", () => ({
@@ -155,6 +153,54 @@ describe("useBudgetStore", () => {
     await load;
 
     expect(store.getState().isLoading).toBe(false);
+  });
+
+  it("drops stale notification side effects after the active user changes", async () => {
+    const deferredSnapshot = createDeferred<{
+      budgets: any[];
+      budgetProgress: any[];
+      summary: { totalBudget: number; totalSpent: number; percentUsed: number };
+      autoSuggestions: any[];
+      pendingAlerts: any[];
+      pendingPermissionRequest: boolean;
+    }>();
+
+    mockRefreshMonth.mockReturnValueOnce(deferredSnapshot.promise);
+
+    const store = await getStore();
+    store.getState().initStore(mockDb, USER_ID);
+    store.setState({ currentMonth: "2026-03" as Month });
+
+    const monitoringCallsBeforeLoad = mockCreateBudgetMonitoringModule.mock.calls.length;
+    const load = store.getState().loadBudgets();
+    const initialMonitoringPorts =
+      mockCreateBudgetMonitoringModule.mock.calls[monitoringCallsBeforeLoad]?.[0];
+
+    expect(initialMonitoringPorts).toBeDefined();
+
+    store.getState().initStore(mockDb, "user-2" as UserId);
+
+    initialMonitoringPorts.insertNotification({
+      type: "budget_alert",
+      dedupKey: "budget_alert:food:80:2026-03",
+      categoryId: "food" as CategoryId,
+      goalId: null,
+      titleKey: "notifications.budgetWarning",
+      messageKey: "notifications.budgetWarningMsg",
+      params: null,
+    });
+
+    expect(mockInsertNotificationRecord).not.toHaveBeenCalled();
+
+    deferredSnapshot.resolve({
+      budgets: [],
+      budgetProgress: [],
+      summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
+      autoSuggestions: [],
+      pendingAlerts: [],
+      pendingPermissionRequest: false,
+    });
+    await load;
   });
 
   it("loads auto suggestions without triggering the full refresh path", async () => {

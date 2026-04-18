@@ -13,4 +13,11 @@ export type {
 } from "./lib/types";
 export { scheduleLocalPush } from "./services/local-push";
 export { deletePushToken, PROJECT_ID, registerPushToken } from "./services/push-token";
-export { useNotificationStore } from "./store";
+export {
+  clearAllNotifications,
+  initializeNotificationStore,
+  insertNotificationRecord,
+  loadNotificationsForUser,
+  markNotificationsVisited,
+  useNotificationStore,
+} from "./store";

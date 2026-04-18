@@ -25,4 +25,10 @@ export {
   type CaptureIngestionPort,
   createCaptureIngestionPort,
 } from "./services/capture-ingestion";
-export { useCaptureSourcesStore } from "./store";
+export {
+  hydrateCaptureSources,
+  refreshCaptureSourceStatus,
+  refreshDetectedSmsCount,
+  toggleCaptureSourcePackage,
+  useCaptureSourcesStore,
+} from "./store";

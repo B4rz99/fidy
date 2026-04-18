@@ -6,4 +6,8 @@ export {
   resolveConflict,
   sync,
 } from "./services/sync";
-export { useSyncConflictStore } from "./store";
+export {
+  loadSyncConflicts,
+  resolveSyncConflictSelection,
+  useSyncConflictStore,
+} from "./store";

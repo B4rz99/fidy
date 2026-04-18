@@ -14,19 +14,12 @@ import {
 } from "./lib/registry";
 import { getUserCategoriesForUser } from "./lib/repository";
 
-// Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
-let dbRef: AnyDb | null = null;
-let userIdRef: UserId | null = null;
-let mutations: WriteThroughMutationModule | null = null;
-
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
 
 type CategoriesState = CategoryRegistrySnapshot;
 
 type CategoriesActions = {
-  initStore(db: AnyDb, userId: UserId): void;
-  refresh(): Promise<void>;
-  createCustom(input: { name: string; iconName: string; colorHex: string }): Promise<boolean>;
+  replaceSnapshot: (snapshot: CategoryRegistrySnapshot) => void;
   isValid(id: string, scope?: CategoryRegistryScope): boolean;
 };
 
@@ -45,62 +38,69 @@ const toCustomCategoryRow = (row: {
 export const useCategoriesStore = create<CategoriesState & CategoriesActions>((set, get) => ({
   ...createCategoryRegistrySnapshot([]),
 
-  initStore: (db, userId) => {
-    dbRef = db;
-    userIdRef = userId;
-    mutations = createWriteThroughMutationModule(db);
-  },
-
-  refresh: async () => {
-    const db = dbRef;
-    const userId = userIdRef;
-    if (!db || !userId) return;
-
-    try {
-      const rows = getUserCategoriesForUser(db, userId).map(toCustomCategoryRow);
-      set(createCategoryRegistrySnapshot(rows));
-    } catch {
-      // keep existing state
-    }
-  },
-
-  createCustom: async (input) => {
-    const db = dbRef;
-    const userId = userIdRef;
-    if (!db || !userId) return false;
-
-    const trimmedName = input.name.trim();
-    if (trimmedName.length < MIN_NAME_LENGTH || trimmedName.length > MAX_NAME_LENGTH) return false;
-    if (!Object.hasOwn(ICON_MAP, input.iconName)) return false;
-    if (!HEX_COLOR_REGEX.test(input.colorHex)) return false;
-
-    const now = toIsoDateTime(new Date());
-    const id = generateUserCategoryId();
-    const mutationModule = mutations;
-    if (!mutationModule) return false;
-
-    try {
-      const result = await mutationModule.commit({
-        kind: "category.save",
-        row: {
-          id,
-          userId,
-          name: trimmedName,
-          iconName: input.iconName,
-          colorHex: input.colorHex,
-          createdAt: now,
-          updatedAt: now,
-          deletedAt: null,
-        },
-      });
-      if (!result.success) return false;
-    } catch {
-      return false;
-    }
-
-    await get().refresh();
-    return true;
-  },
+  replaceSnapshot: (snapshot) => set(snapshot),
 
   isValid: (id, scope = "built_in") => isCategoryIdValid(get(), id, scope),
 }));
+
+function isValidCustomCategoryInput(input: {
+  name: string;
+  iconName: string;
+  colorHex: string;
+}): boolean {
+  const trimmedName = input.name.trim();
+  return (
+    trimmedName.length >= MIN_NAME_LENGTH &&
+    trimmedName.length <= MAX_NAME_LENGTH &&
+    Object.hasOwn(ICON_MAP, input.iconName) &&
+    HEX_COLOR_REGEX.test(input.colorHex)
+  );
+}
+
+function createCategoryMutations(db: AnyDb): WriteThroughMutationModule {
+  return createWriteThroughMutationModule(db);
+}
+
+export async function refreshCategories(db: AnyDb, userId: UserId): Promise<void> {
+  try {
+    const rows = getUserCategoriesForUser(db, userId).map(toCustomCategoryRow);
+    useCategoriesStore.getState().replaceSnapshot(createCategoryRegistrySnapshot(rows));
+  } catch {
+    // keep existing state
+  }
+}
+
+export async function createCustomCategory(
+  db: AnyDb,
+  userId: UserId,
+  input: { name: string; iconName: string; colorHex: string }
+): Promise<boolean> {
+  if (!isValidCustomCategoryInput(input)) return false;
+
+  const trimmedName = input.name.trim();
+  const now = toIsoDateTime(new Date());
+  const id = generateUserCategoryId();
+  const mutations = createCategoryMutations(db);
+
+  try {
+    const result = await mutations.commit({
+      kind: "category.save",
+      row: {
+        id,
+        userId,
+        name: trimmedName,
+        iconName: input.iconName,
+        colorHex: input.colorHex,
+        createdAt: now,
+        updatedAt: now,
+        deletedAt: null,
+      },
+    });
+    if (!result.success) return false;
+  } catch {
+    return false;
+  }
+
+  await refreshCategories(db, userId);
+  return true;
+}

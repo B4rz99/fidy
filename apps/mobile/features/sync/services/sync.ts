@@ -1,152 +1,70 @@
 // biome-ignore-all lint/style/useNamingConvention: snake_case matches Supabase Postgres column names
 import { upsertTransaction, useTransactionStore } from "@/features/transactions";
-import { type AnyDb, enqueueSync, getSupabase } from "@/shared/db";
-import { generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
-import type { SyncConflictId } from "@/shared/types/branded";
+import { enqueueSync, getSupabase } from "@/shared/db";
+import { generateSyncQueueId } from "@/shared/lib";
 import {
   getUnresolvedConflicts,
   resolveConflict as resolveConflictDb,
 } from "../lib/conflict-repository";
+import { createSyncService } from "./create-sync-service";
 import { isOnline } from "./networkMonitor";
 import { syncPull, syncPush } from "./syncEngine";
+import type {
+  ResolveConflictResult,
+  ResolveTransactionConflictInput,
+  SyncConflict,
+  SyncContext,
+  SyncInput,
+  SyncRunResult,
+} from "./types";
 
-export type TransactionSnapshot = {
-  readonly id: string;
-  readonly userId: string;
-  readonly type: string;
-  readonly amount: number;
-  readonly categoryId: string;
-  readonly description: string | null;
-  readonly date: string;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-  readonly deletedAt: string | null;
-  readonly source: string;
-};
-
-export type SyncConflict = {
-  readonly id: string;
-  readonly transactionId: string;
-  readonly localData: TransactionSnapshot;
-  readonly serverData: TransactionSnapshot;
-  readonly detectedAt: string;
-};
-
-export type SyncContext = {
-  readonly db: AnyDb;
-};
-
-export type SyncReason = "startup" | "foreground" | "reconnected" | "manual";
-
-export type SyncInput = SyncContext & {
-  readonly userId: string;
-  readonly reason?: SyncReason;
-};
-
-export type SyncRunResult =
-  | {
-      readonly status: "synced";
-      readonly unresolvedConflicts: number;
-    }
-  | {
-      readonly status: "skipped_offline";
-      readonly unresolvedConflicts: number;
-    }
-  | {
-      readonly status: "failed_pull";
-      readonly unresolvedConflicts: number;
-    };
-
-export type ConflictResolution = "local" | "server";
-
-export type ResolveTransactionConflictInput = SyncContext & {
-  readonly conflictId: SyncConflictId;
-  readonly resolution: ConflictResolution;
-};
-
-export type ResolveConflictResult = {
-  readonly unresolvedConflicts: number;
-};
-
-function parseConflict(row: {
-  readonly id: string;
-  readonly transactionId: string;
-  readonly localData: string;
-  readonly serverData: string;
-  readonly detectedAt: string;
-}): SyncConflict {
-  return {
-    id: row.id,
-    transactionId: row.transactionId,
-    localData: JSON.parse(row.localData) as TransactionSnapshot,
-    serverData: JSON.parse(row.serverData) as TransactionSnapshot,
-    detectedAt: row.detectedAt,
-  };
-}
-
-export async function listConflicts({ db }: SyncContext): Promise<readonly SyncConflict[]> {
-  return getUnresolvedConflicts(db).map(parseConflict);
-}
-
-export async function sync({
-  db,
-  userId,
-  reason: _reason = "foreground",
-}: SyncInput): Promise<SyncRunResult> {
-  void _reason;
-  const online = await isOnline();
-  if (!online) {
-    return {
-      status: "skipped_offline",
-      unresolvedConflicts: (await listConflicts({ db })).length,
-    };
-  }
-
-  const supabase = getSupabase();
-  const pullOk = await syncPull(db, supabase, userId);
-  if (pullOk) {
-    await syncPush(db, supabase, userId);
+const syncService = createSyncService({
+  isOnline,
+  getSupabase,
+  syncPull,
+  syncPush,
+  refreshTransactions: async () => {
     await useTransactionStore.getState().refresh();
-  }
-
-  return {
-    status: pullOk ? "synced" : "failed_pull",
-    unresolvedConflicts: (await listConflicts({ db })).length,
-  };
-}
-
-export async function resolveConflict({
-  db,
-  conflictId,
-  resolution,
-}: ResolveTransactionConflictInput): Promise<ResolveConflictResult> {
-  const row = getUnresolvedConflicts(db).find((conflict) => conflict.id === conflictId);
-  if (!row) {
-    return {
-      unresolvedConflicts: (await listConflicts({ db })).length,
-    };
-  }
-
-  const resolvedAt = toIsoDateTime(new Date());
-
-  if (resolution === "local") {
-    const localData = JSON.parse(row.localData) as TransactionSnapshot;
-    upsertTransaction(db, { ...localData, updatedAt: resolvedAt } as Parameters<
-      typeof upsertTransaction
-    >[1]);
+  },
+  getConflictRows: async ({ db }) => getUnresolvedConflicts(db),
+  upsertTransaction: async (db, row) => {
+    upsertTransaction(db, row as Parameters<typeof upsertTransaction>[1]);
+  },
+  enqueueTransactionSync: async (db, transactionId, createdAt) => {
     enqueueSync(db, {
       id: generateSyncQueueId(),
       tableName: "transactions",
-      rowId: row.transactionId,
+      rowId: transactionId,
       operation: "update",
-      createdAt: resolvedAt,
+      createdAt,
     });
-  }
+  },
+  resolveConflictRow: async (db, conflictId, resolution, resolvedAt) => {
+    resolveConflictDb(db, conflictId, resolution, resolvedAt);
+  },
+});
 
-  resolveConflictDb(db, conflictId, resolution, resolvedAt);
-  await useTransactionStore.getState().refresh();
-
-  return {
-    unresolvedConflicts: (await listConflicts({ db })).length,
-  };
+export async function sync(input: SyncInput): Promise<SyncRunResult> {
+  return syncService.run(input);
 }
+
+export async function listConflicts(input: SyncContext): Promise<readonly SyncConflict[]> {
+  return syncService.listConflicts(input);
+}
+
+export async function resolveConflict({
+  ...input
+}: ResolveTransactionConflictInput): Promise<ResolveConflictResult> {
+  return syncService.resolveConflict(input);
+}
+
+export type {
+  ConflictResolution,
+  ResolveConflictResult,
+  ResolveTransactionConflictInput,
+  SyncConflict,
+  SyncContext,
+  SyncInput,
+  SyncRunResult,
+  TransactionSnapshot,
+} from "./types";

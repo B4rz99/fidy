@@ -5,7 +5,7 @@ import { useSubscription } from "@/shared/hooks";
 import { captureWarning } from "@/shared/lib";
 import { onConnectivityChange } from "../services/networkMonitor";
 import { sync } from "../services/sync";
-import { useSyncConflictStore } from "../store";
+import { loadSyncConflicts } from "../store";
 
 export function useSync(db: AnyDb | null, userId: string | null): boolean {
   const isSyncing = useRef(false);
@@ -30,7 +30,7 @@ export function useSync(db: AnyDb | null, userId: string | null): boolean {
         isSyncing.current = true;
         try {
           const result = await sync({ db, userId, reason: "foreground" });
-          await useSyncConflictStore.getState().loadConflicts();
+          await loadSyncConflicts(db);
           if (result.status === "synced") markInitialDone();
         } catch (error) {
           captureWarning("background_sync_failed", {

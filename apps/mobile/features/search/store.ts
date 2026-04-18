@@ -8,9 +8,6 @@ import { EMPTY_FILTERS } from "./lib/types";
 
 const PAGE_SIZE = 30;
 
-let dbRef: AnyDb | null = null;
-let userIdRef: string | null = null;
-
 type SearchState = {
   filters: SearchFilters;
   results: StoredTransaction[];
@@ -21,12 +18,16 @@ type SearchState = {
 };
 
 type SearchActions = {
-  initStore: (db: AnyDb, userId: string) => void;
   setQuery: (query: string) => void;
   setFilters: (partial: Partial<SearchFilters>) => void;
   clearFilters: () => void;
-  executeSearch: () => void;
-  loadNextPage: () => void;
+  setSearchResults: (
+    results: readonly StoredTransaction[],
+    hasMore: boolean,
+    summary: SearchSummary
+  ) => void;
+  appendSearchResults: (results: readonly StoredTransaction[], hasMore: boolean) => void;
+  setIsSearching: (isSearching: boolean) => void;
   reset: () => void;
 };
 
@@ -39,69 +40,88 @@ const INITIAL_STATE: SearchState = {
   isSearching: false,
 };
 
-export const useSearchStore = create<SearchState & SearchActions>((set, get) => ({
+export const useSearchStore = create<SearchState & SearchActions>((set) => ({
   ...INITIAL_STATE,
 
-  initStore: (db, userId) => {
-    dbRef = db;
-    userIdRef = userId;
-  },
-
   setQuery: (query) => {
-    set((s) => ({ filters: { ...s.filters, query } }));
-    get().executeSearch();
+    set((state) => ({ filters: { ...state.filters, query } }));
   },
 
   setFilters: (partial) => {
-    set((s) => ({ filters: { ...s.filters, ...partial } }));
-    get().executeSearch();
+    set((state) => ({ filters: { ...state.filters, ...partial } }));
   },
 
   clearFilters: () => {
     set({ filters: EMPTY_FILTERS });
-    get().executeSearch();
   },
 
-  executeSearch: () => {
-    if (!dbRef || !userIdRef) return;
-    set({ isSearching: true });
-    try {
-      const { filters } = get();
-      const rows = searchTransactionsPaginated(dbRef, userIdRef, filters, PAGE_SIZE, 0);
-      const hasMore = rows.length > PAGE_SIZE;
-      const pageData = hasMore ? rows.slice(0, PAGE_SIZE) : rows;
-      const summary = searchTransactionsAggregate(dbRef, userIdRef, filters);
-      set({
-        results: pageData.map(toStoredTransaction),
-        offset: pageData.length,
-        hasMore,
-        summary,
-        isSearching: false,
-      });
-    } catch {
-      set({ isSearching: false });
-    }
-  },
+  setSearchResults: (results, hasMore, summary) =>
+    set({
+      results: [...results],
+      offset: results.length,
+      hasMore,
+      summary,
+      isSearching: false,
+    }),
 
-  loadNextPage: () => {
-    if (!dbRef || !userIdRef) return;
-    const { hasMore, offset, filters } = get();
-    if (!hasMore) return;
-    try {
-      const rows = searchTransactionsPaginated(dbRef, userIdRef, filters, PAGE_SIZE, offset);
-      const moreAvailable = rows.length > PAGE_SIZE;
-      const pageData = moreAvailable ? rows.slice(0, PAGE_SIZE) : rows;
-      set((s) => ({
-        results: [...s.results, ...pageData.map(toStoredTransaction)],
-        offset: s.offset + pageData.length,
-        hasMore: moreAvailable,
-      }));
-    } catch {
-      // Keep existing state
-    }
-  },
+  appendSearchResults: (results, hasMore) =>
+    set((state) => ({
+      results: [...state.results, ...results],
+      offset: state.offset + results.length,
+      hasMore,
+    })),
+
+  setIsSearching: (isSearching) => set({ isSearching }),
 
   reset: () => {
     set(INITIAL_STATE);
   },
 }));
+
+export function executeSearch(db: AnyDb, userId: string): void {
+  const { filters, setIsSearching, setSearchResults } = useSearchStore.getState();
+  setIsSearching(true);
+
+  try {
+    const rows = searchTransactionsPaginated(db, userId, filters, PAGE_SIZE, 0);
+    const hasMore = rows.length > PAGE_SIZE;
+    const pageData = (hasMore ? rows.slice(0, PAGE_SIZE) : rows).map(toStoredTransaction);
+    const summary = searchTransactionsAggregate(db, userId, filters);
+    setSearchResults(pageData, hasMore, summary);
+  } catch {
+    setIsSearching(false);
+  }
+}
+
+export function loadNextSearchPage(db: AnyDb, userId: string): void {
+  const { hasMore, offset, filters, appendSearchResults } = useSearchStore.getState();
+  if (!hasMore) return;
+
+  try {
+    const rows = searchTransactionsPaginated(db, userId, filters, PAGE_SIZE, offset);
+    const hasMoreResults = rows.length > PAGE_SIZE;
+    const pageData = (hasMoreResults ? rows.slice(0, PAGE_SIZE) : rows).map(toStoredTransaction);
+    appendSearchResults(pageData, hasMoreResults);
+  } catch {
+    // Keep existing state
+  }
+}
+
+export function updateSearchQuery(db: AnyDb, userId: string, query: string): void {
+  useSearchStore.getState().setQuery(query);
+  executeSearch(db, userId);
+}
+
+export function updateSearchFilters(
+  db: AnyDb,
+  userId: string,
+  partial: Partial<SearchFilters>
+): void {
+  useSearchStore.getState().setFilters(partial);
+  executeSearch(db, userId);
+}
+
+export function clearSearchFilters(db: AnyDb, userId: string): void {
+  useSearchStore.getState().clearFilters();
+  executeSearch(db, userId);
+}

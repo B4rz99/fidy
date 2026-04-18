@@ -1,9 +1,11 @@
+import { Effect } from "effect";
 import type {
   PipelineResult,
   ProcessEmails,
   ProcessRetries,
 } from "@/features/email-capture/pipeline.public";
 import type { AnyDb } from "@/shared/db";
+import { fromThunk, runAppEffect } from "@/shared/effect/runtime";
 import type { UserId } from "@/shared/types/branded";
 import type { ApplePayIntentData, NotificationData } from "../schema";
 import type { ApplePayPipelineResult } from "./apple-pay-pipeline";
@@ -107,25 +109,34 @@ export function createCaptureIngestionPort(
   db: AnyDb,
   deps: Partial<CaptureIngestionDeps> = {}
 ): CaptureIngestionPort | CaptureIngestionPortWithEmail {
-  const ingestDefault: CaptureIngestionPort["ingest"] = async (command) => {
-    switch (command.kind) {
-      case "notification": {
-        const processNotification =
-          deps.processNotification ?? (await loadDefaultDeps()).processNotification;
-        return processNotification(db, command.userId, command.notification);
-      }
-      case "apple_pay": {
-        const processApplePayIntent =
-          deps.processApplePayIntent ?? (await loadDefaultDeps()).processApplePayIntent;
-        return processApplePayIntent(db, command.userId, command.intent);
-      }
-      case "widget": {
-        const processWidgetTransactions =
-          deps.processWidgetTransactions ?? (await loadDefaultDeps()).processWidgetTransactions;
-        return processWidgetTransactions(db, command.userId);
-      }
-    }
-  };
+  const ingestDefault: CaptureIngestionPort["ingest"] = (command) =>
+    runAppEffect(
+      Effect.gen(function* () {
+        switch (command.kind) {
+          case "notification": {
+            const processNotification =
+              deps.processNotification ?? (yield* fromThunk(loadDefaultDeps)).processNotification;
+            return yield* fromThunk(() =>
+              processNotification(db, command.userId, command.notification)
+            );
+          }
+          case "apple_pay": {
+            const processApplePayIntent =
+              deps.processApplePayIntent ??
+              (yield* fromThunk(loadDefaultDeps)).processApplePayIntent;
+            return yield* fromThunk(() =>
+              processApplePayIntent(db, command.userId, command.intent)
+            );
+          }
+          case "widget": {
+            const processWidgetTransactions =
+              deps.processWidgetTransactions ??
+              (yield* fromThunk(loadDefaultDeps)).processWidgetTransactions;
+            return yield* fromThunk(() => processWidgetTransactions(db, command.userId));
+          }
+        }
+      })
+    );
 
   if (!deps.processEmails || !deps.processRetries) {
     return { ingest: ingestDefault };
@@ -138,19 +149,25 @@ export function createCaptureIngestionPort(
   function ingestWithEmail(
     command: EmailCaptureIngestionCommand
   ): Promise<EmailCaptureIngestionOutcome>;
-  async function ingestWithEmail(
+  function ingestWithEmail(
     command: AnyCaptureIngestionCommand
   ): Promise<AnyCaptureIngestionOutcome> {
-    switch (command.kind) {
-      case "notification":
-      case "apple_pay":
-      case "widget":
-        return ingestDefault(command);
-      case "email_batch":
-        return processEmails(db, command.userId, command.emails, command.onProgress);
-      case "email_retry":
-        return processRetries(db, command.userId);
-    }
+    return runAppEffect(
+      Effect.gen(function* () {
+        switch (command.kind) {
+          case "notification":
+          case "apple_pay":
+          case "widget":
+            return yield* fromThunk(() => ingestDefault(command));
+          case "email_batch":
+            return yield* fromThunk(() =>
+              processEmails(db, command.userId, command.emails, command.onProgress)
+            );
+          case "email_retry":
+            return yield* fromThunk(() => processRetries(db, command.userId));
+        }
+      })
+    );
   }
 
   return { ingest: ingestWithEmail };

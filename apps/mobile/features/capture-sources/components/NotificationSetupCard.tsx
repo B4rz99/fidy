@@ -1,8 +1,10 @@
+import { useAuthStore } from "@/features/auth";
 import { Bell, ExternalLink } from "@/shared/components/icons";
 import { Linking, Platform, Pressable, Switch, Text, View } from "@/shared/components/rn";
+import { getDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { KNOWN_BANK_PACKAGES } from "../schema";
-import { useCaptureSourcesStore } from "../store";
+import { toggleCaptureSourcePackage, useCaptureSourcesStore } from "../store";
 
 const openNotificationListenerSettings = () => {
   if (Platform.OS === "android") {
@@ -16,9 +18,9 @@ const openNotificationListenerSettings = () => {
 
 export const NotificationSetupCard = () => {
   const { t } = useTranslation();
+  const userId = useAuthStore((s) => s.session?.user.id ?? null);
   const enabledPackages = useCaptureSourcesStore((s) => s.enabledPackages);
   const isPermissionGranted = useCaptureSourcesStore((s) => s.isNotificationPermissionGranted);
-  const togglePackage = useCaptureSourcesStore((s) => s.togglePackage);
 
   const iconColor = useThemeColor("accentGreen");
   const warningColor = useThemeColor("accentRed");
@@ -95,7 +97,10 @@ export const NotificationSetupCard = () => {
               </Text>
               <Switch
                 value={isEnabled}
-                onValueChange={(value) => togglePackage(pkg.packageName, value)}
+                onValueChange={(value) => {
+                  if (!userId) return;
+                  void toggleCaptureSourcePackage(getDb(userId), userId, pkg.packageName, value);
+                }}
                 trackColor={{ false: secondaryColor, true: iconColor }}
               />
             </View>

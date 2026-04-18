@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
+import { useAuthStore } from "@/features/auth";
 import { Check, Ellipsis, type LucideIcon } from "@/shared/components/icons";
 import {
   FlatList,
@@ -11,10 +12,12 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
+import { getDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import type { UserId } from "@/shared/types/branded";
 import { COLOR_SWATCHES, MAX_NAME_LENGTH, MIN_NAME_LENGTH } from "../lib/constants";
 import { ICON_MAP, SELECTABLE_ICONS } from "../lib/icon-map";
-import { useCategoriesStore } from "../store";
+import { createCustomCategory } from "../store";
 
 const ICON_GRID_COLUMNS = 6;
 
@@ -106,9 +109,11 @@ export function CreateCategorySheet() {
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const { isBusy, run: guardedCreate } = useAsyncGuard();
+  const userId = useAuthStore((state) => state.session?.user.id as UserId | undefined);
 
   const trimmedName = name.trim();
   const isFormValid =
+    userId != null &&
     trimmedName.length >= MIN_NAME_LENGTH &&
     trimmedName.length <= MAX_NAME_LENGTH &&
     selectedIcon !== null &&
@@ -123,16 +128,16 @@ export function CreateCategorySheet() {
   }, []);
 
   const handleCreate = useCallback(() => {
-    if (!selectedIcon || !selectedColor) return;
+    if (!selectedIcon || !selectedColor || !userId) return;
     void guardedCreate(async () => {
-      const success = await useCategoriesStore.getState().createCustom({
+      const success = await createCustomCategory(getDb(userId), userId, {
         name: name.trim(),
         iconName: selectedIcon,
         colorHex: selectedColor,
       });
       if (success) router.back();
     });
-  }, [name, selectedIcon, selectedColor, guardedCreate, router]);
+  }, [guardedCreate, name, router, selectedColor, selectedIcon, userId]);
 
   // Derive preview icon
   const PreviewIcon: LucideIcon = selectedIcon ? (ICON_MAP[selectedIcon] ?? Ellipsis) : Ellipsis;

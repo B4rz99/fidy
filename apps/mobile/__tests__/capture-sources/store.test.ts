@@ -1,7 +1,13 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useCaptureSourcesStore } from "@/features/capture-sources/store";
+import {
+  hydrateCaptureSources,
+  refreshCaptureSourceStatus,
+  refreshDetectedSmsCount,
+  toggleCaptureSourcePackage,
+  useCaptureSourcesStore,
+} from "@/features/capture-sources/store";
 
 const mockGetEnabledPackages = vi.fn().mockResolvedValue([]);
 const mockUpsertNotificationSource = vi.fn();
@@ -26,7 +32,6 @@ const USER_ID = "user-1";
 describe("useCaptureSourcesStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useCaptureSourcesStore.getState()._resetRefs();
     useCaptureSourcesStore.setState({
       enabledPackages: [],
       isNotificationPermissionGranted: false,
@@ -38,109 +43,55 @@ describe("useCaptureSourcesStore", () => {
     mockGetTodaySmsEventCount.mockResolvedValue(0);
   });
 
-  describe("initStore", () => {
-    it("sets db and userId refs for subsequent actions", () => {
-      useCaptureSourcesStore.getState().initStore(mockDb, USER_ID);
-      expect(() => useCaptureSourcesStore.getState().initStore(mockDb, USER_ID)).not.toThrow();
+  it("hydrates capture-source state from the explicit boundary", async () => {
+    mockGetEnabledPackages.mockResolvedValueOnce([
+      "com.todo1.mobile.co.bancolombia",
+      "com.nequi.MobileApp",
+    ]);
+    mockHasProcessedCaptures.mockResolvedValueOnce(true);
+    mockGetTodaySmsEventCount.mockResolvedValueOnce(3);
+
+    await hydrateCaptureSources(mockDb, USER_ID);
+
+    expect(mockGetEnabledPackages).toHaveBeenCalledWith(mockDb, USER_ID);
+    expect(mockHasProcessedCaptures).toHaveBeenCalledWith(mockDb, "apple_pay");
+    expect(mockGetTodaySmsEventCount).toHaveBeenCalledWith(mockDb, USER_ID, expect.any(Date));
+    expect(useCaptureSourcesStore.getState()).toMatchObject({
+      enabledPackages: ["com.todo1.mobile.co.bancolombia", "com.nequi.MobileApp"],
+      isApplePaySetupComplete: true,
+      detectedSmsCount: 3,
     });
   });
 
-  describe("loadConfig", () => {
-    it("loads enabled packages from DB", async () => {
-      mockGetEnabledPackages.mockResolvedValueOnce([
-        "com.todo1.mobile.co.bancolombia",
-        "com.nequi.MobileApp",
-      ]);
+  it("toggles a package through the explicit boundary and updates store state", async () => {
+    await toggleCaptureSourcePackage(mockDb, USER_ID, "com.nequi.MobileApp", true);
 
-      useCaptureSourcesStore.getState().initStore(mockDb, USER_ID);
-      await useCaptureSourcesStore.getState().loadConfig();
-
-      expect(mockGetEnabledPackages).toHaveBeenCalledWith(mockDb, USER_ID);
-      expect(useCaptureSourcesStore.getState().enabledPackages).toEqual([
-        "com.todo1.mobile.co.bancolombia",
-        "com.nequi.MobileApp",
-      ]);
-    });
-
-    it("does nothing when db is not set", async () => {
-      await useCaptureSourcesStore.getState().loadConfig();
-
-      expect(mockGetEnabledPackages).not.toHaveBeenCalled();
-    });
+    expect(mockUpsertNotificationSource).toHaveBeenCalledWith(
+      mockDb,
+      USER_ID,
+      "com.nequi.MobileApp",
+      "Nequi",
+      true,
+      expect.any(String)
+    );
+    expect(useCaptureSourcesStore.getState().enabledPackages).toContain("com.nequi.MobileApp");
   });
 
-  describe("togglePackage", () => {
-    it("enables a package and upserts to DB", async () => {
-      useCaptureSourcesStore.getState().initStore(mockDb, USER_ID);
-      await useCaptureSourcesStore.getState().togglePackage("com.nequi.MobileApp", true);
+  it("refreshes Apple Pay setup status through the explicit boundary", async () => {
+    mockHasProcessedCaptures.mockResolvedValueOnce(true);
 
-      expect(mockUpsertNotificationSource).toHaveBeenCalledWith(
-        mockDb,
-        USER_ID,
-        "com.nequi.MobileApp",
-        "Nequi",
-        true,
-        expect.any(String)
-      );
-      expect(useCaptureSourcesStore.getState().enabledPackages).toContain("com.nequi.MobileApp");
-    });
+    await refreshCaptureSourceStatus(mockDb);
 
-    it("disables a package and removes from state", async () => {
-      useCaptureSourcesStore.getState().initStore(mockDb, USER_ID);
-      useCaptureSourcesStore.setState({ enabledPackages: ["com.nequi.MobileApp"] });
-
-      await useCaptureSourcesStore.getState().togglePackage("com.nequi.MobileApp", false);
-
-      expect(mockUpsertNotificationSource).toHaveBeenCalledWith(
-        mockDb,
-        USER_ID,
-        "com.nequi.MobileApp",
-        "Nequi",
-        false,
-        expect.any(String)
-      );
-      expect(useCaptureSourcesStore.getState().enabledPackages).not.toContain(
-        "com.nequi.MobileApp"
-      );
-    });
+    expect(mockHasProcessedCaptures).toHaveBeenCalledWith(mockDb, "apple_pay");
+    expect(useCaptureSourcesStore.getState().isApplePaySetupComplete).toBe(true);
   });
 
-  describe("refreshStatus", () => {
-    it("sets isApplePaySetupComplete when captures exist", async () => {
-      mockHasProcessedCaptures.mockResolvedValueOnce(true);
+  it("refreshes detected SMS count through the explicit boundary", async () => {
+    mockGetTodaySmsEventCount.mockResolvedValueOnce(3);
 
-      useCaptureSourcesStore.getState().initStore(mockDb, USER_ID);
-      await useCaptureSourcesStore.getState().refreshStatus();
+    await refreshDetectedSmsCount(mockDb, USER_ID);
 
-      expect(mockHasProcessedCaptures).toHaveBeenCalledWith(mockDb, "apple_pay");
-      expect(useCaptureSourcesStore.getState().isApplePaySetupComplete).toBe(true);
-    });
-
-    it("sets isApplePaySetupComplete false when no captures", async () => {
-      mockHasProcessedCaptures.mockResolvedValueOnce(false);
-
-      useCaptureSourcesStore.getState().initStore(mockDb, USER_ID);
-      await useCaptureSourcesStore.getState().refreshStatus();
-
-      expect(useCaptureSourcesStore.getState().isApplePaySetupComplete).toBe(false);
-    });
-  });
-
-  describe("refreshDetectedSms", () => {
-    it("updates detectedSmsCount from DB", async () => {
-      mockGetTodaySmsEventCount.mockResolvedValueOnce(3);
-
-      useCaptureSourcesStore.getState().initStore(mockDb, USER_ID);
-      await useCaptureSourcesStore.getState().refreshDetectedSms();
-
-      expect(mockGetTodaySmsEventCount).toHaveBeenCalledWith(mockDb, USER_ID, expect.any(Date));
-      expect(useCaptureSourcesStore.getState().detectedSmsCount).toBe(3);
-    });
-
-    it("does nothing when db is not set", async () => {
-      await useCaptureSourcesStore.getState().refreshDetectedSms();
-
-      expect(mockGetTodaySmsEventCount).not.toHaveBeenCalled();
-    });
+    expect(mockGetTodaySmsEventCount).toHaveBeenCalledWith(mockDb, USER_ID, expect.any(Date));
+    expect(useCaptureSourcesStore.getState().detectedSmsCount).toBe(3);
   });
 });

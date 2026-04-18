@@ -9,9 +9,6 @@ import {
 } from "./lib/repository";
 import { KNOWN_BANK_PACKAGES } from "./schema";
 
-let dbRef: AnyDb | null = null;
-let userIdRef: string | null = null;
-
 type CaptureSourcesState = {
   enabledPackages: string[];
   isNotificationPermissionGranted: boolean;
@@ -20,94 +17,101 @@ type CaptureSourcesState = {
 };
 
 type CaptureSourcesActions = {
-  initStore: (db: AnyDb, userId: string) => void;
-  hydrate: () => Promise<void>;
-  loadConfig: () => Promise<void>;
-  togglePackage: (packageName: string, enabled: boolean) => Promise<void>;
-  checkPermissions: () => Promise<void>;
-  refreshStatus: () => Promise<void>;
-  refreshDetectedSms: () => Promise<void>;
-  _resetRefs: () => void;
+  setEnabledPackages: (enabledPackages: readonly string[]) => void;
+  setNotificationPermissionGranted: (isNotificationPermissionGranted: boolean) => void;
+  setApplePaySetupComplete: (isApplePaySetupComplete: boolean) => void;
+  setDetectedSmsCount: (detectedSmsCount: number) => void;
 };
 
 export const useCaptureSourcesStore = create<CaptureSourcesState & CaptureSourcesActions>(
-  (set, get) => ({
+  (set) => ({
     enabledPackages: [],
     isNotificationPermissionGranted: false,
     isApplePaySetupComplete: false,
     detectedSmsCount: 0,
 
-    initStore: (db, userId) => {
-      dbRef = db;
-      userIdRef = userId;
-    },
+    setEnabledPackages: (enabledPackages) => set({ enabledPackages: [...enabledPackages] }),
 
-    _resetRefs: () => {
-      dbRef = null;
-      userIdRef = null;
-    },
+    setNotificationPermissionGranted: (isNotificationPermissionGranted) =>
+      set({ isNotificationPermissionGranted }),
 
-    hydrate: async () => {
-      const { loadConfig, checkPermissions, refreshStatus, refreshDetectedSms } = get();
-      await Promise.allSettled([
-        loadConfig(),
-        checkPermissions(),
-        refreshStatus(),
-        refreshDetectedSms(),
-      ]);
-    },
+    setApplePaySetupComplete: (isApplePaySetupComplete) => set({ isApplePaySetupComplete }),
 
-    loadConfig: async () => {
-      if (!dbRef || !userIdRef) return;
-      const enabledPackages = await getEnabledPackages(dbRef, userIdRef);
-      set({ enabledPackages });
-    },
-
-    checkPermissions: async () => {
-      if (Platform.OS !== "android") return;
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports -- conditional native module load; dynamic import() not supported for native modules
-        const mod = require("expo-android-notification-listener-service") as {
-          isPermissionGranted: () => Promise<boolean>;
-        };
-        const granted = await mod.isPermissionGranted();
-        set({ isNotificationPermissionGranted: granted });
-      } catch {
-        // Module not available — leave as false
-      }
-    },
-
-    togglePackage: async (packageName, enabled) => {
-      if (!dbRef || !userIdRef) return;
-
-      const knownPkg = KNOWN_BANK_PACKAGES.find((p) => p.packageName === packageName);
-      const label = knownPkg?.label ?? packageName;
-
-      await upsertNotificationSource(
-        dbRef,
-        userIdRef,
-        packageName,
-        label,
-        enabled,
-        new Date().toISOString()
-      );
-
-      const updated = enabled
-        ? [...get().enabledPackages, packageName]
-        : get().enabledPackages.filter((p) => p !== packageName);
-      set({ enabledPackages: updated });
-    },
-
-    refreshStatus: async () => {
-      if (!dbRef) return;
-      const isApplePaySetupComplete = await hasProcessedCaptures(dbRef, "apple_pay");
-      set({ isApplePaySetupComplete });
-    },
-
-    refreshDetectedSms: async () => {
-      if (!dbRef || !userIdRef) return;
-      const detectedSmsCount = await getTodaySmsEventCount(dbRef, userIdRef, new Date());
-      set({ detectedSmsCount });
-    },
+    setDetectedSmsCount: (detectedSmsCount) => set({ detectedSmsCount }),
   })
 );
+
+async function loadCaptureSourceConfig(db: AnyDb, userId: string): Promise<void> {
+  const enabledPackages = await getEnabledPackages(db, userId);
+  useCaptureSourcesStore.getState().setEnabledPackages(enabledPackages);
+}
+
+async function checkCaptureSourcePermissions(): Promise<void> {
+  if (Platform.OS !== "android") return;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- conditional native module load; dynamic import() not supported for native modules
+    const mod = require("expo-android-notification-listener-service") as {
+      isPermissionGranted: () => Promise<boolean>;
+    };
+    const granted = await mod.isPermissionGranted();
+    useCaptureSourcesStore.getState().setNotificationPermissionGranted(granted);
+  } catch {
+    // Module not available — leave as false
+  }
+}
+
+function getUpdatedEnabledPackages(
+  enabledPackages: readonly string[],
+  packageName: string,
+  enabled: boolean
+): string[] {
+  if (enabled) {
+    return enabledPackages.includes(packageName)
+      ? [...enabledPackages]
+      : [...enabledPackages, packageName];
+  }
+
+  return enabledPackages.filter((pkg) => pkg !== packageName);
+}
+
+export async function hydrateCaptureSources(db: AnyDb, userId: string): Promise<void> {
+  await Promise.allSettled([
+    loadCaptureSourceConfig(db, userId),
+    checkCaptureSourcePermissions(),
+    refreshCaptureSourceStatus(db),
+    refreshDetectedSmsCount(db, userId),
+  ]);
+}
+
+export async function toggleCaptureSourcePackage(
+  db: AnyDb,
+  userId: string,
+  packageName: string,
+  enabled: boolean
+): Promise<void> {
+  const knownPkg = KNOWN_BANK_PACKAGES.find((pkg) => pkg.packageName === packageName);
+  const label = knownPkg?.label ?? packageName;
+
+  await upsertNotificationSource(db, userId, packageName, label, enabled, new Date().toISOString());
+
+  const updated = getUpdatedEnabledPackages(
+    useCaptureSourcesStore.getState().enabledPackages,
+    packageName,
+    enabled
+  );
+  useCaptureSourcesStore.getState().setEnabledPackages(updated);
+}
+
+export async function refreshCaptureSourceStatus(db: AnyDb): Promise<void> {
+  const isApplePaySetupComplete = await hasProcessedCaptures(db, "apple_pay");
+  useCaptureSourcesStore.getState().setApplePaySetupComplete(isApplePaySetupComplete);
+}
+
+export async function refreshDetectedSmsCount(
+  db: AnyDb,
+  userId: string,
+  now: Date = new Date()
+): Promise<void> {
+  const detectedSmsCount = await getTodaySmsEventCount(db, userId, now);
+  useCaptureSourcesStore.getState().setDetectedSmsCount(detectedSmsCount);
+}

@@ -44,8 +44,7 @@ function createDeferred<T>() {
 }
 
 async function getStore() {
-  const { useNotificationStore } = await import("@/features/notifications/store");
-  return useNotificationStore;
+  return import("@/features/notifications/store");
 }
 
 async function flushMicrotasks() {
@@ -71,9 +70,9 @@ describe("useNotificationStore", () => {
       userId === USER_2 ? 2 : 7
     );
 
-    const store = await getStore();
-    const firstInit = store.getState().initStore(mockDb, USER_1);
-    const secondInit = store.getState().initStore(mockDb, USER_2);
+    const { initializeNotificationStore, useNotificationStore: store } = await getStore();
+    const firstInit = initializeNotificationStore(mockDb, USER_1);
+    const secondInit = initializeNotificationStore(mockDb, USER_2);
 
     deferredVisited.resolve(null);
     await firstInit;
@@ -88,9 +87,13 @@ describe("useNotificationStore", () => {
     const deferredCommit = createDeferred<{ success: true; didMutate: true }>();
     mockCommit.mockReturnValueOnce(deferredCommit.promise);
 
-    const store = await getStore();
-    await store.getState().initStore(mockDb, USER_1);
-    store.getState().insertNotification({
+    const {
+      initializeNotificationStore,
+      insertNotificationRecord,
+      useNotificationStore: store,
+    } = await getStore();
+    await initializeNotificationStore(mockDb, USER_1);
+    void insertNotificationRecord(mockDb, USER_1, {
       type: "budget_alert",
       dedupKey: "budget:1",
       categoryId: null,
@@ -100,7 +103,7 @@ describe("useNotificationStore", () => {
       params: null,
     });
 
-    await store.getState().initStore(mockDb, USER_2);
+    await initializeNotificationStore(mockDb, USER_2);
     deferredCommit.resolve({ success: true, didMutate: true });
     await flushMicrotasks();
 
@@ -117,16 +120,20 @@ describe("useNotificationStore", () => {
     const deferredCommit = createDeferred<{ success: true; didMutate: true }>();
     mockCommit.mockReturnValueOnce(deferredCommit.promise);
 
-    const store = await getStore();
-    await store.getState().initStore(mockDb, USER_1);
+    const {
+      clearAllNotifications,
+      initializeNotificationStore,
+      useNotificationStore: store,
+    } = await getStore();
+    await initializeNotificationStore(mockDb, USER_1);
     store.setState({
       notifications: [{ id: "old-user-notif" }] as any[],
       newCount: 4,
     });
 
-    store.getState().clearAll();
+    void clearAllNotifications(mockDb, USER_1);
 
-    await store.getState().initStore(mockDb, USER_2);
+    await initializeNotificationStore(mockDb, USER_2);
     store.setState({
       notifications: [{ id: "new-user-notif" }] as any[],
       newCount: 2,

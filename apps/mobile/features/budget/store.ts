@@ -1,6 +1,6 @@
 import { addMonths, format, subMonths } from "date-fns";
 import { create } from "zustand";
-import { useNotificationStore } from "@/features/notifications";
+import { insertNotificationRecord } from "@/features/notifications";
 import { useSettingsStore } from "@/features/settings";
 import { CATEGORY_MAP, useTransactionStore } from "@/features/transactions";
 import { createWriteThroughMutationModule, type WriteThroughMutationModule } from "@/mutations";
@@ -31,15 +31,34 @@ const parseMonth = (month: Month): Date => {
   return new Date(y, m - 1, 1);
 };
 
-const budgetMonitoring = createBudgetMonitoringModule({
-  getBudgetAlertsEnabled: () => useSettingsStore.getState().notificationPreferences.budgetAlerts,
-  getLocale: () => useLocaleStore.getState().locale,
-  resolveCategoryLabel: (categoryId, locale) => {
-    const category = CATEGORY_MAP[categoryId];
-    return category ? getCategoryLabel(category, locale) : categoryId;
-  },
-  scheduleBudgetAlert,
-  insertNotification: (input) => useNotificationStore.getState().insertNotification(input),
+const createLiveBudgetMonitoring = (
+  db: AnyDb,
+  userId: UserId,
+  shouldDeliverSideEffects: () => boolean
+) =>
+  createBudgetMonitoringModule({
+    getBudgetAlertsEnabled: () => useSettingsStore.getState().notificationPreferences.budgetAlerts,
+    getLocale: () => useLocaleStore.getState().locale,
+    resolveCategoryLabel: (categoryId, locale) => {
+      const category = CATEGORY_MAP[categoryId];
+      return category ? getCategoryLabel(category, locale) : categoryId;
+    },
+    scheduleBudgetAlert: async (alert, categoryName, notificationsEnabled) => {
+      if (!shouldDeliverSideEffects()) return { type: "skipped" } as const;
+      return scheduleBudgetAlert(alert, categoryName, notificationsEnabled);
+    },
+    insertNotification: (input) => {
+      if (!shouldDeliverSideEffects()) return;
+      void insertNotificationRecord(db, userId, input);
+    },
+  });
+
+const budgetAlertStateManager = createBudgetMonitoringModule({
+  getBudgetAlertsEnabled: () => false,
+  getLocale: () => "es",
+  resolveCategoryLabel: (categoryId) => categoryId,
+  scheduleBudgetAlert: async () => ({ type: "skipped" }),
+  insertNotification: () => undefined,
 });
 
 type BudgetState = {
@@ -117,25 +136,30 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     const requestedDb = dbRef;
     const requestedUserId = userIdRef;
     const requestedMonth = get().currentMonth;
+    const isCurrentRefresh = () =>
+      loadBudgetsRequestId === requestId &&
+      dbRef === requestedDb &&
+      userIdRef === requestedUserId &&
+      get().currentMonth === requestedMonth;
     const previous = {
       pendingAlerts: get().pendingAlerts,
       acknowledgedAlerts: get().acknowledgedAlerts,
     };
     set({ isLoading: true });
     try {
+      const budgetMonitoring = createLiveBudgetMonitoring(
+        requestedDb,
+        requestedUserId,
+        isCurrentRefresh
+      );
       const snapshot = await budgetMonitoring.refreshMonth({
         db: requestedDb,
         userId: requestedUserId,
         month: requestedMonth,
         previous,
       });
-      const superseded = loadBudgetsRequestId !== requestId;
-      const contextChanged =
-        dbRef !== requestedDb ||
-        userIdRef !== requestedUserId ||
-        get().currentMonth !== requestedMonth;
-      if (superseded || contextChanged) {
-        if (!superseded) {
+      if (!isCurrentRefresh()) {
+        if (loadBudgetsRequestId === requestId) {
           set({ isLoading: false });
         }
         return;
@@ -165,6 +189,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     if (!dbRef || !userIdRef) return;
     const { currentMonth, budgets } = get();
     try {
+      const budgetMonitoring = createLiveBudgetMonitoring(dbRef, userIdRef, () => true);
       const autoSuggestions = budgetMonitoring.loadAutoSuggestions({
         db: dbRef,
         userId: userIdRef,
@@ -306,7 +331,7 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
 
   acknowledgeAlert: (budgetId, threshold) => {
     set((state) => {
-      const nextState = budgetMonitoring.acknowledgeAlert({
+      const nextState = budgetAlertStateManager.acknowledgeAlert({
         budgetId,
         threshold,
         alertState: {

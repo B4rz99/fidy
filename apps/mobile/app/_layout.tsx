@@ -22,24 +22,23 @@ import { registerBackgroundTask } from "@/features/background-fetch";
 import { useBudgetStore } from "@/features/budget";
 import { useCalendarStore } from "@/features/calendar";
 import {
+  hydrateCaptureSources,
   useApplePayCapture,
-  useCaptureSourcesStore,
   useNotificationCapture,
   useSmsDetection,
   useWidgetCapture,
 } from "@/features/capture-sources";
-import { useCategoriesStore } from "@/features/categories";
+import { refreshCategories } from "@/features/categories";
 import { useEmailCapture, useEmailCaptureStore } from "@/features/email-capture";
 import { useGoalStore } from "@/features/goals";
-import { registerPushToken, useNotificationStore } from "@/features/notifications";
+import { initializeNotificationStore, registerPushToken } from "@/features/notifications";
 import {
   clearOnboardingFromStore,
   getOnboardingCompleteFromStore,
   isOnboardingComplete,
 } from "@/features/onboarding";
-import { useSearchStore } from "@/features/search";
 import { useSettingsStore } from "@/features/settings";
-import { useSync, useSyncConflictStore } from "@/features/sync";
+import { loadSyncConflicts, useSync } from "@/features/sync";
 import { useTransactionStore } from "@/features/transactions";
 import { ErrorFallback } from "@/shared/components";
 import { Platform, useColorScheme } from "@/shared/components/rn";
@@ -78,17 +77,13 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
   useSubscription(
     () => {
       useTransactionStore.getState().initStore(db, userId);
-      useSearchStore.getState().initStore(db, userId);
       useEmailCaptureStore.getState().initStore(db, userId);
-      useCaptureSourcesStore.getState().initStore(db, userId);
       useChatStore.getState().initStore(db, userId);
       useCalendarStore.getState().initStore(db, userId);
       useBudgetStore.getState().initStore(db, userId);
       useGoalStore.getState().initStore(db, userId);
       useAnalyticsStore.getState().initStore(db, userId);
-      useCategoriesStore.getState().initStore(db, userId);
-      void useNotificationStore.getState().initStore(db, userId);
-      useSyncConflictStore.getState().initStore(db);
+      void initializeNotificationStore(db, userId);
       Promise.all([
         useCalendarStore.getState().loadBills(),
         useCalendarStore.getState().loadPaymentsForMonth(),
@@ -102,24 +97,20 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
         .getState()
         .loadAnalytics()
         .catch(handleRecoverableError("Failed to load analytics"));
-      useCategoriesStore
-        .getState()
-        .refresh()
-        .catch(handleRecoverableError("Failed to load user categories"));
+      refreshCategories(db, userId).catch(handleRecoverableError("Failed to load user categories"));
       useChatStore
         .getState()
         .loadSessions()
         .then(() => useChatStore.getState().cleanupExpiredSessions())
         .catch(handleRecoverableError("Failed to load chat sessions"));
-      useCaptureSourcesStore
-        .getState()
-        .hydrate()
-        .catch(handleRecoverableError("Failed to load capture sources"));
+      hydrateCaptureSources(db, userId).catch(
+        handleRecoverableError("Failed to load capture sources")
+      );
       useTransactionStore
         .getState()
         .loadInitialPage()
         .catch(handleRecoverableError("Failed to load transactions"));
-      void useSyncConflictStore.getState().loadConflicts();
+      void loadSyncConflicts(db);
       useSettingsStore
         .getState()
         .hydrate()
