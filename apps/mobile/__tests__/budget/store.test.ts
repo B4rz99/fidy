@@ -171,8 +171,10 @@ describe("useBudgetStore", () => {
     store.getState().initStore(mockDb, USER_ID);
     store.setState({ currentMonth: "2026-03" as Month });
 
+    const monitoringCallsBeforeLoad = mockCreateBudgetMonitoringModule.mock.calls.length;
     const load = store.getState().loadBudgets();
-    const initialMonitoringPorts = mockCreateBudgetMonitoringModule.mock.calls[0]?.[0];
+    const initialMonitoringPorts =
+      mockCreateBudgetMonitoringModule.mock.calls[monitoringCallsBeforeLoad]?.[0];
 
     expect(initialMonitoringPorts).toBeDefined();
 
