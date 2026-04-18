@@ -12,12 +12,19 @@ export function subscribeBudgetToTransactions({
   reload,
 }: SubscribeBudgetToTransactionsInput): () => void {
   let previousRevision = getTransactionDataRevision();
+  let hasPendingReload = false;
 
   return subscribeTransactions(() => {
     const currentRevision = getTransactionDataRevision();
-    if (currentRevision === previousRevision) return;
-    previousRevision = currentRevision;
+    if (currentRevision !== previousRevision && !hasLoadedBudgetState()) {
+      hasPendingReload = true;
+      return;
+    }
+    if (currentRevision === previousRevision && !hasPendingReload) return;
     if (!hasLoadedBudgetState()) return;
+
+    previousRevision = currentRevision;
+    hasPendingReload = false;
     reload();
   });
 }

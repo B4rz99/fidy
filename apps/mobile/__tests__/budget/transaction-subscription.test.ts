@@ -34,4 +34,33 @@ describe("budget transaction subscription", () => {
     cleanup();
     expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
+
+  it("preserves a revision bump until budget state has finished its first load", () => {
+    let notify: () => void = () => undefined;
+    let hasLoadedBudgetState = false;
+    let currentRevision = 0;
+
+    const reload = vi.fn();
+
+    subscribeBudgetToTransactions({
+      subscribeTransactions: (listener) => {
+        notify = listener;
+        return vi.fn();
+      },
+      getTransactionDataRevision: () => currentRevision,
+      hasLoadedBudgetState: () => hasLoadedBudgetState,
+      reload,
+    });
+
+    currentRevision = 1;
+    notify();
+    expect(reload).not.toHaveBeenCalled();
+
+    hasLoadedBudgetState = true;
+    notify();
+    expect(reload).toHaveBeenCalledTimes(1);
+
+    notify();
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
 });
