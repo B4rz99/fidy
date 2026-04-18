@@ -87,7 +87,7 @@ doctor() {
 show_recent() {
   require_vault
   local limit="${1:-10}"
-  grep '^## \[' "${VAULT_DIR}/log.md" | tail -n "${limit}"
+  awk '/^## \[/' "${VAULT_DIR}/log.md" | tail -n "${limit}"
 }
 
 search_vault() {
