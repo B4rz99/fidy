@@ -1,5 +1,6 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { requireUserId } from "@/shared/types/assertions";
 
 const mockAddLogTransactionListener = vi.fn().mockReturnValue({ remove: vi.fn() });
 const mockAddDetectBankSmsListener = vi.fn().mockReturnValue({ remove: vi.fn() });
@@ -40,7 +41,7 @@ vi.mock("@/shared/lib/generate-id", () => ({
 }));
 
 const mockDb = {} as any;
-const USER_ID = "user-1";
+const USER_ID = requireUserId("user-1");
 
 async function loadSetup() {
   return import("@/features/capture-sources/hooks/setup");

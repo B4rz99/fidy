@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { Platform } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
+import { toIsoDateTime } from "@/shared/lib";
+import type { UserId } from "@/shared/types/branded";
 import {
   getEnabledPackages,
   getTodaySmsEventCount,
@@ -41,7 +43,7 @@ export const useCaptureSourcesStore = create<CaptureSourcesState & CaptureSource
   })
 );
 
-async function loadCaptureSourceConfig(db: AnyDb, userId: string): Promise<void> {
+async function loadCaptureSourceConfig(db: AnyDb, userId: UserId): Promise<void> {
   const enabledPackages = await getEnabledPackages(db, userId);
   useCaptureSourcesStore.getState().setEnabledPackages(enabledPackages);
 }
@@ -74,7 +76,7 @@ function getUpdatedEnabledPackages(
   return enabledPackages.filter((pkg) => pkg !== packageName);
 }
 
-export async function hydrateCaptureSources(db: AnyDb, userId: string): Promise<void> {
+export async function hydrateCaptureSources(db: AnyDb, userId: UserId): Promise<void> {
   await Promise.allSettled([
     loadCaptureSourceConfig(db, userId),
     checkCaptureSourcePermissions(),
@@ -85,14 +87,21 @@ export async function hydrateCaptureSources(db: AnyDb, userId: string): Promise<
 
 export async function toggleCaptureSourcePackage(
   db: AnyDb,
-  userId: string,
+  userId: UserId,
   packageName: string,
   enabled: boolean
 ): Promise<void> {
   const knownPkg = KNOWN_BANK_PACKAGES.find((pkg) => pkg.packageName === packageName);
   const label = knownPkg?.label ?? packageName;
 
-  await upsertNotificationSource(db, userId, packageName, label, enabled, new Date().toISOString());
+  await upsertNotificationSource(
+    db,
+    userId,
+    packageName,
+    label,
+    enabled,
+    toIsoDateTime(new Date())
+  );
 
   const updated = getUpdatedEnabledPackages(
     useCaptureSourcesStore.getState().enabledPackages,
@@ -109,7 +118,7 @@ export async function refreshCaptureSourceStatus(db: AnyDb): Promise<void> {
 
 export async function refreshDetectedSmsCount(
   db: AnyDb,
-  userId: string,
+  userId: UserId,
   now: Date = new Date()
 ): Promise<void> {
   const detectedSmsCount = await getTodaySmsEventCount(db, userId, now);

@@ -16,8 +16,12 @@ import {
   View,
 } from "@/shared/components/rn";
 import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
-import { formatInputDisplay, parseDigitsToAmount, parseIsoDate, toIsoDate } from "@/shared/lib";
-import type { IsoDate } from "@/shared/types/branded";
+import {
+  formatInputDisplay,
+  parseDigitsToAmount,
+  parseOptionalIsoDate,
+  toIsoDate,
+} from "@/shared/lib";
 import { useGoalStore } from "../store";
 
 export function GoalEditSheet() {
@@ -48,9 +52,7 @@ export function GoalEditSheet() {
     goal?.interestRatePercent != null ? String(goal.interestRatePercent) : ""
   );
   const [numpadTarget, setNumpadTarget] = useState<"amount" | null>(null);
-  const [targetDate, setTargetDate] = useState<Date | null>(
-    goal?.targetDate ? parseIsoDate(goal.targetDate as IsoDate) : null
-  );
+  const [targetDate, setTargetDate] = useState<Date | null>(parseOptionalIsoDate(goal?.targetDate));
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Blinking cursor

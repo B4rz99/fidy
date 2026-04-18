@@ -1,3 +1,4 @@
+import { assertIsoDate } from "@/shared/types/assertions";
 import type { IsoDate, IsoDateTime, Month } from "@/shared/types/branded";
 
 /**
@@ -28,6 +29,12 @@ export function parseIsoDate(isoDate: IsoDate): Date {
   const month = parts[1] ?? 1;
   const day = parts[2] ?? 1;
   return new Date(year, month - 1, day);
+}
+
+export function parseOptionalIsoDate(value: string | null | undefined): Date | null {
+  if (value == null) return null;
+  assertIsoDate(value);
+  return parseIsoDate(value);
 }
 
 /**

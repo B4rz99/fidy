@@ -273,6 +273,35 @@ module.exports = defineConfig([
     },
   },
 
+  // ── UI branded-boundary assertions ─────────────────────────────────
+  {
+    files: [
+      "app/**/*.tsx",
+      "features/**/components/**/*.tsx",
+      "shared/components/**/*.tsx",
+      "features/**/hooks/**/*.ts",
+      "features/**/hooks/**/*.tsx",
+      "features/**/store.ts",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "TSAsExpression > TSTypeReference[typeName.name=/^(UserId|TransactionId|BudgetId|BillId|CategoryId|IsoDate|IsoDateTime)$/]",
+          message:
+            "UI code must not assert branded IDs or dates directly. Move the proof into a boundary helper such as useOptionalUserId(), requireTransactionId(), getBuiltInCategoryId(), parseOptionalIsoDate(), or a feature row mapper.",
+        },
+        {
+          selector:
+            "TSAsExpression > TSUnionType > TSTypeReference[typeName.name=/^(UserId|TransactionId|BudgetId|BillId|CategoryId|IsoDate|IsoDateTime)$/]",
+          message:
+            "UI code must not assert branded IDs or dates directly. Move the proof into a boundary helper such as useOptionalUserId(), requireTransactionId(), getBuiltInCategoryId(), parseOptionalIsoDate(), or a feature row mapper.",
+        },
+      ],
+    },
+  },
+
   // ── Test file overrides ─────────────────────────────────────────────
   {
     files: ["__tests__/**/*.ts", "__tests__/**/*.tsx"],

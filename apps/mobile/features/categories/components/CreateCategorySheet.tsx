@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import { Check, Ellipsis, type LucideIcon } from "@/shared/components/icons";
 import {
   FlatList,
@@ -14,7 +14,6 @@ import {
 } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
-import type { UserId } from "@/shared/types/branded";
 import { COLOR_SWATCHES, MAX_NAME_LENGTH, MIN_NAME_LENGTH } from "../lib/constants";
 import { ICON_MAP, SELECTABLE_ICONS } from "../lib/icon-map";
 import { createCustomCategory } from "../store";
@@ -109,7 +108,7 @@ export function CreateCategorySheet() {
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const { isBusy, run: guardedCreate } = useAsyncGuard();
-  const userId = useAuthStore((state) => state.session?.user.id as UserId | undefined);
+  const userId = useOptionalUserId();
 
   const trimmedName = name.trim();
   const isFormValid =

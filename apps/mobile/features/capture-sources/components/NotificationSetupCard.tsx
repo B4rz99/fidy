@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import { Bell, ExternalLink } from "@/shared/components/icons";
 import { Linking, Platform, Pressable, Switch, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
@@ -18,7 +18,7 @@ const openNotificationListenerSettings = () => {
 
 export const NotificationSetupCard = () => {
   const { t } = useTranslation();
-  const userId = useAuthStore((s) => s.session?.user.id ?? null);
+  const userId = useOptionalUserId();
   const enabledPackages = useCaptureSourcesStore((s) => s.enabledPackages);
   const isPermissionGranted = useCaptureSourcesStore((s) => s.isNotificationPermissionGranted);
 

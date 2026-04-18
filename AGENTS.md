@@ -77,6 +77,12 @@ Follow React's ["You Might Not Need an Effect"](https://react.dev/learn/you-migh
 
 All IDs, temporal strings, and money amounts use branded types from `shared/types/branded.ts`. Never use plain `string` or `number` for these in function signatures. Use typed ID generators (`generateTransactionId()`, etc.), temporal constructors (`toIsoDate()`, `toMonth()`, `toIsoDateTime()`), and `$type<>()` on Drizzle schema columns. New entities need a branded type, a typed generator, and Drizzle `$type<>()` annotations.
 
+### Branded type assertions stay at boundaries
+
+- Keep branded-type proof in boundary helpers: constructors like `toIsoDate()`, auth hooks like `useOptionalUserId()`, route/ID decoders like `requireTransactionId()`, and row mappers/decoders in `data/`, `repository/`, or `schema/`.
+- UI files (`app/**`, `features/**/components/**`, `shared/components/**`) should not use direct `as UserId`, `as TransactionId`, `as BillId`, `as CategoryId`, `as IsoDate`, or `as IsoDateTime` assertions.
+- When a component needs a branded ID/date, add or reuse a deeper helper instead of asserting locally.
+
 ## Architectural Decisions
 
 ### Calendar-month budgets only

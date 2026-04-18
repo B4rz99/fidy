@@ -1,5 +1,11 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  requireDetectedSmsEventId,
+  requireIsoDateTime,
+  requireTransactionId,
+  requireUserId,
+} from "@/shared/types/assertions";
 import type {
   DetectedSmsEventId,
   IsoDateTime,
@@ -70,6 +76,10 @@ const mockDb = {
   orderBy: mockOrderBy,
   update: mockUpdate,
 } as any;
+const USER_ID = requireUserId("user-1");
+const DETECTED_SMS_EVENT_ID = requireDetectedSmsEventId("sms-1");
+const TRANSACTION_ID = requireTransactionId("tx-123");
+const NOW = requireIsoDateTime("2026-03-07T10:00:00Z");
 
 describe("capture-sources repository", () => {
   beforeEach(() => {
@@ -163,7 +173,7 @@ describe("capture-sources repository", () => {
     mockWhere.mockResolvedValueOnce(rows);
 
     const { getNotificationSources } = await import("@/features/capture-sources/lib/repository");
-    const result = await getNotificationSources(mockDb, "user-1");
+    const result = await getNotificationSources(mockDb, USER_ID);
 
     expect(mockSelect).toHaveBeenCalled();
     expect(mockFrom).toHaveBeenCalled();
@@ -178,7 +188,7 @@ describe("capture-sources repository", () => {
     ]);
 
     const { getEnabledPackages } = await import("@/features/capture-sources/lib/repository");
-    const result = await getEnabledPackages(mockDb, "user-1");
+    const result = await getEnabledPackages(mockDb, USER_ID);
 
     expect(mockSelect).toHaveBeenCalled();
     expect(mockFrom).toHaveBeenCalled();
@@ -191,14 +201,7 @@ describe("capture-sources repository", () => {
   it("upsertNotificationSource calls db.insert with onConflictDoUpdate", async () => {
     const { upsertNotificationSource } = await import("@/features/capture-sources/lib/repository");
 
-    await upsertNotificationSource(
-      mockDb,
-      "user-1",
-      "com.bank.app",
-      "Bank App",
-      true,
-      "2026-03-07T10:00:00Z"
-    );
+    await upsertNotificationSource(mockDb, USER_ID, "com.bank.app", "Bank App", true, NOW);
 
     expect(mockInsert).toHaveBeenCalled();
     expect(mockValues).toHaveBeenCalledWith(
@@ -247,7 +250,7 @@ describe("capture-sources repository", () => {
     mockWhere.mockResolvedValueOnce([{ total: 5 }]);
 
     const { getTodaySmsEventCount } = await import("@/features/capture-sources/lib/repository");
-    const result = await getTodaySmsEventCount(mockDb, "user-1", new Date("2026-03-07T10:00:00Z"));
+    const result = await getTodaySmsEventCount(mockDb, USER_ID, new Date("2026-03-07T10:00:00Z"));
 
     expect(mockSelect).toHaveBeenCalled();
     expect(mockFrom).toHaveBeenCalled();
@@ -259,7 +262,7 @@ describe("capture-sources repository", () => {
     mockWhere.mockResolvedValueOnce([{ total: 0 }]);
 
     const { getTodaySmsEventCount } = await import("@/features/capture-sources/lib/repository");
-    const result = await getTodaySmsEventCount(mockDb, "user-1", new Date("2026-03-07T10:00:00Z"));
+    const result = await getTodaySmsEventCount(mockDb, USER_ID, new Date("2026-03-07T10:00:00Z"));
 
     expect(result).toBe(0);
   });
@@ -269,7 +272,7 @@ describe("capture-sources repository", () => {
   it("dismissSmsEvent calls db.update with correct where clause", async () => {
     const { dismissSmsEvent } = await import("@/features/capture-sources/lib/repository");
 
-    await dismissSmsEvent(mockDb, "sms-1");
+    await dismissSmsEvent(mockDb, DETECTED_SMS_EVENT_ID);
 
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith({ dismissed: true });
@@ -281,7 +284,7 @@ describe("capture-sources repository", () => {
   it("linkSmsEventToTransaction updates linkedTransactionId", async () => {
     const { linkSmsEventToTransaction } = await import("@/features/capture-sources/lib/repository");
 
-    await linkSmsEventToTransaction(mockDb, "sms-1", "tx-123");
+    await linkSmsEventToTransaction(mockDb, DETECTED_SMS_EVENT_ID, TRANSACTION_ID);
 
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith({

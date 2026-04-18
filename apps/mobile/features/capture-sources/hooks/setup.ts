@@ -3,7 +3,8 @@ import { processApplePayIntent } from "@/features/capture-sources/services/apple
 import { processNotification } from "@/features/capture-sources/services/notification-pipeline";
 import type { AnyDb } from "@/shared/db";
 import { captureError, generateDetectedSmsEventId, toIsoDateTime } from "@/shared/lib";
-import type { IsoDateTime, UserId } from "@/shared/types/branded";
+import { requireIsoDateTime } from "@/shared/types/assertions";
+import type { UserId } from "@/shared/types/branded";
 import type { ApplePayIntentData, NotificationData } from "../schema";
 import { createCaptureIngestionPort } from "../services/capture-ingestion";
 
@@ -13,7 +14,7 @@ const noop = () => undefined;
 // requireNativeModule("ExpoAppIntents") which only exists on iOS.
 const loadAppIntents = () => import("@/modules/expo-app-intents");
 
-export async function setupApplePayCapture(db: AnyDb, userId: string): Promise<() => void> {
+export async function setupApplePayCapture(db: AnyDb, userId: UserId): Promise<() => void> {
   const captureIngestion = createCaptureIngestionPort(db, {
     processApplePayIntent,
   });
@@ -24,7 +25,7 @@ export async function setupApplePayCapture(db: AnyDb, userId: string): Promise<(
     captureIngestion
       .ingest({
         kind: "apple_pay",
-        userId: userId as UserId,
+        userId,
         intent: event as ApplePayIntentData,
       })
       .catch(captureError);
@@ -35,7 +36,7 @@ export async function setupApplePayCapture(db: AnyDb, userId: string): Promise<(
 
 export async function setupSmsDetection(
   db: AnyDb,
-  userId: string,
+  userId: UserId,
   refreshDetectedSms: () => void
 ): Promise<() => void> {
   const mod = await loadAppIntents();
@@ -44,9 +45,9 @@ export async function setupSmsDetection(
   const subscription = mod.addDetectBankSmsListener((event) => {
     insertDetectedSmsEvent(db, {
       id: generateDetectedSmsEventId(),
-      userId: userId as UserId,
+      userId,
       senderLabel: event.senderName,
-      detectedAt: event.timestamp as IsoDateTime,
+      detectedAt: requireIsoDateTime(event.timestamp),
       dismissed: false,
       linkedTransactionId: null,
       createdAt: toIsoDateTime(new Date()),
@@ -60,7 +61,7 @@ export async function setupSmsDetection(
 
 export async function setupNotificationCapture(
   db: AnyDb,
-  userId: string,
+  userId: UserId,
   packages: string[]
 ): Promise<() => void> {
   const captureIngestion = createCaptureIngestionPort(db, {
@@ -80,7 +81,7 @@ export async function setupNotificationCapture(
     captureIngestion
       .ingest({
         kind: "notification",
-        userId: userId as UserId,
+        userId,
         notification: event as NotificationData,
       })
       .catch(captureError);

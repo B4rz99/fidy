@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { StoredTransaction } from "@/features/transactions";
 import { toStoredTransaction } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
+import type { UserId } from "@/shared/types/branded";
 import { searchTransactionsAggregate, searchTransactionsPaginated } from "./lib/repository";
 import type { SearchFilters, SearchSummary } from "./lib/types";
 import { EMPTY_FILTERS } from "./lib/types";
@@ -78,7 +79,7 @@ export const useSearchStore = create<SearchState & SearchActions>((set) => ({
   },
 }));
 
-export function executeSearch(db: AnyDb, userId: string): void {
+export function executeSearch(db: AnyDb, userId: UserId): void {
   const { filters, setIsSearching, setSearchResults } = useSearchStore.getState();
   setIsSearching(true);
 
@@ -93,7 +94,7 @@ export function executeSearch(db: AnyDb, userId: string): void {
   }
 }
 
-export function loadNextSearchPage(db: AnyDb, userId: string): void {
+export function loadNextSearchPage(db: AnyDb, userId: UserId): void {
   const { hasMore, offset, filters, appendSearchResults } = useSearchStore.getState();
   if (!hasMore) return;
 
@@ -107,21 +108,21 @@ export function loadNextSearchPage(db: AnyDb, userId: string): void {
   }
 }
 
-export function updateSearchQuery(db: AnyDb, userId: string, query: string): void {
+export function updateSearchQuery(db: AnyDb, userId: UserId, query: string): void {
   useSearchStore.getState().setQuery(query);
   executeSearch(db, userId);
 }
 
 export function updateSearchFilters(
   db: AnyDb,
-  userId: string,
+  userId: UserId,
   partial: Partial<SearchFilters>
 ): void {
   useSearchStore.getState().setFilters(partial);
   executeSearch(db, userId);
 }
 
-export function clearSearchFilters(db: AnyDb, userId: string): void {
+export function clearSearchFilters(db: AnyDb, userId: UserId): void {
   useSearchStore.getState().clearFilters();
   executeSearch(db, userId);
 }

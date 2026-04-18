@@ -115,11 +115,12 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
 
   loadGoals: async () => {
     const db = dbRef;
-    if (!db || !userIdRef) return;
+    const userId = userIdRef;
+    if (!db || !userId) return;
     set({ isLoading: true });
     try {
-      const goalRows = getGoalsForUser(db, userIdRef) as Goal[];
-      const monthlyTotals = getMonthlyTotalsByType(db, userIdRef as UserId, 3);
+      const goalRows = getGoalsForUser(db, userId) as Goal[];
+      const monthlyTotals = getMonthlyTotalsByType(db, userId, 3);
 
       const goalsWithProgress: GoalWithProgress[] = goalRows.map((goal) => {
         const currentAmount = getGoalCurrentAmount(db, goal.id);
@@ -370,9 +371,10 @@ export const useGoalStore = create<GoalState & GoalActions>((set, get) => ({
 
   refreshProjections: () => {
     const db = dbRef;
-    if (!db || !userIdRef) return;
+    const userId = userIdRef;
+    if (!db || !userId) return;
     try {
-      const monthlyTotals = getMonthlyTotalsByType(db, userIdRef as UserId, 3);
+      const monthlyTotals = getMonthlyTotalsByType(db, userId, 3);
       const { goals } = get();
       const updated = goals.map((g) => {
         const currentAmount = getGoalCurrentAmount(db, g.goal.id);

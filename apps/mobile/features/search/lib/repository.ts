@@ -1,20 +1,24 @@
 import { and, count, desc, eq, gte, inArray, isNull, like, lte, sql } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { transactions } from "@/shared/db";
-import type { CategoryId, CopAmount, IsoDate, UserId } from "@/shared/types/branded";
+import { requireCategoryId, requireIsoDate } from "@/shared/types/assertions";
+import type { CopAmount, UserId } from "@/shared/types/branded";
 import type { SearchFilters, SearchSummary } from "./types";
 
-function buildSearchConditions(userId: string, filters: SearchFilters) {
+function buildSearchConditions(userId: UserId, filters: SearchFilters) {
   const trimmedQuery = filters.query.trim();
+  const categoryIds = filters.categoryIds
+    .filter((id) => id.trim().length > 0)
+    .map((id) => requireCategoryId(id));
   return [
-    eq(transactions.userId, userId as UserId),
+    eq(transactions.userId, userId),
     isNull(transactions.deletedAt),
     ...(trimmedQuery.length > 0 ? [like(transactions.description, `%${trimmedQuery}%`)] : []),
-    ...(filters.categoryIds.length > 0
-      ? [inArray(transactions.categoryId, [...filters.categoryIds] as CategoryId[])]
+    ...(categoryIds.length > 0 ? [inArray(transactions.categoryId, categoryIds)] : []),
+    ...(filters.dateFrom !== null
+      ? [gte(transactions.date, requireIsoDate(filters.dateFrom))]
       : []),
-    ...(filters.dateFrom !== null ? [gte(transactions.date, filters.dateFrom as IsoDate)] : []),
-    ...(filters.dateTo !== null ? [lte(transactions.date, filters.dateTo as IsoDate)] : []),
+    ...(filters.dateTo !== null ? [lte(transactions.date, requireIsoDate(filters.dateTo))] : []),
     ...(filters.amountMin !== null
       ? [gte(transactions.amount, filters.amountMin as CopAmount)]
       : []),
@@ -27,7 +31,7 @@ function buildSearchConditions(userId: string, filters: SearchFilters) {
 
 export function searchTransactionsPaginated(
   db: AnyDb,
-  userId: string,
+  userId: UserId,
   filters: SearchFilters,
   limit: number,
   offset: number
@@ -45,7 +49,7 @@ export function searchTransactionsPaginated(
 
 export function searchTransactionsAggregate(
   db: AnyDb,
-  userId: string,
+  userId: UserId,
   filters: SearchFilters
 ): SearchSummary {
   const conditions = buildSearchConditions(userId, filters);

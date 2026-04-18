@@ -5,7 +5,7 @@ import { useTransactionStore } from "@/features/transactions";
 import { ScreenLayout } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
-import type { TransactionId } from "@/shared/types/branded";
+import { requireTransactionId } from "@/shared/types/assertions";
 import { useEmailCaptureStore } from "../store";
 import { NeedsReviewCard } from "./NeedsReviewCard";
 
@@ -21,7 +21,8 @@ export default function NeedsReviewScreen() {
     const map = new Map<string, ReturnType<typeof getTransaction>>();
     needsReview.forEach((item) => {
       if (item.transactionId) {
-        map.set(item.transactionId, getTransaction(item.transactionId as TransactionId));
+        const transactionId = requireTransactionId(item.transactionId);
+        map.set(transactionId, getTransaction(transactionId));
       }
     });
     return map;

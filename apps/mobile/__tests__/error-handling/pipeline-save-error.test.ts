@@ -1,8 +1,8 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { RawEmail } from "@/features/email-capture/schema";
-
 import { processEmails } from "@/features/email-capture/services/email-pipeline";
+import { requireUserId } from "@/shared/types/assertions";
 
 const mockCaptureError = vi.fn();
 
@@ -56,7 +56,7 @@ vi.mock("@/shared/lib/generate-id", () => ({
 }));
 
 const mockDb = {} as any;
-const USER_ID = "user-1";
+const USER_ID = requireUserId("user-1");
 
 function makeRawEmail(overrides: Partial<RawEmail> = {}): RawEmail {
   return {

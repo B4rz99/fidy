@@ -7,6 +7,7 @@ import {
   updateSearchQuery,
   useSearchStore,
 } from "@/features/search/store";
+import { requireUserId } from "@/shared/types/assertions";
 
 const mockSearchTransactionsPaginated = vi.fn();
 const mockSearchTransactionsAggregate = vi.fn();
@@ -25,7 +26,7 @@ vi.mock("@/features/transactions", () => ({
 }));
 
 const mockDb = {} as any;
-const USER_ID = "user-1";
+const USER_ID = requireUserId("user-1");
 
 const makeRow = (id: string) => ({
   id,

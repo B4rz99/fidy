@@ -23,6 +23,7 @@ import {
 } from "@/features/email-capture/lib/repository";
 import { processRetries } from "@/features/email-capture/services/email-pipeline";
 import { processedEmails, syncQueue, transactions } from "@/shared/db/schema";
+import { requireUserId } from "@/shared/types/assertions";
 import type { IsoDateTime, ProcessedEmailId, TransactionId } from "@/shared/types/branded";
 
 const mockParseEmailApi = vi.fn();
@@ -43,6 +44,7 @@ vi.mock("@/features/capture-sources/lib/dedup", () => ({
 
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
+const USER_ID = requireUserId("user-1");
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -189,7 +191,7 @@ describe("retry queue integration (real SQLite)", () => {
       confidence: 0.9,
     });
 
-    const result = await processRetries(db as any, "user-1");
+    const result = await processRetries(db as any, USER_ID);
 
     expect(result.succeeded).toBe(1);
     expect(result.retried).toBe(0);
@@ -225,7 +227,7 @@ describe("retry queue integration (real SQLite)", () => {
 
     mockParseEmailApi.mockRejectedValueOnce(new Error("Edge Function timeout"));
 
-    const result = await processRetries(db as any, "user-1");
+    const result = await processRetries(db as any, USER_ID);
 
     expect(result.retried).toBe(1);
     expect(result.succeeded).toBe(0);
@@ -250,7 +252,7 @@ describe("retry queue integration (real SQLite)", () => {
 
     mockParseEmailApi.mockRejectedValueOnce(new Error("Edge Function timeout"));
 
-    const result = await processRetries(db as any, "user-1");
+    const result = await processRetries(db as any, USER_ID);
 
     expect(result.permanentlyFailed).toBe(1);
 

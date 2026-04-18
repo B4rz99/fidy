@@ -141,6 +141,32 @@ describe("user memories remote adapters", () => {
     ]);
   });
 
+  test("rejects invalid extract-memories payloads", async () => {
+    mockInvoke.mockResolvedValue({
+      data: {
+        success: true,
+        data: [
+          {
+            id: "memory-1",
+            user_id: "user-1",
+            fact: "Shops weekly on Sundays",
+            category: "not-a-real-category",
+            created_at: "2026-03-05T10:00:00Z",
+            updated_at: "2026-03-05T10:00:00Z",
+          },
+        ],
+      },
+      error: null,
+    });
+
+    await expect(
+      extractMemoriesFromConversation([
+        { role: "user", content: "I shop every Sunday" },
+        { role: "assistant", content: "I'll remember that" },
+      ])
+    ).rejects.toThrow("extract_memories_failed");
+  });
+
   test("throws when the remote list fetch fails", async () => {
     mockOrder.mockResolvedValue({ data: null, error: { message: "offline" } });
 

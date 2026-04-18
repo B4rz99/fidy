@@ -2,7 +2,7 @@ import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import * as SplashScreen from "expo-splash-screen";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import { useBudgetStore } from "@/features/budget";
 import { useEmailCaptureStore } from "@/features/email-capture";
 import {
@@ -20,13 +20,11 @@ import { StyleSheet, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useSubscription, useThemeColor } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
-import type { UserId } from "@/shared/types/branded";
 import migrations from "../../drizzle/migrations";
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
-  const session = useAuthStore((s) => s.session);
-  const userId = session?.user.id ?? null;
+  const userId = useOptionalUserId();
   const step = useOnboardingStore((s) => s.step);
   const pageBg = useThemeColor("page");
 
@@ -42,8 +40,8 @@ export default function OnboardingScreen() {
     () => {
       if (!db || !userId) return;
       useEmailCaptureStore.getState().initStore(db, userId);
-      useTransactionStore.getState().initStore(db, userId as UserId);
-      useBudgetStore.getState().initStore(db, userId as UserId);
+      useTransactionStore.getState().initStore(db, userId);
+      useBudgetStore.getState().initStore(db, userId);
       Promise.all([
         useEmailCaptureStore.getState().loadAccounts(),
         useTransactionStore.getState().loadInitialPage(),

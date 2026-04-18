@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import {
   CalendarGrid,
   MonthNavigator,
@@ -13,7 +13,6 @@ import { View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useTranslation } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
-import type { UserId } from "@/shared/types/branded";
 
 export default function BillsCalendarScreen() {
   const router = useRouter();
@@ -21,7 +20,7 @@ export default function BillsCalendarScreen() {
   const currentMonth = useCalendarStore((s) => s.currentMonth);
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
-  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
+  const userId = useOptionalUserId();
 
   const handleNextMonth = useCallback(() => {
     if (!userId) return;
