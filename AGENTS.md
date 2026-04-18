@@ -6,6 +6,10 @@ The role of this file is to describe common mistakes and confusion points that a
 
 The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async (importOriginal) => ...)` for heavy modules like `date-fns`. The async `importOriginal` call creates module-loading contention across parallel Vitest workers, causing intermittent timeouts in tests that dynamically import large module trees (e.g. `syncEngine.ts` → budget + goals + transactions). Fix: remove the global mock entirely, or provide a synchronous factory. Tests needing deterministic behavior should mock at the file level with `vi.doMock` or `vi.mock`.
 
+### Lefthook pre-push can silently skip in detached HEAD (⚠️ AGENT SURPRISE)
+
+`lefthook`'s default pre-push file detection can skip every command when the checkout is on detached `HEAD` or lacks a local base branch/upstream (for example, `git diff HEAD @{push}` and `git diff HEAD main` both fail). In this repo, pre-push commands should enumerate tracked files explicitly so lint/typecheck/test still run in linked worktrees and detached checkouts.
+
 ## Testing Strategy
 
 Use these rules:

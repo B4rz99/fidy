@@ -33,14 +33,18 @@ commit-msg:
 pre-push:
   commands:
     root-biome:
-      run: bun run lint
+      files: git ls-files
+      run: ./scripts/run-pre-push-check.sh root-biome {files}
       skip_output: false
     mobile-eslint:
-      run: bun run lint:mobile
+      files: git ls-files
+      run: ./scripts/run-pre-push-check.sh mobile-eslint {files}
       skip_output: false
     mobile-typecheck:
-      run: bun run typecheck
+      files: git ls-files
+      run: ./scripts/run-pre-push-check.sh mobile-typecheck {files}
       skip_output: false
     tests:
-      run: bun run test
+      files: git ls-files
+      run: ./scripts/run-pre-push-check.sh tests {files}
       skip_output: false
