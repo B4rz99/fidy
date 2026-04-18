@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly DEFAULT_VAULT_DIR="${HOME}/vaults/fidy"
+readonly CONFIG_PATH="${REPO_ROOT}/.context/fidy-vault-path"
+readonly CONFIGURED_VAULT_DIR="$(
+  if [ -f "${CONFIG_PATH}" ]; then
+    head -n 1 "${CONFIG_PATH}"
+  fi
+)"
+readonly VAULT_DIR="${FIDY_VAULT_DIR:-${CONFIGURED_VAULT_DIR:-${DEFAULT_VAULT_DIR}}}"
+readonly LINK_PATH="${REPO_ROOT}/.context/fidy-vault"
+
+ensure_context_dir() {
+  mkdir -p "${REPO_ROOT}/.context"
+}
+
+write_config() {
+  ensure_context_dir
+  printf '%s\n' "${VAULT_DIR}" > "${CONFIG_PATH}"
+}
+
+ensure_link() {
+  ensure_context_dir
+
+  if [ -L "${LINK_PATH}" ]; then
+    local current_target
+    current_target="$(readlink "${LINK_PATH}")"
+
+    if [ "${current_target}" = "${VAULT_DIR}" ]; then
+      write_config
+      return
+    fi
+
+    rm "${LINK_PATH}"
+  elif [ -e "${LINK_PATH}" ]; then
+    echo "expected ${LINK_PATH} to be a symlink" >&2
+    exit 1
+  fi
+
+  ln -s "${VAULT_DIR}" "${LINK_PATH}"
+  write_config
+}
+
+require_vault() {
+  if [ ! -d "${VAULT_DIR}" ]; then
+    echo "missing vault directory: ${VAULT_DIR}" >&2
+    exit 1
+  fi
+}
+
+doctor() {
+  require_vault
+  ensure_link
+
+  local required_paths
+  required_paths=(
+    "AGENTS.md"
+    "CLAUDE.md"
+    "README.md"
+    "index.md"
+    "log.md"
+    "raw"
+    "wiki"
+  )
+
+  local missing_paths
+  missing_paths="$(
+    cd "${VAULT_DIR}" &&
+      printf '%s\n' "${required_paths[@]}" |
+      while IFS= read -r relative_path; do
+        [ -e "${relative_path}" ] || printf '%s\n' "${relative_path}"
+      done
+  )"
+
+  if [ -n "${missing_paths}" ]; then
+    echo "vault is missing required paths:" >&2
+    printf '%s\n' "${missing_paths}" >&2
+    exit 1
+  fi
+
+  printf 'vault ok: %s\nbridge ok: %s -> %s\n' "${VAULT_DIR}" "${LINK_PATH}" "${VAULT_DIR}"
+}
+
+show_recent() {
+  require_vault
+  local limit="${1:-10}"
+  grep '^## \[' "${VAULT_DIR}/log.md" | tail -n "${limit}"
+}
+
+search_vault() {
+  require_vault
+
+  if [ "$#" -eq 0 ]; then
+    echo "usage: $(basename "$0") search <pattern> [rg args...]" >&2
+    exit 1
+  fi
+
+  rg -n "$@" "${VAULT_DIR}"
+}
+
+usage() {
+  cat <<EOF
+usage: $(basename "$0") <command>
+
+commands:
+  path              Print the external vault path
+  link              Create or repair .context/fidy-vault symlink
+  doctor            Validate the vault and bridge
+  open              Open the vault directory in Finder
+  recent [limit]    Show recent log entries
+  search <pattern>  Search the vault with ripgrep
+EOF
+}
+
+command_name="${1:-path}"
+
+case "${command_name}" in
+  path)
+    printf '%s\n' "${VAULT_DIR}"
+    ;;
+  link)
+    ensure_link
+    printf '%s -> %s\n' "${LINK_PATH}" "${VAULT_DIR}"
+    ;;
+  doctor)
+    doctor
+    ;;
+  open)
+    require_vault
+    open "${VAULT_DIR}"
+    ;;
+  recent)
+    shift || true
+    show_recent "${1:-10}"
+    ;;
+  search)
+    shift || true
+    search_vault "$@"
+    ;;
+  *)
+    usage >&2
+    exit 1
+    ;;
+esac

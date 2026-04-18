@@ -6,6 +6,16 @@ The role of this file is to describe common mistakes and confusion points that a
 
 The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async (importOriginal) => ...)` for heavy modules like `date-fns`. The async `importOriginal` call creates module-loading contention across parallel Vitest workers, causing intermittent timeouts in tests that dynamically import large module trees (e.g. `syncEngine.ts` → budget + goals + transactions). Fix: remove the global mock entirely, or provide a synchronous factory. Tests needing deterministic behavior should mock at the file level with `vi.doMock` or `vi.mock`.
 
+## External Fidy Vault
+
+The persistent Fidy knowledge vault lives outside the repo on the local machine.
+
+- Use `.context/fidy-vault` as the stable workspace path. It is a symlink to the external vault.
+- Before doing ingest/query/lint work in the vault, read `.context/fidy-vault/AGENTS.md`.
+- The vault owns `raw/` (immutable sources), `wiki/` (LLM-maintained synthesis), `index.md`, and `log.md`.
+- When you add or revise vault knowledge, update `index.md` and append a dated entry to `log.md`.
+- `bun run vault:doctor` checks that the bridge and core files exist.
+
 ## Opening MRs
 
 Before committing, use the `opening-mr` skill.

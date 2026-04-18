@@ -68,6 +68,7 @@ GoogleService-Info.plist
 # Docs (local-only)
 docs/
 TODOS.md
+.context/
 
 # Superpowers brainstorm artifacts
 .superpowers/
