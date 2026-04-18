@@ -1,12 +1,21 @@
 import { format } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { type BillPayment, getBillsForDate, useCalendarStore } from "@/features/calendar";
+import { useAuthStore } from "@/features/auth";
+import {
+  type BillPayment,
+  deleteBill,
+  getBillsForDate,
+  markBillPaid,
+  unmarkBillPaid,
+  useCalendarStore,
+} from "@/features/calendar";
 import { Check, Pencil, Trash2 } from "@/shared/components/icons";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { getDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
-import { formatMoney, toIsoDate } from "@/shared/lib";
-import type { BillId, CopAmount } from "@/shared/types/branded";
+import { captureError, formatMoney, toIsoDate } from "@/shared/lib";
+import type { BillId, CopAmount, UserId } from "@/shared/types/branded";
 
 export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
@@ -14,9 +23,7 @@ export default function DayDetailScreen() {
   const { t, locale } = useTranslation();
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
-  const markBillPaid = useCalendarStore((s) => s.markBillPaid);
-  const unmarkBillPaid = useCalendarStore((s) => s.unmarkBillPaid);
-  const deleteBill = useCalendarStore((s) => s.deleteBill);
+  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
 
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
@@ -36,11 +43,12 @@ export default function DayDetailScreen() {
     payments.find((p) => p.billId === billId && p.dueDate === dueDateStr);
 
   const handleTogglePaid = async (billId: BillId) => {
+    if (!userId) return;
     const existing = isPaymentPaid(billId);
     if (existing) {
-      await unmarkBillPaid(billId, dueDateStr);
+      await unmarkBillPaid(getDb(userId), userId, billId, dueDateStr);
     } else {
-      await markBillPaid(billId, dueDateStr);
+      await markBillPaid(getDb(userId), userId, billId, dueDateStr);
     }
   };
 
@@ -55,7 +63,8 @@ export default function DayDetailScreen() {
         text: t("common.delete"),
         style: "destructive",
         onPress: () => {
-          void deleteBill(billId);
+          if (!userId) return;
+          void deleteBill(getDb(userId), userId, billId).catch(captureError);
         },
       },
     ]);

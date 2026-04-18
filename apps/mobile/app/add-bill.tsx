@@ -1,7 +1,15 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import { type Bill, type BillFrequency, FREQUENCIES, useCalendarStore } from "@/features/calendar";
+import { useAuthStore } from "@/features/auth";
+import {
+  addBill,
+  type Bill,
+  type BillFrequency,
+  FREQUENCIES,
+  updateBill,
+  useCalendarStore,
+} from "@/features/calendar";
 import { CATEGORIES, type CategoryId, isValidCategoryId } from "@/features/transactions";
 import {
   Keyboard,
@@ -14,10 +22,11 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
+import { getDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { parseDigitsToAmount } from "@/shared/lib";
-import type { BillId } from "@/shared/types/branded";
+import type { BillId, UserId } from "@/shared/types/branded";
 
 function AddBillForm({
   existingBill,
@@ -234,8 +243,7 @@ export default function AddBillScreen() {
   const router = useRouter();
   const { billId } = useLocalSearchParams<{ billId?: string }>();
   const bills = useCalendarStore((s) => s.bills);
-  const addBill = useCalendarStore((s) => s.addBill);
-  const updateBill = useCalendarStore((s) => s.updateBill);
+  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
 
   const existingBill = billId ? bills.find((b) => b.id === billId) : undefined;
 
@@ -243,8 +251,14 @@ export default function AddBillScreen() {
     <AddBillForm
       key={existingBill?.id ?? "new"}
       existingBill={existingBill}
-      onAddBill={addBill}
-      onUpdateBill={updateBill}
+      onAddBill={(name, amount, frequency, categoryId, startDate) => {
+        if (!userId) return Promise.resolve(false);
+        return addBill(getDb(userId), userId, name, amount, frequency, categoryId, startDate);
+      }}
+      onUpdateBill={(id, data) => {
+        if (!userId) return Promise.resolve();
+        return updateBill(getDb(userId), userId, id, data);
+      }}
       onDone={() => router.back()}
     />
   );
