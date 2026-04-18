@@ -253,8 +253,8 @@ function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryProvider>
-        <SentryErrorBoundary fallback={ErrorFallback}>
+      <SentryErrorBoundary fallback={ErrorFallback}>
+        <QueryProvider>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
@@ -404,8 +404,8 @@ function RootLayout() {
           {db && userId && onboardingComplete && (
             <AuthenticatedShell db={db} userId={userId as UserId} />
           )}
-        </SentryErrorBoundary>
-      </QueryProvider>
+        </QueryProvider>
+      </SentryErrorBoundary>
       <StatusBar style="auto" />
     </GestureHandlerRootView>
   );

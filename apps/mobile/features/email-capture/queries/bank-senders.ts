@@ -39,6 +39,7 @@ export async function loadBankSenders(): Promise<readonly BankSender[]> {
 export const bankSendersQueryOptions = queryOptions({
   queryKey: bankSendersQueryKey,
   queryFn: loadBankSenders,
+  gcTime: BANK_SENDERS_STALE_TIME_MS,
   staleTime: BANK_SENDERS_STALE_TIME_MS,
 });
 

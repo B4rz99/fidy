@@ -5,7 +5,11 @@ import {
   extractDomain,
   isBankSender,
 } from "@/features/email-capture/lib/bank-senders";
-import { ensureBankSenders, loadBankSenders } from "@/features/email-capture/queries/bank-senders";
+import {
+  bankSendersQueryOptions,
+  ensureBankSenders,
+  loadBankSenders,
+} from "@/features/email-capture/queries/bank-senders";
 
 import { getSupabase } from "@/shared/db/supabase";
 
@@ -55,6 +59,11 @@ describe("bank senders", () => {
 });
 
 describe("loadBankSenders", () => {
+  it("keeps cached bank senders for one hour", () => {
+    expect(bankSendersQueryOptions.gcTime).toBe(60 * 60 * 1000);
+    expect(bankSendersQueryOptions.staleTime).toBe(60 * 60 * 1000);
+  });
+
   it("merges remote senders with defaults", async () => {
     const remote = [{ bank: "RemoteBank", email: "remote@bank.com" }];
     mockSelect.mockResolvedValue({ data: remote, error: null });
