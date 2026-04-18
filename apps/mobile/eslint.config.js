@@ -115,6 +115,30 @@ module.exports = defineConfig([
 
       // — Import rules —
       "import/no-cycle": "error",
+      "boundaries/element-types": [
+        "error",
+        {
+          default: "allow",
+          rules: [
+            {
+              from: ["feature-public", "feature-internal"],
+              disallow: ["app"],
+            },
+            {
+              from: "shared",
+              disallow: ["app", "feature-public", "feature-internal", "module"],
+            },
+            {
+              from: "module",
+              disallow: ["app", "feature-public", "feature-internal", "shared"],
+            },
+            {
+              from: "app",
+              disallow: ["feature-internal"],
+            },
+          ],
+        },
+      ],
       "import/first": "error",
       "no-duplicate-imports": ["error", { allowSeparateTypeImports: true }],
     },
