@@ -31,6 +31,7 @@ Before anything else:
 After checks pass, create a local iteration commit only.
 
 - Use a scoped header such as `chore(ralph): maintenance [topic]`
+- Do not commit maintenance progress files or progress templates
 - Do not push
 - Do not open or update a PR during the loop
 

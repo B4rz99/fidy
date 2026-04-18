@@ -15,6 +15,7 @@
         "CFBundleURLTypes": [
           {
             "CFBundleURLSchemes": [
+              "fidy",
               "com.googleusercontent.apps.282682681790-630ti7lmdsjcm32o31m1kq50q20727pn"
             ]
           }

@@ -152,11 +152,14 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     const db = dbRef;
     const userId = userIdRef;
     if (!db || !userId) {
-      console.warn("[EmailCapture] fetchAndProcess: no db or userId");
+      captureWarning("email_capture_fetch_missing_context", {
+        hasDb: Boolean(db),
+        hasUserId: Boolean(userId),
+      });
       return;
     }
     if (get().isFetching) {
-      console.warn("[EmailCapture] fetchAndProcess: already fetching, skipping");
+      captureWarning("email_capture_fetch_already_running");
       return;
     }
 
@@ -174,7 +177,7 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
       });
       const { accounts } = get();
       if (accounts.length === 0) {
-        console.warn("[EmailCapture] no connected accounts");
+        captureWarning("email_capture_fetch_no_accounts");
         return;
       }
 

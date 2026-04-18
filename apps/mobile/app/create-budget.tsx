@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Animated from "react-native-reanimated";
 import { type Budget, type BudgetSuggestion, useBudgetStore } from "@/features/budget";
 import {
@@ -43,8 +43,6 @@ function CreateBudgetForm({
   );
   // digits = raw whole-peso string (e.g. "18900" for $18.900 COP)
   const [digits, setDigits] = useState(existingBudget ? String(existingBudget.amount) : "");
-  const digitsRef = useRef(digits);
-  digitsRef.current = digits;
 
   // Blinking cursor
   const { cursorStyle } = useBlinkingCursor();
@@ -72,11 +70,12 @@ function CreateBudgetForm({
       if (existingBudget) {
         await onUpdateBudget(existingBudget.id, amount);
         onDone();
-      } else {
-        if (!category) return;
-        const success = await onCreateBudget(category, amount);
-        if (success) onDone();
+        return;
       }
+
+      if (!category) return;
+      const success = await onCreateBudget(category, amount);
+      if (success) onDone();
     });
   };
 
@@ -89,7 +88,7 @@ function CreateBudgetForm({
   };
 
   const handleKey = useCallback((key: string) => {
-    setDigits(handleNumpadPress(digitsRef.current, key));
+    setDigits((currentDigits) => handleNumpadPress(currentDigits, key));
   }, []);
 
   // Hint: last month spending for selected category

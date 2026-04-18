@@ -41,8 +41,11 @@ const offsetDate = (base: Date, days: number): Date =>
  * Computes a percentage change from `prev` to `curr`, rounded to nearest integer.
  * When prev is 0: returns 100 if curr > 0, otherwise 0.
  */
-const computeDeltaPercent = (curr: number, prev: number): number =>
-  prev > 0 ? Math.round(((curr - prev) / prev) * 100) : curr > 0 ? 100 : 0;
+const computeDeltaPercent = (curr: number, prev: number): number => {
+  if (prev > 0) return Math.round(((curr - prev) / prev) * 100);
+  if (curr > 0) return 100;
+  return 0;
+};
 
 /** Period window sizes in days (inclusive range length - 1). */
 const PERIOD_DAYS: Record<AnalyticsPeriod, number> = {

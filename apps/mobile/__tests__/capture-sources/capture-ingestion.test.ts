@@ -1,16 +1,16 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ApplePayIntentData, NotificationData } from "@/features/capture-sources/schema";
+import { createCaptureIngestionPort } from "@/features/capture-sources/services/capture-ingestion";
+import type { RawEmail } from "@/features/email-capture/schema";
+import type { UserId } from "@/shared/types/branded";
 
 const mockProcessNotification = vi.fn();
 const mockProcessApplePayIntent = vi.fn();
 const mockProcessWidgetTransactions = vi.fn();
 const mockProcessEmails = vi.fn();
 const mockProcessRetries = vi.fn();
-
-import type { ApplePayIntentData, NotificationData } from "@/features/capture-sources/schema";
-import { createCaptureIngestionPort } from "@/features/capture-sources/services/capture-ingestion";
-import type { RawEmail } from "@/features/email-capture/schema";
-import type { UserId } from "@/shared/types/branded";
 
 const mockDb = {} as any;
 const USER_ID = "user-1" as UserId;

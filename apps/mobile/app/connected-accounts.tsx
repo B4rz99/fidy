@@ -87,6 +87,18 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
   const { pulsingStyle: dotAnimatedStyle } = usePulsingOpacity(isSyncing);
 
   if (account) {
+    const syncStatusText = (() => {
+      if (isSyncing) return t("connectedAccounts.syncing");
+      if (!account.lastFetchedAt) return t("connectedAccounts.notSyncedYet");
+
+      return t("connectedAccounts.lastSynced", {
+        time: formatDistanceToNow(new Date(account.lastFetchedAt), {
+          addSuffix: true,
+          locale: getDateFnsLocale(locale),
+        }),
+      });
+    })();
+
     return (
       <View className="rounded-chart bg-card p-5 dark:bg-card-dark" style={{ gap: 14 }}>
         <View className="flex-row items-center justify-between">
@@ -113,16 +125,7 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
         </Text>
 
         <Text className="font-poppins-medium text-caption text-tertiary dark:text-tertiary-dark">
-          {isSyncing
-            ? t("connectedAccounts.syncing")
-            : account.lastFetchedAt
-              ? t("connectedAccounts.lastSynced", {
-                  time: formatDistanceToNow(new Date(account.lastFetchedAt), {
-                    addSuffix: true,
-                    locale: getDateFnsLocale(locale),
-                  }),
-                })
-              : t("connectedAccounts.notSyncedYet")}
+          {syncStatusText}
         </Text>
 
         <Pressable

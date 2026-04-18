@@ -1,5 +1,8 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { processWidgetTransactions } from "@/features/capture-sources/services/widget-pipeline";
+import type { UserId } from "@/shared/types/branded";
 
 const mockInsertTransaction = vi.fn();
 const mockEnqueueSync = vi.fn();
@@ -61,9 +64,6 @@ vi.mock("@/shared/lib", () => ({
   toIsoDateTime: (d: Date) => d.toISOString(),
   trackTransactionCreated: vi.fn(),
 }));
-
-import { processWidgetTransactions } from "@/features/capture-sources/services/widget-pipeline";
-import type { UserId } from "@/shared/types/branded";
 
 const mockDb = {} as any;
 const USER_ID = "user-1" as UserId;
