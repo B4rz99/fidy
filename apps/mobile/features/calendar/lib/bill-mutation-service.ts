@@ -161,9 +161,8 @@ export function createCalendarBillMutationService(
         return false;
       }
 
-      const dbFields = toBillUpdateFields(fields);
-
       try {
+        const dbFields = toBillUpdateFields(fields);
         const result = await commit({
           kind: "calendar.bill.update",
           billId: id,
@@ -207,34 +206,34 @@ export function createCalendarBillMutationService(
         return { success: false };
       }
 
-      const timestamp = now();
-      const nowIso = toIsoDateTime(timestamp);
-      const transactionId = createTransactionId();
-      const amount = bill.amount;
-      assertCopAmount(amount);
-      const transaction: StoredTransaction = {
-        id: transactionId,
-        userId,
-        type: "expense",
-        amount,
-        categoryId: bill.categoryId,
-        description: bill.name,
-        date: parseIsoDate(dueDate),
-        createdAt: timestamp,
-        updatedAt: timestamp,
-        deletedAt: null,
-      };
-
-      const payment: BillPayment = {
-        id: createPaymentId(),
-        billId,
-        dueDate,
-        paidAt: nowIso,
-        transactionId,
-        createdAt: nowIso,
-      };
-
       try {
+        const timestamp = now();
+        const nowIso = toIsoDateTime(timestamp);
+        const transactionId = createTransactionId();
+        const amount = bill.amount;
+        assertCopAmount(amount);
+        const transaction: StoredTransaction = {
+          id: transactionId,
+          userId,
+          type: "expense",
+          amount,
+          categoryId: bill.categoryId,
+          description: bill.name,
+          date: parseIsoDate(dueDate),
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          deletedAt: null,
+        };
+
+        const payment: BillPayment = {
+          id: createPaymentId(),
+          billId,
+          dueDate,
+          paidAt: nowIso,
+          transactionId,
+          createdAt: nowIso,
+        };
+
         const result = await commit({
           kind: "calendar.bill.markPaid",
           transactionRow: toTransactionRow(transaction),
@@ -243,13 +242,13 @@ export function createCalendarBillMutationService(
         if (!result.success) {
           return { success: false };
         }
+
+        deps.addTransactionToCache(transaction);
+        deps.trackPaymentRecorded();
+        return { success: true, payment };
       } catch {
         return { success: false };
       }
-
-      deps.addTransactionToCache(transaction);
-      deps.trackPaymentRecorded();
-      return { success: true, payment };
     },
 
     unmarkBillPaid: async (payments, billId, dueDate) => {

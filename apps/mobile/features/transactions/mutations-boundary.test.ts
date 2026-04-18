@@ -11,74 +11,78 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
-const insertTransaction = vi.fn();
-const upsertTransaction = vi.fn();
-const softDeleteTransaction = vi.fn();
-const insertBill = vi.fn();
-const insertBillPayment = vi.fn();
-const deleteBillPayment = vi.fn();
-const deleteBill = vi.fn();
-const updateBill = vi.fn();
-const insertUserCategory = vi.fn();
-const insertGoal = vi.fn();
-const insertContribution = vi.fn();
-const softDeleteGoal = vi.fn();
-const softDeleteContribution = vi.fn();
-const updateGoal = vi.fn();
-const insertBudget = vi.fn();
-const updateBudgetAmount = vi.fn();
-const softDeleteBudget = vi.fn();
-const copyBudgetsToMonth = vi.fn(() => []);
-const insertNotification = vi.fn(() => ({ changes: 1 }));
-const getAllNotificationIds = vi.fn(() => []);
-const softDeleteAllNotifications = vi.fn();
-const enqueueSync = vi.fn();
+type SharedLibModule = typeof import("@/shared/lib");
+
+const mocks = vi.hoisted(() => ({
+  insertTransaction: vi.fn(),
+  upsertTransaction: vi.fn(),
+  softDeleteTransaction: vi.fn(),
+  insertBill: vi.fn(),
+  insertBillPayment: vi.fn(),
+  deleteBillPayment: vi.fn(),
+  deleteBill: vi.fn(),
+  updateBill: vi.fn(),
+  insertUserCategory: vi.fn(),
+  insertGoal: vi.fn(),
+  insertContribution: vi.fn(),
+  softDeleteGoal: vi.fn(),
+  softDeleteContribution: vi.fn(),
+  updateGoal: vi.fn(),
+  insertBudget: vi.fn(),
+  updateBudgetAmount: vi.fn(),
+  softDeleteBudget: vi.fn(),
+  copyBudgetsToMonth: vi.fn(() => []),
+  insertNotification: vi.fn(() => ({ changes: 1 })),
+  getAllNotificationIds: vi.fn(() => []),
+  softDeleteAllNotifications: vi.fn(),
+  enqueueSync: vi.fn(),
+}));
 
 vi.mock("@/features/transactions/lib/repository", () => ({
-  insertTransaction,
-  upsertTransaction,
-  softDeleteTransaction,
+  insertTransaction: mocks.insertTransaction,
+  upsertTransaction: mocks.upsertTransaction,
+  softDeleteTransaction: mocks.softDeleteTransaction,
 }));
 
 vi.mock("@/features/calendar/lib/repository", () => ({
-  insertBill,
-  insertBillPayment,
-  deleteBillPayment,
-  deleteBill,
-  updateBill,
+  insertBill: mocks.insertBill,
+  insertBillPayment: mocks.insertBillPayment,
+  deleteBillPayment: mocks.deleteBillPayment,
+  deleteBill: mocks.deleteBill,
+  updateBill: mocks.updateBill,
 }));
 
 vi.mock("@/features/categories/lib/repository", () => ({
-  insertUserCategory,
+  insertUserCategory: mocks.insertUserCategory,
 }));
 
 vi.mock("@/features/goals/lib/repository", () => ({
-  insertGoal,
-  insertContribution,
-  softDeleteGoal,
-  softDeleteContribution,
-  updateGoal,
+  insertGoal: mocks.insertGoal,
+  insertContribution: mocks.insertContribution,
+  softDeleteGoal: mocks.softDeleteGoal,
+  softDeleteContribution: mocks.softDeleteContribution,
+  updateGoal: mocks.updateGoal,
 }));
 
 vi.mock("@/features/budget/lib/repository", () => ({
-  insertBudget,
-  updateBudgetAmount,
-  softDeleteBudget,
-  copyBudgetsToMonth,
+  insertBudget: mocks.insertBudget,
+  updateBudgetAmount: mocks.updateBudgetAmount,
+  softDeleteBudget: mocks.softDeleteBudget,
+  copyBudgetsToMonth: mocks.copyBudgetsToMonth,
 }));
 
 vi.mock("@/features/notifications/repository", () => ({
-  insertNotification,
-  getAllNotificationIds,
-  softDeleteAllNotifications,
+  insertNotification: mocks.insertNotification,
+  getAllNotificationIds: mocks.getAllNotificationIds,
+  softDeleteAllNotifications: mocks.softDeleteAllNotifications,
 }));
 
 vi.mock("@/shared/db/enqueue-sync", () => ({
-  enqueueSync,
+  enqueueSync: mocks.enqueueSync,
 }));
 
 vi.mock("@/shared/lib", async () => {
-  const actual = await vi.importActual<typeof import("@/shared/lib")>("@/shared/lib");
+  const actual = await vi.importActual<SharedLibModule>("@/shared/lib");
   return {
     ...actual,
     generateBudgetId: vi.fn(() => "budget-generated"),
@@ -123,8 +127,8 @@ describe("app write-through mutations", () => {
 
     expect(result).toEqual({ success: true, didMutate: true });
     expect(mockDb.transaction).toHaveBeenCalledOnce();
-    expect(insertTransaction).toHaveBeenCalledOnce();
-    expect(enqueueSync).toHaveBeenCalledOnce();
+    expect(mocks.insertTransaction).toHaveBeenCalledOnce();
+    expect(mocks.enqueueSync).toHaveBeenCalledOnce();
   });
 
   it("keeps calendar bill save local-only", async () => {
@@ -150,8 +154,8 @@ describe("app write-through mutations", () => {
 
     expect(result).toEqual({ success: true, didMutate: true });
     expect(mockDb.transaction).toHaveBeenCalledOnce();
-    expect(insertBill).toHaveBeenCalledOnce();
-    expect(enqueueSync).not.toHaveBeenCalled();
+    expect(mocks.insertBill).toHaveBeenCalledOnce();
+    expect(mocks.enqueueSync).not.toHaveBeenCalled();
   });
 
   it("writes both transaction and bill payment when marking bills paid", async () => {
@@ -185,9 +189,9 @@ describe("app write-through mutations", () => {
 
     expect(result).toEqual({ success: true, didMutate: true });
     expect(mockDb.transaction).toHaveBeenCalledOnce();
-    expect(insertTransaction).toHaveBeenCalledOnce();
-    expect(insertBillPayment).toHaveBeenCalledOnce();
-    expect(enqueueSync).toHaveBeenCalledOnce();
+    expect(mocks.insertTransaction).toHaveBeenCalledOnce();
+    expect(mocks.insertBillPayment).toHaveBeenCalledOnce();
+    expect(mocks.enqueueSync).toHaveBeenCalledOnce();
   });
 
   it("fails without side effects when the transaction wrapper throws", async () => {
@@ -218,7 +222,7 @@ describe("app write-through mutations", () => {
 
     expect(result).toEqual({ success: false, error: "db failure" });
     expect(transaction).toHaveBeenCalledOnce();
-    expect(insertTransaction).not.toHaveBeenCalled();
-    expect(enqueueSync).not.toHaveBeenCalled();
+    expect(mocks.insertTransaction).not.toHaveBeenCalled();
+    expect(mocks.enqueueSync).not.toHaveBeenCalled();
   });
 });

@@ -42,6 +42,7 @@ const BOUNDARY_ELEMENTS = [
     pattern: [
       "features/*/*.ts",
       "features/*/components/**/*.{ts,tsx}",
+      "features/*/data/**/*.{ts,tsx}",
       "features/*/hooks/**/*.{ts,tsx}",
       "features/*/lib/**/*.{ts,tsx}",
       "features/*/services/**/*.{ts,tsx}",

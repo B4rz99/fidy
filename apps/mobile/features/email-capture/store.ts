@@ -142,8 +142,9 @@ export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActio
     const account = get().accounts.find((a) => a.id === id);
     if (account) {
       const provider = account.provider;
-      if (provider !== "gmail" && provider !== "outlook") return;
-      await getAdapter(provider).disconnect();
+      if (provider === "gmail" || provider === "outlook") {
+        await getAdapter(provider).disconnect();
+      }
       await deleteEmailAccount(dbRef, account.id);
       set((state) => ({
         accounts: state.accounts.filter((a) => a.id !== id),

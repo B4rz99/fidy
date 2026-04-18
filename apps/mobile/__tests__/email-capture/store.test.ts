@@ -318,6 +318,19 @@ describe("useEmailCaptureStore", () => {
     expect(useEmailCaptureStore.getState().accounts).toHaveLength(0);
   });
 
+  it("disconnectEmail still deletes account when provider is unknown", async () => {
+    useEmailCaptureStore.setState({
+      accounts: [makeAccount({ provider: "legacy-provider" })],
+    });
+
+    await useEmailCaptureStore.getState().disconnectEmail("ea-1");
+
+    expect(getAdapter).not.toHaveBeenCalled();
+    expect(mockAdapter.disconnect).not.toHaveBeenCalled();
+    expect(deleteEmailAccount).toHaveBeenCalledWith(mockDb, "ea-1");
+    expect(useEmailCaptureStore.getState().accounts).toHaveLength(0);
+  });
+
   describe("fetchAndProcess", () => {
     it("fetches emails and runs pipeline", async () => {
       useEmailCaptureStore.setState({

@@ -233,6 +233,16 @@ describe("calendar bill mutation service", () => {
     await expect(service.updateBill("bill-1" as BillId, { name: "Updated" })).resolves.toBe(false);
   });
 
+  it("returns false when updateBill receives an invalid amount", async () => {
+    const service = createService();
+
+    await expect(service.updateBill("bill-1" as BillId, { amount: -1 as CopAmount })).resolves.toBe(
+      false
+    );
+
+    expect(currentCommit).not.toHaveBeenCalled();
+  });
+
   it("returns false for update and delete when commits are unavailable or fail", async () => {
     currentCommit = null;
     const service = createService();
@@ -305,6 +315,22 @@ describe("calendar bill mutation service", () => {
       service.markBillPaid([bill], bill.id as BillId, "2026-04-12" as IsoDate)
     ).resolves.toEqual({ success: false });
 
+    expect(addTransactionToCacheMock).not.toHaveBeenCalled();
+    expect(trackPaymentRecordedMock).not.toHaveBeenCalled();
+  });
+
+  it("returns false when markBillPaid receives an invalid bill amount", async () => {
+    const service = createService();
+
+    await expect(
+      service.markBillPaid(
+        [{ ...bill, amount: -1 as CopAmount }],
+        bill.id as BillId,
+        "2026-04-12" as IsoDate
+      )
+    ).resolves.toEqual({ success: false });
+
+    expect(currentCommit).not.toHaveBeenCalled();
     expect(addTransactionToCacheMock).not.toHaveBeenCalled();
     expect(trackPaymentRecordedMock).not.toHaveBeenCalled();
   });
