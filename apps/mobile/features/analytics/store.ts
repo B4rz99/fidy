@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { useTransactionStore } from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
 import { captureError } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
@@ -9,22 +8,15 @@ import type {
   IncomeExpenseResult,
   PeriodDelta,
 } from "./lib/derive";
-import {
-  computePeriodRange,
-  deriveCategoryBreakdown,
-  deriveIncomeExpense,
-  derivePeriodDelta,
-} from "./lib/derive";
-import { getIncomeExpenseForPeriod, getSpendingByCategoryForPeriod } from "./lib/repository";
+import type { AnalyticsSnapshot } from "./services/create-analytics-service";
+import { createAnalyticsService } from "./services/create-analytics-service";
 
-// Module-level refs: Zustand doesn't serialize DB connections, so we keep them outside the store.
-let dbRef: AnyDb | null = null;
-let userIdRef: UserId | null = null;
-let unsubscribeTxStore: (() => void) | null = null;
-// Track previous pages reference to skip form-field state changes
-let prevPagesRef: unknown = null;
+let loadAnalyticsRequestId = 0;
+
+const analyticsService = createAnalyticsService();
 
 type AnalyticsState = {
+  readonly activeUserId: UserId | null;
   readonly period: AnalyticsPeriod;
   readonly incomeExpense: IncomeExpenseResult | null;
   readonly categoryBreakdown: readonly CategoryBreakdownItem[];
@@ -33,97 +25,86 @@ type AnalyticsState = {
 };
 
 type AnalyticsActions = {
-  initStore(db: AnyDb, userId: UserId): void;
+  beginSession(userId: UserId): void;
   setPeriod(period: AnalyticsPeriod): void;
-  loadAnalytics(): Promise<void>;
+  setSnapshot(snapshot: AnalyticsSnapshot): void;
+  setIsLoading(isLoading: boolean): void;
 };
 
-export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set, get) => ({
+export const useAnalyticsStore = create<AnalyticsState & AnalyticsActions>((set) => ({
+  activeUserId: null,
   period: "M",
   incomeExpense: null,
   categoryBreakdown: [],
   periodDelta: null,
   isLoading: false,
 
-  initStore: (db, userId) => {
-    dbRef = db;
-    userIdRef = userId;
-    // Subscribe to transaction store changes to auto-refresh analytics
-    if (unsubscribeTxStore) unsubscribeTxStore();
-    prevPagesRef = useTransactionStore.getState().pages;
-    unsubscribeTxStore = useTransactionStore.subscribe(() => {
-      // Only refresh when transaction data changes, not form field edits
-      const currentPages = useTransactionStore.getState().pages;
-      if (currentPages === prevPagesRef) return;
-      prevPagesRef = currentPages;
-      if (get().incomeExpense !== null) {
-        void get().loadAnalytics();
-      }
-    });
-  },
+  beginSession: (userId) =>
+    set({
+      activeUserId: userId,
+      incomeExpense: null,
+      categoryBreakdown: [],
+      periodDelta: null,
+      isLoading: false,
+    }),
 
-  setPeriod: (period) => {
-    set({ period });
-    void get().loadAnalytics();
-  },
+  setPeriod: (period) => set({ period }),
 
-  loadAnalytics: async () => {
-    if (!dbRef || !userIdRef) return;
-    const db = dbRef;
-    const userId = userIdRef;
-    set({ isLoading: true });
-    try {
-      const { current, previous } = computePeriodRange(get().period, new Date());
+  setSnapshot: (snapshot) =>
+    set({
+      incomeExpense: snapshot.incomeExpense,
+      categoryBreakdown: snapshot.categoryBreakdown,
+      periodDelta: snapshot.periodDelta,
+      isLoading: false,
+    }),
 
-      // Not parallel — synchronous SQLite must be called sequentially
-      const currentIncomeExpense = getIncomeExpenseForPeriod(
-        db,
-        userId,
-        current.start,
-        current.end
-      );
-      const previousIncomeExpense = getIncomeExpenseForPeriod(
-        db,
-        userId,
-        previous.start,
-        previous.end
-      );
-      const currentSpending = getSpendingByCategoryForPeriod(
-        db,
-        userId,
-        current.start,
-        current.end
-      );
-      const previousSpending = getSpendingByCategoryForPeriod(
-        db,
-        userId,
-        previous.start,
-        previous.end
-      );
-
-      const incomeExpense = deriveIncomeExpense(
-        currentIncomeExpense.income,
-        currentIncomeExpense.expenses
-      );
-      const categoryBreakdown = deriveCategoryBreakdown(
-        currentSpending,
-        currentIncomeExpense.expenses
-      );
-      const periodDelta = derivePeriodDelta(
-        {
-          totalExpenses: currentIncomeExpense.expenses,
-          categorySpending: currentSpending,
-        },
-        {
-          totalExpenses: previousIncomeExpense.expenses,
-          categorySpending: previousSpending,
-        }
-      );
-
-      set({ incomeExpense, categoryBreakdown, periodDelta, isLoading: false });
-    } catch (error) {
-      captureError(error);
-      set({ isLoading: false });
-    }
-  },
+  setIsLoading: (isLoading) => set({ isLoading }),
 }));
+
+function isCurrentAnalyticsRequest(
+  requestId: number,
+  userId: UserId,
+  period: AnalyticsPeriod
+): boolean {
+  return (
+    loadAnalyticsRequestId === requestId &&
+    useAnalyticsStore.getState().activeUserId === userId &&
+    useAnalyticsStore.getState().period === period
+  );
+}
+
+export function initializeAnalyticsSession(userId: UserId): void {
+  loadAnalyticsRequestId += 1;
+  useAnalyticsStore.getState().beginSession(userId);
+}
+
+export async function loadAnalyticsForUser(db: AnyDb, userId: UserId): Promise<void> {
+  const period = useAnalyticsStore.getState().period;
+  const requestId = ++loadAnalyticsRequestId;
+  useAnalyticsStore.getState().setIsLoading(true);
+
+  try {
+    const snapshot = await analyticsService.loadSnapshot({ db, userId, period });
+    if (!isCurrentAnalyticsRequest(requestId, userId, period)) {
+      if (loadAnalyticsRequestId === requestId) {
+        useAnalyticsStore.getState().setIsLoading(false);
+      }
+      return;
+    }
+    useAnalyticsStore.getState().setSnapshot(snapshot);
+  } catch (error) {
+    captureError(error);
+    if (loadAnalyticsRequestId === requestId) {
+      useAnalyticsStore.getState().setIsLoading(false);
+    }
+  }
+}
+
+export async function selectAnalyticsPeriod(
+  db: AnyDb,
+  userId: UserId,
+  period: AnalyticsPeriod
+): Promise<void> {
+  useAnalyticsStore.getState().setPeriod(period);
+  await loadAnalyticsForUser(db, userId);
+}

@@ -21,5 +21,11 @@ export {
   getIncomeExpenseForPeriod,
   getSpendingByCategoryForPeriod,
 } from "./lib/repository";
+export { subscribeAnalyticsToTransactions } from "./services/subscribe-analytics-to-transactions";
 // Store
-export { useAnalyticsStore } from "./store";
+export {
+  initializeAnalyticsSession,
+  loadAnalyticsForUser,
+  selectAnalyticsPeriod,
+  useAnalyticsStore,
+} from "./store";
