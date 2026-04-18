@@ -47,7 +47,7 @@ function AddBillForm({
     data: Partial<
       Pick<Bill, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
     >
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   readonly onDone: () => void;
 }) {
   const { t, locale } = useTranslation();
@@ -82,14 +82,14 @@ function AddBillForm({
       if (existingBill) {
         const amountValue = parseDigitsToAmount(amount);
         if (amountValue <= 0) return;
-        await onUpdateBill(existingBill.id as BillId, {
+        const success = await onUpdateBill(existingBill.id as BillId, {
           name: trimmedName,
           amount: amountValue,
           frequency,
           categoryId: category,
           startDate,
         });
-        onDone();
+        if (success) onDone();
       } else {
         const success = await onAddBill(trimmedName, amount, frequency, category, startDate);
         if (success) onDone();
@@ -256,7 +256,7 @@ export default function AddBillScreen() {
         return addBill(getDb(userId), userId, name, amount, frequency, categoryId, startDate);
       }}
       onUpdateBill={(id, data) => {
-        if (!userId) return Promise.resolve();
+        if (!userId) return Promise.resolve(false);
         return updateBill(getDb(userId), userId, id, data);
       }}
       onDone={() => router.back()}

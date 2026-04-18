@@ -42,6 +42,11 @@ describe("add-bill formSheet screen", () => {
     expect(source).toContain("billId");
   });
 
+  test("only closes edit mode after a successful update", () => {
+    expect(source).toContain("const success = await onUpdateBill");
+    expect(source).toContain("if (success) onDone()");
+  });
+
   test("dismisses keyboard on chip press", () => {
     expect(source).toContain("Keyboard.dismiss");
   });

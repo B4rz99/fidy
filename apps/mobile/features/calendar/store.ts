@@ -12,6 +12,7 @@ import { createCalendarQueryService } from "./services/create-calendar-query-ser
 
 let loadBillsRequestId = 0;
 let loadPaymentsRequestId = 0;
+let calendarSessionId = 0;
 
 const calendarQueryService = createCalendarQueryService();
 
@@ -87,20 +88,30 @@ export const useCalendarStore = create<CalendarState & CalendarActions>((set) =>
     })),
 }));
 
-function isCurrentBillsRequest(requestId: number, userId: UserId): boolean {
-  return loadBillsRequestId === requestId && useCalendarStore.getState().activeUserId === userId;
+function isCurrentBillsRequest(requestId: number, userId: UserId, sessionId: number): boolean {
+  return (
+    loadBillsRequestId === requestId &&
+    useCalendarStore.getState().activeUserId === userId &&
+    calendarSessionId === sessionId
+  );
 }
 
 function isCurrentPaymentsRequest(
   requestId: number,
   userId: UserId,
-  requestedMonth: Date
+  requestedMonth: Date,
+  sessionId: number
 ): boolean {
   return (
     loadPaymentsRequestId === requestId &&
     useCalendarStore.getState().activeUserId === userId &&
-    useCalendarStore.getState().currentMonth.getTime() === requestedMonth.getTime()
+    useCalendarStore.getState().currentMonth.getTime() === requestedMonth.getTime() &&
+    calendarSessionId === sessionId
   );
+}
+
+function isActiveCalendarSession(userId: UserId, sessionId: number): boolean {
+  return calendarSessionId === sessionId && useCalendarStore.getState().activeUserId === userId;
 }
 
 function createLiveCalendarBillMutations(db: AnyDb, userId: UserId) {
@@ -121,6 +132,7 @@ function createLiveCalendarBillMutations(db: AnyDb, userId: UserId) {
 }
 
 export function initializeCalendarSession(userId: UserId): void {
+  calendarSessionId += 1;
   loadBillsRequestId += 1;
   loadPaymentsRequestId += 1;
   useCalendarStore.getState().beginSession(userId);
@@ -128,11 +140,12 @@ export function initializeCalendarSession(userId: UserId): void {
 
 export async function loadBills(db: AnyDb, userId: UserId): Promise<void> {
   const requestId = ++loadBillsRequestId;
+  const sessionId = calendarSessionId;
   useCalendarStore.getState().setIsLoading(true);
 
   try {
     const bills = await calendarQueryService.loadBills({ db, userId });
-    if (!isCurrentBillsRequest(requestId, userId)) {
+    if (!isCurrentBillsRequest(requestId, userId, sessionId)) {
       if (loadBillsRequestId === requestId) {
         useCalendarStore.getState().setIsLoading(false);
       }
@@ -152,6 +165,7 @@ export async function loadPaymentsForMonth(db: AnyDb): Promise<void> {
   if (!userId) return;
 
   const requestId = ++loadPaymentsRequestId;
+  const sessionId = calendarSessionId;
   const requestedMonth = useCalendarStore.getState().currentMonth;
 
   const payments = await calendarQueryService.loadPaymentsForMonth({
@@ -159,7 +173,7 @@ export async function loadPaymentsForMonth(db: AnyDb): Promise<void> {
     month: requestedMonth,
   });
 
-  if (!isCurrentPaymentsRequest(requestId, userId, requestedMonth)) {
+  if (!isCurrentPaymentsRequest(requestId, userId, requestedMonth, sessionId)) {
     return;
   }
 
@@ -187,6 +201,7 @@ export async function addBill(
   categoryId: CategoryId,
   startDate: Date
 ): Promise<boolean> {
+  const sessionId = calendarSessionId;
   const result = await createLiveCalendarBillMutations(db, userId).addBill({
     name,
     amount,
@@ -195,6 +210,7 @@ export async function addBill(
     startDate,
   });
   if (!result.success) return false;
+  if (!isActiveCalendarSession(userId, sessionId)) return false;
 
   useCalendarStore.getState().appendBill(result.bill);
   return true;
@@ -207,16 +223,21 @@ export async function updateBill(
   fields: Partial<
     Pick<Bill, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
   >
-): Promise<void> {
+): Promise<boolean> {
+  const sessionId = calendarSessionId;
   const didUpdate = await createLiveCalendarBillMutations(db, userId).updateBill(id, fields);
-  if (!didUpdate) return;
+  if (!didUpdate) return false;
+  if (!isActiveCalendarSession(userId, sessionId)) return false;
 
   useCalendarStore.getState().replaceBill(id, fields);
+  return true;
 }
 
 export async function deleteBill(db: AnyDb, userId: UserId, id: BillId): Promise<void> {
+  const sessionId = calendarSessionId;
   const didDelete = await createLiveCalendarBillMutations(db, userId).deleteBill(id);
   if (!didDelete) return;
+  if (!isActiveCalendarSession(userId, sessionId)) return;
 
   useCalendarStore.getState().removeBill(id);
 }
@@ -227,12 +248,14 @@ export async function markBillPaid(
   billId: BillId,
   dueDate: IsoDate
 ): Promise<void> {
+  const sessionId = calendarSessionId;
   const result = await createLiveCalendarBillMutations(db, userId).markBillPaid(
     useCalendarStore.getState().bills,
     billId,
     dueDate
   );
   if (!result.success) return;
+  if (!isActiveCalendarSession(userId, sessionId)) return;
 
   useCalendarStore.getState().appendPayment(result.payment);
 }
@@ -243,12 +266,14 @@ export async function unmarkBillPaid(
   billId: BillId,
   dueDate: IsoDate
 ): Promise<void> {
+  const sessionId = calendarSessionId;
   const result = await createLiveCalendarBillMutations(db, userId).unmarkBillPaid(
     useCalendarStore.getState().payments,
     billId,
     dueDate
   );
   if (!result.success) return;
+  if (!isActiveCalendarSession(userId, sessionId)) return;
 
   useCalendarStore.getState().removePayment(billId, dueDate);
 }
