@@ -60,7 +60,7 @@ Poor candidates:
 ## Install
 
 ```bash
-npm install @tanstack/react-query
+bun install @tanstack/react-query
 ```
 
 Optional devtools are mainly for web and are usually not the first priority for Expo mobile work.
