@@ -1,12 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Effect } from "effect";
-import {
-  fromPromise,
-  fromSync,
-  fromThunk,
-  makeAppTag,
-  runWithService,
-} from "@/shared/effect/runtime";
+import { fromPromise, fromSync, fromThunk, makeAppService } from "@/shared/effect/runtime";
 import { toIsoDateTime } from "@/shared/lib";
 import type { IsoDateTime } from "@/shared/types/branded";
 import type {
@@ -66,7 +60,7 @@ export type SyncService = {
   ) => Promise<ResolveConflictResult>;
 };
 
-const SyncDeps = makeAppTag<CreateSyncServiceDeps>("@/features/sync/SyncDeps");
+const SyncDeps = makeAppService<CreateSyncServiceDeps>("@/features/sync/SyncDeps");
 
 function tryParseTransactionSnapshot(value: string): TransactionSnapshot | null {
   try {
@@ -77,7 +71,7 @@ function tryParseTransactionSnapshot(value: string): TransactionSnapshot | null 
 }
 
 const getConflictRowsEffect = (db: SyncContext["db"]) =>
-  Effect.flatMap(SyncDeps, ({ getConflictRows }) => fromPromise(() => getConflictRows({ db })));
+  Effect.flatMap(SyncDeps.tag, ({ getConflictRows }) => fromPromise(() => getConflictRows({ db })));
 
 const unresolvedConflictCountEffect = (db: SyncContext["db"]) =>
   Effect.map(listConflictsEffect({ db }), (conflicts) => conflicts.length);
@@ -107,7 +101,7 @@ function resolveConflictEffect({ db, conflictId, resolution }: ResolveTransactio
     }
 
     const { upsertTransaction, enqueueTransactionSync, resolveConflictRow, refreshTransactions } =
-      yield* SyncDeps;
+      yield* SyncDeps.tag;
     const resolvedAt = toIsoDateTime(new Date());
     const serverData = tryParseTransactionSnapshot(row.serverData);
     const localData =
@@ -134,7 +128,7 @@ function runSyncEffect({ db, userId, reason: _reason = "foreground" }: SyncInput
   return Effect.gen(function* () {
     void _reason;
 
-    const { isOnline, getSupabase, syncPull, syncPush, refreshTransactions } = yield* SyncDeps;
+    const { isOnline, getSupabase, syncPull, syncPush, refreshTransactions } = yield* SyncDeps.tag;
     const online = yield* fromPromise(isOnline);
     if (!online) {
       return {
@@ -168,7 +162,7 @@ export function createSyncService({
   enqueueTransactionSync,
   resolveConflictRow,
 }: CreateSyncServiceDeps): SyncService {
-  const deps = {
+  const runtime = SyncDeps.bind({
     isOnline,
     getSupabase,
     syncPull,
@@ -178,11 +172,11 @@ export function createSyncService({
     upsertTransaction,
     enqueueTransactionSync,
     resolveConflictRow,
-  } satisfies CreateSyncServiceDeps;
+  } satisfies CreateSyncServiceDeps);
 
   return {
-    listConflicts: (input) => runWithService(listConflictsEffect(input), SyncDeps, deps),
-    resolveConflict: (input) => runWithService(resolveConflictEffect(input), SyncDeps, deps),
-    run: (input) => runWithService(runSyncEffect(input), SyncDeps, deps),
+    listConflicts: (input) => runtime.run(listConflictsEffect(input)),
+    resolveConflict: (input) => runtime.run(resolveConflictEffect(input)),
+    run: (input) => runtime.run(runSyncEffect(input)),
   };
 }
