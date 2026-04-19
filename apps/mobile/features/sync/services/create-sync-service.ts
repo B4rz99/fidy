@@ -1,7 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Effect } from "effect";
 import { type AppClock, bindAppClock, currentIsoDateTimeEffect } from "@/shared/effect/clock";
+import { type AppNetwork, bindAppNetwork, isOnlineEffect } from "@/shared/effect/network";
 import { fromPromise, fromSync, fromThunk, makeAppService } from "@/shared/effect/runtime";
+import {
+  type AppSupabase,
+  bindAppSupabase,
+  currentSupabaseClientEffect,
+} from "@/shared/effect/supabase";
 import type { IsoDateTime } from "@/shared/types/branded";
 import type {
   ConflictResolution,
@@ -41,8 +47,6 @@ type ResolveConflictRow = (
 ) => void | Promise<void>;
 
 type CreateSyncServiceDeps = {
-  readonly isOnline: () => Promise<boolean>;
-  readonly getSupabase: () => SupabaseClient;
   readonly syncPull: SyncPull;
   readonly syncPush: SyncPush;
   readonly refreshTransactions: RefreshTransactions;
@@ -51,6 +55,8 @@ type CreateSyncServiceDeps = {
   readonly enqueueTransactionSync: EnqueueTransactionSync;
   readonly resolveConflictRow: ResolveConflictRow;
   readonly clock?: AppClock;
+  readonly network?: AppNetwork;
+  readonly supabase?: AppSupabase;
 };
 
 export type SyncService = {
@@ -129,8 +135,8 @@ function runSyncEffect({ db, userId, reason: _reason = "foreground" }: SyncInput
   return Effect.gen(function* () {
     void _reason;
 
-    const { isOnline, getSupabase, syncPull, syncPush, refreshTransactions } = yield* SyncDeps.tag;
-    const online = yield* fromPromise(isOnline);
+    const { syncPull, syncPush, refreshTransactions } = yield* SyncDeps.tag;
+    const online = yield* isOnlineEffect;
     if (!online) {
       return {
         status: "skipped_offline" as const,
@@ -138,7 +144,7 @@ function runSyncEffect({ db, userId, reason: _reason = "foreground" }: SyncInput
       };
     }
 
-    const supabase = yield* fromSync(getSupabase);
+    const supabase = yield* currentSupabaseClientEffect;
     const pullOk = yield* fromPromise(() => syncPull(db, supabase, userId));
     if (pullOk) {
       yield* fromPromise(() => syncPush(db, supabase, userId));
@@ -153,8 +159,6 @@ function runSyncEffect({ db, userId, reason: _reason = "foreground" }: SyncInput
 }
 
 export function createSyncService({
-  isOnline,
-  getSupabase,
   syncPull,
   syncPush,
   refreshTransactions,
@@ -163,11 +167,13 @@ export function createSyncService({
   enqueueTransactionSync,
   resolveConflictRow,
   clock,
+  network,
+  supabase,
 }: CreateSyncServiceDeps): SyncService {
   const clockRuntime = bindAppClock(clock);
+  const networkRuntime = bindAppNetwork(network);
+  const supabaseRuntime = bindAppSupabase(supabase);
   const runtime = SyncDeps.bind({
-    isOnline,
-    getSupabase,
     syncPull,
     syncPush,
     refreshTransactions,
@@ -180,6 +186,9 @@ export function createSyncService({
   return {
     listConflicts: (input) => runtime.run(clockRuntime.provide(listConflictsEffect(input))),
     resolveConflict: (input) => runtime.run(clockRuntime.provide(resolveConflictEffect(input))),
-    run: (input) => runtime.run(clockRuntime.provide(runSyncEffect(input))),
+    run: (input) =>
+      runtime.run(
+        supabaseRuntime.provide(networkRuntime.provide(clockRuntime.provide(runSyncEffect(input))))
+      ),
   };
 }

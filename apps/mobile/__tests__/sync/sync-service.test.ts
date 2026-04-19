@@ -45,8 +45,6 @@ describe("createSyncService", () => {
     ]);
 
     const service = createSyncService({
-      isOnline,
-      getSupabase,
       syncPull,
       syncPush,
       refreshTransactions,
@@ -54,6 +52,8 @@ describe("createSyncService", () => {
       upsertTransaction: vi.fn(),
       enqueueTransactionSync: vi.fn(),
       resolveConflictRow: vi.fn(),
+      network: { isOnline },
+      supabase: { getSupabase },
     });
 
     const result = await service.run({
@@ -74,8 +74,8 @@ describe("createSyncService", () => {
 
   it("maps unresolved conflict rows into sync conflict records", async () => {
     const service = createSyncService({
-      isOnline: vi.fn().mockResolvedValue(true),
-      getSupabase: vi.fn(),
+      network: { isOnline: vi.fn().mockResolvedValue(true) },
+      supabase: { getSupabase: vi.fn() },
       syncPull: vi.fn(),
       syncPush: vi.fn(),
       refreshTransactions: vi.fn(),
@@ -173,8 +173,8 @@ describe("createSyncService", () => {
       .mockResolvedValueOnce([]);
 
     const service = createSyncService({
-      isOnline: vi.fn().mockResolvedValue(true),
-      getSupabase: vi.fn(),
+      network: { isOnline: vi.fn().mockResolvedValue(true) },
+      supabase: { getSupabase: vi.fn() },
       syncPull: vi.fn(),
       syncPush: vi.fn(),
       refreshTransactions,
@@ -240,8 +240,8 @@ describe("createSyncService", () => {
       .mockResolvedValueOnce([]);
 
     const service = createSyncService({
-      isOnline: vi.fn().mockResolvedValue(true),
-      getSupabase: vi.fn(),
+      network: { isOnline: vi.fn().mockResolvedValue(true) },
+      supabase: { getSupabase: vi.fn() },
       syncPull: vi.fn(),
       syncPush: vi.fn(),
       refreshTransactions,
