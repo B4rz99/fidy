@@ -8,12 +8,18 @@ import {
   type FinancialAccountKind,
   financialAccountKindSchema,
 } from "@/features/financial-accounts";
+import {
+  getFinancialAccountFormScreenState,
+  hasInvalidBillingDayInput,
+  type FinancialAccountFormLookupStatus,
+} from "@/features/financial-accounts/lib/form-screen";
 import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
 import { createFinancialAccountManagementService } from "@/features/financial-accounts/lib/management-service";
 import { parseFinancialAccountRouteParam } from "@/features/financial-accounts/lib/route-params";
 import { ScreenLayout } from "@/shared/components";
 import { ChevronRight, X } from "@/shared/components/icons";
 import {
+  ActivityIndicator,
   Keyboard,
   Platform,
   Pressable,
@@ -170,15 +176,11 @@ function FinancialAccountFormBody({
     const hasPartialOpeningBalance =
       (parsedOpeningBalanceAmount != null && parsedEffectiveDate == null) ||
       (parsedOpeningBalanceAmount == null && parsedEffectiveDate != null);
-    const hasInvalidBillingDay =
-      Number.isNaN(parsedStatementClosingDay) ||
-      Number.isNaN(parsedPaymentDueDay) ||
-      (parsedStatementClosingDay != null &&
-        !Number.isNaN(parsedStatementClosingDay) &&
-        (parsedStatementClosingDay < 1 || parsedStatementClosingDay > 31)) ||
-      (parsedPaymentDueDay != null &&
-        !Number.isNaN(parsedPaymentDueDay) &&
-        (parsedPaymentDueDay < 1 || parsedPaymentDueDay > 31));
+    const hasInvalidBillingDay = hasInvalidBillingDayInput({
+      kind,
+      statementClosingDay: parsedStatementClosingDay,
+      paymentDueDay: parsedPaymentDueDay,
+    });
 
     if (hasPartialOpeningBalance) {
       showErrorToast(t("financialAccounts.form.invalidOpeningBalance"));
@@ -478,26 +480,75 @@ export function FinancialAccountFormScreen() {
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const [existingDetails, setExistingDetails] = useState<AccountDetails | null>(null);
+  const [lookupStatus, setLookupStatus] = useState<FinancialAccountFormLookupStatus>(
+    accountId ? "loading" : "idle"
+  );
+  const primary = useThemeColor("primary");
+  const secondary = useThemeColor("secondary");
+  const accentGreen = useThemeColor("accentGreen");
 
   const reloadAccount = useCallback(() => {
-    if (!db || !accountId) {
+    if (!accountId) {
       setExistingDetails(null);
+      setLookupStatus("idle");
       return;
     }
 
-    setExistingDetails(managementService.getAccountDetails({ db, accountId }));
+    if (!db) {
+      setExistingDetails(null);
+      setLookupStatus("loading");
+      return;
+    }
+
+    const nextDetails = managementService.getAccountDetails({ db, accountId });
+
+    setExistingDetails(nextDetails);
+    setLookupStatus(nextDetails ? "ready" : "missing");
   }, [db, accountId]);
 
   useFocusEffect(reloadAccount);
+  const screenState = getFinancialAccountFormScreenState({ accountId, lookupStatus });
 
-  if (accountId && existingDetails == null) {
+  if (screenState === "loading") {
     return (
       <ScreenLayout
         title={t("financialAccounts.form.editTitle")}
         variant="sub"
         onBack={() => router.back()}
       >
-        <View />
+        <View style={styles.stateContainer}>
+          <ActivityIndicator size="small" color={accentGreen} />
+          <Text style={[styles.stateTitle, { color: primary }]}>
+            {t("financialAccounts.form.loading")}
+          </Text>
+        </View>
+      </ScreenLayout>
+    );
+  }
+
+  if (screenState === "missing") {
+    return (
+      <ScreenLayout
+        title={t("financialAccounts.form.editTitle")}
+        variant="sub"
+        onBack={() => router.replace("/financial-accounts")}
+      >
+        <View style={styles.stateContainer}>
+          <Text style={[styles.stateTitle, { color: primary }]}>
+            {t("financialAccounts.form.missingTitle")}
+          </Text>
+          <Text style={[styles.stateBody, { color: secondary }]}>
+            {t("financialAccounts.form.missingBody")}
+          </Text>
+          <Pressable
+            style={[styles.primaryButton, styles.stateButton, { backgroundColor: accentGreen }]}
+            onPress={() => router.replace("/financial-accounts")}
+          >
+            <Text style={styles.primaryButtonText}>
+              {t("financialAccounts.form.missingCta")}
+            </Text>
+          </Pressable>
+        </View>
       </ScreenLayout>
     );
   }
@@ -532,6 +583,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 32,
     gap: 18,
+  },
+  stateContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  stateTitle: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 18,
+    lineHeight: 24,
+    textAlign: "center",
+  },
+  stateBody: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "center",
+  },
+  stateButton: {
+    minWidth: 180,
   },
   subtitle: {
     fontFamily: "Poppins_500Medium",

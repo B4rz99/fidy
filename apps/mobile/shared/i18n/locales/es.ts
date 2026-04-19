@@ -182,6 +182,11 @@ const es = {
       paymentDueDay: "Fecha limite de pago",
       saveCreate: "Crear cuenta",
       saveEdit: "Guardar cambios",
+      loading: "Cargando cuenta...",
+      missingTitle: "No encontramos esta cuenta",
+      missingBody:
+        "Esta cuenta ya no está disponible. Vuelve a Cuentas financieras e intenta con otra.",
+      missingCta: "Volver a cuentas",
       invalidOpeningBalance:
         "Agrega monto y fecha efectiva al mismo tiempo, o deja ambos campos vacíos.",
       invalidBillingDay: "Ingresa un día entre 1 y 31.",
