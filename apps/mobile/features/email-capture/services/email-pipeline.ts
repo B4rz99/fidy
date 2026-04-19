@@ -1,3 +1,8 @@
+import {
+  buildEmailCaptureEvidence,
+  linkCaptureEvidenceToTransaction,
+  saveCaptureEvidenceRows,
+} from "@/features/capture-evidence";
 import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts";
 import { insertTransaction } from "@/features/transactions/lib/repository";
@@ -39,6 +44,9 @@ const emailPipeline = createEmailPipelineService({
   markPermanentlyFailed,
   markRetrySuccess,
   updateProcessedEmailStatus,
+  buildEmailCaptureEvidence,
+  saveCaptureEvidenceRows,
+  linkCaptureEvidenceToTransaction,
   ensureDefaultFinancialAccount,
   insertTransaction,
   enqueueSync,

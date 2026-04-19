@@ -141,6 +141,13 @@
       "when": 1776564415724,
       "tag": "0019_watery_leopardon",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1776593600000,
+      "tag": "0020_tidy_husk",
+      "breakpoints": true
     }
   ]
 }

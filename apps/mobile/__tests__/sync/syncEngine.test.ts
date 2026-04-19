@@ -10,6 +10,7 @@ const mockGetFinancialAccountIdentifierById = vi.fn().mockReturnValue(null);
 const mockGetOpeningBalanceById = vi.fn().mockReturnValue(null);
 const mockGetOpeningBalanceForAccount = vi.fn().mockReturnValue(null);
 const mockGetTransferById = vi.fn().mockReturnValue(null);
+const mockGetCaptureEvidenceById = vi.fn().mockReturnValue(null);
 const mockEnsureDefaultFinancialAccount = vi
   .fn()
   .mockImplementation((_: unknown, userId: string) => ({ id: `fa-default-${userId}` }));
@@ -21,6 +22,7 @@ const mockUpsertFinancialAccount = vi.fn();
 const mockUpsertFinancialAccountIdentifier = vi.fn();
 const mockUpsertOpeningBalance = vi.fn();
 const mockUpsertTransfer = vi.fn();
+const mockUpsertCaptureEvidence = vi.fn();
 
 const mockInsertConflict = vi.fn();
 vi.mock("@/features/sync/lib/conflict-repository", () => ({
@@ -55,6 +57,15 @@ vi.mock("@/features/transfers", () => ({
   getTransferById: (...args: any[]) => mockGetTransferById(...args),
   upsertTransfer: (...args: any[]) => mockUpsertTransfer(...args),
 }));
+
+vi.mock("@/features/capture-evidence", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/features/capture-evidence")>();
+  return {
+    ...actual,
+    getCaptureEvidenceById: (...args: any[]) => mockGetCaptureEvidenceById(...args),
+    upsertCaptureEvidence: (...args: any[]) => mockUpsertCaptureEvidence(...args),
+  };
+});
 
 const mockDb = {} as any;
 const mockUpsert = vi.fn().mockReturnValue({ error: null });
@@ -364,6 +375,51 @@ describe("syncEngine", () => {
       expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-financial-identifier-1"]);
     });
 
+    it("upserts capture evidence rows and clears the queue entry on success", async () => {
+      mockGetQueuedSyncEntries.mockReturnValueOnce([
+        {
+          id: "sq-capture-evidence-1",
+          tableName: "captureEvidence",
+          rowId: "ce-1",
+          operation: "insert",
+          createdAt: "2026-04-19T10:00:00.000Z",
+        },
+      ]);
+      mockGetCaptureEvidenceById.mockReturnValueOnce({
+        id: "ce-1",
+        userId: "user-1",
+        sourceFamily: "bancolombia",
+        evidenceType: "last4",
+        scope: "notification:bancolombia:last4",
+        value: "1234",
+        transactionId: "tx-1",
+        processedEmailId: null,
+        processedCaptureId: "pc-1",
+        createdAt: "2026-04-19T10:00:00.000Z",
+        updatedAt: "2026-04-19T10:00:00.000Z",
+        deletedAt: null,
+      });
+      mockUpsert.mockReturnValueOnce({ error: null });
+      const mockSupabase = createMockSupabase();
+
+      const { syncPush } = await import("@/features/sync/services/syncEngine");
+      await syncPush(mockDb, mockSupabase, "user-1");
+
+      expect(mockSupabase.from).toHaveBeenCalledWith("capture_evidence");
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "ce-1",
+          user_id: "user-1",
+          source_family: "bancolombia",
+          evidence_type: "last4",
+          scope: "notification:bancolombia:last4",
+          value: "1234",
+          processed_capture_id: "pc-1",
+        })
+      );
+      expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-capture-evidence-1"]);
+    });
+
     it("clears queue entry when local row is missing", async () => {
       mockGetQueuedSyncEntries.mockReturnValueOnce([
         {
@@ -432,6 +488,25 @@ describe("syncEngine", () => {
       mockGetSyncMeta.mockReturnValueOnce(null);
       const mockSupabase = createMockSupabase({
         transactions: { data: [], error: null },
+        capture_evidence: {
+          data: [
+            {
+              id: "ce-1",
+              user_id: "user-1",
+              source_family: "bancolombia",
+              evidence_type: "last4",
+              scope: "notification:bancolombia:last4",
+              value: "1234",
+              transaction_id: "tx-1",
+              processed_email_id: null,
+              processed_capture_id: "pc-1",
+              created_at: "2026-04-18T07:30:00.000Z",
+              updated_at: "2026-04-18T08:00:00.000Z",
+              deleted_at: null,
+            },
+          ],
+          error: null,
+        },
         financial_accounts: {
           data: [
             {
@@ -497,6 +572,7 @@ describe("syncEngine", () => {
           error: null,
         },
       });
+      mockGetCaptureEvidenceById.mockReturnValueOnce(null);
       mockGetFinancialAccountById.mockReturnValueOnce(null);
       mockGetTransferById.mockReturnValueOnce(null);
       mockGetOpeningBalanceById.mockReturnValueOnce(null);
@@ -506,6 +582,15 @@ describe("syncEngine", () => {
       const result = await syncPull(mockDb, mockSupabase, "user-1");
 
       expect(result).toBe(true);
+      expect(mockUpsertCaptureEvidence).toHaveBeenCalledWith(
+        mockDb,
+        expect.objectContaining({
+          id: "ce-1",
+          scope: "notification:bancolombia:last4",
+          value: "1234",
+          processedCaptureId: "pc-1",
+        })
+      );
       expect(mockUpsertFinancialAccount).toHaveBeenCalledWith(
         mockDb,
         expect.objectContaining({
@@ -543,6 +628,10 @@ describe("syncEngine", () => {
       ).toEqual({
         updatedAt: "2026-04-18T12:00:00.000Z",
         id: "fai-1",
+      });
+      expect(JSON.parse(getLastSetSyncMetaValue("last_sync_at_capture_evidence")!)).toEqual({
+        updatedAt: "2026-04-18T08:00:00.000Z",
+        id: "ce-1",
       });
     });
 
@@ -686,6 +775,7 @@ describe("syncEngine", () => {
       await syncPull(mockDb, mockSupabase, "user-1");
 
       expect(mockSupabase._getChain("transactions").gte).toHaveBeenCalled();
+      expect(mockSupabase._getChain("capture_evidence").gte).toHaveBeenCalled();
       expect(mockSupabase._getChain("financial_accounts").gte).toHaveBeenCalled();
       expect(mockSupabase._getChain("transfers").gte).toHaveBeenCalled();
       expect(mockSupabase._getChain("opening_balances").gte).toHaveBeenCalled();

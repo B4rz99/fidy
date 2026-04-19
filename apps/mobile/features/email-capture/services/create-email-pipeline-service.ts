@@ -1,4 +1,6 @@
 import { Effect } from "effect";
+import type { CaptureEvidenceRow, CaptureEvidenceSeed } from "@/features/capture-evidence";
+import { materializeCaptureEvidenceRows } from "@/features/capture-evidence";
 import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
 import type { FinancialAccountRow } from "@/features/financial-accounts";
 import { getBuiltInCategoryId, isValidCategoryId } from "@/features/transactions/lib/categories";
@@ -96,6 +98,17 @@ type CreateEmailPipelineServiceDeps = {
     status: string,
     transactionId: TransactionId | null
   ) => Promise<void>;
+  readonly buildEmailCaptureEvidence: (input: { from: string }) => readonly CaptureEvidenceSeed[];
+  readonly saveCaptureEvidenceRows: (
+    db: AnyDb,
+    rows: readonly CaptureEvidenceRow[]
+  ) => void | Promise<void>;
+  readonly linkCaptureEvidenceToTransaction: (
+    db: AnyDb,
+    processedEmailId: ProcessedEmailId,
+    transactionId: TransactionId,
+    updatedAt: IsoDateTime
+  ) => void | Promise<void>;
   readonly ensureDefaultFinancialAccount: (
     db: AnyDb,
     userId: UserId,
@@ -196,6 +209,43 @@ function insertProcessedEmailEffect(db: AnyDb, row: ProcessedEmailRow) {
   );
 }
 
+function buildEmailCaptureEvidenceRows(
+  userId: UserId,
+  from: string,
+  processedEmailId: ProcessedEmailId,
+  transactionId: TransactionId | null,
+  now: IsoDateTime,
+  buildEmailCaptureEvidence: (input: { from: string }) => readonly CaptureEvidenceSeed[]
+) {
+  return materializeCaptureEvidenceRows(buildEmailCaptureEvidence({ from }), {
+    userId,
+    transactionId,
+    processedEmailId,
+    processedCaptureId: null,
+    createdAt: now,
+    updatedAt: now,
+  });
+}
+
+function saveCaptureEvidenceRowsEffect(db: AnyDb, rows: readonly CaptureEvidenceRow[]) {
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ saveCaptureEvidenceRows }) =>
+    fromThunk(() => saveCaptureEvidenceRows(db, rows))
+  );
+}
+
+function linkCaptureEvidenceToTransactionEffect(
+  db: AnyDb,
+  processedEmailId: ProcessedEmailId,
+  transactionId: TransactionId,
+  updatedAt: IsoDateTime
+) {
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ linkCaptureEvidenceToTransaction }) =>
+    fromThunk(() =>
+      linkCaptureEvidenceToTransaction(db, processedEmailId, transactionId, updatedAt)
+    )
+  );
+}
+
 function saveTransactionEffect(
   db: AnyDb,
   userId: UserId,
@@ -209,10 +259,13 @@ function saveTransactionEffect(
       insertTransaction,
       enqueueSync,
       insertProcessedEmail,
+      buildEmailCaptureEvidence,
+      saveCaptureEvidenceRows,
       trackTransactionCreated,
     } = yield* EmailPipelineDeps.tag;
     const source = getTransactionSource(email.provider);
     const txId = generateTransactionId();
+    const processedEmailId = generateProcessedEmailId();
     const now = yield* currentIsoDateTimeEffect;
     const amount = validated.amount;
     const date = validated.date;
@@ -255,7 +308,7 @@ function saveTransactionEffect(
 
     yield* fromPromise(() =>
       insertProcessedEmail(db, {
-        id: generateProcessedEmailId(),
+        id: processedEmailId,
         externalId: email.externalId,
         provider: email.provider,
         status,
@@ -267,6 +320,20 @@ function saveTransactionEffect(
         confidence: validated.confidence,
         createdAt: now,
       })
+    );
+
+    yield* fromThunk(() =>
+      saveCaptureEvidenceRows(
+        db,
+        buildEmailCaptureEvidenceRows(
+          userId,
+          email.from,
+          processedEmailId,
+          txId,
+          now,
+          buildEmailCaptureEvidence
+        )
+      )
     );
 
     if (status === "success") {
@@ -488,9 +555,10 @@ export function createEmailPipelineService(
             assertIsoDateTime(email.receivedAt);
             const createdAt = await runClockEffect(currentIsoDateTimeEffect);
             const nextRetryAt = parseError ? await runClockEffect(nextRetryAtEffect(0)) : null;
+            const processedEmailId = generateProcessedEmailId();
             await runEmailEffect(
               insertProcessedEmailEffect(db, {
-                id: generateProcessedEmailId(),
+                id: processedEmailId,
                 externalId: email.externalId,
                 provider: email.provider,
                 status,
@@ -509,6 +577,21 @@ export function createEmailPipelineService(
                     }
                   : {}),
               })
+            );
+            await runEmailEffect(
+              Effect.flatMap(EmailPipelineDeps.tag, ({ buildEmailCaptureEvidence }) =>
+                saveCaptureEvidenceRowsEffect(
+                  db,
+                  buildEmailCaptureEvidenceRows(
+                    userId,
+                    email.from,
+                    processedEmailId,
+                    null,
+                    createdAt,
+                    buildEmailCaptureEvidence
+                  )
+                )
+              )
             );
             completed++;
             onProgress?.(getProgressSnapshot(total, completed, result));
@@ -530,9 +613,10 @@ export function createEmailPipelineService(
             const receivedAt = email.receivedAt;
             assertIsoDateTime(receivedAt);
             const createdAt = await runClockEffect(currentIsoDateTimeEffect);
+            const processedEmailId = generateProcessedEmailId();
             await runEmailEffect(
               insertProcessedEmailEffect(db, {
-                id: generateProcessedEmailId(),
+                id: processedEmailId,
                 externalId: email.externalId,
                 provider: email.provider,
                 status: "skipped_duplicate",
@@ -544,6 +628,21 @@ export function createEmailPipelineService(
                 confidence: parsed.confidence,
                 createdAt,
               })
+            );
+            await runEmailEffect(
+              Effect.flatMap(EmailPipelineDeps.tag, ({ buildEmailCaptureEvidence }) =>
+                saveCaptureEvidenceRowsEffect(
+                  db,
+                  buildEmailCaptureEvidenceRows(
+                    userId,
+                    email.from,
+                    processedEmailId,
+                    existingTxId,
+                    createdAt,
+                    buildEmailCaptureEvidence
+                  )
+                )
+              )
             );
             result.skippedCrossSource++;
             completed++;
@@ -672,6 +771,14 @@ export function createEmailPipelineService(
 
         if (existingTxId) {
           await runEmailEffect(
+            linkCaptureEvidenceToTransactionEffect(
+              db,
+              email.id,
+              existingTxId,
+              await runClockEffect(currentIsoDateTimeEffect)
+            )
+          );
+          await runEmailEffect(
             markRetrySuccessEffect(db, email.id, "success", existingTxId, parsed.confidence)
           );
           result.succeeded++;
@@ -681,6 +788,14 @@ export function createEmailPipelineService(
         try {
           const { txId, status } = await runEmailWithClock(
             saveRetryTransactionEffect(db, userId, parsed, email)
+          );
+          await runEmailEffect(
+            linkCaptureEvidenceToTransactionEffect(
+              db,
+              email.id,
+              txId,
+              await runClockEffect(currentIsoDateTimeEffect)
+            )
           );
           await runEmailEffect(
             markRetrySuccessEffect(db, email.id, status, txId, parsed.confidence)

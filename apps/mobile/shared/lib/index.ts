@@ -41,6 +41,7 @@ export {
   generateBillId,
   generateBillPaymentId,
   generateBudgetId,
+  generateCaptureEvidenceId,
   generateChatMessageId,
   generateChatSessionId,
   generateDetectedSmsEventId,

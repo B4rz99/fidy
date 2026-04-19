@@ -6,6 +6,7 @@ export {
   billPayments,
   bills,
   budgets,
+  captureEvidence,
   chatMessages,
   chatSessions,
   detectedSmsEvents,

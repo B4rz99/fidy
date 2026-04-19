@@ -24,6 +24,15 @@ const mockEnsureDefaultFinancialAccount = vi.fn().mockReturnValue({
   updatedAt: "2026-04-18T10:00:00.000Z",
   deletedAt: null,
 });
+const mockBuildApplePayCaptureEvidence = vi.fn().mockReturnValue([
+  {
+    sourceFamily: "apple_pay",
+    evidenceType: "card_hint",
+    scope: "apple_pay:card_hint",
+    value: "visa *1234",
+  },
+]);
+const mockSaveCaptureEvidenceRows = vi.fn();
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
@@ -54,6 +63,18 @@ vi.mock("@/features/capture-sources/lib/repository", () => ({
 
 vi.mock("@/features/financial-accounts", () => ({
   ensureDefaultFinancialAccount: (...args: any[]) => mockEnsureDefaultFinancialAccount(...args),
+}));
+
+vi.mock("@/features/capture-evidence", () => ({
+  buildApplePayCaptureEvidence: (...args: any[]) => mockBuildApplePayCaptureEvidence(...args),
+  materializeCaptureEvidenceRows: (evidence: any[], link: Record<string, unknown>) =>
+    evidence.map((row, index) => ({
+      id: `ce-${index + 1}`,
+      ...row,
+      ...link,
+      deletedAt: null,
+    })),
+  saveCaptureEvidenceRows: (...args: any[]) => mockSaveCaptureEvidenceRows(...args),
 }));
 
 const mockGenerateId = vi.fn();
@@ -89,6 +110,15 @@ describe("processApplePayIntent", () => {
     mockFindDuplicateTransaction.mockResolvedValue(null);
     mockLookupMerchantRule.mockResolvedValue(null);
     mockClassifyMerchantApi.mockResolvedValue("other");
+    mockBuildApplePayCaptureEvidence.mockReturnValue([
+      {
+        sourceFamily: "apple_pay",
+        evidenceType: "card_hint",
+        scope: "apple_pay:card_hint",
+        value: "visa *1234",
+      },
+    ]);
+    mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
   });
 
   it("saves transaction with apple_pay source", async () => {
@@ -109,6 +139,19 @@ describe("processApplePayIntent", () => {
       })
     );
     expect(mockEnqueueSync).toHaveBeenCalled();
+    expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
+      mockDb,
+      expect.arrayContaining([
+        expect.objectContaining({
+          userId: USER_ID,
+          processedCaptureId: expect.any(String),
+          processedEmailId: null,
+          transactionId: "tx-1",
+          scope: "apple_pay:card_hint",
+          value: "visa *1234",
+        }),
+      ])
+    );
   });
 
   it("converts amount to pesos correctly", async () => {

@@ -1,6 +1,7 @@
 // biome-ignore-all lint/style/useNamingConvention: snake_case matches Supabase Postgres column names
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getBudgetById } from "@/features/budget";
+import { getCaptureEvidenceById, upsertCaptureEvidence } from "@/features/capture-evidence";
 import {
   buildDefaultFinancialAccountId,
   getFinancialAccountById,
@@ -36,6 +37,7 @@ import { insertConflict } from "../lib/conflict-repository";
 const LEGACY_LAST_SYNC_AT = "last_sync_at";
 const LAST_SYNC_AT_BY_TABLE = {
   transactions: "last_sync_at_transactions",
+  capture_evidence: "last_sync_at_capture_evidence",
   financial_accounts: "last_sync_at_financial_accounts",
   transfers: "last_sync_at_transfers",
   opening_balances: "last_sync_at_opening_balances",
@@ -102,6 +104,21 @@ type SupabaseFinancialAccountIdentifierRow = {
   account_id: string;
   scope: string;
   value: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+};
+
+type SupabaseCaptureEvidenceRow = {
+  id: string;
+  user_id: string;
+  source_family: string;
+  evidence_type: string;
+  scope: string;
+  value: string;
+  transaction_id: string | null;
+  processed_email_id: string | null;
+  processed_capture_id: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -221,6 +238,25 @@ function fromSupabaseFinancialAccountIdentifierRow(
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,
   } as Parameters<typeof upsertFinancialAccountIdentifier>[1];
+}
+
+function fromSupabaseCaptureEvidenceRow(
+  row: SupabaseCaptureEvidenceRow
+): Parameters<typeof upsertCaptureEvidence>[1] {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    sourceFamily: row.source_family,
+    evidenceType: row.evidence_type,
+    scope: row.scope,
+    value: row.value,
+    transactionId: row.transaction_id,
+    processedEmailId: row.processed_email_id,
+    processedCaptureId: row.processed_capture_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
+  } as Parameters<typeof upsertCaptureEvidence>[1];
 }
 
 type PullTableName = keyof typeof LAST_SYNC_AT_BY_TABLE;
@@ -542,6 +578,30 @@ async function processFinancialAccountIdentifierEntry(
   return !error;
 }
 
+async function processCaptureEvidenceEntry(
+  db: AnyDb,
+  supabase: SupabaseClient,
+  rowId: string
+): Promise<boolean> {
+  const row = getCaptureEvidenceById(db, rowId as Parameters<typeof getCaptureEvidenceById>[1]);
+  if (!row) return true;
+  const { error } = await supabase.from("capture_evidence").upsert({
+    id: row.id,
+    user_id: row.userId,
+    source_family: row.sourceFamily,
+    evidence_type: row.evidenceType,
+    scope: row.scope,
+    value: row.value,
+    transaction_id: row.transactionId,
+    processed_email_id: row.processedEmailId,
+    processed_capture_id: row.processedCaptureId,
+    created_at: row.createdAt,
+    updated_at: row.updatedAt,
+    deleted_at: row.deletedAt,
+  });
+  return !error;
+}
+
 async function processContributionEntry(
   db: AnyDb,
   supabase: SupabaseClient,
@@ -591,6 +651,12 @@ async function processEntry(
   if (entry.tableName === "financialAccounts") {
     const ok = await processFinancialAccountEntry(db, supabase, entry.rowId);
     if (!ok) captureWarning("sync_push_entry_failed", { tableName: "financialAccounts" });
+    return ok ? entry.id : null;
+  }
+
+  if (entry.tableName === "captureEvidence") {
+    const ok = await processCaptureEvidenceEntry(db, supabase, entry.rowId);
+    if (!ok) captureWarning("sync_push_entry_failed", { tableName: "captureEvidence" });
     return ok ? entry.id : null;
   }
 
@@ -664,12 +730,14 @@ export async function syncPull(
   userId: string
 ): Promise<boolean> {
   const [
+    captureEvidenceCursor,
     financialAccountsCursor,
     transfersCursor,
     openingBalancesCursor,
     financialAccountIdentifiersCursor,
     transactionsCursor,
   ] = await Promise.all([
+    getPullCursor(db, "capture_evidence"),
     getPullCursor(db, "financial_accounts"),
     getPullCursor(db, "transfers"),
     getPullCursor(db, "opening_balances"),
@@ -677,12 +745,19 @@ export async function syncPull(
     getPullCursor(db, "transactions"),
   ]);
   const [
+    captureEvidenceFetchResult,
     financialAccountsFetchResult,
     transfersFetchResult,
     openingBalancesFetchResult,
     financialAccountIdentifiersFetchResult,
     transactionsFetchResult,
   ] = await Promise.allSettled([
+    fetchPullRows<SupabaseCaptureEvidenceRow>(
+      supabase,
+      userId,
+      "capture_evidence",
+      captureEvidenceCursor
+    ),
     fetchPullRows<SupabaseFinancialAccountRow>(
       supabase,
       userId,
@@ -706,12 +781,14 @@ export async function syncPull(
   ]);
 
   const [
+    captureEvidenceResult,
     financialAccountsResult,
     transfersResult,
     openingBalancesResult,
     financialAccountIdentifiersResult,
     transactionsResult,
   ] = [
+    toPullFetchOutcome("capture_evidence", captureEvidenceFetchResult),
     toPullFetchOutcome("financial_accounts", financialAccountsFetchResult),
     toPullFetchOutcome("transfers", transfersFetchResult),
     toPullFetchOutcome("opening_balances", openingBalancesFetchResult),
@@ -720,6 +797,7 @@ export async function syncPull(
   ];
 
   const failedFetches = [
+    captureEvidenceResult,
     financialAccountsResult,
     transfersResult,
     openingBalancesResult,
@@ -736,11 +814,13 @@ export async function syncPull(
   }
 
   const financialAccountRows = financialAccountsResult.rows;
+  const captureEvidenceRows = captureEvidenceResult.rows;
   const transferRows = transfersResult.rows;
   const openingBalanceRows = openingBalancesResult.rows;
   const financialAccountIdentifierRows = financialAccountIdentifiersResult.rows;
   const transactionRows = transactionsResult.rows;
   const allUpdatedAts = [
+    ...captureEvidenceRows.map((row) => row.updated_at),
     ...financialAccountRows.map((row) => row.updated_at),
     ...transferRows.map((row) => row.updated_at),
     ...openingBalanceRows.map((row) => row.updated_at),
@@ -750,6 +830,13 @@ export async function syncPull(
   // FP exemption: each row may depend on prior upserts for conflict detection.
   let failedCount = 0;
   let conflictCount = 0;
+  const captureEvidenceOutcome = applyServerRows(db, captureEvidenceRows, {
+    getLocalRow: (database, rowId) =>
+      getCaptureEvidenceById(database, rowId as Parameters<typeof getCaptureEvidenceById>[1]),
+    upsertLocalRow: upsertCaptureEvidence,
+    mapServerRow: fromSupabaseCaptureEvidenceRow,
+  });
+  failedCount += captureEvidenceOutcome.failedCount;
   const financialAccountsOutcome = applyServerRows(db, financialAccountRows, {
     getLocalRow: (database, rowId) =>
       getFinancialAccountById(database, rowId as Parameters<typeof getFinancialAccountById>[1]),
@@ -848,6 +935,7 @@ export async function syncPull(
   });
 
   await Promise.all([
+    advancePullCursor(db, "capture_evidence", captureEvidenceOutcome.safeCursor),
     advancePullCursor(db, "financial_accounts", financialAccountsOutcome.safeCursor),
     advancePullCursor(db, "transfers", transfersOutcome.safeCursor),
     advancePullCursor(db, "opening_balances", openingBalancesOutcome.safeCursor),
