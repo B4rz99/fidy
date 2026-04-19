@@ -2,18 +2,10 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-
-vi.mock("@/shared/db", () => ({
-  getSupabase: vi.fn(),
-}));
-
 import {
-  extractMemoriesFromConversation,
-  listUserMemories,
-  softDeleteUserMemory,
+  createUserMemoryRemoteService,
   toUserMemory,
-} from "@/features/ai-chat/data/user-memories";
-import { getSupabase } from "@/shared/db";
+} from "@/features/ai-chat/data/create-user-memory-remote-service";
 import type { UserId, UserMemoryId } from "@/shared/types/branded";
 
 const mockSelect = vi.fn();
@@ -36,13 +28,23 @@ const mockFrom = vi.fn((table: string) => {
   throw new Error(`Unexpected table ${table}`);
 });
 
+const userMemoryRemoteService = createUserMemoryRemoteService({
+  supabase: {
+    getSupabase: () =>
+      ({
+        from: mockFrom,
+        functions: { invoke: mockInvoke },
+      }) as never,
+  },
+  clock: {
+    now: () => new Date("2026-04-19T12:00:00.000Z"),
+    nowIsoDateTime: () => "2026-04-19T12:00:00.000Z" as never,
+  },
+});
+
 describe("user memories remote adapters", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getSupabase).mockReturnValue({
-      from: mockFrom,
-      functions: { invoke: mockInvoke },
-    } as never);
   });
 
   test("maps a Supabase row to UserMemory", () => {
@@ -88,7 +90,7 @@ describe("user memories remote adapters", () => {
       error: null,
     });
 
-    const result = await listUserMemories("user-1" as UserId);
+    const result = await userMemoryRemoteService.listUserMemories("user-1" as UserId);
 
     expect(mockFrom).toHaveBeenCalledWith("user_memories");
     expect(mockEqSelect).toHaveBeenCalledWith("user_id", "user-1");
@@ -100,9 +102,9 @@ describe("user memories remote adapters", () => {
   test("soft delete updates deleted_at", async () => {
     mockEqUpdate.mockResolvedValue({ error: null });
 
-    await softDeleteUserMemory("memory-1" as UserMemoryId);
+    await userMemoryRemoteService.softDeleteUserMemory("memory-1" as UserMemoryId);
 
-    expect(mockUpdate).toHaveBeenCalledWith({ deleted_at: expect.any(String) });
+    expect(mockUpdate).toHaveBeenCalledWith({ deleted_at: "2026-04-19T12:00:00.000Z" });
     expect(mockEqUpdate).toHaveBeenCalledWith("id", "memory-1");
   });
 
@@ -124,7 +126,7 @@ describe("user memories remote adapters", () => {
       error: null,
     });
 
-    const result = await extractMemoriesFromConversation([
+    const result = await userMemoryRemoteService.extractMemoriesFromConversation([
       { role: "user", content: "I shop every Sunday" },
       { role: "assistant", content: "I'll remember that" },
     ]);
@@ -160,7 +162,7 @@ describe("user memories remote adapters", () => {
     });
 
     await expect(
-      extractMemoriesFromConversation([
+      userMemoryRemoteService.extractMemoriesFromConversation([
         { role: "user", content: "I shop every Sunday" },
         { role: "assistant", content: "I'll remember that" },
       ])
@@ -170,7 +172,9 @@ describe("user memories remote adapters", () => {
   test("throws when the remote list fetch fails", async () => {
     mockOrder.mockResolvedValue({ data: null, error: { message: "offline" } });
 
-    await expect(listUserMemories("user-1" as UserId)).rejects.toThrow("offline");
+    await expect(userMemoryRemoteService.listUserMemories("user-1" as UserId)).rejects.toThrow(
+      "offline"
+    );
   });
 });
 
