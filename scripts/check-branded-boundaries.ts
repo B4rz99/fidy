@@ -47,6 +47,12 @@ export type BoundaryCheckOptions = {
   readonly mobileRoot?: string;
 };
 
+type BrandedImportContext = {
+  readonly brandedTypeNames: ReadonlySet<string>;
+  readonly directAliases: ReadonlyMap<string, string>;
+  readonly namespaceAliases: ReadonlySet<string>;
+};
+
 function listRepoFiles(dirPath: string): readonly string[] {
   return readdirSync(dirPath).flatMap((entry) => {
     const absolutePath = path.join(dirPath, entry);
@@ -82,25 +88,94 @@ function isTestFile(filePath: string): boolean {
   return filePath.includes("/__tests__/") || /\.test\.(ts|tsx)$/.test(filePath);
 }
 
-function collectTypeNames(typeNode: ts.TypeNode): readonly string[] {
+function collectBrandedImportContext(
+  sourceFile: ts.SourceFile,
+  brandedTypeNames: ReadonlySet<string>
+): BrandedImportContext {
+  const directAliases = new Map<string, string>();
+  const namespaceAliases = new Set<string>();
+
+  sourceFile.statements.forEach((statement) => {
+    if (!ts.isImportDeclaration(statement)) {
+      return;
+    }
+
+    const moduleSpecifier = statement.moduleSpecifier;
+    if (!ts.isStringLiteral(moduleSpecifier) || moduleSpecifier.text !== "@/shared/types/branded") {
+      return;
+    }
+
+    const importClause = statement.importClause;
+    if (importClause == null || importClause.namedBindings == null) {
+      return;
+    }
+
+    if (ts.isNamespaceImport(importClause.namedBindings)) {
+      namespaceAliases.add(importClause.namedBindings.name.text);
+      return;
+    }
+
+    importClause.namedBindings.elements.forEach((element) => {
+      const importedName = element.propertyName?.text ?? element.name.text;
+      if (!brandedTypeNames.has(importedName)) {
+        return;
+      }
+
+      directAliases.set(element.name.text, importedName);
+    });
+  });
+
+  return {
+    brandedTypeNames,
+    directAliases,
+    namespaceAliases,
+  };
+}
+
+function getLeftmostIdentifier(entityName: ts.EntityName): string {
+  return ts.isIdentifier(entityName) ? entityName.text : getLeftmostIdentifier(entityName.left);
+}
+
+function resolveBrandNamesFromEntityName(
+  entityName: ts.EntityName,
+  importContext: BrandedImportContext
+): readonly string[] {
+  if (ts.isIdentifier(entityName)) {
+    const directMatch = importContext.directAliases.get(entityName.text);
+    return directMatch == null ? [] : [directMatch];
+  }
+
+  const leftmostIdentifier = getLeftmostIdentifier(entityName);
+  const rightmostIdentifier = entityName.right.text;
+  const isBrandedNamespace =
+    importContext.namespaceAliases.has(leftmostIdentifier) &&
+    importContext.brandedTypeNames.has(rightmostIdentifier);
+
+  return isBrandedNamespace ? [rightmostIdentifier] : [];
+}
+
+function collectTypeNames(
+  typeNode: ts.TypeNode,
+  importContext: BrandedImportContext
+): readonly string[] {
   if (ts.isTypeReferenceNode(typeNode)) {
-    return [typeNode.typeName.getText()];
+    return resolveBrandNamesFromEntityName(typeNode.typeName, importContext);
   }
 
   if (ts.isParenthesizedTypeNode(typeNode)) {
-    return collectTypeNames(typeNode.type);
+    return collectTypeNames(typeNode.type, importContext);
   }
 
   if (ts.isUnionTypeNode(typeNode) || ts.isIntersectionTypeNode(typeNode)) {
-    return typeNode.types.flatMap((part) => collectTypeNames(part));
+    return [...new Set(typeNode.types.flatMap((part) => collectTypeNames(part, importContext)))];
   }
 
   if (ts.isArrayTypeNode(typeNode)) {
-    return collectTypeNames(typeNode.elementType);
+    return collectTypeNames(typeNode.elementType, importContext);
   }
 
   if (ts.isTypeOperatorNode(typeNode)) {
-    return collectTypeNames(typeNode.type);
+    return collectTypeNames(typeNode.type, importContext);
   }
 
   return [];
@@ -143,6 +218,7 @@ function inspectFile(
   const content = readFileSync(path.join(rootDir, filePath), "utf8");
   const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
   const uiRule = getUiRule(filePath, mobileRoot);
+  const importContext = collectBrandedImportContext(sourceFile, brandedTypeNames);
 
   if (uiRule == null) {
     return [];
@@ -153,7 +229,7 @@ function inspectFile(
   const visit = (node: ts.Node): void => {
     if (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) {
       const typeNode = node.type;
-      const brandNames = collectTypeNames(typeNode).filter((name) => brandedTypeNames.has(name));
+      const brandNames = collectTypeNames(typeNode, importContext);
 
       if (brandNames.length > 0) {
         const position = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));

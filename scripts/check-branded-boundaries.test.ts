@@ -61,9 +61,9 @@ describe("check-branded-boundaries", () => {
   test("flags union branded casts in feature components", () => {
     const root = createFixtureRoot({
       "apps/mobile/features/goals/components/Card.tsx": [
-        'import type { UserId } from "@/shared/types/branded";',
+        'import type { UserId as AppUserId } from "@/shared/types/branded";',
         'const sessionUserId = "user-1";',
-        "export const card = (sessionUserId || null) as UserId | null;",
+        "export const card = (sessionUserId || null) as AppUserId | null;",
       ].join("\n"),
     });
 
@@ -74,11 +74,43 @@ describe("check-branded-boundaries", () => {
     expect(violations[0]?.uiRule).toBe("features/**/components/**");
   });
 
+  test("flags branded casts through namespace imports", () => {
+    const root = createFixtureRoot({
+      "apps/mobile/app/profile.tsx": [
+        'import type * as Branded from "@/shared/types/branded";',
+        'const sessionUserId = "user-1";',
+        "export const profile = sessionUserId as Branded.UserId;",
+      ].join("\n"),
+    });
+
+    const violations = collectBrandedBoundaryViolations({ rootDir: root });
+
+    expect(violations).toHaveLength(1);
+    expect(violations[0]?.brandNames).toEqual(["UserId"]);
+    expect(violations[0]?.uiRule).toBe("app/**");
+  });
+
   test("does not flag non-branded assertions in UI", () => {
     const root = createFixtureRoot({
       "apps/mobile/shared/components/Badge.tsx": [
         "const config = { label: 'ok' } as const;",
         "export const badge = config.label;",
+      ].join("\n"),
+    });
+
+    const violations = collectBrandedBoundaryViolations({ rootDir: root });
+
+    expect(violations).toHaveLength(0);
+  });
+
+  test("does not flag unrelated qualified names that are not imported from branded types", () => {
+    const root = createFixtureRoot({
+      "apps/mobile/app/local-namespace.tsx": [
+        "declare namespace LocalTypes {",
+        "  type UserId = string;",
+        "}",
+        'const sessionUserId = "user-1";',
+        "export const localNamespace = sessionUserId as LocalTypes.UserId;",
       ].join("\n"),
     });
 
