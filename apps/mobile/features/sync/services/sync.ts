@@ -1,6 +1,8 @@
 // biome-ignore-all lint/style/useNamingConvention: snake_case matches Supabase Postgres column names
 import { refreshTransactions, upsertTransaction } from "@/features/transactions";
-import { enqueueSync, getSupabase } from "@/shared/db";
+import { enqueueSync } from "@/shared/db";
+import { liveAppNetwork } from "@/shared/effect/network";
+import { liveAppSupabase } from "@/shared/effect/supabase";
 import { generateSyncQueueId } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import {
@@ -8,7 +10,6 @@ import {
   resolveConflict as resolveConflictDb,
 } from "../lib/conflict-repository";
 import { createSyncService } from "./create-sync-service";
-import { isOnline } from "./networkMonitor";
 import { syncPull, syncPush } from "./syncEngine";
 import type {
   ResolveConflictResult,
@@ -20,8 +21,6 @@ import type {
 } from "./types";
 
 const syncService = createSyncService({
-  isOnline,
-  getSupabase,
   syncPull,
   syncPush,
   refreshTransactions: async ({ db, userId }) => {
@@ -43,6 +42,8 @@ const syncService = createSyncService({
   resolveConflictRow: async (db, conflictId, resolution, resolvedAt) => {
     resolveConflictDb(db, conflictId, resolution, resolvedAt);
   },
+  network: liveAppNetwork,
+  supabase: liveAppSupabase,
 });
 
 export async function sync(input: SyncInput): Promise<SyncRunResult> {

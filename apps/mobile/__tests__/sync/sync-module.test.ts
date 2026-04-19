@@ -9,18 +9,30 @@ const mockGetUnresolvedConflicts = vi.fn();
 const mockRefreshTransactions = vi.fn();
 const mockUpsertTransaction = vi.fn();
 
-vi.mock("@/shared/db", () => ({
-  getSupabase: (...args: any[]) => mockGetSupabase(...args),
-}));
-
 vi.mock("@/features/transactions", () => ({
   refreshTransactions: (...args: any[]) => mockRefreshTransactions(...args),
   upsertTransaction: (...args: any[]) => mockUpsertTransaction(...args),
 }));
 
-vi.mock("@/features/sync/services/networkMonitor", () => ({
-  isOnline: (...args: any[]) => mockIsOnline(...args),
-}));
+vi.mock("@/shared/effect/network", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/shared/effect/network")>();
+  return {
+    ...actual,
+    liveAppNetwork: {
+      isOnline: (...args: any[]) => mockIsOnline(...args),
+    },
+  };
+});
+
+vi.mock("@/shared/effect/supabase", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/shared/effect/supabase")>();
+  return {
+    ...actual,
+    liveAppSupabase: {
+      getSupabase: (...args: any[]) => mockGetSupabase(...args),
+    },
+  };
+});
 
 vi.mock("@/features/sync/services/syncEngine", () => ({
   syncPull: (...args: any[]) => mockSyncPull(...args),
@@ -33,6 +45,7 @@ vi.mock("@/features/sync/lib/conflict-repository", () => ({
 
 describe("sync module", () => {
   beforeEach(() => {
+    vi.resetModules();
     vi.clearAllMocks();
     mockGetSupabase.mockReturnValue({ from: vi.fn() });
     mockIsOnline.mockResolvedValue(true);
