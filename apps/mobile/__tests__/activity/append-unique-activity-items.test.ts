@@ -68,8 +68,8 @@ describe("appendUniqueActivityItems", () => {
       makeTransferItem("tr-2" as TransferId),
     ];
 
-    expect(appendUniqueActivityItems(current, next).map((item) => `${item.kind}:${item.id}`)).toEqual(
-      ["transaction:tx-1", "transfer:tr-1", "transaction:tx-2", "transfer:tr-2"]
-    );
+    expect(
+      appendUniqueActivityItems(current, next).map((item) => `${item.kind}:${item.id}`)
+    ).toEqual(["transaction:tx-1", "transfer:tr-1", "transaction:tx-2", "transfer:tr-2"]);
   });
 });

@@ -513,15 +513,18 @@ export function TransferFormScreen() {
     setPickerTarget(null);
   }, []);
 
-  const handleDateChange = useCallback((_event: unknown, nextDate?: Date) => {
-    if (!isIos) {
-      setShowDatePicker(false);
-    }
+  const handleDateChange = useCallback(
+    (_event: unknown, nextDate?: Date) => {
+      if (!isIos) {
+        setShowDatePicker(false);
+      }
 
-    if (nextDate) {
-      setDate(nextDate);
-    }
-  }, [isIos]);
+      if (nextDate) {
+        setDate(nextDate);
+      }
+    },
+    [isIos]
+  );
 
   const handleSave = () => {
     void guardedSave(async () => {
@@ -762,12 +765,7 @@ export function TransferFormScreen() {
       />
 
       {!isIos && showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={handleDateChange}
-        />
+        <DateTimePicker value={date} mode="date" display="default" onChange={handleDateChange} />
       )}
     </>
   );
