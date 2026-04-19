@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { categoryIdSchema } from "@/features/transactions";
+import { requireMonth } from "@/shared/types/assertions";
 import type {
   BudgetId,
   CategoryId,
@@ -13,7 +14,7 @@ import type {
 export const monthSchema = z
   .string()
   .regex(/^\d{4}-(0[1-9]|1[0-2])$/)
-  .transform((s) => s as Month);
+  .transform((value) => requireMonth(value));
 
 export const createBudgetSchema = z.object({
   categoryId: categoryIdSchema,

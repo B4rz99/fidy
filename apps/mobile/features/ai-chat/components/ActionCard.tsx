@@ -2,7 +2,6 @@ import { Trash2 } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
-import type { CopAmount } from "@/shared/types/branded";
 import type { ChatAction } from "../schema";
 
 type ActionCardProps = {
@@ -35,7 +34,7 @@ export function ActionCard({ action, onConfirm, onDismiss }: ActionCardProps) {
             Delete transaction
           </Text>
           <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark">
-            {formatMoney(action.amount as CopAmount)} — {action.description}
+            {formatMoney(action.amount)} — {action.description}
           </Text>
           <Text className="font-poppins-medium text-caption text-tertiary dark:text-tertiary-dark">
             {action.date}

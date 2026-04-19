@@ -4,7 +4,6 @@ import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatSignedMoney } from "@/shared/lib";
-import type { CopAmount } from "@/shared/types/branded";
 import type { SyncConflict } from "../store";
 
 type ConflictCardProps = {
@@ -73,14 +72,8 @@ export const ConflictCard = memo(function ConflictCard({
     [
       localData.amount !== serverData.amount && {
         label: t("common.amount"),
-        localValue: formatSignedMoney(
-          localData.amount as CopAmount,
-          localData.type as "expense" | "income"
-        ),
-        serverValue: formatSignedMoney(
-          serverData.amount as CopAmount,
-          serverData.type as "expense" | "income"
-        ),
+        localValue: formatSignedMoney(localData.amount, localData.type as "expense" | "income"),
+        serverValue: formatSignedMoney(serverData.amount, serverData.type as "expense" | "income"),
       },
       localData.categoryId !== serverData.categoryId && {
         label: t("common.category"),

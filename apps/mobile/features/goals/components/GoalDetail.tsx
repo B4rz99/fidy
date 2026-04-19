@@ -6,7 +6,6 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "@/share
 import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatDateDisplay, formatMoney } from "@/shared/lib";
 import { requireIsoDate } from "@/shared/types/assertions";
-import type { CopAmount } from "@/shared/types/branded";
 import type { GoalProjection, Milestone } from "../lib/derive";
 import { deriveMonthlyMilestones } from "../lib/derive";
 import type { GoalContribution } from "../schema";
@@ -218,10 +217,10 @@ function ContributionRowInner({
         </Text>
       </View>
       <Text style={[styles.contributionAmount, { color: accentGreen }]}>
-        +{formatMoney(contribution.amount as CopAmount)}
+        +{formatMoney(contribution.amount)}
       </Text>
       <Text style={[styles.contributionRunning, { color: secondaryColor }]}>
-        {formatMoney(runningTotal as CopAmount)}
+        {formatMoney(runningTotal)}
       </Text>
     </View>
   );
@@ -253,7 +252,7 @@ function MilestoneRowInner({ milestone }: { readonly milestone: Milestone }) {
           {format(milestone.month, "MMMM")}
         </Text>
         <Text style={[styles.milestoneAmount, { color: secondaryColor }]}>
-          {formatMoney(milestone.cumulativeTarget as CopAmount)}
+          {formatMoney(milestone.cumulativeTarget)}
         </Text>
       </View>
     </View>
@@ -357,11 +356,11 @@ export function GoalDetailScreen() {
   const recommendationText =
     projection.projectedDate != null
       ? t("goals.detail.recommendationText", {
-          amount: formatMoney(Math.round(projection.netMonthlySavings) as CopAmount),
+          amount: formatMoney(Math.round(projection.netMonthlySavings)),
           date: format(projection.projectedDate, "MMMM yyyy"),
         })
       : t("goals.detail.recommendationTextNoDate", {
-          amount: formatMoney(Math.round(projection.netMonthlySavings) as CopAmount),
+          amount: formatMoney(Math.round(projection.netMonthlySavings)),
         });
 
   return (
@@ -391,11 +390,11 @@ export function GoalDetailScreen() {
           <ProgressRing percent={Math.min(progress.percentComplete, 100)} />
           <View style={styles.amountRow}>
             <Text style={[styles.currentAmount, { color: primaryColor }]}>
-              {formatMoney(currentAmount as CopAmount)}
+              {formatMoney(currentAmount)}
             </Text>
             <Text style={[styles.amountDivider, { color: secondaryColor }]}>/</Text>
             <Text style={[styles.targetAmount, { color: secondaryColor }]}>
-              {formatMoney(goal.targetAmount as CopAmount)}
+              {formatMoney(goal.targetAmount)}
             </Text>
           </View>
         </View>

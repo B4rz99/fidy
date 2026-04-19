@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { categoryIdSchema } from "@/features/transactions";
 import { toIsoDate } from "@/shared/lib";
-import { requireBillId, requireCategoryId } from "@/shared/types/assertions";
+import { requireBillId, requireCategoryId, requireCopAmount } from "@/shared/types/assertions";
 import type {
   BillId,
   BillPaymentId,
@@ -77,7 +77,7 @@ export function toBillRow(
     id: requireBillId(bill.id),
     userId,
     name: bill.name,
-    amount: bill.amount as CopAmount,
+    amount: requireCopAmount(bill.amount),
     frequency: bill.frequency,
     categoryId: bill.categoryId,
     startDate: toIsoDate(bill.startDate),

@@ -1,8 +1,8 @@
 import { and, count, desc, eq, gte, inArray, isNull, like, lte, sql } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { transactions } from "@/shared/db";
-import { requireCategoryId, requireIsoDate } from "@/shared/types/assertions";
-import type { CopAmount, UserId } from "@/shared/types/branded";
+import { requireCategoryId, requireCopAmount, requireIsoDate } from "@/shared/types/assertions";
+import type { UserId } from "@/shared/types/branded";
 import type { SearchFilters, SearchSummary } from "./types";
 
 function buildSearchConditions(userId: UserId, filters: SearchFilters) {
@@ -20,10 +20,10 @@ function buildSearchConditions(userId: UserId, filters: SearchFilters) {
       : []),
     ...(filters.dateTo !== null ? [lte(transactions.date, requireIsoDate(filters.dateTo))] : []),
     ...(filters.amountMin !== null
-      ? [gte(transactions.amount, filters.amountMin as CopAmount)]
+      ? [gte(transactions.amount, requireCopAmount(filters.amountMin))]
       : []),
     ...(filters.amountMax !== null
-      ? [lte(transactions.amount, filters.amountMax as CopAmount)]
+      ? [lte(transactions.amount, requireCopAmount(filters.amountMax))]
       : []),
     ...(filters.type !== "all" ? [eq(transactions.type, filters.type)] : []),
   ];

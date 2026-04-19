@@ -5,7 +5,6 @@ import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney } from "@/shared/lib";
-import type { CopAmount } from "@/shared/types/branded";
 import type { BudgetProgress } from "../lib/derive";
 
 type Props = {
@@ -28,7 +27,7 @@ function BudgetCardInner({ progress, onPress }: Props) {
   const badgeColor = progress.isOverBudget ? accentRed : accentGreen;
 
   const remainingText = progress.isOverBudget
-    ? t("budgets.card.over", { amount: formatMoney(Math.abs(progress.remaining) as CopAmount) })
+    ? t("budgets.card.over", { amount: formatMoney(Math.abs(progress.remaining)) })
     : t("budgets.card.remaining", { amount: formatMoney(progress.remaining) });
 
   const handlePress = () => onPress(progress.budgetId);

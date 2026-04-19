@@ -1,11 +1,10 @@
 import { useRouter } from "expo-router";
 import { memo, useCallback, useMemo } from "react";
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
-import type { CopAmount, UserId } from "@/shared/types/branded";
 import { selectGoal, useGoalStore } from "../store";
 
 export const GoalSmartCard = memo(function GoalSmartCard() {
@@ -13,7 +12,7 @@ export const GoalSmartCard = memo(function GoalSmartCard() {
   const { t } = useTranslation();
   const goals = useGoalStore((s) => s.goals);
   const accentGreen = useThemeColor("accentGreen");
-  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
+  const userId = useOptionalUserId();
 
   // Find best goal to display: highest progress % among active (non-complete) goals
   // Fallback: most recently created
@@ -104,8 +103,7 @@ export const GoalSmartCard = memo(function GoalSmartCard() {
             opacity: 0.8,
           }}
         >
-          {formatMoney(topGoal.currentAmount as CopAmount)} /{" "}
-          {formatMoney(topGoal.goal.targetAmount as CopAmount)}
+          {formatMoney(topGoal.currentAmount)} / {formatMoney(topGoal.goal.targetAmount)}
         </Text>
         {moreCount > 0 ? (
           <Text

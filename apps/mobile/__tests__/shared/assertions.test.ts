@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { assertIsoDate, assertIsoDateTime } from "@/shared/types/assertions";
+import {
+  assertIsoDate,
+  assertIsoDateTime,
+  requireCopAmount,
+  requireFinancialAccountId,
+  requireMonth,
+} from "@/shared/types/assertions";
 
 describe("temporal assertions", () => {
   test("assertIsoDate accepts valid calendar dates", () => {
@@ -32,5 +38,25 @@ describe("temporal assertions", () => {
     expect(() => assertIsoDateTime("2024-01-01T24:00:00Z")).toThrow(
       "datetime must be a valid ISO 8601 timestamp"
     );
+  });
+});
+
+describe("boundary require helpers", () => {
+  test("requireMonth accepts calendar months", () => {
+    expect(requireMonth("2026-04")).toBe("2026-04");
+  });
+
+  test("requireMonth rejects invalid months", () => {
+    expect(() => requireMonth("2026-13")).toThrow("month must be a valid YYYY-MM string");
+  });
+
+  test("requireFinancialAccountId rejects empty values", () => {
+    expect(() => requireFinancialAccountId("")).toThrow(
+      "financialAccountId must be a non-empty string"
+    );
+  });
+
+  test("requireCopAmount rejects negative numbers", () => {
+    expect(() => requireCopAmount(-1)).toThrow("amount must be a non-negative integer");
   });
 });

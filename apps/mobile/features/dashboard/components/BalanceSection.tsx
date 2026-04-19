@@ -1,7 +1,6 @@
 import { Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
-import type { CopAmount } from "@/shared/types/branded";
 
 type BalanceSectionProps = {
   readonly balance: number;
@@ -16,7 +15,7 @@ export const BalanceSection = ({ balance }: BalanceSectionProps) => {
         {t("dashboard.spentThisMonth")}
       </Text>
       <Text className="font-poppins-bold text-balance text-primary dark:text-primary-dark">
-        {formatMoney(balance as CopAmount)}
+        {formatMoney(balance)}
       </Text>
     </View>
   );
