@@ -159,10 +159,84 @@ describe("activity query service", () => {
     expect(snapshot.hasMore).toBe(true);
     expect(snapshot.offset).toBe(4);
     expect(snapshot.pages.map((item) => `${item.kind}:${item.id}`)).toEqual([
-      "transfer:tr-2",
       "transaction:tx-2",
+      "transfer:tr-2",
     ]);
     expect(getTransactionsPaginated).toHaveBeenCalledWith(expect.anything(), USER_ID, 5, 0);
     expect(getTransfersPaginated).toHaveBeenCalledWith(expect.anything(), USER_ID, 5, 0);
+  });
+
+  it("orders same-day transaction activity with the transaction source sort key", () => {
+    const getTransactionsPaginated = vi.fn().mockReturnValue([
+      makeTransactionRow({
+        id: "tx-edited" as TransactionId,
+        date: "2026-04-19" as IsoDate,
+        createdAt: "2026-04-19T09:00:00.000Z" as IsoDateTime,
+        updatedAt: "2026-04-19T13:00:00.000Z" as IsoDateTime,
+      }),
+    ]);
+    const getTransfersPaginated = vi.fn().mockReturnValue([
+      makeTransferRow({
+        id: "tr-midday" as TransferId,
+        date: "2026-04-19" as IsoDate,
+        updatedAt: "2026-04-19T10:00:00.000Z" as IsoDateTime,
+      }),
+    ]);
+    const service = createActivityQueryService({
+      getTransactionsPaginated,
+      getTransfersPaginated,
+    });
+
+    const snapshot = service.loadPage({
+      db: {} as never,
+      userId: USER_ID,
+      pageSize: 30,
+      offset: 0,
+    });
+
+    expect(snapshot.pages.map((item) => `${item.kind}:${item.id}`)).toEqual([
+      "transfer:tr-midday",
+      "transaction:tx-edited",
+    ]);
+  });
+
+  it("keeps large merged offsets stack-safe", () => {
+    const totalItems = 6000;
+    const buildTimestamp = (dayOffset: number): IsoDateTime =>
+      new Date(Date.UTC(2026, 3, 19 - dayOffset, 12, 0, 0)).toISOString() as IsoDateTime;
+    const buildDate = (dayOffset: number): IsoDate =>
+      buildTimestamp(dayOffset).slice(0, 10) as IsoDate;
+    const getTransactionsPaginated = vi.fn().mockReturnValue(
+      Array.from({ length: totalItems }, (_, index) =>
+        makeTransactionRow({
+          id: `tx-${index}` as TransactionId,
+          date: buildDate(index),
+          createdAt: buildTimestamp(index),
+          updatedAt: buildTimestamp(index),
+        })
+      )
+    );
+    const getTransfersPaginated = vi.fn().mockReturnValue(
+      Array.from({ length: totalItems }, (_, index) =>
+        makeTransferRow({
+          id: `tr-${index}` as TransferId,
+          date: buildDate(index),
+          updatedAt: buildTimestamp(index),
+        })
+      )
+    );
+    const service = createActivityQueryService({
+      getTransactionsPaginated,
+      getTransfersPaginated,
+    });
+
+    expect(() =>
+      service.loadPage({
+        db: {} as never,
+        userId: USER_ID,
+        pageSize: 20,
+        offset: 5900,
+      })
+    ).not.toThrow();
   });
 });

@@ -19,7 +19,7 @@ import { useAsyncGuard, useSubscription, useTranslation } from "@/shared/hooks";
 import { captureError, trackTransactionCreated } from "@/shared/lib";
 
 export default function AddTransactionScreen() {
-  const { navigate } = useRouter();
+  const router = useRouter();
   const { t } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
@@ -95,7 +95,7 @@ export default function AddTransactionScreen() {
           });
           resetForm();
         }
-        navigate("/(tabs)" as never);
+        router.navigate("/(tabs)" as never);
       }
     });
   };
@@ -117,6 +117,7 @@ export default function AddTransactionScreen() {
       onAccountChange={setAccountId}
       onDescriptionChange={setDescription}
       onSave={handleSave}
+      onClose={() => router.back()}
     />
   );
 }

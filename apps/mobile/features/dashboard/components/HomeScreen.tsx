@@ -1,10 +1,11 @@
 import { useFocusEffect } from "@react-navigation/native";
 import { Stack, useRouter } from "expo-router";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import {
   AccountSuggestionsPromptBanner,
   useAccountSuggestions,
 } from "@/features/account-suggestions";
+import { appendUniqueActivityItems } from "@/features/activity/lib/append-unique-activity-items";
 import {
   createActivityQueryService,
   type StoredActivityItem,
@@ -195,12 +196,14 @@ export const HomeScreen = () => {
   const [activityPages, setActivityPages] = useState<readonly StoredActivityItem[]>([]);
   const [activityOffset, setActivityOffset] = useState(0);
   const [activityHasMore, setActivityHasMore] = useState(false);
+  const lastRequestedActivityOffsetRef = useRef<number | null>(null);
 
   const loadActivityPage = useCallback(() => {
     if (!db || !userId) {
       setActivityPages([]);
       setActivityOffset(0);
       setActivityHasMore(false);
+      lastRequestedActivityOffsetRef.current = null;
       return;
     }
 
@@ -214,10 +217,12 @@ export const HomeScreen = () => {
       setActivityPages(snapshot.pages);
       setActivityOffset(snapshot.offset);
       setActivityHasMore(snapshot.hasMore);
+      lastRequestedActivityOffsetRef.current = null;
     } catch {
       setActivityPages([]);
       setActivityOffset(0);
       setActivityHasMore(false);
+      lastRequestedActivityOffsetRef.current = null;
     }
   }, [db, userId]);
 
@@ -247,7 +252,16 @@ export const HomeScreen = () => {
   }, [activityPages]);
 
   const handleEndReached = useCallback(() => {
-    if (!db || !userId || !activityHasMore) return;
+    if (
+      !db ||
+      !userId ||
+      !activityHasMore ||
+      lastRequestedActivityOffsetRef.current === activityOffset
+    ) {
+      return;
+    }
+
+    lastRequestedActivityOffsetRef.current = activityOffset;
 
     try {
       const snapshot = activityQueryService.loadPage({
@@ -256,10 +270,11 @@ export const HomeScreen = () => {
         pageSize: 30,
         offset: activityOffset,
       });
-      setActivityPages((current) => [...current, ...snapshot.pages]);
+      setActivityPages((current) => appendUniqueActivityItems(current, snapshot.pages));
       setActivityOffset(snapshot.offset);
       setActivityHasMore(snapshot.hasMore);
     } catch {
+      lastRequestedActivityOffsetRef.current = null;
       // Keep the current activity feed if the query fails.
     }
   }, [activityHasMore, activityOffset, db, userId]);

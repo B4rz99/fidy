@@ -109,4 +109,20 @@ describe("transfer mutation service", () => {
     });
     expect(refreshMock).not.toHaveBeenCalled();
   });
+
+  it("treats refresh failures as a successful persisted save", async () => {
+    refreshMock.mockRejectedValueOnce(new Error("refresh failed"));
+    const service = createService();
+
+    const result = await service.save(validInput);
+
+    expect(result).toMatchObject({
+      success: true,
+      transfer: expect.objectContaining({
+        id: "tr-new" as TransferId,
+      }),
+    });
+    expect(saveTransferRowMock).toHaveBeenCalledOnce();
+    expect(refreshMock).toHaveBeenCalledOnce();
+  });
 });

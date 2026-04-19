@@ -76,31 +76,50 @@ function compareActivityItems(left: StoredActivityItem, right: StoredActivityIte
     return dateDiff;
   }
 
-  return right.updatedAt.getTime() - left.updatedAt.getTime();
+  const leftSecondarySortTime =
+    left.kind === "transaction"
+      ? left.transaction.createdAt.getTime()
+      : left.transfer.updatedAt.getTime();
+  const rightSecondarySortTime =
+    right.kind === "transaction"
+      ? right.transaction.createdAt.getTime()
+      : right.transfer.updatedAt.getTime();
+  const secondaryDiff = rightSecondarySortTime - leftSecondarySortTime;
+
+  if (secondaryDiff !== 0) {
+    return secondaryDiff;
+  }
+
+  return right.id.localeCompare(left.id);
 }
 
 function mergeActivityItems(
   left: readonly StoredActivityItem[],
   right: readonly StoredActivityItem[]
 ): readonly StoredActivityItem[] {
-  if (left.length === 0) {
-    return right;
+  const merged: StoredActivityItem[] = [];
+  let leftIndex = 0;
+  let rightIndex = 0;
+
+  // Keep pagination windows stack-safe even when the merged offset grows large.
+  while (leftIndex < left.length && rightIndex < right.length) {
+    const leftHead = left[leftIndex];
+    const rightHead = right[rightIndex];
+
+    if (leftHead == null || rightHead == null) {
+      break;
+    }
+
+    if (compareActivityItems(leftHead, rightHead) <= 0) {
+      merged.push(leftHead);
+      leftIndex += 1;
+    } else {
+      merged.push(rightHead);
+      rightIndex += 1;
+    }
   }
 
-  if (right.length === 0) {
-    return left;
-  }
-
-  const leftHead = left[0];
-  const rightHead = right[0];
-
-  if (leftHead == null || rightHead == null) {
-    return [...left, ...right];
-  }
-
-  return compareActivityItems(leftHead, rightHead) <= 0
-    ? [leftHead, ...mergeActivityItems(left.slice(1), right)]
-    : [rightHead, ...mergeActivityItems(left, right.slice(1))];
+  return [...merged, ...left.slice(leftIndex), ...right.slice(rightIndex)];
 }
 
 export function createActivityQueryService({

@@ -430,6 +430,7 @@ export function TransferFormScreen() {
   const { t, locale } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
+  const isIos = Platform.OS === "ios";
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
@@ -513,14 +514,14 @@ export function TransferFormScreen() {
   }, []);
 
   const handleDateChange = useCallback((_event: unknown, nextDate?: Date) => {
-    if (Platform.OS === "android") {
+    if (!isIos) {
       setShowDatePicker(false);
     }
 
     if (nextDate) {
       setDate(nextDate);
     }
-  }, []);
+  }, [isIos]);
 
   const handleSave = () => {
     void guardedSave(async () => {
@@ -659,29 +660,41 @@ export function TransferFormScreen() {
               >
                 {t("transfers.dateLabel")}
               </Text>
-              <Pressable
-                onPress={() => setShowDatePicker(true)}
-                accessible
-                accessibilityRole="button"
-                accessibilityLabel={t("transfers.a11y.changeDate")}
-                accessibilityValue={{ text: dateLabel }}
+              <View
                 style={{
                   borderRadius: 16,
                   backgroundColor: card,
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
+                  paddingHorizontal: isIos ? 12 : 16,
+                  paddingVertical: isIos ? 8 : 14,
                 }}
               >
-                <Text
-                  style={{
-                    fontFamily: "Poppins_500Medium",
-                    fontSize: 14,
-                    color: primary,
-                  }}
-                >
-                  {dateLabel}
-                </Text>
-              </Pressable>
+                {isIos ? (
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display="compact"
+                    onChange={handleDateChange}
+                  />
+                ) : (
+                  <Pressable
+                    onPress={() => setShowDatePicker(true)}
+                    accessible
+                    accessibilityRole="button"
+                    accessibilityLabel={t("transfers.a11y.changeDate")}
+                    accessibilityValue={{ text: dateLabel }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_500Medium",
+                        fontSize: 14,
+                        color: primary,
+                      }}
+                    >
+                      {dateLabel}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
             </View>
 
             <View
@@ -748,11 +761,11 @@ export function TransferFormScreen() {
         onSelect={applySelectedSide}
       />
 
-      {showDatePicker && (
+      {!isIos && showDatePicker && (
         <DateTimePicker
           value={date}
           mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
+          display="default"
           onChange={handleDateChange}
         />
       )}

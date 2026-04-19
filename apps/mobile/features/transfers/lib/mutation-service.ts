@@ -56,11 +56,17 @@ export function createTransferMutationService({
 
       try {
         saveTransferRow(db, toTransferRow(built.transfer));
-        await refresh();
-        return { success: true, transfer: built.transfer };
       } catch {
         return { success: false, error: "saveFailed" };
       }
+
+      try {
+        await refresh();
+      } catch {
+        // Keep the persisted transfer successful even if the caller refresh fails.
+      }
+
+      return { success: true, transfer: built.transfer };
     },
   };
 }
