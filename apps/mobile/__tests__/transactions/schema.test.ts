@@ -97,4 +97,20 @@ describe("createTransactionSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("returns a validation error for whitespace account ids instead of throwing", () => {
+    expect(() =>
+      createTransactionSchema.safeParse({
+        ...validInput,
+        accountId: "   ",
+      })
+    ).not.toThrow();
+
+    const result = createTransactionSchema.safeParse({
+      ...validInput,
+      accountId: "   ",
+    });
+
+    expect(result.success).toBe(false);
+  });
 });

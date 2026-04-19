@@ -21,8 +21,16 @@ export type AccountAttributionState = z.infer<typeof accountAttributionStateSche
 
 export const financialAccountIdSchema = z
   .string()
+  .trim()
   .min(1, "Account is required")
-  .transform((value) => requireFinancialAccountId(value));
+  .transform((value, ctx) => {
+    try {
+      return requireFinancialAccountId(value);
+    } catch {
+      ctx.addIssue({ code: "custom", message: "Account is required" });
+      return z.NEVER;
+    }
+  });
 
 export function makeCategoryIdSchema(isValid: (id: string) => boolean) {
   return z
