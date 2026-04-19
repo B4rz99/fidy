@@ -1,12 +1,6 @@
 import { buildDefaultFinancialAccountId } from "@/features/financial-accounts";
 import { parseDigitsToAmount, parseIsoDate, toIsoDate, toIsoDateTime } from "@/shared/lib";
-import type {
-  CategoryId,
-  CopAmount,
-  FinancialAccountId,
-  TransactionId,
-  UserId,
-} from "@/shared/types/branded";
+import type { CategoryId, FinancialAccountId, TransactionId, UserId } from "@/shared/types/branded";
 import type { AccountAttributionState, StoredTransaction, TransactionType } from "../schema";
 import { createTransactionSchema } from "../schema";
 import { getBuiltInCategoryId, isValidCategoryId } from "./categories";
@@ -73,7 +67,7 @@ export function buildTransaction(
       id,
       userId,
       type: result.data.type,
-      amount: result.data.amount as CopAmount,
+      amount: result.data.amount,
       categoryId: result.data.categoryId,
       description: result.data.description ?? "",
       date: result.data.date,

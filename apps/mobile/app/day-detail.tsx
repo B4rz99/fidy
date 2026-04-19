@@ -16,7 +16,7 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { captureError, formatMoney, toIsoDate } from "@/shared/lib";
 import { requireBillId } from "@/shared/types/assertions";
-import type { BillId, CopAmount } from "@/shared/types/branded";
+import type { BillId } from "@/shared/types/branded";
 
 export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
@@ -107,7 +107,7 @@ export default function DayDetailScreen() {
                     {bill.name}
                   </Text>
                   <Text style={[styles.billAmount, { color: secondaryColor }]}>
-                    {formatMoney(bill.amount as CopAmount)}
+                    {formatMoney(bill.amount)}
                   </Text>
                 </View>
 

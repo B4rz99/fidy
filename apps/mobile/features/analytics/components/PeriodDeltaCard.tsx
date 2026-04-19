@@ -4,7 +4,6 @@ import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney } from "@/shared/lib";
-import type { CopAmount } from "@/shared/types/branded";
 import type { AnalyticsPeriod, PeriodDelta } from "../lib/derive";
 
 type PeriodDeltaCardProps = {
@@ -13,9 +12,9 @@ type PeriodDeltaCardProps = {
 };
 
 /** Format a delta amount + percent: "+$45.000 (+7%)" or "-$30.000 (-9%)" */
-const formatDelta = (delta: CopAmount, deltaPercent: number): string => {
+const formatDelta = (delta: number, deltaPercent: number): string => {
   const sign = delta >= 0 ? "+" : "-";
-  const absAmount = Math.abs(delta) as CopAmount;
+  const absAmount = Math.abs(delta);
   const absPercent = Math.abs(deltaPercent);
   return `${sign}${formatMoney(absAmount)} (${sign}${absPercent}%)`;
 };

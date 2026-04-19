@@ -5,8 +5,10 @@ import type {
   CopAmount,
   DetectedSmsEventId,
   EmailAccountId,
+  FinancialAccountId,
   IsoDate,
   IsoDateTime,
+  Month,
   ProcessedEmailId,
   SyncConflictId,
   SyncQueueId,
@@ -16,6 +18,7 @@ import type {
 } from "@/shared/types/branded";
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+const MONTH_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/;
 const ISO_DATE_TIME_PATTERN =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|([+-])(\d{2}):(\d{2}))$/;
 
@@ -129,6 +132,10 @@ export function assertEmailAccountId(value: string): asserts value is EmailAccou
   assertNonEmptyString(value, "emailAccountId");
 }
 
+export function assertFinancialAccountId(value: string): asserts value is FinancialAccountId {
+  assertNonEmptyString(value, "financialAccountId");
+}
+
 export function assertProcessedEmailId(value: string): asserts value is ProcessedEmailId {
   assertNonEmptyString(value, "processedEmailId");
 }
@@ -148,6 +155,12 @@ export function assertUserMemoryId(value: string): asserts value is UserMemoryId
 export function assertCopAmount(value: number): asserts value is CopAmount {
   if (!Number.isInteger(value) || value < 0) {
     throw new Error("amount must be a non-negative integer");
+  }
+}
+
+export function assertMonth(value: string): asserts value is Month {
+  if (!MONTH_PATTERN.test(value)) {
+    throw new Error("month must be a valid YYYY-MM string");
   }
 }
 
@@ -173,6 +186,11 @@ export function requireTransactionId(value: string): TransactionId {
   return value;
 }
 
+export function requireCopAmount(value: number): CopAmount {
+  assertCopAmount(value);
+  return value;
+}
+
 export function requireBillId(value: string): BillId {
   assertBillId(value);
   return value;
@@ -190,6 +208,16 @@ export function requireCategoryId(value: string): CategoryId {
 
 export function requireDetectedSmsEventId(value: string): DetectedSmsEventId {
   assertDetectedSmsEventId(value);
+  return value;
+}
+
+export function requireFinancialAccountId(value: string): FinancialAccountId {
+  assertFinancialAccountId(value);
+  return value;
+}
+
+export function requireMonth(value: string): Month {
+  assertMonth(value);
   return value;
 }
 

@@ -2,7 +2,6 @@ import { memo } from "react";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
-import type { CopAmount } from "@/shared/types/branded";
 import type { IncomeExpenseResult } from "../lib/derive";
 
 type IncomeExpenseCardProps = {
@@ -28,7 +27,7 @@ const IncomeExpenseCard = memo(function IncomeExpenseCard({ data }: IncomeExpens
 
   const netPrefix = t("analytics.netPrefix");
   const netSign = netIsPositive ? "+" : "-";
-  const netAbsolute = Math.abs(net) as CopAmount;
+  const netAbsolute = Math.abs(net);
   const netText = `${netPrefix}${netSign}${formatMoney(netAbsolute)}`;
   const netColor = netIsPositive ? accentGreen : accentRed;
 

@@ -1,10 +1,9 @@
 import { z } from "zod";
+import { requireIsoDate, requireTransactionId } from "@/shared/types/assertions";
 import type {
   ChatMessageId,
   ChatSessionId,
-  IsoDate,
   IsoDateTime,
-  TransactionId,
   UserId,
   UserMemoryId,
 } from "@/shared/types/branded";
@@ -19,6 +18,28 @@ export type ChatRole = z.infer<typeof chatRoleSchema>;
 export const actionStatusSchema = z.enum(["pending", "confirmed", "dismissed"]);
 export type ActionStatus = z.infer<typeof actionStatusSchema>;
 
+const actionIsoDateSchema = z.string().transform((value, ctx) => {
+  try {
+    return requireIsoDate(value);
+  } catch {
+    ctx.addIssue({ code: "custom", message: "Invalid ISO date" });
+    return z.NEVER;
+  }
+});
+
+const actionTransactionIdSchema = z
+  .string()
+  .trim()
+  .min(1, "Transaction ID is required")
+  .transform((value, ctx) => {
+    try {
+      return requireTransactionId(value);
+    } catch {
+      ctx.addIssue({ code: "custom", message: "Transaction ID is required" });
+      return z.NEVER;
+    }
+  });
+
 export const addActionSchema = z.object({
   type: z.literal("add"),
   data: z.object({
@@ -26,37 +47,27 @@ export const addActionSchema = z.object({
     amount: z.number().int().positive(),
     categoryId: categoryIdSchema,
     description: z.string(),
-    date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/)
-      .transform((s) => s as IsoDate),
+    date: actionIsoDateSchema,
   }),
 });
 
 export const editActionSchema = z.object({
   type: z.literal("edit"),
-  transactionId: z.string().transform((s) => s as TransactionId),
+  transactionId: actionTransactionIdSchema,
   data: z.object({
     amount: z.number().int().positive().optional(),
     categoryId: categoryIdSchema.optional(),
     description: z.string().optional(),
-    date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/)
-      .transform((s) => s as IsoDate)
-      .optional(),
+    date: actionIsoDateSchema.optional(),
   }),
 });
 
 export const deleteActionSchema = z.object({
   type: z.literal("delete"),
-  transactionId: z.string().transform((s) => s as TransactionId),
+  transactionId: actionTransactionIdSchema,
   description: z.string(),
   amount: z.number().int().positive(),
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .transform((s) => s as IsoDate),
+  date: actionIsoDateSchema,
 });
 
 export const chatActionSchema = z.discriminatedUnion("type", [

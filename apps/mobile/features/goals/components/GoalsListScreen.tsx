@@ -1,12 +1,11 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Target } from "@/shared/components/icons";
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import type { UserId } from "@/shared/types/branded";
 import { selectGoal, useGoalStore } from "../store";
 import { GoalCard } from "./GoalCard";
 
@@ -62,7 +61,7 @@ export function GoalsListScreen() {
   const { t } = useTranslation();
   const goals = useGoalStore((s) => s.goals);
   const isLoading = useGoalStore((s) => s.isLoading);
-  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
+  const userId = useOptionalUserId();
 
   const handleCreateGoal = useCallback(() => {
     router.push("/create-goal");

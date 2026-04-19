@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import Animated from "react-native-reanimated";
-import { useAuthStore } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth";
 import { handleNumpadPress } from "@/features/transactions";
 import { FidyNumpad } from "@/shared/components";
 import {
@@ -16,7 +16,6 @@ import {
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, parseDigitsToAmount, toIsoDate } from "@/shared/lib";
-import type { UserId } from "@/shared/types/branded";
 import { addContribution, useGoalStore } from "../store";
 
 export function AddPaymentSheet() {
@@ -24,7 +23,7 @@ export function AddPaymentSheet() {
   const { t } = useTranslation();
 
   const selectedGoalId = useGoalStore((s) => s.selectedGoalId);
-  const userId = useAuthStore((s) => s.session?.user.id ?? null) as UserId | null;
+  const userId = useOptionalUserId();
 
   const cardBg = useThemeColor("card");
   const primaryColor = useThemeColor("primary");

@@ -1,4 +1,4 @@
-import { addMonths, format, subMonths } from "date-fns";
+import { addMonths, subMonths } from "date-fns";
 import { create } from "zustand";
 import { insertNotificationRecord } from "@/features/notifications";
 import { useSettingsStore } from "@/features/settings";
@@ -6,7 +6,7 @@ import { CATEGORY_MAP } from "@/features/transactions";
 import { createWriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import { getCategoryLabel, useLocaleStore } from "@/shared/i18n";
-import { generateBudgetId, toIsoDateTime, trackBudgetCreated } from "@/shared/lib";
+import { generateBudgetId, toIsoDateTime, toMonth, trackBudgetCreated } from "@/shared/lib";
 import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
 import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./lib/derive";
 import type { BudgetMonthSnapshot } from "./lib/monitoring";
@@ -18,7 +18,7 @@ import { createBudgetSchema } from "./schema";
 let budgetSessionId = 0;
 let loadBudgetsRequestId = 0;
 
-const formatMonth = (date: Date): Month => format(date, "yyyy-MM") as Month;
+const formatMonth = (date: Date): Month => toMonth(date);
 
 /** Parse "YYYY-MM" to a local-time Date (1st of month). Avoids UTC date-only parsing pitfall. */
 const parseMonth = (month: Month): Date => {

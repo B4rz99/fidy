@@ -63,6 +63,20 @@ describe("parseActionFromResponse", () => {
     expect(parseActionFromResponse(text)).toBeNull();
   });
 
+  it("returns null for impossible calendar dates", () => {
+    const text =
+      '[ACTION]{"type":"add","data":{"type":"expense","amount":10000,"categoryId":"food","description":"test","date":"2026-02-31"}}[/ACTION]';
+
+    expect(parseActionFromResponse(text)).toBeNull();
+  });
+
+  it("returns null for empty transaction ids", () => {
+    const text =
+      '[ACTION]{"type":"delete","transactionId":"","description":"Uber","amount":15000,"date":"2026-03-01"}[/ACTION]';
+
+    expect(parseActionFromResponse(text)).toBeNull();
+  });
+
   it("extracts text content without action block", () => {
     const text =
       'Here is the result. [ACTION]{"type":"add","data":{"type":"expense","amount":10000,"categoryId":"food","description":"test","date":"2026-03-01"}}[/ACTION] All done.';

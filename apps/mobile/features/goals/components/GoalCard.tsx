@@ -2,7 +2,6 @@ import { memo } from "react";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
-import type { CopAmount } from "@/shared/types/branded";
 import { deriveGoalCardStatus } from "../lib/derive";
 import type { GoalWithProgress } from "../types";
 
@@ -90,7 +89,7 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
           {goal.name}
         </Text>
         <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 13, color: accentGreen }}>
-          {formatMoney(goal.targetAmount as CopAmount)}
+          {formatMoney(goal.targetAmount)}
         </Text>
       </View>
 
@@ -137,7 +136,7 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
           }}
           numberOfLines={1}
         >
-          {formatMoney(currentAmount as CopAmount)}
+          {formatMoney(currentAmount)}
         </Text>
       </View>
 

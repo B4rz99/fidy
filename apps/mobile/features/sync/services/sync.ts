@@ -4,7 +4,7 @@ import { enqueueSync } from "@/shared/db";
 import { liveAppNetwork } from "@/shared/effect/network";
 import { liveAppSupabase } from "@/shared/effect/supabase";
 import { generateSyncQueueId } from "@/shared/lib";
-import type { UserId } from "@/shared/types/branded";
+import { requireUserId } from "@/shared/types/assertions";
 import {
   getUnresolvedConflicts,
   resolveConflict as resolveConflictDb,
@@ -24,7 +24,7 @@ const syncService = createSyncService({
   syncPull,
   syncPush,
   refreshTransactions: async ({ db, userId }) => {
-    await refreshTransactions(db, userId as UserId);
+    await refreshTransactions(db, requireUserId(userId));
   },
   getConflictRows: async ({ db }) => getUnresolvedConflicts(db),
   upsertTransaction: async (db, row) => {

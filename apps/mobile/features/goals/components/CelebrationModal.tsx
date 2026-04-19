@@ -2,7 +2,6 @@ import { memo } from "react";
 import { Modal, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
-import type { CopAmount } from "@/shared/types/branded";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -124,7 +123,7 @@ export const CelebrationModal = memo(function CelebrationModal({
               color: accentGreen,
             }}
           >
-            {formatMoney(displayAmount as CopAmount)}
+            {formatMoney(displayAmount)}
           </Text>
 
           {/* Continue button */}

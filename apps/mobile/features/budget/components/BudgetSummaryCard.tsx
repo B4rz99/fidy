@@ -2,7 +2,6 @@ import { ProgressBar } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
-import type { CopAmount } from "@/shared/types/branded";
 
 type Props = {
   readonly totalBudget: number;
@@ -23,16 +22,14 @@ export function BudgetSummaryCard({ totalBudget, totalSpent, percentUsed }: Prop
         <Text style={[styles.label, { color: secondaryColor }]}>
           {t("budgets.summary.totalBudget")}
         </Text>
-        <Text style={[styles.amount, { color: primaryColor }]}>
-          {formatMoney(totalBudget as CopAmount)}
-        </Text>
+        <Text style={[styles.amount, { color: primaryColor }]}>{formatMoney(totalBudget)}</Text>
       </View>
 
       <ProgressBar percent={percentUsed} />
 
       <View style={styles.footer}>
         <Text style={[styles.spentText, { color: secondaryColor }]}>
-          {formatMoney(totalSpent as CopAmount)} / {formatMoney(totalBudget as CopAmount)}
+          {formatMoney(totalSpent)} / {formatMoney(totalBudget)}
         </Text>
         <Text style={[styles.usedText, { color: secondaryColor }]}>
           {t("budgets.summary.used", { percent: percentUsed })}

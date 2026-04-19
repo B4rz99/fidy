@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney, trackBudgetAlertViewed } from "@/shared/lib";
-import type { BudgetId, CopAmount } from "@/shared/types/branded";
+import type { BudgetId } from "@/shared/types/branded";
 import type { BudgetAlert } from "../lib/derive";
 
 type Props = {
@@ -36,7 +36,7 @@ export function BudgetAlertBanner({ alert, onDismiss }: Props) {
     ? t("budgets.alerts.overBudget", { category: categoryLabel, percent: alert.percentUsed })
     : t("budgets.alerts.nearLimit", { category: categoryLabel, percent: alert.percentUsed });
 
-  const remaining = formatMoney(Math.abs(alert.remainingAmount) as CopAmount);
+  const remaining = formatMoney(Math.abs(alert.remainingAmount));
   const overAmount = remaining;
 
   const handleDismiss = () => onDismiss(alert.budgetId, alert.threshold);

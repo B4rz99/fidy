@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  requireCategoryId,
+  requireCopAmount,
+  requireFinancialAccountId,
+} from "@/shared/types/assertions";
 import type {
   CategoryId,
   CopAmount,
@@ -16,14 +21,22 @@ export type AccountAttributionState = z.infer<typeof accountAttributionStateSche
 
 export const financialAccountIdSchema = z
   .string()
+  .trim()
   .min(1, "Account is required")
-  .transform((value) => value as FinancialAccountId);
+  .transform((value, ctx) => {
+    try {
+      return requireFinancialAccountId(value);
+    } catch {
+      ctx.addIssue({ code: "custom", message: "Account is required" });
+      return z.NEVER;
+    }
+  });
 
 export function makeCategoryIdSchema(isValid: (id: string) => boolean) {
   return z
     .string()
     .refine(isValid, { message: "Invalid category ID" })
-    .transform((s) => s as CategoryId);
+    .transform((value) => requireCategoryId(value));
 }
 
 export const categoryIdSchema = makeCategoryIdSchema(isValidCategoryId);
@@ -31,7 +44,11 @@ export const categoryIdSchema = makeCategoryIdSchema(isValidCategoryId);
 export const createTransactionSchema = z.object({
   type: transactionTypeSchema,
   /** Amount in whole currency units — must be positive */
-  amount: z.number().int().positive(),
+  amount: z
+    .number()
+    .int()
+    .positive()
+    .transform((value) => requireCopAmount(value)),
   categoryId: categoryIdSchema,
   accountId: financialAccountIdSchema,
   description: z.string().trim().max(200).optional(),

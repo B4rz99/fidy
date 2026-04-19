@@ -38,7 +38,7 @@ export const parseDigitsToAmount = (digits: string): CopAmount => {
  * Formats a numeric amount as a currency display string.
  * 50000 → "$50.000", 0 → "$0"
  */
-export const formatMoney = (amount: CopAmount, config?: CurrencyConfig): string =>
+export const formatMoney = (amount: number, config?: CurrencyConfig): string =>
   stripCurrencySpace(getFormatter(config).format(amount));
 
 /**
@@ -46,7 +46,7 @@ export const formatMoney = (amount: CopAmount, config?: CurrencyConfig): string 
  * (50000, "expense") → "-$50.000", (50000, "income") → "+$50.000"
  */
 export const formatSignedMoney = (
-  amount: CopAmount,
+  amount: number,
   type: "expense" | "income",
   config?: CurrencyConfig
 ): string => {
