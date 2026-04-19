@@ -45,6 +45,10 @@ When a new slice branch is created from an older feature branch and that parent 
 
 Tests that `await import(...)` a large service module inside `beforeEach` can intermittently hit the 10s hook timeout during full-suite runs, even if the file passes in isolation. We hit this in `__tests__/email-capture/email-pipeline.test.ts` because the hook imported `email-pipeline.ts`, which itself pulled broad barrels like `@/features/transactions` and `@/shared/lib`. Fix: prefer static imports (or `beforeAll`) for the module under test, and narrow production imports to deep modules when the test only needs a small subset of functionality.
 
+### Dark-mode category icon colors are inconsistent between screens (⚠️ AGENT SURPRISE)
+
+`apps/mobile/features/categories/components/CategoriesScreen.tsx` special-cases the clothing category icon color in dark mode (`#1A1A1A` -> `#E0E0E0`) so it stays visible on dark surfaces, but the shared `apps/mobile/features/transactions/components/CategoryPill.tsx` does not. If you mirror category visuals from the categories screen into transaction-entry or budget-selection flows, the clothing icon can become too low-contrast unless you add the same override or normalize the shared category-color treatment first.
+
 ## External Fidy Vault
 
 The persistent Fidy knowledge vault lives outside the repo on the local machine.

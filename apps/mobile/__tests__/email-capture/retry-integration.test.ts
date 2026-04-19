@@ -205,11 +205,17 @@ describe("retry queue integration (real SQLite)", () => {
     expect(txRows).toHaveLength(1);
     expect(txRows[0]?.amount).toBe(50000);
     expect(txRows[0]?.source).toBe("email_gmail");
+    expect(txRows[0]?.accountId).toBe(`fa-default-${USER_ID}`);
+    expect(txRows[0]?.accountAttributionState).toBe("unresolved");
 
     // Verify sync queue entry
     const syncRows = await db.select().from(syncQueue);
-    expect(syncRows).toHaveLength(1);
-    expect(syncRows[0]?.tableName).toBe("transactions");
+    expect(syncRows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ tableName: "financialAccounts" }),
+        expect.objectContaining({ tableName: "transactions" }),
+      ])
+    );
 
     // Verify processed email was updated
     const [pe] = await db

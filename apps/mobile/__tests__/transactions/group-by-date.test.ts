@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { StoredTransaction } from "@/features/transactions/schema";
-import type { CategoryId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
+import type {
+  CategoryId,
+  CopAmount,
+  FinancialAccountId,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 function makeTx(overrides: Partial<StoredTransaction> & { date: Date }): StoredTransaction {
   return {
@@ -13,6 +19,8 @@ function makeTx(overrides: Partial<StoredTransaction> & { date: Date }): StoredT
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
+    accountId: "fa-default-user-1" as FinancialAccountId,
+    accountAttributionState: "confirmed",
     ...overrides,
   };
 }

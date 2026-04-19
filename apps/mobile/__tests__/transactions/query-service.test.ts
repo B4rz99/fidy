@@ -3,6 +3,7 @@ import { createTransactionQueryService } from "@/features/transactions/services/
 import type {
   CategoryId,
   CopAmount,
+  FinancialAccountId,
   IsoDate,
   IsoDateTime,
   TransactionId,
@@ -35,6 +36,8 @@ function makeRow(
     createdAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
     updatedAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
     deletedAt: null,
+    accountId: "fa-default-user-1" as FinancialAccountId,
+    accountAttributionState: "confirmed",
     source: "manual",
     ...overrides,
   };
@@ -102,6 +105,8 @@ describe("transaction query service", () => {
         createdAt: new Date("2026-04-12T10:00:00.000Z"),
         updatedAt: new Date("2026-04-12T10:00:00.000Z"),
         deletedAt: null,
+        accountId: "fa-default-user-1" as FinancialAccountId,
+        accountAttributionState: "confirmed" as const,
       },
     ];
 

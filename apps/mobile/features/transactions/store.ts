@@ -6,7 +6,7 @@ import {
   trackTransactionDeleted,
   trackTransactionEdited,
 } from "@/shared/lib";
-import type { CategoryId, TransactionId, UserId } from "@/shared/types/branded";
+import type { CategoryId, FinancialAccountId, TransactionId, UserId } from "@/shared/types/branded";
 import {
   createTransactionMutationService,
   type TransactionMutationResult,
@@ -34,6 +34,8 @@ type TransactionState = {
   readonly type: TransactionType;
   readonly digits: string;
   readonly categoryId: CategoryId | null;
+  readonly defaultAccountId: FinancialAccountId | null;
+  readonly accountId: FinancialAccountId | null;
   readonly description: string;
   readonly date: Date;
   readonly pages: readonly StoredTransaction[];
@@ -52,6 +54,8 @@ type TransactionActions = {
   setType: (type: TransactionType) => void;
   setDigits: (digits: string) => void;
   setCategoryId: (id: CategoryId) => void;
+  setDefaultAccountId: (id: FinancialAccountId | null) => void;
+  setAccountId: (id: FinancialAccountId | null) => void;
   setDescription: (desc: string) => void;
   setDate: (date: Date) => void;
   setPageSnapshot: (snapshot: TransactionPageSnapshot) => void;
@@ -66,12 +70,13 @@ type TransactionActions = {
 
 const INITIAL_FORM: Pick<
   TransactionState,
-  "step" | "type" | "digits" | "categoryId" | "description"
+  "step" | "type" | "digits" | "categoryId" | "accountId" | "description"
 > = {
   step: 1,
   type: "expense",
   digits: "",
   categoryId: null,
+  accountId: null,
   description: "",
 };
 
@@ -79,6 +84,7 @@ function createInitialState(activeUserId: UserId | null): TransactionState {
   return {
     activeUserId,
     ...INITIAL_FORM,
+    defaultAccountId: null,
     date: new Date(),
     pages: [],
     offset: 0,
@@ -92,12 +98,16 @@ function createInitialState(activeUserId: UserId | null): TransactionState {
 }
 
 function toTransactionFormInput(
-  state: Pick<TransactionState, "type" | "digits" | "categoryId" | "description" | "date">
+  state: Pick<
+    TransactionState,
+    "type" | "digits" | "categoryId" | "accountId" | "description" | "date"
+  >
 ) {
   return {
     type: state.type,
     digits: state.digits,
     categoryId: state.categoryId,
+    accountId: state.accountId,
     description: state.description,
     date: state.date,
   };
@@ -146,6 +156,16 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
   setType: (type) => set({ type }),
   setDigits: (digits) => set({ digits }),
   setCategoryId: (categoryId) => set({ categoryId }),
+  setDefaultAccountId: (defaultAccountId) =>
+    set((state) => ({
+      defaultAccountId,
+      accountId:
+        state.editingId == null &&
+        (state.accountId == null || state.accountId === state.defaultAccountId)
+          ? defaultAccountId
+          : state.accountId,
+    })),
+  setAccountId: (accountId) => set({ accountId }),
   setDescription: (description) => set({ description }),
   setDate: (date) => set({ date }),
 
@@ -187,6 +207,7 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
       type: transaction.type,
       digits: String(transaction.amount),
       categoryId: transaction.categoryId,
+      accountId: transaction.accountId,
       description: transaction.description,
       date: transaction.date,
     }),
@@ -211,11 +232,12 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     }),
 
   resetForm: () =>
-    set({
+    set((state) => ({
       ...INITIAL_FORM,
+      accountId: state.defaultAccountId,
       date: new Date(),
       editingId: null,
-    }),
+    })),
 }));
 
 export function initializeTransactionSession(userId: UserId): void {
@@ -373,6 +395,7 @@ export async function updateTransactionDirect(
     readonly type: TransactionType;
     readonly digits: string;
     readonly categoryId: CategoryId | null;
+    readonly accountId: FinancialAccountId | null;
     readonly description: string;
     readonly date: Date;
   }

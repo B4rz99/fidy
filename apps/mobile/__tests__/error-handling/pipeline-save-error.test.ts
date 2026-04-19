@@ -20,6 +20,9 @@ const mockLookupMerchantRule = vi.fn().mockResolvedValue(null);
 const mockInsertMerchantRule = vi.fn();
 const mockParseEmailApi = vi.fn().mockResolvedValue(null);
 const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);
+const mockEnsureDefaultFinancialAccount = vi
+  .fn()
+  .mockImplementation((_: unknown, userId: string) => ({ id: `fa-default-${userId}` }));
 const mockGetPendingRetryEmails = vi.fn().mockResolvedValue([]);
 const mockMarkForRetry = vi.fn();
 const mockMarkPermanentlyFailed = vi.fn();
@@ -42,6 +45,10 @@ vi.mock("@/features/email-capture/lib/repository", () => ({
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: unknown[]) => mockInsertTransaction(...args),
+}));
+
+vi.mock("@/features/financial-accounts", () => ({
+  ensureDefaultFinancialAccount: (...args: unknown[]) => mockEnsureDefaultFinancialAccount(...args),
 }));
 
 vi.mock("@/shared/db/enqueue-sync", () => ({

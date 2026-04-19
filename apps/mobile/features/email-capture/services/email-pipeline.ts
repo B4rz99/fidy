@@ -1,4 +1,5 @@
 import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
+import { ensureDefaultFinancialAccount } from "@/features/financial-accounts";
 import { insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
@@ -38,6 +39,7 @@ const emailPipeline = createEmailPipelineService({
   markPermanentlyFailed,
   markRetrySuccess,
   updateProcessedEmailStatus,
+  ensureDefaultFinancialAccount,
   insertTransaction,
   enqueueSync,
   insertMerchantRule,

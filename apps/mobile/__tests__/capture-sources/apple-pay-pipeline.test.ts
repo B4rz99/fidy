@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ApplePayIntentData } from "@/features/capture-sources/schema";
 import { processApplePayIntent } from "@/features/capture-sources/services/apple-pay-pipeline";
+import type { FinancialAccountId } from "@/shared/types/branded";
 
 const mockInsertTransaction = vi.fn();
 const mockEnqueueSync = vi.fn();
@@ -13,6 +14,16 @@ const mockIsCaptureProcessed = vi.fn().mockResolvedValue(false);
 const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);
 const mockCaptureFingerprint = vi.fn().mockReturnValue("test-fingerprint");
 const mockInsertProcessedCapture = vi.fn();
+const mockEnsureDefaultFinancialAccount = vi.fn().mockReturnValue({
+  id: "fa-default-user-1" as FinancialAccountId,
+  userId: "user-1",
+  name: "Cash",
+  kind: "cash",
+  isDefault: true,
+  createdAt: "2026-04-18T10:00:00.000Z",
+  updatedAt: "2026-04-18T10:00:00.000Z",
+  deletedAt: null,
+});
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
@@ -39,6 +50,10 @@ vi.mock("@/features/capture-sources/lib/dedup", () => ({
 
 vi.mock("@/features/capture-sources/lib/repository", () => ({
   insertProcessedCapture: (...args: any[]) => mockInsertProcessedCapture(...args),
+}));
+
+vi.mock("@/features/financial-accounts", () => ({
+  ensureDefaultFinancialAccount: (...args: any[]) => mockEnsureDefaultFinancialAccount(...args),
 }));
 
 const mockGenerateId = vi.fn();
@@ -88,6 +103,8 @@ describe("processApplePayIntent", () => {
         type: "expense",
         amount: 50000,
         description: "Farmatodo",
+        accountId: "fa-default-user-1",
+        accountAttributionState: "unresolved",
         source: "apple_pay",
       })
     );

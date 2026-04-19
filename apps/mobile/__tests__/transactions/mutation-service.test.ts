@@ -16,6 +16,7 @@ const input = {
   type: "expense" as const,
   digits: "1200",
   categoryId: "food" as CategoryId,
+  accountId: "fa-default-user-1" as FinancialAccountId,
   description: "Lunch",
   date: new Date("2026-04-12T00:00:00.000Z"),
 };
@@ -113,6 +114,7 @@ describe("transaction mutation service", () => {
         userId: "user-1",
         amount: 1200,
         categoryId: "food",
+        accountId: "fa-default-user-1",
       }),
     });
     expect(currentCommit).toHaveBeenCalledWith(
@@ -206,7 +208,10 @@ describe("transaction mutation service", () => {
     } satisfies StoredTransaction);
     const service = createService();
 
-    await service.updateDirect("txn-9" as TransactionId, input);
+    await service.updateDirect("txn-9" as TransactionId, {
+      ...input,
+      accountId: "fa-card-1" as FinancialAccountId,
+    });
 
     expect(currentCommit).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -297,5 +302,16 @@ describe("transaction mutation service", () => {
     );
     expect(trackDeletedMock).toHaveBeenCalledOnce();
     expect(refreshMock).toHaveBeenCalledOnce();
+  });
+
+  it("returns a validation failure when no owning account is selected", async () => {
+    const service = createService();
+
+    await expect(service.save({ ...input, accountId: null })).resolves.toEqual({
+      success: false,
+      error: "Account is required",
+    });
+    expect(currentCommit).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
   });
 });

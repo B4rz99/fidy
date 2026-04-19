@@ -19,6 +19,7 @@ const en = {
     unknown: "Unknown",
     addTransaction: "Add transaction",
     transaction: "Transaction",
+    account: "Account",
     none: "(none)",
     name: "Name",
     other: "Other",
@@ -56,6 +57,10 @@ const en = {
     deleteTransaction: "Delete",
     updateFailed: "Could not update transaction",
     deleteFailed: "Could not delete transaction",
+  },
+
+  financialAccounts: {
+    defaultName: "Cash",
   },
 
   // Bills / Calendar

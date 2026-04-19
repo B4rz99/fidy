@@ -10,6 +10,9 @@ const mockGetFinancialAccountIdentifierById = vi.fn().mockReturnValue(null);
 const mockGetOpeningBalanceById = vi.fn().mockReturnValue(null);
 const mockGetOpeningBalanceForAccount = vi.fn().mockReturnValue(null);
 const mockGetTransferById = vi.fn().mockReturnValue(null);
+const mockEnsureDefaultFinancialAccount = vi
+  .fn()
+  .mockImplementation((_: unknown, userId: string) => ({ id: `fa-default-${userId}` }));
 const mockGetSyncMeta = vi.fn().mockReturnValue(null);
 const mockSetSyncMeta = vi.fn();
 const mockUpsertTransaction = vi.fn();
@@ -36,6 +39,7 @@ vi.mock("@/features/transactions/lib/repository", () => ({
 
 vi.mock("@/features/financial-accounts", () => ({
   buildDefaultFinancialAccountId: (userId: string) => `fa-default-${userId}`,
+  ensureDefaultFinancialAccount: (...args: any[]) => mockEnsureDefaultFinancialAccount(...args),
   getFinancialAccountById: (...args: any[]) => mockGetFinancialAccountById(...args),
   upsertFinancialAccount: (...args: any[]) => mockUpsertFinancialAccount(...args),
   getFinancialAccountIdentifierById: (...args: any[]) =>

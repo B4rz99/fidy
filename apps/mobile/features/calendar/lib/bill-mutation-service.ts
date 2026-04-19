@@ -1,3 +1,4 @@
+import { buildDefaultFinancialAccountId } from "@/features/financial-accounts";
 import type { StoredTransaction } from "@/features/transactions/public";
 import { toTransactionRow } from "@/features/transactions/public";
 import {
@@ -126,6 +127,8 @@ async function commitBillPayment(
     createdAt: timestamp,
     updatedAt: timestamp,
     deletedAt: null,
+    accountId: buildDefaultFinancialAccountId(userId),
+    accountAttributionState: "confirmed",
   };
 
   const payment: BillPayment = {

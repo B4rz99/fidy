@@ -24,6 +24,7 @@ import { enqueueSync } from "@/shared/db/enqueue-sync";
 import type {
   CategoryId,
   CopAmount,
+  FinancialAccountId,
   IsoDate,
   IsoDateTime,
   TransactionId,
@@ -62,6 +63,8 @@ function makeStoredTransaction(overrides: Partial<{ id: TransactionId; updatedAt
     createdAt: new Date("2026-03-04T10:00:00.000Z"),
     updatedAt: new Date("2026-03-04T10:00:00.000Z"),
     deletedAt: null,
+    accountId: "fa-default-user-1" as FinancialAccountId,
+    accountAttributionState: "confirmed" as const,
     ...overrides,
   };
 }
@@ -90,6 +93,8 @@ function makeRow(
     createdAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
     updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
     deletedAt: null,
+    accountId: "fa-default-user-1" as FinancialAccountId,
+    accountAttributionState: "confirmed" as const,
     source: "manual",
     ...overrides,
   };
@@ -99,6 +104,7 @@ describe("transaction boundaries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     initializeTransactionSession(mockUserId);
+    useTransactionStore.getState().setDefaultAccountId("fa-default-user-1" as FinancialAccountId);
   });
 
   it("starts with default form values after session initialization", () => {
@@ -108,6 +114,7 @@ describe("transaction boundaries", () => {
     expect(state.type).toBe("expense");
     expect(state.digits).toBe("");
     expect(state.categoryId).toBeNull();
+    expect(state.accountId).toBe("fa-default-user-1");
     expect(state.description).toBe("");
     expect(state.pages).toEqual([]);
   });
@@ -116,6 +123,7 @@ describe("transaction boundaries", () => {
     useTransactionStore.getState().setType("income");
     useTransactionStore.getState().setDigits("4520");
     useTransactionStore.getState().setCategoryId("food" as CategoryId);
+    useTransactionStore.getState().setAccountId("fa-cash-1" as FinancialAccountId);
     useTransactionStore.getState().setDescription("Lunch");
     useTransactionStore.getState().setDate(new Date("2026-06-15T00:00:00.000Z"));
     useTransactionStore.setState({ pages: [makeStoredTransaction()] });
@@ -126,6 +134,7 @@ describe("transaction boundaries", () => {
       type: "expense",
       digits: "",
       categoryId: null,
+      accountId: "fa-default-user-1",
       description: "",
     });
     expect(useTransactionStore.getState().pages).toHaveLength(1);

@@ -19,6 +19,7 @@ const es = {
     unknown: "Desconocido",
     addTransaction: "Agregar transacción",
     transaction: "Transacción",
+    account: "Cuenta",
     none: "(ninguno)",
     name: "Nombre",
     other: "Otro",
@@ -57,6 +58,10 @@ const es = {
     deleteTransaction: "Eliminar",
     updateFailed: "No se pudo actualizar la transacción",
     deleteFailed: "No se pudo eliminar la transacción",
+  },
+
+  financialAccounts: {
+    defaultName: "Efectivo",
   },
 
   // Bills / Calendar

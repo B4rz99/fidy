@@ -14,6 +14,11 @@ export type TransactionType = z.infer<typeof transactionTypeSchema>;
 export const accountAttributionStateSchema = z.enum(["confirmed", "inferred", "unresolved"]);
 export type AccountAttributionState = z.infer<typeof accountAttributionStateSchema>;
 
+export const financialAccountIdSchema = z
+  .string()
+  .min(1, "Account is required")
+  .transform((value) => value as FinancialAccountId);
+
 export function makeCategoryIdSchema(isValid: (id: string) => boolean) {
   return z
     .string()
@@ -28,6 +33,7 @@ export const createTransactionSchema = z.object({
   /** Amount in whole currency units — must be positive */
   amount: z.number().int().positive(),
   categoryId: categoryIdSchema,
+  accountId: financialAccountIdSchema,
   description: z.string().trim().max(200).optional(),
   date: z.date(),
 });
@@ -45,8 +51,8 @@ export type StoredTransaction = {
   readonly createdAt: Date;
   readonly updatedAt: Date;
   readonly deletedAt: Date | null;
-  readonly accountId?: FinancialAccountId;
-  readonly accountAttributionState?: AccountAttributionState;
+  readonly accountId: FinancialAccountId;
+  readonly accountAttributionState: AccountAttributionState;
   readonly supersededAt?: Date | null;
   readonly source?: string;
 };
