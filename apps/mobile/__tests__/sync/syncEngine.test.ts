@@ -8,6 +8,7 @@ const mockGetTransactionById = vi.fn().mockReturnValue(null);
 const mockGetSyncMeta = vi.fn().mockReturnValue(null);
 const mockSetSyncMeta = vi.fn();
 const mockUpsertTransaction = vi.fn();
+const mockInsertTransaction = vi.fn();
 
 const mockInsertConflict = vi.fn();
 vi.mock("@/features/sync/lib/conflict-repository", () => ({
@@ -20,6 +21,7 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   getTransactionById: (...args: any[]) => mockGetTransactionById(...args),
   getSyncMeta: (...args: any[]) => mockGetSyncMeta(...args),
   setSyncMeta: (...args: any[]) => mockSetSyncMeta(...args),
+  insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
   upsertTransaction: (...args: any[]) => mockUpsertTransaction(...args),
 }));
 

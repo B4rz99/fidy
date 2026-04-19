@@ -306,6 +306,34 @@ describe("email processing pipeline", () => {
     expect(call.nextRetryAt).toBeTruthy();
   });
 
+  it("continues the batch when parsed output is malformed", async () => {
+    const emails = [makeRawEmail({ externalId: "ext-1" }), makeRawEmail({ externalId: "ext-2" })];
+    mockParseEmailApi
+      .mockResolvedValueOnce({
+        type: "expense",
+        amount: -1,
+        categoryId: "other",
+        description: "Compra 1",
+        date: "2026-03-05",
+        confidence: 0.9,
+      } as never)
+      .mockResolvedValueOnce({
+        type: "expense",
+        amount: 30000,
+        categoryId: "food",
+        description: "Compra 2",
+        date: "2026-03-05",
+        confidence: 0.9,
+      });
+
+    const result = await processEmails(mockDb, USER_ID, emails);
+
+    expect(result.failed).toBe(1);
+    expect(result.saved).toBe(1);
+    expect(mockParseEmailApi).toHaveBeenCalledTimes(2);
+    expect(mockInsertTransaction).toHaveBeenCalledTimes(1);
+  });
+
   it("marks email as skipped (not pending_retry) when LLM returns null", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce(null);
@@ -534,6 +562,25 @@ describe("processRetries", () => {
     const result = await processRetries(mockDb, USER_ID);
 
     expect(mockMarkForRetry).toHaveBeenCalledWith(mockDb, "pe-retry-1", 3, expect.any(String));
+    expect(result.retried).toBe(1);
+    expect(result.succeeded).toBe(0);
+  });
+
+  it("reschedules retry when parsed output is malformed", async () => {
+    const row = makePendingRetryRow({ retryCount: 1 });
+    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    mockParseEmailApi.mockResolvedValueOnce({
+      type: "expense",
+      amount: -1,
+      categoryId: "other",
+      description: "Compra en Exito",
+      date: "2026-03-05",
+      confidence: 0.9,
+    } as never);
+
+    const result = await processRetries(mockDb, USER_ID);
+
+    expect(mockMarkForRetry).toHaveBeenCalledWith(mockDb, "pe-retry-1", 2, expect.any(String));
     expect(result.retried).toBe(1);
     expect(result.succeeded).toBe(0);
   });

@@ -18,6 +18,10 @@ Workspace wrapper scripts like `bun run --cwd apps/mobile lint` can behave diffe
 
 Fresh workspaces may not have the `.context/fidy-vault` symlink yet, even when the external vault is correctly configured. Agents that try to read `.context/fidy-vault/AGENTS.md` before running `bun run vault:doctor` can fail with "No such file or directory". Fix: run `bun run vault:doctor` first, then read `.context/fidy-vault/AGENTS.md`.
 
+### Effect runners should squash failures at the boundary (⚠️ AGENT SURPRISE)
+
+`Effect.runPromise(...)` rejects with Effect's `FiberFailure` wrapper, not the original thrown error. In this repo that changes observable behavior in tests and error reporting paths that expect the original `Error` instance. Fix: shared runners like `shared/effect/runtime.ts` should use `Effect.runPromiseExit(...)` and `Cause.squash(...)` before rethrowing so module boundaries preserve the original failure.
+
 ### Rebased PR branches can replay already-merged slice commits (⚠️ AGENT SURPRISE)
 
 When a new slice branch is created from an older feature branch and that parent PR later merges to `main`, the standard `git pull --rebase --autostash origin main` flow can try to replay those already-merged commits and produce conflicts in unrelated files. In this repo, the safer recovery is: stash the current work, create a fresh branch from `origin/main`, then reapply the stash there before opening the next PR.
