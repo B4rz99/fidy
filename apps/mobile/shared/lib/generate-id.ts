@@ -6,14 +6,18 @@ import type {
   ChatSessionId,
   DetectedSmsEventId,
   EmailAccountId,
+  FinancialAccountId,
+  FinancialAccountIdentifierId,
   MerchantRuleId,
   NotificationId,
   NotificationSourceId,
+  OpeningBalanceId,
   ProcessedCaptureId,
   ProcessedEmailId,
   SyncConflictId,
   SyncQueueId,
   TransactionId,
+  TransferId,
   UserCategoryId,
   UserMemoryId,
 } from "@/shared/types/branded";
@@ -66,8 +70,20 @@ export function generateEmailAccountId(): EmailAccountId {
   return generateId("ea") as EmailAccountId;
 }
 
+export function generateFinancialAccountId(): FinancialAccountId {
+  return generateId("fa") as FinancialAccountId;
+}
+
+export function generateFinancialAccountIdentifierId(): FinancialAccountIdentifierId {
+  return generateId("fai") as FinancialAccountIdentifierId;
+}
+
 export function generateSyncConflictId(): SyncConflictId {
   return generateId("sc") as SyncConflictId;
+}
+
+export function generateTransferId(): TransferId {
+  return generateId("tr") as TransferId;
 }
 
 export function generateMerchantRuleId(): MerchantRuleId {
@@ -76,6 +92,10 @@ export function generateMerchantRuleId(): MerchantRuleId {
 
 export function generateNotificationSourceId(): NotificationSourceId {
   return generateId("ns") as NotificationSourceId;
+}
+
+export function generateOpeningBalanceId(): OpeningBalanceId {
+  return generateId("ob") as OpeningBalanceId;
 }
 
 export function generateProcessedCaptureId(): ProcessedCaptureId {

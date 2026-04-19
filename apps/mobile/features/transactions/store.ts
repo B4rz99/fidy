@@ -123,6 +123,7 @@ function createLiveTransactionMutationService(db: AnyDb, userId: UserId, session
   return createTransactionMutationService({
     getCommit: () => mutations.commit,
     getUserId: () => userId,
+    getTransactionById: (id) => getStoredTransactionById(db, userId, id),
     refresh: async () => {
       if (!isActiveTransactionSession(userId, sessionId)) return;
       await refreshTransactions(db, userId);

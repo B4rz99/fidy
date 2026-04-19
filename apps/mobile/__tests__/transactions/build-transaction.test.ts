@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { buildDefaultFinancialAccountId } from "@/features/financial-accounts";
 import {
   buildTransaction,
   toStoredTransaction,
@@ -8,6 +9,7 @@ import type { StoredTransaction } from "@/features/transactions/schema";
 import type {
   CategoryId,
   CopAmount,
+  FinancialAccountId,
   IsoDate,
   IsoDateTime,
   TransactionId,
@@ -114,12 +116,16 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     userId: "user-1" as UserId,
     type: "income",
     amount: 5000 as CopAmount,
-    categoryId: "transfer" as CategoryId,
+    categoryId: "other" as CategoryId,
     description: "Monthly",
     date: new Date(2026, 2, 1),
     createdAt: new Date(2026, 2, 1, 10, 0, 0),
     updatedAt: new Date(2026, 2, 1, 10, 0, 0),
     deletedAt: null,
+    accountId: "fa-default-user-1" as FinancialAccountId,
+    accountAttributionState: "confirmed",
+    supersededAt: null,
+    source: "manual",
   };
 
   test("toTransactionRow produces correct DB row", () => {
@@ -129,6 +135,8 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     expect(row.type).toBe("income");
     expect(row.amount).toBe(5000);
     expect(row.date).toBe("2026-03-01");
+    expect(row.accountId).toBe(buildDefaultFinancialAccountId("user-1" as UserId));
+    expect(row.accountAttributionState).toBe("confirmed");
     expect(typeof row.createdAt).toBe("string");
   });
 
@@ -145,5 +153,40 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     expect(roundTripped.date.getMonth()).toBe(stored.date.getMonth());
     expect(roundTripped.date.getDate()).toBe(stored.date.getDate());
     expect(roundTripped.deletedAt).toBeNull();
+    expect(roundTripped.accountId).toBe(stored.accountId);
+    expect(roundTripped.accountAttributionState).toBe(stored.accountAttributionState);
+    expect(roundTripped.supersededAt).toBeNull();
+    expect(roundTripped.source).toBe(stored.source);
+  });
+
+  test("preserves non-default ownership metadata through row hydration and serialization", () => {
+    const row = {
+      id: "tx-captured" as TransactionId,
+      userId: "user-1" as UserId,
+      type: "expense",
+      amount: 8200 as CopAmount,
+      categoryId: "food" as CategoryId,
+      description: "Captured lunch",
+      date: "2026-03-03" as IsoDate,
+      accountId: "fa-credit-card" as FinancialAccountId,
+      accountAttributionState: "unresolved",
+      supersededAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
+      createdAt: "2026-03-03T10:00:00.000Z" as IsoDateTime,
+      updatedAt: "2026-03-03T12:00:00.000Z" as IsoDateTime,
+      deletedAt: null,
+      source: "email_gmail",
+    };
+
+    const storedTransaction = toStoredTransaction(row);
+    const serialized = toTransactionRow(storedTransaction);
+
+    expect(storedTransaction.accountId).toBe("fa-credit-card");
+    expect(storedTransaction.accountAttributionState).toBe("unresolved");
+    expect(storedTransaction.supersededAt?.toISOString()).toBe("2026-03-04T10:00:00.000Z");
+    expect(storedTransaction.source).toBe("email_gmail");
+    expect(serialized.accountId).toBe("fa-credit-card");
+    expect(serialized.accountAttributionState).toBe("unresolved");
+    expect(serialized.supersededAt).toBe("2026-03-04T10:00:00.000Z");
+    expect(serialized.source).toBe("email_gmail");
   });
 });

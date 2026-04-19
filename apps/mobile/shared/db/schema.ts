@@ -1,4 +1,13 @@
-import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import {
+  check,
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 import type {
   BillId,
   BillPaymentId,
@@ -9,17 +18,21 @@ import type {
   CopAmount,
   DetectedSmsEventId,
   EmailAccountId,
+  FinancialAccountId,
+  FinancialAccountIdentifierId,
   IsoDate,
   IsoDateTime,
   MerchantRuleId,
   Month,
   NotificationId,
   NotificationSourceId,
+  OpeningBalanceId,
   ProcessedCaptureId,
   ProcessedEmailId,
   SyncConflictId,
   SyncQueueId,
   TransactionId,
+  TransferId,
   UserCategoryId,
   UserId,
   UserMemoryId,
@@ -71,6 +84,9 @@ export const transactions = sqliteTable(
     categoryId: text("category_id").$type<CategoryId>().notNull(),
     description: text("description"),
     date: text("date").$type<IsoDate>().notNull(),
+    accountId: text("account_id").$type<FinancialAccountId>().notNull(),
+    accountAttributionState: text("account_attribution_state").notNull(),
+    supersededAt: text("superseded_at").$type<IsoDateTime>(),
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
     updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
     deletedAt: text("deleted_at").$type<IsoDateTime>(),
@@ -79,6 +95,94 @@ export const transactions = sqliteTable(
   (table) => [
     index("idx_transactions_user_date").on(table.userId, table.date),
     index("idx_transactions_user_category").on(table.userId, table.categoryId),
+  ]
+);
+
+export const financialAccounts = sqliteTable(
+  "financial_accounts",
+  {
+    id: text("id").$type<FinancialAccountId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    name: text("name").notNull(),
+    kind: text("kind").notNull(),
+    isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [
+    index("idx_financial_accounts_user").on(table.userId),
+    index("idx_financial_accounts_user_default").on(table.userId, table.isDefault),
+  ]
+);
+
+export const transfers = sqliteTable(
+  "transfers",
+  {
+    id: text("id").$type<TransferId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    amount: integer("amount").$type<CopAmount>().notNull(),
+    fromAccountId: text("from_account_id").$type<FinancialAccountId>(),
+    toAccountId: text("to_account_id").$type<FinancialAccountId>(),
+    fromExternalLabel: text("from_external_label"),
+    toExternalLabel: text("to_external_label"),
+    description: text("description"),
+    date: text("date").$type<IsoDate>().notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [
+    index("idx_transfers_user_date").on(table.userId, table.date),
+    index("idx_transfers_user_updated").on(table.userId, table.updatedAt),
+    check(
+      "ck_transfers_from_endpoint",
+      sql`${table.fromAccountId} is not null or nullif(trim(${table.fromExternalLabel}), '') is not null`
+    ),
+    check(
+      "ck_transfers_to_endpoint",
+      sql`${table.toAccountId} is not null or nullif(trim(${table.toExternalLabel}), '') is not null`
+    ),
+  ]
+);
+
+export const openingBalances = sqliteTable(
+  "opening_balances",
+  {
+    id: text("id").$type<OpeningBalanceId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    accountId: text("account_id").$type<FinancialAccountId>().notNull(),
+    amount: integer("amount").$type<CopAmount>().notNull(),
+    effectiveDate: text("effective_date").$type<IsoDate>().notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [
+    uniqueIndex("uq_opening_balances_account")
+      .on(table.accountId)
+      .where(sql`${table.deletedAt} is null`),
+    index("idx_opening_balances_user").on(table.userId),
+  ]
+);
+
+export const financialAccountIdentifiers = sqliteTable(
+  "financial_account_identifiers",
+  {
+    id: text("id").$type<FinancialAccountIdentifierId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    accountId: text("account_id").$type<FinancialAccountId>().notNull(),
+    scope: text("scope").notNull(),
+    value: text("value").notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [
+    uniqueIndex("uq_financial_account_identifier")
+      .on(table.userId, table.accountId, table.scope, table.value)
+      .where(sql`${table.deletedAt} is null`),
+    index("idx_financial_account_identifiers_account").on(table.accountId),
   ]
 );
 

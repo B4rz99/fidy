@@ -2,6 +2,17 @@
 
 The role of this file is to describe common mistakes and confusion points that agents might encounter as they work in this project. If you ever encounter something in the project that surprises you, please alert the developer working with you and indicate that this is the case in this AGENTS.md file to help prevent future agents from having the same issue
 
+### Financial accounts implementation docs live in-repo
+
+For work on financial accounts, account attribution, post-sync account suggestions, transfers, or default-account bootstrap, read these repo-local docs before coding:
+
+- `CONTEXT.md` — canonical domain language and behavioral rules
+- `docs/adr/0001-financial-accounts-and-transfers.md` — architectural rationale
+- `plans/financial-accounts-v1.md` — implementation slicing and sequence
+- `plans/financial-accounts-prd.md` — high-level product brief
+
+Treat `CONTEXT.md` as the source of truth when these documents differ in level of detail.
+
 ### Vitest: avoid async `importOriginal` in global setup mocks (⚠️ AGENT SURPRISE)
 
 The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async (importOriginal) => ...)` for heavy modules like `date-fns`. The async `importOriginal` call creates module-loading contention across parallel Vitest workers, causing intermittent timeouts in tests that dynamically import large module trees (e.g. `syncEngine.ts` → budget + goals + transactions). Fix: remove the global mock entirely, or provide a synchronous factory. Tests needing deterministic behavior should mock at the file level with `vi.doMock` or `vi.mock`.
@@ -13,6 +24,10 @@ The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async 
 ### Bun workspace scripts need `--shell=bun` for parity (⚠️ AGENT SURPRISE)
 
 Workspace wrapper scripts like `bun run --cwd apps/mobile lint` can behave differently across local checkouts, worktrees, and CI because Bun's default system-shell execution does not resolve workspace binaries consistently. In this repo, root scripts that delegate into `apps/*` or `packages/*` should use `bun run --cwd <dir> --shell=bun <script>` so `expo`, `eslint`, `vitest`, and similar local bins resolve the same way everywhere.
+
+### Drizzle migration generation does not update `apps/mobile/drizzle/migrations.js` (⚠️ AGENT SURPRISE)
+
+Running `bunx drizzle-kit generate` in `apps/mobile` creates the new SQL file, snapshot, and updates `drizzle/meta/_journal.json`, but it does **not** add the new import/export entry in `apps/mobile/drizzle/migrations.js`. Tests and runtime migration loading use `migrations.js`, so after generating a migration you must manually add the new `m00xx` import and include it in the exported `migrations` map.
 
 ### Vault bridge must be initialized before reading `.context/fidy-vault` (⚠️ AGENT SURPRISE)
 

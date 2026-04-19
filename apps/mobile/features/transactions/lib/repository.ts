@@ -1,9 +1,11 @@
 import { and, between, desc, eq, inArray, isNull, like, or, sql, sum } from "drizzle-orm";
+import { buildDefaultFinancialAccountId } from "@/features/financial-accounts";
 import type { AnyDb } from "@/shared/db";
 import { syncMeta, syncQueue, transactions } from "@/shared/db";
 import type {
   CategoryId,
   CopAmount,
+  FinancialAccountId,
   IsoDate,
   IsoDateTime,
   Month,
@@ -11,25 +13,54 @@ import type {
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
+import type { AccountAttributionState } from "../schema";
 
 export type { SyncOperation, SyncQueueEntry, SyncTableName } from "@/shared/db";
 
-export type TransactionRow = typeof transactions.$inferInsert;
+type PersistedTransactionRow = typeof transactions.$inferInsert;
 
-export function insertTransaction(db: AnyDb, row: TransactionRow) {
-  db.insert(transactions).values(row).run();
+export type TransactionRow = Omit<
+  PersistedTransactionRow,
+  "accountId" | "accountAttributionState" | "supersededAt"
+> & {
+  accountId?: FinancialAccountId;
+  accountAttributionState?: AccountAttributionState | string;
+  supersededAt?: IsoDateTime | null;
+};
+
+function getDefaultAttributionState(row: TransactionRow): AccountAttributionState {
+  return row.source === "manual" || row.source == null ? "confirmed" : "unresolved";
 }
 
-export function getAllTransactions(db: AnyDb, userId: UserId) {
+function normalizeTransactionRow(row: TransactionRow): PersistedTransactionRow {
+  return {
+    ...row,
+    source: row.source ?? "manual",
+    accountId: row.accountId ?? buildDefaultFinancialAccountId(row.userId),
+    accountAttributionState: row.accountAttributionState ?? getDefaultAttributionState(row),
+    supersededAt: row.supersededAt ?? null,
+  };
+}
+
+export function insertTransaction(db: AnyDb, row: TransactionRow) {
+  db.insert(transactions).values(normalizeTransactionRow(row)).run();
+}
+
+export function getAllTransactions(db: AnyDb, userId: UserId): TransactionRow[] {
   return db
     .select()
     .from(transactions)
     .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
     .orderBy(desc(transactions.date))
-    .all();
+    .all() as TransactionRow[];
 }
 
-export function getTransactionsPaginated(db: AnyDb, userId: UserId, limit: number, offset: number) {
+export function getTransactionsPaginated(
+  db: AnyDb,
+  userId: UserId,
+  limit: number,
+  offset: number
+): TransactionRow[] {
   return db
     .select()
     .from(transactions)
@@ -37,7 +68,7 @@ export function getTransactionsPaginated(db: AnyDb, userId: UserId, limit: numbe
     .orderBy(desc(transactions.date), desc(transactions.createdAt))
     .limit(limit + 1)
     .offset(offset)
-    .all();
+    .all() as TransactionRow[];
 }
 
 export function getBalanceAggregate(db: AnyDb, userId: UserId): CopAmount {
@@ -135,7 +166,7 @@ export function getRecentTransactions(
   userId: UserId,
   currentMonth: Month,
   previousMonth: Month
-) {
+): TransactionRow[] {
   return db
     .select()
     .from(transactions)
@@ -150,7 +181,7 @@ export function getRecentTransactions(
       )
     )
     .orderBy(desc(transactions.date))
-    .all();
+    .all() as TransactionRow[];
 }
 
 export function softDeleteTransaction(db: AnyDb, id: TransactionId, now: IsoDateTime) {
@@ -160,24 +191,32 @@ export function softDeleteTransaction(db: AnyDb, id: TransactionId, now: IsoDate
     .run();
 }
 
-export function getTransactionById(db: AnyDb, id: TransactionId) {
-  const rows = db.select().from(transactions).where(eq(transactions.id, id)).all();
+export function getTransactionById(db: AnyDb, id: TransactionId): TransactionRow | null {
+  const rows = db
+    .select()
+    .from(transactions)
+    .where(eq(transactions.id, id))
+    .all() as TransactionRow[];
   return rows[0] ?? null;
 }
 
 export function upsertTransaction(db: AnyDb, row: TransactionRow) {
+  const normalizedRow = normalizeTransactionRow(row);
   db.insert(transactions)
-    .values(row)
+    .values(normalizedRow)
     .onConflictDoUpdate({
       target: transactions.id,
       set: {
-        type: row.type,
-        amount: row.amount,
-        categoryId: row.categoryId,
-        description: row.description,
-        date: row.date,
-        updatedAt: row.updatedAt,
-        deletedAt: row.deletedAt,
+        type: normalizedRow.type,
+        amount: normalizedRow.amount,
+        categoryId: normalizedRow.categoryId,
+        description: normalizedRow.description,
+        date: normalizedRow.date,
+        accountId: normalizedRow.accountId,
+        accountAttributionState: normalizedRow.accountAttributionState,
+        supersededAt: normalizedRow.supersededAt,
+        updatedAt: normalizedRow.updatedAt,
+        deletedAt: normalizedRow.deletedAt,
       },
     })
     .run();

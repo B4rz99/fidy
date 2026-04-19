@@ -1,7 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTransactionMutationService } from "@/features/transactions/lib/mutation-service";
+import type { StoredTransaction } from "@/features/transactions/schema";
 import type { WriteThroughMutationModule } from "@/shared/mutations";
-import type { CategoryId, TransactionId, UserId } from "@/shared/types/branded";
+import type {
+  CategoryId,
+  CopAmount,
+  FinancialAccountId,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 const now = new Date("2026-04-12T10:00:00.000Z");
 
@@ -22,10 +29,12 @@ describe("transaction mutation service", () => {
   let resetForm: ServiceDeps["resetForm"];
   let trackDeleted: ServiceDeps["trackDeleted"];
   let trackEdited: ServiceDeps["trackEdited"];
+  let getTransactionById: ServiceDeps["getTransactionById"];
   let refreshMock: ReturnType<typeof vi.fn>;
   let resetFormMock: ReturnType<typeof vi.fn>;
   let trackDeletedMock: ReturnType<typeof vi.fn>;
   let trackEditedMock: ReturnType<typeof vi.fn>;
+  let getTransactionByIdMock: ReturnType<typeof vi.fn>;
 
   function createService() {
     return createTransactionMutationService({
@@ -35,6 +44,7 @@ describe("transaction mutation service", () => {
       resetForm,
       trackDeleted,
       trackEdited,
+      getTransactionById,
       now: () => now,
       createId: () => "txn-1" as TransactionId,
     });
@@ -47,10 +57,12 @@ describe("transaction mutation service", () => {
     resetFormMock = vi.fn();
     trackDeletedMock = vi.fn();
     trackEditedMock = vi.fn();
+    getTransactionByIdMock = vi.fn().mockReturnValue(null);
     refresh = refreshMock as ServiceDeps["refresh"];
     resetForm = resetFormMock as ServiceDeps["resetForm"];
     trackDeleted = trackDeletedMock as ServiceDeps["trackDeleted"];
     trackEdited = trackEditedMock as ServiceDeps["trackEdited"];
+    getTransactionById = getTransactionByIdMock as ServiceDeps["getTransactionById"];
   });
 
   it("returns store-not-initialized when the user is unavailable", async () => {
@@ -172,6 +184,45 @@ describe("transaction mutation service", () => {
     expect(trackEditedMock).toHaveBeenCalledWith({ category: "food" });
     expect(resetFormMock).not.toHaveBeenCalled();
     expect(refreshMock).toHaveBeenCalledOnce();
+  });
+
+  it("preserves ownership metadata when updating a captured transaction", async () => {
+    currentCommit = vi.fn().mockResolvedValue({ success: true, didMutate: true });
+    getTransactionByIdMock.mockReturnValue({
+      id: "txn-9" as TransactionId,
+      userId: "user-1" as UserId,
+      type: "expense",
+      amount: 9800 as CopAmount,
+      categoryId: "food" as CategoryId,
+      description: "Original capture",
+      date: new Date("2026-04-10T00:00:00.000Z"),
+      createdAt: new Date("2026-04-10T10:00:00.000Z"),
+      updatedAt: new Date("2026-04-10T10:00:00.000Z"),
+      deletedAt: null,
+      accountId: "fa-card-1" as FinancialAccountId,
+      accountAttributionState: "unresolved",
+      supersededAt: new Date("2026-04-11T10:00:00.000Z"),
+      source: "email_gmail",
+    } satisfies StoredTransaction);
+    const service = createService();
+
+    await service.updateDirect("txn-9" as TransactionId, input);
+
+    expect(currentCommit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "transaction.save",
+        mode: "update",
+        row: expect.objectContaining({
+          id: "txn-9",
+          accountId: "fa-card-1",
+          accountAttributionState: "unresolved",
+          supersededAt: "2026-04-11T10:00:00.000Z",
+          source: "email_gmail",
+          createdAt: "2026-04-10T10:00:00.000Z",
+          updatedAt: "2026-04-12T10:00:00.000Z",
+        }),
+      })
+    );
   });
 
   it("returns an update error without side effects when the write-through update fails", async () => {

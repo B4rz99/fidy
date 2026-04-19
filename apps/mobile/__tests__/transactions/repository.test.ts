@@ -1,5 +1,6 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { buildDefaultFinancialAccountId } from "@/features/financial-accounts";
 import type {
   CategoryId,
   CopAmount,
@@ -78,6 +79,10 @@ describe("transaction repository", () => {
       categoryId: "food",
       description: "Groceries",
       date: "2026-03-04",
+      accountId: buildDefaultFinancialAccountId("user-1" as UserId),
+      accountAttributionState: "confirmed",
+      source: "manual",
+      supersededAt: null,
       createdAt: "2026-03-04T10:00:00.000Z",
       updatedAt: "2026-03-04T10:00:00.000Z",
     });
@@ -256,7 +261,13 @@ describe("transaction repository", () => {
     upsertTransaction(mockDb, row);
 
     expect(mockInsert).toHaveBeenCalled();
-    expect(mockValues).toHaveBeenCalledWith(row);
+    expect(mockValues).toHaveBeenCalledWith({
+      ...row,
+      accountId: buildDefaultFinancialAccountId("user-1" as UserId),
+      accountAttributionState: "confirmed",
+      source: "manual",
+      supersededAt: null,
+    });
     expect(mockOnConflictDoUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         set: expect.objectContaining({

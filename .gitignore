@@ -67,6 +67,11 @@ GoogleService-Info.plist
 
 # Docs (local-only)
 docs/
+!docs/
+docs/*
+!docs/adr/
+docs/adr/*
+!docs/adr/0001-financial-accounts-and-transfers.md
 TODOS.md
 .context/
 

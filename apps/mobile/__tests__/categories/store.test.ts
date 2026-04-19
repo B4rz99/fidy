@@ -93,8 +93,8 @@ describe("useCategoriesStore", () => {
 
     const state = store.getState();
     expect(state.custom).toHaveLength(1);
-    expect(state.merged).toHaveLength(11);
-    expect(state.merged.slice(0, 10)).toEqual(CATEGORIES);
+    expect(state.merged).toHaveLength(CATEGORIES.length + 1);
+    expect(state.merged.slice(0, CATEGORIES.length)).toEqual(CATEGORIES);
     expect(state.byId.get("ucat-custom-1")).toMatchObject({
       label: { en: "Groceries", es: "Groceries" },
       color: "#FF5722",

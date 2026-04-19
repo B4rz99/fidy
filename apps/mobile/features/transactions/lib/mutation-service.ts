@@ -19,6 +19,7 @@ export type TransactionMutationResult =
 type CreateTransactionMutationServiceDeps = {
   getCommit: () => WriteThroughMutationModule["commit"] | null;
   getUserId: () => UserId | null;
+  getTransactionById: (id: TransactionId) => StoredTransaction | null;
   refresh: () => Promise<void>;
   resetForm: () => void;
   trackDeleted: () => void;
@@ -66,13 +67,14 @@ function buildMutationTransaction(
   input: TransactionFormInput,
   userId: UserId | null,
   id: TransactionId,
-  now: Date
+  now: Date,
+  existing: StoredTransaction | null
 ) {
   if (!userId) {
     return fail("Store not initialized");
   }
 
-  const result = buildTransaction(input, userId, id, now);
+  const result = buildTransaction(input, userId, id, now, existing);
   return result.success ? result : fail(result.error);
 }
 
@@ -84,7 +86,7 @@ export function createTransactionMutationService(
 
   return {
     save: async (input) => {
-      const built = buildMutationTransaction(input, deps.getUserId(), createId(), now());
+      const built = buildMutationTransaction(input, deps.getUserId(), createId(), now(), null);
       if (!built.success) {
         return built;
       }
@@ -104,7 +106,13 @@ export function createTransactionMutationService(
     },
 
     update: async (id, input) => {
-      const built = buildMutationTransaction(input, deps.getUserId(), id, now());
+      const built = buildMutationTransaction(
+        input,
+        deps.getUserId(),
+        id,
+        now(),
+        deps.getTransactionById(id)
+      );
       if (!built.success) {
         return built;
       }
@@ -126,7 +134,13 @@ export function createTransactionMutationService(
     },
 
     updateDirect: async (id, input) => {
-      const built = buildMutationTransaction(input, deps.getUserId(), id, now());
+      const built = buildMutationTransaction(
+        input,
+        deps.getUserId(),
+        id,
+        now(),
+        deps.getTransactionById(id)
+      );
       if (!built.success) {
         return built;
       }

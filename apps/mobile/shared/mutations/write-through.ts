@@ -30,7 +30,16 @@ export type MutationOutcome =
   | { success: true; didMutate: boolean }
   | { success: false; error: string };
 
-type TransactionRow = typeof transactions.$inferInsert;
+type PersistedTransactionRow = typeof transactions.$inferInsert;
+type TransactionRow = Omit<
+  PersistedTransactionRow,
+  "accountId" | "accountAttributionState" | "supersededAt" | "source"
+> & {
+  accountId?: PersistedTransactionRow["accountId"];
+  accountAttributionState?: PersistedTransactionRow["accountAttributionState"];
+  supersededAt?: PersistedTransactionRow["supersededAt"];
+  source?: PersistedTransactionRow["source"];
+};
 type GoalRow = typeof goals.$inferInsert;
 type GoalContributionRow = typeof goalContributions.$inferInsert;
 type BudgetRow = typeof budgets.$inferInsert;

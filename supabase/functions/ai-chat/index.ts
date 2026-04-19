@@ -13,7 +13,6 @@ const CATEGORY_IDS = [
   "home",
   "clothing",
   "services",
-  "transfer",
   "other",
 ] as const;
 
