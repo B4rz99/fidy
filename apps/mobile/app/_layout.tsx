@@ -403,7 +403,13 @@ function RootLayout() {
             />
             <Stack.Screen
               name="link-suggested-account"
-              options={{ ...SHEET, sheetAllowedDetents: [0.8] }}
+              options={{
+                ...SHEET,
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+                sheetAllowedDetents: [0.8],
+              }}
             />
             <Stack.Screen
               name="failed-emails"
