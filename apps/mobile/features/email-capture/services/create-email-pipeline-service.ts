@@ -11,6 +11,13 @@ import {
 } from "@/shared/effect/clock";
 import { fromPromise, fromThunk, makeAppService } from "@/shared/effect/runtime";
 import {
+  type AppTelemetry,
+  bindAppTelemetry,
+  captureErrorEffect,
+  capturePipelineEventEffect,
+  captureWarningEffect,
+} from "@/shared/effect/telemetry";
+import {
   generateProcessedEmailId,
   generateSyncQueueId,
   generateTransactionId,
@@ -50,26 +57,6 @@ export type RetryResult = {
   succeeded: number;
   permanentlyFailed: number;
 };
-
-type CaptureWarning = (
-  name: "email_parse_exception" | "email_retry_parse_exception",
-  tags: {
-    provider: RawEmail["provider"] | ProcessedEmailRow["provider"];
-    errorType: string;
-  }
-) => void | Promise<void>;
-
-type CapturePipelineEvent = (input: {
-  source: "email";
-  batchSize: number;
-  uniqueProviders: number;
-  dedupedInBatch: number;
-  skippedAlreadyProcessed: number;
-  skippedCrossSource: number;
-  saved: number;
-  failed: number;
-  needsReview: number;
-}) => void | Promise<void>;
 
 type CreateEmailPipelineServiceDeps = {
   readonly parseEmailApi: (body: string) => Promise<LlmParsedTransaction | null>;
@@ -122,10 +109,8 @@ type CreateEmailPipelineServiceDeps = {
     category: string;
     source: "email";
   }) => void | Promise<void>;
-  readonly captureError: (error: unknown) => void | Promise<void>;
-  readonly captureWarning: CaptureWarning;
-  readonly capturePipelineEvent: CapturePipelineEvent;
   readonly clock?: AppClock;
+  readonly telemetry?: AppTelemetry;
 };
 
 export type EmailPipelineService = {
@@ -294,30 +279,6 @@ function insertMerchantRuleEffect(
   );
 }
 
-function captureErrorEffect(error: unknown) {
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ captureError }) =>
-    fromThunk(() => captureError(error))
-  );
-}
-
-function captureWarningEffect(
-  name: "email_parse_exception" | "email_retry_parse_exception",
-  tags: {
-    provider: RawEmail["provider"] | ProcessedEmailRow["provider"];
-    errorType: string;
-  }
-) {
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ captureWarning }) =>
-    fromThunk(() => captureWarning(name, tags))
-  );
-}
-
-function capturePipelineEventEffect(input: Parameters<CapturePipelineEvent>[0]) {
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ capturePipelineEvent }) =>
-    fromThunk(() => capturePipelineEvent(input))
-  );
-}
-
 function markForRetryEffect(
   db: AnyDb,
   id: ProcessedEmailId,
@@ -426,11 +387,14 @@ function nextRetryAtEffect(retryCount: number) {
 export function createEmailPipelineService(
   deps: CreateEmailPipelineServiceDeps
 ): EmailPipelineService {
-  const { clock, ...runtimeDeps } = deps;
+  const { clock, telemetry, ...runtimeDeps } = deps;
   const clockRuntime = bindAppClock(clock);
+  const telemetryRuntime = bindAppTelemetry(telemetry);
   const runtime = EmailPipelineDeps.bind(runtimeDeps);
   const runClockEffect = <A>(effect: Effect.Effect<A, unknown, AppClock>) =>
     clockRuntime.run(effect);
+  const runTelemetryEffect = <A>(effect: Effect.Effect<A, unknown, AppTelemetry>) =>
+    telemetryRuntime.run(effect);
   const runEmailEffect = <A>(effect: Effect.Effect<A, unknown, CreateEmailPipelineServiceDeps>) =>
     runtime.run(effect);
   const runEmailWithClock = <A>(
@@ -476,7 +440,7 @@ export function createEmailPipelineService(
           try {
             parsed = await runEmailEffect(parseBodyEffect(db, userId, email.body));
           } catch (err) {
-            await runEmailEffect(
+            await runTelemetryEffect(
               captureWarningEffect("email_parse_exception", {
                 provider: email.provider,
                 errorType: err instanceof Error ? err.message : "unknown",
@@ -529,7 +493,7 @@ export function createEmailPipelineService(
           try {
             existingTxId = await runEmailEffect(findDuplicateTransactionEffect(db, userId, parsed));
           } catch (saveErr) {
-            await runEmailEffect(captureErrorEffect(saveErr));
+            await runTelemetryEffect(captureErrorEffect(saveErr));
             result.failed++;
             completed++;
             onProgress?.(getProgressSnapshot(total, completed, result));
@@ -570,7 +534,7 @@ export function createEmailPipelineService(
               result.saved++;
             }
           } catch (saveErr) {
-            await runEmailEffect(captureErrorEffect(saveErr));
+            await runTelemetryEffect(captureErrorEffect(saveErr));
             result.failed++;
             completed++;
             onProgress?.(getProgressSnapshot(total, completed, result));
@@ -591,7 +555,7 @@ export function createEmailPipelineService(
                 )
               );
             } catch (ruleErr) {
-              await runEmailEffect(captureErrorEffect(ruleErr));
+              await runTelemetryEffect(captureErrorEffect(ruleErr));
             }
           }
 
@@ -602,7 +566,7 @@ export function createEmailPipelineService(
 
       await Promise.all(Array.from({ length: Math.min(Concurrency, total) }, () => worker()));
 
-      await runEmailEffect(
+      await runTelemetryEffect(
         capturePipelineEventEffect({
           source: "email",
           batchSize: rawEmails.length,
@@ -636,7 +600,7 @@ export function createEmailPipelineService(
         try {
           parsed = await runEmailEffect(parseBodyEffect(db, userId, email.rawBody));
         } catch (err) {
-          await runEmailEffect(
+          await runTelemetryEffect(
             captureWarningEffect("email_retry_parse_exception", {
               provider: email.provider,
               errorType: err instanceof Error ? err.message : "unknown",
@@ -667,7 +631,7 @@ export function createEmailPipelineService(
         try {
           existingTxId = await runEmailEffect(findDuplicateTransactionEffect(db, userId, parsed));
         } catch (saveErr) {
-          await runEmailEffect(captureErrorEffect(saveErr));
+          await runTelemetryEffect(captureErrorEffect(saveErr));
           const nextCount = (email.retryCount ?? 0) + 1;
           const nextRetryAt = await runClockEffect(nextRetryAtEffect(nextCount));
           if (isMaxRetriesReached(nextCount)) {
@@ -697,7 +661,7 @@ export function createEmailPipelineService(
           );
           result.succeeded++;
         } catch (saveErr) {
-          await runEmailEffect(captureErrorEffect(saveErr));
+          await runTelemetryEffect(captureErrorEffect(saveErr));
           const nextCount = (email.retryCount ?? 0) + 1;
           const nextRetryAt = await runClockEffect(nextRetryAtEffect(nextCount));
           if (isMaxRetriesReached(nextCount)) {

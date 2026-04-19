@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ChatAction, ChatMessage } from "@/features/ai-chat/schema";
 import { createStreamingChatService } from "@/features/ai-chat/services/create-streaming-chat-service";
+import type { AppTelemetry } from "@/shared/effect/telemetry";
 import { requireCategoryId, requireUserId } from "@/shared/types/assertions";
 import type { ChatSessionId, IsoDateTime } from "@/shared/types/branded";
 
@@ -62,6 +63,32 @@ function createState() {
   };
 }
 
+function makeTelemetry(
+  overrides: {
+    captureWarning?: ReturnType<
+      typeof vi.fn<(message: string, context?: Record<string, string | number | boolean>) => void>
+    >;
+    captureError?: ReturnType<typeof vi.fn<(error: unknown) => void>>;
+  } = {}
+) {
+  const captureError = overrides.captureError ?? vi.fn<(error: unknown) => void>();
+  const captureWarning =
+    overrides.captureWarning ??
+    vi.fn<(message: string, context?: Record<string, string | number | boolean>) => void>();
+  const telemetry = {
+    captureError: (error: unknown) => captureError(error),
+    captureWarning: (message: string, context?: Record<string, string | number | boolean>) =>
+      captureWarning(message, context),
+    capturePipelineEvent: (_data: Record<string, string | number | boolean>) => undefined,
+  } satisfies AppTelemetry;
+
+  return {
+    telemetry,
+    captureError,
+    captureWarning,
+  };
+}
+
 describe("streaming chat service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -89,6 +116,7 @@ describe("streaming chat service", () => {
     const trackAiMessageSent = vi.fn();
     const captureWarning = vi.fn();
     const captureError = vi.fn();
+    const telemetry = makeTelemetry({ captureWarning, captureError });
 
     const service = createStreamingChatService({
       getState: state.getState,
@@ -104,8 +132,7 @@ describe("streaming chat service", () => {
       addAssistantChatMessage,
       parseActionFromResponse: () => makeAddAction(),
       trackAiMessageSent,
-      captureWarning,
-      captureError,
+      telemetry: telemetry.telemetry,
     });
 
     await service.sendMessage({
@@ -136,7 +163,7 @@ describe("streaming chat service", () => {
     const state = createState();
     state.setCurrentSessionId("chat-1" as ChatSessionId);
     const executeAction = vi.fn().mockRejectedValue(new Error("action failed"));
-    const captureWarning = vi.fn();
+    const telemetry = makeTelemetry({ captureWarning: vi.fn() });
 
     const service = createStreamingChatService({
       getState: state.getState,
@@ -151,8 +178,7 @@ describe("streaming chat service", () => {
       addAssistantChatMessage: vi.fn().mockResolvedValue(makeAssistantMessage("reply")),
       parseActionFromResponse: () => makeAddAction(),
       trackAiMessageSent: vi.fn(),
-      captureWarning,
-      captureError: vi.fn(),
+      telemetry: telemetry.telemetry,
     });
 
     await service.sendMessage({
@@ -162,7 +188,7 @@ describe("streaming chat service", () => {
       executeAction,
     });
 
-    expect(captureWarning).toHaveBeenCalledWith("ai_action_failed", {
+    expect(telemetry.captureWarning).toHaveBeenCalledWith("ai_action_failed", {
       actionType: "add",
       errorType: "action failed",
     });
@@ -186,8 +212,7 @@ describe("streaming chat service", () => {
       addAssistantChatMessage,
       parseActionFromResponse: () => null,
       trackAiMessageSent: vi.fn(),
-      captureWarning: vi.fn(),
-      captureError: vi.fn(),
+      telemetry: makeTelemetry().telemetry,
     });
 
     await service.sendMessage({
@@ -228,8 +253,7 @@ describe("streaming chat service", () => {
       addAssistantChatMessage: vi.fn().mockResolvedValue(makeAssistantMessage("reply")),
       parseActionFromResponse: () => null,
       trackAiMessageSent: vi.fn(),
-      captureWarning: vi.fn(),
-      captureError: vi.fn(),
+      telemetry: makeTelemetry().telemetry,
     });
 
     const sendPromise = service.sendMessage({
@@ -295,8 +319,7 @@ describe("streaming chat service", () => {
       addAssistantChatMessage: vi.fn().mockResolvedValue(makeAssistantMessage("reply")),
       parseActionFromResponse: () => null,
       trackAiMessageSent: vi.fn(),
-      captureWarning: vi.fn(),
-      captureError: vi.fn(),
+      telemetry: makeTelemetry().telemetry,
     });
 
     const firstSend = service.sendMessage({

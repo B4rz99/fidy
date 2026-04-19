@@ -1,6 +1,12 @@
 import { Effect } from "effect";
 import type { AnyDb } from "@/shared/db";
 import { fromPromise, fromThunk, makeAppService } from "@/shared/effect/runtime";
+import {
+  type AppTelemetry,
+  bindAppTelemetry,
+  captureErrorEffect,
+  captureWarningEffect,
+} from "@/shared/effect/telemetry";
 import type { ChatSessionId, UserId } from "@/shared/types/branded";
 import type { ChatAction, ChatMessage } from "../schema";
 
@@ -44,14 +50,7 @@ type CreateStreamingChatServiceDeps = {
   ) => Promise<unknown>;
   readonly parseActionFromResponse: (content: string) => ChatAction | null;
   readonly trackAiMessageSent: () => void | Promise<void>;
-  readonly captureWarning: (
-    name: "ai_action_failed",
-    tags: {
-      actionType: ChatAction["type"];
-      errorType: string;
-    }
-  ) => void | Promise<void>;
-  readonly captureError: (error: unknown) => void | Promise<void>;
+  readonly telemetry?: AppTelemetry;
 };
 
 export type StreamingChatService = {
@@ -70,6 +69,17 @@ type ReadySendMessageInput = {
   readonly userId: UserId;
   readonly text: string;
   readonly executeAction: (action: ChatAction) => Promise<void>;
+};
+
+type StreamingTelemetry = {
+  readonly captureError: (error: unknown) => Promise<void>;
+  readonly captureWarning: (
+    name: "ai_action_failed",
+    tags: {
+      actionType: ChatAction["type"];
+      errorType: string;
+    }
+  ) => Promise<void>;
 };
 
 const StreamingChatDeps = makeAppService<CreateStreamingChatServiceDeps>(
@@ -116,6 +126,7 @@ function toConversation(
 async function handleStreamDone(
   runtime: StreamingRuntime,
   deps: CreateStreamingChatServiceDeps,
+  telemetry: StreamingTelemetry,
   runId: number,
   input: ReadySendMessageInput,
   controller: AbortController,
@@ -130,7 +141,7 @@ async function handleStreamDone(
     try {
       await input.executeAction(action);
     } catch (actionErr) {
-      await deps.captureWarning("ai_action_failed", {
+      await telemetry.captureWarning("ai_action_failed", {
         actionType: action.type,
         errorType: actionErr instanceof Error ? actionErr.message : "unknown",
       });
@@ -157,6 +168,7 @@ async function handleStreamError(
 async function runStreamLifecycle(
   runtime: StreamingRuntime,
   deps: CreateStreamingChatServiceDeps,
+  telemetry: StreamingTelemetry,
   runId: number,
   input: ReadySendMessageInput,
   conversation: readonly StreamChatMessage[],
@@ -169,7 +181,7 @@ async function runStreamLifecycle(
     if (settled) return;
     settled = true;
     void handler()
-      .catch((error) => deps.captureError(error))
+      .catch((error) => telemetry.captureError(error))
       .finally(() => {
         resetStreamStateIfCurrent(runtime, deps, runId);
         resolve();
@@ -188,7 +200,8 @@ async function runStreamLifecycle(
           },
           onDone: () => {
             settle(
-              () => handleStreamDone(runtime, deps, runId, input, controller, accumulated),
+              () =>
+                handleStreamDone(runtime, deps, telemetry, runId, input, controller, accumulated),
               resolve
             );
           },
@@ -213,7 +226,7 @@ async function runStreamLifecycle(
 
         if (!settled) {
           settle(
-            () => handleStreamDone(runtime, deps, runId, input, controller, accumulated),
+            () => handleStreamDone(runtime, deps, telemetry, runId, input, controller, accumulated),
             resolve
           );
         }
@@ -237,7 +250,12 @@ async function runStreamLifecycle(
   });
 }
 
-function sendMessageEffect(input: SendMessageInput, runtime: StreamingRuntime, runId: number) {
+function sendMessageEffect(
+  input: SendMessageInput,
+  runtime: StreamingRuntime,
+  telemetry: StreamingTelemetry,
+  runId: number
+) {
   return Effect.gen(function* () {
     const trimmed = input.text.trim();
     if (!trimmed || !input.db || !input.userId) return;
@@ -268,6 +286,7 @@ function sendMessageEffect(input: SendMessageInput, runtime: StreamingRuntime, r
       runStreamLifecycle(
         runtime,
         deps,
+        telemetry,
         runId,
         {
           db,
@@ -285,7 +304,13 @@ function sendMessageEffect(input: SendMessageInput, runtime: StreamingRuntime, r
 export function createStreamingChatService(
   deps: CreateStreamingChatServiceDeps
 ): StreamingChatService {
-  const runtimeService = StreamingChatDeps.bind(deps);
+  const { telemetry, ...runtimeDeps } = deps;
+  const telemetryRuntime = bindAppTelemetry(telemetry);
+  const streamingTelemetry: StreamingTelemetry = {
+    captureError: (error) => telemetryRuntime.run(captureErrorEffect(error)),
+    captureWarning: (message, tags) => telemetryRuntime.run(captureWarningEffect(message, tags)),
+  };
+  const runtimeService = StreamingChatDeps.bind(runtimeDeps);
   const runtime: StreamingRuntime = {
     lastRunId: 0,
     currentRunId: null,
@@ -300,9 +325,9 @@ export function createStreamingChatService(
 
       const runId = beginStreamRun(runtime);
       try {
-        await runtimeService.run(sendMessageEffect(input, runtime, runId));
+        await runtimeService.run(sendMessageEffect(input, runtime, streamingTelemetry, runId));
       } catch (error) {
-        await Promise.resolve(deps.captureError(error));
+        await streamingTelemetry.captureError(error);
         resetStreamStateIfCurrent(runtime, deps, runId);
       }
     },

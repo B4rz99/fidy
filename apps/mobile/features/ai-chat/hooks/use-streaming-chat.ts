@@ -2,13 +2,7 @@ import { useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth";
 import { saveCurrentTransaction, useTransactionStore } from "@/features/transactions";
 import { tryGetDb } from "@/shared/db";
-import {
-  captureError,
-  captureWarning,
-  parseIsoDate,
-  trackAiMessageSent,
-  trackTransactionCreated,
-} from "@/shared/lib";
+import { parseIsoDate, trackAiMessageSent, trackTransactionCreated } from "@/shared/lib";
 import { parseActionFromResponse } from "../lib/parse-action";
 import type { ChatAction } from "../schema";
 import { streamChat } from "../services/ai-chat-api";
@@ -37,8 +31,6 @@ const streamingChatService = createStreamingChatService({
   addAssistantChatMessage,
   parseActionFromResponse,
   trackAiMessageSent,
-  captureWarning,
-  captureError,
 });
 
 export function cancelActiveStream(): void {
