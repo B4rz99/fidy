@@ -1,5 +1,4 @@
 import {
-  ArrowLeftRight,
   Car,
   Clapperboard,
   Ellipsis,
@@ -71,12 +70,6 @@ export const CATEGORIES: readonly Category[] = [
     color: Colors.chart.services,
   },
   {
-    id: "transfer" as CategoryId,
-    label: { en: "Transfer", es: "Transferencia" },
-    icon: ArrowLeftRight,
-    color: Colors.chart.transfer,
-  },
-  {
     id: "other" as CategoryId,
     label: { en: "Other", es: "Otro" },
     icon: Ellipsis,
@@ -107,5 +100,5 @@ export const isValidCategoryId = (
 
 export const CATEGORY_IDS = CATEGORIES.map((c) => c.id);
 
-export const CATEGORY_ROWS = [CATEGORIES.slice(0, 5), CATEGORIES.slice(5, 10)] as const;
+export const CATEGORY_ROWS = [CATEGORIES.slice(0, 5), CATEGORIES.slice(5, 9)] as const;
 export const CATEGORY_ROW_KEYS = CATEGORY_ROWS.map((row) => row.map((c) => c.id).join("-"));

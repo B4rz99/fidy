@@ -1,9 +1,18 @@
 import { z } from "zod";
-import type { CategoryId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
+import type {
+  CategoryId,
+  CopAmount,
+  FinancialAccountId,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 import { isValidCategoryId } from "./lib/categories";
 
 export const transactionTypeSchema = z.enum(["expense", "income"]);
 export type TransactionType = z.infer<typeof transactionTypeSchema>;
+
+export const accountAttributionStateSchema = z.enum(["confirmed", "inferred", "unresolved"]);
+export type AccountAttributionState = z.infer<typeof accountAttributionStateSchema>;
 
 export function makeCategoryIdSchema(isValid: (id: string) => boolean) {
   return z
@@ -36,4 +45,8 @@ export type StoredTransaction = {
   readonly createdAt: Date;
   readonly updatedAt: Date;
   readonly deletedAt: Date | null;
+  readonly accountId?: FinancialAccountId;
+  readonly accountAttributionState?: AccountAttributionState;
+  readonly supersededAt?: Date | null;
+  readonly source?: string;
 };

@@ -14,7 +14,6 @@ const CATEGORY_IDS = [
   "home",
   "clothing",
   "services",
-  "transfer",
   "other",
 ] as const;
 
@@ -26,8 +25,7 @@ const CATEGORY_GUIDE = `- food: groceries, restaurants, bakeries, coffee, food d
 - home: rent, utilities, internet, furniture (EPM, Codensa, Claro hogar, Homecenter, arriendo)
 - clothing: apparel, shoes (Zara, Falabella, Tennis, Arturo Calle)
 - services: insurance, phone plan, subscriptions (Claro móvil, seguros, MetLife, notaría)
-- transfer: money transfers (Nequi, Daviplata, PSE, transferencia)
-- other: anything unclear`;
+- other: anything unclear, including transfers`;
 
 const CLASSIFY_SYSTEM = `Pick the best category for this Colombian merchant.
 

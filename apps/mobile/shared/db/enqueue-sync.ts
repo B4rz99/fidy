@@ -5,6 +5,10 @@ import { syncQueue } from "./schema";
 export type SyncOperation = "insert" | "update" | "delete";
 export type SyncTableName =
   | "transactions"
+  | "financialAccounts"
+  | "financialAccountIdentifiers"
+  | "openingBalances"
+  | "transfers"
   | "budgets"
   | "goals"
   | "goalContributions"

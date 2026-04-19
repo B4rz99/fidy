@@ -8,9 +8,9 @@ import {
 } from "@/features/transactions/lib/categories";
 
 describe("categories", () => {
-  it("exports exactly 10 categories", () => {
-    expect(CATEGORIES).toHaveLength(10);
-    expect(CATEGORY_IDS).toHaveLength(10);
+  it("exports exactly 9 categories", () => {
+    expect(CATEGORIES).toHaveLength(9);
+    expect(CATEGORY_IDS).toHaveLength(9);
   });
 
   it("contains the expected category IDs", () => {
@@ -23,7 +23,6 @@ describe("categories", () => {
       "home",
       "clothing",
       "services",
-      "transfer",
       "other",
     ]);
   });
@@ -38,10 +37,14 @@ describe("categories", () => {
   });
 
   describe("isValidCategoryId", () => {
-    it("returns true for all 10 built-in category IDs", () => {
+    it("returns true for all built-in category IDs", () => {
       for (const id of CATEGORY_IDS) {
         expect(isValidCategoryId(id)).toBe(true);
       }
+    });
+
+    it("returns false for transfer", () => {
+      expect(isValidCategoryId("transfer")).toBe(false);
     });
 
     it("returns false for unknown string", () => {

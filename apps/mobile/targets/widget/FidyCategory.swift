@@ -4,7 +4,7 @@ import AppIntents
 
 enum FidyCategory: String, AppEnum {
     case food, transport, entertainment, health, education
-    case home, clothing, services, transfer, other
+    case home, clothing, services, other
 
     static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Category")
     static let caseDisplayRepresentations: [FidyCategory: DisplayRepresentation] = [
@@ -16,7 +16,6 @@ enum FidyCategory: String, AppEnum {
         .home: "Home",
         .clothing: "Clothing",
         .services: "Services",
-        .transfer: "Transfer",
         .other: "Other",
     ]
 }

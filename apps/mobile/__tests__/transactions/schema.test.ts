@@ -19,7 +19,7 @@ describe("createTransactionSchema", () => {
     const result = createTransactionSchema.safeParse({
       ...validInput,
       type: "income",
-      categoryId: "transfer",
+      categoryId: "other",
     });
     expect(result.success).toBe(true);
   });
@@ -66,6 +66,14 @@ describe("createTransactionSchema", () => {
     const result = createTransactionSchema.safeParse({
       ...validInput,
       categoryId: "unknown",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects transfer as a transaction category", () => {
+    const result = createTransactionSchema.safeParse({
+      ...validInput,
+      categoryId: "transfer",
     });
     expect(result.success).toBe(false);
   });

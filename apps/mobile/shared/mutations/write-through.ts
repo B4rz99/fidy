@@ -1,3 +1,4 @@
+import type { TransactionRow as RepoTransactionRow } from "@/features/transactions/lib/repository";
 import type {
   AnyDb,
   billPayments,
@@ -8,7 +9,6 @@ import type {
   notifications,
   SyncOperation,
   SyncTableName,
-  transactions,
   userCategories,
 } from "@/shared/db";
 import { generateBudgetId, generateSyncQueueId } from "@/shared/lib";
@@ -30,7 +30,7 @@ export type MutationOutcome =
   | { success: true; didMutate: boolean }
   | { success: false; error: string };
 
-type TransactionRow = typeof transactions.$inferInsert;
+type TransactionRow = RepoTransactionRow;
 type GoalRow = typeof goals.$inferInsert;
 type GoalContributionRow = typeof goalContributions.$inferInsert;
 type BudgetRow = typeof budgets.$inferInsert;

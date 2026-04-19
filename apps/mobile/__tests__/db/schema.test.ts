@@ -18,10 +18,13 @@ describe("transactions table schema", () => {
     expect(names).toContain("categoryId");
     expect(names).toContain("description");
     expect(names).toContain("date");
+    expect(names).toContain("accountId");
+    expect(names).toContain("accountAttributionState");
+    expect(names).toContain("supersededAt");
     expect(names).toContain("createdAt");
     expect(names).toContain("updatedAt");
     expect(names).toContain("deletedAt");
-    expect(names).toHaveLength(11);
+    expect(names).toHaveLength(14);
   });
 
   it("id is primary key", () => {
@@ -42,6 +45,21 @@ describe("transactions table schema", () => {
   it("userId is not null", () => {
     const cols = getTableColumns(transactions);
     expect(cols.userId.notNull).toBe(true);
+  });
+
+  it("accountId is not null", () => {
+    const cols = getTableColumns(transactions);
+    expect(cols.accountId.notNull).toBe(true);
+  });
+
+  it("accountAttributionState is not null", () => {
+    const cols = getTableColumns(transactions);
+    expect(cols.accountAttributionState.notNull).toBe(true);
+  });
+
+  it("supersededAt is nullable", () => {
+    const cols = getTableColumns(transactions);
+    expect(cols.supersededAt.notNull).toBe(false);
   });
 
   it("has source column", () => {

@@ -1,6 +1,7 @@
+import { buildDefaultFinancialAccountId } from "@/features/financial-accounts";
 import { parseDigitsToAmount, parseIsoDate, toIsoDate, toIsoDateTime } from "@/shared/lib";
 import type { CategoryId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
-import type { StoredTransaction, TransactionType } from "../schema";
+import type { AccountAttributionState, StoredTransaction, TransactionType } from "../schema";
 import { createTransactionSchema } from "../schema";
 import { getBuiltInCategoryId, isValidCategoryId } from "./categories";
 import type { TransactionRow } from "./repository";
@@ -14,12 +15,31 @@ type BuildInput = {
 };
 
 const OTHER_CATEGORY_ID = getBuiltInCategoryId("other");
+const TRANSACTION_SOURCES_WITH_CONFIRMED_DEFAULT = new Set(["manual"]);
+
+function getDefaultAccountAttributionState(source: string | undefined): AccountAttributionState {
+  return TRANSACTION_SOURCES_WITH_CONFIRMED_DEFAULT.has(source ?? "manual")
+    ? "confirmed"
+    : "unresolved";
+}
+
+function normalizeAccountAttributionState(
+  state: string | undefined,
+  source: string | undefined
+): AccountAttributionState {
+  if (state === "confirmed" || state === "inferred" || state === "unresolved") {
+    return state;
+  }
+
+  return getDefaultAccountAttributionState(source);
+}
 
 export function buildTransaction(
   input: BuildInput,
   userId: UserId,
   id: TransactionId,
-  now: Date
+  now: Date,
+  existing: StoredTransaction | null = null
 ): { success: true; transaction: StoredTransaction } | { success: false; error: string } {
   const amount = parseDigitsToAmount(input.digits);
 
@@ -49,9 +69,14 @@ export function buildTransaction(
       categoryId: result.data.categoryId,
       description: result.data.description ?? "",
       date: result.data.date,
-      createdAt: now,
+      createdAt: existing?.createdAt ?? now,
       updatedAt: now,
-      deletedAt: null,
+      deletedAt: existing?.deletedAt ?? null,
+      accountId: existing?.accountId ?? buildDefaultFinancialAccountId(userId),
+      accountAttributionState:
+        existing?.accountAttributionState ?? getDefaultAccountAttributionState(existing?.source),
+      supersededAt: existing?.supersededAt ?? null,
+      source: existing?.source ?? "manual",
     },
   };
 }
@@ -68,10 +93,18 @@ export function toStoredTransaction(row: TransactionRow): StoredTransaction {
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
     deletedAt: row.deletedAt ? new Date(row.deletedAt) : null,
+    accountId: row.accountId ?? buildDefaultFinancialAccountId(row.userId),
+    accountAttributionState: normalizeAccountAttributionState(
+      row.accountAttributionState,
+      row.source
+    ),
+    supersededAt: row.supersededAt ? new Date(row.supersededAt) : null,
+    source: row.source ?? "manual",
   };
 }
 
 export function toTransactionRow(tx: StoredTransaction): TransactionRow {
+  const source = tx.source ?? "manual";
   return {
     id: tx.id,
     userId: tx.userId,
@@ -80,7 +113,13 @@ export function toTransactionRow(tx: StoredTransaction): TransactionRow {
     categoryId: tx.categoryId,
     description: tx.description || null,
     date: toIsoDate(tx.date),
+    accountId: tx.accountId ?? buildDefaultFinancialAccountId(tx.userId),
+    accountAttributionState:
+      tx.accountAttributionState ?? getDefaultAccountAttributionState(source),
+    supersededAt: tx.supersededAt ? toIsoDateTime(tx.supersededAt) : null,
     createdAt: toIsoDateTime(tx.createdAt),
     updatedAt: toIsoDateTime(tx.updatedAt),
+    deletedAt: tx.deletedAt ? toIsoDateTime(tx.deletedAt) : null,
+    source,
   };
 }
