@@ -3,6 +3,7 @@ import { useOptionalUserId } from "@/features/auth";
 import { saveCurrentTransaction, useTransactionStore } from "@/features/transactions";
 import { tryGetDb } from "@/shared/db";
 import {
+  captureError,
   captureWarning,
   parseIsoDate,
   trackAiMessageSent,
@@ -11,6 +12,7 @@ import {
 import { parseActionFromResponse } from "../lib/parse-action";
 import type { ChatAction } from "../schema";
 import { streamChat } from "../services/ai-chat-api";
+import { createStreamingChatService } from "../services/create-streaming-chat-service";
 import {
   addAssistantChatMessage,
   addUserChatMessage,
@@ -18,17 +20,29 @@ import {
   useChatStore,
 } from "../store";
 
-let activeController: AbortController | null = null;
-
-function resetStreamState(): void {
-  useChatStore.getState().setStreaming(false);
-  useChatStore.getState().setStreamingContent("");
-  activeController = null;
-}
+const streamingChatService = createStreamingChatService({
+  getState: () => {
+    const state = useChatStore.getState();
+    return {
+      isStreaming: state.isStreaming,
+      currentSessionId: state.currentSessionId,
+      messages: state.messages,
+    };
+  },
+  setStreaming: (isStreaming) => useChatStore.getState().setStreaming(isStreaming),
+  setStreamingContent: (content) => useChatStore.getState().setStreamingContent(content),
+  streamChat,
+  createChatSession,
+  addUserChatMessage,
+  addAssistantChatMessage,
+  parseActionFromResponse,
+  trackAiMessageSent,
+  captureWarning,
+  captureError,
+});
 
 export function cancelActiveStream(): void {
-  activeController?.abort();
-  resetStreamState();
+  streamingChatService.cancel();
 }
 
 export function useStreamingChat() {
@@ -77,86 +91,9 @@ export function useStreamingChat() {
 
   const sendMessage = useCallback(
     async (text: string) => {
-      if (isStreaming || !text.trim() || !db || !userId) return;
-
-      const store = useChatStore.getState();
-
-      if (!store.currentSessionId) {
-        await createChatSession(db, userId, text);
-      }
-
-      if (!useChatStore.getState().currentSessionId) {
-        return;
-      }
-
-      await addUserChatMessage(db, userId, text);
-      trackAiMessageSent();
-
-      const allMessages = [
-        ...store.messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
-        { role: "user" as const, content: text },
-      ];
-
-      store.setStreaming(true);
-      store.setStreamingContent("");
-
-      const controller = new AbortController();
-      activeController = controller;
-
-      let accumulated = "";
-
-      try {
-        await streamChat(
-          allMessages,
-          {
-            onChunk: (chunk) => {
-              accumulated += chunk;
-              useChatStore.getState().setStreamingContent(accumulated);
-            },
-            onDone: () => {
-              void (async () => {
-                const action = parseActionFromResponse(accumulated);
-                await addAssistantChatMessage(db, userId, accumulated, action);
-
-                if (action?.type === "add") {
-                  try {
-                    await executeAction(action);
-                  } catch (actionErr) {
-                    captureWarning("ai_action_failed", {
-                      actionType: action.type,
-                      errorType: actionErr instanceof Error ? actionErr.message : "unknown",
-                    });
-                  }
-                }
-
-                resetStreamState();
-              })();
-            },
-            onError: (error) => {
-              void (async () => {
-                const errorMessage =
-                  accumulated || `I'm sorry, something went wrong. Please try again. (${error})`;
-                await addAssistantChatMessage(db, userId, errorMessage);
-                resetStreamState();
-              })();
-            },
-          },
-          controller.signal
-        );
-      } catch (err) {
-        if (!controller.signal.aborted) {
-          const errorMessage =
-            accumulated ||
-            `I'm sorry, something went wrong. Please try again. (${err instanceof Error ? err.message : "Unknown error"})`;
-          await addAssistantChatMessage(db, userId, errorMessage);
-        }
-        resetStreamState();
-      }
+      await streamingChatService.sendMessage({ db, userId, text, executeAction });
     },
-    [db, executeAction, isStreaming, userId]
+    [db, executeAction, userId]
   );
 
   return { sendMessage, cancelStream: cancelActiveStream, isStreaming, streamingContent };
