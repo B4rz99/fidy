@@ -1,8 +1,9 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { RawEmail } from "@/features/email-capture/schema";
+import { createEmailPipelineService } from "@/features/email-capture/services/create-email-pipeline-service";
 import { processEmails, processRetries } from "@/features/email-capture/services/email-pipeline";
-import { requireUserId } from "@/shared/types/assertions";
+import { requireIsoDateTime, requireUserId } from "@/shared/types/assertions";
 
 const mockGetProcessedExternalIds = vi.fn().mockResolvedValue(new Set<string>());
 const mockInsertProcessedEmail = vi.fn();
@@ -173,6 +174,45 @@ describe("email processing pipeline", () => {
       "compra en exito",
       "other",
       expect.any(String)
+    );
+  });
+
+  it("uses the injected clock for persisted email timestamps and retry backoff", async () => {
+    const fixedNow = requireIsoDateTime("2026-04-18T12:34:56.000Z");
+    const service = createEmailPipelineService({
+      parseEmailApi: mockParseEmailApi,
+      lookupMerchantRule: mockLookupMerchantRule,
+      findDuplicateTransaction: mockFindDuplicateTransaction,
+      getProcessedExternalIds: mockGetProcessedExternalIds,
+      getPendingRetryEmails: mockGetPendingRetryEmails,
+      insertProcessedEmail: mockInsertProcessedEmail,
+      markForRetry: mockMarkForRetry,
+      markPermanentlyFailed: mockMarkPermanentlyFailed,
+      markRetrySuccess: mockMarkRetrySuccess,
+      updateProcessedEmailStatus: mockUpdateProcessedEmailStatus,
+      insertTransaction: mockInsertTransaction,
+      enqueueSync: mockEnqueueSync,
+      insertMerchantRule: mockInsertMerchantRule,
+      trackTransactionCreated: vi.fn(),
+      captureError: vi.fn(),
+      captureWarning: vi.fn(),
+      capturePipelineEvent: vi.fn(),
+      clock: {
+        now: () => new Date(fixedNow),
+        nowIsoDateTime: () => fixedNow,
+      },
+    });
+
+    mockParseEmailApi.mockRejectedValueOnce(new Error("LLM timeout"));
+
+    await service.processEmails(mockDb, USER_ID, [makeRawEmail()]);
+
+    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        createdAt: fixedNow,
+        nextRetryAt: "2026-04-18T12:35:56.000Z",
+      })
     );
   });
 

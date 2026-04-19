@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createSyncService } from "@/features/sync/services/create-sync-service";
+import { requireIsoDateTime } from "@/shared/types/assertions";
 
 describe("createSyncService", () => {
   it("returns skipped_offline and does not touch remote sync when offline", async () => {
@@ -129,6 +130,7 @@ describe("createSyncService", () => {
   });
 
   it("re-enqueues the local transaction when resolving a conflict in favor of local data", async () => {
+    const resolvedAt = requireIsoDateTime("2026-04-18T12:34:56.000Z");
     const upsertTransaction = vi.fn();
     const enqueueTransactionSync = vi.fn();
     const resolveConflictRow = vi.fn();
@@ -180,6 +182,10 @@ describe("createSyncService", () => {
       upsertTransaction,
       enqueueTransactionSync,
       resolveConflictRow,
+      clock: {
+        now: () => new Date(resolvedAt),
+        nowIsoDateTime: () => resolvedAt,
+      },
     });
 
     const result = await service.resolveConflict({
@@ -194,16 +200,11 @@ describe("createSyncService", () => {
         id: "tx-1",
         amount: 1000,
         source: "manual",
-        updatedAt: expect.any(String),
+        updatedAt: resolvedAt,
       })
     );
-    expect(enqueueTransactionSync).toHaveBeenCalledWith({} as never, "tx-1", expect.any(String));
-    expect(resolveConflictRow).toHaveBeenCalledWith(
-      {} as never,
-      "conflict-1",
-      "local",
-      expect.any(String)
-    );
+    expect(enqueueTransactionSync).toHaveBeenCalledWith({} as never, "tx-1", resolvedAt);
+    expect(resolveConflictRow).toHaveBeenCalledWith({} as never, "conflict-1", "local", resolvedAt);
     expect(refreshTransactions).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ unresolvedConflicts: 0 });
   });
