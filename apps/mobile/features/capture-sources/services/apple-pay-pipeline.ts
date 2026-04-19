@@ -1,3 +1,4 @@
+import { findMatchingFinancialAccountId } from "@/features/account-suggestions";
 import {
   buildApplePayCaptureEvidence,
   materializeCaptureEvidenceRows,
@@ -42,6 +43,7 @@ export async function processApplePayIntent(
   intent: ApplePayIntentData
 ): Promise<ApplePayPipelineResult> {
   assertUserId(userId);
+  const captureEvidence = buildApplePayCaptureEvidence(intent);
   const amount = Math.round(intent.amount);
   assertCopAmount(amount);
   const today = toIsoDate(new Date());
@@ -82,7 +84,7 @@ export async function processApplePayIntent(
       });
       await saveCaptureEvidenceRows(
         db,
-        materializeCaptureEvidenceRows(buildApplePayCaptureEvidence(intent), {
+        materializeCaptureEvidenceRows(captureEvidence, {
           userId,
           transactionId: existingTxId,
           processedEmailId: null,
@@ -111,6 +113,7 @@ export async function processApplePayIntent(
     const txId = generateTransactionId();
     const now = toIsoDateTime(new Date());
     const defaultAccount = ensureDefaultFinancialAccount(db, userId, { now });
+    const matchedAccountId = findMatchingFinancialAccountId(db, userId, captureEvidence);
 
     insertTransaction(db, {
       id: txId,
@@ -120,8 +123,8 @@ export async function processApplePayIntent(
       categoryId,
       description: intent.merchant,
       date: today,
-      accountId: defaultAccount.id,
-      accountAttributionState: "unresolved",
+      accountId: matchedAccountId ?? defaultAccount.id,
+      accountAttributionState: matchedAccountId ? "inferred" : "unresolved",
       source,
       createdAt: now,
       updatedAt: now,
@@ -150,7 +153,7 @@ export async function processApplePayIntent(
     });
     await saveCaptureEvidenceRows(
       db,
-      materializeCaptureEvidenceRows(buildApplePayCaptureEvidence(intent), {
+      materializeCaptureEvidenceRows(captureEvidence, {
         userId,
         transactionId: txId,
         processedEmailId: null,

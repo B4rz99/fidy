@@ -33,6 +33,7 @@ const mockBuildApplePayCaptureEvidence = vi.fn().mockReturnValue([
   },
 ]);
 const mockSaveCaptureEvidenceRows = vi.fn();
+const mockFindMatchingFinancialAccountId = vi.fn().mockReturnValue(null);
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
@@ -63,6 +64,10 @@ vi.mock("@/features/capture-sources/lib/repository", () => ({
 
 vi.mock("@/features/financial-accounts", () => ({
   ensureDefaultFinancialAccount: (...args: any[]) => mockEnsureDefaultFinancialAccount(...args),
+}));
+
+vi.mock("@/features/account-suggestions", () => ({
+  findMatchingFinancialAccountId: (...args: any[]) => mockFindMatchingFinancialAccountId(...args),
 }));
 
 vi.mock("@/features/capture-evidence", () => ({
@@ -118,6 +123,7 @@ describe("processApplePayIntent", () => {
         value: "visa *1234",
       },
     ]);
+    mockFindMatchingFinancialAccountId.mockReturnValue(null);
     mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
   });
 
@@ -225,6 +231,21 @@ describe("processApplePayIntent", () => {
       "farmatodo",
       "health",
       expect.any(String)
+    );
+  });
+
+  it("marks the transaction as inferred when evidence matches a known financial account", async () => {
+    mockFindMatchingFinancialAccountId.mockReturnValueOnce("fa-card-1");
+
+    const result = await processApplePayIntent(mockDb, USER_ID, makeIntent());
+
+    expect(result.saved).toBe(true);
+    expect(mockInsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        accountId: "fa-card-1",
+        accountAttributionState: "inferred",
+      })
     );
   });
 

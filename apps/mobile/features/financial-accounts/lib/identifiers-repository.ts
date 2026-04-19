@@ -32,6 +32,22 @@ export function getFinancialAccountIdentifiersForAccount(
     .all();
 }
 
+export function getFinancialAccountIdentifiersForUser(
+  db: AnyDb,
+  userId: FinancialAccountIdentifierRow["userId"]
+) {
+  return db
+    .select()
+    .from(financialAccountIdentifiers)
+    .where(
+      and(
+        eq(financialAccountIdentifiers.userId, userId),
+        isNull(financialAccountIdentifiers.deletedAt)
+      )
+    )
+    .all();
+}
+
 function findActiveFinancialAccountIdentifierByUniqueKey(
   db: AnyDb,
   row: FinancialAccountIdentifierRow

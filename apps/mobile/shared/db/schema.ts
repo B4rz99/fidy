@@ -9,6 +9,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import type {
+  AccountSuggestionDismissalId,
   BillId,
   BillPaymentId,
   BudgetId,
@@ -219,6 +220,26 @@ export const captureEvidence = sqliteTable(
     index("idx_capture_evidence_processed_email").on(table.processedEmailId),
     index("idx_capture_evidence_processed_capture").on(table.processedCaptureId),
     index("idx_capture_evidence_user_updated").on(table.userId, table.updatedAt),
+  ]
+);
+
+export const accountSuggestionDismissals = sqliteTable(
+  "account_suggestion_dismissals",
+  {
+    id: text("id").$type<AccountSuggestionDismissalId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    scope: text("scope").notNull(),
+    value: text("value").notNull(),
+    dismissedScore: integer("dismissed_score").notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [
+    uniqueIndex("uq_account_suggestion_dismissals_scope")
+      .on(table.userId, table.scope, table.value)
+      .where(sql`${table.deletedAt} is null`),
+    index("idx_account_suggestion_dismissals_user_updated").on(table.userId, table.updatedAt),
   ]
 );
 

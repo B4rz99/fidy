@@ -34,6 +34,7 @@ const mockBuildNotificationCaptureEvidence = vi.fn().mockReturnValue([
   },
 ]);
 const mockSaveCaptureEvidenceRows = vi.fn();
+const mockFindMatchingFinancialAccountId = vi.fn().mockReturnValue(null);
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
@@ -68,6 +69,10 @@ vi.mock("@/features/email-capture/services/parse-email-api", () => ({
 
 vi.mock("@/features/financial-accounts", () => ({
   ensureDefaultFinancialAccount: (...args: any[]) => mockEnsureDefaultFinancialAccount(...args),
+}));
+
+vi.mock("@/features/account-suggestions", () => ({
+  findMatchingFinancialAccountId: (...args: any[]) => mockFindMatchingFinancialAccountId(...args),
 }));
 
 vi.mock("@/features/capture-evidence", () => ({
@@ -127,6 +132,7 @@ describe("processNotification", () => {
         value: "1234",
       },
     ]);
+    mockFindMatchingFinancialAccountId.mockReturnValue(null);
     mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
   });
 
@@ -253,6 +259,21 @@ describe("processNotification", () => {
     expect(mockInsertTransaction).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({ categoryId: "transport" })
+    );
+  });
+
+  it("marks the transaction as inferred when evidence matches a known financial account", async () => {
+    mockFindMatchingFinancialAccountId.mockReturnValueOnce("fa-card-1");
+
+    const result = await processNotification(mockDb, USER_ID, makeNotification());
+
+    expect(result.saved).toBe(true);
+    expect(mockInsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        accountId: "fa-card-1",
+        accountAttributionState: "inferred",
+      })
     );
   });
 

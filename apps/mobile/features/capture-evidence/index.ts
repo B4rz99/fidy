@@ -7,6 +7,7 @@ export type { CaptureEvidenceRow } from "./lib/repository";
 export {
   countCaptureEvidenceOccurrences,
   getCaptureEvidenceById,
+  getCaptureEvidenceRowsForScopeValue,
   getRepeatedCaptureEvidenceForUser,
   linkCaptureEvidenceToTransaction,
   materializeCaptureEvidenceRows,

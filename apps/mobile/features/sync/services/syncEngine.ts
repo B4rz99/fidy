@@ -1,5 +1,10 @@
 // biome-ignore-all lint/style/useNamingConvention: snake_case matches Supabase Postgres column names
+
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  getAccountSuggestionDismissalById,
+  upsertAccountSuggestionDismissal,
+} from "@/features/account-suggestions";
 import { getBudgetById } from "@/features/budget";
 import { getCaptureEvidenceById, upsertCaptureEvidence } from "@/features/capture-evidence";
 import {
@@ -37,6 +42,7 @@ import { insertConflict } from "../lib/conflict-repository";
 const LEGACY_LAST_SYNC_AT = "last_sync_at";
 const LAST_SYNC_AT_BY_TABLE = {
   transactions: "last_sync_at_transactions",
+  account_suggestion_dismissals: "last_sync_at_account_suggestion_dismissals",
   capture_evidence: "last_sync_at_capture_evidence",
   financial_accounts: "last_sync_at_financial_accounts",
   transfers: "last_sync_at_transfers",
@@ -119,6 +125,17 @@ type SupabaseCaptureEvidenceRow = {
   transaction_id: string | null;
   processed_email_id: string | null;
   processed_capture_id: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+};
+
+type SupabaseAccountSuggestionDismissalRow = {
+  id: string;
+  user_id: string;
+  scope: string;
+  value: string;
+  dismissed_score: number;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -257,6 +274,21 @@ function fromSupabaseCaptureEvidenceRow(
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,
   } as Parameters<typeof upsertCaptureEvidence>[1];
+}
+
+function fromSupabaseAccountSuggestionDismissalRow(
+  row: SupabaseAccountSuggestionDismissalRow
+): Parameters<typeof upsertAccountSuggestionDismissal>[1] {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    scope: row.scope,
+    value: row.value,
+    dismissedScore: row.dismissed_score,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
+  } as Parameters<typeof upsertAccountSuggestionDismissal>[1];
 }
 
 type PullTableName = keyof typeof LAST_SYNC_AT_BY_TABLE;
@@ -602,6 +634,32 @@ async function processCaptureEvidenceEntry(
   return !error;
 }
 
+async function processAccountSuggestionDismissalEntry(
+  db: AnyDb,
+  supabase: SupabaseClient,
+  rowId: string
+): Promise<boolean> {
+  const row = getAccountSuggestionDismissalById(
+    db,
+    rowId as Parameters<typeof getAccountSuggestionDismissalById>[1]
+  );
+  if (!row) return true;
+  const { error } = await supabase.from("account_suggestion_dismissals").upsert(
+    {
+      id: row.id,
+      user_id: row.userId,
+      scope: row.scope,
+      value: row.value,
+      dismissed_score: row.dismissedScore,
+      created_at: row.createdAt,
+      updated_at: row.updatedAt,
+      deleted_at: row.deletedAt,
+    },
+    { onConflict: "user_id,scope,value" }
+  );
+  return !error;
+}
+
 async function processContributionEntry(
   db: AnyDb,
   supabase: SupabaseClient,
@@ -651,6 +709,14 @@ async function processEntry(
   if (entry.tableName === "financialAccounts") {
     const ok = await processFinancialAccountEntry(db, supabase, entry.rowId);
     if (!ok) captureWarning("sync_push_entry_failed", { tableName: "financialAccounts" });
+    return ok ? entry.id : null;
+  }
+
+  if (entry.tableName === "accountSuggestionDismissals") {
+    const ok = await processAccountSuggestionDismissalEntry(db, supabase, entry.rowId);
+    if (!ok) {
+      captureWarning("sync_push_entry_failed", { tableName: "accountSuggestionDismissals" });
+    }
     return ok ? entry.id : null;
   }
 
@@ -730,6 +796,7 @@ export async function syncPull(
   userId: string
 ): Promise<boolean> {
   const [
+    accountSuggestionDismissalsCursor,
     captureEvidenceCursor,
     financialAccountsCursor,
     transfersCursor,
@@ -737,6 +804,7 @@ export async function syncPull(
     financialAccountIdentifiersCursor,
     transactionsCursor,
   ] = await Promise.all([
+    getPullCursor(db, "account_suggestion_dismissals"),
     getPullCursor(db, "capture_evidence"),
     getPullCursor(db, "financial_accounts"),
     getPullCursor(db, "transfers"),
@@ -745,6 +813,7 @@ export async function syncPull(
     getPullCursor(db, "transactions"),
   ]);
   const [
+    accountSuggestionDismissalsFetchResult,
     captureEvidenceFetchResult,
     financialAccountsFetchResult,
     transfersFetchResult,
@@ -752,6 +821,12 @@ export async function syncPull(
     financialAccountIdentifiersFetchResult,
     transactionsFetchResult,
   ] = await Promise.allSettled([
+    fetchPullRows<SupabaseAccountSuggestionDismissalRow>(
+      supabase,
+      userId,
+      "account_suggestion_dismissals",
+      accountSuggestionDismissalsCursor
+    ),
     fetchPullRows<SupabaseCaptureEvidenceRow>(
       supabase,
       userId,
@@ -781,6 +856,7 @@ export async function syncPull(
   ]);
 
   const [
+    accountSuggestionDismissalsResult,
     captureEvidenceResult,
     financialAccountsResult,
     transfersResult,
@@ -788,6 +864,7 @@ export async function syncPull(
     financialAccountIdentifiersResult,
     transactionsResult,
   ] = [
+    toPullFetchOutcome("account_suggestion_dismissals", accountSuggestionDismissalsFetchResult),
     toPullFetchOutcome("capture_evidence", captureEvidenceFetchResult),
     toPullFetchOutcome("financial_accounts", financialAccountsFetchResult),
     toPullFetchOutcome("transfers", transfersFetchResult),
@@ -797,6 +874,7 @@ export async function syncPull(
   ];
 
   const failedFetches = [
+    accountSuggestionDismissalsResult,
     captureEvidenceResult,
     financialAccountsResult,
     transfersResult,
@@ -813,6 +891,7 @@ export async function syncPull(
     });
   }
 
+  const accountSuggestionDismissalRows = accountSuggestionDismissalsResult.rows;
   const financialAccountRows = financialAccountsResult.rows;
   const captureEvidenceRows = captureEvidenceResult.rows;
   const transferRows = transfersResult.rows;
@@ -820,6 +899,7 @@ export async function syncPull(
   const financialAccountIdentifierRows = financialAccountIdentifiersResult.rows;
   const transactionRows = transactionsResult.rows;
   const allUpdatedAts = [
+    ...accountSuggestionDismissalRows.map((row) => row.updated_at),
     ...captureEvidenceRows.map((row) => row.updated_at),
     ...financialAccountRows.map((row) => row.updated_at),
     ...transferRows.map((row) => row.updated_at),
@@ -830,6 +910,16 @@ export async function syncPull(
   // FP exemption: each row may depend on prior upserts for conflict detection.
   let failedCount = 0;
   let conflictCount = 0;
+  const accountSuggestionDismissalsOutcome = applyServerRows(db, accountSuggestionDismissalRows, {
+    getLocalRow: (database, rowId) =>
+      getAccountSuggestionDismissalById(
+        database,
+        rowId as Parameters<typeof getAccountSuggestionDismissalById>[1]
+      ),
+    upsertLocalRow: upsertAccountSuggestionDismissal,
+    mapServerRow: fromSupabaseAccountSuggestionDismissalRow,
+  });
+  failedCount += accountSuggestionDismissalsOutcome.failedCount;
   const captureEvidenceOutcome = applyServerRows(db, captureEvidenceRows, {
     getLocalRow: (database, rowId) =>
       getCaptureEvidenceById(database, rowId as Parameters<typeof getCaptureEvidenceById>[1]),
@@ -935,6 +1025,11 @@ export async function syncPull(
   });
 
   await Promise.all([
+    advancePullCursor(
+      db,
+      "account_suggestion_dismissals",
+      accountSuggestionDismissalsOutcome.safeCursor
+    ),
     advancePullCursor(db, "capture_evidence", captureEvidenceOutcome.safeCursor),
     advancePullCursor(db, "financial_accounts", financialAccountsOutcome.safeCursor),
     advancePullCursor(db, "transfers", transfersOutcome.safeCursor),
