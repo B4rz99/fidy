@@ -1,5 +1,5 @@
-import type { FinancialAccountKind } from "../schema";
 import type { FinancialAccountId } from "@/shared/types/branded";
+import type { FinancialAccountKind } from "../schema";
 
 export type FinancialAccountFormLookupStatus = "idle" | "loading" | "ready" | "missing";
 export type FinancialAccountFormScreenState = "create" | "loading" | "edit" | "missing";

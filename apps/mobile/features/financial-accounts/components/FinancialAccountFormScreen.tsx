@@ -9,9 +9,9 @@ import {
   financialAccountKindSchema,
 } from "@/features/financial-accounts";
 import {
+  type FinancialAccountFormLookupStatus,
   getFinancialAccountFormScreenState,
   hasInvalidBillingDayInput,
-  type FinancialAccountFormLookupStatus,
 } from "@/features/financial-accounts/lib/form-screen";
 import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
 import { createFinancialAccountManagementService } from "@/features/financial-accounts/lib/management-service";
@@ -544,9 +544,7 @@ export function FinancialAccountFormScreen() {
             style={[styles.primaryButton, styles.stateButton, { backgroundColor: accentGreen }]}
             onPress={() => router.replace("/financial-accounts")}
           >
-            <Text style={styles.primaryButtonText}>
-              {t("financialAccounts.form.missingCta")}
-            </Text>
+            <Text style={styles.primaryButtonText}>{t("financialAccounts.form.missingCta")}</Text>
           </Pressable>
         </View>
       </ScreenLayout>
