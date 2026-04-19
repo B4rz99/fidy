@@ -15,6 +15,7 @@ import {
   Palette,
   Shield,
   Tag,
+  Wallet,
 } from "@/shared/components/icons";
 import { Linking, Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -139,6 +140,11 @@ export function SettingsScreen() {
               count: connectedCount,
             })}
             onPress={() => router.push("/connected-accounts")}
+          />
+          <SettingsRow
+            icon={Wallet}
+            label={t("financialAccounts.list.settingsRow")}
+            onPress={() => router.push("/financial-accounts")}
           />
           <SettingsRow
             icon={Bell}
