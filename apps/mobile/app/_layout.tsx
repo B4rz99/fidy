@@ -490,6 +490,21 @@ function RootLayout() {
               options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
             />
             <Stack.Screen
+              name="add-transaction"
+              options={{
+                ...SHEET,
+                sheetAllowedDetents: [0.65],
+                gestureEnabled: false,
+                sheetGrabberVisible: false,
+              }}
+            />
+            <Stack.Screen
+              name="add-transfer"
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
               name="bills-calendar"
               options={{
                 headerShown: Platform.OS === "ios",

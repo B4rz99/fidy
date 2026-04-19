@@ -25,7 +25,7 @@ export default function FailedEmailsScreen() {
   const failedEmails = useEmailCaptureStore((s) => s.failedEmails);
 
   const handleAddManually = useCallback(() => {
-    push("/(tabs)/add");
+    push("/add-transaction");
   }, [push]);
 
   const renderItem = useCallback(

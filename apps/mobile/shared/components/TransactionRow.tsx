@@ -6,11 +6,13 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 type TransactionRowProps = {
   icon: LucideIcon;
   iconBgColor?: string;
+  iconColor?: string;
   name: string;
   date?: string;
   amount: string;
   category: string;
   isPositive?: boolean;
+  amountTone?: "positive" | "negative" | "neutral";
   onEdit?: () => void;
   onDelete?: () => void;
 };
@@ -18,17 +20,27 @@ type TransactionRowProps = {
 export function TransactionRow({
   icon: Icon,
   iconBgColor,
+  iconColor: iconColorOverride,
   name,
   date,
   amount,
   category,
   isPositive = false,
+  amountTone,
   onEdit,
   onDelete,
 }: TransactionRowProps) {
   const defaultIconBg = useThemeColor("peachLight");
-  const iconColor = useThemeColor("tertiary");
+  const defaultIconColor = useThemeColor("tertiary");
+  const iconColor = iconColorOverride ?? defaultIconColor;
   const { t } = useTranslation();
+  const resolvedAmountTone = amountTone ?? (isPositive ? "positive" : "negative");
+  const amountClassName =
+    resolvedAmountTone === "positive"
+      ? "text-accent-green dark:text-accent-green-dark"
+      : resolvedAmountTone === "neutral"
+        ? "text-primary dark:text-primary-dark"
+        : "text-accent-red dark:text-accent-red-dark";
 
   const handleLongPress = useCallback(() => {
     if (Platform.OS !== "ios") return;
@@ -72,15 +84,7 @@ export function TransactionRow({
         )}
       </View>
       <View className="items-end">
-        <Text
-          className={`font-poppins-semibold text-body ${
-            isPositive
-              ? "text-accent-green dark:text-accent-green-dark"
-              : "text-accent-red dark:text-accent-red-dark"
-          }`}
-        >
-          {amount}
-        </Text>
+        <Text className={`font-poppins-semibold text-body ${amountClassName}`}>{amount}</Text>
         <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
           {category}
         </Text>
