@@ -1,4 +1,9 @@
 import {
+  buildApplePayCaptureEvidence,
+  materializeCaptureEvidenceRows,
+  saveCaptureEvidenceRows,
+} from "@/features/capture-evidence";
+import {
   insertMerchantRule,
   lookupMerchantRule,
 } from "@/features/email-capture/merchant-rules.public";
@@ -63,8 +68,9 @@ export async function processApplePayIntent(
 
     if (existingTxId) {
       const now = toIsoDateTime(new Date());
+      const processedCaptureId = generateProcessedCaptureId();
       await insertProcessedCapture(db, {
-        id: generateProcessedCaptureId(),
+        id: processedCaptureId,
         fingerprintHash: fingerprint,
         source,
         status: "skipped_duplicate",
@@ -74,6 +80,17 @@ export async function processApplePayIntent(
         receivedAt: now,
         createdAt: now,
       });
+      await saveCaptureEvidenceRows(
+        db,
+        materializeCaptureEvidenceRows(buildApplePayCaptureEvidence(intent), {
+          userId,
+          transactionId: existingTxId,
+          processedEmailId: null,
+          processedCaptureId,
+          createdAt: now,
+          updatedAt: now,
+        })
+      );
       capturePipelineEvent({ source: "apple_pay", saved: 0, skippedDuplicate: 1 });
       return { saved: false, skippedDuplicate: true, transactionId: existingTxId };
     }
@@ -119,8 +136,9 @@ export async function processApplePayIntent(
     });
 
     // Record in processedCaptures
+    const processedCaptureId = generateProcessedCaptureId();
     await insertProcessedCapture(db, {
-      id: generateProcessedCaptureId(),
+      id: processedCaptureId,
       fingerprintHash: fingerprint,
       source,
       status: "success",
@@ -130,6 +148,17 @@ export async function processApplePayIntent(
       receivedAt: now,
       createdAt: now,
     });
+    await saveCaptureEvidenceRows(
+      db,
+      materializeCaptureEvidenceRows(buildApplePayCaptureEvidence(intent), {
+        userId,
+        transactionId: txId,
+        processedEmailId: null,
+        processedCaptureId,
+        createdAt: now,
+        updatedAt: now,
+      })
+    );
 
     // Always cache merchant rule (Apple Pay data is high confidence)
     await insertMerchantRule(db, userId, merchantKey, categoryId, now);

@@ -12,6 +12,7 @@ import type {
   BillId,
   BillPaymentId,
   BudgetId,
+  CaptureEvidenceId,
   CategoryId,
   ChatMessageId,
   ChatSessionId,
@@ -183,6 +184,41 @@ export const financialAccountIdentifiers = sqliteTable(
       .on(table.userId, table.accountId, table.scope, table.value)
       .where(sql`${table.deletedAt} is null`),
     index("idx_financial_account_identifiers_account").on(table.accountId),
+  ]
+);
+
+export const captureEvidence = sqliteTable(
+  "capture_evidence",
+  {
+    id: text("id").$type<CaptureEvidenceId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    sourceFamily: text("source_family").notNull(),
+    evidenceType: text("evidence_type").notNull(),
+    scope: text("scope").notNull(),
+    value: text("value").notNull(),
+    transactionId: text("transaction_id").$type<TransactionId>(),
+    processedEmailId: text("processed_email_id").$type<ProcessedEmailId>(),
+    processedCaptureId: text("processed_capture_id").$type<ProcessedCaptureId>(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [
+    check(
+      "ck_capture_evidence_source_record",
+      sql`(case when ${table.processedEmailId} is not null then 1 else 0 end) + (case when ${table.processedCaptureId} is not null then 1 else 0 end) = 1`
+    ),
+    uniqueIndex("uq_capture_evidence_email")
+      .on(table.userId, table.processedEmailId, table.scope, table.value)
+      .where(sql`${table.processedEmailId} is not null and ${table.deletedAt} is null`),
+    uniqueIndex("uq_capture_evidence_capture")
+      .on(table.userId, table.processedCaptureId, table.scope, table.value)
+      .where(sql`${table.processedCaptureId} is not null and ${table.deletedAt} is null`),
+    index("idx_capture_evidence_user_scope_value").on(table.userId, table.scope, table.value),
+    index("idx_capture_evidence_transaction").on(table.transactionId),
+    index("idx_capture_evidence_processed_email").on(table.processedEmailId),
+    index("idx_capture_evidence_processed_capture").on(table.processedCaptureId),
+    index("idx_capture_evidence_user_updated").on(table.userId, table.updatedAt),
   ]
 );
 

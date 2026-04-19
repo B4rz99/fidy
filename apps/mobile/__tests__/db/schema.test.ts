@@ -1,6 +1,13 @@
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { billPayments, bills, syncMeta, syncQueue, transactions } from "@/shared/db/schema";
+import {
+  billPayments,
+  bills,
+  captureEvidence,
+  syncMeta,
+  syncQueue,
+  transactions,
+} from "@/shared/db/schema";
 
 describe("transactions table schema", () => {
   it("is named 'transactions'", () => {
@@ -83,6 +90,39 @@ describe("syncQueue table schema", () => {
     expect(names).toContain("operation");
     expect(names).toContain("createdAt");
     expect(names).toHaveLength(5);
+  });
+});
+
+describe("captureEvidence table schema", () => {
+  it("is named 'capture_evidence'", () => {
+    expect(getTableName(captureEvidence)).toBe("capture_evidence");
+  });
+
+  it("has the normalized evidence columns", () => {
+    const cols = getTableColumns(captureEvidence);
+    const names = Object.keys(cols);
+
+    expect(names).toContain("id");
+    expect(names).toContain("userId");
+    expect(names).toContain("sourceFamily");
+    expect(names).toContain("evidenceType");
+    expect(names).toContain("scope");
+    expect(names).toContain("value");
+    expect(names).toContain("transactionId");
+    expect(names).toContain("processedEmailId");
+    expect(names).toContain("processedCaptureId");
+    expect(names).toContain("createdAt");
+    expect(names).toContain("updatedAt");
+    expect(names).toContain("deletedAt");
+    expect(names).toHaveLength(12);
+  });
+
+  it("requires userId, scope, and value", () => {
+    const cols = getTableColumns(captureEvidence);
+
+    expect(cols.userId.notNull).toBe(true);
+    expect(cols.scope.notNull).toBe(true);
+    expect(cols.value.notNull).toBe(true);
   });
 });
 

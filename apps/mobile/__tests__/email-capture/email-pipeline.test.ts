@@ -29,6 +29,22 @@ const mockEnsureDefaultFinancialAccount = vi.fn().mockReturnValue({
   updatedAt: "2026-04-18T10:00:00.000Z",
   deletedAt: null,
 });
+const mockBuildEmailCaptureEvidence = vi.fn().mockReturnValue([
+  {
+    sourceFamily: "bancolombia",
+    evidenceType: "sender_email",
+    scope: "email:bancolombia:sender",
+    value: "notificaciones@bancolombia.com.co",
+  },
+  {
+    sourceFamily: "bancolombia",
+    evidenceType: "sender_domain",
+    scope: "email:bancolombia:domain",
+    value: "bancolombia.com.co",
+  },
+]);
+const mockSaveCaptureEvidenceRows = vi.fn();
+const mockLinkCaptureEvidenceToTransaction = vi.fn();
 
 vi.mock("@/features/capture-sources/lib/dedup", () => ({
   findDuplicateTransaction: (...args: unknown[]) => mockFindDuplicateTransaction(...args),
@@ -63,6 +79,20 @@ vi.mock("@/features/email-capture/services/parse-email-api", () => ({
 
 vi.mock("@/features/financial-accounts", () => ({
   ensureDefaultFinancialAccount: (...args: unknown[]) => mockEnsureDefaultFinancialAccount(...args),
+}));
+
+vi.mock("@/features/capture-evidence", () => ({
+  buildEmailCaptureEvidence: (...args: unknown[]) => mockBuildEmailCaptureEvidence(...args),
+  materializeCaptureEvidenceRows: (evidence: any[], link: Record<string, unknown>) =>
+    evidence.map((row, index) => ({
+      id: `ce-${index + 1}`,
+      ...row,
+      ...link,
+      deletedAt: null,
+    })),
+  saveCaptureEvidenceRows: (...args: unknown[]) => mockSaveCaptureEvidenceRows(...args),
+  linkCaptureEvidenceToTransaction: (...args: unknown[]) =>
+    mockLinkCaptureEvidenceToTransaction(...args),
 }));
 
 vi.mock("@/shared/lib/sentry", () => ({
@@ -117,6 +147,22 @@ describe("email processing pipeline", () => {
     mockMarkPermanentlyFailed.mockResolvedValue(undefined);
     mockMarkRetrySuccess.mockResolvedValue(undefined);
     mockUpdateProcessedEmailStatus.mockResolvedValue(undefined);
+    mockBuildEmailCaptureEvidence.mockReturnValue([
+      {
+        sourceFamily: "bancolombia",
+        evidenceType: "sender_email",
+        scope: "email:bancolombia:sender",
+        value: "notificaciones@bancolombia.com.co",
+      },
+      {
+        sourceFamily: "bancolombia",
+        evidenceType: "sender_domain",
+        scope: "email:bancolombia:domain",
+        value: "bancolombia.com.co",
+      },
+    ]);
+    mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
+    mockLinkCaptureEvidenceToTransaction.mockResolvedValue(undefined);
   });
 
   it("skips already processed emails", async () => {
@@ -146,6 +192,19 @@ describe("email processing pipeline", () => {
         status: "skipped",
         failureReason: null,
       })
+    );
+    expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
+      mockDb,
+      expect.arrayContaining([
+        expect.objectContaining({
+          userId: USER_ID,
+          processedEmailId: expect.any(String),
+          processedCaptureId: null,
+          transactionId: null,
+          scope: "email:bancolombia:sender",
+          value: "notificaciones@bancolombia.com.co",
+        }),
+      ])
     );
   });
 
@@ -185,6 +244,19 @@ describe("email processing pipeline", () => {
         confidence: 0.9,
       })
     );
+    expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
+      mockDb,
+      expect.arrayContaining([
+        expect.objectContaining({
+          userId: USER_ID,
+          processedEmailId: expect.any(String),
+          processedCaptureId: null,
+          transactionId: "tx-1",
+          scope: "email:bancolombia:sender",
+          value: "notificaciones@bancolombia.com.co",
+        }),
+      ])
+    );
     expect(mockInsertMerchantRule).toHaveBeenCalledWith(
       mockDb,
       USER_ID,
@@ -208,6 +280,9 @@ describe("email processing pipeline", () => {
       markRetrySuccess: mockMarkRetrySuccess,
       updateProcessedEmailStatus: mockUpdateProcessedEmailStatus,
       ensureDefaultFinancialAccount: mockEnsureDefaultFinancialAccount,
+      buildEmailCaptureEvidence: mockBuildEmailCaptureEvidence,
+      saveCaptureEvidenceRows: mockSaveCaptureEvidenceRows,
+      linkCaptureEvidenceToTransaction: mockLinkCaptureEvidenceToTransaction,
       insertTransaction: mockInsertTransaction,
       enqueueSync: mockEnqueueSync,
       insertMerchantRule: mockInsertMerchantRule,

@@ -28,6 +28,16 @@ const mockMarkForRetry = vi.fn();
 const mockMarkPermanentlyFailed = vi.fn();
 const mockMarkRetrySuccess = vi.fn();
 const mockUpdateProcessedEmailStatus = vi.fn();
+const mockBuildEmailCaptureEvidence = vi.fn().mockReturnValue([
+  {
+    sourceFamily: "bancolombia",
+    evidenceType: "sender_email",
+    scope: "email:bancolombia:sender",
+    value: "notificaciones@bancolombia.com.co",
+  },
+]);
+const mockSaveCaptureEvidenceRows = vi.fn();
+const mockLinkCaptureEvidenceToTransaction = vi.fn();
 
 vi.mock("@/features/capture-sources/lib/dedup", () => ({
   findDuplicateTransaction: (...args: unknown[]) => mockFindDuplicateTransaction(...args),
@@ -49,6 +59,20 @@ vi.mock("@/features/transactions/lib/repository", () => ({
 
 vi.mock("@/features/financial-accounts", () => ({
   ensureDefaultFinancialAccount: (...args: unknown[]) => mockEnsureDefaultFinancialAccount(...args),
+}));
+
+vi.mock("@/features/capture-evidence", () => ({
+  buildEmailCaptureEvidence: (...args: unknown[]) => mockBuildEmailCaptureEvidence(...args),
+  materializeCaptureEvidenceRows: (evidence: any[], link: Record<string, unknown>) =>
+    evidence.map((row, index) => ({
+      id: `ce-${index + 1}`,
+      ...row,
+      ...link,
+      deletedAt: null,
+    })),
+  saveCaptureEvidenceRows: (...args: unknown[]) => mockSaveCaptureEvidenceRows(...args),
+  linkCaptureEvidenceToTransaction: (...args: unknown[]) =>
+    mockLinkCaptureEvidenceToTransaction(...args),
 }));
 
 vi.mock("@/shared/db/enqueue-sync", () => ({
@@ -110,6 +134,8 @@ describe("pipeline worker save error path", () => {
     mockMarkPermanentlyFailed.mockResolvedValue(undefined);
     mockMarkRetrySuccess.mockResolvedValue(undefined);
     mockUpdateProcessedEmailStatus.mockResolvedValue(undefined);
+    mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
+    mockLinkCaptureEvidenceToTransaction.mockResolvedValue(undefined);
   });
 
   it("calls captureError and continues processing when saveTransaction throws", async () => {

@@ -25,6 +25,15 @@ const mockEnsureDefaultFinancialAccount = vi.fn().mockReturnValue({
   updatedAt: "2026-04-18T10:00:00.000Z",
   deletedAt: null,
 });
+const mockBuildNotificationCaptureEvidence = vi.fn().mockReturnValue([
+  {
+    sourceFamily: "bancolombia",
+    evidenceType: "last4",
+    scope: "notification:bancolombia:last4",
+    value: "1234",
+  },
+]);
+const mockSaveCaptureEvidenceRows = vi.fn();
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
@@ -59,6 +68,19 @@ vi.mock("@/features/email-capture/services/parse-email-api", () => ({
 
 vi.mock("@/features/financial-accounts", () => ({
   ensureDefaultFinancialAccount: (...args: any[]) => mockEnsureDefaultFinancialAccount(...args),
+}));
+
+vi.mock("@/features/capture-evidence", () => ({
+  buildNotificationCaptureEvidence: (...args: any[]) =>
+    mockBuildNotificationCaptureEvidence(...args),
+  materializeCaptureEvidenceRows: (evidence: any[], link: Record<string, unknown>) =>
+    evidence.map((row, index) => ({
+      id: `ce-${index + 1}`,
+      ...row,
+      ...link,
+      deletedAt: null,
+    })),
+  saveCaptureEvidenceRows: (...args: any[]) => mockSaveCaptureEvidenceRows(...args),
 }));
 
 const mockGenerateId = vi.fn();
@@ -97,6 +119,15 @@ describe("processNotification", () => {
     mockParseNotificationApi.mockResolvedValue(null);
     mockCaptureFingerprint.mockReturnValue("test-fingerprint");
     mockStripPii.mockImplementation((t: string) => t);
+    mockBuildNotificationCaptureEvidence.mockReturnValue([
+      {
+        sourceFamily: "bancolombia",
+        evidenceType: "last4",
+        scope: "notification:bancolombia:last4",
+        value: "1234",
+      },
+    ]);
+    mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
   });
 
   it("saves transaction when local regex parses successfully", async () => {
@@ -124,6 +155,19 @@ describe("processNotification", () => {
         status: "success",
         transactionId: "tx-1",
       })
+    );
+    expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
+      mockDb,
+      expect.arrayContaining([
+        expect.objectContaining({
+          userId: USER_ID,
+          processedCaptureId: expect.any(String),
+          processedEmailId: null,
+          transactionId: "tx-1",
+          scope: "notification:bancolombia:last4",
+          value: "1234",
+        }),
+      ])
     );
   });
 

@@ -1,4 +1,9 @@
 import {
+  buildNotificationCaptureEvidence,
+  materializeCaptureEvidenceRows,
+  saveCaptureEvidenceRows,
+} from "@/features/capture-evidence";
+import {
   insertMerchantRule,
   lookupMerchantRule,
 } from "@/features/email-capture/merchant-rules.public";
@@ -69,8 +74,10 @@ export async function processNotification(
       })();
 
   if (!parsed) {
+    const now = toIsoDateTime(new Date());
+    const processedCaptureId = generateProcessedCaptureId();
     await insertProcessedCapture(db, {
-      id: generateProcessedCaptureId(),
+      id: processedCaptureId,
       fingerprintHash: `failed:${notification.packageName}:${notification.timestamp}`,
       source,
       status: "failed",
@@ -78,8 +85,19 @@ export async function processNotification(
       transactionId: null,
       confidence: null,
       receivedAt,
-      createdAt: toIsoDateTime(new Date()),
+      createdAt: now,
     });
+    await saveCaptureEvidenceRows(
+      db,
+      materializeCaptureEvidenceRows(buildNotificationCaptureEvidence(notification), {
+        userId,
+        transactionId: null,
+        processedEmailId: null,
+        processedCaptureId,
+        createdAt: now,
+        updatedAt: now,
+      })
+    );
     capturePipelineEvent({
       source: "notification",
       bankSource: source,
@@ -136,8 +154,10 @@ export async function processNotification(
     );
 
     if (existingTxId) {
+      const now = toIsoDateTime(new Date());
+      const processedCaptureId = generateProcessedCaptureId();
       await insertProcessedCapture(db, {
-        id: generateProcessedCaptureId(),
+        id: processedCaptureId,
         fingerprintHash: fingerprint,
         source,
         status: "skipped_duplicate",
@@ -145,8 +165,19 @@ export async function processNotification(
         transactionId: existingTxId,
         confidence: parsed.confidence,
         receivedAt,
-        createdAt: toIsoDateTime(new Date()),
+        createdAt: now,
       });
+      await saveCaptureEvidenceRows(
+        db,
+        materializeCaptureEvidenceRows(buildNotificationCaptureEvidence(notification), {
+          userId,
+          transactionId: existingTxId,
+          processedEmailId: null,
+          processedCaptureId,
+          createdAt: now,
+          updatedAt: now,
+        })
+      );
       capturePipelineEvent({
         source: "notification",
         bankSource: source,
@@ -197,8 +228,9 @@ export async function processNotification(
     });
 
     // Record in processedCaptures
+    const processedCaptureId = generateProcessedCaptureId();
     await insertProcessedCapture(db, {
-      id: generateProcessedCaptureId(),
+      id: processedCaptureId,
       fingerprintHash: fingerprint,
       source,
       status: "success",
@@ -208,6 +240,17 @@ export async function processNotification(
       receivedAt,
       createdAt: now,
     });
+    await saveCaptureEvidenceRows(
+      db,
+      materializeCaptureEvidenceRows(buildNotificationCaptureEvidence(notification), {
+        userId,
+        transactionId: txId,
+        processedEmailId: null,
+        processedCaptureId,
+        createdAt: now,
+        updatedAt: now,
+      })
+    );
 
     // Cache merchant rule if confidence >= 0.7
     if (parsed.confidence >= 0.7) {

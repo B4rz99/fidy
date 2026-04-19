@@ -2,6 +2,7 @@ import type {
   BillId,
   BillPaymentId,
   BudgetId,
+  CaptureEvidenceId,
   ChatMessageId,
   ChatSessionId,
   DetectedSmsEventId,
@@ -40,6 +41,10 @@ export function generateTransactionId(): TransactionId {
 
 export function generateBudgetId(): BudgetId {
   return generateId("budget") as BudgetId;
+}
+
+export function generateCaptureEvidenceId(): CaptureEvidenceId {
+  return generateId("ce") as CaptureEvidenceId;
 }
 
 export function generateBillId(): BillId {
