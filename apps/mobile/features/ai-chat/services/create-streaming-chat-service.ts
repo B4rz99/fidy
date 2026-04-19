@@ -60,6 +60,8 @@ export type StreamingChatService = {
 };
 
 type StreamingRuntime = {
+  lastRunId: number;
+  currentRunId: number | null;
   activeController: AbortController | null;
 };
 
@@ -74,10 +76,31 @@ const StreamingChatDeps = makeAppTag<CreateStreamingChatServiceDeps>(
   "@/features/ai-chat/StreamingChatDeps"
 );
 
+function beginStreamRun(runtime: StreamingRuntime): number {
+  const runId = runtime.lastRunId + 1;
+  runtime.lastRunId = runId;
+  runtime.currentRunId = runId;
+  return runId;
+}
+
+function isCurrentRun(runtime: StreamingRuntime, runId: number): boolean {
+  return runtime.currentRunId === runId;
+}
+
 function resetStreamState(runtime: StreamingRuntime, deps: CreateStreamingChatServiceDeps): void {
   deps.setStreaming(false);
   deps.setStreamingContent("");
   runtime.activeController = null;
+  runtime.currentRunId = null;
+}
+
+function resetStreamStateIfCurrent(
+  runtime: StreamingRuntime,
+  deps: CreateStreamingChatServiceDeps,
+  runId: number
+): void {
+  if (!isCurrentRun(runtime, runId)) return;
+  resetStreamState(runtime, deps);
 }
 
 function toConversation(
@@ -91,12 +114,14 @@ function toConversation(
 }
 
 async function handleStreamDone(
+  runtime: StreamingRuntime,
   deps: CreateStreamingChatServiceDeps,
+  runId: number,
   input: ReadySendMessageInput,
   controller: AbortController,
   accumulated: string
 ): Promise<void> {
-  if (controller.signal.aborted) return;
+  if (controller.signal.aborted || !isCurrentRun(runtime, runId)) return;
 
   const action = deps.parseActionFromResponse(accumulated);
   await deps.addAssistantChatMessage(input.db, input.userId, accumulated, action);
@@ -114,13 +139,15 @@ async function handleStreamDone(
 }
 
 async function handleStreamError(
+  runtime: StreamingRuntime,
   deps: CreateStreamingChatServiceDeps,
+  runId: number,
   input: ReadySendMessageInput,
   controller: AbortController,
   accumulated: string,
   error: string
 ): Promise<void> {
-  if (controller.signal.aborted) return;
+  if (controller.signal.aborted || !isCurrentRun(runtime, runId)) return;
 
   const errorMessage =
     accumulated || `I'm sorry, something went wrong. Please try again. (${error})`;
@@ -130,6 +157,7 @@ async function handleStreamError(
 async function runStreamLifecycle(
   runtime: StreamingRuntime,
   deps: CreateStreamingChatServiceDeps,
+  runId: number,
   input: ReadySendMessageInput,
   conversation: readonly StreamChatMessage[],
   controller: AbortController
@@ -143,7 +171,7 @@ async function runStreamLifecycle(
     void handler()
       .catch((error) => deps.captureError(error))
       .finally(() => {
-        resetStreamState(runtime, deps);
+        resetStreamStateIfCurrent(runtime, deps, runId);
         resolve();
       });
   };
@@ -154,14 +182,21 @@ async function runStreamLifecycle(
         conversation,
         {
           onChunk: (chunk) => {
+            if (!isCurrentRun(runtime, runId)) return;
             accumulated += chunk;
             deps.setStreamingContent(accumulated);
           },
           onDone: () => {
-            settle(() => handleStreamDone(deps, input, controller, accumulated), resolve);
+            settle(
+              () => handleStreamDone(runtime, deps, runId, input, controller, accumulated),
+              resolve
+            );
           },
           onError: (error) => {
-            settle(() => handleStreamError(deps, input, controller, accumulated, error), resolve);
+            settle(
+              () => handleStreamError(runtime, deps, runId, input, controller, accumulated, error),
+              resolve
+            );
           },
         },
         controller.signal
@@ -170,33 +205,39 @@ async function runStreamLifecycle(
         if (controller.signal.aborted) {
           if (!settled) {
             settled = true;
-            resetStreamState(runtime, deps);
+            resetStreamStateIfCurrent(runtime, deps, runId);
             resolve();
           }
           return;
         }
 
         if (!settled) {
-          settle(() => handleStreamDone(deps, input, controller, accumulated), resolve);
+          settle(
+            () => handleStreamDone(runtime, deps, runId, input, controller, accumulated),
+            resolve
+          );
         }
       })
       .catch((error) => {
         if (controller.signal.aborted) {
           if (!settled) {
             settled = true;
-            resetStreamState(runtime, deps);
+            resetStreamStateIfCurrent(runtime, deps, runId);
             resolve();
           }
           return;
         }
 
         const message = error instanceof Error ? error.message : "Unknown error";
-        settle(() => handleStreamError(deps, input, controller, accumulated, message), resolve);
+        settle(
+          () => handleStreamError(runtime, deps, runId, input, controller, accumulated, message),
+          resolve
+        );
       });
   });
 }
 
-function sendMessageEffect(input: SendMessageInput, runtime: StreamingRuntime) {
+function sendMessageEffect(input: SendMessageInput, runtime: StreamingRuntime, runId: number) {
   return Effect.gen(function* () {
     const trimmed = input.text.trim();
     if (!trimmed || !input.db || !input.userId) return;
@@ -204,10 +245,8 @@ function sendMessageEffect(input: SendMessageInput, runtime: StreamingRuntime) {
     const userId = input.userId;
 
     const deps = yield* StreamingChatDeps;
-    const state = deps.getState();
-    if (state.isStreaming) return;
 
-    if (!state.currentSessionId) {
+    if (!deps.getState().currentSessionId) {
       yield* fromPromise(() => deps.createChatSession(db, userId, trimmed));
     }
 
@@ -229,6 +268,7 @@ function sendMessageEffect(input: SendMessageInput, runtime: StreamingRuntime) {
       runStreamLifecycle(
         runtime,
         deps,
+        runId,
         {
           db,
           userId,
@@ -245,15 +285,26 @@ function sendMessageEffect(input: SendMessageInput, runtime: StreamingRuntime) {
 export function createStreamingChatService(
   deps: CreateStreamingChatServiceDeps
 ): StreamingChatService {
-  const runtime: StreamingRuntime = { activeController: null };
+  const runtime: StreamingRuntime = {
+    lastRunId: 0,
+    currentRunId: null,
+    activeController: null,
+  };
 
   return {
-    sendMessage: (input) =>
-      runWithService(sendMessageEffect(input, runtime), StreamingChatDeps, deps).catch((error) =>
-        Promise.resolve(deps.captureError(error)).then(() => {
-          resetStreamState(runtime, deps);
-        })
-      ),
+    sendMessage: async (input) => {
+      const trimmed = input.text.trim();
+      if (!trimmed || !input.db || !input.userId) return;
+      if (deps.getState().isStreaming || runtime.currentRunId !== null) return;
+
+      const runId = beginStreamRun(runtime);
+      try {
+        await runWithService(sendMessageEffect(input, runtime, runId), StreamingChatDeps, deps);
+      } catch (error) {
+        await Promise.resolve(deps.captureError(error));
+        resetStreamStateIfCurrent(runtime, deps, runId);
+      }
+    },
     cancel: () => {
       runtime.activeController?.abort();
       resetStreamState(runtime, deps);

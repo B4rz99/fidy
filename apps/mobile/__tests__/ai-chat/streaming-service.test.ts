@@ -249,4 +249,97 @@ describe("streaming chat service", () => {
       streamingContent: "",
     });
   });
+
+  it("does not let a canceled stream clear a newer stream when it settles later", async () => {
+    const state = createState();
+    state.setCurrentSessionId("chat-1" as ChatSessionId);
+    let firstSignal: AbortSignal | undefined;
+    let secondSignal: AbortSignal | undefined;
+    let resolveFirst: (() => void) | null = null;
+    let resolveSecond: (() => void) | null = null;
+    let resolveFirstStarted: (() => void) | null = null;
+    let resolveSecondStarted: (() => void) | null = null;
+    const firstStarted = new Promise<void>((resolve) => {
+      resolveFirstStarted = resolve;
+    });
+    const secondStarted = new Promise<void>((resolve) => {
+      resolveSecondStarted = resolve;
+    });
+    let invocation = 0;
+
+    const service = createStreamingChatService({
+      getState: state.getState,
+      setStreaming: state.setStreaming,
+      setStreamingContent: state.setStreamingContent,
+      streamChat: (_messages, callbacks, signal) => {
+        invocation += 1;
+
+        if (invocation === 1) {
+          return new Promise<void>((resolve) => {
+            firstSignal = signal;
+            resolveFirst = resolve;
+            resolveFirstStarted?.();
+          });
+        }
+
+        return new Promise<void>((resolve) => {
+          secondSignal = signal;
+          callbacks.onChunk("new stream");
+          resolveSecond = resolve;
+          resolveSecondStarted?.();
+          signal?.addEventListener("abort", () => resolve());
+        });
+      },
+      createChatSession: vi.fn(),
+      addUserChatMessage: vi.fn().mockResolvedValue(undefined),
+      addAssistantChatMessage: vi.fn().mockResolvedValue(makeAssistantMessage("reply")),
+      parseActionFromResponse: () => null,
+      trackAiMessageSent: vi.fn(),
+      captureWarning: vi.fn(),
+      captureError: vi.fn(),
+    });
+
+    const firstSend = service.sendMessage({
+      db: mockDb,
+      userId: USER_ID,
+      text: "first",
+      executeAction: vi.fn(),
+    });
+
+    await firstStarted;
+    service.cancel();
+
+    const secondSend = service.sendMessage({
+      db: mockDb,
+      userId: USER_ID,
+      text: "second",
+      executeAction: vi.fn(),
+    });
+
+    await secondStarted;
+    expect(firstSignal?.aborted).toBe(true);
+    expect(state.getState()).toMatchObject({
+      isStreaming: true,
+      streamingContent: "new stream",
+    });
+
+    resolveFirst!();
+    await firstSend;
+
+    expect(secondSignal?.aborted).toBe(false);
+    expect(state.getState()).toMatchObject({
+      isStreaming: true,
+      streamingContent: "new stream",
+    });
+
+    service.cancel();
+    await secondSend;
+    resolveSecond!();
+
+    expect(secondSignal?.aborted).toBe(true);
+    expect(state.getState()).toMatchObject({
+      isStreaming: false,
+      streamingContent: "",
+    });
+  });
 });
