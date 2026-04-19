@@ -138,4 +138,39 @@ describe("createAiChatApiService", () => {
 
     expect(onError).toHaveBeenCalledWith("HTTP 503");
   });
+
+  it("reports auth header resolution failures through onError", async () => {
+    const fetchImpl = vi.fn();
+
+    const service = createAiChatApiService({
+      fetchImpl: fetchImpl as never,
+      getBaseUrl: () => "https://example.supabase.co",
+      supabase: {
+        getSupabase: () =>
+          ({
+            auth: {
+              getSession: vi.fn().mockRejectedValue(new Error("session offline")),
+            },
+          }) as never,
+      },
+      telemetry: {
+        captureError: vi.fn(),
+        captureWarning: vi.fn(),
+        capturePipelineEvent: vi.fn(),
+      },
+    });
+
+    const onError = vi.fn();
+
+    await expect(
+      service.streamChat([{ role: "user", content: "hello" }], {
+        onChunk: vi.fn(),
+        onDone: vi.fn(),
+        onError,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledWith("session offline");
+  });
 });

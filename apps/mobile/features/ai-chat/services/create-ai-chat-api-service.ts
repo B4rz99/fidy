@@ -60,7 +60,15 @@ export function createAiChatApiService({
 
   return {
     async streamChat(messages, callbacks, signal) {
-      const headers = await runSupabaseEffect(authHeadersEffect());
+      let headers: Record<string, string>;
+      try {
+        headers = await runSupabaseEffect(authHeadersEffect());
+      } catch (error) {
+        if (signal?.aborted) return;
+        callbacks.onError(error instanceof Error ? error.message : "Auth error");
+        return;
+      }
+
       const url = `${getBaseUrl()}/functions/v1/ai-chat`;
 
       let response: Response;
