@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 import type { AnyDb } from "@/shared/db";
-import { fromPromise, fromThunk, makeAppTag, runWithService } from "@/shared/effect/runtime";
+import { fromPromise, fromThunk, makeAppService } from "@/shared/effect/runtime";
 import type { ChatSessionId, UserId } from "@/shared/types/branded";
 import type { ChatAction, ChatMessage } from "../schema";
 
@@ -72,7 +72,7 @@ type ReadySendMessageInput = {
   readonly executeAction: (action: ChatAction) => Promise<void>;
 };
 
-const StreamingChatDeps = makeAppTag<CreateStreamingChatServiceDeps>(
+const StreamingChatDeps = makeAppService<CreateStreamingChatServiceDeps>(
   "@/features/ai-chat/StreamingChatDeps"
 );
 
@@ -244,7 +244,7 @@ function sendMessageEffect(input: SendMessageInput, runtime: StreamingRuntime, r
     const db = input.db;
     const userId = input.userId;
 
-    const deps = yield* StreamingChatDeps;
+    const deps = yield* StreamingChatDeps.tag;
 
     if (!deps.getState().currentSessionId) {
       yield* fromPromise(() => deps.createChatSession(db, userId, trimmed));
@@ -285,6 +285,7 @@ function sendMessageEffect(input: SendMessageInput, runtime: StreamingRuntime, r
 export function createStreamingChatService(
   deps: CreateStreamingChatServiceDeps
 ): StreamingChatService {
+  const runtimeService = StreamingChatDeps.bind(deps);
   const runtime: StreamingRuntime = {
     lastRunId: 0,
     currentRunId: null,
@@ -299,7 +300,7 @@ export function createStreamingChatService(
 
       const runId = beginStreamRun(runtime);
       try {
-        await runWithService(sendMessageEffect(input, runtime, runId), StreamingChatDeps, deps);
+        await runtimeService.run(sendMessageEffect(input, runtime, runId));
       } catch (error) {
         await Promise.resolve(deps.captureError(error));
         resetStreamStateIfCurrent(runtime, deps, runId);

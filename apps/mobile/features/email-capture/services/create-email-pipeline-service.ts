@@ -3,7 +3,7 @@ import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository"
 import { getBuiltInCategoryId, isValidCategoryId } from "@/features/transactions/lib/categories";
 import type { TransactionRow } from "@/features/transactions/lib/repository";
 import type { AnyDb, SyncQueueEntry } from "@/shared/db";
-import { fromPromise, fromThunk, makeAppTag, runWithService } from "@/shared/effect/runtime";
+import { fromPromise, fromThunk, makeAppService } from "@/shared/effect/runtime";
 import { toIsoDateTime } from "@/shared/lib/format-date";
 import {
   generateProcessedEmailId,
@@ -132,7 +132,7 @@ export type EmailPipelineService = {
   readonly processRetries: (db: AnyDb, userId: UserId) => Promise<RetryResult>;
 };
 
-const EmailPipelineDeps = makeAppTag<CreateEmailPipelineServiceDeps>(
+const EmailPipelineDeps = makeAppService<CreateEmailPipelineServiceDeps>(
   "@/features/email-capture/EmailPipelineDeps"
 );
 
@@ -160,7 +160,7 @@ function getProgressSnapshot(
 
 function parseBodyEffect(db: AnyDb, userId: UserId, body: string) {
   return Effect.gen(function* () {
-    const { parseEmailApi, lookupMerchantRule } = yield* EmailPipelineDeps;
+    const { parseEmailApi, lookupMerchantRule } = yield* EmailPipelineDeps.tag;
     const llmResult = yield* fromPromise(() => parseEmailApi(body));
     if (!llmResult) return null;
 
@@ -174,19 +174,19 @@ function parseBodyEffect(db: AnyDb, userId: UserId, body: string) {
 }
 
 function getProcessedExternalIdsEffect(db: AnyDb, externalIds: string[]) {
-  return Effect.flatMap(EmailPipelineDeps, ({ getProcessedExternalIds }) =>
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ getProcessedExternalIds }) =>
     fromPromise(() => getProcessedExternalIds(db, externalIds))
   );
 }
 
 function getPendingRetryEmailsEffect(db: AnyDb) {
-  return Effect.flatMap(EmailPipelineDeps, ({ getPendingRetryEmails }) =>
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ getPendingRetryEmails }) =>
     fromPromise(() => getPendingRetryEmails(db))
   );
 }
 
 function findDuplicateTransactionEffect(db: AnyDb, userId: UserId, parsed: LlmParsedTransaction) {
-  return Effect.flatMap(EmailPipelineDeps, ({ findDuplicateTransaction }) =>
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ findDuplicateTransaction }) =>
     fromPromise(() =>
       findDuplicateTransaction(db, userId, parsed.amount, parsed.date, parsed.description)
     )
@@ -194,7 +194,7 @@ function findDuplicateTransactionEffect(db: AnyDb, userId: UserId, parsed: LlmPa
 }
 
 function insertProcessedEmailEffect(db: AnyDb, row: ProcessedEmailRow) {
-  return Effect.flatMap(EmailPipelineDeps, ({ insertProcessedEmail }) =>
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ insertProcessedEmail }) =>
     fromPromise(() => insertProcessedEmail(db, row))
   );
 }
@@ -208,7 +208,7 @@ function saveTransactionEffect(
 ) {
   return Effect.gen(function* () {
     const { insertTransaction, enqueueSync, insertProcessedEmail, trackTransactionCreated } =
-      yield* EmailPipelineDeps;
+      yield* EmailPipelineDeps.tag;
     const source = getTransactionSource(email.provider);
     const txId = generateTransactionId();
     const now = toIsoDateTime(new Date());
@@ -283,13 +283,13 @@ function insertMerchantRuleEffect(
   categoryId: CategoryId,
   createdAt: IsoDateTime
 ) {
-  return Effect.flatMap(EmailPipelineDeps, ({ insertMerchantRule }) =>
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ insertMerchantRule }) =>
     fromPromise(() => insertMerchantRule(db, userId, merchantKey, categoryId, createdAt))
   );
 }
 
 function captureErrorEffect(error: unknown) {
-  return Effect.flatMap(EmailPipelineDeps, ({ captureError }) =>
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ captureError }) =>
     fromThunk(() => captureError(error))
   );
 }
@@ -301,13 +301,13 @@ function captureWarningEffect(
     errorType: string;
   }
 ) {
-  return Effect.flatMap(EmailPipelineDeps, ({ captureWarning }) =>
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ captureWarning }) =>
     fromThunk(() => captureWarning(name, tags))
   );
 }
 
 function capturePipelineEventEffect(input: Parameters<CapturePipelineEvent>[0]) {
-  return Effect.flatMap(EmailPipelineDeps, ({ capturePipelineEvent }) =>
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ capturePipelineEvent }) =>
     fromThunk(() => capturePipelineEvent(input))
   );
 }
@@ -318,13 +318,13 @@ function markForRetryEffect(
   retryCount: number,
   nextRetryAt: IsoDateTime
 ) {
-  return Effect.flatMap(EmailPipelineDeps, ({ markForRetry }) =>
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ markForRetry }) =>
     fromPromise(() => markForRetry(db, id, retryCount, nextRetryAt))
   );
 }
 
 function markPermanentlyFailedEffect(db: AnyDb, id: ProcessedEmailId) {
-  return Effect.flatMap(EmailPipelineDeps, ({ markPermanentlyFailed }) =>
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ markPermanentlyFailed }) =>
     fromPromise(() => markPermanentlyFailed(db, id))
   );
 }
@@ -336,7 +336,7 @@ function markRetrySuccessEffect(
   transactionId: TransactionId,
   confidence: number
 ) {
-  return Effect.flatMap(EmailPipelineDeps, ({ markRetrySuccess }) =>
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ markRetrySuccess }) =>
     fromPromise(() => markRetrySuccess(db, id, status, transactionId, confidence))
   );
 }
@@ -347,7 +347,7 @@ function updateProcessedEmailStatusEffect(
   status: string,
   transactionId: TransactionId | null
 ) {
-  return Effect.flatMap(EmailPipelineDeps, ({ updateProcessedEmailStatus }) =>
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ updateProcessedEmailStatus }) =>
     fromPromise(() => updateProcessedEmailStatus(db, id, status, transactionId))
   );
 }
@@ -360,7 +360,7 @@ function saveRetryTransactionEffect(
 ) {
   return Effect.gen(function* () {
     const { insertTransaction, enqueueSync, insertMerchantRule, trackTransactionCreated } =
-      yield* EmailPipelineDeps;
+      yield* EmailPipelineDeps.tag;
     const txId = generateTransactionId();
     const now = toIsoDateTime(new Date());
     const source = getTransactionSource(email.provider);
@@ -416,9 +416,7 @@ function saveRetryTransactionEffect(
 export function createEmailPipelineService(
   deps: CreateEmailPipelineServiceDeps
 ): EmailPipelineService {
-  const runEmailPipelineEffect = <A>(
-    effect: Effect.Effect<A, unknown, CreateEmailPipelineServiceDeps>
-  ): Promise<A> => runWithService(effect, EmailPipelineDeps, deps);
+  const runtime = EmailPipelineDeps.bind(deps);
 
   return {
     async processEmails(db, userId, rawEmails, onProgress) {
@@ -427,9 +425,7 @@ export function createEmailPipelineService(
       );
       const dedupedInBatch = rawEmails.length - uniqueEmails.length;
       const allExternalIds = uniqueEmails.map((email) => email.externalId);
-      const processedIds = await runEmailPipelineEffect(
-        getProcessedExternalIdsEffect(db, allExternalIds)
-      );
+      const processedIds = await runtime.run(getProcessedExternalIdsEffect(db, allExternalIds));
       const toProcess = uniqueEmails.filter((email) => !processedIds.has(email.externalId));
       const skippedAlreadyProcessed = uniqueEmails.length - toProcess.length;
 
@@ -459,9 +455,9 @@ export function createEmailPipelineService(
           let parseError = false;
 
           try {
-            parsed = await runEmailPipelineEffect(parseBodyEffect(db, userId, email.body));
+            parsed = await runtime.run(parseBodyEffect(db, userId, email.body));
           } catch (err) {
-            await runEmailPipelineEffect(
+            await runtime.run(
               captureWarningEffect("email_parse_exception", {
                 provider: email.provider,
                 errorType: err instanceof Error ? err.message : "unknown",
@@ -481,7 +477,7 @@ export function createEmailPipelineService(
             }
 
             assertIsoDateTime(email.receivedAt);
-            await runEmailPipelineEffect(
+            await runtime.run(
               insertProcessedEmailEffect(db, {
                 id: generateProcessedEmailId(),
                 externalId: email.externalId,
@@ -510,11 +506,9 @@ export function createEmailPipelineService(
 
           let existingTxId: TransactionId | null = null;
           try {
-            existingTxId = await runEmailPipelineEffect(
-              findDuplicateTransactionEffect(db, userId, parsed)
-            );
+            existingTxId = await runtime.run(findDuplicateTransactionEffect(db, userId, parsed));
           } catch (saveErr) {
-            await runEmailPipelineEffect(captureErrorEffect(saveErr));
+            await runtime.run(captureErrorEffect(saveErr));
             result.failed++;
             completed++;
             onProgress?.(getProgressSnapshot(total, completed, result));
@@ -524,7 +518,7 @@ export function createEmailPipelineService(
           if (existingTxId) {
             const receivedAt = email.receivedAt;
             assertIsoDateTime(receivedAt);
-            await runEmailPipelineEffect(
+            await runtime.run(
               insertProcessedEmailEffect(db, {
                 id: generateProcessedEmailId(),
                 externalId: email.externalId,
@@ -547,14 +541,14 @@ export function createEmailPipelineService(
 
           const status = parsed.confidence < 0.7 ? "needs_review" : "success";
           try {
-            await runEmailPipelineEffect(saveTransactionEffect(db, userId, parsed, email, status));
+            await runtime.run(saveTransactionEffect(db, userId, parsed, email, status));
             if (status === "needs_review") {
               result.needsReview++;
             } else {
               result.saved++;
             }
           } catch (saveErr) {
-            await runEmailPipelineEffect(captureErrorEffect(saveErr));
+            await runtime.run(captureErrorEffect(saveErr));
             result.failed++;
             completed++;
             onProgress?.(getProgressSnapshot(total, completed, result));
@@ -564,7 +558,7 @@ export function createEmailPipelineService(
           if (status === "success") {
             try {
               const merchantKey = normalizeMerchant(parsed.description);
-              await runEmailPipelineEffect(
+              await runtime.run(
                 insertMerchantRuleEffect(
                   db,
                   userId,
@@ -574,7 +568,7 @@ export function createEmailPipelineService(
                 )
               );
             } catch (ruleErr) {
-              await runEmailPipelineEffect(captureErrorEffect(ruleErr));
+              await runtime.run(captureErrorEffect(ruleErr));
             }
           }
 
@@ -585,7 +579,7 @@ export function createEmailPipelineService(
 
       await Promise.all(Array.from({ length: Math.min(Concurrency, total) }, () => worker()));
 
-      await runEmailPipelineEffect(
+      await runtime.run(
         capturePipelineEventEffect({
           source: "email",
           batchSize: rawEmails.length,
@@ -604,11 +598,11 @@ export function createEmailPipelineService(
 
     async processRetries(db, userId) {
       const result: RetryResult = { retried: 0, succeeded: 0, permanentlyFailed: 0 };
-      const pendingEmails = await runEmailPipelineEffect(getPendingRetryEmailsEffect(db));
+      const pendingEmails = await runtime.run(getPendingRetryEmailsEffect(db));
 
       for (const email of pendingEmails) {
         if (!email.rawBody) {
-          await runEmailPipelineEffect(markPermanentlyFailedEffect(db, email.id));
+          await runtime.run(markPermanentlyFailedEffect(db, email.id));
           result.permanentlyFailed++;
           continue;
         }
@@ -617,9 +611,9 @@ export function createEmailPipelineService(
         let parseError = false;
 
         try {
-          parsed = await runEmailPipelineEffect(parseBodyEffect(db, userId, email.rawBody));
+          parsed = await runtime.run(parseBodyEffect(db, userId, email.rawBody));
         } catch (err) {
-          await runEmailPipelineEffect(
+          await runtime.run(
             captureWarningEffect("email_retry_parse_exception", {
               provider: email.provider,
               errorType: err instanceof Error ? err.message : "unknown",
@@ -631,10 +625,10 @@ export function createEmailPipelineService(
         if (parseError) {
           const nextCount = (email.retryCount ?? 0) + 1;
           if (isMaxRetriesReached(nextCount)) {
-            await runEmailPipelineEffect(markPermanentlyFailedEffect(db, email.id));
+            await runtime.run(markPermanentlyFailedEffect(db, email.id));
             result.permanentlyFailed++;
           } else {
-            await runEmailPipelineEffect(
+            await runtime.run(
               markForRetryEffect(db, email.id, nextCount, computeNextRetryAt(nextCount))
             );
             result.retried++;
@@ -643,25 +637,21 @@ export function createEmailPipelineService(
         }
 
         if (!parsed) {
-          await runEmailPipelineEffect(
-            updateProcessedEmailStatusEffect(db, email.id, "skipped", null)
-          );
+          await runtime.run(updateProcessedEmailStatusEffect(db, email.id, "skipped", null));
           continue;
         }
 
         let existingTxId: TransactionId | null = null;
         try {
-          existingTxId = await runEmailPipelineEffect(
-            findDuplicateTransactionEffect(db, userId, parsed)
-          );
+          existingTxId = await runtime.run(findDuplicateTransactionEffect(db, userId, parsed));
         } catch (saveErr) {
-          await runEmailPipelineEffect(captureErrorEffect(saveErr));
+          await runtime.run(captureErrorEffect(saveErr));
           const nextCount = (email.retryCount ?? 0) + 1;
           if (isMaxRetriesReached(nextCount)) {
-            await runEmailPipelineEffect(markPermanentlyFailedEffect(db, email.id));
+            await runtime.run(markPermanentlyFailedEffect(db, email.id));
             result.permanentlyFailed++;
           } else {
-            await runEmailPipelineEffect(
+            await runtime.run(
               markForRetryEffect(db, email.id, nextCount, computeNextRetryAt(nextCount))
             );
             result.retried++;
@@ -670,7 +660,7 @@ export function createEmailPipelineService(
         }
 
         if (existingTxId) {
-          await runEmailPipelineEffect(
+          await runtime.run(
             markRetrySuccessEffect(db, email.id, "success", existingTxId, parsed.confidence)
           );
           result.succeeded++;
@@ -678,21 +668,19 @@ export function createEmailPipelineService(
         }
 
         try {
-          const { txId, status } = await runEmailPipelineEffect(
+          const { txId, status } = await runtime.run(
             saveRetryTransactionEffect(db, userId, parsed, email)
           );
-          await runEmailPipelineEffect(
-            markRetrySuccessEffect(db, email.id, status, txId, parsed.confidence)
-          );
+          await runtime.run(markRetrySuccessEffect(db, email.id, status, txId, parsed.confidence));
           result.succeeded++;
         } catch (saveErr) {
-          await runEmailPipelineEffect(captureErrorEffect(saveErr));
+          await runtime.run(captureErrorEffect(saveErr));
           const nextCount = (email.retryCount ?? 0) + 1;
           if (isMaxRetriesReached(nextCount)) {
-            await runEmailPipelineEffect(markPermanentlyFailedEffect(db, email.id));
+            await runtime.run(markPermanentlyFailedEffect(db, email.id));
             result.permanentlyFailed++;
           } else {
-            await runEmailPipelineEffect(
+            await runtime.run(
               markForRetryEffect(db, email.id, nextCount, computeNextRetryAt(nextCount))
             );
             result.retried++;
