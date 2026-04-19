@@ -1,12 +1,12 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useOptionalUserId } from "@/features/auth";
+import { useOnboardingStore } from "@/features/onboarding/store";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
-import { AccountSuggestionCard } from "./AccountSuggestionCard";
 import { useAccountSuggestions } from "../hooks/use-account-suggestions";
-import { useOnboardingStore } from "@/features/onboarding/store";
+import { AccountSuggestionCard } from "./AccountSuggestionCard";
 
 export function OnboardingAccountReviewStep() {
   const router = useRouter();
@@ -74,7 +74,10 @@ export function OnboardingAccountReviewStep() {
         </View>
       </View>
 
-      <Pressable style={[styles.continueButton, { backgroundColor: accentGreen }]} onPress={nextStep}>
+      <Pressable
+        style={[styles.continueButton, { backgroundColor: accentGreen }]}
+        onPress={nextStep}
+      >
         <Text style={styles.continueButtonText}>{t("accountSuggestions.onboarding.continue")}</Text>
       </Pressable>
     </View>

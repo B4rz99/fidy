@@ -6,9 +6,9 @@ import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
-import { AccountSuggestionCard } from "./AccountSuggestionCard";
 import { useAccountSuggestions } from "../hooks/use-account-suggestions";
 import { createAccountSuggestionService } from "../services/create-account-suggestion-service";
+import { AccountSuggestionCard } from "./AccountSuggestionCard";
 
 export function AccountSuggestionReviewScreen() {
   const router = useRouter();

@@ -79,8 +79,7 @@ const en = {
     },
     create: {
       title: "Create account",
-      subtitle:
-        "Create a financial account from this suggestion. You can edit the details later.",
+      subtitle: "Create a financial account from this suggestion. You can edit the details later.",
       nameLabel: "Account name",
       kindLabel: "Account kind",
       identifierLabel: "Identifier evidence",
@@ -89,7 +88,8 @@ const en = {
     },
     link: {
       title: "Link existing",
-      subtitle: "We ranked the strongest matches first so you can confirm the right account quickly.",
+      subtitle:
+        "We ranked the strongest matches first so you can confirm the right account quickly.",
       likelyMatches: "Likely matches",
       allAccounts: "All accounts",
       linkFailed: "Could not link account",

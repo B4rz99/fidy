@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { FinancialAccountRow } from "@/features/financial-accounts";
 import {
   buildSuggestedFinancialAccountDraft,
   rankSuggestedFinancialAccounts,
 } from "@/features/account-suggestions/lib/presentation";
+import type { FinancialAccountRow } from "@/features/financial-accounts";
 import { requireIsoDateTime, requireUserId } from "@/shared/types/assertions";
 import type { FinancialAccountId } from "@/shared/types/branded";
 

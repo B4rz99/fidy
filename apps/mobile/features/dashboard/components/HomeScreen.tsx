@@ -1,6 +1,9 @@
 import { Stack, useRouter } from "expo-router";
 import { memo, useCallback, useMemo } from "react";
-import { AccountSuggestionsPromptBanner, useAccountSuggestions } from "@/features/account-suggestions";
+import {
+  AccountSuggestionsPromptBanner,
+  useAccountSuggestions,
+} from "@/features/account-suggestions";
 import { useOptionalUserId } from "@/features/auth";
 import { DetectedTransactionsBanner } from "@/features/capture-sources";
 import {

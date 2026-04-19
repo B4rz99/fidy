@@ -1,7 +1,7 @@
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import type { FinancialAccountKind } from "@/features/financial-accounts";
 import { useOptionalUserId } from "@/features/auth";
+import type { FinancialAccountKind } from "@/features/financial-accounts";
 import { ScreenLayout } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -63,7 +63,11 @@ function ResolvedCreateSuggestedAccountForm({
   };
 
   return (
-    <ScreenLayout title={t("accountSuggestions.create.title")} variant="sub" onBack={() => router.back()}>
+    <ScreenLayout
+      title={t("accountSuggestions.create.title")}
+      variant="sub"
+      onBack={() => router.back()}
+    >
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={styles.scrollContent}

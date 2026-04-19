@@ -1,11 +1,7 @@
 import { create } from "zustand";
 import { useAuthStore } from "@/features/auth";
 import { markOnboardingComplete } from "./lib/check-onboarding";
-import {
-  getNextOnboardingStep,
-  ONBOARDING_STEP,
-  type OnboardingStep,
-} from "./lib/flow";
+import { getNextOnboardingStep, ONBOARDING_STEP, type OnboardingStep } from "./lib/flow";
 
 type OnboardingState = {
   step: OnboardingStep;

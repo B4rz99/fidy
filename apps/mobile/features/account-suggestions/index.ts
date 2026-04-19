@@ -33,24 +33,27 @@ type CreateSuggestedAccountScreenComponent =
   typeof import("./components/CreateSuggestedAccountScreen")["default"];
 type LinkSuggestedAccountScreenComponent =
   typeof import("./components/LinkSuggestedAccountScreen")["default"];
-type UseAccountSuggestionsHook = typeof import("./hooks/use-account-suggestions")["useAccountSuggestions"];
+type UseAccountSuggestionsHook =
+  typeof import("./hooks/use-account-suggestions")["useAccountSuggestions"];
 
 export const AccountSuggestionReviewScreen: AccountSuggestionReviewScreenComponent = (() => {
-  const { AccountSuggestionReviewScreen: Component } = require("./components/AccountSuggestionReviewScreen");
+  const {
+    AccountSuggestionReviewScreen: Component,
+  } = require("./components/AccountSuggestionReviewScreen");
   return createElement(Component);
 }) as AccountSuggestionReviewScreenComponent;
 
 export const AccountSuggestionsPromptBanner: AccountSuggestionsPromptBannerComponent = ((props) => {
-  const { AccountSuggestionsPromptBanner: Component } = require(
-    "./components/AccountSuggestionsPromptBanner"
-  );
+  const {
+    AccountSuggestionsPromptBanner: Component,
+  } = require("./components/AccountSuggestionsPromptBanner");
   return createElement(Component, props);
 }) as AccountSuggestionsPromptBannerComponent;
 
 export const OnboardingAccountReviewStep: OnboardingAccountReviewStepComponent = (() => {
-  const { OnboardingAccountReviewStep: Component } = require(
-    "./components/OnboardingAccountReviewStep"
-  );
+  const {
+    OnboardingAccountReviewStep: Component,
+  } = require("./components/OnboardingAccountReviewStep");
   return createElement(Component);
 }) as OnboardingAccountReviewStepComponent;
 

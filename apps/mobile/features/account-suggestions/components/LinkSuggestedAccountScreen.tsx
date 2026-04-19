@@ -1,12 +1,12 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth";
+import { getFinancialAccountsForUser } from "@/features/financial-accounts";
 import { ScreenLayout } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
-import { getFinancialAccountsForUser } from "@/features/financial-accounts";
 import { useAccountSuggestions } from "../hooks/use-account-suggestions";
 import { rankSuggestedFinancialAccounts } from "../lib/presentation";
 import { createAccountSuggestionService } from "../services/create-account-suggestion-service";
@@ -90,7 +90,11 @@ export default function LinkSuggestedAccountScreen() {
   };
 
   return (
-    <ScreenLayout title={t("accountSuggestions.link.title")} variant="sub" onBack={() => router.back()}>
+    <ScreenLayout
+      title={t("accountSuggestions.link.title")}
+      variant="sub"
+      onBack={() => router.back()}
+    >
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
         <Text style={[styles.subtitle, { color: secondary }]}>
           {t("accountSuggestions.link.subtitle")}

@@ -1,9 +1,9 @@
 import {
   Building2,
   CreditCard,
+  type LucideIcon,
   Sparkles,
   Wallet,
-  type LucideIcon,
 } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -17,7 +17,9 @@ type AccountSuggestionCardProps = {
   readonly onSkip: (suggestion: AccountCreationSuggestion) => void;
 };
 
-function getKindIcon(kind: ReturnType<typeof buildSuggestedFinancialAccountDraft>["kind"]): LucideIcon {
+function getKindIcon(
+  kind: ReturnType<typeof buildSuggestedFinancialAccountDraft>["kind"]
+): LucideIcon {
   if (kind === "wallet" || kind === "cash") {
     return Wallet;
   }

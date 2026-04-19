@@ -56,14 +56,14 @@ const es = {
       subtitle:
         "Crea o vincula ahora las sugerencias de cuenta más fuertes, u omítelas hasta que las necesites.",
       emptyTitle: "No hay sugerencias de cuenta ahora mismo",
-      emptySubtitle:
-        "Cuando la evidencia repetida apunte a una cuenta faltante, aparecerá aquí.",
+      emptySubtitle: "Cuando la evidencia repetida apunte a una cuenta faltante, aparecerá aquí.",
       dismissFailed: "No se pudo descartar la sugerencia",
     },
     onboarding: {
       eyebrow: "REVISIÓN OPCIONAL DE CUENTAS",
       title: "Encontramos sugerencias fuertes de cuenta en tus capturas recientes.",
-      subtitle: "Revisa primero las coincidencias más fuertes, o continúa y termina la configuración.",
+      subtitle:
+        "Revisa primero las coincidencias más fuertes, o continúa y termina la configuración.",
       note: "Las coincidencias de mayor confianza se muestran primero para mantener el onboarding ágil.",
       continue: "Continuar a presupuestos",
     },
@@ -75,7 +75,8 @@ const es = {
       confidenceMedium: "MEDIA",
       reasonLast4: "%{source} terminado en %{value} apareció en %{count} capturas.",
       reasonAlias: "%{source} y %{value} aparecieron juntos en %{count} capturas.",
-      reasonCardHint: "Las pistas de tarjeta de %{source} para %{value} aparecieron en %{count} capturas.",
+      reasonCardHint:
+        "Las pistas de tarjeta de %{source} para %{value} aparecieron en %{count} capturas.",
     },
     create: {
       title: "Crear cuenta",

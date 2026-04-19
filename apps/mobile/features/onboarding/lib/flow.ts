@@ -19,10 +19,7 @@ export function getVisibleOnboardingStepCount(shouldReviewAccounts: boolean) {
   return shouldReviewAccounts ? ONBOARDING_STEP.complete : ONBOARDING_STEP.complete - 1;
 }
 
-export function getVisibleOnboardingStepIndex(
-  step: OnboardingStep,
-  shouldReviewAccounts: boolean
-) {
+export function getVisibleOnboardingStepIndex(step: OnboardingStep, shouldReviewAccounts: boolean) {
   return !shouldReviewAccounts && step >= ONBOARDING_STEP.budgetSetup ? step - 1 : step;
 }
 
