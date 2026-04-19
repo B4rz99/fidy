@@ -91,8 +91,11 @@ export function AccountSuggestionCard({
       </View>
 
       <View style={styles.evidenceRow}>
-        {[draft.sourceLabel, draft.evidenceLabel].map((label) => (
-          <View key={label} style={[styles.evidencePill, { backgroundColor: peachLight }]}>
+        {[draft.sourceLabel, draft.evidenceLabel].map((label, index) => (
+          <View
+            key={`${index}:${label}`}
+            style={[styles.evidencePill, { backgroundColor: peachLight }]}
+          >
             <Text style={[styles.evidenceText, { color: secondary }]}>{label}</Text>
           </View>
         ))}

@@ -7,7 +7,7 @@ import {
   type FinancialAccountKind,
   getFinancialAccountIdentifiersForUser,
   saveFinancialAccount,
-  saveFinancialAccountIdentifier,
+  saveFinancialAccountIdentifierInTransaction,
 } from "@/features/financial-accounts";
 import { getTransactionById, upsertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
@@ -45,7 +45,7 @@ type CreateAccountSuggestionServiceDeps = {
   readonly saveAccountSuggestionDismissal?: typeof saveAccountSuggestionDismissal;
   readonly getFinancialAccountIdentifiersForUser?: typeof getFinancialAccountIdentifiersForUser;
   readonly saveFinancialAccount?: typeof saveFinancialAccount;
-  readonly saveFinancialAccountIdentifier?: typeof saveFinancialAccountIdentifier;
+  readonly saveFinancialAccountIdentifierInTransaction?: typeof saveFinancialAccountIdentifierInTransaction;
   readonly getTransactionById?: typeof getTransactionById;
   readonly upsertTransaction?: typeof upsertTransaction;
   readonly enqueueSync?: typeof enqueueSync;
@@ -134,8 +134,8 @@ export function createAccountSuggestionService({
   getFinancialAccountIdentifiersForUser:
     loadFinancialAccountIdentifiersForUser = getFinancialAccountIdentifiersForUser,
   saveFinancialAccount: persistFinancialAccount = saveFinancialAccount,
-  saveFinancialAccountIdentifier:
-    persistFinancialAccountIdentifier = saveFinancialAccountIdentifier,
+  saveFinancialAccountIdentifierInTransaction:
+    persistFinancialAccountIdentifierInTransaction = saveFinancialAccountIdentifierInTransaction,
   getTransactionById: loadTransactionById = getTransactionById,
   upsertTransaction: persistTransaction = upsertTransaction,
   enqueueSync: enqueueSyncEntry = enqueueSync,
@@ -151,7 +151,7 @@ export function createAccountSuggestionService({
     suggestion,
     updatedAt,
   }: AcceptSuggestionInput & { readonly updatedAt: IsoDateTime }): AcceptSuggestionResult {
-    persistFinancialAccountIdentifier(db, {
+    persistFinancialAccountIdentifierInTransaction(db, {
       id: createIdentifierId(),
       userId,
       accountId,
@@ -253,13 +253,15 @@ export function createAccountSuggestionService({
       accountId,
       suggestion,
     }: AcceptSuggestionInput): AcceptSuggestionResult {
-      return acceptSuggestionWithTimestamp({
-        db,
-        userId,
-        accountId,
-        suggestion,
-        updatedAt: now(),
-      });
+      return db.transaction((tx) =>
+        acceptSuggestionWithTimestamp({
+          db: tx,
+          userId,
+          accountId,
+          suggestion,
+          updatedAt: now(),
+        })
+      );
     },
 
     createSuggestedAccount({
@@ -272,23 +274,25 @@ export function createAccountSuggestionService({
       const updatedAt = now();
       const accountId = createAccountId();
 
-      persistFinancialAccount(db, {
-        id: accountId,
-        userId,
-        name,
-        kind,
-        isDefault: false,
-        createdAt: updatedAt,
-        updatedAt,
-        deletedAt: null,
-      });
+      return db.transaction((tx) => {
+        persistFinancialAccount(tx, {
+          id: accountId,
+          userId,
+          name,
+          kind,
+          isDefault: false,
+          createdAt: updatedAt,
+          updatedAt,
+          deletedAt: null,
+        });
 
-      return acceptSuggestionWithTimestamp({
-        db,
-        userId,
-        accountId,
-        suggestion,
-        updatedAt,
+        return acceptSuggestionWithTimestamp({
+          db: tx,
+          userId,
+          accountId,
+          suggestion,
+          updatedAt,
+        });
       });
     },
   };

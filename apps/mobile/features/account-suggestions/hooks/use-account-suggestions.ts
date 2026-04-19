@@ -1,9 +1,8 @@
 import { useFocusEffect } from "@react-navigation/native";
-import { useEffectEvent, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { AccountCreationSuggestion } from "@/features/account-suggestions/lib/derive-account-suggestions";
 import { createAccountSuggestionService } from "@/features/account-suggestions/services/create-account-suggestion-service";
 import type { AnyDb } from "@/shared/db";
-import { useMountEffect } from "@/shared/hooks";
 import type { UserId } from "@/shared/types/branded";
 
 type UseAccountSuggestionsInput = {
@@ -23,7 +22,7 @@ export function useAccountSuggestions({
   const [suggestions, setSuggestions] = useState<readonly AccountCreationSuggestion[]>([]);
   const [hasLoadedSuggestions, setHasLoadedSuggestions] = useState(false);
 
-  const reloadSuggestions = useEffectEvent(() => {
+  const reloadSuggestions = useCallback(() => {
     if (!db || !userId) {
       setSuggestions([]);
       setHasLoadedSuggestions(true);
@@ -39,11 +38,7 @@ export function useAccountSuggestions({
       })
     );
     setHasLoadedSuggestions(true);
-  });
-
-  useMountEffect(() => {
-    reloadSuggestions();
-  });
+  }, [db, limit, minimumOccurrences, service, userId]);
 
   useFocusEffect(reloadSuggestions);
 
