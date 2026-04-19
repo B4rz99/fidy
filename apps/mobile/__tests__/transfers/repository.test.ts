@@ -102,4 +102,40 @@ describe("transfers repository", () => {
       })
     ).toThrow();
   });
+
+  it("rejects blank external labels as endpoints", () => {
+    expect(() =>
+      saveTransfer(db as any, {
+        id: "tr-blank-from" as TransferId,
+        userId: USER_ID,
+        amount: 250000 as CopAmount,
+        fromAccountId: null,
+        toAccountId: "fa-2" as FinancialAccountId,
+        fromExternalLabel: "   ",
+        toExternalLabel: null,
+        description: "Invalid transfer",
+        date: "2026-04-18" as IsoDate,
+        createdAt: NOW,
+        updatedAt: NOW,
+        deletedAt: null,
+      })
+    ).toThrow();
+
+    expect(() =>
+      saveTransfer(db as any, {
+        id: "tr-blank-to" as TransferId,
+        userId: USER_ID,
+        amount: 250000 as CopAmount,
+        fromAccountId: "fa-1" as FinancialAccountId,
+        toAccountId: null,
+        fromExternalLabel: null,
+        toExternalLabel: "",
+        description: "Invalid transfer",
+        date: "2026-04-18" as IsoDate,
+        createdAt: NOW,
+        updatedAt: NOW,
+        deletedAt: null,
+      })
+    ).toThrow();
+  });
 });

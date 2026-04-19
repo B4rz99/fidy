@@ -137,11 +137,11 @@ export const transfers = sqliteTable(
     index("idx_transfers_user_updated").on(table.userId, table.updatedAt),
     check(
       "ck_transfers_from_endpoint",
-      sql`${table.fromAccountId} is not null or ${table.fromExternalLabel} is not null`
+      sql`${table.fromAccountId} is not null or nullif(trim(${table.fromExternalLabel}), '') is not null`
     ),
     check(
       "ck_transfers_to_endpoint",
-      sql`${table.toAccountId} is not null or ${table.toExternalLabel} is not null`
+      sql`${table.toAccountId} is not null or nullif(trim(${table.toExternalLabel}), '') is not null`
     ),
   ]
 );

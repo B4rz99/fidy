@@ -12,9 +12,15 @@ create table public.transfers (
   updated_at text not null,
   deleted_at text,
   constraint ck_transfers_from_endpoint
-    check (from_account_id is not null or from_external_label is not null),
+    check (
+      from_account_id is not null
+      or nullif(btrim(from_external_label), '') is not null
+    ),
   constraint ck_transfers_to_endpoint
-    check (to_account_id is not null or to_external_label is not null)
+    check (
+      to_account_id is not null
+      or nullif(btrim(to_external_label), '') is not null
+    )
 );
 
 create index idx_transfers_user_date

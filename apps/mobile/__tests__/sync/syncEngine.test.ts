@@ -700,6 +700,57 @@ describe("syncEngine", () => {
       expect(mockSetSyncMeta).not.toHaveBeenCalled();
     });
 
+    it("continues when a secondary table fetch fails and still advances transactions", async () => {
+      mockGetSyncMeta.mockReturnValue(null);
+      const mockSupabase = createMockSupabase({
+        transactions: {
+          data: [
+            {
+              id: "tx-remote-1",
+              user_id: "user-1",
+              type: "income",
+              amount: 5000,
+              category_id: "salary",
+              account_id: "fa-default-user-1",
+              account_attribution_state: "confirmed",
+              superseded_at: null,
+              description: "Pay",
+              date: "2026-03-04",
+              created_at: "2026-03-04T10:00:00.000Z",
+              updated_at: "2026-03-04T12:00:00.000Z",
+              deleted_at: null,
+            },
+          ],
+          error: null,
+        },
+        financial_accounts: {
+          data: null,
+          error: { message: "accounts unavailable", code: "500" },
+        },
+        transfers: { data: [], error: null },
+        opening_balances: { data: [], error: null },
+        financial_account_identifiers: { data: [], error: null },
+      });
+      mockGetTransactionById.mockReturnValueOnce(null);
+
+      const { syncPull } = await import("@/features/sync/services/syncEngine");
+      const result = await syncPull(mockDb, mockSupabase, "user-1");
+
+      expect(result).toBe(true);
+      expect(mockUpsertTransaction).toHaveBeenCalledWith(
+        mockDb,
+        expect.objectContaining({
+          id: "tx-remote-1",
+          userId: "user-1",
+        })
+      );
+      expect(getLastSetSyncMetaValue("last_sync_at_financial_accounts")).toBeNull();
+      expect(JSON.parse(getLastSetSyncMetaValue("last_sync_at_transactions")!)).toEqual({
+        updatedAt: "2026-03-04T12:00:00.000Z",
+        id: "tx-remote-1",
+      });
+    });
+
     it("skips upsert when local row is newer (LWW)", async () => {
       mockGetSyncMeta.mockReturnValueOnce(null);
       const serverRows = [
@@ -813,6 +864,27 @@ describe("syncEngine", () => {
       expect(result).toBe(false);
       expect(mockGetSyncMeta).toHaveBeenCalled();
       expect(mockGetQueuedSyncEntries).not.toHaveBeenCalled();
+    });
+
+    it("still pushes when only a secondary pull table fails", async () => {
+      mockGetSyncMeta.mockReturnValue(null);
+      mockGetQueuedSyncEntries.mockReturnValueOnce([]);
+      const mockSupabase = createMockSupabase({
+        transactions: { data: [], error: null },
+        financial_accounts: {
+          data: null,
+          error: { message: "accounts unavailable", code: "500" },
+        },
+        transfers: { data: [], error: null },
+        opening_balances: { data: [], error: null },
+        financial_account_identifiers: { data: [], error: null },
+      });
+
+      const { fullSync } = await import("@/features/sync/services/syncEngine");
+      const result = await fullSync(mockDb, mockSupabase, "user-1");
+
+      expect(result).toBe(true);
+      expect(mockGetQueuedSyncEntries).toHaveBeenCalled();
     });
   });
 

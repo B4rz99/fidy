@@ -1695,11 +1695,11 @@
       "checkConstraints": {
         "ck_transfers_from_endpoint": {
           "name": "ck_transfers_from_endpoint",
-          "value": "\"transfers\".\"from_account_id\" is not null or \"transfers\".\"from_external_label\" is not null"
+          "value": "\"transfers\".\"from_account_id\" is not null or nullif(trim(\"transfers\".\"from_external_label\"), '') is not null"
         },
         "ck_transfers_to_endpoint": {
           "name": "ck_transfers_to_endpoint",
-          "value": "\"transfers\".\"to_account_id\" is not null or \"transfers\".\"to_external_label\" is not null"
+          "value": "\"transfers\".\"to_account_id\" is not null or nullif(trim(\"transfers\".\"to_external_label\"), '') is not null"
         }
       }
     },

@@ -50,8 +50,8 @@ CREATE TABLE `transfers` (
 	`created_at` text NOT NULL,
 	`updated_at` text NOT NULL,
 	`deleted_at` text,
-	CONSTRAINT `ck_transfers_from_endpoint` CHECK(`from_account_id` IS NOT NULL OR `from_external_label` IS NOT NULL),
-	CONSTRAINT `ck_transfers_to_endpoint` CHECK(`to_account_id` IS NOT NULL OR `to_external_label` IS NOT NULL)
+	CONSTRAINT `ck_transfers_from_endpoint` CHECK(`from_account_id` IS NOT NULL OR NULLIF(TRIM(`from_external_label`), '') IS NOT NULL),
+	CONSTRAINT `ck_transfers_to_endpoint` CHECK(`to_account_id` IS NOT NULL OR NULLIF(TRIM(`to_external_label`), '') IS NOT NULL)
 );
 --> statement-breakpoint
 CREATE INDEX `idx_transfers_user_date` ON `transfers` (`user_id`,`date`);--> statement-breakpoint

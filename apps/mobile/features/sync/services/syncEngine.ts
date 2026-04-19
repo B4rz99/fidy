@@ -225,6 +225,15 @@ function fromSupabaseFinancialAccountIdentifierRow(
 
 type PullTableName = keyof typeof LAST_SYNC_AT_BY_TABLE;
 type PullCursor = { updatedAt: string; id: string | null };
+type PullFetchResponse<TRow extends { updated_at: string; id: string }> = {
+  data: TRow[] | null;
+  error: { message?: string; code?: string } | null;
+};
+type PullFetchOutcome<TRow extends { updated_at: string; id: string }> = {
+  tableName: PullTableName;
+  rows: TRow[];
+  error: { message: string; code: string } | null;
+};
 
 function rowToPullCursor(row: { updated_at: string; id: string }): PullCursor {
   return {
@@ -280,9 +289,50 @@ async function fetchPullRows<T extends { updated_at: string; id: string }>(
   return (await query
     .order("updated_at", { ascending: true })
     .order("id", { ascending: true })
-    .limit(PULL_PAGE_SIZE)) as {
-    data: T[] | null;
-    error: { message?: string; code?: string } | null;
+    .limit(PULL_PAGE_SIZE)) as PullFetchResponse<T>;
+}
+
+function toPullFetchError(error: unknown) {
+  if (typeof error === "object" && error !== null) {
+    const message =
+      "message" in error && typeof error.message === "string" ? error.message : "unknown";
+    const code = "code" in error && typeof error.code === "string" ? error.code : "unknown";
+    return { message, code };
+  }
+
+  return {
+    message: typeof error === "string" ? error : "unknown",
+    code: "unknown",
+  };
+}
+
+function toPullFetchOutcome<TRow extends { updated_at: string; id: string }>(
+  tableName: PullTableName,
+  result: PromiseSettledResult<PullFetchResponse<TRow>>
+): PullFetchOutcome<TRow> {
+  if (result.status === "rejected") {
+    return {
+      tableName,
+      rows: [],
+      error: toPullFetchError(result.reason),
+    };
+  }
+
+  if (result.value.error || !result.value.data) {
+    return {
+      tableName,
+      rows: [],
+      error: {
+        message: result.value.error?.message ?? "no_data",
+        code: result.value.error?.code ?? "unknown",
+      },
+    };
+  }
+
+  return {
+    tableName,
+    rows: result.value.data,
+    error: null,
   };
 }
 
@@ -626,7 +676,13 @@ export async function syncPull(
     getPullCursor(db, "financial_account_identifiers"),
     getPullCursor(db, "transactions"),
   ]);
-  const pullResults = await Promise.all([
+  const [
+    financialAccountsFetchResult,
+    transfersFetchResult,
+    openingBalancesFetchResult,
+    financialAccountIdentifiersFetchResult,
+    transactionsFetchResult,
+  ] = await Promise.allSettled([
     fetchPullRows<SupabaseFinancialAccountRow>(
       supabase,
       userId,
@@ -655,30 +711,35 @@ export async function syncPull(
     openingBalancesResult,
     financialAccountIdentifiersResult,
     transactionsResult,
-  ] = pullResults;
+  ] = [
+    toPullFetchOutcome("financial_accounts", financialAccountsFetchResult),
+    toPullFetchOutcome("transfers", transfersFetchResult),
+    toPullFetchOutcome("opening_balances", openingBalancesFetchResult),
+    toPullFetchOutcome("financial_account_identifiers", financialAccountIdentifiersFetchResult),
+    toPullFetchOutcome("transactions", transactionsFetchResult),
+  ];
 
-  const failedFetch = [
-    { tableName: "financial_accounts", result: financialAccountsResult },
-    { tableName: "transfers", result: transfersResult },
-    { tableName: "opening_balances", result: openingBalancesResult },
-    { tableName: "financial_account_identifiers", result: financialAccountIdentifiersResult },
-    { tableName: "transactions", result: transactionsResult },
-  ].find(({ result }) => result.error || !result.data);
+  const failedFetches = [
+    financialAccountsResult,
+    transfersResult,
+    openingBalancesResult,
+    financialAccountIdentifiersResult,
+    transactionsResult,
+  ].filter((result) => result.error);
 
-  if (failedFetch) {
+  for (const failedFetch of failedFetches) {
     captureWarning("sync_pull_fetch_failed", {
       tableName: failedFetch.tableName,
-      errorMessage: failedFetch.result.error?.message ?? "no_data",
-      errorCode: failedFetch.result.error?.code ?? "unknown",
+      errorMessage: failedFetch.error?.message ?? "no_data",
+      errorCode: failedFetch.error?.code ?? "unknown",
     });
-    return false;
   }
 
-  const financialAccountRows = financialAccountsResult.data ?? [];
-  const transferRows = transfersResult.data ?? [];
-  const openingBalanceRows = openingBalancesResult.data ?? [];
-  const financialAccountIdentifierRows = financialAccountIdentifiersResult.data ?? [];
-  const transactionRows = transactionsResult.data ?? [];
+  const financialAccountRows = financialAccountsResult.rows;
+  const transferRows = transfersResult.rows;
+  const openingBalanceRows = openingBalancesResult.rows;
+  const financialAccountIdentifierRows = financialAccountIdentifiersResult.rows;
+  const transactionRows = transactionsResult.rows;
   const allUpdatedAts = [
     ...financialAccountRows.map((row) => row.updated_at),
     ...transferRows.map((row) => row.updated_at),
@@ -798,7 +859,7 @@ export async function syncPull(
     advancePullCursor(db, "transactions", transactionsSafeCursor),
   ]);
 
-  return true;
+  return transactionsResult.error == null;
 }
 
 export async function fullSync(
