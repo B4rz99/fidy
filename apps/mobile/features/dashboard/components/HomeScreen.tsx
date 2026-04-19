@@ -1,5 +1,6 @@
 import { Stack, useRouter } from "expo-router";
 import { memo, useCallback, useMemo } from "react";
+import { AccountSuggestionsPromptBanner, useAccountSuggestions } from "@/features/account-suggestions";
 import { useOptionalUserId } from "@/features/auth";
 import { DetectedTransactionsBanner } from "@/features/capture-sources";
 import {
@@ -83,12 +84,14 @@ type ListHeaderProps = {
     readonly total: number;
   }[];
   readonly dailySpending: readonly { readonly date: string; readonly total: number }[];
+  readonly accountSuggestionCount: number;
 };
 
 const ListHeader = memo(function ListHeader({
   balance,
   categorySpending,
   dailySpending,
+  accountSuggestionCount,
 }: ListHeaderProps) {
   const { push } = useRouter();
   const userId = useOptionalUserId();
@@ -106,6 +109,10 @@ const ListHeader = memo(function ListHeader({
       />
       <FailedEmailsBanner onPress={() => push("/failed-emails" as never)} />
       <NeedsReviewBanner onPress={() => push("/needs-review" as never)} />
+      <AccountSuggestionsPromptBanner
+        count={accountSuggestionCount}
+        onPress={() => push("/account-suggestions" as never)}
+      />
       <SyncConflictBanner onPress={() => push("/sync-conflicts" as never)} />
       {Platform.OS === "ios" && (
         <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
@@ -126,6 +133,7 @@ export const HomeScreen = () => {
   const { t } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
+  const { suggestions } = useAccountSuggestions({ db, userId });
   const pages = useTransactionStore((s) => s.pages);
   const hasMore = useTransactionStore((s) => s.hasMore);
   const balance = useTransactionStore((s) => s.balance);
@@ -203,9 +211,10 @@ export const HomeScreen = () => {
         balance={balance}
         categorySpending={categorySpending}
         dailySpending={dailySpending}
+        accountSuggestionCount={suggestions.length}
       />
     ),
-    [balance, categorySpending, dailySpending]
+    [balance, categorySpending, dailySpending, suggestions.length]
   );
 
   return (

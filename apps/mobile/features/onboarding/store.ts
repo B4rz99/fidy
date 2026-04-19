@@ -1,39 +1,61 @@
 import { create } from "zustand";
 import { useAuthStore } from "@/features/auth";
 import { markOnboardingComplete } from "./lib/check-onboarding";
+import {
+  getNextOnboardingStep,
+  ONBOARDING_STEP,
+  type OnboardingStep,
+} from "./lib/flow";
 
 type OnboardingState = {
-  step: number;
+  step: OnboardingStep;
   isCompleting: boolean;
   emailSkipped: boolean;
+  shouldReviewAccounts: boolean;
 };
 
 type OnboardingActions = {
   nextStep: () => void;
+  completeSync: (shouldReviewAccounts: boolean) => void;
   skipToComplete: () => void;
   setEmailSkipped: (skipped: boolean) => void;
   completeOnboarding: () => Promise<void>;
   reset: () => void;
 };
 
-export const TOTAL_STEPS = 5;
+export const TOTAL_STEPS = ONBOARDING_STEP.complete;
 
 export const useOnboardingStore = create<OnboardingState & OnboardingActions>((set) => ({
-  step: 1,
+  step: ONBOARDING_STEP.welcome,
   isCompleting: false,
   emailSkipped: false,
+  shouldReviewAccounts: false,
 
   nextStep: () => {
     set((s) => {
-      const next = Math.min(s.step + 1, TOTAL_STEPS);
-      // Skip sync step (3) when email was skipped — nothing to sync
-      const resolved = next === 3 && s.emailSkipped ? 4 : next;
-      return { step: resolved };
+      return {
+        step: getNextOnboardingStep({
+          step: s.step,
+          emailSkipped: s.emailSkipped,
+          shouldReviewAccounts: s.shouldReviewAccounts,
+        }),
+      };
+    });
+  },
+
+  completeSync: (shouldReviewAccounts) => {
+    set({
+      shouldReviewAccounts,
+      step: getNextOnboardingStep({
+        step: ONBOARDING_STEP.sync,
+        emailSkipped: false,
+        shouldReviewAccounts,
+      }),
     });
   },
 
   skipToComplete: () => {
-    set({ step: TOTAL_STEPS });
+    set({ step: ONBOARDING_STEP.complete });
   },
 
   setEmailSkipped: (skipped) => {
@@ -52,6 +74,11 @@ export const useOnboardingStore = create<OnboardingState & OnboardingActions>((s
   },
 
   reset: () => {
-    set({ step: 1, isCompleting: false, emailSkipped: false });
+    set({
+      step: ONBOARDING_STEP.welcome,
+      isCompleting: false,
+      emailSkipped: false,
+      shouldReviewAccounts: false,
+    });
   },
 }));

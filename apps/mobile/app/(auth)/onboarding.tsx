@@ -2,6 +2,7 @@ import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import * as SplashScreen from "expo-splash-screen";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { OnboardingAccountReviewStep } from "@/features/account-suggestions";
 import { useOptionalUserId } from "@/features/auth";
 import { initializeBudgetSession } from "@/features/budget";
 import { initializeEmailCaptureSession, loadEmailAccounts } from "@/features/email-capture";
@@ -10,9 +11,11 @@ import {
   BudgetSetupStep,
   CompleteStep,
   ConnectEmailStep,
+  getVisibleOnboardingStepCount,
+  getVisibleOnboardingStepIndex,
+  ONBOARDING_STEP,
   StepIndicator,
   SyncProgressStep,
-  TOTAL_STEPS,
   useOnboardingStore,
   WelcomeStep,
 } from "@/features/onboarding";
@@ -48,6 +51,7 @@ function AuthenticatedOnboardingScreen({
   readonly userId: UserId;
 }) {
   const step = useOnboardingStore((s) => s.step);
+  const shouldReviewAccounts = useOnboardingStore((s) => s.shouldReviewAccounts);
   const pageBg = useThemeColor("page");
   const [storesReady, setStoresReady] = useState(false);
   const db = getDb(userId);
@@ -91,15 +95,17 @@ function AuthenticatedOnboardingScreen({
 
   const renderStep = () => {
     switch (step) {
-      case 1:
+      case ONBOARDING_STEP.welcome:
         return <WelcomeStep />;
-      case 2:
+      case ONBOARDING_STEP.connectEmail:
         return <ConnectEmailStep />;
-      case 3:
+      case ONBOARDING_STEP.sync:
         return <SyncProgressStep />;
-      case 4:
+      case ONBOARDING_STEP.accountReview:
+        return <OnboardingAccountReviewStep />;
+      case ONBOARDING_STEP.budgetSetup:
         return <BudgetSetupStep />;
-      case 5:
+      case ONBOARDING_STEP.complete:
         return <CompleteStep />;
       default:
         return <WelcomeStep />;
@@ -113,7 +119,10 @@ function AuthenticatedOnboardingScreen({
         { backgroundColor: pageBg, paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}
     >
-      <StepIndicator currentStep={step} totalSteps={TOTAL_STEPS} />
+      <StepIndicator
+        currentStep={getVisibleOnboardingStepIndex(step, shouldReviewAccounts)}
+        totalSteps={getVisibleOnboardingStepCount(shouldReviewAccounts)}
+      />
       {renderStep()}
     </View>
   );

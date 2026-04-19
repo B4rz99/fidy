@@ -43,6 +43,60 @@ const es = {
     spentThisMonth: "Gastado este mes",
   },
 
+  accountSuggestions: {
+    prompt: {
+      count: {
+        one: "%{count} sugerencia de cuenta lista",
+        other: "%{count} sugerencias de cuenta listas",
+      },
+      subtitle: "Revísalas ahora para mejorar dónde caen las capturas recientes.",
+    },
+    review: {
+      title: "Mejorar precisión",
+      subtitle:
+        "Crea o vincula ahora las sugerencias de cuenta más fuertes, u omítelas hasta que las necesites.",
+      emptyTitle: "No hay sugerencias de cuenta ahora mismo",
+      emptySubtitle:
+        "Cuando la evidencia repetida apunte a una cuenta faltante, aparecerá aquí.",
+      dismissFailed: "No se pudo descartar la sugerencia",
+    },
+    onboarding: {
+      eyebrow: "REVISIÓN OPCIONAL DE CUENTAS",
+      title: "Encontramos sugerencias fuertes de cuenta en tus capturas recientes.",
+      subtitle: "Revisa primero las coincidencias más fuertes, o continúa y termina la configuración.",
+      note: "Las coincidencias de mayor confianza se muestran primero para mantener el onboarding ágil.",
+      continue: "Continuar a presupuestos",
+    },
+    card: {
+      create: "Crear",
+      linkExisting: "Vincular existente",
+      skipForNow: "Omitir",
+      confidenceHigh: "ALTA",
+      confidenceMedium: "MEDIA",
+      reasonLast4: "%{source} terminado en %{value} apareció en %{count} capturas.",
+      reasonAlias: "%{source} y %{value} aparecieron juntos en %{count} capturas.",
+      reasonCardHint: "Las pistas de tarjeta de %{source} para %{value} aparecieron en %{count} capturas.",
+    },
+    create: {
+      title: "Crear cuenta",
+      subtitle:
+        "Crea una cuenta financiera desde esta sugerencia. Podrás editar los detalles después.",
+      nameLabel: "Nombre de la cuenta",
+      kindLabel: "Tipo de cuenta",
+      identifierLabel: "Evidencia del identificador",
+      save: "Crear cuenta",
+      saveFailed: "No se pudo crear la cuenta",
+    },
+    link: {
+      title: "Vincular existente",
+      subtitle:
+        "Ordenamos primero las coincidencias más fuertes para que confirmes la cuenta correcta más rápido.",
+      likelyMatches: "Coincidencias probables",
+      allAccounts: "Todas las cuentas",
+      linkFailed: "No se pudo vincular la cuenta",
+    },
+  },
+
   // Transactions
   transactions: {
     expense: "Gasto",
@@ -62,6 +116,13 @@ const es = {
 
   financialAccounts: {
     defaultName: "Efectivo",
+    kinds: {
+      checking: "Corriente",
+      savings: "Ahorros",
+      wallet: "Billetera",
+      cash: "Efectivo",
+      credit_card: "Tarjeta de crédito",
+    },
   },
 
   // Bills / Calendar

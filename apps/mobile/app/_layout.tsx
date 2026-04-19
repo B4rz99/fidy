@@ -386,6 +386,26 @@ function RootLayout() {
               }}
             />
             <Stack.Screen
+              name="account-suggestions"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="create-financial-account"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="link-suggested-account"
+              options={{ ...SHEET, sheetAllowedDetents: [0.8] }}
+            />
+            <Stack.Screen
               name="failed-emails"
               options={{
                 headerShown: Platform.OS === "ios",

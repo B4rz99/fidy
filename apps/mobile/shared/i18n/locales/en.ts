@@ -43,6 +43,59 @@ const en = {
     spentThisMonth: "Spent this month",
   },
 
+  accountSuggestions: {
+    prompt: {
+      count: {
+        one: "%{count} account suggestion ready",
+        other: "%{count} account suggestions ready",
+      },
+      subtitle: "Review them now to improve where recent captures land.",
+    },
+    review: {
+      title: "Improve accuracy",
+      subtitle:
+        "Create or link the strongest account suggestions now, or skip them until you need them.",
+      emptyTitle: "No account suggestions right now",
+      emptySubtitle:
+        "When repeated capture evidence points to a missing account, it will show up here.",
+      dismissFailed: "Could not dismiss suggestion",
+    },
+    onboarding: {
+      eyebrow: "OPTIONAL ACCOUNT REVIEW",
+      title: "We found strong account suggestions from your recent captures.",
+      subtitle: "Review the strongest matches now, or continue and finish setup first.",
+      note: "Highest-confidence matches are shown first so onboarding stays fast.",
+      continue: "Continue to budgets",
+    },
+    card: {
+      create: "Create",
+      linkExisting: "Link existing",
+      skipForNow: "Skip",
+      confidenceHigh: "HIGH",
+      confidenceMedium: "MED",
+      reasonLast4: "%{source} ending in %{value} appeared across %{count} captures.",
+      reasonAlias: "%{source} and %{value} appeared together across %{count} captures.",
+      reasonCardHint: "%{source} card hints for %{value} appeared across %{count} captures.",
+    },
+    create: {
+      title: "Create account",
+      subtitle:
+        "Create a financial account from this suggestion. You can edit the details later.",
+      nameLabel: "Account name",
+      kindLabel: "Account kind",
+      identifierLabel: "Identifier evidence",
+      save: "Create account",
+      saveFailed: "Could not create account",
+    },
+    link: {
+      title: "Link existing",
+      subtitle: "We ranked the strongest matches first so you can confirm the right account quickly.",
+      likelyMatches: "Likely matches",
+      allAccounts: "All accounts",
+      linkFailed: "Could not link account",
+    },
+  },
+
   // Transactions
   transactions: {
     expense: "Expense",
@@ -61,6 +114,13 @@ const en = {
 
   financialAccounts: {
     defaultName: "Cash",
+    kinds: {
+      checking: "Checking",
+      savings: "Savings",
+      wallet: "Wallet",
+      cash: "Cash",
+      credit_card: "Credit card",
+    },
   },
 
   // Bills / Calendar
