@@ -162,35 +162,39 @@ module.exports = defineConfig([
 
       // — Import rules —
       "import/no-cycle": "error",
-      "boundaries/element-types": [
+      "boundaries/dependencies": [
         "error",
         {
           default: "allow",
           rules: [
             {
-              from: ["feature-public", "feature-internal"],
-              disallow: ["app"],
+              from: { type: ["feature-public", "feature-internal"] },
+              disallow: { to: { type: "app" } },
             },
             {
-              from: "shared",
-              disallow: ["app", "feature-public", "feature-internal", "module"],
+              from: { type: "shared" },
+              disallow: {
+                to: { type: ["app", "feature-public", "feature-internal", "module"] },
+              },
             },
             {
-              from: "module",
-              disallow: ["app", "feature-public", "feature-internal", "shared"],
+              from: { type: "module" },
+              disallow: {
+                to: { type: ["app", "feature-public", "feature-internal", "shared"] },
+              },
             },
             {
               from: { category: "feature" },
               disallow: {
                 to: {
                   type: "feature-internal",
-                  captured: { featureName: "!{{from.featureName}}" },
+                  captured: { featureName: "!{{ from.captured.featureName }}" },
                 },
               },
             },
             {
-              from: "app",
-              disallow: ["feature-internal"],
+              from: { type: "app" },
+              disallow: { to: { type: "feature-internal" } },
             },
           ],
         },
