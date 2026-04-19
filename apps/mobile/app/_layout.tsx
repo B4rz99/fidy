@@ -52,6 +52,7 @@ import {
   loadEmailAccounts,
   useEmailCapture,
 } from "@/features/email-capture";
+import { tryEnsureDefaultFinancialAccount } from "@/features/financial-accounts";
 import {
   initializeGoalSession,
   loadGoalsForUser,
@@ -107,37 +108,51 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
 
   useSubscription(
     () => {
-      initializeTransactionSession(userId);
-      initializeEmailCaptureSession(userId);
-      initializeChatSession(userId);
-      initializeCalendarSession(userId);
-      initializeBudgetSession(userId);
-      initializeGoalSession(userId);
-      initializeAnalyticsSession(userId);
-      void initializeNotificationStore(db, userId);
-      Promise.all([loadCalendarBills(db, userId), loadCalendarPaymentsForMonth(db)]).catch(
-        handleRecoverableError("Failed to load calendar data")
-      );
-      loadBudgetsForUser(db, userId).catch(handleRecoverableError("Failed to load budgets"));
-      loadGoalsForUser(db, userId).catch(handleRecoverableError("Failed to load goals"));
-      loadAnalyticsForUser(db, userId).catch(handleRecoverableError("Failed to load analytics"));
-      loadEmailAccounts(db, userId).catch(handleRecoverableError("Failed to load email accounts"));
-      refreshCategories(db, userId).catch(handleRecoverableError("Failed to load user categories"));
-      loadChatSessions(db, userId)
-        .then(() => cleanupExpiredChatSessions(db, userId))
-        .catch(handleRecoverableError("Failed to load chat sessions"));
-      hydrateCaptureSources(db, userId).catch(
-        handleRecoverableError("Failed to load capture sources")
-      );
-      loadInitialTransactions(db, userId).catch(
-        handleRecoverableError("Failed to load transactions")
-      );
-      void loadSyncConflicts(db);
-      useSettingsStore
-        .getState()
-        .hydrate()
-        .catch(handleRecoverableError("Failed to hydrate settings"));
-      void registerBackgroundTask().catch(captureError);
+      void Promise.resolve()
+        .then(() => {
+          initializeTransactionSession(userId);
+          const defaultAccount = tryEnsureDefaultFinancialAccount(db, userId);
+          if (defaultAccount) {
+            useTransactionStore.getState().setDefaultAccountId(defaultAccount.id);
+          }
+          initializeEmailCaptureSession(userId);
+          initializeChatSession(userId);
+          initializeCalendarSession(userId);
+          initializeBudgetSession(userId);
+          initializeGoalSession(userId);
+          initializeAnalyticsSession(userId);
+          void initializeNotificationStore(db, userId);
+          Promise.all([loadCalendarBills(db, userId), loadCalendarPaymentsForMonth(db)]).catch(
+            handleRecoverableError("Failed to load calendar data")
+          );
+          loadBudgetsForUser(db, userId).catch(handleRecoverableError("Failed to load budgets"));
+          loadGoalsForUser(db, userId).catch(handleRecoverableError("Failed to load goals"));
+          loadAnalyticsForUser(db, userId).catch(
+            handleRecoverableError("Failed to load analytics")
+          );
+          loadEmailAccounts(db, userId).catch(
+            handleRecoverableError("Failed to load email accounts")
+          );
+          refreshCategories(db, userId).catch(
+            handleRecoverableError("Failed to load user categories")
+          );
+          loadChatSessions(db, userId)
+            .then(() => cleanupExpiredChatSessions(db, userId))
+            .catch(handleRecoverableError("Failed to load chat sessions"));
+          hydrateCaptureSources(db, userId).catch(
+            handleRecoverableError("Failed to load capture sources")
+          );
+          loadInitialTransactions(db, userId).catch(
+            handleRecoverableError("Failed to load transactions")
+          );
+          void loadSyncConflicts(db);
+          useSettingsStore
+            .getState()
+            .hydrate()
+            .catch(handleRecoverableError("Failed to hydrate settings"));
+          void registerBackgroundTask().catch(captureError);
+        })
+        .catch(captureError);
     },
     [db, userId],
     migrationsReady

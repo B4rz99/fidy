@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
+import type { FinancialAccountRow } from "@/features/financial-accounts";
 import { getBuiltInCategoryId, isValidCategoryId } from "@/features/transactions/lib/categories";
 import type { TransactionRow } from "@/features/transactions/lib/repository";
 import type { AnyDb, SyncQueueEntry } from "@/shared/db";
@@ -95,6 +96,11 @@ type CreateEmailPipelineServiceDeps = {
     status: string,
     transactionId: TransactionId | null
   ) => Promise<void>;
+  readonly ensureDefaultFinancialAccount: (
+    db: AnyDb,
+    userId: UserId,
+    options?: { now?: IsoDateTime }
+  ) => FinancialAccountRow;
   readonly insertTransaction: (db: AnyDb, row: TransactionRow) => void | Promise<void>;
   readonly enqueueSync: (db: AnyDb, input: SyncQueueEntry) => void | Promise<void>;
   readonly insertMerchantRule: (
@@ -198,8 +204,13 @@ function saveTransactionEffect(
   status: "success" | "needs_review"
 ) {
   return Effect.gen(function* () {
-    const { insertTransaction, enqueueSync, insertProcessedEmail, trackTransactionCreated } =
-      yield* EmailPipelineDeps.tag;
+    const {
+      ensureDefaultFinancialAccount,
+      insertTransaction,
+      enqueueSync,
+      insertProcessedEmail,
+      trackTransactionCreated,
+    } = yield* EmailPipelineDeps.tag;
     const source = getTransactionSource(email.provider);
     const txId = generateTransactionId();
     const now = yield* currentIsoDateTimeEffect;
@@ -207,6 +218,9 @@ function saveTransactionEffect(
     const date = validated.date;
     const receivedAt = email.receivedAt;
     const categoryId = getPersistedCategoryId(validated.categoryId);
+    const defaultAccount = yield* fromThunk(() =>
+      ensureDefaultFinancialAccount(db, userId, { now })
+    );
 
     assertCopAmount(amount);
     assertIsoDate(date);
@@ -221,6 +235,8 @@ function saveTransactionEffect(
         categoryId,
         description: validated.description,
         date,
+        accountId: defaultAccount.id,
+        accountAttributionState: "unresolved",
         source,
         createdAt: now,
         updatedAt: now,
@@ -326,8 +342,13 @@ function saveRetryTransactionEffect(
   email: ProcessedEmailRow
 ) {
   return Effect.gen(function* () {
-    const { insertTransaction, enqueueSync, insertMerchantRule, trackTransactionCreated } =
-      yield* EmailPipelineDeps.tag;
+    const {
+      ensureDefaultFinancialAccount,
+      insertTransaction,
+      enqueueSync,
+      insertMerchantRule,
+      trackTransactionCreated,
+    } = yield* EmailPipelineDeps.tag;
     const txId = generateTransactionId();
     const now = yield* currentIsoDateTimeEffect;
     const source = getTransactionSource(email.provider);
@@ -335,6 +356,9 @@ function saveRetryTransactionEffect(
     const date = parsed.date;
     const status: "success" | "needs_review" = parsed.confidence < 0.7 ? "needs_review" : "success";
     const categoryId = getPersistedCategoryId(parsed.categoryId);
+    const defaultAccount = yield* fromThunk(() =>
+      ensureDefaultFinancialAccount(db, userId, { now })
+    );
 
     assertCopAmount(amount);
     assertIsoDate(date);
@@ -348,6 +372,8 @@ function saveRetryTransactionEffect(
         categoryId,
         description: parsed.description,
         date,
+        accountId: defaultAccount.id,
+        accountAttributionState: "unresolved",
         source,
         createdAt: now,
         updatedAt: now,

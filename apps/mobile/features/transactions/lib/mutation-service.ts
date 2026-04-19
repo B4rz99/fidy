@@ -1,6 +1,6 @@
 import { generateTransactionId, toIsoDateTime } from "@/shared/lib";
 import type { WriteThroughMutationModule } from "@/shared/mutations";
-import type { CategoryId, TransactionId, UserId } from "@/shared/types/branded";
+import type { CategoryId, FinancialAccountId, TransactionId, UserId } from "@/shared/types/branded";
 import type { StoredTransaction, TransactionType } from "../schema";
 import { buildTransaction, toTransactionRow } from "./build-transaction";
 
@@ -8,6 +8,7 @@ export type TransactionFormInput = {
   type: TransactionType;
   digits: string;
   categoryId: CategoryId | null;
+  accountId: FinancialAccountId | null;
   description: string;
   date: Date;
 };
