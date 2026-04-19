@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type {
   CategoryId,
   CopAmount,
+  FinancialAccountId,
   IsoDate,
   Month,
   TransactionId,
@@ -27,6 +28,8 @@ const makeTx = (overrides: Partial<StoredTransaction>): StoredTransaction => ({
   createdAt: NOW,
   updatedAt: NOW,
   deletedAt: null,
+  accountId: "fa-default-u1" as FinancialAccountId,
+  accountAttributionState: "confirmed",
   ...overrides,
 });
 

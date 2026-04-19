@@ -2,6 +2,10 @@ import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useOptionalUserId } from "@/features/auth";
+import {
+  ensureDefaultFinancialAccount,
+  getFinancialAccountsForUser,
+} from "@/features/financial-accounts";
 import type { TransactionType } from "@/features/transactions";
 import {
   deleteTransaction,
@@ -14,7 +18,7 @@ import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useMountEffect, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
 import { requireTransactionId } from "@/shared/types/assertions";
-import type { CategoryId } from "@/shared/types/branded";
+import type { CategoryId, FinancialAccountId } from "@/shared/types/branded";
 
 const afterDismiss = () =>
   new Promise<void>((resolve) => {
@@ -31,6 +35,7 @@ export default function EditTransactionScreen() {
   const [type, setType] = useState<TransactionType>("expense");
   const [digits, setDigits] = useState("");
   const [categoryId, setCategoryId] = useState<CategoryId | null>(null);
+  const [accountId, setAccountId] = useState<FinancialAccountId | null>(null);
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date());
   const [loaded, setLoaded] = useState(false);
@@ -39,17 +44,21 @@ export default function EditTransactionScreen() {
       ? requireTransactionId(routeTransactionId.trim())
       : null;
 
+  const accounts = db && userId ? getFinancialAccountsForUser(db, userId) : [];
+
   useMountEffect(() => {
     if (transactionId == null || !db || !userId) {
       router.back();
       return;
     }
 
+    ensureDefaultFinancialAccount(db, userId);
     const tx = getStoredTransactionById(db, userId, transactionId);
     if (tx) {
       setType(tx.type);
       setDigits(String(tx.amount));
       setCategoryId(tx.categoryId);
+      setAccountId(tx.accountId);
       setDescription(tx.description);
       setDate(tx.date);
       setLoaded(true);
@@ -74,6 +83,7 @@ export default function EditTransactionScreen() {
           type,
           digits,
           categoryId,
+          accountId,
           description,
           date,
         });
@@ -110,6 +120,8 @@ export default function EditTransactionScreen() {
       type={type}
       digits={digits}
       categoryId={categoryId}
+      accounts={accounts}
+      accountId={accountId}
       description={description}
       date={date}
       saveLabel={t("common.save")}
@@ -117,6 +129,7 @@ export default function EditTransactionScreen() {
       onTypeChange={setType}
       onDigitsChange={setDigits}
       onCategoryChange={setCategoryId}
+      onAccountChange={setAccountId}
       onDescriptionChange={setDescription}
       onSave={handleSave}
       onDelete={handleDelete}

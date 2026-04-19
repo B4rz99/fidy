@@ -6,6 +6,7 @@ describe("createTransactionSchema", () => {
     type: "expense" as const,
     amount: 4520,
     categoryId: "food" as const,
+    accountId: "fa-default-user-1",
     description: "Groceries",
     date: new Date("2026-03-01"),
   };

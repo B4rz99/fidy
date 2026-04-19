@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { NotificationData } from "@/features/capture-sources/schema";
 import { processNotification } from "@/features/capture-sources/services/notification-pipeline";
+import type { FinancialAccountId } from "@/shared/types/branded";
 
 const mockInsertTransaction = vi.fn();
 const mockEnqueueSync = vi.fn();
@@ -14,6 +15,16 @@ const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);
 const mockCaptureFingerprint = vi.fn().mockReturnValue("test-fingerprint");
 const mockInsertProcessedCapture = vi.fn();
 const mockStripPii = vi.fn().mockImplementation((t: string) => t);
+const mockEnsureDefaultFinancialAccount = vi.fn().mockReturnValue({
+  id: "fa-default-user-1" as FinancialAccountId,
+  userId: "user-1",
+  name: "Cash",
+  kind: "cash",
+  isDefault: true,
+  createdAt: "2026-04-18T10:00:00.000Z",
+  updatedAt: "2026-04-18T10:00:00.000Z",
+  deletedAt: null,
+});
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
@@ -44,6 +55,10 @@ vi.mock("@/features/capture-sources/lib/repository", () => ({
 
 vi.mock("@/features/email-capture/services/parse-email-api", () => ({
   stripPii: (...args: any[]) => mockStripPii(...args),
+}));
+
+vi.mock("@/features/financial-accounts", () => ({
+  ensureDefaultFinancialAccount: (...args: any[]) => mockEnsureDefaultFinancialAccount(...args),
 }));
 
 const mockGenerateId = vi.fn();
@@ -97,6 +112,8 @@ describe("processNotification", () => {
         type: "expense",
         amount: 50000,
         description: "EDS LA CASTELLANA",
+        accountId: "fa-default-user-1",
+        accountAttributionState: "unresolved",
         source: "notification_android",
       })
     );

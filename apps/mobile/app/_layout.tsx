@@ -52,6 +52,7 @@ import {
   loadEmailAccounts,
   useEmailCapture,
 } from "@/features/email-capture";
+import { ensureDefaultFinancialAccount } from "@/features/financial-accounts";
 import {
   initializeGoalSession,
   loadGoalsForUser,
@@ -107,7 +108,9 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
 
   useSubscription(
     () => {
+      const defaultAccount = ensureDefaultFinancialAccount(db, userId);
       initializeTransactionSession(userId);
+      useTransactionStore.getState().setDefaultAccountId(defaultAccount.id);
       initializeEmailCaptureSession(userId);
       initializeChatSession(userId);
       initializeCalendarSession(userId);

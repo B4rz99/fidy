@@ -1,13 +1,22 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import type { FinancialAccountRow } from "@/features/financial-accounts";
 import { FidyNumpad } from "@/shared/components";
 import { Calendar, X } from "@/shared/components/icons";
-import { Keyboard, Platform, Pressable, Text, TextInput, View } from "@/shared/components/rn";
+import {
+  Keyboard,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "@/shared/components/rn";
 import { useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
-import type { CategoryId } from "@/shared/types/branded";
+import type { CategoryId, FinancialAccountId } from "@/shared/types/branded";
 import { CATEGORIES } from "../lib/categories";
 import { getDateLabel } from "../lib/format-date";
 import { handleNumpadPress } from "../lib/handle-numpad-press";
@@ -19,6 +28,8 @@ type TransactionFormProps = {
   readonly type: TransactionType;
   readonly digits: string;
   readonly categoryId: CategoryId | null;
+  readonly accounts: readonly FinancialAccountRow[];
+  readonly accountId: FinancialAccountId | null;
   readonly description: string;
   readonly date: Date;
   readonly saveLabel: string;
@@ -26,6 +37,7 @@ type TransactionFormProps = {
   readonly onTypeChange: (type: TransactionType) => void;
   readonly onDigitsChange: (digits: string) => void;
   readonly onCategoryChange: (id: CategoryId) => void;
+  readonly onAccountChange: (id: FinancialAccountId) => void;
   readonly onDescriptionChange: (text: string) => void;
   readonly onSave: () => void;
   readonly onDelete?: () => void;
@@ -36,6 +48,8 @@ export function TransactionForm({
   type,
   digits,
   categoryId,
+  accounts,
+  accountId,
   description,
   date,
   saveLabel,
@@ -43,6 +57,7 @@ export function TransactionForm({
   onTypeChange,
   onDigitsChange,
   onCategoryChange,
+  onAccountChange,
   onDescriptionChange,
   onSave,
   onDelete,
@@ -57,10 +72,12 @@ export function TransactionForm({
   const tertiary = useThemeColor("tertiary");
   const primary = useThemeColor("primary");
   const borderSubtle = useThemeColor("borderSubtle");
+  const card = useThemeColor("card");
+  const accentGreenLight = useThemeColor("accentGreenLight");
 
   const amountColor = type === "expense" ? accentRed : accentGreen;
   const displayAmount = digits.length > 0 ? formatInputDisplay(digits) : "$";
-  const canSave = parseDigitsToAmount(digits) > 0;
+  const canSave = parseDigitsToAmount(digits) > 0 && accountId != null;
   const buttonBg = canSave ? accentGreen : "#CCCCCC";
   const dateLabel = useMemo(
     () => getDateLabel(date, new Date(), t("dates.today"), getDateFnsLocale(locale)),
@@ -143,6 +160,54 @@ export function TransactionForm({
               />
             ))}
           </View>
+        </View>
+
+        <View style={{ gap: 6 }}>
+          <Text
+            style={{
+              fontFamily: "Poppins_500Medium",
+              fontSize: 12,
+              color: secondary,
+            }}
+          >
+            {t("common.account")}
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              {accounts.map((account) => {
+                const isSelected = account.id === accountId;
+
+                return (
+                  <Pressable
+                    key={account.id}
+                    style={{
+                      minHeight: 36,
+                      borderRadius: 12,
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderWidth: 1,
+                      borderColor: isSelected ? accentGreen : borderSubtle,
+                      backgroundColor: isSelected ? accentGreenLight : card,
+                      justifyContent: "center",
+                    }}
+                    onPress={() => onAccountChange(account.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={account.name}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: isSelected ? "Poppins_600SemiBold" : "Poppins_500Medium",
+                        fontSize: 12,
+                        color: primary,
+                      }}
+                    >
+                      {account.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </ScrollView>
         </View>
 
         {/* Description + Date */}

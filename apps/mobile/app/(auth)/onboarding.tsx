@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth";
 import { initializeBudgetSession } from "@/features/budget";
 import { initializeEmailCaptureSession, loadEmailAccounts } from "@/features/email-capture";
+import { ensureDefaultFinancialAccount } from "@/features/financial-accounts";
 import {
   BudgetSetupStep,
   CompleteStep,
@@ -15,7 +16,11 @@ import {
   useOnboardingStore,
   WelcomeStep,
 } from "@/features/onboarding";
-import { initializeTransactionSession, loadInitialTransactions } from "@/features/transactions";
+import {
+  initializeTransactionSession,
+  loadInitialTransactions,
+  useTransactionStore,
+} from "@/features/transactions";
 import { StyleSheet, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useSubscription, useThemeColor } from "@/shared/hooks";
@@ -51,8 +56,10 @@ function AuthenticatedOnboardingScreen({
   // Initialize minimal stores needed for onboarding
   useSubscription(
     () => {
+      const defaultAccount = ensureDefaultFinancialAccount(db, userId);
       initializeEmailCaptureSession(userId);
       initializeTransactionSession(userId);
+      useTransactionStore.getState().setDefaultAccountId(defaultAccount.id);
       initializeBudgetSession(userId);
       Promise.all([loadEmailAccounts(db, userId), loadInitialTransactions(db, userId)])
         .catch(captureError)

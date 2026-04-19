@@ -14,7 +14,9 @@ export {
   upsertOpeningBalance,
 } from "./lib/opening-balances-repository";
 export {
+  ensureDefaultFinancialAccount,
   type FinancialAccountRow,
+  getDefaultFinancialAccountForUser,
   getFinancialAccountById,
   getFinancialAccountsForUser,
   saveFinancialAccount,

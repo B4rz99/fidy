@@ -1,6 +1,12 @@
 import { buildDefaultFinancialAccountId } from "@/features/financial-accounts";
 import { parseDigitsToAmount, parseIsoDate, toIsoDate, toIsoDateTime } from "@/shared/lib";
-import type { CategoryId, CopAmount, TransactionId, UserId } from "@/shared/types/branded";
+import type {
+  CategoryId,
+  CopAmount,
+  FinancialAccountId,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 import type { AccountAttributionState, StoredTransaction, TransactionType } from "../schema";
 import { createTransactionSchema } from "../schema";
 import { getBuiltInCategoryId, isValidCategoryId } from "./categories";
@@ -10,6 +16,7 @@ type BuildInput = {
   type: TransactionType;
   digits: string;
   categoryId: CategoryId | null;
+  accountId: FinancialAccountId | null;
   description: string;
   date: Date;
 };
@@ -47,6 +54,7 @@ export function buildTransaction(
     type: input.type,
     amount: amount as number,
     categoryId: (input.categoryId ?? "other") as string,
+    accountId: input.accountId ?? "",
     description: input.description || undefined,
     date: input.date,
   };
@@ -72,7 +80,7 @@ export function buildTransaction(
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
       deletedAt: existing?.deletedAt ?? null,
-      accountId: existing?.accountId ?? buildDefaultFinancialAccountId(userId),
+      accountId: result.data.accountId,
       accountAttributionState:
         existing?.accountAttributionState ?? getDefaultAccountAttributionState(existing?.source),
       supersededAt: existing?.supersededAt ?? null,
@@ -113,9 +121,8 @@ export function toTransactionRow(tx: StoredTransaction): TransactionRow {
     categoryId: tx.categoryId,
     description: tx.description || null,
     date: toIsoDate(tx.date),
-    accountId: tx.accountId ?? buildDefaultFinancialAccountId(tx.userId),
-    accountAttributionState:
-      tx.accountAttributionState ?? getDefaultAccountAttributionState(source),
+    accountId: tx.accountId,
+    accountAttributionState: tx.accountAttributionState,
     supersededAt: tx.supersededAt ? toIsoDateTime(tx.supersededAt) : null,
     createdAt: toIsoDateTime(tx.createdAt),
     updatedAt: toIsoDateTime(tx.updatedAt),

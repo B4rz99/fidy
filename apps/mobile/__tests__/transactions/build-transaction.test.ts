@@ -23,6 +23,7 @@ describe("buildTransaction", () => {
     type: "expense" as const,
     digits: "1234",
     categoryId: "food" as CategoryId,
+    accountId: "fa-default-user-1" as FinancialAccountId,
     description: "Lunch",
     date: new Date(2026, 2, 5),
   };
@@ -35,6 +36,8 @@ describe("buildTransaction", () => {
     expect(result.transaction.userId).toBe("user-1");
     expect(result.transaction.amount).toBe(1234);
     expect(result.transaction.categoryId).toBe("food");
+    expect(result.transaction.accountId).toBe("fa-default-user-1");
+    expect(result.transaction.accountAttributionState).toBe("confirmed");
     expect(result.transaction.createdAt).toBe(NOW);
     expect(result.transaction.updatedAt).toBe(NOW);
     expect(result.transaction.deletedAt).toBeNull();
@@ -67,6 +70,16 @@ describe("buildTransaction", () => {
       { ...validInput, digits: "abc" },
       "user-1" as UserId,
       "tx-4" as TransactionId,
+      NOW
+    );
+    expect(result.success).toBe(false);
+  });
+
+  test("returns error when the owning account is missing", () => {
+    const result = buildTransaction(
+      { ...validInput, accountId: null },
+      "user-1" as UserId,
+      "tx-5" as TransactionId,
       NOW
     );
     expect(result.success).toBe(false);

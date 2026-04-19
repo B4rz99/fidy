@@ -7,6 +7,7 @@ import type {
   BudgetId,
   CategoryId,
   CopAmount,
+  FinancialAccountId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
@@ -38,6 +39,8 @@ const makeTx = (overrides: Partial<StoredTransaction> = {}): StoredTransaction =
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
+  accountId: "fa-default-u1" as FinancialAccountId,
+  accountAttributionState: "confirmed",
   ...overrides,
 });
 

@@ -4,6 +4,7 @@ import type { RawEmail } from "@/features/email-capture/schema";
 import { createEmailPipelineService } from "@/features/email-capture/services/create-email-pipeline-service";
 import { processEmails, processRetries } from "@/features/email-capture/services/email-pipeline";
 import { requireIsoDateTime, requireUserId } from "@/shared/types/assertions";
+import type { FinancialAccountId } from "@/shared/types/branded";
 
 const mockGetProcessedExternalIds = vi.fn().mockResolvedValue(new Set<string>());
 const mockInsertProcessedEmail = vi.fn();
@@ -18,6 +19,16 @@ const mockMarkForRetry = vi.fn();
 const mockMarkPermanentlyFailed = vi.fn();
 const mockMarkRetrySuccess = vi.fn();
 const mockUpdateProcessedEmailStatus = vi.fn();
+const mockEnsureDefaultFinancialAccount = vi.fn().mockReturnValue({
+  id: "fa-default-user-1" as FinancialAccountId,
+  userId: requireUserId("user-1"),
+  name: "Cash",
+  kind: "cash",
+  isDefault: true,
+  createdAt: "2026-04-18T10:00:00.000Z",
+  updatedAt: "2026-04-18T10:00:00.000Z",
+  deletedAt: null,
+});
 
 vi.mock("@/features/capture-sources/lib/dedup", () => ({
   findDuplicateTransaction: (...args: unknown[]) => mockFindDuplicateTransaction(...args),
@@ -48,6 +59,10 @@ vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
 
 vi.mock("@/features/email-capture/services/parse-email-api", () => ({
   parseEmailApi: (...args: unknown[]) => mockParseEmailApi(...args),
+}));
+
+vi.mock("@/features/financial-accounts", () => ({
+  ensureDefaultFinancialAccount: (...args: unknown[]) => mockEnsureDefaultFinancialAccount(...args),
 }));
 
 vi.mock("@/shared/lib/sentry", () => ({
@@ -156,6 +171,8 @@ describe("email processing pipeline", () => {
         userId: USER_ID,
         type: "expense",
         amount: 50000,
+        accountId: "fa-default-user-1",
+        accountAttributionState: "unresolved",
         source: "email_gmail",
       })
     );
@@ -190,6 +207,7 @@ describe("email processing pipeline", () => {
       markPermanentlyFailed: mockMarkPermanentlyFailed,
       markRetrySuccess: mockMarkRetrySuccess,
       updateProcessedEmailStatus: mockUpdateProcessedEmailStatus,
+      ensureDefaultFinancialAccount: mockEnsureDefaultFinancialAccount,
       insertTransaction: mockInsertTransaction,
       enqueueSync: mockEnqueueSync,
       insertMerchantRule: mockInsertMerchantRule,

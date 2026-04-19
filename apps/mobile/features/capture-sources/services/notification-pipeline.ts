@@ -3,6 +3,7 @@ import {
   lookupMerchantRule,
 } from "@/features/email-capture/merchant-rules.public";
 import { stripPii } from "@/features/email-capture/parsing.public";
+import { ensureDefaultFinancialAccount } from "@/features/financial-accounts";
 import { insertTransaction, isValidCategoryId } from "@/features/transactions/write.public";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
@@ -170,6 +171,7 @@ export async function processNotification(
     // Save transaction
     const txId = generateTransactionId();
     const now = toIsoDateTime(new Date());
+    const defaultAccount = ensureDefaultFinancialAccount(db, userId, { now });
 
     insertTransaction(db, {
       id: txId,
@@ -179,6 +181,8 @@ export async function processNotification(
       categoryId: finalCategoryId,
       description: parsed.merchant,
       date: parsed.date,
+      accountId: defaultAccount.id,
+      accountAttributionState: "unresolved",
       source,
       createdAt: now,
       updatedAt: now,
