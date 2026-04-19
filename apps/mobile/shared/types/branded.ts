@@ -6,6 +6,7 @@ export type BudgetId = Brand<string, "BudgetId">;
 export type BillId = Brand<string, "BillId">;
 export type BillPaymentId = Brand<string, "BillPaymentId">;
 export type CategoryId = Brand<string, "CategoryId">;
+export type AccountSuggestionDismissalId = Brand<string, "AccountSuggestionDismissalId">;
 export type CaptureEvidenceId = Brand<string, "CaptureEvidenceId">;
 export type FinancialAccountId = Brand<string, "FinancialAccountId">;
 export type FinancialAccountIdentifierId = Brand<string, "FinancialAccountIdentifierId">;

@@ -3,6 +3,7 @@ export {
   type FinancialAccountIdentifierRow,
   getFinancialAccountIdentifierById,
   getFinancialAccountIdentifiersForAccount,
+  getFinancialAccountIdentifiersForUser,
   saveFinancialAccountIdentifier,
   upsertFinancialAccountIdentifier,
 } from "./lib/identifiers-repository";

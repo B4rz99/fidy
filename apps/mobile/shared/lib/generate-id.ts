@@ -1,4 +1,5 @@
 import type {
+  AccountSuggestionDismissalId,
   BillId,
   BillPaymentId,
   BudgetId,
@@ -41,6 +42,10 @@ export function generateTransactionId(): TransactionId {
 
 export function generateBudgetId(): BudgetId {
   return generateId("budget") as BudgetId;
+}
+
+export function generateAccountSuggestionDismissalId(): AccountSuggestionDismissalId {
+  return generateId("asd") as AccountSuggestionDismissalId;
 }
 
 export function generateCaptureEvidenceId(): CaptureEvidenceId {

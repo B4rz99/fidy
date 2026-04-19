@@ -158,6 +158,27 @@ export function countCaptureEvidenceOccurrences(
   return rows[0]?.total ?? 0;
 }
 
+export function getCaptureEvidenceRowsForScopeValue(
+  db: AnyDb,
+  userId: CaptureEvidenceRow["userId"],
+  scope: CaptureEvidenceRow["scope"],
+  value: CaptureEvidenceRow["value"]
+) {
+  return db
+    .select()
+    .from(captureEvidence)
+    .where(
+      and(
+        eq(captureEvidence.userId, userId),
+        eq(captureEvidence.scope, scope),
+        eq(captureEvidence.value, value),
+        isNull(captureEvidence.deletedAt)
+      )
+    )
+    .orderBy(desc(captureEvidence.updatedAt), captureEvidence.id)
+    .all();
+}
+
 export function getRepeatedCaptureEvidenceForUser(
   db: AnyDb,
   userId: CaptureEvidenceRow["userId"],

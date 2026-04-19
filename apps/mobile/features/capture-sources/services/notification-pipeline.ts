@@ -1,3 +1,4 @@
+import { findMatchingFinancialAccountId } from "@/features/account-suggestions";
 import {
   buildNotificationCaptureEvidence,
   materializeCaptureEvidenceRows,
@@ -46,6 +47,7 @@ export async function processNotification(
   notification: NotificationData
 ): Promise<NotificationPipelineResult> {
   assertUserId(userId);
+  const captureEvidence = buildNotificationCaptureEvidence(notification);
   const notificationText = notification.bigText ?? notification.text;
   const sanitizedText = stripPii(notificationText).slice(0, 500);
   const receivedAt = toIsoDateTime(new Date(notification.timestamp));
@@ -89,7 +91,7 @@ export async function processNotification(
     });
     await saveCaptureEvidenceRows(
       db,
-      materializeCaptureEvidenceRows(buildNotificationCaptureEvidence(notification), {
+      materializeCaptureEvidenceRows(captureEvidence, {
         userId,
         transactionId: null,
         processedEmailId: null,
@@ -169,7 +171,7 @@ export async function processNotification(
       });
       await saveCaptureEvidenceRows(
         db,
-        materializeCaptureEvidenceRows(buildNotificationCaptureEvidence(notification), {
+        materializeCaptureEvidenceRows(captureEvidence, {
           userId,
           transactionId: existingTxId,
           processedEmailId: null,
@@ -203,6 +205,7 @@ export async function processNotification(
     const txId = generateTransactionId();
     const now = toIsoDateTime(new Date());
     const defaultAccount = ensureDefaultFinancialAccount(db, userId, { now });
+    const matchedAccountId = findMatchingFinancialAccountId(db, userId, captureEvidence);
 
     insertTransaction(db, {
       id: txId,
@@ -212,8 +215,8 @@ export async function processNotification(
       categoryId: finalCategoryId,
       description: parsed.merchant,
       date: parsed.date,
-      accountId: defaultAccount.id,
-      accountAttributionState: "unresolved",
+      accountId: matchedAccountId ?? defaultAccount.id,
+      accountAttributionState: matchedAccountId ? "inferred" : "unresolved",
       source,
       createdAt: now,
       updatedAt: now,
@@ -242,7 +245,7 @@ export async function processNotification(
     });
     await saveCaptureEvidenceRows(
       db,
-      materializeCaptureEvidenceRows(buildNotificationCaptureEvidence(notification), {
+      materializeCaptureEvidenceRows(captureEvidence, {
         userId,
         transactionId: txId,
         processedEmailId: null,

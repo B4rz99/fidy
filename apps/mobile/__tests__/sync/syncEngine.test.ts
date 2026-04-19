@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockGetQueuedSyncEntries = vi.fn().mockReturnValue([]);
 const mockClearSyncEntries = vi.fn();
+const mockGetAccountSuggestionDismissalById = vi.fn().mockReturnValue(null);
 const mockGetTransactionById = vi.fn().mockReturnValue(null);
 const mockGetFinancialAccountById = vi.fn().mockReturnValue(null);
 const mockGetFinancialAccountIdentifierById = vi.fn().mockReturnValue(null);
@@ -18,6 +19,7 @@ const mockGetSyncMeta = vi.fn().mockReturnValue(null);
 const mockSetSyncMeta = vi.fn();
 const mockUpsertTransaction = vi.fn();
 const mockInsertTransaction = vi.fn();
+const mockUpsertAccountSuggestionDismissal = vi.fn();
 const mockUpsertFinancialAccount = vi.fn();
 const mockUpsertFinancialAccountIdentifier = vi.fn();
 const mockUpsertOpeningBalance = vi.fn();
@@ -37,6 +39,13 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   setSyncMeta: (...args: any[]) => mockSetSyncMeta(...args),
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
   upsertTransaction: (...args: any[]) => mockUpsertTransaction(...args),
+}));
+
+vi.mock("@/features/account-suggestions", () => ({
+  getAccountSuggestionDismissalById: (...args: any[]) =>
+    mockGetAccountSuggestionDismissalById(...args),
+  upsertAccountSuggestionDismissal: (...args: any[]) =>
+    mockUpsertAccountSuggestionDismissal(...args),
 }));
 
 vi.mock("@/features/financial-accounts", () => ({
@@ -250,6 +259,46 @@ describe("syncEngine", () => {
         })
       );
       expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-accounts-1"]);
+    });
+
+    it("upserts account suggestion dismissal rows and clears the queue entry on success", async () => {
+      mockGetQueuedSyncEntries.mockReturnValueOnce([
+        {
+          id: "sq-dismissal-1",
+          tableName: "accountSuggestionDismissals",
+          rowId: "asd-1",
+          operation: "insert",
+          createdAt: "2026-04-19T10:00:00.000Z",
+        },
+      ]);
+      mockGetAccountSuggestionDismissalById.mockReturnValueOnce({
+        id: "asd-1",
+        userId: "user-1",
+        scope: "notification:bancolombia:last4",
+        value: "1234",
+        dismissedScore: 200,
+        createdAt: "2026-04-19T10:00:00.000Z",
+        updatedAt: "2026-04-19T10:00:00.000Z",
+        deletedAt: null,
+      });
+      mockUpsert.mockReturnValueOnce({ error: null });
+      const mockSupabase = createMockSupabase();
+
+      const { syncPush } = await import("@/features/sync/services/syncEngine");
+      await syncPush(mockDb, mockSupabase, "user-1");
+
+      expect(mockSupabase.from).toHaveBeenCalledWith("account_suggestion_dismissals");
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "asd-1",
+          user_id: "user-1",
+          scope: "notification:bancolombia:last4",
+          value: "1234",
+          dismissed_score: 200,
+        }),
+        { onConflict: "user_id,scope,value" }
+      );
+      expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-dismissal-1"]);
     });
 
     it("upserts transfer rows and clears the queue entry on success", async () => {
@@ -632,6 +681,54 @@ describe("syncEngine", () => {
       expect(JSON.parse(getLastSetSyncMetaValue("last_sync_at_capture_evidence")!)).toEqual({
         updatedAt: "2026-04-18T08:00:00.000Z",
         id: "ce-1",
+      });
+    });
+
+    it("pulls account suggestion dismissals and advances their cursor", async () => {
+      const mockSupabase = createMockSupabase({
+        account_suggestion_dismissals: {
+          data: [
+            {
+              id: "asd-1",
+              user_id: "user-1",
+              scope: "notification:bancolombia:last4",
+              value: "1234",
+              dismissed_score: 200,
+              created_at: "2026-04-19T10:00:00.000Z",
+              updated_at: "2026-04-19T11:00:00.000Z",
+              deleted_at: null,
+            },
+          ],
+          error: null,
+        },
+        capture_evidence: { data: [], error: null },
+        financial_accounts: { data: [], error: null },
+        transfers: { data: [], error: null },
+        opening_balances: { data: [], error: null },
+        financial_account_identifiers: { data: [], error: null },
+        transactions: { data: [], error: null },
+      });
+      mockGetAccountSuggestionDismissalById.mockReturnValueOnce(null);
+
+      const { syncPull } = await import("@/features/sync/services/syncEngine");
+      const result = await syncPull(mockDb, mockSupabase, "user-1");
+
+      expect(result).toBe(true);
+      expect(mockUpsertAccountSuggestionDismissal).toHaveBeenCalledWith(
+        mockDb,
+        expect.objectContaining({
+          id: "asd-1",
+          userId: "user-1",
+          scope: "notification:bancolombia:last4",
+          value: "1234",
+          dismissedScore: 200,
+        })
+      );
+      expect(
+        JSON.parse(getLastSetSyncMetaValue("last_sync_at_account_suggestion_dismissals")!)
+      ).toEqual({
+        updatedAt: "2026-04-19T11:00:00.000Z",
+        id: "asd-1",
       });
     });
 
