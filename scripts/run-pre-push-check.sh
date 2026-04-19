@@ -8,6 +8,9 @@ case "$check_name" in
   root-biome)
     bun run lint
     ;;
+  branded-boundaries)
+    bun run lint:brands
+    ;;
   mobile-eslint)
     bun run lint:mobile
     ;;

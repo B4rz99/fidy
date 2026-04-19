@@ -113,6 +113,7 @@ All IDs, temporal strings, and money amounts use branded types from `shared/type
 - Keep branded-type proof in boundary helpers: constructors like `toIsoDate()`, auth hooks like `useOptionalUserId()`, route/ID decoders like `requireTransactionId()`, and row mappers/decoders in `data/`, `repository/`, or `schema/`.
 - UI files (`app/**`, `features/**/components/**`, `shared/components/**`) should not use direct `as UserId`, `as TransactionId`, `as BillId`, `as CategoryId`, `as IsoDate`, or `as IsoDateTime` assertions.
 - When a component needs a branded ID/date, add or reuse a deeper helper instead of asserting locally.
+- `bun run lint:brands` deterministically enforces the UI rule above. If it fails, move the branded proof into `shared/types/assertions.ts`, a trusted constructor like `shared/lib/format-date.ts` or `shared/lib/generate-id.ts`, or a boundary module such as `schema.ts`, `data/`, `repository/`, or `features/auth/public.ts`.
 
 ## Architectural Decisions
 

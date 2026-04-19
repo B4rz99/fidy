@@ -36,6 +36,10 @@ pre-push:
       files: git ls-files
       run: ./scripts/run-pre-push-check.sh root-biome {files}
       skip_output: false
+    branded-boundaries:
+      files: git ls-files
+      run: ./scripts/run-pre-push-check.sh branded-boundaries {files}
+      skip_output: false
     mobile-eslint:
       files: git ls-files
       run: ./scripts/run-pre-push-check.sh mobile-eslint {files}
