@@ -508,14 +508,22 @@ export function createEmailPipelineService(
             continue;
           }
 
-          assertCopAmount(parsed.amount);
-          assertIsoDate(parsed.date);
-          assertIsoDateTime(email.receivedAt);
+          let existingTxId: TransactionId | null = null;
+          try {
+            existingTxId = await runEmailPipelineEffect(
+              findDuplicateTransactionEffect(db, userId, parsed)
+            );
+          } catch (saveErr) {
+            await runEmailPipelineEffect(captureErrorEffect(saveErr));
+            result.failed++;
+            completed++;
+            onProgress?.(getProgressSnapshot(total, completed, result));
+            continue;
+          }
 
-          const existingTxId = await runEmailPipelineEffect(
-            findDuplicateTransactionEffect(db, userId, parsed)
-          );
           if (existingTxId) {
+            const receivedAt = email.receivedAt;
+            assertIsoDateTime(receivedAt);
             await runEmailPipelineEffect(
               insertProcessedEmailEffect(db, {
                 id: generateProcessedEmailId(),
@@ -525,7 +533,7 @@ export function createEmailPipelineService(
                 failureReason: null,
                 subject: email.subject,
                 rawBodyPreview: email.body.slice(0, 500),
-                receivedAt: email.receivedAt,
+                receivedAt,
                 transactionId: existingTxId,
                 confidence: parsed.confidence,
                 createdAt: toIsoDateTime(new Date()),
@@ -641,12 +649,26 @@ export function createEmailPipelineService(
           continue;
         }
 
-        assertCopAmount(parsed.amount);
-        assertIsoDate(parsed.date);
+        let existingTxId: TransactionId | null = null;
+        try {
+          existingTxId = await runEmailPipelineEffect(
+            findDuplicateTransactionEffect(db, userId, parsed)
+          );
+        } catch (saveErr) {
+          await runEmailPipelineEffect(captureErrorEffect(saveErr));
+          const nextCount = (email.retryCount ?? 0) + 1;
+          if (isMaxRetriesReached(nextCount)) {
+            await runEmailPipelineEffect(markPermanentlyFailedEffect(db, email.id));
+            result.permanentlyFailed++;
+          } else {
+            await runEmailPipelineEffect(
+              markForRetryEffect(db, email.id, nextCount, computeNextRetryAt(nextCount))
+            );
+            result.retried++;
+          }
+          continue;
+        }
 
-        const existingTxId = await runEmailPipelineEffect(
-          findDuplicateTransactionEffect(db, userId, parsed)
-        );
         if (existingTxId) {
           await runEmailPipelineEffect(
             markRetrySuccessEffect(db, email.id, "success", existingTxId, parsed.confidence)
