@@ -1,9 +1,13 @@
-import { Context, Effect } from "effect";
+import { Cause, Context, Effect, Exit } from "effect";
 
 export type AppEffect<A, E = unknown, R = never> = Effect.Effect<A, E, R>;
 
-export function runAppEffect<A, E>(effect: AppEffect<A, E>): Promise<A> {
-  return Effect.runPromise(effect);
+export async function runAppEffect<A, E>(effect: AppEffect<A, E>): Promise<A> {
+  const exit = await Effect.runPromiseExit(effect);
+  if (Exit.isFailure(exit)) {
+    throw Cause.squash(exit.cause);
+  }
+  return exit.value;
 }
 
 export function makeAppTag<Service>(key: string): Context.Tag<Service, Service> {

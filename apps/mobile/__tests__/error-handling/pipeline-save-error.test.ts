@@ -20,6 +20,11 @@ const mockLookupMerchantRule = vi.fn().mockResolvedValue(null);
 const mockInsertMerchantRule = vi.fn();
 const mockParseEmailApi = vi.fn().mockResolvedValue(null);
 const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);
+const mockGetPendingRetryEmails = vi.fn().mockResolvedValue([]);
+const mockMarkForRetry = vi.fn();
+const mockMarkPermanentlyFailed = vi.fn();
+const mockMarkRetrySuccess = vi.fn();
+const mockUpdateProcessedEmailStatus = vi.fn();
 
 vi.mock("@/features/capture-sources/lib/dedup", () => ({
   findDuplicateTransaction: (...args: unknown[]) => mockFindDuplicateTransaction(...args),
@@ -28,6 +33,11 @@ vi.mock("@/features/capture-sources/lib/dedup", () => ({
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getProcessedExternalIds: (...args: unknown[]) => mockGetProcessedExternalIds(...args),
   insertProcessedEmail: (...args: unknown[]) => mockInsertProcessedEmail(...args),
+  getPendingRetryEmails: (...args: unknown[]) => mockGetPendingRetryEmails(...args),
+  markForRetry: (...args: unknown[]) => mockMarkForRetry(...args),
+  markPermanentlyFailed: (...args: unknown[]) => mockMarkPermanentlyFailed(...args),
+  markRetrySuccess: (...args: unknown[]) => mockMarkRetrySuccess(...args),
+  updateProcessedEmailStatus: (...args: unknown[]) => mockUpdateProcessedEmailStatus(...args),
 }));
 
 vi.mock("@/features/transactions/lib/repository", () => ({
@@ -88,6 +98,11 @@ describe("pipeline worker save error path", () => {
     mockInsertMerchantRule.mockResolvedValue(undefined);
     mockParseEmailApi.mockResolvedValue(null);
     mockFindDuplicateTransaction.mockResolvedValue(null);
+    mockGetPendingRetryEmails.mockResolvedValue([]);
+    mockMarkForRetry.mockResolvedValue(undefined);
+    mockMarkPermanentlyFailed.mockResolvedValue(undefined);
+    mockMarkRetrySuccess.mockResolvedValue(undefined);
+    mockUpdateProcessedEmailStatus.mockResolvedValue(undefined);
   });
 
   it("calls captureError and continues processing when saveTransaction throws", async () => {
