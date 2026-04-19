@@ -3,8 +3,9 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useOptionalUserId } from "@/features/auth";
 import {
-  ensureDefaultFinancialAccount,
+  type FinancialAccountRow,
   getFinancialAccountsForUser,
+  tryEnsureDefaultFinancialAccount,
 } from "@/features/financial-accounts";
 import type { TransactionType } from "@/features/transactions";
 import {
@@ -39,12 +40,11 @@ export default function EditTransactionScreen() {
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date());
   const [loaded, setLoaded] = useState(false);
+  const [accounts, setAccounts] = useState<readonly FinancialAccountRow[]>([]);
   const transactionId =
     typeof routeTransactionId === "string" && routeTransactionId.trim().length > 0
       ? requireTransactionId(routeTransactionId.trim())
       : null;
-
-  const accounts = db && userId ? getFinancialAccountsForUser(db, userId) : [];
 
   useMountEffect(() => {
     if (transactionId == null || !db || !userId) {
@@ -52,7 +52,8 @@ export default function EditTransactionScreen() {
       return;
     }
 
-    ensureDefaultFinancialAccount(db, userId);
+    tryEnsureDefaultFinancialAccount(db, userId);
+    setAccounts(getFinancialAccountsForUser(db, userId));
     const tx = getStoredTransactionById(db, userId, transactionId);
     if (tx) {
       setType(tx.type);

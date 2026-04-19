@@ -1,9 +1,12 @@
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
+import { useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useOptionalUserId } from "@/features/auth";
 import {
-  ensureDefaultFinancialAccount,
+  type FinancialAccountRow,
   getFinancialAccountsForUser,
+  tryEnsureDefaultFinancialAccount,
 } from "@/features/financial-accounts";
 import {
   saveCurrentTransaction,
@@ -12,14 +15,15 @@ import {
   useTransactionStore,
 } from "@/features/transactions";
 import { tryGetDb } from "@/shared/db";
-import { useAsyncGuard, useMountEffect, useTranslation } from "@/shared/hooks";
-import { trackTransactionCreated } from "@/shared/lib";
+import { useAsyncGuard, useSubscription, useTranslation } from "@/shared/hooks";
+import { captureError, trackTransactionCreated } from "@/shared/lib";
 
 export default function AddTransactionScreen() {
   const { navigate } = useRouter();
   const { t } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
+  const [accounts, setAccounts] = useState<readonly FinancialAccountRow[]>([]);
   const {
     type,
     digits,
@@ -35,17 +39,43 @@ export default function AddTransactionScreen() {
     setAccountId,
     setDescription,
     resetForm,
-  } = useTransactionStore();
+  } = useTransactionStore(
+    useShallow((state) => ({
+      type: state.type,
+      digits: state.digits,
+      categoryId: state.categoryId,
+      accountId: state.accountId,
+      description: state.description,
+      date: state.date,
+      editingId: state.editingId,
+      setType: state.setType,
+      setDigits: state.setDigits,
+      setCategoryId: state.setCategoryId,
+      setDefaultAccountId: state.setDefaultAccountId,
+      setAccountId: state.setAccountId,
+      setDescription: state.setDescription,
+      resetForm: state.resetForm,
+    }))
+  );
 
   const isEditing = editingId != null;
 
-  useMountEffect(() => {
-    if (!db || !userId) return;
-    const defaultAccount = ensureDefaultFinancialAccount(db, userId);
-    setDefaultAccountId(defaultAccount.id);
-  });
-
-  const accounts = db && userId ? getFinancialAccountsForUser(db, userId) : [];
+  useSubscription(
+    () => {
+      if (!db || !userId) return;
+      try {
+        const defaultAccount = tryEnsureDefaultFinancialAccount(db, userId);
+        if (defaultAccount) {
+          setDefaultAccountId(defaultAccount.id);
+        }
+        setAccounts(getFinancialAccountsForUser(db, userId));
+      } catch (error) {
+        captureError(error);
+      }
+    },
+    [db, userId],
+    db != null && userId != null
+  );
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 

@@ -17,6 +17,7 @@ import { useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks
 import { getDateFnsLocale } from "@/shared/i18n";
 import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
 import type { CategoryId, FinancialAccountId } from "@/shared/types/branded";
+import { hasSelectedFinancialAccount } from "../lib/account-selection";
 import { CATEGORIES } from "../lib/categories";
 import { getDateLabel } from "../lib/format-date";
 import { handleNumpadPress } from "../lib/handle-numpad-press";
@@ -77,7 +78,8 @@ export function TransactionForm({
 
   const amountColor = type === "expense" ? accentRed : accentGreen;
   const displayAmount = digits.length > 0 ? formatInputDisplay(digits) : "$";
-  const canSave = parseDigitsToAmount(digits) > 0 && accountId != null;
+  const hasAccountSelection = hasSelectedFinancialAccount(accounts, accountId);
+  const canSave = parseDigitsToAmount(digits) > 0 && hasAccountSelection;
   const buttonBg = canSave ? accentGreen : "#CCCCCC";
   const dateLabel = useMemo(
     () => getDateLabel(date, new Date(), t("dates.today"), getDateFnsLocale(locale)),
@@ -172,7 +174,11 @@ export function TransactionForm({
           >
             {t("common.account")}
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView
+            horizontal
+            keyboardShouldPersistTaps="handled"
+            showsHorizontalScrollIndicator={false}
+          >
             <View style={{ flexDirection: "row", gap: 8 }}>
               {accounts.map((account) => {
                 const isSelected = account.id === accountId;

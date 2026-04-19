@@ -311,5 +311,7 @@ describe("transaction mutation service", () => {
       success: false,
       error: "Account is required",
     });
+    expect(currentCommit).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
   });
 });

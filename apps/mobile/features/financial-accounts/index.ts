@@ -23,3 +23,4 @@ export {
   upsertFinancialAccount,
 } from "./lib/repository";
 export { type FinancialAccountKind, financialAccountKindSchema } from "./schema";
+export { tryEnsureDefaultFinancialAccount } from "./services/try-ensure-default-account";

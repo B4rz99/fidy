@@ -41,18 +41,20 @@ function findCanonicalFinancialAccount(
   return rows.find((row) => row.id === canonicalId) ?? null;
 }
 
-function findChosenDefaultFinancialAccount(
-  rows: readonly FinancialAccountRow[],
-  userId: FinancialAccountRow["userId"]
-) {
-  const canonicalDefault = rows.find(
-    (row) => row.id === buildDefaultFinancialAccountId(userId) && row.isDefault
-  );
-  if (canonicalDefault) {
-    return canonicalDefault;
-  }
+function findExistingDefaultFinancialAccount(rows: readonly FinancialAccountRow[]) {
+  return rows.find((row) => row.isDefault) ?? null;
+}
 
-  return rows.find((row) => row.isDefault) ?? findCanonicalFinancialAccount(rows, userId);
+function promoteFinancialAccountToDefault(
+  row: FinancialAccountRow,
+  now: IsoDateTime
+): FinancialAccountRow {
+  return {
+    ...row,
+    isDefault: true,
+    updatedAt: now,
+    deletedAt: null,
+  };
 }
 
 export function getFinancialAccountById(db: AnyDb, id: FinancialAccountRow["id"]) {
@@ -100,10 +102,7 @@ export function getDefaultFinancialAccountForUser(
   db: AnyDb,
   userId: FinancialAccountRow["userId"]
 ) {
-  return findChosenDefaultFinancialAccount(
-    getActiveFinancialAccountRowsForUser(db, userId),
-    userId
-  );
+  return findExistingDefaultFinancialAccount(getActiveFinancialAccountRowsForUser(db, userId));
 }
 
 export function ensureDefaultFinancialAccount(
@@ -116,10 +115,17 @@ export function ensureDefaultFinancialAccount(
 
   return db.transaction((tx) => {
     const activeRows = getActiveFinancialAccountRowsForUser(tx, userId);
-    const chosenDefault = findChosenDefaultFinancialAccount(activeRows, userId);
+    const existingDefault = findExistingDefaultFinancialAccount(activeRows);
 
-    if (chosenDefault) {
-      return chosenDefault;
+    if (existingDefault) {
+      return existingDefault;
+    }
+
+    const canonicalActive = findCanonicalFinancialAccount(activeRows, userId);
+    if (canonicalActive) {
+      const promotedRow = promoteFinancialAccountToDefault(canonicalActive, now);
+      saveFinancialAccount(tx, promotedRow);
+      return promotedRow;
     }
 
     const canonicalId = buildDefaultFinancialAccountId(userId);

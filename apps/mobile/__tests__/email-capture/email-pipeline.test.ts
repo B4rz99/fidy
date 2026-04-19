@@ -558,7 +558,18 @@ describe("processRetries", () => {
 
     const result = await processRetries(mockDb, USER_ID);
 
-    expect(mockInsertTransaction).toHaveBeenCalled();
+    expect(mockEnsureDefaultFinancialAccount).toHaveBeenCalledWith(
+      mockDb,
+      USER_ID,
+      expect.objectContaining({ now: expect.any(String) })
+    );
+    expect(mockInsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        accountId: "fa-default-user-1",
+        accountAttributionState: "unresolved",
+      })
+    );
     expect(mockEnqueueSync).toHaveBeenCalled();
     expect(result.succeeded).toBe(1);
   });

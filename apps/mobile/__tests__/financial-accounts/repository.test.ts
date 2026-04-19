@@ -108,4 +108,45 @@ describe("financial accounts repository", () => {
     });
     expect(getFinancialAccountsForUser(db as any, USER_ID)).toHaveLength(1);
   });
+
+  it("promotes an existing canonical account to the actual default when the flag is missing", () => {
+    saveFinancialAccount(db as any, {
+      id: "fa-default-user-1" as FinancialAccountId,
+      userId: USER_ID,
+      name: "Cash",
+      kind: "cash",
+      isDefault: false,
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+    });
+
+    const defaultAccount = ensureDefaultFinancialAccount(db as any, USER_ID, {
+      now: "2026-04-18T12:00:00.000Z" as IsoDateTime,
+    });
+
+    expect(defaultAccount).toMatchObject({
+      id: "fa-default-user-1",
+      userId: USER_ID,
+      name: "Cash",
+      kind: "cash",
+      isDefault: true,
+    });
+    expect(getDefaultFinancialAccountForUser(db as any, USER_ID)).toMatchObject({
+      id: "fa-default-user-1",
+      isDefault: true,
+    });
+    expect(getQueuedSyncEntries(db as any)).toEqual([
+      expect.objectContaining({
+        tableName: "financialAccounts",
+        rowId: "fa-default-user-1",
+        operation: "insert",
+      }),
+      expect.objectContaining({
+        tableName: "financialAccounts",
+        rowId: "fa-default-user-1",
+        operation: "update",
+      }),
+    ]);
+  });
 });
