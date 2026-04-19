@@ -194,9 +194,6 @@ describe("email processing pipeline", () => {
       enqueueSync: mockEnqueueSync,
       insertMerchantRule: mockInsertMerchantRule,
       trackTransactionCreated: vi.fn(),
-      captureError: vi.fn(),
-      captureWarning: vi.fn(),
-      capturePipelineEvent: vi.fn(),
       clock: {
         now: () => new Date(fixedNow),
         nowIsoDateTime: () => fixedNow,

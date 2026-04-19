@@ -3,7 +3,6 @@ import { insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import { trackTransactionCreated } from "@/shared/lib/analytics";
-import { captureError, capturePipelineEvent, captureWarning } from "@/shared/lib/sentry";
 import type { UserId } from "@/shared/types/branded";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
 import {
@@ -43,9 +42,6 @@ const emailPipeline = createEmailPipelineService({
   enqueueSync,
   insertMerchantRule,
   trackTransactionCreated,
-  captureError,
-  captureWarning,
-  capturePipelineEvent,
 });
 
 export const processEmails: ProcessEmails = (
