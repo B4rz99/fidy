@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Effect } from "effect";
+import { type AppClock, bindAppClock, currentIsoDateTimeEffect } from "@/shared/effect/clock";
 import { fromPromise, fromSync, fromThunk, makeAppService } from "@/shared/effect/runtime";
-import { toIsoDateTime } from "@/shared/lib";
 import type { IsoDateTime } from "@/shared/types/branded";
 import type {
   ConflictResolution,
@@ -50,6 +50,7 @@ type CreateSyncServiceDeps = {
   readonly upsertTransaction: UpsertTransaction;
   readonly enqueueTransactionSync: EnqueueTransactionSync;
   readonly resolveConflictRow: ResolveConflictRow;
+  readonly clock?: AppClock;
 };
 
 export type SyncService = {
@@ -102,7 +103,7 @@ function resolveConflictEffect({ db, conflictId, resolution }: ResolveTransactio
 
     const { upsertTransaction, enqueueTransactionSync, resolveConflictRow, refreshTransactions } =
       yield* SyncDeps.tag;
-    const resolvedAt = toIsoDateTime(new Date());
+    const resolvedAt = yield* currentIsoDateTimeEffect;
     const serverData = tryParseTransactionSnapshot(row.serverData);
     const localData =
       resolution === "local" ? (JSON.parse(row.localData) as TransactionSnapshot) : null;
@@ -161,7 +162,9 @@ export function createSyncService({
   upsertTransaction,
   enqueueTransactionSync,
   resolveConflictRow,
+  clock,
 }: CreateSyncServiceDeps): SyncService {
+  const clockRuntime = bindAppClock(clock);
   const runtime = SyncDeps.bind({
     isOnline,
     getSupabase,
@@ -175,8 +178,8 @@ export function createSyncService({
   } satisfies CreateSyncServiceDeps);
 
   return {
-    listConflicts: (input) => runtime.run(listConflictsEffect(input)),
-    resolveConflict: (input) => runtime.run(resolveConflictEffect(input)),
-    run: (input) => runtime.run(runSyncEffect(input)),
+    listConflicts: (input) => runtime.run(clockRuntime.provide(listConflictsEffect(input))),
+    resolveConflict: (input) => runtime.run(clockRuntime.provide(resolveConflictEffect(input))),
+    run: (input) => runtime.run(clockRuntime.provide(runSyncEffect(input))),
   };
 }

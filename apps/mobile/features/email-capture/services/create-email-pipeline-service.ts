@@ -3,8 +3,13 @@ import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository"
 import { getBuiltInCategoryId, isValidCategoryId } from "@/features/transactions/lib/categories";
 import type { TransactionRow } from "@/features/transactions/lib/repository";
 import type { AnyDb, SyncQueueEntry } from "@/shared/db";
+import {
+  type AppClock,
+  bindAppClock,
+  currentDateEffect,
+  currentIsoDateTimeEffect,
+} from "@/shared/effect/clock";
 import { fromPromise, fromThunk, makeAppService } from "@/shared/effect/runtime";
-import { toIsoDateTime } from "@/shared/lib/format-date";
 import {
   generateProcessedEmailId,
   generateSyncQueueId,
@@ -120,6 +125,7 @@ type CreateEmailPipelineServiceDeps = {
   readonly captureError: (error: unknown) => void | Promise<void>;
   readonly captureWarning: CaptureWarning;
   readonly capturePipelineEvent: CapturePipelineEvent;
+  readonly clock?: AppClock;
 };
 
 export type EmailPipelineService = {
@@ -211,7 +217,7 @@ function saveTransactionEffect(
       yield* EmailPipelineDeps.tag;
     const source = getTransactionSource(email.provider);
     const txId = generateTransactionId();
-    const now = toIsoDateTime(new Date());
+    const now = yield* currentIsoDateTimeEffect;
     const amount = validated.amount;
     const date = validated.date;
     const receivedAt = email.receivedAt;
@@ -362,7 +368,7 @@ function saveRetryTransactionEffect(
     const { insertTransaction, enqueueSync, insertMerchantRule, trackTransactionCreated } =
       yield* EmailPipelineDeps.tag;
     const txId = generateTransactionId();
-    const now = toIsoDateTime(new Date());
+    const now = yield* currentIsoDateTimeEffect;
     const source = getTransactionSource(email.provider);
     const amount = parsed.amount;
     const date = parsed.date;
@@ -413,10 +419,23 @@ function saveRetryTransactionEffect(
   });
 }
 
+function nextRetryAtEffect(retryCount: number) {
+  return Effect.map(currentDateEffect, (now) => computeNextRetryAt(retryCount, now));
+}
+
 export function createEmailPipelineService(
   deps: CreateEmailPipelineServiceDeps
 ): EmailPipelineService {
-  const runtime = EmailPipelineDeps.bind(deps);
+  const { clock, ...runtimeDeps } = deps;
+  const clockRuntime = bindAppClock(clock);
+  const runtime = EmailPipelineDeps.bind(runtimeDeps);
+  const runClockEffect = <A>(effect: Effect.Effect<A, unknown, AppClock>) =>
+    clockRuntime.run(effect);
+  const runEmailEffect = <A>(effect: Effect.Effect<A, unknown, CreateEmailPipelineServiceDeps>) =>
+    runtime.run(effect);
+  const runEmailWithClock = <A>(
+    effect: Effect.Effect<A, unknown, CreateEmailPipelineServiceDeps | AppClock>
+  ) => runtime.run(clockRuntime.provide(effect));
 
   return {
     async processEmails(db, userId, rawEmails, onProgress) {
@@ -425,7 +444,7 @@ export function createEmailPipelineService(
       );
       const dedupedInBatch = rawEmails.length - uniqueEmails.length;
       const allExternalIds = uniqueEmails.map((email) => email.externalId);
-      const processedIds = await runtime.run(getProcessedExternalIdsEffect(db, allExternalIds));
+      const processedIds = await runEmailEffect(getProcessedExternalIdsEffect(db, allExternalIds));
       const toProcess = uniqueEmails.filter((email) => !processedIds.has(email.externalId));
       const skippedAlreadyProcessed = uniqueEmails.length - toProcess.length;
 
@@ -455,9 +474,9 @@ export function createEmailPipelineService(
           let parseError = false;
 
           try {
-            parsed = await runtime.run(parseBodyEffect(db, userId, email.body));
+            parsed = await runEmailEffect(parseBodyEffect(db, userId, email.body));
           } catch (err) {
-            await runtime.run(
+            await runEmailEffect(
               captureWarningEffect("email_parse_exception", {
                 provider: email.provider,
                 errorType: err instanceof Error ? err.message : "unknown",
@@ -477,7 +496,9 @@ export function createEmailPipelineService(
             }
 
             assertIsoDateTime(email.receivedAt);
-            await runtime.run(
+            const createdAt = await runClockEffect(currentIsoDateTimeEffect);
+            const nextRetryAt = parseError ? await runClockEffect(nextRetryAtEffect(0)) : null;
+            await runEmailEffect(
               insertProcessedEmailEffect(db, {
                 id: generateProcessedEmailId(),
                 externalId: email.externalId,
@@ -489,12 +510,12 @@ export function createEmailPipelineService(
                 receivedAt: email.receivedAt,
                 transactionId: null,
                 confidence: null,
-                createdAt: toIsoDateTime(new Date()),
+                createdAt,
                 ...(parseError
                   ? {
                       rawBody: email.body,
                       retryCount: 0,
-                      nextRetryAt: computeNextRetryAt(0),
+                      nextRetryAt,
                     }
                   : {}),
               })
@@ -506,9 +527,9 @@ export function createEmailPipelineService(
 
           let existingTxId: TransactionId | null = null;
           try {
-            existingTxId = await runtime.run(findDuplicateTransactionEffect(db, userId, parsed));
+            existingTxId = await runEmailEffect(findDuplicateTransactionEffect(db, userId, parsed));
           } catch (saveErr) {
-            await runtime.run(captureErrorEffect(saveErr));
+            await runEmailEffect(captureErrorEffect(saveErr));
             result.failed++;
             completed++;
             onProgress?.(getProgressSnapshot(total, completed, result));
@@ -518,7 +539,8 @@ export function createEmailPipelineService(
           if (existingTxId) {
             const receivedAt = email.receivedAt;
             assertIsoDateTime(receivedAt);
-            await runtime.run(
+            const createdAt = await runClockEffect(currentIsoDateTimeEffect);
+            await runEmailEffect(
               insertProcessedEmailEffect(db, {
                 id: generateProcessedEmailId(),
                 externalId: email.externalId,
@@ -530,7 +552,7 @@ export function createEmailPipelineService(
                 receivedAt,
                 transactionId: existingTxId,
                 confidence: parsed.confidence,
-                createdAt: toIsoDateTime(new Date()),
+                createdAt,
               })
             );
             result.skippedCrossSource++;
@@ -541,14 +563,14 @@ export function createEmailPipelineService(
 
           const status = parsed.confidence < 0.7 ? "needs_review" : "success";
           try {
-            await runtime.run(saveTransactionEffect(db, userId, parsed, email, status));
+            await runEmailWithClock(saveTransactionEffect(db, userId, parsed, email, status));
             if (status === "needs_review") {
               result.needsReview++;
             } else {
               result.saved++;
             }
           } catch (saveErr) {
-            await runtime.run(captureErrorEffect(saveErr));
+            await runEmailEffect(captureErrorEffect(saveErr));
             result.failed++;
             completed++;
             onProgress?.(getProgressSnapshot(total, completed, result));
@@ -558,17 +580,18 @@ export function createEmailPipelineService(
           if (status === "success") {
             try {
               const merchantKey = normalizeMerchant(parsed.description);
-              await runtime.run(
+              const createdAt = await runClockEffect(currentIsoDateTimeEffect);
+              await runEmailEffect(
                 insertMerchantRuleEffect(
                   db,
                   userId,
                   merchantKey,
                   getPersistedCategoryId(parsed.categoryId),
-                  toIsoDateTime(new Date())
+                  createdAt
                 )
               );
             } catch (ruleErr) {
-              await runtime.run(captureErrorEffect(ruleErr));
+              await runEmailEffect(captureErrorEffect(ruleErr));
             }
           }
 
@@ -579,7 +602,7 @@ export function createEmailPipelineService(
 
       await Promise.all(Array.from({ length: Math.min(Concurrency, total) }, () => worker()));
 
-      await runtime.run(
+      await runEmailEffect(
         capturePipelineEventEffect({
           source: "email",
           batchSize: rawEmails.length,
@@ -598,11 +621,11 @@ export function createEmailPipelineService(
 
     async processRetries(db, userId) {
       const result: RetryResult = { retried: 0, succeeded: 0, permanentlyFailed: 0 };
-      const pendingEmails = await runtime.run(getPendingRetryEmailsEffect(db));
+      const pendingEmails = await runEmailEffect(getPendingRetryEmailsEffect(db));
 
       for (const email of pendingEmails) {
         if (!email.rawBody) {
-          await runtime.run(markPermanentlyFailedEffect(db, email.id));
+          await runEmailEffect(markPermanentlyFailedEffect(db, email.id));
           result.permanentlyFailed++;
           continue;
         }
@@ -611,9 +634,9 @@ export function createEmailPipelineService(
         let parseError = false;
 
         try {
-          parsed = await runtime.run(parseBodyEffect(db, userId, email.rawBody));
+          parsed = await runEmailEffect(parseBodyEffect(db, userId, email.rawBody));
         } catch (err) {
-          await runtime.run(
+          await runEmailEffect(
             captureWarningEffect("email_retry_parse_exception", {
               provider: email.provider,
               errorType: err instanceof Error ? err.message : "unknown",
@@ -624,43 +647,41 @@ export function createEmailPipelineService(
 
         if (parseError) {
           const nextCount = (email.retryCount ?? 0) + 1;
+          const nextRetryAt = await runClockEffect(nextRetryAtEffect(nextCount));
           if (isMaxRetriesReached(nextCount)) {
-            await runtime.run(markPermanentlyFailedEffect(db, email.id));
+            await runEmailEffect(markPermanentlyFailedEffect(db, email.id));
             result.permanentlyFailed++;
           } else {
-            await runtime.run(
-              markForRetryEffect(db, email.id, nextCount, computeNextRetryAt(nextCount))
-            );
+            await runEmailEffect(markForRetryEffect(db, email.id, nextCount, nextRetryAt));
             result.retried++;
           }
           continue;
         }
 
         if (!parsed) {
-          await runtime.run(updateProcessedEmailStatusEffect(db, email.id, "skipped", null));
+          await runEmailEffect(updateProcessedEmailStatusEffect(db, email.id, "skipped", null));
           continue;
         }
 
         let existingTxId: TransactionId | null = null;
         try {
-          existingTxId = await runtime.run(findDuplicateTransactionEffect(db, userId, parsed));
+          existingTxId = await runEmailEffect(findDuplicateTransactionEffect(db, userId, parsed));
         } catch (saveErr) {
-          await runtime.run(captureErrorEffect(saveErr));
+          await runEmailEffect(captureErrorEffect(saveErr));
           const nextCount = (email.retryCount ?? 0) + 1;
+          const nextRetryAt = await runClockEffect(nextRetryAtEffect(nextCount));
           if (isMaxRetriesReached(nextCount)) {
-            await runtime.run(markPermanentlyFailedEffect(db, email.id));
+            await runEmailEffect(markPermanentlyFailedEffect(db, email.id));
             result.permanentlyFailed++;
           } else {
-            await runtime.run(
-              markForRetryEffect(db, email.id, nextCount, computeNextRetryAt(nextCount))
-            );
+            await runEmailEffect(markForRetryEffect(db, email.id, nextCount, nextRetryAt));
             result.retried++;
           }
           continue;
         }
 
         if (existingTxId) {
-          await runtime.run(
+          await runEmailEffect(
             markRetrySuccessEffect(db, email.id, "success", existingTxId, parsed.confidence)
           );
           result.succeeded++;
@@ -668,21 +689,22 @@ export function createEmailPipelineService(
         }
 
         try {
-          const { txId, status } = await runtime.run(
+          const { txId, status } = await runEmailWithClock(
             saveRetryTransactionEffect(db, userId, parsed, email)
           );
-          await runtime.run(markRetrySuccessEffect(db, email.id, status, txId, parsed.confidence));
+          await runEmailEffect(
+            markRetrySuccessEffect(db, email.id, status, txId, parsed.confidence)
+          );
           result.succeeded++;
         } catch (saveErr) {
-          await runtime.run(captureErrorEffect(saveErr));
+          await runEmailEffect(captureErrorEffect(saveErr));
           const nextCount = (email.retryCount ?? 0) + 1;
+          const nextRetryAt = await runClockEffect(nextRetryAtEffect(nextCount));
           if (isMaxRetriesReached(nextCount)) {
-            await runtime.run(markPermanentlyFailedEffect(db, email.id));
+            await runEmailEffect(markPermanentlyFailedEffect(db, email.id));
             result.permanentlyFailed++;
           } else {
-            await runtime.run(
-              markForRetryEffect(db, email.id, nextCount, computeNextRetryAt(nextCount))
-            );
+            await runEmailEffect(markForRetryEffect(db, email.id, nextCount, nextRetryAt));
             result.retried++;
           }
         }
