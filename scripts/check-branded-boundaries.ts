@@ -4,26 +4,26 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 
-const ROOT = process.cwd();
-const MOBILE_ROOT = "apps/mobile";
-const BRANDED_TYPES_FILE = path.join(ROOT, MOBILE_ROOT, "shared/types/branded.ts");
+export const DEFAULT_MOBILE_ROOT = "apps/mobile";
 
 const UI_PATH_RULES = [
   {
     label: "app/**",
-    matches: (filePath: string) => filePath.startsWith("apps/mobile/app/"),
+    matches: (filePath: string, mobileRoot: string) => filePath.startsWith(`${mobileRoot}/app/`),
   },
   {
     label: "features/**/components/**",
-    matches: (filePath: string) => /^apps\/mobile\/features\/.+\/components\//.test(filePath),
+    matches: (filePath: string, mobileRoot: string) =>
+      new RegExp(`^${mobileRoot}/features/.+/components/`).test(filePath),
   },
   {
     label: "shared/components/**",
-    matches: (filePath: string) => filePath.startsWith("apps/mobile/shared/components/"),
+    matches: (filePath: string, mobileRoot: string) =>
+      filePath.startsWith(`${mobileRoot}/shared/components/`),
   },
 ] as const;
 
-const ALLOWED_BOUNDARY_HINTS = [
+export const ALLOWED_BOUNDARY_HINTS = [
   "apps/mobile/shared/types/assertions.ts",
   "apps/mobile/shared/lib/format-date.ts",
   "apps/mobile/shared/lib/generate-id.ts",
@@ -33,13 +33,18 @@ const ALLOWED_BOUNDARY_HINTS = [
   "apps/mobile/features/auth/public.ts",
 ];
 
-type Violation = {
+export type Violation = {
   readonly brandNames: readonly string[];
   readonly filePath: string;
   readonly line: number;
   readonly column: number;
   readonly expressionText: string;
   readonly uiRule: (typeof UI_PATH_RULES)[number]["label"];
+};
+
+export type BoundaryCheckOptions = {
+  readonly rootDir?: string;
+  readonly mobileRoot?: string;
 };
 
 function listRepoFiles(dirPath: string): readonly string[] {
@@ -61,12 +66,12 @@ function readBrandedTypeNames(filePath: string): ReadonlySet<string> {
   return new Set(matches.map((match) => match[1]).filter((name): name is string => name != null));
 }
 
-function normalizePath(filePath: string): string {
-  return path.relative(ROOT, filePath).split(path.sep).join("/");
+function normalizePath(rootDir: string, filePath: string): string {
+  return path.relative(rootDir, filePath).split(path.sep).join("/");
 }
 
-function getUiRule(filePath: string): (typeof UI_PATH_RULES)[number] | null {
-  return UI_PATH_RULES.find((rule) => rule.matches(filePath)) ?? null;
+function getUiRule(filePath: string, mobileRoot: string): (typeof UI_PATH_RULES)[number] | null {
+  return UI_PATH_RULES.find((rule) => rule.matches(filePath, mobileRoot)) ?? null;
 }
 
 function isSourceFile(filePath: string): boolean {
@@ -130,12 +135,14 @@ function suggestionForBrands(brandNames: readonly string[]): string {
 }
 
 function inspectFile(
+  rootDir: string,
   filePath: string,
+  mobileRoot: string,
   brandedTypeNames: ReadonlySet<string>
 ): readonly Violation[] {
-  const content = readFileSync(path.join(ROOT, filePath), "utf8");
+  const content = readFileSync(path.join(rootDir, filePath), "utf8");
   const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
-  const uiRule = getUiRule(filePath);
+  const uiRule = getUiRule(filePath, mobileRoot);
 
   if (uiRule == null) {
     return [];
@@ -181,24 +188,44 @@ function formatViolation(violation: Violation): string {
   ].join("\n");
 }
 
-function main(): void {
-  const brandedTypeNames = readBrandedTypeNames(BRANDED_TYPES_FILE);
-  const files = listRepoFiles(path.join(ROOT, MOBILE_ROOT))
-    .map((filePath) => normalizePath(filePath))
+export function collectBrandedBoundaryViolations(
+  options: BoundaryCheckOptions = {}
+): readonly Violation[] {
+  const rootDir = options.rootDir ?? process.cwd();
+  const mobileRoot = options.mobileRoot ?? DEFAULT_MOBILE_ROOT;
+  const brandedTypesFile = path.join(rootDir, mobileRoot, "shared/types/branded.ts");
+  const brandedTypeNames = readBrandedTypeNames(brandedTypesFile);
+  const files = listRepoFiles(path.join(rootDir, mobileRoot))
+    .map((filePath) => normalizePath(rootDir, filePath))
     .filter((filePath) => isSourceFile(filePath) && !isTestFile(filePath));
 
-  const violations = files.flatMap((filePath) => inspectFile(filePath, brandedTypeNames));
+  return files.flatMap((filePath) => inspectFile(rootDir, filePath, mobileRoot, brandedTypeNames));
+}
 
+export function formatBrandedBoundaryFailure(violations: readonly Violation[]): string {
+  if (violations.length === 0) {
+    return "";
+  }
+
+  return [
+    "Branded boundary check failed.",
+    "",
+    "UI files must not create branded values with direct `as Brand` assertions. Move the proof into an approved boundary and pass the branded value in.",
+    "",
+    violations.map((violation) => formatViolation(violation)).join("\n\n"),
+  ].join("\n");
+}
+
+function main(): void {
+  const violations = collectBrandedBoundaryViolations();
   if (violations.length === 0) {
     return;
   }
 
-  console.error("Branded boundary check failed.\n");
-  console.error(
-    "UI files must not create branded values with direct `as Brand` assertions. Move the proof into an approved boundary and pass the branded value in.\n"
-  );
-  console.error(violations.map((violation) => formatViolation(violation)).join("\n\n"));
+  console.error(formatBrandedBoundaryFailure(violations));
   process.exitCode = 1;
 }
 
-main();
+if (import.meta.main) {
+  main();
+}
