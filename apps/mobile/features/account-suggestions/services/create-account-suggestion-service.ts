@@ -4,14 +4,17 @@ import {
 } from "@/features/capture-evidence";
 import {
   type FinancialAccountIdentifierRow,
+  type FinancialAccountKind,
   getFinancialAccountIdentifiersForUser,
-  saveFinancialAccountIdentifier,
+  saveFinancialAccount,
+  saveFinancialAccountIdentifierInTransaction,
 } from "@/features/financial-accounts";
 import { getTransactionById, upsertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
   generateAccountSuggestionDismissalId,
+  generateFinancialAccountId,
   generateFinancialAccountIdentifierId,
   generateSyncQueueId,
   toIsoDateTime,
@@ -41,11 +44,13 @@ type CreateAccountSuggestionServiceDeps = {
   readonly getAccountSuggestionDismissalsForUser?: typeof getAccountSuggestionDismissalsForUser;
   readonly saveAccountSuggestionDismissal?: typeof saveAccountSuggestionDismissal;
   readonly getFinancialAccountIdentifiersForUser?: typeof getFinancialAccountIdentifiersForUser;
-  readonly saveFinancialAccountIdentifier?: typeof saveFinancialAccountIdentifier;
+  readonly saveFinancialAccount?: typeof saveFinancialAccount;
+  readonly saveFinancialAccountIdentifierInTransaction?: typeof saveFinancialAccountIdentifierInTransaction;
   readonly getTransactionById?: typeof getTransactionById;
   readonly upsertTransaction?: typeof upsertTransaction;
   readonly enqueueSync?: typeof enqueueSync;
   readonly now?: () => IsoDateTime;
+  readonly createAccountId?: () => FinancialAccountId;
   readonly createDismissalId?: () => AccountSuggestionDismissalId;
   readonly createIdentifierId?: () => FinancialAccountIdentifierId;
 };
@@ -75,6 +80,14 @@ type AcceptSuggestionResult = {
   readonly identifierScope: string;
   readonly identifierValue: string;
   readonly reprocessedTransactionIds: readonly TransactionId[];
+};
+
+type CreateSuggestedAccountInput = {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly suggestion: AccountCreationSuggestion;
+  readonly name: string;
+  readonly kind: FinancialAccountKind;
 };
 
 function applyLimit<T>(rows: readonly T[], limit: number | undefined) {
@@ -120,15 +133,81 @@ export function createAccountSuggestionService({
     persistAccountSuggestionDismissal = saveAccountSuggestionDismissal,
   getFinancialAccountIdentifiersForUser:
     loadFinancialAccountIdentifiersForUser = getFinancialAccountIdentifiersForUser,
-  saveFinancialAccountIdentifier:
-    persistFinancialAccountIdentifier = saveFinancialAccountIdentifier,
+  saveFinancialAccount: persistFinancialAccount = saveFinancialAccount,
+  saveFinancialAccountIdentifierInTransaction:
+    persistFinancialAccountIdentifierInTransaction = saveFinancialAccountIdentifierInTransaction,
   getTransactionById: loadTransactionById = getTransactionById,
   upsertTransaction: persistTransaction = upsertTransaction,
   enqueueSync: enqueueSyncEntry = enqueueSync,
   now = () => toIsoDateTime(new Date()),
+  createAccountId = generateFinancialAccountId,
   createDismissalId = generateAccountSuggestionDismissalId,
   createIdentifierId = generateFinancialAccountIdentifierId,
 }: CreateAccountSuggestionServiceDeps = {}) {
+  function acceptSuggestionWithTimestamp({
+    db,
+    userId,
+    accountId,
+    suggestion,
+    updatedAt,
+  }: AcceptSuggestionInput & { readonly updatedAt: IsoDateTime }): AcceptSuggestionResult {
+    persistFinancialAccountIdentifierInTransaction(db, {
+      id: createIdentifierId(),
+      userId,
+      accountId,
+      scope: suggestion.scope,
+      value: suggestion.value,
+      createdAt: updatedAt,
+      updatedAt,
+      deletedAt: null,
+    });
+
+    const reprocessedTransactionIds = Array.from(
+      new Set(
+        loadCaptureEvidenceRowsForScopeValue(db, userId, suggestion.scope, suggestion.value)
+          .map((row) => row.transactionId)
+          .filter((transactionId): transactionId is TransactionId => transactionId != null)
+          .filter((transactionId) => {
+            const transaction = loadTransactionById(db, transactionId);
+            return (
+              transaction?.userId === userId &&
+              transaction.deletedAt == null &&
+              transaction.accountAttributionState === "unresolved"
+            );
+          })
+      )
+    );
+
+    reprocessedTransactionIds.forEach((transactionId) => {
+      const transaction = loadTransactionById(db, transactionId);
+      if (!transaction) {
+        return;
+      }
+
+      persistTransaction(db, {
+        ...transaction,
+        accountId,
+        accountAttributionState: "inferred",
+        updatedAt,
+      });
+
+      enqueueSyncEntry(db, {
+        id: generateSyncQueueId(),
+        tableName: "transactions",
+        rowId: transactionId,
+        operation: "update",
+        createdAt: updatedAt,
+      });
+    });
+
+    return {
+      accountId,
+      identifierScope: suggestion.scope,
+      identifierValue: suggestion.value,
+      reprocessedTransactionIds,
+    };
+  }
+
   return {
     listSuggestions({
       db,
@@ -174,63 +253,47 @@ export function createAccountSuggestionService({
       accountId,
       suggestion,
     }: AcceptSuggestionInput): AcceptSuggestionResult {
-      const updatedAt = now();
-
-      persistFinancialAccountIdentifier(db, {
-        id: createIdentifierId(),
-        userId,
-        accountId,
-        scope: suggestion.scope,
-        value: suggestion.value,
-        createdAt: updatedAt,
-        updatedAt,
-        deletedAt: null,
-      });
-
-      const reprocessedTransactionIds = Array.from(
-        new Set(
-          loadCaptureEvidenceRowsForScopeValue(db, userId, suggestion.scope, suggestion.value)
-            .map((row) => row.transactionId)
-            .filter((transactionId): transactionId is TransactionId => transactionId != null)
-            .filter((transactionId) => {
-              const transaction = loadTransactionById(db, transactionId);
-              return (
-                transaction?.userId === userId &&
-                transaction.deletedAt == null &&
-                transaction.accountAttributionState === "unresolved"
-              );
-            })
-        )
-      );
-
-      reprocessedTransactionIds.forEach((transactionId) => {
-        const transaction = loadTransactionById(db, transactionId);
-        if (!transaction) {
-          return;
-        }
-
-        persistTransaction(db, {
-          ...transaction,
+      return db.transaction((tx) =>
+        acceptSuggestionWithTimestamp({
+          db: tx,
+          userId,
           accountId,
-          accountAttributionState: "inferred",
+          suggestion,
+          updatedAt: now(),
+        })
+      );
+    },
+
+    createSuggestedAccount({
+      db,
+      userId,
+      suggestion,
+      name,
+      kind,
+    }: CreateSuggestedAccountInput): AcceptSuggestionResult {
+      const updatedAt = now();
+      const accountId = createAccountId();
+
+      return db.transaction((tx) => {
+        persistFinancialAccount(tx, {
+          id: accountId,
+          userId,
+          name,
+          kind,
+          isDefault: false,
+          createdAt: updatedAt,
+          updatedAt,
+          deletedAt: null,
+        });
+
+        return acceptSuggestionWithTimestamp({
+          db: tx,
+          userId,
+          accountId,
+          suggestion,
           updatedAt,
         });
-
-        enqueueSyncEntry(db, {
-          id: generateSyncQueueId(),
-          tableName: "transactions",
-          rowId: transactionId,
-          operation: "update",
-          createdAt: updatedAt,
-        });
       });
-
-      return {
-        accountId,
-        identifierScope: suggestion.scope,
-        identifierValue: suggestion.value,
-        reprocessedTransactionIds,
-      };
     },
   };
 }

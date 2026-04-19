@@ -1,5 +1,6 @@
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { createAccountSuggestionService } from "@/features/account-suggestions";
 import { useOptionalUserId } from "@/features/auth";
 import {
   fetchAndProcessEmails,
@@ -19,7 +20,7 @@ export function SyncProgressStep() {
   const { t } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
-  const nextStep = useOnboardingStore((s) => s.nextStep);
+  const completeSync = useOnboardingStore((s) => s.completeSync);
 
   const accounts = useEmailCaptureStore((s) => s.accounts);
   const progress = useEmailCaptureStore((s) => s.progress);
@@ -65,6 +66,15 @@ export function SyncProgressStep() {
   const fetchDone = fetchStarted.current && !isFetching;
   const percent = fetchDone ? 100 : finalPercent.current;
   const savedCount = finalSavedCount.current;
+  const suggestionService = useMemo(() => createAccountSuggestionService(), []);
+  const hasAccountSuggestions =
+    fetchDone && db && userId
+      ? suggestionService.listSuggestions({
+          db,
+          userId,
+          limit: 2,
+        }).length > 0
+      : false;
 
   return (
     <View style={styles.container}>
@@ -116,7 +126,7 @@ export function SyncProgressStep() {
             opacity: fetchDone ? 1 : 0.5,
           },
         ]}
-        onPress={nextStep}
+        onPress={() => completeSync(hasAccountSuggestions)}
         disabled={!fetchDone}
       >
         <Text style={styles.primaryButtonText}>{t("onboarding.syncing.continue")}</Text>

@@ -10,4 +10,9 @@ export {
   isOnboardingComplete,
   markOnboardingComplete,
 } from "./lib/check-onboarding";
+export {
+  getVisibleOnboardingStepCount,
+  getVisibleOnboardingStepIndex,
+  ONBOARDING_STEP,
+} from "./lib/flow";
 export { TOTAL_STEPS, useOnboardingStore } from "./store";

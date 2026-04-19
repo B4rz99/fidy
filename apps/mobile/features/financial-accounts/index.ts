@@ -5,6 +5,7 @@ export {
   getFinancialAccountIdentifiersForAccount,
   getFinancialAccountIdentifiersForUser,
   saveFinancialAccountIdentifier,
+  saveFinancialAccountIdentifierInTransaction,
   upsertFinancialAccountIdentifier,
 } from "./lib/identifiers-repository";
 export {

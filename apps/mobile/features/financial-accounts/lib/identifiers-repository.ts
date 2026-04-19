@@ -100,6 +100,39 @@ function persistFinancialAccountIdentifier(db: AnyDb, row: FinancialAccountIdent
     .run();
 }
 
+export function saveFinancialAccountIdentifierInTransaction(
+  db: AnyDb,
+  row: FinancialAccountIdentifierRow
+) {
+  const existingById = getFinancialAccountIdentifierById(db, row.id);
+  const activeDuplicate =
+    row.deletedAt == null ? findActiveFinancialAccountIdentifierByUniqueKey(db, row) : null;
+  const duplicate = activeDuplicate?.id !== row.id ? activeDuplicate : null;
+
+  if (existingById && duplicate) {
+    deleteFinancialAccountIdentifierDuplicate(db, duplicate.id);
+  }
+
+  const persistedRow =
+    existingById == null && duplicate
+      ? {
+          ...row,
+          id: duplicate.id,
+          createdAt: duplicate.createdAt,
+        }
+      : row;
+
+  persistFinancialAccountIdentifier(db, persistedRow);
+
+  enqueueSync(db, {
+    id: generateSyncQueueId(),
+    tableName: "financialAccountIdentifiers",
+    rowId: persistedRow.id,
+    operation: existingById || duplicate ? "update" : "insert",
+    createdAt: row.updatedAt,
+  });
+}
+
 export function upsertFinancialAccountIdentifier(db: AnyDb, row: FinancialAccountIdentifierRow) {
   db.transaction((tx) => {
     const existingById = getFinancialAccountIdentifierById(tx, row.id);
@@ -125,32 +158,6 @@ export function upsertFinancialAccountIdentifier(db: AnyDb, row: FinancialAccoun
 
 export function saveFinancialAccountIdentifier(db: AnyDb, row: FinancialAccountIdentifierRow) {
   db.transaction((tx) => {
-    const existingById = getFinancialAccountIdentifierById(tx, row.id);
-    const activeDuplicate =
-      row.deletedAt == null ? findActiveFinancialAccountIdentifierByUniqueKey(tx, row) : null;
-    const duplicate = activeDuplicate?.id !== row.id ? activeDuplicate : null;
-
-    if (existingById && duplicate) {
-      deleteFinancialAccountIdentifierDuplicate(tx, duplicate.id);
-    }
-
-    const persistedRow =
-      existingById == null && duplicate
-        ? {
-            ...row,
-            id: duplicate.id,
-            createdAt: duplicate.createdAt,
-          }
-        : row;
-
-    persistFinancialAccountIdentifier(tx, persistedRow);
-
-    enqueueSync(tx, {
-      id: generateSyncQueueId(),
-      tableName: "financialAccountIdentifiers",
-      rowId: persistedRow.id,
-      operation: existingById || duplicate ? "update" : "insert",
-      createdAt: row.updatedAt,
-    });
+    saveFinancialAccountIdentifierInTransaction(tx, row);
   });
 }

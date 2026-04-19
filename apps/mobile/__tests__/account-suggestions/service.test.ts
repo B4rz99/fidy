@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createAccountSuggestionService } from "@/features/account-suggestions";
 import { saveCaptureEvidence } from "@/features/capture-evidence";
 import {
+  getFinancialAccountById,
   getFinancialAccountIdentifiersForAccount,
   upsertFinancialAccount,
 } from "@/features/financial-accounts";
@@ -365,5 +366,163 @@ describe("account suggestion service", () => {
       "notification:davivienda:last4",
       "apple_pay:card_hint",
     ]);
+  });
+
+  it("creates a financial account from a suggestion and reprocesses matching unresolved transactions", () => {
+    insertTransaction(db as any, {
+      id: "tx-create-account" as TransactionId,
+      userId: USER_ID,
+      type: "expense",
+      amount: 145000 as CopAmount,
+      categoryId: "shopping" as CategoryId,
+      description: "Compra 1234",
+      date: "2026-04-19" as IsoDate,
+      accountId: "fa-default-user-1" as FinancialAccountId,
+      accountAttributionState: "unresolved",
+      source: "notification_android",
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+    });
+
+    saveEvidenceRow("ce-create-1", {
+      sourceFamily: "bancolombia",
+      evidenceType: "last4",
+      scope: "notification:bancolombia:last4",
+      value: "1234",
+      processedCaptureId: "pc-1",
+      transactionId: "tx-create-account",
+    });
+
+    saveEvidenceRow("ce-create-2", {
+      sourceFamily: "bancolombia",
+      evidenceType: "last4",
+      scope: "notification:bancolombia:last4",
+      value: "1234",
+      processedCaptureId: "pc-2",
+      updatedAt: "2026-04-19T11:00:00.000Z" as IsoDateTime,
+    });
+
+    const service = createAccountSuggestionService({
+      now: () => "2026-04-19T12:00:00.000Z" as IsoDateTime,
+      createAccountId: () => "fa-created" as FinancialAccountId,
+      createIdentifierId: () => "fai-created" as never,
+    });
+    const suggestion = service.listSuggestions({ db: db as any, userId: USER_ID })[0];
+
+    expect(suggestion).toBeDefined();
+
+    const result = service.createSuggestedAccount({
+      db: db as any,
+      userId: USER_ID,
+      suggestion: suggestion!,
+      name: "Bancolombia account",
+      kind: "checking",
+    });
+
+    expect(result).toEqual({
+      accountId: "fa-created",
+      identifierScope: "notification:bancolombia:last4",
+      identifierValue: "1234",
+      reprocessedTransactionIds: ["tx-create-account"],
+    });
+
+    expect(getFinancialAccountById(db as any, "fa-created" as FinancialAccountId)).toEqual(
+      expect.objectContaining({
+        id: "fa-created",
+        userId: USER_ID,
+        name: "Bancolombia account",
+        kind: "checking",
+        isDefault: false,
+      })
+    );
+
+    expect(
+      getFinancialAccountIdentifiersForAccount(db as any, "fa-created" as FinancialAccountId)
+    ).toEqual([
+      expect.objectContaining({
+        accountId: "fa-created",
+        scope: "notification:bancolombia:last4",
+        value: "1234",
+      }),
+    ]);
+
+    expect(getTransactionById(db as any, "tx-create-account" as TransactionId)).toEqual(
+      expect.objectContaining({
+        accountId: "fa-created",
+        accountAttributionState: "inferred",
+        updatedAt: "2026-04-19T12:00:00.000Z",
+      })
+    );
+  });
+
+  it("rolls back account creation when a later suggestion step fails", () => {
+    insertTransaction(db as any, {
+      id: "tx-create-account" as TransactionId,
+      userId: USER_ID,
+      type: "expense",
+      amount: 145000 as CopAmount,
+      categoryId: "shopping" as CategoryId,
+      description: "Compra 1234",
+      date: "2026-04-19" as IsoDate,
+      accountId: "fa-default-user-1" as FinancialAccountId,
+      accountAttributionState: "unresolved",
+      source: "notification_android",
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+    });
+
+    saveEvidenceRow("ce-create-1", {
+      sourceFamily: "bancolombia",
+      evidenceType: "last4",
+      scope: "notification:bancolombia:last4",
+      value: "1234",
+      processedCaptureId: "pc-1",
+      transactionId: "tx-create-account",
+    });
+
+    saveEvidenceRow("ce-create-2", {
+      sourceFamily: "bancolombia",
+      evidenceType: "last4",
+      scope: "notification:bancolombia:last4",
+      value: "1234",
+      processedCaptureId: "pc-2",
+      updatedAt: "2026-04-19T11:00:00.000Z" as IsoDateTime,
+    });
+
+    const service = createAccountSuggestionService({
+      now: () => "2026-04-19T12:00:00.000Z" as IsoDateTime,
+      createAccountId: () => "fa-created" as FinancialAccountId,
+      createIdentifierId: () => "fai-created" as never,
+      upsertTransaction: () => {
+        throw new Error("transaction write failed");
+      },
+    });
+    const suggestion = service.listSuggestions({ db: db as any, userId: USER_ID })[0];
+
+    expect(suggestion).toBeDefined();
+
+    expect(() =>
+      service.createSuggestedAccount({
+        db: db as any,
+        userId: USER_ID,
+        suggestion: suggestion!,
+        name: "Bancolombia account",
+        kind: "checking",
+      })
+    ).toThrow("transaction write failed");
+
+    expect(getFinancialAccountById(db as any, "fa-created" as FinancialAccountId)).toBeNull();
+    expect(
+      getFinancialAccountIdentifiersForAccount(db as any, "fa-created" as FinancialAccountId)
+    ).toEqual([]);
+    expect(getTransactionById(db as any, "tx-create-account" as TransactionId)).toEqual(
+      expect.objectContaining({
+        accountId: "fa-default-user-1",
+        accountAttributionState: "unresolved",
+        updatedAt: NOW,
+      })
+    );
   });
 });
