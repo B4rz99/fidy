@@ -145,6 +145,50 @@ describe("financial account identifiers repository", () => {
     ]);
   });
 
+  it("updates the same row id when the identifier moves onto an occupied unique key", () => {
+    saveFinancialAccountIdentifier(db as any, {
+      id: "fai-1" as FinancialAccountIdentifierId,
+      userId: USER_ID,
+      accountId: ACCOUNT_ID,
+      scope: "email:bancolombia:last4",
+      value: "1111",
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+    });
+
+    saveFinancialAccountIdentifier(db as any, {
+      id: "fai-2" as FinancialAccountIdentifierId,
+      userId: USER_ID,
+      accountId: ACCOUNT_ID,
+      scope: "email:bancolombia:last4",
+      value: "2222",
+      createdAt: "2026-04-18T10:30:00.000Z" as IsoDateTime,
+      updatedAt: "2026-04-18T10:30:00.000Z" as IsoDateTime,
+      deletedAt: null,
+    });
+
+    saveFinancialAccountIdentifier(db as any, {
+      id: "fai-1" as FinancialAccountIdentifierId,
+      userId: USER_ID,
+      accountId: ACCOUNT_ID,
+      scope: "email:bancolombia:last4",
+      value: "2222",
+      createdAt: NOW,
+      updatedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
+      deletedAt: null,
+    });
+
+    expect(getFinancialAccountIdentifiersForAccount(db as any, ACCOUNT_ID)).toEqual([
+      expect.objectContaining({
+        id: "fai-1",
+        scope: "email:bancolombia:last4",
+        value: "2222",
+        updatedAt: "2026-04-18T11:00:00.000Z",
+      }),
+    ]);
+  });
+
   it("keeps a newer local duplicate when the pulled server row is older", () => {
     saveFinancialAccountIdentifier(db as any, {
       id: "fai-local" as FinancialAccountIdentifierId,
@@ -181,6 +225,50 @@ describe("financial account identifiers repository", () => {
         tableName: "financialAccountIdentifiers",
         rowId: "fai-local",
         operation: "insert",
+      }),
+    ]);
+  });
+
+  it("allows re-creating an identifier after soft delete", () => {
+    saveFinancialAccountIdentifier(db as any, {
+      id: "fai-1" as FinancialAccountIdentifierId,
+      userId: USER_ID,
+      accountId: ACCOUNT_ID,
+      scope: "email:bancolombia:last4",
+      value: "1234",
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+    });
+
+    saveFinancialAccountIdentifier(db as any, {
+      id: "fai-1" as FinancialAccountIdentifierId,
+      userId: USER_ID,
+      accountId: ACCOUNT_ID,
+      scope: "email:bancolombia:last4",
+      value: "1234",
+      createdAt: NOW,
+      updatedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
+      deletedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
+    });
+
+    saveFinancialAccountIdentifier(db as any, {
+      id: "fai-2" as FinancialAccountIdentifierId,
+      userId: USER_ID,
+      accountId: ACCOUNT_ID,
+      scope: "email:bancolombia:last4",
+      value: "1234",
+      createdAt: "2026-04-18T12:00:00.000Z" as IsoDateTime,
+      updatedAt: "2026-04-18T12:00:00.000Z" as IsoDateTime,
+      deletedAt: null,
+    });
+
+    expect(getFinancialAccountIdentifiersForAccount(db as any, ACCOUNT_ID)).toEqual([
+      expect.objectContaining({
+        id: "fai-2",
+        scope: "email:bancolombia:last4",
+        value: "1234",
+        updatedAt: "2026-04-18T12:00:00.000Z",
       }),
     ]);
   });

@@ -9,7 +9,7 @@ CREATE TABLE `financial_account_identifiers` (
 	`deleted_at` text
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `uq_financial_account_identifier` ON `financial_account_identifiers` (`user_id`,`account_id`,`scope`,`value`);--> statement-breakpoint
+CREATE UNIQUE INDEX `uq_financial_account_identifier` ON `financial_account_identifiers` (`user_id`,`account_id`,`scope`,`value`) WHERE `deleted_at` IS NULL;--> statement-breakpoint
 CREATE INDEX `idx_financial_account_identifiers_account` ON `financial_account_identifiers` (`account_id`);--> statement-breakpoint
 CREATE TABLE `financial_accounts` (
 	`id` text PRIMARY KEY NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE `opening_balances` (
 	`deleted_at` text
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `uq_opening_balances_account` ON `opening_balances` (`account_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `uq_opening_balances_account` ON `opening_balances` (`account_id`) WHERE `deleted_at` IS NULL;--> statement-breakpoint
 CREATE INDEX `idx_opening_balances_user` ON `opening_balances` (`user_id`);--> statement-breakpoint
 CREATE TABLE `transfers` (
 	`id` text PRIMARY KEY NOT NULL,
@@ -49,7 +49,9 @@ CREATE TABLE `transfers` (
 	`date` text NOT NULL,
 	`created_at` text NOT NULL,
 	`updated_at` text NOT NULL,
-	`deleted_at` text
+	`deleted_at` text,
+	CONSTRAINT `ck_transfers_from_endpoint` CHECK(`from_account_id` IS NOT NULL OR `from_external_label` IS NOT NULL),
+	CONSTRAINT `ck_transfers_to_endpoint` CHECK(`to_account_id` IS NOT NULL OR `to_external_label` IS NOT NULL)
 );
 --> statement-breakpoint
 CREATE INDEX `idx_transfers_user_date` ON `transfers` (`user_id`,`date`);--> statement-breakpoint

@@ -32,7 +32,10 @@ export function getFinancialAccountIdentifiersForAccount(
     .all();
 }
 
-function findFinancialAccountIdentifierByUniqueKey(db: AnyDb, row: FinancialAccountIdentifierRow) {
+function findActiveFinancialAccountIdentifierByUniqueKey(
+  db: AnyDb,
+  row: FinancialAccountIdentifierRow
+) {
   const rows = db
     .select()
     .from(financialAccountIdentifiers)
@@ -41,86 +44,97 @@ function findFinancialAccountIdentifierByUniqueKey(db: AnyDb, row: FinancialAcco
         eq(financialAccountIdentifiers.userId, row.userId),
         eq(financialAccountIdentifiers.accountId, row.accountId),
         eq(financialAccountIdentifiers.scope, row.scope),
-        eq(financialAccountIdentifiers.value, row.value)
+        eq(financialAccountIdentifiers.value, row.value),
+        isNull(financialAccountIdentifiers.deletedAt)
       )
     )
     .all();
   return rows[0] ?? null;
 }
 
-export function upsertFinancialAccountIdentifier(db: AnyDb, row: FinancialAccountIdentifierRow) {
-  db.transaction((tx) => {
-    const existingById = getFinancialAccountIdentifierById(tx, row.id);
-    const existingByUnique = findFinancialAccountIdentifierByUniqueKey(tx, row);
-    const duplicate = existingById ? null : existingByUnique;
-
-    if (existingById && existingById.updatedAt >= row.updatedAt) {
-      return;
-    }
-
-    if (duplicate && duplicate.id !== row.id && duplicate.updatedAt >= row.updatedAt) {
-      return;
-    }
-
-    if (duplicate && duplicate.id !== row.id) {
-      tx.delete(syncQueue)
-        .where(
-          and(
-            eq(syncQueue.tableName, "financialAccountIdentifiers"),
-            eq(syncQueue.rowId, duplicate.id)
-          )
-        )
-        .run();
-      tx.delete(financialAccountIdentifiers)
-        .where(eq(financialAccountIdentifiers.id, duplicate.id))
-        .run();
-    }
-
-    tx.insert(financialAccountIdentifiers)
-      .values(row)
-      .onConflictDoUpdate({
-        target: financialAccountIdentifiers.id,
-        set: {
-          userId: row.userId,
-          accountId: row.accountId,
-          scope: row.scope,
-          value: row.value,
-          createdAt: row.createdAt,
-          updatedAt: row.updatedAt,
-          deletedAt: row.deletedAt,
-        },
-      })
-      .run();
-  });
+function deleteFinancialAccountIdentifierDuplicate(
+  db: AnyDb,
+  duplicateId: FinancialAccountIdentifierRow["id"]
+) {
+  db.delete(syncQueue)
+    .where(
+      and(eq(syncQueue.tableName, "financialAccountIdentifiers"), eq(syncQueue.rowId, duplicateId))
+    )
+    .run();
+  db.delete(financialAccountIdentifiers)
+    .where(eq(financialAccountIdentifiers.id, duplicateId))
+    .run();
 }
 
-export function saveFinancialAccountIdentifier(db: AnyDb, row: FinancialAccountIdentifierRow) {
-  const existing =
-    getFinancialAccountIdentifierById(db, row.id) ??
-    findFinancialAccountIdentifierByUniqueKey(db, row) ??
-    null;
-
+function persistFinancialAccountIdentifier(db: AnyDb, row: FinancialAccountIdentifierRow) {
   db.insert(financialAccountIdentifiers)
     .values(row)
     .onConflictDoUpdate({
-      target: [
-        financialAccountIdentifiers.userId,
-        financialAccountIdentifiers.accountId,
-        financialAccountIdentifiers.scope,
-        financialAccountIdentifiers.value,
-      ],
+      target: financialAccountIdentifiers.id,
       set: {
+        userId: row.userId,
+        accountId: row.accountId,
+        scope: row.scope,
+        value: row.value,
+        createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         deletedAt: row.deletedAt,
       },
     })
     .run();
+}
 
-  enqueueSync(db, {
-    id: generateSyncQueueId(),
-    tableName: "financialAccountIdentifiers",
-    rowId: existing?.id ?? row.id,
-    operation: existing ? "update" : "insert",
-    createdAt: row.updatedAt,
+export function upsertFinancialAccountIdentifier(db: AnyDb, row: FinancialAccountIdentifierRow) {
+  db.transaction((tx) => {
+    const existingById = getFinancialAccountIdentifierById(tx, row.id);
+    const activeDuplicate =
+      row.deletedAt == null ? findActiveFinancialAccountIdentifierByUniqueKey(tx, row) : null;
+    const duplicate = activeDuplicate?.id !== row.id ? activeDuplicate : null;
+
+    if (existingById && existingById.updatedAt >= row.updatedAt) {
+      return;
+    }
+
+    if (duplicate && duplicate.updatedAt >= row.updatedAt) {
+      return;
+    }
+
+    if (duplicate) {
+      deleteFinancialAccountIdentifierDuplicate(tx, duplicate.id);
+    }
+
+    persistFinancialAccountIdentifier(tx, row);
+  });
+}
+
+export function saveFinancialAccountIdentifier(db: AnyDb, row: FinancialAccountIdentifierRow) {
+  db.transaction((tx) => {
+    const existingById = getFinancialAccountIdentifierById(tx, row.id);
+    const activeDuplicate =
+      row.deletedAt == null ? findActiveFinancialAccountIdentifierByUniqueKey(tx, row) : null;
+    const duplicate = activeDuplicate?.id !== row.id ? activeDuplicate : null;
+
+    if (existingById && duplicate) {
+      deleteFinancialAccountIdentifierDuplicate(tx, duplicate.id);
+    }
+
+    const persistedRow =
+      existingById == null && duplicate
+        ? {
+            ...row,
+            id: duplicate.id,
+            createdAt: duplicate.createdAt,
+          }
+        : row;
+
+    persistFinancialAccountIdentifier(tx, persistedRow);
+
+    enqueueSync(tx, {
+      id: generateSyncQueueId(),
+      tableName: "financialAccountIdentifiers",
+      rowId: persistedRow.id,
+      operation: existingById || duplicate ? "update" : "insert",
+      createdAt: row.updatedAt,
+    });
   });
 }

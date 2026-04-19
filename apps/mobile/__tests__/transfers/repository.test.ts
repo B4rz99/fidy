@@ -66,4 +66,40 @@ describe("transfers repository", () => {
       }),
     ]);
   });
+
+  it("requires a source and destination endpoint", () => {
+    expect(() =>
+      saveTransfer(db as any, {
+        id: "tr-missing-from" as TransferId,
+        userId: USER_ID,
+        amount: 250000 as CopAmount,
+        fromAccountId: null,
+        toAccountId: "fa-2" as FinancialAccountId,
+        fromExternalLabel: null,
+        toExternalLabel: null,
+        description: "Invalid transfer",
+        date: "2026-04-18" as IsoDate,
+        createdAt: NOW,
+        updatedAt: NOW,
+        deletedAt: null,
+      })
+    ).toThrow();
+
+    expect(() =>
+      saveTransfer(db as any, {
+        id: "tr-missing-to" as TransferId,
+        userId: USER_ID,
+        amount: 250000 as CopAmount,
+        fromAccountId: "fa-1" as FinancialAccountId,
+        toAccountId: null,
+        fromExternalLabel: null,
+        toExternalLabel: null,
+        description: "Invalid transfer",
+        date: "2026-04-18" as IsoDate,
+        createdAt: NOW,
+        updatedAt: NOW,
+        deletedAt: null,
+      })
+    ).toThrow();
+  });
 });

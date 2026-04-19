@@ -139,6 +139,37 @@ describe("opening balances repository", () => {
     });
   });
 
+  it("updates the same row id when an opening balance moves to a different account", () => {
+    saveOpeningBalance(db as any, {
+      id: "ob-1" as OpeningBalanceId,
+      userId: USER_ID,
+      accountId: ACCOUNT_ID,
+      amount: 500000 as CopAmount,
+      effectiveDate: "2026-04-01" as IsoDate,
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+    });
+
+    saveOpeningBalance(db as any, {
+      id: "ob-1" as OpeningBalanceId,
+      userId: USER_ID,
+      accountId: "fa-2" as FinancialAccountId,
+      amount: 750000 as CopAmount,
+      effectiveDate: "2026-04-02" as IsoDate,
+      createdAt: NOW,
+      updatedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
+      deletedAt: null,
+    });
+
+    expect(getOpeningBalanceForAccount(db as any, ACCOUNT_ID)).toBeNull();
+    expect(getOpeningBalanceForAccount(db as any, "fa-2" as FinancialAccountId)).toMatchObject({
+      id: "ob-1",
+      amount: 750000,
+      effectiveDate: "2026-04-02",
+    });
+  });
+
   it("keeps a newer local duplicate when the pulled server row is older", () => {
     saveOpeningBalance(db as any, {
       id: "ob-local" as OpeningBalanceId,
@@ -174,5 +205,46 @@ describe("opening balances repository", () => {
         operation: "insert",
       }),
     ]);
+  });
+
+  it("allows re-creating an opening balance after soft delete", () => {
+    saveOpeningBalance(db as any, {
+      id: "ob-1" as OpeningBalanceId,
+      userId: USER_ID,
+      accountId: ACCOUNT_ID,
+      amount: 500000 as CopAmount,
+      effectiveDate: "2026-04-01" as IsoDate,
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+    });
+
+    saveOpeningBalance(db as any, {
+      id: "ob-1" as OpeningBalanceId,
+      userId: USER_ID,
+      accountId: ACCOUNT_ID,
+      amount: 500000 as CopAmount,
+      effectiveDate: "2026-04-01" as IsoDate,
+      createdAt: NOW,
+      updatedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
+      deletedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
+    });
+
+    saveOpeningBalance(db as any, {
+      id: "ob-2" as OpeningBalanceId,
+      userId: USER_ID,
+      accountId: ACCOUNT_ID,
+      amount: 750000 as CopAmount,
+      effectiveDate: "2026-04-02" as IsoDate,
+      createdAt: "2026-04-18T12:00:00.000Z" as IsoDateTime,
+      updatedAt: "2026-04-18T12:00:00.000Z" as IsoDateTime,
+      deletedAt: null,
+    });
+
+    expect(getOpeningBalanceForAccount(db as any, ACCOUNT_ID)).toMatchObject({
+      id: "ob-2",
+      amount: 750000,
+      effectiveDate: "2026-04-02",
+    });
   });
 });

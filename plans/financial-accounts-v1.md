@@ -22,13 +22,13 @@ Ship first-class **Financial Accounts** without slowing onboarding:
 
 The current app is transaction-only:
 
-- `transactions` have no `accountId` in [apps/mobile/shared/db/schema.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/shared/db/schema.ts:34)
-- onboarding syncs captures before any account setup in [apps/mobile/app/(auth)/onboarding.tsx](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/app/(auth)/onboarding.tsx:51)
+- `transactions` have no `accountId` in [apps/mobile/shared/db/schema.ts](../apps/mobile/shared/db/schema.ts#L34)
+- onboarding syncs captures before any account setup in [apps/mobile/app/(auth)/onboarding.tsx](../apps/mobile/app/(auth)/onboarding.tsx#L51)
 - capture pipelines save transactions directly from coarse source data in:
-  - [apps/mobile/features/email-capture/services/email-pipeline.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/email-capture/services/email-pipeline.ts:56)
-  - [apps/mobile/features/capture-sources/services/notification-pipeline.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/capture-sources/services/notification-pipeline.ts:31)
-  - [apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts:24)
-- manual entry has no account field in [apps/mobile/app/(tabs)/add.tsx](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/app/(tabs)/add.tsx:1)
+  - [apps/mobile/features/email-capture/services/email-pipeline.ts](../apps/mobile/features/email-capture/services/email-pipeline.ts#L56)
+  - [apps/mobile/features/capture-sources/services/notification-pipeline.ts](../apps/mobile/features/capture-sources/services/notification-pipeline.ts#L31)
+  - [apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts](../apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts#L24)
+- manual entry has no account field in [apps/mobile/app/(tabs)/add.tsx](../apps/mobile/app/(tabs)/add.tsx#L1)
 
 Trying to land accounts, onboarding suggestions, and transfers in one step will create too much drift.
 
@@ -71,10 +71,10 @@ Exit criteria:
 
 Entry points:
 
-- [apps/mobile/shared/db/schema.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/shared/db/schema.ts:1)
-- [apps/mobile/shared/types/branded.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/shared/types/branded.ts:1)
-- [apps/mobile/shared/lib/generate-id.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/shared/lib/generate-id.ts:1)
-- [apps/mobile/features/transactions/schema.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/transactions/schema.ts:1)
+- [apps/mobile/shared/db/schema.ts](../apps/mobile/shared/db/schema.ts#L1)
+- [apps/mobile/shared/types/branded.ts](../apps/mobile/shared/types/branded.ts#L1)
+- [apps/mobile/shared/lib/generate-id.ts](../apps/mobile/shared/lib/generate-id.ts#L1)
+- [apps/mobile/features/transactions/schema.ts](../apps/mobile/features/transactions/schema.ts#L1)
 
 Execution checklist:
 
@@ -105,10 +105,10 @@ Scope:
 
 Primary files:
 
-- [apps/mobile/app/(auth)/onboarding.tsx](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/app/(auth)/onboarding.tsx:1)
-- [apps/mobile/features/transactions/store.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/transactions/store.ts:1)
-- [apps/mobile/features/transactions/schema.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/transactions/schema.ts:1)
-- [apps/mobile/app/(tabs)/add.tsx](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/app/(tabs)/add.tsx:1)
+- [apps/mobile/app/(auth)/onboarding.tsx](../apps/mobile/app/(auth)/onboarding.tsx#L1)
+- [apps/mobile/features/transactions/store.ts](../apps/mobile/features/transactions/store.ts#L1)
+- [apps/mobile/features/transactions/schema.ts](../apps/mobile/features/transactions/schema.ts#L1)
+- [apps/mobile/app/(tabs)/add.tsx](../apps/mobile/app/(tabs)/add.tsx#L1)
 
 Exit criteria:
 
@@ -118,13 +118,13 @@ Exit criteria:
 
 Entry points:
 
-- [apps/mobile/app/(auth)/onboarding.tsx](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/app/(auth)/onboarding.tsx:1)
-- [apps/mobile/features/transactions/store.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/transactions/store.ts:1)
-- [apps/mobile/app/(tabs)/add.tsx](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/app/(tabs)/add.tsx:1)
+- [apps/mobile/app/(auth)/onboarding.tsx](../apps/mobile/app/(auth)/onboarding.tsx#L1)
+- [apps/mobile/features/transactions/store.ts](../apps/mobile/features/transactions/store.ts#L1)
+- [apps/mobile/app/(tabs)/add.tsx](../apps/mobile/app/(tabs)/add.tsx#L1)
 - capture save paths in:
-  - [apps/mobile/features/email-capture/services/email-pipeline.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/email-capture/services/email-pipeline.ts:1)
-  - [apps/mobile/features/capture-sources/services/notification-pipeline.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/capture-sources/services/notification-pipeline.ts:1)
-  - [apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts:1)
+  - [apps/mobile/features/email-capture/services/email-pipeline.ts](../apps/mobile/features/email-capture/services/email-pipeline.ts#L1)
+  - [apps/mobile/features/capture-sources/services/notification-pipeline.ts](../apps/mobile/features/capture-sources/services/notification-pipeline.ts#L1)
+  - [apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts](../apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts#L1)
 
 Execution checklist:
 
@@ -172,11 +172,11 @@ Exit criteria:
 
 Entry points:
 
-- [apps/mobile/features/email-capture/schema.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/email-capture/schema.ts:1)
-- [apps/mobile/features/capture-sources/schema.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/capture-sources/schema.ts:1)
-- [apps/mobile/features/email-capture/services/email-pipeline.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/email-capture/services/email-pipeline.ts:1)
-- [apps/mobile/features/capture-sources/services/notification-pipeline.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/capture-sources/services/notification-pipeline.ts:1)
-- [apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts:1)
+- [apps/mobile/features/email-capture/schema.ts](../apps/mobile/features/email-capture/schema.ts#L1)
+- [apps/mobile/features/capture-sources/schema.ts](../apps/mobile/features/capture-sources/schema.ts#L1)
+- [apps/mobile/features/email-capture/services/email-pipeline.ts](../apps/mobile/features/email-capture/services/email-pipeline.ts#L1)
+- [apps/mobile/features/capture-sources/services/notification-pipeline.ts](../apps/mobile/features/capture-sources/services/notification-pipeline.ts#L1)
+- [apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts](../apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts#L1)
 
 Execution checklist:
 
@@ -221,7 +221,7 @@ Exit criteria:
 Entry points:
 
 - new suggestion derivation module under the financial-account/capture-evidence boundary
-- [CONTEXT.md](/Users/obarbozaa/conductor/workspaces/fidy/florence/CONTEXT.md:1) sections covering `Account Creation Suggestion`, scoped identifiers, and dismissal suppression
+- [CONTEXT.md](../CONTEXT.md#L1) sections covering `Account Creation Suggestion`, scoped identifiers, and dismissal suppression
 
 Execution checklist:
 
@@ -257,10 +257,10 @@ Scope:
 
 Primary files:
 
-- [apps/mobile/features/onboarding/store.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/onboarding/store.ts:1)
-- [apps/mobile/app/(auth)/onboarding.tsx](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/app/(auth)/onboarding.tsx:1)
-- [apps/mobile/features/onboarding/components/SyncProgressStep.tsx](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/onboarding/components/SyncProgressStep.tsx:1)
-- [apps/mobile/features/dashboard/components/HomeScreen.tsx](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/dashboard/components/HomeScreen.tsx:1)
+- [apps/mobile/features/onboarding/store.ts](../apps/mobile/features/onboarding/store.ts#L1)
+- [apps/mobile/app/(auth)/onboarding.tsx](../apps/mobile/app/(auth)/onboarding.tsx#L1)
+- [apps/mobile/features/onboarding/components/SyncProgressStep.tsx](../apps/mobile/features/onboarding/components/SyncProgressStep.tsx#L1)
+- [apps/mobile/features/dashboard/components/HomeScreen.tsx](../apps/mobile/features/dashboard/components/HomeScreen.tsx#L1)
 
 Exit criteria:
 
@@ -270,10 +270,10 @@ Exit criteria:
 
 Entry points:
 
-- [apps/mobile/features/onboarding/store.ts](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/onboarding/store.ts:1)
-- [apps/mobile/app/(auth)/onboarding.tsx](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/app/(auth)/onboarding.tsx:1)
-- [apps/mobile/features/onboarding/components/SyncProgressStep.tsx](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/onboarding/components/SyncProgressStep.tsx:1)
-- [apps/mobile/features/dashboard/components/HomeScreen.tsx](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/dashboard/components/HomeScreen.tsx:1)
+- [apps/mobile/features/onboarding/store.ts](../apps/mobile/features/onboarding/store.ts#L1)
+- [apps/mobile/app/(auth)/onboarding.tsx](../apps/mobile/app/(auth)/onboarding.tsx#L1)
+- [apps/mobile/features/onboarding/components/SyncProgressStep.tsx](../apps/mobile/features/onboarding/components/SyncProgressStep.tsx#L1)
+- [apps/mobile/features/dashboard/components/HomeScreen.tsx](../apps/mobile/features/dashboard/components/HomeScreen.tsx#L1)
 
 Execution checklist:
 
@@ -317,7 +317,7 @@ Exit criteria:
 
 Entry points:
 
-- current connected/capture account surface in [apps/mobile/app/connected-accounts.tsx](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/app/connected-accounts.tsx:1)
+- current connected/capture account surface in [apps/mobile/app/connected-accounts.tsx](../apps/mobile/app/connected-accounts.tsx#L1)
 - any new financial-account feature module created in slices 1-2
 
 Execution checklist:
@@ -400,7 +400,7 @@ Exit criteria:
 
 Entry points:
 
-- [apps/mobile/features/email-capture/components/NeedsReviewScreen.tsx](/Users/obarbozaa/conductor/workspaces/fidy/florence/apps/mobile/features/email-capture/components/NeedsReviewScreen.tsx:1)
+- [apps/mobile/features/email-capture/components/NeedsReviewScreen.tsx](../apps/mobile/features/email-capture/components/NeedsReviewScreen.tsx#L1)
 - transaction edit/details flows
 - capture evidence linkage introduced in slice 3
 

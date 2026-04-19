@@ -1,4 +1,13 @@
-import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import {
+  check,
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 import type {
   BillId,
   BillPaymentId,
@@ -126,6 +135,14 @@ export const transfers = sqliteTable(
   (table) => [
     index("idx_transfers_user_date").on(table.userId, table.date),
     index("idx_transfers_user_updated").on(table.userId, table.updatedAt),
+    check(
+      "ck_transfers_from_endpoint",
+      sql`${table.fromAccountId} is not null or ${table.fromExternalLabel} is not null`
+    ),
+    check(
+      "ck_transfers_to_endpoint",
+      sql`${table.toAccountId} is not null or ${table.toExternalLabel} is not null`
+    ),
   ]
 );
 
@@ -142,7 +159,9 @@ export const openingBalances = sqliteTable(
     deletedAt: text("deleted_at").$type<IsoDateTime>(),
   },
   (table) => [
-    uniqueIndex("uq_opening_balances_account").on(table.accountId),
+    uniqueIndex("uq_opening_balances_account")
+      .on(table.accountId)
+      .where(sql`${table.deletedAt} is null`),
     index("idx_opening_balances_user").on(table.userId),
   ]
 );
@@ -160,12 +179,9 @@ export const financialAccountIdentifiers = sqliteTable(
     deletedAt: text("deleted_at").$type<IsoDateTime>(),
   },
   (table) => [
-    uniqueIndex("uq_financial_account_identifier").on(
-      table.userId,
-      table.accountId,
-      table.scope,
-      table.value
-    ),
+    uniqueIndex("uq_financial_account_identifier")
+      .on(table.userId, table.accountId, table.scope, table.value)
+      .where(sql`${table.deletedAt} is null`),
     index("idx_financial_account_identifiers_account").on(table.accountId),
   ]
 );

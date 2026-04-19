@@ -552,7 +552,8 @@
         "uq_financial_account_identifier": {
           "name": "uq_financial_account_identifier",
           "columns": ["user_id", "account_id", "scope", "value"],
-          "isUnique": true
+          "isUnique": true,
+          "where": "\"deleted_at\" is null"
         },
         "idx_financial_account_identifiers_account": {
           "name": "idx_financial_account_identifiers_account",
@@ -1116,7 +1117,8 @@
         "uq_opening_balances_account": {
           "name": "uq_opening_balances_account",
           "columns": ["account_id"],
-          "isUnique": true
+          "isUnique": true,
+          "where": "\"deleted_at\" is null"
         },
         "idx_opening_balances_user": {
           "name": "idx_opening_balances_user",
@@ -1690,7 +1692,16 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {}
+      "checkConstraints": {
+        "ck_transfers_from_endpoint": {
+          "name": "ck_transfers_from_endpoint",
+          "value": "\"transfers\".\"from_account_id\" is not null or \"transfers\".\"from_external_label\" is not null"
+        },
+        "ck_transfers_to_endpoint": {
+          "name": "ck_transfers_to_endpoint",
+          "value": "\"transfers\".\"to_account_id\" is not null or \"transfers\".\"to_external_label\" is not null"
+        }
+      }
     },
     "user_categories": {
       "name": "user_categories",
