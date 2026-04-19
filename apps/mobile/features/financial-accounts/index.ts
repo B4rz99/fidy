@@ -9,6 +9,10 @@ export {
   upsertFinancialAccountIdentifier,
 } from "./lib/identifiers-repository";
 export {
+  createFinancialAccountManagementService,
+  MANUAL_FINANCIAL_ACCOUNT_IDENTIFIER_SCOPE,
+} from "./lib/management-service";
+export {
   getOpeningBalanceById,
   getOpeningBalanceForAccount,
   type OpeningBalanceRow,

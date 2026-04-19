@@ -1,0 +1,163 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
+import { useOptionalUserId } from "@/features/auth";
+import { createFinancialAccountManagementService } from "@/features/financial-accounts/lib/management-service";
+import { parseFinancialAccountRouteParam } from "@/features/financial-accounts/lib/route-params";
+import { ScreenLayout } from "@/shared/components";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
+import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { showErrorToast } from "@/shared/lib";
+
+const managementService = createFinancialAccountManagementService();
+
+export function FinancialAccountIdentifierSheet() {
+  const router = useRouter();
+  const { accountId: rawAccountId } = useLocalSearchParams<{ accountId?: string }>();
+  const accountId = parseFinancialAccountRouteParam(rawAccountId);
+  const { t } = useTranslation();
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
+  const primary = useThemeColor("primary");
+  const secondary = useThemeColor("secondary");
+  const tertiary = useThemeColor("tertiary");
+  const borderSubtle = useThemeColor("borderSubtle");
+  const accentGreen = useThemeColor("accentGreen");
+  const accentGreenLight = useThemeColor("accentGreenLight");
+  const card = useThemeColor("card");
+  const [value, setValue] = useState("");
+  const { isBusy, run: guardedSave } = useAsyncGuard();
+
+  if (!accountId) {
+    return null;
+  }
+
+  const handleSave = () => {
+    void guardedSave(async () => {
+      try {
+        if (!db || !userId) {
+          return;
+        }
+
+        managementService.addManualIdentifier({
+          db,
+          userId,
+          accountId,
+          value,
+        });
+        router.back();
+      } catch {
+        showErrorToast(t("financialAccounts.identifierSheet.saveFailed"));
+      }
+    });
+  };
+
+  return (
+    <ScreenLayout
+      title={t("financialAccounts.identifierSheet.title")}
+      variant="sub"
+      onBack={() => router.back()}
+    >
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={[styles.subtitle, { color: secondary }]}>
+          {t("financialAccounts.identifierSheet.subtitle")}
+        </Text>
+
+        <View style={styles.fieldBlock}>
+          <Text style={[styles.fieldLabel, { color: secondary }]}>
+            {t("financialAccounts.identifierSheet.label")}
+          </Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: card,
+                borderColor: borderSubtle,
+                color: primary,
+              },
+            ]}
+            value={value}
+            onChangeText={setValue}
+            placeholder={t("financialAccounts.identifierSheet.placeholder")}
+            placeholderTextColor={tertiary}
+          />
+        </View>
+
+        <View style={[styles.noteBanner, { backgroundColor: accentGreenLight }]}>
+          <Text style={[styles.noteText, { color: secondary }]}>
+            {t("financialAccounts.identifierSheet.note")}
+          </Text>
+        </View>
+
+        <Pressable
+          style={[
+            styles.primaryButton,
+            {
+              backgroundColor: accentGreen,
+              opacity: isBusy || value.trim().length === 0 ? 0.5 : 1,
+            },
+          ]}
+          disabled={isBusy || value.trim().length === 0}
+          onPress={handleSave}
+        >
+          <Text style={styles.primaryButtonText}>
+            {t("financialAccounts.identifierSheet.save")}
+          </Text>
+        </Pressable>
+      </ScrollView>
+    </ScreenLayout>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: {
+    paddingHorizontal: 16,
+    paddingBottom: 32,
+    gap: 18,
+  },
+  subtitle: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  fieldBlock: {
+    gap: 8,
+  },
+  fieldLabel: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 12,
+  },
+  input: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    fontFamily: "Poppins_500Medium",
+    fontSize: 14,
+  },
+  noteBanner: {
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  noteText: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  primaryButton: {
+    minHeight: 52,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontFamily: "Poppins_700Bold",
+    fontSize: 14,
+  },
+});

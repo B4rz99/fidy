@@ -402,6 +402,40 @@ function RootLayout() {
               }}
             />
             <Stack.Screen
+              name="financial-accounts"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="financial-account-details"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="financial-account-form"
+              options={{
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+              }}
+            />
+            <Stack.Screen
+              name="financial-account-identifier"
+              options={{
+                ...SHEET,
+                headerShown: Platform.OS === "ios",
+                headerStyle: { backgroundColor: theme.page },
+                headerTintColor: theme.primary,
+                sheetAllowedDetents: [0.62],
+              }}
+            />
+            <Stack.Screen
               name="link-suggested-account"
               options={{
                 ...SHEET,

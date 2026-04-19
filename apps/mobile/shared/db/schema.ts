@@ -108,6 +108,8 @@ export const financialAccounts = sqliteTable(
     name: text("name").notNull(),
     kind: text("kind").notNull(),
     isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
+    statementClosingDay: integer("statement_closing_day"),
+    paymentDueDay: integer("payment_due_day"),
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
     updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
     deletedAt: text("deleted_at").$type<IsoDateTime>(),

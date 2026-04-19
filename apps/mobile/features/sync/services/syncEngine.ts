@@ -73,6 +73,8 @@ type SupabaseFinancialAccountRow = {
   name: string;
   kind: string;
   is_default: boolean;
+  statement_closing_day: number | null;
+  payment_due_day: number | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -204,6 +206,8 @@ function fromSupabaseFinancialAccountRow(
     name: row.name,
     kind: row.kind,
     isDefault: row.is_default,
+    statementClosingDay: row.statement_closing_day,
+    paymentDueDay: row.payment_due_day,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,
@@ -530,6 +534,8 @@ async function processFinancialAccountEntry(
     name: row.name,
     kind: row.kind,
     is_default: row.isDefault,
+    statement_closing_day: row.statementClosingDay ?? null,
+    payment_due_day: row.paymentDueDay ?? null,
     created_at: row.createdAt,
     updated_at: row.updatedAt,
     deleted_at: row.deletedAt,
