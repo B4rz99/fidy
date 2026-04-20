@@ -22,88 +22,118 @@ const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MONTH_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/;
 const ISO_DATE_TIME_PATTERN =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|([+-])(\d{2}):(\d{2}))$/;
+const MAX_OFFSET_MINUTES = 23 * 60 + 59;
 
-function assertNonEmptyString(value: string, label: string): void {
-  if (value.trim().length === 0) {
+type IsoDateParts = readonly [year: number, month: number, day: number];
+type IsoTimeParts = readonly [hour: number, minute: number, second: number, milliseconds: number];
+type IsoOffsetParts = readonly [hour: number, minute: number];
+type Assertion<Value, AssertedValue extends Value> = (
+  value: Value
+) => asserts value is AssertedValue;
+
+const isBlankString = (value: string) => value.trim().length === 0;
+
+const assertNonEmptyString = (value: string, label: string) => {
+  if (isBlankString(value)) {
     throw new Error(`${label} must be a non-empty string`);
   }
-}
+};
 
-function toMilliseconds(fraction: string | undefined): number {
-  return Number((fraction ?? "").slice(0, 3).padEnd(3, "0"));
-}
+const toMilliseconds = (fraction: string | undefined) =>
+  Number((fraction ?? "").slice(0, 3).padEnd(3, "0"));
 
-function isValidUtcDatePart(year: number, month: number, day: number): boolean {
+const parseIsoDateParts = (value: string): IsoDateParts | null => {
+  const match = ISO_DATE_PATTERN.exec(value);
+  return match === null ? null : ([Number(match[1]), Number(match[2]), Number(match[3])] as const);
+};
+
+const isValidUtcDatePart = ([year, month, day]: IsoDateParts) => {
   const date = new Date(Date.UTC(year, month - 1, day));
   return (
     date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
   );
-}
+};
 
-function isValidIsoDateValue(value: string): boolean {
-  const match = ISO_DATE_PATTERN.exec(value);
+const isValidIsoDateValue = (value: string) => {
+  const date = parseIsoDateParts(value);
+  return date === null ? false : isValidUtcDatePart(date);
+};
 
-  if (!match) {
-    return false;
-  }
+const parseIsoDateTimeMatch = (value: string) => ISO_DATE_TIME_PATTERN.exec(value);
 
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
+const toIsoDateParts = (match: RegExpExecArray): IsoDateParts =>
+  [Number(match[1]), Number(match[2]), Number(match[3])] as const;
 
-  return isValidUtcDatePart(year, month, day);
-}
+const toIsoTimeParts = (match: RegExpExecArray): IsoTimeParts =>
+  [Number(match[4]), Number(match[5]), Number(match[6]), toMilliseconds(match[7])] as const;
 
-function isValidIsoDateTimeValue(value: string): boolean {
-  const match = ISO_DATE_TIME_PATTERN.exec(value);
+const toIsoOffsetParts = (match: RegExpExecArray): IsoOffsetParts =>
+  [Number(match[10] ?? "0"), Number(match[11] ?? "0")] as const;
 
-  if (!match) {
-    return false;
-  }
+const offsetMinutes = ([hour, minute]: IsoOffsetParts, sign: string | undefined) =>
+  (sign === "-" ? -1 : 1) * (hour * 60 + minute);
 
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const hour = Number(match[4]);
-  const minute = Number(match[5]);
-  const second = Number(match[6]);
-  const milliseconds = toMilliseconds(match[7]);
-  const zone = match[8];
-  const offsetSign = match[9] === "-" ? -1 : 1;
-  const offsetHour = Number(match[10] ?? "0");
-  const offsetMinute = Number(match[11] ?? "0");
+const isValidIsoTimeParts = ([hour, minute, second]: IsoTimeParts) =>
+  hour <= 23 && minute <= 59 && second <= 59;
 
-  if (
-    !isValidUtcDatePart(year, month, day) ||
-    hour > 23 ||
-    minute > 59 ||
-    second > 59 ||
-    offsetHour > 23 ||
-    offsetMinute > 59
-  ) {
-    return false;
-  }
+const isValidIsoOffset = (match: RegExpExecArray) =>
+  match[8] === "Z"
+    ? true
+    : (([hour, minute]) =>
+        hour <= 23 &&
+        minute <= 59 &&
+        Math.abs(offsetMinutes([hour, minute], match[9])) <= MAX_OFFSET_MINUTES)(
+        toIsoOffsetParts(match)
+      );
 
-  if (zone !== "Z") {
-    const offsetMinutes = offsetSign * (offsetHour * 60 + offsetMinute);
+const matchesUtcDate = (date: Date, [year, month, day]: IsoDateParts) =>
+  date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 
-    if (offsetMinutes < -23 * 60 - 59 || offsetMinutes > 23 * 60 + 59) {
-      return false;
-    }
-  }
+const matchesUtcTime = (date: Date, [hour, minute, second, milliseconds]: IsoTimeParts) =>
+  date.getUTCHours() === hour &&
+  date.getUTCMinutes() === minute &&
+  date.getUTCSeconds() === second &&
+  date.getUTCMilliseconds() === milliseconds;
 
-  const dateAtUtc = new Date(Date.UTC(year, month - 1, day, hour, minute, second, milliseconds));
-
-  return (
-    dateAtUtc.getUTCFullYear() === year &&
-    dateAtUtc.getUTCMonth() === month - 1 &&
-    dateAtUtc.getUTCDate() === day &&
-    dateAtUtc.getUTCHours() === hour &&
-    dateAtUtc.getUTCMinutes() === minute &&
-    dateAtUtc.getUTCSeconds() === second &&
-    dateAtUtc.getUTCMilliseconds() === milliseconds
+const toUtcDateTime = (dateParts: IsoDateParts, timeParts: IsoTimeParts) =>
+  new Date(
+    Date.UTC(
+      dateParts[0],
+      dateParts[1] - 1,
+      dateParts[2],
+      timeParts[0],
+      timeParts[1],
+      timeParts[2],
+      timeParts[3]
+    )
   );
-}
+
+const matchesUtcDateTimeParts = (dateParts: IsoDateParts, timeParts: IsoTimeParts) => {
+  const date = toUtcDateTime(dateParts, timeParts);
+  return matchesUtcDate(date, dateParts) && matchesUtcTime(date, timeParts);
+};
+
+const matchesUtcDateTime = (match: RegExpExecArray) =>
+  matchesUtcDateTimeParts(toIsoDateParts(match), toIsoTimeParts(match));
+
+const isValidParsedIsoDateTime = (match: RegExpExecArray) =>
+  isValidUtcDatePart(toIsoDateParts(match)) &&
+  isValidIsoTimeParts(toIsoTimeParts(match)) &&
+  isValidIsoOffset(match) &&
+  matchesUtcDateTime(match);
+
+const isValidIsoDateTimeValue = (value: string) => {
+  const match = parseIsoDateTimeMatch(value);
+  return match === null ? false : isValidParsedIsoDateTime(match);
+};
+
+const requireValue = <Value, AssertedValue extends Value>(
+  value: Value,
+  assertValue: Assertion<Value, AssertedValue>
+): AssertedValue => {
+  assertValue(value);
+  return value;
+};
 
 export function assertUserId(value: string): asserts value is UserId {
   assertNonEmptyString(value, "userId");
@@ -182,81 +212,65 @@ export function assertIsoDateTime(value: string): asserts value is IsoDateTime {
 }
 
 export function requireUserId(value: string): UserId {
-  assertUserId(value);
-  return value;
+  return requireValue(value, assertUserId);
 }
 
 export function requireTransactionId(value: string): TransactionId {
-  assertTransactionId(value);
-  return value;
+  return requireValue(value, assertTransactionId);
 }
 
 export function requireTransferId(value: string): TransferId {
-  assertTransferId(value);
-  return value;
+  return requireValue(value, assertTransferId);
 }
 
 export function requireProcessedEmailId(value: string): ProcessedEmailId {
-  assertProcessedEmailId(value);
-  return value;
+  return requireValue(value, assertProcessedEmailId);
 }
 
 export function requireCopAmount(value: number): CopAmount {
-  assertCopAmount(value);
-  return value;
+  return requireValue(value, assertCopAmount);
 }
 
 export function requireBillId(value: string): BillId {
-  assertBillId(value);
-  return value;
+  return requireValue(value, assertBillId);
 }
 
 export function requireBudgetId(value: string): BudgetId {
-  assertBudgetId(value);
-  return value;
+  return requireValue(value, assertBudgetId);
 }
 
 export function requireCategoryId(value: string): CategoryId {
-  assertCategoryId(value);
-  return value;
+  return requireValue(value, assertCategoryId);
 }
 
 export function requireDetectedSmsEventId(value: string): DetectedSmsEventId {
-  assertDetectedSmsEventId(value);
-  return value;
+  return requireValue(value, assertDetectedSmsEventId);
 }
 
 export function requireFinancialAccountId(value: string): FinancialAccountId {
-  assertFinancialAccountId(value);
-  return value;
+  return requireValue(value, assertFinancialAccountId);
 }
 
 export function requireMonth(value: string): Month {
-  assertMonth(value);
-  return value;
+  return requireValue(value, assertMonth);
 }
 
 export function requireIsoDate(value: string): IsoDate {
-  assertIsoDate(value);
-  return value;
+  return requireValue(value, assertIsoDate);
 }
 
 export function requireIsoDateTime(value: string): IsoDateTime {
-  assertIsoDateTime(value);
-  return value;
+  return requireValue(value, assertIsoDateTime);
 }
 
 export function requireUserMemoryId(value: string): UserMemoryId {
-  assertUserMemoryId(value);
-  return value;
+  return requireValue(value, assertUserMemoryId);
 }
 
 export function requireSyncConflictId(value: string): SyncConflictId {
-  assertSyncConflictId(value);
-  return value;
+  return requireValue(value, assertSyncConflictId);
 }
 
 export function requireSyncQueueId(value: string): SyncQueueId {
-  assertSyncQueueId(value);
-  return value;
+  return requireValue(value, assertSyncQueueId);
 }
