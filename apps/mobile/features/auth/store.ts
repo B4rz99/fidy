@@ -146,7 +146,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     if (useAuthStore.getState().localQaSession) {
       await clearLocalQaSession().catch(() => undefined);
       resetAnalyticsUser();
-      set({ session: null, localQaSession: null });
+      set({ session: null, localQaSession: null, isLoading: false });
       return;
     }
 
@@ -168,6 +168,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       // Clear local state regardless
     }
     resetAnalyticsUser();
-    set({ session: null, localQaSession: null });
+    set({ session: null, localQaSession: null, isLoading: false });
   },
 }));

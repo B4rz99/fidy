@@ -13,7 +13,10 @@ export function LocalQaLoginButton() {
       label={t("login.continueInLocalQaMode")}
       testID="login.local-qa"
       onPress={() => {
-        void useAuthStore.getState().startLocalQaSession();
+        void useAuthStore
+          .getState()
+          .startLocalQaSession()
+          .catch(() => undefined);
       }}
       containerClassName="bg-card dark:bg-card-dark border border-border-subtle dark:border-border-subtle-dark"
       textClassName="text-primary dark:text-primary-dark"

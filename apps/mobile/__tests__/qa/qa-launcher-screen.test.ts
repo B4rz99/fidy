@@ -11,6 +11,7 @@ describe("QA launcher screen", () => {
   test("starts the requested QA profile from path params and replaces to the target route", () => {
     expect(source).toContain("parseLocalQaProfileRouteParam(rawProfile)");
     expect(source).toContain("parseQaTargetKeyRouteParam(rawTargetKey)");
+    expect(source).toContain("if (!localQaAvailable) {");
     expect(source).toContain("await useAuthStore.getState().startLocalQaSession(profile);");
     expect(source).toContain("replace(target as never);");
     expect(source).toContain('error instanceof Error ? error.message : "unknown"');

@@ -26,6 +26,7 @@ describe("Login screen", () => {
     expect(loginSource).toContain("LocalQaLoginButton");
     expect(localQaButtonSource).toContain('t("login.continueInLocalQaMode")');
     expect(localQaButtonSource).toContain("startLocalQaSession");
+    expect(localQaButtonSource).toContain(".catch(() => undefined)");
   });
 
   test("uses FidyLogo component", () => {

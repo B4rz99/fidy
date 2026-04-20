@@ -16,6 +16,7 @@ import { recordQaLog } from "../logging";
 export function QaLauncherScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const localQaAvailable = isLocalQaAvailable();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const [errorKey, setErrorKey] = useState<string | null>(null);
@@ -29,6 +30,11 @@ export function QaLauncherScreen() {
   const target = parseQaTargetKeyRouteParam(rawTargetKey);
 
   useEffect(() => {
+    if (!localQaAvailable) {
+      setErrorKey("qaTools.unavailable");
+      return;
+    }
+
     if (!profile) {
       setErrorKey("qaTools.unavailable");
       return;
@@ -54,9 +60,9 @@ export function QaLauncherScreen() {
         errorMessage: error instanceof Error ? error.message : "unknown",
       });
     });
-  }, [profile, target, router.replace]);
+  }, [localQaAvailable, profile, target, router.replace]);
 
-  if (!isLocalQaAvailable()) {
+  if (!localQaAvailable) {
     return null;
   }
 

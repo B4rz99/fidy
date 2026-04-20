@@ -316,4 +316,30 @@ describe("useAuthStore", () => {
     expect(mockCleanupCurrentPushToken).not.toHaveBeenCalled();
     expect(mockSignOut).not.toHaveBeenCalled();
   });
+
+  it("signOut clears loading state when it interrupts a pending restoreSession", async () => {
+    const deferredRemoteSession = createDeferred<{
+      data: { session: typeof mockSession | null };
+      error: null;
+    }>();
+
+    mockGetSession.mockImplementationOnce(() => deferredRemoteSession.promise as never);
+
+    const restorePromise = useAuthStore.getState().restoreSession();
+
+    await Promise.resolve();
+    const signOutPromise = useAuthStore.getState().signOut();
+
+    deferredRemoteSession.resolve({
+      data: { session: null },
+      error: null,
+    });
+
+    await Promise.all([restorePromise, signOutPromise]);
+
+    const { session, localQaSession, isLoading } = useAuthStore.getState();
+    expect(session).toBeNull();
+    expect(localQaSession).toBeNull();
+    expect(isLoading).toBe(false);
+  });
 });

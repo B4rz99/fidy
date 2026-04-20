@@ -55,6 +55,7 @@ const FLAG_KEYS: readonly QaFeatureFlagName[] = [
 export function QaToolsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const localQaAvailable = isLocalQaAvailable();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const borderSubtle = useThemeColor("borderSubtle");
@@ -100,7 +101,7 @@ export function QaToolsScreen() {
     const nextProfile = parseLocalQaProfileRouteParam(routeProfile);
     const nextTarget = parseQaTargetRouteParam(routeTarget);
 
-    if (!nextProfile) return;
+    if (!localQaAvailable || !nextProfile) return;
 
     const autoStartKey = JSON.stringify({
       profile: nextProfile,
@@ -111,9 +112,9 @@ export function QaToolsScreen() {
 
     lastAutoStartRequest.current = autoStartKey;
     void runScenario(nextProfile, nextTarget ?? getDefaultQaTarget(nextProfile));
-  }, [routeProfile, routeTarget, runScenario]);
+  }, [localQaAvailable, routeProfile, routeTarget, runScenario]);
 
-  if (!isLocalQaAvailable()) {
+  if (!localQaAvailable) {
     return (
       <ScreenLayout variant="sub" title={t("qaTools.title")} onBack={() => router.back()}>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>

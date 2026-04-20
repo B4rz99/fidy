@@ -17,8 +17,9 @@ describe("QA tools screen", () => {
   test("auto-starts routed QA scenarios when search params change after mount", () => {
     expect(source).toContain("parseLocalQaProfileRouteParam(routeProfile)");
     expect(source).toContain("parseQaTargetRouteParam(routeTarget)");
+    expect(source).toContain("if (!localQaAvailable || !nextProfile) return;");
     expect(source).toContain("useEffect(() => {");
-    expect(source).toContain("[routeProfile, routeTarget, runScenario]");
+    expect(source).toContain("[localQaAvailable, routeProfile, routeTarget, runScenario]");
   });
 
   test("contains QA feature flag toggles, reset tools, and inspectors", () => {
