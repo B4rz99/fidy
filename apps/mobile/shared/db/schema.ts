@@ -200,6 +200,7 @@ export const captureEvidence = sqliteTable(
     scope: text("scope").notNull(),
     value: text("value").notNull(),
     transactionId: text("transaction_id").$type<TransactionId>(),
+    transferId: text("transfer_id").$type<TransferId>(),
     processedEmailId: text("processed_email_id").$type<ProcessedEmailId>(),
     processedCaptureId: text("processed_capture_id").$type<ProcessedCaptureId>(),
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
@@ -211,6 +212,10 @@ export const captureEvidence = sqliteTable(
       "ck_capture_evidence_source_record",
       sql`(case when ${table.processedEmailId} is not null then 1 else 0 end) + (case when ${table.processedCaptureId} is not null then 1 else 0 end) = 1`
     ),
+    check(
+      "ck_capture_evidence_financial_link",
+      sql`${table.transactionId} is null or ${table.transferId} is null`
+    ),
     uniqueIndex("uq_capture_evidence_email")
       .on(table.userId, table.processedEmailId, table.scope, table.value)
       .where(sql`${table.processedEmailId} is not null and ${table.deletedAt} is null`),
@@ -219,6 +224,7 @@ export const captureEvidence = sqliteTable(
       .where(sql`${table.processedCaptureId} is not null and ${table.deletedAt} is null`),
     index("idx_capture_evidence_user_scope_value").on(table.userId, table.scope, table.value),
     index("idx_capture_evidence_transaction").on(table.transactionId),
+    index("idx_capture_evidence_transfer").on(table.transferId),
     index("idx_capture_evidence_processed_email").on(table.processedEmailId),
     index("idx_capture_evidence_processed_capture").on(table.processedCaptureId),
     index("idx_capture_evidence_user_updated").on(table.userId, table.updatedAt),

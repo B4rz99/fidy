@@ -109,12 +109,13 @@ describe("captureEvidence table schema", () => {
     expect(names).toContain("scope");
     expect(names).toContain("value");
     expect(names).toContain("transactionId");
+    expect(names).toContain("transferId");
     expect(names).toContain("processedEmailId");
     expect(names).toContain("processedCaptureId");
     expect(names).toContain("createdAt");
     expect(names).toContain("updatedAt");
     expect(names).toContain("deletedAt");
-    expect(names).toHaveLength(12);
+    expect(names).toHaveLength(13);
   });
 
   it("requires userId, scope, and value", () => {

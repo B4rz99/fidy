@@ -40,6 +40,7 @@ import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { formatMoney, formatSignedMoney, toIsoDate } from "@/shared/lib";
 import type { TransactionId } from "@/shared/types/branded";
 import { getActivityAccountNames } from "../lib/get-activity-account-names";
+import { AttributionReviewBanner } from "./AttributionReviewBanner";
 import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";
 import { DateHeader } from "./DateHeader";
@@ -161,6 +162,7 @@ const ListHeader = memo(function ListHeader({
       />
       <FailedEmailsBanner onPress={() => push("/failed-emails" as never)} />
       <NeedsReviewBanner onPress={() => push("/needs-review" as never)} />
+      <AttributionReviewBanner onPress={() => push("/attribution-review-queue" as never)} />
       <AccountSuggestionsPromptBanner
         count={accountSuggestionCount}
         onPress={() => push("/account-suggestions" as never)}

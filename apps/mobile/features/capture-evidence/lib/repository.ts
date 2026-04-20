@@ -1,12 +1,20 @@
 import { and, count, desc, eq, isNull, sql } from "drizzle-orm";
-import { type AnyDb, captureEvidence, enqueueSync } from "@/shared/db";
-import { generateCaptureEvidenceId, generateSyncQueueId } from "@/shared/lib";
+import type { AnyDb } from "@/shared/db/client";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
+import { captureEvidence } from "@/shared/db/schema";
+import { generateCaptureEvidenceId, generateSyncQueueId } from "@/shared/lib/generate-id";
 import type { CaptureEvidenceSeed } from "../schema";
 
 export type CaptureEvidenceRow = typeof captureEvidence.$inferInsert;
 type CaptureEvidenceLink = Pick<
   CaptureEvidenceRow,
-  "processedEmailId" | "processedCaptureId" | "transactionId" | "userId" | "createdAt" | "updatedAt"
+  | "processedEmailId"
+  | "processedCaptureId"
+  | "transactionId"
+  | "transferId"
+  | "userId"
+  | "createdAt"
+  | "updatedAt"
 >;
 
 type RepeatedCaptureEvidenceRow = {
@@ -43,6 +51,7 @@ function persistCaptureEvidence(db: AnyDb, row: CaptureEvidenceRow) {
         scope: row.scope,
         value: row.value,
         transactionId: row.transactionId,
+        transferId: row.transferId ?? null,
         processedEmailId: row.processedEmailId,
         processedCaptureId: row.processedCaptureId,
         createdAt: row.createdAt,
@@ -94,7 +103,8 @@ export function materializeCaptureEvidenceRows(
     evidenceType: row.evidenceType,
     scope: row.scope,
     value: row.value,
-    transactionId: link.transactionId,
+    transactionId: link.transactionId ?? null,
+    transferId: link.transferId ?? null,
     processedEmailId: link.processedEmailId,
     processedCaptureId: link.processedCaptureId,
     createdAt: link.createdAt,
@@ -130,6 +140,39 @@ export function linkCaptureEvidenceToTransaction(
       saveCaptureEvidenceInTransaction(tx, {
         ...row,
         transactionId,
+        transferId: null,
+        updatedAt,
+      });
+    });
+  });
+}
+
+export function relinkCaptureEvidenceToTransfer(
+  db: AnyDb,
+  transactionId: NonNullable<CaptureEvidenceRow["transactionId"]>,
+  transferId: NonNullable<CaptureEvidenceRow["transferId"]>,
+  updatedAt: CaptureEvidenceRow["updatedAt"]
+) {
+  const rows = db
+    .select()
+    .from(captureEvidence)
+    .where(and(eq(captureEvidence.transactionId, transactionId), isNull(captureEvidence.deletedAt)))
+    .all();
+
+  if (rows.length === 0) {
+    return;
+  }
+
+  db.transaction((tx) => {
+    rows.forEach((row) => {
+      if (row.updatedAt >= updatedAt) {
+        return;
+      }
+
+      saveCaptureEvidenceInTransaction(tx, {
+        ...row,
+        transactionId: null,
+        transferId,
         updatedAt,
       });
     });
@@ -172,6 +215,25 @@ export function getCaptureEvidenceRowsForScopeValue(
         eq(captureEvidence.userId, userId),
         eq(captureEvidence.scope, scope),
         eq(captureEvidence.value, value),
+        isNull(captureEvidence.deletedAt)
+      )
+    )
+    .orderBy(desc(captureEvidence.updatedAt), captureEvidence.id)
+    .all();
+}
+
+export function getCaptureEvidenceRowsForTransaction(
+  db: AnyDb,
+  userId: CaptureEvidenceRow["userId"],
+  transactionId: NonNullable<CaptureEvidenceRow["transactionId"]>
+) {
+  return db
+    .select()
+    .from(captureEvidence)
+    .where(
+      and(
+        eq(captureEvidence.userId, userId),
+        eq(captureEvidence.transactionId, transactionId),
         isNull(captureEvidence.deletedAt)
       )
     )

@@ -6,7 +6,9 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   countCaptureEvidenceOccurrences,
+  getCaptureEvidenceById,
   getRepeatedCaptureEvidenceForUser,
+  relinkCaptureEvidenceToTransfer,
   saveCaptureEvidence,
 } from "@/features/capture-evidence";
 import { getQueuedSyncEntries } from "@/features/transactions";
@@ -16,6 +18,7 @@ import type {
   ProcessedCaptureId,
   ProcessedEmailId,
   TransactionId,
+  TransferId,
   UserId,
 } from "@/shared/types/branded";
 
@@ -133,5 +136,59 @@ describe("capture evidence repository", () => {
         operation: "insert",
       }),
     ]);
+  });
+
+  it("ignores stale relink-to-transfer updates", () => {
+    saveCaptureEvidence(db as any, {
+      id: "ce-stale" as CaptureEvidenceId,
+      userId: USER_ID,
+      sourceFamily: "bancolombia",
+      evidenceType: "last4",
+      scope: "notification:bancolombia:last4",
+      value: "1234",
+      transactionId: "tx-1" as TransactionId,
+      transferId: null,
+      processedEmailId: null,
+      processedCaptureId: "pc-stale" as ProcessedCaptureId,
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+    });
+
+    relinkCaptureEvidenceToTransfer(
+      db as any,
+      "tx-1" as TransactionId,
+      "tr-1" as TransferId,
+      "2026-04-19T09:00:00.000Z" as IsoDateTime
+    );
+
+    expect(getCaptureEvidenceById(db as any, "ce-stale" as CaptureEvidenceId)).toEqual(
+      expect.objectContaining({
+        id: "ce-stale",
+        transactionId: "tx-1",
+        transferId: null,
+        updatedAt: NOW,
+      })
+    );
+  });
+
+  it("rejects evidence rows linked to both a transaction and a transfer", () => {
+    expect(() =>
+      saveCaptureEvidence(db as any, {
+        id: "ce-invalid" as CaptureEvidenceId,
+        userId: USER_ID,
+        sourceFamily: "bancolombia",
+        evidenceType: "last4",
+        scope: "notification:bancolombia:last4",
+        value: "9999",
+        transactionId: "tx-1" as TransactionId,
+        transferId: "tr-1" as TransferId,
+        processedEmailId: null,
+        processedCaptureId: "pc-invalid" as ProcessedCaptureId,
+        createdAt: NOW,
+        updatedAt: NOW,
+        deletedAt: null,
+      })
+    ).toThrow();
   });
 });

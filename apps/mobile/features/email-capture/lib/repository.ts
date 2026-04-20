@@ -45,6 +45,11 @@ export async function getProcessedEmailByExternalId(db: AnyDb, externalId: strin
   return rows[0] ?? null;
 }
 
+export async function getProcessedEmailById(db: AnyDb, id: ProcessedEmailId) {
+  const rows = await db.select().from(processedEmails).where(eq(processedEmails.id, id));
+  return rows[0] ?? null;
+}
+
 export async function getProcessedExternalIds(db: AnyDb, externalIds: string[]) {
   if (externalIds.length === 0) return new Set<string>();
   const rows = await db
@@ -70,6 +75,22 @@ export async function getNeedsReviewEmails(db: AnyDb) {
     .orderBy(desc(processedEmails.receivedAt));
 }
 
+export async function getNeedsReviewEmailByTransactionId(db: AnyDb, transactionId: TransactionId) {
+  const rows = await db
+    .select()
+    .from(processedEmails)
+    .where(
+      and(
+        eq(processedEmails.transactionId, transactionId),
+        eq(processedEmails.status, "needs_review")
+      )
+    )
+    .orderBy(desc(processedEmails.receivedAt))
+    .limit(1);
+
+  return rows[0] ?? null;
+}
+
 export async function updateProcessedEmailStatus(
   db: AnyDb,
   id: ProcessedEmailId,
@@ -77,6 +98,15 @@ export async function updateProcessedEmailStatus(
   transactionId: TransactionId | null
 ) {
   await db.update(processedEmails).set({ status, transactionId }).where(eq(processedEmails.id, id));
+}
+
+export function updateProcessedEmailStatusInTransaction(
+  db: AnyDb,
+  id: ProcessedEmailId,
+  status: string,
+  transactionId: TransactionId | null
+) {
+  db.update(processedEmails).set({ status, transactionId }).where(eq(processedEmails.id, id)).run();
 }
 
 export async function dismissProcessedEmail(db: AnyDb, id: ProcessedEmailId) {

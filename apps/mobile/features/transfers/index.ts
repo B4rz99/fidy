@@ -14,6 +14,11 @@ export {
   type TransferMutationResult,
 } from "./lib/mutation-service";
 export {
+  type ReclassifyTransactionAsTransferError,
+  type ReclassifyTransactionAsTransferResult,
+  reclassifyTransactionAsTransfer,
+} from "./lib/reclassify-transaction-as-transfer";
+export {
   getTransferById,
   getTransfersForUser,
   saveTransfer,

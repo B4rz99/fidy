@@ -1,6 +1,7 @@
-import { and, count, desc, eq, gte, inArray, isNull, like, lte, sql } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db";
-import { transactions } from "@/shared/db";
+import { and, count, desc, eq, gte, inArray, like, lte, sql } from "drizzle-orm";
+import { getActiveTransactionConditions } from "@/features/transactions/lib/active-transaction-conditions";
+import type { AnyDb } from "@/shared/db/client";
+import { transactions } from "@/shared/db/schema";
 import { requireCategoryId, requireCopAmount, requireIsoDate } from "@/shared/types/assertions";
 import type { UserId } from "@/shared/types/branded";
 import type { SearchFilters, SearchSummary } from "./types";
@@ -11,8 +12,7 @@ function buildSearchConditions(userId: UserId, filters: SearchFilters) {
     .filter((id) => id.trim().length > 0)
     .map((id) => requireCategoryId(id));
   return [
-    eq(transactions.userId, userId),
-    isNull(transactions.deletedAt),
+    ...getActiveTransactionConditions(userId),
     ...(trimmedQuery.length > 0 ? [like(transactions.description, `%${trimmedQuery}%`)] : []),
     ...(categoryIds.length > 0 ? [inArray(transactions.categoryId, categoryIds)] : []),
     ...(filters.dateFrom !== null

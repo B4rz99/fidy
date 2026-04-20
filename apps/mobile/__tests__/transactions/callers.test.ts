@@ -16,4 +16,10 @@ describe("transaction callers", () => {
       'if (transactionId == null || !db || !userId) {\n        showErrorToast(t("transactions.deleteFailed"));'
     );
   });
+
+  test("edit screen forwards the linked review email when reclassifying a captured transaction", () => {
+    expect(editTransactionSource).toContain(
+      "processedEmailId: reclassificationProcessedEmailId ?? undefined"
+    );
+  });
 });

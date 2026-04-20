@@ -70,6 +70,7 @@ function saveAccountTransaction({
   amount,
   date,
   accountAttributionState = "confirmed",
+  supersededAt = null,
 }: {
   readonly id: string;
   readonly accountId: string;
@@ -77,6 +78,7 @@ function saveAccountTransaction({
   readonly amount: number;
   readonly date: string;
   readonly accountAttributionState?: "confirmed" | "unresolved";
+  readonly supersededAt?: IsoDateTime | null;
 }) {
   db.insert(transactions)
     .values({
@@ -92,6 +94,7 @@ function saveAccountTransaction({
       createdAt: NOW,
       updatedAt: NOW,
       deletedAt: null,
+      supersededAt,
       source: accountAttributionState === "unresolved" ? "gmail" : "manual",
     })
     .run();
@@ -220,6 +223,31 @@ describe("financial account balance repository", () => {
     expect(getFinancialAccountBalancesForUser(db as any, USER_ID, "2026-04-20" as IsoDate)).toEqual(
       {
         "fa-wallet": 440_000,
+      }
+    );
+  });
+
+  it("ignores superseded transactions when deriving balances", () => {
+    saveAccount("fa-checking", "checking");
+    saveAccountTransaction({
+      id: "tx-active",
+      accountId: "fa-checking",
+      type: "expense",
+      amount: 100_000,
+      date: "2026-04-10",
+    });
+    saveAccountTransaction({
+      id: "tx-superseded",
+      accountId: "fa-checking",
+      type: "expense",
+      amount: 350_000,
+      date: "2026-04-11",
+      supersededAt: "2026-04-12T09:00:00.000Z" as IsoDateTime,
+    });
+
+    expect(getFinancialAccountBalancesForUser(db as any, USER_ID, "2026-04-19" as IsoDate)).toEqual(
+      {
+        "fa-checking": -100_000,
       }
     );
   });

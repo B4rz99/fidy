@@ -1,4 +1,5 @@
 import { and, eq, isNull, lte, sql } from "drizzle-orm";
+import { getActiveTransactionConditions } from "@/features/transactions/lib/active-transaction-conditions";
 import type { AnyDb } from "@/shared/db/client";
 import { financialAccounts, openingBalances, transactions, transfers } from "@/shared/db/schema";
 import type { CopAmount, FinancialAccountId, IsoDate, UserId } from "@/shared/types/branded";
@@ -77,8 +78,7 @@ function getTransactionBalanceEffects(
     .from(transactions)
     .where(
       and(
-        eq(transactions.userId, userId),
-        isNull(transactions.deletedAt),
+        ...getActiveTransactionConditions(userId),
         lte(transactions.date, asOfDate),
         sql`${transactions.accountAttributionState} != 'unresolved'`
       )

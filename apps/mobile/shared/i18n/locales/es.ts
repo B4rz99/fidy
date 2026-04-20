@@ -111,6 +111,7 @@ const es = {
     deleteConfirmMessage: "¿Estás seguro de que quieres eliminar esta transacción?",
     editTransaction: "Editar Transacción",
     deleteTransaction: "Eliminar",
+    convertToTransfer: "Convertir en transferencia",
     updateFailed: "No se pudo actualizar la transacción",
     deleteFailed: "No se pudo eliminar la transacción",
   },
@@ -132,8 +133,11 @@ const es = {
 
   transfers: {
     title: "Nueva transferencia",
+    reclassifyTitle: "Convertir en transferencia",
     subtitle:
       "Las transferencias mueven dinero entre cuentas o entre una cuenta rastreada y un lado explícito fuera de Fidy.",
+    reclassifySubtitle:
+      "Reemplaza esta transacción capturada por la transferencia que realmente representa, sin perder la evidencia original.",
     outsideSubtitle:
       "Usa Fuera de Fidy cuando el otro lado sea efectivo u otra fuente que no rastreas.",
     conflictSubtitle:
@@ -150,6 +154,8 @@ const es = {
     outsideFidyDescription: "Efectivo u otro lado no rastreado",
     outsideHint:
       "¿Necesitas efectivo u otro lado no rastreado? Elígelo explícitamente en el selector en lugar de guardar un gasto falso.",
+    reclassifyHint:
+      "Al guardar se sustituirá la transacción original, la evidencia de captura seguirá adjunta y el registro viejo dejará de contar como gasto.",
     outsideSelectedHint:
       "Fuera de Fidy mantiene esta transferencia explícita sin crear una cuenta o gasto falso.",
     conflictHint:
@@ -167,8 +173,10 @@ const es = {
       sidesRequired: "Elige ambos lados antes de guardar",
       trackedAccountRequired: "Al menos un lado debe ser una cuenta rastreada",
       distinctSidesRequired: "Elige dos lados distintos",
+      reclassifyFailed: "No se pudo convertir esta transacción en transferencia",
       saveFailed: "No se pudo guardar la transferencia",
     },
+    reclassifySave: "Convertir en transferencia",
     activity: {
       generic: "Transferencia",
       toAccount: "Transferencia a %{name}",
@@ -477,6 +485,7 @@ const es = {
     tagline: "tus finanzas, simplificadas.",
     continueWithGoogle: "Continuar con Google",
     continueWithMicrosoft: "Continuar con Microsoft",
+    continueInLocalQaMode: "Continuar en modo QA local",
     legalText: "Al continuar, aceptas nuestros Términos de Servicio\ny Política de Privacidad.",
   },
 
@@ -545,6 +554,82 @@ const es = {
     lowConfidenceHint:
       "Estas fueron analizadas con baja confianza. Por favor confirma o corrige la categoría.",
     bankNotification: "Notificación bancaria",
+  },
+
+  financialMeaningReview: {
+    bannerTitle: {
+      one: "%{count} captura necesita revisión de significado",
+      other: "%{count} capturas necesitan revisión de significado",
+    },
+    bannerSubtitle: "Todavía debemos confirmar si estas capturas son gasto o transferencias.",
+    queueTitle: "Significado Financiero",
+    queueCount: {
+      one: "%{count} captura necesita significado financiero",
+      other: "%{count} capturas necesitan significado financiero",
+    },
+    queueSubtitle:
+      "Confirma qué representa cada captura antes de continuar con la atribución de cuenta.",
+    emptyTitle: "No quedan revisiones de significado",
+    emptySubtitle: "Todo en esta cola ya tiene un significado financiero confirmado.",
+    reviewTitle: "Revisar Significado",
+    reviewPill: "El significado todavía se ve ambiguo",
+    reviewSubtitle:
+      "Confirma si esta captura es un gasto real o si debe convertirse en transferencia.",
+    reviewMeaning: "Revisar significado",
+    dismiss: "Descartar",
+    skip: "Omitir",
+    itsTransaction: "Es una transacción",
+    transfer: "Transferencia",
+    whatWeDetected: "Interpretación actual",
+    transactionDetected: "Capturado como gasto",
+    transferHint:
+      "Si esto fue dinero moviéndose entre cuentas, conviértelo en transferencia en lugar de dejarlo como gasto.",
+    transferExplanation:
+      "Convertirlo en transferencia reemplaza la transacción original y mantiene la evidencia unida al registro corregido.",
+    providers: {
+      gmail: "Captura de Gmail",
+      outlook: "Captura de Outlook",
+    },
+    errors: {
+      dismissFailed: "No se pudo descartar esta captura.",
+      resolveFailed: "No se pudo resolver esta captura.",
+    },
+  },
+
+  attributionReview: {
+    bannerTitle: {
+      one: "%{count} revisión de dueño está lista",
+      other: "%{count} revisiones de dueño están listas",
+    },
+    bannerSubtitle: "Estas capturas todavía necesitan confirmar su cuenta financiera real.",
+    queueTitle: "Atribución de Cuenta",
+    queueCount: {
+      one: "%{count} captura necesita revisión de dueño",
+      other: "%{count} capturas necesitan revisión de dueño",
+    },
+    queueSubtitle:
+      "Estas transacciones cuentan en el total, pero siguen provisionales hasta que confirmes la cuenta real.",
+    emptyTitle: "No quedan revisiones de dueño",
+    emptySubtitle: "Toda captura provisional con sugerencia ya fue confirmada o diferida.",
+    provisionalLabel: "Dueño provisional",
+    currentOwner: "Cuenta temporal",
+    suggestedOwner: "Cuenta sugerida",
+    confirmOwner: "Confirmar dueño",
+    chooseAnother: "Elegir otra",
+    skip: "Omitir",
+    reviewTitle: "Revisar Dueño",
+    reviewPill: "El dueño todavía se ve provisional",
+    reviewSubtitle:
+      "Una confirmación le enseña a Fidy qué cuenta debe ser dueña de capturas similares la próxima vez.",
+    confirmAccount: "Confirmar cuenta",
+    createNew: "Crear nueva",
+    fallbackOwner: "Cuenta temporal",
+    suggestedByEvidence: "Sugerida por evidencia repetida de captura",
+    balanceHint:
+      "Hasta que confirmes el dueño, esta transacción queda fuera de los balances por cuenta aunque sí cuente en el total.",
+    errors: {
+      confirmFailed: "No se pudo confirmar el dueño de la cuenta.",
+    },
   },
 
   // Sync Conflicts

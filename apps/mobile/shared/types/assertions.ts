@@ -186,6 +186,11 @@ export function requireTransactionId(value: string): TransactionId {
   return value;
 }
 
+export function requireProcessedEmailId(value: string): ProcessedEmailId {
+  assertProcessedEmailId(value);
+  return value;
+}
+
 export function requireCopAmount(value: number): CopAmount {
   assertCopAmount(value);
   return value;

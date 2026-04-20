@@ -1,6 +1,8 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
-import { type AnyDb, enqueueSync, transfers } from "@/shared/db";
-import { generateSyncQueueId } from "@/shared/lib";
+import type { AnyDb } from "@/shared/db/client";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
+import { transfers } from "@/shared/db/schema";
+import { generateSyncQueueId } from "@/shared/lib/generate-id";
 
 export type TransferRow = typeof transfers.$inferInsert;
 

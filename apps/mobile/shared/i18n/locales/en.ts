@@ -108,6 +108,7 @@ const en = {
     deleteConfirmMessage: "Are you sure you want to delete this transaction?",
     editTransaction: "Edit Transaction",
     deleteTransaction: "Delete",
+    convertToTransfer: "Convert to transfer",
     updateFailed: "Could not update transaction",
     deleteFailed: "Could not delete transaction",
   },
@@ -127,8 +128,11 @@ const en = {
 
   transfers: {
     title: "New transfer",
+    reclassifyTitle: "Convert to transfer",
     subtitle:
       "Transfers move money between accounts or between one tracked account and an explicit outside-fidy side.",
+    reclassifySubtitle:
+      "Replace this captured transaction with the transfer it actually represents, without losing the original evidence.",
     outsideSubtitle:
       "Use Outside Fidy when the other side is cash or another source you do not track.",
     conflictSubtitle:
@@ -145,6 +149,8 @@ const en = {
     outsideFidyDescription: "Cash or another untracked side",
     outsideHint:
       "Need cash or another untracked side? Choose it explicitly from the side picker instead of saving a fake expense.",
+    reclassifyHint:
+      "Saving will supersede the original transaction, keep the capture evidence attached, and stop the old record from counting as spending.",
     outsideSelectedHint:
       "Outside Fidy keeps this transfer explicit without creating a fake account or expense.",
     conflictHint:
@@ -162,8 +168,10 @@ const en = {
       sidesRequired: "Choose both sides before saving",
       trackedAccountRequired: "At least one side must be a tracked account",
       distinctSidesRequired: "Choose two different sides",
+      reclassifyFailed: "Could not convert this transaction into a transfer",
       saveFailed: "Could not save transfer",
     },
+    reclassifySave: "Convert to transfer",
     activity: {
       generic: "Transfer",
       toAccount: "Transfer to %{name}",
@@ -469,6 +477,7 @@ const en = {
     tagline: "your finances, simplified.",
     continueWithGoogle: "Continue with Google",
     continueWithMicrosoft: "Continue with Microsoft",
+    continueInLocalQaMode: "Continue in local QA mode",
     legalText: "By continuing, you agree to our Terms of Service\nand Privacy Policy.",
   },
 
@@ -537,6 +546,81 @@ const en = {
     lowConfidenceHint:
       "These were parsed with low confidence. Please confirm or correct the category.",
     bankNotification: "Bank notification",
+  },
+
+  financialMeaningReview: {
+    bannerTitle: {
+      one: "%{count} capture needs meaning review",
+      other: "%{count} captures need meaning review",
+    },
+    bannerSubtitle: "We still need to confirm whether these captures are spending or transfers.",
+    queueTitle: "Financial Meaning",
+    queueCount: {
+      one: "%{count} capture needs financial meaning",
+      other: "%{count} captures need financial meaning",
+    },
+    queueSubtitle:
+      "Confirm what each capture actually represents before account ownership continues.",
+    emptyTitle: "No meaning reviews left",
+    emptySubtitle: "Everything in this queue already has a confirmed financial meaning.",
+    reviewTitle: "Review Meaning",
+    reviewPill: "Meaning still looks ambiguous",
+    reviewSubtitle: "Confirm whether this capture is real spending or should become a transfer.",
+    reviewMeaning: "Review meaning",
+    dismiss: "Dismiss",
+    skip: "Skip",
+    itsTransaction: "It's a transaction",
+    transfer: "Transfer",
+    whatWeDetected: "Current interpretation",
+    transactionDetected: "Captured as spending",
+    transferHint:
+      "If this was money moving between accounts, convert it instead of keeping it as spending.",
+    transferExplanation:
+      "Converting to a transfer supersedes the original transaction and keeps the source evidence attached to the corrected record.",
+    providers: {
+      gmail: "Gmail capture",
+      outlook: "Outlook capture",
+    },
+    errors: {
+      dismissFailed: "Couldn't dismiss this capture.",
+      resolveFailed: "Couldn't resolve this capture.",
+    },
+  },
+
+  attributionReview: {
+    bannerTitle: {
+      one: "%{count} owner review is ready",
+      other: "%{count} owner reviews are ready",
+    },
+    bannerSubtitle: "These captures still need their real financial account confirmed.",
+    queueTitle: "Account Attribution",
+    queueCount: {
+      one: "%{count} capture needs owner review",
+      other: "%{count} captures need owner review",
+    },
+    queueSubtitle:
+      "These transactions count overall, but they stay provisional until you confirm the real account.",
+    emptyTitle: "No owner reviews left",
+    emptySubtitle: "Every suggestion-backed provisional capture has been confirmed or deferred.",
+    provisionalLabel: "Provisional owner",
+    currentOwner: "Current fallback",
+    suggestedOwner: "Suggested owner",
+    confirmOwner: "Confirm owner",
+    chooseAnother: "Choose another",
+    skip: "Skip",
+    reviewTitle: "Review Owner",
+    reviewPill: "Owner still looks provisional",
+    reviewSubtitle:
+      "One confirmation teaches Fidy which account should own similar captures next time.",
+    confirmAccount: "Confirm account",
+    createNew: "Create new",
+    fallbackOwner: "Fallback account",
+    suggestedByEvidence: "Suggested from repeated capture evidence",
+    balanceHint:
+      "Until you confirm the owner, this transaction stays out of account-specific balances even though it still counts overall.",
+    errors: {
+      confirmFailed: "Couldn't confirm the account owner.",
+    },
   },
 
   // Sync Conflicts

@@ -1,3 +1,1 @@
-import { NeedsReviewScreen } from "@/features/email-capture";
-
-export default NeedsReviewScreen;
+export { FinancialMeaningQueueScreen as default } from "@/features/review-queues";

@@ -9,6 +9,7 @@ import {
   saveFinancialAccount,
   saveFinancialAccountIdentifierInTransaction,
 } from "@/features/financial-accounts";
+import { isActiveTransactionRow } from "@/features/transactions/lib/active-transaction-conditions";
 import { getTransactionById, upsertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
@@ -171,7 +172,7 @@ export function createAccountSuggestionService({
             const transaction = loadTransactionById(db, transactionId);
             return (
               transaction?.userId === userId &&
-              transaction.deletedAt == null &&
+              isActiveTransactionRow(transaction) &&
               transaction.accountAttributionState === "unresolved"
             );
           })

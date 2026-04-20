@@ -43,6 +43,8 @@ type TransactionFormProps = {
   readonly onSave: () => void;
   readonly onDelete?: () => void;
   readonly onClose?: () => void;
+  readonly extraActionLabel?: string;
+  readonly onExtraAction?: () => void;
 };
 
 export function TransactionForm({
@@ -63,6 +65,8 @@ export function TransactionForm({
   onSave,
   onDelete,
   onClose,
+  extraActionLabel,
+  onExtraAction,
 }: TransactionFormProps) {
   const { t, locale } = useTranslation();
   const { bottom: safeBottom } = useSafeAreaInsets();
@@ -273,6 +277,34 @@ export function TransactionForm({
           gap: 8,
         }}
       >
+        {extraActionLabel && onExtraAction ? (
+          <Pressable
+            style={{
+              height: 44,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: borderSubtle,
+              backgroundColor: card,
+              alignItems: "center",
+              justifyContent: "center",
+              paddingHorizontal: 16,
+            }}
+            onPress={onExtraAction}
+            accessibilityRole="button"
+            accessibilityLabel={extraActionLabel}
+          >
+            <Text
+              style={{
+                fontFamily: "Poppins_600SemiBold",
+                fontSize: 14,
+                color: primary,
+              }}
+            >
+              {extraActionLabel}
+            </Text>
+          </Pressable>
+        ) : null}
+
         {/* Action buttons */}
         <View style={{ flexDirection: "row", gap: 8 }}>
           {onDelete && (
