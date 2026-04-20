@@ -1,7 +1,7 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useOptionalUserId } from "@/features/auth";
 import {
@@ -10,7 +10,11 @@ import {
 } from "@/features/financial-accounts";
 import { getFinancialAccountBalancesForUser } from "@/features/financial-accounts/lib/balance-repository";
 import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
-import { refreshTransactions } from "@/features/transactions";
+import {
+  getStoredTransactionById,
+  refreshTransactions,
+  type StoredTransaction,
+} from "@/features/transactions";
 import { getDateLabel } from "@/features/transactions/lib/format-date";
 import { OUTSIDE_FIDY_LABEL, type TransferSide } from "@/features/transfers/lib/build-transfer";
 import {
@@ -18,6 +22,10 @@ import {
   type TransferMutationError,
 } from "@/features/transfers/lib/mutation-service";
 import { isTransferSideSelected } from "@/features/transfers/lib/presentation";
+import {
+  type ReclassifyTransactionAsTransferError,
+  reclassifyTransactionAsTransfer,
+} from "@/features/transfers/lib/reclassify-transaction-as-transfer";
 import { saveTransfer } from "@/features/transfers/lib/repository";
 import { ScreenLayout } from "@/shared/components";
 import {
@@ -51,6 +59,7 @@ import {
   showErrorToast,
   toIsoDate,
 } from "@/shared/lib";
+import { requireProcessedEmailId, requireTransactionId } from "@/shared/types/assertions";
 
 type PickerTarget = "from" | "to";
 type AccountBalanceMap = Readonly<Record<string, number>>;
@@ -65,7 +74,7 @@ function getKindIcon(kind: FinancialAccountRow["kind"]): LucideIcon {
 }
 
 function getTransferErrorMessage(
-  error: TransferMutationError,
+  error: TransferMutationError | ReclassifyTransactionAsTransferError,
   t: ReturnType<typeof useTranslation>["t"]
 ) {
   if (error === "amountRequired") return t("transfers.errors.amountRequired");
@@ -74,6 +83,7 @@ function getTransferErrorMessage(
   }
   if (error === "trackedAccountRequired") return t("transfers.errors.trackedAccountRequired");
   if (error === "distinctSidesRequired") return t("transfers.errors.distinctSidesRequired");
+  if (error === "transactionNotFound") return t("transfers.errors.reclassifyFailed");
   return t("transfers.errors.saveFailed");
 }
 
@@ -426,10 +436,20 @@ function TransferSidePicker({
 }
 
 export function TransferFormScreen() {
+  const { transactionId: routeTransactionId, processedEmailId: routeProcessedEmailId } =
+    useLocalSearchParams<{ transactionId?: string; processedEmailId?: string }>();
   const router = useRouter();
   const { t, locale } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
+  const reclassificationTransactionId =
+    typeof routeTransactionId === "string" && routeTransactionId.trim().length > 0
+      ? requireTransactionId(routeTransactionId.trim())
+      : null;
+  const reclassificationProcessedEmailId =
+    typeof routeProcessedEmailId === "string" && routeProcessedEmailId.trim().length > 0
+      ? requireProcessedEmailId(routeProcessedEmailId.trim())
+      : null;
   const isIos = Platform.OS === "ios";
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
@@ -447,13 +467,16 @@ export function TransferFormScreen() {
   const [lastEditedSide, setLastEditedSide] = useState<PickerTarget>("to");
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [sourceTransaction, setSourceTransaction] = useState<StoredTransaction | null>(null);
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
+  const hydratedTransactionIdRef = useRef<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       if (!db || !userId) {
         setAccounts([]);
         setBalances({});
+        setSourceTransaction(null);
         return;
       }
 
@@ -464,13 +487,44 @@ export function TransferFormScreen() {
 
       setAccounts(nextAccounts);
       setBalances(nextBalances);
-      setFromSide(
-        (current) =>
-          current ?? (defaultAccount ? { kind: "account", accountId: defaultAccount.id } : null)
-      );
-    }, [db, userId])
+
+      if (reclassificationTransactionId == null) {
+        setSourceTransaction(null);
+        hydratedTransactionIdRef.current = null;
+        setFromSide(
+          (current) =>
+            current ?? (defaultAccount ? { kind: "account", accountId: defaultAccount.id } : null)
+        );
+        return;
+      }
+
+      const transaction = getStoredTransactionById(db, userId, reclassificationTransactionId);
+      if (!transaction) {
+        router.back();
+        return;
+      }
+
+      setSourceTransaction(transaction);
+
+      if (hydratedTransactionIdRef.current === transaction.id) {
+        return;
+      }
+
+      const trackedSide = { kind: "account", accountId: transaction.accountId } as const;
+      const externalSide = { kind: "external", label: OUTSIDE_FIDY_LABEL } as const;
+      const presetFromSide = transaction.type === "expense" ? trackedSide : externalSide;
+      const presetToSide = transaction.type === "expense" ? externalSide : trackedSide;
+
+      setDigits(String(transaction.amount));
+      setFromSide(presetFromSide);
+      setToSide(presetToSide);
+      setDate(transaction.date);
+      setLastEditedSide(transaction.type === "expense" ? "to" : "from");
+      hydratedTransactionIdRef.current = transaction.id;
+    }, [db, reclassificationTransactionId, router, userId])
   );
 
+  const isReclassification = sourceTransaction != null;
   const sameAccountConflict =
     fromSide?.kind === "account" &&
     toSide?.kind === "account" &&
@@ -482,21 +536,31 @@ export function TransferFormScreen() {
     amount > 0 && fromSide != null && toSide != null && !sameAccountConflict && !bothExternal;
   const hintTone = sameAccountConflict || bothExternal ? accentRed : accentGreen;
   const hintBackground = sameAccountConflict ? "#FFF2F0" : "#F7F2EE";
-  const subtitle = sameAccountConflict
+  const defaultSubtitle = sameAccountConflict
     ? t("transfers.conflictSubtitle")
     : hasOutsideSide
       ? t("transfers.outsideSubtitle")
       : t("transfers.subtitle");
-  const hint = sameAccountConflict
+  const subtitle =
+    isReclassification && !sameAccountConflict && !bothExternal
+      ? t("transfers.reclassifySubtitle")
+      : defaultSubtitle;
+  const defaultHint = sameAccountConflict
     ? t("transfers.conflictHint")
     : bothExternal
       ? t("transfers.errors.trackedAccountRequired")
       : hasOutsideSide
         ? t("transfers.outsideSelectedHint")
         : t("transfers.outsideHint");
+  const hint =
+    isReclassification && !sameAccountConflict && !bothExternal
+      ? t("transfers.reclassifyHint")
+      : defaultHint;
   const buttonLabel = sameAccountConflict
     ? t("transfers.chooseDifferentSide")
-    : t("transfers.save");
+    : isReclassification
+      ? t("transfers.reclassifySave")
+      : t("transfers.save");
   const buttonBackground = canSave ? accentGreen : "#DADADA";
   const dateLabel = useMemo(
     () => getDateLabel(date, new Date(), t("dates.today"), getDateFnsLocale(locale)),
@@ -533,32 +597,54 @@ export function TransferFormScreen() {
         return;
       }
 
-      const result = await createTransferMutationService({
-        getDb: () => db,
-        getUserId: () => userId,
-        refresh: () => refreshTransactions(db, userId),
-        saveTransferRow: saveTransfer,
-      }).save({
-        digits,
-        fromSide,
-        toSide,
-        description: "",
-        date,
-      });
+      const result =
+        sourceTransaction == null
+          ? await createTransferMutationService({
+              getDb: () => db,
+              getUserId: () => userId,
+              refresh: () => refreshTransactions(db, userId),
+              saveTransferRow: saveTransfer,
+            }).save({
+              digits,
+              fromSide,
+              toSide,
+              description: "",
+              date,
+            })
+          : reclassifyTransactionAsTransfer(db, {
+              userId,
+              transactionId: sourceTransaction.id,
+              processedEmailId: reclassificationProcessedEmailId ?? undefined,
+              digits,
+              fromSide,
+              toSide,
+              description: sourceTransaction.description,
+              date,
+            });
 
       if (!result.success) {
         showErrorToast(getTransferErrorMessage(result.error, t));
         return;
       }
 
+      await refreshTransactions(db, userId);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (reclassificationProcessedEmailId) {
+        router.replace("/needs-review");
+        return;
+      }
+
       router.navigate("/(tabs)" as never);
     });
   };
 
   return (
     <>
-      <ScreenLayout title={t("transfers.title")} variant="sub" onBack={() => router.back()}>
+      <ScreenLayout
+        title={isReclassification ? t("transfers.reclassifyTitle") : t("transfers.title")}
+        variant="sub"
+        onBack={() => router.back()}
+      >
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : undefined}

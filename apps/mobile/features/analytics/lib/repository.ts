@@ -1,6 +1,7 @@
-import { and, between, desc, eq, isNull, sql, sum } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db";
-import { transactions } from "@/shared/db";
+import { and, between, desc, eq, sql, sum } from "drizzle-orm";
+import { getActiveTransactionConditions } from "@/features/transactions/lib/active-transaction-conditions";
+import type { AnyDb } from "@/shared/db/client";
+import { transactions } from "@/shared/db/schema";
 import type { CategoryId, CopAmount, IsoDate, UserId } from "@/shared/types/branded";
 
 export function getIncomeExpenseForPeriod(
@@ -16,11 +17,7 @@ export function getIncomeExpenseForPeriod(
     })
     .from(transactions)
     .where(
-      and(
-        eq(transactions.userId, userId),
-        between(transactions.date, startDate, endDate),
-        isNull(transactions.deletedAt)
-      )
+      and(...getActiveTransactionConditions(userId), between(transactions.date, startDate, endDate))
     )
     .get();
   return {
@@ -43,10 +40,9 @@ export function getSpendingByCategoryForPeriod(
     .from(transactions)
     .where(
       and(
-        eq(transactions.userId, userId),
+        ...getActiveTransactionConditions(userId),
         eq(transactions.type, "expense"),
-        between(transactions.date, startDate, endDate),
-        isNull(transactions.deletedAt)
+        between(transactions.date, startDate, endDate)
       )
     )
     .groupBy(transactions.categoryId)

@@ -19,10 +19,10 @@ export const NeedsReviewBanner = ({ onPress }: { onPress: () => void }) => {
         <TriangleAlert size={18} color="#E65100" />
         <View>
           <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-            {t("needsReview.count", { count })}
+            {t("financialMeaningReview.bannerTitle", { count })}
           </Text>
           <Text className="font-poppins-medium text-caption" style={{ color: "#6D6D6D" }}>
-            {t("needsReview.lowConfidence")}
+            {t("financialMeaningReview.bannerSubtitle")}
           </Text>
         </View>
       </View>

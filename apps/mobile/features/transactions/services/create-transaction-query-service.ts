@@ -1,6 +1,7 @@
 import type { AnyDb } from "@/shared/db";
 import { toIsoDate, toMonth } from "@/shared/lib";
 import type { CategoryId, CopAmount, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
+import { isActiveTransactionRow } from "../lib/active-transaction-conditions";
 import { toStoredTransaction } from "../lib/build-transaction";
 import {
   getDailySpendingAggregate,
@@ -174,7 +175,7 @@ export function createTransactionQueryService({
       transactionId,
     }: GetStoredTransactionInput): StoredTransaction | null {
       const row = loadTransactionById(db, transactionId);
-      if (!row || row.userId !== userId || row.deletedAt != null) {
+      if (!row || row.userId !== userId || !isActiveTransactionRow(row)) {
         return null;
       }
       return toStoredTransaction(row);

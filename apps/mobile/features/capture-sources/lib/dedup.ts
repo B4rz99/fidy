@@ -1,7 +1,8 @@
-import { and, eq, isNull } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db";
-import { processedCaptures, transactions } from "@/shared/db";
-import { merchantsMatch, normalizeMerchant } from "@/shared/lib";
+import { and, eq } from "drizzle-orm";
+import { getActiveTransactionConditions } from "@/features/transactions/lib/active-transaction-conditions";
+import type { AnyDb } from "@/shared/db/client";
+import { processedCaptures, transactions } from "@/shared/db/schema";
+import { merchantsMatch, normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { assertCopAmount, assertIsoDate, assertUserId } from "@/shared/types/assertions";
 import type { TransactionId } from "@/shared/types/branded";
 
@@ -53,10 +54,9 @@ export async function findDuplicateTransaction(
     .from(transactions)
     .where(
       and(
-        eq(transactions.userId, userId),
+        ...getActiveTransactionConditions(userId),
         eq(transactions.amount, amount),
-        eq(transactions.date, date),
-        isNull(transactions.deletedAt)
+        eq(transactions.date, date)
       )
     );
 

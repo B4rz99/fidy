@@ -1,0 +1,205 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useMemo } from "react";
+import { useOptionalUserId } from "@/features/auth";
+import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
+import { refreshTransactions } from "@/features/transactions";
+import { ScreenLayout } from "@/shared/components";
+import { Info, TriangleAlert } from "@/shared/components/icons";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
+import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { formatSignedMoney, showErrorToast } from "@/shared/lib";
+import { requireTransactionId } from "@/shared/types/assertions";
+import { useAttributionReviewQueue } from "../hooks/use-attribution-review-queue";
+import { getFinancialAccountKindIcon } from "../lib/account-presentation";
+import { ActionButton, DetailRow, EmptyState, SummaryCard } from "./shared";
+
+export function AttributionReviewScreen() {
+  const router = useRouter();
+  const { transactionId } = useLocalSearchParams<{ transactionId?: string }>();
+  const { t } = useTranslation();
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
+  const { items, hasLoadedQueue, service } = useAttributionReviewQueue({ db, userId });
+  const { isBusy, run: guardedAction } = useAsyncGuard();
+  const resolvedTransactionId =
+    typeof transactionId === "string" && transactionId.trim().length > 0
+      ? requireTransactionId(transactionId.trim())
+      : null;
+  const item = useMemo(
+    () =>
+      resolvedTransactionId
+        ? (items.find((entry) => entry.transaction.id === resolvedTransactionId) ?? null)
+        : null,
+    [items, resolvedTransactionId]
+  );
+  const primary = useThemeColor("primary");
+  const secondary = useThemeColor("secondary");
+  const accentRed = useThemeColor("accentRed");
+
+  if (hasLoadedQueue && item == null) {
+    return (
+      <ScreenLayout
+        title={t("attributionReview.reviewTitle")}
+        variant="sub"
+        onBack={() => router.back()}
+      >
+        <EmptyState
+          title={t("attributionReview.emptyTitle")}
+          subtitle={t("attributionReview.emptySubtitle")}
+        />
+      </ScreenLayout>
+    );
+  }
+
+  if (!item) {
+    return null;
+  }
+
+  const CurrentIcon = item.currentAccount
+    ? getFinancialAccountKindIcon(item.currentAccount.kind)
+    : TriangleAlert;
+  const SuggestedIcon = getFinancialAccountKindIcon(item.suggestedAccount.kind);
+
+  const handleConfirm = () => {
+    void guardedAction(async () => {
+      if (!db || !userId) {
+        return;
+      }
+
+      try {
+        const result = service.confirmSuggestedOwner({
+          db,
+          userId,
+          transactionId: item.transaction.id,
+        });
+
+        if (!result.success) {
+          showErrorToast(t("attributionReview.errors.confirmFailed"));
+          return;
+        }
+
+        await refreshTransactions(db, userId);
+        router.replace("/attribution-review-queue" as never);
+      } catch {
+        showErrorToast(t("attributionReview.errors.confirmFailed"));
+      }
+    });
+  };
+
+  return (
+    <ScreenLayout
+      title={t("attributionReview.reviewTitle")}
+      variant="sub"
+      onBack={() => router.back()}
+    >
+      <View style={styles.container}>
+        <SummaryCard
+          icon={TriangleAlert}
+          title={t("attributionReview.reviewPill")}
+          subtitle={t("attributionReview.reviewSubtitle")}
+          tone="green"
+        />
+
+        <View style={styles.headerCopy}>
+          <Text style={[styles.title, { color: primary }]}>
+            {item.transaction.description || t("common.unknown")}
+          </Text>
+          <Text style={[styles.amount, { color: accentRed }]}>
+            {formatSignedMoney(item.transaction.amount, item.transaction.type)}
+          </Text>
+        </View>
+
+        <DetailRow
+          label={t("attributionReview.currentOwner")}
+          title={item.currentAccount?.name ?? t("common.unknown")}
+          subtitle={
+            item.currentAccount
+              ? t(`financialAccounts.kinds.${readFinancialAccountKind(item.currentAccount.kind)}`)
+              : t("attributionReview.fallbackOwner")
+          }
+          icon={<CurrentIcon size={18} color={secondary} />}
+        />
+
+        <DetailRow
+          label={t("attributionReview.suggestedOwner")}
+          title={item.suggestedAccount.name}
+          subtitle={item.evidenceLabel ?? t("attributionReview.suggestedByEvidence")}
+          icon={<SuggestedIcon size={18} color={secondary} />}
+          emphasis="green"
+        />
+
+        <View style={styles.actionColumn}>
+          <ActionButton
+            label={t("attributionReview.confirmAccount")}
+            onPress={handleConfirm}
+            disabled={isBusy}
+          />
+          <ActionButton
+            label={t("attributionReview.createNew")}
+            onPress={() =>
+              router.push({
+                pathname: "/create-financial-account",
+                params: { fingerprint: item.suggestion.fingerprint },
+              })
+            }
+            variant="outline"
+            disabled={isBusy}
+          />
+          <ActionButton
+            label={t("attributionReview.skip")}
+            onPress={() => router.back()}
+            variant="ghost"
+            disabled={isBusy}
+          />
+        </View>
+
+        <View style={styles.noteCard}>
+          <Info size={18} color={secondary} />
+          <Text style={[styles.noteCopy, { color: secondary }]}>
+            {t("attributionReview.balanceHint")}
+          </Text>
+        </View>
+      </View>
+    </ScreenLayout>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingBottom: 28,
+    gap: 16,
+  },
+  headerCopy: {
+    gap: 4,
+  },
+  title: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 24,
+    lineHeight: 28,
+  },
+  amount: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 18,
+  },
+  actionColumn: {
+    gap: 10,
+  },
+  noteCard: {
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: "#00000008",
+  },
+  noteCopy: {
+    flex: 1,
+    fontFamily: "Poppins_500Medium",
+    fontSize: 12,
+    lineHeight: 18,
+  },
+});

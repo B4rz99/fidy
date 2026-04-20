@@ -1,7 +1,7 @@
-import { and, between, desc, eq, inArray, isNull, like, or, sql, sum } from "drizzle-orm";
-import { buildDefaultFinancialAccountId } from "@/features/financial-accounts";
-import type { AnyDb } from "@/shared/db";
-import { syncMeta, syncQueue, transactions } from "@/shared/db";
+import { and, between, desc, eq, inArray, like, or, sql, sum } from "drizzle-orm";
+import { buildDefaultFinancialAccountId } from "@/features/financial-accounts/lib/default-account";
+import type { AnyDb } from "@/shared/db/client";
+import { syncMeta, syncQueue, transactions } from "@/shared/db/schema";
 import type {
   CategoryId,
   CopAmount,
@@ -14,6 +14,7 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 import type { AccountAttributionState } from "../schema";
+import { getActiveTransactionConditions } from "./active-transaction-conditions";
 
 export type { SyncOperation, SyncQueueEntry, SyncTableName } from "@/shared/db";
 
@@ -50,7 +51,7 @@ export function getAllTransactions(db: AnyDb, userId: UserId): TransactionRow[] 
   return db
     .select()
     .from(transactions)
-    .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
+    .where(and(...getActiveTransactionConditions(userId)))
     .orderBy(desc(transactions.date))
     .all() as TransactionRow[];
 }
@@ -64,7 +65,7 @@ export function getTransactionsPaginated(
   return db
     .select()
     .from(transactions)
-    .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
+    .where(and(...getActiveTransactionConditions(userId)))
     .orderBy(desc(transactions.date), desc(transactions.createdAt))
     .limit(limit + 1)
     .offset(offset)
@@ -77,7 +78,7 @@ export function getBalanceAggregate(db: AnyDb, userId: UserId): CopAmount {
       balance: sql<number>`SUM(CASE WHEN ${transactions.type} = 'income' THEN ${transactions.amount} ELSE -${transactions.amount} END)`,
     })
     .from(transactions)
-    .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
+    .where(and(...getActiveTransactionConditions(userId)))
     .get();
   return (row?.balance ?? 0) as CopAmount;
 }
@@ -95,9 +96,8 @@ export function getSpendingByCategoryAggregate(
     .from(transactions)
     .where(
       and(
-        eq(transactions.userId, userId),
+        ...getActiveTransactionConditions(userId),
         eq(transactions.type, "expense"),
-        isNull(transactions.deletedAt),
         like(transactions.date, `${month}%`)
       )
     )
@@ -120,9 +120,8 @@ export function getDailySpendingAggregate(
     .from(transactions)
     .where(
       and(
-        eq(transactions.userId, userId),
+        ...getActiveTransactionConditions(userId),
         eq(transactions.type, "expense"),
-        isNull(transactions.deletedAt),
         between(transactions.date, startDate, endDate)
       )
     )
@@ -151,8 +150,7 @@ export function getMonthlyTotalsByType(
     .from(transactions)
     .where(
       and(
-        eq(transactions.userId, userId),
-        isNull(transactions.deletedAt),
+        ...getActiveTransactionConditions(userId),
         sql`strftime('%Y-%m', ${transactions.date}) >= ${cutoffStr}`
       )
     )
@@ -172,8 +170,7 @@ export function getRecentTransactions(
     .from(transactions)
     .where(
       and(
-        eq(transactions.userId, userId),
-        isNull(transactions.deletedAt),
+        ...getActiveTransactionConditions(userId),
         or(
           like(transactions.date, `${currentMonth}%`),
           like(transactions.date, `${previousMonth}%`)
@@ -222,7 +219,7 @@ export function upsertTransaction(db: AnyDb, row: TransactionRow) {
     .run();
 }
 
-export { enqueueSync } from "@/shared/db";
+export { enqueueSync } from "@/shared/db/enqueue-sync";
 
 export function getQueuedSyncEntries(db: AnyDb) {
   return db.select().from(syncQueue).all();

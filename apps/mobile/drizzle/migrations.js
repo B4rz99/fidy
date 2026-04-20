@@ -22,6 +22,7 @@ import m0019 from "./0019_watery_leopardon.sql";
 import m0020 from "./0020_tidy_husk.sql";
 import m0021 from "./0021_account_suggestion_dismissals.sql";
 import m0022 from "./0022_financial_account_billing_profile.sql";
+import m0023 from "./0023_capture_evidence_transfer_id.sql";
 import journal from "./meta/_journal.json";
 
 export default {
@@ -50,5 +51,6 @@ export default {
     m0020,
     m0021,
     m0022,
+    m0023,
   },
 };

@@ -1,4 +1,9 @@
 export {
+  dismissFinancialMeaningReview,
+  getFinancialMeaningReviewItems,
+  resolveFinancialMeaningReview,
+} from "@/features/email-capture/lib/financial-meaning-review";
+export {
   insertMerchantRule,
   lookupMerchantRule,
 } from "@/features/email-capture/lib/merchant-rules";

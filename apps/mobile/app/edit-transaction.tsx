@@ -39,6 +39,7 @@ export default function EditTransactionScreen() {
   const [accountId, setAccountId] = useState<FinancialAccountId | null>(null);
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date());
+  const [source, setSource] = useState("manual");
   const [loaded, setLoaded] = useState(false);
   const [accounts, setAccounts] = useState<readonly FinancialAccountRow[]>([]);
   const transactionId =
@@ -62,6 +63,7 @@ export default function EditTransactionScreen() {
       setAccountId(tx.accountId);
       setDescription(tx.description);
       setDate(tx.date);
+      setSource(tx.source ?? "manual");
       setLoaded(true);
     } else {
       router.back();
@@ -135,6 +137,12 @@ export default function EditTransactionScreen() {
       onSave={handleSave}
       onDelete={handleDelete}
       onClose={() => router.back()}
+      extraActionLabel={source === "manual" ? undefined : t("transactions.convertToTransfer")}
+      onExtraAction={
+        source === "manual" || transactionId == null
+          ? undefined
+          : () => router.push(`/reclassify-transaction?transactionId=${transactionId}` as never)
+      }
     />
   );
 }

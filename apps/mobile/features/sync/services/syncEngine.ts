@@ -125,6 +125,7 @@ type SupabaseCaptureEvidenceRow = {
   scope: string;
   value: string;
   transaction_id: string | null;
+  transfer_id?: string | null;
   processed_email_id: string | null;
   processed_capture_id: string | null;
   created_at: string;
@@ -272,6 +273,7 @@ function fromSupabaseCaptureEvidenceRow(
     scope: row.scope,
     value: row.value,
     transactionId: row.transaction_id,
+    transferId: row.transfer_id ?? null,
     processedEmailId: row.processed_email_id,
     processedCaptureId: row.processed_capture_id,
     createdAt: row.created_at,
@@ -631,6 +633,7 @@ async function processCaptureEvidenceEntry(
     scope: row.scope,
     value: row.value,
     transaction_id: row.transactionId,
+    transfer_id: row.transferId ?? null,
     processed_email_id: row.processedEmailId,
     processed_capture_id: row.processedCaptureId,
     created_at: row.createdAt,
