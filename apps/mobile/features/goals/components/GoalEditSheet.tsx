@@ -85,14 +85,17 @@ export function GoalEditSheet() {
         const normalizedRate = interestRate.replace(",", ".");
         const isValidRate = /^\d+(\.\d+)?$/.test(normalizedRate);
         const parsedRate = isValidRate ? Number.parseFloat(normalizedRate) : null;
-        const success = await updateGoal(db, userId, selectedGoalId, {
-          name: name.trim(),
-          targetAmount: parsedAmount,
-          targetDate: targetDate ? toIsoDate(targetDate) : null,
-          interestRatePercent:
-            goalType === "debt" && parsedRate != null && Number.isFinite(parsedRate)
-              ? parsedRate
-              : null,
+        const success = await updateGoal(db, userId, {
+          id: selectedGoalId,
+          data: {
+            name: name.trim(),
+            targetAmount: parsedAmount,
+            targetDate: targetDate ? toIsoDate(targetDate) : null,
+            interestRatePercent:
+              goalType === "debt" && parsedRate != null && Number.isFinite(parsedRate)
+                ? parsedRate
+                : null,
+          },
         });
         if (success) back();
       }),
