@@ -1217,7 +1217,6 @@ function toComparableLocalTransactionRow(row: LocalTransactionRow) {
     deletedAt: row.deletedAt ?? null,
   };
 }
-
 function hasTransactionPullConflict(
   localRow: MaybeLocalTransactionRow,
   mappedServerRow: ComparableTransactionRow

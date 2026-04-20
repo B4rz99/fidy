@@ -1,0 +1,2295 @@
+{
+  "thresholds": {
+    "cyclomaticComplexity": 5,
+    "nloc": 30,
+    "parameterCount": 3
+  },
+  "violations": [
+    {
+      "key": "apps/mobile/__tests__/account-suggestions/service.test.ts::(anonymous)::2",
+      "file": "apps/mobile/__tests__/account-suggestions/service.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 2,
+      "cyclomaticComplexity": 1,
+      "nloc": 45,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/account-suggestions/service.test.ts::(anonymous)::4",
+      "file": "apps/mobile/__tests__/account-suggestions/service.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 4,
+      "cyclomaticComplexity": 1,
+      "nloc": 74,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/account-suggestions/service.test.ts::createIdentifierId::2",
+      "file": "apps/mobile/__tests__/account-suggestions/service.test.ts",
+      "function": "createIdentifierId",
+      "occurrence": 2,
+      "cyclomaticComplexity": 1,
+      "nloc": 38,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/account-suggestions/service.test.ts::createIdentifierId::4",
+      "file": "apps/mobile/__tests__/account-suggestions/service.test.ts",
+      "function": "createIdentifierId",
+      "occurrence": 4,
+      "cyclomaticComplexity": 1,
+      "nloc": 42,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/account-suggestions/service.test.ts::saveEvidenceRow::1",
+      "file": "apps/mobile/__tests__/account-suggestions/service.test.ts",
+      "function": "saveEvidenceRow",
+      "occurrence": 1,
+      "cyclomaticComplexity": 11,
+      "nloc": 28,
+      "parameterCount": 2
+    },
+    {
+      "key": "apps/mobile/__tests__/activity/query-service.test.ts::(anonymous)::2",
+      "file": "apps/mobile/__tests__/activity/query-service.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 2,
+      "cyclomaticComplexity": 1,
+      "nloc": 38,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/activity/query-service.test.ts::(anonymous)::4",
+      "file": "apps/mobile/__tests__/activity/query-service.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 4,
+      "cyclomaticComplexity": 1,
+      "nloc": 54,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/activity/query-service.test.ts::(anonymous)::6",
+      "file": "apps/mobile/__tests__/activity/query-service.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 6,
+      "cyclomaticComplexity": 1,
+      "nloc": 31,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/ai-chat/store.test.ts::sessionId::1",
+      "file": "apps/mobile/__tests__/ai-chat/store.test.ts",
+      "function": "sessionId",
+      "occurrence": 1,
+      "cyclomaticComplexity": 7,
+      "nloc": 7,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/ai-chat/user-memories.test.ts::(anonymous)::7",
+      "file": "apps/mobile/__tests__/ai-chat/user-memories.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 7,
+      "cyclomaticComplexity": 1,
+      "nloc": 32,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/analytics/derive.test.ts::makeCategorySpending::7",
+      "file": "apps/mobile/__tests__/analytics/derive.test.ts",
+      "function": "makeCategorySpending",
+      "occurrence": 7,
+      "cyclomaticComplexity": 5,
+      "nloc": 12,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/__tests__/analytics/repository.test.ts::(anonymous)::2",
+      "file": "apps/mobile/__tests__/analytics/repository.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 2,
+      "cyclomaticComplexity": 1,
+      "nloc": 77,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/analytics/service.test.ts::getNow::2",
+      "file": "apps/mobile/__tests__/analytics/service.test.ts",
+      "function": "getNow",
+      "occurrence": 2,
+      "cyclomaticComplexity": 1,
+      "nloc": 45,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/analytics/store.test.ts::(anonymous)::4",
+      "file": "apps/mobile/__tests__/analytics/store.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 4,
+      "cyclomaticComplexity": 1,
+      "nloc": 51,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/auth/store.test.ts::getSupabase::1",
+      "file": "apps/mobile/__tests__/auth/store.test.ts",
+      "function": "getSupabase",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 9,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/__tests__/budget/monitoring.test.ts::getLocale::10",
+      "file": "apps/mobile/__tests__/budget/monitoring.test.ts",
+      "function": "getLocale",
+      "occurrence": 10,
+      "cyclomaticComplexity": 1,
+      "nloc": 46,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/budget/monitoring.test.ts::getLocale::16",
+      "file": "apps/mobile/__tests__/budget/monitoring.test.ts",
+      "function": "getLocale",
+      "occurrence": 16,
+      "cyclomaticComplexity": 1,
+      "nloc": 31,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/budget/repository.test.ts::(anonymous)::18",
+      "file": "apps/mobile/__tests__/budget/repository.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 18,
+      "cyclomaticComplexity": 1,
+      "nloc": 41,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/budget/repository.test.ts::(anonymous)::22",
+      "file": "apps/mobile/__tests__/budget/repository.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 22,
+      "cyclomaticComplexity": 1,
+      "nloc": 36,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/budget/repository.test.ts::(anonymous)::24",
+      "file": "apps/mobile/__tests__/budget/repository.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 24,
+      "cyclomaticComplexity": 1,
+      "nloc": 57,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/budget/store.test.ts::(anonymous)::11",
+      "file": "apps/mobile/__tests__/budget/store.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 11,
+      "cyclomaticComplexity": 2,
+      "nloc": 39,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/budget/store.test.ts::(anonymous)::9",
+      "file": "apps/mobile/__tests__/budget/store.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 9,
+      "cyclomaticComplexity": 2,
+      "nloc": 37,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/calendar/calendar-utils.test.ts::(anonymous)::7",
+      "file": "apps/mobile/__tests__/calendar/calendar-utils.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 7,
+      "cyclomaticComplexity": 6,
+      "nloc": 7,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/calendar/repository.test.ts::(anonymous)::5",
+      "file": "apps/mobile/__tests__/calendar/repository.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 5,
+      "cyclomaticComplexity": 1,
+      "nloc": 76,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/calendar/store.test.ts::(anonymous)::10",
+      "file": "apps/mobile/__tests__/calendar/store.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 10,
+      "cyclomaticComplexity": 1,
+      "nloc": 32,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/calendar/store.test.ts::(anonymous)::11",
+      "file": "apps/mobile/__tests__/calendar/store.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 11,
+      "cyclomaticComplexity": 1,
+      "nloc": 47,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/calendar/store.test.ts::(anonymous)::12",
+      "file": "apps/mobile/__tests__/calendar/store.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 12,
+      "cyclomaticComplexity": 1,
+      "nloc": 51,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/calendar/store.test.ts::(anonymous)::4",
+      "file": "apps/mobile/__tests__/calendar/store.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 4,
+      "cyclomaticComplexity": 1,
+      "nloc": 35,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/calendar/store.test.ts::(anonymous)::8",
+      "file": "apps/mobile/__tests__/calendar/store.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 8,
+      "cyclomaticComplexity": 1,
+      "nloc": 37,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/capture-evidence/repository.test.ts::(anonymous)::2",
+      "file": "apps/mobile/__tests__/capture-evidence/repository.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 2,
+      "cyclomaticComplexity": 1,
+      "nloc": 92,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/capture-evidence/repository.test.ts::(anonymous)::3",
+      "file": "apps/mobile/__tests__/capture-evidence/repository.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 1,
+      "nloc": 31,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts::(anonymous)::4",
+      "file": "apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 4,
+      "cyclomaticComplexity": 1,
+      "nloc": 31,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts::evidence.map::1",
+      "file": "apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts",
+      "function": "evidence.map",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 7,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts::(anonymous)::6",
+      "file": "apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 6,
+      "cyclomaticComplexity": 1,
+      "nloc": 39,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts::evidence.map::1",
+      "file": "apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts",
+      "function": "evidence.map",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 7,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/__tests__/capture-sources/repository-sms-events.test.ts::(anonymous)::3",
+      "file": "apps/mobile/__tests__/capture-sources/repository-sms-events.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 1,
+      "nloc": 36,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts::captureFingerprint::2",
+      "file": "apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts",
+      "function": "captureFingerprint",
+      "occurrence": 2,
+      "cyclomaticComplexity": 1,
+      "nloc": 3,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/__tests__/email-capture/email-pipeline.test.ts::(anonymous)::19",
+      "file": "apps/mobile/__tests__/email-capture/email-pipeline.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 19,
+      "cyclomaticComplexity": 1,
+      "nloc": 37,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/email-capture/email-pipeline.test.ts::(anonymous)::5",
+      "file": "apps/mobile/__tests__/email-capture/email-pipeline.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 5,
+      "cyclomaticComplexity": 1,
+      "nloc": 34,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/email-capture/email-pipeline.test.ts::(anonymous)::8",
+      "file": "apps/mobile/__tests__/email-capture/email-pipeline.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 8,
+      "cyclomaticComplexity": 1,
+      "nloc": 55,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/email-capture/email-pipeline.test.ts::evidence.map::1",
+      "file": "apps/mobile/__tests__/email-capture/email-pipeline.test.ts",
+      "function": "evidence.map",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 9,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts::(anonymous)::2",
+      "file": "apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 2,
+      "cyclomaticComplexity": 1,
+      "nloc": 42,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts::(anonymous)::3",
+      "file": "apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 1,
+      "nloc": 102,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/email-capture/retry-integration.test.ts::(anonymous)::12",
+      "file": "apps/mobile/__tests__/email-capture/retry-integration.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 12,
+      "cyclomaticComplexity": 6,
+      "nloc": 37,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/email-capture/schema-compat.test.ts::extractTypeEnum::1",
+      "file": "apps/mobile/__tests__/email-capture/schema-compat.test.ts",
+      "function": "extractTypeEnum",
+      "occurrence": 1,
+      "cyclomaticComplexity": 6,
+      "nloc": 9,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/__tests__/email-capture/store.test.ts::(anonymous)::33",
+      "file": "apps/mobile/__tests__/email-capture/store.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 33,
+      "cyclomaticComplexity": 1,
+      "nloc": 38,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/email-capture/store.test.ts::(anonymous)::39",
+      "file": "apps/mobile/__tests__/email-capture/store.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 39,
+      "cyclomaticComplexity": 1,
+      "nloc": 39,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/email-capture/store.test.ts::(anonymous)::43",
+      "file": "apps/mobile/__tests__/email-capture/store.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 43,
+      "cyclomaticComplexity": 1,
+      "nloc": 35,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/email-capture/store.test.ts::(anonymous)::45",
+      "file": "apps/mobile/__tests__/email-capture/store.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 45,
+      "cyclomaticComplexity": 1,
+      "nloc": 34,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/email-capture/store.test.ts::(anonymous)::52",
+      "file": "apps/mobile/__tests__/email-capture/store.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 52,
+      "cyclomaticComplexity": 1,
+      "nloc": 42,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/email-capture/store.test.ts::id::1",
+      "file": "apps/mobile/__tests__/email-capture/store.test.ts",
+      "function": "id",
+      "occurrence": 1,
+      "cyclomaticComplexity": 11,
+      "nloc": 7,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/error-handling/pipeline-save-error.test.ts::evidence.map::1",
+      "file": "apps/mobile/__tests__/error-handling/pipeline-save-error.test.ts",
+      "function": "evidence.map",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 9,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/__tests__/financial-accounts/balance-repository.test.ts::(anonymous)::2",
+      "file": "apps/mobile/__tests__/financial-accounts/balance-repository.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 2,
+      "cyclomaticComplexity": 1,
+      "nloc": 56,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/financial-accounts/balance-repository.test.ts::saveAccountTransaction::1",
+      "file": "apps/mobile/__tests__/financial-accounts/balance-repository.test.ts",
+      "function": "saveAccountTransaction",
+      "occurrence": 1,
+      "cyclomaticComplexity": 2,
+      "nloc": 36,
+      "parameterCount": 8
+    },
+    {
+      "key": "apps/mobile/__tests__/financial-accounts/balance-repository.test.ts::saveAccountTransfer::1",
+      "file": "apps/mobile/__tests__/financial-accounts/balance-repository.test.ts",
+      "function": "saveAccountTransfer",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 34,
+      "parameterCount": 8
+    },
+    {
+      "key": "apps/mobile/__tests__/financial-accounts/identifiers.test.ts::(anonymous)::3",
+      "file": "apps/mobile/__tests__/financial-accounts/identifiers.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 1,
+      "nloc": 42,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/financial-accounts/identifiers.test.ts::(anonymous)::5",
+      "file": "apps/mobile/__tests__/financial-accounts/identifiers.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 5,
+      "cyclomaticComplexity": 1,
+      "nloc": 40,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/financial-accounts/identifiers.test.ts::(anonymous)::6",
+      "file": "apps/mobile/__tests__/financial-accounts/identifiers.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 6,
+      "cyclomaticComplexity": 1,
+      "nloc": 37,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/financial-accounts/identifiers.test.ts::(anonymous)::7",
+      "file": "apps/mobile/__tests__/financial-accounts/identifiers.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 7,
+      "cyclomaticComplexity": 1,
+      "nloc": 40,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/financial-accounts/management-service.test.ts::createIdentifierId::2",
+      "file": "apps/mobile/__tests__/financial-accounts/management-service.test.ts",
+      "function": "createIdentifierId",
+      "occurrence": 2,
+      "cyclomaticComplexity": 1,
+      "nloc": 54,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/financial-accounts/management-service.test.ts::createIdentifierId::4",
+      "file": "apps/mobile/__tests__/financial-accounts/management-service.test.ts",
+      "function": "createIdentifierId",
+      "occurrence": 4,
+      "cyclomaticComplexity": 3,
+      "nloc": 55,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/financial-accounts/opening-balances.test.ts::(anonymous)::3",
+      "file": "apps/mobile/__tests__/financial-accounts/opening-balances.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 1,
+      "nloc": 39,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/financial-accounts/opening-balances.test.ts::(anonymous)::6",
+      "file": "apps/mobile/__tests__/financial-accounts/opening-balances.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 6,
+      "cyclomaticComplexity": 1,
+      "nloc": 34,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/financial-accounts/opening-balances.test.ts::(anonymous)::7",
+      "file": "apps/mobile/__tests__/financial-accounts/opening-balances.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 7,
+      "cyclomaticComplexity": 1,
+      "nloc": 37,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/financial-accounts/repository.test.ts::(anonymous)::5",
+      "file": "apps/mobile/__tests__/financial-accounts/repository.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 5,
+      "cyclomaticComplexity": 1,
+      "nloc": 38,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/goals/repository.test.ts::(anonymous)::3",
+      "file": "apps/mobile/__tests__/goals/repository.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 1,
+      "nloc": 50,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/goals/repository.test.ts::(anonymous)::4",
+      "file": "apps/mobile/__tests__/goals/repository.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 4,
+      "cyclomaticComplexity": 1,
+      "nloc": 32,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/goals/service.test.ts::(anonymous)::1",
+      "file": "apps/mobile/__tests__/goals/service.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 62,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/goals/store.test.ts::(anonymous)::6",
+      "file": "apps/mobile/__tests__/goals/store.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 6,
+      "cyclomaticComplexity": 1,
+      "nloc": 55,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/notifications/derive.test.ts::(anonymous)::18",
+      "file": "apps/mobile/__tests__/notifications/derive.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 18,
+      "cyclomaticComplexity": 1,
+      "nloc": 37,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/review-queues/attribution-review-service.test.ts::(anonymous)::2",
+      "file": "apps/mobile/__tests__/review-queues/attribution-review-service.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 2,
+      "cyclomaticComplexity": 1,
+      "nloc": 75,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/review-queues/attribution-review-service.test.ts::saveEvidence::1",
+      "file": "apps/mobile/__tests__/review-queues/attribution-review-service.test.ts",
+      "function": "saveEvidence",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 30,
+      "parameterCount": 6
+    },
+    {
+      "key": "apps/mobile/__tests__/setup.ts::(anonymous)::3",
+      "file": "apps/mobile/__tests__/setup.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 1,
+      "nloc": 80,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/setup.ts::useSafeAreaInsets::1",
+      "file": "apps/mobile/__tests__/setup.ts",
+      "function": "useSafeAreaInsets",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 3,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/__tests__/shared/write-through.test.ts::(anonymous)::7",
+      "file": "apps/mobile/__tests__/shared/write-through.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 7,
+      "cyclomaticComplexity": 1,
+      "nloc": 53,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/sync-conflict-resolution.test.ts::conflictRow::1",
+      "file": "apps/mobile/__tests__/sync/sync-conflict-resolution.test.ts",
+      "function": "conflictRow",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 36,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/sync-conflict-state.test.ts::(anonymous)::2",
+      "file": "apps/mobile/__tests__/sync/sync-conflict-state.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 2,
+      "cyclomaticComplexity": 2,
+      "nloc": 39,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/sync-module.test.ts::(anonymous)::5",
+      "file": "apps/mobile/__tests__/sync/sync-module.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 5,
+      "cyclomaticComplexity": 3,
+      "nloc": 40,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/sync-pull-integration.test.ts::(anonymous)::3",
+      "file": "apps/mobile/__tests__/sync/sync-pull-integration.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 8,
+      "nloc": 18,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/sync-service.test.ts::(anonymous)::1",
+      "file": "apps/mobile/__tests__/sync/sync-service.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 50,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/sync-service.test.ts::(anonymous)::3",
+      "file": "apps/mobile/__tests__/sync/sync-service.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 1,
+      "nloc": 44,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/sync-service.test.ts::(anonymous)::4",
+      "file": "apps/mobile/__tests__/sync/sync-service.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 4,
+      "cyclomaticComplexity": 1,
+      "nloc": 57,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/sync-service.test.ts::(anonymous)::5",
+      "file": "apps/mobile/__tests__/sync/sync-service.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 5,
+      "cyclomaticComplexity": 1,
+      "nloc": 40,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::10",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 10,
+      "cyclomaticComplexity": 1,
+      "nloc": 37,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::11",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 11,
+      "cyclomaticComplexity": 1,
+      "nloc": 37,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::12",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 12,
+      "cyclomaticComplexity": 1,
+      "nloc": 42,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::15",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 15,
+      "cyclomaticComplexity": 1,
+      "nloc": 40,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::16",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 16,
+      "cyclomaticComplexity": 1,
+      "nloc": 148,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::17",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 17,
+      "cyclomaticComplexity": 1,
+      "nloc": 45,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::20",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 20,
+      "cyclomaticComplexity": 2,
+      "nloc": 45,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::23",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 23,
+      "cyclomaticComplexity": 1,
+      "nloc": 65,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::27",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 27,
+      "cyclomaticComplexity": 1,
+      "nloc": 48,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::28",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 28,
+      "cyclomaticComplexity": 1,
+      "nloc": 33,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::29",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 29,
+      "cyclomaticComplexity": 1,
+      "nloc": 36,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::36",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 36,
+      "cyclomaticComplexity": 1,
+      "nloc": 40,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::37",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 37,
+      "cyclomaticComplexity": 1,
+      "nloc": 35,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::5",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 5,
+      "cyclomaticComplexity": 1,
+      "nloc": 42,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::7",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 7,
+      "cyclomaticComplexity": 1,
+      "nloc": 36,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::8",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 8,
+      "cyclomaticComplexity": 1,
+      "nloc": 37,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/sync/syncEngine.test.ts::(anonymous)::9",
+      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 9,
+      "cyclomaticComplexity": 1,
+      "nloc": 40,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/transactions/mutation-service.test.ts::(anonymous)::10",
+      "file": "apps/mobile/__tests__/transactions/mutation-service.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 10,
+      "cyclomaticComplexity": 1,
+      "nloc": 38,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/transactions/query-service.test.ts::(anonymous)::1",
+      "file": "apps/mobile/__tests__/transactions/query-service.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 1,
+      "cyclomaticComplexity": 2,
+      "nloc": 31,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/transactions/repository-monthly-totals.test.ts::(anonymous)::3",
+      "file": "apps/mobile/__tests__/transactions/repository-monthly-totals.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 1,
+      "nloc": 78,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts::(anonymous)::4",
+      "file": "apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 4,
+      "cyclomaticComplexity": 1,
+      "nloc": 121,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/transfers/repository.test.ts::(anonymous)::2",
+      "file": "apps/mobile/__tests__/transfers/repository.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 2,
+      "cyclomaticComplexity": 1,
+      "nloc": 32,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/transfers/repository.test.ts::(anonymous)::5",
+      "file": "apps/mobile/__tests__/transfers/repository.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 5,
+      "cyclomaticComplexity": 1,
+      "nloc": 34,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/__tests__/transfers/repository.test.ts::(anonymous)::8",
+      "file": "apps/mobile/__tests__/transfers/repository.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 8,
+      "cyclomaticComplexity": 1,
+      "nloc": 34,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/account-suggestions/hooks/use-account-suggestions.ts::useAccountSuggestions::1",
+      "file": "apps/mobile/features/account-suggestions/hooks/use-account-suggestions.ts",
+      "function": "useAccountSuggestions",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 17,
+      "parameterCount": 5
+    },
+    {
+      "key": "apps/mobile/features/account-suggestions/lib/dismissals-repository.ts::(anonymous)::1",
+      "file": "apps/mobile/features/account-suggestions/lib/dismissals-repository.ts",
+      "function": "(anonymous)",
+      "occurrence": 1,
+      "cyclomaticComplexity": 8,
+      "nloc": 18,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/account-suggestions/lib/dismissals-repository.ts::(anonymous)::2",
+      "file": "apps/mobile/features/account-suggestions/lib/dismissals-repository.ts",
+      "function": "(anonymous)",
+      "occurrence": 2,
+      "cyclomaticComplexity": 7,
+      "nloc": 22,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/account-suggestions/lib/dismissals-repository.ts::getActiveAccountSuggestionDismissal::1",
+      "file": "apps/mobile/features/account-suggestions/lib/dismissals-repository.ts",
+      "function": "getActiveAccountSuggestionDismissal",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 20,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/account-suggestions/lib/presentation.ts::inferKind::1",
+      "file": "apps/mobile/features/account-suggestions/lib/presentation.ts",
+      "function": "inferKind",
+      "occurrence": 1,
+      "cyclomaticComplexity": 7,
+      "nloc": 26,
+      "parameterCount": 3
+    },
+    {
+      "key": "apps/mobile/features/account-suggestions/lib/presentation.ts::toConfidenceLabel::1",
+      "file": "apps/mobile/features/account-suggestions/lib/presentation.ts",
+      "function": "toConfidenceLabel",
+      "occurrence": 1,
+      "cyclomaticComplexity": 7,
+      "nloc": 17,
+      "parameterCount": 2
+    },
+    {
+      "key": "apps/mobile/features/account-suggestions/services/create-account-suggestion-service.ts::createSuggestedAccount::1",
+      "file": "apps/mobile/features/account-suggestions/services/create-account-suggestion-service.ts",
+      "function": "createSuggestedAccount",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 11,
+      "parameterCount": 6
+    },
+    {
+      "key": "apps/mobile/features/account-suggestions/services/create-account-suggestion-service.ts::listSuggestions::1",
+      "file": "apps/mobile/features/account-suggestions/services/create-account-suggestion-service.ts",
+      "function": "listSuggestions",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 19,
+      "parameterCount": 5
+    },
+    {
+      "key": "apps/mobile/features/activity/services/create-activity-query-service.ts::loadPage::1",
+      "file": "apps/mobile/features/activity/services/create-activity-query-service.ts",
+      "function": "loadPage",
+      "occurrence": 1,
+      "cyclomaticComplexity": 2,
+      "nloc": 16,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/activity/services/create-activity-query-service.ts::mergeActivityItems::1",
+      "file": "apps/mobile/features/activity/services/create-activity-query-service.ts",
+      "function": "mergeActivityItems",
+      "occurrence": 1,
+      "cyclomaticComplexity": 6,
+      "nloc": 24,
+      "parameterCount": 2
+    },
+    {
+      "key": "apps/mobile/features/activity/services/create-activity-query-service.ts::toStoredActivityItems::1",
+      "file": "apps/mobile/features/activity/services/create-activity-query-service.ts",
+      "function": "toStoredActivityItems",
+      "occurrence": 1,
+      "cyclomaticComplexity": 5,
+      "nloc": 28,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/ai-chat/hooks/use-streaming-chat.ts::(anonymous)::4",
+      "file": "apps/mobile/features/ai-chat/hooks/use-streaming-chat.ts",
+      "function": "(anonymous)",
+      "occurrence": 4,
+      "cyclomaticComplexity": 7,
+      "nloc": 32,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/ai-chat/lib/parse-action.ts::parseActionFromResponse::1",
+      "file": "apps/mobile/features/ai-chat/lib/parse-action.ts",
+      "function": "parseActionFromResponse",
+      "occurrence": 1,
+      "cyclomaticComplexity": 6,
+      "nloc": 11,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts::(anonymous)::16",
+      "file": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
+      "function": "(anonymous)",
+      "occurrence": 16,
+      "cyclomaticComplexity": 6,
+      "nloc": 33,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts::beginStreamRun::1",
+      "file": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
+      "function": "beginStreamRun",
+      "occurrence": 1,
+      "cyclomaticComplexity": 7,
+      "nloc": 55,
+      "parameterCount": 12
+    },
+    {
+      "key": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts::handleStreamError::1",
+      "file": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
+      "function": "handleStreamError",
+      "occurrence": 1,
+      "cyclomaticComplexity": 4,
+      "nloc": 14,
+      "parameterCount": 7
+    },
+    {
+      "key": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts::sendMessage::2",
+      "file": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
+      "function": "sendMessage",
+      "occurrence": 2,
+      "cyclomaticComplexity": 7,
+      "nloc": 12,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts::sendMessageEffect::1",
+      "file": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
+      "function": "sendMessageEffect",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 8,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/ai-chat/store.ts::isActiveChatSession::1",
+      "file": "apps/mobile/features/ai-chat/store.ts",
+      "function": "isActiveChatSession",
+      "occurrence": 1,
+      "cyclomaticComplexity": 7,
+      "nloc": 57,
+      "parameterCount": 7
+    },
+    {
+      "key": "apps/mobile/features/ai-chat/store.ts::updateChatActionStatus::1",
+      "file": "apps/mobile/features/ai-chat/store.ts",
+      "function": "updateChatActionStatus",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 12,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/analytics/services/create-analytics-service.ts::derivePeriodDelta::1",
+      "file": "apps/mobile/features/analytics/services/create-analytics-service.ts",
+      "function": "derivePeriodDelta",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 12,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/auth/store.ts::restoreSession::2",
+      "file": "apps/mobile/features/auth/store.ts",
+      "function": "restoreSession",
+      "occurrence": 2,
+      "cyclomaticComplexity": 6,
+      "nloc": 18,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/auth/store.ts::signIn::2",
+      "file": "apps/mobile/features/auth/store.ts",
+      "function": "signIn",
+      "occurrence": 2,
+      "cyclomaticComplexity": 10,
+      "nloc": 36,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/budget/lib/notifications.ts::scheduleBudgetAlert::1",
+      "file": "apps/mobile/features/budget/lib/notifications.ts",
+      "function": "scheduleBudgetAlert",
+      "occurrence": 1,
+      "cyclomaticComplexity": 6,
+      "nloc": 43,
+      "parameterCount": 3
+    },
+    {
+      "key": "apps/mobile/features/budget/lib/repository.ts::updateBudgetAmount::1",
+      "file": "apps/mobile/features/budget/lib/repository.ts",
+      "function": "updateBudgetAmount",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 3,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/budget/services/subscribe-budget-to-transactions.ts::(anonymous)::4",
+      "file": "apps/mobile/features/budget/services/subscribe-budget-to-transactions.ts",
+      "function": "(anonymous)",
+      "occurrence": 4,
+      "cyclomaticComplexity": 6,
+      "nloc": 12,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/budget/store.ts::isCurrentBudgetRequest::1",
+      "file": "apps/mobile/features/budget/store.ts",
+      "function": "isCurrentBudgetRequest",
+      "occurrence": 1,
+      "cyclomaticComplexity": 6,
+      "nloc": 25,
+      "parameterCount": 7
+    },
+    {
+      "key": "apps/mobile/features/budget/store.ts::updateBudget::1",
+      "file": "apps/mobile/features/budget/store.ts",
+      "function": "updateBudget",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 21,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/calendar/lib/bill-mutation-service.ts::(anonymous)::6",
+      "file": "apps/mobile/features/calendar/lib/bill-mutation-service.ts",
+      "function": "(anonymous)",
+      "occurrence": 6,
+      "cyclomaticComplexity": 7,
+      "nloc": 36,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/calendar/lib/calendar-utils.ts::(anonymous)::3",
+      "file": "apps/mobile/features/calendar/lib/calendar-utils.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 10,
+      "nloc": 20,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/calendar/lib/calendar-utils.ts::getNextOccurrence::1",
+      "file": "apps/mobile/features/calendar/lib/calendar-utils.ts",
+      "function": "getNextOccurrence",
+      "occurrence": 1,
+      "cyclomaticComplexity": 10,
+      "nloc": 32,
+      "parameterCount": 2
+    },
+    {
+      "key": "apps/mobile/features/calendar/lib/repository.ts::updateBill::1",
+      "file": "apps/mobile/features/calendar/lib/repository.ts",
+      "function": "updateBill",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 11,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/calendar/store.ts::addBill::1",
+      "file": "apps/mobile/features/calendar/store.ts",
+      "function": "addBill",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 22,
+      "parameterCount": 7
+    },
+    {
+      "key": "apps/mobile/features/calendar/store.ts::markBillPaid::1",
+      "file": "apps/mobile/features/calendar/store.ts",
+      "function": "markBillPaid",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 16,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/calendar/store.ts::unmarkBillPaid::1",
+      "file": "apps/mobile/features/calendar/store.ts",
+      "function": "unmarkBillPaid",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 16,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/calendar/store.ts::updateBill::1",
+      "file": "apps/mobile/features/calendar/store.ts",
+      "function": "updateBill",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 15,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/capture-evidence/lib/build-capture-evidence.ts::extractAliasEvidence::1",
+      "file": "apps/mobile/features/capture-evidence/lib/build-capture-evidence.ts",
+      "function": "extractAliasEvidence",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 14,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/capture-evidence/lib/repository.ts::getCaptureEvidenceRowsForScopeValue::1",
+      "file": "apps/mobile/features/capture-evidence/lib/repository.ts",
+      "function": "getCaptureEvidenceRowsForScopeValue",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 20,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/capture-evidence/lib/repository.ts::linkCaptureEvidenceToTransaction::1",
+      "file": "apps/mobile/features/capture-evidence/lib/repository.ts",
+      "function": "linkCaptureEvidenceToTransaction",
+      "occurrence": 1,
+      "cyclomaticComplexity": 2,
+      "nloc": 18,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/capture-evidence/lib/repository.ts::relinkCaptureEvidenceToTransfer::1",
+      "file": "apps/mobile/features/capture-evidence/lib/repository.ts",
+      "function": "relinkCaptureEvidenceToTransfer",
+      "occurrence": 1,
+      "cyclomaticComplexity": 2,
+      "nloc": 16,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/capture-sources/dedup.public.ts::findDuplicateTransaction::1",
+      "file": "apps/mobile/features/capture-sources/dedup.public.ts",
+      "function": "findDuplicateTransaction",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 12,
+      "parameterCount": 5
+    },
+    {
+      "key": "apps/mobile/features/capture-sources/hooks/setup.ts::parseSmsDetectedAt::1",
+      "file": "apps/mobile/features/capture-sources/hooks/setup.ts",
+      "function": "parseSmsDetectedAt",
+      "occurrence": 1,
+      "cyclomaticComplexity": 6,
+      "nloc": 16,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/capture-sources/lib/dedup.ts::captureFingerprint::1",
+      "file": "apps/mobile/features/capture-sources/lib/dedup.ts",
+      "function": "captureFingerprint",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 9,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/capture-sources/lib/dedup.ts::findDuplicateTransaction::1",
+      "file": "apps/mobile/features/capture-sources/lib/dedup.ts",
+      "function": "findDuplicateTransaction",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 27,
+      "parameterCount": 5
+    },
+    {
+      "key": "apps/mobile/features/capture-sources/lib/notification-parser.ts::tryParseEntry::1",
+      "file": "apps/mobile/features/capture-sources/lib/notification-parser.ts",
+      "function": "tryParseEntry",
+      "occurrence": 1,
+      "cyclomaticComplexity": 10,
+      "nloc": 14,
+      "parameterCount": 2
+    },
+    {
+      "key": "apps/mobile/features/capture-sources/services/capture-ingestion.ts::(anonymous)::2",
+      "file": "apps/mobile/features/capture-sources/services/capture-ingestion.ts",
+      "function": "(anonymous)",
+      "occurrence": 2,
+      "cyclomaticComplexity": 10,
+      "nloc": 25,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/capture-sources/services/capture-ingestion.ts::(anonymous)::3",
+      "file": "apps/mobile/features/capture-sources/services/capture-ingestion.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 6,
+      "nloc": 14,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/capture-sources/services/notification-pipeline.ts::generateSyncQueueId::1",
+      "file": "apps/mobile/features/capture-sources/services/notification-pipeline.ts",
+      "function": "generateSyncQueueId",
+      "occurrence": 1,
+      "cyclomaticComplexity": 2,
+      "nloc": 49,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/capture-sources/store.ts::toggleCaptureSourcePackage::1",
+      "file": "apps/mobile/features/capture-sources/store.ts",
+      "function": "toggleCaptureSourcePackage",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 23,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/categories/store.ts::createCustomCategory::1",
+      "file": "apps/mobile/features/categories/store.ts",
+      "function": "createCustomCategory",
+      "occurrence": 1,
+      "cyclomaticComplexity": 4,
+      "nloc": 31,
+      "parameterCount": 3
+    },
+    {
+      "key": "apps/mobile/features/email-capture/lib/progress-phases.ts::buildProgressDisplay::1",
+      "file": "apps/mobile/features/email-capture/lib/progress-phases.ts",
+      "function": "buildProgressDisplay",
+      "occurrence": 1,
+      "cyclomaticComplexity": 13,
+      "nloc": 34,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/email-capture/lib/repository.ts::markForRetry::1",
+      "file": "apps/mobile/features/email-capture/lib/repository.ts",
+      "function": "markForRetry",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 11,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/email-capture/lib/repository.ts::markRetrySuccess::1",
+      "file": "apps/mobile/features/email-capture/lib/repository.ts",
+      "function": "markRetrySuccess",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 12,
+      "parameterCount": 5
+    },
+    {
+      "key": "apps/mobile/features/email-capture/lib/repository.ts::updateProcessedEmailStatus::1",
+      "file": "apps/mobile/features/email-capture/lib/repository.ts",
+      "function": "updateProcessedEmailStatus",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 8,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/email-capture/lib/repository.ts::updateProcessedEmailStatusInTransaction::1",
+      "file": "apps/mobile/features/email-capture/lib/repository.ts",
+      "function": "updateProcessedEmailStatusInTransaction",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 8,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts::(anonymous)::22",
+      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
+      "function": "(anonymous)",
+      "occurrence": 22,
+      "cyclomaticComplexity": 1,
+      "nloc": 44,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts::(anonymous)::38",
+      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
+      "function": "(anonymous)",
+      "occurrence": 38,
+      "cyclomaticComplexity": 2,
+      "nloc": 40,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts::createEmailPipelineService::1",
+      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
+      "function": "createEmailPipelineService",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 73,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts::generateSyncQueueId::1",
+      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
+      "function": "generateSyncQueueId",
+      "occurrence": 1,
+      "cyclomaticComplexity": 2,
+      "nloc": 46,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts::insertMerchantRuleEffect::1",
+      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
+      "function": "insertMerchantRuleEffect",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 11,
+      "parameterCount": 5
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts::linkCaptureEvidenceToTransactionEffect::1",
+      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
+      "function": "linkCaptureEvidenceToTransactionEffect",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 12,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts::markForRetryEffect::1",
+      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
+      "function": "markForRetryEffect",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 10,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts::markRetrySuccessEffect::1",
+      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
+      "function": "markRetrySuccessEffect",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 11,
+      "parameterCount": 5
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts::processEmails::2",
+      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
+      "function": "processEmails",
+      "occurrence": 2,
+      "cyclomaticComplexity": 1,
+      "nloc": 19,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts::updateProcessedEmailStatusEffect::1",
+      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
+      "function": "updateProcessedEmailStatusEffect",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 10,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts::worker::1",
+      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
+      "function": "worker",
+      "occurrence": 1,
+      "cyclomaticComplexity": 11,
+      "nloc": 70,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/create-parse-email-service.ts::(anonymous)::3",
+      "file": "apps/mobile/features/email-capture/services/create-parse-email-service.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 6,
+      "nloc": 19,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/create-parse-email-service.ts::(anonymous)::5",
+      "file": "apps/mobile/features/email-capture/services/create-parse-email-service.ts",
+      "function": "(anonymous)",
+      "occurrence": 5,
+      "cyclomaticComplexity": 7,
+      "nloc": 16,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/email-adapter.ts::base64UrlEncode::1",
+      "file": "apps/mobile/features/email-capture/services/email-adapter.ts",
+      "function": "base64UrlEncode",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 238,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/gmail-adapter.ts::getHeader::1",
+      "file": "apps/mobile/features/email-capture/services/gmail-adapter.ts",
+      "function": "getHeader",
+      "occurrence": 1,
+      "cyclomaticComplexity": 21,
+      "nloc": 72,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/outlook-adapter.ts::sanitize::1",
+      "file": "apps/mobile/features/email-capture/services/outlook-adapter.ts",
+      "function": "sanitize",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 38,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/email-capture/services/parse-email-api.ts::stripPii::1",
+      "file": "apps/mobile/features/email-capture/services/parse-email-api.ts",
+      "function": "stripPii",
+      "occurrence": 1,
+      "cyclomaticComplexity": 22,
+      "nloc": 23,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/email-capture/store.ts::(anonymous)::16",
+      "file": "apps/mobile/features/email-capture/store.ts",
+      "function": "(anonymous)",
+      "occurrence": 16,
+      "cyclomaticComplexity": 7,
+      "nloc": 24,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/email-capture/store.ts::clearAutoClearTimer::1",
+      "file": "apps/mobile/features/email-capture/store.ts",
+      "function": "clearAutoClearTimer",
+      "occurrence": 1,
+      "cyclomaticComplexity": 12,
+      "nloc": 60,
+      "parameterCount": 12
+    },
+    {
+      "key": "apps/mobile/features/email-capture/store.ts::disconnectEmailAccount::1",
+      "file": "apps/mobile/features/email-capture/store.ts",
+      "function": "disconnectEmailAccount",
+      "occurrence": 1,
+      "cyclomaticComplexity": 8,
+      "nloc": 26,
+      "parameterCount": 3
+    },
+    {
+      "key": "apps/mobile/features/email-capture/store.ts::onProgress::2",
+      "file": "apps/mobile/features/email-capture/store.ts",
+      "function": "onProgress",
+      "occurrence": 2,
+      "cyclomaticComplexity": 7,
+      "nloc": 45,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/financial-accounts/lib/balance-repository.ts::getFinancialAccountBalancesForUser::1",
+      "file": "apps/mobile/features/financial-accounts/lib/balance-repository.ts",
+      "function": "getFinancialAccountBalancesForUser",
+      "occurrence": 1,
+      "cyclomaticComplexity": 9,
+      "nloc": 28,
+      "parameterCount": 3
+    },
+    {
+      "key": "apps/mobile/features/financial-accounts/lib/form-screen.ts::hasInvalidBillingDayInput::1",
+      "file": "apps/mobile/features/financial-accounts/lib/form-screen.ts",
+      "function": "hasInvalidBillingDayInput",
+      "occurrence": 1,
+      "cyclomaticComplexity": 5,
+      "nloc": 20,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/financial-accounts/lib/identifiers-repository.ts::(anonymous)::1",
+      "file": "apps/mobile/features/financial-accounts/lib/identifiers-repository.ts",
+      "function": "(anonymous)",
+      "occurrence": 1,
+      "cyclomaticComplexity": 8,
+      "nloc": 16,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/financial-accounts/lib/management-service.ts::(anonymous)::2",
+      "file": "apps/mobile/features/financial-accounts/lib/management-service.ts",
+      "function": "(anonymous)",
+      "occurrence": 2,
+      "cyclomaticComplexity": 7,
+      "nloc": 23,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/financial-accounts/lib/management-service.ts::addManualIdentifier::1",
+      "file": "apps/mobile/features/financial-accounts/lib/management-service.ts",
+      "function": "addManualIdentifier",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 5,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/financial-accounts/lib/management-service.ts::normalizeOpeningBalance::1",
+      "file": "apps/mobile/features/financial-accounts/lib/management-service.ts",
+      "function": "normalizeOpeningBalance",
+      "occurrence": 1,
+      "cyclomaticComplexity": 6,
+      "nloc": 16,
+      "parameterCount": 2
+    },
+    {
+      "key": "apps/mobile/features/financial-accounts/lib/management-service.ts::updateAccount::1",
+      "file": "apps/mobile/features/financial-accounts/lib/management-service.ts",
+      "function": "updateAccount",
+      "occurrence": 1,
+      "cyclomaticComplexity": 2,
+      "nloc": 42,
+      "parameterCount": 10
+    },
+    {
+      "key": "apps/mobile/features/financial-accounts/lib/opening-balances-repository.ts::(anonymous)::1",
+      "file": "apps/mobile/features/financial-accounts/lib/opening-balances-repository.ts",
+      "function": "(anonymous)",
+      "occurrence": 1,
+      "cyclomaticComplexity": 8,
+      "nloc": 16,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/financial-accounts/lib/opening-balances-repository.ts::(anonymous)::2",
+      "file": "apps/mobile/features/financial-accounts/lib/opening-balances-repository.ts",
+      "function": "(anonymous)",
+      "occurrence": 2,
+      "cyclomaticComplexity": 7,
+      "nloc": 20,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/financial-accounts/lib/repository.ts::(anonymous)::3",
+      "file": "apps/mobile/features/financial-accounts/lib/repository.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 11,
+      "nloc": 29,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/goals/lib/derive.ts::computeMedian::1",
+      "file": "apps/mobile/features/goals/lib/derive.ts",
+      "function": "computeMedian",
+      "occurrence": 1,
+      "cyclomaticComplexity": 12,
+      "nloc": 10,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/goals/lib/derive.ts::deriveBudgetNudges::1",
+      "file": "apps/mobile/features/goals/lib/derive.ts",
+      "function": "deriveBudgetNudges",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 18,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/goals/lib/derive.ts::deriveGoalCardStatus::1",
+      "file": "apps/mobile/features/goals/lib/derive.ts",
+      "function": "deriveGoalCardStatus",
+      "occurrence": 1,
+      "cyclomaticComplexity": 6,
+      "nloc": 17,
+      "parameterCount": 2
+    },
+    {
+      "key": "apps/mobile/features/goals/lib/derive.ts::deriveGoalProjection::1",
+      "file": "apps/mobile/features/goals/lib/derive.ts",
+      "function": "deriveGoalProjection",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 33,
+      "parameterCount": 3
+    },
+    {
+      "key": "apps/mobile/features/goals/lib/repository.ts::updateGoal::1",
+      "file": "apps/mobile/features/goals/lib/repository.ts",
+      "function": "updateGoal",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 18,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/goals/schema.ts::(anonymous)::1",
+      "file": "apps/mobile/features/goals/schema.ts",
+      "function": "(anonymous)",
+      "occurrence": 1,
+      "cyclomaticComplexity": 9,
+      "nloc": 8,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/goals/services/create-goal-query-service.ts::deriveGoalPaceGuidance::1",
+      "file": "apps/mobile/features/goals/services/create-goal-query-service.ts",
+      "function": "deriveGoalPaceGuidance",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 4,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/goals/store.ts::(anonymous)::7",
+      "file": "apps/mobile/features/goals/store.ts",
+      "function": "(anonymous)",
+      "occurrence": 7,
+      "cyclomaticComplexity": 5,
+      "nloc": 39,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/goals/store.ts::generateId::1",
+      "file": "apps/mobile/features/goals/store.ts",
+      "function": "generateId",
+      "occurrence": 1,
+      "cyclomaticComplexity": 10,
+      "nloc": 18,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/goals/store.ts::isCurrentGoalsRequest::1",
+      "file": "apps/mobile/features/goals/store.ts",
+      "function": "isCurrentGoalsRequest",
+      "occurrence": 1,
+      "cyclomaticComplexity": 7,
+      "nloc": 27,
+      "parameterCount": 8
+    },
+    {
+      "key": "apps/mobile/features/goals/store.ts::refreshSelectedGoalContributions::1",
+      "file": "apps/mobile/features/goals/store.ts",
+      "function": "refreshSelectedGoalContributions",
+      "occurrence": 1,
+      "cyclomaticComplexity": 2,
+      "nloc": 10,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/notifications/lib/derive.ts::(anonymous)::5",
+      "file": "apps/mobile/features/notifications/lib/derive.ts",
+      "function": "(anonymous)",
+      "occurrence": 5,
+      "cyclomaticComplexity": 8,
+      "nloc": 16,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/notifications/lib/display.ts::getCategoryVisuals::1",
+      "file": "apps/mobile/features/notifications/lib/display.ts",
+      "function": "getCategoryVisuals",
+      "occurrence": 1,
+      "cyclomaticComplexity": 15,
+      "nloc": 8,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/onboarding/lib/flow.ts::getNextOnboardingStep::1",
+      "file": "apps/mobile/features/onboarding/lib/flow.ts",
+      "function": "getNextOnboardingStep",
+      "occurrence": 1,
+      "cyclomaticComplexity": 5,
+      "nloc": 13,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/review-queues/lib/attribution-review-service.ts::(anonymous)::3",
+      "file": "apps/mobile/features/review-queues/lib/attribution-review-service.ts",
+      "function": "(anonymous)",
+      "occurrence": 3,
+      "cyclomaticComplexity": 6,
+      "nloc": 12,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/review-queues/lib/attribution-review-service.ts::getBestMatchingSuggestion::1",
+      "file": "apps/mobile/features/review-queues/lib/attribution-review-service.ts",
+      "function": "getBestMatchingSuggestion",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 13,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/review-queues/lib/attribution-review-service.ts::scoreSuggestedAccount::1",
+      "file": "apps/mobile/features/review-queues/lib/attribution-review-service.ts",
+      "function": "scoreSuggestedAccount",
+      "occurrence": 1,
+      "cyclomaticComplexity": 11,
+      "nloc": 28,
+      "parameterCount": 2
+    },
+    {
+      "key": "apps/mobile/features/search/lib/filters.ts::hasActiveFilters::1",
+      "file": "apps/mobile/features/search/lib/filters.ts",
+      "function": "hasActiveFilters",
+      "occurrence": 1,
+      "cyclomaticComplexity": 7,
+      "nloc": 12,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/search/lib/repository.ts::buildSearchConditions::1",
+      "file": "apps/mobile/features/search/lib/repository.ts",
+      "function": "buildSearchConditions",
+      "occurrence": 1,
+      "cyclomaticComplexity": 8,
+      "nloc": 22,
+      "parameterCount": 2
+    },
+    {
+      "key": "apps/mobile/features/search/lib/repository.ts::searchTransactionsPaginated::1",
+      "file": "apps/mobile/features/search/lib/repository.ts",
+      "function": "searchTransactionsPaginated",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 17,
+      "parameterCount": 5
+    },
+    {
+      "key": "apps/mobile/features/settings/store.ts::hydrate::2",
+      "file": "apps/mobile/features/settings/store.ts",
+      "function": "hydrate",
+      "occurrence": 2,
+      "cyclomaticComplexity": 6,
+      "nloc": 22,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/sync/lib/conflict-detection.ts::hasDataConflict::1",
+      "file": "apps/mobile/features/sync/lib/conflict-detection.ts",
+      "function": "hasDataConflict",
+      "occurrence": 1,
+      "cyclomaticComplexity": 6,
+      "nloc": 10,
+      "parameterCount": 2
+    },
+    {
+      "key": "apps/mobile/features/sync/lib/conflict-repository.ts::resolveConflict::1",
+      "file": "apps/mobile/features/sync/lib/conflict-repository.ts",
+      "function": "resolveConflict",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 8,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/sync/services/create-sync-service.ts::unresolvedConflictCountEffect::3",
+      "file": "apps/mobile/features/sync/services/create-sync-service.ts",
+      "function": "unresolvedConflictCountEffect",
+      "occurrence": 3,
+      "cyclomaticComplexity": 9,
+      "nloc": 21,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/sync/services/syncEngine.ts::processEntry::1",
+      "file": "apps/mobile/features/sync/services/syncEngine.ts",
+      "function": "processEntry",
+      "occurrence": 1,
+      "cyclomaticComplexity": 34,
+      "nloc": 70,
+      "parameterCount": 3
+    },
+    {
+      "key": "apps/mobile/features/sync/services/syncEngine.ts::processFinancialAccountEntry::1",
+      "file": "apps/mobile/features/sync/services/syncEngine.ts",
+      "function": "processFinancialAccountEntry",
+      "occurrence": 1,
+      "cyclomaticComplexity": 6,
+      "nloc": 21,
+      "parameterCount": 3
+    },
+    {
+      "key": "apps/mobile/features/sync/services/syncEngine.ts::rowToPullCursor::1",
+      "file": "apps/mobile/features/sync/services/syncEngine.ts",
+      "function": "rowToPullCursor",
+      "occurrence": 1,
+      "cyclomaticComplexity": 12,
+      "nloc": 50,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/sync/services/syncEngine.ts::toPullFetchError::1",
+      "file": "apps/mobile/features/sync/services/syncEngine.ts",
+      "function": "toPullFetchError",
+      "occurrence": 1,
+      "cyclomaticComplexity": 8,
+      "nloc": 12,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/sync/services/syncEngine.ts::toPullFetchError::2",
+      "file": "apps/mobile/features/sync/services/syncEngine.ts",
+      "function": "toPullFetchError",
+      "occurrence": 2,
+      "cyclomaticComplexity": 7,
+      "nloc": 19,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/sync/services/syncEngine.ts::toSupabaseRow::1",
+      "file": "apps/mobile/features/sync/services/syncEngine.ts",
+      "function": "toSupabaseRow",
+      "occurrence": 1,
+      "cyclomaticComplexity": 18,
+      "nloc": 51,
+      "parameterCount": 2
+    },
+    {
+      "key": "apps/mobile/features/transactions/lib/build-transaction.ts::getDefaultAccountAttributionState::1",
+      "file": "apps/mobile/features/transactions/lib/build-transaction.ts",
+      "function": "getDefaultAccountAttributionState",
+      "occurrence": 1,
+      "cyclomaticComplexity": 7,
+      "nloc": 15,
+      "parameterCount": 2
+    },
+    {
+      "key": "apps/mobile/features/transactions/lib/build-transaction.ts::parseDigitsToAmount::1",
+      "file": "apps/mobile/features/transactions/lib/build-transaction.ts",
+      "function": "parseDigitsToAmount",
+      "occurrence": 1,
+      "cyclomaticComplexity": 22,
+      "nloc": 36,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/transactions/lib/build-transaction.ts::toStoredTransaction::1",
+      "file": "apps/mobile/features/transactions/lib/build-transaction.ts",
+      "function": "toStoredTransaction",
+      "occurrence": 1,
+      "cyclomaticComplexity": 10,
+      "nloc": 22,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/transactions/lib/build-transaction.ts::toTransactionRow::1",
+      "file": "apps/mobile/features/transactions/lib/build-transaction.ts",
+      "function": "toTransactionRow",
+      "occurrence": 1,
+      "cyclomaticComplexity": 6,
+      "nloc": 19,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/transactions/lib/format-date.ts::getDateLabel::1",
+      "file": "apps/mobile/features/transactions/lib/format-date.ts",
+      "function": "getDateLabel",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 9,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/transactions/lib/group-by-date.ts::makeDateLabel::1",
+      "file": "apps/mobile/features/transactions/lib/group-by-date.ts",
+      "function": "makeDateLabel",
+      "occurrence": 1,
+      "cyclomaticComplexity": 4,
+      "nloc": 11,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/transactions/lib/group-by-date.ts::makeDateLabel::2",
+      "file": "apps/mobile/features/transactions/lib/group-by-date.ts",
+      "function": "makeDateLabel",
+      "occurrence": 2,
+      "cyclomaticComplexity": 1,
+      "nloc": 7,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/transactions/lib/mutation-service.ts::buildMutationTransaction::1",
+      "file": "apps/mobile/features/transactions/lib/mutation-service.ts",
+      "function": "buildMutationTransaction",
+      "occurrence": 1,
+      "cyclomaticComplexity": 3,
+      "nloc": 13,
+      "parameterCount": 5
+    },
+    {
+      "key": "apps/mobile/features/transactions/lib/repository.ts::getDailySpendingAggregate::1",
+      "file": "apps/mobile/features/transactions/lib/repository.ts",
+      "function": "getDailySpendingAggregate",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 11,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/transactions/lib/repository.ts::getDefaultAttributionState::1",
+      "file": "apps/mobile/features/transactions/lib/repository.ts",
+      "function": "getDefaultAttributionState",
+      "occurrence": 1,
+      "cyclomaticComplexity": 11,
+      "nloc": 13,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/transactions/lib/repository.ts::getRecentTransactions::1",
+      "file": "apps/mobile/features/transactions/lib/repository.ts",
+      "function": "getRecentTransactions",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 22,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/transactions/lib/repository.ts::getTransactionsPaginated::1",
+      "file": "apps/mobile/features/transactions/lib/repository.ts",
+      "function": "getTransactionsPaginated",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 16,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/transactions/mutations-boundary.test.ts::(anonymous)::12",
+      "file": "apps/mobile/features/transactions/mutations-boundary.test.ts",
+      "function": "(anonymous)",
+      "occurrence": 12,
+      "cyclomaticComplexity": 1,
+      "nloc": 33,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/transactions/services/create-transaction-query-service.ts::getStoredTransaction::1",
+      "file": "apps/mobile/features/transactions/services/create-transaction-query-service.ts",
+      "function": "getStoredTransaction",
+      "occurrence": 1,
+      "cyclomaticComplexity": 4,
+      "nloc": 11,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/transactions/services/create-transaction-query-service.ts::loadNextPage::1",
+      "file": "apps/mobile/features/transactions/services/create-transaction-query-service.ts",
+      "function": "loadNextPage",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 3,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/transactions/store.ts::createInitialState::1",
+      "file": "apps/mobile/features/transactions/store.ts",
+      "function": "createInitialState",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 31,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/transactions/store.ts::updateTransactionDirect::1",
+      "file": "apps/mobile/features/transactions/store.ts",
+      "function": "updateTransactionDirect",
+      "occurrence": 1,
+      "cyclomaticComplexity": 2,
+      "nloc": 19,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/features/transfers/lib/build-transfer.ts::toStoredTransfer::1",
+      "file": "apps/mobile/features/transfers/lib/build-transfer.ts",
+      "function": "toStoredTransfer",
+      "occurrence": 1,
+      "cyclomaticComplexity": 10,
+      "nloc": 21,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/transfers/lib/build-transfer.ts::toTransferRow::1",
+      "file": "apps/mobile/features/transfers/lib/build-transfer.ts",
+      "function": "toTransferRow",
+      "occurrence": 1,
+      "cyclomaticComplexity": 7,
+      "nloc": 16,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/transfers/lib/build-transfer.ts::trimLabel::2",
+      "file": "apps/mobile/features/transfers/lib/build-transfer.ts",
+      "function": "trimLabel",
+      "occurrence": 2,
+      "cyclomaticComplexity": 7,
+      "nloc": 23,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/features/transfers/lib/mutation-service.ts::save::1",
+      "file": "apps/mobile/features/transfers/lib/mutation-service.ts",
+      "function": "save",
+      "occurrence": 1,
+      "cyclomaticComplexity": 6,
+      "nloc": 21,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/features/transfers/lib/repository.ts::getTransfersPaginated::1",
+      "file": "apps/mobile/features/transfers/lib/repository.ts",
+      "function": "getTransfersPaginated",
+      "occurrence": 1,
+      "cyclomaticComplexity": 1,
+      "nloc": 15,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/mutations/index.ts::applyCommand::1",
+      "file": "apps/mobile/mutations/index.ts",
+      "function": "applyCommand",
+      "occurrence": 1,
+      "cyclomaticComplexity": 20,
+      "nloc": 44,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/mutations/index.ts::applyTransactionSave::1",
+      "file": "apps/mobile/mutations/index.ts",
+      "function": "applyTransactionSave",
+      "occurrence": 1,
+      "cyclomaticComplexity": 45,
+      "nloc": 190,
+      "parameterCount": 39
+    },
+    {
+      "key": "apps/mobile/plugins/withFidyWidget.js::addWidgetExtensionTarget::1",
+      "file": "apps/mobile/plugins/withFidyWidget.js",
+      "function": "addWidgetExtensionTarget",
+      "occurrence": 1,
+      "cyclomaticComplexity": 13,
+      "nloc": 109,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/plugins/withFidyWidget.js::buildSettings::1",
+      "file": "apps/mobile/plugins/withFidyWidget.js",
+      "function": "buildSettings",
+      "occurrence": 1,
+      "cyclomaticComplexity": 2,
+      "nloc": 36,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/plugins/withFidyWidget.js::reconcileBuildSettings::1",
+      "file": "apps/mobile/plugins/withFidyWidget.js",
+      "function": "reconcileBuildSettings",
+      "occurrence": 1,
+      "cyclomaticComplexity": 10,
+      "nloc": 22,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/shared/db/supabase.ts::getSupabase::1",
+      "file": "apps/mobile/shared/db/supabase.ts",
+      "function": "getSupabase",
+      "occurrence": 1,
+      "cyclomaticComplexity": 8,
+      "nloc": 19,
+      "parameterCount": 0
+    },
+    {
+      "key": "apps/mobile/shared/effect/runtime.ts::>::6",
+      "file": "apps/mobile/shared/effect/runtime.ts",
+      "function": ">",
+      "occurrence": 6,
+      "cyclomaticComplexity": 1,
+      "nloc": 7,
+      "parameterCount": 4
+    },
+    {
+      "key": "apps/mobile/shared/lib/format-date.ts::parseIsoDate::1",
+      "file": "apps/mobile/shared/lib/format-date.ts",
+      "function": "parseIsoDate",
+      "occurrence": 1,
+      "cyclomaticComplexity": 7,
+      "nloc": 8,
+      "parameterCount": 1
+    },
+    {
+      "key": "apps/mobile/shared/types/assertions.ts::assertNonEmptyString::1",
+      "file": "apps/mobile/shared/types/assertions.ts",
+      "function": "assertNonEmptyString",
+      "occurrence": 1,
+      "cyclomaticComplexity": 28,
+      "nloc": 68,
+      "parameterCount": 4
+    }
+  ]
+}
