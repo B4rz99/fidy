@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vitest";
+import { OUTSIDE_FIDY_LABEL, type StoredTransfer } from "@/features/transfers/lib/build-transfer";
 import {
   getTransferActivityCopy,
   getTransferSideLabel,
   isTransferSideSelected,
 } from "@/features/transfers/lib/presentation";
-import { OUTSIDE_FIDY_LABEL, type StoredTransfer } from "@/features/transfers/lib/build-transfer";
+import type { TranslateFn } from "@/shared/i18n";
 import type { CopAmount, FinancialAccountId, TransferId, UserId } from "@/shared/types/branded";
 
 const USER_ID = "user-1" as UserId;
 const CHECKING_ID = "fa-checking" as FinancialAccountId;
 const CARD_ID = "fa-card" as FinancialAccountId;
-const t = (key: string, params?: Record<string, string>) =>
+const t: TranslateFn = (key, params) =>
   params
     ? `${key}:${Object.entries(params)
         .map(([paramKey, value]) => `${paramKey}=${value}`)
@@ -35,18 +36,22 @@ function makeTransfer(overrides: Partial<StoredTransfer> = {}): StoredTransfer {
 
 describe("transfer presentation", () => {
   it("uses account names when the side is tracked and falls back to unknown", () => {
-    expect(getTransferSideLabel({ kind: "account", accountId: CHECKING_ID }, { [CHECKING_ID]: "Checking" }, t)).toBe(
-      "Checking"
-    );
+    expect(
+      getTransferSideLabel(
+        { kind: "account", accountId: CHECKING_ID },
+        { [CHECKING_ID]: "Checking" },
+        t
+      )
+    ).toBe("Checking");
     expect(getTransferSideLabel({ kind: "account", accountId: CARD_ID }, {}, t)).toBe(
       "common.unknown"
     );
   });
 
   it("localizes Outside Fidy and preserves custom external labels", () => {
-    expect(
-      getTransferSideLabel({ kind: "external", label: OUTSIDE_FIDY_LABEL }, {}, t)
-    ).toBe("transfers.outsideFidy");
+    expect(getTransferSideLabel({ kind: "external", label: OUTSIDE_FIDY_LABEL }, {}, t)).toBe(
+      "transfers.outsideFidy"
+    );
     expect(getTransferSideLabel({ kind: "external", label: "Wallet in mom's house" }, {}, t)).toBe(
       "Wallet in mom's house"
     );
@@ -100,9 +105,9 @@ describe("transfer presentation", () => {
     expect(isTransferSideSelected({ kind: "account", accountId: CHECKING_ID }, CHECKING_ID)).toBe(
       true
     );
-    expect(isTransferSideSelected({ kind: "external", label: OUTSIDE_FIDY_LABEL }, CHECKING_ID)).toBe(
-      false
-    );
+    expect(
+      isTransferSideSelected({ kind: "external", label: OUTSIDE_FIDY_LABEL }, CHECKING_ID)
+    ).toBe(false);
     expect(isTransferSideSelected(null, CHECKING_ID)).toBe(false);
   });
 });
