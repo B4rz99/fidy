@@ -2,101 +2,87 @@
 import { captureError, captureWarning } from "@/shared/lib";
 import type { RawEmail } from "../schema";
 
-export async function fetchGmailEmailsWithToken(
-  token: string,
-  since: string,
-  senderEmails: string[]
-): Promise<RawEmail[]> {
-  const epoch = Math.floor(new Date(since).getTime() / 1000);
-  const fromQuery = senderEmails.map((e) => `from:${e}`).join(" OR ");
-  const query = `(${fromQuery}) after:${epoch}`;
-
-  const listResponse = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-
-  if (!listResponse.ok) {
-    captureWarning("gmail_api_list_failed", { httpStatus: listResponse.status });
-    return [];
-  }
-
-  const listData = (await listResponse.json()) as { messages?: { id: string }[] };
-  const messageIds: string[] = (listData.messages ?? []).map((m) => m.id);
-
-  if (messageIds.length === 0) return [];
-
-  const Concurrency = 5;
-  const chunks = Array.from({ length: Math.ceil(messageIds.length / Concurrency) }, (_, i) =>
-    messageIds.slice(i * Concurrency, (i + 1) * Concurrency)
-  );
-
-  // Batches must be sequential to respect Gmail API rate limits.
-  const emails = await chunks.reduce<Promise<RawEmail[]>>(async (accPromise, batch) => {
-    const acc = await accPromise;
-    const results = await Promise.allSettled(
-      batch.map(async (id) => {
-        const msgResponse = await fetch(
-          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (!msgResponse.ok) return null;
-        const msg = (await msgResponse.json()) as { payload: GmailPayload };
-        return parseGmailMessage(id, msg);
-      })
-    );
-    const fulfilled = results
-      .filter((r): r is PromiseFulfilledResult<RawEmail | null> => r.status === "fulfilled")
-      .map((r) => r.value)
-      .filter((v): v is RawEmail => v != null);
-    return [...acc, ...fulfilled];
-  }, Promise.resolve([]));
-
-  return emails;
-}
-
 type GmailHeader = { name: string; value: string };
 type GmailPart = { mimeType: string; body?: { data?: string }; parts?: GmailPart[] };
 type GmailPayload = { headers: GmailHeader[]; parts?: GmailPart[]; body?: { data?: string } };
+type GmailListResponse = { messages?: { id: string }[] };
+type GmailMessageResponse = { payload: GmailPayload };
+type GmailJsonResult<T> = { ok: true; data: T } | { ok: false; status: number };
 
-function getHeader(headers: GmailHeader[], name: string): string {
-  return headers.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value ?? "";
-}
+const GMAIL_MESSAGES_URL = "https://gmail.googleapis.com/gmail/v1/users/me/messages";
+const GMAIL_BATCH_SIZE = 5;
 
-function extractBodyText(payload: GmailPayload): string {
-  // Try top-level body first
+const toAuthorizationHeaders = (token: string) => ({ Authorization: `Bearer ${token}` });
+
+const fetchGmailJson = async <T>(url: string, token: string): Promise<GmailJsonResult<T>> => {
+  const response = await fetch(url, { headers: toAuthorizationHeaders(token) });
+  if (!response.ok) {
+    return { ok: false, status: response.status };
+  }
+
+  return { ok: true, data: (await response.json()) as T };
+};
+
+const toMessageQuery = (since: string, senderEmails: string[]): string => {
+  const epoch = Math.floor(new Date(since).getTime() / 1000);
+  const senders = senderEmails.map((email) => `from:${email}`).join(" OR ");
+  return `(${senders}) after:${epoch}`;
+};
+
+const toListUrl = (query: string): string => `${GMAIL_MESSAGES_URL}?q=${encodeURIComponent(query)}`;
+
+const toMessageUrl = (id: string): string => `${GMAIL_MESSAGES_URL}/${id}?format=full`;
+
+const toMessageIds = (listData: GmailListResponse): string[] =>
+  (listData.messages ?? []).map((message) => message.id);
+
+const chunkMessageIds = (messageIds: string[]): string[][] =>
+  Array.from({ length: Math.ceil(messageIds.length / GMAIL_BATCH_SIZE) }, (_, index) =>
+    messageIds.slice(index * GMAIL_BATCH_SIZE, (index + 1) * GMAIL_BATCH_SIZE)
+  );
+
+const isFulfilled = <T>(result: PromiseSettledResult<T>): result is PromiseFulfilledResult<T> =>
+  result.status === "fulfilled";
+
+const isNonNull = <T>(value: T | null): value is T => value != null;
+
+const getHeader = (headers: GmailHeader[], name: string): string =>
+  headers.find((header) => header.name.toLowerCase() === name.toLowerCase())?.value ?? "";
+
+const getMatchingPartData = (part: GmailPart, mime: string): string | null =>
+  part.mimeType === mime && part.body?.data ? decodeBase64Url(part.body.data) : null;
+
+const getNestedPartData = (part: GmailPart, mime: string): string | null =>
+  part.parts ? findPartByMime(part.parts, mime) : null;
+
+const findPartByMime = (parts: GmailPart[], mime: string): string | null => {
+  for (const part of parts) {
+    const directMatch = getMatchingPartData(part, mime);
+    if (directMatch) return directMatch;
+
+    const nestedMatch = getNestedPartData(part, mime);
+    if (nestedMatch) return nestedMatch;
+  }
+
+  return null;
+};
+
+const extractBodyText = (payload: GmailPayload): string => {
   if (payload.body?.data) {
     return decodeBase64Url(payload.body.data);
   }
 
   if (!payload.parts) return "";
 
-  // Prefer text/plain
   const plain = findPartByMime(payload.parts, "text/plain");
   if (plain) return plain;
 
-  // Fall back to text/html with tags stripped (bank emails are often HTML-only)
   const html = findPartByMime(payload.parts, "text/html");
-  if (html) return stripHtml(html);
+  return html ? stripHtml(html) : "";
+};
 
-  return "";
-}
-
-function findPartByMime(parts: GmailPart[], mime: string): string | null {
-  for (const part of parts) {
-    if (part.mimeType === mime && part.body?.data) {
-      return decodeBase64Url(part.body.data);
-    }
-    if (part.parts) {
-      const nested = findPartByMime(part.parts, mime);
-      if (nested) return nested;
-    }
-  }
-  return null;
-}
-
-function stripHtml(html: string): string {
-  return html
+const stripHtml = (html: string): string =>
+  html
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
     .replace(/<[^>]+>/g, " ")
@@ -107,9 +93,8 @@ function stripHtml(html: string): string {
     .replace(/&#?\w+;/gi, "")
     .replace(/\s+/g, " ")
     .trim();
-}
 
-function decodeBase64Url(data: string): string {
+const decodeBase64Url = (data: string): string => {
   try {
     const base64 = data.replace(/-/g, "+").replace(/_/g, "/");
     const binary = atob(base64);
@@ -119,31 +104,79 @@ function decodeBase64Url(data: string): string {
     captureError(error);
     return "";
   }
-}
+};
 
-function parseGmailMessage(id: string, msg: { payload: GmailPayload }): RawEmail | null {
+const normalizeSender = (from: string): string => from.match(/<(.+?)>/)?.[1] ?? from;
+
+const normalizeReceivedAt = (date: string): string => {
+  const parsedDate = new Date(date);
+  return Number.isNaN(parsedDate.getTime()) ? new Date().toISOString() : parsedDate.toISOString();
+};
+
+const fetchGmailMessage = async (token: string, id: string): Promise<RawEmail | null> => {
+  const result = await fetchGmailJson<GmailMessageResponse>(toMessageUrl(id), token);
+  return result.ok ? parseGmailMessage(id, result.data) : null;
+};
+
+const toBatchEmails = (results: PromiseSettledResult<RawEmail | null>[]): RawEmail[] =>
+  results
+    .filter(isFulfilled)
+    .map((result) => result.value)
+    .filter(isNonNull);
+
+const collectBatchEmails = async (token: string, batch: string[]): Promise<RawEmail[]> =>
+  toBatchEmails(await Promise.allSettled(batch.map((id) => fetchGmailMessage(token, id))));
+
+const appendBatchEmails = async (
+  token: string,
+  accPromise: Promise<RawEmail[]>,
+  batch: string[]
+): Promise<RawEmail[]> => {
+  const acc = await accPromise;
+  const emails = await collectBatchEmails(token, batch);
+  return [...acc, ...emails];
+};
+
+const collectSequentialEmails = (token: string, messageIds: string[]): Promise<RawEmail[]> =>
+  chunkMessageIds(messageIds).reduce<Promise<RawEmail[]>>(
+    // Batches must be sequential to respect Gmail API rate limits.
+    (accPromise, batch) => appendBatchEmails(token, accPromise, batch),
+    Promise.resolve([])
+  );
+
+export const fetchGmailEmailsWithToken = async (
+  token: string,
+  since: string,
+  senderEmails: string[]
+): Promise<RawEmail[]> => {
+  const listResult = await fetchGmailJson<GmailListResponse>(
+    toListUrl(toMessageQuery(since, senderEmails)),
+    token
+  );
+
+  if (!listResult.ok) {
+    captureWarning("gmail_api_list_failed", { httpStatus: listResult.status });
+    return [];
+  }
+
+  const messageIds = toMessageIds(listResult.data);
+  return messageIds.length === 0 ? [] : collectSequentialEmails(token, messageIds);
+};
+
+const parseGmailMessage = (id: string, msg: GmailMessageResponse): RawEmail | null => {
   const headers = msg.payload.headers;
   const from = getHeader(headers, "From");
   const subject = getHeader(headers, "Subject");
-  const dateStr = getHeader(headers, "Date");
-  const body = extractBodyText(msg.payload);
-
   if (!from || !subject) return null;
 
-  const emailMatch = from.match(/<(.+?)>/);
-  const emailAddress = emailMatch?.[1] ?? from;
-
-  const parsedDate = new Date(dateStr);
-  const receivedAt = Number.isNaN(parsedDate.getTime())
-    ? new Date().toISOString()
-    : parsedDate.toISOString();
-
+  const body = extractBodyText(msg.payload);
+  const receivedAt = normalizeReceivedAt(getHeader(headers, "Date"));
   return {
     externalId: id,
-    from: emailAddress,
+    from: normalizeSender(from),
     subject,
     body,
     receivedAt,
     provider: "gmail",
   };
-}
+};

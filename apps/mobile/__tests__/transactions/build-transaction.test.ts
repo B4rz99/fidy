@@ -29,7 +29,12 @@ describe("buildTransaction", () => {
   };
 
   test("returns success with valid input", () => {
-    const result = buildTransaction(validInput, "user-1" as UserId, "tx-1" as TransactionId, NOW);
+    const result = buildTransaction({
+      input: validInput,
+      userId: "user-1" as UserId,
+      id: "tx-1" as TransactionId,
+      now: NOW,
+    });
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.transaction.id).toBe("tx-1");
@@ -44,44 +49,44 @@ describe("buildTransaction", () => {
   });
 
   test("returns error for zero amount", () => {
-    const result = buildTransaction(
-      { ...validInput, digits: "0" },
-      "user-1" as UserId,
-      "tx-2" as TransactionId,
-      NOW
-    );
+    const result = buildTransaction({
+      input: { ...validInput, digits: "0" },
+      userId: "user-1" as UserId,
+      id: "tx-2" as TransactionId,
+      now: NOW,
+    });
     expect(result.success).toBe(false);
   });
 
   test("defaults categoryId to 'other' when null", () => {
-    const result = buildTransaction(
-      { ...validInput, categoryId: null },
-      "user-1" as UserId,
-      "tx-3" as TransactionId,
-      NOW
-    );
+    const result = buildTransaction({
+      input: { ...validInput, categoryId: null },
+      userId: "user-1" as UserId,
+      id: "tx-3" as TransactionId,
+      now: NOW,
+    });
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.transaction.categoryId).toBe("other");
   });
 
   test("returns error for non-numeric digits", () => {
-    const result = buildTransaction(
-      { ...validInput, digits: "abc" },
-      "user-1" as UserId,
-      "tx-4" as TransactionId,
-      NOW
-    );
+    const result = buildTransaction({
+      input: { ...validInput, digits: "abc" },
+      userId: "user-1" as UserId,
+      id: "tx-4" as TransactionId,
+      now: NOW,
+    });
     expect(result.success).toBe(false);
   });
 
   test("returns error when the owning account is missing", () => {
-    const result = buildTransaction(
-      { ...validInput, accountId: null },
-      "user-1" as UserId,
-      "tx-5" as TransactionId,
-      NOW
-    );
+    const result = buildTransaction({
+      input: { ...validInput, accountId: null },
+      userId: "user-1" as UserId,
+      id: "tx-5" as TransactionId,
+      now: NOW,
+    });
     expect(result.success).toBe(false);
   });
 });
