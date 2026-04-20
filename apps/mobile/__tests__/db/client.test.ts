@@ -1,11 +1,12 @@
 import { getRandomBytes } from "expo-crypto";
 import { deleteItemAsync, getItem, setItem } from "expo-secure-store";
-import { openDatabaseSync } from "expo-sqlite";
+import { deleteDatabaseAsync, openDatabaseSync } from "expo-sqlite";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getDb, resetDb, tryGetDb } from "@/shared/db/client";
+import { getDb, resetDb, resetDbForUser, tryGetDb } from "@/shared/db/client";
 
 vi.mock("expo-sqlite", () => ({
   openDatabaseSync: vi.fn(() => ({ execSync: vi.fn(), closeSync: vi.fn() })),
+  deleteDatabaseAsync: vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock("drizzle-orm/expo-sqlite", () => ({
@@ -110,6 +111,22 @@ describe("getDb", () => {
 
     getDb("user-456");
     expect(openDatabaseSync).toHaveBeenCalledTimes(2);
+  });
+
+  it("resetDbForUser deletes the user-scoped database", async () => {
+    await resetDbForUser("user-123");
+
+    expect(deleteDatabaseAsync).toHaveBeenCalledWith("fidy-user-123.db");
+  });
+
+  it("resetDbForUser ignores missing database errors for fresh users", async () => {
+    vi.mocked(deleteDatabaseAsync).mockRejectedValueOnce(
+      new Error(
+        "Calling the 'deleteDatabaseAsync' function has failed\n→ Caused by: Database /tmp/fidy-user-123.db not found"
+      )
+    );
+
+    await expect(resetDbForUser("user-123")).resolves.toBeUndefined();
   });
 
   it("auto-resets when called with a different userId", () => {

@@ -719,6 +719,93 @@ const en = {
     logout: "Log Out",
     logoutConfirmTitle: "Log Out",
     logoutConfirmMessage: "Are you sure you want to log out?",
+    localQaTitle: "Local QA",
+    localQaDescription: "Reset or switch local-only QA scenarios without touching a real account.",
+    localQaReset: "Reset current scenario",
+    localQaOpenTools: "Open QA tools",
+    localQaExit: "Exit local QA",
+  },
+
+  qaTools: {
+    title: "QA Tools",
+    subtitle: "Seed deterministic local-only scenarios and jump straight to the screen you want.",
+    unavailable: "Local QA tools are only available in development builds.",
+    currentProfile: "Current profile: %{profile}",
+    noActiveProfile: "No local QA profile is active.",
+    preparing: "Preparing local QA scenario...",
+    startFailed: "Could not start the selected QA scenario.",
+    scenariosTitle: "Scenarios",
+    flagsTitle: "Feature flags",
+    actionsTitle: "Reset tools",
+    openTitle: "Open screen",
+    openWithCurrentProfile: "Open current profile entry point",
+    logsTitle: "Log inspector",
+    logsEmpty: "No QA logs captured yet.",
+    networkTitle: "Network inspector",
+    networkEmpty: "No network requests captured yet.",
+    flagOn: "ON",
+    flagOff: "OFF",
+    banner: "QA profile: %{profile} · offline: %{offline}",
+    bannerOfflineOn: "simulated",
+    bannerOfflineOff: "live",
+    profiles: {
+      default: {
+        title: "Default",
+        description: "One default cash account and onboarding complete.",
+      },
+      empty: {
+        title: "Empty",
+        description: "No financial data and onboarding incomplete.",
+      },
+      "two-accounts": {
+        title: "Two accounts",
+        description: "Cash and Bancolombia with no seeded activity.",
+      },
+      "transfer-ready": {
+        title: "Transfer ready",
+        description: "Two tracked accounts plus seeded transactions and one transfer.",
+      },
+      "transfer-conflict": {
+        title: "Transfer conflict",
+        description: "Two tracked accounts with a prefilled same-account transfer conflict.",
+      },
+    },
+    flags: {
+      networkInspectorEnabled: {
+        title: "Network inspector",
+        description: "Capture recent fetch requests with status and timing data.",
+      },
+      logInspectorEnabled: {
+        title: "Log inspector",
+        description: "Capture QA-scoped app events from auth, seed, and harness boundaries.",
+      },
+      simulateOffline: {
+        title: "Simulate offline",
+        description: "Force fetch requests to fail so you can test offline and error states.",
+      },
+      showQaBanner: {
+        title: "Show QA banner",
+        description: "Render a small on-device banner with the active QA profile and network mode.",
+      },
+    },
+    actions: {
+      resetCurrentScenario: "Reset current scenario",
+      resetFlags: "Reset feature flags",
+      clearLogs: "Clear QA logs",
+      clearNetwork: "Clear network events",
+      exitLocalQa: "Exit local QA",
+    },
+    open: {
+      home: "Home",
+      addChooser: "Add chooser",
+      onboarding: "Onboarding",
+      addTransaction: "Add transaction",
+      addTransfer: "Add transfer",
+      transferConflict: "Transfer conflict preset",
+      financialAccounts: "Financial accounts",
+      profile: "Profile",
+      qaTools: "QA tools",
+    },
   },
 
   // Notification Capture

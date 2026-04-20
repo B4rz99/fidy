@@ -2,7 +2,7 @@ import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import * as SplashScreen from "expo-splash-screen";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { OnboardingAccountReviewStep } from "@/features/account-suggestions";
+import { OnboardingAccountReviewStep } from "@/features/account-suggestions/routes.public";
 import { useOptionalUserId } from "@/features/auth";
 import { initializeBudgetSession } from "@/features/budget";
 import { initializeEmailCaptureSession, loadEmailAccounts } from "@/features/email-capture";

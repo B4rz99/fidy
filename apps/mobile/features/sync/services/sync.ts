@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/useNamingConvention: snake_case matches Supabase Postgres column names
-import { refreshTransactions, upsertTransaction } from "@/features/transactions";
+import { upsertTransaction } from "@/features/transactions/lib/repository";
+import { refreshTransactions } from "@/features/transactions/store";
 import { enqueueSync } from "@/shared/db";
 import { liveAppNetwork } from "@/shared/effect/network";
 import { liveAppSupabase } from "@/shared/effect/supabase";

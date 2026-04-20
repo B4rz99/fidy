@@ -1,1 +1,1 @@
-export { CreateSuggestedAccountScreen as default } from "@/features/account-suggestions";
+export { CreateSuggestedAccountScreen as default } from "@/features/account-suggestions/routes.public";

@@ -41,40 +41,45 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   upsertTransaction: (...args: any[]) => mockUpsertTransaction(...args),
 }));
 
-vi.mock("@/features/account-suggestions", () => ({
+vi.mock("@/features/account-suggestions/lib/dismissals-repository", () => ({
   getAccountSuggestionDismissalById: (...args: any[]) =>
     mockGetAccountSuggestionDismissalById(...args),
   upsertAccountSuggestionDismissal: (...args: any[]) =>
     mockUpsertAccountSuggestionDismissal(...args),
 }));
 
-vi.mock("@/features/financial-accounts", () => ({
+vi.mock("@/features/financial-accounts/lib/default-account", () => ({
   buildDefaultFinancialAccountId: (userId: string) => `fa-default-${userId}`,
+}));
+
+vi.mock("@/features/financial-accounts/lib/repository", () => ({
   ensureDefaultFinancialAccount: (...args: any[]) => mockEnsureDefaultFinancialAccount(...args),
   getFinancialAccountById: (...args: any[]) => mockGetFinancialAccountById(...args),
   upsertFinancialAccount: (...args: any[]) => mockUpsertFinancialAccount(...args),
+}));
+
+vi.mock("@/features/financial-accounts/lib/identifiers-repository", () => ({
   getFinancialAccountIdentifierById: (...args: any[]) =>
     mockGetFinancialAccountIdentifierById(...args),
   upsertFinancialAccountIdentifier: (...args: any[]) =>
     mockUpsertFinancialAccountIdentifier(...args),
+}));
+
+vi.mock("@/features/financial-accounts/lib/opening-balances-repository", () => ({
   getOpeningBalanceById: (...args: any[]) => mockGetOpeningBalanceById(...args),
   getOpeningBalanceForAccount: (...args: any[]) => mockGetOpeningBalanceForAccount(...args),
   upsertOpeningBalance: (...args: any[]) => mockUpsertOpeningBalance(...args),
 }));
 
-vi.mock("@/features/transfers", () => ({
+vi.mock("@/features/transfers/lib/repository", () => ({
   getTransferById: (...args: any[]) => mockGetTransferById(...args),
   upsertTransfer: (...args: any[]) => mockUpsertTransfer(...args),
 }));
 
-vi.mock("@/features/capture-evidence", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/features/capture-evidence")>();
-  return {
-    ...actual,
-    getCaptureEvidenceById: (...args: any[]) => mockGetCaptureEvidenceById(...args),
-    upsertCaptureEvidence: (...args: any[]) => mockUpsertCaptureEvidence(...args),
-  };
-});
+vi.mock("@/features/capture-evidence/lib/repository", () => ({
+  getCaptureEvidenceById: (...args: any[]) => mockGetCaptureEvidenceById(...args),
+  upsertCaptureEvidence: (...args: any[]) => mockUpsertCaptureEvidence(...args),
+}));
 
 const mockDb = {} as any;
 const mockUpsert = vi.fn().mockReturnValue({ error: null });

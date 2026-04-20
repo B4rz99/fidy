@@ -4,19 +4,26 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   getAccountSuggestionDismissalById,
   upsertAccountSuggestionDismissal,
-} from "@/features/account-suggestions";
-import { getBudgetById } from "@/features/budget";
-import { getCaptureEvidenceById, upsertCaptureEvidence } from "@/features/capture-evidence";
+} from "@/features/account-suggestions/lib/dismissals-repository";
+import { getBudgetById } from "@/features/budget/lib/repository";
 import {
-  buildDefaultFinancialAccountId,
-  getFinancialAccountById,
+  getCaptureEvidenceById,
+  upsertCaptureEvidence,
+} from "@/features/capture-evidence/lib/repository";
+import { buildDefaultFinancialAccountId } from "@/features/financial-accounts/lib/default-account";
+import {
   getFinancialAccountIdentifierById,
-  getOpeningBalanceById,
-  upsertFinancialAccount,
   upsertFinancialAccountIdentifier,
+} from "@/features/financial-accounts/lib/identifiers-repository";
+import {
+  getOpeningBalanceById,
   upsertOpeningBalance,
-} from "@/features/financial-accounts";
-import { getContributionById, getGoalById } from "@/features/goals";
+} from "@/features/financial-accounts/lib/opening-balances-repository";
+import {
+  getFinancialAccountById,
+  upsertFinancialAccount,
+} from "@/features/financial-accounts/lib/repository";
+import { getContributionById, getGoalById } from "@/features/goals/lib/repository";
 import {
   clearSyncEntries,
   getQueuedSyncEntries,
@@ -24,8 +31,8 @@ import {
   getTransactionById,
   setSyncMeta,
   upsertTransaction,
-} from "@/features/transactions";
-import { getTransferById, upsertTransfer } from "@/features/transfers";
+} from "@/features/transactions/lib/repository";
+import { getTransferById, upsertTransfer } from "@/features/transfers/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import {
   captureError,

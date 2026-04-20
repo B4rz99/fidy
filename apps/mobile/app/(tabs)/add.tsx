@@ -14,6 +14,7 @@ function AddEntryCard({
   iconBackground,
   iconColor,
   onPress,
+  testID,
 }: {
   readonly icon: LucideIcon;
   readonly title: string;
@@ -25,6 +26,8 @@ function AddEntryCard({
   readonly iconBackground: string;
   readonly iconColor: string;
   readonly onPress: () => void;
+  // biome-ignore lint/style/useNamingConvention: React Native prop name
+  readonly testID: string;
 }) {
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
@@ -34,6 +37,7 @@ function AddEntryCard({
   return (
     <Pressable
       onPress={onPress}
+      testID={testID}
       style={{
         borderRadius: 20,
         borderWidth: 1,
@@ -182,6 +186,7 @@ export default function AddEntryChooserScreen() {
           badgeBackground={peachLight}
           iconBackground="#F7EEE8"
           iconColor={primary}
+          testID="add-chooser.transaction"
           onPress={() => router.push("/add-transaction" as never)}
         />
 
@@ -195,6 +200,7 @@ export default function AddEntryChooserScreen() {
           badgeBackground="#E8F4D0"
           iconBackground="#F4F8EA"
           iconColor={accentGreen}
+          testID="add-chooser.transfer"
           onPress={() => router.push("/add-transfer" as never)}
         />
 

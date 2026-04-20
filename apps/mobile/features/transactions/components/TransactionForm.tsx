@@ -112,6 +112,7 @@ export function TransactionForm({
           <Pressable
             onPress={onClose}
             hitSlop={12}
+            testID="transaction-form.close"
             accessibilityRole="button"
             accessibilityLabel={t("common.close")}
           >
@@ -190,6 +191,7 @@ export function TransactionForm({
                 return (
                   <Pressable
                     key={account.id}
+                    testID={`transaction-form.account.${account.id}`}
                     style={{
                       minHeight: 36,
                       borderRadius: 12,
@@ -223,6 +225,7 @@ export function TransactionForm({
         {/* Description + Date */}
         <View style={{ flexDirection: "row", gap: 8 }}>
           <TextInput
+            testID="transaction-form.description"
             style={{
               flex: 1,
               height: 36,
@@ -243,6 +246,7 @@ export function TransactionForm({
             maxLength={200}
           />
           <View
+            testID="transaction-form.date"
             style={{
               height: 36,
               borderRadius: 10,
@@ -279,6 +283,7 @@ export function TransactionForm({
       >
         {extraActionLabel && onExtraAction ? (
           <Pressable
+            testID="transaction-form.extra-action"
             style={{
               height: 44,
               borderRadius: 12,
@@ -309,6 +314,7 @@ export function TransactionForm({
         <View style={{ flexDirection: "row", gap: 8 }}>
           {onDelete && (
             <Pressable
+              testID="transaction-form.delete"
               style={{
                 height: 48,
                 borderRadius: 12,
@@ -333,6 +339,7 @@ export function TransactionForm({
             </Pressable>
           )}
           <Pressable
+            testID="transaction-form.save"
             style={{
               flex: 1,
               height: 48,

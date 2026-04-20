@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
-import { useAuthStore } from "@/features/auth";
+import { useAuthIdentity, useAuthMode, useAuthStore } from "@/features/auth";
+import { LocalQaProfileTools } from "@/features/qa/routes.public";
 import { ScreenLayout } from "@/shared/components";
 import { Brain, LogOut } from "@/shared/components/icons";
 import { Alert, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
@@ -10,10 +11,8 @@ export function ProfileScreen() {
   const router = useRouter();
   const { t } = useTranslation();
 
-  const session = useAuthStore((s) => s.session);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- user_metadata.full_name is typed as any by Supabase
-  const fullName: string = session?.user.user_metadata.full_name ?? "";
-  const email = session?.user.email ?? "";
+  const { fullName, email } = useAuthIdentity();
+  const authMode = useAuthMode();
   const initials = getUserInitials(fullName, email);
 
   const accentGreen = useThemeColor("accentGreen");
@@ -107,12 +106,15 @@ export function ProfileScreen() {
             </Text>
           </Pressable>
 
-          {/* Delete Account Text Button */}
-          <Pressable onPress={handleDeleteAccount}>
-            <Text className="font-poppins text-sm text-accent-red dark:text-accent-red-dark">
-              {t("settings.deleteAccount")}
-            </Text>
-          </Pressable>
+          <LocalQaProfileTools />
+
+          {authMode === "remote" ? (
+            <Pressable onPress={handleDeleteAccount}>
+              <Text className="font-poppins text-sm text-accent-red dark:text-accent-red-dark">
+                {t("settings.deleteAccount")}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       </ScrollView>
     </ScreenLayout>

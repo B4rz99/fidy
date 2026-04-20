@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import { Stack, useRouter } from "expo-router";
 import { openBrowserAsync } from "expo-web-browser";
-import { useAuthStore } from "@/features/auth";
+import { useAuthIdentity } from "@/features/auth";
 import { useEmailCaptureStore } from "@/features/email-capture";
 import { ScreenLayout, SettingsSection, TAB_BAR_CLEARANCE } from "@/shared/components";
 import {
@@ -38,10 +38,7 @@ export function SettingsScreen() {
   const router = useRouter();
   const { t, locale } = useTranslation();
 
-  const session = useAuthStore((s) => s.session);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- user_metadata.full_name is typed as any by Supabase
-  const fullName: string = session?.user.user_metadata.full_name ?? "";
-  const email = session?.user.email ?? "";
+  const { fullName, email } = useAuthIdentity();
   const initials = getUserInitials(fullName, email);
 
   const connectedCount = useEmailCaptureStore((s) => s.accounts.length);

@@ -29,8 +29,8 @@ export const markOnboardingComplete = async (): Promise<void> => {
 };
 
 /** Clears the local onboarding flag from SecureStore only (used on sign-out). */
-export const clearOnboardingFromStore = (): void => {
-  void SecureStore.deleteItemAsync(SECURE_STORE_KEY).catch(() => undefined);
+export const clearOnboardingFromStore = async (): Promise<void> => {
+  await SecureStore.deleteItemAsync(SECURE_STORE_KEY).catch(() => undefined);
 };
 
 /** Clears onboarding from both SecureStore and Supabase metadata (dev reset only). */

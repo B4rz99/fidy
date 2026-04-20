@@ -1,5 +1,6 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GoogleIcon, MicrosoftIcon, OAuthButton, useAuthStore } from "@/features/auth";
+import { LocalQaLoginButton } from "@/features/qa/routes.public";
 import { FidyLogo } from "@/shared/components";
 import { ActivityIndicator, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
@@ -32,6 +33,7 @@ export default function LoginScreen() {
             <OAuthButton
               icon={<GoogleIcon />}
               label={t("login.continueWithGoogle")}
+              testID="login.google"
               onPress={() => {
                 void useAuthStore.getState().signIn("google");
               }}
@@ -41,12 +43,14 @@ export default function LoginScreen() {
             <OAuthButton
               icon={<MicrosoftIcon />}
               label={t("login.continueWithMicrosoft")}
+              testID="login.microsoft"
               onPress={() => {
                 void useAuthStore.getState().signIn("azure");
               }}
               containerClassName="bg-login-ms dark:bg-login-ms-dark"
               textClassName="text-primary dark:text-primary-dark"
             />
+            <LocalQaLoginButton />
           </View>
         )}
 

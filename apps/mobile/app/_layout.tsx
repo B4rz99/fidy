@@ -13,7 +13,6 @@ import * as Notifications from "expo-notifications";
 import { type Href, Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useMemo } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   cleanupExpiredChatSessions,
@@ -26,7 +25,12 @@ import {
   subscribeAnalyticsToTransactions,
   useAnalyticsStore,
 } from "@/features/analytics";
-import { useAuthStore, useOptionalUserId } from "@/features/auth";
+import {
+  useAuthMode,
+  useAuthStore,
+  useEffectiveOnboardingComplete,
+  useOptionalUserId,
+} from "@/features/auth";
 import { registerBackgroundTask } from "@/features/background-fetch";
 import {
   initializeBudgetSession,
@@ -60,11 +64,8 @@ import {
   useGoalStore,
 } from "@/features/goals";
 import { initializeNotificationStore, registerPushToken } from "@/features/notifications";
-import {
-  clearOnboardingFromStore,
-  getOnboardingCompleteFromStore,
-  isOnboardingComplete,
-} from "@/features/onboarding";
+import { isLocalQaAvailable, useQaDevtoolsRuntime } from "@/features/qa";
+import { QaStatusBanner } from "@/features/qa/routes.public";
 import { useSettingsStore } from "@/features/settings";
 import { loadSyncConflicts, useSync } from "@/features/sync";
 import {
@@ -102,7 +103,15 @@ if (SENTRY_DSN) {
   initSentry(SENTRY_DSN);
 }
 
-function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
+function AuthenticatedShell({
+  db,
+  userId,
+  enableRemoteEffects,
+}: {
+  db: AnyDb;
+  userId: UserId;
+  enableRemoteEffects: boolean;
+}) {
   const router = useRouter();
   const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
 
@@ -115,7 +124,9 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
           if (defaultAccount) {
             useTransactionStore.getState().setDefaultAccountId(defaultAccount.id);
           }
-          initializeEmailCaptureSession(userId);
+          if (enableRemoteEffects) {
+            initializeEmailCaptureSession(userId);
+          }
           initializeChatSession(userId);
           initializeCalendarSession(userId);
           initializeBudgetSession(userId);
@@ -130,9 +141,11 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
           loadAnalyticsForUser(db, userId).catch(
             handleRecoverableError("Failed to load analytics")
           );
-          loadEmailAccounts(db, userId).catch(
-            handleRecoverableError("Failed to load email accounts")
-          );
+          if (enableRemoteEffects) {
+            loadEmailAccounts(db, userId).catch(
+              handleRecoverableError("Failed to load email accounts")
+            );
+          }
           refreshCategories(db, userId).catch(
             handleRecoverableError("Failed to load user categories")
           );
@@ -150,11 +163,13 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
             .getState()
             .hydrate()
             .catch(handleRecoverableError("Failed to hydrate settings"));
-          void registerBackgroundTask().catch(captureError);
+          if (enableRemoteEffects) {
+            void registerBackgroundTask().catch(captureError);
+          }
         })
         .catch(captureError);
     },
-    [db, userId],
+    [db, enableRemoteEffects, userId],
     migrationsReady
   );
 
@@ -204,16 +219,22 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
     migrationsReady
   );
 
-  const initialSyncDone = useSync(migrationsReady ? db : null, userId);
-  const captureDb = initialSyncDone && migrationsReady ? db : null;
-  useEmailCapture(captureDb, userId);
-  useNotificationCapture(captureDb, userId);
-  useApplePayCapture(captureDb, userId);
-  useSmsDetection(captureDb, userId);
-  useWidgetCapture(captureDb, userId);
+  const initialSyncDone = useSync(
+    enableRemoteEffects && migrationsReady ? db : null,
+    enableRemoteEffects ? userId : null
+  );
+  const captureDb = enableRemoteEffects && initialSyncDone && migrationsReady ? db : null;
+  const captureUserId = enableRemoteEffects ? userId : null;
+  useEmailCapture(captureDb, captureUserId);
+  useNotificationCapture(captureDb, captureUserId);
+  useApplePayCapture(captureDb, captureUserId);
+  useSmsDetection(captureDb, captureUserId);
+  useWidgetCapture(captureDb, captureUserId);
 
   // Global notification handler + push token / response listeners
   useSubscription(() => {
+    if (!enableRemoteEffects) return;
+
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowBanner: true,
@@ -241,7 +262,7 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
       tokenSub.remove();
       responseSub.remove();
     };
-  }, [userId, router]);
+  }, [enableRemoteEffects, userId, router]);
 
   useSubscription(
     () => {
@@ -256,21 +277,17 @@ function AuthenticatedShell({ db, userId }: { db: AnyDb; userId: UserId }) {
 }
 
 function RootLayout() {
-  const session = useAuthStore((s) => s.session);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
+  const authMode = useAuthMode();
   const userId = useOptionalUserId();
+  const onboardingComplete = useEffectiveOnboardingComplete();
   const router = useRouter();
   const segments = useSegments();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const localQaAvailable = isLocalQaAvailable();
 
-  // Onboarding completion: check SecureStore first, then session metadata
-  const onboardingComplete = useMemo(() => {
-    if (session) {
-      return getOnboardingCompleteFromStore() || isOnboardingComplete(session);
-    }
-    return false;
-  }, [session]);
+  useQaDevtoolsRuntime();
 
   const [fontsLoaded, fontsError] = useFonts({
     Poppins_500Medium,
@@ -283,11 +300,10 @@ function RootLayout() {
     void useAuthStore.getState().restoreSession();
   });
 
-  // Side effects when session changes: set Sentry user, clear onboarding on sign-out
+  // Side effects when session changes: set Sentry user
   useSubscription(() => {
     setSentryUser(userId);
-    if (!session) clearOnboardingFromStore();
-  }, [session, userId]);
+  }, [userId]);
 
   useSubscription(
     () => {
@@ -300,8 +316,18 @@ function RootLayout() {
   // Three-state routing: no user → login, user + not onboarded → onboarding, user + onboarded → tabs
   useSubscription(
     () => {
-      const inAuthGroup = segments[0] === "(auth)";
+      const topSegment = segments[0] as string | undefined;
+      const inAuthGroup = topSegment === "(auth)";
       const inOnboarding = (segments as string[])[1] === "onboarding";
+      const inQaRoute =
+        localQaAvailable &&
+        (topSegment === "qa-tools" ||
+          topSegment === "qa-transfer-conflict" ||
+          topSegment === "qa-open");
+
+      if (inQaRoute) {
+        return;
+      }
 
       if (!userId && !inAuthGroup) {
         router.replace("/(auth)");
@@ -311,7 +337,7 @@ function RootLayout() {
         router.replace("/(tabs)/(index)" as never);
       }
     },
-    [userId, segments, router, onboardingComplete],
+    [localQaAvailable, onboardingComplete, router, segments, userId],
     !isAuthLoading && (fontsLoaded || fontsError != null)
   );
 
@@ -332,6 +358,26 @@ function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
+            {localQaAvailable ? (
+              <Stack.Screen
+                name="qa-tools"
+                options={{
+                  headerShown: Platform.OS === "ios",
+                  headerStyle: { backgroundColor: theme.page },
+                  headerTintColor: theme.primary,
+                }}
+              />
+            ) : null}
+            {localQaAvailable ? (
+              <Stack.Screen
+                name="qa-open"
+                options={{
+                  headerShown: Platform.OS === "ios",
+                  headerStyle: { backgroundColor: theme.page },
+                  headerTintColor: theme.primary,
+                }}
+              />
+            ) : null}
             <Stack.Screen
               name="add-bill"
               options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
@@ -549,10 +595,25 @@ function RootLayout() {
                 sheetGrabberVisible: false,
               }}
             />
+            {localQaAvailable ? (
+              <Stack.Screen
+                name="qa-transfer-conflict"
+                options={{
+                  headerShown: false,
+                }}
+              />
+            ) : null}
           </Stack>
-          {db && userId && onboardingComplete && <AuthenticatedShell db={db} userId={userId} />}
+          {db && userId && onboardingComplete && (
+            <AuthenticatedShell
+              db={db}
+              userId={userId}
+              enableRemoteEffects={authMode === "remote"}
+            />
+          )}
         </QueryProvider>
       </SentryErrorBoundary>
+      <QaStatusBanner />
       <StatusBar style="auto" />
     </GestureHandlerRootView>
   );
