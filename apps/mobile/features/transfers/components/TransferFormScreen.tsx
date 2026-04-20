@@ -627,7 +627,9 @@ export function TransferFormScreen() {
         return;
       }
 
-      await refreshTransactions(db, userId);
+      if (sourceTransaction != null) {
+        await refreshTransactions(db, userId);
+      }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       if (reclassificationProcessedEmailId) {
         router.replace("/needs-review");

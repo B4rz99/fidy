@@ -165,11 +165,7 @@ export function relinkCaptureEvidenceToTransfer(
 
   db.transaction((tx) => {
     rows.forEach((row) => {
-      if (
-        row.transactionId === null &&
-        row.transferId === transferId &&
-        row.updatedAt >= updatedAt
-      ) {
+      if (row.updatedAt >= updatedAt) {
         return;
       }
 

@@ -170,7 +170,10 @@ export function AttributionQueueScreen() {
                 })
               }
               onOpenDetails={() =>
-                router.push(`/attribution-review?transactionId=${item.transaction.id}` as never)
+                router.push({
+                  pathname: "/attribution-review",
+                  params: { transactionId: item.transaction.id },
+                } as never)
               }
               onSkip={() =>
                 setSkippedIds((current) =>

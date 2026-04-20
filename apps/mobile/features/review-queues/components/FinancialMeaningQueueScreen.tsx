@@ -155,7 +155,10 @@ export function FinancialMeaningQueueScreen() {
               item={item}
               disabled={isBusy}
               onReview={() =>
-                router.push(`/meaning-review?processedEmailId=${item.processedEmail.id}` as never)
+                router.push({
+                  pathname: "/meaning-review",
+                  params: { processedEmailId: item.processedEmail.id },
+                } as never)
               }
               onDismiss={() => handleDismiss(item.processedEmail.id)}
               onSkip={() =>

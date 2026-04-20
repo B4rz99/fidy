@@ -212,6 +212,10 @@ export const captureEvidence = sqliteTable(
       "ck_capture_evidence_source_record",
       sql`(case when ${table.processedEmailId} is not null then 1 else 0 end) + (case when ${table.processedCaptureId} is not null then 1 else 0 end) = 1`
     ),
+    check(
+      "ck_capture_evidence_financial_link",
+      sql`${table.transactionId} is null or ${table.transferId} is null`
+    ),
     uniqueIndex("uq_capture_evidence_email")
       .on(table.userId, table.processedEmailId, table.scope, table.value)
       .where(sql`${table.processedEmailId} is not null and ${table.deletedAt} is null`),

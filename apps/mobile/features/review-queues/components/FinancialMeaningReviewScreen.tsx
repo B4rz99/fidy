@@ -159,9 +159,13 @@ export function FinancialMeaningReviewScreen() {
           <ActionButton
             label={t("financialMeaningReview.transfer")}
             onPress={() =>
-              router.push(
-                `/reclassify-transaction?transactionId=${item.transaction.id}&processedEmailId=${item.processedEmail.id}` as never
-              )
+              router.push({
+                pathname: "/reclassify-transaction",
+                params: {
+                  transactionId: item.transaction.id,
+                  processedEmailId: item.processedEmail.id,
+                },
+              } as never)
             }
             variant="outline"
             disabled={isBusy}

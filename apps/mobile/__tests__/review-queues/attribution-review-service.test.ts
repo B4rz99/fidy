@@ -185,4 +185,96 @@ describe("attribution review service", () => {
       })
     );
   });
+
+  it("returns failure without accepting the suggestion when the reviewed transaction disappears", () => {
+    upsertFinancialAccount(db as any, {
+      id: "fa-default-user-1" as FinancialAccountId,
+      userId: USER_ID,
+      name: "Main account",
+      kind: "checking",
+      isDefault: true,
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+    });
+
+    upsertFinancialAccount(db as any, {
+      id: "fa-davivienda" as FinancialAccountId,
+      userId: USER_ID,
+      name: "Davivienda Visa",
+      kind: "credit_card",
+      isDefault: false,
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+    });
+
+    insertTransaction(db as any, {
+      id: "tx-reviewed" as TransactionId,
+      userId: USER_ID,
+      type: "expense",
+      amount: 85000 as CopAmount,
+      categoryId: "shopping" as CategoryId,
+      description: "Rappi Supermai",
+      date: "2026-03-03" as IsoDate,
+      accountId: "fa-default-user-1" as FinancialAccountId,
+      accountAttributionState: "unresolved",
+      source: "notification_android",
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+    });
+
+    insertTransaction(db as any, {
+      id: "tx-related" as TransactionId,
+      userId: USER_ID,
+      type: "expense",
+      amount: 120000 as CopAmount,
+      categoryId: "shopping" as CategoryId,
+      description: "Otro cobro",
+      date: "2026-03-04" as IsoDate,
+      accountId: "fa-default-user-1" as FinancialAccountId,
+      accountAttributionState: "unresolved",
+      source: "notification_android",
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+    });
+
+    saveEvidence("ce-reviewed", {
+      transactionId: "tx-reviewed",
+      value: "4931",
+      processedCaptureId: "pc-1",
+    });
+    saveEvidence("ce-related", {
+      transactionId: "tx-related",
+      value: "4931",
+      processedCaptureId: "pc-2",
+      updatedAt: "2026-04-19T11:00:00.000Z" as IsoDateTime,
+    });
+
+    const service = createAttributionReviewService({
+      now: () => "2026-04-19T12:00:00.000Z" as IsoDateTime,
+      getTransactionById: () => null,
+    });
+
+    const result = service.confirmSuggestedOwner({
+      db: db as any,
+      userId: USER_ID,
+      transactionId: "tx-reviewed" as TransactionId,
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: "reviewItemNotFound",
+    });
+
+    expect(getTransactionById(db as any, "tx-related" as TransactionId)).toEqual(
+      expect.objectContaining({
+        accountId: "fa-default-user-1",
+        accountAttributionState: "unresolved",
+        updatedAt: NOW,
+      })
+    );
+  });
 });

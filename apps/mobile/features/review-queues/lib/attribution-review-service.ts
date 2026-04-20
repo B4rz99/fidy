@@ -12,7 +12,7 @@ import {
 import { toStoredTransaction } from "@/features/transactions/lib/build-transaction";
 import {
   getAllTransactions,
-  getTransactionById,
+  getTransactionById as loadTransactionById,
   upsertTransaction,
 } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db/client";
@@ -58,6 +58,7 @@ type ConfirmSuggestedOwnerResult =
 
 type CreateAttributionReviewServiceDeps = {
   readonly now?: () => IsoDateTime;
+  readonly getTransactionById?: typeof loadTransactionById;
 };
 
 function normalizeSearchText(value: string) {
@@ -149,6 +150,7 @@ function toReviewItem(
 
 export function createAttributionReviewService({
   now = () => toIsoDateTime(new Date()),
+  getTransactionById = loadTransactionById,
 }: CreateAttributionReviewServiceDeps = {}) {
   const accountSuggestionService = createAccountSuggestionService({ now });
 
@@ -200,19 +202,19 @@ export function createAttributionReviewService({
       const { suggestedAccount, suggestion } = item;
       const updatedAt = now();
 
-      db.transaction((tx) => {
+      return db.transaction((tx): ConfirmSuggestedOwnerResult => {
+        const currentTransaction = getTransactionById(tx, transactionId);
+
+        if (!currentTransaction) {
+          return { success: false, error: "reviewItemNotFound" };
+        }
+
         accountSuggestionService.acceptSuggestion({
           db: tx,
           userId,
           accountId: suggestedAccount.id,
           suggestion,
         });
-
-        const currentTransaction = getTransactionById(tx, transactionId);
-
-        if (!currentTransaction) {
-          return;
-        }
 
         upsertTransaction(tx, {
           ...currentTransaction,
@@ -228,13 +230,13 @@ export function createAttributionReviewService({
           operation: "update",
           createdAt: updatedAt,
         });
-      });
 
-      return {
-        success: true,
-        accountId: suggestedAccount.id,
-        suggestionFingerprint: suggestion.fingerprint,
-      };
+        return {
+          success: true,
+          accountId: suggestedAccount.id,
+          suggestionFingerprint: suggestion.fingerprint,
+        };
+      });
     },
   };
 }

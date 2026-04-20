@@ -141,7 +141,11 @@ export default function EditTransactionScreen() {
       onExtraAction={
         source === "manual" || transactionId == null
           ? undefined
-          : () => router.push(`/reclassify-transaction?transactionId=${transactionId}` as never)
+          : () =>
+              router.push({
+                pathname: "/reclassify-transaction",
+                params: { transactionId },
+              } as never)
       }
     />
   );
