@@ -75,7 +75,7 @@ function buildMutationTransaction(
     return fail("Store not initialized");
   }
 
-  const result = buildTransaction(input, userId, id, now, existing);
+  const result = buildTransaction({ input, userId, id, now, existing });
   return result.success ? result : fail(result.error);
 }
 
