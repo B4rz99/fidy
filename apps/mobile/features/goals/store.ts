@@ -1,19 +1,11 @@
 import { create } from "zustand";
-import { insertNotificationRecord, scheduleLocalPush } from "@/features/notifications";
-import { createWriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
-import { i18n } from "@/shared/i18n";
-import {
-  generateId,
-  toIsoDateTime,
-  trackGoalContributionAdded,
-  trackGoalCreated,
-  trackGoalMilestoneReached,
-} from "@/shared/lib";
-import type { MutationCommand } from "@/shared/mutations/write-through";
 import type { UserId } from "@/shared/types/branded";
-import type { GoalContribution } from "./schema";
-import { addContributionSchema, createGoalSchema } from "./schema";
+import type { AddContributionInput, CreateGoalInput, GoalContribution } from "./schema";
+import {
+  createGoalMutationService,
+  type GoalUpdateInput,
+} from "./services/create-goal-mutation-service";
 import { createGoalQueryService } from "./services/create-goal-query-service";
 import type { GoalWithProgress } from "./types";
 
@@ -40,6 +32,34 @@ type GoalActions = {
   clearSelectedGoal: () => void;
   setIsLoading: (isLoading: boolean) => void;
 };
+
+type GoalSessionSnapshot = {
+  readonly userId: UserId;
+  readonly sessionId: number;
+};
+
+type GoalRequestSnapshot = GoalSessionSnapshot & {
+  readonly requestId: number;
+};
+
+type GoalSelectionSnapshot = GoalRequestSnapshot & {
+  readonly goalId: string;
+};
+
+type GoalRefreshSnapshot = GoalSessionSnapshot & {
+  readonly db: AnyDb;
+};
+
+type GoalSelectionRefreshSnapshot = GoalRefreshSnapshot & {
+  readonly goalId: string;
+};
+
+type GoalUpdateRequest = {
+  readonly id: string;
+  readonly data: GoalUpdateInput;
+};
+
+type GoalMutationService = ReturnType<typeof createGoalMutationService>;
 
 export const useGoalStore = create<GoalState & GoalActions>((set) => ({
   activeUserId: null,
@@ -68,83 +88,51 @@ export const useGoalStore = create<GoalState & GoalActions>((set) => ({
   setIsLoading: (isLoading) => set({ isLoading }),
 }));
 
-function isCurrentGoalsRequest(requestId: number, userId: UserId, sessionId: number): boolean {
-  return (
-    loadGoalsRequestId === requestId &&
-    useGoalStore.getState().activeUserId === userId &&
-    goalsSessionId === sessionId
-  );
+function isActiveGoalSession(session: GoalSessionSnapshot): boolean {
+  const { activeUserId } = useGoalStore.getState();
+  return [goalsSessionId === session.sessionId, activeUserId === session.userId].every(Boolean);
 }
 
-function isCurrentGoalSelection(
-  requestId: number,
-  userId: UserId,
-  goalId: string,
-  sessionId: number
-): boolean {
-  return (
-    loadGoalContributionsRequestId === requestId &&
-    useGoalStore.getState().activeUserId === userId &&
-    useGoalStore.getState().selectedGoalId === goalId &&
-    goalsSessionId === sessionId
-  );
+function isCurrentGoalsRequest(request: GoalRequestSnapshot): boolean {
+  return [loadGoalsRequestId === request.requestId, isActiveGoalSession(request)].every(Boolean);
 }
 
-function isActiveGoalSession(userId: UserId, sessionId: number): boolean {
-  return goalsSessionId === sessionId && useGoalStore.getState().activeUserId === userId;
+function isCurrentGoalSelection(request: GoalSelectionSnapshot): boolean {
+  const { selectedGoalId } = useGoalStore.getState();
+  return [
+    loadGoalContributionsRequestId === request.requestId,
+    selectedGoalId === request.goalId,
+    isActiveGoalSession(request),
+  ].every(Boolean);
 }
 
-function getCrossedMilestones(percentBefore: number, percentAfter: number) {
-  return GOAL_MILESTONES.filter(
-    (milestone) => percentBefore < milestone && percentAfter >= milestone
-  );
-}
-
-async function commitGoalMutation(db: AnyDb, command: MutationCommand): Promise<boolean> {
-  const mutations = createWriteThroughMutationModule(db);
-
-  try {
-    const result = await mutations.commit(command);
-    return result.success;
-  } catch {
-    return false;
+function clearGoalsLoadingIfCurrent(requestId: number): void {
+  if (loadGoalsRequestId === requestId) {
+    useGoalStore.getState().setIsLoading(false);
   }
 }
 
-async function refreshGoalsForActiveSession(
-  db: AnyDb,
-  userId: UserId,
-  sessionId: number
-): Promise<boolean> {
-  if (!isActiveGoalSession(userId, sessionId)) return false;
-  await loadGoalsForUser(db, userId);
-  return isActiveGoalSession(userId, sessionId);
+async function refreshGoalsForActiveSession(input: GoalRefreshSnapshot): Promise<boolean> {
+  if (!isActiveGoalSession(input)) return false;
+  await loadGoalsForUser(input.db, input.userId);
+  return isActiveGoalSession(input);
 }
 
 async function refreshSelectedGoalContributions(
-  db: AnyDb,
-  userId: UserId,
-  goalId: string,
-  sessionId: number
+  input: GoalSelectionRefreshSnapshot
 ): Promise<boolean> {
-  if (!isActiveGoalSession(userId, sessionId)) return false;
-  await selectGoal(db, userId, goalId);
-  return isActiveGoalSession(userId, sessionId);
+  if (!isActiveGoalSession(input)) return false;
+  await selectGoal(input.db, input.userId, input.goalId);
+  return isActiveGoalSession(input);
 }
 
-function buildGoalMilestoneNotification(goalName: string, goalId: string, milestone: number) {
-  return {
-    type: "goal_milestone" as const,
-    dedupKey: `goal_milestone:${goalId}:${milestone}`,
-    categoryId: null,
-    goalId,
-    titleKey: "notifications.goalMilestone",
-    messageKey: "notifications.goalMilestoneMsg",
-    params: JSON.stringify({
-      goalName,
-      percent: milestone,
-    }),
-  };
+function getGoalById(goalId: string): GoalWithProgress | null {
+  return useGoalStore.getState().goals.find((goal) => goal.goal.id === goalId) ?? null;
+}
+
+function getGoalPercentComplete(goalId: string): number {
+  const goal = getGoalById(goalId);
+  return goal == null ? 0 : goal.progress.percentComplete;
 }
 
 export function initializeGoalSession(userId: UserId): void {
@@ -155,29 +143,28 @@ export function initializeGoalSession(userId: UserId): void {
 }
 
 export async function loadGoalsForUser(db: AnyDb, userId: UserId): Promise<void> {
-  const requestId = ++loadGoalsRequestId;
-  const sessionId = goalsSessionId;
+  const request: GoalRequestSnapshot = {
+    userId,
+    sessionId: goalsSessionId,
+    requestId: ++loadGoalsRequestId,
+  };
   useGoalStore.getState().setIsLoading(true);
 
   try {
     const goals = await goalQueryService.loadGoals({ db, userId });
-    if (!isCurrentGoalsRequest(requestId, userId, sessionId)) {
-      if (loadGoalsRequestId === requestId) {
-        useGoalStore.getState().setIsLoading(false);
-      }
+    if (!isCurrentGoalsRequest(request)) {
+      clearGoalsLoadingIfCurrent(request.requestId);
       return;
     }
     useGoalStore.getState().setGoals(goals);
   } catch {
-    if (loadGoalsRequestId === requestId) {
-      useGoalStore.getState().setIsLoading(false);
-    }
+    clearGoalsLoadingIfCurrent(request.requestId);
   }
 }
 
 export async function selectGoal(db: AnyDb, userId: UserId, goalId: string | null): Promise<void> {
   const requestId = ++loadGoalContributionsRequestId;
-  const sessionId = goalsSessionId;
+  const session: GoalSessionSnapshot = { userId, sessionId: goalsSessionId };
   useGoalStore.getState().setSelectedGoalId(goalId);
 
   if (goalId == null) {
@@ -187,7 +174,7 @@ export async function selectGoal(db: AnyDb, userId: UserId, goalId: string | nul
 
   try {
     const contributions = await goalQueryService.loadGoalContributions({ db, goalId });
-    if (!isCurrentGoalSelection(requestId, userId, goalId, sessionId)) {
+    if (!isCurrentGoalSelection({ ...session, goalId, requestId })) {
       return;
     }
     useGoalStore.getState().setSelectedGoalContributions(contributions);
@@ -199,170 +186,96 @@ export async function selectGoal(db: AnyDb, userId: UserId, goalId: string | nul
 export async function createGoal(
   db: AnyDb,
   userId: UserId,
-  input: {
-    readonly name: string;
-    readonly type: "savings" | "debt";
-    readonly targetAmount: number;
-    readonly targetDate?: string;
-    readonly interestRatePercent?: number;
-    readonly iconName?: string;
-    readonly colorHex?: string;
-  }
+  input: CreateGoalInput
 ): Promise<boolean> {
-  const validation = createGoalSchema.safeParse(input);
-  if (!validation.success) return false;
-
-  const sessionId = goalsSessionId;
-  const now = toIsoDateTime(new Date());
-  const didCommit = await commitGoalMutation(db, {
-    kind: "goal.save",
-    row: {
-      id: generateId("gl"),
-      userId,
-      name: input.name,
-      type: input.type,
-      targetAmount: input.targetAmount,
-      targetDate: input.targetDate ?? null,
-      interestRatePercent: input.interestRatePercent ?? null,
-      iconName: input.iconName ?? null,
-      colorHex: input.colorHex ?? null,
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
-    },
-  });
-  if (!didCommit) return false;
-  trackGoalCreated();
-
-  return refreshGoalsForActiveSession(db, userId, sessionId);
+  const session: GoalSessionSnapshot = { userId, sessionId: goalsSessionId };
+  const didCreate = await createGoalMutationService({ db, userId }).createGoal(input);
+  if (!didCreate) return false;
+  return refreshGoalsForActiveSession({ db, ...session });
 }
 
 export async function updateGoal(
   db: AnyDb,
   userId: UserId,
-  id: string,
-  data: {
-    readonly name?: string;
-    readonly targetAmount?: number;
-    readonly targetDate?: string | null;
-    readonly interestRatePercent?: number | null;
-    readonly iconName?: string | null;
-    readonly colorHex?: string | null;
-  }
+  input: GoalUpdateRequest
 ): Promise<boolean> {
-  const sessionId = goalsSessionId;
-  const didCommit = await commitGoalMutation(db, {
-    kind: "goal.update",
-    goalId: id,
-    data,
-    now: toIsoDateTime(new Date()),
-  });
-  if (!didCommit) return false;
-
-  return refreshGoalsForActiveSession(db, userId, sessionId);
+  const session: GoalSessionSnapshot = { userId, sessionId: goalsSessionId };
+  const didUpdate = await createGoalMutationService({ db, userId }).updateGoal(
+    input.id,
+    input.data
+  );
+  if (!didUpdate) return false;
+  return refreshGoalsForActiveSession({ db, ...session });
 }
 
 export async function deleteGoal(db: AnyDb, userId: UserId, id: string): Promise<boolean> {
-  const sessionId = goalsSessionId;
-  const didCommit = await commitGoalMutation(db, {
-    kind: "goal.delete",
-    goalId: id,
-    now: toIsoDateTime(new Date()),
-  });
-  if (!didCommit) return false;
-  if (!isActiveGoalSession(userId, sessionId)) return false;
+  const session: GoalSessionSnapshot = { userId, sessionId: goalsSessionId };
+  const didDelete = await createGoalMutationService({ db, userId }).deleteGoal(id);
+  if (!didDelete) return false;
+  if (!isActiveGoalSession(session)) return false;
 
   if (useGoalStore.getState().selectedGoalId === id) {
     useGoalStore.getState().clearSelectedGoal();
   }
+  return refreshGoalsForActiveSession({ db, ...session });
+}
 
-  return refreshGoalsForActiveSession(db, userId, sessionId);
+function getCrossedMilestones(percentBefore: number, percentAfter: number) {
+  return GOAL_MILESTONES.filter(
+    (milestone) => percentBefore < milestone && percentAfter >= milestone
+  );
+}
+
+function notifyGoalMilestones(
+  goalMutations: GoalMutationService,
+  goalId: string,
+  percentBefore: number
+): void {
+  const goal = getGoalById(goalId);
+  if (goal == null) return;
+
+  const milestones = getCrossedMilestones(percentBefore, goal.progress.percentComplete);
+  if (milestones.length === 0) return;
+
+  goalMutations.notifyMilestones({
+    goalId,
+    goalName: goal.goal.name,
+    milestones,
+  });
 }
 
 export async function addContribution(
   db: AnyDb,
   userId: UserId,
-  input: {
-    readonly goalId: string;
-    readonly amount: number;
-    readonly note?: string;
-    readonly date: string;
-  }
+  input: AddContributionInput
 ): Promise<boolean> {
-  const validation = addContributionSchema.safeParse(input);
-  if (!validation.success) return false;
+  const session: GoalSessionSnapshot = { userId, sessionId: goalsSessionId };
+  const goalMutations: GoalMutationService = createGoalMutationService({ db, userId });
+  const percentBefore = getGoalPercentComplete(input.goalId);
+  const didAdd = await goalMutations.addContribution(input);
+  if (!didAdd) return false;
 
-  const sessionId = goalsSessionId;
-  const now = toIsoDateTime(new Date());
-  const percentBefore =
-    useGoalStore.getState().goals.find((goal) => goal.goal.id === input.goalId)?.progress
-      .percentComplete ?? 0;
-  const didCommit = await commitGoalMutation(db, {
-    kind: "goalContribution.save",
-    row: {
-      id: generateId("gc"),
-      goalId: input.goalId,
-      userId,
-      amount: input.amount,
-      note: input.note ?? null,
-      date: input.date,
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
-    },
-  });
-  if (!didCommit) return false;
-  trackGoalContributionAdded();
-
-  const didRefreshGoals = await refreshGoalsForActiveSession(db, userId, sessionId);
+  const didRefreshGoals = await refreshGoalsForActiveSession({ db, ...session });
   if (!didRefreshGoals) return false;
 
-  const selectedGoal = useGoalStore.getState().goals.find((goal) => goal.goal.id === input.goalId);
-  if (selectedGoal == null) return true;
-
-  getCrossedMilestones(percentBefore, selectedGoal.progress.percentComplete).forEach(
-    (milestone) => {
-      void insertNotificationRecord(
-        db,
-        userId,
-        buildGoalMilestoneNotification(selectedGoal.goal.name, input.goalId, milestone)
-      );
-      trackGoalMilestoneReached();
-      void scheduleLocalPush({
-        title: i18n.t("notifications.goalMilestone", {
-          goalName: selectedGoal.goal.name,
-          percent: milestone,
-        }),
-        body: i18n.t("notifications.goalMilestoneMsg", { percent: milestone }),
-        data: { route: `/goal-detail?goalId=${input.goalId}` },
-        preferenceKey: "goalMilestones",
-      });
-    }
-  );
-
-  if (useGoalStore.getState().selectedGoalId !== input.goalId) {
-    return true;
-  }
-
-  return refreshSelectedGoalContributions(db, userId, input.goalId, sessionId);
+  notifyGoalMilestones(goalMutations, input.goalId, percentBefore);
+  return useGoalStore.getState().selectedGoalId === input.goalId
+    ? refreshSelectedGoalContributions({ db, ...session, goalId: input.goalId })
+    : true;
 }
 
 export async function deleteContribution(db: AnyDb, userId: UserId, id: string): Promise<boolean> {
-  const sessionId = goalsSessionId;
-  const didCommit = await commitGoalMutation(db, {
-    kind: "goalContribution.delete",
-    contributionId: id,
-    now: toIsoDateTime(new Date()),
-  });
-  if (!didCommit) return false;
+  const session: GoalSessionSnapshot = { userId, sessionId: goalsSessionId };
+  const didDelete = await createGoalMutationService({ db, userId }).deleteContribution(id);
+  if (!didDelete) return false;
 
-  const didRefreshGoals = await refreshGoalsForActiveSession(db, userId, sessionId);
+  const didRefreshGoals = await refreshGoalsForActiveSession({ db, ...session });
   if (!didRefreshGoals) return false;
 
-  const selectedGoalId = useGoalStore.getState().selectedGoalId;
+  const { selectedGoalId } = useGoalStore.getState();
   if (selectedGoalId == null) {
     return true;
   }
 
-  return refreshSelectedGoalContributions(db, userId, selectedGoalId, sessionId);
+  return refreshSelectedGoalContributions({ db, ...session, goalId: selectedGoalId });
 }
