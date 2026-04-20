@@ -50,6 +50,22 @@ export function getTransfersForUser(db: AnyDb, userId: TransferRow["userId"]) {
     .select()
     .from(transfers)
     .where(and(eq(transfers.userId, userId), isNull(transfers.deletedAt)))
-    .orderBy(desc(transfers.date), desc(transfers.updatedAt))
+    .orderBy(desc(transfers.date), desc(transfers.updatedAt), desc(transfers.id))
+    .all();
+}
+
+export function getTransfersPaginated(
+  db: AnyDb,
+  userId: TransferRow["userId"],
+  limit: number,
+  offset: number
+) {
+  return db
+    .select()
+    .from(transfers)
+    .where(and(eq(transfers.userId, userId), isNull(transfers.deletedAt)))
+    .orderBy(desc(transfers.date), desc(transfers.updatedAt), desc(transfers.id))
+    .limit(limit + 1)
+    .offset(offset)
     .all();
 }

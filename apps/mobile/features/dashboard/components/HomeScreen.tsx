@@ -1,9 +1,15 @@
+import { useFocusEffect } from "@react-navigation/native";
 import { Stack, useRouter } from "expo-router";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import {
   AccountSuggestionsPromptBanner,
   useAccountSuggestions,
 } from "@/features/account-suggestions";
+import { appendUniqueActivityItems } from "@/features/activity/lib/append-unique-activity-items";
+import {
+  createActivityQueryService,
+  type StoredActivityItem,
+} from "@/features/activity/services/create-activity-query-service";
 import { useOptionalUserId } from "@/features/auth";
 import { DetectedTransactionsBanner } from "@/features/capture-sources";
 import {
@@ -20,25 +26,27 @@ import { SyncConflictBanner } from "@/features/sync";
 import {
   CATEGORY_MAP,
   deleteTransaction,
-  loadNextTransactions,
-  loadTransactionIntoForm,
   makeDateLabel,
   type StoredTransaction,
   useTransactionStore,
 } from "@/features/transactions";
+import { getTransferActivityCopy } from "@/features/transfers/lib/presentation";
 import { ScreenLayout, TAB_BAR_CLEARANCE, TransactionRow } from "@/shared/components";
-import { Ellipsis } from "@/shared/components/icons";
+import { ArrowLeftRight, Ellipsis } from "@/shared/components/icons";
 import { Alert, FlatList, Platform, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
-import { formatSignedMoney, toIsoDate } from "@/shared/lib";
+import { formatMoney, formatSignedMoney, toIsoDate } from "@/shared/lib";
 import type { TransactionId } from "@/shared/types/branded";
+import { getActivityAccountNames } from "../lib/get-activity-account-names";
 import { BalanceSection } from "./BalanceSection";
 import { ChartSection } from "./ChartSection";
 import { DateHeader } from "./DateHeader";
 import { EmptyTransactions } from "./EmptyTransactions";
 import { NeedsReviewBanner } from "./NeedsReviewBanner";
+
+const activityQueryService = createActivityQueryService();
 
 const TransactionItem = memo(function TransactionItem({
   tx,
@@ -74,6 +82,47 @@ const TransactionItem = memo(function TransactionItem({
           isPositive={tx.type === "income"}
           onEdit={onEdit}
           onDelete={onDelete}
+        />
+      </View>
+    </View>
+  );
+});
+
+const TransferItem = memo(function TransferItem({
+  item,
+  showDateHeader,
+  accountNames,
+}: {
+  item: Extract<StoredActivityItem, { kind: "transfer" }>;
+  showDateHeader: boolean;
+  accountNames: Readonly<Record<string, string>>;
+}) {
+  const { t, locale } = useTranslation();
+  const accentGreen = useThemeColor("accentGreen");
+  const accentGreenLight = useThemeColor("accentGreenLight");
+  const { title, route } = getTransferActivityCopy(item.transfer, accountNames, t);
+
+  return (
+    <View>
+      {showDateHeader && (
+        <DateHeader
+          label={makeDateLabel(
+            item.date,
+            t("dates.today"),
+            t("dates.yesterday"),
+            getDateFnsLocale(locale)
+          )}
+        />
+      )}
+      <View className="px-4">
+        <TransactionRow
+          icon={ArrowLeftRight}
+          iconBgColor={accentGreenLight}
+          iconColor={accentGreen}
+          name={title}
+          amount={formatMoney(item.transfer.amount)}
+          category={route}
+          amountTone="neutral"
         />
       </View>
     </View>
@@ -137,42 +186,107 @@ export const HomeScreen = () => {
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const { suggestions } = useAccountSuggestions({ db, userId });
-  const pages = useTransactionStore((s) => s.pages);
-  const hasMore = useTransactionStore((s) => s.hasMore);
   const balance = useTransactionStore((s) => s.balance);
   const categorySpending = useTransactionStore((s) => s.categorySpending);
   const dailySpending = useTransactionStore((s) => s.dailySpending);
+  const dataRevision = useTransactionStore((s) => s.dataRevision);
   // phase gates ListEmptyComponent — suppresses "No transactions" during first sync
   const phase = useEmailCaptureStore((s) => s.phase);
   const primaryColor = useThemeColor("primary");
+  const [activityPages, setActivityPages] = useState<readonly StoredActivityItem[]>([]);
+  const [activityOffset, setActivityOffset] = useState(0);
+  const [activityHasMore, setActivityHasMore] = useState(false);
+  const lastRequestedActivityOffsetRef = useRef<number | null>(null);
 
-  // Pre-compute which transactions are the first of their date group
+  const loadActivityPage = useCallback(() => {
+    if (!db || !userId) {
+      setActivityPages([]);
+      setActivityOffset(0);
+      setActivityHasMore(false);
+      lastRequestedActivityOffsetRef.current = null;
+      return;
+    }
+
+    try {
+      const snapshot = activityQueryService.loadPage({
+        db,
+        userId,
+        pageSize: 30,
+        offset: 0,
+      });
+      setActivityPages(snapshot.pages);
+      setActivityOffset(snapshot.offset);
+      setActivityHasMore(snapshot.hasMore);
+      lastRequestedActivityOffsetRef.current = null;
+    } catch {
+      setActivityPages([]);
+      setActivityOffset(0);
+      setActivityHasMore(false);
+      lastRequestedActivityOffsetRef.current = null;
+    }
+  }, [db, userId]);
+
+  const accountNames = getActivityAccountNames(db, userId);
+
+  useFocusEffect(loadActivityPage);
+
+  useSubscription(
+    () => {
+      loadActivityPage();
+    },
+    [dataRevision],
+    db != null && userId != null
+  );
+
   const dateBreaks = useMemo(() => {
     const breaks = new Set<string>();
     let lastDateKey: string | null = null;
-    pages.forEach((tx) => {
-      const dateKey = toIsoDate(tx.date);
+    activityPages.forEach((item) => {
+      const dateKey = toIsoDate(item.date);
       if (dateKey !== lastDateKey) {
-        breaks.add(tx.id);
+        breaks.add(item.id);
         lastDateKey = dateKey;
       }
     });
     return breaks;
-  }, [pages]);
+  }, [activityPages]);
 
   const handleEndReached = useCallback(() => {
-    if (!db || !userId || !hasMore) return;
-    void loadNextTransactions(db, userId);
-  }, [db, hasMore, userId]);
+    if (
+      !db ||
+      !userId ||
+      !activityHasMore ||
+      lastRequestedActivityOffsetRef.current === activityOffset
+    ) {
+      return;
+    }
+
+    lastRequestedActivityOffsetRef.current = activityOffset;
+
+    try {
+      const snapshot = activityQueryService.loadPage({
+        db,
+        userId,
+        pageSize: 30,
+        offset: activityOffset,
+      });
+      setActivityPages((current) => appendUniqueActivityItems(current, snapshot.pages));
+      setActivityOffset(snapshot.offset);
+      setActivityHasMore(snapshot.hasMore);
+    } catch {
+      lastRequestedActivityOffsetRef.current = null;
+      // Keep the current activity feed if the query fails.
+    }
+  }, [activityHasMore, activityOffset, db, userId]);
 
   const handleEdit = useCallback(
     (id: TransactionId) => {
-      if (!db || !userId) return;
-      const didLoad = loadTransactionIntoForm(db, userId, id);
-      if (!didLoad) return;
-      push("/(tabs)/add" as never);
+      push({
+        pathname: "/edit-transaction",
+        params: { transactionId: id },
+      } as never);
     },
-    [db, push, userId]
+    [push]
   );
 
   const handleDelete = useCallback(
@@ -193,20 +307,25 @@ export const HomeScreen = () => {
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: StoredTransaction }) => {
-      return (
+    ({ item }: { item: StoredActivityItem }) =>
+      item.kind === "transaction" ? (
         <TransactionItem
-          tx={item}
+          tx={item.transaction}
           showDateHeader={dateBreaks.has(item.id)}
-          onEdit={() => handleEdit(item.id)}
-          onDelete={() => handleDelete(item.id)}
+          onEdit={() => handleEdit(item.transaction.id)}
+          onDelete={() => handleDelete(item.transaction.id)}
         />
-      );
-    },
-    [dateBreaks, handleEdit, handleDelete]
+      ) : (
+        <TransferItem
+          item={item}
+          showDateHeader={dateBreaks.has(item.id)}
+          accountNames={accountNames}
+        />
+      ),
+    [accountNames, dateBreaks, handleDelete, handleEdit]
   );
 
-  const keyExtractor = useCallback((item: StoredTransaction) => item.id, []);
+  const keyExtractor = useCallback((item: StoredActivityItem) => item.id, []);
 
   const listHeader = useMemo(
     () => (
@@ -263,7 +382,7 @@ export const HomeScreen = () => {
         />
       )}
       <FlatList
-        data={pages}
+        data={activityPages}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         onEndReached={handleEndReached}

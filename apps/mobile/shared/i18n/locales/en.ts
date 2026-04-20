@@ -112,6 +112,66 @@ const en = {
     deleteFailed: "Could not delete transaction",
   },
 
+  addEntry: {
+    title: "What do you want to add?",
+    subtitle: "Choose the record type first so transfers stay separate from spending and income.",
+    transactionTitle: "Transaction",
+    transactionBody: "Record spending or income for one financial account",
+    transactionBadge: "Expense or income",
+    transferTitle: "Transfer",
+    transferBody: "Move money between accounts, or use Outside Fidy when one side is not tracked.",
+    transferBadge: "No budget impact",
+    footnote:
+      "Transfers stay out of spending and budget math, so choosing them here prevents double counting later.",
+  },
+
+  transfers: {
+    title: "New transfer",
+    subtitle:
+      "Transfers move money between accounts or between one tracked account and an explicit outside-fidy side.",
+    outsideSubtitle:
+      "Use Outside Fidy when the other side is cash or another source you do not track.",
+    conflictSubtitle:
+      "Transfers need two different sides. If money starts and ends in the same account, nothing actually moved.",
+    amountLabel: "Transfer amount",
+    fromLabel: "From",
+    toLabel: "To",
+    dateLabel: "Transfer date",
+    chooseSide: "Choose side",
+    chooseSideHint: "Choose an account or Outside Fidy",
+    chooseDifferentSide: "Choose different side",
+    save: "Record transfer",
+    outsideFidy: "Outside Fidy",
+    outsideFidyDescription: "Cash or another untracked side",
+    outsideHint:
+      "Need cash or another untracked side? Choose it explicitly from the side picker instead of saving a fake expense.",
+    outsideSelectedHint:
+      "Outside Fidy keeps this transfer explicit without creating a fake account or expense.",
+    conflictHint:
+      "Choose two different sides. A transfer cannot start and end in the same financial account.",
+    pickerTitle: "Choose transfer side",
+    pickerSubtitle:
+      "Pick a tracked financial account, or explicitly choose an outside-Fidy side for cash or external funding.",
+    a11y: {
+      amountField: "Edit transfer amount",
+      selectSide: "Select %{side} side",
+      changeDate: "Change transfer date",
+    },
+    errors: {
+      amountRequired: "Enter a transfer amount",
+      sidesRequired: "Choose both sides before saving",
+      trackedAccountRequired: "At least one side must be a tracked account",
+      distinctSidesRequired: "Choose two different sides",
+      saveFailed: "Could not save transfer",
+    },
+    activity: {
+      generic: "Transfer",
+      toAccount: "Transfer to %{name}",
+      fromAccount: "Transfer from %{name}",
+      route: "%{from} -> %{to}",
+    },
+  },
+
   financialAccounts: {
     defaultName: "Cash",
     kinds: {
@@ -701,8 +761,6 @@ const en = {
         "You have %{remaining} left for %{daysLeft} days. Any clothing that can wait until next month would help stay within budget.",
       services:
         "You have %{remaining} left for %{daysLeft} days. Checking for any subscriptions you can pause could free up a bit of room.",
-      transfer:
-        "You have %{remaining} left for %{daysLeft} days. Keeping transfers to what's necessary this week would help stay within budget.",
       other:
         "You have %{remaining} left for %{daysLeft} days. A quick look at recent purchases might show where there's a bit of room to adjust.",
     },
@@ -721,7 +779,6 @@ const en = {
         "You've gone %{overAmount} over. Skipping new clothing this month would help recover the difference.",
       services:
         "You've gone %{overAmount} over. Pausing a subscription or two this month could make a real dent.",
-      transfer: "You've gone %{overAmount} over. Non-urgent transfers can wait until next month.",
       other:
         "You've gone %{overAmount} over. Taking a close look at recent purchases might reveal some easy wins.",
     },

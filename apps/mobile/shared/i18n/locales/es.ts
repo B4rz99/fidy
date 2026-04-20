@@ -115,6 +115,68 @@ const es = {
     deleteFailed: "No se pudo eliminar la transacción",
   },
 
+  addEntry: {
+    title: "¿Qué quieres agregar?",
+    subtitle:
+      "Elige primero el tipo de registro para que las transferencias sigan separadas de gastos e ingresos.",
+    transactionTitle: "Transacción",
+    transactionBody: "Registra un gasto o ingreso para una cuenta financiera",
+    transactionBadge: "Gasto o ingreso",
+    transferTitle: "Transferencia",
+    transferBody:
+      "Mueve dinero entre cuentas, o usa Fuera de Fidy cuando uno de los lados no está rastreado.",
+    transferBadge: "Sin impacto en presupuesto",
+    footnote:
+      "Las transferencias no entran en gasto ni presupuesto, así que elegirlas aquí evita doble conteo después.",
+  },
+
+  transfers: {
+    title: "Nueva transferencia",
+    subtitle:
+      "Las transferencias mueven dinero entre cuentas o entre una cuenta rastreada y un lado explícito fuera de Fidy.",
+    outsideSubtitle:
+      "Usa Fuera de Fidy cuando el otro lado sea efectivo u otra fuente que no rastreas.",
+    conflictSubtitle:
+      "Las transferencias necesitan dos lados distintos. Si el dinero empieza y termina en la misma cuenta, en realidad no se movió.",
+    amountLabel: "Monto de la transferencia",
+    fromLabel: "Desde",
+    toLabel: "Hacia",
+    dateLabel: "Fecha de transferencia",
+    chooseSide: "Elegir lado",
+    chooseSideHint: "Elige una cuenta o Fuera de Fidy",
+    chooseDifferentSide: "Elige otro lado",
+    save: "Registrar transferencia",
+    outsideFidy: "Fuera de Fidy",
+    outsideFidyDescription: "Efectivo u otro lado no rastreado",
+    outsideHint:
+      "¿Necesitas efectivo u otro lado no rastreado? Elígelo explícitamente en el selector en lugar de guardar un gasto falso.",
+    outsideSelectedHint:
+      "Fuera de Fidy mantiene esta transferencia explícita sin crear una cuenta o gasto falso.",
+    conflictHint:
+      "Elige dos lados distintos. Una transferencia no puede empezar y terminar en la misma cuenta financiera.",
+    pickerTitle: "Elige el lado de la transferencia",
+    pickerSubtitle:
+      "Elige una cuenta financiera rastreada, o selecciona explícitamente un lado fuera de Fidy para efectivo o fondos externos.",
+    a11y: {
+      amountField: "Editar monto de la transferencia",
+      selectSide: "Seleccionar lado %{side}",
+      changeDate: "Cambiar fecha de la transferencia",
+    },
+    errors: {
+      amountRequired: "Ingresa el monto de la transferencia",
+      sidesRequired: "Elige ambos lados antes de guardar",
+      trackedAccountRequired: "Al menos un lado debe ser una cuenta rastreada",
+      distinctSidesRequired: "Elige dos lados distintos",
+      saveFailed: "No se pudo guardar la transferencia",
+    },
+    activity: {
+      generic: "Transferencia",
+      toAccount: "Transferencia a %{name}",
+      fromAccount: "Transferencia desde %{name}",
+      route: "%{from} -> %{to}",
+    },
+  },
+
   financialAccounts: {
     defaultName: "Efectivo",
     kinds: {
@@ -710,8 +772,6 @@ const es = {
         "Te quedan %{remaining} para %{daysLeft} días. La ropa que pueda esperar hasta el próximo mes ayudaría a mantenerse dentro del presupuesto.",
       services:
         "Te quedan %{remaining} para %{daysLeft} días. Revisar si hay suscripciones que puedas pausar podría liberar algo de espacio.",
-      transfer:
-        "Te quedan %{remaining} para %{daysLeft} días. Limitar transferencias a lo necesario esta semana ayudaría a mantenerse dentro del presupuesto.",
       other:
         "Te quedan %{remaining} para %{daysLeft} días. Una mirada rápida a los gastos recientes podría mostrar dónde hay un poco de margen.",
     },
@@ -730,8 +790,6 @@ const es = {
         "Te pasaste %{overAmount}. Saltarte compras de ropa este mes ayudaría a recuperar la diferencia.",
       services:
         "Te pasaste %{overAmount}. Pausar una o dos suscripciones este mes podría marcar la diferencia.",
-      transfer:
-        "Te pasaste %{overAmount}. Las transferencias no urgentes pueden esperar hasta el próximo mes.",
       other:
         "Te pasaste %{overAmount}. Revisar compras recientes de cerca podría revelar algunos ahorros fáciles.",
     },

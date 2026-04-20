@@ -37,6 +37,18 @@ Fresh workspaces may not have the `.context/fidy-vault` symlink yet, even when t
 
 `Effect.runPromise(...)` rejects with Effect's `FiberFailure` wrapper, not the original thrown error. In this repo that changes observable behavior in tests and error reporting paths that expect the original `Error` instance. Fix: shared runners like `shared/effect/runtime.ts` should use `Effect.runPromiseExit(...)` and `Cause.squash(...)` before rethrowing so module boundaries preserve the original failure.
 
+### XcodeBuildMCP persistence and tool exposure differ in this harness (⚠️ AGENT SURPRISE)
+
+In this Codex/Conductor harness, `session_set_defaults(..., persist: true)` can try to write `/.xcodebuildmcp/config.yaml` instead of the workspace root, so it is not a reliable way to create repo-local XcodeBuildMCP config. Also, the built-in tool wrappers may expose only a subset of XcodeBuildMCP even when the latest server supports more workflows like `ui-automation/tap` and `type-text`. Fix: commit an explicit workspace config at `.xcodebuildmcp/config.yaml`, keep the Codex MCP entry in `~/.codex/config.toml`, and use the packaged CLI directly from the repo root when wrappers are missing, for example `npx -y xcodebuildmcp@latest ui-automation snapshot-ui --simulator-id ...`.
+
+### Root Bun test scripts need `./` for explicit file execution (⚠️ AGENT SURPRISE)
+
+At the repo root, `bun test scripts/check-branded-boundaries.test.ts` can fail with `Cannot find module .../scripts/check-branded-boundaries.test.ts from ''`, even though the file exists. In this checkout Bun only resolved the direct file path reliably when it was prefixed with `./`. Fix: root package scripts that execute a single test file should use `bun test ./scripts/...` instead of `bun test scripts/...`.
+
+### `shared/db` barrel can pull React Native runtime into pure tests (⚠️ AGENT SURPRISE)
+
+Importing `@/shared/db` from a supposedly pure repository/query module also loads `shared/db/client.ts`, which reaches `shared/lib` and mobile-only runtime dependencies like `@sentry/react-native` and toast code. That can break isolated Bun imports and make data-layer tests unexpectedly depend on the React Native runtime. Fix: in pure repository/query modules and DB-heavy tests, prefer deep imports from `shared/db/schema`, `shared/db/enqueue-sync`, and `shared/db/client` instead of the `shared/db` barrel.
+
 ### Rebased PR branches can replay already-merged slice commits (⚠️ AGENT SURPRISE)
 
 When a new slice branch is created from an older feature branch and that parent PR later merges to `main`, the standard `git pull --rebase --autostash origin main` flow can try to replay those already-merged commits and produce conflicts in unrelated files. In this repo, the safer recovery is: stash the current work, create a fresh branch from `origin/main`, then reapply the stash there before opening the next PR.

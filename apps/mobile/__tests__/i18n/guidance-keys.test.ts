@@ -19,7 +19,6 @@ const CATEGORIES = [
   "home",
   "clothing",
   "services",
-  "transfer",
   "other",
 ];
 

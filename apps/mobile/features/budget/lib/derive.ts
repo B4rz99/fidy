@@ -129,7 +129,6 @@ const SUGGESTION_CATEGORY_IDS: ReadonlySet<string> = new Set([
   "home",
   "clothing",
   "services",
-  "transfer",
   "other",
 ]);
 
