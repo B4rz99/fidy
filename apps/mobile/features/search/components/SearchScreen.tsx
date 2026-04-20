@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { useOptionalUserId } from "@/features/auth";
 import { CATEGORY_MAP, makeDateLabel, type StoredTransaction } from "@/features/transactions";
@@ -11,6 +11,7 @@ import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { formatSignedMoney, toIsoDate } from "@/shared/lib";
 import { amountDigitsToAmount } from "../lib/amount-utils";
 import { hasActiveFilters } from "../lib/filters";
+import { resolveSearchRouteFilters } from "../lib/route-params";
 import type { SearchFilters } from "../lib/types";
 import {
   clearSearchFilters,
@@ -67,6 +68,10 @@ const SearchTransactionItem = memo(function SearchTransactionItem({
 });
 
 export const SearchScreen = () => {
+  const routeParams = useLocalSearchParams<{
+    category?: string | string[];
+    categoryId?: string | string[];
+  }>();
   const { back } = useRouter();
   const { t } = useTranslation();
   const primary = useThemeColor("primary");
@@ -80,6 +85,8 @@ export const SearchScreen = () => {
   const hasMore = useSearchStore((s) => s.hasMore);
   const summary = useSearchStore((s) => s.summary);
   const reset = useSearchStore((s) => s.reset);
+  const initialRouteFilters = resolveSearchRouteFilters(routeParams);
+  const shouldAutoFocusInput = initialRouteFilters.categoryIds == null;
 
   const [ready, setReady] = useState(false);
   const [inputText, setInputText] = useState("");
@@ -93,9 +100,15 @@ export const SearchScreen = () => {
     const handle = InteractionManager.runAfterInteractions(() => {
       setReady(true);
       if (db && userId) {
-        executeSearch(db, userId);
+        if (initialRouteFilters.categoryIds != null) {
+          updateSearchFilters(db, userId, initialRouteFilters);
+        } else {
+          executeSearch(db, userId);
+        }
       }
-      inputRef.current?.focus();
+      if (shouldAutoFocusInput) {
+        inputRef.current?.focus();
+      }
     });
     return () => {
       handle.cancel();

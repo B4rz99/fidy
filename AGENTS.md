@@ -49,6 +49,10 @@ At the repo root, `bun test scripts/check-branded-boundaries.test.ts` can fail w
 
 Importing `@/shared/db` from a supposedly pure repository/query module also loads `shared/db/client.ts`, which reaches `shared/lib` and mobile-only runtime dependencies like `@sentry/react-native` and toast code. That can break isolated Bun imports and make data-layer tests unexpectedly depend on the React Native runtime. Fix: in pure repository/query modules and DB-heavy tests, prefer deep imports from `shared/db/schema`, `shared/db/enqueue-sync`, and `shared/db/client` instead of the `shared/db` barrel.
 
+### Notification deep-link params can drift from screen expectations (⚠️ AGENT SURPRISE)
+
+This repo has already had one mismatch where notification routes used legacy params like `/search?category=...` and `/goal-detail?id=...` while the destination screens expected different boundaries. The current app accepts both the legacy params and the normalized forms (`categoryId`, `goalId`) so existing queued notifications still work. Fix: when adding or refactoring notification deep links, update both the route builders and the destination route-param readers together, and keep a regression probe for notification taps in QA.
+
 ### Rebased PR branches can replay already-merged slice commits (⚠️ AGENT SURPRISE)
 
 When a new slice branch is created from an older feature branch and that parent PR later merges to `main`, the standard `git pull --rebase --autostash origin main` flow can try to replay those already-merged commits and produce conflicts in unrelated files. In this repo, the safer recovery is: stash the current work, create a fresh branch from `origin/main`, then reapply the stash there before opening the next PR.
