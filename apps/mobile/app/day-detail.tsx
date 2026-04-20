@@ -47,9 +47,9 @@ export default function DayDetailScreen() {
     if (!userId) return;
     const existing = isPaymentPaid(billId);
     if (existing) {
-      await unmarkBillPaid(getDb(userId), userId, billId, dueDateStr);
+      await unmarkBillPaid({ db: getDb(userId), userId, billId, dueDate: dueDateStr });
     } else {
-      await markBillPaid(getDb(userId), userId, billId, dueDateStr);
+      await markBillPaid({ db: getDb(userId), userId, billId, dueDate: dueDateStr });
     }
   };
 
@@ -65,7 +65,7 @@ export default function DayDetailScreen() {
         style: "destructive",
         onPress: () => {
           if (!userId) return;
-          void deleteBill(getDb(userId), userId, billId).catch(captureError);
+          void deleteBill({ db: getDb(userId), userId, billId }).catch(captureError);
         },
       },
     ]);
