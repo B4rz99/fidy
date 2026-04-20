@@ -62,6 +62,43 @@ function createDeferred<T>() {
   return { promise, resolve, reject };
 }
 
+const db = {} as never;
+const bill = {
+  id: "bill-1" as BillId,
+  name: "Netflix",
+  amount: 35000 as CopAmount,
+  frequency: "monthly" as const,
+  categoryId: "services" as CategoryId,
+  startDate: new Date("2026-01-15T00:00:00.000Z"),
+  isActive: true,
+};
+const billDraft = {
+  name: bill.name,
+  amount: "35000",
+  frequency: bill.frequency,
+  categoryId: bill.categoryId,
+  startDate: bill.startDate,
+};
+const unpaidPayment = {
+  id: "pay-1" as BillPaymentId,
+  billId: bill.id,
+  dueDate: "2026-03-15" as IsoDate,
+  paidAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
+  transactionId: null,
+  createdAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
+};
+const paidPayment = {
+  ...unpaidPayment,
+  transactionId: "txn-1" as TransactionId,
+};
+
+const actor = (userId: UserId) => ({ db, userId });
+const paymentCommand = (userId: UserId) => ({
+  ...actor(userId),
+  billId: bill.id,
+  dueDate: unpaidPayment.dueDate,
+});
+
 describe("calendar store boundary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -93,17 +130,7 @@ describe("calendar store boundary", () => {
     const load = loadBills({} as never, "user-1" as UserId);
 
     initializeCalendarSession("user-2" as UserId);
-    deferred.resolve([
-      {
-        id: "bill-1" as BillId,
-        name: "Netflix",
-        amount: 35000 as CopAmount,
-        frequency: "monthly",
-        categoryId: "services" as CategoryId,
-        startDate: new Date("2026-01-15T00:00:00.000Z"),
-        isActive: true,
-      },
-    ]);
+    deferred.resolve([bill]);
 
     await load;
 
@@ -154,15 +181,10 @@ describe("calendar store boundary", () => {
     });
     initializeCalendarSession("user-1" as UserId);
 
-    const result = await addBill(
-      {} as never,
-      "user-1" as UserId,
-      "Netflix",
-      "35000",
-      "monthly",
-      "services" as CategoryId,
-      new Date("2026-01-15T00:00:00.000Z")
-    );
+    const result = await addBill({
+      ...actor("user-1" as UserId),
+      draft: billDraft,
+    });
 
     expect(result).toBe(true);
     expect(useCalendarStore.getState().bills).toEqual([
@@ -189,28 +211,15 @@ describe("calendar store boundary", () => {
     mockAddBill.mockReturnValueOnce(deferred.promise);
 
     initializeCalendarSession("user-1" as UserId);
-    const add = addBill(
-      {} as never,
-      "user-1" as UserId,
-      "Netflix",
-      "35000",
-      "monthly",
-      "services" as CategoryId,
-      new Date("2026-01-15T00:00:00.000Z")
-    );
+    const add = addBill({
+      ...actor("user-1" as UserId),
+      draft: billDraft,
+    });
 
     initializeCalendarSession("user-2" as UserId);
     deferred.resolve({
       success: true,
-      bill: {
-        id: "bill-1" as BillId,
-        name: "Netflix",
-        amount: 35000 as CopAmount,
-        frequency: "monthly",
-        categoryId: "services" as CategoryId,
-        startDate: new Date("2026-01-15T00:00:00.000Z"),
-        isActive: true,
-      },
+      bill,
     });
 
     await expect(add).resolves.toBe(false);
@@ -223,23 +232,13 @@ describe("calendar store boundary", () => {
   it("drops stale update results after the active user changes", async () => {
     const deferred = createDeferred<boolean>();
     mockUpdateBill.mockReturnValueOnce(deferred.promise);
-    useCalendarStore.setState({
-      bills: [
-        {
-          id: "bill-1" as BillId,
-          name: "Netflix",
-          amount: 35000 as CopAmount,
-          frequency: "monthly",
-          categoryId: "services" as CategoryId,
-          startDate: new Date("2026-01-15T00:00:00.000Z"),
-          isActive: true,
-        },
-      ],
-    });
+    useCalendarStore.setState({ bills: [bill] });
 
     initializeCalendarSession("user-1" as UserId);
-    const update = updateBill({} as never, "user-1" as UserId, "bill-1" as BillId, {
-      name: "Hulu",
+    const update = updateBill({
+      ...actor("user-1" as UserId),
+      billId: bill.id,
+      changes: { name: "Hulu" },
     });
 
     initializeCalendarSession("user-2" as UserId);
@@ -254,32 +253,13 @@ describe("calendar store boundary", () => {
 
   it("removes a deleted bill and its payments from state", async () => {
     initializeCalendarSession("user-1" as UserId);
-    useCalendarStore.setState({
-      bills: [
-        {
-          id: "bill-1" as BillId,
-          name: "Netflix",
-          amount: 35000 as CopAmount,
-          frequency: "monthly",
-          categoryId: "services" as CategoryId,
-          startDate: new Date("2026-01-15T00:00:00.000Z"),
-          isActive: true,
-        },
-      ],
-      payments: [
-        {
-          id: "pay-1" as BillPaymentId,
-          billId: "bill-1" as BillId,
-          dueDate: "2026-03-15" as IsoDate,
-          paidAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
-          transactionId: null,
-          createdAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
-        },
-      ],
-    });
+    useCalendarStore.setState({ bills: [bill], payments: [unpaidPayment] });
     mockDeleteBill.mockResolvedValueOnce(true);
 
-    await deleteBill({} as never, "user-1" as UserId, "bill-1" as BillId);
+    await deleteBill({
+      ...actor("user-1" as UserId),
+      billId: bill.id,
+    });
 
     expect(useCalendarStore.getState()).toMatchObject({
       bills: [],
@@ -288,39 +268,15 @@ describe("calendar store boundary", () => {
   });
 
   it("updates payment state through the paid and unpaid boundaries", async () => {
-    useCalendarStore.setState({
-      bills: [
-        {
-          id: "bill-1" as BillId,
-          name: "Netflix",
-          amount: 35000 as CopAmount,
-          frequency: "monthly",
-          categoryId: "services" as CategoryId,
-          startDate: new Date("2026-01-15T00:00:00.000Z"),
-          isActive: true,
-        },
-      ],
-    });
+    useCalendarStore.setState({ bills: [bill] });
     mockMarkBillPaid.mockResolvedValueOnce({
       success: true,
-      payment: {
-        id: "pay-1" as BillPaymentId,
-        billId: "bill-1" as BillId,
-        dueDate: "2026-03-15" as IsoDate,
-        paidAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
-        transactionId: "txn-1" as TransactionId,
-        createdAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
-      },
+      payment: paidPayment,
     });
     mockUnmarkBillPaid.mockResolvedValueOnce({ success: true });
     initializeCalendarSession("user-1" as UserId);
 
-    await markBillPaid(
-      {} as never,
-      "user-1" as UserId,
-      "bill-1" as BillId,
-      "2026-03-15" as IsoDate
-    );
+    await markBillPaid(paymentCommand("user-1" as UserId));
     expect(useCalendarStore.getState().payments).toEqual([
       expect.objectContaining({
         id: "pay-1",
@@ -328,12 +284,7 @@ describe("calendar store boundary", () => {
       }),
     ]);
 
-    await unmarkBillPaid(
-      {} as never,
-      "user-1" as UserId,
-      "bill-1" as BillId,
-      "2026-03-15" as IsoDate
-    );
+    await unmarkBillPaid(paymentCommand("user-1" as UserId));
     expect(useCalendarStore.getState().payments).toEqual([]);
   });
 
@@ -349,40 +300,16 @@ describe("calendar store boundary", () => {
         createdAt: IsoDateTime;
       };
     }>();
-    useCalendarStore.setState({
-      bills: [
-        {
-          id: "bill-1" as BillId,
-          name: "Netflix",
-          amount: 35000 as CopAmount,
-          frequency: "monthly",
-          categoryId: "services" as CategoryId,
-          startDate: new Date("2026-01-15T00:00:00.000Z"),
-          isActive: true,
-        },
-      ],
-    });
+    useCalendarStore.setState({ bills: [bill] });
     mockMarkBillPaid.mockReturnValueOnce(deferred.promise);
 
     initializeCalendarSession("user-1" as UserId);
-    const mark = markBillPaid(
-      {} as never,
-      "user-1" as UserId,
-      "bill-1" as BillId,
-      "2026-03-15" as IsoDate
-    );
+    const mark = markBillPaid(paymentCommand("user-1" as UserId));
 
     initializeCalendarSession("user-2" as UserId);
     deferred.resolve({
       success: true,
-      payment: {
-        id: "pay-1" as BillPaymentId,
-        billId: "bill-1" as BillId,
-        dueDate: "2026-03-15" as IsoDate,
-        paidAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
-        transactionId: "txn-1" as TransactionId,
-        createdAt: "2026-03-10T00:00:00.000Z" as IsoDateTime,
-      },
+      payment: paidPayment,
     });
 
     await mark;

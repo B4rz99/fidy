@@ -33,10 +33,13 @@ import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { parseDigitsToAmount } from "@/shared/lib";
 import { requireBillId } from "@/shared/types/assertions";
-import type { BillId, UserId } from "@/shared/types/branded";
+import type { UserId } from "@/shared/types/branded";
 import migrations from "../drizzle/migrations";
 
 const DEFAULT_BILL_CATEGORY_ID = getBuiltInCategoryId("services");
+
+type AddBillDraft = Parameters<typeof addBill>[0]["draft"];
+type UpdateBillInput = Omit<Parameters<typeof updateBill>[0], "db" | "userId">;
 
 function AddBillForm({
   existingBill,
@@ -46,19 +49,8 @@ function AddBillForm({
   canSubmit,
 }: {
   readonly existingBill: Bill | undefined;
-  readonly onAddBill: (
-    name: string,
-    amount: string,
-    frequency: BillFrequency,
-    categoryId: CategoryId,
-    startDate: Date
-  ) => Promise<boolean>;
-  readonly onUpdateBill: (
-    id: BillId,
-    data: Partial<
-      Pick<Bill, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
-    >
-  ) => Promise<boolean>;
+  readonly onAddBill: (draft: AddBillDraft) => Promise<boolean>;
+  readonly onUpdateBill: (input: UpdateBillInput) => Promise<boolean>;
   readonly onDone: () => void;
   readonly canSubmit: boolean;
 }) {
@@ -95,16 +87,25 @@ function AddBillForm({
       if (existingBill) {
         const amountValue = parseDigitsToAmount(amount);
         if (amountValue <= 0) return;
-        const success = await onUpdateBill(requireBillId(existingBill.id), {
+        const success = await onUpdateBill({
+          billId: requireBillId(existingBill.id),
+          changes: {
+            name: trimmedName,
+            amount: amountValue,
+            frequency,
+            categoryId: category,
+            startDate,
+          },
+        });
+        if (success) onDone();
+      } else {
+        const success = await onAddBill({
           name: trimmedName,
-          amount: amountValue,
+          amount,
           frequency,
           categoryId: category,
           startDate,
         });
-        if (success) onDone();
-      } else {
-        const success = await onAddBill(trimmedName, amount, frequency, category, startDate);
         if (success) onDone();
       }
     });
@@ -272,13 +273,13 @@ function AuthenticatedAddBillForm({
       key={existingBill?.id ?? "new"}
       existingBill={existingBill}
       canSubmit={migrationsReady}
-      onAddBill={(name, amount, frequency, categoryId, startDate) => {
+      onAddBill={(draft) => {
         if (!migrationsReady) return Promise.resolve(false);
-        return addBill(db, userId, name, amount, frequency, categoryId, startDate);
+        return addBill({ db, userId, draft });
       }}
-      onUpdateBill={(id, data) => {
+      onUpdateBill={(input) => {
         if (!migrationsReady) return Promise.resolve(false);
-        return updateBill(db, userId, id, data);
+        return updateBill({ db, userId, ...input });
       }}
       onDone={onDone}
     />
