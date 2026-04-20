@@ -1,9 +1,27 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ONBOARDING_STEP } from "@/features/onboarding/lib/flow";
+import { useLocalOnboardingState } from "@/features/onboarding/lib/local-onboarding-state";
 import { useOnboardingStore } from "@/features/onboarding/store";
+
+const { mockMarkOnboardingComplete } = vi.hoisted(() => ({
+  mockMarkOnboardingComplete: vi.fn(() => Promise.resolve()),
+}));
+
+vi.mock("@/features/onboarding/lib/check-onboarding", async () => {
+  const actual = await vi.importActual<typeof import("@/features/onboarding/lib/check-onboarding")>(
+    "@/features/onboarding/lib/check-onboarding"
+  );
+
+  return {
+    ...actual,
+    markOnboardingComplete: () => mockMarkOnboardingComplete(),
+  };
+});
 
 describe("useOnboardingStore", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
+    useLocalOnboardingState.setState({ isComplete: false });
     useOnboardingStore.setState({
       step: ONBOARDING_STEP.welcome,
       isCompleting: false,
@@ -103,5 +121,13 @@ describe("useOnboardingStore", () => {
     });
     useOnboardingStore.getState().nextStep();
     expect(useOnboardingStore.getState().step).toBe(ONBOARDING_STEP.sync);
+  });
+
+  test("completeOnboarding updates auth-derived onboarding state after persisting the flag", async () => {
+    await useOnboardingStore.getState().completeOnboarding();
+
+    expect(mockMarkOnboardingComplete).toHaveBeenCalledOnce();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(true);
+    expect(useOnboardingStore.getState().isCompleting).toBe(false);
   });
 });

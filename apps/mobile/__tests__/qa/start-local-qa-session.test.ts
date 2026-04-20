@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { startLocalQaSession } from "@/features/qa";
 
-const mockClear = vi.fn();
+const mockClear = vi.fn(() => Promise.resolve());
+const mockSetLocalOnboardingComplete = vi.fn();
 const mockOnboardingReset = vi.fn();
 const mockResetDbForUser = vi.fn<(userId: string) => Promise<void>>(() => Promise.resolve());
 const mockGetDb = vi.fn<(userId: string) => { _: string }>(() => ({ _: "db" }));
@@ -38,6 +39,12 @@ vi.mock("@/features/onboarding/lib/check-onboarding", () => ({
 vi.mock("@/features/onboarding/store", () => ({
   useOnboardingStore: {
     getState: () => ({ reset: mockOnboardingReset }),
+  },
+}));
+
+vi.mock("@/features/onboarding/lib/local-onboarding-state", () => ({
+  useLocalOnboardingState: {
+    getState: () => ({ setIsComplete: mockSetLocalOnboardingComplete }),
   },
 }));
 
@@ -100,6 +107,7 @@ describe("startLocalQaSession", () => {
 
     expect(mockBuildLocalQaSeed).toHaveBeenCalledWith("transfer-ready", expect.any(Date));
     expect(mockClear).toHaveBeenCalledOnce();
+    expect(mockSetLocalOnboardingComplete).toHaveBeenCalledWith(false);
     expect(mockOnboardingReset).toHaveBeenCalledOnce();
     expect(mockQueryClientClear).toHaveBeenCalledOnce();
     expect(mockResetDbForUser).toHaveBeenCalledWith("qa-local-transfer-ready");

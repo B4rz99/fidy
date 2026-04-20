@@ -1,4 +1,4 @@
-import { getOnboardingCompleteFromStore } from "@/features/onboarding/lib/check-onboarding";
+import { useLocalOnboardingState } from "@/features/onboarding/lib/local-onboarding-state";
 import { requireUserId } from "@/shared/types/assertions";
 import {
   deriveAccountCreatedAt,
@@ -34,13 +34,11 @@ export const useAccountCreatedAt = () =>
   );
 
 export const useEffectiveOnboardingComplete = () =>
-  useAuthStore((state) =>
-    deriveEffectiveOnboardingComplete({
-      session: state.session,
-      localQaSession: state.localQaSession,
-      localOnboardingComplete: getOnboardingCompleteFromStore(),
-    })
-  );
+  deriveEffectiveOnboardingComplete({
+    session: useAuthStore((state) => state.session),
+    localQaSession: useAuthStore((state) => state.localQaSession),
+    localOnboardingComplete: useLocalOnboardingState((state) => state.isComplete),
+  });
 
 export const useOptionalUserId = () => {
   const userId = useAuthStore(

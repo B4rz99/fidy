@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { markOnboardingComplete } from "./lib/check-onboarding";
 import { getNextOnboardingStep, ONBOARDING_STEP, type OnboardingStep } from "./lib/flow";
+import { useLocalOnboardingState } from "./lib/local-onboarding-state";
 
 type OnboardingState = {
   step: OnboardingStep;
@@ -61,6 +62,7 @@ export const useOnboardingStore = create<OnboardingState & OnboardingActions>((s
     set({ isCompleting: true });
     try {
       await markOnboardingComplete();
+      useLocalOnboardingState.getState().setIsComplete(true);
     } finally {
       set({ isCompleting: false });
     }

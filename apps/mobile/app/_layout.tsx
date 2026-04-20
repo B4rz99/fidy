@@ -64,7 +64,6 @@ import {
   useGoalStore,
 } from "@/features/goals";
 import { initializeNotificationStore, registerPushToken } from "@/features/notifications";
-import { clearOnboardingFromStore } from "@/features/onboarding";
 import { isLocalQaAvailable, useQaDevtoolsRuntime } from "@/features/qa";
 import { QaStatusBanner } from "@/features/qa/routes.public";
 import { useSettingsStore } from "@/features/settings";
@@ -278,7 +277,6 @@ function AuthenticatedShell({
 }
 
 function RootLayout() {
-  const session = useAuthStore((s) => s.session);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
   const authMode = useAuthMode();
   const userId = useOptionalUserId();
@@ -302,11 +300,10 @@ function RootLayout() {
     void useAuthStore.getState().restoreSession();
   });
 
-  // Side effects when session changes: set Sentry user, clear onboarding on sign-out
+  // Side effects when session changes: set Sentry user
   useSubscription(() => {
     setSentryUser(userId);
-    if (!session && authMode === "remote") clearOnboardingFromStore();
-  }, [authMode, session, userId]);
+  }, [userId]);
 
   useSubscription(
     () => {

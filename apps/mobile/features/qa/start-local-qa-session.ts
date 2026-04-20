@@ -2,6 +2,7 @@ import { migrate } from "drizzle-orm/expo-sqlite/migrator";
 import migrations from "@/drizzle/migrations";
 import { upsertFinancialAccount } from "@/features/financial-accounts/lib/repository";
 import { clearOnboardingFromStore } from "@/features/onboarding/lib/check-onboarding";
+import { useLocalOnboardingState } from "@/features/onboarding/lib/local-onboarding-state";
 import { useOnboardingStore } from "@/features/onboarding/store";
 import { insertTransaction } from "@/features/transactions/lib/repository";
 import { upsertTransfer } from "@/features/transfers/lib/repository";
@@ -13,7 +14,8 @@ import { type LocalQaProfile, persistLocalQaSession } from "./local-session";
 export async function startLocalQaSession(profile: LocalQaProfile = "default") {
   const seed = buildLocalQaSeed(profile, new Date());
 
-  clearOnboardingFromStore();
+  await clearOnboardingFromStore();
+  useLocalOnboardingState.getState().setIsComplete(false);
   useOnboardingStore.getState().reset();
   queryClient.clear();
 

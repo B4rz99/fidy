@@ -1,6 +1,8 @@
 import type { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
 import { cleanupCurrentPushToken } from "@/features/notifications/public";
+import { clearOnboardingFromStore } from "@/features/onboarding/lib/check-onboarding";
+import { useLocalOnboardingState } from "@/features/onboarding/lib/local-onboarding-state";
 import {
   clearLocalQaSession,
   type LocalQaProfile,
@@ -63,17 +65,33 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       if (!isCurrentAuthTransition(transitionVersion)) return;
       if (error || !data.session) {
         if (error) captureWarning("auth_restore_failed", { errorMessage: error.message });
-        set({ session: null, localQaSession: null, isLoading: false });
+        await clearOnboardingFromStore();
+        if (!isCurrentAuthTransition(transitionVersion)) return;
+        set({
+          session: null,
+          localQaSession: null,
+          isLoading: false,
+        });
+        useLocalOnboardingState.getState().setIsComplete(false);
         return;
       }
       identifyUser(data.session.user.id);
-      set({ session: data.session, localQaSession: null, isLoading: false });
+      set({
+        session: data.session,
+        localQaSession: null,
+        isLoading: false,
+      });
     } catch (err) {
       if (!isCurrentAuthTransition(transitionVersion)) return;
       captureWarning("auth_restore_exception", {
         errorType: err instanceof Error ? err.message : "unknown",
       });
-      set({ session: null, localQaSession: null, isLoading: false });
+      set({
+        session: null,
+        localQaSession: null,
+        isLoading: false,
+      });
+      useLocalOnboardingState.getState().setIsComplete(false);
     }
   },
 
@@ -87,13 +105,22 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       const localQaSession = await prepareLocalQaSession(profile);
       if (!isCurrentAuthTransition(transitionVersion)) return;
       identifyUser(localQaSession.userId);
-      set({ session: null, localQaSession, isLoading: false });
+      set({
+        session: null,
+        localQaSession,
+        isLoading: false,
+      });
+      useLocalOnboardingState.getState().setIsComplete(false);
     } catch (err) {
       if (!isCurrentAuthTransition(transitionVersion)) return;
       captureWarning("auth_start_local_qa_failed", {
         errorType: err instanceof Error ? err.message : "unknown",
       });
-      set({ session: null, localQaSession: null, isLoading: false });
+      set({
+        session: null,
+        localQaSession: null,
+        isLoading: false,
+      });
       throw err;
     }
   },
@@ -127,7 +154,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
           });
           if (sessionData.session) {
             identifyUser(sessionData.session.user.id);
-            set({ session: sessionData.session, localQaSession: null, isLoading: false });
+            set({
+              session: sessionData.session,
+              localQaSession: null,
+              isLoading: false,
+            });
           }
         }
       }
@@ -145,8 +176,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
     if (useAuthStore.getState().localQaSession) {
       await clearLocalQaSession().catch(() => undefined);
+      await clearOnboardingFromStore();
       resetAnalyticsUser();
-      set({ session: null, localQaSession: null, isLoading: false });
+      set({
+        session: null,
+        localQaSession: null,
+        isLoading: false,
+      });
+      useLocalOnboardingState.getState().setIsComplete(false);
       return;
     }
 
@@ -167,7 +204,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     } catch {
       // Clear local state regardless
     }
+    await clearOnboardingFromStore();
     resetAnalyticsUser();
-    set({ session: null, localQaSession: null, isLoading: false });
+    set({
+      session: null,
+      localQaSession: null,
+      isLoading: false,
+    });
+    useLocalOnboardingState.getState().setIsComplete(false);
   },
 }));
