@@ -141,6 +141,21 @@ async function parseNotificationStage(context: NotificationContext): Promise<Par
   if (!parsed) {
     return { kind: "failed", context: { ...context, parseMethod } };
   }
+  return {
+    kind: "parsed",
+    context: buildParsedNotificationContext(context, parseMethod, parsed),
+  };
+}
+
+function buildNotificationFingerprint(context: NotificationContext, parsed: ParsedNotification) {
+  return captureFingerprint(context.source, parsed.amount, parsed.date, parsed.merchant);
+}
+
+function buildParsedNotificationContext(
+  context: NotificationContext,
+  parseMethod: NotificationParseMethod,
+  parsed: ParsedNotificationCandidate
+): ParsedNotificationContext {
   assertCopAmount(parsed.amount);
   assertIsoDate(parsed.date);
   const validatedParsed: ParsedNotification = {
@@ -148,20 +163,13 @@ async function parseNotificationStage(context: NotificationContext): Promise<Par
     amount: parsed.amount,
     date: parsed.date,
   };
-  const fingerprint = buildNotificationFingerprint(context, validatedParsed);
-  return {
-    kind: "parsed",
-    context: {
-      ...context,
-      parseMethod,
-      parsed: validatedParsed,
-      fingerprint,
-    },
-  };
-}
 
-function buildNotificationFingerprint(context: NotificationContext, parsed: ParsedNotification) {
-  return captureFingerprint(context.source, parsed.amount, parsed.date, parsed.merchant);
+  return {
+    ...context,
+    parseMethod,
+    parsed: validatedParsed,
+    fingerprint: buildNotificationFingerprint(context, validatedParsed),
+  };
 }
 
 async function parseNotificationWithLlm(
