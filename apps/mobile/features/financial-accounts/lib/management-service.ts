@@ -87,9 +87,130 @@ type FinancialAccountDetails = {
   readonly hasBillingProfileGap: boolean;
 };
 
+type FinancialAccountManagementDeps = {
+  readonly now: () => IsoDateTime;
+  readonly createAccountId: () => FinancialAccountId;
+  readonly createOpeningBalanceId: () => OpeningBalanceId;
+  readonly createIdentifierId: () => FinancialAccountIdentifierId;
+};
+
+type OpeningBalanceInput = {
+  readonly amount: CopAmount | null;
+  readonly effectiveDate: IsoDate | null;
+};
+
+type BillingProfile = Pick<FinancialAccountRow, "statementClosingDay" | "paymentDueDay">;
+
+type OpeningBalanceDraft = Pick<OpeningBalanceRow, "amount" | "effectiveDate">;
+
+type BillingProfileInput = {
+  readonly kind: FinancialAccountKind;
+  readonly statementClosingDay: number | null;
+  readonly paymentDueDay: number | null;
+};
+
+type AccountShapeInput = Pick<
+  CreateAccountInput,
+  | "name"
+  | "kind"
+  | "openingBalanceAmount"
+  | "openingBalanceEffectiveDate"
+  | "statementClosingDay"
+  | "paymentDueDay"
+>;
+
+type NormalizedAccountShape = {
+  readonly name: string;
+  readonly kind: FinancialAccountKind;
+  readonly billingProfile: BillingProfile;
+  readonly openingBalance: OpeningBalanceDraft | null;
+};
+
+type CreateAccountPlan = {
+  readonly account: FinancialAccountRow;
+  readonly openingBalance: OpeningBalanceRow | null;
+  readonly manualIdentifier: FinancialAccountIdentifierRow | null;
+};
+
+type UpdateAccountPlan = {
+  readonly account: FinancialAccountRow;
+  readonly openingBalance: OpeningBalanceRow | null;
+};
+
+type BuildNewAccountRowInput = {
+  readonly accountId: FinancialAccountId;
+  readonly userId: UserId;
+  readonly shape: NormalizedAccountShape;
+  readonly createdAt: IsoDateTime;
+};
+
+type BuildCreateOpeningBalanceInput = {
+  readonly createOpeningBalanceId: () => OpeningBalanceId;
+  readonly userId: UserId;
+  readonly accountId: FinancialAccountId;
+  readonly openingBalance: OpeningBalanceDraft | null;
+  readonly createdAt: IsoDateTime;
+};
+
+type BuildManualIdentifierRowInput = {
+  readonly createIdentifierId: () => FinancialAccountIdentifierId;
+  readonly userId: UserId;
+  readonly accountId: FinancialAccountId;
+  readonly value: string | null;
+  readonly updatedAt: IsoDateTime;
+};
+
+type PlanAccountCreationInput = {
+  readonly deps: FinancialAccountManagementDeps;
+  readonly input: CreateAccountInput;
+  readonly createdAt: IsoDateTime;
+};
+
+type BuildUpdatedAccountRowInput = {
+  readonly existingAccount: FinancialAccountRow;
+  readonly shape: NormalizedAccountShape;
+  readonly updatedAt: IsoDateTime;
+};
+
+type BuildActiveOpeningBalanceInput = {
+  readonly createOpeningBalanceId: () => OpeningBalanceId;
+  readonly userId: UserId;
+  readonly accountId: FinancialAccountId;
+  readonly openingBalance: OpeningBalanceDraft;
+  readonly existingOpeningBalance: OpeningBalanceRow | null;
+  readonly updatedAt: IsoDateTime;
+};
+
+type BuildUpdatedOpeningBalanceInput = {
+  readonly createOpeningBalanceId: () => OpeningBalanceId;
+  readonly userId: UserId;
+  readonly accountId: FinancialAccountId;
+  readonly openingBalance: OpeningBalanceDraft | null;
+  readonly existingOpeningBalance: OpeningBalanceRow | null;
+  readonly updatedAt: IsoDateTime;
+};
+
+type PlanAccountUpdateInput = {
+  readonly deps: FinancialAccountManagementDeps;
+  readonly input: UpdateAccountInput;
+  readonly updatedAt: IsoDateTime;
+  readonly existingAccount: FinancialAccountRow;
+  readonly existingOpeningBalance: OpeningBalanceRow | null;
+};
+
 function trimOrNull(value: string | null) {
   const trimmedValue = value?.trim() ?? "";
   return trimmedValue.length > 0 ? trimmedValue : null;
+}
+
+function requireFinancialAccountName(name: string) {
+  const normalizedName = name.trim();
+
+  if (normalizedName.length === 0) {
+    throw new Error("financial account name is required");
+  }
+
+  return normalizedName;
 }
 
 function hasBillingProfileGap(
@@ -101,23 +222,12 @@ function hasBillingProfileGap(
   );
 }
 
-function normalizeOpeningBalance(
-  amount: CopAmount | null,
-  effectiveDate: IsoDate | null
-): Pick<OpeningBalanceRow, "amount" | "effectiveDate"> | null {
-  const hasOpeningBalance = amount != null && effectiveDate != null;
-  const hasPartialOpeningBalance = amount != null || effectiveDate != null;
+function hasPartialOpeningBalance(input: OpeningBalanceInput) {
+  return input.amount != null || input.effectiveDate != null;
+}
 
-  if (hasPartialOpeningBalance && !hasOpeningBalance) {
-    throw new Error("opening balance requires both amount and effective date");
-  }
-
-  return hasOpeningBalance
-    ? {
-        amount,
-        effectiveDate,
-      }
-    : null;
+function hasMissingOpeningBalanceValue(input: OpeningBalanceInput) {
+  return input.amount == null || input.effectiveDate == null;
 }
 
 function normalizeBillingDay(value: number | null, label: string) {
@@ -132,22 +242,22 @@ function normalizeBillingDay(value: number | null, label: string) {
   return value;
 }
 
-function normalizeBillingProfile(
-  kind: FinancialAccountKind,
-  statementClosingDay: number | null,
-  paymentDueDay: number | null
-) {
-  if (kind !== "credit_card") {
-    return {
+function normalizeBillingProfile(input: BillingProfileInput): BillingProfile {
+  if (input.kind !== "credit_card") {
+    const emptyBillingProfile: BillingProfile = {
       statementClosingDay: null,
       paymentDueDay: null,
     };
+
+    return emptyBillingProfile;
   }
 
-  return {
-    statementClosingDay: normalizeBillingDay(statementClosingDay, "statementClosingDay"),
-    paymentDueDay: normalizeBillingDay(paymentDueDay, "paymentDueDay"),
+  const billingProfile: BillingProfile = {
+    statementClosingDay: normalizeBillingDay(input.statementClosingDay, "statementClosingDay"),
+    paymentDueDay: normalizeBillingDay(input.paymentDueDay, "paymentDueDay"),
   };
+
+  return billingProfile;
 }
 
 function assertOwnedFinancialAccount(account: FinancialAccountRow | null, userId: UserId) {
@@ -158,197 +268,345 @@ function assertOwnedFinancialAccount(account: FinancialAccountRow | null, userId
   return account;
 }
 
-export function createFinancialAccountManagementService({
-  now = () => toIsoDateTime(new Date()),
-  createAccountId = generateFinancialAccountId,
-  createOpeningBalanceId = generateOpeningBalanceId,
-  createIdentifierId = generateFinancialAccountIdentifierId,
-}: CreateFinancialAccountManagementServiceDeps = {}) {
-  const persistManualIdentifier = (
-    db: AnyDb,
-    userId: UserId,
-    accountId: FinancialAccountId,
-    value: string,
-    updatedAt: IsoDateTime
-  ) => {
-    const normalizedIdentifierValue = trimOrNull(value);
-
-    if (normalizedIdentifierValue == null) {
-      return;
-    }
-
-    saveFinancialAccountIdentifierInTransaction(db, {
-      id: createIdentifierId(),
-      userId,
-      accountId,
-      scope: MANUAL_FINANCIAL_ACCOUNT_IDENTIFIER_SCOPE,
-      value: normalizedIdentifierValue,
-      createdAt: updatedAt,
-      updatedAt,
-      deletedAt: null,
-    });
+function normalizeAccountShape(input: AccountShapeInput): NormalizedAccountShape {
+  const billingProfileInput: BillingProfileInput = {
+    kind: input.kind,
+    statementClosingDay: input.statementClosingDay,
+    paymentDueDay: input.paymentDueDay,
   };
-
-  const getAccountDetails = ({
-    db,
-    accountId,
-  }: GetAccountDetailsInput): FinancialAccountDetails | null => {
-    const account = getFinancialAccountById(db, accountId);
-
-    if (!account || account.deletedAt != null) {
-      return null;
-    }
-
-    return {
-      account,
-      openingBalance: getOpeningBalanceForAccount(db, accountId),
-      identifiers: getFinancialAccountIdentifiersForAccount(db, accountId),
-      hasBillingProfileGap: hasBillingProfileGap(account),
-    };
+  const openingBalanceInput: OpeningBalanceInput = {
+    amount: input.openingBalanceAmount,
+    effectiveDate: input.openingBalanceEffectiveDate,
   };
 
   return {
-    getAccountDetails,
-    createAccount({
-      db,
-      userId,
-      name,
-      kind,
-      openingBalanceAmount,
-      openingBalanceEffectiveDate,
-      manualIdentifierValue,
-      statementClosingDay,
-      paymentDueDay,
-    }: CreateAccountInput): CreateAccountResult {
-      const createdAt = now();
-      const normalizedName = name.trim();
-      const normalizedBillingProfile = normalizeBillingProfile(
-        kind,
-        statementClosingDay,
-        paymentDueDay
-      );
-      const normalizedOpeningBalance = normalizeOpeningBalance(
-        openingBalanceAmount,
-        openingBalanceEffectiveDate
-      );
+    name: requireFinancialAccountName(input.name),
+    kind: input.kind,
+    billingProfile: normalizeBillingProfile(billingProfileInput),
+    openingBalance: normalizeOpeningBalance(openingBalanceInput),
+  };
+}
 
-      if (normalizedName.length === 0) {
-        throw new Error("financial account name is required");
-      }
+function normalizeOpeningBalance(input: OpeningBalanceInput): OpeningBalanceDraft | null {
+  if (!hasPartialOpeningBalance(input)) {
+    return null;
+  }
 
-      const account = {
-        id: createAccountId(),
-        userId,
-        name: normalizedName,
-        kind,
-        isDefault: false,
-        statementClosingDay: normalizedBillingProfile.statementClosingDay,
-        paymentDueDay: normalizedBillingProfile.paymentDueDay,
-        createdAt,
-        updatedAt: createdAt,
-        deletedAt: null,
-      } satisfies FinancialAccountRow;
+  if (hasMissingOpeningBalanceValue(input)) {
+    throw new Error("opening balance requires both amount and effective date");
+  }
 
-      db.transaction((tx) => {
-        saveFinancialAccount(tx, account);
+  const openingBalance: OpeningBalanceDraft = {
+    amount: input.amount as CopAmount,
+    effectiveDate: input.effectiveDate as IsoDate,
+  };
 
-        if (normalizedOpeningBalance != null) {
-          saveOpeningBalance(tx, {
-            id: createOpeningBalanceId(),
-            userId,
-            accountId: account.id,
-            amount: normalizedOpeningBalance.amount,
-            effectiveDate: normalizedOpeningBalance.effectiveDate,
-            createdAt,
-            updatedAt: createdAt,
-            deletedAt: null,
-          });
-        }
+  return openingBalance;
+}
 
-        persistManualIdentifier(tx, userId, account.id, manualIdentifierValue ?? "", createdAt);
-      });
+function buildNewAccountRow(input: BuildNewAccountRowInput): FinancialAccountRow {
+  return {
+    id: input.accountId,
+    userId: input.userId,
+    name: input.shape.name,
+    kind: input.shape.kind,
+    isDefault: false,
+    statementClosingDay: input.shape.billingProfile.statementClosingDay,
+    paymentDueDay: input.shape.billingProfile.paymentDueDay,
+    createdAt: input.createdAt,
+    updatedAt: input.createdAt,
+    deletedAt: null,
+  };
+}
 
-      return { account };
-    },
+function buildCreateOpeningBalanceRow(
+  input: BuildCreateOpeningBalanceInput
+): OpeningBalanceRow | null {
+  if (input.openingBalance == null) {
+    return null;
+  }
 
-    updateAccount({
-      db,
-      userId,
+  return {
+    id: input.createOpeningBalanceId(),
+    userId: input.userId,
+    accountId: input.accountId,
+    amount: input.openingBalance.amount,
+    effectiveDate: input.openingBalance.effectiveDate,
+    createdAt: input.createdAt,
+    updatedAt: input.createdAt,
+    deletedAt: null,
+  };
+}
+
+function buildManualIdentifierRow(
+  input: BuildManualIdentifierRowInput
+): FinancialAccountIdentifierRow | null {
+  const normalizedIdentifierValue = trimOrNull(input.value);
+
+  if (normalizedIdentifierValue == null) {
+    return null;
+  }
+
+  return {
+    id: input.createIdentifierId(),
+    userId: input.userId,
+    accountId: input.accountId,
+    scope: MANUAL_FINANCIAL_ACCOUNT_IDENTIFIER_SCOPE,
+    value: normalizedIdentifierValue,
+    createdAt: input.updatedAt,
+    updatedAt: input.updatedAt,
+    deletedAt: null,
+  };
+}
+
+function planAccountCreation(input: PlanAccountCreationInput): CreateAccountPlan {
+  const shape = normalizeAccountShape(input.input);
+  const accountId = input.deps.createAccountId();
+
+  return {
+    account: buildNewAccountRow({
       accountId,
-      name,
-      kind,
-      openingBalanceAmount,
-      openingBalanceEffectiveDate,
-      statementClosingDay,
-      paymentDueDay,
-    }: UpdateAccountInput): CreateAccountResult {
-      const updatedAt = now();
-      const normalizedName = name.trim();
-      const normalizedBillingProfile = normalizeBillingProfile(
-        kind,
-        statementClosingDay,
-        paymentDueDay
-      );
-      const normalizedOpeningBalance = normalizeOpeningBalance(
-        openingBalanceAmount,
-        openingBalanceEffectiveDate
-      );
-      const existingAccount = assertOwnedFinancialAccount(
-        getFinancialAccountById(db, accountId),
-        userId
-      );
-      const existingOpeningBalance = getOpeningBalanceForAccount(db, accountId);
+      userId: input.input.userId,
+      shape,
+      createdAt: input.createdAt,
+    }),
+    openingBalance: buildCreateOpeningBalanceRow({
+      createOpeningBalanceId: input.deps.createOpeningBalanceId,
+      userId: input.input.userId,
+      accountId,
+      openingBalance: shape.openingBalance,
+      createdAt: input.createdAt,
+    }),
+    manualIdentifier: buildManualIdentifierRow({
+      createIdentifierId: input.deps.createIdentifierId,
+      userId: input.input.userId,
+      accountId,
+      value: input.input.manualIdentifierValue,
+      updatedAt: input.createdAt,
+    }),
+  };
+}
 
-      if (normalizedName.length === 0) {
-        throw new Error("financial account name is required");
-      }
+function buildUpdatedAccountRow(input: BuildUpdatedAccountRowInput): FinancialAccountRow {
+  return {
+    ...input.existingAccount,
+    name: input.shape.name,
+    kind: input.shape.kind,
+    statementClosingDay: input.shape.billingProfile.statementClosingDay,
+    paymentDueDay: input.shape.billingProfile.paymentDueDay,
+    updatedAt: input.updatedAt,
+    deletedAt: null,
+  };
+}
 
-      const account = {
-        ...existingAccount,
-        name: normalizedName,
-        kind,
-        statementClosingDay: normalizedBillingProfile.statementClosingDay,
-        paymentDueDay: normalizedBillingProfile.paymentDueDay,
-        updatedAt,
-        deletedAt: null,
-      } satisfies FinancialAccountRow;
+function buildDeletedOpeningBalance(
+  existingOpeningBalance: OpeningBalanceRow | null,
+  updatedAt: IsoDateTime
+): OpeningBalanceRow | null {
+  if (existingOpeningBalance == null) {
+    return null;
+  }
 
-      db.transaction((tx) => {
-        saveFinancialAccount(tx, account);
+  return {
+    ...existingOpeningBalance,
+    updatedAt,
+    deletedAt: updatedAt,
+  };
+}
 
-        if (normalizedOpeningBalance != null) {
-          saveOpeningBalance(tx, {
-            id: existingOpeningBalance?.id ?? createOpeningBalanceId(),
-            userId,
-            accountId,
-            amount: normalizedOpeningBalance.amount,
-            effectiveDate: normalizedOpeningBalance.effectiveDate,
-            createdAt: existingOpeningBalance?.createdAt ?? updatedAt,
-            updatedAt,
-            deletedAt: null,
-          });
-          return;
-        }
+function buildActiveOpeningBalanceRow(input: BuildActiveOpeningBalanceInput): OpeningBalanceRow {
+  return {
+    id: input.existingOpeningBalance?.id ?? input.createOpeningBalanceId(),
+    userId: input.userId,
+    accountId: input.accountId,
+    amount: input.openingBalance.amount,
+    effectiveDate: input.openingBalance.effectiveDate,
+    createdAt: input.existingOpeningBalance?.createdAt ?? input.updatedAt,
+    updatedAt: input.updatedAt,
+    deletedAt: null,
+  };
+}
 
-        if (existingOpeningBalance) {
-          saveOpeningBalance(tx, {
-            ...existingOpeningBalance,
-            updatedAt,
-            deletedAt: updatedAt,
-          });
-        }
-      });
+function buildUpdatedOpeningBalance(
+  input: BuildUpdatedOpeningBalanceInput
+): OpeningBalanceRow | null {
+  if (input.openingBalance == null) {
+    return buildDeletedOpeningBalance(input.existingOpeningBalance, input.updatedAt);
+  }
 
-      return { account };
-    },
+  const activeOpeningBalance: BuildActiveOpeningBalanceInput = {
+    createOpeningBalanceId: input.createOpeningBalanceId,
+    userId: input.userId,
+    accountId: input.accountId,
+    openingBalance: input.openingBalance,
+    existingOpeningBalance: input.existingOpeningBalance,
+    updatedAt: input.updatedAt,
+  };
 
-    addManualIdentifier({ db, userId, accountId, value }: AddManualIdentifierInput) {
-      const account = assertOwnedFinancialAccount(getFinancialAccountById(db, accountId), userId);
-      const updatedAt = now();
+  return buildActiveOpeningBalanceRow(activeOpeningBalance);
+}
 
-      db.transaction((tx) => {
-        persistManualIdentifier(tx, userId, account.id, value, updatedAt);
-      });
-    },
+function planAccountUpdate(input: PlanAccountUpdateInput): UpdateAccountPlan {
+  const shape = normalizeAccountShape(input.input);
+  const account = buildUpdatedAccountRow({
+    existingAccount: input.existingAccount,
+    shape,
+    updatedAt: input.updatedAt,
+  });
+  const openingBalanceInput: BuildUpdatedOpeningBalanceInput = {
+    createOpeningBalanceId: input.deps.createOpeningBalanceId,
+    userId: input.input.userId,
+    accountId: input.input.accountId,
+    openingBalance: shape.openingBalance,
+    existingOpeningBalance: input.existingOpeningBalance,
+    updatedAt: input.updatedAt,
+  };
+
+  return {
+    account,
+    openingBalance: buildUpdatedOpeningBalance(openingBalanceInput),
+  };
+}
+
+function saveOptionalOpeningBalance(db: AnyDb, openingBalance: OpeningBalanceRow | null) {
+  if (openingBalance == null) {
+    return;
+  }
+
+  saveOpeningBalance(db, openingBalance);
+}
+
+function saveOptionalIdentifier(db: AnyDb, identifier: FinancialAccountIdentifierRow | null) {
+  if (identifier == null) {
+    return;
+  }
+
+  saveFinancialAccountIdentifierInTransaction(db, identifier);
+}
+
+function persistAccountCreation(input: { readonly db: AnyDb; readonly plan: CreateAccountPlan }) {
+  input.db.transaction((tx) => {
+    saveFinancialAccount(tx, input.plan.account);
+    saveOptionalOpeningBalance(tx, input.plan.openingBalance);
+    saveOptionalIdentifier(tx, input.plan.manualIdentifier);
+  });
+}
+
+function persistAccountUpdate(input: { readonly db: AnyDb; readonly plan: UpdateAccountPlan }) {
+  input.db.transaction((tx) => {
+    saveFinancialAccount(tx, input.plan.account);
+    saveOptionalOpeningBalance(tx, input.plan.openingBalance);
+  });
+}
+
+function persistManualIdentifier(input: {
+  readonly db: AnyDb;
+  readonly identifier: FinancialAccountIdentifierRow | null;
+}) {
+  input.db.transaction((tx) => {
+    saveOptionalIdentifier(tx, input.identifier);
+  });
+}
+
+function getAccountDetails(input: GetAccountDetailsInput): FinancialAccountDetails | null {
+  const account = getFinancialAccountById(input.db, input.accountId);
+
+  if (!account || account.deletedAt != null) {
+    return null;
+  }
+
+  return {
+    account,
+    openingBalance: getOpeningBalanceForAccount(input.db, input.accountId),
+    identifiers: getFinancialAccountIdentifiersForAccount(input.db, input.accountId),
+    hasBillingProfileGap: hasBillingProfileGap(account),
+  };
+}
+
+function createAccount(
+  deps: FinancialAccountManagementDeps,
+  input: CreateAccountInput
+): CreateAccountResult {
+  const plan = planAccountCreation({
+    deps,
+    input,
+    createdAt: deps.now(),
+  });
+
+  persistAccountCreation({
+    db: input.db,
+    plan,
+  });
+
+  return { account: plan.account };
+}
+
+function updateAccount(
+  deps: FinancialAccountManagementDeps,
+  input: UpdateAccountInput
+): CreateAccountResult {
+  const existingAccount = assertOwnedFinancialAccount(
+    getFinancialAccountById(input.db, input.accountId),
+    input.userId
+  );
+  const plan = planAccountUpdate({
+    deps,
+    input,
+    updatedAt: deps.now(),
+    existingAccount,
+    existingOpeningBalance: getOpeningBalanceForAccount(input.db, input.accountId),
+  });
+
+  persistAccountUpdate({
+    db: input.db,
+    plan,
+  });
+
+  return { account: plan.account };
+}
+
+function addManualIdentifier(
+  deps: FinancialAccountManagementDeps,
+  input: AddManualIdentifierInput
+) {
+  const account = assertOwnedFinancialAccount(
+    getFinancialAccountById(input.db, input.accountId),
+    input.userId
+  );
+
+  persistManualIdentifier({
+    db: input.db,
+    identifier: buildManualIdentifierRow({
+      createIdentifierId: deps.createIdentifierId,
+      userId: input.userId,
+      accountId: account.id,
+      value: input.value,
+      updatedAt: deps.now(),
+    }),
+  });
+}
+
+function resolveManagementDeps(
+  deps: CreateFinancialAccountManagementServiceDeps
+): FinancialAccountManagementDeps {
+  return {
+    now: deps.now ?? (() => toIsoDateTime(new Date())),
+    createAccountId: deps.createAccountId ?? generateFinancialAccountId,
+    createOpeningBalanceId: deps.createOpeningBalanceId ?? generateOpeningBalanceId,
+    createIdentifierId: deps.createIdentifierId ?? generateFinancialAccountIdentifierId,
+  };
+}
+
+export function createFinancialAccountManagementService(
+  deps: CreateFinancialAccountManagementServiceDeps = {}
+) {
+  const resolvedDeps = resolveManagementDeps(deps);
+
+  return {
+    getAccountDetails,
+    createAccount: (input: CreateAccountInput) => createAccount(resolvedDeps, input),
+    updateAccount: (input: UpdateAccountInput) => updateAccount(resolvedDeps, input),
+    addManualIdentifier: (input: AddManualIdentifierInput) =>
+      addManualIdentifier(resolvedDeps, input),
   };
 }
