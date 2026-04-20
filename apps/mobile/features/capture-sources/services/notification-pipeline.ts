@@ -13,7 +13,7 @@ import { stripPii } from "@/features/email-capture/parsing.public";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts";
 import { insertTransaction, isValidCategoryId } from "@/features/transactions/write.public";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync } from "@/shared/db";
+import { enqueueSync } from "@/shared/db/enqueue-sync";
 import {
   capturePipelineEvent,
   generateProcessedCaptureId,
@@ -52,7 +52,7 @@ type NotificationStageMetrics = {
   skippedDuplicate: 0 | 1;
   parseFailed: 0 | 1;
 };
-type ParsedNotificationCandidate = {
+type RawParsedNotification = {
   amount: number;
   merchant: string;
   type: "expense" | "income";
@@ -60,7 +60,7 @@ type ParsedNotificationCandidate = {
   date: string;
   confidence: number;
 };
-type ParsedNotification = Omit<ParsedNotificationCandidate, "amount" | "date"> & {
+type ParsedNotification = Omit<RawParsedNotification, "amount" | "date"> & {
   amount: CopAmount;
   date: IsoDate;
 };
@@ -130,7 +130,7 @@ export async function processNotification(
 async function parseNotificationStage(context: NotificationContext): Promise<ParseStageResult> {
   const localResult = parseNotificationLocally(context.notificationText);
   const parseMethod: NotificationParseMethod = localResult ? "regex" : "llm";
-  const parsed: ParsedNotificationCandidate | null = localResult
+  const rawParsed = localResult
     ? {
         ...localResult,
         categoryId: FALLBACK_CATEGORY_ID,
@@ -138,12 +138,19 @@ async function parseNotificationStage(context: NotificationContext): Promise<Par
         confidence: 0.8,
       }
     : await parseNotificationWithLlm(context.sanitizedText);
-  if (!parsed) {
+  if (!rawParsed) {
     return { kind: "failed", context: { ...context, parseMethod } };
   }
+  const parsed = normalizeParsedNotification(rawParsed);
+  const fingerprint = buildNotificationFingerprint(context, parsed);
   return {
     kind: "parsed",
-    context: buildParsedNotificationContext(context, parseMethod, parsed),
+    context: {
+      ...context,
+      parseMethod,
+      parsed,
+      fingerprint,
+    },
   };
 }
 
@@ -151,30 +158,20 @@ function buildNotificationFingerprint(context: NotificationContext, parsed: Pars
   return captureFingerprint(context.source, parsed.amount, parsed.date, parsed.merchant);
 }
 
-function buildParsedNotificationContext(
-  context: NotificationContext,
-  parseMethod: NotificationParseMethod,
-  parsed: ParsedNotificationCandidate
-): ParsedNotificationContext {
+function normalizeParsedNotification(parsed: RawParsedNotification): ParsedNotification {
   assertCopAmount(parsed.amount);
   assertIsoDate(parsed.date);
-  const validatedParsed: ParsedNotification = {
+
+  return {
     ...parsed,
     amount: parsed.amount,
     date: parsed.date,
-  };
-
-  return {
-    ...context,
-    parseMethod,
-    parsed: validatedParsed,
-    fingerprint: buildNotificationFingerprint(context, validatedParsed),
   };
 }
 
 async function parseNotificationWithLlm(
   sanitizedText: string
-): Promise<ParsedNotificationCandidate | null> {
+): Promise<RawParsedNotification | null> {
   const llm = await parseNotificationApi(sanitizedText);
 
   return llm
@@ -344,7 +341,7 @@ async function persistCaptureOutcome(
     createdAt: outcome.now,
   });
 
-  saveCaptureEvidenceRows(
+  await saveCaptureEvidenceRows(
     context.db,
     materializeCaptureEvidenceRows(context.captureEvidence, {
       userId: context.userId,

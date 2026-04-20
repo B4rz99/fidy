@@ -48,8 +48,8 @@ import {
   createGenericWriteThroughMutationModule,
   getMutationPolicy,
   type MutationCommand,
-  type MutationCommandApplier,
   type MutationDb,
+  type MutationEffect,
   type MutationOutcome,
   toSyncEntry,
   type WriteThroughMutationModule,
@@ -57,119 +57,182 @@ import {
 
 import { assertIsoDateTime } from "@/shared/types/assertions";
 
-function applyTransactionSave(
+type MutationKind = MutationCommand["kind"];
+type MutationCommandByKind = {
+  [Kind in MutationKind]: Extract<MutationCommand, { kind: Kind }>;
+};
+type MutationHandler<Kind extends MutationKind> = (
   db: MutationDb,
-  command: Extract<MutationCommand, { kind: "transaction.save" }>
-): CommandEffectResult {
-  if (command.mode === "insert") {
-    insertTransaction(db, command.row);
-  } else {
-    upsertTransaction(db, command.row);
-  }
+  command: MutationCommandByKind[Kind]
+) => CommandEffectResult;
+type MutationHandlerRegistry = {
+  [Kind in MutationKind]: MutationHandler<Kind>;
+};
+type MutationHandlerSubset<Kind extends MutationKind> = Pick<MutationHandlerRegistry, Kind>;
+type SyncChange = {
+  tableName: Parameters<typeof toSyncEntry>[0];
+  rowId: Parameters<typeof toSyncEntry>[1];
+  operation: Parameters<typeof toSyncEntry>[2];
+  createdAt: Parameters<typeof toSyncEntry>[3];
+};
+type TransactionSaveCommand = MutationCommandByKind["transaction.save"];
+type TransactionDeleteCommand = MutationCommandByKind["transaction.delete"];
+type GoalSaveCommand = MutationCommandByKind["goal.save"];
+type GoalUpdateCommand = MutationCommandByKind["goal.update"];
+type GoalDeleteCommand = MutationCommandByKind["goal.delete"];
+type GoalContributionSaveCommand = MutationCommandByKind["goalContribution.save"];
+type GoalContributionDeleteCommand = MutationCommandByKind["goalContribution.delete"];
+type BudgetSaveCommand = MutationCommandByKind["budget.save"];
+type BudgetUpdateCommand = MutationCommandByKind["budget.update"];
+type BudgetDeleteCommand = MutationCommandByKind["budget.delete"];
+type BudgetCopyCommand = MutationCommandByKind["budget.copy"];
+type NotificationInsertCommand = MutationCommandByKind["notification.insert"];
+type NotificationClearAllCommand = MutationCommandByKind["notification.clearAll"];
+type CategorySaveCommand = MutationCommandByKind["category.save"];
+type CalendarBillSaveCommand = MutationCommandByKind["calendar.bill.save"];
+type CalendarBillUpdateCommand = MutationCommandByKind["calendar.bill.update"];
+type CalendarBillDeleteCommand = MutationCommandByKind["calendar.bill.delete"];
+type CalendarBillMarkPaidCommand = MutationCommandByKind["calendar.bill.markPaid"];
+type CalendarBillUnmarkPaidCommand = MutationCommandByKind["calendar.bill.unmarkPaid"];
 
-  enqueueSync(
-    db,
-    toSyncEntry(
-      "transactions",
-      command.row.id,
-      command.mode === "insert" ? "insert" : "update",
-      command.row.updatedAt
-    )
-  );
+const completeCommand = (
+  afterCommit: readonly MutationEffect[] | undefined,
+  didMutate = true
+): CommandEffectResult => ({ didMutate, effects: afterCommit ?? [] });
 
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+const queueSyncChange = (db: MutationDb, change: SyncChange): void => {
+  enqueueSync(db, toSyncEntry(change.tableName, change.rowId, change.operation, change.createdAt));
+};
 
-function applyTransactionDelete(
+const applyTransactionSave = (
   db: MutationDb,
-  command: Extract<MutationCommand, { kind: "transaction.delete" }>
-): CommandEffectResult {
+  command: TransactionSaveCommand
+): CommandEffectResult => {
+  const persistTransaction = command.mode === "insert" ? insertTransaction : upsertTransaction;
+  const operation = command.mode === "insert" ? "insert" : "update";
+
+  persistTransaction(db, command.row);
+  queueSyncChange(db, {
+    tableName: "transactions",
+    rowId: command.row.id,
+    operation,
+    createdAt: command.row.updatedAt,
+  });
+
+  return completeCommand(command.afterCommit);
+};
+
+const applyTransactionDelete = (
+  db: MutationDb,
+  command: TransactionDeleteCommand
+): CommandEffectResult => {
   softDeleteTransaction(db, command.transactionId, command.now);
-  enqueueSync(db, toSyncEntry("transactions", command.transactionId, "delete", command.now));
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  queueSyncChange(db, {
+    tableName: "transactions",
+    rowId: command.transactionId,
+    operation: "delete",
+    createdAt: command.now,
+  });
+  return completeCommand(command.afterCommit);
+};
 
-function applyGoalSave(
-  db: MutationDb,
-  command: Extract<MutationCommand, { kind: "goal.save" }>
-): CommandEffectResult {
+const applyGoalSave = (db: MutationDb, command: GoalSaveCommand): CommandEffectResult => {
   assertIsoDateTime(command.row.updatedAt);
   insertGoal(db, command.row);
-  enqueueSync(db, toSyncEntry("goals", command.row.id, "insert", command.row.updatedAt));
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  queueSyncChange(db, {
+    tableName: "goals",
+    rowId: command.row.id,
+    operation: "insert",
+    createdAt: command.row.updatedAt,
+  });
+  return completeCommand(command.afterCommit);
+};
 
-function applyGoalUpdate(
-  db: MutationDb,
-  command: Extract<MutationCommand, { kind: "goal.update" }>
-): CommandEffectResult {
+const applyGoalUpdate = (db: MutationDb, command: GoalUpdateCommand): CommandEffectResult => {
   updateGoal(db, command.goalId, command.data, command.now);
-  enqueueSync(db, toSyncEntry("goals", command.goalId, "update", command.now));
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  queueSyncChange(db, {
+    tableName: "goals",
+    rowId: command.goalId,
+    operation: "update",
+    createdAt: command.now,
+  });
+  return completeCommand(command.afterCommit);
+};
 
-function applyGoalDelete(
-  db: MutationDb,
-  command: Extract<MutationCommand, { kind: "goal.delete" }>
-): CommandEffectResult {
+const applyGoalDelete = (db: MutationDb, command: GoalDeleteCommand): CommandEffectResult => {
   softDeleteGoal(db, command.goalId, command.now);
-  enqueueSync(db, toSyncEntry("goals", command.goalId, "delete", command.now));
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  queueSyncChange(db, {
+    tableName: "goals",
+    rowId: command.goalId,
+    operation: "delete",
+    createdAt: command.now,
+  });
+  return completeCommand(command.afterCommit);
+};
 
-function applyGoalContributionSave(
+const applyGoalContributionSave = (
   db: MutationDb,
-  command: Extract<MutationCommand, { kind: "goalContribution.save" }>
-): CommandEffectResult {
+  command: GoalContributionSaveCommand
+): CommandEffectResult => {
   assertIsoDateTime(command.row.updatedAt);
   insertContribution(db, command.row);
-  enqueueSync(
-    db,
-    toSyncEntry("goalContributions", command.row.id, "insert", command.row.updatedAt)
-  );
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  queueSyncChange(db, {
+    tableName: "goalContributions",
+    rowId: command.row.id,
+    operation: "insert",
+    createdAt: command.row.updatedAt,
+  });
+  return completeCommand(command.afterCommit);
+};
 
-function applyGoalContributionDelete(
+const applyGoalContributionDelete = (
   db: MutationDb,
-  command: Extract<MutationCommand, { kind: "goalContribution.delete" }>
-): CommandEffectResult {
+  command: GoalContributionDeleteCommand
+): CommandEffectResult => {
   softDeleteContribution(db, command.contributionId, command.now);
-  enqueueSync(db, toSyncEntry("goalContributions", command.contributionId, "delete", command.now));
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  queueSyncChange(db, {
+    tableName: "goalContributions",
+    rowId: command.contributionId,
+    operation: "delete",
+    createdAt: command.now,
+  });
+  return completeCommand(command.afterCommit);
+};
 
-function applyBudgetSave(
-  db: MutationDb,
-  command: Extract<MutationCommand, { kind: "budget.save" }>
-): CommandEffectResult {
+const applyBudgetSave = (db: MutationDb, command: BudgetSaveCommand): CommandEffectResult => {
   insertBudget(db, command.row);
-  enqueueSync(db, toSyncEntry("budgets", command.row.id, "insert", command.row.updatedAt));
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  queueSyncChange(db, {
+    tableName: "budgets",
+    rowId: command.row.id,
+    operation: "insert",
+    createdAt: command.row.updatedAt,
+  });
+  return completeCommand(command.afterCommit);
+};
 
-function applyBudgetUpdate(
-  db: MutationDb,
-  command: Extract<MutationCommand, { kind: "budget.update" }>
-): CommandEffectResult {
+const applyBudgetUpdate = (db: MutationDb, command: BudgetUpdateCommand): CommandEffectResult => {
   updateBudgetAmount(db, command.budgetId, command.amount, command.now);
-  enqueueSync(db, toSyncEntry("budgets", command.budgetId, "update", command.now));
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  queueSyncChange(db, {
+    tableName: "budgets",
+    rowId: command.budgetId,
+    operation: "update",
+    createdAt: command.now,
+  });
+  return completeCommand(command.afterCommit);
+};
 
-function applyBudgetDelete(
-  db: MutationDb,
-  command: Extract<MutationCommand, { kind: "budget.delete" }>
-): CommandEffectResult {
+const applyBudgetDelete = (db: MutationDb, command: BudgetDeleteCommand): CommandEffectResult => {
   softDeleteBudget(db, command.budgetId, command.now);
-  enqueueSync(db, toSyncEntry("budgets", command.budgetId, "delete", command.now));
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  queueSyncChange(db, {
+    tableName: "budgets",
+    rowId: command.budgetId,
+    operation: "delete",
+    createdAt: command.now,
+  });
+  return completeCommand(command.afterCommit);
+};
 
-function applyBudgetCopy(
-  db: MutationDb,
-  command: Extract<MutationCommand, { kind: "budget.copy" }>
-): CommandEffectResult {
+const applyBudgetCopy = (db: MutationDb, command: BudgetCopyCommand): CommandEffectResult => {
   const copiedIds = copyBudgetsToMonth(
     db,
     command.userId,
@@ -180,146 +243,179 @@ function applyBudgetCopy(
   );
 
   copiedIds.forEach((id) => {
-    enqueueSync(db, toSyncEntry("budgets", id, "insert", command.now));
+    queueSyncChange(db, {
+      tableName: "budgets",
+      rowId: id,
+      operation: "insert",
+      createdAt: command.now,
+    });
   });
 
-  return { didMutate: copiedIds.length > 0, effects: command.afterCommit ?? [] };
-}
+  return completeCommand(command.afterCommit, copiedIds.length > 0);
+};
 
-function applyNotificationInsert(
+const applyNotificationInsert = (
   db: MutationDb,
-  command: Extract<MutationCommand, { kind: "notification.insert" }>
-): CommandEffectResult {
+  command: NotificationInsertCommand
+): CommandEffectResult => {
   const result = insertNotification(db, command.row);
   if (result.changes === 0) {
-    return { didMutate: false, effects: command.afterCommit ?? [] };
+    return completeCommand(command.afterCommit, false);
   }
 
-  enqueueSync(db, toSyncEntry("notifications", command.row.id, "insert", command.row.updatedAt));
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  queueSyncChange(db, {
+    tableName: "notifications",
+    rowId: command.row.id,
+    operation: "insert",
+    createdAt: command.row.updatedAt,
+  });
+  return completeCommand(command.afterCommit);
+};
 
-function applyNotificationClearAll(
+const applyNotificationClearAll = (
   db: MutationDb,
-  command: Extract<MutationCommand, { kind: "notification.clearAll" }>
-): CommandEffectResult {
+  command: NotificationClearAllCommand
+): CommandEffectResult => {
   const allIds = getAllNotificationIds(db, command.userId);
   softDeleteAllNotifications(db, command.userId, command.now);
   allIds.forEach((id) => {
-    enqueueSync(db, toSyncEntry("notifications", id, "delete", command.now));
+    queueSyncChange(db, {
+      tableName: "notifications",
+      rowId: id,
+      operation: "delete",
+      createdAt: command.now,
+    });
   });
-  return { didMutate: allIds.length > 0, effects: command.afterCommit ?? [] };
-}
+  return completeCommand(command.afterCommit, allIds.length > 0);
+};
 
-function applyCategorySave(
-  db: MutationDb,
-  command: Extract<MutationCommand, { kind: "category.save" }>
-): CommandEffectResult {
+const applyCategorySave = (db: MutationDb, command: CategorySaveCommand): CommandEffectResult => {
   insertUserCategory(db, command.row);
-  enqueueSync(db, toSyncEntry("userCategories", command.row.id, "insert", command.row.updatedAt));
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  queueSyncChange(db, {
+    tableName: "userCategories",
+    rowId: command.row.id,
+    operation: "insert",
+    createdAt: command.row.updatedAt,
+  });
+  return completeCommand(command.afterCommit);
+};
 
-function applyCalendarBillSave(
+const applyCalendarBillSave = (
   db: MutationDb,
-  command: Extract<MutationCommand, { kind: "calendar.bill.save" }>
-): CommandEffectResult {
+  command: CalendarBillSaveCommand
+): CommandEffectResult => {
   insertBill(db, command.row);
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  return completeCommand(command.afterCommit);
+};
 
-function applyCalendarBillUpdate(
+const applyCalendarBillUpdate = (
   db: MutationDb,
-  command: Extract<MutationCommand, { kind: "calendar.bill.update" }>
-): CommandEffectResult {
+  command: CalendarBillUpdateCommand
+): CommandEffectResult => {
   updateBill(db, command.billId, command.fields, command.now);
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  return completeCommand(command.afterCommit);
+};
 
-function applyCalendarBillDelete(
+const applyCalendarBillDelete = (
   db: MutationDb,
-  command: Extract<MutationCommand, { kind: "calendar.bill.delete" }>
-): CommandEffectResult {
+  command: CalendarBillDeleteCommand
+): CommandEffectResult => {
   deleteBill(db, command.billId);
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  return completeCommand(command.afterCommit);
+};
 
-function applyCalendarBillMarkPaid(
+const applyCalendarBillMarkPaid = (
   db: MutationDb,
-  command: Extract<MutationCommand, { kind: "calendar.bill.markPaid" }>
-): CommandEffectResult {
+  command: CalendarBillMarkPaidCommand
+): CommandEffectResult => {
   insertTransaction(db, command.transactionRow);
-  enqueueSync(
-    db,
-    toSyncEntry(
-      "transactions",
-      command.transactionRow.id,
-      "insert",
-      command.transactionRow.updatedAt
-    )
-  );
+  queueSyncChange(db, {
+    tableName: "transactions",
+    rowId: command.transactionRow.id,
+    operation: "insert",
+    createdAt: command.transactionRow.updatedAt,
+  });
   insertBillPayment(db, command.paymentRow);
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
+  return completeCommand(command.afterCommit);
+};
 
-function applyCalendarBillUnmarkPaid(
+const applyCalendarBillUnmarkPaid = (
   db: MutationDb,
-  command: Extract<MutationCommand, { kind: "calendar.bill.unmarkPaid" }>
-): CommandEffectResult {
+  command: CalendarBillUnmarkPaidCommand
+): CommandEffectResult => {
   if (command.transactionId) {
     softDeleteTransaction(db, command.transactionId, command.now);
-    enqueueSync(db, toSyncEntry("transactions", command.transactionId, "delete", command.now));
+    queueSyncChange(db, {
+      tableName: "transactions",
+      rowId: command.transactionId,
+      operation: "delete",
+      createdAt: command.now,
+    });
   }
 
   deleteBillPayment(db, command.billId, command.dueDate);
-  return { didMutate: true, effects: command.afterCommit ?? [] };
-}
-
-const applyCommand: MutationCommandApplier = (db, command) => {
-  switch (command.kind) {
-    case "transaction.save":
-      return applyTransactionSave(db, command);
-    case "transaction.delete":
-      return applyTransactionDelete(db, command);
-    case "goal.save":
-      return applyGoalSave(db, command);
-    case "goal.update":
-      return applyGoalUpdate(db, command);
-    case "goal.delete":
-      return applyGoalDelete(db, command);
-    case "goalContribution.save":
-      return applyGoalContributionSave(db, command);
-    case "goalContribution.delete":
-      return applyGoalContributionDelete(db, command);
-    case "budget.save":
-      return applyBudgetSave(db, command);
-    case "budget.update":
-      return applyBudgetUpdate(db, command);
-    case "budget.delete":
-      return applyBudgetDelete(db, command);
-    case "budget.copy":
-      return applyBudgetCopy(db, command);
-    case "notification.insert":
-      return applyNotificationInsert(db, command);
-    case "notification.clearAll":
-      return applyNotificationClearAll(db, command);
-    case "category.save":
-      return applyCategorySave(db, command);
-    case "calendar.bill.save":
-      return applyCalendarBillSave(db, command);
-    case "calendar.bill.update":
-      return applyCalendarBillUpdate(db, command);
-    case "calendar.bill.delete":
-      return applyCalendarBillDelete(db, command);
-    case "calendar.bill.markPaid":
-      return applyCalendarBillMarkPaid(db, command);
-    case "calendar.bill.unmarkPaid":
-      return applyCalendarBillUnmarkPaid(db, command);
-  }
-
-  const exhaustiveCheck: never = command;
-  return exhaustiveCheck;
+  return completeCommand(command.afterCommit);
 };
+
+const transactionHandlers: MutationHandlerSubset<"transaction.save" | "transaction.delete"> = {
+  "transaction.save": applyTransactionSave,
+  "transaction.delete": applyTransactionDelete,
+};
+
+const goalHandlers: MutationHandlerSubset<
+  "goal.save" | "goal.update" | "goal.delete" | "goalContribution.save" | "goalContribution.delete"
+> = {
+  "goal.save": applyGoalSave,
+  "goal.update": applyGoalUpdate,
+  "goal.delete": applyGoalDelete,
+  "goalContribution.save": applyGoalContributionSave,
+  "goalContribution.delete": applyGoalContributionDelete,
+};
+
+const budgetHandlers: MutationHandlerSubset<
+  "budget.save" | "budget.update" | "budget.delete" | "budget.copy"
+> = {
+  "budget.save": applyBudgetSave,
+  "budget.update": applyBudgetUpdate,
+  "budget.delete": applyBudgetDelete,
+  "budget.copy": applyBudgetCopy,
+};
+
+const notificationHandlers: MutationHandlerSubset<"notification.insert" | "notification.clearAll"> =
+  {
+    "notification.insert": applyNotificationInsert,
+    "notification.clearAll": applyNotificationClearAll,
+  };
+
+const categoryHandlers: MutationHandlerSubset<"category.save"> = {
+  "category.save": applyCategorySave,
+};
+
+const calendarHandlers: MutationHandlerSubset<
+  | "calendar.bill.save"
+  | "calendar.bill.update"
+  | "calendar.bill.delete"
+  | "calendar.bill.markPaid"
+  | "calendar.bill.unmarkPaid"
+> = {
+  "calendar.bill.save": applyCalendarBillSave,
+  "calendar.bill.update": applyCalendarBillUpdate,
+  "calendar.bill.delete": applyCalendarBillDelete,
+  "calendar.bill.markPaid": applyCalendarBillMarkPaid,
+  "calendar.bill.unmarkPaid": applyCalendarBillUnmarkPaid,
+};
+
+const mutationHandlers: MutationHandlerRegistry = {
+  ...transactionHandlers,
+  ...goalHandlers,
+  ...budgetHandlers,
+  ...notificationHandlers,
+  ...categoryHandlers,
+  ...calendarHandlers,
+};
+
+const applyCommand = (db: MutationDb, command: MutationCommand): CommandEffectResult =>
+  mutationHandlers[command.kind](db, command as never);
 
 export function createWriteThroughMutationModule(db: AnyDb): WriteThroughMutationModule {
   return createGenericWriteThroughMutationModule(db, applyCommand);

@@ -17,6 +17,9 @@ case "$check_name" in
   mobile-typecheck)
     bun run typecheck
     ;;
+  complexity)
+    bun run lint:complexity
+    ;;
   tests)
     bun run test
     ;;
