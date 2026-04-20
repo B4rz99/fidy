@@ -20,6 +20,12 @@ type InsertNotificationInput = {
   readonly params: string | null;
 };
 
+type InsertNotificationCommandInput = {
+  readonly userId: UserId;
+  readonly input: InsertNotificationInput;
+  readonly now: IsoDateTime;
+};
+
 type NotificationState = {
   notifications: readonly StoredNotification[];
   newCount: number;
@@ -65,6 +71,40 @@ function isActiveNotificationUser(userId: UserId): boolean {
   return useNotificationStore.getState().activeUserId === userId;
 }
 
+const createInsertNotificationCommand = ({
+  userId,
+  input,
+  now,
+}: InsertNotificationCommandInput) => ({
+  kind: "notification.insert" as const,
+  row: {
+    id: generateNotificationId(),
+    userId,
+    type: input.type,
+    dedupKey: input.dedupKey,
+    categoryId: input.categoryId,
+    goalId: input.goalId,
+    titleKey: input.titleKey,
+    messageKey: input.messageKey,
+    params: input.params,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+  },
+});
+
+const finalizeInsertedNotification = (userId: UserId, didMutate: boolean): boolean => {
+  if (!didMutate) {
+    return false;
+  }
+
+  if (isActiveNotificationUser(userId)) {
+    useNotificationStore.getState().incrementNewCount();
+  }
+
+  return true;
+};
+
 export async function initializeNotificationStore(db: AnyDb, userId: UserId): Promise<void> {
   useNotificationStore.getState().beginSession(userId);
 
@@ -100,32 +140,16 @@ export async function insertNotificationRecord(
   db: AnyDb,
   userId: UserId,
   input: InsertNotificationInput
-): Promise<void> {
+): Promise<boolean> {
   const now = toIsoDateTime(new Date());
-  const id = generateNotificationId();
   const mutations = createWriteThroughMutationModule(db);
+  const result = await mutations.commit(createInsertNotificationCommand({ userId, input, now }));
 
-  const result = await mutations.commit({
-    kind: "notification.insert",
-    row: {
-      id,
-      userId,
-      type: input.type,
-      dedupKey: input.dedupKey,
-      categoryId: input.categoryId,
-      goalId: input.goalId,
-      titleKey: input.titleKey,
-      messageKey: input.messageKey,
-      params: input.params,
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
-    },
-  });
-
-  if (result.success && result.didMutate && isActiveNotificationUser(userId)) {
-    useNotificationStore.getState().incrementNewCount();
+  if (!result.success) {
+    return false;
   }
+
+  return finalizeInsertedNotification(userId, result.didMutate);
 }
 
 export function markNotificationsVisited(userId: UserId): void {

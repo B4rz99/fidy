@@ -226,18 +226,18 @@ function getCrossedMilestones(percentBefore: number, percentAfter: number) {
   );
 }
 
-function notifyGoalMilestones(
+async function notifyGoalMilestones(
   goalMutations: GoalMutationService,
   goalId: string,
   percentBefore: number
-): void {
+) {
   const goal = getGoalById(goalId);
   if (goal == null) return;
 
   const milestones = getCrossedMilestones(percentBefore, goal.progress.percentComplete);
   if (milestones.length === 0) return;
 
-  goalMutations.notifyMilestones({
+  await goalMutations.notifyMilestones({
     goalId,
     goalName: goal.goal.name,
     milestones,
@@ -258,7 +258,7 @@ export async function addContribution(
   const didRefreshGoals = await refreshGoalsForActiveSession({ db, ...session });
   if (!didRefreshGoals) return false;
 
-  notifyGoalMilestones(goalMutations, input.goalId, percentBefore);
+  await notifyGoalMilestones(goalMutations, input.goalId, percentBefore);
   return useGoalStore.getState().selectedGoalId === input.goalId
     ? refreshSelectedGoalContributions({ db, ...session, goalId: input.goalId })
     : true;
