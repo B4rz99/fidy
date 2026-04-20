@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { EmailAccountRow } from "@/features/email-capture/lib/repository";
 import {
   createEmailFetchClientIds,
   fetchEmailAccountBatch,
 } from "@/features/email-capture/services/email-capture-fetch-service";
-import type { EmailAccountRow } from "@/features/email-capture/lib/repository";
 import type { EmailAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
 
 const { mockFetchEmails, mockEnsureBankSenders } = vi.hoisted(() => ({

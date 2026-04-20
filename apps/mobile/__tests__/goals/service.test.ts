@@ -1,7 +1,7 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import type { GoalUpdateInput } from "@/features/goals/schema";
 import { createGoalMutationService } from "@/features/goals/services/create-goal-mutation-service";
 import { createGoalQueryService } from "@/features/goals/services/create-goal-query-service";
-import type { GoalUpdateInput } from "@/features/goals/schema";
 import type { UserId } from "@/shared/types/branded";
 
 const mockGetGoalsForUser = vi.fn();

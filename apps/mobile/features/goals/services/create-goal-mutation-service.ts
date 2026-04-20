@@ -15,6 +15,7 @@ import type { AddContributionInput, CreateGoalInput, GoalUpdateInput } from "../
 import { addContributionSchema, createGoalSchema, updateGoalSchema } from "../schema";
 
 type CommitGoalMutation = (command: MutationCommand) => Promise<boolean>;
+
 export type { GoalUpdateInput } from "../schema";
 
 type GoalMilestone = {
