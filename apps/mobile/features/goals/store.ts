@@ -334,7 +334,7 @@ export async function addContribution(
           percent: milestone,
         }),
         body: i18n.t("notifications.goalMilestoneMsg", { percent: milestone }),
-        data: { route: `/goal-detail?id=${input.goalId}` },
+        data: { route: `/goal-detail?goalId=${input.goalId}` },
         preferenceKey: "goalMilestones",
       });
     }

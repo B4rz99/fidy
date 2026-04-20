@@ -71,7 +71,7 @@ describe("deriveNotificationDisplay", () => {
     expect(result.iconName).toBe("utensils");
     expect(result.iconColor).toBe("#7CB243");
     expect(result.iconBgColor).toBe("#E8F5E9");
-    expect(result.route).toBe("/search?category=food");
+    expect(result.route).toBe("/search?categoryId=food");
   });
 
   it("resolves spending_anomaly for transport category", () => {
@@ -106,7 +106,7 @@ describe("deriveNotificationDisplay", () => {
     expect(result.iconName).toBe("trophy");
     expect(result.iconColor).toBe("#7CB243");
     expect(result.iconBgColor).toBe("#E8F5E9");
-    expect(result.route).toBe("/goal-detail?id=goal-42");
+    expect(result.route).toBe("/goal-detail?goalId=goal-42");
   });
 
   it("resolves goal_milestone with null goalId to null route", () => {

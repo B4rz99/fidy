@@ -96,7 +96,7 @@ export const deriveNotificationDisplay = (
       case "spending_anomaly":
         return {
           ...getCategoryVisuals(notification.categoryId),
-          route: `/search?category=${notification.categoryId ?? "other"}` as string | null,
+          route: `/search?categoryId=${notification.categoryId ?? "other"}` as string | null,
         };
       case "budget_pace":
         return {
@@ -109,7 +109,7 @@ export const deriveNotificationDisplay = (
           iconColor: "#7CB243",
           iconBgColor: "#E8F5E9",
           route: notification.goalId
-            ? (`/goal-detail?id=${notification.goalId}` as string | null)
+            ? (`/goal-detail?goalId=${notification.goalId}` as string | null)
             : null,
         };
       default:

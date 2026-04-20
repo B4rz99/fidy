@@ -1,15 +1,18 @@
 import { format } from "date-fns";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { memo, useCallback, useRef, useState } from "react";
 import Svg, { Circle as SvgCircle } from "react-native-svg";
+import { useOptionalUserId } from "@/features/auth";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
 import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatDateDisplay, formatMoney } from "@/shared/lib";
 import { requireIsoDate } from "@/shared/types/assertions";
 import type { GoalProjection, Milestone } from "../lib/derive";
 import { deriveMonthlyMilestones } from "../lib/derive";
+import { resolveGoalDetailGoalId } from "../lib/route-params";
 import type { GoalContribution } from "../schema";
-import { useGoalStore } from "../store";
+import { selectGoal, useGoalStore } from "../store";
 import type { CelebrationMilestone } from "./CelebrationModal";
 import { CelebrationModal } from "./CelebrationModal";
 
@@ -266,8 +269,14 @@ const MilestoneRow = memo(MilestoneRowInner);
 // ---------------------------------------------------------------------------
 
 export function GoalDetailScreen() {
+  const routeParams = useLocalSearchParams<{
+    goalId?: string | string[];
+    id?: string | string[];
+  }>();
   const { t } = useTranslation();
   const { push } = useRouter();
+  const userId = useOptionalUserId();
+  const db = userId ? tryGetDb(userId) : null;
   const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
   const primaryColor = useThemeColor("primary");
@@ -280,9 +289,12 @@ export function GoalDetailScreen() {
     null
   );
 
+  const routeGoalId = resolveGoalDetailGoalId(routeParams);
   const selectedGoalId = useGoalStore((s) => s.selectedGoalId);
   const goals = useGoalStore((s) => s.goals);
   const contributions = useGoalStore((s) => s.selectedGoalContributions);
+  const activeGoalId = routeGoalId ?? selectedGoalId;
+  const visibleContributions = activeGoalId === selectedGoalId ? contributions : [];
 
   const handleTabChange = useCallback((tab: TabType) => {
     setActiveTab(tab);
@@ -304,8 +316,19 @@ export function GoalDetailScreen() {
     push("/(tabs)/(ai)" as never);
   }, [push]);
 
-  // Find the selected goal
-  const goalData = goals.find((g) => g.goal.id === selectedGoalId);
+  useSubscription(
+    () => {
+      if (!db || !userId || routeGoalId == null) {
+        return;
+      }
+
+      void selectGoal(db, userId, routeGoalId);
+    },
+    [db, userId, routeGoalId],
+    db != null && userId != null && routeGoalId != null && routeGoalId !== selectedGoalId
+  );
+
+  const goalData = goals.find((g) => g.goal.id === activeGoalId);
 
   // Track previous progress percent to detect milestone crossings.
   const prevPercentRef = useRef<number | null>(null);
@@ -333,7 +356,7 @@ export function GoalDetailScreen() {
   // Compute running totals for contribution history
   const contributionsWithRunning: { contribution: GoalContribution; runningTotal: number }[] =
     (() => {
-      const reversed = [...contributions].reverse();
+      const reversed = [...visibleContributions].reverse();
       const result: { contribution: GoalContribution; runningTotal: number }[] = [];
       reversed.forEach((c) => {
         const prevTotal = result.length > 0 ? (result[result.length - 1]?.runningTotal ?? 0) : 0;
