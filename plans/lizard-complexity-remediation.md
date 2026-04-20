@@ -30,9 +30,9 @@ Largest current violation clusters:
 - `ai-chat`: `11`
 - `mutations`: `3`, but one of them is the single worst function in the repo
 
-Top production hotspots by severity:
+Top production hotspots in the initial baseline snapshot:
 
-1. `apps/mobile/mutations/index.ts::applyTransactionSave` — `CCN 45`, `NLOC 190`, `params 39`
+1. `apps/mobile/mutations/index.ts::applyTransactionSave` — `CCN 45`, `NLOC 190` (omit parameter count here; Lizard counted the TypeScript overload signatures as `params 39`, which overstated the real function surface)
 2. `apps/mobile/features/sync/services/syncEngine.ts::processEntry` — `CCN 34`, `NLOC 70`, `params 3`
 3. `apps/mobile/shared/types/assertions.ts::assertNonEmptyString` — `CCN 28`, `NLOC 68`, `params 4`
 4. `apps/mobile/features/transactions/lib/build-transaction.ts::parseDigitsToAmount` — `CCN 22`, `NLOC 36`

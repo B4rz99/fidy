@@ -77,6 +77,10 @@ Feature barrels like `features/transactions/index.ts` and `features/qa/index.ts`
 
 In this repo, Lizard's JS/TS parser can attribute top-level regex-heavy declarations to the preceding function and inflate its reported CCN/NLOC. We hit this in `apps/mobile/features/capture-sources/lib/notification-parser.ts`, where Lizard reported `parseAmount` as `CCN 44` even though the function body is small and most of the file is regex constants. Fix: treat Lizard as a hotspot finder, manually verify regex-heavy/config-heavy files before refactoring or blocking CI on them, and use stricter enforcement only on validated production hotspots instead of the exploratory `token_count>0` / `parameter_count>0` profile.
 
+### Lizard counts TypeScript overload signatures as extra parameters (⚠️ AGENT SURPRISE)
+
+In this repo, Lizard can report wildly inflated `parameter_count` for overloaded TypeScript functions because it counts each overload signature before the implementation. We hit this in `apps/mobile/mutations/index.ts`, where `applyTransactionSave` showed `params 39` even though the real implementation only takes `db` and `command`. Fix: do not treat overload-heavy `parameter_count` readings as literal API surfaces; verify the implementation signature before using that metric in plans, docs, or gates.
+
 ## External Fidy Vault
 
 The persistent Fidy knowledge vault lives outside the repo on the local machine.

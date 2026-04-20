@@ -4,7 +4,6 @@ type Violation = {
   key: string;
   file: string;
   function: string;
-  occurrence: number;
   cyclomaticComplexity: number;
   nloc: number;
   parameterCount: number;
@@ -50,22 +49,19 @@ const toRows = (csv: string): string[][] =>
     .filter((line) => line.length > 0)
     .map((line) => line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) ?? []);
 
-const buildViolations = (rows: string[][]): Violation[] => {
-  const occurrences = new Map<string, number>();
+const stripQuotes = (value: string | undefined): string => value?.replaceAll('"', "") ?? "";
 
+const buildViolations = (rows: string[][]): Violation[] => {
   return rows
     .map((row) => {
-      const file = row[6]?.replaceAll('"', "") ?? "";
-      const fn = row[7]?.replaceAll('"', "") ?? "";
-      const occurrenceKey = `${file}::${fn}`;
-      const occurrence = (occurrences.get(occurrenceKey) ?? 0) + 1;
-      occurrences.set(occurrenceKey, occurrence);
+      const key = stripQuotes(row[5]);
+      const file = stripQuotes(row[6]);
+      const fn = stripQuotes(row[7]);
 
       return {
-        key: `${file}::${fn}::${occurrence}`,
+        key,
         file,
         function: fn,
-        occurrence,
         cyclomaticComplexity: Number(row[1]),
         nloc: Number(row[0]),
         parameterCount: Number(row[3]),

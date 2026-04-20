@@ -33,10 +33,9 @@ test("passes when current strict violations match the checked-in ledger", () => 
       thresholds: { cyclomaticComplexity: 5, nloc: 30, parameterCount: 3 },
       violations: [
         {
-          key: "apps/mobile/foo.ts::alpha::1",
+          key: "alpha@10-40@apps/mobile/foo.ts",
           file: "apps/mobile/foo.ts",
           function: "alpha",
-          occurrence: 1,
           cyclomaticComplexity: 6,
           nloc: 31,
           parameterCount: 2,
@@ -71,10 +70,9 @@ test("fails when an existing strict violation gets worse", () => {
       thresholds: { cyclomaticComplexity: 5, nloc: 30, parameterCount: 3 },
       violations: [
         {
-          key: "apps/mobile/foo.ts::alpha::1",
+          key: "alpha@10-40@apps/mobile/foo.ts",
           file: "apps/mobile/foo.ts",
           function: "alpha",
-          occurrence: 1,
           cyclomaticComplexity: 6,
           nloc: 31,
           parameterCount: 2,
@@ -113,10 +111,9 @@ test("fails when a new strict violation appears outside the checked-in ledger", 
       thresholds: { cyclomaticComplexity: 5, nloc: 30, parameterCount: 3 },
       violations: [
         {
-          key: "apps/mobile/foo.ts::alpha::1",
+          key: "alpha@10-40@apps/mobile/foo.ts",
           file: "apps/mobile/foo.ts",
           function: "alpha",
-          occurrence: 1,
           cyclomaticComplexity: 6,
           nloc: 31,
           parameterCount: 2,
@@ -175,7 +172,49 @@ test("can write a strict debt ledger from a lizard csv report", async () => {
 
   expect(ledger.thresholds).toEqual({ cyclomaticComplexity: 5, nloc: 30, parameterCount: 3 });
   expect(ledger.violations.map((violation) => violation.key)).toEqual([
-    "apps/mobile/foo.ts::alpha::1",
-    "apps/mobile/foo.ts::beta::1",
+    "alpha@10-40@apps/mobile/foo.ts",
+    "beta@53-87@apps/mobile/foo.ts",
   ]);
+});
+
+test("matches same-named violations by location instead of ordinal occurrence", () => {
+  const dir = createTempDir();
+  const csvPath = join(dir, "strict.csv");
+  const ledgerPath = join(dir, "ledger.json");
+
+  writeFileSync(
+    csvPath,
+    `${[
+      '31,6,100,2,31,"alpha@1-9@apps/mobile/foo.ts","apps/mobile/foo.ts","alpha","alpha",1,9',
+      '31,6,100,2,31,"alpha@10-40@apps/mobile/foo.ts","apps/mobile/foo.ts","alpha","alpha",10,40',
+    ].join("\n")}\n`
+  );
+
+  writeFileSync(
+    ledgerPath,
+    JSON.stringify({
+      thresholds: { cyclomaticComplexity: 5, nloc: 30, parameterCount: 3 },
+      violations: [
+        {
+          key: "alpha@10-40@apps/mobile/foo.ts",
+          file: "apps/mobile/foo.ts",
+          function: "alpha",
+          cyclomaticComplexity: 6,
+          nloc: 31,
+          parameterCount: 2,
+        },
+      ],
+    })
+  );
+
+  const result = Bun.spawnSync({
+    cmd: ["bun", "scripts/check-lizard-complexity.ts", "--csv", csvPath, "--ledger", ledgerPath],
+    cwd: process.cwd(),
+    stderr: "pipe",
+    stdout: "pipe",
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.stderr.toString()).toContain("alpha@1-9@apps/mobile/foo.ts");
+  expect(result.stderr.toString()).not.toContain("alpha@10-40@apps/mobile/foo.ts");
 });

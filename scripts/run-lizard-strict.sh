@@ -82,13 +82,11 @@ STRICT_ARGS="
   --parameter-threshold "$STRICT_PARAMS" \
   $(printf '%s\n' "$@" | sed 's/^/--target /')
 
-CHECK_ARGS="--csv $CSV_REPORT --ledger $LEDGER_PATH"
-
 if [ "$WRITE_LEDGER" = true ]; then
-  bun scripts/check-lizard-complexity.ts $CHECK_ARGS --write-ledger
+  bun scripts/check-lizard-complexity.ts --csv "$CSV_REPORT" --ledger "$LEDGER_PATH" --write-ledger
   printf 'Lizard strict debt ledger written to %s\n' "$LEDGER_PATH"
 else
-  bun scripts/check-lizard-complexity.ts $CHECK_ARGS
+  bun scripts/check-lizard-complexity.ts --csv "$CSV_REPORT" --ledger "$LEDGER_PATH"
 fi
 
 printf 'Lizard strict report written to %s\n' "$REPORT_DIR"
