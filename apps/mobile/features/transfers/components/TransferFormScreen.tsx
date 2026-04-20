@@ -63,6 +63,12 @@ import { requireProcessedEmailId, requireTransactionId } from "@/shared/types/as
 
 type PickerTarget = "from" | "to";
 type AccountBalanceMap = Readonly<Record<string, number>>;
+type TransferFormInitialDraft = {
+  readonly digits: string;
+  readonly fromSide: TransferSide;
+  readonly toSide: TransferSide;
+  readonly lastEditedSide: PickerTarget;
+};
 
 function getKindIcon(kind: FinancialAccountRow["kind"]): LucideIcon {
   const resolvedKind = readFinancialAccountKind(kind);
@@ -94,6 +100,7 @@ function TransferSideCard({
   balances,
   isConflict,
   onPress,
+  testID,
 }: {
   readonly label: string;
   readonly side: TransferSide | null;
@@ -101,6 +108,8 @@ function TransferSideCard({
   readonly balances: AccountBalanceMap;
   readonly isConflict: boolean;
   readonly onPress: () => void;
+  // biome-ignore lint/style/useNamingConvention: React Native prop name
+  readonly testID: string;
 }) {
   const { t } = useTranslation();
   const primary = useThemeColor("primary");
@@ -145,6 +154,7 @@ function TransferSideCard({
       </Text>
       <Pressable
         onPress={onPress}
+        testID={testID}
         accessible
         accessibilityRole="button"
         accessibilityLabel={t("transfers.a11y.selectSide", { side: label })}
@@ -255,6 +265,7 @@ function TransferSidePicker({
         <Pressable
           onPress={() => undefined}
           accessible={false}
+          testID="transfer.picker.sheet"
           style={{
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
@@ -308,6 +319,7 @@ function TransferSidePicker({
               return (
                 <Pressable
                   key={account.id}
+                  testID={`transfer.picker.account.${account.id}`}
                   onPress={() =>
                     target && onSelect(target, { kind: "account", accountId: account.id })
                   }
@@ -377,6 +389,7 @@ function TransferSidePicker({
             })}
 
             <Pressable
+              testID="transfer.picker.outside-fidy"
               onPress={() =>
                 target && onSelect(target, { kind: "external", label: OUTSIDE_FIDY_LABEL })
               }
@@ -435,9 +448,18 @@ function TransferSidePicker({
   );
 }
 
-export function TransferFormScreen() {
+type TransferFormScreenProps = {
+  readonly initialDraftResolver?: (
+    accounts: readonly FinancialAccountRow[]
+  ) => TransferFormInitialDraft | null;
+};
+
+export function TransferFormScreen({ initialDraftResolver }: TransferFormScreenProps = {}) {
   const { transactionId: routeTransactionId, processedEmailId: routeProcessedEmailId } =
-    useLocalSearchParams<{ transactionId?: string; processedEmailId?: string }>();
+    useLocalSearchParams<{
+      transactionId?: string;
+      processedEmailId?: string;
+    }>();
   const router = useRouter();
   const { t, locale } = useTranslation();
   const userId = useOptionalUserId();
@@ -470,6 +492,7 @@ export function TransferFormScreen() {
   const [sourceTransaction, setSourceTransaction] = useState<StoredTransaction | null>(null);
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
   const hydratedTransactionIdRef = useRef<string | null>(null);
+  const appliedInitialDraftRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -477,6 +500,7 @@ export function TransferFormScreen() {
         setAccounts([]);
         setBalances({});
         setSourceTransaction(null);
+        appliedInitialDraftRef.current = false;
         return;
       }
 
@@ -491,6 +515,23 @@ export function TransferFormScreen() {
       if (reclassificationTransactionId == null) {
         setSourceTransaction(null);
         hydratedTransactionIdRef.current = null;
+
+        const initialDraft =
+          initialDraftResolver && !appliedInitialDraftRef.current
+            ? initialDraftResolver(nextAccounts)
+            : null;
+
+        if (initialDraft) {
+          setDigits(initialDraft.digits);
+          setFromSide(initialDraft.fromSide);
+          setToSide(initialDraft.toSide);
+          setLastEditedSide(initialDraft.lastEditedSide);
+          appliedInitialDraftRef.current = true;
+          return;
+        }
+
+        if (!initialDraftResolver) appliedInitialDraftRef.current = false;
+
         setFromSide(
           (current) =>
             current ?? (defaultAccount ? { kind: "account", accountId: defaultAccount.id } : null)
@@ -521,7 +562,7 @@ export function TransferFormScreen() {
       setDate(transaction.date);
       setLastEditedSide(transaction.type === "expense" ? "to" : "from");
       hydratedTransactionIdRef.current = transaction.id;
-    }, [db, reclassificationTransactionId, router, userId])
+    }, [db, initialDraftResolver, reclassificationTransactionId, router, userId])
   );
 
   const isReclassification = sourceTransaction != null;
@@ -705,6 +746,7 @@ export function TransferFormScreen() {
                 </Text>
                 <TextInput
                   ref={inputRef}
+                  testID="transfer.form.amount"
                   value={digits}
                   onChangeText={(text) => setDigits(cleanDigitInput(text))}
                   keyboardType="number-pad"
@@ -729,6 +771,7 @@ export function TransferFormScreen() {
               accounts={accounts}
               balances={balances}
               isConflict={sameAccountConflict && lastEditedSide === "from"}
+              testID="transfer.form.from-side"
               onPress={() => setPickerTarget("from")}
             />
 
@@ -738,6 +781,7 @@ export function TransferFormScreen() {
               accounts={accounts}
               balances={balances}
               isConflict={sameAccountConflict && lastEditedSide === "to"}
+              testID="transfer.form.to-side"
               onPress={() => setPickerTarget("to")}
             />
 
@@ -761,6 +805,7 @@ export function TransferFormScreen() {
               >
                 {isIos ? (
                   <DateTimePicker
+                    testID="transfer.form.date"
                     value={date}
                     mode="date"
                     display="compact"
@@ -768,6 +813,7 @@ export function TransferFormScreen() {
                   />
                 ) : (
                   <Pressable
+                    testID="transfer.form.date"
                     onPress={() => setShowDatePicker(true)}
                     accessible
                     accessibilityRole="button"
@@ -814,6 +860,7 @@ export function TransferFormScreen() {
             </View>
 
             <Pressable
+              testID="transfer.form.save"
               onPress={canSave ? handleSave : undefined}
               disabled={!canSave || isSaving}
               accessible

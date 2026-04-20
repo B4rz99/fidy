@@ -48,6 +48,14 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
   },
   plugins: [
     "expo-router",
+    [
+      "expo-dev-client",
+      {
+        ios: {
+          launchMode: "launcher",
+        },
+      },
+    ],
     "expo-secure-store",
     // biome-ignore lint/style/useNamingConvention: expo-sqlite config key
     ["expo-sqlite", { useSQLCipher: true }],

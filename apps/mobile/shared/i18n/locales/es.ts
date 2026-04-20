@@ -728,6 +728,98 @@ const es = {
     logout: "Cerrar Sesión",
     logoutConfirmTitle: "Cerrar Sesión",
     logoutConfirmMessage: "¿Estás seguro de que quieres cerrar sesión?",
+    localQaTitle: "QA local",
+    localQaDescription:
+      "Reinicia o cambia escenarios de QA solo locales sin tocar una cuenta real.",
+    localQaReset: "Reiniciar escenario actual",
+    localQaOpenTools: "Abrir herramientas QA",
+    localQaExit: "Salir del QA local",
+  },
+
+  qaTools: {
+    title: "Herramientas QA",
+    subtitle:
+      "Siembra escenarios locales determinísticos y abre directamente la pantalla que quieres revisar.",
+    unavailable: "Las herramientas de QA local solo están disponibles en builds de desarrollo.",
+    currentProfile: "Perfil actual: %{profile}",
+    noActiveProfile: "No hay un perfil de QA local activo.",
+    preparing: "Preparando escenario de QA local...",
+    startFailed: "No se pudo iniciar el escenario QA seleccionado.",
+    scenariosTitle: "Escenarios",
+    flagsTitle: "Feature flags",
+    actionsTitle: "Herramientas de reinicio",
+    openTitle: "Abrir pantalla",
+    openWithCurrentProfile: "Abrir el punto de entrada del perfil actual",
+    logsTitle: "Inspector de logs",
+    logsEmpty: "Todavía no hay logs de QA.",
+    networkTitle: "Inspector de red",
+    networkEmpty: "Todavía no hay solicitudes de red capturadas.",
+    flagOn: "ENCENDIDO",
+    flagOff: "APAGADO",
+    banner: "Perfil QA: %{profile} · red: %{offline}",
+    bannerOfflineOn: "simulada",
+    bannerOfflineOff: "real",
+    profiles: {
+      default: {
+        title: "Predeterminado",
+        description: "Una cuenta de efectivo predeterminada y onboarding completo.",
+      },
+      empty: {
+        title: "Vacío",
+        description: "Sin datos financieros y onboarding incompleto.",
+      },
+      "two-accounts": {
+        title: "Dos cuentas",
+        description: "Efectivo y Bancolombia sin actividad sembrada.",
+      },
+      "transfer-ready": {
+        title: "Listo para transferir",
+        description: "Dos cuentas rastreadas, transacciones sembradas y una transferencia.",
+      },
+      "transfer-conflict": {
+        title: "Conflicto de transferencia",
+        description:
+          "Dos cuentas rastreadas con un conflicto prellenado de transferencia a la misma cuenta.",
+      },
+    },
+    flags: {
+      networkInspectorEnabled: {
+        title: "Inspector de red",
+        description: "Captura solicitudes fetch recientes con estado y duración.",
+      },
+      logInspectorEnabled: {
+        title: "Inspector de logs",
+        description:
+          "Captura eventos de la app relacionados con QA en los límites de auth, siembra y harness.",
+      },
+      simulateOffline: {
+        title: "Simular sin conexión",
+        description:
+          "Fuerza a que fallen las solicitudes fetch para probar estados offline y de error.",
+      },
+      showQaBanner: {
+        title: "Mostrar banner QA",
+        description: "Muestra un banner pequeño con el perfil QA activo y el modo de red actual.",
+      },
+    },
+    actions: {
+      resetCurrentScenario: "Reiniciar escenario actual",
+      resetFlags: "Reiniciar feature flags",
+      clearLogs: "Limpiar logs QA",
+      clearNetwork: "Limpiar eventos de red",
+      exitLocalQa: "Salir del QA local",
+    },
+    open: {
+      home: "Inicio",
+      addChooser: "Selector de agregar",
+      onboarding: "Onboarding",
+      addTransaction: "Agregar transacción",
+      addTransfer: "Agregar transferencia",
+      transferConflict: "Preset de conflicto de transferencia",
+      financialAccounts: "Cuentas financieras",
+      profile: "Perfil",
+      qaTools: "Herramientas QA",
+    },
   },
 
   // Notification Capture

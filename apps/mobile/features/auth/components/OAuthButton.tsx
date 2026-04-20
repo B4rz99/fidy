@@ -8,6 +8,8 @@ interface OAuthButtonProps {
   onPress: () => void;
   containerClassName: string;
   textClassName: string;
+  // biome-ignore lint/style/useNamingConvention: React Native prop name
+  testID?: string;
 }
 
 // biome-ignore lint/style/useNamingConvention: OAuth is a proper noun
@@ -17,10 +19,12 @@ export function OAuthButton({
   onPress,
   containerClassName,
   textClassName,
+  testID,
 }: OAuthButtonProps) {
   return (
     <Pressable
       onPress={onPress}
+      testID={testID}
       className={`h-[52px] items-center justify-center rounded-xl ${containerClassName}`}
     >
       <View className="flex-row items-center justify-center gap-3">

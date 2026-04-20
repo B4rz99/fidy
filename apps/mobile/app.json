@@ -38,6 +38,14 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-dev-client",
+        {
+          "ios": {
+            "launchMode": "launcher"
+          }
+        }
+      ],
       "expo-secure-store",
       [
         "expo-sqlite",

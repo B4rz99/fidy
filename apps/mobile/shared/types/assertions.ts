@@ -13,6 +13,7 @@ import type {
   SyncConflictId,
   SyncQueueId,
   TransactionId,
+  TransferId,
   UserId,
   UserMemoryId,
 } from "@/shared/types/branded";
@@ -112,6 +113,10 @@ export function assertTransactionId(value: string): asserts value is Transaction
   assertNonEmptyString(value, "transactionId");
 }
 
+export function assertTransferId(value: string): asserts value is TransferId {
+  assertNonEmptyString(value, "transferId");
+}
+
 export function assertBillId(value: string): asserts value is BillId {
   assertNonEmptyString(value, "billId");
 }
@@ -183,6 +188,11 @@ export function requireUserId(value: string): UserId {
 
 export function requireTransactionId(value: string): TransactionId {
   assertTransactionId(value);
+  return value;
+}
+
+export function requireTransferId(value: string): TransferId {
+  assertTransferId(value);
   return value;
 }
 

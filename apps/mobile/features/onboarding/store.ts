@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { useAuthStore } from "@/features/auth";
 import { markOnboardingComplete } from "./lib/check-onboarding";
 import { getNextOnboardingStep, ONBOARDING_STEP, type OnboardingStep } from "./lib/flow";
 
@@ -62,8 +61,6 @@ export const useOnboardingStore = create<OnboardingState & OnboardingActions>((s
     set({ isCompleting: true });
     try {
       await markOnboardingComplete();
-      // Refresh session so root layout detects updated user_metadata
-      await useAuthStore.getState().restoreSession();
     } finally {
       set({ isCompleting: false });
     }

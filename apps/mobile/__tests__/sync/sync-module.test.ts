@@ -9,8 +9,11 @@ const mockGetUnresolvedConflicts = vi.fn();
 const mockRefreshTransactions = vi.fn();
 const mockUpsertTransaction = vi.fn();
 
-vi.mock("@/features/transactions", () => ({
+vi.mock("@/features/transactions/store", () => ({
   refreshTransactions: (...args: any[]) => mockRefreshTransactions(...args),
+}));
+
+vi.mock("@/features/transactions/lib/repository", () => ({
   upsertTransaction: (...args: any[]) => mockUpsertTransaction(...args),
 }));
 

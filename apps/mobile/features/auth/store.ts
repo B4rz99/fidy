@@ -1,6 +1,12 @@
 import type { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
 import { cleanupCurrentPushToken } from "@/features/notifications/public";
+import {
+  clearLocalQaSession,
+  type LocalQaProfile,
+  type LocalQaSession,
+  loadLocalQaSession,
+} from "@/features/qa/local-session";
 import { getSupabase } from "@/shared/db";
 import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
 
@@ -9,46 +15,95 @@ type OAuthProvider = "google" | "azure";
 
 type AuthState = {
   session: Session | null;
+  localQaSession: LocalQaSession | null;
   isLoading: boolean;
   isSigningIn: boolean;
 };
 
 type AuthActions = {
   restoreSession: () => Promise<void>;
+  startLocalQaSession: (profile?: LocalQaProfile) => Promise<void>;
   signIn: (provider: OAuthProvider) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
 const REDIRECT_URI = "fidy://auth/callback";
+let authTransitionVersion = 0;
+
+function beginAuthTransition() {
+  authTransitionVersion += 1;
+  return authTransitionVersion;
+}
+
+function isCurrentAuthTransition(version: number) {
+  return authTransitionVersion === version;
+}
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   session: null,
+  localQaSession: null,
   isLoading: true,
   isSigningIn: false,
 
   restoreSession: async () => {
+    const transitionVersion = beginAuthTransition();
+
     try {
+      const persistedLocalQaSession = await loadLocalQaSession();
+
+      if (persistedLocalQaSession) {
+        if (!isCurrentAuthTransition(transitionVersion)) return;
+        identifyUser(persistedLocalQaSession.userId);
+        set({ session: null, localQaSession: persistedLocalQaSession, isLoading: false });
+        return;
+      }
+
       const supabase = getSupabase();
       const { data, error } = await supabase.auth.getSession();
+      if (!isCurrentAuthTransition(transitionVersion)) return;
       if (error || !data.session) {
         if (error) captureWarning("auth_restore_failed", { errorMessage: error.message });
-        set({ session: null, isLoading: false });
+        set({ session: null, localQaSession: null, isLoading: false });
         return;
       }
       identifyUser(data.session.user.id);
-      set({ session: data.session, isLoading: false });
+      set({ session: data.session, localQaSession: null, isLoading: false });
     } catch (err) {
+      if (!isCurrentAuthTransition(transitionVersion)) return;
       captureWarning("auth_restore_exception", {
         errorType: err instanceof Error ? err.message : "unknown",
       });
-      set({ session: null, isLoading: false });
+      set({ session: null, localQaSession: null, isLoading: false });
+    }
+  },
+
+  startLocalQaSession: async (profile) => {
+    const transitionVersion = beginAuthTransition();
+    set({ isLoading: true });
+    try {
+      const { startLocalQaSession: prepareLocalQaSession } = await import(
+        "@/features/qa/start-local-qa-session"
+      );
+      const localQaSession = await prepareLocalQaSession(profile);
+      if (!isCurrentAuthTransition(transitionVersion)) return;
+      identifyUser(localQaSession.userId);
+      set({ session: null, localQaSession, isLoading: false });
+    } catch (err) {
+      if (!isCurrentAuthTransition(transitionVersion)) return;
+      captureWarning("auth_start_local_qa_failed", {
+        errorType: err instanceof Error ? err.message : "unknown",
+      });
+      set({ session: null, localQaSession: null, isLoading: false });
+      throw err;
     }
   },
 
   signIn: async (provider) => {
+    beginAuthTransition();
     set({ isSigningIn: true });
     try {
       const { openAuthSessionAsync } = await import("expo-web-browser");
+      await clearLocalQaSession().catch(() => undefined);
       const supabase = getSupabase();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -72,7 +127,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
           });
           if (sessionData.session) {
             identifyUser(sessionData.session.user.id);
-            set({ session: sessionData.session, isLoading: false });
+            set({ session: sessionData.session, localQaSession: null, isLoading: false });
           }
         }
       }
@@ -86,6 +141,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   },
 
   signOut: async () => {
+    beginAuthTransition();
+
+    if (useAuthStore.getState().localQaSession) {
+      await clearLocalQaSession().catch(() => undefined);
+      resetAnalyticsUser();
+      set({ session: null, localQaSession: null });
+      return;
+    }
+
     // Clean up push token while session is still valid (RLS needs auth).
     // Capped at 2s so signout isn't blocked indefinitely by network issues.
     await Promise.race([
@@ -104,6 +168,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       // Clear local state regardless
     }
     resetAnalyticsUser();
-    set({ session: null });
+    set({ session: null, localQaSession: null });
   },
 }));

@@ -2,13 +2,17 @@ import type { ExpoSQLiteDatabase } from "drizzle-orm/expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
-import { openDatabaseSync } from "expo-sqlite";
+import { deleteDatabaseAsync, openDatabaseSync } from "expo-sqlite";
 import { captureError } from "@/shared/lib";
 
 // biome-ignore lint/suspicious/noExplicitAny: drizzle generic varies by caller
 export type AnyDb = ExpoSQLiteDatabase<any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- drizzle schema generic varies by caller
 
 const HEX_KEY_PATTERN = /^[0-9a-f]{64}$/;
+
+export function getDatabaseName(userId: string) {
+  return `fidy-${userId}.db`;
+}
 
 function getOrCreateEncryptionKey(userId: string): string {
   const storeKey = `fidy-db-key-${userId}`;
@@ -31,7 +35,7 @@ export function getDb(userId: string) {
   }
   if (!db) {
     try {
-      const dbName = `fidy-${userId}.db`;
+      const dbName = getDatabaseName(userId);
       const encryptionKey = getOrCreateEncryptionKey(userId);
       sqliteRef = openDatabaseSync(dbName);
       sqliteRef.execSync(`PRAGMA key = "x'${encryptionKey}'"`);
@@ -61,5 +65,22 @@ export function resetDb() {
     sqliteRef = null;
     db = null;
     currentUserId = null;
+  }
+}
+
+function isMissingDatabaseError(error: unknown) {
+  return error instanceof Error && /database .* not found/i.test(error.message);
+}
+
+export async function resetDbForUser(userId: string) {
+  if (currentUserId === userId) {
+    resetDb();
+  }
+
+  try {
+    await deleteDatabaseAsync(getDatabaseName(userId));
+  } catch (error) {
+    if (isMissingDatabaseError(error)) return;
+    throw error;
   }
 }

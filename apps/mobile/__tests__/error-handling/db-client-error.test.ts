@@ -10,6 +10,7 @@ vi.mock("@/shared/lib/sentry", () => ({
 
 vi.mock("expo-sqlite", () => ({
   openDatabaseSync: vi.fn(() => ({ execSync: vi.fn(), closeSync: vi.fn() })),
+  deleteDatabaseAsync: vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock("drizzle-orm/expo-sqlite", () => ({

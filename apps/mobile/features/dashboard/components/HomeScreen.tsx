@@ -4,7 +4,7 @@ import { memo, useCallback, useMemo, useRef, useState } from "react";
 import {
   AccountSuggestionsPromptBanner,
   useAccountSuggestions,
-} from "@/features/account-suggestions";
+} from "@/features/account-suggestions/routes.public";
 import { appendUniqueActivityItems } from "@/features/activity/lib/append-unique-activity-items";
 import {
   createActivityQueryService,

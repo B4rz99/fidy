@@ -184,6 +184,7 @@ vi.mock("react-native-reanimated", () => {
 // Mock expo-sqlite
 vi.mock("expo-sqlite", () => ({
   openDatabaseSync: vi.fn(() => ({ execSync: vi.fn(), closeSync: vi.fn() })),
+  deleteDatabaseAsync: vi.fn(() => Promise.resolve()),
 }));
 
 // Note: date-fns is NOT mocked globally. Tests that need deterministic date

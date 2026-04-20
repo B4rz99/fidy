@@ -65,6 +65,14 @@ Tests that `await import(...)` a large service module inside `beforeEach` can in
 
 `apps/mobile/features/categories/components/CategoriesScreen.tsx` special-cases the clothing category icon color in dark mode (`#1A1A1A` -> `#E0E0E0`) so it stays visible on dark surfaces, but the shared `apps/mobile/features/transactions/components/CategoryPill.tsx` does not. If you mirror category visuals from the categories screen into transaction-entry or budget-selection flows, the clothing icon can become too low-contrast unless you add the same override or normalize the shared category-color treatment first.
 
+### `features/qa` barrel must lazy-load session seeding (⚠️ AGENT SURPRISE)
+
+Do **not** eagerly re-export `start-local-qa-session` from `apps/mobile/features/qa/index.ts`. That module imports the Drizzle migration bundle, which in turn loads raw `apps/mobile/drizzle/*.sql` files. If the QA barrel is imported from broad surfaces like `features/auth/store.ts`, unrelated Vitest suites can start failing with SQL parse errors or long import chains. Fix: keep `loadLocalQaSession` / `clearLocalQaSession` in the barrel, but make `startLocalQaSession()` a lazy wrapper that `import()`s `./start-local-qa-session` only when called.
+
+### Pure services should deep-import logic, not feature barrels with UI (⚠️ AGENT SURPRISE)
+
+Feature barrels like `features/transactions/index.ts` and `features/qa/index.ts` can export React/React Native components alongside repositories and stores. When a pure module such as `features/sync/services/sync.ts` imports those barrels, Vitest/tsx may traverse `react-native`'s Flow entrypoints during non-UI tests and fail with `Unexpected token 'typeof'`. Fix: in services/repositories/tests, deep-import the exact `lib/` or `store` module you need, and keep UI exports in separate `routes.public.ts` or component barrels.
+
 ## External Fidy Vault
 
 The persistent Fidy knowledge vault lives outside the repo on the local machine.
