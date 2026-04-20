@@ -75,6 +75,21 @@ export async function getNeedsReviewEmails(db: AnyDb) {
     .orderBy(desc(processedEmails.receivedAt));
 }
 
+export async function getNeedsReviewEmailByTransactionId(db: AnyDb, transactionId: TransactionId) {
+  const rows = await db
+    .select()
+    .from(processedEmails)
+    .where(
+      and(
+        eq(processedEmails.transactionId, transactionId),
+        eq(processedEmails.status, "needs_review")
+      )
+    )
+    .orderBy(desc(processedEmails.receivedAt));
+
+  return rows[0] ?? null;
+}
+
 export async function updateProcessedEmailStatus(
   db: AnyDb,
   id: ProcessedEmailId,

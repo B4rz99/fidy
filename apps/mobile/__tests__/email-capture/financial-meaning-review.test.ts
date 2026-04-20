@@ -14,7 +14,11 @@ import {
   getProcessedEmailById,
   insertProcessedEmail,
 } from "@/features/email-capture/lib/repository";
-import { getTransactionById, insertTransaction } from "@/features/transactions/lib/repository";
+import {
+  getQueuedSyncEntries,
+  getTransactionById,
+  insertTransaction,
+} from "@/features/transactions/lib/repository";
 import type {
   CategoryId,
   CopAmount,
@@ -141,6 +145,16 @@ describe("financial meaning review", () => {
         supersededAt: "2026-04-19T11:00:00.000Z",
         updatedAt: "2026-04-19T11:00:00.000Z",
       })
+    );
+    expect(getQueuedSyncEntries(db as any)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          tableName: "transactions",
+          rowId: "tx-2",
+          operation: "update",
+          createdAt: "2026-04-19T11:00:00.000Z",
+        }),
+      ])
     );
   });
 });

@@ -8,6 +8,7 @@ export {
   lookupMerchantRule,
 } from "@/features/email-capture/lib/merchant-rules";
 export type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
+export { getNeedsReviewEmailByTransactionId } from "@/features/email-capture/lib/repository";
 export { EmailConnectBanner } from "./components/EmailConnectBanner";
 export { FailedEmailsBanner } from "./components/FailedEmailsBanner";
 export { useEmailCapture } from "./hooks/useEmailCapture";

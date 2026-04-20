@@ -223,6 +223,33 @@ describe("email capture repository", () => {
     expect(result).toEqual(mockRows);
   });
 
+  it("getNeedsReviewEmailByTransactionId returns the most recent linked review email", async () => {
+    const mockRows = [
+      {
+        id: "pe-2",
+        transactionId: "tx-1",
+        status: "needs_review",
+        receivedAt: "2026-04-19T11:00:00Z",
+      },
+      {
+        id: "pe-1",
+        transactionId: "tx-1",
+        status: "needs_review",
+        receivedAt: "2026-04-19T10:00:00Z",
+      },
+    ];
+    mockWhere.mockReturnValueOnce({ orderBy: mockOrderBy });
+    mockOrderBy.mockResolvedValueOnce(mockRows);
+
+    const { getNeedsReviewEmailByTransactionId } = await import(
+      "@/features/email-capture/lib/repository"
+    );
+    const result = await getNeedsReviewEmailByTransactionId(mockDb, "tx-1" as TransactionId);
+
+    expect(mockSelect).toHaveBeenCalled();
+    expect(result).toEqual(mockRows[0]);
+  });
+
   it("updateProcessedEmailStatus updates status and transactionId", async () => {
     const { updateProcessedEmailStatus } = await import("@/features/email-capture/lib/repository");
 
