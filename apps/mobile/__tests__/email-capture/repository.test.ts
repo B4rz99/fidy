@@ -238,8 +238,8 @@ describe("email capture repository", () => {
         receivedAt: "2026-04-19T10:00:00Z",
       },
     ];
-    mockWhere.mockReturnValueOnce({ orderBy: mockOrderBy });
-    mockOrderBy.mockResolvedValueOnce(mockRows);
+    const mockLimit = vi.fn().mockResolvedValueOnce(mockRows);
+    mockWhere.mockReturnValueOnce({ orderBy: vi.fn().mockReturnValueOnce({ limit: mockLimit }) });
 
     const { getNeedsReviewEmailByTransactionId } = await import(
       "@/features/email-capture/lib/repository"
@@ -247,6 +247,7 @@ describe("email capture repository", () => {
     const result = await getNeedsReviewEmailByTransactionId(mockDb, "tx-1" as TransactionId);
 
     expect(mockSelect).toHaveBeenCalled();
+    expect(mockLimit).toHaveBeenCalledWith(1);
     expect(result).toEqual(mockRows[0]);
   });
 

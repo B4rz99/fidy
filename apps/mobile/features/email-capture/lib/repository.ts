@@ -85,7 +85,8 @@ export async function getNeedsReviewEmailByTransactionId(db: AnyDb, transactionI
         eq(processedEmails.status, "needs_review")
       )
     )
-    .orderBy(desc(processedEmails.receivedAt));
+    .orderBy(desc(processedEmails.receivedAt))
+    .limit(1);
 
   return rows[0] ?? null;
 }
