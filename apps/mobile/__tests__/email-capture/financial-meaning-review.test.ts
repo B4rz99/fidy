@@ -6,6 +6,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   dismissFinancialMeaningReview,
+  getFinancialMeaningReviewItems,
   resolveFinancialMeaningReview,
 } from "@/features/email-capture/lib/financial-meaning-review";
 import {
@@ -93,6 +94,151 @@ describe("financial meaning review", () => {
     );
   });
 
+  it("lists only active low-confidence emails that still point at active transactions", async () => {
+    insertTransaction(db as any, {
+      id: "tx-active" as TransactionId,
+      userId: USER_ID,
+      type: "expense",
+      amount: 120000 as CopAmount,
+      categoryId: "shopping" as CategoryId,
+      description: "Active charge",
+      date: "2026-04-18" as IsoDate,
+      accountId: "fa-default-user-1" as FinancialAccountId,
+      accountAttributionState: "unresolved",
+      source: "email_gmail",
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+    });
+
+    insertTransaction(db as any, {
+      id: "tx-inactive" as TransactionId,
+      userId: USER_ID,
+      type: "expense",
+      amount: 80000 as CopAmount,
+      categoryId: "shopping" as CategoryId,
+      description: "Superseded charge",
+      date: "2026-04-18" as IsoDate,
+      accountId: "fa-default-user-1" as FinancialAccountId,
+      accountAttributionState: "unresolved",
+      source: "email_gmail",
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+      supersededAt: "2026-04-19T09:00:00.000Z" as IsoDateTime,
+    });
+
+    await insertProcessedEmail(db as any, {
+      id: "pe-active" as ProcessedEmailId,
+      externalId: "ext-active",
+      provider: "gmail",
+      status: "needs_review",
+      failureReason: null,
+      subject: "Active review",
+      rawBodyPreview: "Still relevant",
+      receivedAt: NOW,
+      transactionId: "tx-active" as TransactionId,
+      confidence: 0.42,
+      createdAt: NOW,
+      rawBody: null,
+      retryCount: 0,
+      nextRetryAt: null,
+    });
+
+    await insertProcessedEmail(db as any, {
+      id: "pe-missing" as ProcessedEmailId,
+      externalId: "ext-missing",
+      provider: "gmail",
+      status: "needs_review",
+      failureReason: null,
+      subject: "Missing tx",
+      rawBodyPreview: "No transaction",
+      receivedAt: NOW,
+      transactionId: "tx-missing" as TransactionId,
+      confidence: 0.42,
+      createdAt: NOW,
+      rawBody: null,
+      retryCount: 0,
+      nextRetryAt: null,
+    });
+
+    await insertProcessedEmail(db as any, {
+      id: "pe-unlinked" as ProcessedEmailId,
+      externalId: "ext-unlinked",
+      provider: "gmail",
+      status: "needs_review",
+      failureReason: null,
+      subject: "No link",
+      rawBodyPreview: "No linked tx",
+      receivedAt: NOW,
+      transactionId: null,
+      confidence: 0.42,
+      createdAt: NOW,
+      rawBody: null,
+      retryCount: 0,
+      nextRetryAt: null,
+    });
+
+    await insertProcessedEmail(db as any, {
+      id: "pe-inactive" as ProcessedEmailId,
+      externalId: "ext-inactive",
+      provider: "gmail",
+      status: "needs_review",
+      failureReason: null,
+      subject: "Inactive tx",
+      rawBodyPreview: "Superseded",
+      receivedAt: NOW,
+      transactionId: "tx-inactive" as TransactionId,
+      confidence: 0.42,
+      createdAt: NOW,
+      rawBody: null,
+      retryCount: 0,
+      nextRetryAt: null,
+    });
+
+    await expect(getFinancialMeaningReviewItems(db as any)).resolves.toEqual([
+      expect.objectContaining({
+        processedEmail: expect.objectContaining({ id: "pe-active" }),
+        transaction: expect.objectContaining({ id: "tx-active" }),
+      }),
+    ]);
+  });
+
+  it("resolving a missing review item is a no-op", async () => {
+    await expect(
+      resolveFinancialMeaningReview(db as any, "pe-missing" as ProcessedEmailId)
+    ).resolves.toBeUndefined();
+  });
+
+  it("resolves orphaned review items by clearing needs-review status even without a transaction", async () => {
+    await insertProcessedEmail(db as any, {
+      id: "pe-orphan" as ProcessedEmailId,
+      externalId: "ext-orphan",
+      provider: "gmail",
+      status: "needs_review",
+      failureReason: null,
+      subject: "Orphan review",
+      rawBodyPreview: "No transaction attached",
+      receivedAt: NOW,
+      transactionId: null,
+      confidence: 0.31,
+      createdAt: NOW,
+      rawBody: null,
+      retryCount: 0,
+      nextRetryAt: null,
+    });
+
+    await resolveFinancialMeaningReview(db as any, "pe-orphan" as ProcessedEmailId);
+
+    expect(await getProcessedEmailById(db as any, "pe-orphan" as ProcessedEmailId)).toEqual(
+      expect.objectContaining({
+        id: "pe-orphan",
+        status: "success",
+        transactionId: null,
+      })
+    );
+  });
+
   it("dismisses a low-confidence email by skipping the capture and superseding the provisional transaction", async () => {
     insertTransaction(db as any, {
       id: "tx-2" as TransactionId,
@@ -156,5 +302,41 @@ describe("financial meaning review", () => {
         }),
       ])
     );
+  });
+
+  it("dismissing a missing review item is a no-op when using default dependencies", async () => {
+    await expect(
+      dismissFinancialMeaningReview(db as any, "pe-missing" as ProcessedEmailId)
+    ).resolves.toBeUndefined();
+  });
+
+  it("dismisses orphaned review items without trying to supersede a missing transaction", async () => {
+    await insertProcessedEmail(db as any, {
+      id: "pe-missing-tx" as ProcessedEmailId,
+      externalId: "ext-missing-tx",
+      provider: "gmail",
+      status: "needs_review",
+      failureReason: null,
+      subject: "Missing linked transaction",
+      rawBodyPreview: "No longer exists",
+      receivedAt: NOW,
+      transactionId: "tx-missing" as TransactionId,
+      confidence: 0.29,
+      createdAt: NOW,
+      rawBody: null,
+      retryCount: 0,
+      nextRetryAt: null,
+    });
+
+    await dismissFinancialMeaningReview(db as any, "pe-missing-tx" as ProcessedEmailId);
+
+    expect(await getProcessedEmailById(db as any, "pe-missing-tx" as ProcessedEmailId)).toEqual(
+      expect.objectContaining({
+        id: "pe-missing-tx",
+        status: "skipped",
+        transactionId: null,
+      })
+    );
+    expect(getQueuedSyncEntries(db as any)).toEqual([]);
   });
 });
