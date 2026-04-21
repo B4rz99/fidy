@@ -127,10 +127,16 @@ export function createActivityQueryService({
   getTransfersPaginated: loadTransfersPaginated = getTransfersPaginated,
 }: CreateActivityQueryServiceDeps = {}) {
   return {
-    loadPage({ db, userId, pageSize, offset }: LoadActivityPageInput): ActivityPageSnapshot {
+    loadPage(input: LoadActivityPageInput): ActivityPageSnapshot {
+      const { db, userId, pageSize, offset } = input;
       const fetchSize = offset + pageSize + 1;
       const mergedItems = toStoredActivityItems(
-        loadTransactionsPaginated(db, userId, fetchSize, 0),
+        loadTransactionsPaginated({
+          db,
+          userId,
+          limit: fetchSize,
+          offset: 0,
+        }),
         loadTransfersPaginated(db, userId, fetchSize, 0),
         fetchSize
       );

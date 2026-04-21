@@ -4,8 +4,13 @@ import { enqueueSync, financialAccounts } from "@/shared/db";
 import { useLocaleStore } from "@/shared/i18n";
 import { generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
 import type { IsoDateTime } from "@/shared/types/branded";
-import type { FinancialAccountKind } from "../schema";
 import { buildDefaultFinancialAccountId } from "./default-account";
+import {
+  buildDefaultFinancialAccountRow,
+  findCanonicalFinancialAccount,
+  findExistingDefaultFinancialAccount,
+  promoteFinancialAccountToDefault,
+} from "./default-account-bootstrap";
 
 export type FinancialAccountRow = typeof financialAccounts.$inferInsert;
 
@@ -13,8 +18,12 @@ type EnsureDefaultFinancialAccountOptions = {
   readonly now?: IsoDateTime;
   readonly name?: string;
 };
-
-const DEFAULT_FINANCIAL_ACCOUNT_KIND: FinancialAccountKind = "cash";
+type EnsureDefaultFinancialAccountContext = {
+  readonly db: AnyDb;
+  readonly userId: FinancialAccountRow["userId"];
+  readonly now: IsoDateTime;
+  readonly name: string;
+};
 
 function getDefaultFinancialAccountName() {
   return useLocaleStore.getState().t("financialAccounts.defaultName");
@@ -33,28 +42,23 @@ function getActiveFinancialAccountRowsForUser(db: AnyDb, userId: FinancialAccoun
     .all();
 }
 
-function findCanonicalFinancialAccount(
-  rows: readonly FinancialAccountRow[],
-  userId: FinancialAccountRow["userId"]
-) {
-  const canonicalId = buildDefaultFinancialAccountId(userId);
-  return rows.find((row) => row.id === canonicalId) ?? null;
-}
+function resolveExistingDefaultFinancialAccount(
+  context: EnsureDefaultFinancialAccountContext
+): FinancialAccountRow | null {
+  const activeRows = getActiveFinancialAccountRowsForUser(context.db, context.userId);
+  const existingDefault = findExistingDefaultFinancialAccount(activeRows);
+  if (existingDefault) {
+    return existingDefault;
+  }
 
-function findExistingDefaultFinancialAccount(rows: readonly FinancialAccountRow[]) {
-  return rows.find((row) => row.isDefault) ?? null;
-}
+  const canonicalActive = findCanonicalFinancialAccount(activeRows, context.userId);
+  if (!canonicalActive) {
+    return null;
+  }
 
-function promoteFinancialAccountToDefault(
-  row: FinancialAccountRow,
-  now: IsoDateTime
-): FinancialAccountRow {
-  return {
-    ...row,
-    isDefault: true,
-    updatedAt: now,
-    deletedAt: null,
-  };
+  const promotedRow = promoteFinancialAccountToDefault(canonicalActive, context.now);
+  saveFinancialAccount(context.db, promotedRow);
+  return promotedRow;
 }
 
 export function getFinancialAccountById(db: AnyDb, id: FinancialAccountRow["id"]) {
@@ -112,39 +116,31 @@ export function ensureDefaultFinancialAccount(
   userId: FinancialAccountRow["userId"],
   options: EnsureDefaultFinancialAccountOptions = {}
 ) {
-  const now = getDefaultFinancialAccountCreateTime(options.now);
-  const name = options.name ?? getDefaultFinancialAccountName();
+  const context = {
+    db,
+    userId,
+    now: getDefaultFinancialAccountCreateTime(options.now),
+    name: options.name ?? getDefaultFinancialAccountName(),
+  } satisfies EnsureDefaultFinancialAccountContext;
 
   return db.transaction((tx) => {
-    const activeRows = getActiveFinancialAccountRowsForUser(tx, userId);
-    const existingDefault = findExistingDefaultFinancialAccount(activeRows);
-
+    const transactionContext = {
+      ...context,
+      db: tx,
+    } satisfies EnsureDefaultFinancialAccountContext;
+    const existingDefault = resolveExistingDefaultFinancialAccount(transactionContext);
     if (existingDefault) {
       return existingDefault;
     }
 
-    const canonicalActive = findCanonicalFinancialAccount(activeRows, userId);
-    if (canonicalActive) {
-      const promotedRow = promoteFinancialAccountToDefault(canonicalActive, now);
-      saveFinancialAccount(tx, promotedRow);
-      return promotedRow;
-    }
-
-    const canonicalId = buildDefaultFinancialAccountId(userId);
+    const canonicalId = buildDefaultFinancialAccountId(transactionContext.userId);
     const existingCanonical = getFinancialAccountById(tx, canonicalId);
-    const row = {
-      id: canonicalId,
-      userId,
-      name: existingCanonical?.name || name,
-      kind: existingCanonical?.kind || DEFAULT_FINANCIAL_ACCOUNT_KIND,
-      isDefault: true,
-      statementClosingDay: existingCanonical?.statementClosingDay ?? null,
-      paymentDueDay: existingCanonical?.paymentDueDay ?? null,
-      createdAt: existingCanonical?.createdAt ?? now,
-      updatedAt: now,
-      deletedAt: null,
-    } satisfies FinancialAccountRow;
-
+    const row = buildDefaultFinancialAccountRow(
+      transactionContext.userId,
+      transactionContext.now,
+      transactionContext.name,
+      existingCanonical
+    );
     saveFinancialAccount(tx, row);
     return row;
   });

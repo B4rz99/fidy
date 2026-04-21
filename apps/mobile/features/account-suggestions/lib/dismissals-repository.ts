@@ -3,6 +3,12 @@ import { type AnyDb, accountSuggestionDismissals, enqueueSync, syncQueue } from 
 import { generateSyncQueueId } from "@/shared/lib";
 
 export type AccountSuggestionDismissalRow = typeof accountSuggestionDismissals.$inferInsert;
+type ActiveDismissalLookupInput = {
+  readonly db: AnyDb;
+  readonly userId: AccountSuggestionDismissalRow["userId"];
+  readonly scope: AccountSuggestionDismissalRow["scope"];
+  readonly value: AccountSuggestionDismissalRow["value"];
+};
 
 export function getAccountSuggestionDismissalById(
   db: AnyDb,
@@ -32,20 +38,15 @@ export function getAccountSuggestionDismissalsForUser(
     .all();
 }
 
-export function getActiveAccountSuggestionDismissal(
-  db: AnyDb,
-  userId: AccountSuggestionDismissalRow["userId"],
-  scope: AccountSuggestionDismissalRow["scope"],
-  value: AccountSuggestionDismissalRow["value"]
-) {
-  const rows = db
+export function getActiveAccountSuggestionDismissal(input: ActiveDismissalLookupInput) {
+  const rows = input.db
     .select()
     .from(accountSuggestionDismissals)
     .where(
       and(
-        eq(accountSuggestionDismissals.userId, userId),
-        eq(accountSuggestionDismissals.scope, scope),
-        eq(accountSuggestionDismissals.value, value),
+        eq(accountSuggestionDismissals.userId, input.userId),
+        eq(accountSuggestionDismissals.scope, input.scope),
+        eq(accountSuggestionDismissals.value, input.value),
         isNull(accountSuggestionDismissals.deletedAt)
       )
     )
@@ -82,61 +83,75 @@ function persistAccountSuggestionDismissal(db: AnyDb, row: AccountSuggestionDism
     .run();
 }
 
-export function upsertAccountSuggestionDismissal(db: AnyDb, row: AccountSuggestionDismissalRow) {
-  db.transaction((tx) => {
-    const existingById = getAccountSuggestionDismissalById(tx, row.id);
-    const activeDuplicate =
-      row.deletedAt == null
-        ? getActiveAccountSuggestionDismissal(tx, row.userId, row.scope, row.value)
-        : null;
-    const duplicate = activeDuplicate?.id !== row.id ? activeDuplicate : null;
+function getActiveDuplicateDismissal(db: AnyDb, row: AccountSuggestionDismissalRow) {
+  const activeDuplicate =
+    row.deletedAt == null
+      ? getActiveAccountSuggestionDismissal({
+          db,
+          userId: row.userId,
+          scope: row.scope,
+          value: row.value,
+        })
+      : null;
 
-    if (existingById && existingById.updatedAt >= row.updatedAt) {
-      return;
-    }
+  return activeDuplicate?.id !== row.id ? activeDuplicate : null;
+}
 
-    if (duplicate && duplicate.updatedAt >= row.updatedAt) {
-      return;
-    }
+function shouldSkipDismissalPersist(
+  existingById: AccountSuggestionDismissalRow | null,
+  duplicate: AccountSuggestionDismissalRow | null,
+  row: AccountSuggestionDismissalRow
+) {
+  return (
+    (existingById != null && existingById.updatedAt >= row.updatedAt) ||
+    (duplicate != null && duplicate.updatedAt >= row.updatedAt)
+  );
+}
 
-    if (duplicate) {
-      deleteDismissalDuplicate(tx, duplicate.id);
-    }
+function upsertDismissalInTransaction(db: AnyDb, row: AccountSuggestionDismissalRow) {
+  const existingById = getAccountSuggestionDismissalById(db, row.id);
+  const duplicate = getActiveDuplicateDismissal(db, row);
+  if (shouldSkipDismissalPersist(existingById, duplicate, row)) {
+    return;
+  }
 
-    persistAccountSuggestionDismissal(tx, row);
+  if (duplicate) {
+    deleteDismissalDuplicate(db, duplicate.id);
+  }
+
+  persistAccountSuggestionDismissal(db, row);
+}
+
+function saveDismissalInTransaction(db: AnyDb, row: AccountSuggestionDismissalRow) {
+  const existingById = getAccountSuggestionDismissalById(db, row.id);
+  const duplicate = getActiveDuplicateDismissal(db, row);
+  if (existingById && duplicate) {
+    deleteDismissalDuplicate(db, duplicate.id);
+  }
+
+  const persistedRow =
+    existingById == null && duplicate
+      ? {
+          ...row,
+          id: duplicate.id,
+          createdAt: duplicate.createdAt,
+        }
+      : row;
+  persistAccountSuggestionDismissal(db, persistedRow);
+
+  enqueueSync(db, {
+    id: generateSyncQueueId(),
+    tableName: "accountSuggestionDismissals",
+    rowId: persistedRow.id,
+    operation: existingById || duplicate ? "update" : "insert",
+    createdAt: row.updatedAt,
   });
 }
 
+export function upsertAccountSuggestionDismissal(db: AnyDb, row: AccountSuggestionDismissalRow) {
+  db.transaction((tx) => upsertDismissalInTransaction(tx, row));
+}
+
 export function saveAccountSuggestionDismissal(db: AnyDb, row: AccountSuggestionDismissalRow) {
-  db.transaction((tx) => {
-    const existingById = getAccountSuggestionDismissalById(tx, row.id);
-    const activeDuplicate =
-      row.deletedAt == null
-        ? getActiveAccountSuggestionDismissal(tx, row.userId, row.scope, row.value)
-        : null;
-    const duplicate = activeDuplicate?.id !== row.id ? activeDuplicate : null;
-
-    if (existingById && duplicate) {
-      deleteDismissalDuplicate(tx, duplicate.id);
-    }
-
-    const persistedRow =
-      existingById == null && duplicate
-        ? {
-            ...row,
-            id: duplicate.id,
-            createdAt: duplicate.createdAt,
-          }
-        : row;
-
-    persistAccountSuggestionDismissal(tx, persistedRow);
-
-    enqueueSync(tx, {
-      id: generateSyncQueueId(),
-      tableName: "accountSuggestionDismissals",
-      rowId: persistedRow.id,
-      operation: existingById || duplicate ? "update" : "insert",
-      createdAt: row.updatedAt,
-    });
-  });
+  db.transaction((tx) => saveDismissalInTransaction(tx, row));
 }

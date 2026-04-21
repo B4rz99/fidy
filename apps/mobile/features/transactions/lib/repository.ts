@@ -15,10 +15,29 @@ import type {
 } from "@/shared/types/branded";
 import type { AccountAttributionState } from "../schema";
 import { getActiveTransactionConditions } from "./active-transaction-conditions";
+import { getDefaultAccountAttributionState } from "./build-transaction";
 
 export type { SyncOperation, SyncQueueEntry, SyncTableName } from "@/shared/db";
 
 type PersistedTransactionRow = typeof transactions.$inferInsert;
+type TransactionsPageInput = {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly limit: number;
+  readonly offset: number;
+};
+type DailySpendingAggregateInput = {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly startDate: IsoDate;
+  readonly endDate: IsoDate;
+};
+type RecentTransactionsInput = {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly currentMonth: Month;
+  readonly previousMonth: Month;
+};
 
 export type TransactionRow = Omit<
   PersistedTransactionRow,
@@ -29,16 +48,28 @@ export type TransactionRow = Omit<
   supersededAt?: IsoDateTime | null;
 };
 
-function getDefaultAttributionState(row: TransactionRow): AccountAttributionState {
-  return row.source === "manual" || row.source == null ? "confirmed" : "unresolved";
+function resolveTransactionSource(row: TransactionRow): string {
+  return row.source ?? "manual";
+}
+
+function resolveTransactionAccountId(row: TransactionRow): FinancialAccountId {
+  return row.accountId ?? buildDefaultFinancialAccountId(row.userId);
+}
+
+function resolveTransactionAttributionState(
+  row: TransactionRow,
+  source: string
+): AccountAttributionState | string {
+  return row.accountAttributionState ?? getDefaultAccountAttributionState(source);
 }
 
 function normalizeTransactionRow(row: TransactionRow): PersistedTransactionRow {
+  const source = resolveTransactionSource(row);
   return {
     ...row,
-    source: row.source ?? "manual",
-    accountId: row.accountId ?? buildDefaultFinancialAccountId(row.userId),
-    accountAttributionState: row.accountAttributionState ?? getDefaultAttributionState(row),
+    source,
+    accountId: resolveTransactionAccountId(row),
+    accountAttributionState: resolveTransactionAttributionState(row, source),
     supersededAt: row.supersededAt ?? null,
   };
 }
@@ -56,19 +87,14 @@ export function getAllTransactions(db: AnyDb, userId: UserId): TransactionRow[] 
     .all() as TransactionRow[];
 }
 
-export function getTransactionsPaginated(
-  db: AnyDb,
-  userId: UserId,
-  limit: number,
-  offset: number
-): TransactionRow[] {
-  return db
+export function getTransactionsPaginated(input: TransactionsPageInput): TransactionRow[] {
+  return input.db
     .select()
     .from(transactions)
-    .where(and(...getActiveTransactionConditions(userId)))
+    .where(and(...getActiveTransactionConditions(input.userId)))
     .orderBy(desc(transactions.date), desc(transactions.createdAt))
-    .limit(limit + 1)
-    .offset(offset)
+    .limit(input.limit + 1)
+    .offset(input.offset)
     .all() as TransactionRow[];
 }
 
@@ -107,12 +133,9 @@ export function getSpendingByCategoryAggregate(
 }
 
 export function getDailySpendingAggregate(
-  db: AnyDb,
-  userId: UserId,
-  startDate: IsoDate,
-  endDate: IsoDate
+  input: DailySpendingAggregateInput
 ): { date: IsoDate; total: CopAmount }[] {
-  return db
+  return input.db
     .select({
       date: transactions.date,
       total: sum(transactions.amount).mapWith((val) => Number(val) as CopAmount),
@@ -120,9 +143,9 @@ export function getDailySpendingAggregate(
     .from(transactions)
     .where(
       and(
-        ...getActiveTransactionConditions(userId),
+        ...getActiveTransactionConditions(input.userId),
         eq(transactions.type, "expense"),
-        between(transactions.date, startDate, endDate)
+        between(transactions.date, input.startDate, input.endDate)
       )
     )
     .groupBy(transactions.date)
@@ -159,21 +182,16 @@ export function getMonthlyTotalsByType(
     .all();
 }
 
-export function getRecentTransactions(
-  db: AnyDb,
-  userId: UserId,
-  currentMonth: Month,
-  previousMonth: Month
-): TransactionRow[] {
-  return db
+export function getRecentTransactions(input: RecentTransactionsInput): TransactionRow[] {
+  return input.db
     .select()
     .from(transactions)
     .where(
       and(
-        ...getActiveTransactionConditions(userId),
+        ...getActiveTransactionConditions(input.userId),
         or(
-          like(transactions.date, `${currentMonth}%`),
-          like(transactions.date, `${previousMonth}%`)
+          like(transactions.date, `${input.currentMonth}%`),
+          like(transactions.date, `${input.previousMonth}%`)
         )
       )
     )

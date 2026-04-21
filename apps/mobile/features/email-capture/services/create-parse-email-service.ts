@@ -14,6 +14,12 @@ import type { LlmParsedTransaction } from "./llm-parser";
 import { llmOutputSchema } from "./llm-parser";
 
 type ParseMode = "classify" | "full_parse" | "parse_notification";
+type ParseFunctionResult<Response> = {
+  readonly data?: Response | null;
+  readonly error?: {
+    readonly message?: string;
+  } | null;
+};
 
 type ParseEmailResponse = {
   readonly success: boolean;
@@ -49,64 +55,102 @@ function invokeParseEmailFunctionEffect<Response>(body: string, mode: ParseMode)
   );
 }
 
+function logParseApiFailureEffect(
+  warningPrefix: "parse_email" | "parse_notification",
+  response: ParseFunctionResult<ParseEmailResponse>
+) {
+  return Effect.zipRight(
+    captureWarningEffect(`${warningPrefix}_api_failed`, {
+      errorMessage: response.error?.message ?? "unknown",
+      hasData: response.data != null,
+    }),
+    Effect.succeed(null)
+  );
+}
+
+function validateParsedTransactionEffect(
+  warningPrefix: "parse_email" | "parse_notification",
+  data: unknown
+) {
+  const result = llmOutputSchema.safeParse(data);
+  if (!result.success) {
+    return Effect.zipRight(
+      captureWarningEffect(`${warningPrefix}_validation_failed`, {
+        issueCount: result.error.issues.length,
+      }),
+      Effect.succeed(null)
+    );
+  }
+
+  return Effect.succeed(result.data);
+}
+
+function handleParseTransactionResponseEffect(
+  warningPrefix: "parse_email" | "parse_notification",
+  response: ParseFunctionResult<ParseEmailResponse>
+) {
+  if (response.error != null || !response.data?.success) {
+    return logParseApiFailureEffect(warningPrefix, response);
+  }
+
+  return validateParsedTransactionEffect(warningPrefix, response.data.data);
+}
+
+function logParseExceptionEffect(
+  warningPrefix: "parse_email" | "parse_notification",
+  error: unknown
+) {
+  return Effect.zipRight(
+    captureWarningEffect(`${warningPrefix}_api_exception`, {
+      errorType: error instanceof Error ? error.message : "unknown",
+    }),
+    Effect.succeed(null)
+  );
+}
+
 function parseTransactionEffect(
   body: string,
   mode: Extract<ParseMode, "full_parse" | "parse_notification">,
   warningPrefix: "parse_email" | "parse_notification"
 ) {
   return Effect.catchAll(
-    Effect.gen(function* () {
-      const response = yield* invokeParseEmailFunctionEffect<ParseEmailResponse>(body, mode);
-      const { data, error } = response;
+    Effect.flatMap(invokeParseEmailFunctionEffect<ParseEmailResponse>(body, mode), (response) =>
+      handleParseTransactionResponseEffect(warningPrefix, response)
+    ),
+    (error) => logParseExceptionEffect(warningPrefix, error)
+  );
+}
 
-      if (error != null || !data?.success) {
-        yield* captureWarningEffect(`${warningPrefix}_api_failed`, {
-          errorMessage: error?.message ?? "unknown",
-          hasData: data != null,
-        });
-        return null;
-      }
-
-      const result = llmOutputSchema.safeParse(data.data);
-      if (!result.success) {
-        yield* captureWarningEffect(`${warningPrefix}_validation_failed`, {
-          issueCount: result.error.issues.length,
-        });
-        return null;
-      }
-
-      return result.data;
+function logClassifyApiFailureEffect(response: ParseFunctionResult<ClassifyResponse>) {
+  return Effect.zipRight(
+    captureWarningEffect("classify_merchant_failed", {
+      hasError: response.error != null,
+      errorMessage: response.error?.message ?? "unknown",
     }),
-    (error) =>
-      Effect.zipRight(
-        captureWarningEffect(`${warningPrefix}_api_exception`, {
-          errorType: error instanceof Error ? error.message : "unknown",
-        }),
-        Effect.succeed(null)
-      )
+    Effect.succeed("other")
+  );
+}
+
+function handleClassifyMerchantResponseEffect(
+  response: ParseFunctionResult<ClassifyResponse>,
+  validCategoryIds: readonly string[]
+) {
+  if (response.error != null || !response.data?.success) {
+    return logClassifyApiFailureEffect(response);
+  }
+
+  const categoryId = response.data.data?.categoryId;
+  return Effect.succeed(
+    categoryId != null && validCategoryIds.includes(categoryId) ? categoryId : "other"
   );
 }
 
 function classifyMerchantEffect(merchant: string, validCategoryIds: readonly string[]) {
   return Effect.catchAll(
-    Effect.gen(function* () {
-      const response = yield* invokeParseEmailFunctionEffect<ClassifyResponse>(
-        merchant,
-        "classify"
-      );
-      const { data, error } = response;
-
-      if (error != null || !data?.success) {
-        yield* captureWarningEffect("classify_merchant_failed", {
-          hasError: error != null,
-          errorMessage: error?.message ?? "unknown",
-        });
-        return "other";
-      }
-
-      const categoryId = data.data?.categoryId;
-      return categoryId != null && validCategoryIds.includes(categoryId) ? categoryId : "other";
-    }),
+    Effect.flatMap(
+      invokeParseEmailFunctionEffect<ClassifyResponse>(merchant, "classify"),
+      (response) => handleClassifyMerchantResponseEffect(response, validCategoryIds)
+    ),
     () => Effect.succeed("other")
   );
 }

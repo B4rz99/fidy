@@ -45,12 +45,12 @@ const SearchTransactionItem = memo(function SearchTransactionItem({
       {showDateHeader && (
         <View className="px-4 pt-4 pb-1">
           <Text className="font-poppins-semibold text-caption text-secondary dark:text-secondary-dark">
-            {makeDateLabel(
-              tx.date,
-              t("dates.today"),
-              t("dates.yesterday"),
-              getDateFnsLocale(locale)
-            )}
+            {makeDateLabel({
+              date: tx.date,
+              todayLabel: t("dates.today"),
+              yesterdayLabel: t("dates.yesterday"),
+              dateFnsLocale: getDateFnsLocale(locale),
+            })}
           </Text>
         </View>
       )}

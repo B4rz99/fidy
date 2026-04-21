@@ -66,12 +66,12 @@ const TransactionItem = memo(function TransactionItem({
     <View>
       {showDateHeader && (
         <DateHeader
-          label={makeDateLabel(
-            tx.date,
-            t("dates.today"),
-            t("dates.yesterday"),
-            getDateFnsLocale(locale)
-          )}
+          label={makeDateLabel({
+            date: tx.date,
+            todayLabel: t("dates.today"),
+            yesterdayLabel: t("dates.yesterday"),
+            dateFnsLocale: getDateFnsLocale(locale),
+          })}
         />
       )}
       <View className="px-4">
@@ -107,12 +107,12 @@ const TransferItem = memo(function TransferItem({
     <View>
       {showDateHeader && (
         <DateHeader
-          label={makeDateLabel(
-            item.date,
-            t("dates.today"),
-            t("dates.yesterday"),
-            getDateFnsLocale(locale)
-          )}
+          label={makeDateLabel({
+            date: item.date,
+            todayLabel: t("dates.today"),
+            yesterdayLabel: t("dates.yesterday"),
+            dateFnsLocale: getDateFnsLocale(locale),
+          })}
         />
       )}
       <View className="px-4">

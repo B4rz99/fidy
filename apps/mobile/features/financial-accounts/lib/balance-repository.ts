@@ -4,6 +4,12 @@ import type { AnyDb } from "@/shared/db/client";
 import { financialAccounts, openingBalances, transactions, transfers } from "@/shared/db/schema";
 import type { CopAmount, FinancialAccountId, IsoDate, UserId } from "@/shared/types/branded";
 import type { FinancialAccountKind } from "../schema";
+import {
+  buildAccountBalanceMap,
+  combineTransferBalanceEffects,
+  getAccountKindMap,
+  getOpeningBalanceTotals,
+} from "./balance-maps";
 
 type AccountBalanceMap = Record<string, CopAmount>;
 
@@ -24,10 +30,6 @@ type OpeningBalanceAggregateRow = {
 
 function toAggregateMap(rows: readonly BalanceAggregateRow[]): AccountBalanceMap {
   return Object.fromEntries(rows.map((row) => [row.accountId, row.total])) as AccountBalanceMap;
-}
-
-function getOpeningBalanceEffect(kind: FinancialAccountKind, amount: CopAmount): CopAmount {
-  return (kind === "credit_card" ? -amount : amount) as CopAmount;
 }
 
 function getFinancialAccountsForBalance(db: AnyDb, userId: UserId): readonly AccountRow[] {
@@ -141,51 +143,26 @@ function getIncomingTransferBalanceEffects(
     }));
 }
 
-function combineTransferBalanceEffects(
-  outgoingRows: readonly BalanceAggregateRow[],
-  incomingRows: readonly BalanceAggregateRow[]
-): AccountBalanceMap {
-  const rows = [...outgoingRows, ...incomingRows];
-  const accountIds = Array.from(new Set(rows.map((row) => row.accountId)));
-
-  return Object.fromEntries(
-    accountIds.map((accountId) => [
-      accountId,
-      rows
-        .filter((row) => row.accountId === accountId)
-        .reduce((total, row) => (total + row.total) as CopAmount, 0 as CopAmount),
-    ])
-  ) as AccountBalanceMap;
-}
-
 export function getFinancialAccountBalancesForUser(
   db: AnyDb,
   userId: UserId,
   asOfDate: IsoDate
 ): Record<string, CopAmount> {
   const accounts = getFinancialAccountsForBalance(db, userId);
-  const accountKinds = Object.fromEntries(
-    accounts.map((account) => [account.id, account.kind])
-  ) as Record<string, FinancialAccountKind>;
-  const openingBalanceRows = getOpeningBalanceAmounts(db, userId, asOfDate);
-  const openingBalanceTotals = Object.fromEntries(
-    openingBalanceRows.map((row) => [
-      row.accountId,
-      getOpeningBalanceEffect(accountKinds[row.accountId] ?? "checking", row.amount),
-    ])
-  ) as AccountBalanceMap;
+  const openingBalanceTotals = getOpeningBalanceTotals(
+    getOpeningBalanceAmounts(db, userId, asOfDate),
+    getAccountKindMap(accounts)
+  );
   const transactionTotals = toAggregateMap(getTransactionBalanceEffects(db, userId, asOfDate));
   const transferTotals = combineTransferBalanceEffects(
     getOutgoingTransferBalanceEffects(db, userId, asOfDate),
     getIncomingTransferBalanceEffects(db, userId, asOfDate)
   );
 
-  return Object.fromEntries(
-    accounts.map((account) => [
-      account.id,
-      ((openingBalanceTotals[account.id] ?? 0) +
-        (transactionTotals[account.id] ?? 0) +
-        (transferTotals[account.id] ?? 0)) as CopAmount,
-    ])
-  ) as Record<string, CopAmount>;
+  return buildAccountBalanceMap({
+    accounts,
+    openingBalanceTotals,
+    transactionTotals,
+    transferTotals,
+  });
 }

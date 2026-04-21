@@ -11,6 +11,25 @@ import type {
 
 export type EmailAccountRow = typeof emailAccounts.$inferInsert;
 export type ProcessedEmailRow = typeof processedEmails.$inferInsert;
+type ProcessedEmailStatusUpdateInput = {
+  readonly db: AnyDb;
+  readonly id: ProcessedEmailId;
+  readonly status: string;
+  readonly transactionId: TransactionId | null;
+};
+type RetryScheduleInput = {
+  readonly db: AnyDb;
+  readonly id: ProcessedEmailId;
+  readonly retryCount: number;
+  readonly nextRetryAt: IsoDateTime;
+};
+type RetrySuccessInput = {
+  readonly db: AnyDb;
+  readonly id: ProcessedEmailId;
+  readonly status: "success" | "needs_review";
+  readonly transactionId: TransactionId;
+  readonly confidence: number;
+};
 
 export async function insertEmailAccount(db: AnyDb, row: EmailAccountRow) {
   await db.insert(emailAccounts).values(row);
@@ -91,22 +110,26 @@ export async function getNeedsReviewEmailByTransactionId(db: AnyDb, transactionI
   return rows[0] ?? null;
 }
 
-export async function updateProcessedEmailStatus(
+function getProcessedEmailUpdateQuery(
   db: AnyDb,
   id: ProcessedEmailId,
-  status: string,
-  transactionId: TransactionId | null
+  fields: Partial<ProcessedEmailRow>
 ) {
-  await db.update(processedEmails).set({ status, transactionId }).where(eq(processedEmails.id, id));
+  return db.update(processedEmails).set(fields).where(eq(processedEmails.id, id));
 }
 
-export function updateProcessedEmailStatusInTransaction(
-  db: AnyDb,
-  id: ProcessedEmailId,
-  status: string,
-  transactionId: TransactionId | null
-) {
-  db.update(processedEmails).set({ status, transactionId }).where(eq(processedEmails.id, id)).run();
+export async function updateProcessedEmailStatus(input: ProcessedEmailStatusUpdateInput) {
+  await getProcessedEmailUpdateQuery(input.db, input.id, {
+    status: input.status,
+    transactionId: input.transactionId,
+  });
+}
+
+export function updateProcessedEmailStatusInTransaction(input: ProcessedEmailStatusUpdateInput) {
+  getProcessedEmailUpdateQuery(input.db, input.id, {
+    status: input.status,
+    transactionId: input.transactionId,
+  }).run();
 }
 
 export async function dismissProcessedEmail(db: AnyDb, id: ProcessedEmailId) {
@@ -127,16 +150,12 @@ export async function getPendingRetryEmails(db: AnyDb) {
     .limit(50);
 }
 
-export async function markForRetry(
-  db: AnyDb,
-  id: ProcessedEmailId,
-  retryCount: number,
-  nextRetryAt: IsoDateTime
-) {
-  await db
-    .update(processedEmails)
-    .set({ status: "pending_retry", retryCount, nextRetryAt })
-    .where(eq(processedEmails.id, id));
+export async function markForRetry(input: RetryScheduleInput) {
+  await getProcessedEmailUpdateQuery(input.db, input.id, {
+    status: "pending_retry",
+    retryCount: input.retryCount,
+    nextRetryAt: input.nextRetryAt,
+  });
 }
 
 export async function markPermanentlyFailed(db: AnyDb, id: ProcessedEmailId) {
@@ -146,15 +165,11 @@ export async function markPermanentlyFailed(db: AnyDb, id: ProcessedEmailId) {
     .where(eq(processedEmails.id, id));
 }
 
-export async function markRetrySuccess(
-  db: AnyDb,
-  id: ProcessedEmailId,
-  status: "success" | "needs_review",
-  transactionId: TransactionId,
-  confidence: number
-) {
-  await db
-    .update(processedEmails)
-    .set({ status, transactionId, confidence, rawBody: null })
-    .where(eq(processedEmails.id, id));
+export async function markRetrySuccess(input: RetrySuccessInput) {
+  await getProcessedEmailUpdateQuery(input.db, input.id, {
+    status: input.status,
+    transactionId: input.transactionId,
+    confidence: input.confidence,
+    rawBody: null,
+  });
 }

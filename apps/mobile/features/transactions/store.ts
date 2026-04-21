@@ -79,6 +79,33 @@ const INITIAL_FORM: Pick<
   accountId: null,
   description: "",
 };
+const INITIAL_PAGINATION_STATE: Pick<TransactionState, "pages" | "offset" | "hasMore"> = {
+  pages: [],
+  offset: 0,
+  hasMore: true,
+};
+const INITIAL_AGGREGATE_STATE: Pick<
+  TransactionState,
+  "balance" | "categorySpending" | "dailySpending" | "dataRevision"
+> = {
+  balance: 0,
+  categorySpending: [],
+  dailySpending: [],
+  dataRevision: 0,
+};
+type UpdateTransactionDirectInput = {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly id: TransactionId;
+  readonly fields: {
+    readonly type: TransactionType;
+    readonly digits: string;
+    readonly categoryId: CategoryId | null;
+    readonly accountId: FinancialAccountId | null;
+    readonly description: string;
+    readonly date: Date;
+  };
+};
 
 function createInitialState(activeUserId: UserId | null): TransactionState {
   return {
@@ -86,13 +113,8 @@ function createInitialState(activeUserId: UserId | null): TransactionState {
     ...INITIAL_FORM,
     defaultAccountId: null,
     date: new Date(),
-    pages: [],
-    offset: 0,
-    hasMore: true,
-    balance: 0,
-    categorySpending: [],
-    dailySpending: [],
-    dataRevision: 0,
+    ...INITIAL_PAGINATION_STATE,
+    ...INITIAL_AGGREGATE_STATE,
     editingId: null,
   };
 }
@@ -388,18 +410,9 @@ export async function updateCurrentTransaction(
 }
 
 export async function updateTransactionDirect(
-  db: AnyDb,
-  userId: UserId,
-  id: TransactionId,
-  fields: {
-    readonly type: TransactionType;
-    readonly digits: string;
-    readonly categoryId: CategoryId | null;
-    readonly accountId: FinancialAccountId | null;
-    readonly description: string;
-    readonly date: Date;
-  }
+  input: UpdateTransactionDirectInput
 ): Promise<TransactionMutationResult> {
+  const { db, userId, id, fields } = input;
   const sessionId = transactionsSessionId;
   if (!isActiveTransactionSession(userId, sessionId)) {
     return { success: false, error: "Store not initialized" };

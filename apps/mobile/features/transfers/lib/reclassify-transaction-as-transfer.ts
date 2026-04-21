@@ -112,7 +112,12 @@ export function reclassifyTransactionAsTransfer(
     relinkEvidenceToTransfer(tx, existingTransaction.id, built.transfer.id, updatedAt);
 
     if (input.processedEmailId) {
-      saveProcessedEmailStatus(tx, input.processedEmailId, "success", existingTransaction.id);
+      saveProcessedEmailStatus({
+        db: tx,
+        id: input.processedEmailId,
+        status: "success",
+        transactionId: existingTransaction.id,
+      });
     }
   });
 

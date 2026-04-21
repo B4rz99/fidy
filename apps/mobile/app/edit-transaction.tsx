@@ -93,13 +93,18 @@ export default function EditTransactionScreen() {
       router.back();
       await afterDismiss();
       try {
-        const result = await updateTransactionDirect(db, userId, transactionId, {
-          type,
-          digits,
-          categoryId,
-          accountId,
-          description,
-          date,
+        const result = await updateTransactionDirect({
+          db,
+          userId,
+          id: transactionId,
+          fields: {
+            type,
+            digits,
+            categoryId,
+            accountId,
+            description,
+            date,
+          },
         });
         if (!result.success) {
           showErrorToast(t("transactions.updateFailed"));

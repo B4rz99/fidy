@@ -3,15 +3,15 @@ import { assertCopAmount, assertIsoDate, assertUserId } from "@/shared/types/ass
 import type { TransactionId } from "@/shared/types/branded";
 import { findDuplicateTransaction as findDuplicateTransactionInternal } from "./lib/dedup";
 
-export function findDuplicateTransaction(
-  db: AnyDb,
-  userId: string,
-  amount: number,
-  date: string,
-  merchant: string
-): Promise<TransactionId | null> {
-  assertUserId(userId);
-  assertCopAmount(amount);
-  assertIsoDate(date);
-  return findDuplicateTransactionInternal(db, userId, amount, date, merchant);
+export function findDuplicateTransaction(input: {
+  readonly db: AnyDb;
+  readonly userId: string;
+  readonly amount: number;
+  readonly date: string;
+  readonly merchant: string;
+}): Promise<TransactionId | null> {
+  assertUserId(input.userId);
+  assertCopAmount(input.amount);
+  assertIsoDate(input.date);
+  return findDuplicateTransactionInternal(input);
 }

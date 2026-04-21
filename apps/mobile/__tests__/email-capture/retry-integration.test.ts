@@ -81,6 +81,75 @@ function insertRetryEmail(overrides: Partial<typeof processedEmails.$inferInsert
   return row;
 }
 
+function queueDueRetryEmail(overrides: Partial<typeof processedEmails.$inferInsert> = {}) {
+  const dueAt = new Date(Date.now() - 60_000).toISOString() as IsoDateTime;
+  return insertRetryEmail({ nextRetryAt: dueAt, ...overrides });
+}
+
+function mockSuccessfulRetryParse() {
+  mockParseEmailApi.mockResolvedValueOnce({
+    type: "expense",
+    amount: 50000,
+    categoryId: "other",
+    description: "Compra en Exito",
+    date: "2026-03-05",
+    confidence: 0.9,
+  });
+}
+
+async function getRetryEmail() {
+  const [row] = await db
+    .select()
+    .from(processedEmails)
+    .where(eq(processedEmails.id, "pe-retry-1" as ProcessedEmailId));
+  return row ?? null;
+}
+
+async function getInsertedTransactions() {
+  return db.select().from(transactions);
+}
+
+async function getSyncQueueEntries() {
+  return db.select().from(syncQueue);
+}
+
+function expectRetryResult(
+  result: Awaited<ReturnType<typeof processRetries>>,
+  expected: Pick<
+    Awaited<ReturnType<typeof processRetries>>,
+    "retried" | "succeeded" | "permanentlyFailed"
+  >
+) {
+  expect(result).toEqual(expect.objectContaining(expected));
+}
+
+async function expectSuccessfulRetryArtifacts() {
+  const [txRow] = await getInsertedTransactions();
+  expect(txRow).toEqual(
+    expect.objectContaining({
+      amount: 50000,
+      source: "email_gmail",
+      accountId: `fa-default-${USER_ID}`,
+      accountAttributionState: "unresolved",
+    })
+  );
+
+  expect(await getSyncQueueEntries()).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ tableName: "financialAccounts" }),
+      expect.objectContaining({ tableName: "transactions" }),
+    ])
+  );
+
+  expect(await getRetryEmail()).toEqual(
+    expect.objectContaining({
+      status: "success",
+      rawBody: null,
+      transactionId: txRow?.id,
+    })
+  );
+}
+
 describe("retry queue integration (real SQLite)", () => {
   it("migration adds rawBody, retryCount, nextRetryAt columns", () => {
     const columns = sqlite.pragma("table_info(processed_emails)") as {
@@ -132,7 +201,12 @@ describe("retry queue integration (real SQLite)", () => {
     insertRetryEmail({ nextRetryAt: pastTime, retryCount: 1 });
 
     const futureTime = new Date(Date.now() + 300_000).toISOString() as IsoDateTime;
-    await markForRetry(db as any, "pe-retry-1" as ProcessedEmailId, 2, futureTime);
+    await markForRetry({
+      db: db as any,
+      id: "pe-retry-1" as ProcessedEmailId,
+      retryCount: 2,
+      nextRetryAt: futureTime,
+    });
 
     const [row] = await db
       .select()
@@ -160,13 +234,13 @@ describe("retry queue integration (real SQLite)", () => {
   it("markRetrySuccess sets status/transactionId/confidence and clears rawBody", async () => {
     insertRetryEmail({ nextRetryAt: new Date().toISOString() as IsoDateTime });
 
-    await markRetrySuccess(
-      db as any,
-      "pe-retry-1" as ProcessedEmailId,
-      "success",
-      "tx-42" as TransactionId,
-      0.95
-    );
+    await markRetrySuccess({
+      db: db as any,
+      id: "pe-retry-1" as ProcessedEmailId,
+      status: "success",
+      transactionId: "tx-42" as TransactionId,
+      confidence: 0.95,
+    });
 
     const [row] = await db
       .select()
@@ -179,52 +253,14 @@ describe("retry queue integration (real SQLite)", () => {
   });
 
   it("full flow: pending_retry email → successful retry → transaction created", async () => {
-    const pastTime = new Date(Date.now() - 60_000).toISOString() as IsoDateTime;
-    insertRetryEmail({ nextRetryAt: pastTime });
-
-    mockParseEmailApi.mockResolvedValueOnce({
-      type: "expense",
-      amount: 50000,
-      categoryId: "other",
-      description: "Compra en Exito",
-      date: "2026-03-05",
-      confidence: 0.9,
-    });
+    queueDueRetryEmail();
+    mockSuccessfulRetryParse();
 
     const result = await processRetries(db as any, USER_ID);
 
-    expect(result.succeeded).toBe(1);
-    expect(result.retried).toBe(0);
-    expect(result.permanentlyFailed).toBe(0);
-
-    // Verify parseEmailApi was called with the cached rawBody
+    expectRetryResult(result, { succeeded: 1, retried: 0, permanentlyFailed: 0 });
     expect(mockParseEmailApi).toHaveBeenCalledWith("Su compra por $50.000 fue aprobada en EXITO");
-
-    // Verify transaction was created in DB
-    const txRows = await db.select().from(transactions);
-    expect(txRows).toHaveLength(1);
-    expect(txRows[0]?.amount).toBe(50000);
-    expect(txRows[0]?.source).toBe("email_gmail");
-    expect(txRows[0]?.accountId).toBe(`fa-default-${USER_ID}`);
-    expect(txRows[0]?.accountAttributionState).toBe("unresolved");
-
-    // Verify sync queue entry
-    const syncRows = await db.select().from(syncQueue);
-    expect(syncRows).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ tableName: "financialAccounts" }),
-        expect.objectContaining({ tableName: "transactions" }),
-      ])
-    );
-
-    // Verify processed email was updated
-    const [pe] = await db
-      .select()
-      .from(processedEmails)
-      .where(eq(processedEmails.id, "pe-retry-1" as ProcessedEmailId));
-    expect(pe?.status).toBe("success");
-    expect(pe?.rawBody).toBeNull();
-    expect(pe?.transactionId).toBe(txRows[0]?.id);
+    await expectSuccessfulRetryArtifacts();
   });
 
   it("full flow: pending_retry email → parse fails again → rescheduled with backoff", async () => {
