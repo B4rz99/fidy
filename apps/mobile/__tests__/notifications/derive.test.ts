@@ -72,6 +72,44 @@ const priorDate = (bucket: number): Date => {
   return d;
 };
 
+const rankedPaceCategories = [
+  "food",
+  "transport",
+  "entertainment",
+  "health",
+  "utilities",
+  "education",
+] as CategoryId[];
+
+const rankedWeeklyAmounts: CopAmount[] = [
+  700_000 as CopAmount,
+  800_000 as CopAmount,
+  600_000 as CopAmount,
+  900_000 as CopAmount,
+  1_000_000 as CopAmount,
+  1_100_000 as CopAmount,
+];
+
+function buildRankedBudgetPaceInputs() {
+  return {
+    txs: rankedPaceCategories.map((categoryId, index) =>
+      makeTx({
+        date: new Date("2026-03-16T12:00:00"),
+        categoryId,
+        amount: rankedWeeklyAmounts[index],
+      })
+    ),
+    progresses: rankedPaceCategories.map((categoryId, index) =>
+      makeProgress({
+        budgetId: `b${index + 1}` as BudgetId,
+        categoryId,
+        amount: 500_000 as CopAmount,
+        spent: 0 as CopAmount,
+      })
+    ),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -196,45 +234,7 @@ describe("deriveWeeklyMoves", () => {
 
   // Test 9 — 6+ moves all above threshold → only 3 returned, sorted by impact descending
   it("returns at most 3 moves sorted by impact descending when many moves qualify", () => {
-    // Create 6 budget progresses with different categories, all overpaced
-    // Use large current-week spend to guarantee all 6 fire pace moves
-    // Each category gets a different week spend to produce distinct impacts
-    const categories = [
-      "food",
-      "transport",
-      "entertainment",
-      "health",
-      "utilities",
-      "education",
-    ] as CategoryId[];
-
-    // Amounts spent this week per category (all → projected > budget of 500_000)
-    const weeklyAmounts: CopAmount[] = [
-      700_000 as CopAmount, // impact ~1_100_000
-      800_000 as CopAmount, // impact ~1_228_571
-      600_000 as CopAmount, // impact ~971_428
-      900_000 as CopAmount, // impact ~1_357_142
-      1_000_000 as CopAmount, // impact ~1_485_714
-      1_100_000 as CopAmount, // impact ~1_614_285
-    ];
-
-    const txs = categories.map((categoryId, i) =>
-      makeTx({
-        date: new Date("2026-03-16T12:00:00"),
-        categoryId,
-        amount: weeklyAmounts[i],
-      })
-    );
-
-    const progresses = categories.map((categoryId, i) =>
-      makeProgress({
-        budgetId: `b${i + 1}` as BudgetId,
-        categoryId,
-        amount: 500_000 as CopAmount,
-        spent: 0 as CopAmount,
-      })
-    );
-
+    const { txs, progresses } = buildRankedBudgetPaceInputs();
     const result = deriveWeeklyMoves(txs, progresses, WEEK_START);
     expect(result).toHaveLength(3);
 

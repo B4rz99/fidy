@@ -25,6 +25,26 @@ function createDeferred<T>() {
   return { promise, resolve, reject };
 }
 
+function makeAnalyticsSnapshot() {
+  return {
+    incomeExpense: {
+      income: 500000 as CopAmount,
+      expenses: 200000 as CopAmount,
+      net: 300000 as CopAmount,
+      netIsPositive: true,
+    },
+    categoryBreakdown: [
+      { categoryId: "food" as CategoryId, total: 200000 as CopAmount, percent: 100 },
+    ],
+    periodDelta: {
+      totalDelta: 100000 as CopAmount,
+      totalDeltaPercent: 100,
+      spendingIncreased: true,
+      categoryDeltas: [],
+    },
+  };
+}
+
 describe("analytics store boundary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -39,49 +59,14 @@ describe("analytics store boundary", () => {
   });
 
   it("drops stale analytics results after the active user changes", async () => {
-    const deferred = createDeferred<{
-      incomeExpense: {
-        income: CopAmount;
-        expenses: CopAmount;
-        net: CopAmount;
-        netIsPositive: boolean;
-      };
-      categoryBreakdown: readonly { categoryId: CategoryId; total: CopAmount; percent: number }[];
-      periodDelta: {
-        totalDelta: CopAmount;
-        totalDeltaPercent: number;
-        spendingIncreased: boolean;
-        categoryDeltas: readonly {
-          categoryId: CategoryId;
-          delta: CopAmount;
-          deltaPercent: number;
-          increased: boolean;
-        }[];
-      };
-    }>();
+    const deferred = createDeferred<ReturnType<typeof makeAnalyticsSnapshot>>();
     mockLoadSnapshot.mockReturnValueOnce(deferred.promise);
 
     initializeAnalyticsSession("user-1" as UserId);
     const load = loadAnalyticsForUser({} as never, "user-1" as UserId);
 
     initializeAnalyticsSession("user-2" as UserId);
-    deferred.resolve({
-      incomeExpense: {
-        income: 500000 as CopAmount,
-        expenses: 200000 as CopAmount,
-        net: 300000 as CopAmount,
-        netIsPositive: true,
-      },
-      categoryBreakdown: [
-        { categoryId: "food" as CategoryId, total: 200000 as CopAmount, percent: 100 },
-      ],
-      periodDelta: {
-        totalDelta: 100000 as CopAmount,
-        totalDeltaPercent: 100,
-        spendingIncreased: true,
-        categoryDeltas: [],
-      },
-    });
+    deferred.resolve(makeAnalyticsSnapshot());
 
     await load;
 

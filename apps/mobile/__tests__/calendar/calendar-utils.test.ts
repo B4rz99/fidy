@@ -58,9 +58,14 @@ describe("getMonthGrid", () => {
     // March 2026: Mar 1 is Sunday → Mon-start offset = 6
     const grid = getMonthGrid(2026, 2);
     // First 6 cells should be null (Mon-Sat padding), then day 1 on Sunday
-    for (let i = 0; i < 6; i++) {
-      expect(grid[0]?.[i]?.day).toBeNull();
-    }
+    expect(grid[0]?.slice(0, 6).map((cell) => cell?.day)).toEqual([
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+    ]);
     expect(grid[0]?.[6]?.day).toBe(1);
   });
 

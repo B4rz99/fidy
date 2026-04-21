@@ -63,73 +63,77 @@ const insertTransactionRow = (
     source: "manual",
   });
 
+const periodAggregateRows = [
+  {
+    id: "income-active" as TransactionId,
+    type: "income" as const,
+    amount: 500000 as CopAmount,
+    categoryId: "salary" as CategoryId,
+    description: "Salary",
+    date: "2026-03-03" as IsoDate,
+  },
+  {
+    id: "income-deleted" as TransactionId,
+    type: "income" as const,
+    amount: 150000 as CopAmount,
+    categoryId: "salary" as CategoryId,
+    description: "Bonus",
+    date: "2026-03-04" as IsoDate,
+  },
+  {
+    id: "expense-food-1" as TransactionId,
+    type: "expense" as const,
+    amount: 120000 as CopAmount,
+    categoryId: "food" as CategoryId,
+    description: "Groceries",
+    date: "2026-03-05" as IsoDate,
+  },
+  {
+    id: "expense-food-2" as TransactionId,
+    type: "expense" as const,
+    amount: 40000 as CopAmount,
+    categoryId: "food" as CategoryId,
+    description: "Snacks",
+    date: "2026-03-15" as IsoDate,
+  },
+  {
+    id: "expense-transport" as TransactionId,
+    type: "expense" as const,
+    amount: 80000 as CopAmount,
+    categoryId: "transport" as CategoryId,
+    description: "Taxi",
+    date: "2026-03-10" as IsoDate,
+  },
+  {
+    id: "expense-deleted" as TransactionId,
+    type: "expense" as const,
+    amount: 60000 as CopAmount,
+    categoryId: "subscriptions" as CategoryId,
+    description: "Streaming",
+    date: "2026-03-18" as IsoDate,
+  },
+  {
+    id: "expense-out-of-range" as TransactionId,
+    type: "expense" as const,
+    amount: 999999 as CopAmount,
+    categoryId: "food" as CategoryId,
+    description: "February groceries",
+    date: "2026-02-28" as IsoDate,
+  },
+  {
+    id: "expense-other-user" as TransactionId,
+    userId: OTHER_USER_ID,
+    type: "expense" as const,
+    amount: 30000 as CopAmount,
+    categoryId: "food" as CategoryId,
+    description: "Other user groceries",
+    date: "2026-03-08" as IsoDate,
+  },
+];
+
 describe("analytics repository", () => {
   it("builds period aggregates from active in-range transactions only", () => {
-    insertTransactionRow({
-      id: "income-active" as TransactionId,
-      type: "income",
-      amount: 500000 as CopAmount,
-      categoryId: "salary" as CategoryId,
-      description: "Salary",
-      date: "2026-03-03" as IsoDate,
-    });
-    insertTransactionRow({
-      id: "income-deleted" as TransactionId,
-      type: "income",
-      amount: 150000 as CopAmount,
-      categoryId: "salary" as CategoryId,
-      description: "Bonus",
-      date: "2026-03-04" as IsoDate,
-    });
-    insertTransactionRow({
-      id: "expense-food-1" as TransactionId,
-      type: "expense",
-      amount: 120000 as CopAmount,
-      categoryId: "food" as CategoryId,
-      description: "Groceries",
-      date: "2026-03-05" as IsoDate,
-    });
-    insertTransactionRow({
-      id: "expense-food-2" as TransactionId,
-      type: "expense",
-      amount: 40000 as CopAmount,
-      categoryId: "food" as CategoryId,
-      description: "Snacks",
-      date: "2026-03-15" as IsoDate,
-    });
-    insertTransactionRow({
-      id: "expense-transport" as TransactionId,
-      type: "expense",
-      amount: 80000 as CopAmount,
-      categoryId: "transport" as CategoryId,
-      description: "Taxi",
-      date: "2026-03-10" as IsoDate,
-    });
-    insertTransactionRow({
-      id: "expense-deleted" as TransactionId,
-      type: "expense",
-      amount: 60000 as CopAmount,
-      categoryId: "subscriptions" as CategoryId,
-      description: "Streaming",
-      date: "2026-03-18" as IsoDate,
-    });
-    insertTransactionRow({
-      id: "expense-out-of-range" as TransactionId,
-      type: "expense",
-      amount: 999999 as CopAmount,
-      categoryId: "food" as CategoryId,
-      description: "February groceries",
-      date: "2026-02-28" as IsoDate,
-    });
-    insertTransactionRow({
-      id: "expense-other-user" as TransactionId,
-      userId: OTHER_USER_ID,
-      type: "expense",
-      amount: 30000 as CopAmount,
-      categoryId: "food" as CategoryId,
-      description: "Other user groceries",
-      date: "2026-03-08" as IsoDate,
-    });
+    periodAggregateRows.forEach(insertTransactionRow);
 
     softDeleteTransaction(db as any, "income-deleted" as TransactionId, DELETED_AT);
     softDeleteTransaction(db as any, "expense-deleted" as TransactionId, DELETED_AT);

@@ -64,73 +64,77 @@ const insertTransactionRow = (
     source: "manual",
   });
 
+const monthlyTotalsRows = [
+  {
+    id: "mar-income" as TransactionId,
+    type: "income" as const,
+    amount: 700000 as CopAmount,
+    categoryId: "salary" as CategoryId,
+    description: "Salary",
+    date: "2026-03-05" as IsoDate,
+  },
+  {
+    id: "mar-expense" as TransactionId,
+    type: "expense" as const,
+    amount: 150000 as CopAmount,
+    categoryId: "food" as CategoryId,
+    description: "Groceries",
+    date: "2026-03-07" as IsoDate,
+  },
+  {
+    id: "feb-income" as TransactionId,
+    type: "income" as const,
+    amount: 680000 as CopAmount,
+    categoryId: "salary" as CategoryId,
+    description: "Salary",
+    date: "2026-02-04" as IsoDate,
+  },
+  {
+    id: "feb-expense" as TransactionId,
+    type: "expense" as const,
+    amount: 220000 as CopAmount,
+    categoryId: "rent" as CategoryId,
+    description: "Rent",
+    date: "2026-02-10" as IsoDate,
+  },
+  {
+    id: "jan-expense" as TransactionId,
+    type: "expense" as const,
+    amount: 90000 as CopAmount,
+    categoryId: "transport" as CategoryId,
+    description: "Transit",
+    date: "2026-01-15" as IsoDate,
+  },
+  {
+    id: "jan-income-deleted" as TransactionId,
+    type: "income" as const,
+    amount: 50000 as CopAmount,
+    categoryId: "salary" as CategoryId,
+    description: "Bonus",
+    date: "2026-01-18" as IsoDate,
+  },
+  {
+    id: "dec-expense" as TransactionId,
+    type: "expense" as const,
+    amount: 999999 as CopAmount,
+    categoryId: "shopping" as CategoryId,
+    description: "Holiday shopping",
+    date: "2025-12-20" as IsoDate,
+  },
+  {
+    id: "mar-other-user" as TransactionId,
+    userId: OTHER_USER_ID,
+    type: "income" as const,
+    amount: 123456 as CopAmount,
+    categoryId: "salary" as CategoryId,
+    description: "Other user",
+    date: "2026-03-10" as IsoDate,
+  },
+];
+
 describe("transaction repository monthly totals", () => {
   it("returns active monthly totals for the rolling window only", () => {
-    insertTransactionRow({
-      id: "mar-income" as TransactionId,
-      type: "income",
-      amount: 700000 as CopAmount,
-      categoryId: "salary" as CategoryId,
-      description: "Salary",
-      date: "2026-03-05" as IsoDate,
-    });
-    insertTransactionRow({
-      id: "mar-expense" as TransactionId,
-      type: "expense",
-      amount: 150000 as CopAmount,
-      categoryId: "food" as CategoryId,
-      description: "Groceries",
-      date: "2026-03-07" as IsoDate,
-    });
-    insertTransactionRow({
-      id: "feb-income" as TransactionId,
-      type: "income",
-      amount: 680000 as CopAmount,
-      categoryId: "salary" as CategoryId,
-      description: "Salary",
-      date: "2026-02-04" as IsoDate,
-    });
-    insertTransactionRow({
-      id: "feb-expense" as TransactionId,
-      type: "expense",
-      amount: 220000 as CopAmount,
-      categoryId: "rent" as CategoryId,
-      description: "Rent",
-      date: "2026-02-10" as IsoDate,
-    });
-    insertTransactionRow({
-      id: "jan-expense" as TransactionId,
-      type: "expense",
-      amount: 90000 as CopAmount,
-      categoryId: "transport" as CategoryId,
-      description: "Transit",
-      date: "2026-01-15" as IsoDate,
-    });
-    insertTransactionRow({
-      id: "jan-income-deleted" as TransactionId,
-      type: "income",
-      amount: 50000 as CopAmount,
-      categoryId: "salary" as CategoryId,
-      description: "Bonus",
-      date: "2026-01-18" as IsoDate,
-    });
-    insertTransactionRow({
-      id: "dec-expense" as TransactionId,
-      type: "expense",
-      amount: 999999 as CopAmount,
-      categoryId: "shopping" as CategoryId,
-      description: "Holiday shopping",
-      date: "2025-12-20" as IsoDate,
-    });
-    insertTransactionRow({
-      id: "mar-other-user" as TransactionId,
-      userId: OTHER_USER_ID,
-      type: "income",
-      amount: 123456 as CopAmount,
-      categoryId: "salary" as CategoryId,
-      description: "Other user",
-      date: "2026-03-10" as IsoDate,
-    });
+    monthlyTotalsRows.forEach(insertTransactionRow);
 
     softDeleteTransaction(db as any, "jan-income-deleted" as TransactionId, DELETED_AT);
 

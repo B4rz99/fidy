@@ -36,103 +36,128 @@ afterEach(() => {
   sqlite.close();
 });
 
-function saveEvidence(
-  id: string,
+type SavedEvidenceInput = {
+  readonly transactionId: string | null;
+  readonly value: string;
+  readonly processedCaptureId: string;
+  readonly updatedAt?: IsoDateTime;
+};
+
+type AccountInput = {
+  readonly id: FinancialAccountId;
+  readonly name: string;
+  readonly kind: "checking" | "credit_card";
+  readonly isDefault: boolean;
+};
+
+type ReviewTransactionInput = {
+  readonly id: TransactionId;
+  readonly amount: CopAmount;
+  readonly description: string;
+  readonly date: IsoDate;
+};
+
+const attributionAccounts = [
   {
-    transactionId,
-    value,
-    processedCaptureId,
-    updatedAt = NOW,
-  }: {
-    readonly transactionId: string | null;
-    readonly value: string;
-    readonly processedCaptureId: string;
-    readonly updatedAt?: IsoDateTime;
-  }
-) {
+    id: "fa-default-user-1" as FinancialAccountId,
+    name: "Main account",
+    kind: "checking" as const,
+    isDefault: true,
+  },
+  {
+    id: "fa-davivienda" as FinancialAccountId,
+    name: "Davivienda Visa",
+    kind: "credit_card" as const,
+    isDefault: false,
+  },
+];
+
+const attributionTransactions = [
+  {
+    id: "tx-reviewed" as TransactionId,
+    amount: 85000 as CopAmount,
+    description: "Rappi Supermai",
+    date: "2026-03-03" as IsoDate,
+  },
+  {
+    id: "tx-related" as TransactionId,
+    amount: 120000 as CopAmount,
+    description: "Otro cobro",
+    date: "2026-03-04" as IsoDate,
+  },
+];
+
+const attributionEvidence = [
+  {
+    id: "ce-reviewed",
+    transactionId: "tx-reviewed",
+    value: "4931",
+    processedCaptureId: "pc-1",
+  },
+  {
+    id: "ce-related",
+    transactionId: "tx-related",
+    value: "4931",
+    processedCaptureId: "pc-2",
+    updatedAt: "2026-04-19T11:00:00.000Z" as IsoDateTime,
+  },
+];
+
+function insertAccount(input: AccountInput) {
+  upsertFinancialAccount(db as any, {
+    id: input.id,
+    userId: USER_ID,
+    name: input.name,
+    kind: input.kind,
+    isDefault: input.isDefault,
+    createdAt: NOW,
+    updatedAt: NOW,
+    deletedAt: null,
+  });
+}
+
+function insertReviewTransaction(input: ReviewTransactionInput) {
+  insertTransaction(db as any, {
+    id: input.id,
+    userId: USER_ID,
+    type: "expense",
+    amount: input.amount,
+    categoryId: "shopping" as CategoryId,
+    description: input.description,
+    date: input.date,
+    accountId: "fa-default-user-1" as FinancialAccountId,
+    accountAttributionState: "unresolved",
+    source: "notification_android",
+    createdAt: NOW,
+    updatedAt: NOW,
+    deletedAt: null,
+  });
+}
+
+function saveEvidence(id: string, input: SavedEvidenceInput) {
   saveCaptureEvidence(db as any, {
     id: id as CaptureEvidenceId,
     userId: USER_ID,
     sourceFamily: "davivienda",
     evidenceType: "last4",
     scope: "notification:davivienda:last4",
-    value,
-    transactionId: transactionId as TransactionId | null,
+    value: input.value,
+    transactionId: input.transactionId as TransactionId | null,
     transferId: null,
     processedEmailId: null,
-    processedCaptureId: processedCaptureId as ProcessedCaptureId,
-    createdAt: updatedAt,
-    updatedAt,
+    processedCaptureId: input.processedCaptureId as ProcessedCaptureId,
+    createdAt: input.updatedAt ?? NOW,
+    updatedAt: input.updatedAt ?? NOW,
     deletedAt: null,
   });
 }
 
 describe("attribution review service", () => {
   it("lists unresolved transactions with a suggested account and confirms the reviewed owner", () => {
-    upsertFinancialAccount(db as any, {
-      id: "fa-default-user-1" as FinancialAccountId,
-      userId: USER_ID,
-      name: "Main account",
-      kind: "checking",
-      isDefault: true,
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    upsertFinancialAccount(db as any, {
-      id: "fa-davivienda" as FinancialAccountId,
-      userId: USER_ID,
-      name: "Davivienda Visa",
-      kind: "credit_card",
-      isDefault: false,
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    insertTransaction(db as any, {
-      id: "tx-reviewed" as TransactionId,
-      userId: USER_ID,
-      type: "expense",
-      amount: 85000 as CopAmount,
-      categoryId: "shopping" as CategoryId,
-      description: "Rappi Supermai",
-      date: "2026-03-03" as IsoDate,
-      accountId: "fa-default-user-1" as FinancialAccountId,
-      accountAttributionState: "unresolved",
-      source: "notification_android",
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    insertTransaction(db as any, {
-      id: "tx-related" as TransactionId,
-      userId: USER_ID,
-      type: "expense",
-      amount: 120000 as CopAmount,
-      categoryId: "shopping" as CategoryId,
-      description: "Otro cobro",
-      date: "2026-03-04" as IsoDate,
-      accountId: "fa-default-user-1" as FinancialAccountId,
-      accountAttributionState: "unresolved",
-      source: "notification_android",
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    saveEvidence("ce-reviewed", {
-      transactionId: "tx-reviewed",
-      value: "4931",
-      processedCaptureId: "pc-1",
-    });
-    saveEvidence("ce-related", {
-      transactionId: "tx-related",
-      value: "4931",
-      processedCaptureId: "pc-2",
-      updatedAt: "2026-04-19T11:00:00.000Z" as IsoDateTime,
+    attributionAccounts.forEach(insertAccount);
+    attributionTransactions.forEach(insertReviewTransaction);
+    attributionEvidence.forEach((row) => {
+      saveEvidence(row.id, row);
     });
 
     const service = createAttributionReviewService({
@@ -187,70 +212,10 @@ describe("attribution review service", () => {
   });
 
   it("returns failure without accepting the suggestion when the reviewed transaction disappears", () => {
-    upsertFinancialAccount(db as any, {
-      id: "fa-default-user-1" as FinancialAccountId,
-      userId: USER_ID,
-      name: "Main account",
-      kind: "checking",
-      isDefault: true,
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    upsertFinancialAccount(db as any, {
-      id: "fa-davivienda" as FinancialAccountId,
-      userId: USER_ID,
-      name: "Davivienda Visa",
-      kind: "credit_card",
-      isDefault: false,
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    insertTransaction(db as any, {
-      id: "tx-reviewed" as TransactionId,
-      userId: USER_ID,
-      type: "expense",
-      amount: 85000 as CopAmount,
-      categoryId: "shopping" as CategoryId,
-      description: "Rappi Supermai",
-      date: "2026-03-03" as IsoDate,
-      accountId: "fa-default-user-1" as FinancialAccountId,
-      accountAttributionState: "unresolved",
-      source: "notification_android",
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    insertTransaction(db as any, {
-      id: "tx-related" as TransactionId,
-      userId: USER_ID,
-      type: "expense",
-      amount: 120000 as CopAmount,
-      categoryId: "shopping" as CategoryId,
-      description: "Otro cobro",
-      date: "2026-03-04" as IsoDate,
-      accountId: "fa-default-user-1" as FinancialAccountId,
-      accountAttributionState: "unresolved",
-      source: "notification_android",
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    saveEvidence("ce-reviewed", {
-      transactionId: "tx-reviewed",
-      value: "4931",
-      processedCaptureId: "pc-1",
-    });
-    saveEvidence("ce-related", {
-      transactionId: "tx-related",
-      value: "4931",
-      processedCaptureId: "pc-2",
-      updatedAt: "2026-04-19T11:00:00.000Z" as IsoDateTime,
+    attributionAccounts.forEach(insertAccount);
+    attributionTransactions.forEach(insertReviewTransaction);
+    attributionEvidence.forEach((row) => {
+      saveEvidence(row.id, row);
     });
 
     const service = createAttributionReviewService({
