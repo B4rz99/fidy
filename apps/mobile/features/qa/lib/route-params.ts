@@ -1,16 +1,18 @@
 import { isLocalQaProfile, type LocalQaProfile } from "../local-session";
 import { getQaTargetFromKey, isQaTarget, isQaTargetKey, type QaTarget } from "./entry-points";
 
-function getFirstRouteParamValue(value: string | string[] | null | undefined): string | null {
-  if (Array.isArray(value)) {
-    return value[0] ?? null;
-  }
+function getFirstArrayRouteParamValue(value: readonly string[] | null | undefined): string | null {
+  return value?.[0] ?? null;
+}
 
-  return value ?? null;
+function getFirstRouteParamValue(
+  value: string | readonly string[] | null | undefined
+): string | null {
+  return typeof value === "string" ? value : getFirstArrayRouteParamValue(value);
 }
 
 export function parseLocalQaProfileRouteParam(
-  value: string | string[] | null | undefined
+  value: string | readonly string[] | null | undefined
 ): LocalQaProfile | null {
   const normalizedValue = getFirstRouteParamValue(value)?.trim();
 
@@ -22,7 +24,7 @@ export function parseLocalQaProfileRouteParam(
 }
 
 export function parseQaTargetRouteParam(
-  value: string | string[] | null | undefined
+  value: string | readonly string[] | null | undefined
 ): QaTarget | null {
   const normalizedValue = getFirstRouteParamValue(value)?.trim();
 
@@ -34,7 +36,7 @@ export function parseQaTargetRouteParam(
 }
 
 export function parseQaTargetKeyRouteParam(
-  value: string | string[] | null | undefined
+  value: string | readonly string[] | null | undefined
 ): QaTarget | null {
   const normalizedValue = getFirstRouteParamValue(value)?.trim();
 

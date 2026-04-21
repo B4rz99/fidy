@@ -12,7 +12,7 @@ import {
   createCategoryRegistrySnapshot,
   isCategoryIdValid,
 } from "./lib/registry";
-import { getUserCategoriesForUser } from "./lib/repository";
+import { getUserCategoriesForUser, type UserCategoryRow } from "./lib/repository";
 
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
 
@@ -21,6 +21,12 @@ type CategoriesState = CategoryRegistrySnapshot;
 type CategoriesActions = {
   replaceSnapshot: (snapshot: CategoryRegistrySnapshot) => void;
   isValid(id: string, scope?: CategoryRegistryScope): boolean;
+};
+
+type CustomCategoryInput = {
+  readonly name: string;
+  readonly iconName: string;
+  readonly colorHex: string;
 };
 
 const toCustomCategoryRow = (row: {
@@ -43,11 +49,7 @@ export const useCategoriesStore = create<CategoriesState & CategoriesActions>((s
   isValid: (id, scope = "built_in") => isCategoryIdValid(get(), id, scope),
 }));
 
-function isValidCustomCategoryInput(input: {
-  name: string;
-  iconName: string;
-  colorHex: string;
-}): boolean {
+function isValidCustomCategoryInput(input: CustomCategoryInput): boolean {
   const trimmedName = input.name.trim();
   return (
     trimmedName.length >= MIN_NAME_LENGTH &&
@@ -59,6 +61,31 @@ function isValidCustomCategoryInput(input: {
 
 function createCategoryMutations(db: AnyDb): WriteThroughMutationModule {
   return createWriteThroughMutationModule(db);
+}
+
+function buildCustomCategoryRow(userId: UserId, input: CustomCategoryInput): UserCategoryRow {
+  const now = toIsoDateTime(new Date());
+  return {
+    id: generateUserCategoryId(),
+    userId,
+    name: input.name.trim(),
+    iconName: input.iconName,
+    colorHex: input.colorHex,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+  };
+}
+
+async function saveCustomCategory(
+  mutations: WriteThroughMutationModule,
+  row: UserCategoryRow
+): Promise<boolean> {
+  try {
+    return (await mutations.commit({ kind: "category.save", row })).success;
+  } catch {
+    return false;
+  }
 }
 
 export async function refreshCategories(db: AnyDb, userId: UserId): Promise<void> {
@@ -73,33 +100,16 @@ export async function refreshCategories(db: AnyDb, userId: UserId): Promise<void
 export async function createCustomCategory(
   db: AnyDb,
   userId: UserId,
-  input: { name: string; iconName: string; colorHex: string }
+  input: CustomCategoryInput
 ): Promise<boolean> {
   if (!isValidCustomCategoryInput(input)) return false;
 
-  const trimmedName = input.name.trim();
-  const now = toIsoDateTime(new Date());
-  const id = generateUserCategoryId();
-  const mutations = createCategoryMutations(db);
+  const didSave = await saveCustomCategory(
+    createCategoryMutations(db),
+    buildCustomCategoryRow(userId, input)
+  );
 
-  try {
-    const result = await mutations.commit({
-      kind: "category.save",
-      row: {
-        id,
-        userId,
-        name: trimmedName,
-        iconName: input.iconName,
-        colorHex: input.colorHex,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
-      },
-    });
-    if (!result.success) return false;
-  } catch {
-    return false;
-  }
+  if (!didSave) return false;
 
   await refreshCategories(db, userId);
   return true;
