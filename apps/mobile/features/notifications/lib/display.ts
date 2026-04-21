@@ -6,43 +6,65 @@ import type { NotificationDisplay, NotificationSection, StoredNotification } fro
 // Constants
 // ---------------------------------------------------------------------------
 
-const CATEGORY_ICON_NAMES: Record<string, string> = {
-  food: "utensils",
-  transport: "car",
-  entertainment: "clapperboard",
-  health: "heart-pulse",
-  education: "graduation-cap",
-  home: "house",
-  clothing: "shirt",
-  services: "wrench",
-  transfer: "arrow-left-right",
-  other: "ellipsis",
+type CategoryVisuals = {
+  readonly iconName: string;
+  readonly iconColor: string;
+  readonly iconBgColor: string;
 };
 
-const CATEGORY_CHART_COLORS: Record<string, string> = {
-  food: "#7CB243",
-  transport: "#E8A090",
-  entertainment: "#F5C842",
-  health: "#E06060",
-  education: "#5B9BD5",
-  home: "#8BBAE8",
-  clothing: "#1A1A1A",
-  services: "#F0A04B",
-  transfer: "#6DC4B0",
-  other: "#B8A9D4",
+const DEFAULT_CATEGORY_VISUALS: CategoryVisuals = {
+  iconName: "ellipsis",
+  iconColor: "#B8A9D4",
+  iconBgColor: "#F3E5F5",
 };
 
-const CATEGORY_BG_COLORS: Record<string, string> = {
-  food: "#E8F5E9",
-  transport: "#FFF0ED",
-  entertainment: "#FFFDE7",
-  health: "#FFEBEE",
-  education: "#E3F2FD",
-  home: "#E3F2FD",
-  clothing: "#F5F5F5",
-  services: "#FFF3E0",
-  transfer: "#E0F2F1",
-  other: "#F3E5F5",
+const CATEGORY_VISUALS: Record<string, CategoryVisuals> = {
+  food: {
+    iconName: "utensils",
+    iconColor: "#7CB243",
+    iconBgColor: "#E8F5E9",
+  },
+  transport: {
+    iconName: "car",
+    iconColor: "#E8A090",
+    iconBgColor: "#FFF0ED",
+  },
+  entertainment: {
+    iconName: "clapperboard",
+    iconColor: "#F5C842",
+    iconBgColor: "#FFFDE7",
+  },
+  health: {
+    iconName: "heart-pulse",
+    iconColor: "#E06060",
+    iconBgColor: "#FFEBEE",
+  },
+  education: {
+    iconName: "graduation-cap",
+    iconColor: "#5B9BD5",
+    iconBgColor: "#E3F2FD",
+  },
+  home: {
+    iconName: "house",
+    iconColor: "#8BBAE8",
+    iconBgColor: "#E3F2FD",
+  },
+  clothing: {
+    iconName: "shirt",
+    iconColor: "#1A1A1A",
+    iconBgColor: "#F5F5F5",
+  },
+  services: {
+    iconName: "wrench",
+    iconColor: "#F0A04B",
+    iconBgColor: "#FFF3E0",
+  },
+  transfer: {
+    iconName: "arrow-left-right",
+    iconColor: "#6DC4B0",
+    iconBgColor: "#E0F2F1",
+  },
+  other: DEFAULT_CATEGORY_VISUALS,
 };
 
 // ---------------------------------------------------------------------------
@@ -60,14 +82,8 @@ const parseParams = (params: string | null): Record<string, unknown> => {
   }
 };
 
-const getCategoryVisuals = (categoryId: CategoryId | null) => {
-  const key = categoryId ?? "other";
-  return {
-    iconName: CATEGORY_ICON_NAMES[key] ?? CATEGORY_ICON_NAMES.other ?? "ellipsis",
-    iconColor: CATEGORY_CHART_COLORS[key] ?? CATEGORY_CHART_COLORS.other ?? "#B8A9D4",
-    iconBgColor: CATEGORY_BG_COLORS[key] ?? CATEGORY_BG_COLORS.other ?? "#F3E5F5",
-  };
-};
+const getCategoryVisuals = (categoryId: CategoryId | null): CategoryVisuals =>
+  CATEGORY_VISUALS[categoryId ?? "other"] ?? DEFAULT_CATEGORY_VISUALS;
 
 // ---------------------------------------------------------------------------
 // deriveNotificationDisplay

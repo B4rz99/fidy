@@ -27,6 +27,18 @@ type BudgetPaceMove = {
 
 export type WeeklyMove = AnomalyMove | BudgetPaceMove;
 
+type AnomalyCandidate = {
+  readonly categoryId: CategoryId;
+  readonly priorCount: number;
+  readonly thisWeekSpend: CopAmount;
+  readonly weeklyTotals: readonly CopAmount[];
+};
+
+type AnomalyContext = {
+  readonly priorCountByCategory: ReadonlyMap<CategoryId, number>;
+  readonly currentWeekByCategory: ReadonlyMap<CategoryId, CopAmount>;
+};
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
@@ -65,6 +77,41 @@ const groupPriorWeeksByCategory = (
     return acc;
   }, new Map());
 
+const buildAnomalyCandidate = (
+  categoryId: CategoryId,
+  weekTotalsMap: ReadonlyMap<number, CopAmount>,
+  context: AnomalyContext
+): AnomalyCandidate => ({
+  categoryId,
+  priorCount: context.priorCountByCategory.get(categoryId) ?? 0,
+  thisWeekSpend: (context.currentWeekByCategory.get(categoryId) ?? 0) as CopAmount,
+  weeklyTotals: Array.from(weekTotalsMap.values()),
+});
+
+const buildAnomalyMove = ({
+  categoryId,
+  priorCount,
+  thisWeekSpend,
+  weeklyTotals,
+}: AnomalyCandidate): AnomalyMove | null => {
+  if (priorCount < 5) return null;
+
+  const medianWeeklySpend = computeMedian(weeklyTotals);
+
+  if (!Number.isFinite(medianWeeklySpend)) return null;
+  if (thisWeekSpend <= 1.5 * medianWeeklySpend) return null;
+
+  return {
+    type: "anomaly" as const,
+    categoryId,
+    weeklySpend: thisWeekSpend as CopAmount,
+    medianWeeklySpend: Math.round(medianWeeklySpend) as CopAmount,
+    impact: Math.round(thisWeekSpend - medianWeeklySpend) as CopAmount,
+  };
+};
+
+const isPresent = <T>(value: T | null): value is T => value !== null;
+
 /**
  * Detects spending anomalies per category using median weekly spend of prior weeks.
  * Emits an AnomalyMove when this-week spend > 1.5 × medianWeeklySpend.
@@ -85,29 +132,13 @@ const detectAnomalies = (
     return acc;
   }, new Map());
 
-  return Array.from(priorWeeksByCategory.entries()).flatMap(([categoryId, weekTotalsMap]) => {
-    const priorCount = priorCountByCategory.get(categoryId) ?? 0;
-    if (priorCount < 5) return [];
+  const anomalyContext: AnomalyContext = { priorCountByCategory, currentWeekByCategory };
 
-    const weeklyTotals = Array.from(weekTotalsMap.values());
-    const medianWeeklySpend = computeMedian(weeklyTotals);
-
-    if (!Number.isFinite(medianWeeklySpend)) return [];
-
-    const thisWeekSpend = currentWeekByCategory.get(categoryId) ?? 0;
-
-    if (thisWeekSpend <= 1.5 * medianWeeklySpend) return [];
-
-    return [
-      {
-        type: "anomaly" as const,
-        categoryId,
-        weeklySpend: thisWeekSpend as CopAmount,
-        medianWeeklySpend: Math.round(medianWeeklySpend) as CopAmount,
-        impact: Math.round(thisWeekSpend - medianWeeklySpend) as CopAmount,
-      },
-    ];
-  });
+  return Array.from(priorWeeksByCategory.entries())
+    .map(([categoryId, weekTotalsMap]) =>
+      buildAnomalyMove(buildAnomalyCandidate(categoryId, weekTotalsMap, anomalyContext))
+    )
+    .filter(isPresent);
 };
 
 /**
