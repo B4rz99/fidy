@@ -21,14 +21,14 @@ describe("ai chat callers", () => {
   });
 
   test("ChatScreen catches action-status persistence failures", () => {
-    expect(chatScreenSource).toContain("updateChatActionStatus(db, userId, messageId, status)");
+    expect(chatScreenSource).toContain("updateChatActionStatus({ db, userId, messageId, status })");
     expect(chatScreenSource).toContain(".catch(captureError)");
     expect(chatScreenSource).toContain("persistActionStatus");
     expect(chatScreenSource).not.toContain(
-      'void updateChatActionStatus(db, userId, messageId, "confirmed")'
+      'void updateChatActionStatus({ db, userId, messageId, status: "confirmed" })'
     );
     expect(chatScreenSource).not.toContain(
-      'void updateChatActionStatus(db, userId, messageId, "dismissed")'
+      'void updateChatActionStatus({ db, userId, messageId, status: "dismissed" })'
     );
   });
 });

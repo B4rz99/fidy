@@ -5,6 +5,20 @@ import { transfers } from "@/shared/db/schema";
 import { generateSyncQueueId } from "@/shared/lib/generate-id";
 
 export type TransferRow = typeof transfers.$inferInsert;
+type GetTransfersPageInput = {
+  readonly db: AnyDb;
+  readonly userId: TransferRow["userId"];
+  readonly limit: number;
+  readonly offset: number;
+};
+
+function queryActiveTransfers(db: AnyDb, userId: TransferRow["userId"]) {
+  return db
+    .select()
+    .from(transfers)
+    .where(and(eq(transfers.userId, userId), isNull(transfers.deletedAt)))
+    .orderBy(desc(transfers.date), desc(transfers.updatedAt), desc(transfers.id));
+}
 
 export function getTransferById(db: AnyDb, id: TransferRow["id"]) {
   const rows = db.select().from(transfers).where(eq(transfers.id, id)).all();
@@ -48,25 +62,12 @@ export function saveTransfer(db: AnyDb, row: TransferRow) {
 }
 
 export function getTransfersForUser(db: AnyDb, userId: TransferRow["userId"]) {
-  return db
-    .select()
-    .from(transfers)
-    .where(and(eq(transfers.userId, userId), isNull(transfers.deletedAt)))
-    .orderBy(desc(transfers.date), desc(transfers.updatedAt), desc(transfers.id))
-    .all();
+  return queryActiveTransfers(db, userId).all();
 }
 
-export function getTransfersPaginated(
-  db: AnyDb,
-  userId: TransferRow["userId"],
-  limit: number,
-  offset: number
-) {
-  return db
-    .select()
-    .from(transfers)
-    .where(and(eq(transfers.userId, userId), isNull(transfers.deletedAt)))
-    .orderBy(desc(transfers.date), desc(transfers.updatedAt), desc(transfers.id))
+export function getTransfersPaginated(input: GetTransfersPageInput) {
+  const { db, userId, limit, offset } = input;
+  return queryActiveTransfers(db, userId)
     .limit(limit + 1)
     .offset(offset)
     .all();

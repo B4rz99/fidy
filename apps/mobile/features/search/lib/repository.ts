@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray, like, lte, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, like, lte, type SQL, sql } from "drizzle-orm";
 import { getActiveTransactionConditions } from "@/features/transactions/lib/active-transaction-conditions";
 import type { AnyDb } from "@/shared/db/client";
 import { transactions } from "@/shared/db/schema";
@@ -6,36 +6,59 @@ import { requireCategoryId, requireCopAmount, requireIsoDate } from "@/shared/ty
 import type { UserId } from "@/shared/types/branded";
 import type { SearchFilters, SearchSummary } from "./types";
 
-function buildSearchConditions(userId: UserId, filters: SearchFilters) {
-  const trimmedQuery = filters.query.trim();
-  const categoryIds = filters.categoryIds
-    .filter((id) => id.trim().length > 0)
-    .map((id) => requireCategoryId(id));
-  return [
-    ...getActiveTransactionConditions(userId),
-    ...(trimmedQuery.length > 0 ? [like(transactions.description, `%${trimmedQuery}%`)] : []),
-    ...(categoryIds.length > 0 ? [inArray(transactions.categoryId, categoryIds)] : []),
-    ...(filters.dateFrom !== null
-      ? [gte(transactions.date, requireIsoDate(filters.dateFrom))]
-      : []),
-    ...(filters.dateTo !== null ? [lte(transactions.date, requireIsoDate(filters.dateTo))] : []),
-    ...(filters.amountMin !== null
-      ? [gte(transactions.amount, requireCopAmount(filters.amountMin))]
-      : []),
-    ...(filters.amountMax !== null
-      ? [lte(transactions.amount, requireCopAmount(filters.amountMax))]
-      : []),
-    ...(filters.type !== "all" ? [eq(transactions.type, filters.type)] : []),
-  ];
+type SearchCondition = SQL<unknown>;
+type SearchTransactionsPageInput = {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly filters: SearchFilters;
+  readonly limit: number;
+  readonly offset: number;
+};
+type SearchConditionBuilder = (filters: SearchFilters) => SearchCondition | null;
+
+function compactSearchConditions(
+  conditions: readonly (SearchCondition | null)[]
+): readonly SearchCondition[] {
+  return conditions.filter((condition): condition is SearchCondition => condition !== null);
 }
 
-export function searchTransactionsPaginated(
-  db: AnyDb,
-  userId: UserId,
-  filters: SearchFilters,
-  limit: number,
-  offset: number
-) {
+function toCategoryIds(categoryIds: SearchFilters["categoryIds"]) {
+  return categoryIds.filter((id) => id.trim().length > 0).map((id) => requireCategoryId(id));
+}
+
+const SEARCH_CONDITION_BUILDERS: readonly SearchConditionBuilder[] = [
+  (filters) => {
+    const trimmedQuery = filters.query.trim();
+    return trimmedQuery.length > 0 ? like(transactions.description, `%${trimmedQuery}%`) : null;
+  },
+  (filters) => {
+    const ids = toCategoryIds(filters.categoryIds);
+    return ids.length > 0 ? inArray(transactions.categoryId, ids) : null;
+  },
+  (filters) =>
+    filters.dateFrom !== null ? gte(transactions.date, requireIsoDate(filters.dateFrom)) : null,
+  (filters) =>
+    filters.dateTo !== null ? lte(transactions.date, requireIsoDate(filters.dateTo)) : null,
+  (filters) =>
+    filters.amountMin !== null
+      ? gte(transactions.amount, requireCopAmount(filters.amountMin))
+      : null,
+  (filters) =>
+    filters.amountMax !== null
+      ? lte(transactions.amount, requireCopAmount(filters.amountMax))
+      : null,
+  (filters) => (filters.type !== "all" ? eq(transactions.type, filters.type) : null),
+];
+
+function buildSearchConditions(userId: UserId, filters: SearchFilters) {
+  return compactSearchConditions([
+    ...getActiveTransactionConditions(userId),
+    ...SEARCH_CONDITION_BUILDERS.map((buildCondition) => buildCondition(filters)),
+  ]);
+}
+
+export function searchTransactionsPaginated(input: SearchTransactionsPageInput) {
+  const { db, userId, filters, limit, offset } = input;
   const conditions = buildSearchConditions(userId, filters);
   return db
     .select()

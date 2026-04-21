@@ -1,8 +1,8 @@
-import type { AccountCreationSuggestion } from "@/features/account-suggestions";
 import {
-  buildSuggestedFinancialAccountDraft,
+  type AccountCreationSuggestion,
   createAccountSuggestionFingerprint,
-} from "@/features/account-suggestions";
+} from "@/features/account-suggestions/lib/derive-account-suggestions";
+import { buildSuggestedFinancialAccountDraft } from "@/features/account-suggestions/lib/presentation";
 import { createAccountSuggestionService } from "@/features/account-suggestions/services/create-account-suggestion-service";
 import { getCaptureEvidenceRowsForTransaction } from "@/features/capture-evidence/lib/repository";
 import {
@@ -65,6 +65,37 @@ function normalizeSearchText(value: string) {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+function scoreCardHintKind(kind: FinancialAccountRow["kind"]) {
+  return kind === "credit_card" ? 5 : 0;
+}
+
+function scoreLast4Kind(kind: FinancialAccountRow["kind"]) {
+  if (kind === "credit_card") {
+    return 4;
+  }
+  return kind === "checking" ? 1 : 0;
+}
+
+function scoreAccountHintKind(kind: FinancialAccountRow["kind"]) {
+  if (kind === "wallet") {
+    return 4;
+  }
+  return kind === "checking" ? 2 : 0;
+}
+
+function getSuggestedKindScore(
+  account: FinancialAccountRow,
+  suggestion: AccountCreationSuggestion
+) {
+  if (suggestion.evidenceType === "card_hint") {
+    return scoreCardHintKind(account.kind);
+  }
+  if (suggestion.evidenceType === "last4") {
+    return scoreLast4Kind(account.kind);
+  }
+  return scoreAccountHintKind(account.kind);
+}
+
 function scoreSuggestedAccount(
   account: FinancialAccountRow,
   suggestion: AccountCreationSuggestion
@@ -72,27 +103,25 @@ function scoreSuggestedAccount(
   const normalizedName = normalizeSearchText(account.name);
   const normalizedSource = normalizeSearchText(suggestion.sourceFamily);
   const normalizedEvidence = normalizeSearchText(suggestion.value);
-  const kindScore =
-    suggestion.evidenceType === "card_hint"
-      ? account.kind === "credit_card"
-        ? 5
-        : 0
-      : suggestion.evidenceType === "last4"
-        ? account.kind === "credit_card"
-          ? 4
-          : account.kind === "checking"
-            ? 1
-            : 0
-        : account.kind === "wallet"
-          ? 4
-          : account.kind === "checking"
-            ? 2
-            : 0;
+  const kindScore = getSuggestedKindScore(account, suggestion);
   const sourceScore = normalizedName.includes(normalizedSource) ? 2 : 0;
   const evidenceScore = normalizedName.includes(normalizedEvidence) ? 1 : 0;
   const defaultPenalty = account.isDefault ? -1 : 0;
 
   return kindScore + sourceScore + evidenceScore + defaultPenalty;
+}
+
+type ScoredSuggestedAccount = {
+  readonly account: FinancialAccountRow;
+  readonly score: number;
+};
+
+function compareSuggestedAccounts(left: ScoredSuggestedAccount, right: ScoredSuggestedAccount) {
+  return (
+    right.score - left.score ||
+    Number(left.account.isDefault) - Number(right.account.isDefault) ||
+    left.account.name.localeCompare(right.account.name)
+  );
 }
 
 function getSuggestedAccount(
@@ -105,29 +134,26 @@ function getSuggestedAccount(
         account,
         score: scoreSuggestedAccount(account, suggestion),
       }))
-      .sort(
-        (left, right) =>
-          right.score - left.score ||
-          Number(left.account.isDefault) - Number(right.account.isDefault) ||
-          left.account.name.localeCompare(right.account.name)
-      )
+      .sort(compareSuggestedAccounts)
       .find((item) => item.score > 0)?.account ?? null
   );
 }
 
-function getBestMatchingSuggestion(
-  suggestions: readonly AccountCreationSuggestion[],
-  transactionId: TransactionId,
-  db: AnyDb,
-  userId: UserId
-) {
+function getBestMatchingSuggestion(input: {
+  readonly suggestions: readonly AccountCreationSuggestion[];
+  readonly transactionId: TransactionId;
+  readonly db: AnyDb;
+  readonly userId: UserId;
+}) {
   const evidenceFingerprints = new Set(
-    getCaptureEvidenceRowsForTransaction(db, userId, transactionId).map((row) =>
+    getCaptureEvidenceRowsForTransaction(input.db, input.userId, input.transactionId).map((row) =>
       createAccountSuggestionFingerprint(row.scope, row.value)
     )
   );
 
-  return suggestions.find((suggestion) => evidenceFingerprints.has(suggestion.fingerprint)) ?? null;
+  return (
+    input.suggestions.find((suggestion) => evidenceFingerprints.has(suggestion.fingerprint)) ?? null
+  );
 }
 
 function toReviewItem(
@@ -145,6 +171,50 @@ function toReviewItem(
     evidenceLabel: suggestion
       ? buildSuggestedFinancialAccountDraft(suggestion).evidenceLabel
       : null,
+  };
+}
+
+function confirmSuggestedOwnerInTransaction(input: {
+  readonly tx: AnyDb;
+  readonly transactionId: TransactionId;
+  readonly userId: UserId;
+  readonly suggestedAccount: FinancialAccountRow;
+  readonly suggestion: AccountCreationSuggestion;
+  readonly updatedAt: IsoDateTime;
+  readonly getTransactionById: typeof loadTransactionById;
+  readonly accountSuggestionService: ReturnType<typeof createAccountSuggestionService>;
+}): ConfirmSuggestedOwnerResult {
+  const currentTransaction = input.getTransactionById(input.tx, input.transactionId);
+  if (!currentTransaction) {
+    return { success: false, error: "reviewItemNotFound" };
+  }
+
+  input.accountSuggestionService.acceptSuggestion({
+    db: input.tx,
+    userId: input.userId,
+    accountId: input.suggestedAccount.id,
+    suggestion: input.suggestion,
+  });
+
+  upsertTransaction(input.tx, {
+    ...currentTransaction,
+    accountId: input.suggestedAccount.id,
+    accountAttributionState: "confirmed",
+    updatedAt: input.updatedAt,
+  });
+
+  enqueueSync(input.tx, {
+    id: generateSyncQueueId(),
+    tableName: "transactions",
+    rowId: input.transactionId,
+    operation: "update",
+    createdAt: input.updatedAt,
+  });
+
+  return {
+    success: true,
+    accountId: input.suggestedAccount.id,
+    suggestionFingerprint: input.suggestion.fingerprint,
   };
 }
 
@@ -167,7 +237,12 @@ export function createAttributionReviewService({
         toReviewItem(
           transaction,
           accounts,
-          getBestMatchingSuggestion(suggestions, transaction.id, db, userId)
+          getBestMatchingSuggestion({
+            suggestions,
+            transactionId: transaction.id,
+            db,
+            userId,
+          })
         )
       );
   };
@@ -179,64 +254,40 @@ export function createAttributionReviewService({
   }: ListQueueItemsInput & { transactionId: TransactionId }) =>
     listQueueItems({ db, userId }).find((item) => item.transaction.id === transactionId) ?? null;
 
+  function confirmSuggestedOwner(input: ConfirmSuggestedOwnerInput): ConfirmSuggestedOwnerResult {
+    const { db, userId, transactionId } = input;
+    const item = getReviewItem({ db, userId, transactionId });
+
+    if (!item) {
+      return { success: false, error: "reviewItemNotFound" };
+    }
+
+    if (!item.suggestion || !item.suggestedAccount) {
+      return { success: false, error: "suggestedOwnerUnavailable" };
+    }
+
+    const { suggestedAccount, suggestion } = item;
+    const updatedAt = now();
+
+    return db.transaction(
+      (tx): ConfirmSuggestedOwnerResult =>
+        confirmSuggestedOwnerInTransaction({
+          tx,
+          transactionId,
+          userId,
+          suggestion,
+          updatedAt,
+          suggestedAccount,
+          getTransactionById,
+          accountSuggestionService,
+        })
+    );
+  }
+
   return {
     listQueueItems,
 
     getReviewItem,
-
-    confirmSuggestedOwner({
-      db,
-      userId,
-      transactionId,
-    }: ConfirmSuggestedOwnerInput): ConfirmSuggestedOwnerResult {
-      const item = getReviewItem({ db, userId, transactionId });
-
-      if (!item) {
-        return { success: false, error: "reviewItemNotFound" };
-      }
-
-      if (!item.suggestion || !item.suggestedAccount) {
-        return { success: false, error: "suggestedOwnerUnavailable" };
-      }
-
-      const { suggestedAccount, suggestion } = item;
-      const updatedAt = now();
-
-      return db.transaction((tx): ConfirmSuggestedOwnerResult => {
-        const currentTransaction = getTransactionById(tx, transactionId);
-
-        if (!currentTransaction) {
-          return { success: false, error: "reviewItemNotFound" };
-        }
-
-        accountSuggestionService.acceptSuggestion({
-          db: tx,
-          userId,
-          accountId: suggestedAccount.id,
-          suggestion,
-        });
-
-        upsertTransaction(tx, {
-          ...currentTransaction,
-          accountId: suggestedAccount.id,
-          accountAttributionState: "confirmed",
-          updatedAt,
-        });
-
-        enqueueSync(tx, {
-          id: generateSyncQueueId(),
-          tableName: "transactions",
-          rowId: transactionId,
-          operation: "update",
-          createdAt: updatedAt,
-        });
-
-        return {
-          success: true,
-          accountId: suggestedAccount.id,
-          suggestionFingerprint: suggestion.fingerprint,
-        };
-      });
-    },
+    confirmSuggestedOwner,
   };
 }

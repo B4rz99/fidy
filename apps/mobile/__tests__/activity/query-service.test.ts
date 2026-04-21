@@ -215,7 +215,12 @@ describe("activity query service", () => {
       limit: 5,
       offset: 0,
     });
-    expect(getTransfersPaginated).toHaveBeenCalledWith(expect.anything(), USER_ID, 5, 0);
+    expect(getTransfersPaginated).toHaveBeenCalledWith({
+      db: expect.anything(),
+      userId: USER_ID,
+      limit: 5,
+      offset: 0,
+    });
   });
 
   it("orders same-day transaction activity with the transaction source sort key", () => {

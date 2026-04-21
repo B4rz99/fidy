@@ -23,12 +23,13 @@ export function toIsoDate(date: Date): IsoDate {
  * Parses an ISO date string (YYYY-MM-DD) into a local Date (midnight local time).
  * Avoids `new Date("YYYY-MM-DD")` which parses as UTC and shifts dates in negative UTC offsets.
  */
+function toDatePart(value: string | undefined, fallback: number): number {
+  return Number(value ?? String(fallback));
+}
+
 export function parseIsoDate(isoDate: IsoDate): Date {
-  const parts = isoDate.split("-").map(Number);
-  const year = parts[0] ?? 0;
-  const month = parts[1] ?? 1;
-  const day = parts[2] ?? 1;
-  return new Date(year, month - 1, day);
+  const [year, month, day] = isoDate.split("-");
+  return new Date(toDatePart(year, 0), toDatePart(month, 1) - 1, toDatePart(day, 1));
 }
 
 export function parseOptionalIsoDate(value: string | null | undefined): Date | null {

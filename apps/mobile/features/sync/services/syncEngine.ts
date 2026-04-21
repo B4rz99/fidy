@@ -1210,11 +1210,9 @@ function toComparableTransactionRow(row: ComparableTransactionRow) {
 function toComparableLocalTransactionRow(row: LocalTransactionRow) {
   return {
     ...row,
-    accountId: row.accountId ?? buildDefaultFinancialAccountId(row.userId),
-    accountAttributionState: row.accountAttributionState ?? "confirmed",
-    supersededAt: row.supersededAt ?? null,
-    description: row.description ?? null,
-    deletedAt: row.deletedAt ?? null,
+    ...toSupabaseTransactionAccountDefaults(row),
+    ...toSupabaseTransactionDeleteFields(row),
+    description: toSupabaseTransactionDescription(row),
   };
 }
 function hasTransactionPullConflict(
