@@ -99,7 +99,11 @@ export const NotificationSetupCard = () => {
                 value={isEnabled}
                 onValueChange={(value) => {
                   if (!userId) return;
-                  void toggleCaptureSourcePackage(getDb(userId), userId, pkg.packageName, value);
+                  void toggleCaptureSourcePackage(getDb(userId), {
+                    userId,
+                    packageName: pkg.packageName,
+                    enabled: value,
+                  });
                 }}
                 trackColor={{ false: secondaryColor, true: iconColor }}
               />

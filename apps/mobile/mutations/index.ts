@@ -312,7 +312,11 @@ const applyCalendarBillUpdate = (
   db: MutationDb,
   command: CalendarBillUpdateCommand
 ): CommandEffectResult => {
-  updateBill(db, command.billId, command.fields, command.now);
+  updateBill(db, {
+    id: command.billId,
+    fields: command.fields,
+    now: command.now,
+  });
   return completeCommand(command.afterCommit);
 };
 

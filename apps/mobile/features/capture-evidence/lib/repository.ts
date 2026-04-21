@@ -25,6 +25,24 @@ type RepeatedCaptureEvidenceRow = {
   readonly occurrences: number;
 };
 
+type LinkCaptureEvidenceToTransactionInput = {
+  readonly processedEmailId: NonNullable<CaptureEvidenceRow["processedEmailId"]>;
+  readonly transactionId: NonNullable<CaptureEvidenceRow["transactionId"]>;
+  readonly updatedAt: CaptureEvidenceRow["updatedAt"];
+};
+
+type RelinkCaptureEvidenceToTransferInput = {
+  readonly transactionId: NonNullable<CaptureEvidenceRow["transactionId"]>;
+  readonly transferId: NonNullable<CaptureEvidenceRow["transferId"]>;
+  readonly updatedAt: CaptureEvidenceRow["updatedAt"];
+};
+
+type CaptureEvidenceScopeValueInput = {
+  readonly userId: CaptureEvidenceRow["userId"];
+  readonly scope: CaptureEvidenceRow["scope"];
+  readonly value: CaptureEvidenceRow["value"];
+};
+
 function saveCaptureEvidenceInTransaction(db: AnyDb, row: CaptureEvidenceRow) {
   const existing = getCaptureEvidenceById(db, row.id);
 
@@ -115,15 +133,16 @@ export function materializeCaptureEvidenceRows(
 
 export function linkCaptureEvidenceToTransaction(
   db: AnyDb,
-  processedEmailId: NonNullable<CaptureEvidenceRow["processedEmailId"]>,
-  transactionId: NonNullable<CaptureEvidenceRow["transactionId"]>,
-  updatedAt: CaptureEvidenceRow["updatedAt"]
+  input: LinkCaptureEvidenceToTransactionInput
 ) {
   const rows = db
     .select()
     .from(captureEvidence)
     .where(
-      and(eq(captureEvidence.processedEmailId, processedEmailId), isNull(captureEvidence.deletedAt))
+      and(
+        eq(captureEvidence.processedEmailId, input.processedEmailId),
+        isNull(captureEvidence.deletedAt)
+      )
     )
     .all();
 
@@ -133,15 +152,15 @@ export function linkCaptureEvidenceToTransaction(
 
   db.transaction((tx) => {
     rows.forEach((row) => {
-      if (row.transactionId === transactionId && row.updatedAt >= updatedAt) {
+      if (row.transactionId === input.transactionId && row.updatedAt >= input.updatedAt) {
         return;
       }
 
       saveCaptureEvidenceInTransaction(tx, {
         ...row,
-        transactionId,
+        transactionId: input.transactionId,
         transferId: null,
-        updatedAt,
+        updatedAt: input.updatedAt,
       });
     });
   });
@@ -149,14 +168,14 @@ export function linkCaptureEvidenceToTransaction(
 
 export function relinkCaptureEvidenceToTransfer(
   db: AnyDb,
-  transactionId: NonNullable<CaptureEvidenceRow["transactionId"]>,
-  transferId: NonNullable<CaptureEvidenceRow["transferId"]>,
-  updatedAt: CaptureEvidenceRow["updatedAt"]
+  input: RelinkCaptureEvidenceToTransferInput
 ) {
   const rows = db
     .select()
     .from(captureEvidence)
-    .where(and(eq(captureEvidence.transactionId, transactionId), isNull(captureEvidence.deletedAt)))
+    .where(
+      and(eq(captureEvidence.transactionId, input.transactionId), isNull(captureEvidence.deletedAt))
+    )
     .all();
 
   if (rows.length === 0) {
@@ -165,15 +184,15 @@ export function relinkCaptureEvidenceToTransfer(
 
   db.transaction((tx) => {
     rows.forEach((row) => {
-      if (row.updatedAt >= updatedAt) {
+      if (row.updatedAt >= input.updatedAt) {
         return;
       }
 
       saveCaptureEvidenceInTransaction(tx, {
         ...row,
         transactionId: null,
-        transferId,
-        updatedAt,
+        transferId: input.transferId,
+        updatedAt: input.updatedAt,
       });
     });
   });
@@ -203,18 +222,16 @@ export function countCaptureEvidenceOccurrences(
 
 export function getCaptureEvidenceRowsForScopeValue(
   db: AnyDb,
-  userId: CaptureEvidenceRow["userId"],
-  scope: CaptureEvidenceRow["scope"],
-  value: CaptureEvidenceRow["value"]
+  input: CaptureEvidenceScopeValueInput
 ) {
   return db
     .select()
     .from(captureEvidence)
     .where(
       and(
-        eq(captureEvidence.userId, userId),
-        eq(captureEvidence.scope, scope),
-        eq(captureEvidence.value, value),
+        eq(captureEvidence.userId, input.userId),
+        eq(captureEvidence.scope, input.scope),
+        eq(captureEvidence.value, input.value),
         isNull(captureEvidence.deletedAt)
       )
     )

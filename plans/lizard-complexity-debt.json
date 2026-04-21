@@ -150,14 +150,6 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@88-171@apps/mobile/__tests__/calendar/repository.test.ts",
-      "file": "apps/mobile/__tests__/calendar/repository.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 76,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@97-204@apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts",
       "file": "apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts",
       "function": "(anonymous)",
@@ -172,14 +164,6 @@
       "cyclomaticComplexity": 1,
       "nloc": 238,
       "parameterCount": 1
-    },
-    {
-      "key": "buildMutationTransaction@67-80@apps/mobile/features/transactions/lib/mutation-service.ts",
-      "file": "apps/mobile/features/transactions/lib/mutation-service.ts",
-      "function": "buildMutationTransaction",
-      "cyclomaticComplexity": 3,
-      "nloc": 13,
-      "parameterCount": 5
     },
     {
       "key": "conflictRow@59-94@apps/mobile/__tests__/sync/sync-conflict-resolution.test.ts",
@@ -230,22 +214,6 @@
       "parameterCount": 4
     },
     {
-      "key": "getCaptureEvidenceRowsForScopeValue@204-223@apps/mobile/features/capture-evidence/lib/repository.ts",
-      "file": "apps/mobile/features/capture-evidence/lib/repository.ts",
-      "function": "getCaptureEvidenceRowsForScopeValue",
-      "cyclomaticComplexity": 1,
-      "nloc": 20,
-      "parameterCount": 4
-    },
-    {
-      "key": "getDateLabel@9-17@apps/mobile/features/transactions/lib/format-date.ts",
-      "file": "apps/mobile/features/transactions/lib/format-date.ts",
-      "function": "getDateLabel",
-      "cyclomaticComplexity": 3,
-      "nloc": 9,
-      "parameterCount": 4
-    },
-    {
       "key": "getNow@27-73@apps/mobile/__tests__/analytics/service.test.ts",
       "file": "apps/mobile/__tests__/analytics/service.test.ts",
       "function": "getNow",
@@ -259,22 +227,6 @@
       "function": "getSupabase",
       "cyclomaticComplexity": 1,
       "nloc": 9,
-      "parameterCount": 4
-    },
-    {
-      "key": "hasInvalidBillingDayInput@11-32@apps/mobile/features/financial-accounts/lib/form-screen.ts",
-      "file": "apps/mobile/features/financial-accounts/lib/form-screen.ts",
-      "function": "hasInvalidBillingDayInput",
-      "cyclomaticComplexity": 5,
-      "nloc": 20,
-      "parameterCount": 4
-    },
-    {
-      "key": "linkCaptureEvidenceToTransaction@116-148@apps/mobile/features/capture-evidence/lib/repository.ts",
-      "file": "apps/mobile/features/capture-evidence/lib/repository.ts",
-      "function": "linkCaptureEvidenceToTransaction",
-      "cyclomaticComplexity": 2,
-      "nloc": 18,
       "parameterCount": 4
     },
     {
@@ -300,14 +252,6 @@
       "cyclomaticComplexity": 6,
       "nloc": 16,
       "parameterCount": 1
-    },
-    {
-      "key": "relinkCaptureEvidenceToTransfer@150-180@apps/mobile/features/capture-evidence/lib/repository.ts",
-      "file": "apps/mobile/features/capture-evidence/lib/repository.ts",
-      "function": "relinkCaptureEvidenceToTransfer",
-      "cyclomaticComplexity": 2,
-      "nloc": 16,
-      "parameterCount": 4
     },
     {
       "key": "resolveConflict@21-28@apps/mobile/features/sync/lib/conflict-repository.ts",
@@ -350,28 +294,12 @@
       "parameterCount": 0
     },
     {
-      "key": "toggleCaptureSourcePackage@88-112@apps/mobile/features/capture-sources/store.ts",
-      "file": "apps/mobile/features/capture-sources/store.ts",
-      "function": "toggleCaptureSourcePackage",
-      "cyclomaticComplexity": 3,
-      "nloc": 23,
-      "parameterCount": 4
-    },
-    {
       "key": "unresolvedConflictCountEffect@106-132@apps/mobile/features/sync/services/create-sync-service.ts",
       "file": "apps/mobile/features/sync/services/create-sync-service.ts",
       "function": "unresolvedConflictCountEffect",
       "cyclomaticComplexity": 9,
       "nloc": 21,
       "parameterCount": 1
-    },
-    {
-      "key": "updateBill@33-43@apps/mobile/features/calendar/lib/repository.ts",
-      "file": "apps/mobile/features/calendar/lib/repository.ts",
-      "function": "updateBill",
-      "cyclomaticComplexity": 3,
-      "nloc": 11,
-      "parameterCount": 4
     },
     {
       "key": "updateBudgetAmount@37-39@apps/mobile/features/budget/lib/repository.ts",

@@ -112,9 +112,11 @@ type CreateEmailPipelineServiceDeps = {
   ) => void | Promise<void>;
   readonly linkCaptureEvidenceToTransaction: (
     db: AnyDb,
-    processedEmailId: ProcessedEmailId,
-    transactionId: TransactionId,
-    updatedAt: IsoDateTime
+    input: {
+      readonly processedEmailId: ProcessedEmailId;
+      readonly transactionId: TransactionId;
+      readonly updatedAt: IsoDateTime;
+    }
   ) => void | Promise<void>;
   readonly ensureDefaultFinancialAccount: (
     db: AnyDb,
@@ -460,12 +462,11 @@ function saveEmailCaptureEvidenceEffect(input: CaptureEvidenceSaveInput) {
 function linkCaptureEvidenceToTransactionEffect(input: LinkCaptureEvidenceInput) {
   return Effect.flatMap(EmailPipelineDeps.tag, ({ linkCaptureEvidenceToTransaction }) =>
     fromThunk(() =>
-      linkCaptureEvidenceToTransaction(
-        input.db,
-        input.processedEmailId,
-        input.transactionId,
-        input.updatedAt
-      )
+      linkCaptureEvidenceToTransaction(input.db, {
+        processedEmailId: input.processedEmailId,
+        transactionId: input.transactionId,
+        updatedAt: input.updatedAt,
+      })
     )
   );
 }

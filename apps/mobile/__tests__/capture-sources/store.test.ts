@@ -64,7 +64,11 @@ describe("useCaptureSourcesStore", () => {
   });
 
   it("toggles a package through the explicit boundary and updates store state", async () => {
-    await toggleCaptureSourcePackage(mockDb, USER_ID, "com.nequi.MobileApp", true);
+    await toggleCaptureSourcePackage(mockDb, {
+      userId: USER_ID,
+      packageName: "com.nequi.MobileApp",
+      enabled: true,
+    });
 
     expect(mockUpsertNotificationSource).toHaveBeenCalledWith(
       mockDb,

@@ -29,6 +29,14 @@ type CreateTransactionMutationServiceDeps = {
   createId?: () => TransactionId;
 };
 
+type BuildMutationTransactionInput = {
+  readonly form: TransactionFormInput;
+  readonly userId: UserId | null;
+  readonly transactionId: TransactionId;
+  readonly now: Date;
+  readonly existing: StoredTransaction | null;
+};
+
 export type TransactionMutationService = {
   save: (input: TransactionFormInput) => Promise<TransactionMutationResult>;
   update: (id: TransactionId, input: TransactionFormInput) => Promise<TransactionMutationResult>;
@@ -64,18 +72,18 @@ async function commitTransaction(
   }
 }
 
-function buildMutationTransaction(
-  input: TransactionFormInput,
-  userId: UserId | null,
-  id: TransactionId,
-  now: Date,
-  existing: StoredTransaction | null
-) {
-  if (!userId) {
+function buildMutationTransaction(input: BuildMutationTransactionInput) {
+  if (!input.userId) {
     return fail("Store not initialized");
   }
 
-  const result = buildTransaction({ input, userId, id, now, existing });
+  const result = buildTransaction({
+    input: input.form,
+    userId: input.userId,
+    id: input.transactionId,
+    now: input.now,
+    existing: input.existing,
+  });
   return result.success ? result : fail(result.error);
 }
 
@@ -87,7 +95,13 @@ export function createTransactionMutationService(
 
   return {
     save: async (input) => {
-      const built = buildMutationTransaction(input, deps.getUserId(), createId(), now(), null);
+      const built = buildMutationTransaction({
+        form: input,
+        userId: deps.getUserId(),
+        transactionId: createId(),
+        now: now(),
+        existing: null,
+      });
       if (!built.success) {
         return built;
       }
@@ -107,13 +121,13 @@ export function createTransactionMutationService(
     },
 
     update: async (id, input) => {
-      const built = buildMutationTransaction(
-        input,
-        deps.getUserId(),
-        id,
-        now(),
-        deps.getTransactionById(id)
-      );
+      const built = buildMutationTransaction({
+        form: input,
+        userId: deps.getUserId(),
+        transactionId: id,
+        now: now(),
+        existing: deps.getTransactionById(id),
+      });
       if (!built.success) {
         return built;
       }
@@ -135,13 +149,13 @@ export function createTransactionMutationService(
     },
 
     updateDirect: async (id, input) => {
-      const built = buildMutationTransaction(
-        input,
-        deps.getUserId(),
-        id,
-        now(),
-        deps.getTransactionById(id)
-      );
+      const built = buildMutationTransaction({
+        form: input,
+        userId: deps.getUserId(),
+        transactionId: id,
+        now: now(),
+        existing: deps.getTransactionById(id),
+      });
       if (!built.success) {
         return built;
       }

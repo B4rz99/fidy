@@ -51,7 +51,12 @@ export const TransactionDetails = () => {
 
   const amountColor = type === "expense" ? accentRed : accentGreen;
   const displayAmount = formatInputDisplay(digits);
-  const dateLabel = getDateLabel(date, new Date(), t("dates.today"), getDateFnsLocale(locale));
+  const dateLabel = getDateLabel({
+    date,
+    now: new Date(),
+    todayLabel: t("dates.today"),
+    dateFnsLocale: getDateFnsLocale(locale),
+  });
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 

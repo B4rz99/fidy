@@ -25,6 +25,12 @@ type CaptureSourcesActions = {
   setDetectedSmsCount: (detectedSmsCount: number) => void;
 };
 
+type ToggleCaptureSourcePackageInput = {
+  readonly userId: UserId;
+  readonly packageName: string;
+  readonly enabled: boolean;
+};
+
 export const useCaptureSourcesStore = create<CaptureSourcesState & CaptureSourcesActions>(
   (set) => ({
     enabledPackages: [],
@@ -58,7 +64,7 @@ async function checkCaptureSourcePermissions(): Promise<void> {
     const granted = await mod.isPermissionGranted();
     useCaptureSourcesStore.getState().setNotificationPermissionGranted(granted);
   } catch {
-    // Module not available — leave as false
+    // Module not available -- leave as false
   }
 }
 
@@ -87,26 +93,24 @@ export async function hydrateCaptureSources(db: AnyDb, userId: UserId): Promise<
 
 export async function toggleCaptureSourcePackage(
   db: AnyDb,
-  userId: UserId,
-  packageName: string,
-  enabled: boolean
+  input: ToggleCaptureSourcePackageInput
 ): Promise<void> {
-  const knownPkg = KNOWN_BANK_PACKAGES.find((pkg) => pkg.packageName === packageName);
-  const label = knownPkg?.label ?? packageName;
+  const knownPkg = KNOWN_BANK_PACKAGES.find((pkg) => pkg.packageName === input.packageName);
+  const label = knownPkg?.label ?? input.packageName;
 
   await upsertNotificationSource(
     db,
-    userId,
-    packageName,
+    input.userId,
+    input.packageName,
     label,
-    enabled,
+    input.enabled,
     toIsoDateTime(new Date())
   );
 
   const updated = getUpdatedEnabledPackages(
     useCaptureSourcesStore.getState().enabledPackages,
-    packageName,
-    enabled
+    input.packageName,
+    input.enabled
   );
   useCaptureSourcesStore.getState().setEnabledPackages(updated);
 }

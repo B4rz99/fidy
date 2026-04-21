@@ -130,12 +130,11 @@ describe("capture evidence repository", () => {
       processedCaptureId: "pc-stale" as ProcessedCaptureId,
     });
 
-    relinkCaptureEvidenceToTransfer(
-      db as any,
-      "tx-1" as TransactionId,
-      "tr-1" as TransferId,
-      "2026-04-19T09:00:00.000Z" as IsoDateTime
-    );
+    relinkCaptureEvidenceToTransfer(db as any, {
+      transactionId: "tx-1" as TransactionId,
+      transferId: "tr-1" as TransferId,
+      updatedAt: "2026-04-19T09:00:00.000Z" as IsoDateTime,
+    });
 
     expect(getCaptureEvidenceById(db as any, "ce-stale" as CaptureEvidenceId)).toEqual(
       expect.objectContaining({
