@@ -58,7 +58,7 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
   const persistActionStatus = useCallback(
     (messageId: ChatMessageId, status: ActionStatus) => {
       if (!db || !userId) return;
-      void updateChatActionStatus(db, userId, messageId, status).catch(captureError);
+      void updateChatActionStatus({ db, userId, messageId, status }).catch(captureError);
     },
     [db, userId]
   );

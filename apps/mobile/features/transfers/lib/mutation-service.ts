@@ -2,6 +2,7 @@ import type { AnyDb } from "@/shared/db";
 import { generateTransferId } from "@/shared/lib/generate-id";
 import type { TransferId, UserId } from "@/shared/types/branded";
 import {
+  type BuildTransferInput,
   buildTransfer,
   type StoredTransfer,
   type TransferBuildError,
@@ -10,11 +11,11 @@ import {
 import type { TransferRow } from "./repository";
 
 export type TransferFormInput = {
-  readonly digits: string;
-  readonly fromSide: Parameters<typeof buildTransfer>[0]["fromSide"];
-  readonly toSide: Parameters<typeof buildTransfer>[0]["toSide"];
-  readonly description: string;
-  readonly date: Date;
+  readonly digits: BuildTransferInput["digits"];
+  readonly fromSide: BuildTransferInput["fromSide"];
+  readonly toSide: BuildTransferInput["toSide"];
+  readonly description: BuildTransferInput["description"];
+  readonly date: BuildTransferInput["date"];
 };
 
 export type TransferMutationError = TransferBuildError | "storeNotInitialized" | "saveFailed";
@@ -49,7 +50,12 @@ export function createTransferMutationService({
         return { success: false, error: "storeNotInitialized" };
       }
 
-      const built = buildTransfer(input, userId, createId(), now());
+      const built = buildTransfer({
+        input,
+        userId,
+        id: createId(),
+        now: now(),
+      });
       if (!built.success) {
         return built;
       }

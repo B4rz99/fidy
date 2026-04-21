@@ -84,7 +84,13 @@ export function executeSearch(db: AnyDb, userId: UserId): void {
   setIsSearching(true);
 
   try {
-    const rows = searchTransactionsPaginated(db, userId, filters, PAGE_SIZE, 0);
+    const rows = searchTransactionsPaginated({
+      db,
+      userId,
+      filters,
+      limit: PAGE_SIZE,
+      offset: 0,
+    });
     const hasMore = rows.length > PAGE_SIZE;
     const pageData = (hasMore ? rows.slice(0, PAGE_SIZE) : rows).map(toStoredTransaction);
     const summary = searchTransactionsAggregate(db, userId, filters);
@@ -99,7 +105,13 @@ export function loadNextSearchPage(db: AnyDb, userId: UserId): void {
   if (!hasMore) return;
 
   try {
-    const rows = searchTransactionsPaginated(db, userId, filters, PAGE_SIZE, offset);
+    const rows = searchTransactionsPaginated({
+      db,
+      userId,
+      filters,
+      limit: PAGE_SIZE,
+      offset,
+    });
     const hasMoreResults = rows.length > PAGE_SIZE;
     const pageData = (hasMoreResults ? rows.slice(0, PAGE_SIZE) : rows).map(toStoredTransaction);
     appendSearchResults(pageData, hasMoreResults);

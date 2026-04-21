@@ -1,9 +1,9 @@
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
-import { create } from "zustand";
+import { create, type StateCreator } from "zustand";
 import { type AnyDb, chatMessages, chatSessions } from "@/shared/db";
 import { generateChatMessageId, generateChatSessionId, toIsoDateTime } from "@/shared/lib";
-import { requireIsoDateTime } from "@/shared/types/assertions";
 import type { ChatMessageId, ChatSessionId, UserId } from "@/shared/types/branded";
+import { mapChatMessageRow, mapChatSessionRow } from "./lib/chat-row-mappers";
 import { deriveConversationTitle, findExpiredSessions } from "./lib/sessions";
 import type { ActionStatus, ChatAction, ChatMessage, ChatSession } from "./schema";
 
@@ -39,136 +39,94 @@ type ChatActions = {
   dismissExpiredBanner: () => void;
 };
 
-export const useChatStore = create<ChatState & ChatActions>((set) => ({
-  activeUserId: null,
-  sessions: [],
-  currentSessionId: null,
-  messages: [],
-  isStreaming: false,
-  streamingContent: "",
-  expiredSessionCount: 0,
+type ChatStore = ChatState & ChatActions;
+type ChatSetState = Parameters<StateCreator<ChatStore>>[0];
+type UpdateChatActionStatusInput = {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly messageId: ChatMessageId;
+  readonly status: ActionStatus;
+};
 
-  beginSession: (userId) =>
-    set({
-      activeUserId: userId,
-      sessions: [],
-      currentSessionId: null,
-      messages: [],
-      isStreaming: false,
-      streamingContent: "",
-      expiredSessionCount: 0,
-    }),
+function createChatState(activeUserId: UserId | null): ChatState {
+  return {
+    activeUserId,
+    sessions: [],
+    currentSessionId: null,
+    messages: [],
+    isStreaming: false,
+    streamingContent: "",
+    expiredSessionCount: 0,
+  };
+}
 
-  setSessions: (sessions) => set({ sessions: [...sessions] }),
+function beginChatSession(set: ChatSetState): ChatActions["beginSession"] {
+  return (userId) => set(createChatState(userId));
+}
 
-  prependSession: (session) =>
+function prependChatSession(set: ChatSetState): ChatActions["prependSession"] {
+  return (session) =>
     set((state) => ({
       sessions: [session, ...state.sessions],
       currentSessionId: session.id,
       messages: [],
-    })),
+    }));
+}
 
-  removeSession: (sessionId) =>
+function removeChatSession(set: ChatSetState): ChatActions["removeSession"] {
+  return (sessionId) =>
     set((state) => ({
       sessions: state.sessions.filter((session) => session.id !== sessionId),
       currentSessionId: state.currentSessionId === sessionId ? null : state.currentSessionId,
       messages: state.currentSessionId === sessionId ? [] : state.messages,
-    })),
+    }));
+}
 
-  setCurrentSessionId: (currentSessionId) => set({ currentSessionId, messages: [] }),
-
-  setMessages: (messages) => set({ messages: [...messages] }),
-
-  appendMessage: (message) =>
-    set((state) => ({
-      messages: [...state.messages, message],
-    })),
-
-  setMessageActionStatus: (messageId, status) =>
+function setChatMessageActionStatus(set: ChatSetState): ChatActions["setMessageActionStatus"] {
+  return (messageId, status) =>
     set((state) => ({
       messages: state.messages.map((message) =>
         message.id === messageId ? { ...message, actionStatus: status } : message
       ),
-    })),
+    }));
+}
 
-  setStreaming: (isStreaming) => set({ isStreaming }),
+function createChatActions(set: ChatSetState): ChatActions {
+  return {
+    beginSession: beginChatSession(set),
+    setSessions: (sessions) => set({ sessions: [...sessions] }),
+    prependSession: prependChatSession(set),
+    removeSession: removeChatSession(set),
+    setCurrentSessionId: (currentSessionId) => set({ currentSessionId, messages: [] }),
+    setMessages: (messages) => set({ messages: [...messages] }),
+    appendMessage: (message) =>
+      set((state) => ({
+        messages: [...state.messages, message],
+      })),
+    setMessageActionStatus: setChatMessageActionStatus(set),
+    setStreaming: (isStreaming) => set({ isStreaming }),
+    setStreamingContent: (streamingContent) => set({ streamingContent }),
+    setExpiredSessionCount: (expiredSessionCount) => set({ expiredSessionCount }),
+    clearCurrentConversation: () =>
+      set({
+        currentSessionId: null,
+        messages: [],
+        isStreaming: false,
+        streamingContent: "",
+      }),
+    dismissExpiredBanner: () => set({ expiredSessionCount: 0 }),
+  };
+}
 
-  setStreamingContent: (streamingContent) => set({ streamingContent }),
+const createChatStoreState: StateCreator<ChatStore> = (set) => ({
+  ...createChatState(null),
+  ...createChatActions(set),
+});
 
-  setExpiredSessionCount: (expiredSessionCount) => set({ expiredSessionCount }),
-
-  clearCurrentConversation: () =>
-    set({
-      currentSessionId: null,
-      messages: [],
-      isStreaming: false,
-      streamingContent: "",
-    }),
-
-  dismissExpiredBanner: () => set({ expiredSessionCount: 0 }),
-}));
+export const useChatStore = create<ChatStore>(createChatStoreState);
 
 function isActiveChatSession(userId: UserId, sessionId: number): boolean {
   return chatStoreSessionId === sessionId && useChatStore.getState().activeUserId === userId;
-}
-
-function isCurrentLoadSessionsRequest(
-  requestId: number,
-  userId: UserId,
-  sessionId: number
-): boolean {
-  return loadChatSessionsRequestId === requestId && isActiveChatSession(userId, sessionId);
-}
-
-function isCurrentSelectSessionRequest(
-  requestId: number,
-  userId: UserId,
-  sessionId: number,
-  chatSessionId: ChatSessionId
-): boolean {
-  return (
-    selectChatSessionRequestId === requestId &&
-    isActiveChatSession(userId, sessionId) &&
-    useChatStore.getState().currentSessionId === chatSessionId
-  );
-}
-
-function mapChatSessionRow(row: {
-  id: ChatSessionId;
-  userId: UserId;
-  title: string;
-  createdAt: string;
-  expiresAt: string;
-  deletedAt: string | null;
-}): ChatSession {
-  return {
-    id: row.id,
-    userId: row.userId,
-    title: row.title,
-    createdAt: requireIsoDateTime(row.createdAt),
-    expiresAt: requireIsoDateTime(row.expiresAt),
-    deletedAt: row.deletedAt ? requireIsoDateTime(row.deletedAt) : null,
-  };
-}
-
-function mapChatMessageRow(row: {
-  id: ChatMessageId;
-  sessionId: ChatSessionId;
-  role: string;
-  content: string;
-  action: string | null;
-  actionStatus: string | null;
-  createdAt: string;
-}): ChatMessage {
-  return {
-    id: row.id,
-    sessionId: row.sessionId,
-    role: row.role as "user" | "assistant",
-    content: row.content,
-    action: row.action ? (JSON.parse(row.action) as ChatAction) : null,
-    actionStatus: row.actionStatus as ActionStatus | null,
-    createdAt: requireIsoDateTime(row.createdAt),
-  };
 }
 
 export function initializeChatSession(userId: UserId): void {
@@ -185,13 +143,15 @@ export function startNewChat(): void {
 export async function loadChatSessions(db: AnyDb, userId: UserId): Promise<void> {
   const requestId = ++loadChatSessionsRequestId;
   const sessionId = chatStoreSessionId;
+  const isCurrentRequest = () =>
+    loadChatSessionsRequestId === requestId && isActiveChatSession(userId, sessionId);
   const rows = await db
     .select()
     .from(chatSessions)
     .where(and(eq(chatSessions.userId, userId), isNull(chatSessions.deletedAt)))
     .orderBy(desc(chatSessions.createdAt));
 
-  if (!isCurrentLoadSessionsRequest(requestId, userId, sessionId)) return;
+  if (!isCurrentRequest()) return;
   useChatStore.getState().setSessions(rows.map(mapChatSessionRow));
 }
 
@@ -257,6 +217,10 @@ export async function selectChatSession(
 ): Promise<void> {
   const requestId = ++selectChatSessionRequestId;
   const sessionId = chatStoreSessionId;
+  const isCurrentRequest = () =>
+    selectChatSessionRequestId === requestId &&
+    isActiveChatSession(userId, sessionId) &&
+    useChatStore.getState().currentSessionId === id;
   useChatStore.getState().setCurrentSessionId(id);
 
   const rows = await db
@@ -265,7 +229,7 @@ export async function selectChatSession(
     .where(eq(chatMessages.sessionId, id))
     .orderBy(asc(chatMessages.createdAt));
 
-  if (!isCurrentSelectSessionRequest(requestId, userId, sessionId, id)) return;
+  if (!isCurrentRequest()) return;
   useChatStore.getState().setMessages(rows.map(mapChatMessageRow));
 }
 
@@ -358,12 +322,8 @@ export async function addAssistantChatMessage(
   return message;
 }
 
-export async function updateChatActionStatus(
-  db: AnyDb,
-  userId: UserId,
-  messageId: ChatMessageId,
-  status: ActionStatus
-): Promise<void> {
+export async function updateChatActionStatus(input: UpdateChatActionStatusInput): Promise<void> {
+  const { db, userId, messageId, status } = input;
   const sessionId = chatStoreSessionId;
   if (!isActiveChatSession(userId, sessionId)) return;
 

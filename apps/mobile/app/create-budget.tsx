@@ -219,7 +219,7 @@ export default function CreateBudgetScreen() {
       }}
       onUpdateBudget={(id, amount) => {
         if (!userId || !db) return Promise.resolve(false);
-        return updateBudget(db, userId, id, amount);
+        return updateBudget({ db, userId, id, amount });
       }}
       onDeleteBudget={(id) => {
         if (!userId || !db) return Promise.resolve(false);

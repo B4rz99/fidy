@@ -26,7 +26,12 @@ const validInput = {
 
 describe("buildTransfer", () => {
   test("builds a tracked-account transfer with one amount and two explicit sides", () => {
-    const result = buildTransfer(validInput, "user-1" as UserId, "tr-1" as TransferId, NOW);
+    const result = buildTransfer({
+      input: validInput,
+      userId: "user-1" as UserId,
+      id: "tr-1" as TransferId,
+      now: NOW,
+    });
 
     expect(result).toMatchObject({
       success: true,
@@ -42,43 +47,43 @@ describe("buildTransfer", () => {
   });
 
   test("rejects transfers that do not have two explicit sides", () => {
-    const missingFrom = buildTransfer(
-      { ...validInput, fromSide: null },
-      "user-1" as UserId,
-      "tr-2" as TransferId,
-      NOW
-    );
-    const missingTo = buildTransfer(
-      { ...validInput, toSide: null },
-      "user-1" as UserId,
-      "tr-3" as TransferId,
-      NOW
-    );
+    const missingFrom = buildTransfer({
+      input: { ...validInput, fromSide: null },
+      userId: "user-1" as UserId,
+      id: "tr-2" as TransferId,
+      now: NOW,
+    });
+    const missingTo = buildTransfer({
+      input: { ...validInput, toSide: null },
+      userId: "user-1" as UserId,
+      id: "tr-3" as TransferId,
+      now: NOW,
+    });
 
     expect(missingFrom).toEqual({ success: false, error: "fromSideRequired" });
     expect(missingTo).toEqual({ success: false, error: "toSideRequired" });
   });
 
   test("allows the generic outside side only when the other side is a tracked account", () => {
-    const trackedToOutside = buildTransfer(
-      {
+    const trackedToOutside = buildTransfer({
+      input: {
         ...validInput,
         toSide: { kind: "external" as const, label: OUTSIDE_FIDY_LABEL },
       },
-      "user-1" as UserId,
-      "tr-4" as TransferId,
-      NOW
-    );
-    const outsideToOutside = buildTransfer(
-      {
+      userId: "user-1" as UserId,
+      id: "tr-4" as TransferId,
+      now: NOW,
+    });
+    const outsideToOutside = buildTransfer({
+      input: {
         ...validInput,
         fromSide: { kind: "external" as const, label: OUTSIDE_FIDY_LABEL },
         toSide: { kind: "external" as const, label: OUTSIDE_FIDY_LABEL },
       },
-      "user-1" as UserId,
-      "tr-5" as TransferId,
-      NOW
-    );
+      userId: "user-1" as UserId,
+      id: "tr-5" as TransferId,
+      now: NOW,
+    });
 
     expect(trackedToOutside).toMatchObject({
       success: true,
@@ -90,15 +95,15 @@ describe("buildTransfer", () => {
   });
 
   test("rejects transfers where both tracked sides point to the same account", () => {
-    const result = buildTransfer(
-      {
+    const result = buildTransfer({
+      input: {
         ...validInput,
         toSide: { kind: "account" as const, accountId: "fa-checking" as FinancialAccountId },
       },
-      "user-1" as UserId,
-      "tr-6" as TransferId,
-      NOW
-    );
+      userId: "user-1" as UserId,
+      id: "tr-6" as TransferId,
+      now: NOW,
+    });
 
     expect(result).toEqual({ success: false, error: "distinctSidesRequired" });
   });

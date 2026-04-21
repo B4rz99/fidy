@@ -73,18 +73,18 @@ export function reclassifyTransactionAsTransfer(
   }
 
   const nowDate = now();
-  const built = buildTransfer(
-    {
+  const built = buildTransfer({
+    input: {
       digits: input.digits,
       fromSide: input.fromSide,
       toSide: input.toSide,
       description: input.description,
       date: input.date,
     },
-    input.userId,
-    createId(),
-    nowDate
-  );
+    userId: input.userId,
+    id: createId(),
+    now: nowDate,
+  });
 
   if (!built.success) {
     return built;

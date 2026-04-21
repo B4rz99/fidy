@@ -5,6 +5,23 @@ type SubscribeBudgetToTransactionsInput = {
   readonly reload: () => void;
 };
 
+type BudgetReloadAction = "queue" | "reload" | "skip";
+type BudgetReloadState = {
+  readonly currentRevision: number;
+  readonly previousRevision: number;
+  readonly hasLoadedBudgetState: boolean;
+  readonly hasPendingReload: boolean;
+};
+
+function getBudgetReloadAction(input: BudgetReloadState): BudgetReloadAction {
+  if (!input.hasLoadedBudgetState) {
+    return input.currentRevision !== input.previousRevision ? "queue" : "skip";
+  }
+  return input.currentRevision === input.previousRevision && !input.hasPendingReload
+    ? "skip"
+    : "reload";
+}
+
 export function subscribeBudgetToTransactions({
   subscribeTransactions,
   getTransactionDataRevision,
@@ -16,12 +33,18 @@ export function subscribeBudgetToTransactions({
 
   return subscribeTransactions(() => {
     const currentRevision = getTransactionDataRevision();
-    if (currentRevision !== previousRevision && !hasLoadedBudgetState()) {
+    const action = getBudgetReloadAction({
+      currentRevision,
+      previousRevision,
+      hasLoadedBudgetState: hasLoadedBudgetState(),
+      hasPendingReload,
+    });
+
+    if (action === "queue") {
       hasPendingReload = true;
       return;
     }
-    if (currentRevision === previousRevision && !hasPendingReload) return;
-    if (!hasLoadedBudgetState()) return;
+    if (action === "skip") return;
 
     previousRevision = currentRevision;
     hasPendingReload = false;

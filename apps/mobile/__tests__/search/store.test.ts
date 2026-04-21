@@ -54,13 +54,13 @@ describe("search store boundary", () => {
 
     executeSearch(mockDb, USER_ID);
 
-    expect(mockSearchTransactionsPaginated).toHaveBeenCalledWith(
-      mockDb,
-      USER_ID,
-      expect.objectContaining({ query: "coffee" }),
-      30,
-      0
-    );
+    expect(mockSearchTransactionsPaginated).toHaveBeenCalledWith({
+      db: mockDb,
+      userId: USER_ID,
+      filters: expect.objectContaining({ query: "coffee" }),
+      limit: 30,
+      offset: 0,
+    });
     expect(mockSearchTransactionsAggregate).toHaveBeenCalledWith(
       mockDb,
       USER_ID,
@@ -85,13 +85,13 @@ describe("search store boundary", () => {
 
     loadNextSearchPage(mockDb, USER_ID);
 
-    expect(mockSearchTransactionsPaginated).toHaveBeenCalledWith(
-      mockDb,
-      USER_ID,
-      EMPTY_FILTERS,
-      30,
-      1
-    );
+    expect(mockSearchTransactionsPaginated).toHaveBeenCalledWith({
+      db: mockDb,
+      userId: USER_ID,
+      filters: EMPTY_FILTERS,
+      limit: 30,
+      offset: 1,
+    });
     expect(useSearchStore.getState().results).toEqual([
       makeRow("tx-1"),
       expect.objectContaining({ id: "tx-2" }),
@@ -108,13 +108,13 @@ describe("search store boundary", () => {
     updateSearchQuery(mockDb, USER_ID, "rent");
 
     expect(useSearchStore.getState().filters.query).toBe("rent");
-    expect(mockSearchTransactionsPaginated).toHaveBeenCalledWith(
-      mockDb,
-      USER_ID,
-      expect.objectContaining({ query: "rent" }),
-      30,
-      0
-    );
+    expect(mockSearchTransactionsPaginated).toHaveBeenCalledWith({
+      db: mockDb,
+      userId: USER_ID,
+      filters: expect.objectContaining({ query: "rent" }),
+      limit: 30,
+      offset: 0,
+    });
     expect(useSearchStore.getState().results).toEqual([
       expect.objectContaining({ id: "tx-9", converted: true }),
     ]);

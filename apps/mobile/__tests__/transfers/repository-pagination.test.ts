@@ -31,14 +31,14 @@ describe("getTransfersPaginated", () => {
 
   it("calls limit with limit+1 for hasMore detection", async () => {
     const { getTransfersPaginated } = await import("@/features/transfers/lib/repository");
-    getTransfersPaginated(mockDb, "user-1" as UserId, 30, 0);
+    getTransfersPaginated({ db: mockDb, userId: "user-1" as UserId, limit: 30, offset: 0 });
 
     expect(mockLimit).toHaveBeenCalledWith(31);
   });
 
   it("uses a unique tiebreaker in the sort order", async () => {
     const { getTransfersPaginated } = await import("@/features/transfers/lib/repository");
-    getTransfersPaginated(mockDb, "user-1" as UserId, 30, 0);
+    getTransfersPaginated({ db: mockDb, userId: "user-1" as UserId, limit: 30, offset: 0 });
 
     expect(mockOrderBy).toHaveBeenCalledOnce();
     expect(mockOrderBy.mock.calls[0]).toHaveLength(3);

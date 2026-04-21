@@ -1,5 +1,5 @@
 import { addMonths, subMonths } from "date-fns";
-import { create } from "zustand";
+import { create, type StateCreator } from "zustand";
 import { insertNotificationRecord } from "@/features/notifications";
 import { useSettingsStore } from "@/features/settings";
 import { CATEGORY_MAP } from "@/features/transactions";
@@ -86,37 +86,43 @@ type BudgetActions = {
   clearPendingPermissionRequest: () => void;
 };
 
-export const useBudgetStore = create<BudgetState & BudgetActions>((set) => ({
-  activeUserId: null,
-  currentMonth: formatMonth(new Date()),
-  budgets: [],
-  budgetProgress: [],
-  summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
-  autoSuggestions: [],
-  acknowledgedAlerts: new Set(),
-  pendingAlerts: [],
-  pendingPermissionRequest: false,
-  hasLoadedOnce: false,
-  isLoading: false,
+type BudgetStore = BudgetState & BudgetActions;
+type BudgetSetState = Parameters<StateCreator<BudgetStore>>[0];
+type BudgetRequest = {
+  readonly requestId: number;
+  readonly userId: UserId;
+  readonly month: Month;
+  readonly sessionId: number;
+};
+type UpdateBudgetInput = {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly id: BudgetId;
+  readonly amount: CopAmount;
+};
 
-  beginSession: (userId) =>
-    set((state) => ({
-      activeUserId: userId,
-      currentMonth: state.currentMonth,
-      budgets: [],
-      budgetProgress: [],
-      summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
-      autoSuggestions: [],
-      acknowledgedAlerts: new Set(),
-      pendingAlerts: [],
-      pendingPermissionRequest: false,
-      hasLoadedOnce: false,
-      isLoading: false,
-    })),
+function createBudgetState(currentMonth: Month, activeUserId: UserId | null): BudgetState {
+  return {
+    activeUserId,
+    currentMonth,
+    budgets: [],
+    budgetProgress: [],
+    summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
+    autoSuggestions: [],
+    acknowledgedAlerts: new Set(),
+    pendingAlerts: [],
+    pendingPermissionRequest: false,
+    hasLoadedOnce: false,
+    isLoading: false,
+  };
+}
 
-  setMonth: (currentMonth) => set({ currentMonth }),
+function beginBudgetSession(set: BudgetSetState): BudgetActions["beginSession"] {
+  return (userId) => set((state) => createBudgetState(state.currentMonth, userId));
+}
 
-  setSnapshot: (snapshot) =>
+function setBudgetSnapshot(set: BudgetSetState): BudgetActions["setSnapshot"] {
+  return (snapshot) =>
     set((state) => ({
       budgets: snapshot.budgets as Budget[],
       budgetProgress: snapshot.budgetProgress as BudgetProgress[],
@@ -126,14 +132,11 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set) => ({
       pendingPermissionRequest: state.pendingPermissionRequest || snapshot.pendingPermissionRequest,
       hasLoadedOnce: true,
       isLoading: false,
-    })),
+    }));
+}
 
-  setAutoSuggestions: (autoSuggestions) =>
-    set({ autoSuggestions: [...autoSuggestions] as BudgetSuggestion[] }),
-
-  setIsLoading: (isLoading) => set({ isLoading }),
-
-  acknowledgeAlert: (budgetId, threshold) =>
+function acknowledgeBudgetAlert(set: BudgetSetState): BudgetActions["acknowledgeAlert"] {
+  return (budgetId, threshold) =>
     set((state) => {
       const nextState = budgetAlertStateManager.acknowledgeAlert({
         budgetId,
@@ -148,39 +151,43 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set) => ({
         acknowledgedAlerts: new Set(nextState.acknowledgedAlerts),
         pendingAlerts: nextState.pendingAlerts,
       };
-    }),
-
-  clearPendingPermissionRequest: () => {
-    set({ pendingPermissionRequest: false });
-  },
-}));
-
-function isCurrentBudgetRequest(
-  requestId: number,
-  userId: UserId,
-  month: Month,
-  sessionId: number
-): boolean {
-  return (
-    loadBudgetsRequestId === requestId &&
-    useBudgetStore.getState().activeUserId === userId &&
-    useBudgetStore.getState().currentMonth === month &&
-    budgetSessionId === sessionId
-  );
+    });
 }
+
+function createBudgetActions(set: BudgetSetState): BudgetActions {
+  return {
+    beginSession: beginBudgetSession(set),
+    setMonth: (currentMonth) => set({ currentMonth }),
+    setSnapshot: setBudgetSnapshot(set),
+    setAutoSuggestions: (autoSuggestions) =>
+      set({ autoSuggestions: [...autoSuggestions] as BudgetSuggestion[] }),
+    setIsLoading: (isLoading) => set({ isLoading }),
+    acknowledgeAlert: acknowledgeBudgetAlert(set),
+    clearPendingPermissionRequest: () => {
+      set({ pendingPermissionRequest: false });
+    },
+  };
+}
+
+const createBudgetStoreState: StateCreator<BudgetStore> = (set) => ({
+  ...createBudgetState(formatMonth(new Date()), null),
+  ...createBudgetActions(set),
+});
+
+export const useBudgetStore = create<BudgetStore>(createBudgetStoreState);
 
 function isActiveBudgetSession(userId: UserId, sessionId: number): boolean {
   return budgetSessionId === sessionId && useBudgetStore.getState().activeUserId === userId;
 }
 
-async function refreshBudgetsForActiveSession(
-  db: AnyDb,
-  userId: UserId,
-  sessionId: number
-): Promise<boolean> {
-  if (!isActiveBudgetSession(userId, sessionId)) return false;
-  await loadBudgetsForUser(db, userId);
-  return isActiveBudgetSession(userId, sessionId);
+async function refreshBudgetsForActiveSession(input: {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly sessionId: number;
+}): Promise<boolean> {
+  if (!isActiveBudgetSession(input.userId, input.sessionId)) return false;
+  await loadBudgetsForUser(input.db, input.userId);
+  return isActiveBudgetSession(input.userId, input.sessionId);
 }
 
 export function initializeBudgetSession(userId: UserId): void {
@@ -190,9 +197,16 @@ export function initializeBudgetSession(userId: UserId): void {
 }
 
 export async function loadBudgetsForUser(db: AnyDb, userId: UserId): Promise<void> {
-  const requestId = ++loadBudgetsRequestId;
-  const sessionId = budgetSessionId;
-  const requestedMonth = useBudgetStore.getState().currentMonth;
+  const request: BudgetRequest = {
+    requestId: ++loadBudgetsRequestId,
+    userId,
+    month: useBudgetStore.getState().currentMonth,
+    sessionId: budgetSessionId,
+  };
+  const isCurrentRequest = () =>
+    loadBudgetsRequestId === request.requestId &&
+    isActiveBudgetSession(request.userId, request.sessionId) &&
+    useBudgetStore.getState().currentMonth === request.month;
   const previous = {
     pendingAlerts: useBudgetStore.getState().pendingAlerts,
     acknowledgedAlerts: useBudgetStore.getState().acknowledgedAlerts,
@@ -201,17 +215,15 @@ export async function loadBudgetsForUser(db: AnyDb, userId: UserId): Promise<voi
   useBudgetStore.getState().setIsLoading(true);
 
   try {
-    const snapshot = await createLiveBudgetMonitoring(db, userId, () =>
-      isCurrentBudgetRequest(requestId, userId, requestedMonth, sessionId)
-    ).refreshMonth({
+    const snapshot = await createLiveBudgetMonitoring(db, userId, isCurrentRequest).refreshMonth({
       db,
       userId,
-      month: requestedMonth,
+      month: request.month,
       previous,
     });
 
-    if (!isCurrentBudgetRequest(requestId, userId, requestedMonth, sessionId)) {
-      if (loadBudgetsRequestId === requestId) {
+    if (!isCurrentRequest()) {
+      if (loadBudgetsRequestId === request.requestId) {
         useBudgetStore.getState().setIsLoading(false);
       }
       return;
@@ -219,7 +231,7 @@ export async function loadBudgetsForUser(db: AnyDb, userId: UserId): Promise<voi
 
     useBudgetStore.getState().setSnapshot(snapshot);
   } catch {
-    if (loadBudgetsRequestId === requestId) {
+    if (loadBudgetsRequestId === request.requestId) {
       useBudgetStore.getState().setIsLoading(false);
     }
   }
@@ -292,15 +304,11 @@ export async function createBudget(
   }
 
   trackBudgetCreated({ category: String(categoryId) });
-  return refreshBudgetsForActiveSession(db, userId, sessionId);
+  return refreshBudgetsForActiveSession({ db, userId, sessionId });
 }
 
-export async function updateBudget(
-  db: AnyDb,
-  userId: UserId,
-  id: BudgetId,
-  amount: CopAmount
-): Promise<boolean> {
+export async function updateBudget(input: UpdateBudgetInput): Promise<boolean> {
+  const { db, userId, id, amount } = input;
   const sessionId = budgetSessionId;
   const now = toIsoDateTime(new Date());
 
@@ -316,7 +324,7 @@ export async function updateBudget(
     return false;
   }
 
-  return refreshBudgetsForActiveSession(db, userId, sessionId);
+  return refreshBudgetsForActiveSession({ db, userId, sessionId });
 }
 
 export async function deleteBudget(db: AnyDb, userId: UserId, id: BudgetId): Promise<boolean> {
@@ -334,7 +342,7 @@ export async function deleteBudget(db: AnyDb, userId: UserId, id: BudgetId): Pro
     return false;
   }
 
-  return refreshBudgetsForActiveSession(db, userId, sessionId);
+  return refreshBudgetsForActiveSession({ db, userId, sessionId });
 }
 
 export async function copyBudgetsForward(
@@ -361,7 +369,7 @@ export async function copyBudgetsForward(
 
   if (!isActiveBudgetSession(userId, sessionId)) return false;
   useBudgetStore.getState().setMonth(targetMonth);
-  return refreshBudgetsForActiveSession(db, userId, sessionId);
+  return refreshBudgetsForActiveSession({ db, userId, sessionId });
 }
 
 export async function acceptBudgetSuggestions(
@@ -397,5 +405,5 @@ export async function acceptBudgetSuggestions(
     return false;
   }
 
-  return refreshBudgetsForActiveSession(db, userId, sessionId);
+  return refreshBudgetsForActiveSession({ db, userId, sessionId });
 }

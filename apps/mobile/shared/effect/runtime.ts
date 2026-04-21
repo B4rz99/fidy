@@ -22,19 +22,12 @@ export function makeAppTag<Service>(key: string): Context.Tag<Service, Service> 
   return Context.GenericTag<Service>(key);
 }
 
-export function runWithService<A, E, I, S>(
-  effect: AppEffect<A, E, I>,
-  tag: Context.Tag<I, S>,
-  service: S
-): Promise<A> {
-  return runAppEffect(Effect.provideService(effect, tag, service));
-}
-
 export function bindAppService<I, S>(tag: Context.Tag<I, S>, service: S): BoundAppService<I, S> {
   return {
     provide: <A, E, R>(effect: AppEffect<A, E, I | R>) =>
       Effect.provideService(effect, tag, service),
-    run: <A, E>(effect: AppEffect<A, E, I>) => runWithService(effect, tag, service),
+    run: <A, E>(effect: AppEffect<A, E, I>) =>
+      runAppEffect(Effect.provideService(effect, tag, service)),
   };
 }
 

@@ -7,13 +7,12 @@ type TransactionRow = {
   readonly deletedAt: string | null;
 };
 
+function toComparableTransactionValues(row: TransactionRow) {
+  return [row.amount, row.categoryId, row.description, row.date, row.type, row.deletedAt] as const;
+}
+
 export function hasDataConflict(local: TransactionRow, server: TransactionRow): boolean {
-  return (
-    local.amount !== server.amount ||
-    local.categoryId !== server.categoryId ||
-    local.description !== server.description ||
-    local.date !== server.date ||
-    local.type !== server.type ||
-    local.deletedAt !== server.deletedAt
-  );
+  const localValues = toComparableTransactionValues(local);
+  const serverValues = toComparableTransactionValues(server);
+  return localValues.some((value, index) => value !== serverValues[index]);
 }
