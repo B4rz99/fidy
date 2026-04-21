@@ -4,15 +4,22 @@ const ACTION_REGEX = /\[ACTION\]([\s\S]*?)\[\/ACTION\]/;
 
 export const ACTION_BLOCK_REGEX = /\[ACTION\][\s\S]*?\[\/ACTION\]/g;
 
-export function parseActionFromResponse(text: string): ChatAction | null {
+function extractActionPayload(text: string): string | null {
   const match = ACTION_REGEX.exec(text);
-  if (!match) return null;
+  return match?.[1] ?? null;
+}
 
+function parseChatAction(payload: string): ChatAction | null {
   try {
-    const parsed: unknown = JSON.parse(match[1] ?? "");
+    const parsed: unknown = JSON.parse(payload);
     const result = chatActionSchema.safeParse(parsed);
     return result.success ? result.data : null;
   } catch {
     return null;
   }
+}
+
+export function parseActionFromResponse(text: string): ChatAction | null {
+  const payload = extractActionPayload(text);
+  return payload == null ? null : parseChatAction(payload);
 }

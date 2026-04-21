@@ -14,14 +14,6 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@137-156@apps/mobile/features/financial-accounts/lib/identifiers-repository.ts",
-      "file": "apps/mobile/features/financial-accounts/lib/identifiers-repository.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 8,
-      "nloc": 16,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@141-174@apps/mobile/__tests__/goals/repository.test.ts",
       "file": "apps/mobile/__tests__/goals/repository.test.ts",
       "function": "(anonymous)",
@@ -54,14 +46,6 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@250-291@apps/mobile/features/calendar/lib/bill-mutation-service.ts",
-      "file": "apps/mobile/features/calendar/lib/bill-mutation-service.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 7,
-      "nloc": 36,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@41-95@apps/mobile/__tests__/analytics/store.test.ts",
       "file": "apps/mobile/__tests__/analytics/store.test.ts",
       "function": "(anonymous)",
@@ -83,14 +67,6 @@
       "function": "(anonymous)",
       "cyclomaticComplexity": 2,
       "nloc": 31,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@47-80@apps/mobile/features/ai-chat/hooks/use-streaming-chat.ts",
-      "file": "apps/mobile/features/ai-chat/hooks/use-streaming-chat.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 7,
-      "nloc": 32,
       "parameterCount": 0
     },
     {
@@ -238,22 +214,6 @@
       "parameterCount": 4
     },
     {
-      "key": "parseActionFromResponse@7-18@apps/mobile/features/ai-chat/lib/parse-action.ts",
-      "file": "apps/mobile/features/ai-chat/lib/parse-action.ts",
-      "function": "parseActionFromResponse",
-      "cyclomaticComplexity": 6,
-      "nloc": 11,
-      "parameterCount": 1
-    },
-    {
-      "key": "parseSmsDetectedAt@15-33@apps/mobile/features/capture-sources/hooks/setup.ts",
-      "file": "apps/mobile/features/capture-sources/hooks/setup.ts",
-      "function": "parseSmsDetectedAt",
-      "cyclomaticComplexity": 6,
-      "nloc": 16,
-      "parameterCount": 1
-    },
-    {
       "key": "resolveConflict@21-28@apps/mobile/features/sync/lib/conflict-repository.ts",
       "file": "apps/mobile/features/sync/lib/conflict-repository.ts",
       "function": "resolveConflict",
@@ -278,28 +238,12 @@
       "parameterCount": 6
     },
     {
-      "key": "scheduleBudgetAlert@21-68@apps/mobile/features/budget/lib/notifications.ts",
-      "file": "apps/mobile/features/budget/lib/notifications.ts",
-      "function": "scheduleBudgetAlert",
-      "cyclomaticComplexity": 6,
-      "nloc": 43,
-      "parameterCount": 3
-    },
-    {
       "key": "sessionId@66-72@apps/mobile/__tests__/ai-chat/store.test.ts",
       "file": "apps/mobile/__tests__/ai-chat/store.test.ts",
       "function": "sessionId",
       "cyclomaticComplexity": 7,
       "nloc": 7,
       "parameterCount": 0
-    },
-    {
-      "key": "unresolvedConflictCountEffect@106-132@apps/mobile/features/sync/services/create-sync-service.ts",
-      "file": "apps/mobile/features/sync/services/create-sync-service.ts",
-      "function": "unresolvedConflictCountEffect",
-      "cyclomaticComplexity": 9,
-      "nloc": 21,
-      "parameterCount": 1
     },
     {
       "key": "updateBudgetAmount@37-39@apps/mobile/features/budget/lib/repository.ts",

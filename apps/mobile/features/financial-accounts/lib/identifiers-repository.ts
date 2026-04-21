@@ -68,6 +68,12 @@ function findActiveFinancialAccountIdentifierByUniqueKey(
   return rows[0] ?? null;
 }
 
+function getFinancialAccountIdentifierDuplicate(db: AnyDb, row: FinancialAccountIdentifierRow) {
+  const activeDuplicate =
+    row.deletedAt == null ? findActiveFinancialAccountIdentifierByUniqueKey(db, row) : null;
+  return activeDuplicate?.id !== row.id ? activeDuplicate : null;
+}
+
 function deleteFinancialAccountIdentifierDuplicate(
   db: AnyDb,
   duplicateId: FinancialAccountIdentifierRow["id"]
@@ -100,14 +106,41 @@ function persistFinancialAccountIdentifier(db: AnyDb, row: FinancialAccountIdent
     .run();
 }
 
+function shouldSkipFinancialAccountIdentifierUpsert(
+  existingRow: FinancialAccountIdentifierRow | null,
+  nextUpdatedAt: FinancialAccountIdentifierRow["updatedAt"]
+) {
+  return existingRow != null && existingRow.updatedAt >= nextUpdatedAt;
+}
+
+function upsertFinancialAccountIdentifierInTransaction(
+  db: AnyDb,
+  row: FinancialAccountIdentifierRow
+) {
+  const existingById = getFinancialAccountIdentifierById(db, row.id);
+  const duplicate = getFinancialAccountIdentifierDuplicate(db, row);
+
+  if (shouldSkipFinancialAccountIdentifierUpsert(existingById, row.updatedAt)) {
+    return;
+  }
+
+  if (shouldSkipFinancialAccountIdentifierUpsert(duplicate, row.updatedAt)) {
+    return;
+  }
+
+  if (duplicate != null) {
+    deleteFinancialAccountIdentifierDuplicate(db, duplicate.id);
+  }
+
+  persistFinancialAccountIdentifier(db, row);
+}
+
 export function saveFinancialAccountIdentifierInTransaction(
   db: AnyDb,
   row: FinancialAccountIdentifierRow
 ) {
   const existingById = getFinancialAccountIdentifierById(db, row.id);
-  const activeDuplicate =
-    row.deletedAt == null ? findActiveFinancialAccountIdentifierByUniqueKey(db, row) : null;
-  const duplicate = activeDuplicate?.id !== row.id ? activeDuplicate : null;
+  const duplicate = getFinancialAccountIdentifierDuplicate(db, row);
 
   if (existingById && duplicate) {
     deleteFinancialAccountIdentifierDuplicate(db, duplicate.id);
@@ -135,24 +168,7 @@ export function saveFinancialAccountIdentifierInTransaction(
 
 export function upsertFinancialAccountIdentifier(db: AnyDb, row: FinancialAccountIdentifierRow) {
   db.transaction((tx) => {
-    const existingById = getFinancialAccountIdentifierById(tx, row.id);
-    const activeDuplicate =
-      row.deletedAt == null ? findActiveFinancialAccountIdentifierByUniqueKey(tx, row) : null;
-    const duplicate = activeDuplicate?.id !== row.id ? activeDuplicate : null;
-
-    if (existingById && existingById.updatedAt >= row.updatedAt) {
-      return;
-    }
-
-    if (duplicate && duplicate.updatedAt >= row.updatedAt) {
-      return;
-    }
-
-    if (duplicate) {
-      deleteFinancialAccountIdentifierDuplicate(tx, duplicate.id);
-    }
-
-    persistFinancialAccountIdentifier(tx, row);
+    upsertFinancialAccountIdentifierInTransaction(tx, row);
   });
 }
 
