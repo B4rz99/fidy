@@ -153,6 +153,17 @@ describe("deriveNotificationDisplay", () => {
     expect(result.iconBgColor).toBe("#F3E5F5");
   });
 
+  it("falls back to 'other' category visuals when categoryId is unsupported", () => {
+    const n = makeNotification({
+      type: "spending_anomaly",
+      categoryId: "unknown-category" as CategoryId,
+    });
+    const result = deriveNotificationDisplay(n, mockT);
+    expect(result.iconName).toBe("ellipsis");
+    expect(result.iconColor).toBe("#B8A9D4");
+    expect(result.iconBgColor).toBe("#F3E5F5");
+  });
+
   it("defaults budget_alert with no params to threshold 100 visuals", () => {
     const n = makeNotification({
       type: "budget_alert",
