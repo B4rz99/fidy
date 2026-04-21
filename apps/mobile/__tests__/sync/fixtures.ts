@@ -1,10 +1,15 @@
 type Overrides = Record<string, unknown>;
-type ConflictOverrides = {
+type ConflictData = Record<string, unknown>;
+type ParsedConflictOverrides = {
   id?: string;
   transactionId?: string;
-  localData?: Record<string, unknown>;
-  serverData?: Record<string, unknown>;
+  localData?: ConflictData;
+  serverData?: ConflictData;
   detectedAt?: string;
+};
+type ConflictRowOverrides = Omit<ParsedConflictOverrides, "localData" | "serverData"> & {
+  localData?: ConflictData | string;
+  serverData?: ConflictData | string;
 };
 
 export const SYNC_USER_ID = "user-1";
@@ -222,7 +227,7 @@ const DEFAULT_SERVER_CONFLICT_DATA = createLocalTransaction({
   source: "email",
 });
 
-export const createParsedConflict = (overrides: ConflictOverrides = {}) => ({
+export const createParsedConflict = (overrides: ParsedConflictOverrides = {}) => ({
   id: "conflict-1",
   transactionId: "tx-1",
   localData: createLocalTransaction(),
@@ -231,13 +236,17 @@ export const createParsedConflict = (overrides: ConflictOverrides = {}) => ({
   ...overrides,
 });
 
-export const createConflictRow = (overrides: ConflictOverrides = {}) => {
-  const conflict = createParsedConflict(overrides);
+const serializeConflictData = (value: ConflictData | string) =>
+  typeof value === "string" ? value : JSON.stringify(value);
+
+export const createConflictRow = (overrides: ConflictRowOverrides = {}) => {
+  const { localData, serverData, ...rest } = overrides;
+  const conflict = createParsedConflict(rest);
   return {
     id: conflict.id,
     transactionId: conflict.transactionId,
-    localData: JSON.stringify(conflict.localData),
-    serverData: JSON.stringify(conflict.serverData),
+    localData: serializeConflictData(localData ?? conflict.localData),
+    serverData: serializeConflictData(serverData ?? conflict.serverData),
     detectedAt: conflict.detectedAt,
   };
 };
