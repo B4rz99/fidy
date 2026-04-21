@@ -20,6 +20,9 @@ let db: ReturnType<typeof drizzle>;
 
 const USER_ID = "user-1" as UserId;
 const NOW = "2026-04-18T10:00:00.000Z" as IsoDateTime;
+const TRANSFER_DATE = "2026-04-18" as IsoDate;
+
+type TransferInput = Parameters<typeof saveTransfer>[1];
 
 beforeEach(() => {
   sqlite = new Database(":memory:");
@@ -31,22 +34,37 @@ afterEach(() => {
   sqlite.close();
 });
 
+function makeTransfer(overrides: Partial<TransferInput> = {}): TransferInput {
+  return {
+    id: "tr-1" as TransferId,
+    userId: USER_ID,
+    amount: 250000 as CopAmount,
+    fromAccountId: "fa-1" as FinancialAccountId,
+    toAccountId: "fa-2" as FinancialAccountId,
+    fromExternalLabel: null,
+    toExternalLabel: null,
+    description: "Move to savings",
+    date: TRANSFER_DATE,
+    createdAt: NOW,
+    updatedAt: NOW,
+    deletedAt: null,
+    ...overrides,
+  };
+}
+
+function expectQueuedTransfer(rowId: string, operation: "insert" | "update") {
+  expect(getQueuedSyncEntries(db as any)).toEqual([
+    expect.objectContaining({
+      tableName: "transfers",
+      rowId,
+      operation,
+    }),
+  ]);
+}
+
 describe("transfers repository", () => {
   it("saves a transfer, reads it back, and enqueues sync", () => {
-    saveTransfer(db as any, {
-      id: "tr-1" as TransferId,
-      userId: USER_ID,
-      amount: 250000 as CopAmount,
-      fromAccountId: "fa-1" as FinancialAccountId,
-      toAccountId: "fa-2" as FinancialAccountId,
-      fromExternalLabel: null,
-      toExternalLabel: null,
-      description: "Move to savings",
-      date: "2026-04-18" as IsoDate,
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
+    saveTransfer(db as any, makeTransfer());
 
     expect(getTransfersForUser(db as any, USER_ID)).toEqual([
       expect.objectContaining({
@@ -57,85 +75,44 @@ describe("transfers repository", () => {
         toAccountId: "fa-2",
       }),
     ]);
-
-    expect(getQueuedSyncEntries(db as any)).toEqual([
-      expect.objectContaining({
-        tableName: "transfers",
-        rowId: "tr-1",
-        operation: "insert",
-      }),
-    ]);
+    expectQueuedTransfer("tr-1", "insert");
   });
 
   it("requires a source and destination endpoint", () => {
     expect(() =>
-      saveTransfer(db as any, {
-        id: "tr-missing-from" as TransferId,
-        userId: USER_ID,
-        amount: 250000 as CopAmount,
-        fromAccountId: null,
-        toAccountId: "fa-2" as FinancialAccountId,
-        fromExternalLabel: null,
-        toExternalLabel: null,
-        description: "Invalid transfer",
-        date: "2026-04-18" as IsoDate,
-        createdAt: NOW,
-        updatedAt: NOW,
-        deletedAt: null,
-      })
+      saveTransfer(
+        db as any,
+        makeTransfer({ id: "tr-missing-from" as TransferId, fromAccountId: null })
+      )
     ).toThrow();
-
     expect(() =>
-      saveTransfer(db as any, {
-        id: "tr-missing-to" as TransferId,
-        userId: USER_ID,
-        amount: 250000 as CopAmount,
-        fromAccountId: "fa-1" as FinancialAccountId,
-        toAccountId: null,
-        fromExternalLabel: null,
-        toExternalLabel: null,
-        description: "Invalid transfer",
-        date: "2026-04-18" as IsoDate,
-        createdAt: NOW,
-        updatedAt: NOW,
-        deletedAt: null,
-      })
+      saveTransfer(
+        db as any,
+        makeTransfer({ id: "tr-missing-to" as TransferId, toAccountId: null })
+      )
     ).toThrow();
   });
 
   it("rejects blank external labels as endpoints", () => {
     expect(() =>
-      saveTransfer(db as any, {
-        id: "tr-blank-from" as TransferId,
-        userId: USER_ID,
-        amount: 250000 as CopAmount,
-        fromAccountId: null,
-        toAccountId: "fa-2" as FinancialAccountId,
-        fromExternalLabel: "   ",
-        toExternalLabel: null,
-        description: "Invalid transfer",
-        date: "2026-04-18" as IsoDate,
-        createdAt: NOW,
-        updatedAt: NOW,
-        deletedAt: null,
-      })
+      saveTransfer(
+        db as any,
+        makeTransfer({
+          id: "tr-blank-from" as TransferId,
+          fromAccountId: null,
+          fromExternalLabel: "   ",
+        })
+      )
     ).toThrow();
-
     expect(() =>
-      saveTransfer(db as any, {
-        id: "tr-blank-to" as TransferId,
-        userId: USER_ID,
-        amount: 250000 as CopAmount,
-        fromAccountId: "fa-1" as FinancialAccountId,
-        toAccountId: null,
-        fromExternalLabel: null,
-        toExternalLabel: "",
-        description: "Invalid transfer",
-        date: "2026-04-18" as IsoDate,
-        createdAt: NOW,
-        updatedAt: NOW,
-        deletedAt: null,
-      })
+      saveTransfer(
+        db as any,
+        makeTransfer({
+          id: "tr-blank-to" as TransferId,
+          toAccountId: null,
+          toExternalLabel: "",
+        })
+      )
     ).toThrow();
   });
 });

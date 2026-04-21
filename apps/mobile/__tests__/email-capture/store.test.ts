@@ -145,24 +145,63 @@ const mockDb = {
 } as any;
 const mockUserId = "user-1";
 
+type TestEmailAccount = {
+  id: EmailAccountId;
+  userId: UserId;
+  provider: string;
+  email: string;
+  lastFetchedAt: IsoDateTime | null;
+  createdAt: IsoDateTime;
+};
+
+type RawEmail = {
+  externalId: string;
+  from: string;
+  subject: string;
+  body: string;
+  receivedAt: string;
+  provider: "gmail" | "outlook";
+};
+
+type ProcessSummary = {
+  filtered: number;
+  skippedDuplicate: number;
+  skippedCrossSource: number;
+  saved: number;
+  failed: number;
+  needsReview: number;
+};
+
+const DEFAULT_ACCOUNT: TestEmailAccount = {
+  id: "ea-1" as EmailAccountId,
+  userId: mockUserId as UserId,
+  provider: "gmail",
+  email: "test@gmail.com",
+  lastFetchedAt: null,
+  createdAt: "2026-03-05T10:00:00Z" as IsoDateTime,
+};
+
+const DEFAULT_RAW_EMAIL: RawEmail = {
+  externalId: "ext-1",
+  from: "bank@example.com",
+  subject: "Alert",
+  body: "body",
+  receivedAt: "2026-03-05T10:00:00Z",
+  provider: "gmail",
+};
+
+const EMPTY_PROCESS_SUMMARY: ProcessSummary = {
+  filtered: 0,
+  skippedDuplicate: 0,
+  skippedCrossSource: 0,
+  saved: 0,
+  failed: 0,
+  needsReview: 0,
+};
+
 /** Helper to build a typed email account object for tests */
-function makeAccount(
-  overrides: {
-    id?: string;
-    provider?: string;
-    email?: string;
-    lastFetchedAt?: string | null;
-    createdAt?: string;
-  } = {}
-) {
-  return {
-    id: (overrides.id ?? "ea-1") as EmailAccountId,
-    userId: mockUserId as UserId,
-    provider: overrides.provider ?? "gmail",
-    email: overrides.email ?? "test@gmail.com",
-    lastFetchedAt: (overrides.lastFetchedAt ?? null) as IsoDateTime | null,
-    createdAt: (overrides.createdAt ?? "2026-03-05T10:00:00Z") as IsoDateTime,
-  };
+function makeAccount(overrides: Partial<TestEmailAccount> = {}): TestEmailAccount {
+  return { ...DEFAULT_ACCOUNT, ...overrides };
 }
 
 /** Helper to build a typed processed email object for tests */
@@ -194,6 +233,33 @@ function createDeferred<T>() {
     reject = rej;
   });
   return { promise, resolve, reject };
+}
+
+function makeRawEmail(overrides: Partial<RawEmail> = {}): RawEmail {
+  return { ...DEFAULT_RAW_EMAIL, ...overrides };
+}
+
+function setAccounts(accounts: TestEmailAccount[] = [makeAccount()]) {
+  useEmailCaptureStore.setState({ accounts });
+}
+
+function mockEmptyReviewLoads() {
+  vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
+  vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+}
+
+function mockProcessResult(overrides: Partial<ProcessSummary> = {}) {
+  vi.mocked(processEmails).mockResolvedValueOnce({ ...EMPTY_PROCESS_SUMMARY, ...overrides });
+}
+
+function runFetchAndProcess(gmailClientId = "g", outlookClientId = "o", refresh = mockRefresh) {
+  return fetchAndProcessEmails(
+    mockDb,
+    mockUserId as UserId,
+    gmailClientId,
+    outlookClientId,
+    refresh
+  );
 }
 
 describe("email capture boundary", () => {
@@ -388,39 +454,13 @@ describe("email capture boundary", () => {
 
   describe("fetchAndProcess", () => {
     it("fetches emails and runs pipeline", async () => {
-      useEmailCaptureStore.setState({
-        accounts: [makeAccount()],
-      });
-
-      const mockRawEmails = [
-        {
-          externalId: "ext-1",
-          from: "bank@example.com",
-          subject: "Alert",
-          body: "body",
-          receivedAt: "2026-03-05T10:00:00Z",
-          provider: "gmail" as const,
-        },
-      ];
+      setAccounts();
+      const mockRawEmails = [makeRawEmail()];
       mockAdapter.fetchEmails.mockResolvedValueOnce(mockRawEmails);
-      vi.mocked(processEmails).mockResolvedValueOnce({
-        filtered: 0,
-        skippedDuplicate: 0,
-        skippedCrossSource: 0,
-        saved: 1,
-        failed: 0,
-        needsReview: 0,
-      });
-      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
-      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+      mockProcessResult({ saved: 1 });
+      mockEmptyReviewLoads();
 
-      await fetchAndProcessEmails(
-        mockDb,
-        mockUserId as UserId,
-        "gmail-client-id",
-        "outlook-client-id",
-        mockRefresh
-      );
+      await runFetchAndProcess("gmail-client-id", "outlook-client-id");
 
       expect(mockEnsureBankSenders).toHaveBeenCalledTimes(1);
       expect(mockAdapter.fetchEmails).toHaveBeenCalled();
@@ -430,36 +470,29 @@ describe("email capture boundary", () => {
     });
 
     it("fetches emails for outlook accounts", async () => {
-      useEmailCaptureStore.setState({
-        accounts: [makeAccount({ id: "ea-2", provider: "outlook", email: "test@outlook.com" })],
-      });
+      setAccounts([
+        makeAccount({
+          id: "ea-2" as EmailAccountId,
+          provider: "outlook",
+          email: "test@outlook.com",
+        }),
+      ]);
 
       mockAdapter.fetchEmails.mockResolvedValueOnce([]);
-      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
-      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+      mockEmptyReviewLoads();
 
-      await fetchAndProcessEmails(
-        mockDb,
-        mockUserId as UserId,
-        "gmail-client-id",
-        "outlook-client-id",
-        mockRefresh
-      );
+      await runFetchAndProcess("gmail-client-id", "outlook-client-id");
 
       expect(getAdapter).toHaveBeenCalledWith("outlook");
       expect(mockAdapter.fetchEmails).toHaveBeenCalled();
     });
 
     it("sets isFetching during execution", async () => {
-      useEmailCaptureStore.setState({
-        accounts: [makeAccount({ email: "u@g.com", createdAt: "" })],
-      });
+      setAccounts([makeAccount({ email: "u@g.com", createdAt: "" as IsoDateTime })]);
       mockAdapter.fetchEmails.mockResolvedValueOnce([]);
-      // No processEmails mock needed — 0 emails with first fetch goes to zero-emails early return
-      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
-      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+      mockEmptyReviewLoads();
 
-      const promise = fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
+      const promise = runFetchAndProcess();
       expect(useEmailCaptureStore.getState().isFetching).toBe(true);
 
       await promise;
@@ -468,7 +501,7 @@ describe("email capture boundary", () => {
 
     it("warns when the requested email capture session is no longer active", async () => {
       initializeEmailCaptureSession("user-2" as UserId);
-      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
+      await runFetchAndProcess();
 
       expect(mockAdapter.fetchEmails).not.toHaveBeenCalled();
       expect(mockCaptureWarning).toHaveBeenCalledWith("email_capture_fetch_missing_context", {
@@ -484,65 +517,40 @@ describe("email capture boundary", () => {
         accounts: [makeAccount()],
       });
 
-      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
+      await runFetchAndProcess();
 
       expect(mockAdapter.fetchEmails).not.toHaveBeenCalled();
     });
 
     it("continues processing other accounts when one fails", async () => {
-      useEmailCaptureStore.setState({
-        accounts: [
-          makeAccount(),
-          makeAccount({ id: "ea-2", provider: "outlook", email: "test@outlook.com" }),
-        ],
-      });
+      setAccounts([
+        makeAccount(),
+        makeAccount({
+          id: "ea-2" as EmailAccountId,
+          provider: "outlook",
+          email: "test@outlook.com",
+        }),
+      ]);
 
       mockAdapter.fetchEmails
         .mockRejectedValueOnce(new Error("network error"))
         .mockResolvedValueOnce([]);
-      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
-      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+      mockEmptyReviewLoads();
 
-      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
+      await runFetchAndProcess();
 
       expect(mockAdapter.fetchEmails).toHaveBeenCalledTimes(2);
       expect(useEmailCaptureStore.getState().isFetching).toBe(false);
     });
 
     it("calls processEmails with correct arguments", async () => {
-      useEmailCaptureStore.setState({
-        accounts: [makeAccount()],
-      });
-
-      const mockRawEmails = [
-        {
-          externalId: "ext-1",
-          from: "bank@example.com",
-          subject: "Alert",
-          body: "body",
-          receivedAt: "2026-03-05T10:00:00Z",
-          provider: "gmail" as const,
-        },
-      ];
+      setAccounts();
+      const mockRawEmails = [makeRawEmail()];
       mockAdapter.fetchEmails.mockResolvedValueOnce(mockRawEmails);
-      vi.mocked(processEmails).mockResolvedValueOnce({
-        filtered: 0,
-        skippedDuplicate: 0,
-        skippedCrossSource: 0,
-        saved: 1,
-        failed: 0,
-        needsReview: 0,
-      });
-      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
-      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+      mockProcessResult({ saved: 1 });
+      mockEmptyReviewLoads();
 
-      await fetchAndProcessEmails(
-        mockDb,
-        mockUserId as UserId,
-        "gmail-client-id",
-        "outlook-client-id",
-        mockRefresh
-      );
+      await runFetchAndProcess("gmail-client-id", "outlook-client-id");
 
       expect(processEmails).toHaveBeenCalledWith(
         mockDb,
@@ -553,20 +561,8 @@ describe("email capture boundary", () => {
     });
 
     it("sets phase to processing when showing progress", async () => {
-      useEmailCaptureStore.setState({
-        accounts: [makeAccount()],
-      });
-
-      const mockRawEmails = [
-        {
-          externalId: "ext-1",
-          from: "bank@example.com",
-          subject: "Alert",
-          body: "body",
-          receivedAt: "2026-03-05T10:00:00Z",
-          provider: "gmail" as const,
-        },
-      ];
+      setAccounts();
+      const mockRawEmails = [makeRawEmail()];
       mockAdapter.fetchEmails.mockResolvedValueOnce(mockRawEmails);
 
       const phases: (string | null)[] = [];
@@ -582,64 +578,46 @@ describe("email capture boundary", () => {
           needsReview: 0,
         };
       });
-      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
-      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+      mockEmptyReviewLoads();
 
-      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
+      await runFetchAndProcess();
 
       expect(phases).toContain("processing");
       expect(useEmailCaptureStore.getState().phase).toBe("complete");
     });
 
     it("skips progress state when below threshold on subsequent sync", async () => {
-      useEmailCaptureStore.setState({
-        accounts: [makeAccount({ lastFetchedAt: "2026-03-10T00:00:00Z" })],
-      });
-
+      setAccounts([makeAccount({ lastFetchedAt: "2026-03-10T00:00:00Z" as IsoDateTime })]);
       mockAdapter.fetchEmails.mockResolvedValueOnce([
-        {
-          externalId: "ext-1",
+        makeRawEmail({
           from: "b@b.com",
           subject: "A",
           body: "b",
           receivedAt: "2026-03-10T00:00:00Z",
-          provider: "gmail",
-        },
-        {
+        }),
+        makeRawEmail({
           externalId: "ext-2",
           from: "b@b.com",
           subject: "B",
           body: "b",
           receivedAt: "2026-03-10T00:00:00Z",
-          provider: "gmail",
-        },
+        }),
       ]);
-      vi.mocked(processEmails).mockResolvedValueOnce({
-        filtered: 0,
-        skippedDuplicate: 0,
-        skippedCrossSource: 0,
-        saved: 2,
-        failed: 0,
-        needsReview: 0,
-      });
-      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
-      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+      mockProcessResult({ saved: 2 });
+      mockEmptyReviewLoads();
 
-      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
+      await runFetchAndProcess();
 
       expect(useEmailCaptureStore.getState().phase).toBeNull();
     });
 
     it("updates in-memory accounts lastFetchedAt after fetch", async () => {
-      useEmailCaptureStore.setState({
-        accounts: [makeAccount()],
-      });
+      setAccounts();
 
       mockAdapter.fetchEmails.mockResolvedValueOnce([]);
-      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
-      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+      mockEmptyReviewLoads();
 
-      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
+      await runFetchAndProcess();
 
       const updatedAccount = useEmailCaptureStore.getState().accounts[0]!;
       expect(updatedAccount.lastFetchedAt).not.toBeNull();
@@ -649,37 +627,20 @@ describe("email capture boundary", () => {
       vi.useFakeTimers();
 
       try {
-        useEmailCaptureStore.setState({
-          accounts: [makeAccount()],
-        });
-
+        setAccounts();
         mockAdapter.fetchEmails.mockResolvedValueOnce([
-          {
-            externalId: "ext-1",
+          makeRawEmail({
             from: "b@b.com",
             subject: "A",
             body: "b",
             receivedAt: "2026-03-10T00:00:00Z",
-            provider: "gmail",
-          },
+          }),
         ]);
-        vi.mocked(processEmails).mockResolvedValueOnce({
-          filtered: 0,
-          skippedDuplicate: 0,
-          skippedCrossSource: 0,
-          saved: 1,
-          failed: 0,
-          needsReview: 0,
-        });
-        vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
-        vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+        mockProcessResult({ saved: 1 });
+        mockEmptyReviewLoads();
 
-        await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
-
-        // Phase should be "complete" immediately after
+        await runFetchAndProcess();
         expect(useEmailCaptureStore.getState().phase).toBe("complete");
-
-        // After 2s, phase should auto-clear
         vi.advanceTimersByTime(2000);
         expect(useEmailCaptureStore.getState().phase).toBeNull();
         expect(useEmailCaptureStore.getState().progress).toBeNull();
@@ -689,51 +650,33 @@ describe("email capture boundary", () => {
     });
 
     it("preserves complete phase immediately after fetchAndProcess", async () => {
-      useEmailCaptureStore.setState({
-        accounts: [makeAccount()],
-      });
-
+      setAccounts();
       mockAdapter.fetchEmails.mockResolvedValueOnce([
-        {
-          externalId: "ext-1",
+        makeRawEmail({
           from: "b@b.com",
           subject: "A",
           body: "b",
           receivedAt: "2026-03-10T00:00:00Z",
-          provider: "gmail",
-        },
+        }),
       ]);
-      vi.mocked(processEmails).mockResolvedValueOnce({
-        filtered: 0,
-        skippedDuplicate: 0,
-        skippedCrossSource: 0,
-        saved: 1,
-        failed: 0,
-        needsReview: 0,
-      });
-      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
-      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+      mockProcessResult({ saved: 1 });
+      mockEmptyReviewLoads();
 
-      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
+      await runFetchAndProcess();
 
       expect(useEmailCaptureStore.getState().phase).toBe("complete");
       expect(useEmailCaptureStore.getState().isFetching).toBe(false);
     });
 
     it("shows progress on first fetch even with 1 email", async () => {
-      useEmailCaptureStore.setState({
-        accounts: [makeAccount()],
-      });
-
+      setAccounts();
       mockAdapter.fetchEmails.mockResolvedValueOnce([
-        {
-          externalId: "ext-1",
+        makeRawEmail({
           from: "b@b.com",
           subject: "A",
           body: "b",
           receivedAt: "2026-03-10T00:00:00Z",
-          provider: "gmail",
-        },
+        }),
       ]);
 
       const phases: (string | null)[] = [];
@@ -749,24 +692,20 @@ describe("email capture boundary", () => {
           needsReview: 0,
         };
       });
-      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
-      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+      mockEmptyReviewLoads();
 
-      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
+      await runFetchAndProcess();
 
       expect(phases).toContain("processing");
     });
 
     it("sets complete with zero results when first fetch has 0 emails", async () => {
-      useEmailCaptureStore.setState({
-        accounts: [makeAccount()],
-      });
+      setAccounts();
 
       mockAdapter.fetchEmails.mockResolvedValueOnce([]);
-      vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
-      vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+      mockEmptyReviewLoads();
 
-      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
+      await runFetchAndProcess();
 
       expect(useEmailCaptureStore.getState().phase).toBe("complete");
       expect(useEmailCaptureStore.getState().progress).toEqual(
@@ -776,23 +715,18 @@ describe("email capture boundary", () => {
     });
 
     it("clears phase and progress on error in finally block", async () => {
-      useEmailCaptureStore.setState({
-        accounts: [makeAccount()],
-      });
-
+      setAccounts();
       mockAdapter.fetchEmails.mockResolvedValueOnce([
-        {
-          externalId: "ext-1",
+        makeRawEmail({
           from: "b@b.com",
           subject: "A",
           body: "b",
           receivedAt: "2026-03-10T00:00:00Z",
-          provider: "gmail",
-        },
+        }),
       ]);
       vi.mocked(processEmails).mockRejectedValueOnce(new Error("pipeline crash"));
 
-      await fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
+      await runFetchAndProcess();
 
       expect(useEmailCaptureStore.getState().phase).toBeNull();
       expect(useEmailCaptureStore.getState().progress).toBeNull();
@@ -800,37 +734,21 @@ describe("email capture boundary", () => {
     });
 
     it("drops stale fetch completions after the active user changes", async () => {
-      const deferred =
-        createDeferred<
-          readonly [
-            {
-              readonly externalId: string;
-              readonly from: string;
-              readonly subject: string;
-              readonly body: string;
-              readonly receivedAt: string;
-              readonly provider: "gmail";
-            },
-          ]
-        >();
-      useEmailCaptureStore.setState({
-        accounts: [makeAccount()],
-      });
+      const deferred = createDeferred<readonly [RawEmail]>();
+      setAccounts();
       mockAdapter.fetchEmails.mockReturnValueOnce(deferred.promise);
 
-      const fetch = fetchAndProcessEmails(mockDb, mockUserId as UserId, "g", "o", mockRefresh);
+      const fetch = runFetchAndProcess();
       expect(useEmailCaptureStore.getState().isFetching).toBe(true);
 
       initializeEmailCaptureSession("user-2" as UserId);
       deferred.resolve([
-        {
-          externalId: "ext-1",
+        makeRawEmail({
           from: "b@b.com",
           subject: "A",
           body: "b",
           receivedAt: "2026-03-10T00:00:00Z",
-          provider: "gmail",
-        },
+        }),
       ]);
 
       await fetch;

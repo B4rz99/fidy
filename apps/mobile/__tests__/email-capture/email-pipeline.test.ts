@@ -46,6 +46,26 @@ const mockBuildEmailCaptureEvidence = vi.fn().mockReturnValue([
 const mockSaveCaptureEvidenceRows = vi.fn();
 const mockLinkCaptureEvidenceToTransaction = vi.fn();
 
+function buildCaptureEvidenceRow(
+  row: Record<string, unknown>,
+  index: number,
+  link: Record<string, unknown>
+) {
+  return {
+    id: `ce-${index + 1}`,
+    ...row,
+    ...link,
+    deletedAt: null,
+  };
+}
+
+function materializeCaptureEvidenceRowsFixture(
+  evidence: Record<string, unknown>[],
+  link: Record<string, unknown>
+) {
+  return evidence.map((row, index) => buildCaptureEvidenceRow(row, index, link));
+}
+
 vi.mock("@/features/capture-sources/lib/dedup", () => ({
   findDuplicateTransaction: (...args: unknown[]) => mockFindDuplicateTransaction(...args),
 }));
@@ -84,12 +104,7 @@ vi.mock("@/features/financial-accounts", () => ({
 vi.mock("@/features/capture-evidence", () => ({
   buildEmailCaptureEvidence: (...args: unknown[]) => mockBuildEmailCaptureEvidence(...args),
   materializeCaptureEvidenceRows: (evidence: any[], link: Record<string, unknown>) =>
-    evidence.map((row, index) => ({
-      id: `ce-${index + 1}`,
-      ...row,
-      ...link,
-      deletedAt: null,
-    })),
+    materializeCaptureEvidenceRowsFixture(evidence, link),
   saveCaptureEvidenceRows: (...args: unknown[]) => mockSaveCaptureEvidenceRows(...args),
   linkCaptureEvidenceToTransaction: (...args: unknown[]) =>
     mockLinkCaptureEvidenceToTransaction(...args),
@@ -111,6 +126,7 @@ vi.mock("@/shared/lib/generate-id", () => ({
 
 const mockDb = {} as any;
 const USER_ID = requireUserId("user-1");
+let idCounter = 0;
 
 function makeRawEmail(overrides: Partial<RawEmail> = {}): RawEmail {
   return {
@@ -124,45 +140,122 @@ function makeRawEmail(overrides: Partial<RawEmail> = {}): RawEmail {
   };
 }
 
-describe("email processing pipeline", () => {
-  let idCounter: number;
+function makeParsedEmailResult(overrides: Record<string, unknown> = {}) {
+  return {
+    type: "expense",
+    amount: 50000,
+    categoryId: "other",
+    description: "Compra en Exito",
+    date: "2026-03-05",
+    confidence: 0.9,
+    ...overrides,
+  };
+}
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    idCounter = 0;
-    mockGenerateId.mockImplementation((prefix: string) => {
-      idCounter++;
-      return `${prefix}-${idCounter}`;
-    });
-    mockGetProcessedExternalIds.mockResolvedValue(new Set<string>());
-    mockInsertProcessedEmail.mockResolvedValue(undefined);
-    mockInsertTransaction.mockResolvedValue(undefined);
-    mockEnqueueSync.mockResolvedValue(undefined);
-    mockLookupMerchantRule.mockResolvedValue(null);
-    mockInsertMerchantRule.mockResolvedValue(undefined);
-    mockParseEmailApi.mockResolvedValue(null);
-    mockFindDuplicateTransaction.mockResolvedValue(null);
-    mockGetPendingRetryEmails.mockResolvedValue([]);
-    mockMarkForRetry.mockResolvedValue(undefined);
-    mockMarkPermanentlyFailed.mockResolvedValue(undefined);
-    mockMarkRetrySuccess.mockResolvedValue(undefined);
-    mockUpdateProcessedEmailStatus.mockResolvedValue(undefined);
-    mockBuildEmailCaptureEvidence.mockReturnValue([
-      {
-        sourceFamily: "bancolombia",
-        evidenceType: "sender_email",
+function resetGeneratedIds() {
+  idCounter = 0;
+  mockGenerateId.mockImplementation((prefix: string) => {
+    idCounter += 1;
+    return `${prefix}-${idCounter}`;
+  });
+}
+
+function resetPipelineMocks() {
+  mockGetProcessedExternalIds.mockResolvedValue(new Set<string>());
+  mockInsertProcessedEmail.mockResolvedValue(undefined);
+  mockInsertTransaction.mockResolvedValue(undefined);
+  mockEnqueueSync.mockResolvedValue(undefined);
+  mockLookupMerchantRule.mockResolvedValue(null);
+  mockInsertMerchantRule.mockResolvedValue(undefined);
+  mockParseEmailApi.mockResolvedValue(null);
+  mockFindDuplicateTransaction.mockResolvedValue(null);
+  mockGetPendingRetryEmails.mockResolvedValue([]);
+  mockMarkForRetry.mockResolvedValue(undefined);
+  mockMarkPermanentlyFailed.mockResolvedValue(undefined);
+  mockMarkRetrySuccess.mockResolvedValue(undefined);
+  mockUpdateProcessedEmailStatus.mockResolvedValue(undefined);
+}
+
+function resetCaptureEvidenceMocks() {
+  mockBuildEmailCaptureEvidence.mockReturnValue([
+    {
+      sourceFamily: "bancolombia",
+      evidenceType: "sender_email",
+      scope: "email:bancolombia:sender",
+      value: "notificaciones@bancolombia.com.co",
+    },
+    {
+      sourceFamily: "bancolombia",
+      evidenceType: "sender_domain",
+      scope: "email:bancolombia:domain",
+      value: "bancolombia.com.co",
+    },
+  ]);
+  mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
+  mockLinkCaptureEvidenceToTransaction.mockResolvedValue(undefined);
+}
+
+function expectSavedTransaction(matcher: Record<string, unknown>) {
+  expect(mockInsertTransaction).toHaveBeenCalledWith(mockDb, expect.objectContaining(matcher));
+}
+
+function expectProcessedEmailSaved(matcher: Record<string, unknown>) {
+  expect(mockInsertProcessedEmail).toHaveBeenCalledWith(mockDb, expect.objectContaining(matcher));
+}
+
+function expectCaptureEvidenceSaved(transactionId: string | null) {
+  expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
+    mockDb,
+    expect.arrayContaining([
+      expect.objectContaining({
+        userId: USER_ID,
+        processedEmailId: expect.any(String),
+        processedCaptureId: null,
+        transactionId,
         scope: "email:bancolombia:sender",
         value: "notificaciones@bancolombia.com.co",
-      },
-      {
-        sourceFamily: "bancolombia",
-        evidenceType: "sender_domain",
-        scope: "email:bancolombia:domain",
-        value: "bancolombia.com.co",
-      },
-    ]);
-    mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
-    mockLinkCaptureEvidenceToTransaction.mockResolvedValue(undefined);
+      }),
+    ])
+  );
+}
+
+function mockNeedsReviewThenSavedParseResults() {
+  mockParseEmailApi
+    .mockResolvedValueOnce(makeParsedEmailResult({ description: "Compra 1", confidence: 0.5 }))
+    .mockResolvedValueOnce(
+      makeParsedEmailResult({
+        amount: 30000,
+        categoryId: "food",
+        description: "Compra 2",
+      })
+    );
+}
+
+function expectProgressIncludesNeedsReview(
+  progressCalls: {
+    total: number;
+    completed: number;
+    saved: number;
+    failed: number;
+    needsReview: number;
+  }[]
+) {
+  expect(progressCalls.length).toBeGreaterThanOrEqual(3);
+  expect(progressCalls[0]).toEqual(
+    expect.objectContaining({ total: 2, completed: 0, saved: 0, failed: 0, needsReview: 0 })
+  );
+  expect(progressCalls[1]?.needsReview).toBe(1);
+  expect(progressCalls[1]?.saved).toBe(0);
+  expect(progressCalls.at(-1)?.needsReview).toBe(1);
+  expect(progressCalls.at(-1)?.saved).toBe(1);
+}
+
+describe("email processing pipeline", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetGeneratedIds();
+    resetPipelineMocks();
+    resetCaptureEvidenceMocks();
   });
 
   it("skips already processed emails", async () => {
@@ -210,53 +303,28 @@ describe("email processing pipeline", () => {
 
   it("saves transaction and caches merchant rule when LLM returns high confidence", async () => {
     const emails = [makeRawEmail()];
-    mockParseEmailApi.mockResolvedValueOnce({
-      type: "expense",
-      amount: 50000,
-      categoryId: "other",
-      description: "Compra en Exito",
-      date: "2026-03-05",
-      confidence: 0.9,
-    });
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
 
     const result = await processEmails(mockDb, USER_ID, emails);
 
     expect(result.saved).toBe(1);
     expect(result.needsReview).toBe(0);
     expect(result.failed).toBe(0);
-    expect(mockInsertTransaction).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({
-        userId: USER_ID,
-        type: "expense",
-        amount: 50000,
-        accountId: "fa-default-user-1",
-        accountAttributionState: "unresolved",
-        source: "email_gmail",
-      })
-    );
+    expectSavedTransaction({
+      userId: USER_ID,
+      type: "expense",
+      amount: 50000,
+      accountId: "fa-default-user-1",
+      accountAttributionState: "unresolved",
+      source: "email_gmail",
+    });
     expect(mockEnqueueSync).toHaveBeenCalled();
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({
-        externalId: "ext-1",
-        status: "success",
-        confidence: 0.9,
-      })
-    );
-    expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
-      mockDb,
-      expect.arrayContaining([
-        expect.objectContaining({
-          userId: USER_ID,
-          processedEmailId: expect.any(String),
-          processedCaptureId: null,
-          transactionId: "tx-1",
-          scope: "email:bancolombia:sender",
-          value: "notificaciones@bancolombia.com.co",
-        }),
-      ])
-    );
+    expectProcessedEmailSaved({
+      externalId: "ext-1",
+      status: "success",
+      confidence: 0.9,
+    });
+    expectCaptureEvidenceSaved("tx-1");
     expect(mockInsertMerchantRule).toHaveBeenCalledWith(
       mockDb,
       USER_ID,
@@ -485,24 +553,7 @@ describe("email processing pipeline", () => {
 
   it("includes needsReview in progress callback", async () => {
     const emails = [makeRawEmail({ externalId: "ext-1" }), makeRawEmail({ externalId: "ext-2" })];
-    // First email: low confidence → needs_review
-    mockParseEmailApi.mockResolvedValueOnce({
-      type: "expense",
-      amount: 50000,
-      categoryId: "other",
-      description: "Compra 1",
-      date: "2026-03-05",
-      confidence: 0.5,
-    });
-    // Second email: high confidence → saved
-    mockParseEmailApi.mockResolvedValueOnce({
-      type: "expense",
-      amount: 30000,
-      categoryId: "food",
-      description: "Compra 2",
-      date: "2026-03-05",
-      confidence: 0.9,
-    });
+    mockNeedsReviewThenSavedParseResults();
 
     const progressCalls: {
       total: number;
@@ -514,20 +565,7 @@ describe("email processing pipeline", () => {
 
     await processEmails(mockDb, USER_ID, emails, (p) => progressCalls.push(p));
 
-    // Initial call + one per email
-    expect(progressCalls.length).toBeGreaterThanOrEqual(3);
-    // First call is initial: all zeros
-    expect(progressCalls[0]).toEqual(
-      expect.objectContaining({ total: 2, completed: 0, saved: 0, failed: 0, needsReview: 0 })
-    );
-    // After first email (needs_review): needsReview = 1
-    const afterFirst = progressCalls[1]!;
-    expect(afterFirst.needsReview).toBe(1);
-    expect(afterFirst.saved).toBe(0);
-    // After second email (saved): saved = 1
-    const last = progressCalls[progressCalls.length - 1]!;
-    expect(last.needsReview).toBe(1);
-    expect(last.saved).toBe(1);
+    expectProgressIncludesNeedsReview(progressCalls);
   });
 
   it("returns zero counts for empty input", async () => {

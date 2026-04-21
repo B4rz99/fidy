@@ -6,67 +6,11 @@
   },
   "violations": [
     {
-      "key": "(anonymous)@106-140@apps/mobile/__tests__/transfers/repository.test.ts",
-      "file": "apps/mobile/__tests__/transfers/repository.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 34,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@1088-1129@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 40,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@111-144@apps/mobile/__tests__/ai-chat/user-memories.test.ts",
       "file": "apps/mobile/__tests__/ai-chat/user-memories.test.ts",
       "function": "(anonymous)",
       "cyclomaticComplexity": 1,
       "nloc": 32,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@112-151@apps/mobile/__tests__/financial-accounts/repository.test.ts",
-      "file": "apps/mobile/__tests__/financial-accounts/repository.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 38,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@1131-1167@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 35,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@122-146@apps/mobile/__tests__/sync/sync-pull-integration.test.ts",
-      "file": "apps/mobile/__tests__/sync/sync-pull-integration.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 8,
-      "nloc": 18,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@130-166@apps/mobile/__tests__/email-capture/email-pipeline.test.ts",
-      "file": "apps/mobile/__tests__/email-capture/email-pipeline.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 34,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@132-189@apps/mobile/__tests__/sync/sync-service.test.ts",
-      "file": "apps/mobile/__tests__/sync/sync-service.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 57,
       "parameterCount": 0
     },
     {
@@ -78,51 +22,11 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@139-197@apps/mobile/__tests__/financial-accounts/balance-repository.test.ts",
-      "file": "apps/mobile/__tests__/financial-accounts/balance-repository.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 56,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@141-173@apps/mobile/__tests__/capture-evidence/repository.test.ts",
-      "file": "apps/mobile/__tests__/capture-evidence/repository.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 31,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@141-174@apps/mobile/__tests__/goals/repository.test.ts",
       "file": "apps/mobile/__tests__/goals/repository.test.ts",
       "function": "(anonymous)",
       "cyclomaticComplexity": 1,
       "nloc": 32,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@148-190@apps/mobile/__tests__/financial-accounts/identifiers.test.ts",
-      "file": "apps/mobile/__tests__/financial-accounts/identifiers.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 40,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@153-199@apps/mobile/__tests__/budget/store.test.ts",
-      "file": "apps/mobile/__tests__/budget/store.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 2,
-      "nloc": 39,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@154-197@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 42,
       "parameterCount": 0
     },
     {
@@ -134,27 +38,11 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@173-208@apps/mobile/__tests__/financial-accounts/opening-balances.test.ts",
-      "file": "apps/mobile/__tests__/financial-accounts/opening-balances.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 34,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@191-230@apps/mobile/__tests__/transactions/mutation-service.test.ts",
       "file": "apps/mobile/__tests__/transactions/mutation-service.test.ts",
       "function": "(anonymous)",
       "cyclomaticComplexity": 1,
       "nloc": 38,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@192-230@apps/mobile/__tests__/financial-accounts/identifiers.test.ts",
-      "file": "apps/mobile/__tests__/financial-accounts/identifiers.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 37,
       "parameterCount": 0
     },
     {
@@ -166,139 +54,11 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@203-250@apps/mobile/__tests__/budget/repository.test.ts",
-      "file": "apps/mobile/__tests__/budget/repository.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 41,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@210-249@apps/mobile/__tests__/financial-accounts/opening-balances.test.ts",
-      "file": "apps/mobile/__tests__/financial-accounts/opening-balances.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 37,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@211-267@apps/mobile/__tests__/email-capture/email-pipeline.test.ts",
-      "file": "apps/mobile/__tests__/email-capture/email-pipeline.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 55,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@212-252@apps/mobile/__tests__/sync/sync-service.test.ts",
-      "file": "apps/mobile/__tests__/sync/sync-service.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 40,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@230-267@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 36,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@232-274@apps/mobile/__tests__/financial-accounts/identifiers.test.ts",
-      "file": "apps/mobile/__tests__/financial-accounts/identifiers.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 40,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@24-64@apps/mobile/__tests__/sync/sync-conflict-state.test.ts",
-      "file": "apps/mobile/__tests__/sync/sync-conflict-state.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 2,
-      "nloc": 39,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@250-291@apps/mobile/features/calendar/lib/bill-mutation-service.ts",
       "file": "apps/mobile/features/calendar/lib/bill-mutation-service.ts",
       "function": "(anonymous)",
       "cyclomaticComplexity": 7,
       "nloc": 36,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@269-307@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 37,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@273-313@apps/mobile/__tests__/budget/repository.test.ts",
-      "file": "apps/mobile/__tests__/budget/repository.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 36,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@294-369@apps/mobile/__tests__/account-suggestions/service.test.ts",
-      "file": "apps/mobile/__tests__/account-suggestions/service.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 74,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@309-350@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 40,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@315-377@apps/mobile/__tests__/budget/repository.test.ts",
-      "file": "apps/mobile/__tests__/budget/repository.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 57,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@35-68@apps/mobile/__tests__/transfers/repository.test.ts",
-      "file": "apps/mobile/__tests__/transfers/repository.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 32,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@352-390@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 37,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@390-430@apps/mobile/__tests__/email-capture/store.test.ts",
-      "file": "apps/mobile/__tests__/email-capture/store.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 38,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@392-430@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 37,
       "parameterCount": 0
     },
     {
@@ -318,22 +78,6 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@42-139@apps/mobile/__tests__/capture-evidence/repository.test.ts",
-      "file": "apps/mobile/__tests__/capture-evidence/repository.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 92,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@432-475@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 42,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@47-80@apps/mobile/__tests__/transactions/query-service.test.ts",
       "file": "apps/mobile/__tests__/transactions/query-service.test.ts",
       "function": "(anonymous)",
@@ -350,22 +94,6 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@486-531@apps/mobile/__tests__/email-capture/email-pipeline.test.ts",
-      "file": "apps/mobile/__tests__/email-capture/email-pipeline.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 37,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@498-539@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 40,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@51-95@apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts",
       "file": "apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts",
       "function": "(anonymous)",
@@ -374,51 +102,11 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@512-553@apps/mobile/__tests__/email-capture/store.test.ts",
-      "file": "apps/mobile/__tests__/email-capture/store.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 39,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@541-690@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 148,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@57-190@apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts",
-      "file": "apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 121,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@57-65@apps/mobile/__tests__/calendar/calendar-utils.test.ts",
       "file": "apps/mobile/__tests__/calendar/calendar-utils.test.ts",
       "function": "(anonymous)",
       "cyclomaticComplexity": 6,
       "nloc": 7,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@594-631@apps/mobile/__tests__/email-capture/store.test.ts",
-      "file": "apps/mobile/__tests__/email-capture/store.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 35,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@648-688@apps/mobile/__tests__/email-capture/store.test.ts",
-      "file": "apps/mobile/__tests__/email-capture/store.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 34,
       "parameterCount": 0
     },
     {
@@ -438,46 +126,6 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@69-110@apps/mobile/__tests__/financial-accounts/opening-balances.test.ts",
-      "file": "apps/mobile/__tests__/financial-accounts/opening-balances.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 39,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@69-113@apps/mobile/__tests__/financial-accounts/identifiers.test.ts",
-      "file": "apps/mobile/__tests__/financial-accounts/identifiers.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 42,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@692-738@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 45,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@7-57@apps/mobile/__tests__/sync/sync-service.test.ts",
-      "file": "apps/mobile/__tests__/sync/sync-service.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 50,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@70-104@apps/mobile/__tests__/transfers/repository.test.ts",
-      "file": "apps/mobile/__tests__/transfers/repository.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 34,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@70-124@apps/mobile/__tests__/shared/write-through.test.ts",
       "file": "apps/mobile/__tests__/shared/write-through.test.ts",
       "function": "(anonymous)",
@@ -491,54 +139,6 @@
       "function": "(anonymous)",
       "cyclomaticComplexity": 1,
       "nloc": 75,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@74-123@apps/mobile/__tests__/account-suggestions/service.test.ts",
-      "file": "apps/mobile/__tests__/account-suggestions/service.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 45,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@740-800@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 2,
-      "nloc": 45,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@75-118@apps/mobile/__tests__/sync/sync-service.test.ts",
-      "file": "apps/mobile/__tests__/sync/sync-service.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 44,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@77-119@apps/mobile/__tests__/budget/store.test.ts",
-      "file": "apps/mobile/__tests__/budget/store.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 2,
-      "nloc": 37,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@802-847@apps/mobile/__tests__/email-capture/store.test.ts",
-      "file": "apps/mobile/__tests__/email-capture/store.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 42,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@802-870@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 65,
       "parameterCount": 0
     },
     {
@@ -558,43 +158,11 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@89-130@apps/mobile/__tests__/sync/sync-module.test.ts",
-      "file": "apps/mobile/__tests__/sync/sync-module.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 3,
-      "nloc": 40,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@899-948@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 48,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@950-984@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 33,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@97-204@apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts",
       "file": "apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts",
       "function": "(anonymous)",
       "cyclomaticComplexity": 1,
       "nloc": 102,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@986-1023@apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 36,
       "parameterCount": 0
     },
     {
@@ -630,38 +198,6 @@
       "parameterCount": 3
     },
     {
-      "key": "createIdentifierId@135-195@apps/mobile/__tests__/financial-accounts/management-service.test.ts",
-      "file": "apps/mobile/__tests__/financial-accounts/management-service.test.ts",
-      "function": "createIdentifierId",
-      "cyclomaticComplexity": 3,
-      "nloc": 55,
-      "parameterCount": 0
-    },
-    {
-      "key": "createIdentifierId@247-292@apps/mobile/__tests__/account-suggestions/service.test.ts",
-      "file": "apps/mobile/__tests__/account-suggestions/service.test.ts",
-      "function": "createIdentifierId",
-      "cyclomaticComplexity": 1,
-      "nloc": 38,
-      "parameterCount": 0
-    },
-    {
-      "key": "createIdentifierId@409-457@apps/mobile/__tests__/account-suggestions/service.test.ts",
-      "file": "apps/mobile/__tests__/account-suggestions/service.test.ts",
-      "function": "createIdentifierId",
-      "cyclomaticComplexity": 1,
-      "nloc": 42,
-      "parameterCount": 0
-    },
-    {
-      "key": "createIdentifierId@41-97@apps/mobile/__tests__/financial-accounts/management-service.test.ts",
-      "file": "apps/mobile/__tests__/financial-accounts/management-service.test.ts",
-      "function": "createIdentifierId",
-      "cyclomaticComplexity": 1,
-      "nloc": 54,
-      "parameterCount": 0
-    },
-    {
       "key": "deriveEffectiveOnboardingComplete@55-62@apps/mobile/features/auth/lib/effective-auth.ts",
       "file": "apps/mobile/features/auth/lib/effective-auth.ts",
       "function": "deriveEffectiveOnboardingComplete",
@@ -694,28 +230,12 @@
       "parameterCount": 4
     },
     {
-      "key": "evidence.map@87-96@apps/mobile/__tests__/email-capture/email-pipeline.test.ts",
-      "file": "apps/mobile/__tests__/email-capture/email-pipeline.test.ts",
-      "function": "evidence.map",
-      "cyclomaticComplexity": 1,
-      "nloc": 9,
-      "parameterCount": 4
-    },
-    {
       "key": "extractAliasEvidence@55-80@apps/mobile/features/capture-evidence/lib/build-capture-evidence.ts",
       "file": "apps/mobile/features/capture-evidence/lib/build-capture-evidence.ts",
       "function": "extractAliasEvidence",
       "cyclomaticComplexity": 1,
       "nloc": 14,
       "parameterCount": 4
-    },
-    {
-      "key": "extractTypeEnum@52-99@apps/mobile/__tests__/email-capture/schema-compat.test.ts",
-      "file": "apps/mobile/__tests__/email-capture/schema-compat.test.ts",
-      "function": "extractTypeEnum",
-      "cyclomaticComplexity": 6,
-      "nloc": 9,
-      "parameterCount": 1
     },
     {
       "key": "getCaptureEvidenceRowsForScopeValue@204-223@apps/mobile/features/capture-evidence/lib/repository.ts",
@@ -756,22 +276,6 @@
       "cyclomaticComplexity": 6,
       "nloc": 7,
       "parameterCount": 1
-    },
-    {
-      "key": "getLocale@307-355@apps/mobile/__tests__/budget/monitoring.test.ts",
-      "file": "apps/mobile/__tests__/budget/monitoring.test.ts",
-      "function": "getLocale",
-      "cyclomaticComplexity": 1,
-      "nloc": 46,
-      "parameterCount": 0
-    },
-    {
-      "key": "getLocale@447-479@apps/mobile/__tests__/budget/monitoring.test.ts",
-      "file": "apps/mobile/__tests__/budget/monitoring.test.ts",
-      "function": "getLocale",
-      "cyclomaticComplexity": 1,
-      "nloc": 31,
-      "parameterCount": 0
     },
     {
       "key": "getNextOnboardingStep@26-40@apps/mobile/features/onboarding/lib/flow.ts",
@@ -819,14 +323,6 @@
       "function": "hydrate",
       "cyclomaticComplexity": 6,
       "nloc": 22,
-      "parameterCount": 0
-    },
-    {
-      "key": "id@159-165@apps/mobile/__tests__/email-capture/store.test.ts",
-      "file": "apps/mobile/__tests__/email-capture/store.test.ts",
-      "function": "id",
-      "cyclomaticComplexity": 11,
-      "nloc": 7,
       "parameterCount": 0
     },
     {
@@ -886,36 +382,12 @@
       "parameterCount": 0
     },
     {
-      "key": "saveAccountTransaction@66-101@apps/mobile/__tests__/financial-accounts/balance-repository.test.ts",
-      "file": "apps/mobile/__tests__/financial-accounts/balance-repository.test.ts",
-      "function": "saveAccountTransaction",
-      "cyclomaticComplexity": 2,
-      "nloc": 36,
-      "parameterCount": 8
-    },
-    {
-      "key": "saveAccountTransfer@103-136@apps/mobile/__tests__/financial-accounts/balance-repository.test.ts",
-      "file": "apps/mobile/__tests__/financial-accounts/balance-repository.test.ts",
-      "function": "saveAccountTransfer",
-      "cyclomaticComplexity": 1,
-      "nloc": 34,
-      "parameterCount": 8
-    },
-    {
       "key": "saveEvidence@39-68@apps/mobile/__tests__/review-queues/attribution-review-service.test.ts",
       "file": "apps/mobile/__tests__/review-queues/attribution-review-service.test.ts",
       "function": "saveEvidence",
       "cyclomaticComplexity": 1,
       "nloc": 30,
       "parameterCount": 6
-    },
-    {
-      "key": "saveEvidenceRow@44-71@apps/mobile/__tests__/account-suggestions/service.test.ts",
-      "file": "apps/mobile/__tests__/account-suggestions/service.test.ts",
-      "function": "saveEvidenceRow",
-      "cyclomaticComplexity": 11,
-      "nloc": 28,
-      "parameterCount": 2
     },
     {
       "key": "scheduleBudgetAlert@21-68@apps/mobile/features/budget/lib/notifications.ts",
