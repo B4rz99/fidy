@@ -51,6 +51,36 @@ vi.mock("@/features/budget/lib/notifications", () => ({
 const USER_ID = "user-1" as UserId;
 const mockDb = {} as any;
 
+type BudgetRefreshSnapshot = {
+  budgets: any[];
+  budgetProgress: any[];
+  summary: { totalBudget: number; totalSpent: number; percentUsed: number };
+  autoSuggestions: any[];
+  pendingAlerts: any[];
+  pendingPermissionRequest: boolean;
+};
+
+const EMPTY_BUDGET_REFRESH_SNAPSHOT: BudgetRefreshSnapshot = {
+  budgets: [{ id: "budget-1", categoryId: "food", month: "2026-03" as Month }],
+  budgetProgress: [],
+  summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
+  autoSuggestions: [],
+  pendingAlerts: [],
+  pendingPermissionRequest: false,
+};
+
+const MARCH_STALE_SNAPSHOT: BudgetRefreshSnapshot = {
+  ...EMPTY_BUDGET_REFRESH_SNAPSHOT,
+  budgets: [{ id: "budget-march", categoryId: "food", month: "2026-03" as Month }],
+  summary: { totalBudget: 100000, totalSpent: 85000, percentUsed: 85 },
+};
+
+const APRIL_FRESH_SNAPSHOT: BudgetRefreshSnapshot = {
+  ...EMPTY_BUDGET_REFRESH_SNAPSHOT,
+  budgets: [{ id: "budget-april", categoryId: "transport", month: "2026-04" as Month }],
+  summary: { totalBudget: 120000, totalSpent: 10000, percentUsed: 8 },
+};
+
 function createDeferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (error?: unknown) => void;
@@ -65,6 +95,13 @@ async function getBudgetModule() {
   return import("@/features/budget/store");
 }
 
+async function initializeBudgetStore(month: Month = "2026-03" as Month) {
+  const module = await getBudgetModule();
+  module.initializeBudgetSession(USER_ID);
+  module.useBudgetStore.getState().setMonth(month);
+  return module;
+}
+
 describe("useBudgetStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -75,97 +112,50 @@ describe("useBudgetStore", () => {
   });
 
   it("ignores stale budget refresh results after the month changes", async () => {
-    const staleSnapshot = {
-      budgets: [{ id: "budget-march", categoryId: "food", month: "2026-03" as Month }] as any[],
-      budgetProgress: [],
-      summary: { totalBudget: 100000, totalSpent: 85000, percentUsed: 85 },
-      autoSuggestions: [],
-      pendingAlerts: [],
-      pendingPermissionRequest: false,
-    };
-    const freshSnapshot = {
-      budgets: [
-        { id: "budget-april", categoryId: "transport", month: "2026-04" as Month },
-      ] as any[],
-      budgetProgress: [],
-      summary: { totalBudget: 120000, totalSpent: 10000, percentUsed: 8 },
-      autoSuggestions: [],
-      pendingAlerts: [],
-      pendingPermissionRequest: false,
-    };
-    const deferredMarch = createDeferred<typeof staleSnapshot>();
+    const deferredMarch = createDeferred<BudgetRefreshSnapshot>();
 
     mockRefreshMonth.mockImplementation(({ month }: { month: Month }) =>
-      month === ("2026-03" as Month) ? deferredMarch.promise : Promise.resolve(freshSnapshot)
+      month === ("2026-03" as Month) ? deferredMarch.promise : Promise.resolve(APRIL_FRESH_SNAPSHOT)
     );
 
-    const { initializeBudgetSession, loadBudgetsForUser, useBudgetStore } = await getBudgetModule();
-    initializeBudgetSession(USER_ID);
-    useBudgetStore.getState().setMonth("2026-03" as Month);
-
+    const { loadBudgetsForUser, useBudgetStore } = await initializeBudgetStore("2026-03" as Month);
     const staleLoad = loadBudgetsForUser(mockDb, USER_ID);
 
     useBudgetStore.getState().setMonth("2026-04" as Month);
     const freshLoad = loadBudgetsForUser(mockDb, USER_ID);
 
     await freshLoad;
-    deferredMarch.resolve(staleSnapshot);
+    deferredMarch.resolve(MARCH_STALE_SNAPSHOT);
     await staleLoad;
 
     expect(useBudgetStore.getState().currentMonth).toBe("2026-04");
-    expect(useBudgetStore.getState().budgets).toEqual(freshSnapshot.budgets);
-    expect(useBudgetStore.getState().summary).toEqual(freshSnapshot.summary);
+    expect(useBudgetStore.getState().budgets).toEqual(APRIL_FRESH_SNAPSHOT.budgets);
+    expect(useBudgetStore.getState().summary).toEqual(APRIL_FRESH_SNAPSHOT.summary);
     expect(useBudgetStore.getState().isLoading).toBe(false);
   });
 
   it("clears loading when context changes without starting a newer refresh", async () => {
-    const deferredSnapshot = createDeferred<{
-      budgets: any[];
-      budgetProgress: any[];
-      summary: { totalBudget: number; totalSpent: number; percentUsed: number };
-      autoSuggestions: any[];
-      pendingAlerts: any[];
-      pendingPermissionRequest: boolean;
-    }>();
-
+    const deferredSnapshot = createDeferred<BudgetRefreshSnapshot>();
     mockRefreshMonth.mockReturnValueOnce(deferredSnapshot.promise);
 
-    const { initializeBudgetSession, loadBudgetsForUser, useBudgetStore } = await getBudgetModule();
-    initializeBudgetSession(USER_ID);
-    useBudgetStore.getState().setMonth("2026-03" as Month);
-
+    const { initializeBudgetSession, loadBudgetsForUser, useBudgetStore } =
+      await initializeBudgetStore("2026-03" as Month);
     const load = loadBudgetsForUser(mockDb, USER_ID);
 
     initializeBudgetSession("user-2" as UserId);
-    deferredSnapshot.resolve({
-      budgets: [],
-      budgetProgress: [],
-      summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
-      autoSuggestions: [],
-      pendingAlerts: [],
-      pendingPermissionRequest: false,
-    });
+    deferredSnapshot.resolve(EMPTY_BUDGET_REFRESH_SNAPSHOT);
     await load;
 
     expect(useBudgetStore.getState().isLoading).toBe(false);
   });
 
   it("drops stale notification side effects after the active user changes", async () => {
-    const deferredSnapshot = createDeferred<{
-      budgets: any[];
-      budgetProgress: any[];
-      summary: { totalBudget: number; totalSpent: number; percentUsed: number };
-      autoSuggestions: any[];
-      pendingAlerts: any[];
-      pendingPermissionRequest: boolean;
-    }>();
-
+    const deferredSnapshot = createDeferred<BudgetRefreshSnapshot>();
     mockRefreshMonth.mockReturnValueOnce(deferredSnapshot.promise);
 
-    const { initializeBudgetSession, loadBudgetsForUser, useBudgetStore } = await getBudgetModule();
-    initializeBudgetSession(USER_ID);
-    useBudgetStore.getState().setMonth("2026-03" as Month);
-
+    const { initializeBudgetSession, loadBudgetsForUser } = await initializeBudgetStore(
+      "2026-03" as Month
+    );
     const monitoringCallsBeforeLoad = mockCreateBudgetMonitoringModule.mock.calls.length;
     const load = loadBudgetsForUser(mockDb, USER_ID);
     const initialMonitoringPorts =
@@ -174,7 +164,6 @@ describe("useBudgetStore", () => {
     expect(initialMonitoringPorts).toBeDefined();
 
     initializeBudgetSession("user-2" as UserId);
-
     initialMonitoringPorts.insertNotification({
       type: "budget_alert",
       dedupKey: "budget_alert:food:80:2026-03",
@@ -187,14 +176,7 @@ describe("useBudgetStore", () => {
 
     expect(mockInsertNotificationRecord).not.toHaveBeenCalled();
 
-    deferredSnapshot.resolve({
-      budgets: [],
-      budgetProgress: [],
-      summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
-      autoSuggestions: [],
-      pendingAlerts: [],
-      pendingPermissionRequest: false,
-    });
+    deferredSnapshot.resolve(EMPTY_BUDGET_REFRESH_SNAPSHOT);
     await load;
   });
 
@@ -207,9 +189,7 @@ describe("useBudgetStore", () => {
     ];
     mockLoadAutoSuggestions.mockReturnValue(suggestions);
 
-    const { initializeBudgetSession, loadBudgetAutoSuggestions, useBudgetStore } =
-      await getBudgetModule();
-    initializeBudgetSession(USER_ID);
+    const { loadBudgetAutoSuggestions, useBudgetStore } = await initializeBudgetStore();
     useBudgetStore.setState({
       currentMonth: "2026-03" as Month,
       budgets: [{ id: "budget-1", categoryId: "food" as CategoryId }] as any[],

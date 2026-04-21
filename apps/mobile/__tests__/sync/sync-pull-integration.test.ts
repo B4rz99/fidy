@@ -114,6 +114,32 @@ function mockSupabase(rows: Record<string, unknown>[]) {
   return chain as any;
 }
 
+function expectStoredAmount(transactionId: TransactionId, amount: number) {
+  const tx = getTransactionById(db as any, transactionId);
+  expect(tx).not.toBeNull();
+  expect(tx?.amount).toBe(amount);
+}
+
+function readLoggedConflict() {
+  const conflicts = getUnresolvedConflicts(db as any);
+  expect(conflicts).toHaveLength(1);
+  const [conflict] = conflicts;
+  expect(conflict).toBeDefined();
+
+  return {
+    conflict,
+    localData: JSON.parse(conflict?.localData ?? "{}"),
+    serverData: JSON.parse(conflict?.serverData ?? "{}"),
+  };
+}
+
+function expectLoggedConflict(transactionId: string, localAmount: number, serverAmount: number) {
+  const { conflict, localData, serverData } = readLoggedConflict();
+  expect(conflict?.transactionId).toBe(transactionId);
+  expect(localData.amount).toBe(localAmount);
+  expect(serverData.amount).toBe(serverAmount);
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -128,21 +154,8 @@ describe("syncPull integration (real SQLite)", () => {
 
     const ok = await syncPull(db as any, supabase, USER_ID);
     expect(ok).toBe(true);
-
-    // Local row should now have the server's amount
-    const tx = getTransactionById(db as any, "tx-1" as TransactionId);
-    expect(tx).not.toBeNull();
-    expect(tx?.amount).toBe(2000);
-
-    // A conflict should be logged
-    const conflicts = getUnresolvedConflicts(db as any);
-    expect(conflicts).toHaveLength(1);
-    expect(conflicts[0]?.transactionId).toBe("tx-1");
-
-    const localData = JSON.parse(conflicts[0]?.localData ?? "{}");
-    const serverData = JSON.parse(conflicts[0]?.serverData ?? "{}");
-    expect(localData.amount).toBe(1000);
-    expect(serverData.amount).toBe(2000);
+    expectStoredAmount("tx-1" as TransactionId, 2000);
+    expectLoggedConflict("tx-1", 1000, 2000);
   });
 
   it("local newer → preserved, no conflict", async () => {

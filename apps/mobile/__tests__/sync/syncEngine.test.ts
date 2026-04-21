@@ -2,6 +2,27 @@
 // biome-ignore-all lint/style/useNamingConvention: snake_case matches Supabase API column names
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  createCursor,
+  createLocalAccountSuggestionDismissal,
+  createLocalCaptureEvidence,
+  createLocalFinancialAccount,
+  createLocalFinancialAccountIdentifier,
+  createLocalOpeningBalance,
+  createLocalTransaction,
+  createLocalTransfer,
+  createSequentialServerTransactions,
+  createServerAccountSuggestionDismissalRow,
+  createServerCaptureEvidenceRow,
+  createServerFinancialAccountIdentifierRow,
+  createServerFinancialAccountRow,
+  createServerOpeningBalanceRow,
+  createServerTransactionRow,
+  createServerTransferRow,
+  createSyncQueueEntry,
+  SYNC_USER_ID,
+} from "./fixtures";
+
 const mockGetQueuedSyncEntries = vi.fn().mockReturnValue([]);
 const mockClearSyncEntries = vi.fn();
 const mockGetAccountSuggestionDismissalById = vi.fn().mockReturnValue(null);
@@ -134,6 +155,267 @@ function getLastSetSyncMetaValue(key: string) {
   return typeof lastCall?.[2] === "string" ? lastCall[2] : null;
 }
 
+function createTransactionPullSupabase(overrides: Record<string, unknown> = {}) {
+  return createMockSupabase({
+    data: [createServerTransactionRow(overrides)],
+    error: null,
+  });
+}
+
+function createFinancialTablesSupabase() {
+  return createMockSupabase({
+    transactions: { data: [], error: null },
+    capture_evidence: { data: [createServerCaptureEvidenceRow()], error: null },
+    financial_accounts: { data: [createServerFinancialAccountRow()], error: null },
+    transfers: { data: [createServerTransferRow()], error: null },
+    opening_balances: { data: [createServerOpeningBalanceRow()], error: null },
+    financial_account_identifiers: {
+      data: [createServerFinancialAccountIdentifierRow()],
+      error: null,
+    },
+  });
+}
+
+function createDismissalPullSupabase() {
+  return createMockSupabase({
+    account_suggestion_dismissals: {
+      data: [createServerAccountSuggestionDismissalRow()],
+      error: null,
+    },
+    capture_evidence: { data: [], error: null },
+    financial_accounts: { data: [], error: null },
+    transfers: { data: [], error: null },
+    opening_balances: { data: [], error: null },
+    financial_account_identifiers: { data: [], error: null },
+    transactions: { data: [], error: null },
+  });
+}
+
+function createSecondaryFailureSupabase() {
+  return createMockSupabase({
+    transactions: {
+      data: [
+        createServerTransactionRow({
+          id: "tx-remote-1",
+          type: "income",
+          amount: 5000,
+          category_id: "salary",
+          description: "Pay",
+          date: "2026-03-04",
+          created_at: "2026-03-04T10:00:00.000Z",
+          updated_at: "2026-03-04T12:00:00.000Z",
+        }),
+      ],
+      error: null,
+    },
+    financial_accounts: {
+      data: null,
+      error: { message: "accounts unavailable", code: "500" },
+    },
+    transfers: { data: [], error: null },
+    opening_balances: { data: [], error: null },
+    financial_account_identifiers: { data: [], error: null },
+  });
+}
+
+function createSameTimestampTransactionSupabase() {
+  return createMockSupabase({
+    transactions: {
+      data: [
+        createServerTransactionRow({
+          id: "tx-1001",
+          amount: 1000,
+          description: null,
+          created_at: "2026-04-18T12:00:00.000Z",
+          updated_at: "2026-04-18T12:00:00.000Z",
+        }),
+        createServerTransactionRow({
+          id: "tx-1002",
+          amount: 1000,
+          description: null,
+          created_at: "2026-04-18T12:00:00.000Z",
+          updated_at: "2026-04-18T12:00:00.000Z",
+        }),
+      ],
+      error: null,
+    },
+  });
+}
+
+function createCompositeSyncMeta(updatedAt: string, id: string) {
+  const syncMeta = new Map<string, string>([
+    ["last_sync_at_transactions", JSON.stringify(createCursor(updatedAt, id))],
+  ]);
+  mockGetSyncMeta.mockImplementation((_, key: string) => syncMeta.get(key) ?? null);
+  mockSetSyncMeta.mockImplementation((_, key: string, value: string) => {
+    syncMeta.set(key, value);
+  });
+  return syncMeta;
+}
+
+async function runSyncPush(mockSupabase: any, userId = SYNC_USER_ID) {
+  const { syncPush } = await import("@/features/sync/services/syncEngine");
+  await syncPush(mockDb, mockSupabase, userId);
+}
+
+async function runSyncPull(mockSupabase: any, userId = SYNC_USER_ID) {
+  const { syncPull } = await import("@/features/sync/services/syncEngine");
+  return syncPull(mockDb, mockSupabase, userId);
+}
+
+function expectQueueCleared(...entryIds: string[]) {
+  expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, entryIds);
+}
+
+function expectCursorToEqual(key: string, cursor: Record<string, string>) {
+  expect(JSON.parse(getLastSetSyncMetaValue(key)!)).toEqual(cursor);
+}
+
+function expectUpsertedTransaction(matcher: Record<string, unknown>) {
+  expect(mockUpsertTransaction).toHaveBeenCalledWith(mockDb, expect.objectContaining(matcher));
+}
+
+function expectLastSyncAt(value: string) {
+  expect(mockSetSyncMeta).toHaveBeenCalledWith(mockDb, "last_sync_at", value);
+}
+
+function expectConflictLogged(transactionId: string) {
+  expect(mockInsertConflict).toHaveBeenCalledWith(
+    mockDb,
+    expect.objectContaining({ transactionId })
+  );
+}
+
+function expectCaptureEvidencePulled() {
+  expect(mockUpsertCaptureEvidence).toHaveBeenCalledWith(
+    mockDb,
+    expect.objectContaining({
+      id: "ce-1",
+      scope: "notification:bancolombia:last4",
+      value: "1234",
+      processedCaptureId: "pc-1",
+    })
+  );
+}
+
+function expectFinancialAccountPulled() {
+  expect(mockUpsertFinancialAccount).toHaveBeenCalledWith(
+    mockDb,
+    expect.objectContaining({
+      id: "fa-1",
+      userId: "user-1",
+      isDefault: true,
+    })
+  );
+}
+
+function expectTransferPulled() {
+  expect(mockUpsertTransfer).toHaveBeenCalledWith(
+    mockDb,
+    expect.objectContaining({
+      id: "tr-1",
+      fromAccountId: "fa-1",
+      toAccountId: "fa-2",
+    })
+  );
+}
+
+function createBusyTableCursorSupabase() {
+  return createMockSupabase({
+    transactions: { data: createSequentialServerTransactions(1000), error: null },
+    financial_accounts: {
+      data: [
+        createServerFinancialAccountRow({
+          created_at: "2026-04-19T00:00:00.000Z",
+          updated_at: "2026-04-19T00:00:00.000Z",
+        }),
+      ],
+      error: null,
+    },
+  });
+}
+
+function expectBusyTableCursorIsolation() {
+  expectCursorToEqual(
+    "last_sync_at_transactions",
+    createCursor("2026-04-18T0999:00:00.000Z", "tx-1000")
+  );
+  expect(mockSetSyncMeta).toHaveBeenCalledWith(
+    mockDb,
+    "last_sync_at",
+    "2026-04-18T0999:00:00.000Z"
+  );
+  expectCursorToEqual(
+    "last_sync_at_financial_accounts",
+    createCursor("2026-04-19T00:00:00.000Z", "fa-1")
+  );
+  expect(getLastSetSyncMetaValue("last_sync_at_transactions")).not.toContain(
+    "2026-04-19T00:00:00.000Z"
+  );
+}
+
+function expectOpeningBalancePulled() {
+  expect(mockUpsertOpeningBalance).toHaveBeenCalledWith(
+    mockDb,
+    expect.objectContaining({
+      id: "ob-1",
+      accountId: "fa-1",
+      amount: 500000,
+    })
+  );
+}
+
+function expectFinancialAccountIdentifierPulled() {
+  expect(mockUpsertFinancialAccountIdentifier).toHaveBeenCalledWith(
+    mockDb,
+    expect.objectContaining({
+      id: "fai-1",
+      accountId: "fa-1",
+      value: "1234",
+    })
+  );
+}
+
+function expectFinancialTableCursors() {
+  expectCursorToEqual(
+    "last_sync_at_financial_account_identifiers",
+    createCursor("2026-04-18T12:00:00.000Z", "fai-1")
+  );
+  expectCursorToEqual(
+    "last_sync_at_capture_evidence",
+    createCursor("2026-04-18T08:00:00.000Z", "ce-1")
+  );
+}
+
+function expectDismissalPulled() {
+  expect(mockUpsertAccountSuggestionDismissal).toHaveBeenCalledWith(
+    mockDb,
+    expect.objectContaining({
+      id: "asd-1",
+      userId: "user-1",
+      scope: "notification:bancolombia:last4",
+      value: "1234",
+      dismissedScore: 200,
+    })
+  );
+  expectCursorToEqual(
+    "last_sync_at_account_suggestion_dismissals",
+    createCursor("2026-04-19T11:00:00.000Z", "asd-1")
+  );
+}
+
+function expectCompositeTransactionsQuery(mockSupabase: any) {
+  expect(mockSupabase._getChain("transactions").or).toHaveBeenCalledWith(
+    "updated_at.gt.2026-04-18T12:00:00.000Z,and(updated_at.eq.2026-04-18T12:00:00.000Z,id.gt.tx-1000)"
+  );
+  expect(mockSupabase._getChain("transactions").order).toHaveBeenNthCalledWith(1, "updated_at", {
+    ascending: true,
+  });
+  expect(mockSupabase._getChain("transactions").order).toHaveBeenNthCalledWith(2, "id", {
+    ascending: true,
+  });
+}
+
 describe("syncEngine", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -152,35 +434,20 @@ describe("syncEngine", () => {
     });
 
     it("upserts transaction row to supabase and clears queue on success", async () => {
-      mockGetQueuedSyncEntries.mockReturnValueOnce([
-        {
-          id: "sq-1",
-          tableName: "transactions",
-          rowId: "tx-1",
-          operation: "insert",
+      mockGetQueuedSyncEntries.mockReturnValueOnce([createSyncQueueEntry()]);
+      mockGetTransactionById.mockReturnValueOnce(
+        createLocalTransaction({
+          amount: 1500,
+          description: "Lunch",
+          date: "2026-03-04",
           createdAt: "2026-03-04T10:00:00.000Z",
-        },
-      ]);
-      mockGetTransactionById.mockReturnValueOnce({
-        id: "tx-1",
-        userId: "user-1",
-        type: "expense",
-        amount: 1500,
-        categoryId: "food",
-        accountId: "fa-default-user-1",
-        accountAttributionState: "confirmed",
-        supersededAt: null,
-        description: "Lunch",
-        date: "2026-03-04",
-        createdAt: "2026-03-04T10:00:00.000Z",
-        updatedAt: "2026-03-04T10:00:00.000Z",
-        deletedAt: null,
-      });
+          updatedAt: "2026-03-04T10:00:00.000Z",
+        })
+      );
       mockUpsert.mockReturnValueOnce({ error: null });
       const mockSupabase = createMockSupabase();
 
-      const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, "user-1");
+      await runSyncPush(mockSupabase);
 
       expect(mockSupabase.from).toHaveBeenCalledWith("transactions");
       expect(mockUpsert).toHaveBeenCalledWith(
@@ -193,7 +460,7 @@ describe("syncEngine", () => {
           superseded_at: null,
         })
       );
-      expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-1"]);
+      expectQueueCleared("sq-1");
     });
 
     it("keeps entry in queue when supabase returns error", async () => {
@@ -229,29 +496,17 @@ describe("syncEngine", () => {
 
     it("upserts financial account rows and clears the queue entry on success", async () => {
       mockGetQueuedSyncEntries.mockReturnValueOnce([
-        {
+        createSyncQueueEntry({
           id: "sq-accounts-1",
           tableName: "financialAccounts",
           rowId: "fa-1",
-          operation: "insert",
-          createdAt: "2026-03-04T10:00:00.000Z",
-        },
+        }),
       ]);
-      mockGetFinancialAccountById.mockReturnValueOnce({
-        id: "fa-1",
-        userId: "user-1",
-        name: "Main wallet",
-        kind: "wallet",
-        isDefault: true,
-        createdAt: "2026-03-04T10:00:00.000Z",
-        updatedAt: "2026-03-04T10:00:00.000Z",
-        deletedAt: null,
-      });
+      mockGetFinancialAccountById.mockReturnValueOnce(createLocalFinancialAccount());
       mockUpsert.mockReturnValueOnce({ error: null });
       const mockSupabase = createMockSupabase();
 
-      const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, "user-1");
+      await runSyncPush(mockSupabase);
 
       expect(mockSupabase.from).toHaveBeenCalledWith("financial_accounts");
       expect(mockUpsert).toHaveBeenCalledWith(
@@ -263,34 +518,25 @@ describe("syncEngine", () => {
           is_default: true,
         })
       );
-      expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-accounts-1"]);
+      expectQueueCleared("sq-accounts-1");
     });
 
     it("upserts account suggestion dismissal rows and clears the queue entry on success", async () => {
       mockGetQueuedSyncEntries.mockReturnValueOnce([
-        {
+        createSyncQueueEntry({
           id: "sq-dismissal-1",
           tableName: "accountSuggestionDismissals",
           rowId: "asd-1",
-          operation: "insert",
           createdAt: "2026-04-19T10:00:00.000Z",
-        },
+        }),
       ]);
-      mockGetAccountSuggestionDismissalById.mockReturnValueOnce({
-        id: "asd-1",
-        userId: "user-1",
-        scope: "notification:bancolombia:last4",
-        value: "1234",
-        dismissedScore: 200,
-        createdAt: "2026-04-19T10:00:00.000Z",
-        updatedAt: "2026-04-19T10:00:00.000Z",
-        deletedAt: null,
-      });
+      mockGetAccountSuggestionDismissalById.mockReturnValueOnce(
+        createLocalAccountSuggestionDismissal()
+      );
       mockUpsert.mockReturnValueOnce({ error: null });
       const mockSupabase = createMockSupabase();
 
-      const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, "user-1");
+      await runSyncPush(mockSupabase);
 
       expect(mockSupabase.from).toHaveBeenCalledWith("account_suggestion_dismissals");
       expect(mockUpsert).toHaveBeenCalledWith(
@@ -303,38 +549,22 @@ describe("syncEngine", () => {
         }),
         { onConflict: "user_id,scope,value" }
       );
-      expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-dismissal-1"]);
+      expectQueueCleared("sq-dismissal-1");
     });
 
     it("upserts transfer rows and clears the queue entry on success", async () => {
       mockGetQueuedSyncEntries.mockReturnValueOnce([
-        {
+        createSyncQueueEntry({
           id: "sq-transfer-1",
           tableName: "transfers",
           rowId: "tr-1",
-          operation: "insert",
-          createdAt: "2026-03-04T10:00:00.000Z",
-        },
+        }),
       ]);
-      mockGetTransferById.mockReturnValueOnce({
-        id: "tr-1",
-        userId: "user-1",
-        amount: 250000,
-        fromAccountId: "fa-1",
-        toAccountId: "fa-2",
-        fromExternalLabel: null,
-        toExternalLabel: null,
-        description: "Move to savings",
-        date: "2026-04-18",
-        createdAt: "2026-04-18T10:00:00.000Z",
-        updatedAt: "2026-04-18T10:00:00.000Z",
-        deletedAt: null,
-      });
+      mockGetTransferById.mockReturnValueOnce(createLocalTransfer());
       mockUpsert.mockReturnValueOnce({ error: null });
       const mockSupabase = createMockSupabase();
 
-      const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, "user-1");
+      await runSyncPush(mockSupabase);
 
       expect(mockSupabase.from).toHaveBeenCalledWith("transfers");
       expect(mockUpsert).toHaveBeenCalledWith(
@@ -346,34 +576,22 @@ describe("syncEngine", () => {
           to_account_id: "fa-2",
         })
       );
-      expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-transfer-1"]);
+      expectQueueCleared("sq-transfer-1");
     });
 
     it("upserts opening balance rows and clears the queue entry on success", async () => {
       mockGetQueuedSyncEntries.mockReturnValueOnce([
-        {
+        createSyncQueueEntry({
           id: "sq-opening-balance-1",
           tableName: "openingBalances",
           rowId: "ob-1",
-          operation: "insert",
-          createdAt: "2026-03-04T10:00:00.000Z",
-        },
+        }),
       ]);
-      mockGetOpeningBalanceById.mockReturnValueOnce({
-        id: "ob-1",
-        userId: "user-1",
-        accountId: "fa-1",
-        amount: 500000,
-        effectiveDate: "2026-04-01",
-        createdAt: "2026-04-18T10:00:00.000Z",
-        updatedAt: "2026-04-18T10:00:00.000Z",
-        deletedAt: null,
-      });
+      mockGetOpeningBalanceById.mockReturnValueOnce(createLocalOpeningBalance());
       mockUpsert.mockReturnValueOnce({ error: null });
       const mockSupabase = createMockSupabase();
 
-      const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, "user-1");
+      await runSyncPush(mockSupabase);
 
       expect(mockSupabase.from).toHaveBeenCalledWith("opening_balances");
       expect(mockUpsert).toHaveBeenCalledWith(
@@ -386,34 +604,24 @@ describe("syncEngine", () => {
         }),
         { onConflict: "account_id" }
       );
-      expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-opening-balance-1"]);
+      expectQueueCleared("sq-opening-balance-1");
     });
 
     it("upserts financial account identifier rows and clears the queue entry on success", async () => {
       mockGetQueuedSyncEntries.mockReturnValueOnce([
-        {
+        createSyncQueueEntry({
           id: "sq-financial-identifier-1",
           tableName: "financialAccountIdentifiers",
           rowId: "fai-1",
-          operation: "insert",
-          createdAt: "2026-03-04T10:00:00.000Z",
-        },
+        }),
       ]);
-      mockGetFinancialAccountIdentifierById.mockReturnValueOnce({
-        id: "fai-1",
-        userId: "user-1",
-        accountId: "fa-1",
-        scope: "email:bancolombia:last4",
-        value: "1234",
-        createdAt: "2026-04-18T10:00:00.000Z",
-        updatedAt: "2026-04-18T10:00:00.000Z",
-        deletedAt: null,
-      });
+      mockGetFinancialAccountIdentifierById.mockReturnValueOnce(
+        createLocalFinancialAccountIdentifier()
+      );
       mockUpsert.mockReturnValueOnce({ error: null });
       const mockSupabase = createMockSupabase();
 
-      const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, "user-1");
+      await runSyncPush(mockSupabase);
 
       expect(mockSupabase.from).toHaveBeenCalledWith("financial_account_identifiers");
       expect(mockUpsert).toHaveBeenCalledWith(
@@ -426,38 +634,23 @@ describe("syncEngine", () => {
         }),
         { onConflict: "user_id,account_id,scope,value" }
       );
-      expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-financial-identifier-1"]);
+      expectQueueCleared("sq-financial-identifier-1");
     });
 
     it("upserts capture evidence rows and clears the queue entry on success", async () => {
       mockGetQueuedSyncEntries.mockReturnValueOnce([
-        {
+        createSyncQueueEntry({
           id: "sq-capture-evidence-1",
           tableName: "captureEvidence",
           rowId: "ce-1",
-          operation: "insert",
           createdAt: "2026-04-19T10:00:00.000Z",
-        },
+        }),
       ]);
-      mockGetCaptureEvidenceById.mockReturnValueOnce({
-        id: "ce-1",
-        userId: "user-1",
-        sourceFamily: "bancolombia",
-        evidenceType: "last4",
-        scope: "notification:bancolombia:last4",
-        value: "1234",
-        transactionId: "tx-1",
-        processedEmailId: null,
-        processedCaptureId: "pc-1",
-        createdAt: "2026-04-19T10:00:00.000Z",
-        updatedAt: "2026-04-19T10:00:00.000Z",
-        deletedAt: null,
-      });
+      mockGetCaptureEvidenceById.mockReturnValueOnce(createLocalCaptureEvidence());
       mockUpsert.mockReturnValueOnce({ error: null });
       const mockSupabase = createMockSupabase();
 
-      const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, "user-1");
+      await runSyncPush(mockSupabase);
 
       expect(mockSupabase.from).toHaveBeenCalledWith("capture_evidence");
       expect(mockUpsert).toHaveBeenCalledWith(
@@ -471,7 +664,7 @@ describe("syncEngine", () => {
           processed_capture_id: "pc-1",
         })
       );
-      expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-capture-evidence-1"]);
+      expectQueueCleared("sq-capture-evidence-1");
     });
 
     it("clears queue entry when local row is missing", async () => {
@@ -497,376 +690,87 @@ describe("syncEngine", () => {
   describe("syncPull", () => {
     it("fetches all rows on first sync and sets last_sync_at to max updated_at", async () => {
       mockGetSyncMeta.mockReturnValueOnce(null);
-      const serverRows = [
-        {
-          id: "tx-remote-1",
-          user_id: "user-1",
-          type: "income",
-          amount: 5000,
-          category_id: "salary",
-          account_id: "fa-default-user-1",
-          account_attribution_state: "confirmed",
-          superseded_at: null,
-          description: "Pay",
-          date: "2026-03-04",
-          created_at: "2026-03-04T10:00:00.000Z",
-          updated_at: "2026-03-04T12:00:00.000Z",
-          deleted_at: null,
-        },
-      ];
-      const mockSupabase = createMockSupabase({ data: serverRows, error: null });
+      const mockSupabase = createTransactionPullSupabase({
+        id: "tx-remote-1",
+        type: "income",
+        amount: 5000,
+        category_id: "salary",
+        description: "Pay",
+        date: "2026-03-04",
+        created_at: "2026-03-04T10:00:00.000Z",
+        updated_at: "2026-03-04T12:00:00.000Z",
+      });
       mockGetTransactionById.mockReturnValueOnce(null);
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      const result = await syncPull(mockDb, mockSupabase, "user-1");
+      const result = await runSyncPull(mockSupabase);
 
       expect(result).toBe(true);
-      expect(mockUpsertTransaction).toHaveBeenCalledWith(
-        mockDb,
-        expect.objectContaining({
-          id: "tx-remote-1",
-          userId: "user-1",
-          accountId: "fa-default-user-1",
-          accountAttributionState: "confirmed",
-          supersededAt: null,
-        })
-      );
-      expect(mockSetSyncMeta).toHaveBeenCalledWith(
-        mockDb,
-        "last_sync_at",
-        "2026-03-04T12:00:00.000Z"
-      );
+      expectUpsertedTransaction({
+        id: "tx-remote-1",
+        userId: "user-1",
+        accountId: "fa-default-user-1",
+        accountAttributionState: "confirmed",
+        supersededAt: null,
+      });
+      expectLastSyncAt("2026-03-04T12:00:00.000Z");
     });
 
     it("pulls financial-account tables and advances the shared sync cursor", async () => {
       mockGetSyncMeta.mockReturnValueOnce(null);
-      const mockSupabase = createMockSupabase({
-        transactions: { data: [], error: null },
-        capture_evidence: {
-          data: [
-            {
-              id: "ce-1",
-              user_id: "user-1",
-              source_family: "bancolombia",
-              evidence_type: "last4",
-              scope: "notification:bancolombia:last4",
-              value: "1234",
-              transaction_id: "tx-1",
-              processed_email_id: null,
-              processed_capture_id: "pc-1",
-              created_at: "2026-04-18T07:30:00.000Z",
-              updated_at: "2026-04-18T08:00:00.000Z",
-              deleted_at: null,
-            },
-          ],
-          error: null,
-        },
-        financial_accounts: {
-          data: [
-            {
-              id: "fa-1",
-              user_id: "user-1",
-              name: "Main wallet",
-              kind: "wallet",
-              is_default: true,
-              created_at: "2026-04-18T08:00:00.000Z",
-              updated_at: "2026-04-18T09:00:00.000Z",
-              deleted_at: null,
-            },
-          ],
-          error: null,
-        },
-        transfers: {
-          data: [
-            {
-              id: "tr-1",
-              user_id: "user-1",
-              amount: 250000,
-              from_account_id: "fa-1",
-              to_account_id: "fa-2",
-              from_external_label: null,
-              to_external_label: null,
-              description: "Move to savings",
-              date: "2026-04-18",
-              created_at: "2026-04-18T09:30:00.000Z",
-              updated_at: "2026-04-18T10:00:00.000Z",
-              deleted_at: null,
-            },
-          ],
-          error: null,
-        },
-        opening_balances: {
-          data: [
-            {
-              id: "ob-1",
-              user_id: "user-1",
-              account_id: "fa-1",
-              amount: 500000,
-              effective_date: "2026-04-01",
-              created_at: "2026-04-18T10:30:00.000Z",
-              updated_at: "2026-04-18T11:00:00.000Z",
-              deleted_at: null,
-            },
-          ],
-          error: null,
-        },
-        financial_account_identifiers: {
-          data: [
-            {
-              id: "fai-1",
-              user_id: "user-1",
-              account_id: "fa-1",
-              scope: "email:bancolombia:last4",
-              value: "1234",
-              created_at: "2026-04-18T11:30:00.000Z",
-              updated_at: "2026-04-18T12:00:00.000Z",
-              deleted_at: null,
-            },
-          ],
-          error: null,
-        },
-      });
+      const mockSupabase = createFinancialTablesSupabase();
       mockGetCaptureEvidenceById.mockReturnValueOnce(null);
       mockGetFinancialAccountById.mockReturnValueOnce(null);
       mockGetTransferById.mockReturnValueOnce(null);
       mockGetOpeningBalanceById.mockReturnValueOnce(null);
       mockGetFinancialAccountIdentifierById.mockReturnValueOnce(null);
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      const result = await syncPull(mockDb, mockSupabase, "user-1");
+      const result = await runSyncPull(mockSupabase);
 
       expect(result).toBe(true);
-      expect(mockUpsertCaptureEvidence).toHaveBeenCalledWith(
-        mockDb,
-        expect.objectContaining({
-          id: "ce-1",
-          scope: "notification:bancolombia:last4",
-          value: "1234",
-          processedCaptureId: "pc-1",
-        })
-      );
-      expect(mockUpsertFinancialAccount).toHaveBeenCalledWith(
-        mockDb,
-        expect.objectContaining({
-          id: "fa-1",
-          userId: "user-1",
-          isDefault: true,
-        })
-      );
-      expect(mockUpsertTransfer).toHaveBeenCalledWith(
-        mockDb,
-        expect.objectContaining({
-          id: "tr-1",
-          fromAccountId: "fa-1",
-          toAccountId: "fa-2",
-        })
-      );
-      expect(mockUpsertOpeningBalance).toHaveBeenCalledWith(
-        mockDb,
-        expect.objectContaining({
-          id: "ob-1",
-          accountId: "fa-1",
-          amount: 500000,
-        })
-      );
-      expect(mockUpsertFinancialAccountIdentifier).toHaveBeenCalledWith(
-        mockDb,
-        expect.objectContaining({
-          id: "fai-1",
-          accountId: "fa-1",
-          value: "1234",
-        })
-      );
-      expect(
-        JSON.parse(getLastSetSyncMetaValue("last_sync_at_financial_account_identifiers")!)
-      ).toEqual({
-        updatedAt: "2026-04-18T12:00:00.000Z",
-        id: "fai-1",
-      });
-      expect(JSON.parse(getLastSetSyncMetaValue("last_sync_at_capture_evidence")!)).toEqual({
-        updatedAt: "2026-04-18T08:00:00.000Z",
-        id: "ce-1",
-      });
+      expectCaptureEvidencePulled();
+      expectFinancialAccountPulled();
+      expectTransferPulled();
+      expectOpeningBalancePulled();
+      expectFinancialAccountIdentifierPulled();
+      expectFinancialTableCursors();
     });
 
     it("pulls account suggestion dismissals and advances their cursor", async () => {
-      const mockSupabase = createMockSupabase({
-        account_suggestion_dismissals: {
-          data: [
-            {
-              id: "asd-1",
-              user_id: "user-1",
-              scope: "notification:bancolombia:last4",
-              value: "1234",
-              dismissed_score: 200,
-              created_at: "2026-04-19T10:00:00.000Z",
-              updated_at: "2026-04-19T11:00:00.000Z",
-              deleted_at: null,
-            },
-          ],
-          error: null,
-        },
-        capture_evidence: { data: [], error: null },
-        financial_accounts: { data: [], error: null },
-        transfers: { data: [], error: null },
-        opening_balances: { data: [], error: null },
-        financial_account_identifiers: { data: [], error: null },
-        transactions: { data: [], error: null },
-      });
+      const mockSupabase = createDismissalPullSupabase();
       mockGetAccountSuggestionDismissalById.mockReturnValueOnce(null);
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      const result = await syncPull(mockDb, mockSupabase, "user-1");
+      const result = await runSyncPull(mockSupabase);
 
       expect(result).toBe(true);
-      expect(mockUpsertAccountSuggestionDismissal).toHaveBeenCalledWith(
-        mockDb,
-        expect.objectContaining({
-          id: "asd-1",
-          userId: "user-1",
-          scope: "notification:bancolombia:last4",
-          value: "1234",
-          dismissedScore: 200,
-        })
-      );
-      expect(
-        JSON.parse(getLastSetSyncMetaValue("last_sync_at_account_suggestion_dismissals")!)
-      ).toEqual({
-        updatedAt: "2026-04-19T11:00:00.000Z",
-        id: "asd-1",
-      });
+      expectDismissalPulled();
     });
 
     it("tracks per-table cursors so a busy table is not skipped by a newer row elsewhere", async () => {
       mockGetSyncMeta.mockImplementation((_, key: string) =>
         key === "last_sync_at" ? "2026-04-01T00:00:00.000Z" : null
       );
-      const transactionRows = Array.from({ length: 1000 }, (_, index) => {
-        const hour = String(index).padStart(4, "0");
-        return {
-          id: `tx-${index + 1}`,
-          user_id: "user-1",
-          type: "expense",
-          amount: 1000,
-          category_id: "food",
-          description: null,
-          date: "2026-04-18",
-          created_at: `2026-04-18T${hour}:00:00.000Z`,
-          updated_at: `2026-04-18T${hour}:00:00.000Z`,
-          deleted_at: null,
-        };
-      });
-      const mockSupabase = createMockSupabase({
-        transactions: { data: transactionRows, error: null },
-        financial_accounts: {
-          data: [
-            {
-              id: "fa-1",
-              user_id: "user-1",
-              name: "Main wallet",
-              kind: "wallet",
-              is_default: true,
-              created_at: "2026-04-19T00:00:00.000Z",
-              updated_at: "2026-04-19T00:00:00.000Z",
-              deleted_at: null,
-            },
-          ],
-          error: null,
-        },
-      });
+      const mockSupabase = createBusyTableCursorSupabase();
       mockGetTransactionById.mockReturnValue(null);
       mockGetFinancialAccountById.mockReturnValue(null);
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      const result = await syncPull(mockDb, mockSupabase, "user-1");
+      const result = await runSyncPull(mockSupabase);
 
       expect(result).toBe(true);
-      expect(JSON.parse(getLastSetSyncMetaValue("last_sync_at_transactions")!)).toEqual({
-        updatedAt: "2026-04-18T0999:00:00.000Z",
-        id: "tx-1000",
-      });
-      expect(mockSetSyncMeta).toHaveBeenCalledWith(
-        mockDb,
-        "last_sync_at",
-        "2026-04-18T0999:00:00.000Z"
-      );
-      expect(JSON.parse(getLastSetSyncMetaValue("last_sync_at_financial_accounts")!)).toEqual({
-        updatedAt: "2026-04-19T00:00:00.000Z",
-        id: "fa-1",
-      });
-      expect(getLastSetSyncMetaValue("last_sync_at_transactions")).not.toContain(
-        "2026-04-19T00:00:00.000Z"
-      );
+      expectBusyTableCursorIsolation();
     });
 
     it("uses a composite cursor to continue past rows that share the same updated_at", async () => {
-      const syncMeta = new Map<string, string>([
-        [
-          "last_sync_at_transactions",
-          JSON.stringify({
-            updatedAt: "2026-04-18T12:00:00.000Z",
-            id: "tx-1000",
-          }),
-        ],
-      ]);
-      mockGetSyncMeta.mockImplementation((_, key: string) => syncMeta.get(key) ?? null);
-      mockSetSyncMeta.mockImplementation((_, key: string, value: string) => {
-        syncMeta.set(key, value);
-      });
-      const mockSupabase = createMockSupabase({
-        transactions: {
-          data: [
-            {
-              id: "tx-1001",
-              user_id: "user-1",
-              type: "expense",
-              amount: 1000,
-              category_id: "food",
-              description: null,
-              date: "2026-04-18",
-              created_at: "2026-04-18T12:00:00.000Z",
-              updated_at: "2026-04-18T12:00:00.000Z",
-              deleted_at: null,
-            },
-            {
-              id: "tx-1002",
-              user_id: "user-1",
-              type: "expense",
-              amount: 1000,
-              category_id: "food",
-              description: null,
-              date: "2026-04-18",
-              created_at: "2026-04-18T12:00:00.000Z",
-              updated_at: "2026-04-18T12:00:00.000Z",
-              deleted_at: null,
-            },
-          ],
-          error: null,
-        },
-      });
+      const syncMeta = createCompositeSyncMeta("2026-04-18T12:00:00.000Z", "tx-1000");
+      const mockSupabase = createSameTimestampTransactionSupabase();
       mockGetTransactionById.mockReturnValue(null);
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      const result = await syncPull(mockDb, mockSupabase, "user-1");
+      const result = await runSyncPull(mockSupabase);
 
       expect(result).toBe(true);
-      expect(mockSupabase._getChain("transactions").or).toHaveBeenCalledWith(
-        "updated_at.gt.2026-04-18T12:00:00.000Z,and(updated_at.eq.2026-04-18T12:00:00.000Z,id.gt.tx-1000)"
+      expectCompositeTransactionsQuery(mockSupabase);
+      expect(JSON.parse(syncMeta.get("last_sync_at_transactions")!)).toEqual(
+        createCursor("2026-04-18T12:00:00.000Z", "tx-1002")
       );
-      expect(mockSupabase._getChain("transactions").order).toHaveBeenNthCalledWith(
-        1,
-        "updated_at",
-        {
-          ascending: true,
-        }
-      );
-      expect(mockSupabase._getChain("transactions").order).toHaveBeenNthCalledWith(2, "id", {
-        ascending: true,
-      });
-      expect(JSON.parse(syncMeta.get("last_sync_at_transactions")!)).toEqual({
-        updatedAt: "2026-04-18T12:00:00.000Z",
-        id: "tx-1002",
-      });
     });
 
     it("uses last_sync_at for incremental pull and skips setSyncMeta when no rows", async () => {
@@ -898,123 +802,73 @@ describe("syncEngine", () => {
 
     it("continues when a secondary table fetch fails and still advances transactions", async () => {
       mockGetSyncMeta.mockReturnValue(null);
-      const mockSupabase = createMockSupabase({
-        transactions: {
-          data: [
-            {
-              id: "tx-remote-1",
-              user_id: "user-1",
-              type: "income",
-              amount: 5000,
-              category_id: "salary",
-              account_id: "fa-default-user-1",
-              account_attribution_state: "confirmed",
-              superseded_at: null,
-              description: "Pay",
-              date: "2026-03-04",
-              created_at: "2026-03-04T10:00:00.000Z",
-              updated_at: "2026-03-04T12:00:00.000Z",
-              deleted_at: null,
-            },
-          ],
-          error: null,
-        },
-        financial_accounts: {
-          data: null,
-          error: { message: "accounts unavailable", code: "500" },
-        },
-        transfers: { data: [], error: null },
-        opening_balances: { data: [], error: null },
-        financial_account_identifiers: { data: [], error: null },
-      });
+      const mockSupabase = createSecondaryFailureSupabase();
       mockGetTransactionById.mockReturnValueOnce(null);
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      const result = await syncPull(mockDb, mockSupabase, "user-1");
+      const result = await runSyncPull(mockSupabase);
 
       expect(result).toBe(true);
-      expect(mockUpsertTransaction).toHaveBeenCalledWith(
-        mockDb,
-        expect.objectContaining({
-          id: "tx-remote-1",
-          userId: "user-1",
-        })
-      );
+      expectUpsertedTransaction({ id: "tx-remote-1", userId: "user-1" });
       expect(getLastSetSyncMetaValue("last_sync_at_financial_accounts")).toBeNull();
-      expect(JSON.parse(getLastSetSyncMetaValue("last_sync_at_transactions")!)).toEqual({
-        updatedAt: "2026-03-04T12:00:00.000Z",
-        id: "tx-remote-1",
-      });
+      expectCursorToEqual(
+        "last_sync_at_transactions",
+        createCursor("2026-03-04T12:00:00.000Z", "tx-remote-1")
+      );
     });
 
     it("skips upsert when local row is newer (LWW)", async () => {
       mockGetSyncMeta.mockReturnValueOnce(null);
-      const serverRows = [
-        {
-          id: "tx-1",
-          user_id: "user-1",
-          type: "expense",
-          amount: 1000,
-          category_id: "food",
+      const mockSupabase = createMockSupabase({
+        data: [
+          createServerTransactionRow({
+            amount: 1000,
+            description: null,
+            date: "2026-03-04",
+            created_at: "2026-03-04T10:00:00.000Z",
+            updated_at: "2026-03-04T10:00:00.000Z",
+          }),
+        ],
+        error: null,
+      });
+      mockGetTransactionById.mockReturnValueOnce(
+        createLocalTransaction({
+          amount: 2000,
           description: null,
           date: "2026-03-04",
-          created_at: "2026-03-04T10:00:00.000Z",
-          updated_at: "2026-03-04T10:00:00.000Z",
-          deleted_at: null,
-        },
-      ];
-      const mockSupabase = createMockSupabase({ data: serverRows, error: null });
-      mockGetTransactionById.mockReturnValueOnce({
-        id: "tx-1",
-        userId: "user-1",
-        type: "expense",
-        amount: 2000,
-        categoryId: "food",
-        description: null,
-        date: "2026-03-04",
-        createdAt: "2026-03-04T10:00:00.000Z",
-        updatedAt: "2026-03-04T12:00:00.000Z",
-        deletedAt: null,
-      });
+          createdAt: "2026-03-04T10:00:00.000Z",
+          updatedAt: "2026-03-04T12:00:00.000Z",
+        })
+      );
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      await syncPull(mockDb, mockSupabase, "user-1");
+      await runSyncPull(mockSupabase);
 
       expect(mockUpsertTransaction).not.toHaveBeenCalled();
     });
 
     it("upserts when server row is newer", async () => {
       mockGetSyncMeta.mockReturnValueOnce(null);
-      const serverRows = [
-        {
-          id: "tx-1",
-          user_id: "user-1",
-          type: "expense",
-          amount: 3000,
-          category_id: "food",
-          description: "Updated",
-          date: "2026-03-04",
-          created_at: "2026-03-04T10:00:00.000Z",
-          updated_at: "2026-03-04T14:00:00.000Z",
-          deleted_at: null,
-        },
-      ];
-      const mockSupabase = createMockSupabase({ data: serverRows, error: null });
-      mockGetTransactionById.mockReturnValueOnce({
-        id: "tx-1",
-        userId: "user-1",
-        type: "expense",
-        amount: 1000,
-        categoryId: "food",
-        description: null,
-        date: "2026-03-04",
-        createdAt: "2026-03-04T10:00:00.000Z",
-        updatedAt: "2026-03-04T10:00:00.000Z",
-        deletedAt: null,
+      const mockSupabase = createMockSupabase({
+        data: [
+          createServerTransactionRow({
+            amount: 3000,
+            description: "Updated",
+            date: "2026-03-04",
+            created_at: "2026-03-04T10:00:00.000Z",
+            updated_at: "2026-03-04T14:00:00.000Z",
+          }),
+        ],
+        error: null,
       });
+      mockGetTransactionById.mockReturnValueOnce(
+        createLocalTransaction({
+          description: null,
+          date: "2026-03-04",
+          createdAt: "2026-03-04T10:00:00.000Z",
+          updatedAt: "2026-03-04T10:00:00.000Z",
+        })
+      );
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      await syncPull(mockDb, mockSupabase, "user-1");
+      await runSyncPull(mockSupabase);
 
       expect(mockUpsertTransaction).toHaveBeenCalledWith(
         mockDb,
@@ -1087,80 +941,53 @@ describe("syncEngine", () => {
   describe("conflict logging", () => {
     it("logs conflict when server overwrites local with different data", async () => {
       mockGetSyncMeta.mockReturnValueOnce(null);
-      const serverRows = [
-        {
-          id: "tx-1",
-          user_id: "user-1",
-          type: "expense",
-          amount: 2000,
-          category_id: "food",
-          description: "Updated by server",
-          date: "2026-03-04",
-          created_at: "2026-03-04T10:00:00.000Z",
-          updated_at: "2026-03-04T14:00:00.000Z",
-          deleted_at: null,
-        },
-      ];
-      const mockSupabase = createMockSupabase({ data: serverRows, error: null });
-      mockGetTransactionById.mockReturnValueOnce({
-        id: "tx-1",
-        userId: "user-1",
-        type: "expense",
-        amount: 1000,
-        categoryId: "food",
-        description: "Local version",
+      const mockSupabase = createTransactionPullSupabase({
+        amount: 2000,
+        description: "Updated by server",
         date: "2026-03-04",
-        createdAt: "2026-03-04T10:00:00.000Z",
-        updatedAt: "2026-03-04T10:00:00.000Z",
-        deletedAt: null,
-        source: "manual",
+        created_at: "2026-03-04T10:00:00.000Z",
+        updated_at: "2026-03-04T14:00:00.000Z",
       });
-
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      await syncPull(mockDb, mockSupabase, "user-1");
-
-      expect(mockInsertConflict).toHaveBeenCalledWith(
-        mockDb,
-        expect.objectContaining({
-          transactionId: "tx-1",
+      mockGetTransactionById.mockReturnValueOnce(
+        createLocalTransaction({
+          description: "Local version",
+          date: "2026-03-04",
+          createdAt: "2026-03-04T10:00:00.000Z",
+          updatedAt: "2026-03-04T10:00:00.000Z",
         })
       );
+
+      await runSyncPull(mockSupabase);
+
+      expectConflictLogged("tx-1");
       expect(mockUpsertTransaction).toHaveBeenCalled();
     });
 
     it("does not log conflict when data matches (only timestamp differs)", async () => {
       mockGetSyncMeta.mockReturnValueOnce(null);
-      const serverRows = [
-        {
-          id: "tx-1",
-          user_id: "user-1",
-          type: "expense",
+      const mockSupabase = createMockSupabase({
+        data: [
+          createServerTransactionRow({
+            amount: 1000,
+            description: "Same data",
+            date: "2026-03-04",
+            created_at: "2026-03-04T10:00:00.000Z",
+            updated_at: "2026-03-04T14:00:00.000Z",
+          }),
+        ],
+        error: null,
+      });
+      mockGetTransactionById.mockReturnValueOnce(
+        createLocalTransaction({
           amount: 1000,
-          category_id: "food",
           description: "Same data",
           date: "2026-03-04",
-          created_at: "2026-03-04T10:00:00.000Z",
-          updated_at: "2026-03-04T14:00:00.000Z",
-          deleted_at: null,
-        },
-      ];
-      const mockSupabase = createMockSupabase({ data: serverRows, error: null });
-      mockGetTransactionById.mockReturnValueOnce({
-        id: "tx-1",
-        userId: "user-1",
-        type: "expense",
-        amount: 1000,
-        categoryId: "food",
-        description: "Same data",
-        date: "2026-03-04",
-        createdAt: "2026-03-04T10:00:00.000Z",
-        updatedAt: "2026-03-04T10:00:00.000Z",
-        deletedAt: null,
-        source: "manual",
-      });
+          createdAt: "2026-03-04T10:00:00.000Z",
+          updatedAt: "2026-03-04T10:00:00.000Z",
+        })
+      );
 
-      const { syncPull } = await import("@/features/sync/services/syncEngine");
-      await syncPull(mockDb, mockSupabase, "user-1");
+      await runSyncPull(mockSupabase);
 
       expect(mockInsertConflict).not.toHaveBeenCalled();
       expect(mockUpsertTransaction).toHaveBeenCalled();

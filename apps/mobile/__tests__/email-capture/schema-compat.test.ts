@@ -50,12 +50,11 @@ function extractCategoryIds(source: string): string[] {
 }
 
 /** Extract type enum values from FULL_PARSE_SCHEMA */
+const TYPE_ENUM_PATTERN =
+  /FULL_PARSE_SCHEMA[\s\S]*?type:\s*\{\s*type:\s*"string",\s*enum:\s*\[([\s\S]*?)\]/;
+
 function extractTypeEnum(source: string): string[] {
-  const typeMatch = source.match(
-    /FULL_PARSE_SCHEMA[\s\S]*?type:\s*\{\s*type:\s*"string",\s*enum:\s*\[([\s\S]*?)\]/
-  );
-  if (!typeMatch) return [];
-  const typeBlock = typeMatch[1] ?? "";
+  const typeBlock = source.match(TYPE_ENUM_PATTERN)?.[1] ?? "";
   return [...typeBlock.matchAll(/"(\w+)"/g)].map((m) => m[1] ?? "").filter(Boolean);
 }
 

@@ -1,11 +1,11 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: sync conflict state tests use flexible mock db
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
 import {
   loadSyncConflicts,
   resolveSyncConflictSelection,
   useSyncConflictStore,
 } from "@/features/sync/store";
+import { createParsedConflict } from "./fixtures";
 
 const mockListConflicts = vi.fn();
 const mockResolveConflict = vi.fn();
@@ -22,39 +22,7 @@ describe("sync conflict state", () => {
   });
 
   it("loads conflicts into the store from the sync boundary", async () => {
-    mockListConflicts.mockResolvedValueOnce([
-      {
-        id: "conflict-1",
-        transactionId: "tx-1",
-        localData: {
-          id: "tx-1",
-          userId: "user-1",
-          type: "expense",
-          amount: 1000,
-          categoryId: "food",
-          description: "Local merchant",
-          date: "2026-03-10",
-          createdAt: "2026-03-10T08:00:00.000Z",
-          updatedAt: "2026-03-10T10:00:00.000Z",
-          deletedAt: null,
-          source: "manual",
-        },
-        serverData: {
-          id: "tx-1",
-          userId: "user-1",
-          type: "expense",
-          amount: 2000,
-          categoryId: "food",
-          description: "Server merchant",
-          date: "2026-03-10",
-          createdAt: "2026-03-10T08:00:00.000Z",
-          updatedAt: "2026-03-10T14:00:00.000Z",
-          deletedAt: null,
-          source: "email",
-        },
-        detectedAt: "2026-03-15T10:00:00.000Z",
-      },
-    ]);
+    mockListConflicts.mockResolvedValueOnce([createParsedConflict()]);
 
     await loadSyncConflicts({} as any);
 

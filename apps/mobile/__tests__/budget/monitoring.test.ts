@@ -4,6 +4,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { BudgetAlertState } from "@/features/budget/lib/monitoring";
 import { createBudgetMonitoringModule } from "@/features/budget/lib/monitoring";
 import { insertBudget } from "@/features/budget/lib/repository";
 import { insertTransaction } from "@/features/transactions/lib/repository";
@@ -84,70 +85,168 @@ const insertExpense = (
     source: "manual",
   });
 
+function createMonitoringModule() {
+  return createBudgetMonitoringModule({
+    getBudgetAlertsEnabled: () => true,
+    getLocale: () => "es",
+    resolveCategoryLabel: mockResolveCategoryLabel,
+    scheduleBudgetAlert: mockScheduleBudgetAlert,
+    insertNotification: mockInsertNotification,
+  });
+}
+
+async function refreshCurrentMonth(
+  module = createMonitoringModule(),
+  previous: BudgetAlertState | undefined = {
+    pendingAlerts: [],
+    acknowledgedAlerts: new Set(),
+  }
+) {
+  return module.refreshMonth({
+    db: db as any,
+    userId: USER_ID,
+    month: CURRENT_MONTH,
+    ...(previous ? { previous } : {}),
+  });
+}
+
+function createPendingAlertState(): BudgetAlertState {
+  return {
+    pendingAlerts: [
+      {
+        budgetId: "budget-1" as BudgetId,
+        categoryId: "food" as CategoryId,
+        threshold: 80 as const,
+        percentUsed: 85,
+        suggestionKey: undefined,
+        daysLeft: 10,
+        remainingAmount: 15000 as CopAmount,
+      },
+      {
+        budgetId: "budget-2" as BudgetId,
+        categoryId: "transport" as CategoryId,
+        threshold: 80 as const,
+        percentUsed: 90,
+        suggestionKey: undefined,
+        daysLeft: 10,
+        remainingAmount: 10000 as CopAmount,
+      },
+    ],
+    acknowledgedAlerts: new Set(["budget-2:80"]),
+  };
+}
+
+function seedBudgetAlertScenario() {
+  insertBudgetRow();
+  insertBudgetRow({
+    id: "budget-2" as BudgetId,
+    categoryId: "transport" as CategoryId,
+    amount: 50000 as CopAmount,
+  });
+  insertExpense({ id: "tx-1", categoryId: "food" as CategoryId, amount: 85000 as CopAmount });
+  insertExpense({
+    id: "tx-2",
+    categoryId: "transport" as CategoryId,
+    amount: 10000 as CopAmount,
+  });
+  insertExpense({
+    id: "tx-3",
+    categoryId: "entertainment" as CategoryId,
+    amount: 43234 as CopAmount,
+    date: "2026-02-12",
+    month: "2026-02" as Month,
+  });
+}
+
+function expectDeliveredBudgetAlert(result: Awaited<ReturnType<typeof refreshCurrentMonth>>) {
+  expect(result.budgets).toHaveLength(2);
+  expect(result.budgetProgress).toHaveLength(2);
+  expect(result.summary).toEqual({
+    totalBudget: 150000,
+    totalSpent: 95000,
+    percentUsed: 63,
+  });
+  expect(result.autoSuggestions).toEqual([
+    { categoryId: "entertainment" as CategoryId, suggestedAmount: 44000 as CopAmount },
+  ]);
+  expect(result.pendingAlerts).toHaveLength(1);
+  expect(result.pendingAlerts[0]?.budgetId).toBe("budget-1");
+  expect(result.pendingPermissionRequest).toBe(false);
+  expect(mockResolveCategoryLabel).toHaveBeenCalledWith("food", "es");
+  expect(mockScheduleBudgetAlert).toHaveBeenCalledOnce();
+  expect(mockInsertNotification).toHaveBeenCalledOnce();
+  const inserted = mockInsertNotification.mock.calls[0]?.[0] as { params: string };
+  expect(JSON.parse(inserted.params)).toMatchObject({
+    category: "es:food",
+    threshold: 80,
+    daysLeft: expect.any(Number),
+  });
+}
+
+function seedInitialOverBudgetScenario() {
+  insertBudgetRow({
+    id: "budget-1" as BudgetId,
+    categoryId: "food" as CategoryId,
+    amount: 100000 as CopAmount,
+  });
+  insertBudgetRow({
+    id: "budget-2" as BudgetId,
+    categoryId: "transport" as CategoryId,
+    amount: 50000 as CopAmount,
+  });
+  insertExpense({
+    id: "tx-1",
+    categoryId: "food" as CategoryId,
+    amount: 110000 as CopAmount,
+  });
+}
+
+function expectInitialOverBudgetProgress(result: Awaited<ReturnType<typeof refreshCurrentMonth>>) {
+  expect(result.budgetProgress).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        budgetId: "budget-1",
+        spent: 110000,
+        remaining: -10000,
+        percentUsed: 110,
+      }),
+      expect.objectContaining({
+        budgetId: "budget-2",
+        spent: 0,
+        remaining: 50000,
+        percentUsed: 0,
+      }),
+    ])
+  );
+}
+
+function expectInitialOverBudgetDelivery(result: Awaited<ReturnType<typeof refreshCurrentMonth>>) {
+  expect(result.pendingPermissionRequest).toBe(false);
+  expect(result.pendingAlerts).toEqual([
+    expect.objectContaining({
+      budgetId: "budget-1",
+      threshold: 100,
+    }),
+  ]);
+  expect(mockScheduleBudgetAlert).toHaveBeenCalledWith(
+    expect.objectContaining({ budgetId: "budget-1", threshold: 100 }),
+    "es:food",
+    true
+  );
+  expect(mockInsertNotification).toHaveBeenCalledWith(
+    expect.objectContaining({
+      titleKey: "notifications.budgetExceeded",
+      messageKey: "notifications.budgetExceededMsg",
+      dedupKey: "budget_alert:food:100:2026-03",
+    })
+  );
+}
+
 describe("createBudgetMonitoringModule", () => {
   it("refreshMonth loads budgets, derives alerts, and delivers fresh ones", async () => {
-    insertBudgetRow();
-    insertBudgetRow({
-      id: "budget-2" as BudgetId,
-      categoryId: "transport" as CategoryId,
-      amount: 50000 as CopAmount,
-    });
-
-    insertExpense({ id: "tx-1", categoryId: "food" as CategoryId, amount: 85000 as CopAmount });
-    insertExpense({
-      id: "tx-2",
-      categoryId: "transport" as CategoryId,
-      amount: 10000 as CopAmount,
-    });
-    insertExpense({
-      id: "tx-3",
-      categoryId: "entertainment" as CategoryId,
-      amount: 43234 as CopAmount,
-      date: "2026-02-12",
-      month: "2026-02" as Month,
-    });
-
-    const module = createBudgetMonitoringModule({
-      getBudgetAlertsEnabled: () => true,
-      getLocale: () => "es",
-      resolveCategoryLabel: mockResolveCategoryLabel,
-      scheduleBudgetAlert: mockScheduleBudgetAlert,
-      insertNotification: mockInsertNotification,
-    });
-
-    const result = await module.refreshMonth({
-      db: db as any,
-      userId: USER_ID,
-      month: CURRENT_MONTH,
-      previous: {
-        pendingAlerts: [],
-        acknowledgedAlerts: new Set(),
-      },
-    });
-
-    expect(result.budgets).toHaveLength(2);
-    expect(result.budgetProgress).toHaveLength(2);
-    expect(result.summary).toEqual({
-      totalBudget: 150000,
-      totalSpent: 95000,
-      percentUsed: 63,
-    });
-    expect(result.autoSuggestions).toEqual([
-      { categoryId: "entertainment" as CategoryId, suggestedAmount: 44000 as CopAmount },
-    ]);
-    expect(result.pendingAlerts).toHaveLength(1);
-    expect(result.pendingAlerts[0]?.budgetId).toBe("budget-1");
-    expect(result.pendingPermissionRequest).toBe(false);
-    expect(mockResolveCategoryLabel).toHaveBeenCalledWith("food", "es");
-    expect(mockScheduleBudgetAlert).toHaveBeenCalledOnce();
-    expect(mockInsertNotification).toHaveBeenCalledOnce();
-
-    const inserted = mockInsertNotification.mock.calls[0]?.[0] as { params: string };
-    expect(JSON.parse(inserted.params)).toMatchObject({
-      category: "es:food",
-      threshold: 80,
-      daysLeft: expect.any(Number),
-    });
+    seedBudgetAlertScenario();
+    const result = await refreshCurrentMonth();
+    expectDeliveredBudgetAlert(result);
   });
 
   it("refreshMonth skips duplicate delivery when the same alert is still pending", async () => {
@@ -158,23 +257,8 @@ describe("createBudgetMonitoringModule", () => {
       amount: 85000 as CopAmount,
     });
 
-    const module = createBudgetMonitoringModule({
-      getBudgetAlertsEnabled: () => true,
-      getLocale: () => "es",
-      resolveCategoryLabel: mockResolveCategoryLabel,
-      scheduleBudgetAlert: mockScheduleBudgetAlert,
-      insertNotification: mockInsertNotification,
-    });
-
-    const first = await module.refreshMonth({
-      db: db as any,
-      userId: USER_ID,
-      month: CURRENT_MONTH,
-      previous: {
-        pendingAlerts: [],
-        acknowledgedAlerts: new Set(),
-      },
-    });
+    const module = createMonitoringModule();
+    const first = await refreshCurrentMonth(module);
 
     expect(first.pendingAlerts).toHaveLength(1);
     expect(mockScheduleBudgetAlert).toHaveBeenCalledOnce();
@@ -184,14 +268,9 @@ describe("createBudgetMonitoringModule", () => {
     mockInsertNotification.mockClear();
     mockResolveCategoryLabel.mockClear();
 
-    const second = await module.refreshMonth({
-      db: db as any,
-      userId: USER_ID,
-      month: CURRENT_MONTH,
-      previous: {
-        pendingAlerts: first.pendingAlerts,
-        acknowledgedAlerts: new Set(),
-      },
+    const second = await refreshCurrentMonth(module, {
+      pendingAlerts: first.pendingAlerts,
+      acknowledgedAlerts: new Set(),
     });
 
     expect(second.pendingAlerts).toHaveLength(1);
@@ -210,23 +289,7 @@ describe("createBudgetMonitoringModule", () => {
 
     mockScheduleBudgetAlert.mockResolvedValueOnce({ type: "needs_permission" });
 
-    const module = createBudgetMonitoringModule({
-      getBudgetAlertsEnabled: () => true,
-      getLocale: () => "es",
-      resolveCategoryLabel: mockResolveCategoryLabel,
-      scheduleBudgetAlert: mockScheduleBudgetAlert,
-      insertNotification: mockInsertNotification,
-    });
-
-    const result = await module.refreshMonth({
-      db: db as any,
-      userId: USER_ID,
-      month: CURRENT_MONTH,
-      previous: {
-        pendingAlerts: [],
-        acknowledgedAlerts: new Set(),
-      },
-    });
+    const result = await refreshCurrentMonth();
 
     expect(result.pendingPermissionRequest).toBe(true);
     expect(mockScheduleBudgetAlert).toHaveBeenCalledOnce();
@@ -260,23 +323,7 @@ describe("createBudgetMonitoringModule", () => {
       .mockResolvedValueOnce({ type: "scheduled", id: "notif-1" })
       .mockRejectedValueOnce(new Error("push service down"));
 
-    const module = createBudgetMonitoringModule({
-      getBudgetAlertsEnabled: () => true,
-      getLocale: () => "es",
-      resolveCategoryLabel: mockResolveCategoryLabel,
-      scheduleBudgetAlert: mockScheduleBudgetAlert,
-      insertNotification: mockInsertNotification,
-    });
-
-    const result = await module.refreshMonth({
-      db: db as any,
-      userId: USER_ID,
-      month: CURRENT_MONTH,
-      previous: {
-        pendingAlerts: [],
-        acknowledgedAlerts: new Set(),
-      },
-    });
+    const result = await refreshCurrentMonth();
 
     expect(result.pendingPermissionRequest).toBe(false);
     expect(result.pendingAlerts).toHaveLength(2);
@@ -285,73 +332,10 @@ describe("createBudgetMonitoringModule", () => {
   });
 
   it("refreshMonth derives initial over-budget alerts without previous state", async () => {
-    insertBudgetRow({
-      id: "budget-1" as BudgetId,
-      categoryId: "food" as CategoryId,
-      amount: 100000 as CopAmount,
-    });
-    insertBudgetRow({
-      id: "budget-2" as BudgetId,
-      categoryId: "transport" as CategoryId,
-      amount: 50000 as CopAmount,
-    });
-
-    insertExpense({
-      id: "tx-1",
-      categoryId: "food" as CategoryId,
-      amount: 110000 as CopAmount,
-    });
-
-    const module = createBudgetMonitoringModule({
-      getBudgetAlertsEnabled: () => true,
-      getLocale: () => "es",
-      resolveCategoryLabel: mockResolveCategoryLabel,
-      scheduleBudgetAlert: mockScheduleBudgetAlert,
-      insertNotification: mockInsertNotification,
-    });
-
-    const result = await module.refreshMonth({
-      db: db as any,
-      userId: USER_ID,
-      month: CURRENT_MONTH,
-    });
-
-    expect(result.pendingPermissionRequest).toBe(false);
-    expect(result.budgetProgress).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          budgetId: "budget-1",
-          spent: 110000,
-          remaining: -10000,
-          percentUsed: 110,
-        }),
-        expect.objectContaining({
-          budgetId: "budget-2",
-          spent: 0,
-          remaining: 50000,
-          percentUsed: 0,
-        }),
-      ])
-    );
-    expect(result.pendingAlerts).toEqual([
-      expect.objectContaining({
-        budgetId: "budget-1",
-        threshold: 100,
-      }),
-    ]);
-    expect(mockScheduleBudgetAlert).toHaveBeenCalledOnce();
-    expect(mockScheduleBudgetAlert).toHaveBeenCalledWith(
-      expect.objectContaining({ budgetId: "budget-1", threshold: 100 }),
-      "es:food",
-      true
-    );
-    expect(mockInsertNotification).toHaveBeenCalledWith(
-      expect.objectContaining({
-        titleKey: "notifications.budgetExceeded",
-        messageKey: "notifications.budgetExceededMsg",
-        dedupKey: "budget_alert:food:100:2026-03",
-      })
-    );
+    seedInitialOverBudgetScenario();
+    const result = await refreshCurrentMonth(undefined, undefined);
+    expectInitialOverBudgetProgress(result);
+    expectInitialOverBudgetDelivery(result);
   });
 
   it("loads transaction aggregates from the transactions public surface", async () => {
@@ -419,15 +403,7 @@ describe("createBudgetMonitoringModule", () => {
       month: "2026-02" as Month,
     });
 
-    const module = createBudgetMonitoringModule({
-      getBudgetAlertsEnabled: () => true,
-      getLocale: () => "es",
-      resolveCategoryLabel: mockResolveCategoryLabel,
-      scheduleBudgetAlert: mockScheduleBudgetAlert,
-      insertNotification: mockInsertNotification,
-    });
-
-    const suggestions = module.loadAutoSuggestions({
+    const suggestions = createMonitoringModule().loadAutoSuggestions({
       db: db as any,
       userId: USER_ID,
       month: CURRENT_MONTH,
@@ -442,40 +418,10 @@ describe("createBudgetMonitoringModule", () => {
   });
 
   it("acknowledgeAlert removes the targeted alert from pending state", () => {
-    const module = createBudgetMonitoringModule({
-      getBudgetAlertsEnabled: () => true,
-      getLocale: () => "es",
-      resolveCategoryLabel: mockResolveCategoryLabel,
-      scheduleBudgetAlert: mockScheduleBudgetAlert,
-      insertNotification: mockInsertNotification,
-    });
-
-    const nextState = module.acknowledgeAlert({
+    const nextState = createMonitoringModule().acknowledgeAlert({
       budgetId: "budget-1" as BudgetId,
       threshold: 80,
-      alertState: {
-        pendingAlerts: [
-          {
-            budgetId: "budget-1" as BudgetId,
-            categoryId: "food" as CategoryId,
-            threshold: 80,
-            percentUsed: 85,
-            suggestionKey: undefined,
-            daysLeft: 10,
-            remainingAmount: 15000 as CopAmount,
-          },
-          {
-            budgetId: "budget-2" as BudgetId,
-            categoryId: "transport" as CategoryId,
-            threshold: 80,
-            percentUsed: 90,
-            suggestionKey: undefined,
-            daysLeft: 10,
-            remainingAmount: 10000 as CopAmount,
-          },
-        ],
-        acknowledgedAlerts: new Set(["budget-2:80"]),
-      },
+      alertState: createPendingAlertState(),
     });
 
     expect(nextState.pendingAlerts).toHaveLength(1);

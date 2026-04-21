@@ -1,6 +1,8 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: sync boundary test uses flexible mock ports
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createConflictRow } from "./fixtures";
+
 const mockGetSupabase = vi.fn();
 const mockIsOnline = vi.fn();
 const mockSyncPull = vi.fn();
@@ -87,39 +89,7 @@ describe("sync module", () => {
   });
 
   it("lists unresolved conflicts through the boundary", async () => {
-    mockGetUnresolvedConflicts.mockReturnValueOnce([
-      {
-        id: "conflict-1",
-        transactionId: "tx-1",
-        localData: JSON.stringify({
-          id: "tx-1",
-          userId: "user-1",
-          type: "expense",
-          amount: 1000,
-          categoryId: "food",
-          description: "Local merchant",
-          date: "2026-03-10",
-          createdAt: "2026-03-10T08:00:00.000Z",
-          updatedAt: "2026-03-10T10:00:00.000Z",
-          deletedAt: null,
-          source: "manual",
-        }),
-        serverData: JSON.stringify({
-          id: "tx-1",
-          userId: "user-1",
-          type: "expense",
-          amount: 2000,
-          categoryId: "food",
-          description: "Server merchant",
-          date: "2026-03-10",
-          createdAt: "2026-03-10T08:00:00.000Z",
-          updatedAt: "2026-03-10T14:00:00.000Z",
-          deletedAt: null,
-          source: "email",
-        }),
-        detectedAt: "2026-03-15T10:00:00.000Z",
-      },
-    ]);
+    mockGetUnresolvedConflicts.mockReturnValueOnce([createConflictRow()]);
 
     const { listConflicts } = await import("@/features/sync/services/sync");
     const conflicts = await listConflicts({ db: {} as any });

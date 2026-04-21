@@ -16,15 +16,14 @@ import type {
   IsoDate,
   IsoDateTime,
   OpeningBalanceId,
-  UserId,
 } from "@/shared/types/branded";
+import { createOpeningBalanceFixture, FIXTURE_ACCOUNT_ID, FIXTURE_USER_ID } from "./fixtures";
 
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
 
-const USER_ID = "user-1" as UserId;
-const NOW = "2026-04-18T10:00:00.000Z" as IsoDateTime;
-const ACCOUNT_ID = "fa-1" as FinancialAccountId;
+const USER_ID = FIXTURE_USER_ID;
+const ACCOUNT_ID = FIXTURE_ACCOUNT_ID;
 
 beforeEach(() => {
   sqlite = new Database(":memory:");
@@ -36,20 +35,26 @@ afterEach(() => {
   sqlite.close();
 });
 
+function saveBalance(overrides: Partial<ReturnType<typeof createOpeningBalanceFixture>> = {}) {
+  saveOpeningBalance(db as any, createOpeningBalanceFixture(overrides));
+}
+
+function upsertBalance(overrides: Partial<ReturnType<typeof createOpeningBalanceFixture>> = {}) {
+  upsertOpeningBalance(db as any, createOpeningBalanceFixture(overrides));
+}
+
+function expectOpeningBalanceForAccount(
+  accountId: FinancialAccountId,
+  matcher: Record<string, unknown>
+) {
+  expect(getOpeningBalanceForAccount(db as any, accountId)).toMatchObject(matcher);
+}
+
 describe("opening balances repository", () => {
   it("saves an opening balance, reads it back, and enqueues sync", () => {
-    saveOpeningBalance(db as any, {
-      id: "ob-1" as OpeningBalanceId,
-      userId: USER_ID,
-      accountId: ACCOUNT_ID,
-      amount: 500000 as CopAmount,
-      effectiveDate: "2026-04-01" as IsoDate,
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
+    saveBalance();
 
-    expect(getOpeningBalanceForAccount(db as any, ACCOUNT_ID)).toMatchObject({
+    expectOpeningBalanceForAccount(ACCOUNT_ID, {
       id: "ob-1",
       userId: USER_ID,
       accountId: ACCOUNT_ID,
@@ -67,29 +72,15 @@ describe("opening balances repository", () => {
   });
 
   it("enqueues the persisted row id when a unique-account upsert reuses an existing record", () => {
-    saveOpeningBalance(db as any, {
-      id: "ob-1" as OpeningBalanceId,
-      userId: USER_ID,
-      accountId: ACCOUNT_ID,
-      amount: 500000 as CopAmount,
-      effectiveDate: "2026-04-01" as IsoDate,
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    saveOpeningBalance(db as any, {
+    saveBalance();
+    saveBalance({
       id: "ob-2" as OpeningBalanceId,
-      userId: USER_ID,
-      accountId: ACCOUNT_ID,
       amount: 750000 as CopAmount,
       effectiveDate: "2026-04-02" as IsoDate,
-      createdAt: NOW,
       updatedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
-      deletedAt: null,
     });
 
-    expect(getOpeningBalanceForAccount(db as any, ACCOUNT_ID)).toMatchObject({
+    expectOpeningBalanceForAccount(ACCOUNT_ID, {
       id: "ob-1",
       amount: 750000,
       effectiveDate: "2026-04-02",
@@ -110,29 +101,15 @@ describe("opening balances repository", () => {
   });
 
   it("replaces a local duplicate id with the pulled server row for the same account", () => {
-    saveOpeningBalance(db as any, {
-      id: "ob-local" as OpeningBalanceId,
-      userId: USER_ID,
-      accountId: ACCOUNT_ID,
-      amount: 500000 as CopAmount,
-      effectiveDate: "2026-04-01" as IsoDate,
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    upsertOpeningBalance(db as any, {
+    saveBalance({ id: "ob-local" as OpeningBalanceId });
+    upsertBalance({
       id: "ob-server" as OpeningBalanceId,
-      userId: USER_ID,
-      accountId: ACCOUNT_ID,
       amount: 750000 as CopAmount,
       effectiveDate: "2026-04-02" as IsoDate,
-      createdAt: NOW,
       updatedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
-      deletedAt: null,
     });
 
-    expect(getOpeningBalanceForAccount(db as any, ACCOUNT_ID)).toMatchObject({
+    expectOpeningBalanceForAccount(ACCOUNT_ID, {
       id: "ob-server",
       amount: 750000,
       effectiveDate: "2026-04-02",
@@ -140,30 +117,16 @@ describe("opening balances repository", () => {
   });
 
   it("updates the same row id when an opening balance moves to a different account", () => {
-    saveOpeningBalance(db as any, {
-      id: "ob-1" as OpeningBalanceId,
-      userId: USER_ID,
-      accountId: ACCOUNT_ID,
-      amount: 500000 as CopAmount,
-      effectiveDate: "2026-04-01" as IsoDate,
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    saveOpeningBalance(db as any, {
-      id: "ob-1" as OpeningBalanceId,
-      userId: USER_ID,
+    saveBalance();
+    saveBalance({
       accountId: "fa-2" as FinancialAccountId,
       amount: 750000 as CopAmount,
       effectiveDate: "2026-04-02" as IsoDate,
-      createdAt: NOW,
       updatedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
-      deletedAt: null,
     });
 
     expect(getOpeningBalanceForAccount(db as any, ACCOUNT_ID)).toBeNull();
-    expect(getOpeningBalanceForAccount(db as any, "fa-2" as FinancialAccountId)).toMatchObject({
+    expectOpeningBalanceForAccount("fa-2" as FinancialAccountId, {
       id: "ob-1",
       amount: 750000,
       effectiveDate: "2026-04-02",
@@ -171,29 +134,15 @@ describe("opening balances repository", () => {
   });
 
   it("keeps a newer local duplicate when the pulled server row is older", () => {
-    saveOpeningBalance(db as any, {
+    saveBalance({
       id: "ob-local" as OpeningBalanceId,
-      userId: USER_ID,
-      accountId: ACCOUNT_ID,
       amount: 750000 as CopAmount,
       effectiveDate: "2026-04-02" as IsoDate,
-      createdAt: NOW,
       updatedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
-      deletedAt: null,
     });
+    upsertBalance({ id: "ob-server" as OpeningBalanceId });
 
-    upsertOpeningBalance(db as any, {
-      id: "ob-server" as OpeningBalanceId,
-      userId: USER_ID,
-      accountId: ACCOUNT_ID,
-      amount: 500000 as CopAmount,
-      effectiveDate: "2026-04-01" as IsoDate,
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    expect(getOpeningBalanceForAccount(db as any, ACCOUNT_ID)).toMatchObject({
+    expectOpeningBalanceForAccount(ACCOUNT_ID, {
       id: "ob-local",
       amount: 750000,
       effectiveDate: "2026-04-02",
@@ -208,40 +157,21 @@ describe("opening balances repository", () => {
   });
 
   it("allows re-creating an opening balance after soft delete", () => {
-    saveOpeningBalance(db as any, {
+    saveBalance();
+    saveBalance({
       id: "ob-1" as OpeningBalanceId,
-      userId: USER_ID,
-      accountId: ACCOUNT_ID,
-      amount: 500000 as CopAmount,
-      effectiveDate: "2026-04-01" as IsoDate,
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    saveOpeningBalance(db as any, {
-      id: "ob-1" as OpeningBalanceId,
-      userId: USER_ID,
-      accountId: ACCOUNT_ID,
-      amount: 500000 as CopAmount,
-      effectiveDate: "2026-04-01" as IsoDate,
-      createdAt: NOW,
       updatedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
       deletedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
     });
-
-    saveOpeningBalance(db as any, {
+    saveBalance({
       id: "ob-2" as OpeningBalanceId,
-      userId: USER_ID,
-      accountId: ACCOUNT_ID,
       amount: 750000 as CopAmount,
       effectiveDate: "2026-04-02" as IsoDate,
       createdAt: "2026-04-18T12:00:00.000Z" as IsoDateTime,
       updatedAt: "2026-04-18T12:00:00.000Z" as IsoDateTime,
-      deletedAt: null,
     });
 
-    expect(getOpeningBalanceForAccount(db as any, ACCOUNT_ID)).toMatchObject({
+    expectOpeningBalanceForAccount(ACCOUNT_ID, {
       id: "ob-2",
       amount: 750000,
       effectiveDate: "2026-04-02",

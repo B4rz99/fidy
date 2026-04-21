@@ -11,13 +11,14 @@ import {
   saveFinancialAccount,
 } from "@/features/financial-accounts";
 import { getQueuedSyncEntries } from "@/features/transactions/lib/repository";
-import type { FinancialAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
+import type { FinancialAccountId, IsoDateTime } from "@/shared/types/branded";
+import { createFinancialAccountFixture, FIXTURE_NOW, FIXTURE_USER_ID } from "./fixtures";
 
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
 
-const USER_ID = "user-1" as UserId;
-const NOW = "2026-04-18T10:00:00.000Z" as IsoDateTime;
+const USER_ID = FIXTURE_USER_ID;
+const NOW = FIXTURE_NOW;
 
 beforeEach(() => {
   sqlite = new Database(":memory:");
@@ -29,18 +30,25 @@ afterEach(() => {
   sqlite.close();
 });
 
+function saveAccount(overrides: Partial<ReturnType<typeof createFinancialAccountFixture>> = {}) {
+  saveFinancialAccount(db as any, createFinancialAccountFixture(overrides));
+}
+
+function expectFinancialAccountSyncEntries(...entries: readonly [string, string][]) {
+  expect(getQueuedSyncEntries(db as any)).toEqual(
+    entries.map(([rowId, operation]) =>
+      expect.objectContaining({
+        tableName: "financialAccounts",
+        rowId,
+        operation,
+      })
+    )
+  );
+}
+
 describe("financial accounts repository", () => {
   it("saves an account, reads it back, and enqueues sync", () => {
-    saveFinancialAccount(db as any, {
-      id: "fa-1" as FinancialAccountId,
-      userId: USER_ID,
-      name: "Main wallet",
-      kind: "wallet",
-      isDefault: true,
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
+    saveAccount();
 
     expect(getFinancialAccountsForUser(db as any, USER_ID)).toEqual([
       expect.objectContaining({
@@ -84,15 +92,10 @@ describe("financial accounts repository", () => {
   });
 
   it("reuses an existing default account instead of creating a new canonical one", () => {
-    saveFinancialAccount(db as any, {
+    saveAccount({
       id: "fa-bank-1" as FinancialAccountId,
-      userId: USER_ID,
       name: "Bancolombia",
       kind: "checking",
-      isDefault: true,
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
     });
 
     const defaultAccount = ensureDefaultFinancialAccount(db as any, USER_ID, {
@@ -110,15 +113,11 @@ describe("financial accounts repository", () => {
   });
 
   it("promotes an existing canonical account to the actual default when the flag is missing", () => {
-    saveFinancialAccount(db as any, {
+    saveAccount({
       id: "fa-default-user-1" as FinancialAccountId,
-      userId: USER_ID,
       name: "Cash",
       kind: "cash",
       isDefault: false,
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
     });
 
     const defaultAccount = ensureDefaultFinancialAccount(db as any, USER_ID, {
@@ -136,17 +135,9 @@ describe("financial accounts repository", () => {
       id: "fa-default-user-1",
       isDefault: true,
     });
-    expect(getQueuedSyncEntries(db as any)).toEqual([
-      expect.objectContaining({
-        tableName: "financialAccounts",
-        rowId: "fa-default-user-1",
-        operation: "insert",
-      }),
-      expect.objectContaining({
-        tableName: "financialAccounts",
-        rowId: "fa-default-user-1",
-        operation: "update",
-      }),
-    ]);
+    expectFinancialAccountSyncEntries(
+      ["fa-default-user-1", "insert"],
+      ["fa-default-user-1", "update"]
+    );
   });
 });
