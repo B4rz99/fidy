@@ -58,42 +58,47 @@ const DEFAULT_QA_FEATURE_FLAGS: QaFeatureFlags = {
   showQaBanner: false,
 };
 
+const QA_FEATURE_FLAG_NAMES = [
+  "networkInspectorEnabled",
+  "logInspectorEnabled",
+  "simulateOffline",
+  "showQaBanner",
+] as const satisfies readonly QaFeatureFlagName[];
+
 function buildStoredFlagsKey() {
   return QA_DEVTOOLS_FLAGS_KEY;
 }
 
-function parseStoredFlags(value: string | null): QaFeatureFlags {
-  if (!value) return DEFAULT_QA_FEATURE_FLAGS;
+function getParsedBooleanFlag(
+  parsed: Partial<Record<QaFeatureFlagName, unknown>>,
+  name: QaFeatureFlagName
+) {
+  return typeof parsed[name] === "boolean" ? parsed[name] : DEFAULT_QA_FEATURE_FLAGS[name];
+}
 
+function normalizeStoredFlags(parsed: Partial<Record<QaFeatureFlagName, unknown>>): QaFeatureFlags {
+  return {
+    networkInspectorEnabled: getParsedBooleanFlag(parsed, QA_FEATURE_FLAG_NAMES[0]),
+    logInspectorEnabled: getParsedBooleanFlag(parsed, QA_FEATURE_FLAG_NAMES[1]),
+    simulateOffline: getParsedBooleanFlag(parsed, QA_FEATURE_FLAG_NAMES[2]),
+    showQaBanner: getParsedBooleanFlag(parsed, QA_FEATURE_FLAG_NAMES[3]),
+  };
+}
+
+function tryParseStoredFlags(value: string): Partial<Record<QaFeatureFlagName, unknown>> | null {
   try {
-    const parsed = JSON.parse(value) as Partial<Record<QaFeatureFlagName, unknown>>;
-
-    return {
-      networkInspectorEnabled:
-        typeof parsed.networkInspectorEnabled === "boolean"
-          ? parsed.networkInspectorEnabled
-          : DEFAULT_QA_FEATURE_FLAGS.networkInspectorEnabled,
-      logInspectorEnabled:
-        typeof parsed.logInspectorEnabled === "boolean"
-          ? parsed.logInspectorEnabled
-          : DEFAULT_QA_FEATURE_FLAGS.logInspectorEnabled,
-      simulateOffline:
-        typeof parsed.simulateOffline === "boolean"
-          ? parsed.simulateOffline
-          : DEFAULT_QA_FEATURE_FLAGS.simulateOffline,
-      showQaBanner:
-        typeof parsed.showQaBanner === "boolean"
-          ? parsed.showQaBanner
-          : DEFAULT_QA_FEATURE_FLAGS.showQaBanner,
-    };
+    return JSON.parse(value) as Partial<Record<QaFeatureFlagName, unknown>>;
   } catch {
-    return DEFAULT_QA_FEATURE_FLAGS;
+    return null;
   }
 }
 
-function loadStoredFlags(): QaFeatureFlags {
-  if (!isLocalQaAvailable()) return DEFAULT_QA_FEATURE_FLAGS;
+function parseStoredFlags(value: string | null): QaFeatureFlags {
+  const parsed = value === null ? null : tryParseStoredFlags(value);
+  return parsed === null ? DEFAULT_QA_FEATURE_FLAGS : normalizeStoredFlags(parsed);
+}
 
+function readStoredFlags(): QaFeatureFlags {
   try {
     return parseStoredFlags(SecureStore.getItem(buildStoredFlagsKey()));
   } catch {
@@ -101,14 +106,8 @@ function loadStoredFlags(): QaFeatureFlags {
   }
 }
 
-function persistFlags(flags: QaFeatureFlags) {
-  if (!isLocalQaAvailable()) return;
-
-  try {
-    SecureStore.setItem(buildStoredFlagsKey(), JSON.stringify(flags));
-  } catch {
-    // Best-effort persistence only.
-  }
+function loadStoredFlags(): QaFeatureFlags {
+  return isLocalQaAvailable() ? readStoredFlags() : DEFAULT_QA_FEATURE_FLAGS;
 }
 
 function appendBounded<T>(current: readonly T[], next: T, maxItems: number) {
@@ -187,3 +186,16 @@ export const useQaDevtoolsStore = create<QaDevtoolsState & QaDevtoolsActions>((s
 export const qaFeatureFlags = {
   defaults: DEFAULT_QA_FEATURE_FLAGS,
 };
+
+function persistFlags(flags: QaFeatureFlags) {
+  if (!isLocalQaAvailable()) return;
+  writeStoredFlags(flags);
+}
+
+function writeStoredFlags(flags: QaFeatureFlags) {
+  try {
+    SecureStore.setItem(buildStoredFlagsKey(), JSON.stringify(flags));
+  } catch {
+    // Best-effort persistence only.
+  }
+}

@@ -9,17 +9,21 @@ type FetchFn = typeof fetch;
 let originalFetch: FetchFn | null = null;
 let installedFetchWrapper: FetchFn | null = null;
 
-function getRequestUrl(input: FetchInput) {
-  if (typeof input === "string") return input;
-  if (typeof URL !== "undefined" && input instanceof URL) return input.toString();
-  if (typeof Request !== "undefined" && input instanceof Request) return input.url;
-  return String(input);
+type QaRecordNetworkEvent = ReturnType<typeof useQaDevtoolsStore.getState>["recordNetworkEvent"];
+
+type QaRequestDetails = {
+  readonly method: string;
+  readonly url: string;
+  readonly startedAt: number;
+};
+
+function isRequestInput(input: FetchInput): input is Request {
+  return typeof Request !== "undefined" && input instanceof Request;
 }
 
-function getRequestMethod(input: FetchInput, init?: FetchInit) {
-  if (typeof init?.method === "string") return init.method.toUpperCase();
-  if (typeof Request !== "undefined" && input instanceof Request) return input.method.toUpperCase();
-  return "GET";
+function getRequestUrl(input: FetchInput) {
+  if (typeof input === "string") return input;
+  return isRequestInput(input) ? input.url : String(input);
 }
 
 function getCurrentFetch(): FetchFn | null {
@@ -28,6 +32,90 @@ function getCurrentFetch(): FetchFn | null {
 
 function setGlobalFetch(nextFetch: FetchFn) {
   globalThis.fetch = nextFetch;
+}
+
+function getQaRequestDetails(input: FetchInput, init?: FetchInit): QaRequestDetails {
+  return {
+    method: getRequestMethod(input, init),
+    url: getRequestUrl(input),
+    startedAt: Date.now(),
+  };
+}
+
+function getRequestMethod(input: FetchInput, init?: FetchInit) {
+  if (typeof init?.method === "string") return init.method.toUpperCase();
+  if (isRequestInput(input)) return input.method.toUpperCase();
+  return "GET";
+}
+
+function recordBlockedRequest(details: QaRequestDetails, recordNetworkEvent: QaRecordNetworkEvent) {
+  recordNetworkEvent({
+    method: details.method,
+    url: details.url,
+    outcome: "blocked",
+    status: null,
+    durationMs: 0,
+    errorMessage: "QA simulateOffline is enabled",
+  });
+  recordQaLog("warn", "qa_simulate_offline_blocked_request", {
+    method: details.method,
+    url: details.url,
+  });
+}
+
+function recordSuccessfulRequest(
+  details: QaRequestDetails,
+  recordNetworkEvent: QaRecordNetworkEvent,
+  response: Response
+) {
+  recordNetworkEvent({
+    method: details.method,
+    url: details.url,
+    outcome: "success",
+    status: response.status,
+    durationMs: Date.now() - details.startedAt,
+    errorMessage: null,
+  });
+}
+
+function recordFailedRequest(
+  details: QaRequestDetails,
+  recordNetworkEvent: QaRecordNetworkEvent,
+  error: unknown
+) {
+  const errorMessage = error instanceof Error ? error.message : "unknown";
+  recordNetworkEvent({
+    method: details.method,
+    url: details.url,
+    outcome: "error",
+    status: null,
+    durationMs: Date.now() - details.startedAt,
+    errorMessage,
+  });
+}
+
+async function inspectFetchRequest(currentFetch: FetchFn, input: FetchInput, init?: FetchInit) {
+  const { flags, recordNetworkEvent } = useQaDevtoolsStore.getState();
+  const requestDetails = getQaRequestDetails(input, init);
+
+  if (flags.simulateOffline) {
+    recordBlockedRequest(requestDetails, recordNetworkEvent);
+    throw new TypeError("Network request failed (QA simulateOffline)");
+  }
+
+  try {
+    const response = await currentFetch(input, init);
+    recordSuccessfulRequest(requestDetails, recordNetworkEvent, response);
+    return response;
+  } catch (error) {
+    recordFailedRequest(requestDetails, recordNetworkEvent, error);
+    throw error;
+  }
+}
+
+function createQaFetchWrapper(currentFetch: FetchFn): FetchFn {
+  return ((input: FetchInput, init?: FetchInit) =>
+    inspectFetchRequest(currentFetch, input, init)) as FetchFn;
 }
 
 export function installQaFetchInspector() {
@@ -45,53 +133,7 @@ export function installQaFetchInspector() {
   }
 
   originalFetch = currentFetch;
-  installedFetchWrapper = (async (input: FetchInput, init?: FetchInit) => {
-    const { flags, recordNetworkEvent } = useQaDevtoolsStore.getState();
-    const url = getRequestUrl(input);
-    const method = getRequestMethod(input, init);
-    const startedAt = Date.now();
-
-    if (flags.simulateOffline) {
-      recordNetworkEvent({
-        method,
-        url,
-        outcome: "blocked",
-        status: null,
-        durationMs: 0,
-        errorMessage: "QA simulateOffline is enabled",
-      });
-      recordQaLog("warn", "qa_simulate_offline_blocked_request", { method, url });
-      throw new TypeError("Network request failed (QA simulateOffline)");
-    }
-
-    try {
-      const response = await currentFetch(input, init);
-
-      recordNetworkEvent({
-        method,
-        url,
-        outcome: "success",
-        status: response.status,
-        durationMs: Date.now() - startedAt,
-        errorMessage: null,
-      });
-
-      return response;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "unknown";
-
-      recordNetworkEvent({
-        method,
-        url,
-        outcome: "error",
-        status: null,
-        durationMs: Date.now() - startedAt,
-        errorMessage,
-      });
-
-      throw error;
-    }
-  }) as FetchFn;
+  installedFetchWrapper = createQaFetchWrapper(currentFetch);
 
   setGlobalFetch(installedFetchWrapper);
   recordQaLog("info", "qa_fetch_inspector_installed");

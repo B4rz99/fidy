@@ -34,6 +34,23 @@ describe("QA devtools store", () => {
     );
   });
 
+  it("fills missing persisted flags from defaults", async () => {
+    vi.mocked(getItem).mockReturnValueOnce(
+      JSON.stringify({
+        networkInspectorEnabled: false,
+      })
+    );
+
+    const { useQaDevtoolsStore } = await import("@/features/qa/devtools-store");
+
+    expect(useQaDevtoolsStore.getState().flags).toMatchObject({
+      networkInspectorEnabled: false,
+      logInspectorEnabled: true,
+      simulateOffline: false,
+      showQaBanner: false,
+    });
+  });
+
   it("records bounded QA log and network history", async () => {
     const { useQaDevtoolsStore } = await import("@/features/qa/devtools-store");
 

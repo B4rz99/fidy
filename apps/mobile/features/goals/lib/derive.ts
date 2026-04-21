@@ -66,6 +66,28 @@ export type GoalAlert = {
   readonly shiftMonths: number;
 };
 
+type MonthSummary = {
+  readonly income: number;
+  readonly expense: number;
+};
+
+type GoalProjectionStats = {
+  readonly confidence: ConfidenceTier;
+  readonly netMonthlySavings: number;
+};
+
+type BudgetNudgeSpending = {
+  readonly categoryId: string;
+  readonly total: number;
+};
+
+type BudgetNudgeInput = {
+  readonly currentAmount: number;
+  readonly targetAmount: number;
+  readonly netMonthlySavings: number;
+  readonly spendingByCategory: readonly BudgetNudgeSpending[];
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -73,21 +95,92 @@ export type GoalAlert = {
 /** Compute the median of a readonly numeric array. Pure, no mutation. */
 export function computeMedian(values: readonly number[]): number {
   if (values.length === 0) return 0;
-  if (values.length === 1) return values[0] ?? 0;
-
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-
-  return sorted.length % 2 === 1
-    ? (sorted[mid] ?? 0)
-    : ((sorted[mid - 1] ?? 0) + (sorted[mid] ?? 0)) / 2;
+  const sorted = sortNumbers(values);
+  const mid = getMedianIndex(sorted.length);
+  return isEvenLength(sorted.length) ? getEvenMedian(sorted, mid) : getValueAt(sorted, mid);
 }
+
+const sortNumbers = (values: readonly number[]): readonly number[] =>
+  [...values].sort(compareNumbersAscending);
+
+const compareNumbersAscending = (left: number, right: number): number => left - right;
+
+const getMedianIndex = (length: number): number => Math.floor(length / 2);
+
+const isEvenLength = (length: number): boolean => length % 2 === 0;
+
+const getValueAt = (values: readonly number[], index: number): number => values[index] ?? 0;
+
+const getEvenMedian = (sorted: readonly number[], mid: number): number =>
+  (getValueAt(sorted, mid - 1) + getValueAt(sorted, mid)) / 2;
 
 const confidenceFromMonthCount = (count: number): ConfidenceTier => {
   if (count === 0) return "none";
   if (count === 1) return "low";
   if (count === 2) return "medium";
   return "high";
+};
+
+const updateMonthSummary = (summary: MonthSummary, total: MonthlyTotal): MonthSummary =>
+  total.type === "income"
+    ? { ...summary, income: summary.income + total.total }
+    : { ...summary, expense: summary.expense + total.total };
+
+const groupMonthlyTotals = (
+  monthlyTotals: readonly MonthlyTotal[]
+): ReadonlyMap<string, MonthSummary> =>
+  monthlyTotals.reduce<Map<string, MonthSummary>>((acc, total) => {
+    const current = acc.get(total.month) ?? { income: 0, expense: 0 };
+    acc.set(total.month, updateMonthSummary(current, total));
+    return acc;
+  }, new Map());
+
+const getNetMonthlySavings = (monthSummaries: readonly MonthSummary[]): number => {
+  const incomes = monthSummaries.map((entry) => entry.income);
+  const expenses = monthSummaries.map((entry) => entry.expense);
+  return computeMedian(incomes) - computeMedian(expenses);
+};
+
+const getGoalProjectionStats = (monthlyTotals: readonly MonthlyTotal[]): GoalProjectionStats => {
+  const monthGroups = groupMonthlyTotals(monthlyTotals);
+  return {
+    confidence: confidenceFromMonthCount(monthGroups.size),
+    netMonthlySavings: getNetMonthlySavings([...monthGroups.values()]),
+  };
+};
+
+const buildCompletedProjection = (
+  confidence: ConfidenceTier,
+  netMonthlySavings: number
+): GoalProjection => ({
+  monthsToGo: 0,
+  projectedDate: new Date(),
+  confidence,
+  netMonthlySavings,
+});
+
+const buildUnavailableProjection = (
+  confidence: ConfidenceTier,
+  netMonthlySavings: number
+): GoalProjection => ({
+  monthsToGo: null,
+  projectedDate: null,
+  confidence,
+  netMonthlySavings,
+});
+
+const buildProjectedGoalResult = (
+  remaining: number,
+  confidence: ConfidenceTier,
+  netMonthlySavings: number
+): GoalProjection => {
+  const monthsToGo = Math.ceil(remaining / netMonthlySavings);
+  return {
+    monthsToGo,
+    projectedDate: addMonths(new Date(), monthsToGo),
+    confidence,
+    netMonthlySavings,
+  };
 };
 
 // ---------------------------------------------------------------------------
@@ -120,54 +213,11 @@ export function deriveGoalProjection(
   currentAmount: number,
   monthlyTotals: readonly MonthlyTotal[]
 ): GoalProjection {
-  // Group by month, aggregate income and expense per month
-  const byMonth = monthlyTotals.reduce<Map<string, { income: number; expense: number }>>(
-    (acc, t) => {
-      const existing = acc.get(t.month) ?? { income: 0, expense: 0 };
-      const updated =
-        t.type === "income"
-          ? { ...existing, income: existing.income + t.total }
-          : { ...existing, expense: existing.expense + t.total };
-      acc.set(t.month, updated);
-      return acc;
-    },
-    new Map()
-  );
-
-  const distinctMonths = byMonth.size;
-  const confidence = confidenceFromMonthCount(distinctMonths);
-
-  const monthEntries = [...byMonth.values()];
-  const medianIncome = computeMedian(monthEntries.map((e) => e.income));
-  const medianExpense = computeMedian(monthEntries.map((e) => e.expense));
-  const netMonthlySavings = medianIncome - medianExpense;
-
+  const { confidence, netMonthlySavings } = getGoalProjectionStats(monthlyTotals);
   const remaining = goal.targetAmount - currentAmount;
-
-  // Already complete
-  if (remaining <= 0) {
-    return {
-      monthsToGo: 0,
-      projectedDate: new Date(),
-      confidence,
-      netMonthlySavings,
-    };
-  }
-
-  // Cannot project if no savings or no data
-  if (netMonthlySavings <= 0) {
-    return {
-      monthsToGo: null,
-      projectedDate: null,
-      confidence,
-      netMonthlySavings,
-    };
-  }
-
-  const monthsToGo = Math.ceil(remaining / netMonthlySavings);
-  const projectedDate = addMonths(new Date(), monthsToGo);
-
-  return { monthsToGo, projectedDate, confidence, netMonthlySavings };
+  if (remaining <= 0) return buildCompletedProjection(confidence, netMonthlySavings);
+  if (netMonthlySavings <= 0) return buildUnavailableProjection(confidence, netMonthlySavings);
+  return buildProjectedGoalResult(remaining, confidence, netMonthlySavings);
 }
 
 // ---------------------------------------------------------------------------
@@ -263,41 +313,40 @@ export function deriveInstallmentProgress(
 // 6. deriveBudgetNudges
 // ---------------------------------------------------------------------------
 
-export function deriveBudgetNudges(
-  currentAmount: number,
-  targetAmount: number,
-  netMonthlySavings: number,
-  spendingByCategory: readonly {
-    readonly categoryId: string;
-    readonly total: number;
-  }[]
-): readonly BudgetNudge[] {
-  if (netMonthlySavings <= 0) return [];
+export function deriveBudgetNudges(input: BudgetNudgeInput): readonly BudgetNudge[] {
+  if (input.netMonthlySavings <= 0) return [];
 
-  const remaining = targetAmount - currentAmount;
+  const remaining = input.targetAmount - input.currentAmount;
   if (remaining <= 0) return [];
 
-  const baselineMonths = Math.ceil(remaining / netMonthlySavings);
-
-  // Top 3 categories by total, sorted descending
-  const topCategories = [...spendingByCategory].sort((a, b) => b.total - a.total).slice(0, 3);
-
-  const nudges = topCategories.map((cat) => {
-    const suggestedReduction = Math.round(cat.total * 0.15);
-    const newSavings = netMonthlySavings + suggestedReduction;
-    const newMonths = newSavings > 0 ? Math.ceil(remaining / newSavings) : baselineMonths;
-    const monthsSaved = baselineMonths - newMonths;
-
-    return {
-      categoryId: cat.categoryId,
-      currentSpending: cat.total,
-      suggestedReduction,
-      monthsSaved,
-    };
-  });
-
-  return [...nudges].sort((a, b) => b.monthsSaved - a.monthsSaved);
+  const baselineMonths = Math.ceil(remaining / input.netMonthlySavings);
+  const nudges = getTopSpendingCategories(input.spendingByCategory).map((category) =>
+    buildBudgetNudge(category, remaining, baselineMonths, input.netMonthlySavings)
+  );
+  return nudges.sort((left, right) => right.monthsSaved - left.monthsSaved);
 }
+
+const getTopSpendingCategories = (
+  spendingByCategory: readonly BudgetNudgeSpending[]
+): readonly BudgetNudgeSpending[] =>
+  [...spendingByCategory].sort((left, right) => right.total - left.total).slice(0, 3);
+
+const buildBudgetNudge = (
+  category: BudgetNudgeSpending,
+  remaining: number,
+  baselineMonths: number,
+  netMonthlySavings: number
+): BudgetNudge => {
+  const suggestedReduction = Math.round(category.total * 0.15);
+  const newSavings = netMonthlySavings + suggestedReduction;
+  const newMonths = newSavings > 0 ? Math.ceil(remaining / newSavings) : baselineMonths;
+  return {
+    categoryId: category.categoryId,
+    currentSpending: category.total,
+    suggestedReduction,
+    monthsSaved: baselineMonths - newMonths,
+  };
+};
 
 // ---------------------------------------------------------------------------
 // 7. deriveGoalAlerts
@@ -387,19 +436,21 @@ export function deriveGoalCardStatus(
   progress: GoalProgress,
   paceGuidance: GoalPaceGuidance | null
 ): GoalCardStatus | null {
-  if (progress.isComplete) return { kind: "completed" };
-
-  if (paceGuidance !== null) {
-    if (paceGuidance.type === "pace_ahead") {
-      return { kind: "pace_ahead", amount: paceGuidance.amountAhead };
-    }
-    if (paceGuidance.reason === "no_contributions") {
-      return { kind: "start_saving" };
-    }
-    return { kind: "pace_behind", amount: paceGuidance.amountBehind };
-  }
-
-  if (progress.percentComplete >= 75) return { kind: "almost_there" };
-
-  return null;
+  const progressStatus = getProgressStatus(progress);
+  if (progressStatus?.kind === "completed") return progressStatus;
+  if (paceGuidance !== null) return getPaceStatus(paceGuidance);
+  return progressStatus;
 }
+
+const getProgressStatus = (progress: GoalProgress): GoalCardStatus | null => {
+  if (progress.isComplete) return { kind: "completed" };
+  if (progress.percentComplete >= 75) return { kind: "almost_there" };
+  return null;
+};
+
+const getPaceStatus = (paceGuidance: GoalPaceGuidance): GoalCardStatus =>
+  paceGuidance.type === "pace_ahead"
+    ? { kind: "pace_ahead", amount: paceGuidance.amountAhead }
+    : paceGuidance.reason === "no_contributions"
+      ? { kind: "start_saving" }
+      : { kind: "pace_behind", amount: paceGuidance.amountBehind };
