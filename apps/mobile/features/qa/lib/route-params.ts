@@ -5,7 +5,9 @@ function getFirstArrayRouteParamValue(value: readonly string[] | null | undefine
   return value?.[0] ?? null;
 }
 
-function getFirstRouteParamValue(value: string | readonly string[] | null | undefined): string | null {
+function getFirstRouteParamValue(
+  value: string | readonly string[] | null | undefined
+): string | null {
   return typeof value === "string" ? value : getFirstArrayRouteParamValue(value);
 }
 
