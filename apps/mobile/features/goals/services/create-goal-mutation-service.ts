@@ -3,6 +3,7 @@ import { createWriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import { i18n } from "@/shared/i18n";
 import {
+  captureWarning,
   generateId,
   toIsoDateTime,
   trackGoalContributionAdded,
@@ -46,6 +47,32 @@ type CreateGoalMutationServiceDeps = {
   readonly trackMilestoneReached?: () => void;
 };
 
+function logMilestoneNotificationFailure(milestone: GoalMilestone, error: unknown): void {
+  captureWarning("goal_milestone_notification_failed", {
+    goalId: milestone.goalId,
+    milestone: milestone.milestone,
+    errorMessage: error instanceof Error ? error.message : "unknown",
+  });
+}
+
+function scheduleMilestonePush(input: {
+  readonly milestone: GoalMilestone;
+  readonly schedulePush: typeof scheduleLocalPush;
+  readonly translateMilestoneTitle: (input: GoalMilestone) => string;
+  readonly translateMilestoneBody: (input: GoalMilestone) => string;
+}): void {
+  void input
+    .schedulePush({
+      title: input.translateMilestoneTitle(input.milestone),
+      body: input.translateMilestoneBody(input.milestone),
+      data: { route: `/goal-detail?goalId=${input.milestone.goalId}` },
+      preferenceKey: "goalMilestones",
+    })
+    .catch((error) => {
+      logMilestoneNotificationFailure(input.milestone, error);
+    });
+}
+
 function publishGoalMilestone(input: {
   readonly db: AnyDb;
   readonly userId: UserId;
@@ -73,12 +100,10 @@ function publishGoalMilestone(input: {
       if (!didInsert) return;
 
       input.trackMilestoneReached();
-      void input.schedulePush({
-        title: input.translateMilestoneTitle(input.milestone),
-        body: input.translateMilestoneBody(input.milestone),
-        data: { route: `/goal-detail?goalId=${input.milestone.goalId}` },
-        preferenceKey: "goalMilestones",
-      });
+      scheduleMilestonePush(input);
+    })
+    .catch((error) => {
+      logMilestoneNotificationFailure(input.milestone, error);
     });
 }
 

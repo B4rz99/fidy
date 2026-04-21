@@ -291,3 +291,21 @@ it("skips milestone push and analytics when the notification insert is deduped",
   expect(schedulePush).not.toHaveBeenCalled();
   expect(trackMilestoneReached).not.toHaveBeenCalled();
 });
+
+it("squashes milestone notification failures", async () => {
+  const { insertNotification, schedulePush, trackMilestoneReached, service } =
+    createMilestoneService();
+  insertNotification.mockRejectedValue(new Error("notification unavailable"));
+
+  await expect(
+    service.notifyMilestones({
+      goalId: "goal-1",
+      goalName: "Trip",
+      milestones: [25],
+    })
+  ).resolves.toBeUndefined();
+
+  expect(insertNotification).toHaveBeenCalledTimes(1);
+  expect(schedulePush).not.toHaveBeenCalled();
+  expect(trackMilestoneReached).not.toHaveBeenCalled();
+});
