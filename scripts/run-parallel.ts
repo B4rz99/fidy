@@ -40,7 +40,7 @@ const taskGroups = {
 
 const groupName = process.argv[2];
 
-if (!groupName || !(groupName in taskGroups)) {
+if (!groupName || !Object.hasOwn(taskGroups, groupName)) {
   const availableGroups = Object.keys(taskGroups)
     .map((name) => `  - ${name}`)
     .join("\n");
