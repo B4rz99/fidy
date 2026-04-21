@@ -37,6 +37,48 @@ export function cancelActiveStream(): void {
   streamingChatService.cancel();
 }
 
+type UserDb = NonNullable<ReturnType<typeof tryGetDb>>;
+type OptionalUserId = ReturnType<typeof useOptionalUserId>;
+type AddAction = Extract<ChatAction, { type: "add" }>;
+
+function populateTransactionDraft(action: AddAction) {
+  const store = useTransactionStore.getState();
+  store.setType(action.data.type);
+  store.setDigits(String(action.data.amount));
+  store.setCategoryId(action.data.categoryId);
+  store.setDescription(action.data.description);
+  store.setDate(parseIsoDate(action.data.date));
+  return store;
+}
+
+function trackAddActionCreated(action: AddAction) {
+  trackTransactionCreated({
+    type: action.data.type,
+    category: String(action.data.categoryId),
+    source: "ai_chat",
+  });
+}
+
+async function saveAddActionTransaction(
+  action: AddAction,
+  db: UserDb,
+  userId: NonNullable<OptionalUserId>
+) {
+  return (await saveCurrentTransaction(db, userId)).success
+    ? trackAddActionCreated(action)
+    : undefined;
+}
+
+async function executeAddAction(action: AddAction, db: UserDb | null, userId: OptionalUserId) {
+  if (!db || !userId) return;
+  const activeDb = db;
+  const activeUserId = userId;
+  const store = populateTransactionDraft(action);
+  return Promise.resolve(saveAddActionTransaction(action, activeDb, activeUserId)).finally(() =>
+    store.resetForm()
+  );
+}
+
 export function useStreamingChat() {
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
@@ -45,38 +87,11 @@ export function useStreamingChat() {
 
   const executeAction = useCallback(
     async (action: ChatAction) => {
-      switch (action.type) {
-        case "add": {
-          const store = useTransactionStore.getState();
-          if (!db || !userId) return;
-          store.setType(action.data.type);
-          store.setDigits(String(action.data.amount));
-          store.setCategoryId(action.data.categoryId);
-          store.setDescription(action.data.description);
-          store.setDate(parseIsoDate(action.data.date));
-          try {
-            const result = await saveCurrentTransaction(db, userId);
-            if (result.success) {
-              trackTransactionCreated({
-                type: action.data.type,
-                category: String(action.data.categoryId),
-                source: "ai_chat",
-              });
-            }
-          } finally {
-            store.resetForm();
-          }
-          break;
-        }
-        case "edit": {
-          // Edit not yet fully wired
-          break;
-        }
-        case "delete": {
-          // Delete handled via updateActionStatus flow in ChatScreen
-          break;
-        }
+      if (action.type !== "add") {
+        return;
       }
+
+      await executeAddAction(action, db, userId);
     },
     [db, userId]
   );

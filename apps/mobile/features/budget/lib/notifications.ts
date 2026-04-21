@@ -9,6 +9,16 @@ export type ScheduleResult =
   | { readonly type: "needs_permission" }
   | { readonly type: "skipped" };
 
+type NonScheduledResult = Exclude<
+  ScheduleResult,
+  { readonly type: "scheduled"; readonly id: string }
+>;
+
+const RESULT_BY_ACTION = {
+  prePermission: { type: "needs_permission" },
+  skip: { type: "skipped" },
+} as const satisfies Record<"prePermission" | "skip", NonScheduledResult>;
+
 async function readHasSeenPrePermission(): Promise<boolean> {
   try {
     const value = await SecureStore.getItemAsync(PRE_PERMISSION_KEY);
@@ -18,48 +28,75 @@ async function readHasSeenPrePermission(): Promise<boolean> {
   }
 }
 
+function buildBudgetAlertCopy(alert: BudgetAlert, categoryName: string) {
+  if (alert.threshold === 100) {
+    return {
+      title: i18n.t("budgets.alerts.overBudgetTitle"),
+      body: i18n.t("budgets.alerts.overBudget", {
+        category: categoryName,
+        percent: alert.percentUsed,
+      }),
+    };
+  }
+
+  return {
+    title: i18n.t("budgets.alerts.nearLimitTitle"),
+    body: i18n.t("budgets.alerts.nearLimit", {
+      category: categoryName,
+      percent: alert.percentUsed,
+    }),
+  };
+}
+
+function getImmediateScheduleResult(
+  actionType: ReturnType<typeof determineAlertAction>["type"]
+): NonScheduledResult | null {
+  if (actionType === "send") {
+    return null;
+  }
+
+  return actionType === "pre_permission" ? RESULT_BY_ACTION.prePermission : RESULT_BY_ACTION.skip;
+}
+
+async function getBudgetAlertAction(notificationsEnabled: boolean) {
+  const { status } = await Notifications.getPermissionsAsync();
+  const hasSeenPrePermission = await readHasSeenPrePermission();
+  return determineAlertAction(status, hasSeenPrePermission, notificationsEnabled);
+}
+
+async function scheduleBudgetNotification(
+  alert: BudgetAlert,
+  copy: ReturnType<typeof buildBudgetAlertCopy>
+) {
+  return Notifications.scheduleNotificationAsync({
+    content: {
+      title: copy.title,
+      body: copy.body,
+      data: {
+        budgetId: alert.budgetId,
+        categoryId: alert.categoryId,
+        threshold: alert.threshold,
+        route: "/(tabs)/(finance)",
+      },
+    },
+    trigger: null, // immediate
+  });
+}
+
 export async function scheduleBudgetAlert(
   alert: BudgetAlert,
   categoryName: string,
   notificationsEnabled = true
 ): Promise<ScheduleResult> {
   try {
-    const { status } = await Notifications.getPermissionsAsync();
-    const hasSeenPrePermission = await readHasSeenPrePermission();
-    const action = determineAlertAction(status, hasSeenPrePermission, notificationsEnabled);
+    const action = await getBudgetAlertAction(notificationsEnabled);
+    const immediateResult = getImmediateScheduleResult(action.type);
 
-    if (action.type === "pre_permission") return { type: "needs_permission" };
-    if (action.type === "skip") return { type: "skipped" };
+    if (immediateResult != null) {
+      return immediateResult;
+    }
 
-    // action.type === "send" — schedule the notification
-    const title =
-      alert.threshold === 100
-        ? i18n.t("budgets.alerts.overBudgetTitle")
-        : i18n.t("budgets.alerts.nearLimitTitle");
-    const body =
-      alert.threshold === 100
-        ? i18n.t("budgets.alerts.overBudget", {
-            category: categoryName,
-            percent: alert.percentUsed,
-          })
-        : i18n.t("budgets.alerts.nearLimit", {
-            category: categoryName,
-            percent: alert.percentUsed,
-          });
-
-    const id = await Notifications.scheduleNotificationAsync({
-      content: {
-        title,
-        body,
-        data: {
-          budgetId: alert.budgetId,
-          categoryId: alert.categoryId,
-          threshold: alert.threshold,
-          route: "/(tabs)/(finance)",
-        },
-      },
-      trigger: null, // immediate
-    });
+    const id = await scheduleBudgetNotification(alert, buildBudgetAlertCopy(alert, categoryName));
 
     return { type: "scheduled", id };
   } catch {

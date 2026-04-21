@@ -153,6 +153,48 @@ async function commitBillPayment(
   return { transaction, payment };
 }
 
+function getBillForPayment(bills: readonly Bill[], billId: BillId): Bill | null {
+  return bills.find((candidate) => candidate.id === billId) ?? null;
+}
+
+async function commitBillPaymentSafely(input: {
+  readonly commit: WriteThroughMutationModule["commit"];
+  readonly bill: Bill;
+  readonly billId: BillId;
+  readonly dueDate: IsoDate;
+  readonly userId: UserId;
+  readonly timestamp: Date;
+  readonly createPaymentId: () => BillPaymentId;
+  readonly createTransactionId: () => TransactionId;
+}) {
+  try {
+    return await commitBillPayment(
+      input.commit,
+      input.bill,
+      input.billId,
+      input.dueDate,
+      input.userId,
+      input.timestamp,
+      input.createPaymentId,
+      input.createTransactionId
+    );
+  } catch {
+    return null;
+  }
+}
+
+function applyBillPaymentSideEffects(
+  deps: CreateCalendarBillMutationServiceDeps,
+  transaction: StoredTransaction
+) {
+  try {
+    deps.addTransactionToCache(transaction);
+    deps.trackPaymentRecorded();
+  } catch (error) {
+    deps.reportAsyncError(error);
+  }
+}
+
 export function createCalendarBillMutationService(
   deps: CreateCalendarBillMutationServiceDeps
 ): CalendarBillMutationService {
@@ -250,43 +292,26 @@ export function createCalendarBillMutationService(
     markBillPaid: async (bills, billId, dueDate) => {
       const userId = deps.getUserId();
       const commit = deps.getCommit();
-      if (!userId || !commit) {
+      const bill = getBillForPayment(bills, billId);
+      if (!userId || !commit || bill == null) {
         return { success: false };
       }
 
-      const bill = bills.find((candidate) => candidate.id === billId);
-      if (!bill) {
-        return { success: false };
-      }
-
-      let commitResult: { transaction: StoredTransaction; payment: BillPayment } | null = null;
-
-      try {
-        commitResult = await commitBillPayment(
-          commit,
-          bill,
-          billId,
-          dueDate,
-          userId,
-          now(),
-          createPaymentId,
-          createTransactionId
-        );
-      } catch {
-        return { success: false };
-      }
-
+      const commitResult = await commitBillPaymentSafely({
+        commit,
+        bill,
+        billId,
+        dueDate,
+        userId,
+        timestamp: now(),
+        createPaymentId,
+        createTransactionId,
+      });
       if (!commitResult) {
         return { success: false };
       }
 
-      try {
-        deps.addTransactionToCache(commitResult.transaction);
-        deps.trackPaymentRecorded();
-      } catch (error) {
-        deps.reportAsyncError(error);
-      }
-
+      applyBillPaymentSideEffects(deps, commitResult.transaction);
       return { success: true, payment: commitResult.payment };
     },
 

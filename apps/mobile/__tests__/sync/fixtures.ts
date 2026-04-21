@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/useNamingConvention: sync fixtures mirror server column names
 type Overrides = Record<string, unknown>;
 type ConflictData = Record<string, unknown>;
 type ParsedConflictOverrides = {

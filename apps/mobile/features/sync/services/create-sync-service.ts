@@ -83,6 +83,11 @@ const getConflictRowsEffect = (db: SyncContext["db"]) =>
 const unresolvedConflictCountEffect = (db: SyncContext["db"]) =>
   Effect.map(listConflictsEffect({ db }), (conflicts) => conflicts.length);
 
+const unresolvedConflictResultEffect = (db: SyncContext["db"]) =>
+  Effect.map(unresolvedConflictCountEffect(db), (unresolvedConflicts) => ({
+    unresolvedConflicts,
+  }));
+
 function listConflictsEffect({ db }: SyncContext) {
   return Effect.flatMap(getConflictRowsEffect(db), (rows) =>
     Effect.forEach(rows, (row) =>
@@ -97,37 +102,96 @@ function listConflictsEffect({ db }: SyncContext) {
   );
 }
 
+function getConflictRow(
+  rows: readonly ConflictRow[],
+  conflictId: ResolveTransactionConflictInput["conflictId"]
+) {
+  return rows.find((conflict) => conflict.id === conflictId) ?? null;
+}
+
+function getLocalResolutionData(
+  row: ConflictRow,
+  resolution: ResolveTransactionConflictInput["resolution"]
+) {
+  return resolution === "local" ? (JSON.parse(row.localData) as TransactionSnapshot) : null;
+}
+
+const getRefreshUserId = (
+  localData: TransactionSnapshot | null,
+  serverData: TransactionSnapshot | null
+) => localData?.userId ?? serverData?.userId ?? null;
+
+function persistLocalResolutionEffect(input: {
+  readonly db: SyncContext["db"];
+  readonly row: ConflictRow;
+  readonly localData: TransactionSnapshot | null;
+  readonly resolvedAt: IsoDateTime;
+  readonly upsertTransaction: UpsertTransaction;
+  readonly enqueueTransactionSync: EnqueueTransactionSync;
+}) {
+  if (input.localData == null) {
+    return Effect.succeed(undefined);
+  }
+
+  const localData = input.localData;
+  return Effect.all([
+    fromThunk(() =>
+      input.upsertTransaction(input.db, {
+        ...localData,
+        updatedAt: input.resolvedAt,
+      })
+    ),
+    fromThunk(() =>
+      input.enqueueTransactionSync(input.db, input.row.transactionId, input.resolvedAt)
+    ),
+  ]);
+}
+
+function refreshResolvedConflictEffect(input: {
+  readonly db: SyncContext["db"];
+  readonly userId: string | null;
+  readonly refreshTransactions: RefreshTransactions;
+}) {
+  if (input.userId == null) {
+    return Effect.succeed(undefined);
+  }
+
+  const userId = input.userId;
+  return fromThunk(() => input.refreshTransactions({ db: input.db, userId }));
+}
+
 function resolveConflictEffect({ db, conflictId, resolution }: ResolveTransactionConflictInput) {
   return Effect.gen(function* () {
     const rows = yield* getConflictRowsEffect(db);
-    const row = rows.find((conflict) => conflict.id === conflictId);
+    const row = getConflictRow(rows, conflictId);
     if (!row) {
-      return {
-        unresolvedConflicts: yield* unresolvedConflictCountEffect(db),
-      };
+      return yield* unresolvedConflictResultEffect(db);
     }
 
     const { upsertTransaction, enqueueTransactionSync, resolveConflictRow, refreshTransactions } =
       yield* SyncDeps.tag;
     const resolvedAt = yield* currentIsoDateTimeEffect;
     const serverData = tryParseTransactionSnapshot(row.serverData);
-    const localData =
-      resolution === "local" ? (JSON.parse(row.localData) as TransactionSnapshot) : null;
-    const refreshUserId = localData?.userId ?? serverData?.userId ?? null;
+    const localData = getLocalResolutionData(row, resolution);
+    const refreshUserId = getRefreshUserId(localData, serverData);
 
-    if (resolution === "local" && localData) {
-      yield* fromThunk(() => upsertTransaction(db, { ...localData, updatedAt: resolvedAt }));
-      yield* fromThunk(() => enqueueTransactionSync(db, row.transactionId, resolvedAt));
-    }
+    yield* persistLocalResolutionEffect({
+      db,
+      row,
+      localData,
+      resolvedAt,
+      upsertTransaction,
+      enqueueTransactionSync,
+    });
 
     yield* fromThunk(() => resolveConflictRow(db, conflictId, resolution, resolvedAt));
-    if (refreshUserId != null) {
-      yield* fromThunk(() => refreshTransactions({ db, userId: refreshUserId }));
-    }
+    yield* refreshResolvedConflictEffect({
+      db,
+      userId: refreshUserId,
+      refreshTransactions,
+    });
 
-    return {
-      unresolvedConflicts: yield* unresolvedConflictCountEffect(db),
-    };
+    return yield* unresolvedConflictResultEffect(db);
   });
 }
 
