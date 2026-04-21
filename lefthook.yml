@@ -31,7 +31,6 @@ commit-msg:
         fi
 
 pre-push:
-  parallel: true
   commands:
     root-biome:
       files: git ls-files
