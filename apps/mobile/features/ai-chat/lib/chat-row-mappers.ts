@@ -2,6 +2,18 @@ import type { chatMessages, chatSessions } from "@/shared/db";
 import { requireIsoDateTime } from "@/shared/types/assertions";
 import type { ActionStatus, ChatAction, ChatMessage, ChatSession } from "../schema";
 
+const parseChatAction = (action: string | null): ChatAction | null => {
+  if (action === null) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(action) as ChatAction;
+  } catch {
+    return null;
+  }
+};
+
 export function mapChatSessionRow(row: typeof chatSessions.$inferSelect): ChatSession {
   return {
     id: row.id,
@@ -19,7 +31,7 @@ export function mapChatMessageRow(row: typeof chatMessages.$inferSelect): ChatMe
     sessionId: row.sessionId,
     role: row.role as "user" | "assistant",
     content: row.content,
-    action: row.action ? (JSON.parse(row.action) as ChatAction) : null,
+    action: parseChatAction(row.action),
     actionStatus: row.actionStatus as ActionStatus | null,
     createdAt: requireIsoDateTime(row.createdAt),
   };
