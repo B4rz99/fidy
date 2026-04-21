@@ -3,6 +3,7 @@ import { createWriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import { i18n } from "@/shared/i18n";
 import {
+  captureWarning,
   generateId,
   toIsoDateTime,
   trackGoalContributionAdded,
@@ -11,17 +12,12 @@ import {
 } from "@/shared/lib";
 import type { MutationCommand } from "@/shared/mutations/write-through";
 import type { UserId } from "@/shared/types/branded";
-import type { AddContributionInput, CreateGoalInput, Goal } from "../schema";
-import { addContributionSchema, createGoalSchema } from "../schema";
+import type { AddContributionInput, CreateGoalInput, GoalUpdateInput } from "../schema";
+import { addContributionSchema, createGoalSchema, updateGoalSchema } from "../schema";
 
 type CommitGoalMutation = (command: MutationCommand) => Promise<boolean>;
 
-export type GoalUpdateInput = Partial<
-  Pick<
-    Goal,
-    "name" | "targetAmount" | "targetDate" | "interestRatePercent" | "iconName" | "colorHex"
-  >
->;
+export type { GoalUpdateInput } from "../schema";
 
 type GoalMilestone = {
   readonly goalId: string;
@@ -51,6 +47,32 @@ type CreateGoalMutationServiceDeps = {
   readonly trackMilestoneReached?: () => void;
 };
 
+function logMilestoneNotificationFailure(milestone: GoalMilestone, error: unknown): void {
+  captureWarning("goal_milestone_notification_failed", {
+    goalId: milestone.goalId,
+    milestone: milestone.milestone,
+    errorMessage: error instanceof Error ? error.message : "unknown",
+  });
+}
+
+function scheduleMilestonePush(input: {
+  readonly milestone: GoalMilestone;
+  readonly schedulePush: typeof scheduleLocalPush;
+  readonly translateMilestoneTitle: (input: GoalMilestone) => string;
+  readonly translateMilestoneBody: (input: GoalMilestone) => string;
+}): void {
+  void input
+    .schedulePush({
+      title: input.translateMilestoneTitle(input.milestone),
+      body: input.translateMilestoneBody(input.milestone),
+      data: { route: `/goal-detail?goalId=${input.milestone.goalId}` },
+      preferenceKey: "goalMilestones",
+    })
+    .catch((error) => {
+      logMilestoneNotificationFailure(input.milestone, error);
+    });
+}
+
 function publishGoalMilestone(input: {
   readonly db: AnyDb;
   readonly userId: UserId;
@@ -60,26 +82,29 @@ function publishGoalMilestone(input: {
   readonly translateMilestoneTitle: (input: GoalMilestone) => string;
   readonly translateMilestoneBody: (input: GoalMilestone) => string;
   readonly trackMilestoneReached: () => void;
-}): void {
-  void input.insertNotification(input.db, input.userId, {
-    type: "goal_milestone",
-    dedupKey: `goal_milestone:${input.milestone.goalId}:${input.milestone.milestone}`,
-    categoryId: null,
-    goalId: input.milestone.goalId,
-    titleKey: "notifications.goalMilestone",
-    messageKey: "notifications.goalMilestoneMsg",
-    params: JSON.stringify({
-      goalName: input.milestone.goalName,
-      percent: input.milestone.milestone,
-    }),
-  });
-  input.trackMilestoneReached();
-  void input.schedulePush({
-    title: input.translateMilestoneTitle(input.milestone),
-    body: input.translateMilestoneBody(input.milestone),
-    data: { route: `/goal-detail?goalId=${input.milestone.goalId}` },
-    preferenceKey: "goalMilestones",
-  });
+}): Promise<void> {
+  return input
+    .insertNotification(input.db, input.userId, {
+      type: "goal_milestone",
+      dedupKey: `goal_milestone:${input.milestone.goalId}:${input.milestone.milestone}`,
+      categoryId: null,
+      goalId: input.milestone.goalId,
+      titleKey: "notifications.goalMilestone",
+      messageKey: "notifications.goalMilestoneMsg",
+      params: JSON.stringify({
+        goalName: input.milestone.goalName,
+        percent: input.milestone.milestone,
+      }),
+    })
+    .then((didInsert) => {
+      if (!didInsert) return;
+
+      input.trackMilestoneReached();
+      scheduleMilestonePush(input);
+    })
+    .catch((error) => {
+      logMilestoneNotificationFailure(input.milestone, error);
+    });
 }
 
 export function createGoalMutationService({
@@ -140,13 +165,17 @@ export function createGoalMutationService({
       return true;
     },
 
-    updateGoal: (goalId: string, data: GoalUpdateInput): Promise<boolean> =>
-      commitGoalMutation({
+    updateGoal: async (goalId: string, data: GoalUpdateInput): Promise<boolean> => {
+      const validation = updateGoalSchema.safeParse(data);
+      if (!validation.success) return false;
+
+      return commitGoalMutation({
         kind: "goal.update",
         goalId,
-        data,
+        data: validation.data,
         now: toIsoDateTime(now()),
-      }),
+      });
+    },
 
     deleteGoal: (goalId: string): Promise<boolean> =>
       commitGoalMutation({
@@ -187,19 +216,25 @@ export function createGoalMutationService({
         now: toIsoDateTime(now()),
       }),
 
-    notifyMilestones: ({ goalId, goalName, milestones }: GoalMilestoneEffect): void => {
-      milestones.forEach((milestone) => {
-        publishGoalMilestone({
-          db,
-          userId,
-          milestone: { goalId, goalName, milestone },
-          insertNotification,
-          schedulePush,
-          translateMilestoneTitle,
-          translateMilestoneBody,
-          trackMilestoneReached,
-        });
-      });
+    notifyMilestones: async ({
+      goalId,
+      goalName,
+      milestones,
+    }: GoalMilestoneEffect): Promise<void> => {
+      await Promise.all(
+        milestones.map((milestone) =>
+          publishGoalMilestone({
+            db,
+            userId,
+            milestone: { goalId, goalName, milestone },
+            insertNotification,
+            schedulePush,
+            translateMilestoneTitle,
+            translateMilestoneBody,
+            trackMilestoneReached,
+          })
+        )
+      );
     },
   };
 }

@@ -90,7 +90,7 @@ const isSupportedEmailProvider = (provider: string): provider is EmailProvider =
   provider === "gmail" || provider === "outlook";
 
 const resolveFetchSince = (account: EmailAccountRow, minSince: string): string =>
-  account.lastFetchedAt && account.lastFetchedAt < minSince ? account.lastFetchedAt : minSince;
+  account.lastFetchedAt && account.lastFetchedAt > minSince ? account.lastFetchedAt : minSince;
 
 const loadSenderEmails = async (): Promise<readonly string[]> => {
   const senders = await ensureBankSenders(queryClient);

@@ -1,33 +1,49 @@
 import { z } from "zod";
 
 const goalTypeSchema = z.enum(["savings", "debt"]);
+const goalNameSchema = z.string().min(1).max(100);
+const targetAmountSchema = z.number().int().positive();
+const interestRatePercentSchema = z.number().min(0).max(100);
+const iconNameSchema = z.string();
+const colorHexSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+
+function isValidCalendarDate(value: string): boolean {
+  const [year = 0, month = 1, day = 1] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  return [date.getFullYear() === year, date.getMonth() === month - 1, date.getDate() === day].every(
+    Boolean
+  );
+}
 
 const isoDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
-  .refine((val) => {
-    const parts = val.split("-").map(Number);
-    const y = parts[0] ?? 0;
-    const m = parts[1] ?? 1;
-    const d = parts[2] ?? 1;
-    const date = new Date(y, m - 1, d);
-    return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
-  }, "Invalid calendar date");
+  .refine(isValidCalendarDate, "Invalid calendar date");
 
 export const createGoalSchema = z.object({
-  name: z.string().min(1).max(100),
+  name: goalNameSchema,
   type: goalTypeSchema,
-  targetAmount: z.number().int().positive(),
+  targetAmount: targetAmountSchema,
   targetDate: isoDateSchema.optional(),
-  interestRatePercent: z.number().min(0).max(100).optional(),
-  iconName: z.string().optional(),
-  colorHex: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/)
-    .optional(),
+  interestRatePercent: interestRatePercentSchema.optional(),
+  iconName: iconNameSchema.optional(),
+  colorHex: colorHexSchema.optional(),
 });
 
 export type CreateGoalInput = z.infer<typeof createGoalSchema>;
+
+export const updateGoalSchema = z
+  .object({
+    name: goalNameSchema.optional(),
+    targetAmount: targetAmountSchema.optional(),
+    targetDate: isoDateSchema.nullable().optional(),
+    interestRatePercent: interestRatePercentSchema.nullable().optional(),
+    iconName: iconNameSchema.nullable().optional(),
+    colorHex: colorHexSchema.nullable().optional(),
+  })
+  .strict();
+
+export type GoalUpdateInput = z.infer<typeof updateGoalSchema>;
 
 export const addContributionSchema = z.object({
   goalId: z.string().min(1),

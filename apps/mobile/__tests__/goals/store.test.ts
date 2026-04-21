@@ -1,16 +1,46 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  addContribution,
   createGoal,
   initializeGoalSession,
   loadGoalsForUser,
   selectGoal,
   useGoalStore,
 } from "@/features/goals/store";
+import type { GoalWithProgress } from "@/features/goals/types";
+import { insertNotificationRecord } from "@/features/notifications";
 import type { UserId } from "@/shared/types/branded";
 
 const mockLoadGoals = vi.fn();
 const mockLoadGoalContributions = vi.fn();
 const mockCommit = vi.fn();
+
+const baseGoalSnapshot: GoalWithProgress = {
+  goal: {
+    id: "goal-1",
+    userId: "user-1",
+    name: "Trip",
+    type: "savings",
+    targetAmount: 1000000,
+    targetDate: null,
+    interestRatePercent: null,
+    iconName: null,
+    colorHex: null,
+    createdAt: "2026-04-01T00:00:00.000Z",
+    updatedAt: "2026-04-01T00:00:00.000Z",
+    deletedAt: null,
+  },
+  currentAmount: 250000,
+  progress: { percentComplete: 25, remaining: 750000, isComplete: false },
+  projection: {
+    monthsToGo: 2,
+    projectedDate: new Date("2026-06-01T00:00:00.000Z"),
+    confidence: "high",
+    netMonthlySavings: 400000,
+  },
+  installments: { current: 1, total: 3 },
+  paceGuidance: null,
+};
 
 vi.mock("@/features/goals/services/create-goal-query-service", () => ({
   createGoalQueryService: () => ({
@@ -53,6 +83,26 @@ function createDeferred<T>() {
   return { promise, resolve, reject };
 }
 
+const createGoalSnapshot = (progress: GoalWithProgress["progress"]): GoalWithProgress => ({
+  ...baseGoalSnapshot,
+  currentAmount: baseGoalSnapshot.goal.targetAmount - progress.remaining,
+  progress,
+});
+
+const initialGoalSnapshot = createGoalSnapshot({
+  percentComplete: 20,
+  remaining: 800000,
+  isComplete: false,
+});
+
+const updatedGoalSnapshot = createGoalSnapshot({
+  percentComplete: 50,
+  remaining: 500000,
+  isComplete: false,
+});
+
+const createGoalLoadDeferred = () => createDeferred<readonly GoalWithProgress[]>();
+
 describe("goal store boundary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -66,55 +116,14 @@ describe("goal store boundary", () => {
   });
 
   it("drops stale goal results after the active user changes", async () => {
-    const deferred =
-      createDeferred<
-        readonly [
-          {
-            readonly goal: {
-              readonly id: string;
-              readonly name: string;
-            };
-            readonly currentAmount: number;
-            readonly progress: {
-              readonly percentComplete: number;
-              readonly remaining: number;
-              readonly isComplete: boolean;
-            };
-            readonly projection: {
-              readonly monthsToGo: number | null;
-              readonly projectedDate: Date | null;
-              readonly confidence: "none" | "low" | "medium" | "high";
-              readonly netMonthlySavings: number;
-            };
-            readonly installments: {
-              readonly current: number;
-              readonly total: number;
-            };
-            readonly paceGuidance: null;
-          },
-        ]
-      >();
+    const deferred = createGoalLoadDeferred();
     mockLoadGoals.mockReturnValueOnce(deferred.promise);
 
     initializeGoalSession("user-1" as UserId);
     const load = loadGoalsForUser({} as never, "user-1" as UserId);
 
     initializeGoalSession("user-2" as UserId);
-    deferred.resolve([
-      {
-        goal: { id: "goal-1", name: "Trip" },
-        currentAmount: 250000,
-        progress: { percentComplete: 25, remaining: 750000, isComplete: false },
-        projection: {
-          monthsToGo: 2,
-          projectedDate: new Date("2026-06-01T00:00:00.000Z"),
-          confidence: "high",
-          netMonthlySavings: 400000,
-        },
-        installments: { current: 1, total: 3 },
-        paceGuidance: null,
-      },
-    ]);
+    deferred.resolve([baseGoalSnapshot]);
 
     await load;
 
@@ -173,5 +182,33 @@ describe("goal store boundary", () => {
       activeUserId: "user-2",
       goals: [],
     });
+  });
+
+  it("does not fail addContribution when milestone notification publishing rejects", async () => {
+    mockCommit.mockResolvedValueOnce({ success: true });
+    mockLoadGoals.mockResolvedValueOnce([updatedGoalSnapshot]);
+    vi.mocked(insertNotificationRecord).mockRejectedValue(new Error("notifications offline"));
+
+    initializeGoalSession("user-1" as UserId);
+    useGoalStore.setState({
+      activeUserId: "user-1" as UserId,
+      goals: [initialGoalSnapshot],
+      selectedGoalId: null,
+      selectedGoalContributions: [],
+      isLoading: false,
+    });
+
+    await expect(
+      addContribution({} as never, "user-1" as UserId, {
+        goalId: "goal-1",
+        amount: 250000,
+        date: "2026-04-18",
+      })
+    ).resolves.toBe(true);
+
+    expect(mockCommit).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "goalContribution.save" })
+    );
+    expect(useGoalStore.getState().goals).toEqual([updatedGoalSnapshot]);
   });
 });

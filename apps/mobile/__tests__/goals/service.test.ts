@@ -1,4 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import type { GoalUpdateInput } from "@/features/goals/schema";
 import { createGoalMutationService } from "@/features/goals/services/create-goal-mutation-service";
 import { createGoalQueryService } from "@/features/goals/services/create-goal-query-service";
 import type { UserId } from "@/shared/types/branded";
@@ -101,7 +102,7 @@ function createQueryService() {
 }
 
 function createMilestoneService() {
-  const insertNotification = vi.fn();
+  const insertNotification = vi.fn().mockResolvedValue(true);
   const schedulePush = vi.fn();
   const trackMilestoneReached = vi.fn();
 
@@ -219,11 +220,53 @@ it("commits normalized goal saves and tracks successful creates", async () => {
   expect(trackCreated).toHaveBeenCalledTimes(1);
 });
 
-it("publishes milestone notifications through the injected side-effect boundary", () => {
+it("commits validated goal updates", async () => {
+  const commit = vi.fn().mockResolvedValue(true);
+  const service = createGoalMutationService({
+    db: {} as never,
+    userId: "user-1" as UserId,
+    commit,
+    now: () => new Date("2026-04-20T12:30:00.000Z"),
+  });
+
+  await expect(
+    service.updateGoal("goal-1", {
+      targetDate: null,
+      colorHex: "#00AAFF",
+    })
+  ).resolves.toBe(true);
+
+  expect(commit).toHaveBeenCalledWith({
+    kind: "goal.update",
+    goalId: "goal-1",
+    data: {
+      targetDate: null,
+      colorHex: "#00AAFF",
+    },
+    now: "2026-04-20T12:30:00.000Z",
+  });
+});
+
+it("rejects invalid goal updates before they reach the mutation boundary", async () => {
+  const commit = vi.fn().mockResolvedValue(true);
+  const service = createGoalMutationService({
+    db: {} as never,
+    userId: "user-1" as UserId,
+    commit,
+  });
+
+  await expect(service.updateGoal("goal-1", { colorHex: "blue" } as GoalUpdateInput)).resolves.toBe(
+    false
+  );
+
+  expect(commit).not.toHaveBeenCalled();
+});
+
+it("publishes milestone notifications through the injected side-effect boundary", async () => {
   const { insertNotification, schedulePush, trackMilestoneReached, service } =
     createMilestoneService();
 
-  service.notifyMilestones({
+  await service.notifyMilestones({
     goalId: "goal-1",
     goalName: "Trip",
     milestones: [25, 50],
@@ -231,4 +274,38 @@ it("publishes milestone notifications through the injected side-effect boundary"
 
   expectMilestoneNotifications(insertNotification);
   expectMilestonePushes(schedulePush, trackMilestoneReached);
+});
+
+it("skips milestone push and analytics when the notification insert is deduped", async () => {
+  const { insertNotification, schedulePush, trackMilestoneReached, service } =
+    createMilestoneService();
+  insertNotification.mockResolvedValue(false);
+
+  await service.notifyMilestones({
+    goalId: "goal-1",
+    goalName: "Trip",
+    milestones: [25],
+  });
+
+  expect(insertNotification).toHaveBeenCalledTimes(1);
+  expect(schedulePush).not.toHaveBeenCalled();
+  expect(trackMilestoneReached).not.toHaveBeenCalled();
+});
+
+it("squashes milestone notification failures", async () => {
+  const { insertNotification, schedulePush, trackMilestoneReached, service } =
+    createMilestoneService();
+  insertNotification.mockRejectedValue(new Error("notification unavailable"));
+
+  await expect(
+    service.notifyMilestones({
+      goalId: "goal-1",
+      goalName: "Trip",
+      milestones: [25],
+    })
+  ).resolves.toBeUndefined();
+
+  expect(insertNotification).toHaveBeenCalledTimes(1);
+  expect(schedulePush).not.toHaveBeenCalled();
+  expect(trackMilestoneReached).not.toHaveBeenCalled();
 });
