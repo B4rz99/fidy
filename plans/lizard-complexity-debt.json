@@ -190,14 +190,6 @@
       "parameterCount": 1
     },
     {
-      "key": "createCustomCategory@73-106@apps/mobile/features/categories/store.ts",
-      "file": "apps/mobile/features/categories/store.ts",
-      "function": "createCustomCategory",
-      "cyclomaticComplexity": 4,
-      "nloc": 31,
-      "parameterCount": 3
-    },
-    {
       "key": "deriveEffectiveOnboardingComplete@55-62@apps/mobile/features/auth/lib/effective-auth.ts",
       "file": "apps/mobile/features/auth/lib/effective-auth.ts",
       "function": "deriveEffectiveOnboardingComplete",
@@ -254,38 +246,6 @@
       "parameterCount": 4
     },
     {
-      "key": "getFirstNonEmptyRouteParam@6-15@apps/mobile/features/goals/lib/route-params.ts",
-      "file": "apps/mobile/features/goals/lib/route-params.ts",
-      "function": "getFirstNonEmptyRouteParam",
-      "cyclomaticComplexity": 6,
-      "nloc": 8,
-      "parameterCount": 1
-    },
-    {
-      "key": "getFirstNonEmptyRouteParam@8-17@apps/mobile/features/search/lib/route-params.ts",
-      "file": "apps/mobile/features/search/lib/route-params.ts",
-      "function": "getFirstNonEmptyRouteParam",
-      "cyclomaticComplexity": 6,
-      "nloc": 8,
-      "parameterCount": 1
-    },
-    {
-      "key": "getFirstRouteParamValue@4-12@apps/mobile/features/qa/lib/route-params.ts",
-      "file": "apps/mobile/features/qa/lib/route-params.ts",
-      "function": "getFirstRouteParamValue",
-      "cyclomaticComplexity": 6,
-      "nloc": 7,
-      "parameterCount": 1
-    },
-    {
-      "key": "getNextOnboardingStep@26-40@apps/mobile/features/onboarding/lib/flow.ts",
-      "file": "apps/mobile/features/onboarding/lib/flow.ts",
-      "function": "getNextOnboardingStep",
-      "cyclomaticComplexity": 5,
-      "nloc": 13,
-      "parameterCount": 4
-    },
-    {
       "key": "getNow@27-73@apps/mobile/__tests__/analytics/service.test.ts",
       "file": "apps/mobile/__tests__/analytics/service.test.ts",
       "function": "getNow",
@@ -302,28 +262,12 @@
       "parameterCount": 4
     },
     {
-      "key": "hasActiveFilters@3-15@apps/mobile/features/search/lib/filters.ts",
-      "file": "apps/mobile/features/search/lib/filters.ts",
-      "function": "hasActiveFilters",
-      "cyclomaticComplexity": 7,
-      "nloc": 12,
-      "parameterCount": 1
-    },
-    {
       "key": "hasInvalidBillingDayInput@11-32@apps/mobile/features/financial-accounts/lib/form-screen.ts",
       "file": "apps/mobile/features/financial-accounts/lib/form-screen.ts",
       "function": "hasInvalidBillingDayInput",
       "cyclomaticComplexity": 5,
       "nloc": 20,
       "parameterCount": 4
-    },
-    {
-      "key": "hydrate@88-115@apps/mobile/features/settings/store.ts",
-      "file": "apps/mobile/features/settings/store.ts",
-      "function": "hydrate",
-      "cyclomaticComplexity": 6,
-      "nloc": 22,
-      "parameterCount": 0
     },
     {
       "key": "linkCaptureEvidenceToTransaction@116-148@apps/mobile/features/capture-evidence/lib/repository.ts",

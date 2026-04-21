@@ -33,6 +33,7 @@ type SettingsActions = {
 };
 
 const PREFS_KEY = "notification_preferences";
+const THEME_PREFERENCE_KEY = "theme_preference";
 
 const toColorScheme = (pref: ThemePreference) => (pref === "system" ? "unspecified" : pref);
 
@@ -47,6 +48,23 @@ const persistPreferences = (prefs: NotificationPreferences): void => {
   });
 };
 
+const resolveThemePreference = (value: string | null): ThemePreference | null =>
+  value === "light" || value === "dark" || value === "system" ? value : null;
+
+const parseStoredNotificationPreferences = (
+  value: string | null
+): NotificationPreferences | null => {
+  if (!value) {
+    return null;
+  }
+
+  const raw: unknown = JSON.parse(value);
+  return {
+    ...DEFAULT_NOTIFICATION_PREFERENCES,
+    ...(typeof raw === "object" && raw !== null ? (raw as Partial<NotificationPreferences>) : {}),
+  };
+};
+
 export const useSettingsStore = create<SettingsState & SettingsActions>((set, get) => ({
   themePreference: "system",
   notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
@@ -55,7 +73,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
   setThemePreference: (pref) => {
     set({ themePreference: pref });
     Appearance.setColorScheme(toColorScheme(pref));
-    void SecureStore.setItemAsync("theme_preference", pref).catch((error) => {
+    void SecureStore.setItemAsync(THEME_PREFERENCE_KEY, pref).catch((error) => {
       captureWarning("theme_preference_persist_failed", {
         errorMessage: error instanceof Error ? error.message : "unknown",
       });
@@ -88,26 +106,26 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
   hydrate: async () => {
     try {
       const [storedTheme, storedPrefs] = await Promise.all([
-        SecureStore.getItemAsync("theme_preference"),
+        SecureStore.getItemAsync(THEME_PREFERENCE_KEY),
         SecureStore.getItemAsync(PREFS_KEY),
       ]);
+      const themePreference = resolveThemePreference(storedTheme);
 
-      if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
-        set({ themePreference: storedTheme });
-        Appearance.setColorScheme(toColorScheme(storedTheme));
+      if (themePreference) {
+        set({ themePreference });
+        Appearance.setColorScheme(toColorScheme(themePreference));
       }
 
-      if (storedPrefs) {
-        const raw: unknown = JSON.parse(storedPrefs);
-        const parsed: NotificationPreferences = {
-          ...DEFAULT_NOTIFICATION_PREFERENCES,
-          ...(typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {}),
-        };
-        set({
-          notificationPreferences: parsed,
-          areAllNotificationsOff: computeAllOff(parsed),
-        });
+      const notificationPreferences = parseStoredNotificationPreferences(storedPrefs);
+
+      if (!notificationPreferences) {
+        return;
       }
+
+      set({
+        notificationPreferences,
+        areAllNotificationsOff: computeAllOff(notificationPreferences),
+      });
     } catch {
       // SecureStore unavailable (e.g., in tests)
     }
