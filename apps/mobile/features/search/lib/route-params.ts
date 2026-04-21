@@ -6,12 +6,10 @@ type SearchRouteParams = {
 };
 
 function getFirstNonEmptyRouteParam(value: string | readonly string[] | undefined): string | null {
-  if (typeof value === "string") {
-    const trimmedValue = value.trim();
-    return trimmedValue.length > 0 ? trimmedValue : null;
-  }
+  const values = Array.isArray(value) ? value : value === undefined ? [] : [value];
+  const normalizedValues = values.map((entry) => entry.trim()).filter((entry) => entry.length > 0);
 
-  return value?.find((entry) => entry.trim().length > 0)?.trim() ?? null;
+  return normalizedValues[0] ?? null;
 }
 
 export function resolveSearchRouteFilters(params: SearchRouteParams): Partial<SearchFilters> {

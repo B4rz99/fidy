@@ -23,18 +23,14 @@ export function getVisibleOnboardingStepIndex(step: OnboardingStep, shouldReview
   return !shouldReviewAccounts && step >= ONBOARDING_STEP.budgetSetup ? step - 1 : step;
 }
 
-export function getNextOnboardingStep({
-  step,
-  emailSkipped,
-  shouldReviewAccounts,
-}: NextOnboardingStepInput): OnboardingStep {
-  if (step === ONBOARDING_STEP.connectEmail && emailSkipped) {
+export function getNextOnboardingStep(input: NextOnboardingStepInput): OnboardingStep {
+  if (input.step === ONBOARDING_STEP.connectEmail && input.emailSkipped) {
     return ONBOARDING_STEP.budgetSetup;
   }
 
-  if (step === ONBOARDING_STEP.sync) {
-    return shouldReviewAccounts ? ONBOARDING_STEP.accountReview : ONBOARDING_STEP.budgetSetup;
+  if (input.step === ONBOARDING_STEP.sync) {
+    return input.shouldReviewAccounts ? ONBOARDING_STEP.accountReview : ONBOARDING_STEP.budgetSetup;
   }
 
-  return Math.min(step + 1, ONBOARDING_STEP.complete) as OnboardingStep;
+  return Math.min(input.step + 1, ONBOARDING_STEP.complete) as OnboardingStep;
 }
