@@ -49,8 +49,12 @@ const {
 
 const { mockSetSession, mockSignInWithOAuth, mockSignOut, mockGetSession, supabaseAuthMock } =
   vi.hoisted(() => {
+    const hoistedSession = {
+      user: { id: "user-1", email: "test@example.com" },
+      access_token: "token",
+    };
     const mockSetSession = vi.fn(() =>
-      Promise.resolve({ data: { session: mockSession }, error: null })
+      Promise.resolve({ data: { session: hoistedSession }, error: null })
     );
     const mockSignInWithOAuth = vi.fn(() =>
       Promise.resolve({ data: { url: "https://example.com" }, error: null })

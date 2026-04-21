@@ -4,93 +4,25 @@ import { vi } from "vitest";
 process.env.EXPO_PUBLIC_GMAIL_CLIENT_ID = "test-gmail-client-id.apps.googleusercontent.com";
 process.env.EXPO_PUBLIC_OUTLOOK_CLIENT_ID = "test-outlook-client-id";
 
-const zeroInsets = { top: 0, bottom: 0, left: 0, right: 0 };
+const { safeAreaContextMock } = vi.hoisted(() => {
+  const zeroInsets = { top: 0, bottom: 0, left: 0, right: 0 };
 
-const safeAreaContextMock = {
-  useSafeAreaInsets: () => zeroInsets,
-  SafeAreaProvider: "SafeAreaProvider",
-};
+  return {
+    safeAreaContextMock: {
+      useSafeAreaInsets: () => zeroInsets,
+      SafeAreaProvider: "SafeAreaProvider",
+    },
+  };
+});
 
-const lucideReactNativeMock = {
-  ArrowLeftRight: "ArrowLeftRight",
-  Baby: "Baby",
-  Banknote: "Banknote",
-  BarChart3: "BarChart3",
-  Bell: "Bell",
-  Book: "Book",
-  Brain: "Brain",
-  Briefcase: "Briefcase",
-  Building2: "Building2",
-  Calendar: "Calendar",
-  Car: "Car",
-  Check: "Check",
-  CheckCircle: "CheckCircle",
-  ChevronLeft: "ChevronLeft",
-  ChevronRight: "ChevronRight",
-  CircleCheck: "CircleCheck",
-  Clapperboard: "Clapperboard",
-  Clock: "Clock",
-  Coffee: "Coffee",
-  Delete: "Delete",
-  Dog: "Dog",
-  Dumbbell: "Dumbbell",
-  Ellipsis: "Ellipsis",
-  ExternalLink: "ExternalLink",
-  FileText: "FileText",
-  Film: "Film",
-  Fuel: "Fuel",
-  Gamepad2: "Gamepad2",
-  Gift: "Gift",
-  GitMerge: "GitMerge",
-  Globe: "Globe",
-  GraduationCap: "GraduationCap",
-  Heart: "Heart",
-  HeartPulse: "HeartPulse",
-  HelpCircle: "HelpCircle",
-  Home: "Home",
-  House: "House",
-  Info: "Info",
-  LogOut: "LogOut",
-  Mail: "Mail",
-  Menu: "Menu",
-  MessageSquare: "MessageSquare",
-  Monitor: "Monitor",
-  Music: "Music",
-  Palette: "Palette",
-  PawPrint: "PawPrint",
-  Pencil: "Pencil",
-  PiggyBank: "PiggyBank",
-  Plane: "Plane",
-  Plus: "Plus",
-  Receipt: "Receipt",
-  Scissors: "Scissors",
-  Search: "Search",
-  SendHorizonal: "SendHorizonal",
-  Settings: "Settings",
-  Shield: "Shield",
-  Shirt: "Shirt",
-  ShoppingBag: "ShoppingBag",
-  ShoppingCart: "ShoppingCart",
-  Smartphone: "Smartphone",
-  Sparkles: "Sparkles",
-  Star: "Star",
-  Stethoscope: "Stethoscope",
-  Tag: "Tag",
-  Target: "Target",
-  Trash2: "Trash2",
-  TrendingUp: "TrendingUp",
-  TriangleAlert: "TriangleAlert",
-  Trophy: "Trophy",
-  Umbrella: "Umbrella",
-  User: "User",
-  Utensils: "Utensils",
-  Wallet: "Wallet",
-  Wifi: "Wifi",
-  Wine: "Wine",
-  Wrench: "Wrench",
-  X: "X",
-  Zap: "Zap",
-};
+const { lucideReactNativeMock } = vi.hoisted(() => ({
+  lucideReactNativeMock: new Proxy<Record<string, string>>(
+    {},
+    {
+      get: (_, iconName) => (typeof iconName === "string" ? iconName : ""),
+    }
+  ),
+}));
 
 // Mock react-native (Flow syntax not supported outside RN bundler)
 vi.mock("react-native", () => ({
