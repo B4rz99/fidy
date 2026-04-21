@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { insertNotificationRecord } from "@/features/notifications";
 import {
   addContribution,
   createGoal,
@@ -9,6 +8,7 @@ import {
   useGoalStore,
 } from "@/features/goals/store";
 import type { GoalWithProgress } from "@/features/goals/types";
+import { insertNotificationRecord } from "@/features/notifications";
 import type { UserId } from "@/shared/types/branded";
 
 const mockLoadGoals = vi.fn();
