@@ -75,36 +75,36 @@ type CreateEmailPipelineServiceDeps = {
     userId: UserId,
     merchantKey: string
   ) => Promise<CategoryId | null>;
-  readonly findDuplicateTransaction: (
-    db: AnyDb,
-    userId: UserId,
-    amount: LlmParsedTransaction["amount"],
-    date: LlmParsedTransaction["date"],
-    description: string
-  ) => Promise<TransactionId | null>;
+  readonly findDuplicateTransaction: (input: {
+    readonly db: AnyDb;
+    readonly userId: UserId;
+    readonly amount: LlmParsedTransaction["amount"];
+    readonly date: LlmParsedTransaction["date"];
+    readonly merchant: string;
+  }) => Promise<TransactionId | null>;
   readonly getProcessedExternalIds: (db: AnyDb, externalIds: string[]) => Promise<Set<string>>;
   readonly getPendingRetryEmails: (db: AnyDb) => Promise<readonly ProcessedEmailRow[]>;
   readonly insertProcessedEmail: (db: AnyDb, row: ProcessedEmailRow) => Promise<void>;
-  readonly markForRetry: (
-    db: AnyDb,
-    id: ProcessedEmailId,
-    retryCount: number,
-    nextRetryAt: IsoDateTime
-  ) => Promise<void>;
+  readonly markForRetry: (input: {
+    readonly db: AnyDb;
+    readonly id: ProcessedEmailId;
+    readonly retryCount: number;
+    readonly nextRetryAt: IsoDateTime;
+  }) => Promise<void>;
   readonly markPermanentlyFailed: (db: AnyDb, id: ProcessedEmailId) => Promise<void>;
-  readonly markRetrySuccess: (
-    db: AnyDb,
-    id: ProcessedEmailId,
-    status: "success" | "needs_review",
-    transactionId: TransactionId,
-    confidence: number
-  ) => Promise<void>;
-  readonly updateProcessedEmailStatus: (
-    db: AnyDb,
-    id: ProcessedEmailId,
-    status: string,
-    transactionId: TransactionId | null
-  ) => Promise<void>;
+  readonly markRetrySuccess: (input: {
+    readonly db: AnyDb;
+    readonly id: ProcessedEmailId;
+    readonly status: "success" | "needs_review";
+    readonly transactionId: TransactionId;
+    readonly confidence: number;
+  }) => Promise<void>;
+  readonly updateProcessedEmailStatus: (input: {
+    readonly db: AnyDb;
+    readonly id: ProcessedEmailId;
+    readonly status: string;
+    readonly transactionId: TransactionId | null;
+  }) => Promise<void>;
   readonly buildEmailCaptureEvidence: (input: { from: string }) => readonly CaptureEvidenceSeed[];
   readonly saveCaptureEvidenceRows: (
     db: AnyDb,
@@ -407,7 +407,13 @@ function getPendingRetryEmailsEffect(db: AnyDb) {
 function findDuplicateTransactionEffect(db: AnyDb, userId: UserId, parsed: LlmParsedTransaction) {
   return Effect.flatMap(EmailPipelineDeps.tag, ({ findDuplicateTransaction }) =>
     fromPromise(() =>
-      findDuplicateTransaction(db, userId, parsed.amount, parsed.date, parsed.description)
+      findDuplicateTransaction({
+        db,
+        userId,
+        amount: parsed.amount,
+        date: parsed.date,
+        merchant: parsed.description,
+      })
     )
   );
 }
@@ -675,7 +681,14 @@ function insertMerchantRuleEffect(input: MerchantRuleEffectInput) {
 
 function markForRetryEffect(input: RetryScheduleEffectInput) {
   return Effect.flatMap(EmailPipelineDeps.tag, ({ markForRetry }) =>
-    fromPromise(() => markForRetry(input.db, input.id, input.retryCount, input.nextRetryAt))
+    fromPromise(() =>
+      markForRetry({
+        db: input.db,
+        id: input.id,
+        retryCount: input.retryCount,
+        nextRetryAt: input.nextRetryAt,
+      })
+    )
   );
 }
 
@@ -688,7 +701,13 @@ function markPermanentlyFailedEffect(db: AnyDb, id: ProcessedEmailId) {
 function markRetrySuccessEffect(input: RetrySuccessEffectInput) {
   return Effect.flatMap(EmailPipelineDeps.tag, ({ markRetrySuccess }) =>
     fromPromise(() =>
-      markRetrySuccess(input.db, input.id, input.status, input.transactionId, input.confidence)
+      markRetrySuccess({
+        db: input.db,
+        id: input.id,
+        status: input.status,
+        transactionId: input.transactionId,
+        confidence: input.confidence,
+      })
     )
   );
 }
@@ -696,7 +715,12 @@ function markRetrySuccessEffect(input: RetrySuccessEffectInput) {
 function updateProcessedEmailStatusEffect(input: ProcessedEmailStatusEffectInput) {
   return Effect.flatMap(EmailPipelineDeps.tag, ({ updateProcessedEmailStatus }) =>
     fromPromise(() =>
-      updateProcessedEmailStatus(input.db, input.id, input.status, input.transactionId)
+      updateProcessedEmailStatus({
+        db: input.db,
+        id: input.id,
+        status: input.status,
+        transactionId: input.transactionId,
+      })
     )
   );
 }

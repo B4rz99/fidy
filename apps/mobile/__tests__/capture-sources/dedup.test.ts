@@ -19,12 +19,21 @@ const mockDb = {
   where: mockWhere,
 } as any;
 
+const DISTINCT_FINGERPRINT_INPUTS = [
+  { source: "email", amount: 5000, date: "2026-03-07", merchant: "Uber Eats" },
+  { source: "email", amount: 9999, date: "2026-03-07", merchant: "Uber Eats" },
+  { source: "notification", amount: 5000, date: "2026-03-07", merchant: "Uber Eats" },
+  { source: "email", amount: 5000, date: "2026-03-08", merchant: "Uber Eats" },
+  { source: "email", amount: 5000, date: "2026-03-07", merchant: "Starbucks" },
+] as const;
+
 describe("captureFingerprint", () => {
   it("returns a deterministic string for the same inputs", async () => {
     const { captureFingerprint } = await import("@/features/capture-sources/lib/dedup");
 
-    const a = captureFingerprint("email", 5000, "2026-03-07", "Uber Eats");
-    const b = captureFingerprint("email", 5000, "2026-03-07", "Uber Eats");
+    const input = DISTINCT_FINGERPRINT_INPUTS[0];
+    const a = captureFingerprint(input);
+    const b = captureFingerprint(input);
 
     expect(a).toBe(b);
   });
@@ -32,20 +41,26 @@ describe("captureFingerprint", () => {
   it("produces different output for different inputs", async () => {
     const { captureFingerprint } = await import("@/features/capture-sources/lib/dedup");
 
-    const a = captureFingerprint("email", 5000, "2026-03-07", "Uber Eats");
-    const b = captureFingerprint("email", 9999, "2026-03-07", "Uber Eats");
-    const c = captureFingerprint("notification", 5000, "2026-03-07", "Uber Eats");
-    const d = captureFingerprint("email", 5000, "2026-03-08", "Uber Eats");
-    const e = captureFingerprint("email", 5000, "2026-03-07", "Starbucks");
+    const fingerprints = DISTINCT_FINGERPRINT_INPUTS.map((input) => captureFingerprint(input));
 
-    expect(new Set([a, b, c, d, e]).size).toBe(5);
+    expect(new Set(fingerprints).size).toBe(DISTINCT_FINGERPRINT_INPUTS.length);
   });
 
   it("normalizes merchant name (lowercase, trimmed, collapsed spaces)", async () => {
     const { captureFingerprint } = await import("@/features/capture-sources/lib/dedup");
 
-    const a = captureFingerprint("email", 1000, "2026-03-07", "  Uber  Eats  ");
-    const b = captureFingerprint("email", 1000, "2026-03-07", "uber eats");
+    const a = captureFingerprint({
+      source: "email",
+      amount: 1000,
+      date: "2026-03-07",
+      merchant: "  Uber  Eats  ",
+    });
+    const b = captureFingerprint({
+      source: "email",
+      amount: 1000,
+      date: "2026-03-07",
+      merchant: "uber eats",
+    });
 
     expect(a).toBe(b);
   });
@@ -93,13 +108,13 @@ describe("findDuplicateTransaction", () => {
     mockWhere.mockResolvedValueOnce([{ id: "tx-1", description: "Uber Eats" }]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
-    const result = await findDuplicateTransaction(
-      mockDb,
-      "user-1",
-      5000,
-      "2026-03-07",
-      "Uber Eats"
-    );
+    const result = await findDuplicateTransaction({
+      db: mockDb,
+      userId: "user-1",
+      amount: 5000,
+      date: "2026-03-07",
+      merchant: "Uber Eats",
+    });
 
     expect(result).toBe("tx-1");
   });
@@ -108,13 +123,13 @@ describe("findDuplicateTransaction", () => {
     mockWhere.mockResolvedValueOnce([]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
-    const result = await findDuplicateTransaction(
-      mockDb,
-      "user-1",
-      5000,
-      "2026-03-07",
-      "Uber Eats"
-    );
+    const result = await findDuplicateTransaction({
+      db: mockDb,
+      userId: "user-1",
+      amount: 5000,
+      date: "2026-03-07",
+      merchant: "Uber Eats",
+    });
 
     expect(result).toBeNull();
   });
@@ -123,13 +138,13 @@ describe("findDuplicateTransaction", () => {
     mockWhere.mockResolvedValueOnce([{ id: "tx-2", description: "  UBER   EATS  " }]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
-    const result = await findDuplicateTransaction(
-      mockDb,
-      "user-1",
-      5000,
-      "2026-03-07",
-      "uber eats"
-    );
+    const result = await findDuplicateTransaction({
+      db: mockDb,
+      userId: "user-1",
+      amount: 5000,
+      date: "2026-03-07",
+      merchant: "uber eats",
+    });
 
     expect(result).toBe("tx-2");
   });
@@ -138,13 +153,13 @@ describe("findDuplicateTransaction", () => {
     mockWhere.mockResolvedValueOnce([{ id: "tx-3", description: "Starbucks" }]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
-    const result = await findDuplicateTransaction(
-      mockDb,
-      "user-1",
-      5000,
-      "2026-03-07",
-      "Uber Eats"
-    );
+    const result = await findDuplicateTransaction({
+      db: mockDb,
+      userId: "user-1",
+      amount: 5000,
+      date: "2026-03-07",
+      merchant: "Uber Eats",
+    });
 
     expect(result).toBeNull();
   });
@@ -153,13 +168,13 @@ describe("findDuplicateTransaction", () => {
     mockWhere.mockResolvedValueOnce([{ id: "tx-sub-1", description: "BOLD Natural Medical" }]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
-    const result = await findDuplicateTransaction(
-      mockDb,
-      "user-1",
-      100000,
-      "2026-03-21",
-      "Natural Medical"
-    );
+    const result = await findDuplicateTransaction({
+      db: mockDb,
+      userId: "user-1",
+      amount: 100000,
+      date: "2026-03-21",
+      merchant: "Natural Medical",
+    });
 
     expect(result).toBe("tx-sub-1");
   });
@@ -168,13 +183,13 @@ describe("findDuplicateTransaction", () => {
     mockWhere.mockResolvedValueOnce([{ id: "tx-sub-2", description: "HARISSA" }]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
-    const result = await findDuplicateTransaction(
-      mockDb,
-      "user-1",
-      160100,
-      "2026-03-20",
-      "HARISSA HF2"
-    );
+    const result = await findDuplicateTransaction({
+      db: mockDb,
+      userId: "user-1",
+      amount: 160100,
+      date: "2026-03-20",
+      merchant: "HARISSA HF2",
+    });
 
     expect(result).toBe("tx-sub-2");
   });
@@ -183,13 +198,13 @@ describe("findDuplicateTransaction", () => {
     mockWhere.mockResolvedValueOnce([{ id: "tx-short", description: "AB" }]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
-    const result = await findDuplicateTransaction(
-      mockDb,
-      "user-1",
-      5000,
-      "2026-03-07",
-      "ABC Store"
-    );
+    const result = await findDuplicateTransaction({
+      db: mockDb,
+      userId: "user-1",
+      amount: 5000,
+      date: "2026-03-07",
+      merchant: "ABC Store",
+    });
 
     expect(result).toBeNull();
   });
@@ -198,13 +213,13 @@ describe("findDuplicateTransaction", () => {
     mockWhere.mockResolvedValueOnce([{ id: "tx-null", description: null }]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
-    const result = await findDuplicateTransaction(
-      mockDb,
-      "user-1",
-      5000,
-      "2026-03-07",
-      "Uber Eats"
-    );
+    const result = await findDuplicateTransaction({
+      db: mockDb,
+      userId: "user-1",
+      amount: 5000,
+      date: "2026-03-07",
+      merchant: "Uber Eats",
+    });
 
     expect(result).toBeNull();
   });

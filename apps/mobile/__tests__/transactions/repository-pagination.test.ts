@@ -50,28 +50,48 @@ describe("getTransactionsPaginated", () => {
     mockAll.mockReturnValueOnce(mockRows);
 
     const { getTransactionsPaginated } = await import("@/features/transactions/lib/repository");
-    const result = getTransactionsPaginated(mockDb, "user-1" as UserId, 30, 0);
+    const result = getTransactionsPaginated({
+      db: mockDb,
+      userId: "user-1" as UserId,
+      limit: 30,
+      offset: 0,
+    });
 
     expect(result).toEqual(mockRows);
   });
 
   it("calls limit with limit+1 for hasMore detection", async () => {
     const { getTransactionsPaginated } = await import("@/features/transactions/lib/repository");
-    getTransactionsPaginated(mockDb, "user-1" as UserId, 30, 0);
+    getTransactionsPaginated({
+      db: mockDb,
+      userId: "user-1" as UserId,
+      limit: 30,
+      offset: 0,
+    });
 
     expect(mockLimit).toHaveBeenCalledWith(31);
   });
 
   it("calls offset with the given offset value", async () => {
     const { getTransactionsPaginated } = await import("@/features/transactions/lib/repository");
-    getTransactionsPaginated(mockDb, "user-1" as UserId, 30, 60);
+    getTransactionsPaginated({
+      db: mockDb,
+      userId: "user-1" as UserId,
+      limit: 30,
+      offset: 60,
+    });
 
     expect(mockOffset).toHaveBeenCalledWith(60);
   });
 
   it("queries the correct table with select and from", async () => {
     const { getTransactionsPaginated } = await import("@/features/transactions/lib/repository");
-    getTransactionsPaginated(mockDb, "user-1" as UserId, 30, 0);
+    getTransactionsPaginated({
+      db: mockDb,
+      userId: "user-1" as UserId,
+      limit: 30,
+      offset: 0,
+    });
 
     expect(mockSelect).toHaveBeenCalled();
     expect(mockFrom).toHaveBeenCalled();
@@ -83,7 +103,12 @@ describe("getTransactionsPaginated", () => {
     mockAll.mockReturnValueOnce([]);
 
     const { getTransactionsPaginated } = await import("@/features/transactions/lib/repository");
-    const result = getTransactionsPaginated(mockDb, "user-1" as UserId, 30, 0);
+    const result = getTransactionsPaginated({
+      db: mockDb,
+      userId: "user-1" as UserId,
+      limit: 30,
+      offset: 0,
+    });
 
     expect(result).toEqual([]);
   });
@@ -193,12 +218,12 @@ describe("getDailySpendingAggregate", () => {
     mockAll.mockReturnValueOnce(mockResult);
 
     const { getDailySpendingAggregate } = await import("@/features/transactions/lib/repository");
-    const result = getDailySpendingAggregate(
-      mockDb,
-      "user-1" as UserId,
-      "2026-02-12" as IsoDate,
-      "2026-03-14" as IsoDate
-    );
+    const result = getDailySpendingAggregate({
+      db: mockDb,
+      userId: "user-1" as UserId,
+      startDate: "2026-02-12" as IsoDate,
+      endDate: "2026-03-14" as IsoDate,
+    });
 
     expect(result).toEqual(mockResult);
   });
@@ -207,12 +232,12 @@ describe("getDailySpendingAggregate", () => {
     mockAll.mockReturnValueOnce([]);
 
     const { getDailySpendingAggregate } = await import("@/features/transactions/lib/repository");
-    const result = getDailySpendingAggregate(
-      mockDb,
-      "user-1" as UserId,
-      "2026-02-12" as IsoDate,
-      "2026-03-14" as IsoDate
-    );
+    const result = getDailySpendingAggregate({
+      db: mockDb,
+      userId: "user-1" as UserId,
+      startDate: "2026-02-12" as IsoDate,
+      endDate: "2026-03-14" as IsoDate,
+    });
 
     expect(result).toEqual([]);
   });
@@ -247,12 +272,12 @@ describe("getRecentTransactions", () => {
     mockAll.mockReturnValueOnce(mockRows);
 
     const { getRecentTransactions } = await import("@/features/transactions/lib/repository");
-    const result = getRecentTransactions(
-      mockDb,
-      "user-1" as UserId,
-      "2026-03" as Month,
-      "2026-02" as Month
-    );
+    const result = getRecentTransactions({
+      db: mockDb,
+      userId: "user-1" as UserId,
+      currentMonth: "2026-03" as Month,
+      previousMonth: "2026-02" as Month,
+    });
 
     expect(result).toEqual(mockRows);
   });
@@ -261,19 +286,24 @@ describe("getRecentTransactions", () => {
     mockAll.mockReturnValueOnce([]);
 
     const { getRecentTransactions } = await import("@/features/transactions/lib/repository");
-    const result = getRecentTransactions(
-      mockDb,
-      "user-1" as UserId,
-      "2026-03" as Month,
-      "2026-02" as Month
-    );
+    const result = getRecentTransactions({
+      db: mockDb,
+      userId: "user-1" as UserId,
+      currentMonth: "2026-03" as Month,
+      previousMonth: "2026-02" as Month,
+    });
 
     expect(result).toEqual([]);
   });
 
   it("calls where and orderBy for filtering and sorting", async () => {
     const { getRecentTransactions } = await import("@/features/transactions/lib/repository");
-    getRecentTransactions(mockDb, "user-1" as UserId, "2026-03" as Month, "2026-02" as Month);
+    getRecentTransactions({
+      db: mockDb,
+      userId: "user-1" as UserId,
+      currentMonth: "2026-03" as Month,
+      previousMonth: "2026-02" as Month,
+    });
 
     expect(mockSelect).toHaveBeenCalled();
     expect(mockFrom).toHaveBeenCalled();

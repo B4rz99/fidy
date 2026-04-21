@@ -52,57 +52,68 @@ function persistOpeningBalance(db: AnyDb, row: OpeningBalanceRow) {
     .run();
 }
 
-export function upsertOpeningBalance(db: AnyDb, row: OpeningBalanceRow) {
-  db.transaction((tx) => {
-    const existingById = getOpeningBalanceById(tx, row.id);
-    const activeDuplicate =
-      row.deletedAt == null ? findActiveOpeningBalanceByAccountId(tx, row.accountId) : null;
-    const duplicate = activeDuplicate?.id !== row.id ? activeDuplicate : null;
+function getActiveOpeningBalanceDuplicate(db: AnyDb, row: OpeningBalanceRow) {
+  const activeDuplicate =
+    row.deletedAt == null ? findActiveOpeningBalanceByAccountId(db, row.accountId) : null;
+  return activeDuplicate?.id !== row.id ? activeDuplicate : null;
+}
 
-    if (existingById && existingById.updatedAt >= row.updatedAt) {
-      return;
-    }
+function shouldSkipOpeningBalancePersist(
+  existingById: OpeningBalanceRow | null,
+  duplicate: OpeningBalanceRow | null,
+  row: OpeningBalanceRow
+) {
+  return (
+    (existingById != null && existingById.updatedAt >= row.updatedAt) ||
+    (duplicate != null && duplicate.updatedAt >= row.updatedAt)
+  );
+}
 
-    if (duplicate && duplicate.updatedAt >= row.updatedAt) {
-      return;
-    }
+function upsertOpeningBalanceInTransaction(db: AnyDb, row: OpeningBalanceRow) {
+  const existingById = getOpeningBalanceById(db, row.id);
+  const duplicate = getActiveOpeningBalanceDuplicate(db, row);
+  if (shouldSkipOpeningBalancePersist(existingById, duplicate, row)) {
+    return;
+  }
 
-    if (duplicate) {
-      deleteOpeningBalanceDuplicate(tx, duplicate.id);
-    }
+  if (duplicate) {
+    deleteOpeningBalanceDuplicate(db, duplicate.id);
+  }
 
-    persistOpeningBalance(tx, row);
+  persistOpeningBalance(db, row);
+}
+
+function saveOpeningBalanceInTransaction(db: AnyDb, row: OpeningBalanceRow) {
+  const existingById = getOpeningBalanceById(db, row.id);
+  const duplicate = getActiveOpeningBalanceDuplicate(db, row);
+  if (existingById && duplicate) {
+    deleteOpeningBalanceDuplicate(db, duplicate.id);
+  }
+
+  const persistedRow =
+    existingById == null && duplicate
+      ? {
+          ...row,
+          id: duplicate.id,
+          createdAt: duplicate.createdAt,
+        }
+      : row;
+
+  persistOpeningBalance(db, persistedRow);
+
+  enqueueSync(db, {
+    id: generateSyncQueueId(),
+    tableName: "openingBalances",
+    rowId: persistedRow.id,
+    operation: existingById || duplicate ? "update" : "insert",
+    createdAt: row.updatedAt,
   });
 }
 
+export function upsertOpeningBalance(db: AnyDb, row: OpeningBalanceRow) {
+  db.transaction((tx) => upsertOpeningBalanceInTransaction(tx, row));
+}
+
 export function saveOpeningBalance(db: AnyDb, row: OpeningBalanceRow) {
-  db.transaction((tx) => {
-    const existingById = getOpeningBalanceById(tx, row.id);
-    const activeDuplicate =
-      row.deletedAt == null ? findActiveOpeningBalanceByAccountId(tx, row.accountId) : null;
-    const duplicate = activeDuplicate?.id !== row.id ? activeDuplicate : null;
-
-    if (existingById && duplicate) {
-      deleteOpeningBalanceDuplicate(tx, duplicate.id);
-    }
-
-    const persistedRow =
-      existingById == null && duplicate
-        ? {
-            ...row,
-            id: duplicate.id,
-            createdAt: duplicate.createdAt,
-          }
-        : row;
-
-    persistOpeningBalance(tx, persistedRow);
-
-    enqueueSync(tx, {
-      id: generateSyncQueueId(),
-      tableName: "openingBalances",
-      rowId: persistedRow.id,
-      operation: existingById || duplicate ? "update" : "insert",
-      createdAt: row.updatedAt,
-    });
-  });
+  db.transaction((tx) => saveOpeningBalanceInTransaction(tx, row));
 }

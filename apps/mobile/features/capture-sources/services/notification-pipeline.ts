@@ -155,7 +155,12 @@ async function parseNotificationStage(context: NotificationContext): Promise<Par
 }
 
 function buildNotificationFingerprint(context: NotificationContext, parsed: ParsedNotification) {
-  return captureFingerprint(context.source, parsed.amount, parsed.date, parsed.merchant);
+  return captureFingerprint({
+    source: context.source,
+    amount: parsed.amount,
+    date: parsed.date,
+    merchant: parsed.merchant,
+  });
 }
 
 function normalizeParsedNotification(parsed: RawParsedNotification): ParsedNotification {
@@ -223,13 +228,13 @@ async function findDuplicateCapture(
     return { kind: "already_processed" };
   }
 
-  const transactionId = await findDuplicateTransaction(
-    context.db,
-    context.userId,
-    context.parsed.amount,
-    context.parsed.date,
-    context.parsed.merchant
-  );
+  const transactionId = await findDuplicateTransaction({
+    db: context.db,
+    userId: context.userId,
+    amount: context.parsed.amount,
+    date: context.parsed.date,
+    merchant: context.parsed.merchant,
+  });
 
   return transactionId ? { kind: "cross_source", transactionId } : null;
 }

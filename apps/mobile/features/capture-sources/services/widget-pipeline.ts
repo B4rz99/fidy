@@ -25,7 +25,7 @@ function toTransactionId(widgetEntryId: string): TransactionId {
 }
 
 function widgetFingerprint(entryId: string, amount: number, date: string): string {
-  return captureFingerprint("widget", amount, date, entryId);
+  return captureFingerprint({ source: "widget", amount, date, merchant: entryId });
 }
 
 export type WidgetPipelineResult = {
@@ -91,7 +91,13 @@ export async function processWidgetTransactions(
         continue;
       }
 
-      const existingTxId = await findDuplicateTransaction(db, userId, amount, date, description);
+      const existingTxId = await findDuplicateTransaction({
+        db,
+        userId,
+        amount,
+        date,
+        merchant: description,
+      });
 
       if (existingTxId) {
         await insertProcessedCapture(db, {

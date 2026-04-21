@@ -6,17 +6,26 @@ import { merchantsMatch, normalizeMerchant } from "@/shared/lib/normalize-mercha
 import { assertCopAmount, assertIsoDate, assertUserId } from "@/shared/types/assertions";
 import type { TransactionId } from "@/shared/types/branded";
 
+type CaptureFingerprintInput = {
+  readonly source: string;
+  readonly amount: number;
+  readonly date: string;
+  readonly merchant: string;
+};
+type DuplicateTransactionLookupInput = {
+  readonly db: AnyDb;
+  readonly userId: string;
+  readonly amount: number;
+  readonly date: string;
+  readonly merchant: string;
+};
+
 /**
  * Creates a fingerprint hash for deduplication across capture sources.
  * Same amount + date + normalized merchant → same fingerprint.
  */
-export function captureFingerprint(
-  source: string,
-  amount: number,
-  date: string,
-  merchant: string
-): string {
-  return `${source}:${amount}:${date}:${normalizeMerchant(merchant)}`;
+export function captureFingerprint(input: CaptureFingerprintInput): string {
+  return `${input.source}:${input.amount}:${input.date}:${normalizeMerchant(input.merchant)}`;
 }
 
 /**
@@ -36,17 +45,13 @@ export async function isCaptureProcessed(db: AnyDb, fingerprintHash: string): Pr
  * Returns the existing transaction ID if found, null otherwise.
  */
 export async function findDuplicateTransaction(
-  db: AnyDb,
-  userId: string,
-  amount: number,
-  date: string,
-  merchant: string
+  input: DuplicateTransactionLookupInput
 ): Promise<TransactionId | null> {
-  assertUserId(userId);
-  assertCopAmount(amount);
-  assertIsoDate(date);
-  const normalized = normalizeMerchant(merchant);
-  const rows = await db
+  assertUserId(input.userId);
+  assertCopAmount(input.amount);
+  assertIsoDate(input.date);
+  const normalized = normalizeMerchant(input.merchant);
+  const rows = await input.db
     .select({
       id: transactions.id,
       description: transactions.description,
@@ -54,9 +59,9 @@ export async function findDuplicateTransaction(
     .from(transactions)
     .where(
       and(
-        ...getActiveTransactionConditions(userId),
-        eq(transactions.amount, amount),
-        eq(transactions.date, date)
+        ...getActiveTransactionConditions(input.userId),
+        eq(transactions.amount, input.amount),
+        eq(transactions.date, input.date)
       )
     );
 

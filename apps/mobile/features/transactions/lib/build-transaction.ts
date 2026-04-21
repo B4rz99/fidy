@@ -57,7 +57,7 @@ const toTransactionSource = (source: string | undefined | null): string => sourc
 const isAccountAttributionState = (state: string | undefined): state is AccountAttributionState =>
   state === "confirmed" || state === "inferred" || state === "unresolved";
 
-const getDefaultAccountAttributionState = (
+export const getDefaultAccountAttributionState = (
   source: string | undefined | null
 ): AccountAttributionState =>
   TRANSACTION_SOURCES_WITH_CONFIRMED_DEFAULT.has(source ?? "manual") ? "confirmed" : "unresolved";

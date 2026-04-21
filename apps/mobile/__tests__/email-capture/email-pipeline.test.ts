@@ -664,11 +664,13 @@ describe("processRetries", () => {
     await processRetries(mockDb, USER_ID);
 
     expect(mockMarkRetrySuccess).toHaveBeenCalledWith(
-      mockDb,
-      "pe-retry-1",
-      "success",
-      expect.stringMatching(/^tx-/),
-      0.9
+      expect.objectContaining({
+        db: mockDb,
+        id: "pe-retry-1",
+        status: "success",
+        transactionId: expect.stringMatching(/^tx-/),
+        confidence: 0.9,
+      })
     );
   });
 
@@ -687,11 +689,13 @@ describe("processRetries", () => {
     await processRetries(mockDb, USER_ID);
 
     expect(mockMarkRetrySuccess).toHaveBeenCalledWith(
-      mockDb,
-      "pe-retry-1",
-      "needs_review",
-      expect.stringMatching(/^tx-/),
-      0.5
+      expect.objectContaining({
+        db: mockDb,
+        id: "pe-retry-1",
+        status: "needs_review",
+        transactionId: expect.stringMatching(/^tx-/),
+        confidence: 0.5,
+      })
     );
   });
 
@@ -702,7 +706,14 @@ describe("processRetries", () => {
 
     const result = await processRetries(mockDb, USER_ID);
 
-    expect(mockMarkForRetry).toHaveBeenCalledWith(mockDb, "pe-retry-1", 3, expect.any(String));
+    expect(mockMarkForRetry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        db: mockDb,
+        id: "pe-retry-1",
+        retryCount: 3,
+        nextRetryAt: expect.any(String),
+      })
+    );
     expect(result.retried).toBe(1);
     expect(result.succeeded).toBe(0);
   });
@@ -721,7 +732,14 @@ describe("processRetries", () => {
 
     const result = await processRetries(mockDb, USER_ID);
 
-    expect(mockMarkForRetry).toHaveBeenCalledWith(mockDb, "pe-retry-1", 2, expect.any(String));
+    expect(mockMarkForRetry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        db: mockDb,
+        id: "pe-retry-1",
+        retryCount: 2,
+        nextRetryAt: expect.any(String),
+      })
+    );
     expect(result.retried).toBe(1);
     expect(result.succeeded).toBe(0);
   });
@@ -745,10 +763,12 @@ describe("processRetries", () => {
     await processRetries(mockDb, USER_ID);
 
     expect(mockUpdateProcessedEmailStatus).toHaveBeenCalledWith(
-      mockDb,
-      "pe-retry-1",
-      "skipped",
-      null
+      expect.objectContaining({
+        db: mockDb,
+        id: "pe-retry-1",
+        status: "skipped",
+        transactionId: null,
+      })
     );
   });
 
@@ -769,11 +789,13 @@ describe("processRetries", () => {
 
     expect(mockInsertTransaction).not.toHaveBeenCalled();
     expect(mockMarkRetrySuccess).toHaveBeenCalledWith(
-      mockDb,
-      "pe-retry-1",
-      "success",
-      "tx-existing",
-      0.9
+      expect.objectContaining({
+        db: mockDb,
+        id: "pe-retry-1",
+        status: "success",
+        transactionId: "tx-existing",
+        confidence: 0.9,
+      })
     );
     expect(result.succeeded).toBe(1);
   });
@@ -806,7 +828,14 @@ describe("processRetries", () => {
 
     const result = await processRetries(mockDb, USER_ID);
 
-    expect(mockMarkForRetry).toHaveBeenCalledWith(mockDb, "pe-retry-1", 2, expect.any(String));
+    expect(mockMarkForRetry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        db: mockDb,
+        id: "pe-retry-1",
+        retryCount: 2,
+        nextRetryAt: expect.any(String),
+      })
+    );
     expect(result.retried).toBe(1);
     expect(result.succeeded).toBe(0);
   });

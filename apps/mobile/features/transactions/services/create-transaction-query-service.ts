@@ -104,7 +104,7 @@ function loadAggregateSnapshot(
   const endDate = toIsoDate(now);
   const categorySpending = loadSpendingByCategory(db, userId, currentMonth);
   const balance = categorySpending.reduce((sum, category) => sum + category.total, 0);
-  const dailySpending = loadDailySpending(db, userId, startDate, endDate);
+  const dailySpending = loadDailySpending({ db, userId, startDate, endDate });
 
   return {
     balance,
@@ -130,7 +130,7 @@ export function createTransactionQueryService({
       pageSize,
     }: LoadInitialSnapshotInput): TransactionPageSnapshot & TransactionAggregateSnapshot {
       const pageSnapshot = toPageSnapshot(
-        loadTransactionsPaginated(db, userId, pageSize, 0),
+        loadTransactionsPaginated({ db, userId, limit: pageSize, offset: 0 }),
         pageSize
       );
       return {
@@ -139,8 +139,16 @@ export function createTransactionQueryService({
       };
     },
 
-    loadNextPage({ db, userId, pageSize, offset }: LoadPageInput): TransactionPageSnapshot {
-      return toPageSnapshot(loadTransactionsPaginated(db, userId, pageSize, offset), pageSize);
+    loadNextPage(input: LoadPageInput): TransactionPageSnapshot {
+      return toPageSnapshot(
+        loadTransactionsPaginated({
+          db: input.db,
+          userId: input.userId,
+          limit: input.pageSize,
+          offset: input.offset,
+        }),
+        input.pageSize
+      );
     },
 
     loadRefreshSnapshot({
@@ -152,7 +160,7 @@ export function createTransactionQueryService({
     }: LoadRefreshSnapshotInput): TransactionRefreshSnapshot {
       const reloadSize = Math.max(currentOffset, pageSize);
       const pageSnapshot = toPageSnapshot(
-        loadTransactionsPaginated(db, userId, reloadSize, 0),
+        loadTransactionsPaginated({ db, userId, limit: reloadSize, offset: 0 }),
         reloadSize
       );
       return {
@@ -169,13 +177,9 @@ export function createTransactionQueryService({
       return loadAggregateOnlySnapshot(db, userId);
     },
 
-    getStoredTransaction({
-      db,
-      userId,
-      transactionId,
-    }: GetStoredTransactionInput): StoredTransaction | null {
-      const row = loadTransactionById(db, transactionId);
-      if (!row || row.userId !== userId || !isActiveTransactionRow(row)) {
+    getStoredTransaction(input: GetStoredTransactionInput): StoredTransaction | null {
+      const row = loadTransactionById(input.db, input.transactionId);
+      if (!row || row.userId !== input.userId || !isActiveTransactionRow(row)) {
         return null;
       }
       return toStoredTransaction(row);

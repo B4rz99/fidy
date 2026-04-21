@@ -406,7 +406,12 @@ export async function confirmReviewedEmail(
     await insertMerchantRule(db, userId, merchantKey, categoryId, now);
   }
 
-  await updateProcessedEmailStatus(db, processedEmail.id, "success", processedEmail.transactionId);
+  await updateProcessedEmailStatus({
+    db,
+    id: processedEmail.id,
+    status: "success",
+    transactionId: processedEmail.transactionId,
+  });
   if (!isActiveEmailCaptureSession(session)) return;
 
   useEmailCaptureStore.getState().removeNeedsReviewEmail(processedEmailId);

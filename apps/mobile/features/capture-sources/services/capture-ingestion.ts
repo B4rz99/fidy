@@ -1,4 +1,3 @@
-import { Effect } from "effect";
 import type {
   PipelineResult,
   ProcessEmails,
@@ -74,27 +73,104 @@ type SameFeatureDeps = Pick<
 >;
 
 type EmailDeps = Pick<CaptureIngestionDeps, "processEmails" | "processRetries">;
+type IngestSameFeatureCommandInput = {
+  readonly db: AnyDb;
+  readonly deps: Partial<SameFeatureDeps>;
+  readonly command: CaptureIngestionCommand;
+};
+type IngestEmailCommandInput = {
+  readonly db: AnyDb;
+  readonly deps: EmailDeps;
+  readonly command: EmailCaptureIngestionCommand;
+};
 
 let defaultDepsPromise: Promise<SameFeatureDeps> | null = null;
+
+async function importDefaultDeps(): Promise<SameFeatureDeps> {
+  const [notification, applePay, widget] = await Promise.all([
+    import("./notification-pipeline"),
+    import("./apple-pay-pipeline"),
+    import("./widget-pipeline"),
+  ]);
+
+  return {
+    processNotification: notification.processNotification,
+    processApplePayIntent: applePay.processApplePayIntent,
+    processWidgetTransactions: widget.processWidgetTransactions,
+  };
+}
 
 async function loadDefaultDeps(): Promise<SameFeatureDeps> {
   if (defaultDepsPromise) return defaultDepsPromise;
 
-  defaultDepsPromise = (async () => {
-    const [notification, applePay, widget] = await Promise.all([
-      import("./notification-pipeline"),
-      import("./apple-pay-pipeline"),
-      import("./widget-pipeline"),
-    ]);
-
-    return {
-      processNotification: notification.processNotification,
-      processApplePayIntent: applePay.processApplePayIntent,
-      processWidgetTransactions: widget.processWidgetTransactions,
-    };
-  })();
+  defaultDepsPromise = importDefaultDeps();
 
   return defaultDepsPromise;
+}
+
+async function getNotificationHandler(
+  deps: Partial<SameFeatureDeps>
+): Promise<NotificationHandler> {
+  return deps.processNotification ?? (await loadDefaultDeps()).processNotification;
+}
+
+async function getApplePayHandler(deps: Partial<SameFeatureDeps>): Promise<ApplePayHandler> {
+  return deps.processApplePayIntent ?? (await loadDefaultDeps()).processApplePayIntent;
+}
+
+async function getWidgetHandler(deps: Partial<SameFeatureDeps>): Promise<WidgetHandler> {
+  return deps.processWidgetTransactions ?? (await loadDefaultDeps()).processWidgetTransactions;
+}
+
+async function ingestSameFeatureCommand(
+  input: IngestSameFeatureCommandInput
+): Promise<CaptureIngestionOutcome> {
+  switch (input.command.kind) {
+    case "notification":
+      return (await getNotificationHandler(input.deps))(
+        input.db,
+        input.command.userId,
+        input.command.notification
+      );
+    case "apple_pay":
+      return (await getApplePayHandler(input.deps))(
+        input.db,
+        input.command.userId,
+        input.command.intent
+      );
+    case "widget":
+      return (await getWidgetHandler(input.deps))(input.db, input.command.userId);
+  }
+}
+
+function isSameFeatureCommand(
+  command: AnyCaptureIngestionCommand
+): command is CaptureIngestionCommand {
+  return (
+    command.kind === "notification" || command.kind === "apple_pay" || command.kind === "widget"
+  );
+}
+
+async function ingestEmailCommand(
+  input: IngestEmailCommandInput
+): Promise<EmailCaptureIngestionOutcome> {
+  switch (input.command.kind) {
+    case "email_batch":
+      return input.deps.processEmails(
+        input.db,
+        input.command.userId,
+        input.command.emails,
+        input.command.onProgress
+      );
+    case "email_retry":
+      return input.deps.processRetries(input.db, input.command.userId);
+  }
+}
+
+function hasEmailDeps(
+  deps: Partial<CaptureIngestionDeps>
+): deps is Partial<SameFeatureDeps> & EmailDeps {
+  return Boolean(deps.processEmails && deps.processRetries);
 }
 
 export function createCaptureIngestionPort(
@@ -110,40 +186,13 @@ export function createCaptureIngestionPort(
   deps: Partial<CaptureIngestionDeps> = {}
 ): CaptureIngestionPort | CaptureIngestionPortWithEmail {
   const ingestDefault: CaptureIngestionPort["ingest"] = (command) =>
-    runAppEffect(
-      Effect.gen(function* () {
-        switch (command.kind) {
-          case "notification": {
-            const processNotification =
-              deps.processNotification ?? (yield* fromThunk(loadDefaultDeps)).processNotification;
-            return yield* fromThunk(() =>
-              processNotification(db, command.userId, command.notification)
-            );
-          }
-          case "apple_pay": {
-            const processApplePayIntent =
-              deps.processApplePayIntent ??
-              (yield* fromThunk(loadDefaultDeps)).processApplePayIntent;
-            return yield* fromThunk(() =>
-              processApplePayIntent(db, command.userId, command.intent)
-            );
-          }
-          case "widget": {
-            const processWidgetTransactions =
-              deps.processWidgetTransactions ??
-              (yield* fromThunk(loadDefaultDeps)).processWidgetTransactions;
-            return yield* fromThunk(() => processWidgetTransactions(db, command.userId));
-          }
-        }
-      })
-    );
+    runAppEffect(fromThunk(() => ingestSameFeatureCommand({ db, deps, command })));
 
-  if (!deps.processEmails || !deps.processRetries) {
+  if (!hasEmailDeps(deps)) {
     return { ingest: ingestDefault };
   }
 
-  const processEmails = deps.processEmails;
-  const processRetries = deps.processRetries;
+  const emailDeps = deps;
 
   function ingestWithEmail(command: CaptureIngestionCommand): Promise<CaptureIngestionOutcome>;
   function ingestWithEmail(
@@ -152,22 +201,9 @@ export function createCaptureIngestionPort(
   function ingestWithEmail(
     command: AnyCaptureIngestionCommand
   ): Promise<AnyCaptureIngestionOutcome> {
-    return runAppEffect(
-      Effect.gen(function* () {
-        switch (command.kind) {
-          case "notification":
-          case "apple_pay":
-          case "widget":
-            return yield* fromThunk(() => ingestDefault(command));
-          case "email_batch":
-            return yield* fromThunk(() =>
-              processEmails(db, command.userId, command.emails, command.onProgress)
-            );
-          case "email_retry":
-            return yield* fromThunk(() => processRetries(db, command.userId));
-        }
-      })
-    );
+    return isSameFeatureCommand(command)
+      ? ingestDefault(command)
+      : runAppEffect(fromThunk(() => ingestEmailCommand({ db, deps: emailDeps, command })));
   }
 
   return { ingest: ingestWithEmail };

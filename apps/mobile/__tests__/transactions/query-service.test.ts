@@ -121,7 +121,12 @@ describe("transaction query service", () => {
     expect(snapshot.sameData).toBe(true);
     expect(snapshot.offset).toBe(1);
     expect(snapshot.hasMore).toBe(false);
-    expect(getTransactionsPaginated).toHaveBeenCalledWith(expect.anything(), mockUserId, 30, 0);
+    expect(getTransactionsPaginated).toHaveBeenCalledWith({
+      db: expect.anything(),
+      userId: mockUserId,
+      limit: 30,
+      offset: 0,
+    });
   });
 
   it("uses an inclusive 30-day daily-spending window", () => {
@@ -138,12 +143,12 @@ describe("transaction query service", () => {
       userId: mockUserId,
     });
 
-    expect(getDailySpendingAggregate).toHaveBeenCalledWith(
-      expect.anything(),
-      mockUserId,
-      "2026-03-14",
-      "2026-04-12"
-    );
+    expect(getDailySpendingAggregate).toHaveBeenCalledWith({
+      db: expect.anything(),
+      userId: mockUserId,
+      startDate: "2026-03-14",
+      endDate: "2026-04-12",
+    });
   });
 
   it("returns null for deleted or cross-user transaction lookups", () => {

@@ -28,7 +28,7 @@ function makeTx(overrides: Partial<StoredTransaction> & { date: Date }): StoredT
 describe("buildListData", () => {
   it("returns empty items and stickyIndices for empty input", async () => {
     const { buildListData } = await import("@/features/transactions/lib/group-by-date");
-    const result = buildListData([]);
+    const result = buildListData({ transactions: [] });
 
     expect(result.items).toEqual([]);
     expect(result.stickyIndices).toEqual([]);
@@ -37,7 +37,7 @@ describe("buildListData", () => {
   it("returns one date header and one transaction for a single item", async () => {
     const { buildListData } = await import("@/features/transactions/lib/group-by-date");
     const tx = makeTx({ date: new Date(2026, 2, 10) }); // March 10, 2026
-    const result = buildListData([tx]);
+    const result = buildListData({ transactions: [tx] });
 
     expect(result.items).toHaveLength(2);
     expect(result.items[0]).toMatchObject({ kind: "date-header" });
@@ -49,7 +49,7 @@ describe("buildListData", () => {
     const { buildListData } = await import("@/features/transactions/lib/group-by-date");
     const tx1 = makeTx({ id: "tx-1" as TransactionId, date: new Date(2026, 2, 10) });
     const tx2 = makeTx({ id: "tx-2" as TransactionId, date: new Date(2026, 2, 10) });
-    const result = buildListData([tx1, tx2]);
+    const result = buildListData({ transactions: [tx1, tx2] });
 
     expect(result.items).toHaveLength(3); // 1 header + 2 transactions
     expect(result.items[0]).toMatchObject({ kind: "date-header" });
@@ -62,7 +62,7 @@ describe("buildListData", () => {
     const { buildListData } = await import("@/features/transactions/lib/group-by-date");
     const tx1 = makeTx({ id: "tx-1" as TransactionId, date: new Date(2026, 2, 14) });
     const tx2 = makeTx({ id: "tx-2" as TransactionId, date: new Date(2026, 2, 13) });
-    const result = buildListData([tx1, tx2]);
+    const result = buildListData({ transactions: [tx1, tx2] });
 
     // header1, tx1, header2, tx2
     expect(result.items).toHaveLength(4);
@@ -76,7 +76,7 @@ describe("buildListData", () => {
   it("labels today's date as 'Today'", async () => {
     const { buildListData } = await import("@/features/transactions/lib/group-by-date");
     const tx = makeTx({ date: new Date() });
-    const result = buildListData([tx]);
+    const result = buildListData({ transactions: [tx] });
 
     expect(result.items[0]).toMatchObject({
       kind: "date-header",
@@ -89,7 +89,7 @@ describe("buildListData", () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const tx = makeTx({ date: yesterday });
-    const result = buildListData([tx]);
+    const result = buildListData({ transactions: [tx] });
 
     expect(result.items[0]).toMatchObject({
       kind: "date-header",
@@ -100,7 +100,7 @@ describe("buildListData", () => {
   it("formats older dates as 'Month day'", async () => {
     const { buildListData } = await import("@/features/transactions/lib/group-by-date");
     const tx = makeTx({ date: new Date(2026, 0, 15) }); // Jan 15, 2026
-    const result = buildListData([tx]);
+    const result = buildListData({ transactions: [tx] });
 
     expect(result.items[0]).toMatchObject({
       kind: "date-header",
@@ -114,7 +114,7 @@ describe("buildListData", () => {
     const tx2 = makeTx({ id: "tx-2" as TransactionId, date: new Date(2026, 2, 14) });
     const tx3 = makeTx({ id: "tx-3" as TransactionId, date: new Date(2026, 2, 13) });
     const tx4 = makeTx({ id: "tx-4" as TransactionId, date: new Date(2026, 2, 12) });
-    const result = buildListData([tx1, tx2, tx3, tx4]);
+    const result = buildListData({ transactions: [tx1, tx2, tx3, tx4] });
 
     // [header@0, tx1, tx2, header@3, tx3, header@5, tx4]
     expect(result.stickyIndices).toEqual([0, 3, 5]);
@@ -127,7 +127,7 @@ describe("buildListData", () => {
     const input = [tx1, tx2];
     const inputCopy = [...input];
 
-    buildListData(input);
+    buildListData({ transactions: input });
 
     expect(input).toEqual(inputCopy);
   });

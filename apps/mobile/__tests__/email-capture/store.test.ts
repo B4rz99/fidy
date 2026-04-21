@@ -862,7 +862,12 @@ describe("email capture boundary", () => {
 
       await confirmReviewedEmail(mockDb, mockUserId as UserId, "pe-1", "food", mockRefresh);
 
-      expect(updateProcessedEmailStatus).toHaveBeenCalledWith(mockDb, "pe-1", "success", "tx-1");
+      expect(updateProcessedEmailStatus).toHaveBeenCalledWith({
+        db: mockDb,
+        id: "pe-1",
+        status: "success",
+        transactionId: "tx-1",
+      });
       expect(useEmailCaptureStore.getState().needsReviewEmails).toHaveLength(0);
       // Verify merchant rule was saved
       expect(insertMerchantRule).toHaveBeenCalledWith(

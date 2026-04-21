@@ -10,44 +10,59 @@ export type DateHeader = {
 };
 
 export type ListItem = DateHeader | StoredTransaction;
+type DateLabelInput = {
+  readonly date: Date;
+  readonly todayLabel?: string;
+  readonly yesterdayLabel?: string;
+  readonly dateFnsLocale?: Locale;
+};
+type DateLabelOptions = Omit<DateLabelInput, "date">;
+type BuildListDataInput = {
+  readonly transactions: readonly StoredTransaction[];
+  readonly todayLabel?: string;
+  readonly yesterdayLabel?: string;
+  readonly dateFnsLocale?: Locale;
+};
 
 export function isDateHeader(item: ListItem): item is DateHeader {
   return "kind" in item;
 }
 
-export function makeDateLabel(
-  date: Date,
+export function makeDateLabel({
+  date,
   todayLabel = "Today",
   yesterdayLabel = "Yesterday",
-  dateFnsLocale?: Locale
-): string {
+  dateFnsLocale,
+}: DateLabelInput): string {
   if (isToday(date)) return todayLabel;
   if (isYesterday(date)) return yesterdayLabel;
   return format(date, "MMMM d", dateFnsLocale ? { locale: dateFnsLocale } : undefined);
 }
 
-export function buildListData(
-  transactions: readonly StoredTransaction[],
-  todayLabel = "Today",
-  yesterdayLabel = "Yesterday",
-  dateFnsLocale?: Locale
-): {
+function buildDateHeader(transaction: StoredTransaction, options: DateLabelOptions): DateHeader {
+  return {
+    kind: "date-header",
+    label: makeDateLabel({ date: transaction.date, ...options }),
+    dateKey: toIsoDate(transaction.date),
+  };
+}
+
+export function buildListData(input: BuildListDataInput): {
   readonly items: ListItem[];
   readonly stickyIndices: number[];
 } {
+  const { transactions, todayLabel = "Today", yesterdayLabel = "Yesterday", dateFnsLocale } = input;
   // Local mutation for O(n) performance on the render path (CLAUDE.md performance exemption).
   const items: ListItem[] = [];
   const stickyIndices: number[] = [];
+  const labelOptions = { todayLabel, yesterdayLabel, dateFnsLocale };
 
   transactions.reduce<string | null>((prev, tx) => {
-    const dateKey = toIsoDate(tx.date);
+    const header = buildDateHeader(tx, labelOptions);
+    const dateKey = header.dateKey;
     if (dateKey !== prev) {
       stickyIndices.push(items.length);
-      items.push({
-        kind: "date-header" as const,
-        label: makeDateLabel(tx.date, todayLabel, yesterdayLabel, dateFnsLocale),
-        dateKey,
-      });
+      items.push(header);
     }
     items.push(tx);
     return dateKey;

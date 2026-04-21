@@ -50,7 +50,12 @@ export async function processApplePayIntent(
   const source: "apple_pay" = "apple_pay";
 
   // Check fingerprint dedup
-  const fingerprint = captureFingerprint(source, amount, today, intent.merchant);
+  const fingerprint = captureFingerprint({
+    source,
+    amount,
+    date: today,
+    merchant: intent.merchant,
+  });
 
   if (inFlightFingerprints.has(fingerprint)) {
     capturePipelineEvent({ source: "apple_pay", saved: 0, skippedDuplicate: 1 });
@@ -66,7 +71,13 @@ export async function processApplePayIntent(
       return { saved: false, skippedDuplicate: true, transactionId: null };
     }
     // Cross-source dedup
-    const existingTxId = await findDuplicateTransaction(db, userId, amount, today, intent.merchant);
+    const existingTxId = await findDuplicateTransaction({
+      db,
+      userId,
+      amount,
+      date: today,
+      merchant: intent.merchant,
+    });
 
     if (existingTxId) {
       const now = toIsoDateTime(new Date());

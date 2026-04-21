@@ -51,12 +51,12 @@ export async function resolveFinancialMeaningReview(db: AnyDb, processedEmailId:
     return;
   }
 
-  await updateProcessedEmailStatus(
+  await updateProcessedEmailStatus({
     db,
-    processedEmailId,
-    "success",
-    processedEmail.transactionId ?? null
-  );
+    id: processedEmailId,
+    status: "success",
+    transactionId: processedEmail.transactionId ?? null,
+  });
 }
 
 export async function dismissFinancialMeaningReview(
@@ -99,6 +99,11 @@ export async function dismissFinancialMeaningReview(
       }
     }
 
-    saveProcessedEmailStatus(tx, processedEmailId, "skipped", null);
+    saveProcessedEmailStatus({
+      db: tx,
+      id: processedEmailId,
+      status: "skipped",
+      transactionId: null,
+    });
   });
 }

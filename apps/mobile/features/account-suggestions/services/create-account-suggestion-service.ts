@@ -210,23 +210,19 @@ export function createAccountSuggestionService({
   }
 
   return {
-    listSuggestions({
-      db,
-      userId,
-      limit,
-      minimumOccurrences = 2,
-    }: ListSuggestionsInput): readonly AccountCreationSuggestion[] {
+    listSuggestions(input: ListSuggestionsInput): readonly AccountCreationSuggestion[] {
+      const minimumOccurrences = input.minimumOccurrences ?? 2;
       return applyLimit(
         filterDismissedSuggestions(
           filterAlreadyLinkedSuggestions(
             deriveAccountSuggestions(
-              loadRepeatedCaptureEvidenceForUser(db, userId, minimumOccurrences)
+              loadRepeatedCaptureEvidenceForUser(input.db, input.userId, minimumOccurrences)
             ),
-            loadFinancialAccountIdentifiersForUser(db, userId)
+            loadFinancialAccountIdentifiersForUser(input.db, input.userId)
           ),
-          loadAccountSuggestionDismissalsForUser(db, userId)
+          loadAccountSuggestionDismissalsForUser(input.db, input.userId)
         ),
-        limit
+        input.limit
       );
     },
 
@@ -265,22 +261,16 @@ export function createAccountSuggestionService({
       );
     },
 
-    createSuggestedAccount({
-      db,
-      userId,
-      suggestion,
-      name,
-      kind,
-    }: CreateSuggestedAccountInput): AcceptSuggestionResult {
+    createSuggestedAccount(input: CreateSuggestedAccountInput): AcceptSuggestionResult {
       const updatedAt = now();
       const accountId = createAccountId();
 
-      return db.transaction((tx) => {
+      return input.db.transaction((tx) => {
         persistFinancialAccount(tx, {
           id: accountId,
-          userId,
-          name,
-          kind,
+          userId: input.userId,
+          name: input.name,
+          kind: input.kind,
           isDefault: false,
           createdAt: updatedAt,
           updatedAt,
@@ -289,9 +279,9 @@ export function createAccountSuggestionService({
 
         return acceptSuggestionWithTimestamp({
           db: tx,
-          userId,
+          userId: input.userId,
           accountId,
-          suggestion,
+          suggestion: input.suggestion,
           updatedAt,
         });
       });
