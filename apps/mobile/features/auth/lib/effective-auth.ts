@@ -52,11 +52,9 @@ export function deriveAuthIdentity({ session, localQaSession }: EffectiveAuthInp
   };
 }
 
-export function deriveEffectiveOnboardingComplete({
-  session,
-  localQaSession,
-  localOnboardingComplete,
-}: EffectiveOnboardingInput) {
-  if (localQaSession) return localQaSession.onboardingComplete;
-  return localOnboardingComplete || session?.user.user_metadata.onboarding_completed === true;
+export function deriveEffectiveOnboardingComplete(input: EffectiveOnboardingInput) {
+  if (input.localQaSession) return input.localQaSession.onboardingComplete;
+  return (
+    input.localOnboardingComplete || input.session?.user.user_metadata.onboarding_completed === true
+  );
 }

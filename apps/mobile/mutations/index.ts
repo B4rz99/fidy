@@ -149,7 +149,12 @@ const applyGoalSave = (db: MutationDb, command: GoalSaveCommand): CommandEffectR
 };
 
 const applyGoalUpdate = (db: MutationDb, command: GoalUpdateCommand): CommandEffectResult => {
-  updateGoal(db, command.goalId, command.data, command.now);
+  updateGoal({
+    db,
+    id: command.goalId,
+    data: command.data,
+    now: command.now,
+  });
   queueSyncChange(db, {
     tableName: "goals",
     rowId: command.goalId,
@@ -211,7 +216,12 @@ const applyBudgetSave = (db: MutationDb, command: BudgetSaveCommand): CommandEff
 };
 
 const applyBudgetUpdate = (db: MutationDb, command: BudgetUpdateCommand): CommandEffectResult => {
-  updateBudgetAmount(db, command.budgetId, command.amount, command.now);
+  updateBudgetAmount({
+    db,
+    id: command.budgetId,
+    amount: command.amount,
+    now: command.now,
+  });
   queueSyncChange(db, {
     tableName: "budgets",
     rowId: command.budgetId,

@@ -13,12 +13,8 @@ type UseAccountSuggestionsInput = {
   readonly minimumOccurrences?: number;
 };
 
-export function useAccountSuggestions({
-  db,
-  userId,
-  limit,
-  minimumOccurrences,
-}: UseAccountSuggestionsInput) {
+export function useAccountSuggestions(input: UseAccountSuggestionsInput) {
+  const { db, userId, limit, minimumOccurrences } = input;
   const service = useMemo(() => createAccountSuggestionService(), []);
   const [suggestions, setSuggestions] = useState<readonly AccountCreationSuggestion[]>([]);
   const [hasLoadedSuggestions, setHasLoadedSuggestions] = useState(false);

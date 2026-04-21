@@ -37,6 +37,20 @@ type GoalQueryServiceDeps = {
   readonly getToday?: () => Date;
 };
 
+function getGoalPaceGuidance(input: {
+  readonly goal: Goal;
+  readonly currentAmount: number;
+  readonly contributionMonths: number;
+  readonly today: Date;
+}) {
+  return deriveGoalPaceGuidance(
+    input.goal,
+    input.currentAmount,
+    input.contributionMonths > 0,
+    input.today
+  );
+}
+
 function toGoalWithProgress(
   goal: Goal,
   currentAmount: number,
@@ -46,6 +60,12 @@ function toGoalWithProgress(
 ): GoalWithProgress {
   const progress = deriveGoalProgress(goal, currentAmount);
   const savingsProjection = deriveGoalProjection(goal, currentAmount, monthlyTotals);
+  const paceGuidance = getGoalPaceGuidance({
+    goal,
+    currentAmount,
+    contributionMonths,
+    today,
+  });
   const projection =
     goal.type === "debt" &&
     goal.interestRatePercent != null &&
@@ -86,7 +106,7 @@ function toGoalWithProgress(
       projection.netMonthlySavings,
       contributionMonths
     ),
-    paceGuidance: deriveGoalPaceGuidance(goal, currentAmount, contributionMonths > 0, today),
+    paceGuidance,
   };
 }
 

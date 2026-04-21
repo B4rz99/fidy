@@ -4,6 +4,19 @@ import { goalContributions, goals } from "@/shared/db";
 
 export type GoalRow = typeof goals.$inferInsert;
 export type GoalContributionRow = typeof goalContributions.$inferInsert;
+type UpdateGoalInput = {
+  readonly db: AnyDb;
+  readonly id: string;
+  readonly data: {
+    name?: string;
+    targetAmount?: number;
+    targetDate?: string | null;
+    interestRatePercent?: number | null;
+    iconName?: string | null;
+    colorHex?: string | null;
+  };
+  readonly now: string;
+};
 
 // --- Goals CRUD ---
 
@@ -24,22 +37,11 @@ export function getGoalById(db: AnyDb, id: string) {
   return rows[0] ?? null;
 }
 
-export function updateGoal(
-  db: AnyDb,
-  id: string,
-  data: {
-    name?: string;
-    targetAmount?: number;
-    targetDate?: string | null;
-    interestRatePercent?: number | null;
-    iconName?: string | null;
-    colorHex?: string | null;
-  },
-  now: string
-) {
-  db.update(goals)
-    .set({ ...data, updatedAt: now })
-    .where(eq(goals.id, id))
+export function updateGoal(input: UpdateGoalInput) {
+  input.db
+    .update(goals)
+    .set({ ...input.data, updatedAt: input.now })
+    .where(eq(goals.id, input.id))
     .run();
 }
 

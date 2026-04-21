@@ -146,17 +146,17 @@ describe("goals repository", () => {
       targetDate: "2026-12-31",
     });
 
-    updateGoal(
-      db as any,
-      "goal-1",
-      {
+    updateGoal({
+      db: db as any,
+      id: "goal-1",
+      data: {
         name: "Renovation fund",
         targetAmount: 750000,
         colorHex: "#1D4ED8",
         targetDate: null,
       },
-      "2026-04-01T12:00:00.000Z"
-    );
+      now: "2026-04-01T12:00:00.000Z",
+    });
 
     expect(getGoalById(db as any, "goal-1")).toMatchObject({
       id: "goal-1",

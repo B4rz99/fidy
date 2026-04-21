@@ -32,6 +32,15 @@ type CreateAnalyticsServiceDeps = {
   readonly getSpendingByCategoryForPeriod?: typeof getSpendingByCategoryForPeriod;
 };
 
+type PeriodDeltaInput = Parameters<typeof derivePeriodDelta>[0];
+
+function buildPeriodDeltaInput(
+  totalExpenses: PeriodDeltaInput["totalExpenses"],
+  categorySpending: PeriodDeltaInput["categorySpending"]
+): PeriodDeltaInput {
+  return { totalExpenses, categorySpending };
+}
+
 export function createAnalyticsService({
   getNow = () => new Date(),
   getIncomeExpenseForPeriod: loadIncomeExpense = getIncomeExpenseForPeriod,
@@ -49,6 +58,14 @@ export function createAnalyticsService({
       const previousIncomeExpense = loadIncomeExpense(db, userId, previous.start, previous.end);
       const currentSpending = loadSpendingByCategory(db, userId, current.start, current.end);
       const previousSpending = loadSpendingByCategory(db, userId, previous.start, previous.end);
+      const currentPeriodDeltaInput = buildPeriodDeltaInput(
+        currentIncomeExpense.expenses,
+        currentSpending
+      );
+      const previousPeriodDeltaInput = buildPeriodDeltaInput(
+        previousIncomeExpense.expenses,
+        previousSpending
+      );
 
       return {
         incomeExpense: deriveIncomeExpense(
@@ -56,16 +73,7 @@ export function createAnalyticsService({
           currentIncomeExpense.expenses
         ),
         categoryBreakdown: deriveCategoryBreakdown(currentSpending, currentIncomeExpense.expenses),
-        periodDelta: derivePeriodDelta(
-          {
-            totalExpenses: currentIncomeExpense.expenses,
-            categorySpending: currentSpending,
-          },
-          {
-            totalExpenses: previousIncomeExpense.expenses,
-            categorySpending: previousSpending,
-          }
-        ),
+        periodDelta: derivePeriodDelta(currentPeriodDeltaInput, previousPeriodDeltaInput),
       };
     },
   };

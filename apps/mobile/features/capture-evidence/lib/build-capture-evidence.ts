@@ -64,15 +64,19 @@ function extractAliasEvidence(
   }));
 }
 
-function extractLast4Evidence(scopePrefix: string, family: string, rawText: string) {
+function extractLast4Evidence(input: {
+  readonly scopePrefix: string;
+  readonly family: string;
+  readonly rawText: string;
+}) {
   const values = LAST4_PATTERNS.flatMap((pattern) =>
-    Array.from(rawText.matchAll(pattern), (match) => match[1] ?? "")
+    Array.from(input.rawText.matchAll(pattern), (match) => match[1] ?? "")
   )
     .filter((value) => value.length === 4)
     .map((value) => ({
-      sourceFamily: family,
+      sourceFamily: input.family,
       evidenceType: "last4" as const,
-      scope: `${scopePrefix}:${family}:last4`,
+      scope: `${input.scopePrefix}:${input.family}:last4`,
       value,
     }));
 
@@ -126,7 +130,7 @@ export function buildNotificationCaptureEvidence(
       value: notification.packageName.toLowerCase(),
     },
     ...extractAliasEvidence(family, combinedText),
-    ...extractLast4Evidence("notification", family, combinedText),
+    ...extractLast4Evidence({ scopePrefix: "notification", family, rawText: combinedText }),
   ]);
 }
 
@@ -147,10 +151,12 @@ export function buildApplePayCaptureEvidence(
       scope: "apple_pay:card_hint",
       value: cardHint,
     },
-    ...extractLast4Evidence("apple_pay", "", cardHint).map((row) => ({
-      ...row,
-      sourceFamily: family,
-      scope: "apple_pay:last4",
-    })),
+    ...extractLast4Evidence({ scopePrefix: "apple_pay", family: "", rawText: cardHint }).map(
+      (row) => ({
+        ...row,
+        sourceFamily: family,
+        scope: "apple_pay:last4",
+      })
+    ),
   ]);
 }

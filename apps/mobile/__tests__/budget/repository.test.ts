@@ -176,12 +176,12 @@ describe("budget repository", () => {
     it("sets amount and updatedAt", async () => {
       const { updateBudgetAmount } = await loadBudgetRepository();
 
-      updateBudgetAmount(
-        mockDb,
-        "budget-1" as BudgetId,
-        75000 as CopAmount,
-        "2026-03-15T00:00:00.000Z" as IsoDateTime
-      );
+      updateBudgetAmount({
+        db: mockDb,
+        id: "budget-1" as BudgetId,
+        amount: 75000 as CopAmount,
+        now: "2026-03-15T00:00:00.000Z" as IsoDateTime,
+      });
 
       expect(mockUpdate).toHaveBeenCalled();
       expect(mockSet).toHaveBeenCalledWith({
