@@ -15,14 +15,94 @@ const { safeAreaContextMock } = vi.hoisted(() => {
   };
 });
 
-const { lucideReactNativeMock } = vi.hoisted(() => ({
-  lucideReactNativeMock: new Proxy<Record<string, string>>(
-    {},
-    {
-      get: (_, iconName) => (typeof iconName === "string" ? iconName : ""),
-    }
-  ),
-}));
+const { lucideReactNativeMock } = vi.hoisted(() => {
+  const iconNames = [
+    "ArrowLeftRight",
+    "Baby",
+    "Banknote",
+    "BarChart3",
+    "Bell",
+    "Book",
+    "Brain",
+    "Briefcase",
+    "Building2",
+    "Calendar",
+    "Car",
+    "Check",
+    "CheckCircle",
+    "ChevronLeft",
+    "ChevronRight",
+    "CircleCheck",
+    "Clapperboard",
+    "Clock",
+    "Coffee",
+    "Delete",
+    "Dog",
+    "Dumbbell",
+    "Ellipsis",
+    "ExternalLink",
+    "FileText",
+    "Film",
+    "Fuel",
+    "Gamepad2",
+    "Gift",
+    "GitMerge",
+    "Globe",
+    "GraduationCap",
+    "Heart",
+    "HeartPulse",
+    "HelpCircle",
+    "Home",
+    "House",
+    "Info",
+    "LogOut",
+    "Mail",
+    "Menu",
+    "MessageSquare",
+    "Monitor",
+    "Music",
+    "Palette",
+    "PawPrint",
+    "Pencil",
+    "PiggyBank",
+    "Plane",
+    "Plus",
+    "Receipt",
+    "Scissors",
+    "Search",
+    "SendHorizonal",
+    "Settings",
+    "Shield",
+    "Shirt",
+    "ShoppingBag",
+    "ShoppingCart",
+    "Smartphone",
+    "Sparkles",
+    "Star",
+    "Stethoscope",
+    "Tag",
+    "Target",
+    "Trash2",
+    "TrendingUp",
+    "TriangleAlert",
+    "Trophy",
+    "Umbrella",
+    "User",
+    "Utensils",
+    "Wallet",
+    "Wifi",
+    "Wine",
+    "Wrench",
+    "X",
+    "Zap",
+  ];
+
+  return {
+    lucideReactNativeMock: Object.fromEntries(
+      iconNames.map((iconName) => [iconName, iconName])
+    ) as Record<string, string>,
+  };
+});
 
 // Mock react-native (Flow syntax not supported outside RN bundler)
 vi.mock("react-native", () => ({
