@@ -20,6 +20,8 @@ jobs:
         run: bun run lint
       - name: Mobile ESLint (includes import/no-cycle)
         run: bun run lint:mobile
+      - name: Lizard strict complexity gate
+        run: bun run lint:complexity
 
   architecture:
     name: Architecture
