@@ -13,6 +13,10 @@ const mockGetPendingTransactions = vi.fn();
 const mockRemovePendingTransactions = vi.fn();
 const mockIsAvailable = vi.fn();
 const mockGenerateProcessedCaptureId = vi.fn();
+type CaptureFingerprintArgs = readonly [string, number, string, string];
+
+const buildFingerprint = ([source, amount, date, merchant]: CaptureFingerprintArgs) =>
+  `fp:${source}:${amount}:${date}:${merchant}`;
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
@@ -40,8 +44,7 @@ vi.mock("@/shared/db/enqueue-sync", () => ({
 vi.mock("@/features/capture-sources/lib/dedup", () => ({
   isCaptureProcessed: (...args: any[]) => mockIsCaptureProcessed(...args),
   findDuplicateTransaction: (...args: any[]) => mockFindDuplicateTransaction(...args),
-  captureFingerprint: (source: string, amount: number, date: string, merchant: string) =>
-    `fp:${source}:${amount}:${date}:${merchant}`,
+  captureFingerprint: (...args: CaptureFingerprintArgs) => buildFingerprint(args),
 }));
 
 vi.mock("@/features/capture-sources/lib/repository", () => ({
