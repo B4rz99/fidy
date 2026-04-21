@@ -58,11 +58,10 @@ export function buildListData(input: BuildListDataInput): {
   const labelOptions = { todayLabel, yesterdayLabel, dateFnsLocale };
 
   transactions.reduce<string | null>((prev, tx) => {
-    const header = buildDateHeader(tx, labelOptions);
-    const dateKey = header.dateKey;
+    const dateKey = toIsoDate(tx.date);
     if (dateKey !== prev) {
       stickyIndices.push(items.length);
-      items.push(header);
+      items.push(buildDateHeader(tx, labelOptions));
     }
     items.push(tx);
     return dateKey;
