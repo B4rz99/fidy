@@ -109,7 +109,11 @@ export function reclassifyTransactionAsTransfer(
       createdAt: updatedAt,
     });
 
-    relinkEvidenceToTransfer(tx, existingTransaction.id, built.transfer.id, updatedAt);
+    relinkEvidenceToTransfer(tx, {
+      transactionId: existingTransaction.id,
+      transferId: built.transfer.id,
+      updatedAt,
+    });
 
     if (input.processedEmailId) {
       saveProcessedEmailStatus({

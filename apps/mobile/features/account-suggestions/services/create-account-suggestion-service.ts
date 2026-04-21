@@ -165,7 +165,11 @@ export function createAccountSuggestionService({
 
     const reprocessedTransactionIds = Array.from(
       new Set(
-        loadCaptureEvidenceRowsForScopeValue(db, userId, suggestion.scope, suggestion.value)
+        loadCaptureEvidenceRowsForScopeValue(db, {
+          userId,
+          scope: suggestion.scope,
+          value: suggestion.value,
+        })
           .map((row) => row.transactionId)
           .filter((transactionId): transactionId is TransactionId => transactionId != null)
           .filter((transactionId) => {

@@ -604,7 +604,13 @@ export function TransferFormScreen({ initialDraftResolver }: TransferFormScreenP
       : t("transfers.save");
   const buttonBackground = canSave ? accentGreen : "#DADADA";
   const dateLabel = useMemo(
-    () => getDateLabel(date, new Date(), t("dates.today"), getDateFnsLocale(locale)),
+    () =>
+      getDateLabel({
+        date,
+        now: new Date(),
+        todayLabel: t("dates.today"),
+        dateFnsLocale: getDateFnsLocale(locale),
+      }),
     [date, locale, t]
   );
 

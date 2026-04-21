@@ -86,7 +86,13 @@ export function TransactionForm({
   const canSave = parseDigitsToAmount(digits) > 0 && hasAccountSelection;
   const buttonBg = canSave ? accentGreen : "#CCCCCC";
   const dateLabel = useMemo(
-    () => getDateLabel(date, new Date(), t("dates.today"), getDateFnsLocale(locale)),
+    () =>
+      getDateLabel({
+        date,
+        now: new Date(),
+        todayLabel: t("dates.today"),
+        dateFnsLocale: getDateFnsLocale(locale),
+      }),
     [date, t, locale]
   );
 

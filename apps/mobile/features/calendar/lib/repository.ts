@@ -22,6 +22,12 @@ export type BillUpdateFields = {
   isActive?: boolean;
 };
 
+type UpdateBillInput = {
+  readonly id: BillId;
+  readonly fields: BillUpdateFields;
+  readonly now: IsoDateTime;
+};
+
 export function insertBill(db: AnyDb, row: BillRow) {
   db.insert(bills).values(row).run();
 }
@@ -30,21 +36,21 @@ export function getAllBills(db: AnyDb, userId: UserId) {
   return db.select().from(bills).where(eq(bills.userId, userId)).all();
 }
 
-export function updateBill(db: AnyDb, id: BillId, fields: BillUpdateFields, now: IsoDateTime) {
+export function updateBill(db: AnyDb, input: UpdateBillInput) {
   const normalizedStartDate =
-    fields.startDate != null ? toIsoDate(new Date(fields.startDate)) : undefined;
+    input.fields.startDate != null ? toIsoDate(new Date(input.fields.startDate)) : undefined;
   const normalizedFields = {
-    name: fields.name,
-    amount: fields.amount,
-    frequency: fields.frequency,
-    categoryId: fields.categoryId,
-    isActive: fields.isActive,
+    name: input.fields.name,
+    amount: input.fields.amount,
+    frequency: input.fields.frequency,
+    categoryId: input.fields.categoryId,
+    isActive: input.fields.isActive,
     ...(normalizedStartDate != null ? { startDate: normalizedStartDate } : {}),
   };
 
   db.update(bills)
-    .set({ ...normalizedFields, updatedAt: now })
-    .where(eq(bills.id, id))
+    .set({ ...normalizedFields, updatedAt: input.now })
+    .where(eq(bills.id, input.id))
     .run();
 }
 

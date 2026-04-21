@@ -84,26 +84,75 @@ const insertBillPaymentRow = (
     createdAt: CREATED_AT,
   });
 
-describe("calendar repository", () => {
-  it("removes deleted bill payments from monthly reads and cleans up dependent rows", () => {
-    insertBillRow();
-    insertBillRow({
-      id: "bill-2" as BillId,
-      name: "Water",
-      amount: 80000 as CopAmount,
-      categoryId: "utilities" as CategoryId,
-    });
+function seedBills() {
+  insertBillRow();
+  insertBillRow({
+    id: "bill-2" as BillId,
+    name: "Water",
+    amount: 80000 as CopAmount,
+    categoryId: "utilities" as CategoryId,
+  });
+}
 
-    updateBill(
-      db as any,
-      "bill-1" as BillId,
-      {
+function seedBillPayments() {
+  insertBillPaymentRow({
+    id: "payment-1" as BillPaymentId,
+    billId: "bill-1" as BillId,
+    dueDate: "2026-04-05" as IsoDate,
+    transactionId: "tx-1" as TransactionId,
+  });
+  insertBillPaymentRow({
+    id: "payment-2" as BillPaymentId,
+    billId: "bill-1" as BillId,
+    dueDate: "2026-04-20" as IsoDate,
+    paidAt: "2026-04-20T10:00:00.000Z" as IsoDateTime,
+    transactionId: "tx-2" as TransactionId,
+  });
+  insertBillPaymentRow({
+    id: "payment-3" as BillPaymentId,
+    billId: "bill-2" as BillId,
+    dueDate: "2026-04-10" as IsoDate,
+    paidAt: "2026-04-10T10:00:00.000Z" as IsoDateTime,
+    transactionId: "tx-3" as TransactionId,
+  });
+  insertBillPaymentRow({
+    id: "payment-4" as BillPaymentId,
+    billId: "bill-2" as BillId,
+    dueDate: "2026-05-02" as IsoDate,
+    paidAt: "2026-05-02T10:00:00.000Z" as IsoDateTime,
+    transactionId: "tx-4" as TransactionId,
+  });
+}
+
+function expectAprilPaymentIds(ids: readonly string[]) {
+  expect(
+    getBillPaymentsForMonth(db as any, "2026-04-01" as IsoDate, "2026-04-30" as IsoDate)
+      .map(({ id }) => id)
+      .sort()
+  ).toEqual(ids);
+}
+
+function expectMayPaymentIds(ids: readonly string[]) {
+  expect(
+    getBillPaymentsForMonth(db as any, "2026-05-01" as IsoDate, "2026-05-31" as IsoDate).map(
+      ({ id }) => id
+    )
+  ).toEqual(ids);
+}
+
+describe("calendar repository", () => {
+  it("updates bills and filters deleted bill payments from monthly reads", () => {
+    seedBills();
+
+    updateBill(db as any, {
+      id: "bill-1" as BillId,
+      fields: {
         name: "Home Internet",
         amount: 135000 as CopAmount,
         isActive: false,
       },
-      UPDATED_AT
-    );
+      now: UPDATED_AT,
+    });
 
     expect(getAllBills(db as any, USER_ID)).toEqual(
       expect.arrayContaining([
@@ -121,52 +170,18 @@ describe("calendar repository", () => {
       ])
     );
 
-    insertBillPaymentRow({
-      id: "payment-1" as BillPaymentId,
-      billId: "bill-1" as BillId,
-      dueDate: "2026-04-05" as IsoDate,
-      transactionId: "tx-1" as TransactionId,
-    });
-    insertBillPaymentRow({
-      id: "payment-2" as BillPaymentId,
-      billId: "bill-1" as BillId,
-      dueDate: "2026-04-20" as IsoDate,
-      paidAt: "2026-04-20T10:00:00.000Z" as IsoDateTime,
-      transactionId: "tx-2" as TransactionId,
-    });
-    insertBillPaymentRow({
-      id: "payment-3" as BillPaymentId,
-      billId: "bill-2" as BillId,
-      dueDate: "2026-04-10" as IsoDate,
-      paidAt: "2026-04-10T10:00:00.000Z" as IsoDateTime,
-      transactionId: "tx-3" as TransactionId,
-    });
-    insertBillPaymentRow({
-      id: "payment-4" as BillPaymentId,
-      billId: "bill-2" as BillId,
-      dueDate: "2026-05-02" as IsoDate,
-      paidAt: "2026-05-02T10:00:00.000Z" as IsoDateTime,
-      transactionId: "tx-4" as TransactionId,
-    });
-
+    seedBillPayments();
     deleteBillPayment(db as any, "bill-2" as BillId, "2026-04-10" as IsoDate);
+    expectAprilPaymentIds(["payment-1", "payment-2"]);
+  });
 
-    expect(
-      getBillPaymentsForMonth(db as any, "2026-04-01" as IsoDate, "2026-04-30" as IsoDate)
-        .map(({ id }) => id)
-        .sort()
-    ).toEqual(["payment-1", "payment-2"]);
-
+  it("deletes a bill and its dependent bill payments", () => {
+    seedBills();
+    seedBillPayments();
     deleteBill(db as any, "bill-1" as BillId);
 
     expect(getAllBills(db as any, USER_ID).map(({ id }) => id)).toEqual(["bill-2"]);
-    expect(
-      getBillPaymentsForMonth(db as any, "2026-04-01" as IsoDate, "2026-04-30" as IsoDate)
-    ).toEqual([]);
-    expect(
-      getBillPaymentsForMonth(db as any, "2026-05-01" as IsoDate, "2026-05-31" as IsoDate).map(
-        ({ id }) => id
-      )
-    ).toEqual(["payment-4"]);
+    expectAprilPaymentIds(["payment-3"]);
+    expectMayPaymentIds(["payment-4"]);
   });
 });

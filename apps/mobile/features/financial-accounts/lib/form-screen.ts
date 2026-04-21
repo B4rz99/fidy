@@ -1,6 +1,17 @@
 import type { FinancialAccountId } from "@/shared/types/branded";
 import type { FinancialAccountKind } from "../schema";
 
+type BillingDayInput = {
+  readonly kind: FinancialAccountKind;
+  readonly statementClosingDay: number | null;
+  readonly paymentDueDay: number | null;
+};
+
+type FinancialAccountFormScreenStateInput = {
+  readonly accountId: FinancialAccountId | null;
+  readonly lookupStatus: FinancialAccountFormLookupStatus;
+};
+
 export type FinancialAccountFormLookupStatus = "idle" | "loading" | "ready" | "missing";
 export type FinancialAccountFormScreenState = "create" | "loading" | "edit" | "missing";
 
@@ -8,43 +19,31 @@ function isOutOfRangeBillingDay(day: number | null): boolean {
   return day != null && !Number.isNaN(day) && (day < 1 || day > 31);
 }
 
-export function hasInvalidBillingDayInput({
-  kind,
-  statementClosingDay,
-  paymentDueDay,
-}: {
-  readonly kind: FinancialAccountKind;
-  readonly statementClosingDay: number | null;
-  readonly paymentDueDay: number | null;
-}): boolean {
-  if (kind !== "credit_card") {
+export function hasInvalidBillingDayInput(input: BillingDayInput): boolean {
+  if (input.kind !== "credit_card") {
     return false;
   }
 
   return (
-    Number.isNaN(statementClosingDay) ||
-    Number.isNaN(paymentDueDay) ||
-    isOutOfRangeBillingDay(statementClosingDay) ||
-    isOutOfRangeBillingDay(paymentDueDay)
+    Number.isNaN(input.statementClosingDay) ||
+    Number.isNaN(input.paymentDueDay) ||
+    isOutOfRangeBillingDay(input.statementClosingDay) ||
+    isOutOfRangeBillingDay(input.paymentDueDay)
   );
 }
 
-export function getFinancialAccountFormScreenState({
-  accountId,
-  lookupStatus,
-}: {
-  readonly accountId: FinancialAccountId | null;
-  readonly lookupStatus: FinancialAccountFormLookupStatus;
-}): FinancialAccountFormScreenState {
-  if (accountId == null) {
+export function getFinancialAccountFormScreenState(
+  input: FinancialAccountFormScreenStateInput
+): FinancialAccountFormScreenState {
+  if (input.accountId == null) {
     return "create";
   }
 
-  if (lookupStatus === "ready") {
+  if (input.lookupStatus === "ready") {
     return "edit";
   }
 
-  if (lookupStatus === "missing") {
+  if (input.lookupStatus === "missing") {
     return "missing";
   }
 
