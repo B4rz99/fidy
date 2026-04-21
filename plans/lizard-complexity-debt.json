@@ -6,14 +6,6 @@
   },
   "violations": [
     {
-      "key": "(anonymous)@100-137@apps/mobile/__tests__/capture-sources/repository-sms-events.test.ts",
-      "file": "apps/mobile/__tests__/capture-sources/repository-sms-events.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 36,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@104-116@apps/mobile/features/review-queues/lib/attribution-review-service.ts",
       "file": "apps/mobile/features/review-queues/lib/attribution-review-service.ts",
       "function": "(anonymous)",
@@ -94,27 +86,11 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@12-77@apps/mobile/__tests__/goals/service.test.ts",
-      "file": "apps/mobile/__tests__/goals/service.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 62,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@122-146@apps/mobile/__tests__/sync/sync-pull-integration.test.ts",
       "file": "apps/mobile/__tests__/sync/sync-pull-integration.test.ts",
       "function": "(anonymous)",
       "cyclomaticComplexity": 8,
       "nloc": 18,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@130-161@apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts",
-      "file": "apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 31,
       "parameterCount": 0
     },
     {
@@ -139,14 +115,6 @@
       "function": "(anonymous)",
       "cyclomaticComplexity": 8,
       "nloc": 16,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@139-178@apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts",
-      "file": "apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 39,
       "parameterCount": 0
     },
     {
@@ -246,14 +214,6 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@176-214@apps/mobile/__tests__/calendar/store.test.ts",
-      "file": "apps/mobile/__tests__/calendar/store.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 37,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@181-228@apps/mobile/__tests__/email-capture/retry-integration.test.ts",
       "file": "apps/mobile/__tests__/email-capture/retry-integration.test.ts",
       "function": "(anonymous)",
@@ -350,30 +310,6 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@255-288@apps/mobile/__tests__/calendar/store.test.ts",
-      "file": "apps/mobile/__tests__/calendar/store.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 32,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@256-351@apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 44,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@259-301@apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
-      "file": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 6,
-      "nloc": 33,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@269-307@apps/mobile/__tests__/sync/syncEngine.test.ts",
       "file": "apps/mobile/__tests__/sync/syncEngine.test.ts",
       "function": "(anonymous)",
@@ -387,14 +323,6 @@
       "function": "(anonymous)",
       "cyclomaticComplexity": 1,
       "nloc": 36,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@290-338@apps/mobile/__tests__/calendar/store.test.ts",
-      "file": "apps/mobile/__tests__/calendar/store.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 47,
       "parameterCount": 0
     },
     {
@@ -422,30 +350,6 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@316-340@apps/mobile/features/financial-accounts/lib/management-service.ts",
-      "file": "apps/mobile/features/financial-accounts/lib/management-service.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 7,
-      "nloc": 23,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@324-368@apps/mobile/features/goals/store.ts",
-      "file": "apps/mobile/features/goals/store.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 5,
-      "nloc": 39,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@340-393@apps/mobile/__tests__/calendar/store.test.ts",
-      "file": "apps/mobile/__tests__/calendar/store.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 51,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@35-68@apps/mobile/__tests__/transfers/repository.test.ts",
       "file": "apps/mobile/__tests__/transfers/repository.test.ts",
       "function": "(anonymous)",
@@ -459,14 +363,6 @@
       "function": "(anonymous)",
       "cyclomaticComplexity": 1,
       "nloc": 37,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@384-407@apps/mobile/features/email-capture/store.ts",
-      "file": "apps/mobile/features/email-capture/store.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 7,
-      "nloc": 24,
       "parameterCount": 0
     },
     {
@@ -491,14 +387,6 @@
       "function": "(anonymous)",
       "cyclomaticComplexity": 1,
       "nloc": 51,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@411-474@apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 2,
-      "nloc": 40,
       "parameterCount": 0
     },
     {
@@ -654,14 +542,6 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@68-126@apps/mobile/__tests__/goals/store.test.ts",
-      "file": "apps/mobile/__tests__/goals/store.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 55,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@68-148@apps/mobile/__tests__/transactions/repository-monthly-totals.test.ts",
       "file": "apps/mobile/__tests__/transactions/repository-monthly-totals.test.ts",
       "function": "(anonymous)",
@@ -758,14 +638,6 @@
       "parameterCount": 0
     },
     {
-      "key": "(anonymous)@77-115@apps/mobile/__tests__/calendar/store.test.ts",
-      "file": "apps/mobile/__tests__/calendar/store.test.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 1,
-      "nloc": 35,
-      "parameterCount": 0
-    },
-    {
       "key": "(anonymous)@77-119@apps/mobile/__tests__/budget/store.test.ts",
       "file": "apps/mobile/__tests__/budget/store.test.ts",
       "function": "(anonymous)",
@@ -779,14 +651,6 @@
       "function": "(anonymous)",
       "cyclomaticComplexity": 7,
       "nloc": 20,
-      "parameterCount": 0
-    },
-    {
-      "key": "(anonymous)@8-15@apps/mobile/features/goals/schema.ts",
-      "file": "apps/mobile/features/goals/schema.ts",
-      "function": "(anonymous)",
-      "cyclomaticComplexity": 9,
-      "nloc": 8,
       "parameterCount": 0
     },
     {
@@ -894,22 +758,6 @@
       "parameterCount": 4
     },
     {
-      "key": "addBill@195-217@apps/mobile/features/calendar/store.ts",
-      "file": "apps/mobile/features/calendar/store.ts",
-      "function": "addBill",
-      "cyclomaticComplexity": 3,
-      "nloc": 22,
-      "parameterCount": 7
-    },
-    {
-      "key": "addManualIdentifier@345-352@apps/mobile/features/financial-accounts/lib/management-service.ts",
-      "file": "apps/mobile/features/financial-accounts/lib/management-service.ts",
-      "function": "addManualIdentifier",
-      "cyclomaticComplexity": 1,
-      "nloc": 5,
-      "parameterCount": 4
-    },
-    {
       "key": "addWidgetExtensionTarget@164-301@apps/mobile/plugins/withFidyWidget.js",
       "file": "apps/mobile/plugins/withFidyWidget.js",
       "function": "addWidgetExtensionTarget",
@@ -918,28 +766,12 @@
       "parameterCount": 0
     },
     {
-      "key": "assertNonEmptyString@26-108@apps/mobile/shared/types/assertions.ts",
-      "file": "apps/mobile/shared/types/assertions.ts",
-      "function": "assertNonEmptyString",
-      "cyclomaticComplexity": 28,
-      "nloc": 68,
-      "parameterCount": 4
-    },
-    {
       "key": "base64UrlEncode@10-247@apps/mobile/features/email-capture/services/email-adapter.ts",
       "file": "apps/mobile/features/email-capture/services/email-adapter.ts",
       "function": "base64UrlEncode",
       "cyclomaticComplexity": 1,
       "nloc": 238,
       "parameterCount": 1
-    },
-    {
-      "key": "beginStreamRun@89-150@apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
-      "file": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
-      "function": "beginStreamRun",
-      "cyclomaticComplexity": 7,
-      "nloc": 55,
-      "parameterCount": 12
     },
     {
       "key": "buildMutationTransaction@67-80@apps/mobile/features/transactions/lib/mutation-service.ts",
@@ -982,22 +814,6 @@
       "parameterCount": 4
     },
     {
-      "key": "captureFingerprint@43-45@apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts",
-      "file": "apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts",
-      "function": "captureFingerprint",
-      "cyclomaticComplexity": 1,
-      "nloc": 3,
-      "parameterCount": 4
-    },
-    {
-      "key": "clearAutoClearTimer@140-216@apps/mobile/features/email-capture/store.ts",
-      "file": "apps/mobile/features/email-capture/store.ts",
-      "function": "clearAutoClearTimer",
-      "cyclomaticComplexity": 12,
-      "nloc": 60,
-      "parameterCount": 12
-    },
-    {
       "key": "computeMedian@74-86@apps/mobile/features/goals/lib/derive.ts",
       "file": "apps/mobile/features/goals/lib/derive.ts",
       "function": "computeMedian",
@@ -1020,14 +836,6 @@
       "cyclomaticComplexity": 4,
       "nloc": 31,
       "parameterCount": 3
-    },
-    {
-      "key": "createEmailPipelineService@480-653@apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "function": "createEmailPipelineService",
-      "cyclomaticComplexity": 3,
-      "nloc": 73,
-      "parameterCount": 1
     },
     {
       "key": "createIdentifierId@135-195@apps/mobile/__tests__/financial-accounts/management-service.test.ts",
@@ -1126,35 +934,11 @@
       "parameterCount": 4
     },
     {
-      "key": "disconnectEmailAccount@312-340@apps/mobile/features/email-capture/store.ts",
-      "file": "apps/mobile/features/email-capture/store.ts",
-      "function": "disconnectEmailAccount",
-      "cyclomaticComplexity": 8,
-      "nloc": 26,
-      "parameterCount": 3
-    },
-    {
       "key": "evidence.map@67-76@apps/mobile/__tests__/error-handling/pipeline-save-error.test.ts",
       "file": "apps/mobile/__tests__/error-handling/pipeline-save-error.test.ts",
       "function": "evidence.map",
       "cyclomaticComplexity": 1,
       "nloc": 9,
-      "parameterCount": 4
-    },
-    {
-      "key": "evidence.map@76-83@apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts",
-      "file": "apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts",
-      "function": "evidence.map",
-      "cyclomaticComplexity": 1,
-      "nloc": 7,
-      "parameterCount": 4
-    },
-    {
-      "key": "evidence.map@82-89@apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts",
-      "file": "apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts",
-      "function": "evidence.map",
-      "cyclomaticComplexity": 1,
-      "nloc": 7,
       "parameterCount": 4
     },
     {
@@ -1196,22 +980,6 @@
       "cyclomaticComplexity": 1,
       "nloc": 12,
       "parameterCount": 5
-    },
-    {
-      "key": "generateId@220-238@apps/mobile/features/goals/store.ts",
-      "file": "apps/mobile/features/goals/store.ts",
-      "function": "generateId",
-      "cyclomaticComplexity": 10,
-      "nloc": 18,
-      "parameterCount": 0
-    },
-    {
-      "key": "generateSyncQueueId@301-350@apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "function": "generateSyncQueueId",
-      "cyclomaticComplexity": 2,
-      "nloc": 46,
-      "parameterCount": 0
     },
     {
       "key": "getActiveAccountSuggestionDismissal@35-54@apps/mobile/features/account-suggestions/lib/dismissals-repository.ts",
@@ -1262,14 +1030,6 @@
       "parameterCount": 4
     },
     {
-      "key": "getDefaultAccountAttributionState@21-38@apps/mobile/features/transactions/lib/build-transaction.ts",
-      "file": "apps/mobile/features/transactions/lib/build-transaction.ts",
-      "function": "getDefaultAccountAttributionState",
-      "cyclomaticComplexity": 7,
-      "nloc": 15,
-      "parameterCount": 2
-    },
-    {
       "key": "getDefaultAttributionState@32-46@apps/mobile/features/transactions/lib/repository.ts",
       "file": "apps/mobile/features/transactions/lib/repository.ts",
       "function": "getDefaultAttributionState",
@@ -1308,14 +1068,6 @@
       "cyclomaticComplexity": 6,
       "nloc": 7,
       "parameterCount": 1
-    },
-    {
-      "key": "getHeader@62-149@apps/mobile/features/email-capture/services/gmail-adapter.ts",
-      "file": "apps/mobile/features/email-capture/services/gmail-adapter.ts",
-      "function": "getHeader",
-      "cyclomaticComplexity": 21,
-      "nloc": 72,
-      "parameterCount": 4
     },
     {
       "key": "getLocale@307-355@apps/mobile/__tests__/budget/monitoring.test.ts",
@@ -1414,14 +1166,6 @@
       "parameterCount": 4
     },
     {
-      "key": "handleStreamError@152-166@apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
-      "file": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
-      "function": "handleStreamError",
-      "cyclomaticComplexity": 4,
-      "nloc": 14,
-      "parameterCount": 7
-    },
-    {
       "key": "hasActiveFilters@3-15@apps/mobile/features/search/lib/filters.ts",
       "file": "apps/mobile/features/search/lib/filters.ts",
       "function": "hasActiveFilters",
@@ -1470,14 +1214,6 @@
       "parameterCount": 3
     },
     {
-      "key": "insertMerchantRuleEffect@353-363@apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "function": "insertMerchantRuleEffect",
-      "cyclomaticComplexity": 1,
-      "nloc": 11,
-      "parameterCount": 5
-    },
-    {
       "key": "isActiveChatSession@111-171@apps/mobile/features/ai-chat/store.ts",
       "file": "apps/mobile/features/ai-chat/store.ts",
       "function": "isActiveChatSession",
@@ -1494,27 +1230,11 @@
       "parameterCount": 7
     },
     {
-      "key": "isCurrentGoalsRequest@71-101@apps/mobile/features/goals/store.ts",
-      "file": "apps/mobile/features/goals/store.ts",
-      "function": "isCurrentGoalsRequest",
-      "cyclomaticComplexity": 7,
-      "nloc": 27,
-      "parameterCount": 8
-    },
-    {
       "key": "linkCaptureEvidenceToTransaction@116-148@apps/mobile/features/capture-evidence/lib/repository.ts",
       "file": "apps/mobile/features/capture-evidence/lib/repository.ts",
       "function": "linkCaptureEvidenceToTransaction",
       "cyclomaticComplexity": 2,
       "nloc": 18,
-      "parameterCount": 4
-    },
-    {
-      "key": "linkCaptureEvidenceToTransactionEffect@236-247@apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "function": "linkCaptureEvidenceToTransactionEffect",
-      "cyclomaticComplexity": 1,
-      "nloc": 12,
       "parameterCount": 4
     },
     {
@@ -1566,27 +1286,11 @@
       "parameterCount": 4
     },
     {
-      "key": "markBillPaid@245-261@apps/mobile/features/calendar/store.ts",
-      "file": "apps/mobile/features/calendar/store.ts",
-      "function": "markBillPaid",
-      "cyclomaticComplexity": 3,
-      "nloc": 16,
-      "parameterCount": 4
-    },
-    {
       "key": "markForRetry@130-140@apps/mobile/features/email-capture/lib/repository.ts",
       "file": "apps/mobile/features/email-capture/lib/repository.ts",
       "function": "markForRetry",
       "cyclomaticComplexity": 1,
       "nloc": 11,
-      "parameterCount": 4
-    },
-    {
-      "key": "markForRetryEffect@365-374@apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "function": "markForRetryEffect",
-      "cyclomaticComplexity": 1,
-      "nloc": 10,
       "parameterCount": 4
     },
     {
@@ -1598,14 +1302,6 @@
       "parameterCount": 5
     },
     {
-      "key": "markRetrySuccessEffect@382-392@apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "function": "markRetrySuccessEffect",
-      "cyclomaticComplexity": 1,
-      "nloc": 11,
-      "parameterCount": 5
-    },
-    {
       "key": "mergeActivityItems@96-125@apps/mobile/features/activity/services/create-activity-query-service.ts",
       "file": "apps/mobile/features/activity/services/create-activity-query-service.ts",
       "function": "mergeActivityItems",
@@ -1614,35 +1310,11 @@
       "parameterCount": 2
     },
     {
-      "key": "normalizeOpeningBalance@104-121@apps/mobile/features/financial-accounts/lib/management-service.ts",
-      "file": "apps/mobile/features/financial-accounts/lib/management-service.ts",
-      "function": "normalizeOpeningBalance",
-      "cyclomaticComplexity": 6,
-      "nloc": 16,
-      "parameterCount": 2
-    },
-    {
-      "key": "onProgress@429-485@apps/mobile/features/email-capture/store.ts",
-      "file": "apps/mobile/features/email-capture/store.ts",
-      "function": "onProgress",
-      "cyclomaticComplexity": 7,
-      "nloc": 45,
-      "parameterCount": 1
-    },
-    {
       "key": "parseActionFromResponse@7-18@apps/mobile/features/ai-chat/lib/parse-action.ts",
       "file": "apps/mobile/features/ai-chat/lib/parse-action.ts",
       "function": "parseActionFromResponse",
       "cyclomaticComplexity": 6,
       "nloc": 11,
-      "parameterCount": 1
-    },
-    {
-      "key": "parseDigitsToAmount@45-83@apps/mobile/features/transactions/lib/build-transaction.ts",
-      "file": "apps/mobile/features/transactions/lib/build-transaction.ts",
-      "function": "parseDigitsToAmount",
-      "cyclomaticComplexity": 22,
-      "nloc": 36,
       "parameterCount": 1
     },
     {
@@ -1670,28 +1342,12 @@
       "parameterCount": 1
     },
     {
-      "key": "processEmails@498-518@apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "function": "processEmails",
-      "cyclomaticComplexity": 1,
-      "nloc": 19,
-      "parameterCount": 4
-    },
-    {
       "key": "reconcileBuildSettings@135-162@apps/mobile/plugins/withFidyWidget.js",
       "file": "apps/mobile/plugins/withFidyWidget.js",
       "function": "reconcileBuildSettings",
       "cyclomaticComplexity": 10,
       "nloc": 22,
       "parameterCount": 0
-    },
-    {
-      "key": "refreshSelectedGoalContributions@124-133@apps/mobile/features/goals/store.ts",
-      "file": "apps/mobile/features/goals/store.ts",
-      "function": "refreshSelectedGoalContributions",
-      "cyclomaticComplexity": 2,
-      "nloc": 10,
-      "parameterCount": 4
     },
     {
       "key": "relinkCaptureEvidenceToTransfer@150-180@apps/mobile/features/capture-evidence/lib/repository.ts",
@@ -1790,22 +1446,6 @@
       "parameterCount": 5
     },
     {
-      "key": "sendMessage@321-333@apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
-      "file": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
-      "function": "sendMessage",
-      "cyclomaticComplexity": 7,
-      "nloc": 12,
-      "parameterCount": 0
-    },
-    {
-      "key": "sendMessageEffect@253-302@apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
-      "file": "apps/mobile/features/ai-chat/services/create-streaming-chat-service.ts",
-      "function": "sendMessageEffect",
-      "cyclomaticComplexity": 1,
-      "nloc": 8,
-      "parameterCount": 4
-    },
-    {
       "key": "sessionId@66-72@apps/mobile/__tests__/ai-chat/store.test.ts",
       "file": "apps/mobile/__tests__/ai-chat/store.test.ts",
       "function": "sessionId",
@@ -1820,14 +1460,6 @@
       "cyclomaticComplexity": 11,
       "nloc": 42,
       "parameterCount": 0
-    },
-    {
-      "key": "stripPii@4-28@apps/mobile/features/email-capture/services/parse-email-api.ts",
-      "file": "apps/mobile/features/email-capture/services/parse-email-api.ts",
-      "function": "stripPii",
-      "cyclomaticComplexity": 22,
-      "nloc": 23,
-      "parameterCount": 1
     },
     {
       "key": "toComparableLocalTransactionRow@1210-1219@apps/mobile/features/sync/services/syncEngine.ts",
@@ -1862,27 +1494,11 @@
       "parameterCount": 4
     },
     {
-      "key": "toStoredTransaction@86-108@apps/mobile/features/transactions/lib/build-transaction.ts",
-      "file": "apps/mobile/features/transactions/lib/build-transaction.ts",
-      "function": "toStoredTransaction",
-      "cyclomaticComplexity": 10,
-      "nloc": 22,
-      "parameterCount": 1
-    },
-    {
       "key": "toStoredTransfer@109-130@apps/mobile/features/transfers/lib/build-transfer.ts",
       "file": "apps/mobile/features/transfers/lib/build-transfer.ts",
       "function": "toStoredTransfer",
       "cyclomaticComplexity": 10,
       "nloc": 21,
-      "parameterCount": 1
-    },
-    {
-      "key": "toTransactionRow@108-126@apps/mobile/features/transactions/lib/build-transaction.ts",
-      "file": "apps/mobile/features/transactions/lib/build-transaction.ts",
-      "function": "toTransactionRow",
-      "cyclomaticComplexity": 6,
-      "nloc": 19,
       "parameterCount": 1
     },
     {
@@ -1902,44 +1518,12 @@
       "parameterCount": 1
     },
     {
-      "key": "tryParseEntry@56-74@apps/mobile/features/capture-sources/lib/notification-parser.ts",
-      "file": "apps/mobile/features/capture-sources/lib/notification-parser.ts",
-      "function": "tryParseEntry",
-      "cyclomaticComplexity": 10,
-      "nloc": 14,
-      "parameterCount": 2
-    },
-    {
-      "key": "unmarkBillPaid@263-279@apps/mobile/features/calendar/store.ts",
-      "file": "apps/mobile/features/calendar/store.ts",
-      "function": "unmarkBillPaid",
-      "cyclomaticComplexity": 3,
-      "nloc": 16,
-      "parameterCount": 4
-    },
-    {
       "key": "unresolvedConflictCountEffect@106-132@apps/mobile/features/sync/services/create-sync-service.ts",
       "file": "apps/mobile/features/sync/services/create-sync-service.ts",
       "function": "unresolvedConflictCountEffect",
       "cyclomaticComplexity": 9,
       "nloc": 21,
       "parameterCount": 1
-    },
-    {
-      "key": "updateAccount@274-343@apps/mobile/features/financial-accounts/lib/management-service.ts",
-      "file": "apps/mobile/features/financial-accounts/lib/management-service.ts",
-      "function": "updateAccount",
-      "cyclomaticComplexity": 2,
-      "nloc": 42,
-      "parameterCount": 10
-    },
-    {
-      "key": "updateBill@219-234@apps/mobile/features/calendar/store.ts",
-      "file": "apps/mobile/features/calendar/store.ts",
-      "function": "updateBill",
-      "cyclomaticComplexity": 3,
-      "nloc": 15,
-      "parameterCount": 4
     },
     {
       "key": "updateBill@33-43@apps/mobile/features/calendar/lib/repository.ts",
@@ -1990,14 +1574,6 @@
       "parameterCount": 4
     },
     {
-      "key": "updateProcessedEmailStatusEffect@394-403@apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "function": "updateProcessedEmailStatusEffect",
-      "cyclomaticComplexity": 1,
-      "nloc": 10,
-      "parameterCount": 4
-    },
-    {
       "key": "updateProcessedEmailStatusInTransaction@103-110@apps/mobile/features/email-capture/lib/repository.ts",
       "file": "apps/mobile/features/email-capture/lib/repository.ts",
       "function": "updateProcessedEmailStatusInTransaction",
@@ -2028,14 +1604,6 @@
       "cyclomaticComplexity": 1,
       "nloc": 3,
       "parameterCount": 4
-    },
-    {
-      "key": "worker@525-599@apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "file": "apps/mobile/features/email-capture/services/create-email-pipeline-service.ts",
-      "function": "worker",
-      "cyclomaticComplexity": 11,
-      "nloc": 70,
-      "parameterCount": 0
     }
   ]
 }
