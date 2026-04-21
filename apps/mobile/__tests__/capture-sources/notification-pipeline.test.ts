@@ -35,6 +35,25 @@ const mockBuildNotificationCaptureEvidence = vi.fn().mockReturnValue([
 ]);
 const mockSaveCaptureEvidenceRows = vi.fn();
 const mockFindMatchingFinancialAccountId = vi.fn().mockReturnValue(null);
+const DEFAULT_NOTIFICATION_CAPTURE_EVIDENCE = {
+  sourceFamily: "bancolombia",
+  evidenceType: "last4",
+  scope: "notification:bancolombia:last4",
+  value: "1234",
+};
+
+function materializeCaptureEvidenceRow(link: Record<string, unknown>, row: any, index: number) {
+  return {
+    id: `ce-${index + 1}`,
+    ...row,
+    ...link,
+    deletedAt: null,
+  };
+}
+
+function materializeCaptureEvidenceRows(evidence: any[], link: Record<string, unknown>) {
+  return evidence.map((row, index) => materializeCaptureEvidenceRow(link, row, index));
+}
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
@@ -78,13 +97,7 @@ vi.mock("@/features/account-suggestions", () => ({
 vi.mock("@/features/capture-evidence", () => ({
   buildNotificationCaptureEvidence: (...args: any[]) =>
     mockBuildNotificationCaptureEvidence(...args),
-  materializeCaptureEvidenceRows: (evidence: any[], link: Record<string, unknown>) =>
-    evidence.map((row, index) => ({
-      id: `ce-${index + 1}`,
-      ...row,
-      ...link,
-      deletedAt: null,
-    })),
+  materializeCaptureEvidenceRows,
   saveCaptureEvidenceRows: (...args: any[]) => mockSaveCaptureEvidenceRows(...args),
 }));
 
@@ -108,6 +121,45 @@ function makeNotification(overrides: Partial<NotificationData> = {}): Notificati
   };
 }
 
+function expectSavedNotificationTransaction(transactionId: string) {
+  expect(mockInsertTransaction).toHaveBeenCalledWith(
+    mockDb,
+    expect.objectContaining({
+      userId: USER_ID,
+      type: "expense",
+      amount: 50000,
+      description: "EDS LA CASTELLANA",
+      accountId: "fa-default-user-1",
+      accountAttributionState: "unresolved",
+      source: "notification_android",
+    })
+  );
+  expect(mockEnqueueSync).toHaveBeenCalled();
+  expect(mockInsertProcessedCapture).toHaveBeenCalledWith(
+    mockDb,
+    expect.objectContaining({
+      status: "success",
+      transactionId,
+    })
+  );
+}
+
+function expectSavedNotificationEvidence(transactionId: string) {
+  expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
+    mockDb,
+    expect.arrayContaining([
+      expect.objectContaining({
+        userId: USER_ID,
+        processedCaptureId: expect.any(String),
+        processedEmailId: null,
+        transactionId,
+        scope: "notification:bancolombia:last4",
+        value: "1234",
+      }),
+    ])
+  );
+}
+
 describe("processNotification", () => {
   let idCounter: number;
 
@@ -124,14 +176,7 @@ describe("processNotification", () => {
     mockParseNotificationApi.mockResolvedValue(null);
     mockCaptureFingerprint.mockReturnValue("test-fingerprint");
     mockStripPii.mockImplementation((t: string) => t);
-    mockBuildNotificationCaptureEvidence.mockReturnValue([
-      {
-        sourceFamily: "bancolombia",
-        evidenceType: "last4",
-        scope: "notification:bancolombia:last4",
-        value: "1234",
-      },
-    ]);
+    mockBuildNotificationCaptureEvidence.mockReturnValue([DEFAULT_NOTIFICATION_CAPTURE_EVIDENCE]);
     mockFindMatchingFinancialAccountId.mockReturnValue(null);
     mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
   });
@@ -142,39 +187,8 @@ describe("processNotification", () => {
     expect(result.saved).toBe(true);
     expect(result.skippedDuplicate).toBe(false);
     expect(result.transactionId).toBe("tx-1");
-    expect(mockInsertTransaction).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({
-        userId: USER_ID,
-        type: "expense",
-        amount: 50000,
-        description: "EDS LA CASTELLANA",
-        accountId: "fa-default-user-1",
-        accountAttributionState: "unresolved",
-        source: "notification_android",
-      })
-    );
-    expect(mockEnqueueSync).toHaveBeenCalled();
-    expect(mockInsertProcessedCapture).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({
-        status: "success",
-        transactionId: "tx-1",
-      })
-    );
-    expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
-      mockDb,
-      expect.arrayContaining([
-        expect.objectContaining({
-          userId: USER_ID,
-          processedCaptureId: expect.any(String),
-          processedEmailId: null,
-          transactionId: "tx-1",
-          scope: "notification:bancolombia:last4",
-          value: "1234",
-        }),
-      ])
-    );
+    expectSavedNotificationTransaction("tx-1");
+    expectSavedNotificationEvidence("tx-1");
   });
 
   it("falls through to LLM when local regex fails", async () => {

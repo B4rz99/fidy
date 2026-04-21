@@ -25,6 +25,7 @@ let db: ReturnType<typeof drizzle>;
 
 const USER_ID = "user-1" as UserId;
 const CREATED_AT = "2026-04-01T00:00:00.000Z" as IsoDateTime;
+const OTHER_USER_ID = "user-2" as UserId;
 
 beforeEach(() => {
   sqlite = new Database(":memory:");
@@ -96,44 +97,46 @@ const insertNotificationSourceRow = (
     CREATED_AT
   );
 
+type NotificationSourceSeed = NonNullable<Parameters<typeof insertNotificationSourceRow>[0]>;
+
+const insertNotificationSources = (sources: readonly NotificationSourceSeed[]) =>
+  Promise.all(sources.map(insertNotificationSourceRow));
+
+const mapNotificationSourceSummary = ({
+  packageName,
+  label,
+  isEnabled,
+}: {
+  packageName: string;
+  label: string;
+  isEnabled: boolean;
+}) => ({ packageName, label, isEnabled });
+
+function expectNotificationSourceSummaries(
+  sources: Awaited<ReturnType<typeof getNotificationSources>>,
+  expected: readonly ReturnType<typeof mapNotificationSourceSummary>[]
+) {
+  expect(sources).toHaveLength(expected.length);
+  expect(sources.map(mapNotificationSourceSummary)).toEqual(expect.arrayContaining([...expected]));
+}
+
 describe("capture-sources repository SMS events", () => {
   it("returns all notification sources for the requested user only", async () => {
-    await insertNotificationSourceRow({
-      packageName: "com.bank.app",
-      label: "Bank App",
-      isEnabled: true,
-    });
-    await insertNotificationSourceRow({
-      packageName: "com.wallet.app",
-      label: "Wallet App",
-      isEnabled: false,
-    });
-    await insertNotificationSourceRow({
-      userId: "user-2" as UserId,
-      packageName: "com.other.bank",
-      label: "Other User App",
-      isEnabled: true,
-    });
+    await insertNotificationSources([
+      { packageName: "com.bank.app", label: "Bank App", isEnabled: true },
+      { packageName: "com.wallet.app", label: "Wallet App", isEnabled: false },
+      {
+        userId: OTHER_USER_ID,
+        packageName: "com.other.bank",
+        label: "Other User App",
+        isEnabled: true,
+      },
+    ]);
 
-    const sources = await getNotificationSources(db as any, USER_ID);
-
-    expect(sources).toHaveLength(2);
-    expect(
-      sources.map(({ packageName, label, isEnabled }) => ({ packageName, label, isEnabled }))
-    ).toEqual(
-      expect.arrayContaining([
-        {
-          packageName: "com.bank.app",
-          label: "Bank App",
-          isEnabled: true,
-        },
-        {
-          packageName: "com.wallet.app",
-          label: "Wallet App",
-          isEnabled: false,
-        },
-      ])
-    );
+    expectNotificationSourceSummaries(await getNotificationSources(db as any, USER_ID), [
+      { packageName: "com.bank.app", label: "Bank App", isEnabled: true },
+      { packageName: "com.wallet.app", label: "Wallet App", isEnabled: false },
+    ]);
   });
 
   it("returns only undismissed events for the current user in newest-first order", async () => {
@@ -155,7 +158,7 @@ describe("capture-sources repository SMS events", () => {
     });
     await insertSmsEventRow({
       id: "sms-4" as DetectedSmsEventId,
-      userId: "user-2" as UserId,
+      userId: OTHER_USER_ID,
       senderLabel: "Other user event",
       detectedAt: "2026-04-10T13:00:00.000Z" as IsoDateTime,
     });

@@ -34,6 +34,25 @@ const mockBuildApplePayCaptureEvidence = vi.fn().mockReturnValue([
 ]);
 const mockSaveCaptureEvidenceRows = vi.fn();
 const mockFindMatchingFinancialAccountId = vi.fn().mockReturnValue(null);
+const DEFAULT_APPLE_PAY_CAPTURE_EVIDENCE = {
+  sourceFamily: "apple_pay",
+  evidenceType: "card_hint",
+  scope: "apple_pay:card_hint",
+  value: "visa *1234",
+};
+
+function materializeCaptureEvidenceRow(link: Record<string, unknown>, row: any, index: number) {
+  return {
+    id: `ce-${index + 1}`,
+    ...row,
+    ...link,
+    deletedAt: null,
+  };
+}
+
+function materializeCaptureEvidenceRows(evidence: any[], link: Record<string, unknown>) {
+  return evidence.map((row, index) => materializeCaptureEvidenceRow(link, row, index));
+}
 
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
@@ -72,13 +91,7 @@ vi.mock("@/features/account-suggestions", () => ({
 
 vi.mock("@/features/capture-evidence", () => ({
   buildApplePayCaptureEvidence: (...args: any[]) => mockBuildApplePayCaptureEvidence(...args),
-  materializeCaptureEvidenceRows: (evidence: any[], link: Record<string, unknown>) =>
-    evidence.map((row, index) => ({
-      id: `ce-${index + 1}`,
-      ...row,
-      ...link,
-      deletedAt: null,
-    })),
+  materializeCaptureEvidenceRows,
   saveCaptureEvidenceRows: (...args: any[]) => mockSaveCaptureEvidenceRows(...args),
 }));
 
@@ -101,6 +114,39 @@ function makeIntent(overrides: Partial<ApplePayIntentData> = {}): ApplePayIntent
   };
 }
 
+function expectSavedApplePayTransaction(transactionId: string) {
+  expect(mockInsertTransaction).toHaveBeenCalledWith(
+    mockDb,
+    expect.objectContaining({
+      userId: USER_ID,
+      type: "expense",
+      amount: 50000,
+      description: "Farmatodo",
+      accountId: "fa-default-user-1",
+      accountAttributionState: "unresolved",
+      source: "apple_pay",
+    })
+  );
+  expect(mockEnqueueSync).toHaveBeenCalled();
+  expect(transactionId).toBe("tx-1");
+}
+
+function expectSavedApplePayEvidence(transactionId: string) {
+  expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
+    mockDb,
+    expect.arrayContaining([
+      expect.objectContaining({
+        userId: USER_ID,
+        processedCaptureId: expect.any(String),
+        processedEmailId: null,
+        transactionId,
+        scope: "apple_pay:card_hint",
+        value: "visa *1234",
+      }),
+    ])
+  );
+}
+
 describe("processApplePayIntent", () => {
   let idCounter: number;
 
@@ -115,14 +161,7 @@ describe("processApplePayIntent", () => {
     mockFindDuplicateTransaction.mockResolvedValue(null);
     mockLookupMerchantRule.mockResolvedValue(null);
     mockClassifyMerchantApi.mockResolvedValue("other");
-    mockBuildApplePayCaptureEvidence.mockReturnValue([
-      {
-        sourceFamily: "apple_pay",
-        evidenceType: "card_hint",
-        scope: "apple_pay:card_hint",
-        value: "visa *1234",
-      },
-    ]);
+    mockBuildApplePayCaptureEvidence.mockReturnValue([DEFAULT_APPLE_PAY_CAPTURE_EVIDENCE]);
     mockFindMatchingFinancialAccountId.mockReturnValue(null);
     mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
   });
@@ -131,33 +170,8 @@ describe("processApplePayIntent", () => {
     const result = await processApplePayIntent(mockDb, USER_ID, makeIntent());
 
     expect(result.saved).toBe(true);
-    expect(result.transactionId).toBe("tx-1");
-    expect(mockInsertTransaction).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({
-        userId: USER_ID,
-        type: "expense",
-        amount: 50000,
-        description: "Farmatodo",
-        accountId: "fa-default-user-1",
-        accountAttributionState: "unresolved",
-        source: "apple_pay",
-      })
-    );
-    expect(mockEnqueueSync).toHaveBeenCalled();
-    expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
-      mockDb,
-      expect.arrayContaining([
-        expect.objectContaining({
-          userId: USER_ID,
-          processedCaptureId: expect.any(String),
-          processedEmailId: null,
-          transactionId: "tx-1",
-          scope: "apple_pay:card_hint",
-          value: "visa *1234",
-        }),
-      ])
-    );
+    expectSavedApplePayTransaction(result.transactionId ?? "");
+    expectSavedApplePayEvidence("tx-1");
   });
 
   it("converts amount to pesos correctly", async () => {
