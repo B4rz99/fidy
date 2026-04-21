@@ -134,14 +134,6 @@
       "parameterCount": 0
     },
     {
-      "key": "base64UrlEncode@10-247@apps/mobile/features/email-capture/services/email-adapter.ts",
-      "file": "apps/mobile/features/email-capture/services/email-adapter.ts",
-      "function": "base64UrlEncode",
-      "cyclomaticComplexity": 1,
-      "nloc": 238,
-      "parameterCount": 1
-    },
-    {
       "key": "conflictRow@59-94@apps/mobile/__tests__/sync/sync-conflict-resolution.test.ts",
       "file": "apps/mobile/__tests__/sync/sync-conflict-resolution.test.ts",
       "function": "conflictRow",
@@ -150,43 +142,11 @@
       "parameterCount": 1
     },
     {
-      "key": "deriveEffectiveOnboardingComplete@55-62@apps/mobile/features/auth/lib/effective-auth.ts",
-      "file": "apps/mobile/features/auth/lib/effective-auth.ts",
-      "function": "deriveEffectiveOnboardingComplete",
-      "cyclomaticComplexity": 3,
-      "nloc": 8,
-      "parameterCount": 4
-    },
-    {
-      "key": "deriveGoalPaceGuidance@89-93@apps/mobile/features/goals/services/create-goal-query-service.ts",
-      "file": "apps/mobile/features/goals/services/create-goal-query-service.ts",
-      "function": "deriveGoalPaceGuidance",
-      "cyclomaticComplexity": 1,
-      "nloc": 4,
-      "parameterCount": 4
-    },
-    {
-      "key": "derivePeriodDelta@59-70@apps/mobile/features/analytics/services/create-analytics-service.ts",
-      "file": "apps/mobile/features/analytics/services/create-analytics-service.ts",
-      "function": "derivePeriodDelta",
-      "cyclomaticComplexity": 1,
-      "nloc": 12,
-      "parameterCount": 4
-    },
-    {
       "key": "evidence.map@67-76@apps/mobile/__tests__/error-handling/pipeline-save-error.test.ts",
       "file": "apps/mobile/__tests__/error-handling/pipeline-save-error.test.ts",
       "function": "evidence.map",
       "cyclomaticComplexity": 1,
       "nloc": 9,
-      "parameterCount": 4
-    },
-    {
-      "key": "extractAliasEvidence@55-80@apps/mobile/features/capture-evidence/lib/build-capture-evidence.ts",
-      "file": "apps/mobile/features/capture-evidence/lib/build-capture-evidence.ts",
-      "function": "extractAliasEvidence",
-      "cyclomaticComplexity": 1,
-      "nloc": 14,
       "parameterCount": 4
     },
     {
@@ -214,22 +174,6 @@
       "parameterCount": 4
     },
     {
-      "key": "resolveConflict@21-28@apps/mobile/features/sync/lib/conflict-repository.ts",
-      "file": "apps/mobile/features/sync/lib/conflict-repository.ts",
-      "function": "resolveConflict",
-      "cyclomaticComplexity": 1,
-      "nloc": 8,
-      "parameterCount": 4
-    },
-    {
-      "key": "sanitize@10-47@apps/mobile/features/email-capture/services/outlook-adapter.ts",
-      "file": "apps/mobile/features/email-capture/services/outlook-adapter.ts",
-      "function": "sanitize",
-      "cyclomaticComplexity": 1,
-      "nloc": 38,
-      "parameterCount": 0
-    },
-    {
       "key": "saveEvidence@39-68@apps/mobile/__tests__/review-queues/attribution-review-service.test.ts",
       "file": "apps/mobile/__tests__/review-queues/attribution-review-service.test.ts",
       "function": "saveEvidence",
@@ -244,30 +188,6 @@
       "cyclomaticComplexity": 7,
       "nloc": 7,
       "parameterCount": 0
-    },
-    {
-      "key": "updateBudgetAmount@37-39@apps/mobile/features/budget/lib/repository.ts",
-      "file": "apps/mobile/features/budget/lib/repository.ts",
-      "function": "updateBudgetAmount",
-      "cyclomaticComplexity": 1,
-      "nloc": 3,
-      "parameterCount": 4
-    },
-    {
-      "key": "updateGoal@27-44@apps/mobile/features/goals/lib/repository.ts",
-      "file": "apps/mobile/features/goals/lib/repository.ts",
-      "function": "updateGoal",
-      "cyclomaticComplexity": 1,
-      "nloc": 18,
-      "parameterCount": 4
-    },
-    {
-      "key": "useAccountSuggestions@16-60@apps/mobile/features/account-suggestions/hooks/use-account-suggestions.ts",
-      "file": "apps/mobile/features/account-suggestions/hooks/use-account-suggestions.ts",
-      "function": "useAccountSuggestions",
-      "cyclomaticComplexity": 1,
-      "nloc": 17,
-      "parameterCount": 5
     },
     {
       "key": "useSafeAreaInsets@37-39@apps/mobile/__tests__/setup.ts",

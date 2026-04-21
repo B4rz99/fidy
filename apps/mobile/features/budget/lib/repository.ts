@@ -4,6 +4,12 @@ import { budgets } from "@/shared/db";
 import type { BudgetId, CopAmount, IsoDateTime, Month, UserId } from "@/shared/types/branded";
 
 export type BudgetRow = typeof budgets.$inferInsert;
+type UpdateBudgetAmountInput = {
+  readonly db: AnyDb;
+  readonly id: BudgetId;
+  readonly amount: CopAmount;
+  readonly now: IsoDateTime;
+};
 
 export function insertBudget(db: AnyDb, row: BudgetRow) {
   db.insert(budgets)
@@ -34,8 +40,12 @@ export function getBudgetById(db: AnyDb, id: BudgetId) {
   return rows[0] ?? null;
 }
 
-export function updateBudgetAmount(db: AnyDb, id: BudgetId, amount: CopAmount, now: IsoDateTime) {
-  db.update(budgets).set({ amount, updatedAt: now }).where(eq(budgets.id, id)).run();
+export function updateBudgetAmount(input: UpdateBudgetAmountInput) {
+  input.db
+    .update(budgets)
+    .set({ amount: input.amount, updatedAt: input.now })
+    .where(eq(budgets.id, input.id))
+    .run();
 }
 
 export function softDeleteBudget(db: AnyDb, id: BudgetId, now: IsoDateTime) {

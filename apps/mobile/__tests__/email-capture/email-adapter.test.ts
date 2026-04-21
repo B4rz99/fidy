@@ -177,6 +177,27 @@ describe("createAdapter", () => {
       expect(result).toEqual({ success: false, error: "no_email_found" });
     });
 
+    it("returns no_email_found when extractEmail returns an empty string", async () => {
+      mockOpenAuthSession.mockResolvedValueOnce({
+        type: "success",
+        url: "fidy://test/callback?code=auth-code",
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ access_token: "at" }),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ email: "" }),
+      });
+
+      const adapter = createAdapter(testConfig, stubFetch);
+      const result = await adapter.connect("client-id");
+      expect(result).toEqual({ success: false, error: "no_email_found" });
+    });
+
     it("stores tokens in SecureStore with correct keys", async () => {
       mockOpenAuthSession.mockResolvedValueOnce({
         type: "success",

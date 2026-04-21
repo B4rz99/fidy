@@ -41,7 +41,12 @@ const syncService = createSyncService({
     });
   },
   resolveConflictRow: async (db, conflictId, resolution, resolvedAt) => {
-    resolveConflictDb(db, conflictId, resolution, resolvedAt);
+    resolveConflictDb({
+      db,
+      id: conflictId,
+      resolution,
+      resolvedAt,
+    });
   },
   network: liveAppNetwork,
   supabase: liveAppSupabase,
