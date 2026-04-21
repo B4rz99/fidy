@@ -17,7 +17,7 @@ function buildSenderFilter(senderEmails: string[]) {
 }
 
 export function buildOutlookFilter(senderEmails: string[], since: string) {
-  return `(${buildSenderFilter(senderEmails)}) and receivedDateTime ge '${since}'`;
+  return `(${buildSenderFilter(senderEmails)}) and receivedDateTime ge ${since}`;
 }
 
 export function toRawOutlookEmail(message: OutlookMessage): RawEmail {

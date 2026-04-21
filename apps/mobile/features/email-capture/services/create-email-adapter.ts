@@ -140,7 +140,7 @@ async function fetchProfileEmail(input: {
 
   const profile = (await profileResponse.json()) as Record<string, unknown>;
   const email = input.config.extractEmail(profile);
-  return email == null ? { success: false, error: "no_email_found" } : { success: true, email };
+  return !email ? { success: false, error: "no_email_found" } : { success: true, email };
 }
 
 async function connectAdapter(input: {

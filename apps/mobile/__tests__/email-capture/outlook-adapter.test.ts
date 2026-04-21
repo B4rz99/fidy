@@ -39,6 +39,12 @@ describe("outlook adapter", () => {
         subject: "Transaction Alert",
         provider: "outlook",
       });
+
+      const calledUrl = mockFetch.mock.calls[0]?.[0] as string;
+      expect(decodeURIComponent(calledUrl)).toContain("receivedDateTime ge 2026-03-01T00:00:00Z");
+      expect(decodeURIComponent(calledUrl)).not.toContain(
+        "receivedDateTime ge '2026-03-01T00:00:00Z'"
+      );
     });
 
     it("returns empty array when no messages found", async () => {
