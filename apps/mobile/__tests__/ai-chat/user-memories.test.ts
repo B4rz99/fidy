@@ -42,6 +42,34 @@ const userMemoryRemoteService = createUserMemoryRemoteService({
   },
 });
 
+const memoryConversation = [
+  { role: "user" as const, content: "I shop every Sunday" },
+  { role: "assistant" as const, content: "I'll remember that" },
+];
+
+function makeExtractMemoryRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "memory-1",
+    user_id: "user-1",
+    fact: "Shops weekly on Sundays",
+    category: "habit",
+    created_at: "2026-03-05T10:00:00Z",
+    updated_at: "2026-03-05T10:00:00Z",
+    ...overrides,
+  };
+}
+
+const extractedMemoryExpectation = [
+  {
+    id: "memory-1",
+    userId: "user-1",
+    fact: "Shops weekly on Sundays",
+    category: "habit",
+    createdAt: "2026-03-05T10:00:00Z",
+    updatedAt: "2026-03-05T10:00:00Z",
+  },
+];
+
 describe("user memories remote adapters", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -112,60 +140,28 @@ describe("user memories remote adapters", () => {
     mockInvoke.mockResolvedValue({
       data: {
         success: true,
-        data: [
-          {
-            id: "memory-1",
-            user_id: "user-1",
-            fact: "Shops weekly on Sundays",
-            category: "habit",
-            created_at: "2026-03-05T10:00:00Z",
-            updated_at: "2026-03-05T10:00:00Z",
-          },
-        ],
+        data: [makeExtractMemoryRow()],
       },
       error: null,
     });
 
-    const result = await userMemoryRemoteService.extractMemoriesFromConversation([
-      { role: "user", content: "I shop every Sunday" },
-      { role: "assistant", content: "I'll remember that" },
-    ]);
+    const result =
+      await userMemoryRemoteService.extractMemoriesFromConversation(memoryConversation);
 
-    expect(result).toEqual([
-      {
-        id: "memory-1",
-        userId: "user-1",
-        fact: "Shops weekly on Sundays",
-        category: "habit",
-        createdAt: "2026-03-05T10:00:00Z",
-        updatedAt: "2026-03-05T10:00:00Z",
-      },
-    ]);
+    expect(result).toEqual(extractedMemoryExpectation);
   });
 
   test("rejects invalid extract-memories payloads", async () => {
     mockInvoke.mockResolvedValue({
       data: {
         success: true,
-        data: [
-          {
-            id: "memory-1",
-            user_id: "user-1",
-            fact: "Shops weekly on Sundays",
-            category: "not-a-real-category",
-            created_at: "2026-03-05T10:00:00Z",
-            updated_at: "2026-03-05T10:00:00Z",
-          },
-        ],
+        data: [makeExtractMemoryRow({ category: "not-a-real-category" })],
       },
       error: null,
     });
 
     await expect(
-      userMemoryRemoteService.extractMemoriesFromConversation([
-        { role: "user", content: "I shop every Sunday" },
-        { role: "assistant", content: "I'll remember that" },
-      ])
+      userMemoryRemoteService.extractMemoriesFromConversation(memoryConversation)
     ).rejects.toThrow("extract_memories_failed");
   });
 

@@ -21,6 +21,28 @@ const input = {
   date: new Date("2026-04-12T00:00:00.000Z"),
 };
 
+function makeCapturedStoredTransaction(
+  overrides: Partial<StoredTransaction> = {}
+): StoredTransaction {
+  return {
+    id: "txn-9" as TransactionId,
+    userId: "user-1" as UserId,
+    type: "expense",
+    amount: 9800 as CopAmount,
+    categoryId: "food" as CategoryId,
+    description: "Original capture",
+    date: new Date("2026-04-10T00:00:00.000Z"),
+    createdAt: new Date("2026-04-10T10:00:00.000Z"),
+    updatedAt: new Date("2026-04-10T10:00:00.000Z"),
+    deletedAt: null,
+    accountId: "fa-card-1" as FinancialAccountId,
+    accountAttributionState: "unresolved",
+    supersededAt: new Date("2026-04-11T10:00:00.000Z"),
+    source: "email_gmail",
+    ...overrides,
+  };
+}
+
 describe("transaction mutation service", () => {
   type ServiceDeps = Parameters<typeof createTransactionMutationService>[0];
 
@@ -190,22 +212,7 @@ describe("transaction mutation service", () => {
 
   it("preserves ownership metadata when updating a captured transaction", async () => {
     currentCommit = vi.fn().mockResolvedValue({ success: true, didMutate: true });
-    getTransactionByIdMock.mockReturnValue({
-      id: "txn-9" as TransactionId,
-      userId: "user-1" as UserId,
-      type: "expense",
-      amount: 9800 as CopAmount,
-      categoryId: "food" as CategoryId,
-      description: "Original capture",
-      date: new Date("2026-04-10T00:00:00.000Z"),
-      createdAt: new Date("2026-04-10T10:00:00.000Z"),
-      updatedAt: new Date("2026-04-10T10:00:00.000Z"),
-      deletedAt: null,
-      accountId: "fa-card-1" as FinancialAccountId,
-      accountAttributionState: "unresolved",
-      supersededAt: new Date("2026-04-11T10:00:00.000Z"),
-      source: "email_gmail",
-    } satisfies StoredTransaction);
+    getTransactionByIdMock.mockReturnValue(makeCapturedStoredTransaction());
     const service = createService();
 
     await service.updateDirect("txn-9" as TransactionId, {

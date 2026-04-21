@@ -47,40 +47,125 @@ afterEach(() => {
   sqlite.close();
 });
 
+type EmailTransactionOverrides = Partial<{
+  id: TransactionId;
+  amount: CopAmount;
+  description: string;
+  date: IsoDate;
+  updatedAt: IsoDateTime;
+  supersededAt: IsoDateTime | null;
+}>;
+
+type NeedsReviewEmailOverrides = Partial<{
+  id: ProcessedEmailId;
+  externalId: string;
+  subject: string;
+  rawBodyPreview: string;
+  transactionId: TransactionId | null;
+  confidence: number;
+}>;
+
+const defaultEmailTransaction = {
+  id: "tx-1" as TransactionId,
+  userId: USER_ID,
+  type: "expense" as const,
+  amount: 450000 as CopAmount,
+  categoryId: "shopping" as CategoryId,
+  description: "Pago tarjeta de crédito",
+  date: "2026-04-18" as IsoDate,
+  accountId: "fa-default-user-1" as FinancialAccountId,
+  accountAttributionState: "unresolved",
+  source: "email_gmail" as const,
+  createdAt: NOW,
+  updatedAt: NOW,
+  deletedAt: null,
+};
+
+const defaultNeedsReviewEmail = {
+  id: "pe-1" as ProcessedEmailId,
+  externalId: "ext-1",
+  provider: "gmail" as const,
+  status: "needs_review" as const,
+  failureReason: null,
+  subject: "Bancolombia alert",
+  rawBodyPreview: "Pago tarjeta",
+  receivedAt: NOW,
+  transactionId: "tx-1" as TransactionId,
+  confidence: 0.52,
+  createdAt: NOW,
+  rawBody: null,
+  retryCount: 0,
+  nextRetryAt: null,
+};
+
+const reviewCandidateTransactions = [
+  {
+    id: "tx-active" as TransactionId,
+    amount: 120000 as CopAmount,
+    description: "Active charge",
+  },
+  {
+    id: "tx-inactive" as TransactionId,
+    amount: 80000 as CopAmount,
+    description: "Superseded charge",
+    supersededAt: "2026-04-19T09:00:00.000Z" as IsoDateTime,
+  },
+];
+
+const reviewCandidateEmails = [
+  {
+    id: "pe-active" as ProcessedEmailId,
+    externalId: "ext-active",
+    subject: "Active review",
+    rawBodyPreview: "Still relevant",
+    transactionId: "tx-active" as TransactionId,
+    confidence: 0.42,
+  },
+  {
+    id: "pe-missing" as ProcessedEmailId,
+    externalId: "ext-missing",
+    subject: "Missing tx",
+    rawBodyPreview: "No transaction",
+    transactionId: "tx-missing" as TransactionId,
+    confidence: 0.42,
+  },
+  {
+    id: "pe-unlinked" as ProcessedEmailId,
+    externalId: "ext-unlinked",
+    subject: "No link",
+    rawBodyPreview: "No linked tx",
+    transactionId: null,
+    confidence: 0.42,
+  },
+  {
+    id: "pe-inactive" as ProcessedEmailId,
+    externalId: "ext-inactive",
+    subject: "Inactive tx",
+    rawBodyPreview: "Superseded",
+    transactionId: "tx-inactive" as TransactionId,
+    confidence: 0.42,
+  },
+];
+
+function insertEmailTransactionRow(overrides: EmailTransactionOverrides = {}) {
+  insertTransaction(db as any, {
+    ...defaultEmailTransaction,
+    ...overrides,
+    ...(overrides.supersededAt == null ? {} : { supersededAt: overrides.supersededAt }),
+  });
+}
+
+async function insertNeedsReviewEmail(overrides: NeedsReviewEmailOverrides = {}) {
+  await insertProcessedEmail(db as any, {
+    ...defaultNeedsReviewEmail,
+    ...overrides,
+  });
+}
+
 describe("financial meaning review", () => {
   it("marks a reviewed low-confidence email as success without deleting the linked transaction", async () => {
-    insertTransaction(db as any, {
-      id: "tx-1" as TransactionId,
-      userId: USER_ID,
-      type: "expense",
-      amount: 450000 as CopAmount,
-      categoryId: "shopping" as CategoryId,
-      description: "Pago tarjeta de crédito",
-      date: "2026-04-18" as IsoDate,
-      accountId: "fa-default-user-1" as FinancialAccountId,
-      accountAttributionState: "unresolved",
-      source: "email_gmail",
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    await insertProcessedEmail(db as any, {
-      id: "pe-1" as ProcessedEmailId,
-      externalId: "ext-1",
-      provider: "gmail",
-      status: "needs_review",
-      failureReason: null,
-      subject: "Bancolombia alert",
-      rawBodyPreview: "Pago tarjeta",
-      receivedAt: NOW,
-      transactionId: "tx-1" as TransactionId,
-      confidence: 0.52,
-      createdAt: NOW,
-      rawBody: null,
-      retryCount: 0,
-      nextRetryAt: null,
-    });
+    insertEmailTransactionRow();
+    await insertNeedsReviewEmail();
 
     await resolveFinancialMeaningReview(db as any, "pe-1" as ProcessedEmailId);
 
@@ -95,106 +180,8 @@ describe("financial meaning review", () => {
   });
 
   it("lists only active low-confidence emails that still point at active transactions", async () => {
-    insertTransaction(db as any, {
-      id: "tx-active" as TransactionId,
-      userId: USER_ID,
-      type: "expense",
-      amount: 120000 as CopAmount,
-      categoryId: "shopping" as CategoryId,
-      description: "Active charge",
-      date: "2026-04-18" as IsoDate,
-      accountId: "fa-default-user-1" as FinancialAccountId,
-      accountAttributionState: "unresolved",
-      source: "email_gmail",
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-    });
-
-    insertTransaction(db as any, {
-      id: "tx-inactive" as TransactionId,
-      userId: USER_ID,
-      type: "expense",
-      amount: 80000 as CopAmount,
-      categoryId: "shopping" as CategoryId,
-      description: "Superseded charge",
-      date: "2026-04-18" as IsoDate,
-      accountId: "fa-default-user-1" as FinancialAccountId,
-      accountAttributionState: "unresolved",
-      source: "email_gmail",
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
-      supersededAt: "2026-04-19T09:00:00.000Z" as IsoDateTime,
-    });
-
-    await insertProcessedEmail(db as any, {
-      id: "pe-active" as ProcessedEmailId,
-      externalId: "ext-active",
-      provider: "gmail",
-      status: "needs_review",
-      failureReason: null,
-      subject: "Active review",
-      rawBodyPreview: "Still relevant",
-      receivedAt: NOW,
-      transactionId: "tx-active" as TransactionId,
-      confidence: 0.42,
-      createdAt: NOW,
-      rawBody: null,
-      retryCount: 0,
-      nextRetryAt: null,
-    });
-
-    await insertProcessedEmail(db as any, {
-      id: "pe-missing" as ProcessedEmailId,
-      externalId: "ext-missing",
-      provider: "gmail",
-      status: "needs_review",
-      failureReason: null,
-      subject: "Missing tx",
-      rawBodyPreview: "No transaction",
-      receivedAt: NOW,
-      transactionId: "tx-missing" as TransactionId,
-      confidence: 0.42,
-      createdAt: NOW,
-      rawBody: null,
-      retryCount: 0,
-      nextRetryAt: null,
-    });
-
-    await insertProcessedEmail(db as any, {
-      id: "pe-unlinked" as ProcessedEmailId,
-      externalId: "ext-unlinked",
-      provider: "gmail",
-      status: "needs_review",
-      failureReason: null,
-      subject: "No link",
-      rawBodyPreview: "No linked tx",
-      receivedAt: NOW,
-      transactionId: null,
-      confidence: 0.42,
-      createdAt: NOW,
-      rawBody: null,
-      retryCount: 0,
-      nextRetryAt: null,
-    });
-
-    await insertProcessedEmail(db as any, {
-      id: "pe-inactive" as ProcessedEmailId,
-      externalId: "ext-inactive",
-      provider: "gmail",
-      status: "needs_review",
-      failureReason: null,
-      subject: "Inactive tx",
-      rawBodyPreview: "Superseded",
-      receivedAt: NOW,
-      transactionId: "tx-inactive" as TransactionId,
-      confidence: 0.42,
-      createdAt: NOW,
-      rawBody: null,
-      retryCount: 0,
-      nextRetryAt: null,
-    });
+    reviewCandidateTransactions.forEach(insertEmailTransactionRow);
+    await Promise.all(reviewCandidateEmails.map(insertNeedsReviewEmail));
 
     await expect(getFinancialMeaningReviewItems(db as any)).resolves.toEqual([
       expect.objectContaining({
@@ -211,21 +198,13 @@ describe("financial meaning review", () => {
   });
 
   it("resolves orphaned review items by clearing needs-review status even without a transaction", async () => {
-    await insertProcessedEmail(db as any, {
+    await insertNeedsReviewEmail({
       id: "pe-orphan" as ProcessedEmailId,
       externalId: "ext-orphan",
-      provider: "gmail",
-      status: "needs_review",
-      failureReason: null,
       subject: "Orphan review",
       rawBodyPreview: "No transaction attached",
-      receivedAt: NOW,
       transactionId: null,
       confidence: 0.31,
-      createdAt: NOW,
-      rawBody: null,
-      retryCount: 0,
-      nextRetryAt: null,
     });
 
     await resolveFinancialMeaningReview(db as any, "pe-orphan" as ProcessedEmailId);
@@ -240,37 +219,18 @@ describe("financial meaning review", () => {
   });
 
   it("dismisses a low-confidence email by skipping the capture and superseding the provisional transaction", async () => {
-    insertTransaction(db as any, {
+    insertEmailTransactionRow({
       id: "tx-2" as TransactionId,
-      userId: USER_ID,
-      type: "expense",
       amount: 98000 as CopAmount,
-      categoryId: "shopping" as CategoryId,
       description: "Cobro no rastreable",
-      date: "2026-04-18" as IsoDate,
-      accountId: "fa-default-user-1" as FinancialAccountId,
-      accountAttributionState: "unresolved",
-      source: "email_gmail",
-      createdAt: NOW,
-      updatedAt: NOW,
-      deletedAt: null,
     });
-
-    await insertProcessedEmail(db as any, {
+    await insertNeedsReviewEmail({
       id: "pe-2" as ProcessedEmailId,
       externalId: "ext-2",
-      provider: "gmail",
-      status: "needs_review",
-      failureReason: null,
       subject: "Unknown sender",
       rawBodyPreview: "No es gasto",
-      receivedAt: NOW,
       transactionId: "tx-2" as TransactionId,
       confidence: 0.41,
-      createdAt: NOW,
-      rawBody: null,
-      retryCount: 0,
-      nextRetryAt: null,
     });
 
     await dismissFinancialMeaningReview(db as any, "pe-2" as ProcessedEmailId, {
@@ -311,21 +271,13 @@ describe("financial meaning review", () => {
   });
 
   it("dismisses orphaned review items without trying to supersede a missing transaction", async () => {
-    await insertProcessedEmail(db as any, {
+    await insertNeedsReviewEmail({
       id: "pe-missing-tx" as ProcessedEmailId,
       externalId: "ext-missing-tx",
-      provider: "gmail",
-      status: "needs_review",
-      failureReason: null,
       subject: "Missing linked transaction",
       rawBodyPreview: "No longer exists",
-      receivedAt: NOW,
       transactionId: "tx-missing" as TransactionId,
       confidence: 0.29,
-      createdAt: NOW,
-      rawBody: null,
-      retryCount: 0,
-      nextRetryAt: null,
     });
 
     await dismissFinancialMeaningReview(db as any, "pe-missing-tx" as ProcessedEmailId);

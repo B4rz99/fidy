@@ -11,34 +11,56 @@ import type {
 } from "@/shared/types/branded";
 
 const mockUserId = "user-1" as UserId;
+const testNow = () => new Date("2026-04-12T18:00:00.000Z");
 
-function makeRow(
-  overrides: Partial<{
-    id: TransactionId;
-    userId: UserId;
-    amount: CopAmount;
-    categoryId: CategoryId;
-    description: string | null;
-    date: IsoDate;
-    createdAt: IsoDateTime;
-    updatedAt: IsoDateTime;
-    deletedAt: IsoDateTime | null;
-  }> = {}
-) {
-  return {
+type StoredRowOverrides = Partial<{
+  id: TransactionId;
+  userId: UserId;
+  amount: CopAmount;
+  categoryId: CategoryId;
+  description: string | null;
+  date: IsoDate;
+  createdAt: IsoDateTime;
+  updatedAt: IsoDateTime;
+  deletedAt: IsoDateTime | null;
+}>;
+
+const defaultStoredRow = {
+  id: "tx-1" as TransactionId,
+  userId: mockUserId,
+  type: "expense" as const,
+  amount: 1200 as CopAmount,
+  categoryId: "food" as CategoryId,
+  description: "Lunch",
+  date: "2026-04-12" as IsoDate,
+  createdAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
+  updatedAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
+  deletedAt: null,
+  accountId: "fa-default-user-1" as FinancialAccountId,
+  accountAttributionState: "confirmed" as const,
+  source: "manual" as const,
+};
+
+const currentPages = [
+  {
     id: "tx-1" as TransactionId,
     userId: mockUserId,
-    type: "expense",
+    type: "expense" as const,
     amount: 1200 as CopAmount,
     categoryId: "food" as CategoryId,
     description: "Lunch",
-    date: "2026-04-12" as IsoDate,
-    createdAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
-    updatedAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
+    date: new Date("2026-04-12T00:00:00.000Z"),
+    createdAt: new Date("2026-04-12T10:00:00.000Z"),
+    updatedAt: new Date("2026-04-12T10:00:00.000Z"),
     deletedAt: null,
     accountId: "fa-default-user-1" as FinancialAccountId,
-    accountAttributionState: "confirmed",
-    source: "manual",
+    accountAttributionState: "confirmed" as const,
+  },
+];
+
+function makeRow(overrides: StoredRowOverrides = {}) {
+  return {
+    ...defaultStoredRow,
     ...overrides,
   };
 }
@@ -46,17 +68,15 @@ function makeRow(
 describe("transaction query service", () => {
   it("loads an initial snapshot with page and aggregate data", () => {
     const getTransactionsPaginated = vi.fn().mockReturnValue([makeRow()]);
-    const getSpendingByCategoryAggregate = vi
-      .fn()
-      .mockReturnValue([{ categoryId: "food" as CategoryId, total: 1200 as CopAmount }]);
-    const getDailySpendingAggregate = vi
-      .fn()
-      .mockReturnValue([{ date: "2026-04-12" as IsoDate, total: 1200 as CopAmount }]);
     const service = createTransactionQueryService({
       getTransactionsPaginated,
-      getSpendingByCategoryAggregate,
-      getDailySpendingAggregate,
-      getNow: () => new Date("2026-04-12T18:00:00.000Z"),
+      getSpendingByCategoryAggregate: vi
+        .fn()
+        .mockReturnValue([{ categoryId: "food" as CategoryId, total: 1200 as CopAmount }]),
+      getDailySpendingAggregate: vi
+        .fn()
+        .mockReturnValue([{ date: "2026-04-12" as IsoDate, total: 1200 as CopAmount }]),
+      getNow: testNow,
     });
 
     const snapshot = service.loadInitialSnapshot({
@@ -90,25 +110,8 @@ describe("transaction query service", () => {
       getTransactionsPaginated,
       getSpendingByCategoryAggregate: vi.fn().mockReturnValue([]),
       getDailySpendingAggregate: vi.fn().mockReturnValue([]),
-      getNow: () => new Date("2026-04-12T18:00:00.000Z"),
+      getNow: testNow,
     });
-
-    const currentPages = [
-      {
-        id: "tx-1" as TransactionId,
-        userId: mockUserId,
-        type: "expense" as const,
-        amount: 1200 as CopAmount,
-        categoryId: "food" as CategoryId,
-        description: "Lunch",
-        date: new Date("2026-04-12T00:00:00.000Z"),
-        createdAt: new Date("2026-04-12T10:00:00.000Z"),
-        updatedAt: new Date("2026-04-12T10:00:00.000Z"),
-        deletedAt: null,
-        accountId: "fa-default-user-1" as FinancialAccountId,
-        accountAttributionState: "confirmed" as const,
-      },
-    ];
 
     const snapshot = service.loadRefreshSnapshot({
       db: {} as never,
@@ -135,7 +138,7 @@ describe("transaction query service", () => {
       getTransactionsPaginated: vi.fn().mockReturnValue([]),
       getSpendingByCategoryAggregate: vi.fn().mockReturnValue([]),
       getDailySpendingAggregate,
-      getNow: () => new Date("2026-04-12T18:00:00.000Z"),
+      getNow: testNow,
     });
 
     service.loadAggregateSnapshot({

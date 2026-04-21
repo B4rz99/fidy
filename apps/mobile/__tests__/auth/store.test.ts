@@ -12,9 +12,9 @@ const {
   mockClearLocalQaSession,
   mockGetOnboardingCompleteFromStore,
   mockClearOnboardingFromStore,
-} = vi.hoisted(() => ({
-  mockCleanupCurrentPushToken: vi.fn(() => Promise.resolve()),
-  mockLoadLocalQaSession: vi.fn<
+} = vi.hoisted(() => {
+  const mockCleanupCurrentPushToken = vi.fn(() => Promise.resolve());
+  const mockLoadLocalQaSession = vi.fn<
     () => Promise<{
       userId: string;
       profile: string;
@@ -22,8 +22,8 @@ const {
       displayName: string;
       email: string;
     } | null>
-  >(() => Promise.resolve(null)),
-  mockStartLocalQaSession: vi.fn((profile?: string) =>
+  >(() => Promise.resolve(null));
+  const mockStartLocalQaSession = vi.fn((profile?: string) =>
     Promise.resolve({
       userId: profile === "transfer-ready" ? "qa-local-transfer-ready" : "qa-local-default",
       profile: profile === "transfer-ready" ? "transfer-ready" : "default",
@@ -32,30 +32,49 @@ const {
       email:
         profile === "transfer-ready" ? "local-qa+transfer-ready@fidy.dev" : "local-qa@fidy.dev",
     })
-  ),
-  mockClearLocalQaSession: vi.fn(() => Promise.resolve()),
-  mockGetOnboardingCompleteFromStore: vi.fn(() => false),
-  mockClearOnboardingFromStore: vi.fn(() => Promise.resolve()),
-}));
+  );
+  const mockClearLocalQaSession = vi.fn(() => Promise.resolve());
+  const mockGetOnboardingCompleteFromStore = vi.fn(() => false);
+  const mockClearOnboardingFromStore = vi.fn(() => Promise.resolve());
 
-const mockSetSession = vi.fn(() =>
-  Promise.resolve({ data: { session: mockSession }, error: null })
-);
-const mockSignInWithOAuth = vi.fn(() =>
-  Promise.resolve({ data: { url: "https://example.com" }, error: null })
-);
-const mockSignOut = vi.fn(() => Promise.resolve({ error: null }));
-const mockGetSession = vi.fn(() => Promise.resolve({ data: { session: null }, error: null }));
+  return {
+    mockCleanupCurrentPushToken,
+    mockLoadLocalQaSession,
+    mockStartLocalQaSession,
+    mockClearLocalQaSession,
+    mockGetOnboardingCompleteFromStore,
+    mockClearOnboardingFromStore,
+  };
+});
 
-vi.mock("@/shared/db", () => ({
-  getSupabase: () => ({
-    auth: {
+const { mockSetSession, mockSignInWithOAuth, mockSignOut, mockGetSession, supabaseAuthMock } =
+  vi.hoisted(() => {
+    const mockSetSession = vi.fn(() =>
+      Promise.resolve({ data: { session: mockSession }, error: null })
+    );
+    const mockSignInWithOAuth = vi.fn(() =>
+      Promise.resolve({ data: { url: "https://example.com" }, error: null })
+    );
+    const mockSignOut = vi.fn(() => Promise.resolve({ error: null }));
+    const mockGetSession = vi.fn(() => Promise.resolve({ data: { session: null }, error: null }));
+    const supabaseAuthMock = {
       getSession: mockGetSession,
       signInWithOAuth: mockSignInWithOAuth,
       signOut: mockSignOut,
       setSession: mockSetSession,
-    },
-  }),
+    };
+
+    return {
+      mockSetSession,
+      mockSignInWithOAuth,
+      mockSignOut,
+      mockGetSession,
+      supabaseAuthMock,
+    };
+  });
+
+vi.mock("@/shared/db", () => ({
+  getSupabase: () => ({ auth: supabaseAuthMock }),
 }));
 
 const mockOpenAuthSession = vi.fn<

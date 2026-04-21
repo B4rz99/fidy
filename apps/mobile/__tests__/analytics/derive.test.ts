@@ -11,11 +11,10 @@ import type { CategoryId, CopAmount } from "@/shared/types/branded";
 // Fixture builders
 // ---------------------------------------------------------------------------
 
-const makeCategorySpending = (items: readonly { categoryId: string; total: number }[]) =>
-  items.map((item) => ({
-    categoryId: item.categoryId as CategoryId,
-    total: item.total as CopAmount,
-  }));
+const categorySpending = (categoryId: string, total: number) => ({
+  categoryId: categoryId as CategoryId,
+  total: total as CopAmount,
+});
 
 // ---------------------------------------------------------------------------
 // computePeriodRange
@@ -148,7 +147,7 @@ describe("deriveIncomeExpense", () => {
 
 describe("deriveCategoryBreakdown", () => {
   it("computes correct percent for a single category (100%)", () => {
-    const spending = makeCategorySpending([{ categoryId: "food", total: 500000 }]);
+    const spending = [categorySpending("food", 500000)];
     const result = deriveCategoryBreakdown(spending, 500000 as CopAmount);
     expect(result).toHaveLength(1);
     expect(result[0]?.percent).toBe(100);
@@ -157,11 +156,11 @@ describe("deriveCategoryBreakdown", () => {
   });
 
   it("computes correct percents for multiple categories", () => {
-    const spending = makeCategorySpending([
-      { categoryId: "food", total: 300000 },
-      { categoryId: "transport", total: 100000 },
-      { categoryId: "entertainment", total: 100000 },
-    ]);
+    const spending = [
+      categorySpending("food", 300000),
+      categorySpending("transport", 100000),
+      categorySpending("entertainment", 100000),
+    ];
     const result = deriveCategoryBreakdown(spending, 500000 as CopAmount);
     const byId = new Map(result.map((item) => [item.categoryId, item]));
     expect(byId.get("food" as CategoryId)?.percent).toBe(60);
@@ -170,10 +169,7 @@ describe("deriveCategoryBreakdown", () => {
   });
 
   it("returns percent=0 for all categories when totalExpenses is 0", () => {
-    const spending = makeCategorySpending([
-      { categoryId: "food", total: 0 },
-      { categoryId: "transport", total: 0 },
-    ]);
+    const spending = [categorySpending("food", 0), categorySpending("transport", 0)];
     const result = deriveCategoryBreakdown(spending, 0 as CopAmount);
     expect(result.every((item) => item.percent === 0)).toBe(true);
   });
@@ -184,11 +180,11 @@ describe("deriveCategoryBreakdown", () => {
   });
 
   it("sorts results descending by total", () => {
-    const spending = makeCategorySpending([
-      { categoryId: "transport", total: 100000 },
-      { categoryId: "food", total: 400000 },
-      { categoryId: "entertainment", total: 50000 },
-    ]);
+    const spending = [
+      categorySpending("transport", 100000),
+      categorySpending("food", 400000),
+      categorySpending("entertainment", 50000),
+    ];
     const result = deriveCategoryBreakdown(spending, 550000 as CopAmount);
     expect(result[0]?.categoryId).toBe("food");
     expect(result[1]?.categoryId).toBe("transport");
@@ -196,10 +192,7 @@ describe("deriveCategoryBreakdown", () => {
   });
 
   it("preserves already-sorted input order (still sorted desc)", () => {
-    const spending = makeCategorySpending([
-      { categoryId: "food", total: 500000 },
-      { categoryId: "transport", total: 200000 },
-    ]);
+    const spending = [categorySpending("food", 500000), categorySpending("transport", 200000)];
     const result = deriveCategoryBreakdown(spending, 700000 as CopAmount);
     expect(result[0]?.categoryId).toBe("food");
     expect(result[1]?.categoryId).toBe("transport");
@@ -207,11 +200,11 @@ describe("deriveCategoryBreakdown", () => {
 
   it("rounds percents to nearest integer", () => {
     // 100000 / 300000 = 33.333...% → rounds to 33
-    const spending = makeCategorySpending([
-      { categoryId: "food", total: 100000 },
-      { categoryId: "transport", total: 100000 },
-      { categoryId: "other", total: 100000 },
-    ]);
+    const spending = [
+      categorySpending("food", 100000),
+      categorySpending("transport", 100000),
+      categorySpending("other", 100000),
+    ];
     const result = deriveCategoryBreakdown(spending, 300000 as CopAmount);
     expect(result.every((item) => item.percent === 33)).toBe(true);
   });
@@ -226,11 +219,11 @@ describe("derivePeriodDelta", () => {
     const result = derivePeriodDelta(
       {
         totalExpenses: 600000 as CopAmount,
-        categorySpending: makeCategorySpending([{ categoryId: "food", total: 600000 }]),
+        categorySpending: [categorySpending("food", 600000)],
       },
       {
         totalExpenses: 500000 as CopAmount,
-        categorySpending: makeCategorySpending([{ categoryId: "food", total: 500000 }]),
+        categorySpending: [categorySpending("food", 500000)],
       }
     );
     expect(result.totalDelta).toBe(100000);
@@ -242,11 +235,11 @@ describe("derivePeriodDelta", () => {
     const result = derivePeriodDelta(
       {
         totalExpenses: 400000 as CopAmount,
-        categorySpending: makeCategorySpending([{ categoryId: "food", total: 400000 }]),
+        categorySpending: [categorySpending("food", 400000)],
       },
       {
         totalExpenses: 500000 as CopAmount,
-        categorySpending: makeCategorySpending([{ categoryId: "food", total: 500000 }]),
+        categorySpending: [categorySpending("food", 500000)],
       }
     );
     expect(result.totalDelta).toBe(-100000);
@@ -258,11 +251,11 @@ describe("derivePeriodDelta", () => {
     const result = derivePeriodDelta(
       {
         totalExpenses: 500000 as CopAmount,
-        categorySpending: makeCategorySpending([{ categoryId: "food", total: 500000 }]),
+        categorySpending: [categorySpending("food", 500000)],
       },
       {
         totalExpenses: 500000 as CopAmount,
-        categorySpending: makeCategorySpending([{ categoryId: "food", total: 500000 }]),
+        categorySpending: [categorySpending("food", 500000)],
       }
     );
     expect(result.totalDelta).toBe(0);
@@ -274,7 +267,7 @@ describe("derivePeriodDelta", () => {
     const result = derivePeriodDelta(
       {
         totalExpenses: 300000 as CopAmount,
-        categorySpending: makeCategorySpending([{ categoryId: "food", total: 300000 }]),
+        categorySpending: [categorySpending("food", 300000)],
       },
       {
         totalExpenses: 0 as CopAmount,
@@ -298,7 +291,7 @@ describe("derivePeriodDelta", () => {
     const result = derivePeriodDelta(
       {
         totalExpenses: 300000 as CopAmount,
-        categorySpending: makeCategorySpending([{ categoryId: "food", total: 300000 }]),
+        categorySpending: [categorySpending("food", 300000)],
       },
       {
         totalExpenses: 0 as CopAmount,
@@ -316,17 +309,11 @@ describe("derivePeriodDelta", () => {
     const result = derivePeriodDelta(
       {
         totalExpenses: 700000 as CopAmount,
-        categorySpending: makeCategorySpending([
-          { categoryId: "food", total: 400000 },
-          { categoryId: "transport", total: 300000 },
-        ]),
+        categorySpending: [categorySpending("food", 400000), categorySpending("transport", 300000)],
       },
       {
         totalExpenses: 600000 as CopAmount,
-        categorySpending: makeCategorySpending([
-          { categoryId: "food", total: 300000 },
-          { categoryId: "transport", total: 300000 },
-        ]),
+        categorySpending: [categorySpending("food", 300000), categorySpending("transport", 300000)],
       }
     );
     const byId = new Map(result.categoryDeltas.map((d) => [d.categoryId, d]));
@@ -341,7 +328,7 @@ describe("derivePeriodDelta", () => {
       { totalExpenses: 0 as CopAmount, categorySpending: [] },
       {
         totalExpenses: 500000 as CopAmount,
-        categorySpending: makeCategorySpending([{ categoryId: "food", total: 500000 }]),
+        categorySpending: [categorySpending("food", 500000)],
       }
     );
     expect(result.categoryDeltas).toHaveLength(0);
@@ -352,11 +339,11 @@ describe("derivePeriodDelta", () => {
     const result = derivePeriodDelta(
       {
         totalExpenses: 600000 as CopAmount,
-        categorySpending: makeCategorySpending([{ categoryId: "food", total: 600000 }]),
+        categorySpending: [categorySpending("food", 600000)],
       },
       {
         totalExpenses: 400000 as CopAmount,
-        categorySpending: makeCategorySpending([{ categoryId: "food", total: 400000 }]),
+        categorySpending: [categorySpending("food", 400000)],
       }
     );
     expect(result.categoryDeltas[0]?.deltaPercent).toBe(50);

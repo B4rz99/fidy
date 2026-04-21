@@ -9,6 +9,23 @@ import {
 } from "@/features/ai-chat/store";
 import type { ChatMessageId, ChatSessionId, IsoDateTime, UserId } from "@/shared/types/branded";
 
+type MessageOverrides = {
+  id?: string;
+  sessionId?: string;
+  content?: string;
+  createdAt?: IsoDateTime;
+};
+
+const defaultMessage = {
+  id: "message-1" as ChatMessageId,
+  sessionId: "chat-1" as ChatSessionId,
+  role: "assistant" as const,
+  content: "Here is your weekly summary",
+  action: null,
+  actionStatus: null,
+  createdAt: "2026-04-18T10:15:00.000Z" as IsoDateTime,
+};
+
 vi.mock("@/shared/db", () => ({
   chatMessages: {
     id: "id",
@@ -58,17 +75,13 @@ function makeSession(overrides: { id?: string; title?: string } = {}) {
   };
 }
 
-function makeMessage(
-  overrides: { id?: string; sessionId?: string; content?: string; createdAt?: IsoDateTime } = {}
-): ChatMessage {
+function makeMessage(overrides: MessageOverrides = {}): ChatMessage {
+  const nextMessage = { ...defaultMessage, ...overrides };
   return {
-    id: (overrides.id ?? "message-1") as ChatMessageId,
-    sessionId: (overrides.sessionId ?? "chat-1") as ChatSessionId,
-    role: "assistant",
-    content: overrides.content ?? "Here is your weekly summary",
-    action: null,
-    actionStatus: null,
-    createdAt: overrides.createdAt ?? ("2026-04-18T10:15:00.000Z" as IsoDateTime),
+    ...nextMessage,
+    id: nextMessage.id as ChatMessageId,
+    sessionId: nextMessage.sessionId as ChatSessionId,
+    createdAt: nextMessage.createdAt as IsoDateTime,
   };
 }
 

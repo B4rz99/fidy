@@ -82,6 +82,47 @@ const insertContributionRow = (
     deletedAt: null,
   });
 
+const contributionSummaryRows = [
+  {
+    id: "contribution-1",
+    goalId: "goal-1",
+    amount: 100000,
+    date: "2026-01-05",
+  },
+  {
+    id: "contribution-2",
+    goalId: "goal-1",
+    amount: 150000,
+    date: "2026-02-10",
+  },
+  {
+    id: "contribution-3",
+    goalId: "goal-1",
+    amount: 50000,
+    date: "2026-02-20",
+  },
+  {
+    id: "contribution-4",
+    goalId: "goal-2",
+    amount: 999999,
+    date: "2026-02-15",
+  },
+] as const;
+
+const updatedGoalExpectation = {
+  id: "goal-1",
+  name: "Renovation fund",
+  type: "savings",
+  targetAmount: 750000,
+  targetDate: null,
+  interestRatePercent: null,
+  iconName: "wallet",
+  colorHex: "#1D4ED8",
+  createdAt: CREATED_AT,
+  updatedAt: "2026-04-01T12:00:00.000Z",
+  deletedAt: null,
+};
+
 describe("goals repository", () => {
   it("builds an active contribution summary for a goal", () => {
     insertGoalRow();
@@ -92,30 +133,7 @@ describe("goals repository", () => {
       targetDate: "2026-09-01",
     });
 
-    insertContributionRow({
-      id: "contribution-1",
-      goalId: "goal-1",
-      amount: 100000,
-      date: "2026-01-05",
-    });
-    insertContributionRow({
-      id: "contribution-2",
-      goalId: "goal-1",
-      amount: 150000,
-      date: "2026-02-10",
-    });
-    insertContributionRow({
-      id: "contribution-3",
-      goalId: "goal-1",
-      amount: 50000,
-      date: "2026-02-20",
-    });
-    insertContributionRow({
-      id: "contribution-4",
-      goalId: "goal-2",
-      amount: 999999,
-      date: "2026-02-15",
-    });
+    contributionSummaryRows.forEach(insertContributionRow);
 
     expect(getGoalsForUser(db as any, USER_ID)).toHaveLength(2);
     expect(getGoalById(db as any, "goal-1")).toMatchObject({
@@ -158,19 +176,7 @@ describe("goals repository", () => {
       now: "2026-04-01T12:00:00.000Z",
     });
 
-    expect(getGoalById(db as any, "goal-1")).toMatchObject({
-      id: "goal-1",
-      name: "Renovation fund",
-      type: "savings",
-      targetAmount: 750000,
-      targetDate: null,
-      interestRatePercent: null,
-      iconName: "wallet",
-      colorHex: "#1D4ED8",
-      createdAt: CREATED_AT,
-      updatedAt: "2026-04-01T12:00:00.000Z",
-      deletedAt: null,
-    });
+    expect(getGoalById(db as any, "goal-1")).toMatchObject(updatedGoalExpectation);
   });
 
   it("soft deletes a goal so it disappears from active listings but remains queryable by id", () => {

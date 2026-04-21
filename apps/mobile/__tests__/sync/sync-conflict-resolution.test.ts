@@ -56,36 +56,42 @@ function insertLocalTx(overrides: Record<string, unknown> = {}) {
   insertTransaction(db as any, row as any);
 }
 
-function conflictRow(overrides: Record<string, unknown> = {}) {
+const localConflictData = {
+  id: "tx-1",
+  userId: "user-1",
+  type: "expense",
+  amount: 1000,
+  categoryId: "food",
+  description: "Local merchant",
+  date: "2026-03-10",
+  createdAt: "2026-03-10T08:00:00.000Z",
+  updatedAt: "2026-03-10T10:00:00.000Z",
+  deletedAt: null,
+  source: "manual",
+};
+
+const serverConflictData = {
+  id: "tx-1",
+  userId: "user-1",
+  type: "expense",
+  amount: 2000,
+  categoryId: "food",
+  description: "Server merchant",
+  date: "2026-03-10",
+  createdAt: "2026-03-10T08:00:00.000Z",
+  updatedAt: "2026-03-10T14:00:00.000Z",
+  deletedAt: null,
+  source: "email",
+};
+
+type ConflictRowOverrides = Record<string, unknown>;
+
+function conflictRow(overrides: ConflictRowOverrides = {}) {
   return {
     id: "conflict-1",
     transactionId: "tx-1",
-    localData: JSON.stringify({
-      id: "tx-1",
-      userId: "user-1",
-      type: "expense",
-      amount: 1000,
-      categoryId: "food",
-      description: "Local merchant",
-      date: "2026-03-10",
-      createdAt: "2026-03-10T08:00:00.000Z",
-      updatedAt: "2026-03-10T10:00:00.000Z",
-      deletedAt: null,
-      source: "manual",
-    }),
-    serverData: JSON.stringify({
-      id: "tx-1",
-      userId: "user-1",
-      type: "expense",
-      amount: 2000,
-      categoryId: "food",
-      description: "Server merchant",
-      date: "2026-03-10",
-      createdAt: "2026-03-10T08:00:00.000Z",
-      updatedAt: "2026-03-10T14:00:00.000Z",
-      deletedAt: null,
-      source: "email",
-    }),
+    localData: JSON.stringify(localConflictData),
+    serverData: JSON.stringify(serverConflictData),
     detectedAt: "2026-03-15T10:00:00.000Z",
     resolvedAt: null,
     resolution: null,

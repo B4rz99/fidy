@@ -4,42 +4,14 @@ import { vi } from "vitest";
 process.env.EXPO_PUBLIC_GMAIL_CLIENT_ID = "test-gmail-client-id.apps.googleusercontent.com";
 process.env.EXPO_PUBLIC_OUTLOOK_CLIENT_ID = "test-outlook-client-id";
 
-// Mock react-native (Flow syntax not supported outside RN bundler)
-vi.mock("react-native", () => ({
-  View: "View",
-  Text: "Text",
-  TextInput: "TextInput",
-  Pressable: "Pressable",
-  ScrollView: "ScrollView",
-  FlatList: "FlatList",
-  Switch: "Switch",
-  Image: "Image",
-  ActivityIndicator: "ActivityIndicator",
-  ActionSheetIOS: { showActionSheetWithOptions: vi.fn() },
-  Alert: { alert: vi.fn() },
-  Appearance: { setColorScheme: vi.fn() },
-  StyleSheet: { create: (styles: Record<string, unknown>) => styles },
-  Keyboard: { dismiss: vi.fn() },
-  KeyboardAvoidingView: "KeyboardAvoidingView",
-  Linking: {
-    openSettings: vi.fn(),
-    sendIntent: vi.fn(() => Promise.resolve()),
-  },
-  Platform: { OS: "ios", select: (obj: Record<string, unknown>) => obj.ios },
-  useColorScheme: () => "light",
-  AppState: {
-    addEventListener: vi.fn(() => ({ remove: vi.fn() })),
-  },
-}));
+const zeroInsets = { top: 0, bottom: 0, left: 0, right: 0 };
 
-// Mock react-native-safe-area-context
-vi.mock("react-native-safe-area-context", () => ({
-  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+const safeAreaContextMock = {
+  useSafeAreaInsets: () => zeroInsets,
   SafeAreaProvider: "SafeAreaProvider",
-}));
+};
 
-// Mock lucide-react-native
-vi.mock("lucide-react-native", () => ({
+const lucideReactNativeMock = {
   ArrowLeftRight: "ArrowLeftRight",
   Baby: "Baby",
   Banknote: "Banknote",
@@ -118,7 +90,41 @@ vi.mock("lucide-react-native", () => ({
   Wrench: "Wrench",
   X: "X",
   Zap: "Zap",
+};
+
+// Mock react-native (Flow syntax not supported outside RN bundler)
+vi.mock("react-native", () => ({
+  View: "View",
+  Text: "Text",
+  TextInput: "TextInput",
+  Pressable: "Pressable",
+  ScrollView: "ScrollView",
+  FlatList: "FlatList",
+  Switch: "Switch",
+  Image: "Image",
+  ActivityIndicator: "ActivityIndicator",
+  ActionSheetIOS: { showActionSheetWithOptions: vi.fn() },
+  Alert: { alert: vi.fn() },
+  Appearance: { setColorScheme: vi.fn() },
+  StyleSheet: { create: (styles: Record<string, unknown>) => styles },
+  Keyboard: { dismiss: vi.fn() },
+  KeyboardAvoidingView: "KeyboardAvoidingView",
+  Linking: {
+    openSettings: vi.fn(),
+    sendIntent: vi.fn(() => Promise.resolve()),
+  },
+  Platform: { OS: "ios", select: (obj: Record<string, unknown>) => obj.ios },
+  useColorScheme: () => "light",
+  AppState: {
+    addEventListener: vi.fn(() => ({ remove: vi.fn() })),
+  },
 }));
+
+// Mock react-native-safe-area-context
+vi.mock("react-native-safe-area-context", () => safeAreaContextMock);
+
+// Mock lucide-react-native
+vi.mock("lucide-react-native", () => lucideReactNativeMock);
 
 // Mock nativewind/preset (needed for tailwind config import)
 vi.mock("nativewind/preset", () => ({ default: {} }));

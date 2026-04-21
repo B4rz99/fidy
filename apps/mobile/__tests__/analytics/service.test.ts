@@ -4,27 +4,64 @@ import type { CategoryId, CopAmount, UserId } from "@/shared/types/branded";
 
 const mockGetIncomeExpenseForPeriod = vi.fn();
 const mockGetSpendingByCategoryForPeriod = vi.fn();
+const testNow = () => new Date(2026, 2, 23);
+
+const currentIncomeExpense = {
+  income: 500000 as CopAmount,
+  expenses: 200000 as CopAmount,
+};
+
+const previousIncomeExpense = {
+  income: 450000 as CopAmount,
+  expenses: 100000 as CopAmount,
+};
+
+const currentSpending = [
+  { categoryId: "food" as CategoryId, total: 150000 as CopAmount },
+  { categoryId: "transport" as CategoryId, total: 50000 as CopAmount },
+];
+
+const previousSpending = [{ categoryId: "food" as CategoryId, total: 100000 as CopAmount }];
+
+const expectedIncomeExpenseCalls: ReadonlyArray<
+  readonly [callIndex: number, startDate: string, endDate: string]
+> = [
+  [1, "2026-02-22", "2026-03-23"],
+  [2, "2026-01-23", "2026-02-21"],
+];
+
+const expectedSnapshot = {
+  incomeExpense: {
+    income: 500000,
+    expenses: 200000,
+    net: 300000,
+    netIsPositive: true,
+  },
+  categoryBreakdown: [
+    { categoryId: "food", total: 150000, percent: 75 },
+    { categoryId: "transport", total: 50000, percent: 25 },
+  ],
+  periodDelta: {
+    totalDelta: 100000,
+    totalDeltaPercent: 100,
+    spendingIncreased: true,
+    categoryDeltas: [
+      { categoryId: "food", delta: 50000, deltaPercent: 50, increased: true },
+      { categoryId: "transport", delta: 50000, deltaPercent: 100, increased: true },
+    ],
+  },
+};
 
 describe("analytics service", () => {
   it("builds the analytics snapshot for the selected period", async () => {
     mockGetIncomeExpenseForPeriod
-      .mockReturnValueOnce({
-        income: 500000 as CopAmount,
-        expenses: 200000 as CopAmount,
-      })
-      .mockReturnValueOnce({
-        income: 450000 as CopAmount,
-        expenses: 100000 as CopAmount,
-      });
+      .mockReturnValueOnce(currentIncomeExpense)
+      .mockReturnValueOnce(previousIncomeExpense);
     mockGetSpendingByCategoryForPeriod
-      .mockReturnValueOnce([
-        { categoryId: "food" as CategoryId, total: 150000 as CopAmount },
-        { categoryId: "transport" as CategoryId, total: 50000 as CopAmount },
-      ])
-      .mockReturnValueOnce([{ categoryId: "food" as CategoryId, total: 100000 as CopAmount }]);
-
+      .mockReturnValueOnce(currentSpending)
+      .mockReturnValueOnce(previousSpending);
     const service = createAnalyticsService({
-      getNow: () => new Date(2026, 2, 23),
+      getNow: testNow,
       getIncomeExpenseForPeriod: mockGetIncomeExpenseForPeriod,
       getSpendingByCategoryForPeriod: mockGetSpendingByCategoryForPeriod,
     });
@@ -35,40 +72,15 @@ describe("analytics service", () => {
       period: "M",
     });
 
-    expect(mockGetIncomeExpenseForPeriod).toHaveBeenNthCalledWith(
-      1,
-      expect.anything(),
-      "user-1",
-      "2026-02-22",
-      "2026-03-23"
-    );
-    expect(mockGetIncomeExpenseForPeriod).toHaveBeenNthCalledWith(
-      2,
-      expect.anything(),
-      "user-1",
-      "2026-01-23",
-      "2026-02-21"
-    );
-    expect(snapshot).toEqual({
-      incomeExpense: {
-        income: 500000,
-        expenses: 200000,
-        net: 300000,
-        netIsPositive: true,
-      },
-      categoryBreakdown: [
-        { categoryId: "food", total: 150000, percent: 75 },
-        { categoryId: "transport", total: 50000, percent: 25 },
-      ],
-      periodDelta: {
-        totalDelta: 100000,
-        totalDeltaPercent: 100,
-        spendingIncreased: true,
-        categoryDeltas: [
-          { categoryId: "food", delta: 50000, deltaPercent: 50, increased: true },
-          { categoryId: "transport", delta: 50000, deltaPercent: 100, increased: true },
-        ],
-      },
+    expectedIncomeExpenseCalls.forEach(([callIndex, startDate, endDate]) => {
+      expect(mockGetIncomeExpenseForPeriod).toHaveBeenNthCalledWith(
+        callIndex,
+        expect.anything(),
+        "user-1",
+        startDate,
+        endDate
+      );
     });
+    expect(snapshot).toEqual(expectedSnapshot);
   });
 });

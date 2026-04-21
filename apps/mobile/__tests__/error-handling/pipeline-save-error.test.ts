@@ -39,6 +39,18 @@ const mockBuildEmailCaptureEvidence = vi.fn().mockReturnValue([
 const mockSaveCaptureEvidenceRows = vi.fn();
 const mockLinkCaptureEvidenceToTransaction = vi.fn();
 
+type MaterializedEvidenceLink = Record<string, unknown>;
+type MaterializedEvidenceRow = Record<string, unknown> & { id: string; deletedAt: null };
+
+const toMaterializedEvidenceRow =
+  (link: MaterializedEvidenceLink) =>
+  (row: Record<string, unknown>, index: number): MaterializedEvidenceRow => ({
+    id: `ce-${index + 1}`,
+    ...row,
+    ...link,
+    deletedAt: null,
+  });
+
 vi.mock("@/features/capture-sources/lib/dedup", () => ({
   findDuplicateTransaction: (...args: unknown[]) => mockFindDuplicateTransaction(...args),
 }));
@@ -63,13 +75,10 @@ vi.mock("@/features/financial-accounts", () => ({
 
 vi.mock("@/features/capture-evidence", () => ({
   buildEmailCaptureEvidence: (...args: unknown[]) => mockBuildEmailCaptureEvidence(...args),
-  materializeCaptureEvidenceRows: (evidence: any[], link: Record<string, unknown>) =>
-    evidence.map((row, index) => ({
-      id: `ce-${index + 1}`,
-      ...row,
-      ...link,
-      deletedAt: null,
-    })),
+  materializeCaptureEvidenceRows: (
+    evidence: Record<string, unknown>[],
+    link: MaterializedEvidenceLink
+  ) => evidence.map(toMaterializedEvidenceRow(link)),
   saveCaptureEvidenceRows: (...args: unknown[]) => mockSaveCaptureEvidenceRows(...args),
   linkCaptureEvidenceToTransaction: (...args: unknown[]) =>
     mockLinkCaptureEvidenceToTransaction(...args),

@@ -27,6 +27,46 @@ async function loadGenericModule() {
   return import("@/shared/mutations");
 }
 
+type TransactionCommandOverrides = Partial<{
+  id: TransactionId;
+  mode: "insert" | "update";
+  amount: CopAmount;
+  categoryId: CategoryId;
+  description: string;
+  date: IsoDate;
+  createdAt: IsoDateTime;
+  updatedAt: IsoDateTime;
+}>;
+
+const defaultTransactionCommand = {
+  kind: "transaction.save" as const,
+  mode: "insert" as const,
+  row: {
+    id: "tx-1" as TransactionId,
+    userId: "user-1" as UserId,
+    type: "expense" as const,
+    amount: 1000 as CopAmount,
+    categoryId: "food" as CategoryId,
+    description: "Lunch",
+    date: "2026-04-12" as IsoDate,
+    createdAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
+    updatedAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
+    deletedAt: null,
+  },
+};
+
+function makeTransactionSaveCommand(overrides: TransactionCommandOverrides = {}) {
+  const { mode, ...rowOverrides } = overrides;
+  return {
+    ...defaultTransactionCommand,
+    mode: mode ?? defaultTransactionCommand.mode,
+    row: {
+      ...defaultTransactionCommand.row,
+      ...rowOverrides,
+    },
+  };
+}
+
 describe("write-through mutations", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -39,26 +79,9 @@ describe("write-through mutations", () => {
 
   it("commits commands through the injected generic applier", async () => {
     const { createGenericWriteThroughMutationModule } = await loadGenericModule();
-    const now = "2026-04-12T10:00:00.000Z" as IsoDateTime;
     const applyCommand = vi.fn(() => ({ didMutate: true, effects: [] }));
     const module = createGenericWriteThroughMutationModule(mockDb, applyCommand);
-
-    const command = {
-      kind: "transaction.save" as const,
-      mode: "insert" as const,
-      row: {
-        id: "tx-1" as TransactionId,
-        userId: "user-1" as UserId,
-        type: "expense" as const,
-        amount: 1000 as CopAmount,
-        categoryId: "food" as CategoryId,
-        description: "Lunch",
-        date: "2026-04-12" as IsoDate,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
-      },
-    };
+    const command = makeTransactionSaveCommand();
 
     const result = await module.commit(command);
 
@@ -76,41 +99,16 @@ describe("write-through mutations", () => {
       .mockReturnValueOnce({ didMutate: true, effects: [effectOne] })
       .mockReturnValueOnce({ didMutate: false, effects: [effectTwo] });
     const module = createGenericWriteThroughMutationModule(mockDb, applyCommand);
-    const now = "2026-04-12T10:00:00.000Z" as IsoDateTime;
 
     const result = await module.commitBatch([
-      {
-        kind: "transaction.save",
-        mode: "insert",
-        row: {
-          id: "tx-batch-1" as TransactionId,
-          userId: "user-1" as UserId,
-          type: "expense",
-          amount: 1000 as CopAmount,
-          categoryId: "food" as CategoryId,
-          description: "Lunch",
-          date: "2026-04-12" as IsoDate,
-          createdAt: now,
-          updatedAt: now,
-          deletedAt: null,
-        },
-      },
-      {
-        kind: "transaction.save",
+      makeTransactionSaveCommand({ id: "tx-batch-1" as TransactionId }),
+      makeTransactionSaveCommand({
+        id: "tx-batch-2" as TransactionId,
         mode: "update",
-        row: {
-          id: "tx-batch-2" as TransactionId,
-          userId: "user-1" as UserId,
-          type: "expense",
-          amount: 2000 as CopAmount,
-          categoryId: "transport" as CategoryId,
-          description: "Bus",
-          date: "2026-04-12" as IsoDate,
-          createdAt: now,
-          updatedAt: now,
-          deletedAt: null,
-        },
-      },
+        amount: 2000 as CopAmount,
+        categoryId: "transport" as CategoryId,
+        description: "Bus",
+      }),
     ]);
 
     expect(result).toEqual([
@@ -127,24 +125,8 @@ describe("write-through mutations", () => {
     const { createGenericWriteThroughMutationModule } = await loadGenericModule();
     const applyCommand = vi.fn(() => ({ didMutate: true, effects: [] }));
     const module = createGenericWriteThroughMutationModule(mockDb, applyCommand);
-    const now = "2026-04-12T10:00:00.000Z" as IsoDateTime;
 
-    await module.commit({
-      kind: "transaction.save",
-      mode: "insert",
-      row: {
-        id: "tx-generic-1" as TransactionId,
-        userId: "user-1" as UserId,
-        type: "expense",
-        amount: 1000 as CopAmount,
-        categoryId: "food" as CategoryId,
-        description: "Lunch",
-        date: "2026-04-12" as IsoDate,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
-      },
-    });
+    await module.commit(makeTransactionSaveCommand({ id: "tx-generic-1" as TransactionId }));
 
     expect(applyCommand).toHaveBeenCalledOnce();
   });

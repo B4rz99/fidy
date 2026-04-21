@@ -94,6 +94,84 @@ const mockDb = {
   transaction: vi.fn((fn: (tx: AnyDb) => unknown) => fn(mockDb as AnyDb)),
 } as unknown as AnyDb;
 
+type TransactionRowOverrides = Partial<{
+  id: TransactionId;
+  amount: CopAmount;
+  categoryId: CategoryId;
+  description: string;
+  date: IsoDate;
+  createdAt: IsoDateTime;
+  updatedAt: IsoDateTime;
+}>;
+
+type BillRowOverrides = Partial<{
+  id: BillId;
+  amount: CopAmount;
+  categoryId: CategoryId;
+  startDate: IsoDate;
+  createdAt: IsoDateTime;
+  updatedAt: IsoDateTime;
+}>;
+
+type PaymentRowOverrides = Partial<{
+  id: BillPaymentId;
+  billId: BillId;
+  dueDate: IsoDate;
+  paidAt: IsoDateTime;
+  transactionId: TransactionId;
+  createdAt: IsoDateTime;
+}>;
+
+const defaultTransactionRow = {
+  id: "tx-1" as TransactionId,
+  userId: "user-1" as UserId,
+  type: "expense" as const,
+  amount: 1200 as CopAmount,
+  categoryId: "food" as CategoryId,
+  description: "Lunch",
+  date: "2026-04-12" as IsoDate,
+  createdAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
+  updatedAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
+  deletedAt: null,
+};
+
+const defaultBillRow = {
+  id: "bill-1" as BillId,
+  userId: "user-1" as UserId,
+  name: "Rent",
+  amount: 100000 as CopAmount,
+  frequency: "monthly" as const,
+  categoryId: "housing" as CategoryId,
+  startDate: "2026-04-01" as IsoDate,
+  isActive: true,
+  createdAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
+  updatedAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
+};
+
+const defaultPaymentRow = {
+  id: "payment-1" as BillPaymentId,
+  billId: "bill-1" as BillId,
+  dueDate: "2026-04-12" as IsoDate,
+  paidAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
+  transactionId: "tx-paid-1" as TransactionId,
+  createdAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
+};
+
+const makeTransactionRow = (overrides: TransactionRowOverrides = {}) => ({
+  ...defaultTransactionRow,
+  ...overrides,
+});
+
+const makeBillRow = (overrides: BillRowOverrides = {}) => ({
+  ...defaultBillRow,
+  ...overrides,
+});
+
+const makePaymentRow = (overrides: PaymentRowOverrides = {}) => ({
+  ...defaultPaymentRow,
+  ...overrides,
+});
+
 async function loadModule() {
   return import("@/mutations");
 }
@@ -106,23 +184,11 @@ describe("app write-through mutations", () => {
   it("enqueues sync for transaction saves", async () => {
     const { createWriteThroughMutationModule } = await loadModule();
     const module = createWriteThroughMutationModule(mockDb);
-    const now = "2026-04-12T10:00:00.000Z" as IsoDateTime;
 
     const result = await module.commit({
       kind: "transaction.save",
       mode: "insert",
-      row: {
-        id: "tx-1" as TransactionId,
-        userId: "user-1" as UserId,
-        type: "expense",
-        amount: 1200 as CopAmount,
-        categoryId: "food" as CategoryId,
-        description: "Lunch",
-        date: "2026-04-12" as IsoDate,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
-      },
+      row: makeTransactionRow(),
     });
 
     expect(result).toEqual({ success: true, didMutate: true });
@@ -134,22 +200,10 @@ describe("app write-through mutations", () => {
   it("keeps calendar bill save local-only", async () => {
     const { createWriteThroughMutationModule } = await loadModule();
     const module = createWriteThroughMutationModule(mockDb);
-    const now = "2026-04-12T10:00:00.000Z" as IsoDateTime;
 
     const result = await module.commit({
       kind: "calendar.bill.save",
-      row: {
-        id: "bill-1" as BillId,
-        userId: "user-1" as UserId,
-        name: "Rent",
-        amount: 100000 as CopAmount,
-        frequency: "monthly",
-        categoryId: "housing" as CategoryId,
-        startDate: "2026-04-01" as IsoDate,
-        isActive: true,
-        createdAt: now,
-        updatedAt: now,
-      },
+      row: makeBillRow(),
     });
 
     expect(result).toEqual({ success: true, didMutate: true });
@@ -161,30 +215,16 @@ describe("app write-through mutations", () => {
   it("writes both transaction and bill payment when marking bills paid", async () => {
     const { createWriteThroughMutationModule } = await loadModule();
     const module = createWriteThroughMutationModule(mockDb);
-    const now = "2026-04-12T10:00:00.000Z" as IsoDateTime;
 
     const result = await module.commit({
       kind: "calendar.bill.markPaid",
-      transactionRow: {
+      transactionRow: makeTransactionRow({
         id: "tx-paid-1" as TransactionId,
-        userId: "user-1" as UserId,
-        type: "expense",
         amount: 250000 as CopAmount,
         categoryId: "housing" as CategoryId,
         description: "Rent",
-        date: "2026-04-12" as IsoDate,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
-      },
-      paymentRow: {
-        id: "payment-1" as BillPaymentId,
-        billId: "bill-1" as BillId,
-        dueDate: "2026-04-12" as IsoDate,
-        paidAt: now,
-        transactionId: "tx-paid-1" as TransactionId,
-        createdAt: now,
-      },
+      }),
+      paymentRow: makePaymentRow(),
     });
 
     expect(result).toEqual({ success: true, didMutate: true });
@@ -201,23 +241,11 @@ describe("app write-through mutations", () => {
     });
     const failingDb = { transaction } as unknown as AnyDb;
     const module = createWriteThroughMutationModule(failingDb);
-    const now = "2026-04-12T10:00:00.000Z" as IsoDateTime;
 
     const result = await module.commit({
       kind: "transaction.save",
       mode: "insert",
-      row: {
-        id: "tx-fail-1" as TransactionId,
-        userId: "user-1" as UserId,
-        type: "expense",
-        amount: 1200 as CopAmount,
-        categoryId: "food" as CategoryId,
-        description: "Lunch",
-        date: "2026-04-12" as IsoDate,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
-      },
+      row: makeTransactionRow({ id: "tx-fail-1" as TransactionId }),
     });
 
     expect(result).toEqual({ success: false, error: "db failure" });
