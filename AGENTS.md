@@ -21,6 +21,10 @@ The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async 
 
 `lefthook`'s default pre-push file detection can skip every command when the checkout is on detached `HEAD` or lacks a local base branch/upstream (for example, `git diff HEAD @{push}` and `git diff HEAD main` both fail). In this repo, pre-push commands should enumerate tracked files explicitly so lint/typecheck/test still run in linked worktrees and detached checkouts.
 
+### Lefthook pre-push is already parallel unless you disable it (⚠️ AGENT SURPRISE)
+
+It is easy to read `lefthook.yml` and assume `pre-push.commands` run sequentially because `parallel: true` is omitted. In Lefthook 2.x they already run in parallel unless you set `parallel: false` or `piped: true`, so the real bottleneck is usually inside the called scripts like `typecheck` and `test`. Fix: make `parallel: true` explicit for readability, and optimize the underlying scripts when pre-push feels slow.
+
 ### Bun workspace scripts need `--shell=bun` for parity (⚠️ AGENT SURPRISE)
 
 Workspace wrapper scripts like `bun run --cwd apps/mobile lint` can behave differently across local checkouts, worktrees, and CI because Bun's default system-shell execution does not resolve workspace binaries consistently. In this repo, root scripts that delegate into `apps/*` or `packages/*` should use `bun run --cwd <dir> --shell=bun <script>` so `expo`, `eslint`, `vitest`, and similar local bins resolve the same way everywhere.

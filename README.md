@@ -18,9 +18,9 @@ Primary commands:
 - `bun run analyze:complexity:strict` runs the strict Lizard gate and writes reports to `.context/reports/lizard/strict/`.
 - `bun run analyze:complexity:strict:update-ledger` refreshes the checked-in strict debt ledger after an intentional burn-down step.
 - `bun run typecheck` builds shared packages and typechecks the workspace.
-- `bun run test` runs the mobile Vitest suite.
+- `bun run test` runs the root guardrail tests and the mobile Vitest suite in parallel.
 - `bun run test:coverage` runs the mobile tests with coverage.
-- `bun run verify` runs lint, mobile lint, typecheck, and tests in the same order used locally.
+- `bun run verify` runs the full local gate before push.
 
 ## Complexity Policy
 
