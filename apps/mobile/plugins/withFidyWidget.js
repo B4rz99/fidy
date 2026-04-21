@@ -90,213 +90,209 @@ const copyWidgetFiles = (projectRoot, config) => {
 
 const generateUuid = (project) => project.generateUuid();
 
+const BASE_EXTENSION_BUILD_SETTINGS = {
+  ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: '""',
+  ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: '""',
+  CLANG_ANALYZER_NONNULL: "YES",
+  CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION: "YES_AGGRESSIVE",
+  CLANG_CXX_LANGUAGE_STANDARD: '"gnu++20"',
+  CLANG_ENABLE_OBJC_WEAK: "YES",
+  CLANG_WARN_DOCUMENTATION_COMMENTS: "YES",
+  CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER: "YES",
+  CLANG_WARN_UNGUARDED_AVAILABILITY: "YES_AGGRESSIVE",
+  CODE_SIGN_ENTITLEMENTS: `${EXTENSION_NAME}/widget.entitlements`,
+  CODE_SIGN_STYLE: "Automatic",
+  CURRENT_PROJECT_VERSION: "1",
+  DEBUG_INFORMATION_FORMAT: '"dwarf-with-dsym"',
+  GCC_C_LANGUAGE_STANDARD: "gnu17",
+  INFOPLIST_KEY_CFBundleDisplayName: EXTENSION_NAME,
+  INFOPLIST_KEY_NSHumanReadableCopyright: '""',
+  IPHONEOS_DEPLOYMENT_TARGET: DEPLOYMENT_TARGET,
+  LD_RUNPATH_SEARCH_PATHS:
+    '"$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"',
+  MARKETING_VERSION: "1.0",
+  PRODUCT_NAME: '"$(TARGET_NAME)"',
+  SKIP_INSTALL: "YES",
+  SWIFT_EMIT_LOC_STRINGS: "YES",
+  SWIFT_VERSION,
+  TARGETED_DEVICE_FAMILY: '"1,2"',
+};
+
+const isObject = (value) => typeof value === "object" && value !== null;
+const isNamedExtensionTarget = (target) => isObject(target) && target.name === EXTENSION_NAME;
+const getProductsGroupComment = () => `${EXTENSION_NAME}.appex`;
+const getEmbedPhaseComment = () => `${EXTENSION_NAME}.appex in Embed App Extensions`;
+const getXcodeObjects = (project) => project.hash.project.objects;
+
 // Xcode build setting keys use SCREAMING_SNAKE_CASE by convention.
 const buildSettings = (config) => {
   const developmentTeam = getDevelopmentTeam(config);
-  const extensionBundleId = getExtensionBundleId(config);
-
   const settings = {
-    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: '""',
-    ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: '""',
-    CLANG_ANALYZER_NONNULL: "YES",
-    CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION: "YES_AGGRESSIVE",
-    CLANG_CXX_LANGUAGE_STANDARD: '"gnu++20"',
-    CLANG_ENABLE_OBJC_WEAK: "YES",
-    CLANG_WARN_DOCUMENTATION_COMMENTS: "YES",
-    CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER: "YES",
-    CLANG_WARN_UNGUARDED_AVAILABILITY: "YES_AGGRESSIVE",
-    CODE_SIGN_ENTITLEMENTS: `${EXTENSION_NAME}/widget.entitlements`,
-    CODE_SIGN_STYLE: "Automatic",
-    CURRENT_PROJECT_VERSION: "1",
-    DEBUG_INFORMATION_FORMAT: '"dwarf-with-dsym"',
-    GCC_C_LANGUAGE_STANDARD: "gnu17",
-    INFOPLIST_KEY_CFBundleDisplayName: EXTENSION_NAME,
-    INFOPLIST_KEY_NSHumanReadableCopyright: '""',
-    IPHONEOS_DEPLOYMENT_TARGET: DEPLOYMENT_TARGET,
-    LD_RUNPATH_SEARCH_PATHS:
-      '"$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"',
-    MARKETING_VERSION: "1.0",
-    PRODUCT_BUNDLE_IDENTIFIER: extensionBundleId,
-    PRODUCT_NAME: '"$(TARGET_NAME)"',
-    SKIP_INSTALL: "YES",
-    SWIFT_EMIT_LOC_STRINGS: "YES",
-    SWIFT_VERSION,
-    TARGETED_DEVICE_FAMILY: '"1,2"',
+    ...BASE_EXTENSION_BUILD_SETTINGS,
+    PRODUCT_BUNDLE_IDENTIFIER: getExtensionBundleId(config),
   };
-
-  if (developmentTeam) {
-    settings.DEVELOPMENT_TEAM = developmentTeam;
-  }
-
-  return settings;
+  return developmentTeam ? { ...settings, DEVELOPMENT_TEAM: developmentTeam } : settings;
 };
 
 /** Reconcile build settings on the extension's Debug/Release configurations. */
+const getExtensionConfigListId = (project) =>
+  Object.values(project.pbxNativeTargetSection()).find(isNamedExtensionTarget)
+    ?.buildConfigurationList ?? null;
+
+const getConfigList = (project, configListId) =>
+  getXcodeObjects(project).XCConfigurationList?.[configListId] ?? null;
+
+const getBuildConfigurationRefs = (project, configListId) =>
+  getConfigList(project, configListId)?.buildConfigurations ?? [];
+
+const applySettingsToBuildConfig = (config, settings) => {
+  if (isObject(config) && config.buildSettings) {
+    config.buildSettings = { ...config.buildSettings, ...settings };
+  }
+};
+
+const applySettingsToConfigRefs = (project, configRefs, settings) => {
+  const buildConfigs = getXcodeObjects(project).XCBuildConfiguration;
+  for (const ref of configRefs) {
+    applySettingsToBuildConfig(buildConfigs?.[ref.value], settings);
+  }
+};
+
 const reconcileBuildSettings = (project, settings) => {
-  // Find the extension target's buildConfigurationList UUID
-  const nativeTargets = project.pbxNativeTargetSection();
-  let configListId = null;
-  for (const val of Object.values(nativeTargets)) {
-    if (typeof val === "object" && val !== null && val.name === EXTENSION_NAME) {
-      configListId = val.buildConfigurationList;
-      break;
-    }
-  }
+  const configListId = getExtensionConfigListId(project);
   if (!configListId) return;
+  applySettingsToConfigRefs(project, getBuildConfigurationRefs(project, configListId), settings);
+};
 
-  // Get the configuration UUIDs from the XCConfigurationList via direct hash access
-  const configLists = project.hash.project.objects.XCConfigurationList;
-  const configList = configLists?.[configListId];
-  if (!configList?.buildConfigurations) return;
+const targetExists = (project) =>
+  Object.values(project.pbxNativeTargetSection()).some(isNamedExtensionTarget);
 
-  const configUuids = new Set(configList.buildConfigurations.map((c) => c.value));
+const createWidgetTarget = (project, extensionBundleId) =>
+  project.addTarget(EXTENSION_NAME, "app_extension", EXTENSION_NAME, extensionBundleId);
 
-  // Apply build settings to those specific configurations
-  const buildConfigs = project.hash.project.objects.XCBuildConfiguration;
-  for (const uuid of configUuids) {
-    const config = buildConfigs?.[uuid];
-    if (typeof config === "object" && config.buildSettings) {
-      config.buildSettings = { ...config.buildSettings, ...settings };
-    }
-  }
+const applySettingsToTarget = (project, targetUuid, settings) => {
+  const nativeTarget = project.pbxNativeTargetSection()[targetUuid];
+  const configListId = nativeTarget?.buildConfigurationList;
+  if (!configListId) return;
+  applySettingsToConfigRefs(project, getBuildConfigurationRefs(project, configListId), settings);
+};
+
+const addWidgetSourcesBuildPhase = (project, targetUuid) =>
+  project.addBuildPhase(
+    SWIFT_FILES.map((file) => `${EXTENSION_NAME}/${file}`),
+    "PBXSourcesBuildPhase",
+    "Sources",
+    targetUuid,
+    undefined,
+    generateUuid(project)
+  );
+
+const addWidgetExtensionGroup = (project) => {
+  const extensionGroup = project.addPbxGroup(
+    [...STATIC_EXTENSION_FILES, "WidgetConfig.swift"],
+    EXTENSION_NAME,
+    EXTENSION_NAME,
+    '"<group>"',
+    { uuid: generateUuid(project) }
+  );
+  const mainGroupId = project.getFirstProject().firstProject.mainGroup;
+  project.addToPbxGroup(extensionGroup.uuid, mainGroupId);
+};
+
+const addFrameworkBuildPhase = (project, targetUuid) =>
+  project.addBuildPhase(
+    [],
+    "PBXFrameworksBuildPhase",
+    "Frameworks",
+    targetUuid,
+    undefined,
+    generateUuid(project)
+  );
+
+const addWidgetFrameworks = (project, targetUuid) => {
+  addFrameworkBuildPhase(project, targetUuid);
+  project.addFramework("WidgetKit.framework", { target: targetUuid, link: true });
+  project.addFramework("SwiftUI.framework", { target: targetUuid, link: true });
+};
+
+const createEmbedPhase = (project) => {
+  const embedPhaseUuid = generateUuid(project);
+  const mainTarget = project.getFirstTarget();
+  project.addBuildPhase(
+    [],
+    "PBXCopyFilesBuildPhase",
+    "Embed App Extensions",
+    mainTarget.firstTarget.uuid,
+    "app_extension",
+    embedPhaseUuid
+  );
+  return embedPhaseUuid;
+};
+
+const getProductReferenceUuid = (project, targetUuid) =>
+  project.pbxNativeTargetSection()[targetUuid]?.productReference ?? null;
+
+const getProductsGroup = (project) => {
+  const groups = getXcodeObjects(project).PBXGroup || {};
+  return (
+    Object.values(groups).find((group) => isObject(group) && group.name === "Products") ?? null
+  );
+};
+
+const addProductToProductsGroup = (project, productRefUuid) => {
+  const productsGroup = getProductsGroup(project);
+  if (!productsGroup) return;
+  const alreadyInGroup = productsGroup.children?.some((child) => child.value === productRefUuid);
+  if (alreadyInGroup) return;
+  productsGroup.children.push({
+    value: productRefUuid,
+    comment: getProductsGroupComment(),
+  });
+};
+
+const createEmbedBuildFile = (project, productRefUuid) => {
+  const buildFileUuid = generateUuid(project);
+  getXcodeObjects(project).PBXBuildFile[buildFileUuid] = {
+    isa: "PBXBuildFile",
+    fileRef: productRefUuid,
+    settings: { ATTRIBUTES: ["RemoveHeadersOnCopy"] },
+  };
+  getXcodeObjects(project).PBXBuildFile[`${buildFileUuid}_comment`] = getEmbedPhaseComment();
+  return buildFileUuid;
+};
+
+const addBuildFileToEmbedPhase = (project, embedPhaseUuid, buildFileUuid) => {
+  const embedPhase = getXcodeObjects(project).PBXCopyFilesBuildPhase?.[embedPhaseUuid];
+  if (!embedPhase) return;
+  embedPhase.files.push({
+    value: buildFileUuid,
+    comment: getEmbedPhaseComment(),
+  });
+};
+
+const embedWidgetExtension = (project, targetUuid) => {
+  const productRefUuid = getProductReferenceUuid(project, targetUuid);
+  if (!productRefUuid) return;
+  const embedPhaseUuid = createEmbedPhase(project);
+  addProductToProductsGroup(project, productRefUuid);
+  addBuildFileToEmbedPhase(project, embedPhaseUuid, createEmbedBuildFile(project, productRefUuid));
+};
+
+const createWidgetExtensionStructure = (project, extensionBundleId, settings) => {
+  const target = createWidgetTarget(project, extensionBundleId);
+  applySettingsToTarget(project, target.uuid, settings);
+  addWidgetSourcesBuildPhase(project, target.uuid);
+  addWidgetExtensionGroup(project);
+  addWidgetFrameworks(project, target.uuid);
+  embedWidgetExtension(project, target.uuid);
 };
 
 const addWidgetExtensionTarget = (project, config) => {
   const extensionBundleId = getExtensionBundleId(config);
   const settings = buildSettings(config);
-
-  // 0. Check if the target already exists
-  const existingTargets = project.pbxNativeTargetSection();
-  const targetExists = Object.values(existingTargets).some(
-    (t) => typeof t === "object" && t !== null && t.name === EXTENSION_NAME
-  );
-
-  // 1. Create structural elements only if the target doesn't exist
-  if (!targetExists) {
-    const target = project.addTarget(
-      EXTENSION_NAME,
-      "app_extension",
-      EXTENSION_NAME,
-      extensionBundleId
-    );
-
-    // Apply build settings immediately after target creation — the xcode
-    // package creates Debug/Release configs but leaves them sparse.
-    const nativeTarget = project.pbxNativeTargetSection()[target.uuid];
-    const configListId = nativeTarget?.buildConfigurationList;
-    if (configListId) {
-      const configList = project.hash.project.objects.XCConfigurationList?.[configListId];
-      if (configList?.buildConfigurations) {
-        const buildConfigs = project.hash.project.objects.XCBuildConfiguration;
-        for (const ref of configList.buildConfigurations) {
-          const config = buildConfigs?.[ref.value];
-          if (typeof config === "object" && config.buildSettings) {
-            config.buildSettings = { ...config.buildSettings, ...settings };
-          }
-        }
-      }
-    }
-
-    const sourcesBuildPhaseUuid = generateUuid(project);
-    project.addBuildPhase(
-      SWIFT_FILES.map((f) => `${EXTENSION_NAME}/${f}`),
-      "PBXSourcesBuildPhase",
-      "Sources",
-      target.uuid,
-      undefined,
-      sourcesBuildPhaseUuid
-    );
-
-    const groupUuid = generateUuid(project);
-    const extensionGroup = project.addPbxGroup(
-      [...STATIC_EXTENSION_FILES, "WidgetConfig.swift"],
-      EXTENSION_NAME,
-      EXTENSION_NAME,
-      '"<group>"',
-      { uuid: groupUuid }
-    );
-    const mainGroupId = project.getFirstProject().firstProject.mainGroup;
-    project.addToPbxGroup(extensionGroup.uuid, mainGroupId);
-
-    const frameworksBuildPhaseUuid = generateUuid(project);
-    project.addBuildPhase(
-      [],
-      "PBXFrameworksBuildPhase",
-      "Frameworks",
-      target.uuid,
-      undefined,
-      frameworksBuildPhaseUuid
-    );
-
-    project.addFramework("WidgetKit.framework", {
-      target: target.uuid,
-      link: true,
-    });
-    project.addFramework("SwiftUI.framework", {
-      target: target.uuid,
-      link: true,
-    });
-
-    // Embed the extension in the main app — create the phase with an empty
-    // file list, then manually wire the target's product reference into the
-    // phase so CocoaPods doesn't encounter an orphaned PBXFileReference.
-    const mainTarget = project.getFirstTarget();
-    const embedPhaseUuid = generateUuid(project);
-    project.addBuildPhase(
-      [],
-      "PBXCopyFilesBuildPhase",
-      "Embed App Extensions",
-      mainTarget.firstTarget.uuid,
-      "app_extension",
-      embedPhaseUuid
-    );
-
-    // Find the target's product reference (the .appex created by addTarget)
-    const nativeTargetEntry = project.pbxNativeTargetSection()[target.uuid];
-    const productRefUuid = nativeTargetEntry?.productReference;
-
-    if (productRefUuid) {
-      // Add product to the Products group so CocoaPods can resolve its parent
-      const productsGroupKey = Object.keys(project.hash.project.objects.PBXGroup || {}).find(
-        (key) => {
-          const group = project.hash.project.objects.PBXGroup[key];
-          return typeof group === "object" && group.name === "Products";
-        }
-      );
-      if (productsGroupKey) {
-        const productsGroup = project.hash.project.objects.PBXGroup[productsGroupKey];
-        const alreadyInGroup = productsGroup.children?.some((c) => c.value === productRefUuid);
-        if (!alreadyInGroup) {
-          productsGroup.children.push({
-            value: productRefUuid,
-            comment: `${EXTENSION_NAME}.appex`,
-          });
-        }
-      }
-
-      // Add a PBXBuildFile referencing the product in the embed phase
-      const buildFileUuid = generateUuid(project);
-      project.hash.project.objects.PBXBuildFile[buildFileUuid] = {
-        isa: "PBXBuildFile",
-        fileRef: productRefUuid,
-        settings: { ATTRIBUTES: ["RemoveHeadersOnCopy"] },
-      };
-      project.hash.project.objects.PBXBuildFile[`${buildFileUuid}_comment`] =
-        `${EXTENSION_NAME}.appex in Embed App Extensions`;
-
-      // Add the build file to the embed phase's files array
-      const copyFilesPhases = project.hash.project.objects.PBXCopyFilesBuildPhase || {};
-      const embedPhase = copyFilesPhases[embedPhaseUuid];
-      if (embedPhase) {
-        embedPhase.files.push({
-          value: buildFileUuid,
-          comment: `${EXTENSION_NAME}.appex in Embed App Extensions`,
-        });
-      }
-    }
+  if (!targetExists(project)) {
+    createWidgetExtensionStructure(project, extensionBundleId, settings);
   }
-
-  // 2. Always reconcile build settings
   reconcileBuildSettings(project, settings);
 };
 

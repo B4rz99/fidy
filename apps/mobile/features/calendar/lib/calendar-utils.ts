@@ -22,6 +22,19 @@ export type CalendarDay = {
   date: Date | null;
 };
 
+type CalendarDateContext = {
+  readonly date: Date;
+  readonly year: number;
+  readonly month: number;
+  readonly day: number;
+  readonly dayOfWeek: number;
+};
+
+type OccurrenceContext = {
+  readonly start: Date;
+  readonly normalizedFrom: Date;
+};
+
 export const WEEKDAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"] as const;
 
 /**
@@ -54,31 +67,8 @@ export function getMonthGrid(year: number, month: number): CalendarDay[][] {
  * Returns bills that occur on a specific date based on their frequency.
  */
 export function getBillsForDate(bills: Bill[], date: Date): Bill[] {
-  const y = date.getFullYear();
-  const m = date.getMonth();
-  const d = date.getDate();
-
-  return bills.filter((bill) => {
-    if (!bill.isActive) return false;
-    if (date < bill.startDate) return false;
-
-    switch (bill.frequency) {
-      case "monthly":
-        return clampDay(bill.startDate.getDate(), y, m) === d;
-      case "weekly":
-        return getDay(bill.startDate) === getDay(date);
-      case "biweekly": {
-        const weeksDiff = differenceInWeeks(date, bill.startDate);
-        return weeksDiff >= 0 && weeksDiff % 2 === 0 && getDay(bill.startDate) === getDay(date);
-      }
-      case "yearly": {
-        if (bill.startDate.getMonth() !== m) return false;
-        return clampDay(bill.startDate.getDate(), y, m) === d;
-      }
-      default:
-        return false;
-    }
-  });
+  const calendarDate = getCalendarDateContext(date);
+  return bills.filter((bill) => billOccursOnDate(bill, calendarDate));
 }
 
 export function formatMonthYear(date: Date, dateFnsLocale?: Locale): string {
@@ -89,35 +79,77 @@ export function formatMonthYear(date: Date, dateFnsLocale?: Locale): string {
  * Get the next occurrence of a bill from a given date.
  */
 export function getNextOccurrence(bill: Bill, from: Date): Date {
-  const start = bill.startDate;
-  // Normalize to midnight so a bill due today isn't skipped
-  const normalizedFrom = startOfDay(from);
-  switch (bill.frequency) {
-    case "weekly": {
-      const dayDiff = (getDay(start) - getDay(normalizedFrom) + 7) % 7;
-      const next = addDays(normalizedFrom, dayDiff === 0 ? 0 : dayDiff);
-      return next >= normalizedFrom ? next : addWeeks(next, 1);
-    }
-    case "biweekly": {
-      const daysDiff = differenceInCalendarDays(normalizedFrom, start);
-      const periods = daysDiff <= 0 ? 0 : Math.ceil(daysDiff / 14);
-      return addWeeks(start, periods * 2);
-    }
-    case "monthly": {
-      const day = start.getDate();
-      const y = normalizedFrom.getFullYear();
-      const m = normalizedFrom.getMonth();
-      const candidate = new Date(y, m, clampDay(day, y, m));
-      if (candidate >= normalizedFrom) return candidate;
-      return new Date(y, m + 1, clampDay(day, y, m + 1));
-    }
-    case "yearly": {
-      const day = start.getDate();
-      const sm = start.getMonth();
-      const y = normalizedFrom.getFullYear();
-      const candidate = new Date(y, sm, clampDay(day, y, sm));
-      if (candidate >= normalizedFrom) return candidate;
-      return new Date(y + 1, sm, clampDay(day, y + 1, sm));
-    }
-  }
+  return getNextOccurrenceForFrequency(bill.frequency, {
+    start: bill.startDate,
+    normalizedFrom: startOfDay(from),
+  });
+}
+
+function getCalendarDateContext(date: Date): CalendarDateContext {
+  return {
+    date,
+    year: date.getFullYear(),
+    month: date.getMonth(),
+    day: date.getDate(),
+    dayOfWeek: getDay(date),
+  };
+}
+
+function billOccursOnDate(bill: Bill, calendarDate: CalendarDateContext): boolean {
+  if (!bill.isActive) return false;
+  if (calendarDate.date < bill.startDate) return false;
+  const matcher = BILL_DATE_MATCHERS[bill.frequency as Bill["frequency"]];
+  return matcher ? matcher(bill, calendarDate) : false;
+}
+
+const BILL_DATE_MATCHERS = {
+  monthly: (bill: Bill, calendarDate: CalendarDateContext): boolean =>
+    clampDay(bill.startDate.getDate(), calendarDate.year, calendarDate.month) === calendarDate.day,
+  weekly: (bill: Bill, calendarDate: CalendarDateContext): boolean =>
+    getDay(bill.startDate) === calendarDate.dayOfWeek,
+  biweekly: (bill: Bill, calendarDate: CalendarDateContext): boolean => {
+    const weeksDiff = differenceInWeeks(calendarDate.date, bill.startDate);
+    return (
+      weeksDiff >= 0 && weeksDiff % 2 === 0 && getDay(bill.startDate) === calendarDate.dayOfWeek
+    );
+  },
+  yearly: (bill: Bill, calendarDate: CalendarDateContext): boolean =>
+    bill.startDate.getMonth() === calendarDate.month &&
+    clampDay(bill.startDate.getDate(), calendarDate.year, calendarDate.month) === calendarDate.day,
+} satisfies Record<Bill["frequency"], (bill: Bill, calendarDate: CalendarDateContext) => boolean>;
+
+const NEXT_OCCURRENCE_HANDLERS = {
+  weekly: ({ start, normalizedFrom }: OccurrenceContext): Date => {
+    const dayDiff = (getDay(start) - getDay(normalizedFrom) + 7) % 7;
+    const next = addDays(normalizedFrom, dayDiff === 0 ? 0 : dayDiff);
+    return next >= normalizedFrom ? next : addWeeks(next, 1);
+  },
+  biweekly: ({ start, normalizedFrom }: OccurrenceContext): Date => {
+    const daysDiff = differenceInCalendarDays(normalizedFrom, start);
+    const periods = daysDiff <= 0 ? 0 : Math.ceil(daysDiff / 14);
+    return addWeeks(start, periods * 2);
+  },
+  monthly: ({ start, normalizedFrom }: OccurrenceContext): Date => {
+    const year = normalizedFrom.getFullYear();
+    const month = normalizedFrom.getMonth();
+    const candidate = new Date(year, month, clampDay(start.getDate(), year, month));
+    return candidate >= normalizedFrom
+      ? candidate
+      : new Date(year, month + 1, clampDay(start.getDate(), year, month + 1));
+  },
+  yearly: ({ start, normalizedFrom }: OccurrenceContext): Date => {
+    const year = normalizedFrom.getFullYear();
+    const month = start.getMonth();
+    const candidate = new Date(year, month, clampDay(start.getDate(), year, month));
+    return candidate >= normalizedFrom
+      ? candidate
+      : new Date(year + 1, month, clampDay(start.getDate(), year + 1, month));
+  },
+} satisfies Record<Bill["frequency"], (context: OccurrenceContext) => Date>;
+
+function getNextOccurrenceForFrequency(
+  frequency: Bill["frequency"],
+  context: OccurrenceContext
+): Date {
+  return NEXT_OCCURRENCE_HANDLERS[frequency](context);
 }

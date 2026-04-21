@@ -435,14 +435,29 @@ describe("deriveBudgetNudges", () => {
     { categoryId: "utilities", total: 200_000 },
   ];
 
+  const makeBudgetNudgeInput = (
+    overrides: Partial<{
+      currentAmount: number;
+      targetAmount: number;
+      netMonthlySavings: number;
+      spendingByCategory: readonly { categoryId: string; total: number }[];
+    }> = {}
+  ) => ({
+    currentAmount: 0,
+    targetAmount: 5_000_000,
+    netMonthlySavings: 500_000,
+    spendingByCategory: spending,
+    ...overrides,
+  });
+
   it("returns top 3 categories by total spending", () => {
-    const result = deriveBudgetNudges(0, 5_000_000, 500_000, spending);
+    const result = deriveBudgetNudges(makeBudgetNudgeInput());
     expect(result).toHaveLength(3);
     expect(result[0]?.categoryId).toBe("food");
   });
 
   it("calculates 15% reduction for each category", () => {
-    const result = deriveBudgetNudges(0, 5_000_000, 500_000, spending);
+    const result = deriveBudgetNudges(makeBudgetNudgeInput());
     const foodNudge = result.find((n) => n.categoryId === "food");
     expect(foodNudge).toBeDefined();
     expect(foodNudge?.currentSpending).toBe(800_000);
@@ -454,31 +469,31 @@ describe("deriveBudgetNudges", () => {
     // baseline monthsToGo = 5M / 500k = 10
     // food reduction = 120k → new savings = 620k → 5M/620k = 8.06.. → ceil 9
     // monthsSaved = 10 - 9 = 1
-    const result = deriveBudgetNudges(0, 5_000_000, 500_000, spending);
+    const result = deriveBudgetNudges(makeBudgetNudgeInput());
     const foodNudge = result.find((n) => n.categoryId === "food");
     expect(foodNudge).toBeDefined();
     expect(foodNudge?.monthsSaved).toBe(1);
   });
 
   it("sorts by monthsSaved descending", () => {
-    const result = deriveBudgetNudges(0, 5_000_000, 500_000, spending);
+    const result = deriveBudgetNudges(makeBudgetNudgeInput());
     const monthsSaved = result.map((n) => n.monthsSaved);
     expect(monthsSaved).toEqual([...monthsSaved].sort((a, b) => b - a));
   });
 
   it("returns empty array when savings rate is zero", () => {
-    const result = deriveBudgetNudges(0, 5_000_000, 0, spending);
+    const result = deriveBudgetNudges(makeBudgetNudgeInput({ netMonthlySavings: 0 }));
     expect(result).toHaveLength(0);
   });
 
   it("returns empty array when savings rate is negative", () => {
-    const result = deriveBudgetNudges(0, 5_000_000, -100_000, spending);
+    const result = deriveBudgetNudges(makeBudgetNudgeInput({ netMonthlySavings: -100_000 }));
     expect(result).toHaveLength(0);
   });
 
   it("handles fewer than 3 categories", () => {
     const smallSpending = [{ categoryId: "food", total: 800_000 }];
-    const result = deriveBudgetNudges(0, 5_000_000, 500_000, smallSpending);
+    const result = deriveBudgetNudges(makeBudgetNudgeInput({ spendingByCategory: smallSpending }));
     expect(result).toHaveLength(1);
   });
 });
