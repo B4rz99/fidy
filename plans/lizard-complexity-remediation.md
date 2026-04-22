@@ -1,5 +1,17 @@
 # Lizard Strict Burn-Down Plan
 
+## Status
+
+Completed on April 21, 2026.
+
+Final state on `origin/main`:
+
+- `bun run lint:complexity` passes
+- `plans/lizard-complexity-debt.json` is at `0` violations
+- Waves 1-4 and MRs 1-5 are merged
+
+The rest of this document is kept as historical planning context.
+
 ## Target
 
 Use one enforced Lizard target for the repo:
@@ -10,11 +22,11 @@ Use one enforced Lizard target for the repo:
 
 No second profile. No softer long-term gate.
 
-## Reality Check
+## Historical Reality Check
 
-This target is coherent, but it is not one-shot reachable from the current codebase.
+At the start of this effort, this target was coherent, but it was not one-shot reachable from the codebase.
 
-Based on the current scan:
+Based on the initial scan:
 
 - Total functions violating the target: `340`
 - Test violations: `129`
@@ -393,17 +405,250 @@ Once production hotspots are mostly stable, test cleanup can be parallelized agg
 5. One agent on `Slice 8`
 6. Many agents on `Slice 9+` by test cluster
 
-## Recommended Starting Point
+## Historical Remaining Baseline
 
-Start with `apps/mobile/mutations/index.ts`.
+After the first burn-down wave landed and the ledger was refreshed on April 20, 2026, the remaining strict debt is:
+
+- total violations: `200`
+- production violations: `106`
+- test violations: `94`
+
+Largest remaining production clusters:
+
+- `transactions`: `13`
+- `email-capture`: `9`
+- `account-suggestions`: `8`
+- `capture-sources`: `7`
+- `goals`: `7`
+- `financial-accounts`: `6`
+- `budget`: `5`
+- `transfers`: `5`
+
+Highest-value remaining production hotspots:
+
+1. `apps/mobile/features/notifications/lib/display.ts::getCategoryVisuals` — `CCN 15`
+2. `apps/mobile/plugins/withFidyWidget.js::addWidgetExtensionTarget` — `CCN 13`, `NLOC 109`
+3. `apps/mobile/features/email-capture/lib/progress-phases.ts::buildProgressDisplay` — `CCN 13`, `NLOC 34`
+4. `apps/mobile/features/goals/lib/derive.ts::computeMedian` — `CCN 12`
+5. `apps/mobile/features/auth/store.ts::{restoreSession, signIn}` — `CCN 11`, `NLOC 44/42`
+6. `apps/mobile/features/qa/devtools-store.ts::parseStoredFlags` — `CCN 11`, `NLOC 41`
+
+## Historical Parallel Waves
+
+The original hotspot slices are largely complete. The next plan should burn down the remaining debt by feature cluster, not by the old orchestrator order.
+
+### Wave 1: Standalone production hotspots
+
+These are the best immediate parallel tasks because they are high-value and low-conflict:
+
+- `notifications` agent: `apps/mobile/features/notifications/lib/display.ts`, `apps/mobile/features/notifications/lib/derive.ts`
+- `goals` agent: `apps/mobile/features/goals/lib/derive.ts`
+- `auth` agent: `apps/mobile/features/auth/store.ts`
+- `qa` agent: `apps/mobile/features/qa/devtools-store.ts`, `apps/mobile/features/qa/network-inspector.ts`
+- `plugin` agent: `apps/mobile/plugins/withFidyWidget.js`
+- `calendar` agent: `apps/mobile/features/calendar/lib/calendar-utils.ts`
+
+### Wave 2: Feature-cluster production cleanup
+
+Run these in parallel, but keep each cluster owned by one agent because the files within each cluster share helpers, types, and tests:
+
+- `transactions` cluster: `apps/mobile/features/transactions/lib/repository.ts`, `apps/mobile/features/transactions/lib/group-by-date.ts`, `apps/mobile/features/transactions/services/create-transaction-query-service.ts`, `apps/mobile/features/transactions/store.ts`
+- `email-capture` cluster: `apps/mobile/features/email-capture/lib/repository.ts`, `apps/mobile/features/email-capture/lib/progress-phases.ts`, `apps/mobile/features/email-capture/services/create-parse-email-service.ts`
+- `account-suggestions` cluster: `apps/mobile/features/account-suggestions/lib/dismissals-repository.ts`, `apps/mobile/features/account-suggestions/lib/presentation.ts`, `apps/mobile/features/account-suggestions/services/create-account-suggestion-service.ts`
+- `financial-accounts` cluster: `apps/mobile/features/financial-accounts/lib/repository.ts`, `apps/mobile/features/financial-accounts/lib/opening-balances-repository.ts`, `apps/mobile/features/financial-accounts/lib/balance-repository.ts`
+- `capture-sources` cluster: `apps/mobile/features/capture-sources/services/capture-ingestion.ts`, `apps/mobile/features/capture-sources/lib/dedup.ts`
+
+### Wave 3: Medium shared/service clusters
+
+These are parallelizable, but each one should stay inside its own feature boundary:
+
+- `budget` cluster: `apps/mobile/features/budget/store.ts`, `apps/mobile/features/budget/services/subscribe-budget-to-transactions.ts`
+- `review-queues` cluster: `apps/mobile/features/review-queues/lib/attribution-review-service.ts`
+- `activity` cluster: `apps/mobile/features/activity/services/create-activity-query-service.ts`
+- `search` cluster: `apps/mobile/features/search/lib/repository.ts`
+- `transfers` cluster: `apps/mobile/features/transfers/lib/build-transfer.ts`, `apps/mobile/features/transfers/lib/repository.ts`
+- `ai-chat` cluster: `apps/mobile/features/ai-chat/store.ts`
+- `sync` cluster: residual `apps/mobile/features/sync/services/syncEngine.ts` and `apps/mobile/features/sync/lib/conflict-detection.ts`
+- `shared` cluster: `apps/mobile/shared/effect/runtime.ts`, `apps/mobile/shared/lib/format-date.ts`, `apps/mobile/shared/db/supabase.ts`
+
+### Wave 4: Test burn-down
+
+Once the paired production cluster is stable, test cleanup can fan out aggressively by domain:
+
+- `sync tests`: start with `apps/mobile/__tests__/sync/syncEngine.test.ts`, `sync-service.test.ts`, `sync-pull-integration.test.ts`
+- `email-capture tests`: start with `apps/mobile/__tests__/email-capture/store.test.ts`, `email-pipeline.test.ts`
+- `financial-accounts tests`: start with `apps/mobile/__tests__/financial-accounts/identifiers.test.ts`, `balance-repository.test.ts`, `opening-balances.test.ts`
+- `account-suggestions tests`: `apps/mobile/__tests__/account-suggestions/service.test.ts`
+- `budget/activity/transfers tests`: `budget/repository.test.ts`, `budget/store.test.ts`, `activity/query-service.test.ts`, `transfers/repository.test.ts`
+- `capture-evidence tests`: `apps/mobile/__tests__/capture-evidence/repository.test.ts`
+
+### Parallelization rules for the remaining work
+
+- Do not split one feature cluster across multiple agents in the same wave.
+- Do not start a feature's test cleanup before that feature's production cluster is merged.
+- `withFidyWidget.js` should run alone because it is isolated and likely to be noisy.
+- `shared` cleanup should start after the first two production waves, because shared helpers create merge churn.
+- If a cluster only has parameter-count violations, prefer API reshaping over helper extraction.
+
+## Historical Serial Execution Mode
+
+If one agent is doing the whole burn-down instead of parallel waves, execute the remaining work one cluster at a time and open one MR per cluster.
+
+### Serial rules
+
+- Finish one cluster completely before starting the next.
+- After each cluster:
+  - run the cluster's targeted tests
+  - run `bun run lint:complexity`
+  - refresh the strict report if needed
+  - open one MR
+- Do not batch multiple clusters into one MR.
+- Do not start a feature's test cluster before its production cluster is merged.
+
+### Serial cluster order
+
+1. `notifications`
+2. `goals`
+3. `auth`
+4. `qa`
+5. `plugin`
+6. `calendar`
+7. `transactions`
+8. `email-capture`
+9. `account-suggestions`
+10. `financial-accounts`
+11. `capture-sources`
+12. `budget`
+13. `review-queues`
+14. `activity`
+15. `search`
+16. `transfers`
+17. `ai-chat`
+18. `sync`
+19. `shared`
+20. `sync tests`
+21. `email-capture tests`
+22. `financial-accounts tests`
+23. `account-suggestions tests`
+24. `budget/activity/transfers tests`
+25. `capture-evidence tests`
+
+### Why this order
+
+- start with isolated high-value production hotspots
+- then clear the larger feature clusters
+- then do the medium shared/service cleanup
+- leave test burn-down until the matching production code is stable
+
+## Historical Final Micro-Plan After Waves 1-4
+
+After rebasing against `origin/main` on April 21, 2026, the remaining strict debt is:
+
+- total violations: `57`
+- production violations: `33`
+- test violations: `24`
+
+At this point the old wave model is mostly complete. The remainder should be burned down with a short tail of tiny MRs.
+
+### MR 1: Route params and small branching helpers
+
+Scope:
+
+- `apps/mobile/features/goals/lib/route-params.ts`
+- `apps/mobile/features/search/lib/route-params.ts`
+- `apps/mobile/features/qa/lib/route-params.ts`
+- `apps/mobile/features/search/lib/filters.ts`
+- `apps/mobile/features/settings/store.ts`
+- `apps/mobile/features/categories/store.ts`
+- `apps/mobile/features/onboarding/lib/flow.ts`
 
 Reason:
 
-- it contains the worst function in the repo by a large margin
-- it has both complexity and parameter-count problems
-- it is central enough that improving it will set the boundary pattern for later slices
+- these are isolated helpers and lightweight stores
+- most remaining debt here is small branching or single-file NLOC/parameter cleanup
+- low merge risk and fast payoff
 
-The second slice should be `syncEngine.ts`, because it has the next-highest concentration of real orchestration debt.
+### MR 2: Parameter-count and repository-shape cleanup
+
+Scope:
+
+- `apps/mobile/features/capture-evidence/lib/repository.ts`
+- `apps/mobile/features/transactions/lib/mutation-service.ts`
+- `apps/mobile/features/transactions/lib/format-date.ts`
+- `apps/mobile/features/calendar/lib/repository.ts`
+- `apps/mobile/features/capture-sources/store.ts`
+- `apps/mobile/features/financial-accounts/lib/form-screen.ts`
+
+Reason:
+
+- this batch is mostly `parameter_count` cleanup and small API reshaping
+- they are easier to fix together than as separate one-file PRs
+- the changes should be narrow and mostly mechanical
+
+### MR 3: Remaining production orchestration tail
+
+Scope:
+
+- `apps/mobile/features/sync/services/create-sync-service.ts`
+- `apps/mobile/features/calendar/lib/bill-mutation-service.ts`
+- `apps/mobile/features/ai-chat/hooks/use-streaming-chat.ts`
+- `apps/mobile/features/ai-chat/lib/parse-action.ts`
+- `apps/mobile/features/budget/lib/notifications.ts`
+- `apps/mobile/features/capture-sources/hooks/setup.ts`
+- `apps/mobile/features/financial-accounts/lib/identifiers-repository.ts`
+
+Reason:
+
+- these are the remaining real branching/orchestration hotspots
+- they need slightly more judgment than the parameter-count tail
+- still small enough to fit in one focused cleanup MR
+
+### MR 4: Final production leftovers with adjacent cleanup
+
+Scope:
+
+- any remaining production violations after MRs 1-3
+- likely candidates:
+  - `apps/mobile/features/account-suggestions/lib/dismissals-repository.ts`
+  - `apps/mobile/features/account-suggestions/lib/presentation.ts`
+  - `apps/mobile/features/account-suggestions/services/create-account-suggestion-service.ts`
+  - `apps/mobile/features/email-capture/lib/repository.ts`
+  - `apps/mobile/features/financial-accounts/lib/opening-balances-repository.ts`
+
+Reason:
+
+- by this point the remaining production debt should be a small mixed tail
+- keep one MR reserved for whatever is still left instead of over-planning now
+
+### MR 5: Final test tail
+
+Scope:
+
+- remaining test violations only
+- expected hotspots:
+  - `apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts`
+  - `apps/mobile/__tests__/setup.ts`
+  - `apps/mobile/__tests__/review-queues/attribution-review-service.test.ts`
+  - `apps/mobile/__tests__/goals/repository.test.ts`
+  - any remaining analytics, transactions, notifications, or sync test files
+
+Reason:
+
+- by this point production code should be nearly or fully clean
+- the remaining debt is mostly long anonymous blocks and oversized scenario setup
+- keeping tests in the final MR avoids mixing production and test churn
+
+### Endgame rules
+
+- after each MR, refresh the ledger and reassess before starting the next one
+- if MRs 1-3 eliminate more debt than expected, merge MR 4 into MR 5 or skip it
+- do not reopen broad wave planning unless the remaining debt stops shrinking cleanly
+
+## Historical Starting Point
+
+The initial burn-down started with `apps/mobile/mutations/index.ts` and `syncEngine.ts` because they were the worst hotspots in the original baseline.
+
+That guidance is historical. The burn-down is complete; the sections above are retained only as archive/history.
 
 ## Non-Negotiable Guardrail
 

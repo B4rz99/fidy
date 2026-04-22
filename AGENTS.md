@@ -81,6 +81,10 @@ In this repo, Lizard's JS/TS parser can attribute top-level regex-heavy declarat
 
 In this repo, Lizard can report wildly inflated `parameter_count` for overloaded TypeScript functions because it counts each overload signature before the implementation. We hit this in `apps/mobile/mutations/index.ts`, where `applyTransactionSave` showed `params 39` even though the real implementation only takes `db` and `command`. Fix: do not treat overload-heavy `parameter_count` readings as literal API surfaces; verify the implementation signature before using that metric in plans, docs, or gates.
 
+### Complexity ledger rewrites are zero-only by default (⚠️ AGENT SURPRISE)
+
+Now that the repo's strict Lizard baseline is back to zero, `bun run analyze:complexity:strict:update-ledger` refuses to snapshot a non-zero `plans/lizard-complexity-debt.json`. This protects the gate from being weakened accidentally after the burn-down completed. Fix: treat `update-ledger` as a zero-baseline refresh only; deliberate repo-wide baseline rewrites must call `scripts/run-lizard-strict.sh --write-ledger --allow-nonzero-write` explicitly.
+
 ## External Fidy Vault
 
 The persistent Fidy knowledge vault lives outside the repo on the local machine.

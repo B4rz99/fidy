@@ -13,10 +13,10 @@ Primary commands:
 - `bun run mobile` starts the Expo app.
 - `bun run landing` serves the static landing site.
 - `bun run lint` runs root Biome checks.
-- `bun run lint:complexity` runs the enforced Lizard gate (`CCN <= 5`, `NLOC <= 30`, `parameter_count <= 3`) against the checked-in debt ledger.
+- `bun run lint:complexity` runs the enforced Lizard gate (`CCN <= 5`, `NLOC <= 30`, `parameter_count <= 3`) against the checked-in zero-baseline ledger.
 - `bun run lint:mobile` runs Expo ESLint for the mobile app.
-- `bun run analyze:complexity:strict` runs the strict Lizard gate and writes reports to `.context/reports/lizard/strict/`.
-- `bun run analyze:complexity:strict:update-ledger` refreshes the checked-in strict debt ledger after an intentional burn-down step.
+- `bun run analyze:complexity:strict` runs the strict Lizard scan, writes reports to `.context/reports/lizard/strict/`, and checks them against the checked-in baseline.
+- `bun run analyze:complexity:strict:update-ledger` rewrites the checked-in baseline ledger. In steady state this should remain zero and is maintenance-only.
 - `bun run typecheck` builds shared packages and typechecks the workspace.
 - `bun run test` runs the mobile Vitest suite.
 - `bun run test:coverage` runs the mobile tests with coverage.
@@ -24,7 +24,7 @@ Primary commands:
 
 ## Complexity Policy
 
-This repo treats function complexity as a design constraint, not just a lint metric. The target is `CCN <= 5`, `NLOC <= 30`, and `parameter_count <= 3` because smaller branching surfaces, shorter functions, and narrower interfaces reduce cognitive load, improve testability, and force orchestration code into deeper modules instead of growing monolithic workflow functions. The guardrail is architectural: do not "fix" the metric with shallow wrapper extraction or generic option bags. Refactors should reduce responsibility per function and improve boundary design.
+This repo treats function complexity as a design constraint, not just a lint metric. The target is `CCN <= 5`, `NLOC <= 30`, and `parameter_count <= 3` because smaller branching surfaces, shorter functions, and narrower interfaces reduce cognitive load, improve testability, and force orchestration code into deeper modules instead of growing monolithic workflow functions. The guardrail is architectural: do not "fix" the metric with shallow wrapper extraction or generic option bags. Refactors should reduce responsibility per function and improve boundary design. The checked-in ledger is now a zero baseline, so rewriting it is a rare maintenance operation rather than part of normal development.
 
 ## Repo Layout
 
