@@ -1,34 +1,40 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, test } from "vitest";
+import { expect, test } from "vitest";
 
-describe("QA tools screen", () => {
-  const source = readFileSync(
-    resolve(__dirname, "../../features/qa/components/QaToolsScreen.tsx"),
-    "utf-8"
-  );
+function readSource(relativePath: string) {
+  return readFileSync(resolve(__dirname, relativePath), "utf-8");
+}
 
-  test("contains seeded scenario buttons and direct entry points", () => {
-    expect(source).toContain("transfer-conflict");
-    expect(source).toContain("QA_TARGETS.addTransfer");
-    expect(source).toContain("QA_TARGETS.transferConflict");
-  });
+const screenSource = readSource("../../features/qa/components/QaToolsScreen.tsx");
+const cardButtonSource = readSource("../../features/qa/components/qa-tools/QaToolsCardButton.tsx");
+const constantsSource = readSource("../../features/qa/components/qa-tools/QaTools.constants.ts");
+const contentSource = readSource("../../features/qa/components/qa-tools/QaToolsContent.tsx");
+const runnerSource = readSource("../../features/qa/components/qa-tools/useQaScenarioRunner.ts");
 
-  test("auto-starts routed QA scenarios when search params change after mount", () => {
-    expect(source).toContain("parseLocalQaProfileRouteParam(routeProfile)");
-    expect(source).toContain("parseQaTargetRouteParam(routeTarget)");
-    expect(source).toContain("if (!localQaAvailable || !nextProfile) return;");
-    expect(source).toContain("useEffect(() => {");
-    expect(source).toContain("[localQaAvailable, routeProfile, routeTarget, runScenario]");
-  });
+test("contains seeded scenario buttons and direct entry points", () => {
+  expect(constantsSource).toContain("transfer-conflict");
+  expect(constantsSource).toContain("QA_TARGETS.addTransfer");
+  expect(constantsSource).toContain("QA_TARGETS.transferConflict");
+});
 
-  test("contains QA feature flag toggles, reset tools, and inspectors", () => {
-    expect(source).toContain('t("qaTools.flagsTitle")');
-    expect(source).toContain('t("qaTools.actionsTitle")');
-    expect(source).toContain('t("qaTools.logsTitle")');
-    expect(source).toContain('t("qaTools.networkTitle")');
-    expect(source).toContain(`testID={\`qa.flag.\${flagName}\`}`);
-    expect(source).toContain('testID="qa.action.clear-network-events"');
-    expect(source).toContain("JSON.stringify(entry.context)");
-  });
+test("auto-starts routed QA scenarios when search params change after mount", () => {
+  expect(runnerSource).toContain("parseLocalQaProfileRouteParam(routeProfile)");
+  expect(runnerSource).toContain("parseQaTargetRouteParam(routeTarget) ?? undefined");
+  expect(runnerSource).toContain("if (!localQaAvailable) {");
+  expect(runnerSource).toContain("if (!profile) {");
+  expect(runnerSource).toContain("useEffect(() => {");
+  expect(runnerSource).toContain("[localQaAvailable, routeProfile, routeTarget, runScenario]");
+});
+
+test("contains QA feature flag toggles, reset tools, and inspectors", () => {
+  expect(screenSource).toContain("<QaToolsContent");
+  expect(contentSource).toContain('t("qaTools.flagsTitle")');
+  expect(contentSource).toContain('t("qaTools.actionsTitle")');
+  expect(contentSource).toContain('t("qaTools.logsTitle")');
+  expect(contentSource).toContain('t("qaTools.networkTitle")');
+  expect(contentSource).toContain(`testId={\`qa.flag.\${flagName}\`}`);
+  expect(contentSource).toContain('testId="qa.action.clear-network-events"');
+  expect(cardButtonSource).toContain("testID={testId}");
+  expect(contentSource).toContain("JSON.stringify(entry.context)");
 });
