@@ -1,0 +1,147 @@
+import { useCallback, useRef, useState } from "react";
+import { handleNumpadPress } from "@/features/transactions";
+import { Keyboard, Platform } from "@/shared/components/rn";
+import { useBlinkingCursor } from "@/shared/hooks";
+import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
+import type { GoalType } from "../../schema";
+
+export type GoalSheetCursorStyle = ReturnType<typeof useBlinkingCursor>["cursorStyle"];
+
+export type GoalSheetFormModel = {
+  readonly amount: number;
+  readonly cursorStyle: GoalSheetCursorStyle;
+  readonly digits: string;
+  readonly displayAmount: string;
+  readonly goalType: GoalType;
+  readonly handleAmountPress: () => void;
+  readonly handleDateChange: (_event: unknown, date?: Date) => void;
+  readonly handleDateFieldPress: () => void;
+  readonly handleInterestRateFocus: () => void;
+  readonly handleKey: (key: string) => void;
+  readonly handleNameFocus: () => void;
+  readonly interestRate: string;
+  readonly name: string;
+  readonly numpadTarget: "amount" | null;
+  readonly setGoalType: (goalType: GoalType) => void;
+  readonly setInterestRate: (interestRate: string) => void;
+  readonly setName: (name: string) => void;
+  readonly showDatePicker: boolean;
+  readonly targetDate: Date | null;
+  readonly clearTargetDate: () => void;
+};
+
+type GoalSheetFormOptions = {
+  readonly initialDigits?: string;
+  readonly initialGoalType: GoalType;
+  readonly initialInterestRate?: string;
+  readonly initialName?: string;
+  readonly initialNumpadTarget?: "amount" | null;
+  readonly initialTargetDate?: Date | null;
+};
+
+function useGoalSheetManualFocus(
+  setNumpadTarget: (value: "amount" | null) => void,
+  setShowDatePicker: (value: boolean) => void
+) {
+  return useCallback(() => {
+    setNumpadTarget(null);
+    setShowDatePicker(false);
+  }, [setNumpadTarget, setShowDatePicker]);
+}
+
+function useGoalSheetDates(initialTargetDate: Date | null) {
+  const [targetDate, setTargetDate] = useState<Date | null>(initialTargetDate ?? null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  return {
+    clearTargetDate: useCallback(() => {
+      setTargetDate(null);
+      setShowDatePicker(false);
+    }, []),
+    handleDateChange: useCallback((_event: unknown, date?: Date) => {
+      if (Platform.OS === "android") setShowDatePicker(false);
+      if (date) setTargetDate(date);
+    }, []),
+    handleDateFieldPress: useCallback(() => {
+      Keyboard.dismiss();
+      setShowDatePicker(true);
+    }, []),
+    setShowDatePicker,
+    showDatePicker,
+    targetDate,
+  };
+}
+
+function useGoalSheetNumpad(
+  initialDigits: string,
+  initialTarget: "amount" | null,
+  setShowDatePicker: (value: boolean) => void
+) {
+  const [digits, setDigits] = useState(initialDigits);
+  const [numpadTarget, setNumpadTarget] = useState<"amount" | null>(initialTarget);
+  const digitsRef = useRef(digits);
+  digitsRef.current = digits;
+
+  return {
+    digits,
+    displayAmount: digits.length > 0 ? formatInputDisplay(digits) : "$",
+    handleAmountPress: useCallback(() => {
+      Keyboard.dismiss();
+      setShowDatePicker(false);
+      setNumpadTarget("amount");
+    }, [setShowDatePicker]),
+    handleKey: useCallback(
+      (key: string) => {
+        if (numpadTarget === "amount") {
+          setDigits(handleNumpadPress(digitsRef.current, key));
+        }
+      },
+      [numpadTarget]
+    ),
+    numpadTarget,
+    setNumpadTarget,
+  };
+}
+
+export function useGoalSheetForm(options: GoalSheetFormOptions): GoalSheetFormModel {
+  const [goalType, setGoalType] = useState<GoalType>(options.initialGoalType);
+  const [name, setName] = useState(options.initialName ?? "");
+  const [interestRate, setInterestRate] = useState(options.initialInterestRate ?? "");
+  const { cursorStyle } = useBlinkingCursor();
+  const dates = useGoalSheetDates(options.initialTargetDate ?? null);
+  const numpad = useGoalSheetNumpad(
+    options.initialDigits ?? "",
+    options.initialNumpadTarget ?? null,
+    dates.setShowDatePicker
+  );
+  const handleManualFieldFocus = useGoalSheetManualFocus(
+    numpad.setNumpadTarget,
+    dates.setShowDatePicker
+  );
+
+  return {
+    amount: parseDigitsToAmount(numpad.digits),
+    cursorStyle,
+    digits: numpad.digits,
+    displayAmount: numpad.displayAmount,
+    goalType,
+    handleAmountPress: numpad.handleAmountPress,
+    handleDateChange: dates.handleDateChange,
+    handleDateFieldPress: useCallback(() => {
+      handleManualFieldFocus();
+      dates.handleDateFieldPress();
+    }, [dates.handleDateFieldPress, handleManualFieldFocus]),
+    handleInterestRateFocus: handleManualFieldFocus,
+    handleKey: numpad.handleKey,
+    handleNameFocus: handleManualFieldFocus,
+    interestRate,
+    name,
+    numpadTarget: numpad.numpadTarget,
+    setGoalType,
+    setInterestRate,
+    setName,
+    showDatePicker: dates.showDatePicker,
+    targetDate: dates.targetDate,
+    clearTargetDate: dates.clearTargetDate,
+  };
+}
