@@ -4,6 +4,17 @@ Keep this file lean. Add only repo-specific rules and surprises that save future
 
 ## Read First
 
+### Financial accounts
+
+For financial accounts, account attribution, post-sync account suggestions, transfers, or default-account bootstrap, read:
+
+- `CONTEXT.md`
+- `docs/adr/0001-financial-accounts-and-transfers.md`
+- `plans/financial-accounts-v1.md`
+- `plans/financial-accounts-prd.md`
+
+`CONTEXT.md` is the source of truth if they differ.
+
 ## Workflow Surprises
 
 - Vitest: do not use async `importOriginal` global mocks for heavy modules in `__tests__/setup.ts`; prefer sync or file-local mocks.
@@ -33,13 +44,14 @@ Keep this file lean. Add only repo-specific rules and surprises that save future
 
 ## Code Style
 
-- Financial-core `lib/`, schemas, and utils are pure/functional. Infrastructure edges may use idiomatic React or Zustand patterns.
+- Financial-core `lib/`, schemas, and utils are pure/functional. Pure logic lives in `lib/`; side effects stay in stores/hooks. Infrastructure edges may use idiomatic React or Zustand patterns.
 - In pure logic: no `let`/`var`, no `.push()` accumulation, no parameter reassignment, no `for`/`while`; prefer `map`, `filter`, `reduce`, and explicit dependencies.
 - Keep functions atomic: return results instead of mutating closure or module state. Stateful utilities belong outside `lib/`.
+- Service exception: imperative loops are acceptable only for streaming or worker-pool I/O, and should include a comment explaining why.
 - Prefer inline derivation, keyed remounts, event handlers, `useMountEffect`, or TanStack Query before reaching for `useEffect`.
 - Allowed `useEffect` cases: subscriptions with cleanup, Reanimated animations, and app bootstrap in `_layout.tsx`.
 - Use branded IDs, dates, and money types from `shared/types/branded.ts`. New entities need a branded type, typed generator, and Drizzle `$type<>()`.
-- Branded assertions stay at boundaries. UI code should not use direct `as UserId` / `as TransactionId` / `as IsoDate` assertions. `bun run lint:brands` enforces this.
+- Branded assertions stay at boundaries. UI code should not use direct `as UserId` / `as TransactionId` / `as BillId` / `as CategoryId` / `as IsoDate` / `as IsoDateTime` assertions. If `bun run lint:brands` fails, move the proof into `shared/types/assertions.ts`, a trusted constructor such as `shared/lib/format-date.ts` or `shared/lib/generate-id.ts`, or a boundary module such as `schema.ts`, `data/`, `repository/`, or `features/auth/public.ts`.
 
 ## Architecture
 
