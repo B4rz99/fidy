@@ -83,7 +83,9 @@ const listSourceFiles = (root: string, relativeDir = ""): string[] => {
 };
 
 const countLines = (contents: string): number =>
-  contents.length === 0 ? 0 : contents.split(/\r?\n/).length;
+  contents.length === 0
+    ? 0
+    : (contents.match(/\n/g)?.length ?? 0) + (contents.endsWith("\n") ? 0 : 1);
 
 const categorizeViolation = (relativePath: string): string => {
   if (relativePath.includes("/components/")) return "components";

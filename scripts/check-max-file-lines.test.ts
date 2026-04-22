@@ -71,3 +71,22 @@ test("ignores structural exemptions and still reports remaining oversized files"
   expect(result.stdout.toString()).not.toContain("apps/mobile/shared/i18n/locales/en.ts");
   expect(result.stdout.toString()).not.toContain("supabase/functions/weekly-digest/index.ts");
 });
+
+test("does not overcount a file that ends with a trailing newline", () => {
+  const root = createTempDir();
+  const absolutePath = join(root, "apps/mobile/features/demo/components/ThresholdScreen.tsx");
+  mkdirSync(dirname(absolutePath), { recursive: true });
+  writeFileSync(absolutePath, "line_1\nline_2\nline_3\nline_4\nline_5\n");
+
+  const result = Bun.spawnSync({
+    cmd: ["bun", "scripts/check-max-file-lines.ts", "--root", root, "--max-lines", "5"],
+    cwd: process.cwd(),
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.stdout.toString()).toContain("Oversized files: 0");
+  expect(result.stdout.toString()).toContain("No oversized files found.");
+  expect(result.stdout.toString()).not.toContain("ThresholdScreen.tsx");
+});
