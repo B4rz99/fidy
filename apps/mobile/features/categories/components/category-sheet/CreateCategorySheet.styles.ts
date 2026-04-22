@@ -1,0 +1,86 @@
+import { StyleSheet } from "@/shared/components/rn";
+
+export const styles = StyleSheet.create({
+  container: { flex: 1 },
+  scrollContent: {
+    paddingTop: 12,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    gap: 16,
+  },
+  grabBar: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+  },
+  title: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  previewRow: { alignItems: "center" },
+  previewPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    height: 48,
+    paddingTop: 8,
+    paddingBottom: 8,
+    paddingLeft: 14,
+    paddingRight: 20,
+    borderRadius: 24,
+  },
+  previewText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 15,
+    color: "#FFFFFF",
+  },
+  fieldGroup: { gap: 8 },
+  fieldLabel: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 13,
+  },
+  input: {
+    borderRadius: 12,
+    borderCurve: "continuous",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+  },
+  iconGridContent: { gap: 8 },
+  iconGridRow: { gap: 8, justifyContent: "flex-start" },
+  iconCellWrapper: { flex: 1, alignItems: "center" },
+  iconCell: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  swatchGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  swatch: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  createButton: {
+    borderRadius: 12,
+    borderCurve: "continuous",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 48,
+  },
+  createButtonText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 16,
+    color: "#FFFFFF",
+  },
+});
