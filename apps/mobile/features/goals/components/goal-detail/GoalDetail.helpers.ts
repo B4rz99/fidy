@@ -3,6 +3,7 @@ import { formatMoney } from "@/shared/lib";
 import type { GoalProjection, Milestone } from "../../lib/derive";
 import { deriveMonthlyMilestones } from "../../lib/derive";
 import type { GoalContribution } from "../../schema";
+import type { GoalWithProgress } from "../../types";
 import type { CelebrationMilestone } from "../CelebrationModal";
 
 export type TabType = "contributions" | "aiPlan";
@@ -43,7 +44,18 @@ export type GoalProjectionCopy =
       };
     };
 
+export type GoalMilestoneBaseline = {
+  readonly goalId: string | null;
+  readonly percent: number | null;
+};
+
+export type GoalMilestoneState = {
+  readonly baseline: GoalMilestoneBaseline;
+  readonly crossedMilestone: CelebrationMilestone | null;
+};
+
 const MILESTONE_THRESHOLDS: readonly CelebrationMilestone[] = [25, 50, 75, 100];
+const EMPTY_GOAL_MILESTONE_BASELINE: GoalMilestoneBaseline = { goalId: null, percent: null };
 
 export function checkMilestoneCrossed(
   previousPercent: number,
@@ -100,6 +112,64 @@ export function buildGoalRecommendationCopy(projection: GoalProjection): GoalRec
       };
 }
 
+function buildLowConfidenceProjectionCopy(projection: GoalProjection): GoalProjectionCopy {
+  return projection.monthsToGo == null
+    ? { key: "goals.detail.setTargetDate" }
+    : {
+        key: "goals.detail.roughEstimate",
+        values: { months: String(projection.monthsToGo) },
+      };
+}
+
+function buildEstimatedProjectionCopy(projection: GoalProjection): GoalProjectionCopy {
+  return {
+    key: "goals.detail.estimated",
+    values: {
+      date: projection.projectedDate ? format(projection.projectedDate, "MMMM yyyy") : "",
+    },
+  };
+}
+
+function buildGoalMilestoneBaseline(goalData: GoalWithProgress): GoalMilestoneBaseline {
+  return {
+    goalId: goalData.goal.id,
+    percent: goalData.progress.percentComplete,
+  };
+}
+
+function getGoalMilestoneCrossing(
+  baseline: GoalMilestoneBaseline,
+  nextBaseline: GoalMilestoneBaseline
+): CelebrationMilestone | null {
+  return baseline.percent != null && baseline.percent !== nextBaseline.percent
+    ? checkMilestoneCrossed(baseline.percent, nextBaseline.percent ?? 0)
+    : null;
+}
+
+export function getNextGoalMilestoneState(
+  baseline: GoalMilestoneBaseline,
+  goalData: GoalWithProgress | null
+): GoalMilestoneState {
+  if (goalData == null) {
+    return {
+      baseline: EMPTY_GOAL_MILESTONE_BASELINE,
+      crossedMilestone: null,
+    };
+  }
+
+  const nextBaseline = buildGoalMilestoneBaseline(goalData);
+
+  return baseline.goalId !== goalData.goal.id
+    ? {
+        baseline: nextBaseline,
+        crossedMilestone: null,
+      }
+    : {
+        baseline: nextBaseline,
+        crossedMilestone: getGoalMilestoneCrossing(baseline, nextBaseline),
+      };
+}
+
 export function buildGoalProjectionCopy(projection: GoalProjection): GoalProjectionCopy {
   if (projection.confidence === "none") {
     return { key: "goals.detail.setTargetDate" };
@@ -110,16 +180,8 @@ export function buildGoalProjectionCopy(projection: GoalProjection): GoalProject
   }
 
   return projection.confidence === "low"
-    ? {
-        key: "goals.detail.roughEstimate",
-        values: { months: String(projection.monthsToGo) },
-      }
-    : {
-        key: "goals.detail.estimated",
-        values: {
-          date: projection.projectedDate ? format(projection.projectedDate, "MMMM yyyy") : "",
-        },
-      };
+    ? buildLowConfidenceProjectionCopy(projection)
+    : buildEstimatedProjectionCopy(projection);
 }
 
 export function hasLowConfidenceProjection(projection: GoalProjection): boolean {

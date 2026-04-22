@@ -12,7 +12,8 @@ import {
   buildContributionRows,
   buildGoalMilestones,
   buildGoalRecommendationCopy,
-  checkMilestoneCrossed,
+  type GoalMilestoneBaseline,
+  getNextGoalMilestoneState,
   type TabType,
 } from "./GoalDetail.helpers";
 
@@ -84,30 +85,17 @@ function useGoalDetailCelebration(goalData: GoalWithProgress | null) {
   const [celebrationMilestone, setCelebrationMilestone] = useState<CelebrationMilestone | null>(
     null
   );
-  const previousPercentRef = useRef<number | null>(null);
+  const milestoneBaselineRef = useRef<GoalMilestoneBaseline>({ goalId: null, percent: null });
 
-  useSubscription(
-    () => {
-      if (goalData == null) {
-        return;
-      }
+  useSubscription(() => {
+    const nextState = getNextGoalMilestoneState(milestoneBaselineRef.current, goalData);
 
-      const previousPercent = previousPercentRef.current;
-      const currentPercent = goalData.progress.percentComplete;
-      const crossedMilestone =
-        previousPercent != null && previousPercent !== currentPercent
-          ? checkMilestoneCrossed(previousPercent, currentPercent)
-          : null;
+    if (nextState.crossedMilestone != null) {
+      setCelebrationMilestone(nextState.crossedMilestone);
+    }
 
-      if (crossedMilestone != null) {
-        setCelebrationMilestone(crossedMilestone);
-      }
-
-      previousPercentRef.current = currentPercent;
-    },
-    [goalData],
-    goalData != null
-  );
+    milestoneBaselineRef.current = nextState.baseline;
+  }, [goalData]);
 
   return {
     celebrationMilestone,
