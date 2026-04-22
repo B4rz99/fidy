@@ -25,6 +25,10 @@ The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async 
 
 Workspace wrapper scripts like `bun run --cwd apps/mobile lint` can behave differently across local checkouts, worktrees, and CI because Bun's default system-shell execution does not resolve workspace binaries consistently. In this repo, root scripts that delegate into `apps/*` or `packages/*` should use `bun run --cwd <dir> --shell=bun <script>` so `expo`, `eslint`, `vitest`, and similar local bins resolve the same way everywhere.
 
+### Bun install blocks latest packages unless you override minimum release age (⚠️ AGENT SURPRISE)
+
+This repo's `bunfig.toml` sets `minimumReleaseAge = 604800` (7 days). That means `bun install` will reject very recent releases like freshly published TypeScript or `typescript-eslint` versions even when the version specifier is explicit. Fix: when you intentionally need to validate or adopt the latest published version, run `bun install --minimum-release-age 0` (or another explicit override) for that session instead of assuming the registry or lockfile is broken.
+
 ### Drizzle migration generation does not update `apps/mobile/drizzle/migrations.js` (⚠️ AGENT SURPRISE)
 
 Running `bunx drizzle-kit generate` in `apps/mobile` creates the new SQL file, snapshot, and updates `drizzle/meta/_journal.json`, but it does **not** add the new import/export entry in `apps/mobile/drizzle/migrations.js`. Tests and runtime migration loading use `migrations.js`, so after generating a migration you must manually add the new `m00xx` import and include it in the exported `migrations` map.
