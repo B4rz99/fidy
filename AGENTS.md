@@ -1,191 +1,61 @@
-## Agent Notes & Surprises
-
-The role of this file is to describe common mistakes and confusion points that agents might encounter as they work in this project. If you ever encounter something in the project that surprises you, please alert the developer working with you and indicate that this is the case in this AGENTS.md file to help prevent future agents from having the same issue
-
-### Financial accounts implementation docs live in-repo
-
-For work on financial accounts, account attribution, post-sync account suggestions, transfers, or default-account bootstrap, read these repo-local docs before coding:
-
-- `CONTEXT.md` — canonical domain language and behavioral rules
-- `docs/adr/0001-financial-accounts-and-transfers.md` — architectural rationale
-- `plans/financial-accounts-v1.md` — implementation slicing and sequence
-- `plans/financial-accounts-prd.md` — high-level product brief
-
-Treat `CONTEXT.md` as the source of truth when these documents differ in level of detail.
-
-### Vitest: avoid async `importOriginal` in global setup mocks (⚠️ AGENT SURPRISE)
-
-The global test setup (`__tests__/setup.ts`) must NOT use `vi.mock("...", async (importOriginal) => ...)` for heavy modules like `date-fns`. The async `importOriginal` call creates module-loading contention across parallel Vitest workers, causing intermittent timeouts in tests that dynamically import large module trees (e.g. `syncEngine.ts` → budget + goals + transactions). Fix: remove the global mock entirely, or provide a synchronous factory. Tests needing deterministic behavior should mock at the file level with `vi.doMock` or `vi.mock`.
-
-### Lefthook pre-push can silently skip in detached HEAD (⚠️ AGENT SURPRISE)
-
-`lefthook`'s default pre-push file detection can skip every command when the checkout is on detached `HEAD` or lacks a local base branch/upstream (for example, `git diff HEAD @{push}` and `git diff HEAD main` both fail). In this repo, pre-push commands should enumerate tracked files explicitly so lint/typecheck/test still run in linked worktrees and detached checkouts.
-
-### Bun workspace scripts need `--shell=bun` for parity (⚠️ AGENT SURPRISE)
-
-Workspace wrapper scripts like `bun run --cwd apps/mobile lint` can behave differently across local checkouts, worktrees, and CI because Bun's default system-shell execution does not resolve workspace binaries consistently. In this repo, root scripts that delegate into `apps/*` or `packages/*` should use `bun run --cwd <dir> --shell=bun <script>` so `expo`, `eslint`, `vitest`, and similar local bins resolve the same way everywhere.
-
-### Bun install blocks latest packages unless you override minimum release age (⚠️ AGENT SURPRISE)
-
-This repo's `bunfig.toml` sets `minimumReleaseAge = 604800` (7 days). That means `bun install` will reject very recent releases like freshly published TypeScript or `typescript-eslint` versions even when the version specifier is explicit. Fix: when you intentionally need to validate or adopt the latest published version, run `bun install --minimum-release-age 0` (or another explicit override) for that session instead of assuming the registry or lockfile is broken.
-
-### Drizzle migration generation does not update `apps/mobile/drizzle/migrations.js` (⚠️ AGENT SURPRISE)
-
-Running `bunx drizzle-kit generate` in `apps/mobile` creates the new SQL file, snapshot, and updates `drizzle/meta/_journal.json`, but it does **not** add the new import/export entry in `apps/mobile/drizzle/migrations.js`. Tests and runtime migration loading use `migrations.js`, so after generating a migration you must manually add the new `m00xx` import and include it in the exported `migrations` map.
-
-### Vault bridge must be initialized before reading `.context/fidy-vault` (⚠️ AGENT SURPRISE)
-
-Fresh workspaces may not have the `.context/fidy-vault` symlink yet, even when the external vault is correctly configured. Agents that try to read `.context/fidy-vault/AGENTS.md` before running `bun run vault:doctor` can fail with "No such file or directory". Fix: run `bun run vault:doctor` first, then read `.context/fidy-vault/AGENTS.md`.
-
-### Effect runners should squash failures at the boundary (⚠️ AGENT SURPRISE)
-
-`Effect.runPromise(...)` rejects with Effect's `FiberFailure` wrapper, not the original thrown error. In this repo that changes observable behavior in tests and error reporting paths that expect the original `Error` instance. Fix: shared runners like `shared/effect/runtime.ts` should use `Effect.runPromiseExit(...)` and `Cause.squash(...)` before rethrowing so module boundaries preserve the original failure.
-
-### XcodeBuildMCP persistence and tool exposure differ in this harness (⚠️ AGENT SURPRISE)
-
-In this Codex/Conductor harness, `session_set_defaults(..., persist: true)` can try to write `/.xcodebuildmcp/config.yaml` instead of the workspace root, so it is not a reliable way to create repo-local XcodeBuildMCP config. Also, the built-in tool wrappers may expose only a subset of XcodeBuildMCP even when the latest server supports more workflows like `ui-automation/tap` and `type-text`. Fix: commit an explicit workspace config at `.xcodebuildmcp/config.yaml`, keep the Codex MCP entry in `~/.codex/config.toml`, and use the packaged CLI directly from the repo root when wrappers are missing, for example `npx -y xcodebuildmcp@latest ui-automation snapshot-ui --simulator-id ...`.
-
-### Root Bun test scripts need `./` for explicit file execution (⚠️ AGENT SURPRISE)
-
-At the repo root, `bun test scripts/check-branded-boundaries.test.ts` can fail with `Cannot find module .../scripts/check-branded-boundaries.test.ts from ''`, even though the file exists. In this checkout Bun only resolved the direct file path reliably when it was prefixed with `./`. Fix: root package scripts that execute a single test file should use `bun test ./scripts/...` instead of `bun test scripts/...`.
-
-### `shared/db` barrel can pull React Native runtime into pure tests (⚠️ AGENT SURPRISE)
-
-Importing `@/shared/db` from a supposedly pure repository/query module also loads `shared/db/client.ts`, which reaches `shared/lib` and mobile-only runtime dependencies like `@sentry/react-native` and toast code. That can break isolated Bun imports and make data-layer tests unexpectedly depend on the React Native runtime. Fix: in pure repository/query modules and DB-heavy tests, prefer deep imports from `shared/db/schema`, `shared/db/enqueue-sync`, and `shared/db/client` instead of the `shared/db` barrel.
-
-### Notification deep-link params can drift from screen expectations (⚠️ AGENT SURPRISE)
-
-This repo has already had one mismatch where notification routes used legacy params like `/search?category=...` and `/goal-detail?id=...` while the destination screens expected different boundaries. The current app accepts both the legacy params and the normalized forms (`categoryId`, `goalId`) so existing queued notifications still work. Fix: when adding or refactoring notification deep links, update both the route builders and the destination route-param readers together, and keep a regression probe for notification taps in QA.
-
-### Rebased PR branches can replay already-merged slice commits (⚠️ AGENT SURPRISE)
-
-When a new slice branch is created from an older feature branch and that parent PR later merges to `main`, the standard `git pull --rebase --autostash origin main` flow can try to replay those already-merged commits and produce conflicts in unrelated files. In this repo, the safer recovery is: stash the current work, create a fresh branch from `origin/main`, then reapply the stash there before opening the next PR.
-
-### Vitest: avoid dynamic imports in `beforeEach` for heavy modules (⚠️ AGENT SURPRISE)
-
-Tests that `await import(...)` a large service module inside `beforeEach` can intermittently hit the 10s hook timeout during full-suite runs, even if the file passes in isolation. We hit this in `__tests__/email-capture/email-pipeline.test.ts` because the hook imported `email-pipeline.ts`, which itself pulled broad barrels like `@/features/transactions` and `@/shared/lib`. Fix: prefer static imports (or `beforeAll`) for the module under test, and narrow production imports to deep modules when the test only needs a small subset of functionality.
-
-### Dark-mode category icon colors are inconsistent between screens (⚠️ AGENT SURPRISE)
-
-`apps/mobile/features/categories/components/CategoriesScreen.tsx` special-cases the clothing category icon color in dark mode (`#1A1A1A` -> `#E0E0E0`) so it stays visible on dark surfaces, but the shared `apps/mobile/features/transactions/components/CategoryPill.tsx` does not. If you mirror category visuals from the categories screen into transaction-entry or budget-selection flows, the clothing icon can become too low-contrast unless you add the same override or normalize the shared category-color treatment first.
-
-### `features/qa` barrel must lazy-load session seeding (⚠️ AGENT SURPRISE)
-
-Do **not** eagerly re-export `start-local-qa-session` from `apps/mobile/features/qa/index.ts`. That module imports the Drizzle migration bundle, which in turn loads raw `apps/mobile/drizzle/*.sql` files. If the QA barrel is imported from broad surfaces like `features/auth/store.ts`, unrelated Vitest suites can start failing with SQL parse errors or long import chains. Fix: keep `loadLocalQaSession` / `clearLocalQaSession` in the barrel, but make `startLocalQaSession()` a lazy wrapper that `import()`s `./start-local-qa-session` only when called.
-
-### Pure services should deep-import logic, not feature barrels with UI (⚠️ AGENT SURPRISE)
-
-Feature barrels like `features/transactions/index.ts` and `features/qa/index.ts` can export React/React Native components alongside repositories and stores. When a pure module such as `features/sync/services/sync.ts` imports those barrels, Vitest/tsx may traverse `react-native`'s Flow entrypoints during non-UI tests and fail with `Unexpected token 'typeof'`. Fix: in services/repositories/tests, deep-import the exact `lib/` or `store` module you need, and keep UI exports in separate `routes.public.ts` or component barrels.
-
-### Lizard can overcount regex-heavy JS/TS files (⚠️ AGENT SURPRISE)
-
-In this repo, Lizard's JS/TS parser can attribute top-level regex-heavy declarations to the preceding function and inflate its reported CCN/NLOC. We hit this in `apps/mobile/features/capture-sources/lib/notification-parser.ts`, where Lizard reported `parseAmount` as `CCN 44` even though the function body is small and most of the file is regex constants. Fix: treat Lizard as a hotspot finder, manually verify regex-heavy/config-heavy files before refactoring or blocking CI on them, and use stricter enforcement only on validated production hotspots instead of the exploratory `token_count>0` / `parameter_count>0` profile.
-
-### Lizard counts TypeScript overload signatures as extra parameters (⚠️ AGENT SURPRISE)
-
-In this repo, Lizard can report wildly inflated `parameter_count` for overloaded TypeScript functions because it counts each overload signature before the implementation. We hit this in `apps/mobile/mutations/index.ts`, where `applyTransactionSave` showed `params 39` even though the real implementation only takes `db` and `command`. Fix: do not treat overload-heavy `parameter_count` readings as literal API surfaces; verify the implementation signature before using that metric in plans, docs, or gates.
-
-### Complexity ledger rewrites are zero-only by default (⚠️ AGENT SURPRISE)
-
-Now that the repo's strict Lizard baseline is back to zero, `bun run analyze:complexity:strict:update-ledger` refuses to snapshot a non-zero `plans/lizard-complexity-debt.json`. This protects the gate from being weakened accidentally after the burn-down completed. Fix: treat `update-ledger` as a zero-baseline refresh only; deliberate repo-wide baseline rewrites must call `scripts/run-lizard-strict.sh --write-ledger --allow-nonzero-write` explicitly.
-
-## External Fidy Vault
-
-The persistent Fidy knowledge vault lives outside the repo on the local machine.
-
-- Use `.context/fidy-vault` as the stable workspace path. It is a symlink to the external vault.
-- Before doing ingest/query/lint work in the vault, run `bun run vault:doctor`.
-- After `vault:doctor` succeeds, read `.context/fidy-vault/AGENTS.md`.
-- The vault owns `raw/` (immutable sources), `wiki/` (LLM-maintained synthesis), `index.md`, and `log.md`.
-- When you add or revise vault knowledge, update `index.md` and append a dated entry to `log.md`.
-- `bun run vault:doctor` checks that the bridge and core files exist.
-
-## Testing Strategy
-
-Use these rules:
-- Test the deepest module that owns the behavior. Use boundary tests for orchestration. Keep direct unit tests for stable pure rules like derivations, validators, builders, and predicates.
-- If coverage drops in a store, hook, or other delegating layer after a refactor, treat it as a seam problem first. Prefer extracting and testing a deeper boundary before adding shallow tests.
-- Async store tests that depend on mutable refs like `dbRef`, `userIdRef`, or selected time ranges must cover stale completions after context changes, cross-user writes after identity changes, and loading-state cleanup when a request becomes stale.
-- Tests around `shared/mutations/write-through.ts` and its caller-owned mutation boundaries must prove transaction semantics, not just final state. `AnyDb` test doubles for those paths must implement `transaction()`.
-
-## Code Style: Functional Programming
-
-All code in the financial core (`lib/`, schemas, utils) MUST follow functional programming patterns. Infrastructure edges (stores, hooks, DB clients) are exempt where idiomatic React/Zustand patterns require it.
-
-- No mutable variables (`let`, `var`) in pure logic — use `const` only
-- No `.push()` accumulation — use `.map()`, `.filter()`, `.reduce()`, `Array.from()`
-- No parameter reassignment — create new `const` bindings instead
-- No `while`/`for` loops — use declarative alternatives or recursion
-- Separate pure functions from side effects: pure logic in `lib/`, effects in stores/hooks
-- Pure functions take all dependencies as parameters (no reaching into module state)
-
-## Code Style: Atomicity Principle
-
-Every function must be **atomic**: it does one thing, takes explicit inputs, and returns a result without modifying anything outside its scope.
-
-- A function's entire effect is captured in its return value — no mutating closure variables, module state, or parameters
-- Build results declaratively (`[cond && item, ...].filter(Boolean)`, `.reduce()` with spread) instead of `const arr = []; arr.push(…)`
-- Move inherently stateful utilities (mutexes, caches, counters) out of `lib/` into `shared/hooks/` or `shared/db/` — `lib/` is pure-only territory
-- Streaming/worker-pool I/O idioms (`while` + `ReadableStream`, `nextIdx++` for concurrent workers) are acceptable **only** in `services/` with a comment explaining why
-- When a function needs mutable accumulation for performance (e.g., 1000+ items), use a local `const arr: T[] = []` inside the function and never leak it — but prefer immutable patterns first
-
-## Code Style: Avoid Unnecessary useEffect
-
-Follow React's ["You Might Not Need an Effect"](https://react.dev/learn/you-might-not-need-an-effect) guidelines. Before reaching for `useEffect`, use these alternatives:
-
-1. **Derive inline** — if the value can be computed from props/state, compute it during render (a `const`, `useMemo`, or the "adjust during render" pattern)
-2. **Key prop reset** — to reset a component when a prop changes, render it with `key={prop}` so React remounts with fresh state
-3. **Event handlers** — side effects caused by user actions belong in the handler that triggered them, not in an effect that watches for state changes
-4. **`useMountEffect`** — for true mount-only work (app bootstrap, one-time loads), use `shared/hooks/useMountEffect` instead of `useEffect(..., [])`
-5. **TanStack Query** — for data fetching, prefer `useQuery`/`useMutation`
-
-**Allowed useEffect cases:**
-- Subscriptions / listeners that return a cleanup function
-- Reanimated animations (`withRepeat`, `withSequence`)
-- App bootstrap in `_layout.tsx` (routing, splash screen)
-
-## Code Style: Branded Types
-
-All IDs, temporal strings, and money amounts use branded types from `shared/types/branded.ts`. Never use plain `string` or `number` for these in function signatures. Use typed ID generators (`generateTransactionId()`, etc.), temporal constructors (`toIsoDate()`, `toMonth()`, `toIsoDateTime()`), and `$type<>()` on Drizzle schema columns. New entities need a branded type, a typed generator, and Drizzle `$type<>()` annotations.
-
-### Branded type assertions stay at boundaries
-
-- Keep branded-type proof in boundary helpers: constructors like `toIsoDate()`, auth hooks like `useOptionalUserId()`, route/ID decoders like `requireTransactionId()`, and row mappers/decoders in `data/`, `repository/`, or `schema/`.
-- UI files (`app/**`, `features/**/components/**`, `shared/components/**`) should not use direct `as UserId`, `as TransactionId`, `as BillId`, `as CategoryId`, `as IsoDate`, or `as IsoDateTime` assertions.
-- When a component needs a branded ID/date, add or reuse a deeper helper instead of asserting locally.
-- `bun run lint:brands` deterministically enforces the UI rule above. If it fails, move the branded proof into `shared/types/assertions.ts`, a trusted constructor like `shared/lib/format-date.ts` or `shared/lib/generate-id.ts`, or a boundary module such as `schema.ts`, `data/`, `repository/`, or `features/auth/public.ts`.
-
-## Architectural Decisions
-
-### Calendar-month budgets only
-Budget periods are always calendar months (1st to last day). No custom periods. Reuse `deriveSpendingByCategory(month)` directly. Extend only if user research demands it.
-
-### Non-nullable accountId with default account (Phase 3)
-When multi-account (#9) ships, `accountId` on transactions must be NOT NULL with a default account. Do NOT add a nullable accountId column early. Phase 3 migration: (1) create `accounts` table with default account, (2) `ALTER TABLE transactions ADD COLUMN account_id TEXT NOT NULL DEFAULT '{default_id}'`, (3) backfill from source → bank mapping.
-
-### Sync all new tables
-Every new DB table that stores user data must integrate with the sync queue. Use the shared `enqueueSync(db, tableName, rowId, operation)` helper from `shared/db/enqueue-sync.ts`. Add ~S effort per feature for sync integration.
-
-### On-device derivations for everything
-All budget/goal/analytics computations run on-device using local SQLite. No new Edge Functions for derivations. Edge Functions are only for: (1) weekly digest scheduler (cron), (2) AI chat context extension.
-
-### LIKE queries for search
-Use `WHERE description LIKE '%term%'` for transaction search. No FTS5 unless profiling shows degradation beyond 50ms on 2K+ rows.
-
-### SQL aggregation for analytics
-Follow existing `getBalanceAggregate()` pattern in repository. Use SQL `GROUP BY` + `SUM` at the repository level. Never load all rows into JS for aggregation.
-
-### Budget progress = pure derivation
-`deriveBudgetProgress()` must be a pure function in `derive.ts`. Takes budget + transactions as params, returns progress. Memoize in store on transaction change. Consistent with FP mandate.
-
-### Direct unit tests for pure functions
-New derivation/pure functions get direct unit tests with fixture data. File-source reading pattern (`readFileSync` test pattern) stays for navigation/layout tests only.
-
-## Design System Conventions
-
-- Currency: COP (Colombian Pesos) — large whole numbers, no decimals
-- i18n: All user-facing strings go through `useTranslation()` hook — see `adding-i18n-strings` skill
-- State management: Zustand stores in `features/{feature}/stores/`
-- Navigation: Expo Router — screens in `app/`, modals as top-level routes
-- Data fetching: TanStack Query for server data, Zustand for local/derived state
-- Functional programming: pure functions in `lib/`, side effects in stores/hooks only
+## Purpose
+
+Keep this file lean. Add only repo-specific rules and surprises that save future agents real time. If something costs you time twice, add a short note here.
+
+## Read First
+
+## Workflow Surprises
+
+- Vitest: do not use async `importOriginal` global mocks for heavy modules in `__tests__/setup.ts`; prefer sync or file-local mocks.
+- Vitest: avoid heavy `await import(...)` inside `beforeEach`; prefer static imports or `beforeAll`.
+- Bun workspace wrappers should use `bun run --cwd <dir> --shell=bun <script>`.
+- Root single-file Bun tests should use `bun test ./path/to.test.ts`, not `bun test path/to.test.ts`.
+- `bunx drizzle-kit generate` does not update `apps/mobile/drizzle/migrations.js`; add the new `m00xx` import/export manually.
+- Run `bun run vault:doctor` before reading `.context/fidy-vault`; fresh workspaces may be missing the symlink.
+- Shared Effect runners should use `Effect.runPromiseExit(...)` plus `Cause.squash(...)` so boundaries rethrow the original error.
+- Tooling gap: lint prefers barrels, but some barrels such as `@/shared/db` and feature `index.ts` files can pull Expo/UI runtime into pure code. For pure modules, prefer narrow `*.public.ts` surfaces; for DB internals, use `shared/db/schema`, `shared/db/client`, or `shared/db/enqueue-sync` when needed.
+- `apps/mobile/features/qa/index.ts` must lazy-load `start-local-qa-session`; eager re-exports pull Drizzle SQL into unrelated tests.
+- Keep notification deep-link builders and route readers in sync; support both legacy params (`category`, `id`) and normalized params (`categoryId`, `goalId`) when needed.
+- Lizard can overcount regex-heavy files and TypeScript overloads; verify hotspots manually before acting on the metric.
+
+## External Vault
+
+- Use `.context/fidy-vault` as the stable path to the external vault.
+- Before vault ingest/query/lint work, run `bun run vault:doctor`.
+- After that succeeds, read `.context/fidy-vault/AGENTS.md`.
+
+## Testing
+
+- Test the deepest module that owns the behavior; use boundary tests for orchestration.
+- If coverage drops in a store or hook, extract a deeper seam before adding shallow tests.
+- Async store tests using mutable refs such as `dbRef`, `userIdRef`, or selected ranges must cover stale completion, cross-user writes, and loading cleanup.
+- Tests around `shared/mutations/write-through.ts` must prove transaction semantics; `AnyDb` doubles need `transaction()`.
+
+## Code Style
+
+- Financial-core `lib/`, schemas, and utils are pure/functional. Infrastructure edges may use idiomatic React or Zustand patterns.
+- In pure logic: no `let`/`var`, no `.push()` accumulation, no parameter reassignment, no `for`/`while`; prefer `map`, `filter`, `reduce`, and explicit dependencies.
+- Keep functions atomic: return results instead of mutating closure or module state. Stateful utilities belong outside `lib/`.
+- Prefer inline derivation, keyed remounts, event handlers, `useMountEffect`, or TanStack Query before reaching for `useEffect`.
+- Allowed `useEffect` cases: subscriptions with cleanup, Reanimated animations, and app bootstrap in `_layout.tsx`.
+- Use branded IDs, dates, and money types from `shared/types/branded.ts`. New entities need a branded type, typed generator, and Drizzle `$type<>()`.
+- Branded assertions stay at boundaries. UI code should not use direct `as UserId` / `as TransactionId` / `as IsoDate` assertions. `bun run lint:brands` enforces this.
+
+## Architecture
+
+- Budgets are calendar-month only.
+- Multi-account: `transactions.accountId` becomes `NOT NULL` only in Phase 3, after creating accounts/default account and backfilling.
+- Every new user-data table must enqueue sync via `enqueueSync(db, tableName, rowId, operation)`.
+- Budget, goal, and analytics derivations run on-device in SQLite. New Edge Functions are only for weekly digest scheduling and AI chat context extension.
+- Transaction search uses SQL `LIKE`; do not add FTS5 without profiling evidence.
+- Analytics aggregation belongs in SQL, not JS.
+- `deriveBudgetProgress()` stays pure.
+- New pure derivations get direct unit tests; file-source tests are for navigation/layout cases only.
+
+## Product Conventions
+
+- Currency: COP, no decimals.
+- All user-facing strings go through `useTranslation()`; see the `adding-i18n-strings` skill.
+- Zustand stores live in `features/{feature}/stores/`.
+- Navigation uses Expo Router; screens live in `app/`, modals are top-level routes.
+- Use TanStack Query for server data and Zustand for local or derived state.
