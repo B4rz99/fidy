@@ -14,11 +14,27 @@ STRICT_CCN=5
 STRICT_NLOC=30
 STRICT_PARAMS=3
 WRITE_LEDGER=false
+ALLOW_NONZERO_WRITE=false
 
-if [ "${1:-}" = "--write-ledger" ]; then
-  WRITE_LEDGER=true
-  shift
-fi
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --write-ledger)
+      WRITE_LEDGER=true
+      shift
+      ;;
+    --allow-nonzero-write)
+      ALLOW_NONZERO_WRITE=true
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
 
 if [ "$#" -eq 0 ]; then
   set -- apps/mobile apps/landing packages
@@ -66,8 +82,8 @@ STRICT_ARGS="
   -a $STRICT_PARAMS
 "
 
-# The hard gate is enforced by the checked-in debt ledger. Lizard's own exit code
-# is ignored here so we can always emit reports before comparing against the ledger.
+# The hard gate is enforced by the checked-in baseline ledger. Lizard's own exit
+# code is ignored here so we can always emit reports before comparing against it.
 "$LIZARD_BIN" $STRICT_ARGS "$@" > "$TEXT_REPORT" || true
 "$LIZARD_BIN" $STRICT_ARGS --csv "$@" > "$CSV_REPORT" || true
 "$LIZARD_BIN" $STRICT_ARGS -w "$@" > "$WARNINGS_REPORT" || true
@@ -83,8 +99,12 @@ STRICT_ARGS="
   $(printf '%s\n' "$@" | sed 's/^/--target /')
 
 if [ "$WRITE_LEDGER" = true ]; then
-  bun scripts/check-lizard-complexity.ts --csv "$CSV_REPORT" --ledger "$LEDGER_PATH" --write-ledger
-  printf 'Lizard strict debt ledger written to %s\n' "$LEDGER_PATH"
+  if [ "$ALLOW_NONZERO_WRITE" = true ]; then
+    bun scripts/check-lizard-complexity.ts --csv "$CSV_REPORT" --ledger "$LEDGER_PATH" --write-ledger --allow-nonzero-write
+  else
+    bun scripts/check-lizard-complexity.ts --csv "$CSV_REPORT" --ledger "$LEDGER_PATH" --write-ledger
+  fi
+  printf 'Lizard strict baseline ledger written to %s\n' "$LEDGER_PATH"
 else
   bun scripts/check-lizard-complexity.ts --csv "$CSV_REPORT" --ledger "$LEDGER_PATH"
 fi

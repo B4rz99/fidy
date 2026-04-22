@@ -28,10 +28,11 @@ const parseArgs = (argv: string[]) => {
   const csvIndex = argv.indexOf("--csv");
   const ledgerIndex = argv.indexOf("--ledger");
   const writeLedger = argv.includes("--write-ledger");
+  const allowNonZeroWrite = argv.includes("--allow-nonzero-write");
 
   if (csvIndex === -1 || ledgerIndex === -1 || !argv[csvIndex + 1] || !argv[ledgerIndex + 1]) {
     throw new Error(
-      "Usage: bun scripts/check-lizard-complexity.ts --csv <path> --ledger <path> [--write-ledger]"
+      "Usage: bun scripts/check-lizard-complexity.ts --csv <path> --ledger <path> [--write-ledger] [--allow-nonzero-write]"
     );
   }
 
@@ -39,6 +40,7 @@ const parseArgs = (argv: string[]) => {
     csvPath: argv[csvIndex + 1],
     ledgerPath: argv[ledgerIndex + 1],
     writeLedger,
+    allowNonZeroWrite,
   };
 };
 
@@ -105,11 +107,17 @@ const findWorsenedViolations = (
 };
 
 const main = async () => {
-  const { csvPath, ledgerPath, writeLedger } = parseArgs(process.argv.slice(2));
+  const { csvPath, ledgerPath, writeLedger, allowNonZeroWrite } = parseArgs(process.argv.slice(2));
   const csv = await Bun.file(csvPath).text();
   const currentViolations = buildViolations(toRows(csv));
 
   if (writeLedger) {
+    if (currentViolations.length > 0 && !allowNonZeroWrite) {
+      throw new Error(
+        "Refusing to write a non-zero Lizard baseline. Fix the violations or rerun intentionally with --allow-nonzero-write."
+      );
+    }
+
     const ledger: Ledger = {
       thresholds: { ...DEFAULT_THRESHOLDS },
       violations: [...currentViolations].sort((left, right) => left.key.localeCompare(right.key)),

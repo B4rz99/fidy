@@ -134,7 +134,72 @@ test("fails when a new strict violation appears outside the checked-in ledger", 
   expect(result.stderr.toString()).toContain("beta");
 });
 
-test("can write a strict debt ledger from a lizard csv report", async () => {
+test("can write a zero strict baseline ledger from a lizard csv report", async () => {
+  const dir = createTempDir();
+  const csvPath = join(dir, "strict.csv");
+  const ledgerPath = join(dir, "ledger.json");
+
+  writeFileSync(
+    csvPath,
+    '12,1,20,1,12,"ok@41-52@apps/mobile/foo.ts","apps/mobile/foo.ts","ok","ok",41,52\n'
+  );
+
+  const result = Bun.spawnSync({
+    cmd: [
+      "bun",
+      "scripts/check-lizard-complexity.ts",
+      "--csv",
+      csvPath,
+      "--ledger",
+      ledgerPath,
+      "--write-ledger",
+    ],
+    cwd: process.cwd(),
+    stderr: "pipe",
+    stdout: "pipe",
+  });
+
+  expect(result.exitCode).toBe(0);
+
+  const ledger = JSON.parse(await Bun.file(ledgerPath).text()) as {
+    thresholds: { cyclomaticComplexity: number; nloc: number; parameterCount: number };
+    violations: Array<{ key: string; function: string }>;
+  };
+
+  expect(ledger.thresholds).toEqual({ cyclomaticComplexity: 5, nloc: 30, parameterCount: 3 });
+  expect(ledger.violations).toEqual([]);
+});
+
+test("refuses to write a non-zero strict baseline ledger without an explicit override", () => {
+  const dir = createTempDir();
+  const csvPath = join(dir, "strict.csv");
+  const ledgerPath = join(dir, "ledger.json");
+
+  writeFileSync(
+    csvPath,
+    '31,6,100,2,31,"alpha@10-40@apps/mobile/foo.ts","apps/mobile/foo.ts","alpha","alpha",10,40\n'
+  );
+
+  const result = Bun.spawnSync({
+    cmd: [
+      "bun",
+      "scripts/check-lizard-complexity.ts",
+      "--csv",
+      csvPath,
+      "--ledger",
+      ledgerPath,
+      "--write-ledger",
+    ],
+    cwd: process.cwd(),
+    stderr: "pipe",
+    stdout: "pipe",
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.stderr.toString()).toContain("Refusing to write a non-zero Lizard baseline");
+});
+
+test("can explicitly write a non-zero strict baseline ledger when override is passed", async () => {
   const dir = createTempDir();
   const csvPath = join(dir, "strict.csv");
   const ledgerPath = join(dir, "ledger.json");
@@ -157,6 +222,7 @@ test("can write a strict debt ledger from a lizard csv report", async () => {
       "--ledger",
       ledgerPath,
       "--write-ledger",
+      "--allow-nonzero-write",
     ],
     cwd: process.cwd(),
     stderr: "pipe",
