@@ -7,12 +7,12 @@ function readSource(relativePath: string) {
 }
 
 function readTransferFormSource() {
-  return [
-    readSource("../../features/transfers/components/TransferFormScreen.tsx"),
-    readSource("../../features/transfers/components/transfer-form/TransferFormContent.tsx"),
-    readSource("../../features/transfers/components/transfer-form/TransferForm.types.ts"),
-    readSource("../../features/transfers/components/transfer-form/TransferSidePicker.tsx"),
-  ].join("\n");
+  return {
+    content: readSource(
+      "../../features/transfers/components/transfer-form/TransferFormContent.tsx"
+    ),
+    picker: readSource("../../features/transfers/components/transfer-form/TransferSidePicker.tsx"),
+  };
 }
 
 const localQaButtonSource = readSource("../../features/qa/components/LocalQaLoginButton.tsx");
@@ -39,11 +39,13 @@ describe("QA selector contract", () => {
   });
 
   test("exposes transfer form selectors for amount, side cards, save, and picker options", () => {
-    expect(transferFormSource).toContain('"transfer.form.amount"');
-    expect(transferFormSource).toContain('"transfer.form.from-side"');
-    expect(transferFormSource).toContain('"transfer.form.to-side"');
-    expect(transferFormSource).toContain('"transfer.form.save"');
-    expect(transferFormSource).toContain("transfer.picker.account.");
-    expect(transferFormSource).toContain('"transfer.picker.outside-fidy"');
+    expect(transferFormSource.content).toContain("testID={TRANSFER_FORM_TEST_IDS.amount}");
+    expect(transferFormSource.content).toContain("testID={TRANSFER_FORM_TEST_IDS.fromSide}");
+    expect(transferFormSource.content).toContain("testID={TRANSFER_FORM_TEST_IDS.toSide}");
+    expect(transferFormSource.content).toContain("testID={TRANSFER_FORM_TEST_IDS.save}");
+    expect(transferFormSource.picker).toContain("TRANSFER_FORM_TEST_IDS.pickerAccountPrefix");
+    expect(transferFormSource.picker).toContain(
+      "testID={TRANSFER_FORM_TEST_IDS.pickerOutsideFidy}"
+    );
   });
 });

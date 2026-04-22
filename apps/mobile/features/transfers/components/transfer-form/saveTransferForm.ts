@@ -66,22 +66,44 @@ async function saveReclassifiedTransfer(
     readonly userId: UserId;
   }
 ) {
-  const result = reclassifyTransactionAsTransfer(input.db, {
-    userId: input.userId,
-    transactionId: input.sourceTransaction.id,
-    processedEmailId: input.processedEmailId ?? undefined,
-    digits: input.digits,
-    fromSide: input.fromSide,
-    toSide: input.toSide,
-    description: input.sourceTransaction.description,
-    date: input.date,
-  });
+  const result = runReclassifiedTransfer(input);
 
   if (result.success) {
-    await refreshTransactions(input.db, input.userId);
+    await refreshReclassifiedTransactions(input.db, input.userId);
   }
 
   return result;
+}
+
+function runReclassifiedTransfer(
+  input: SubmitTransferFormInput & {
+    readonly db: AnyDb;
+    readonly sourceTransaction: StoredTransaction;
+    readonly userId: UserId;
+  }
+) {
+  try {
+    return reclassifyTransactionAsTransfer(input.db, {
+      userId: input.userId,
+      transactionId: input.sourceTransaction.id,
+      processedEmailId: input.processedEmailId ?? undefined,
+      digits: input.digits,
+      fromSide: input.fromSide,
+      toSide: input.toSide,
+      description: input.sourceTransaction.description,
+      date: input.date,
+    });
+  } catch {
+    return { success: false, error: "saveFailed" } as const;
+  }
+}
+
+async function refreshReclassifiedTransactions(db: AnyDb, userId: UserId) {
+  try {
+    await refreshTransactions(db, userId);
+  } catch {
+    // Preserve the persisted save result when only the refresh boundary fails.
+  }
 }
 
 function didTransferSaveSucceed(

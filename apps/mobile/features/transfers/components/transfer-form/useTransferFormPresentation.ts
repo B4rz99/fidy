@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { getDateLabel } from "@/features/transactions/lib/format-date";
 import type { TransferSide } from "@/features/transfers/lib/build-transfer";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -22,21 +21,18 @@ export function useTransferFormPresentation(input: {
     isReclassification: input.isReclassification,
     toSide: input.toSide,
   });
+  const dateLabel = getDateLabel({
+    date: input.date,
+    now: new Date(),
+    todayLabel: t("dates.today"),
+    dateFnsLocale: getDateFnsLocale(locale),
+  });
 
   return {
     buttonBackground: formState.canSave ? accentGreen : "#DADADA",
     buttonLabel: t(formState.buttonLabelKey),
     canSave: formState.canSave,
-    dateLabel: useMemo(
-      () =>
-        getDateLabel({
-          date: input.date,
-          now: new Date(),
-          todayLabel: t("dates.today"),
-          dateFnsLocale: getDateFnsLocale(locale),
-        }),
-      [input.date, locale, t]
-    ),
+    dateLabel,
     hint: t(formState.hintKey),
     hintBackground: formState.sameAccountConflict ? "#FFF2F0" : "#F7F2EE",
     hintTone: formState.sameAccountConflict || formState.bothExternal ? accentRed : accentGreen,
