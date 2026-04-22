@@ -1,0 +1,173 @@
+import { useFocusEffect } from "@react-navigation/native";
+import { useRouter } from "expo-router";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { appendUniqueActivityItems } from "@/features/activity/lib/append-unique-activity-items";
+import {
+  createActivityQueryService,
+  type StoredActivityItem,
+} from "@/features/activity/services/create-activity-query-service";
+import { deleteTransaction } from "@/features/transactions";
+import { Alert } from "@/shared/components/rn";
+import type { AnyDb } from "@/shared/db";
+import { useSubscription, useTranslation } from "@/shared/hooks";
+import { toIsoDate } from "@/shared/lib";
+import type { TransactionId, UserId } from "@/shared/types/branded";
+import { getActivityAccountNames } from "../../lib/get-activity-account-names";
+
+const activityQueryService = createActivityQueryService();
+
+type HomeActivityFeedState = {
+  readonly activityHasMore: boolean;
+  readonly activityOffset: number;
+  readonly activityPages: readonly StoredActivityItem[];
+};
+
+type UseHomeActivityFeedInput = {
+  readonly dataRevision: number;
+  readonly db: AnyDb | null;
+  readonly userId: UserId | null;
+};
+
+export type HomeActivityFeedModel = {
+  readonly accountNames: Readonly<Record<string, string>>;
+  readonly activityPages: readonly StoredActivityItem[];
+  readonly dateBreaks: ReadonlySet<string>;
+  readonly handleEndReached: () => void;
+  readonly onDeleteTransaction: (id: TransactionId) => void;
+  readonly onEditTransaction: (id: TransactionId) => void;
+};
+
+const EMPTY_ACTIVITY_FEED: HomeActivityFeedState = {
+  activityHasMore: false,
+  activityOffset: 0,
+  activityPages: [],
+};
+
+function createDateBreaks(activityPages: readonly StoredActivityItem[]) {
+  return activityPages.reduce<Set<string>>((breaks, item, index) => {
+    const previousItem = index > 0 ? activityPages[index - 1] : null;
+    const previousDate = previousItem ? toIsoDate(previousItem.date) : null;
+    const currentDate = toIsoDate(item.date);
+
+    return previousDate === currentDate ? breaks : breaks.add(item.id);
+  }, new Set<string>());
+}
+
+export function useHomeActivityFeed({
+  dataRevision,
+  db,
+  userId,
+}: UseHomeActivityFeedInput): HomeActivityFeedModel {
+  const { push } = useRouter();
+  const { t } = useTranslation();
+  const [activityFeed, setActivityFeed] = useState<HomeActivityFeedState>(EMPTY_ACTIVITY_FEED);
+  const lastRequestedActivityOffsetRef = useRef<number | null>(null);
+
+  const resetActivityFeed = useCallback(() => {
+    setActivityFeed(EMPTY_ACTIVITY_FEED);
+    lastRequestedActivityOffsetRef.current = null;
+  }, []);
+
+  const loadFirstPage = useCallback(() => {
+    if (!db || !userId) {
+      resetActivityFeed();
+      return;
+    }
+
+    try {
+      const snapshot = activityQueryService.loadPage({
+        db,
+        userId,
+        pageSize: 30,
+        offset: 0,
+      });
+      setActivityFeed({
+        activityPages: snapshot.pages,
+        activityOffset: snapshot.offset,
+        activityHasMore: snapshot.hasMore,
+      });
+      lastRequestedActivityOffsetRef.current = null;
+    } catch {
+      resetActivityFeed();
+    }
+  }, [db, resetActivityFeed, userId]);
+
+  useFocusEffect(loadFirstPage);
+
+  useSubscription(
+    () => {
+      loadFirstPage();
+    },
+    [dataRevision],
+    db != null && userId != null
+  );
+
+  const handleEndReached = useCallback(() => {
+    if (
+      !db ||
+      !userId ||
+      !activityFeed.activityHasMore ||
+      lastRequestedActivityOffsetRef.current === activityFeed.activityOffset
+    ) {
+      return;
+    }
+
+    lastRequestedActivityOffsetRef.current = activityFeed.activityOffset;
+
+    try {
+      const snapshot = activityQueryService.loadPage({
+        db,
+        userId,
+        pageSize: 30,
+        offset: activityFeed.activityOffset,
+      });
+      setActivityFeed((current) => ({
+        activityPages: appendUniqueActivityItems(current.activityPages, snapshot.pages),
+        activityOffset: snapshot.offset,
+        activityHasMore: snapshot.hasMore,
+      }));
+    } catch {
+      lastRequestedActivityOffsetRef.current = null;
+      // Keep the current activity feed if the query fails.
+    }
+  }, [activityFeed.activityHasMore, activityFeed.activityOffset, db, userId]);
+
+  const onEditTransaction = useCallback(
+    (id: TransactionId) => {
+      push({
+        pathname: "/edit-transaction",
+        params: { transactionId: id },
+      } as never);
+    },
+    [push]
+  );
+
+  const onDeleteTransaction = useCallback(
+    (id: TransactionId) => {
+      Alert.alert(t("transactions.deleteConfirmTitle"), t("transactions.deleteConfirmMessage"), [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.delete"),
+          style: "destructive",
+          onPress: () => {
+            if (!db || !userId) return;
+            void deleteTransaction(db, userId, id);
+          },
+        },
+      ]);
+    },
+    [db, t, userId]
+  );
+
+  return {
+    accountNames: getActivityAccountNames(db, userId),
+    activityPages: activityFeed.activityPages,
+    dateBreaks: useMemo(
+      () => createDateBreaks(activityFeed.activityPages),
+      [activityFeed.activityPages]
+    ),
+    handleEndReached,
+    onDeleteTransaction,
+    onEditTransaction,
+  };
+}
