@@ -5,37 +5,38 @@ import {
   captureErrorEffect,
   captureWarningEffect,
 } from "@/shared/effect/telemetry";
-import type { ChatSessionId, UserId } from "@/shared/types/branded";
-import type { ChatAction, ChatMessage } from "../schema";
+import type { UserId } from "@/shared/types/branded";
+import type { ChatAction } from "../schema";
+import {
+  type ActiveStreamRun,
+  beginStreamRun,
+  canPersistRun,
+  createActiveStreamRun,
+  createStreamCallbacks,
+  createStreamRecorder,
+  hasActiveStream,
+  type ReadySendMessageInput,
+  resetStreamState,
+  resetStreamStateIfCurrent,
+  type SendMessageInput,
+  type StreamChatMessage,
+  type StreamingRuntime,
+  type StreamRecorder,
+  type StreamStateDeps,
+  setStreamOutcome,
+  toConversation,
+  toReadySendMessageInput,
+  toThrownErrorMessage,
+} from "./streaming-chat-service/runtime";
 
-type StreamChatMessage = Pick<ChatMessage, "role" | "content">;
-
-type StreamCallbacks = {
-  readonly onChunk: (text: string) => void;
-  readonly onDone: () => void;
-  readonly onError: (error: string) => void;
-};
-
-type StreamingChatState = {
-  readonly isStreaming: boolean;
-  readonly currentSessionId: ChatSessionId | null;
-  readonly messages: readonly ChatMessage[];
-};
-
-type SendMessageInput = {
-  readonly db: AnyDb | null;
-  readonly userId: UserId | null;
-  readonly text: string;
-  readonly executeAction: (action: ChatAction) => Promise<void>;
-};
-
-type CreateStreamingChatServiceDeps = {
-  readonly getState: () => StreamingChatState;
-  readonly setStreaming: (isStreaming: boolean) => void;
-  readonly setStreamingContent: (content: string) => void;
+type CreateStreamingChatServiceDeps = StreamStateDeps & {
   readonly streamChat: (
     messages: readonly StreamChatMessage[],
-    callbacks: StreamCallbacks,
+    callbacks: {
+      readonly onChunk: (text: string) => void;
+      readonly onDone: () => void;
+      readonly onError: (error: string) => void;
+    },
     signal?: AbortSignal
   ) => Promise<void>;
   readonly createChatSession: (db: AnyDb, userId: UserId, firstMessage: string) => Promise<unknown>;
@@ -56,19 +57,6 @@ export type StreamingChatService = {
   readonly cancel: () => void;
 };
 
-type StreamingRuntime = {
-  lastRunId: number;
-  currentRunId: number | null;
-  activeController: AbortController | null;
-};
-
-type ReadySendMessageInput = {
-  readonly db: AnyDb;
-  readonly userId: UserId;
-  readonly text: string;
-  readonly executeAction: (action: ChatAction) => Promise<void>;
-};
-
 type StreamingTelemetry = {
   readonly captureError: (error: unknown) => Promise<void>;
   readonly captureWarning: (
@@ -79,95 +67,6 @@ type StreamingTelemetry = {
     }
   ) => Promise<void>;
 };
-
-type StreamOutcome =
-  | { readonly type: "done" }
-  | { readonly type: "error"; readonly message: string };
-
-type ActiveStreamRun = {
-  readonly deps: CreateStreamingChatServiceDeps;
-  readonly telemetry: StreamingTelemetry;
-  readonly runtime: StreamingRuntime;
-  readonly request: ReadySendMessageInput;
-  readonly runId: number;
-  readonly controller: AbortController;
-};
-
-type ActiveStreamRunArgs = {
-  readonly deps: CreateStreamingChatServiceDeps;
-  readonly telemetry: StreamingTelemetry;
-  readonly runtime: StreamingRuntime;
-  readonly request: ReadySendMessageInput;
-  readonly runId: number;
-};
-
-type CurrentStreamRun = {
-  readonly runtime: StreamingRuntime;
-  readonly runId: number;
-};
-
-type StreamRecorder = {
-  accumulated: string;
-  outcome: StreamOutcome | null;
-};
-
-const beginStreamRun = (runtime: StreamingRuntime): number => {
-  const runId = runtime.lastRunId + 1;
-  runtime.lastRunId = runId;
-  runtime.currentRunId = runId;
-  return runId;
-};
-
-const toReadySendMessageInput = (input: SendMessageInput): ReadySendMessageInput | null => {
-  const text = input.text.trim();
-  if (!text || !input.db || !input.userId) return null;
-  return {
-    db: input.db,
-    userId: input.userId,
-    text,
-    executeAction: input.executeAction,
-  };
-};
-
-const hasActiveStream = (state: StreamingChatState, runtime: StreamingRuntime): boolean =>
-  state.isStreaming || runtime.currentRunId !== null;
-
-const createActiveStreamRun = (args: ActiveStreamRunArgs): ActiveStreamRun => {
-  const controller = new AbortController();
-  args.runtime.activeController = controller;
-  return {
-    ...args,
-    controller,
-  };
-};
-
-const isCurrentRun = (run: CurrentStreamRun): boolean => run.runtime.currentRunId === run.runId;
-
-const resetStreamState = (
-  runtime: StreamingRuntime,
-  deps: CreateStreamingChatServiceDeps
-): void => {
-  deps.setStreaming(false);
-  deps.setStreamingContent("");
-  runtime.activeController = null;
-  runtime.currentRunId = null;
-};
-
-const resetStreamStateIfCurrent = (run: ActiveStreamRun): void => {
-  if (!isCurrentRun(run)) return;
-  resetStreamState(run.runtime, run.deps);
-};
-
-const canPersistRun = (run: ActiveStreamRun): boolean =>
-  !run.controller.signal.aborted && isCurrentRun(run);
-
-const toConversation = (
-  messages: readonly ChatMessage[],
-  text: string
-): readonly StreamChatMessage[] => [
-  ...messages.map((message) => ({ role: message.role, content: message.content })),
-  { role: "user" as const, content: text },
-];
 
 const ensureCurrentSession = async (
   deps: CreateStreamingChatServiceDeps,
@@ -187,45 +86,17 @@ async function buildConversation(
   return toConversation(deps.getState().messages, request.text);
 }
 
-async function prepareStreamingRun(run: ActiveStreamRun): Promise<void> {
+async function prepareStreamingRun(
+  run: ActiveStreamRun<CreateStreamingChatServiceDeps, StreamingTelemetry>
+): Promise<void> {
   await run.deps.addUserChatMessage(run.request.db, run.request.userId, run.request.text);
   await run.deps.trackAiMessageSent();
   run.deps.setStreaming(true);
   run.deps.setStreamingContent("");
 }
 
-function createStreamRecorder(): StreamRecorder {
-  return {
-    accumulated: "",
-    outcome: null,
-  };
-}
-
-function setStreamOutcome(recorder: StreamRecorder, outcome: StreamOutcome): void {
-  if (recorder.outcome) return;
-  recorder.outcome = outcome;
-}
-
-function recordStreamChunk(run: ActiveStreamRun, recorder: StreamRecorder, chunk: string): void {
-  if (!isCurrentRun(run)) return;
-  recorder.accumulated += chunk;
-  run.deps.setStreamingContent(recorder.accumulated);
-}
-
-function createStreamCallbacks(run: ActiveStreamRun, recorder: StreamRecorder): StreamCallbacks {
-  return {
-    onChunk: (chunk) => recordStreamChunk(run, recorder, chunk),
-    onDone: () => setStreamOutcome(recorder, { type: "done" }),
-    onError: (error) => setStreamOutcome(recorder, { type: "error", message: error }),
-  };
-}
-
-function toThrownErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Unknown error";
-}
-
 async function consumeStream(
-  run: ActiveStreamRun,
+  run: ActiveStreamRun<CreateStreamingChatServiceDeps, StreamingTelemetry>,
   conversation: readonly StreamChatMessage[],
   recorder: StreamRecorder
 ): Promise<void> {
@@ -242,7 +113,7 @@ async function consumeStream(
 }
 
 async function executeAddAction(
-  run: ActiveStreamRun,
+  run: ActiveStreamRun<CreateStreamingChatServiceDeps, StreamingTelemetry>,
   action: Extract<ChatAction, { type: "add" }>
 ) {
   try {
@@ -256,14 +127,17 @@ async function executeAddAction(
 }
 
 async function persistAssistantMessage(
-  run: ActiveStreamRun,
+  run: ActiveStreamRun<CreateStreamingChatServiceDeps, StreamingTelemetry>,
   content: string,
   action: ChatAction | null
 ): Promise<void> {
   await run.deps.addAssistantChatMessage(run.request.db, run.request.userId, content, action);
 }
 
-async function persistDoneOutcome(run: ActiveStreamRun, content: string): Promise<void> {
+async function persistDoneOutcome(
+  run: ActiveStreamRun<CreateStreamingChatServiceDeps, StreamingTelemetry>,
+  content: string
+): Promise<void> {
   const action = run.deps.parseActionFromResponse(content);
   await persistAssistantMessage(run, content, action);
   if (action?.type !== "add") return;
@@ -271,7 +145,7 @@ async function persistDoneOutcome(run: ActiveStreamRun, content: string): Promis
 }
 
 async function persistErrorOutcome(
-  run: ActiveStreamRun,
+  run: ActiveStreamRun<CreateStreamingChatServiceDeps, StreamingTelemetry>,
   accumulated: string,
   error: string
 ): Promise<void> {
@@ -279,7 +153,10 @@ async function persistErrorOutcome(
   await run.deps.addAssistantChatMessage(run.request.db, run.request.userId, content);
 }
 
-async function persistStreamOutcome(run: ActiveStreamRun, recorder: StreamRecorder): Promise<void> {
+async function persistStreamOutcome(
+  run: ActiveStreamRun<CreateStreamingChatServiceDeps, StreamingTelemetry>,
+  recorder: StreamRecorder
+): Promise<void> {
   if (!canPersistRun(run)) return;
   const outcome = recorder.outcome ?? { type: "done" as const };
   if (outcome.type === "error") {
@@ -290,7 +167,7 @@ async function persistStreamOutcome(run: ActiveStreamRun, recorder: StreamRecord
 }
 
 async function runStreamLifecycle(
-  run: ActiveStreamRun,
+  run: ActiveStreamRun<CreateStreamingChatServiceDeps, StreamingTelemetry>,
   conversation: readonly StreamChatMessage[]
 ): Promise<void> {
   const recorder = createStreamRecorder();
@@ -303,7 +180,9 @@ async function runStreamLifecycle(
   }
 }
 
-async function startStreamingRun(run: ActiveStreamRun): Promise<void> {
+async function startStreamingRun(
+  run: ActiveStreamRun<CreateStreamingChatServiceDeps, StreamingTelemetry>
+): Promise<void> {
   const conversation = await buildConversation(run.deps, run.request);
   if (!conversation) {
     resetStreamStateIfCurrent(run);
