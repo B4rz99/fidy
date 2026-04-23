@@ -1,20 +1,3 @@
-## Purpose
-
-Keep this file lean. Add only repo-specific rules and surprises that save future agents real time. If something costs you time twice, add a short note here.
-
-## Read First
-
-### Financial accounts
-
-For financial accounts, account attribution, post-sync account suggestions, transfers, or default-account bootstrap, read:
-
-- `CONTEXT.md`
-- `docs/adr/0001-financial-accounts-and-transfers.md`
-- `plans/financial-accounts-v1.md`
-- `plans/financial-accounts-prd.md`
-
-`CONTEXT.md` is the source of truth if they differ.
-
 ## Workflow Surprises
 
 - Vitest: do not use async `importOriginal` global mocks for heavy modules in `__tests__/setup.ts`; prefer sync or file-local mocks.

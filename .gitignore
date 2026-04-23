@@ -71,7 +71,7 @@ docs/
 docs/*
 !docs/adr/
 docs/adr/*
-!docs/adr/0001-financial-accounts-and-transfers.md
+!docs/adr/*.md
 TODOS.md
 .context/
 
