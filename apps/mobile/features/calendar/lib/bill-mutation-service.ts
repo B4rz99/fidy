@@ -1,199 +1,22 @@
-import { buildDefaultFinancialAccountId } from "@/features/financial-accounts";
-import type { StoredTransaction } from "@/features/transactions/public";
-import { toTransactionRow } from "@/features/transactions/public";
 import {
   generateBillId,
   generateBillPaymentId,
   generateTransactionId,
   parseDigitsToAmount,
-  parseIsoDate,
   toIsoDateTime,
 } from "@/shared/lib";
-import type { WriteThroughMutationModule } from "@/shared/mutations";
-import { assertCopAmount } from "@/shared/types/assertions";
-import type {
-  BillId,
-  BillPaymentId,
-  CategoryId,
-  IsoDate,
-  TransactionId,
-  UserId,
-} from "@/shared/types/branded";
+import { createBillSchema, toBillRow } from "../schema";
+import { applyBillPaymentSideEffects } from "./bill-mutation-service/bill-payment-effects";
 import {
-  type Bill,
-  type BillFrequency,
-  type BillPayment,
-  createBillSchema,
-  toBillRow,
-} from "../schema";
-import type { BillUpdateFields } from "./repository";
-
-type AddBillInput = {
-  name: string;
-  amount: string;
-  frequency: BillFrequency;
-  categoryId: CategoryId;
-  startDate: Date;
-};
-
-type UpdateBillFields = Partial<
-  Pick<Bill, "name" | "amount" | "frequency" | "categoryId" | "startDate" | "isActive">
->;
-
-type AddBillResult = { success: true; bill: Bill } | { success: false };
-type MarkBillPaidResult = { success: true; payment: BillPayment } | { success: false };
-type UnmarkBillPaidResult = { success: true } | { success: false };
-
-type CreateCalendarBillMutationServiceDeps = {
-  getCommit: () => WriteThroughMutationModule["commit"] | null;
-  getUserId: () => UserId | null;
-  requestNotificationPermissions: () => Promise<boolean>;
-  scheduleBillNotifications: (bill: Bill) => unknown;
-  reportAsyncError: (error: unknown) => void;
-  addTransactionToCache: (transaction: StoredTransaction) => void;
-  removeTransactionFromCache: (transactionId: TransactionId) => void;
-  trackCreated: (input: { frequency: BillFrequency }) => void;
-  trackPaymentRecorded: () => void;
-  now?: () => Date;
-  createBillId?: () => BillId;
-  createPaymentId?: () => BillPaymentId;
-  createTransactionId?: () => TransactionId;
-};
-
-export type CalendarBillMutationService = {
-  addBill: (input: AddBillInput) => Promise<AddBillResult>;
-  updateBill: (id: BillId, fields: UpdateBillFields) => Promise<boolean>;
-  deleteBill: (id: BillId) => Promise<boolean>;
-  markBillPaid: (
-    bills: readonly Bill[],
-    billId: BillId,
-    dueDate: IsoDate
-  ) => Promise<MarkBillPaidResult>;
-  unmarkBillPaid: (
-    payments: readonly BillPayment[],
-    billId: BillId,
-    dueDate: IsoDate
-  ) => Promise<UnmarkBillPaidResult>;
-};
-
-function toBillUpdateFields(fields: UpdateBillFields): BillUpdateFields {
-  const amount = fields.amount;
-  if (amount != null) {
-    assertCopAmount(amount);
-  }
-
-  return {
-    ...(fields.name != null ? { name: fields.name } : {}),
-    ...(amount != null ? { amount } : {}),
-    ...(fields.frequency != null ? { frequency: fields.frequency } : {}),
-    ...(fields.categoryId != null ? { categoryId: fields.categoryId } : {}),
-    ...(fields.startDate != null ? { startDate: fields.startDate.toISOString() } : {}),
-    ...(fields.isActive != null ? { isActive: fields.isActive } : {}),
-  };
-}
-
-function scheduleNotifications(deps: CreateCalendarBillMutationServiceDeps, bill: Bill) {
-  void deps
-    .requestNotificationPermissions()
-    .then((granted) =>
-      granted ? Promise.resolve(deps.scheduleBillNotifications(bill)) : undefined
-    )
-    .catch(deps.reportAsyncError);
-}
-
-async function commitBillPayment(
-  commit: WriteThroughMutationModule["commit"],
-  bill: Bill,
-  billId: BillId,
-  dueDate: IsoDate,
-  userId: UserId,
-  timestamp: Date,
-  createPaymentId: () => BillPaymentId,
-  createTransactionId: () => TransactionId
-): Promise<{ transaction: StoredTransaction; payment: BillPayment } | null> {
-  const nowIso = toIsoDateTime(timestamp);
-  const transactionId = createTransactionId();
-  const amount = bill.amount;
-  assertCopAmount(amount);
-
-  const transaction: StoredTransaction = {
-    id: transactionId,
-    userId,
-    type: "expense",
-    amount,
-    categoryId: bill.categoryId,
-    description: bill.name,
-    date: parseIsoDate(dueDate),
-    createdAt: timestamp,
-    updatedAt: timestamp,
-    deletedAt: null,
-    accountId: buildDefaultFinancialAccountId(userId),
-    accountAttributionState: "confirmed",
-  };
-
-  const payment: BillPayment = {
-    id: createPaymentId(),
-    billId,
-    dueDate,
-    paidAt: nowIso,
-    transactionId,
-    createdAt: nowIso,
-  };
-
-  const result = await commit({
-    kind: "calendar.bill.markPaid",
-    transactionRow: toTransactionRow(transaction),
-    paymentRow: payment,
-  });
-
-  if (!result.success) {
-    return null;
-  }
-
-  return { transaction, payment };
-}
-
-function getBillForPayment(bills: readonly Bill[], billId: BillId): Bill | null {
-  return bills.find((candidate) => candidate.id === billId) ?? null;
-}
-
-async function commitBillPaymentSafely(input: {
-  readonly commit: WriteThroughMutationModule["commit"];
-  readonly bill: Bill;
-  readonly billId: BillId;
-  readonly dueDate: IsoDate;
-  readonly userId: UserId;
-  readonly timestamp: Date;
-  readonly createPaymentId: () => BillPaymentId;
-  readonly createTransactionId: () => TransactionId;
-}) {
-  try {
-    return await commitBillPayment(
-      input.commit,
-      input.bill,
-      input.billId,
-      input.dueDate,
-      input.userId,
-      input.timestamp,
-      input.createPaymentId,
-      input.createTransactionId
-    );
-  } catch {
-    return null;
-  }
-}
-
-function applyBillPaymentSideEffects(
-  deps: CreateCalendarBillMutationServiceDeps,
-  transaction: StoredTransaction
-) {
-  try {
-    deps.addTransactionToCache(transaction);
-    deps.trackPaymentRecorded();
-  } catch (error) {
-    deps.reportAsyncError(error);
-  }
-}
+  commitBillPaymentSafely,
+  getBillForPayment,
+} from "./bill-mutation-service/commit-bill-payment";
+import { scheduleNotifications } from "./bill-mutation-service/notifications";
+import { toBillUpdateFields } from "./bill-mutation-service/to-bill-update-fields";
+import type {
+  CalendarBillMutationService,
+  CreateCalendarBillMutationServiceDeps,
+} from "./bill-mutation-service/types";
 
 export function createCalendarBillMutationService(
   deps: CreateCalendarBillMutationServiceDeps
@@ -228,7 +51,7 @@ export function createCalendarBillMutationService(
         return { success: false };
       }
 
-      const bill: Bill = {
+      const bill = {
         id: createBillId(),
         ...parsed.data,
       };
@@ -257,11 +80,10 @@ export function createCalendarBillMutationService(
       }
 
       try {
-        const dbFields = toBillUpdateFields(fields);
         const result = await commit({
           kind: "calendar.bill.update",
           billId: id,
-          fields: dbFields,
+          fields: toBillUpdateFields(fields),
           now: toIsoDateTime(now()),
         });
 
