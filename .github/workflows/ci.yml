@@ -22,6 +22,8 @@ jobs:
         run: bun run lint:mobile
       - name: Lizard strict complexity gate
         run: bun run lint:complexity
+      - name: File-size gate
+        run: bun run lint:file-size
 
   architecture:
     name: Architecture

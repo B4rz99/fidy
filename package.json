@@ -30,6 +30,7 @@
     "build:packages": "bun run --cwd packages/assets --shell=bun build && bun run --cwd packages/types --shell=bun build && bun run --cwd packages/schemas --shell=bun build && bun run --cwd packages/utils --shell=bun build",
     "lint:mobile": "bun run --cwd apps/mobile --shell=bun lint",
     "lint:complexity": "./scripts/run-lizard-strict.sh",
+    "lint:file-size": "bun ./scripts/check-max-file-lines.ts --enforce",
     "lint:brands": "bun scripts/check-branded-boundaries.ts",
     "lint:architecture": "depcruise --config .dependency-cruiser.cjs apps/mobile packages",
     "lint:dead-code": "knip-bun --config knip.json",
@@ -46,7 +47,7 @@
     "perf:bundle:mobile": "bun run --cwd apps/mobile --shell=bun bundle:atlas",
     "lint": "bunx biome check .",
     "format": "bunx biome format --write .",
-    "verify": "bun run lint && bun run lint:brands && bun run lint:mobile && bun run lint:complexity && bun run lint:architecture && bun run typecheck && bun run test"
+    "verify": "bun run lint && bun run lint:brands && bun run lint:mobile && bun run lint:complexity && bun run lint:file-size && bun run lint:architecture && bun run typecheck && bun run test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.4",
