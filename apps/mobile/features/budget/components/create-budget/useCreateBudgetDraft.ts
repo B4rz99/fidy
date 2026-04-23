@@ -1,3 +1,4 @@
+import type { SetStateAction } from "react";
 import { useCallback, useState } from "react";
 import { isValidCategoryId } from "@/features/transactions";
 import type { Budget } from "../../schema";
@@ -20,6 +21,10 @@ function resolveInitialDraft(existingBudget: Budget | undefined): CreateBudgetDr
   };
 }
 
+export function resolveNextDigits(currentDigits: string, nextDigits: SetStateAction<string>) {
+  return typeof nextDigits === "function" ? nextDigits(currentDigits) : nextDigits;
+}
+
 export function useCreateBudgetDraft(
   existingBudget: Budget | undefined
 ): CreateBudgetDraftController {
@@ -31,8 +36,11 @@ export function useCreateBudgetDraft(
     setCategory: useCallback((category) => {
       setDraft((current) => ({ ...current, category }));
     }, []),
-    setDigits: useCallback((digits) => {
-      setDraft((current) => ({ ...current, digits }));
+    setDigits: useCallback((nextDigits) => {
+      setDraft((current) => ({
+        ...current,
+        digits: resolveNextDigits(current.digits, nextDigits),
+      }));
     }, []),
   };
 }

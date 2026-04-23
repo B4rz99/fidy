@@ -46,6 +46,9 @@ test("create-budget content renders category pills and numpad entry", () => {
 
 test("create-budget form delegates numpad digits through handleNumpadPress", () => {
   expect(formSource).toContain("handleNumpadPress");
+  expect(formSource).toContain(
+    "setDigits((currentDigits) => handleNumpadPress(currentDigits, key))"
+  );
 });
 
 test("authenticated create-budget form writes through budget store actions", () => {

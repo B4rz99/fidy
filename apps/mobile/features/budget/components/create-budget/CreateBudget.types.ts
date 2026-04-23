@@ -1,3 +1,4 @@
+import type { SetStateAction } from "react";
 import type { CategoryId } from "@/features/transactions";
 import type { BudgetId, CopAmount, UserId } from "@/shared/types/branded";
 import type { BudgetSuggestion } from "../../lib/derive";
@@ -34,5 +35,5 @@ export type CreateBudgetDraftController = {
   readonly draft: CreateBudgetDraftState;
   readonly isEdit: boolean;
   readonly setCategory: (category: CategoryId) => void;
-  readonly setDigits: (digits: string) => void;
+  readonly setDigits: (digits: SetStateAction<string>) => void;
 };

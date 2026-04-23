@@ -16,26 +16,27 @@ export function CreateBudgetForm(props: CreateBudgetFormProps) {
     onDone: props.onDone,
     onUpdateBudget: props.onUpdateBudget,
   });
+  const { draft, isEdit, setCategory, setDigits } = draftController;
   const handleKey = useCallback(
     (key: string) => {
-      draftController.setDigits(handleNumpadPress(draftController.draft.digits, key));
+      setDigits((currentDigits) => handleNumpadPress(currentDigits, key));
     },
-    [draftController]
+    [setDigits]
   );
 
   return (
     <CreateBudgetFormContent
       autoSuggestions={props.autoSuggestions}
       canMutate={props.canMutate}
-      category={draftController.draft.category}
-      digits={draftController.draft.digits}
+      category={draft.category}
+      digits={draft.digits}
       existingCategoryIds={props.existingCategoryIds}
       handleDelete={handleDelete}
       handleKey={handleKey}
       handleSave={handleSave}
-      isEdit={draftController.isEdit}
+      isEdit={isEdit}
       isSaving={isSaving}
-      setCategory={draftController.setCategory}
+      setCategory={setCategory}
     />
   );
 }
