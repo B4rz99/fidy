@@ -30,11 +30,7 @@ export function FinancialAccountDetailsScreenContent({
   const accentRed = useThemeColor("accentRed");
   const accentGreen = useThemeColor("accentGreen");
 
-  if (!accountId) {
-    return null;
-  }
-
-  if (!details || !kind) {
+  if (!accountId || !details || !kind) {
     return (
       <ScreenLayout title={t("financialAccounts.detail.title")} variant="sub" onBack={onBack}>
         <View style={styles.emptyState}>

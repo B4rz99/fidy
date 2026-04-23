@@ -32,6 +32,7 @@ test("keeps the details hook wired to account lookup and detail actions", () => 
 });
 
 test("keeps the extracted detail content wired to the hero, billing gap, and identifiers", () => {
+  expect(contentSource).toContain("if (!accountId || !details || !kind)");
   expect(contentSource).toContain("<FinancialAccountDetailsHero");
   expect(contentSource).toContain('t("financialAccounts.detail.billingGapTitle")');
   expect(contentSource).toContain("<FinancialAccountIdentifiersSection");
