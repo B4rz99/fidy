@@ -48,6 +48,24 @@ const mockUpsertTransfer = vi.fn();
 const mockUpsertCaptureEvidence = vi.fn();
 
 const mockInsertConflict = vi.fn();
+const mockCaptureError = vi.fn();
+const mockCapturePipelineEvent = vi.fn();
+const mockCaptureWarning = vi.fn();
+const mockGenerateSyncConflictId = vi.fn(() => "sync-conflict-1");
+const mockToIsoDateTime = vi.fn((date: Date) => date.toISOString());
+
+vi.mock("@/shared/lib", async () => {
+  const actual = await vi.importActual<typeof import("@/shared/lib")>("@/shared/lib");
+  return {
+    ...actual,
+    captureError: (...args: any[]) => mockCaptureError(...args),
+    capturePipelineEvent: (...args: any[]) => mockCapturePipelineEvent(...args),
+    captureWarning: (...args: any[]) => mockCaptureWarning(...args),
+    generateSyncConflictId: () => mockGenerateSyncConflictId(),
+    toIsoDateTime: (date: Date) => mockToIsoDateTime(date),
+  };
+});
+
 vi.mock("@/features/sync/lib/conflict-repository", () => ({
   insertConflict: (...args: any[]) => mockInsertConflict(...args),
 }));
@@ -684,6 +702,26 @@ describe("syncEngine", () => {
       await syncPush(mockDb, mockSupabase, "user-1");
 
       expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-1"]);
+    });
+
+    it("captures rejected push entries with queue metadata", async () => {
+      mockGetQueuedSyncEntries.mockReturnValueOnce([createSyncQueueEntry()]);
+      mockGetTransactionById.mockImplementationOnce(() => {
+        throw new Error("lookup exploded");
+      });
+      const mockSupabase = createMockSupabase();
+      await runSyncPush(mockSupabase);
+
+      expect(mockClearSyncEntries).not.toHaveBeenCalled();
+      expect(mockCaptureWarning).toHaveBeenCalledWith(
+        "sync_push_entry_failed",
+        expect.objectContaining({
+          tableName: "transactions",
+          rowId: "tx-1",
+          errorMessage: "lookup exploded",
+          errorCode: "unknown",
+        })
+      );
     });
   });
 
