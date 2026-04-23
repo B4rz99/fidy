@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { create } from "zustand";
 import { isValidCategoryId } from "@/features/transactions/write.public";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync, transactions } from "@/shared/db";
@@ -11,11 +10,9 @@ import {
   normalizeMerchant,
   toIsoDateTime,
 } from "@/shared/lib";
-import { assertEmailAccountId } from "@/shared/types/assertions";
-import type { EmailAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
+import type { UserId } from "@/shared/types/branded";
 import { insertMerchantRule } from "./lib/merchant-rules";
-import type { ProgressPhase } from "./lib/progress-phases";
-import type { EmailAccountRow, ProcessedEmailRow } from "./lib/repository";
+import type { EmailAccountRow } from "./lib/repository";
 import {
   deleteEmailAccount,
   dismissProcessedEmail,
@@ -25,16 +22,13 @@ import {
   insertEmailAccount,
   updateProcessedEmailStatus,
 } from "./lib/repository";
-import type { ProgressCallback } from "./pipeline.public";
 import type { EmailProvider } from "./schema";
 import { getAdapter } from "./services/email-adapter";
 import {
   createEmailFetchClientIds,
-  type EmailCaptureQueues,
   fetchEmailAccountBatch,
   ingestFetchedEmails,
   loadEmailCaptureQueues,
-  type PersistedFetchedAccounts,
   persistFetchedAccounts,
 } from "./services/email-capture-fetch-service";
 import {
@@ -43,137 +37,24 @@ import {
   beginEmailCaptureRequest,
   createEmailCaptureFetchProgressHandler,
   createEmailCaptureSession,
-  type EmailCaptureFetchRun,
   finalizeEmailCaptureFetchRun,
   initializeEmailCaptureStoreSession,
   isActiveEmailCaptureSession,
-  isCurrentEmailCaptureFetchRun,
   isCurrentEmailCaptureRequest,
   registerEmailCaptureStoreRuntime,
 } from "./services/email-capture-store-runtime";
-
-type ProgressSnapshot = Parameters<ProgressCallback>[0];
-type RefreshTransactions = () => Promise<void> | void;
+import {
+  applyEmailCaptureFetchOutcome,
+  isManagedEmailProvider,
+  type RefreshTransactions,
+  resolveEmailAccountId,
+  useEmailCaptureStore,
+  warnFetchMissingContext,
+} from "./store/state";
 
 const noopRefreshTransactions: RefreshTransactions = () => undefined;
 
-type ApplyFetchOutcomeInput = {
-  readonly run: EmailCaptureFetchRun;
-  readonly showProgress: boolean;
-  readonly persistedAccounts: PersistedFetchedAccounts;
-  readonly queues: EmailCaptureQueues;
-  readonly refreshTransactions: RefreshTransactions;
-};
-
-type EmailCaptureState = {
-  readonly activeUserId: UserId | null;
-  readonly accounts: readonly EmailAccountRow[];
-  readonly failedEmails: readonly ProcessedEmailRow[];
-  readonly needsReviewEmails: readonly ProcessedEmailRow[];
-  readonly isFetching: boolean;
-  readonly progress: ProgressSnapshot | null;
-  readonly phase: ProgressPhase | null;
-  readonly bannerDismissed: boolean;
-};
-
-type EmailCaptureActions = {
-  beginSession: (userId: UserId) => void;
-  setAccounts: (accounts: readonly EmailAccountRow[]) => void;
-  setFailedEmails: (failedEmails: readonly ProcessedEmailRow[]) => void;
-  setNeedsReviewEmails: (needsReviewEmails: readonly ProcessedEmailRow[]) => void;
-  setIsFetching: (isFetching: boolean) => void;
-  setProgress: (progress: ProgressSnapshot | null) => void;
-  setPhase: (phase: ProgressPhase | null) => void;
-  dismissBanner: () => void;
-  appendAccount: (account: EmailAccountRow) => void;
-  removeAccount: (accountId: string) => void;
-  removeFailedEmail: (processedEmailId: string) => void;
-  removeNeedsReviewEmail: (processedEmailId: string) => void;
-  markAccountsFetched: (accountIds: ReadonlySet<EmailAccountId>, fetchedAt: IsoDateTime) => void;
-};
-
-export const useEmailCaptureStore = create<EmailCaptureState & EmailCaptureActions>((set) => ({
-  activeUserId: null,
-  accounts: [],
-  failedEmails: [],
-  needsReviewEmails: [],
-  isFetching: false,
-  progress: null,
-  phase: null,
-  bannerDismissed: false,
-
-  beginSession: (userId) =>
-    set({
-      activeUserId: userId,
-      accounts: [],
-      failedEmails: [],
-      needsReviewEmails: [],
-      isFetching: false,
-      progress: null,
-      phase: null,
-      bannerDismissed: false,
-    }),
-
-  setAccounts: (accounts) => set({ accounts: [...accounts] }),
-
-  setFailedEmails: (failedEmails) => set({ failedEmails: [...failedEmails] }),
-
-  setNeedsReviewEmails: (needsReviewEmails) => set({ needsReviewEmails: [...needsReviewEmails] }),
-
-  setIsFetching: (isFetching) => set({ isFetching }),
-
-  setProgress: (progress) => set({ progress }),
-
-  setPhase: (phase) => set({ phase }),
-
-  dismissBanner: () => set({ bannerDismissed: true }),
-
-  appendAccount: (account) => set((state) => ({ accounts: [...state.accounts, account] })),
-
-  removeAccount: (accountId) =>
-    set((state) => ({
-      accounts: state.accounts.filter((account) => account.id !== accountId),
-    })),
-
-  removeFailedEmail: (processedEmailId) =>
-    set((state) => ({
-      failedEmails: state.failedEmails.filter((email) => email.id !== processedEmailId),
-    })),
-
-  removeNeedsReviewEmail: (processedEmailId) =>
-    set((state) => ({
-      needsReviewEmails: state.needsReviewEmails.filter((email) => email.id !== processedEmailId),
-    })),
-
-  markAccountsFetched: (accountIds, fetchedAt) =>
-    set((state) => ({
-      accounts: state.accounts.map((account) =>
-        accountIds.has(account.id) ? { ...account, lastFetchedAt: fetchedAt } : account
-      ),
-    })),
-}));
-
-function resolveEmailAccountId(
-  account: EmailAccountRow | undefined,
-  emailAccountId: string
-): EmailAccountId {
-  if (account) return account.id;
-  assertEmailAccountId(emailAccountId);
-  return emailAccountId;
-}
-
-function isManagedEmailProvider(provider: string | undefined): provider is EmailProvider {
-  return provider === "gmail" || provider === "outlook";
-}
-
-function warnFetchMissingContext(userId: UserId): void {
-  const activeUserId = useEmailCaptureStore.getState().activeUserId;
-  captureWarning("email_capture_fetch_missing_context", {
-    hasActiveSession: activeUserId !== null,
-    matchesActiveSession: activeUserId === userId,
-    activeSessionUserId: activeUserId ?? "none",
-  });
-}
+export { useEmailCaptureStore };
 
 registerEmailCaptureStoreRuntime({
   beginSession: (userId) => useEmailCaptureStore.getState().beginSession(userId),
@@ -187,22 +68,6 @@ registerEmailCaptureStoreRuntime({
 
 export function initializeEmailCaptureSession(userId: UserId): void {
   initializeEmailCaptureStoreSession(userId);
-}
-
-async function applyFetchOutcome(input: ApplyFetchOutcomeInput): Promise<void> {
-  if (!isCurrentEmailCaptureFetchRun(input.run)) return;
-
-  const state = useEmailCaptureStore.getState();
-  state.markAccountsFetched(
-    input.persistedAccounts.updatedAccountIds,
-    input.persistedAccounts.fetchedAt
-  );
-  state.setFailedEmails(input.queues.failedEmails);
-  state.setNeedsReviewEmails(input.queues.needsReviewEmails);
-  if (input.showProgress) {
-    state.setPhase("complete");
-  }
-  await input.refreshTransactions();
 }
 
 export async function loadEmailAccounts(db: AnyDb, userId: UserId): Promise<void> {
@@ -352,7 +217,7 @@ export async function fetchAndProcessEmails(
       onProgress: createEmailCaptureFetchProgressHandler(run, refreshTransactions),
     });
 
-    await applyFetchOutcome({
+    await applyEmailCaptureFetchOutcome({
       run,
       showProgress: summary.showProgress,
       persistedAccounts: await persistFetchedAccounts({ db, fetchResults: summary.fetchResults }),
