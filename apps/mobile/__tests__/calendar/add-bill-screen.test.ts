@@ -25,6 +25,7 @@ test("add-bill is registered in root layout as formSheet", () => {
 
 test("add-bill routes through the extracted screen module", () => {
   expect(routeSource).toContain("AddBillScreen");
+  expect(routeSource).toContain("routes.public");
 });
 
 test("add-bill content uses KeyboardAvoidingView for keyboard handling", () => {

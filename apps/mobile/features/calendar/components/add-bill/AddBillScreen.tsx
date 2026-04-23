@@ -4,11 +4,8 @@ import type { UserId } from "@/shared/types/branded";
 import type { Bill } from "../../schema";
 import { useCalendarStore } from "../../store";
 import { AddBillForm } from "./AddBillForm";
+import { resolveBillIdParam, resolveExistingBill } from "./AddBillScreen.helpers";
 import { AuthenticatedAddBillForm } from "./AuthenticatedAddBillForm";
-
-function resolveExistingBill(bills: readonly Bill[], billId: string | undefined) {
-  return billId ? bills.find((bill) => bill.id === billId) : undefined;
-}
 
 function DisabledAddBillForm({
   existingBill,
@@ -45,13 +42,14 @@ function AddBillFormForUser({
 
 export function AddBillScreen() {
   const router = useRouter();
-  const { billId } = useLocalSearchParams<{ billId?: string }>();
+  const { billId } = useLocalSearchParams<{ billId?: string | string[] }>();
   const bills = useCalendarStore((state) => state.bills);
   const userId = useOptionalUserId();
+  const resolvedBillId = resolveBillIdParam(billId);
 
   return (
     <AddBillFormForUser
-      existingBill={resolveExistingBill(bills, billId)}
+      existingBill={resolveExistingBill(bills, resolvedBillId)}
       userId={userId}
       onDone={() => router.back()}
     />
