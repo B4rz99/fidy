@@ -1,32 +1,24 @@
-import { addMonths, subMonths } from "date-fns";
-import { create, type StateCreator } from "zustand";
+import { create } from "zustand";
 import { insertNotificationRecord } from "@/features/notifications";
 import { useSettingsStore } from "@/features/settings";
 import { CATEGORY_MAP } from "@/features/transactions";
 import { createWriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import { getCategoryLabel, useLocaleStore } from "@/shared/i18n";
-import { generateBudgetId, toIsoDateTime, toMonth, trackBudgetCreated } from "@/shared/lib";
+import { generateBudgetId, toIsoDateTime, trackBudgetCreated } from "@/shared/lib";
 import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
-import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./lib/derive";
-import type { BudgetMonthSnapshot } from "./lib/monitoring";
 import { createBudgetMonitoringModule } from "./lib/monitoring";
 import { scheduleBudgetAlert } from "./lib/notifications";
-import type { Budget } from "./schema";
 import { createBudgetSchema } from "./schema";
+import {
+  formatBudgetMonth,
+  nextBudgetMonth as getNextBudgetMonth,
+  previousBudgetMonth,
+} from "./store/month";
+import { createBudgetStoreState } from "./store/state";
 
 let budgetSessionId = 0;
 let loadBudgetsRequestId = 0;
-
-const formatMonth = (date: Date): Month => toMonth(date);
-
-/** Parse "YYYY-MM" to a local-time Date (1st of month). Avoids UTC date-only parsing pitfall. */
-const parseMonth = (month: Month): Date => {
-  const parts = month.split("-").map(Number);
-  const year = parts[0] ?? 0;
-  const monthIndex = (parts[1] ?? 1) - 1;
-  return new Date(year, monthIndex, 1);
-};
 
 const createLiveBudgetMonitoring = (
   db: AnyDb,
@@ -57,37 +49,6 @@ const budgetAlertStateManager = createBudgetMonitoringModule({
   scheduleBudgetAlert: async () => ({ type: "skipped" }),
   insertNotification: () => undefined,
 });
-
-type BudgetState = {
-  readonly activeUserId: UserId | null;
-  readonly currentMonth: Month;
-  readonly budgets: readonly Budget[];
-  readonly budgetProgress: readonly BudgetProgress[];
-  readonly summary: {
-    readonly totalBudget: number;
-    readonly totalSpent: number;
-    readonly percentUsed: number;
-  };
-  readonly autoSuggestions: readonly BudgetSuggestion[];
-  readonly acknowledgedAlerts: ReadonlySet<string>;
-  readonly pendingAlerts: readonly BudgetAlert[];
-  readonly pendingPermissionRequest: boolean;
-  readonly hasLoadedOnce: boolean;
-  readonly isLoading: boolean;
-};
-
-type BudgetActions = {
-  beginSession: (userId: UserId) => void;
-  setMonth: (month: Month) => void;
-  setSnapshot: (snapshot: BudgetMonthSnapshot) => void;
-  setAutoSuggestions: (autoSuggestions: readonly BudgetSuggestion[]) => void;
-  setIsLoading: (isLoading: boolean) => void;
-  acknowledgeAlert: (budgetId: BudgetId, threshold: 80 | 100) => void;
-  clearPendingPermissionRequest: () => void;
-};
-
-type BudgetStore = BudgetState & BudgetActions;
-type BudgetSetState = Parameters<StateCreator<BudgetStore>>[0];
 type BudgetRequest = {
   readonly requestId: number;
   readonly userId: UserId;
@@ -101,80 +62,9 @@ type UpdateBudgetInput = {
   readonly amount: CopAmount;
 };
 
-function createBudgetState(currentMonth: Month, activeUserId: UserId | null): BudgetState {
-  return {
-    activeUserId,
-    currentMonth,
-    budgets: [],
-    budgetProgress: [],
-    summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
-    autoSuggestions: [],
-    acknowledgedAlerts: new Set(),
-    pendingAlerts: [],
-    pendingPermissionRequest: false,
-    hasLoadedOnce: false,
-    isLoading: false,
-  };
-}
-
-function beginBudgetSession(set: BudgetSetState): BudgetActions["beginSession"] {
-  return (userId) => set((state) => createBudgetState(state.currentMonth, userId));
-}
-
-function setBudgetSnapshot(set: BudgetSetState): BudgetActions["setSnapshot"] {
-  return (snapshot) =>
-    set((state) => ({
-      budgets: snapshot.budgets as Budget[],
-      budgetProgress: snapshot.budgetProgress as BudgetProgress[],
-      summary: snapshot.summary,
-      autoSuggestions: snapshot.autoSuggestions as BudgetSuggestion[],
-      pendingAlerts: snapshot.pendingAlerts,
-      pendingPermissionRequest: state.pendingPermissionRequest || snapshot.pendingPermissionRequest,
-      hasLoadedOnce: true,
-      isLoading: false,
-    }));
-}
-
-function acknowledgeBudgetAlert(set: BudgetSetState): BudgetActions["acknowledgeAlert"] {
-  return (budgetId, threshold) =>
-    set((state) => {
-      const nextState = budgetAlertStateManager.acknowledgeAlert({
-        budgetId,
-        threshold,
-        alertState: {
-          pendingAlerts: state.pendingAlerts,
-          acknowledgedAlerts: state.acknowledgedAlerts,
-        },
-      });
-
-      return {
-        acknowledgedAlerts: new Set(nextState.acknowledgedAlerts),
-        pendingAlerts: nextState.pendingAlerts,
-      };
-    });
-}
-
-function createBudgetActions(set: BudgetSetState): BudgetActions {
-  return {
-    beginSession: beginBudgetSession(set),
-    setMonth: (currentMonth) => set({ currentMonth }),
-    setSnapshot: setBudgetSnapshot(set),
-    setAutoSuggestions: (autoSuggestions) =>
-      set({ autoSuggestions: [...autoSuggestions] as BudgetSuggestion[] }),
-    setIsLoading: (isLoading) => set({ isLoading }),
-    acknowledgeAlert: acknowledgeBudgetAlert(set),
-    clearPendingPermissionRequest: () => {
-      set({ pendingPermissionRequest: false });
-    },
-  };
-}
-
-const createBudgetStoreState: StateCreator<BudgetStore> = (set) => ({
-  ...createBudgetState(formatMonth(new Date()), null),
-  ...createBudgetActions(set),
-});
-
-export const useBudgetStore = create<BudgetStore>(createBudgetStoreState);
+export const useBudgetStore = create(
+  createBudgetStoreState(formatBudgetMonth(new Date()), budgetAlertStateManager)
+);
 
 function isActiveBudgetSession(userId: UserId, sessionId: number): boolean {
   return budgetSessionId === sessionId && useBudgetStore.getState().activeUserId === userId;
@@ -238,13 +128,13 @@ export async function loadBudgetsForUser(db: AnyDb, userId: UserId): Promise<voi
 }
 
 export async function nextBudgetMonth(db: AnyDb, userId: UserId): Promise<void> {
-  const next = formatMonth(addMonths(parseMonth(useBudgetStore.getState().currentMonth), 1));
+  const next = getNextBudgetMonth(useBudgetStore.getState().currentMonth);
   useBudgetStore.getState().setMonth(next);
   await loadBudgetsForUser(db, userId);
 }
 
 export async function prevBudgetMonth(db: AnyDb, userId: UserId): Promise<void> {
-  const previous = formatMonth(subMonths(parseMonth(useBudgetStore.getState().currentMonth), 1));
+  const previous = previousBudgetMonth(useBudgetStore.getState().currentMonth);
   useBudgetStore.getState().setMonth(previous);
   await loadBudgetsForUser(db, userId);
 }
