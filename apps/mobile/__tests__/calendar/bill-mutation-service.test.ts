@@ -337,7 +337,7 @@ describe("calendar bill mutation service", () => {
         kind: "calendar.bill.markPaid",
       })
     );
-    expect(trackPaymentRecordedMock).not.toHaveBeenCalled();
+    expect(trackPaymentRecordedMock).toHaveBeenCalledOnce();
   });
 
   it("returns false when markBillPaid receives an invalid bill amount", async () => {

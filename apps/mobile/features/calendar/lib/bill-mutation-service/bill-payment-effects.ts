@@ -7,6 +7,11 @@ export function applyBillPaymentSideEffects(
 ) {
   try {
     deps.addTransactionToCache(transaction);
+  } catch (error) {
+    deps.reportAsyncError(error);
+  }
+
+  try {
     deps.trackPaymentRecorded();
   } catch (error) {
     deps.reportAsyncError(error);
