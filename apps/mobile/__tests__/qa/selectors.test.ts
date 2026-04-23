@@ -15,11 +15,23 @@ function readTransferFormSource() {
   };
 }
 
+function readTransactionFormSource() {
+  return {
+    actions: readSource(
+      "../../features/transactions/components/transaction-form/TransactionActionSection.tsx"
+    ),
+    accounts: readSource(
+      "../../features/transactions/components/transaction-form/TransactionAccountSection.tsx"
+    ),
+    metadata: readSource(
+      "../../features/transactions/components/transaction-form/TransactionMetadataRow.tsx"
+    ),
+  };
+}
+
 const localQaButtonSource = readSource("../../features/qa/components/LocalQaLoginButton.tsx");
 const addChooserSource = readSource("../../app/(tabs)/add.tsx");
-const transactionFormSource = readSource(
-  "../../features/transactions/components/TransactionForm.tsx"
-);
+const transactionFormSource = readTransactionFormSource();
 const transferFormIdsSource = readSource(
   "../../features/transfers/components/transfer-form/TransferForm.types.ts"
 );
@@ -35,9 +47,9 @@ test("exposes chooser selectors for transaction and transfer entry", () => {
 });
 
 test("exposes transaction form selectors for save, date, and account selection", () => {
-  expect(transactionFormSource).toContain('testID="transaction-form.save"');
-  expect(transactionFormSource).toContain('testID="transaction-form.date"');
-  expect(transactionFormSource).toContain("transaction-form.account.");
+  expect(transactionFormSource.actions).toContain('testID="transaction-form.save"');
+  expect(transactionFormSource.metadata).toContain('testID="transaction-form.date"');
+  expect(transactionFormSource.accounts).toContain("transaction-form.account.");
 });
 
 test("wires transfer form selectors through the JSX usage sites", () => {

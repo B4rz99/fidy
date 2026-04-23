@@ -140,6 +140,13 @@ describe("transaction boundaries", () => {
     expect(useTransactionStore.getState().pages).toHaveLength(1);
   });
 
+  it("applies digits updater functions against the latest draft value", () => {
+    useTransactionStore.getState().setDigits("45");
+    useTransactionStore.getState().setDigits((currentDigits) => `${currentDigits}20`);
+
+    expect(useTransactionStore.getState().digits).toBe("4520");
+  });
+
   it("saveCurrentTransaction returns store-not-initialized when the active session changed", async () => {
     initializeTransactionSession("user-2" as UserId);
 

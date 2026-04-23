@@ -7,6 +7,7 @@ import {
   trackTransactionEdited,
 } from "@/shared/lib";
 import type { CategoryId, FinancialAccountId, TransactionId, UserId } from "@/shared/types/branded";
+import type { DigitsInput } from "./components/transaction-form/TransactionForm.types";
 import {
   createTransactionMutationService,
   type TransactionMutationResult,
@@ -52,7 +53,7 @@ type TransactionActions = {
   beginSession: (userId: UserId) => void;
   setStep: (step: FormStep) => void;
   setType: (type: TransactionType) => void;
-  setDigits: (digits: string) => void;
+  setDigits: (digits: DigitsInput) => void;
   setCategoryId: (id: CategoryId) => void;
   setDefaultAccountId: (id: FinancialAccountId | null) => void;
   setAccountId: (id: FinancialAccountId | null) => void;
@@ -176,7 +177,10 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
   beginSession: (userId) => set(createInitialState(userId)),
   setStep: (step) => set({ step }),
   setType: (type) => set({ type }),
-  setDigits: (digits) => set({ digits }),
+  setDigits: (digits) =>
+    set((state) => ({
+      digits: typeof digits === "function" ? digits(state.digits) : digits,
+    })),
   setCategoryId: (categoryId) => set({ categoryId }),
   setDefaultAccountId: (defaultAccountId) =>
     set((state) => ({
