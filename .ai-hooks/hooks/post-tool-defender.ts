@@ -11,6 +11,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { parse as parseYaml } from "yaml";
+import {
+  extractTextContent,
+  type HookInput,
+  MONITORED_TOOLS,
+  normalizeHookInput,
+} from "./post-tool-defender-hook";
 
 // Types
 interface Pattern {
@@ -24,13 +30,6 @@ interface Config {
   rolePlayingPatterns?: Pattern[];
   encodingPatterns?: Pattern[];
   contextManipulationPatterns?: Pattern[];
-}
-
-interface HookInput {
-  toolName: string;
-  toolInput: Record<string, unknown>;
-  toolResponse?: unknown;
-  toolResult?: unknown;
 }
 
 // Detection tuple: [category, reason, severity]
@@ -53,63 +52,6 @@ function loadConfig(): Config {
   }
 
   return {};
-}
-
-/**
- * Extract text content from tool result based on tool type.
- */
-function extractTextContent(toolName: string, toolResult: unknown): string {
-  if (toolResult === null || toolResult === undefined) {
-    return "";
-  }
-
-  if (typeof toolResult === "string") {
-    return toolResult;
-  }
-
-  if (typeof toolResult === "object") {
-    const result = toolResult as Record<string, unknown>;
-
-    if ("content" in result) {
-      const content = result.content;
-      if (typeof content === "string") return content;
-      if (Array.isArray(content)) {
-        return content
-          .map((block) => {
-            if (typeof block === "string") return block;
-            if (typeof block === "object" && block && "text" in block) {
-              return String((block as Record<string, unknown>).text);
-            }
-            return "";
-          })
-          .filter(Boolean)
-          .join("\n");
-      }
-    }
-
-    for (const key of ["output", "result", "text", "stdout", "data"]) {
-      if (key in result && result[key] != null) {
-        const value = result[key];
-        if (typeof value === "string") return value;
-        return String(value);
-      }
-    }
-
-    try {
-      return JSON.stringify(result);
-    } catch {
-      return String(result);
-    }
-  }
-
-  if (Array.isArray(toolResult)) {
-    return toolResult
-      .map((item) => extractTextContent(toolName, item))
-      .filter(Boolean)
-      .join("\n");
-  }
-
-  return String(toolResult);
 }
 
 /**
@@ -148,23 +90,6 @@ export function scanForInjections(text: string, config: Config): Detection[] {
 
   return detections;
 }
-
-function normalizeHookInput(input: Record<string, unknown>): HookInput | null {
-  const toolName = input.tool_name;
-  const toolInput = input.tool_input;
-
-  if (typeof toolName !== "string" || typeof toolInput !== "object" || toolInput === null) {
-    return null;
-  }
-
-  return {
-    toolName,
-    toolInput: toolInput as Record<string, unknown>,
-    toolResponse: input.tool_response,
-    toolResult: input.tool_result,
-  };
-}
-
 /**
  * Format detections into a warning message.
  */
@@ -281,13 +206,11 @@ async function main(): Promise<void> {
   const { toolName, toolInput, toolResponse, toolResult: toolResultFallback } = input;
   const toolResult = toolResponse ?? toolResultFallback;
 
-  const monitoredTools = new Set(["Read", "WebFetch", "Bash", "Grep", "Glob", "Task"]);
-
-  if (!monitoredTools.has(toolName)) {
+  if (!MONITORED_TOOLS.has(toolName)) {
     process.exit(0);
   }
 
-  const text = extractTextContent(toolName, toolResult);
+  const text = extractTextContent(toolResult);
 
   if (!text || text.length < 10) {
     process.exit(0);
