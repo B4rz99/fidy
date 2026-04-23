@@ -45,6 +45,7 @@ describe("normalizeHookInput", () => {
   it("rejects malformed hook payloads", () => {
     expect(normalizeHookInput({ tool_name: "Read", tool_input: null })).toBeNull();
     expect(normalizeHookInput({ tool_name: 42, tool_input: {} })).toBeNull();
+    expect(normalizeHookInput({ tool_name: "Read", tool_input: [] })).toBeNull();
   });
 });
 
@@ -55,6 +56,14 @@ describe("extractTextContent", () => {
         content: ["first", { text: "second" }, { ignored: true }],
       })
     ).toBe("first\nsecond");
+  });
+
+  it("skips nullish text blocks", () => {
+    expect(
+      extractTextContent({
+        content: [{ text: undefined }, { text: null }, { text: "kept" }],
+      })
+    ).toBe("kept");
   });
 
   it("normalizes nested array results", () => {

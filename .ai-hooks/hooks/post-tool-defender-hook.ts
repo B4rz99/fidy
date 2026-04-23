@@ -37,7 +37,8 @@ export function extractTextContent(toolResult: unknown): string {
             }
 
             if (typeof block === "object" && block && "text" in block) {
-              return String((block as Record<string, unknown>).text);
+              const text = (block as Record<string, unknown>).text;
+              return text == null ? "" : String(text);
             }
 
             return "";
@@ -68,7 +69,12 @@ export function normalizeHookInput(input: Record<string, unknown>): HookInput | 
   const toolName = input.tool_name;
   const toolInput = input.tool_input;
 
-  if (typeof toolName !== "string" || typeof toolInput !== "object" || toolInput === null) {
+  if (
+    typeof toolName !== "string" ||
+    typeof toolInput !== "object" ||
+    toolInput === null ||
+    Array.isArray(toolInput)
+  ) {
     return null;
   }
 
