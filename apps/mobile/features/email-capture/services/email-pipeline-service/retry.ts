@@ -29,20 +29,20 @@ import type {
 
 async function parseRetryEmail(
   context: RetryBatchContext,
-  email: ProcessedEmailRow
+  input: {
+    readonly provider: ProcessedEmailRow["provider"];
+    readonly rawBody: string;
+  }
 ): Promise<RetryParseOutcome> {
-  const rawBody = email.rawBody;
-  if (!rawBody) return { kind: "retry" };
-
   try {
     const parsed = await context.runtime.runEmailEffect(
-      parseBodyEffect(context.db, context.userId, rawBody)
+      parseBodyEffect(context.db, context.userId, input.rawBody)
     );
     return parsed ? { kind: "parsed", parsed } : { kind: "skipped" };
   } catch (error) {
     await context.runtime.runTelemetryEffect(
       captureWarningEffect("email_retry_parse_exception", {
-        provider: email.provider,
+        provider: input.provider,
         errorType: error instanceof Error ? error.message : "unknown",
       })
     );
@@ -196,12 +196,16 @@ async function processParsedRetryEmail(
 }
 
 async function processRetryEmail(context: RetryBatchContext, email: ProcessedEmailRow) {
-  if (!email.rawBody) {
+  const { rawBody } = email;
+  if (!rawBody) {
     await markRetryAsPermanentlyFailed(context, email.id);
     return;
   }
 
-  const parsed = await parseRetryEmail(context, email);
+  const parsed = await parseRetryEmail(context, {
+    provider: email.provider,
+    rawBody,
+  });
   if (parsed.kind !== "parsed") {
     await handleRetryParseOutcome(context, email, parsed.kind);
     return;

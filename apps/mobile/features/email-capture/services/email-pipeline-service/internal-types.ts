@@ -199,6 +199,7 @@ export type UnparsedProcessedEmailRowInput = {
   readonly processedEmailId: ProcessedEmailId;
   readonly createdAt: IsoDateTime;
   readonly status: "pending_retry" | "skipped";
+  readonly failureReason: string | null;
   readonly nextRetryAt: IsoDateTime | null;
 };
 

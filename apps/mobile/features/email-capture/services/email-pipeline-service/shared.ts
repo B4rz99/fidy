@@ -86,7 +86,7 @@ export function buildUnparsedProcessedEmailRow(
     externalId: input.email.externalId,
     provider: input.email.provider,
     status: input.status,
-    failureReason: input.status === "pending_retry" ? "parse_error" : null,
+    failureReason: input.failureReason,
     subject: input.email.subject,
     rawBodyPreview: input.email.body.slice(0, 500),
     receivedAt: requireIsoDateTime(input.email.receivedAt),
