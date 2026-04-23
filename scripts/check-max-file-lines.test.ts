@@ -90,3 +90,29 @@ test("does not overcount a file that ends with a trailing newline", () => {
   expect(result.stdout.toString()).toContain("No oversized files found.");
   expect(result.stdout.toString()).not.toContain("ThresholdScreen.tsx");
 });
+
+test("fails in enforce mode when oversized files are present", () => {
+  const root = createTempDir();
+  writeSourceFile(root, "apps/mobile/features/demo/components/LargeScreen.tsx", 6);
+
+  const result = Bun.spawnSync({
+    cmd: [
+      "bun",
+      "scripts/check-max-file-lines.ts",
+      "--root",
+      root,
+      "--max-lines",
+      "5",
+      "--enforce",
+    ],
+    cwd: process.cwd(),
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.stdout.toString()).toContain("Oversized files: 1");
+  expect(result.stdout.toString()).toContain(
+    "apps/mobile/features/demo/components/LargeScreen.tsx"
+  );
+});

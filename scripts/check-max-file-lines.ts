@@ -4,6 +4,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
 type Args = {
+  enforce: boolean;
   root: string;
   maxLines: number;
 };
@@ -30,6 +31,7 @@ const IGNORED_DIRECTORIES = new Set([
 const normalizePath = (value: string): string => value.replaceAll("\\", "/");
 
 const parseArgs = (argv: string[]): Args => {
+  const enforce = argv.includes("--enforce");
   const rootIndex = argv.indexOf("--root");
   const maxLinesIndex = argv.indexOf("--max-lines");
   const root = rootIndex === -1 ? process.cwd() : argv[rootIndex + 1];
@@ -44,7 +46,7 @@ const parseArgs = (argv: string[]): Args => {
     throw new Error("--max-lines must be a positive integer");
   }
 
-  return { root, maxLines };
+  return { enforce, root, maxLines };
 };
 
 const hasSourceExtension = (relativePath: string): boolean =>
@@ -144,9 +146,13 @@ const formatReport = (root: string, maxLines: number, violations: readonly Viola
 };
 
 const main = () => {
-  const { root, maxLines } = parseArgs(process.argv.slice(2));
+  const { enforce, root, maxLines } = parseArgs(process.argv.slice(2));
   const violations = scanViolations(root, maxLines);
   console.log(formatReport(root, maxLines, violations));
+
+  if (enforce && violations.length > 0) {
+    process.exit(1);
+  }
 };
 
 try {
