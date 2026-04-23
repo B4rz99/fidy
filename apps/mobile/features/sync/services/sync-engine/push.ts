@@ -191,6 +191,18 @@ function readRejectedPushErrorCode(reason: unknown) {
   return typeof reason.code === "string" ? reason.code : "unknown";
 }
 
+function toRejectedPushWarningPayload(
+  entry: { tableName: string; rowId: string } | undefined,
+  reason: unknown
+) {
+  return {
+    tableName: entry?.tableName ?? "unknown",
+    rowId: entry?.rowId ?? "unknown",
+    errorMessage: readRejectedPushErrorMessage(reason),
+    errorCode: readRejectedPushErrorCode(reason),
+  };
+}
+
 function captureRejectedPushEntries(
   entries: readonly { tableName: string; rowId: string }[],
   results: readonly PromiseSettledResult<SyncQueueId | null>[]
@@ -200,13 +212,10 @@ function captureRejectedPushEntries(
       return;
     }
 
-    const entry = entries[index];
-    captureWarning("sync_push_entry_failed", {
-      tableName: entry?.tableName ?? "unknown",
-      rowId: entry?.rowId ?? "unknown",
-      errorMessage: readRejectedPushErrorMessage(result.reason),
-      errorCode: readRejectedPushErrorCode(result.reason),
-    });
+    captureWarning(
+      "sync_push_entry_failed",
+      toRejectedPushWarningPayload(entries[index], result.reason)
+    );
   });
 }
 
