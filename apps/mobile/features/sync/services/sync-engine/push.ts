@@ -165,6 +165,51 @@ function capturePushEntryFailure(
   });
 }
 
+function hasRejectedPushErrorFields(
+  reason: unknown
+): reason is { message?: unknown; code?: unknown } {
+  return typeof reason === "object" && reason !== null;
+}
+
+function readRejectedPushErrorMessage(reason: unknown) {
+  if (typeof reason === "string") {
+    return reason;
+  }
+
+  if (!hasRejectedPushErrorFields(reason)) {
+    return "unknown";
+  }
+
+  return typeof reason.message === "string" ? reason.message : "unknown";
+}
+
+function readRejectedPushErrorCode(reason: unknown) {
+  if (!hasRejectedPushErrorFields(reason)) {
+    return "unknown";
+  }
+
+  return typeof reason.code === "string" ? reason.code : "unknown";
+}
+
+function captureRejectedPushEntries(
+  entries: readonly { tableName: string; rowId: string }[],
+  results: readonly PromiseSettledResult<SyncQueueId | null>[]
+) {
+  results.forEach((result, index) => {
+    if (result.status === "fulfilled") {
+      return;
+    }
+
+    const entry = entries[index];
+    captureWarning("sync_push_entry_failed", {
+      tableName: entry?.tableName ?? "unknown",
+      rowId: entry?.rowId ?? "unknown",
+      errorMessage: readRejectedPushErrorMessage(result.reason),
+      errorCode: readRejectedPushErrorCode(result.reason),
+    });
+  });
+}
+
 async function processEntry(
   db: AnyDb,
   supabase: SupabaseClient,
@@ -194,6 +239,7 @@ export async function syncPush(
   const results = await Promise.allSettled(
     entries.map((entry) => processEntry(db, supabase, entry))
   );
+  captureRejectedPushEntries(entries, results);
   const processedIds = results
     .filter(
       (result): result is PromiseFulfilledResult<SyncQueueId> =>
