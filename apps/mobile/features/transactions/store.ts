@@ -1,4 +1,3 @@
-import { create } from "zustand";
 import { createWriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import {
@@ -7,93 +6,19 @@ import {
   trackTransactionEdited,
 } from "@/shared/lib";
 import type { CategoryId, FinancialAccountId, TransactionId, UserId } from "@/shared/types/branded";
-import type { DigitsInput } from "./components/transaction-form/TransactionForm.types";
 import {
   createTransactionMutationService,
   type TransactionMutationResult,
 } from "./lib/mutation-service";
 import type { StoredTransaction, TransactionType } from "./schema";
-import {
-  type CategorySpendingItem,
-  createTransactionQueryService,
-  type DailySpendingItem,
-  type TransactionAggregateSnapshot,
-  type TransactionPageSnapshot,
-  type TransactionRefreshSnapshot,
-} from "./services/create-transaction-query-service";
-
-type FormStep = 1 | 2;
+import { createTransactionQueryService } from "./services/create-transaction-query-service";
+import { toTransactionFormInput } from "./store/form-input";
+import { useTransactionStore } from "./store/state";
 
 const PAGE_SIZE = 30;
 
 let transactionsSessionId = 0;
 let loadTransactionsRequestId = 0;
-
-type TransactionState = {
-  readonly activeUserId: UserId | null;
-  readonly step: FormStep;
-  readonly type: TransactionType;
-  readonly digits: string;
-  readonly categoryId: CategoryId | null;
-  readonly defaultAccountId: FinancialAccountId | null;
-  readonly accountId: FinancialAccountId | null;
-  readonly description: string;
-  readonly date: Date;
-  readonly pages: readonly StoredTransaction[];
-  readonly offset: number;
-  readonly hasMore: boolean;
-  readonly balance: number;
-  readonly categorySpending: readonly CategorySpendingItem[];
-  readonly dailySpending: readonly DailySpendingItem[];
-  readonly dataRevision: number;
-  readonly editingId: TransactionId | null;
-};
-
-type TransactionActions = {
-  beginSession: (userId: UserId) => void;
-  setStep: (step: FormStep) => void;
-  setType: (type: TransactionType) => void;
-  setDigits: (digits: DigitsInput) => void;
-  setCategoryId: (id: CategoryId) => void;
-  setDefaultAccountId: (id: FinancialAccountId | null) => void;
-  setAccountId: (id: FinancialAccountId | null) => void;
-  setDescription: (desc: string) => void;
-  setDate: (date: Date) => void;
-  setPageSnapshot: (snapshot: TransactionPageSnapshot) => void;
-  appendPageSnapshot: (snapshot: TransactionPageSnapshot) => void;
-  setAggregateSnapshot: (snapshot: TransactionAggregateSnapshot) => void;
-  applyRefreshSnapshot: (snapshot: TransactionRefreshSnapshot) => void;
-  hydrateEditingTransaction: (id: TransactionId, transaction: StoredTransaction) => void;
-  addToCache: (tx: StoredTransaction) => void;
-  removeFromCache: (id: TransactionId) => void;
-  resetForm: () => void;
-};
-
-const INITIAL_FORM: Pick<
-  TransactionState,
-  "step" | "type" | "digits" | "categoryId" | "accountId" | "description"
-> = {
-  step: 1,
-  type: "expense",
-  digits: "",
-  categoryId: null,
-  accountId: null,
-  description: "",
-};
-const INITIAL_PAGINATION_STATE: Pick<TransactionState, "pages" | "offset" | "hasMore"> = {
-  pages: [],
-  offset: 0,
-  hasMore: true,
-};
-const INITIAL_AGGREGATE_STATE: Pick<
-  TransactionState,
-  "balance" | "categorySpending" | "dailySpending" | "dataRevision"
-> = {
-  balance: 0,
-  categorySpending: [],
-  dailySpending: [],
-  dataRevision: 0,
-};
 type UpdateTransactionDirectInput = {
   readonly db: AnyDb;
   readonly userId: UserId;
@@ -107,34 +32,6 @@ type UpdateTransactionDirectInput = {
     readonly date: Date;
   };
 };
-
-function createInitialState(activeUserId: UserId | null): TransactionState {
-  return {
-    activeUserId,
-    ...INITIAL_FORM,
-    defaultAccountId: null,
-    date: new Date(),
-    ...INITIAL_PAGINATION_STATE,
-    ...INITIAL_AGGREGATE_STATE,
-    editingId: null,
-  };
-}
-
-function toTransactionFormInput(
-  state: Pick<
-    TransactionState,
-    "type" | "digits" | "categoryId" | "accountId" | "description" | "date"
-  >
-) {
-  return {
-    type: state.type,
-    digits: state.digits,
-    categoryId: state.categoryId,
-    accountId: state.accountId,
-    description: state.description,
-    date: state.date,
-  };
-}
 
 function isActiveTransactionSession(userId: UserId, sessionId: number): boolean {
   return (
@@ -170,101 +67,7 @@ function createLiveTransactionMutationService(db: AnyDb, userId: UserId, session
     createId: generateTransactionId,
   });
 }
-
-export const useTransactionStore = create<TransactionState & TransactionActions>((set) => ({
-  ...createInitialState(null),
-
-  beginSession: (userId) => set(createInitialState(userId)),
-  setStep: (step) => set({ step }),
-  setType: (type) => set({ type }),
-  setDigits: (digits) =>
-    set((state) => ({
-      digits: typeof digits === "function" ? digits(state.digits) : digits,
-    })),
-  setCategoryId: (categoryId) => set({ categoryId }),
-  setDefaultAccountId: (defaultAccountId) =>
-    set((state) => ({
-      defaultAccountId,
-      accountId:
-        state.editingId == null &&
-        (state.accountId == null || state.accountId === state.defaultAccountId)
-          ? defaultAccountId
-          : state.accountId,
-    })),
-  setAccountId: (accountId) => set({ accountId }),
-  setDescription: (description) => set({ description }),
-  setDate: (date) => set({ date }),
-
-  setPageSnapshot: (snapshot) =>
-    set({
-      pages: [...snapshot.pages],
-      offset: snapshot.offset,
-      hasMore: snapshot.hasMore,
-    }),
-
-  appendPageSnapshot: (snapshot) =>
-    set((state) => ({
-      pages: [...state.pages, ...snapshot.pages],
-      offset: state.offset + snapshot.pages.length,
-      hasMore: snapshot.hasMore,
-    })),
-
-  setAggregateSnapshot: (snapshot) =>
-    set({
-      balance: snapshot.balance,
-      categorySpending: [...snapshot.categorySpending],
-      dailySpending: [...snapshot.dailySpending],
-    }),
-
-  applyRefreshSnapshot: (snapshot) =>
-    set((state) => ({
-      ...(snapshot.sameData ? null : { pages: [...snapshot.pages] }),
-      offset: snapshot.offset,
-      hasMore: snapshot.hasMore,
-      balance: snapshot.balance,
-      categorySpending: [...snapshot.categorySpending],
-      dailySpending: [...snapshot.dailySpending],
-      dataRevision: state.dataRevision + 1,
-    })),
-
-  hydrateEditingTransaction: (id, transaction) =>
-    set({
-      editingId: id,
-      type: transaction.type,
-      digits: String(transaction.amount),
-      categoryId: transaction.categoryId,
-      accountId: transaction.accountId,
-      description: transaction.description,
-      date: transaction.date,
-    }),
-
-  addToCache: (transaction) =>
-    set((state) => ({
-      pages: [transaction, ...state.pages],
-      offset: state.offset + 1,
-      dataRevision: state.dataRevision + 1,
-    })),
-
-  removeFromCache: (id) =>
-    set((state) => {
-      const pages = state.pages.filter((transaction) => transaction.id !== id);
-      const removed = pages.length < state.pages.length;
-
-      return {
-        pages,
-        offset: removed ? Math.max(0, state.offset - 1) : state.offset,
-        dataRevision: removed ? state.dataRevision + 1 : state.dataRevision,
-      };
-    }),
-
-  resetForm: () =>
-    set((state) => ({
-      ...INITIAL_FORM,
-      accountId: state.defaultAccountId,
-      date: new Date(),
-      editingId: null,
-    })),
-}));
+export { useTransactionStore };
 
 export function initializeTransactionSession(userId: UserId): void {
   transactionsSessionId += 1;
