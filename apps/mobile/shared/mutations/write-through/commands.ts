@@ -1,0 +1,217 @@
+import type {
+  AnyDb,
+  billPayments,
+  bills,
+  budgets,
+  goalContributions,
+  goals,
+  notifications,
+  transactions,
+  userCategories,
+} from "@/shared/db";
+import type {
+  BillId,
+  BudgetId,
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  Month,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
+
+export type MutationEffect = () => void | Promise<void>;
+
+export type MutationOutcome =
+  | { success: true; didMutate: boolean }
+  | { success: false; error: string };
+
+type PersistedTransactionRow = typeof transactions.$inferInsert;
+type TransactionRow = Omit<
+  PersistedTransactionRow,
+  "accountId" | "accountAttributionState" | "supersededAt" | "source"
+> & {
+  accountId?: PersistedTransactionRow["accountId"];
+  accountAttributionState?: PersistedTransactionRow["accountAttributionState"];
+  supersededAt?: PersistedTransactionRow["supersededAt"];
+  source?: PersistedTransactionRow["source"];
+};
+type GoalRow = typeof goals.$inferInsert;
+type GoalContributionRow = typeof goalContributions.$inferInsert;
+type BudgetRow = typeof budgets.$inferInsert;
+type NotificationRow = typeof notifications.$inferInsert;
+type UserCategoryRow = typeof userCategories.$inferInsert;
+type BillRow = typeof bills.$inferInsert;
+type BillPaymentRow = typeof billPayments.$inferInsert;
+
+type TransactionSaveCommand = {
+  kind: "transaction.save";
+  mode: "insert" | "update";
+  row: TransactionRow;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type TransactionDeleteCommand = {
+  kind: "transaction.delete";
+  transactionId: TransactionId;
+  now: IsoDateTime;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type GoalSaveCommand = {
+  kind: "goal.save";
+  row: GoalRow;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type GoalUpdateCommand = {
+  kind: "goal.update";
+  goalId: string;
+  data: Partial<
+    Pick<
+      GoalRow,
+      "name" | "targetAmount" | "targetDate" | "interestRatePercent" | "iconName" | "colorHex"
+    >
+  >;
+  now: IsoDateTime;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type GoalDeleteCommand = {
+  kind: "goal.delete";
+  goalId: string;
+  now: IsoDateTime;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type GoalContributionSaveCommand = {
+  kind: "goalContribution.save";
+  row: GoalContributionRow;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type GoalContributionDeleteCommand = {
+  kind: "goalContribution.delete";
+  contributionId: string;
+  now: IsoDateTime;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type BudgetSaveCommand = {
+  kind: "budget.save";
+  row: BudgetRow;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type BudgetUpdateCommand = {
+  kind: "budget.update";
+  budgetId: BudgetId;
+  amount: CopAmount;
+  now: IsoDateTime;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type BudgetDeleteCommand = {
+  kind: "budget.delete";
+  budgetId: BudgetId;
+  now: IsoDateTime;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type BudgetCopyCommand = {
+  kind: "budget.copy";
+  sourceMonth: Month;
+  targetMonth: Month;
+  userId: UserId;
+  now: IsoDateTime;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type NotificationInsertCommand = {
+  kind: "notification.insert";
+  row: NotificationRow;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type NotificationClearAllCommand = {
+  kind: "notification.clearAll";
+  userId: UserId;
+  now: IsoDateTime;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type CategorySaveCommand = {
+  kind: "category.save";
+  row: UserCategoryRow;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type CalendarBillUpdateFields = {
+  name?: string;
+  amount?: CopAmount;
+  frequency?: BillRow["frequency"];
+  categoryId?: CategoryId;
+  startDate?: string;
+  isActive?: boolean;
+};
+
+type CalendarBillSaveCommand = {
+  kind: "calendar.bill.save";
+  row: BillRow;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type CalendarBillUpdateCommand = {
+  kind: "calendar.bill.update";
+  billId: BillId;
+  fields: CalendarBillUpdateFields;
+  now: IsoDateTime;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type CalendarBillDeleteCommand = {
+  kind: "calendar.bill.delete";
+  billId: BillId;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type CalendarBillMarkPaidCommand = {
+  kind: "calendar.bill.markPaid";
+  transactionRow: TransactionRow;
+  paymentRow: BillPaymentRow;
+  afterCommit?: readonly MutationEffect[];
+};
+
+type CalendarBillUnmarkPaidCommand = {
+  kind: "calendar.bill.unmarkPaid";
+  billId: BillId;
+  dueDate: IsoDate;
+  transactionId: TransactionId | null;
+  now: IsoDateTime;
+  afterCommit?: readonly MutationEffect[];
+};
+
+export type MutationCommand =
+  | TransactionSaveCommand
+  | TransactionDeleteCommand
+  | GoalSaveCommand
+  | GoalUpdateCommand
+  | GoalDeleteCommand
+  | GoalContributionSaveCommand
+  | GoalContributionDeleteCommand
+  | BudgetSaveCommand
+  | BudgetUpdateCommand
+  | BudgetDeleteCommand
+  | BudgetCopyCommand
+  | NotificationInsertCommand
+  | NotificationClearAllCommand
+  | CategorySaveCommand
+  | CalendarBillSaveCommand
+  | CalendarBillUpdateCommand
+  | CalendarBillDeleteCommand
+  | CalendarBillMarkPaidCommand
+  | CalendarBillUnmarkPaidCommand;
+
+type TransactionCallback = Parameters<AnyDb["transaction"]>[0];
+export type MutationDb = Parameters<TransactionCallback>[0];
