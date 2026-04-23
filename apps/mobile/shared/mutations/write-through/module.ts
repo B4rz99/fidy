@@ -42,21 +42,14 @@ export function createGenericWriteThroughMutationModule(
     },
     commitBatch: async (commands) => {
       try {
-        const result = db.transaction((tx) =>
-          commands.reduce<{
-            outcomes: readonly MutationOutcome[];
-            effects: readonly MutationEffect[];
-          }>(
-            (acc, command) => {
-              const next = applyCommand(tx, command);
-              return {
-                outcomes: [...acc.outcomes, { success: true, didMutate: next.didMutate }],
-                effects: [...acc.effects, ...next.effects],
-              };
-            },
-            { outcomes: [], effects: [] }
-          )
-        ) as {
+        const result = db.transaction((tx) => {
+          const applied = commands.map((command) => applyCommand(tx, command));
+
+          return {
+            outcomes: applied.map((next) => ({ success: true, didMutate: next.didMutate })),
+            effects: applied.flatMap((next) => next.effects),
+          };
+        }) as {
           outcomes: readonly MutationOutcome[];
           effects: readonly MutationEffect[];
         };

@@ -28,5 +28,8 @@ test("keeps the generic module responsible for batched effects and policy export
   expect(moduleSource).toContain("function runEffects");
   expect(moduleSource).toContain("createGenericWriteThroughMutationModule");
   expect(moduleSource).toContain("commitBatch");
+  expect(moduleSource).toContain("const applied = commands.map");
+  expect(moduleSource).toContain("applied.flatMap");
+  expect(moduleSource).not.toContain("[...acc.outcomes");
   expect(moduleSource).toContain("export { getMutationPolicy }");
 });
