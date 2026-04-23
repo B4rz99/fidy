@@ -13,4 +13,8 @@ describe("financial account route params", () => {
   it("returns the branded account id when the route param is present", () => {
     expect(parseFinancialAccountRouteParam("fa-123")).toBe("fa-123");
   });
+
+  it("returns the first repeated route param value", () => {
+    expect(parseFinancialAccountRouteParam(["fa-123", "fa-456"])).toBe("fa-123");
+  });
 });
