@@ -1,65 +1,81 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, test } from "vitest";
+import { expect, test } from "vitest";
 
-const source = readFileSync(resolve(__dirname, "../../app/add-bill.tsx"), "utf-8");
+function readSource(relativePath: string) {
+  return readFileSync(resolve(__dirname, relativePath), "utf-8");
+}
+
+const routeSource = readSource("../../app/add-bill.tsx");
 const layoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
+const screenSource = readSource("../../features/calendar/components/add-bill/AddBillScreen.tsx");
+const formSource = readSource("../../features/calendar/components/add-bill/AddBillForm.tsx");
+const formContentSource = readSource(
+  "../../features/calendar/components/add-bill/AddBillFormContent.tsx"
+);
+const authFormSource = readSource(
+  "../../features/calendar/components/add-bill/AuthenticatedAddBillForm.tsx"
+);
+const submitSource = readSource("../../features/calendar/components/add-bill/useAddBillSubmit.ts");
 
-describe("add-bill formSheet screen", () => {
-  test("is registered in root layout as formSheet", () => {
-    expect(layoutSource).toContain('name="add-bill"');
-    expect(layoutSource).toContain("formSheet");
-  });
+test("add-bill is registered in root layout as formSheet", () => {
+  expect(layoutSource).toContain('name="add-bill"');
+  expect(layoutSource).toContain("formSheet");
+});
 
-  test("uses KeyboardAvoidingView for keyboard handling", () => {
-    expect(source).toContain("KeyboardAvoidingView");
-  });
+test("add-bill routes through the extracted screen module", () => {
+  expect(routeSource).toContain("AddBillScreen");
+  expect(routeSource).toContain("routes.public");
+});
 
-  test("has name and amount text inputs", () => {
-    expect(source).toContain("TextInput");
-    expect(source).toContain("onChangeText");
-  });
+test("add-bill content uses KeyboardAvoidingView for keyboard handling", () => {
+  expect(formContentSource).toContain("KeyboardAvoidingView");
+});
 
-  test("has frequency chips", () => {
-    expect(source).toContain("FREQUENCIES");
-    expect(source).toContain("frequency");
-  });
+test("add-bill content has name and amount text inputs", () => {
+  expect(formContentSource).toContain("TextInput");
+  expect(formContentSource).toContain("onChangeText");
+});
 
-  test("has category chips", () => {
-    expect(source).toContain("CATEGORIES");
-    expect(source).toContain("category");
-  });
+test("add-bill content has frequency chips", () => {
+  expect(formContentSource).toContain("FREQUENCIES");
+  expect(formContentSource).toContain("frequency");
+});
 
-  test("calls addBill from store on submit", () => {
-    expect(source).toContain("addBill");
-  });
+test("add-bill content has category chips", () => {
+  expect(formContentSource).toContain("CATEGORIES");
+  expect(formContentSource).toContain("category");
+});
 
-  test("uses router.back() on successful save", () => {
-    expect(source).toContain("router.back()");
-  });
+test("authenticated add-bill form calls addBill from store on submit", () => {
+  expect(authFormSource).toContain("addBill");
+});
 
-  test("supports edit mode via billId param", () => {
-    expect(source).toContain("billId");
-  });
+test("add-bill screen uses router.back() on successful save", () => {
+  expect(screenSource).toContain("router.back()");
+});
 
-  test("only closes edit mode after a successful update", () => {
-    expect(source).toContain("const success = await onUpdateBill");
-    expect(source).toContain("if (success) onDone()");
-  });
+test("add-bill screen supports edit mode via billId param", () => {
+  expect(screenSource).toContain("billId");
+});
 
-  test("gates bill mutations on migration readiness", () => {
-    expect(source).toContain("useMigrations");
-    expect(source).toContain("canSubmit={migrationsReady}");
-    expect(source).toContain("if (!migrationsReady) return Promise.resolve(false)");
-    expect(source).not.toContain("undefined as never");
-  });
+test("add-bill submit only closes edit mode after a successful update", () => {
+  expect(submitSource).toContain("const success = await onUpdateBill");
+  expect(submitSource).toContain("if (success) onDone()");
+});
 
-  test("dismisses keyboard on chip press", () => {
-    expect(source).toContain("Keyboard.dismiss");
-  });
+test("authenticated add-bill form gates bill mutations on migration readiness", () => {
+  expect(authFormSource).toContain("useMigrations");
+  expect(authFormSource).toContain("canSubmit={migrationsReady}");
+  expect(authFormSource).toContain("if (!migrationsReady) return Promise.resolve(false)");
+  expect(authFormSource).not.toContain("undefined as never");
+});
 
-  test("uses Pressable per ui-pressable rule", () => {
-    expect(source).toContain("Pressable");
-    expect(source).not.toContain("TouchableOpacity");
-  });
+test("add-bill form dismisses keyboard on chip press", () => {
+  expect(formSource).toContain("Keyboard.dismiss");
+});
+
+test("add-bill content uses Pressable per ui-pressable rule", () => {
+  expect(formContentSource).toContain("Pressable");
+  expect(formContentSource).not.toContain("TouchableOpacity");
 });
