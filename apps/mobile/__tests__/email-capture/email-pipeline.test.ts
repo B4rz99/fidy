@@ -504,6 +504,72 @@ describe("email processing pipeline", () => {
     expect(call.nextRetryAt).toBeTruthy();
   });
 
+  it("marks parsed email as pending_retry when duplicate lookup fails", async () => {
+    const emails = [makeRawEmail()];
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+    mockFindDuplicateTransaction.mockRejectedValueOnce(new Error("dedup lookup down"));
+
+    const result = await processEmails(mockDb, USER_ID, emails);
+
+    expect(result.failed).toBe(1);
+    expect(result.saved).toBe(0);
+    expect(mockInsertTransaction).not.toHaveBeenCalled();
+    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        status: "pending_retry",
+        failureReason: null,
+        rawBody: "Su compra por $50.000 fue aprobada",
+        retryCount: 0,
+      })
+    );
+  });
+
+  it("marks parsed email as pending_retry when transaction save fails", async () => {
+    const emails = [makeRawEmail()];
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+    mockInsertTransaction.mockImplementationOnce(() => {
+      throw new Error("db write failed");
+    });
+
+    const result = await processEmails(mockDb, USER_ID, emails);
+
+    expect(result.failed).toBe(1);
+    expect(result.saved).toBe(0);
+    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        status: "pending_retry",
+        failureReason: null,
+        rawBody: "Su compra por $50.000 fue aprobada",
+        retryCount: 0,
+      })
+    );
+  });
+
+  it("does not insert a second processed email row after a partial save already persisted one", async () => {
+    const emails = [makeRawEmail()];
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+    mockGetProcessedExternalIds
+      .mockResolvedValueOnce(new Set<string>())
+      .mockResolvedValueOnce(new Set<string>(["ext-1"]));
+    mockSaveCaptureEvidenceRows.mockImplementationOnce(() => {
+      throw new Error("capture evidence failed");
+    });
+
+    const result = await processEmails(mockDb, USER_ID, emails);
+
+    expect(result.failed).toBe(1);
+    expect(mockInsertProcessedEmail).toHaveBeenCalledTimes(1);
+    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        status: "success",
+        transactionId: expect.stringMatching(/^tx-/),
+      })
+    );
+  });
+
   it("continues the batch when parsed output is malformed", async () => {
     const emails = [makeRawEmail({ externalId: "ext-1" }), makeRawEmail({ externalId: "ext-2" })];
     mockParseEmailApi
