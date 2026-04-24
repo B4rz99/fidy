@@ -1,4 +1,4 @@
-import type { FinancialAccountRow } from "@/features/financial-accounts";
+import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { requireFinancialAccountId } from "@/shared/types/assertions";
 import type { TransferSide } from "./build-transfer";
 

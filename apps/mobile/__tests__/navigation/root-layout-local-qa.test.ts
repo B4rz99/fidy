@@ -6,7 +6,7 @@ describe("Root layout local QA gating", () => {
   const source = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
 
   test("disables sync and capture hooks when remote effects are off", () => {
-    expect(source).toContain("enableRemoteEffects && migrationsReady ? db : null");
+    expect(source).toContain("useSyncBootstrap({ db, enableRemoteEffects, migrationsReady, userId })");
     expect(source).toContain("enableRemoteEffects ? userId : null");
   });
 

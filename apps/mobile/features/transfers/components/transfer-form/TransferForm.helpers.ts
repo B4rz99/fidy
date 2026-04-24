@@ -1,4 +1,4 @@
-import type { FinancialAccountRow } from "@/features/financial-accounts";
+import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
 import type { TransferSide } from "@/features/transfers/lib/build-transfer";
 import type { TransferMutationError } from "@/features/transfers/lib/mutation-service";

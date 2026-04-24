@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { Platform } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { requireProcessedEmailId, requireTransactionId } from "@/shared/types/assertions";

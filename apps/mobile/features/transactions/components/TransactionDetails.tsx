@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { useShallow } from "zustand/react/shallow";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { Calendar, ChevronLeft } from "@/shared/components/icons";
 import { Pressable, Text, TextInput, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";

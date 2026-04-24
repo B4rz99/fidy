@@ -1,4 +1,4 @@
-import type { FinancialAccountRow } from "@/features/financial-accounts";
+import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { FinancialAccountId } from "@/shared/types/branded";
 
 export function hasSelectedFinancialAccount(
