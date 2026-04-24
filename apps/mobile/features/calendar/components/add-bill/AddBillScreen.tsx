@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import type { UserId } from "@/shared/types/branded";
 import type { Bill } from "../../schema";
 import { useCalendarStore } from "../../store";

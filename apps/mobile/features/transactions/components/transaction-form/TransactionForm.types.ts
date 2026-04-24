@@ -1,4 +1,4 @@
-import type { FinancialAccountRow } from "@/features/financial-accounts";
+import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { CategoryId, FinancialAccountId } from "@/shared/types/branded";
 import type { TransactionType } from "../../schema";
 
