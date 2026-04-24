@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
-import { getNextOccurrence, useCalendarStore } from "@/features/calendar";
-import { CATEGORY_MAP } from "@/features/transactions";
+import { getNextOccurrence, useCalendarStore } from "@/features/calendar/public";
+import { CATEGORY_MAP } from "@/shared/categories";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";

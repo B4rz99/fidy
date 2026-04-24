@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { useBudgetStore } from "../../store";
 import { AuthenticatedCreateBudgetForm } from "./AuthenticatedCreateBudgetForm";
 import { CreateBudgetForm } from "./CreateBudgetForm";

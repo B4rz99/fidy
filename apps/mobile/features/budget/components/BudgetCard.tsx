@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { CATEGORY_MAP } from "@/features/transactions";
+import { CATEGORY_MAP } from "@/shared/categories";
 import { ProgressBar } from "@/shared/components";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";

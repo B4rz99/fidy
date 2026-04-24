@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { OnboardingAccountReviewStep } from "@/features/account-suggestions/routes.public";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
-import { initializeBudgetSession } from "@/features/budget/public";
+import { initializeBudgetSession } from "@/features/budget/hooks.public";
 import { initializeEmailCaptureSession, loadEmailAccounts } from "@/features/email-capture";
 import { tryEnsureDefaultFinancialAccount } from "@/features/financial-accounts";
 import {

@@ -1,6 +1,6 @@
-import { insertNotificationRecord, scheduleLocalPush } from "@/features/notifications";
+import { insertNotificationRecord, scheduleLocalPush } from "@/features/notifications/public";
 import { createWriteThroughMutationModule } from "@/mutations";
-import type { AnyDb } from "@/shared/db";
+import type { AnyDb } from "@/shared/db/client";
 import { i18n } from "@/shared/i18n";
 import {
   captureWarning,

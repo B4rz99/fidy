@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useBudgetStore } from "@/features/budget";
-import { useTransactionStore } from "@/features/transactions";
+import { useBudgetStore } from "@/features/budget/public";
+import { useTransactionStore } from "@/features/transactions/store.public";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { useOnboardingStore } from "../store";
