@@ -18,6 +18,7 @@ const TEST_FILE_PATTERN = /\.test\.(ts|tsx)$/;
 const FEATURE_IMPORT_PATTERN = /from\s+["']@\/features\/([^/"']+)["']/g;
 const withOptions = (options: CliOptions, patch: Partial<CliOptions>): CliOptions =>
   Object.assign({}, options, patch);
+const normalizePath = (path: string): string => path.replaceAll("\\", "/");
 
 const isTsSourceFile = (path: string) => {
   const extension = extname(path);
@@ -41,8 +42,8 @@ const walk = (root: string): readonly string[] => {
   });
 };
 
-const getOwnerFeature = (path: string): string | null => {
-  const normalized = path.split("/").join("/");
+export const extractOwnerFeatureFromPath = (path: string): string | null => {
+  const normalized = normalizePath(path);
   const match = normalized.match(/apps\/mobile\/features\/([^/]+)/);
   return match?.[1] ?? null;
 };
@@ -54,7 +55,7 @@ export const collectFeaturePublicImportViolations = (root: string): readonly Imp
     .filter(isTsSourceFile)
     .filter((path) => !isIgnoredSourceFile(path))
     .flatMap((path) => {
-      const ownerFeature = getOwnerFeature(path);
+      const ownerFeature = extractOwnerFeatureFromPath(path);
       if (ownerFeature == null) return [];
 
       const source = readFileSync(path, "utf8");

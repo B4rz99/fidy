@@ -13,32 +13,39 @@ type CliOptions = {
 const DEFAULT_ROOT = process.cwd();
 const withOptions = (options: CliOptions, patch: Partial<CliOptions>): CliOptions =>
   Object.assign({}, options, patch);
+const readOptionValue = (args: readonly string[], index: number): string | null => {
+  const value = args[index + 1];
+  if (value == null || value.startsWith("--")) {
+    return null;
+  }
+  return value;
+};
 
 const parseArgs = (argv: readonly string[]): CliOptions =>
   argv.reduce<CliOptions>(
     (options, arg, index, allArgs) => {
       if (arg === "--feature") {
-        const feature = allArgs[index + 1];
+        const feature = readOptionValue(allArgs, index);
         return feature ? withOptions(options, { feature }) : options;
       }
 
       if (arg === "--table") {
-        const table = allArgs[index + 1];
+        const table = readOptionValue(allArgs, index);
         return table ? withOptions(options, { table }) : options;
       }
 
       if (arg === "--entity") {
-        const entity = allArgs[index + 1];
+        const entity = readOptionValue(allArgs, index);
         return entity ? withOptions(options, { entity }) : options;
       }
 
       if (arg === "--root") {
-        const root = allArgs[index + 1];
+        const root = readOptionValue(allArgs, index);
         return root ? withOptions(options, { root }) : options;
       }
 
       if (arg === "--output") {
-        const output = allArgs[index + 1];
+        const output = readOptionValue(allArgs, index);
         return output ? withOptions(options, { output }) : options;
       }
 

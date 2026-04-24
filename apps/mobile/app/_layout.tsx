@@ -12,6 +12,7 @@ import { getLocales } from "expo-localization";
 import { type Href, Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import { useCallback } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   runAuthenticatedBootstrap,
@@ -86,12 +87,16 @@ function AuthenticatedShell({
   const initialSyncDone = useSyncBootstrap({ db, enableRemoteEffects, migrationsReady, userId });
   const captureDb = enableRemoteEffects && initialSyncDone && migrationsReady ? db : null;
   const captureUserId = enableRemoteEffects ? userId : null;
+  const navigateToRoute = useCallback(
+    (route: string) => {
+      router.push(route as Href);
+    },
+    [router]
+  );
   useAuthenticatedCapturePipelines({ db: captureDb, userId: captureUserId });
   useAuthenticatedNotificationBootstrap({
     enableRemoteEffects,
-    navigateToRoute: (route) => {
-      router.push(route as Href);
-    },
+    navigateToRoute,
     userId,
   });
 

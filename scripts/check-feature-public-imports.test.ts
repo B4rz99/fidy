@@ -2,6 +2,7 @@ import { afterEach, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { extractOwnerFeatureFromPath } from "./check-feature-public-imports";
 
 const tempDirs: string[] = [];
 
@@ -100,4 +101,10 @@ test("fails in enforce mode when violations are present", () => {
   expect(result.stdout.toString()).toContain(
     "apps/mobile/features/search/store.ts:1 imports @/features/transactions"
   );
+});
+
+test("extracts feature owners from Windows-style paths", () => {
+  expect(
+    extractOwnerFeatureFromPath("C:\\repo\\apps\\mobile\\features\\notifications\\bootstrap.ts")
+  ).toBe("notifications");
 });

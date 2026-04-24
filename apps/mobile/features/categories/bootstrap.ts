@@ -1,13 +1,10 @@
 import type { BootstrapTask } from "@/shared/bootstrap/registry";
 import type { AuthenticatedBootstrapContext } from "@/shared/bootstrap/types";
-import { handleRecoverableError } from "@/shared/lib";
 import { refreshCategories } from "./public";
 
 export const categoriesBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
   id: "categories",
   run: ({ db, userId }) => {
-    void refreshCategories(db, userId).catch(
-      handleRecoverableError("Failed to load user categories")
-    );
+    void refreshCategories(db, userId);
   },
 };

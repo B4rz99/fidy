@@ -86,3 +86,23 @@ test("fails when required arguments are missing", () => {
   expect(result.exitCode).toBe(1);
   expect(result.stderr.toString()).toContain("Missing required option: --table");
 });
+
+test("does not treat another flag as a missing option value", () => {
+  const result = Bun.spawnSync({
+    cmd: [
+      "bun",
+      "scripts/scaffold-syncable-feature.ts",
+      "--feature",
+      "--table",
+      "demo_rows",
+      "--entity",
+      "DemoRow",
+    ],
+    cwd: process.cwd(),
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.stderr.toString()).toContain("Missing required option: --feature");
+});
