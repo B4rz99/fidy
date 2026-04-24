@@ -1,4 +1,4 @@
-import { useEmailCaptureStore } from "@/features/email-capture";
+import { useEmailCaptureStore } from "@/features/email-capture/public";
 import { ChevronRight, TriangleAlert } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";

@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { ScreenLayout } from "@/shared/components";
 import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";

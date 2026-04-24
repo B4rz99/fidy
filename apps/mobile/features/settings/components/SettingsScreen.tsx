@@ -1,8 +1,8 @@
 import Constants from "expo-constants";
 import { Stack, useRouter } from "expo-router";
 import { openBrowserAsync } from "expo-web-browser";
-import { useAuthIdentity } from "@/features/auth";
-import { useEmailCaptureStore } from "@/features/email-capture";
+import { useAuthIdentity } from "@/features/auth/public";
+import { useEmailCaptureStore } from "@/features/email-capture/public";
 import { ScreenLayout, SettingsSection, TAB_BAR_CLEARANCE } from "@/shared/components";
 import {
   Bell,

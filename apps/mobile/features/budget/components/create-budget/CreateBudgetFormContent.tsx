@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import Animated from "react-native-reanimated";
-import { type CategoryId, CATEGORIES } from "@/shared/categories";
 import { CategoryPill } from "@/features/transactions/display.public";
+import { CATEGORIES, type CategoryId } from "@/shared/categories";
 import { FidyNumpad } from "@/shared/components";
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";

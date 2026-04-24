@@ -1,6 +1,6 @@
 import type { Effect } from "effect";
-import type { CaptureEvidenceSeed } from "@/features/capture-evidence";
-import type { FinancialAccountRow } from "@/features/financial-accounts";
+import type { CaptureEvidenceSeed } from "@/features/capture-evidence/public";
+import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { AnyDb } from "@/shared/db";
 import type { AppClock } from "@/shared/effect/clock";
 import type { AppTelemetry } from "@/shared/effect/telemetry";

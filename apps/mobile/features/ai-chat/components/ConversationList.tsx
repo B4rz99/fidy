@@ -2,7 +2,7 @@ import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { Stack } from "expo-router";
 import { memo, useCallback } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { MessageSquare, Plus, Trash2, X } from "@/shared/components/icons";
 import { Platform, Pressable, Text, View } from "@/shared/components/rn";
