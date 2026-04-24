@@ -39,11 +39,8 @@
 ## Architecture
 
 - Budgets are calendar-month only.
-- Multi-account: `transactions.accountId` becomes `NOT NULL` only in Phase 3, after creating accounts/default account and backfilling.
 - Every new user-data table must enqueue sync via `enqueueSync(db, tableName, rowId, operation)`.
-- Budget, goal, and analytics derivations run on-device in SQLite. New Edge Functions are only for weekly digest scheduling and AI chat context extension.
 - Transaction search uses SQL `LIKE`; do not add FTS5 without profiling evidence.
-- Analytics aggregation belongs in SQL, not JS.
 - `deriveBudgetProgress()` stays pure.
 - New pure derivations get direct unit tests; file-source tests are for navigation/layout cases only.
 
@@ -54,3 +51,20 @@
 - Zustand stores live in `features/{feature}/stores/`.
 - Navigation uses Expo Router; screens live in `app/`, modals are top-level routes.
 - Use TanStack Query for server data and Zustand for local or derived state.
+
+## Feature Surface Conventions
+
+- Cross-feature imports must go through explicit `*.public.ts` files. Do not import another feature’s `index.ts` or internal modules.
+- Treat `public.ts` as non-UI by default: pure logic, schemas, repositories, services, and store-free APIs only.
+- Put React components/screens in `ui.public.ts`, hooks in `hooks.public.ts`, and split mature features further by responsibility (`query.public.ts`, `store.public.ts`, `display.public.ts`, `write.public.ts`) when needed.
+- Route files in `app/` should import feature screens/components from `ui.public.ts` or `routes.public.ts`, not from broad feature barrels.
+- If multiple features depend on the same domain concept, move it to `shared/` instead of keeping one feature as the accidental owner.
+- Feature startup belongs in `features/*/bootstrap.ts` and is composed through the bootstrap registry/authenticated shell, not added ad hoc in `_layout.tsx`.
+- Keep broad public barrels narrow. If adding one export would pull UI or store code into pure consumers, create a new explicit surface instead.
+
+## File Size Conventions
+
+- Split by responsibility boundary, not by arbitrary chunks.
+- Keep route files and public entrypoints thin. Screens in `app/` should usually re-export from `routes.public.ts`; large feature entry files should delegate to focused modules.
+- For stores, keep the exported boundary thin and move pure Zustand state to `store/state.ts`; move async workflows, mappers, and side-effect orchestration into sibling modules or services.
+- Avoid catch-all `utils.ts` buckets.
