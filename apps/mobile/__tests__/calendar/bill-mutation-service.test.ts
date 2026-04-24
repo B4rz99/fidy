@@ -406,7 +406,7 @@ describe("calendar bill mutation service", () => {
       })
     );
 
-    vi.doUnmock("@/features/transactions/public");
+    vi.doUnmock("@/features/transactions/query.public");
     vi.doUnmock("@/features/transactions/lib/build-transaction");
     vi.resetModules();
   });

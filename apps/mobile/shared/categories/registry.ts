@@ -77,8 +77,9 @@ export const CATEGORIES: readonly Category[] = [
   },
 ] as const;
 
-export const CATEGORY_MAP: Record<string, Category | undefined> = Object.fromEntries(
-  CATEGORIES.map((category) => [category.id, category])
+export const CATEGORY_MAP: Record<string, Category | undefined> = Object.assign(
+  Object.create(null) as Record<string, Category | undefined>,
+  Object.fromEntries(CATEGORIES.map((category) => [category.id, category]))
 );
 
 export const getBuiltInCategory = (id: string): Category => {
