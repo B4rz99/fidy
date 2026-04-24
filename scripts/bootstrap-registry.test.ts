@@ -82,3 +82,65 @@ test("subscribeBootstrapTasks returns a combined cleanup for enabled subscriptio
     "cleanup:second",
   ]);
 });
+
+test("subscribeBootstrapTasks cleans up earlier subscriptions when a later subscribe fails", () => {
+  const context: TestContext = { enabled: true, log: [] };
+  const subscribeError = new Error("subscribe failed");
+  const tasks: readonly SubscriptionTask<TestContext>[] = [
+    {
+      id: "first",
+      subscribe: ({ log }) => {
+        log.push("subscribe:first");
+        return () => {
+          log.push("cleanup:first");
+        };
+      },
+    },
+    {
+      id: "second",
+      subscribe: ({ log }) => {
+        log.push("subscribe:second");
+        throw subscribeError;
+      },
+    },
+  ];
+
+  expect(() => subscribeBootstrapTasks(context, tasks)).toThrow(subscribeError);
+  expect(context.log).toEqual(["subscribe:first", "subscribe:second", "cleanup:first"]);
+});
+
+test("subscribeBootstrapTasks runs every cleanup even if one throws", () => {
+  const context: TestContext = { enabled: true, log: [] };
+  const cleanupError = new Error("cleanup failed");
+  const tasks: readonly SubscriptionTask<TestContext>[] = [
+    {
+      id: "first",
+      subscribe: ({ log }) => {
+        log.push("subscribe:first");
+        return () => {
+          log.push("cleanup:first");
+          throw cleanupError;
+        };
+      },
+    },
+    {
+      id: "second",
+      subscribe: ({ log }) => {
+        log.push("subscribe:second");
+        return () => {
+          log.push("cleanup:second");
+        };
+      },
+    },
+  ];
+
+  const cleanup = subscribeBootstrapTasks(context, tasks);
+
+  expect(() => cleanup()).toThrow(cleanupError);
+  expect(context.log).toEqual([
+    "subscribe:first",
+    "subscribe:second",
+    "cleanup:first",
+    "cleanup:second",
+  ]);
+});

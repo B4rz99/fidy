@@ -39,7 +39,7 @@ const subscribeNotificationNavigation = ({
 export const notificationsBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
   id: "notifications",
   run: ({ db, userId }) => {
-    void initializeNotificationStore(db, userId);
+    void initializeNotificationStore(db, userId).catch(captureError);
   },
 };
 

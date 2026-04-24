@@ -7,7 +7,7 @@ export type BootstrapTask<Context> = {
 export type SubscriptionTask<Context> = {
   readonly id: string;
   readonly isEnabled?: (context: Context) => boolean;
-  readonly subscribe: (context: Context) => void | (() => void);
+  readonly subscribe: (context: Context) => undefined | (() => void);
 };
 
 const isTaskEnabled = <Context>(
@@ -25,20 +25,85 @@ export async function runBootstrapTasks<Context>(
   }
 }
 
-const isCleanup = (value: void | (() => void)): value is () => void => typeof value === "function";
+type Cleanup = () => void;
+
+const isCleanup = (value: undefined | Cleanup): value is Cleanup => typeof value === "function";
+
+const collectCleanupErrors = (cleanups: readonly Cleanup[]): readonly unknown[] => {
+  const errors: unknown[] = [];
+
+  for (const cleanup of cleanups) {
+    try {
+      cleanup();
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+
+  return errors;
+};
+
+const throwCleanupErrors = (errors: readonly unknown[], message: string): void => {
+  if (errors.length === 0) {
+    return;
+  }
+
+  if (errors.length === 1) {
+    throw errors[0];
+  }
+
+  throw new AggregateError(errors, message);
+};
+
+const registerCleanup = (cleanups: Cleanup[], value: undefined | Cleanup): void => {
+  if (isCleanup(value)) {
+    cleanups.push(value);
+  }
+};
+
+const throwSubscribeFailure = (
+  taskId: string,
+  error: unknown,
+  cleanups: readonly Cleanup[]
+): never => {
+  const cleanupErrors = collectCleanupErrors(cleanups);
+  if (cleanupErrors.length === 0) {
+    throw error;
+  }
+
+  throw new AggregateError(
+    [error, ...cleanupErrors],
+    `Bootstrap subscription task "${taskId}" failed`
+  );
+};
+
+const subscribeTask = <Context>(
+  context: Context,
+  task: SubscriptionTask<Context>,
+  cleanups: Cleanup[]
+): void => {
+  if (!isTaskEnabled(task, context)) {
+    return;
+  }
+
+  try {
+    registerCleanup(cleanups, task.subscribe(context));
+  } catch (error) {
+    throwSubscribeFailure(task.id, error, cleanups);
+  }
+};
 
 export const subscribeBootstrapTasks = <Context>(
   context: Context,
   tasks: readonly SubscriptionTask<Context>[]
 ): (() => void) => {
-  const cleanups = tasks
-    .filter((task) => isTaskEnabled(task, context))
-    .map((task) => task.subscribe(context))
-    .filter(isCleanup);
+  const cleanups: Cleanup[] = [];
+
+  for (const task of tasks) {
+    subscribeTask(context, task, cleanups);
+  }
 
   return () => {
-    cleanups.forEach((cleanup) => {
-      cleanup();
-    });
+    throwCleanupErrors(collectCleanupErrors(cleanups), "Bootstrap cleanup failed");
   };
 };
