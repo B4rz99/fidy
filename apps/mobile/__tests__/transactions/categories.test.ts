@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getBuiltInCategoryId } from "@/features/transactions";
+import { getBuiltInCategory } from "@/features/transactions/categories.public";
 import {
   CATEGORIES,
   CATEGORY_IDS,
@@ -83,5 +84,9 @@ describe("getBuiltInCategoryId", () => {
 
   it("throws for unknown built-in category keys", () => {
     expect(() => getBuiltInCategoryId("missing")).toThrow("Unknown built-in category: missing");
+  });
+
+  it("throws for inherited object keys", () => {
+    expect(() => getBuiltInCategory("toString")).toThrow("Unknown built-in category: toString");
   });
 });

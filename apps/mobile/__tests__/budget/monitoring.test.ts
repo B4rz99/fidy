@@ -388,7 +388,7 @@ describe("createBudgetMonitoringModule", () => {
       percentUsed: 85,
     });
 
-    vi.doUnmock("@/features/transactions/public");
+    vi.doUnmock("@/features/transactions/query.public");
     vi.doUnmock("@/features/transactions/lib/repository");
     vi.resetModules();
   });
