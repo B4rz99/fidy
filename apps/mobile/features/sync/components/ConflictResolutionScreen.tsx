@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { useAuthStore } from "@/features/auth";
+import { useAuthStore } from "@/features/auth/public";
 import { ScreenLayout } from "@/shared/components";
 import { FlatList, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";

@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { Ellipsis } from "@/shared/components/icons";
 import { useAsyncGuard } from "@/shared/hooks";
 import { ICON_MAP } from "../../lib/icon-map";

@@ -1,6 +1,6 @@
-import { findMatchingFinancialAccountId } from "@/features/account-suggestions";
+import { findMatchingFinancialAccountId } from "@/features/account-suggestions/public";
 import { lookupMerchantRule } from "@/features/email-capture/merchant-rules.public";
-import { ensureDefaultFinancialAccount } from "@/features/financial-accounts";
+import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
 import type { AnyDb } from "@/shared/db";
 import { normalizeMerchant, toIsoDateTime } from "@/shared/lib";
 import { assertUserId } from "@/shared/types/assertions";

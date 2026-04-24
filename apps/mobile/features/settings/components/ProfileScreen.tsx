@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useAuthIdentity, useAuthMode, useAuthStore } from "@/features/auth";
+import { useAuthIdentity, useAuthMode, useAuthStore } from "@/features/auth/public";
 import { LocalQaProfileTools } from "@/features/qa/routes.public";
 import { ScreenLayout } from "@/shared/components";
 import { Brain, LogOut } from "@/shared/components/icons";

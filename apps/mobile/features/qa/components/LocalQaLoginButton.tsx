@@ -1,4 +1,5 @@
-import { OAuthButton, useAuthStore } from "@/features/auth";
+import { useAuthStore } from "@/features/auth/public";
+import { OAuthButton } from "@/features/auth/ui.public";
 import { useTranslation } from "@/shared/hooks";
 import { isLocalQaAvailable } from "../local-session";
 

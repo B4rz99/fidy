@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useAuthStore } from "@/features/auth";
+import { useAuthStore } from "@/features/auth/public";
 import {
   type QaFeatureFlagName,
   type QaNetworkEvent,

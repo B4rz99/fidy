@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/features/auth";
+import { useAuthStore } from "@/features/auth/public";
 import { Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { useQaDevtoolsStore } from "../devtools-store";

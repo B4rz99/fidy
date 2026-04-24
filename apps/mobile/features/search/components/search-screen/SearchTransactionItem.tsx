@@ -1,7 +1,7 @@
 import { memo } from "react";
+import { CATEGORY_MAP } from "@/shared/categories";
 import { makeDateLabel } from "@/features/transactions/display.public";
 import type { StoredTransaction } from "@/features/transactions/query.public";
-import { CATEGORY_MAP } from "@/shared/categories";
 import { TransactionRow } from "@/shared/components";
 import { Ellipsis } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";

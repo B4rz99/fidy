@@ -1,4 +1,4 @@
-import type { CaptureEvidenceType } from "@/features/capture-evidence";
+import type { CaptureEvidenceType } from "@/features/capture-evidence/public";
 
 type RepeatedCaptureEvidence = {
   readonly scope: string;

@@ -1,10 +1,10 @@
-import type { CaptureEvidenceSeed } from "@/features/capture-evidence";
+import type { CaptureEvidenceSeed } from "@/features/capture-evidence/public";
 import {
   type FinancialAccountIdentifierRow,
   type FinancialAccountRow,
   getFinancialAccountIdentifiersForUser,
   getFinancialAccountsForUser,
-} from "@/features/financial-accounts";
+} from "@/features/financial-accounts/public";
 import type { AnyDb } from "@/shared/db";
 import type { FinancialAccountId, UserId } from "@/shared/types/branded";
 

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import {
   type FinancialAccountKind,
   financialAccountKindSchema,
-} from "@/features/financial-accounts";
+} from "@/features/financial-accounts/public";
 import { ChevronRight } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";

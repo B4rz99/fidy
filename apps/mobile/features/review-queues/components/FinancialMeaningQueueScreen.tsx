@@ -3,10 +3,7 @@ import { format } from "date-fns";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
-import {
-  dismissFinancialMeaningReview,
-  loadNeedsReviewEmails,
-} from "@/features/email-capture/public";
+import { dismissFinancialMeaningReview, loadNeedsReviewEmails } from "@/features/email-capture/public";
 import { refreshTransactions } from "@/features/transactions/store.public";
 import { ScreenLayout } from "@/shared/components";
 import { ChevronRight, TriangleAlert } from "@/shared/components/icons";

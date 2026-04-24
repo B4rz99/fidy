@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { useOptionalUserId } from "@/features/auth";
-import type { FinancialAccountKind } from "@/features/financial-accounts";
+import { useOptionalUserId } from "@/features/auth/public";
+import type { FinancialAccountKind } from "@/features/financial-accounts/public";
 import { ScreenLayout } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import type { UserId, UserMemoryId } from "@/shared/types/branded";
 import {
   extractMemoriesFromConversation,
