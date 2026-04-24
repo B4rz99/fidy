@@ -34,25 +34,25 @@ pre-push:
   commands:
     root-biome:
       files: git ls-files
-      run: ./scripts/run-pre-push-check.sh root-biome {files}
+      run: bun run lint
       skip_output: false
     branded-boundaries:
       files: git ls-files
-      run: ./scripts/run-pre-push-check.sh branded-boundaries {files}
+      run: bun run lint:brands
       skip_output: false
     mobile-eslint:
       files: git ls-files
-      run: ./scripts/run-pre-push-check.sh mobile-eslint {files}
+      run: bun run lint:mobile
       skip_output: false
     mobile-typecheck:
       files: git ls-files
-      run: ./scripts/run-pre-push-check.sh mobile-typecheck {files}
+      run: bun run typecheck
       skip_output: false
     complexity:
       files: git ls-files
-      run: ./scripts/run-pre-push-check.sh complexity {files}
+      run: bun run lint:complexity
       skip_output: false
     tests:
       files: git ls-files
-      run: ./scripts/run-pre-push-check.sh tests {files}
+      run: bun run test
       skip_output: false
