@@ -1,9 +1,9 @@
 import type { BootstrapTask, SubscriptionTask } from "@/shared/bootstrap/registry";
 import type { AuthenticatedBootstrapContext } from "@/shared/bootstrap/types";
 import { handleRecoverableError } from "@/shared/lib";
-import { subscribeGoalsToTransactions } from "./services/subscribe-goals-to-transactions";
-import { initializeGoalSession, loadGoalsForUser, useGoalStore } from "./public";
 import { useTransactionStore } from "../transactions/store.public";
+import { initializeGoalSession, loadGoalsForUser, useGoalStore } from "./public";
+import { subscribeGoalsToTransactions } from "./services/subscribe-goals-to-transactions";
 
 export const goalsBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
   id: "goals",

@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 import {
-  runBootstrapTasks,
-  subscribeBootstrapTasks,
   type BootstrapTask,
+  runBootstrapTasks,
   type SubscriptionTask,
+  subscribeBootstrapTasks,
 } from "../apps/mobile/shared/bootstrap/registry";
 
 type TestContext = {

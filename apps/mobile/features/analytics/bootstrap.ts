@@ -1,17 +1,15 @@
 import type { BootstrapTask, SubscriptionTask } from "@/shared/bootstrap/registry";
 import type { AuthenticatedBootstrapContext } from "@/shared/bootstrap/types";
 import { handleRecoverableError } from "@/shared/lib";
-import { subscribeAnalyticsToTransactions } from "./services/subscribe-analytics-to-transactions";
-import { initializeAnalyticsSession, loadAnalyticsForUser, useAnalyticsStore } from "./public";
 import { useTransactionStore } from "../transactions/store.public";
+import { initializeAnalyticsSession, loadAnalyticsForUser, useAnalyticsStore } from "./public";
+import { subscribeAnalyticsToTransactions } from "./services/subscribe-analytics-to-transactions";
 
 export const analyticsBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
   id: "analytics",
   run: ({ db, userId }) => {
     initializeAnalyticsSession(userId);
-    void loadAnalyticsForUser(db, userId).catch(
-      handleRecoverableError("Failed to load analytics")
-    );
+    void loadAnalyticsForUser(db, userId).catch(handleRecoverableError("Failed to load analytics"));
   },
 };
 

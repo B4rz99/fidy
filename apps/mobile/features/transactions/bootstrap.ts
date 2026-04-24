@@ -2,7 +2,11 @@ import { tryEnsureDefaultFinancialAccount } from "@/features/financial-accounts/
 import type { BootstrapTask } from "@/shared/bootstrap/registry";
 import type { AuthenticatedBootstrapContext } from "@/shared/bootstrap/types";
 import { handleRecoverableError } from "@/shared/lib";
-import { initializeTransactionSession, loadInitialTransactions, useTransactionStore } from "./store.public";
+import {
+  initializeTransactionSession,
+  loadInitialTransactions,
+  useTransactionStore,
+} from "./store.public";
 
 export const transactionBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
   id: "transactions",
