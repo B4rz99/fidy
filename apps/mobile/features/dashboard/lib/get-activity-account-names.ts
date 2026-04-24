@@ -1,4 +1,4 @@
-import { getFinancialAccountsForUser } from "@/features/financial-accounts";
+import { getFinancialAccountsForUser } from "@/features/financial-accounts/public";
 import type { AnyDb } from "@/shared/db";
 import { isMissingSqliteTableError } from "@/shared/lib/sqlite-errors";
 import type { UserId } from "@/shared/types/branded";

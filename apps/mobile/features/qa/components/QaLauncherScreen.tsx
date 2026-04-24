@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { useAuthStore } from "@/features/auth";
+import { useAuthStore } from "@/features/auth/public";
 import { ScreenLayout } from "@/shared/components";
 import { ActivityIndicator, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";

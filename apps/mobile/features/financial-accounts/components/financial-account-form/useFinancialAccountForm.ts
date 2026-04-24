@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { useOptionalUserId } from "@/features/auth";
-import type { FinancialAccountKind } from "@/features/financial-accounts";
+import { useOptionalUserId } from "@/features/auth/public";
+import type { FinancialAccountKind } from "@/features/financial-accounts/public";
 import { hasInvalidBillingDayInput } from "@/features/financial-accounts/lib/form-screen";
 import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
 import { createFinancialAccountManagementService } from "@/features/financial-accounts/lib/management-service";

@@ -1,4 +1,4 @@
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { useAttributionReviewQueue } from "@/features/review-queues/hooks/use-attribution-review-queue";
 import { ChevronRight, Landmark } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";

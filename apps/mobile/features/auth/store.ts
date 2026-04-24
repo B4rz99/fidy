@@ -9,7 +9,7 @@ import {
   type LocalQaSession,
   loadLocalQaSession,
 } from "@/features/qa/local-session";
-import { getSupabase } from "@/shared/db";
+import { getSupabase } from "@/shared/db/supabase";
 import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
 
 // biome-ignore lint/style/useNamingConvention: OAuth is a proper noun

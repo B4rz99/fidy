@@ -1,4 +1,4 @@
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { Bell, ExternalLink } from "@/shared/components/icons";
 import { Linking, Platform, Pressable, Switch, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";

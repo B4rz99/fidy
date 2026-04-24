@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { saveNotificationPreferences } from "../data/notification-preferences";
 import type { NotificationPreferences } from "../store";
 

@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { tryGetDb } from "@/shared/db";
 import { useSubscription } from "@/shared/hooks";
 import { useLocaleStore } from "@/shared/i18n/store";

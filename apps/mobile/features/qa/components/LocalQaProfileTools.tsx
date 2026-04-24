@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useAuthMode, useAuthStore } from "@/features/auth";
+import { useAuthMode, useAuthStore } from "@/features/auth/public";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 

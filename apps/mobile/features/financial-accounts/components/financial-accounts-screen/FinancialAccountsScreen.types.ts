@@ -1,4 +1,4 @@
-import type { FinancialAccountRow } from "@/features/financial-accounts";
+import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 
 export type FinancialAccountListItem = {
   readonly account: FinancialAccountRow;

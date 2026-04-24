@@ -1,4 +1,4 @@
-import type { CaptureEvidenceSeed } from "@/features/capture-evidence";
+import type { CaptureEvidenceSeed } from "@/features/capture-evidence/public";
 import type { AnyDb } from "@/shared/db";
 import type {
   CategoryId,
