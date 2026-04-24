@@ -1,5 +1,5 @@
-import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
+import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { TransferSide } from "@/features/transfers/lib/build-transfer";
 import type { TransferMutationError } from "@/features/transfers/lib/mutation-service";
 import type { ReclassifyTransactionAsTransferError } from "@/features/transfers/lib/reclassify-transaction-as-transfer";

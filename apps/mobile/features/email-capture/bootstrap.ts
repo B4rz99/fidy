@@ -1,5 +1,8 @@
 import type { BootstrapTask } from "@/shared/bootstrap/registry";
-import type { AuthenticatedBootstrapContext, CapturePipelineContext } from "@/shared/bootstrap/types";
+import type {
+  AuthenticatedBootstrapContext,
+  CapturePipelineContext,
+} from "@/shared/bootstrap/types";
 import { handleRecoverableError } from "@/shared/lib";
 import { useEmailCapture } from "./hooks/useEmailCapture";
 import { initializeEmailCaptureSession, loadEmailAccounts } from "./public";

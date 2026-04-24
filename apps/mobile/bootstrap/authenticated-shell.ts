@@ -18,10 +18,7 @@ import {
   emailCaptureBootstrapTask,
   useEmailCaptureBootstrap,
 } from "@/features/email-capture/bootstrap";
-import {
-  goalsBootstrapTask,
-  goalsTransactionSubscriptionTask,
-} from "@/features/goals/bootstrap";
+import { goalsBootstrapTask, goalsTransactionSubscriptionTask } from "@/features/goals/bootstrap";
 import {
   notificationsBootstrapTask,
   useNotificationBootstrap,

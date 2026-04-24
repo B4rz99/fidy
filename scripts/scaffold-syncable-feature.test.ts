@@ -70,7 +70,9 @@ test("writes the checklist to the requested output path", () => {
   expect(result.stdout.toString()).toContain(outputPath);
   expect(existsSync(outputPath)).toBe(true);
   expect(readFileSync(outputPath, "utf8")).toContain("apps/mobile/features/demo/public.ts");
-  expect(readFileSync(outputPath, "utf8")).toContain('enqueueSync(db, "demo_rows", rowId, operation)');
+  expect(readFileSync(outputPath, "utf8")).toContain(
+    'enqueueSync(db, "demo_rows", rowId, operation)'
+  );
 });
 
 test("fails when required arguments are missing", () => {

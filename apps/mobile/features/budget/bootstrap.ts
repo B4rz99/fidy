@@ -1,9 +1,9 @@
 import type { BootstrapTask, SubscriptionTask } from "@/shared/bootstrap/registry";
 import type { AuthenticatedBootstrapContext } from "@/shared/bootstrap/types";
 import { handleRecoverableError } from "@/shared/lib";
-import { subscribeBudgetToTransactions } from "./services/subscribe-budget-to-transactions";
-import { initializeBudgetSession, loadBudgetsForUser, useBudgetStore } from "./public";
 import { useTransactionStore } from "../transactions/store.public";
+import { initializeBudgetSession, loadBudgetsForUser, useBudgetStore } from "./public";
+import { subscribeBudgetToTransactions } from "./services/subscribe-budget-to-transactions";
 
 export const budgetBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
   id: "budget",

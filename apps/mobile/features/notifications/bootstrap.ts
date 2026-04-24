@@ -8,6 +8,34 @@ import { useSubscription } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
 import { initializeNotificationStore, registerPushToken } from "./public";
 
+const notificationBehavior = {
+  shouldShowBanner: true,
+  shouldShowList: true,
+  shouldPlaySound: false,
+  shouldSetBadge: false,
+} as const;
+
+const registerCurrentPushToken = (userId: NotificationBootstrapContext["userId"]): void => {
+  void registerPushToken(userId).catch(captureError);
+};
+
+const configureNotificationHandler = (): void => {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => notificationBehavior,
+  });
+};
+
+const subscribeNotificationNavigation = ({
+  navigateToRoute,
+}: Pick<NotificationBootstrapContext, "navigateToRoute">) =>
+  Notifications.addNotificationResponseReceivedListener((response) => {
+    const data = response.notification.request.content.data;
+    const route = data?.route;
+    if (typeof route === "string" && route.startsWith("/")) {
+      navigateToRoute(route);
+    }
+  });
+
 export const notificationsBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
   id: "notifications",
   run: ({ db, userId }) => {
@@ -23,28 +51,12 @@ export const useNotificationBootstrap = ({
   useSubscription(() => {
     if (!enableRemoteEffects) return;
 
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowBanner: true,
-        shouldShowList: true,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
-      }),
-    });
-
-    void registerPushToken(userId).catch(captureError);
-
+    configureNotificationHandler();
+    registerCurrentPushToken(userId);
     const tokenSub = Notifications.addPushTokenListener(() => {
-      void registerPushToken(userId).catch(captureError);
+      registerCurrentPushToken(userId);
     });
-
-    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data;
-      const route = data?.route;
-      if (typeof route === "string" && route.startsWith("/")) {
-        navigateToRoute(route);
-      }
-    });
+    const responseSub = subscribeNotificationNavigation({ navigateToRoute });
 
     return () => {
       tokenSub.remove();
