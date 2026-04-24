@@ -1,14 +1,14 @@
 import {
   getCaptureEvidenceRowsForScopeValue,
   getRepeatedCaptureEvidenceForUser,
-} from "@/features/capture-evidence";
+} from "@/features/capture-evidence/public";
 import {
   type FinancialAccountIdentifierRow,
   type FinancialAccountKind,
   getFinancialAccountIdentifiersForUser,
   saveFinancialAccount,
   saveFinancialAccountIdentifierInTransaction,
-} from "@/features/financial-accounts";
+} from "@/features/financial-accounts/public";
 import { isActiveTransactionRow } from "@/features/transactions/lib/active-transaction-conditions";
 import { getTransactionById, upsertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";

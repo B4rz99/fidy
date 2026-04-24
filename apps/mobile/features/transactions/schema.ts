@@ -1,9 +1,6 @@
 import { z } from "zod";
-import {
-  requireCategoryId,
-  requireCopAmount,
-  requireFinancialAccountId,
-} from "@/shared/types/assertions";
+import { categoryIdSchema } from "@/shared/categories";
+import { requireCopAmount, requireFinancialAccountId } from "@/shared/types/assertions";
 import type {
   CategoryId,
   CopAmount,
@@ -11,7 +8,6 @@ import type {
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
-import { isValidCategoryId } from "./lib/categories";
 
 export const transactionTypeSchema = z.enum(["expense", "income"]);
 export type TransactionType = z.infer<typeof transactionTypeSchema>;
@@ -32,14 +28,7 @@ export const financialAccountIdSchema = z
     }
   });
 
-export function makeCategoryIdSchema(isValid: (id: string) => boolean) {
-  return z
-    .string()
-    .refine(isValid, { message: "Invalid category ID" })
-    .transform((value) => requireCategoryId(value));
-}
-
-export const categoryIdSchema = makeCategoryIdSchema(isValidCategoryId);
+export { categoryIdSchema, makeCategoryIdSchema } from "@/shared/categories";
 
 export const createTransactionSchema = z.object({
   type: transactionTypeSchema,

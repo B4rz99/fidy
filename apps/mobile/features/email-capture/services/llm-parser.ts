@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CATEGORY_IDS } from "@/features/transactions";
+import { CATEGORY_IDS } from "@/shared/categories";
 
 export const llmOutputSchema = z.object({
   type: z.enum(["expense", "income"]),

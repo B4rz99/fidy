@@ -1,4 +1,4 @@
-import type { StoredTransaction } from "@/features/transactions/public";
+import type { StoredTransaction } from "@/features/transactions/query.public";
 import type { WriteThroughMutationModule } from "@/shared/mutations";
 import type {
   BillId,

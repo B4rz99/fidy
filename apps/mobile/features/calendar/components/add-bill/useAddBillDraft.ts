@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useRef, useState } from "react";
-import { getBuiltInCategoryId, isValidCategoryId } from "@/features/transactions";
+import { getBuiltInCategoryId, isValidCategoryId } from "@/shared/categories";
 import type { TextInput } from "@/shared/components/rn";
 import type { Bill } from "../../schema";
 import type { AddBillDraftController, AddBillDraftState } from "./AddBillForm.types";

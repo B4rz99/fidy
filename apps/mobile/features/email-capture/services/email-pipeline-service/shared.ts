@@ -1,5 +1,5 @@
 import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
-import { getBuiltInCategoryId, isValidCategoryId } from "@/features/transactions/lib/categories";
+import { getBuiltInCategoryId, isValidCategoryId } from "@/shared/categories";
 import { assertCopAmount, assertIsoDate, requireIsoDateTime } from "@/shared/types/assertions";
 import type {
   DuplicateProcessedEmailRowInput,

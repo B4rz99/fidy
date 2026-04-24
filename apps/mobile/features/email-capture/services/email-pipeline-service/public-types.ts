@@ -1,6 +1,6 @@
-import type { CaptureEvidenceRow, CaptureEvidenceSeed } from "@/features/capture-evidence";
+import type { CaptureEvidenceRow, CaptureEvidenceSeed } from "@/features/capture-evidence/public";
 import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
-import type { FinancialAccountRow } from "@/features/financial-accounts";
+import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { TransactionRow } from "@/features/transactions/lib/repository";
 import type { AnyDb, SyncQueueEntry } from "@/shared/db";
 import type { AppClock } from "@/shared/effect/clock";

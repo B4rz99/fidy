@@ -7,7 +7,7 @@ const { refreshTransactionsMock, reclassifyTransactionAsTransferMock } = vi.hois
   reclassifyTransactionAsTransferMock: vi.fn(),
 }));
 
-vi.mock("@/features/transactions", () => ({
+vi.mock("@/features/transactions/store.public", () => ({
   refreshTransactions: refreshTransactionsMock,
 }));
 

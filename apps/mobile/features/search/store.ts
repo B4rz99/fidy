@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import type { StoredTransaction } from "@/features/transactions";
-import { toStoredTransaction } from "@/features/transactions";
-import type { AnyDb } from "@/shared/db";
+import type { StoredTransaction } from "@/features/transactions/query.public";
+import { toStoredTransaction } from "@/features/transactions/query.public";
+import type { AnyDb } from "@/shared/db/client";
 import type { UserId } from "@/shared/types/branded";
 import { searchTransactionsAggregate, searchTransactionsPaginated } from "./lib/repository";
 import type { SearchFilters, SearchSummary } from "./lib/types";

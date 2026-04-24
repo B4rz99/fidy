@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { FinancialAccountRow } from "@/features/financial-accounts";
+import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { TransactionRow } from "@/features/transactions/lib/repository";
 import type { SyncQueueEntry } from "@/shared/db";
 import { currentIsoDateTimeEffect } from "@/shared/effect/clock";

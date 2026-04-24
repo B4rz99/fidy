@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { categoryIdSchema } from "@/features/transactions";
+import { categoryIdSchema } from "@/shared/categories";
 import { toIsoDate } from "@/shared/lib";
 import { requireBillId, requireCategoryId, requireCopAmount } from "@/shared/types/assertions";
 import type {

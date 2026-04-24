@@ -1,8 +1,8 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
-import { refreshTransactions } from "@/features/transactions";
+import { refreshTransactions } from "@/features/transactions/store.public";
 import { ScreenLayout } from "@/shared/components";
 import { Info, TriangleAlert } from "@/shared/components/icons";
 import { StyleSheet, Text, View } from "@/shared/components/rn";

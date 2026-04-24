@@ -2,9 +2,9 @@ import {
   buildEmailCaptureEvidence,
   linkCaptureEvidenceToTransaction,
   saveCaptureEvidenceRows,
-} from "@/features/capture-evidence";
+} from "@/features/capture-evidence/public";
 import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
-import { ensureDefaultFinancialAccount } from "@/features/financial-accounts";
+import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
 import { insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
