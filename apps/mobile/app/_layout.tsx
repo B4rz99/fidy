@@ -9,70 +9,25 @@ import {
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useFonts } from "expo-font";
 import { getLocales } from "expo-localization";
-import * as Notifications from "expo-notifications";
 import { type Href, Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
-  cleanupExpiredChatSessions,
-  initializeChatSession,
-  loadChatSessions,
-} from "@/features/ai-chat";
-import {
-  initializeAnalyticsSession,
-  loadAnalyticsForUser,
-  subscribeAnalyticsToTransactions,
-  useAnalyticsStore,
-} from "@/features/analytics";
+  runAuthenticatedBootstrap,
+  subscribeAuthenticatedTransactionRefreshes,
+  useAuthenticatedCapturePipelines,
+  useAuthenticatedNotificationBootstrap,
+} from "@/bootstrap/authenticated-shell";
 import {
   useAuthMode,
   useAuthStore,
   useEffectiveOnboardingComplete,
   useOptionalUserId,
-} from "@/features/auth";
-import { registerBackgroundTask } from "@/features/background-fetch";
-import {
-  initializeBudgetSession,
-  loadBudgetsForUser,
-  subscribeBudgetToTransactions,
-  useBudgetStore,
-} from "@/features/budget";
-import {
-  initializeCalendarSession,
-  loadBills as loadCalendarBills,
-  loadPaymentsForMonth as loadCalendarPaymentsForMonth,
-} from "@/features/calendar";
-import {
-  hydrateCaptureSources,
-  useApplePayCapture,
-  useNotificationCapture,
-  useSmsDetection,
-  useWidgetCapture,
-} from "@/features/capture-sources";
-import { refreshCategories } from "@/features/categories";
-import {
-  initializeEmailCaptureSession,
-  loadEmailAccounts,
-  useEmailCapture,
-} from "@/features/email-capture";
-import { tryEnsureDefaultFinancialAccount } from "@/features/financial-accounts";
-import {
-  initializeGoalSession,
-  loadGoalsForUser,
-  subscribeGoalsToTransactions,
-  useGoalStore,
-} from "@/features/goals";
-import { initializeNotificationStore, registerPushToken } from "@/features/notifications";
-import { isLocalQaAvailable, useQaDevtoolsRuntime } from "@/features/qa";
-import { QaStatusBanner } from "@/features/qa/routes.public";
-import { useSettingsStore } from "@/features/settings";
-import { loadSyncConflicts, useSync } from "@/features/sync";
-import {
-  initializeTransactionSession,
-  loadInitialTransactions,
-  useTransactionStore,
-} from "@/features/transactions";
+} from "@/features/auth/hooks.public";
+import { isLocalQaAvailable, useQaDevtoolsRuntime } from "@/features/qa/hooks.public";
+import { QaStatusBanner } from "@/features/qa/ui.public";
+import { useSyncBootstrap } from "@/features/sync/hooks.public";
 import { ErrorFallback } from "@/shared/components";
 import { Platform, useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
@@ -81,7 +36,6 @@ import { useMountEffect, useSubscription } from "@/shared/hooks";
 import { useLocaleStore } from "@/shared/i18n";
 import {
   captureError,
-  handleRecoverableError,
   initSentry,
   SentryErrorBoundary,
   setSentryUser,
@@ -117,152 +71,29 @@ function AuthenticatedShell({
 
   useSubscription(
     () => {
-      void Promise.resolve()
-        .then(() => {
-          initializeTransactionSession(userId);
-          const defaultAccount = tryEnsureDefaultFinancialAccount(db, userId);
-          if (defaultAccount) {
-            useTransactionStore.getState().setDefaultAccountId(defaultAccount.id);
-          }
-          if (enableRemoteEffects) {
-            initializeEmailCaptureSession(userId);
-          }
-          initializeChatSession(userId);
-          initializeCalendarSession(userId);
-          initializeBudgetSession(userId);
-          initializeGoalSession(userId);
-          initializeAnalyticsSession(userId);
-          void initializeNotificationStore(db, userId);
-          Promise.all([loadCalendarBills(db, userId), loadCalendarPaymentsForMonth(db)]).catch(
-            handleRecoverableError("Failed to load calendar data")
-          );
-          loadBudgetsForUser(db, userId).catch(handleRecoverableError("Failed to load budgets"));
-          loadGoalsForUser(db, userId).catch(handleRecoverableError("Failed to load goals"));
-          loadAnalyticsForUser(db, userId).catch(
-            handleRecoverableError("Failed to load analytics")
-          );
-          if (enableRemoteEffects) {
-            loadEmailAccounts(db, userId).catch(
-              handleRecoverableError("Failed to load email accounts")
-            );
-          }
-          refreshCategories(db, userId).catch(
-            handleRecoverableError("Failed to load user categories")
-          );
-          loadChatSessions(db, userId)
-            .then(() => cleanupExpiredChatSessions(db, userId))
-            .catch(handleRecoverableError("Failed to load chat sessions"));
-          hydrateCaptureSources(db, userId).catch(
-            handleRecoverableError("Failed to load capture sources")
-          );
-          loadInitialTransactions(db, userId).catch(
-            handleRecoverableError("Failed to load transactions")
-          );
-          void loadSyncConflicts(db);
-          useSettingsStore
-            .getState()
-            .hydrate()
-            .catch(handleRecoverableError("Failed to hydrate settings"));
-          if (enableRemoteEffects) {
-            void registerBackgroundTask().catch(captureError);
-          }
-        })
-        .catch(captureError);
+      void runAuthenticatedBootstrap({ db, enableRemoteEffects, userId }).catch(captureError);
     },
     [db, enableRemoteEffects, userId],
     migrationsReady
   );
 
   useSubscription(
-    () =>
-      subscribeBudgetToTransactions({
-        subscribeTransactions: useTransactionStore.subscribe,
-        getTransactionDataRevision: () => useTransactionStore.getState().dataRevision,
-        hasLoadedBudgetState: () => useBudgetStore.getState().hasLoadedOnce,
-        reload: () => {
-          void loadBudgetsForUser(db, userId).catch(
-            handleRecoverableError("Failed to load budgets")
-          );
-        },
-      }),
-    [db, userId],
+    () => subscribeAuthenticatedTransactionRefreshes({ db, enableRemoteEffects, userId }),
+    [db, enableRemoteEffects, userId],
     migrationsReady
   );
 
-  useSubscription(
-    () =>
-      subscribeGoalsToTransactions({
-        subscribeTransactions: useTransactionStore.subscribe,
-        getTransactionDataRevision: () => useTransactionStore.getState().dataRevision,
-        hasLoadedGoals: () => useGoalStore.getState().goals.length > 0,
-        reload: () => {
-          void loadGoalsForUser(db, userId).catch(handleRecoverableError("Failed to load goals"));
-        },
-      }),
-    [db, userId],
-    migrationsReady
-  );
-
-  useSubscription(
-    () =>
-      subscribeAnalyticsToTransactions({
-        subscribeTransactions: useTransactionStore.subscribe,
-        getTransactionDataRevision: () => useTransactionStore.getState().dataRevision,
-        hasLoadedAnalytics: () => useAnalyticsStore.getState().incomeExpense !== null,
-        reload: () => {
-          void loadAnalyticsForUser(db, userId).catch(
-            handleRecoverableError("Failed to load analytics")
-          );
-        },
-      }),
-    [db, userId],
-    migrationsReady
-  );
-
-  const initialSyncDone = useSync(
-    enableRemoteEffects && migrationsReady ? db : null,
-    enableRemoteEffects ? userId : null
-  );
+  const initialSyncDone = useSyncBootstrap({ db, enableRemoteEffects, migrationsReady, userId });
   const captureDb = enableRemoteEffects && initialSyncDone && migrationsReady ? db : null;
   const captureUserId = enableRemoteEffects ? userId : null;
-  useEmailCapture(captureDb, captureUserId);
-  useNotificationCapture(captureDb, captureUserId);
-  useApplePayCapture(captureDb, captureUserId);
-  useSmsDetection(captureDb, captureUserId);
-  useWidgetCapture(captureDb, captureUserId);
-
-  // Global notification handler + push token / response listeners
-  useSubscription(() => {
-    if (!enableRemoteEffects) return;
-
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowBanner: true,
-        shouldShowList: true,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
-      }),
-    });
-
-    void registerPushToken(userId).catch(captureError);
-
-    const tokenSub = Notifications.addPushTokenListener(() => {
-      void registerPushToken(userId).catch(captureError);
-    });
-
-    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data;
-      const route = data?.route;
-      if (typeof route === "string" && route.startsWith("/")) {
-        router.push(route as Href);
-      }
-    });
-
-    return () => {
-      tokenSub.remove();
-      responseSub.remove();
-    };
-  }, [enableRemoteEffects, userId, router]);
+  useAuthenticatedCapturePipelines({ db: captureDb, userId: captureUserId });
+  useAuthenticatedNotificationBootstrap({
+    enableRemoteEffects,
+    navigateToRoute: (route) => {
+      router.push(route as Href);
+    },
+    userId,
+  });
 
   useSubscription(
     () => {

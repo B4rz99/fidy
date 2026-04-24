@@ -1,4 +1,4 @@
-import type { FinancialAccountRow } from "@/features/financial-accounts";
+import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import type { FinancialAccountId } from "@/shared/types/branded";
 import { styles } from "./TransactionForm.styles";
