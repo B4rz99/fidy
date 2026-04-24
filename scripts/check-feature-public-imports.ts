@@ -15,7 +15,8 @@ type ImportViolation = {
 const DEFAULT_ROOT = process.cwd();
 const FEATURES_ROOT = join("apps", "mobile", "features");
 const TEST_FILE_PATTERN = /\.test\.(ts|tsx)$/;
-const FEATURE_IMPORT_PATTERN = /from\s+["']@\/features\/([^/"']+)["']/g;
+const FEATURE_IMPORT_PATTERN =
+  /(?:^|\n)\s*(?:import|export)(?:\s+type)?[\s\S]*?\bfrom\s+["']@\/features\/([^/"']+)["']/g;
 const withOptions = (options: CliOptions, patch: Partial<CliOptions>): CliOptions =>
   Object.assign({}, options, patch);
 const normalizePath = (path: string): string => path.replaceAll("\\", "/");
@@ -48,6 +49,31 @@ export const extractOwnerFeatureFromPath = (path: string): string | null => {
   return match?.[1] ?? null;
 };
 
+const countNewlines = (text: string): number => text.split("\n").length - 1;
+const getDeclarationOffset = (match: RegExpMatchArray): number | null => {
+  const declarationOffset = match[0].search(/\b(?:import|export)\b/);
+  return declarationOffset === -1 ? null : declarationOffset;
+};
+
+const collectFeatureImports = (
+  source: string
+): readonly { readonly importedFeature: string; readonly line: number }[] =>
+  Array.from(source.matchAll(FEATURE_IMPORT_PATTERN)).flatMap((match) => {
+    const importedFeature = match[1];
+    const matchIndex = match.index;
+    const declarationOffset = getDeclarationOffset(match);
+    if (importedFeature == null || matchIndex == null || declarationOffset == null) {
+      return [];
+    }
+
+    return [
+      {
+        importedFeature,
+        line: countNewlines(source.slice(0, matchIndex + declarationOffset)) + 1,
+      },
+    ];
+  });
+
 export const collectFeaturePublicImportViolations = (root: string): readonly ImportViolation[] => {
   const featuresRoot = join(root, FEATURES_ROOT);
 
@@ -59,19 +85,13 @@ export const collectFeaturePublicImportViolations = (root: string): readonly Imp
       if (ownerFeature == null) return [];
 
       const source = readFileSync(path, "utf8");
-      const lines = source.split("\n");
-
-      return lines.flatMap((lineText, index) =>
-        Array.from(lineText.matchAll(FEATURE_IMPORT_PATTERN))
-          .map((match) => match[1])
-          .filter((importedFeature): importedFeature is string => importedFeature != null)
-          .filter((importedFeature) => importedFeature !== ownerFeature)
-          .map((importedFeature) => ({
-            importer: relative(root, path),
-            importedFeature,
-            line: index + 1,
-          }))
-      );
+      return collectFeatureImports(source)
+        .filter((importedFeature) => importedFeature.importedFeature !== ownerFeature)
+        .map((importedFeature) => ({
+          importer: relative(root, path),
+          importedFeature: importedFeature.importedFeature,
+          line: importedFeature.line,
+        }));
     });
 };
 

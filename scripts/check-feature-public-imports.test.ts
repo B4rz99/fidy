@@ -108,3 +108,33 @@ test("extracts feature owners from Windows-style paths", () => {
     extractOwnerFeatureFromPath("C:\\repo\\apps\\mobile\\features\\notifications\\bootstrap.ts")
   ).toBe("notifications");
 });
+
+test("ignores comment and string matches while still catching multiline imports", () => {
+  const root = createTempDir();
+  writeSourceFile(
+    root,
+    "apps/mobile/features/budget/store.ts",
+    [
+      '// from "@/features/auth"',
+      "const message = 'import { useOptionalUserId } from \"@/features/auth\"';",
+      "import {",
+      "  refreshTransactions,",
+      '} from "@/features/transactions";',
+      "",
+    ].join("\n")
+  );
+
+  const result = Bun.spawnSync({
+    cmd: ["bun", "scripts/check-feature-public-imports.ts", "--root", root, "--enforce"],
+    cwd: process.cwd(),
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.stdout.toString()).toContain("Broad cross-feature barrel imports: 1");
+  expect(result.stdout.toString()).toContain(
+    "apps/mobile/features/budget/store.ts:3 imports @/features/transactions"
+  );
+  expect(result.stdout.toString()).not.toContain("@/features/auth");
+});

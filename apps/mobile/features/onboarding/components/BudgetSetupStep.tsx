@@ -1,10 +1,10 @@
 import { useOptionalUserId } from "@/features/auth/public";
+import { useSuggestionSelection } from "@/features/budget/hooks.public";
 import {
   acceptBudgetSuggestions,
   loadBudgetAutoSuggestions,
   useBudgetStore,
 } from "@/features/budget/public";
-import { useSuggestionSelection } from "@/features/budget/ui.public";
 import { CATEGORY_MAP } from "@/shared/categories";
 import {
   Pressable,
