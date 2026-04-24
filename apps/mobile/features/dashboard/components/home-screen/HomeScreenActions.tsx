@@ -1,5 +1,5 @@
-import { BellAction } from "@/features/notifications";
-import { SearchAction } from "@/features/search";
+import { BellAction } from "@/features/notifications/ui.public";
+import { SearchAction } from "@/features/search/ui.public";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 

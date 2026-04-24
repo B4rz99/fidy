@@ -9,6 +9,8 @@ import {
 } from "./lib/effective-auth";
 import { useAuthStore } from "./store";
 
+export { useAuthStore };
+
 export const useAuthMode = () =>
   useAuthStore((state) =>
     deriveAuthMode({ session: state.session, localQaSession: state.localQaSession })

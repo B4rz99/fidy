@@ -1,3 +1,3 @@
-import { NotificationPreferencesScreen } from "@/features/settings";
+import { NotificationPreferencesScreen } from "@/features/settings/ui.public";
 
 export default NotificationPreferencesScreen;

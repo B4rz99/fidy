@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
-import { useAuthStore } from "@/features/auth";
-import { getUnsyncedCount, useDeleteAccountMutation } from "@/features/settings";
+import { useAuthStore } from "@/features/auth/hooks.public";
+import { getUnsyncedCount, useDeleteAccountMutation } from "@/features/settings/hooks.public";
 import { TriangleAlert } from "@/shared/components/icons";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
