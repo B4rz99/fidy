@@ -119,7 +119,10 @@ function wrappedDataKeyIsWellFormed(entry: unknown) {
 }
 
 function wrappedDataKeyFieldsAreWellFormed(record: Record<string, unknown>) {
-  return WRAPPED_DATA_KEY_FIELD_CHECKS.every((check) => check(record));
+  return (
+    Object.keys(record).every((key) => WRAPPED_DATA_KEY_FIELDS.includes(key)) &&
+    WRAPPED_DATA_KEY_FIELD_CHECKS.every((check) => check(record))
+  );
 }
 
 function unseenObjectContainsSecret(
@@ -173,6 +176,15 @@ const WRAPPED_DATA_KEY_FIELD_CHECKS = [
   (record: Record<string, unknown>) => isBase64String(record.ciphertext),
   (record: Record<string, unknown>) => typeof record.iterations === "number",
 ] as const;
+
+const WRAPPED_DATA_KEY_FIELDS: readonly string[] = [
+  "kind",
+  "algorithm",
+  "salt",
+  "nonce",
+  "ciphertext",
+  "iterations",
+];
 
 type SecretScanContext = {
   readonly encryptedBackupVersion: number;

@@ -183,24 +183,18 @@ describe("local ledger backup encryption", () => {
     });
 
     expect(() => assertLocalLedgerBackupSecretSafeForRemote(encrypted)).not.toThrow();
-    expect(() => assertLocalLedgerBackupSecretSafeForRemote(recoveryKey)).toThrow(
-      "Local ledger backup secret cannot be sent to remote services"
-    );
+    expectRemoteSecretRejection(recoveryKey);
     expect(() => assertLocalLedgerBackupSecretSafeForLog(recoveryKey)).toThrow(
       "Local ledger backup secret cannot be written to logs"
     );
-    expect(() => assertLocalLedgerBackupSecretSafeForRemote(SNAPSHOT)).toThrow(
-      "Local ledger backup secret cannot be sent to remote services"
-    );
-    expect(() =>
-      assertLocalLedgerBackupSecretSafeForRemote({ trustedDeviceSecret: "device-held-secret" })
-    ).toThrow("Local ledger backup secret cannot be sent to remote services");
-    expect(() =>
-      assertLocalLedgerBackupSecretSafeForRemote({ ...encrypted, plaintext: SNAPSHOT })
-    ).toThrow("Local ledger backup secret cannot be sent to remote services");
-    expect(() =>
-      assertLocalLedgerBackupSecretSafeForRemote({ ...encrypted, ciphertext: recoveryKey })
-    ).toThrow("Local ledger backup secret cannot be sent to remote services");
+    expectRemoteSecretRejection(SNAPSHOT);
+    expectRemoteSecretRejection({ trustedDeviceSecret: "device-held-secret" });
+    expectRemoteSecretRejection({ ...encrypted, plaintext: SNAPSHOT });
+    expectRemoteSecretRejection({ ...encrypted, ciphertext: recoveryKey });
+    expectRemoteSecretRejection({
+      ...encrypted,
+      wrappedDataKeys: [{ ...encrypted.wrappedDataKeys[0]!, rawKey: recoveryKey }],
+    });
   });
 
   it("handles cyclic payloads while checking for backup secrets", async () => {
@@ -215,3 +209,9 @@ describe("local ledger backup encryption", () => {
     );
   });
 });
+
+function expectRemoteSecretRejection(value: unknown) {
+  expect(() => assertLocalLedgerBackupSecretSafeForRemote(value)).toThrow(
+    "Local ledger backup secret cannot be sent to remote services"
+  );
+}
