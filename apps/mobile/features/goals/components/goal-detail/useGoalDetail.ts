@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { tryGetDb } from "@/shared/db";
 import { useSubscription, useTranslation } from "@/shared/hooks";
 import { resolveGoalDetailGoalId } from "../../lib/route-params";

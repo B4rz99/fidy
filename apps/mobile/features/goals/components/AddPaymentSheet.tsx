@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import Animated from "react-native-reanimated";
-import { useOptionalUserId } from "@/features/auth";
-import { handleNumpadPress } from "@/features/transactions";
+import { useOptionalUserId } from "@/features/auth/public";
+import { handleNumpadPress } from "@/features/transactions/display.public";
 import { FidyNumpad } from "@/shared/components";
 import {
   Keyboard,

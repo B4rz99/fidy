@@ -16,7 +16,7 @@ import {
   softDeleteContribution,
   softDeleteGoal,
   updateGoal,
-} from "@/features/goals";
+} from "@/features/goals/public";
 
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
