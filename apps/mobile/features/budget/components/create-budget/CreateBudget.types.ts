@@ -1,5 +1,5 @@
 import type { SetStateAction } from "react";
-import type { CategoryId } from "@/features/transactions";
+import type { CategoryId } from "@/shared/categories";
 import type { BudgetId, CopAmount, UserId } from "@/shared/types/branded";
 import type { BudgetSuggestion } from "../../lib/derive";
 import type { Budget } from "../../schema";

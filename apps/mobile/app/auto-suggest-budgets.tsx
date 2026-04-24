@@ -1,6 +1,10 @@
 import { useRouter } from "expo-router";
-import { useOptionalUserId } from "@/features/auth";
-import { acceptBudgetSuggestions, useBudgetStore, useSuggestionSelection } from "@/features/budget";
+import { useOptionalUserId } from "@/features/auth/hooks.public";
+import {
+  acceptBudgetSuggestions,
+  useBudgetStore,
+  useSuggestionSelection,
+} from "@/features/budget/hooks.public";
 import { CATEGORY_MAP } from "@/features/transactions";
 import {
   KeyboardAvoidingView,

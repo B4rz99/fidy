@@ -1,6 +1,6 @@
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
-import { getStoredTransactionById } from "@/features/transactions";
+import { getStoredTransactionById } from "@/features/transactions/query.public";
 import type { AnyDb } from "@/shared/db";
 import type { UserId } from "@/shared/types/branded";
 import type { TransactionId } from "./hydration";

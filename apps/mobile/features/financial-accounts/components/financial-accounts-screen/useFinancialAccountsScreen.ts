@@ -1,10 +1,10 @@
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { useOptionalUserId } from "@/features/auth";
-import { getFinancialAccountsForUser } from "@/features/financial-accounts";
+import { useOptionalUserId } from "@/features/auth/public";
 import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
 import { createFinancialAccountManagementService } from "@/features/financial-accounts/lib/management-service";
+import { getFinancialAccountsForUser } from "@/features/financial-accounts/public";
 import { tryGetDb } from "@/shared/db";
 import type { FinancialAccountListItem } from "./FinancialAccountsScreen.types";
 

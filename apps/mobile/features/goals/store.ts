@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { AnyDb } from "@/shared/db";
+import type { AnyDb } from "@/shared/db/client";
 import type { UserId } from "@/shared/types/branded";
 import type { AddContributionInput, CreateGoalInput, GoalContribution } from "./schema";
 import {

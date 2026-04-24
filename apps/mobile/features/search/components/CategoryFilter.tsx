@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { memo } from "react";
-import { CATEGORIES, CATEGORY_ROWS, type Category } from "@/features/transactions";
+import { CATEGORIES, CATEGORY_ROWS, type Category } from "@/shared/categories";
 import { Check } from "@/shared/components/icons";
 import { Pressable, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";

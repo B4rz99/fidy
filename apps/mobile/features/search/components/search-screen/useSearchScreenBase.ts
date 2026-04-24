@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from "expo-router";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { getDb } from "@/shared/db";
 import { useThemeColor } from "@/shared/hooks";
 import { resolveSearchRouteFilters } from "../../lib/route-params";

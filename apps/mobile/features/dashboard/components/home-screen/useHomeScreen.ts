@@ -1,6 +1,6 @@
-import { useOptionalUserId } from "@/features/auth";
-import { useEmailCaptureStore } from "@/features/email-capture";
-import { useTransactionStore } from "@/features/transactions";
+import { useOptionalUserId } from "@/features/auth/public";
+import { useEmailCaptureStore } from "@/features/email-capture/public";
+import { useTransactionStore } from "@/features/transactions/store.public";
 import { tryGetDb } from "@/shared/db";
 import { type HomeActivityFeedModel, useHomeActivityFeed } from "./useHomeActivityFeed";
 

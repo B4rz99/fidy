@@ -1,4 +1,7 @@
-import type { FinancialAccountKind, FinancialAccountRow } from "@/features/financial-accounts";
+import type {
+  FinancialAccountKind,
+  FinancialAccountRow,
+} from "@/features/financial-accounts/public";
 import type { AccountCreationSuggestion } from "./derive-account-suggestions";
 
 type SuggestedFinancialAccountDraft = {

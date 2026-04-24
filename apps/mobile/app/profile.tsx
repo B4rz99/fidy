@@ -1,3 +1,3 @@
-import { ProfileScreen } from "@/features/settings";
+import { ProfileScreen } from "@/features/settings/ui.public";
 
 export default ProfileScreen;

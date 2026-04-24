@@ -1,8 +1,9 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { Alert } from "@/shared/components/rn";
-import { type AnyDb, tryGetDb } from "@/shared/db";
+import type { AnyDb } from "@/shared/db/client";
+import { tryGetDb } from "@/shared/db/client";
 import { useAsyncGuard, useTranslation } from "@/shared/hooks";
 import { toIsoDate } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import type { StoredTransaction } from "@/features/transactions";
+import type { StoredTransaction } from "@/features/transactions/query.public";
 import { TAB_BAR_CLEARANCE } from "@/shared/components";
 import { FlatList } from "@/shared/components/rn";
 import { toIsoDate } from "@/shared/lib";

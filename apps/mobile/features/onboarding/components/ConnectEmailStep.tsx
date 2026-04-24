@@ -1,11 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { GoogleIcon, MicrosoftIcon, OAuthButton, useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
+import { GoogleIcon, MicrosoftIcon, OAuthButton } from "@/features/auth/ui.public";
 import {
   connectEmailAccount,
   getGmailClientId,
   getOutlookClientId,
   useEmailCaptureStore,
-} from "@/features/email-capture";
+} from "@/features/email-capture/public";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";

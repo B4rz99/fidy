@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { useOnboardingStore } from "@/features/onboarding/store";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";

@@ -1,10 +1,10 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { useOptionalUserId } from "@/features/auth";
-import type { FinancialAccountKind } from "@/features/financial-accounts";
+import { useOptionalUserId } from "@/features/auth/public";
 import { hasInvalidBillingDayInput } from "@/features/financial-accounts/lib/form-screen";
 import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
 import { createFinancialAccountManagementService } from "@/features/financial-accounts/lib/management-service";
+import type { FinancialAccountKind } from "@/features/financial-accounts/public";
 import type { AnyDb } from "@/shared/db";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useTranslation } from "@/shared/hooks";

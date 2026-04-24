@@ -1,14 +1,14 @@
 import { useMemo, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { createAccountSuggestionService } from "@/features/account-suggestions";
-import { useOptionalUserId } from "@/features/auth";
+import { createAccountSuggestionService } from "@/features/account-suggestions/public";
+import { useOptionalUserId } from "@/features/auth/public";
 import {
   fetchAndProcessEmails,
   getGmailClientId,
   getOutlookClientId,
   useEmailCaptureStore,
-} from "@/features/email-capture";
-import { refreshTransactions, useTransactionStore } from "@/features/transactions";
+} from "@/features/email-capture/public";
+import { refreshTransactions, useTransactionStore } from "@/features/transactions/store.public";
 import { ProgressBar } from "@/shared/components";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";

@@ -1,10 +1,10 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
+import { getFinancialAccountBalancesForUser } from "@/features/financial-accounts/lib/balance-repository";
 import {
   type FinancialAccountRow,
   getFinancialAccountsForUser,
-} from "@/features/financial-accounts";
-import { getFinancialAccountBalancesForUser } from "@/features/financial-accounts/lib/balance-repository";
-import type { StoredTransaction } from "@/features/transactions";
+} from "@/features/financial-accounts/public";
+import type { StoredTransaction } from "@/features/transactions/query.public";
 import { OUTSIDE_FIDY_LABEL, type TransferSide } from "@/features/transfers/lib/build-transfer";
 import type { AnyDb } from "@/shared/db";
 import { toIsoDate } from "@/shared/lib";

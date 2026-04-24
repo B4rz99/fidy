@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth";
+import { useAuthStore } from "@/features/auth/public";
 import { deleteAccountRequest } from "../data/notification-preferences";
 
 type DeleteAccountInput = {

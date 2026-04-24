@@ -1,8 +1,8 @@
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { useOptionalUserId } from "@/features/auth";
-import { refreshTransactions } from "@/features/transactions";
+import { useOptionalUserId } from "@/features/auth/public";
+import { refreshTransactions } from "@/features/transactions/store.public";
 import { ScreenLayout } from "@/shared/components";
 import { ChevronRight, Landmark } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";

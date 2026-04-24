@@ -1,15 +1,15 @@
-import { findMatchingFinancialAccountId } from "@/features/account-suggestions";
+import { findMatchingFinancialAccountId } from "@/features/account-suggestions/public";
 import {
   buildApplePayCaptureEvidence,
   materializeCaptureEvidenceRows,
   saveCaptureEvidenceRows,
-} from "@/features/capture-evidence";
+} from "@/features/capture-evidence/public";
 import {
   insertMerchantRule,
   lookupMerchantRule,
 } from "@/features/email-capture/merchant-rules.public";
 import { classifyMerchantApi } from "@/features/email-capture/parsing.public";
-import { ensureDefaultFinancialAccount } from "@/features/financial-accounts";
+import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
 import { insertTransaction, isValidCategoryId } from "@/features/transactions/write.public";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";

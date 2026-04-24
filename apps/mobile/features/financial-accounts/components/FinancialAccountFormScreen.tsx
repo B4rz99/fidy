@@ -1,7 +1,7 @@
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import {
   type FinancialAccountFormLookupStatus,
   getFinancialAccountFormScreenState,

@@ -1,7 +1,7 @@
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAccountCreatedAt, useOptionalUserId } from "@/features/auth";
+import { useAccountCreatedAt, useOptionalUserId } from "@/features/auth/public";
 import { ScreenLayout } from "@/shared/components";
 import { Platform, Pressable, SectionList, StyleSheet, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";

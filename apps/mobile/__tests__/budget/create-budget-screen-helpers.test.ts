@@ -1,10 +1,10 @@
 import { expect, test } from "vitest";
-import type { Budget } from "@/features/budget";
 import {
   resolveBudgetIdParam,
   resolveExistingBudget,
   resolveExistingCategoryIds,
 } from "@/features/budget/components/create-budget/CreateBudgetScreen.helpers";
+import type { Budget } from "@/features/budget/public";
 
 const internetBudget = {
   amount: 100000,

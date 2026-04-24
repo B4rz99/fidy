@@ -77,7 +77,7 @@ const { mockSetSession, mockSignInWithOAuth, mockSignOut, mockGetSession, supaba
     };
   });
 
-vi.mock("@/shared/db", () => ({
+vi.mock("@/shared/db/supabase", () => ({
   getSupabase: () => ({ auth: supabaseAuthMock }),
 }));
 

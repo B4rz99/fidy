@@ -1,5 +1,5 @@
-import { getMonthlyTotalsByType } from "@/features/transactions";
-import type { AnyDb } from "@/shared/db";
+import { getMonthlyTotalsByType } from "@/features/transactions/query.public";
+import type { AnyDb } from "@/shared/db/client";
 import type { UserId } from "@/shared/types/branded";
 import {
   deriveDebtProjection,

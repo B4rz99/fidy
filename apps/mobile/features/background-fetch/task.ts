@@ -6,7 +6,7 @@ import {
   getOutlookClientId,
   initializeEmailCaptureSession,
   loadEmailAccounts,
-} from "@/features/email-capture";
+} from "@/features/email-capture/public";
 import { getDb, getSupabase } from "@/shared/db";
 import { captureError } from "@/shared/lib";
 import { requireUserId } from "@/shared/types/assertions";

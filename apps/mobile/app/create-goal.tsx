@@ -1,4 +1,4 @@
-import { GoalCreateSheet } from "@/features/goals";
+import { GoalCreateSheet } from "@/features/goals/ui.public";
 
 export default function CreateGoalRoute() {
   return <GoalCreateSheet />;

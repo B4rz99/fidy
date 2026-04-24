@@ -1,5 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
-import type { LocalQaSession } from "@/features/qa";
+import type { LocalQaSession } from "@/features/qa/public";
 import { requireUserId } from "@/shared/types/assertions";
 import type { UserId } from "@/shared/types/branded";
 

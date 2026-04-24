@@ -1,5 +1,5 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { CATEGORIES, type CategoryId } from "@/features/transactions";
+import { CATEGORIES, type CategoryId } from "@/shared/categories";
 import {
   KeyboardAvoidingView,
   Platform,

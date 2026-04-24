@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import { insertNotificationRecord } from "@/features/notifications";
-import { useSettingsStore } from "@/features/settings";
-import { CATEGORY_MAP } from "@/features/transactions";
+import { insertNotificationRecord } from "@/features/notifications/public";
+import { useSettingsStore } from "@/features/settings/public";
 import { createWriteThroughMutationModule } from "@/mutations";
-import type { AnyDb } from "@/shared/db";
+import { CATEGORY_MAP } from "@/shared/categories";
+import type { AnyDb } from "@/shared/db/client";
 import { getCategoryLabel, useLocaleStore } from "@/shared/i18n";
 import { generateBudgetId, toIsoDateTime, trackBudgetCreated } from "@/shared/lib";
 import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";

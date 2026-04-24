@@ -3,16 +3,15 @@ import {
   AccountSuggestionsPromptBanner,
   useAccountSuggestions,
 } from "@/features/account-suggestions/routes.public";
-import { useOptionalUserId } from "@/features/auth";
-import { DetectedTransactionsBanner } from "@/features/capture-sources";
+import { useOptionalUserId } from "@/features/auth/public";
+import { DetectedTransactionsBanner } from "@/features/capture-sources/public";
 import {
   connectEmailAccount,
-  EmailConnectBanner,
-  FailedEmailsBanner,
   getGmailClientId,
   getOutlookClientId,
-} from "@/features/email-capture";
-import { SyncConflictBanner } from "@/features/sync";
+} from "@/features/email-capture/public";
+import { EmailConnectBanner, FailedEmailsBanner } from "@/features/email-capture/ui.public";
+import { SyncConflictBanner } from "@/features/sync/public";
 import { Platform, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { AttributionReviewBanner } from "../AttributionReviewBanner";

@@ -1,3 +1,5 @@
-export { toTransactionRow } from "./lib/build-transaction";
-export { getSpendingByCategoryAggregate } from "./lib/repository";
-export type { StoredTransaction } from "./schema";
+export * from "./categories.public";
+export * from "./display.public";
+export * from "./query.public";
+export * from "./store.public";
+export { insertTransaction } from "./write.public";

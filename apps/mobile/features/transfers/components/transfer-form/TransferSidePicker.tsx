@@ -1,5 +1,5 @@
-import type { FinancialAccountRow } from "@/features/financial-accounts";
 import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
+import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { TransferSide } from "@/features/transfers/lib/build-transfer";
 import { OUTSIDE_FIDY_LABEL } from "@/features/transfers/lib/build-transfer";
 import { isTransferSideSelected } from "@/features/transfers/lib/presentation";

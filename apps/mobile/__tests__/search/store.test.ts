@@ -1,6 +1,6 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: search store tests use flexible mock rows
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { EMPTY_FILTERS } from "@/features/search";
+import { EMPTY_FILTERS } from "@/features/search/public";
 import {
   executeSearch,
   loadNextSearchPage,
@@ -21,7 +21,7 @@ vi.mock("@/features/search/lib/repository", () => ({
   searchTransactionsAggregate: (...args: any[]) => mockSearchTransactionsAggregate(...args),
 }));
 
-vi.mock("@/features/transactions", () => ({
+vi.mock("@/features/transactions/query.public", () => ({
   toStoredTransaction: (row: any) => mockToStoredTransaction(row),
 }));
 

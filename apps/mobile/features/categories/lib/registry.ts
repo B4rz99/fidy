@@ -1,4 +1,4 @@
-import { CATEGORIES, CATEGORY_ROWS, type Category } from "@/features/transactions";
+import { CATEGORIES, CATEGORY_ROWS, type Category } from "@/shared/categories";
 import { Ellipsis } from "@/shared/components/icons";
 import { requireCategoryId } from "@/shared/types/assertions";
 import { ICON_MAP } from "./icon-map";

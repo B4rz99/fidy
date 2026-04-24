@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { createFinancialAccountManagementService } from "@/features/financial-accounts/lib/management-service";
 import { parseFinancialAccountRouteParam } from "@/features/financial-accounts/lib/route-params";
 import { ScreenLayout } from "@/shared/components";

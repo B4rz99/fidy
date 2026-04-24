@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { handleNumpadPress } from "@/features/transactions";
+import { handleNumpadPress } from "@/features/transactions/display.public";
 import type { CreateBudgetFormProps } from "./CreateBudget.types";
 import { CreateBudgetFormContent } from "./CreateBudgetFormContent";
 import { useCreateBudgetDraft } from "./useCreateBudgetDraft";

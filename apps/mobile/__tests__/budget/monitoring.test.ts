@@ -338,7 +338,7 @@ describe("createBudgetMonitoringModule", () => {
     expectInitialOverBudgetDelivery(result);
   });
 
-  it("loads transaction aggregates from the transactions public surface", async () => {
+  it("loads transaction aggregates from the transactions query public surface", async () => {
     vi.resetModules();
 
     const getSpendingByCategoryAggregateMock = vi.fn(() => [
@@ -348,7 +348,7 @@ describe("createBudgetMonitoringModule", () => {
       },
     ]);
 
-    vi.doMock("@/features/transactions/public", () => ({
+    vi.doMock("@/features/transactions/query.public", () => ({
       getSpendingByCategoryAggregate: getSpendingByCategoryAggregateMock,
     }));
     vi.doMock("@/features/transactions/lib/repository", () => ({

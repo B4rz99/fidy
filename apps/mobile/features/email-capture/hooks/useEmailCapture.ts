@@ -1,4 +1,4 @@
-import { refreshTransactions } from "@/features/transactions";
+import { refreshTransactions } from "@/features/transactions/store.public";
 import { AppState } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
 import { useSubscription } from "@/shared/hooks";

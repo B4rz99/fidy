@@ -1,5 +1,5 @@
-import type { FinancialAccountRow } from "@/features/financial-accounts";
 import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
+import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { TransferSide } from "@/features/transfers/lib/build-transfer";
 import { ChevronRight, ExternalLink, Landmark } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";

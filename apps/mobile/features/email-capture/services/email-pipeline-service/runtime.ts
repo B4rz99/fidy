@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import {
   type CaptureEvidenceRow,
   materializeCaptureEvidenceRows,
-} from "@/features/capture-evidence";
+} from "@/features/capture-evidence/public";
 import type { AnyDb } from "@/shared/db";
 import { type AppClock, bindAppClock, currentDateEffect } from "@/shared/effect/clock";
 import { fromPromise, fromThunk, makeAppService } from "@/shared/effect/runtime";
