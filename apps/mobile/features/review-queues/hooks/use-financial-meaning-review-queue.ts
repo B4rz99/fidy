@@ -1,6 +1,9 @@
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
-import { getFinancialMeaningReviewItems, loadNeedsReviewEmails } from "@/features/email-capture/public";
+import {
+  getFinancialMeaningReviewItems,
+  loadNeedsReviewEmails,
+} from "@/features/email-capture/public";
 import type { AnyDb } from "@/shared/db";
 import { isMissingSqliteTableError } from "@/shared/lib/sqlite-errors";
 import type { UserId } from "@/shared/types/branded";
