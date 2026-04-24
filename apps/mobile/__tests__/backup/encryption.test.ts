@@ -198,5 +198,20 @@ describe("local ledger backup encryption", () => {
     expect(() =>
       assertLocalLedgerBackupSecretSafeForRemote({ ...encrypted, plaintext: SNAPSHOT })
     ).toThrow("Local ledger backup secret cannot be sent to remote services");
+    expect(() =>
+      assertLocalLedgerBackupSecretSafeForRemote({ ...encrypted, ciphertext: recoveryKey })
+    ).toThrow("Local ledger backup secret cannot be sent to remote services");
+  });
+
+  it("handles cyclic payloads while checking for backup secrets", async () => {
+    const recoveryKey = generateBackupRecoveryKey();
+    const cyclicPayload: Record<string, unknown> = {};
+    cyclicPayload.self = cyclicPayload;
+
+    expect(() => assertLocalLedgerBackupSecretSafeForRemote(cyclicPayload)).not.toThrow();
+    cyclicPayload.recoveryKey = recoveryKey;
+    expect(() => assertLocalLedgerBackupSecretSafeForRemote(cyclicPayload)).toThrow(
+      "Local ledger backup secret cannot be sent to remote services"
+    );
   });
 });
