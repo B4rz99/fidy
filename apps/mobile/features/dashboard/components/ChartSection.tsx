@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { CATEGORY_MAP } from "@/features/transactions";
+import { CATEGORY_MAP } from "@/shared/categories";
 import {
   type LayoutChangeEvent,
   type NativeScrollEvent,

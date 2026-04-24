@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Target } from "@/shared/components/icons";
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";

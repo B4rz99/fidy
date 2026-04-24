@@ -1,13 +1,13 @@
 import { format } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import {
   dismissFinancialMeaningReview,
   loadNeedsReviewEmails,
   resolveFinancialMeaningReview,
-} from "@/features/email-capture";
-import { refreshTransactions } from "@/features/transactions";
+} from "@/features/email-capture/public";
+import { refreshTransactions } from "@/features/transactions/store.public";
 import { ScreenLayout } from "@/shared/components";
 import { ArrowLeftRight, TriangleAlert } from "@/shared/components/icons";
 import { StyleSheet, Text, View } from "@/shared/components/rn";

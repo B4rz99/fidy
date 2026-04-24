@@ -1,4 +1,4 @@
-import { getBuiltInCategoryId } from "@/features/transactions";
+import { getBuiltInCategoryId } from "@/shared/categories";
 import type { Bill } from "../schema";
 
 const SERVICES_CATEGORY_ID = getBuiltInCategoryId("services");

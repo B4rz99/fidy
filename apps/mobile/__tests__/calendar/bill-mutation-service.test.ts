@@ -356,13 +356,13 @@ describe("calendar bill mutation service", () => {
     expect(trackPaymentRecordedMock).not.toHaveBeenCalled();
   });
 
-  it("loads transaction adapters from the transactions public surface", async () => {
+  it("loads transaction adapters from the transactions query public surface", async () => {
     vi.resetModules();
 
     const transactionRow = { id: "txn-row" };
     const toTransactionRowMock = vi.fn(() => transactionRow);
 
-    vi.doMock("@/features/transactions/public", () => ({
+    vi.doMock("@/features/transactions/query.public", () => ({
       toTransactionRow: toTransactionRowMock,
     }));
     vi.doMock("@/features/transactions/lib/build-transaction", () => ({

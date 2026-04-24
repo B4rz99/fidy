@@ -1,7 +1,7 @@
 import type { ReactNode, RefObject } from "react";
-import type { StoredTransaction } from "@/features/transactions";
+import type { StoredTransaction } from "@/features/transactions/query.public";
 import type { TextInput } from "@/shared/components/rn";
-import type { AnyDb } from "@/shared/db";
+import type { AnyDb } from "@/shared/db/client";
 import type { UserId } from "@/shared/types/branded";
 import type { SearchFilters, SearchSummary } from "../../lib/types";
 import type { FilterKey } from "../FilterChipRow";

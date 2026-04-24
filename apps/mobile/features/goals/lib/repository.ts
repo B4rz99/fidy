@@ -1,6 +1,6 @@
 import { and, desc, eq, isNull, sql, sum } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db";
-import { goalContributions, goals } from "@/shared/db";
+import type { AnyDb } from "@/shared/db/client";
+import { goalContributions, goals } from "@/shared/db/schema";
 
 export type GoalRow = typeof goals.$inferInsert;
 export type GoalContributionRow = typeof goalContributions.$inferInsert;

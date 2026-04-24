@@ -1,4 +1,4 @@
-import type { StoredTransaction } from "@/features/transactions/public";
+import type { StoredTransaction } from "@/features/transactions/query.public";
 import type { CreateCalendarBillMutationServiceDeps } from "./types";
 
 export function applyBillPaymentSideEffects(

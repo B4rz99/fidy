@@ -1,6 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db";
-import { budgets } from "@/shared/db";
+import type { AnyDb } from "@/shared/db/client";
+import { budgets } from "@/shared/db/schema";
 import type { BudgetId, CopAmount, IsoDateTime, Month, UserId } from "@/shared/types/branded";
 
 export type BudgetRow = typeof budgets.$inferInsert;

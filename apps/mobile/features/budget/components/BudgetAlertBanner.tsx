@@ -1,4 +1,4 @@
-import { CATEGORY_MAP } from "@/features/transactions";
+import { CATEGORY_MAP } from "@/shared/categories";
 import { X } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";

@@ -1,6 +1,6 @@
 import { subMonths } from "date-fns";
-import { getSpendingByCategoryAggregate } from "@/features/transactions/public";
-import type { AnyDb } from "@/shared/db";
+import { getSpendingByCategoryAggregate } from "@/features/transactions/query.public";
+import type { AnyDb } from "@/shared/db/client";
 import { formatMoney, toMonth } from "@/shared/lib";
 import { assertCopAmount } from "@/shared/types/assertions";
 import type { BudgetId, CategoryId, Month, UserId } from "@/shared/types/branded";

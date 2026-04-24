@@ -1,7 +1,7 @@
 import {
   materializeCaptureEvidenceRows,
   saveCaptureEvidenceRows,
-} from "@/features/capture-evidence";
+} from "@/features/capture-evidence/public";
 import { insertMerchantRule } from "@/features/email-capture/merchant-rules.public";
 import { insertTransaction } from "@/features/transactions/write.public";
 import { enqueueSync } from "@/shared/db/enqueue-sync";

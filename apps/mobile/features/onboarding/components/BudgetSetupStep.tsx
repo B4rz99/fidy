@@ -1,11 +1,11 @@
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/public";
 import {
   acceptBudgetSuggestions,
   loadBudgetAutoSuggestions,
   useBudgetStore,
-  useSuggestionSelection,
-} from "@/features/budget";
-import { CATEGORY_MAP } from "@/features/transactions";
+} from "@/features/budget/public";
+import { useSuggestionSelection } from "@/features/budget/ui.public";
+import { CATEGORY_MAP } from "@/shared/categories";
 import {
   Pressable,
   ScrollView,

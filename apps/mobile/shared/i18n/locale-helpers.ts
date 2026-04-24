@@ -1,4 +1,4 @@
-import type { Category } from "@/features/transactions";
+import type { Category } from "@/shared/categories";
 import { resolveLanguage } from "./resolve-language";
 
 export const getCategoryLabel = (category: Category, locale: string): string =>

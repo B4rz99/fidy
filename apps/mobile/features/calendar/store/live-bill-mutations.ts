@@ -1,4 +1,4 @@
-import { useTransactionStore } from "@/features/transactions";
+import { useTransactionStore } from "@/features/transactions/store.public";
 import { createWriteThroughMutationModule } from "@/mutations";
 import { captureError, trackBillCreated, trackBillPaymentRecorded } from "@/shared/lib";
 import { createCalendarBillMutationService } from "../lib/bill-mutation-service";

@@ -6,7 +6,7 @@ import {
   createActivityQueryService,
   type StoredActivityItem,
 } from "@/features/activity/services/create-activity-query-service";
-import { deleteTransaction } from "@/features/transactions";
+import { deleteTransaction } from "@/features/transactions/store.public";
 import { Alert } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
 import { useSubscription, useTranslation } from "@/shared/hooks";

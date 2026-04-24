@@ -1,6 +1,6 @@
 import { useCallback } from "react";
-import { useOptionalUserId } from "@/features/auth";
-import { saveCurrentTransaction, useTransactionStore } from "@/features/transactions";
+import { useOptionalUserId } from "@/features/auth/public";
+import { saveCurrentTransaction, useTransactionStore } from "@/features/transactions/store.public";
 import { tryGetDb } from "@/shared/db";
 import { parseIsoDate, trackAiMessageSent, trackTransactionCreated } from "@/shared/lib";
 import { parseActionFromResponse } from "../lib/parse-action";

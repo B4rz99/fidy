@@ -1,6 +1,6 @@
 import type { SetStateAction } from "react";
 import { useCallback, useState } from "react";
-import { isValidCategoryId } from "@/features/transactions";
+import { isValidCategoryId } from "@/shared/categories";
 import type { Budget } from "../../schema";
 import type { CreateBudgetDraftController, CreateBudgetDraftState } from "./CreateBudget.types";
 

@@ -1,4 +1,4 @@
-import { relinkCaptureEvidenceToTransfer } from "@/features/capture-evidence";
+import { relinkCaptureEvidenceToTransfer } from "@/features/capture-evidence/public";
 import { updateProcessedEmailStatusInTransaction } from "@/features/email-capture/lib/repository";
 import { getTransactionById, upsertTransaction } from "@/features/transactions/lib/repository";
 import { enqueueSync } from "@/shared/db/enqueue-sync";

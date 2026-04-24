@@ -1,8 +1,9 @@
 import { Stack, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { AnalyticsScreen } from "@/features/analytics";
-import { BudgetListScreen } from "@/features/budget";
-import { GoalsListScreen, useGoalStore } from "@/features/goals";
+import { BudgetListScreen } from "@/features/budget/ui.public";
+import { useGoalStore } from "@/features/goals/hooks.public";
+import { GoalsListScreen } from "@/features/goals/ui.public";
 import { Plus } from "@/shared/components/icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";

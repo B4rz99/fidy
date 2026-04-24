@@ -1,5 +1,5 @@
-import type { CaptureEvidenceSeed } from "@/features/capture-evidence";
-import { buildNotificationCaptureEvidence } from "@/features/capture-evidence";
+import type { CaptureEvidenceSeed } from "@/features/capture-evidence/public";
+import { buildNotificationCaptureEvidence } from "@/features/capture-evidence/public";
 import { stripPii } from "@/features/email-capture/parsing.public";
 import { isValidCategoryId } from "@/features/transactions/write.public";
 import { toIsoDate, toIsoDateTime } from "@/shared/lib";

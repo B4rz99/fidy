@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { handleNumpadPress } from "@/features/transactions";
+import { handleNumpadPress } from "@/features/transactions/display.public";
 import { Keyboard, Platform } from "@/shared/components/rn";
 import { useBlinkingCursor } from "@/shared/hooks";
 import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
