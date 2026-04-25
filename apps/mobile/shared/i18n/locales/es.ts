@@ -1050,7 +1050,7 @@ const es = {
     goalMilestoneMsg: "Has ahorrado el %{percent}% de tu meta",
     weeklyDigest: {
       title: "Tu semana en resumen",
-      reminderTitle: "Tu resumen semanal esta listo",
+      reminderTitle: "Tu resumen semanal está listo",
       reminderBody: "Abre Fidy para generarlo en privado desde este dispositivo.",
       spending: "Gastaste %{amount} esta semana",
       categoryOne: " principalmente en %{firstCategory}",
