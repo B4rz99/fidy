@@ -2,7 +2,7 @@
  * Static schema compatibility test.
  *
  * Reads the Edge Function source as text and compares the JSON Schema
- * (FULL_PARSE_SCHEMA) and CATEGORY_IDS against the client Zod schema,
+ * (CAPTURE_INTERPRETER_SCHEMA) and CATEGORY_IDS against the client Zod schema,
  * catching schema drift without any network calls.
  */
 import { readFileSync } from "node:fs";
@@ -21,10 +21,10 @@ const edgeFnSource = readFileSync(
 // Regex extractors (pure functions)
 // ---------------------------------------------------------------------------
 
-/** Extract property keys from FULL_PARSE_SCHEMA.schema.properties */
+/** Extract property keys from CAPTURE_INTERPRETER_SCHEMA.schema.properties */
 function extractPropertyKeys(source: string): string[] {
   const propsMatch = source.match(
-    /FULL_PARSE_SCHEMA\s*=\s*\{[\s\S]*?properties:\s*\{([\s\S]*?)\},\s*\n\s*required:/
+    /CAPTURE_INTERPRETER_SCHEMA\s*=\s*\{[\s\S]*?properties:\s*\{([\s\S]*?)\},\s*\n\s*required:/
   );
   if (!propsMatch) return [];
   const propsBlock = propsMatch[1] ?? "";
@@ -33,9 +33,9 @@ function extractPropertyKeys(source: string): string[] {
   return [...keyMatches].map((m) => m[1] ?? "").filter(Boolean);
 }
 
-/** Extract required field names from FULL_PARSE_SCHEMA */
+/** Extract required field names from CAPTURE_INTERPRETER_SCHEMA */
 function extractRequired(source: string): string[] {
-  const reqMatch = source.match(/FULL_PARSE_SCHEMA[\s\S]*?required:\s*\[([\s\S]*?)\]/);
+  const reqMatch = source.match(/CAPTURE_INTERPRETER_SCHEMA[\s\S]*?required:\s*\[([\s\S]*?)\]/);
   if (!reqMatch) return [];
   const reqBlock = reqMatch[1] ?? "";
   return [...reqBlock.matchAll(/"(\w+)"/g)].map((m) => m[1] ?? "").filter(Boolean);
@@ -49,9 +49,9 @@ function extractCategoryIds(source: string): string[] {
   return [...catBlock.matchAll(/"(\w+)"/g)].map((m) => m[1] ?? "").filter(Boolean);
 }
 
-/** Extract type enum values from FULL_PARSE_SCHEMA */
+/** Extract type enum values from CAPTURE_INTERPRETER_SCHEMA */
 const TYPE_ENUM_PATTERN =
-  /FULL_PARSE_SCHEMA[\s\S]*?type:\s*\{\s*type:\s*"string",\s*enum:\s*\[([\s\S]*?)\]/;
+  /CAPTURE_INTERPRETER_SCHEMA[\s\S]*?type:\s*\{\s*type:\s*\["string",\s*"null"\],\s*enum:\s*\[([\s\S]*?)\]/;
 
 function extractTypeEnum(source: string): string[] {
   const typeBlock = source.match(TYPE_ENUM_PATTERN)?.[1] ?? "";
@@ -70,19 +70,32 @@ describe("Edge Function ↔ client schema compatibility", () => {
     expect(extractTypeEnum(edgeFnSource).length).toBeGreaterThan(0);
   });
 
-  it("FULL_PARSE_SCHEMA property keys match llmOutputSchema shape", () => {
+  it("CAPTURE_INTERPRETER_SCHEMA contains the candidate response shape", () => {
     const edgeKeys = extractPropertyKeys(edgeFnSource).sort();
-    const clientKeys = Object.keys(llmOutputSchema.shape).sort();
+    const candidateKeys = [
+      "amount",
+      "categoryId",
+      "confidence",
+      "date",
+      "description",
+      "fromAccountHint",
+      "kind",
+      "reason",
+      "toAccountHint",
+      "type",
+    ].sort();
 
-    expect(edgeKeys).toEqual(clientKeys);
+    expect(edgeKeys).toEqual(candidateKeys);
   });
 
-  it("required fields match", () => {
+  it("transaction candidate fields include the client parser shape", () => {
     const edgeRequired = extractRequired(edgeFnSource).sort();
     const clientKeys = Object.keys(llmOutputSchema.shape).sort();
 
-    // Every required field in the edge function should exist in the client schema
-    expect(edgeRequired).toEqual(clientKeys);
+    expect(edgeRequired).toEqual(
+      expect.arrayContaining(["kind", "reason", "fromAccountHint", "toAccountHint"])
+    );
+    expect(edgeRequired).toEqual(expect.arrayContaining(clientKeys));
   });
 
   it("CATEGORY_IDS match between Edge Function and client", () => {
