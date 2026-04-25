@@ -24,9 +24,9 @@ _Avoid_: Cloud sync, server ledger
 The user-facing recovery feature that creates and restores Encrypted Backups without exposing Plaintext Financial Data to Fidy servers.
 _Avoid_: Encryption setup, recovery-secret setup
 
-**Recovery Secret**:
-User-held key material needed to decrypt an Encrypted Backup after reinstall.
-_Avoid_: Password reset, server key
+**Recovery Key**:
+User-held generated key needed to decrypt an Encrypted Backup after reinstall when platform-held key material is unavailable.
+_Avoid_: Recovery phrase, passphrase, password reset, server key
 
 **Cloud AI Processing**:
 Explicit, transient processing of selected capture evidence or financial context by a remote AI service.
@@ -48,11 +48,11 @@ _Avoid_: Backup, recovery
 - Fidy-controlled servers must not store **Plaintext Financial Data** as ordinary database rows for recovery
 - An **Encrypted Backup** may contain financial records before encryption, but remote storage only receives ciphertext and non-financial backup metadata
 - An **Encrypted Backup** exists to restore the **Local Ledger** after app deletion, reinstall, or device loss
-- A **Recovery Secret** decrypts an **Encrypted Backup**
-- Fidy should not be able to decrypt an **Encrypted Backup** without the user's **Recovery Secret**
-- The **Recovery Secret** should be handled through platform-native storage and recovery where possible, with manual recovery as a fallback
+- A **Recovery Key** decrypts an **Encrypted Backup** when platform-held key material is unavailable
+- Fidy should not be able to decrypt an **Encrypted Backup** without the user's **Recovery Key** or platform-held key material
+- The **Recovery Key** is the manual recovery fallback; platform-native storage should make same-device recovery invisible where possible
 - Fidy login can locate a user's **Encrypted Backup**, but it must not by itself decrypt the backup
-- A lost-phone restore requires either platform-backed recovery of the **Recovery Secret** or the user's manual recovery fallback
+- A lost-phone restore requires either platform-backed recovery or the user's **Recovery Key**
 - If the user loses both the device-held secret and the manual recovery fallback, Fidy must not imply that the old **Local Ledger** can be recovered
 - Fidy must not offer server-side recovery that lets Fidy decrypt an **Encrypted Backup**
 - Strong recovery means accepting that the old **Local Ledger** is unrecoverable when all user-held recovery material is lost
@@ -67,7 +67,7 @@ _Avoid_: Backup, recovery
 ## Example dialogue
 
 > **Dev:** "If we stop syncing readable transactions to Supabase, how does the user recover after deleting the app?"
-> **Domain expert:** "The device creates an **Encrypted Backup** of the **Local Ledger**; Supabase stores only ciphertext, and restore requires the user's **Recovery Secret**."
+> **Domain expert:** "The device creates an **Encrypted Backup** of the **Local Ledger**; Supabase stores only ciphertext, and restore requires the user's **Recovery Key** or platform-held key material."
 
 ## Flagged ambiguities
 

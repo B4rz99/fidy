@@ -53,27 +53,27 @@ The app exports a canonical backup snapshot, encrypts it on device, and uploads 
 
 The backup payload should be versioned so restore can run migrations before opening the Local Ledger.
 
-### Recovery Secret
+### Recovery Key
 
-The recovery secret should be user-held, but the user-facing experience should be **Private Backup**, not "manage an encryption key." The default flow should feel like turning on a protected app backup, with the secret handled by platform-native storage where possible and manual recovery only as the fallback.
+The manual recovery fallback is a generated **Recovery Key**, but the user-facing experience should be **Private Backup**, not "manage an encryption key." The default flow should feel like turning on a protected app backup, with platform-native storage handling same-device recovery where possible and the Recovery Key kept by the user for lost-phone or new-device restore.
 
 UX target:
 
 - Non-technical mobile users should understand the promise in one sentence: Fidy can save an encrypted backup, but only they can unlock it.
 - Google, Microsoft, or Apple login should locate the user's backup account, not decrypt the backup by itself.
 - Same-device restore should be nearly invisible when platform secure storage still has the key.
-- New-device or lost-device restore should use the user's manual recovery phrase/passphrase or a platform-backed recovery mechanism.
-- Losing the recovery secret must be treated as a clear product state, not hidden in fine print.
+- New-device or lost-device restore should use the user's Recovery Key or a platform-backed recovery mechanism.
+- Losing the Recovery Key must be treated as a clear product state, not hidden in fine print.
 
 Security target:
 
 - Fidy must never store plaintext financial records remotely.
 - Fidy must never store a raw backup encryption key remotely.
-- Fidy must never store an unwrap-capable server secret that can decrypt a user's backup without user-held material.
+- Fidy must never store an unwrap-capable server secret that can decrypt a user's backup without the user's Recovery Key or platform-held key material.
 - Recovery key wrapping must happen on device.
 - Every remote backup should be encrypted with a random backup data key and authenticated encryption.
-- The backup data key may have multiple wrapped copies, but every wrap must require user-held or platform-held material.
-- If all user-held and platform-held recovery material is gone, the old Local Ledger is unrecoverable.
+- The backup data key may have multiple wrapped copies, but every wrap must require the user's Recovery Key or platform-held key material.
+- If the Recovery Key and all platform-held key material are gone, the old Local Ledger is unrecoverable.
 
 Platform constraints:
 
@@ -86,7 +86,7 @@ Recommended recovery ladder:
 
 1. **Device unlock**: use stored local key material for normal app use and same-device reinstall when available.
 2. **Private Backup restore**: after login, locate the encrypted backup and try platform-backed recovery.
-3. **Manual recovery**: ask for a recovery phrase/passphrase only when platform recovery cannot unlock the backup.
+3. **Manual recovery**: ask for the Recovery Key only when platform recovery cannot unlock the backup.
 4. **No-secret state**: if the user cannot unlock the backup, let them start fresh without implying Fidy can recover the old ledger.
 
 Lost-phone UX:
@@ -94,21 +94,21 @@ Lost-phone UX:
 - Treat "I lost my phone" as a primary restore path on the sign-in/restoration screen.
 - First ask the user to sign in with Google, Microsoft, or Apple so Fidy can find backup metadata.
 - If platform-backed key recovery is available, unlock the backup without asking the user to understand encryption.
-- If platform recovery is not available, ask for the manual recovery phrase/passphrase with calm copy and clear examples of where they may have saved it.
-- If the user cannot provide the recovery fallback, explain that the backup is still private but cannot be unlocked, then offer "Start fresh" as the next step.
-- Do not frame this as an account problem: login identifies the backup; the recovery secret unlocks it.
-- In settings, show a backup health check that warns users before a lost-phone event if they have no manual recovery fallback saved.
+- If platform recovery is not available, ask for the Recovery Key with calm copy and clear examples of where they may have saved it.
+- If the user cannot provide the Recovery Key, explain that the backup is still private but cannot be unlocked, then offer "Start fresh" as the next step.
+- Do not frame this as an account problem: login identifies the backup; the Recovery Key or platform-held key material unlocks it.
+- In settings, show a backup health check that warns users before a lost-phone event if they have not confirmed their Recovery Key.
 
 Strict security stance:
 
 - Do not add Fidy-managed escrow for MVP.
-- Do not add "forgot recovery secret" reset for encrypted backups.
+- Do not add "forgot Recovery Key" reset for encrypted backups.
 - Do not auto-restore from login alone.
-- Do not send the manual recovery phrase/passphrase to Supabase or AI providers.
-- Do not log recovery phrases, derived keys, wrapped keys, or backup plaintext.
-- Prefer a generated recovery phrase over a user-created password because non-technical users commonly choose weak passwords.
-- Require the user to confirm the recovery phrase before considering Private Backup healthy.
-- Let users rotate recovery material by decrypting locally, generating a new recovery phrase, rewrapping the backup key, and uploading new wrapped-key metadata.
+- Do not send the Recovery Key to Supabase or AI providers.
+- Do not log Recovery Keys, derived keys, wrapped keys, or backup plaintext.
+- Use a generated Recovery Key instead of a user-created password because non-technical users commonly choose weak passwords.
+- Require the user to confirm the Recovery Key before considering Private Backup healthy.
+- Let users rotate the Recovery Key by decrypting locally, generating a new Recovery Key, rewrapping the backup key, and uploading new wrapped-key metadata.
 
 Recommended auth direction:
 
@@ -144,7 +144,7 @@ Cloud AI is not allowed to become remote storage:
 
 3. Add on-device encryption
    - Generate backup encryption keys on device.
-   - Derive or wrap the key with the Recovery Secret.
+   - Derive or wrap the key with the Recovery Key.
    - Encrypt/decrypt snapshots locally.
    - Add corruption, wrong-secret, and schema-version tests.
 
@@ -177,7 +177,6 @@ Cloud AI is not allowed to become remote storage:
 ## Open Decisions
 
 - Should Private Backup be automatic after first successful onboarding, or should users explicitly enable it before their first captured data is saved?
-- Should manual recovery use a generated recovery phrase, a user-created passphrase, or both?
-- Should the generated recovery phrase be 12 words for lower friction or 24 words for a stricter security posture?
+- Resolved: manual recovery uses a generated Recovery Key, not a phrase, passphrase, or user-created password.
 - Are cloud AI ingestion and advisor enabled by default with disclosure, or opt-in before first use?
 - What exact retention promise applies to cloud AI request payloads and provider logs?
