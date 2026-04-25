@@ -60,6 +60,14 @@ const expenseTransactionsSince = (
     (transaction) => transaction.type === "expense" && transaction.date >= sinceDate
   );
 
+const expenseTransactionsInMonth = (
+  transactions: readonly LocalDigestTransaction[],
+  month: string
+): readonly LocalDigestTransaction[] =>
+  transactions.filter(
+    (transaction) => transaction.type === "expense" && transaction.date.startsWith(month)
+  );
+
 const addCategoryTotal = (
   totals: readonly CategoryTotal[],
   transaction: LocalDigestTransaction
@@ -108,6 +116,9 @@ const deriveBudgetStatus = (
 export function deriveLocalWeeklyDigestData(input: LocalWeeklyDigestInput): WeeklyDigestData {
   const expenses = expenseTransactionsSince(input.transactions, input.sinceDate);
   const categoryTotals = deriveCategoryTotals(expenses);
+  const monthlyCategoryTotals = deriveCategoryTotals(
+    expenseTransactionsInMonth(input.transactions, input.month)
+  );
 
   return {
     totalSpent: expenses.reduce((sum, transaction) => sum + transaction.amount, 0),
@@ -115,7 +126,7 @@ export function deriveLocalWeeklyDigestData(input: LocalWeeklyDigestInput): Week
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 2)
       .map(({ name, amount }) => ({ name, amount })),
-    budgetStatus: deriveBudgetStatus(input.budgets, categoryTotals, input.month),
+    budgetStatus: deriveBudgetStatus(input.budgets, monthlyCategoryTotals, input.month),
     goalContributionsThisWeek: input.goalContributions
       .filter((contribution) => contribution.date >= input.sinceDate)
       .reduce((sum, contribution) => sum + contribution.amount, 0),

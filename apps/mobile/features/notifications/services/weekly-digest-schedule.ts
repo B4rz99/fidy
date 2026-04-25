@@ -1,41 +1,47 @@
 import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
-import i18n from "@/shared/i18n/i18n";
 import type { UserId } from "@/shared/types/branded";
 
-const WEEKLY_DIGEST_TRIGGER = {
-  type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-  weekday: 1,
-  hour: 19,
-  minute: 0,
-} as const;
+const WEEKLY_DIGEST_NOTIFICATION_TYPE = "weekly_digest";
+const WEEKLY_DIGEST_NOTIFICATION_KEY = "weekly_digest_notification";
 
-const scheduledDigestKey = (userId: UserId) => `weekly_digest_notification_${userId}`;
+type ScheduledNotificationRequest = {
+  readonly identifier: string;
+  readonly content: {
+    readonly data?: Record<string, unknown> | null;
+  };
+};
 
-export async function cancelWeeklyDigestNotification(userId: UserId): Promise<void> {
-  const previousId = await SecureStore.getItemAsync(scheduledDigestKey(userId));
-  if (!previousId) return;
+const legacyScheduledDigestKey = (userId: UserId) => `${WEEKLY_DIGEST_NOTIFICATION_KEY}_${userId}`;
 
-  await Notifications.cancelScheduledNotificationAsync(previousId);
-  await SecureStore.deleteItemAsync(scheduledDigestKey(userId));
+async function getScheduledWeeklyDigestIds(): Promise<readonly string[]> {
+  try {
+    const scheduledNotifications =
+      (await Notifications.getAllScheduledNotificationsAsync()) as readonly ScheduledNotificationRequest[];
+
+    return scheduledNotifications
+      .filter((notification) => notification.content.data?.type === WEEKLY_DIGEST_NOTIFICATION_TYPE)
+      .map((notification) => notification.identifier);
+  } catch {
+    return [];
+  }
 }
 
-export async function scheduleWeeklyDigestReminder(userId: UserId): Promise<string | null> {
+const compactUniqueIds = (ids: readonly (string | null)[]): readonly string[] =>
+  Array.from(new Set(ids.filter((id): id is string => id !== null && id.length > 0)));
+
+export async function cancelWeeklyDigestNotification(userId: UserId): Promise<void> {
+  const storedId = await SecureStore.getItemAsync(WEEKLY_DIGEST_NOTIFICATION_KEY);
+  const legacyStoredId = await SecureStore.getItemAsync(legacyScheduledDigestKey(userId));
+  const scheduledIds = await getScheduledWeeklyDigestIds();
+  const idsToCancel = compactUniqueIds([storedId, legacyStoredId, ...scheduledIds]);
+
+  await Promise.all(idsToCancel.map((id) => Notifications.cancelScheduledNotificationAsync(id)));
+
   try {
-    await cancelWeeklyDigestNotification(userId);
-
-    const scheduledId = await Notifications.scheduleNotificationAsync({
-      content: {
-        title: i18n.t("notifications.weeklyDigest.reminderTitle"),
-        body: i18n.t("notifications.weeklyDigest.reminderBody"),
-        data: { route: "/notifications", type: "weekly_digest" },
-      },
-      trigger: WEEKLY_DIGEST_TRIGGER,
-    });
-
-    await SecureStore.setItemAsync(scheduledDigestKey(userId), scheduledId);
-    return scheduledId;
+    await SecureStore.deleteItemAsync(WEEKLY_DIGEST_NOTIFICATION_KEY);
+    await SecureStore.deleteItemAsync(legacyScheduledDigestKey(userId));
   } catch {
-    return null;
+    return;
   }
 }

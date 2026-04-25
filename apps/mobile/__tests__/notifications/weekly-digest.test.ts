@@ -5,8 +5,7 @@ import {
   deriveLocalWeeklyDigestData,
   deriveWeeklyDigestMessage,
 } from "@/features/notifications/lib/weekly-digest";
-import { syncWeeklyDigestReminder } from "@/features/notifications/services/weekly-digest";
-import { scheduleWeeklyDigestReminder } from "@/features/notifications/services/weekly-digest-schedule";
+import { cancelWeeklyDigestNotification } from "@/features/notifications/services/weekly-digest-schedule";
 import { useSettingsStore } from "@/features/settings/store";
 import i18n from "@/shared/i18n/i18n";
 import type { UserId } from "@/shared/types/branded";
@@ -67,6 +66,39 @@ const digestMessageInput = {
   goalContributionsThisWeek: 0,
 } as const;
 
+const MONTH_TO_DATE_OVER_ROWS = {
+  ...LOCAL_DIGEST_ROWS,
+  transactions: [
+    {
+      type: "expense",
+      amount: 60_000,
+      categoryId: "cat-food",
+      categoryName: "Food",
+      date: "2026-04-02",
+    },
+    {
+      type: "expense",
+      amount: 40_000,
+      categoryId: "cat-food",
+      categoryName: "Food",
+      date: "2026-04-20",
+    },
+  ],
+} as const;
+
+const SCHEDULED_NOTIFICATIONS = [
+  {
+    identifier: "previous-account-weekly-digest-id",
+    content: { data: { type: "weekly_digest" } },
+    trigger: null,
+  },
+  {
+    identifier: "unrelated-id",
+    content: { data: { type: "bill_reminder" } },
+    trigger: null,
+  },
+] as never;
+
 beforeEach(() => {
   i18n.locale = "en";
   useSettingsStore.setState(useSettingsStore.getInitialState());
@@ -90,23 +122,16 @@ describe("deriveLocalWeeklyDigestData", () => {
 });
 
 describe("deriveLocalWeeklyDigestData budget status", () => {
-  it("marks digest budgets on track when spending stays below monthly limits", () => {
-    const digest = deriveLocalWeeklyDigestData({
-      ...LOCAL_DIGEST_ROWS,
-      transactions: [
-        {
-          type: "expense",
-          amount: 40_000,
-          categoryId: "cat-food",
-          categoryName: "Food",
-          date: "2026-04-20",
-        },
-      ],
-    });
+  it("marks digest budgets over when month-to-date spending exceeds monthly limits", () => {
+    const digest = deriveLocalWeeklyDigestData(MONTH_TO_DATE_OVER_ROWS);
 
-    expect(digest.budgetStatus).toBe("on_track");
+    expect(digest.budgetStatus).toBe("over");
+    expect(digest.totalSpent).toBe(40_000);
+    expect(digest.topCategories).toEqual([{ name: "Food", amount: 40_000 }]);
   });
+});
 
+describe("deriveLocalWeeklyDigestData missing budgets", () => {
   it("marks digest budgets missing when the current month has no budgets", () => {
     const digest = deriveLocalWeeklyDigestData({
       ...LOCAL_DIGEST_ROWS,
@@ -189,54 +214,29 @@ describe("deriveWeeklyDigestMessage truncation", () => {
   });
 });
 
-describe("weekly digest notification scheduling", () => {
-  it("schedules a recurring reminder without frozen financial content", async () => {
-    vi.mocked(Notifications.scheduleNotificationAsync).mockResolvedValue("weekly-digest-id");
-
-    const result = await scheduleWeeklyDigestReminder("user-1" as UserId);
-
-    expect(result).toBe("weekly-digest-id");
-    expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith({
-      content: {
-        title: "Your weekly digest is ready",
-        body: "Open Fidy to generate it privately from this device.",
-        data: { route: "/notifications", type: "weekly_digest" },
-      },
-      trigger: {
-        type: "weekly",
-        weekday: 1,
-        hour: 19,
-        minute: 0,
-      },
-    });
-    expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        content: expect.objectContaining({
-          body: expect.stringContaining("$130.000"),
-        }),
-      })
+describe("weekly digest notification cleanup", () => {
+  it("cancels stored and discovered local digest schedules", async () => {
+    vi.mocked(SecureStore.getItemAsync)
+      .mockResolvedValueOnce("device-weekly-digest-id")
+      .mockResolvedValueOnce("legacy-weekly-digest-id");
+    vi.mocked(Notifications.getAllScheduledNotificationsAsync).mockResolvedValue(
+      SCHEDULED_NOTIFICATIONS
     );
-  });
 
-  it("does not schedule when the weekly digest preference is disabled", async () => {
-    useSettingsStore.getState().setNotificationPreference("weeklyDigest", false);
+    await cancelWeeklyDigestNotification("user-1" as UserId);
 
-    const result = await syncWeeklyDigestReminder("user-1" as UserId);
-
-    expect(result).toBeNull();
-    expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled();
-  });
-
-  it("cancels the previous local digest schedule when the preference is disabled", async () => {
-    vi.mocked(SecureStore.getItemAsync).mockResolvedValue("old-weekly-digest-id");
-    useSettingsStore.getState().setNotificationPreference("weeklyDigest", false);
-
-    const result = await syncWeeklyDigestReminder("user-1" as UserId);
-
-    expect(result).toBeNull();
     expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith(
-      "old-weekly-digest-id"
+      "device-weekly-digest-id"
     );
+    expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith(
+      "legacy-weekly-digest-id"
+    );
+    expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith(
+      "previous-account-weekly-digest-id"
+    );
+    expect(Notifications.cancelScheduledNotificationAsync).not.toHaveBeenCalledWith("unrelated-id");
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("weekly_digest_notification");
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("weekly_digest_notification_user-1");
     expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled();
   });
 });

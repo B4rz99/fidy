@@ -349,6 +349,7 @@ vi.mock("@fidy/assets", () => ({
 vi.mock("expo-notifications", () => ({
   scheduleNotificationAsync: vi.fn(),
   cancelScheduledNotificationAsync: vi.fn(),
+  getAllScheduledNotificationsAsync: vi.fn(() => Promise.resolve([])),
   SchedulableTriggerInputTypes: { WEEKLY: "weekly" },
   getPermissionsAsync: vi.fn(() =>
     Promise.resolve({ status: "undetermined", granted: false, canAskAgain: true })
