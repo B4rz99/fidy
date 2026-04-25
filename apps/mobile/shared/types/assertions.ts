@@ -1,4 +1,5 @@
 import type {
+  BackupId,
   BillId,
   BudgetId,
   CategoryId,
@@ -151,6 +152,10 @@ export function assertBillId(value: string): asserts value is BillId {
   assertNonEmptyString(value, "billId");
 }
 
+export function assertBackupId(value: string): asserts value is BackupId {
+  assertNonEmptyString(value, "backupId");
+}
+
 export function assertBudgetId(value: string): asserts value is BudgetId {
   assertNonEmptyString(value, "budgetId");
 }
@@ -233,6 +238,10 @@ export function requireCopAmount(value: number): CopAmount {
 
 export function requireBillId(value: string): BillId {
   return requireValue(value, assertBillId);
+}
+
+export function requireBackupId(value: string): BackupId {
+  return requireValue(value, assertBackupId);
 }
 
 export function requireBudgetId(value: string): BudgetId {

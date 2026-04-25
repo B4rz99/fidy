@@ -26,3 +26,17 @@ export {
   importLocalLedgerBackupSnapshot,
   LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION,
 } from "./local-ledger-snapshot";
+export type {
+  DeleteEncryptedRemoteBackupInput,
+  DownloadEncryptedRemoteBackupInput,
+  RemoteBackupMetadata,
+  UploadEncryptedRemoteBackupInput,
+} from "./remote-storage";
+export {
+  deleteEncryptedRemoteBackup,
+  downloadEncryptedRemoteBackup,
+  listEncryptedRemoteBackups,
+  REMOTE_BACKUP_BUCKET,
+  REMOTE_BACKUP_METADATA_TABLE,
+  uploadEncryptedRemoteBackup,
+} from "./remote-storage";
