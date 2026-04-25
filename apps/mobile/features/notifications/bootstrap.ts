@@ -7,7 +7,7 @@ import type {
 import { useSubscription } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
 import { initializeNotificationStore, registerPushToken } from "./public";
-import { cancelWeeklyDigestNotification } from "./services/weekly-digest-schedule";
+import { cleanupLegacyWeeklyDigestNotificationSchedules } from "./services/weekly-digest-schedule";
 
 const notificationBehavior = {
   shouldShowBanner: true,
@@ -41,7 +41,7 @@ export const notificationsBootstrapTask: BootstrapTask<AuthenticatedBootstrapCon
   id: "notifications",
   run: ({ db, userId }) => {
     void initializeNotificationStore(db, userId).catch(captureError);
-    void cancelWeeklyDigestNotification(userId).catch(captureError);
+    void cleanupLegacyWeeklyDigestNotificationSchedules(userId).catch(captureError);
   },
 };
 

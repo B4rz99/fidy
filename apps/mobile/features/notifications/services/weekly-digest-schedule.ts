@@ -4,6 +4,7 @@ import type { UserId } from "@/shared/types/branded";
 
 const WEEKLY_DIGEST_NOTIFICATION_TYPE = "weekly_digest";
 const WEEKLY_DIGEST_NOTIFICATION_KEY = "weekly_digest_notification";
+const WEEKLY_DIGEST_LEGACY_CLEANUP_KEY = "weekly_digest_notification_legacy_cleanup_v1";
 
 type ScheduledNotificationRequest = {
   readonly identifier: string;
@@ -44,4 +45,14 @@ export async function cancelWeeklyDigestNotification(userId: UserId): Promise<vo
   } catch {
     return;
   }
+}
+
+export async function cleanupLegacyWeeklyDigestNotificationSchedules(
+  userId: UserId
+): Promise<void> {
+  const hasCleanedUp = await SecureStore.getItemAsync(WEEKLY_DIGEST_LEGACY_CLEANUP_KEY);
+  if (hasCleanedUp === "true") return;
+
+  await cancelWeeklyDigestNotification(userId);
+  await SecureStore.setItemAsync(WEEKLY_DIGEST_LEGACY_CLEANUP_KEY, "true");
 }

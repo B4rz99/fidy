@@ -5,7 +5,10 @@ import {
   deriveLocalWeeklyDigestData,
   deriveWeeklyDigestMessage,
 } from "@/features/notifications/lib/weekly-digest";
-import { cancelWeeklyDigestNotification } from "@/features/notifications/services/weekly-digest-schedule";
+import {
+  cancelWeeklyDigestNotification,
+  cleanupLegacyWeeklyDigestNotificationSchedules,
+} from "@/features/notifications/services/weekly-digest-schedule";
 import { useSettingsStore } from "@/features/settings/store";
 import i18n from "@/shared/i18n/i18n";
 import type { UserId } from "@/shared/types/branded";
@@ -238,5 +241,16 @@ describe("weekly digest notification cleanup", () => {
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("weekly_digest_notification");
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("weekly_digest_notification_user-1");
     expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled();
+  });
+});
+
+describe("weekly digest legacy notification cleanup", () => {
+  it("runs legacy local schedule cleanup once per device", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockResolvedValueOnce("true");
+
+    await cleanupLegacyWeeklyDigestNotificationSchedules("user-1" as UserId);
+
+    expect(Notifications.getAllScheduledNotificationsAsync).not.toHaveBeenCalled();
+    expect(Notifications.cancelScheduledNotificationAsync).not.toHaveBeenCalled();
   });
 });
