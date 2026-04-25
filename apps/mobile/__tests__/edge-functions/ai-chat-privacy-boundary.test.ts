@@ -26,4 +26,11 @@ describe("ai-chat Edge Function privacy boundary", () => {
     expect(source).toContain("## What you know about this user");
     expect(source).not.toContain('from("user_memories").select("fact, category")');
   });
+
+  it("validates packet collections before building chat prompts", () => {
+    expect(source).toContain("isOptionalArrayOf(value.memories, isMemorySummary)");
+    expect(source).toContain("isOptionalArrayOf(value.goals, isGoalSummary)");
+    expect(source).toContain('typeof value.targetAmount === "number"');
+    expect(source).toContain("invalid_context_packet");
+  });
 });

@@ -178,8 +178,43 @@ function buildSystemPrompt(context: { packet: FinancialContextPacket }): string 
   return parts.join("\n");
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isOptionalArrayOf(value: unknown, isItemValid: (item: unknown) => boolean): boolean {
+  return value === undefined || (Array.isArray(value) && value.every(isItemValid));
+}
+
+function isUnknownItem(_value: unknown): boolean {
+  return true;
+}
+
+function isMemorySummary(value: unknown): boolean {
+  return isRecord(value) && typeof value.fact === "string" && typeof value.category === "string";
+}
+
+function isGoalSummary(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    typeof value.name === "string" &&
+    typeof value.type === "string" &&
+    typeof value.targetAmount === "number" &&
+    typeof value.currentAmount === "number" &&
+    typeof value.progressPct === "number"
+  );
+}
+
 function isFinancialContextPacket(value: unknown): value is FinancialContextPacket {
-  return typeof value === "object" && value !== null && "summary" in value;
+  if (!isRecord(value) || !("summary" in value)) return false;
+  return (
+    isOptionalArrayOf(value.recentTransactions, isUnknownItem) &&
+    isOptionalArrayOf(value.budgets, isUnknownItem) &&
+    isOptionalArrayOf(value.memories, isMemorySummary) &&
+    isOptionalArrayOf(value.goals, isGoalSummary) &&
+    isOptionalArrayOf(value.accounts, isUnknownItem) &&
+    isOptionalArrayOf(value.captureEvidence, isUnknownItem)
+  );
 }
 
 Deno.serve(async (req) => {

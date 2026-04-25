@@ -16,6 +16,8 @@ import {
   useChatStore,
 } from "../store";
 
+const MAX_CONTEXT_MEMORIES = 20;
+
 const streamingChatService = createStreamingChatService({
   getState: () => {
     const state = useChatStore.getState();
@@ -31,11 +33,11 @@ const streamingChatService = createStreamingChatService({
   buildFinancialContextPacket: async (input) => {
     const [packet, memories] = await Promise.all([
       buildFinancialContextPacket(input),
-      listUserMemories(input.userId),
+      listUserMemories(input.userId).catch(() => []),
     ]);
     return {
       ...packet,
-      memories: memories.map((memory) => ({
+      memories: memories.slice(0, MAX_CONTEXT_MEMORIES).map((memory) => ({
         fact: memory.fact,
         category: memory.category,
       })),
