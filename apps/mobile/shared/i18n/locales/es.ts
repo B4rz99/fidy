@@ -695,6 +695,7 @@ const es = {
     accountSection: "CUENTA",
     preferencesSection: "PREFERENCIAS",
     connectionsSection: "CONEXIONES",
+    privateBackupSection: "COPIA PRIVADA",
     appSection: "APLICACIÓN",
     theme: "Tema",
     themeSystem: "Sistema",
@@ -709,6 +710,13 @@ const es = {
       other: "%{count} cuentas",
     },
     notifications: "Notificaciones",
+    privateBackup: "Copia privada",
+    privateBackupStatus: {
+      notSetUp: "Sin configurar",
+      recoveryKeyNotConfirmed: "Llave de recuperación sin confirmar",
+      ready: "Lista",
+      backupFailed: "Falló la copia",
+    },
     on: "Activadas",
     off: "Desactivadas",
     helpSupport: "Ayuda y Soporte",
@@ -734,6 +742,61 @@ const es = {
     localQaReset: "Reiniciar escenario actual",
     localQaOpenTools: "Abrir herramientas QA",
     localQaExit: "Salir del QA local",
+  },
+
+  privateBackup: {
+    title: "Copia privada",
+    status: {
+      notSetUp: "Copia privada apagada",
+      recoveryKeyNotConfirmed: "Guarda tu llave",
+      ready: "Llave guardada",
+      backupFailed: "Reintenta la copia",
+    },
+    notSetupTitle: "Guarda una copia privada",
+    notSetupBody:
+      "Fidy puede guardar una copia que solo tu Llave de recuperación o un dispositivo confiable pueden abrir.",
+    confirmTitle: "Guarda tu Llave de recuperación ahora",
+    confirmBody:
+      "Este celular puede restaurar en silencio, pero un celular nuevo necesita tu Llave de recuperación guardada. Fidy no puede recrearla después.",
+    readyTitle: "Tu copia está saludable",
+    readyBody:
+      "Este dispositivo puede restaurar en silencio, y un celular nuevo puede abrir la misma copia con tu Llave de recuperación guardada.",
+    failedTitle: "Falló la subida de la copia",
+    failedBody:
+      "Tu celular actual todavía tiene tus datos. Reintenta cuando la conexión esté estable.",
+    recoveryKeyLabel: "Llave de recuperación",
+    recoveryKeyHelper:
+      "Guárdala en un gestor de contraseñas, iCloud Passwords o Bitwarden. Copiar y pegar debe ser el camino normal.",
+    confirmPlaceholder: "Pega tu Llave de recuperación",
+    saveKey: "Guardar Llave",
+    savingBackup: "Guardando copia...",
+    finishLater: "Terminar después",
+    setUp: "Configurar Copia privada",
+    retryBackup: "Reintentar copia",
+    viewKey: "Ver llave",
+    rotateKey: "Rotar llave",
+    encryptedBackupTitle: "Copia privada",
+    encryptedBackupBody: "Última copia %{backupDate}",
+    recoveryKeySavedTitle: "Llave guardada",
+    recoveryKeySavedBody: "Guardada en tu gestor de contraseñas",
+    newPhoneTitle: "Restaurar en celular nuevo",
+    newPhoneBody: "Pega la llave después de iniciar sesión",
+    privacyNote:
+      "Iniciar sesión encuentra la cuenta de la copia. Solo la Llave de recuperación o un dispositivo confiable la abren.",
+    keyUnavailable: "Esta Llave de recuperación ya no está disponible en la app.",
+    confirmMismatchTitle: "Esa llave no coincide",
+    confirmMismatchBody:
+      "Pega la Llave de recuperación exactamente como aparece antes de marcar la copia como lista.",
+    uploadFailedTitle: "La copia no se guardó",
+    uploadFailedBody:
+      "Revisa tu conexión e intenta de nuevo. Fidy todavía no marcará la copia como lista.",
+    signInRequired: "Inicia sesión otra vez para que Fidy guarde esta copia privada en tu cuenta.",
+    checklist: {
+      passwordManager: "Guarda la llave en un gestor de contraseñas que ya confíes.",
+      newDevice: "Pégala en un dispositivo nuevo cuando Fidy encuentre tu copia privada.",
+      lostKey:
+        "Si pierdes esta llave y también un dispositivo confiable, el historial anterior queda cerrado.",
+    },
   },
 
   qaTools: {
