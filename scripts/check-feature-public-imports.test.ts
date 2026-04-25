@@ -18,6 +18,8 @@ const writeSourceFile = (root: string, relativePath: string, source: string): vo
   writeFileSync(absolutePath, source);
 };
 
+const normalizePathSeparators = (value: string): string => value.replaceAll("\\", "/");
+
 afterEach(() => {
   tempDirs.splice(0).forEach((dir) => {
     rmSync(dir, { recursive: true, force: true });
@@ -45,10 +47,9 @@ test("reports broad barrel imports across feature boundaries", () => {
   });
 
   expect(result.exitCode).toBe(0);
-  expect(result.stdout.toString()).toContain("Broad cross-feature barrel imports: 1");
-  expect(result.stdout.toString()).toContain(
-    "apps/mobile/features/budget/store.ts:1 imports @/features/auth"
-  );
+  const stdout = normalizePathSeparators(result.stdout.toString());
+  expect(stdout).toContain("Broad cross-feature barrel imports: 1");
+  expect(stdout).toContain("apps/mobile/features/budget/store.ts:1 imports @/features/auth");
 });
 
 test("ignores same-feature barrels, tests, and explicit public imports", () => {
@@ -97,8 +98,9 @@ test("fails in enforce mode when violations are present", () => {
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.stdout.toString()).toContain("Broad cross-feature barrel imports: 1");
-  expect(result.stdout.toString()).toContain(
+  const stdout = normalizePathSeparators(result.stdout.toString());
+  expect(stdout).toContain("Broad cross-feature barrel imports: 1");
+  expect(stdout).toContain(
     "apps/mobile/features/search/store.ts:1 imports @/features/transactions"
   );
 });
@@ -132,9 +134,10 @@ test("ignores comment and string matches while still catching multiline imports"
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.stdout.toString()).toContain("Broad cross-feature barrel imports: 1");
-  expect(result.stdout.toString()).toContain(
+  const stdout = normalizePathSeparators(result.stdout.toString());
+  expect(stdout).toContain("Broad cross-feature barrel imports: 1");
+  expect(stdout).toContain(
     "apps/mobile/features/budget/store.ts:3 imports @/features/transactions"
   );
-  expect(result.stdout.toString()).not.toContain("@/features/auth");
+  expect(stdout).not.toContain("@/features/auth");
 });

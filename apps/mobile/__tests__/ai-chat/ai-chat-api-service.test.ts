@@ -6,6 +6,7 @@ vi.mock("expo/fetch", () => ({
 }));
 
 import { createAiChatApiService } from "@/features/ai-chat/services/create-ai-chat-api-service";
+import { requireMonth } from "@/shared/types/assertions";
 
 describe("createAiChatApiService", () => {
   it("streams chunks with auth headers from Supabase session", async () => {
@@ -59,6 +60,86 @@ describe("createAiChatApiService", () => {
     expect(onChunk).toHaveBeenCalledWith("Hello");
     expect(onDone).toHaveBeenCalledTimes(1);
     expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("sends an app-built financial context packet with chat messages", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response("data: [DONE]\n\n", {
+        status: 200,
+        headers: { "Content-Type": "text/event-stream" },
+      })
+    );
+
+    const service = createAiChatApiService({
+      fetchImpl: fetchImpl as never,
+      getBaseUrl: () => "https://example.supabase.co",
+      supabase: {
+        getSupabase: () =>
+          ({
+            auth: {
+              getSession: vi.fn().mockResolvedValue({
+                data: { session: { access_token: "token-123" } },
+              }),
+            },
+          }) as never,
+      },
+      telemetry: {
+        captureError: vi.fn(),
+        captureWarning: vi.fn(),
+        capturePipelineEvent: vi.fn(),
+      },
+    });
+
+    await service.streamChat(
+      [{ role: "user", content: "how am I doing?" }],
+      {
+        onChunk: vi.fn(),
+        onDone: vi.fn(),
+        onError: vi.fn(),
+      },
+      {
+        financialContextPacket: {
+          summary: {
+            balance: 125000,
+            currentMonthSpending: [{ categoryId: "food", total: 50000 }],
+            previousMonthSpending: [],
+            monthOverMonthDeltas: [
+              { categoryId: "food", current: 50000, previous: 0, delta: 50000 },
+            ],
+          },
+          recentTransactions: [
+            {
+              type: "expense",
+              amount: 50000,
+              categoryId: "food",
+              description: "Lunch",
+              date: "2026-04-20",
+            },
+          ],
+          budgets: [{ categoryId: "food", amount: 200000, month: requireMonth("2026-04") }],
+          goals: [],
+          accounts: [],
+          captureEvidence: [],
+          memories: [{ fact: "Prefers cash envelopes", category: "preference" }],
+        },
+      }
+    );
+
+    const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toMatchObject({
+      messages: [{ role: "user", content: "how am I doing?" }],
+      financialContextPacket: {
+        summary: {
+          balance: 125000,
+        },
+        recentTransactions: [
+          {
+            description: "Lunch",
+          },
+        ],
+        memories: [{ fact: "Prefers cash envelopes", category: "preference" }],
+      },
+    });
   });
 
   it("captures chunk callback failures without crashing the stream", async () => {
