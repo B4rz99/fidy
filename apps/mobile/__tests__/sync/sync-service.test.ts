@@ -100,7 +100,8 @@ describe("createSyncService", () => {
       userId: TEST_USER_ID,
     });
 
-    expect(ports.syncPush).toHaveBeenCalledWith(TEST_DB, supabase, TEST_USER_ID, {
+    expect(ports.syncPush).toHaveBeenCalledWith(TEST_DB, supabase, {
+      userId: TEST_USER_ID,
       remoteFinancialSync: "legacy",
     });
   });

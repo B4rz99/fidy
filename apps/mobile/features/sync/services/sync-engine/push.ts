@@ -8,16 +8,19 @@ import { getFinancialAccountIdentifierById } from "@/features/financial-accounts
 import { getOpeningBalanceById } from "@/features/financial-accounts/lib/opening-balances-repository";
 import { getFinancialAccountById } from "@/features/financial-accounts/lib/repository";
 import { getContributionById, getGoalById } from "@/features/goals/lib/repository";
-import {
-  clearSyncEntries,
-  getQueuedSyncEntries,
-  getTransactionById,
-} from "@/features/transactions/lib/repository";
+import { getQueuedSyncEntries, getTransactionById } from "@/features/transactions/lib/repository";
 import { getTransferById } from "@/features/transfers/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import { capturePipelineEvent, captureWarning } from "@/shared/lib";
 import { requireBudgetId, requireTransactionId } from "@/shared/types/assertions";
 import type { SyncQueueId } from "@/shared/types/branded";
+import {
+  clearProcessedSyncEntries,
+  getProcessedSyncQueueIds,
+  type PushQueueEntry,
+  type PushQueueResult,
+  shouldSkipPlaintextFinancialPush,
+} from "./push-queue";
 import {
   toPushEntryFailure,
   toSupabaseAccountSuggestionDismissalRow,
@@ -36,23 +39,11 @@ import type {
   PushEntryHandler,
   PushEntryOutcome,
   SyncPushOptions,
+  SyncPushRequest,
   UpsertPushSpec,
 } from "./types";
 
 const PUSH_ENTRY_PROCESSED: PushEntryOutcome = { ok: true };
-const PRIVATE_BACKUP_SYNC_MODE = "privateBackup";
-const PLAINTEXT_FINANCIAL_PUSH_TABLES = new Set<string>([
-  "transactions",
-  "budgets",
-  "goals",
-  "financialAccounts",
-  "transfers",
-  "openingBalances",
-  "financialAccountIdentifiers",
-  "captureEvidence",
-  "accountSuggestionDismissals",
-  "goalContributions",
-]);
 
 async function upsertPushRow<TRow, TSupabaseRow>(
   context: PushEntryContext,
@@ -224,7 +215,7 @@ function toRejectedPushWarningPayload(
 
 function captureRejectedPushEntries(
   entries: readonly { tableName: string; rowId: string }[],
-  results: readonly PromiseSettledResult<SyncQueueId | null>[]
+  results: readonly PushQueueResult[]
 ) {
   results.forEach((result, index) => {
     if (result.status === "fulfilled") {
@@ -238,16 +229,16 @@ function captureRejectedPushEntries(
   });
 }
 
-async function processEntry(
-  db: AnyDb,
-  supabase: SupabaseClient,
-  entry: { id: SyncQueueId; tableName: string; rowId: string },
-  options: SyncPushOptions
-): Promise<SyncQueueId | null> {
-  if (
-    options.remoteFinancialSync === PRIVATE_BACKUP_SYNC_MODE &&
-    PLAINTEXT_FINANCIAL_PUSH_TABLES.has(entry.tableName)
-  ) {
+type ProcessEntryInput = {
+  readonly db: AnyDb;
+  readonly supabase: SupabaseClient;
+  readonly entry: PushQueueEntry;
+  readonly options: SyncPushOptions;
+};
+
+async function processEntry(input: ProcessEntryInput): Promise<SyncQueueId | null> {
+  const { db, supabase, entry, options } = input;
+  if (shouldSkipPlaintextFinancialPush(entry.tableName, options)) {
     return entry.id;
   }
 
@@ -264,29 +255,30 @@ async function processEntry(
   return outcome.ok ? entry.id : null;
 }
 
+type ProcessEntriesInput = {
+  readonly db: AnyDb;
+  readonly supabase: SupabaseClient;
+  readonly entries: readonly PushQueueEntry[];
+  readonly options: SyncPushOptions;
+};
+
+async function processEntries(input: ProcessEntriesInput) {
+  return Promise.allSettled(input.entries.map((entry) => processEntry({ ...input, entry })));
+}
+
 export async function syncPush(
   db: AnyDb,
   supabase: SupabaseClient,
-  _userId: string,
-  options: SyncPushOptions = { remoteFinancialSync: "legacy" }
+  request: SyncPushRequest
 ): Promise<void> {
+  const options: SyncPushOptions = { remoteFinancialSync: request.remoteFinancialSync };
   const entries = await getQueuedSyncEntries(db);
   if (entries.length === 0) return;
 
-  const results = await Promise.allSettled(
-    entries.map((entry) => processEntry(db, supabase, entry, options))
-  );
+  const results = await processEntries({ db, supabase, entries, options });
   captureRejectedPushEntries(entries, results);
-  const processedIds = results
-    .filter(
-      (result): result is PromiseFulfilledResult<SyncQueueId> =>
-        result.status === "fulfilled" && result.value !== null
-    )
-    .map((result) => result.value);
-
-  if (processedIds.length > 0) {
-    await clearSyncEntries(db, processedIds);
-  }
+  const processedIds = getProcessedSyncQueueIds(results);
+  await clearProcessedSyncEntries(db, processedIds);
 
   capturePipelineEvent({
     source: "sync_push",

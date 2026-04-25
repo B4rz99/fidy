@@ -28,6 +28,10 @@ export type RemoteFinancialSyncMode = "legacy" | "privateBackup";
 export type SyncPushOptions = {
   readonly remoteFinancialSync?: RemoteFinancialSyncMode;
 };
+export type SyncPushRequest = {
+  readonly userId: string;
+  readonly remoteFinancialSync?: RemoteFinancialSyncMode;
+};
 
 export type SupabaseTransactionRow = {
   id: string;

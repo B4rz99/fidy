@@ -9,7 +9,7 @@ import {
   currentSupabaseClientEffect,
 } from "@/shared/effect/supabase";
 import type { IsoDateTime } from "@/shared/types/branded";
-import type { SyncPushOptions } from "./sync-engine/types";
+import type { SyncPushRequest } from "./sync-engine/types";
 import type {
   ConflictResolution,
   ResolveConflictResult,
@@ -25,8 +25,7 @@ type SyncPull = (db: SyncInput["db"], supabase: SupabaseClient, userId: string) 
 type SyncPush = (
   db: SyncInput["db"],
   supabase: SupabaseClient,
-  userId: string,
-  options: SyncPushOptions
+  request: SyncPushRequest
 ) => Promise<void>;
 type ConflictRow = {
   readonly id: string;
@@ -229,7 +228,7 @@ function runSyncEffect({
     const supabase = yield* currentSupabaseClientEffect;
     const pullOk = yield* fromPromise(() => syncPull(db, supabase, userId));
     if (pullOk) {
-      yield* fromPromise(() => syncPush(db, supabase, userId, { remoteFinancialSync }));
+      yield* fromPromise(() => syncPush(db, supabase, { userId, remoteFinancialSync }));
       yield* fromThunk(() => refreshTransactions({ db, userId }));
     }
 

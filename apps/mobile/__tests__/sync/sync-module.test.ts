@@ -69,7 +69,8 @@ describe("sync module", () => {
 
     expect(mockIsOnline).toHaveBeenCalled();
     expect(mockSyncPull).toHaveBeenCalledWith(db, expect.any(Object), "user-1");
-    expect(mockSyncPush).toHaveBeenCalledWith(db, expect.any(Object), "user-1", {
+    expect(mockSyncPush).toHaveBeenCalledWith(db, expect.any(Object), {
+      userId: "user-1",
       remoteFinancialSync: "legacy",
     });
     expect(mockRefreshTransactions).toHaveBeenCalledTimes(1);

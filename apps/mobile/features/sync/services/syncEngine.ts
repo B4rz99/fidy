@@ -4,17 +4,18 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AnyDb } from "@/shared/db";
 import { syncPull } from "./sync-engine/pull";
 import { syncPush } from "./sync-engine/push";
+import type { SyncPushRequest } from "./sync-engine/types";
 
 export { syncPull, syncPush };
 
 export async function fullSync(
   db: AnyDb,
   supabase: SupabaseClient,
-  userId: string
+  request: SyncPushRequest
 ): Promise<boolean> {
-  const pullOk = await syncPull(db, supabase, userId);
+  const pullOk = await syncPull(db, supabase, request.userId);
   if (pullOk) {
-    await syncPush(db, supabase, userId);
+    await syncPush(db, supabase, request);
   }
   return pullOk;
 }
