@@ -24,6 +24,15 @@ export const LAST_SYNC_AT_BY_TABLE = {
 } as const;
 export const PULL_PAGE_SIZE = 1000;
 
+export type RemoteFinancialSyncMode = "legacy" | "privateBackup";
+export type SyncPushOptions = {
+  readonly remoteFinancialSync?: RemoteFinancialSyncMode;
+};
+export type SyncPushRequest = {
+  readonly userId: string;
+  readonly remoteFinancialSync?: RemoteFinancialSyncMode;
+};
+
 export type SupabaseTransactionRow = {
   id: string;
   user_id: string;
