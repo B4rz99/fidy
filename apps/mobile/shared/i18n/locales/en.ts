@@ -1027,6 +1027,17 @@ const en = {
     spendingAnomalyMsg: "Your weekly spending is higher than usual",
     budgetPaceMsg: "Projected %{projected} vs %{budget} budget",
     goalMilestoneMsg: "You've saved %{percent}% of your goal",
+    weeklyDigest: {
+      title: "Your Week in Review",
+      reminderTitle: "Your weekly digest is ready",
+      reminderBody: "Open Fidy to generate it privately from this device.",
+      spending: "You spent %{amount} this week",
+      categoryOne: " mostly on %{firstCategory}",
+      categoryTwo: " mostly on %{firstCategory} and %{secondCategory}",
+      budgetOver: ". You're over budget - consider adjusting for next week",
+      budgetOnTrack: ". You're on track with your budgets",
+      goalContribution: ". You saved %{amount} toward your goals",
+    },
 
     // Section headers
     weeklyMovesHeader: "YOUR MONEY MOVES · %{weekRange}",

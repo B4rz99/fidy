@@ -1,4 +1,6 @@
 import { Stack, useRouter } from "expo-router";
+import { useOptionalUserId } from "@/features/auth/public";
+import { cancelWeeklyDigestNotification } from "@/features/notifications/schedule.public";
 import { ScreenLayout, SettingsSection } from "@/shared/components";
 import { Bell } from "@/shared/components/icons";
 import { Platform, ScrollView, View } from "@/shared/components/rn";
@@ -46,6 +48,7 @@ export function NotificationPreferencesScreen() {
   const router = useRouter();
   const { t } = useTranslation();
 
+  const userId = useOptionalUserId();
   const prefs = useSettingsStore((s) => s.notificationPreferences);
   const areAllOff = useSettingsStore((s) => s.areAllNotificationsOff);
   const setPreference = useSettingsStore((s) => s.setNotificationPreference);
@@ -55,9 +58,15 @@ export function NotificationPreferencesScreen() {
   const allOn =
     prefs.budgetAlerts && prefs.goalMilestones && prefs.spendingAnomalies && prefs.weeklyDigest;
 
+  const cancelWeeklyDigestIfDisabled = (updated: NotificationPreferences): void => {
+    if (updated.weeklyDigest || userId === null) return;
+    void cancelWeeklyDigestNotification(userId).catch(() => undefined);
+  };
+
   const handleSetPreference = (key: keyof NotificationPreferences, value: boolean) => {
     const updated = { ...prefs, [key]: value };
     setPreference(key, value);
+    cancelWeeklyDigestIfDisabled(updated);
     syncPreferences.mutate(updated);
   };
 
@@ -70,6 +79,7 @@ export function NotificationPreferencesScreen() {
     };
 
     setAll(enabled);
+    cancelWeeklyDigestIfDisabled(updated);
     syncPreferences.mutate(updated);
   };
 

@@ -1048,6 +1048,17 @@ const es = {
     spendingAnomalyMsg: "Tu gasto semanal es más alto de lo usual",
     budgetPaceMsg: "Proyectado %{projected} vs %{budget} presupuesto",
     goalMilestoneMsg: "Has ahorrado el %{percent}% de tu meta",
+    weeklyDigest: {
+      title: "Tu semana en resumen",
+      reminderTitle: "Tu resumen semanal esta listo",
+      reminderBody: "Abre Fidy para generarlo en privado desde este dispositivo.",
+      spending: "Gastaste %{amount} esta semana",
+      categoryOne: " principalmente en %{firstCategory}",
+      categoryTwo: " principalmente en %{firstCategory} y %{secondCategory}",
+      budgetOver: ". Superaste tu presupuesto - considera ajustar la proxima semana",
+      budgetOnTrack: ". Vas al dia con tus presupuestos",
+      goalContribution: ". Ahorraste %{amount} para tus metas",
+    },
 
     // Encabezados de sección
     weeklyMovesHeader: "TUS MOVIMIENTOS · %{weekRange}",
