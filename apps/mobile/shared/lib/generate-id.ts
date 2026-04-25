@@ -1,5 +1,6 @@
 import type {
   AccountSuggestionDismissalId,
+  BackupId,
   BillId,
   BillPaymentId,
   BudgetId,
@@ -58,6 +59,10 @@ export function generateBillId(): BillId {
 
 export function generateBillPaymentId(): BillPaymentId {
   return generateId("bp") as BillPaymentId;
+}
+
+export function generateBackupId(): BackupId {
+  return generateId("backup") as BackupId;
 }
 
 export function generateSyncQueueId(): SyncQueueId {

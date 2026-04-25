@@ -39,6 +39,7 @@ export {
 } from "./format-money";
 export {
   generateAccountSuggestionDismissalId,
+  generateBackupId,
   generateBillId,
   generateBillPaymentId,
   generateBudgetId,
