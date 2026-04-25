@@ -27,6 +27,19 @@ export {
   LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION,
 } from "./local-ledger-snapshot";
 export type {
+  CreatePrivateBackupInput,
+  PrivateBackupHealth,
+  PrivateBackupHealthInput,
+  PrivateBackupHealthStatus,
+  RotatePrivateBackupRecoveryKeySafelyInput,
+  RotatePrivateBackupRecoveryKeySafelyResult,
+} from "./private-backup";
+export {
+  createPrivateBackup,
+  derivePrivateBackupHealth,
+  rotatePrivateBackupRecoveryKeySafely,
+} from "./private-backup";
+export type {
   DeleteEncryptedRemoteBackupInput,
   DownloadEncryptedRemoteBackupInput,
   RemoteBackupMetadata,

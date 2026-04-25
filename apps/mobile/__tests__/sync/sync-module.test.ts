@@ -69,7 +69,10 @@ describe("sync module", () => {
 
     expect(mockIsOnline).toHaveBeenCalled();
     expect(mockSyncPull).toHaveBeenCalledWith(db, expect.any(Object), "user-1");
-    expect(mockSyncPush).toHaveBeenCalledWith(db, expect.any(Object), "user-1");
+    expect(mockSyncPush).toHaveBeenCalledWith(db, expect.any(Object), {
+      userId: "user-1",
+      remoteFinancialSync: "legacy",
+    });
     expect(mockRefreshTransactions).toHaveBeenCalledTimes(1);
     expect(result.status).toBe("synced");
     expect(result.unresolvedConflicts).toBe(0);
@@ -86,6 +89,23 @@ describe("sync module", () => {
     expect(mockSyncPush).not.toHaveBeenCalled();
     expect(mockRefreshTransactions).not.toHaveBeenCalled();
     expect(result.status).toBe("skipped_offline");
+  });
+
+  it("does not run legacy Remote Financial Sync in Private Backup mode", async () => {
+    const { sync } = await import("@/features/sync/services/sync");
+    const db = {} as any;
+
+    const result = await sync({
+      db,
+      userId: "user-1",
+      remoteFinancialSync: "privateBackup",
+    });
+
+    expect(mockGetSupabase).not.toHaveBeenCalled();
+    expect(mockSyncPull).not.toHaveBeenCalled();
+    expect(mockSyncPush).not.toHaveBeenCalled();
+    expect(mockRefreshTransactions).not.toHaveBeenCalled();
+    expect(result.status).toBe("synced");
   });
 
   it("lists unresolved conflicts through the boundary", async () => {

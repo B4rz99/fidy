@@ -1,7 +1,17 @@
 import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
+import type { RemoteBackupMetadata } from "@/features/backup/public";
 import { Appearance } from "@/shared/components/rn";
 import { captureWarning } from "@/shared/lib";
+import {
+  DEFAULT_PRIVATE_BACKUP_STATE,
+  loadPrivateBackupSettingsState,
+  markPrivateBackupConfirmed,
+  markPrivateBackupFailed,
+  type PrivateBackupSettingsState,
+  persistPrivateBackupState,
+  preparePrivateBackupSetup,
+} from "./lib/private-backup-settings-state";
 
 export type ThemePreference = "system" | "light" | "dark";
 
@@ -23,12 +33,22 @@ type SettingsState = {
   themePreference: ThemePreference;
   notificationPreferences: NotificationPreferences;
   areAllNotificationsOff: boolean;
+  privateBackup: PrivateBackupSettingsState;
 };
+
+type SetSettingsState = (partial: Partial<SettingsState>) => void;
 
 type SettingsActions = {
   setThemePreference: (pref: ThemePreference) => void;
   setNotificationPreference: (key: keyof NotificationPreferences, value: boolean) => void;
   setAllNotifications: (enabled: boolean) => void;
+  beginPrivateBackupSetup: (recoveryKey: string) => void;
+  confirmPrivateBackupRecoveryKey: (
+    confirmedRecoveryKey: string,
+    latestBackup: RemoteBackupMetadata
+  ) => void;
+  markPrivateBackupUploadFailed: (failedAt: string) => void;
+  markPrivateBackupUploadReady: (latestBackup: RemoteBackupMetadata) => void;
   hydrate: () => Promise<void>;
 };
 
@@ -65,10 +85,56 @@ const parseStoredNotificationPreferences = (
   };
 };
 
+const loadStoredSettings = async () => {
+  const [storedTheme, storedPrefs, privateBackup] = await Promise.all([
+    SecureStore.getItemAsync(THEME_PREFERENCE_KEY),
+    SecureStore.getItemAsync(PREFS_KEY),
+    loadPrivateBackupSettingsState(),
+  ]);
+
+  return {
+    storedTheme,
+    storedPrefs,
+    privateBackup,
+  };
+};
+
+const applyStoredThemePreference = (set: SetSettingsState, storedTheme: string | null) => {
+  const themePreference = resolveThemePreference(storedTheme);
+  if (!themePreference) {
+    return;
+  }
+
+  set({ themePreference });
+  Appearance.setColorScheme(toColorScheme(themePreference));
+};
+
+const applyStoredPrivateBackup = (
+  set: SetSettingsState,
+  privateBackup: PrivateBackupSettingsState | null
+) => {
+  if (privateBackup) {
+    set({ privateBackup });
+  }
+};
+
+const applyStoredNotificationPreferences = (set: SetSettingsState, storedPrefs: string | null) => {
+  const notificationPreferences = parseStoredNotificationPreferences(storedPrefs);
+  if (!notificationPreferences) {
+    return;
+  }
+
+  set({
+    notificationPreferences,
+    areAllNotificationsOff: computeAllOff(notificationPreferences),
+  });
+};
+
 export const useSettingsStore = create<SettingsState & SettingsActions>((set, get) => ({
   themePreference: "system",
   notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
   areAllNotificationsOff: false,
+  privateBackup: DEFAULT_PRIVATE_BACKUP_STATE,
 
   setThemePreference: (pref) => {
     set({ themePreference: pref });
@@ -103,29 +169,43 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
     persistPreferences(updated);
   },
 
+  beginPrivateBackupSetup: (recoveryKey) => {
+    const privateBackup = preparePrivateBackupSetup(get().privateBackup, recoveryKey);
+    set({
+      privateBackup,
+    });
+    persistPrivateBackupState(privateBackup);
+  },
+
+  confirmPrivateBackupRecoveryKey: (confirmedRecoveryKey, latestBackup) => {
+    const currentRecoveryKey = get().privateBackup.generatedRecoveryKey;
+    if (currentRecoveryKey === null || confirmedRecoveryKey !== currentRecoveryKey) {
+      return;
+    }
+
+    const privateBackup = markPrivateBackupConfirmed(get().privateBackup, latestBackup);
+    set({ privateBackup });
+    persistPrivateBackupState(privateBackup);
+  },
+
+  markPrivateBackupUploadFailed: (failedAt) => {
+    const privateBackup = markPrivateBackupFailed(get().privateBackup, failedAt);
+    set({ privateBackup });
+    persistPrivateBackupState(privateBackup);
+  },
+
+  markPrivateBackupUploadReady: (latestBackup) => {
+    const privateBackup = markPrivateBackupConfirmed(get().privateBackup, latestBackup);
+    set({ privateBackup });
+    persistPrivateBackupState(privateBackup);
+  },
+
   hydrate: async () => {
     try {
-      const [storedTheme, storedPrefs] = await Promise.all([
-        SecureStore.getItemAsync(THEME_PREFERENCE_KEY),
-        SecureStore.getItemAsync(PREFS_KEY),
-      ]);
-      const themePreference = resolveThemePreference(storedTheme);
-
-      if (themePreference) {
-        set({ themePreference });
-        Appearance.setColorScheme(toColorScheme(themePreference));
-      }
-
-      const notificationPreferences = parseStoredNotificationPreferences(storedPrefs);
-
-      if (!notificationPreferences) {
-        return;
-      }
-
-      set({
-        notificationPreferences,
-        areAllNotificationsOff: computeAllOff(notificationPreferences),
-      });
+      const stored = await loadStoredSettings();
+      applyStoredThemePreference(set, stored.storedTheme);
+      applyStoredPrivateBackup(set, stored.privateBackup);
+      applyStoredNotificationPreferences(set, stored.storedPrefs);
     } catch {
       // SecureStore unavailable (e.g., in tests)
     }

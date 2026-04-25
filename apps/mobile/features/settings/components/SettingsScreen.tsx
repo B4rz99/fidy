@@ -2,6 +2,7 @@ import Constants from "expo-constants";
 import { Stack, useRouter } from "expo-router";
 import { openBrowserAsync } from "expo-web-browser";
 import { useAuthIdentity } from "@/features/auth/public";
+import type { PrivateBackupHealthStatus } from "@/features/backup/public";
 import { useEmailCaptureStore } from "@/features/email-capture/public";
 import { ScreenLayout, SettingsSection, TAB_BAR_CLEARANCE } from "@/shared/components";
 import {
@@ -11,6 +12,7 @@ import {
   Globe,
   HelpCircle,
   Info,
+  KeyRound,
   Mail,
   Palette,
   Shield,
@@ -34,6 +36,19 @@ const THEME_LABEL_KEYS: Record<string, string> = {
   dark: "settings.themeDark",
 };
 
+function getPrivateBackupStatusLabelKey(status: PrivateBackupHealthStatus) {
+  switch (status) {
+    case "not_set_up":
+      return "settings.privateBackupStatus.notSetUp";
+    case "recovery_key_not_confirmed":
+      return "settings.privateBackupStatus.recoveryKeyNotConfirmed";
+    case "ready":
+      return "settings.privateBackupStatus.ready";
+    case "backup_failed":
+      return "settings.privateBackupStatus.backupFailed";
+  }
+}
+
 export function SettingsScreen() {
   const router = useRouter();
   const { t, locale } = useTranslation();
@@ -45,6 +60,7 @@ export function SettingsScreen() {
 
   const themePreference = useSettingsStore((s) => s.themePreference);
   const areAllNotificationsOff = useSettingsStore((s) => s.areAllNotificationsOff);
+  const privateBackupHealth = useSettingsStore((s) => s.privateBackup.health.status);
 
   const accentGreen = useThemeColor("accentGreen");
   const tertiaryColor = useThemeColor("tertiary");
@@ -148,6 +164,17 @@ export function SettingsScreen() {
             label={t("settings.notifications")}
             subtitle={areAllNotificationsOff ? t("settings.off") : t("settings.on")}
             onPress={() => router.push("/notification-preferences")}
+            isLast
+          />
+        </SettingsSection>
+
+        {/* PRIVATE BACKUP */}
+        <SettingsSection label={t("settings.privateBackupSection")}>
+          <SettingsRow
+            icon={KeyRound}
+            label={t("settings.privateBackup")}
+            subtitle={t(getPrivateBackupStatusLabelKey(privateBackupHealth))}
+            onPress={() => router.push("/private-backup")}
             isLast
           />
         </SettingsSection>

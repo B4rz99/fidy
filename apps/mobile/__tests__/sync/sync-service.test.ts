@@ -64,6 +64,48 @@ describe("createSyncService", () => {
     });
   });
 
+  it("skips legacy Remote Financial Sync for Private Backup users", async () => {
+    const supabase = {};
+    const { service, ports } = createService({
+      supabase: { getSupabase: vi.fn().mockReturnValue(supabase) },
+      syncPull: vi.fn().mockResolvedValue(true),
+      syncPush: vi.fn().mockResolvedValue(undefined),
+      refreshTransactions: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const result = await service.run({
+      db: TEST_DB,
+      userId: TEST_USER_ID,
+      remoteFinancialSync: "privateBackup",
+    });
+
+    expect(result.status).toBe("synced");
+    expect(ports.supabase.getSupabase).not.toHaveBeenCalled();
+    expect(ports.syncPull).not.toHaveBeenCalled();
+    expect(ports.syncPush).not.toHaveBeenCalled();
+    expect(ports.refreshTransactions).not.toHaveBeenCalled();
+  });
+
+  it("keeps legacy Remote Financial Sync as the default push capability", async () => {
+    const supabase = {};
+    const { service, ports } = createService({
+      supabase: { getSupabase: vi.fn().mockReturnValue(supabase) },
+      syncPull: vi.fn().mockResolvedValue(true),
+      syncPush: vi.fn().mockResolvedValue(undefined),
+      refreshTransactions: vi.fn().mockResolvedValue(undefined),
+    });
+
+    await service.run({
+      db: TEST_DB,
+      userId: TEST_USER_ID,
+    });
+
+    expect(ports.syncPush).toHaveBeenCalledWith(TEST_DB, supabase, {
+      userId: TEST_USER_ID,
+      remoteFinancialSync: "legacy",
+    });
+  });
+
   it("re-enqueues the local transaction when resolving a conflict in favor of local data", async () => {
     const resolvedAt = requireIsoDateTime("2026-04-18T12:34:56.000Z");
     const { service, ports } = createService({

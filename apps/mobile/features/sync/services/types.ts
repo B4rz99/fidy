@@ -1,5 +1,6 @@
 import type { AnyDb } from "@/shared/db";
 import type { SyncConflictId } from "@/shared/types/branded";
+import type { RemoteFinancialSyncMode } from "./sync-engine/types";
 
 export type TransactionSnapshot = {
   readonly id: string;
@@ -32,6 +33,7 @@ export type SyncReason = "startup" | "foreground" | "reconnected" | "manual";
 export type SyncInput = SyncContext & {
   readonly userId: string;
   readonly reason?: SyncReason;
+  readonly remoteFinancialSync?: RemoteFinancialSyncMode;
 };
 
 export type SyncRunResult =

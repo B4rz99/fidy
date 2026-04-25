@@ -271,9 +271,9 @@ function createCompositeSyncMeta(updatedAt: string, id: string) {
   return syncMeta;
 }
 
-async function runSyncPush(mockSupabase: any, userId = SYNC_USER_ID) {
+async function runSyncPush(mockSupabase: any, userId = SYNC_USER_ID, options?: any) {
   const { syncPush } = await import("@/features/sync/services/syncEngine");
-  await syncPush(mockDb, mockSupabase, userId);
+  await syncPush(mockDb, mockSupabase, { userId, ...options });
 }
 
 async function runSyncPull(mockSupabase: any, userId = SYNC_USER_ID) {
@@ -434,6 +434,31 @@ function expectCompositeTransactionsQuery(mockSupabase: any) {
   });
 }
 
+const PRIVATE_BACKUP_BLOCKED_PUSH_ENTRIES = [
+  createSyncQueueEntry({ id: "sq-transactions", tableName: "transactions", rowId: "tx-1" }),
+  createSyncQueueEntry({ id: "sq-budgets", tableName: "budgets", rowId: "budget-1" }),
+  createSyncQueueEntry({ id: "sq-goals", tableName: "goals", rowId: "goal-1" }),
+  createSyncQueueEntry({ id: "sq-accounts", tableName: "financialAccounts", rowId: "fa-1" }),
+  createSyncQueueEntry({ id: "sq-transfers", tableName: "transfers", rowId: "tr-1" }),
+  createSyncQueueEntry({ id: "sq-opening-balances", tableName: "openingBalances", rowId: "ob-1" }),
+  createSyncQueueEntry({
+    id: "sq-identifiers",
+    tableName: "financialAccountIdentifiers",
+    rowId: "fai-1",
+  }),
+  createSyncQueueEntry({ id: "sq-capture-evidence", tableName: "captureEvidence", rowId: "ce-1" }),
+  createSyncQueueEntry({
+    id: "sq-dismissals",
+    tableName: "accountSuggestionDismissals",
+    rowId: "asd-1",
+  }),
+  createSyncQueueEntry({ id: "sq-contributions", tableName: "goalContributions", rowId: "gc-1" }),
+];
+
+const PRIVATE_BACKUP_BLOCKED_PUSH_ENTRY_IDS = PRIVATE_BACKUP_BLOCKED_PUSH_ENTRIES.map(
+  (entry) => entry.id
+);
+
 describe("syncEngine", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -445,7 +470,7 @@ describe("syncEngine", () => {
       const mockSupabase = createMockSupabase();
 
       const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, "user-1");
+      await syncPush(mockDb, mockSupabase, { userId: "user-1" });
 
       expect(mockSupabase.from).not.toHaveBeenCalled();
       expect(mockClearSyncEntries).not.toHaveBeenCalled();
@@ -507,7 +532,7 @@ describe("syncEngine", () => {
       const mockSupabase = createMockSupabase();
 
       const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, "user-1");
+      await syncPush(mockDb, mockSupabase, { userId: "user-1" });
 
       expect(mockClearSyncEntries).not.toHaveBeenCalled();
     });
@@ -699,7 +724,7 @@ describe("syncEngine", () => {
       const mockSupabase = createMockSupabase();
 
       const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, "user-1");
+      await syncPush(mockDb, mockSupabase, { userId: "user-1" });
 
       expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-1"]);
     });
@@ -722,6 +747,18 @@ describe("syncEngine", () => {
           errorCode: "unknown",
         })
       );
+    });
+
+    it("does not push plaintext financial rows for Private Backup users", async () => {
+      mockGetQueuedSyncEntries.mockReturnValueOnce(PRIVATE_BACKUP_BLOCKED_PUSH_ENTRIES);
+      const mockSupabase = createMockSupabase();
+
+      await runSyncPush(mockSupabase, SYNC_USER_ID, {
+        remoteFinancialSync: "privateBackup",
+      });
+
+      expect(mockSupabase.from).not.toHaveBeenCalled();
+      expectQueueCleared(...PRIVATE_BACKUP_BLOCKED_PUSH_ENTRY_IDS);
     });
   });
 
@@ -934,7 +971,7 @@ describe("syncEngine", () => {
       const mockSupabase = createMockSupabase({ data: [], error: null });
 
       const { fullSync } = await import("@/features/sync/services/syncEngine");
-      const result = await fullSync(mockDb, mockSupabase, "user-1");
+      const result = await fullSync(mockDb, mockSupabase, { userId: "user-1" });
 
       expect(result).toBe(true);
       expect(mockGetSyncMeta).toHaveBeenCalled();
@@ -947,7 +984,7 @@ describe("syncEngine", () => {
       const mockSupabase = createMockSupabase({ data: null, error: { message: "fail" } });
 
       const { fullSync } = await import("@/features/sync/services/syncEngine");
-      const result = await fullSync(mockDb, mockSupabase, "user-1");
+      const result = await fullSync(mockDb, mockSupabase, { userId: "user-1" });
 
       expect(result).toBe(false);
       expect(mockGetSyncMeta).toHaveBeenCalled();
@@ -969,7 +1006,7 @@ describe("syncEngine", () => {
       });
 
       const { fullSync } = await import("@/features/sync/services/syncEngine");
-      const result = await fullSync(mockDb, mockSupabase, "user-1");
+      const result = await fullSync(mockDb, mockSupabase, { userId: "user-1" });
 
       expect(result).toBe(true);
       expect(mockGetQueuedSyncEntries).toHaveBeenCalled();
