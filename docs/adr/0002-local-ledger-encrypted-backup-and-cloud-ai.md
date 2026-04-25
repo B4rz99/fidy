@@ -10,4 +10,4 @@ Fidy will stop treating plaintext Supabase financial tables as the durability me
 
 **Consequences**
 
-Cloud features must receive data through explicit task boundaries, such as capture interpretation or advisor context packets, instead of querying plaintext financial rows from Supabase. Backup restore depends on user-held recovery material; if Fidy cannot decrypt the backup, Fidy also cannot recover it when the user loses the recovery secret.
+Cloud features must receive data through explicit task boundaries, such as capture interpretation or advisor context packets, instead of querying plaintext financial rows from Supabase. Backup restore depends on the user's Recovery Key or platform-held key material; if Fidy cannot decrypt the backup, Fidy also cannot recover it when the user loses that recovery material.
