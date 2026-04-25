@@ -9,6 +9,7 @@ import {
   currentSupabaseClientEffect,
 } from "@/shared/effect/supabase";
 import type { IsoDateTime } from "@/shared/types/branded";
+import type { SyncPushOptions } from "./sync-engine/types";
 import type {
   ConflictResolution,
   ResolveConflictResult,
@@ -21,7 +22,12 @@ import type {
 } from "./types";
 
 type SyncPull = (db: SyncInput["db"], supabase: SupabaseClient, userId: string) => Promise<boolean>;
-type SyncPush = (db: SyncInput["db"], supabase: SupabaseClient, userId: string) => Promise<void>;
+type SyncPush = (
+  db: SyncInput["db"],
+  supabase: SupabaseClient,
+  userId: string,
+  options: SyncPushOptions
+) => Promise<void>;
 type ConflictRow = {
   readonly id: string;
   readonly transactionId: string;
@@ -195,7 +201,12 @@ function resolveConflictEffect({ db, conflictId, resolution }: ResolveTransactio
   });
 }
 
-function runSyncEffect({ db, userId, reason: _reason = "foreground" }: SyncInput) {
+function runSyncEffect({
+  db,
+  userId,
+  reason: _reason = "foreground",
+  remoteFinancialSync = "legacy",
+}: SyncInput) {
   return Effect.gen(function* () {
     void _reason;
 
@@ -208,10 +219,17 @@ function runSyncEffect({ db, userId, reason: _reason = "foreground" }: SyncInput
       };
     }
 
+    if (remoteFinancialSync === "privateBackup") {
+      return {
+        status: "synced" as const,
+        unresolvedConflicts: yield* unresolvedConflictCountEffect(db),
+      };
+    }
+
     const supabase = yield* currentSupabaseClientEffect;
     const pullOk = yield* fromPromise(() => syncPull(db, supabase, userId));
     if (pullOk) {
-      yield* fromPromise(() => syncPush(db, supabase, userId));
+      yield* fromPromise(() => syncPush(db, supabase, userId, { remoteFinancialSync }));
       yield* fromThunk(() => refreshTransactions({ db, userId }));
     }
 

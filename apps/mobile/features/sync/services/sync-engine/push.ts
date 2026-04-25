@@ -31,9 +31,28 @@ import {
   toSupabaseTransactionRow,
   toSupabaseTransferRow,
 } from "./to-supabase";
-import type { PushEntryContext, PushEntryHandler, PushEntryOutcome, UpsertPushSpec } from "./types";
+import type {
+  PushEntryContext,
+  PushEntryHandler,
+  PushEntryOutcome,
+  SyncPushOptions,
+  UpsertPushSpec,
+} from "./types";
 
 const PUSH_ENTRY_PROCESSED: PushEntryOutcome = { ok: true };
+const PRIVATE_BACKUP_SYNC_MODE = "privateBackup";
+const PLAINTEXT_FINANCIAL_PUSH_TABLES = new Set<string>([
+  "transactions",
+  "budgets",
+  "goals",
+  "financialAccounts",
+  "transfers",
+  "openingBalances",
+  "financialAccountIdentifiers",
+  "captureEvidence",
+  "accountSuggestionDismissals",
+  "goalContributions",
+]);
 
 async function upsertPushRow<TRow, TSupabaseRow>(
   context: PushEntryContext,
@@ -222,8 +241,16 @@ function captureRejectedPushEntries(
 async function processEntry(
   db: AnyDb,
   supabase: SupabaseClient,
-  entry: { id: SyncQueueId; tableName: string; rowId: string }
+  entry: { id: SyncQueueId; tableName: string; rowId: string },
+  options: SyncPushOptions
 ): Promise<SyncQueueId | null> {
+  if (
+    options.remoteFinancialSync === PRIVATE_BACKUP_SYNC_MODE &&
+    PLAINTEXT_FINANCIAL_PUSH_TABLES.has(entry.tableName)
+  ) {
+    return entry.id;
+  }
+
   const handler = getPushEntryHandler(entry.tableName);
   if (!handler) {
     captureWarning("sync_push_unknown_table", { tableName: entry.tableName });
@@ -240,13 +267,14 @@ async function processEntry(
 export async function syncPush(
   db: AnyDb,
   supabase: SupabaseClient,
-  _userId: string
+  _userId: string,
+  options: SyncPushOptions = { remoteFinancialSync: "legacy" }
 ): Promise<void> {
   const entries = await getQueuedSyncEntries(db);
   if (entries.length === 0) return;
 
   const results = await Promise.allSettled(
-    entries.map((entry) => processEntry(db, supabase, entry))
+    entries.map((entry) => processEntry(db, supabase, entry, options))
   );
   captureRejectedPushEntries(entries, results);
   const processedIds = results

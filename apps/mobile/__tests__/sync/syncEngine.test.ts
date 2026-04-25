@@ -271,9 +271,9 @@ function createCompositeSyncMeta(updatedAt: string, id: string) {
   return syncMeta;
 }
 
-async function runSyncPush(mockSupabase: any, userId = SYNC_USER_ID) {
+async function runSyncPush(mockSupabase: any, userId = SYNC_USER_ID, options?: any) {
   const { syncPush } = await import("@/features/sync/services/syncEngine");
-  await syncPush(mockDb, mockSupabase, userId);
+  await syncPush(mockDb, mockSupabase, userId, options);
 }
 
 async function runSyncPull(mockSupabase: any, userId = SYNC_USER_ID) {
@@ -721,6 +721,65 @@ describe("syncEngine", () => {
           errorMessage: "lookup exploded",
           errorCode: "unknown",
         })
+      );
+    });
+
+    it("does not push plaintext financial rows for Private Backup users", async () => {
+      const blockedEntries = [
+        createSyncQueueEntry({ id: "sq-transactions", tableName: "transactions", rowId: "tx-1" }),
+        createSyncQueueEntry({ id: "sq-budgets", tableName: "budgets", rowId: "budget-1" }),
+        createSyncQueueEntry({ id: "sq-goals", tableName: "goals", rowId: "goal-1" }),
+        createSyncQueueEntry({
+          id: "sq-accounts",
+          tableName: "financialAccounts",
+          rowId: "fa-1",
+        }),
+        createSyncQueueEntry({ id: "sq-transfers", tableName: "transfers", rowId: "tr-1" }),
+        createSyncQueueEntry({
+          id: "sq-opening-balances",
+          tableName: "openingBalances",
+          rowId: "ob-1",
+        }),
+        createSyncQueueEntry({
+          id: "sq-identifiers",
+          tableName: "financialAccountIdentifiers",
+          rowId: "fai-1",
+        }),
+        createSyncQueueEntry({
+          id: "sq-capture-evidence",
+          tableName: "captureEvidence",
+          rowId: "ce-1",
+        }),
+        createSyncQueueEntry({
+          id: "sq-dismissals",
+          tableName: "accountSuggestionDismissals",
+          rowId: "asd-1",
+        }),
+        createSyncQueueEntry({
+          id: "sq-contributions",
+          tableName: "goalContributions",
+          rowId: "gc-1",
+        }),
+      ];
+      mockGetQueuedSyncEntries.mockReturnValueOnce(blockedEntries);
+      const mockSupabase = createMockSupabase();
+
+      await runSyncPush(mockSupabase, SYNC_USER_ID, {
+        remoteFinancialSync: "privateBackup",
+      });
+
+      expect(mockSupabase.from).not.toHaveBeenCalled();
+      expectQueueCleared(
+        "sq-transactions",
+        "sq-budgets",
+        "sq-goals",
+        "sq-accounts",
+        "sq-transfers",
+        "sq-opening-balances",
+        "sq-identifiers",
+        "sq-capture-evidence",
+        "sq-dismissals",
+        "sq-contributions"
       );
     });
   });
