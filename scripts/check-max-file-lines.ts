@@ -129,11 +129,13 @@ const formatReport = (root: string, maxLines: number, violations: readonly Viola
   const filesSection = violations
     .map((violation) => `${violation.lineCount} ${violation.path} [${violation.category}]`)
     .join("\n");
+  const splitGuidance = "File is too long. Split by responsibility boundary, not arbitrary chunks.";
 
   return [
     `Root: ${normalizePath(relative(process.cwd(), root) || ".")}`,
     `Max lines: ${maxLines}`,
     `Oversized files: ${violations.length}`,
+    violations.length > 0 ? splitGuidance : "",
     violations.length > 0 ? "" : "No oversized files found.",
     violations.length > 0 ? "By category:" : "",
     violations.length > 0 ? categorySummary : "",

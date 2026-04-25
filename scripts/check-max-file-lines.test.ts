@@ -40,6 +40,9 @@ test("reports oversized non-exempt files grouped by category in report-only mode
 
   expect(result.exitCode).toBe(0);
   expect(result.stdout.toString()).toContain("Oversized files: 1");
+  expect(result.stdout.toString()).toContain(
+    "File is too long. Split by responsibility boundary, not arbitrary chunks."
+  );
   expect(result.stdout.toString()).toContain("components: 1");
   expect(result.stdout.toString()).toContain(
     "apps/mobile/features/demo/components/LargeScreen.tsx"
@@ -88,6 +91,7 @@ test("does not overcount a file that ends with a trailing newline", () => {
   expect(result.exitCode).toBe(0);
   expect(result.stdout.toString()).toContain("Oversized files: 0");
   expect(result.stdout.toString()).toContain("No oversized files found.");
+  expect(result.stdout.toString()).not.toContain("File is too long.");
   expect(result.stdout.toString()).not.toContain("ThresholdScreen.tsx");
 });
 
