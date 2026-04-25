@@ -88,7 +88,7 @@ export const collectFeaturePublicImportViolations = (root: string): readonly Imp
       return collectFeatureImports(source)
         .filter((importedFeature) => importedFeature.importedFeature !== ownerFeature)
         .map((importedFeature) => ({
-          importer: relative(root, path),
+          importer: normalizePath(relative(root, path)),
           importedFeature: importedFeature.importedFeature,
           line: importedFeature.line,
         }));
