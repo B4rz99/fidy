@@ -30,7 +30,7 @@ export type ExportLocalLedgerBackupSnapshotOptions = {
 const MAX_ROWS_PER_INSERT = 50;
 
 export function exportLocalLedgerBackupSnapshot(
-  db: BackupDb,
+  db: BackupSelectDb,
   options: ExportLocalLedgerBackupSnapshotOptions
 ): BackupSnapshot {
   return {
@@ -122,7 +122,7 @@ function chunkRows(rows: readonly Record<string, unknown>[]) {
   );
 }
 
-function selectRows(db: BackupDb, table: BackupTable): readonly Record<string, unknown>[] {
+function selectRows(db: BackupSelectDb, table: BackupTable): readonly Record<string, unknown>[] {
   return db.select().from(table).all();
 }
 
