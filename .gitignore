@@ -30,6 +30,7 @@ ios/
 
 # MCP (contains tokens)
 .mcp.json
+!plugins/*/.mcp.json
 
 # Supabase local
 .supabase/
@@ -82,6 +83,8 @@ TODOS.md
 .agents/*
 !.agents/skills/
 !.agents/skills/**
+!.agents/plugins/
+!.agents/plugins/marketplace.json
 skills-lock.json
 .continue/
 .kiro/
@@ -105,3 +108,7 @@ apps/mobile/.claude/settings.local.json
 *~
 *.orig
 .vercel
+
+# MemPalace per-project files
+mempalace.yaml
+entities.json
