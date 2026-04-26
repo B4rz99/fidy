@@ -1,8 +1,7 @@
 import { and, count, desc, eq, isNull, sql } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db/client";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
 import { captureEvidence } from "@/shared/db/schema";
-import { generateCaptureEvidenceId, generateSyncQueueId } from "@/shared/lib/generate-id";
+import { generateCaptureEvidenceId } from "@/shared/lib/generate-id";
 import type { CaptureEvidenceSeed } from "../schema";
 
 export type CaptureEvidenceRow = typeof captureEvidence.$inferInsert;
@@ -44,17 +43,7 @@ type CaptureEvidenceScopeValueInput = {
 };
 
 function saveCaptureEvidenceInTransaction(db: AnyDb, row: CaptureEvidenceRow) {
-  const existing = getCaptureEvidenceById(db, row.id);
-
   persistCaptureEvidence(db, row);
-
-  enqueueSync(db, {
-    id: generateSyncQueueId(),
-    tableName: "captureEvidence",
-    rowId: row.id,
-    operation: existing ? "update" : "insert",
-    createdAt: row.updatedAt,
-  });
 }
 
 function persistCaptureEvidence(db: AnyDb, row: CaptureEvidenceRow) {

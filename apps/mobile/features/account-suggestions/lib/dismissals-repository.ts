@@ -1,6 +1,5 @@
 import { and, eq, isNull } from "drizzle-orm";
-import { type AnyDb, accountSuggestionDismissals, enqueueSync, syncQueue } from "@/shared/db";
-import { generateSyncQueueId } from "@/shared/lib";
+import { type AnyDb, accountSuggestionDismissals } from "@/shared/db";
 
 export type AccountSuggestionDismissalRow = typeof accountSuggestionDismissals.$inferInsert;
 type ActiveDismissalLookupInput = {
@@ -55,11 +54,6 @@ export function getActiveAccountSuggestionDismissal(input: ActiveDismissalLookup
 }
 
 function deleteDismissalDuplicate(db: AnyDb, duplicateId: AccountSuggestionDismissalRow["id"]) {
-  db.delete(syncQueue)
-    .where(
-      and(eq(syncQueue.tableName, "accountSuggestionDismissals"), eq(syncQueue.rowId, duplicateId))
-    )
-    .run();
   db.delete(accountSuggestionDismissals)
     .where(eq(accountSuggestionDismissals.id, duplicateId))
     .run();
@@ -138,14 +132,6 @@ function saveDismissalInTransaction(db: AnyDb, row: AccountSuggestionDismissalRo
         }
       : row;
   persistAccountSuggestionDismissal(db, persistedRow);
-
-  enqueueSync(db, {
-    id: generateSyncQueueId(),
-    tableName: "accountSuggestionDismissals",
-    rowId: persistedRow.id,
-    operation: existingById || duplicate ? "update" : "insert",
-    createdAt: row.updatedAt,
-  });
 }
 
 export function upsertAccountSuggestionDismissal(db: AnyDb, row: AccountSuggestionDismissalRow) {

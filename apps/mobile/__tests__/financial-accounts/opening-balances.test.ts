@@ -9,7 +9,6 @@ import {
   saveOpeningBalance,
   upsertOpeningBalance,
 } from "@/features/financial-accounts";
-import { getQueuedSyncEntries } from "@/features/transactions/lib/repository";
 import type {
   CopAmount,
   FinancialAccountId,
@@ -51,7 +50,7 @@ function expectOpeningBalanceForAccount(
 }
 
 describe("opening balances repository", () => {
-  it("saves an opening balance, reads it back, and enqueues sync", () => {
+  it("saves an opening balance, reads it back,", () => {
     saveBalance();
 
     expectOpeningBalanceForAccount(ACCOUNT_ID, {
@@ -61,14 +60,6 @@ describe("opening balances repository", () => {
       amount: 500000,
       effectiveDate: "2026-04-01",
     });
-
-    expect(getQueuedSyncEntries(db as any)).toEqual([
-      expect.objectContaining({
-        tableName: "openingBalances",
-        rowId: "ob-1",
-        operation: "insert",
-      }),
-    ]);
   });
 
   it("enqueues the persisted row id when a unique-account upsert reuses an existing record", () => {
@@ -85,19 +76,6 @@ describe("opening balances repository", () => {
       amount: 750000,
       effectiveDate: "2026-04-02",
     });
-
-    expect(getQueuedSyncEntries(db as any)).toEqual([
-      expect.objectContaining({
-        tableName: "openingBalances",
-        rowId: "ob-1",
-        operation: "insert",
-      }),
-      expect.objectContaining({
-        tableName: "openingBalances",
-        rowId: "ob-1",
-        operation: "update",
-      }),
-    ]);
   });
 
   it("replaces a local duplicate id with the pulled server row for the same account", () => {
@@ -147,13 +125,6 @@ describe("opening balances repository", () => {
       amount: 750000,
       effectiveDate: "2026-04-02",
     });
-    expect(getQueuedSyncEntries(db as any)).toEqual([
-      expect.objectContaining({
-        tableName: "openingBalances",
-        rowId: "ob-local",
-        operation: "insert",
-      }),
-    ]);
   });
 
   it("allows re-creating an opening balance after soft delete", () => {

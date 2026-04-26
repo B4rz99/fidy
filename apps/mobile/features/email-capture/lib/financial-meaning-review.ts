@@ -2,9 +2,7 @@ import { isActiveTransactionRow } from "@/features/transactions/lib/active-trans
 import { toStoredTransaction } from "@/features/transactions/lib/build-transaction";
 import { getTransactionById, upsertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db/client";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
 import { toIsoDateTime } from "@/shared/lib/format-date";
-import { generateSyncQueueId } from "@/shared/lib/generate-id";
 import type { IsoDateTime, ProcessedEmailId } from "@/shared/types/branded";
 import {
   getNeedsReviewEmails,
@@ -87,14 +85,6 @@ export async function dismissFinancialMeaningReview(
           ...transaction,
           supersededAt: updatedAt,
           updatedAt,
-        });
-
-        enqueueSync(tx, {
-          id: generateSyncQueueId(),
-          tableName: "transactions",
-          rowId: transaction.id,
-          operation: "update",
-          createdAt: updatedAt,
         });
       }
     }

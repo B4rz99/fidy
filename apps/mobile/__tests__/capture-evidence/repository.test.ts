@@ -7,11 +7,14 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   countCaptureEvidenceOccurrences,
   getCaptureEvidenceById,
+  getCaptureEvidenceRowsForScopeValue,
   getRepeatedCaptureEvidenceForUser,
+  linkCaptureEvidenceToTransaction,
   relinkCaptureEvidenceToTransfer,
   saveCaptureEvidence,
+  saveCaptureEvidenceRows,
+  upsertCaptureEvidence,
 } from "@/features/capture-evidence";
-import { getQueuedSyncEntries } from "@/features/transactions";
 import type {
   CaptureEvidenceId,
   IsoDateTime,
@@ -64,18 +67,6 @@ function saveEvidence(overrides: Partial<CaptureEvidenceInput> = {}) {
   saveCaptureEvidence(db as any, makeCaptureEvidence(overrides));
 }
 
-function expectQueuedEvidence(...rowIds: string[]) {
-  expect(getQueuedSyncEntries(db as any)).toEqual(
-    rowIds.map((rowId) =>
-      expect.objectContaining({
-        tableName: "captureEvidence",
-        rowId,
-        operation: "insert",
-      })
-    )
-  );
-}
-
 function seedRepeatedCaptureEvidence() {
   saveEvidence();
   saveEvidence({
@@ -86,19 +77,18 @@ function seedRepeatedCaptureEvidence() {
     updatedAt: LATER,
   });
   saveEvidence({
-    id: "ce-3" as CaptureEvidenceId,
+    id: "ce-deleted" as CaptureEvidenceId,
+    transactionId: null,
+    processedCaptureId: "pc-deleted" as ProcessedCaptureId,
+    deletedAt: LATER,
+  });
+  saveEvidence({
+    id: "ce-email" as CaptureEvidenceId,
     evidenceType: "sender_email",
     scope: "email:bancolombia:sender",
     value: "notificaciones@bancolombia.com.co",
-    transactionId: "tx-3" as TransactionId,
     processedEmailId: "pe-1" as ProcessedEmailId,
     processedCaptureId: null,
-  });
-  saveEvidence({
-    id: "ce-4" as CaptureEvidenceId,
-    transactionId: null,
-    processedCaptureId: "pc-4" as ProcessedCaptureId,
-    deletedAt: "2026-04-19T12:00:00.000Z" as IsoDateTime,
   });
 }
 
@@ -115,13 +105,107 @@ function expectRepeatedCaptureEvidenceCounts() {
       occurrences: 2,
     },
   ]);
-  expectQueuedEvidence("ce-1", "ce-2", "ce-3", "ce-4");
+}
+
+function seedEmailEvidenceForLinking() {
+  saveCaptureEvidenceRows(db as any, [
+    makeCaptureEvidence({
+      id: "ce-email-1" as CaptureEvidenceId,
+      transactionId: null,
+      processedEmailId: "pe-link" as ProcessedEmailId,
+      processedCaptureId: null,
+    }),
+    makeCaptureEvidence({
+      id: "ce-email-2" as CaptureEvidenceId,
+      evidenceType: "sender_email",
+      scope: "email:bancolombia:sender",
+      value: "notificaciones@bancolombia.com.co",
+      transactionId: "tx-linked" as TransactionId,
+      processedEmailId: "pe-link" as ProcessedEmailId,
+      processedCaptureId: null,
+      updatedAt: LATER,
+    }),
+  ]);
+}
+
+function expectEmailEvidenceLinkingResult() {
+  expect(getCaptureEvidenceById(db as any, "ce-email-1" as CaptureEvidenceId)).toEqual(
+    expect.objectContaining({
+      transactionId: "tx-linked",
+      updatedAt: "2026-04-19T10:30:00.000Z",
+    })
+  );
+  expect(getCaptureEvidenceById(db as any, "ce-email-2" as CaptureEvidenceId)).toEqual(
+    expect.objectContaining({ updatedAt: LATER })
+  );
 }
 
 describe("capture evidence repository", () => {
-  it("saves evidence, enqueues sync, and counts repeated scoped evidence for one user", () => {
+  it("counts repeated active evidence and ignores deleted rows", () => {
     seedRepeatedCaptureEvidence();
+
     expectRepeatedCaptureEvidenceCounts();
+    expect(
+      getCaptureEvidenceRowsForScopeValue(db as any, {
+        userId: USER_ID,
+        scope: "notification:bancolombia:last4",
+        value: "1234",
+      })
+    ).toHaveLength(2);
+  });
+
+  it("upserts only fresher evidence rows", () => {
+    saveEvidence();
+
+    upsertCaptureEvidence(
+      db as any,
+      makeCaptureEvidence({
+        value: "stale",
+        updatedAt: "2026-04-19T09:00:00.000Z" as IsoDateTime,
+      })
+    );
+    expect(getCaptureEvidenceById(db as any, "ce-1" as CaptureEvidenceId)).toEqual(
+      expect.objectContaining({ value: "1234", updatedAt: NOW })
+    );
+
+    upsertCaptureEvidence(
+      db as any,
+      makeCaptureEvidence({
+        value: "fresh",
+        updatedAt: LATER,
+      })
+    );
+    expect(getCaptureEvidenceById(db as any, "ce-1" as CaptureEvidenceId)).toEqual(
+      expect.objectContaining({ value: "fresh", updatedAt: LATER })
+    );
+  });
+
+  it("links email evidence to a transaction when the link is fresher", () => {
+    seedEmailEvidenceForLinking();
+
+    linkCaptureEvidenceToTransaction(db as any, {
+      processedEmailId: "pe-link" as ProcessedEmailId,
+      transactionId: "tx-linked" as TransactionId,
+      updatedAt: "2026-04-19T10:30:00.000Z" as IsoDateTime,
+    });
+
+    expectEmailEvidenceLinkingResult();
+  });
+
+  it("does nothing for empty batch saves and missing relink targets", () => {
+    saveCaptureEvidenceRows(db as any, []);
+    linkCaptureEvidenceToTransaction(db as any, {
+      processedEmailId: "pe-missing" as ProcessedEmailId,
+      transactionId: "tx-missing" as TransactionId,
+      updatedAt: LATER,
+    });
+    relinkCaptureEvidenceToTransfer(db as any, {
+      transactionId: "tx-missing" as TransactionId,
+      transferId: "tr-missing" as TransferId,
+      updatedAt: LATER,
+    });
+
+    expect(getRepeatedCaptureEvidenceForUser(db as any, USER_ID)).toEqual([]);
   });
 
   it("ignores stale relink-to-transfer updates", () => {

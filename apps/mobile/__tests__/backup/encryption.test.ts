@@ -27,7 +27,6 @@ const SNAPSHOT = {
     accountSuggestionDismissals: [],
     processedEmails: [],
     processedCaptures: [],
-    syncConflicts: [],
   },
 } as unknown as BackupSnapshot;
 

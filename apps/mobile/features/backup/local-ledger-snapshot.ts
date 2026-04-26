@@ -9,7 +9,6 @@ import {
   openingBalances,
   processedCaptures,
   processedEmails,
-  syncConflicts,
   transactions,
   transfers,
   userCategories,
@@ -77,10 +76,6 @@ export function exportLocalLedgerBackupSnapshot(
         db,
         processedCaptures
       ) as readonly (typeof processedCaptures.$inferSelect)[],
-      syncConflicts: selectRows(
-        db,
-        syncConflicts
-      ) as readonly (typeof syncConflicts.$inferSelect)[],
     },
   };
 }
@@ -102,7 +97,6 @@ export function importLocalLedgerBackupSnapshot(db: BackupDb, snapshot: unknown)
     insertRows(tx, processedCaptures, validatedSnapshot.data.processedCaptures);
     insertRows(tx, captureEvidence, validatedSnapshot.data.captureEvidence);
     insertRows(tx, accountSuggestionDismissals, validatedSnapshot.data.accountSuggestionDismissals);
-    insertRows(tx, syncConflicts, validatedSnapshot.data.syncConflicts);
   });
 }
 
@@ -187,7 +181,6 @@ const BACKUP_DATA_KEYS = [
   "accountSuggestionDismissals",
   "processedEmails",
   "processedCaptures",
-  "syncConflicts",
 ] as const;
 
 type LocalLedgerBackupSnapshotData = {
@@ -204,7 +197,6 @@ type LocalLedgerBackupSnapshotData = {
   readonly accountSuggestionDismissals: readonly (typeof accountSuggestionDismissals.$inferSelect)[];
   readonly processedEmails: readonly (typeof processedEmails.$inferSelect)[];
   readonly processedCaptures: readonly (typeof processedCaptures.$inferSelect)[];
-  readonly syncConflicts: readonly (typeof syncConflicts.$inferSelect)[];
 };
 
 type BackupTable =
@@ -218,7 +210,6 @@ type BackupTable =
   | typeof openingBalances
   | typeof processedCaptures
   | typeof processedEmails
-  | typeof syncConflicts
   | typeof transactions
   | typeof transfers
   | typeof userCategories;

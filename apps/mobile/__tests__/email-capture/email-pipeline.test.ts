@@ -9,7 +9,6 @@ import type { FinancialAccountId } from "@/shared/types/branded";
 const mockGetProcessedExternalIds = vi.fn().mockResolvedValue(new Set<string>());
 const mockInsertProcessedEmail = vi.fn();
 const mockInsertTransaction = vi.fn();
-const mockEnqueueSync = vi.fn();
 const mockLookupMerchantRule = vi.fn().mockResolvedValue(null);
 const mockInsertMerchantRule = vi.fn();
 const mockParseEmailApi = vi.fn().mockResolvedValue(null);
@@ -84,10 +83,6 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: unknown[]) => mockInsertTransaction(...args),
 }));
 
-vi.mock("@/shared/db/enqueue-sync", () => ({
-  enqueueSync: (...args: unknown[]) => mockEnqueueSync(...args),
-}));
-
 vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
   lookupMerchantRule: (...args: unknown[]) => mockLookupMerchantRule(...args),
   insertMerchantRule: (...args: unknown[]) => mockInsertMerchantRule(...args),
@@ -121,7 +116,6 @@ vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: unknown[]) => mockGenerateId(...args),
   generateTransactionId: () => mockGenerateId("tx"),
   generateProcessedEmailId: () => mockGenerateId("pe"),
-  generateSyncQueueId: () => mockGenerateId("sq"),
 }));
 
 const mockDb = {} as any;
@@ -164,7 +158,6 @@ function resetPipelineMocks() {
   mockGetProcessedExternalIds.mockResolvedValue(new Set<string>());
   mockInsertProcessedEmail.mockResolvedValue(undefined);
   mockInsertTransaction.mockResolvedValue(undefined);
-  mockEnqueueSync.mockResolvedValue(undefined);
   mockLookupMerchantRule.mockResolvedValue(null);
   mockInsertMerchantRule.mockResolvedValue(undefined);
   mockParseEmailApi.mockResolvedValue(null);
@@ -318,7 +311,6 @@ describe("email processing pipeline", () => {
       accountAttributionState: "unresolved",
       source: "email_gmail",
     });
-    expect(mockEnqueueSync).toHaveBeenCalled();
     expectProcessedEmailSaved({
       externalId: "ext-1",
       status: "success",
@@ -352,7 +344,6 @@ describe("email processing pipeline", () => {
       saveCaptureEvidenceRows: mockSaveCaptureEvidenceRows,
       linkCaptureEvidenceToTransaction: mockLinkCaptureEvidenceToTransaction,
       insertTransaction: mockInsertTransaction,
-      enqueueSync: mockEnqueueSync,
       insertMerchantRule: mockInsertMerchantRule,
       trackTransactionCreated: vi.fn(),
       clock: {
@@ -391,7 +382,6 @@ describe("email processing pipeline", () => {
     expect(result.saved).toBe(0);
     expect(result.failed).toBe(0);
     expect(mockInsertTransaction).toHaveBeenCalled();
-    expect(mockEnqueueSync).toHaveBeenCalled();
     expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
@@ -704,7 +694,6 @@ describe("processRetries", () => {
     mockMarkPermanentlyFailed.mockResolvedValue(undefined);
     mockMarkRetrySuccess.mockResolvedValue(undefined);
     mockInsertTransaction.mockResolvedValue(undefined);
-    mockEnqueueSync.mockResolvedValue(undefined);
     mockLookupMerchantRule.mockResolvedValue(null);
     mockInsertMerchantRule.mockResolvedValue(undefined);
     mockParseEmailApi.mockResolvedValue(null);
@@ -749,7 +738,6 @@ describe("processRetries", () => {
         accountAttributionState: "unresolved",
       })
     );
-    expect(mockEnqueueSync).toHaveBeenCalled();
     expect(result.succeeded).toBe(1);
   });
 

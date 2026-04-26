@@ -17,14 +17,10 @@ export { makeDateLabel } from "./lib/group-by-date";
 export { handleNumpadPress } from "./lib/handle-numpad-press";
 export type { TransactionRow } from "./lib/repository";
 export {
-  clearSyncEntries,
   getMonthlyTotalsByType,
-  getQueuedSyncEntries,
   getSpendingByCategoryAggregate,
-  getSyncMeta,
   getTransactionById,
   insertTransaction,
-  setSyncMeta,
   softDeleteTransaction,
   upsertTransaction,
 } from "./lib/repository";

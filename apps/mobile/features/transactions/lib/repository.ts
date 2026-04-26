@@ -1,7 +1,7 @@
-import { and, between, desc, eq, inArray, like, or, sql, sum } from "drizzle-orm";
+import { and, between, desc, eq, like, or, sql, sum } from "drizzle-orm";
 import { buildDefaultFinancialAccountId } from "@/features/financial-accounts/lib/default-account";
 import type { AnyDb } from "@/shared/db/client";
-import { syncMeta, syncQueue, transactions } from "@/shared/db/schema";
+import { transactions } from "@/shared/db/schema";
 import type {
   CategoryId,
   CopAmount,
@@ -9,15 +9,12 @@ import type {
   IsoDate,
   IsoDateTime,
   Month,
-  SyncQueueId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
 import type { AccountAttributionState } from "../schema";
 import { getActiveTransactionConditions } from "./active-transaction-conditions";
 import { getDefaultAccountAttributionState } from "./build-transaction";
-
-export type { SyncOperation, SyncQueueEntry, SyncTableName } from "@/shared/db";
 
 type PersistedTransactionRow = typeof transactions.$inferInsert;
 type TransactionsPageInput = {
@@ -234,28 +231,5 @@ export function upsertTransaction(db: AnyDb, row: TransactionRow) {
         deletedAt: normalizedRow.deletedAt,
       },
     })
-    .run();
-}
-
-export { enqueueSync } from "@/shared/db/enqueue-sync";
-
-export function getQueuedSyncEntries(db: AnyDb) {
-  return db.select().from(syncQueue).all();
-}
-
-export function clearSyncEntries(db: AnyDb, ids: SyncQueueId[]) {
-  if (ids.length === 0) return;
-  db.delete(syncQueue).where(inArray(syncQueue.id, ids)).run();
-}
-
-export function getSyncMeta(db: AnyDb, key: string) {
-  const rows = db.select().from(syncMeta).where(eq(syncMeta.key, key)).all();
-  return rows[0]?.value ?? null;
-}
-
-export function setSyncMeta(db: AnyDb, key: string, value: string) {
-  db.insert(syncMeta)
-    .values({ key, value })
-    .onConflictDoUpdate({ target: syncMeta.key, set: { value } })
     .run();
 }

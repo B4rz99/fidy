@@ -22,7 +22,7 @@ import {
   markRetrySuccess,
 } from "@/features/email-capture/lib/repository";
 import { processRetries } from "@/features/email-capture/services/email-pipeline";
-import { processedEmails, syncQueue, transactions } from "@/shared/db/schema";
+import { processedEmails, transactions } from "@/shared/db/schema";
 import { requireUserId } from "@/shared/types/assertions";
 import type { IsoDateTime, ProcessedEmailId, TransactionId } from "@/shared/types/branded";
 
@@ -108,11 +108,6 @@ async function getRetryEmail() {
 async function getInsertedTransactions() {
   return db.select().from(transactions);
 }
-
-async function getSyncQueueEntries() {
-  return db.select().from(syncQueue);
-}
-
 function expectRetryResult(
   result: Awaited<ReturnType<typeof processRetries>>,
   expected: Pick<
@@ -132,13 +127,6 @@ async function expectSuccessfulRetryArtifacts() {
       accountId: `fa-default-${USER_ID}`,
       accountAttributionState: "unresolved",
     })
-  );
-
-  expect(await getSyncQueueEntries()).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({ tableName: "financialAccounts" }),
-      expect.objectContaining({ tableName: "transactions" }),
-    ])
   );
 
   expect(await getRetryEmail()).toEqual(

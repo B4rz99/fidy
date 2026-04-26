@@ -1,9 +1,8 @@
 import { relinkCaptureEvidenceToTransfer } from "@/features/capture-evidence/public";
 import { updateProcessedEmailStatusInTransaction } from "@/features/email-capture/lib/repository";
 import { getTransactionById, upsertTransaction } from "@/features/transactions/lib/repository";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
 import { toIsoDateTime } from "@/shared/lib/format-date";
-import { generateSyncQueueId, generateTransferId } from "@/shared/lib/generate-id";
+import { generateTransferId } from "@/shared/lib/generate-id";
 import type {
   IsoDateTime,
   ProcessedEmailId,
@@ -99,14 +98,6 @@ export function reclassifyTransactionAsTransfer(
       ...existingTransaction,
       supersededAt: updatedAt,
       updatedAt,
-    });
-
-    enqueueSync(tx, {
-      id: generateSyncQueueId(),
-      tableName: "transactions",
-      rowId: existingTransaction.id,
-      operation: "update",
-      createdAt: updatedAt,
     });
 
     relinkEvidenceToTransfer(tx, {

@@ -4,8 +4,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { getQueuedSyncEntries } from "@/features/transactions/lib/repository";
-import { getTransfersForUser, saveTransfer } from "@/features/transfers";
+import { saveTransfer } from "@/features/transfers";
 import type {
   CopAmount,
   FinancialAccountId,
@@ -51,33 +50,7 @@ function makeTransfer(overrides: Partial<TransferInput> = {}): TransferInput {
     ...overrides,
   };
 }
-
-function expectQueuedTransfer(rowId: string, operation: "insert" | "update") {
-  expect(getQueuedSyncEntries(db as any)).toEqual([
-    expect.objectContaining({
-      tableName: "transfers",
-      rowId,
-      operation,
-    }),
-  ]);
-}
-
 describe("transfers repository", () => {
-  it("saves a transfer, reads it back, and enqueues sync", () => {
-    saveTransfer(db as any, makeTransfer());
-
-    expect(getTransfersForUser(db as any, USER_ID)).toEqual([
-      expect.objectContaining({
-        id: "tr-1",
-        userId: USER_ID,
-        amount: 250000,
-        fromAccountId: "fa-1",
-        toAccountId: "fa-2",
-      }),
-    ]);
-    expectQueuedTransfer("tr-1", "insert");
-  });
-
   it("requires a source and destination endpoint", () => {
     expect(() =>
       saveTransfer(

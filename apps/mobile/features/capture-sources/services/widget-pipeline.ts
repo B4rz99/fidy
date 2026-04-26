@@ -1,11 +1,9 @@
 import { insertTransaction, isValidCategoryId } from "@/features/transactions/write.public";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync } from "@/shared/db";
 import {
   captureError,
   capturePipelineEvent,
   generateProcessedCaptureId,
-  generateSyncQueueId,
   toIsoDate,
   toIsoDateTime,
   trackTransactionCreated,
@@ -128,14 +126,6 @@ export async function processWidgetTransactions(
         source: "widget",
         createdAt: now,
         updatedAt: now,
-      });
-
-      enqueueSync(db, {
-        id: generateSyncQueueId(),
-        tableName: "transactions",
-        rowId: txId,
-        operation: "insert",
-        createdAt: now,
       });
 
       await insertProcessedCapture(db, {

@@ -2,7 +2,7 @@ import type { CaptureEvidenceRow, CaptureEvidenceSeed } from "@/features/capture
 import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { TransactionRow } from "@/features/transactions/lib/repository";
-import type { AnyDb, SyncQueueEntry } from "@/shared/db";
+import type { AnyDb } from "@/shared/db";
 import type { AppClock } from "@/shared/effect/clock";
 import type { AppTelemetry } from "@/shared/effect/telemetry";
 import type {
@@ -105,7 +105,6 @@ export type CreateEmailPipelineServiceDeps = {
     options?: { now?: IsoDateTime }
   ) => FinancialAccountRow;
   readonly insertTransaction: (db: AnyDb, row: TransactionRow) => void | Promise<void>;
-  readonly enqueueSync: (db: AnyDb, input: SyncQueueEntry) => void | Promise<void>;
   readonly insertMerchantRule: (
     db: AnyDb,
     userId: UserId,

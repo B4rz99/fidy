@@ -19,7 +19,6 @@ import {
   openingBalances,
   processedCaptures,
   processedEmails,
-  syncConflicts,
   transactions,
   transfers,
   userCategories,
@@ -159,12 +158,7 @@ function seedDismissalsAndConflicts() {
   sourceSqlite.exec(`
     insert into account_suggestion_dismissals (
       id, user_id, scope, value, dismissed_score, created_at, updated_at, deleted_at
-    ) values ('dismissal-1', 'user-1', 'last4', '9999', 70, '${NOW}', '${NOW}', null);
-
-    insert into sync_conflicts (
-      id, transaction_id, local_data, server_data, detected_at, resolved_at, resolution
-    ) values ('conflict-1', 'txn-1', '{"amount":42000}', '{"amount":43000}', '${NOW}', null, null);
-  `);
+    ) values ('dismissal-1', 'user-1', 'last4', '9999', 70, '${NOW}', '${NOW}', null);  `);
 }
 
 function expectRestoredLedgerToMatchSource() {
@@ -213,9 +207,6 @@ function expectRestoredCaptureAndReviewState() {
   expect(targetDb.select().from(accountSuggestionDismissals).all()).toEqual(
     sourceDb.select().from(accountSuggestionDismissals).all()
   );
-  expect(targetDb.select().from(syncConflicts).all()).toEqual(
-    sourceDb.select().from(syncConflicts).all()
-  );
 }
 
 function snapshotWithDuplicateIdentifierRows() {
@@ -256,7 +247,6 @@ function emptySnapshotData(overrides: Record<string, unknown> = {}) {
     accountSuggestionDismissals: [],
     processedEmails: [],
     processedCaptures: [],
-    syncConflicts: [],
     ...overrides,
   };
 }
@@ -360,7 +350,6 @@ describe("local ledger backup snapshots", () => {
         accountSuggestionDismissals: expect.any(Array),
         processedEmails: expect.any(Array),
         processedCaptures: expect.any(Array),
-        syncConflicts: expect.any(Array),
       },
     });
     expectRestoredLedgerToMatchSource();

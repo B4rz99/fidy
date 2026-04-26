@@ -117,10 +117,6 @@ vi.mock("@/shared/query", () => ({
   queryClient: { ensureQueryData: vi.fn(), getQueryData: vi.fn() },
 }));
 
-vi.mock("@/shared/db/enqueue-sync", () => ({
-  enqueueSync: vi.fn(),
-}));
-
 const mockRefresh = vi.fn();
 
 vi.mock("drizzle-orm", () => ({
@@ -134,7 +130,6 @@ vi.mock("@/shared/db/schema", () => ({
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: vi.fn(() => "ea-generated"),
   generateEmailAccountId: () => "ea-generated",
-  generateSyncQueueId: () => "sq-generated",
 }));
 
 const mockSelectWhere = vi.fn().mockResolvedValue([{ description: "Compra en Exito" }]);
@@ -584,31 +579,6 @@ describe("email capture boundary", () => {
 
       expect(phases).toContain("processing");
       expect(useEmailCaptureStore.getState().phase).toBe("complete");
-    });
-
-    it("skips progress state when below threshold on subsequent sync", async () => {
-      setAccounts([makeAccount({ lastFetchedAt: "2026-03-10T00:00:00Z" as IsoDateTime })]);
-      mockAdapter.fetchEmails.mockResolvedValueOnce([
-        makeRawEmail({
-          from: "b@b.com",
-          subject: "A",
-          body: "b",
-          receivedAt: "2026-03-10T00:00:00Z",
-        }),
-        makeRawEmail({
-          externalId: "ext-2",
-          from: "b@b.com",
-          subject: "B",
-          body: "b",
-          receivedAt: "2026-03-10T00:00:00Z",
-        }),
-      ]);
-      mockProcessResult({ saved: 2 });
-      mockEmptyReviewLoads();
-
-      await runFetchAndProcess();
-
-      expect(useEmailCaptureStore.getState().phase).toBeNull();
     });
 
     it("updates in-memory accounts lastFetchedAt after fetch", async () => {

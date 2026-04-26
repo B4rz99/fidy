@@ -1,6 +1,5 @@
 import { and, eq, isNull } from "drizzle-orm";
-import { type AnyDb, enqueueSync, financialAccountIdentifiers, syncQueue } from "@/shared/db";
-import { generateSyncQueueId } from "@/shared/lib";
+import { type AnyDb, financialAccountIdentifiers } from "@/shared/db";
 
 export type FinancialAccountIdentifierRow = typeof financialAccountIdentifiers.$inferInsert;
 
@@ -78,11 +77,6 @@ function deleteFinancialAccountIdentifierDuplicate(
   db: AnyDb,
   duplicateId: FinancialAccountIdentifierRow["id"]
 ) {
-  db.delete(syncQueue)
-    .where(
-      and(eq(syncQueue.tableName, "financialAccountIdentifiers"), eq(syncQueue.rowId, duplicateId))
-    )
-    .run();
   db.delete(financialAccountIdentifiers)
     .where(eq(financialAccountIdentifiers.id, duplicateId))
     .run();
@@ -156,14 +150,6 @@ export function saveFinancialAccountIdentifierInTransaction(
       : row;
 
   persistFinancialAccountIdentifier(db, persistedRow);
-
-  enqueueSync(db, {
-    id: generateSyncQueueId(),
-    tableName: "financialAccountIdentifiers",
-    rowId: persistedRow.id,
-    operation: existingById || duplicate ? "update" : "insert",
-    createdAt: row.updatedAt,
-  });
 }
 
 export function upsertFinancialAccountIdentifier(db: AnyDb, row: FinancialAccountIdentifierRow) {

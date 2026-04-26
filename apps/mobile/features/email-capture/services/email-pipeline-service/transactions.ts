@@ -1,14 +1,9 @@
 import { Effect } from "effect";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { TransactionRow } from "@/features/transactions/lib/repository";
-import type { SyncQueueEntry } from "@/shared/db";
 import { currentIsoDateTimeEffect } from "@/shared/effect/clock";
 import { fromPromise, fromThunk } from "@/shared/effect/runtime";
-import {
-  generateProcessedEmailId,
-  generateSyncQueueId,
-  generateTransactionId,
-} from "@/shared/lib/generate-id";
+import { generateProcessedEmailId, generateTransactionId } from "@/shared/lib/generate-id";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import {
   assertIsoDateTime,
@@ -16,7 +11,7 @@ import {
   requireIsoDate,
   requireIsoDateTime,
 } from "@/shared/types/assertions";
-import type { IsoDateTime, TransactionId } from "@/shared/types/branded";
+import type { IsoDateTime } from "@/shared/types/branded";
 import {
   EmailPipelineDeps,
   ensureDefaultFinancialAccountEffect,
@@ -56,23 +51,10 @@ function buildTransactionRow(context: PersistedTransactionContext): TransactionR
   };
 }
 
-function buildTransactionSyncEntry(rowId: TransactionId, createdAt: IsoDateTime): SyncQueueEntry {
-  return {
-    id: generateSyncQueueId(),
-    tableName: "transactions",
-    rowId,
-    operation: "insert" as const,
-    createdAt,
-  };
-}
-
 function persistTransactionRecordEffect(context: PersistedTransactionContext) {
   return Effect.gen(function* () {
-    const { insertTransaction, enqueueSync } = yield* EmailPipelineDeps.tag;
+    const { insertTransaction } = yield* EmailPipelineDeps.tag;
     yield* fromThunk(() => insertTransaction(context.db, buildTransactionRow(context)));
-    yield* fromThunk(() =>
-      enqueueSync(context.db, buildTransactionSyncEntry(context.txId, context.now))
-    );
   });
 }
 

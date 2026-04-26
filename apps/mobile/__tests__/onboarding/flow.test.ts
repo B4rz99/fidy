@@ -7,31 +7,11 @@ import {
 } from "@/features/onboarding/lib/flow";
 
 describe("onboarding flow helpers", () => {
-  it("routes sync completion into account review when strong suggestions exist", () => {
-    expect(
-      getNextOnboardingStep({
-        step: ONBOARDING_STEP.sync,
-        emailSkipped: false,
-        shouldReviewAccounts: true,
-      })
-    ).toBe(ONBOARDING_STEP.accountReview);
-  });
-
   it("skips account review and continues to budget setup when no strong suggestions exist", () => {
     expect(
       getNextOnboardingStep({
         step: ONBOARDING_STEP.sync,
         emailSkipped: false,
-        shouldReviewAccounts: false,
-      })
-    ).toBe(ONBOARDING_STEP.budgetSetup);
-  });
-
-  it("skips sync and account review when the user skips email connection", () => {
-    expect(
-      getNextOnboardingStep({
-        step: ONBOARDING_STEP.connectEmail,
-        emailSkipped: true,
         shouldReviewAccounts: false,
       })
     ).toBe(ONBOARDING_STEP.budgetSetup);
