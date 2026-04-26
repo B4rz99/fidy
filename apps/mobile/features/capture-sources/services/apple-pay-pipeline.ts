@@ -17,11 +17,9 @@ import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/pub
 import { insertTransaction } from "@/features/transactions/write.public";
 import { CATEGORY_IDS } from "@/shared/categories";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync } from "@/shared/db";
 import {
   capturePipelineEvent,
   generateProcessedCaptureId,
-  generateSyncQueueId,
   generateTransactionId,
   normalizeMerchant,
   toIsoDate,
@@ -194,14 +192,6 @@ export async function processApplePayIntent(
       source,
       createdAt: now,
       updatedAt: now,
-    });
-
-    enqueueSync(db, {
-      id: generateSyncQueueId(),
-      tableName: "transactions",
-      rowId: txId,
-      operation: "insert",
-      createdAt: now,
     });
 
     // Record in processedCaptures

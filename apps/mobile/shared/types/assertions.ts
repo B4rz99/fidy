@@ -11,8 +11,6 @@ import type {
   IsoDateTime,
   Month,
   ProcessedEmailId,
-  SyncConflictId,
-  SyncQueueId,
   TransactionId,
   TransferId,
   UserId,
@@ -180,14 +178,6 @@ export function assertProcessedEmailId(value: string): asserts value is Processe
   assertNonEmptyString(value, "processedEmailId");
 }
 
-export function assertSyncConflictId(value: string): asserts value is SyncConflictId {
-  assertNonEmptyString(value, "syncConflictId");
-}
-
-export function assertSyncQueueId(value: string): asserts value is SyncQueueId {
-  assertNonEmptyString(value, "syncQueueId");
-}
-
 export function assertUserMemoryId(value: string): asserts value is UserMemoryId {
   assertNonEmptyString(value, "userMemoryId");
 }
@@ -274,12 +264,4 @@ export function requireIsoDateTime(value: string): IsoDateTime {
 
 export function requireUserMemoryId(value: string): UserMemoryId {
   return requireValue(value, assertUserMemoryId);
-}
-
-export function requireSyncConflictId(value: string): SyncConflictId {
-  return requireValue(value, assertSyncConflictId);
-}
-
-export function requireSyncQueueId(value: string): SyncQueueId {
-  return requireValue(value, assertSyncQueueId);
 }

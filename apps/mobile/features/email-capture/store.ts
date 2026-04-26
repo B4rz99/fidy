@@ -1,17 +1,6 @@
-import { eq } from "drizzle-orm";
-import { isValidCategoryId } from "@/features/transactions/write.public";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync, transactions } from "@/shared/db";
-import {
-  captureError,
-  captureWarning,
-  generateEmailAccountId,
-  generateSyncQueueId,
-  normalizeMerchant,
-  toIsoDateTime,
-} from "@/shared/lib";
+import { captureError, captureWarning, generateEmailAccountId, toIsoDateTime } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
-import { insertMerchantRule } from "./lib/merchant-rules";
 import type { EmailAccountRow } from "./lib/repository";
 import {
   deleteEmailAccount,
@@ -20,7 +9,6 @@ import {
   getFailedEmails,
   getNeedsReviewEmails,
   insertEmailAccount,
-  updateProcessedEmailStatus,
 } from "./lib/repository";
 import type { EmailProvider } from "./schema";
 import { getAdapter } from "./services/email-adapter";
@@ -51,6 +39,8 @@ import {
   useEmailCaptureStore,
   warnFetchMissingContext,
 } from "./store/state";
+
+export { confirmReviewedEmail } from "./store/reviewed-email";
 
 const noopRefreshTransactions: RefreshTransactions = () => undefined;
 
@@ -229,56 +219,4 @@ export async function fetchAndProcessEmails(
   } finally {
     finalizeEmailCaptureFetchRun(run);
   }
-}
-
-export async function confirmReviewedEmail(
-  db: AnyDb,
-  userId: UserId,
-  processedEmailId: string,
-  categoryId: string,
-  refreshTransactions: RefreshTransactions = noopRefreshTransactions
-): Promise<void> {
-  const session = createEmailCaptureSession(userId);
-  if (!isActiveEmailCaptureSession(session)) return;
-
-  const processedEmail = useEmailCaptureStore
-    .getState()
-    .needsReviewEmails.find((email) => email.id === processedEmailId);
-  if (!processedEmail?.transactionId || !isValidCategoryId(categoryId)) return;
-
-  const now = toIsoDateTime(new Date());
-
-  await db
-    .update(transactions)
-    .set({ categoryId, updatedAt: now })
-    .where(eq(transactions.id, processedEmail.transactionId));
-
-  enqueueSync(db, {
-    id: generateSyncQueueId(),
-    tableName: "transactions",
-    rowId: processedEmail.transactionId,
-    operation: "update",
-    createdAt: now,
-  });
-
-  const txRows = await db
-    .select({ description: transactions.description })
-    .from(transactions)
-    .where(eq(transactions.id, processedEmail.transactionId));
-  const description = txRows[0]?.description;
-  if (description) {
-    const merchantKey = normalizeMerchant(description);
-    await insertMerchantRule(db, userId, merchantKey, categoryId, now);
-  }
-
-  await updateProcessedEmailStatus({
-    db,
-    id: processedEmail.id,
-    status: "success",
-    transactionId: processedEmail.transactionId,
-  });
-  if (!isActiveEmailCaptureSession(session)) return;
-
-  useEmailCaptureStore.getState().removeNeedsReviewEmail(processedEmailId);
-  await refreshTransactions();
 }

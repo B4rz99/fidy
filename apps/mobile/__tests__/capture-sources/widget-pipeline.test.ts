@@ -5,7 +5,6 @@ import { processWidgetTransactions } from "@/features/capture-sources/services/w
 import type { UserId } from "@/shared/types/branded";
 
 const mockInsertTransaction = vi.fn();
-const mockEnqueueSync = vi.fn();
 const mockIsCaptureProcessed = vi.fn();
 const mockFindDuplicateTransaction = vi.fn();
 const mockInsertProcessedCapture = vi.fn();
@@ -37,10 +36,6 @@ vi.mock("@/features/transactions/lib/categories", () => ({
     ].includes(id),
 }));
 
-vi.mock("@/shared/db/enqueue-sync", () => ({
-  enqueueSync: (...args: any[]) => mockEnqueueSync(...args),
-}));
-
 vi.mock("@/features/capture-sources/lib/dedup", () => ({
   isCaptureProcessed: (...args: any[]) => mockIsCaptureProcessed(...args),
   findDuplicateTransaction: (...args: any[]) => mockFindDuplicateTransaction(...args),
@@ -60,7 +55,6 @@ vi.mock("@/modules/expo-app-intents", () => ({
 vi.mock("@/shared/lib", () => ({
   captureError: vi.fn(),
   capturePipelineEvent: vi.fn(),
-  generateSyncQueueId: () => "sq-1",
   generateProcessedCaptureId: () => mockGenerateProcessedCaptureId(),
   toIsoDate: (d: Date) => d.toISOString().slice(0, 10),
   toIsoDateTime: (d: Date) => d.toISOString(),
@@ -137,24 +131,6 @@ describe("processWidgetTransactions", () => {
     );
   });
 
-  it("enqueues sync for each saved transaction", async () => {
-    mockGetPendingTransactions.mockResolvedValue([
-      { id: "sync-1", amount: 10000, createdAt: "2026-03-27T10:00:00Z" },
-    ]);
-
-    await processWidgetTransactions(mockDb, USER_ID);
-
-    expect(mockEnqueueSync).toHaveBeenCalledOnce();
-    expect(mockEnqueueSync).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({
-        tableName: "transactions",
-        rowId: "txn-widget-sync-1",
-        operation: "insert",
-      })
-    );
-  });
-
   it("removes all processed entry IDs after success", async () => {
     mockGetPendingTransactions.mockResolvedValue([
       { id: "id-a", amount: 10000, createdAt: "2026-03-27T10:00:00Z" },
@@ -164,7 +140,6 @@ describe("processWidgetTransactions", () => {
     await processWidgetTransactions(mockDb, USER_ID);
 
     expect(mockInsertTransaction).toHaveBeenCalledTimes(2);
-    expect(mockEnqueueSync).toHaveBeenCalledTimes(2);
     expect(mockRemovePendingTransactions).toHaveBeenCalledWith(["id-a", "id-b"]);
   });
 

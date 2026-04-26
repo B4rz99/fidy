@@ -1,13 +1,6 @@
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import {
-  billPayments,
-  bills,
-  captureEvidence,
-  syncMeta,
-  syncQueue,
-  transactions,
-} from "@/shared/db/schema";
+import { billPayments, bills, captureEvidence, transactions } from "@/shared/db/schema";
 
 describe("transactions table schema", () => {
   it("is named 'transactions'", () => {
@@ -75,24 +68,6 @@ describe("transactions table schema", () => {
   });
 });
 
-describe("syncQueue table schema", () => {
-  it("is named 'sync_queue'", () => {
-    expect(getTableName(syncQueue)).toBe("sync_queue");
-  });
-
-  it("has all required columns", () => {
-    const cols = getTableColumns(syncQueue);
-    const names = Object.keys(cols);
-
-    expect(names).toContain("id");
-    expect(names).toContain("tableName");
-    expect(names).toContain("rowId");
-    expect(names).toContain("operation");
-    expect(names).toContain("createdAt");
-    expect(names).toHaveLength(5);
-  });
-});
-
 describe("captureEvidence table schema", () => {
   it("is named 'capture_evidence'", () => {
     expect(getTableName(captureEvidence)).toBe("capture_evidence");
@@ -124,26 +99,6 @@ describe("captureEvidence table schema", () => {
     expect(cols.userId.notNull).toBe(true);
     expect(cols.scope.notNull).toBe(true);
     expect(cols.value.notNull).toBe(true);
-  });
-});
-
-describe("syncMeta table schema", () => {
-  it("is named 'sync_meta'", () => {
-    expect(getTableName(syncMeta)).toBe("sync_meta");
-  });
-
-  it("has key and value columns", () => {
-    const cols = getTableColumns(syncMeta);
-    const names = Object.keys(cols);
-
-    expect(names).toContain("key");
-    expect(names).toContain("value");
-    expect(names).toHaveLength(2);
-  });
-
-  it("key is primary key", () => {
-    const cols = getTableColumns(syncMeta);
-    expect(cols.key.primary).toBe(true);
   });
 });
 

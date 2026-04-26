@@ -47,7 +47,6 @@ const SNAPSHOT = {
     accountSuggestionDismissals: [],
     processedEmails: [],
     processedCaptures: [],
-    syncConflicts: [],
   },
 } satisfies BackupSnapshot;
 

@@ -9,7 +9,6 @@ import {
   saveFinancialAccountIdentifier,
   upsertFinancialAccountIdentifier,
 } from "@/features/financial-accounts";
-import { getQueuedSyncEntries } from "@/features/transactions/lib/repository";
 import type { FinancialAccountIdentifierId, IsoDateTime } from "@/shared/types/branded";
 import { createIdentifierFixture, FIXTURE_ACCOUNT_ID, FIXTURE_USER_ID } from "./fixtures";
 
@@ -44,7 +43,7 @@ function expectIdentifiersForAccount(matcher: Record<string, unknown>) {
 }
 
 describe("financial account identifiers repository", () => {
-  it("saves an identifier, reads it back, and enqueues sync", () => {
+  it("saves an identifier, reads it back,", () => {
     saveIdentifier();
 
     expectIdentifiersForAccount({
@@ -54,14 +53,6 @@ describe("financial account identifiers repository", () => {
       scope: "email:bancolombia:last4",
       value: "1234",
     });
-
-    expect(getQueuedSyncEntries(db as any)).toEqual([
-      expect.objectContaining({
-        tableName: "financialAccountIdentifiers",
-        rowId: "fai-1",
-        operation: "insert",
-      }),
-    ]);
   });
 
   it("enqueues the persisted row id when a unique identifier upsert reuses an existing record", () => {
@@ -77,19 +68,6 @@ describe("financial account identifiers repository", () => {
       value: "1234",
       updatedAt: "2026-04-18T11:00:00.000Z",
     });
-
-    expect(getQueuedSyncEntries(db as any)).toEqual([
-      expect.objectContaining({
-        tableName: "financialAccountIdentifiers",
-        rowId: "fai-1",
-        operation: "insert",
-      }),
-      expect.objectContaining({
-        tableName: "financialAccountIdentifiers",
-        rowId: "fai-1",
-        operation: "update",
-      }),
-    ]);
   });
 
   it("replaces a local duplicate id with the pulled server row for the same unique identifier", () => {
@@ -142,13 +120,6 @@ describe("financial account identifiers repository", () => {
       value: "1234",
       updatedAt: "2026-04-18T11:00:00.000Z",
     });
-    expect(getQueuedSyncEntries(db as any)).toEqual([
-      expect.objectContaining({
-        tableName: "financialAccountIdentifiers",
-        rowId: "fai-local",
-        operation: "insert",
-      }),
-    ]);
   });
 
   it("allows re-creating an identifier after soft delete", () => {

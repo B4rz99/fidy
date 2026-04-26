@@ -4,11 +4,9 @@ import {
 } from "@/features/capture-evidence/public";
 import { insertMerchantRule } from "@/features/email-capture/merchant-rules.public";
 import { insertTransaction } from "@/features/transactions/write.public";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
 import {
   capturePipelineEvent,
   generateProcessedCaptureId,
-  generateSyncQueueId,
   generateTransactionId,
   toIsoDateTime,
   trackTransactionCreated,
@@ -97,7 +95,6 @@ export async function reportSkippedDuplicate(
 
 function saveTransactionRecord(context: ResolvedNotificationContext) {
   const transactionId = generateTransactionId();
-  const syncQueueId = generateSyncQueueId();
 
   insertTransaction(context.db, {
     id: transactionId,
@@ -112,14 +109,6 @@ function saveTransactionRecord(context: ResolvedNotificationContext) {
     source: context.source,
     createdAt: context.now,
     updatedAt: context.now,
-  });
-
-  enqueueSync(context.db, {
-    id: syncQueueId,
-    tableName: "transactions",
-    rowId: transactionId,
-    operation: "insert",
-    createdAt: context.now,
   });
 
   return transactionId;

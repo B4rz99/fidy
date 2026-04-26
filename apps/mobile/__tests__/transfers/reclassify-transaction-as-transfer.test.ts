@@ -12,12 +12,7 @@ import {
   getProcessedEmailById,
   insertProcessedEmail,
 } from "@/features/email-capture/lib/repository";
-import {
-  clearSyncEntries,
-  getQueuedSyncEntries,
-  getTransactionById,
-  insertTransaction,
-} from "@/features/transactions/lib/repository";
+import { getTransactionById, insertTransaction } from "@/features/transactions/lib/repository";
 import { reclassifyTransactionAsTransfer } from "@/features/transfers/lib/reclassify-transaction-as-transfer";
 import { getTransferById } from "@/features/transfers/lib/repository";
 import type {
@@ -110,17 +105,10 @@ async function insertPendingProcessedEmail() {
   });
 }
 
-function clearExistingSyncEntries() {
-  clearSyncEntries(
-    db as any,
-    getQueuedSyncEntries(db as any).map((entry) => entry.id)
-  );
-}
-
 function seedReclassificationScenario() {
   insertOriginalTransactionRecord();
   insertTransferEvidence();
-  return insertPendingProcessedEmail().then(() => clearExistingSyncEntries());
+  return insertPendingProcessedEmail();
 }
 
 function runReclassification() {
@@ -140,28 +128,6 @@ function runReclassification() {
       now: () => new Date(NOW),
       createId: () => TRANSFER_ID,
     }
-  );
-}
-
-function expectTransferReclassificationSync() {
-  expect(getQueuedSyncEntries(db as any)).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({
-        tableName: "transfers",
-        rowId: TRANSFER_ID,
-        operation: "insert",
-      }),
-      expect.objectContaining({
-        tableName: "transactions",
-        rowId: ORIGINAL_TRANSACTION_ID,
-        operation: "update",
-      }),
-      expect.objectContaining({
-        tableName: "captureEvidence",
-        rowId: "ce-1",
-        operation: "update",
-      }),
-    ])
   );
 }
 
@@ -200,7 +166,7 @@ async function expectProcessedEmailSucceeded() {
 }
 
 describe("reclassifyTransactionAsTransfer", () => {
-  it("creates a transfer, supersedes the original transaction, relinks capture evidence, and enqueues sync", async () => {
+  it("creates a transfer, supersedes the original transaction, relinks capture evidence,", async () => {
     await seedReclassificationScenario();
     const result = runReclassification();
 
@@ -213,6 +179,5 @@ describe("reclassifyTransactionAsTransfer", () => {
     });
     expectCreatedTransferState();
     await expectProcessedEmailSucceeded();
-    expectTransferReclassificationSync();
   });
 });

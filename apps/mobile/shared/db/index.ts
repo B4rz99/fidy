@@ -1,7 +1,5 @@
 export type { AnyDb } from "./client";
 export { getDb, resetDb, resetDbForUser, tryGetDb } from "./client";
-export type { SyncOperation, SyncQueueEntry, SyncTableName } from "./enqueue-sync";
-export { enqueueSync } from "./enqueue-sync";
 export {
   accountSuggestionDismissals,
   billPayments,
@@ -22,9 +20,6 @@ export {
   openingBalances,
   processedCaptures,
   processedEmails,
-  syncConflicts,
-  syncMeta,
-  syncQueue,
   transactions,
   transfers,
   userCategories,

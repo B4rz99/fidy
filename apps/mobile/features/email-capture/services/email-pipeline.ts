@@ -7,7 +7,6 @@ import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
 import { insertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync } from "@/shared/db";
 import { trackTransactionCreated } from "@/shared/lib/analytics";
 import type { UserId } from "@/shared/types/branded";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
@@ -49,7 +48,6 @@ const emailPipeline = createEmailPipelineService({
   linkCaptureEvidenceToTransaction,
   ensureDefaultFinancialAccount,
   insertTransaction,
-  enqueueSync,
   insertMerchantRule,
   trackTransactionCreated,
 });

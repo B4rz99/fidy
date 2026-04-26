@@ -14,7 +14,6 @@ import {
   createFinancialAccountManagementService,
   MANUAL_FINANCIAL_ACCOUNT_IDENTIFIER_SCOPE,
 } from "@/features/financial-accounts/lib/management-service";
-import { getQueuedSyncEntries } from "@/features/transactions/lib/repository";
 import type { FinancialAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
 
 let sqlite: InstanceType<typeof Database>;
@@ -82,26 +81,6 @@ function expectManualIdentifier(accountId: FinancialAccountId) {
       id: "fai-new",
       scope: MANUAL_FINANCIAL_ACCOUNT_IDENTIFIER_SCOPE,
       value: "Ahorros casa",
-    }),
-  ]);
-}
-
-function expectManualAccountSyncEntries() {
-  expect(getQueuedSyncEntries(db as any)).toEqual([
-    expect.objectContaining({
-      tableName: "financialAccounts",
-      rowId: "fa-new",
-      operation: "insert",
-    }),
-    expect.objectContaining({
-      tableName: "openingBalances",
-      rowId: "ob-new",
-      operation: "insert",
-    }),
-    expect.objectContaining({
-      tableName: "financialAccountIdentifiers",
-      rowId: "fai-new",
-      operation: "insert",
     }),
   ]);
 }
@@ -182,7 +161,6 @@ describe("financial account management service", () => {
     expectManualAccountRecord(result.account.id);
     expectManualOpeningBalance(result.account.id);
     expectManualIdentifier(result.account.id);
-    expectManualAccountSyncEntries();
   });
 
   it("allows creating a credit-card account without a billing profile and reports the gap", () => {

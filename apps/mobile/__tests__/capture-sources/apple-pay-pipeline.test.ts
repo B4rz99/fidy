@@ -6,7 +6,6 @@ import { processApplePayIntent } from "@/features/capture-sources/services/apple
 import type { FinancialAccountId } from "@/shared/types/branded";
 
 const mockInsertTransaction = vi.fn();
-const mockEnqueueSync = vi.fn();
 const mockLookupMerchantRule = vi.fn().mockResolvedValue(null);
 const mockInsertMerchantRule = vi.fn();
 const mockClassifyMerchantApi = vi.fn().mockResolvedValue("other");
@@ -58,10 +57,6 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
 }));
 
-vi.mock("@/shared/db/enqueue-sync", () => ({
-  enqueueSync: (...args: any[]) => mockEnqueueSync(...args),
-}));
-
 vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
   lookupMerchantRule: (...args: any[]) => mockLookupMerchantRule(...args),
   insertMerchantRule: (...args: any[]) => mockInsertMerchantRule(...args),
@@ -100,7 +95,6 @@ vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: any[]) => mockGenerateId(...args),
   generateTransactionId: () => mockGenerateId("tx"),
   generateProcessedCaptureId: () => mockGenerateId("pc"),
-  generateSyncQueueId: () => mockGenerateId("sq"),
 }));
 
 const mockDb = {} as any;
@@ -127,7 +121,6 @@ function expectSavedApplePayTransaction(transactionId: string) {
       source: "apple_pay",
     })
   );
-  expect(mockEnqueueSync).toHaveBeenCalled();
   expect(transactionId).toBe("tx-1");
 }
 

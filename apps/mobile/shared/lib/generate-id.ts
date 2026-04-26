@@ -17,8 +17,6 @@ import type {
   OpeningBalanceId,
   ProcessedCaptureId,
   ProcessedEmailId,
-  SyncConflictId,
-  SyncQueueId,
   TransactionId,
   TransferId,
   UserCategoryId,
@@ -65,10 +63,6 @@ export function generateBackupId(): BackupId {
   return generateId("backup") as BackupId;
 }
 
-export function generateSyncQueueId(): SyncQueueId {
-  return generateId("sq") as SyncQueueId;
-}
-
 export function generateChatSessionId(): ChatSessionId {
   return generateId("session") as ChatSessionId;
 }
@@ -91,10 +85,6 @@ export function generateFinancialAccountId(): FinancialAccountId {
 
 export function generateFinancialAccountIdentifierId(): FinancialAccountIdentifierId {
   return generateId("fai") as FinancialAccountIdentifierId;
-}
-
-export function generateSyncConflictId(): SyncConflictId {
-  return generateId("sc") as SyncConflictId;
 }
 
 export function generateTransferId(): TransferId {

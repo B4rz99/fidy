@@ -13,18 +13,14 @@ import { toStoredTransaction } from "@/features/transactions/lib/build-transacti
 import {
   getAllTransactions,
   getTransactionById as loadTransactionById,
-  upsertTransaction,
 } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db/client";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
 import { toIsoDateTime } from "@/shared/lib/format-date";
-import { generateSyncQueueId } from "@/shared/lib/generate-id";
-import type {
-  FinancialAccountId,
-  IsoDateTime,
-  TransactionId,
-  UserId,
-} from "@/shared/types/branded";
+import type { IsoDateTime, TransactionId, UserId } from "@/shared/types/branded";
+import {
+  type ConfirmSuggestedOwnerResult,
+  confirmSuggestedOwnerInTransaction,
+} from "./attribution-review-confirmation";
 
 export type AttributionReviewItem = {
   readonly transaction: ReturnType<typeof toStoredTransaction>;
@@ -44,17 +40,6 @@ type ConfirmSuggestedOwnerInput = {
   readonly userId: UserId;
   readonly transactionId: TransactionId;
 };
-
-type ConfirmSuggestedOwnerResult =
-  | {
-      readonly success: true;
-      readonly accountId: FinancialAccountId;
-      readonly suggestionFingerprint: string;
-    }
-  | {
-      readonly success: false;
-      readonly error: "reviewItemNotFound" | "suggestedOwnerUnavailable";
-    };
 
 type CreateAttributionReviewServiceDeps = {
   readonly now?: () => IsoDateTime;
@@ -165,7 +150,7 @@ function toReviewItem(
 
   return {
     transaction: toStoredTransaction(transactionRow),
-    currentAccount: accounts.find((account) => account.id === transactionRow.accountId) ?? null,
+    currentAccount: findFinancialAccountById(accounts, transactionRow.accountId),
     suggestedAccount,
     suggestion,
     evidenceLabel: suggestion
@@ -174,48 +159,11 @@ function toReviewItem(
   };
 }
 
-function confirmSuggestedOwnerInTransaction(input: {
-  readonly tx: AnyDb;
-  readonly transactionId: TransactionId;
-  readonly userId: UserId;
-  readonly suggestedAccount: FinancialAccountRow;
-  readonly suggestion: AccountCreationSuggestion;
-  readonly updatedAt: IsoDateTime;
-  readonly getTransactionById: typeof loadTransactionById;
-  readonly accountSuggestionService: ReturnType<typeof createAccountSuggestionService>;
-}): ConfirmSuggestedOwnerResult {
-  const currentTransaction = input.getTransactionById(input.tx, input.transactionId);
-  if (!currentTransaction) {
-    return { success: false, error: "reviewItemNotFound" };
-  }
-
-  input.accountSuggestionService.acceptSuggestion({
-    db: input.tx,
-    userId: input.userId,
-    accountId: input.suggestedAccount.id,
-    suggestion: input.suggestion,
-  });
-
-  upsertTransaction(input.tx, {
-    ...currentTransaction,
-    accountId: input.suggestedAccount.id,
-    accountAttributionState: "confirmed",
-    updatedAt: input.updatedAt,
-  });
-
-  enqueueSync(input.tx, {
-    id: generateSyncQueueId(),
-    tableName: "transactions",
-    rowId: input.transactionId,
-    operation: "update",
-    createdAt: input.updatedAt,
-  });
-
-  return {
-    success: true,
-    accountId: input.suggestedAccount.id,
-    suggestionFingerprint: input.suggestion.fingerprint,
-  };
+function findFinancialAccountById(
+  accounts: readonly FinancialAccountRow[],
+  accountId: ReturnType<typeof getAllTransactions>[number]["accountId"]
+) {
+  return accounts.find((account) => account.id === accountId) ?? null;
 }
 
 export function createAttributionReviewService({

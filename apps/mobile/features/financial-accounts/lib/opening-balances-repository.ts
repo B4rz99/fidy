@@ -1,6 +1,5 @@
 import { and, eq, isNull } from "drizzle-orm";
-import { type AnyDb, enqueueSync, openingBalances, syncQueue } from "@/shared/db";
-import { generateSyncQueueId } from "@/shared/lib";
+import { type AnyDb, openingBalances } from "@/shared/db";
 
 export type OpeningBalanceRow = typeof openingBalances.$inferInsert;
 
@@ -28,9 +27,6 @@ function findActiveOpeningBalanceByAccountId(db: AnyDb, accountId: OpeningBalanc
 }
 
 function deleteOpeningBalanceDuplicate(db: AnyDb, duplicateId: OpeningBalanceRow["id"]) {
-  db.delete(syncQueue)
-    .where(and(eq(syncQueue.tableName, "openingBalances"), eq(syncQueue.rowId, duplicateId)))
-    .run();
   db.delete(openingBalances).where(eq(openingBalances.id, duplicateId)).run();
 }
 
@@ -100,14 +96,6 @@ function saveOpeningBalanceInTransaction(db: AnyDb, row: OpeningBalanceRow) {
       : row;
 
   persistOpeningBalance(db, persistedRow);
-
-  enqueueSync(db, {
-    id: generateSyncQueueId(),
-    tableName: "openingBalances",
-    rowId: persistedRow.id,
-    operation: existingById || duplicate ? "update" : "insert",
-    createdAt: row.updatedAt,
-  });
 }
 
 export function upsertOpeningBalance(db: AnyDb, row: OpeningBalanceRow) {

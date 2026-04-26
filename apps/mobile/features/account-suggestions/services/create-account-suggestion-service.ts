@@ -12,12 +12,10 @@ import {
 import { isActiveTransactionRow } from "@/features/transactions/lib/active-transaction-conditions";
 import { getTransactionById, upsertTransaction } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync } from "@/shared/db";
 import {
   generateAccountSuggestionDismissalId,
   generateFinancialAccountId,
   generateFinancialAccountIdentifierId,
-  generateSyncQueueId,
   toIsoDateTime,
 } from "@/shared/lib";
 import type {
@@ -49,7 +47,6 @@ type CreateAccountSuggestionServiceDeps = {
   readonly saveFinancialAccountIdentifierInTransaction?: typeof saveFinancialAccountIdentifierInTransaction;
   readonly getTransactionById?: typeof getTransactionById;
   readonly upsertTransaction?: typeof upsertTransaction;
-  readonly enqueueSync?: typeof enqueueSync;
   readonly now?: () => IsoDateTime;
   readonly createAccountId?: () => FinancialAccountId;
   readonly createDismissalId?: () => AccountSuggestionDismissalId;
@@ -139,7 +136,6 @@ export function createAccountSuggestionService({
     persistFinancialAccountIdentifierInTransaction = saveFinancialAccountIdentifierInTransaction,
   getTransactionById: loadTransactionById = getTransactionById,
   upsertTransaction: persistTransaction = upsertTransaction,
-  enqueueSync: enqueueSyncEntry = enqueueSync,
   now = () => toIsoDateTime(new Date()),
   createAccountId = generateFinancialAccountId,
   createDismissalId = generateAccountSuggestionDismissalId,
@@ -194,14 +190,6 @@ export function createAccountSuggestionService({
         accountId,
         accountAttributionState: "inferred",
         updatedAt,
-      });
-
-      enqueueSyncEntry(db, {
-        id: generateSyncQueueId(),
-        tableName: "transactions",
-        rowId: transactionId,
-        operation: "update",
-        createdAt: updatedAt,
       });
     });
 

@@ -31,8 +31,6 @@ import type {
   OpeningBalanceId,
   ProcessedCaptureId,
   ProcessedEmailId,
-  SyncConflictId,
-  SyncQueueId,
   TransactionId,
   TransferId,
   UserCategoryId,
@@ -286,33 +284,6 @@ export const processedEmails = sqliteTable(
     uniqueIndex("uq_processed_external_id").on(table.externalId),
     index("idx_processed_status").on(table.status),
   ]
-);
-
-export const syncQueue = sqliteTable("sync_queue", {
-  id: text("id").$type<SyncQueueId>().primaryKey(),
-  tableName: text("table_name").notNull(),
-  rowId: text("row_id").notNull(),
-  operation: text("operation").notNull(),
-  createdAt: text("created_at").$type<IsoDateTime>().notNull(),
-});
-
-export const syncMeta = sqliteTable("sync_meta", {
-  key: text("key").primaryKey(),
-  value: text("value").notNull(),
-});
-
-export const syncConflicts = sqliteTable(
-  "sync_conflicts",
-  {
-    id: text("id").$type<SyncConflictId>().primaryKey(),
-    transactionId: text("transaction_id").$type<TransactionId>().notNull(),
-    localData: text("local_data").notNull(),
-    serverData: text("server_data").notNull(),
-    detectedAt: text("detected_at").$type<IsoDateTime>().notNull(),
-    resolvedAt: text("resolved_at").$type<IsoDateTime>(),
-    resolution: text("resolution"),
-  },
-  (table) => [index("idx_sync_conflicts_resolved").on(table.resolvedAt)]
 );
 
 export const merchantRules = sqliteTable(

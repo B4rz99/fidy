@@ -1,8 +1,6 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db/client";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
 import { transfers } from "@/shared/db/schema";
-import { generateSyncQueueId } from "@/shared/lib/generate-id";
 
 export type TransferRow = typeof transfers.$inferInsert;
 type GetTransfersPageInput = {
@@ -48,17 +46,7 @@ export function upsertTransfer(db: AnyDb, row: TransferRow) {
 }
 
 export function saveTransfer(db: AnyDb, row: TransferRow) {
-  const existing = getTransferById(db, row.id);
-
   upsertTransfer(db, row);
-
-  enqueueSync(db, {
-    id: generateSyncQueueId(),
-    tableName: "transfers",
-    rowId: row.id,
-    operation: existing ? "update" : "insert",
-    createdAt: row.updatedAt,
-  });
 }
 
 export function getTransfersForUser(db: AnyDb, userId: TransferRow["userId"]) {

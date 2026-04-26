@@ -1,8 +1,8 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync, financialAccounts } from "@/shared/db";
+import { financialAccounts } from "@/shared/db";
 import { useLocaleStore } from "@/shared/i18n";
-import { generateSyncQueueId, toIsoDateTime } from "@/shared/lib";
+import { toIsoDateTime } from "@/shared/lib";
 import type { IsoDateTime } from "@/shared/types/branded";
 import { buildDefaultFinancialAccountId } from "./default-account";
 import {
@@ -87,17 +87,7 @@ export function upsertFinancialAccount(db: AnyDb, row: FinancialAccountRow) {
 }
 
 export function saveFinancialAccount(db: AnyDb, row: FinancialAccountRow) {
-  const existing = getFinancialAccountById(db, row.id);
-
   upsertFinancialAccount(db, row);
-
-  enqueueSync(db, {
-    id: generateSyncQueueId(),
-    tableName: "financialAccounts",
-    rowId: row.id,
-    operation: existing ? "update" : "insert",
-    createdAt: row.updatedAt,
-  });
 }
 
 export function getFinancialAccountsForUser(db: AnyDb, userId: FinancialAccountRow["userId"]) {

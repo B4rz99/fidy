@@ -6,7 +6,6 @@ import type {
   CopAmount,
   IsoDate,
   IsoDateTime,
-  SyncQueueId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
@@ -136,82 +135,6 @@ describe("transaction repository", () => {
     expect(mockRun).toHaveBeenCalled();
   });
 
-  it("enqueueSync inserts into sync_queue", async () => {
-    const { enqueueSync } = await import("@/features/transactions/lib/repository");
-
-    enqueueSync(mockDb, {
-      id: "sq-1" as SyncQueueId,
-      tableName: "transactions",
-      rowId: "tx-123",
-      operation: "insert",
-      createdAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
-    });
-
-    expect(mockInsert).toHaveBeenCalled();
-    expect(mockValues).toHaveBeenCalledWith({
-      id: "sq-1",
-      tableName: "transactions",
-      rowId: "tx-123",
-      operation: "insert",
-      createdAt: "2026-03-04T10:00:00.000Z",
-    });
-    expect(mockRun).toHaveBeenCalled();
-  });
-
-  it("getQueuedSyncEntries returns all queue entries", async () => {
-    const mockEntries = [
-      { id: "sq-1", tableName: "transactions", rowId: "tx-1", operation: "insert" },
-    ];
-    mockFrom.mockReturnValueOnce({ all: () => mockEntries });
-
-    const { getQueuedSyncEntries } = await import("@/features/transactions/lib/repository");
-    const result = getQueuedSyncEntries(mockDb);
-
-    expect(mockSelect).toHaveBeenCalled();
-    expect(result).toEqual(mockEntries);
-  });
-
-  it("clearSyncEntries deletes entries by id in a single query", async () => {
-    const { clearSyncEntries } = await import("@/features/transactions/lib/repository");
-
-    clearSyncEntries(mockDb, ["sq-1" as SyncQueueId, "sq-2" as SyncQueueId]);
-
-    expect(mockDelete).toHaveBeenCalledTimes(1);
-    expect(mockDeleteWhere).toHaveBeenCalledTimes(1);
-    expect(mockRun).toHaveBeenCalled();
-  });
-
-  it("clearSyncEntries does nothing for empty array", async () => {
-    const { clearSyncEntries } = await import("@/features/transactions/lib/repository");
-
-    clearSyncEntries(mockDb, []);
-
-    expect(mockDelete).not.toHaveBeenCalled();
-  });
-
-  it("setSyncMeta upserts key-value pair", async () => {
-    const { setSyncMeta } = await import("@/features/transactions/lib/repository");
-
-    setSyncMeta(mockDb, "last_sync_at", "2026-03-04T10:00:00.000Z");
-
-    expect(mockInsert).toHaveBeenCalled();
-    expect(mockValues).toHaveBeenCalledWith({
-      key: "last_sync_at",
-      value: "2026-03-04T10:00:00.000Z",
-    });
-    expect(mockOnConflictDoUpdate).toHaveBeenCalled();
-    expect(mockRun).toHaveBeenCalled();
-  });
-
-  it("getSyncMeta returns value for existing key", async () => {
-    mockAll.mockReturnValueOnce([{ key: "last_sync_at", value: "2026-03-04T10:00:00.000Z" }]);
-
-    const { getSyncMeta } = await import("@/features/transactions/lib/repository");
-    const result = getSyncMeta(mockDb, "last_sync_at");
-
-    expect(result).toBe("2026-03-04T10:00:00.000Z");
-  });
-
   it("getTransactionById returns the row when found", async () => {
     const mockRow = {
       id: "tx-1",
@@ -278,14 +201,5 @@ describe("transaction repository", () => {
       })
     );
     expect(mockRun).toHaveBeenCalled();
-  });
-
-  it("getSyncMeta returns null for missing key", async () => {
-    mockAll.mockReturnValueOnce([]);
-
-    const { getSyncMeta } = await import("@/features/transactions/lib/repository");
-    const result = getSyncMeta(mockDb, "nonexistent");
-
-    expect(result).toBeNull();
   });
 });

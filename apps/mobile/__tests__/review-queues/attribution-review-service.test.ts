@@ -55,6 +55,7 @@ type ReviewTransactionInput = {
   readonly amount: CopAmount;
   readonly description: string;
   readonly date: IsoDate;
+  readonly accountId?: FinancialAccountId;
 };
 
 const attributionAccounts = [
@@ -125,7 +126,7 @@ function insertReviewTransaction(input: ReviewTransactionInput) {
     categoryId: "shopping" as CategoryId,
     description: input.description,
     date: input.date,
-    accountId: "fa-default-user-1" as FinancialAccountId,
+    accountId: input.accountId ?? ("fa-default-user-1" as FinancialAccountId),
     accountAttributionState: "unresolved",
     source: "notification_android",
     createdAt: NOW,
@@ -241,5 +242,75 @@ describe("attribution review service", () => {
         updatedAt: NOW,
       })
     );
+  });
+
+  it("lists unresolved transactions without evidence as unsuggested review items", () => {
+    insertReviewTransaction({
+      id: "tx-unsuggested" as TransactionId,
+      amount: 50000 as CopAmount,
+      description: "Unknown merchant",
+      date: "2026-03-05" as IsoDate,
+      accountId: "fa-missing" as FinancialAccountId,
+    });
+
+    const service = createAttributionReviewService();
+
+    expect(service.listQueueItems({ db: db as any, userId: USER_ID })).toEqual([
+      expect.objectContaining({
+        transaction: expect.objectContaining({ id: "tx-unsuggested" }),
+        currentAccount: null,
+        suggestedAccount: null,
+        suggestion: null,
+        evidenceLabel: null,
+      }),
+    ]);
+    expect(
+      service.confirmSuggestedOwner({
+        db: db as any,
+        userId: USER_ID,
+        transactionId: "tx-unsuggested" as TransactionId,
+      })
+    ).toEqual({ success: false, error: "suggestedOwnerUnavailable" });
+  });
+
+  it("returns review item lookups by transaction id", () => {
+    attributionAccounts.forEach(insertAccount);
+    insertReviewTransaction({
+      id: "tx-reviewed" as TransactionId,
+      amount: 85000 as CopAmount,
+      description: "Rappi Supermai",
+      date: "2026-03-03" as IsoDate,
+    });
+    saveEvidence("ce-reviewed", {
+      transactionId: "tx-reviewed",
+      value: "4931",
+      processedCaptureId: "pc-1",
+    });
+
+    const service = createAttributionReviewService();
+
+    expect(
+      service.getReviewItem({
+        db: db as any,
+        userId: USER_ID,
+        transactionId: "tx-reviewed" as TransactionId,
+      })
+    ).toEqual(
+      expect.objectContaining({ transaction: expect.objectContaining({ id: "tx-reviewed" }) })
+    );
+    expect(
+      service.getReviewItem({
+        db: db as any,
+        userId: USER_ID,
+        transactionId: "tx-missing" as TransactionId,
+      })
+    ).toBeNull();
+    expect(
+      service.confirmSuggestedOwner({
+        db: db as any,
+        userId: USER_ID,
+        transactionId: "tx-missing" as TransactionId,
+      })
+    ).toEqual({ success: false, error: "reviewItemNotFound" });
   });
 });

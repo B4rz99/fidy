@@ -15,7 +15,6 @@ vi.mock("@/shared/lib/sentry", () => ({
 const mockGetProcessedExternalIds = vi.fn().mockResolvedValue(new Set<string>());
 const mockInsertProcessedEmail = vi.fn();
 const mockInsertTransaction = vi.fn();
-const mockEnqueueSync = vi.fn();
 const mockLookupMerchantRule = vi.fn().mockResolvedValue(null);
 const mockInsertMerchantRule = vi.fn();
 const mockParseEmailApi = vi.fn().mockResolvedValue(null);
@@ -84,10 +83,6 @@ vi.mock("@/features/capture-evidence", () => ({
     mockLinkCaptureEvidenceToTransaction(...args),
 }));
 
-vi.mock("@/shared/db/enqueue-sync", () => ({
-  enqueueSync: (...args: unknown[]) => mockEnqueueSync(...args),
-}));
-
 vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
   lookupMerchantRule: (...args: unknown[]) => mockLookupMerchantRule(...args),
   insertMerchantRule: (...args: unknown[]) => mockInsertMerchantRule(...args),
@@ -102,7 +97,6 @@ vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: unknown[]) => mockGenerateId(...args),
   generateTransactionId: () => mockGenerateId("tx"),
   generateProcessedEmailId: () => mockGenerateId("pe"),
-  generateSyncQueueId: () => mockGenerateId("sq"),
 }));
 
 const mockDb = {} as any;
@@ -133,7 +127,6 @@ describe("pipeline worker save error path", () => {
     mockGetProcessedExternalIds.mockResolvedValue(new Set<string>());
     mockInsertProcessedEmail.mockResolvedValue(undefined);
     mockInsertTransaction.mockResolvedValue(undefined);
-    mockEnqueueSync.mockResolvedValue(undefined);
     mockLookupMerchantRule.mockResolvedValue(null);
     mockInsertMerchantRule.mockResolvedValue(undefined);
     mockParseEmailApi.mockResolvedValue(null);
