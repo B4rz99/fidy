@@ -9,7 +9,7 @@ import {
 } from "@/features/calendar/lib/repository";
 import { insertTransaction, softDeleteTransaction } from "@/features/transactions/lib/repository";
 import type { MutationCommandByKind, MutationHandlerSubset } from "./common";
-import { completeCommand, queueSyncChange } from "./common";
+import { completeCommand } from "./common";
 
 type CalendarBillSaveCommand = MutationCommandByKind<"calendar.bill.save">;
 type CalendarBillUpdateCommand = MutationCommandByKind<"calendar.bill.update">;
@@ -50,12 +50,6 @@ const applyCalendarBillMarkPaid = (
   command: CalendarBillMarkPaidCommand
 ) => {
   insertTransaction(db, command.transactionRow);
-  queueSyncChange(db, {
-    tableName: "transactions",
-    rowId: command.transactionRow.id,
-    operation: "insert",
-    createdAt: command.transactionRow.updatedAt,
-  });
   insertBillPayment(db, command.paymentRow);
   return completeCommand(command.afterCommit);
 };
@@ -66,12 +60,6 @@ const applyCalendarBillUnmarkPaid = (
 ) => {
   if (command.transactionId) {
     softDeleteTransaction(db, command.transactionId, command.now);
-    queueSyncChange(db, {
-      tableName: "transactions",
-      rowId: command.transactionId,
-      operation: "delete",
-      createdAt: command.now,
-    });
   }
 
   deleteBillPayment(db, command.billId, command.dueDate);

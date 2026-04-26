@@ -623,22 +623,6 @@ const en = {
     },
   },
 
-  // Sync Conflicts
-  syncConflicts: {
-    title: "Sync Conflicts",
-    allResolved: "All resolved!",
-    noConflicts: "No sync conflicts right now.",
-    count: {
-      one: "%{count} sync conflict needs review",
-      other: "%{count} sync conflicts need review",
-    },
-    changesFromDevice: "Changes from another device",
-    yourVersion: "Your version",
-    syncedVersion: "Synced version",
-    keepMine: "Keep mine",
-    acceptSynced: "Accept synced",
-  },
-
   // Chart Section
   chart: {
     dailySpending: "Daily Spending",

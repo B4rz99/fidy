@@ -24,7 +24,6 @@ import {
   useNotificationBootstrap,
 } from "@/features/notifications/bootstrap";
 import { settingsBootstrapTask } from "@/features/settings/bootstrap";
-import { syncBootstrapTask } from "@/features/sync/bootstrap";
 import { transactionBootstrapTask } from "@/features/transactions/bootstrap";
 import { runBootstrapTasks, subscribeBootstrapTasks } from "@/shared/bootstrap/registry";
 import type {
@@ -44,7 +43,6 @@ const AUTHENTICATED_BOOTSTRAP_TASKS = [
   categoriesBootstrapTask,
   captureSourcesBootstrapTask,
   emailCaptureBootstrapTask,
-  syncBootstrapTask,
   settingsBootstrapTask,
   backgroundFetchBootstrapTask,
 ] as const;

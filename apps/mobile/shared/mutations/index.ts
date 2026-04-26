@@ -7,6 +7,5 @@ export {
   type MutationCommandApplier,
   type MutationEffect,
   type MutationOutcome,
-  toSyncEntry,
   type WriteThroughMutationModule,
 } from "./write-through";

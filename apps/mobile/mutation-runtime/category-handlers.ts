@@ -2,7 +2,7 @@
 
 import { insertUserCategory } from "@/features/categories/lib/repository";
 import type { MutationCommandByKind, MutationHandlerSubset } from "./common";
-import { completeCommand, queueSyncChange } from "./common";
+import { completeCommand } from "./common";
 
 type CategorySaveCommand = MutationCommandByKind<"category.save">;
 
@@ -11,12 +11,6 @@ const applyCategorySave = (
   command: CategorySaveCommand
 ) => {
   insertUserCategory(db, command.row);
-  queueSyncChange(db, {
-    tableName: "userCategories",
-    rowId: command.row.id,
-    operation: "insert",
-    createdAt: command.row.updatedAt,
-  });
   return completeCommand(command.afterCommit);
 };
 

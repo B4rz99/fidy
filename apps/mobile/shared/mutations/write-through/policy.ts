@@ -1,27 +1,27 @@
 import type { MutationCommand } from "./commands";
 
-export type MutationPolicy = "local-only" | "sync-backed";
+export type MutationPolicy = "local-only" | "ledger-backed";
 
 const MUTATION_POLICY: Record<MutationCommand["kind"], MutationPolicy> = {
-  "transaction.save": "sync-backed",
-  "transaction.delete": "sync-backed",
-  "goal.save": "sync-backed",
-  "goal.update": "sync-backed",
-  "goal.delete": "sync-backed",
-  "goalContribution.save": "sync-backed",
-  "goalContribution.delete": "sync-backed",
-  "budget.save": "sync-backed",
-  "budget.update": "sync-backed",
-  "budget.delete": "sync-backed",
-  "budget.copy": "sync-backed",
-  "notification.insert": "sync-backed",
-  "notification.clearAll": "sync-backed",
-  "category.save": "sync-backed",
+  "transaction.save": "ledger-backed",
+  "transaction.delete": "ledger-backed",
+  "goal.save": "ledger-backed",
+  "goal.update": "ledger-backed",
+  "goal.delete": "ledger-backed",
+  "goalContribution.save": "ledger-backed",
+  "goalContribution.delete": "ledger-backed",
+  "budget.save": "ledger-backed",
+  "budget.update": "ledger-backed",
+  "budget.delete": "ledger-backed",
+  "budget.copy": "ledger-backed",
+  "notification.insert": "ledger-backed",
+  "notification.clearAll": "ledger-backed",
+  "category.save": "ledger-backed",
   "calendar.bill.save": "local-only",
   "calendar.bill.update": "local-only",
   "calendar.bill.delete": "local-only",
-  "calendar.bill.markPaid": "sync-backed",
-  "calendar.bill.unmarkPaid": "sync-backed",
+  "calendar.bill.markPaid": "ledger-backed",
+  "calendar.bill.unmarkPaid": "ledger-backed",
 };
 
 export function getMutationPolicy(kind: MutationCommand["kind"]): MutationPolicy {

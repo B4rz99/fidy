@@ -632,22 +632,6 @@ const es = {
     },
   },
 
-  // Sync Conflicts
-  syncConflicts: {
-    title: "Conflictos de Sincronización",
-    allResolved: "¡Todo resuelto!",
-    noConflicts: "No hay conflictos de sincronización.",
-    count: {
-      one: "%{count} conflicto de sincronización necesita revisión",
-      other: "%{count} conflictos de sincronización necesitan revisión",
-    },
-    changesFromDevice: "Cambios desde otro dispositivo",
-    yourVersion: "Tu versión",
-    syncedVersion: "Versión sincronizada",
-    keepMine: "Mantener mía",
-    acceptSynced: "Aceptar sincronizada",
-  },
-
   // Chart Section
   chart: {
     dailySpending: "Gasto Diario",

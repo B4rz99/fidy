@@ -35,7 +35,6 @@ const mocks = vi.hoisted(() => ({
   insertNotification: vi.fn(() => ({ changes: 1 })),
   getAllNotificationIds: vi.fn(() => []),
   softDeleteAllNotifications: vi.fn(),
-  enqueueSync: vi.fn(),
 }));
 
 vi.mock("@/features/transactions/lib/repository", () => ({
@@ -77,16 +76,11 @@ vi.mock("@/features/notifications/repository", () => ({
   softDeleteAllNotifications: mocks.softDeleteAllNotifications,
 }));
 
-vi.mock("@/shared/db/enqueue-sync", () => ({
-  enqueueSync: mocks.enqueueSync,
-}));
-
 vi.mock("@/shared/lib", async () => {
   const actual = await vi.importActual<SharedLibModule>("@/shared/lib");
   return {
     ...actual,
     generateBudgetId: vi.fn(() => "budget-generated"),
-    generateSyncQueueId: vi.fn(() => "sync-generated"),
   };
 });
 
@@ -181,7 +175,7 @@ describe("app write-through mutations", () => {
     vi.clearAllMocks();
   });
 
-  it("enqueues sync for transaction saves", async () => {
+  it("saves transactions through the write-through boundary", async () => {
     const { createWriteThroughMutationModule } = await loadModule();
     const module = createWriteThroughMutationModule(mockDb);
 
@@ -194,7 +188,6 @@ describe("app write-through mutations", () => {
     expect(result).toEqual({ success: true, didMutate: true });
     expect(mockDb.transaction).toHaveBeenCalledOnce();
     expect(mocks.insertTransaction).toHaveBeenCalledOnce();
-    expect(mocks.enqueueSync).toHaveBeenCalledOnce();
   });
 
   it("keeps calendar bill save local-only", async () => {
@@ -209,7 +202,6 @@ describe("app write-through mutations", () => {
     expect(result).toEqual({ success: true, didMutate: true });
     expect(mockDb.transaction).toHaveBeenCalledOnce();
     expect(mocks.insertBill).toHaveBeenCalledOnce();
-    expect(mocks.enqueueSync).not.toHaveBeenCalled();
   });
 
   it("writes both transaction and bill payment when marking bills paid", async () => {
@@ -231,7 +223,6 @@ describe("app write-through mutations", () => {
     expect(mockDb.transaction).toHaveBeenCalledOnce();
     expect(mocks.insertTransaction).toHaveBeenCalledOnce();
     expect(mocks.insertBillPayment).toHaveBeenCalledOnce();
-    expect(mocks.enqueueSync).toHaveBeenCalledOnce();
   });
 
   it("fails without side effects when the transaction wrapper throws", async () => {
@@ -251,6 +242,5 @@ describe("app write-through mutations", () => {
     expect(result).toEqual({ success: false, error: "db failure" });
     expect(transaction).toHaveBeenCalledOnce();
     expect(mocks.insertTransaction).not.toHaveBeenCalled();
-    expect(mocks.enqueueSync).not.toHaveBeenCalled();
   });
 });

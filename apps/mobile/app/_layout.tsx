@@ -28,7 +28,6 @@ import {
 } from "@/features/auth/hooks.public";
 import { isLocalQaAvailable, useQaDevtoolsRuntime } from "@/features/qa/hooks.public";
 import { QaStatusBanner } from "@/features/qa/ui.public";
-import { useSyncBootstrap } from "@/features/sync/hooks.public";
 import { ErrorFallback } from "@/shared/components";
 import { Platform, useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
@@ -84,8 +83,7 @@ function AuthenticatedShell({
     migrationsReady
   );
 
-  const initialSyncDone = useSyncBootstrap({ db, enableRemoteEffects, migrationsReady, userId });
-  const captureDb = enableRemoteEffects && initialSyncDone && migrationsReady ? db : null;
+  const captureDb = enableRemoteEffects && migrationsReady ? db : null;
   const captureUserId = enableRemoteEffects ? userId : null;
   const navigateToRoute = useCallback(
     (route: string) => {

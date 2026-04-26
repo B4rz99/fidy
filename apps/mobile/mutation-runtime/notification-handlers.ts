@@ -6,7 +6,7 @@ import {
   softDeleteAllNotifications,
 } from "@/features/notifications/repository";
 import type { MutationCommandByKind, MutationHandlerSubset } from "./common";
-import { completeCommand, queueSyncChange } from "./common";
+import { completeCommand } from "./common";
 
 type NotificationInsertCommand = MutationCommandByKind<"notification.insert">;
 type NotificationClearAllCommand = MutationCommandByKind<"notification.clearAll">;
@@ -19,13 +19,6 @@ const applyNotificationInsert = (
   if (result.changes === 0) {
     return completeCommand(command.afterCommit, false);
   }
-
-  queueSyncChange(db, {
-    tableName: "notifications",
-    rowId: command.row.id,
-    operation: "insert",
-    createdAt: command.row.updatedAt,
-  });
   return completeCommand(command.afterCommit);
 };
 
@@ -35,14 +28,6 @@ const applyNotificationClearAll = (
 ) => {
   const allIds = getAllNotificationIds(db, command.userId);
   softDeleteAllNotifications(db, command.userId, command.now);
-  allIds.forEach((id) => {
-    queueSyncChange(db, {
-      tableName: "notifications",
-      rowId: id,
-      operation: "delete",
-      createdAt: command.now,
-    });
-  });
   return completeCommand(command.afterCommit, allIds.length > 0);
 };
 

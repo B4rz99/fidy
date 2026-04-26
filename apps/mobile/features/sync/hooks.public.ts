@@ -1,1 +1,0 @@
-export { useSyncBootstrap } from "./bootstrap";
