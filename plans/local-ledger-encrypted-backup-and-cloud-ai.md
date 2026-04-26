@@ -2,7 +2,7 @@
 
 ## Problem
 
-Fidy was intended to feel local-first and on-device, but the current sync architecture stores readable financial rows in Supabase so users can recover data after deleting the app. That solves durability, but it turns Supabase into a plaintext financial ledger and lets server-side features query financial rows directly.
+Fidy was intended to feel local-first and on-device, but the previous remote recovery architecture stored readable financial rows in Supabase so users could recover data after deleting the app. That solved durability, but it turned Supabase into a plaintext financial ledger and let server-side features query financial rows directly.
 
 The MVP still needs AI-first ingestion and an AI financial advisor. Regex-only parsing is too fragile for Colombian bank emails, notifications, Apple Pay, and Google Pay evidence, and on-device foundation models are not yet a dependable baseline across all MVP devices.
 
@@ -15,12 +15,11 @@ The MVP still needs AI-first ingestion and an AI financial advisor. Regex-only p
 - Cloud AI inputs are task-scoped and not stored as Fidy financial records.
 - Server-side features do not query plaintext `transactions`, `budgets`, `goals`, `financial_accounts`, `transfers`, `opening_balances`, identifiers, or capture evidence.
 
-## Current Plaintext Server Surfaces
+## Removed Plaintext Server Surfaces
 
-- `apps/mobile/features/sync/services/syncEngine.ts` pushes financial rows to Supabase tables.
 - `supabase/functions/weekly-digest/index.ts` reads transactions, budgets, and goal contributions server-side.
 - `supabase/functions/ai-chat/index.ts` builds advisor context by querying plaintext financial rows server-side.
-- Capture parsing already sends sanitized text to cloud AI, but the result is later persisted through normal financial sync.
+- Capture parsing already sends sanitized text to cloud AI, but the result must only persist to the Local Ledger and encrypted backups.
 
 ## Architecture
 
@@ -133,8 +132,8 @@ Cloud AI is not allowed to become remote storage:
 
 1. Name the boundaries
    - Add domain language and ADR.
-   - Add a feature flag or config value for legacy Remote Financial Sync.
-   - Add tests that make current plaintext sync surfaces visible.
+   - Remove remote plaintext financial storage paths before launch.
+   - Add tests that make plaintext server persistence visible if it is reintroduced.
 
 2. Build backup export/import
    - Create a canonical `BackupSnapshot` schema for the Local Ledger.
@@ -154,9 +153,9 @@ Cloud AI is not allowed to become remote storage:
    - Ensure RLS never exposes backups across users.
    - Keep metadata non-financial.
 
-5. Replace recovery sync
-   - Stop enqueueing financial rows to Remote Financial Sync for new users.
-   - Keep legacy migration support for existing users until their encrypted backup is created.
+5. Replace remote recovery
+   - Remove plaintext financial table writes while preserving historical migration files for Supabase migration history.
+   - Keep remote recovery through encrypted backups only.
    - Add a settings surface for backup status and restore.
 
 6. Move insights off server-side financial queries
@@ -170,8 +169,8 @@ Cloud AI is not allowed to become remote storage:
    - Add tests that cloud AI callers do not write plaintext financial records remotely.
 
 8. Retire plaintext financial tables
-   - After migration, prevent new writes to plaintext financial tables.
-   - Export/delete legacy plaintext financial rows for users who have migrated.
+   - Add a later drop migration for plaintext financial tables.
+   - Remove account deletion cleanup paths for tables that no longer exist.
    - Keep deletion/account-closure paths aligned with encrypted backup deletion.
 
 ## Open Decisions

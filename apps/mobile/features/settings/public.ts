@@ -1,7 +1,6 @@
 import type { NotificationPreferences } from "./store";
 import { useSettingsStore } from "./store";
 
-export { getUnsyncedCount } from "./lib/check-unsynced";
 export {
   buildPrivacyUrl,
   buildTermsUrl,

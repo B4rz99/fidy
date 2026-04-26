@@ -1,4 +1,4 @@
-# `Financial Accounts, Post-Sync Account Suggestions, and Transfers`
+# `Financial Accounts, Post-Capture Account Suggestions, and Transfers`
 
 ## Problem
 
@@ -8,20 +8,19 @@ That creates three user-facing problems:
 
 - captured transactions cannot reliably be attributed to the financial account that actually sent or received the money
 - credit-card payments are at risk of being treated like new expenses instead of debt-settling transfers, which double-counts spending
-- onboarding sync happens before any account setup exists, so multi-account accuracy cannot start working on day one without adding friction
+- capture import happens before any account setup exists, so multi-account accuracy cannot start working on day one without adding friction
 
 The result is a product that can show automated capture, but cannot yet tell a user which bank account, wallet, cash balance, or credit card a record belongs to, and cannot cleanly distinguish spending from settlement.
 
 ## Proposal
 
-Introduce first-class **Financial Accounts** and make every transaction belong to exactly one account. Auto-create a default financial account before first sync so onboarding remains fast, then use repeated scoped capture evidence to suggest likely account creation or linking after sync as an optional accuracy improvement.
+Introduce first-class **Financial Accounts** and make every transaction belong to exactly one account. Auto-create a default financial account before first capture import so onboarding remains fast, then use repeated scoped capture evidence to suggest likely account creation or linking after capture import as an optional accuracy improvement.
 
 Keep **Transaction** narrow as `expense | income`. Add a separate first-class **Transfer** record for money moving between accounts or between a tracked account and a generic external side. This fixes the credit-card-payment problem without polluting spending analytics or budgets.
 
 The onboarding experience should remain:
 
 - connect email
-- sync
 - optionally improve account accuracy
 - continue
 
@@ -54,7 +53,7 @@ Users should not be forced to do account setup before they see the core product 
   Extract a deep, testable module that turns raw capture inputs into normalized account-evidence facts, derives repeated scoped matches, and emits account-creation suggestions. It should own the rules for sender/last-4/alias scope, suppression of dismissed suggestions, and reprocessing of unresolved records after a suggestion is accepted.
 
 - `onboarding` account-accuracy orchestration
-  Update onboarding to auto-bootstrap the default account before sync, skip the optional post-sync step when there are no strong suggestions, and otherwise route into a shared suggestion-review screen capped at three items. This orchestration should stay thin and depend on the suggestion module rather than containing matching logic.
+  Update onboarding to auto-bootstrap the default account before capture import, skip the optional post-capture step when there are no strong suggestions, and otherwise route into a shared suggestion-review screen capped at three items. This orchestration should stay thin and depend on the suggestion module rather than containing matching logic.
 
 - `financial-account review` surface
   Add a shared suggestion-review flow used from onboarding and the later home/dashboard prompt. It should support:
@@ -73,7 +72,7 @@ Users should not be forced to do account setup before they see the core product 
 
 - Capture evidence can include sensitive financial metadata such as sender domains, account aliases, and last-4 identifiers. Persist only the normalized fields needed for matching and continue treating raw capture text as sensitive user data.
 - Financial account suggestions must always be user-confirmed. The app must not auto-create financial accounts from capture evidence.
-- Dismissed captures and unresolved records may still sync, but their states must remain explicit so other devices do not reinterpret them silently.
+- Dismissed captures and unresolved records must keep explicit local states so backup restore does not reinterpret them silently.
 - Linking evidence to accounts must stay user-scoped. No identifier matching or suggestion generation should cross user boundaries.
 
 ## Testing
@@ -91,10 +90,10 @@ Users should not be forced to do account setup before they see the core product 
   - transaction persistence with `accountId`
   - capture-evidence persistence
   - reprocessing unresolved records after account creation/linking
-  - transfer persistence and sync queue integration
+  - transfer persistence and encrypted backup integration
 
 - Integration/orchestration coverage for:
-  - onboarding flow: sync with and without strong suggestions
+  - onboarding flow: capture import with and without strong suggestions
   - onboarding auto-entry into optional account-accuracy step
   - reuse of the same suggestion-review screen from onboarding and home
   - manual transaction entry with a default preselected account
@@ -103,8 +102,8 @@ Users should not be forced to do account setup before they see the core product 
 ## Success criteria
 
 - [ ] Every new transaction saved by manual entry or automatic capture persists with a non-null financial account and explicit account-attribution state.
-- [ ] Onboarding still reaches first captured value before any required account setup, while showing an optional post-sync account-accuracy step only when strong suggestions exist.
-- [ ] The post-sync account-accuracy step shows at most 3 high-confidence account suggestions, and skipped suggestions remain available later from the home/dashboard prompt.
+- [ ] Onboarding still reaches first captured value before any required account setup, while showing an optional post-capture account-accuracy step only when strong suggestions exist.
+- [ ] The post-capture account-accuracy step shows at most 3 high-confidence account suggestions, and skipped suggestions remain available later from the home/dashboard prompt.
 - [ ] Accepting an account suggestion immediately improves matching for future captures and reprocesses matching unresolved past records.
 - [ ] Credit-card payments can be recorded as transfers and no longer need to appear as expenses in spending analytics or budgets.
 
