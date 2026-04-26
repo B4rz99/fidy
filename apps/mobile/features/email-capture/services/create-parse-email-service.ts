@@ -1,4 +1,8 @@
 import { Effect } from "effect";
+import {
+  interpretCaptureCandidate,
+  validateCaptureCandidateForLocalLedger,
+} from "@/features/capture-interpreter/public";
 import { fromPromise } from "@/shared/effect/runtime";
 import {
   type AppSupabase,
@@ -31,6 +35,12 @@ type ClassifyResponse = {
   readonly data?: {
     readonly categoryId?: string;
   };
+};
+type ParseTransactionInput = {
+  readonly body: string;
+  readonly mode: Extract<ParseMode, "full_parse" | "parse_notification">;
+  readonly warningPrefix: "parse_email" | "parse_notification";
+  readonly validCategoryIds: readonly string[];
 };
 
 type CreateParseEmailServiceDeps = {
@@ -70,30 +80,45 @@ function logParseApiFailureEffect(
 
 function validateParsedTransactionEffect(
   warningPrefix: "parse_email" | "parse_notification",
-  data: unknown
+  data: unknown,
+  validCategoryIds: readonly string[]
 ) {
-  const result = llmOutputSchema.safeParse(data);
-  if (!result.success) {
+  const interpreted = interpretCaptureCandidate(data, { validCategoryIds });
+  if (interpreted.kind === "invalid") {
     return Effect.zipRight(
       captureWarningEffect(`${warningPrefix}_validation_failed`, {
-        issueCount: result.error.issues.length,
+        issueCount: interpreted.reasons.length,
       }),
       Effect.succeed(null)
     );
   }
 
-  return Effect.succeed(result.data);
+  const validation = validateCaptureCandidateForLocalLedger(interpreted.candidate, {
+    validCategoryIds,
+  });
+
+  if (validation.kind === "accepted") {
+    return Effect.succeed(llmOutputSchema.parse(validation.transaction));
+  }
+
+  return Effect.zipRight(
+    captureWarningEffect(`${warningPrefix}_${validation.kind}`, {
+      reason: validation.reason,
+    }),
+    Effect.succeed(null)
+  );
 }
 
 function handleParseTransactionResponseEffect(
   warningPrefix: "parse_email" | "parse_notification",
-  response: ParseFunctionResult<ParseEmailResponse>
+  response: ParseFunctionResult<ParseEmailResponse>,
+  validCategoryIds: readonly string[]
 ) {
   if (response.error != null || !response.data?.success) {
     return logParseApiFailureEffect(warningPrefix, response);
   }
 
-  return validateParsedTransactionEffect(warningPrefix, response.data.data);
+  return validateParsedTransactionEffect(warningPrefix, response.data.data, validCategoryIds);
 }
 
 function logParseExceptionEffect(
@@ -108,16 +133,26 @@ function logParseExceptionEffect(
   );
 }
 
-function parseTransactionEffect(
-  body: string,
-  mode: Extract<ParseMode, "full_parse" | "parse_notification">,
-  warningPrefix: "parse_email" | "parse_notification"
+function parseApiResponseEffect(
+  input: {
+    readonly warningPrefix: "parse_email" | "parse_notification";
+    readonly validCategoryIds: readonly string[];
+  },
+  response: ParseFunctionResult<ParseEmailResponse>
 ) {
+  return handleParseTransactionResponseEffect(
+    input.warningPrefix,
+    response,
+    input.validCategoryIds
+  );
+}
+
+function parseTransactionEffect(input: ParseTransactionInput) {
+  const request = invokeParseEmailFunctionEffect<ParseEmailResponse>(input.body, input.mode);
+
   return Effect.catchAll(
-    Effect.flatMap(invokeParseEmailFunctionEffect<ParseEmailResponse>(body, mode), (response) =>
-      handleParseTransactionResponseEffect(warningPrefix, response)
-    ),
-    (error) => logParseExceptionEffect(warningPrefix, error)
+    Effect.flatMap(request, (response) => parseApiResponseEffect(input, response)),
+    (error) => logParseExceptionEffect(input.warningPrefix, error)
   );
 }
 
@@ -168,8 +203,22 @@ export function createParseEmailService({
   return {
     classifyMerchant: (merchant) => runEffect(classifyMerchantEffect(merchant, validCategoryIds)),
     parseEmail: (emailBody) =>
-      runEffect(parseTransactionEffect(emailBody, "full_parse", "parse_email")),
+      runEffect(
+        parseTransactionEffect({
+          body: emailBody,
+          mode: "full_parse",
+          warningPrefix: "parse_email",
+          validCategoryIds,
+        })
+      ),
     parseNotification: (sanitizedText) =>
-      runEffect(parseTransactionEffect(sanitizedText, "parse_notification", "parse_notification")),
+      runEffect(
+        parseTransactionEffect({
+          body: sanitizedText,
+          mode: "parse_notification",
+          warningPrefix: "parse_notification",
+          validCategoryIds,
+        })
+      ),
   };
 }

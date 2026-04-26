@@ -31,9 +31,15 @@ const CLASSIFY_SYSTEM = `Pick the best category for this Colombian merchant.
 
 ${CATEGORY_GUIDE}`;
 
-const FULL_PARSE_SYSTEM = `Extract transaction data from this Colombian bank email.
+const FULL_PARSE_SYSTEM = `Interpret this Colombian bank email as one Capture Interpreter candidate.
 
 Rules:
+- Return exactly one candidate with kind: "transaction", "transfer", "not_trackable", or "needs_review".
+- Fill fields that do not apply to the selected kind with null.
+- Use "transaction" only when the evidence clearly describes a ledger expense or income.
+- Use "transfer" when the evidence clearly describes movement between the user's own accounts.
+- Use "not_trackable" for security alerts, OTPs, marketing, balances, or messages without a financial event.
+- Use "needs_review" when amount, merchant, date, or event type is ambiguous.
 - All amounts are in Colombian Pesos (COP). Commas and dots are thousands separators. Return amount as whole pesos (integer, no centavos). Examples: 7,500 = 7500, 50,000 = 50000.
 - amount: amount in whole pesos (integer)
 - description: ONLY the merchant/business name, cleaned up (e.g. "EDS La Castellana", "Farmatodo", "MetLife Colombia")
@@ -44,9 +50,16 @@ Rules:
 Category guide — pick based on the MERCHANT NAME:
 ${CATEGORY_GUIDE}`;
 
-const NOTIFICATION_PARSE_SYSTEM = `Extract transaction data from this Colombian bank push notification.
+const NOTIFICATION_PARSE_SYSTEM = `Interpret this Colombian bank push notification as one Capture Interpreter candidate.
 
 The text is short (1-2 lines). Apply the same rules:
+- Return exactly one candidate with kind: "transaction", "transfer", "not_trackable", or "needs_review".
+- Fill fields that do not apply to the selected kind with null.
+- Use "transaction" only when the evidence clearly describes a ledger expense or income.
+- Use "transaction" for Apple Pay or Google Pay purchases when they include a merchant and amount.
+- Use "transfer" only when the text clearly describes movement between the user's own accounts.
+- Use "not_trackable" for security alerts, OTPs, marketing, balances, or messages without a financial event.
+- Use "needs_review" when amount, merchant, date, or event type is ambiguous.
 - All amounts are in Colombian Pesos (COP). Commas and dots are thousands separators. Return amount as whole pesos (integer, no centavos).
 - amount: amount in whole pesos (integer)
 - description: ONLY the merchant/business name, cleaned up
@@ -70,20 +83,35 @@ const CLASSIFY_SCHEMA = {
   },
 };
 
-const FULL_PARSE_SCHEMA = {
-  name: "transaction",
+const CAPTURE_INTERPRETER_SCHEMA = {
+  name: "capture_interpreter_candidate",
   strict: true,
   schema: {
     type: "object",
     properties: {
-      type: { type: "string", enum: ["expense", "income"] },
-      amount: { type: "integer" },
-      categoryId: { type: "string", enum: [...CATEGORY_IDS] },
-      description: { type: "string" },
-      date: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
+      kind: { type: "string", enum: ["transaction", "transfer", "not_trackable", "needs_review"] },
+      type: { type: ["string", "null"], enum: ["expense", "income", null] },
+      amount: { type: ["integer", "null"] },
+      categoryId: { type: ["string", "null"], enum: [...CATEGORY_IDS, null] },
+      description: { type: ["string", "null"] },
+      date: { type: ["string", "null"], pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
       confidence: { type: "number", minimum: 0, maximum: 1 },
+      reason: { type: ["string", "null"] },
+      fromAccountHint: { type: ["string", "null"] },
+      toAccountHint: { type: ["string", "null"] },
     },
-    required: ["type", "amount", "categoryId", "description", "date", "confidence"],
+    required: [
+      "kind",
+      "type",
+      "amount",
+      "categoryId",
+      "description",
+      "date",
+      "confidence",
+      "reason",
+      "fromAccountHint",
+      "toAccountHint",
+    ],
     additionalProperties: false,
   },
 };
@@ -241,7 +269,7 @@ Deno.serve(async (req) => {
         : mode === "parse_notification"
           ? NOTIFICATION_PARSE_SYSTEM
           : FULL_PARSE_SYSTEM;
-    const jsonSchema = mode === "classify" ? CLASSIFY_SCHEMA : FULL_PARSE_SCHEMA;
+    const jsonSchema = mode === "classify" ? CLASSIFY_SCHEMA : CAPTURE_INTERPRETER_SCHEMA;
     const maxLength = mode === "parse_notification" ? 500 : 2000;
     // Truncate to focus on transaction details, skip legal/footer noise
     const truncatedBody = emailBody.length > maxLength ? emailBody.slice(0, maxLength) : emailBody;

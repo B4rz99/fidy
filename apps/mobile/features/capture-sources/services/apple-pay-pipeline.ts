@@ -5,12 +5,17 @@ import {
   saveCaptureEvidenceRows,
 } from "@/features/capture-evidence/public";
 import {
+  buildTransactionCandidate,
+  validateCaptureCandidateForLocalLedger,
+} from "@/features/capture-interpreter/public";
+import {
   insertMerchantRule,
   lookupMerchantRule,
 } from "@/features/email-capture/merchant-rules.public";
 import { classifyMerchantApi } from "@/features/email-capture/parsing.public";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
-import { insertTransaction, isValidCategoryId } from "@/features/transactions/write.public";
+import { insertTransaction } from "@/features/transactions/write.public";
+import { CATEGORY_IDS } from "@/shared/categories";
 import type { AnyDb } from "@/shared/db";
 import { enqueueSync } from "@/shared/db";
 import {
@@ -24,7 +29,7 @@ import {
   trackTransactionCreated,
 } from "@/shared/lib";
 import { assertCopAmount, assertUserId } from "@/shared/types/assertions";
-import type { TransactionId } from "@/shared/types/branded";
+import type { CategoryId, IsoDate, TransactionId } from "@/shared/types/branded";
 import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
 import { insertProcessedCapture } from "../lib/repository";
 import type { ApplePayIntentData } from "../schema";
@@ -36,6 +41,55 @@ export type ApplePayPipelineResult = {
   skippedDuplicate: boolean;
   transactionId: TransactionId | null;
 };
+
+type ApplePayCategoryResolutionInput = {
+  readonly amount: number;
+  readonly rawCategoryId: string;
+  readonly merchant: string;
+  readonly date: IsoDate;
+};
+
+function validateApplePayCategoryCandidate(
+  input: ApplePayCategoryResolutionInput,
+  categoryId: string
+) {
+  return validateCaptureCandidateForLocalLedger(
+    buildTransactionCandidate({
+      type: "expense",
+      amount: input.amount,
+      categoryId,
+      description: input.merchant,
+      date: input.date,
+      confidence: 1.0,
+    }),
+    { validCategoryIds: CATEGORY_IDS }
+  );
+}
+
+function requireAcceptedApplePayCategory(input: ApplePayCategoryResolutionInput): CategoryId {
+  const fallbackValidation = validateApplePayCategoryCandidate(input, "other");
+
+  if (fallbackValidation.kind !== "accepted") {
+    throw new Error("Missing fallback category");
+  }
+
+  return fallbackValidation.transaction.categoryId;
+}
+
+function resolveApplePayCategoryId(input: {
+  readonly amount: number;
+  readonly rawCategoryId: string;
+  readonly merchant: string;
+  readonly date: IsoDate;
+}): CategoryId {
+  const validation = validateApplePayCategoryCandidate(input, input.rawCategoryId);
+
+  if (validation.kind === "accepted") {
+    return validation.transaction.categoryId;
+  }
+
+  return requireAcceptedApplePayCategory(input);
+}
 
 export async function processApplePayIntent(
   db: AnyDb,
@@ -114,11 +168,12 @@ export async function processApplePayIntent(
 
     // If no cached category, classify via LLM
     const rawCategoryId = cachedCategoryId ?? (await classifyMerchantApi(intent.merchant));
-    const fallbackCategoryId = "other";
-    if (!isValidCategoryId(fallbackCategoryId)) {
-      throw new Error("Missing fallback category");
-    }
-    const categoryId = isValidCategoryId(rawCategoryId) ? rawCategoryId : fallbackCategoryId;
+    const categoryId = resolveApplePayCategoryId({
+      amount,
+      rawCategoryId,
+      merchant: intent.merchant,
+      date: today,
+    });
 
     // Save transaction
     const txId = generateTransactionId();

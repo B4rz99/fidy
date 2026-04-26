@@ -127,6 +127,7 @@ describe("parseEmailApi", () => {
       data: {
         success: true,
         data: {
+          kind: "transaction",
           type: "expense",
           amount: 50000,
           categoryId: "food",
@@ -161,6 +162,7 @@ describe("parseEmailApi", () => {
       data: {
         success: true,
         data: {
+          kind: "transaction",
           type: "expense",
           amount: -100,
           categoryId: "food",
