@@ -17,6 +17,7 @@ export async function checkRateLimit(
 ): Promise<RateLimitResult> {
   const now = new Date();
   const windowKey = now.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
+  const retryAfterSeconds = 60 - now.getSeconds();
 
   try {
     const { data, error } = await serviceClient.rpc("check_rate_limit", {
@@ -27,24 +28,23 @@ export async function checkRateLimit(
     });
 
     if (error) {
-      console.error("Rate limit RPC error, failing open:", error.message);
-      return { allowed: true, count: 0 };
+      console.error("Rate limit RPC error, failing closed:", error.message);
+      return { allowed: false, count: 0, retryAfterSeconds };
     }
 
     const row = Array.isArray(data) ? data[0] : data;
     if (!row || typeof row.allowed !== "boolean") {
-      console.error("Rate limit RPC returned no data, failing open");
-      return { allowed: true, count: 0 };
+      console.error("Rate limit RPC returned no data, failing closed");
+      return { allowed: false, count: 0, retryAfterSeconds };
     }
 
     if (row.allowed) {
       return { allowed: true, count: row.current_count };
     }
 
-    const retryAfterSeconds = 60 - now.getSeconds();
     return { allowed: false, count: row.current_count, retryAfterSeconds };
   } catch (err) {
-    console.error("Rate limit check failed, failing open:", err);
-    return { allowed: true, count: 0 };
+    console.error("Rate limit check failed, failing closed:", err);
+    return { allowed: false, count: 0, retryAfterSeconds };
   }
 }
