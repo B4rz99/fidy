@@ -8,7 +8,7 @@ import {
 } from "@/features/budget/lib/repository";
 import { createBudgetCopyId } from "@/shared/mutations";
 import type { MutationCommandByKind, MutationHandlerSubset } from "./common";
-import { completeCommand, queueSyncChange } from "./common";
+import { completeCommand } from "./common";
 
 type BudgetSaveCommand = MutationCommandByKind<"budget.save">;
 type BudgetUpdateCommand = MutationCommandByKind<"budget.update">;
@@ -20,12 +20,6 @@ const applyBudgetSave = (
   command: BudgetSaveCommand
 ) => {
   insertBudget(db, command.row);
-  queueSyncChange(db, {
-    tableName: "budgets",
-    rowId: command.row.id,
-    operation: "insert",
-    createdAt: command.row.updatedAt,
-  });
   return completeCommand(command.afterCommit);
 };
 
@@ -39,12 +33,6 @@ const applyBudgetUpdate = (
     amount: command.amount,
     now: command.now,
   });
-  queueSyncChange(db, {
-    tableName: "budgets",
-    rowId: command.budgetId,
-    operation: "update",
-    createdAt: command.now,
-  });
   return completeCommand(command.afterCommit);
 };
 
@@ -53,12 +41,6 @@ const applyBudgetDelete = (
   command: BudgetDeleteCommand
 ) => {
   softDeleteBudget(db, command.budgetId, command.now);
-  queueSyncChange(db, {
-    tableName: "budgets",
-    rowId: command.budgetId,
-    operation: "delete",
-    createdAt: command.now,
-  });
   return completeCommand(command.afterCommit);
 };
 
@@ -74,15 +56,6 @@ const applyBudgetCopy = (
     command.now,
     createBudgetCopyId
   );
-
-  copiedIds.forEach((id) => {
-    queueSyncChange(db, {
-      tableName: "budgets",
-      rowId: id,
-      operation: "insert",
-      createdAt: command.now,
-    });
-  });
 
   return completeCommand(command.afterCommit, copiedIds.length > 0);
 };

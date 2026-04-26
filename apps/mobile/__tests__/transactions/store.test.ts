@@ -5,7 +5,6 @@ import {
   getTransactionById,
   getTransactionsPaginated,
   insertTransaction,
-  softDeleteTransaction,
 } from "@/features/transactions/lib/repository";
 import {
   getStoredTransactionById,
@@ -15,12 +14,10 @@ import {
   loadTransactionAggregates,
   loadTransactionIntoForm,
   refreshTransactions,
-  removeTransaction,
   saveCurrentTransaction,
   useTransactionStore,
 } from "@/features/transactions/store";
 import type { AnyDb } from "@/shared/db";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
 import type {
   CategoryId,
   CopAmount,
@@ -40,10 +37,6 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   getTransactionById: vi.fn().mockReturnValue(null),
   softDeleteTransaction: vi.fn(),
   upsertTransaction: vi.fn(),
-}));
-
-vi.mock("@/shared/db/enqueue-sync", () => ({
-  enqueueSync: vi.fn(),
 }));
 
 const mockDb = {
@@ -179,13 +172,6 @@ describe("transaction boundaries", () => {
         categoryId: "food",
         userId: mockUserId,
         updatedAt: expect.any(String),
-      })
-    );
-    expect(enqueueSync).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({
-        tableName: "transactions",
-        operation: "insert",
       })
     );
     expect(getTransactionsPaginated).toHaveBeenCalled();
@@ -340,21 +326,6 @@ describe("transaction boundaries", () => {
     });
 
     expect(getStoredTransactionById(mockDb, mockUserId, "tx-1" as TransactionId)).toBeNull();
-  });
-
-  it("removeTransaction soft-deletes, enqueues sync, and refreshes", async () => {
-    await removeTransaction(mockDb, mockUserId, "tx-1" as TransactionId);
-
-    expect(softDeleteTransaction).toHaveBeenCalledWith(mockDb, "tx-1", expect.any(String));
-    expect(enqueueSync).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({
-        tableName: "transactions",
-        rowId: "tx-1",
-        operation: "delete",
-      })
-    );
-    expect(getTransactionsPaginated).toHaveBeenCalled();
   });
 
   it("loadTransactionAggregates updates aggregate state without disturbing pages", () => {

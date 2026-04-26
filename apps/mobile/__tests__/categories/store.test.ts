@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getUserCategoriesForUser, insertUserCategory } from "@/features/categories/lib/repository";
 import { CATEGORIES, CATEGORY_ROWS } from "@/features/transactions/lib/categories";
-import { enqueueSync } from "@/shared/db/enqueue-sync";
 import type { IsoDateTime, UserCategoryId, UserId } from "@/shared/types/branded";
 
 // Mock the repository
@@ -18,19 +17,13 @@ vi.mock("@/features/categories/lib/icon-map", () => ({
   ICON_MAP: { Zap: () => null, PawPrint: () => null, ShoppingCart: () => null },
 }));
 
-// Mock enqueueSync
-vi.mock("@/shared/db/enqueue-sync", () => ({
-  enqueueSync: vi.fn(),
-}));
-
-// Mock shared/lib — the store imports from the barrel
+// Mock shared/lib - the store imports from the barrel
 vi.mock("@/shared/lib", async (importOriginal) => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   const actual = await importOriginal<typeof import("@/shared/lib")>();
   return {
     ...actual,
     generateUserCategoryId: vi.fn().mockReturnValue("ucat-test-123"),
-    generateSyncQueueId: vi.fn().mockReturnValue("sq-test-123"),
     toIsoDateTime: vi.fn().mockReturnValue("2026-03-21T12:00:00.000Z"),
   };
 });
@@ -103,7 +96,7 @@ describe("useCategoriesStore", () => {
     expect(state.isValid("ucat-custom-1", "merged")).toBe(true);
   });
 
-  it("createCustom inserts to DB and enqueues sync", async () => {
+  it("createCustom inserts to DB", async () => {
     vi.mocked(getUserCategoriesForUser).mockReturnValue([]);
     vi.mocked(insertUserCategory).mockReturnValue(undefined);
 
@@ -116,7 +109,6 @@ describe("useCategoriesStore", () => {
 
     expect(result).toBe(true);
     expect(insertUserCategory).toHaveBeenCalledOnce();
-    expect(enqueueSync).toHaveBeenCalledOnce();
   });
 
   it("createCustom returns false when name is too short", async () => {

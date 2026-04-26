@@ -4,7 +4,7 @@ export type {
   MutationEffect,
   MutationOutcome,
 } from "./write-through/commands";
-export { createBudgetCopyId, toSyncEntry } from "./write-through/helpers";
+export { createBudgetCopyId } from "./write-through/helpers";
 export {
   type CommandEffectResult,
   createGenericWriteThroughMutationModule,

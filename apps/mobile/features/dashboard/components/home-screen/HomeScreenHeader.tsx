@@ -11,7 +11,6 @@ import {
   getOutlookClientId,
 } from "@/features/email-capture/public";
 import { EmailConnectBanner, FailedEmailsBanner } from "@/features/email-capture/ui.public";
-import { SyncConflictBanner } from "@/features/sync/public";
 import { Platform, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { AttributionReviewBanner } from "../AttributionReviewBanner";
@@ -54,7 +53,6 @@ export function HomeScreenHeader({
         count={suggestions.length}
         onPress={() => push("/account-suggestions" as never)}
       />
-      <SyncConflictBanner onPress={() => push("/sync-conflicts" as never)} />
       {Platform.OS === "ios" ? (
         <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
       ) : null}
