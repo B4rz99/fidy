@@ -4,6 +4,7 @@ import type { SyncQueueId } from "@/shared/types/branded";
 import type { SyncPushOptions } from "./types";
 
 const PRIVATE_BACKUP_SYNC_MODE = "privateBackup";
+const DEFAULT_REMOTE_FINANCIAL_SYNC_MODE = PRIVATE_BACKUP_SYNC_MODE;
 const PLAINTEXT_FINANCIAL_PUSH_TABLES = new Set<string>([
   "transactions",
   "budgets",
@@ -21,8 +22,9 @@ export type PushQueueEntry = { id: SyncQueueId; tableName: string; rowId: string
 export type PushQueueResult = PromiseSettledResult<SyncQueueId | null>;
 
 export function shouldSkipPlaintextFinancialPush(tableName: string, options: SyncPushOptions) {
+  const remoteFinancialSync = options.remoteFinancialSync ?? DEFAULT_REMOTE_FINANCIAL_SYNC_MODE;
   return (
-    options.remoteFinancialSync === PRIVATE_BACKUP_SYNC_MODE &&
+    remoteFinancialSync === PRIVATE_BACKUP_SYNC_MODE &&
     PLAINTEXT_FINANCIAL_PUSH_TABLES.has(tableName)
   );
 }

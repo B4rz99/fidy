@@ -61,11 +61,16 @@ describe("sync module", () => {
     mockUpsertTransaction.mockReset();
   });
 
-  it("syncs by pulling first, then pushing queued rows when online", async () => {
+  it("syncs by pulling first, then pushing queued rows when legacy sync is explicit", async () => {
     const { sync } = await import("@/features/sync/services/sync");
     const db = {} as any;
 
-    const result = await sync({ db, userId: "user-1", reason: "foreground" });
+    const result = await sync({
+      db,
+      userId: "user-1",
+      reason: "foreground",
+      remoteFinancialSync: "legacy",
+    });
 
     expect(mockIsOnline).toHaveBeenCalled();
     expect(mockSyncPull).toHaveBeenCalledWith(db, expect.any(Object), "user-1");
@@ -76,6 +81,22 @@ describe("sync module", () => {
     expect(mockRefreshTransactions).toHaveBeenCalledTimes(1);
     expect(result.status).toBe("synced");
     expect(result.unresolvedConflicts).toBe(0);
+  });
+
+  it("uses Private Backup mode by default", async () => {
+    const { sync } = await import("@/features/sync/services/sync");
+    const db = {} as any;
+
+    const result = await sync({ db, userId: "user-1", reason: "foreground" });
+
+    expect(mockGetSupabase).toHaveBeenCalled();
+    expect(mockSyncPull).not.toHaveBeenCalled();
+    expect(mockSyncPush).toHaveBeenCalledWith(db, expect.any(Object), {
+      userId: "user-1",
+      remoteFinancialSync: "privateBackup",
+    });
+    expect(mockRefreshTransactions).not.toHaveBeenCalled();
+    expect(result.status).toBe("synced");
   });
 
   it("returns skipped_offline without touching remote sync when offline", async () => {
@@ -91,7 +112,7 @@ describe("sync module", () => {
     expect(result.status).toBe("skipped_offline");
   });
 
-  it("does not run legacy Remote Financial Sync in Private Backup mode", async () => {
+  it("runs only push cleanup in Private Backup mode", async () => {
     const { sync } = await import("@/features/sync/services/sync");
     const db = {} as any;
 
@@ -101,9 +122,12 @@ describe("sync module", () => {
       remoteFinancialSync: "privateBackup",
     });
 
-    expect(mockGetSupabase).not.toHaveBeenCalled();
+    expect(mockGetSupabase).toHaveBeenCalled();
     expect(mockSyncPull).not.toHaveBeenCalled();
-    expect(mockSyncPush).not.toHaveBeenCalled();
+    expect(mockSyncPush).toHaveBeenCalledWith(db, expect.any(Object), {
+      userId: "user-1",
+      remoteFinancialSync: "privateBackup",
+    });
     expect(mockRefreshTransactions).not.toHaveBeenCalled();
     expect(result.status).toBe("synced");
   });

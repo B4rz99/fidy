@@ -271,9 +271,9 @@ function createCompositeSyncMeta(updatedAt: string, id: string) {
   return syncMeta;
 }
 
-async function runSyncPush(mockSupabase: any, userId = SYNC_USER_ID, options?: any) {
+async function runSyncPush(mockSupabase: any, userId = SYNC_USER_ID, options: any = {}) {
   const { syncPush } = await import("@/features/sync/services/syncEngine");
-  await syncPush(mockDb, mockSupabase, { userId, ...options });
+  await syncPush(mockDb, mockSupabase, { userId, remoteFinancialSync: "legacy", ...options });
 }
 
 async function runSyncPull(mockSupabase: any, userId = SYNC_USER_ID) {
@@ -470,10 +470,21 @@ describe("syncEngine", () => {
       const mockSupabase = createMockSupabase();
 
       const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, { userId: "user-1" });
+      await syncPush(mockDb, mockSupabase, { userId: "user-1", remoteFinancialSync: "legacy" });
 
       expect(mockSupabase.from).not.toHaveBeenCalled();
       expect(mockClearSyncEntries).not.toHaveBeenCalled();
+    });
+
+    it("does not push plaintext financial rows by default", async () => {
+      mockGetQueuedSyncEntries.mockReturnValueOnce(PRIVATE_BACKUP_BLOCKED_PUSH_ENTRIES);
+      const mockSupabase = createMockSupabase();
+
+      const { syncPush } = await import("@/features/sync/services/syncEngine");
+      await syncPush(mockDb, mockSupabase, { userId: SYNC_USER_ID });
+
+      expect(mockSupabase.from).not.toHaveBeenCalled();
+      expectQueueCleared(...PRIVATE_BACKUP_BLOCKED_PUSH_ENTRY_IDS);
     });
 
     it("upserts transaction row to supabase and clears queue on success", async () => {
@@ -532,7 +543,7 @@ describe("syncEngine", () => {
       const mockSupabase = createMockSupabase();
 
       const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, { userId: "user-1" });
+      await syncPush(mockDb, mockSupabase, { userId: "user-1", remoteFinancialSync: "legacy" });
 
       expect(mockClearSyncEntries).not.toHaveBeenCalled();
     });
@@ -724,7 +735,7 @@ describe("syncEngine", () => {
       const mockSupabase = createMockSupabase();
 
       const { syncPush } = await import("@/features/sync/services/syncEngine");
-      await syncPush(mockDb, mockSupabase, { userId: "user-1" });
+      await syncPush(mockDb, mockSupabase, { userId: "user-1", remoteFinancialSync: "legacy" });
 
       expect(mockClearSyncEntries).toHaveBeenCalledWith(mockDb, ["sq-1"]);
     });
@@ -971,7 +982,10 @@ describe("syncEngine", () => {
       const mockSupabase = createMockSupabase({ data: [], error: null });
 
       const { fullSync } = await import("@/features/sync/services/syncEngine");
-      const result = await fullSync(mockDb, mockSupabase, { userId: "user-1" });
+      const result = await fullSync(mockDb, mockSupabase, {
+        userId: "user-1",
+        remoteFinancialSync: "legacy",
+      });
 
       expect(result).toBe(true);
       expect(mockGetSyncMeta).toHaveBeenCalled();
@@ -984,7 +998,10 @@ describe("syncEngine", () => {
       const mockSupabase = createMockSupabase({ data: null, error: { message: "fail" } });
 
       const { fullSync } = await import("@/features/sync/services/syncEngine");
-      const result = await fullSync(mockDb, mockSupabase, { userId: "user-1" });
+      const result = await fullSync(mockDb, mockSupabase, {
+        userId: "user-1",
+        remoteFinancialSync: "legacy",
+      });
 
       expect(result).toBe(false);
       expect(mockGetSyncMeta).toHaveBeenCalled();
@@ -1006,10 +1023,26 @@ describe("syncEngine", () => {
       });
 
       const { fullSync } = await import("@/features/sync/services/syncEngine");
-      const result = await fullSync(mockDb, mockSupabase, { userId: "user-1" });
+      const result = await fullSync(mockDb, mockSupabase, {
+        userId: "user-1",
+        remoteFinancialSync: "legacy",
+      });
 
       expect(result).toBe(true);
       expect(mockGetQueuedSyncEntries).toHaveBeenCalled();
+    });
+
+    it("does not pull or push plaintext financial tables by default", async () => {
+      mockGetQueuedSyncEntries.mockReturnValueOnce(PRIVATE_BACKUP_BLOCKED_PUSH_ENTRIES);
+      const mockSupabase = createMockSupabase();
+
+      const { fullSync } = await import("@/features/sync/services/syncEngine");
+      const result = await fullSync(mockDb, mockSupabase, { userId: SYNC_USER_ID });
+
+      expect(result).toBe(true);
+      expect(mockSupabase.from).not.toHaveBeenCalled();
+      expect(mockGetSyncMeta).not.toHaveBeenCalled();
+      expectQueueCleared(...PRIVATE_BACKUP_BLOCKED_PUSH_ENTRY_IDS);
     });
   });
 

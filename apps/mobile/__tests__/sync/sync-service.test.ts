@@ -64,7 +64,7 @@ describe("createSyncService", () => {
     });
   });
 
-  it("skips legacy Remote Financial Sync for Private Backup users", async () => {
+  it("cleans skipped plaintext queue entries for Private Backup users", async () => {
     const supabase = {};
     const { service, ports } = createService({
       supabase: { getSupabase: vi.fn().mockReturnValue(supabase) },
@@ -80,13 +80,16 @@ describe("createSyncService", () => {
     });
 
     expect(result.status).toBe("synced");
-    expect(ports.supabase.getSupabase).not.toHaveBeenCalled();
+    expect(ports.supabase.getSupabase).toHaveBeenCalled();
     expect(ports.syncPull).not.toHaveBeenCalled();
-    expect(ports.syncPush).not.toHaveBeenCalled();
+    expect(ports.syncPush).toHaveBeenCalledWith(TEST_DB, supabase, {
+      userId: TEST_USER_ID,
+      remoteFinancialSync: "privateBackup",
+    });
     expect(ports.refreshTransactions).not.toHaveBeenCalled();
   });
 
-  it("keeps legacy Remote Financial Sync as the default push capability", async () => {
+  it("uses Private Backup mode by default", async () => {
     const supabase = {};
     const { service, ports } = createService({
       supabase: { getSupabase: vi.fn().mockReturnValue(supabase) },
@@ -100,6 +103,31 @@ describe("createSyncService", () => {
       userId: TEST_USER_ID,
     });
 
+    expect(ports.supabase.getSupabase).toHaveBeenCalled();
+    expect(ports.syncPull).not.toHaveBeenCalled();
+    expect(ports.syncPush).toHaveBeenCalledWith(TEST_DB, supabase, {
+      userId: TEST_USER_ID,
+      remoteFinancialSync: "privateBackup",
+    });
+    expect(ports.refreshTransactions).not.toHaveBeenCalled();
+  });
+
+  it("runs legacy Remote Financial Sync only when explicitly requested", async () => {
+    const supabase = {};
+    const { service, ports } = createService({
+      supabase: { getSupabase: vi.fn().mockReturnValue(supabase) },
+      syncPull: vi.fn().mockResolvedValue(true),
+      syncPush: vi.fn().mockResolvedValue(undefined),
+      refreshTransactions: vi.fn().mockResolvedValue(undefined),
+    });
+
+    await service.run({
+      db: TEST_DB,
+      userId: TEST_USER_ID,
+      remoteFinancialSync: "legacy",
+    });
+
+    expect(ports.syncPull).toHaveBeenCalledWith(TEST_DB, supabase, TEST_USER_ID);
     expect(ports.syncPush).toHaveBeenCalledWith(TEST_DB, supabase, {
       userId: TEST_USER_ID,
       remoteFinancialSync: "legacy",

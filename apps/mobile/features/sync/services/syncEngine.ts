@@ -13,7 +13,8 @@ export async function fullSync(
   supabase: SupabaseClient,
   request: SyncPushRequest
 ): Promise<boolean> {
-  const pullOk = await syncPull(db, supabase, request.userId);
+  const pullOk =
+    request.remoteFinancialSync === "legacy" ? await syncPull(db, supabase, request.userId) : true;
   if (pullOk) {
     await syncPush(db, supabase, request);
   }
