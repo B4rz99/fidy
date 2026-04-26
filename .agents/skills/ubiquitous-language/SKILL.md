@@ -19,11 +19,9 @@ Before proposing terms, inspect the relevant sources that already exist:
 - the relevant code and tests
 - `CONTEXT.md` or `CONTEXT-MAP.md` when present
 - `docs/adr/` when decisions affect terminology
-- `.context/fidy-vault/index.md`
-- `.context/fidy-vault/wiki/domains/`
-- `.context/fidy-vault/wiki/decisions/`
+- Mempalace `/search` results when durable memory may already contain the concept
 
-Run `bun run vault:doctor` first if you expect to read or update the vault.
+Use Mempalace for durable terminology memory outside the repo.
 
 ## What To Look For
 
@@ -39,11 +37,11 @@ Do not default to a new root-level markdown file.
 
 Write the glossary into the most appropriate durable home:
 
-1. update the existing domain page in `.context/fidy-vault/wiki/domains/` when one already owns the topic
-2. otherwise update the relevant `CONTEXT.md`
-3. only create a standalone glossary page when no existing page is a natural fit
+1. update the relevant `CONTEXT.md`, `CONTEXT-MAP.md`, or ADR when the terminology belongs in repo documentation
+2. use Mempalace `/mine` when the terminology should live as durable memory outside the repo
+3. only create a standalone glossary file when no existing page is a natural fit and the user wants repo-local documentation
 
-If you create a new vault page, place it under `.context/fidy-vault/wiki/domains/` and follow the vault maintenance rules in `.context/fidy-vault/AGENTS.md`.
+If you mine terminology into Mempalace, keep the payload compact and cite the code/docs that established each term.
 
 ## Output Shape
 
@@ -69,4 +67,4 @@ Group terms by subdomain, actor, or lifecycle when that clarifies the language.
 
 - Summarize the chosen canonical terms inline for the user.
 - If you updated durable documentation, mention the file you changed.
-- If you updated the vault, also mention the `index.md` and `log.md` updates.
+- If you mined terminology into Mempalace, mention that memory was updated.

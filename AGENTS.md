@@ -5,18 +5,18 @@
 - Bun workspace wrappers should use `bun run --cwd <dir> --shell=bun <script>`.
 - Root single-file Bun tests should use `bun test ./path/to.test.ts`, not `bun test path/to.test.ts`.
 - `bunx drizzle-kit generate` does not update `apps/mobile/drizzle/migrations.js`; add the new `m00xx` import/export manually.
-- Run `bun run vault:doctor` before reading `.context/fidy-vault`; fresh workspaces may be missing the symlink.
+- Mempalace is the active durable-memory system.
 - Shared Effect runners should use `Effect.runPromiseExit(...)` plus `Cause.squash(...)` so boundaries rethrow the original error.
 - Tooling gap: lint prefers barrels, but some barrels such as `@/shared/db` and feature `index.ts` files can pull Expo/UI runtime into pure code. For pure modules, prefer narrow `*.public.ts` surfaces; for DB internals, use `shared/db/schema`, `shared/db/client`, or `shared/db/enqueue-sync` when needed.
 - `apps/mobile/features/qa/index.ts` must lazy-load `start-local-qa-session`; eager re-exports pull Drizzle SQL into unrelated tests.
 - Keep notification deep-link builders and route readers in sync; support both legacy params (`category`, `id`) and normalized params (`categoryId`, `goalId`) when needed.
 - Lizard can overcount regex-heavy files and TypeScript overloads; verify hotspots manually before acting on the metric.
 
-## External Vault
+## Durable Memory
 
-- Use `.context/fidy-vault` as the stable path to the external vault.
-- Before vault ingest/query/lint work, run `bun run vault:doctor`.
-- After that succeeds, read `.context/fidy-vault/AGENTS.md`.
+- Use Mempalace for durable project memory, research notes, source digests, architecture notes, workflows, and domain knowledge that should live outside the repo.
+- Prefer the repo-local Mempalace plugin exposed through `.agents/plugins/marketplace.json` and configured by `mempalace.yaml`.
+- Use the Mempalace skills for memory work: `/search` for lookup, `/mine` for ingest, `/status` for health, and `/help` for command guidance.
 
 ## Testing
 
