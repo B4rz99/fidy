@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { checkRateLimit } from "../_shared/rate-limit.ts";
+import { deleteAccountRemoteData } from "./cleanup.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
@@ -72,12 +73,18 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Delete user (CASCADE on foreign keys handles data cleanup)
-    const { error: deleteError } = await serviceClient.auth.admin.deleteUser(userId);
+    const deleteResult = await deleteAccountRemoteData(serviceClient, userId);
 
-    if (deleteError) {
-      console.error("Failed to delete user:", deleteError.message);
-      return jsonResponse({ success: false, error: "delete_failed" }, 500);
+    if (!deleteResult.success) {
+      console.error("Failed to delete account remote data:", deleteResult.failures);
+      return jsonResponse(
+        {
+          success: false,
+          error: "delete_failed",
+          failureCount: deleteResult.failures.length,
+        },
+        500
+      );
     }
 
     return jsonResponse({ success: true });
