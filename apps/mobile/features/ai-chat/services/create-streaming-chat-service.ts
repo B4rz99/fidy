@@ -1,3 +1,7 @@
+import type {
+  BuildFinancialContextPacketInput,
+  FinancialContextPacket,
+} from "@/features/advisor/public";
 import type { AnyDb } from "@/shared/db";
 import {
   type AppTelemetry,
@@ -37,8 +41,14 @@ type CreateStreamingChatServiceDeps = StreamStateDeps & {
       readonly onDone: () => void;
       readonly onError: (error: string) => void;
     },
-    signal?: AbortSignal
+    options?: {
+      readonly signal?: AbortSignal;
+      readonly financialContextPacket?: FinancialContextPacket;
+    }
   ) => Promise<void>;
+  readonly buildFinancialContextPacket?: (
+    input: BuildFinancialContextPacketInput
+  ) => FinancialContextPacket | Promise<FinancialContextPacket>;
   readonly createChatSession: (db: AnyDb, userId: UserId, firstMessage: string) => Promise<unknown>;
   readonly addUserChatMessage: (db: AnyDb, userId: UserId, content: string) => Promise<unknown>;
   readonly addAssistantChatMessage: (
@@ -101,11 +111,14 @@ async function consumeStream(
   recorder: StreamRecorder
 ): Promise<void> {
   try {
-    await run.deps.streamChat(
-      conversation,
-      createStreamCallbacks(run, recorder),
-      run.controller.signal
-    );
+    const financialContextPacket = await run.deps.buildFinancialContextPacket?.({
+      db: run.request.db,
+      userId: run.request.userId,
+    });
+    await run.deps.streamChat(conversation, createStreamCallbacks(run, recorder), {
+      signal: run.controller.signal,
+      financialContextPacket,
+    });
   } catch (error) {
     if (run.controller.signal.aborted) return;
     setStreamOutcome(recorder, { type: "error", message: toThrownErrorMessage(error) });

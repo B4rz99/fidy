@@ -90,64 +90,6 @@ function createUserClient(token: string) {
   });
 }
 
-function currentMonthString(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function previousMonthString(month: string): string {
-  const [year, m] = month.split("-").map(Number);
-  const prevM = m === 1 ? 12 : m - 1;
-  const prevY = m === 1 ? year - 1 : year;
-  return `${prevY}-${String(prevM).padStart(2, "0")}`;
-}
-
-function nextMonthString(month: string): string {
-  const [year, m] = month.split("-").map(Number);
-  const nextM = m === 12 ? 1 : m + 1;
-  const nextY = m === 12 ? year + 1 : year;
-  return `${nextY}-${String(nextM).padStart(2, "0")}`;
-}
-
-type CategorySpending = { categoryId: string; total: number };
-type CategoryDelta = { categoryId: string; current: number; previous: number; delta: number };
-
-function computeSpendingByCategory(
-  transactions: { category_id: string; amount: number; type: string; date: string }[],
-  month: string
-): CategorySpending[] {
-  const start = `${month}-01`;
-  const end = `${nextMonthString(month)}-01`;
-  const map = transactions
-    .filter((t) => t.type === "expense" && t.date >= start && t.date < end)
-    .reduce(
-      (acc, t) => acc.set(t.category_id, (acc.get(t.category_id) ?? 0) + t.amount),
-      new Map<string, number>()
-    );
-  return Array.from(map.entries()).map(([categoryId, total]) => ({
-    categoryId,
-    total,
-  }));
-}
-
-function computeDeltas(current: CategorySpending[], previous: CategorySpending[]): CategoryDelta[] {
-  const prevMap = new Map(previous.map((p) => [p.categoryId, p.total]));
-  const allCategories = new Set([
-    ...current.map((c) => c.categoryId),
-    ...previous.map((p) => p.categoryId),
-  ]);
-  return Array.from(allCategories).map((categoryId) => {
-    const currentTotal = current.find((c) => c.categoryId === categoryId)?.total ?? 0;
-    const previousTotal = prevMap.get(categoryId) ?? 0;
-    return {
-      categoryId,
-      current: currentTotal,
-      previous: previousTotal,
-      delta: currentTotal - previousTotal,
-    };
-  });
-}
-
 function jsonResponse(
   body: unknown,
   status = 200,
@@ -178,95 +120,101 @@ function structuredLog(fields: {
 }
 
 type GoalSummary = {
-  name: string;
-  type: string;
-  targetAmount: number;
-  currentAmount: number;
-  progressPct: number;
+  readonly name: string;
+  readonly type: string;
+  readonly targetAmount: number;
+  readonly currentAmount: number;
+  readonly progressPct: number;
 };
 
-async function fetchGoalsContext(
-  userClient: ReturnType<typeof createClient>
-): Promise<GoalSummary[]> {
-  try {
-    const { data: goals, error: goalsError } = await userClient
-      .from("goals")
-      .select("id, name, type, target_amount, target_date")
-      .is("deleted_at", null);
-
-    if (goalsError || !goals || goals.length === 0) return [];
-
-    const { data: contributions, error: contribError } = await userClient
-      .from("goal_contributions")
-      .select("goal_id, amount")
-      .is("deleted_at", null)
-      .in(
-        "goal_id",
-        goals.map((g: { id: string }) => g.id)
-      );
-
-    if (contribError) return [];
-
-    const totals = (contributions ?? []).reduce((acc, c) => {
-      const contrib = c as { goal_id: string; amount: number };
-      acc.set(contrib.goal_id, (acc.get(contrib.goal_id) ?? 0) + contrib.amount);
-      return acc;
-    }, new Map<string, number>());
-
-    return goals.map(
-      (g: {
-        id: string;
-        name: string;
-        type: string;
-        target_amount: number;
-        target_date: string | null;
-      }) => {
-        const current = totals.get(g.id) ?? 0;
-        const progressPct = g.target_amount > 0 ? Math.round((current / g.target_amount) * 100) : 0;
-        return {
-          name: g.name,
-          type: g.type,
-          targetAmount: g.target_amount,
-          currentAmount: current,
-          progressPct,
-        };
-      }
-    );
-  } catch {
-    return [];
-  }
-}
+type FinancialContextPacket = {
+  readonly summary: unknown;
+  readonly recentTransactions?: readonly unknown[];
+  readonly budgets?: readonly unknown[];
+  readonly memories?: readonly { readonly fact: string; readonly category: string }[];
+  readonly goals?: readonly GoalSummary[];
+  readonly accounts?: readonly unknown[];
+  readonly captureEvidence?: readonly unknown[];
+};
 
 function formatGoalLine(g: GoalSummary): string {
   const amounts = `$${g.currentAmount.toLocaleString("es-CO")} / $${g.targetAmount.toLocaleString("es-CO")} (${g.progressPct}%)`;
   return `- "${g.name}" (${g.type}): ${amounts}`;
 }
 
-function buildSystemPrompt(context: {
-  transactions: unknown[];
-  summary: unknown;
-  memories: { fact: string; category: string }[];
-  goals: GoalSummary[];
-}): string {
+function buildSystemPrompt(context: { packet: FinancialContextPacket }): string {
   const parts = [SYSTEM_PROMPT];
 
-  if (context.memories.length > 0) {
-    const memoryLines = context.memories.map((m) => `- [${m.category}] ${m.fact}`).join("\n");
+  if ((context.packet.memories ?? []).length > 0) {
+    const memoryLines = (context.packet.memories ?? [])
+      .map((memory) => `- [${memory.category}] ${memory.fact}`)
+      .join("\n");
     parts.push(`\n## What you know about this user\n${memoryLines}`);
   }
 
-  if (context.goals.length > 0) {
-    const goalLines = context.goals.map(formatGoalLine).join("\n");
+  if ((context.packet.goals ?? []).length > 0) {
+    const goalLines = (context.packet.goals ?? []).map(formatGoalLine).join("\n");
     parts.push(`\n## User's Financial Goals\n${goalLines}`);
   }
 
-  parts.push(`\n## Current financial context\n${JSON.stringify(context.summary)}`);
+  parts.push(`\n## Current financial context\n${JSON.stringify(context.packet.summary)}`);
 
-  if (context.transactions.length > 0) {
-    parts.push(`\n## Recent transactions\n${JSON.stringify(context.transactions)}`);
+  if ((context.packet.budgets ?? []).length > 0) {
+    parts.push(`\n## Current budgets\n${JSON.stringify(context.packet.budgets)}`);
+  }
+
+  if ((context.packet.accounts ?? []).length > 0) {
+    parts.push(`\n## Financial accounts\n${JSON.stringify(context.packet.accounts)}`);
+  }
+
+  if ((context.packet.captureEvidence ?? []).length > 0) {
+    parts.push(`\n## Capture evidence signals\n${JSON.stringify(context.packet.captureEvidence)}`);
+  }
+
+  if ((context.packet.recentTransactions ?? []).length > 0) {
+    parts.push(`\n## Recent transactions\n${JSON.stringify(context.packet.recentTransactions)}`);
   }
 
   return parts.join("\n");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isOptionalArrayOf(value: unknown, isItemValid: (item: unknown) => boolean): boolean {
+  return value === undefined || (Array.isArray(value) && value.every(isItemValid));
+}
+
+function isUnknownItem(_value: unknown): boolean {
+  return true;
+}
+
+function isMemorySummary(value: unknown): boolean {
+  return isRecord(value) && typeof value.fact === "string" && typeof value.category === "string";
+}
+
+function isGoalSummary(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    typeof value.name === "string" &&
+    typeof value.type === "string" &&
+    typeof value.targetAmount === "number" &&
+    typeof value.currentAmount === "number" &&
+    typeof value.progressPct === "number"
+  );
+}
+
+function isFinancialContextPacket(value: unknown): value is FinancialContextPacket {
+  if (!isRecord(value) || !("summary" in value)) return false;
+  return (
+    isOptionalArrayOf(value.recentTransactions, isUnknownItem) &&
+    isOptionalArrayOf(value.budgets, isUnknownItem) &&
+    isOptionalArrayOf(value.memories, isMemorySummary) &&
+    isOptionalArrayOf(value.goals, isGoalSummary) &&
+    isOptionalArrayOf(value.accounts, isUnknownItem) &&
+    isOptionalArrayOf(value.captureEvidence, isUnknownItem)
+  );
 }
 
 Deno.serve(async (req) => {
@@ -488,71 +436,20 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: "invalid_request" }, 400);
     }
 
-    // Server-side context building
-    const userClient = createUserClient(token);
-    const month = currentMonthString();
-    const prevMonth = previousMonthString(month);
-
-    const contextStartTime = Date.now();
-    const [balanceResult, txResult, memoriesResult, goals] = await Promise.all([
-      userClient.rpc("get_user_balance"),
-      userClient
-        .from("transactions")
-        .select("type, amount, category_id, description, date")
-        .is("deleted_at", null)
-        .gte("date", `${prevMonth}-01`)
-        .order("date", { ascending: false }),
-      userClient.from("user_memories").select("fact, category").is("deleted_at", null),
-      fetchGoalsContext(userClient),
-    ]);
-    const contextQueryMs = Date.now() - contextStartTime;
-
-    const contextError =
-      balanceResult.error?.message ?? txResult.error?.message ?? memoriesResult.error?.message;
-    if (contextError) {
+    const { financialContextPacket } = body;
+    if (!isFinancialContextPacket(financialContextPacket)) {
       structuredLog({
         request_id: requestId,
         user_id: userId,
         mode,
         success: false,
         latency_ms: Date.now() - startTime,
-        error_type: "context_query_error",
-        context_query_ms: contextQueryMs,
+        error_type: "invalid_context_packet",
       });
-      return jsonResponse({ success: false, error: "context_query_error" }, 500);
+      return jsonResponse({ success: false, error: "invalid_context_packet" }, 400);
     }
 
-    const txData = txResult.data ?? [];
-    const currentSpending = computeSpendingByCategory(txData, month);
-    const prevSpending = computeSpendingByCategory(txData, prevMonth);
-
-    const context = {
-      transactions: txData.map(
-        (t: {
-          type: string;
-          amount: number;
-          category_id: string;
-          description: string;
-          date: string;
-        }) => ({
-          type: t.type,
-          amount: t.amount,
-          categoryId: t.category_id,
-          description: t.description,
-          date: t.date,
-        })
-      ),
-      summary: {
-        balance: (balanceResult.data as number) ?? 0,
-        currentMonthSpending: currentSpending,
-        previousMonthSpending: prevSpending,
-        monthOverMonthDeltas: computeDeltas(currentSpending, prevSpending),
-      },
-      memories: (memoriesResult.data ?? []) as { fact: string; category: string }[],
-      goals,
-    };
-
-    const systemPrompt = buildSystemPrompt(context);
+    const systemPrompt = buildSystemPrompt({ packet: financialContextPacket });
 
     const stream = await openai.chat.completions.create({
       model: MODEL,
@@ -581,7 +478,7 @@ Deno.serve(async (req) => {
             latency_ms: Date.now() - startTime,
             error_type: null,
             message_count: messages.length,
-            context_query_ms: contextQueryMs,
+            context_query_ms: 0,
           });
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : String(err);

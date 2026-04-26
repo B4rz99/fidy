@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import { fetch as expoFetch } from "expo/fetch";
+import type { FinancialContextPacket } from "@/features/advisor/public";
 import { fromPromise } from "@/shared/effect/runtime";
 import {
   type AppSupabase,
@@ -16,6 +17,11 @@ type StreamCallbacks = {
   readonly onError: (error: string) => void;
 };
 
+type StreamChatOptions = {
+  readonly signal?: AbortSignal;
+  readonly financialContextPacket?: FinancialContextPacket;
+};
+
 type CreateAiChatApiServiceDeps = {
   readonly fetchImpl?: typeof expoFetch;
   readonly getBaseUrl?: () => string;
@@ -27,7 +33,7 @@ export type AiChatApiService = {
   readonly streamChat: (
     messages: readonly ChatMessage[],
     callbacks: StreamCallbacks,
-    signal?: AbortSignal
+    options?: StreamChatOptions
   ) => Promise<void>;
 };
 
@@ -45,6 +51,160 @@ function authHeadersEffect() {
   );
 }
 
+async function resolveAuthHeaders(input: {
+  readonly runSupabaseEffect: <A>(effect: Effect.Effect<A, unknown, AppSupabase>) => Promise<A>;
+  readonly callbacks: StreamCallbacks;
+  readonly signal?: AbortSignal;
+}): Promise<Record<string, string> | null> {
+  try {
+    return await input.runSupabaseEffect(authHeadersEffect());
+  } catch (error) {
+    if (!input.signal?.aborted) {
+      input.callbacks.onError(error instanceof Error ? error.message : "Auth error");
+    }
+    return null;
+  }
+}
+
+async function postChat(input: {
+  readonly fetchImpl: typeof expoFetch;
+  readonly url: string;
+  readonly headers: Record<string, string>;
+  readonly messages: readonly ChatMessage[];
+  readonly financialContextPacket?: FinancialContextPacket;
+  readonly signal?: AbortSignal;
+  readonly callbacks: StreamCallbacks;
+}): Promise<Response | null> {
+  try {
+    return await input.fetchImpl(input.url, {
+      method: "POST",
+      headers: input.headers,
+      body: JSON.stringify({
+        messages: input.messages,
+        financialContextPacket: input.financialContextPacket,
+      }),
+      signal: input.signal,
+    });
+  } catch (error) {
+    if (!input.signal?.aborted) {
+      input.callbacks.onError(error instanceof Error ? error.message : "Network error");
+    }
+    return null;
+  }
+}
+
+type SsePayloadResult = "continue" | "done";
+
+function emitChunk(input: {
+  readonly callbacks: StreamCallbacks;
+  readonly captureCallbackError: (error: unknown) => void;
+  readonly content: unknown;
+}): void {
+  try {
+    input.callbacks.onChunk(String(input.content));
+  } catch (callbackError) {
+    input.captureCallbackError(callbackError);
+  }
+}
+
+function handleSsePayload(input: {
+  readonly payload: string;
+  readonly callbacks: StreamCallbacks;
+  readonly captureCallbackError: (error: unknown) => void;
+}): SsePayloadResult {
+  if (input.payload === "[DONE]") {
+    input.callbacks.onDone();
+    return "done";
+  }
+
+  try {
+    const parsed = JSON.parse(input.payload) as Record<string, unknown>;
+    if (parsed.error) {
+      input.callbacks.onError(String(parsed.error));
+      return "done";
+    }
+    if (parsed.content) {
+      emitChunk({ ...input, content: parsed.content });
+    }
+  } catch {
+    // Skip malformed SSE lines
+  }
+  return "continue";
+}
+
+async function consumeSseStream(input: {
+  readonly reader: ReadableStreamDefaultReader<Uint8Array>;
+  readonly callbacks: StreamCallbacks;
+  readonly signal?: AbortSignal;
+  readonly captureCallbackError: (error: unknown) => void;
+}): Promise<void> {
+  const decoder = new TextDecoder();
+  // FP exemption: streaming SSE requires imperative buffering.
+  let buffer = "";
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- intentional streaming loop
+    while (true) {
+      const { done, value } = await input.reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const result = handleSsePayload({
+          payload: line.slice(6).trim(),
+          callbacks: input.callbacks,
+          captureCallbackError: input.captureCallbackError,
+        });
+        if (result === "done") return;
+      }
+    }
+
+    input.callbacks.onDone();
+  } catch (error) {
+    if (input.signal?.aborted) return;
+    input.callbacks.onError(error instanceof Error ? error.message : "Stream error");
+  }
+}
+
+function getStreamReader(
+  response: Response,
+  callbacks: StreamCallbacks
+): ReadableStreamDefaultReader<Uint8Array> | null {
+  if (!response.ok) {
+    callbacks.onError(`HTTP ${response.status}`);
+    return null;
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    callbacks.onError("No response body");
+    return null;
+  }
+  return reader;
+}
+
+async function openChatStream(input: {
+  readonly runSupabaseEffect: <A>(effect: Effect.Effect<A, unknown, AppSupabase>) => Promise<A>;
+  readonly fetchImpl: typeof expoFetch;
+  readonly url: string;
+  readonly messages: readonly ChatMessage[];
+  readonly financialContextPacket?: FinancialContextPacket;
+  readonly callbacks: StreamCallbacks;
+  readonly signal?: AbortSignal;
+}): Promise<ReadableStreamDefaultReader<Uint8Array> | null> {
+  const headers = await resolveAuthHeaders(input);
+  if (!headers) return null;
+
+  const response = await postChat({ ...input, headers });
+  if (!response) return null;
+
+  return getStreamReader(response, input.callbacks);
+}
+
 export function createAiChatApiService({
   fetchImpl = expoFetch,
   getBaseUrl = () => process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
@@ -59,90 +219,20 @@ export function createAiChatApiService({
     telemetryRuntime.run(captureErrorEffect(error)).catch(() => undefined);
 
   return {
-    async streamChat(messages, callbacks, signal) {
-      let headers: Record<string, string>;
-      try {
-        headers = await runSupabaseEffect(authHeadersEffect());
-      } catch (error) {
-        if (signal?.aborted) return;
-        callbacks.onError(error instanceof Error ? error.message : "Auth error");
-        return;
-      }
+    async streamChat(messages, callbacks, options) {
+      const { signal, financialContextPacket } = options ?? {};
+      const reader = await openChatStream({
+        runSupabaseEffect,
+        fetchImpl,
+        url: `${getBaseUrl()}/functions/v1/ai-chat`,
+        messages,
+        financialContextPacket,
+        callbacks,
+        signal,
+      });
+      if (!reader) return;
 
-      const url = `${getBaseUrl()}/functions/v1/ai-chat`;
-
-      let response: Response;
-      try {
-        response = await fetchImpl(url, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ messages }),
-          signal,
-        });
-      } catch (error) {
-        if (signal?.aborted) return;
-        callbacks.onError(error instanceof Error ? error.message : "Network error");
-        return;
-      }
-
-      if (!response.ok) {
-        callbacks.onError(`HTTP ${response.status}`);
-        return;
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        callbacks.onError("No response body");
-        return;
-      }
-
-      const decoder = new TextDecoder();
-      // FP exemption: streaming SSE requires imperative buffering.
-      let buffer = "";
-
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- intentional streaming loop
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? "";
-
-          for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            const payload = line.slice(6).trim();
-
-            if (payload === "[DONE]") {
-              callbacks.onDone();
-              return;
-            }
-
-            try {
-              const parsed = JSON.parse(payload) as Record<string, unknown>;
-              if (parsed.error) {
-                callbacks.onError(String(parsed.error));
-                return;
-              }
-              if (parsed.content) {
-                try {
-                  callbacks.onChunk(String(parsed.content));
-                } catch (callbackError) {
-                  void captureCallbackError(callbackError);
-                }
-              }
-            } catch {
-              // Skip malformed SSE lines
-            }
-          }
-        }
-
-        callbacks.onDone();
-      } catch (error) {
-        if (signal?.aborted) return;
-        callbacks.onError(error instanceof Error ? error.message : "Stream error");
-      }
+      await consumeSseStream({ reader, callbacks, signal, captureCallbackError });
     },
   };
 }

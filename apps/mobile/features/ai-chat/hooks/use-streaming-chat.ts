@@ -1,8 +1,10 @@
 import { useCallback } from "react";
+import { buildFinancialContextPacket } from "@/features/advisor/public";
 import { useOptionalUserId } from "@/features/auth/public";
 import { saveCurrentTransaction, useTransactionStore } from "@/features/transactions/store.public";
 import { tryGetDb } from "@/shared/db";
 import { parseIsoDate, trackAiMessageSent, trackTransactionCreated } from "@/shared/lib";
+import { listUserMemories } from "../data/user-memories";
 import { parseActionFromResponse } from "../lib/parse-action";
 import type { ChatAction } from "../schema";
 import { streamChat } from "../services/ai-chat-api";
@@ -13,6 +15,8 @@ import {
   createChatSession,
   useChatStore,
 } from "../store";
+
+const MAX_CONTEXT_MEMORIES = 20;
 
 const streamingChatService = createStreamingChatService({
   getState: () => {
@@ -26,6 +30,19 @@ const streamingChatService = createStreamingChatService({
   setStreaming: (isStreaming) => useChatStore.getState().setStreaming(isStreaming),
   setStreamingContent: (content) => useChatStore.getState().setStreamingContent(content),
   streamChat,
+  buildFinancialContextPacket: async (input) => {
+    const [packet, memories] = await Promise.all([
+      buildFinancialContextPacket(input),
+      listUserMemories(input.userId).catch(() => []),
+    ]);
+    return {
+      ...packet,
+      memories: memories.slice(0, MAX_CONTEXT_MEMORIES).map((memory) => ({
+        fact: memory.fact,
+        category: memory.category,
+      })),
+    };
+  },
   createChatSession,
   addUserChatMessage,
   addAssistantChatMessage,

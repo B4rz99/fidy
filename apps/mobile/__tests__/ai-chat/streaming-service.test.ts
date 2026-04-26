@@ -33,6 +33,23 @@ function makeAddAction(): ChatAction {
   };
 }
 
+function makeFinancialContextPacket() {
+  return {
+    summary: {
+      balance: 750000,
+      currentMonthSpending: [],
+      previousMonthSpending: [],
+      monthOverMonthDeltas: [],
+    },
+    recentTransactions: [],
+    budgets: [],
+    goals: [],
+    accounts: [],
+    captureEvidence: [],
+    memories: [{ fact: "Prefers cash envelopes", category: "preference" }],
+  };
+}
+
 function createState() {
   let state: {
     isStreaming: boolean;
@@ -159,6 +176,47 @@ describe("streaming chat service", () => {
     });
   });
 
+  it("builds a local financial context packet before calling the chat stream", async () => {
+    const state = createState();
+    state.setCurrentSessionId("chat-1" as ChatSessionId);
+    const packet = makeFinancialContextPacket();
+    const buildFinancialContextPacket = vi.fn().mockResolvedValue(packet);
+    const streamChat = vi.fn(async (_messages, callbacks) => {
+      callbacks.onDone();
+    });
+
+    const service = createStreamingChatService({
+      getState: state.getState,
+      setStreaming: state.setStreaming,
+      setStreamingContent: state.setStreamingContent,
+      streamChat,
+      buildFinancialContextPacket,
+      createChatSession: vi.fn(),
+      addUserChatMessage: vi.fn().mockResolvedValue(undefined),
+      addAssistantChatMessage: vi.fn().mockResolvedValue(makeAssistantMessage("")),
+      parseActionFromResponse: () => null,
+      trackAiMessageSent: vi.fn(),
+      telemetry: makeTelemetry().telemetry,
+    });
+
+    await service.sendMessage({
+      db: mockDb,
+      userId: USER_ID,
+      text: "how am I doing?",
+      executeAction: vi.fn(),
+    });
+
+    expect(buildFinancialContextPacket).toHaveBeenCalledWith({ db: mockDb, userId: USER_ID });
+    expect(streamChat).toHaveBeenCalledWith(
+      [{ role: "user", content: "how am I doing?" }],
+      expect.any(Object),
+      {
+        signal: expect.any(AbortSignal),
+        financialContextPacket: packet,
+      }
+    );
+  });
+
   it("captures action failures without breaking the assistant reply", async () => {
     const state = createState();
     state.setCurrentSessionId("chat-1" as ChatSessionId);
@@ -242,11 +300,11 @@ describe("streaming chat service", () => {
       getState: state.getState,
       setStreaming: state.setStreaming,
       setStreamingContent: state.setStreamingContent,
-      streamChat: (_messages, _callbacks, signal) =>
+      streamChat: (_messages, _callbacks, options) =>
         new Promise<void>((resolve) => {
-          capturedSignal = signal;
+          capturedSignal = options?.signal;
           resolveStarted?.();
-          signal?.addEventListener("abort", () => resolve());
+          options?.signal?.addEventListener("abort", () => resolve());
         }),
       createChatSession: vi.fn(),
       addUserChatMessage: vi.fn().mockResolvedValue(undefined),
@@ -295,23 +353,23 @@ describe("streaming chat service", () => {
       getState: state.getState,
       setStreaming: state.setStreaming,
       setStreamingContent: state.setStreamingContent,
-      streamChat: (_messages, callbacks, signal) => {
+      streamChat: (_messages, callbacks, options) => {
         invocation += 1;
 
         if (invocation === 1) {
           return new Promise<void>((resolve) => {
-            firstSignal = signal;
+            firstSignal = options?.signal;
             resolveFirst = resolve;
             resolveFirstStarted?.();
           });
         }
 
         return new Promise<void>((resolve) => {
-          secondSignal = signal;
+          secondSignal = options?.signal;
           callbacks.onChunk("new stream");
           resolveSecond = resolve;
           resolveSecondStarted?.();
-          signal?.addEventListener("abort", () => resolve());
+          options?.signal?.addEventListener("abort", () => resolve());
         });
       },
       createChatSession: vi.fn(),
