@@ -204,7 +204,7 @@ function runSyncEffect({
   db,
   userId,
   reason: _reason = "foreground",
-  remoteFinancialSync = "legacy",
+  remoteFinancialSync = "privateBackup",
 }: SyncInput) {
   return Effect.gen(function* () {
     void _reason;
@@ -219,6 +219,8 @@ function runSyncEffect({
     }
 
     if (remoteFinancialSync === "privateBackup") {
+      const supabase = yield* currentSupabaseClientEffect;
+      yield* fromPromise(() => syncPush(db, supabase, { userId, remoteFinancialSync }));
       return {
         status: "synced" as const,
         unresolvedConflicts: yield* unresolvedConflictCountEffect(db),
