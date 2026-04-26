@@ -1,29 +1,17 @@
 import { useRouter } from "expo-router";
-import { useMemo } from "react";
 import { useAuthStore } from "@/features/auth/hooks.public";
-import { getUnsyncedCount, useDeleteAccountMutation } from "@/features/settings/hooks.public";
+import { useDeleteAccountMutation } from "@/features/settings/hooks.public";
 import { TriangleAlert } from "@/shared/components/icons";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "@/shared/components/rn";
-import { getDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 export default function DeleteAccountSheet() {
   const { t } = useTranslation();
   const router = useRouter();
-  const userId = useAuthStore((s) => s.session?.user.id);
   const accessToken = useAuthStore((s) => s.session?.access_token);
   const deleteAccount = useDeleteAccountMutation();
   const accentRed = useThemeColor("accentRed");
   const borderColor = useThemeColor("borderSubtle");
-  // getDb is a cached lookup here — DB is already open from AuthenticatedShell
-  const unsyncedCount = useMemo(() => {
-    if (!userId) return 0;
-    try {
-      return getUnsyncedCount(getDb(userId));
-    } catch {
-      return 0;
-    }
-  }, [userId]);
 
   const handleDelete = async () => {
     try {
@@ -63,14 +51,6 @@ export default function DeleteAccountSheet() {
       >
         {t("settings.deleteAccountWarning")}
       </Text>
-      {unsyncedCount > 0 ? (
-        <Text
-          className="font-poppins-semibold"
-          style={{ fontSize: 13, color: accentRed, textAlign: "center" }}
-        >
-          {t("settings.deleteAccountUnsyncedWarning", { count: unsyncedCount })}
-        </Text>
-      ) : null}
       <View style={{ width: "100%", gap: 12, marginTop: 8 }}>
         <Pressable
           onPress={() => router.back()}

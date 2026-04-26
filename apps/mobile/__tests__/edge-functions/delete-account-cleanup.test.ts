@@ -7,7 +7,7 @@ import { deleteAccountRemoteData } from "../../../../supabase/functions/delete-a
 const USER_ID = "00000000-0000-4000-8000-000000000001";
 
 describe("delete-account remote cleanup", () => {
-  it("deletes encrypted backups, operational rows, legacy plaintext rows, and the auth user", async () => {
+  it("deletes encrypted backups, operational rows, and the auth user", async () => {
     const supabase = createDeleteAccountSupabase({
       backupRows: [{ id: "backup-1" }, { id: "backup-2" }],
     });
@@ -22,13 +22,6 @@ describe("delete-account remote cleanup", () => {
       "push_devices",
       "notification_preferences",
       "rate_limits",
-      "account_suggestion_dismissals",
-      "capture_evidence",
-      "financial_account_identifiers",
-      "opening_balances",
-      "transfers",
-      "transactions",
-      "financial_accounts",
     ]);
     expect(supabase.storageRemove).toHaveBeenCalledWith([
       `${USER_ID}/backup-1.json`,

@@ -4,10 +4,10 @@
 
 Ship first-class **Financial Accounts** without slowing onboarding:
 
-- auto-create one default financial account before first sync
-- keep onboarding fast: `connect email -> sync -> optional improve accuracy -> budget`
+- auto-create one default financial account before first capture import
+- keep onboarding fast: `connect email -> capture import -> optional improve accuracy -> budget`
 - assign every transaction to a financial account
-- suggest account creation/linking after sync from repeated scoped evidence
+- suggest account creation/linking after capture import from repeated scoped evidence
 - separate **Transfer** from **Transaction**
 
 ## Non-goals for this slice
@@ -23,7 +23,7 @@ Ship first-class **Financial Accounts** without slowing onboarding:
 The current app is transaction-only:
 
 - `transactions` have no `accountId` in [apps/mobile/shared/db/schema.ts](../apps/mobile/shared/db/schema.ts#L34)
-- onboarding syncs captures before any account setup in [apps/mobile/app/(auth)/onboarding.tsx](../apps/mobile/app/(auth)/onboarding.tsx#L51)
+- onboarding capture imports captures before any account setup in [apps/mobile/app/(auth)/onboarding.tsx](../apps/mobile/app/(auth)/onboarding.tsx#L51)
 - capture pipelines save transactions directly from coarse source data in:
   - [apps/mobile/features/email-capture/services/email-pipeline.ts](../apps/mobile/features/email-capture/services/email-pipeline.ts#L56)
   - [apps/mobile/features/capture-sources/services/notification-pipeline.ts](../apps/mobile/features/capture-sources/services/notification-pipeline.ts#L31)
@@ -61,7 +61,7 @@ Implementation notes:
 
 - because the app is unreleased, make the schema change cleanly instead of adding temporary nullable account fields
 - keep balances derived from opening balances + transactions + transfers
-- every new table must use sync queue integration
+- new user-data tables stay local and are covered by encrypted backup export/import
 
 Exit criteria:
 
@@ -83,7 +83,7 @@ Execution checklist:
 - [ ] Add `financial_accounts`, `financial_account_identifiers`, `opening_balances`, and `transfers` tables.
 - [ ] Extend `transactions` with non-null `account_id` and explicit `account_attribution_state`.
 - [ ] Add the minimal repository/build/decoder layer needed to read and write the new entities cleanly.
-- [ ] Wire sync queue support for every new user-data table introduced in this slice.
+- [ ] Wire encrypted backup export/import coverage for every new user-data table introduced in this slice.
 - [ ] Remove `"transfer"` from transaction categorization/schema so transfer semantics stop leaking through categories.
 
 Guardrails:
@@ -99,7 +99,7 @@ Make day-zero ownership real before touching suggestions.
 Scope:
 
 - create one default financial account automatically at registration/onboarding start
-- wire onboarding initialization so the default account exists before first sync
+- wire onboarding initialization so the default account exists before first capture import
 - update manual transaction creation/edit flows to require an account with default preselected
 - update repositories/builders/stores so `StoredTransaction` includes `accountId` and `accountAttributionState`
 
@@ -112,7 +112,7 @@ Primary files:
 
 Exit criteria:
 
-- first sync works without explicit account setup
+- first capture import works without explicit account setup
 - manual transactions always save with an account
 - default account exists exactly once per user
 
@@ -128,16 +128,16 @@ Entry points:
 
 Execution checklist:
 
-- [ ] Add a bootstrap path that creates exactly one default financial account before onboarding sync begins.
+- [ ] Add a bootstrap path that creates exactly one default financial account before onboarding capture import begins.
 - [ ] Ensure the bootstrap is idempotent so it does not create duplicate default accounts.
 - [ ] Thread default-account lookup into every capture pipeline save path.
 - [ ] Extend `StoredTransaction` and transaction builders/rows with `accountId` and `accountAttributionState`.
 - [ ] Add account selection to manual transaction create/edit with the default account preselected.
-- [ ] Keep first-sync onboarding working without any new required account setup step.
+- [ ] Keep first-capture-import onboarding working without any new required account setup step.
 
 Guardrails:
 
-- Do not surface required account setup before sync.
+- Do not surface required account setup before capture import.
 - Do not create more than one default account per user.
 - Unresolved fallback-assigned transactions must remain provisional for account-specific balances.
 
@@ -243,7 +243,7 @@ Add the user-facing accuracy flow after the engine works.
 
 Scope:
 
-- insert optional onboarding step after sync and before budget setup
+- insert optional onboarding step after capture import and before budget setup
 - auto-enter that step only when strong suggestions exist
 - skip it entirely when none exist
 - reuse the same consolidated review screen from onboarding and later home prompt
@@ -277,7 +277,7 @@ Entry points:
 
 Execution checklist:
 
-- [ ] Insert the optional post-sync account-accuracy step after sync and before budget setup.
+- [ ] Insert the optional post-capture account-accuracy step after capture import and before budget setup.
 - [ ] Auto-enter the step only when strong suggestions exist; skip it entirely otherwise.
 - [ ] Reuse one consolidated suggestion-review screen from onboarding and later home prompt.
 - [ ] Cap onboarding-visible suggestions at 3.
@@ -442,7 +442,7 @@ Do **Slices 1-2 together** before anything else:
 1. add `financial_accounts`
 2. auto-create default account
 3. add `transactions.account_id`
-4. thread account ownership through manual entry + sync save paths
+4. thread account ownership through manual entry + capture save paths
 
 That gives a working backbone for every later slice.
 

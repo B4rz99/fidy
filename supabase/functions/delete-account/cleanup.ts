@@ -61,16 +61,6 @@ const OPERATIONAL_REMOTE_TABLES = [
   "rate_limits",
 ] as const;
 
-const LEGACY_PLAINTEXT_FINANCIAL_TABLES = [
-  "account_suggestion_dismissals",
-  "capture_evidence",
-  "financial_account_identifiers",
-  "opening_balances",
-  "transfers",
-  "transactions",
-  "financial_accounts",
-] as const;
-
 export async function deleteAccountRemoteData(
   supabase: DeleteAccountSupabaseClient,
   userId: string
@@ -83,9 +73,7 @@ export async function deleteAccountRemoteData(
   const cleanupFailures = [
     await deleteUserRows(supabase, ENCRYPTED_BACKUPS_TABLE, userId),
     ...(await Promise.all(
-      [...OPERATIONAL_REMOTE_TABLES, ...LEGACY_PLAINTEXT_FINANCIAL_TABLES].map((tableName) =>
-        deleteUserRows(supabase, tableName, userId)
-      )
+      OPERATIONAL_REMOTE_TABLES.map((tableName) => deleteUserRows(supabase, tableName, userId))
     )),
   ].filter((failure): failure is DeleteAccountRemoteFailure => failure !== null);
 

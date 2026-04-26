@@ -38,14 +38,12 @@ Largest current violation clusters:
 - `email-capture`: `34`
 - `transactions`: `23`
 - `capture-sources`: `15`
-- `sync`: `12`
 - `ai-chat`: `11`
 - `mutations`: `3`, but one of them is the single worst function in the repo
 
 Top production hotspots in the initial baseline snapshot:
 
 1. `apps/mobile/mutations/index.ts::applyTransactionSave` — `CCN 45`, `NLOC 190` (omit parameter count here; Lizard counted the TypeScript overload signatures as `params 39`, which overstated the real function surface)
-2. `apps/mobile/features/sync/services/syncEngine.ts::processEntry` — `CCN 34`, `NLOC 70`, `params 3`
 3. `apps/mobile/shared/types/assertions.ts::assertNonEmptyString` — `CCN 28`, `NLOC 68`, `params 4`
 4. `apps/mobile/features/transactions/lib/build-transaction.ts::parseDigitsToAmount` — `CCN 22`, `NLOC 36`
 5. `apps/mobile/features/email-capture/services/parse-email-api.ts::stripPii` — `CCN 22`, `NLOC 23`
@@ -101,7 +99,6 @@ This is also strict, but still workable.
 
 It is good because:
 
-- it forces long flows like sync, email capture, and mutations to split into staged operations
 - it discourages giant "do everything" functions
 
 The cost:
@@ -165,7 +162,6 @@ A small number of orchestration functions account for a disproportionate amount 
 ### Scope
 
 - `apps/mobile/mutations/index.ts`
-- `apps/mobile/features/sync/services/syncEngine.ts`
 - `apps/mobile/features/capture-sources/services/notification-pipeline.ts`
 - `apps/mobile/features/email-capture/services/create-email-pipeline-service.ts`
 
@@ -173,7 +169,6 @@ A small number of orchestration functions account for a disproportionate amount 
 
 - replace switch/if dispatch with handler registries
 - split workflows into named stages
-- move per-entity sync logic into per-entity handlers
 - collapse repeated persistence + telemetry branches behind shared boundaries
 - replace giant parameter surfaces with domain command payloads or stage contexts
 
@@ -191,7 +186,6 @@ A small number of orchestration functions account for a disproportionate amount 
 ### Scope
 
 - mutation payloads
-- sync mappers
 - transaction builders
 - service entry points with many independent scalar inputs
 
@@ -308,7 +302,6 @@ Refactor `apps/mobile/mutations/index.ts`.
 
 ### Slice 3
 
-Refactor sync push dispatch in `syncEngine.ts`.
 
 ### Slice 4
 
@@ -344,7 +337,6 @@ Burn down tests until the ledger is empty.
 ### Safe parallel tracks after Slice 1
 
 - `Slice 2` (`mutations/index.ts`)
-- `Slice 3` (`syncEngine.ts`)
 - `Slice 4` (`processNotification`)
 - `Slice 5` (`create-email-pipeline-service.ts`)
 
@@ -354,7 +346,6 @@ These are the best first parallel candidates because each attacks a different ho
 
 - `Slice 4` and `Slice 5` are both in capture/email territory. They can run in parallel, but only if each agent stays in its assigned files and avoids opportunistic cleanup in shared helper modules.
 - `Slice 2` should avoid broad edits in `shared/mutations/write-through.ts` unless that file is explicitly assigned to the same agent.
-- `Slice 3` should avoid shared utility cleanup while it is focused on sync dispatch and per-table handlers.
 
 ### Should wait until the first hotspot wave settles
 
@@ -389,7 +380,6 @@ After `Slice 5` and most of `Slice 6` are done, split `Slice 7` into file-cluste
 
 Once production hotspots are mostly stable, test cleanup can be parallelized aggressively by file group:
 
-- sync tests
 - capture-sources tests
 - calendar tests
 - goals tests
@@ -468,14 +458,12 @@ These are parallelizable, but each one should stay inside its own feature bounda
 - `search` cluster: `apps/mobile/features/search/lib/repository.ts`
 - `transfers` cluster: `apps/mobile/features/transfers/lib/build-transfer.ts`, `apps/mobile/features/transfers/lib/repository.ts`
 - `ai-chat` cluster: `apps/mobile/features/ai-chat/store.ts`
-- `sync` cluster: residual `apps/mobile/features/sync/services/syncEngine.ts` and `apps/mobile/features/sync/lib/conflict-detection.ts`
 - `shared` cluster: `apps/mobile/shared/effect/runtime.ts`, `apps/mobile/shared/lib/format-date.ts`, `apps/mobile/shared/db/supabase.ts`
 
 ### Wave 4: Test burn-down
 
 Once the paired production cluster is stable, test cleanup can fan out aggressively by domain:
 
-- `sync tests`: start with `apps/mobile/__tests__/sync/syncEngine.test.ts`, `sync-service.test.ts`, `sync-pull-integration.test.ts`
 - `email-capture tests`: start with `apps/mobile/__tests__/email-capture/store.test.ts`, `email-pipeline.test.ts`
 - `financial-accounts tests`: start with `apps/mobile/__tests__/financial-accounts/identifiers.test.ts`, `balance-repository.test.ts`, `opening-balances.test.ts`
 - `account-suggestions tests`: `apps/mobile/__tests__/account-suggestions/service.test.ts`
@@ -524,9 +512,7 @@ If one agent is doing the whole burn-down instead of parallel waves, execute the
 15. `search`
 16. `transfers`
 17. `ai-chat`
-18. `sync`
 19. `shared`
-20. `sync tests`
 21. `email-capture tests`
 22. `financial-accounts tests`
 23. `account-suggestions tests`
@@ -589,7 +575,6 @@ Reason:
 
 Scope:
 
-- `apps/mobile/features/sync/services/create-sync-service.ts`
 - `apps/mobile/features/calendar/lib/bill-mutation-service.ts`
 - `apps/mobile/features/ai-chat/hooks/use-streaming-chat.ts`
 - `apps/mobile/features/ai-chat/lib/parse-action.ts`
@@ -630,7 +615,6 @@ Scope:
   - `apps/mobile/__tests__/setup.ts`
   - `apps/mobile/__tests__/review-queues/attribution-review-service.test.ts`
   - `apps/mobile/__tests__/goals/repository.test.ts`
-  - any remaining analytics, transactions, notifications, or sync test files
 
 Reason:
 
@@ -646,7 +630,7 @@ Reason:
 
 ## Historical Starting Point
 
-The initial burn-down started with `apps/mobile/mutations/index.ts` and `syncEngine.ts` because they were the worst hotspots in the original baseline.
+The initial burn-down started with `apps/mobile/mutations/index.ts` because they were the worst hotspots in the original baseline.
 
 That guidance is historical. The burn-down is complete; the sections above are retained only as archive/history.
 

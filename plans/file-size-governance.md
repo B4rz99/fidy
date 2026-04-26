@@ -45,7 +45,6 @@ Concentration of oversized files:
 
 Largest current hotspots:
 
-- [apps/mobile/features/sync/services/syncEngine.ts](../apps/mobile/features/sync/services/syncEngine.ts)
 - [apps/mobile/features/email-capture/services/create-email-pipeline-service.ts](../apps/mobile/features/email-capture/services/create-email-pipeline-service.ts)
 - [apps/mobile/features/transfers/components/TransferFormScreen.tsx](../apps/mobile/features/transfers/components/TransferFormScreen.tsx)
 - [apps/mobile/features/goals/components/GoalDetail.tsx](../apps/mobile/features/goals/components/GoalDetail.tsx)
@@ -98,7 +97,6 @@ Examples:
 - [apps/mobile/features/financial-accounts/components/FinancialAccountFormScreen.tsx](../apps/mobile/features/financial-accounts/components/FinancialAccountFormScreen.tsx)
 - [apps/mobile/features/financial-accounts/lib/management-service.ts](../apps/mobile/features/financial-accounts/lib/management-service.ts)
 - [apps/mobile/features/transactions/store.ts](../apps/mobile/features/transactions/store.ts)
-- [apps/mobile/features/sync/services/syncEngine.ts](../apps/mobile/features/sync/services/syncEngine.ts)
 - [apps/mobile/features/email-capture/services/create-email-pipeline-service.ts](../apps/mobile/features/email-capture/services/create-email-pipeline-service.ts)
 
 ### Legitimate boundary files
@@ -338,21 +336,11 @@ Exit criteria:
 
 Targets:
 
-- [apps/mobile/features/sync/services/syncEngine.ts](../apps/mobile/features/sync/services/syncEngine.ts)
 - [apps/mobile/features/email-capture/services/create-email-pipeline-service.ts](../apps/mobile/features/email-capture/services/create-email-pipeline-service.ts)
 - [apps/mobile/features/capture-sources/services/notification-pipeline.ts](../apps/mobile/features/capture-sources/services/notification-pipeline.ts)
 - [apps/mobile/mutations/index.ts](../apps/mobile/mutations/index.ts)
 
 Recommended splits:
-
-For `syncEngine.ts`:
-
-- `sync-row-mappers.ts`
-- `sync-pull-cursors.ts`
-- `sync-pull-fetch.ts`
-- `sync-pull-apply.ts`
-- `sync-push-handlers.ts`
-- keep `syncEngine.ts` as orchestration shell
 
 For `create-email-pipeline-service.ts`:
 
@@ -371,7 +359,6 @@ Exit criteria:
 
 - these files are meaningfully smaller or their residual size is justified and documented
 - public wrappers remain stable:
-  - [apps/mobile/features/sync/services/sync.ts](../apps/mobile/features/sync/services/sync.ts)
   - [apps/mobile/features/email-capture/services/email-pipeline.ts](../apps/mobile/features/email-capture/services/email-pipeline.ts)
 - tests continue to target boundary behavior rather than internal implementation details
 
@@ -416,7 +403,7 @@ Recommended order:
 2. Split `management-service.ts` and `FinancialAccountFormScreen.tsx` as the first proof that file-size refactors improve cohesion.
 3. Split `TransferFormScreen.tsx` and `GoalDetail.tsx` by UI/controller boundaries.
 4. Move `transactions/store.ts`, `budget/store.ts`, and `email-capture/store.ts` async workflows into dedicated loader/mutation modules.
-5. Tackle `syncEngine.ts`, `create-email-pipeline-service.ts`, `notification-pipeline.ts`, and `mutations/index.ts` once the file-size signal is proven useful.
+5. Tackle `create-email-pipeline-service.ts`, `notification-pipeline.ts`, and `mutations/index.ts` once the file-size signal is proven useful.
 
 ## Guardrails
 
