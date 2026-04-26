@@ -726,7 +726,7 @@ const es = {
     deleteAccount: "Eliminar Cuenta",
     deleteAccountTitle: "Eliminar Cuenta",
     deleteAccountWarning:
-      "Esto eliminará permanentemente tu cuenta y todos tus datos. Esta acción no se puede deshacer.",
+      "Esto eliminará permanentemente tu cuenta, tus copias privadas y todos tus datos remotos. Las copias privadas anteriores no se podrán recuperar después.",
     deleteAccountUnsyncedWarning: {
       one: "Tienes %{count} cambio sin sincronizar que se perderá.",
       other: "Tienes %{count} cambios sin sincronizar que se perderán.",

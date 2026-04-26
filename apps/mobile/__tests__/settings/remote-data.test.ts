@@ -15,6 +15,8 @@ import {
   toNotificationPreferences,
 } from "@/features/settings/data/notification-preferences";
 import { getSupabase } from "@/shared/db";
+import en from "@/shared/i18n/locales/en";
+import es from "@/shared/i18n/locales/es";
 
 const mockSelect = vi.fn();
 const mockEq = vi.fn();
@@ -108,5 +110,12 @@ describe("settings remote callers", () => {
 
     expect(source).toContain("useDeleteAccountMutation");
     expect(source).not.toContain("deleteAccount = useSettingsStore");
+  });
+
+  test("delete-account confirmation copy says encrypted backups are unrecoverable", () => {
+    expect(en.settings.deleteAccountWarning).toContain("encrypted backups");
+    expect(en.settings.deleteAccountWarning).toContain("cannot be recovered");
+    expect(es.settings.deleteAccountWarning).toContain("copias privadas");
+    expect(es.settings.deleteAccountWarning).toContain("no se podrán recuperar");
   });
 });

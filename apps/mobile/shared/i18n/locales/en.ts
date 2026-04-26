@@ -717,7 +717,7 @@ const en = {
     deleteAccount: "Delete Account",
     deleteAccountTitle: "Delete Account",
     deleteAccountWarning:
-      "This will permanently delete your account and all your data. This action cannot be undone.",
+      "This will permanently delete your account, encrypted backups, and all remote data. Old encrypted backups cannot be recovered after deletion.",
     deleteAccountUnsyncedWarning: {
       one: "You have %{count} unsynced change that will be lost.",
       other: "You have %{count} unsynced changes that will be lost.",
