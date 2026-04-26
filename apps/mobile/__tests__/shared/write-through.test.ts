@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AnyDb } from "@/shared/db";
-import { getMutationPolicy } from "@/shared/mutations";
 import type {
   CategoryId,
   CopAmount,
@@ -10,13 +9,8 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
-vi.mock("@/shared/db/enqueue-sync", () => ({
-  enqueueSync: vi.fn(),
-}));
-
 vi.mock("@/shared/lib", () => ({
   generateBudgetId: vi.fn().mockReturnValue("budget-generated"),
-  generateSyncQueueId: vi.fn().mockReturnValue("sync-generated"),
 }));
 
 const mockDb = {
@@ -70,11 +64,6 @@ function makeTransactionSaveCommand(overrides: TransactionCommandOverrides = {})
 describe("write-through mutations", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it("publishes the explicit sync policy", () => {
-    expect(getMutationPolicy("calendar.bill.save")).toBe("local-only");
-    expect(getMutationPolicy("transaction.save")).toBe("sync-backed");
   });
 
   it("commits commands through the injected generic applier", async () => {

@@ -20,8 +20,7 @@ test("keeps the app mutation entrypoint routed through extracted handler modules
 });
 
 test("keeps shared mutation helpers separate from domain handlers", () => {
-  expect(commonSource).toContain("const queueSyncChange");
-  expect(commonSource).toContain("type SyncChange");
+  expect(commonSource).toContain("completeCommand");
   expect(budgetSource).toContain("copyBudgetsToMonth");
   expect(budgetSource).toContain("createBudgetCopyId");
 });

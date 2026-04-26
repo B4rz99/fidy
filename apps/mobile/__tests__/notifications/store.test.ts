@@ -63,26 +63,6 @@ describe("useNotificationStore", () => {
     vi.resetModules();
   });
 
-  it("ignores stale async initStore completion after the active user changes", async () => {
-    const deferredVisited = createDeferred<string | null>();
-    mockGetItemAsync.mockReturnValueOnce(deferredVisited.promise);
-    mockCountNotificationsSince.mockImplementation((_db, userId: UserId) =>
-      userId === USER_2 ? 2 : 7
-    );
-
-    const { initializeNotificationStore, useNotificationStore: store } = await getStore();
-    const firstInit = initializeNotificationStore(mockDb, USER_1);
-    const secondInit = initializeNotificationStore(mockDb, USER_2);
-
-    deferredVisited.resolve(null);
-    await firstInit;
-    await secondInit;
-
-    expect(store.getState().newCount).toBe(2);
-    expect(mockCountNotificationsSince).toHaveBeenLastCalledWith(mockDb, USER_2, null);
-    expect(mockCountNotificationsSince).not.toHaveBeenCalledWith(mockDb, USER_1, null);
-  });
-
   it("does not increment newCount when an older user's insert completes later", async () => {
     const deferredCommit = createDeferred<{ success: true; didMutate: true }>();
     mockCommit.mockReturnValueOnce(deferredCommit.promise);

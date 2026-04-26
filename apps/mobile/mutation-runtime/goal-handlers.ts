@@ -9,7 +9,7 @@ import {
 } from "@/features/goals/lib/repository";
 import { assertIsoDateTime } from "@/shared/types/assertions";
 import type { MutationCommandByKind, MutationHandlerSubset } from "./common";
-import { completeCommand, queueSyncChange } from "./common";
+import { completeCommand } from "./common";
 
 type GoalSaveCommand = MutationCommandByKind<"goal.save">;
 type GoalUpdateCommand = MutationCommandByKind<"goal.update">;
@@ -23,12 +23,6 @@ const applyGoalSave = (
 ) => {
   assertIsoDateTime(command.row.updatedAt);
   insertGoal(db, command.row);
-  queueSyncChange(db, {
-    tableName: "goals",
-    rowId: command.row.id,
-    operation: "insert",
-    createdAt: command.row.updatedAt,
-  });
   return completeCommand(command.afterCommit);
 };
 
@@ -42,12 +36,6 @@ const applyGoalUpdate = (
     data: command.data,
     now: command.now,
   });
-  queueSyncChange(db, {
-    tableName: "goals",
-    rowId: command.goalId,
-    operation: "update",
-    createdAt: command.now,
-  });
   return completeCommand(command.afterCommit);
 };
 
@@ -56,12 +44,6 @@ const applyGoalDelete = (
   command: GoalDeleteCommand
 ) => {
   softDeleteGoal(db, command.goalId, command.now);
-  queueSyncChange(db, {
-    tableName: "goals",
-    rowId: command.goalId,
-    operation: "delete",
-    createdAt: command.now,
-  });
   return completeCommand(command.afterCommit);
 };
 
@@ -71,12 +53,6 @@ const applyGoalContributionSave = (
 ) => {
   assertIsoDateTime(command.row.updatedAt);
   insertContribution(db, command.row);
-  queueSyncChange(db, {
-    tableName: "goalContributions",
-    rowId: command.row.id,
-    operation: "insert",
-    createdAt: command.row.updatedAt,
-  });
   return completeCommand(command.afterCommit);
 };
 
@@ -85,12 +61,6 @@ const applyGoalContributionDelete = (
   command: GoalContributionDeleteCommand
 ) => {
   softDeleteContribution(db, command.contributionId, command.now);
-  queueSyncChange(db, {
-    tableName: "goalContributions",
-    rowId: command.contributionId,
-    operation: "delete",
-    createdAt: command.now,
-  });
   return completeCommand(command.afterCommit);
 };
 

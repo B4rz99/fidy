@@ -43,7 +43,6 @@ test("keeps activity item rendering memo-safe for edit and delete handlers", () 
 
 test("keeps the header wired to banners and analytics navigation", () => {
   expect(headerSource).toContain("<EmailConnectBanner");
-  expect(headerSource).toContain("<SyncConflictBanner");
   expect(headerSource).toContain("<DetectedTransactionsBanner");
   expect(headerSource).toContain("const db = tryGetDb(userId);");
   expect(headerSource).toContain('push("/analytics" as never)');
