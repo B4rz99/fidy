@@ -41,7 +41,6 @@ The first slice covers only encrypted backup metadata and blob access. Other ope
 
 Define the Edge Function request/response contract:
 
-- list backup metadata
 - get the current backup metadata, returning zero or one confirmed backup
 - prepare upload with validated metadata and signed upload URL
 - confirm uploaded backup metadata after server-side object verification
@@ -54,7 +53,8 @@ Exit criteria:
 - The contract validates `backupId`, user ownership, schema version, app version, device label, ciphertext size, and SHA-256 metadata.
 - The contract exposes zero or one current backup; it does not expose backup history in this slice.
 - The confirm step treats client-provided `ciphertextSha256` as an expected hash, not proof; the Edge Function must read the stored object, compute SHA-256 server-side, and compare it before persisting metadata.
-- `prepareUpload` and `confirmUpload` reject an already-confirmed `(userId, backupId)`.
+- `prepareUpload` rejects an already-confirmed `(userId, backupId)`.
+- `confirmUpload` is retry-safe: if the same `(userId, backupId)` is already confirmed with matching metadata, it returns success or an explicit idempotent success status instead of failing the backup.
 
 ### Slice 1A: Local snapshot validation
 
