@@ -69,6 +69,24 @@ describe("private-backup-api Edge Function", () => {
 
   it("fails closed when rate limiting is unavailable", async () => {
     const api = createPrivateBackupApiDeps({
+      rateLimit: { allowed: false, retryAfterSeconds: 41, unavailable: true },
+    });
+
+    const response = await handlePrivateBackupRequest(
+      jsonRequest({ action: "current" }, "valid-token"),
+      api.deps
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "rate_limit_unavailable",
+    });
+    expectNoStoreCalls(api.store);
+  });
+
+  it("fails closed when the rate limit dependency throws", async () => {
+    const api = createPrivateBackupApiDeps({
       rateLimitError: new Error("rate limit unavailable"),
     });
 
@@ -511,7 +529,7 @@ type RemoteBackupMetadata = {
 
 type RateLimitResult =
   | { readonly allowed: true }
-  | { readonly allowed: false; readonly retryAfterSeconds: number };
+  | { readonly allowed: false; readonly retryAfterSeconds: number; readonly unavailable?: true };
 
 function metadataPayload() {
   return {

@@ -30,7 +30,7 @@ type ServiceClient = {
 
 type RateLimitResult =
   | { readonly allowed: true }
-  | { readonly allowed: false; readonly retryAfterSeconds: number };
+  | { readonly allowed: false; readonly retryAfterSeconds: number; readonly unavailable?: true };
 
 export type PrivateBackupApiDeps = {
   readonly auth: AuthClient;
@@ -72,6 +72,9 @@ export async function handlePrivateBackupRequest(
     return jsonResponse({ success: false, error: "rate_limit_unavailable" }, 503);
   }
   if (!rateLimit.allowed) {
+    if (rateLimit.unavailable === true) {
+      return jsonResponse({ success: false, error: "rate_limit_unavailable" }, 503);
+    }
     return jsonResponse({ success: false, error: "rate_limited" }, 429, {
       "Retry-After": String(rateLimit.retryAfterSeconds),
     });

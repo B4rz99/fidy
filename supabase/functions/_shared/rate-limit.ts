@@ -8,7 +8,7 @@ const serviceClient = createClient(
 
 type RateLimitResult =
   | { allowed: true; count: number }
-  | { allowed: false; count: number; retryAfterSeconds: number };
+  | { allowed: false; count: number; retryAfterSeconds: number; unavailable?: true };
 
 export async function checkRateLimit(
   userId: string,
@@ -29,13 +29,13 @@ export async function checkRateLimit(
 
     if (error) {
       console.error("Rate limit RPC error, failing closed:", error.message);
-      return { allowed: false, count: 0, retryAfterSeconds };
+      return { allowed: false, count: 0, retryAfterSeconds, unavailable: true };
     }
 
     const row = Array.isArray(data) ? data[0] : data;
     if (!row || typeof row.allowed !== "boolean") {
       console.error("Rate limit RPC returned no data, failing closed");
-      return { allowed: false, count: 0, retryAfterSeconds };
+      return { allowed: false, count: 0, retryAfterSeconds, unavailable: true };
     }
 
     if (row.allowed) {
@@ -45,6 +45,6 @@ export async function checkRateLimit(
     return { allowed: false, count: row.current_count, retryAfterSeconds };
   } catch (err) {
     console.error("Rate limit check failed, failing closed:", err);
-    return { allowed: false, count: 0, retryAfterSeconds };
+    return { allowed: false, count: 0, retryAfterSeconds, unavailable: true };
   }
 }
