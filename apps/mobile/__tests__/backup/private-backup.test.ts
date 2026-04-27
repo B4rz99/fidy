@@ -96,6 +96,36 @@ describe("createPrivateBackup", () => {
       })
     );
   });
+
+  it("refuses to encrypt or upload an invalid local ledger snapshot", async () => {
+    const exportSnapshot = vi.fn().mockReturnValue({
+      ...SNAPSHOT,
+      version: 999,
+    });
+    const encryptSnapshot = vi.fn().mockResolvedValue(ENCRYPTED_BACKUP);
+    const uploadBackup = vi.fn().mockResolvedValue(METADATA);
+
+    await expect(
+      createPrivateBackup({
+        db: {} as Parameters<typeof createPrivateBackup>[0]["db"],
+        supabase: {} as Parameters<typeof createPrivateBackup>[0]["supabase"],
+        userId: METADATA.userId,
+        backupId: METADATA.backupId,
+        recoveryKey: "RK-current",
+        confirmedRecoveryKey: "RK-current",
+        trustedDeviceSecret: "device-secret",
+        exportedAt: METADATA.createdAt,
+        appVersion: METADATA.appVersion,
+        deviceLabel: METADATA.deviceLabel,
+        exportSnapshot,
+        encryptSnapshot,
+        uploadBackup,
+      })
+    ).rejects.toThrow("Unsupported local ledger backup snapshot version: 999");
+
+    expect(encryptSnapshot).not.toHaveBeenCalled();
+    expect(uploadBackup).not.toHaveBeenCalled();
+  });
 });
 
 describe("rotatePrivateBackupRecoveryKeySafely", () => {

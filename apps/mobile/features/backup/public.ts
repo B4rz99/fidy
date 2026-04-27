@@ -25,6 +25,7 @@ export {
   exportLocalLedgerBackupSnapshot,
   importLocalLedgerBackupSnapshot,
   LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION,
+  validateBackupSnapshot,
 } from "./local-ledger-snapshot";
 export type {
   CreatePrivateBackupInput,

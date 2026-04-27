@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   exportLocalLedgerBackupSnapshot,
   importLocalLedgerBackupSnapshot,
+  validateBackupSnapshot,
 } from "@/features/backup/public";
 import {
   accountSuggestionDismissals,
@@ -225,10 +226,19 @@ function snapshotWithLargeAccountTable() {
     version: 1,
     exportedAt: NOW,
     data: emptySnapshotData({
-      financialAccounts: Array.from({ length: 51 }, (_, index) =>
-        rollbackAccountRow(`fa-${index}`)
-      ),
+      financialAccounts: Array.from({ length: 51 }, (_, index) => ({
+        ...rollbackAccountRow(`fa-${index}`),
+        isDefault: index === 0,
+      })),
     }),
+  };
+}
+
+function validSnapshot(overrides: Record<string, unknown> = {}) {
+  return {
+    version: 1,
+    exportedAt: NOW,
+    data: emptySnapshotData(overrides),
   };
 }
 
@@ -281,6 +291,96 @@ function rollbackIdentifierRow(value: string) {
     updatedAt: NOW,
     deletedAt: null,
   };
+}
+
+function userCategoryRow(id = "uc-food") {
+  return {
+    id,
+    userId: "user-1",
+    name: "Work lunches",
+    iconName: "utensils",
+    colorHex: "#2F80ED",
+    createdAt: NOW,
+    updatedAt: NOW,
+    deletedAt: null,
+  };
+}
+
+function transactionRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "txn-1",
+    userId: "user-1",
+    type: "expense",
+    amount: 42000,
+    categoryId: "uc-food",
+    description: "Lunch",
+    date: "2026-04-20",
+    accountId: "fa-rollback",
+    accountAttributionState: "confirmed",
+    supersededAt: null,
+    createdAt: NOW,
+    updatedAt: NOW,
+    deletedAt: null,
+    source: "manual",
+    ...overrides,
+  };
+}
+
+function openingBalanceRow(id = "ob-1") {
+  return {
+    id,
+    userId: "user-1",
+    accountId: "fa-rollback",
+    amount: 250000,
+    effectiveDate: "2026-04-01",
+    createdAt: NOW,
+    updatedAt: NOW,
+    deletedAt: null,
+  };
+}
+
+function processedEmailRow() {
+  return {
+    id: "email-1",
+    externalId: "provider-message-1",
+    provider: "gmail",
+    status: "success",
+    failureReason: null,
+    subject: "Purchase alert",
+    rawBodyPreview: "Paid with card ending 1234",
+    receivedAt: NOW,
+    transactionId: "txn-1",
+    confidence: 0.9,
+    createdAt: NOW,
+    rawBody: "Paid with card ending 1234 at Store",
+    retryCount: 0,
+    nextRetryAt: null,
+  };
+}
+
+function captureEvidenceRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "ce-1",
+    userId: "user-1",
+    sourceFamily: "gmail",
+    evidenceType: "last4",
+    scope: "last4",
+    value: "1234",
+    transactionId: "txn-1",
+    transferId: null,
+    processedEmailId: "email-1",
+    processedCaptureId: null,
+    createdAt: NOW,
+    updatedAt: NOW,
+    deletedAt: null,
+    ...overrides,
+  };
+}
+
+function withoutKeys<Row extends Record<string, unknown>>(row: Row, keys: readonly (keyof Row)[]) {
+  return Object.fromEntries(
+    Object.entries(row).filter(([key]) => !keys.includes(key as keyof Row))
+  );
 }
 
 function createCappedInsertDb(maxRowsPerInsert: number) {
@@ -407,5 +507,85 @@ describe("local ledger backup snapshots", () => {
     importLocalLedgerBackupSnapshot(db as any, snapshotWithLargeAccountTable());
 
     expect(getInsertedRows()).toBe(51);
+  });
+
+  it("validates supported snapshot versions before backup upload", () => {
+    expect(() =>
+      validateBackupSnapshot({
+        version: 999,
+        exportedAt: NOW,
+        data: {},
+      })
+    ).toThrow("Unsupported local ledger backup snapshot version: 999");
+  });
+
+  it("rejects malformed table rows before backup upload", () => {
+    expect(() =>
+      validateBackupSnapshot(
+        validSnapshot({
+          financialAccounts: [{ ...rollbackAccountRow(), name: null }],
+        })
+      )
+    ).toThrow("Malformed local ledger backup row: name must be a non-empty string");
+  });
+
+  it("accepts legacy version 1 rows that predate additive defaulted columns", () => {
+    const snapshot = validSnapshot({
+      userCategories: [userCategoryRow()],
+      financialAccounts: [
+        withoutKeys(rollbackAccountRow(), ["statementClosingDay", "paymentDueDay"]),
+      ],
+      transactions: [withoutKeys(transactionRow(), ["source"])],
+      processedEmails: [withoutKeys(processedEmailRow(), ["rawBody", "retryCount", "nextRetryAt"])],
+    });
+
+    expect(validateBackupSnapshot(snapshot)).toBe(snapshot);
+  });
+
+  it("rejects duplicate primary IDs inside backed-up collections", () => {
+    expect(() =>
+      validateBackupSnapshot(
+        validSnapshot({
+          financialAccounts: [rollbackAccountRow(), rollbackAccountRow()],
+        })
+      )
+    ).toThrow("Duplicate local ledger backup primary id in financialAccounts");
+  });
+
+  it("rejects unresolved references inside the snapshot", () => {
+    expect(() =>
+      validateBackupSnapshot(
+        validSnapshot({
+          userCategories: [userCategoryRow()],
+          financialAccounts: [rollbackAccountRow()],
+          transactions: [transactionRow({ accountId: "fa-missing" })],
+        })
+      )
+    ).toThrow("Local ledger backup has unresolved reference: transactions.accountId");
+  });
+
+  it("rejects snapshot rows that violate local ledger invariants", () => {
+    expect(() =>
+      validateBackupSnapshot(
+        validSnapshot({
+          financialAccounts: [rollbackAccountRow()],
+          openingBalances: [openingBalanceRow("ob-1"), openingBalanceRow("ob-2")],
+        })
+      )
+    ).toThrow("Local ledger backup has multiple active opening balances for an account");
+  });
+
+  it("rejects capture evidence with invalid source or financial links", () => {
+    expect(() =>
+      validateBackupSnapshot(
+        validSnapshot({
+          userCategories: [userCategoryRow()],
+          financialAccounts: [rollbackAccountRow()],
+          transactions: [transactionRow()],
+          processedEmails: [processedEmailRow()],
+          captureEvidence: [captureEvidenceRow({ processedCaptureId: "capture-1" })],
+        })
+      )
+    ).toThrow("Local ledger backup has unresolved reference: captureEvidence.processedCaptureId");
   });
 });
