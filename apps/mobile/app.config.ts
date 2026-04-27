@@ -52,7 +52,7 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
       "expo-dev-client",
       {
         ios: {
-          launchMode: "launcher",
+          launchMode: "most-recent",
         },
       },
     ],
