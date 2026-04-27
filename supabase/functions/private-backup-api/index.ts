@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { checkRateLimit } from "../_shared/rate-limit.ts";
 import { handlePrivateBackupRequest } from "./handler.ts";
 import { createPrivateBackupStore } from "./store.ts";
 
@@ -15,6 +16,7 @@ Deno.serve((request) => {
 
   return handlePrivateBackupRequest(request, {
     auth: authClient,
+    rateLimit: (userId) => checkRateLimit(userId, "private-backup-api", 20),
     store: createPrivateBackupStore(serviceClient),
   });
 });
