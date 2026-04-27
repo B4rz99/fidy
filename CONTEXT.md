@@ -40,6 +40,10 @@ _Avoid_: Database dump, remote profile
 Plaintext replication of financial records to Fidy-controlled server tables.
 _Avoid_: Backup, recovery
 
+**Remote API Boundary**:
+The authenticated server-side boundary that owns operational remote reads and writes instead of exposing Fidy-controlled tables or storage directly to the mobile app.
+_Avoid_: API extra layer, proxy, backend wrapper
+
 ## Relationships
 
 - The **Local Ledger** is the source of truth for transactions, transfers, financial accounts, budgets, goals, capture evidence, and financial derivations
@@ -63,6 +67,13 @@ _Avoid_: Backup, recovery
 - A **Financial Context Packet** is narrower than the **Local Ledger** and should be built per advisor request
 - AI advisor features should use **Financial Context Packets** instead of server-side queries over plaintext financial tables
 - Weekly digest-style insights should be generated from the **Local Ledger** on device unless the user explicitly opts into **Cloud AI Processing**
+- The **Remote API Boundary** owns operational remote access for Encrypted Backups, notification preferences, push device registration, and user memories
+- The **Remote API Boundary** does not replace Supabase Auth, and table RLS remains defense-in-depth behind it
+- The **Remote API Boundary** is capability-scoped so backup, notification, push-device, and memory operations can be validated, rate-limited, and revoked independently
+- **Encrypted Backup** blob transfer uses short-lived signed storage URLs while backup metadata remains owned by the **Remote API Boundary**
+- A confirmed **Encrypted Backup** is immutable; creating a newer recovery artifact uses a new backup id instead of overwriting the existing one
+- Fidy keeps at most one confirmed **Encrypted Backup** per user; the user-facing **Private Backup** status shows when that backup was last updated
+- A newer **Encrypted Backup** replaces the previous one only after local snapshot validation, upload, server-side object integrity verification, and metadata confirmation succeed
 
 ## Example dialogue
 
@@ -74,3 +85,4 @@ _Avoid_: Backup, recovery
 - "local-first" was used to mean both on-device source of truth and server-side plaintext recovery. Resolved: use **Local Ledger** for the source of truth and **Encrypted Backup** for recovery.
 - "sync" was used to mean both recovery and cross-device plaintext replication. Resolved: use **Encrypted Backup** for recovery and **Remote Financial Sync** for the legacy plaintext replication model.
 - "AI-first" could imply either cloud-only AI or private on-device-only AI. Resolved: MVP permits explicit **Cloud AI Processing** while avoiding stored plaintext financial rows on Fidy servers.
+- "API extra layer" could imply either a generic proxy or a domain boundary. Resolved: use **Remote API Boundary** for authenticated server-side ownership of operational remote reads and writes.
