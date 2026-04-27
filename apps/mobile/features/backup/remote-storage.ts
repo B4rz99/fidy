@@ -47,6 +47,7 @@ type PrivateBackupApiResponse<T> =
 
 type PrepareUploadResponse = PrivateBackupApiResponse<{
   readonly path: string;
+  readonly uploadUrl: string;
   readonly uploadToken: string;
 }>;
 
@@ -75,12 +76,14 @@ export async function uploadEncryptedRemoteBackup(
     action: "prepareUpload",
     backupId: input.backupId,
   });
-  const uploadResponse = await supabase.storage
-    .from(REMOTE_BACKUP_BUCKET)
-    .uploadToSignedUrl(prepared.path, prepared.uploadToken, JSON.stringify(input.encryptedBackup), {
-      contentType: "application/json",
-    });
-  throwIfRemoteBackupError(uploadResponse.error, "upload encrypted backup");
+  const uploadResponse = await fetch(prepared.uploadUrl, {
+    body: JSON.stringify(input.encryptedBackup),
+    headers: { "Content-Type": "application/json" },
+    method: "PUT",
+  });
+  if (!uploadResponse.ok) {
+    throw new Error("Unable to upload encrypted backup: storage upload failed");
+  }
 
   const confirmed = await invokePrivateBackupApi<ConfirmUploadResponse>(supabase, {
     action: "confirmUpload",
