@@ -13,8 +13,10 @@ import {
   transfers,
   userCategories,
 } from "@/shared/db/schema";
+import { validateBackupSnapshot } from "./local-ledger-snapshot-validation";
+import { LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION } from "./local-ledger-snapshot-version";
 
-export const LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION = 1;
+export { LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION, validateBackupSnapshot };
 
 export type BackupSnapshot = {
   readonly version: typeof LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION;
@@ -81,7 +83,7 @@ export function exportLocalLedgerBackupSnapshot(
 }
 
 export function importLocalLedgerBackupSnapshot(db: BackupDb, snapshot: unknown) {
-  const validatedSnapshot = parseBackupSnapshot(snapshot);
+  const validatedSnapshot = validateBackupSnapshot(snapshot);
 
   db.transaction((tx) => {
     insertRows(tx, userCategories, validatedSnapshot.data.userCategories);
@@ -120,70 +122,7 @@ function selectRows(db: BackupSelectDb, table: BackupTable): readonly Record<str
   return db.select().from(table).all();
 }
 
-function parseBackupSnapshot(snapshot: unknown): BackupSnapshot {
-  assertSnapshotRecord(snapshot);
-  assertSupportedSnapshotVersion(snapshot);
-  assertVersionOneSnapshotShape(snapshot);
-  return snapshot as BackupSnapshot;
-}
-
-function assertSnapshotRecord(snapshot: unknown): asserts snapshot is Record<string, unknown> {
-  if (!isRecord(snapshot)) {
-    throw new Error("Malformed local ledger backup snapshot");
-  }
-}
-
-function assertSupportedSnapshotVersion(snapshot: Record<string, unknown>) {
-  if (snapshot.version !== LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION) {
-    throw new Error(
-      `Unsupported local ledger backup snapshot version: ${String(snapshot.version)}`
-    );
-  }
-}
-
-function assertVersionOneSnapshotShape(snapshot: Record<string, unknown>) {
-  const data = snapshot.data;
-  if (typeof snapshot.exportedAt !== "string" || !isRecord(data)) {
-    throw new Error("Malformed local ledger backup snapshot");
-  }
-
-  if (!hasBackupTableArrays(data) || !hasBackupTableRows(data)) {
-    throw new Error("Malformed local ledger backup snapshot");
-  }
-}
-
-function hasBackupTableArrays(data: Record<string, unknown>) {
-  return BACKUP_DATA_KEYS.every((key) => Array.isArray(data[key]));
-}
-
-function hasBackupTableRows(data: Record<string, unknown>) {
-  return BACKUP_DATA_KEYS.every((key) => {
-    const rows = data[key];
-    return Array.isArray(rows) && rows.every(isRecord);
-  });
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-const BACKUP_DATA_KEYS = [
-  "transactions",
-  "transfers",
-  "userCategories",
-  "financialAccounts",
-  "openingBalances",
-  "budgets",
-  "goals",
-  "goalContributions",
-  "captureEvidence",
-  "financialAccountIdentifiers",
-  "accountSuggestionDismissals",
-  "processedEmails",
-  "processedCaptures",
-] as const;
-
-type LocalLedgerBackupSnapshotData = {
+export type LocalLedgerBackupSnapshotData = {
   readonly transactions: readonly (typeof transactions.$inferSelect)[];
   readonly transfers: readonly (typeof transfers.$inferSelect)[];
   readonly userCategories: readonly (typeof userCategories.$inferSelect)[];

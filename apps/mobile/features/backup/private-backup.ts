@@ -7,6 +7,7 @@ import {
   type BackupSnapshot,
   exportLocalLedgerBackupSnapshot,
   LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION,
+  validateBackupSnapshot,
 } from "./local-ledger-snapshot";
 import type { RemoteBackupMetadata, UploadEncryptedRemoteBackupInput } from "./remote-storage";
 import { uploadEncryptedRemoteBackup } from "./remote-storage";
@@ -171,7 +172,8 @@ const createEncryptedPrivateBackup = async (
   dependencies: CreatePrivateBackupDependencies
 ) => {
   const snapshot = dependencies.exportSnapshot(input.db, { exportedAt: input.exportedAt });
-  return dependencies.encryptSnapshot(snapshot, {
+  const validatedSnapshot = validateBackupSnapshot(snapshot);
+  return dependencies.encryptSnapshot(validatedSnapshot, {
     trustedDeviceSecret: input.trustedDeviceSecret,
     recoveryKey: input.recoveryKey,
     confirmedRecoveryKey: input.confirmedRecoveryKey,
