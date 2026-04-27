@@ -34,6 +34,7 @@ export type PrivateBackupApiDeps = {
 };
 
 const SIGNED_URL_EXPIRES_IN_SECONDS = 300;
+const BACKUP_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 export async function handlePrivateBackupRequest(
   request: Request,
@@ -96,7 +97,7 @@ async function currentResponse(store: ServiceClient, userId: string) {
 }
 
 async function prepareUploadResponse(store: ServiceClient, userId: string, body: unknown) {
-  const backupId = readRequiredString(body, "backupId");
+  const backupId = readRequiredBackupId(body);
   if (backupId === null) {
     return jsonResponse({ success: false, error: "invalid_metadata" }, 400);
   }
@@ -119,7 +120,7 @@ async function prepareUploadResponse(store: ServiceClient, userId: string, body:
 
 async function confirmUploadResponse(store: ServiceClient, userId: string, body: unknown) {
   const metadata = readRemoteBackupMetadata(body, userId);
-  if (metadata === null) {
+  if (metadata === null || !isBackupIdSegment(metadata.backupId)) {
     return jsonResponse({ success: false, error: "invalid_metadata" }, 400);
   }
 
@@ -209,6 +210,15 @@ async function readJsonBody(request: Request): Promise<unknown> {
 
 function readAction(body: unknown) {
   return readRequiredString(body, "action");
+}
+
+function readRequiredBackupId(body: unknown): string | null {
+  const backupId = readRequiredString(body, "backupId");
+  return backupId !== null && isBackupIdSegment(backupId) ? backupId : null;
+}
+
+function isBackupIdSegment(value: string): boolean {
+  return BACKUP_ID_PATTERN.test(value);
 }
 
 function readRequiredString(body: unknown, key: string): string | null {

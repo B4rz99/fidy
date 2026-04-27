@@ -107,6 +107,23 @@ describe("private-backup-api Edge Function", () => {
     expect(api.store.createdUploadUrls()).toEqual([]);
   });
 
+  it("rejects path-breaking backup ids before creating signed upload URLs", async () => {
+    const api = createPrivateBackupApiDeps();
+
+    const response = await handlePrivateBackupRequest(
+      jsonRequest({ action: "prepareUpload", backupId: "../backup-1" }, "valid-token"),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_metadata",
+    });
+    expect(api.store.loadBackup).not.toHaveBeenCalled();
+    expect(api.store.createdUploadUrls()).toEqual([]);
+  });
+
   it("returns the current authenticated-user backup metadata", async () => {
     const current = metadataRow({ backupId: BACKUP_ID });
     const api = createPrivateBackupApiDeps({
@@ -167,6 +184,34 @@ describe("private-backup-api Edge Function", () => {
       error: "internal_error",
     });
     expect(api.store.confirmedBackups()).toEqual([]);
+  });
+
+  it("rejects path-breaking confirmUpload backup ids before reading or changing storage", async () => {
+    const api = createPrivateBackupApiDeps({
+      objects: new Map([[`${USER_ID}/nested/backup-1.json`, ENCRYPTED_BACKUP_OBJECT]]),
+    });
+
+    const response = await handlePrivateBackupRequest(
+      jsonRequest(
+        {
+          action: "confirmUpload",
+          ...metadataPayload(),
+          backupId: "nested/backup-1",
+        },
+        "valid-token"
+      ),
+      api.deps
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "invalid_metadata",
+    });
+    expect(api.store.loadBackup).not.toHaveBeenCalled();
+    expect(api.store.downloadObject).not.toHaveBeenCalled();
+    expect(api.store.confirmedBackups()).toEqual([]);
+    expect(api.store.deletedObjects()).toEqual([]);
   });
 
   it("rejects invalid metadata before reading or changing backup storage", async () => {
