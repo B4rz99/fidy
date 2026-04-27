@@ -50,6 +50,57 @@ const SNAPSHOT = {
   },
 } satisfies BackupSnapshot;
 
+const SNAPSHOT_WITH_FINANCIAL_DATA = {
+  ...SNAPSHOT,
+  data: {
+    ...SNAPSHOT.data,
+    userCategories: [
+      {
+        id: "category-1",
+        userId: "user-1",
+        name: "Food",
+        iconName: "utensils",
+        colorHex: "#ff0000",
+        createdAt: "2026-04-25T12:00:00.000Z",
+        updatedAt: "2026-04-25T12:00:00.000Z",
+        deletedAt: null,
+      },
+    ] as unknown as BackupSnapshot["data"]["userCategories"],
+    financialAccounts: [
+      {
+        id: "account-1",
+        userId: "user-1",
+        name: "Main checking",
+        kind: "checking",
+        isDefault: true,
+        statementClosingDay: null,
+        paymentDueDay: null,
+        createdAt: "2026-04-25T12:00:00.000Z",
+        updatedAt: "2026-04-25T12:00:00.000Z",
+        deletedAt: null,
+      },
+    ] as unknown as BackupSnapshot["data"]["financialAccounts"],
+    transactions: [
+      {
+        id: "txn-1",
+        userId: "user-1",
+        type: "expense",
+        amount: 42_000,
+        categoryId: "category-1",
+        description: "Lunch at El Prado",
+        date: "2026-04-25",
+        accountId: "account-1",
+        accountAttributionState: "confirmed",
+        supersededAt: null,
+        createdAt: "2026-04-25T12:00:00.000Z",
+        updatedAt: "2026-04-25T12:00:00.000Z",
+        deletedAt: null,
+        source: "manual",
+      },
+    ] as unknown as BackupSnapshot["data"]["transactions"],
+  },
+} satisfies BackupSnapshot;
+
 describe("private backup health", () => {
   it("keeps Private Backup in warning state until the Recovery Key is confirmed", () => {
     expect(
@@ -97,6 +148,29 @@ describe("createPrivateBackup", () => {
     );
   });
 
+  it("sends only encrypted payloads and remote metadata to backup upload", async () => {
+    const exportSnapshot = vi.fn().mockReturnValue(SNAPSHOT_WITH_FINANCIAL_DATA);
+    const encryptSnapshot = vi.fn().mockResolvedValue(ENCRYPTED_BACKUP);
+    const uploadBackup = vi.fn().mockResolvedValue(METADATA);
+
+    await createPrivateBackup(
+      privateBackupInput({ exportSnapshot, encryptSnapshot, uploadBackup })
+    );
+
+    const remotePayload = JSON.stringify(uploadBackup.mock.calls);
+
+    expect(uploadBackup).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        encryptedBackup: ENCRYPTED_BACKUP,
+      })
+    );
+    expect(remotePayload).not.toContain("Lunch at El Prado");
+    expect(remotePayload).not.toContain("txn-1");
+    expect(remotePayload).not.toContain("RK-AAAA-BBBB-CCCC-DDDD-EEEE-FFFF");
+    expect(remotePayload).not.toContain("trusted-device-secret");
+  });
+
   it("refuses to encrypt or upload an invalid local ledger snapshot", async () => {
     const exportSnapshot = vi.fn().mockReturnValue({
       ...SNAPSHOT,
@@ -127,6 +201,27 @@ describe("createPrivateBackup", () => {
     expect(uploadBackup).not.toHaveBeenCalled();
   });
 });
+
+function privateBackupInput(
+  overrides: Pick<
+    Parameters<typeof createPrivateBackup>[0],
+    "encryptSnapshot" | "exportSnapshot" | "uploadBackup"
+  >
+): Parameters<typeof createPrivateBackup>[0] {
+  return {
+    db: {} as Parameters<typeof createPrivateBackup>[0]["db"],
+    supabase: {} as Parameters<typeof createPrivateBackup>[0]["supabase"],
+    userId: METADATA.userId,
+    backupId: METADATA.backupId,
+    recoveryKey: "RK-AAAA-BBBB-CCCC-DDDD-EEEE-FFFF",
+    confirmedRecoveryKey: "RK-AAAA-BBBB-CCCC-DDDD-EEEE-FFFF",
+    trustedDeviceSecret: "trusted-device-secret",
+    exportedAt: METADATA.createdAt,
+    appVersion: METADATA.appVersion,
+    deviceLabel: METADATA.deviceLabel,
+    ...overrides,
+  };
+}
 
 describe("rotatePrivateBackupRecoveryKeySafely", () => {
   it("keeps the old backup metadata when replacement upload fails", async () => {
