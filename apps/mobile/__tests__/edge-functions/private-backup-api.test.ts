@@ -147,6 +147,33 @@ describe("private-backup-api Edge Function", () => {
       success: true,
       backup: current,
     });
+    expect(api.store.loadCurrentBackup).toHaveBeenCalledWith(USER_ID);
+    expect(api.store.listBackups).not.toHaveBeenCalled();
+  });
+
+  it("does not expose backup history while the API contract is current-backup only", async () => {
+    const current = metadataRow({
+      backupId: "backup-current",
+      createdAt: "2026-04-27T10:00:00.000Z",
+    });
+    const legacy = metadataRow({
+      backupId: "backup-legacy",
+      createdAt: "2026-04-26T10:00:00.000Z",
+    });
+    const api = createPrivateBackupApiDeps({ backups: [legacy, current] });
+
+    const response = await handlePrivateBackupRequest(
+      jsonRequest({ action: "current" }, "valid-token"),
+      api.deps
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({
+      success: true,
+      backup: current,
+    });
+    expect(JSON.stringify(body)).not.toContain("backup-legacy");
   });
 
   it("confirms uploaded metadata only after server-side object verification", async () => {
