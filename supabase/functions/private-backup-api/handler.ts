@@ -28,8 +28,13 @@ type ServiceClient = {
   deleteObject(path: string): Promise<void>;
 };
 
+type RateLimitResult =
+  | { readonly allowed: true }
+  | { readonly allowed: false; readonly retryAfterSeconds: number; readonly unavailable?: true };
+
 export type PrivateBackupApiDeps = {
   readonly auth: AuthClient;
+  readonly rateLimit: (userId: string) => Promise<RateLimitResult>;
   readonly store: ServiceClient;
 };
 
@@ -60,6 +65,19 @@ export async function handlePrivateBackupRequest(
 
   if (error !== null || user === null) {
     return jsonResponse({ success: false, error: "invalid_auth" }, 401);
+  }
+
+  const rateLimit = await readRateLimit(deps, user.id);
+  if (rateLimit === null) {
+    return jsonResponse({ success: false, error: "rate_limit_unavailable" }, 503);
+  }
+  if (!rateLimit.allowed) {
+    if (rateLimit.unavailable === true) {
+      return jsonResponse({ success: false, error: "rate_limit_unavailable" }, 503);
+    }
+    return jsonResponse({ success: false, error: "rate_limited" }, 429, {
+      "Retry-After": String(rateLimit.retryAfterSeconds),
+    });
   }
 
   const body = await readJsonBody(request);
@@ -229,10 +247,25 @@ function readRequiredString(body: unknown, key: string): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
-function jsonResponse(body: unknown, status = 200): Response {
+async function readRateLimit(
+  deps: PrivateBackupApiDeps,
+  userId: string
+): Promise<RateLimitResult | null> {
+  try {
+    return await deps.rateLimit(userId);
+  } catch {
+    return null;
+  }
+}
+
+function jsonResponse(
+  body: unknown,
+  status = 200,
+  extraHeaders?: Record<string, string>
+): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json", ...corsHeaders() },
+    headers: { "Content-Type": "application/json", ...corsHeaders(), ...extraHeaders },
   });
 }
 

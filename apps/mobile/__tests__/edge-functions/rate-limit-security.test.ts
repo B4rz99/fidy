@@ -10,6 +10,7 @@ const source = readFileSync(
 describe("Edge Function rate limiting", () => {
   it("fails closed when the backing RPC is unavailable", () => {
     expect(source).toContain("failing closed");
+    expect(source).toContain("unavailable: true");
     expect(source).not.toContain("failing open");
     expect(source).not.toContain("allowed: true, count: 0");
   });

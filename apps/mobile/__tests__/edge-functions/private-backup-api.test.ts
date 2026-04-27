@@ -47,6 +47,62 @@ describe("private-backup-api Edge Function", () => {
     expectNoStoreCalls(invalidAuth.store);
   });
 
+  it("rate limits authenticated backup API requests before actions run", async () => {
+    const api = createPrivateBackupApiDeps({
+      rateLimit: { allowed: false, retryAfterSeconds: 41 },
+    });
+
+    const response = await handlePrivateBackupRequest(
+      jsonRequest({ action: "current" }, "valid-token"),
+      api.deps
+    );
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("41");
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "rate_limited",
+    });
+    expect(api.rateLimit).toHaveBeenCalledWith(USER_ID);
+    expectNoStoreCalls(api.store);
+  });
+
+  it("fails closed when rate limiting is unavailable", async () => {
+    const api = createPrivateBackupApiDeps({
+      rateLimit: { allowed: false, retryAfterSeconds: 41, unavailable: true },
+    });
+
+    const response = await handlePrivateBackupRequest(
+      jsonRequest({ action: "current" }, "valid-token"),
+      api.deps
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "rate_limit_unavailable",
+    });
+    expectNoStoreCalls(api.store);
+  });
+
+  it("fails closed when the rate limit dependency throws", async () => {
+    const api = createPrivateBackupApiDeps({
+      rateLimitError: new Error("rate limit unavailable"),
+    });
+
+    const response = await handlePrivateBackupRequest(
+      jsonRequest({ action: "current" }, "valid-token"),
+      api.deps
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "rate_limit_unavailable",
+    });
+    expectNoStoreCalls(api.store);
+  });
+
   it("routes only the private backup actions", async () => {
     const api = createPrivateBackupApiDeps();
 
@@ -416,11 +472,20 @@ function createPrivateBackupApiDeps(
     readonly deleteBackupMetadataError?: Error;
     readonly downloadObjectError?: Error;
     readonly objects?: ReadonlyMap<string, Uint8Array>;
+    readonly rateLimit?: RateLimitResult;
+    readonly rateLimitError?: Error;
     readonly userId?: string;
   } = {}
 ) {
   const store = createPrivateBackupStore(options);
+  const allowedRateLimit = { allowed: true } satisfies RateLimitResult;
+  const rateLimit = vi.fn(() =>
+    options.rateLimitError === undefined
+      ? Promise.resolve(options.rateLimit ?? allowedRateLimit)
+      : Promise.reject(options.rateLimitError)
+  );
   return {
+    rateLimit,
     store,
     deps: {
       auth: {
@@ -428,6 +493,7 @@ function createPrivateBackupApiDeps(
           getUser: vi.fn(() => Promise.resolve(authResponse(options))),
         },
       },
+      rateLimit,
       store,
     },
   };
@@ -460,6 +526,10 @@ type RemoteBackupMetadata = {
   readonly ciphertextSizeBytes: number;
   readonly ciphertextSha256: string;
 };
+
+type RateLimitResult =
+  | { readonly allowed: true }
+  | { readonly allowed: false; readonly retryAfterSeconds: number; readonly unavailable?: true };
 
 function metadataPayload() {
   return {
