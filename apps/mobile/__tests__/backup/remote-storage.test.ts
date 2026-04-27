@@ -61,14 +61,14 @@ describe("remote encrypted backup storage", () => {
     await expect(
       uploadEncryptedRemoteBackup(supabase.client, remoteBackupUploadInput())
     ).rejects.toThrow("Unable to call private backup API: metadata_mismatch");
-    expect(supabase.storageUploadToSignedUrl).toHaveBeenCalledWith(
-      `${USER_ID}/${BACKUP_ID}.json`,
-      "signed-upload-token",
-      JSON.stringify(ENCRYPTED_BACKUP),
-      { contentType: "application/json" }
-    );
+    expect(supabase.fetch).toHaveBeenCalledWith("https://storage.example/upload", {
+      body: JSON.stringify(ENCRYPTED_BACKUP),
+      headers: { "Content-Type": "application/json" },
+      method: "PUT",
+    });
     expect(supabase.storageRemove).not.toHaveBeenCalled();
     expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.storageFrom).not.toHaveBeenCalled();
   });
 
   it("lists only encrypted backup metadata for the current user", async () => {
@@ -183,12 +183,13 @@ function expectUploadCalls(supabase: ReturnType<typeof createRemoteBackupSupabas
       backupId: BACKUP_ID,
     },
   });
-  expect(supabase.storageUploadToSignedUrl).toHaveBeenCalledWith(
-    `${USER_ID}/${BACKUP_ID}.json`,
-    "signed-upload-token",
-    JSON.stringify(ENCRYPTED_BACKUP),
-    { contentType: "application/json" }
-  );
+  expect(supabase.fetch).toHaveBeenCalledWith("https://storage.example/upload", {
+    body: JSON.stringify(ENCRYPTED_BACKUP),
+    headers: { "Content-Type": "application/json" },
+    method: "PUT",
+  });
+  expect(supabase.storageUploadToSignedUrl).not.toHaveBeenCalled();
+  expect(supabase.storageFrom).not.toHaveBeenCalled();
   expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
     body: {
       action: "confirmUpload",
@@ -218,6 +219,7 @@ function createRemoteBackupSupabase(
           data: {
             success: true,
             path: `${USER_ID}/${BACKUP_ID}.json`,
+            uploadUrl: "https://storage.example/upload",
             uploadToken: "signed-upload-token",
           },
           error: null,
@@ -277,6 +279,7 @@ function createRemoteBackupSupabase(
     from,
     functionsInvoke,
     storageRemove,
+    storageFrom: client.storage.from,
     storageUploadToSignedUrl,
     remotePayloads: () => [
       functionsInvoke.mock.calls,
