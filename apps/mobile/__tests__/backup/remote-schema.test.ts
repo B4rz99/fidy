@@ -46,4 +46,14 @@ describe("remote encrypted backup schema", () => {
     expect(sql).toContain('drop policy if exists "users can delete own encrypted backup objects"');
     expect(sql).not.toContain("create policy");
   });
+
+  it("keeps encrypted backups locked down after direct policies are removed", () => {
+    const sql = readFileSync(WRITE_BOUNDARY_MIGRATION, "utf8").toLowerCase();
+
+    expect(sql).toContain("alter table public.encrypted_backups enable row level security");
+    expect(sql).toContain("alter table public.encrypted_backups force row level security");
+    expect(sql).toContain("update storage.buckets");
+    expect(sql).toContain("set public = false");
+    expect(sql).toContain("where id = 'encrypted-backups'");
+  });
 });
