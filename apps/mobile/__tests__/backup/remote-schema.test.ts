@@ -6,6 +6,10 @@ const MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260425100000_encrypted_backups.sql"
 );
+const WRITE_BOUNDARY_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260427100000_private_backup_api_write_boundary.sql"
+);
 
 describe("remote encrypted backup schema", () => {
   it("stores only encrypted backup metadata and scopes table and blob access to the owner", () => {
@@ -27,5 +31,19 @@ describe("remote encrypted backup schema", () => {
     expect(sql).toContain("storage.foldername(name)");
     expect(sql).toContain("(storage.foldername(name))[1] = (select auth.uid())::text");
     expect(sql).not.toMatch(/plaintext|raw_key|derived_key|recovery_key|recovery_phrase/u);
+  });
+
+  it("removes direct authenticated writes so private-backup-api owns backup mutations", () => {
+    const sql = readFileSync(WRITE_BOUNDARY_MIGRATION, "utf8").toLowerCase();
+
+    expect(sql).toContain('drop policy if exists "users can read own encrypted backups"');
+    expect(sql).toContain('drop policy if exists "users can insert own encrypted backups"');
+    expect(sql).toContain('drop policy if exists "users can update own encrypted backups"');
+    expect(sql).toContain('drop policy if exists "users can delete own encrypted backups"');
+    expect(sql).toContain('drop policy if exists "users can read own encrypted backup objects"');
+    expect(sql).toContain('drop policy if exists "users can insert own encrypted backup objects"');
+    expect(sql).toContain('drop policy if exists "users can update own encrypted backup objects"');
+    expect(sql).toContain('drop policy if exists "users can delete own encrypted backup objects"');
+    expect(sql).not.toContain("create policy");
   });
 });

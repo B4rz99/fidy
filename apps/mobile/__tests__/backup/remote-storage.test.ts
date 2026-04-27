@@ -40,16 +40,7 @@ const FORBIDDEN_REMOTE_VALUES = [
   "trusted-device-secret",
 ] as const;
 
-type RemoteMetadataRow = {
-  readonly id: string;
-  readonly user_id: string;
-  readonly created_at: string;
-  readonly schema_version: number;
-  readonly app_version: string;
-  readonly device_label: string;
-  readonly ciphertext_size_bytes: number;
-  readonly ciphertext_sha256: string;
-};
+type RemoteMetadata = ReturnType<typeof expectedRemoteMetadata>;
 
 describe("remote encrypted backup storage", () => {
   it("uploads encrypted backup blobs with metadata that excludes plaintext and secrets", async () => {
@@ -62,36 +53,39 @@ describe("remote encrypted backup storage", () => {
     expectRemotePayloadsToExclude(FORBIDDEN_REMOTE_VALUES, supabase.remotePayloads());
   });
 
-  it("removes an uploaded blob when metadata persistence fails", async () => {
+  it("surfaces confirmation failures without direct metadata or blob cleanup", async () => {
     const supabase = createRemoteBackupSupabase({
-      metadataUpsertError: { message: "metadata write failed" },
+      apiErrors: { confirmUpload: "metadata_mismatch" },
     });
 
     await expect(
       uploadEncryptedRemoteBackup(supabase.client, remoteBackupUploadInput())
-    ).rejects.toThrow("Unable to save encrypted backup metadata: metadata write failed");
-    expect(supabase.storageUpload).toHaveBeenCalledWith(
+    ).rejects.toThrow("Unable to call private backup API: metadata_mismatch");
+    expect(supabase.storageUploadToSignedUrl).toHaveBeenCalledWith(
       `${USER_ID}/${BACKUP_ID}.json`,
+      "signed-upload-token",
       JSON.stringify(ENCRYPTED_BACKUP),
-      { contentType: "application/json", upsert: true }
+      { contentType: "application/json" }
     );
-    expect(supabase.storageRemove).toHaveBeenCalledWith([`${USER_ID}/${BACKUP_ID}.json`]);
+    expect(supabase.storageRemove).not.toHaveBeenCalled();
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 
   it("lists only encrypted backup metadata for the current user", async () => {
-    const supabase = createRemoteBackupSupabase({ metadataRows: [remoteMetadataRow()] });
+    const supabase = createRemoteBackupSupabase({ currentBackup: expectedRemoteMetadata() });
 
     await expect(listEncryptedRemoteBackups(supabase.client, USER_ID)).resolves.toEqual([
       expectedRemoteMetadata(),
     ]);
-    expect(supabase.metadataEq).toHaveBeenCalledWith("user_id", USER_ID);
-    expect(supabase.metadataOrder).toHaveBeenCalledWith("created_at", { ascending: false });
-    expect(supabase.storageUpload).not.toHaveBeenCalled();
+    expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
+      body: { action: "current" },
+    });
+    expect(supabase.storageUploadToSignedUrl).not.toHaveBeenCalled();
   });
 
   it("downloads an encrypted backup blob through user-scoped metadata", async () => {
     const supabase = createRemoteBackupSupabase({
-      metadataRows: [remoteMetadataRow()],
+      currentBackup: expectedRemoteMetadata(),
       storageBody: JSON.stringify(ENCRYPTED_BACKUP),
     });
 
@@ -101,15 +95,16 @@ describe("remote encrypted backup storage", () => {
         backupId: BACKUP_ID,
       })
     ).resolves.toEqual(ENCRYPTED_BACKUP);
-    expect(supabase.metadataEq).toHaveBeenCalledWith("user_id", USER_ID);
-    expect(supabase.metadataEq).toHaveBeenCalledWith("id", BACKUP_ID);
-    expect(supabase.storageDownload).toHaveBeenCalledWith(`${USER_ID}/${BACKUP_ID}.json`);
+    expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
+      body: { action: "prepareDownload" },
+    });
+    expect(supabase.fetch).toHaveBeenCalledWith("https://storage.example/download");
     expectRemotePayloadsToExclude(FORBIDDEN_REMOTE_VALUES, supabase.remotePayloads());
   });
 
   it("rejects a downloaded blob that does not match its metadata", async () => {
     const supabase = createRemoteBackupSupabase({
-      metadataRows: [remoteMetadataRow()],
+      currentBackup: expectedRemoteMetadata(),
       storageBody: JSON.stringify({ ...ENCRYPTED_BACKUP, ciphertext: "c3RhbGU=" }),
     });
 
@@ -122,7 +117,7 @@ describe("remote encrypted backup storage", () => {
   });
 
   it("deletes the encrypted backup blob and user-scoped metadata row", async () => {
-    const supabase = createRemoteBackupSupabase();
+    const supabase = createRemoteBackupSupabase({ currentBackup: expectedRemoteMetadata() });
 
     await expect(
       deleteEncryptedRemoteBackup(supabase.client, {
@@ -130,15 +125,19 @@ describe("remote encrypted backup storage", () => {
         backupId: BACKUP_ID,
       })
     ).resolves.toBeUndefined();
-    expect(supabase.storageRemove).toHaveBeenCalledWith([`${USER_ID}/${BACKUP_ID}.json`]);
-    expect(supabase.metadataDelete).toHaveBeenCalled();
-    expect(supabase.metadataDeleteEq).toHaveBeenCalledWith("user_id", USER_ID);
-    expect(supabase.metadataDeleteEq).toHaveBeenCalledWith("id", BACKUP_ID);
+    expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
+      body: { action: "current" },
+    });
+    expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
+      body: { action: "deleteCurrent" },
+    });
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 
-  it("keeps the blob when metadata deletion fails", async () => {
+  it("keeps direct storage untouched when API deletion fails", async () => {
     const supabase = createRemoteBackupSupabase({
-      metadataDeleteError: { message: "metadata delete failed" },
+      currentBackup: expectedRemoteMetadata(),
+      apiErrors: { deleteCurrent: "delete_failed" },
     });
 
     await expect(
@@ -146,9 +145,9 @@ describe("remote encrypted backup storage", () => {
         userId: USER_ID,
         backupId: BACKUP_ID,
       })
-    ).rejects.toThrow("Unable to delete encrypted backup metadata: metadata delete failed");
-    expect(supabase.metadataDelete).toHaveBeenCalled();
+    ).rejects.toThrow("Unable to call private backup API: delete_failed");
     expect(supabase.storageRemove).not.toHaveBeenCalled();
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 });
 
@@ -178,76 +177,92 @@ function expectedRemoteMetadata() {
 }
 
 function expectUploadCalls(supabase: ReturnType<typeof createRemoteBackupSupabase>) {
-  expect(supabase.storageUpload).toHaveBeenCalledWith(
-    `${USER_ID}/${BACKUP_ID}.json`,
-    JSON.stringify(ENCRYPTED_BACKUP),
-    { contentType: "application/json", upsert: true }
-  );
-  expect(supabase.metadataUpsert).toHaveBeenCalledWith(remoteMetadataRow(), {
-    onConflict: "user_id,id",
+  expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
+    body: {
+      action: "prepareUpload",
+      backupId: BACKUP_ID,
+    },
   });
-}
-
-function remoteMetadataRow(): RemoteMetadataRow {
-  return {
-    id: BACKUP_ID,
-    user_id: USER_ID,
-    created_at: CREATED_AT,
-    schema_version: 1,
-    app_version: "1.2.3",
-    device_label: "iPhone 17",
-    ciphertext_size_bytes: 10,
-    ciphertext_sha256: "305531dcc50ebca31cf1d5b31e9fc76ed51f66b3b6dd5a030c6539ae6532f979",
-  };
+  expect(supabase.storageUploadToSignedUrl).toHaveBeenCalledWith(
+    `${USER_ID}/${BACKUP_ID}.json`,
+    "signed-upload-token",
+    JSON.stringify(ENCRYPTED_BACKUP),
+    { contentType: "application/json" }
+  );
+  expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
+    body: {
+      action: "confirmUpload",
+      ...expectedRemoteMetadata(),
+    },
+  });
 }
 
 function createRemoteBackupSupabase(
   options: {
-    readonly metadataRows?: readonly RemoteMetadataRow[];
-    readonly metadataDeleteError?: { readonly message: string };
-    readonly metadataUpsertError?: { readonly message: string };
+    readonly apiErrors?: Partial<Record<string, string>>;
+    readonly currentBackup?: RemoteMetadata | null;
     readonly storageBody?: string;
   } = {}
 ) {
-  const metadataOrder = vi.fn(() =>
-    Promise.resolve({ data: options.metadataRows ?? [], error: null })
+  const currentBackup = options.currentBackup === undefined ? null : options.currentBackup;
+  const functionsInvoke = vi.fn(
+    (functionName: string, invokeOptions: { body: { action: string } }) => {
+      expect(functionName).toBe("private-backup-api");
+      const action = invokeOptions.body.action;
+      const apiError = options.apiErrors?.[action];
+      if (apiError !== undefined) {
+        return Promise.resolve({ data: { success: false, error: apiError }, error: null });
+      }
+      if (action === "prepareUpload") {
+        return Promise.resolve({
+          data: {
+            success: true,
+            path: `${USER_ID}/${BACKUP_ID}.json`,
+            uploadToken: "signed-upload-token",
+          },
+          error: null,
+        });
+      }
+      if (action === "confirmUpload") {
+        return Promise.resolve({
+          data: { success: true, backup: expectedRemoteMetadata() },
+          error: null,
+        });
+      }
+      if (action === "current") {
+        return Promise.resolve({
+          data: { success: true, backup: currentBackup },
+          error: null,
+        });
+      }
+      if (action === "prepareDownload") {
+        return Promise.resolve({
+          data: {
+            success: true,
+            backup: currentBackup ?? expectedRemoteMetadata(),
+            downloadUrl: "https://storage.example/download",
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: { success: true }, error: null });
+    }
   );
-  const metadataSingle = vi.fn(() =>
-    Promise.resolve({ data: options.metadataRows?.[0] ?? null, error: null })
-  );
-  const metadataEq = vi.fn(() => ({
-    eq: metadataEq,
-    error: null,
-    order: metadataOrder,
-    single: metadataSingle,
-  }));
-  const metadataDeleteEq = vi.fn(() => ({
-    eq: metadataDeleteEq,
-    error: options.metadataDeleteError ?? null,
-  }));
-  const metadataSelect = vi.fn(() => ({ eq: metadataEq }));
-  const metadataDelete = vi.fn(() => ({
-    eq: metadataDeleteEq,
-    error: options.metadataDeleteError ?? null,
-  }));
-  const metadataUpsert = vi.fn(() =>
-    Promise.resolve({ error: options.metadataUpsertError ?? null })
-  );
-  const storageUpload = vi.fn(() => Promise.resolve({ error: null }));
-  const storageDownload = vi.fn(() =>
+  const storageUploadToSignedUrl = vi.fn(() => Promise.resolve({ error: null }));
+  const storageRemove = vi.fn(() => Promise.resolve({ error: null }));
+  const from = vi.fn();
+  const fetch = vi.fn(() =>
     Promise.resolve({
-      data: { text: () => Promise.resolve(options.storageBody ?? "") },
-      error: null,
+      ok: true,
+      json: () =>
+        Promise.resolve(JSON.parse(options.storageBody ?? JSON.stringify(ENCRYPTED_BACKUP))),
     })
   );
-  const storageRemove = vi.fn(() => Promise.resolve({ error: null }));
-  const table = { delete: metadataDelete, select: metadataSelect, upsert: metadataUpsert };
-  const bucket = { download: storageDownload, remove: storageRemove, upload: storageUpload };
+  vi.stubGlobal("fetch", fetch);
+  const bucket = { remove: storageRemove, uploadToSignedUrl: storageUploadToSignedUrl };
   const client = {
-    from: vi.fn((tableName: string) => {
-      expect(tableName).toBe("encrypted_backups");
-      return table;
-    }),
+    from,
+    functions: { invoke: functionsInvoke },
     storage: {
       from: vi.fn((bucketName: string) => {
         expect(bucketName).toBe("encrypted-backups");
@@ -258,21 +273,15 @@ function createRemoteBackupSupabase(
 
   return {
     client: client as unknown as SupabaseClient,
-    metadataEq,
-    metadataOrder,
-    metadataSelect,
-    metadataSingle,
-    metadataDelete,
-    metadataDeleteEq,
-    metadataUpsert,
-    storageDownload,
+    fetch,
+    from,
+    functionsInvoke,
     storageRemove,
-    storageUpload,
+    storageUploadToSignedUrl,
     remotePayloads: () => [
-      metadataEq.mock.calls,
-      metadataUpsert.mock.calls,
-      storageDownload.mock.calls,
-      storageUpload.mock.calls,
+      functionsInvoke.mock.calls,
+      storageUploadToSignedUrl.mock.calls,
+      fetch.mock.calls,
     ],
   };
 }
