@@ -2,6 +2,7 @@
 import * as SecureStore from "expo-secure-store";
 import { captureError, captureWarning } from "@/shared/lib";
 import type { ConnectResult, RawEmail } from "../schema";
+import { readOauthCallbackCode } from "./email-adapter-callback";
 import { generatePkce } from "./email-adapter-pkce";
 import type { EmailAdapter, EmailProviderConfig, FetchEmailsFn } from "./email-adapter-types";
 
@@ -9,8 +10,6 @@ type TokenResponse = {
   access_token: string;
   refresh_token?: string;
 };
-
-type ConnectError = Extract<ConnectResult, { success: false }>["error"];
 
 type AuthorizationCodeResult =
   | {
@@ -21,7 +20,7 @@ type AuthorizationCodeResult =
     }
   | {
       success: false;
-      error: ConnectError;
+      error: Extract<ConnectResult, { success: false }>["error"];
     };
 
 type ProfileEmailResult =
@@ -54,6 +53,7 @@ function buildAuthParams(input: {
   clientId: string;
   redirectUri: string;
   codeChallenge: string;
+  state: string;
 }) {
   return new URLSearchParams({
     client_id: input.clientId,
@@ -63,22 +63,25 @@ function buildAuthParams(input: {
     ...input.config.extraAuthParams,
     code_challenge: input.codeChallenge,
     code_challenge_method: "S256",
+    state: input.state,
   });
 }
 
-async function requestAuthorizationCode(input: {
+const requestAuthorizationCode = async (input: {
   config: EmailProviderConfig;
   clientId: string;
-}): Promise<AuthorizationCodeResult> {
+}): Promise<AuthorizationCodeResult> => {
   const { openAuthSessionAsync } = await import("expo-web-browser");
   const redirectUri = input.config.getRedirectUri();
   const { codeVerifier, codeChallenge } = await generatePkce();
+  const { codeVerifier: state } = await generatePkce();
   const result = await openAuthSessionAsync(
     `${input.config.authUrl}?${buildAuthParams({
       config: input.config,
       clientId: input.clientId,
       redirectUri,
       codeChallenge,
+      state,
     })}`,
     redirectUri
   );
@@ -87,11 +90,11 @@ async function requestAuthorizationCode(input: {
     return { success: false, error: "cancelled" };
   }
 
-  const code = new URL(result.url).searchParams.get("code");
-  return code == null
-    ? { success: false, error: "no_code" }
-    : { success: true, code, redirectUri, codeVerifier };
-}
+  const callback = readOauthCallbackCode({ callbackUrl: result.url, redirectUri, state });
+  return callback.success
+    ? { success: true, code: callback.code, redirectUri, codeVerifier }
+    : callback;
+};
 
 function buildTokenExchangeBody(input: {
   config: EmailProviderConfig;

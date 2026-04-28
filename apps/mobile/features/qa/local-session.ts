@@ -31,11 +31,16 @@ function getLocalQaBuildFlag() {
   return process.env.EXPO_PUBLIC_ENABLE_LOCAL_QA === "1";
 }
 
+function isProductionBuild() {
+  return process.env.EXPO_PUBLIC_APP_ENV === "production";
+}
+
 export function isLocalQaProfile(value: string | null | undefined): value is LocalQaProfile {
   return LOCAL_QA_PROFILES.includes(value as LocalQaProfile);
 }
 
 export function isLocalQaAvailable(): boolean {
+  if (isProductionBuild()) return false;
   return getRuntimeDevFlag() === true || process.env.NODE_ENV === "test" || getLocalQaBuildFlag();
 }
 

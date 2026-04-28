@@ -95,6 +95,22 @@ describe("setupApplePayCapture", () => {
       merchant: "Farmatodo",
     });
   });
+
+  it("ignores malformed Apple Pay intent payloads", async () => {
+    const { setupApplePayCapture } = await loadSetup();
+    let capturedListener: (event: any) => void = vi.fn();
+    mockAddLogTransactionListener.mockImplementationOnce((listener: any) => {
+      capturedListener = listener;
+      return { remove: vi.fn() };
+    });
+
+    await setupApplePayCapture(mockDb, USER_ID);
+    capturedListener({ amount: "50000", merchant: "Farmatodo" });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mockProcessApplePayIntent).not.toHaveBeenCalled();
+  });
 });
 
 describe("setupSmsDetection", () => {
@@ -174,6 +190,21 @@ describe("setupSmsDetection", () => {
     expect(mockInsertDetectedSmsEvent).not.toHaveBeenCalled();
     expect(mockRefreshDetectedSms).not.toHaveBeenCalled();
   });
+
+  it("ignores malformed SMS payloads before reading fields", async () => {
+    const { setupSmsDetection } = await loadSetup();
+    let capturedListener: (event: any) => void = vi.fn();
+    mockAddDetectBankSmsListener.mockImplementationOnce((listener: any) => {
+      capturedListener = listener;
+      return { remove: vi.fn() };
+    });
+
+    await setupSmsDetection(mockDb, USER_ID, mockRefreshDetectedSms);
+
+    expect(() => capturedListener({ senderName: "", timestamp: Date.now() })).not.toThrow();
+    expect(mockInsertDetectedSmsEvent).not.toHaveBeenCalled();
+    expect(mockRefreshDetectedSms).not.toHaveBeenCalled();
+  });
 });
 
 describe("setupNotificationCapture", () => {
@@ -219,6 +250,26 @@ describe("setupNotificationCapture", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(mockProcessNotification).toHaveBeenCalledWith(mockDb, USER_ID, notificationData);
+  });
+
+  it("ignores malformed notification payloads", async () => {
+    const { setupNotificationCapture } = await loadSetup();
+    let capturedListener: (event: any) => void = vi.fn();
+    mockAndroidAddListener.mockImplementationOnce((_event: any, listener: any) => {
+      capturedListener = listener;
+      return { remove: vi.fn() };
+    });
+
+    await setupNotificationCapture(mockDb, USER_ID, ["com.todo1.mobile.co.bancolombia"]);
+    capturedListener({
+      packageName: "com.todo1.mobile.co.bancolombia",
+      text: 123,
+      timestamp: "today",
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mockProcessNotification).not.toHaveBeenCalled();
   });
 
   it("returns no-op when no packages provided", async () => {

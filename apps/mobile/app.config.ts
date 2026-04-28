@@ -1,5 +1,15 @@
 import type { ExpoConfig } from "expo/config";
 
+const isProductionBuild = process.env.APP_ENV === "production";
+const devClientPlugin: NonNullable<ExpoConfig["plugins"]>[number] = [
+  "expo-dev-client",
+  {
+    ios: {
+      launchMode: "most-recent",
+    },
+  },
+];
+
 // Cast: newArchEnabled, edgeToEdgeEnabled, predictiveBackGestureEnabled
 // exist in SDK 55 but @expo/config-types hasn't caught up yet.
 const config: ExpoConfig & { newArchEnabled?: boolean } = {
@@ -48,14 +58,7 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
   },
   plugins: [
     "expo-router",
-    [
-      "expo-dev-client",
-      {
-        ios: {
-          launchMode: "most-recent",
-        },
-      },
-    ],
+    ...(isProductionBuild ? [] : [devClientPlugin]),
     "expo-secure-store",
     // biome-ignore lint/style/useNamingConvention: expo-sqlite config key
     ["expo-sqlite", { useSQLCipher: true }],

@@ -5,7 +5,11 @@ import type { AnyDb } from "@/shared/db";
 import { captureError, generateDetectedSmsEventId, toIsoDateTime } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import { parseSmsDetectedAt } from "../lib/parse-sms-detected-at";
-import type { ApplePayIntentData, NotificationData } from "../schema";
+import {
+  applePayIntentDataSchema,
+  notificationDataSchema,
+  smsDetectionDataSchema,
+} from "../schema";
 import { createCaptureIngestionPort } from "../services/capture-ingestion";
 
 const noop = () => undefined;
@@ -22,11 +26,14 @@ export async function setupApplePayCapture(db: AnyDb, userId: UserId): Promise<(
   if (!mod.isAvailable()) return noop;
 
   const subscription = mod.addLogTransactionListener((event) => {
+    const parsed = applePayIntentDataSchema.safeParse(event);
+    if (!parsed.success) return;
+
     captureIngestion
       .ingest({
         kind: "apple_pay",
         userId,
-        intent: event as ApplePayIntentData,
+        intent: parsed.data,
       })
       .catch(captureError);
   });
@@ -43,17 +50,20 @@ export async function setupSmsDetection(
   if (!mod.isAvailable()) return noop;
 
   const subscription = mod.addDetectBankSmsListener((event) => {
-    const detectedAt = parseSmsDetectedAt(event.timestamp);
+    const parsed = smsDetectionDataSchema.safeParse(event);
+    if (!parsed.success) return;
+
+    const detectedAt = parseSmsDetectedAt(parsed.data.timestamp);
 
     if (detectedAt == null) {
-      captureError(new Error(`Invalid SMS detection timestamp: ${event.timestamp}`));
+      captureError(new Error(`Invalid SMS detection timestamp: ${parsed.data.timestamp}`));
       return;
     }
 
     insertDetectedSmsEvent(db, {
       id: generateDetectedSmsEventId(),
       userId,
-      senderLabel: event.senderName,
+      senderLabel: parsed.data.senderName,
       detectedAt,
       dismissed: false,
       linkedTransactionId: null,
@@ -85,11 +95,14 @@ export async function setupNotificationCapture(
   mod.setAllowedPackages(packages);
 
   const subscription = mod.addListener("onNotificationReceived", (event: unknown) => {
+    const parsed = notificationDataSchema.safeParse(event);
+    if (!parsed.success) return;
+
     captureIngestion
       .ingest({
         kind: "notification",
         userId,
-        notification: event as NotificationData,
+        notification: parsed.data,
       })
       .catch(captureError);
   });
