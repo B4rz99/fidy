@@ -53,7 +53,7 @@ export type EmailCaptureFetchOutcome =
       readonly needsReviewCount: number;
       readonly failedCount: number;
     }
-  | { readonly status: "skipped" };
+  | { readonly status: "skipped"; readonly reason: "already_fetching" | "missing_context" };
 
 const EMPTY_FETCH_OUTCOME: EmailCaptureFetchOutcome = {
   status: "completed",
@@ -62,7 +62,15 @@ const EMPTY_FETCH_OUTCOME: EmailCaptureFetchOutcome = {
   failedCount: 0,
 };
 
-const SKIPPED_FETCH_OUTCOME: EmailCaptureFetchOutcome = { status: "skipped" };
+const alreadyFetchingOutcome: EmailCaptureFetchOutcome = {
+  status: "skipped",
+  reason: "already_fetching",
+};
+
+const missingContextOutcome: EmailCaptureFetchOutcome = {
+  status: "skipped",
+  reason: "missing_context",
+};
 
 export { useEmailCaptureStore };
 
@@ -195,11 +203,11 @@ export async function fetchAndProcessEmails(
   const fetchStart = beginEmailCaptureFetchRun(userId);
   if (fetchStart.kind === "missing_context") {
     warnFetchMissingContext(userId);
-    return SKIPPED_FETCH_OUTCOME;
+    return missingContextOutcome;
   }
   if (fetchStart.kind === "already_fetching") {
     captureWarning("email_capture_fetch_already_running");
-    return SKIPPED_FETCH_OUTCOME;
+    return alreadyFetchingOutcome;
   }
 
   const run = fetchStart.run;
@@ -226,11 +234,26 @@ export async function fetchAndProcessEmails(
         const processed = await processedPromise;
         if (!fetchResult.fetchOk) return processed;
 
+        const previousResult = aggregatePipelineResults(
+          processed.map((result) => result.processingResult)
+        );
+        const completedBefore = processed.reduce(
+          (completed, result) => completed + result.rawEmails.length,
+          0
+        );
+
         const processingResult = await ingestFetchedEmails({
           db,
           userId,
           emails: fetchResult.rawEmails,
-          onProgress,
+          onProgress: (progress) =>
+            onProgress({
+              total: summary.allEmails.length,
+              completed: completedBefore + progress.completed,
+              saved: previousResult.saved + progress.saved,
+              failed: previousResult.failed + progress.failed,
+              needsReview: previousResult.needsReview + progress.needsReview,
+            }),
           runRetries: false,
         });
 

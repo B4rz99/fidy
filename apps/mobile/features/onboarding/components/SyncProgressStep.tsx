@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { createAccountSuggestionService } from "@/features/account-suggestions/public";
 import { useOptionalUserId } from "@/features/auth/public";
@@ -25,6 +25,7 @@ export function SyncProgressStep() {
 
   const accounts = useEmailCaptureStore((s) => s.accounts);
   const progress = useEmailCaptureStore((s) => s.progress);
+  const isFetching = useEmailCaptureStore((s) => s.isFetching);
   const [syncOutcome, setSyncOutcome] = useState<{
     readonly savedCount: number;
     readonly hasAccountSuggestions: boolean;
@@ -39,8 +40,7 @@ export function SyncProgressStep() {
   const fetchStarted = useRef(false);
   const suggestionService = useMemo(() => createAccountSuggestionService(), []);
 
-  // Start fetch on mount if we have accounts
-  useMountEffect(() => {
+  const startSync = useCallback(() => {
     let isMounted = true;
     if (accounts.length > 0 && !fetchStarted.current && db && userId) {
       fetchStarted.current = true;
@@ -54,7 +54,12 @@ export function SyncProgressStep() {
           () => refreshTransactions(db, userId)
         );
         if (!isMounted) return;
-        if (outcome.status !== "completed") return;
+        if (outcome.status !== "completed") {
+          if (outcome.reason === "already_fetching") {
+            fetchStarted.current = false;
+          }
+          return;
+        }
         setSyncOutcome({
           savedCount: outcome.savedCount,
           hasAccountSuggestions:
@@ -72,7 +77,20 @@ export function SyncProgressStep() {
     return () => {
       isMounted = false;
     };
+  }, [accounts.length, db, suggestionService, userId]);
+
+  // Start fetch on mount if we have accounts.
+  useMountEffect(() => {
+    const cleanup = startSync();
+    return cleanup;
   });
+
+  useEffect(() => {
+    if (accounts.length === 0 || isFetching || fetchStarted.current || syncOutcome !== null) {
+      return undefined;
+    }
+    return startSync();
+  }, [accounts.length, isFetching, startSync, syncOutcome]);
 
   const livePercent = progress
     ? progress.total > 0

@@ -167,6 +167,14 @@ type ProcessSummary = {
   needsReview: number;
 };
 
+type ProgressSnapshot = {
+  total: number;
+  completed: number;
+  saved: number;
+  failed: number;
+  needsReview: number;
+};
+
 const DEFAULT_ACCOUNT: TestEmailAccount = {
   id: "ea-1" as EmailAccountId,
   userId: mockUserId as UserId,
@@ -515,7 +523,7 @@ describe("email capture boundary", () => {
       const result = await runFetchAndProcess();
 
       expect(mockAdapter.fetchEmails).not.toHaveBeenCalled();
-      expect(result).toEqual({ status: "skipped" });
+      expect(result).toEqual({ status: "skipped", reason: "already_fetching" });
     });
 
     it("continues processing other accounts when one fails", async () => {
@@ -645,6 +653,40 @@ describe("email capture boundary", () => {
       const [failedAccount, savedAccount] = useEmailCaptureStore.getState().accounts;
       expect(failedAccount?.lastFetchedAt).toBeNull();
       expect(savedAccount?.lastFetchedAt).not.toBeNull();
+    });
+
+    it("reports whole-sync progress across per-account processing", async () => {
+      setAccounts([
+        makeAccount(),
+        makeAccount({
+          id: "ea-2" as EmailAccountId,
+          provider: "outlook",
+          email: "test@outlook.com",
+        }),
+      ]);
+      mockAdapter.fetchEmails
+        .mockResolvedValueOnce([makeRawEmail({ externalId: "ext-1" })])
+        .mockResolvedValueOnce([makeRawEmail({ externalId: "ext-2", provider: "outlook" })]);
+      const progressSnapshots: ProgressSnapshot[] = [];
+      vi.mocked(processEmails)
+        .mockImplementationOnce(async (_db, _uid, _emails, onProgress) => {
+          onProgress?.({ total: 1, completed: 1, saved: 1, failed: 0, needsReview: 0 });
+          progressSnapshots.push(useEmailCaptureStore.getState().progress!);
+          return { ...EMPTY_PROCESS_SUMMARY, saved: 1 };
+        })
+        .mockImplementationOnce(async (_db, _uid, _emails, onProgress) => {
+          onProgress?.({ total: 1, completed: 1, saved: 1, failed: 0, needsReview: 0 });
+          progressSnapshots.push(useEmailCaptureStore.getState().progress!);
+          return { ...EMPTY_PROCESS_SUMMARY, saved: 1 };
+        });
+      mockEmptyReviewLoads();
+
+      await runFetchAndProcess();
+
+      expect(progressSnapshots).toEqual([
+        expect.objectContaining({ total: 2, completed: 1, saved: 1 }),
+        expect.objectContaining({ total: 2, completed: 2, saved: 2 }),
+      ]);
     });
 
     it("auto-clears phase after 2s timeout when phase is complete", async () => {
