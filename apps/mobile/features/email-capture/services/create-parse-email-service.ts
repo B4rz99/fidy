@@ -49,6 +49,8 @@ type CreateParseEmailServiceDeps = {
   readonly telemetry?: AppTelemetry;
 };
 
+const AUTHORIZATION_HEADER = "Authorization";
+
 export type ParseEmailService = {
   readonly classifyMerchant: (merchant: string) => Promise<string>;
   readonly parseEmail: (emailBody: string) => Promise<LlmParsedTransaction | null>;
@@ -57,11 +59,15 @@ export type ParseEmailService = {
 
 function invokeParseEmailFunctionEffect<Response>(body: string, mode: ParseMode) {
   return Effect.flatMap(currentSupabaseClientEffect, (supabase) =>
-    fromPromise(() =>
-      supabase.functions.invoke<Response>("parse-email", {
+    fromPromise(async () => {
+      const sessionResult = await supabase.auth?.getSession?.();
+      const accessToken = sessionResult?.data.session?.access_token;
+
+      return supabase.functions.invoke<Response>("parse-email", {
         body: { body, mode },
-      })
-    )
+        ...(accessToken ? { headers: { [AUTHORIZATION_HEADER]: `Bearer ${accessToken}` } } : {}),
+      });
+    })
   );
 }
 
@@ -74,7 +80,7 @@ function logParseApiFailureEffect(
       errorMessage: response.error?.message ?? "unknown",
       hasData: response.data != null,
     }),
-    Effect.succeed(null)
+    Effect.fail(new Error(response.error?.message ?? "parse-email request failed"))
   );
 }
 
@@ -148,12 +154,13 @@ function parseApiResponseEffect(
 }
 
 function parseTransactionEffect(input: ParseTransactionInput) {
-  const request = invokeParseEmailFunctionEffect<ParseEmailResponse>(input.body, input.mode);
-
-  return Effect.catchAll(
-    Effect.flatMap(request, (response) => parseApiResponseEffect(input, response)),
-    (error) => logParseExceptionEffect(input.warningPrefix, error)
+  const request = Effect.catchAll(
+    invokeParseEmailFunctionEffect<ParseEmailResponse>(input.body, input.mode),
+    (error) =>
+      Effect.zipRight(logParseExceptionEffect(input.warningPrefix, error), Effect.fail(error))
   );
+
+  return Effect.flatMap(request, (response) => parseApiResponseEffect(input, response));
 }
 
 function logClassifyApiFailureEffect(response: ParseFunctionResult<ClassifyResponse>) {

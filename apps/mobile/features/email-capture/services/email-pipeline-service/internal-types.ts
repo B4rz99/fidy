@@ -31,6 +31,10 @@ export type PipelineRuntime = {
   readonly runEmailWithClock: <A>(
     effect: Effect.Effect<A, unknown, CreateEmailPipelineServiceDeps | AppClock>
   ) => Promise<A>;
+  readonly parseRateLimit: {
+    readonly delayMs: number;
+    readonly sleep: (delayMs: number) => Promise<void>;
+  };
 };
 
 export type CaptureEvidenceRowsInput = {

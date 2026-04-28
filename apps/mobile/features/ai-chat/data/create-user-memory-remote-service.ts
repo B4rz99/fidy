@@ -41,6 +41,8 @@ type CreateUserMemoryRemoteServiceDeps = {
   readonly clock?: AppClock;
 };
 
+const AUTHORIZATION_HEADER = "Authorization";
+
 export type UserMemoryRemoteService = {
   readonly listUserMemories: (userId: UserId) => Promise<readonly UserMemory[]>;
   readonly softDeleteUserMemory: (id: UserMemoryId) => Promise<void>;
@@ -105,23 +107,26 @@ function softDeleteUserMemoryEffect(id: UserMemoryId) {
 
 function extractMemoriesEffect(messages: readonly ConversationMessage[]) {
   return Effect.flatMap(currentSupabaseClientEffect, (supabase) =>
-    Effect.map(
-      fromPromise(() =>
-        supabase.functions.invoke("ai-chat", {
+    Effect.flatMap(
+      fromPromise(async () => {
+        const sessionResult = await supabase.auth.getSession();
+        const accessToken = sessionResult.data.session?.access_token;
+        return supabase.functions.invoke("ai-chat", {
           body: { mode: "extract_memories", messages },
-        })
-      ),
+          ...(accessToken ? { headers: { [AUTHORIZATION_HEADER]: `Bearer ${accessToken}` } } : {}),
+        });
+      }),
       ({ data, error }) => {
         if (error != null) {
-          throw error;
+          return Effect.fail(error);
         }
 
         const result = extractMemoriesResponseSchema.safeParse(data);
         if (!result.success) {
-          throw new Error("extract_memories_failed");
+          return Effect.fail(new Error("extract_memories_failed"));
         }
 
-        return result.data.data.map(toUserMemory);
+        return Effect.succeed(result.data.data.map(toUserMemory));
       }
     )
   );

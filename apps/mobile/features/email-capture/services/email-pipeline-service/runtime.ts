@@ -30,6 +30,11 @@ export const EmailPipelineDeps = makeAppService<CreateEmailPipelineServiceDeps>(
   "@/features/email-capture/EmailPipelineDeps"
 );
 
+const DEFAULT_PARSE_RATE_LIMIT_DELAY_MS = process.env.NODE_ENV === "test" ? 0 : 3000;
+
+const sleep = (delayMs: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, delayMs));
+
 export function parseBodyEffect(db: AnyDb, userId: UserId, body: string) {
   return Effect.gen(function* () {
     const { parseEmailApi, lookupMerchantRule } = yield* EmailPipelineDeps.tag;
@@ -206,7 +211,7 @@ export function nextRetryAtEffect(retryCount: number) {
 }
 
 export function createPipelineRuntime(deps: CreateEmailPipelineServiceDeps): PipelineRuntime {
-  const { clock, telemetry, ...runtimeDeps } = deps;
+  const { clock, telemetry, parseRateLimit, ...runtimeDeps } = deps;
   const clockRuntime = bindAppClock(clock as AppClock | undefined);
   const telemetryRuntime = bindAppTelemetry(telemetry as AppTelemetry | undefined);
   const runtime = EmailPipelineDeps.bind(runtimeDeps);
@@ -216,5 +221,9 @@ export function createPipelineRuntime(deps: CreateEmailPipelineServiceDeps): Pip
     runTelemetryEffect: (effect) => telemetryRuntime.run(effect),
     runEmailEffect: (effect) => runtime.run(effect),
     runEmailWithClock: (effect) => runtime.run(clockRuntime.provide(effect)),
+    parseRateLimit: {
+      delayMs: parseRateLimit?.delayMs ?? DEFAULT_PARSE_RATE_LIMIT_DELAY_MS,
+      sleep: parseRateLimit?.sleep ?? sleep,
+    },
   };
 }

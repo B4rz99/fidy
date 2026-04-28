@@ -6,13 +6,21 @@ import type { EmailAccountId, IsoDateTime, UserId } from "@/shared/types/branded
 import { isFirstFetchForAny, shouldShowProgress } from "../lib/progress-phases";
 import type { EmailAccountRow, ProcessedEmailRow } from "../lib/repository";
 import { getFailedEmails, getNeedsReviewEmails, updateLastFetchedAt } from "../lib/repository";
-import type { ProgressCallback, RawEmail } from "../pipeline.public";
+import type { PipelineResult, ProgressCallback, RawEmail } from "../pipeline.public";
 import { processEmails, processRetries } from "../pipeline.public";
 import { ensureBankSenders } from "../queries/bank-senders";
 import type { EmailProvider } from "../schema";
 import { getAdapter } from "./email-adapter";
 
 const EMPTY_RAW_EMAILS: RawEmail[] = [];
+const EMPTY_PIPELINE_RESULT: PipelineResult = {
+  filtered: 0,
+  skippedDuplicate: 0,
+  skippedCrossSource: 0,
+  saved: 0,
+  failed: 0,
+  needsReview: 0,
+};
 const FETCH_LOOKBACK_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 type EmailFetchClientIds = Record<EmailProvider, string>;
@@ -54,6 +62,7 @@ type FetchEmailAccountCommand = {
 type PersistFetchedAccountsCommand = {
   readonly db: AnyDb;
   readonly fetchResults: readonly EmailAccountFetchResult[];
+  readonly processingResult: PipelineResult;
 };
 
 const createEmptyFetchResult = (account: EmailAccountRow): EmailAccountFetchResult => ({
@@ -76,11 +85,6 @@ const createFetchSummary = (
     showProgress: shouldShowProgress(allEmails.length, isFirstFetchForAny(accounts)),
   };
 };
-
-const createSuccessfulAccountIds = (
-  fetchResults: readonly EmailAccountFetchResult[]
-): ReadonlySet<EmailAccountId> =>
-  new Set(fetchResults.filter((result) => result.fetchOk).map((result) => result.account.id));
 
 const getSuccessfulFetches = (
   fetchResults: readonly EmailAccountFetchResult[]
@@ -150,31 +154,35 @@ export async function ingestFetchedEmails(input: {
   readonly userId: UserId;
   readonly emails: readonly RawEmail[];
   readonly onProgress?: ProgressCallback;
-}): Promise<void> {
+}): Promise<PipelineResult> {
   const captureIngestion = createCaptureIngestionPort(input.db, {
     processEmails,
     processRetries,
   });
 
-  if (input.emails.length > 0) {
-    await captureIngestion.ingest({
-      kind: "email_batch",
-      userId: input.userId,
-      emails: [...input.emails],
-      onProgress: input.onProgress,
-    });
-  }
+  const processingResult: PipelineResult =
+    input.emails.length > 0
+      ? ((await captureIngestion.ingest({
+          kind: "email_batch",
+          userId: input.userId,
+          emails: [...input.emails],
+          onProgress: input.onProgress,
+        })) as PipelineResult)
+      : EMPTY_PIPELINE_RESULT;
 
   await captureIngestion.ingest({
     kind: "email_retry",
     userId: input.userId,
   });
+
+  return processingResult;
 }
 
 export async function persistFetchedAccounts(
   command: PersistFetchedAccountsCommand
 ): Promise<PersistedFetchedAccounts> {
-  const successfulFetches = getSuccessfulFetches(command.fetchResults);
+  const successfulFetches =
+    command.processingResult.failed === 0 ? getSuccessfulFetches(command.fetchResults) : [];
   const fetchedAt = toIsoDateTime(new Date());
 
   await Promise.all(
@@ -183,7 +191,7 @@ export async function persistFetchedAccounts(
 
   return {
     fetchedAt,
-    updatedAccountIds: createSuccessfulAccountIds(command.fetchResults),
+    updatedAccountIds: new Set(successfulFetches.map((result) => result.account.id)),
   };
 }
 

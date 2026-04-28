@@ -41,6 +41,8 @@ type RemoteBackupErrorLike = {
   readonly message?: string;
 };
 
+const AUTHORIZATION_HEADER = "Authorization";
+
 type PrivateBackupApiResponse<T> =
   | ({ readonly success: true } & T)
   | { readonly success: false; readonly error: string };
@@ -155,7 +157,12 @@ async function invokePrivateBackupApi<T extends PrivateBackupApiResponse<unknown
   supabase: SupabaseClient,
   body: Record<string, unknown>
 ): Promise<Extract<T, { readonly success: true }>> {
-  const response = await supabase.functions.invoke<T>("private-backup-api", { body });
+  const sessionResult = await supabase.auth.getSession();
+  const accessToken = sessionResult.data.session?.access_token;
+  const response = await supabase.functions.invoke<T>("private-backup-api", {
+    body,
+    ...(accessToken ? { headers: { [AUTHORIZATION_HEADER]: `Bearer ${accessToken}` } } : {}),
+  });
   throwIfRemoteBackupError(response.error, "call private backup API");
   if (response.data === null) {
     throw new Error("Unable to call private backup API: missing response");

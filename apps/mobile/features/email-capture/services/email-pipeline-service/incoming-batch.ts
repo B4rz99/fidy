@@ -63,13 +63,21 @@ async function captureIncomingBatchEvent(
   );
 }
 
-const EMAIL_WORKER_CONCURRENCY = 5;
+const EMAIL_WORKER_CONCURRENCY = 1;
+
+async function waitForParseRateLimit(context: EmailBatchContext): Promise<void> {
+  const delayMs = context.runtime.parseRateLimit.delayMs;
+  if (context.completed === 0 || delayMs <= 0) return;
+
+  await context.runtime.parseRateLimit.sleep(delayMs);
+}
 
 async function runEmailWorker(context: EmailBatchContext, queue: EmailQueue): Promise<void> {
-  // FP exemption: a shared queue keeps concurrency bounded while preserving real-time progress updates.
+  // FP exemption: the worker queue keeps parse-email calls serialized for Edge Function rate limits.
   while (true) {
     const email = getNextQueuedEmail(queue);
     if (!email) return;
+    await waitForParseRateLimit(context);
     await processIncomingEmail(context, email);
     completeEmailStep(context);
   }
