@@ -15,6 +15,7 @@ const mockOrder = vi.fn();
 const mockUpdate = vi.fn();
 const mockEqUpdate = vi.fn();
 const mockInvoke = vi.fn();
+const AUTHORIZATION_HEADER = "Authorization";
 const mockFrom = vi.fn((table: string) => {
   if (table === "user_memories") {
     return {
@@ -32,6 +33,13 @@ const userMemoryRemoteService = createUserMemoryRemoteService({
   supabase: {
     getSupabase: () =>
       ({
+        auth: {
+          getSession: () =>
+            Promise.resolve({
+              data: { session: { access_token: "memory-access-token" } },
+              error: null,
+            }),
+        },
         from: mockFrom,
         functions: { invoke: mockInvoke },
       }) as never,
@@ -149,6 +157,10 @@ describe("user memories remote adapters", () => {
       await userMemoryRemoteService.extractMemoriesFromConversation(memoryConversation);
 
     expect(result).toEqual(extractedMemoryExpectation);
+    expect(mockInvoke).toHaveBeenCalledWith("ai-chat", {
+      body: { mode: "extract_memories", messages: memoryConversation },
+      headers: { [AUTHORIZATION_HEADER]: "Bearer memory-access-token" },
+    });
   });
 
   test("rejects invalid extract-memories payloads", async () => {

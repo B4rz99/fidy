@@ -555,6 +555,17 @@ describe("email capture boundary", () => {
       );
     });
 
+    it("returns the awaited processing outcome", async () => {
+      setAccounts();
+      mockAdapter.fetchEmails.mockResolvedValueOnce([makeRawEmail()]);
+      mockProcessResult({ saved: 2, needsReview: 1 });
+      mockEmptyReviewLoads();
+
+      const result = await runFetchAndProcess();
+
+      expect(result).toEqual({ savedCount: 2, needsReviewCount: 1, failedCount: 0 });
+    });
+
     it("sets phase to processing when showing progress", async () => {
       setAccounts();
       const mockRawEmails = [makeRawEmail()];
@@ -591,6 +602,18 @@ describe("email capture boundary", () => {
 
       const updatedAccount = useEmailCaptureStore.getState().accounts[0]!;
       expect(updatedAccount.lastFetchedAt).not.toBeNull();
+    });
+
+    it("does not advance lastFetchedAt when fetched emails fail processing", async () => {
+      setAccounts();
+      mockAdapter.fetchEmails.mockResolvedValueOnce([makeRawEmail()]);
+      mockProcessResult({ failed: 1 });
+      mockEmptyReviewLoads();
+
+      await runFetchAndProcess();
+
+      expect(updateLastFetchedAt).not.toHaveBeenCalled();
+      expect(useEmailCaptureStore.getState().accounts[0]?.lastFetchedAt).toBeNull();
     });
 
     it("auto-clears phase after 2s timeout when phase is complete", async () => {

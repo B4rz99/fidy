@@ -123,6 +123,10 @@ export type CreateEmailPipelineServiceDeps = {
   }) => void | Promise<void>;
   readonly clock?: AppClock;
   readonly telemetry?: AppTelemetry;
+  readonly parseRateLimit?: {
+    readonly delayMs?: number;
+    readonly sleep?: (delayMs: number) => Promise<void>;
+  };
 };
 
 export type EmailPipelineService = {

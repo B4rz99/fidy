@@ -14,6 +14,7 @@ import { requireBackupId, requireIsoDateTime, requireUserId } from "@/shared/typ
 const USER_ID = requireUserId("00000000-0000-4000-8000-000000000001");
 const BACKUP_ID = requireBackupId("backup-1");
 const CREATED_AT = requireIsoDateTime("2026-04-24T10:30:00.000Z");
+const AUTHORIZATION_HEADER = "Authorization";
 
 const ENCRYPTED_BACKUP = {
   version: 1,
@@ -79,6 +80,7 @@ describe("remote encrypted backup storage", () => {
     ]);
     expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
       body: { action: "current" },
+      headers: { [AUTHORIZATION_HEADER]: "Bearer backup-access-token" },
     });
     expect(supabase.storageUploadToSignedUrl).not.toHaveBeenCalled();
   });
@@ -97,6 +99,7 @@ describe("remote encrypted backup storage", () => {
     ).resolves.toEqual(ENCRYPTED_BACKUP);
     expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
       body: { action: "prepareDownload" },
+      headers: { [AUTHORIZATION_HEADER]: "Bearer backup-access-token" },
     });
     expect(supabase.fetch).toHaveBeenCalledWith("https://storage.example/download");
     expectRemotePayloadsToExclude(FORBIDDEN_REMOTE_VALUES, supabase.remotePayloads());
@@ -127,9 +130,11 @@ describe("remote encrypted backup storage", () => {
     ).resolves.toBeUndefined();
     expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
       body: { action: "current" },
+      headers: { [AUTHORIZATION_HEADER]: "Bearer backup-access-token" },
     });
     expect(supabase.functionsInvoke).toHaveBeenCalledWith("private-backup-api", {
       body: { action: "deleteCurrent" },
+      headers: { [AUTHORIZATION_HEADER]: "Bearer backup-access-token" },
     });
     expect(supabase.from).not.toHaveBeenCalled();
   });
@@ -182,6 +187,7 @@ function expectUploadCalls(supabase: ReturnType<typeof createRemoteBackupSupabas
       action: "prepareUpload",
       backupId: BACKUP_ID,
     },
+    headers: { [AUTHORIZATION_HEADER]: "Bearer backup-access-token" },
   });
   expect(supabase.fetch).toHaveBeenCalledWith("https://storage.example/upload", {
     body: JSON.stringify(ENCRYPTED_BACKUP),
@@ -195,6 +201,7 @@ function expectUploadCalls(supabase: ReturnType<typeof createRemoteBackupSupabas
       action: "confirmUpload",
       ...expectedRemoteMetadata(),
     },
+    headers: { [AUTHORIZATION_HEADER]: "Bearer backup-access-token" },
   });
 }
 
@@ -263,6 +270,13 @@ function createRemoteBackupSupabase(
   vi.stubGlobal("fetch", fetch);
   const bucket = { remove: storageRemove, uploadToSignedUrl: storageUploadToSignedUrl };
   const client = {
+    auth: {
+      getSession: () =>
+        Promise.resolve({
+          data: { session: { access_token: "backup-access-token" } },
+          error: null,
+        }),
+    },
     from,
     functions: { invoke: functionsInvoke },
     storage: {

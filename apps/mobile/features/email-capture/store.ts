@@ -44,6 +44,18 @@ export { confirmReviewedEmail } from "./store/reviewed-email";
 
 const noopRefreshTransactions: RefreshTransactions = () => undefined;
 
+export type EmailCaptureFetchOutcome = {
+  readonly savedCount: number;
+  readonly needsReviewCount: number;
+  readonly failedCount: number;
+};
+
+const EMPTY_FETCH_OUTCOME: EmailCaptureFetchOutcome = {
+  savedCount: 0,
+  needsReviewCount: 0,
+  failedCount: 0,
+};
+
 export { useEmailCaptureStore };
 
 registerEmailCaptureStoreRuntime({
@@ -171,15 +183,15 @@ export async function fetchAndProcessEmails(
   gmailClientId: string,
   outlookClientId: string,
   refreshTransactions: RefreshTransactions = noopRefreshTransactions
-): Promise<void> {
+): Promise<EmailCaptureFetchOutcome> {
   const fetchStart = beginEmailCaptureFetchRun(userId);
   if (fetchStart.kind === "missing_context") {
     warnFetchMissingContext(userId);
-    return;
+    return EMPTY_FETCH_OUTCOME;
   }
   if (fetchStart.kind === "already_fetching") {
     captureWarning("email_capture_fetch_already_running");
-    return;
+    return EMPTY_FETCH_OUTCOME;
   }
 
   const run = fetchStart.run;
@@ -188,7 +200,7 @@ export async function fetchAndProcessEmails(
     const accounts = useEmailCaptureStore.getState().accounts;
     if (accounts.length === 0) {
       captureWarning("email_capture_fetch_no_accounts");
-      return;
+      return EMPTY_FETCH_OUTCOME;
     }
 
     const summary = await fetchEmailAccountBatch({
@@ -200,7 +212,7 @@ export async function fetchAndProcessEmails(
       showProgress: summary.showProgress,
       emailCount: summary.allEmails.length,
     });
-    await ingestFetchedEmails({
+    const processingResult = await ingestFetchedEmails({
       db,
       userId,
       emails: summary.allEmails,
@@ -210,12 +222,23 @@ export async function fetchAndProcessEmails(
     await applyEmailCaptureFetchOutcome({
       run,
       showProgress: summary.showProgress,
-      persistedAccounts: await persistFetchedAccounts({ db, fetchResults: summary.fetchResults }),
+      persistedAccounts: await persistFetchedAccounts({
+        db,
+        fetchResults: summary.fetchResults,
+        processingResult,
+      }),
       queues: await loadEmailCaptureQueues(db),
       refreshTransactions,
     });
+
+    return {
+      savedCount: processingResult.saved,
+      needsReviewCount: processingResult.needsReview,
+      failedCount: processingResult.failed,
+    };
   } catch (error) {
     captureError(error);
+    return EMPTY_FETCH_OUTCOME;
   } finally {
     finalizeEmailCaptureFetchRun(run);
   }

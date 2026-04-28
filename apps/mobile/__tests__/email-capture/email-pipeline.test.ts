@@ -188,6 +188,29 @@ function resetCaptureEvidenceMocks() {
   mockLinkCaptureEvidenceToTransaction.mockResolvedValue(undefined);
 }
 
+function createTestEmailPipelineService(overrides: Record<string, unknown> = {}) {
+  return createEmailPipelineService({
+    parseEmailApi: mockParseEmailApi,
+    lookupMerchantRule: mockLookupMerchantRule,
+    findDuplicateTransaction: mockFindDuplicateTransaction,
+    getProcessedExternalIds: mockGetProcessedExternalIds,
+    getPendingRetryEmails: mockGetPendingRetryEmails,
+    insertProcessedEmail: mockInsertProcessedEmail,
+    markForRetry: mockMarkForRetry,
+    markPermanentlyFailed: mockMarkPermanentlyFailed,
+    markRetrySuccess: mockMarkRetrySuccess,
+    updateProcessedEmailStatus: mockUpdateProcessedEmailStatus,
+    ensureDefaultFinancialAccount: mockEnsureDefaultFinancialAccount,
+    buildEmailCaptureEvidence: mockBuildEmailCaptureEvidence,
+    saveCaptureEvidenceRows: mockSaveCaptureEvidenceRows,
+    linkCaptureEvidenceToTransaction: mockLinkCaptureEvidenceToTransaction,
+    insertTransaction: mockInsertTransaction,
+    insertMerchantRule: mockInsertMerchantRule,
+    trackTransactionCreated: vi.fn(),
+    ...overrides,
+  });
+}
+
 function expectSavedTransaction(matcher: Record<string, unknown>) {
   expect(mockInsertTransaction).toHaveBeenCalledWith(mockDb, expect.objectContaining(matcher));
 }
@@ -345,24 +368,7 @@ describe("email processing pipeline", () => {
 
   it("uses the injected clock for persisted email timestamps and retry backoff", async () => {
     const fixedNow = requireIsoDateTime("2026-04-18T12:34:56.000Z");
-    const service = createEmailPipelineService({
-      parseEmailApi: mockParseEmailApi,
-      lookupMerchantRule: mockLookupMerchantRule,
-      findDuplicateTransaction: mockFindDuplicateTransaction,
-      getProcessedExternalIds: mockGetProcessedExternalIds,
-      getPendingRetryEmails: mockGetPendingRetryEmails,
-      insertProcessedEmail: mockInsertProcessedEmail,
-      markForRetry: mockMarkForRetry,
-      markPermanentlyFailed: mockMarkPermanentlyFailed,
-      markRetrySuccess: mockMarkRetrySuccess,
-      updateProcessedEmailStatus: mockUpdateProcessedEmailStatus,
-      ensureDefaultFinancialAccount: mockEnsureDefaultFinancialAccount,
-      buildEmailCaptureEvidence: mockBuildEmailCaptureEvidence,
-      saveCaptureEvidenceRows: mockSaveCaptureEvidenceRows,
-      linkCaptureEvidenceToTransaction: mockLinkCaptureEvidenceToTransaction,
-      insertTransaction: mockInsertTransaction,
-      insertMerchantRule: mockInsertMerchantRule,
-      trackTransactionCreated: vi.fn(),
+    const service = createTestEmailPipelineService({
       clock: {
         now: () => new Date(fixedNow),
         nowIsoDateTime: () => fixedNow,
@@ -380,6 +386,36 @@ describe("email processing pipeline", () => {
         nextRetryAt: "2026-04-18T12:35:56.000Z",
       })
     );
+  });
+
+  it("waits between parse-email calls when a rate-limit delay is configured", async () => {
+    const events: string[] = [];
+    const service = createTestEmailPipelineService({
+      parseRateLimit: {
+        delayMs: 3000,
+        sleep: async (delayMs: number) => {
+          events.push(`sleep:${delayMs}`);
+        },
+      },
+    });
+    mockParseEmailApi.mockImplementation(async (body: string) => {
+      events.push(`parse:${body}`);
+      return makeParsedEmailResult({ description: body });
+    });
+
+    await service.processEmails(mockDb, USER_ID, [
+      makeRawEmail({ externalId: "ext-1", body: "Compra 1" }),
+      makeRawEmail({ externalId: "ext-2", body: "Compra 2" }),
+      makeRawEmail({ externalId: "ext-3", body: "Compra 3" }),
+    ]);
+
+    expect(events).toEqual([
+      "parse:Compra 1",
+      "sleep:3000",
+      "parse:Compra 2",
+      "sleep:3000",
+      "parse:Compra 3",
+    ]);
   });
 
   it("saves transaction as needs_review when LLM returns low confidence", async () => {

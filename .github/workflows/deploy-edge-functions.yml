@@ -1,16 +1,32 @@
 name: Deploy Edge Functions
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
     paths:
+      - ".github/workflows/deploy-edge-functions.yml"
       - "supabase/functions/**"
 
 jobs:
   deploy:
     name: Deploy to Supabase
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - function: parse-email
+            verify_jwt: false
+          - function: ai-chat
+            verify_jwt: false
+          - function: weekly-digest
+            verify_jwt: false
+          - function: delete-account
+            verify_jwt: true
+          - function: private-backup-api
+            verify_jwt: true
     steps:
       - uses: actions/checkout@v4
 
@@ -18,22 +34,12 @@ jobs:
         with:
           version: 2.75.0
 
-      - name: Deploy parse-email
-        run: supabase functions deploy parse-email --no-verify-jwt --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      - name: Deploy ai-chat
-        run: supabase functions deploy ai-chat --no-verify-jwt --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      - name: Deploy weekly-digest
-        run: supabase functions deploy weekly-digest --no-verify-jwt --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      - name: Deploy delete-account
-        run: supabase functions deploy delete-account --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+      - name: Deploy ${{ matrix.function }}
+        run: |
+          args=("${{ matrix.function }}" --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}")
+          if [[ "${{ matrix.verify_jwt }}" == "false" ]]; then
+            args+=(--no-verify-jwt)
+          fi
+          supabase functions deploy "${args[@]}"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

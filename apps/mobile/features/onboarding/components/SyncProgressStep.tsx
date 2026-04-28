@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { createAccountSuggestionService } from "@/features/account-suggestions/public";
 import { useOptionalUserId } from "@/features/auth/public";
@@ -25,7 +25,10 @@ export function SyncProgressStep() {
 
   const accounts = useEmailCaptureStore((s) => s.accounts);
   const progress = useEmailCaptureStore((s) => s.progress);
-  const isFetching = useEmailCaptureStore((s) => s.isFetching);
+  const [syncOutcome, setSyncOutcome] = useState<{
+    readonly savedCount: number;
+    readonly hasAccountSuggestions: boolean;
+  } | null>(null);
 
   const recentTransactions = useTransactionStore(useShallow((s) => s.pages.slice(0, 3)));
 
@@ -34,21 +37,40 @@ export function SyncProgressStep() {
   const accentGreen = useThemeColor("accentGreen");
 
   const fetchStarted = useRef(false);
-  // Snapshot final values so they persist after the store clears progress
-  const finalPercent = useRef(0);
-  const finalSavedCount = useRef(0);
+  const suggestionService = useMemo(() => createAccountSuggestionService(), []);
 
   // Start fetch on mount if we have accounts
   useMountEffect(() => {
+    let isMounted = true;
     if (accounts.length > 0 && !fetchStarted.current && db && userId) {
       fetchStarted.current = true;
       trackOnboardingEvent("email_sync_start", { accountCount: accounts.length });
-      void fetchAndProcessEmails(db, userId, getGmailClientId(), getOutlookClientId(), () =>
-        refreshTransactions(db, userId)
-      );
+      void (async () => {
+        const outcome = await fetchAndProcessEmails(
+          db,
+          userId,
+          getGmailClientId(),
+          getOutlookClientId(),
+          () => refreshTransactions(db, userId)
+        );
+        if (!isMounted) return;
+        setSyncOutcome({
+          savedCount: outcome.savedCount,
+          hasAccountSuggestions:
+            suggestionService.listSuggestions({
+              db,
+              userId,
+              limit: 2,
+            }).length > 0,
+        });
+      })();
     } else if (accounts.length === 0) {
       logOnboardingEvent("email_sync_no_accounts");
     }
+
+    return () => {
+      isMounted = false;
+    };
   });
 
   const livePercent = progress
@@ -57,28 +79,10 @@ export function SyncProgressStep() {
       : 0
     : 0;
 
-  // Keep the high-water mark so the bar doesn't reset when the store clears progress
-  if (livePercent > finalPercent.current) {
-    finalPercent.current = livePercent;
-  }
-  if (progress && progress.saved > finalSavedCount.current) {
-    finalSavedCount.current = progress.saved;
-  }
-
-  // Fetch is done when: it was started and is no longer fetching
-  // (covers both progress-shown and silent-processing paths)
-  const fetchDone = fetchStarted.current && !isFetching;
-  const percent = fetchDone ? 100 : finalPercent.current;
-  const savedCount = finalSavedCount.current;
-  const suggestionService = useMemo(() => createAccountSuggestionService(), []);
-  const hasAccountSuggestions =
-    fetchDone && db && userId
-      ? suggestionService.listSuggestions({
-          db,
-          userId,
-          limit: 2,
-        }).length > 0
-      : false;
+  const fetchDone = syncOutcome !== null;
+  const percent = fetchDone ? 100 : livePercent;
+  const savedCount = syncOutcome?.savedCount ?? progress?.saved ?? 0;
+  const hasAccountSuggestions = syncOutcome?.hasAccountSuggestions ?? false;
 
   return (
     <View style={styles.container}>
