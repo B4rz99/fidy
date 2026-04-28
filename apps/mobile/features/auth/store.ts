@@ -11,6 +11,7 @@ import {
 } from "@/features/qa/local-session";
 import { getSupabase } from "@/shared/db/supabase";
 import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
+import { readSupabaseSessionTokens, type SupabaseAuthTokens } from "./oauth-callback";
 
 // biome-ignore lint/style/useNamingConvention: OAuth is a proper noun
 type OAuthProvider = "google" | "azure";
@@ -136,11 +137,6 @@ async function handleRestoreSessionException(
   clearLocalOnboardingState();
 }
 
-type SupabaseAuthTokens = {
-  readonly accessToken: string;
-  readonly refreshToken: string;
-};
-
 async function requestOauthUrl(provider: OAuthProvider): Promise<string | null> {
   await clearLocalQaSession().catch(() => undefined);
   const supabase = getSupabase();
@@ -157,24 +153,15 @@ async function openOauthBrowser(url: string): Promise<string | null> {
   return result.type === "success" && result.url ? result.url : null;
 }
 
-function getSupabaseSessionTokens(url: string): SupabaseAuthTokens | null {
-  const params = new URLSearchParams(new URL(url).hash.slice(1));
-  return createSupabaseAuthTokens(params.get("access_token"), params.get("refresh_token"));
-}
+const getSupabaseSessionTokens = (url: string): SupabaseAuthTokens | null => {
+  return readSupabaseSessionTokens(url, REDIRECT_URI);
+};
 
 async function signInWithProvider(provider: OAuthProvider): Promise<Session | null> {
   const authUrl = await requestOauthUrl(provider);
   if (authUrl === null) return null;
 
   return restoreProviderSession(authUrl);
-}
-
-function createSupabaseAuthTokens(
-  accessToken: string | null,
-  refreshToken: string | null
-): SupabaseAuthTokens | null {
-  if (accessToken === null || refreshToken === null) return null;
-  return { accessToken, refreshToken };
 }
 
 async function restoreProviderSession(authUrl: string): Promise<Session | null> {

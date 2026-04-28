@@ -88,7 +88,7 @@ describe("createAdapter", () => {
     it("returns email on successful OAuth flow", async () => {
       mockOpenAuthSession.mockResolvedValueOnce({
         type: "success",
-        url: "fidy://test/callback?code=auth-code",
+        url: "fidy://test/callback?code=auth-code&state=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       });
 
       mockFetch.mockResolvedValueOnce({
@@ -117,7 +117,7 @@ describe("createAdapter", () => {
     it("returns no_code when callback URL has no code", async () => {
       mockOpenAuthSession.mockResolvedValueOnce({
         type: "success",
-        url: "fidy://test/callback?error=access_denied",
+        url: "fidy://test/callback?error=access_denied&state=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       });
 
       const adapter = createAdapter(testConfig, stubFetch);
@@ -125,10 +125,36 @@ describe("createAdapter", () => {
       expect(result).toEqual({ success: false, error: "no_code" });
     });
 
+    it("rejects callback URLs that do not match the configured redirect URI", async () => {
+      mockOpenAuthSession.mockResolvedValueOnce({
+        type: "success",
+        url: "fidy://other/callback?code=auth-code&state=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      });
+
+      const adapter = createAdapter(testConfig, stubFetch);
+      const result = await adapter.connect("client-id");
+
+      expect(result).toEqual({ success: false, error: "invalid_callback" });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("rejects callback URLs with a missing or mismatched state", async () => {
+      mockOpenAuthSession.mockResolvedValueOnce({
+        type: "success",
+        url: "fidy://test/callback?code=auth-code&state=attacker-state",
+      });
+
+      const adapter = createAdapter(testConfig, stubFetch);
+      const result = await adapter.connect("client-id");
+
+      expect(result).toEqual({ success: false, error: "invalid_callback" });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
     it("returns token_exchange_failed when token POST fails", async () => {
       mockOpenAuthSession.mockResolvedValueOnce({
         type: "success",
-        url: "fidy://test/callback?code=auth-code",
+        url: "fidy://test/callback?code=auth-code&state=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       });
 
       mockFetch.mockResolvedValueOnce({ ok: false, status: 400 });
@@ -141,7 +167,7 @@ describe("createAdapter", () => {
     it("returns profile_fetch_failed when profile GET fails", async () => {
       mockOpenAuthSession.mockResolvedValueOnce({
         type: "success",
-        url: "fidy://test/callback?code=auth-code",
+        url: "fidy://test/callback?code=auth-code&state=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       });
 
       mockFetch.mockResolvedValueOnce({
@@ -159,7 +185,7 @@ describe("createAdapter", () => {
     it("returns no_email_found when extractEmail returns null", async () => {
       mockOpenAuthSession.mockResolvedValueOnce({
         type: "success",
-        url: "fidy://test/callback?code=auth-code",
+        url: "fidy://test/callback?code=auth-code&state=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       });
 
       mockFetch.mockResolvedValueOnce({
@@ -180,7 +206,7 @@ describe("createAdapter", () => {
     it("returns no_email_found when extractEmail returns an empty string", async () => {
       mockOpenAuthSession.mockResolvedValueOnce({
         type: "success",
-        url: "fidy://test/callback?code=auth-code",
+        url: "fidy://test/callback?code=auth-code&state=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       });
 
       mockFetch.mockResolvedValueOnce({
@@ -201,7 +227,7 @@ describe("createAdapter", () => {
     it("stores tokens in SecureStore with correct keys", async () => {
       mockOpenAuthSession.mockResolvedValueOnce({
         type: "success",
-        url: "fidy://test/callback?code=auth-code",
+        url: "fidy://test/callback?code=auth-code&state=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       });
 
       mockFetch.mockResolvedValueOnce({
@@ -224,7 +250,7 @@ describe("createAdapter", () => {
     it("stores refresh_token only when present", async () => {
       mockOpenAuthSession.mockResolvedValueOnce({
         type: "success",
-        url: "fidy://test/callback?code=auth-code",
+        url: "fidy://test/callback?code=auth-code&state=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       });
 
       mockFetch.mockResolvedValueOnce({
@@ -268,7 +294,7 @@ describe("createAdapter", () => {
 
       mockOpenAuthSession.mockResolvedValueOnce({
         type: "success",
-        url: "fidy://test/callback?code=auth-code",
+        url: "fidy://test/callback?code=auth-code&state=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       });
 
       mockFetch.mockResolvedValueOnce({ ok: false, status: 400 });
