@@ -7,25 +7,35 @@ import {
   toRawOutlookEmail,
 } from "./outlook-adapter-utils";
 
+type OutlookListResponse = {
+  readonly value?: OutlookMessage[];
+  readonly "@odata.nextLink"?: string;
+};
+
+const toInitialMessagesUrl = (senderEmails: string[], since: string) =>
+  `https://graph.microsoft.com/v1.0/me/messages?$filter=${encodeURIComponent(
+    buildOutlookFilter(senderEmails, since)
+  )}&$select=id,subject,body,from,receivedDateTime`;
+
 export async function fetchOutlookEmailsWithToken(
   token: string,
   since: string,
   senderEmails: string[]
 ): Promise<RawEmail[]> {
-  const response = await fetch(
-    `https://graph.microsoft.com/v1.0/me/messages?$filter=${encodeURIComponent(
-      buildOutlookFilter(senderEmails, since)
-    )}&$select=id,subject,body,from,receivedDateTime`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  async function collectPage(url: string): Promise<RawEmail[]> {
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
 
-  if (!response.ok) {
-    captureWarning("outlook_api_list_failed", { httpStatus: response.status });
-    return [];
+    if (!response.ok) {
+      captureWarning("outlook_api_list_failed", { httpStatus: response.status });
+      return [];
+    }
+
+    const data = (await response.json()) as OutlookListResponse;
+    const pageEmails = (data.value ?? []).map(toRawOutlookEmail);
+    return data["@odata.nextLink"]
+      ? [...pageEmails, ...(await collectPage(data["@odata.nextLink"]))]
+      : pageEmails;
   }
 
-  const data = (await response.json()) as { value?: OutlookMessage[] };
-  const messages: OutlookMessage[] = data.value ?? [];
-
-  return messages.map(toRawOutlookEmail);
+  return collectPage(toInitialMessagesUrl(senderEmails, since));
 }

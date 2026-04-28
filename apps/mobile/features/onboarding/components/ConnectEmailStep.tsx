@@ -10,6 +10,7 @@ import {
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
+import { logOnboardingEvent, trackOnboardingEvent } from "../lib/telemetry";
 import { useOnboardingStore } from "../store";
 
 export function ConnectEmailStep() {
@@ -29,10 +30,18 @@ export function ConnectEmailStep() {
   const handleConnect = (provider: "gmail" | "outlook") =>
     guardedRun(async () => {
       if (!db || !userId) return;
+      const beforeCount = useEmailCaptureStore.getState().accounts.length;
+      logOnboardingEvent("email_connect_start", { provider, beforeCount });
       const clientId = provider === "gmail" ? getGmailClientId() : getOutlookClientId();
       await connectEmailAccount(db, userId, provider, clientId);
       // If accounts were added, auto-advance
       const accounts = useEmailCaptureStore.getState().accounts;
+      const connected = accounts.length > beforeCount;
+      trackOnboardingEvent("email_connect_result", {
+        provider,
+        connected,
+        accountCount: accounts.length,
+      });
       if (accounts.length > 0) {
         nextStep();
       }

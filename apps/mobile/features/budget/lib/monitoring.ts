@@ -1,7 +1,10 @@
-import { subMonths } from "date-fns";
-import { getSpendingByCategoryAggregate } from "@/features/transactions/query.public";
+import { subDays } from "date-fns";
+import {
+  getSpendingByCategoryAggregate,
+  getSpendingByCategoryDateRangeAggregate,
+} from "@/features/transactions/query.public";
 import type { AnyDb } from "@/shared/db/client";
-import { formatMoney, toMonth } from "@/shared/lib";
+import { formatMoney, toIsoDate } from "@/shared/lib";
 import { assertCopAmount } from "@/shared/types/assertions";
 import type { BudgetId, CategoryId, Month, UserId } from "@/shared/types/branded";
 import type { Budget } from "../schema";
@@ -67,6 +70,7 @@ export type LoadBudgetSuggestionsInput = {
 export type BudgetMonitoringPorts = {
   readonly getBudgetAlertsEnabled: () => boolean;
   readonly getLocale: () => string;
+  readonly getCurrentDate?: () => Date;
   readonly resolveCategoryLabel: (categoryId: CategoryId, locale: string) => string;
   readonly scheduleBudgetAlert: (
     alert: BudgetAlert,
@@ -84,24 +88,23 @@ export type BudgetMonitoringModule = {
 
 const alertKey = (budgetId: BudgetId, threshold: 80 | 100): string => `${budgetId}:${threshold}`;
 
-const formatMonth = (date: Date): Month => toMonth(date);
-
-const parseMonth = (month: Month): Date => {
-  const parts = month.split("-").map(Number);
-  const year = parts[0] ?? 0;
-  const monthIndex = (parts[1] ?? 1) - 1;
-  return new Date(year, monthIndex, 1);
-};
+const AUTO_SUGGESTION_LOOKBACK_DAYS = 30;
 
 const deriveAutoSuggestionsForMonth = (
   db: AnyDb,
   userId: UserId,
-  month: Month,
-  existingCategoryIds: ReadonlySet<CategoryId>
+  existingCategoryIds: ReadonlySet<CategoryId>,
+  currentDate: Date
 ): readonly BudgetSuggestion[] => {
-  const previousMonth = formatMonth(subMonths(parseMonth(month), 1));
-  const previousSpending = getSpendingByCategoryAggregate(db, userId, previousMonth);
-  return deriveAutoSuggestBudgets(previousSpending, existingCategoryIds);
+  const endDate = toIsoDate(currentDate);
+  const startDate = toIsoDate(subDays(currentDate, AUTO_SUGGESTION_LOOKBACK_DAYS));
+  const recentSpending = getSpendingByCategoryDateRangeAggregate({
+    db,
+    userId,
+    startDate,
+    endDate,
+  });
+  return deriveAutoSuggestBudgets(recentSpending, existingCategoryIds);
 };
 
 const toNotificationInput = (
@@ -225,8 +228,8 @@ export function createBudgetMonitoringModule(ports: BudgetMonitoringPorts): Budg
       const autoSuggestions = deriveAutoSuggestionsForMonth(
         db,
         userId,
-        month,
-        new Set(budgets.map((budget) => budget.categoryId))
+        new Set(budgets.map((budget) => budget.categoryId)),
+        ports.getCurrentDate?.() ?? new Date()
       );
 
       return {
@@ -239,8 +242,13 @@ export function createBudgetMonitoringModule(ports: BudgetMonitoringPorts): Budg
       };
     },
 
-    loadAutoSuggestions: ({ db, userId, month, existingCategoryIds }) =>
-      deriveAutoSuggestionsForMonth(db, userId, month, existingCategoryIds),
+    loadAutoSuggestions: ({ db, userId, existingCategoryIds }) =>
+      deriveAutoSuggestionsForMonth(
+        db,
+        userId,
+        existingCategoryIds,
+        ports.getCurrentDate?.() ?? new Date()
+      ),
 
     acknowledgeAlert: ({ budgetId, threshold, alertState }) => {
       const key = alertKey(budgetId, threshold);

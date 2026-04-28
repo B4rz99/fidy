@@ -82,14 +82,21 @@ export function insertProcessedEmailEffect(db: AnyDb, row: ProcessedEmailRow) {
 }
 
 function buildEmailCaptureEvidenceRows(input: CaptureEvidenceRowsInput) {
-  return materializeCaptureEvidenceRows(input.buildEmailCaptureEvidence({ from: input.from }), {
-    userId: input.userId,
-    transactionId: input.transactionId,
-    processedEmailId: input.processedEmailId,
-    processedCaptureId: null,
-    createdAt: input.now,
-    updatedAt: input.now,
-  });
+  return materializeCaptureEvidenceRows(
+    input.buildEmailCaptureEvidence({
+      from: input.from,
+      fromAccountHint: input.fromAccountHint,
+      toAccountHint: input.toAccountHint,
+    }),
+    {
+      userId: input.userId,
+      transactionId: input.transactionId,
+      processedEmailId: input.processedEmailId,
+      processedCaptureId: null,
+      createdAt: input.now,
+      updatedAt: input.now,
+    }
+  );
 }
 
 function saveCaptureEvidenceRowsEffect(db: AnyDb, rows: readonly CaptureEvidenceRow[]) {
@@ -105,6 +112,8 @@ export function saveEmailCaptureEvidenceEffect(input: CaptureEvidenceSaveInput) 
       buildEmailCaptureEvidenceRows({
         userId: input.userId,
         from: input.from,
+        fromAccountHint: input.fromAccountHint,
+        toAccountHint: input.toAccountHint,
         processedEmailId: input.processedEmailId,
         transactionId: input.transactionId,
         now: input.now,

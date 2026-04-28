@@ -212,6 +212,22 @@ function expectCaptureEvidenceSaved(transactionId: string | null) {
   );
 }
 
+function expectCaptureEvidenceBuiltFromEmailContent() {
+  expect(mockBuildEmailCaptureEvidence).toHaveBeenCalledWith({
+    from: "notificaciones@bancolombia.com.co",
+    fromAccountHint: undefined,
+    toAccountHint: undefined,
+  });
+}
+
+function expectCaptureEvidenceBuiltFromLlmAccountHint() {
+  expect(mockBuildEmailCaptureEvidence).toHaveBeenCalledWith({
+    from: "notificaciones@bancolombia.com.co",
+    fromAccountHint: "Tarjeta credito Bancolombia",
+    toAccountHint: undefined,
+  });
+}
+
 function mockNeedsReviewThenSavedParseResults() {
   mockParseEmailApi
     .mockResolvedValueOnce(makeParsedEmailResult({ description: "Compra 1", confidence: 0.5 }))
@@ -292,6 +308,7 @@ describe("email processing pipeline", () => {
         }),
       ])
     );
+    expectCaptureEvidenceBuiltFromEmailContent();
   });
 
   it("saves transaction and caches merchant rule when LLM returns high confidence", async () => {
@@ -391,6 +408,18 @@ describe("email processing pipeline", () => {
       })
     );
     expect(mockInsertMerchantRule).not.toHaveBeenCalled();
+    expectCaptureEvidenceBuiltFromEmailContent();
+  });
+
+  it("uses LLM account hints as capture evidence for account suggestions", async () => {
+    const emails = [makeRawEmail()];
+    mockParseEmailApi.mockResolvedValueOnce(
+      makeParsedEmailResult({ fromAccountHint: "Tarjeta credito Bancolombia" })
+    );
+
+    await processEmails(mockDb, USER_ID, emails);
+
+    expectCaptureEvidenceBuiltFromLlmAccountHint();
   });
 
   it("uses cached category from merchant rule hit", async () => {

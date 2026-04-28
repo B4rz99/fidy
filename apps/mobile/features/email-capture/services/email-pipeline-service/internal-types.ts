@@ -36,10 +36,16 @@ export type PipelineRuntime = {
 export type CaptureEvidenceRowsInput = {
   readonly userId: UserId;
   readonly from: string;
+  readonly fromAccountHint?: string;
+  readonly toAccountHint?: string;
   readonly processedEmailId: ProcessedEmailId;
   readonly transactionId: TransactionId | null;
   readonly now: IsoDateTime;
-  readonly buildEmailCaptureEvidence: (input: { from: string }) => readonly CaptureEvidenceSeed[];
+  readonly buildEmailCaptureEvidence: (input: {
+    readonly from: string;
+    readonly fromAccountHint?: string;
+    readonly toAccountHint?: string;
+  }) => readonly CaptureEvidenceSeed[];
 };
 
 export type CaptureEvidenceSaveInput = Omit<

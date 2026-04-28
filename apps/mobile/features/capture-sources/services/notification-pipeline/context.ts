@@ -1,5 +1,8 @@
 import type { CaptureEvidenceSeed } from "@/features/capture-evidence/public";
-import { buildNotificationCaptureEvidence } from "@/features/capture-evidence/public";
+import {
+  buildNotificationCaptureEvidence,
+  buildNotificationLlmAccountHintCaptureEvidence,
+} from "@/features/capture-evidence/public";
 import { stripPii } from "@/features/email-capture/parsing.public";
 import { isValidCategoryId } from "@/features/transactions/write.public";
 import { toIsoDate, toIsoDateTime } from "@/shared/lib";
@@ -54,8 +57,27 @@ export async function parseNotificationWithLlm(
         categoryId: llm.categoryId,
         date: llm.date,
         confidence: llm.confidence,
+        fromAccountHint: llm.fromAccountHint,
+        toAccountHint: llm.toAccountHint,
       }
     : null;
+}
+
+export function appendParsedNotificationEvidence(
+  context: NotificationContext,
+  parsed: ParsedNotification
+): NotificationContext {
+  return {
+    ...context,
+    captureEvidence: [
+      ...context.captureEvidence,
+      ...buildNotificationLlmAccountHintCaptureEvidence({
+        notification: context.notification,
+        fromAccountHint: parsed.fromAccountHint,
+        toAccountHint: parsed.toAccountHint,
+      }),
+    ],
+  };
 }
 
 export function normalizeNotificationCommand(

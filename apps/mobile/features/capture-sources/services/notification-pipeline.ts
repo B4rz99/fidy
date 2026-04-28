@@ -9,6 +9,7 @@ import { findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
 import { parseNotificationLocally } from "../lib/notification-parser";
 import type { NotificationData } from "../schema";
 import {
+  appendParsedNotificationEvidence,
   buildNotificationFingerprint,
   FALLBACK_CATEGORY_ID,
   normalizeNotificationCommand,
@@ -69,11 +70,12 @@ async function parseNotificationStage(context: NotificationContext): Promise<Par
     return { kind: "failed", context: { ...context, parseMethod } };
   }
   const parsed = normalizeParsedNotification(rawParsed);
+  const parsedContext = appendParsedNotificationEvidence(context, parsed);
   const fingerprint = buildNotificationFingerprint(context, parsed);
   return {
     kind: "parsed",
     context: {
-      ...context,
+      ...parsedContext,
       parseMethod,
       parsed,
       fingerprint,

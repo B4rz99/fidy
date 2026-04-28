@@ -5,6 +5,7 @@ export {
   getMonthlyTotalsByType,
   getRecentTransactions,
   getSpendingByCategoryAggregate,
+  getSpendingByCategoryDateRangeAggregate,
   getTransactionById,
 } from "./lib/repository";
 export type { StoredTransaction, TransactionType } from "./schema";

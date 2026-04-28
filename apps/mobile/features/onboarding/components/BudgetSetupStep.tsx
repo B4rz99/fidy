@@ -19,6 +19,7 @@ import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney } from "@/shared/lib";
+import { logOnboardingEvent, trackOnboardingEvent } from "../lib/telemetry";
 import { useOnboardingStore } from "../store";
 
 export function BudgetSetupStep() {
@@ -40,7 +41,11 @@ export function BudgetSetupStep() {
   // Load suggestions on mount
   useMountEffect(() => {
     if (!userId || !db) return;
+    logOnboardingEvent("budget_suggestions_load_start");
     loadBudgetAutoSuggestions(db, userId);
+    trackOnboardingEvent("budget_suggestions_loaded", {
+      suggestionCount: useBudgetStore.getState().autoSuggestions.length,
+    });
   });
 
   const { selectedIds, editedAmounts, handleToggle, handleAmountChange, buildBudgetMap } =
@@ -52,12 +57,19 @@ export function BudgetSetupStep() {
       if (budgets.size > 0) {
         if (!userId || !db) return;
         const success = await acceptBudgetSuggestions(db, userId, budgets);
+        trackOnboardingEvent("budget_suggestions_accept_result", {
+          budgetCount: budgets.size,
+          success,
+        });
         if (!success) return;
       }
       nextStep();
     });
 
   const handleSkip = () => {
+    trackOnboardingEvent("budget_suggestions_skipped", {
+      suggestionCount: autoSuggestions.length,
+    });
     nextStep();
   };
 

@@ -26,7 +26,10 @@ const DIRECT_KIND_BY_EVIDENCE_TYPE = new Map<
 const CONFIDENCE_LABEL_BY_EVIDENCE_TYPE = new Map<
   AccountCreationSuggestion["evidenceType"],
   SuggestedFinancialAccountDraft["confidenceLabel"]
->([["last4", "HIGH"]]);
+>([
+  ["last4", "HIGH"],
+  ["llm_account_hint", "HIGH"],
+]);
 
 function toTitleCaseSegment(segment: string) {
   return segment.length === 0 ? segment : `${segment[0]?.toUpperCase()}${segment.slice(1)}`;
@@ -60,6 +63,22 @@ function inferKind(suggestion: AccountCreationSuggestion): FinancialAccountKind 
   const directKind = DIRECT_KIND_BY_EVIDENCE_TYPE.get(suggestion.evidenceType);
   if (directKind) {
     return directKind;
+  }
+
+  if (
+    suggestion.evidenceType === "llm_account_hint" &&
+    /\b(?:credito|crédito|credit|tarjeta|card|visa|mastercard|amex)\b/u.test(
+      normalizeSearchText(suggestion.value)
+    )
+  ) {
+    return "credit_card";
+  }
+
+  if (
+    suggestion.evidenceType === "llm_account_hint" &&
+    /\b(?:ahorros|savings)\b/u.test(normalizeSearchText(suggestion.value))
+  ) {
+    return "savings";
   }
 
   if (isWalletAliasSuggestion(suggestion)) {

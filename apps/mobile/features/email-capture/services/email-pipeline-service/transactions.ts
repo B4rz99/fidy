@@ -188,6 +188,8 @@ export function saveTransactionEffect(input: SaveTransactionInput) {
       db: context.db,
       userId: context.userId,
       from: context.email.from,
+      fromAccountHint: context.parsed.fromAccountHint,
+      toAccountHint: context.parsed.toAccountHint,
       processedEmailId: context.processedEmailId,
       transactionId: context.txId,
       now: context.now,

@@ -5,7 +5,7 @@ import type { RawEmail } from "../schema";
 type GmailHeader = { name: string; value: string };
 type GmailPart = { mimeType: string; body?: { data?: string }; parts?: GmailPart[] };
 type GmailPayload = { headers: GmailHeader[]; parts?: GmailPart[]; body?: { data?: string } };
-type GmailListResponse = { messages?: { id: string }[] };
+type GmailListResponse = { messages?: { id: string }[]; nextPageToken?: string };
 type GmailMessageResponse = { payload: GmailPayload };
 type GmailJsonResult<T> = { ok: true; data: T } | { ok: false; status: number };
 
@@ -29,7 +29,11 @@ const toMessageQuery = (since: string, senderEmails: string[]): string => {
   return `(${senders}) after:${epoch}`;
 };
 
-const toListUrl = (query: string): string => `${GMAIL_MESSAGES_URL}?q=${encodeURIComponent(query)}`;
+const toListUrl = (query: string, pageToken?: string): string => {
+  const params = new URLSearchParams({ q: query });
+  if (pageToken) params.set("pageToken", pageToken);
+  return `${GMAIL_MESSAGES_URL}?${params.toString()}`;
+};
 
 const toMessageUrl = (id: string): string => `${GMAIL_MESSAGES_URL}/${id}?format=full`;
 
@@ -149,18 +153,24 @@ export const fetchGmailEmailsWithToken = async (
   since: string,
   senderEmails: string[]
 ): Promise<RawEmail[]> => {
-  const listResult = await fetchGmailJson<GmailListResponse>(
-    toListUrl(toMessageQuery(since, senderEmails)),
-    token
-  );
+  const query = toMessageQuery(since, senderEmails);
 
-  if (!listResult.ok) {
-    captureWarning("gmail_api_list_failed", { httpStatus: listResult.status });
-    return [];
+  async function collectPage(pageToken: string | undefined): Promise<RawEmail[]> {
+    const listResult = await fetchGmailJson<GmailListResponse>(toListUrl(query, pageToken), token);
+
+    if (!listResult.ok) {
+      captureWarning("gmail_api_list_failed", { httpStatus: listResult.status });
+      return [];
+    }
+
+    const messageIds = toMessageIds(listResult.data);
+    const pageEmails =
+      messageIds.length === 0 ? [] : await collectSequentialEmails(token, messageIds);
+    const nextPageToken = listResult.data.nextPageToken;
+    return nextPageToken ? [...pageEmails, ...(await collectPage(nextPageToken))] : pageEmails;
   }
 
-  const messageIds = toMessageIds(listResult.data);
-  return messageIds.length === 0 ? [] : collectSequentialEmails(token, messageIds);
+  return collectPage(undefined);
 };
 
 const parseGmailMessage = (id: string, msg: GmailMessageResponse): RawEmail | null => {

@@ -67,5 +67,48 @@ describe("outlook adapter", () => {
       ]);
       expect(emails).toEqual([]);
     });
+
+    it("follows paginated message lists", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            value: [
+              {
+                id: "msg-1",
+                subject: "First",
+                from: { emailAddress: { address: "bank@example.com" } },
+                body: { content: "First body" },
+                receivedDateTime: "2026-03-05T10:00:00Z",
+              },
+            ],
+            "@odata.nextLink": "https://graph.microsoft.com/v1.0/me/messages?page=2",
+          }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            value: [
+              {
+                id: "msg-2",
+                subject: "Second",
+                from: { emailAddress: { address: "bank@example.com" } },
+                body: { content: "Second body" },
+                receivedDateTime: "2026-03-06T10:00:00Z",
+              },
+            ],
+          }),
+      });
+
+      const emails = await fetchOutlookEmailsWithToken("access-token", "2026-03-01T00:00:00Z", [
+        "bank@example.com",
+      ]);
+
+      expect(emails.map((email) => email.subject)).toEqual(["First", "Second"]);
+      expect(mockFetch.mock.calls[1]?.[0]).toBe(
+        "https://graph.microsoft.com/v1.0/me/messages?page=2"
+      );
+    });
   });
 });

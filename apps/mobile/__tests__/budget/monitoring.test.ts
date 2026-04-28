@@ -22,6 +22,7 @@ let db: ReturnType<typeof drizzle>;
 
 const USER_ID = "user-1" as UserId;
 const CURRENT_MONTH = "2026-03" as Month;
+const CURRENT_DATE = new Date(2026, 3, 18);
 
 const mockScheduleBudgetAlert = vi.fn();
 const mockInsertNotification = vi.fn();
@@ -89,6 +90,7 @@ function createMonitoringModule() {
   return createBudgetMonitoringModule({
     getBudgetAlertsEnabled: () => true,
     getLocale: () => "es",
+    getCurrentDate: () => CURRENT_DATE,
     resolveCategoryLabel: mockResolveCategoryLabel,
     scheduleBudgetAlert: mockScheduleBudgetAlert,
     insertNotification: mockInsertNotification,
@@ -153,8 +155,7 @@ function seedBudgetAlertScenario() {
     id: "tx-3",
     categoryId: "entertainment" as CategoryId,
     amount: 43234 as CopAmount,
-    date: "2026-02-12",
-    month: "2026-02" as Month,
+    date: "2026-04-12",
   });
 }
 
@@ -350,9 +351,13 @@ describe("createBudgetMonitoringModule", () => {
 
     vi.doMock("@/features/transactions/query.public", () => ({
       getSpendingByCategoryAggregate: getSpendingByCategoryAggregateMock,
+      getSpendingByCategoryDateRangeAggregate: vi.fn(() => []),
     }));
     vi.doMock("@/features/transactions/lib/repository", () => ({
       getSpendingByCategoryAggregate: () => {
+        throw new Error("budget monitoring should not import transaction internals");
+      },
+      getSpendingByCategoryDateRangeAggregate: () => {
         throw new Error("budget monitoring should not import transaction internals");
       },
     }));
@@ -399,8 +404,7 @@ describe("createBudgetMonitoringModule", () => {
       id: "tx-3",
       categoryId: "entertainment" as CategoryId,
       amount: 43234 as CopAmount,
-      date: "2026-02-12",
-      month: "2026-02" as Month,
+      date: "2026-04-12",
     });
 
     const suggestions = createMonitoringModule().loadAutoSuggestions({

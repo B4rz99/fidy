@@ -23,6 +23,34 @@ describe("capture evidence builders", () => {
     ]);
   });
 
+  it("builds LLM account hint evidence from parsed email account hints", () => {
+    expect(
+      buildEmailCaptureEvidence({
+        from: "Notificaciones@Bancolombia.com.co",
+        fromAccountHint: "Tarjeta de credito Bancolombia",
+      })
+    ).toEqual([
+      {
+        sourceFamily: "bancolombia",
+        evidenceType: "sender_email",
+        scope: "email:bancolombia:sender",
+        value: "notificaciones@bancolombia.com.co",
+      },
+      {
+        sourceFamily: "bancolombia",
+        evidenceType: "sender_domain",
+        scope: "email:bancolombia:domain",
+        value: "bancolombia.com.co",
+      },
+      {
+        sourceFamily: "bancolombia",
+        evidenceType: "llm_account_hint",
+        scope: "email:bancolombia:llm_account_hint",
+        value: "tarjeta de credito bancolombia",
+      },
+    ]);
+  });
+
   it("extracts package family, alias tokens, and last4 evidence from notifications", () => {
     expect(
       buildNotificationCaptureEvidence({

@@ -32,6 +32,7 @@ const mockBuildNotificationCaptureEvidence = vi.fn().mockReturnValue([
     value: "1234",
   },
 ]);
+const mockBuildNotificationLlmAccountHintCaptureEvidence = vi.fn().mockReturnValue([]);
 const mockSaveCaptureEvidenceRows = vi.fn();
 const mockFindMatchingFinancialAccountId = vi.fn().mockReturnValue(null);
 const DEFAULT_NOTIFICATION_CAPTURE_EVIDENCE = {
@@ -92,6 +93,8 @@ vi.mock("@/features/account-suggestions", () => ({
 vi.mock("@/features/capture-evidence", () => ({
   buildNotificationCaptureEvidence: (...args: any[]) =>
     mockBuildNotificationCaptureEvidence(...args),
+  buildNotificationLlmAccountHintCaptureEvidence: (...args: any[]) =>
+    mockBuildNotificationLlmAccountHintCaptureEvidence(...args),
   materializeCaptureEvidenceRows,
   saveCaptureEvidenceRows: (...args: any[]) => mockSaveCaptureEvidenceRows(...args),
 }));
@@ -170,6 +173,7 @@ describe("processNotification", () => {
     mockCaptureFingerprint.mockReturnValue("test-fingerprint");
     mockStripPii.mockImplementation((t: string) => t);
     mockBuildNotificationCaptureEvidence.mockReturnValue([DEFAULT_NOTIFICATION_CAPTURE_EVIDENCE]);
+    mockBuildNotificationLlmAccountHintCaptureEvidence.mockReturnValue([]);
     mockFindMatchingFinancialAccountId.mockReturnValue(null);
     mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
   });
@@ -192,7 +196,16 @@ describe("processNotification", () => {
       description: "Restaurante XYZ",
       date: "2026-03-07",
       confidence: 0.9,
+      fromAccountHint: "Tarjeta credito Bancolombia",
     });
+    mockBuildNotificationLlmAccountHintCaptureEvidence.mockReturnValueOnce([
+      {
+        sourceFamily: "bancolombia",
+        evidenceType: "llm_account_hint",
+        scope: "notification:bancolombia:llm_account_hint",
+        value: "tarjeta credito bancolombia",
+      },
+    ]);
 
     const result = await processNotification(
       mockDb,
@@ -201,6 +214,11 @@ describe("processNotification", () => {
     );
 
     expect(mockParseNotificationApi).toHaveBeenCalled();
+    expect(mockBuildNotificationLlmAccountHintCaptureEvidence).toHaveBeenCalledWith({
+      notification: expect.objectContaining({ packageName: "com.todo1.mobile.co.bancolombia" }),
+      fromAccountHint: "Tarjeta credito Bancolombia",
+      toAccountHint: undefined,
+    });
     expect(result.saved).toBe(true);
     expect(mockInsertTransaction).toHaveBeenCalledWith(
       mockDb,

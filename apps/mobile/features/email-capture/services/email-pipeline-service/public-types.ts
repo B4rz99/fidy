@@ -86,7 +86,11 @@ export type CreateEmailPipelineServiceDeps = {
     readonly status: string;
     readonly transactionId: TransactionId | null;
   }) => Promise<void>;
-  readonly buildEmailCaptureEvidence: (input: { from: string }) => readonly CaptureEvidenceSeed[];
+  readonly buildEmailCaptureEvidence: (input: {
+    readonly from: string;
+    readonly fromAccountHint?: string;
+    readonly toAccountHint?: string;
+  }) => readonly CaptureEvidenceSeed[];
   readonly saveCaptureEvidenceRows: (
     db: AnyDb,
     rows: readonly CaptureEvidenceRow[]

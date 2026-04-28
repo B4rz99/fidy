@@ -14,6 +14,7 @@ import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
+import { logOnboardingEvent, trackOnboardingEvent } from "../lib/telemetry";
 import { useOnboardingStore } from "../store";
 
 export function SyncProgressStep() {
@@ -41,9 +42,12 @@ export function SyncProgressStep() {
   useMountEffect(() => {
     if (accounts.length > 0 && !fetchStarted.current && db && userId) {
       fetchStarted.current = true;
+      trackOnboardingEvent("email_sync_start", { accountCount: accounts.length });
       void fetchAndProcessEmails(db, userId, getGmailClientId(), getOutlookClientId(), () =>
         refreshTransactions(db, userId)
       );
+    } else if (accounts.length === 0) {
+      logOnboardingEvent("email_sync_no_accounts");
     }
   });
 
@@ -126,7 +130,14 @@ export function SyncProgressStep() {
             opacity: fetchDone ? 1 : 0.5,
           },
         ]}
-        onPress={() => completeSync(hasAccountSuggestions)}
+        onPress={() => {
+          trackOnboardingEvent("email_sync_continue", {
+            savedCount,
+            hasAccountSuggestions,
+            recentTransactionCount: recentTransactions.length,
+          });
+          completeSync(hasAccountSuggestions);
+        }}
         disabled={!fetchDone}
       >
         <Text style={styles.primaryButtonText}>{t("onboarding.syncing.continue")}</Text>

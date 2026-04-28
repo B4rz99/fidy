@@ -213,6 +213,39 @@ function seedAliasRankingEvidence() {
   });
 }
 
+function seedSameSourceAliasAndLast4Evidence() {
+  seedRepeatedScopedSuggestionEvidence();
+  saveEvidenceRow("ce-alias-same-source-1", {
+    evidenceType: "alias_token",
+    scope: "email:bancolombia:alias",
+    value: "credito",
+    processedEmailId: "pe-alias-1" as ProcessedEmailId,
+  });
+  saveEvidenceRow("ce-alias-same-source-2", {
+    evidenceType: "alias_token",
+    scope: "email:bancolombia:alias",
+    value: "credito",
+    processedEmailId: "pe-alias-2" as ProcessedEmailId,
+    updatedAt: "2026-04-19T11:40:00.000Z" as IsoDateTime,
+  });
+}
+
+function seedLlmAccountHintEvidence() {
+  saveEvidenceRow("ce-llm-hint-1", {
+    evidenceType: "llm_account_hint",
+    scope: "email:bancolombia:llm_account_hint",
+    value: "tarjeta credito bancolombia",
+    processedEmailId: "pe-llm-1" as ProcessedEmailId,
+  });
+  saveEvidenceRow("ce-llm-hint-2", {
+    evidenceType: "llm_account_hint",
+    scope: "email:bancolombia:llm_account_hint",
+    value: "tarjeta credito bancolombia",
+    processedEmailId: "pe-llm-2" as ProcessedEmailId,
+    updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
+  });
+}
+
 function seedSuggestionRankingEvidence() {
   seedLast4RankingEvidence();
   seedCardHintRankingEvidence();
@@ -373,6 +406,32 @@ describe("account suggestion service", () => {
       "notification:bancolombia:last4",
       "notification:davivienda:last4",
       "apple_pay:card_hint",
+    ]);
+  });
+
+  it("suppresses generic alias suggestions when the same source has card-specific evidence", () => {
+    seedSameSourceAliasAndLast4Evidence();
+    const service = createSuggestionService();
+    const suggestions = service.listSuggestions({ db: db as any, userId: USER_ID });
+
+    expect(suggestions.map((suggestion) => suggestion.scope)).toEqual([
+      "notification:bancolombia:last4",
+    ]);
+  });
+
+  it("lists repeated LLM account hints as account suggestions", () => {
+    seedLlmAccountHintEvidence();
+    const service = createSuggestionService();
+    const suggestions = service.listSuggestions({ db: db as any, userId: USER_ID });
+
+    expect(suggestions).toEqual([
+      expect.objectContaining({
+        scope: "email:bancolombia:llm_account_hint",
+        value: "tarjeta credito bancolombia",
+        sourceFamily: "bancolombia",
+        evidenceType: "llm_account_hint",
+        occurrences: 2,
+      }),
     ]);
   });
 

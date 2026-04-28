@@ -46,6 +46,7 @@ import type { UserId } from "@/shared/types/branded";
 import migrations from "../drizzle/migrations";
 
 const SHEET = { headerShown: false, presentation: "formSheet" } as const;
+const ONBOARDING_ALLOWED_ROUTES = new Set(["create-financial-account", "link-suggested-account"]);
 
 // Init locale synchronously before first render
 useLocaleStore.getState().initLocale(getLocales()[0]?.languageTag ?? "es"); // eslint-disable-line @typescript-eslint/no-unnecessary-condition -- getLocales() CAN return empty array per Expo docs
@@ -153,6 +154,9 @@ function RootLayout() {
       const topSegment = segments[0] as string | undefined;
       const inAuthGroup = topSegment === "(auth)";
       const inOnboarding = (segments as string[])[1] === "onboarding";
+      const inOnboardingAllowedRoute = topSegment
+        ? ONBOARDING_ALLOWED_ROUTES.has(topSegment)
+        : false;
       const inQaRoute =
         localQaAvailable &&
         (topSegment === "qa-tools" ||
@@ -165,7 +169,7 @@ function RootLayout() {
 
       if (!userId && !inAuthGroup) {
         router.replace("/(auth)");
-      } else if (userId && !onboardingComplete && !inOnboarding) {
+      } else if (userId && !onboardingComplete && !inOnboarding && !inOnboardingAllowedRoute) {
         router.replace("/(auth)/onboarding");
       } else if (userId && onboardingComplete && inAuthGroup) {
         router.replace("/(tabs)/(index)" as never);
