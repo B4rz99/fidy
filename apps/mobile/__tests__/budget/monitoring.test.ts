@@ -421,6 +421,33 @@ describe("createBudgetMonitoringModule", () => {
     expect(mockInsertNotification).not.toHaveBeenCalled();
   });
 
+  it("loadAutoSuggestions uses exactly thirty inclusive days", () => {
+    insertBudgetRow();
+    insertExpense({
+      id: "tx-before-window",
+      categoryId: "entertainment" as CategoryId,
+      amount: 10000 as CopAmount,
+      date: "2026-03-19",
+    });
+    insertExpense({
+      id: "tx-window-start",
+      categoryId: "entertainment" as CategoryId,
+      amount: 20000 as CopAmount,
+      date: "2026-03-20",
+    });
+
+    const suggestions = createMonitoringModule().loadAutoSuggestions({
+      db: db as any,
+      userId: USER_ID,
+      month: CURRENT_MONTH,
+      existingCategoryIds: new Set(["food" as CategoryId]),
+    });
+
+    expect(suggestions).toEqual([
+      { categoryId: "entertainment" as CategoryId, suggestedAmount: 20000 as CopAmount },
+    ]);
+  });
+
   it("acknowledgeAlert removes the targeted alert from pending state", () => {
     const nextState = createMonitoringModule().acknowledgeAlert({
       budgetId: "budget-1" as BudgetId,

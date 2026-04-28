@@ -22,8 +22,12 @@ export async function fetchOutlookEmailsWithToken(
   since: string,
   senderEmails: string[]
 ): Promise<RawEmail[]> {
-  async function collectPage(url: string): Promise<RawEmail[]> {
-    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const emails: RawEmail[] = [];
+  let nextUrl: string | undefined = toInitialMessagesUrl(senderEmails, since);
+
+  // Pagination is external I/O; mutate a local accumulator to avoid recursive array copies.
+  while (nextUrl) {
+    const response = await fetch(nextUrl, { headers: { Authorization: `Bearer ${token}` } });
 
     if (!response.ok) {
       captureWarning("outlook_api_list_failed", { httpStatus: response.status });
@@ -31,11 +35,9 @@ export async function fetchOutlookEmailsWithToken(
     }
 
     const data = (await response.json()) as OutlookListResponse;
-    const pageEmails = (data.value ?? []).map(toRawOutlookEmail);
-    return data["@odata.nextLink"]
-      ? [...pageEmails, ...(await collectPage(data["@odata.nextLink"]))]
-      : pageEmails;
+    emails.push(...(data.value ?? []).map(toRawOutlookEmail));
+    nextUrl = data["@odata.nextLink"];
   }
 
-  return collectPage(toInitialMessagesUrl(senderEmails, since));
+  return emails;
 }

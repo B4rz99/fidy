@@ -97,7 +97,7 @@ const deriveAutoSuggestionsForMonth = (
   currentDate: Date
 ): readonly BudgetSuggestion[] => {
   const endDate = toIsoDate(currentDate);
-  const startDate = toIsoDate(subDays(currentDate, AUTO_SUGGESTION_LOOKBACK_DAYS));
+  const startDate = toIsoDate(subDays(currentDate, AUTO_SUGGESTION_LOOKBACK_DAYS - 1));
   const recentSpending = getSpendingByCategoryDateRangeAggregate({
     db,
     userId,

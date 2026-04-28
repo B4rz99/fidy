@@ -419,6 +419,18 @@ describe("account suggestion service", () => {
     ]);
   });
 
+  it("keeps LLM account hints when the same source has card-specific evidence", () => {
+    seedRepeatedScopedSuggestionEvidence();
+    seedLlmAccountHintEvidence();
+    const service = createSuggestionService();
+    const suggestions = service.listSuggestions({ db: db as any, userId: USER_ID });
+
+    expect(suggestions.map((suggestion) => suggestion.scope)).toEqual([
+      "notification:bancolombia:last4",
+      "email:bancolombia:llm_account_hint",
+    ]);
+  });
+
   it("lists repeated LLM account hints as account suggestions", () => {
     seedLlmAccountHintEvidence();
     const service = createSuggestionService();

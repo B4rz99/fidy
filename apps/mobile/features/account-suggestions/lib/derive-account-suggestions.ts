@@ -52,7 +52,7 @@ function hasStrongerSameSourceEvidence(
   rows: readonly (RepeatedCaptureEvidence & { readonly evidenceType: SuggestionEvidenceType })[]
 ) {
   return (
-    (row.evidenceType === "alias_token" || row.evidenceType === "llm_account_hint") &&
+    row.evidenceType === "alias_token" &&
     rows.some(
       (candidate) =>
         candidate.sourceFamily === row.sourceFamily &&

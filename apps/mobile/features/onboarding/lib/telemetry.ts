@@ -7,7 +7,7 @@ export function logOnboardingEvent(event: string, data: OnboardingTelemetryData 
 }
 
 export function captureOnboardingEvent(event: string, data: OnboardingTelemetryData = {}): void {
-  capturePipelineEvent({ source: "onboarding", event, ...data });
+  capturePipelineEvent({ ...data, source: "onboarding", event });
 }
 
 export function trackOnboardingEvent(event: string, data: OnboardingTelemetryData = {}): void {
