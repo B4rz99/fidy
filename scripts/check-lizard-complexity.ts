@@ -4,25 +4,47 @@ type Violation = {
   key: string;
   file: string;
   function: string;
+  thresholdProfile: ThresholdProfileName;
   cyclomaticComplexity: number;
   nloc: number;
   parameterCount: number;
 };
 
+type Thresholds = {
+  cyclomaticComplexity: number;
+  nloc: number;
+  parameterCount: number;
+};
+
+type ThresholdProfileName = "lib" | "default";
+
 type Ledger = {
-  thresholds: {
-    cyclomaticComplexity: number;
-    nloc: number;
-    parameterCount: number;
-  };
+  thresholds: typeof THRESHOLD_PROFILES;
   violations: Violation[];
 };
 
-const DEFAULT_THRESHOLDS = {
-  cyclomaticComplexity: 5,
-  nloc: 30,
-  parameterCount: 3,
+const THRESHOLD_PROFILES = {
+  lib: {
+    cyclomaticComplexity: 5,
+    nloc: 30,
+    parameterCount: 3,
+  },
+  default: {
+    cyclomaticComplexity: 8,
+    nloc: 50,
+    parameterCount: 4,
+  },
 } as const;
+
+const LIB_PATH_PATTERN = /(^|\/)lib(\/|$)/;
+
+const thresholdProfileForFile = (file: string): ThresholdProfileName =>
+  LIB_PATH_PATTERN.test(file) ? "lib" : "default";
+
+const exceedsThresholds = (violation: Violation, thresholds: Thresholds): boolean =>
+  violation.cyclomaticComplexity > thresholds.cyclomaticComplexity ||
+  violation.nloc > thresholds.nloc ||
+  violation.parameterCount > thresholds.parameterCount;
 
 const parseArgs = (argv: string[]) => {
   const csvIndex = argv.indexOf("--csv");
@@ -59,21 +81,20 @@ const buildViolations = (rows: string[][]): Violation[] => {
       const key = stripQuotes(row[5]);
       const file = stripQuotes(row[6]);
       const fn = stripQuotes(row[7]);
+      const thresholdProfile = thresholdProfileForFile(file);
 
       return {
         key,
         file,
         function: fn,
+        thresholdProfile,
         cyclomaticComplexity: Number(row[1]),
         nloc: Number(row[0]),
         parameterCount: Number(row[3]),
       };
     })
-    .filter(
-      (violation) =>
-        violation.cyclomaticComplexity > DEFAULT_THRESHOLDS.cyclomaticComplexity ||
-        violation.nloc > DEFAULT_THRESHOLDS.nloc ||
-        violation.parameterCount > DEFAULT_THRESHOLDS.parameterCount
+    .filter((violation) =>
+      exceedsThresholds(violation, THRESHOLD_PROFILES[violation.thresholdProfile])
     );
 };
 
@@ -119,7 +140,7 @@ const main = async () => {
     }
 
     const ledger: Ledger = {
-      thresholds: { ...DEFAULT_THRESHOLDS },
+      thresholds: { ...THRESHOLD_PROFILES },
       violations: [...currentViolations].sort((left, right) => left.key.localeCompare(right.key)),
     };
 

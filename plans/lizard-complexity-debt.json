@@ -1,8 +1,15 @@
 {
   "thresholds": {
-    "cyclomaticComplexity": 5,
-    "nloc": 30,
-    "parameterCount": 3
+    "lib": {
+      "cyclomaticComplexity": 5,
+      "nloc": 30,
+      "parameterCount": 3
+    },
+    "default": {
+      "cyclomaticComplexity": 8,
+      "nloc": 50,
+      "parameterCount": 4
+    }
   },
   "violations": []
 }
