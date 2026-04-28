@@ -125,10 +125,34 @@ describe("createAdapter", () => {
       expect(result).toEqual({ success: false, error: "no_code" });
     });
 
+    it("returns no_code when callback URL has an empty code", async () => {
+      mockOpenAuthSession.mockResolvedValueOnce({
+        type: "success",
+        url: "fidy://test/callback?code=&state=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      });
+
+      const adapter = createAdapter(testConfig, stubFetch);
+      const result = await adapter.connect("client-id");
+      expect(result).toEqual({ success: false, error: "no_code" });
+    });
+
     it("rejects callback URLs that do not match the configured redirect URI", async () => {
       mockOpenAuthSession.mockResolvedValueOnce({
         type: "success",
         url: "fidy://other/callback?code=auth-code&state=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      });
+
+      const adapter = createAdapter(testConfig, stubFetch);
+      const result = await adapter.connect("client-id");
+
+      expect(result).toEqual({ success: false, error: "invalid_callback" });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("rejects callback URLs on a different port", async () => {
+      mockOpenAuthSession.mockResolvedValueOnce({
+        type: "success",
+        url: "fidy://test:123/callback?code=auth-code&state=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       });
 
       const adapter = createAdapter(testConfig, stubFetch);

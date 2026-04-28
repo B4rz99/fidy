@@ -14,13 +14,15 @@ const parseUrl = (url: string): URL | null => {
 const hasRedirectTarget = (callbackUrl: URL, redirectUrl: URL): boolean =>
   callbackUrl.protocol === redirectUrl.protocol &&
   callbackUrl.hostname === redirectUrl.hostname &&
+  callbackUrl.port === redirectUrl.port &&
   callbackUrl.pathname === redirectUrl.pathname;
 
 const createSupabaseAuthTokens = (
   accessToken: string | null,
   refreshToken: string | null
 ): SupabaseAuthTokens | null => {
-  if (accessToken === null || refreshToken === null) return null;
+  if (accessToken === null || accessToken.length === 0) return null;
+  if (refreshToken === null || refreshToken.length === 0) return null;
   return { accessToken, refreshToken };
 };
 

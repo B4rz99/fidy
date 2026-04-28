@@ -32,7 +32,7 @@ function getLocalQaBuildFlag() {
 }
 
 function isProductionBuild() {
-  return process.env.APP_ENV === "production";
+  return process.env.EXPO_PUBLIC_APP_ENV === "production";
 }
 
 export function isLocalQaProfile(value: string | null | undefined): value is LocalQaProfile {

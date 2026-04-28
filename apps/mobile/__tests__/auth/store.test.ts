@@ -325,6 +325,30 @@ describe("useAuthStore", () => {
     expect(useAuthStore.getState().session).toBeNull();
   });
 
+  it("signIn rejects callback URLs on a different port", async () => {
+    mockOpenAuthSession.mockResolvedValueOnce({
+      type: "success",
+      url: "fidy://auth:123/callback#access_token=tok&refresh_token=ref",
+    });
+
+    await useAuthStore.getState().signIn("google");
+
+    expect(mockSetSession).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().session).toBeNull();
+  });
+
+  it("signIn rejects empty callback tokens", async () => {
+    mockOpenAuthSession.mockResolvedValueOnce({
+      type: "success",
+      url: "fidy://auth/callback#access_token=&refresh_token=ref",
+    });
+
+    await useAuthStore.getState().signIn("google");
+
+    expect(mockSetSession).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().session).toBeNull();
+  });
+
   it("signOut clears session", async () => {
     useAuthStore.setState({
       session: { access_token: "token" } as never,

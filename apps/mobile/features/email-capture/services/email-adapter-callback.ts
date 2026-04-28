@@ -17,6 +17,7 @@ const parseUrl = (url: string): URL | null => {
 const hasCallbackTarget = (actual: URL, expected: URL): boolean =>
   actual.protocol === expected.protocol &&
   actual.hostname === expected.hostname &&
+  actual.port === expected.port &&
   actual.pathname === expected.pathname;
 
 const invalidCallback = (): CallbackCodeResult => ({ success: false, error: "invalid_callback" });
@@ -40,7 +41,7 @@ const readValidCallbackUrl = (input: {
 
 const readCodeParam = (callbackUrl: URL): CallbackCodeResult => {
   const code = callbackUrl.searchParams.get("code");
-  if (code === null) return { success: false, error: "no_code" };
+  if (code === null || code.length === 0) return { success: false, error: "no_code" };
   return { success: true, code };
 };
 
