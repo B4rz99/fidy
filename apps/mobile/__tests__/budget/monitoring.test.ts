@@ -155,7 +155,7 @@ function seedBudgetAlertScenario() {
     id: "tx-3",
     categoryId: "entertainment" as CategoryId,
     amount: 43234 as CopAmount,
-    date: "2026-04-12",
+    date: "2026-02-12",
   });
 }
 
@@ -404,7 +404,7 @@ describe("createBudgetMonitoringModule", () => {
       id: "tx-3",
       categoryId: "entertainment" as CategoryId,
       amount: 43234 as CopAmount,
-      date: "2026-04-12",
+      date: "2026-02-12",
     });
 
     const suggestions = createMonitoringModule().loadAutoSuggestions({
@@ -421,19 +421,19 @@ describe("createBudgetMonitoringModule", () => {
     expect(mockInsertNotification).not.toHaveBeenCalled();
   });
 
-  it("loadAutoSuggestions uses exactly thirty inclusive days", () => {
+  it("loadAutoSuggestions uses previous calendar month spending", () => {
     insertBudgetRow();
     insertExpense({
-      id: "tx-before-window",
+      id: "tx-current-month",
       categoryId: "entertainment" as CategoryId,
       amount: 10000 as CopAmount,
-      date: "2026-03-19",
+      date: "2026-03-10",
     });
     insertExpense({
-      id: "tx-window-start",
+      id: "tx-previous-month",
       categoryId: "entertainment" as CategoryId,
       amount: 20000 as CopAmount,
-      date: "2026-03-20",
+      date: "2026-02-20",
     });
 
     const suggestions = createMonitoringModule().loadAutoSuggestions({
