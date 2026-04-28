@@ -55,6 +55,10 @@ type BrandedImportContext = {
 
 function listRepoFiles(dirPath: string): readonly string[] {
   return readdirSync(dirPath).flatMap((entry) => {
+    if (entry === "node_modules") {
+      return [];
+    }
+
     const absolutePath = path.join(dirPath, entry);
     const stats = statSync(absolutePath);
 
