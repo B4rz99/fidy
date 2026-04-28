@@ -15,4 +15,5 @@ export {
   getVisibleOnboardingStepIndex,
   ONBOARDING_STEP,
 } from "./lib/flow";
+export { logOnboardingEvent, trackOnboardingEvent } from "./lib/telemetry";
 export { TOTAL_STEPS, useOnboardingStore } from "./store";

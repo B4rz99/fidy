@@ -17,13 +17,14 @@ import {
   ConnectEmailStep,
   getVisibleOnboardingStepCount,
   getVisibleOnboardingStepIndex,
+  logOnboardingEvent,
   ONBOARDING_STEP,
   StepIndicator,
   SyncProgressStep,
+  trackOnboardingEvent,
   useOnboardingStore,
   WelcomeStep,
 } from "@/features/onboarding";
-import { logOnboardingEvent, trackOnboardingEvent } from "@/features/onboarding/lib/telemetry";
 import {
   initializeTransactionSession,
   loadInitialTransactions,
