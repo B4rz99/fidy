@@ -156,6 +156,45 @@ function expectSavedNotificationEvidence(transactionId: string) {
   );
 }
 
+function mockNotificationLlmAccountHintParse() {
+  mockParseNotificationApi.mockResolvedValueOnce({
+    type: "expense",
+    amount: 35000,
+    categoryId: "food",
+    description: "Restaurante XYZ",
+    date: "2026-03-07",
+    confidence: 0.9,
+    fromAccountHint: "Tarjeta credito Bancolombia",
+  });
+  mockBuildNotificationLlmAccountHintCaptureEvidence.mockReturnValueOnce([
+    {
+      sourceFamily: "bancolombia",
+      evidenceType: "llm_account_hint",
+      scope: "notification:bancolombia:llm_account_hint",
+      value: "tarjeta credito bancolombia",
+    },
+  ]);
+}
+
+function expectNotificationLlmAccountHintEvidence() {
+  expect(mockBuildNotificationLlmAccountHintCaptureEvidence).toHaveBeenCalledWith({
+    notification: expect.objectContaining({ packageName: "com.todo1.mobile.co.bancolombia" }),
+    fromAccountHint: "Tarjeta credito Bancolombia",
+    toAccountHint: undefined,
+  });
+}
+
+function expectSavedLlmNotificationTransaction() {
+  expect(mockInsertTransaction).toHaveBeenCalledWith(
+    mockDb,
+    expect.objectContaining({
+      amount: 35000,
+      categoryId: "food",
+      description: "Restaurante XYZ",
+    })
+  );
+}
+
 describe("processNotification", () => {
   let idCounter: number;
 
@@ -189,23 +228,7 @@ describe("processNotification", () => {
   });
 
   it("falls through to LLM when local regex fails", async () => {
-    mockParseNotificationApi.mockResolvedValueOnce({
-      type: "expense",
-      amount: 35000,
-      categoryId: "food",
-      description: "Restaurante XYZ",
-      date: "2026-03-07",
-      confidence: 0.9,
-      fromAccountHint: "Tarjeta credito Bancolombia",
-    });
-    mockBuildNotificationLlmAccountHintCaptureEvidence.mockReturnValueOnce([
-      {
-        sourceFamily: "bancolombia",
-        evidenceType: "llm_account_hint",
-        scope: "notification:bancolombia:llm_account_hint",
-        value: "tarjeta credito bancolombia",
-      },
-    ]);
+    mockNotificationLlmAccountHintParse();
 
     const result = await processNotification(
       mockDb,
@@ -214,20 +237,9 @@ describe("processNotification", () => {
     );
 
     expect(mockParseNotificationApi).toHaveBeenCalled();
-    expect(mockBuildNotificationLlmAccountHintCaptureEvidence).toHaveBeenCalledWith({
-      notification: expect.objectContaining({ packageName: "com.todo1.mobile.co.bancolombia" }),
-      fromAccountHint: "Tarjeta credito Bancolombia",
-      toAccountHint: undefined,
-    });
+    expectNotificationLlmAccountHintEvidence();
     expect(result.saved).toBe(true);
-    expect(mockInsertTransaction).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({
-        amount: 35000,
-        categoryId: "food",
-        description: "Restaurante XYZ",
-      })
-    );
+    expectSavedLlmNotificationTransaction();
   });
 
   it("records failed capture when both regex and LLM fail", async () => {
