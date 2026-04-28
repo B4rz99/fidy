@@ -5,7 +5,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { OnboardingAccountReviewStep } from "@/features/account-suggestions/routes.public";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
 import { initializeBudgetSession } from "@/features/budget/hooks.public";
-import { initializeEmailCaptureSession, loadEmailAccounts } from "@/features/email-capture";
+import {
+  initializeEmailCaptureSession,
+  loadEmailAccounts,
+  useEmailCaptureStore,
+} from "@/features/email-capture";
 import { tryEnsureDefaultFinancialAccount } from "@/features/financial-accounts";
 import {
   BudgetSetupStep,
@@ -13,9 +17,11 @@ import {
   ConnectEmailStep,
   getVisibleOnboardingStepCount,
   getVisibleOnboardingStepIndex,
+  logOnboardingEvent,
   ONBOARDING_STEP,
   StepIndicator,
   SyncProgressStep,
+  trackOnboardingEvent,
   useOnboardingStore,
   WelcomeStep,
 } from "@/features/onboarding";
@@ -60,6 +66,7 @@ function AuthenticatedOnboardingScreen({
   // Initialize minimal stores needed for onboarding
   useSubscription(
     () => {
+      logOnboardingEvent("init_start", { migrationsReady });
       void Promise.resolve()
         .then(() => {
           initializeEmailCaptureSession(userId);
@@ -71,7 +78,18 @@ function AuthenticatedOnboardingScreen({
           initializeBudgetSession(userId);
           return Promise.all([loadEmailAccounts(db, userId), loadInitialTransactions(db, userId)]);
         })
-        .catch(captureError)
+        .then(() => {
+          trackOnboardingEvent("init_complete", {
+            emailAccounts: useEmailCaptureStore.getState().accounts.length,
+            transactionPreviewCount: useTransactionStore.getState().pages.slice(0, 3).length,
+          });
+        })
+        .catch((error) => {
+          logOnboardingEvent("init_failed", {
+            errorType: error instanceof Error ? error.name : "unknown",
+          });
+          captureError(error);
+        })
         .finally(() => {
           setStoresReady(true);
         });

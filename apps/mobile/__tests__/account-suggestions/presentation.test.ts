@@ -86,6 +86,27 @@ describe("account suggestion presentation helpers", () => {
     });
   });
 
+  it("builds a credit-card draft from LLM account hint evidence", () => {
+    expect(
+      buildSuggestedFinancialAccountDraft({
+        fingerprint: '["email:bancolombia:llm_account_hint","tarjeta credito bancolombia"]',
+        scope: "email:bancolombia:llm_account_hint",
+        value: "tarjeta credito bancolombia",
+        sourceFamily: "bancolombia",
+        evidenceType: "llm_account_hint",
+        occurrences: 3,
+        confidenceScore: 270,
+      })
+    ).toEqual({
+      confidenceLabel: "HIGH",
+      evidenceLabel: "tarjeta credito bancolombia",
+      kind: "credit_card",
+      name: "Bancolombia card",
+      occurrences: 3,
+      sourceLabel: "Bancolombia",
+    });
+  });
+
   it("ranks likely matching financial accounts before the rest", () => {
     const ranked = rankSuggestedFinancialAccounts(ACCOUNTS, {
       fingerprint: '["notification:nequi:alias","wallet"]',

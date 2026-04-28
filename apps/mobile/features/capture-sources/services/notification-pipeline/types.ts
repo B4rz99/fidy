@@ -26,6 +26,8 @@ export type RawParsedNotification = {
   categoryId: string;
   date: string;
   confidence: number;
+  fromAccountHint?: string;
+  toAccountHint?: string;
 };
 
 export type ParsedNotification = Omit<RawParsedNotification, "amount" | "date"> & {

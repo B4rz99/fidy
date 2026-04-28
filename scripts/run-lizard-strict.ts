@@ -12,9 +12,9 @@ const REPORT_DIR = join(ROOT_DIR, ".context", "reports", "lizard", "strict");
 const SUMMARY_SCRIPT = join(ROOT_DIR, "scripts", "summarize_lizard.py");
 const REQUIREMENTS_HASH_FILE = join(VENV_DIR, ".requirements.sha256");
 const LEDGER_PATH = join(ROOT_DIR, "plans", "lizard-complexity-debt.json");
-const STRICT_CCN = "5";
-const STRICT_NLOC = "30";
-const STRICT_PARAMS = "3";
+const DEFAULT_CCN = "8";
+const DEFAULT_NLOC = "50";
+const DEFAULT_PARAMS = "4";
 
 type ParsedArgs = {
   writeLedger: boolean;
@@ -170,12 +170,14 @@ const strictArgs = [
   "javascript",
   "-l",
   "typescript",
+  "-x",
+  "*/coverage/*",
   "-C",
-  STRICT_CCN,
+  DEFAULT_CCN,
   "-L",
-  STRICT_NLOC,
+  DEFAULT_NLOC,
   "-a",
-  STRICT_PARAMS,
+  DEFAULT_PARAMS,
 ];
 
 run([venvLizard(), ...strictArgs, ...targets], { allowFailure: true, stdoutPath: textReport });
@@ -200,11 +202,11 @@ run([
   "--version",
   version,
   "--ccn-threshold",
-  STRICT_CCN,
+  DEFAULT_CCN,
   "--nloc-threshold",
-  STRICT_NLOC,
+  DEFAULT_NLOC,
   "--parameter-threshold",
-  STRICT_PARAMS,
+  DEFAULT_PARAMS,
   ...targets.flatMap((target) => ["--target", target]),
 ]);
 

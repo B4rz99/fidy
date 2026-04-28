@@ -29,6 +29,7 @@ type DailySpendingAggregateInput = {
   readonly startDate: IsoDate;
   readonly endDate: IsoDate;
 };
+type SpendingByCategoryDateRangeInput = DailySpendingAggregateInput;
 type RecentTransactionsInput = {
   readonly db: AnyDb;
   readonly userId: UserId;
@@ -122,6 +123,27 @@ export function getSpendingByCategoryAggregate(
         ...getActiveTransactionConditions(userId),
         eq(transactions.type, "expense"),
         like(transactions.date, `${month}%`)
+      )
+    )
+    .groupBy(transactions.categoryId)
+    .orderBy(desc(sum(transactions.amount)))
+    .all();
+}
+
+export function getSpendingByCategoryDateRangeAggregate(
+  input: SpendingByCategoryDateRangeInput
+): { categoryId: CategoryId; total: CopAmount }[] {
+  return input.db
+    .select({
+      categoryId: transactions.categoryId,
+      total: sum(transactions.amount).mapWith((val) => Number(val) as CopAmount),
+    })
+    .from(transactions)
+    .where(
+      and(
+        ...getActiveTransactionConditions(input.userId),
+        eq(transactions.type, "expense"),
+        between(transactions.date, input.startDate, input.endDate)
       )
     )
     .groupBy(transactions.categoryId)

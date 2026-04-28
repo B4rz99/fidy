@@ -67,6 +67,7 @@ export type LoadBudgetSuggestionsInput = {
 export type BudgetMonitoringPorts = {
   readonly getBudgetAlertsEnabled: () => boolean;
   readonly getLocale: () => string;
+  readonly getCurrentDate?: () => Date;
   readonly resolveCategoryLabel: (categoryId: CategoryId, locale: string) => string;
   readonly scheduleBudgetAlert: (
     alert: BudgetAlert,
@@ -84,8 +85,6 @@ export type BudgetMonitoringModule = {
 
 const alertKey = (budgetId: BudgetId, threshold: 80 | 100): string => `${budgetId}:${threshold}`;
 
-const formatMonth = (date: Date): Month => toMonth(date);
-
 const parseMonth = (month: Month): Date => {
   const parts = month.split("-").map(Number);
   const year = parts[0] ?? 0;
@@ -99,7 +98,7 @@ const deriveAutoSuggestionsForMonth = (
   month: Month,
   existingCategoryIds: ReadonlySet<CategoryId>
 ): readonly BudgetSuggestion[] => {
-  const previousMonth = formatMonth(subMonths(parseMonth(month), 1));
+  const previousMonth = toMonth(subMonths(parseMonth(month), 1));
   const previousSpending = getSpendingByCategoryAggregate(db, userId, previousMonth);
   return deriveAutoSuggestBudgets(previousSpending, existingCategoryIds);
 };

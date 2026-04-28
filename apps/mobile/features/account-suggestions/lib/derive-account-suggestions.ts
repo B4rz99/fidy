@@ -8,7 +8,10 @@ type RepeatedCaptureEvidence = {
   readonly occurrences: number;
 };
 
-type SuggestionEvidenceType = Extract<CaptureEvidenceType, "alias_token" | "card_hint" | "last4">;
+type SuggestionEvidenceType = Extract<
+  CaptureEvidenceType,
+  "alias_token" | "card_hint" | "last4" | "llm_account_hint"
+>;
 
 export type AccountCreationSuggestion = {
   readonly fingerprint: string;
@@ -21,7 +24,12 @@ export type AccountCreationSuggestion = {
 };
 
 function isSuggestionEvidenceType(value: string): value is SuggestionEvidenceType {
-  return value === "last4" || value === "card_hint" || value === "alias_token";
+  return (
+    value === "last4" ||
+    value === "card_hint" ||
+    value === "alias_token" ||
+    value === "llm_account_hint"
+  );
 }
 
 export function createAccountSuggestionFingerprint(scope: string, value: string) {
@@ -29,9 +37,29 @@ export function createAccountSuggestionFingerprint(scope: string, value: string)
 }
 
 function toConfidenceScore(evidenceType: SuggestionEvidenceType, occurrences: number) {
-  const baseScore = evidenceType === "last4" ? 100 : evidenceType === "card_hint" ? 80 : 60;
+  const baseScore = (() => {
+    if (evidenceType === "last4") return 100;
+    if (evidenceType === "llm_account_hint") return 90;
+    if (evidenceType === "card_hint") return 80;
+    return 60;
+  })();
 
   return baseScore * occurrences;
+}
+
+function hasStrongerSameSourceEvidence(
+  row: RepeatedCaptureEvidence & { readonly evidenceType: SuggestionEvidenceType },
+  rows: readonly (RepeatedCaptureEvidence & { readonly evidenceType: SuggestionEvidenceType })[]
+) {
+  return (
+    row.evidenceType === "alias_token" &&
+    rows.some(
+      (candidate) =>
+        candidate.sourceFamily === row.sourceFamily &&
+        candidate.evidenceType !== row.evidenceType &&
+        (candidate.evidenceType === "last4" || candidate.evidenceType === "card_hint")
+    )
+  );
 }
 
 function compareSuggestions(left: AccountCreationSuggestion, right: AccountCreationSuggestion) {
@@ -55,6 +83,7 @@ export function deriveAccountSuggestions(
   );
 
   return suggestionRows
+    .filter((row) => !hasStrongerSameSourceEvidence(row, suggestionRows))
     .map((row) => ({
       fingerprint: createAccountSuggestionFingerprint(row.scope, row.value),
       scope: row.scope,

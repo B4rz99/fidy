@@ -208,6 +208,7 @@ const ROW_SPECS: readonly RowSpec[] = [
                 "alias_token",
                 "card_hint",
                 "last4",
+                "llm_account_hint",
               ],
               value,
               "evidenceType"

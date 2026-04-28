@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
+import { trackOnboardingEvent } from "@/features/onboarding/lib/telemetry";
 import { useOnboardingStore } from "@/features/onboarding/store";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -54,21 +55,36 @@ export function OnboardingAccountReviewStep() {
             <AccountSuggestionCard
               key={suggestion.fingerprint}
               suggestion={suggestion}
-              onCreate={(item) =>
+              onCreate={(item) => {
+                trackOnboardingEvent("account_suggestion_create_opened", {
+                  evidenceType: item.evidenceType,
+                  occurrences: item.occurrences,
+                  confidenceScore: item.confidenceScore,
+                });
                 router.push({
                   pathname: "/create-financial-account",
                   params: { fingerprint: item.fingerprint },
-                } as never)
-              }
-              onLink={(item) =>
+                } as never);
+              }}
+              onLink={(item) => {
+                trackOnboardingEvent("account_suggestion_link_opened", {
+                  evidenceType: item.evidenceType,
+                  occurrences: item.occurrences,
+                  confidenceScore: item.confidenceScore,
+                });
                 router.push({
                   pathname: "/link-suggested-account",
                   params: { fingerprint: item.fingerprint },
-                } as never)
-              }
-              onSkip={(item) =>
-                setDeferredFingerprints((current) => [...current, item.fingerprint])
-              }
+                } as never);
+              }}
+              onSkip={(item) => {
+                trackOnboardingEvent("account_suggestion_deferred", {
+                  evidenceType: item.evidenceType,
+                  occurrences: item.occurrences,
+                  confidenceScore: item.confidenceScore,
+                });
+                setDeferredFingerprints((current) => [...current, item.fingerprint]);
+              }}
             />
           ))}
         </View>
@@ -76,7 +92,14 @@ export function OnboardingAccountReviewStep() {
 
       <Pressable
         style={[styles.continueButton, { backgroundColor: accentGreen }]}
-        onPress={nextStep}
+        onPress={() => {
+          trackOnboardingEvent("account_review_continue", {
+            suggestionCount: suggestions.length,
+            visibleSuggestionCount: visibleSuggestions.length,
+            deferredCount: deferredFingerprints.length,
+          });
+          nextStep();
+        }}
       >
         <Text style={styles.continueButtonText}>{t("accountSuggestions.onboarding.continue")}</Text>
       </Pressable>

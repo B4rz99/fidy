@@ -19,6 +19,7 @@ export type { TransactionRow } from "./lib/repository";
 export {
   getMonthlyTotalsByType,
   getSpendingByCategoryAggregate,
+  getSpendingByCategoryDateRangeAggregate,
   getTransactionById,
   insertTransaction,
   softDeleteTransaction,

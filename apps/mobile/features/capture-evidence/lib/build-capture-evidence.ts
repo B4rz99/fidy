@@ -21,6 +21,8 @@ const LAST4_PATTERNS = [
 
 type EmailCaptureInput = {
   readonly from: string;
+  readonly fromAccountHint?: string;
+  readonly toAccountHint?: string;
 };
 
 function normalizeWhitespace(value: string) {
@@ -31,6 +33,27 @@ function normalizeFamily(value: string) {
   return normalizeWhitespace(value)
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
+}
+
+function normalizeHint(value: string) {
+  return normalizeWhitespace(value).replace(/\s+/g, " ");
+}
+
+export function buildLlmAccountHintCaptureEvidence(input: {
+  readonly family: string;
+  readonly scopePrefix: "email" | "notification";
+  readonly fromAccountHint?: string;
+  readonly toAccountHint?: string;
+}): readonly CaptureEvidenceSeed[] {
+  return [input.fromAccountHint, input.toAccountHint]
+    .filter((hint): hint is string => hint != null && hint.trim().length > 0)
+    .map(normalizeHint)
+    .map((hint) => ({
+      sourceFamily: input.family,
+      evidenceType: "llm_account_hint" as const,
+      scope: `${input.scopePrefix}:${input.family}:llm_account_hint`,
+      value: hint,
+    }));
 }
 
 function uniqueEvidence(rows: readonly CaptureEvidenceSeed[]) {
@@ -103,7 +126,26 @@ export function buildEmailCaptureEvidence(
       scope: `email:${family}:domain`,
       value: senderDomain,
     },
+    ...buildLlmAccountHintCaptureEvidence({
+      family,
+      scopePrefix: "email",
+      fromAccountHint: input.fromAccountHint,
+      toAccountHint: input.toAccountHint,
+    }),
   ]);
+}
+
+export function buildNotificationLlmAccountHintCaptureEvidence(input: {
+  readonly notification: NotificationData;
+  readonly fromAccountHint?: string;
+  readonly toAccountHint?: string;
+}): readonly CaptureEvidenceSeed[] {
+  return buildLlmAccountHintCaptureEvidence({
+    family: familyFromPackageName(input.notification.packageName),
+    scopePrefix: "notification",
+    fromAccountHint: input.fromAccountHint,
+    toAccountHint: input.toAccountHint,
+  });
 }
 
 export function buildNotificationCaptureEvidence(

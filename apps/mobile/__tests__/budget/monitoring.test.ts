@@ -22,6 +22,7 @@ let db: ReturnType<typeof drizzle>;
 
 const USER_ID = "user-1" as UserId;
 const CURRENT_MONTH = "2026-03" as Month;
+const CURRENT_DATE = new Date(2026, 3, 18);
 
 const mockScheduleBudgetAlert = vi.fn();
 const mockInsertNotification = vi.fn();
@@ -89,6 +90,7 @@ function createMonitoringModule() {
   return createBudgetMonitoringModule({
     getBudgetAlertsEnabled: () => true,
     getLocale: () => "es",
+    getCurrentDate: () => CURRENT_DATE,
     resolveCategoryLabel: mockResolveCategoryLabel,
     scheduleBudgetAlert: mockScheduleBudgetAlert,
     insertNotification: mockInsertNotification,
@@ -154,7 +156,6 @@ function seedBudgetAlertScenario() {
     categoryId: "entertainment" as CategoryId,
     amount: 43234 as CopAmount,
     date: "2026-02-12",
-    month: "2026-02" as Month,
   });
 }
 
@@ -350,9 +351,13 @@ describe("createBudgetMonitoringModule", () => {
 
     vi.doMock("@/features/transactions/query.public", () => ({
       getSpendingByCategoryAggregate: getSpendingByCategoryAggregateMock,
+      getSpendingByCategoryDateRangeAggregate: vi.fn(() => []),
     }));
     vi.doMock("@/features/transactions/lib/repository", () => ({
       getSpendingByCategoryAggregate: () => {
+        throw new Error("budget monitoring should not import transaction internals");
+      },
+      getSpendingByCategoryDateRangeAggregate: () => {
         throw new Error("budget monitoring should not import transaction internals");
       },
     }));
@@ -400,7 +405,6 @@ describe("createBudgetMonitoringModule", () => {
       categoryId: "entertainment" as CategoryId,
       amount: 43234 as CopAmount,
       date: "2026-02-12",
-      month: "2026-02" as Month,
     });
 
     const suggestions = createMonitoringModule().loadAutoSuggestions({
@@ -415,6 +419,33 @@ describe("createBudgetMonitoringModule", () => {
     ]);
     expect(mockScheduleBudgetAlert).not.toHaveBeenCalled();
     expect(mockInsertNotification).not.toHaveBeenCalled();
+  });
+
+  it("loadAutoSuggestions uses previous calendar month spending", () => {
+    insertBudgetRow();
+    insertExpense({
+      id: "tx-current-month",
+      categoryId: "entertainment" as CategoryId,
+      amount: 10000 as CopAmount,
+      date: "2026-03-10",
+    });
+    insertExpense({
+      id: "tx-previous-month",
+      categoryId: "entertainment" as CategoryId,
+      amount: 20000 as CopAmount,
+      date: "2026-02-20",
+    });
+
+    const suggestions = createMonitoringModule().loadAutoSuggestions({
+      db: db as any,
+      userId: USER_ID,
+      month: CURRENT_MONTH,
+      existingCategoryIds: new Set(["food" as CategoryId]),
+    });
+
+    expect(suggestions).toEqual([
+      { categoryId: "entertainment" as CategoryId, suggestedAmount: 20000 as CopAmount },
+    ]);
   });
 
   it("acknowledgeAlert removes the targeted alert from pending state", () => {

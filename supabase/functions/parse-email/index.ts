@@ -46,6 +46,8 @@ Rules:
 - date: transaction date in YYYY-MM-DD
 - confidence: 0 to 1
 - type: "expense" for purchases/payments, "income" for deposits/transfers received
+- fromAccountHint: source account/card/wallet hint exactly as described by the bank, or null when absent. Prefer semantic labels like "Bancolombia credit card" over guessing card digits. Do not infer a last-4 unless the message explicitly says it is the account/card ending.
+- toAccountHint: destination account/card/wallet hint exactly as described by the bank, or null when absent.
 
 Category guide — pick based on the MERCHANT NAME:
 ${CATEGORY_GUIDE}`;
@@ -66,6 +68,8 @@ The text is short (1-2 lines). Apply the same rules:
 - date: transaction date in YYYY-MM-DD (use today if not stated)
 - confidence: 0 to 1
 - type: "expense" for purchases/payments, "income" for deposits/transfers received
+- fromAccountHint: source account/card/wallet hint exactly as described by the notification, or null when absent. Prefer semantic labels like "Bancolombia credit card" over guessing card digits. Do not infer a last-4 unless the notification explicitly says it is the account/card ending.
+- toAccountHint: destination account/card/wallet hint exactly as described by the notification, or null when absent.
 
 Category guide — pick based on the MERCHANT NAME:
 ${CATEGORY_GUIDE}`;
@@ -121,6 +125,8 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
   Deno.env.get("SUPABASE_ANON_KEY") ?? ""
 );
+const LLM_TEMPERATURE = 0;
+const LLM_SEED = 0;
 
 function jsonResponse(
   body: unknown,
@@ -280,6 +286,8 @@ Deno.serve(async (req) => {
         { role: "system", content: systemPrompt },
         { role: "user", content: truncatedBody },
       ],
+      temperature: LLM_TEMPERATURE,
+      seed: LLM_SEED,
       response_format: { type: "json_schema", json_schema: jsonSchema },
     });
 

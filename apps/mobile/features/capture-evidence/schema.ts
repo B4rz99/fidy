@@ -7,6 +7,7 @@ export const captureEvidenceTypeSchema = z.enum([
   "alias_token",
   "card_hint",
   "last4",
+  "llm_account_hint",
 ]);
 export type CaptureEvidenceType = z.infer<typeof captureEvidenceTypeSchema>;
 

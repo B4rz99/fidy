@@ -14,6 +14,8 @@ export type TransactionCandidate = {
   readonly description: string;
   readonly date: string;
   readonly confidence: number;
+  readonly fromAccountHint?: string;
+  readonly toAccountHint?: string;
 };
 
 export type TransferCandidate = {
@@ -51,6 +53,8 @@ export type LocalLedgerTransaction = {
   readonly description: string;
   readonly date: IsoDate;
   readonly confidence: number;
+  readonly fromAccountHint?: string;
+  readonly toAccountHint?: string;
 };
 
 export type CaptureCandidateInterpretation =
@@ -73,6 +77,8 @@ const transactionCandidateSchema = z.object({
   description: z.string().trim().min(1),
   date: z.string().min(1),
   confidence: confidenceSchema,
+  fromAccountHint: z.string().nullish().transform(undefinedIfNull),
+  toAccountHint: z.string().nullish().transform(undefinedIfNull),
 });
 const transferCandidateSchema = z.object({
   kind: z.literal("transfer"),
@@ -131,6 +137,8 @@ function validateTransactionCandidate(
         description: candidate.description,
         date: requireIsoDate(candidate.date),
         confidence: candidate.confidence,
+        fromAccountHint: candidate.fromAccountHint,
+        toAccountHint: candidate.toAccountHint,
       },
     };
   } catch (error) {

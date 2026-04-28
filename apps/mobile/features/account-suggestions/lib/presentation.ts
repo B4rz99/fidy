@@ -26,7 +26,20 @@ const DIRECT_KIND_BY_EVIDENCE_TYPE = new Map<
 const CONFIDENCE_LABEL_BY_EVIDENCE_TYPE = new Map<
   AccountCreationSuggestion["evidenceType"],
   SuggestedFinancialAccountDraft["confidenceLabel"]
->([["last4", "HIGH"]]);
+>([
+  ["last4", "HIGH"],
+  ["llm_account_hint", "HIGH"],
+]);
+const LLM_HINT_KIND_TERMS: readonly {
+  readonly kind: FinancialAccountKind;
+  readonly terms: readonly string[];
+}[] = [
+  {
+    kind: "credit_card",
+    terms: ["credito", "crédito", "credit", "tarjeta", "card", "visa", "mastercard", "amex"],
+  },
+  { kind: "savings", terms: ["ahorros", "savings"] },
+];
 
 function toTitleCaseSegment(segment: string) {
   return segment.length === 0 ? segment : `${segment[0]?.toUpperCase()}${segment.slice(1)}`;
@@ -44,6 +57,10 @@ function normalizeSearchText(value: string) {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+function containsAnyTerm(value: string, terms: readonly string[]) {
+  return terms.some((term) => value.includes(term));
+}
+
 function buildEvidenceLabel(suggestion: AccountCreationSuggestion) {
   return suggestion.evidenceType === "last4" ? `••${suggestion.value}` : suggestion.value;
 }
@@ -56,18 +73,20 @@ function isWalletAliasSuggestion(suggestion: AccountCreationSuggestion) {
   );
 }
 
-function inferKind(suggestion: AccountCreationSuggestion): FinancialAccountKind {
-  const directKind = DIRECT_KIND_BY_EVIDENCE_TYPE.get(suggestion.evidenceType);
-  if (directKind) {
-    return directKind;
-  }
+const inferLlmHintKind = (value: string): FinancialAccountKind | undefined =>
+  LLM_HINT_KIND_TERMS.find((entry) => containsAnyTerm(normalizeSearchText(value), entry.terms))
+    ?.kind;
 
-  if (isWalletAliasSuggestion(suggestion)) {
-    return "wallet";
-  }
+const inferLlmSuggestionKind = (
+  suggestion: AccountCreationSuggestion
+): FinancialAccountKind | undefined =>
+  suggestion.evidenceType === "llm_account_hint"
+    ? (inferLlmHintKind(suggestion.value) ?? "checking")
+    : undefined;
 
-  return "checking";
-}
+const inferWalletSuggestionKind = (
+  suggestion: AccountCreationSuggestion
+): FinancialAccountKind | undefined => (isWalletAliasSuggestion(suggestion) ? "wallet" : undefined);
 
 function buildSuggestedName(
   sourceLabel: string,
@@ -122,7 +141,11 @@ export function buildSuggestedFinancialAccountDraft(
 ): SuggestedFinancialAccountDraft {
   const sourceLabel = normalizeLabel(suggestion.sourceFamily);
   const evidenceLabel = buildEvidenceLabel(suggestion);
-  const kind = inferKind(suggestion);
+  const kind =
+    DIRECT_KIND_BY_EVIDENCE_TYPE.get(suggestion.evidenceType) ??
+    inferLlmSuggestionKind(suggestion) ??
+    inferWalletSuggestionKind(suggestion) ??
+    "checking";
 
   return {
     kind,

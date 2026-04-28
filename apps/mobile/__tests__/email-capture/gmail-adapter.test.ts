@@ -125,5 +125,51 @@ describe("gmail adapter", () => {
       ]);
       expect(emails).toEqual([]);
     });
+
+    it("follows paginated message lists", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ messages: [{ id: "msg-1" }], nextPageToken: "page-2" }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            payload: {
+              headers: [
+                { name: "From", value: "bank@example.com" },
+                { name: "Subject", value: "First" },
+                { name: "Date", value: "Thu, 05 Mar 2026 10:00:00 +0000" },
+              ],
+              parts: [{ mimeType: "text/plain", body: { data: "Zmlyc3Q" } }],
+            },
+          }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ messages: [{ id: "msg-2" }] }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            payload: {
+              headers: [
+                { name: "From", value: "bank@example.com" },
+                { name: "Subject", value: "Second" },
+                { name: "Date", value: "Thu, 06 Mar 2026 10:00:00 +0000" },
+              ],
+              parts: [{ mimeType: "text/plain", body: { data: "c2Vjb25k" } }],
+            },
+          }),
+      });
+
+      const emails = await fetchGmailEmailsWithToken("access-token", "2026-03-01T00:00:00Z", [
+        "bank@example.com",
+      ]);
+
+      expect(emails.map((email) => email.subject)).toEqual(["First", "Second"]);
+      expect(String(mockFetch.mock.calls[2]?.[0])).toContain("pageToken=page-2");
+    });
   });
 });
