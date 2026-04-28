@@ -43,6 +43,7 @@ export function SyncProgressStep() {
     let isMounted = true;
     let resolveIdle: ((value: boolean) => void) | null = null;
     let unsubscribeIdle: (() => void) | null = null;
+    let lastLoggedProgress = "";
 
     const clearIdleWait = (shouldRetry: boolean) => {
       unsubscribeIdle?.();
@@ -63,6 +64,30 @@ export function SyncProgressStep() {
       });
     };
 
+    const unsubscribeProgress = useEmailCaptureStore.subscribe((state) => {
+      const snapshot = state.progress;
+      if (!snapshot) return;
+
+      const logKey = [
+        snapshot.completed,
+        snapshot.total,
+        snapshot.saved,
+        snapshot.needsReview,
+        snapshot.failed,
+      ].join(":");
+      if (logKey === lastLoggedProgress) return;
+      lastLoggedProgress = logKey;
+
+      logOnboardingEvent("email_sync_progress", {
+        completed: snapshot.completed,
+        total: snapshot.total,
+        savedCount: snapshot.saved,
+        needsReviewCount: snapshot.needsReview,
+        failedCount: snapshot.failed,
+        foundCount: snapshot.saved + snapshot.needsReview,
+      });
+    });
+
     if (accounts.length > 0 && !fetchStarted.current && db && userId) {
       fetchStarted.current = true;
       trackOnboardingEvent("email_sync_start", { accountCount: accounts.length });
@@ -77,14 +102,24 @@ export function SyncProgressStep() {
           );
           if (!isMounted) return;
           if (outcome.status === "completed") {
-            setSyncOutcome({
+            const foundCount = outcome.savedCount + outcome.needsReviewCount;
+            const hasAccountSuggestions =
+              suggestionService.listSuggestions({
+                db,
+                userId,
+                limit: 2,
+              }).length > 0;
+            trackOnboardingEvent("email_sync_complete", {
               savedCount: outcome.savedCount,
-              hasAccountSuggestions:
-                suggestionService.listSuggestions({
-                  db,
-                  userId,
-                  limit: 2,
-                }).length > 0,
+              needsReviewCount: outcome.needsReviewCount,
+              failedCount: outcome.failedCount,
+              foundCount,
+              hasAccountSuggestions,
+              recentTransactionCount: useTransactionStore.getState().pages.slice(0, 3).length,
+            });
+            setSyncOutcome({
+              savedCount: foundCount,
+              hasAccountSuggestions,
             });
             return;
           }
@@ -98,6 +133,7 @@ export function SyncProgressStep() {
 
     return () => {
       isMounted = false;
+      unsubscribeProgress();
       clearIdleWait(false);
     };
   };
@@ -116,7 +152,8 @@ export function SyncProgressStep() {
 
   const fetchDone = syncOutcome !== null;
   const percent = fetchDone ? 100 : livePercent;
-  const savedCount = syncOutcome?.savedCount ?? progress?.saved ?? 0;
+  const savedCount =
+    syncOutcome?.savedCount ?? (progress ? progress.saved + progress.needsReview : 0);
   const hasAccountSuggestions = syncOutcome?.hasAccountSuggestions ?? false;
 
   return (
