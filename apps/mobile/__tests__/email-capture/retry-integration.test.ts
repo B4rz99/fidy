@@ -29,6 +29,7 @@ import type { IsoDateTime, ProcessedEmailId, TransactionId } from "@/shared/type
 const mockParseEmailApi = vi.fn();
 vi.mock("@/features/email-capture/services/parse-email-api", () => ({
   parseEmailApi: (...args: unknown[]) => mockParseEmailApi(...args),
+  retryableParseEmailApi: (...args: unknown[]) => mockParseEmailApi(...args),
 }));
 
 vi.mock("@/shared/lib/sentry", () => ({

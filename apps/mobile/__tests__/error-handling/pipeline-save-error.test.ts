@@ -90,6 +90,7 @@ vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
 
 vi.mock("@/features/email-capture/services/parse-email-api", () => ({
   parseEmailApi: (...args: unknown[]) => mockParseEmailApi(...args),
+  retryableParseEmailApi: (...args: unknown[]) => mockParseEmailApi(...args),
 }));
 
 const mockGenerateId = vi.fn();

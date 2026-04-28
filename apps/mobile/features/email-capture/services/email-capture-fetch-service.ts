@@ -31,6 +31,10 @@ export type EmailAccountFetchResult = {
   readonly fetchOk: boolean;
 };
 
+export type ProcessedEmailAccountFetchResult = EmailAccountFetchResult & {
+  readonly processingResult: PipelineResult;
+};
+
 export type EmailCaptureFetchSummary = {
   readonly fetchResults: readonly EmailAccountFetchResult[];
   readonly allEmails: readonly RawEmail[];
@@ -61,8 +65,7 @@ type FetchEmailAccountCommand = {
 
 type PersistFetchedAccountsCommand = {
   readonly db: AnyDb;
-  readonly fetchResults: readonly EmailAccountFetchResult[];
-  readonly processingResult: PipelineResult;
+  readonly fetchResults: readonly ProcessedEmailAccountFetchResult[];
 };
 
 const createEmptyFetchResult = (account: EmailAccountRow): EmailAccountFetchResult => ({
@@ -86,9 +89,23 @@ const createFetchSummary = (
   };
 };
 
-const getSuccessfulFetches = (
-  fetchResults: readonly EmailAccountFetchResult[]
-): readonly EmailAccountFetchResult[] => fetchResults.filter((result) => result.fetchOk);
+const getSuccessfulProcessedFetches = (
+  fetchResults: readonly ProcessedEmailAccountFetchResult[]
+): readonly ProcessedEmailAccountFetchResult[] =>
+  fetchResults.filter((result) => result.fetchOk && result.processingResult.failed === 0);
+
+export const aggregatePipelineResults = (results: readonly PipelineResult[]): PipelineResult =>
+  results.reduce(
+    (total, result) => ({
+      filtered: total.filtered + result.filtered,
+      skippedDuplicate: total.skippedDuplicate + result.skippedDuplicate,
+      skippedCrossSource: total.skippedCrossSource + result.skippedCrossSource,
+      saved: total.saved + result.saved,
+      failed: total.failed + result.failed,
+      needsReview: total.needsReview + result.needsReview,
+    }),
+    EMPTY_PIPELINE_RESULT
+  );
 
 const isSupportedEmailProvider = (provider: string): provider is EmailProvider =>
   provider === "gmail" || provider === "outlook";
@@ -154,6 +171,7 @@ export async function ingestFetchedEmails(input: {
   readonly userId: UserId;
   readonly emails: readonly RawEmail[];
   readonly onProgress?: ProgressCallback;
+  readonly runRetries?: boolean;
 }): Promise<PipelineResult> {
   const captureIngestion = createCaptureIngestionPort(input.db, {
     processEmails,
@@ -170,10 +188,12 @@ export async function ingestFetchedEmails(input: {
         })) as PipelineResult)
       : EMPTY_PIPELINE_RESULT;
 
-  await captureIngestion.ingest({
-    kind: "email_retry",
-    userId: input.userId,
-  });
+  if (input.runRetries !== false) {
+    await captureIngestion.ingest({
+      kind: "email_retry",
+      userId: input.userId,
+    });
+  }
 
   return processingResult;
 }
@@ -181,8 +201,7 @@ export async function ingestFetchedEmails(input: {
 export async function persistFetchedAccounts(
   command: PersistFetchedAccountsCommand
 ): Promise<PersistedFetchedAccounts> {
-  const successfulFetches =
-    command.processingResult.failed === 0 ? getSuccessfulFetches(command.fetchResults) : [];
+  const successfulFetches = getSuccessfulProcessedFetches(command.fetchResults);
   const fetchedAt = toIsoDateTime(new Date());
 
   await Promise.all(

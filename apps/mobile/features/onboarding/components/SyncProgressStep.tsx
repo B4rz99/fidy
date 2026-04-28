@@ -39,30 +39,58 @@ export function SyncProgressStep() {
   const fetchStarted = useRef(false);
   const suggestionService = useMemo(() => createAccountSuggestionService(), []);
 
-  // Start fetch on mount if we have accounts
-  useMountEffect(() => {
+  const startSync = () => {
     let isMounted = true;
+    let resolveIdle: ((value: boolean) => void) | null = null;
+    let unsubscribeIdle: (() => void) | null = null;
+
+    const clearIdleWait = (shouldRetry: boolean) => {
+      unsubscribeIdle?.();
+      unsubscribeIdle = null;
+      resolveIdle?.(shouldRetry);
+      resolveIdle = null;
+    };
+
+    const waitForFetchIdle = () => {
+      if (!useEmailCaptureStore.getState().isFetching) return Promise.resolve(isMounted);
+
+      return new Promise<boolean>((resolve) => {
+        resolveIdle = resolve;
+        unsubscribeIdle = useEmailCaptureStore.subscribe((state) => {
+          if (state.isFetching) return;
+          clearIdleWait(isMounted);
+        });
+      });
+    };
+
     if (accounts.length > 0 && !fetchStarted.current && db && userId) {
       fetchStarted.current = true;
       trackOnboardingEvent("email_sync_start", { accountCount: accounts.length });
       void (async () => {
-        const outcome = await fetchAndProcessEmails(
-          db,
-          userId,
-          getGmailClientId(),
-          getOutlookClientId(),
-          () => refreshTransactions(db, userId)
-        );
-        if (!isMounted) return;
-        setSyncOutcome({
-          savedCount: outcome.savedCount,
-          hasAccountSuggestions:
-            suggestionService.listSuggestions({
-              db,
-              userId,
-              limit: 2,
-            }).length > 0,
-        });
+        while (isMounted) {
+          const outcome = await fetchAndProcessEmails(
+            db,
+            userId,
+            getGmailClientId(),
+            getOutlookClientId(),
+            () => refreshTransactions(db, userId)
+          );
+          if (!isMounted) return;
+          if (outcome.status === "completed") {
+            setSyncOutcome({
+              savedCount: outcome.savedCount,
+              hasAccountSuggestions:
+                suggestionService.listSuggestions({
+                  db,
+                  userId,
+                  limit: 2,
+                }).length > 0,
+            });
+            return;
+          }
+
+          if (outcome.reason !== "already_fetching" || !(await waitForFetchIdle())) return;
+        }
       })();
     } else if (accounts.length === 0) {
       logOnboardingEvent("email_sync_no_accounts");
@@ -70,7 +98,14 @@ export function SyncProgressStep() {
 
     return () => {
       isMounted = false;
+      clearIdleWait(false);
     };
+  };
+
+  // Start fetch on mount if we have accounts.
+  useMountEffect(() => {
+    const cleanup = startSync();
+    return cleanup;
   });
 
   const livePercent = progress

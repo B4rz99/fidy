@@ -147,13 +147,14 @@ describe("parseEmailApi", () => {
     });
   });
 
-  it("throws on edge function error", async () => {
+  it("returns null on edge function error", async () => {
     mockInvoke.mockResolvedValueOnce({
       data: null,
       error: { message: "timeout" },
     });
 
-    await expect(parseEmailApi("email body")).rejects.toThrow("timeout");
+    const result = await parseEmailApi("email body");
+    expect(result).toBeNull();
   });
 
   it("returns null when Zod validation fails", async () => {

@@ -4,3 +4,8 @@ import { createParseEmailService } from "./create-parse-email-service";
 export const liveParseEmailService = createParseEmailService({
   validCategoryIds: CATEGORY_IDS,
 });
+
+export const retryableParseEmailService = createParseEmailService({
+  validCategoryIds: CATEGORY_IDS,
+  throwOnApiFailure: true,
+});
