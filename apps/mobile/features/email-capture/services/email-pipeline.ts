@@ -28,12 +28,12 @@ import {
   type ProgressCallback,
   type RetryResult,
 } from "./create-email-pipeline-service";
-import { parseEmailApi } from "./parse-email-api";
+import { retryableParseEmailApi } from "./parse-email-api";
 
 export type { PipelineResult, ProcessEmails, ProcessRetries, ProgressCallback, RetryResult };
 
 const emailPipeline = createEmailPipelineService({
-  parseEmailApi,
+  parseEmailApi: retryableParseEmailApi,
   lookupMerchantRule,
   findDuplicateTransaction,
   getProcessedExternalIds,

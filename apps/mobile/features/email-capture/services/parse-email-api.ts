@@ -1,5 +1,5 @@
 import type { LlmParsedTransaction } from "./llm-parser";
-import { liveParseEmailService } from "./parse-email-service";
+import { liveParseEmailService, retryableParseEmailService } from "./parse-email-service";
 
 type RedactionRule = {
   pattern: RegExp;
@@ -43,3 +43,8 @@ export const classifyMerchantApi = async (merchant: string): Promise<string> =>
 
 export const parseEmailApi = async (emailBody: string): Promise<LlmParsedTransaction | null> =>
   liveParseEmailService.parseEmail(sanitizeEmailBody(emailBody));
+
+export const retryableParseEmailApi = async (
+  emailBody: string
+): Promise<LlmParsedTransaction | null> =>
+  retryableParseEmailService.parseEmail(sanitizeEmailBody(emailBody));

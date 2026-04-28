@@ -125,7 +125,7 @@ describe("createParseEmailService", () => {
     });
   });
 
-  it("throws when the parse-email function rejects the authenticated request", async () => {
+  it("returns null when the parse-email function rejects the authenticated request", async () => {
     const captureWarning = vi.fn();
     const mockInvoke = vi.fn().mockResolvedValue({
       data: { success: false, error: "invalid_auth" },
@@ -134,6 +134,36 @@ describe("createParseEmailService", () => {
 
     const service = createParseEmailService({
       validCategoryIds: ["food"],
+      supabase: {
+        getSupabase: () =>
+          ({
+            functions: { invoke: mockInvoke },
+          }) as never,
+      },
+      telemetry: {
+        captureError: vi.fn(),
+        captureWarning,
+        capturePipelineEvent: vi.fn(),
+      },
+    });
+
+    await expect(service.parseEmail("Compra por $50,000")).resolves.toBeNull();
+    expect(captureWarning).toHaveBeenCalledWith("parse_email_api_failed", {
+      errorMessage: "Invalid JWT",
+      hasData: true,
+    });
+  });
+
+  it("throws on parse-email failure when configured for retryable pipeline parsing", async () => {
+    const captureWarning = vi.fn();
+    const mockInvoke = vi.fn().mockResolvedValue({
+      data: { success: false, error: "invalid_auth" },
+      error: { message: "Invalid JWT" },
+    });
+
+    const service = createParseEmailService({
+      validCategoryIds: ["food"],
+      throwOnApiFailure: true,
       supabase: {
         getSupabase: () =>
           ({

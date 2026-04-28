@@ -47,6 +47,7 @@ type CreateParseEmailServiceDeps = {
   readonly validCategoryIds: readonly string[];
   readonly supabase?: AppSupabase;
   readonly telemetry?: AppTelemetry;
+  readonly throwOnApiFailure?: boolean;
 };
 
 const AUTHORIZATION_HEADER = "Authorization";
@@ -73,14 +74,17 @@ function invokeParseEmailFunctionEffect<Response>(body: string, mode: ParseMode)
 
 function logParseApiFailureEffect(
   warningPrefix: "parse_email" | "parse_notification",
-  response: ParseFunctionResult<ParseEmailResponse>
+  response: ParseFunctionResult<ParseEmailResponse>,
+  throwOnApiFailure: boolean
 ) {
   return Effect.zipRight(
     captureWarningEffect(`${warningPrefix}_api_failed`, {
       errorMessage: response.error?.message ?? "unknown",
       hasData: response.data != null,
     }),
-    Effect.fail(new Error(response.error?.message ?? "parse-email request failed"))
+    throwOnApiFailure
+      ? Effect.fail(new Error(response.error?.message ?? "parse-email request failed"))
+      : Effect.succeed(null)
   );
 }
 
@@ -118,10 +122,11 @@ function validateParsedTransactionEffect(
 function handleParseTransactionResponseEffect(
   warningPrefix: "parse_email" | "parse_notification",
   response: ParseFunctionResult<ParseEmailResponse>,
-  validCategoryIds: readonly string[]
+  validCategoryIds: readonly string[],
+  throwOnApiFailure: boolean
 ) {
   if (response.error != null || !response.data?.success) {
-    return logParseApiFailureEffect(warningPrefix, response);
+    return logParseApiFailureEffect(warningPrefix, response, throwOnApiFailure);
   }
 
   return validateParsedTransactionEffect(warningPrefix, response.data.data, validCategoryIds);
@@ -143,24 +148,32 @@ function parseApiResponseEffect(
   input: {
     readonly warningPrefix: "parse_email" | "parse_notification";
     readonly validCategoryIds: readonly string[];
+    readonly throwOnApiFailure: boolean;
   },
   response: ParseFunctionResult<ParseEmailResponse>
 ) {
   return handleParseTransactionResponseEffect(
     input.warningPrefix,
     response,
-    input.validCategoryIds
+    input.validCategoryIds,
+    input.throwOnApiFailure
   );
 }
 
-function parseTransactionEffect(input: ParseTransactionInput) {
+function parseTransactionEffect(
+  input: ParseTransactionInput & { readonly throwOnApiFailure: boolean }
+) {
   const request = Effect.catchAll(
     invokeParseEmailFunctionEffect<ParseEmailResponse>(input.body, input.mode),
     (error) =>
-      Effect.zipRight(logParseExceptionEffect(input.warningPrefix, error), Effect.fail(error))
+      input.throwOnApiFailure
+        ? Effect.zipRight(logParseExceptionEffect(input.warningPrefix, error), Effect.fail(error))
+        : Effect.zipRight(logParseExceptionEffect(input.warningPrefix, error), Effect.succeed(null))
   );
 
-  return Effect.flatMap(request, (response) => parseApiResponseEffect(input, response));
+  return Effect.flatMap(request, (response) =>
+    response === null ? Effect.succeed(null) : parseApiResponseEffect(input, response)
+  );
 }
 
 function logClassifyApiFailureEffect(response: ParseFunctionResult<ClassifyResponse>) {
@@ -201,6 +214,7 @@ export function createParseEmailService({
   validCategoryIds,
   supabase,
   telemetry,
+  throwOnApiFailure = false,
 }: CreateParseEmailServiceDeps): ParseEmailService {
   const supabaseRuntime = bindAppSupabase(supabase);
   const telemetryRuntime = bindAppTelemetry(telemetry);
@@ -216,6 +230,7 @@ export function createParseEmailService({
           mode: "full_parse",
           warningPrefix: "parse_email",
           validCategoryIds,
+          throwOnApiFailure,
         })
       ),
     parseNotification: (sanitizedText) =>
@@ -225,6 +240,7 @@ export function createParseEmailService({
           mode: "parse_notification",
           warningPrefix: "parse_notification",
           validCategoryIds,
+          throwOnApiFailure,
         })
       ),
   };

@@ -512,9 +512,10 @@ describe("email capture boundary", () => {
         accounts: [makeAccount()],
       });
 
-      await runFetchAndProcess();
+      const result = await runFetchAndProcess();
 
       expect(mockAdapter.fetchEmails).not.toHaveBeenCalled();
+      expect(result).toEqual({ status: "skipped" });
     });
 
     it("continues processing other accounts when one fails", async () => {
@@ -563,7 +564,12 @@ describe("email capture boundary", () => {
 
       const result = await runFetchAndProcess();
 
-      expect(result).toEqual({ savedCount: 2, needsReviewCount: 1, failedCount: 0 });
+      expect(result).toEqual({
+        status: "completed",
+        savedCount: 2,
+        needsReviewCount: 1,
+        failedCount: 0,
+      });
     });
 
     it("sets phase to processing when showing progress", async () => {
@@ -614,6 +620,31 @@ describe("email capture boundary", () => {
 
       expect(updateLastFetchedAt).not.toHaveBeenCalled();
       expect(useEmailCaptureStore.getState().accounts[0]?.lastFetchedAt).toBeNull();
+    });
+
+    it("advances lastFetchedAt for accounts whose own emails process successfully", async () => {
+      setAccounts([
+        makeAccount(),
+        makeAccount({
+          id: "ea-2" as EmailAccountId,
+          provider: "outlook",
+          email: "test@outlook.com",
+        }),
+      ]);
+      mockAdapter.fetchEmails
+        .mockResolvedValueOnce([makeRawEmail({ externalId: "ext-1" })])
+        .mockResolvedValueOnce([makeRawEmail({ externalId: "ext-2", provider: "outlook" })]);
+      mockProcessResult({ failed: 1 });
+      mockProcessResult({ saved: 1 });
+      mockEmptyReviewLoads();
+
+      await runFetchAndProcess();
+
+      expect(updateLastFetchedAt).toHaveBeenCalledTimes(1);
+      expect(updateLastFetchedAt).toHaveBeenCalledWith(mockDb, "ea-2", expect.any(String));
+      const [failedAccount, savedAccount] = useEmailCaptureStore.getState().accounts;
+      expect(failedAccount?.lastFetchedAt).toBeNull();
+      expect(savedAccount?.lastFetchedAt).not.toBeNull();
     });
 
     it("auto-clears phase after 2s timeout when phase is complete", async () => {

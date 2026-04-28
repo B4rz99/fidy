@@ -54,6 +54,7 @@ export function SyncProgressStep() {
           () => refreshTransactions(db, userId)
         );
         if (!isMounted) return;
+        if (outcome.status !== "completed") return;
         setSyncOutcome({
           savedCount: outcome.savedCount,
           hasAccountSuggestions:

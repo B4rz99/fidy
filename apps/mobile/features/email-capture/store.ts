@@ -13,10 +13,12 @@ import {
 import type { EmailProvider } from "./schema";
 import { getAdapter } from "./services/email-adapter";
 import {
+  aggregatePipelineResults,
   createEmailFetchClientIds,
   fetchEmailAccountBatch,
   ingestFetchedEmails,
   loadEmailCaptureQueues,
+  type ProcessedEmailAccountFetchResult,
   persistFetchedAccounts,
 } from "./services/email-capture-fetch-service";
 import {
@@ -44,17 +46,23 @@ export { confirmReviewedEmail } from "./store/reviewed-email";
 
 const noopRefreshTransactions: RefreshTransactions = () => undefined;
 
-export type EmailCaptureFetchOutcome = {
-  readonly savedCount: number;
-  readonly needsReviewCount: number;
-  readonly failedCount: number;
-};
+export type EmailCaptureFetchOutcome =
+  | {
+      readonly status: "completed";
+      readonly savedCount: number;
+      readonly needsReviewCount: number;
+      readonly failedCount: number;
+    }
+  | { readonly status: "skipped" };
 
 const EMPTY_FETCH_OUTCOME: EmailCaptureFetchOutcome = {
+  status: "completed",
   savedCount: 0,
   needsReviewCount: 0,
   failedCount: 0,
 };
+
+const SKIPPED_FETCH_OUTCOME: EmailCaptureFetchOutcome = { status: "skipped" };
 
 export { useEmailCaptureStore };
 
@@ -187,11 +195,11 @@ export async function fetchAndProcessEmails(
   const fetchStart = beginEmailCaptureFetchRun(userId);
   if (fetchStart.kind === "missing_context") {
     warnFetchMissingContext(userId);
-    return EMPTY_FETCH_OUTCOME;
+    return SKIPPED_FETCH_OUTCOME;
   }
   if (fetchStart.kind === "already_fetching") {
     captureWarning("email_capture_fetch_already_running");
-    return EMPTY_FETCH_OUTCOME;
+    return SKIPPED_FETCH_OUTCOME;
   }
 
   const run = fetchStart.run;
@@ -212,26 +220,42 @@ export async function fetchAndProcessEmails(
       showProgress: summary.showProgress,
       emailCount: summary.allEmails.length,
     });
-    const processingResult = await ingestFetchedEmails({
-      db,
-      userId,
-      emails: summary.allEmails,
-      onProgress: createEmailCaptureFetchProgressHandler(run, refreshTransactions),
-    });
+    const onProgress = createEmailCaptureFetchProgressHandler(run, refreshTransactions);
+    const processedFetchResults = await summary.fetchResults.reduce(
+      async (processedPromise, fetchResult) => {
+        const processed = await processedPromise;
+        if (!fetchResult.fetchOk) return processed;
+
+        const processingResult = await ingestFetchedEmails({
+          db,
+          userId,
+          emails: fetchResult.rawEmails,
+          onProgress,
+          runRetries: false,
+        });
+
+        return [...processed, { ...fetchResult, processingResult }];
+      },
+      Promise.resolve([] as ProcessedEmailAccountFetchResult[])
+    );
+    await ingestFetchedEmails({ db, userId, emails: [] });
+    const processingResult = aggregatePipelineResults(
+      processedFetchResults.map((result) => result.processingResult)
+    );
 
     await applyEmailCaptureFetchOutcome({
       run,
       showProgress: summary.showProgress,
       persistedAccounts: await persistFetchedAccounts({
         db,
-        fetchResults: summary.fetchResults,
-        processingResult,
+        fetchResults: processedFetchResults,
       }),
       queues: await loadEmailCaptureQueues(db),
       refreshTransactions,
     });
 
     return {
+      status: "completed",
       savedCount: processingResult.saved,
       needsReviewCount: processingResult.needsReview,
       failedCount: processingResult.failed,
