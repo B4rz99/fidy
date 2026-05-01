@@ -26,6 +26,7 @@
     "lint:mobile": "bun run --cwd apps/mobile --shell=bun lint",
     "lint:complexity": "bun ./scripts/run-lizard-strict.ts",
     "lint:file-size": "bun ./scripts/check-max-file-lines.ts --enforce",
+    "lint:theme-colors": "bun ./scripts/check-theme-color-literals.ts --enforce",
     "lint:brands": "bun scripts/check-branded-boundaries.ts",
     "lint:feature-public-imports": "bun ./scripts/check-feature-public-imports.ts --enforce",
     "lint:architecture": "bun run lint:feature-public-imports && bunx dependency-cruiser --config .dependency-cruiser.cjs apps/mobile packages",
@@ -37,15 +38,16 @@
     "test:bootstrap-registry": "bun test ./scripts/bootstrap-registry.test.ts",
     "test:feature-public-imports": "bun test ./scripts/check-feature-public-imports.test.ts",
     "test:file-size": "bun test ./scripts/check-max-file-lines.test.ts",
+    "test:theme-colors": "bun test ./scripts/check-theme-color-literals.test.ts",
     "test:complexity": "bun test ./scripts/check-lizard-complexity.test.ts",
     "test:mobile": "bun run --cwd apps/mobile --shell=bun test",
     "test:mutation:mobile": "bun run --cwd apps/mobile --shell=bun test:mutation",
-    "test": "bun run test:brands && bun run test:bootstrap-registry && bun run test:feature-public-imports && bun run test:file-size && bun run test:complexity && bun run test:mobile",
+    "test": "bun run test:brands && bun run test:bootstrap-registry && bun run test:feature-public-imports && bun run test:file-size && bun run test:theme-colors && bun run test:complexity && bun run test:mobile",
     "test:coverage": "bun run --cwd apps/mobile --shell=bun test:coverage",
     "perf:bundle:mobile": "bun run --cwd apps/mobile --shell=bun bundle:atlas",
     "lint": "bunx biome check .",
     "format": "bunx biome format --write .",
-    "verify": "bun run lint && bun run lint:brands && bun run lint:mobile && bun run lint:complexity && bun run lint:file-size && bun run lint:architecture && bun run typecheck && bun run test"
+    "verify": "bun run lint && bun run lint:brands && bun run lint:mobile && bun run lint:complexity && bun run lint:file-size && bun run lint:theme-colors && bun run lint:architecture && bun run typecheck && bun run test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.4",

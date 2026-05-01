@@ -16,6 +16,10 @@ type MessageBubbleProps = {
 function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: MessageBubbleProps) {
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
+  const chatAssistantBubble = useThemeColor("chatAssistantBubble");
+  const chatAssistantText = useThemeColor("chatAssistantText");
+  const chatUserBubble = useThemeColor("chatUserBubble");
+  const chatUserText = useThemeColor("chatUserText");
 
   const isUser = message.role === "user";
 
@@ -28,14 +32,14 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
           <View
             style={{
               maxWidth: "85%",
-              backgroundColor: accentGreen,
+              backgroundColor: chatUserBubble,
               borderRadius: 16,
               borderBottomRightRadius: 4,
               paddingVertical: 10,
               paddingHorizontal: 14,
             }}
           >
-            <Text className="font-poppins-medium text-body" style={{ color: "#FFFFFF" }}>
+            <Text className="font-poppins-medium text-body" style={{ color: chatUserText }}>
               {contentWithoutAction}
             </Text>
           </View>
@@ -43,11 +47,11 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
       ) : (
         <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
           <View
-            className="bg-nav dark:bg-nav-dark"
             style={{
               width: 28,
               height: 28,
               borderRadius: 14,
+              backgroundColor: chatAssistantBubble,
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -56,16 +60,16 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
           </View>
           <View style={{ flex: 1 }}>
             <View
-              className="bg-nav dark:bg-nav-dark"
               style={{
                 maxWidth: "90%",
                 borderRadius: 16,
                 borderBottomLeftRadius: 4,
+                backgroundColor: chatAssistantBubble,
                 paddingVertical: 10,
                 paddingHorizontal: 14,
               }}
             >
-              <Text className="font-poppins-medium text-body text-primary dark:text-primary-dark">
+              <Text className="font-poppins-medium text-body" style={{ color: chatAssistantText }}>
                 {contentWithoutAction}
               </Text>
             </View>

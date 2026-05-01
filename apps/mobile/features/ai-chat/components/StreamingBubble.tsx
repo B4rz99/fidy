@@ -9,15 +9,17 @@ type StreamingBubbleProps = {
 
 function StreamingBubbleInner({ content }: StreamingBubbleProps) {
   const accentGreen = useThemeColor("accentGreen");
+  const chatAssistantBubble = useThemeColor("chatAssistantBubble");
+  const chatAssistantText = useThemeColor("chatAssistantText");
 
   return (
     <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 4 }}>
       <View
-        className="bg-nav dark:bg-nav-dark"
         style={{
           width: 28,
           height: 28,
           borderRadius: 14,
+          backgroundColor: chatAssistantBubble,
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -26,16 +28,16 @@ function StreamingBubbleInner({ content }: StreamingBubbleProps) {
       </View>
       <View style={{ flex: 1 }}>
         <View
-          className="bg-nav dark:bg-nav-dark"
           style={{
             maxWidth: "90%",
             borderRadius: 16,
             borderBottomLeftRadius: 4,
+            backgroundColor: chatAssistantBubble,
             paddingVertical: 10,
             paddingHorizontal: 14,
           }}
         >
-          <Text className="font-poppins-medium text-body text-primary dark:text-primary-dark">
+          <Text className="font-poppins-medium text-body" style={{ color: chatAssistantText }}>
             {content || "..."}
           </Text>
         </View>
