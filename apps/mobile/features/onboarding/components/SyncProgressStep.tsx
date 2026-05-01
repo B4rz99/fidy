@@ -10,13 +10,14 @@ import {
 } from "@/features/email-capture/public";
 import { refreshTransactions, useTransactionStore } from "@/features/transactions/store.public";
 import { ProgressBar } from "@/shared/components";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Pressable, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import { SYNC_EARLY_UNLOCK_TIMEOUT_MS, shouldUnlockEmailSyncStep } from "../lib/sync-unlock";
 import { logOnboardingEvent, trackOnboardingEvent } from "../lib/telemetry";
 import { useOnboardingStore } from "../store";
+import { styles } from "./SyncProgressStep.styles";
 
 type SyncOutcome = {
   readonly savedCount: number;
@@ -293,69 +294,3 @@ export function SyncProgressStep() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingVertical: 48,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    gap: 24,
-  },
-  title: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 22,
-    textAlign: "center",
-  },
-  progressSection: {
-    gap: 8,
-  },
-  counter: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 14,
-    textAlign: "center",
-  },
-  previewSection: {
-    gap: 8,
-  },
-  previewTitle: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 13,
-  },
-  previewRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 6,
-  },
-  previewDescription: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 13,
-    flex: 1,
-    marginRight: 12,
-  },
-  previewAmount: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 13,
-  },
-  helperText: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 13,
-    textAlign: "center",
-  },
-  primaryButton: {
-    borderRadius: 14,
-    borderCurve: "continuous",
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-  primaryButtonText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 16,
-    color: "#FFFFFF",
-  },
-});

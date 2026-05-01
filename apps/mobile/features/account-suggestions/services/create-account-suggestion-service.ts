@@ -36,6 +36,7 @@ import {
   getAccountSuggestionDismissalsForUser,
   saveAccountSuggestionDismissal,
 } from "../lib/dismissals-repository";
+import { logAccountSuggestionDiagnostics } from "./diagnostics";
 
 type CreateAccountSuggestionServiceDeps = {
   readonly getRepeatedCaptureEvidenceForUser?: typeof getRepeatedCaptureEvidenceForUser;
@@ -117,45 +118,6 @@ function filterDismissedSuggestions(
   return suggestions.filter((suggestion) => {
     const dismissedScore = dismissalScoreByFingerprint.get(suggestion.fingerprint);
     return dismissedScore == null || suggestion.confidenceScore > dismissedScore;
-  });
-}
-
-function logAccountSuggestionDiagnostics(
-  suggestions: readonly AccountCreationSuggestion[],
-  input: ListSuggestionsInput,
-  evidenceGroups: readonly {
-    readonly scope: string;
-    readonly sourceFamily: string;
-    readonly evidenceType: string;
-    readonly occurrences: number;
-  }[]
-) {
-  if (typeof __DEV__ === "undefined" || !__DEV__) return;
-
-  console.info("[account-suggestions] evidence_groups", {
-    totalCount: evidenceGroups.length,
-    minimumOccurrences: 1,
-    groups: evidenceGroups.map((group) => ({
-      scope: group.scope,
-      sourceFamily: group.sourceFamily,
-      evidenceType: group.evidenceType,
-      occurrences: group.occurrences,
-    })),
-  });
-  console.info("[account-suggestions] candidates", {
-    totalCount: suggestions.length,
-    returnedCount: input.limit ? Math.min(input.limit, suggestions.length) : suggestions.length,
-    limit: input.limit ?? null,
-    minimumOccurrences: input.minimumOccurrences ?? 2,
-    candidates: suggestions.map((suggestion) => ({
-      fingerprint: suggestion.fingerprint,
-      scope: suggestion.scope,
-      value: suggestion.value,
-      sourceFamily: suggestion.sourceFamily,
-      evidenceType: suggestion.evidenceType,
-      occurrences: suggestion.occurrences,
-      confidenceScore: suggestion.confidenceScore,
-    })),
   });
 }
 

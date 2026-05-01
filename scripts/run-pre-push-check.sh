@@ -20,6 +20,9 @@ case "$check_name" in
   complexity)
     bun run lint:complexity
     ;;
+  file-size)
+    bun run lint:file-size
+    ;;
   tests)
     bun run test
     ;;
