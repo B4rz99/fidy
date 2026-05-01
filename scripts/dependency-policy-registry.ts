@@ -10,14 +10,20 @@ const DEFAULT_REGISTRY = "https://registry.npmjs.org";
 
 const normalizeRegistryUrl = (registry: string): string => registry.replace(/\/+$/, "");
 
+const nonEmptyRegistry = (registry: string | undefined): string | undefined => {
+  const trimmed = registry?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : undefined;
+};
+
 const parseNpmrc = (content: string): Partial<RegistryConfig> => {
   const entries = content
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0 && !line.startsWith("#") && !line.startsWith(";"));
-  const defaultRegistry = entries
-    .map((line) => line.match(/^registry\s*=\s*(.+)$/)?.[1])
-    .find((registry): registry is string => Boolean(registry));
+  const defaultRegistry = entries.reduce<string | undefined>((registry, line) => {
+    const match = line.match(/^registry\s*=\s*(.+)$/)?.[1];
+    return nonEmptyRegistry(match) ?? registry;
+  }, undefined);
   const scopedRegistries = entries.reduce<Map<string, string>>((registries, line) => {
     const match = line.match(/^(@[^:]+):registry\s*=\s*(.+)$/);
     if (match?.[1] && match[2]) registries.set(match[1], normalizeRegistryUrl(match[2]));
@@ -34,8 +40,8 @@ export const createRegistryResolver = (root: string): ((packageName: string) => 
   const npmrcPath = join(root, ".npmrc");
   const npmrcConfig = existsSync(npmrcPath) ? parseNpmrc(readFileSync(npmrcPath, "utf8")) : {};
   const defaultRegistry = normalizeRegistryUrl(
-    process.env.npm_config_registry ??
-      process.env.NPM_CONFIG_REGISTRY ??
+    nonEmptyRegistry(process.env.npm_config_registry) ??
+      nonEmptyRegistry(process.env.NPM_CONFIG_REGISTRY) ??
       npmrcConfig.defaultRegistry ??
       DEFAULT_REGISTRY
   );
