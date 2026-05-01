@@ -228,7 +228,7 @@ async function unwrapFirstCandidate(
       fromBase64(candidate.wrappedDataKey.nonce),
       fromBase64(candidate.wrappedDataKey.ciphertext)
     );
-  } catch (_error) {
+  } catch {
     if (rest.length > 0) {
       return unwrapFirstCandidate(rest);
     }
@@ -265,7 +265,7 @@ async function decryptSnapshotCiphertext(
       fromBase64(encrypted.nonce),
       fromBase64(encrypted.ciphertext)
     );
-  } catch (_error) {
+  } catch {
     throw new BackupDecryptError("tampered_ciphertext");
   }
 }

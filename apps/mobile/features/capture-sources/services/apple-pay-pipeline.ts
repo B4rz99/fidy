@@ -99,7 +99,7 @@ export async function processApplePayIntent(
   const amount = Math.round(intent.amount);
   assertCopAmount(amount);
   const today = toIsoDate(new Date());
-  const source: "apple_pay" = "apple_pay";
+  const source = "apple_pay" as const;
 
   // Check fingerprint dedup
   const fingerprint = captureFingerprint({

@@ -1,4 +1,3 @@
-import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View } from "@/shared/components/rn";
 import { AddNavButton } from "./AddNavButton";
@@ -7,7 +6,20 @@ import { TAB_CONFIG } from "./tab-config";
 
 export { TAB_CONFIG };
 
-export const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
+type CustomTabBarProps = {
+  navigation: {
+    emit: (event: { type: "tabPress"; target: string; canPreventDefault: true }) => {
+      defaultPrevented: boolean;
+    };
+    navigate: (name: string) => void;
+  };
+  state: {
+    index: number;
+    routes: readonly { key: string; name: string }[];
+  };
+};
+
+export const CustomTabBar = ({ state, navigation }: CustomTabBarProps) => {
   const insets = useSafeAreaInsets();
 
   return (
