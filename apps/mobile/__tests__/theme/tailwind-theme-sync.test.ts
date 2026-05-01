@@ -29,6 +29,17 @@ describe("tailwind <-> Colors sync", () => {
     expect(twColors["nav-dark"]).toBe(Colors.dark.nav);
   });
 
+  test("chat semantic colors match Colors", () => {
+    expect(twColors["chat-assistant-bubble"]).toBe(Colors.light.chatAssistantBubble);
+    expect(twColors["chat-assistant-bubble-dark"]).toBe(Colors.dark.chatAssistantBubble);
+    expect(twColors["chat-assistant-text"]).toBe(Colors.light.chatAssistantText);
+    expect(twColors["chat-assistant-text-dark"]).toBe(Colors.dark.chatAssistantText);
+    expect(twColors["chat-user-bubble"]).toBe(Colors.light.chatUserBubble);
+    expect(twColors["chat-user-bubble-dark"]).toBe(Colors.dark.chatUserBubble);
+    expect(twColors["chat-user-text"]).toBe(Colors.light.chatUserText);
+    expect(twColors["chat-user-text-dark"]).toBe(Colors.dark.chatUserText);
+  });
+
   test("chart-food matches Colors.chart.food", () => {
     expect(twColors["chart-food"]).toBe(Colors.chart.food);
   });
