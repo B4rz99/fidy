@@ -23,8 +23,12 @@ export function UpcomingBillsSection() {
     const now = new Date();
     return bills
       .reduce<Array<{ readonly bill: (typeof bills)[number]; readonly nextDate: Date }>>(
-        (items, bill) =>
-          bill.isActive ? [...items, { bill, nextDate: getNextOccurrence(bill, now) }] : items,
+        (items, bill) => {
+          if (bill.isActive) {
+            items.push({ bill, nextDate: getNextOccurrence(bill, now) });
+          }
+          return items;
+        },
         []
       )
       .sort((a, b) => a.nextDate.getTime() - b.nextDate.getTime())

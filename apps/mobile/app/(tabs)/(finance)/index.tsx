@@ -14,7 +14,7 @@ import { useGoalStore } from "@/features/goals/hooks.public";
 import { GoalsListScreen } from "@/features/goals/ui.public";
 import { Plus } from "@/shared/components/icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
-import { getDb } from "@/shared/db";
+import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
 
@@ -69,12 +69,16 @@ function FinanceCalendarPanel() {
 
   const handleNextMonth = useCallback(() => {
     if (!userId) return;
-    void nextMonth(getDb(userId)).catch(captureError);
+    const db = tryGetDb(userId);
+    if (!db) return;
+    void nextMonth(db).catch(captureError);
   }, [userId]);
 
   const handlePrevMonth = useCallback(() => {
     if (!userId) return;
-    void prevMonth(getDb(userId)).catch(captureError);
+    const db = tryGetDb(userId);
+    if (!db) return;
+    void prevMonth(db).catch(captureError);
   }, [userId]);
 
   return (

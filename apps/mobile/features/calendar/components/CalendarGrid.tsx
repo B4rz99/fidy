@@ -20,13 +20,13 @@ export function CalendarGrid({ currentMonth, bills, payments, cellMinHeight, onD
   const month = currentMonth.getMonth();
   const weekdayLabels = useMemo(
     () => [
-      t("calendar.weekdays.mon"),
-      t("calendar.weekdays.tue"),
-      t("calendar.weekdays.wed"),
-      t("calendar.weekdays.thu"),
-      t("calendar.weekdays.fri"),
-      t("calendar.weekdays.sat"),
-      t("calendar.weekdays.sun"),
+      { key: "mon", label: t("calendar.weekdays.mon") },
+      { key: "tue", label: t("calendar.weekdays.tue") },
+      { key: "wed", label: t("calendar.weekdays.wed") },
+      { key: "thu", label: t("calendar.weekdays.thu") },
+      { key: "fri", label: t("calendar.weekdays.fri") },
+      { key: "sat", label: t("calendar.weekdays.sat") },
+      { key: "sun", label: t("calendar.weekdays.sun") },
     ],
     [t]
   );
@@ -36,15 +36,12 @@ export function CalendarGrid({ currentMonth, bills, payments, cellMinHeight, onD
   const billsByDate = useMemo(
     () =>
       new Map(
-        grid
-          .flat()
-          .reduce<Array<readonly [string, Bill[]]>>(
-            (entries, cell) =>
-              cell.date
-                ? [...entries, [cell.date.toISOString(), getBillsForDate(bills, cell.date)]]
-                : entries,
-            []
-          )
+        grid.flat().reduce<Array<readonly [string, Bill[]]>>((entries, cell) => {
+          if (cell.date) {
+            entries.push([cell.date.toISOString(), getBillsForDate(bills, cell.date)]);
+          }
+          return entries;
+        }, [])
       ),
     [grid, bills]
   );
@@ -56,13 +53,12 @@ export function CalendarGrid({ currentMonth, bills, payments, cellMinHeight, onD
       const dateKey = toIsoDate(cell.date);
       const cellBills = billsByDate.get(cell.date.toISOString()) ?? [];
       const paidIds = new Set(
-        cellBills.reduce<string[]>(
-          (ids, bill) =>
-            payments.some((payment) => payment.billId === bill.id && payment.dueDate === dateKey)
-              ? [...ids, bill.id]
-              : ids,
-          []
-        )
+        cellBills.reduce<string[]>((ids, bill) => {
+          if (payments.some((payment) => payment.billId === bill.id && payment.dueDate === dateKey)) {
+            ids.push(bill.id);
+          }
+          return ids;
+        }, [])
       );
       map.set(cell.date.toISOString(), paidIds);
     }
@@ -77,8 +73,8 @@ export function CalendarGrid({ currentMonth, bills, payments, cellMinHeight, onD
     <View style={[styles.container, { borderColor, backgroundColor: cardBg }]}>
       {/* Weekday header */}
       <View style={styles.headerRow}>
-        {weekdayLabels.map((label) => (
-          <View key={label} style={styles.headerCell}>
+        {weekdayLabels.map(({ key, label }) => (
+          <View key={key} style={styles.headerCell}>
             <Text style={[styles.headerText, { color: tertiaryColor }]}>{label}</Text>
           </View>
         ))}
