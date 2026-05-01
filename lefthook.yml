@@ -2,9 +2,9 @@ version: '2'
 
 pre-commit:
   commands:
-    biome:
-      glob: '*.{js,jsx,ts,tsx,json}'
-      run: bunx biome check --write {staged_files}
+    oxlint:
+      glob: '*.{js,jsx,ts,tsx}'
+      run: bunx oxlint --fix {staged_files}
       skip_output: errors
     format:
       glob: '*.{js,jsx,ts,tsx,json}'
@@ -20,7 +20,7 @@ commit-msg:
 
 pre-push:
   commands:
-    root-biome:
+    root-oxlint:
       files: git ls-files
       run: bun run lint
       skip_output: false
