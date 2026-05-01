@@ -86,3 +86,28 @@ test("allows color literals in the central theme file", () => {
   expect(result.exitCode).toBe(0);
   expect(result.stdout.toString()).toContain("Hardcoded theme color literals: 0");
 });
+
+test("ignores test and migration folders", () => {
+  const root = createTempDir();
+  writeSourceFile(
+    root,
+    "apps/mobile/features/chat/__tests__/Bubble.test.tsx",
+    'export const styles = { backgroundColor: "#000000" };\n'
+  );
+  writeSourceFile(
+    root,
+    "apps/mobile/shared/migrations/0001.ts",
+    'export const legacyColor = "#FFFFFF";\n'
+  );
+  writeSourceFile(root, "scripts/theme-color-literals-baseline.json", "[]\n");
+
+  const result = Bun.spawnSync({
+    cmd: ["bun", "scripts/check-theme-color-literals.ts", "--root", root, "--enforce"],
+    cwd: process.cwd(),
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.stdout.toString()).toContain("Hardcoded theme color literals: 0");
+});

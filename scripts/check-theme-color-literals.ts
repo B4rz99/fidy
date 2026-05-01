@@ -23,10 +23,7 @@ const SOURCE_ROOTS = [
   join("apps", "mobile", "shared"),
 ];
 const COLOR_LITERAL_PATTERN = /#[0-9A-Fa-f]{3,8}\b|\brgba?\([^\n)]*\)/g;
-const IGNORED_PATH_PARTS = [
-  `${join("", "__tests__")}${join("", "")}`,
-  `${join("", "migrations")}${join("", "")}`,
-];
+const IGNORED_PATH_PARTS = ["/__tests__/", "/migrations/"];
 const ALLOWED_FILES = new Set([
   normalizePath(join("apps", "mobile", "shared", "constants", "theme.ts")),
 ]);
@@ -47,7 +44,7 @@ const shouldIgnoreFile = (root: string, path: string): boolean => {
   const relativePath = normalizePath(relative(root, path));
   return (
     ALLOWED_FILES.has(relativePath) ||
-    IGNORED_PATH_PARTS.some((part) => normalizePath(path).includes(normalizePath(part)))
+    IGNORED_PATH_PARTS.some((part) => normalizePath(path).includes(part))
   );
 };
 
