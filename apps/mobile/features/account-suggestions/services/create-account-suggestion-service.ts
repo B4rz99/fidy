@@ -120,6 +120,45 @@ function filterDismissedSuggestions(
   });
 }
 
+function logAccountSuggestionDiagnostics(
+  suggestions: readonly AccountCreationSuggestion[],
+  input: ListSuggestionsInput,
+  evidenceGroups: readonly {
+    readonly scope: string;
+    readonly sourceFamily: string;
+    readonly evidenceType: string;
+    readonly occurrences: number;
+  }[]
+) {
+  if (typeof __DEV__ === "undefined" || !__DEV__) return;
+
+  console.info("[account-suggestions] evidence_groups", {
+    totalCount: evidenceGroups.length,
+    minimumOccurrences: 1,
+    groups: evidenceGroups.map((group) => ({
+      scope: group.scope,
+      sourceFamily: group.sourceFamily,
+      evidenceType: group.evidenceType,
+      occurrences: group.occurrences,
+    })),
+  });
+  console.info("[account-suggestions] candidates", {
+    totalCount: suggestions.length,
+    returnedCount: input.limit ? Math.min(input.limit, suggestions.length) : suggestions.length,
+    limit: input.limit ?? null,
+    minimumOccurrences: input.minimumOccurrences ?? 2,
+    candidates: suggestions.map((suggestion) => ({
+      fingerprint: suggestion.fingerprint,
+      scope: suggestion.scope,
+      value: suggestion.value,
+      sourceFamily: suggestion.sourceFamily,
+      evidenceType: suggestion.evidenceType,
+      occurrences: suggestion.occurrences,
+      confidenceScore: suggestion.confidenceScore,
+    })),
+  });
+}
+
 export function createAccountSuggestionService({
   getRepeatedCaptureEvidenceForUser:
     loadRepeatedCaptureEvidenceForUser = getRepeatedCaptureEvidenceForUser,
@@ -204,18 +243,23 @@ export function createAccountSuggestionService({
   return {
     listSuggestions(input: ListSuggestionsInput): readonly AccountCreationSuggestion[] {
       const minimumOccurrences = input.minimumOccurrences ?? 2;
-      return applyLimit(
-        filterDismissedSuggestions(
-          filterAlreadyLinkedSuggestions(
-            deriveAccountSuggestions(
-              loadRepeatedCaptureEvidenceForUser(input.db, input.userId, minimumOccurrences)
-            ),
-            loadFinancialAccountIdentifiersForUser(input.db, input.userId)
+      const evidenceGroups =
+        typeof __DEV__ !== "undefined" && __DEV__
+          ? loadRepeatedCaptureEvidenceForUser(input.db, input.userId, 1)
+          : [];
+      const suggestions = filterDismissedSuggestions(
+        filterAlreadyLinkedSuggestions(
+          deriveAccountSuggestions(
+            loadRepeatedCaptureEvidenceForUser(input.db, input.userId, minimumOccurrences)
           ),
-          loadAccountSuggestionDismissalsForUser(input.db, input.userId)
+          loadFinancialAccountIdentifiersForUser(input.db, input.userId)
         ),
-        input.limit
+        loadAccountSuggestionDismissalsForUser(input.db, input.userId)
       );
+
+      logAccountSuggestionDiagnostics(suggestions, input, evidenceGroups);
+
+      return applyLimit(suggestions, input.limit);
     },
 
     dismissSuggestion({ db, userId, suggestion }: DismissSuggestionInput) {

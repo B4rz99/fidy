@@ -107,6 +107,27 @@ describe("account suggestion presentation helpers", () => {
     });
   });
 
+  it("builds a medium-confidence card draft from product-only evidence", () => {
+    expect(
+      buildSuggestedFinancialAccountDraft({
+        fingerprint: '["email:davibank:card_product_hint","visa oro"]',
+        scope: "email:davibank:card_product_hint",
+        value: "visa oro",
+        sourceFamily: "davibank",
+        evidenceType: "card_product_hint",
+        occurrences: 2,
+        confidenceScore: 170,
+      })
+    ).toEqual({
+      confidenceLabel: "MED",
+      evidenceLabel: "Visa Oro",
+      kind: "credit_card",
+      name: "Davibank Visa Oro",
+      occurrences: 2,
+      sourceLabel: "Davibank",
+    });
+  });
+
   it("ranks likely matching financial accounts before the rest", () => {
     const ranked = rankSuggestedFinancialAccounts(ACCOUNTS, {
       fingerprint: '["notification:nequi:alias","wallet"]',

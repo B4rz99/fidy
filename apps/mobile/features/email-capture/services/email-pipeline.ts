@@ -32,6 +32,9 @@ import { retryableParseEmailApi } from "./parse-email-api";
 
 export type { PipelineResult, ProcessEmails, ProcessRetries, ProgressCallback, RetryResult };
 
+const INITIAL_SYNC_PARSE_START_DELAY_MS = 1000;
+const INITIAL_SYNC_PARSE_CONCURRENCY = 10;
+
 const emailPipeline = createEmailPipelineService({
   parseEmailApi: retryableParseEmailApi,
   lookupMerchantRule,
@@ -52,12 +55,44 @@ const emailPipeline = createEmailPipelineService({
   trackTransactionCreated,
 });
 
+const initialSyncEmailPipeline = createEmailPipelineService({
+  parseEmailApi: retryableParseEmailApi,
+  lookupMerchantRule,
+  findDuplicateTransaction,
+  getProcessedExternalIds,
+  getPendingRetryEmails,
+  insertProcessedEmail,
+  markForRetry,
+  markPermanentlyFailed,
+  markRetrySuccess,
+  updateProcessedEmailStatus,
+  buildEmailCaptureEvidence,
+  saveCaptureEvidenceRows,
+  linkCaptureEvidenceToTransaction,
+  ensureDefaultFinancialAccount,
+  insertTransaction,
+  insertMerchantRule,
+  trackTransactionCreated,
+  parseContext: "initial_sync",
+  parseRateLimit: {
+    delayMs: INITIAL_SYNC_PARSE_START_DELAY_MS,
+    concurrency: INITIAL_SYNC_PARSE_CONCURRENCY,
+  },
+});
+
 export const processEmails: ProcessEmails = (
   db: AnyDb,
   userId: UserId,
   rawEmails: RawEmail[],
   onProgress?: ProgressCallback
 ) => emailPipeline.processEmails(db, userId, rawEmails, onProgress);
+
+export const processInitialSyncEmails: ProcessEmails = (
+  db: AnyDb,
+  userId: UserId,
+  rawEmails: RawEmail[],
+  onProgress?: ProgressCallback
+) => initialSyncEmailPipeline.processEmails(db, userId, rawEmails, onProgress);
 
 export const processRetries: ProcessRetries = (db: AnyDb, userId: UserId) =>
   emailPipeline.processRetries(db, userId);

@@ -11,7 +11,11 @@ import {
   updateProcessedEmailStatus,
 } from "@/features/email-capture/lib/repository";
 import { getAdapter } from "@/features/email-capture/services/email-adapter";
-import { processEmails } from "@/features/email-capture/services/email-pipeline";
+import { summarizeFetchedEmailDiagnostics } from "@/features/email-capture/services/email-capture-fetch-service";
+import {
+  processEmails,
+  processInitialSyncEmails,
+} from "@/features/email-capture/services/email-pipeline";
 import {
   confirmReviewedEmail,
   connectEmailAccount,
@@ -67,6 +71,14 @@ vi.mock("@/features/email-capture/services/email-adapter", () => ({
 
 vi.mock("@/features/email-capture/services/email-pipeline", () => ({
   processEmails: vi.fn().mockResolvedValue({
+    filtered: 0,
+    skippedDuplicate: 0,
+    skippedCrossSource: 0,
+    saved: 0,
+    failed: 0,
+    needsReview: 0,
+  }),
+  processInitialSyncEmails: vi.fn().mockResolvedValue({
     filtered: 0,
     skippedDuplicate: 0,
     skippedCrossSource: 0,
@@ -290,6 +302,35 @@ describe("email capture boundary", () => {
     expect(state.needsReviewEmails).toEqual([]);
     expect(state.isFetching).toBe(false);
     expect(state.bannerDismissed).toBe(false);
+  });
+
+  it("summarizes fetched email source families without email content", () => {
+    expect(
+      summarizeFetchedEmailDiagnostics([
+        {
+          account: makeAccount({ provider: "gmail" }) as never,
+          fetchOk: true,
+          rawEmails: [
+            makeRawEmail({ from: "notificaciones@rappicard.co" }) as never,
+            makeRawEmail({ from: "alertas@rappicard.co" }) as never,
+            makeRawEmail({ from: "alertas@davibank.com" }) as never,
+          ],
+        },
+      ])
+    ).toEqual({
+      totalEmails: 3,
+      accounts: [
+        {
+          provider: "gmail",
+          fetchOk: true,
+          emailCount: 3,
+          sourceFamilies: {
+            davibank: 1,
+            rappicard: 2,
+          },
+        },
+      ],
+    });
   });
 
   it("loadAccounts fetches from DB and sets state", async () => {
@@ -562,6 +603,34 @@ describe("email capture boundary", () => {
         mockRawEmails,
         expect.any(Function)
       );
+    });
+
+    it("uses the initial sync parser profile when requested", async () => {
+      setAccounts();
+      const mockRawEmails = [makeRawEmail()];
+      mockAdapter.fetchEmails.mockResolvedValueOnce(mockRawEmails);
+      vi.mocked(processInitialSyncEmails).mockResolvedValueOnce({
+        ...EMPTY_PROCESS_SUMMARY,
+        saved: 1,
+      });
+      mockEmptyReviewLoads();
+
+      await fetchAndProcessEmails(
+        mockDb,
+        mockUserId as UserId,
+        "gmail-client-id",
+        "outlook-client-id",
+        mockRefresh,
+        { parseProfile: "initial_sync" }
+      );
+
+      expect(processInitialSyncEmails).toHaveBeenCalledWith(
+        mockDb,
+        mockUserId,
+        mockRawEmails,
+        expect.any(Function)
+      );
+      expect(processEmails).not.toHaveBeenCalled();
     });
 
     it("returns the awaited processing outcome", async () => {

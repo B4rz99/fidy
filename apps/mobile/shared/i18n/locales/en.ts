@@ -73,9 +73,12 @@ const en = {
       skipForNow: "Skip",
       confidenceHigh: "HIGH",
       confidenceMedium: "MED",
-      reasonLast4: "%{source} ending in %{value} appeared across %{count} captures.",
+      reasonLast4: "We found this card ending in %{value}.",
       reasonAlias: "%{source} and %{value} appeared together across %{count} captures.",
       reasonCardHint: "%{source} card hints for %{value} appeared across %{count} captures.",
+      reasonCardProduct:
+        "We often saw %{source} %{evidence}. Confirm if this is one of your cards.",
+      reasonAccountType: "We often saw %{source} %{evidence}. Confirm before creating an account.",
     },
     create: {
       title: "Create account",
@@ -927,8 +930,14 @@ const en = {
       alreadyHaveAccount: "I already have an account",
     },
     connectEmail: {
-      title: "Connect your email",
-      description: "We'll scan your inbox for bank emails and capture transactions automatically.",
+      title: "Connect your email accounts",
+      description:
+        "Connect every inbox where you receive bank or card emails. You can sync after one account or add another first.",
+      connectGmail: "Connect Gmail",
+      connectOutlook: "Connect Outlook",
+      gmailConnected: "Gmail connected",
+      outlookConnected: "Outlook connected",
+      syncConnectedEmails: "Sync connected emails",
       trustBadge: "Your data stays on your device",
       skipForNow: "Skip for now",
     },
@@ -940,6 +949,7 @@ const en = {
       },
       recentCaptures: "Recent captures",
       helperText: "This may take a moment",
+      backgroundHelperText: "You can continue. We'll keep importing the rest in the background.",
       continue: "Continue",
     },
     budgetSetup: {

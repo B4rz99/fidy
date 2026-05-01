@@ -22,7 +22,10 @@ const WALLET_SOURCE_FAMILIES = new Set(["nequi", "daviplata", "wallet"]);
 const DIRECT_KIND_BY_EVIDENCE_TYPE = new Map<
   AccountCreationSuggestion["evidenceType"],
   FinancialAccountKind
->([["card_hint", "credit_card"]]);
+>([
+  ["card_hint", "credit_card"],
+  ["card_product_hint", "credit_card"],
+]);
 const CONFIDENCE_LABEL_BY_EVIDENCE_TYPE = new Map<
   AccountCreationSuggestion["evidenceType"],
   SuggestedFinancialAccountDraft["confidenceLabel"]
@@ -62,7 +65,15 @@ function containsAnyTerm(value: string, terms: readonly string[]) {
 }
 
 function buildEvidenceLabel(suggestion: AccountCreationSuggestion) {
-  return suggestion.evidenceType === "last4" ? `••${suggestion.value}` : suggestion.value;
+  if (suggestion.evidenceType === "last4") {
+    return `••${suggestion.value}`;
+  }
+
+  if (suggestion.evidenceType === "card_product_hint") {
+    return normalizeLabel(suggestion.value);
+  }
+
+  return suggestion.value;
 }
 
 function isWalletAliasSuggestion(suggestion: AccountCreationSuggestion) {
@@ -91,13 +102,18 @@ const inferWalletSuggestionKind = (
 function buildSuggestedName(
   sourceLabel: string,
   evidenceLabel: string,
-  kind: FinancialAccountKind
+  kind: FinancialAccountKind,
+  evidenceType: AccountCreationSuggestion["evidenceType"]
 ) {
   if (kind === "wallet") {
     return `${sourceLabel} wallet`;
   }
 
   if (kind === "credit_card") {
+    if (evidenceType === "card_product_hint" && evidenceLabel.length > 0) {
+      return `${sourceLabel} ${evidenceLabel}`;
+    }
+
     return `${sourceLabel} card`;
   }
 
@@ -149,7 +165,7 @@ export function buildSuggestedFinancialAccountDraft(
 
   return {
     kind,
-    name: buildSuggestedName(sourceLabel, evidenceLabel, kind),
+    name: buildSuggestedName(sourceLabel, evidenceLabel, kind, suggestion.evidenceType),
     sourceLabel,
     evidenceLabel,
     confidenceLabel: CONFIDENCE_LABEL_BY_EVIDENCE_TYPE.get(suggestion.evidenceType) ?? "MED",

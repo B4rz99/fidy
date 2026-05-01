@@ -47,35 +47,49 @@ const {
   };
 });
 
-const { mockSetSession, mockSignInWithOAuth, mockSignOut, mockGetSession, supabaseAuthMock } =
-  vi.hoisted(() => {
-    const hoistedSession = {
-      user: { id: "user-1", email: "test@example.com" },
-      access_token: "token",
-    };
-    const mockSetSession = vi.fn(() =>
-      Promise.resolve({ data: { session: hoistedSession }, error: null })
-    );
-    const mockSignInWithOAuth = vi.fn(() =>
-      Promise.resolve({ data: { url: "https://example.com" }, error: null })
-    );
-    const mockSignOut = vi.fn(() => Promise.resolve({ error: null }));
-    const mockGetSession = vi.fn(() => Promise.resolve({ data: { session: null }, error: null }));
-    const supabaseAuthMock = {
-      getSession: mockGetSession,
-      signInWithOAuth: mockSignInWithOAuth,
-      signOut: mockSignOut,
-      setSession: mockSetSession,
-    };
+const {
+  mockSetSession,
+  mockSignInWithOAuth,
+  mockSignOut,
+  mockGetSession,
+  mockGetUser,
+  supabaseAuthMock,
+} = vi.hoisted(() => {
+  const hoistedSession = {
+    user: { id: "user-1", email: "test@example.com" },
+    access_token: "token",
+  };
+  const mockSetSession = vi.fn(() =>
+    Promise.resolve({ data: { session: hoistedSession }, error: null })
+  );
+  const mockSignInWithOAuth = vi.fn(() =>
+    Promise.resolve({ data: { url: "https://example.com" }, error: null })
+  );
+  const mockSignOut = vi.fn(() => Promise.resolve({ error: null }));
+  const mockGetSession = vi.fn(() => Promise.resolve({ data: { session: null }, error: null }));
+  const mockGetUser = vi.fn<
+    () => Promise<{
+      data: { user: typeof hoistedSession.user | null };
+      error: { message: string } | null;
+    }>
+  >(() => Promise.resolve({ data: { user: hoistedSession.user }, error: null }));
+  const supabaseAuthMock = {
+    getSession: mockGetSession,
+    getUser: mockGetUser,
+    signInWithOAuth: mockSignInWithOAuth,
+    signOut: mockSignOut,
+    setSession: mockSetSession,
+  };
 
-    return {
-      mockSetSession,
-      mockSignInWithOAuth,
-      mockSignOut,
-      mockGetSession,
-      supabaseAuthMock,
-    };
-  });
+  return {
+    mockSetSession,
+    mockSignInWithOAuth,
+    mockSignOut,
+    mockGetSession,
+    mockGetUser,
+    supabaseAuthMock,
+  };
+});
 
 vi.mock("@/shared/db/supabase", () => ({
   getSupabase: () => ({ auth: supabaseAuthMock }),
@@ -182,6 +196,27 @@ describe("useAuthStore", () => {
     expect(session).toEqual(mockSession);
     expect(session?.user).toEqual(mockUser);
     expect(localQaSession).toBeNull();
+    expect(useLocalOnboardingState.getState().isComplete).toBe(false);
+    expect(isLoading).toBe(false);
+  });
+
+  it("restoreSession clears a cached session that Supabase no longer recognizes", async () => {
+    useLocalOnboardingState.setState({ isComplete: true });
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: mockSession },
+      error: null,
+    } as never);
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: "User from sub claim in JWT does not exist" },
+    });
+
+    await useAuthStore.getState().restoreSession();
+
+    const { session, isLoading } = useAuthStore.getState();
+    expect(session).toBeNull();
+    expect(mockSignOut).toHaveBeenCalledOnce();
+    expect(mockClearOnboardingFromStore).toHaveBeenCalledOnce();
     expect(useLocalOnboardingState.getState().isComplete).toBe(false);
     expect(isLoading).toBe(false);
   });

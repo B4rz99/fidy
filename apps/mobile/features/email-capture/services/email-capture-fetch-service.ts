@@ -7,7 +7,7 @@ import { isFirstFetchForAny, shouldShowProgress } from "../lib/progress-phases";
 import type { EmailAccountRow, ProcessedEmailRow } from "../lib/repository";
 import { getFailedEmails, getNeedsReviewEmails, updateLastFetchedAt } from "../lib/repository";
 import type { PipelineResult, ProgressCallback, RawEmail } from "../pipeline.public";
-import { processEmails, processRetries } from "../pipeline.public";
+import { processEmails, processInitialSyncEmails, processRetries } from "../pipeline.public";
 import { ensureBankSenders } from "../queries/bank-senders";
 import type { EmailProvider } from "../schema";
 import { getAdapter } from "./email-adapter";
@@ -76,6 +76,45 @@ const createEmptyFetchResult = (account: EmailAccountRow): EmailAccountFetchResu
 
 const createFetchLookbackBoundary = (): string =>
   new Date(Date.now() - FETCH_LOOKBACK_WINDOW_MS).toISOString();
+
+const normalizeSourceFamily = (from: string): string => {
+  const domain = from.split("@").at(1)?.toLowerCase().trim() ?? "unknown";
+  return (
+    domain
+      .split(".")
+      .filter(Boolean)[0]
+      ?.replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "") || "unknown"
+  );
+};
+
+const countBySourceFamily = (emails: readonly RawEmail[]) =>
+  Object.fromEntries(
+    Array.from(
+      emails.reduce((counts, email) => {
+        const family = normalizeSourceFamily(email.from);
+        return new Map(counts).set(family, (counts.get(family) ?? 0) + 1);
+      }, new Map<string, number>())
+    ).sort(([left], [right]) => left.localeCompare(right))
+  );
+
+export const summarizeFetchedEmailDiagnostics = (
+  fetchResults: readonly EmailAccountFetchResult[]
+) => ({
+  totalEmails: fetchResults.reduce((total, result) => total + result.rawEmails.length, 0),
+  accounts: fetchResults.map((result) => ({
+    provider: result.account.provider,
+    fetchOk: result.fetchOk,
+    emailCount: result.rawEmails.length,
+    sourceFamilies: countBySourceFamily(result.rawEmails),
+  })),
+});
+
+function logFetchedEmailDiagnostics(fetchResults: readonly EmailAccountFetchResult[]) {
+  if (typeof __DEV__ === "undefined" || !__DEV__) return;
+
+  console.info("[email-capture] fetch_batch", summarizeFetchedEmailDiagnostics(fetchResults));
+}
 
 const createFetchSummary = (
   accounts: readonly EmailAccountRow[],
@@ -162,6 +201,7 @@ export async function fetchEmailAccountBatch(
       fetchEmailsForAccount({ account, clientIds: command.clientIds, senderEmails, minSince })
     )
   );
+  logFetchedEmailDiagnostics(fetchResults);
 
   return createFetchSummary(command.accounts, fetchResults);
 }
@@ -172,9 +212,10 @@ export async function ingestFetchedEmails(input: {
   readonly emails: readonly RawEmail[];
   readonly onProgress?: ProgressCallback;
   readonly runRetries?: boolean;
+  readonly parseProfile?: "default" | "initial_sync";
 }): Promise<PipelineResult> {
   const captureIngestion = createCaptureIngestionPort(input.db, {
-    processEmails,
+    processEmails: input.parseProfile === "initial_sync" ? processInitialSyncEmails : processEmails,
     processRetries,
   });
 

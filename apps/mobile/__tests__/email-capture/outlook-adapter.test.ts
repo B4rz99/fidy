@@ -47,6 +47,33 @@ describe("outlook adapter", () => {
       );
     });
 
+    it("normalizes HTML email bodies to plain text", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            value: [
+              {
+                id: "msg-html",
+                subject: "Transaction Alert",
+                from: { emailAddress: { address: "bank@example.com" } },
+                body: {
+                  content:
+                    "<html><body><p>Método de pago</p><p>RappiCard Crédito&nbsp;**** 0746</p></body></html>",
+                },
+                receivedDateTime: "2026-03-05T10:00:00Z",
+              },
+            ],
+          }),
+      });
+
+      const emails = await fetchOutlookEmailsWithToken("access-token", "2026-03-01T00:00:00Z", [
+        "bank@example.com",
+      ]);
+
+      expect(emails[0]?.body).toBe("Método de pago RappiCard Crédito **** 0746");
+    });
+
     it("returns empty array when no messages found", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,

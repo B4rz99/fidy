@@ -31,14 +31,17 @@ export const EmailPipelineDeps = makeAppService<CreateEmailPipelineServiceDeps>(
 );
 
 const DEFAULT_PARSE_RATE_LIMIT_DELAY_MS = process.env.NODE_ENV === "test" ? 0 : 3000;
+const DEFAULT_PARSE_RATE_LIMIT_CONCURRENCY = 1;
 
 const sleep = (delayMs: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, delayMs));
 
 export function parseBodyEffect(db: AnyDb, userId: UserId, body: string) {
   return Effect.gen(function* () {
-    const { parseEmailApi, lookupMerchantRule } = yield* EmailPipelineDeps.tag;
-    const llmResult = yield* fromPromise(() => parseEmailApi(body));
+    const { parseEmailApi, parseContext, lookupMerchantRule } = yield* EmailPipelineDeps.tag;
+    const llmResult = yield* fromPromise(() =>
+      parseContext ? parseEmailApi(body, { parseContext }) : parseEmailApi(body)
+    );
     if (!llmResult) return null;
 
     const merchantKey = normalizeMerchant(llmResult.description);
@@ -90,8 +93,12 @@ function buildEmailCaptureEvidenceRows(input: CaptureEvidenceRowsInput) {
   return materializeCaptureEvidenceRows(
     input.buildEmailCaptureEvidence({
       from: input.from,
+      body: input.body,
       fromAccountHint: input.fromAccountHint,
       toAccountHint: input.toAccountHint,
+      cardProductHint: input.cardProductHint,
+      accountTypeHint: input.accountTypeHint,
+      counterpartyHint: input.counterpartyHint,
     }),
     {
       userId: input.userId,
@@ -117,8 +124,12 @@ export function saveEmailCaptureEvidenceEffect(input: CaptureEvidenceSaveInput) 
       buildEmailCaptureEvidenceRows({
         userId: input.userId,
         from: input.from,
+        body: input.body,
         fromAccountHint: input.fromAccountHint,
         toAccountHint: input.toAccountHint,
+        cardProductHint: input.cardProductHint,
+        accountTypeHint: input.accountTypeHint,
+        counterpartyHint: input.counterpartyHint,
         processedEmailId: input.processedEmailId,
         transactionId: input.transactionId,
         now: input.now,
@@ -223,6 +234,7 @@ export function createPipelineRuntime(deps: CreateEmailPipelineServiceDeps): Pip
     runEmailWithClock: (effect) => runtime.run(clockRuntime.provide(effect)),
     parseRateLimit: {
       delayMs: parseRateLimit?.delayMs ?? DEFAULT_PARSE_RATE_LIMIT_DELAY_MS,
+      concurrency: parseRateLimit?.concurrency ?? DEFAULT_PARSE_RATE_LIMIT_CONCURRENCY,
       sleep: parseRateLimit?.sleep ?? sleep,
     },
   };

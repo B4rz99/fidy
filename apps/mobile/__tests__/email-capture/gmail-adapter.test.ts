@@ -83,6 +83,43 @@ describe("gmail adapter", () => {
       expect(emails[0]?.body).toBe(utf8Text);
     });
 
+    it("normalizes HTML fallback bodies with the shared email text utility", async () => {
+      const htmlBody =
+        "<html><body><p>Método de pago</p><p>RappiCard Crédito&nbsp;**** 0746</p></body></html>";
+      const encoded = Buffer.from(htmlBody, "utf-8")
+        .toString("base64")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ messages: [{ id: "msg-html" }] }),
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: "msg-html",
+            payload: {
+              headers: [
+                { name: "From", value: "bank@example.com" },
+                { name: "Subject", value: "Compra" },
+                { name: "Date", value: "Thu, 05 Mar 2026 10:00:00 +0000" },
+              ],
+              parts: [{ mimeType: "text/html", body: { data: encoded } }],
+            },
+          }),
+      });
+
+      const emails = await fetchGmailEmailsWithToken("access-token", "2026-03-01T00:00:00Z", [
+        "bank@example.com",
+      ]);
+
+      expect(emails[0]?.body).toBe("Método de pago RappiCard Crédito **** 0746");
+    });
+
     it("handles invalid date header gracefully", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,

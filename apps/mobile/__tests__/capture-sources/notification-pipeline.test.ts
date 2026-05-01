@@ -164,14 +164,15 @@ function mockNotificationLlmAccountHintParse() {
     description: "Restaurante XYZ",
     date: "2026-03-07",
     confidence: 0.9,
-    fromAccountHint: "Tarjeta credito Bancolombia",
+    cardProductHint: "Visa Oro",
+    accountTypeHint: "Tarjeta credito",
   });
   mockBuildNotificationLlmAccountHintCaptureEvidence.mockReturnValueOnce([
     {
       sourceFamily: "bancolombia",
-      evidenceType: "llm_account_hint",
-      scope: "notification:bancolombia:llm_account_hint",
-      value: "tarjeta credito bancolombia",
+      evidenceType: "card_product_hint",
+      scope: "notification:bancolombia:card_product_hint",
+      value: "visa oro",
     },
   ]);
 }
@@ -179,8 +180,10 @@ function mockNotificationLlmAccountHintParse() {
 function expectNotificationLlmAccountHintEvidence() {
   expect(mockBuildNotificationLlmAccountHintCaptureEvidence).toHaveBeenCalledWith({
     notification: expect.objectContaining({ packageName: "com.todo1.mobile.co.bancolombia" }),
-    fromAccountHint: "Tarjeta credito Bancolombia",
+    fromAccountHint: undefined,
     toAccountHint: undefined,
+    cardProductHint: "Visa Oro",
+    accountTypeHint: "Tarjeta credito",
   });
 }
 

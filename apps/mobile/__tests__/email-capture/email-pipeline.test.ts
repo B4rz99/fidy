@@ -2,7 +2,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { RawEmail } from "@/features/email-capture/schema";
 import { createEmailPipelineService } from "@/features/email-capture/services/create-email-pipeline-service";
-import { processEmails, processRetries } from "@/features/email-capture/services/email-pipeline";
+import {
+  processEmails,
+  processInitialSyncEmails,
+  processRetries,
+} from "@/features/email-capture/services/email-pipeline";
 import { requireIsoDateTime, requireUserId } from "@/shared/types/assertions";
 import type { FinancialAccountId } from "@/shared/types/branded";
 
@@ -239,16 +243,24 @@ function expectCaptureEvidenceSaved(transactionId: string | null) {
 function expectCaptureEvidenceBuiltFromEmailContent() {
   expect(mockBuildEmailCaptureEvidence).toHaveBeenCalledWith({
     from: "notificaciones@bancolombia.com.co",
+    body: "Su compra por $50.000 fue aprobada",
     fromAccountHint: undefined,
     toAccountHint: undefined,
+    cardProductHint: undefined,
+    accountTypeHint: undefined,
+    counterpartyHint: undefined,
   });
 }
 
 function expectCaptureEvidenceBuiltFromLlmAccountHint() {
   expect(mockBuildEmailCaptureEvidence).toHaveBeenCalledWith({
     from: "notificaciones@bancolombia.com.co",
-    fromAccountHint: "Tarjeta credito Bancolombia",
+    body: "Su compra por $50.000 fue aprobada",
+    fromAccountHint: undefined,
     toAccountHint: undefined,
+    cardProductHint: "Visa Oro",
+    accountTypeHint: "Tarjeta credito",
+    counterpartyHint: "Exito",
   });
 }
 
@@ -419,6 +431,74 @@ describe("email processing pipeline", () => {
     ]);
   });
 
+  it("can overlap parse-email calls when rate-limited concurrency is configured", async () => {
+    const events: string[] = [];
+    let resolveFirstParse!: (result: ReturnType<typeof makeParsedEmailResult>) => void;
+    const service = createTestEmailPipelineService({
+      parseRateLimit: {
+        delayMs: 1000,
+        concurrency: 2,
+        sleep: async (delayMs: number) => {
+          events.push(`sleep:${delayMs}`);
+        },
+      },
+    });
+    mockParseEmailApi.mockImplementation(async (body: string) => {
+      events.push(`parse:${body}`);
+      if (body === "Compra 1") {
+        return new Promise((resolve) => {
+          resolveFirstParse = resolve;
+        });
+      }
+
+      return makeParsedEmailResult({ description: body });
+    });
+
+    const processing = service.processEmails(mockDb, USER_ID, [
+      makeRawEmail({ externalId: "ext-1", body: "Compra 1" }),
+      makeRawEmail({ externalId: "ext-2", body: "Compra 2" }),
+    ]);
+
+    await vi.waitFor(() => expect(events).toContain("parse:Compra 2"));
+    expect(events).toEqual(["parse:Compra 1", "sleep:1000", "parse:Compra 2"]);
+
+    resolveFirstParse(makeParsedEmailResult({ description: "Compra 1" }));
+    await processing;
+  });
+
+  it("allows ten in-flight parse-email calls for initial sync", async () => {
+    vi.useFakeTimers();
+    const events: string[] = [];
+    const pendingParses: Array<(result: ReturnType<typeof makeParsedEmailResult>) => void> = [];
+    mockParseEmailApi.mockImplementation(async (body: string) => {
+      events.push(`parse:${body}`);
+      return new Promise((resolve) => pendingParses.push(resolve));
+    });
+
+    try {
+      const processing = processInitialSyncEmails(
+        mockDb,
+        USER_ID,
+        Array.from({ length: 11 }, (_, index) =>
+          makeRawEmail({ externalId: `ext-${index + 1}`, body: `Compra ${index + 1}` })
+        )
+      );
+
+      await vi.advanceTimersByTimeAsync(9000);
+      expect(events).toEqual(Array.from({ length: 10 }, (_, index) => `parse:Compra ${index + 1}`));
+
+      pendingParses.forEach((resolve, index) => {
+        resolve(makeParsedEmailResult({ description: `Compra ${index + 1}` }));
+      });
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(events).toContain("parse:Compra 11");
+      pendingParses.at(-1)?.(makeParsedEmailResult({ description: "Compra 11" }));
+      await processing;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("saves transaction as needs_review when LLM returns low confidence", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce({
@@ -448,10 +528,14 @@ describe("email processing pipeline", () => {
     expectCaptureEvidenceBuiltFromEmailContent();
   });
 
-  it("uses LLM account hints as capture evidence for account suggestions", async () => {
+  it("uses typed LLM account hints as capture evidence for account suggestions", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce(
-      makeParsedEmailResult({ fromAccountHint: "Tarjeta credito Bancolombia" })
+      makeParsedEmailResult({
+        cardProductHint: "Visa Oro",
+        accountTypeHint: "Tarjeta credito",
+        counterpartyHint: "Exito",
+      })
     );
 
     await processEmails(mockDb, USER_ID, emails);

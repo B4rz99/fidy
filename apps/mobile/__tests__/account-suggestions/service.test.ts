@@ -246,6 +246,146 @@ function seedLlmAccountHintEvidence() {
   });
 }
 
+function seedEquivalentLlmAccountHintEvidence() {
+  saveEvidenceRow("ce-davibank-hint-1", {
+    sourceFamily: "davibank",
+    evidenceType: "llm_account_hint",
+    scope: "email:davibank:llm_account_hint",
+    value: "davibank visa oro",
+    processedEmailId: "pe-davibank-1" as ProcessedEmailId,
+  });
+  saveEvidenceRow("ce-davibank-hint-2", {
+    sourceFamily: "davibank",
+    evidenceType: "llm_account_hint",
+    scope: "email:davibank:llm_account_hint",
+    value: "davibank visa oro",
+    processedEmailId: "pe-davibank-2" as ProcessedEmailId,
+    updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
+  });
+  saveEvidenceRow("ce-davibank-hint-3", {
+    sourceFamily: "davibank",
+    evidenceType: "llm_account_hint",
+    scope: "email:davibank:llm_account_hint",
+    value: "tarjeta visa oro",
+    processedEmailId: "pe-davibank-3" as ProcessedEmailId,
+    updatedAt: "2026-04-19T11:51:00.000Z" as IsoDateTime,
+  });
+  saveEvidenceRow("ce-davibank-hint-4", {
+    sourceFamily: "davibank",
+    evidenceType: "llm_account_hint",
+    scope: "email:davibank:llm_account_hint",
+    value: "tarjeta visa oro",
+    processedEmailId: "pe-davibank-4" as ProcessedEmailId,
+    updatedAt: "2026-04-19T11:52:00.000Z" as IsoDateTime,
+  });
+}
+
+function seedDistinctLlmAccountHintEvidence() {
+  saveEvidenceRow("ce-distinct-hint-1", {
+    sourceFamily: "davibank",
+    evidenceType: "llm_account_hint",
+    scope: "email:davibank:llm_account_hint",
+    value: "tarjeta visa oro",
+    processedEmailId: "pe-distinct-1" as ProcessedEmailId,
+  });
+  saveEvidenceRow("ce-distinct-hint-2", {
+    sourceFamily: "davibank",
+    evidenceType: "llm_account_hint",
+    scope: "email:davibank:llm_account_hint",
+    value: "tarjeta visa oro",
+    processedEmailId: "pe-distinct-2" as ProcessedEmailId,
+    updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
+  });
+  saveEvidenceRow("ce-distinct-hint-3", {
+    sourceFamily: "davibank",
+    evidenceType: "llm_account_hint",
+    scope: "email:davibank:llm_account_hint",
+    value: "mastercard black",
+    processedEmailId: "pe-distinct-3" as ProcessedEmailId,
+    updatedAt: "2026-04-19T11:51:00.000Z" as IsoDateTime,
+  });
+  saveEvidenceRow("ce-distinct-hint-4", {
+    sourceFamily: "davibank",
+    evidenceType: "llm_account_hint",
+    scope: "email:davibank:llm_account_hint",
+    value: "mastercard black",
+    processedEmailId: "pe-distinct-4" as ProcessedEmailId,
+    updatedAt: "2026-04-19T11:52:00.000Z" as IsoDateTime,
+  });
+}
+
+function seedMerchantLikeLlmAccountHintEvidence() {
+  saveEvidenceRow("ce-merchant-hint-1", {
+    sourceFamily: "davibank",
+    evidenceType: "llm_account_hint",
+    scope: "email:davibank:llm_account_hint",
+    value: "rappi colombia",
+    processedEmailId: "pe-merchant-1" as ProcessedEmailId,
+  });
+  saveEvidenceRow("ce-merchant-hint-2", {
+    sourceFamily: "davibank",
+    evidenceType: "llm_account_hint",
+    scope: "email:davibank:llm_account_hint",
+    value: "rappi colombia",
+    processedEmailId: "pe-merchant-2" as ProcessedEmailId,
+    updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
+  });
+}
+
+function seedCardProductHintEvidence() {
+  saveEvidenceRow("ce-product-1", {
+    sourceFamily: "davibank",
+    evidenceType: "card_product_hint",
+    scope: "email:davibank:card_product_hint",
+    value: "visa oro",
+    processedEmailId: "pe-product-1" as ProcessedEmailId,
+  });
+  saveEvidenceRow("ce-product-2", {
+    sourceFamily: "davibank",
+    evidenceType: "card_product_hint",
+    scope: "email:davibank:card_product_hint",
+    value: "visa oro",
+    processedEmailId: "pe-product-2" as ProcessedEmailId,
+    updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
+  });
+}
+
+function seedAccountTypeHintEvidence() {
+  saveEvidenceRow("ce-type-1", {
+    sourceFamily: "davibank",
+    evidenceType: "account_type_hint",
+    scope: "email:davibank:account_type_hint",
+    value: "tarjeta de credito",
+    processedEmailId: "pe-type-1" as ProcessedEmailId,
+  });
+  saveEvidenceRow("ce-type-2", {
+    sourceFamily: "davibank",
+    evidenceType: "account_type_hint",
+    scope: "email:davibank:account_type_hint",
+    value: "tarjeta de credito",
+    processedEmailId: "pe-type-2" as ProcessedEmailId,
+    updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
+  });
+}
+
+function seedCounterpartyHintEvidence() {
+  saveEvidenceRow("ce-counterparty-1", {
+    sourceFamily: "davibank",
+    evidenceType: "counterparty_hint",
+    scope: "email:davibank:counterparty_hint",
+    value: "rappi colombia",
+    processedEmailId: "pe-counterparty-1" as ProcessedEmailId,
+  });
+  saveEvidenceRow("ce-counterparty-2", {
+    sourceFamily: "davibank",
+    evidenceType: "counterparty_hint",
+    scope: "email:davibank:counterparty_hint",
+    value: "rappi colombia",
+    processedEmailId: "pe-counterparty-2" as ProcessedEmailId,
+    updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
+  });
+}
+
 function seedSuggestionRankingEvidence() {
   seedLast4RankingEvidence();
   seedCardHintRankingEvidence();
@@ -419,7 +559,7 @@ describe("account suggestion service", () => {
     ]);
   });
 
-  it("keeps LLM account hints when the same source has card-specific evidence", () => {
+  it("suppresses LLM account hints when the same source has card-specific evidence", () => {
     seedRepeatedScopedSuggestionEvidence();
     seedLlmAccountHintEvidence();
     const service = createSuggestionService();
@@ -427,7 +567,6 @@ describe("account suggestion service", () => {
 
     expect(suggestions.map((suggestion) => suggestion.scope)).toEqual([
       "notification:bancolombia:last4",
-      "email:bancolombia:llm_account_hint",
     ]);
   });
 
@@ -445,6 +584,75 @@ describe("account suggestion service", () => {
         occurrences: 2,
       }),
     ]);
+  });
+
+  it("collapses equivalent same-source LLM account hint variants", () => {
+    seedEquivalentLlmAccountHintEvidence();
+    const service = createSuggestionService();
+    const suggestions = service.listSuggestions({ db: db as any, userId: USER_ID, limit: 2 });
+
+    expect(suggestions).toEqual([
+      expect.objectContaining({
+        scope: "email:davibank:llm_account_hint",
+        value: "davibank visa oro",
+        sourceFamily: "davibank",
+        evidenceType: "llm_account_hint",
+        occurrences: 4,
+      }),
+    ]);
+  });
+
+  it("keeps distinct same-source LLM account hint products separate", () => {
+    seedDistinctLlmAccountHintEvidence();
+    const service = createSuggestionService();
+    const suggestions = service.listSuggestions({ db: db as any, userId: USER_ID, limit: 3 });
+
+    expect(suggestions.map((suggestion) => suggestion.value)).toEqual([
+      "mastercard black",
+      "tarjeta visa oro",
+    ]);
+  });
+
+  it("ignores merchant-like LLM account hints", () => {
+    seedMerchantLikeLlmAccountHintEvidence();
+    const service = createSuggestionService();
+
+    expect(service.listSuggestions({ db: db as any, userId: USER_ID })).toEqual([]);
+  });
+
+  it("lists repeated card product hints as uncertain account suggestions", () => {
+    seedCardProductHintEvidence();
+    const service = createSuggestionService();
+
+    expect(service.listSuggestions({ db: db as any, userId: USER_ID })).toEqual([
+      expect.objectContaining({
+        scope: "email:davibank:card_product_hint",
+        value: "visa oro",
+        sourceFamily: "davibank",
+        evidenceType: "card_product_hint",
+        occurrences: 2,
+      }),
+    ]);
+  });
+
+  it("suppresses generic account type hints when the same source has stronger product evidence", () => {
+    seedCardProductHintEvidence();
+    seedAccountTypeHintEvidence();
+    const service = createSuggestionService();
+
+    expect(service.listSuggestions({ db: db as any, userId: USER_ID })).toEqual([
+      expect.objectContaining({
+        evidenceType: "card_product_hint",
+        value: "visa oro",
+      }),
+    ]);
+  });
+
+  it("ignores counterparty hints for account suggestions", () => {
+    seedCounterpartyHintEvidence();
+    const service = createSuggestionService();
+
+    expect(service.listSuggestions({ db: db as any, userId: USER_ID })).toEqual([]);
   });
 
   it("creates a financial account from a suggestion and reprocesses matching unresolved transactions", () => {

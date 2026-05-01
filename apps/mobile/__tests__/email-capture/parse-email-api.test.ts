@@ -4,6 +4,7 @@ import {
   classifyMerchantApi,
   parseEmailApi,
   stripPii,
+  summarizeLlmEmailInputDiagnostics,
 } from "@/features/email-capture/services/parse-email-api";
 
 const mockInvoke = vi.fn();
@@ -66,9 +67,30 @@ describe("stripPii", () => {
 
   it("removes masked card numbers", () => {
     expect(stripPii("Card *1234")).toBe("Card [CARD]");
+    expect(stripPii("RappiCard Crédito **** 0746")).toBe("RappiCard Crédito [CARD]");
     expect(stripPii("Tarjeta ****5678")).toBe("Tarjeta [CARD]");
     expect(stripPii("XXXX XXXX XXXX 1234")).toBe("[CARD]");
     expect(stripPii("4567 XXXX XXXX 1234")).toBe("[CARD]");
+  });
+
+  it("summarizes LLM input shape without exposing card suffixes", () => {
+    const sanitizedText = stripPii(
+      "Método de pago\nRappiCard Crédito **** 0746\nAutorizacion 446288"
+    );
+    const diagnostics = summarizeLlmEmailInputDiagnostics({
+      rawText: "Método de pago\nRappiCard Crédito **** 0746\nAutorizacion 446288",
+      sanitizedText,
+    });
+
+    expect(diagnostics).toEqual({
+      rawLength: expect.any(Number),
+      sanitizedLength: expect.any(Number),
+      wasTruncated: false,
+      sanitizedHasPaymentMethodLabel: true,
+      sanitizedCardPlaceholderCount: 1,
+    });
+    expect(JSON.stringify(diagnostics)).not.toContain("0746");
+    expect(JSON.stringify(diagnostics)).not.toContain("446288");
   });
 
   it("removes full card numbers", () => {

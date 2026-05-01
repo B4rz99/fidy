@@ -123,6 +123,13 @@ async function restoreSupabaseSession(set: SetAuthState, transitionVersion: numb
     await handleMissingRemoteSession(set, transitionVersion, error?.message);
     return;
   }
+  const userResult = await supabase.auth.getUser();
+  if (isStaleAuthTransition(transitionVersion)) return;
+  if (userResult.error || !userResult.data.user) {
+    await signOutRemoteSession();
+    await handleMissingRemoteSession(set, transitionVersion, userResult.error?.message);
+    return;
+  }
   setRemoteAuthState(set, data.session);
 }
 

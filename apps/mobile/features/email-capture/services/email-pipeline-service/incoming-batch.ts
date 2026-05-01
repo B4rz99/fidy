@@ -63,13 +63,22 @@ async function captureIncomingBatchEvent(
   );
 }
 
-const EMAIL_WORKER_CONCURRENCY = 1;
-
 async function waitForParseRateLimit(context: EmailBatchContext): Promise<void> {
   const delayMs = context.runtime.parseRateLimit.delayMs;
-  if (context.completed === 0 || delayMs <= 0) return;
+  if (context.parseStarts === 0) {
+    context.parseStarts = 1;
+    return;
+  }
 
-  await context.runtime.parseRateLimit.sleep(delayMs);
+  const scheduledStart = context.parseStartGate.then(async () => {
+    if (delayMs > 0) {
+      await context.runtime.parseRateLimit.sleep(delayMs);
+    }
+    context.parseStarts += 1;
+  });
+
+  context.parseStartGate = scheduledStart.catch(() => undefined);
+  await scheduledStart;
 }
 
 async function runEmailWorker(context: EmailBatchContext, queue: EmailQueue): Promise<void> {
@@ -85,7 +94,7 @@ async function runEmailWorker(context: EmailBatchContext, queue: EmailQueue): Pr
 
 async function runEmailWorkers(context: EmailBatchContext, emails: RawEmail[]) {
   const queue: EmailQueue = { emails, nextIdx: 0 };
-  const workerCount = Math.min(EMAIL_WORKER_CONCURRENCY, emails.length);
+  const workerCount = Math.min(context.runtime.parseRateLimit.concurrency, emails.length);
   await Promise.all(Array.from({ length: workerCount }, () => runEmailWorker(context, queue)));
 }
 
@@ -99,6 +108,8 @@ export async function processEmailBatch(runtime: PipelineRuntime, input: Process
     total: batch.total,
     onProgress: input.onProgress,
     completed: 0,
+    parseStarts: 0,
+    parseStartGate: Promise.resolve(),
   };
 
   reportEmailProgress(context);

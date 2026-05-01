@@ -198,7 +198,8 @@ export async function fetchAndProcessEmails(
   userId: UserId,
   gmailClientId: string,
   outlookClientId: string,
-  refreshTransactions: RefreshTransactions = noopRefreshTransactions
+  refreshTransactions: RefreshTransactions = noopRefreshTransactions,
+  options: { readonly parseProfile?: "default" | "initial_sync" } = {}
 ): Promise<EmailCaptureFetchOutcome> {
   const fetchStart = beginEmailCaptureFetchRun(userId);
   if (fetchStart.kind === "missing_context") {
@@ -255,13 +256,14 @@ export async function fetchAndProcessEmails(
               needsReview: previousResult.needsReview + progress.needsReview,
             }),
           runRetries: false,
+          parseProfile: options.parseProfile,
         });
 
         return [...processed, { ...fetchResult, processingResult }];
       },
       Promise.resolve([] as ProcessedEmailAccountFetchResult[])
     );
-    await ingestFetchedEmails({ db, userId, emails: [] });
+    await ingestFetchedEmails({ db, userId, emails: [], parseProfile: options.parseProfile });
     const processingResult = aggregatePipelineResults(
       processedFetchResults.map((result) => result.processingResult)
     );

@@ -1,10 +1,4 @@
-import {
-  Building2,
-  CreditCard,
-  type LucideIcon,
-  Sparkles,
-  Wallet,
-} from "@/shared/components/icons";
+import { Building2, CreditCard, Sparkles, Wallet } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { AccountCreationSuggestion } from "../lib/derive-account-suggestions";
@@ -17,21 +11,15 @@ type AccountSuggestionCardProps = {
   readonly onSkip: (suggestion: AccountCreationSuggestion) => void;
 };
 
-function getKindIcon(
-  kind: ReturnType<typeof buildSuggestedFinancialAccountDraft>["kind"]
-): LucideIcon {
-  if (kind === "wallet" || kind === "cash") {
-    return Wallet;
-  }
-
-  if (kind === "credit_card") {
-    return CreditCard;
-  }
-
-  return Building2;
-}
-
 function buildReasonKey(suggestion: AccountCreationSuggestion) {
+  if (suggestion.evidenceType === "card_product_hint") {
+    return "accountSuggestions.card.reasonCardProduct";
+  }
+
+  if (suggestion.evidenceType === "account_type_hint") {
+    return "accountSuggestions.card.reasonAccountType";
+  }
+
   if (suggestion.evidenceType === "card_hint") {
     return "accountSuggestions.card.reasonCardHint";
   }
@@ -51,7 +39,6 @@ export function AccountSuggestionCard({
 }: AccountSuggestionCardProps) {
   const { t } = useTranslation();
   const draft = buildSuggestedFinancialAccountDraft(suggestion);
-  const Icon = getKindIcon(draft.kind);
 
   const card = useThemeColor("card");
   const borderSubtle = useThemeColor("borderSubtle");
@@ -66,7 +53,13 @@ export function AccountSuggestionCard({
     <View style={[styles.card, { backgroundColor: card, borderColor: borderSubtle }]}>
       <View style={styles.topRow}>
         <View style={[styles.iconWrap, { backgroundColor: accentGreenLight }]}>
-          <Icon size={20} color={accentGreen} />
+          {draft.kind === "wallet" || draft.kind === "cash" ? (
+            <Wallet size={20} color={accentGreen} />
+          ) : draft.kind === "credit_card" ? (
+            <CreditCard size={20} color={accentGreen} />
+          ) : (
+            <Building2 size={20} color={accentGreen} />
+          )}
         </View>
         <View style={styles.textColumn}>
           <Text style={[styles.title, { color: primary }]}>{draft.name}</Text>
@@ -74,6 +67,7 @@ export function AccountSuggestionCard({
             {t(buildReasonKey(suggestion), {
               source: draft.sourceLabel,
               value: suggestion.value,
+              evidence: draft.evidenceLabel,
               count: suggestion.occurrences,
             })}
           </Text>
@@ -91,14 +85,12 @@ export function AccountSuggestionCard({
       </View>
 
       <View style={styles.evidenceRow}>
-        {[draft.sourceLabel, draft.evidenceLabel].map((label, index) => (
-          <View
-            key={`${index}:${label}`}
-            style={[styles.evidencePill, { backgroundColor: peachLight }]}
-          >
-            <Text style={[styles.evidenceText, { color: secondary }]}>{label}</Text>
-          </View>
-        ))}
+        <View style={[styles.evidencePill, { backgroundColor: peachLight }]}>
+          <Text style={[styles.evidenceText, { color: secondary }]}>{draft.sourceLabel}</Text>
+        </View>
+        <View style={[styles.evidencePill, { backgroundColor: peachLight }]}>
+          <Text style={[styles.evidenceText, { color: secondary }]}>{draft.evidenceLabel}</Text>
+        </View>
       </View>
 
       <View style={styles.actionsRow}>

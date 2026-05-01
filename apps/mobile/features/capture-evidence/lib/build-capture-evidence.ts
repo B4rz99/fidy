@@ -1,6 +1,7 @@
 import type { ApplePayIntentData, NotificationData } from "@/features/capture-sources/schema";
 import { KNOWN_BANK_PACKAGES } from "@/features/capture-sources/schema";
 import { extractDomain } from "@/features/email-capture/lib/bank-senders";
+import { htmlToPlainText } from "@/shared/lib/html-to-text";
 import type { CaptureEvidenceSeed } from "../schema";
 
 const ALIAS_TOKENS = [
@@ -19,10 +20,19 @@ const LAST4_PATTERNS = [
   /(?:tarjeta|card|cuenta|cta\.?|account|ending in|terminad[ao] en)\D{0,16}(\d{4})\b/gi,
 ] as const;
 
+const EMAIL_LAST4_PATTERNS = [
+  /(?:m[eé]todo\s+de\s+pago)\D{0,48}(?:\*{1,4}|x{2,4})[\s.-]*(\d{4})\b/gi,
+] as const;
+const EMAIL_PAYMENT_METHOD_LABEL_PATTERN = /m[eé]todo\s+de\s+pago/i;
+
 type EmailCaptureInput = {
   readonly from: string;
+  readonly body?: string;
   readonly fromAccountHint?: string;
   readonly toAccountHint?: string;
+  readonly cardProductHint?: string;
+  readonly accountTypeHint?: string;
+  readonly counterpartyHint?: string;
 };
 
 function normalizeWhitespace(value: string) {
@@ -39,13 +49,21 @@ function normalizeHint(value: string) {
   return normalizeWhitespace(value).replace(/\s+/g, " ");
 }
 
+type TypedLlmHint = {
+  readonly evidenceType: "card_product_hint" | "account_type_hint" | "counterparty_hint";
+  readonly value: string;
+};
+
 export function buildLlmAccountHintCaptureEvidence(input: {
   readonly family: string;
   readonly scopePrefix: "email" | "notification";
   readonly fromAccountHint?: string;
   readonly toAccountHint?: string;
+  readonly cardProductHint?: string;
+  readonly accountTypeHint?: string;
+  readonly counterpartyHint?: string;
 }): readonly CaptureEvidenceSeed[] {
-  return [input.fromAccountHint, input.toAccountHint]
+  const legacyHints = [input.fromAccountHint, input.toAccountHint]
     .filter((hint): hint is string => hint != null && hint.trim().length > 0)
     .map(normalizeHint)
     .map((hint) => ({
@@ -54,6 +72,20 @@ export function buildLlmAccountHintCaptureEvidence(input: {
       scope: `${input.scopePrefix}:${input.family}:llm_account_hint`,
       value: hint,
     }));
+  const typedHints = [
+    { evidenceType: "card_product_hint" as const, value: input.cardProductHint },
+    { evidenceType: "account_type_hint" as const, value: input.accountTypeHint },
+    { evidenceType: "counterparty_hint" as const, value: input.counterpartyHint },
+  ]
+    .filter((hint): hint is TypedLlmHint => hint.value != null && hint.value.trim().length > 0)
+    .map((hint) => ({
+      sourceFamily: input.family,
+      evidenceType: hint.evidenceType,
+      scope: `${input.scopePrefix}:${input.family}:${hint.evidenceType}`,
+      value: normalizeHint(hint.value),
+    }));
+
+  return [...legacyHints, ...typedHints];
 }
 
 function uniqueEvidence(rows: readonly CaptureEvidenceSeed[]) {
@@ -106,12 +138,60 @@ function extractLast4Evidence(input: {
   return uniqueEvidence(values);
 }
 
+function extractEmailLast4Evidence(input: { readonly family: string; readonly rawText: string }) {
+  const evidenceText = htmlToPlainText(input.rawText);
+  const values = EMAIL_LAST4_PATTERNS.flatMap((pattern) =>
+    Array.from(evidenceText.matchAll(pattern), (match) => match[1] ?? "")
+  )
+    .filter((value) => value.length === 4)
+    .map((value) => ({
+      sourceFamily: input.family,
+      evidenceType: "last4" as const,
+      scope: `email:${input.family}:last4`,
+      value,
+    }));
+
+  return uniqueEvidence(values);
+}
+
+export function summarizeEmailEvidenceInputDiagnostics(input: {
+  readonly family: string;
+  readonly rawText: string;
+}) {
+  const evidenceText = htmlToPlainText(input.rawText);
+  return {
+    sourceFamily: input.family,
+    bodyLength: input.rawText.length,
+    evidenceTextLength: evidenceText.length,
+    hasPaymentMethodLabel: EMAIL_PAYMENT_METHOD_LABEL_PATTERN.test(evidenceText),
+    maskedPaymentMethodMatchCount: EMAIL_LAST4_PATTERNS.reduce(
+      (count, pattern) => count + Array.from(evidenceText.matchAll(pattern)).length,
+      0
+    ),
+  };
+}
+
+function logEmailEvidenceInputDiagnostics(input: {
+  readonly family: string;
+  readonly rawText: string;
+}) {
+  if (typeof __DEV__ === "undefined" || !__DEV__) return;
+
+  const diagnostics = summarizeEmailEvidenceInputDiagnostics(input);
+  if (!diagnostics.hasPaymentMethodLabel && diagnostics.maskedPaymentMethodMatchCount === 0) return;
+
+  console.info("[capture-evidence] email_input_shape", diagnostics);
+}
+
 export function buildEmailCaptureEvidence(
   input: EmailCaptureInput
 ): readonly CaptureEvidenceSeed[] {
   const senderEmail = normalizeWhitespace(input.from);
   const senderDomain = extractDomain(senderEmail);
   const family = familyFromDomain(senderDomain);
+  const body = input.body ?? "";
+
+  logEmailEvidenceInputDiagnostics({ family, rawText: body });
 
   return uniqueEvidence([
     {
@@ -131,7 +211,11 @@ export function buildEmailCaptureEvidence(
       scopePrefix: "email",
       fromAccountHint: input.fromAccountHint,
       toAccountHint: input.toAccountHint,
+      cardProductHint: input.cardProductHint,
+      accountTypeHint: input.accountTypeHint,
+      counterpartyHint: input.counterpartyHint,
     }),
+    ...extractEmailLast4Evidence({ family, rawText: body }),
   ]);
 }
 
@@ -139,12 +223,18 @@ export function buildNotificationLlmAccountHintCaptureEvidence(input: {
   readonly notification: NotificationData;
   readonly fromAccountHint?: string;
   readonly toAccountHint?: string;
+  readonly cardProductHint?: string;
+  readonly accountTypeHint?: string;
+  readonly counterpartyHint?: string;
 }): readonly CaptureEvidenceSeed[] {
   return buildLlmAccountHintCaptureEvidence({
     family: familyFromPackageName(input.notification.packageName),
     scopePrefix: "notification",
     fromAccountHint: input.fromAccountHint,
     toAccountHint: input.toAccountHint,
+    cardProductHint: input.cardProductHint,
+    accountTypeHint: input.accountTypeHint,
+    counterpartyHint: input.counterpartyHint,
   });
 }
 

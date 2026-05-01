@@ -16,6 +16,9 @@ export type TransactionCandidate = {
   readonly confidence: number;
   readonly fromAccountHint?: string;
   readonly toAccountHint?: string;
+  readonly cardProductHint?: string;
+  readonly accountTypeHint?: string;
+  readonly counterpartyHint?: string;
 };
 
 export type TransferCandidate = {
@@ -26,6 +29,9 @@ export type TransferCandidate = {
   readonly confidence: number;
   readonly fromAccountHint?: string;
   readonly toAccountHint?: string;
+  readonly cardProductHint?: string;
+  readonly accountTypeHint?: string;
+  readonly counterpartyHint?: string;
 };
 
 export type NotTrackableCandidate = {
@@ -55,6 +61,9 @@ export type LocalLedgerTransaction = {
   readonly confidence: number;
   readonly fromAccountHint?: string;
   readonly toAccountHint?: string;
+  readonly cardProductHint?: string;
+  readonly accountTypeHint?: string;
+  readonly counterpartyHint?: string;
 };
 
 export type CaptureCandidateInterpretation =
@@ -79,6 +88,9 @@ const transactionCandidateSchema = z.object({
   confidence: confidenceSchema,
   fromAccountHint: z.string().nullish().transform(undefinedIfNull),
   toAccountHint: z.string().nullish().transform(undefinedIfNull),
+  cardProductHint: z.string().nullish().transform(undefinedIfNull),
+  accountTypeHint: z.string().nullish().transform(undefinedIfNull),
+  counterpartyHint: z.string().nullish().transform(undefinedIfNull),
 });
 const transferCandidateSchema = z.object({
   kind: z.literal("transfer"),
@@ -88,6 +100,9 @@ const transferCandidateSchema = z.object({
   confidence: confidenceSchema,
   fromAccountHint: z.string().nullish().transform(undefinedIfNull),
   toAccountHint: z.string().nullish().transform(undefinedIfNull),
+  cardProductHint: z.string().nullish().transform(undefinedIfNull),
+  accountTypeHint: z.string().nullish().transform(undefinedIfNull),
+  counterpartyHint: z.string().nullish().transform(undefinedIfNull),
 });
 const notTrackableCandidateSchema = z.object({
   kind: z.literal("not_trackable"),
@@ -139,6 +154,9 @@ function validateTransactionCandidate(
         confidence: candidate.confidence,
         fromAccountHint: candidate.fromAccountHint,
         toAccountHint: candidate.toAccountHint,
+        cardProductHint: candidate.cardProductHint,
+        accountTypeHint: candidate.accountTypeHint,
+        counterpartyHint: candidate.counterpartyHint,
       },
     };
   } catch (error) {

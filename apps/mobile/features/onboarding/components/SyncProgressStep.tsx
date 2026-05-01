@@ -14,8 +14,15 @@ import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
+import { SYNC_EARLY_UNLOCK_TIMEOUT_MS, shouldUnlockEmailSyncStep } from "../lib/sync-unlock";
 import { logOnboardingEvent, trackOnboardingEvent } from "../lib/telemetry";
 import { useOnboardingStore } from "../store";
+
+type SyncOutcome = {
+  readonly savedCount: number;
+  readonly hasAccountSuggestions: boolean;
+  readonly importComplete: boolean;
+};
 
 export function SyncProgressStep() {
   const { t } = useTranslation();
@@ -25,10 +32,7 @@ export function SyncProgressStep() {
 
   const accounts = useEmailCaptureStore((s) => s.accounts);
   const progress = useEmailCaptureStore((s) => s.progress);
-  const [syncOutcome, setSyncOutcome] = useState<{
-    readonly savedCount: number;
-    readonly hasAccountSuggestions: boolean;
-  } | null>(null);
+  const [syncOutcome, setSyncOutcome] = useState<SyncOutcome | null>(null);
 
   const recentTransactions = useTransactionStore(useShallow((s) => s.pages.slice(0, 3)));
 
@@ -44,12 +48,50 @@ export function SyncProgressStep() {
     let resolveIdle: ((value: boolean) => void) | null = null;
     let unsubscribeIdle: (() => void) | null = null;
     let lastLoggedProgress = "";
+    let syncUnlockTimer: ReturnType<typeof setTimeout> | null = null;
+    let syncStartedAt = Date.now();
+    let hasUnlockedSync = false;
+    let syncCompleted = false;
 
     const clearIdleWait = (shouldRetry: boolean) => {
       unsubscribeIdle?.();
       unsubscribeIdle = null;
       resolveIdle?.(shouldRetry);
       resolveIdle = null;
+    };
+
+    const getHasAccountSuggestions = () =>
+      Boolean(
+        db &&
+          userId &&
+          suggestionService.listSuggestions({
+            db,
+            userId,
+            limit: 2,
+          }).length > 0
+      );
+
+    const unlockSync = (input: {
+      readonly foundCount: number;
+      readonly importComplete: boolean;
+      readonly reason: "early_results" | "timeout" | "complete";
+    }) => {
+      if (!isMounted) return;
+      if (input.importComplete) syncCompleted = true;
+      const hasAccountSuggestions = getHasAccountSuggestions();
+      if (!hasUnlockedSync) {
+        hasUnlockedSync = true;
+        trackOnboardingEvent("email_sync_unlocked", {
+          reason: input.reason,
+          foundCount: input.foundCount,
+          hasAccountSuggestions,
+        });
+      }
+      setSyncOutcome({
+        savedCount: input.foundCount,
+        hasAccountSuggestions,
+        importComplete: input.importComplete,
+      });
     };
 
     const waitForFetchIdle = () => {
@@ -86,10 +128,35 @@ export function SyncProgressStep() {
         failedCount: snapshot.failed,
         foundCount: snapshot.saved + snapshot.needsReview,
       });
+
+      const foundCount = snapshot.saved + snapshot.needsReview;
+      if (
+        shouldUnlockEmailSyncStep({
+          foundCount,
+          elapsedMs: Date.now() - syncStartedAt,
+          isComplete: false,
+        })
+      ) {
+        unlockSync({
+          foundCount,
+          importComplete: false,
+          reason: foundCount > 0 ? "early_results" : "timeout",
+        });
+      }
     });
 
     if (accounts.length > 0 && !fetchStarted.current && db && userId) {
       fetchStarted.current = true;
+      syncStartedAt = Date.now();
+      syncUnlockTimer = setTimeout(() => {
+        if (syncCompleted) return;
+        const snapshot = useEmailCaptureStore.getState().progress;
+        unlockSync({
+          foundCount: snapshot ? snapshot.saved + snapshot.needsReview : 0,
+          importComplete: false,
+          reason: "timeout",
+        });
+      }, SYNC_EARLY_UNLOCK_TIMEOUT_MS);
       trackOnboardingEvent("email_sync_start", { accountCount: accounts.length });
       void (async () => {
         while (isMounted) {
@@ -98,17 +165,13 @@ export function SyncProgressStep() {
             userId,
             getGmailClientId(),
             getOutlookClientId(),
-            () => refreshTransactions(db, userId)
+            () => refreshTransactions(db, userId),
+            { parseProfile: "initial_sync" }
           );
           if (!isMounted) return;
           if (outcome.status === "completed") {
             const foundCount = outcome.savedCount + outcome.needsReviewCount;
-            const hasAccountSuggestions =
-              suggestionService.listSuggestions({
-                db,
-                userId,
-                limit: 2,
-              }).length > 0;
+            const hasAccountSuggestions = getHasAccountSuggestions();
             trackOnboardingEvent("email_sync_complete", {
               savedCount: outcome.savedCount,
               needsReviewCount: outcome.needsReviewCount,
@@ -117,9 +180,10 @@ export function SyncProgressStep() {
               hasAccountSuggestions,
               recentTransactionCount: useTransactionStore.getState().pages.slice(0, 3).length,
             });
-            setSyncOutcome({
-              savedCount: foundCount,
-              hasAccountSuggestions,
+            unlockSync({
+              foundCount,
+              importComplete: true,
+              reason: "complete",
             });
             return;
           }
@@ -133,6 +197,7 @@ export function SyncProgressStep() {
 
     return () => {
       isMounted = false;
+      if (syncUnlockTimer) clearTimeout(syncUnlockTimer);
       unsubscribeProgress();
       clearIdleWait(false);
     };
@@ -150,8 +215,9 @@ export function SyncProgressStep() {
       : 0
     : 0;
 
-  const fetchDone = syncOutcome !== null;
-  const percent = fetchDone ? 100 : livePercent;
+  const canContinue = syncOutcome !== null;
+  const importComplete = syncOutcome?.importComplete ?? false;
+  const percent = importComplete ? 100 : livePercent;
   const savedCount =
     syncOutcome?.savedCount ?? (progress ? progress.saved + progress.needsReview : 0);
   const hasAccountSuggestions = syncOutcome?.hasAccountSuggestions ?? false;
@@ -191,9 +257,14 @@ export function SyncProgressStep() {
           </View>
         ) : null}
 
-        {!fetchDone ? (
+        {!canContinue ? (
           <Text style={[styles.helperText, { color: secondaryColor }]}>
             {t("onboarding.syncing.helperText")}
+          </Text>
+        ) : null}
+        {canContinue && !importComplete ? (
+          <Text style={[styles.helperText, { color: secondaryColor }]}>
+            {t("onboarding.syncing.backgroundHelperText")}
           </Text>
         ) : null}
       </View>
@@ -203,18 +274,19 @@ export function SyncProgressStep() {
           styles.primaryButton,
           {
             backgroundColor: accentGreen,
-            opacity: fetchDone ? 1 : 0.5,
+            opacity: canContinue ? 1 : 0.5,
           },
         ]}
         onPress={() => {
           trackOnboardingEvent("email_sync_continue", {
             savedCount,
             hasAccountSuggestions,
+            importComplete,
             recentTransactionCount: recentTransactions.length,
           });
           completeSync(hasAccountSuggestions);
         }}
-        disabled={!fetchDone}
+        disabled={!canContinue}
       >
         <Text style={styles.primaryButtonText}>{t("onboarding.syncing.continue")}</Text>
       </Pressable>

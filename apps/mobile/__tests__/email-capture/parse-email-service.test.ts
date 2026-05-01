@@ -46,6 +46,7 @@ describe("createParseEmailService", () => {
           confidence: 0.9,
           fromAccountHint: "Tarjeta credito Bancolombia",
           toAccountHint: null,
+          counterpartyHint: "Exito",
         },
       },
       error: null,
@@ -72,6 +73,7 @@ describe("createParseEmailService", () => {
         categoryId: "food",
         description: "Exito",
         fromAccountHint: "Tarjeta credito Bancolombia",
+        counterpartyHint: "Exito",
       })
     );
   });
@@ -180,6 +182,41 @@ describe("createParseEmailService", () => {
     await expect(service.parseEmail("Compra por $50,000")).rejects.toThrow("Invalid JWT");
     expect(captureWarning).toHaveBeenCalledWith("parse_email_api_failed", {
       errorMessage: "Invalid JWT",
+      hasData: true,
+    });
+  });
+
+  it("surfaces sanitized parse-email function data errors for diagnostics", async () => {
+    const captureWarning = vi.fn();
+    const mockInvoke = vi.fn().mockResolvedValue({
+      data: {
+        success: false,
+        error: "openai_error:400:unsupported_value:temperature:invalid_request_error",
+      },
+      error: null,
+    });
+
+    const service = createParseEmailService({
+      validCategoryIds: ["food"],
+      throwOnApiFailure: true,
+      supabase: {
+        getSupabase: () =>
+          ({
+            functions: { invoke: mockInvoke },
+          }) as never,
+      },
+      telemetry: {
+        captureError: vi.fn(),
+        captureWarning,
+        capturePipelineEvent: vi.fn(),
+      },
+    });
+
+    await expect(service.parseEmail("Compra por $50,000")).rejects.toThrow(
+      "openai_error:400:unsupported_value:temperature:invalid_request_error"
+    );
+    expect(captureWarning).toHaveBeenCalledWith("parse_email_api_failed", {
+      errorMessage: "openai_error:400:unsupported_value:temperature:invalid_request_error",
       hasData: true,
     });
   });
