@@ -54,7 +54,9 @@ export function CalendarGrid({ currentMonth, bills, payments, cellMinHeight, onD
       const cellBills = billsByDate.get(cell.date.toISOString()) ?? [];
       const paidIds = new Set(
         cellBills.reduce<string[]>((ids, bill) => {
-          if (payments.some((payment) => payment.billId === bill.id && payment.dueDate === dateKey)) {
+          if (
+            payments.some((payment) => payment.billId === bill.id && payment.dueDate === dateKey)
+          ) {
             ids.push(bill.id);
           }
           return ids;
