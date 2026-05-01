@@ -19,11 +19,11 @@ describe("parse-email Edge Function source", () => {
     expect(parseEmailSource).toContain('return ["openai_error", status, code, param, type]');
   });
 
-  it("keeps initial sync on a higher scoped rate limit than default parsing", () => {
+  it("does not trust client parse context for elevated rate limits", () => {
     expect(parseEmailSource).toContain("const DEFAULT_RATE_LIMIT_PER_MINUTE = 20");
-    expect(parseEmailSource).toContain("const INITIAL_SYNC_RATE_LIMIT_PER_MINUTE = 90");
-    expect(parseEmailSource).toContain('parseContext === "initial_sync"');
-    expect(parseEmailSource).toContain('"parse-email:initial-sync"');
+    expect(parseEmailSource).not.toContain("INITIAL_SYNC_RATE_LIMIT_PER_MINUTE");
+    expect(parseEmailSource).not.toContain('parseContext === "initial_sync"');
+    expect(parseEmailSource).not.toContain('"parse-email:initial-sync"');
   });
 
   it("keeps account evidence separate from merchant and counterparty fields", () => {

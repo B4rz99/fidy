@@ -94,7 +94,10 @@ async function runEmailWorker(context: EmailBatchContext, queue: EmailQueue): Pr
 
 async function runEmailWorkers(context: EmailBatchContext, emails: RawEmail[]) {
   const queue: EmailQueue = { emails, nextIdx: 0 };
-  const workerCount = Math.min(context.runtime.parseRateLimit.concurrency, emails.length);
+  const workerCount = Math.min(
+    Math.max(1, context.runtime.parseRateLimit.concurrency),
+    emails.length
+  );
   await Promise.all(Array.from({ length: workerCount }, () => runEmailWorker(context, queue)));
 }
 

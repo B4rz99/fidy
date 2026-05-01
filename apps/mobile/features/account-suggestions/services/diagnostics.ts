@@ -31,13 +31,16 @@ export function logAccountSuggestionDiagnostics(
   });
   console.info("[account-suggestions] candidates", {
     totalCount: suggestions.length,
-    returnedCount: input.limit ? Math.min(input.limit, suggestions.length) : suggestions.length,
+    returnedCount:
+      typeof input.limit === "number"
+        ? Math.min(input.limit, suggestions.length)
+        : suggestions.length,
     limit: input.limit ?? null,
     minimumOccurrences: input.minimumOccurrences ?? 2,
     candidates: suggestions.map((suggestion) => ({
-      fingerprint: suggestion.fingerprint,
+      fingerprint: "[redacted]",
       scope: suggestion.scope,
-      value: suggestion.value,
+      value: "[redacted]",
       sourceFamily: suggestion.sourceFamily,
       evidenceType: suggestion.evidenceType,
       occurrences: suggestion.occurrences,

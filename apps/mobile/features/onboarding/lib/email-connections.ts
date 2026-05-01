@@ -1,6 +1,7 @@
 import type { EmailProvider } from "@/features/email-capture/public";
 
 const EMAIL_PROVIDERS = ["gmail", "outlook"] as const satisfies readonly EmailProvider[];
+const SUPPORTED_EMAIL_PROVIDERS = new Set<string>(EMAIL_PROVIDERS);
 
 type EmailConnectionAccount = {
   readonly provider: string;
@@ -27,5 +28,5 @@ export function shouldAdvanceAfterEmailConnection(_accounts: readonly EmailConne
 }
 
 export function hasConnectedEmailAccount(accounts: readonly EmailConnectionAccount[]) {
-  return accounts.length > 0;
+  return accounts.some((account) => SUPPORTED_EMAIL_PROVIDERS.has(account.provider));
 }

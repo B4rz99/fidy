@@ -33,9 +33,9 @@ import { retryableParseEmailApi } from "./parse-email-api";
 export type { PipelineResult, ProcessEmails, ProcessRetries, ProgressCallback, RetryResult };
 
 const INITIAL_SYNC_PARSE_START_DELAY_MS = 1000;
-const INITIAL_SYNC_PARSE_CONCURRENCY = 10;
+const INITIAL_SYNC_PARSE_CONCURRENCY = 1;
 
-const emailPipeline = createEmailPipelineService({
+const emailPipelineDeps = {
   parseEmailApi: retryableParseEmailApi,
   lookupMerchantRule,
   findDuplicateTransaction,
@@ -53,26 +53,12 @@ const emailPipeline = createEmailPipelineService({
   insertTransaction,
   insertMerchantRule,
   trackTransactionCreated,
-});
+};
+
+const emailPipeline = createEmailPipelineService(emailPipelineDeps);
 
 const initialSyncEmailPipeline = createEmailPipelineService({
-  parseEmailApi: retryableParseEmailApi,
-  lookupMerchantRule,
-  findDuplicateTransaction,
-  getProcessedExternalIds,
-  getPendingRetryEmails,
-  insertProcessedEmail,
-  markForRetry,
-  markPermanentlyFailed,
-  markRetrySuccess,
-  updateProcessedEmailStatus,
-  buildEmailCaptureEvidence,
-  saveCaptureEvidenceRows,
-  linkCaptureEvidenceToTransaction,
-  ensureDefaultFinancialAccount,
-  insertTransaction,
-  insertMerchantRule,
-  trackTransactionCreated,
+  ...emailPipelineDeps,
   parseContext: "initial_sync",
   parseRateLimit: {
     delayMs: INITIAL_SYNC_PARSE_START_DELAY_MS,

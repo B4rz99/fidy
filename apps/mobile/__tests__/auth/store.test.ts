@@ -221,6 +221,25 @@ describe("useAuthStore", () => {
     expect(isLoading).toBe(false);
   });
 
+  it("restoreSession preserves cached session on transient getUser errors", async () => {
+    mockGetSession.mockResolvedValueOnce({
+      data: { session: mockSession },
+      error: null,
+    } as never);
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: "Network request failed" },
+    });
+
+    await useAuthStore.getState().restoreSession();
+
+    const { session, isLoading } = useAuthStore.getState();
+    expect(session).toEqual(mockSession);
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockClearOnboardingFromStore).not.toHaveBeenCalled();
+    expect(isLoading).toBe(false);
+  });
+
   it("restoreSession clears the local onboarding flag when no session exists", async () => {
     useLocalOnboardingState.setState({ isComplete: true });
 

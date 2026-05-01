@@ -1,6 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
-import { cleanupCurrentPushToken } from "@/features/notifications/public";
 import { clearOnboardingFromStore } from "@/features/onboarding/lib/check-onboarding";
 import { useLocalOnboardingState } from "@/features/onboarding/lib/local-onboarding-state";
 import {
@@ -12,6 +11,7 @@ import {
 import { getSupabase } from "@/shared/db/supabase";
 import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
 import { readSupabaseSessionTokens, type SupabaseAuthTokens } from "./oauth-callback";
+import { cleanupPushTokenBeforeSignOut, signOutRemoteSession } from "./sign-out";
 
 // biome-ignore lint/style/useNamingConvention: OAuth is a proper noun
 type OAuthProvider = "google" | "azure";
@@ -46,6 +46,11 @@ function isCurrentAuthTransition(version: number) {
 
 function isStaleAuthTransition(version: number) {
   return !isCurrentAuthTransition(version);
+}
+
+function isMissingRemoteUserError(message: string | undefined) {
+  const normalizedMessage = message?.toLowerCase() ?? "";
+  return normalizedMessage.includes("user") && normalizedMessage.includes("does not exist");
 }
 
 function setSignedOutAuthState(set: SetAuthState) {
@@ -115,6 +120,16 @@ async function handleMissingRemoteSession(
   clearLocalOnboardingState();
 }
 
+async function handleMissingValidatedUser(
+  set: SetAuthState,
+  transitionVersion: number,
+  errorMessage?: string
+) {
+  await signOutRemoteSession();
+  if (isStaleAuthTransition(transitionVersion)) return;
+  await handleMissingRemoteSession(set, transitionVersion, errorMessage);
+}
+
 async function restoreSupabaseSession(set: SetAuthState, transitionVersion: number) {
   const supabase = getSupabase();
   const { data, error } = await supabase.auth.getSession();
@@ -125,9 +140,11 @@ async function restoreSupabaseSession(set: SetAuthState, transitionVersion: numb
   }
   const userResult = await supabase.auth.getUser();
   if (isStaleAuthTransition(transitionVersion)) return;
-  if (userResult.error || !userResult.data.user) {
-    await signOutRemoteSession();
-    await handleMissingRemoteSession(set, transitionVersion, userResult.error?.message);
+  if (
+    !userResult.data.user &&
+    (!userResult.error || isMissingRemoteUserError(userResult.error.message))
+  ) {
+    await handleMissingValidatedUser(set, transitionVersion, userResult.error?.message);
     return;
   }
   setRemoteAuthState(set, data.session);
@@ -194,24 +211,6 @@ async function signOutLocalQaSession(set: SetAuthState) {
   await clearLocalQaSession().catch(() => undefined);
   await clearOnboardingAndAuthState(set);
   resetAnalyticsUser();
-}
-
-async function cleanupPushTokenBeforeSignOut() {
-  await Promise.race([
-    cleanupCurrentPushToken().catch((error) => {
-      captureAuthFailure("auth_signout_push_token_cleanup_failed", error);
-    }),
-    new Promise((resolve) => setTimeout(resolve, 2000)),
-  ]);
-}
-
-async function signOutRemoteSession() {
-  try {
-    const supabase = getSupabase();
-    await supabase.auth.signOut();
-  } catch {
-    // Clear local state regardless.
-  }
 }
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({

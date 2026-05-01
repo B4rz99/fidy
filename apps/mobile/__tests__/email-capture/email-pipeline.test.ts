@@ -466,7 +466,7 @@ describe("email processing pipeline", () => {
     await processing;
   });
 
-  it("allows ten in-flight parse-email calls for initial sync", async () => {
+  it("keeps initial sync serialized until duplicate writes are atomic", async () => {
     vi.useFakeTimers();
     const events: string[] = [];
     const pendingParses: Array<(result: ReturnType<typeof makeParsedEmailResult>) => void> = [];
@@ -479,20 +479,19 @@ describe("email processing pipeline", () => {
       const processing = processInitialSyncEmails(
         mockDb,
         USER_ID,
-        Array.from({ length: 11 }, (_, index) =>
+        Array.from({ length: 2 }, (_, index) =>
           makeRawEmail({ externalId: `ext-${index + 1}`, body: `Compra ${index + 1}` })
         )
       );
 
       await vi.advanceTimersByTimeAsync(9000);
-      expect(events).toEqual(Array.from({ length: 10 }, (_, index) => `parse:Compra ${index + 1}`));
+      expect(events).toEqual(["parse:Compra 1"]);
 
-      pendingParses.forEach((resolve, index) => {
-        resolve(makeParsedEmailResult({ description: `Compra ${index + 1}` }));
-      });
+      pendingParses[0]?.(makeParsedEmailResult({ description: "Compra 1" }));
       await vi.advanceTimersByTimeAsync(1000);
-      expect(events).toContain("parse:Compra 11");
-      pendingParses.at(-1)?.(makeParsedEmailResult({ description: "Compra 11" }));
+
+      expect(events).toEqual(["parse:Compra 1", "parse:Compra 2"]);
+      pendingParses[1]?.(makeParsedEmailResult({ description: "Compra 2" }));
       await processing;
     } finally {
       vi.useRealTimers();

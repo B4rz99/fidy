@@ -7,7 +7,6 @@ export function htmlToPlainText(value: string): string {
     .replace(/&amp;/gi, "&")
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">")
-    .replace(/&#?\w+;/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
 }

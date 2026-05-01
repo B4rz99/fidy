@@ -73,6 +73,10 @@ describe("stripPii", () => {
     expect(stripPii("4567 XXXX XXXX 1234")).toBe("[CARD]");
   });
 
+  it("preserves single-letter X reference codes", () => {
+    expect(stripPii("Referencia X-2024 aprobada")).toBe("Referencia X-2024 aprobada");
+  });
+
   it("summarizes LLM input shape without exposing card suffixes", () => {
     const sanitizedText = stripPii(
       "Método de pago\nRappiCard Crédito **** 0746\nAutorizacion 446288"

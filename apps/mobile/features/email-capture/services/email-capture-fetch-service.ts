@@ -93,7 +93,8 @@ const countBySourceFamily = (emails: readonly RawEmail[]) =>
     Array.from(
       emails.reduce((counts, email) => {
         const family = normalizeSourceFamily(email.from);
-        return new Map(counts).set(family, (counts.get(family) ?? 0) + 1);
+        counts.set(family, (counts.get(family) ?? 0) + 1);
+        return counts;
       }, new Map<string, number>())
     ).sort(([left], [right]) => left.localeCompare(right))
   );

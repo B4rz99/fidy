@@ -26,7 +26,7 @@ const REDACTION_RULES: readonly RedactionRule[] = [
   { pattern: /\b\d{15,16}\b/g, replacement: "[CARD]" },
   { pattern: /\d{4}[\s-]*[*Xx]{2,}[\s-]*[*Xx]{2,}[\s-]*\d{4}/g, replacement: "[CARD]" },
   { pattern: /[*Xx]{2,4}[\s.-]*[*Xx]{2,4}[\s.-]*[*Xx]{2,4}[\s.-]*\d{4}/g, replacement: "[CARD]" },
-  { pattern: /[*Xx]{1,4}[\s.-]*\d{4}/g, replacement: "[CARD]" },
+  { pattern: /(?<![A-Za-z0-9])(?:\*{1,4}|[Xx]{2,4})[\s.-]*\d{4}\b/g, replacement: "[CARD]" },
 ];
 
 const applyRedactionRule = (text: string, rule: RedactionRule): string =>

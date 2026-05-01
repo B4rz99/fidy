@@ -145,7 +145,8 @@ function mergeEquivalentSuggestionRows(rows: readonly SuggestionRow[]): readonly
         }
       : row;
 
-    return new Map(groups).set(key, merged);
+    groups.set(key, merged);
+    return groups;
   }, new Map<string, SuggestionRow>());
 
   return Array.from(groupedRows.values());

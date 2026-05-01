@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getEmailConnectionChecklist,
+  hasConnectedEmailAccount,
   shouldAdvanceAfterEmailConnection,
 } from "@/features/onboarding/lib/email-connections";
 
@@ -14,5 +15,10 @@ describe("onboarding email connections", () => {
       { provider: "gmail", connected: true },
       { provider: "outlook", connected: false },
     ]);
+  });
+
+  it("only treats supported providers as connected", () => {
+    expect(hasConnectedEmailAccount([{ provider: "imap" }])).toBe(false);
+    expect(hasConnectedEmailAccount([{ provider: "outlook" }])).toBe(true);
   });
 });

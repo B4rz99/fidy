@@ -143,15 +143,9 @@ const supabase = createClient(
 );
 const LLM_SEED = 0;
 const DEFAULT_RATE_LIMIT_PER_MINUTE = 20;
-const INITIAL_SYNC_RATE_LIMIT_PER_MINUTE = 90;
 
-function getParseRateLimit(parseContext: unknown) {
-  return parseContext === "initial_sync"
-    ? {
-        key: "parse-email:initial-sync",
-        limit: INITIAL_SYNC_RATE_LIMIT_PER_MINUTE,
-      }
-    : { key: "parse-email", limit: DEFAULT_RATE_LIMIT_PER_MINUTE };
+function getParseRateLimit() {
+  return { key: "parse-email", limit: DEFAULT_RATE_LIMIT_PER_MINUTE };
 }
 
 function jsonResponse(
@@ -298,8 +292,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: "invalid_request" }, 400);
     }
 
-    const parseContext = payload.parseContext;
-    const rateLimit = getParseRateLimit(parseContext);
+    const rateLimit = getParseRateLimit();
     const rateResult = await checkRateLimit(userId, rateLimit.key, rateLimit.limit);
     if (!rateResult.allowed) {
       structuredLog({
