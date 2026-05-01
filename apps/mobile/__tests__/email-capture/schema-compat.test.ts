@@ -74,8 +74,11 @@ describe("Edge Function ↔ client schema compatibility", () => {
     const edgeKeys = extractPropertyKeys(edgeFnSource).sort();
     const candidateKeys = [
       "amount",
+      "accountTypeHint",
+      "cardProductHint",
       "categoryId",
       "confidence",
+      "counterpartyHint",
       "date",
       "description",
       "fromAccountHint",

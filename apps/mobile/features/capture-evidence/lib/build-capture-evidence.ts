@@ -183,6 +183,27 @@ function logEmailEvidenceInputDiagnostics(input: {
   console.info("[capture-evidence] email_input_shape", diagnostics);
 }
 
+function buildEmailSenderEvidence(input: {
+  readonly family: string;
+  readonly senderEmail: string;
+  readonly senderDomain: string;
+}): readonly CaptureEvidenceSeed[] {
+  return [
+    {
+      sourceFamily: input.family,
+      evidenceType: "sender_email",
+      scope: `email:${input.family}:sender`,
+      value: input.senderEmail,
+    },
+    {
+      sourceFamily: input.family,
+      evidenceType: "sender_domain",
+      scope: `email:${input.family}:domain`,
+      value: input.senderDomain,
+    },
+  ];
+}
+
 export function buildEmailCaptureEvidence(
   input: EmailCaptureInput
 ): readonly CaptureEvidenceSeed[] {
@@ -194,18 +215,7 @@ export function buildEmailCaptureEvidence(
   logEmailEvidenceInputDiagnostics({ family, rawText: body });
 
   return uniqueEvidence([
-    {
-      sourceFamily: family,
-      evidenceType: "sender_email",
-      scope: `email:${family}:sender`,
-      value: senderEmail,
-    },
-    {
-      sourceFamily: family,
-      evidenceType: "sender_domain",
-      scope: `email:${family}:domain`,
-      value: senderDomain,
-    },
+    ...buildEmailSenderEvidence({ family, senderEmail, senderDomain }),
     ...buildLlmAccountHintCaptureEvidence({
       family,
       scopePrefix: "email",

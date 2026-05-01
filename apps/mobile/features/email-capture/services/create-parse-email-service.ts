@@ -86,12 +86,24 @@ function invokeParseEmailFunctionEffect<Response>(
   );
 }
 
+function getParseApiErrorMessage(response: ParseFunctionResult<ParseEmailResponse>) {
+  return response.error?.message ?? response.data?.error ?? "unknown";
+}
+
+function createParseApiFailureResult(errorMessage: string, throwOnApiFailure: boolean) {
+  return throwOnApiFailure
+    ? Effect.fail(
+        new Error(errorMessage === "unknown" ? "parse-email request failed" : errorMessage)
+      )
+    : Effect.succeed(null);
+}
+
 function logParseApiFailureEffect(
   warningPrefix: "parse_email" | "parse_notification",
   response: ParseFunctionResult<ParseEmailResponse>,
   throwOnApiFailure: boolean
 ) {
-  const errorMessage = response.error?.message ?? response.data?.error ?? "unknown";
+  const errorMessage = getParseApiErrorMessage(response);
   if (typeof __DEV__ !== "undefined" && __DEV__) {
     console.info(`[email-capture] ${warningPrefix}_api_failed`, {
       errorMessage,
@@ -104,11 +116,7 @@ function logParseApiFailureEffect(
       errorMessage,
       hasData: response.data != null,
     }),
-    throwOnApiFailure
-      ? Effect.fail(
-          new Error(errorMessage === "unknown" ? "parse-email request failed" : errorMessage)
-        )
-      : Effect.succeed(null)
+    createParseApiFailureResult(errorMessage, throwOnApiFailure)
   );
 }
 

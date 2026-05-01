@@ -51,6 +51,7 @@ Rules:
 - toAccountHint: legacy destination account/card/wallet hint exactly as described by the bank, or null when absent.
 - cardProductHint: card or account product name only when explicitly described, such as "Visa Oro" or "Mastercard Black"; if unsure, return null.
 - accountTypeHint: generic payment instrument/account type only, such as "credit card", "savings account", or "wallet"; if unsure, return null.
+- counterpartyHint: merchant/payee/counterparty name only, or null when absent.
 - Account fields only contain payment instrument/account descriptions. Do not put merchants, payees, stores, apps, counterparties, authorization numbers, amounts, or dates in account fields.
 
 Category guide — pick based on the MERCHANT NAME:
@@ -77,6 +78,7 @@ The text is short (1-2 lines). Apply the same rules:
 - toAccountHint: legacy destination account/card/wallet hint exactly as described by the notification, or null when absent.
 - cardProductHint: card or account product name only when explicitly described, such as "Visa Oro" or "Mastercard Black"; if unsure, return null.
 - accountTypeHint: generic payment instrument/account type only, such as "credit card", "savings account", or "wallet"; if unsure, return null.
+- counterpartyHint: merchant/payee/counterparty name only, or null when absent.
 - Account fields only contain payment instrument/account descriptions. Do not put merchants, payees, stores, apps, counterparties, authorization numbers, amounts, or dates in account fields.
 
 Category guide — pick based on the MERCHANT NAME:
@@ -113,6 +115,7 @@ const CAPTURE_INTERPRETER_SCHEMA = {
       toAccountHint: { type: ["string", "null"] },
       cardProductHint: { type: ["string", "null"] },
       accountTypeHint: { type: ["string", "null"] },
+      counterpartyHint: { type: ["string", "null"] },
     },
     required: [
       "kind",
@@ -127,6 +130,7 @@ const CAPTURE_INTERPRETER_SCHEMA = {
       "toAccountHint",
       "cardProductHint",
       "accountTypeHint",
+      "counterpartyHint",
     ],
     additionalProperties: false,
   },

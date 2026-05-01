@@ -20,6 +20,24 @@ type SuggestionEvidenceType = Extract<
 
 type SuggestionRow = RepeatedCaptureEvidence & { readonly evidenceType: SuggestionEvidenceType };
 
+const SUGGESTION_EVIDENCE_TYPES = new Set<SuggestionEvidenceType>([
+  "last4",
+  "card_hint",
+  "alias_token",
+  "llm_account_hint",
+  "card_product_hint",
+  "account_type_hint",
+]);
+
+const BASE_CONFIDENCE_BY_EVIDENCE_TYPE = new Map<SuggestionEvidenceType, number>([
+  ["last4", 100],
+  ["card_product_hint", 85],
+  ["card_hint", 80],
+  ["llm_account_hint", 70],
+  ["account_type_hint", 50],
+  ["alias_token", 60],
+]);
+
 const GENERIC_LLM_HINT_TERMS = new Set([
   "account",
   "card",
@@ -61,14 +79,7 @@ export type AccountCreationSuggestion = {
 };
 
 function isSuggestionEvidenceType(value: string): value is SuggestionEvidenceType {
-  return (
-    value === "last4" ||
-    value === "card_hint" ||
-    value === "alias_token" ||
-    value === "llm_account_hint" ||
-    value === "card_product_hint" ||
-    value === "account_type_hint"
-  );
+  return SUGGESTION_EVIDENCE_TYPES.has(value as SuggestionEvidenceType);
 }
 
 export function createAccountSuggestionFingerprint(scope: string, value: string) {
@@ -76,15 +87,7 @@ export function createAccountSuggestionFingerprint(scope: string, value: string)
 }
 
 function toConfidenceScore(evidenceType: SuggestionEvidenceType, occurrences: number) {
-  const baseScore = (() => {
-    if (evidenceType === "last4") return 100;
-    if (evidenceType === "card_product_hint") return 85;
-    if (evidenceType === "llm_account_hint") return 70;
-    if (evidenceType === "card_hint") return 80;
-    if (evidenceType === "account_type_hint") return 50;
-    return 60;
-  })();
-
+  const baseScore = BASE_CONFIDENCE_BY_EVIDENCE_TYPE.get(evidenceType) ?? 60;
   return baseScore * occurrences;
 }
 

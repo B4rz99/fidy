@@ -99,25 +99,26 @@ const inferWalletSuggestionKind = (
   suggestion: AccountCreationSuggestion
 ): FinancialAccountKind | undefined => (isWalletAliasSuggestion(suggestion) ? "wallet" : undefined);
 
-function buildSuggestedName(
-  sourceLabel: string,
-  evidenceLabel: string,
-  kind: FinancialAccountKind,
-  evidenceType: AccountCreationSuggestion["evidenceType"]
-) {
-  if (kind === "wallet") {
-    return `${sourceLabel} wallet`;
+function buildSuggestedName(input: {
+  readonly sourceLabel: string;
+  readonly evidenceLabel: string;
+  readonly kind: FinancialAccountKind;
+  readonly evidenceType: AccountCreationSuggestion["evidenceType"];
+}) {
+  const cardName =
+    input.evidenceType === "card_product_hint" && input.evidenceLabel.length > 0
+      ? input.evidenceLabel
+      : "card";
+
+  if (input.kind === "wallet") {
+    return `${input.sourceLabel} wallet`;
   }
 
-  if (kind === "credit_card") {
-    if (evidenceType === "card_product_hint" && evidenceLabel.length > 0) {
-      return `${sourceLabel} ${evidenceLabel}`;
-    }
-
-    return `${sourceLabel} card`;
+  if (input.kind === "credit_card") {
+    return `${input.sourceLabel} ${cardName}`;
   }
 
-  return `${sourceLabel} ${evidenceLabel}`;
+  return `${input.sourceLabel} ${input.evidenceLabel}`;
 }
 
 function getKindScore(account: FinancialAccountRow, draft: SuggestedFinancialAccountDraft) {
@@ -162,10 +163,16 @@ export function buildSuggestedFinancialAccountDraft(
     inferLlmSuggestionKind(suggestion) ??
     inferWalletSuggestionKind(suggestion) ??
     "checking";
+  const suggestedNameInput = {
+    sourceLabel,
+    evidenceLabel,
+    kind,
+    evidenceType: suggestion.evidenceType,
+  };
 
   return {
     kind,
-    name: buildSuggestedName(sourceLabel, evidenceLabel, kind, suggestion.evidenceType),
+    name: buildSuggestedName(suggestedNameInput),
     sourceLabel,
     evidenceLabel,
     confidenceLabel: CONFIDENCE_LABEL_BY_EVIDENCE_TYPE.get(suggestion.evidenceType) ?? "MED",
