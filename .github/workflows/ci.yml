@@ -24,6 +24,8 @@ jobs:
         run: bun run lint:complexity
       - name: File-size gate
         run: bun run lint:file-size
+      - name: Dependency policy gate
+        run: bun run lint:dependency-policy
 
   architecture:
     name: Architecture

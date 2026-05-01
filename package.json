@@ -27,6 +27,7 @@
     "lint:complexity": "bun ./scripts/run-lizard-strict.ts",
     "lint:file-size": "bun ./scripts/check-max-file-lines.ts --enforce",
     "lint:theme-colors": "bun ./scripts/check-theme-color-literals.ts --enforce",
+    "lint:dependency-policy": "bun ./scripts/check-dependency-policy.ts --enforce --stale-days 30",
     "lint:brands": "bun scripts/check-branded-boundaries.ts",
     "lint:feature-public-imports": "bun ./scripts/check-feature-public-imports.ts --enforce",
     "lint:architecture": "bun run lint:feature-public-imports && bunx dependency-cruiser --config .dependency-cruiser.cjs apps/mobile packages",
@@ -47,7 +48,7 @@
     "perf:bundle:mobile": "bun run --cwd apps/mobile --shell=bun bundle:atlas",
     "lint": "bunx biome check .",
     "format": "bunx biome format --write .",
-    "verify": "bun run lint && bun run lint:brands && bun run lint:mobile && bun run lint:complexity && bun run lint:file-size && bun run lint:theme-colors && bun run lint:architecture && bun run typecheck && bun run test"
+    "verify": "bun run lint && bun run lint:brands && bun run lint:mobile && bun run lint:complexity && bun run lint:file-size && bun run lint:theme-colors && bun run lint:dependency-policy && bun run lint:architecture && bun run typecheck && bun run test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.4",

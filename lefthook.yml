@@ -44,6 +44,10 @@ pre-push:
       files: git ls-files
       run: bun run lint:file-size
       skip_output: false
+    dependency-policy:
+      files: git ls-files
+      run: bun run lint:dependency-policy
+      skip_output: false
     tests:
       files: git ls-files
       run: bun run test

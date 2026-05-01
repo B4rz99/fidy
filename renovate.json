@@ -1,0 +1,21 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "dependencyDashboard": true,
+  "dependencyDashboardReportAbandonment": true,
+  "ignoreUnstable": true,
+  "packageRules": [
+    {
+      "matchDatasources": ["npm"],
+      "matchUpdateTypes": ["minor", "major"],
+      "addLabels": ["dependency-ci-blocking"]
+    },
+    {
+      "matchDatasources": ["npm"],
+      "abandonmentThreshold": "1 month",
+      "addLabels": ["dependency-stale-upstream"]
+    }
+  ],
+  "separateMajorMinor": true,
+  "separateMinorPatch": true
+}
