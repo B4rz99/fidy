@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
 import { existsSync } from "node:fs";
+import { formatReport } from "./dependency-policy-format";
 import {
   collectDependencies,
-  formatReport,
   inspectDependencies,
   readDependencyPolicyConfig,
 } from "./dependency-policy-support";
@@ -60,6 +60,7 @@ const main = async (): Promise<void> => {
     (policyConfig.deferredUpdates ?? []).map((deferral) => [deferral.name, deferral])
   );
   const { violations, warnings } = await inspectDependencies(
+    options.root,
     dependencies,
     deferredUpdates,
     options.minimumReleaseAgeDays,

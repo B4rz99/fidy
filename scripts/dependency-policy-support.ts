@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join } from "node:path";
+import { createRegistryResolver } from "./dependency-policy-registry";
 
 type PackageJson = {
   dependencies?: Record<string, string>;
@@ -26,7 +27,7 @@ export type DependencyPolicyConfig = { deferredUpdates?: readonly DeferredUpdate
 
 export type DeferredUpdate = { name: string; reason: string; until: string };
 
-type Violation = {
+export type Violation = {
   dependency: Dependency;
   current: Version;
   latest: Version;
@@ -133,8 +134,8 @@ const isStableVersion = (value: string): boolean => /^\d+\.\d+\.\d+$/.test(value
 const compareVersions = (left: Version, right: Version): number =>
   left.major - right.major || left.minor - right.minor || left.patch - right.patch;
 
-const fetchPackument = async (name: string): Promise<NpmPackument> => {
-  const response = await fetch(`https://registry.npmjs.org/${encodeURIComponent(name)}`);
+const fetchPackument = async (name: string, registryUrl: string): Promise<NpmPackument> => {
+  const response = await fetch(`${registryUrl}/${encodeURIComponent(name)}`);
   if (!response.ok) throw new Error(`npm registry returned ${response.status} for ${name}`);
   return (await response.json()) as NpmPackument;
 };
@@ -169,13 +170,14 @@ const findLatestEligibleStableVersion = (
 
 const inspectDependency = async (
   dependency: Dependency,
+  registryUrl: string,
   minimumReleaseAgeDays: number,
   staleDays: number
 ): Promise<InspectionResult> => {
   const current = parseVersion(dependency.resolvedVersion ?? dependency.spec);
   if (!current) return { violations: [], warnings: [] };
 
-  const packument = await fetchPackument(dependency.name);
+  const packument = await fetchPackument(dependency.name, registryUrl);
   const latest = findLatestEligibleStableVersion(packument, minimumReleaseAgeDays);
   if (!latest) return { violations: [], warnings: [] };
 
@@ -206,6 +208,7 @@ const inspectDependency = async (
 };
 
 export const inspectDependencies = async (
+  root: string,
   dependencies: readonly Dependency[],
   deferredUpdates: ReadonlyMap<string, DeferredUpdate>,
   minimumReleaseAgeDays: number,
@@ -220,9 +223,17 @@ export const inspectDependencies = async (
     ).values()
   );
   const results = await Promise.all(
-    uniqueDependencies.map((dependency) =>
-      inspectDependency(dependency, minimumReleaseAgeDays, staleDays)
-    )
+    (() => {
+      const registryFor = createRegistryResolver(root);
+      return uniqueDependencies.map((dependency) =>
+        inspectDependency(
+          dependency,
+          registryFor(dependency.name),
+          minimumReleaseAgeDays,
+          staleDays
+        )
+      );
+    })()
   );
   const sortByName = (findings: readonly Violation[]): readonly Violation[] =>
     [...findings].sort((left, right) => left.dependency.name.localeCompare(right.dependency.name));
@@ -248,47 +259,3 @@ export const inspectDependencies = async (
     warnings: sortByName([...results.flatMap((result) => result.warnings), ...activeDeferrals]),
   };
 };
-
-const formatVersion = (version: Version): string =>
-  `${version.major}.${version.minor}.${version.patch}`;
-
-const formatReleaseDate = (date: Date | null): string =>
-  date ? date.toISOString().slice(0, 10) : "unknown release date";
-
-const formatViolation = (root: string, violation: Violation): string => {
-  const manifest = normalizePath(relative(root, join(root, violation.dependency.manifestPath)));
-  return [
-    `- ${violation.dependency.name} (${manifest} ${violation.dependency.type})`,
-    `  declared: ${violation.dependency.spec}`,
-    `  resolved/current: ${formatVersion(violation.current)}`,
-    `  latest stable: ${formatVersion(violation.latest)} (${formatReleaseDate(violation.latestReleasedAt)})`,
-    `  reasons: ${violation.reasons.join(", ")}`,
-  ].join("\n");
-};
-
-export const formatReport = (
-  root: string,
-  dependencyCount: number,
-  minimumReleaseAgeDays: number,
-  staleDays: number,
-  violations: readonly Violation[],
-  warnings: readonly Violation[]
-): string =>
-  [
-    `Dependency policy root: ${normalizePath(relative(process.cwd(), root) || ".")}`,
-    `Registry dependencies checked: ${dependencyCount}`,
-    `Minimum release age: ${minimumReleaseAgeDays} days`,
-    `Stale upstream warning threshold: ${staleDays} days`,
-    `Policy violations: ${violations.length}`,
-    `Policy warnings: ${warnings.length}`,
-    violations.length > 0
-      ? "CI fails for latest stable minor or major updates. Stale upstream age is reported as a warning."
-      : "No dependency policy violations found.",
-    violations.length > 0 ? "" : "",
-    ...violations.map((violation) => formatViolation(root, violation)),
-    warnings.length > 0 ? "" : "",
-    warnings.length > 0 ? "Warnings:" : "",
-    ...warnings.map((warning) => formatViolation(root, warning)),
-  ]
-    .filter((line) => line.length > 0)
-    .join("\n");
