@@ -2,12 +2,14 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { getFinancialAccountsForUser } from "@/features/financial-accounts/public";
+import { useOnboardingStore } from "@/features/onboarding/store";
 import { ScreenLayout } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
 import { useAccountSuggestions } from "../hooks/use-account-suggestions";
+import { shouldAdvanceOnboardingAfterSuggestionMutation } from "../lib/onboarding-review";
 import { rankSuggestedFinancialAccounts } from "../lib/presentation";
 import { createAccountSuggestionService } from "../services/create-account-suggestion-service";
 
@@ -46,11 +48,13 @@ function AccountRow({
 }
 
 export default function LinkSuggestedAccountScreen() {
-  const router = useRouter();
+  const { back } = useRouter();
   const { fingerprint } = useLocalSearchParams<{ fingerprint?: string }>();
   const { t } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
+  const onboardingStep = useOnboardingStore((state) => state.step);
+  const nextStep = useOnboardingStore((state) => state.nextStep);
   const { suggestions, hasLoadedSuggestions } = useAccountSuggestions({ db, userId });
   const service = useMemo(() => createAccountSuggestionService(), []);
   const primary = useThemeColor("primary");
@@ -82,7 +86,19 @@ export default function LinkSuggestedAccountScreen() {
           accountId,
           suggestion,
         });
-        router.back();
+        const remainingSuggestionCount = service.listSuggestions({
+          db,
+          userId,
+        }).length;
+        if (
+          shouldAdvanceOnboardingAfterSuggestionMutation({
+            onboardingStep,
+            remainingSuggestionCount,
+          })
+        ) {
+          nextStep();
+        }
+        back();
       } catch {
         showErrorToast(t("accountSuggestions.link.linkFailed"));
       }
@@ -90,11 +106,7 @@ export default function LinkSuggestedAccountScreen() {
   };
 
   return (
-    <ScreenLayout
-      title={t("accountSuggestions.link.title")}
-      variant="sub"
-      onBack={() => router.back()}
-    >
+    <ScreenLayout title={t("accountSuggestions.link.title")} variant="sub" onBack={back}>
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
         <Text style={[styles.subtitle, { color: secondary }]}>
           {t("accountSuggestions.link.subtitle")}

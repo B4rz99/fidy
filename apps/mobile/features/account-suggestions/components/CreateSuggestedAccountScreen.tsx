@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/public";
+import { useOnboardingStore } from "@/features/onboarding/store";
 import { ScreenLayout } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -9,6 +10,7 @@ import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
 import { useAccountSuggestions } from "../hooks/use-account-suggestions";
 import type { AccountCreationSuggestion } from "../lib/derive-account-suggestions";
+import { shouldAdvanceOnboardingAfterSuggestionMutation } from "../lib/onboarding-review";
 import { buildSuggestedFinancialAccountDraft } from "../lib/presentation";
 import { createAccountSuggestionService } from "../services/create-account-suggestion-service";
 
@@ -29,8 +31,10 @@ function ResolvedCreateSuggestedAccountForm({
   readonly suggestion: AccountCreationSuggestion;
   readonly userId: NonNullable<ReturnType<typeof useOptionalUserId>>;
 }) {
-  const router = useRouter();
+  const { back } = useRouter();
   const { t } = useTranslation();
+  const onboardingStep = useOnboardingStore((state) => state.step);
+  const nextStep = useOnboardingStore((state) => state.nextStep);
   const service = useMemo(() => createAccountSuggestionService(), []);
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
@@ -55,7 +59,19 @@ function ResolvedCreateSuggestedAccountForm({
           name: name.trim(),
           kind,
         });
-        router.back();
+        const remainingSuggestionCount = service.listSuggestions({
+          db,
+          userId,
+        }).length;
+        if (
+          shouldAdvanceOnboardingAfterSuggestionMutation({
+            onboardingStep,
+            remainingSuggestionCount,
+          })
+        ) {
+          nextStep();
+        }
+        back();
       } catch {
         showErrorToast(t("accountSuggestions.create.saveFailed"));
       }
@@ -63,11 +79,7 @@ function ResolvedCreateSuggestedAccountForm({
   };
 
   return (
-    <ScreenLayout
-      title={t("accountSuggestions.create.title")}
-      variant="sub"
-      onBack={() => router.back()}
-    >
+    <ScreenLayout title={t("accountSuggestions.create.title")} variant="sub" onBack={back}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={styles.scrollContent}
@@ -131,15 +143,6 @@ function ResolvedCreateSuggestedAccountForm({
           </View>
         </View>
 
-        <View style={styles.fieldGroup}>
-          <Text style={[styles.fieldLabel, { color: secondary }]}>
-            {t("accountSuggestions.create.identifierLabel")}
-          </Text>
-          <View style={[styles.identifierBox, { backgroundColor: accentGreenLight }]}>
-            <Text style={[styles.identifierText, { color: primary }]}>{draft.evidenceLabel}</Text>
-          </View>
-        </View>
-
         <Pressable
           style={[
             styles.saveButton,
@@ -160,7 +163,7 @@ function ResolvedCreateSuggestedAccountForm({
 
 export default function CreateSuggestedAccountScreen() {
   const { fingerprint } = useLocalSearchParams<{ fingerprint?: string }>();
-  const router = useRouter();
+  const { back } = useRouter();
   const { t } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
@@ -175,11 +178,7 @@ export default function CreateSuggestedAccountScreen() {
 
   if (hasLoadedSuggestions && suggestion == null) {
     return (
-      <ScreenLayout
-        title={t("accountSuggestions.create.title")}
-        variant="sub"
-        onBack={() => router.back()}
-      >
+      <ScreenLayout title={t("accountSuggestions.create.title")} variant="sub" onBack={back}>
         <View style={styles.emptyState}>
           <Text style={[styles.emptyTitle, { color: primary }]}>
             {t("accountSuggestions.review.emptyTitle")}
@@ -247,10 +246,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-  },
-  identifierText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 13,
   },
   identifierLabel: {
     fontFamily: "Poppins_500Medium",

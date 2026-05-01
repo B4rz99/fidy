@@ -7,10 +7,11 @@ import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useAccountSuggestions } from "../hooks/use-account-suggestions";
+import { getDeferredSuggestionReviewState } from "../lib/onboarding-review";
 import { AccountSuggestionCard } from "./AccountSuggestionCard";
 
 export function OnboardingAccountReviewStep() {
-  const router = useRouter();
+  const { push } = useRouter();
   const { t } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
@@ -61,7 +62,7 @@ export function OnboardingAccountReviewStep() {
                   occurrences: item.occurrences,
                   confidenceScore: item.confidenceScore,
                 });
-                router.push({
+                push({
                   pathname: "/create-financial-account",
                   params: { fingerprint: item.fingerprint },
                 } as never);
@@ -72,7 +73,7 @@ export function OnboardingAccountReviewStep() {
                   occurrences: item.occurrences,
                   confidenceScore: item.confidenceScore,
                 });
-                router.push({
+                push({
                   pathname: "/link-suggested-account",
                   params: { fingerprint: item.fingerprint },
                 } as never);
@@ -83,7 +84,15 @@ export function OnboardingAccountReviewStep() {
                   occurrences: item.occurrences,
                   confidenceScore: item.confidenceScore,
                 });
-                setDeferredFingerprints((current) => [...current, item.fingerprint]);
+                const deferredState = getDeferredSuggestionReviewState({
+                  suggestions,
+                  deferredFingerprints,
+                  skippedFingerprint: item.fingerprint,
+                });
+                setDeferredFingerprints(deferredState.deferredFingerprints);
+                if (!deferredState.hasRemainingVisibleSuggestion) {
+                  nextStep();
+                }
               }}
             />
           ))}
