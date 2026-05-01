@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { trackOnboardingEvent } from "@/features/onboarding/lib/telemetry";
 import { useOnboardingStore } from "@/features/onboarding/store";
@@ -22,6 +22,7 @@ export function OnboardingAccountReviewStep() {
     limit: 2,
   });
   const [deferredFingerprints, setDeferredFingerprints] = useState<readonly string[]>([]);
+  const deferredFingerprintsRef = useRef<readonly string[]>([]);
 
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
@@ -86,10 +87,18 @@ export function OnboardingAccountReviewStep() {
                 });
                 const deferredState = getDeferredSuggestionReviewState({
                   suggestions,
-                  deferredFingerprints,
+                  deferredFingerprints: deferredFingerprintsRef.current,
                   skippedFingerprint: item.fingerprint,
                 });
-                setDeferredFingerprints(deferredState.deferredFingerprints);
+                deferredFingerprintsRef.current = deferredState.deferredFingerprints;
+                setDeferredFingerprints(
+                  (current) =>
+                    getDeferredSuggestionReviewState({
+                      suggestions,
+                      deferredFingerprints: current,
+                      skippedFingerprint: item.fingerprint,
+                    }).deferredFingerprints
+                );
                 if (!deferredState.hasRemainingVisibleSuggestion) {
                   nextStep();
                 }
