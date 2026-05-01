@@ -80,7 +80,7 @@ export const isBase64String = (value: unknown): boolean => {
 
   try {
     return toBase64(fromBase64(value)) === value;
-  } catch (_error) {
+  } catch {
     return false;
   }
 };
