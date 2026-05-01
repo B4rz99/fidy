@@ -1,22 +1,10 @@
-import {
-  Car,
-  Clapperboard,
-  Ellipsis,
-  GraduationCap,
-  HeartPulse,
-  House,
-  type LucideIcon,
-  Shirt,
-  Utensils,
-  Wrench,
-} from "@/shared/components/icons";
 import { Colors } from "@/shared/constants/theme";
 import type { CategoryId } from "@/shared/types/branded";
 
 export type Category = {
   readonly id: CategoryId;
   readonly label: { readonly en: string; readonly es: string };
-  readonly icon: LucideIcon;
+  readonly icon: string;
   readonly color: string;
 };
 
@@ -24,55 +12,55 @@ export const CATEGORIES: readonly Category[] = [
   {
     id: "food" as CategoryId,
     label: { en: "Food", es: "Comida" },
-    icon: Utensils,
+    icon: "🍽️",
     color: Colors.chart.food,
   },
   {
     id: "transport" as CategoryId,
     label: { en: "Transport", es: "Transporte" },
-    icon: Car,
+    icon: "🚗",
     color: Colors.chart.transport,
   },
   {
     id: "entertainment" as CategoryId,
     label: { en: "Entertainment", es: "Entretenimiento" },
-    icon: Clapperboard,
+    icon: "🎬",
     color: Colors.chart.entertainment,
   },
   {
     id: "health" as CategoryId,
     label: { en: "Health", es: "Salud" },
-    icon: HeartPulse,
+    icon: "🩺",
     color: Colors.chart.health,
   },
   {
     id: "education" as CategoryId,
     label: { en: "Education", es: "Educación" },
-    icon: GraduationCap,
+    icon: "🎓",
     color: Colors.chart.education,
   },
   {
     id: "home" as CategoryId,
     label: { en: "Home", es: "Hogar" },
-    icon: House,
+    icon: "🏠",
     color: Colors.chart.home,
   },
   {
     id: "clothing" as CategoryId,
     label: { en: "Clothing", es: "Ropa" },
-    icon: Shirt,
+    icon: "👕",
     color: Colors.chart.clothing,
   },
   {
     id: "services" as CategoryId,
     label: { en: "Services", es: "Servicios" },
-    icon: Wrench,
+    icon: "🛠️",
     color: Colors.chart.services,
   },
   {
     id: "other" as CategoryId,
     label: { en: "Other", es: "Otro" },
-    icon: Ellipsis,
+    icon: "✨",
     color: Colors.chart.other,
   },
 ] as const;

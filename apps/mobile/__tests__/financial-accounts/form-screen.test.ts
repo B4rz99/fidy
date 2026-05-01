@@ -3,6 +3,7 @@ import {
   getFinancialAccountFormScreenState,
   hasInvalidBillingDayInput,
 } from "@/features/financial-accounts/lib/form-screen";
+import { canFinancialAccountHaveIdentifiers as canKindHaveIdentifiers } from "@/features/financial-accounts/lib/kind";
 import { requireFinancialAccountId } from "@/shared/types/assertions";
 
 describe("financial account form helpers", () => {
@@ -42,5 +43,11 @@ describe("financial account form helpers", () => {
         lookupStatus: "loading",
       })
     ).toBe("create");
+  });
+
+  it("does not show identifier controls for cash accounts", () => {
+    expect(canKindHaveIdentifiers("cash")).toBe(false);
+    expect(canKindHaveIdentifiers("checking")).toBe(true);
+    expect(canKindHaveIdentifiers("credit_card")).toBe(true);
   });
 });

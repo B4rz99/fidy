@@ -8,12 +8,13 @@ type Props = {
   date: Date | null;
   bills: Bill[];
   paidBillIds: ReadonlySet<string>;
+  minHeight?: number;
   onDayPress: (date: Date) => void;
 };
 
 const MAX_VISIBLE_TAGS = 2;
 
-export function CalendarDayCell({ day, date, bills, paidBillIds, onDayPress }: Props) {
+export function CalendarDayCell({ day, date, bills, paidBillIds, minHeight, onDayPress }: Props) {
   const primaryColor = useThemeColor("primary");
   const peachBg = useThemeColor("peachLight");
   const tertiaryColor = useThemeColor("tertiary");
@@ -21,13 +22,16 @@ export function CalendarDayCell({ day, date, bills, paidBillIds, onDayPress }: P
   const accentGreenLight = useThemeColor("accentGreenLight");
 
   if (day === null || !date) {
-    return <View style={styles.cell} />;
+    return <View style={[styles.cell, minHeight != null ? { minHeight } : undefined]} />;
   }
 
   const visibleBills = bills.slice(0, MAX_VISIBLE_TAGS);
 
   return (
-    <Pressable style={styles.cell} onPress={() => onDayPress(date)}>
+    <Pressable
+      style={[styles.cell, minHeight != null ? { minHeight } : undefined]}
+      onPress={() => onDayPress(date)}
+    >
       <Text style={[styles.dayNumber, { color: primaryColor }]}>{day}</Text>
       {visibleBills.map((bill) => {
         const paid = paidBillIds.has(bill.id);

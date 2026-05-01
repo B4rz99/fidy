@@ -159,18 +159,20 @@ export function SyncProgressStep() {
         });
       }, SYNC_EARLY_UNLOCK_TIMEOUT_MS);
       trackOnboardingEvent("email_sync_start", { accountCount: accounts.length });
-      void (async () => {
-        while (isMounted) {
-          const outcome = await fetchAndProcessEmails(
-            db,
-            userId,
-            getGmailClientId(),
-            getOutlookClientId(),
-            () => refreshTransactions(db, userId),
-            { parseProfile: "initial_sync" }
-          );
-          if (!isMounted) return;
-          if (outcome.status === "completed") {
+      const runFetchUntilComplete = async (): Promise<void> => {
+        if (!isMounted) return;
+
+        const outcome = await fetchAndProcessEmails(
+          db,
+          userId,
+          getGmailClientId(),
+          getOutlookClientId(),
+          () => refreshTransactions(db, userId),
+          { parseProfile: "initial_sync" }
+        );
+
+        if (outcome.status === "completed") {
+          if (isMounted) {
             const foundCount = outcome.savedCount + outcome.needsReviewCount;
             const hasAccountSuggestions = getHasAccountSuggestions();
             trackOnboardingEvent("email_sync_complete", {
@@ -186,12 +188,17 @@ export function SyncProgressStep() {
               importComplete: true,
               reason: "complete",
             });
-            return;
           }
-
-          if (outcome.reason !== "already_fetching" || !(await waitForFetchIdle())) return;
+          return;
         }
-      })();
+
+        if (isMounted && outcome.reason === "already_fetching") {
+          const shouldRetry = await waitForFetchIdle();
+          if (shouldRetry) await runFetchUntilComplete();
+        }
+      };
+
+      void runFetchUntilComplete();
     } else if (accounts.length === 0) {
       logOnboardingEvent("email_sync_no_accounts");
     }
@@ -216,7 +223,6 @@ export function SyncProgressStep() {
       : 0
     : 0;
 
-  const canContinue = syncOutcome !== null;
   const importComplete = syncOutcome?.importComplete ?? false;
   const percent = importComplete ? 100 : livePercent;
   const savedCount =
@@ -258,12 +264,12 @@ export function SyncProgressStep() {
           </View>
         ) : null}
 
-        {!canContinue ? (
+        {syncOutcome === null ? (
           <Text style={[styles.helperText, { color: secondaryColor }]}>
             {t("onboarding.syncing.helperText")}
           </Text>
         ) : null}
-        {canContinue && !importComplete ? (
+        {syncOutcome !== null && !importComplete ? (
           <Text style={[styles.helperText, { color: secondaryColor }]}>
             {t("onboarding.syncing.backgroundHelperText")}
           </Text>
@@ -275,7 +281,7 @@ export function SyncProgressStep() {
           styles.primaryButton,
           {
             backgroundColor: accentGreen,
-            opacity: canContinue ? 1 : 0.5,
+            opacity: syncOutcome !== null ? 1 : 0.5,
           },
         ]}
         onPress={() => {
@@ -287,7 +293,7 @@ export function SyncProgressStep() {
           });
           completeSync(hasAccountSuggestions);
         }}
-        disabled={!canContinue}
+        disabled={syncOutcome === null}
       >
         <Text style={styles.primaryButtonText}>{t("onboarding.syncing.continue")}</Text>
       </Pressable>

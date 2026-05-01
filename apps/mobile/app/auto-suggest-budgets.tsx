@@ -27,7 +27,7 @@ import {
 } from "@/shared/lib";
 
 export default function AutoSuggestBudgetsScreen() {
-  const router = useRouter();
+  const { back } = useRouter();
   const { t, locale } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
@@ -57,13 +57,13 @@ export default function AutoSuggestBudgetsScreen() {
       } else {
         trackBudgetSuggestionRejected();
       }
-      router.back();
+      back();
     });
   };
 
   const handleSkip = () => {
     trackBudgetSuggestionRejected();
-    router.back();
+    back();
   };
 
   return (
@@ -86,7 +86,6 @@ export default function AutoSuggestBudgetsScreen() {
         <View style={styles.list}>
           {autoSuggestions.map((suggestion) => {
             const category = CATEGORY_MAP[suggestion.categoryId] ?? null;
-            const CategoryIcon = category?.icon;
             const categoryLabel = category
               ? getCategoryLabel(category, locale)
               : suggestion.categoryId;
@@ -95,7 +94,7 @@ export default function AutoSuggestBudgetsScreen() {
             return (
               <View key={suggestion.categoryId} style={[styles.row, { borderColor }]}>
                 <View style={styles.rowLeft}>
-                  {category && CategoryIcon && <CategoryIcon size={18} color={category.color} />}
+                  {category ? <Text style={{ color: category.color }}>{category.icon}</Text> : null}
                   <View>
                     <Text style={[styles.categoryName, { color: primaryColor }]}>
                       {categoryLabel}

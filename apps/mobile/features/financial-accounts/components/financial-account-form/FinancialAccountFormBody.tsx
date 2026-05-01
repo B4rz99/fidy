@@ -1,6 +1,7 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
 import { X } from "@/shared/components/icons";
+import { useState } from "react";
 import {
   Keyboard,
   Platform,
@@ -12,6 +13,7 @@ import {
 } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
+import { canFinancialAccountHaveIdentifiers } from "../../lib/kind";
 import { styles } from "./FinancialAccountForm.styles";
 import {
   ACCOUNT_KIND_OPTIONS,
@@ -33,6 +35,7 @@ export function FinancialAccountFormBody({
   readonly onManageIdentifiers: (() => void) | null;
 }) {
   const { t, locale } = useTranslation();
+  const [datePickerFallback] = useState(() => new Date());
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
@@ -172,7 +175,7 @@ export function FinancialAccountFormBody({
 
           {showDatePicker ? (
             <DateTimePicker
-              value={effectiveDate ?? new Date()}
+              value={effectiveDate ?? datePickerFallback}
               mode="date"
               display={Platform.OS === "ios" ? "spinner" : "default"}
               onChange={(_event, date) => {
@@ -238,18 +241,20 @@ export function FinancialAccountFormBody({
         </FormSection>
       ) : null}
 
-      <FinancialAccountIdentifiersSection
-        borderSubtle={borderSubtle}
-        card={card}
-        existingDetails={existingDetails}
-        isEdit={isEdit}
-        manualIdentifierValue={manualIdentifierValue}
-        onManageIdentifiers={onManageIdentifiers}
-        primary={primary}
-        secondary={secondary}
-        setManualIdentifierValue={setManualIdentifierValue}
-        tertiary={tertiary}
-      />
+      {canFinancialAccountHaveIdentifiers(kind) ? (
+        <FinancialAccountIdentifiersSection
+          borderSubtle={borderSubtle}
+          card={card}
+          existingDetails={existingDetails}
+          isEdit={isEdit}
+          manualIdentifierValue={manualIdentifierValue}
+          onManageIdentifiers={onManageIdentifiers}
+          primary={primary}
+          secondary={secondary}
+          setManualIdentifierValue={setManualIdentifierValue}
+          tertiary={tertiary}
+        />
+      ) : null}
 
       <Pressable
         style={[

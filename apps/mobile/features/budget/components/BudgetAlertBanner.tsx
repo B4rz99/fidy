@@ -44,7 +44,7 @@ export function BudgetAlertBanner({ alert, onDismiss }: Props) {
   return (
     <View style={[styles.banner, { backgroundColor: bannerBg }]}>
       <View style={[styles.iconCircle, { backgroundColor: circleBg }]}>
-        {CategoryIcon && <CategoryIcon size={16} color={iconColor} />}
+        {CategoryIcon ? <Text style={{ color: iconColor }}>{CategoryIcon}</Text> : null}
       </View>
       <View style={styles.content}>
         <Text style={[styles.title, { color: primaryColor }]}>{title}</Text>

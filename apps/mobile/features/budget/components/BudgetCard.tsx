@@ -39,7 +39,9 @@ function BudgetCardInner({ progress, onPress }: Props) {
     >
       <View style={styles.header}>
         <View style={styles.categoryRow}>
-          {category && CategoryIcon && <CategoryIcon size={18} color={category.color} />}
+          {category && CategoryIcon ? (
+            <Text style={{ color: category.color }}>{CategoryIcon}</Text>
+          ) : null}
           <Text style={[styles.categoryName, { color: primaryColor }]}>{categoryLabel}</Text>
         </View>
         <View style={[styles.badge, { backgroundColor: badgeColor }]}>

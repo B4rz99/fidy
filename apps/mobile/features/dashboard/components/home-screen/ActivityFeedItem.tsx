@@ -5,7 +5,6 @@ import type { StoredTransaction } from "@/features/transactions/query.public";
 import { getTransferActivityCopy } from "@/features/transfers/lib/presentation";
 import { CATEGORY_MAP } from "@/shared/categories";
 import { TransactionRow } from "@/shared/components";
-import { ArrowLeftRight, Ellipsis } from "@/shared/components/icons";
 import { View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
@@ -49,7 +48,7 @@ const TransactionActivityItem = memo(function TransactionActivityItem({
       ) : null}
       <View className="px-4">
         <TransactionRow
-          icon={category?.icon ?? Ellipsis}
+          icon={category?.icon ?? "✨"}
           name={tx.description || t("common.unknown")}
           amount={formatSignedMoney(tx.amount, tx.type)}
           category={category ? getCategoryLabel(category, locale) : t("common.other")}
@@ -92,7 +91,7 @@ const TransferActivityItem = memo(function TransferActivityItem({
       ) : null}
       <View className="px-4">
         <TransactionRow
-          icon={ArrowLeftRight}
+          icon="↔️"
           iconBgColor={accentGreenLight}
           iconColor={accentGreen}
           name={title}

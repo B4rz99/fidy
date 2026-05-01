@@ -11,7 +11,7 @@ const MAX_UPCOMING_BILLS = 3;
 
 export function UpcomingBillsSection() {
   const { t, locale } = useTranslation();
-  const router = useRouter();
+  const { push } = useRouter();
   const bills = useCalendarStore((s) => s.bills);
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
@@ -22,17 +22,17 @@ export function UpcomingBillsSection() {
   const upcomingBills = useMemo(() => {
     const now = new Date();
     return bills
-      .filter((b) => b.isActive)
-      .map((bill) => ({
-        bill,
-        nextDate: getNextOccurrence(bill, now),
-      }))
+      .reduce<Array<{ readonly bill: (typeof bills)[number]; readonly nextDate: Date }>>(
+        (items, bill) =>
+          bill.isActive ? [...items, { bill, nextDate: getNextOccurrence(bill, now) }] : items,
+        []
+      )
       .sort((a, b) => a.nextDate.getTime() - b.nextDate.getTime())
       .slice(0, MAX_UPCOMING_BILLS);
   }, [bills]);
 
   const handleSeeAll = () => {
-    router.push("/bills-calendar");
+    push("/bills-calendar");
   };
 
   return (
@@ -56,7 +56,6 @@ export function UpcomingBillsSection() {
         <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
           {upcomingBills.map(({ bill, nextDate }, index) => {
             const category = CATEGORY_MAP[bill.categoryId] ?? null;
-            const CategoryIcon = category?.icon;
             const categoryLabel = category ? getCategoryLabel(category, locale) : bill.categoryId;
 
             return (
@@ -68,7 +67,7 @@ export function UpcomingBillsSection() {
                 ]}
               >
                 <View style={styles.billInfo}>
-                  {category && CategoryIcon && <CategoryIcon size={16} color={category.color} />}
+                  {category ? <Text style={{ color: category.color }}>{category.icon}</Text> : null}
                   <View>
                     <Text style={[styles.billName, { color: primaryColor }]}>{bill.name}</Text>
                     <Text style={[styles.billDate, { color: secondaryColor }]}>

@@ -163,6 +163,22 @@ describe("financial account management service", () => {
     expectManualIdentifier(result.account.id);
   });
 
+  it("does not persist manual identifiers for cash accounts", () => {
+    const service = createService();
+    const result = service.createAccount(
+      createAccountInput({
+        name: "Cash drawer",
+        kind: "cash" as const,
+        manualIdentifierValue: "Efectivo",
+      })
+    );
+
+    expect(getFinancialAccountById(db as any, result.account.id)).toMatchObject({
+      kind: "cash",
+    });
+    expect(getFinancialAccountIdentifiersForAccount(db as any, result.account.id)).toEqual([]);
+  });
+
   it("allows creating a credit-card account without a billing profile and reports the gap", () => {
     const service = createFinancialAccountManagementService({
       now: () => "2026-04-19T12:00:00.000Z" as IsoDateTime,

@@ -87,7 +87,6 @@ export function BudgetSetupStep() {
           <View style={styles.list}>
             {autoSuggestions.map((suggestion) => {
               const category = CATEGORY_MAP[suggestion.categoryId] ?? null;
-              const CategoryIcon = category?.icon;
               const categoryLabel = category
                 ? getCategoryLabel(category, locale)
                 : suggestion.categoryId;
@@ -96,8 +95,8 @@ export function BudgetSetupStep() {
               return (
                 <View key={suggestion.categoryId} style={[styles.row, { borderColor }]}>
                   <View style={styles.rowLeft}>
-                    {category && CategoryIcon ? (
-                      <CategoryIcon size={18} color={category.color} />
+                    {category ? (
+                      <Text style={{ color: category.color }}>{category.icon}</Text>
                     ) : null}
                     <View>
                       <Text style={[styles.categoryName, { color: primaryColor }]}>

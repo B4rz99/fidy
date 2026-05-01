@@ -3,6 +3,7 @@ import { TriangleAlert } from "@/shared/components/icons";
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
+import { canFinancialAccountHaveIdentifiers } from "../../lib/kind";
 import {
   FinancialAccountDetailSection,
   FinancialAccountFieldRow,
@@ -126,10 +127,12 @@ export function FinancialAccountDetailsScreenContent({
           </FinancialAccountDetailSection>
         ) : null}
 
-        <FinancialAccountIdentifiersSection
-          identifiers={details.identifiers}
-          onManageIdentifiers={onManageIdentifiers}
-        />
+        {canFinancialAccountHaveIdentifiers(kind) ? (
+          <FinancialAccountIdentifiersSection
+            identifiers={details.identifiers}
+            onManageIdentifiers={onManageIdentifiers}
+          />
+        ) : null}
 
         <Pressable
           style={[styles.primaryButton, { backgroundColor: accentGreen }]}

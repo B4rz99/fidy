@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import { ScreenLayout, SettingsSection, TAB_BAR_CLEARANCE } from "@/shared/components";
-import type { LucideIcon } from "@/shared/components/icons";
 import { Plus } from "@/shared/components/icons";
 import {
   Pressable,
@@ -24,13 +23,13 @@ const resolveIconColor = (color: string, isDark: boolean): string =>
 // ─── Category row with custom icon color ────────────────────────────
 
 type CategoryRowProps = {
-  icon: LucideIcon;
+  icon: string;
   label: string;
   color: string;
   isLast: boolean;
 };
 
-function CategoryRow({ icon: Icon, label, color, isLast }: CategoryRowProps) {
+function CategoryRow({ icon, label, color, isLast }: CategoryRowProps) {
   const borderColor = useThemeColor("borderSubtle");
 
   return (
@@ -43,7 +42,7 @@ function CategoryRow({ icon: Icon, label, color, isLast }: CategoryRowProps) {
         },
       ]}
     >
-      <Icon size={24} color={color} />
+      <Text style={[styles.categoryEmoji, { color }]}>{icon}</Text>
       <Text
         className="font-poppins text-sm text-primary dark:text-primary-dark"
         style={{ flex: 1 }}
@@ -57,7 +56,7 @@ function CategoryRow({ icon: Icon, label, color, isLast }: CategoryRowProps) {
 // ─── Main screen ────────────────────────────────────────────────────
 
 export function CategoriesScreen() {
-  const router = useRouter();
+  const { back, push } = useRouter();
   const { t, locale } = useTranslation();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -68,11 +67,11 @@ export function CategoriesScreen() {
   const customCategories = useCategoriesStore((s) => s.custom);
 
   const handleAddPress = useCallback(() => {
-    router.push("/create-category");
-  }, [router]);
+    push("/create-category");
+  }, [push]);
 
   return (
-    <ScreenLayout variant="sub" title={t("categories.title")} onBack={() => router.back()}>
+    <ScreenLayout variant="sub" title={t("categories.title")} onBack={back}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={styles.scrollContent}
@@ -144,6 +143,9 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
+  },
+  categoryEmoji: {
+    fontSize: 24,
   },
   emptyContainer: {
     height: 80,

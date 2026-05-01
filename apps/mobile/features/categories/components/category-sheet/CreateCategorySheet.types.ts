@@ -1,5 +1,3 @@
-import type { LucideIcon } from "@/shared/components/icons";
-
 export type CreateCategorySheetViewModel = {
   readonly canSubmit: boolean;
   readonly handleCreate: () => void;
@@ -7,7 +5,7 @@ export type CreateCategorySheetViewModel = {
   readonly handleColorSelect: (color: string) => void;
   readonly isBusy: boolean;
   readonly name: string;
-  readonly previewIcon: LucideIcon;
+  readonly previewIcon: string;
   readonly selectedColor: string | null;
   readonly selectedIcon: string | null;
   readonly setName: (name: string) => void;
