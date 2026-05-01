@@ -3,7 +3,6 @@ import { makeDateLabel } from "@/features/transactions/display.public";
 import type { StoredTransaction } from "@/features/transactions/query.public";
 import { CATEGORY_MAP } from "@/shared/categories";
 import { TransactionRow } from "@/shared/components";
-import { Ellipsis } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
@@ -37,7 +36,7 @@ export const SearchTransactionItem = memo(function SearchTransactionItem({
       ) : null}
       <View className="px-4">
         <TransactionRow
-          icon={category?.icon ?? Ellipsis}
+          icon={category?.icon ?? "✨"}
           name={tx.description || t("common.unknown")}
           amount={formatSignedMoney(tx.amount, tx.type)}
           category={category ? getCategoryLabel(category, locale) : t("common.other")}

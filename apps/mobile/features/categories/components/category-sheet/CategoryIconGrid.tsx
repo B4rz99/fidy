@@ -1,6 +1,5 @@
 import { memo, useCallback } from "react";
-import type { LucideIcon } from "@/shared/components/icons";
-import { FlatList, Pressable, View } from "@/shared/components/rn";
+import { FlatList, Pressable, Text, View } from "@/shared/components/rn";
 import { SELECTABLE_ICONS } from "../../lib/icon-map";
 import { styles } from "./CreateCategorySheet.styles";
 
@@ -18,7 +17,7 @@ type CategoryIconGridProps = {
 type IconCellProps = {
   readonly accentGreen: string;
   readonly borderColor: string;
-  readonly icon: LucideIcon;
+  readonly icon: string;
   readonly isSelected: boolean;
   readonly name: string;
   readonly onPress: (name: string) => void;
@@ -29,7 +28,7 @@ type IconCellProps = {
 const IconCell = memo(function IconCell({
   accentGreen,
   borderColor,
-  icon: Icon,
+  icon,
   isSelected,
   name,
   onPress,
@@ -51,7 +50,7 @@ const IconCell = memo(function IconCell({
           },
         ]}
       >
-        <Icon size={20} color={iconColor} />
+        <Text style={{ color: iconColor }}>{icon}</Text>
       </View>
     </Pressable>
   );

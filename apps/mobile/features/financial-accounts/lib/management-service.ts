@@ -23,6 +23,7 @@ import {
   type UpdateAccountInput,
 } from "./management-service/types";
 import { planAccountUpdate } from "./management-service/update-plan";
+import { canFinancialAccountHaveIdentifiers, readFinancialAccountKind } from "./kind";
 import { getOpeningBalanceForAccount } from "./opening-balances-repository";
 import { getFinancialAccountById } from "./repository";
 
@@ -76,6 +77,10 @@ function addManualIdentifier(
     getFinancialAccountById(input.db, input.accountId),
     input.userId
   );
+
+  if (!canFinancialAccountHaveIdentifiers(readFinancialAccountKind(account.kind))) {
+    return;
+  }
 
   persistManualIdentifier({
     db: input.db,

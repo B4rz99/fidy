@@ -14,7 +14,7 @@ vi.mock("@/features/categories/lib/repository", () => ({
 // Mock the icon-map
 vi.mock("@/features/categories/lib/icon-map", () => ({
   // biome-ignore lint/style/useNamingConvention: mirrors the actual ICON_MAP export
-  ICON_MAP: { Zap: () => null, PawPrint: () => null, ShoppingCart: () => null },
+  ICON_MAP: { Zap: "⚡", PawPrint: "🐾", ShoppingCart: "🛒" },
 }));
 
 // Mock shared/lib - the store imports from the barrel

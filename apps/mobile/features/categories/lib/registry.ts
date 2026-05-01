@@ -1,5 +1,4 @@
 import { CATEGORIES, CATEGORY_ROWS, type Category } from "@/shared/categories";
-import { Ellipsis } from "@/shared/components/icons";
 import { requireCategoryId } from "@/shared/types/assertions";
 import { ICON_MAP } from "./icon-map";
 
@@ -25,7 +24,7 @@ export type CategoryRegistrySnapshot = {
 const toCustomCategory = (row: CategoryRegistryRow): Category => ({
   id: requireCategoryId(row.id),
   label: { en: row.name, es: row.name },
-  icon: ICON_MAP[row.iconName] ?? Ellipsis,
+  icon: ICON_MAP[row.iconName] ?? "✨",
   color: row.colorHex,
 });
 

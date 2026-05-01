@@ -1,6 +1,5 @@
 import { useRouter } from "expo-router";
 import { useOptionalUserId } from "@/features/auth/public";
-import { Ellipsis } from "@/shared/components/icons";
 import { useAsyncGuard } from "@/shared/hooks";
 import { ICON_MAP } from "../../lib/icon-map";
 import type { CreateCategorySheetViewModel } from "./CreateCategorySheet.types";
@@ -8,7 +7,7 @@ import { useCreateCategoryDraft } from "./useCreateCategoryDraft";
 import { useCreateCategorySubmit } from "./useCreateCategorySubmit";
 
 function resolvePreviewIcon(selectedIcon: string | null) {
-  return selectedIcon ? (ICON_MAP[selectedIcon] ?? Ellipsis) : Ellipsis;
+  return selectedIcon ? (ICON_MAP[selectedIcon] ?? "✨") : "✨";
 }
 
 export function useCreateCategorySheet(): CreateCategorySheetViewModel {

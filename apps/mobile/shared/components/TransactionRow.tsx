@@ -1,10 +1,9 @@
 import { useCallback } from "react";
-import type { LucideIcon } from "@/shared/components/icons";
 import { ActionSheetIOS, Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 type TransactionRowProps = {
-  icon: LucideIcon;
+  icon: string;
   iconBgColor?: string;
   iconColor?: string;
   name: string;
@@ -18,7 +17,7 @@ type TransactionRowProps = {
 };
 
 export function TransactionRow({
-  icon: Icon,
+  icon,
   iconBgColor,
   iconColor: iconColorOverride,
   name,
@@ -71,7 +70,7 @@ export function TransactionRow({
         className="h-10 w-10 items-center justify-center rounded-icon"
         style={{ backgroundColor: iconBgColor ?? defaultIconBg }}
       >
-        <Icon size={20} color={iconColor} />
+        <Text style={{ color: iconColor }}>{icon}</Text>
       </View>
       <View className="ml-3 flex-1">
         <Text className="font-poppins-medium text-body text-primary dark:text-primary-dark">

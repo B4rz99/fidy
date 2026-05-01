@@ -2,7 +2,7 @@ import * as Haptics from "expo-haptics";
 import { memo } from "react";
 import { CATEGORIES, CATEGORY_ROWS, type Category } from "@/shared/categories";
 import { Check } from "@/shared/components/icons";
-import { Pressable, View } from "@/shared/components/rn";
+import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 
@@ -15,19 +15,18 @@ const FilterPill = memo(
   ({
     category,
     isSelected,
-    onPress,
+    onToggle,
   }: {
     category: Category;
     isSelected: boolean;
-    onPress: () => void;
+    onToggle: (categoryId: string) => void;
   }) => {
     const { locale } = useTranslation();
     const peachLight = useThemeColor("peachLight");
-    const Icon = category.icon;
 
     const handlePress = () => {
       void Haptics.selectionAsync();
-      onPress();
+      onToggle(category.id);
     };
 
     return (
@@ -39,11 +38,7 @@ const FilterPill = memo(
         accessibilityState={{ selected: isSelected }}
         accessibilityLabel={getCategoryLabel(category, locale)}
       >
-        {isSelected ? (
-          <Check size={16} color="#FFFFFF" />
-        ) : (
-          <Icon size={16} color={category.color} />
-        )}
+        {isSelected ? <Check size={16} color="#FFFFFF" /> : <Text>{category.icon}</Text>}
       </Pressable>
     );
   }
@@ -60,7 +55,7 @@ export const CategoryFilter = ({ selectedIds, onToggle }: CategoryFilterProps) =
             key={cat.id}
             category={cat}
             isSelected={selectedIds.includes(cat.id)}
-            onPress={() => onToggle(cat.id)}
+            onToggle={onToggle}
           />
         ))}
       </View>

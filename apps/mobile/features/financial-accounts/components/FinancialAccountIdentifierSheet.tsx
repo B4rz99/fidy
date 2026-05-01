@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { createFinancialAccountManagementService } from "@/features/financial-accounts/lib/management-service";
 import { parseFinancialAccountRouteParam } from "@/features/financial-accounts/lib/route-params";
+import { canFinancialAccountHaveIdentifiers, readFinancialAccountKind } from "../lib/kind";
 import { ScreenLayout } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -12,7 +13,7 @@ import { showErrorToast } from "@/shared/lib";
 const managementService = createFinancialAccountManagementService();
 
 export function FinancialAccountIdentifierSheet() {
-  const router = useRouter();
+  const { back } = useRouter();
   const { accountId: rawAccountId } = useLocalSearchParams<{ accountId?: string }>();
   const accountId = parseFinancialAccountRouteParam(rawAccountId);
   const { t } = useTranslation();
@@ -28,8 +29,29 @@ export function FinancialAccountIdentifierSheet() {
   const [value, setValue] = useState("");
   const { isBusy, run: guardedSave } = useAsyncGuard();
 
-  if (!accountId) {
-    return null;
+  const accountDetails =
+    db && accountId ? managementService.getAccountDetails({ db, accountId }) : null;
+  const accountCanHaveIdentifiers = accountDetails
+    ? canFinancialAccountHaveIdentifiers(readFinancialAccountKind(accountDetails.account.kind))
+    : false;
+
+  if (!accountId || !accountDetails || !accountCanHaveIdentifiers) {
+    return (
+      <ScreenLayout
+        title={t("financialAccounts.identifierSheet.title")}
+        variant="sub"
+        onBack={back}
+      >
+        <View style={styles.stateContainer}>
+          <Text style={[styles.stateTitle, { color: primary }]}>
+            {t("financialAccounts.form.missingTitle")}
+          </Text>
+          <Text style={[styles.stateBody, { color: secondary }]}>
+            {t("financialAccounts.form.missingBody")}
+          </Text>
+        </View>
+      </ScreenLayout>
+    );
   }
 
   const handleSave = () => {
@@ -45,7 +67,7 @@ export function FinancialAccountIdentifierSheet() {
           accountId,
           value,
         });
-        router.back();
+        back();
       } catch {
         showErrorToast(t("financialAccounts.identifierSheet.saveFailed"));
       }
@@ -53,11 +75,7 @@ export function FinancialAccountIdentifierSheet() {
   };
 
   return (
-    <ScreenLayout
-      title={t("financialAccounts.identifierSheet.title")}
-      variant="sub"
-      onBack={() => router.back()}
-    >
+    <ScreenLayout title={t("financialAccounts.identifierSheet.title")} variant="sub" onBack={back}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={styles.content}
@@ -159,5 +177,20 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontFamily: "Poppins_700Bold",
     fontSize: 14,
+  },
+  stateContainer: {
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 24,
+    gap: 10,
+  },
+  stateTitle: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 18,
+  },
+  stateBody: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 13,
+    lineHeight: 20,
   },
 });

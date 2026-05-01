@@ -14,7 +14,7 @@ export function CreateCategorySheetContent({
   handleIconSelect,
   isBusy,
   name,
-  previewIcon: PreviewIcon,
+  previewIcon,
   selectedColor,
   selectedIcon,
   setName,
@@ -44,7 +44,7 @@ export function CreateCategorySheetContent({
 
       <View style={styles.previewRow}>
         <View style={[styles.previewPill, { backgroundColor: selectedColor ?? accentGreen }]}>
-          <PreviewIcon size={20} color="#FFFFFF" />
+          <Text>{previewIcon}</Text>
           <Text style={styles.previewText}>
             {trimmedName.length > 0 ? trimmedName : t("categories.create.namePlaceholder")}
           </Text>

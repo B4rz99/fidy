@@ -10,7 +10,6 @@ import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { nextBudgetMonth, prevBudgetMonth, useBudgetStore } from "../store";
 import { BudgetCard } from "./BudgetCard";
 import { BudgetSummaryCard } from "./BudgetSummaryCard";
-import { UpcomingBillsSection } from "./UpcomingBillsSection";
 
 function AddBudgetButton({ onPress }: { readonly onPress: () => void }) {
   const primaryColor = useThemeColor("primary");
@@ -24,7 +23,7 @@ function AddBudgetButton({ onPress }: { readonly onPress: () => void }) {
 
 export function BudgetListScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
+  const { push } = useRouter();
 
   const currentMonth = useBudgetStore((s) => s.currentMonth);
   const budgets = useBudgetStore((s) => s.budgets);
@@ -40,9 +39,9 @@ export function BudgetListScreen() {
   useSubscription(
     () => {
       clearPendingPermissionRequest();
-      router.push("/enable-notifications");
+      push("/enable-notifications");
     },
-    [pendingPermissionRequest, clearPendingPermissionRequest, router],
+    [pendingPermissionRequest, clearPendingPermissionRequest, push],
     pendingPermissionRequest
   );
 
@@ -57,7 +56,7 @@ export function BudgetListScreen() {
   );
 
   const handleAddBudget = () => {
-    router.push("/create-budget");
+    push("/create-budget");
   };
 
   const handleNextMonth = useCallback(() => {
@@ -75,18 +74,18 @@ export function BudgetListScreen() {
   }, [userId]);
 
   const handleAutoSetup = () => {
-    router.push("/auto-suggest-budgets");
+    push("/auto-suggest-budgets");
   };
 
   const handleCreateManually = () => {
-    router.push("/create-budget");
+    push("/create-budget");
   };
 
   const handleBudgetPress = useCallback(
     (budgetId: string) => {
-      router.push({ pathname: "/create-budget", params: { budgetId } });
+      push({ pathname: "/create-budget", params: { budgetId } });
     },
-    [router]
+    [push]
   );
 
   const hasBudgets = budgets.length > 0;
@@ -125,8 +124,6 @@ export function BudgetListScreen() {
                   onPress={handleBudgetPress}
                 />
               ))}
-
-              <UpcomingBillsSection />
             </View>
           ) : (
             <View style={styles.emptyState}>
