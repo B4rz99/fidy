@@ -13,6 +13,7 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 import type { RawEmail } from "../../schema";
+import type { ParseContext } from "../create-parse-email-service";
 import type { LlmParsedTransaction } from "../llm-parser";
 
 export type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
@@ -50,7 +51,11 @@ export type RetryResult = {
 };
 
 export type CreateEmailPipelineServiceDeps = {
-  readonly parseEmailApi: (body: string) => Promise<LlmParsedTransaction | null>;
+  readonly parseEmailApi: (
+    body: string,
+    options?: { readonly parseContext?: ParseContext }
+  ) => Promise<LlmParsedTransaction | null>;
+  readonly parseContext?: ParseContext;
   readonly lookupMerchantRule: (
     db: AnyDb,
     userId: UserId,
@@ -88,8 +93,12 @@ export type CreateEmailPipelineServiceDeps = {
   }) => Promise<void>;
   readonly buildEmailCaptureEvidence: (input: {
     readonly from: string;
+    readonly body?: string;
     readonly fromAccountHint?: string;
     readonly toAccountHint?: string;
+    readonly cardProductHint?: string;
+    readonly accountTypeHint?: string;
+    readonly counterpartyHint?: string;
   }) => readonly CaptureEvidenceSeed[];
   readonly saveCaptureEvidenceRows: (
     db: AnyDb,
@@ -125,6 +134,7 @@ export type CreateEmailPipelineServiceDeps = {
   readonly telemetry?: AppTelemetry;
   readonly parseRateLimit?: {
     readonly delayMs?: number;
+    readonly concurrency?: number;
     readonly sleep?: (delayMs: number) => Promise<void>;
   };
 };

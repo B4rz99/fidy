@@ -1,3 +1,4 @@
+import { htmlToPlainText } from "@/shared/lib/html-to-text";
 import type { RawEmail } from "../schema";
 
 export type OutlookMessage = {
@@ -25,7 +26,7 @@ export function toRawOutlookEmail(message: OutlookMessage): RawEmail {
     externalId: message.id,
     from: message.from.emailAddress.address,
     subject: message.subject,
-    body: message.body.content,
+    body: htmlToPlainText(message.body.content),
     receivedAt: message.receivedDateTime,
     provider: "outlook",
   };

@@ -10,6 +10,9 @@ export const llmOutputSchema = z.object({
   confidence: z.number().min(0).max(1),
   fromAccountHint: z.string().optional(),
   toAccountHint: z.string().optional(),
+  cardProductHint: z.string().optional(),
+  accountTypeHint: z.string().optional(),
+  counterpartyHint: z.string().optional(),
 });
 
 export type LlmParsedTransaction = z.infer<typeof llmOutputSchema>;

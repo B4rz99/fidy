@@ -33,6 +33,7 @@ export type PipelineRuntime = {
   ) => Promise<A>;
   readonly parseRateLimit: {
     readonly delayMs: number;
+    readonly concurrency: number;
     readonly sleep: (delayMs: number) => Promise<void>;
   };
 };
@@ -40,15 +41,23 @@ export type PipelineRuntime = {
 export type CaptureEvidenceRowsInput = {
   readonly userId: UserId;
   readonly from: string;
+  readonly body?: string;
   readonly fromAccountHint?: string;
   readonly toAccountHint?: string;
+  readonly cardProductHint?: string;
+  readonly accountTypeHint?: string;
+  readonly counterpartyHint?: string;
   readonly processedEmailId: ProcessedEmailId;
   readonly transactionId: TransactionId | null;
   readonly now: IsoDateTime;
   readonly buildEmailCaptureEvidence: (input: {
     readonly from: string;
+    readonly body?: string;
     readonly fromAccountHint?: string;
     readonly toAccountHint?: string;
+    readonly cardProductHint?: string;
+    readonly accountTypeHint?: string;
+    readonly counterpartyHint?: string;
   }) => readonly CaptureEvidenceSeed[];
 };
 
@@ -167,6 +176,8 @@ export type EmailBatchContext = {
   readonly total: number;
   readonly onProgress?: ProgressCallback;
   completed: number;
+  parseStarts: number;
+  parseStartGate: Promise<void>;
 };
 
 export type RetryBatchContext = {

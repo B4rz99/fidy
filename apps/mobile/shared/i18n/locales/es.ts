@@ -73,10 +73,14 @@ const es = {
       skipForNow: "Omitir",
       confidenceHigh: "ALTA",
       confidenceMedium: "MEDIA",
-      reasonLast4: "%{source} terminado en %{value} apareció en %{count} capturas.",
+      reasonLast4: "Encontramos esta tarjeta terminada en %{value}.",
       reasonAlias: "%{source} y %{value} aparecieron juntos en %{count} capturas.",
       reasonCardHint:
         "Las pistas de tarjeta de %{source} para %{value} aparecieron en %{count} capturas.",
+      reasonCardProduct:
+        "Vimos varias veces %{source} %{evidence}. Confirma si es una de tus tarjetas.",
+      reasonAccountType:
+        "Vimos varias veces %{source} %{evidence}. Confirma antes de crear una cuenta.",
     },
     create: {
       title: "Crear cuenta",
@@ -945,9 +949,14 @@ const es = {
       alreadyHaveAccount: "Ya tengo una cuenta",
     },
     connectEmail: {
-      title: "Conecta tu correo",
+      title: "Conecta tus correos",
       description:
-        "Escanearemos tu bandeja de entrada en busca de correos bancarios y capturaremos transacciones automáticamente.",
+        "Conecta cada bandeja donde recibas correos de bancos o tarjetas. Puedes sincronizar después de una cuenta o agregar otra primero.",
+      connectGmail: "Conectar Gmail",
+      connectOutlook: "Conectar Outlook",
+      gmailConnected: "Gmail conectado",
+      outlookConnected: "Outlook conectado",
+      syncConnectedEmails: "Sincronizar correos conectados",
       trustBadge: "Tus datos se quedan en tu dispositivo",
       skipForNow: "Omitir por ahora",
     },
@@ -959,6 +968,7 @@ const es = {
       },
       recentCaptures: "Capturas recientes",
       helperText: "Esto puede tomar un momento",
+      backgroundHelperText: "Ya puedes continuar. Seguiremos importando el resto en segundo plano.",
       continue: "Continuar",
     },
     budgetSetup: {

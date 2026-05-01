@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/useNamingConvention: Gmail API uses snake_case
 import { captureError, captureWarning } from "@/shared/lib";
+import { htmlToPlainText } from "@/shared/lib/html-to-text";
 import type { RawEmail } from "../schema";
 
 type GmailHeader = { name: string; value: string };
@@ -82,21 +83,8 @@ const extractBodyText = (payload: GmailPayload): string => {
   if (plain) return plain;
 
   const html = findPartByMime(payload.parts, "text/html");
-  return html ? stripHtml(html) : "";
+  return html ? htmlToPlainText(html) : "";
 };
-
-const stripHtml = (html: string): string =>
-  html
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&#?\w+;/gi, "")
-    .replace(/\s+/g, " ")
-    .trim();
 
 const decodeBase64Url = (data: string): string => {
   try {

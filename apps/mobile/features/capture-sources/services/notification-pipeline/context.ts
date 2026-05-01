@@ -59,6 +59,8 @@ export async function parseNotificationWithLlm(
         confidence: llm.confidence,
         fromAccountHint: llm.fromAccountHint,
         toAccountHint: llm.toAccountHint,
+        cardProductHint: llm.cardProductHint,
+        accountTypeHint: llm.accountTypeHint,
       }
     : null;
 }
@@ -75,6 +77,8 @@ export function appendParsedNotificationEvidence(
         notification: context.notification,
         fromAccountHint: parsed.fromAccountHint,
         toAccountHint: parsed.toAccountHint,
+        cardProductHint: parsed.cardProductHint,
+        accountTypeHint: parsed.accountTypeHint,
       }),
     ],
   };

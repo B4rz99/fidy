@@ -43,11 +43,16 @@ Rules:
 - All amounts are in Colombian Pesos (COP). Commas and dots are thousands separators. Return amount as whole pesos (integer, no centavos). Examples: 7,500 = 7500, 50,000 = 50000.
 - amount: amount in whole pesos (integer)
 - description: ONLY the merchant/business name, cleaned up (e.g. "EDS La Castellana", "Farmatodo", "MetLife Colombia")
+- merchant/payee goes in description, never in account fields.
 - date: transaction date in YYYY-MM-DD
 - confidence: 0 to 1
 - type: "expense" for purchases/payments, "income" for deposits/transfers received
-- fromAccountHint: source account/card/wallet hint exactly as described by the bank, or null when absent. Prefer semantic labels like "Bancolombia credit card" over guessing card digits. Do not infer a last-4 unless the message explicitly says it is the account/card ending.
-- toAccountHint: destination account/card/wallet hint exactly as described by the bank, or null when absent.
+- fromAccountHint: legacy source account/card/wallet hint exactly as described by the bank, or null when absent.
+- toAccountHint: legacy destination account/card/wallet hint exactly as described by the bank, or null when absent.
+- cardProductHint: card or account product name only when explicitly described, such as "Visa Oro" or "Mastercard Black"; if unsure, return null.
+- accountTypeHint: generic payment instrument/account type only, such as "credit card", "savings account", or "wallet"; if unsure, return null.
+- counterpartyHint: merchant/payee/counterparty name only, or null when absent.
+- Account fields only contain payment instrument/account descriptions. Do not put merchants, payees, stores, apps, counterparties, authorization numbers, amounts, or dates in account fields.
 
 Category guide — pick based on the MERCHANT NAME:
 ${CATEGORY_GUIDE}`;
@@ -65,11 +70,16 @@ The text is short (1-2 lines). Apply the same rules:
 - All amounts are in Colombian Pesos (COP). Commas and dots are thousands separators. Return amount as whole pesos (integer, no centavos).
 - amount: amount in whole pesos (integer)
 - description: ONLY the merchant/business name, cleaned up
+- merchant/payee goes in description, never in account fields.
 - date: transaction date in YYYY-MM-DD (use today if not stated)
 - confidence: 0 to 1
 - type: "expense" for purchases/payments, "income" for deposits/transfers received
-- fromAccountHint: source account/card/wallet hint exactly as described by the notification, or null when absent. Prefer semantic labels like "Bancolombia credit card" over guessing card digits. Do not infer a last-4 unless the notification explicitly says it is the account/card ending.
-- toAccountHint: destination account/card/wallet hint exactly as described by the notification, or null when absent.
+- fromAccountHint: legacy source account/card/wallet hint exactly as described by the notification, or null when absent.
+- toAccountHint: legacy destination account/card/wallet hint exactly as described by the notification, or null when absent.
+- cardProductHint: card or account product name only when explicitly described, such as "Visa Oro" or "Mastercard Black"; if unsure, return null.
+- accountTypeHint: generic payment instrument/account type only, such as "credit card", "savings account", or "wallet"; if unsure, return null.
+- counterpartyHint: merchant/payee/counterparty name only, or null when absent.
+- Account fields only contain payment instrument/account descriptions. Do not put merchants, payees, stores, apps, counterparties, authorization numbers, amounts, or dates in account fields.
 
 Category guide — pick based on the MERCHANT NAME:
 ${CATEGORY_GUIDE}`;
@@ -103,6 +113,9 @@ const CAPTURE_INTERPRETER_SCHEMA = {
       reason: { type: ["string", "null"] },
       fromAccountHint: { type: ["string", "null"] },
       toAccountHint: { type: ["string", "null"] },
+      cardProductHint: { type: ["string", "null"] },
+      accountTypeHint: { type: ["string", "null"] },
+      counterpartyHint: { type: ["string", "null"] },
     },
     required: [
       "kind",
@@ -115,6 +128,9 @@ const CAPTURE_INTERPRETER_SCHEMA = {
       "reason",
       "fromAccountHint",
       "toAccountHint",
+      "cardProductHint",
+      "accountTypeHint",
+      "counterpartyHint",
     ],
     additionalProperties: false,
   },
@@ -125,8 +141,12 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
   Deno.env.get("SUPABASE_ANON_KEY") ?? ""
 );
-const LLM_TEMPERATURE = 0;
 const LLM_SEED = 0;
+const DEFAULT_RATE_LIMIT_PER_MINUTE = 20;
+
+function getParseRateLimit() {
+  return { key: "parse-email", limit: DEFAULT_RATE_LIMIT_PER_MINUTE };
+}
 
 function jsonResponse(
   body: unknown,
@@ -154,6 +174,25 @@ function structuredLog(fields: {
       timestamp: new Date().toISOString(),
     })
   );
+}
+
+function readErrorField(err: unknown, field: "status" | "code" | "param" | "type"): string {
+  if (typeof err !== "object" || err === null || !(field in err)) return "";
+  const value = (err as Record<string, unknown>)[field];
+  return typeof value === "string" || typeof value === "number" ? String(value) : "";
+}
+
+function classifyInternalError(err: unknown): string {
+  const status = readErrorField(err, "status");
+  const code = readErrorField(err, "code");
+  const param = readErrorField(err, "param");
+  const type = readErrorField(err, "type");
+
+  if (status || code || param || type) {
+    return ["openai_error", status, code, param, type].filter(Boolean).join(":");
+  }
+
+  return err instanceof Error ? err.name : "unknown_error";
 }
 
 Deno.serve(async (req) => {
@@ -193,22 +232,6 @@ Deno.serve(async (req) => {
     }
 
     userId = user.id;
-
-    // Rate limit: 20 requests per minute per user
-    const rateResult = await checkRateLimit(userId, "parse-email", 20);
-    if (!rateResult.allowed) {
-      structuredLog({
-        request_id: requestId,
-        user_id: userId,
-        mode: "",
-        success: false,
-        latency_ms: Date.now() - startTime,
-        error_type: "rate_limited",
-      });
-      return jsonResponse({ success: false, error: "rate_limited" }, 429, {
-        "Retry-After": String(rateResult.retryAfterSeconds),
-      });
-    }
 
     // Body size limit: 10KB
     const bodyResult = await readBodyWithLimit(req);
@@ -269,6 +292,22 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: "invalid_request" }, 400);
     }
 
+    const rateLimit = getParseRateLimit();
+    const rateResult = await checkRateLimit(userId, rateLimit.key, rateLimit.limit);
+    if (!rateResult.allowed) {
+      structuredLog({
+        request_id: requestId,
+        user_id: userId,
+        mode,
+        success: false,
+        latency_ms: Date.now() - startTime,
+        error_type: "rate_limited",
+      });
+      return jsonResponse({ success: false, error: "rate_limited" }, 429, {
+        "Retry-After": String(rateResult.retryAfterSeconds),
+      });
+    }
+
     const systemPrompt =
       mode === "classify"
         ? CLASSIFY_SYSTEM
@@ -286,7 +325,6 @@ Deno.serve(async (req) => {
         { role: "system", content: systemPrompt },
         { role: "user", content: truncatedBody },
       ],
-      temperature: LLM_TEMPERATURE,
       seed: LLM_SEED,
       response_format: { type: "json_schema", json_schema: jsonSchema },
     });
@@ -318,15 +356,18 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ success: true, data });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const errorType = classifyInternalError(err);
     structuredLog({
       request_id: requestId,
       user_id: userId,
       mode,
       success: false,
       latency_ms: Date.now() - startTime,
-      error_type: message,
+      error_type: errorType,
     });
+    if (errorType.startsWith("openai_error")) {
+      return jsonResponse({ success: false, error: errorType }, 200);
+    }
     return jsonResponse({ success: false, error: "internal_error" }, 500);
   }
 });

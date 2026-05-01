@@ -40,6 +40,10 @@ pre-push:
       files: git ls-files
       run: bun run lint:complexity
       skip_output: false
+    file-size:
+      files: git ls-files
+      run: bun run lint:file-size
+      skip_output: false
     tests:
       files: git ls-files
       run: bun run test

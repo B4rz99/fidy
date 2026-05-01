@@ -18,6 +18,8 @@ import type { LlmParsedTransaction } from "./llm-parser";
 import { llmOutputSchema } from "./llm-parser";
 
 type ParseMode = "classify" | "full_parse" | "parse_notification";
+export type ParseContext = "default" | "initial_sync";
+export type ParseEmailOptions = { readonly parseContext?: ParseContext };
 type ParseFunctionResult<Response> = {
   readonly data?: Response | null;
   readonly error?: {
@@ -28,6 +30,7 @@ type ParseFunctionResult<Response> = {
 type ParseEmailResponse = {
   readonly success: boolean;
   readonly data?: unknown;
+  readonly error?: string;
 };
 
 type ClassifyResponse = {
@@ -54,22 +57,45 @@ const AUTHORIZATION_HEADER = "Authorization";
 
 export type ParseEmailService = {
   readonly classifyMerchant: (merchant: string) => Promise<string>;
-  readonly parseEmail: (emailBody: string) => Promise<LlmParsedTransaction | null>;
+  readonly parseEmail: (
+    emailBody: string,
+    options?: ParseEmailOptions
+  ) => Promise<LlmParsedTransaction | null>;
   readonly parseNotification: (sanitizedText: string) => Promise<LlmParsedTransaction | null>;
 };
 
-function invokeParseEmailFunctionEffect<Response>(body: string, mode: ParseMode) {
+function invokeParseEmailFunctionEffect<Response>(
+  body: string,
+  mode: ParseMode,
+  options?: ParseEmailOptions
+) {
   return Effect.flatMap(currentSupabaseClientEffect, (supabase) =>
     fromPromise(async () => {
       const sessionResult = await supabase.auth?.getSession?.();
       const accessToken = sessionResult?.data.session?.access_token;
 
       return supabase.functions.invoke<Response>("parse-email", {
-        body: { body, mode },
+        body: {
+          body,
+          mode,
+          ...(options?.parseContext ? { parseContext: options.parseContext } : {}),
+        },
         ...(accessToken ? { headers: { [AUTHORIZATION_HEADER]: `Bearer ${accessToken}` } } : {}),
       });
     })
   );
+}
+
+function getParseApiErrorMessage(response: ParseFunctionResult<ParseEmailResponse>) {
+  return response.error?.message ?? response.data?.error ?? "unknown";
+}
+
+function createParseApiFailureResult(errorMessage: string, throwOnApiFailure: boolean) {
+  return throwOnApiFailure
+    ? Effect.fail(
+        new Error(errorMessage === "unknown" ? "parse-email request failed" : errorMessage)
+      )
+    : Effect.succeed(null);
 }
 
 function logParseApiFailureEffect(
@@ -77,14 +103,20 @@ function logParseApiFailureEffect(
   response: ParseFunctionResult<ParseEmailResponse>,
   throwOnApiFailure: boolean
 ) {
+  const errorMessage = getParseApiErrorMessage(response);
+  if (typeof __DEV__ !== "undefined" && __DEV__) {
+    console.info(`[email-capture] ${warningPrefix}_api_failed`, {
+      errorMessage,
+      hasData: response.data != null,
+    });
+  }
+
   return Effect.zipRight(
     captureWarningEffect(`${warningPrefix}_api_failed`, {
-      errorMessage: response.error?.message ?? "unknown",
+      errorMessage,
       hasData: response.data != null,
     }),
-    throwOnApiFailure
-      ? Effect.fail(new Error(response.error?.message ?? "parse-email request failed"))
-      : Effect.succeed(null)
+    createParseApiFailureResult(errorMessage, throwOnApiFailure)
   );
 }
 
@@ -161,10 +193,13 @@ function parseApiResponseEffect(
 }
 
 function parseTransactionEffect(
-  input: ParseTransactionInput & { readonly throwOnApiFailure: boolean }
+  input: ParseTransactionInput & {
+    readonly throwOnApiFailure: boolean;
+    readonly options?: ParseEmailOptions;
+  }
 ) {
   const request = Effect.catchAll(
-    invokeParseEmailFunctionEffect<ParseEmailResponse>(input.body, input.mode),
+    invokeParseEmailFunctionEffect<ParseEmailResponse>(input.body, input.mode, input.options),
     (error) =>
       input.throwOnApiFailure
         ? Effect.zipRight(logParseExceptionEffect(input.warningPrefix, error), Effect.fail(error))
@@ -223,7 +258,7 @@ export function createParseEmailService({
 
   return {
     classifyMerchant: (merchant) => runEffect(classifyMerchantEffect(merchant, validCategoryIds)),
-    parseEmail: (emailBody) =>
+    parseEmail: (emailBody, options) =>
       runEffect(
         parseTransactionEffect({
           body: emailBody,
@@ -231,6 +266,7 @@ export function createParseEmailService({
           warningPrefix: "parse_email",
           validCategoryIds,
           throwOnApiFailure,
+          options,
         })
       ),
     parseNotification: (sanitizedText) =>

@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { trackOnboardingEvent } from "@/features/onboarding/lib/telemetry";
 import { useOnboardingStore } from "@/features/onboarding/store";
@@ -7,10 +7,11 @@ import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useAccountSuggestions } from "../hooks/use-account-suggestions";
+import { getDeferredSuggestionReviewState } from "../lib/onboarding-review";
 import { AccountSuggestionCard } from "./AccountSuggestionCard";
 
 export function OnboardingAccountReviewStep() {
-  const router = useRouter();
+  const { push } = useRouter();
   const { t } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
@@ -21,6 +22,7 @@ export function OnboardingAccountReviewStep() {
     limit: 2,
   });
   const [deferredFingerprints, setDeferredFingerprints] = useState<readonly string[]>([]);
+  const deferredFingerprintsRef = useRef<readonly string[]>([]);
 
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
@@ -61,7 +63,7 @@ export function OnboardingAccountReviewStep() {
                   occurrences: item.occurrences,
                   confidenceScore: item.confidenceScore,
                 });
-                router.push({
+                push({
                   pathname: "/create-financial-account",
                   params: { fingerprint: item.fingerprint },
                 } as never);
@@ -72,7 +74,7 @@ export function OnboardingAccountReviewStep() {
                   occurrences: item.occurrences,
                   confidenceScore: item.confidenceScore,
                 });
-                router.push({
+                push({
                   pathname: "/link-suggested-account",
                   params: { fingerprint: item.fingerprint },
                 } as never);
@@ -83,7 +85,23 @@ export function OnboardingAccountReviewStep() {
                   occurrences: item.occurrences,
                   confidenceScore: item.confidenceScore,
                 });
-                setDeferredFingerprints((current) => [...current, item.fingerprint]);
+                const deferredState = getDeferredSuggestionReviewState({
+                  suggestions,
+                  deferredFingerprints: deferredFingerprintsRef.current,
+                  skippedFingerprint: item.fingerprint,
+                });
+                deferredFingerprintsRef.current = deferredState.deferredFingerprints;
+                setDeferredFingerprints(
+                  (current) =>
+                    getDeferredSuggestionReviewState({
+                      suggestions,
+                      deferredFingerprints: current,
+                      skippedFingerprint: item.fingerprint,
+                    }).deferredFingerprints
+                );
+                if (!deferredState.hasRemainingVisibleSuggestion) {
+                  nextStep();
+                }
               }}
             />
           ))}

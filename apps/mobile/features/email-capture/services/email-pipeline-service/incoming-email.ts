@@ -69,6 +69,7 @@ async function persistIncomingEmailRecord(input: IncomingEmailPersistenceInput) 
       db: input.context.db,
       userId: input.context.userId,
       from: input.email.from,
+      body: input.email.body,
       processedEmailId: input.processedEmailId,
       transactionId: input.transactionId,
       now: input.createdAt,

@@ -10,8 +10,63 @@ type RepeatedCaptureEvidence = {
 
 type SuggestionEvidenceType = Extract<
   CaptureEvidenceType,
-  "alias_token" | "card_hint" | "last4" | "llm_account_hint"
+  | "alias_token"
+  | "card_hint"
+  | "last4"
+  | "llm_account_hint"
+  | "card_product_hint"
+  | "account_type_hint"
 >;
+
+type SuggestionRow = RepeatedCaptureEvidence & { readonly evidenceType: SuggestionEvidenceType };
+
+const SUGGESTION_EVIDENCE_TYPES = new Set<SuggestionEvidenceType>([
+  "last4",
+  "card_hint",
+  "alias_token",
+  "llm_account_hint",
+  "card_product_hint",
+  "account_type_hint",
+]);
+
+const BASE_CONFIDENCE_BY_EVIDENCE_TYPE = new Map<SuggestionEvidenceType, number>([
+  ["last4", 100],
+  ["card_product_hint", 85],
+  ["card_hint", 80],
+  ["llm_account_hint", 70],
+  ["account_type_hint", 50],
+  ["alias_token", 60],
+]);
+
+const GENERIC_LLM_HINT_TERMS = new Set([
+  "account",
+  "card",
+  "credito",
+  "crédito",
+  "credit",
+  "cuenta",
+  "tarjeta",
+]);
+
+const ACCOUNT_LIKE_LLM_HINT_TERMS = new Set([
+  "account",
+  "ahorros",
+  "amex",
+  "black",
+  "card",
+  "checking",
+  "corriente",
+  "credito",
+  "credit",
+  "cuenta",
+  "debito",
+  "mastercard",
+  "oro",
+  "platinum",
+  "savings",
+  "tarjeta",
+  "visa",
+]);
 
 export type AccountCreationSuggestion = {
   readonly fingerprint: string;
@@ -24,12 +79,7 @@ export type AccountCreationSuggestion = {
 };
 
 function isSuggestionEvidenceType(value: string): value is SuggestionEvidenceType {
-  return (
-    value === "last4" ||
-    value === "card_hint" ||
-    value === "alias_token" ||
-    value === "llm_account_hint"
-  );
+  return SUGGESTION_EVIDENCE_TYPES.has(value as SuggestionEvidenceType);
 }
 
 export function createAccountSuggestionFingerprint(scope: string, value: string) {
@@ -37,14 +87,69 @@ export function createAccountSuggestionFingerprint(scope: string, value: string)
 }
 
 function toConfidenceScore(evidenceType: SuggestionEvidenceType, occurrences: number) {
-  const baseScore = (() => {
-    if (evidenceType === "last4") return 100;
-    if (evidenceType === "llm_account_hint") return 90;
-    if (evidenceType === "card_hint") return 80;
-    return 60;
-  })();
-
+  const baseScore = BASE_CONFIDENCE_BY_EVIDENCE_TYPE.get(evidenceType) ?? 60;
   return baseScore * occurrences;
+}
+
+function normalizeLlmHintToken(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function getHintCanonicalValue(row: SuggestionRow) {
+  if (row.evidenceType !== "llm_account_hint" && row.evidenceType !== "card_product_hint") {
+    return row.value;
+  }
+
+  const sourceTokens = new Set(row.sourceFamily.split(/[_\s-]+/).map(normalizeLlmHintToken));
+  const tokens = row.value
+    .split(/[^\p{L}\p{N}]+/u)
+    .map(normalizeLlmHintToken)
+    .filter((token) => token.length > 0)
+    .filter((token) => !sourceTokens.has(token))
+    .filter((token) => !GENERIC_LLM_HINT_TERMS.has(token));
+
+  return tokens.length > 0 ? tokens.join(" ") : normalizeLlmHintToken(row.value);
+}
+
+function getNormalizedLlmHintTokens(value: string) {
+  return value
+    .split(/[^\p{L}\p{N}]+/u)
+    .map(normalizeLlmHintToken)
+    .filter((token) => token.length > 0);
+}
+
+function isAccountLikeSuggestionRow(row: SuggestionRow) {
+  return (
+    row.evidenceType !== "llm_account_hint" ||
+    getNormalizedLlmHintTokens(row.value).some((token) => ACCOUNT_LIKE_LLM_HINT_TERMS.has(token))
+  );
+}
+
+function mergeEquivalentSuggestionRows(rows: readonly SuggestionRow[]): readonly SuggestionRow[] {
+  const groupedRows = rows.reduce((groups, row) => {
+    const key = JSON.stringify([
+      row.scope,
+      row.sourceFamily,
+      row.evidenceType,
+      getHintCanonicalValue(row),
+    ]);
+    const previous = groups.get(key);
+    const merged = previous
+      ? {
+          ...previous,
+          value: previous.occurrences >= row.occurrences ? previous.value : row.value,
+          occurrences: previous.occurrences + row.occurrences,
+        }
+      : row;
+
+    groups.set(key, merged);
+    return groups;
+  }, new Map<string, SuggestionRow>());
+
+  return Array.from(groupedRows.values());
 }
 
 function hasStrongerSameSourceEvidence(
@@ -52,12 +157,18 @@ function hasStrongerSameSourceEvidence(
   rows: readonly (RepeatedCaptureEvidence & { readonly evidenceType: SuggestionEvidenceType })[]
 ) {
   return (
-    row.evidenceType === "alias_token" &&
+    (row.evidenceType === "alias_token" ||
+      row.evidenceType === "llm_account_hint" ||
+      row.evidenceType === "account_type_hint" ||
+      row.evidenceType === "card_product_hint") &&
     rows.some(
       (candidate) =>
         candidate.sourceFamily === row.sourceFamily &&
         candidate.evidenceType !== row.evidenceType &&
-        (candidate.evidenceType === "last4" || candidate.evidenceType === "card_hint")
+        (candidate.evidenceType === "last4" ||
+          candidate.evidenceType === "card_hint" ||
+          (row.evidenceType !== "card_product_hint" &&
+            candidate.evidenceType === "card_product_hint"))
     )
   );
 }
@@ -82,8 +193,10 @@ export function deriveAccountSuggestions(
     } => isSuggestionEvidenceType(row.evidenceType)
   );
 
-  return suggestionRows
-    .filter((row) => !hasStrongerSameSourceEvidence(row, suggestionRows))
+  const accountLikeSuggestionRows = suggestionRows.filter(isAccountLikeSuggestionRow);
+
+  return mergeEquivalentSuggestionRows(accountLikeSuggestionRows)
+    .filter((row) => !hasStrongerSameSourceEvidence(row, accountLikeSuggestionRows))
     .map((row) => ({
       fingerprint: createAccountSuggestionFingerprint(row.scope, row.value),
       scope: row.scope,

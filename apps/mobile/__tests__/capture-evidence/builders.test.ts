@@ -4,6 +4,7 @@ import {
   buildEmailCaptureEvidence,
   buildNotificationCaptureEvidence,
 } from "@/features/capture-evidence";
+import { summarizeEmailEvidenceInputDiagnostics } from "@/features/capture-evidence/lib/build-capture-evidence";
 
 describe("capture evidence builders", () => {
   it("builds normalized sender and domain evidence from email senders", () => {
@@ -23,11 +24,13 @@ describe("capture evidence builders", () => {
     ]);
   });
 
-  it("builds LLM account hint evidence from parsed email account hints", () => {
+  it("builds typed LLM account evidence from parsed email account hints", () => {
     expect(
       buildEmailCaptureEvidence({
         from: "Notificaciones@Bancolombia.com.co",
-        fromAccountHint: "Tarjeta de credito Bancolombia",
+        cardProductHint: "Visa Oro",
+        accountTypeHint: "Tarjeta de credito",
+        counterpartyHint: "Rappi Colombia",
       })
     ).toEqual([
       {
@@ -44,11 +47,104 @@ describe("capture evidence builders", () => {
       },
       {
         sourceFamily: "bancolombia",
-        evidenceType: "llm_account_hint",
-        scope: "email:bancolombia:llm_account_hint",
-        value: "tarjeta de credito bancolombia",
+        evidenceType: "card_product_hint",
+        scope: "email:bancolombia:card_product_hint",
+        value: "visa oro",
+      },
+      {
+        sourceFamily: "bancolombia",
+        evidenceType: "account_type_hint",
+        scope: "email:bancolombia:account_type_hint",
+        value: "tarjeta de credito",
+      },
+      {
+        sourceFamily: "bancolombia",
+        evidenceType: "counterparty_hint",
+        scope: "email:bancolombia:counterparty_hint",
+        value: "rappi colombia",
       },
     ]);
+  });
+
+  it("extracts last4 evidence from precise email payment method labels", () => {
+    expect(
+      buildEmailCaptureEvidence({
+        from: "notificaciones@rappicard.co",
+        body: "Metodo de pago *0746\nAutorizacion 446288",
+      })
+    ).toContainEqual({
+      sourceFamily: "rappicard",
+      evidenceType: "last4",
+      scope: "email:rappicard:last4",
+      value: "0746",
+    });
+  });
+
+  it("extracts last4 evidence when the email payment method label has card text before the suffix", () => {
+    expect(
+      buildEmailCaptureEvidence({
+        from: "notificaciones@rappicard.co",
+        body: "Método de pago\nRappiCard Crédito **** 0746\nAutorizacion 446288",
+      })
+    ).toContainEqual({
+      sourceFamily: "rappicard",
+      evidenceType: "last4",
+      scope: "email:rappicard:last4",
+      value: "0746",
+    });
+  });
+
+  it("extracts last4 evidence when Outlook provides an HTML email body", () => {
+    expect(
+      buildEmailCaptureEvidence({
+        from: "notificaciones@rappicard.co",
+        body: `
+          <html><body>
+            <table>
+              <tr><td>Método de pago</td></tr>
+              <tr><td>RappiCard Crédito</td><td>**** 0746</td></tr>
+            </table>
+            <p>Autorizacion 446288</p>
+          </body></html>
+        `,
+      })
+    ).toContainEqual({
+      sourceFamily: "rappicard",
+      evidenceType: "last4",
+      scope: "email:rappicard:last4",
+      value: "0746",
+    });
+  });
+
+  it("summarizes email evidence input shape without exposing the card suffix", () => {
+    const diagnostics = summarizeEmailEvidenceInputDiagnostics({
+      family: "rappicard",
+      rawText: "Método de pago\nRappiCard Crédito **** 0746\nAutorizacion 446288",
+    });
+
+    expect(diagnostics).toEqual({
+      sourceFamily: "rappicard",
+      bodyLength: expect.any(Number),
+      evidenceTextLength: expect.any(Number),
+      hasPaymentMethodLabel: true,
+      maskedPaymentMethodMatchCount: 1,
+    });
+    expect(JSON.stringify(diagnostics)).not.toContain("0746");
+    expect(JSON.stringify(diagnostics)).not.toContain("446288");
+  });
+
+  it("does not extract email authorization numbers as last4 evidence", () => {
+    expect(
+      buildEmailCaptureEvidence({
+        from: "notificaciones@rappicard.co",
+        body: "Autorizacion 446288\nReferencia 1829\nCompra por $18.290",
+      })
+    ).not.toContainEqual({
+      sourceFamily: "rappicard",
+      evidenceType: "last4",
+      scope: "email:rappicard:last4",
+      value: "1829",
+    });
   });
 
   it("extracts package family, alias tokens, and last4 evidence from notifications", () => {
