@@ -4,6 +4,15 @@ import { buildCreateOpeningBalanceRow } from "./opening-balance-rows";
 import { normalizeAccountShape } from "./shape";
 import type { CreateAccountPlan, PlanAccountCreationInput } from "./types";
 import { canFinancialAccountHaveIdentifiers } from "../kind";
+import type { FinancialAccountKind } from "../../schema";
+
+function getManualIdentifierValue(input: PlanAccountCreationInput, kind: FinancialAccountKind) {
+  if (!canFinancialAccountHaveIdentifiers(kind)) {
+    return null;
+  }
+
+  return input.input.manualIdentifierValue;
+}
 
 export function planAccountCreation(input: PlanAccountCreationInput): CreateAccountPlan {
   const shape = normalizeAccountShape(input.input);
@@ -25,9 +34,7 @@ export function planAccountCreation(input: PlanAccountCreationInput): CreateAcco
     createIdentifierId: input.deps.createIdentifierId,
     userId: input.input.userId,
     accountId,
-    value: canFinancialAccountHaveIdentifiers(shape.kind)
-      ? input.input.manualIdentifierValue
-      : null,
+    value: getManualIdentifierValue(input, shape.kind),
     updatedAt: input.createdAt,
   });
 

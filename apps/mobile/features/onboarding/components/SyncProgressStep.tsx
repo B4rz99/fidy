@@ -210,13 +210,10 @@ export function SyncProgressStep() {
       clearIdleWait(false);
     };
   };
-
-  // Start fetch on mount if we have accounts.
   useMountEffect(() => {
     const cleanup = startSync();
     return cleanup;
   });
-
   const livePercent = progress
     ? progress.total > 0
       ? Math.round((progress.completed / progress.total) * 100)
