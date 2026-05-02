@@ -2,7 +2,7 @@ import { findMatchingFinancialAccountId } from "@/features/account-suggestions/p
 import { lookupMerchantRule } from "@/features/email-capture/merchant-rules.public";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
 import type { AnyDb } from "@/shared/db";
-import { normalizeMerchant, toIsoDateTime } from "@/shared/lib";
+import { captureWarning, normalizeMerchant, toIsoDateTime } from "@/shared/lib";
 import { assertUserId } from "@/shared/types/assertions";
 import type { CategoryId } from "@/shared/types/branded";
 import { findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
@@ -46,13 +46,22 @@ export async function processNotification(
 ): Promise<NotificationPipelineResult> {
   assertUserId(userId);
   const context = normalizeNotificationCommand({ db, userId, notification });
-  const parseStage = await parseNotificationStage(context);
 
-  if (parseStage.kind === "failed") {
-    return persistFailedNotification(parseStage.context);
+  try {
+    const parseStage = await parseNotificationStage(context);
+
+    if (parseStage.kind === "failed") {
+      return persistFailedNotification(parseStage.context);
+    }
+
+    return withFingerprintLock(parseStage.context, handleParsedNotification);
+  } catch (error) {
+    captureWarning("notification_pipeline_exception", {
+      bankSource: context.source,
+      errorType: error instanceof Error ? error.name : typeof error,
+    });
+    throw error;
   }
-
-  return withFingerprintLock(parseStage.context, handleParsedNotification);
 }
 
 async function parseNotificationStage(context: NotificationContext): Promise<ParseStageResult> {

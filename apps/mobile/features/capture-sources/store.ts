@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { Platform } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";
-import { toIsoDateTime } from "@/shared/lib";
+import { captureWarning, toIsoDateTime } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import {
   getEnabledPackages,
@@ -49,6 +49,26 @@ export const useCaptureSourcesStore = create<CaptureSourcesState & CaptureSource
   })
 );
 
+const errorType = (error: unknown): string => (error instanceof Error ? error.name : typeof error);
+
+function reportHydrationFailures(results: readonly PromiseSettledResult<void>[]): void {
+  const operations = [
+    "load_config",
+    "check_permissions",
+    "refresh_status",
+    "refresh_sms_count",
+  ] as const;
+
+  results.forEach((result, index) => {
+    if (result.status === "rejected") {
+      captureWarning("capture_sources_hydration_failed", {
+        operation: operations[index] ?? "unknown",
+        errorType: errorType(result.reason),
+      });
+    }
+  });
+}
+
 async function loadCaptureSourceConfig(db: AnyDb, userId: UserId): Promise<void> {
   const enabledPackages = await getEnabledPackages(db, userId);
   useCaptureSourcesStore.getState().setEnabledPackages(enabledPackages);
@@ -83,12 +103,13 @@ function getUpdatedEnabledPackages(
 }
 
 export async function hydrateCaptureSources(db: AnyDb, userId: UserId): Promise<void> {
-  await Promise.allSettled([
+  const results = await Promise.allSettled([
     loadCaptureSourceConfig(db, userId),
     checkCaptureSourcePermissions(),
     refreshCaptureSourceStatus(db),
     refreshDetectedSmsCount(db, userId),
   ]);
+  reportHydrationFailures(results);
 }
 
 export async function toggleCaptureSourcePackage(

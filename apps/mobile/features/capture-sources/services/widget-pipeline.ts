@@ -3,6 +3,7 @@ import type { AnyDb } from "@/shared/db";
 import {
   captureError,
   capturePipelineEvent,
+  captureWarning,
   generateProcessedCaptureId,
   toIsoDate,
   toIsoDateTime,
@@ -31,6 +32,8 @@ export type WidgetPipelineResult = {
   skippedDuplicate: number;
   errors: number;
 };
+
+const errorType = (error: unknown): string => (error instanceof Error ? error.name : typeof error);
 
 export async function processWidgetTransactions(
   db: AnyDb,
@@ -157,10 +160,18 @@ export async function processWidgetTransactions(
   }
 
   if (succeededEntryIds.length > 0) {
-    await removePendingTransactions(succeededEntryIds);
+    try {
+      await removePendingTransactions(succeededEntryIds);
+    } catch (error) {
+      captureWarning("widget_pending_cleanup_failed", {
+        succeeded: succeededEntryIds.length,
+        errorType: errorType(error),
+      });
+      throw error;
+    }
   }
 
-  capturePipelineEvent({ source: "widget", saved, skippedDuplicate });
+  capturePipelineEvent({ source: "widget", saved, skippedDuplicate, errors });
 
   return { saved, skippedDuplicate, errors };
 }

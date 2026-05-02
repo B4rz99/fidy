@@ -2,7 +2,12 @@ import { insertDetectedSmsEvent } from "@/features/capture-sources/lib/repositor
 import { processApplePayIntent } from "@/features/capture-sources/services/apple-pay-pipeline";
 import { processNotification } from "@/features/capture-sources/services/notification-pipeline";
 import type { AnyDb } from "@/shared/db";
-import { captureError, generateDetectedSmsEventId, toIsoDateTime } from "@/shared/lib";
+import {
+  captureError,
+  captureWarning,
+  generateDetectedSmsEventId,
+  toIsoDateTime,
+} from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import { parseSmsDetectedAt } from "../lib/parse-sms-detected-at";
 import {
@@ -13,6 +18,8 @@ import {
 import { createCaptureIngestionPort } from "../services/capture-ingestion";
 
 const noop = () => undefined;
+
+const issueCount = (issues: readonly unknown[]): number => issues.length;
 
 // Dynamic import to avoid Android bundle crash — this module calls
 // requireNativeModule("ExpoAppIntents") which only exists on iOS.
@@ -27,7 +34,12 @@ export async function setupApplePayCapture(db: AnyDb, userId: UserId): Promise<(
 
   const subscription = mod.addLogTransactionListener((event) => {
     const parsed = applePayIntentDataSchema.safeParse(event);
-    if (!parsed.success) return;
+    if (!parsed.success) {
+      captureWarning("apple_pay_capture_invalid_payload", {
+        issueCount: issueCount(parsed.error.issues),
+      });
+      return;
+    }
 
     captureIngestion
       .ingest({
@@ -51,7 +63,12 @@ export async function setupSmsDetection(
 
   const subscription = mod.addDetectBankSmsListener((event) => {
     const parsed = smsDetectionDataSchema.safeParse(event);
-    if (!parsed.success) return;
+    if (!parsed.success) {
+      captureWarning("sms_detection_invalid_payload", {
+        issueCount: issueCount(parsed.error.issues),
+      });
+      return;
+    }
 
     const detectedAt = parseSmsDetectedAt(parsed.data.timestamp);
 
@@ -96,7 +113,12 @@ export async function setupNotificationCapture(
 
   const subscription = mod.addListener("onNotificationReceived", (event: unknown) => {
     const parsed = notificationDataSchema.safeParse(event);
-    if (!parsed.success) return;
+    if (!parsed.success) {
+      captureWarning("notification_capture_invalid_payload", {
+        issueCount: issueCount(parsed.error.issues),
+      });
+      return;
+    }
 
     captureIngestion
       .ingest({
