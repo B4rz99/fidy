@@ -1,11 +1,12 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
 import { refreshTransactions } from "@/features/transactions/store.public";
 import { ScreenLayout } from "@/shared/components";
 import { Info, TriangleAlert } from "@/shared/components/icons";
-import { StyleSheet, Text, View } from "@/shared/components/rn";
+import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatSignedMoney, showErrorToast } from "@/shared/lib";
@@ -18,6 +19,7 @@ export function AttributionReviewScreen() {
   const router = useRouter();
   const { transactionId } = useLocalSearchParams<{ transactionId?: string }>();
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const { items, hasLoadedQueue, service } = useAttributionReviewQueue({ db, userId });
@@ -26,7 +28,7 @@ export function AttributionReviewScreen() {
     typeof transactionId === "string" && transactionId.trim().length > 0
       ? requireTransactionId(transactionId.trim())
       : null;
-  const item = useMemo(
+  const reviewItem = useMemo(
     () =>
       resolvedTransactionId
         ? (items.find((entry) => entry.transaction.id === resolvedTransactionId) ?? null)
@@ -37,7 +39,7 @@ export function AttributionReviewScreen() {
   const secondary = useThemeColor("secondary");
   const accentRed = useThemeColor("accentRed");
 
-  if (hasLoadedQueue && item == null) {
+  if (hasLoadedQueue && reviewItem == null) {
     return (
       <ScreenLayout
         title={t("attributionReview.reviewTitle")}
@@ -52,14 +54,14 @@ export function AttributionReviewScreen() {
     );
   }
 
-  if (!item) {
+  if (!reviewItem) {
     return null;
   }
 
-  const CurrentIcon = item.currentAccount
-    ? getFinancialAccountKindIcon(item.currentAccount.kind)
+  const CurrentIcon = reviewItem.currentAccount
+    ? getFinancialAccountKindIcon(reviewItem.currentAccount.kind)
     : TriangleAlert;
-  const SuggestedIcon = getFinancialAccountKindIcon(item.suggestedAccount.kind);
+  const SuggestedIcon = getFinancialAccountKindIcon(reviewItem.suggestedAccount.kind);
 
   const handleConfirm = () => {
     void guardedAction(async () => {
@@ -71,7 +73,7 @@ export function AttributionReviewScreen() {
         const result = service.confirmSuggestedOwner({
           db,
           userId,
-          transactionId: item.transaction.id,
+          transactionId: reviewItem.transaction.id,
         });
 
         if (!result.success) {
@@ -93,7 +95,11 @@ export function AttributionReviewScreen() {
       variant="sub"
       onBack={() => router.back()}
     >
-      <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={[styles.container, { paddingBottom: bottom + 28 }]}
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={false}
+      >
         <SummaryCard
           icon={TriangleAlert}
           title={t("attributionReview.reviewPill")}
@@ -103,19 +109,21 @@ export function AttributionReviewScreen() {
 
         <View style={styles.headerCopy}>
           <Text style={[styles.title, { color: primary }]}>
-            {item.transaction.description || t("common.unknown")}
+            {reviewItem.transaction.description || t("common.unknown")}
           </Text>
           <Text style={[styles.amount, { color: accentRed }]}>
-            {formatSignedMoney(item.transaction.amount, item.transaction.type)}
+            {formatSignedMoney(reviewItem.transaction.amount, reviewItem.transaction.type)}
           </Text>
         </View>
 
         <DetailRow
           label={t("attributionReview.currentOwner")}
-          title={item.currentAccount?.name ?? t("common.unknown")}
+          title={reviewItem.currentAccount?.name ?? t("common.unknown")}
           subtitle={
-            item.currentAccount
-              ? t(`financialAccounts.kinds.${readFinancialAccountKind(item.currentAccount.kind)}`)
+            reviewItem.currentAccount
+              ? t(
+                  `financialAccounts.kinds.${readFinancialAccountKind(reviewItem.currentAccount.kind)}`
+                )
               : t("attributionReview.fallbackOwner")
           }
           icon={<CurrentIcon size={18} color={secondary} />}
@@ -123,8 +131,8 @@ export function AttributionReviewScreen() {
 
         <DetailRow
           label={t("attributionReview.suggestedOwner")}
-          title={item.suggestedAccount.name}
-          subtitle={item.evidenceLabel ?? t("attributionReview.suggestedByEvidence")}
+          title={reviewItem.suggestedAccount.name}
+          subtitle={reviewItem.evidenceLabel ?? t("attributionReview.suggestedByEvidence")}
           icon={<SuggestedIcon size={18} color={secondary} />}
           emphasis="green"
         />
@@ -140,7 +148,7 @@ export function AttributionReviewScreen() {
             onPress={() =>
               router.push({
                 pathname: "/create-financial-account",
-                params: { fingerprint: item.suggestion.fingerprint },
+                params: { fingerprint: reviewItem.suggestion.fingerprint },
               })
             }
             variant="outline"
@@ -160,16 +168,14 @@ export function AttributionReviewScreen() {
             {t("attributionReview.balanceHint")}
           </Text>
         </View>
-      </View>
+      </ScrollView>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     paddingHorizontal: 16,
-    paddingBottom: 28,
     gap: 16,
   },
   headerCopy: {

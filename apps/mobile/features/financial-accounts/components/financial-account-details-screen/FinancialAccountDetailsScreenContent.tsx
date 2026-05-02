@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenLayout } from "@/shared/components";
 import { TriangleAlert } from "@/shared/components/icons";
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
@@ -30,6 +31,7 @@ export function FinancialAccountDetailsScreenContent({
   const secondary = useThemeColor("secondary");
   const accentRed = useThemeColor("accentRed");
   const accentGreen = useThemeColor("accentGreen");
+  const { bottom } = useSafeAreaInsets();
 
   if (!accountId || !details || !kind) {
     return (
@@ -55,7 +57,7 @@ export function FinancialAccountDetailsScreenContent({
     <ScreenLayout title={t("financialAccounts.detail.title")} variant="sub" onBack={onBack}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: bottom + 32 }]}
         showsVerticalScrollIndicator={false}
       >
         <FinancialAccountDetailsHero

@@ -1,5 +1,6 @@
 import { memo, useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
+import { TAB_BAR_CLEARANCE } from "@/shared/components";
 import type { ViewStyle } from "@/shared/components/rn";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
@@ -12,6 +13,7 @@ import { IncomeExpenseCard } from "./IncomeExpenseCard";
 import { PeriodDeltaCard } from "./PeriodDeltaCard";
 
 const PERIODS: readonly AnalyticsPeriod[] = ["W", "M", "Q", "Y"];
+const ANALYTICS_CONTENT_PADDING = 16;
 
 type PeriodSelectorProps = {
   readonly activePeriod: AnalyticsPeriod;
@@ -86,7 +88,11 @@ export function AnalyticsScreen() {
   return (
     <ScrollView
       style={[styles.scrollView, scrollBg]}
-      contentContainerStyle={styles.contentContainer}
+      contentContainerStyle={[
+        styles.contentContainer,
+        { paddingBottom: ANALYTICS_CONTENT_PADDING + TAB_BAR_CLEARANCE },
+      ]}
+      contentInsetAdjustmentBehavior="automatic"
       showsVerticalScrollIndicator={false}
     >
       <PeriodSelector activePeriod={period} onSelect={handleSelectPeriod} />
@@ -111,7 +117,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    padding: 16,
+    padding: ANALYTICS_CONTENT_PADDING,
     gap: 16,
   },
   selectorContainer: {

@@ -78,6 +78,7 @@ export function SearchResultsList({
         hasActiveFilters(filters) ? <SearchEmptyState onClearFilters={handleClearAll} /> : undefined
       }
       showsVerticalScrollIndicator={false}
+      contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }}
     />
   );

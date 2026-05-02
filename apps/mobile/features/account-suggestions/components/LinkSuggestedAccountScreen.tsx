@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { getFinancialAccountsForUser } from "@/features/financial-accounts/public";
 import { useOnboardingStore } from "@/features/onboarding/store";
@@ -51,6 +52,7 @@ export default function LinkSuggestedAccountScreen() {
   const { back } = useRouter();
   const { fingerprint } = useLocalSearchParams<{ fingerprint?: string }>();
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const onboardingStep = useOnboardingStore((state) => state.step);
@@ -107,7 +109,10 @@ export default function LinkSuggestedAccountScreen() {
 
   return (
     <ScreenLayout title={t("accountSuggestions.link.title")} variant="sub" onBack={back}>
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={[styles.content, { paddingBottom: bottom + 32 }]}
+      >
         <Text style={[styles.subtitle, { color: secondary }]}>
           {t("accountSuggestions.link.subtitle")}
         </Text>

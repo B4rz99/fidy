@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Sparkles } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 type StarterSuggestionsProps = {
@@ -23,14 +23,17 @@ export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
   );
 
   return (
-    <View
-      style={{
-        flex: 1,
+    <ScrollView
+      contentContainerStyle={{
+        flexGrow: 1,
         alignItems: "center",
         justifyContent: "center",
         paddingHorizontal: 32,
+        paddingVertical: 24,
         gap: 24,
       }}
+      contentInsetAdjustmentBehavior="automatic"
+      showsVerticalScrollIndicator={false}
     >
       <View style={{ alignItems: "center", gap: 8 }}>
         <View
@@ -74,6 +77,6 @@ export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
           </Pressable>
         ))}
       </View>
-    </View>
+    </ScrollView>
   );
 }

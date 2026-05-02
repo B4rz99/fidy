@@ -1,4 +1,5 @@
 import { Keyboard } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pressable, ScrollView, Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { MAX_NAME_LENGTH } from "../../lib/constants";
@@ -21,6 +22,7 @@ export function CreateCategorySheetContent({
   trimmedName,
 }: CreateCategorySheetViewModel) {
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const accentGreen = useThemeColor("accentGreen");
   const borderColor = useThemeColor("borderSubtle");
   const cardBg = useThemeColor("card");
@@ -32,7 +34,8 @@ export function CreateCategorySheetContent({
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: pageBg }]}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 24 }]}
+      contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="interactive"
       automaticallyAdjustKeyboardInsets

@@ -2,6 +2,7 @@ import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth";
 import {
   dismissFailedEmail,
@@ -20,6 +21,7 @@ const ItemSeparator = () => <View style={{ height: 10 }} />;
 export default function FailedEmailsScreen() {
   const { back, push } = useRouter();
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const failedEmails = useEmailCaptureStore((s) => s.failedEmails);
@@ -50,7 +52,7 @@ export default function FailedEmailsScreen() {
         keyExtractor={(item) => item.id}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
-          paddingBottom: 40,
+          paddingBottom: bottom + 40,
           paddingHorizontal: 16,
         }}
         ItemSeparatorComponent={ItemSeparator}

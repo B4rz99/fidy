@@ -2,6 +2,7 @@ import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import {
   dismissFinancialMeaningReview,
@@ -104,6 +105,7 @@ function FinancialMeaningQueueCard({
 export function FinancialMeaningQueueScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const { items, hasLoadedQueue, reloadQueue } = useFinancialMeaningReviewQueue({ db, userId });
@@ -144,7 +146,8 @@ export function FinancialMeaningQueueScreen() {
         <FlashList
           data={visibleItems}
           keyExtractor={(item) => item.processedEmail.id}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: bottom + 28 }]}
+          contentInsetAdjustmentBehavior="automatic"
           ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
           ListHeaderComponent={
             <SummaryCard

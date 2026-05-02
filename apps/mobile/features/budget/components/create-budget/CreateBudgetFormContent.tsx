@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated from "react-native-reanimated";
 import { CategoryPill } from "@/features/transactions/display.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
@@ -54,6 +55,7 @@ export function CreateBudgetFormContent({
   setCategory,
 }: CreateBudgetFormContentProps) {
   const { t, locale } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const { cursorStyle } = useBlinkingCursor();
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
@@ -77,7 +79,8 @@ export function CreateBudgetFormContent({
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: cardBg }]}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 24 }]}
+      contentInsetAdjustmentBehavior="automatic"
     >
       <Text style={[styles.title, { color: primaryColor }]}>
         {isEdit ? t("budgets.edit.title") : t("budgets.create.title")}

@@ -1,7 +1,8 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
-import { X } from "@/shared/components/icons";
 import { useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { X } from "@/shared/components/icons";
 import {
   Keyboard,
   Platform,
@@ -35,6 +36,7 @@ export function FinancialAccountFormBody({
   readonly onManageIdentifiers: (() => void) | null;
 }) {
   const { t, locale } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const [datePickerFallback] = useState(() => new Date());
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
@@ -70,7 +72,7 @@ export function FinancialAccountFormBody({
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingBottom: bottom + 32 }]}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >

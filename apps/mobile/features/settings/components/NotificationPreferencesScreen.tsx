@@ -1,4 +1,5 @@
 import { Stack, useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { cancelWeeklyDigestNotification } from "@/features/notifications/schedule.public";
 import { ScreenLayout, SettingsSection } from "@/shared/components";
@@ -47,6 +48,7 @@ const PREFERENCE_TOGGLES: readonly PreferenceToggle[] = [
 export function NotificationPreferencesScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
 
   const userId = useOptionalUserId();
   const prefs = useSettingsStore((s) => s.notificationPreferences);
@@ -97,7 +99,7 @@ export function NotificationPreferencesScreen() {
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 16,
-          paddingBottom: 40,
+          paddingBottom: bottom + 40,
           gap: 24,
         }}
         contentInsetAdjustmentBehavior="automatic"
