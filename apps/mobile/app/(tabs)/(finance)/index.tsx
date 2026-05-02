@@ -1,5 +1,6 @@
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnalyticsScreen } from "@/features/analytics";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
 import { BudgetListScreen } from "@/features/budget/ui.public";
@@ -15,6 +16,7 @@ import { GoalsListScreen } from "@/features/goals/ui.public";
 import { TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus } from "@/shared/components/icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Colors } from "@/shared/constants/theme";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
@@ -67,6 +69,8 @@ function FinanceCalendarPanel() {
   const payments = useCalendarStore((s) => s.payments);
   const userId = useOptionalUserId();
   const pageBg = useThemeColor("page");
+  const insets = useSafeAreaInsets();
+  const tabBarClearance = Platform.OS === "ios" ? insets.bottom + 72 : TAB_BAR_CLEARANCE;
 
   const handleNextMonth = useCallback(() => {
     if (!userId) return;
@@ -83,7 +87,13 @@ function FinanceCalendarPanel() {
   }, [userId]);
 
   return (
-    <View style={[styles.calendarPanel, { backgroundColor: pageBg }]}>
+    <View
+      style={[
+        styles.calendarPanel,
+        { backgroundColor: pageBg },
+        { paddingBottom: tabBarClearance },
+      ]}
+    >
       <MonthNavigator
         currentMonth={currentMonth}
         onPrev={handlePrevMonth}
@@ -106,6 +116,7 @@ function FinanceCalendarPanel() {
 
 function useHeaderRight(activeTab: FinanceTab) {
   const { push } = useRouter();
+  const { t } = useTranslation();
   const primaryColor = useThemeColor("primary");
   const accentGreen = useThemeColor("accentGreen");
   const goals = useGoalStore((s) => s.goals);
@@ -116,6 +127,20 @@ function useHeaderRight(activeTab: FinanceTab) {
         return (
           <Pressable onPress={() => push("/create-budget")} hitSlop={12}>
             <Plus size={24} color={primaryColor} />
+          </Pressable>
+        );
+      };
+    }
+    if (activeTab === "calendar") {
+      return function AddBillAction() {
+        return (
+          <Pressable
+            onPress={() => push("/add-bill")}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={t("bills.addBill")}
+          >
+            <Plus size={24} color={Colors.light.card} />
           </Pressable>
         );
       };
@@ -132,7 +157,7 @@ function useHeaderRight(activeTab: FinanceTab) {
     return function NoAction() {
       return null;
     };
-  }, [activeTab, goals.length, primaryColor, accentGreen, push]);
+  }, [activeTab, goals.length, primaryColor, accentGreen, push, t]);
 }
 
 export default function FinanceScreen() {
@@ -191,7 +216,6 @@ const styles = StyleSheet.create({
   calendarPanel: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingBottom: TAB_BAR_CLEARANCE,
   },
   calendarGridWrap: {
     flex: 1,

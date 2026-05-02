@@ -109,6 +109,7 @@ export function CalendarGrid({ currentMonth, bills, payments, cellMinHeight, onD
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     borderRadius: 12,
     borderCurve: "continuous",
     borderWidth: 1,
@@ -127,6 +128,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   weekRow: {
+    flex: 1,
     flexDirection: "row",
   },
 });

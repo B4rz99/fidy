@@ -33,6 +33,7 @@ export function ScreenLayout({
         <Stack.Screen
           options={{
             title,
+            headerRight: () => rightActions,
             ...(onBack != null && {
               headerLeft: () => (
                 <Pressable onPress={onBack} hitSlop={12}>
