@@ -3,6 +3,7 @@ import type { UserId } from "@/shared/types/branded";
 import type { RawEmail } from "./schema";
 import type { PipelineResult, ProgressCallback, RetryResult } from "./services/email-pipeline";
 import {
+  processBackgroundEmails as processBackgroundEmailsInternal,
   processEmails as processEmailsInternal,
   processInitialSyncEmails as processInitialSyncEmailsInternal,
   processRetries as processRetriesInternal,
@@ -26,6 +27,9 @@ export type ProcessRetries = (db: AnyDb, userId: UserId) => Promise<RetryResult>
 
 export const processEmails: ProcessEmails = (db, userId, rawEmails, onProgress) =>
   processEmailsInternal(db, userId, rawEmails, onProgress);
+
+export const processBackgroundEmails: ProcessEmails = (db, userId, rawEmails, onProgress) =>
+  processBackgroundEmailsInternal(db, userId, rawEmails, onProgress);
 
 export const processInitialSyncEmails: ProcessEmails = (db, userId, rawEmails, onProgress) =>
   processInitialSyncEmailsInternal(db, userId, rawEmails, onProgress);

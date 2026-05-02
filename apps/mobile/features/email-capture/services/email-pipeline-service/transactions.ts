@@ -1,8 +1,12 @@
 import { Effect } from "effect";
+import {
+  type CaptureEvidenceRow,
+  materializeCaptureEvidenceRows,
+} from "@/features/capture-evidence/public";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { TransactionRow } from "@/features/transactions/lib/repository";
 import { currentIsoDateTimeEffect } from "@/shared/effect/clock";
-import { fromPromise, fromThunk } from "@/shared/effect/runtime";
+import { fromThunk } from "@/shared/effect/runtime";
 import { generateProcessedEmailId, generateTransactionId } from "@/shared/lib/generate-id";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import {
@@ -16,7 +20,6 @@ import {
   EmailPipelineDeps,
   ensureDefaultFinancialAccountEffect,
   insertMerchantRuleEffect,
-  saveEmailCaptureEvidenceEffect,
 } from "./runtime";
 import {
   assertParsedTransaction,
@@ -32,6 +35,7 @@ import type {
   SaveRetryTransactionInput,
   SaveTransactionInput,
   TrackSavedTransactionInput,
+  CreateEmailPipelineServiceDeps,
 } from "./types";
 
 function buildTransactionRow(context: PersistedTransactionContext): TransactionRow {
@@ -58,24 +62,70 @@ function persistTransactionRecordEffect(context: PersistedTransactionContext) {
   });
 }
 
-function persistProcessedEmailEffect(context: EmailTransactionContext) {
-  const row = {
-    id: context.processedEmailId,
-    externalId: context.email.externalId,
-    provider: context.email.provider,
-    status: context.status,
-    failureReason: null,
-    subject: context.email.subject,
-    rawBodyPreview: context.email.body.slice(0, 500),
-    receivedAt: requireIsoDateTime(context.email.receivedAt),
-    transactionId: context.txId,
-    confidence: context.parsed.confidence,
-    createdAt: context.now,
-  };
-
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ insertProcessedEmail }) =>
-    fromPromise(() => insertProcessedEmail(context.db, row))
+function buildTransactionCaptureEvidenceRows(
+  context: EmailTransactionContext,
+  buildEmailCaptureEvidence: CreateEmailPipelineServiceDeps["buildEmailCaptureEvidence"]
+): readonly CaptureEvidenceRow[] {
+  return materializeCaptureEvidenceRows(
+    buildEmailCaptureEvidence({
+      from: context.email.from,
+      body: context.email.body,
+      fromAccountHint: context.parsed.fromAccountHint,
+      toAccountHint: context.parsed.toAccountHint,
+      cardProductHint: context.parsed.cardProductHint,
+      accountTypeHint: context.parsed.accountTypeHint,
+      counterpartyHint: context.parsed.counterpartyHint,
+    }),
+    {
+      userId: context.userId,
+      transactionId: context.txId,
+      processedEmailId: context.processedEmailId,
+      processedCaptureId: null,
+      createdAt: context.now,
+      updatedAt: context.now,
+    }
   );
+}
+
+function persistTransactionBundleEffect(context: EmailTransactionContext) {
+  return Effect.gen(function* () {
+    const {
+      buildEmailCaptureEvidence,
+      insertProcessedEmail,
+      insertTransaction,
+      saveCaptureEvidenceRows,
+    } = yield* EmailPipelineDeps.tag;
+    const transactionRow = buildTransactionRow(context);
+    const processedEmailRow = {
+      id: context.processedEmailId,
+      externalId: context.email.externalId,
+      provider: context.email.provider,
+      status: context.status,
+      failureReason: null,
+      subject: context.email.subject,
+      rawBodyPreview: context.email.body.slice(0, 500),
+      receivedAt: requireIsoDateTime(context.email.receivedAt),
+      transactionId: context.txId,
+      confidence: context.parsed.confidence,
+      createdAt: context.now,
+    };
+    const evidenceRows = buildTransactionCaptureEvidenceRows(context, buildEmailCaptureEvidence);
+
+    yield* fromThunk(() => {
+      if ("transaction" in context.db && typeof context.db.transaction === "function") {
+        context.db.transaction((tx) => {
+          insertTransaction(tx, transactionRow);
+          insertProcessedEmail(tx, processedEmailRow);
+          saveCaptureEvidenceRows(tx, evidenceRows);
+        });
+        return;
+      }
+
+      insertTransaction(context.db, transactionRow);
+      insertProcessedEmail(context.db, processedEmailRow);
+      saveCaptureEvidenceRows(context.db, evidenceRows);
+    });
+  });
 }
 
 function trackSavedTransactionEffect(input: TrackSavedTransactionInput) {
@@ -182,22 +232,7 @@ function persistSuccessfulRetrySideEffectsEffect(context: RetryTransactionContex
 export function saveTransactionEffect(input: SaveTransactionInput) {
   return Effect.gen(function* () {
     const context = yield* createEmailTransactionContextEffect(input);
-    yield* persistTransactionRecordEffect(context);
-    yield* persistProcessedEmailEffect(context);
-    yield* saveEmailCaptureEvidenceEffect({
-      db: context.db,
-      userId: context.userId,
-      from: context.email.from,
-      body: context.email.body,
-      fromAccountHint: context.parsed.fromAccountHint,
-      toAccountHint: context.parsed.toAccountHint,
-      cardProductHint: context.parsed.cardProductHint,
-      accountTypeHint: context.parsed.accountTypeHint,
-      counterpartyHint: context.parsed.counterpartyHint,
-      processedEmailId: context.processedEmailId,
-      transactionId: context.txId,
-      now: context.now,
-    });
+    yield* persistTransactionBundleEffect(context);
     yield* trackSavedTransactionEffect({
       parsed: context.parsed,
       categoryId: context.categoryId,

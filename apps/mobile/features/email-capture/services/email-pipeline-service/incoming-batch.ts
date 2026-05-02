@@ -1,5 +1,6 @@
 import type { AnyDb } from "@/shared/db";
 import { capturePipelineEventEffect } from "@/shared/effect/telemetry";
+import { buildEmailPipelineBatchTelemetry } from "./email-telemetry";
 import { processIncomingEmail } from "./incoming-email";
 import { getProcessedExternalIdsEffect } from "./runtime";
 import {
@@ -32,14 +33,16 @@ async function createEmailBatchPlan(
     )
   );
   const toProcess = uniqueEmails.filter((email) => !processedIds.has(email.externalId));
+  const boundedToProcess =
+    runtime.maxCandidateEmails == null ? toProcess : toProcess.slice(0, runtime.maxCandidateEmails);
   const skippedAlreadyProcessed = uniqueEmails.length - toProcess.length;
 
   return {
-    toProcess,
+    toProcess: boundedToProcess,
     dedupedInBatch,
     skippedAlreadyProcessed,
     result: createPipelineResult(dedupedInBatch + skippedAlreadyProcessed),
-    total: toProcess.length,
+    total: boundedToProcess.length,
   };
 }
 
@@ -49,17 +52,14 @@ async function captureIncomingBatchEvent(
   batch: EmailBatchPlan
 ) {
   await runtime.runTelemetryEffect(
-    capturePipelineEventEffect({
-      source: "email",
-      batchSize: rawEmails.length,
-      uniqueProviders: new Set(rawEmails.map((email) => email.provider)).size,
-      dedupedInBatch: batch.dedupedInBatch,
-      skippedAlreadyProcessed: batch.skippedAlreadyProcessed,
-      skippedCrossSource: batch.result.skippedCrossSource,
-      saved: batch.result.saved,
-      failed: batch.result.failed,
-      needsReview: batch.result.needsReview,
-    })
+    capturePipelineEventEffect(
+      buildEmailPipelineBatchTelemetry({
+        rawEmails,
+        dedupedInBatch: batch.dedupedInBatch,
+        skippedAlreadyProcessed: batch.skippedAlreadyProcessed,
+        result: batch.result,
+      })
+    )
   );
 }
 
@@ -113,6 +113,7 @@ export async function processEmailBatch(runtime: PipelineRuntime, input: Process
     completed: 0,
     parseStarts: 0,
     parseStartGate: Promise.resolve(),
+    persistenceGate: Promise.resolve(),
   };
 
   reportEmailProgress(context);

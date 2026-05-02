@@ -22,6 +22,7 @@ const FilterPill = memo(
     onToggle: (categoryId: string) => void;
   }) => {
     const { locale } = useTranslation();
+    const card = useThemeColor("card");
     const peachLight = useThemeColor("peachLight");
 
     const handlePress = () => {
@@ -38,7 +39,7 @@ const FilterPill = memo(
         accessibilityState={{ selected: isSelected }}
         accessibilityLabel={getCategoryLabel(category, locale)}
       >
-        {isSelected ? <Check size={16} color="#FFFFFF" /> : <Text>{category.icon}</Text>}
+        {isSelected ? <Check size={16} color={card} /> : <Text>{category.icon}</Text>}
       </Pressable>
     );
   }

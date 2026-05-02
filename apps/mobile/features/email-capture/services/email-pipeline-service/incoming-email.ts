@@ -1,8 +1,13 @@
 import { currentIsoDateTimeEffect } from "@/shared/effect/clock";
-import { captureErrorEffect, captureWarningEffect } from "@/shared/effect/telemetry";
+import {
+  captureErrorEffect,
+  capturePipelineEventEffect,
+  captureWarningEffect,
+} from "@/shared/effect/telemetry";
 import { generateProcessedEmailId } from "@/shared/lib/generate-id";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { assertIsoDateTime } from "@/shared/types/assertions";
+import { buildSkippedEmailDiagnostics } from "./email-telemetry";
 import {
   findDuplicateTransactionEffect,
   getProcessedExternalIdsEffect,
@@ -18,6 +23,7 @@ import {
   getPersistedCategoryId,
   incrementPipelineMetric,
   resolveEmailStatus,
+  runSerializedPersistence,
 } from "./shared";
 import { saveTransactionEffect } from "./transactions";
 import type {
@@ -45,7 +51,7 @@ async function parseIncomingEmail(
     await context.runtime.runTelemetryEffect(
       captureWarningEffect("email_parse_exception", {
         provider: email.provider,
-        errorType: error instanceof Error ? error.message : "unknown",
+        errorType: error instanceof Error ? error.name : "unknown",
       })
     );
     return { kind: "failed" };
@@ -81,12 +87,12 @@ async function persistPendingRetryIncomingEmail(
   context: EmailBatchContext,
   email: RawEmail,
   failureReason: string | null
-) {
+): Promise<boolean> {
   const processedIds = await context.runtime.runEmailEffect(
     getProcessedExternalIdsEffect(context.db, [email.externalId])
   );
   if (processedIds.has(email.externalId)) {
-    return;
+    return false;
   }
 
   const { createdAt, processedEmailId } = await createIncomingEmailPersistenceState(context, email);
@@ -108,6 +114,7 @@ async function persistPendingRetryIncomingEmail(
     transactionId: null,
     createdAt,
   });
+  return true;
 }
 
 async function persistSkippedIncomingEmail(
@@ -116,8 +123,9 @@ async function persistSkippedIncomingEmail(
   kind: Exclude<UnparsedIncomingEmailKind, "failed">
 ) {
   const { createdAt, processedEmailId } = await createIncomingEmailPersistenceState(context, email);
+  const metadataOnlyEmail = { ...email, subject: "", body: "" };
   const row = buildUnparsedProcessedEmailRow({
-    email,
+    email: metadataOnlyEmail,
     processedEmailId,
     createdAt,
     status: "skipped",
@@ -125,14 +133,10 @@ async function persistSkippedIncomingEmail(
     nextRetryAt: null,
   });
 
-  await persistIncomingEmailRecord({
-    context,
-    email,
-    row,
-    processedEmailId,
-    transactionId: null,
-    createdAt,
-  });
+  await context.runtime.runEmailEffect(insertProcessedEmailEffect(context.db, row));
+  await context.runtime.runTelemetryEffect(
+    capturePipelineEventEffect(buildSkippedEmailDiagnostics({ email, reason: kind }))
+  );
   incrementPipelineMetric(context.result, kind === "filtered" ? "filtered" : "failed");
 }
 
@@ -231,40 +235,51 @@ async function processParsedIncomingEmail(
   email: RawEmail,
   parsed: LlmParsedTransaction
 ) {
-  const duplicate = await lookupIncomingDuplicate(context, parsed);
-  if (duplicate.kind === "failed") {
-    await persistPendingRetryIncomingEmail(context, email, null);
-    incrementPipelineMetric(context.result, "failed");
-    return;
-  }
+  await runSerializedPersistence(context, async () => {
+    const duplicate = await lookupIncomingDuplicate(context, parsed);
+    if (duplicate.kind === "failed") {
+      const queuedRetry = await persistPendingRetryIncomingEmail(context, email, null);
+      incrementPipelineMetric(context.result, "failed");
+      if (queuedRetry) {
+        incrementPipelineMetric(context.result, "pendingRetry");
+      }
+      return;
+    }
 
-  if (duplicate.kind === "duplicate") {
-    await persistDuplicateIncomingEmail({
-      context,
-      email,
-      parsed,
-      transactionId: duplicate.transactionId,
-    });
-    return;
-  }
+    if (duplicate.kind === "duplicate") {
+      await persistDuplicateIncomingEmail({
+        context,
+        email,
+        parsed,
+        transactionId: duplicate.transactionId,
+      });
+      return;
+    }
 
-  const status = resolveEmailStatus(parsed.confidence);
-  const saved = await persistIncomingTransaction({ context, email, parsed, status });
-  if (!saved) {
-    await persistPendingRetryIncomingEmail(context, email, null);
-    incrementPipelineMetric(context.result, "failed");
-    return;
-  }
+    const status = resolveEmailStatus(parsed.confidence);
+    const saved = await persistIncomingTransaction({ context, email, parsed, status });
+    if (!saved) {
+      const queuedRetry = await persistPendingRetryIncomingEmail(context, email, null);
+      incrementPipelineMetric(context.result, "failed");
+      if (queuedRetry) {
+        incrementPipelineMetric(context.result, "pendingRetry");
+      }
+      return;
+    }
 
-  incrementPipelineMetric(context.result, status === "success" ? "saved" : "needsReview");
+    incrementPipelineMetric(context.result, status === "success" ? "saved" : "needsReview");
+  });
 }
 
 export async function processIncomingEmail(context: EmailBatchContext, email: RawEmail) {
   const parsed = await parseIncomingEmail(context, email);
   if (parsed.kind !== "parsed") {
     if (parsed.kind === "failed") {
-      await persistPendingRetryIncomingEmail(context, email, "parse_error");
+      const queuedRetry = await persistPendingRetryIncomingEmail(context, email, "parse_error");
       incrementPipelineMetric(context.result, "failed");
+      if (queuedRetry) {
+        incrementPipelineMetric(context.result, "pendingRetry");
+      }
       return;
     }
 

@@ -27,7 +27,7 @@ type FetchStartResult =
 type FetchProgressRuntime = {
   readonly run: EmailCaptureFetchRun;
   readonly refreshTransactions: RefreshTransactions;
-  lastRefreshedSaved: number;
+  hasRefreshedFirstSave: boolean;
 };
 
 export type EmailCaptureSession = {
@@ -113,8 +113,8 @@ const applyFetchProgress = (
   if (!isCurrentEmailCaptureFetchRun(progressRuntime.run)) return;
 
   getRuntime().setProgress(progress);
-  if (progress.saved <= progressRuntime.lastRefreshedSaved) return;
-  progressRuntime.lastRefreshedSaved = progress.saved;
+  if (progress.saved === 0 || progressRuntime.hasRefreshedFirstSave) return;
+  progressRuntime.hasRefreshedFirstSave = true;
   void progressRuntime.refreshTransactions();
 };
 
@@ -187,7 +187,7 @@ export function createEmailCaptureFetchProgressHandler(
   const progressRuntime: FetchProgressRuntime = {
     run,
     refreshTransactions,
-    lastRefreshedSaved: 0,
+    hasRefreshedFirstSave: false,
   };
 
   return (progress) => applyFetchProgress(progressRuntime, progress);

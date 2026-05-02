@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { RawEmail } from "@/features/email-capture/schema";
 import { createEmailPipelineService } from "@/features/email-capture/services/create-email-pipeline-service";
 import {
+  processBackgroundEmails,
   processEmails,
   processInitialSyncEmails,
   processRetries,
@@ -329,22 +330,77 @@ describe("email processing pipeline", () => {
         externalId: "ext-1",
         status: "skipped",
         failureReason: null,
+        subject: "",
+        rawBodyPreview: "",
       })
     );
-    expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
-      mockDb,
-      expect.arrayContaining([
-        expect.objectContaining({
-          userId: USER_ID,
-          processedEmailId: expect.any(String),
-          processedCaptureId: null,
-          transactionId: null,
-          scope: "email:bancolombia:sender",
-          value: "notificaciones@bancolombia.com.co",
-        }),
-      ])
+    expect(mockSaveCaptureEvidenceRows).not.toHaveBeenCalled();
+    expect(mockBuildEmailCaptureEvidence).not.toHaveBeenCalled();
+  });
+
+  it("emits privacy-safe diagnostics for skipped emails and batch outcomes", async () => {
+    const capturePipelineEvent = vi.fn();
+    const service = createTestEmailPipelineService({
+      telemetry: {
+        captureError: vi.fn(),
+        captureWarning: vi.fn(),
+        capturePipelineEvent,
+      },
+    });
+    mockParseEmailApi.mockResolvedValueOnce(null);
+
+    await service.processEmails(mockDb, USER_ID, [makeRawEmail()]);
+
+    expect(capturePipelineEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schema: "email_skipped_v1",
+        providerFamily: "gmail",
+        skipReason: "filtered",
+      })
     );
-    expectCaptureEvidenceBuiltFromEmailContent();
+    expect(capturePipelineEvent).toHaveBeenCalledWith({
+      source: "email",
+      schema: "email_pipeline_batch_v1",
+      batchSize: 1,
+      providerFamilyCount: 1,
+      providerFamilies: "gmail",
+      dedupedInBatch: 0,
+      skippedAlreadyProcessed: 0,
+      skippedCrossSource: 0,
+      skippedDuplicate: 0,
+      filtered: 1,
+      saved: 0,
+      failed: 0,
+      pendingRetry: 0,
+      needsReview: 0,
+    });
+    expect(JSON.stringify(capturePipelineEvent.mock.calls)).not.toContain("Compra aprobada");
+    expect(JSON.stringify(capturePipelineEvent.mock.calls)).not.toContain("50.000");
+    expect(JSON.stringify(capturePipelineEvent.mock.calls)).not.toContain(
+      "notificaciones@bancolombia.com.co"
+    );
+    expect(JSON.stringify(capturePipelineEvent.mock.calls)).not.toContain("bancolombia.com.co");
+  });
+
+  it("reports parser exceptions without exception messages", async () => {
+    const captureWarning = vi.fn();
+    const service = createTestEmailPipelineService({
+      telemetry: {
+        captureError: vi.fn(),
+        captureWarning,
+        capturePipelineEvent: vi.fn(),
+      },
+    });
+    mockParseEmailApi.mockRejectedValueOnce(new Error("Compra en Exito por $50.000"));
+
+    await service.processEmails(mockDb, USER_ID, [makeRawEmail()]);
+
+    expect(captureWarning).toHaveBeenCalledWith("email_parse_exception", {
+      provider: "gmail",
+      errorType: "Error",
+    });
+    expect(JSON.stringify(captureWarning.mock.calls)).not.toContain("Exito");
+    expect(JSON.stringify(captureWarning.mock.calls)).not.toContain("50.000");
   });
 
   it("saves transaction and caches merchant rule when LLM returns high confidence", async () => {
@@ -379,6 +435,21 @@ describe("email processing pipeline", () => {
     );
   });
 
+  it("persists a new transaction and its processed email in one database transaction", async () => {
+    const dbWithTransaction = {
+      transaction: vi.fn((operation: (tx: unknown) => unknown) => operation(mockDb)),
+    } as any;
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+
+    const result = await processEmails(dbWithTransaction, USER_ID, [makeRawEmail()]);
+
+    expect(result.saved).toBe(1);
+    expect(dbWithTransaction.transaction).toHaveBeenCalledTimes(1);
+    expect(mockInsertTransaction).toHaveBeenCalledWith(mockDb, expect.any(Object));
+    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(mockDb, expect.any(Object));
+    expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(mockDb, expect.any(Array));
+  });
+
   it("uses the injected clock for persisted email timestamps and retry backoff", async () => {
     const fixedNow = requireIsoDateTime("2026-04-18T12:34:56.000Z");
     const service = createTestEmailPipelineService({
@@ -406,6 +477,7 @@ describe("email processing pipeline", () => {
     const service = createTestEmailPipelineService({
       parseRateLimit: {
         delayMs: 3000,
+        concurrency: 1,
         sleep: async (delayMs: number) => {
           events.push(`sleep:${delayMs}`);
         },
@@ -464,6 +536,142 @@ describe("email processing pipeline", () => {
 
     resolveFirstParse(makeParsedEmailResult({ description: "Compra 1" }));
     await processing;
+  });
+
+  it("uses foreground policy with three concurrent parse starts and no fixed delay", async () => {
+    const events: string[] = [];
+    const pendingParses: Array<(result: ReturnType<typeof makeParsedEmailResult>) => void> = [];
+    mockParseEmailApi.mockImplementation(async (body: string) => {
+      events.push(`parse:${body}`);
+      return new Promise((resolve) => pendingParses.push(resolve));
+    });
+
+    const processing = processEmails(
+      mockDb,
+      USER_ID,
+      Array.from({ length: 3 }, (_, index) =>
+        makeRawEmail({ externalId: `ext-${index + 1}`, body: `Compra ${index + 1}` })
+      )
+    );
+
+    await vi.waitFor(() => expect(events).toContain("parse:Compra 3"));
+    expect(events).toEqual(["parse:Compra 1", "parse:Compra 2", "parse:Compra 3"]);
+
+    pendingParses.forEach((resolve, index) =>
+      resolve(makeParsedEmailResult({ description: `Compra ${index + 1}` }))
+    );
+    await processing;
+  });
+
+  it("uses background policy with two concurrent parse starts", async () => {
+    const events: string[] = [];
+    const pendingParses: Array<(result: ReturnType<typeof makeParsedEmailResult>) => void> = [];
+    mockParseEmailApi.mockImplementation(async (body: string) => {
+      events.push(`parse:${body}`);
+      return new Promise((resolve) => pendingParses.push(resolve));
+    });
+
+    const processing = processBackgroundEmails(
+      mockDb,
+      USER_ID,
+      Array.from({ length: 3 }, (_, index) =>
+        makeRawEmail({ externalId: `ext-${index + 1}`, body: `Compra ${index + 1}` })
+      )
+    );
+
+    await vi.waitFor(() => expect(events).toContain("parse:Compra 2"));
+    expect(events).toEqual(["parse:Compra 1", "parse:Compra 2"]);
+
+    pendingParses[0]?.(makeParsedEmailResult({ description: "Compra 1" }));
+    await vi.waitFor(() => expect(events).toContain("parse:Compra 3"));
+    expect(events).toEqual(["parse:Compra 1", "parse:Compra 2", "parse:Compra 3"]);
+
+    pendingParses[1]?.(makeParsedEmailResult({ description: "Compra 2" }));
+    pendingParses[2]?.(makeParsedEmailResult({ description: "Compra 3" }));
+    await processing;
+  });
+
+  it("bounds background parsing to ten unprocessed candidates after durable skips", async () => {
+    mockGetProcessedExternalIds.mockResolvedValueOnce(new Set(["ext-1", "ext-2"]));
+    mockParseEmailApi.mockResolvedValue(makeParsedEmailResult());
+
+    await processBackgroundEmails(
+      mockDb,
+      USER_ID,
+      Array.from({ length: 14 }, (_, index) =>
+        makeRawEmail({ externalId: `ext-${index + 1}`, body: `Compra ${index + 1}` })
+      )
+    );
+
+    expect(mockParseEmailApi).toHaveBeenCalledTimes(10);
+    expect(mockParseEmailApi).toHaveBeenCalledWith("Compra 3");
+    expect(mockParseEmailApi).toHaveBeenCalledWith("Compra 12");
+    expect(mockParseEmailApi).not.toHaveBeenCalledWith("Compra 13");
+  });
+
+  it("serializes duplicate lookup and transaction insert under concurrent parsing", async () => {
+    const persistedTransactions: Array<{
+      id: string;
+      amount: number;
+      date: string;
+      description: string;
+    }> = [];
+    let releaseFirstInsert!: () => void;
+    const firstInsertStarted = new Promise<void>((resolve) => {
+      mockInsertTransaction.mockImplementation(async (_db, row) => {
+        if (mockInsertTransaction.mock.calls.length === 1) {
+          resolve();
+          await new Promise<void>((release) => {
+            releaseFirstInsert = release;
+          });
+        }
+
+        persistedTransactions.push({
+          id: row.id,
+          amount: row.amount,
+          date: row.date,
+          description: row.description,
+        });
+      });
+    });
+    const service = createTestEmailPipelineService({
+      parseRateLimit: { delayMs: 0, concurrency: 2 },
+    });
+    mockParseEmailApi.mockResolvedValue(makeParsedEmailResult({ description: "Compra duplicada" }));
+    mockFindDuplicateTransaction.mockImplementation(async ({ amount, date, merchant }) => {
+      const existing = persistedTransactions.find(
+        (transaction) =>
+          transaction.amount === amount &&
+          transaction.date === date &&
+          transaction.description === merchant
+      );
+
+      return existing?.id ?? null;
+    });
+
+    const processing = service.processEmails(mockDb, USER_ID, [
+      makeRawEmail({ externalId: "ext-1", body: "Compra duplicada 1" }),
+      makeRawEmail({ externalId: "ext-2", body: "Compra duplicada 2" }),
+    ]);
+
+    await firstInsertStarted;
+    await Promise.resolve();
+    await Promise.resolve();
+    releaseFirstInsert();
+
+    const result = await processing;
+
+    expect(mockInsertTransaction).toHaveBeenCalledTimes(1);
+    expect(result.saved).toBe(1);
+    expect(result.skippedCrossSource).toBe(1);
+    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        externalId: "ext-2",
+        status: "skipped_duplicate",
+        transactionId: expect.stringMatching(/^tx-/),
+      })
+    );
   });
 
   it("keeps initial sync serialized until duplicate writes are atomic", async () => {
@@ -628,6 +836,7 @@ describe("email processing pipeline", () => {
     const result = await processEmails(mockDb, USER_ID, emails);
 
     expect(result.failed).toBe(1);
+    expect(result.pendingRetry).toBe(1);
     expect(result.saved).toBe(0);
     expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
       mockDb,
@@ -651,6 +860,7 @@ describe("email processing pipeline", () => {
     const result = await processEmails(mockDb, USER_ID, emails);
 
     expect(result.failed).toBe(1);
+    expect(result.pendingRetry).toBe(1);
     expect(result.saved).toBe(0);
     expect(mockInsertTransaction).not.toHaveBeenCalled();
     expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
@@ -674,6 +884,7 @@ describe("email processing pipeline", () => {
     const result = await processEmails(mockDb, USER_ID, emails);
 
     expect(result.failed).toBe(1);
+    expect(result.pendingRetry).toBe(1);
     expect(result.saved).toBe(0);
     expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
       mockDb,
@@ -782,6 +993,7 @@ describe("email processing pipeline", () => {
       skippedCrossSource: 0,
       saved: 0,
       failed: 0,
+      pendingRetry: 0,
       needsReview: 0,
     });
   });

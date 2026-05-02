@@ -32,6 +32,11 @@ import { retryableParseEmailApi } from "./parse-email-api";
 
 export type { PipelineResult, ProcessEmails, ProcessRetries, ProgressCallback, RetryResult };
 
+const FOREGROUND_PARSE_START_DELAY_MS = 0;
+const FOREGROUND_PARSE_CONCURRENCY = 3;
+const BACKGROUND_PARSE_START_DELAY_MS = 0;
+const BACKGROUND_PARSE_CONCURRENCY = 2;
+const BACKGROUND_MAX_CANDIDATE_EMAILS = 10;
 const INITIAL_SYNC_PARSE_START_DELAY_MS = 1000;
 const INITIAL_SYNC_PARSE_CONCURRENCY = 1;
 
@@ -55,7 +60,22 @@ const emailPipelineDeps = {
   trackTransactionCreated,
 };
 
-const emailPipeline = createEmailPipelineService(emailPipelineDeps);
+const emailPipeline = createEmailPipelineService({
+  ...emailPipelineDeps,
+  parseRateLimit: {
+    delayMs: FOREGROUND_PARSE_START_DELAY_MS,
+    concurrency: FOREGROUND_PARSE_CONCURRENCY,
+  },
+});
+
+const backgroundEmailPipeline = createEmailPipelineService({
+  ...emailPipelineDeps,
+  parseRateLimit: {
+    delayMs: BACKGROUND_PARSE_START_DELAY_MS,
+    concurrency: BACKGROUND_PARSE_CONCURRENCY,
+  },
+  maxCandidateEmails: BACKGROUND_MAX_CANDIDATE_EMAILS,
+});
 
 const initialSyncEmailPipeline = createEmailPipelineService({
   ...emailPipelineDeps,
@@ -72,6 +92,13 @@ export const processEmails: ProcessEmails = (
   rawEmails: RawEmail[],
   onProgress?: ProgressCallback
 ) => emailPipeline.processEmails(db, userId, rawEmails, onProgress);
+
+export const processBackgroundEmails: ProcessEmails = (
+  db: AnyDb,
+  userId: UserId,
+  rawEmails: RawEmail[],
+  onProgress?: ProgressCallback
+) => backgroundEmailPipeline.processEmails(db, userId, rawEmails, onProgress);
 
 export const processInitialSyncEmails: ProcessEmails = (
   db: AnyDb,

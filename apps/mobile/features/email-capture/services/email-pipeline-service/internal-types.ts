@@ -36,6 +36,7 @@ export type PipelineRuntime = {
     readonly concurrency: number;
     readonly sleep: (delayMs: number) => Promise<void>;
   };
+  readonly maxCandidateEmails?: number;
 };
 
 export type CaptureEvidenceRowsInput = {
@@ -178,6 +179,7 @@ export type EmailBatchContext = {
   completed: number;
   parseStarts: number;
   parseStartGate: Promise<void>;
+  persistenceGate: Promise<void>;
 };
 
 export type RetryBatchContext = {
@@ -213,7 +215,13 @@ export type RetryDuplicateOutcome =
   | { readonly kind: "retry" };
 
 export type UnparsedIncomingEmailKind = Exclude<IncomingParseOutcome["kind"], "parsed">;
-export type EmailMetric = "filtered" | "skippedCrossSource" | "saved" | "failed" | "needsReview";
+export type EmailMetric =
+  | "filtered"
+  | "skippedCrossSource"
+  | "saved"
+  | "failed"
+  | "pendingRetry"
+  | "needsReview";
 
 export type UnparsedProcessedEmailRowInput = {
   readonly email: RawEmail;

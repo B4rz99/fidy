@@ -30,8 +30,8 @@ export const EmailPipelineDeps = makeAppService<CreateEmailPipelineServiceDeps>(
   "@/features/email-capture/EmailPipelineDeps"
 );
 
-const DEFAULT_PARSE_RATE_LIMIT_DELAY_MS = process.env.NODE_ENV === "test" ? 0 : 3000;
-const DEFAULT_PARSE_RATE_LIMIT_CONCURRENCY = 1;
+const DEFAULT_PARSE_RATE_LIMIT_DELAY_MS = 0;
+const DEFAULT_PARSE_RATE_LIMIT_CONCURRENCY = 3;
 
 const sleep = (delayMs: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, delayMs));
@@ -222,7 +222,7 @@ export function nextRetryAtEffect(retryCount: number) {
 }
 
 export function createPipelineRuntime(deps: CreateEmailPipelineServiceDeps): PipelineRuntime {
-  const { clock, telemetry, parseRateLimit, ...runtimeDeps } = deps;
+  const { clock, telemetry, parseRateLimit, maxCandidateEmails, ...runtimeDeps } = deps;
   const clockRuntime = bindAppClock(clock as AppClock | undefined);
   const telemetryRuntime = bindAppTelemetry(telemetry as AppTelemetry | undefined);
   const runtime = EmailPipelineDeps.bind(runtimeDeps);
@@ -237,5 +237,6 @@ export function createPipelineRuntime(deps: CreateEmailPipelineServiceDeps): Pip
       concurrency: parseRateLimit?.concurrency ?? DEFAULT_PARSE_RATE_LIMIT_CONCURRENCY,
       sleep: parseRateLimit?.sleep ?? sleep,
     },
+    maxCandidateEmails,
   };
 }

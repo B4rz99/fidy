@@ -13,8 +13,10 @@ import {
 import { getAdapter } from "@/features/email-capture/services/email-adapter";
 import { summarizeFetchedEmailDiagnostics } from "@/features/email-capture/services/email-capture-fetch-service";
 import {
+  processBackgroundEmails,
   processEmails,
   processInitialSyncEmails,
+  processRetries,
 } from "@/features/email-capture/services/email-pipeline";
 import {
   confirmReviewedEmail,
@@ -70,12 +72,22 @@ vi.mock("@/features/email-capture/services/email-adapter", () => ({
 }));
 
 vi.mock("@/features/email-capture/services/email-pipeline", () => ({
+  processBackgroundEmails: vi.fn().mockResolvedValue({
+    filtered: 0,
+    skippedDuplicate: 0,
+    skippedCrossSource: 0,
+    saved: 0,
+    failed: 0,
+    pendingRetry: 0,
+    needsReview: 0,
+  }),
   processEmails: vi.fn().mockResolvedValue({
     filtered: 0,
     skippedDuplicate: 0,
     skippedCrossSource: 0,
     saved: 0,
     failed: 0,
+    pendingRetry: 0,
     needsReview: 0,
   }),
   processInitialSyncEmails: vi.fn().mockResolvedValue({
@@ -84,6 +96,7 @@ vi.mock("@/features/email-capture/services/email-pipeline", () => ({
     skippedCrossSource: 0,
     saved: 0,
     failed: 0,
+    pendingRetry: 0,
     needsReview: 0,
   }),
   processRetries: vi.fn().mockResolvedValue({
@@ -176,6 +189,7 @@ type ProcessSummary = {
   skippedCrossSource: number;
   saved: number;
   failed: number;
+  pendingRetry: number;
   needsReview: number;
 };
 
@@ -211,6 +225,7 @@ const EMPTY_PROCESS_SUMMARY: ProcessSummary = {
   skippedCrossSource: 0,
   saved: 0,
   failed: 0,
+  pendingRetry: 0,
   needsReview: 0,
 };
 
@@ -304,7 +319,7 @@ describe("email capture boundary", () => {
     expect(state.bannerDismissed).toBe(false);
   });
 
-  it("summarizes fetched email source families without email content", () => {
+  it("summarizes fetched email diagnostics without sender families or content", () => {
     expect(
       summarizeFetchedEmailDiagnostics([
         {
@@ -324,10 +339,6 @@ describe("email capture boundary", () => {
           provider: "gmail",
           fetchOk: true,
           emailCount: 3,
-          sourceFamilies: {
-            davibank: 1,
-            rappicard: 2,
-          },
         },
       ],
     });
@@ -633,6 +644,95 @@ describe("email capture boundary", () => {
       expect(processEmails).not.toHaveBeenCalled();
     });
 
+    it("uses the background parser profile and bounds email work per run when requested", async () => {
+      setAccounts();
+      const mockRawEmails = Array.from({ length: 12 }, (_, index) =>
+        makeRawEmail({
+          externalId: `ext-${index + 1}`,
+          receivedAt: `2026-03-05T10:${String(index).padStart(2, "0")}:00Z`,
+        })
+      );
+      mockAdapter.fetchEmails.mockResolvedValueOnce(mockRawEmails);
+      vi.mocked(processBackgroundEmails).mockResolvedValueOnce({
+        ...EMPTY_PROCESS_SUMMARY,
+        saved: 10,
+      });
+      mockEmptyReviewLoads();
+
+      await fetchAndProcessEmails(
+        mockDb,
+        mockUserId as UserId,
+        "gmail-client-id",
+        "outlook-client-id",
+        mockRefresh,
+        { parseProfile: "background" }
+      );
+
+      expect(processBackgroundEmails).toHaveBeenCalledWith(
+        mockDb,
+        mockUserId,
+        mockRawEmails.slice(-10).reverse(),
+        expect.any(Function)
+      );
+      expect(updateLastFetchedAt).not.toHaveBeenCalled();
+      expect(processEmails).not.toHaveBeenCalled();
+      expect(processInitialSyncEmails).not.toHaveBeenCalled();
+      expect(processRetries).not.toHaveBeenCalled();
+    });
+
+    it("applies the background work bound across all fetched accounts", async () => {
+      setAccounts([
+        makeAccount(),
+        makeAccount({ id: "ea-2" as EmailAccountId, provider: "outlook" }),
+      ]);
+      const gmailEmails = Array.from({ length: 8 }, (_, index) =>
+        makeRawEmail({
+          externalId: `gmail-${index + 1}`,
+          receivedAt: `2026-03-05T10:${String(index).padStart(2, "0")}:00Z`,
+        })
+      );
+      const outlookEmails = Array.from({ length: 8 }, (_, index) =>
+        makeRawEmail({
+          externalId: `outlook-${index + 1}`,
+          provider: "outlook",
+          receivedAt: `2026-03-05T11:${String(index).padStart(2, "0")}:00Z`,
+        })
+      );
+      mockAdapter.fetchEmails
+        .mockResolvedValueOnce(gmailEmails)
+        .mockResolvedValueOnce(outlookEmails);
+      vi.mocked(processBackgroundEmails)
+        .mockResolvedValueOnce({ ...EMPTY_PROCESS_SUMMARY })
+        .mockResolvedValueOnce({ ...EMPTY_PROCESS_SUMMARY });
+      mockEmptyReviewLoads();
+
+      await fetchAndProcessEmails(
+        mockDb,
+        mockUserId as UserId,
+        "gmail-client-id",
+        "outlook-client-id",
+        mockRefresh,
+        { parseProfile: "background" }
+      );
+
+      const processedEmails = vi
+        .mocked(processBackgroundEmails)
+        .mock.calls.flatMap(([, , emails]) => emails);
+      expect(processedEmails).toHaveLength(10);
+      expect(processedEmails.map((email) => email.externalId)).toEqual([
+        "outlook-8",
+        "outlook-7",
+        "outlook-6",
+        "outlook-5",
+        "outlook-4",
+        "outlook-3",
+        "outlook-2",
+        "outlook-1",
+        "gmail-8",
+        "gmail-7",
+      ]);
+    });
+
     it("returns the awaited processing outcome", async () => {
       setAccounts();
       mockAdapter.fetchEmails.mockResolvedValueOnce([makeRawEmail()]);
@@ -664,6 +764,7 @@ describe("email capture boundary", () => {
           skippedCrossSource: 0,
           saved: 1,
           failed: 0,
+          pendingRetry: 0,
           needsReview: 0,
         };
       });
@@ -687,19 +788,19 @@ describe("email capture boundary", () => {
       expect(updatedAccount.lastFetchedAt).not.toBeNull();
     });
 
-    it("does not advance lastFetchedAt when fetched emails fail processing", async () => {
+    it("advances lastFetchedAt when fetched emails are durably queued for retry", async () => {
       setAccounts();
       mockAdapter.fetchEmails.mockResolvedValueOnce([makeRawEmail()]);
-      mockProcessResult({ failed: 1 });
+      mockProcessResult({ failed: 1, pendingRetry: 1 });
       mockEmptyReviewLoads();
 
       await runFetchAndProcess();
 
-      expect(updateLastFetchedAt).not.toHaveBeenCalled();
-      expect(useEmailCaptureStore.getState().accounts[0]?.lastFetchedAt).toBeNull();
+      expect(updateLastFetchedAt).toHaveBeenCalledWith(mockDb, "ea-1", expect.any(String));
+      expect(useEmailCaptureStore.getState().accounts[0]?.lastFetchedAt).not.toBeNull();
     });
 
-    it("advances lastFetchedAt for accounts whose own emails process successfully", async () => {
+    it("advances lastFetchedAt for each account whose provider fetch and local processing is durable", async () => {
       setAccounts([
         makeAccount(),
         makeAccount({
@@ -711,16 +812,17 @@ describe("email capture boundary", () => {
       mockAdapter.fetchEmails
         .mockResolvedValueOnce([makeRawEmail({ externalId: "ext-1" })])
         .mockResolvedValueOnce([makeRawEmail({ externalId: "ext-2", provider: "outlook" })]);
-      mockProcessResult({ failed: 1 });
+      mockProcessResult({ failed: 1, pendingRetry: 1 });
       mockProcessResult({ saved: 1 });
       mockEmptyReviewLoads();
 
       await runFetchAndProcess();
 
-      expect(updateLastFetchedAt).toHaveBeenCalledTimes(1);
+      expect(updateLastFetchedAt).toHaveBeenCalledTimes(2);
+      expect(updateLastFetchedAt).toHaveBeenCalledWith(mockDb, "ea-1", expect.any(String));
       expect(updateLastFetchedAt).toHaveBeenCalledWith(mockDb, "ea-2", expect.any(String));
       const [failedAccount, savedAccount] = useEmailCaptureStore.getState().accounts;
-      expect(failedAccount?.lastFetchedAt).toBeNull();
+      expect(failedAccount?.lastFetchedAt).not.toBeNull();
       expect(savedAccount?.lastFetchedAt).not.toBeNull();
     });
 
@@ -756,6 +858,24 @@ describe("email capture boundary", () => {
         expect.objectContaining({ total: 2, completed: 1, saved: 1 }),
         expect.objectContaining({ total: 2, completed: 2, saved: 2 }),
       ]);
+    });
+
+    it("refreshes transactions after the first saved foreground email and after completion", async () => {
+      setAccounts();
+      mockAdapter.fetchEmails.mockResolvedValueOnce([
+        makeRawEmail({ externalId: "ext-1" }),
+        makeRawEmail({ externalId: "ext-2" }),
+      ]);
+      vi.mocked(processEmails).mockImplementationOnce(async (_db, _uid, _emails, onProgress) => {
+        onProgress?.({ total: 2, completed: 1, saved: 1, failed: 0, needsReview: 0 });
+        onProgress?.({ total: 2, completed: 2, saved: 2, failed: 0, needsReview: 0 });
+        return { ...EMPTY_PROCESS_SUMMARY, saved: 2 };
+      });
+      mockEmptyReviewLoads();
+
+      await runFetchAndProcess();
+
+      expect(mockRefresh).toHaveBeenCalledTimes(2);
     });
 
     it("auto-clears phase after 2s timeout when phase is complete", async () => {
@@ -824,6 +944,7 @@ describe("email capture boundary", () => {
           skippedCrossSource: 0,
           saved: 0,
           failed: 0,
+          pendingRetry: 0,
           needsReview: 0,
         };
       });

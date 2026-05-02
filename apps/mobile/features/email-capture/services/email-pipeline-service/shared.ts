@@ -63,6 +63,28 @@ export function getNextQueuedEmail(queue: EmailQueue) {
   return email ?? null;
 }
 
+export async function runSerializedPersistence<T>(
+  context: EmailBatchContext,
+  operation: () => Promise<T>
+): Promise<T> {
+  const previous = context.persistenceGate;
+  let releaseCurrent!: () => void;
+  const current = new Promise<void>((resolve) => {
+    releaseCurrent = resolve;
+  });
+  context.persistenceGate = previous.then(
+    () => current,
+    () => current
+  );
+
+  await previous;
+  try {
+    return await operation();
+  } finally {
+    releaseCurrent();
+  }
+}
+
 export function dedupeRawEmails(rawEmails: EmailQueue["emails"]) {
   return Array.from(new Map(rawEmails.map((email) => [email.externalId, email])).values());
 }
@@ -74,6 +96,7 @@ export function createPipelineResult(skippedDuplicate: number): PipelineResult {
     skippedCrossSource: 0,
     saved: 0,
     failed: 0,
+    pendingRetry: 0,
     needsReview: 0,
   };
 }

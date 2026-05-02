@@ -33,6 +33,7 @@ export type PipelineResult = {
   skippedCrossSource: number;
   saved: number;
   failed: number;
+  pendingRetry: number;
   needsReview: number;
 };
 
@@ -137,6 +138,7 @@ export type CreateEmailPipelineServiceDeps = {
     readonly concurrency?: number;
     readonly sleep?: (delayMs: number) => Promise<void>;
   };
+  readonly maxCandidateEmails?: number;
 };
 
 export type EmailPipelineService = {
