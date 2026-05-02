@@ -2,13 +2,15 @@ import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
 import { createWriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
-import { generateNotificationId, toIsoDateTime } from "@/shared/lib";
+import { captureWarning, generateNotificationId, toIsoDateTime } from "@/shared/lib";
 import { requireIsoDateTime } from "@/shared/types/assertions";
 import type { CategoryId, IsoDateTime, UserId } from "@/shared/types/branded";
 import type { NotificationType, StoredNotification } from "./lib/types";
 import { countNotificationsSince, getNotifications } from "./repository";
 
 const lastVisitedKey = (userId: UserId) => `notification_last_visited_${userId}`;
+
+const errorType = (error: unknown): string => (error instanceof Error ? error.name : typeof error);
 
 type InsertNotificationInput = {
   readonly type: NotificationType;
@@ -112,7 +114,10 @@ export async function initializeNotificationStore(db: AnyDb, userId: UserId): Pr
   try {
     const stored = await SecureStore.getItemAsync(lastVisitedKey(userId));
     lastVisitedAt = stored ? requireIsoDateTime(stored) : null;
-  } catch {
+  } catch (error) {
+    captureWarning("notification_store_last_visited_read_failed", {
+      errorType: errorType(error),
+    });
     // SecureStore may fail in tests — default to null
   }
 
@@ -131,7 +136,10 @@ export function loadNotificationsForUser(db: AnyDb, userId: UserId): void {
       return;
     }
     useNotificationStore.getState().setNotifications(rows as readonly StoredNotification[]);
-  } catch {
+  } catch (error) {
+    captureWarning("notification_store_load_failed", {
+      errorType: errorType(error),
+    });
     useNotificationStore.getState().setIsLoading(false);
   }
 }
@@ -146,6 +154,9 @@ export async function insertNotificationRecord(
   const result = await mutations.commit(createInsertNotificationCommand({ userId, input, now }));
 
   if (!result.success) {
+    captureWarning("notification_insert_failed", {
+      errorType: result.error ? "mutation_rejected" : "unknown",
+    });
     return false;
   }
 
@@ -154,7 +165,11 @@ export async function insertNotificationRecord(
 
 export function markNotificationsVisited(userId: UserId): void {
   const now = toIsoDateTime(new Date());
-  void SecureStore.setItemAsync(lastVisitedKey(userId), now).catch(() => undefined);
+  void SecureStore.setItemAsync(lastVisitedKey(userId), now).catch((error) => {
+    captureWarning("notification_store_last_visited_write_failed", {
+      errorType: errorType(error),
+    });
+  });
 
   if (isActiveNotificationUser(userId)) {
     useNotificationStore.getState().setNewCount(0);
@@ -170,7 +185,14 @@ export async function clearAllNotifications(db: AnyDb, userId: UserId): Promise<
     now,
   });
 
-  if (result.success && isActiveNotificationUser(userId)) {
+  if (!result.success) {
+    captureWarning("notification_clear_all_failed", {
+      errorType: result.error ? "mutation_rejected" : "unknown",
+    });
+    return;
+  }
+
+  if (isActiveNotificationUser(userId)) {
     useNotificationStore.getState().clearState();
   }
 }

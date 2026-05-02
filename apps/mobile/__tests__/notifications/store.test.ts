@@ -19,6 +19,7 @@ vi.mock("@/features/notifications/repository", () => ({
 }));
 
 vi.mock("@/shared/lib", () => ({
+  captureWarning: vi.fn(),
   generateNotificationId: vi.fn(() => "notif-generated"),
   toIsoDateTime: vi.fn(() => "2026-04-12T10:00:00.000Z"),
 }));

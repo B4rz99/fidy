@@ -1,4 +1,4 @@
-import { generateTransactionId, toIsoDateTime } from "@/shared/lib";
+import { captureWarning, generateTransactionId, toIsoDateTime } from "@/shared/lib";
 import type { WriteThroughMutationModule } from "@/shared/mutations";
 import type { CategoryId, FinancialAccountId, TransactionId, UserId } from "@/shared/types/branded";
 import type { StoredTransaction, TransactionType } from "../schema";
@@ -49,6 +49,8 @@ export type TransactionMutationService = {
 
 const fail = (error: string): TransactionMutationResult => ({ success: false, error });
 
+const errorType = (error: unknown): string => (error instanceof Error ? error.name : typeof error);
+
 async function commitTransaction(
   commit: WriteThroughMutationModule["commit"] | null,
   mode: "insert" | "update",
@@ -56,6 +58,7 @@ async function commitTransaction(
   message: string
 ) {
   if (!commit) {
+    captureWarning("transaction_commit_unavailable", { mode });
     return fail("Store not initialized");
   }
 
@@ -66,8 +69,20 @@ async function commitTransaction(
       row: toTransactionRow(transaction),
     });
 
-    return result.success ? result : fail(message);
-  } catch {
+    if (!result.success) {
+      captureWarning("transaction_commit_failed", {
+        mode,
+        errorType: "mutation_rejected",
+      });
+      return fail(message);
+    }
+
+    return result;
+  } catch (error) {
+    captureWarning("transaction_commit_exception", {
+      mode,
+      errorType: errorType(error),
+    });
     return fail(message);
   }
 }
@@ -185,6 +200,9 @@ export function createTransactionMutationService(
         });
 
         if (!result.success) {
+          captureWarning("transaction_delete_failed", {
+            errorType: "mutation_rejected",
+          });
           throw new Error(result.error);
         }
 

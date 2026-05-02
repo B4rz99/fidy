@@ -55,6 +55,7 @@ vi.mock("@/modules/expo-app-intents", () => ({
 vi.mock("@/shared/lib", () => ({
   captureError: vi.fn(),
   capturePipelineEvent: vi.fn(),
+  captureWarning: vi.fn(),
   generateProcessedCaptureId: () => mockGenerateProcessedCaptureId(),
   toIsoDate: (d: Date) => d.toISOString().slice(0, 10),
   toIsoDateTime: (d: Date) => d.toISOString(),
