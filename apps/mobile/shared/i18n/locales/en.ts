@@ -674,6 +674,7 @@ const en = {
     preferencesSection: "PREFERENCES",
     connectionsSection: "CONNECTIONS",
     privateBackupSection: "PRIVATE BACKUP",
+    privacySection: "PRIVACY",
     appSection: "APP",
     theme: "Theme",
     themeSystem: "System",
@@ -689,6 +690,9 @@ const en = {
     },
     notifications: "Notifications",
     privateBackup: "Private Backup",
+    parseImprovementSharing: "Improve notification parsing",
+    parseImprovementSharingSubtitle:
+      "Share redacted formats when parsing struggles. Amounts, merchants, dates, names, and cards are removed first.",
     privateBackupStatus: {
       notSetUp: "Not set up",
       recoveryKeyNotConfirmed: "Recovery Key not confirmed",
@@ -770,6 +774,13 @@ const en = {
       newDevice: "Paste it on a new device when Fidy finds your encrypted backup.",
       lostKey: "If you lose both this key and a trusted device, the old ledger stays locked.",
     },
+  },
+
+  parseImprovementPrompt: {
+    title: "Help improve parsing?",
+    body: "We can share this redacted format to improve future parsing:\n\n%{template}\n\nAmounts, merchants, dates, names, and cards are removed first.",
+    share: "Share redacted format",
+    notNow: "Not now",
   },
 
   qaTools: {

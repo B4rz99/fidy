@@ -166,6 +166,7 @@ function mockNotificationLlmAccountHintParse() {
     confidence: 0.9,
     cardProductHint: "Visa Oro",
     accountTypeHint: "Tarjeta credito",
+    counterpartyHint: "Restaurante XYZ",
   });
   mockBuildNotificationLlmAccountHintCaptureEvidence.mockReturnValueOnce([
     {
@@ -184,6 +185,7 @@ function expectNotificationLlmAccountHintEvidence() {
     toAccountHint: undefined,
     cardProductHint: "Visa Oro",
     accountTypeHint: "Tarjeta credito",
+    counterpartyHint: "Restaurante XYZ",
   });
 }
 
@@ -220,13 +222,16 @@ describe("processNotification", () => {
     mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
   });
 
-  it("saves transaction when local regex parses successfully", async () => {
+  it("saves transaction when LLM parses a notification with regex hints", async () => {
+    mockNotificationLlmAccountHintParse();
+
     const result = await processNotification(mockDb, USER_ID, makeNotification());
 
     expect(result.saved).toBe(true);
     expect(result.skippedDuplicate).toBe(false);
     expect(result.transactionId).toBe("tx-1");
-    expectSavedNotificationTransaction("tx-1");
+    expect(mockParseNotificationApi).toHaveBeenCalledWith(expect.stringContaining("type=expense"));
+    expectSavedLlmNotificationTransaction();
     expectSavedNotificationEvidence("tx-1");
   });
 
@@ -245,6 +250,38 @@ describe("processNotification", () => {
     expectSavedLlmNotificationTransaction();
   });
 
+  it("uses generic regex matches as LLM hints instead of saving fallback categories", async () => {
+    mockNotificationLlmAccountHintParse();
+    mockStripPii.mockReturnValueOnce("Tu compra fue aprobada por [AMOUNT] en [MERCHANT].");
+
+    const result = await processNotification(
+      mockDb,
+      USER_ID,
+      makeNotification({ text: "Tu compra fue aprobada por $18,900 en CAFETERIA CENTRAL. " })
+    );
+
+    expect(result.saved).toBe(true);
+    expect(mockParseNotificationApi).toHaveBeenCalledWith(
+      expect.stringContaining("Local regex hints")
+    );
+    expect(mockParseNotificationApi).toHaveBeenCalledWith(expect.stringContaining("type=expense"));
+    expect(mockParseNotificationApi).not.toHaveBeenCalledWith(expect.stringContaining("18900"));
+    expect(mockParseNotificationApi).toHaveBeenCalledWith(
+      expect.not.stringContaining("CAFETERIA CENTRAL")
+    );
+    expect(mockInsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({ categoryId: "food" })
+    );
+    expect(mockInsertMerchantRule).toHaveBeenCalledWith(
+      mockDb,
+      USER_ID,
+      "restaurante xyz",
+      "food",
+      expect.any(String)
+    );
+  });
+
   it("records failed capture when both regex and LLM fail", async () => {
     const result = await processNotification(
       mockDb,
@@ -261,7 +298,36 @@ describe("processNotification", () => {
     );
   });
 
+  it("persists low-confidence notification parses as needs_review", async () => {
+    mockParseNotificationApi.mockResolvedValueOnce({
+      type: "income",
+      amount: 35000,
+      categoryId: "other",
+      description: "Transferencia recibida",
+      date: "2026-03-07",
+      confidence: 0.5,
+    });
+
+    const result = await processNotification(
+      mockDb,
+      USER_ID,
+      makeNotification({ text: "Formato raro con $35,000" })
+    );
+
+    expect(result.saved).toBe(true);
+    expect(mockInsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({ type: "income", amount: 35000 })
+    );
+    expect(mockInsertProcessedCapture).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({ status: "needs_review", confidence: 0.5 })
+    );
+    expect(mockInsertMerchantRule).not.toHaveBeenCalled();
+  });
+
   it("skips when fingerprint already processed", async () => {
+    mockNotificationLlmAccountHintParse();
     mockIsCaptureProcessed.mockResolvedValueOnce(true);
 
     const result = await processNotification(mockDb, USER_ID, makeNotification());
@@ -273,6 +339,7 @@ describe("processNotification", () => {
   });
 
   it("skips when cross-source duplicate found", async () => {
+    mockNotificationLlmAccountHintParse();
     mockFindDuplicateTransaction.mockResolvedValueOnce("existing-tx-1");
 
     const result = await processNotification(mockDb, USER_ID, makeNotification());
@@ -291,6 +358,7 @@ describe("processNotification", () => {
   });
 
   it("uses cached merchant rule for category", async () => {
+    mockNotificationLlmAccountHintParse();
     mockLookupMerchantRule.mockResolvedValueOnce("transport");
 
     const result = await processNotification(mockDb, USER_ID, makeNotification());
@@ -303,6 +371,7 @@ describe("processNotification", () => {
   });
 
   it("marks the transaction as inferred when evidence matches a known financial account", async () => {
+    mockNotificationLlmAccountHintParse();
     mockFindMatchingFinancialAccountId.mockReturnValueOnce("fa-card-1");
 
     const result = await processNotification(mockDb, USER_ID, makeNotification());
@@ -317,19 +386,34 @@ describe("processNotification", () => {
     );
   });
 
-  it("caches merchant rule when confidence >= 0.7", async () => {
+  it("does not cache categories when LLM notification parsing fails", async () => {
     await processNotification(mockDb, USER_ID, makeNotification());
+
+    expect(mockInsertTransaction).not.toHaveBeenCalled();
+    expect(mockInsertMerchantRule).not.toHaveBeenCalled();
+  });
+
+  it("caches merchant rule when a high-confidence LLM parse provides the category", async () => {
+    mockNotificationLlmAccountHintParse();
+
+    await processNotification(
+      mockDb,
+      USER_ID,
+      makeNotification({ text: "Some unrecognized bank format with $35,000" })
+    );
 
     expect(mockInsertMerchantRule).toHaveBeenCalledWith(
       mockDb,
       USER_ID,
-      "eds la castellana",
-      expect.any(String),
+      "restaurante xyz",
+      "food",
       expect.any(String)
     );
   });
 
   it("resolves Google Wallet as google_pay source", async () => {
+    mockNotificationLlmAccountHintParse();
+
     const result = await processNotification(
       mockDb,
       USER_ID,

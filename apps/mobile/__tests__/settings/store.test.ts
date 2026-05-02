@@ -28,6 +28,7 @@ describe("useSettingsStore", () => {
       spendingAnomalies: true,
       weeklyDigest: true,
     });
+    expect(initial.shareAnonymizedParseSamples).toBe(false);
   });
 
   beforeEach(() => {
@@ -50,6 +51,23 @@ describe("useSettingsStore", () => {
     useSettingsStore.getState().setNotificationPreference("budgetAlerts", false);
     expect(useSettingsStore.getState().notificationPreferences.budgetAlerts).toBe(false);
     expect(useSettingsStore.getState().notificationPreferences.goalMilestones).toBe(true);
+  });
+
+  test("setShareAnonymizedParseSamples persists privacy preference", () => {
+    useSettingsStore.getState().setShareAnonymizedParseSamples(true);
+
+    expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(true);
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith("share_anonymized_parse_samples", "true");
+  });
+
+  test("hydrates anonymized parse sample sharing preference", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockImplementation((key) =>
+      Promise.resolve(key === "share_anonymized_parse_samples" ? "true" : null)
+    );
+
+    await useSettingsStore.getState().hydrate();
+
+    expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(true);
   });
 
   test("tracks Private Backup setup until the Recovery Key is confirmed", () => {

@@ -1,6 +1,4 @@
-export type LocalParseResult = {
-  amount: number;
-  merchant: string;
+export type LocalParseHint = {
   type: "expense" | "income";
 };
 
@@ -64,9 +62,39 @@ type PatternEntry = {
   merchantResolver: MerchantResolver;
 };
 
-const PATTERNS: readonly PatternEntry[] = [
+const HINT_PATTERNS: readonly PatternEntry[] = [
   {
     pattern: BANCOLOMBIA_PURCHASE,
+    type: "expense",
+    amountGroup: 1,
+    merchantResolver: merchantFromGroup(2),
+  },
+  {
+    pattern: BBVA_PURCHASE,
+    type: "expense",
+    amountGroup: 1,
+    merchantResolver: merchantFromGroup(2),
+  },
+  {
+    pattern: DAVIPLATA_PURCHASE,
+    type: "expense",
+    amountGroup: 1,
+    merchantResolver: merchantFromGroup(2),
+  },
+  {
+    pattern: GOOGLE_WALLET_EN,
+    type: "expense",
+    amountGroup: 1,
+    merchantResolver: merchantFromGroup(2),
+  },
+  {
+    pattern: GOOGLE_WALLET_ES,
+    type: "expense",
+    amountGroup: 1,
+    merchantResolver: merchantFromGroup(2),
+  },
+  {
+    pattern: GENERIC_PURCHASE,
     type: "expense",
     amountGroup: 1,
     merchantResolver: merchantFromGroup(2),
@@ -89,22 +117,10 @@ const PATTERNS: readonly PatternEntry[] = [
     amountGroup: 1,
     merchantResolver: staticMerchant("Depósito"),
   },
-  {
-    pattern: BBVA_PURCHASE,
-    type: "expense",
-    amountGroup: 1,
-    merchantResolver: merchantFromGroup(2),
-  },
   { pattern: NEQUI_SENT, type: "expense", amountGroup: 1, merchantResolver: merchantFromGroup(2) },
   {
     pattern: NEQUI_RECEIVED,
     type: "income",
-    amountGroup: 1,
-    merchantResolver: merchantFromGroup(2),
-  },
-  {
-    pattern: DAVIPLATA_PURCHASE,
-    type: "expense",
     amountGroup: 1,
     merchantResolver: merchantFromGroup(2),
   },
@@ -114,27 +130,9 @@ const PATTERNS: readonly PatternEntry[] = [
     amountGroup: 1,
     merchantResolver: merchantFromGroup(2),
   },
-  {
-    pattern: GOOGLE_WALLET_EN,
-    type: "expense",
-    amountGroup: 1,
-    merchantResolver: merchantFromGroup(2),
-  },
-  {
-    pattern: GOOGLE_WALLET_ES,
-    type: "expense",
-    amountGroup: 1,
-    merchantResolver: merchantFromGroup(2),
-  },
-  {
-    pattern: GENERIC_PURCHASE,
-    type: "expense",
-    amountGroup: 1,
-    merchantResolver: merchantFromGroup(2),
-  },
 ];
 
-function tryParseEntry(combined: string, entry: PatternEntry): LocalParseResult | null {
+function tryParseEntry(combined: string, entry: PatternEntry): LocalParseHint | null {
   const match = combined.match(entry.pattern);
   if (!match) return null;
 
@@ -144,14 +142,14 @@ function tryParseEntry(combined: string, entry: PatternEntry): LocalParseResult 
   const merchant = entry.merchantResolver(match);
   if (merchant.length === 0) return null;
 
-  return { amount, merchant, type: entry.type };
+  return { type: entry.type };
 }
 
-export function parseNotificationLocally(text: string): LocalParseResult | null {
+export function parseNotificationLocalHint(text: string): LocalParseHint | null {
   const combined = text.trim();
   if (combined.length === 0) return null;
 
-  return PATTERNS.reduce<LocalParseResult | null>(
+  return HINT_PATTERNS.reduce<LocalParseHint | null>(
     (found, entry) => found ?? tryParseEntry(combined, entry),
     null
   );

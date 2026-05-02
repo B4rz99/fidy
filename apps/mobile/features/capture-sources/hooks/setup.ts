@@ -16,8 +16,24 @@ import {
   smsDetectionDataSchema,
 } from "../schema";
 import { createCaptureIngestionPort } from "../services/capture-ingestion";
+import type {
+  NotificationParseMethod,
+  NotificationSource,
+} from "../services/notification-pipeline/types";
 
 const noop = () => undefined;
+
+type NotificationCaptureOptions = {
+  readonly onParseImprovementRequest?: (input: NotificationParseImprovementRequest) => void;
+};
+
+type NotificationParseImprovementRequest = {
+  readonly rawText: string;
+  readonly source: NotificationSource;
+  readonly status: "failed" | "needs_review";
+  readonly confidence: number | null;
+  readonly parseMethod: NotificationParseMethod;
+};
 
 const issueCount = (issues: readonly unknown[]): number => issues.length;
 
@@ -96,7 +112,8 @@ export async function setupSmsDetection(
 export async function setupNotificationCapture(
   db: AnyDb,
   userId: UserId,
-  packages: string[]
+  packages: string[],
+  options: NotificationCaptureOptions = {}
 ): Promise<() => void> {
   const captureIngestion = createCaptureIngestionPort(db, {
     processNotification,
@@ -125,6 +142,13 @@ export async function setupNotificationCapture(
         kind: "notification",
         userId,
         notification: parsed.data,
+      })
+      .then((result) => {
+        if (!("parseImprovementRequest" in result) || !result.parseImprovementRequest) return;
+        options.onParseImprovementRequest?.({
+          rawText: parsed.data.bigText ?? parsed.data.text,
+          ...result.parseImprovementRequest,
+        });
       })
       .catch(captureError);
   });

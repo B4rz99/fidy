@@ -30,6 +30,7 @@ export type RawParsedNotification = {
   toAccountHint?: string;
   cardProductHint?: string;
   accountTypeHint?: string;
+  counterpartyHint?: string;
 };
 
 export type ParsedNotification = Omit<RawParsedNotification, "amount" | "date"> & {
@@ -78,7 +79,7 @@ export type DuplicateCheckResult =
   | { kind: "cross_source"; transactionId: TransactionId };
 
 export type PersistedCaptureOutcome = {
-  status: "failed" | "skipped_duplicate" | "success";
+  status: "failed" | "skipped_duplicate" | "needs_review" | "success";
   fingerprintHash: string;
   transactionId: TransactionId | null;
   confidence: number | null;
@@ -89,4 +90,10 @@ export type NotificationPipelineResult = {
   saved: boolean;
   skippedDuplicate: boolean;
   transactionId: TransactionId | null;
+  parseImprovementRequest?: {
+    readonly source: NotificationSource;
+    readonly status: "failed" | "needs_review";
+    readonly confidence: number | null;
+    readonly parseMethod: NotificationParseMethod;
+  };
 };

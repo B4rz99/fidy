@@ -60,6 +60,7 @@ ${CATEGORY_GUIDE}`;
 const NOTIFICATION_PARSE_SYSTEM = `Interpret this Colombian bank push notification as one Capture Interpreter candidate.
 
 The text is short (1-2 lines). Apply the same rules:
+- If the input includes "Local regex hints", treat them as non-authoritative evidence only; resolve conflicts from the full text and return needs_review when event type remains ambiguous.
 - Return exactly one candidate with kind: "transaction", "transfer", "not_trackable", or "needs_review".
 - Fill fields that do not apply to the selected kind with null.
 - Use "transaction" only when the evidence clearly describes a ledger expense or income.

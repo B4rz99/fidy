@@ -684,6 +684,7 @@ const es = {
     preferencesSection: "PREFERENCIAS",
     connectionsSection: "CONEXIONES",
     privateBackupSection: "COPIA PRIVADA",
+    privacySection: "PRIVACIDAD",
     appSection: "APLICACIÓN",
     theme: "Tema",
     themeSystem: "Sistema",
@@ -699,6 +700,9 @@ const es = {
     },
     notifications: "Notificaciones",
     privateBackup: "Copia privada",
+    parseImprovementSharing: "Mejorar lectura de notificaciones",
+    parseImprovementSharingSubtitle:
+      "Comparte formatos redactados cuando falle una lectura. Primero se quitan montos, comercios, fechas, nombres y tarjetas.",
     privateBackupStatus: {
       notSetUp: "Sin configurar",
       recoveryKeyNotConfirmed: "Llave de recuperación sin confirmar",
@@ -785,6 +789,13 @@ const es = {
       lostKey:
         "Si pierdes esta llave y también un dispositivo confiable, el historial anterior queda cerrado.",
     },
+  },
+
+  parseImprovementPrompt: {
+    title: "¿Ayudar a mejorar la lectura?",
+    body: "Podemos compartir este formato redactado para mejorar futuras lecturas:\n\n%{template}\n\nPrimero se quitan montos, comercios, fechas, nombres y tarjetas.",
+    share: "Compartir formato redactado",
+    notNow: "Ahora no",
   },
 
   qaTools: {

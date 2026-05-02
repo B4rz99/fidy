@@ -252,6 +252,47 @@ describe("setupNotificationCapture", () => {
     expect(mockProcessNotification).toHaveBeenCalledWith(mockDb, USER_ID, notificationData);
   });
 
+  it("requests parse improvement sharing after failed notification parsing", async () => {
+    const { setupNotificationCapture } = await loadSetup();
+    const mockRequestParseImprovementSample = vi.fn();
+    let capturedListener: (event: any) => void = vi.fn();
+    mockAndroidAddListener.mockImplementationOnce((_event: any, listener: any) => {
+      capturedListener = listener;
+      return { remove: vi.fn() };
+    });
+    mockProcessNotification.mockResolvedValueOnce({
+      saved: false,
+      skippedDuplicate: false,
+      transactionId: null,
+      parseImprovementRequest: {
+        source: "notification_android",
+        status: "failed",
+        confidence: null,
+        parseMethod: "llm",
+      },
+    });
+
+    await setupNotificationCapture(mockDb, USER_ID, ["com.todo1.mobile.co.bancolombia"], {
+      onParseImprovementRequest: mockRequestParseImprovementSample,
+    });
+
+    const notificationData = {
+      packageName: "com.todo1.mobile.co.bancolombia",
+      text: "Formato nuevo por $50,000 en EXITO.",
+      timestamp: Date.now(),
+    };
+    capturedListener(notificationData);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mockRequestParseImprovementSample).toHaveBeenCalledWith({
+      rawText: notificationData.text,
+      source: "notification_android",
+      status: "failed",
+      confidence: null,
+      parseMethod: "llm",
+    });
+  });
+
   it("ignores malformed notification payloads", async () => {
     const { setupNotificationCapture } = await loadSetup();
     let capturedListener: (event: any) => void = vi.fn();

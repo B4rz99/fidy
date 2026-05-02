@@ -61,6 +61,7 @@ export async function parseNotificationWithLlm(
         toAccountHint: llm.toAccountHint,
         cardProductHint: llm.cardProductHint,
         accountTypeHint: llm.accountTypeHint,
+        counterpartyHint: llm.counterpartyHint,
       }
     : null;
 }
@@ -79,6 +80,7 @@ export function appendParsedNotificationEvidence(
         toAccountHint: parsed.toAccountHint,
         cardProductHint: parsed.cardProductHint,
         accountTypeHint: parsed.accountTypeHint,
+        counterpartyHint: parsed.counterpartyHint,
       }),
     ],
   };
