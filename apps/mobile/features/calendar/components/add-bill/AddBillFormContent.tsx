@@ -1,4 +1,5 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
 import {
   KeyboardAvoidingView,
@@ -50,6 +51,7 @@ export function AddBillFormContent({
   startDate,
 }: AddBillFormContentProps) {
   const { t, locale } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const accentGreen = useThemeColor("accentGreen");
   const borderColor = useThemeColor("borderSubtle");
   const cardBg = useThemeColor("card");
@@ -64,7 +66,8 @@ export function AddBillFormContent({
     >
       <ScrollView
         style={[styles.container, { backgroundColor: cardBg }]}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: bottom + 24 }]}
+        contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
       >
         <Text style={[styles.title, { color: primaryColor }]}>

@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/public";
 import { useOnboardingStore } from "@/features/onboarding/store";
@@ -33,6 +34,7 @@ function ResolvedCreateSuggestedAccountForm({
 }) {
   const { back } = useRouter();
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const onboardingStep = useOnboardingStore((state) => state.step);
   const nextStep = useOnboardingStore((state) => state.nextStep);
   const service = useMemo(() => createAccountSuggestionService(), []);
@@ -82,7 +84,7 @@ function ResolvedCreateSuggestedAccountForm({
     <ScreenLayout title={t("accountSuggestions.create.title")} variant="sub" onBack={back}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 32 }]}
         keyboardShouldPersistTaps="handled"
       >
         <Text style={[styles.subtitle, { color: secondary }]}>

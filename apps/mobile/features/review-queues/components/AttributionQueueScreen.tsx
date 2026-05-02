@@ -1,6 +1,7 @@
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { refreshTransactions } from "@/features/transactions/store.public";
 import { ScreenLayout } from "@/shared/components";
@@ -104,6 +105,7 @@ function AttributionQueueCard({
 export function AttributionQueueScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const { items, hasLoadedQueue, reloadQueue, service } = useAttributionReviewQueue({ db, userId });
@@ -148,7 +150,8 @@ export function AttributionQueueScreen() {
         <FlashList
           data={visibleItems}
           keyExtractor={(item) => item.transaction.id}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: bottom + 28 }]}
+          contentInsetAdjustmentBehavior="automatic"
           ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
           ListHeaderComponent={
             <SummaryCard

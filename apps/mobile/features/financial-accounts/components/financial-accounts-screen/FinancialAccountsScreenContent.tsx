@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenLayout } from "@/shared/components";
 import { Plus } from "@/shared/components/icons";
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
@@ -23,13 +24,14 @@ export function FinancialAccountsScreenContent({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
+  const { bottom } = useSafeAreaInsets();
   const hasItems = regularAccounts.length + creditCardAccounts.length > 0;
 
   return (
     <ScreenLayout title={t("financialAccounts.list.title")} variant="sub" onBack={onBack}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: bottom + 32 }]}
         showsVerticalScrollIndicator={false}
       >
         <Text style={[styles.subtitle, { color: secondary }]}>

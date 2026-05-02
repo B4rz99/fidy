@@ -2,6 +2,7 @@ import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
 import { PRE_PERMISSION_KEY, registerPushToken } from "@/features/notifications/hooks.public";
 import { Bell } from "@/shared/components/icons";
@@ -12,6 +13,7 @@ import { captureError } from "@/shared/lib";
 export default function EnableNotificationsSheet() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const accentGreen = useThemeColor("accentGreen");
   const borderColor = useThemeColor("borderSubtle");
@@ -44,7 +46,13 @@ export default function EnableNotificationsSheet() {
   return (
     <ScrollView
       className="flex-1 bg-card dark:bg-card-dark"
-      contentContainerStyle={{ padding: 24, alignItems: "center", gap: 16 }}
+      contentContainerStyle={{
+        padding: 24,
+        paddingBottom: bottom + 24,
+        alignItems: "center",
+        gap: 16,
+      }}
+      contentInsetAdjustmentBehavior="automatic"
     >
       <View
         style={{

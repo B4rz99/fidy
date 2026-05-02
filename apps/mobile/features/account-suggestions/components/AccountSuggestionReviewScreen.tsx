@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { ScreenLayout } from "@/shared/components";
 import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
@@ -13,6 +14,7 @@ import { AccountSuggestionCard } from "./AccountSuggestionCard";
 export function AccountSuggestionReviewScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const { suggestions, hasLoadedSuggestions, reloadSuggestions } = useAccountSuggestions({
@@ -62,7 +64,7 @@ export function AccountSuggestionReviewScreen() {
     >
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: bottom + 32 }]}
         showsVerticalScrollIndicator={false}
       >
         <Text style={[styles.subtitle, { color: secondary }]}>

@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
   acceptBudgetSuggestions,
@@ -29,6 +30,7 @@ import {
 export default function AutoSuggestBudgetsScreen() {
   const { back } = useRouter();
   const { t, locale } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
 
@@ -73,7 +75,8 @@ export default function AutoSuggestBudgetsScreen() {
     >
       <ScrollView
         style={[styles.container, { backgroundColor: cardBg }]}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 24 }]}
+        contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
       >
         <Text style={[styles.title, { color: primaryColor }]}>

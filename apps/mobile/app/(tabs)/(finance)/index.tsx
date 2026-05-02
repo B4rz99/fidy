@@ -12,6 +12,7 @@ import {
 } from "@/features/calendar";
 import { useGoalStore } from "@/features/goals/hooks.public";
 import { GoalsListScreen } from "@/features/goals/ui.public";
+import { TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus } from "@/shared/components/icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -190,6 +191,7 @@ const styles = StyleSheet.create({
   calendarPanel: {
     flex: 1,
     paddingHorizontal: 16,
+    paddingBottom: TAB_BAR_CLEARANCE,
   },
   calendarGridWrap: {
     flex: 1,

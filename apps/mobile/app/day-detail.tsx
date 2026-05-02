@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth";
 import {
   type BillPayment,
@@ -22,6 +23,7 @@ export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
   const router = useRouter();
   const { t, locale } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
   const userId = useOptionalUserId();
@@ -74,7 +76,8 @@ export default function DayDetailScreen() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: cardBg }]}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingBottom: bottom + 24 }]}
+      contentInsetAdjustmentBehavior="automatic"
     >
       <Text style={[styles.title, { color: primaryColor }]}>
         {format(dateObj, "EEEE, PP", { locale: getDateFnsLocale(locale) })}

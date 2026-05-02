@@ -1,4 +1,5 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TriangleAlert } from "@/shared/components/icons";
 import {
   KeyboardAvoidingView,
@@ -18,6 +19,7 @@ import type { useTransferForm } from "./useTransferForm";
 
 export function TransferFormContent(props: { readonly form: ReturnType<typeof useTransferForm> }) {
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
@@ -32,7 +34,7 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: bottom + 28 }]}
       >
         <Text style={[styles.subtitle, { color: secondary }]}>{props.form.subtitle}</Text>
 

@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { FLAG_KEYS, QA_PROFILES, QA_TARGET_LABEL_KEYS, QA_TARGET_LIST } from "./QaTools.constants";
@@ -12,6 +13,7 @@ type QaToolsContentProps = {
 
 export function QaToolsContent({ qaTools }: QaToolsContentProps) {
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const borderSubtle = useThemeColor("borderSubtle");
@@ -19,7 +21,10 @@ export function QaToolsContent({ qaTools }: QaToolsContentProps) {
   const accentGreen = useThemeColor("accentGreen");
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContent}>
+    <ScrollView
+      contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 24 }]}
+      contentInsetAdjustmentBehavior="automatic"
+    >
       <View style={styles.statusBlock}>
         <Text style={[styles.subtitleText, { color: secondary }]}>{t("qaTools.subtitle")}</Text>
         <Text style={[styles.primaryValueText, { color: primary }]}>

@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { trackOnboardingEvent } from "@/features/onboarding/lib/telemetry";
 import { useOnboardingStore } from "@/features/onboarding/store";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useAccountSuggestions } from "../hooks/use-account-suggestions";
@@ -35,7 +35,12 @@ export function OnboardingAccountReviewStep() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.scrollArea}
+        contentContainerStyle={styles.content}
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={[styles.eyebrow, { color: accentGreen }]}>
           {t("accountSuggestions.onboarding.eyebrow")}
         </Text>
@@ -106,7 +111,7 @@ export function OnboardingAccountReviewStep() {
             />
           ))}
         </View>
-      </View>
+      </ScrollView>
 
       <Pressable
         style={[styles.continueButton, { backgroundColor: accentGreen }]}
@@ -136,6 +141,9 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: 12,
+  },
+  scrollArea: {
+    flex: 1,
   },
   eyebrow: {
     fontFamily: "Poppins_700Bold",

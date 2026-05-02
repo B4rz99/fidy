@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated from "react-native-reanimated";
 import { useOptionalUserId } from "@/features/auth/public";
 import { handleNumpadPress } from "@/features/transactions/display.public";
@@ -21,6 +22,7 @@ import { addContribution, useGoalStore } from "../store";
 export function AddPaymentSheet() {
   const { back } = useRouter();
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
 
   const selectedGoalId = useGoalStore((s) => s.selectedGoalId);
   const userId = useOptionalUserId();
@@ -76,7 +78,8 @@ export function AddPaymentSheet() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: cardBg }]}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 24 }]}
+      contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
     >
       {/* Grab bar */}

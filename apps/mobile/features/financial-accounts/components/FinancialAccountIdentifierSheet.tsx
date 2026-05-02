@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { createFinancialAccountManagementService } from "@/features/financial-accounts/lib/management-service";
 import { parseFinancialAccountRouteParam } from "@/features/financial-accounts/lib/route-params";
@@ -17,6 +18,7 @@ export function FinancialAccountIdentifierSheet() {
   const { accountId: rawAccountId } = useLocalSearchParams<{ accountId?: string }>();
   const accountId = parseFinancialAccountRouteParam(rawAccountId);
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const primary = useThemeColor("primary");
@@ -78,7 +80,7 @@ export function FinancialAccountIdentifierSheet() {
     <ScreenLayout title={t("financialAccounts.identifierSheet.title")} variant="sub" onBack={back}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: bottom + 32 }]}
         keyboardShouldPersistTaps="handled"
       >
         <Text style={[styles.subtitle, { color: secondary }]}>

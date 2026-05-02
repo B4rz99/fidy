@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import {
   dismissFinancialMeaningReview,
@@ -10,7 +11,7 @@ import {
 import { refreshTransactions } from "@/features/transactions/store.public";
 import { ScreenLayout } from "@/shared/components";
 import { ArrowLeftRight, TriangleAlert } from "@/shared/components/icons";
-import { StyleSheet, Text, View } from "@/shared/components/rn";
+import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
@@ -23,6 +24,7 @@ export function FinancialMeaningReviewScreen() {
   const router = useRouter();
   const { processedEmailId } = useLocalSearchParams<{ processedEmailId?: string }>();
   const { t, locale } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const { items, hasLoadedQueue } = useFinancialMeaningReviewQueue({ db, userId });
@@ -31,7 +33,7 @@ export function FinancialMeaningReviewScreen() {
     typeof processedEmailId === "string" && processedEmailId.trim().length > 0
       ? requireProcessedEmailId(processedEmailId.trim())
       : null;
-  const item = useMemo(
+  const reviewItem = useMemo(
     () =>
       resolvedProcessedEmailId
         ? (items.find((entry) => entry.processedEmail.id === resolvedProcessedEmailId) ?? null)
@@ -46,7 +48,7 @@ export function FinancialMeaningReviewScreen() {
   const accentRed = useThemeColor("accentRed");
   const accentGreen = useThemeColor("accentGreen");
 
-  if (hasLoadedQueue && item == null) {
+  if (hasLoadedQueue && reviewItem == null) {
     return (
       <ScreenLayout
         title={t("financialMeaningReview.reviewTitle")}
@@ -61,7 +63,7 @@ export function FinancialMeaningReviewScreen() {
     );
   }
 
-  if (!item) {
+  if (!reviewItem) {
     return null;
   }
 
@@ -72,7 +74,7 @@ export function FinancialMeaningReviewScreen() {
       }
 
       try {
-        await resolveFinancialMeaningReview(db, item.processedEmail.id);
+        await resolveFinancialMeaningReview(db, reviewItem.processedEmail.id);
         await loadNeedsReviewEmails(db, userId);
         await refreshTransactions(db, userId);
         router.replace("/needs-review");
@@ -89,7 +91,7 @@ export function FinancialMeaningReviewScreen() {
       }
 
       try {
-        await dismissFinancialMeaningReview(db, item.processedEmail.id);
+        await dismissFinancialMeaningReview(db, reviewItem.processedEmail.id);
         await loadNeedsReviewEmails(db, userId);
         await refreshTransactions(db, userId);
         router.replace("/needs-review");
@@ -105,7 +107,11 @@ export function FinancialMeaningReviewScreen() {
       variant="sub"
       onBack={() => router.back()}
     >
-      <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={[styles.container, { paddingBottom: bottom + 28 }]}
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={false}
+      >
         <SummaryCard
           icon={TriangleAlert}
           title={t("financialMeaningReview.reviewPill")}
@@ -113,25 +119,27 @@ export function FinancialMeaningReviewScreen() {
         />
 
         <View style={[styles.card, { backgroundColor: card, borderColor: borderSubtle }]}>
-          <Text style={[styles.metaLabel, { color: tertiary }]}>{item.processedEmail.subject}</Text>
+          <Text style={[styles.metaLabel, { color: tertiary }]}>
+            {reviewItem.processedEmail.subject}
+          </Text>
           <View style={styles.titleRow}>
             <View style={styles.titleWrap}>
               <Text style={[styles.title, { color: primary }]}>
-                {item.transaction.description || t("common.unknown")}
+                {reviewItem.transaction.description || t("common.unknown")}
               </Text>
               <Text style={[styles.subtitle, { color: secondary }]}>
-                {format(item.transaction.date, "PP", { locale: getDateFnsLocale(locale) })}
+                {format(reviewItem.transaction.date, "PP", { locale: getDateFnsLocale(locale) })}
               </Text>
             </View>
             <Text
               style={[
                 styles.amount,
                 {
-                  color: item.transaction.type === "income" ? accentGreen : accentRed,
+                  color: reviewItem.transaction.type === "income" ? accentGreen : accentRed,
                 },
               ]}
             >
-              {formatSignedMoney(item.transaction.amount, item.transaction.type)}
+              {formatSignedMoney(reviewItem.transaction.amount, reviewItem.transaction.type)}
             </Text>
           </View>
 
@@ -162,8 +170,8 @@ export function FinancialMeaningReviewScreen() {
               router.push({
                 pathname: "/reclassify-transaction",
                 params: {
-                  transactionId: item.transaction.id,
-                  processedEmailId: item.processedEmail.id,
+                  transactionId: reviewItem.transaction.id,
+                  processedEmailId: reviewItem.processedEmail.id,
                 },
               } as never)
             }
@@ -184,16 +192,14 @@ export function FinancialMeaningReviewScreen() {
             {t("financialMeaningReview.transferExplanation")}
           </Text>
         </View>
-      </View>
+      </ScrollView>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     paddingHorizontal: 16,
-    paddingBottom: 28,
     gap: 16,
   },
   card: {

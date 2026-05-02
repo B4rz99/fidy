@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import {
   generateBackupRecoveryKey,
@@ -38,6 +39,7 @@ export function PrivateBackupScreen() {
   const router = useRouter();
   const userId = useOptionalUserId();
   const { t, locale } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const [confirmation, setConfirmation] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const privateBackup = useSettingsStore((s) => s.privateBackup);
@@ -121,9 +123,10 @@ export function PrivateBackupScreen() {
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 16,
-          paddingBottom: 40,
+          paddingBottom: bottom + 40,
           gap: 12,
         }}
+        contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
         <StatusPill

@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScrollView, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import type { GoalProjection, Milestone } from "../../lib/derive";
@@ -27,11 +28,12 @@ export function GoalDetailContent(props: {
   readonly targetAmount: number;
 }) {
   const pageBg = useThemeColor("page");
+  const { bottom } = useSafeAreaInsets();
 
   return (
     <View style={[styles.container, { backgroundColor: pageBg }]}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 32 }]}
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="automatic"
       >

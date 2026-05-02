@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthIdentity, useAuthMode, useAuthStore } from "@/features/auth/public";
 import { LocalQaProfileTools } from "@/features/qa/routes.public";
 import { ScreenLayout } from "@/shared/components";
@@ -10,6 +11,7 @@ import { getUserInitials } from "../lib/settings-links";
 export function ProfileScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
 
   const { fullName, email } = useAuthIdentity();
   const authMode = useAuthMode();
@@ -43,8 +45,9 @@ export function ProfileScreen() {
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 32,
-          paddingBottom: 40,
+          paddingBottom: bottom + 40,
         }}
+        contentInsetAdjustmentBehavior="automatic"
       >
         {/* Avatar & Info */}
         <View className="items-center" style={{ gap: 12 }}>

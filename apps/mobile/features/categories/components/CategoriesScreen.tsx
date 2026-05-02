@@ -75,6 +75,7 @@ export function CategoriesScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={styles.scrollContent}
+        contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
         {/* Built-in categories */}

@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated from "react-native-reanimated";
 import { useOptionalUserId } from "@/features/auth";
 import { ApplePaySetupCard, NotificationSetupCard } from "@/features/capture-sources";
@@ -20,6 +21,7 @@ import { getDateFnsLocale } from "@/shared/i18n";
 export default function ConnectedAccountsScreen() {
   const { back } = useRouter();
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const accounts = useEmailCaptureStore((s) => s.accounts);
@@ -32,7 +34,7 @@ export default function ConnectedAccountsScreen() {
     <ScreenLayout title={t("connectedAccounts.title")} variant="sub" onBack={() => back()}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: bottom + 40 }}
         className="flex-1 px-4"
       >
         <View style={{ gap: 24 }}>

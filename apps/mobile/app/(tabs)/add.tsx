@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
+import { TAB_BAR_CLEARANCE } from "@/shared/components";
 import { ArrowLeftRight, type LucideIcon, Plus } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 function AddEntryCard({
@@ -126,12 +127,19 @@ export default function AddEntryChooserScreen() {
   const accentGreenLight = useThemeColor("accentGreenLight");
 
   return (
-    <View
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      showsVerticalScrollIndicator={false}
       style={{
         flex: 1,
         backgroundColor: peachLight,
+      }}
+      contentContainerStyle={{
+        flexGrow: 1,
         justifyContent: "center",
         paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: TAB_BAR_CLEARANCE + 16,
       }}
     >
       <View
@@ -224,6 +232,6 @@ export default function AddEntryChooserScreen() {
           </Text>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
