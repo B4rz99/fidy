@@ -33,6 +33,10 @@ describe("ScreenLayout", () => {
     expect(source).toContain("ReactNode");
   });
 
+  test("passes rightActions to the native iOS header", () => {
+    expect(source).toContain("headerRight: () => rightActions");
+  });
+
   test("accepts onBack function prop", () => {
     expect(source).toMatch(/onBack\??\s*:\s*\(\)\s*=>\s*void/);
   });

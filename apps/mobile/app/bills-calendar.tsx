@@ -9,13 +9,15 @@ import {
   useCalendarStore,
 } from "@/features/calendar";
 import { ScreenLayout } from "@/shared/components";
-import { View } from "@/shared/components/rn";
+import { Plus } from "@/shared/components/icons";
+import { Pressable, View } from "@/shared/components/rn";
+import { Colors } from "@/shared/constants/theme";
 import { getDb } from "@/shared/db";
 import { useTranslation } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
 
 export default function BillsCalendarScreen() {
-  const router = useRouter();
+  const { back, push } = useRouter();
   const { t } = useTranslation();
   const currentMonth = useCalendarStore((s) => s.currentMonth);
   const bills = useCalendarStore((s) => s.bills);
@@ -33,7 +35,21 @@ export default function BillsCalendarScreen() {
   }, [userId]);
 
   return (
-    <ScreenLayout title={t("calendar.title")} variant="sub" onBack={() => router.back()}>
+    <ScreenLayout
+      title={t("calendar.title")}
+      variant="sub"
+      rightActions={
+        <Pressable
+          onPress={() => push("/add-bill")}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={t("bills.addBill")}
+        >
+          <Plus size={24} color={Colors.light.card} />
+        </Pressable>
+      }
+      onBack={() => back()}
+    >
       <View className="flex-1 px-4">
         <MonthNavigator
           currentMonth={currentMonth}
@@ -46,7 +62,7 @@ export default function BillsCalendarScreen() {
             bills={bills}
             payments={payments}
             onDayPress={(date) =>
-              router.push({ pathname: "/day-detail", params: { date: date.toISOString() } })
+              push({ pathname: "/day-detail", params: { date: date.toISOString() } })
             }
           />
         </View>
