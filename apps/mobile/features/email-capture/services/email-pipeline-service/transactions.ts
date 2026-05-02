@@ -6,7 +6,7 @@ import {
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { TransactionRow } from "@/features/transactions/lib/repository";
 import { currentIsoDateTimeEffect } from "@/shared/effect/clock";
-import { fromThunk } from "@/shared/effect/runtime";
+import { fromPromise, fromThunk } from "@/shared/effect/runtime";
 import { generateProcessedEmailId, generateTransactionId } from "@/shared/lib/generate-id";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import {
@@ -111,19 +111,19 @@ function persistTransactionBundleEffect(context: EmailTransactionContext) {
     };
     const evidenceRows = buildTransactionCaptureEvidenceRows(context, buildEmailCaptureEvidence);
 
-    yield* fromThunk(() => {
+    yield* fromPromise(async () => {
       if ("transaction" in context.db && typeof context.db.transaction === "function") {
-        context.db.transaction((tx) => {
-          insertTransaction(tx, transactionRow);
-          insertProcessedEmail(tx, processedEmailRow);
-          saveCaptureEvidenceRows(tx, evidenceRows);
+        await context.db.transaction(async (tx) => {
+          await insertTransaction(tx, transactionRow);
+          await insertProcessedEmail(tx, processedEmailRow);
+          await saveCaptureEvidenceRows(tx, evidenceRows);
         });
         return;
       }
 
-      insertTransaction(context.db, transactionRow);
-      insertProcessedEmail(context.db, processedEmailRow);
-      saveCaptureEvidenceRows(context.db, evidenceRows);
+      await insertTransaction(context.db, transactionRow);
+      await insertProcessedEmail(context.db, processedEmailRow);
+      await saveCaptureEvidenceRows(context.db, evidenceRows);
     });
   });
 }

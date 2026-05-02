@@ -450,6 +450,21 @@ describe("email processing pipeline", () => {
     expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(mockDb, expect.any(Array));
   });
 
+  it("does not report saved when a bundled async write rejects", async () => {
+    const dbWithTransaction = {
+      transaction: vi.fn((operation: (tx: unknown) => unknown) => operation(mockDb)),
+    } as any;
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+    mockInsertProcessedEmail.mockRejectedValueOnce(new Error("processed email insert failed"));
+
+    const result = await processEmails(dbWithTransaction, USER_ID, [makeRawEmail()]);
+
+    expect(result.saved).toBe(0);
+    expect(result.failed).toBe(1);
+    expect(result.pendingRetry).toBe(1);
+    expect(mockInsertMerchantRule).not.toHaveBeenCalled();
+  });
+
   it("uses the injected clock for persisted email timestamps and retry backoff", async () => {
     const fixedNow = requireIsoDateTime("2026-04-18T12:34:56.000Z");
     const service = createTestEmailPipelineService({
