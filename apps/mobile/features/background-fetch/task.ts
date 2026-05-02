@@ -25,7 +25,9 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
     initializeEmailCaptureSession(userId);
     await loadEmailAccounts(db, userId);
 
-    await fetchAndProcessEmails(db, userId, getGmailClientId(), getOutlookClientId());
+    await fetchAndProcessEmails(db, userId, getGmailClientId(), getOutlookClientId(), undefined, {
+      parseProfile: "background",
+    });
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch (error) {
     captureError(error);
