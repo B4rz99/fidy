@@ -119,9 +119,11 @@ const applyFetchProgress = (
   progressRuntime.lastRefreshedFoundCount = foundCount;
   progressRuntime.refreshGate = progressRuntime.refreshGate.then(
     async () => {
+      if (!isCurrentEmailCaptureFetchRun(progressRuntime.run)) return;
       await progressRuntime.refreshTransactions();
     },
     async () => {
+      if (!isCurrentEmailCaptureFetchRun(progressRuntime.run)) return;
       await progressRuntime.refreshTransactions();
     }
   );

@@ -1119,6 +1119,34 @@ describe("email capture boundary", () => {
       expect(mockRefresh).toHaveBeenCalledTimes(4);
     });
 
+    it("drops queued progress refreshes after the active fetch run changes", async () => {
+      const refreshGate = createDeferred<void>();
+      const processingGate = createDeferred<void>();
+      const slowRefresh = vi.fn().mockImplementationOnce(() => refreshGate.promise);
+      setAccounts();
+      mockAdapter.fetchEmails.mockResolvedValueOnce([
+        makeRawEmail({ externalId: "ext-1" }),
+        makeRawEmail({ externalId: "ext-2" }),
+      ]);
+      vi.mocked(processEmails).mockImplementationOnce(async (_db, _uid, _emails, onProgress) => {
+        onProgress?.({ total: 2, completed: 1, saved: 1, failed: 0, needsReview: 0 });
+        onProgress?.({ total: 2, completed: 2, saved: 2, failed: 0, needsReview: 0 });
+        await processingGate.promise;
+        return { ...EMPTY_PROCESS_SUMMARY, saved: 2 };
+      });
+      mockEmptyReviewLoads();
+
+      const fetchRun = runFetchAndProcess("g", "o", slowRefresh);
+      await vi.waitFor(() => expect(slowRefresh).toHaveBeenCalledTimes(1));
+
+      initializeEmailCaptureSession("user-2" as UserId);
+      refreshGate.resolve();
+      processingGate.resolve();
+      await fetchRun;
+
+      expect(slowRefresh).toHaveBeenCalledTimes(1);
+    });
+
     it("does not refresh transactions for filtered foreground email progress", async () => {
       setAccounts();
       mockAdapter.fetchEmails.mockResolvedValueOnce([makeRawEmail({ externalId: "ext-1" })]);

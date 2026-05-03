@@ -611,59 +611,47 @@ describe("email processing pipeline", () => {
     await processing;
   });
 
-  it("uses foreground policy with all parse starts and no fixed delay", async () => {
-    const events: string[] = [];
-    const pendingParses: Array<(result: ReturnType<typeof makeParsedEmailResult>) => void> = [];
+  async function expectSharedParseConcurrencyLimit(
+    processEmailsFn:
+      | typeof processEmails
+      | typeof processBackgroundEmails
+      | typeof processInitialSyncEmails
+  ) {
+    const parseStarts: string[] = [];
+    const pendingParses: Array<(result: null) => void> = [];
     mockParseEmailApi.mockImplementation(async (body: string) => {
-      events.push(`parse:${body}`);
+      parseStarts.push(`parse:${body}`);
       return new Promise((resolve) => pendingParses.push(resolve));
     });
 
-    const processing = processEmails(
+    const processing = processEmailsFn(
       mockDb,
       USER_ID,
-      Array.from({ length: 4 }, (_, index) =>
+      Array.from({ length: 16 }, (_, index) =>
         makeRawEmail({ externalId: `ext-${index + 1}`, body: `Compra ${index + 1}` })
       )
     );
 
-    await vi.waitFor(() => expect(events).toContain("parse:Compra 4"));
-    expect(events).toEqual([
-      "parse:Compra 1",
-      "parse:Compra 2",
-      "parse:Compra 3",
-      "parse:Compra 4",
-    ]);
+    await vi.waitFor(() => expect(parseStarts).toHaveLength(15));
+    expect(parseStarts).not.toContain("parse:Compra 16");
 
-    pendingParses.forEach((resolve, index) =>
-      resolve(makeParsedEmailResult({ description: `Compra ${index + 1}` }))
-    );
+    pendingParses[0]?.(null);
+    await vi.waitFor(() => expect(parseStarts).toContain("parse:Compra 16"));
+
+    pendingParses.slice(1).forEach((resolve) => resolve(null));
     await processing;
+  }
+
+  it("uses foreground policy with shared parse concurrency", async () => {
+    await expectSharedParseConcurrencyLimit(processEmails);
   });
 
-  it("uses background policy with all parse starts", async () => {
-    const events: string[] = [];
-    const pendingParses: Array<(result: ReturnType<typeof makeParsedEmailResult>) => void> = [];
-    mockParseEmailApi.mockImplementation(async (body: string) => {
-      events.push(`parse:${body}`);
-      return new Promise((resolve) => pendingParses.push(resolve));
-    });
+  it("uses background policy with shared parse concurrency", async () => {
+    await expectSharedParseConcurrencyLimit(processBackgroundEmails);
+  });
 
-    const processing = processBackgroundEmails(
-      mockDb,
-      USER_ID,
-      Array.from({ length: 3 }, (_, index) =>
-        makeRawEmail({ externalId: `ext-${index + 1}`, body: `Compra ${index + 1}` })
-      )
-    );
-
-    await vi.waitFor(() => expect(events).toContain("parse:Compra 3"));
-    expect(events).toEqual(["parse:Compra 1", "parse:Compra 2", "parse:Compra 3"]);
-
-    pendingParses[0]?.(makeParsedEmailResult({ description: "Compra 1" }));
-    pendingParses[1]?.(makeParsedEmailResult({ description: "Compra 2" }));
-    pendingParses[2]?.(makeParsedEmailResult({ description: "Compra 3" }));
-    await processing;
+  it("uses initial sync policy with shared parse concurrency", async () => {
+    await expectSharedParseConcurrencyLimit(processInitialSyncEmails);
   });
 
   it("does not bound background parsing after durable skips", async () => {
