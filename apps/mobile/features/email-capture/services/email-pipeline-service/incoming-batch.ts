@@ -30,6 +30,13 @@ type EmailBatchTiming = {
   readonly firstSavedLatencyMs: number | null;
 };
 
+type EmailBatchTimingAccumulator = {
+  readonly count: number;
+  readonly parseTotalDurationMs: number;
+  readonly parseMaxDurationMs: number;
+  readonly persistenceTotalDurationMs: number;
+};
+
 const nowMs = (): number => Date.now();
 
 async function createEmailBatchPlan(
@@ -122,27 +129,36 @@ async function runEmailWorkers(input: {
   );
 }
 
+const createTimingAccumulator = (): EmailBatchTimingAccumulator => ({
+  count: 0,
+  parseTotalDurationMs: 0,
+  parseMaxDurationMs: 0,
+  persistenceTotalDurationMs: 0,
+});
+
+const addOutcomeTiming = (
+  timing: EmailBatchTimingAccumulator,
+  outcome: IncomingEmailOutcome
+): EmailBatchTimingAccumulator => ({
+  count: timing.count + 1,
+  parseTotalDurationMs: timing.parseTotalDurationMs + outcome.parseDurationMs,
+  parseMaxDurationMs: Math.max(timing.parseMaxDurationMs, outcome.parseDurationMs),
+  persistenceTotalDurationMs: timing.persistenceTotalDurationMs + outcome.persistenceDurationMs,
+});
+
 const summarizeBatchTiming = (
-  outcomes: readonly IncomingEmailOutcome[],
+  timing: EmailBatchTimingAccumulator,
   batchDurationMs: number,
   firstSavedLatencyMs: number | null
-): EmailBatchTiming => {
-  const parseDurations = outcomes.map((outcome) => outcome.parseDurationMs);
-  const parseTotalDurationMs = parseDurations.reduce((total, duration) => total + duration, 0);
-
-  return {
-    batchDurationMs,
-    parseTotalDurationMs,
-    parseMaxDurationMs: Math.max(0, ...parseDurations),
-    parseAverageDurationMs:
-      parseDurations.length === 0 ? 0 : Math.round(parseTotalDurationMs / parseDurations.length),
-    persistenceTotalDurationMs: outcomes.reduce(
-      (total, outcome) => total + outcome.persistenceDurationMs,
-      0
-    ),
-    firstSavedLatencyMs,
-  };
-};
+): EmailBatchTiming => ({
+  batchDurationMs,
+  parseTotalDurationMs: timing.parseTotalDurationMs,
+  parseMaxDurationMs: timing.parseMaxDurationMs,
+  parseAverageDurationMs:
+    timing.count === 0 ? 0 : Math.round(timing.parseTotalDurationMs / timing.count),
+  persistenceTotalDurationMs: timing.persistenceTotalDurationMs,
+  firstSavedLatencyMs,
+});
 
 export async function processEmailBatch(runtime: PipelineRuntime, input: ProcessEmailsInput) {
   const batchStartedAt = nowMs();
@@ -155,9 +171,9 @@ export async function processEmailBatch(runtime: PipelineRuntime, input: Process
     parseStartGate: Promise.resolve(),
     persistenceGate: Promise.resolve(),
   };
-  const outcomes: IncomingEmailOutcome[] = [];
   let completed = 0;
   let firstSavedLatencyMs: number | null = null;
+  let timing = createTimingAccumulator();
   let progressResult = batch.result;
   const reportProgress = () => {
     input.onProgress?.(getProgressSnapshot(batch.total, completed, progressResult));
@@ -168,8 +184,8 @@ export async function processEmailBatch(runtime: PipelineRuntime, input: Process
     context,
     emails: batch.toProcess,
     onOutcome: (outcome) => {
-      outcomes.push(outcome);
       completed += 1;
+      timing = addOutcomeTiming(timing, outcome);
       if (firstSavedLatencyMs === null && outcome.savedTransaction) {
         firstSavedLatencyMs = nowMs() - batchStartedAt;
       }
@@ -183,7 +199,7 @@ export async function processEmailBatch(runtime: PipelineRuntime, input: Process
         rawEmails: input.rawEmails,
         batch,
         result: progressResult,
-        timing: summarizeBatchTiming(outcomes, nowMs() - batchStartedAt, firstSavedLatencyMs),
+        timing: summarizeBatchTiming(timing, nowMs() - batchStartedAt, firstSavedLatencyMs),
       })
     )
   );

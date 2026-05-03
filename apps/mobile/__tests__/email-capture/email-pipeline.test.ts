@@ -437,6 +437,30 @@ describe("email processing pipeline", () => {
     expect(JSON.stringify(capturePipelineEvent.mock.calls)).not.toContain("Exito");
   });
 
+  it("reports first-saved timing when the persisted transaction needs review", async () => {
+    const capturePipelineEvent = vi.fn();
+    const service = createTestEmailPipelineService({
+      telemetry: {
+        captureError: vi.fn(),
+        captureWarning: vi.fn(),
+        capturePipelineEvent,
+      },
+    });
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult({ confidence: 0.5 }));
+
+    await service.processEmails(mockDb, USER_ID, [makeRawEmail()]);
+
+    expect(capturePipelineEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schema: "email_pipeline_batch_v1",
+        saved: 0,
+        needsReview: 1,
+        hasFirstSavedTransaction: true,
+        firstSavedLatencyMs: expect.any(Number),
+      })
+    );
+  });
+
   it("saves transaction and caches merchant rule when LLM returns high confidence", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());

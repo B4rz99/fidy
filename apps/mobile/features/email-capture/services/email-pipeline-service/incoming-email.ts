@@ -244,7 +244,7 @@ async function processParsedIncomingEmail(
   return {
     result,
     persistenceDurationMs: nowMs() - persistenceStartedAt,
-    savedTransaction: result.saved > 0,
+    savedTransaction: result.saved > 0 || result.needsReview > 0,
   };
 }
 
