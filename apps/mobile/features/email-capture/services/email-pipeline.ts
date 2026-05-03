@@ -33,12 +33,8 @@ import { retryableParseEmailApi } from "./parse-email-api";
 export type { PipelineResult, ProcessEmails, ProcessRetries, ProgressCallback, RetryResult };
 
 const FOREGROUND_PARSE_START_DELAY_MS = 0;
-const FOREGROUND_PARSE_CONCURRENCY = 3;
 const BACKGROUND_PARSE_START_DELAY_MS = 0;
-const BACKGROUND_PARSE_CONCURRENCY = 2;
-const BACKGROUND_MAX_CANDIDATE_EMAILS = 10;
 const INITIAL_SYNC_PARSE_START_DELAY_MS = 0;
-const INITIAL_SYNC_PARSE_CONCURRENCY = 2;
 
 const emailPipelineDeps = {
   parseEmailApi: retryableParseEmailApi,
@@ -64,7 +60,7 @@ const emailPipeline = createEmailPipelineService({
   ...emailPipelineDeps,
   parseRateLimit: {
     delayMs: FOREGROUND_PARSE_START_DELAY_MS,
-    concurrency: FOREGROUND_PARSE_CONCURRENCY,
+    concurrency: null,
   },
 });
 
@@ -72,9 +68,8 @@ const backgroundEmailPipeline = createEmailPipelineService({
   ...emailPipelineDeps,
   parseRateLimit: {
     delayMs: BACKGROUND_PARSE_START_DELAY_MS,
-    concurrency: BACKGROUND_PARSE_CONCURRENCY,
+    concurrency: null,
   },
-  maxCandidateEmails: BACKGROUND_MAX_CANDIDATE_EMAILS,
 });
 
 const initialSyncEmailPipeline = createEmailPipelineService({
@@ -82,7 +77,7 @@ const initialSyncEmailPipeline = createEmailPipelineService({
   parseContext: "initial_sync",
   parseRateLimit: {
     delayMs: INITIAL_SYNC_PARSE_START_DELAY_MS,
-    concurrency: INITIAL_SYNC_PARSE_CONCURRENCY,
+    concurrency: null,
   },
 });
 

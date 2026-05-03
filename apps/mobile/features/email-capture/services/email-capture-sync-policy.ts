@@ -1,8 +1,5 @@
 import type { RawEmail } from "../schema";
 
-const BACKGROUND_MAX_CANDIDATE_EMAILS = 10;
-const INITIAL_SYNC_MAX_CANDIDATE_EMAILS = 20;
-
 export type EmailCaptureParseProfile = "foreground" | "background" | "initial_sync";
 
 export type EmailCaptureSyncPolicy = {
@@ -37,7 +34,12 @@ export const applyEmailCaptureCandidateLimit = <T extends EmailBatchLike>(
   fetchResults: readonly T[],
   maxCandidateEmails: number | null
 ): readonly T[] => {
-  if (maxCandidateEmails == null) return fetchResults;
+  if (maxCandidateEmails == null) {
+    return fetchResults.map((result) => ({
+      ...result,
+      rawEmails: sortNewestFirst(result.rawEmails),
+    }));
+  }
 
   const allowedExternalIds = new Set(
     sortNewestFirst(fetchResults.flatMap((result) => result.rawEmails))
@@ -60,7 +62,7 @@ export const resolveEmailCaptureSyncPolicy = (
     ? {
         parseProfile,
         advancesLastFetchedAt: false,
-        maxCandidateEmails: BACKGROUND_MAX_CANDIDATE_EMAILS,
+        maxCandidateEmails: null,
         runRetries: false,
         showsProgress: false,
       }
@@ -68,7 +70,7 @@ export const resolveEmailCaptureSyncPolicy = (
       ? {
           parseProfile,
           advancesLastFetchedAt: false,
-          maxCandidateEmails: INITIAL_SYNC_MAX_CANDIDATE_EMAILS,
+          maxCandidateEmails: null,
           runRetries: false,
           showsProgress: true,
         }

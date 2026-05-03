@@ -31,7 +31,7 @@ export const EmailPipelineDeps = makeAppService<CreateEmailPipelineServiceDeps>(
 );
 
 const DEFAULT_PARSE_RATE_LIMIT_DELAY_MS = 0;
-const DEFAULT_PARSE_RATE_LIMIT_CONCURRENCY = 3;
+const DEFAULT_PARSE_RATE_LIMIT_CONCURRENCY: number | null = null;
 
 const sleep = (delayMs: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, delayMs));

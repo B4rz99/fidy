@@ -34,7 +34,7 @@ export type PipelineRuntime = {
   ) => Promise<A>;
   readonly parseRateLimit: {
     readonly delayMs: number;
-    readonly concurrency: number;
+    readonly concurrency: number | null;
     readonly sleep: (delayMs: number) => Promise<void>;
   };
   readonly maxCandidateEmails?: number;

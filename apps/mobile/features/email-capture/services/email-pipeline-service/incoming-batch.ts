@@ -104,7 +104,7 @@ async function runEmailWorker(input: {
   readonly queue: EmailQueue;
   readonly onOutcome: (outcome: IncomingEmailOutcome) => void;
 }): Promise<void> {
-  // FP exemption: the worker queue keeps parse-email calls serialized for Edge Function rate limits.
+  // FP exemption: workers share a queue so parse calls can run without artificial batching.
   while (true) {
     const email = getNextQueuedEmail(input.queue);
     if (!email) return;
@@ -119,15 +119,20 @@ async function runEmailWorkers(input: {
   readonly onOutcome: (outcome: IncomingEmailOutcome) => void;
 }) {
   const queue: EmailQueue = { emails: input.emails, nextIdx: 0 };
-  const workerCount = Math.min(
-    Math.max(1, input.context.runtime.parseRateLimit.concurrency),
-    input.emails.length
-  );
-  await Promise.all(
+  const concurrency = input.context.runtime.parseRateLimit.concurrency;
+  const workerCount =
+    concurrency == null
+      ? input.emails.length
+      : Math.min(Math.max(1, concurrency), input.emails.length);
+  const results = await Promise.allSettled(
     Array.from({ length: workerCount }, () =>
       runEmailWorker({ context: input.context, queue, onOutcome: input.onOutcome })
     )
   );
+  const rejection = results.find((result) => result.status === "rejected");
+  if (rejection?.status === "rejected") {
+    throw rejection.reason;
+  }
 }
 
 const createTimingAccumulator = (): EmailBatchTimingAccumulator => ({

@@ -322,6 +322,39 @@ function getProcessedInitialSyncExternalIds(): string[] {
     .map((email) => email.externalId);
 }
 
+function getProcessedBackgroundExternalIds(): string[] {
+  return vi
+    .mocked(processBackgroundEmails)
+    .mock.calls.flatMap(([, , emails]) => emails)
+    .map((email) => email.externalId);
+}
+
+function setGmailAndOutlookAccounts() {
+  setAccounts([makeAccount(), makeAccount({ id: "ea-2" as EmailAccountId, provider: "outlook" })]);
+}
+
+function mockFetchedDatedEmails(input: {
+  readonly gmailCount: number;
+  readonly outlookCount: number;
+}) {
+  mockAdapter.fetchEmails
+    .mockResolvedValueOnce(
+      makeDatedEmails({ provider: "gmail", prefix: "gmail", hour: "10", count: input.gmailCount })
+    )
+    .mockResolvedValueOnce(
+      makeDatedEmails({
+        provider: "outlook",
+        prefix: "outlook",
+        hour: "11",
+        count: input.outlookCount,
+      })
+    );
+}
+
+function expectedNewestFirstIds(prefix: string, count: number): string[] {
+  return Array.from({ length: count }, (_, index) => `${prefix}-${count - index}`);
+}
+
 function runFetchAndProcess(gmailClientId = "g", outlookClientId = "o", refresh = mockRefresh) {
   return fetchAndProcessEmails(
     mockDb,
@@ -346,6 +379,18 @@ function runInitialSyncFetch() {
 describe("email capture boundary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(processEmails).mockReset();
+    vi.mocked(processBackgroundEmails).mockReset();
+    vi.mocked(processInitialSyncEmails).mockReset();
+    vi.mocked(processRetries).mockReset();
+    vi.mocked(processEmails).mockResolvedValue({ ...EMPTY_PROCESS_SUMMARY });
+    vi.mocked(processBackgroundEmails).mockResolvedValue({ ...EMPTY_PROCESS_SUMMARY });
+    vi.mocked(processInitialSyncEmails).mockResolvedValue({ ...EMPTY_PROCESS_SUMMARY });
+    vi.mocked(processRetries).mockResolvedValue({
+      retried: 0,
+      succeeded: 0,
+      permanentlyFailed: 0,
+    });
     vi.mocked(insertEmailAccount).mockResolvedValue(true);
     mockEnsureBankSenders.mockResolvedValue([
       { bank: "Bancolombia", email: "notificaciones@bancolombia.com.co" },
@@ -779,7 +824,7 @@ describe("email capture boundary", () => {
       expect(processEmails).not.toHaveBeenCalled();
     });
 
-    it("uses the background parser profile and bounds email work per run when requested", async () => {
+    it("uses the background parser profile without bounding email work", async () => {
       setAccounts();
       const mockRawEmails = Array.from({ length: 12 }, (_, index) =>
         makeRawEmail({
@@ -790,7 +835,7 @@ describe("email capture boundary", () => {
       mockAdapter.fetchEmails.mockResolvedValueOnce(mockRawEmails);
       vi.mocked(processBackgroundEmails).mockResolvedValueOnce({
         ...EMPTY_PROCESS_SUMMARY,
-        saved: 10,
+        saved: 12,
       });
       mockEmptyReviewLoads();
 
@@ -806,7 +851,7 @@ describe("email capture boundary", () => {
       expect(processBackgroundEmails).toHaveBeenCalledWith(
         mockDb,
         mockUserId,
-        mockRawEmails.slice(-10).reverse(),
+        mockRawEmails.slice().reverse(),
         expect.any(Function)
       );
       expect(updateLastFetchedAt).not.toHaveBeenCalled();
@@ -815,27 +860,9 @@ describe("email capture boundary", () => {
       expect(processRetries).not.toHaveBeenCalled();
     });
 
-    it("applies the background work bound across all fetched accounts", async () => {
-      setAccounts([
-        makeAccount(),
-        makeAccount({ id: "ea-2" as EmailAccountId, provider: "outlook" }),
-      ]);
-      const gmailEmails = Array.from({ length: 8 }, (_, index) =>
-        makeRawEmail({
-          externalId: `gmail-${index + 1}`,
-          receivedAt: `2026-03-05T10:${String(index).padStart(2, "0")}:00Z`,
-        })
-      );
-      const outlookEmails = Array.from({ length: 8 }, (_, index) =>
-        makeRawEmail({
-          externalId: `outlook-${index + 1}`,
-          provider: "outlook",
-          receivedAt: `2026-03-05T11:${String(index).padStart(2, "0")}:00Z`,
-        })
-      );
-      mockAdapter.fetchEmails
-        .mockResolvedValueOnce(gmailEmails)
-        .mockResolvedValueOnce(outlookEmails);
+    it("processes all background work across all fetched accounts", async () => {
+      setGmailAndOutlookAccounts();
+      mockFetchedDatedEmails({ gmailCount: 8, outlookCount: 8 });
       vi.mocked(processBackgroundEmails)
         .mockResolvedValueOnce({ ...EMPTY_PROCESS_SUMMARY })
         .mockResolvedValueOnce({ ...EMPTY_PROCESS_SUMMARY });
@@ -850,25 +877,13 @@ describe("email capture boundary", () => {
         { parseProfile: "background" }
       );
 
-      const processedEmails = vi
-        .mocked(processBackgroundEmails)
-        .mock.calls.flatMap(([, , emails]) => emails);
-      expect(processedEmails).toHaveLength(10);
-      expect(processedEmails.map((email) => email.externalId)).toEqual([
-        "outlook-8",
-        "outlook-7",
-        "outlook-6",
-        "outlook-5",
-        "outlook-4",
-        "outlook-3",
-        "outlook-2",
-        "outlook-1",
-        "gmail-8",
-        "gmail-7",
+      expect(getProcessedBackgroundExternalIds()).toEqual([
+        ...expectedNewestFirstIds("outlook", 8),
+        ...expectedNewestFirstIds("gmail", 8),
       ]);
     });
 
-    it("bounds initial sync to newest candidates without advancing account cursors", async () => {
+    it("processes all initial sync candidates without advancing account cursors", async () => {
       setAccounts([
         makeAccount(),
         makeAccount({ id: "ea-2" as EmailAccountId, provider: "outlook" }),
@@ -908,6 +923,50 @@ describe("email capture boundary", () => {
         "gmail-7",
         "gmail-6",
         "gmail-5",
+        "gmail-4",
+        "gmail-3",
+        "gmail-2",
+        "gmail-1",
+      ]);
+      expect(updateLastFetchedAt).not.toHaveBeenCalled();
+    });
+
+    it("continues initial sync after enough transaction results are found", async () => {
+      setAccounts([
+        makeAccount(),
+        makeAccount({ id: "ea-2" as EmailAccountId, provider: "outlook" }),
+      ]);
+      mockAdapter.fetchEmails
+        .mockResolvedValueOnce(
+          makeDatedEmails({ provider: "gmail", prefix: "gmail", hour: "11", count: 4 })
+        )
+        .mockResolvedValueOnce(
+          makeDatedEmails({ provider: "outlook", prefix: "outlook", hour: "10", count: 4 })
+        );
+      vi.mocked(processInitialSyncEmails).mockResolvedValueOnce({
+        ...EMPTY_PROCESS_SUMMARY,
+        saved: 3,
+      });
+      mockEmptyReviewLoads();
+
+      const outcome = await runInitialSyncFetch();
+
+      expect(outcome).toEqual({
+        status: "completed",
+        savedCount: 3,
+        needsReviewCount: 0,
+        failedCount: 0,
+      });
+      expect(processInitialSyncEmails).toHaveBeenCalledTimes(2);
+      expect(getProcessedInitialSyncExternalIds()).toEqual([
+        "gmail-4",
+        "gmail-3",
+        "gmail-2",
+        "gmail-1",
+        "outlook-4",
+        "outlook-3",
+        "outlook-2",
+        "outlook-1",
       ]);
       expect(updateLastFetchedAt).not.toHaveBeenCalled();
     });
@@ -1040,22 +1099,38 @@ describe("email capture boundary", () => {
       ]);
     });
 
-    it("refreshes transactions after the first saved foreground email and after completion", async () => {
+    it("refreshes transactions as foreground email transactions are found and after completion", async () => {
       setAccounts();
       mockAdapter.fetchEmails.mockResolvedValueOnce([
         makeRawEmail({ externalId: "ext-1" }),
         makeRawEmail({ externalId: "ext-2" }),
+        makeRawEmail({ externalId: "ext-3" }),
       ]);
       vi.mocked(processEmails).mockImplementationOnce(async (_db, _uid, _emails, onProgress) => {
-        onProgress?.({ total: 2, completed: 1, saved: 1, failed: 0, needsReview: 0 });
-        onProgress?.({ total: 2, completed: 2, saved: 2, failed: 0, needsReview: 0 });
-        return { ...EMPTY_PROCESS_SUMMARY, saved: 2 };
+        onProgress?.({ total: 3, completed: 1, saved: 1, failed: 0, needsReview: 0 });
+        onProgress?.({ total: 3, completed: 2, saved: 1, failed: 0, needsReview: 1 });
+        onProgress?.({ total: 3, completed: 3, saved: 2, failed: 0, needsReview: 1 });
+        return { ...EMPTY_PROCESS_SUMMARY, saved: 2, needsReview: 1 };
       });
       mockEmptyReviewLoads();
 
       await runFetchAndProcess();
 
-      expect(mockRefresh).toHaveBeenCalledTimes(2);
+      expect(mockRefresh).toHaveBeenCalledTimes(4);
+    });
+
+    it("does not refresh transactions for filtered foreground email progress", async () => {
+      setAccounts();
+      mockAdapter.fetchEmails.mockResolvedValueOnce([makeRawEmail({ externalId: "ext-1" })]);
+      vi.mocked(processEmails).mockImplementationOnce(async (_db, _uid, _emails, onProgress) => {
+        onProgress?.({ total: 1, completed: 1, saved: 0, failed: 0, needsReview: 0 });
+        return { ...EMPTY_PROCESS_SUMMARY, filtered: 1 };
+      });
+      mockEmptyReviewLoads();
+
+      await runFetchAndProcess();
+
+      expect(mockRefresh).toHaveBeenCalledTimes(1);
     });
 
     it("auto-clears phase after 2s timeout when phase is complete", async () => {
