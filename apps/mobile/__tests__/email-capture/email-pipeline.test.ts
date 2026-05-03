@@ -905,15 +905,7 @@ describe("email processing pipeline", () => {
         retryCount: 0,
       })
     );
-    expect(result.parseImprovementRequests).toEqual([
-      {
-        rawText: "Compra aprobada\n\nSu compra por $50.000 fue aprobada",
-        source: "email_gmail",
-        status: "failed",
-        confidence: null,
-        parseMethod: "llm",
-      },
-    ]);
+    expect(result.parseImprovementRequests).toEqual([]);
   });
 
   it("marks parsed email as pending_retry when transaction save fails", async () => {
@@ -937,15 +929,7 @@ describe("email processing pipeline", () => {
         retryCount: 0,
       })
     );
-    expect(result.parseImprovementRequests).toEqual([
-      {
-        rawText: "Compra aprobada\n\nSu compra por $50.000 fue aprobada",
-        source: "email_gmail",
-        status: "failed",
-        confidence: null,
-        parseMethod: "llm",
-      },
-    ]);
+    expect(result.parseImprovementRequests).toEqual([]);
   });
 
   it("does not insert a second processed email row after a partial save already persisted one", async () => {

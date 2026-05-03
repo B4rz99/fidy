@@ -9,6 +9,8 @@ import type {
 } from "@/shared/types/branded";
 
 const mockValues = vi.fn().mockReturnThis();
+const mockRun = vi.fn().mockReturnValue({ changes: 1 });
+const mockOnConflictDoNothing = vi.fn().mockReturnValue({ run: mockRun });
 const mockInsert = vi.fn(() => ({ values: mockValues }));
 const mockSelect = vi.fn().mockReturnThis();
 const mockFrom = vi.fn().mockReturnThis();
@@ -33,7 +35,9 @@ const mockDb = {
 describe("email capture repository", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockValues.mockReturnThis();
+    mockRun.mockReturnValue({ changes: 1 });
+    mockOnConflictDoNothing.mockReturnValue({ run: mockRun });
+    mockValues.mockReturnValue({ onConflictDoNothing: mockOnConflictDoNothing });
     mockSelect.mockReturnValue({ from: mockFrom });
     mockFrom.mockReturnValue({ where: mockWhere, orderBy: mockOrderBy });
     mockWhere.mockReturnValue({ orderBy: mockOrderBy });
@@ -43,10 +47,10 @@ describe("email capture repository", () => {
     mockInsert.mockReturnValue({ values: mockValues });
   });
 
-  it("insertEmailAccount calls db.insert with correct row", async () => {
+  it("insertEmailAccount inserts with duplicate protection", async () => {
     const { insertEmailAccount } = await import("@/features/email-capture/lib/repository");
 
-    await insertEmailAccount(mockDb, {
+    const inserted = await insertEmailAccount(mockDb, {
       id: "ea-1" as EmailAccountId,
       userId: "user-1" as UserId,
       provider: "gmail",
@@ -64,6 +68,24 @@ describe("email capture repository", () => {
       lastFetchedAt: null,
       createdAt: "2026-03-05T10:00:00Z",
     });
+    expect(mockOnConflictDoNothing).toHaveBeenCalled();
+    expect(inserted).toBe(true);
+  });
+
+  it("insertEmailAccount reports duplicate conflicts", async () => {
+    mockRun.mockReturnValueOnce({ changes: 0 });
+    const { insertEmailAccount } = await import("@/features/email-capture/lib/repository");
+
+    const inserted = await insertEmailAccount(mockDb, {
+      id: "ea-1" as EmailAccountId,
+      userId: "user-1" as UserId,
+      provider: "gmail",
+      email: "test@gmail.com",
+      lastFetchedAt: null,
+      createdAt: "2026-03-05T10:00:00Z" as IsoDateTime,
+    });
+
+    expect(inserted).toBe(false);
   });
 
   it("getEmailAccount returns single account by id", async () => {

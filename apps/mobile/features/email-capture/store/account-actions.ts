@@ -23,21 +23,23 @@ export async function connectEmailAccount(
   const result = await getAdapter(provider).connect(clientId);
   if (!result.success || !isActiveEmailCaptureSession(session)) return;
 
+  const normalizedEmail = result.email.toLowerCase();
   const alreadyConnected = useEmailCaptureStore
     .getState()
-    .accounts.some((account) => account.email.toLowerCase() === result.email.toLowerCase());
+    .accounts.some((account) => account.email.toLowerCase() === normalizedEmail);
   if (alreadyConnected) return;
 
   const row: EmailAccountRow = {
     id: generateEmailAccountId(),
     userId,
     provider,
-    email: result.email,
+    email: normalizedEmail,
     lastFetchedAt: null,
     createdAt: toIsoDateTime(new Date()),
   };
 
-  await insertEmailAccount(db, row);
+  const inserted = await insertEmailAccount(db, row);
+  if (!inserted) return;
   if (!isActiveEmailCaptureSession(session)) return;
   useEmailCaptureStore.getState().appendAccount(row);
 }

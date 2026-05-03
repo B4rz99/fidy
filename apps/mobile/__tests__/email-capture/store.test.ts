@@ -54,7 +54,7 @@ vi.mock("@/shared/lib", async () => {
 
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getEmailAccounts: vi.fn().mockResolvedValue([]),
-  insertEmailAccount: vi.fn(),
+  insertEmailAccount: vi.fn().mockResolvedValue(true),
   deleteEmailAccount: vi.fn(),
   getFailedEmails: vi.fn().mockResolvedValue([]),
   getNeedsReviewEmails: vi.fn().mockResolvedValue([]),
@@ -313,6 +313,7 @@ function runFetchAndProcess(gmailClientId = "g", outlookClientId = "o", refresh 
 describe("email capture boundary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(insertEmailAccount).mockResolvedValue(true);
     mockEnsureBankSenders.mockResolvedValue([
       { bank: "Bancolombia", email: "notificaciones@bancolombia.com.co" },
     ]);
@@ -434,10 +435,10 @@ describe("email capture boundary", () => {
     expect(useEmailCaptureStore.getState().failedEmails).toHaveLength(0);
   });
 
-  it("connectEmail calls adapter and saves account", async () => {
+  it("connectEmail calls adapter and saves normalized account", async () => {
     mockAdapter.connect.mockResolvedValueOnce({
       success: true,
-      email: "user@gmail.com",
+      email: "User@Gmail.com",
     });
 
     await connectEmailAccount(mockDb, mockUserId as UserId, "gmail", "client-id");
@@ -497,6 +498,19 @@ describe("email capture boundary", () => {
     // Should NOT insert a duplicate account
     expect(insertEmailAccount).not.toHaveBeenCalled();
     expect(useEmailCaptureStore.getState().accounts).toHaveLength(1);
+  });
+
+  it("connectEmail does not append when the database rejects a duplicate account", async () => {
+    vi.mocked(insertEmailAccount).mockResolvedValueOnce(false);
+    mockAdapter.connect.mockResolvedValueOnce({
+      success: true,
+      email: "user@gmail.com",
+    });
+
+    await connectEmailAccount(mockDb, mockUserId as UserId, "gmail", "client-id");
+
+    expect(insertEmailAccount).toHaveBeenCalled();
+    expect(useEmailCaptureStore.getState().accounts).toHaveLength(0);
   });
 
   it("disconnectEmail removes from DB and state", async () => {

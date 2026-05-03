@@ -169,6 +169,13 @@
       "when": 1776612600000,
       "tag": "0023_capture_evidence_transfer_id",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1777824000000,
+      "tag": "0024_unique_email_accounts",
+      "breakpoints": true
     }
   ]
 }

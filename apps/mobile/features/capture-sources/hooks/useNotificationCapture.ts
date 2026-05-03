@@ -36,8 +36,9 @@ export function useNotificationCapture(db: AnyDb | null, userId: UserId | null) 
           }
 
           const sample = buildNotificationParseImprovementSample(input);
-          if (promptedParseImprovementTemplates.has(sample.template)) return;
-          promptedParseImprovementTemplates.add(sample.template);
+          const promptKey = `${userId}:${sample.template}`;
+          if (promptedParseImprovementTemplates.has(promptKey)) return;
+          promptedParseImprovementTemplates.add(promptKey);
 
           Alert.alert(
             t("parseImprovementPrompt.title"),
