@@ -1,6 +1,7 @@
 import type { RawEmail } from "../schema";
 
 const BACKGROUND_MAX_CANDIDATE_EMAILS = 10;
+const INITIAL_SYNC_MAX_CANDIDATE_EMAILS = 20;
 
 export type EmailCaptureParseProfile = "foreground" | "background" | "initial_sync";
 
@@ -63,10 +64,18 @@ export const resolveEmailCaptureSyncPolicy = (
         runRetries: false,
         showsProgress: false,
       }
-    : {
-        parseProfile: parseProfile ?? "foreground",
-        advancesLastFetchedAt: true,
-        maxCandidateEmails: null,
-        runRetries: true,
-        showsProgress: true,
-      };
+    : parseProfile === "initial_sync"
+      ? {
+          parseProfile,
+          advancesLastFetchedAt: false,
+          maxCandidateEmails: INITIAL_SYNC_MAX_CANDIDATE_EMAILS,
+          runRetries: false,
+          showsProgress: true,
+        }
+      : {
+          parseProfile: parseProfile ?? "foreground",
+          advancesLastFetchedAt: true,
+          maxCandidateEmails: null,
+          runRetries: true,
+          showsProgress: true,
+        };

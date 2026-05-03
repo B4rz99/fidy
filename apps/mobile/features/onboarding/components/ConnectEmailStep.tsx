@@ -58,13 +58,14 @@ export function ConnectEmailStep() {
       const beforeCount = useEmailCaptureStore.getState().accounts.length;
       logOnboardingEvent("email_connect_start", { provider, beforeCount });
       const clientId = provider === "gmail" ? getGmailClientId() : getOutlookClientId();
-      await connectEmailAccount(db, userId, provider, clientId);
+      const result = await connectEmailAccount(db, userId, provider, clientId);
       const latestAccounts = useEmailCaptureStore.getState().accounts;
       const connected = latestAccounts.length > beforeCount;
       trackOnboardingEvent("email_connect_result", {
         provider,
         connected,
         accountCount: latestAccounts.length,
+        reason: result.connected ? "connected" : result.reason,
       });
     });
 
