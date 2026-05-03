@@ -59,6 +59,10 @@ async function cacheMerchantRuleIfEligible(context: ResolvedNotificationContext)
     return;
   }
 
+  if (context.parseMethod === "regex" && String(context.categoryId) === "other") {
+    return;
+  }
+
   await insertMerchantRule(
     context.db,
     context.userId,
@@ -66,6 +70,10 @@ async function cacheMerchantRuleIfEligible(context: ResolvedNotificationContext)
     context.categoryId,
     context.now
   );
+}
+
+function resolveProcessedCaptureStatus(context: ResolvedNotificationContext) {
+  return context.parsed.confidence < 0.7 ? "needs_review" : "success";
 }
 
 function trackNotificationPipeline(
@@ -93,6 +101,18 @@ export async function reportSkippedDuplicate(
   return { saved: false, skippedDuplicate: true, transactionId };
 }
 
+function buildParseImprovementRequest(
+  context: NotificationStageContext,
+  input: { readonly status: "failed" | "needs_review"; readonly confidence: number | null }
+) {
+  return {
+    source: context.source,
+    status: input.status,
+    confidence: input.confidence,
+    parseMethod: context.parseMethod,
+  };
+}
+
 function saveTransactionRecord(context: ResolvedNotificationContext) {
   const transactionId = generateTransactionId();
 
@@ -115,6 +135,10 @@ function saveTransactionRecord(context: ResolvedNotificationContext) {
 }
 
 async function trackSuccessfulNotification(context: ResolvedNotificationContext) {
+  if (resolveProcessedCaptureStatus(context) !== "success") {
+    return;
+  }
+
   trackTransactionCreated({
     type: context.parsed.type,
     category: String(context.categoryId),
@@ -146,7 +170,15 @@ export async function persistFailedNotification(
     parseFailed: 1,
   });
 
-  return { saved: false, skippedDuplicate: false, transactionId: null };
+  return {
+    saved: false,
+    skippedDuplicate: false,
+    transactionId: null,
+    parseImprovementRequest: buildParseImprovementRequest(context, {
+      status: "failed",
+      confidence: null,
+    }),
+  };
 }
 
 export async function persistDuplicateNotification(
@@ -174,7 +206,7 @@ export async function persistSuccessfulNotification(
   const transactionId = saveTransactionRecord(context);
 
   await persistCaptureOutcome(context, {
-    status: "success",
+    status: resolveProcessedCaptureStatus(context),
     fingerprintHash: context.fingerprint,
     transactionId,
     confidence: context.parsed.confidence,
@@ -183,5 +215,15 @@ export async function persistSuccessfulNotification(
   await cacheMerchantRuleIfEligible(context);
   await trackSuccessfulNotification(context);
 
-  return { saved: true, skippedDuplicate: false, transactionId };
+  return resolveProcessedCaptureStatus(context) === "needs_review"
+    ? {
+        saved: true,
+        skippedDuplicate: false,
+        transactionId,
+        parseImprovementRequest: buildParseImprovementRequest(context, {
+          status: "needs_review",
+          confidence: context.parsed.confidence,
+        }),
+      }
+    : { saved: true, skippedDuplicate: false, transactionId };
 }

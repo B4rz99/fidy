@@ -16,6 +16,7 @@ import {
   Mail,
   Palette,
   Shield,
+  Sparkles,
   Tag,
   Wallet,
 } from "@/shared/components/icons";
@@ -61,6 +62,8 @@ export function SettingsScreen() {
   const themePreference = useSettingsStore((s) => s.themePreference);
   const areAllNotificationsOff = useSettingsStore((s) => s.areAllNotificationsOff);
   const privateBackupHealth = useSettingsStore((s) => s.privateBackup.health.status);
+  const shareAnonymizedParseSamples = useSettingsStore((s) => s.shareAnonymizedParseSamples);
+  const setShareAnonymizedParseSamples = useSettingsStore((s) => s.setShareAnonymizedParseSamples);
 
   const accentGreen = useThemeColor("accentGreen");
   const tertiaryColor = useThemeColor("tertiary");
@@ -168,13 +171,21 @@ export function SettingsScreen() {
           />
         </SettingsSection>
 
-        {/* PRIVATE BACKUP */}
-        <SettingsSection label={t("settings.privateBackupSection")}>
+        {/* PRIVACY */}
+        <SettingsSection label={t("settings.privacySection")}>
           <SettingsRow
             icon={KeyRound}
             label={t("settings.privateBackup")}
             subtitle={t(getPrivateBackupStatusLabelKey(privateBackupHealth))}
             onPress={() => router.push("/private-backup")}
+          />
+          <SettingsRow
+            icon={Sparkles}
+            label={t("settings.parseImprovementSharing")}
+            subtitle={t("settings.parseImprovementSharingSubtitle")}
+            accessory="switch"
+            switchValue={shareAnonymizedParseSamples}
+            onSwitchChange={setShareAnonymizedParseSamples}
             isLast
           />
         </SettingsSection>

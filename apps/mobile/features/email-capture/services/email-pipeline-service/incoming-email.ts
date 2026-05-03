@@ -9,6 +9,10 @@ import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { assertIsoDateTime } from "@/shared/types/assertions";
 import { buildSkippedEmailDiagnostics } from "./email-telemetry";
 import {
+  appendFailedEmailParseImprovementRequest,
+  appendNeedsReviewEmailParseImprovementRequest,
+} from "./parse-improvement";
+import {
   findDuplicateTransactionEffect,
   getProcessedExternalIdsEffect,
   insertMerchantRuleEffect,
@@ -114,6 +118,7 @@ async function persistPendingRetryIncomingEmail(
     transactionId: null,
     createdAt,
   });
+  if (failureReason === "parse_error") appendFailedEmailParseImprovementRequest(context, email);
   return true;
 }
 
@@ -268,6 +273,9 @@ async function processParsedIncomingEmail(
     }
 
     incrementPipelineMetric(context.result, status === "success" ? "saved" : "needsReview");
+    if (status === "needs_review") {
+      appendNeedsReviewEmailParseImprovementRequest(context, email, parsed.confidence);
+    }
   });
 }
 

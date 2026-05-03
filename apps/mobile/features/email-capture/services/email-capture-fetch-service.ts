@@ -33,6 +33,7 @@ const EMPTY_PIPELINE_RESULT: PipelineResult = {
   failed: 0,
   pendingRetry: 0,
   needsReview: 0,
+  parseImprovementRequests: [],
 };
 const FETCH_LOOKBACK_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -139,6 +140,10 @@ export const aggregatePipelineResults = (results: readonly PipelineResult[]): Pi
       failed: total.failed + result.failed,
       pendingRetry: total.pendingRetry + result.pendingRetry,
       needsReview: total.needsReview + result.needsReview,
+      parseImprovementRequests: [
+        ...total.parseImprovementRequests,
+        ...result.parseImprovementRequests,
+      ],
     }),
     EMPTY_PIPELINE_RESULT
   );

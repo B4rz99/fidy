@@ -259,7 +259,10 @@ export const emailAccounts = sqliteTable(
     lastFetchedAt: text("last_fetched_at").$type<IsoDateTime>(),
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
   },
-  (table) => [index("idx_email_accounts_user").on(table.userId)]
+  (table) => [
+    index("idx_email_accounts_user").on(table.userId),
+    uniqueIndex("uq_email_accounts_user_email").on(table.userId, table.email),
+  ]
 );
 
 export const processedEmails = sqliteTable(

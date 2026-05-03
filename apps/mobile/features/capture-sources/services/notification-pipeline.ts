@@ -6,12 +6,11 @@ import { captureWarning, normalizeMerchant, toIsoDateTime } from "@/shared/lib";
 import { assertUserId } from "@/shared/types/assertions";
 import type { CategoryId } from "@/shared/types/branded";
 import { findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
-import { parseNotificationLocally } from "../lib/notification-parser";
+import { parseNotificationLocalHint } from "../lib/notification-parser";
 import type { NotificationData } from "../schema";
 import {
   appendParsedNotificationEvidence,
   buildNotificationFingerprint,
-  FALLBACK_CATEGORY_ID,
   normalizeNotificationCommand,
   normalizeParsedNotification,
   parseNotificationWithLlm,
@@ -65,16 +64,11 @@ export async function processNotification(
 }
 
 async function parseNotificationStage(context: NotificationContext): Promise<ParseStageResult> {
-  const localResult = parseNotificationLocally(context.notificationText);
-  const parseMethod: NotificationParseMethod = localResult ? "regex" : "llm";
-  const rawParsed = localResult
-    ? {
-        ...localResult,
-        categoryId: FALLBACK_CATEGORY_ID,
-        date: context.notificationDate,
-        confidence: 0.8,
-      }
-    : await parseNotificationWithLlm(context.sanitizedText);
+  const parseMethod: NotificationParseMethod = "llm";
+  const localHint = parseNotificationLocalHint(context.notificationText);
+  const rawParsed = await parseNotificationWithLlm(
+    buildNotificationLlmInput(context.sanitizedText, localHint)
+  );
   if (!rawParsed) {
     return { kind: "failed", context: { ...context, parseMethod } };
   }
@@ -90,6 +84,20 @@ async function parseNotificationStage(context: NotificationContext): Promise<Par
       fingerprint,
     },
   };
+}
+
+function buildNotificationLlmInput(
+  sanitizedText: string,
+  localHint: ReturnType<typeof parseNotificationLocalHint>
+) {
+  if (!localHint) return sanitizedText;
+
+  return [
+    "Local regex hints (not authoritative):",
+    `type=${localHint.type}`,
+    "",
+    sanitizedText,
+  ].join("\n");
 }
 
 async function withFingerprintLock(

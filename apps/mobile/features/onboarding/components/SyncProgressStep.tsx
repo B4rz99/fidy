@@ -8,6 +8,7 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture/public";
+import { useSettingsStore } from "@/features/settings/hooks.public";
 import { refreshTransactions, useTransactionStore } from "@/features/transactions/store.public";
 import { ProgressBar } from "@/shared/components";
 import { Pressable, Text, View } from "@/shared/components/rn";
@@ -30,17 +31,14 @@ export function SyncProgressStep() {
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const completeSync = useOnboardingStore((s) => s.completeSync);
-
   const accounts = useEmailCaptureStore((s) => s.accounts);
   const progress = useEmailCaptureStore((s) => s.progress);
+  const shareAnonymizedParseSamples = useSettingsStore((s) => s.shareAnonymizedParseSamples);
   const [syncOutcome, setSyncOutcome] = useState<SyncOutcome | null>(null);
-
   const recentTransactions = useTransactionStore(useShallow((s) => s.pages.slice(0, 3)));
-
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
-
   const fetchStarted = useRef(false);
   const suggestionService = useMemo(() => createAccountSuggestionService(), []);
 
@@ -168,7 +166,10 @@ export function SyncProgressStep() {
           getGmailClientId(),
           getOutlookClientId(),
           () => refreshTransactions(db, userId),
-          { parseProfile: "initial_sync" }
+          {
+            parseProfile: "initial_sync",
+            shareParseImprovementSamples: shareAnonymizedParseSamples,
+          }
         );
 
         if (outcome.status === "completed") {

@@ -13,6 +13,7 @@ import type {
 } from "@/shared/types/branded";
 import type {
   CreateEmailPipelineServiceDeps,
+  EmailParseImprovementRequest,
   EmailSaveStatus,
   LlmParsedTransaction,
   PipelineResult,
@@ -222,6 +223,11 @@ export type EmailMetric =
   | "failed"
   | "pendingRetry"
   | "needsReview";
+
+export type AppendEmailParseImprovementRequestInput = {
+  readonly result: PipelineResult;
+  readonly request: EmailParseImprovementRequest;
+};
 
 export type UnparsedProcessedEmailRowInput = {
   readonly email: RawEmail;

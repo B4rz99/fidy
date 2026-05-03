@@ -31,8 +31,9 @@ type RetrySuccessInput = {
   readonly confidence: number;
 };
 
-export async function insertEmailAccount(db: AnyDb, row: EmailAccountRow) {
-  await db.insert(emailAccounts).values(row);
+export async function insertEmailAccount(db: AnyDb, row: EmailAccountRow): Promise<boolean> {
+  const result = await db.insert(emailAccounts).values(row).onConflictDoNothing().run();
+  return result.changes > 0;
 }
 
 export async function getEmailAccount(db: AnyDb, id: EmailAccountId) {

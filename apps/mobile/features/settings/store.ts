@@ -34,6 +34,7 @@ type SettingsState = {
   notificationPreferences: NotificationPreferences;
   areAllNotificationsOff: boolean;
   privateBackup: PrivateBackupSettingsState;
+  shareAnonymizedParseSamples: boolean;
 };
 
 type SetSettingsState = (partial: Partial<SettingsState>) => void;
@@ -42,6 +43,7 @@ type SettingsActions = {
   setThemePreference: (pref: ThemePreference) => void;
   setNotificationPreference: (key: keyof NotificationPreferences, value: boolean) => void;
   setAllNotifications: (enabled: boolean) => void;
+  setShareAnonymizedParseSamples: (enabled: boolean) => void;
   beginPrivateBackupSetup: (recoveryKey: string) => void;
   confirmPrivateBackupRecoveryKey: (
     confirmedRecoveryKey: string,
@@ -54,6 +56,7 @@ type SettingsActions = {
 
 const PREFS_KEY = "notification_preferences";
 const THEME_PREFERENCE_KEY = "theme_preference";
+const SHARE_ANONYMIZED_PARSE_SAMPLES_KEY = "share_anonymized_parse_samples";
 
 const toColorScheme = (pref: ThemePreference) => (pref === "system" ? "unspecified" : pref);
 
@@ -86,15 +89,18 @@ const parseStoredNotificationPreferences = (
 };
 
 const loadStoredSettings = async () => {
-  const [storedTheme, storedPrefs, privateBackup] = await Promise.all([
-    SecureStore.getItemAsync(THEME_PREFERENCE_KEY),
-    SecureStore.getItemAsync(PREFS_KEY),
-    loadPrivateBackupSettingsState(),
-  ]);
+  const [storedTheme, storedPrefs, storedShareAnonymizedParseSamples, privateBackup] =
+    await Promise.all([
+      SecureStore.getItemAsync(THEME_PREFERENCE_KEY),
+      SecureStore.getItemAsync(PREFS_KEY),
+      SecureStore.getItemAsync(SHARE_ANONYMIZED_PARSE_SAMPLES_KEY),
+      loadPrivateBackupSettingsState(),
+    ]);
 
   return {
     storedTheme,
     storedPrefs,
+    storedShareAnonymizedParseSamples,
     privateBackup,
   };
 };
@@ -135,6 +141,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
   notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
   areAllNotificationsOff: false,
   privateBackup: DEFAULT_PRIVATE_BACKUP_STATE,
+  shareAnonymizedParseSamples: false,
 
   setThemePreference: (pref) => {
     set({ themePreference: pref });
@@ -167,6 +174,17 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
       areAllNotificationsOff: computeAllOff(updated),
     });
     persistPreferences(updated);
+  },
+
+  setShareAnonymizedParseSamples: (enabled) => {
+    set({ shareAnonymizedParseSamples: enabled });
+    void SecureStore.setItemAsync(SHARE_ANONYMIZED_PARSE_SAMPLES_KEY, String(enabled)).catch(
+      (error) => {
+        captureWarning("parse_sample_sharing_preference_persist_failed", {
+          errorMessage: error instanceof Error ? error.message : "unknown",
+        });
+      }
+    );
   },
 
   beginPrivateBackupSetup: (recoveryKey) => {
@@ -206,6 +224,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
       applyStoredThemePreference(set, stored.storedTheme);
       applyStoredPrivateBackup(set, stored.privateBackup);
       applyStoredNotificationPreferences(set, stored.storedPrefs);
+      set({ shareAnonymizedParseSamples: stored.storedShareAnonymizedParseSamples === "true" });
     } catch {
       // SecureStore unavailable (e.g., in tests)
     }

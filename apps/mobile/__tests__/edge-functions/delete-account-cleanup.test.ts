@@ -21,6 +21,7 @@ describe("delete-account remote cleanup", () => {
       "encrypted_backups",
       "push_devices",
       "notification_preferences",
+      "notification_parse_improvement_samples",
       "rate_limits",
     ]);
     expect(supabase.storageRemove).toHaveBeenCalledWith([

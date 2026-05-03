@@ -2,6 +2,7 @@ import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository"
 import { getBuiltInCategoryId, isValidCategoryId } from "@/shared/categories";
 import { assertCopAmount, assertIsoDate, requireIsoDateTime } from "@/shared/types/assertions";
 import type {
+  AppendEmailParseImprovementRequestInput,
   DuplicateProcessedEmailRowInput,
   EmailBatchContext,
   EmailMetric,
@@ -42,6 +43,10 @@ export function assertParsedTransaction(parsed: TrackSavedTransactionInput["pars
 
 export function incrementPipelineMetric(result: PipelineResult, field: EmailMetric) {
   result[field] += 1;
+}
+
+export function appendEmailParseImprovementRequest(input: AppendEmailParseImprovementRequestInput) {
+  input.result.parseImprovementRequests = [...input.result.parseImprovementRequests, input.request];
 }
 
 export function incrementRetryMetric(result: RetryResult, field: keyof RetryResult) {
@@ -98,6 +103,7 @@ export function createPipelineResult(skippedDuplicate: number): PipelineResult {
     failed: 0,
     pendingRetry: 0,
     needsReview: 0,
+    parseImprovementRequests: [],
   };
 }
 

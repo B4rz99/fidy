@@ -1,5 +1,5 @@
 ---
-name: opening-mr
+name: opening-pr
 description: Sync with main, run the required local checks, commit, push, and open a PR. Use when the user asks to open a PR or when a task explicitly requires the repo's PR workflow.
 ---
 
@@ -17,14 +17,17 @@ Start from an up-to-date branch before verifying or committing.
 
 ## Step 2 — Review The Diff
 
-Review the current diff before proceeding. Focus on:
+Review the current diff before proceeding. Deploy multiple subagents in parallel, each focused on one review lens:
 
-- correctness and regressions
-- secrets or unsafe data handling
-- whether the change matches the user request
-- whether any required follow-up verification is missing
+- perform a high-quality security review, including secrets, unsafe data handling, auth boundaries, privacy leaks, and injection risks
+- perform a quality code review, including correctness, regressions, edge cases, error handling, naming, and missing tests
+- simplify code by consolidating related logic where reuse would reduce duplication or clarify ownership
+- check functional programming patterns, especially avoiding unnecessary mutation in pure modules
+- check atomicity patterns, especially transaction boundaries, partial writes, stale completions, and cleanup on failure
+- check purism patterns, especially side effects leaking into `lib/`, schemas, utilities, or other pure surfaces
+- identify where Sentry logs or breadcrumbs are necessary for production diagnosability without adding noisy or sensitive logging
 
-Fix important issues before moving on.
+Synthesize the subagent findings before editing. Fix important issues before moving on, and do not defer findings that would make the PR unsafe, misleading, or difficult to review.
 
 ## Step 3 — Run Project Checks
 

@@ -1,6 +1,7 @@
 export type {
   CaptureEvidenceRowsInput,
   CaptureEvidenceSaveInput,
+  AppendEmailParseImprovementRequestInput,
   DefaultAccountInput,
   DuplicateLookupOutcome,
   DuplicateProcessedEmailRowInput,
@@ -33,6 +34,7 @@ export type {
 export type {
   CategoryId,
   CreateEmailPipelineServiceDeps,
+  EmailParseImprovementRequest,
   EmailPipelineService,
   EmailSaveStatus,
   IsoDateTime,
