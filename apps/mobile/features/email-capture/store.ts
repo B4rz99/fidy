@@ -10,7 +10,6 @@ import {
 import { shareEmailParseImprovementRequests } from "./services/email-parse-improvement-sharing";
 import {
   applyEmailCaptureCandidateLimit,
-  aggregatePipelineResults,
   createEmailFetchClientIds,
   type EmailCaptureParseProfile,
   fetchEmailAccountBatch,
@@ -21,6 +20,7 @@ import {
   resolveEmailCaptureSyncPolicy,
   sortFetchResultsByNewestEmail,
 } from "./services/email-capture-fetch-service";
+import { aggregatePipelineResults } from "./services/email-capture-result";
 import {
   applyEmailCaptureFetchSummary,
   beginEmailCaptureFetchRun,

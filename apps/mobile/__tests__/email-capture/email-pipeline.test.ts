@@ -358,22 +358,30 @@ describe("email processing pipeline", () => {
         skipReason: "filtered",
       })
     );
-    expect(capturePipelineEvent).toHaveBeenCalledWith({
-      source: "email",
-      schema: "email_pipeline_batch_v1",
-      batchSize: 1,
-      providerFamilyCount: 1,
-      providerFamilies: "gmail",
-      dedupedInBatch: 0,
-      skippedAlreadyProcessed: 0,
-      skippedCrossSource: 0,
-      skippedDuplicate: 0,
-      filtered: 1,
-      saved: 0,
-      failed: 0,
-      pendingRetry: 0,
-      needsReview: 0,
-    });
+    expect(capturePipelineEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: "email",
+        schema: "email_pipeline_batch_v1",
+        batchSize: 1,
+        providerFamilyCount: 1,
+        providerFamilies: "gmail",
+        dedupedInBatch: 0,
+        skippedAlreadyProcessed: 0,
+        skippedCrossSource: 0,
+        skippedDuplicate: 0,
+        filtered: 1,
+        saved: 0,
+        failed: 0,
+        pendingRetry: 0,
+        needsReview: 0,
+        batchDurationMs: expect.any(Number),
+        parseTotalDurationMs: expect.any(Number),
+        parseMaxDurationMs: expect.any(Number),
+        parseAverageDurationMs: expect.any(Number),
+        persistenceTotalDurationMs: expect.any(Number),
+        hasFirstSavedTransaction: false,
+      })
+    );
     expect(JSON.stringify(capturePipelineEvent.mock.calls)).not.toContain("Compra aprobada");
     expect(JSON.stringify(capturePipelineEvent.mock.calls)).not.toContain("50.000");
     expect(JSON.stringify(capturePipelineEvent.mock.calls)).not.toContain(
@@ -401,6 +409,32 @@ describe("email processing pipeline", () => {
     });
     expect(JSON.stringify(captureWarning.mock.calls)).not.toContain("Exito");
     expect(JSON.stringify(captureWarning.mock.calls)).not.toContain("50.000");
+  });
+
+  it("reports first-saved timing without transaction content", async () => {
+    const capturePipelineEvent = vi.fn();
+    const service = createTestEmailPipelineService({
+      telemetry: {
+        captureError: vi.fn(),
+        captureWarning: vi.fn(),
+        capturePipelineEvent,
+      },
+    });
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+
+    await service.processEmails(mockDb, USER_ID, [makeRawEmail()]);
+
+    expect(capturePipelineEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schema: "email_pipeline_batch_v1",
+        saved: 1,
+        hasFirstSavedTransaction: true,
+        firstSavedLatencyMs: expect.any(Number),
+      })
+    );
+    expect(JSON.stringify(capturePipelineEvent.mock.calls)).not.toContain("Compra aprobada");
+    expect(JSON.stringify(capturePipelineEvent.mock.calls)).not.toContain("50.000");
+    expect(JSON.stringify(capturePipelineEvent.mock.calls)).not.toContain("Exito");
   });
 
   it("saves transaction and caches merchant rule when LLM returns high confidence", async () => {
@@ -719,6 +753,16 @@ describe("email processing pipeline", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("passes the explicit initial-sync parse context to remote parsing", async () => {
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+
+    await processInitialSyncEmails(mockDb, USER_ID, [makeRawEmail()]);
+
+    expect(mockParseEmailApi).toHaveBeenCalledWith("Su compra por $50.000 fue aprobada", {
+      parseContext: "initial_sync",
+    });
   });
 
   it("saves transaction as needs_review when LLM returns low confidence", async () => {

@@ -4,20 +4,33 @@ import { buildEmailPipelineBatchTelemetry } from "./email-telemetry";
 import { processIncomingEmail } from "./incoming-email";
 import { getProcessedExternalIdsEffect } from "./runtime";
 import {
-  completeEmailStep,
   createPipelineResult,
   dedupeRawEmails,
   getNextQueuedEmail,
-  reportEmailProgress,
+  getProgressSnapshot,
+  mergePipelineResults,
 } from "./shared";
 import type {
   EmailBatchContext,
   EmailBatchPlan,
   EmailQueue,
+  IncomingEmailOutcome,
   PipelineRuntime,
+  PipelineResult,
   ProcessEmailsInput,
   RawEmail,
 } from "./types";
+
+type EmailBatchTiming = {
+  readonly batchDurationMs: number;
+  readonly parseTotalDurationMs: number;
+  readonly parseMaxDurationMs: number;
+  readonly parseAverageDurationMs: number;
+  readonly persistenceTotalDurationMs: number;
+  readonly firstSavedLatencyMs: number | null;
+};
+
+const nowMs = (): number => Date.now();
 
 async function createEmailBatchPlan(
   runtime: PipelineRuntime,
@@ -46,22 +59,19 @@ async function createEmailBatchPlan(
   };
 }
 
-async function captureIncomingBatchEvent(
-  runtime: PipelineRuntime,
-  rawEmails: RawEmail[],
-  batch: EmailBatchPlan
-) {
-  await runtime.runTelemetryEffect(
-    capturePipelineEventEffect(
-      buildEmailPipelineBatchTelemetry({
-        rawEmails,
-        dedupedInBatch: batch.dedupedInBatch,
-        skippedAlreadyProcessed: batch.skippedAlreadyProcessed,
-        result: batch.result,
-      })
-    )
-  );
-}
+const buildIncomingBatchTelemetry = (input: {
+  readonly rawEmails: RawEmail[];
+  readonly batch: EmailBatchPlan;
+  readonly result: PipelineResult;
+  readonly timing: EmailBatchTiming;
+}) =>
+  buildEmailPipelineBatchTelemetry({
+    rawEmails: input.rawEmails,
+    dedupedInBatch: input.batch.dedupedInBatch,
+    skippedAlreadyProcessed: input.batch.skippedAlreadyProcessed,
+    timing: input.timing,
+    result: input.result,
+  });
 
 async function waitForParseRateLimit(context: EmailBatchContext): Promise<void> {
   const delayMs = context.runtime.parseRateLimit.delayMs;
@@ -81,43 +91,101 @@ async function waitForParseRateLimit(context: EmailBatchContext): Promise<void> 
   await scheduledStart;
 }
 
-async function runEmailWorker(context: EmailBatchContext, queue: EmailQueue): Promise<void> {
+async function runEmailWorker(input: {
+  readonly context: EmailBatchContext;
+  readonly queue: EmailQueue;
+  readonly onOutcome: (outcome: IncomingEmailOutcome) => void;
+}): Promise<void> {
   // FP exemption: the worker queue keeps parse-email calls serialized for Edge Function rate limits.
   while (true) {
-    const email = getNextQueuedEmail(queue);
+    const email = getNextQueuedEmail(input.queue);
     if (!email) return;
-    await waitForParseRateLimit(context);
-    await processIncomingEmail(context, email);
-    completeEmailStep(context);
+    await waitForParseRateLimit(input.context);
+    input.onOutcome(await processIncomingEmail(input.context, email));
   }
 }
 
-async function runEmailWorkers(context: EmailBatchContext, emails: RawEmail[]) {
-  const queue: EmailQueue = { emails, nextIdx: 0 };
+async function runEmailWorkers(input: {
+  readonly context: EmailBatchContext;
+  readonly emails: RawEmail[];
+  readonly onOutcome: (outcome: IncomingEmailOutcome) => void;
+}) {
+  const queue: EmailQueue = { emails: input.emails, nextIdx: 0 };
   const workerCount = Math.min(
-    Math.max(1, context.runtime.parseRateLimit.concurrency),
-    emails.length
+    Math.max(1, input.context.runtime.parseRateLimit.concurrency),
+    input.emails.length
   );
-  await Promise.all(Array.from({ length: workerCount }, () => runEmailWorker(context, queue)));
+  await Promise.all(
+    Array.from({ length: workerCount }, () =>
+      runEmailWorker({ context: input.context, queue, onOutcome: input.onOutcome })
+    )
+  );
 }
 
+const summarizeBatchTiming = (
+  outcomes: readonly IncomingEmailOutcome[],
+  batchDurationMs: number,
+  firstSavedLatencyMs: number | null
+): EmailBatchTiming => {
+  const parseDurations = outcomes.map((outcome) => outcome.parseDurationMs);
+  const parseTotalDurationMs = parseDurations.reduce((total, duration) => total + duration, 0);
+
+  return {
+    batchDurationMs,
+    parseTotalDurationMs,
+    parseMaxDurationMs: Math.max(0, ...parseDurations),
+    parseAverageDurationMs:
+      parseDurations.length === 0 ? 0 : Math.round(parseTotalDurationMs / parseDurations.length),
+    persistenceTotalDurationMs: outcomes.reduce(
+      (total, outcome) => total + outcome.persistenceDurationMs,
+      0
+    ),
+    firstSavedLatencyMs,
+  };
+};
+
 export async function processEmailBatch(runtime: PipelineRuntime, input: ProcessEmailsInput) {
+  const batchStartedAt = nowMs();
   const batch = await createEmailBatchPlan(runtime, input.db, input.rawEmails);
   const context: EmailBatchContext = {
     runtime,
     db: input.db,
     userId: input.userId,
-    result: batch.result,
-    total: batch.total,
-    onProgress: input.onProgress,
-    completed: 0,
     parseStarts: 0,
     parseStartGate: Promise.resolve(),
     persistenceGate: Promise.resolve(),
   };
+  const outcomes: IncomingEmailOutcome[] = [];
+  let completed = 0;
+  let firstSavedLatencyMs: number | null = null;
+  let progressResult = batch.result;
+  const reportProgress = () => {
+    input.onProgress?.(getProgressSnapshot(batch.total, completed, progressResult));
+  };
 
-  reportEmailProgress(context);
-  await runEmailWorkers(context, batch.toProcess);
-  await captureIncomingBatchEvent(runtime, input.rawEmails, batch);
-  return batch.result;
+  reportProgress();
+  await runEmailWorkers({
+    context,
+    emails: batch.toProcess,
+    onOutcome: (outcome) => {
+      outcomes.push(outcome);
+      completed += 1;
+      if (firstSavedLatencyMs === null && outcome.savedTransaction) {
+        firstSavedLatencyMs = nowMs() - batchStartedAt;
+      }
+      progressResult = mergePipelineResults([progressResult, outcome.result]);
+      reportProgress();
+    },
+  });
+  await runtime.runTelemetryEffect(
+    capturePipelineEventEffect(
+      buildIncomingBatchTelemetry({
+        rawEmails: input.rawEmails,
+        batch,
+        result: progressResult,
+        timing: summarizeBatchTiming(outcomes, nowMs() - batchStartedAt, firstSavedLatencyMs),
+      })
+    )
+  );
+  return progressResult;
 }

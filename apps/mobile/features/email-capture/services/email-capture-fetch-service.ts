@@ -6,7 +6,7 @@ import type { EmailAccountId, IsoDateTime, UserId } from "@/shared/types/branded
 import { isFirstFetchForAny, shouldShowProgress } from "../lib/progress-phases";
 import type { EmailAccountRow, ProcessedEmailRow } from "../lib/repository";
 import { getFailedEmails, getNeedsReviewEmails, updateLastFetchedAt } from "../lib/repository";
-import type { PipelineResult, ProgressCallback, RawEmail } from "../pipeline.public";
+import type { PipelineResult, ProgressCallback, RawEmail, RetryResult } from "../pipeline.public";
 import {
   processBackgroundEmails,
   processEmails,
@@ -16,6 +16,10 @@ import {
 import { ensureBankSenders } from "../queries/bank-senders";
 import type { EmailProvider } from "../schema";
 import type { EmailCaptureParseProfile } from "./email-capture-sync-policy";
+import {
+  captureEmailFetchBatchTelemetry,
+  captureEmailRetryBatchTelemetry,
+} from "./email-capture-fetch-telemetry";
 import { getAdapter } from "./email-adapter";
 export {
   applyEmailCaptureCandidateLimit,
@@ -43,6 +47,7 @@ export type EmailAccountFetchResult = {
   readonly account: EmailAccountRow;
   readonly rawEmails: readonly RawEmail[];
   readonly fetchOk: boolean;
+  readonly fetchDurationMs: number;
 };
 
 export type ProcessedEmailAccountFetchResult = EmailAccountFetchResult & {
@@ -82,10 +87,14 @@ type PersistFetchedAccountsCommand = {
   readonly fetchResults: readonly ProcessedEmailAccountFetchResult[];
 };
 
-const createEmptyFetchResult = (account: EmailAccountRow): EmailAccountFetchResult => ({
+const createEmptyFetchResult = (
+  account: EmailAccountRow,
+  fetchDurationMs = 0
+): EmailAccountFetchResult => ({
   account,
   rawEmails: EMPTY_RAW_EMAILS,
   fetchOk: false,
+  fetchDurationMs,
 });
 
 const createFetchLookbackBoundary = (): string =>
@@ -130,24 +139,6 @@ const getDurablyProcessedFetches = (
         result.processingResult.failed === result.processingResult.pendingRetry)
   );
 
-export const aggregatePipelineResults = (results: readonly PipelineResult[]): PipelineResult =>
-  results.reduce(
-    (total, result) => ({
-      filtered: total.filtered + result.filtered,
-      skippedDuplicate: total.skippedDuplicate + result.skippedDuplicate,
-      skippedCrossSource: total.skippedCrossSource + result.skippedCrossSource,
-      saved: total.saved + result.saved,
-      failed: total.failed + result.failed,
-      pendingRetry: total.pendingRetry + result.pendingRetry,
-      needsReview: total.needsReview + result.needsReview,
-      parseImprovementRequests: [
-        ...total.parseImprovementRequests,
-        ...result.parseImprovementRequests,
-      ],
-    }),
-    EMPTY_PIPELINE_RESULT
-  );
-
 const isSupportedEmailProvider = (provider: string): provider is EmailProvider =>
   provider === "gmail" || provider === "outlook";
 
@@ -166,6 +157,7 @@ async function fetchEmailsForAccount(
     return createEmptyFetchResult(command.account);
   }
 
+  const fetchStartedAt = Date.now();
   try {
     const provider = command.account.provider;
     const rawEmails = await getAdapter(provider).fetchEmails(
@@ -174,14 +166,21 @@ async function fetchEmailsForAccount(
       [...command.senderEmails]
     );
 
-    return { account: command.account, rawEmails, fetchOk: true };
+    return {
+      account: command.account,
+      rawEmails,
+      fetchOk: true,
+      fetchDurationMs: Date.now() - fetchStartedAt,
+    };
   } catch (error) {
+    const fetchDurationMs = Date.now() - fetchStartedAt;
     captureWarning("email_adapter_fetch_failed", {
       provider: command.account.provider,
       errorType: error instanceof Error ? error.name : "unknown",
+      fetchDurationMs,
     });
 
-    return createEmptyFetchResult(command.account);
+    return createEmptyFetchResult(command.account, fetchDurationMs);
   }
 }
 
@@ -196,6 +195,7 @@ export const createEmailFetchClientIds = (
 export async function fetchEmailAccountBatch(
   command: FetchEmailAccountsCommand
 ): Promise<EmailCaptureFetchSummary> {
+  const fetchStartedAt = Date.now();
   const senderEmails = await loadSenderEmails();
   const minSince = createFetchLookbackBoundary();
   const fetchResults = await Promise.all(
@@ -209,6 +209,10 @@ export async function fetchEmailAccountBatch(
     )
   );
   logFetchedEmailDiagnostics(fetchResults);
+  captureEmailFetchBatchTelemetry({
+    fetchResults,
+    fetchDurationMs: Date.now() - fetchStartedAt,
+  });
 
   return createFetchSummary(command.accounts, fetchResults);
 }
@@ -243,10 +247,17 @@ export async function ingestFetchedEmails(input: {
       : EMPTY_PIPELINE_RESULT;
 
   if (input.runRetries !== false) {
-    await captureIngestion.ingest({
+    const retryStartedAt = Date.now();
+    const retryResult = (await captureIngestion.ingest({
       kind: "email_retry",
       userId: input.userId,
-    });
+    })) as RetryResult;
+    if (retryResult.retried > 0 || retryResult.permanentlyFailed > 0) {
+      captureEmailRetryBatchTelemetry({
+        retryResult,
+        retryDurationMs: Date.now() - retryStartedAt,
+      });
+    }
   }
 
   return processingResult;

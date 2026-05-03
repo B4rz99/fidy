@@ -11,6 +11,8 @@ export type {
   EmailQueue,
   EmailTransactionContext,
   IncomingEmailPersistenceInput,
+  IncomingEmailOutcome,
+  IncomingEmailPersistenceOutcome,
   IncomingParseOutcome,
   LinkCaptureEvidenceInput,
   MerchantRuleEffectInput,

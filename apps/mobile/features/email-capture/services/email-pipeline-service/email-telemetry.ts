@@ -5,6 +5,14 @@ type BatchTelemetryInput = {
   readonly rawEmails: readonly RawEmail[];
   readonly dedupedInBatch: number;
   readonly skippedAlreadyProcessed: number;
+  readonly timing?: {
+    readonly batchDurationMs: number;
+    readonly parseTotalDurationMs: number;
+    readonly parseMaxDurationMs: number;
+    readonly parseAverageDurationMs: number;
+    readonly persistenceTotalDurationMs: number;
+    readonly firstSavedLatencyMs: number | null;
+  };
   readonly result: PipelineResult;
 };
 
@@ -38,6 +46,19 @@ export function buildEmailPipelineBatchTelemetry(input: BatchTelemetryInput): Te
     skippedCrossSource: input.result.skippedCrossSource,
     skippedDuplicate: input.result.skippedDuplicate,
     filtered: input.result.filtered,
+    ...(input.timing
+      ? {
+          batchDurationMs: input.timing.batchDurationMs,
+          parseTotalDurationMs: input.timing.parseTotalDurationMs,
+          parseMaxDurationMs: input.timing.parseMaxDurationMs,
+          parseAverageDurationMs: input.timing.parseAverageDurationMs,
+          persistenceTotalDurationMs: input.timing.persistenceTotalDurationMs,
+          hasFirstSavedTransaction: input.timing.firstSavedLatencyMs !== null,
+          ...(input.timing.firstSavedLatencyMs === null
+            ? {}
+            : { firstSavedLatencyMs: input.timing.firstSavedLatencyMs }),
+        }
+      : {}),
     saved: input.result.saved,
     failed: input.result.failed,
     pendingRetry: input.result.pendingRetry,
