@@ -14,40 +14,60 @@ const rawEmail: RawEmail = {
   provider: "gmail",
 };
 
+const batchTiming = {
+  batchDurationMs: 42,
+  parseTotalDurationMs: 25,
+  parseMaxDurationMs: 20,
+  parseAverageDurationMs: 13,
+  persistenceTotalDurationMs: 12,
+  firstSavedLatencyMs: null,
+};
+
+const filteredPipelineResult = {
+  filtered: 1,
+  skippedDuplicate: 0,
+  skippedCrossSource: 0,
+  saved: 0,
+  failed: 0,
+  pendingRetry: 0,
+  needsReview: 0,
+  parseImprovementRequests: [],
+};
+
+const expectedBatchTelemetry = {
+  source: "email",
+  schema: "email_pipeline_batch_v1",
+  batchSize: 1,
+  providerFamilyCount: 1,
+  providerFamilies: "gmail",
+  dedupedInBatch: 0,
+  skippedAlreadyProcessed: 0,
+  skippedCrossSource: 0,
+  skippedDuplicate: 0,
+  filtered: 1,
+  batchDurationMs: 42,
+  parseTotalDurationMs: 25,
+  parseMaxDurationMs: 20,
+  parseAverageDurationMs: 13,
+  persistenceTotalDurationMs: 12,
+  hasFirstSavedTransaction: false,
+  saved: 0,
+  failed: 0,
+  pendingRetry: 0,
+  needsReview: 0,
+};
+
 describe("email pipeline telemetry", () => {
   it("builds a structural batch event without email identifiers or content", () => {
     const event = buildEmailPipelineBatchTelemetry({
       rawEmails: [rawEmail],
       dedupedInBatch: 0,
       skippedAlreadyProcessed: 0,
-      result: {
-        filtered: 1,
-        skippedDuplicate: 0,
-        skippedCrossSource: 0,
-        saved: 0,
-        failed: 0,
-        pendingRetry: 0,
-        needsReview: 0,
-        parseImprovementRequests: [],
-      },
+      timing: batchTiming,
+      result: filteredPipelineResult,
     });
 
-    expect(event).toEqual({
-      source: "email",
-      schema: "email_pipeline_batch_v1",
-      batchSize: 1,
-      providerFamilyCount: 1,
-      providerFamilies: "gmail",
-      dedupedInBatch: 0,
-      skippedAlreadyProcessed: 0,
-      skippedCrossSource: 0,
-      skippedDuplicate: 0,
-      filtered: 1,
-      saved: 0,
-      failed: 0,
-      pendingRetry: 0,
-      needsReview: 0,
-    });
+    expect(event).toEqual(expectedBatchTelemetry);
     expect(Object.keys(event).join(" ")).not.toMatch(/body|subject|email|merchant|amount/i);
     expect(Object.values(event).join(" ")).not.toContain("Exito");
     expect(Object.values(event).join(" ")).not.toContain("50.000");

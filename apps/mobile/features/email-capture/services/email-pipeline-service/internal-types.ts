@@ -174,10 +174,6 @@ export type EmailBatchContext = {
   readonly runtime: PipelineRuntime;
   readonly db: AnyDb;
   readonly userId: UserId;
-  readonly result: PipelineResult;
-  readonly total: number;
-  readonly onProgress?: ProgressCallback;
-  completed: number;
   parseStarts: number;
   parseStartGate: Promise<void>;
   persistenceGate: Promise<void>;
@@ -199,6 +195,19 @@ export type IncomingParseOutcome =
   | { readonly kind: "parsed"; readonly parsed: LlmParsedTransaction }
   | { readonly kind: "filtered" }
   | { readonly kind: "failed" };
+
+export type IncomingEmailOutcome = {
+  readonly result: PipelineResult;
+  readonly parseDurationMs: number;
+  readonly persistenceDurationMs: number;
+  readonly savedTransaction: boolean;
+};
+
+export type IncomingEmailPersistenceOutcome = {
+  readonly result: PipelineResult;
+  readonly persistenceDurationMs: number;
+  readonly savedTransaction: boolean;
+};
 
 export type DuplicateLookupOutcome =
   | { readonly kind: "new" }

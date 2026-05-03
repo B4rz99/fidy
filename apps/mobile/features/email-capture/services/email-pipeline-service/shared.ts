@@ -41,25 +41,38 @@ export function assertParsedTransaction(parsed: TrackSavedTransactionInput["pars
   assertIsoDate(parsed.date);
 }
 
-export function incrementPipelineMetric(result: PipelineResult, field: EmailMetric) {
-  result[field] += 1;
-}
+export const createPipelineMetricResult = (field: EmailMetric): PipelineResult => ({
+  ...createPipelineResult(0),
+  [field]: 1,
+});
 
-export function appendEmailParseImprovementRequest(input: AppendEmailParseImprovementRequestInput) {
-  input.result.parseImprovementRequests = [...input.result.parseImprovementRequests, input.request];
-}
+export const appendEmailParseImprovementRequest = (
+  input: AppendEmailParseImprovementRequestInput
+): PipelineResult => ({
+  ...input.result,
+  parseImprovementRequests: [...input.result.parseImprovementRequests, input.request],
+});
+
+export const mergePipelineResults = (results: readonly PipelineResult[]): PipelineResult =>
+  results.reduce(
+    (total, result) => ({
+      filtered: total.filtered + result.filtered,
+      skippedDuplicate: total.skippedDuplicate + result.skippedDuplicate,
+      skippedCrossSource: total.skippedCrossSource + result.skippedCrossSource,
+      saved: total.saved + result.saved,
+      failed: total.failed + result.failed,
+      pendingRetry: total.pendingRetry + result.pendingRetry,
+      needsReview: total.needsReview + result.needsReview,
+      parseImprovementRequests: [
+        ...total.parseImprovementRequests,
+        ...result.parseImprovementRequests,
+      ],
+    }),
+    createPipelineResult(0)
+  );
 
 export function incrementRetryMetric(result: RetryResult, field: keyof RetryResult) {
   result[field] += 1;
-}
-
-export function reportEmailProgress(context: EmailBatchContext) {
-  context.onProgress?.(getProgressSnapshot(context.total, context.completed, context.result));
-}
-
-export function completeEmailStep(context: EmailBatchContext) {
-  context.completed += 1;
-  reportEmailProgress(context);
 }
 
 export function getNextQueuedEmail(queue: EmailQueue) {

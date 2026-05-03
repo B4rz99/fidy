@@ -344,6 +344,7 @@ describe("email capture boundary", () => {
         {
           account: makeAccount({ provider: "gmail" }) as never,
           fetchOk: true,
+          fetchDurationMs: 0,
           rawEmails: [
             makeRawEmail({ from: "notificaciones@rappicard.co" }) as never,
             makeRawEmail({ from: "alertas@rappicard.co" }) as never,

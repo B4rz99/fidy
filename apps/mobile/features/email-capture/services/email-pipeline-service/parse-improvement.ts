@@ -1,16 +1,16 @@
 import { getTransactionSource } from "./shared";
-import type { EmailBatchContext, RawEmail } from "./types";
+import type { PipelineResult, RawEmail } from "./types";
 import { appendEmailParseImprovementRequest } from "./shared";
 
 const buildEmailParseImprovementRawText = (email: RawEmail): string =>
   [email.subject, email.body].filter((part) => part.trim().length > 0).join("\n\n");
 
 export function appendFailedEmailParseImprovementRequest(
-  context: EmailBatchContext,
+  result: PipelineResult,
   email: RawEmail
-) {
-  appendEmailParseImprovementRequest({
-    result: context.result,
+): PipelineResult {
+  return appendEmailParseImprovementRequest({
+    result,
     request: {
       rawText: buildEmailParseImprovementRawText(email),
       source: getTransactionSource(email.provider),
@@ -22,12 +22,12 @@ export function appendFailedEmailParseImprovementRequest(
 }
 
 export function appendNeedsReviewEmailParseImprovementRequest(
-  context: EmailBatchContext,
+  result: PipelineResult,
   email: RawEmail,
   confidence: number
-) {
-  appendEmailParseImprovementRequest({
-    result: context.result,
+): PipelineResult {
+  return appendEmailParseImprovementRequest({
+    result,
     request: {
       rawText: buildEmailParseImprovementRawText(email),
       source: getTransactionSource(email.provider),
