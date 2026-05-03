@@ -6,14 +6,13 @@ import { useSubscription } from "@/shared/hooks";
 import { handleRecoverableError } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import { getGmailClientId, getOutlookClientId } from "../schema";
-import { fetchAndProcessEmails, loadEmailAccounts } from "../store";
+import { fetchAndProcessEmails, initializeEmailCaptureSession, loadEmailAccounts } from "../store";
 
 export function useEmailCapture(db: AnyDb | null, userId: UserId | null) {
-  const shareAnonymizedParseSamples = useSettingsStore((s) => s.shareAnonymizedParseSamples);
-
   useSubscription(
     () => {
       if (!db || !userId) return;
+      initializeEmailCaptureSession(userId);
 
       const runFetch = () => {
         fetchAndProcessEmails(
@@ -22,7 +21,9 @@ export function useEmailCapture(db: AnyDb | null, userId: UserId | null) {
           getGmailClientId(),
           getOutlookClientId(),
           () => refreshTransactions(db, userId),
-          { shareParseImprovementSamples: shareAnonymizedParseSamples }
+          {
+            shareParseImprovementSamples: useSettingsStore.getState().shareAnonymizedParseSamples,
+          }
         ).catch(handleRecoverableError("Email sync failed"));
       };
 
@@ -38,7 +39,7 @@ export function useEmailCapture(db: AnyDb | null, userId: UserId | null) {
         subscription.remove();
       };
     },
-    [db, userId, shareAnonymizedParseSamples],
+    [db, userId],
     db != null && userId != null
   );
 }

@@ -14,10 +14,7 @@ import {
   useCaptureSourcesBootstrap,
 } from "@/features/capture-sources/bootstrap";
 import { categoriesBootstrapTask } from "@/features/categories/bootstrap";
-import {
-  emailCaptureBootstrapTask,
-  useEmailCaptureBootstrap,
-} from "@/features/email-capture/bootstrap";
+import { useEmailCaptureBootstrap } from "@/features/email-capture/bootstrap";
 import { goalsBootstrapTask, goalsTransactionSubscriptionTask } from "@/features/goals/bootstrap";
 import {
   notificationsBootstrapTask,
@@ -42,7 +39,6 @@ const AUTHENTICATED_BOOTSTRAP_TASKS = [
   notificationsBootstrapTask,
   categoriesBootstrapTask,
   captureSourcesBootstrapTask,
-  emailCaptureBootstrapTask,
   settingsBootstrapTask,
   backgroundFetchBootstrapTask,
 ] as const;

@@ -14,17 +14,18 @@ import { ProgressBar } from "@/shared/components";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
-import { formatMoney } from "@/shared/lib";
 import { SYNC_EARLY_UNLOCK_TIMEOUT_MS, shouldUnlockEmailSyncStep } from "../lib/sync-unlock";
 import { logOnboardingEvent, trackOnboardingEvent } from "../lib/telemetry";
 import { useOnboardingStore } from "../store";
 import { styles } from "./SyncProgressStep.styles";
+import { SyncTransactionPreview } from "./SyncTransactionPreview";
 
 type SyncOutcome = {
   readonly savedCount: number;
   readonly hasAccountSuggestions: boolean;
   readonly importComplete: boolean;
 };
+const RECENT_TRANSACTION_PREVIEW_LIMIT = 3;
 
 export function SyncProgressStep() {
   const { t } = useTranslation();
@@ -35,7 +36,9 @@ export function SyncProgressStep() {
   const progress = useEmailCaptureStore((s) => s.progress);
   const shareAnonymizedParseSamples = useSettingsStore((s) => s.shareAnonymizedParseSamples);
   const [syncOutcome, setSyncOutcome] = useState<SyncOutcome | null>(null);
-  const recentTransactions = useTransactionStore(useShallow((s) => s.pages.slice(0, 3)));
+  const recentTransactions = useTransactionStore(
+    useShallow((s) => s.pages.slice(0, RECENT_TRANSACTION_PREVIEW_LIMIT))
+  );
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
@@ -51,6 +54,7 @@ export function SyncProgressStep() {
     let syncStartedAt = Date.now();
     let hasUnlockedSync = false;
     let syncCompleted = false;
+    let lastPreviewRefreshFoundCount = 0;
 
     const clearIdleWait = (shouldRetry: boolean) => {
       unsubscribeIdle?.();
@@ -105,6 +109,14 @@ export function SyncProgressStep() {
       });
     };
 
+    const refreshPreviewForFoundCount = (foundCount: number) => {
+      if (!db || !userId) return;
+      if (lastPreviewRefreshFoundCount >= RECENT_TRANSACTION_PREVIEW_LIMIT) return;
+      if (foundCount <= lastPreviewRefreshFoundCount) return;
+      lastPreviewRefreshFoundCount = foundCount;
+      void refreshTransactions(db, userId);
+    };
+
     const unsubscribeProgress = useEmailCaptureStore.subscribe((state) => {
       const snapshot = state.progress;
       if (!snapshot) return;
@@ -129,6 +141,7 @@ export function SyncProgressStep() {
       });
 
       const foundCount = snapshot.saved + snapshot.needsReview;
+      refreshPreviewForFoundCount(foundCount);
       if (
         shouldUnlockEmailSyncStep({
           foundCount,
@@ -241,26 +254,13 @@ export function SyncProgressStep() {
           </Text>
         </View>
 
-        {recentTransactions.length > 0 ? (
-          <View style={styles.previewSection}>
-            <Text style={[styles.previewTitle, { color: secondaryColor }]}>
-              {t("onboarding.syncing.recentCaptures")}
-            </Text>
-            {recentTransactions.map((tx) => (
-              <View key={tx.id} style={styles.previewRow}>
-                <Text
-                  style={[styles.previewDescription, { color: primaryColor }]}
-                  numberOfLines={1}
-                >
-                  {tx.description || t("common.transaction")}
-                </Text>
-                <Text style={[styles.previewAmount, { color: primaryColor }]}>
-                  {formatMoney(tx.amount)}
-                </Text>
-              </View>
-            ))}
-          </View>
-        ) : null}
+        <SyncTransactionPreview
+          fallbackLabel={t("common.transaction")}
+          primaryColor={primaryColor}
+          secondaryColor={secondaryColor}
+          title={t("onboarding.syncing.recentCaptures")}
+          transactions={recentTransactions}
+        />
 
         {syncOutcome === null ? (
           <Text style={[styles.helperText, { color: secondaryColor }]}>

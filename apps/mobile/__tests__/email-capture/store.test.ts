@@ -300,6 +300,28 @@ function mockProcessResult(overrides: Partial<ProcessSummary> = {}) {
   vi.mocked(processEmails).mockResolvedValueOnce({ ...EMPTY_PROCESS_SUMMARY, ...overrides });
 }
 
+function makeDatedEmails(input: {
+  readonly provider: RawEmail["provider"];
+  readonly prefix: string;
+  readonly hour: string;
+  readonly count: number;
+}): RawEmail[] {
+  return Array.from({ length: input.count }, (_, index) =>
+    makeRawEmail({
+      externalId: `${input.prefix}-${index + 1}`,
+      provider: input.provider,
+      receivedAt: `2026-03-05T${input.hour}:${String(index).padStart(2, "0")}:00Z`,
+    })
+  );
+}
+
+function getProcessedInitialSyncExternalIds(): string[] {
+  return vi
+    .mocked(processInitialSyncEmails)
+    .mock.calls.flatMap(([, , emails]) => emails)
+    .map((email) => email.externalId);
+}
+
 function runFetchAndProcess(gmailClientId = "g", outlookClientId = "o", refresh = mockRefresh) {
   return fetchAndProcessEmails(
     mockDb,
@@ -307,6 +329,17 @@ function runFetchAndProcess(gmailClientId = "g", outlookClientId = "o", refresh 
     gmailClientId,
     outlookClientId,
     refresh
+  );
+}
+
+function runInitialSyncFetch() {
+  return fetchAndProcessEmails(
+    mockDb,
+    mockUserId as UserId,
+    "gmail-client-id",
+    "outlook-client-id",
+    mockRefresh,
+    { parseProfile: "initial_sync" }
   );
 }
 
@@ -442,7 +475,7 @@ describe("email capture boundary", () => {
       email: "User@Gmail.com",
     });
 
-    await connectEmailAccount(mockDb, mockUserId as UserId, "gmail", "client-id");
+    const result = await connectEmailAccount(mockDb, mockUserId as UserId, "gmail", "client-id");
 
     expect(getAdapter).toHaveBeenCalledWith("gmail");
     expect(mockAdapter.connect).toHaveBeenCalledWith("client-id");
@@ -455,6 +488,7 @@ describe("email capture boundary", () => {
       })
     );
     expect(useEmailCaptureStore.getState().accounts).toHaveLength(1);
+    expect(result).toEqual({ connected: true });
   });
 
   it("connectEmail calls adapter for outlook provider", async () => {
@@ -477,10 +511,15 @@ describe("email capture boundary", () => {
       error: "cancelled",
     });
 
-    await connectEmailAccount(mockDb, mockUserId as UserId, "gmail", "client-id");
+    const result = await connectEmailAccount(mockDb, mockUserId as UserId, "gmail", "client-id");
 
     expect(insertEmailAccount).not.toHaveBeenCalled();
     expect(useEmailCaptureStore.getState().accounts).toHaveLength(0);
+    expect(result).toEqual({ connected: false, reason: "cancelled" });
+    expect(mockCaptureWarning).toHaveBeenCalledWith("email_account_connect_failed", {
+      provider: "gmail",
+      reason: "cancelled",
+    });
   });
 
   it("connectEmail rejects duplicate email address", async () => {
@@ -494,11 +533,12 @@ describe("email capture boundary", () => {
       email: "user@gmail.com",
     });
 
-    await connectEmailAccount(mockDb, mockUserId as UserId, "gmail", "client-id");
+    const result = await connectEmailAccount(mockDb, mockUserId as UserId, "gmail", "client-id");
 
     // Should NOT insert a duplicate account
     expect(insertEmailAccount).not.toHaveBeenCalled();
     expect(useEmailCaptureStore.getState().accounts).toHaveLength(1);
+    expect(result).toEqual({ connected: false, reason: "duplicate_account" });
   });
 
   it("connectEmail does not append when the database rejects a duplicate account", async () => {
@@ -508,10 +548,11 @@ describe("email capture boundary", () => {
       email: "user@gmail.com",
     });
 
-    await connectEmailAccount(mockDb, mockUserId as UserId, "gmail", "client-id");
+    const result = await connectEmailAccount(mockDb, mockUserId as UserId, "gmail", "client-id");
 
     expect(insertEmailAccount).toHaveBeenCalled();
     expect(useEmailCaptureStore.getState().accounts).toHaveLength(0);
+    expect(result).toEqual({ connected: false, reason: "database_rejected" });
   });
 
   it("disconnectEmail removes from DB and state", async () => {
@@ -825,6 +866,50 @@ describe("email capture boundary", () => {
         "gmail-8",
         "gmail-7",
       ]);
+    });
+
+    it("bounds initial sync to newest candidates without advancing account cursors", async () => {
+      setAccounts([
+        makeAccount(),
+        makeAccount({ id: "ea-2" as EmailAccountId, provider: "outlook" }),
+      ]);
+      mockAdapter.fetchEmails
+        .mockResolvedValueOnce(
+          makeDatedEmails({ provider: "gmail", prefix: "gmail", hour: "10", count: 12 })
+        )
+        .mockResolvedValueOnce(
+          makeDatedEmails({ provider: "outlook", prefix: "outlook", hour: "11", count: 12 })
+        );
+      vi.mocked(processInitialSyncEmails)
+        .mockResolvedValueOnce({ ...EMPTY_PROCESS_SUMMARY })
+        .mockResolvedValueOnce({ ...EMPTY_PROCESS_SUMMARY });
+      mockEmptyReviewLoads();
+
+      await runInitialSyncFetch();
+
+      expect(getProcessedInitialSyncExternalIds()).toEqual([
+        "outlook-12",
+        "outlook-11",
+        "outlook-10",
+        "outlook-9",
+        "outlook-8",
+        "outlook-7",
+        "outlook-6",
+        "outlook-5",
+        "outlook-4",
+        "outlook-3",
+        "outlook-2",
+        "outlook-1",
+        "gmail-12",
+        "gmail-11",
+        "gmail-10",
+        "gmail-9",
+        "gmail-8",
+        "gmail-7",
+        "gmail-6",
+        "gmail-5",
+      ]);
+      expect(updateLastFetchedAt).not.toHaveBeenCalled();
     });
 
     it("returns the awaited processing outcome", async () => {

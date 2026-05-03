@@ -747,8 +747,7 @@ describe("email processing pipeline", () => {
     );
   });
 
-  it("keeps initial sync serialized until duplicate writes are atomic", async () => {
-    vi.useFakeTimers();
+  it("starts initial sync parsing two emails immediately", async () => {
     const events: string[] = [];
     const pendingParses: Array<(result: ReturnType<typeof makeParsedEmailResult>) => void> = [];
     mockParseEmailApi.mockImplementation(async (body: string) => {
@@ -756,27 +755,24 @@ describe("email processing pipeline", () => {
       return new Promise((resolve) => pendingParses.push(resolve));
     });
 
-    try {
-      const processing = processInitialSyncEmails(
-        mockDb,
-        USER_ID,
-        Array.from({ length: 2 }, (_, index) =>
-          makeRawEmail({ externalId: `ext-${index + 1}`, body: `Compra ${index + 1}` })
-        )
-      );
+    const processing = processInitialSyncEmails(
+      mockDb,
+      USER_ID,
+      Array.from({ length: 3 }, (_, index) =>
+        makeRawEmail({ externalId: `ext-${index + 1}`, body: `Compra ${index + 1}` })
+      )
+    );
 
-      await vi.advanceTimersByTimeAsync(9000);
-      expect(events).toEqual(["parse:Compra 1"]);
+    await vi.waitFor(() => expect(events).toContain("parse:Compra 2"));
+    expect(events).toEqual(["parse:Compra 1", "parse:Compra 2"]);
 
-      pendingParses[0]?.(makeParsedEmailResult({ description: "Compra 1" }));
-      await vi.advanceTimersByTimeAsync(1000);
+    pendingParses[0]?.(makeParsedEmailResult({ description: "Compra 1" }));
+    await vi.waitFor(() => expect(events).toContain("parse:Compra 3"));
+    expect(events).toEqual(["parse:Compra 1", "parse:Compra 2", "parse:Compra 3"]);
 
-      expect(events).toEqual(["parse:Compra 1", "parse:Compra 2"]);
-      pendingParses[1]?.(makeParsedEmailResult({ description: "Compra 2" }));
-      await processing;
-    } finally {
-      vi.useRealTimers();
-    }
+    pendingParses[1]?.(makeParsedEmailResult({ description: "Compra 2" }));
+    pendingParses[2]?.(makeParsedEmailResult({ description: "Compra 3" }));
+    await processing;
   });
 
   it("passes the explicit initial-sync parse context to remote parsing", async () => {
