@@ -690,9 +690,9 @@ const en = {
     },
     notifications: "Notifications",
     privateBackup: "Private Backup",
-    parseImprovementSharing: "Improve notification parsing",
+    parseImprovementSharing: "Improve capture parsing",
     parseImprovementSharingSubtitle:
-      "Share redacted formats when parsing struggles. Amounts, merchants, dates, names, and cards are removed first.",
+      "Share redacted email and notification formats when parsing struggles. Amounts, merchants, dates, names, and cards are removed first.",
     privateBackupStatus: {
       notSetUp: "Not set up",
       recoveryKeyNotConfirmed: "Recovery Key not confirmed",

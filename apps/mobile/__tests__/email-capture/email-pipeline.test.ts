@@ -748,6 +748,15 @@ describe("email processing pipeline", () => {
     );
     expect(mockInsertMerchantRule).not.toHaveBeenCalled();
     expectCaptureEvidenceBuiltFromEmailContent();
+    expect(result.parseImprovementRequests).toEqual([
+      {
+        rawText: "Compra aprobada\n\nSu compra por $50.000 fue aprobada",
+        source: "email_gmail",
+        status: "needs_review",
+        confidence: 0.5,
+        parseMethod: "llm",
+      },
+    ]);
   });
 
   it("uses typed LLM account hints as capture evidence for account suggestions", async () => {
@@ -865,6 +874,15 @@ describe("email processing pipeline", () => {
     // nextRetryAt should be set
     const call = mockInsertProcessedEmail.mock.calls[0]?.[1];
     expect(call.nextRetryAt).toBeTruthy();
+    expect(result.parseImprovementRequests).toEqual([
+      {
+        rawText: "Compra aprobada\n\nSu compra por $50.000 fue aprobada",
+        source: "email_gmail",
+        status: "failed",
+        confidence: null,
+        parseMethod: "llm",
+      },
+    ]);
   });
 
   it("marks parsed email as pending_retry when duplicate lookup fails", async () => {
@@ -887,6 +905,15 @@ describe("email processing pipeline", () => {
         retryCount: 0,
       })
     );
+    expect(result.parseImprovementRequests).toEqual([
+      {
+        rawText: "Compra aprobada\n\nSu compra por $50.000 fue aprobada",
+        source: "email_gmail",
+        status: "failed",
+        confidence: null,
+        parseMethod: "llm",
+      },
+    ]);
   });
 
   it("marks parsed email as pending_retry when transaction save fails", async () => {
@@ -910,6 +937,15 @@ describe("email processing pipeline", () => {
         retryCount: 0,
       })
     );
+    expect(result.parseImprovementRequests).toEqual([
+      {
+        rawText: "Compra aprobada\n\nSu compra por $50.000 fue aprobada",
+        source: "email_gmail",
+        status: "failed",
+        confidence: null,
+        parseMethod: "llm",
+      },
+    ]);
   });
 
   it("does not insert a second processed email row after a partial save already persisted one", async () => {
@@ -1010,6 +1046,7 @@ describe("email processing pipeline", () => {
       failed: 0,
       pendingRetry: 0,
       needsReview: 0,
+      parseImprovementRequests: [],
     });
   });
 

@@ -1,17 +1,13 @@
 import type { AnyDb } from "@/shared/db";
-import { captureError, captureWarning, generateEmailAccountId, toIsoDateTime } from "@/shared/lib";
+import { captureError, captureWarning, toIsoDateTime } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
-import type { EmailAccountRow } from "./lib/repository";
 import {
-  deleteEmailAccount,
   dismissProcessedEmail,
   getEmailAccounts,
   getFailedEmails,
   getNeedsReviewEmails,
-  insertEmailAccount,
 } from "./lib/repository";
-import type { EmailProvider } from "./schema";
-import { getAdapter } from "./services/email-adapter";
+import { shareEmailParseImprovementRequests } from "./services/email-parse-improvement-sharing";
 import {
   applyEmailCaptureCandidateLimit,
   aggregatePipelineResults,
@@ -39,14 +35,13 @@ import {
 } from "./services/email-capture-store-runtime";
 import {
   applyEmailCaptureFetchOutcome,
-  isManagedEmailProvider,
   type RefreshTransactions,
-  resolveEmailAccountId,
   useEmailCaptureStore,
   warnFetchMissingContext,
 } from "./store/state";
 
 export { confirmReviewedEmail } from "./store/reviewed-email";
+export { connectEmailAccount, disconnectEmailAccount } from "./store/account-actions";
 
 const noopRefreshTransactions: RefreshTransactions = () => undefined;
 
@@ -133,65 +128,16 @@ export async function dismissFailedEmail(
   if (!isActiveEmailCaptureSession(session)) return;
   useEmailCaptureStore.getState().removeFailedEmail(processedEmailId);
 }
-export async function connectEmailAccount(
-  db: AnyDb,
-  userId: UserId,
-  provider: EmailProvider,
-  clientId: string
-): Promise<void> {
-  const session = createEmailCaptureSession(userId);
-  if (!isActiveEmailCaptureSession(session)) return;
-
-  const result = await getAdapter(provider).connect(clientId);
-  if (!result.success || !isActiveEmailCaptureSession(session)) return;
-
-  const alreadyConnected = useEmailCaptureStore
-    .getState()
-    .accounts.some((account) => account.email.toLowerCase() === result.email.toLowerCase());
-  if (alreadyConnected) return;
-
-  const row: EmailAccountRow = {
-    id: generateEmailAccountId(),
-    userId,
-    provider,
-    email: result.email,
-    lastFetchedAt: null,
-    createdAt: toIsoDateTime(new Date()),
-  };
-
-  await insertEmailAccount(db, row);
-  if (!isActiveEmailCaptureSession(session)) return;
-  useEmailCaptureStore.getState().appendAccount(row);
-}
-export async function disconnectEmailAccount(
-  db: AnyDb,
-  userId: UserId,
-  emailAccountId: string
-): Promise<void> {
-  const session = createEmailCaptureSession(userId);
-  if (!isActiveEmailCaptureSession(session)) return;
-
-  const account = useEmailCaptureStore
-    .getState()
-    .accounts.find((candidate) => candidate.id === emailAccountId);
-  const accountId = resolveEmailAccountId(account, emailAccountId);
-  if (isManagedEmailProvider(account?.provider)) {
-    await getAdapter(account.provider).disconnect();
-    if (!isActiveEmailCaptureSession(session)) return;
-  }
-
-  await deleteEmailAccount(db, accountId);
-  if (!isActiveEmailCaptureSession(session)) return;
-  useEmailCaptureStore.getState().removeAccount(accountId);
-}
-
 export async function fetchAndProcessEmails(
   db: AnyDb,
   userId: UserId,
   gmailClientId: string,
   outlookClientId: string,
   refreshTransactions: RefreshTransactions = noopRefreshTransactions,
-  options: { readonly parseProfile?: EmailCaptureParseProfile } = {}
+  options: {
+    readonly parseProfile?: EmailCaptureParseProfile;
+    readonly shareParseImprovementSamples?: boolean;
+  } = {}
 ): Promise<EmailCaptureFetchOutcome> {
   const fetchStart = beginEmailCaptureFetchRun(userId);
   if (fetchStart.kind === "missing_context") {
@@ -268,6 +214,11 @@ export async function fetchAndProcessEmails(
     const processingResult = aggregatePipelineResults(
       processedFetchResults.map((result) => result.processingResult)
     );
+    await shareEmailParseImprovementRequests({
+      enabled: options.shareParseImprovementSamples === true,
+      userId,
+      requests: processingResult.parseImprovementRequests,
+    });
 
     await applyEmailCaptureFetchOutcome({
       run,

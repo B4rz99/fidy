@@ -1,7 +1,7 @@
 create table if not exists public.notification_parse_improvement_samples (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  source text not null check (source in ('notification_android', 'google_pay')),
+  source text not null check (source in ('notification_android', 'google_pay', 'email_gmail', 'email_outlook')),
   status text not null check (status in ('failed', 'needs_review')),
   confidence_bucket text not null check (confidence_bucket in ('none', 'low', 'medium', 'high')),
   parse_method text not null check (parse_method in ('regex', 'llm')),

@@ -1,6 +1,7 @@
 export {
   anonymizeNotificationParseSample,
   buildNotificationParseImprovementSample,
+  shareNotificationParseImprovementSample as shareCaptureParseImprovementSample,
   shareNotificationParseImprovementSample,
 } from "./lib/notification-parse-improvement";
 export type {

@@ -38,6 +38,8 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
+const mockShareParseImprovementSample = vi.fn().mockResolvedValue(undefined);
+
 const { mockCaptureWarning } = vi.hoisted(() => ({
   mockCaptureWarning: vi.fn(),
 }));
@@ -80,6 +82,7 @@ vi.mock("@/features/email-capture/services/email-pipeline", () => ({
     failed: 0,
     pendingRetry: 0,
     needsReview: 0,
+    parseImprovementRequests: [],
   }),
   processEmails: vi.fn().mockResolvedValue({
     filtered: 0,
@@ -89,6 +92,7 @@ vi.mock("@/features/email-capture/services/email-pipeline", () => ({
     failed: 0,
     pendingRetry: 0,
     needsReview: 0,
+    parseImprovementRequests: [],
   }),
   processInitialSyncEmails: vi.fn().mockResolvedValue({
     filtered: 0,
@@ -98,12 +102,18 @@ vi.mock("@/features/email-capture/services/email-pipeline", () => ({
     failed: 0,
     pendingRetry: 0,
     needsReview: 0,
+    parseImprovementRequests: [],
   }),
   processRetries: vi.fn().mockResolvedValue({
     retried: 0,
     succeeded: 0,
     permanentlyFailed: 0,
   }),
+}));
+
+vi.mock("@/features/capture-sources/diagnostics.public", () => ({
+  shareCaptureParseImprovementSample: (...args: unknown[]) =>
+    mockShareParseImprovementSample(...args),
 }));
 
 vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
@@ -191,6 +201,13 @@ type ProcessSummary = {
   failed: number;
   pendingRetry: number;
   needsReview: number;
+  parseImprovementRequests: readonly {
+    readonly rawText: string;
+    readonly source: "email_gmail" | "email_outlook";
+    readonly status: "failed" | "needs_review";
+    readonly confidence: number | null;
+    readonly parseMethod: "llm";
+  }[];
 };
 
 type ProgressSnapshot = {
@@ -227,6 +244,7 @@ const EMPTY_PROCESS_SUMMARY: ProcessSummary = {
   failed: 0,
   pendingRetry: 0,
   needsReview: 0,
+  parseImprovementRequests: [],
 };
 
 /** Helper to build a typed email account object for tests */
@@ -616,6 +634,67 @@ describe("email capture boundary", () => {
       );
     });
 
+    it("shares email parse-improvement requests when enabled", async () => {
+      setAccounts();
+      mockAdapter.fetchEmails.mockResolvedValueOnce([makeRawEmail()]);
+      mockEmptyReviewLoads();
+      mockProcessResult({
+        needsReview: 1,
+        parseImprovementRequests: [
+          {
+            rawText: "Compra aprobada\n\nSu compra por $50.000 fue aprobada",
+            source: "email_gmail",
+            status: "needs_review",
+            confidence: 0.5,
+            parseMethod: "llm",
+          },
+        ],
+      });
+
+      await fetchAndProcessEmails(
+        mockDb,
+        mockUserId as UserId,
+        "gmail-client",
+        "outlook-client",
+        mockRefresh,
+        {
+          shareParseImprovementSamples: true,
+        }
+      );
+
+      expect(mockShareParseImprovementSample).toHaveBeenCalledWith({
+        rawText: "Compra aprobada\n\nSu compra por $50.000 fue aprobada",
+        source: "email_gmail",
+        status: "needs_review",
+        confidence: 0.5,
+        parseMethod: "llm",
+        userId: mockUserId,
+        consent: true,
+      });
+    });
+
+    it("does not share email parse-improvement requests when disabled", async () => {
+      setAccounts();
+      mockAdapter.fetchEmails.mockResolvedValueOnce([makeRawEmail()]);
+      mockEmptyReviewLoads();
+      mockProcessResult({
+        failed: 1,
+        parseImprovementRequests: [
+          {
+            rawText: "Compra aprobada\n\nSu compra por $50.000 fue aprobada",
+            source: "email_gmail",
+            status: "failed",
+            confidence: null,
+            parseMethod: "llm",
+          },
+        ],
+      });
+
+      await runFetchAndProcess();
+
+      expect(mockShareParseImprovementSample).not.toHaveBeenCalled();
+    });
+
     it("uses the initial sync parser profile when requested", async () => {
       setAccounts();
       const mockRawEmails = [makeRawEmail()];
@@ -766,6 +845,7 @@ describe("email capture boundary", () => {
           failed: 0,
           pendingRetry: 0,
           needsReview: 0,
+          parseImprovementRequests: [],
         };
       });
       mockEmptyReviewLoads();
@@ -946,6 +1026,7 @@ describe("email capture boundary", () => {
           failed: 0,
           pendingRetry: 0,
           needsReview: 0,
+          parseImprovementRequests: [],
         };
       });
       mockEmptyReviewLoads();

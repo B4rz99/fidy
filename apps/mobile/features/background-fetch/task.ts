@@ -7,6 +7,7 @@ import {
   initializeEmailCaptureSession,
   loadEmailAccounts,
 } from "@/features/email-capture/public";
+import { useSettingsStore } from "@/features/settings/hooks.public";
 import { getDb, getSupabase } from "@/shared/db";
 import { captureError } from "@/shared/lib";
 import { requireUserId } from "@/shared/types/assertions";
@@ -27,6 +28,7 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
 
     await fetchAndProcessEmails(db, userId, getGmailClientId(), getOutlookClientId(), undefined, {
       parseProfile: "background",
+      shareParseImprovementSamples: useSettingsStore.getState().shareAnonymizedParseSamples,
     });
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch (error) {

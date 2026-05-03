@@ -28,6 +28,7 @@ describe("email pipeline telemetry", () => {
         failed: 0,
         pendingRetry: 0,
         needsReview: 0,
+        parseImprovementRequests: [],
       },
     });
 

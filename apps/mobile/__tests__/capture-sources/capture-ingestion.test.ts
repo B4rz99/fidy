@@ -27,7 +27,9 @@ describe("capture ingestion port", () => {
       skippedCrossSource: 0,
       saved: 0,
       failed: 0,
+      pendingRetry: 0,
       needsReview: 0,
+      parseImprovementRequests: [],
     });
     mockProcessRetries.mockResolvedValue({
       retried: 0,
@@ -125,7 +127,9 @@ describe("capture ingestion port", () => {
         skippedCrossSource: 0,
         saved: 1,
         failed: 0,
+        pendingRetry: 0,
         needsReview: 0,
+        parseImprovementRequests: [],
       };
     });
 

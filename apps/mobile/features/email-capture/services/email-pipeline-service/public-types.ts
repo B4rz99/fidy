@@ -35,6 +35,15 @@ export type PipelineResult = {
   failed: number;
   pendingRetry: number;
   needsReview: number;
+  parseImprovementRequests: readonly EmailParseImprovementRequest[];
+};
+
+export type EmailParseImprovementRequest = {
+  readonly rawText: string;
+  readonly source: "email_gmail" | "email_outlook";
+  readonly status: "failed" | "needs_review";
+  readonly confidence: number | null;
+  readonly parseMethod: "llm";
 };
 
 export type ProgressCallback = (progress: {

@@ -700,9 +700,9 @@ const es = {
     },
     notifications: "Notificaciones",
     privateBackup: "Copia privada",
-    parseImprovementSharing: "Mejorar lectura de notificaciones",
+    parseImprovementSharing: "Mejorar lectura de capturas",
     parseImprovementSharingSubtitle:
-      "Comparte formatos redactados cuando falle una lectura. Primero se quitan montos, comercios, fechas, nombres y tarjetas.",
+      "Comparte formatos redactados de correos y notificaciones cuando falle una lectura. Primero se quitan montos, comercios, fechas, nombres y tarjetas.",
     privateBackupStatus: {
       notSetUp: "Sin configurar",
       recoveryKeyNotConfirmed: "Llave de recuperación sin confirmar",
