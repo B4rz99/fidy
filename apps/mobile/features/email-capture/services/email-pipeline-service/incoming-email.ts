@@ -118,9 +118,7 @@ async function persistPendingRetryIncomingEmail(
     transactionId: null,
     createdAt,
   });
-  if (failureReason === "parse_error") {
-    appendFailedEmailParseImprovementRequest(context, email);
-  }
+  if (failureReason === "parse_error") appendFailedEmailParseImprovementRequest(context, email);
   return true;
 }
 
