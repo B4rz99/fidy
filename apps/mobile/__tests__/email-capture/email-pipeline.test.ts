@@ -611,60 +611,50 @@ describe("email processing pipeline", () => {
     await processing;
   });
 
-  it("uses foreground policy with three concurrent parse starts and no fixed delay", async () => {
-    const events: string[] = [];
-    const pendingParses: Array<(result: ReturnType<typeof makeParsedEmailResult>) => void> = [];
+  async function expectSharedParseConcurrencyLimit(
+    processEmailsFn:
+      | typeof processEmails
+      | typeof processBackgroundEmails
+      | typeof processInitialSyncEmails
+  ) {
+    const parseStarts: string[] = [];
+    const pendingParses: Array<(result: null) => void> = [];
     mockParseEmailApi.mockImplementation(async (body: string) => {
-      events.push(`parse:${body}`);
+      parseStarts.push(`parse:${body}`);
       return new Promise((resolve) => pendingParses.push(resolve));
     });
 
-    const processing = processEmails(
+    const processing = processEmailsFn(
       mockDb,
       USER_ID,
-      Array.from({ length: 3 }, (_, index) =>
+      Array.from({ length: 16 }, (_, index) =>
         makeRawEmail({ externalId: `ext-${index + 1}`, body: `Compra ${index + 1}` })
       )
     );
 
-    await vi.waitFor(() => expect(events).toContain("parse:Compra 3"));
-    expect(events).toEqual(["parse:Compra 1", "parse:Compra 2", "parse:Compra 3"]);
+    await vi.waitFor(() => expect(parseStarts).toHaveLength(15));
+    expect(parseStarts).not.toContain("parse:Compra 16");
 
-    pendingParses.forEach((resolve, index) =>
-      resolve(makeParsedEmailResult({ description: `Compra ${index + 1}` }))
-    );
+    pendingParses[0]?.(null);
+    await vi.waitFor(() => expect(parseStarts).toContain("parse:Compra 16"));
+
+    pendingParses.slice(1).forEach((resolve) => resolve(null));
     await processing;
+  }
+
+  it("uses foreground policy with shared parse concurrency", async () => {
+    await expectSharedParseConcurrencyLimit(processEmails);
   });
 
-  it("uses background policy with two concurrent parse starts", async () => {
-    const events: string[] = [];
-    const pendingParses: Array<(result: ReturnType<typeof makeParsedEmailResult>) => void> = [];
-    mockParseEmailApi.mockImplementation(async (body: string) => {
-      events.push(`parse:${body}`);
-      return new Promise((resolve) => pendingParses.push(resolve));
-    });
-
-    const processing = processBackgroundEmails(
-      mockDb,
-      USER_ID,
-      Array.from({ length: 3 }, (_, index) =>
-        makeRawEmail({ externalId: `ext-${index + 1}`, body: `Compra ${index + 1}` })
-      )
-    );
-
-    await vi.waitFor(() => expect(events).toContain("parse:Compra 2"));
-    expect(events).toEqual(["parse:Compra 1", "parse:Compra 2"]);
-
-    pendingParses[0]?.(makeParsedEmailResult({ description: "Compra 1" }));
-    await vi.waitFor(() => expect(events).toContain("parse:Compra 3"));
-    expect(events).toEqual(["parse:Compra 1", "parse:Compra 2", "parse:Compra 3"]);
-
-    pendingParses[1]?.(makeParsedEmailResult({ description: "Compra 2" }));
-    pendingParses[2]?.(makeParsedEmailResult({ description: "Compra 3" }));
-    await processing;
+  it("uses background policy with shared parse concurrency", async () => {
+    await expectSharedParseConcurrencyLimit(processBackgroundEmails);
   });
 
-  it("bounds background parsing to ten unprocessed candidates after durable skips", async () => {
+  it("uses initial sync policy with shared parse concurrency", async () => {
+    await expectSharedParseConcurrencyLimit(processInitialSyncEmails);
+  });
+
+  it("does not bound background parsing after durable skips", async () => {
     mockGetProcessedExternalIds.mockResolvedValueOnce(new Set(["ext-1", "ext-2"]));
     mockParseEmailApi.mockResolvedValue(makeParsedEmailResult());
 
@@ -676,10 +666,9 @@ describe("email processing pipeline", () => {
       )
     );
 
-    expect(mockParseEmailApi).toHaveBeenCalledTimes(10);
+    expect(mockParseEmailApi).toHaveBeenCalledTimes(12);
     expect(mockParseEmailApi).toHaveBeenCalledWith("Compra 3");
-    expect(mockParseEmailApi).toHaveBeenCalledWith("Compra 12");
-    expect(mockParseEmailApi).not.toHaveBeenCalledWith("Compra 13");
+    expect(mockParseEmailApi).toHaveBeenCalledWith("Compra 14");
   });
 
   it("serializes duplicate lookup and transaction insert under concurrent parsing", async () => {
@@ -747,7 +736,7 @@ describe("email processing pipeline", () => {
     );
   });
 
-  it("starts initial sync parsing two emails immediately", async () => {
+  it("starts all initial sync parses immediately", async () => {
     const events: string[] = [];
     const pendingParses: Array<(result: ReturnType<typeof makeParsedEmailResult>) => void> = [];
     mockParseEmailApi.mockImplementation(async (body: string) => {
@@ -763,16 +752,51 @@ describe("email processing pipeline", () => {
       )
     );
 
-    await vi.waitFor(() => expect(events).toContain("parse:Compra 2"));
-    expect(events).toEqual(["parse:Compra 1", "parse:Compra 2"]);
-
-    pendingParses[0]?.(makeParsedEmailResult({ description: "Compra 1" }));
     await vi.waitFor(() => expect(events).toContain("parse:Compra 3"));
     expect(events).toEqual(["parse:Compra 1", "parse:Compra 2", "parse:Compra 3"]);
 
+    pendingParses[0]?.(makeParsedEmailResult({ description: "Compra 1" }));
     pendingParses[1]?.(makeParsedEmailResult({ description: "Compra 2" }));
     pendingParses[2]?.(makeParsedEmailResult({ description: "Compra 3" }));
     await processing;
+  });
+
+  it("does not stop scheduling initial sync parses after the preview target is reached", async () => {
+    const events: string[] = [];
+    const pendingParses: Array<(result: ReturnType<typeof makeParsedEmailResult>) => void> = [];
+    mockParseEmailApi.mockImplementation(async (body: string) => {
+      events.push(`parse:${body}`);
+      return new Promise((resolve) => pendingParses.push(resolve));
+    });
+
+    const processing = processInitialSyncEmails(
+      mockDb,
+      USER_ID,
+      Array.from({ length: 6 }, (_, index) =>
+        makeRawEmail({ externalId: `ext-${index + 1}`, body: `Compra ${index + 1}` })
+      )
+    );
+
+    await vi.waitFor(() => expect(events).toContain("parse:Compra 6"));
+    expect(events).toEqual([
+      "parse:Compra 1",
+      "parse:Compra 2",
+      "parse:Compra 3",
+      "parse:Compra 4",
+      "parse:Compra 5",
+      "parse:Compra 6",
+    ]);
+
+    pendingParses[0]?.(makeParsedEmailResult({ description: "Compra 1" }));
+    pendingParses[1]?.(makeParsedEmailResult({ description: "Compra 2" }));
+    pendingParses[2]?.(makeParsedEmailResult({ description: "Compra 3" }));
+    pendingParses[3]?.(makeParsedEmailResult({ description: "Compra 4" }));
+    pendingParses[4]?.(makeParsedEmailResult({ description: "Compra 5" }));
+    pendingParses[5]?.(makeParsedEmailResult({ description: "Compra 6" }));
+
+    const result = await processing;
+
+    expect(result.saved).toBe(6);
   });
 
   it("passes the explicit initial-sync parse context to remote parsing", async () => {

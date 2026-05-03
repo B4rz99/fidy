@@ -221,6 +221,44 @@ describe("createParseEmailService", () => {
     });
   });
 
+  it("surfaces parse-email rate limits from the Edge Function response", async () => {
+    const captureWarning = vi.fn();
+    const mockInvoke = vi.fn().mockResolvedValue({
+      data: null,
+      error: {
+        message: "Edge Function returned a non-2xx status code",
+        context: {
+          status: 429,
+          headers: { get: (header: string) => (header === "Retry-After" ? "41" : null) },
+        },
+      },
+    });
+
+    const service = createParseEmailService({
+      validCategoryIds: ["food"],
+      throwOnApiFailure: true,
+      supabase: {
+        getSupabase: () =>
+          ({
+            functions: { invoke: mockInvoke },
+          }) as never,
+      },
+      telemetry: {
+        captureError: vi.fn(),
+        captureWarning,
+        capturePipelineEvent: vi.fn(),
+      },
+    });
+
+    await expect(service.parseEmail("Compra por $50,000")).rejects.toThrow("rate_limited");
+    expect(captureWarning).toHaveBeenCalledWith("parse_email_api_failed", {
+      errorMessage: "rate_limited",
+      hasData: false,
+      httpStatus: 429,
+      retryAfterSeconds: 41,
+    });
+  });
+
   it("returns null and captures a warning when local notification validation rejects a candidate", async () => {
     const captureWarning = vi.fn();
     const mockInvoke = vi.fn().mockResolvedValue({

@@ -143,7 +143,7 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_ANON_KEY") ?? ""
 );
 const LLM_SEED = 0;
-const DEFAULT_RATE_LIMIT_PER_MINUTE = 20;
+const DEFAULT_RATE_LIMIT_PER_MINUTE = 200;
 
 function getParseRateLimit() {
   return { key: "parse-email", limit: DEFAULT_RATE_LIMIT_PER_MINUTE };

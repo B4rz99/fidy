@@ -16,6 +16,7 @@ import {
 } from "@/shared/effect/telemetry";
 import type { LlmParsedTransaction } from "./llm-parser";
 import { llmOutputSchema } from "./llm-parser";
+import { buildParseApiFailureDiagnostics } from "./parse-api-failure-diagnostics";
 
 type ParseMode = "classify" | "full_parse" | "parse_notification";
 export type ParseContext = "default" | "initial_sync";
@@ -24,6 +25,7 @@ type ParseFunctionResult<Response> = {
   readonly data?: Response | null;
   readonly error?: {
     readonly message?: string;
+    readonly context?: unknown;
   } | null;
 };
 
@@ -86,10 +88,6 @@ function invokeParseEmailFunctionEffect<Response>(
   );
 }
 
-function getParseApiErrorMessage(response: ParseFunctionResult<ParseEmailResponse>) {
-  return response.error?.message ?? response.data?.error ?? "unknown";
-}
-
 function createParseApiFailureResult(errorMessage: string, throwOnApiFailure: boolean) {
   return throwOnApiFailure
     ? Effect.fail(
@@ -103,20 +101,14 @@ function logParseApiFailureEffect(
   response: ParseFunctionResult<ParseEmailResponse>,
   throwOnApiFailure: boolean
 ) {
-  const errorMessage = getParseApiErrorMessage(response);
+  const diagnostics = buildParseApiFailureDiagnostics(response);
   if (typeof __DEV__ !== "undefined" && __DEV__) {
-    console.info(`[email-capture] ${warningPrefix}_api_failed`, {
-      errorMessage,
-      hasData: response.data != null,
-    });
+    console.info(`[email-capture] ${warningPrefix}_api_failed`, diagnostics);
   }
 
   return Effect.zipRight(
-    captureWarningEffect(`${warningPrefix}_api_failed`, {
-      errorMessage,
-      hasData: response.data != null,
-    }),
-    createParseApiFailureResult(errorMessage, throwOnApiFailure)
+    captureWarningEffect(`${warningPrefix}_api_failed`, diagnostics),
+    createParseApiFailureResult(diagnostics.errorMessage, throwOnApiFailure)
   );
 }
 

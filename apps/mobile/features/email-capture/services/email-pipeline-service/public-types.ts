@@ -144,7 +144,7 @@ export type CreateEmailPipelineServiceDeps = {
   readonly telemetry?: AppTelemetry;
   readonly parseRateLimit?: {
     readonly delayMs?: number;
-    readonly concurrency?: number;
+    readonly concurrency?: number | null;
     readonly sleep?: (delayMs: number) => Promise<void>;
   };
   readonly maxCandidateEmails?: number;
