@@ -111,12 +111,6 @@ export const summarizeFetchedEmailDiagnostics = (
   })),
 });
 
-function logFetchedEmailDiagnostics(fetchResults: readonly EmailAccountFetchResult[]) {
-  if (typeof __DEV__ === "undefined" || !__DEV__) return;
-
-  console.info("[email-capture] fetch_batch", summarizeFetchedEmailDiagnostics(fetchResults));
-}
-
 const createFetchSummary = (
   accounts: readonly EmailAccountRow[],
   fetchResults: readonly EmailAccountFetchResult[]
@@ -208,7 +202,6 @@ export async function fetchEmailAccountBatch(
       })
     )
   );
-  logFetchedEmailDiagnostics(fetchResults);
   captureEmailFetchBatchTelemetry({
     fetchResults,
     fetchDurationMs: Date.now() - fetchStartedAt,

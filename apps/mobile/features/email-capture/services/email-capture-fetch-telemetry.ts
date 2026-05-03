@@ -1,5 +1,6 @@
 import { capturePipelineEvent } from "@/shared/lib";
 import type { RetryResult } from "../pipeline.public";
+import { logEmailCaptureDevDiagnostic } from "./email-capture-dev-diagnostics";
 
 type EmailFetchTelemetryResult = {
   readonly account: { readonly provider: string };
@@ -16,7 +17,7 @@ export function captureEmailFetchBatchTelemetry(input: {
   readonly fetchDurationMs: number;
 }) {
   const providerFamilies = providerFamiliesForResults(input.fetchResults);
-  capturePipelineEvent({
+  const event = {
     source: "email",
     schema: "email_fetch_batch_v1",
     accountCount: input.fetchResults.length,
@@ -30,19 +31,23 @@ export function captureEmailFetchBatchTelemetry(input: {
       0,
       ...input.fetchResults.map((result) => result.fetchDurationMs)
     ),
-  });
+  };
+  logEmailCaptureDevDiagnostic("fetch_batch", event);
+  capturePipelineEvent(event);
 }
 
 export function captureEmailRetryBatchTelemetry(input: {
   readonly retryResult: RetryResult;
   readonly retryDurationMs: number;
 }) {
-  capturePipelineEvent({
+  const event = {
     source: "email",
     schema: "email_retry_batch_v1",
     retried: input.retryResult.retried,
     succeeded: input.retryResult.succeeded,
     permanentlyFailed: input.retryResult.permanentlyFailed,
     retryDurationMs: input.retryDurationMs,
-  });
+  };
+  logEmailCaptureDevDiagnostic("retry_batch", event);
+  capturePipelineEvent(event);
 }
