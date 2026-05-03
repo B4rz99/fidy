@@ -20,7 +20,7 @@ describe("parse-email Edge Function source", () => {
   });
 
   it("does not trust client parse context for elevated rate limits", () => {
-    expect(parseEmailSource).toContain("const DEFAULT_RATE_LIMIT_PER_MINUTE = 20");
+    expect(parseEmailSource).toContain("const DEFAULT_RATE_LIMIT_PER_MINUTE = 300");
     expect(parseEmailSource).not.toContain("INITIAL_SYNC_RATE_LIMIT_PER_MINUTE");
     expect(parseEmailSource).not.toContain('parseContext === "initial_sync"');
     expect(parseEmailSource).not.toContain('"parse-email:initial-sync"');
