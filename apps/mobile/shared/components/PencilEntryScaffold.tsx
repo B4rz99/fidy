@@ -1,4 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, Delete } from "@/shared/components/icons";
 import { Platform, Pressable, Text, TextInput, View } from "@/shared/components/rn";
@@ -37,6 +39,8 @@ export const PENCIL_ENTRY_ROWS = [
 ] as const;
 
 const ANDROID_TAB_BAR_HEIGHT = 64;
+const SWIPE_TAB_THRESHOLD = 56;
+const TAB_LINE_WIDTH = 88;
 
 function getTabIndicatorColor(input: {
   readonly accentGreen: string;
@@ -132,6 +136,7 @@ export function PencilEntryScaffold({
   onTabPress,
   tabs,
 }: PencilEntryScaffoldProps) {
+  const tabBarWidth = useSharedValue(0);
   const { t } = useTranslation();
   const page = useThemeColor("page");
   const primary = useThemeColor("primary");
@@ -145,6 +150,35 @@ export function PencilEntryScaffold({
   const { bottom, top } = useSafeAreaInsets();
   const tabBarClearance =
     Platform.OS === "ios" ? Math.max(bottom, 16) : ANDROID_TAB_BAR_HEIGHT + Math.max(bottom, 16);
+  const activeTabIndex = tabs.findIndex((tab) => tab.key === activeTab);
+  const animatedTabLineStyle = useAnimatedStyle(() => {
+    const tabWidth = tabs.length > 0 ? tabBarWidth.value / tabs.length : 0;
+    const translateX =
+      activeTabIndex < 0
+        ? 0
+        : activeTabIndex * tabWidth + Math.max((tabWidth - TAB_LINE_WIDTH) / 2, 0);
+
+    return {
+      backgroundColor: withTiming(activeColor, { duration: 180 }),
+      transform: [{ translateX: withTiming(translateX, { duration: 180 }) }],
+    };
+  });
+  const tabSwipe = Gesture.Pan()
+    .runOnJS(true)
+    .activeOffsetX([-16, 16])
+    .failOffsetY([-24, 24])
+    .onEnd((event) => {
+      if (activeTabIndex < 0) return;
+      if (event.translationX <= -SWIPE_TAB_THRESHOLD) {
+        const nextTab = tabs[Math.min(activeTabIndex + 1, tabs.length - 1)];
+        if (nextTab && nextTab.key !== activeTab) onTabPress(nextTab.key);
+        return;
+      }
+      if (event.translationX >= SWIPE_TAB_THRESHOLD) {
+        const previousTab = tabs[Math.max(activeTabIndex - 1, 0)];
+        if (previousTab && previousTab.key !== activeTab) onTabPress(previousTab.key);
+      }
+    });
 
   return (
     <View
@@ -157,7 +191,12 @@ export function PencilEntryScaffold({
         },
       ]}
     >
-      <View style={styles.tabs}>
+      <View
+        style={styles.tabs}
+        onLayout={(event) => {
+          tabBarWidth.value = event.nativeEvent.layout.width;
+        }}
+      >
         {tabs.map((tab) => {
           const isActive = tab.key === activeTab;
           return (
@@ -177,79 +216,79 @@ export function PencilEntryScaffold({
               >
                 {tab.label}
               </Text>
-              {isActive ? (
-                <View style={[styles.tabLine, { backgroundColor: activeColor }]} />
-              ) : null}
             </Pressable>
           );
         })}
+        <Animated.View style={[styles.tabLine, animatedTabLineStyle]} />
       </View>
 
-      <View style={styles.amountArea}>
-        <Text
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.35}
-          style={[styles.amount, { color: primary }]}
-        >
-          {amount || "$0"}
-        </Text>
-      </View>
+      <GestureDetector gesture={tabSwipe}>
+        <View style={styles.swipeArea}>
+          <View style={styles.amountArea}>
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.35}
+              style={[styles.amount, { color: primary }]}
+            >
+              {amount || "$0"}
+            </Text>
+          </View>
 
-      <View style={styles.fields}>{fields}</View>
+          <View style={styles.fields}>{fields}</View>
 
-      <View style={styles.numpad}>
-        {PENCIL_ENTRY_ROWS.map((row) => (
-          <View key={row.join("-")} style={styles.numpadRow}>
-            {row.map((key) => {
-              if (key === "delete") {
-                return (
-                  <View key={key} style={styles.rightColumn}>
+          <View style={styles.numpad}>
+            {PENCIL_ENTRY_ROWS.map((row) => (
+              <View key={row.join("-")} style={styles.numpadRow}>
+                {row.map((key) => {
+                  if (key === "delete") {
+                    return (
+                      <View key={key} style={styles.rightColumn}>
+                        <Pressable
+                          style={[styles.key, { backgroundColor: specialKeyBg }]}
+                          onPress={() => onKeyPress(key)}
+                          accessibilityRole="button"
+                          accessibilityLabel={t("common.delete")}
+                        >
+                          <Delete size={20} color={tertiary} />
+                        </Pressable>
+                        <Pressable
+                          testID="keyConfirm"
+                          style={[
+                            styles.key,
+                            {
+                              backgroundColor: accentGreen,
+                              opacity: isConfirmDisabled ? 0.45 : 1,
+                            },
+                          ]}
+                          disabled={isConfirmDisabled}
+                          onPress={isConfirmDisabled ? undefined : onConfirm}
+                          accessibilityRole="button"
+                        >
+                          <Check size={22} color={onAccent} />
+                        </Pressable>
+                      </View>
+                    );
+                  }
+
+                  return (
                     <Pressable
-                      style={[styles.key, { backgroundColor: specialKeyBg }]}
+                      key={key}
+                      style={[styles.key, { backgroundColor: keyBg }]}
                       onPress={() => onKeyPress(key)}
                       accessibilityRole="button"
-                      accessibilityLabel={t("common.delete")}
+                      accessibilityLabel={key}
                     >
-                      <Delete size={20} color={tertiary} />
+                      <Text style={[styles.keyText, { color: primary }]}>{key}</Text>
                     </Pressable>
-                    <Pressable
-                      testID="keyConfirm"
-                      style={[
-                        styles.key,
-                        styles.keyConfirm,
-                        {
-                          backgroundColor: accentGreen,
-                          opacity: isConfirmDisabled ? 0.45 : 1,
-                          shadowColor: accentGreen,
-                        },
-                      ]}
-                      disabled={isConfirmDisabled}
-                      onPress={isConfirmDisabled ? undefined : onConfirm}
-                      accessibilityRole="button"
-                    >
-                      <Check size={22} color={onAccent} />
-                    </Pressable>
-                  </View>
-                );
-              }
-
-              return (
-                <Pressable
-                  key={key}
-                  style={[styles.key, { backgroundColor: keyBg }]}
-                  onPress={() => onKeyPress(key)}
-                  accessibilityRole="button"
-                  accessibilityLabel={key}
-                >
-                  <Text style={[styles.keyText, { color: primary }]}>{key}</Text>
-                </Pressable>
-              );
-            })}
+                  );
+                })}
+              </View>
+            ))}
           </View>
-        ))}
-      </View>
-      <View style={styles.bottomSpacer} />
+          <View style={styles.bottomSpacer} />
+        </View>
+      </GestureDetector>
     </View>
   );
 }

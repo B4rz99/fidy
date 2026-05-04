@@ -15,6 +15,7 @@ import type { TransferSide } from "../lib/build-transfer";
 import { TransferSidePicker } from "./transfer-form/TransferSidePicker";
 import { TRANSFER_FORM_TEST_IDS } from "./transfer-form/TransferForm.types";
 import { useTransferForm } from "./transfer-form/useTransferForm";
+import { transferEntryStyles } from "./PencilTransferEntryScreen.styles";
 
 function handlePencilTransferKey(currentDigits: string, key: string): string {
   if (key === "delete") return currentDigits.slice(0, -1);
@@ -190,17 +191,13 @@ export function PencilTransferEntryScreen(
               {t("common.category")}
             </Text>
             <Pressable
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 12,
-                borderRadius: 18,
-                borderWidth: 1,
-                borderColor: accentGreen,
-                backgroundColor: card,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-              }}
+              style={[
+                transferEntryStyles.categoryRow,
+                {
+                  borderColor: accentGreen,
+                  backgroundColor: card,
+                },
+              ]}
               onPress={() => setShowCategoryPicker(false)}
               accessibilityRole="button"
             >

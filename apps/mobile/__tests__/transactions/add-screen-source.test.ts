@@ -42,6 +42,13 @@ test("Pencil entry scaffold matches the requested layout structure", () => {
   expect(scaffoldSource).toContain("rightColumn");
   expect(scaffoldSource).toContain("keyConfirm");
   expect(scaffoldSource).toContain("getTabIndicatorColor");
+  expect(scaffoldSource).toContain("GestureDetector");
+  expect(scaffoldSource).toContain("SWIPE_TAB_THRESHOLD");
+  expect(scaffoldSource).toContain("onTabPress(nextTab.key)");
+  expect(scaffoldSource).toContain("onTabPress(previousTab.key)");
+  expect(scaffoldSource).toContain("Animated.View");
+  expect(scaffoldSource).toContain("withTiming");
+  expect(scaffoldSource).toContain("animatedTabLineStyle");
   expect(scaffoldSource).toContain("valueTone");
   expect(scaffoldSource).toContain("amountArea");
   expect(scaffoldSource).toContain("adjustsFontSizeToFit");

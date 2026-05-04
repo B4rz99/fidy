@@ -7,6 +7,7 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import type { Category } from "../lib/categories";
 import { CATEGORIES } from "../lib/categories";
+import { sheetStyles } from "./PencilTransactionEntrySheets.styles";
 
 type PickerSheetFrameProps = {
   readonly children: ReactNode;
@@ -114,17 +115,13 @@ export function TransactionAccountPickerSheet(props: {
               return (
                 <Pressable
                   key={account.id}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 12,
-                    borderRadius: 18,
-                    borderWidth: 1,
-                    borderColor: isSelected ? accentGreen : borderSubtle,
-                    backgroundColor: card,
-                    paddingHorizontal: 14,
-                    paddingVertical: 12,
-                  }}
+                  style={[
+                    sheetStyles.selectedRow,
+                    {
+                      borderColor: isSelected ? accentGreen : borderSubtle,
+                      backgroundColor: card,
+                    },
+                  ]}
                   onPress={() => props.onSelect(account.id)}
                   accessibilityRole="button"
                 >
@@ -236,17 +233,13 @@ export function TransactionCategoryPickerSheet(props: {
               return (
                 <Pressable
                   key={category.id}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 12,
-                    borderRadius: 18,
-                    borderWidth: 1,
-                    borderColor: isSelected ? accentGreen : borderSubtle,
-                    backgroundColor: card,
-                    paddingHorizontal: 14,
-                    paddingVertical: 12,
-                  }}
+                  style={[
+                    sheetStyles.selectedRow,
+                    {
+                      borderColor: isSelected ? accentGreen : borderSubtle,
+                      backgroundColor: card,
+                    },
+                  ]}
                   onPress={() => props.onSelect(category.id)}
                   accessibilityRole="button"
                 >

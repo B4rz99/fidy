@@ -56,11 +56,6 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
   },
-  keyConfirm: {
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.38,
-    shadowRadius: 14,
-  },
   keyText: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 19,
@@ -88,6 +83,9 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
   tabLine: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
     borderRadius: 2,
     height: 4,
     width: 88,
@@ -100,5 +98,9 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     height: 52,
+    position: "relative",
+  },
+  swipeArea: {
+    flex: 1,
   },
 });

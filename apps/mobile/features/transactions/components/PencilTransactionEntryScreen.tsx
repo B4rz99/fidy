@@ -34,11 +34,11 @@ import {
 export function PencilTransactionEntryScreen() {
   const [entryMode, setEntryMode] = useState<PencilEntryTab>("expense");
 
-  if (entryMode === "transfer") {
-    return <PencilTransferEntryScreen onTransactionTabSelect={setEntryMode} />;
-  }
-
-  return <PencilTransactionEntryContent onTransferTabSelect={() => setEntryMode("transfer")} />;
+  return entryMode === "transfer" ? (
+    <PencilTransferEntryScreen onTransactionTabSelect={setEntryMode} />
+  ) : (
+    <PencilTransactionEntryContent onTransferTabSelect={() => setEntryMode("transfer")} />
+  );
 }
 
 function PencilTransactionEntryContent(props: { readonly onTransferTabSelect: () => void }) {
