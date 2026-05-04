@@ -28,6 +28,7 @@ const sourceTransaction = {
 function buildReclassificationInput(): Parameters<typeof submitTransferForm>[0] {
   return {
     date: new Date("2026-04-20T00:00:00.000Z"),
+    description: "Move to savings",
     db,
     digits: "450000",
     fromSide: { kind: "account", accountId },

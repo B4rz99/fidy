@@ -18,7 +18,7 @@ describe("Private Backup settings surface", () => {
   const routeSource = readFileSync(resolve(__dirname, "../../app/private-backup.tsx"), "utf-8");
 
   it("links settings to the Private Backup route", () => {
-    expect(settingsSource).toContain('router.push("/private-backup")');
+    expect(settingsSource).toContain('push("/private-backup")');
     expect(routeSource).toContain("PrivateBackupScreen");
   });
 

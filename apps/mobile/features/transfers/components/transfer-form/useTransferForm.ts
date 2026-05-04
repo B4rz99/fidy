@@ -70,6 +70,7 @@ function useTransferFormDerivedState(
   return {
     actions: useTransferFormActions({
       date: state.date,
+      description: state.description,
       db: route.db,
       digits: state.digits,
       fromSide: state.fromSide,

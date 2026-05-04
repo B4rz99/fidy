@@ -17,6 +17,7 @@ import type { ProcessedEmailId, UserId } from "@/shared/types/branded";
 
 type SubmitTransferFormInput = {
   readonly date: Date;
+  readonly description: string;
   readonly db: AnyDb | null;
   readonly digits: string;
   readonly fromSide: TransferSide | null;
@@ -54,7 +55,7 @@ async function saveNewTransfer(
     digits: input.digits,
     fromSide: input.fromSide,
     toSide: input.toSide,
-    description: "",
+    description: input.description,
     date: input.date,
   });
 }

@@ -5,6 +5,7 @@ export const Colors = {
     secondary: "#6D6D6D",
     tertiary: "#929292",
     accentGreen: "#7CB243",
+    onAccent: "#FFFFFF",
     accentRed: "#D45B5B",
     card: "#FFFFFF",
     peachLight: "#F5E1C8",
@@ -22,6 +23,7 @@ export const Colors = {
     peach: "#6D6D6D",
     numpadKey: "#fdf3ee",
     numpadSpecialKey: "#fae3d9",
+    modalBackdrop: "#000000",
     nav: "#1A1A1A",
   },
   dark: {
@@ -30,6 +32,7 @@ export const Colors = {
     secondary: "#9A9A9A",
     tertiary: "#5E5E5E",
     accentGreen: "#8BC34A",
+    onAccent: "#0D0D0D",
     accentRed: "#E06060",
     card: "#1C1C1E",
     peachLight: "#2A1F1A",
@@ -47,6 +50,7 @@ export const Colors = {
     peach: "#E8A090",
     numpadKey: "#2A1F1A",
     numpadSpecialKey: "#3A2820",
+    modalBackdrop: "#000000",
     nav: "#1C1C1E",
   },
   chart: {

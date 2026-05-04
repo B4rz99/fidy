@@ -30,7 +30,7 @@ function readTransactionFormSource() {
 }
 
 const localQaButtonSource = readSource("../../features/qa/components/LocalQaLoginButton.tsx");
-const addChooserSource = readSource("../../app/(tabs)/add.tsx");
+const addRouteSource = readSource("../../app/(tabs)/add.tsx");
 const transactionFormSource = readTransactionFormSource();
 const transferFormIdsSource = readSource(
   "../../features/transfers/components/transfer-form/TransferForm.types.ts"
@@ -41,9 +41,8 @@ test("exposes a login selector for local QA entry", () => {
   expect(localQaButtonSource).toContain('testID="login.local-qa"');
 });
 
-test("exposes chooser selectors for transaction and transfer entry", () => {
-  expect(addChooserSource).toContain('testID="add-chooser.transaction"');
-  expect(addChooserSource).toContain('testID="add-chooser.transfer"');
+test("routes add tab directly to Pencil transaction entry", () => {
+  expect(addRouteSource).toContain("PencilTransactionEntryScreen");
 });
 
 test("exposes transaction form selectors for save, date, and account selection", () => {

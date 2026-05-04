@@ -120,21 +120,6 @@ const es = {
     deleteFailed: "No se pudo eliminar la transacción",
   },
 
-  addEntry: {
-    title: "¿Qué quieres agregar?",
-    subtitle:
-      "Elige primero el tipo de registro para que las transferencias sigan separadas de gastos e ingresos.",
-    transactionTitle: "Transacción",
-    transactionBody: "Registra un gasto o ingreso para una cuenta financiera",
-    transactionBadge: "Gasto o ingreso",
-    transferTitle: "Transferencia",
-    transferBody:
-      "Mueve dinero entre cuentas, o usa Fuera de Fidy cuando uno de los lados no está rastreado.",
-    transferBadge: "Sin impacto en presupuesto",
-    footnote:
-      "Las transferencias no entran en gasto ni presupuesto, así que elegirlas aquí evita doble conteo después.",
-  },
-
   transfers: {
     title: "Nueva transferencia",
     reclassifyTitle: "Convertir en transferencia",

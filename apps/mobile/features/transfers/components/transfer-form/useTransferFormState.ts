@@ -6,6 +6,7 @@ import type { AccountBalanceMap, PickerTarget } from "./TransferForm.types";
 
 function useTransferFormDraftState() {
   const [date, setDate] = useState(new Date());
+  const [description, setDescription] = useState("");
   const [digits, setDigits] = useState("");
   const [fromSide, setFromSide] = useState<TransferSide | null>(null);
   const [toSide, setToSide] = useState<TransferSide | null>(null);
@@ -15,11 +16,13 @@ function useTransferFormDraftState() {
 
   return {
     date,
+    description,
     digits,
     fromSide,
     lastEditedSide,
     pickerTarget,
     setDate,
+    setDescription,
     setDigits,
     setFromSide,
     setLastEditedSide,
