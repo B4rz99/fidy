@@ -463,9 +463,11 @@ describe("email processing pipeline", () => {
 
   it("saves transaction and caches merchant rule when LLM returns high confidence", async () => {
     const emails = [makeRawEmail()];
+    const trackTransactionCreated = vi.fn();
+    const service = createTestEmailPipelineService({ trackTransactionCreated });
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
 
-    const result = await processEmails(mockDb, USER_ID, emails);
+    const result = await service.processEmails(mockDb, USER_ID, emails);
 
     expect(result.saved).toBe(1);
     expect(result.needsReview).toBe(0);
@@ -491,6 +493,23 @@ describe("email processing pipeline", () => {
       "other",
       expect.any(String)
     );
+    expect(trackTransactionCreated).toHaveBeenCalledWith({
+      type: "expense",
+      category: "other",
+      source: "email",
+    });
+  });
+
+  it("truncates persisted raw body previews to 500 characters", async () => {
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+    const longBody = "x".repeat(501);
+
+    await processEmails(mockDb, USER_ID, [makeRawEmail({ body: longBody })]);
+
+    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({ rawBodyPreview: "x".repeat(500) })
+    );
   });
 
   it("persists a new transaction and its processed email in one database transaction", async () => {
@@ -506,6 +525,52 @@ describe("email processing pipeline", () => {
     expect(mockInsertTransaction).toHaveBeenCalledWith(mockDb, expect.any(Object));
     expect(mockInsertProcessedEmail).toHaveBeenCalledWith(mockDb, expect.any(Object));
     expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(mockDb, expect.any(Array));
+  });
+
+  it("persists a new transaction without a database transaction helper", async () => {
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+
+    const result = await processEmails(mockDb, USER_ID, [makeRawEmail()]);
+
+    expect(result.saved).toBe(1);
+    expect(mockEnsureDefaultFinancialAccount).toHaveBeenCalledWith(
+      mockDb,
+      USER_ID,
+      expect.objectContaining({ now: expect.any(String) })
+    );
+    expect(mockInsertTransaction).toHaveBeenCalledWith(mockDb, expect.any(Object));
+    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(mockDb, expect.any(Object));
+    expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(mockDb, expect.any(Array));
+  });
+
+  it("falls back when a database exposes a non-function transaction property", async () => {
+    const dbWithNonFunctionTransaction = { transaction: true } as any;
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+
+    const result = await processEmails(dbWithNonFunctionTransaction, USER_ID, [makeRawEmail()]);
+
+    expect(result.saved).toBe(1);
+    expect(mockInsertTransaction).toHaveBeenCalledWith(
+      dbWithNonFunctionTransaction,
+      expect.any(Object)
+    );
+    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+      dbWithNonFunctionTransaction,
+      expect.any(Object)
+    );
+  });
+
+  it("does not track low-confidence persisted email transactions", async () => {
+    const trackTransactionCreated = vi.fn(() => {
+      throw new Error("should not track needs_review");
+    });
+    const service = createTestEmailPipelineService({ trackTransactionCreated });
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult({ confidence: 0.5 }));
+
+    const result = await service.processEmails(mockDb, USER_ID, [makeRawEmail()]);
+
+    expect(result.needsReview).toBe(1);
+    expect(trackTransactionCreated).not.toHaveBeenCalled();
   });
 
   it("does not report saved when a bundled async write rejects", async () => {
@@ -1199,6 +1264,8 @@ describe("processRetries", () => {
 
   it("creates transaction on successful retry", async () => {
     const row = makePendingRetryRow();
+    const trackTransactionCreated = vi.fn();
+    const service = createTestEmailPipelineService({ trackTransactionCreated });
     mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
@@ -1209,7 +1276,7 @@ describe("processRetries", () => {
       confidence: 0.9,
     });
 
-    const result = await processRetries(mockDb, USER_ID);
+    const result = await service.processRetries(mockDb, USER_ID);
 
     expect(mockEnsureDefaultFinancialAccount).toHaveBeenCalledWith(
       mockDb,
@@ -1223,6 +1290,18 @@ describe("processRetries", () => {
         accountAttributionState: "unresolved",
       })
     );
+    expect(mockInsertMerchantRule).toHaveBeenCalledWith(
+      mockDb,
+      USER_ID,
+      "compra en exito",
+      "other",
+      expect.any(String)
+    );
+    expect(trackTransactionCreated).toHaveBeenCalledWith({
+      type: "expense",
+      category: "other",
+      source: "email",
+    });
     expect(result.succeeded).toBe(1);
   });
 
@@ -1253,6 +1332,8 @@ describe("processRetries", () => {
 
   it("marks as needs_review when confidence < 0.7 on retry", async () => {
     const row = makePendingRetryRow();
+    const trackTransactionCreated = vi.fn();
+    const service = createTestEmailPipelineService({ trackTransactionCreated });
     mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
@@ -1263,7 +1344,7 @@ describe("processRetries", () => {
       confidence: 0.5,
     });
 
-    await processRetries(mockDb, USER_ID);
+    await service.processRetries(mockDb, USER_ID);
 
     expect(mockMarkRetrySuccess).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1274,6 +1355,8 @@ describe("processRetries", () => {
         confidence: 0.5,
       })
     );
+    expect(mockInsertMerchantRule).not.toHaveBeenCalled();
+    expect(trackTransactionCreated).not.toHaveBeenCalled();
   });
 
   it("increments retryCount on failure and schedules next retry", async () => {

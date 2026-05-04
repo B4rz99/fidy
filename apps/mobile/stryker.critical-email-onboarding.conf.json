@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "testRunner": "command",
+  "commandRunner": {
+    "command": "bun run test __tests__/email-capture/email-adapter.test.ts __tests__/email-capture/gmail-adapter.test.ts __tests__/email-capture/outlook-adapter.test.ts __tests__/email-capture/email-pipeline.test.ts __tests__/email-capture/parse-email-service.test.ts __tests__/email-capture/parse-email-service-wiring.test.ts __tests__/email-capture/llm-parser.test.ts __tests__/email-capture/sync-policy.test.ts __tests__/email-capture/merchant-rules.test.ts __tests__/email-capture/parse-improvement.test.ts __tests__/email-capture/parse-improvement-sharing.test.ts __tests__/onboarding/check-onboarding.test.ts __tests__/onboarding/flow.test.ts __tests__/onboarding/email-connections.test.ts __tests__/onboarding/sync-unlock.test.ts __tests__/onboarding/telemetry.test.ts __tests__/onboarding/store.test.ts __tests__/shared/create-async-guard.test.ts"
+  },
+  "reporters": ["clear-text", "html", "progress"],
+  "coverageAnalysis": "off",
+  "mutate": [
+    "features/email-capture/lib/merchant-rules.ts",
+    "features/email-capture/services/create-email-adapter.ts",
+    "features/email-capture/services/create-email-pipeline-service.ts",
+    "features/email-capture/services/email-adapter-registry.ts",
+    "features/email-capture/services/email-capture-sync-policy.ts",
+    "features/email-capture/services/email-parse-improvement-sharing.ts",
+    "features/email-capture/services/email-pipeline.ts",
+    "features/email-capture/services/email-pipeline-service/parse-improvement.ts",
+    "features/email-capture/services/email-pipeline-service/transactions.ts",
+    "features/email-capture/services/gmail-adapter.ts",
+    "features/email-capture/services/llm-parser.ts",
+    "features/email-capture/services/outlook-adapter.ts",
+    "features/email-capture/services/parse-email-service.ts",
+    "features/onboarding/lib/**/*.ts",
+    "features/onboarding/store.ts",
+    "shared/hooks/create-async-guard.ts"
+  ],
+  "ignorePatterns": [
+    ".expo/**",
+    "android/**",
+    "dist/**",
+    "coverage/**",
+    "drizzle/**",
+    "ios/**",
+    "node_modules/**"
+  ]
+}

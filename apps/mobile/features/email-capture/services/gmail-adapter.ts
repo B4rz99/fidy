@@ -42,14 +42,13 @@ const toMessageIds = (listData: GmailListResponse): string[] =>
   (listData.messages ?? []).map((message) => message.id);
 
 const chunkMessageIds = (messageIds: string[]): string[][] =>
+  // Extra empty chunks from the arithmetic mutant produce no fetches, so this line has equivalent mutants.
+  // Stryker disable next-line ArithmeticOperator
   Array.from({ length: Math.ceil(messageIds.length / GMAIL_BATCH_SIZE) }, (_, index) =>
     messageIds.slice(index * GMAIL_BATCH_SIZE, (index + 1) * GMAIL_BATCH_SIZE)
   );
 
-const isFulfilled = <T>(result: PromiseSettledResult<T>): result is PromiseFulfilledResult<T> =>
-  result.status === "fulfilled";
-
-const isNonNull = <T>(value: T | null): value is T => value != null;
+const isNonNull = <T>(value: T | null): value is T => value !== null;
 
 const getHeader = (headers: GmailHeader[], name: string): string =>
   headers.find((header) => header.name.toLowerCase() === name.toLowerCase())?.value ?? "";
@@ -110,14 +109,11 @@ const fetchGmailMessage = async (token: string, id: string): Promise<RawEmail | 
   return result.ok ? parseGmailMessage(id, result.data) : null;
 };
 
-const toBatchEmails = (results: PromiseSettledResult<RawEmail | null>[]): RawEmail[] =>
-  results
-    .filter(isFulfilled)
-    .map((result) => result.value)
-    .filter(isNonNull);
+const fetchGmailMessageOrNull = (token: string, id: string): Promise<RawEmail | null> =>
+  fetchGmailMessage(token, id).catch(() => null);
 
 const collectBatchEmails = async (token: string, batch: string[]): Promise<RawEmail[]> =>
-  toBatchEmails(await Promise.allSettled(batch.map((id) => fetchGmailMessage(token, id))));
+  (await Promise.all(batch.map((id) => fetchGmailMessageOrNull(token, id)))).filter(isNonNull);
 
 const appendBatchEmails = async (
   token: string,
@@ -152,8 +148,7 @@ export const fetchGmailEmailsWithToken = async (
     }
 
     const messageIds = toMessageIds(listResult.data);
-    const pageEmails =
-      messageIds.length === 0 ? [] : await collectSequentialEmails(token, messageIds);
+    const pageEmails = await collectSequentialEmails(token, messageIds);
     const nextPageToken = listResult.data.nextPageToken;
     return nextPageToken ? [...pageEmails, ...(await collectPage(nextPageToken))] : pageEmails;
   }
