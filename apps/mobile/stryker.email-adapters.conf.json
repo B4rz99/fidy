@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "testRunner": "command",
+  "commandRunner": {
+    "command": "bun run test __tests__/email-capture/email-adapter.test.ts __tests__/email-capture/gmail-adapter.test.ts __tests__/email-capture/outlook-adapter.test.ts"
+  },
+  "reporters": ["clear-text", "html", "progress"],
+  "coverageAnalysis": "off",
+  "mutate": [
+    "features/email-capture/services/create-email-adapter.ts",
+    "features/email-capture/services/email-adapter-registry.ts",
+    "features/email-capture/services/gmail-adapter.ts",
+    "features/email-capture/services/outlook-adapter.ts"
+  ],
+  "ignorePatterns": [
+    ".expo/**",
+    "android/**",
+    "dist/**",
+    "coverage/**",
+    "drizzle/**",
+    "ios/**",
+    "node_modules/**"
+  ]
+}

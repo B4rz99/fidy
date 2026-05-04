@@ -19,6 +19,8 @@ const sortNewestFirst = (emails: readonly RawEmail[]): readonly RawEmail[] =>
 
 const newestReceivedAt = (result: EmailBatchLike) =>
   result.rawEmails.reduce(
+    // Identical timestamps are interchangeable for sorting; `>` and `>=` produce the same order here.
+    // Stryker disable next-line EqualityOperator
     (newest, email) => (email.receivedAt > newest ? email.receivedAt : newest),
     ""
   );

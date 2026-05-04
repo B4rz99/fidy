@@ -20,5 +20,6 @@ describe("onboarding email connections", () => {
   it("only treats supported providers as connected", () => {
     expect(hasConnectedEmailAccount([{ provider: "imap" }])).toBe(false);
     expect(hasConnectedEmailAccount([{ provider: "outlook" }])).toBe(true);
+    expect(hasConnectedEmailAccount([{ provider: "imap" }, { provider: "gmail" }])).toBe(true);
   });
 });

@@ -59,6 +59,8 @@ export const useOnboardingStore = create<OnboardingState & OnboardingActions>((s
       shouldReviewAccounts,
       step: getNextOnboardingStep({
         step: ONBOARDING_STEP.sync,
+        // Sync routing ignores emailSkipped; this literal documents that sync was not skipped.
+        // Stryker disable next-line BooleanLiteral
         emailSkipped: false,
         shouldReviewAccounts,
       }),

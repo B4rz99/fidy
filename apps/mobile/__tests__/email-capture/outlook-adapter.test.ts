@@ -2,6 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fetchOutlookEmailsWithToken } from "@/features/email-capture/services/outlook-adapter";
 
+const { mockCaptureWarning } = vi.hoisted(() => ({
+  mockCaptureWarning: vi.fn(),
+}));
+
+vi.mock("@/shared/lib", () => ({
+  captureWarning: (...args: unknown[]) => mockCaptureWarning(...args),
+}));
+
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
@@ -45,6 +53,9 @@ describe("outlook adapter", () => {
       expect(decodeURIComponent(calledUrl)).not.toContain(
         "receivedDateTime ge '2026-03-01T00:00:00Z'"
       );
+      expect(mockFetch.mock.calls[0]?.[1]).toEqual({
+        headers: { Authorization: "Bearer access-token" },
+      });
     });
 
     it("normalizes HTML email bodies to plain text", async () => {
@@ -86,6 +97,19 @@ describe("outlook adapter", () => {
       expect(emails).toEqual([]);
     });
 
+    it("returns empty array when response omits value", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+      const emails = await fetchOutlookEmailsWithToken("access-token", "2026-03-01T00:00:00Z", [
+        "bank@example.com",
+      ]);
+
+      expect(emails).toEqual([]);
+    });
+
     it("returns empty array when API call fails", async () => {
       mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
@@ -93,6 +117,9 @@ describe("outlook adapter", () => {
         "bank@example.com",
       ]);
       expect(emails).toEqual([]);
+      expect(mockCaptureWarning).toHaveBeenCalledWith("outlook_api_list_failed", {
+        httpStatus: 500,
+      });
     });
 
     it("follows paginated message lists", async () => {
