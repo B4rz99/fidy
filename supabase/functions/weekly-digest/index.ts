@@ -54,6 +54,16 @@ const toDigestReminder = (device: UserDevice): ExpoPushMessage => ({
   data: { route: "/notifications", type: "weekly_digest" },
 });
 
+function logWeeklyDigestError(message: string, detail?: unknown): void {
+  // eslint-disable-next-line no-console -- Supabase Edge Function operational error log.
+  console.error(message, detail);
+}
+
+function logWeeklyDigestInfo(message: string): void {
+  // eslint-disable-next-line no-console -- Supabase Edge Function operational status log.
+  console.log(message);
+}
+
 async function fetchEligibleDevices(): Promise<readonly UserDevice[]> {
   const { data: devices, error: devError } = await serviceClient
     .from("push_devices")
@@ -61,7 +71,7 @@ async function fetchEligibleDevices(): Promise<readonly UserDevice[]> {
     .order("updated_at", { ascending: false });
 
   if (devError) {
-    console.error("Failed to fetch push devices:", devError.message);
+    logWeeklyDigestError("Failed to fetch push devices:", devError.message);
     return [];
   }
 
@@ -73,7 +83,7 @@ async function fetchEligibleDevices(): Promise<readonly UserDevice[]> {
     .eq("weekly_digest", false);
 
   if (prefError) {
-    console.error("Failed to fetch digest preferences:", prefError.message);
+    logWeeklyDigestError("Failed to fetch digest preferences:", prefError.message);
     return [];
   }
 
@@ -101,7 +111,7 @@ async function sendPushBatch(
   });
 
   if (!response.ok) {
-    console.error(`Expo Push API returned ${response.status}: ${await response.text()}`);
+    logWeeklyDigestError(`Expo Push API returned ${response.status}: ${await response.text()}`);
     return [];
   }
 
@@ -135,7 +145,7 @@ async function cleanupStaleTokens(
     .in("expo_push_token", staleTokens);
 
   if (error) {
-    console.error("Failed to clean up stale tokens:", error.message);
+    logWeeklyDigestError("Failed to clean up stale tokens:", error.message);
   }
 }
 
@@ -156,7 +166,7 @@ Deno.serve(async (req) => {
     const devices = await fetchEligibleDevices();
 
     if (devices.length === 0) {
-      console.log("No eligible devices for weekly digest");
+      logWeeklyDigestInfo("No eligible devices for weekly digest");
       return jsonResponse({ success: true, sent: 0 });
     }
 
@@ -175,7 +185,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`Weekly digest reminders: ${totals.sent} sent, ${totals.failed} failed`);
+    logWeeklyDigestInfo(`Weekly digest reminders: ${totals.sent} sent, ${totals.failed} failed`);
     return jsonResponse({
       success: totals.failed === 0,
       sent: totals.sent,
@@ -183,7 +193,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("Weekly digest reminder error:", message);
+    logWeeklyDigestError("Weekly digest reminder error:", message);
     return jsonResponse({ success: false, error: "internal_error" }, 500);
   }
 });

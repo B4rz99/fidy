@@ -6,7 +6,6 @@ import {
 } from "@/shared/effect/telemetry";
 import { generateProcessedEmailId } from "@/shared/lib/generate-id";
 import { assertIsoDateTime } from "@/shared/types/assertions";
-import { logEmailCaptureDevDiagnostic } from "../email-capture-dev-diagnostics";
 import { buildSkippedEmailDiagnostics } from "./email-telemetry";
 import { cacheMerchantRule, lookupIncomingDuplicate } from "./incoming-parsed-helpers";
 import {
@@ -148,7 +147,6 @@ async function persistSkippedIncomingEmail(
 
   await context.runtime.runEmailEffect(insertProcessedEmailEffect(context.db, row));
   const diagnostics = buildSkippedEmailDiagnostics({ email, reason: kind });
-  logEmailCaptureDevDiagnostic("skipped_email", diagnostics);
   await context.runtime.runTelemetryEffect(capturePipelineEventEffect(diagnostics));
   return createPipelineMetricResult(kind === "filtered" ? "filtered" : "failed");
 }

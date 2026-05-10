@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   captureOnboardingEvent,
   logOnboardingEvent,
@@ -16,17 +16,12 @@ vi.mock("@/shared/lib", () => ({
 describe("onboarding telemetry", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(console, "info").mockImplementation(() => undefined);
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it("logs onboarding events with the onboarding prefix", () => {
+  it("keeps onboarding logs local-only", () => {
     logOnboardingEvent("started", { step: 1 });
 
-    expect(console.info).toHaveBeenCalledWith("[onboarding]", "started", { step: 1 });
+    expect(mockCapturePipelineEvent).not.toHaveBeenCalled();
   });
 
   it("captures onboarding events with source and event fields", () => {
@@ -39,12 +34,9 @@ describe("onboarding telemetry", () => {
     });
   });
 
-  it("tracks onboarding events through logging and capture", () => {
+  it("tracks onboarding events through telemetry capture", () => {
     trackOnboardingEvent("sync_complete", { shouldReviewAccounts: true });
 
-    expect(console.info).toHaveBeenCalledWith("[onboarding]", "sync_complete", {
-      shouldReviewAccounts: true,
-    });
     expect(mockCapturePipelineEvent).toHaveBeenCalledWith({
       shouldReviewAccounts: true,
       source: "onboarding",

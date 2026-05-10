@@ -111,6 +111,7 @@ function structuredLog(fields: {
   message_count?: number;
   context_query_ms?: number;
 }): void {
+  // eslint-disable-next-line no-console -- Supabase Edge Function structured request log.
   console.log(
     JSON.stringify({
       ...fields,

@@ -2,8 +2,8 @@ import { capturePipelineEvent } from "@/shared/lib";
 
 type OnboardingTelemetryData = Record<string, string | number | boolean>;
 
-export function logOnboardingEvent(event: string, data: OnboardingTelemetryData = {}): void {
-  console.info("[onboarding]", event, data);
+export function logOnboardingEvent(_event: string, _data: OnboardingTelemetryData = {}): void {
+  // Intentionally local-only after console diagnostics were removed.
 }
 
 export function captureOnboardingEvent(event: string, data: OnboardingTelemetryData = {}): void {
@@ -11,6 +11,5 @@ export function captureOnboardingEvent(event: string, data: OnboardingTelemetryD
 }
 
 export function trackOnboardingEvent(event: string, data: OnboardingTelemetryData = {}): void {
-  logOnboardingEvent(event, data);
   captureOnboardingEvent(event, data);
 }

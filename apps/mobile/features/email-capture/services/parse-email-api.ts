@@ -52,28 +52,7 @@ export function summarizeLlmEmailInputDiagnostics(input: {
   };
 }
 
-function logLlmEmailInputDiagnostics(input: {
-  readonly rawText: string;
-  readonly sanitizedText: string;
-}) {
-  if (typeof __DEV__ === "undefined" || !__DEV__) return;
-
-  const diagnostics = summarizeLlmEmailInputDiagnostics(input);
-  if (
-    !diagnostics.sanitizedHasPaymentMethodLabel &&
-    diagnostics.sanitizedCardPlaceholderCount === 0
-  ) {
-    return;
-  }
-
-  console.info("[email-capture] llm_input_shape", diagnostics);
-}
-
-function sanitizeEmailBodyForLlm(text: string) {
-  const sanitizedText = sanitizeEmailBody(text);
-  logLlmEmailInputDiagnostics({ rawText: text, sanitizedText });
-  return sanitizedText;
-}
+const sanitizeEmailBodyForLlm = (text: string): string => sanitizeEmailBody(text);
 
 export const stripPii = (text: string): string => REDACTION_RULES.reduce(applyRedactionRule, text);
 

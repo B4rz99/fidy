@@ -3,7 +3,6 @@ import { KNOWN_BANK_PACKAGES } from "@/features/capture-sources/schema";
 import { extractDomain } from "@/features/email-capture/lib/bank-senders";
 import { htmlToPlainText } from "@/shared/lib/html-to-text";
 import type { CaptureEvidenceSeed } from "../schema";
-import { logEmailEvidenceInputDiagnostics } from "./email-diagnostics";
 
 export { summarizeEmailEvidenceInputDiagnostics } from "./email-diagnostics";
 
@@ -183,8 +182,6 @@ export function buildEmailCaptureEvidence(
   const senderDomain = extractDomain(senderEmail);
   const family = familyFromDomain(senderDomain);
   const body = input.body ?? "";
-
-  logEmailEvidenceInputDiagnostics({ family, rawText: body });
 
   return uniqueEvidence([
     ...buildEmailSenderEvidence({ family, senderEmail, senderDomain }),

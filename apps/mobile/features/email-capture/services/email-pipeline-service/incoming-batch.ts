@@ -1,6 +1,5 @@
 import type { AnyDb } from "@/shared/db";
 import { capturePipelineEventEffect } from "@/shared/effect/telemetry";
-import { logEmailCaptureDevDiagnostic } from "../email-capture-dev-diagnostics";
 import { buildEmailPipelineBatchTelemetry } from "./email-telemetry";
 import { processIncomingEmail } from "./incoming-email";
 import { getProcessedExternalIdsEffect } from "./runtime";
@@ -205,7 +204,6 @@ export async function processEmailBatch(runtime: PipelineRuntime, input: Process
     result: progressResult,
     timing: summarizeBatchTiming(timing, nowMs() - batchStartedAt, firstSavedLatencyMs),
   });
-  logEmailCaptureDevDiagnostic("pipeline_batch", telemetry);
   await runtime.runTelemetryEffect(capturePipelineEventEffect(telemetry));
   return progressResult;
 }
