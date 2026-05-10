@@ -14,6 +14,20 @@ export type PencilEntryFieldProps = {
   readonly testID?: string;
 };
 
+function getToneColor(input: {
+  readonly primary: string;
+  readonly secondary: string;
+  readonly tertiary: string;
+  readonly value?: string;
+  readonly valueTone?: PencilEntryFieldProps["valueTone"];
+}): string {
+  if (input.valueTone === "primary") return input.primary;
+  if (input.valueTone === "secondary") return input.secondary;
+  if (input.valueTone === "tertiary") return input.tertiary;
+  if (input.value) return input.primary;
+  return input.tertiary;
+}
+
 export function PencilEntryField({
   children,
   icon: Icon,
@@ -28,16 +42,7 @@ export function PencilEntryField({
   const tertiary = useThemeColor("tertiary");
   const borderSubtle = useThemeColor("borderSubtle");
   const card = useThemeColor("card");
-  const toneColor =
-    valueTone === "primary"
-      ? primary
-      : valueTone === "secondary"
-        ? secondary
-        : valueTone === "tertiary"
-          ? tertiary
-          : value
-            ? primary
-            : tertiary;
+  const toneColor = getToneColor({ primary, secondary, tertiary, value, valueTone });
   const content = children ?? (
     <Text
       numberOfLines={1}

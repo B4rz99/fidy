@@ -54,9 +54,12 @@ const getProgressStatus = (progress: GoalProgress): GoalCardStatus | null => {
   return null;
 };
 
-const getPaceStatus = (paceGuidance: GoalPaceGuidance): GoalCardStatus =>
-  paceGuidance.type === "pace_ahead"
-    ? { kind: "pace_ahead", amount: paceGuidance.amountAhead }
-    : paceGuidance.reason === "no_contributions"
-      ? { kind: "start_saving" }
-      : { kind: "pace_behind", amount: paceGuidance.amountBehind };
+const getPaceStatus = (paceGuidance: GoalPaceGuidance): GoalCardStatus => {
+  if (paceGuidance.type === "pace_ahead") {
+    return { kind: "pace_ahead", amount: paceGuidance.amountAhead };
+  }
+
+  if (paceGuidance.reason === "no_contributions") return { kind: "start_saving" };
+
+  return { kind: "pace_behind", amount: paceGuidance.amountBehind };
+};

@@ -43,6 +43,12 @@ const FETCH_LOOKBACK_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 type EmailFetchClientIds = Record<EmailProvider, string>;
 
+function getProcessEmailsForProfile(parseProfile: EmailCaptureParseProfile | undefined) {
+  if (parseProfile === "initial_sync") return processInitialSyncEmails;
+  if (parseProfile === "background") return processBackgroundEmails;
+  return processEmails;
+}
+
 export type EmailAccountFetchResult = {
   readonly account: EmailAccountRow;
   readonly rawEmails: readonly RawEmail[];
@@ -218,12 +224,7 @@ export async function ingestFetchedEmails(input: {
   readonly runRetries?: boolean;
   readonly parseProfile?: EmailCaptureParseProfile;
 }): Promise<PipelineResult> {
-  const processEmailsForProfile =
-    input.parseProfile === "initial_sync"
-      ? processInitialSyncEmails
-      : input.parseProfile === "background"
-        ? processBackgroundEmails
-        : processEmails;
+  const processEmailsForProfile = getProcessEmailsForProfile(input.parseProfile);
   const captureIngestion = createCaptureIngestionPort(input.db, {
     processEmails: processEmailsForProfile,
     processRetries,

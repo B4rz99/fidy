@@ -8,12 +8,11 @@ type BackupActionButtonProps = {
   readonly disabled?: boolean;
 };
 
-const getButtonTextClassName = (isPrimary: boolean, isDanger: boolean) =>
-  isPrimary
-    ? "font-poppins-semibold text-white"
-    : isDanger
-      ? "font-poppins-semibold text-accent-red dark:text-accent-red-dark"
-      : "font-poppins-semibold text-primary dark:text-primary-dark";
+const getButtonTextClassName = (isPrimary: boolean, isDanger: boolean) => {
+  if (isPrimary) return "font-poppins-semibold text-white";
+  if (isDanger) return "font-poppins-semibold text-accent-red dark:text-accent-red-dark";
+  return "font-poppins-semibold text-primary dark:text-primary-dark";
+};
 
 export function BackupActionButton({
   label,

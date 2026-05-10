@@ -31,6 +31,12 @@ function buildReasonKey(suggestion: AccountCreationSuggestion) {
   return "accountSuggestions.card.reasonLast4";
 }
 
+function getAccountIcon(kind: string) {
+  if (kind === "wallet" || kind === "cash") return Wallet;
+  if (kind === "credit_card") return CreditCard;
+  return Building2;
+}
+
 export function AccountSuggestionCard({
   suggestion,
   onCreate,
@@ -48,18 +54,13 @@ export function AccountSuggestionCard({
   const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
   const peachLight = useThemeColor("peachLight");
+  const AccountIcon = getAccountIcon(draft.kind);
 
   return (
     <View style={[styles.card, { backgroundColor: card, borderColor: borderSubtle }]}>
       <View style={styles.topRow}>
         <View style={[styles.iconWrap, { backgroundColor: accentGreenLight }]}>
-          {draft.kind === "wallet" || draft.kind === "cash" ? (
-            <Wallet size={20} color={accentGreen} />
-          ) : draft.kind === "credit_card" ? (
-            <CreditCard size={20} color={accentGreen} />
-          ) : (
-            <Building2 size={20} color={accentGreen} />
-          )}
+          <AccountIcon size={20} color={accentGreen} />
         </View>
         <View style={styles.textColumn}>
           <Text style={[styles.title, { color: primary }]}>{draft.name}</Text>

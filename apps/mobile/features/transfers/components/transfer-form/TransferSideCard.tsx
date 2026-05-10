@@ -9,6 +9,27 @@ import { getKindIcon } from "./TransferForm.helpers";
 import { styles } from "./TransferForm.styles";
 import type { AccountBalanceMap } from "./TransferForm.types";
 
+function getSideTitle(
+  side: TransferSide | null,
+  account: FinancialAccountRow | null | undefined,
+  t: ReturnType<typeof useTranslation>["t"]
+): string {
+  if (side == null) return t("transfers.chooseSide");
+  if (side.kind === "external") return t("transfers.outsideFidy");
+  return account?.name ?? t("common.unknown");
+}
+
+function getSideSubtitle(
+  side: TransferSide | null,
+  account: FinancialAccountRow | null | undefined,
+  t: ReturnType<typeof useTranslation>["t"]
+): string {
+  if (side == null) return t("transfers.chooseSideHint");
+  if (side.kind === "external") return t("transfers.outsideFidyDescription");
+  if (account) return t(`financialAccounts.kinds.${readFinancialAccountKind(account.kind)}`);
+  return t("common.unknown");
+}
+
 export function TransferSideCard(props: {
   readonly accounts: readonly FinancialAccountRow[];
   readonly balances: AccountBalanceMap;
@@ -30,24 +51,14 @@ export function TransferSideCard(props: {
   const peachLight = useThemeColor("peachLight");
   const accountId = props.side?.kind === "account" ? props.side.accountId : null;
   const account = accountId ? props.accounts.find((item) => item.id === accountId) : null;
-  const kind = account ? readFinancialAccountKind(account.kind) : null;
-  const Icon =
-    props.side?.kind === "external" ? ExternalLink : account ? getKindIcon(account.kind) : Landmark;
+  const Icon = (() => {
+    if (props.side?.kind === "external") return ExternalLink;
+    if (account) return getKindIcon(account.kind);
+    return Landmark;
+  })();
   const sideBalance = account ? (props.balances[account.id] ?? 0) : null;
-  const title =
-    props.side == null
-      ? t("transfers.chooseSide")
-      : props.side.kind === "external"
-        ? t("transfers.outsideFidy")
-        : (account?.name ?? t("common.unknown"));
-  const subtitle =
-    props.side == null
-      ? t("transfers.chooseSideHint")
-      : props.side.kind === "external"
-        ? t("transfers.outsideFidyDescription")
-        : account
-          ? t(`financialAccounts.kinds.${kind}`)
-          : t("common.unknown");
+  const title = getSideTitle(props.side, account, t);
+  const subtitle = getSideSubtitle(props.side, account, t);
 
   return (
     <View style={{ gap: 8 }}>

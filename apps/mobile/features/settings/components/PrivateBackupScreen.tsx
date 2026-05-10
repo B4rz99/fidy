@@ -115,6 +115,21 @@ export function PrivateBackupScreen() {
   const isConfirmingKey = health.status === "recovery_key_not_confirmed";
   const isReady = health.status === "ready";
   const isFailed = health.status === "backup_failed";
+  const statusCopy = (() => {
+    if (isReady) {
+      return { title: t("privateBackup.readyTitle"), body: t("privateBackup.readyBody") };
+    }
+
+    if (isFailed) {
+      return { title: t("privateBackup.failedTitle"), body: t("privateBackup.failedBody") };
+    }
+
+    if (isConfirmingKey) {
+      return { title: t("privateBackup.confirmTitle"), body: t("privateBackup.confirmBody") };
+    }
+
+    return { title: t("privateBackup.notSetupTitle"), body: t("privateBackup.notSetupBody") };
+  })();
 
   return (
     <ScreenLayout variant="sub" title={t("privateBackup.title")} onBack={() => router.back()}>
@@ -136,24 +151,8 @@ export function PrivateBackupScreen() {
 
         <BackupStatusCard
           icon={isFailed ? RefreshCcw : Shield}
-          title={
-            isReady
-              ? t("privateBackup.readyTitle")
-              : isFailed
-                ? t("privateBackup.failedTitle")
-                : isConfirmingKey
-                  ? t("privateBackup.confirmTitle")
-                  : t("privateBackup.notSetupTitle")
-          }
-          body={
-            isReady
-              ? t("privateBackup.readyBody")
-              : isFailed
-                ? t("privateBackup.failedBody")
-                : isConfirmingKey
-                  ? t("privateBackup.confirmBody")
-                  : t("privateBackup.notSetupBody")
-          }
+          title={statusCopy.title}
+          body={statusCopy.body}
           tone={isFailed || isConfirmingKey ? "peach" : "green"}
         />
 

@@ -24,18 +24,17 @@ type LocalQaSeed = {
   readonly transfers: readonly TransferRow[];
 };
 
+function getDisplayName(profile: LocalQaProfile): string {
+  if (profile === "transfer-ready") return "Local QA Transfer Ready";
+  if (profile === "transfer-conflict") return "Local QA Transfer Conflict";
+  if (profile === "two-accounts") return "Local QA Two Accounts";
+  if (profile === "empty") return "Local QA Empty";
+  return "Local QA";
+}
+
 function getSessionForProfile(profile: LocalQaProfile): LocalQaSession {
   const userId = requireUserId(`qa-local-${profile}`);
-  const displayName =
-    profile === "transfer-ready"
-      ? "Local QA Transfer Ready"
-      : profile === "transfer-conflict"
-        ? "Local QA Transfer Conflict"
-        : profile === "two-accounts"
-          ? "Local QA Two Accounts"
-          : profile === "empty"
-            ? "Local QA Empty"
-            : "Local QA";
+  const displayName = getDisplayName(profile);
 
   return {
     userId,

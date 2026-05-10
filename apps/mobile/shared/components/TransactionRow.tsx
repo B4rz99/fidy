@@ -16,6 +16,12 @@ type TransactionRowProps = {
   onDelete?: () => void;
 };
 
+function getAmountClassName(amountTone: NonNullable<TransactionRowProps["amountTone"]>): string {
+  if (amountTone === "positive") return "text-accent-green dark:text-accent-green-dark";
+  if (amountTone === "neutral") return "text-primary dark:text-primary-dark";
+  return "text-accent-red dark:text-accent-red-dark";
+}
+
 export function TransactionRow({
   icon,
   iconBgColor,
@@ -34,12 +40,7 @@ export function TransactionRow({
   const iconColor = iconColorOverride ?? defaultIconColor;
   const { t } = useTranslation();
   const resolvedAmountTone = amountTone ?? (isPositive ? "positive" : "negative");
-  const amountClassName =
-    resolvedAmountTone === "positive"
-      ? "text-accent-green dark:text-accent-green-dark"
-      : resolvedAmountTone === "neutral"
-        ? "text-primary dark:text-primary-dark"
-        : "text-accent-red dark:text-accent-red-dark";
+  const amountClassName = getAmountClassName(resolvedAmountTone);
 
   const handleLongPress = useCallback(() => {
     if (Platform.OS !== "ios") return;
