@@ -25,8 +25,14 @@ const pushedCommits = pushLines.flatMap((line) => {
 
   if (!localSha || localSha === ZERO_SHA) return [];
 
-  const range = remoteSha && remoteSha !== ZERO_SHA ? `${remoteSha}..${localSha}` : localSha;
-  return text(["git", "rev-list", range]).split("\n").filter(Boolean);
+  const args =
+    remoteSha && remoteSha !== ZERO_SHA
+      ? ["rev-list", `${remoteSha}..${localSha}`]
+      : ["rev-list", localSha, "--not", "--remotes"];
+
+  return text(["git", ...args])
+    .split("\n")
+    .filter(Boolean);
 });
 
 const commits = [
