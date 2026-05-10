@@ -116,19 +116,6 @@ const en = {
     deleteFailed: "Could not delete transaction",
   },
 
-  addEntry: {
-    title: "What do you want to add?",
-    subtitle: "Choose the record type first so transfers stay separate from spending and income.",
-    transactionTitle: "Transaction",
-    transactionBody: "Record spending or income for one financial account",
-    transactionBadge: "Expense or income",
-    transferTitle: "Transfer",
-    transferBody: "Move money between accounts, or use Outside Fidy when one side is not tracked.",
-    transferBadge: "No budget impact",
-    footnote:
-      "Transfers stay out of spending and budget math, so choosing them here prevents double counting later.",
-  },
-
   transfers: {
     title: "New transfer",
     reclassifyTitle: "Convert to transfer",

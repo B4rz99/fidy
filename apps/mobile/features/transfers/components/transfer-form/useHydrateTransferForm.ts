@@ -73,14 +73,21 @@ function loadTransferFormOnFocus(input: {
 
 export function useHydrateTransferForm(input: {
   readonly db: AnyDb | null;
+  readonly enabled: boolean;
   readonly initialDraftResolver: TransferFormScreenProps["initialDraftResolver"];
   readonly onMissingTransaction: () => void;
   readonly reclassificationTransactionId: TransactionId | null;
   readonly state: TransferFormState;
   readonly userId: UserId | null | undefined;
 }) {
-  const { db, initialDraftResolver, onMissingTransaction, reclassificationTransactionId, userId } =
-    input;
+  const {
+    db,
+    enabled,
+    initialDraftResolver,
+    onMissingTransaction,
+    reclassificationTransactionId,
+    userId,
+  } = input;
   const {
     appliedInitialDraftRef,
     hydratedTransactionIdRef,
@@ -96,6 +103,8 @@ export function useHydrateTransferForm(input: {
 
   useFocusEffect(
     useCallback(() => {
+      if (!enabled) return;
+
       loadTransferFormOnFocus({
         db,
         initialDraftResolver,
@@ -118,6 +127,7 @@ export function useHydrateTransferForm(input: {
     }, [
       appliedInitialDraftRef,
       db,
+      enabled,
       hydratedTransactionIdRef,
       initialDraftResolver,
       onMissingTransaction,

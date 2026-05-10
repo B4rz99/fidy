@@ -10,6 +10,7 @@ import type { PickerTarget } from "./TransferForm.types";
 
 async function saveTransferFormAction(input: {
   readonly date: Date;
+  readonly description: string;
   readonly db: Parameters<typeof submitTransferForm>[0]["db"];
   readonly digits: string;
   readonly fromSide: TransferSide | null;
@@ -33,6 +34,7 @@ async function saveTransferFormAction(input: {
 
 export function useTransferFormActions(input: {
   readonly date: Date;
+  readonly description: string;
   readonly db: Parameters<typeof submitTransferForm>[0]["db"];
   readonly digits: string;
   readonly fromSide: TransferSide | null;
@@ -78,6 +80,7 @@ export function useTransferFormActions(input: {
       void guardedSave(() =>
         saveTransferFormAction({
           date: input.date,
+          description: input.description,
           db: input.db,
           digits: input.digits,
           fromSide: input.fromSide,

@@ -70,6 +70,7 @@ function useTransferFormDerivedState(
   return {
     actions: useTransferFormActions({
       date: state.date,
+      description: state.description,
       db: route.db,
       digits: state.digits,
       fromSide: state.fromSide,
@@ -98,6 +99,7 @@ export function useTransferForm(props: TransferFormScreenProps) {
 
   useHydrateTransferForm({
     db: route.db,
+    enabled: props.enabled ?? true,
     initialDraftResolver: props.initialDraftResolver,
     onMissingTransaction: route.onMissingTransaction,
     reclassificationTransactionId: route.reclassificationTransactionId,
