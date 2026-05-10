@@ -26,6 +26,7 @@ const IGNORED_DIRECTORIES = new Set([
   "build",
   "dist",
   "node_modules",
+  ".worktrees",
 ]);
 
 const normalizePath = (value: string): string => value.replaceAll("\\", "/");

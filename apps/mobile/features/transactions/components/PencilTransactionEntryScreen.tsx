@@ -19,7 +19,7 @@ import {
 import { View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useSubscription, useTranslation } from "@/shared/hooks";
-import { getCategoryLabel } from "@/shared/i18n";
+import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
 import { captureError, formatInputDisplay, trackTransactionCreated } from "@/shared/lib";
 import { CATEGORIES } from "../lib/categories";
 import { getDateLabel } from "../lib/format-date";
@@ -48,7 +48,6 @@ export function PencilTransactionEntryScreen() {
     entryMode: "expense",
     sheet: null,
   });
-  const transferEntry = usePencilTransferEntry();
   const { navigate } = useRouter();
   const { t, locale } = useTranslation();
   const userId = useOptionalUserId();
@@ -89,8 +88,14 @@ export function PencilTransactionEntryScreen() {
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
   const selectedAccount = uiState.accounts.find((account) => account.id === accountId);
   const selectedCategory = CATEGORIES.find((category) => category.id === categoryId);
-  const dateLabel = getDateLabel({ date, now: new Date(), todayLabel: t("dates.today") });
   const isTransfer = uiState.entryMode === "transfer";
+  const transferEntry = usePencilTransferEntry({ enabled: isTransfer });
+  const dateLabel = getDateLabel({
+    date,
+    now: new Date(),
+    todayLabel: t("dates.today"),
+    dateFnsLocale: getDateFnsLocale(locale),
+  });
   const activeTab = isTransfer ? "transfer" : type;
 
   useSubscription(
@@ -134,7 +139,7 @@ export function PencilTransactionEntryScreen() {
       <PencilEntryField
         icon={Wallet}
         label=""
-        value={selectedAccount?.name}
+        value={selectedAccount?.name ?? t("common.account")}
         onPress={() => setUiState({ sheet: "account" })}
       />
       <View style={{ flexDirection: "row", gap: 12, height: 50 }}>

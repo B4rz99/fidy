@@ -99,6 +99,7 @@ export function useTransferForm(props: TransferFormScreenProps) {
 
   useHydrateTransferForm({
     db: route.db,
+    enabled: props.enabled ?? true,
     initialDraftResolver: props.initialDraftResolver,
     onMissingTransaction: route.onMissingTransaction,
     reclassificationTransactionId: route.reclassificationTransactionId,

@@ -221,6 +221,7 @@ export function SettingsScreen() {
             isLast
           />
         </SettingsSection>
+        {Platform.OS === "android" ? <View style={{ height: TAB_BAR_CLEARANCE }} /> : null}
       </ScrollView>
     </ScreenLayout>
   );

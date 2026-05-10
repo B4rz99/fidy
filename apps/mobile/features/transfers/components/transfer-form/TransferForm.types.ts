@@ -13,6 +13,7 @@ export type TransferFormInitialDraft = {
 };
 
 export type TransferFormScreenProps = {
+  readonly enabled?: boolean;
   readonly initialDraftResolver?: (
     accounts: readonly FinancialAccountRow[]
   ) => TransferFormInitialDraft | null;

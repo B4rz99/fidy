@@ -7,21 +7,14 @@ import {
 } from "@/shared/components/PencilEntryScaffold";
 import { Modal, Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { formatInputDisplay, MAX_AMOUNT_DIGITS } from "@/shared/lib";
+import { formatInputDisplay } from "@/shared/lib";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
+import { handleNumpadPress } from "@/features/transactions/display.public";
 import type { TransferSide } from "../lib/build-transfer";
 import { TransferSidePicker } from "./transfer-form/TransferSidePicker";
 import { TRANSFER_FORM_TEST_IDS } from "./transfer-form/TransferForm.types";
 import { useTransferForm } from "./transfer-form/useTransferForm";
 import { transferEntryStyles } from "./PencilTransferEntryScreen.styles";
-
-function handlePencilTransferKey(currentDigits: string, key: string): string {
-  if (key === "delete") return currentDigits.slice(0, -1);
-  if (key === "000") return (currentDigits + key).slice(0, MAX_AMOUNT_DIGITS);
-  if (/^[0-9]$/.test(key))
-    return currentDigits.length < MAX_AMOUNT_DIGITS ? currentDigits + key : currentDigits;
-  return currentDigits;
-}
 
 function getPencilTransferSideTitle(
   side: TransferSide | null,
@@ -33,9 +26,9 @@ function getPencilTransferSideTitle(
   return accounts.find((account) => account.id === side.accountId)?.name ?? t("common.unknown");
 }
 
-export function usePencilTransferEntry() {
+export function usePencilTransferEntry(props: { readonly enabled?: boolean } = {}) {
   const { t } = useTranslation();
-  const form = useTransferForm({});
+  const form = useTransferForm({ enabled: props.enabled ?? true });
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
@@ -92,7 +85,7 @@ export function usePencilTransferEntry() {
     ),
     isConfirmDisabled: !form.canSave || form.isSaving,
     onConfirm: form.handleSave,
-    onKeyPress: (key: string) => form.setDigits((digits) => handlePencilTransferKey(digits, key)),
+    onKeyPress: (key: string) => form.setDigits((digits) => handleNumpadPress(digits, key)),
     overlays: (
       <>
         <TransferSidePicker
@@ -104,7 +97,12 @@ export function usePencilTransferEntry() {
           onClose={form.handlePickerClose}
           onSelect={form.applySelectedSide}
         />
-        <Modal visible={form.showDatePicker} transparent animationType="fade">
+        <Modal
+          visible={form.showDatePicker}
+          transparent
+          animationType="fade"
+          onRequestClose={() => form.setShowDatePicker(false)}
+        >
           <Pressable
             testID="calendar-picker.backdrop"
             style={{ flex: 1, justifyContent: "flex-end", backgroundColor: `${modalBackdrop}40` }}
@@ -146,7 +144,12 @@ export function usePencilTransferEntry() {
             </View>
           </Pressable>
         </Modal>
-        <Modal visible={showCategoryPicker} transparent animationType="fade">
+        <Modal
+          visible={showCategoryPicker}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowCategoryPicker(false)}
+        >
           <Pressable
             testID="category-picker.backdrop"
             style={{ flex: 1, justifyContent: "flex-end", backgroundColor: `${modalBackdrop}40` }}
