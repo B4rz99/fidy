@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AnyDb } from "@/shared/db";
+import type * as SharedLibModuleImport from "@/shared/lib";
 import type {
   BillId,
   BillPaymentId,
@@ -11,7 +12,7 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
-type SharedLibModule = typeof import("@/shared/lib");
+type SharedLibModule = typeof SharedLibModuleImport;
 
 const mocks = vi.hoisted(() => ({
   insertTransaction: vi.fn(),

@@ -1,4 +1,5 @@
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
+import type { useBlinkingCursor } from "@/shared/hooks";
 import type { CategoryId, FinancialAccountId } from "@/shared/types/branded";
 import type { TransactionType } from "../../schema";
 
@@ -28,9 +29,7 @@ export type TransactionFormProps = {
 
 export type TransactionFormModel = {
   readonly canSave: boolean;
-  readonly cursorStyle: ReturnType<
-    typeof import("@/shared/hooks").useBlinkingCursor
-  >["cursorStyle"];
+  readonly cursorStyle: ReturnType<typeof useBlinkingCursor>["cursorStyle"];
   readonly dateLabel: string;
   readonly descriptionFocused: boolean;
   readonly displayAmount: string;
