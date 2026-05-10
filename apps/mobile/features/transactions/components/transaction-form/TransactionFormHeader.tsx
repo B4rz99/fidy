@@ -1,3 +1,4 @@
+import type { ComponentProps } from "react";
 import Animated from "react-native-reanimated";
 import { X } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
@@ -8,7 +9,7 @@ import { styles } from "./TransactionForm.styles";
 type TransactionFormHeaderProps = {
   readonly amountColor: string;
   readonly closeLabel: string;
-  readonly cursorStyle: Record<string, unknown>;
+  readonly cursorStyle: ComponentProps<typeof Animated.View>["style"];
   readonly descriptionFocused: boolean;
   readonly displayAmount: string;
   readonly onClose?: () => void;

@@ -12,6 +12,7 @@ const editLoadedSource = readSource(
   "../../features/goals/components/goal-sheet/GoalEditSheetLoaded.tsx"
 );
 const formSource = readSource("../../features/goals/components/goal-sheet/GoalSheetForm.tsx");
+const dateFieldSource = readSource("../../features/goals/components/goal-sheet/GoalDateField.tsx");
 const formHookSource = readSource("../../features/goals/components/goal-sheet/useGoalSheetForm.ts");
 const createActionsSource = readSource(
   "../../features/goals/components/goal-sheet/useGoalCreateActions.ts"
@@ -38,6 +39,7 @@ test("keeps the edit-goal sheet wired to the shared form and delete flow", () =>
 test("keeps the shared goal-sheet cluster wired to the date picker and numpad flow", () => {
   expect(formSource).toContain("<GoalAmountField");
   expect(formSource).toContain("<GoalDateField");
+  expect(dateFieldSource).toContain("@expo/ui/community/datetime-picker");
   expect(formSource).toContain("<GoalTypeToggle");
   expect(formHookSource).toContain("handleNumpadPress");
   expect(formHookSource).toContain("setShowDatePicker(true)");

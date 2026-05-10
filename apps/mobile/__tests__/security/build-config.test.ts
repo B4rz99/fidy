@@ -21,6 +21,17 @@ afterEach(() => {
 });
 
 describe("production build security config", () => {
+  it("uses only the Expo Sentry config plugin", async () => {
+    vi.resetModules();
+
+    const { default: config } = await import("../../app.config");
+    const pluginNames =
+      config.plugins?.map((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin)) ?? [];
+
+    expect(pluginNames.filter((plugin) => plugin === "@sentry/react-native/expo")).toHaveLength(1);
+    expect(pluginNames).not.toContain("@sentry/react-native");
+  });
+
   it("does not include the Expo dev client plugin in production app config", async () => {
     process.env.APP_ENV = "production";
     vi.resetModules();

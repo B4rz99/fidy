@@ -1,4 +1,4 @@
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 import { getStoredTransactionById } from "@/features/transactions/query.public";
 import type { AnyDb } from "@/shared/db";

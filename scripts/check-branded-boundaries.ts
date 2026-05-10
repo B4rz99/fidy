@@ -6,6 +6,8 @@ import ts from "typescript";
 
 export const DEFAULT_MOBILE_ROOT = "apps/mobile";
 
+const GENERATED_DIRECTORY_NAMES = new Set(["android", "ios", "node_modules"]);
+
 const UI_PATH_RULES = [
   {
     label: "app/**",
@@ -55,7 +57,7 @@ type BrandedImportContext = {
 
 function listRepoFiles(dirPath: string): readonly string[] {
   return readdirSync(dirPath).flatMap((entry) => {
-    if (entry === "node_modules") {
+    if (GENERATED_DIRECTORY_NAMES.has(entry)) {
       return [];
     }
 

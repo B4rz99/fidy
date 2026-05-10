@@ -1,6 +1,5 @@
 import * as Notifications from "expo-notifications";
-import * as SecureStore from "expo-secure-store";
-import { determineAlertAction, PRE_PERMISSION_KEY } from "@/features/notifications/public";
+import { determineAlertAction, readHasSeenPrePermission } from "@/features/notifications/public";
 import i18n from "../../../shared/i18n/i18n";
 import type { BudgetAlert } from "./derive";
 
@@ -18,15 +17,6 @@ const RESULT_BY_ACTION = {
   prePermission: { type: "needs_permission" },
   skip: { type: "skipped" },
 } as const satisfies Record<"prePermission" | "skip", NonScheduledResult>;
-
-async function readHasSeenPrePermission(): Promise<boolean> {
-  try {
-    const value = await SecureStore.getItemAsync(PRE_PERMISSION_KEY);
-    return value === "true";
-  } catch {
-    return false;
-  }
-}
 
 function buildBudgetAlertCopy(alert: BudgetAlert, categoryName: string) {
   if (alert.threshold === 100) {
@@ -59,9 +49,9 @@ function getImmediateScheduleResult(
 }
 
 async function getBudgetAlertAction(notificationsEnabled: boolean) {
-  const { status } = await Notifications.getPermissionsAsync();
+  const permission = await Notifications.getPermissionsAsync();
   const hasSeenPrePermission = await readHasSeenPrePermission();
-  return determineAlertAction(status, hasSeenPrePermission, notificationsEnabled);
+  return determineAlertAction(permission.status, hasSeenPrePermission, notificationsEnabled);
 }
 
 async function scheduleBudgetNotification(

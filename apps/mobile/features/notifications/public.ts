@@ -10,8 +10,17 @@ export type {
   StoredNotification,
 } from "./lib/types";
 export { scheduleLocalPush } from "./services/local-push";
+export {
+  readHasSeenPrePermission,
+  shouldShowNotificationPrePermissionPrompt,
+} from "./services/pre-permission";
 
-export { deletePushToken, PROJECT_ID, registerPushToken } from "./services/push-token";
+export {
+  deletePushToken,
+  PROJECT_ID,
+  registerKnownPushToken,
+  registerPushToken,
+} from "./services/push-token";
 export {
   clearAllNotifications,
   initializeNotificationStore,

@@ -2,11 +2,13 @@ import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { MonthNavigator } from "@/features/calendar/public";
+import { shouldShowNotificationPrePermissionPrompt } from "@/features/notifications/public";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Wallet } from "@/shared/components/icons";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
+import { captureError } from "@/shared/lib";
 import { nextBudgetMonth, prevBudgetMonth, useBudgetStore } from "../store";
 import { BudgetCard } from "./BudgetCard";
 import { BudgetSummaryCard } from "./BudgetSummaryCard";
@@ -38,8 +40,22 @@ export function BudgetListScreen() {
   // chain and cannot call router.push() directly — this is a Zustand subscription pattern.
   useSubscription(
     () => {
-      clearPendingPermissionRequest();
-      push("/enable-notifications");
+      let cancelled = false;
+
+      void shouldShowNotificationPrePermissionPrompt()
+        .then((shouldShowPrompt) => {
+          if (cancelled || !shouldShowPrompt) return;
+
+          push("/enable-notifications");
+        })
+        .catch(captureError)
+        .finally(() => {
+          if (!cancelled) clearPendingPermissionRequest();
+        });
+
+      return () => {
+        cancelled = true;
+      };
     },
     [pendingPermissionRequest, clearPendingPermissionRequest, push],
     pendingPermissionRequest

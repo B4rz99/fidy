@@ -1,5 +1,4 @@
-import { useFocusEffect } from "@react-navigation/native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { appendUniqueActivityItems } from "@/features/activity/lib/append-unique-activity-items";
 import {

@@ -75,6 +75,13 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
     "expo-background-task",
     "expo-localization",
     [
+      "@sentry/react-native/expo",
+      {
+        organization: "fidy",
+        project: "fidy-mobile",
+      },
+    ],
+    [
       "expo-notifications",
       {
         icon: "./assets/images/notification-icon.png",

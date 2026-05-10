@@ -166,7 +166,7 @@ export default function EditTransactionScreen() {
                   transactionId,
                   processedEmailId: reclassificationProcessedEmailId ?? undefined,
                 },
-              } as never)
+              })
       }
     />
   );

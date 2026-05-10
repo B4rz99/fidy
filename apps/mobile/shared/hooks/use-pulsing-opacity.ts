@@ -8,13 +8,15 @@ import {
   withTiming,
 } from "react-native-reanimated";
 
+type OpacityAnimatedStyle = ReturnType<typeof useAnimatedStyle<{ opacity: number }>>;
+
 export function usePulsingOpacity(
   active: boolean,
   min = 0.3,
   duration = 600
 ): {
   opacity: SharedValue<number>;
-  pulsingStyle: { opacity: number };
+  pulsingStyle: OpacityAnimatedStyle;
 } {
   const opacity = useSharedValue(1);
 

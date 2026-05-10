@@ -40,6 +40,8 @@ test("keeps search initialization wired to initial route filters and bootstrap s
   );
   expect(initHookSource).toContain("executeSearch(args.db, args.userId)");
   expect(initHookSource).toContain("args.reset();");
+  expect(initHookSource).toContain("{ closing: false }");
+  expect(initHookSource).not.toContain("fallbackMs: null");
 });
 
 test("keeps content and results rendering wired to the extracted list modules", () => {

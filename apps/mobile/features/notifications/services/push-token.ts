@@ -8,6 +8,31 @@ import type { UserId } from "@/shared/types/branded";
 const easConfig = Constants.expoConfig?.extra?.eas as { projectId?: string } | undefined;
 export const PROJECT_ID = easConfig?.projectId ?? "";
 
+async function upsertPushToken(userId: UserId, token: string): Promise<string | null> {
+  const supabase = getSupabase();
+  const { error } = await supabase.from("push_devices").upsert(
+    {
+      // biome-ignore lint/style/useNamingConvention: Supabase column name
+      user_id: userId,
+      // biome-ignore lint/style/useNamingConvention: Supabase column name
+      expo_push_token: token,
+      platform: Platform.OS,
+      // biome-ignore lint/style/useNamingConvention: Supabase column name
+      app_version: Constants.expoConfig?.version ?? null,
+      // biome-ignore lint/style/useNamingConvention: Supabase column name
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,expo_push_token" }
+  );
+
+  if (error) {
+    captureWarning("push_token_upsert_failed", { errorMessage: error.message });
+    return null;
+  }
+
+  return token;
+}
+
 /**
  * Register the device's push token with Supabase.
  * Called after permission grant and on app launch (idempotent upsert).
@@ -18,28 +43,21 @@ export async function registerPushToken(userId: UserId): Promise<string | null> 
       projectId: PROJECT_ID,
     });
 
-    const supabase = getSupabase();
-    const { error } = await supabase.from("push_devices").upsert(
-      {
-        // biome-ignore lint/style/useNamingConvention: Supabase column name
-        user_id: userId,
-        // biome-ignore lint/style/useNamingConvention: Supabase column name
-        expo_push_token: token,
-        platform: Platform.OS,
-        // biome-ignore lint/style/useNamingConvention: Supabase column name
-        app_version: Constants.expoConfig?.version ?? null,
-        // biome-ignore lint/style/useNamingConvention: Supabase column name
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,expo_push_token" }
-    );
+    return await upsertPushToken(userId, token);
+  } catch (err) {
+    captureWarning("push_token_register_failed", {
+      errorType: err instanceof Error ? err.message : "unknown",
+    });
+    return null;
+  }
+}
 
-    if (error) {
-      captureWarning("push_token_upsert_failed", { errorMessage: error.message });
-      return null;
-    }
-
-    return token;
+export async function registerKnownPushToken(
+  userId: UserId,
+  token: string
+): Promise<string | null> {
+  try {
+    return await upsertPushToken(userId, token);
   } catch (err) {
     captureWarning("push_token_register_failed", {
       errorType: err instanceof Error ? err.message : "unknown",
