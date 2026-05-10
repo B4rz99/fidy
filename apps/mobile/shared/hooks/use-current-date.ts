@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useSubscription } from "./use-subscription";
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
 const getMsUntilTomorrow = (now: Date): number => {
   const tomorrow = new Date(now);
   tomorrow.setHours(24, 0, 0, 0);
@@ -13,15 +11,18 @@ export function useCurrentDate(): Date {
   const [currentDate, setCurrentDate] = useState(() => new Date());
 
   useSubscription(() => {
-    let interval: ReturnType<typeof setInterval> | null = null;
-    const timeout = setTimeout(() => {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    const scheduleNextTick = () => {
+      timeout = setTimeout(() => {
       setCurrentDate(new Date());
-      interval = setInterval(() => setCurrentDate(new Date()), MS_PER_DAY);
-    }, getMsUntilTomorrow(new Date()));
+        scheduleNextTick();
+      }, getMsUntilTomorrow(new Date()));
+    };
+
+    scheduleNextTick();
 
     return () => {
-      clearTimeout(timeout);
-      if (interval) clearInterval(interval);
+      if (timeout) clearTimeout(timeout);
     };
   }, []);
 

@@ -33,9 +33,9 @@ const isHttpsUrl = (value: unknown): value is string =>
   typeof value === "string" && value.startsWith("https://");
 
 export function deriveAuthProfileImageUrl(input: EffectiveAuthInput): string | null {
-  const imageUrl =
-    input.session?.user.user_metadata.avatar_url ?? input.session?.user.user_metadata.picture;
-  return input.localQaSession || !isHttpsUrl(imageUrl) ? null : imageUrl;
+  const metadata = input.session?.user.user_metadata;
+  const imageUrl = [metadata?.avatar_url, metadata?.picture].find(isHttpsUrl);
+  return input.localQaSession ? null : (imageUrl ?? null);
 }
 
 export function deriveAuthMode({ session, localQaSession }: EffectiveAuthInput): AuthMode {

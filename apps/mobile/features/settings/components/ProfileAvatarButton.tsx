@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { type Href, useRouter } from "expo-router";
 import { useAuthIdentity } from "@/features/auth/hooks.public";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { deriveProfileAvatar } from "../lib/profile-avatar";
 
 type ProfileAvatarButtonProps = {
@@ -12,6 +12,7 @@ type ProfileAvatarButtonProps = {
 
 export function ProfileAvatarButton({ size = 36 }: ProfileAvatarButtonProps) {
   const { push } = useRouter();
+  const { t } = useTranslation();
   const { fullName, email, profileImageUrl } = useAuthIdentity();
   const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
   const accentGreen = useThemeColor("accentGreen");
@@ -24,6 +25,7 @@ export function ProfileAvatarButton({ size = 36 }: ProfileAvatarButtonProps) {
 
   return (
     <Pressable
+      accessibilityLabel={t("settings.openSettings")}
       accessibilityRole="button"
       onPress={() => push("/settings" as Href)}
       testID="settings.profile-avatar-button"

@@ -34,6 +34,10 @@ type EditTransactionDraft = {
 
 type DigitsInput = string | ((currentDigits: string) => string);
 
+type EditTransactionDraftAction =
+  | { readonly type: "update"; readonly update: Partial<EditTransactionDraft> }
+  | { readonly type: "setDigits"; readonly digits: DigitsInput };
+
 const initialDraft: EditTransactionDraft = {
   accountId: null,
   categoryId: null,
@@ -47,9 +51,13 @@ const initialDraft: EditTransactionDraft = {
 
 function updateDraft(
   draft: EditTransactionDraft,
-  update: Partial<EditTransactionDraft>
+  action: EditTransactionDraftAction
 ): EditTransactionDraft {
-  return { ...draft, ...update };
+  if (action.type === "setDigits") {
+    return { ...draft, digits: resolveDigitsInput(draft.digits, action.digits) };
+  }
+
+  return { ...draft, ...action.update };
 }
 
 function resolveDigitsInput(currentDigits: string, input: DigitsInput): string {
@@ -92,14 +100,17 @@ export default function EditTransactionScreen() {
       );
 
       setDraft({
-        accountId: tx.accountId,
-        categoryId: tx.categoryId,
-        date: tx.date,
-        description: tx.description,
-        digits: String(tx.amount),
-        reclassificationProcessedEmailId: reviewEmail?.id ?? null,
-        source: tx.source ?? "manual",
-        type: tx.type,
+        type: "update",
+        update: {
+          accountId: tx.accountId,
+          categoryId: tx.categoryId,
+          date: tx.date,
+          description: tx.description,
+          digits: String(tx.amount),
+          reclassificationProcessedEmailId: reviewEmail?.id ?? null,
+          source: tx.source ?? "manual",
+          type: tx.type,
+        },
       });
       loadedRef.current = true;
     })();
@@ -176,11 +187,13 @@ export default function EditTransactionScreen() {
       date={draft.date}
       saveLabel={t("common.save")}
       isSaving={isSaving}
-      onTypeChange={(type) => setDraft({ type })}
-      onDigitsChange={(digits) => setDraft({ digits: resolveDigitsInput(draft.digits, digits) })}
-      onCategoryChange={(categoryId) => setDraft({ categoryId })}
-      onAccountChange={(accountId) => setDraft({ accountId })}
-      onDescriptionChange={(description) => setDraft({ description })}
+      onTypeChange={(type) => setDraft({ type: "update", update: { type } })}
+      onDigitsChange={(digits) => setDraft({ type: "setDigits", digits })}
+      onCategoryChange={(categoryId) => setDraft({ type: "update", update: { categoryId } })}
+      onAccountChange={(accountId) => setDraft({ type: "update", update: { accountId } })}
+      onDescriptionChange={(description) =>
+        setDraft({ type: "update", update: { description } })
+      }
       onSave={handleSave}
       onDelete={handleDelete}
       onClose={back}

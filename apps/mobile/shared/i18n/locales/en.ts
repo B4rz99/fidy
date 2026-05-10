@@ -659,6 +659,7 @@ const en = {
   // Settings
   settings: {
     title: "Settings",
+    openSettings: "Open settings",
     accountSection: "ACCOUNT",
     preferencesSection: "PREFERENCES",
     connectionsSection: "CONNECTIONS",
