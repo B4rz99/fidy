@@ -1,4 +1,3 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: integration test uses a real SQLite DB
 import { resolve } from "node:path";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
@@ -17,9 +16,12 @@ import {
   softDeleteGoal,
   updateGoal,
 } from "@/features/goals/public";
+import type { AnyDb } from "@/shared/db";
 
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
+
+const testDb = () => db as unknown as AnyDb;
 
 const USER_ID = "user-1";
 const CREATED_AT = "2026-03-01T00:00:00.000Z";
@@ -45,7 +47,7 @@ const insertGoalRow = (
     targetDate: string | null;
   }> = {}
 ) =>
-  insertGoal(db as any, {
+  insertGoal(testDb(), {
     id: overrides.id ?? "goal-1",
     userId: overrides.userId ?? USER_ID,
     name: overrides.name ?? "Emergency fund",
@@ -70,7 +72,7 @@ const insertContributionRow = (
     date: string;
   }> = {}
 ) =>
-  insertContribution(db as any, {
+  insertContribution(testDb(), {
     id: overrides.id ?? "contribution-1",
     goalId: overrides.goalId ?? "goal-1",
     userId: overrides.userId ?? USER_ID,
@@ -135,25 +137,25 @@ describe("goals repository", () => {
 
     contributionSummaryRows.forEach(insertContributionRow);
 
-    expect(getGoalsForUser(db as any, USER_ID)).toHaveLength(2);
-    expect(getGoalById(db as any, "goal-1")).toMatchObject({
+    expect(getGoalsForUser(testDb(), USER_ID)).toHaveLength(2);
+    expect(getGoalById(testDb(), "goal-1")).toMatchObject({
       id: "goal-1",
       name: "Emergency fund",
     });
-    expect(getContributionById(db as any, "contribution-2")).toMatchObject({
+    expect(getContributionById(testDb(), "contribution-2")).toMatchObject({
       id: "contribution-2",
       goalId: "goal-1",
       amount: 150000,
     });
 
-    softDeleteContribution(db as any, "contribution-3", DELETED_AT);
+    softDeleteContribution(testDb(), "contribution-3", DELETED_AT);
 
-    expect(getContributionsForGoal(db as any, "goal-1").map(({ id }) => id)).toEqual([
+    expect(getContributionsForGoal(testDb(), "goal-1").map(({ id }) => id)).toEqual([
       "contribution-2",
       "contribution-1",
     ]);
-    expect(getGoalCurrentAmount(db as any, "goal-1")).toBe(250000);
-    expect(getContributionMonthCount(db as any, "goal-1")).toBe(2);
+    expect(getGoalCurrentAmount(testDb(), "goal-1")).toBe(250000);
+    expect(getContributionMonthCount(testDb(), "goal-1")).toBe(2);
   });
 
   it("applies partial goal updates without overwriting omitted fields", () => {
@@ -165,7 +167,7 @@ describe("goals repository", () => {
     });
 
     updateGoal({
-      db: db as any,
+      db: testDb(),
       id: "goal-1",
       data: {
         name: "Renovation fund",
@@ -176,7 +178,7 @@ describe("goals repository", () => {
       now: "2026-04-01T12:00:00.000Z",
     });
 
-    expect(getGoalById(db as any, "goal-1")).toMatchObject(updatedGoalExpectation);
+    expect(getGoalById(testDb(), "goal-1")).toMatchObject(updatedGoalExpectation);
   });
 
   it("soft deletes a goal so it disappears from active listings but remains queryable by id", () => {
@@ -189,10 +191,10 @@ describe("goals repository", () => {
       name: "Vacation",
     });
 
-    softDeleteGoal(db as any, "goal-1", DELETED_AT);
+    softDeleteGoal(testDb(), "goal-1", DELETED_AT);
 
-    expect(getGoalsForUser(db as any, USER_ID).map(({ id }) => id)).toEqual(["goal-2"]);
-    expect(getGoalById(db as any, "goal-1")).toMatchObject({
+    expect(getGoalsForUser(testDb(), USER_ID).map(({ id }) => id)).toEqual(["goal-2"]);
+    expect(getGoalById(testDb(), "goal-1")).toMatchObject({
       id: "goal-1",
       deletedAt: DELETED_AT,
       updatedAt: DELETED_AT,

@@ -1,32 +1,36 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: integration test uses a real SQLite DB
 import { resolve } from "node:path";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { BudgetAlertState } from "@/features/budget/lib/monitoring";
+import type { BudgetAlertState, BudgetMonitoringPorts } from "@/features/budget/lib/monitoring";
 import { createBudgetMonitoringModule } from "@/features/budget/lib/monitoring";
 import { insertBudget } from "@/features/budget/lib/repository";
 import { insertTransaction } from "@/features/transactions/lib/repository";
+import type { AnyDb } from "@/shared/db";
 import type {
   BudgetId,
   CategoryId,
   CopAmount,
+  IsoDate,
   IsoDateTime,
   Month,
+  TransactionId,
   UserId,
 } from "@/shared/types/branded";
 
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
 
+const testDb = () => db as unknown as AnyDb;
+
 const USER_ID = "user-1" as UserId;
 const CURRENT_MONTH = "2026-03" as Month;
 const CURRENT_DATE = new Date(2026, 3, 18);
 
-const mockScheduleBudgetAlert = vi.fn();
-const mockInsertNotification = vi.fn();
-const mockResolveCategoryLabel = vi.fn(
+const mockScheduleBudgetAlert = vi.fn<BudgetMonitoringPorts["scheduleBudgetAlert"]>();
+const mockInsertNotification = vi.fn<(...args: unknown[]) => unknown>();
+const mockResolveCategoryLabel = vi.fn<(categoryId: CategoryId, locale: string) => string>(
   (categoryId: CategoryId, locale: string) => `${locale}:${categoryId}`
 );
 
@@ -52,7 +56,7 @@ const insertBudgetRow = (
     month: Month;
   }> = {}
 ) =>
-  insertBudget(db as any, {
+  insertBudget(testDb(), {
     id: (overrides.id ?? "budget-1") as BudgetId,
     userId: USER_ID,
     categoryId: (overrides.categoryId ?? "food") as CategoryId,
@@ -72,14 +76,14 @@ const insertExpense = (
     month: Month;
   }> = {}
 ) =>
-  insertTransaction(db as any, {
-    id: (overrides.id ?? "tx-1") as any,
+  insertTransaction(testDb(), {
+    id: (overrides.id ?? "tx-1") as TransactionId,
     userId: USER_ID,
     type: "expense",
     amount: (overrides.amount ?? 85000) as CopAmount,
     categoryId: (overrides.categoryId ?? "food") as CategoryId,
     description: "merchant",
-    date: (overrides.date ?? `${overrides.month ?? CURRENT_MONTH}-10`) as any,
+    date: (overrides.date ?? `${overrides.month ?? CURRENT_MONTH}-10`) as IsoDate,
     createdAt: "2026-03-10T10:00:00.000Z" as IsoDateTime,
     updatedAt: "2026-03-10T10:00:00.000Z" as IsoDateTime,
     deletedAt: null,
@@ -105,7 +109,7 @@ async function refreshCurrentMonth(
   }
 ) {
   return module.refreshMonth({
-    db: db as any,
+    db: testDb(),
     userId: USER_ID,
     month: CURRENT_MONTH,
     ...(previous ? { previous } : {}),
@@ -342,7 +346,9 @@ describe("createBudgetMonitoringModule", () => {
   it("loads transaction aggregates from the transactions query public surface", async () => {
     vi.resetModules();
 
-    const getSpendingByCategoryAggregateMock = vi.fn(() => [
+    const getSpendingByCategoryAggregateMock = vi.fn<
+      () => { categoryId: CategoryId; total: CopAmount }[]
+    >(() => [
       {
         categoryId: "food" as CategoryId,
         total: 85000 as CopAmount,
@@ -351,7 +357,7 @@ describe("createBudgetMonitoringModule", () => {
 
     vi.doMock("@/features/transactions/query.public", () => ({
       getSpendingByCategoryAggregate: getSpendingByCategoryAggregateMock,
-      getSpendingByCategoryDateRangeAggregate: vi.fn(() => []),
+      getSpendingByCategoryDateRangeAggregate: vi.fn<() => unknown[]>(() => []),
     }));
     vi.doMock("@/features/transactions/lib/repository", () => ({
       getSpendingByCategoryAggregate: () => {
@@ -362,9 +368,8 @@ describe("createBudgetMonitoringModule", () => {
       },
     }));
 
-    const { createBudgetMonitoringModule: createBudgetMonitoringModuleFromPublic } = await import(
-      "@/features/budget/lib/monitoring"
-    );
+    const { createBudgetMonitoringModule: createBudgetMonitoringModuleFromPublic } =
+      await import("@/features/budget/lib/monitoring");
 
     insertBudgetRow();
 
@@ -377,7 +382,7 @@ describe("createBudgetMonitoringModule", () => {
     });
 
     const result = await module.refreshMonth({
-      db: db as any,
+      db: testDb(),
       userId: USER_ID,
       month: CURRENT_MONTH,
       previous: {
@@ -408,7 +413,7 @@ describe("createBudgetMonitoringModule", () => {
     });
 
     const suggestions = createMonitoringModule().loadAutoSuggestions({
-      db: db as any,
+      db: testDb(),
       userId: USER_ID,
       month: CURRENT_MONTH,
       existingCategoryIds: new Set(["food" as CategoryId]),
@@ -437,7 +442,7 @@ describe("createBudgetMonitoringModule", () => {
     });
 
     const suggestions = createMonitoringModule().loadAutoSuggestions({
-      db: db as any,
+      db: testDb(),
       userId: USER_ID,
       month: CURRENT_MONTH,
       existingCategoryIds: new Set(["food" as CategoryId]),

@@ -193,19 +193,13 @@ vi.mock("react-native-reanimated", () => {
     default: Animated,
     FadeIn: { duration: () => ({ duration: () => "FadeIn" }) },
     FadeOut: { duration: () => ({ duration: () => "FadeOut" }) },
-    // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
-    useAnimatedStyle: (fn: any) => fn(),
-    // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
-    useSharedValue: (init: any) => ({ value: init }),
-    // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
-    withTiming: (val: any) => val,
-    // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
-    withRepeat: (val: any) => val,
-    // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
-    withSequence: (...vals: any[]) => vals[0],
+    useAnimatedStyle: (fn: () => unknown) => fn(),
+    useSharedValue: (init: unknown) => ({ value: init }),
+    withTiming: <T>(val: T) => val,
+    withRepeat: <T>(val: T) => val,
+    withSequence: <T>(...vals: T[]) => vals[0],
     cancelAnimation: createMock(),
-    // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
-    runOnJS: (fn: any) => fn,
+    runOnJS: <T extends (...args: unknown[]) => unknown>(fn: T) => fn,
   };
 });
 
