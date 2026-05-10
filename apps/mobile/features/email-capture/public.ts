@@ -2,13 +2,10 @@ export {
   dismissFinancialMeaningReview,
   getFinancialMeaningReviewItems,
   resolveFinancialMeaningReview,
-} from "@/features/email-capture/lib/financial-meaning-review";
-export {
-  insertMerchantRule,
-  lookupMerchantRule,
-} from "@/features/email-capture/lib/merchant-rules";
-export type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
-export { getNeedsReviewEmailByTransactionId } from "@/features/email-capture/lib/repository";
+} from "./lib/financial-meaning-review";
+export { insertMerchantRule, lookupMerchantRule } from "./lib/merchant-rules";
+export type { ProcessedEmailRow } from "./lib/repository";
+export { getNeedsReviewEmailByTransactionId } from "./lib/repository";
 export type { BankSender } from "./lib/bank-senders";
 export type { EmailProvider } from "./schema";
 export { getGmailClientId, getOutlookClientId } from "./schema";
