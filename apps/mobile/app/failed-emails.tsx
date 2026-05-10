@@ -8,7 +8,7 @@ import {
   dismissFailedEmail,
   type ProcessedEmailRow,
   useEmailCaptureStore,
-} from "@/features/email-capture/public";
+} from "@/features/email-capture";
 import { ScreenLayout } from "@/shared/components";
 import { Info, Plus, TriangleAlert } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";

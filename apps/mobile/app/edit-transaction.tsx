@@ -2,7 +2,7 @@ import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useState } from "react";
 import { useOptionalUserId } from "@/features/auth";
-import { getNeedsReviewEmailByTransactionId } from "@/features/email-capture/public";
+import { getNeedsReviewEmailByTransactionId } from "@/features/email-capture";
 import {
   type FinancialAccountRow,
   getFinancialAccountsForUser,

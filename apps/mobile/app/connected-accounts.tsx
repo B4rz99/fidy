@@ -10,7 +10,7 @@ import {
   getGmailClientId,
   getOutlookClientId,
   useEmailCaptureStore,
-} from "@/features/email-capture/public";
+} from "@/features/email-capture";
 import { ScreenLayout } from "@/shared/components";
 import { Mail } from "@/shared/components/icons";
 import { Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
