@@ -61,7 +61,11 @@ vi.mock("expo-constants", () => ({
 
 describe("push-token service", () => {
   beforeEach(() => {
+    vi.resetModules();
     vi.clearAllMocks();
+    mockGetExpoPushTokenAsync.mockReset();
+    mockGetPermissionsAsync.mockReset();
+    mockEq.mockReset();
     vi.useRealTimers();
     mockGetPermissionsAsync.mockResolvedValue({
       status: "granted",
@@ -131,23 +135,53 @@ describe("push-token service", () => {
       expect(mockUpsert).not.toHaveBeenCalled();
     });
 
-    it("retries canceled fetches when requesting the Expo push token", async () => {
-      vi.useFakeTimers();
+    it("deduplicates concurrent Expo push token registration", async () => {
+      let resolveToken: (value: { data: string }) => void = () => undefined;
+      mockGetExpoPushTokenAsync.mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveToken = resolve;
+        })
+      );
+
+      const { registerPushToken } = await import("@/features/notifications/services/push-token");
+      const first = registerPushToken(MOCK_USER_ID);
+      const second = registerPushToken(MOCK_USER_ID);
+
+      resolveToken({ data: MOCK_TOKEN });
+
+      await expect(first).resolves.toBe(MOCK_TOKEN);
+      await expect(second).resolves.toBe(MOCK_TOKEN);
+      expect(mockGetExpoPushTokenAsync).toHaveBeenCalledTimes(1);
+    });
+
+    it("cooldowns canceled fetches instead of retrying token registration immediately", async () => {
+      vi.useFakeTimers({ now: new Date("2026-05-10T10:00:00.000Z") });
       mockGetExpoPushTokenAsync
         .mockRejectedValueOnce(new Error("fetch failed: Fetch request has been canceled"))
         .mockResolvedValueOnce({ data: MOCK_TOKEN });
 
       const { registerPushToken } = await import("@/features/notifications/services/push-token");
-      const result = registerPushToken(MOCK_USER_ID);
 
-      await vi.advanceTimersByTimeAsync(750);
+      await expect(registerPushToken(MOCK_USER_ID)).resolves.toBeNull();
+      await expect(registerPushToken(MOCK_USER_ID)).resolves.toBeNull();
 
-      await expect(result).resolves.toBe(MOCK_TOKEN);
-      expect(mockGetExpoPushTokenAsync).toHaveBeenCalledTimes(2);
-      expect(mockUpsert).toHaveBeenCalledWith(
-        expect.objectContaining({ expo_push_token: MOCK_TOKEN }),
-        { onConflict: "user_id,expo_push_token" }
+      expect(mockGetExpoPushTokenAsync).toHaveBeenCalledTimes(1);
+      expect(mockUpsert).not.toHaveBeenCalled();
+    });
+
+    it("cooldowns aborted fetches instead of retrying token registration immediately", async () => {
+      vi.useFakeTimers({ now: new Date("2026-05-10T10:00:00.000Z") });
+      mockGetExpoPushTokenAsync.mockRejectedValueOnce(
+        new Error("fetch failed: The operation was aborted.")
       );
+
+      const { registerPushToken } = await import("@/features/notifications/services/push-token");
+
+      await expect(registerPushToken(MOCK_USER_ID)).resolves.toBeNull();
+      await expect(registerPushToken(MOCK_USER_ID)).resolves.toBeNull();
+
+      expect(mockGetExpoPushTokenAsync).toHaveBeenCalledTimes(1);
+      expect(mockUpsert).not.toHaveBeenCalled();
     });
 
     it("upserts known listener tokens without fetching a fresh Expo token", async () => {
