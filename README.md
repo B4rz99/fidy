@@ -26,6 +26,25 @@ Fidy is designed for people who want to:
 - **Recovery should not require plaintext sync.** Remote recovery uses Encrypted Backups instead of storing readable financial records on Fidy servers.
 - **Cloud AI is task-scoped.** When remote AI processing is needed, Fidy sends the minimum financial context needed for that task.
 
+## Features
+
+- Digital transaction capture from supported payment and notification surfaces.
+- Local-first ledger for transactions, transfers, accounts, budgets, goals, and financial derivations.
+- Capture evidence interpretation for turning raw signals into reviewable financial records.
+- AI-assisted transaction interpretation and personal finance guidance.
+- Private recovery through encrypted backups instead of plaintext financial sync.
+- Mobile-first flows for everyday budgeting, goal tracking, and financial review.
+
+## Stack
+
+- **Mobile app**: Expo, React Native, Expo Router, React 19.
+- **Local data**: Expo SQLite, Drizzle ORM, branded TypeScript domain types.
+- **State and data fetching**: Zustand, TanStack Query, Effect.
+- **Backend services**: Supabase Auth, Supabase Edge Functions, scoped remote APIs.
+- **Styling and UI**: NativeWind, Tailwind CSS, Expo UI, React Native vector icons.
+- **Observability and analytics**: Sentry and PostHog.
+- **Tooling**: Bun workspaces, TypeScript, Vitest, Oxlint, Oxfmt, dependency-cruiser.
+
 ## What Is In This Repo
 
 This is the Fidy monorepo. It contains the mobile app, landing site, shared packages, Supabase functions, and project automation.
