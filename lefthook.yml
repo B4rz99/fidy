@@ -1,14 +1,14 @@
-version: '2'
+version: "2"
 
 pre-commit:
   commands:
     oxlint:
-      glob: '*.{js,jsx,ts,tsx}'
+      glob: "*.{js,jsx,ts,tsx}"
       run: bunx oxlint --fix {staged_files}
       skip_output: errors
     format:
-      glob: '*.{js,jsx,ts,tsx,json}'
-      run: bunx biome format --write {staged_files}
+      glob: "*.{js,jsx,ts,tsx,json}"
+      run: bunx oxfmt --write {staged_files}
       skip_output: errors
 
 commit-msg:

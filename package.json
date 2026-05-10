@@ -2,7 +2,6 @@
   "name": "fidy-monorepo",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "bun@1.3.10",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -46,8 +45,14 @@
     "test": "bun run test:brands && bun run test:bootstrap-registry && bun run test:feature-public-imports && bun run test:file-size && bun run test:theme-colors && bun run test:complexity && bun run test:mobile",
     "test:coverage": "bun run --cwd apps/mobile --shell=bun test:coverage",
     "perf:bundle:mobile": "bun run --cwd apps/mobile --shell=bun bundle:atlas",
-    "lint": "bunx oxlint .",
-    "format": "bunx biome format --write .",
+    "lint": "bunx oxlint --import-plugin --react-plugin --vitest-plugin --promise-plugin .",
+    "lint:oxc:type-aware": "bunx oxlint --import-plugin --react-plugin --vitest-plugin --promise-plugin --type-aware .",
+    "format": "bunx oxfmt --write .",
+    "format:check": "bunx oxfmt --check .",
+    "format:oxfmt": "bunx oxfmt --write .",
+    "format:oxfmt:check": "bunx oxfmt --check .",
+    "format:biome": "bunx biome format --write .",
+    "format:biome:check": "bunx biome format .",
     "verify": "bun run lint && bun run lint:brands && bun run lint:mobile && bun run lint:complexity && bun run lint:file-size && bun run lint:theme-colors && bun run lint:dependency-policy && bun run lint:architecture && bun run typecheck && bun run test"
   },
   "devDependencies": {
@@ -57,8 +62,11 @@
     "jscpd": "4.0.9",
     "knip": "6.11.0",
     "lefthook": "2.1.1",
+    "oxfmt": "0.47.0",
     "oxlint": "1.62.0",
+    "oxlint-tsgolint": "0.22.1",
     "typescript": "6.0.3",
     "xcodebuildmcp": "2.3.2"
-  }
+  },
+  "packageManager": "bun@1.3.10"
 }
