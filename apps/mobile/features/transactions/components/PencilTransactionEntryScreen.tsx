@@ -133,7 +133,7 @@ export function PencilTransactionEntryScreen() {
       />
       <PencilEntryField
         icon={Wallet}
-        label={`${t("common.account")}:`}
+        label=""
         value={selectedAccount?.name}
         onPress={() => setUiState({ sheet: "account" })}
       />
