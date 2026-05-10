@@ -46,7 +46,7 @@ export function useSearchInitialization(args: SearchInitializationArgs) {
     const handle = runAfterNavigationTransition(
       navigation,
       () => bootstrapSearch(args, inputRef as SearchInputRef, setReady),
-      { closing: false }
+      { closing: false, fallbackMs: null }
     );
 
     return () => {
