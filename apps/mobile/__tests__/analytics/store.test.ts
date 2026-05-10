@@ -7,7 +7,7 @@ import {
 } from "@/features/analytics/store";
 import type { CategoryId, CopAmount, UserId } from "@/shared/types/branded";
 
-const mockLoadSnapshot = vi.fn();
+const mockLoadSnapshot = vi.fn<(...args: unknown[]) => Promise<unknown>>();
 
 vi.mock("@/features/analytics/services/create-analytics-service", () => ({
   createAnalyticsService: () => ({
