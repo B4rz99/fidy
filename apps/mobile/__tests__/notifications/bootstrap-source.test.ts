@@ -12,7 +12,9 @@ describe("notification bootstrap", () => {
     expect(source).toContain("registerCurrentPushToken(userId)");
     expect(source).toContain("addPushTokenListener");
     expect(source).toContain("addPushTokenListener(() =>");
-    expect(source).toMatch(/addPushTokenListener\(\(\) => \{\s+registerCurrentPushToken\(userId\);\s+\}\)/);
+    expect(source).toMatch(
+      /addPushTokenListener\(\(\) => \{\s+registerCurrentPushToken\(userId\);\s+\}\)/
+    );
     expect(source).not.toContain("registerKnownPushToken(userId, token.data)");
   });
 
