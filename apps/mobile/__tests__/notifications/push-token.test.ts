@@ -5,6 +5,7 @@ import type { UserId } from "@/shared/types/branded";
 const PROJECT_ID = "78256cac-010c-40e8-a651-4cc4b6000e41";
 const MOCK_TOKEN = "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]";
 const MOCK_USER_ID = "user-123" as UserId;
+const OTHER_USER_ID = "user-456" as UserId;
 
 // --- Supabase mock ---
 const mockUpsert = vi.fn<(...args: any[]) => any>(() => Promise.resolve({ error: null }));
@@ -154,6 +155,33 @@ describe("push-token service", () => {
       expect(mockGetExpoPushTokenAsync).toHaveBeenCalledTimes(1);
     });
 
+    it("keeps concurrent Expo push token registration separate by user", async () => {
+      mockGetExpoPushTokenAsync
+        .mockResolvedValueOnce({ data: "ExponentPushToken[first]" })
+        .mockResolvedValueOnce({ data: "ExponentPushToken[second]" });
+
+      const { registerPushToken } = await import("@/features/notifications/services/push-token");
+
+      await expect(
+        Promise.all([registerPushToken(MOCK_USER_ID), registerPushToken(OTHER_USER_ID)])
+      ).resolves.toEqual(["ExponentPushToken[first]", "ExponentPushToken[second]"]);
+      expect(mockGetExpoPushTokenAsync).toHaveBeenCalledTimes(2);
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: MOCK_USER_ID,
+          expo_push_token: "ExponentPushToken[first]",
+        }),
+        { onConflict: "user_id,expo_push_token" }
+      );
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: OTHER_USER_ID,
+          expo_push_token: "ExponentPushToken[second]",
+        }),
+        { onConflict: "user_id,expo_push_token" }
+      );
+    });
+
     it("cooldowns canceled fetches instead of retrying token registration immediately", async () => {
       vi.useFakeTimers({ now: new Date("2026-05-10T10:00:00.000Z") });
       mockGetExpoPushTokenAsync
@@ -167,6 +195,24 @@ describe("push-token service", () => {
 
       expect(mockGetExpoPushTokenAsync).toHaveBeenCalledTimes(1);
       expect(mockUpsert).not.toHaveBeenCalled();
+    });
+
+    it("does not let one user's transient cooldown block another user", async () => {
+      vi.useFakeTimers({ now: new Date("2026-05-10T10:00:00.000Z") });
+      mockGetExpoPushTokenAsync
+        .mockRejectedValueOnce(new Error("fetch failed: Fetch request has been canceled"))
+        .mockResolvedValueOnce({ data: MOCK_TOKEN });
+
+      const { registerPushToken } = await import("@/features/notifications/services/push-token");
+
+      await expect(registerPushToken(MOCK_USER_ID)).resolves.toBeNull();
+      await expect(registerPushToken(OTHER_USER_ID)).resolves.toBe(MOCK_TOKEN);
+
+      expect(mockGetExpoPushTokenAsync).toHaveBeenCalledTimes(2);
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({ user_id: OTHER_USER_ID, expo_push_token: MOCK_TOKEN }),
+        { onConflict: "user_id,expo_push_token" }
+      );
     });
 
     it("cooldowns aborted fetches instead of retrying token registration immediately", async () => {

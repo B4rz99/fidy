@@ -9,8 +9,8 @@ const easConfig = Constants.expoConfig?.extra?.eas as { projectId?: string } | u
 export const PROJECT_ID = easConfig?.projectId ?? "";
 const TRANSIENT_PUSH_TOKEN_COOLDOWN_MS = 60_000;
 
-let pushTokenRegistration: Promise<string | null> | null = null;
-let transientPushTokenFailureUntil = 0;
+const pushTokenRegistrations = new Map<UserId, Promise<string | null>>();
+const transientPushTokenFailureUntilByUserId = new Map<UserId, number>();
 
 const isTransientPushTokenFetchError = (error: unknown): boolean =>
   error instanceof Error &&
@@ -46,14 +46,17 @@ async function upsertPushToken(userId: UserId, token: string): Promise<string | 
  * Called after permission grant and on app launch (idempotent upsert).
  */
 export async function registerPushToken(userId: UserId): Promise<string | null> {
-  if (Date.now() < transientPushTokenFailureUntil) return null;
-  if (pushTokenRegistration !== null) return pushTokenRegistration;
+  if (Date.now() < (transientPushTokenFailureUntilByUserId.get(userId) ?? 0)) return null;
 
-  pushTokenRegistration = registerPushTokenOnce(userId).finally(() => {
-    pushTokenRegistration = null;
+  const existingRegistration = pushTokenRegistrations.get(userId);
+  if (existingRegistration !== undefined) return existingRegistration;
+
+  const registration = registerPushTokenOnce(userId).finally(() => {
+    pushTokenRegistrations.delete(userId);
   });
+  pushTokenRegistrations.set(userId, registration);
 
-  return pushTokenRegistration;
+  return registration;
 }
 
 async function registerPushTokenOnce(userId: UserId): Promise<string | null> {
@@ -66,7 +69,10 @@ async function registerPushTokenOnce(userId: UserId): Promise<string | null> {
     return await upsertPushToken(userId, token);
   } catch (err) {
     if (isTransientPushTokenFetchError(err)) {
-      transientPushTokenFailureUntil = Date.now() + TRANSIENT_PUSH_TOKEN_COOLDOWN_MS;
+      transientPushTokenFailureUntilByUserId.set(
+        userId,
+        Date.now() + TRANSIENT_PUSH_TOKEN_COOLDOWN_MS
+      );
     }
     captureWarning("push_token_register_failed", {
       errorType: err instanceof Error ? err.message : "unknown",
