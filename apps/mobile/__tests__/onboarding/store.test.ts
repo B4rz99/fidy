@@ -6,9 +6,9 @@ import type * as CheckOnboarding from "@/features/onboarding/lib/check-onboardin
 
 const { mockLogOnboardingEvent, mockMarkOnboardingComplete, mockTrackOnboardingEvent } = vi.hoisted(
   () => ({
-    mockLogOnboardingEvent: vi.fn(),
-    mockMarkOnboardingComplete: vi.fn(() => Promise.resolve()),
-    mockTrackOnboardingEvent: vi.fn(),
+    mockLogOnboardingEvent: vi.fn<(...args: unknown[]) => void>(),
+    mockMarkOnboardingComplete: vi.fn<() => Promise<void>>(() => Promise.resolve()),
+    mockTrackOnboardingEvent: vi.fn<(...args: unknown[]) => void>(),
   })
 );
 
