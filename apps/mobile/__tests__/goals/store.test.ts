@@ -12,9 +12,9 @@ import { insertNotificationRecord } from "@/features/notifications";
 import type * as SharedLib from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 
-const mockLoadGoals = vi.fn();
-const mockLoadGoalContributions = vi.fn();
-const mockCommit = vi.fn();
+const mockLoadGoals = vi.fn<(...args: unknown[]) => Promise<unknown>>();
+const mockLoadGoalContributions = vi.fn<(...args: unknown[]) => Promise<unknown>>();
+const mockCommit = vi.fn<(...args: unknown[]) => Promise<unknown>>();
 
 const baseGoalSnapshot: GoalWithProgress = {
   goal: {
@@ -57,20 +57,20 @@ vi.mock("@/mutations", () => ({
 }));
 
 vi.mock("@/features/notifications", () => ({
-  insertNotificationRecord: vi.fn(),
-  scheduleLocalPush: vi.fn(),
+  insertNotificationRecord: vi.fn<() => void>(),
+  scheduleLocalPush: vi.fn<() => void>(),
 }));
 
 vi.mock("@/shared/lib", async () => {
   const actual = await vi.importActual<typeof SharedLib>("@/shared/lib");
   return {
     ...actual,
-    captureError: vi.fn(),
-    generateId: vi.fn(() => "goal-generated"),
-    toIsoDateTime: vi.fn(() => "2026-04-18T10:00:00.000Z"),
-    trackGoalContributionAdded: vi.fn(),
-    trackGoalCreated: vi.fn(),
-    trackGoalMilestoneReached: vi.fn(),
+    captureError: vi.fn<() => void>(),
+    generateId: vi.fn<() => string>(() => "goal-generated"),
+    toIsoDateTime: vi.fn<() => string>(() => "2026-04-18T10:00:00.000Z"),
+    trackGoalContributionAdded: vi.fn<() => void>(),
+    trackGoalCreated: vi.fn<() => void>(),
+    trackGoalMilestoneReached: vi.fn<() => void>(),
   };
 });
 
