@@ -1,3 +1,5 @@
+import { extractEmailDomain } from "@/shared/lib.public";
+
 export type BankSender = {
   readonly bank: string;
   readonly email: string;
@@ -11,8 +13,7 @@ export const DEFAULT_BANK_SENDERS: readonly BankSender[] = [
 ] as const;
 
 export function extractDomain(email: string): string {
-  const atIdx = email.lastIndexOf("@");
-  return atIdx >= 0 ? email.slice(atIdx + 1).toLowerCase() : email.toLowerCase();
+  return extractEmailDomain(email);
 }
 
 export function isBankSender(from: string, senders: readonly BankSender[]): boolean {

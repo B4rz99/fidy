@@ -1,8 +1,10 @@
 import { relinkCaptureEvidenceToTransfer } from "@/features/capture-evidence/public";
-import { updateProcessedEmailStatusInTransaction } from "@/features/email-capture/lib/repository";
-import { getTransactionById, upsertTransaction } from "@/features/transactions/lib/repository";
-import { toIsoDateTime } from "@/shared/lib/format-date";
-import { generateTransferId } from "@/shared/lib/generate-id";
+import { markProcessedEmailReclassifiedAsTransfer } from "@/features/email-capture/transfer-reclassification.public";
+import {
+  getTransactionById,
+  markTransactionSuperseded,
+} from "@/features/transactions/transfer-reclassification.public";
+import { generateTransferId, toIsoDateTime } from "@/shared/lib.public";
 import type {
   IsoDateTime,
   ProcessedEmailId,
@@ -36,9 +38,9 @@ type ReclassifyTransactionAsTransferDeps = {
   readonly createId?: () => TransferId;
   readonly saveTransferRow?: (db: Parameters<typeof saveTransfer>[0], row: TransferRow) => void;
   readonly loadTransactionById?: typeof getTransactionById;
-  readonly saveTransactionRow?: typeof upsertTransaction;
+  readonly saveTransactionRow?: typeof markTransactionSuperseded;
   readonly relinkEvidenceToTransfer?: typeof relinkCaptureEvidenceToTransfer;
-  readonly saveProcessedEmailStatus?: typeof updateProcessedEmailStatusInTransaction;
+  readonly saveProcessedEmailStatus?: typeof markProcessedEmailReclassifiedAsTransfer;
 };
 
 export type ReclassifyTransactionAsTransferError = TransferBuildError | "transactionNotFound";
@@ -55,9 +57,9 @@ export function reclassifyTransactionAsTransfer(
     createId = generateTransferId,
     saveTransferRow = saveTransfer,
     loadTransactionById = getTransactionById,
-    saveTransactionRow = upsertTransaction,
+    saveTransactionRow = markTransactionSuperseded,
     relinkEvidenceToTransfer = relinkCaptureEvidenceToTransfer,
-    saveProcessedEmailStatus = updateProcessedEmailStatusInTransaction,
+    saveProcessedEmailStatus = markProcessedEmailReclassifiedAsTransfer,
   }: ReclassifyTransactionAsTransferDeps = {}
 ): ReclassifyTransactionAsTransferResult {
   const existingTransaction = loadTransactionById(db, input.transactionId);
@@ -110,7 +112,6 @@ export function reclassifyTransactionAsTransfer(
       saveProcessedEmailStatus({
         db: tx,
         id: input.processedEmailId,
-        status: "success",
         transactionId: existingTransaction.id,
       });
     }

@@ -1,7 +1,6 @@
 import type { CaptureEvidenceRow, CaptureEvidenceSeed } from "@/features/capture-evidence/public";
-import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
-import type { TransactionRow } from "@/features/transactions/lib/repository";
+import type { TransactionRow } from "@/features/transactions/query.public";
 import type { AnyDb } from "@/shared/db";
 import type { AppClock } from "@/shared/effect/clock";
 import type { AppTelemetry } from "@/shared/effect/telemetry";
@@ -12,11 +11,12 @@ import type {
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
+import type { ProcessedEmailRow } from "../../lib/repository";
 import type { RawEmail } from "../../schema";
 import type { ParseContext } from "../create-parse-email-service";
 import type { LlmParsedTransaction } from "../llm-parser";
 
-export type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
+export type { ProcessedEmailRow } from "../../lib/repository";
 export type {
   CategoryId,
   IsoDateTime,
