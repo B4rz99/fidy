@@ -9,7 +9,7 @@ import {
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useFonts } from "expo-font";
 import { getLocales } from "expo-localization";
-import { type Href, Stack, useRouter, useSegments } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useCallback } from "react";
@@ -88,7 +88,7 @@ function AuthenticatedShell({
   const captureUserId = enableRemoteEffects ? userId : null;
   const navigateToRoute = useCallback(
     (route: string) => {
-      router.push(route as Href);
+      router.push(route);
     },
     [router]
   );
@@ -172,7 +172,7 @@ function RootLayout() {
       } else if (userId && !onboardingComplete && !inOnboarding && !inOnboardingAllowedRoute) {
         router.replace("/(auth)/onboarding");
       } else if (userId && onboardingComplete && inAuthGroup) {
-        router.replace("/(tabs)/(index)" as never);
+        router.replace("/(tabs)/(index)");
       }
     },
     [localQaAvailable, onboardingComplete, router, segments, userId],

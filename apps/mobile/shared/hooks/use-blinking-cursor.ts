@@ -8,13 +8,15 @@ import {
   withTiming,
 } from "react-native-reanimated";
 
+type OpacityAnimatedStyle = ReturnType<typeof useAnimatedStyle<{ opacity: number }>>;
+
 /**
  * Returns a Reanimated animated style that blinks opacity on/off at ~1Hz.
  * Use for text-cursor indicators in amount-input screens.
  */
 export function useBlinkingCursor(): {
   cursorOpacity: SharedValue<number>;
-  cursorStyle: { opacity: number };
+  cursorStyle: OpacityAnimatedStyle;
 } {
   const cursorOpacity = useSharedValue(1);
 

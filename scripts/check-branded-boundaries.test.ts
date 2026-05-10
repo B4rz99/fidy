@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
@@ -126,6 +126,20 @@ describe("check-branded-boundaries", () => {
         'export const schemaUserId = "user-1" as UserId;',
       ].join("\n"),
     });
+
+    const violations = collectBrandedBoundaryViolations({ rootDir: root });
+
+    expect(violations).toHaveLength(0);
+  });
+
+  test("ignores generated native directories", () => {
+    const root = createFixtureRoot({});
+    const generatedHeaderDirectory = path.join(root, "apps/mobile/ios/Pods/Headers/Public");
+    mkdirSync(generatedHeaderDirectory, { recursive: true });
+    symlinkSync(
+      path.join(root, "apps/mobile/ios/Pods/MissingHeader.h"),
+      path.join(generatedHeaderDirectory, "NativeMicrotasks.h")
+    );
 
     const violations = collectBrandedBoundaryViolations({ rootDir: root });
 

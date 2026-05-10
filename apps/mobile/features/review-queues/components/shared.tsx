@@ -76,6 +76,7 @@ export function ActionButton({
   const card = useThemeColor("card");
   const borderSubtle = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
+  const onAccent = useThemeColor("onAccent");
   const peachLight = useThemeColor("peachLight");
 
   const buttonStyle = (() => {
@@ -84,7 +85,7 @@ export function ActionButton({
     return { backgroundColor: peachLight, borderColor: peachLight };
   })();
   const labelColor = (() => {
-    if (variant === "solid") return "#FFFFFF";
+    if (variant === "solid") return onAccent;
     if (variant === "ghost") return secondary;
     return primary;
   })();

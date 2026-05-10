@@ -6,6 +6,11 @@
       "reason": "Major v8 migration needs a dedicated Sentry PR with config review, source map verification, and native QA."
     },
     {
+      "name": "@shopify/flash-list",
+      "until": "2026-06-01",
+      "reason": "Expo SDK 56 expects 2.0.2; newer native versions need Expo compatibility confirmation."
+    },
+    {
       "name": "eslint",
       "until": "2026-06-01",
       "reason": "ESLint 10 should wait for eslint-config-expo compatibility confirmation."
