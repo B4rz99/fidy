@@ -5,9 +5,11 @@ type MockImplementation<TArgs extends readonly unknown[] = [], TReturn = void> =
   ...args: TArgs
 ) => TReturn;
 
-const createMock = <TArgs extends readonly unknown[] = [], TReturn = void>(
-  implementation?: MockImplementation<TArgs, TReturn>
-) => vi.fn<MockImplementation<TArgs, TReturn>>(implementation);
+const { createMock } = vi.hoisted(() => ({
+  createMock: <TArgs extends readonly unknown[] = [], TReturn = void>(
+    implementation?: MockImplementation<TArgs, TReturn>
+  ) => vi.fn<MockImplementation<TArgs, TReturn>>(implementation),
+}));
 
 process.env.EXPO_PUBLIC_GMAIL_CLIENT_ID = "test-gmail-client-id.apps.googleusercontent.com";
 process.env.EXPO_PUBLIC_OUTLOOK_CLIENT_ID = "test-outlook-client-id";
