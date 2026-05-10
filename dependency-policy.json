@@ -1,11 +1,6 @@
 {
   "deferredUpdates": [
     {
-      "name": "@supabase/supabase-js",
-      "until": "2026-06-01",
-      "reason": "Minor dependency update should land in a dedicated maintenance PR with Supabase auth/database smoke checks."
-    },
-    {
       "name": "@sentry/react-native",
       "until": "2026-06-01",
       "reason": "Major v8 migration needs a dedicated Sentry PR with config review, source map verification, and native QA."
@@ -26,26 +21,6 @@
       "reason": "ESLint 10 should wait for eslint-config-expo compatibility confirmation."
     },
     {
-      "name": "knip",
-      "until": "2026-06-01",
-      "reason": "Minor dependency update should land in a dedicated tooling PR so unused-code reports can be reviewed separately."
-    },
-    {
-      "name": "lucide-react-native",
-      "until": "2026-06-01",
-      "reason": "Minor dependency update should land in a dedicated UI dependency PR with icon rendering smoke checks."
-    },
-    {
-      "name": "oxlint",
-      "until": "2026-06-01",
-      "reason": "Minor dependency update should land in a dedicated tooling PR so lint output changes can be reviewed separately."
-    },
-    {
-      "name": "posthog-react-native",
-      "until": "2026-06-01",
-      "reason": "Minor dependency update should land in a dedicated analytics PR with event capture smoke checks."
-    },
-    {
       "name": "react-native",
       "until": "2026-06-01",
       "reason": "Expo SDK 55 expects react-native 0.83.6; npm latest is outside the supported Expo native set."
@@ -64,11 +39,6 @@
       "name": "tailwindcss",
       "until": "2026-06-01",
       "reason": "Tailwind 4 requires NativeWind compatibility proof and a dedicated styling migration."
-    },
-    {
-      "name": "zod",
-      "until": "2026-06-01",
-      "reason": "Minor dependency update should land in a dedicated schema-validation PR with parser regression checks."
     }
   ]
 }
