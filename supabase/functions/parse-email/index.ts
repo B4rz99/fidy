@@ -85,6 +85,18 @@ The text is short (1-2 lines). Apply the same rules:
 Category guide — pick based on the MERCHANT NAME:
 ${CATEGORY_GUIDE}`;
 
+function getSystemPrompt(mode: string): string {
+  if (mode === "classify") {
+    return CLASSIFY_SYSTEM;
+  }
+
+  if (mode === "parse_notification") {
+    return NOTIFICATION_PARSE_SYSTEM;
+  }
+
+  return FULL_PARSE_SYSTEM;
+}
+
 const CLASSIFY_SCHEMA = {
   name: "classify_result",
   strict: true,
@@ -309,12 +321,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt =
-      mode === "classify"
-        ? CLASSIFY_SYSTEM
-        : mode === "parse_notification"
-          ? NOTIFICATION_PARSE_SYSTEM
-          : FULL_PARSE_SYSTEM;
+    const systemPrompt = getSystemPrompt(mode);
     const jsonSchema = mode === "classify" ? CLASSIFY_SCHEMA : CAPTURE_INTERPRETER_SCHEMA;
     const maxLength = mode === "parse_notification" ? 500 : 2000;
     // Truncate to focus on transaction details, skip legal/footer noise
