@@ -67,14 +67,14 @@ function makeRow(overrides: StoredRowOverrides = {}) {
 
 describe("transaction query service", () => {
   it("loads an initial snapshot with page and aggregate data", () => {
-    const getTransactionsPaginated = vi.fn().mockReturnValue([makeRow()]);
+    const getTransactionsPaginated = vi.fn<(...args: any[]) => any>().mockReturnValue([makeRow()]);
     const service = createTransactionQueryService({
       getTransactionsPaginated,
       getSpendingByCategoryAggregate: vi
-        .fn()
+        .fn<(...args: any[]) => any>()
         .mockReturnValue([{ categoryId: "food" as CategoryId, total: 1200 as CopAmount }]),
       getDailySpendingAggregate: vi
-        .fn()
+        .fn<(...args: any[]) => any>()
         .mockReturnValue([{ date: "2026-04-12" as IsoDate, total: 1200 as CopAmount }]),
       getNow: testNow,
     });
@@ -100,7 +100,7 @@ describe("transaction query service", () => {
   });
 
   it("marks refresh snapshots as unchanged when ids and updatedAt values match", () => {
-    const getTransactionsPaginated = vi.fn().mockReturnValue([
+    const getTransactionsPaginated = vi.fn<(...args: any[]) => any>().mockReturnValue([
       makeRow({
         id: "tx-1" as TransactionId,
         updatedAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
@@ -108,8 +108,8 @@ describe("transaction query service", () => {
     ]);
     const service = createTransactionQueryService({
       getTransactionsPaginated,
-      getSpendingByCategoryAggregate: vi.fn().mockReturnValue([]),
-      getDailySpendingAggregate: vi.fn().mockReturnValue([]),
+      getSpendingByCategoryAggregate: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
+      getDailySpendingAggregate: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
       getNow: testNow,
     });
 
@@ -133,10 +133,10 @@ describe("transaction query service", () => {
   });
 
   it("uses an inclusive 30-day daily-spending window", () => {
-    const getDailySpendingAggregate = vi.fn().mockReturnValue([]);
+    const getDailySpendingAggregate = vi.fn<(...args: any[]) => any>().mockReturnValue([]);
     const service = createTransactionQueryService({
-      getTransactionsPaginated: vi.fn().mockReturnValue([]),
-      getSpendingByCategoryAggregate: vi.fn().mockReturnValue([]),
+      getTransactionsPaginated: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
+      getSpendingByCategoryAggregate: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
       getDailySpendingAggregate,
       getNow: testNow,
     });
@@ -155,8 +155,8 @@ describe("transaction query service", () => {
   });
 
   it("returns null for deleted or cross-user transaction lookups", () => {
-    const getTransactionById = vi
-      .fn()
+    const getTransactionById = vi.fn<(...args: any[]) => any>();
+    getTransactionById
       .mockReturnValueOnce(makeRow({ userId: "user-2" as UserId }))
       .mockReturnValueOnce(makeRow({ deletedAt: "2026-04-13T08:00:00.000Z" as IsoDateTime }));
     const service = createTransactionQueryService({ getTransactionById });

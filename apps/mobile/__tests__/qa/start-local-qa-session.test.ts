@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { startLocalQaSession } from "@/features/qa";
 import type * as LocalSession from "@/features/qa/local-session";
 
-const mockClear = vi.fn(() => Promise.resolve());
-const mockSetLocalOnboardingComplete = vi.fn();
-const mockOnboardingReset = vi.fn();
+const mockClear = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
+const mockSetLocalOnboardingComplete = vi.fn<(...args: any[]) => any>();
+const mockOnboardingReset = vi.fn<(...args: any[]) => any>();
 const mockResetDbForUser = vi.fn<(userId: string) => Promise<void>>(() => Promise.resolve());
 const mockGetDb = vi.fn<(userId: string) => { _: string }>(() => ({ _: "db" }));
 const mockMigrate = vi.fn<(db: unknown, config: unknown) => Promise<void>>(() => Promise.resolve());
@@ -14,7 +14,7 @@ const mockUpsertTransfer = vi.fn<(db: unknown, row: unknown) => void>();
 const mockPersistLocalQaSession = vi.fn<(session: unknown) => Promise<void>>(() =>
   Promise.resolve()
 );
-const mockQueryClientClear = vi.fn();
+const mockQueryClientClear = vi.fn<(...args: any[]) => any>();
 
 const session = {
   userId: "qa-local-transfer-ready" as never,

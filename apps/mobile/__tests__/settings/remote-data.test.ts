@@ -14,14 +14,14 @@ import es from "@/shared/i18n/locales/es";
 import type { UserId } from "@/shared/types/branded";
 
 vi.mock("@/shared/db", () => ({
-  getSupabase: vi.fn(),
+  getSupabase: vi.fn<(...args: any[]) => any>(),
 }));
 
-const mockSelect = vi.fn();
-const mockEq = vi.fn();
-const mockMaybeSingle = vi.fn();
-const mockUpsert = vi.fn();
-const mockFrom = vi.fn((_table: string) => ({
+const mockSelect = vi.fn<(...args: any[]) => any>();
+const mockEq = vi.fn<(...args: any[]) => any>();
+const mockMaybeSingle = vi.fn<(...args: any[]) => any>();
+const mockUpsert = vi.fn<(...args: any[]) => any>();
+const mockFrom = vi.fn<(...args: any[]) => any>((_table: string) => ({
   select: mockSelect.mockReturnValue({
     eq: mockEq.mockReturnValue({ maybeSingle: mockMaybeSingle }),
   }),
@@ -81,9 +81,9 @@ describe("settings remote data", () => {
   test("delete-account helper throws on non-OK response", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
+      vi.fn<(...args: any[]) => any>().mockResolvedValue({
         ok: false,
-        json: vi.fn().mockResolvedValue({ error: "delete_failed" }),
+        json: vi.fn<(...args: any[]) => any>().mockResolvedValue({ error: "delete_failed" }),
       })
     );
 

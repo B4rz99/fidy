@@ -4,8 +4,10 @@ import {
   shareNotificationParseImprovementSample,
 } from "@/features/capture-sources/lib/notification-parse-improvement";
 
-const mockCapturePipelineEvent = vi.fn();
-const mockInsertNotificationParseImprovementSample = vi.fn().mockResolvedValue(undefined);
+const mockCapturePipelineEvent = vi.fn<(...args: any[]) => any>();
+const mockInsertNotificationParseImprovementSample = vi
+  .fn<(...args: any[]) => any>()
+  .mockResolvedValue(undefined);
 
 vi.mock("@/shared/lib", () => ({
   capturePipelineEvent: (...args: Parameters<typeof mockCapturePipelineEvent>) =>

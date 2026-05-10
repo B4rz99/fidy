@@ -29,18 +29,18 @@ import type {
 } from "@/shared/types/branded";
 
 vi.mock("@/features/transactions/lib/repository", () => ({
-  insertTransaction: vi.fn(),
-  getTransactionsPaginated: vi.fn().mockReturnValue([]),
-  getSpendingByCategoryAggregate: vi.fn().mockReturnValue([]),
-  getDailySpendingAggregate: vi.fn().mockReturnValue([]),
-  getRecentTransactions: vi.fn().mockReturnValue([]),
-  getTransactionById: vi.fn().mockReturnValue(null),
-  softDeleteTransaction: vi.fn(),
-  upsertTransaction: vi.fn(),
+  insertTransaction: vi.fn<(...args: any[]) => any>(),
+  getTransactionsPaginated: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
+  getSpendingByCategoryAggregate: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
+  getDailySpendingAggregate: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
+  getRecentTransactions: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
+  getTransactionById: vi.fn<(...args: any[]) => any>().mockReturnValue(null),
+  softDeleteTransaction: vi.fn<(...args: any[]) => any>(),
+  upsertTransaction: vi.fn<(...args: any[]) => any>(),
 }));
 
 const mockDb = {
-  transaction: vi.fn((fn: (tx: unknown) => unknown) => fn(mockDb)),
+  transaction: vi.fn<(...args: any[]) => any>((fn: (tx: unknown) => unknown) => fn(mockDb)),
 } as unknown as AnyDb;
 const mockUserId = "user-1" as UserId;
 

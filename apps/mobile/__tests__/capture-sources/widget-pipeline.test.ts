@@ -4,14 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { processWidgetTransactions } from "@/features/capture-sources/services/widget-pipeline";
 import type { UserId } from "@/shared/types/branded";
 
-const mockInsertTransaction = vi.fn();
-const mockIsCaptureProcessed = vi.fn();
-const mockFindDuplicateTransaction = vi.fn();
-const mockInsertProcessedCapture = vi.fn();
-const mockGetPendingTransactions = vi.fn();
-const mockRemovePendingTransactions = vi.fn();
-const mockIsAvailable = vi.fn();
-const mockGenerateProcessedCaptureId = vi.fn();
+const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
+const mockIsCaptureProcessed = vi.fn<(...args: any[]) => any>();
+const mockFindDuplicateTransaction = vi.fn<(...args: any[]) => any>();
+const mockInsertProcessedCapture = vi.fn<(...args: any[]) => any>();
+const mockGetPendingTransactions = vi.fn<(...args: any[]) => any>();
+const mockRemovePendingTransactions = vi.fn<(...args: any[]) => any>();
+const mockIsAvailable = vi.fn<(...args: any[]) => any>();
+const mockGenerateProcessedCaptureId = vi.fn<(...args: any[]) => any>();
 type CaptureFingerprintArgs = readonly [string, number, string, string];
 
 const buildFingerprint = ([source, amount, date, merchant]: CaptureFingerprintArgs) =>
@@ -53,13 +53,13 @@ vi.mock("@/modules/expo-app-intents", () => ({
 }));
 
 vi.mock("@/shared/lib", () => ({
-  captureError: vi.fn(),
-  capturePipelineEvent: vi.fn(),
-  captureWarning: vi.fn(),
+  captureError: vi.fn<(...args: any[]) => any>(),
+  capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
+  captureWarning: vi.fn<(...args: any[]) => any>(),
   generateProcessedCaptureId: () => mockGenerateProcessedCaptureId(),
   toIsoDate: (d: Date) => d.toISOString().slice(0, 10),
   toIsoDateTime: (d: Date) => d.toISOString(),
-  trackTransactionCreated: vi.fn(),
+  trackTransactionCreated: vi.fn<(...args: any[]) => any>(),
 }));
 
 const mockDb = {} as any;

@@ -7,8 +7,8 @@ describe("budget transaction subscription", () => {
     let hasLoadedBudgetState = false;
     let currentRevision = 0;
 
-    const unsubscribe = vi.fn();
-    const reload = vi.fn();
+    const unsubscribe = vi.fn<(...args: any[]) => any>();
+    const reload = vi.fn<(...args: any[]) => any>();
 
     const cleanup = subscribeBudgetToTransactions({
       subscribeTransactions: (listener) => {
@@ -40,12 +40,12 @@ describe("budget transaction subscription", () => {
     let hasLoadedBudgetState = false;
     let currentRevision = 0;
 
-    const reload = vi.fn();
+    const reload = vi.fn<(...args: any[]) => any>();
 
     subscribeBudgetToTransactions({
       subscribeTransactions: (listener) => {
         notify = listener;
-        return vi.fn();
+        return vi.fn<(...args: any[]) => any>();
       },
       getTransactionDataRevision: () => currentRevision,
       hasLoadedBudgetState: () => hasLoadedBudgetState,

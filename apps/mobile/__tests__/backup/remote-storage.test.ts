@@ -213,7 +213,7 @@ function createRemoteBackupSupabase(
   } = {}
 ) {
   const currentBackup = options.currentBackup === undefined ? null : options.currentBackup;
-  const functionsInvoke = vi.fn(
+  const functionsInvoke = vi.fn<(...args: any[]) => any>(
     (functionName: string, invokeOptions: { body: { action: string } }) => {
       expect(functionName).toBe("private-backup-api");
       const action = invokeOptions.body.action;
@@ -257,10 +257,12 @@ function createRemoteBackupSupabase(
       return Promise.resolve({ data: { success: true }, error: null });
     }
   );
-  const storageUploadToSignedUrl = vi.fn(() => Promise.resolve({ error: null }));
-  const storageRemove = vi.fn(() => Promise.resolve({ error: null }));
-  const from = vi.fn();
-  const fetch = vi.fn(() =>
+  const storageUploadToSignedUrl = vi.fn<(...args: any[]) => any>(() =>
+    Promise.resolve({ error: null })
+  );
+  const storageRemove = vi.fn<(...args: any[]) => any>(() => Promise.resolve({ error: null }));
+  const from = vi.fn<(...args: any[]) => any>();
+  const fetch = vi.fn<(...args: any[]) => any>(() =>
     Promise.resolve({
       ok: true,
       json: () =>
@@ -280,7 +282,7 @@ function createRemoteBackupSupabase(
     from,
     functions: { invoke: functionsInvoke },
     storage: {
-      from: vi.fn((bucketName: string) => {
+      from: vi.fn<(...args: any[]) => any>((bucketName: string) => {
         expect(bucketName).toBe("encrypted-backups");
         return bucket;
       }),

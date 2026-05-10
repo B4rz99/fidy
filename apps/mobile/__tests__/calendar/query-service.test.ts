@@ -12,7 +12,7 @@ import type {
 
 describe("calendar query service", () => {
   it("maps bill rows into calendar bill domain objects", async () => {
-    const getAllBills = vi.fn().mockReturnValue([
+    const getAllBills = vi.fn<(...args: any[]) => any>().mockReturnValue([
       {
         id: "bill-1" as BillId,
         userId: "user-1" as UserId,
@@ -41,7 +41,7 @@ describe("calendar query service", () => {
   });
 
   it("uses calendar-month date bounds when loading payments", async () => {
-    const getBillPaymentsForMonth = vi.fn().mockReturnValue([
+    const getBillPaymentsForMonth = vi.fn<(...args: any[]) => any>().mockReturnValue([
       {
         id: "pay-1" as BillPaymentId,
         billId: "bill-1" as BillId,

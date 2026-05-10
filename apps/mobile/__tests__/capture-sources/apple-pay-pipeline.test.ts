@@ -5,15 +5,15 @@ import type { ApplePayIntentData } from "@/features/capture-sources/schema";
 import { processApplePayIntent } from "@/features/capture-sources/services/apple-pay-pipeline";
 import type { FinancialAccountId } from "@/shared/types/branded";
 
-const mockInsertTransaction = vi.fn();
-const mockLookupMerchantRule = vi.fn().mockResolvedValue(null);
-const mockInsertMerchantRule = vi.fn();
-const mockClassifyMerchantApi = vi.fn().mockResolvedValue("other");
-const mockIsCaptureProcessed = vi.fn().mockResolvedValue(false);
-const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);
-const mockCaptureFingerprint = vi.fn().mockReturnValue("test-fingerprint");
-const mockInsertProcessedCapture = vi.fn();
-const mockEnsureDefaultFinancialAccount = vi.fn().mockReturnValue({
+const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
+const mockLookupMerchantRule = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
+const mockInsertMerchantRule = vi.fn<(...args: any[]) => any>();
+const mockClassifyMerchantApi = vi.fn<(...args: any[]) => any>().mockResolvedValue("other");
+const mockIsCaptureProcessed = vi.fn<(...args: any[]) => any>().mockResolvedValue(false);
+const mockFindDuplicateTransaction = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
+const mockCaptureFingerprint = vi.fn<(...args: any[]) => any>().mockReturnValue("test-fingerprint");
+const mockInsertProcessedCapture = vi.fn<(...args: any[]) => any>();
+const mockEnsureDefaultFinancialAccount = vi.fn<(...args: any[]) => any>().mockReturnValue({
   id: "fa-default-user-1" as FinancialAccountId,
   userId: "user-1",
   name: "Cash",
@@ -23,7 +23,7 @@ const mockEnsureDefaultFinancialAccount = vi.fn().mockReturnValue({
   updatedAt: "2026-04-18T10:00:00.000Z",
   deletedAt: null,
 });
-const mockBuildApplePayCaptureEvidence = vi.fn().mockReturnValue([
+const mockBuildApplePayCaptureEvidence = vi.fn<(...args: any[]) => any>().mockReturnValue([
   {
     sourceFamily: "apple_pay",
     evidenceType: "card_hint",
@@ -31,8 +31,8 @@ const mockBuildApplePayCaptureEvidence = vi.fn().mockReturnValue([
     value: "visa *1234",
   },
 ]);
-const mockSaveCaptureEvidenceRows = vi.fn();
-const mockFindMatchingFinancialAccountId = vi.fn().mockReturnValue(null);
+const mockSaveCaptureEvidenceRows = vi.fn<(...args: any[]) => any>();
+const mockFindMatchingFinancialAccountId = vi.fn<(...args: any[]) => any>().mockReturnValue(null);
 const DEFAULT_APPLE_PAY_CAPTURE_EVIDENCE = {
   sourceFamily: "apple_pay",
   evidenceType: "card_hint",
@@ -90,7 +90,7 @@ vi.mock("@/features/capture-evidence", () => ({
   saveCaptureEvidenceRows: (...args: any[]) => mockSaveCaptureEvidenceRows(...args),
 }));
 
-const mockGenerateId = vi.fn();
+const mockGenerateId = vi.fn<(...args: any[]) => any>();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: any[]) => mockGenerateId(...args),
   generateTransactionId: () => mockGenerateId("tx"),

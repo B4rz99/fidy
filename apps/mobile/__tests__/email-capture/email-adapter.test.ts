@@ -8,13 +8,13 @@ import type {
 import { createAdapter, getAdapter } from "@/features/email-capture/services/email-adapter";
 
 const { mockCaptureError, mockCaptureWarning } = vi.hoisted(() => ({
-  mockCaptureError: vi.fn(),
-  mockCaptureWarning: vi.fn(),
+  mockCaptureError: vi.fn<(...args: any[]) => any>(),
+  mockCaptureWarning: vi.fn<(...args: any[]) => any>(),
 }));
 
-const mockGetItemAsync = vi.fn();
-const mockSetItemAsync = vi.fn();
-const mockDeleteItemAsync = vi.fn();
+const mockGetItemAsync = vi.fn<(...args: any[]) => any>();
+const mockSetItemAsync = vi.fn<(...args: any[]) => any>();
+const mockDeleteItemAsync = vi.fn<(...args: any[]) => any>();
 
 vi.mock("expo-secure-store", () => ({
   getItemAsync: (...args: unknown[]) => mockGetItemAsync(...args),
@@ -22,7 +22,7 @@ vi.mock("expo-secure-store", () => ({
   deleteItemAsync: (...args: unknown[]) => mockDeleteItemAsync(...args),
 }));
 
-const mockOpenAuthSession = vi.fn();
+const mockOpenAuthSession = vi.fn<(...args: any[]) => any>();
 
 vi.mock("expo-web-browser", () => ({
   openAuthSessionAsync: (...args: unknown[]) => mockOpenAuthSession(...args),
@@ -39,7 +39,7 @@ vi.mock("@/shared/lib", () => ({
   captureWarning: (...args: unknown[]) => mockCaptureWarning(...args),
 }));
 
-const mockFetch = vi.fn();
+const mockFetch = vi.fn<(...args: any[]) => any>();
 global.fetch = mockFetch;
 
 const testConfig: EmailProviderConfig = {
@@ -57,7 +57,7 @@ const testConfig: EmailProviderConfig = {
   extraRefreshParams: {},
 };
 
-const stubFetch: FetchEmailsFn = vi.fn().mockResolvedValue([]);
+const stubFetch: FetchEmailsFn = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
 
 describe("createAdapter", () => {
   beforeEach(() => {
@@ -425,7 +425,7 @@ describe("createAdapter", () => {
           provider: "gmail" as const,
         },
       ];
-      const fetchFn = vi.fn().mockResolvedValue(mockEmails);
+      const fetchFn = vi.fn<(...args: any[]) => any>().mockResolvedValue(mockEmails);
       const adapter = createAdapter(testConfig, fetchFn);
       const result = await adapter.fetchEmails("client-id", "2026-03-01", ["a@b.com"]);
 
@@ -445,7 +445,7 @@ describe("createAdapter", () => {
         json: () => Promise.resolve({ access_token: "new-token" }),
       });
 
-      const fetchFn = vi.fn().mockResolvedValue([]);
+      const fetchFn = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
       const adapter = createAdapter(testConfig, fetchFn);
       await adapter.fetchEmails("client-id", "2026-03-01", ["a@b.com"]);
 
@@ -477,7 +477,7 @@ describe("createAdapter", () => {
         json: () => Promise.resolve({ access_token: "new-token", refresh_token: "new-refresh" }),
       });
 
-      const fetchFn = vi.fn().mockResolvedValue([]);
+      const fetchFn = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
       const adapter = createAdapter(testConfig, fetchFn);
       await adapter.fetchEmails("client-id", "2026-03-01", ["a@b.com"]);
 
@@ -490,7 +490,7 @@ describe("createAdapter", () => {
       mockGetItemAsync.mockResolvedValueOnce("refresh-token");
       mockFetch.mockResolvedValueOnce({ ok: false, status: 400 });
 
-      const fetchFn = vi.fn().mockResolvedValue([]);
+      const fetchFn = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
       const adapter = createAdapter(testConfig, fetchFn);
       const result = await adapter.fetchEmails("client-id", "2026-03-01", ["a@b.com"]);
 
@@ -507,7 +507,7 @@ describe("createAdapter", () => {
       mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
       mockGetItemAsync.mockResolvedValueOnce(null);
 
-      const fetchFn = vi.fn().mockResolvedValue([]);
+      const fetchFn = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
       const adapter = createAdapter(testConfig, fetchFn);
       const result = await adapter.fetchEmails("client-id", "2026-03-01", ["a@b.com"]);
 
@@ -520,7 +520,7 @@ describe("createAdapter", () => {
       mockGetItemAsync.mockResolvedValueOnce("stored-token");
       mockFetch.mockRejectedValueOnce(new Error("profile unavailable"));
 
-      const fetchFn = vi.fn().mockResolvedValue([]);
+      const fetchFn = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
       const adapter = createAdapter(testConfig, fetchFn);
       const result = await adapter.fetchEmails("client-id", "2026-03-01", ["a@b.com"]);
 
@@ -543,7 +543,7 @@ describe("createAdapter", () => {
         json: () => Promise.resolve({ access_token: "new-token" }),
       });
 
-      const fetchFn = vi.fn().mockResolvedValue([]);
+      const fetchFn = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
       const adapter = createAdapter(configWithRefresh, fetchFn);
       await adapter.fetchEmails("client-id", "2026-03-01", ["a@b.com"]);
 

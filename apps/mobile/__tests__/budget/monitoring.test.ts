@@ -24,9 +24,9 @@ const USER_ID = "user-1" as UserId;
 const CURRENT_MONTH = "2026-03" as Month;
 const CURRENT_DATE = new Date(2026, 3, 18);
 
-const mockScheduleBudgetAlert = vi.fn();
-const mockInsertNotification = vi.fn();
-const mockResolveCategoryLabel = vi.fn(
+const mockScheduleBudgetAlert = vi.fn<(...args: any[]) => any>();
+const mockInsertNotification = vi.fn<(...args: any[]) => any>();
+const mockResolveCategoryLabel = vi.fn<(...args: any[]) => any>(
   (categoryId: CategoryId, locale: string) => `${locale}:${categoryId}`
 );
 
@@ -342,7 +342,7 @@ describe("createBudgetMonitoringModule", () => {
   it("loads transaction aggregates from the transactions query public surface", async () => {
     vi.resetModules();
 
-    const getSpendingByCategoryAggregateMock = vi.fn(() => [
+    const getSpendingByCategoryAggregateMock = vi.fn<(...args: any[]) => any>(() => [
       {
         categoryId: "food" as CategoryId,
         total: 85000 as CopAmount,
@@ -351,7 +351,7 @@ describe("createBudgetMonitoringModule", () => {
 
     vi.doMock("@/features/transactions/query.public", () => ({
       getSpendingByCategoryAggregate: getSpendingByCategoryAggregateMock,
-      getSpendingByCategoryDateRangeAggregate: vi.fn(() => []),
+      getSpendingByCategoryDateRangeAggregate: vi.fn<(...args: any[]) => any>(() => []),
     }));
     vi.doMock("@/features/transactions/lib/repository", () => ({
       getSpendingByCategoryAggregate: () => {
@@ -362,9 +362,8 @@ describe("createBudgetMonitoringModule", () => {
       },
     }));
 
-    const { createBudgetMonitoringModule: createBudgetMonitoringModuleFromPublic } = await import(
-      "@/features/budget/lib/monitoring"
-    );
+    const { createBudgetMonitoringModule: createBudgetMonitoringModuleFromPublic } =
+      await import("@/features/budget/lib/monitoring");
 
     insertBudgetRow();
 

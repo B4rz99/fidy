@@ -10,10 +10,12 @@ import {
 } from "@/features/onboarding/lib/check-onboarding";
 
 const { mockDeleteItemAsync, mockGetItem, mockSetItemAsync, mockUpdateUser } = vi.hoisted(() => ({
-  mockDeleteItemAsync: vi.fn((_key: string) => Promise.resolve()),
-  mockGetItem: vi.fn((_key: string) => null as string | null),
-  mockSetItemAsync: vi.fn((_key: string, _value: string) => Promise.resolve()),
-  mockUpdateUser: vi.fn((_attributes: unknown) => Promise.resolve()),
+  mockDeleteItemAsync: vi.fn<(...args: any[]) => any>((_key: string) => Promise.resolve()),
+  mockGetItem: vi.fn<(...args: any[]) => any>((_key: string) => null as string | null),
+  mockSetItemAsync: vi.fn<(...args: any[]) => any>((_key: string, _value: string) =>
+    Promise.resolve()
+  ),
+  mockUpdateUser: vi.fn<(...args: any[]) => any>((_attributes: unknown) => Promise.resolve()),
 }));
 
 vi.mock("expo-secure-store", () => ({

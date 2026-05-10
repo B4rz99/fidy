@@ -10,11 +10,11 @@ import type {
 } from "@/shared/types/branded";
 
 vi.mock("@/shared/lib", () => ({
-  generateBudgetId: vi.fn().mockReturnValue("budget-generated"),
+  generateBudgetId: vi.fn<(...args: any[]) => any>().mockReturnValue("budget-generated"),
 }));
 
 const mockDb = {
-  transaction: vi.fn((fn: (tx: AnyDb) => unknown) => fn(mockDb as AnyDb)),
+  transaction: vi.fn<(...args: any[]) => any>((fn: (tx: AnyDb) => unknown) => fn(mockDb as AnyDb)),
 } as unknown as AnyDb;
 
 async function loadGenericModule() {
@@ -68,7 +68,10 @@ describe("write-through mutations", () => {
 
   it("commits commands through the injected generic applier", async () => {
     const { createGenericWriteThroughMutationModule } = await loadGenericModule();
-    const applyCommand = vi.fn(() => ({ didMutate: true, effects: [] }));
+    const applyCommand = vi.fn<(...args: any[]) => any>(() => ({
+      didMutate: true,
+      effects: [],
+    }));
     const module = createGenericWriteThroughMutationModule(mockDb, applyCommand);
     const command = makeTransactionSaveCommand();
 
@@ -81,10 +84,10 @@ describe("write-through mutations", () => {
 
   it("runs collected after-commit effects after a generic batch succeeds", async () => {
     const { createGenericWriteThroughMutationModule } = await loadGenericModule();
-    const effectOne = vi.fn();
-    const effectTwo = vi.fn();
-    const applyCommand = vi
-      .fn()
+    const effectOne = vi.fn<(...args: any[]) => any>();
+    const effectTwo = vi.fn<(...args: any[]) => any>();
+    const applyCommand = vi.fn<(...args: any[]) => any>();
+    applyCommand
       .mockReturnValueOnce({ didMutate: true, effects: [effectOne] })
       .mockReturnValueOnce({ didMutate: false, effects: [effectTwo] });
     const module = createGenericWriteThroughMutationModule(mockDb, applyCommand);
@@ -112,7 +115,10 @@ describe("write-through mutations", () => {
 
   it("delegates command application to an injected applier", async () => {
     const { createGenericWriteThroughMutationModule } = await loadGenericModule();
-    const applyCommand = vi.fn(() => ({ didMutate: true, effects: [] }));
+    const applyCommand = vi.fn<(...args: any[]) => any>(() => ({
+      didMutate: true,
+      effects: [],
+    }));
     const module = createGenericWriteThroughMutationModule(mockDb, applyCommand);
 
     await module.commit(makeTransactionSaveCommand({ id: "tx-generic-1" as TransactionId }));

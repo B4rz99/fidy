@@ -8,19 +8,19 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
-const mockValues = vi.fn().mockReturnThis();
-const mockRun = vi.fn().mockReturnValue({ changes: 1 });
-const mockOnConflictDoNothing = vi.fn().mockReturnValue({ run: mockRun });
-const mockInsert = vi.fn(() => ({ values: mockValues }));
-const mockSelect = vi.fn().mockReturnThis();
-const mockFrom = vi.fn().mockReturnThis();
-const mockWhere = vi.fn().mockReturnThis();
-const mockOrderBy = vi.fn().mockResolvedValue([]);
-const mockDelete = vi.fn().mockReturnThis();
-const mockDeleteWhere = vi.fn().mockResolvedValue([]);
-const mockUpdate = vi.fn().mockReturnThis();
-const mockSet = vi.fn().mockReturnThis();
-const mockUpdateWhere = vi.fn().mockResolvedValue([]);
+const mockValues = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockRun = vi.fn<(...args: any[]) => any>().mockReturnValue({ changes: 1 });
+const mockOnConflictDoNothing = vi.fn<(...args: any[]) => any>().mockReturnValue({ run: mockRun });
+const mockInsert = vi.fn<(...args: any[]) => any>(() => ({ values: mockValues }));
+const mockSelect = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockFrom = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockWhere = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockOrderBy = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
+const mockDelete = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockDeleteWhere = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
+const mockUpdate = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockSet = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockUpdateWhere = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
 
 const mockDb = {
   insert: mockInsert,
@@ -169,9 +169,8 @@ describe("email capture repository", () => {
     const mockRow = { id: "pe-1", externalId: "msg-123", status: "success" };
     mockWhere.mockResolvedValueOnce([mockRow]);
 
-    const { getProcessedEmailByExternalId } = await import(
-      "@/features/email-capture/lib/repository"
-    );
+    const { getProcessedEmailByExternalId } =
+      await import("@/features/email-capture/lib/repository");
     const result = await getProcessedEmailByExternalId(mockDb, "msg-123");
 
     expect(result).toEqual(mockRow);
@@ -180,9 +179,8 @@ describe("email capture repository", () => {
   it("getProcessedEmailByExternalId returns null when not found", async () => {
     mockWhere.mockResolvedValueOnce([]);
 
-    const { getProcessedEmailByExternalId } = await import(
-      "@/features/email-capture/lib/repository"
-    );
+    const { getProcessedEmailByExternalId } =
+      await import("@/features/email-capture/lib/repository");
     const result = await getProcessedEmailByExternalId(mockDb, "nonexistent");
 
     expect(result).toBeNull();
@@ -260,12 +258,13 @@ describe("email capture repository", () => {
         receivedAt: "2026-04-19T10:00:00Z",
       },
     ];
-    const mockLimit = vi.fn().mockResolvedValueOnce(mockRows);
-    mockWhere.mockReturnValueOnce({ orderBy: vi.fn().mockReturnValueOnce({ limit: mockLimit }) });
+    const mockLimit = vi.fn<(...args: any[]) => any>().mockResolvedValueOnce(mockRows);
+    mockWhere.mockReturnValueOnce({
+      orderBy: vi.fn<(...args: any[]) => any>().mockReturnValueOnce({ limit: mockLimit }),
+    });
 
-    const { getNeedsReviewEmailByTransactionId } = await import(
-      "@/features/email-capture/lib/repository"
-    );
+    const { getNeedsReviewEmailByTransactionId } =
+      await import("@/features/email-capture/lib/repository");
     const result = await getNeedsReviewEmailByTransactionId(mockDb, "tx-1" as TransactionId);
 
     expect(mockSelect).toHaveBeenCalled();
@@ -290,8 +289,10 @@ describe("email capture repository", () => {
 
   it("getPendingRetryEmails returns pending_retry emails where nextRetryAt <= now", async () => {
     const mockRows = [{ id: "pe-1", status: "pending_retry", rawBody: "body", retryCount: 1 }];
-    const mockLimit = vi.fn().mockResolvedValueOnce(mockRows);
-    mockWhere.mockReturnValueOnce({ orderBy: vi.fn().mockReturnValueOnce({ limit: mockLimit }) });
+    const mockLimit = vi.fn<(...args: any[]) => any>().mockResolvedValueOnce(mockRows);
+    mockWhere.mockReturnValueOnce({
+      orderBy: vi.fn<(...args: any[]) => any>().mockReturnValueOnce({ limit: mockLimit }),
+    });
 
     const { getPendingRetryEmails } = await import("@/features/email-capture/lib/repository");
     const result = await getPendingRetryEmails(mockDb);

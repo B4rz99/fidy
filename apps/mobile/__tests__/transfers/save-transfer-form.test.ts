@@ -4,8 +4,8 @@ import type { AnyDb } from "@/shared/db";
 import type { FinancialAccountId, UserId } from "@/shared/types/branded";
 
 const { refreshTransactionsMock, reclassifyTransactionAsTransferMock } = vi.hoisted(() => ({
-  refreshTransactionsMock: vi.fn(),
-  reclassifyTransactionAsTransferMock: vi.fn(),
+  refreshTransactionsMock: vi.fn<(...args: any[]) => any>(),
+  reclassifyTransactionAsTransferMock: vi.fn<(...args: any[]) => any>(),
 }));
 
 vi.mock("@/features/transactions/store.public", () => ({

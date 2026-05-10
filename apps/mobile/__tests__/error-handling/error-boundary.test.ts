@@ -4,19 +4,22 @@ import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@sentry/react-native", () => ({
-  init: vi.fn(),
-  captureException: vi.fn(),
-  captureMessage: vi.fn(),
-  setUser: vi.fn(),
-  withScope: vi.fn((cb: (scope: unknown) => void) =>
-    cb({ setContext: vi.fn(), setLevel: vi.fn() })
+  init: vi.fn<(...args: any[]) => any>(),
+  captureException: vi.fn<(...args: any[]) => any>(),
+  captureMessage: vi.fn<(...args: any[]) => any>(),
+  setUser: vi.fn<(...args: any[]) => any>(),
+  withScope: vi.fn<(...args: any[]) => any>((cb: (scope: unknown) => void) =>
+    cb({
+      setContext: vi.fn<(...args: any[]) => any>(),
+      setLevel: vi.fn<(...args: any[]) => any>(),
+    })
   ),
   ErrorBoundary: "SentryErrorBoundary",
-  wrap: vi.fn((component: unknown) => component),
+  wrap: vi.fn<(...args: any[]) => any>((component: unknown) => component),
 }));
 
 vi.mock("expo-updates", () => ({
-  reloadAsync: vi.fn(),
+  reloadAsync: vi.fn<(...args: any[]) => any>(),
 }));
 
 describe("ErrorFallback component", () => {

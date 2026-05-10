@@ -7,8 +7,8 @@ import type { IsoDateTime, UserCategoryId, UserId } from "@/shared/types/branded
 
 // Mock the repository
 vi.mock("@/features/categories/lib/repository", () => ({
-  getUserCategoriesForUser: vi.fn().mockReturnValue([]),
-  insertUserCategory: vi.fn(),
+  getUserCategoriesForUser: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
+  insertUserCategory: vi.fn<(...args: any[]) => any>(),
 }));
 
 // Mock the icon-map
@@ -23,15 +23,15 @@ vi.mock("@/shared/lib", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/shared/lib")>();
   return {
     ...actual,
-    generateUserCategoryId: vi.fn().mockReturnValue("ucat-test-123"),
-    toIsoDateTime: vi.fn().mockReturnValue("2026-03-21T12:00:00.000Z"),
+    generateUserCategoryId: vi.fn<(...args: any[]) => any>().mockReturnValue("ucat-test-123"),
+    toIsoDateTime: vi.fn<(...args: any[]) => any>().mockReturnValue("2026-03-21T12:00:00.000Z"),
   };
 });
 
 const mockDb = {
-  insert: vi.fn(),
-  select: vi.fn(),
-  transaction: vi.fn((fn: (tx: any) => void) => fn(mockDb)),
+  insert: vi.fn<(...args: any[]) => any>(),
+  select: vi.fn<(...args: any[]) => any>(),
+  transaction: vi.fn<(...args: any[]) => any>((fn: (tx: any) => void) => fn(mockDb)),
 } as any;
 
 describe("useCategoriesStore", () => {

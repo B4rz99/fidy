@@ -2,10 +2,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { requireUserId } from "@/shared/types/assertions";
 
-const mockAlert = vi.fn();
-const mockBuildSample = vi.fn(() => ({ template: "[BANK] [AMOUNT] [MERCHANT]" }));
-const mockShareSample = vi.fn();
-const mockSetupNotificationCapture = vi.fn(() => Promise.resolve(() => undefined));
+const mockAlert = vi.fn<(...args: any[]) => any>();
+const mockBuildSample = vi.fn<(...args: any[]) => any>(() => ({
+  template: "[BANK] [AMOUNT] [MERCHANT]",
+}));
+const mockShareSample = vi.fn<(...args: any[]) => any>();
+const mockSetupNotificationCapture = vi.fn<(...args: any[]) => any>(() =>
+  Promise.resolve(() => undefined)
+);
 
 const mockPackages = ["com.todo1.mobile.co.bancolombia"];
 const mockDb = {} as any;
@@ -63,7 +67,7 @@ async function loadUseNotificationCapture() {
     },
     useTranslation: () => ({ t: (key: string) => key }),
   }));
-  vi.doMock("@/shared/lib", () => ({ captureError: vi.fn() }));
+  vi.doMock("@/shared/lib", () => ({ captureError: vi.fn<(...args: any[]) => any>() }));
   vi.doMock("@/features/capture-sources/hooks/setup", () => ({
     setupNotificationCapture: (...args: unknown[]) =>
       (mockSetupNotificationCapture as (...args: unknown[]) => unknown)(...args),

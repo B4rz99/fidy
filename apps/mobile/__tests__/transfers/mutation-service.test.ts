@@ -39,8 +39,8 @@ describe("transfer mutation service", () => {
   beforeEach(() => {
     currentUserId = "user-1" as UserId;
     currentDb = {} as AnyDb;
-    refreshMock = vi.fn().mockResolvedValue(undefined);
-    saveTransferRowMock = vi.fn();
+    refreshMock = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
+    saveTransferRowMock = vi.fn<(...args: any[]) => any>();
     refresh = refreshMock as ServiceDeps["refresh"];
     saveTransferRow = saveTransferRowMock as ServiceDeps["saveTransferRow"];
   });

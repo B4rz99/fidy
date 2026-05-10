@@ -75,12 +75,12 @@ describe("transaction mutation service", () => {
 
   beforeEach(() => {
     currentUserId = "user-1" as UserId;
-    currentCommit = vi.fn();
-    refreshMock = vi.fn().mockResolvedValue(undefined);
-    resetFormMock = vi.fn();
-    trackDeletedMock = vi.fn();
-    trackEditedMock = vi.fn();
-    getTransactionByIdMock = vi.fn().mockReturnValue(null);
+    currentCommit = vi.fn<(...args: any[]) => any>();
+    refreshMock = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
+    resetFormMock = vi.fn<(...args: any[]) => any>();
+    trackDeletedMock = vi.fn<(...args: any[]) => any>();
+    trackEditedMock = vi.fn<(...args: any[]) => any>();
+    getTransactionByIdMock = vi.fn<(...args: any[]) => any>().mockReturnValue(null);
     refresh = refreshMock as ServiceDeps["refresh"];
     resetForm = resetFormMock as ServiceDeps["resetForm"];
     trackDeleted = trackDeletedMock as ServiceDeps["trackDeleted"];
@@ -111,7 +111,7 @@ describe("transaction mutation service", () => {
   });
 
   it("maps failed insert commits to a save error", async () => {
-    currentCommit = vi.fn().mockResolvedValue({
+    currentCommit = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       success: false,
       error: "db failed",
     });
@@ -124,7 +124,9 @@ describe("transaction mutation service", () => {
   });
 
   it("saves valid transactions through the write-through boundary", async () => {
-    currentCommit = vi.fn().mockResolvedValue({ success: true, didMutate: true });
+    currentCommit = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue({ success: true, didMutate: true });
     const service = createService();
 
     const result = await service.save(input);
@@ -157,7 +159,7 @@ describe("transaction mutation service", () => {
       error: "Store not initialized",
     });
 
-    currentCommit = vi.fn().mockRejectedValue(new Error("boom"));
+    currentCommit = vi.fn<(...args: any[]) => any>().mockRejectedValue(new Error("boom"));
     await expect(service.updateDirect("txn-9" as TransactionId, input)).resolves.toEqual({
       success: false,
       error: "Failed to update transaction",
@@ -165,7 +167,9 @@ describe("transaction mutation service", () => {
   });
 
   it("updates transactions and resets the form on success", async () => {
-    currentCommit = vi.fn().mockResolvedValue({ success: true, didMutate: true });
+    currentCommit = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue({ success: true, didMutate: true });
     const service = createService();
 
     const result = await service.update("txn-9" as TransactionId, input);
@@ -180,7 +184,7 @@ describe("transaction mutation service", () => {
   });
 
   it("returns a failed update result when the commit reports no mutation", async () => {
-    currentCommit = vi.fn().mockResolvedValue({
+    currentCommit = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       success: false,
       error: "write-through rejected update",
     });
@@ -196,7 +200,9 @@ describe("transaction mutation service", () => {
   });
 
   it("updates transactions directly without resetting the form", async () => {
-    currentCommit = vi.fn().mockResolvedValue({ success: true, didMutate: true });
+    currentCommit = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue({ success: true, didMutate: true });
     const service = createService();
 
     const result = await service.updateDirect("txn-9" as TransactionId, input);
@@ -211,7 +217,9 @@ describe("transaction mutation service", () => {
   });
 
   it("preserves ownership metadata when updating a captured transaction", async () => {
-    currentCommit = vi.fn().mockResolvedValue({ success: true, didMutate: true });
+    currentCommit = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue({ success: true, didMutate: true });
     getTransactionByIdMock.mockReturnValue(makeCapturedStoredTransaction());
     const service = createService();
 
@@ -238,7 +246,7 @@ describe("transaction mutation service", () => {
   });
 
   it("returns an update error without side effects when the write-through update fails", async () => {
-    currentCommit = vi.fn().mockResolvedValue({
+    currentCommit = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       success: false,
       error: "update failed",
     });
@@ -280,7 +288,7 @@ describe("transaction mutation service", () => {
   });
 
   it("throws on failed deletes and still refreshes when commits are unavailable", async () => {
-    const failingCommit = vi.fn().mockResolvedValue({
+    const failingCommit = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       success: false,
       error: "delete failed",
     });
@@ -296,7 +304,9 @@ describe("transaction mutation service", () => {
   });
 
   it("tracks successful deletes and refreshes afterward", async () => {
-    currentCommit = vi.fn().mockResolvedValue({ success: true, didMutate: true });
+    currentCommit = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue({ success: true, didMutate: true });
     const service = createService();
 
     await service.remove("txn-4" as TransactionId);

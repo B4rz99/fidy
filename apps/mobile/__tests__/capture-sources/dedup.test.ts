@@ -2,16 +2,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("drizzle-orm", () => ({
-  eq: vi.fn((_col, val) => ({ op: "eq", val })),
-  and: vi.fn((...args: any[]) => ({ op: "and", args })),
-  gte: vi.fn((_col, val) => ({ op: "gte", val })),
-  lte: vi.fn((_col, val) => ({ op: "lte", val })),
-  isNull: vi.fn((_col) => ({ op: "isNull" })),
+  eq: vi.fn<(...args: any[]) => any>((_col, val) => ({ op: "eq", val })),
+  and: vi.fn<(...args: any[]) => any>((...args: any[]) => ({ op: "and", args })),
+  gte: vi.fn<(...args: any[]) => any>((_col, val) => ({ op: "gte", val })),
+  lte: vi.fn<(...args: any[]) => any>((_col, val) => ({ op: "lte", val })),
+  isNull: vi.fn<(...args: any[]) => any>((_col) => ({ op: "isNull" })),
 }));
 
-const mockSelect = vi.fn().mockReturnThis();
-const mockFrom = vi.fn().mockReturnThis();
-const mockWhere = vi.fn().mockResolvedValue([]);
+const mockSelect = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockFrom = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockWhere = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
 
 const mockDb = {
   select: mockSelect,
