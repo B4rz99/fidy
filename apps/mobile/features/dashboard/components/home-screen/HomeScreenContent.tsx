@@ -6,7 +6,7 @@ import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { FlatList, Platform } from "@/shared/components/rn";
 import { EmptyTransactions } from "../EmptyTransactions";
 import { ActivityFeedItem } from "./ActivityFeedItem";
-import { HomeScreenActions, HomeScreenHeaderTitle } from "./HomeScreenActions";
+import { HomeScreenActions } from "./HomeScreenActions";
 import { HomeScreenHeader } from "./HomeScreenHeader";
 import type { HomeScreenModel } from "./useHomeScreen";
 
@@ -47,7 +47,7 @@ export function HomeScreenContent({ model }: HomeScreenContentProps) {
       {Platform.OS === "ios" ? (
         <Stack.Screen
           options={{
-            headerTitle: () => <HomeScreenHeaderTitle />,
+            headerTitle: "",
             headerRight: () => <HomeScreenActions gap={20} paddingHorizontal={4} />,
           }}
         />
@@ -62,7 +62,8 @@ export function HomeScreenContent({ model }: HomeScreenContentProps) {
         ListHeaderComponent={listHeader}
         ListEmptyComponent={model.showEmptyTransactions ? <EmptyTransactions /> : undefined}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }}
+        contentContainerStyle={{ paddingBottom: 0 }}
+        contentInset={{ bottom: TAB_BAR_CLEARANCE }}
         contentInsetAdjustmentBehavior="automatic"
       />
     </ScreenLayout>

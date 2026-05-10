@@ -19,7 +19,7 @@ describe("transaction callers", () => {
 
   test("edit screen forwards the linked review email when reclassifying a captured transaction", () => {
     expect(editTransactionSource).toContain(
-      "processedEmailId: reclassificationProcessedEmailId ?? undefined"
+      "processedEmailId: draft.reclassificationProcessedEmailId ?? undefined"
     );
   });
 });

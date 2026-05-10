@@ -24,29 +24,31 @@ function parseReclassificationProcessedEmailId(rawProcessedEmailId: string | str
 
 async function navigateAfterTransferSave(
   destination: "needs-review" | "tabs",
-  router: ReturnType<typeof useRouter>
+  replace: ReturnType<typeof useRouter>["replace"],
+  navigate: ReturnType<typeof useRouter>["navigate"]
 ) {
   if (destination === "needs-review") {
-    router.replace("/needs-review");
+    replace("/needs-review");
     return;
   }
 
-  router.navigate("/(tabs)" as never);
+  navigate("/(tabs)" as never);
 }
 
 function useTransferFormRouteContext() {
   const { transactionId: rawTransactionId, processedEmailId: rawProcessedEmailId } =
     useLocalSearchParams<{ transactionId?: string; processedEmailId?: string }>();
-  const router = useRouter();
+  const { back, navigate, replace } = useRouter();
   const userId = useOptionalUserId();
 
   return {
     db: userId ? tryGetDb(userId) : null,
     isIos: Platform.OS === "ios",
-    onMissingTransaction: useCallback(() => router.back(), [router]),
+    onMissingTransaction: useCallback(() => back(), [back]),
     onSuccessfulSave: useCallback(
-      (destination: "needs-review" | "tabs") => navigateAfterTransferSave(destination, router),
-      [router]
+      (destination: "needs-review" | "tabs") =>
+        navigateAfterTransferSave(destination, replace, navigate),
+      [navigate, replace]
     ),
     processedEmailId: parseReclassificationProcessedEmailId(rawProcessedEmailId),
     reclassificationTransactionId: parseReclassificationTransactionId(rawTransactionId),

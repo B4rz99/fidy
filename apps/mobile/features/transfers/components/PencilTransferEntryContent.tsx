@@ -6,7 +6,7 @@ import {
   PencilEntryTextInputField,
 } from "@/shared/components/PencilEntryScaffold";
 import { Modal, Platform, Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useCurrentDate, useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatInputDisplay, showSuccessToast } from "@/shared/lib";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { handleNumpadPress } from "@/features/transactions/display.public";
@@ -33,6 +33,7 @@ export function usePencilTransferEntry(props: { readonly enabled?: boolean } = {
     onSuccessfulSave: () => showSuccessToast(t("transfers.saved"), 1.6),
   });
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const maximumDate = useCurrentDate();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const card = useThemeColor("card");
@@ -128,7 +129,7 @@ export function usePencilTransferEntry(props: { readonly enabled?: boolean } = {
                 value={form.date}
                 mode="date"
                 display={Platform.OS === "ios" ? "spinner" : "default"}
-                maximumDate={new Date()}
+                maximumDate={maximumDate}
                 onChange={form.handleDateChange}
               />
               <Pressable

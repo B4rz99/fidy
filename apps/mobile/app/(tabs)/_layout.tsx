@@ -25,10 +25,6 @@ function IosTabs() {
         <NativeTabs.Trigger.Icon sf="chart.bar.fill" />
         <NativeTabs.Trigger.Label>{t("tabs.finance")}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="(menu)">
-        <NativeTabs.Trigger.Icon sf="gearshape" />
-        <NativeTabs.Trigger.Label>{t("tabs.settings")}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
@@ -46,7 +42,6 @@ function AndroidTabs() {
       <Tabs.Screen name="(ai)" options={{ title: t("tabs.ai") }} />
       <Tabs.Screen name="add" options={{ title: t("tabs.add") }} />
       <Tabs.Screen name="(finance)" options={{ title: t("tabs.finance") }} />
-      <Tabs.Screen name="(menu)" options={{ title: t("tabs.settings") }} />
     </Tabs>
   );
 }

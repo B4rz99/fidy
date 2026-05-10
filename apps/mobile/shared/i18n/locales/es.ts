@@ -667,6 +667,7 @@ const es = {
   // Settings
   settings: {
     title: "Ajustes",
+    openSettings: "Abrir ajustes",
     accountSection: "CUENTA",
     preferencesSection: "PREFERENCIAS",
     connectionsSection: "CONEXIONES",

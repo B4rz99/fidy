@@ -1,5 +1,7 @@
 import Constants from "expo-constants";
+import { Image } from "expo-image";
 import { Stack, useRouter } from "expo-router";
+import { useState } from "react";
 import { openBrowserAsync } from "expo-web-browser";
 import { useAuthIdentity } from "@/features/auth/public";
 import type { PrivateBackupHealthStatus } from "@/features/backup/public";
@@ -22,12 +24,8 @@ import {
 } from "@/shared/components/icons";
 import { Linking, Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import {
-  buildPrivacyUrl,
-  buildTermsUrl,
-  buildWhatsAppUrl,
-  getUserInitials,
-} from "../lib/settings-links";
+import { deriveProfileAvatar } from "../lib/profile-avatar";
+import { buildPrivacyUrl, buildTermsUrl, buildWhatsAppUrl } from "../lib/settings-links";
 import { useSettingsStore } from "../store";
 import { SettingsRow } from "./SettingsRow";
 
@@ -51,11 +49,17 @@ function getPrivateBackupStatusLabelKey(status: PrivateBackupHealthStatus) {
 }
 
 export function SettingsScreen() {
-  const { push } = useRouter();
+  const { back, push } = useRouter();
   const { t, locale } = useTranslation();
 
-  const { fullName, email } = useAuthIdentity();
-  const initials = getUserInitials(fullName, email);
+  const { fullName, email, profileImageUrl } = useAuthIdentity();
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
+  const avatar = deriveProfileAvatar({
+    fullName,
+    email,
+    profileImageUrl,
+    didImageFail: profileImageUrl === failedImageUrl,
+  });
 
   const connectedCount = useEmailCaptureStore((s) => s.accounts.length);
 
@@ -77,16 +81,17 @@ export function SettingsScreen() {
   const version = Constants.expoConfig?.version ?? "0.0.1";
 
   return (
-    <ScreenLayout variant="tab" title={t("settings.title")}>
+    <ScreenLayout variant="sub" title={t("settings.title")} onBack={back}>
       {Platform.OS === "ios" && <Stack.Screen options={{ title: t("settings.title") }} />}
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 16,
-          paddingBottom: TAB_BAR_CLEARANCE,
+          paddingBottom: 16,
           gap: 24,
         }}
+        contentInset={{ bottom: TAB_BAR_CLEARANCE }}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
@@ -107,11 +112,21 @@ export function SettingsScreen() {
                 width: 40,
                 height: 40,
                 backgroundColor: accentGreen,
+                overflow: "hidden",
               }}
             >
-              <Text className="font-poppins-semibold text-white" style={{ fontSize: 14 }}>
-                {initials}
-              </Text>
+              {avatar.type === "image" ? (
+                <Image
+                  source={{ uri: avatar.uri }}
+                  style={{ width: 40, height: 40 }}
+                  contentFit="cover"
+                  onError={() => setFailedImageUrl(avatar.uri)}
+                />
+              ) : (
+                <Text className="font-poppins-semibold text-white" style={{ fontSize: 14 }}>
+                  {avatar.initials}
+                </Text>
+              )}
             </View>
             <View className="flex-1" style={{ gap: 2 }}>
               <Text className="font-poppins text-sm text-primary dark:text-primary-dark">

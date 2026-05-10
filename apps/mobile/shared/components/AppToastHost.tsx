@@ -2,11 +2,13 @@ import { useState } from "react";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CheckCircle } from "@/shared/components/icons";
-import { AccessibilityInfo, StyleSheet, Text, View } from "@/shared/components/rn";
+import { AccessibilityInfo, Platform, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useSubscription, useThemeColor } from "@/shared/hooks";
 import { subscribeAppToasts } from "@/shared/lib";
 
 type AppToast = Parameters<Parameters<typeof subscribeAppToasts>[0]>[0];
+
+const getAndroidShadowFallback = () => (Platform.OS === "android" ? { elevation: 8 } : null);
 
 export function AppToastHost() {
   const [toast, setToast] = useState<AppToast | null>(null);
@@ -58,7 +60,8 @@ export function AppToastHost() {
             top: top + 12,
             backgroundColor: card,
             borderColor: accentGreen,
-            shadowColor: primary,
+            boxShadow: `0 8px 24px ${primary}29`,
+            ...getAndroidShadowFallback(),
           },
           animatedToastStyle,
         ]}
@@ -94,7 +97,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     borderRadius: 18,
     borderWidth: 1,
-    elevation: 8,
     flexDirection: "row",
     gap: 12,
     maxWidth: 360,
@@ -102,9 +104,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     position: "absolute",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
     width: "88%",
   },
 });

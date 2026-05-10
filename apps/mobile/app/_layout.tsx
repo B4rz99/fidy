@@ -67,7 +67,7 @@ function AuthenticatedShell({
   userId: UserId;
   enableRemoteEffects: boolean;
 }) {
-  const router = useRouter();
+  const { push } = useRouter();
   const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
 
   useSubscription(
@@ -88,10 +88,10 @@ function AuthenticatedShell({
   const captureUserId = enableRemoteEffects ? userId : null;
   const navigateToRoute = useCallback(
     (route: string) => {
-      const href = route as unknown as Parameters<typeof router.push>[0];
-      router.push(href);
+      const href = route as unknown as Parameters<typeof push>[0];
+      push(href);
     },
-    [router]
+    [push]
   );
   useAuthenticatedCapturePipelines({ db: captureDb, userId: captureUserId });
   useAuthenticatedNotificationBootstrap({
@@ -117,7 +117,7 @@ function RootLayout() {
   const authMode = useAuthMode();
   const userId = useOptionalUserId();
   const onboardingComplete = useEffectiveOnboardingComplete();
-  const router = useRouter();
+  const { replace } = useRouter();
   const segments = useSegments();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
@@ -169,14 +169,14 @@ function RootLayout() {
       }
 
       if (!userId && !inAuthGroup) {
-        router.replace("/(auth)");
+        replace("/(auth)");
       } else if (userId && !onboardingComplete && !inOnboarding && !inOnboardingAllowedRoute) {
-        router.replace("/(auth)/onboarding");
+        replace("/(auth)/onboarding");
       } else if (userId && onboardingComplete && inAuthGroup) {
-        router.replace("/(tabs)/(index)");
+        replace("/(tabs)/(index)");
       }
     },
-    [localQaAvailable, onboardingComplete, router, segments, userId],
+    [localQaAvailable, onboardingComplete, replace, segments, userId],
     !isAuthLoading && (fontsLoaded || fontsError != null)
   );
 
@@ -189,6 +189,11 @@ function RootLayout() {
   }
 
   const db = userId ? getDb(userId) : null;
+  const iosHeaderOptions = {
+    headerShown: Platform.OS === "ios",
+    headerStyle: { backgroundColor: theme.page },
+    headerTintColor: theme.primary,
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -197,26 +202,8 @@ function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
-            {localQaAvailable ? (
-              <Stack.Screen
-                name="qa-tools"
-                options={{
-                  headerShown: Platform.OS === "ios",
-                  headerStyle: { backgroundColor: theme.page },
-                  headerTintColor: theme.primary,
-                }}
-              />
-            ) : null}
-            {localQaAvailable ? (
-              <Stack.Screen
-                name="qa-open"
-                options={{
-                  headerShown: Platform.OS === "ios",
-                  headerStyle: { backgroundColor: theme.page },
-                  headerTintColor: theme.primary,
-                }}
-              />
-            ) : null}
+            {localQaAvailable ? <Stack.Screen name="qa-tools" options={iosHeaderOptions} /> : null}
+            {localQaAvailable ? <Stack.Screen name="qa-open" options={iosHeaderOptions} /> : null}
             <Stack.Screen
               name="add-bill"
               options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
@@ -238,113 +225,25 @@ function RootLayout() {
               name="enable-notifications"
               options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
             />
-            <Stack.Screen
-              name="analytics"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
-            <Stack.Screen
-              name="notifications"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
-            <Stack.Screen
-              name="search"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
-            <Stack.Screen
-              name="connected-accounts"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
-            <Stack.Screen
-              name="account-suggestions"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
-            <Stack.Screen
-              name="create-financial-account"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
-            <Stack.Screen
-              name="financial-accounts"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
-            <Stack.Screen
-              name="financial-account-details"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
-            <Stack.Screen
-              name="financial-account-form"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
+            <Stack.Screen name="analytics" options={iosHeaderOptions} />
+            <Stack.Screen name="notifications" options={iosHeaderOptions} />
+            <Stack.Screen name="search" options={iosHeaderOptions} />
+            <Stack.Screen name="connected-accounts" options={iosHeaderOptions} />
+            <Stack.Screen name="account-suggestions" options={iosHeaderOptions} />
+            <Stack.Screen name="create-financial-account" options={iosHeaderOptions} />
+            <Stack.Screen name="financial-accounts" options={iosHeaderOptions} />
+            <Stack.Screen name="financial-account-details" options={iosHeaderOptions} />
+            <Stack.Screen name="financial-account-form" options={iosHeaderOptions} />
+            <Stack.Screen name="failed-emails" options={iosHeaderOptions} />
+            <Stack.Screen name="profile" options={iosHeaderOptions} />
+            <Stack.Screen name="settings" options={iosHeaderOptions} />
             <Stack.Screen
               name="financial-account-identifier"
-              options={{
-                ...SHEET,
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-                sheetAllowedDetents: [0.62],
-              }}
+              options={{ ...SHEET, ...iosHeaderOptions, sheetAllowedDetents: [0.62] }}
             />
             <Stack.Screen
               name="link-suggested-account"
-              options={{
-                ...SHEET,
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-                sheetAllowedDetents: [0.8],
-              }}
-            />
-            <Stack.Screen
-              name="failed-emails"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
-            <Stack.Screen
-              name="profile"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
+              options={{ ...SHEET, ...iosHeaderOptions, sheetAllowedDetents: [0.8] }}
             />
             <Stack.Screen
               name="create-budget"
@@ -354,14 +253,7 @@ function RootLayout() {
               name="auto-suggest-budgets"
               options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
             />
-            <Stack.Screen
-              name="goal-detail"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
+            <Stack.Screen name="goal-detail" options={iosHeaderOptions} />
             <Stack.Screen
               name="create-goal"
               options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
@@ -383,44 +275,11 @@ function RootLayout() {
                 sheetGrabberVisible: false,
               }}
             />
-            <Stack.Screen
-              name="add-transfer"
-              options={{
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="bills-calendar"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
-            <Stack.Screen
-              name="ai-memories"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
-            <Stack.Screen
-              name="notification-preferences"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
-            <Stack.Screen
-              name="categories"
-              options={{
-                headerShown: Platform.OS === "ios",
-                headerStyle: { backgroundColor: theme.page },
-                headerTintColor: theme.primary,
-              }}
-            />
+            <Stack.Screen name="add-transfer" options={{ headerShown: false }} />
+            <Stack.Screen name="bills-calendar" options={iosHeaderOptions} />
+            <Stack.Screen name="ai-memories" options={iosHeaderOptions} />
+            <Stack.Screen name="notification-preferences" options={iosHeaderOptions} />
+            <Stack.Screen name="categories" options={iosHeaderOptions} />
             <Stack.Screen
               name="create-category"
               options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
@@ -435,12 +294,7 @@ function RootLayout() {
               }}
             />
             {localQaAvailable ? (
-              <Stack.Screen
-                name="qa-transfer-conflict"
-                options={{
-                  headerShown: false,
-                }}
-              />
+              <Stack.Screen name="qa-transfer-conflict" options={{ headerShown: false }} />
             ) : null}
           </Stack>
           {db && userId && onboardingComplete && (

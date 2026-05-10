@@ -1,14 +1,17 @@
 import { Stack } from "expo-router";
-import { Platform, useColorScheme } from "@/shared/components/rn";
+import { ProfileAvatarButton } from "@/features/settings/header.public";
+import { useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 
-export default function MenuStackLayout() {
+export default function AddStackLayout() {
   const theme = Colors[useColorScheme() === "dark" ? "dark" : "light"];
 
   return (
     <Stack
       screenOptions={{
-        headerShown: Platform.OS === "ios",
+        headerShown: true,
+        headerLeft: () => <ProfileAvatarButton />,
+        headerTitle: "",
         headerStyle: { backgroundColor: theme.page },
         headerTintColor: theme.primary,
       }}

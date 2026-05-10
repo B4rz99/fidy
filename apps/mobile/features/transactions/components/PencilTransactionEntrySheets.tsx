@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { Wallet } from "@/shared/components/icons";
 import { Modal, Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useCurrentDate, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import type { Category } from "../lib/categories";
 import { CATEGORIES } from "../lib/categories";
@@ -160,6 +160,7 @@ export function TransactionDatePickerSheet(props: {
   const card = useThemeColor("card");
   const accentGreen = useThemeColor("accentGreen");
   const onAccent = useThemeColor("onAccent");
+  const maximumDate = useCurrentDate();
 
   return (
     <PickerSheetFrame
@@ -182,7 +183,7 @@ export function TransactionDatePickerSheet(props: {
           value={props.date}
           mode="date"
           display={Platform.OS === "ios" ? "spinner" : "default"}
-          maximumDate={new Date()}
+          maximumDate={maximumDate}
           onChange={(_event, nextDate) => {
             if (Platform.OS !== "ios") props.onClose();
             if (nextDate) props.onChange(nextDate);

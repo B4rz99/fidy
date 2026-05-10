@@ -57,7 +57,7 @@ function FinancialAccountFormMissingState({ onExit }: { readonly onExit: () => v
 }
 
 export function FinancialAccountFormScreen() {
-  const router = useRouter();
+  const { back, push, replace } = useRouter();
   const { accountId: rawAccountId } = useLocalSearchParams<{ accountId?: string }>();
   const accountId = parseFinancialAccountRouteParam(rawAccountId);
   const { t } = useTranslation();
@@ -90,10 +90,10 @@ export function FinancialAccountFormScreen() {
   useFocusEffect(reloadAccount);
 
   const screenState = getFinancialAccountFormScreenState({ accountId, lookupStatus });
-  const exitToAccountList = () => router.replace("/financial-accounts");
+  const exitToAccountList = () => replace("/financial-accounts");
   const onManageIdentifiers = accountId
     ? () =>
-        router.push({
+        push({
           pathname: "/financial-account-identifier",
           params: { accountId },
         })
@@ -119,7 +119,7 @@ export function FinancialAccountFormScreen() {
         accountId ? t("financialAccounts.form.editTitle") : t("financialAccounts.form.createTitle")
       }
       variant="sub"
-      onBack={screenState === "missing" ? exitToAccountList : () => router.back()}
+      onBack={screenState === "missing" ? exitToAccountList : back}
     >
       {formContent}
     </ScreenLayout>

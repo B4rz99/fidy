@@ -29,6 +29,15 @@ export function deriveAccountCreatedAt({ session, localQaSession }: EffectiveAut
   return session?.user.created_at ?? "";
 }
 
+const isHttpsUrl = (value: unknown): value is string =>
+  typeof value === "string" && value.startsWith("https://");
+
+export function deriveAuthProfileImageUrl(input: EffectiveAuthInput): string | null {
+  const metadata = input.session?.user.user_metadata;
+  const imageUrl = [metadata?.avatar_url, metadata?.picture].find(isHttpsUrl);
+  return input.localQaSession ? null : (imageUrl ?? null);
+}
+
 export function deriveAuthMode({ session, localQaSession }: EffectiveAuthInput): AuthMode {
   if (localQaSession) return "local-qa";
   if (session) return "remote";
@@ -49,6 +58,7 @@ export function deriveAuthIdentity({ session, localQaSession }: EffectiveAuthInp
     fullName: deriveAuthFullName({ session, localQaSession }),
     email: deriveAuthEmail({ session, localQaSession }),
     accountCreatedAt: deriveAccountCreatedAt({ session, localQaSession }),
+    profileImageUrl: deriveAuthProfileImageUrl({ session, localQaSession }),
   };
 }
 

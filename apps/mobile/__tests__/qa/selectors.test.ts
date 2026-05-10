@@ -30,7 +30,7 @@ function readTransactionFormSource() {
 }
 
 const localQaButtonSource = readSource("../../features/qa/components/LocalQaLoginButton.tsx");
-const addRouteSource = readSource("../../app/(tabs)/add.tsx");
+const addRouteSource = readSource("../../app/(tabs)/add/index.tsx");
 const transactionFormSource = readTransactionFormSource();
 const transferFormIdsSource = readSource(
   "../../features/transfers/components/transfer-form/TransferForm.types.ts"

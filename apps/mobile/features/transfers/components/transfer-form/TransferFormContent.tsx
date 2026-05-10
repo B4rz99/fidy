@@ -10,7 +10,7 @@ import {
   TextInput,
   View,
 } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useCurrentDate, useThemeColor, useTranslation } from "@/shared/hooks";
 import { cleanDigitInput, formatInputDisplay } from "@/shared/lib";
 import { styles } from "./TransferForm.styles";
 import { TRANSFER_FORM_TEST_IDS } from "./TransferForm.types";
@@ -20,6 +20,7 @@ import type { useTransferForm } from "./useTransferForm";
 export function TransferFormContent(props: { readonly form: ReturnType<typeof useTransferForm> }) {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
+  const maximumDate = useCurrentDate();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
@@ -94,7 +95,7 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
                 value={props.form.date}
                 mode="date"
                 display="compact"
-                maximumDate={new Date()}
+                maximumDate={maximumDate}
                 onChange={props.form.handleDateChange}
               />
             ) : (

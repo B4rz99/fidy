@@ -32,7 +32,7 @@ export function ScreenLayout({
       {Platform.OS === "ios" && (
         <Stack.Screen
           options={{
-            title,
+            title: isTab ? "" : title,
             headerRight: () => rightActions,
             ...(onBack != null && {
               headerLeft: () => (
@@ -61,7 +61,7 @@ export function ScreenLayout({
                 }
                 numberOfLines={1}
               >
-                {title}
+                {isTab ? "" : title}
               </Text>
             </View>
             {rightActions}

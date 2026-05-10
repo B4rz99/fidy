@@ -9,7 +9,7 @@ import {
 } from "@/features/backup/public";
 import { ScreenLayout } from "@/shared/components";
 import { CheckCircle, KeyRound, RefreshCcw, Shield, Smartphone } from "@/shared/components/icons";
-import { Alert, ScrollView, Text, TextInput, View } from "@/shared/components/rn";
+import { Alert, Platform, ScrollView, Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { uploadConfirmedPrivateBackup } from "../lib/private-backup-upload";
@@ -35,8 +35,12 @@ function getPrivateBackupStatusLabelKey(status: PrivateBackupHealthStatus) {
 const formatPrivateBackupCreatedAt = (createdAt: string, locale: string) =>
   format(new Date(createdAt), "PPp", { locale: getDateFnsLocale(locale) });
 
+function AndroidSafeAreaSpacer({ bottom }: { readonly bottom: number }) {
+  return Platform.OS === "ios" ? null : <View style={{ height: bottom }} />;
+}
+
 export function PrivateBackupScreen() {
-  const router = useRouter();
+  const { back } = useRouter();
   const userId = useOptionalUserId();
   const { t, locale } = useTranslation();
   const { bottom } = useSafeAreaInsets();
@@ -132,15 +136,16 @@ export function PrivateBackupScreen() {
   })();
 
   return (
-    <ScreenLayout variant="sub" title={t("privateBackup.title")} onBack={() => router.back()}>
+    <ScreenLayout variant="sub" title={t("privateBackup.title")} onBack={back}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 16,
-          paddingBottom: bottom + 40,
+          paddingBottom: 40,
           gap: 12,
         }}
+        contentInset={{ bottom }}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
@@ -201,7 +206,7 @@ export function PrivateBackupScreen() {
             />
             <BackupActionButton
               label={t("privateBackup.finishLater")}
-              onPress={() => router.back()}
+              onPress={back}
               variant="secondary"
             />
           </>
@@ -267,6 +272,7 @@ export function PrivateBackupScreen() {
         <Text className="font-poppins text-xs text-secondary dark:text-secondary-dark">
           {t("privateBackup.privacyNote")}
         </Text>
+        <AndroidSafeAreaSpacer bottom={bottom} />
       </ScrollView>
     </ScreenLayout>
   );

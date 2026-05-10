@@ -11,6 +11,11 @@
       "reason": "Expo SDK 56 expects 2.0.2; newer native versions need Expo compatibility confirmation."
     },
     {
+      "name": "dependency-cruiser",
+      "until": "2026-06-01",
+      "reason": "Minor dependency update should land in a dedicated tooling PR so architecture reports can be reviewed separately."
+    },
+    {
       "name": "eslint",
       "until": "2026-06-01",
       "reason": "ESLint 10 should wait for eslint-config-expo compatibility confirmation."

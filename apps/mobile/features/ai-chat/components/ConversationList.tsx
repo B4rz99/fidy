@@ -1,6 +1,7 @@
 import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { Stack } from "expo-router";
+import { ProfileAvatarButton } from "@/features/settings/header.public";
 import { memo, useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
@@ -21,14 +22,18 @@ type ConversationListProps = {
 
 const ItemSeparator = () => <View style={{ height: 10 }} />;
 
+function AndroidTabBarSpacer() {
+  return Platform.OS === "ios" ? null : <View style={{ height: TAB_BAR_CLEARANCE }} />;
+}
+
 const SessionCard = memo(function SessionCardInner({
   session,
-  onSelect,
-  onDelete,
+  onDeleteSession,
+  onSelectSession,
 }: {
   readonly session: ChatSession;
-  readonly onSelect: () => void;
-  readonly onDelete: () => void;
+  readonly onDeleteSession: (id: ChatSessionId) => void;
+  readonly onSelectSession: (id: ChatSessionId) => void;
 }) {
   const { locale } = useTranslation();
   const tertiary = useThemeColor("tertiary");
@@ -40,7 +45,7 @@ const SessionCard = memo(function SessionCardInner({
 
   return (
     <Pressable
-      onPress={onSelect}
+      onPress={() => onSelectSession(session.id)}
       className="bg-card dark:bg-card-dark"
       style={{
         borderRadius: 16,
@@ -63,7 +68,7 @@ const SessionCard = memo(function SessionCardInner({
           {dateStr}
         </Text>
       </View>
-      <Pressable onPress={() => onDelete()} hitSlop={12} style={{ padding: 4 }}>
+      <Pressable onPress={() => onDeleteSession(session.id)} hitSlop={12} style={{ padding: 4 }}>
         <Trash2 size={18} color={accentRed} />
       </Pressable>
     </Pressable>
@@ -106,8 +111,8 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
     ({ item }: { item: ChatSession }) => (
       <SessionCard
         session={item}
-        onSelect={() => onSelectSession(item.id)}
-        onDelete={() => handleDelete(item.id)}
+        onSelectSession={onSelectSession}
+        onDeleteSession={handleDelete}
       />
     ),
     [onSelectSession, handleDelete]
@@ -121,8 +126,8 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
       {Platform.OS === "ios" && (
         <Stack.Screen
           options={{
-            title: t("aiChat.title"),
-            headerLeft: () => null,
+            headerTitle: "",
+            headerLeft: () => <ProfileAvatarButton />,
             headerRight: () => <NewChatButton onPress={onNewChat} />,
           }}
         />
@@ -133,9 +138,10 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
         keyExtractor={(item) => item.id}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
-          paddingBottom: TAB_BAR_CLEARANCE,
+          paddingBottom: 0,
           paddingHorizontal: 16,
         }}
+        contentInset={{ bottom: TAB_BAR_CLEARANCE }}
         ItemSeparatorComponent={ItemSeparator}
         ListHeaderComponent={
           cleanupMessage != null ? (
@@ -175,6 +181,7 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
             </Text>
           </View>
         }
+        ListFooterComponent={AndroidTabBarSpacer}
       />
     </ScreenLayout>
   );

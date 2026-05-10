@@ -2,6 +2,7 @@ export { useAnimatedProgress } from "./use-animated-progress";
 export { useAsyncGuard } from "./use-async-guard";
 export { useBlinkingCursor } from "./use-blinking-cursor";
 export { useColorScheme } from "./use-color-scheme";
+export { useCurrentDate } from "./use-current-date";
 export { useMountEffect } from "./use-mount-effect";
 export { usePulsingOpacity } from "./use-pulsing-opacity";
 export { useSubscription } from "./use-subscription";

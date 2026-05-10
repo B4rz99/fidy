@@ -32,6 +32,7 @@ type PencilEntryScaffoldProps = {
   readonly onKeyPress: (key: string) => void;
   readonly onTabPress: (tab: PencilEntryTab) => void;
   readonly tabs: readonly { readonly key: PencilEntryTab; readonly label: string }[];
+  readonly includesNativeHeader?: boolean;
 };
 
 export const PENCIL_ENTRY_ROWS = [
@@ -66,6 +67,7 @@ export function PencilEntryScaffold({
   onKeyPress,
   onTabPress,
   tabs,
+  includesNativeHeader = false,
 }: PencilEntryScaffoldProps) {
   const { width } = useWindowDimensions();
   const tabBarWidth = useSharedValue(Math.max(width - PENCIL_ENTRY_HORIZONTAL_PADDING * 2, 0));
@@ -125,7 +127,7 @@ export function PencilEntryScaffold({
         {
           backgroundColor: page,
           paddingBottom: tabBarClearance,
-          paddingTop: top + 20,
+          paddingTop: includesNativeHeader ? 16 : top + 16,
         },
       ]}
     >
