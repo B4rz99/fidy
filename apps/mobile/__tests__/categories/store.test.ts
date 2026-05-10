@@ -1,14 +1,17 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getUserCategoriesForUser, insertUserCategory } from "@/features/categories/lib/repository";
 import { CATEGORIES, CATEGORY_ROWS } from "@/features/transactions/lib/categories";
+import type { AnyDb } from "@/shared/db";
 import type { IsoDateTime, UserCategoryId, UserId } from "@/shared/types/branded";
+
+const GENERATED_CATEGORY_ID = "ucat-test-123" as UserCategoryId;
+const MOCK_NOW = "2026-03-21T12:00:00.000Z" as IsoDateTime;
 
 // Mock the repository
 vi.mock("@/features/categories/lib/repository", () => ({
-  getUserCategoriesForUser: vi.fn().mockReturnValue([]),
-  insertUserCategory: vi.fn(),
+  getUserCategoriesForUser: vi.fn<typeof getUserCategoriesForUser>().mockReturnValue([]),
+  insertUserCategory: vi.fn<typeof insertUserCategory>(),
 }));
 
 // Mock the icon-map
@@ -23,16 +26,16 @@ vi.mock("@/shared/lib", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/shared/lib")>();
   return {
     ...actual,
-    generateUserCategoryId: vi.fn().mockReturnValue("ucat-test-123"),
-    toIsoDateTime: vi.fn().mockReturnValue("2026-03-21T12:00:00.000Z"),
+    generateUserCategoryId: vi.fn<() => UserCategoryId>().mockReturnValue(GENERATED_CATEGORY_ID),
+    toIsoDateTime: vi.fn<() => IsoDateTime>().mockReturnValue(MOCK_NOW),
   };
 });
 
 const mockDb = {
-  insert: vi.fn(),
-  select: vi.fn(),
-  transaction: vi.fn((fn: (tx: any) => void) => fn(mockDb)),
-} as any;
+  insert: vi.fn<() => unknown>(),
+  select: vi.fn<() => unknown>(),
+  transaction: vi.fn<(fn: (tx: AnyDb) => void) => void>((fn) => fn(mockDb as unknown as AnyDb)),
+} as unknown as AnyDb;
 
 describe("useCategoriesStore", () => {
   beforeEach(() => {
