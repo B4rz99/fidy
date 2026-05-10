@@ -1,22 +1,25 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { AnyDb } from "@/shared/db/client";
 import { requireUserId } from "@/shared/types/assertions";
 import type { SearchFilters } from "../../features/search/lib/types";
 import { EMPTY_FILTERS } from "../../features/search/lib/types";
 
-const _mockRun = vi.fn();
-const mockAll = vi.fn().mockReturnValue([]);
-const mockGet = vi.fn().mockReturnValue(null);
-const mockSelect = vi.fn().mockReturnThis();
-const mockFrom = vi.fn().mockReturnThis();
-const mockWhere = vi.fn().mockReturnThis();
-const mockOrderBy = vi.fn().mockReturnThis();
-const mockLimit = vi.fn().mockReturnThis();
-const mockOffset = vi.fn().mockReturnThis();
+type SearchRow = { readonly id: string; readonly description: string; readonly amount: number };
+type AggregateRow = { readonly count: number; readonly total: number };
+
+const _mockRun = vi.fn<() => void>();
+const mockAll = vi.fn<() => SearchRow[]>().mockReturnValue([]);
+const mockGet = vi.fn<() => AggregateRow | null>().mockReturnValue(null);
+const mockSelect = vi.fn<(fields?: unknown) => unknown>();
+const mockFrom = vi.fn<(table?: unknown) => unknown>();
+const mockWhere = vi.fn<(condition?: unknown) => unknown>();
+const mockOrderBy = vi.fn<(...columns: unknown[]) => unknown>();
+const mockLimit = vi.fn<(limit: number) => unknown>();
+const mockOffset = vi.fn<(offset: number) => unknown>();
 
 const mockDb = {
   select: mockSelect,
-} as any;
+} as unknown as AnyDb;
 const USER_ID = requireUserId("user-1");
 
 const withFilters = (overrides: Partial<SearchFilters>): SearchFilters => ({
