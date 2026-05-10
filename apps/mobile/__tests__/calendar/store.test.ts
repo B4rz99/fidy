@@ -21,13 +21,13 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
-const mockLoadBills = vi.fn();
-const mockLoadPaymentsForMonth = vi.fn();
-const mockAddBill = vi.fn();
-const mockDeleteBill = vi.fn();
-const mockMarkBillPaid = vi.fn();
-const mockUnmarkBillPaid = vi.fn();
-const mockUpdateBill = vi.fn();
+const mockLoadBills = vi.fn<(...args: unknown[]) => Promise<unknown>>();
+const mockLoadPaymentsForMonth = vi.fn<(...args: unknown[]) => Promise<unknown>>();
+const mockAddBill = vi.fn<(...args: unknown[]) => Promise<unknown>>();
+const mockDeleteBill = vi.fn<(...args: unknown[]) => Promise<unknown>>();
+const mockMarkBillPaid = vi.fn<(...args: unknown[]) => Promise<unknown>>();
+const mockUnmarkBillPaid = vi.fn<(...args: unknown[]) => Promise<unknown>>();
+const mockUpdateBill = vi.fn<(...args: unknown[]) => Promise<unknown>>();
 
 vi.mock("@/features/calendar/services/create-calendar-query-service", () => ({
   createCalendarQueryService: () => ({
@@ -48,7 +48,7 @@ vi.mock("@/features/calendar/lib/bill-mutation-service", () => ({
 
 vi.mock("@/mutations", () => ({
   createWriteThroughMutationModule: () => ({
-    commit: vi.fn(),
+    commit: vi.fn<() => void>(),
   }),
 }));
 
@@ -112,18 +112,17 @@ describe("calendar store boundary", () => {
   });
 
   it("drops stale bill results after the active user changes", async () => {
-    const deferred =
-      createDeferred<
-        readonly {
-          id: BillId;
-          name: string;
-          amount: CopAmount;
-          frequency: "monthly";
-          categoryId: CategoryId;
-          startDate: Date;
-          isActive: boolean;
-        }[]
-      >();
+    const deferred = createDeferred<
+      readonly {
+        id: BillId;
+        name: string;
+        amount: CopAmount;
+        frequency: "monthly";
+        categoryId: CategoryId;
+        startDate: Date;
+        isActive: boolean;
+      }[]
+    >();
     mockLoadBills.mockReturnValueOnce(deferred.promise);
 
     initializeCalendarSession("user-1" as UserId);

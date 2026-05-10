@@ -76,9 +76,7 @@ describe("createBillSchema", () => {
   test("strips id field from parsed output", () => {
     const result = createBillSchema.safeParse({ ...valid, id: "bill-1" });
     expect(result.success).toBe(true);
-    if (result.success) {
-      expect("id" in result.data).toBe(false);
-    }
+    expect(result.data).not.toHaveProperty("id");
   });
 
   test("rejects invalid frequency", () => {
