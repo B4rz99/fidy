@@ -1,4 +1,4 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons";
 import { useBudgetStore } from "@/features/budget/public";
 import { useTransactionStore } from "@/features/transactions/store.public";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";

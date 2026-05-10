@@ -224,9 +224,13 @@ vi.mock("expo-router", () => ({
   useRouter: () => ({ replace: mockReplace, push: mockPush, back: mockBack }),
 }));
 
-// Mock @expo/vector-icons/Ionicons
-vi.mock("@expo/vector-icons/Ionicons", () => ({
+// Mock vector icon packages
+vi.mock("@react-native-vector-icons/ionicons", () => ({
   default: "Ionicons",
+}));
+
+vi.mock("@react-native-vector-icons/material-icons", () => ({
+  default: "MaterialIcons",
 }));
 
 // Mock @supabase/supabase-js
