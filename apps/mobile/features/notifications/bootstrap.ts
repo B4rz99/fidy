@@ -6,7 +6,7 @@ import type {
 } from "@/shared/bootstrap/types";
 import { useSubscription } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
-import { initializeNotificationStore, registerPushToken } from "./public";
+import { initializeNotificationStore, registerKnownPushToken, registerPushToken } from "./public";
 import { cleanupLegacyWeeklyDigestNotificationSchedules } from "./services/weekly-digest-schedule";
 
 const notificationBehavior = {
@@ -55,8 +55,8 @@ export const useNotificationBootstrap = ({
 
     configureNotificationHandler();
     registerCurrentPushToken(userId);
-    const tokenSub = Notifications.addPushTokenListener(() => {
-      registerCurrentPushToken(userId);
+    const tokenSub = Notifications.addPushTokenListener((token) => {
+      void registerKnownPushToken(userId, token.data).catch(captureError);
     });
     const responseSub = subscribeNotificationNavigation({ navigateToRoute });
 
