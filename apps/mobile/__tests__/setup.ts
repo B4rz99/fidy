@@ -266,8 +266,8 @@ vi.mock("expo-crypto", () => ({
   getRandomBytes: createMock(() => new Uint8Array(32)),
 }));
 
-// Mock @react-native-community/datetimepicker
-vi.mock("@react-native-community/datetimepicker", () => ({
+// Mock Expo UI DateTimePicker drop-in
+vi.mock("@expo/ui/community/datetime-picker", () => ({
   default: "DateTimePicker",
 }));
 

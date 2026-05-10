@@ -1,4 +1,4 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker from "@expo/ui/community/datetime-picker";
 import { useState } from "react";
 import { ArrowLeftRight, Calendar, Pencil, Tag } from "@/shared/components/icons";
 import {
@@ -130,7 +130,8 @@ export function usePencilTransferEntry(props: { readonly enabled?: boolean } = {
                 mode="date"
                 display={Platform.OS === "ios" ? "spinner" : "default"}
                 maximumDate={maximumDate}
-                onChange={form.handleDateChange}
+                onValueChange={form.handleDateChange}
+                onDismiss={() => form.handleDateChange({ type: "dismissed" })}
               />
               <Pressable
                 style={{

@@ -1,4 +1,4 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker from "@expo/ui/community/datetime-picker";
 import { useRouter } from "expo-router";
 import { ScreenLayout } from "@/shared/components";
 import { useCurrentDate, useTranslation } from "@/shared/hooks";
@@ -39,7 +39,8 @@ export function TransferFormScreen(props: TransferFormScreenProps = {}) {
           mode="date"
           display="default"
           maximumDate={maximumDate}
-          onChange={form.handleDateChange}
+          onValueChange={form.handleDateChange}
+          onDismiss={() => form.handleDateChange({ type: "dismissed" })}
         />
       ) : null}
     </>
