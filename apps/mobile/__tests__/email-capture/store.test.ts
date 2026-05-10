@@ -39,10 +39,12 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
-const mockShareParseImprovementSample = vi.fn().mockResolvedValue(undefined);
+const mockShareParseImprovementSample = vi
+  .fn<(...args: unknown[]) => Promise<void>>()
+  .mockResolvedValue(undefined);
 
 const { mockCaptureWarning } = vi.hoisted(() => ({
-  mockCaptureWarning: vi.fn(),
+  mockCaptureWarning: vi.fn<(message: string, context?: Record<string, unknown>) => void>(),
 }));
 
 vi.mock("@/shared/lib", async () => {
@@ -54,28 +56,29 @@ vi.mock("@/shared/lib", async () => {
 });
 
 vi.mock("@/features/email-capture/lib/repository", () => ({
-  getEmailAccounts: vi.fn().mockResolvedValue([]),
-  insertEmailAccount: vi.fn().mockResolvedValue(true),
-  deleteEmailAccount: vi.fn(),
-  getFailedEmails: vi.fn().mockResolvedValue([]),
-  getNeedsReviewEmails: vi.fn().mockResolvedValue([]),
-  dismissProcessedEmail: vi.fn(),
-  updateLastFetchedAt: vi.fn(),
-  updateProcessedEmailStatus: vi.fn(),
+  getEmailAccounts: vi.fn<typeof getEmailAccounts>().mockResolvedValue([]),
+  insertEmailAccount: vi.fn<typeof insertEmailAccount>().mockResolvedValue(true),
+  deleteEmailAccount: vi.fn<typeof deleteEmailAccount>(),
+  getFailedEmails: vi.fn<typeof getFailedEmails>().mockResolvedValue([]),
+  getNeedsReviewEmails: vi.fn<typeof getNeedsReviewEmails>().mockResolvedValue([]),
+  dismissProcessedEmail: vi.fn<typeof dismissProcessedEmail>(),
+  updateLastFetchedAt: vi.fn<typeof updateLastFetchedAt>(),
+  updateProcessedEmailStatus: vi.fn<typeof updateProcessedEmailStatus>(),
 }));
 
 const mockAdapter = {
-  isConnected: vi.fn().mockResolvedValue(true),
-  connect: vi.fn(),
-  disconnect: vi.fn().mockResolvedValue(undefined),
-  fetchEmails: vi.fn().mockResolvedValue([]),
+  isConnected: vi.fn<() => Promise<boolean>>().mockResolvedValue(true),
+  connect:
+    vi.fn<() => Promise<{ success: true; email: string } | { success: false; error: string }>>(),
+  disconnect: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
+  fetchEmails: vi.fn<() => Promise<RawEmail[]>>().mockResolvedValue([]),
 };
 vi.mock("@/features/email-capture/services/email-adapter", () => ({
-  getAdapter: vi.fn(() => mockAdapter),
+  getAdapter: vi.fn<typeof getAdapter>(() => mockAdapter),
 }));
 
 vi.mock("@/features/email-capture/services/email-pipeline", () => ({
-  processBackgroundEmails: vi.fn().mockResolvedValue({
+  processBackgroundEmails: vi.fn<typeof processBackgroundEmails>().mockResolvedValue({
     filtered: 0,
     skippedDuplicate: 0,
     skippedCrossSource: 0,
@@ -85,7 +88,7 @@ vi.mock("@/features/email-capture/services/email-pipeline", () => ({
     needsReview: 0,
     parseImprovementRequests: [],
   }),
-  processEmails: vi.fn().mockResolvedValue({
+  processEmails: vi.fn<typeof processEmails>().mockResolvedValue({
     filtered: 0,
     skippedDuplicate: 0,
     skippedCrossSource: 0,
@@ -95,7 +98,7 @@ vi.mock("@/features/email-capture/services/email-pipeline", () => ({
     needsReview: 0,
     parseImprovementRequests: [],
   }),
-  processInitialSyncEmails: vi.fn().mockResolvedValue({
+  processInitialSyncEmails: vi.fn<typeof processInitialSyncEmails>().mockResolvedValue({
     filtered: 0,
     skippedDuplicate: 0,
     skippedCrossSource: 0,
@@ -105,7 +108,7 @@ vi.mock("@/features/email-capture/services/email-pipeline", () => ({
     needsReview: 0,
     parseImprovementRequests: [],
   }),
-  processRetries: vi.fn().mockResolvedValue({
+  processRetries: vi.fn<typeof processRetries>().mockResolvedValue({
     retried: 0,
     succeeded: 0,
     permanentlyFailed: 0,
@@ -118,20 +121,20 @@ vi.mock("@/features/capture-sources/diagnostics.public", () => ({
 }));
 
 vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
-  insertMerchantRule: vi.fn(),
+  insertMerchantRule: vi.fn<typeof insertMerchantRule>(),
 }));
 
 vi.mock("@/shared/lib/normalize-merchant", () => ({
-  normalizeMerchant: vi.fn((s: string) => s.toLowerCase()),
+  normalizeMerchant: vi.fn<(s: string) => string>((s: string) => s.toLowerCase()),
 }));
 
 // Mock passes through real implementations for progress-phases
-const mockIsFirstFetchForAny = vi.fn((accounts: { lastFetchedAt: string | null }[]) =>
-  accounts.some((a) => a.lastFetchedAt === null)
+const mockIsFirstFetchForAny = vi.fn<(accounts: { lastFetchedAt: string | null }[]) => boolean>(
+  (accounts) => accounts.some((a) => a.lastFetchedAt === null)
 );
-const mockShouldShowProgress = vi.fn(
-  (emailCount: number, isFirst: boolean, _threshold = 5) => isFirst || emailCount >= _threshold
-);
+const mockShouldShowProgress = vi.fn<
+  (emailCount: number, isFirst: boolean, _threshold?: number) => boolean
+>((emailCount, isFirst, _threshold = 5) => isFirst || emailCount >= _threshold);
 vi.mock("@/features/email-capture/lib/progress-phases", () => ({
   isFirstFetchForAny: (...args: unknown[]) =>
     mockIsFirstFetchForAny(...(args as [{ lastFetchedAt: string | null }[]])),
@@ -141,7 +144,7 @@ vi.mock("@/features/email-capture/lib/progress-phases", () => ({
 
 const { mockEnsureBankSenders } = vi.hoisted(() => ({
   mockEnsureBankSenders: vi
-    .fn()
+    .fn<() => Promise<{ bank: string; email: string }[]>>()
     .mockResolvedValue([{ bank: "Bancolombia", email: "notificaciones@bancolombia.com.co" }]),
 }));
 
@@ -150,13 +153,16 @@ vi.mock("@/features/email-capture/queries/bank-senders", () => ({
 }));
 
 vi.mock("@/shared/query", () => ({
-  queryClient: { ensureQueryData: vi.fn(), getQueryData: vi.fn() },
+  queryClient: { ensureQueryData: vi.fn<() => unknown>(), getQueryData: vi.fn<() => unknown>() },
 }));
 
-const mockRefresh = vi.fn();
+const mockRefresh = vi.fn<() => void>();
 
 vi.mock("drizzle-orm", () => ({
-  eq: vi.fn((...args: unknown[]) => ({ type: "eq", args })),
+  eq: vi.fn<(...args: unknown[]) => { type: "eq"; args: unknown[] }>((...args: unknown[]) => ({
+    type: "eq",
+    args,
+  })),
 }));
 
 vi.mock("@/shared/db/schema", () => ({
@@ -164,16 +170,23 @@ vi.mock("@/shared/db/schema", () => ({
 }));
 
 vi.mock("@/shared/lib/generate-id", () => ({
-  generateId: vi.fn(() => "ea-generated"),
+  generateId: vi.fn<() => string>(() => "ea-generated"),
   generateEmailAccountId: () => "ea-generated",
 }));
 
-const mockSelectWhere = vi.fn().mockResolvedValue([{ description: "Compra en Exito" }]);
+const mockSelectWhere = vi
+  .fn<() => Promise<{ description: string }[]>>()
+  .mockResolvedValue([{ description: "Compra en Exito" }]);
 const mockDb = {
-  update: vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) }),
-  select: vi.fn().mockReturnValue({ from: vi.fn().mockReturnValue({ where: mockSelectWhere }) }),
-  // biome-ignore lint/suspicious/noExplicitAny: mock DB object for testing
-} as any;
+  update: vi.fn<() => { set: () => { where: () => void } }>().mockReturnValue({
+    set: vi.fn<() => { where: () => void }>().mockReturnValue({ where: vi.fn<() => void>() }),
+  }),
+  select: vi.fn<() => { from: () => { where: typeof mockSelectWhere } }>().mockReturnValue({
+    from: vi
+      .fn<() => { where: typeof mockSelectWhere }>()
+      .mockReturnValue({ where: mockSelectWhere }),
+  }),
+} as unknown as Parameters<typeof loadEmailAccounts>[0];
 const mockUserId = "user-1";
 
 type TestEmailAccount = {
@@ -1123,7 +1136,9 @@ describe("email capture boundary", () => {
     it("drops queued progress refreshes after the active fetch run changes", async () => {
       const refreshGate = createDeferred<void>();
       const processingGate = createDeferred<void>();
-      const slowRefresh = vi.fn().mockImplementationOnce(() => refreshGate.promise);
+      const slowRefresh = vi
+        .fn<() => void>()
+        .mockImplementationOnce(() => refreshGate.promise as unknown as void);
       setAccounts();
       mockAdapter.fetchEmails.mockResolvedValueOnce([
         makeRawEmail({ externalId: "ext-1" }),
@@ -1275,7 +1290,7 @@ describe("email capture boundary", () => {
     });
 
     it("drops stale fetch completions after the active user changes", async () => {
-      const deferred = createDeferred<readonly [RawEmail]>();
+      const deferred = createDeferred<RawEmail[]>();
       setAccounts();
       mockAdapter.fetchEmails.mockReturnValueOnce(deferred.promise);
 
