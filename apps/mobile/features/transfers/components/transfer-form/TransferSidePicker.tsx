@@ -30,11 +30,16 @@ export function TransferSidePicker(props: {
   const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
   const accentRed = useThemeColor("accentRed");
+  const modalBackdrop = useThemeColor("modalBackdrop");
   const peachLight = useThemeColor("peachLight");
 
   return (
-    <Modal visible={props.visible} transparent animationType="slide" onRequestClose={props.onClose}>
-      <Pressable onPress={props.onClose} accessible={false} style={styles.pickerBackdrop}>
+    <Modal visible={props.visible} transparent animationType="fade" onRequestClose={props.onClose}>
+      <Pressable
+        onPress={props.onClose}
+        accessible={false}
+        style={[styles.pickerBackdrop, { backgroundColor: `${modalBackdrop}40` }]}
+      >
         <Pressable
           onPress={() => undefined}
           accessible={false}

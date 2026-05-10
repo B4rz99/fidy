@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useReducer } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
@@ -8,7 +8,7 @@ import {
   getFinancialAccountsForUser,
   tryEnsureDefaultFinancialAccount,
 } from "@/features/financial-accounts/public";
-import { PencilTransferEntryScreen } from "@/features/transfers/routes.public";
+import { usePencilTransferEntry } from "@/features/transfers/ui.public";
 import { Calendar, Pencil, Tag, Wallet } from "@/shared/components/icons";
 import {
   PencilEntryField,
@@ -31,25 +31,28 @@ import {
   TransactionDatePickerSheet,
 } from "./PencilTransactionEntrySheets";
 
-export function PencilTransactionEntryScreen() {
-  const [entryMode, setEntryMode] = useState<PencilEntryTab>("expense");
+type TransactionSheet = "account" | "category" | "date" | null;
+type AddEntryUiState = {
+  readonly accounts: readonly FinancialAccountRow[];
+  readonly entryMode: PencilEntryTab;
+  readonly sheet: TransactionSheet;
+};
 
-  return entryMode === "transfer" ? (
-    <PencilTransferEntryScreen onTransactionTabSelect={setEntryMode} />
-  ) : (
-    <PencilTransactionEntryContent onTransferTabSelect={() => setEntryMode("transfer")} />
-  );
+function mergeUiState(state: AddEntryUiState, patch: Partial<AddEntryUiState>): AddEntryUiState {
+  return { ...state, ...patch };
 }
 
-function PencilTransactionEntryContent(props: { readonly onTransferTabSelect: () => void }) {
+export function PencilTransactionEntryScreen() {
+  const [uiState, setUiState] = useReducer(mergeUiState, {
+    accounts: [],
+    entryMode: "expense",
+    sheet: null,
+  });
+  const transferEntry = usePencilTransferEntry();
   const { navigate } = useRouter();
   const { t, locale } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
-  const [accounts, setAccounts] = useState<readonly FinancialAccountRow[]>([]);
-  const [showAccountPicker, setShowAccountPicker] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const {
     accountId,
     categoryId,
@@ -84,13 +87,11 @@ function PencilTransactionEntryContent(props: { readonly onTransferTabSelect: ()
     }))
   );
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
-  const selectedAccount = accounts.find((account) => account.id === accountId);
+  const selectedAccount = uiState.accounts.find((account) => account.id === accountId);
   const selectedCategory = CATEGORIES.find((category) => category.id === categoryId);
-  const dateLabel = getDateLabel({
-    date,
-    now: new Date(),
-    todayLabel: t("dates.today"),
-  });
+  const dateLabel = getDateLabel({ date, now: new Date(), todayLabel: t("dates.today") });
+  const isTransfer = uiState.entryMode === "transfer";
+  const activeTab = isTransfer ? "transfer" : type;
 
   useSubscription(
     () => {
@@ -98,7 +99,7 @@ function PencilTransactionEntryContent(props: { readonly onTransferTabSelect: ()
       try {
         const defaultAccount = tryEnsureDefaultFinancialAccount(db, userId);
         if (defaultAccount) setDefaultAccountId(defaultAccount.id);
-        setAccounts(getFinancialAccountsForUser(db, userId));
+        setUiState({ accounts: getFinancialAccountsForUser(db, userId) });
       } catch (error) {
         captureError(error);
       }
@@ -108,101 +109,101 @@ function PencilTransactionEntryContent(props: { readonly onTransferTabSelect: ()
   );
 
   const handleTabPress = (tab: PencilEntryTab) => {
-    if (tab === "transfer") {
-      props.onTransferTabSelect();
-      return;
-    }
-    setType(tab);
+    setUiState({ entryMode: tab });
+    if (tab !== "transfer") setType(tab);
   };
-
   const handleSave = () => {
     void guardedSave(async () => {
       if (!db || !userId) return;
       const result = await saveCurrentTransaction(db, userId);
-      if (result.success) {
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        trackTransactionCreated({
-          type,
-          category: String(categoryId ?? ""),
-          source: "manual",
-        });
-        resetForm();
-        navigate("/(tabs)" as never);
-      }
+      if (!result.success) return;
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      trackTransactionCreated({ type, category: String(categoryId ?? ""), source: "manual" });
+      resetForm();
+      navigate("/(tabs)" as never);
     });
   };
+  const transactionFields = (
+    <>
+      <PencilEntryTextInputField
+        icon={Pencil}
+        label={t("common.description")}
+        value={description}
+        onChangeText={setDescription}
+      />
+      <PencilEntryField
+        icon={Wallet}
+        label={`${t("common.account")}:`}
+        value={selectedAccount?.name}
+        onPress={() => setUiState({ sheet: "account" })}
+      />
+      <View style={{ flexDirection: "row", gap: 12, height: 50 }}>
+        <PencilEntryField
+          icon={Calendar}
+          label={dateLabel}
+          valueTone="primary"
+          onPress={() => setUiState({ sheet: "date" })}
+        />
+        <PencilEntryField
+          icon={Tag}
+          label={`${t("common.category")}:`}
+          value={selectedCategory ? getCategoryLabel(selectedCategory, locale) : undefined}
+          valueTone={selectedCategory ? "primary" : "tertiary"}
+          onPress={() => setUiState({ sheet: "category" })}
+        />
+      </View>
+    </>
+  );
 
   return (
     <>
       <PencilEntryScaffold
-        activeTab={type}
-        amount={formatInputDisplay(digits)}
-        isConfirmDisabled={isSaving || !accountId || !categoryId || digits.length === 0}
-        onConfirm={handleSave}
-        onKeyPress={(key) => setDigits((currentDigits) => handleNumpadPress(currentDigits, key))}
+        activeTab={activeTab}
+        amount={isTransfer ? transferEntry.amount : formatInputDisplay(digits)}
+        isConfirmDisabled={
+          isTransfer
+            ? transferEntry.isConfirmDisabled
+            : isSaving || !accountId || !categoryId || digits.length === 0
+        }
+        onConfirm={isTransfer ? transferEntry.onConfirm : handleSave}
+        onKeyPress={
+          isTransfer
+            ? transferEntry.onKeyPress
+            : (key) => setDigits((currentDigits) => handleNumpadPress(currentDigits, key))
+        }
         onTabPress={handleTabPress}
         tabs={[
           { key: "expense", label: t("transactions.expense") },
           { key: "income", label: t("transactions.income") },
           { key: "transfer", label: t("transfers.activity.generic") },
         ]}
-        fields={
-          <>
-            <PencilEntryTextInputField
-              icon={Pencil}
-              label={t("common.description")}
-              value={description}
-              onChangeText={setDescription}
-            />
-            <PencilEntryField
-              icon={Wallet}
-              label={`${t("common.account")}:`}
-              value={selectedAccount?.name}
-              onPress={() => setShowAccountPicker(true)}
-            />
-            <View style={{ flexDirection: "row", gap: 12, height: 50 }}>
-              <PencilEntryField
-                icon={Calendar}
-                label={dateLabel}
-                valueTone="primary"
-                onPress={() => setShowDatePicker(true)}
-              />
-              <PencilEntryField
-                icon={Tag}
-                label={`${t("common.category")}:`}
-                value={selectedCategory ? getCategoryLabel(selectedCategory, locale) : undefined}
-                valueTone={selectedCategory ? "primary" : "tertiary"}
-                onPress={() => setShowCategoryPicker(true)}
-              />
-            </View>
-          </>
-        }
+        fields={isTransfer ? transferEntry.fields : transactionFields}
       />
-
+      {transferEntry.overlays}
       <TransactionAccountPickerSheet
         accountId={accountId}
-        accounts={accounts}
-        visible={showAccountPicker}
-        onClose={() => setShowAccountPicker(false)}
+        accounts={uiState.accounts}
+        visible={uiState.sheet === "account"}
+        onClose={() => setUiState({ sheet: null })}
         onSelect={(nextAccountId) => {
           setAccountId(nextAccountId);
-          setShowAccountPicker(false);
+          setUiState({ sheet: null });
         }}
       />
       <TransactionDatePickerSheet
         date={date}
-        visible={showDatePicker}
-        onClose={() => setShowDatePicker(false)}
+        visible={uiState.sheet === "date"}
+        onClose={() => setUiState({ sheet: null })}
         onChange={setDate}
       />
       <TransactionCategoryPickerSheet
         categoryId={categoryId}
         locale={locale}
-        visible={showCategoryPicker}
-        onClose={() => setShowCategoryPicker(false)}
+        visible={uiState.sheet === "category"}
+        onClose={() => setUiState({ sheet: null })}
         onSelect={(nextCategoryId) => {
           setCategoryId(nextCategoryId);
-          setShowCategoryPicker(false);
+          setUiState({ sheet: null });
         }}
       />
     </>

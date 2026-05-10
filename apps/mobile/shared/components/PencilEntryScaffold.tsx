@@ -1,24 +1,27 @@
-import type { ComponentType, ReactNode } from "react";
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import type { ReactNode } from "react";
+import Animated, {
+  useAnimatedStyle,
+  useDerivedValue,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, Delete } from "@/shared/components/icons";
-import { Platform, Pressable, Text, TextInput, View } from "@/shared/components/rn";
+import {
+  Keyboard,
+  Platform,
+  Pressable,
+  Text,
+  useWindowDimensions,
+  View,
+} from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+export { PencilEntryField, PencilEntryTextInputField } from "./PencilEntryField";
+export type { PencilEntryFieldProps } from "./PencilEntryField";
 import { styles } from "./PencilEntryScaffold.styles";
 
 export type PencilEntryTab = "expense" | "income" | "transfer";
-
-export type PencilEntryFieldProps = {
-  readonly icon: ComponentType<{ size?: number; color?: string }>;
-  readonly label: string;
-  readonly value?: string;
-  readonly valueTone?: "primary" | "secondary" | "tertiary";
-  readonly onPress?: () => void;
-  readonly children?: ReactNode;
-  // biome-ignore lint/style/useNamingConvention: React Native prop name
-  readonly testID?: string;
-};
 
 type PencilEntryScaffoldProps = {
   readonly activeTab: PencilEntryTab;
@@ -39,8 +42,9 @@ export const PENCIL_ENTRY_ROWS = [
 ] as const;
 
 const ANDROID_TAB_BAR_HEIGHT = 64;
+const PENCIL_ENTRY_HORIZONTAL_PADDING = 16;
 const SWIPE_TAB_THRESHOLD = 56;
-const TAB_LINE_WIDTH = 88;
+const TAB_GAP = 8;
 
 function getTabIndicatorColor(input: {
   readonly accentGreen: string;
@@ -53,79 +57,6 @@ function getTabIndicatorColor(input: {
   return input.tertiary;
 }
 
-export function PencilEntryField({
-  children,
-  icon: Icon,
-  label,
-  onPress,
-  testID,
-  value,
-  valueTone,
-}: PencilEntryFieldProps) {
-  const primary = useThemeColor("primary");
-  const secondary = useThemeColor("secondary");
-  const tertiary = useThemeColor("tertiary");
-  const borderSubtle = useThemeColor("borderSubtle");
-  const card = useThemeColor("card");
-  const toneColor =
-    valueTone === "primary"
-      ? primary
-      : valueTone === "secondary"
-        ? secondary
-        : valueTone === "tertiary"
-          ? tertiary
-          : value
-            ? primary
-            : tertiary;
-  const content = children ?? (
-    <Text
-      numberOfLines={1}
-      style={[styles.fieldText, { color: toneColor }]}
-    >{`${label}${value ? ` ${value}` : ""}`}</Text>
-  );
-
-  const fieldStyle = [styles.fieldCard, { backgroundColor: card, borderColor: borderSubtle }];
-
-  if (!onPress) {
-    return (
-      <View testID={testID} style={fieldStyle}>
-        <Icon size={18} color={secondary} />
-        {content}
-      </View>
-    );
-  }
-
-  return (
-    <Pressable testID={testID} onPress={onPress} accessibilityRole="button" style={fieldStyle}>
-      <Icon size={18} color={secondary} />
-      {content}
-    </Pressable>
-  );
-}
-
-export function PencilEntryTextInputField(props: {
-  readonly icon: PencilEntryFieldProps["icon"];
-  readonly label: string;
-  readonly onChangeText: (text: string) => void;
-  readonly value: string;
-}) {
-  const primary = useThemeColor("primary");
-  const tertiary = useThemeColor("tertiary");
-
-  return (
-    <PencilEntryField icon={props.icon} label={props.label}>
-      <TextInput
-        value={props.value}
-        onChangeText={props.onChangeText}
-        placeholder={props.label}
-        placeholderTextColor={tertiary}
-        maxLength={200}
-        style={[styles.fieldInput, { color: primary }]}
-      />
-    </PencilEntryField>
-  );
-}
-
 export function PencilEntryScaffold({
   activeTab,
   amount,
@@ -136,7 +67,8 @@ export function PencilEntryScaffold({
   onTabPress,
   tabs,
 }: PencilEntryScaffoldProps) {
-  const tabBarWidth = useSharedValue(0);
+  const { width } = useWindowDimensions();
+  const tabBarWidth = useSharedValue(Math.max(width - PENCIL_ENTRY_HORIZONTAL_PADDING * 2, 0));
   const { t } = useTranslation();
   const page = useThemeColor("page");
   const primary = useThemeColor("primary");
@@ -148,19 +80,25 @@ export function PencilEntryScaffold({
   const specialKeyBg = useThemeColor("numpadSpecialKey");
   const activeColor = getTabIndicatorColor({ accentGreen, accentRed, tab: activeTab, tertiary });
   const { bottom, top } = useSafeAreaInsets();
-  const tabBarClearance =
-    Platform.OS === "ios" ? Math.max(bottom, 16) : ANDROID_TAB_BAR_HEIGHT + Math.max(bottom, 16);
+  const tabBarHeight = Platform.OS === "ios" ? ANDROID_TAB_BAR_HEIGHT / 8 : ANDROID_TAB_BAR_HEIGHT;
+  const tabBarClearance = tabBarHeight + Math.max(bottom, 16);
   const activeTabIndex = tabs.findIndex((tab) => tab.key === activeTab);
-  const animatedTabLineStyle = useAnimatedStyle(() => {
-    const tabWidth = tabs.length > 0 ? tabBarWidth.value / tabs.length : 0;
-    const translateX =
-      activeTabIndex < 0
-        ? 0
-        : activeTabIndex * tabWidth + Math.max((tabWidth - TAB_LINE_WIDTH) / 2, 0);
+  const totalTabGap = Math.max(tabs.length - 1, 0) * TAB_GAP;
+  const tabPillWidth = Math.max(
+    (width - PENCIL_ENTRY_HORIZONTAL_PADDING * 2 - totalTabGap) / Math.max(tabs.length, 1),
+    0
+  );
+  const animatedTabPillX = useDerivedValue(() => {
+    const tabWidth = tabs.length > 0 ? (tabBarWidth.value - totalTabGap) / tabs.length : 0;
+    const translateX = activeTabIndex < 0 ? 0 : activeTabIndex * (tabWidth + TAB_GAP);
 
+    return withTiming(translateX, { duration: 180 });
+  });
+  const animatedTabPillColor = useDerivedValue(() => withTiming(activeColor, { duration: 180 }));
+  const animatedTabPillStyle = useAnimatedStyle(() => {
     return {
-      backgroundColor: withTiming(activeColor, { duration: 180 }),
-      transform: [{ translateX: withTiming(translateX, { duration: 180 }) }],
+      backgroundColor: animatedTabPillColor.value,
+      transform: [{ translateX: animatedTabPillX.value }],
     };
   });
   const tabSwipe = Gesture.Pan()
@@ -211,7 +149,7 @@ export function PencilEntryScaffold({
                 numberOfLines={1}
                 style={[
                   styles.tabText,
-                  { color: isActive ? primary : tertiary, fontWeight: isActive ? "700" : "600" },
+                  { color: isActive ? onAccent : tertiary, fontWeight: isActive ? "700" : "600" },
                 ]}
               >
                 {tab.label}
@@ -219,12 +157,12 @@ export function PencilEntryScaffold({
             </Pressable>
           );
         })}
-        <Animated.View style={[styles.tabLine, animatedTabLineStyle]} />
+        <Animated.View style={[styles.tabPill, { width: tabPillWidth }, animatedTabPillStyle]} />
       </View>
 
       <GestureDetector gesture={tabSwipe}>
         <View style={styles.swipeArea}>
-          <View style={styles.amountArea}>
+          <Pressable style={styles.amountArea} onPress={Keyboard.dismiss}>
             <Text
               numberOfLines={1}
               adjustsFontSizeToFit
@@ -233,7 +171,7 @@ export function PencilEntryScaffold({
             >
               {amount || "$0"}
             </Text>
-          </View>
+          </Pressable>
 
           <View style={styles.fields}>{fields}</View>
 
@@ -286,7 +224,6 @@ export function PencilEntryScaffold({
               </View>
             ))}
           </View>
-          <View style={styles.bottomSpacer} />
         </View>
       </GestureDetector>
     </View>

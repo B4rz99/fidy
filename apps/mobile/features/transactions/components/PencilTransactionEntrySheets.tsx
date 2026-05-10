@@ -23,7 +23,7 @@ function PickerSheetFrame({ children, onClose, testID, visible }: PickerSheetFra
     <Modal visible={visible} transparent animationType="fade">
       <Pressable
         testID={testID}
-        style={{ flex: 1, justifyContent: "flex-end", backgroundColor: modalBackdrop }}
+        style={{ flex: 1, justifyContent: "flex-end", backgroundColor: `${modalBackdrop}40` }}
         onPress={onClose}
       >
         {children}

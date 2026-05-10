@@ -13,7 +13,6 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     flex: 0.85,
     justifyContent: "center",
-    maxHeight: 256,
     minHeight: 80,
   },
   container: {
@@ -21,9 +20,6 @@ export const styles = StyleSheet.create({
     paddingBottom: 16,
     paddingHorizontal: 16,
     paddingTop: 20,
-  },
-  bottomSpacer: {
-    height: 3,
   },
   fieldCard: {
     alignItems: "center",
@@ -75,20 +71,21 @@ export const styles = StyleSheet.create({
   },
   rightColumn: {
     flex: 1,
+    flexDirection: "row",
     gap: 6,
   },
   tab: {
     alignItems: "center",
     flex: 1,
-    gap: 8,
+    justifyContent: "center",
+    zIndex: 1,
   },
-  tabLine: {
+  tabPill: {
     position: "absolute",
-    bottom: 0,
+    top: 2,
     left: 0,
-    borderRadius: 2,
-    height: 4,
-    width: 88,
+    borderRadius: 999,
+    height: 30,
   },
   tabText: {
     fontFamily: "Poppins_600SemiBold",
@@ -97,7 +94,7 @@ export const styles = StyleSheet.create({
   tabs: {
     flexDirection: "row",
     gap: 8,
-    height: 52,
+    height: 34,
     position: "relative",
   },
   swipeArea: {
