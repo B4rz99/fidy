@@ -1,5 +1,5 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { type ReactNode, useState } from "react";
+import type { ReactNode } from "react";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { Wallet } from "@/shared/components/icons";
 import { Modal, Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
