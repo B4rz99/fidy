@@ -1,5 +1,8 @@
 type TransitionEndNavigation = {
-  readonly addListener: (event: "transitionEnd", callback: (event: TransitionEndEvent) => void) => () => void;
+  readonly addListener: (
+    event: "transitionEnd",
+    callback: (event: TransitionEndEvent) => void
+  ) => () => void;
 };
 
 type TransitionEndEvent = {

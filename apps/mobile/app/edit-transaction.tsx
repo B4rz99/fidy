@@ -79,7 +79,10 @@ export default function EditTransactionScreen() {
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
   const dismissAndWait = () => {
-    const pendingTransition = waitForNavigationTransition(navigation, { closing: true, fallbackMs: 2000 });
+    const pendingTransition = waitForNavigationTransition(navigation, {
+      closing: true,
+      fallbackMs: 2000,
+    });
     router.back();
     return pendingTransition;
   };

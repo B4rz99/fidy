@@ -60,7 +60,8 @@ function useTransferFormDerivedState(
   state: ReturnType<typeof useTransferFormState>
 ) {
   const isReclassification = state.sourceTransaction != null;
-  const defaultAccount = state.accounts.find((account) => account.isDefault) ?? state.accounts[0] ?? null;
+  const defaultAccount =
+    state.accounts.find((account) => account.isDefault) ?? state.accounts[0] ?? null;
   const defaultFromSide = defaultAccount
     ? ({ kind: "account", accountId: defaultAccount.id } as const)
     : null;
