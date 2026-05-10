@@ -25,4 +25,10 @@ describe("Root layout query provider", () => {
       expect(source).toContain(`"${screen}"`);
     }
   });
+
+  test("declares status and navigation bar system UI together", () => {
+    expect(source).toContain('import { NavigationBar } from "expo-navigation-bar"');
+    expect(source).toContain('<StatusBar style="auto" />');
+    expect(source).toContain('<NavigationBar style="auto" hidden={false} />');
+  });
 });
