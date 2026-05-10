@@ -27,7 +27,7 @@ Expected benefit:
 
 ### 2. Spike Expo UI DateTimePicker replacement
 
-Status: one contained goal-date field migrated as a spike; broader migration remains gated on manual iOS/Android QA.
+Status: completed in PR 409; manual iOS/Android QA is still recommended for native picker presentation and dismissal behavior.
 
 SDK 56 introduces `@expo/ui/community/datetime-picker` as a drop-in replacement for `@react-native-community/datetimepicker`.
 
@@ -43,6 +43,13 @@ Expected benefit:
 - Fewer community native dependencies.
 - Better alignment with Expo-managed native primitives.
 - Lower upgrade risk for core financial forms.
+
+Migration result:
+
+- All DateTimePicker usage now imports from `@expo/ui/community/datetime-picker`.
+- The app uses Expo UI `onValueChange` and `onDismiss` instead of the deprecated community picker `onChange` API.
+- Android dismiss/cancel/backdrop behavior remains explicit so dismissed pickers do not commit dates.
+- `@react-native-community/datetimepicker` was removed once source imports were gone.
 
 ### 3. Add declarative Android NavigationBar handling
 
@@ -130,9 +137,33 @@ Measurement protocol:
 - Keep precompiled iOS Expo packages enabled by default; only opt out if native build logs show a concrete precompiled-module failure.
 - Do not claim Hermes V1 or Expo Modules runtime wins from JS-only tests; use device/simulator startup traces or build logs.
 
+### 7. Review Expo Widgets for the App Intents shortcut extension
+
+Status: reviewed after PR 409; no immediate `expo-widgets` migration is warranted.
+
+SDK 56 introduces `expo-widgets` for iOS home screen widgets and Live Activities built with Expo UI components.
+
+Tasks:
+
+- Compare Expo Widgets config plugin behavior against the existing `withFidyWidget` plugin.
+- Check whether Expo Widgets can replace the current empty WidgetKit target used only to host App Intents.
+- Check whether App Group `UserDefaults` queueing and the local Expo module bridge remain necessary.
+
+Expected benefit:
+
+- Avoids carrying custom native widget setup if Expo provides an equivalent managed primitive.
+
+Review result:
+
+- Fidy's `FidyWidgetBundle.swift` intentionally renders no useful widget UI; the target exists to host `QuickExpenseIntent` for Back Tap / Shortcuts discovery.
+- `expo-widgets` generates rendered WidgetKit and Live Activity surfaces from Expo UI components. Its documented API covers widget timelines, live activity lifecycle, push tokens, and widget interaction events, not defining App Intent parameters or an App Intents-only extension.
+- The current App Group `UserDefaults` bridge is still the handoff point between the App Intent extension and the local-first SQLite app. `expo-widgets` does not replace the pending transaction queue or `modules/expo-app-intents` reader/removal API.
+- Replacing the plugin now would likely add an unnecessary real widget target while losing the custom App Intent source files that power quick transaction capture.
+- Keep `withFidyWidget` and the local `expo-app-intents` module until Fidy designs an actual widget or Live Activity surface, or Expo documents first-class App Intents generation for shortcut-style intents.
+
 ## Deferred Work
 
-- Expo Widgets stable API review for the existing Fidy widget plugin.
+- Actual home screen widget or Live Activity design, if product value is clear.
 - Inline Expo Modules only if custom native code grows beyond config-plugin glue.
 - Expo UI broader component adoption after the DateTimePicker migration proves stable.
 - `expo/fetch` behavior review if OAuth/email/backup fetch flows show regressions.
