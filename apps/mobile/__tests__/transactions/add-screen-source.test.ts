@@ -135,6 +135,19 @@ test("Pencil transaction entry supports expense income transfer and calendar", (
   expect(transactionEntrySource).toContain("saveCurrentTransaction");
 });
 
+test("Pencil transaction entry confirms saves with a toast without leaving the add screen", () => {
+  expect(transactionEntrySource).toContain("showSuccessToast");
+  expect(transactionEntrySource).toContain('showSuccessToast(t("transactions.saved"), 1.6)');
+  expect(pencilTransferEntrySource).toContain('showSuccessToast(t("transfers.saved"), 1.6)');
+  expect(transactionEntrySource).not.toContain('navigate("/(tabs)"');
+  expect(pencilTransferEntrySource).not.toContain('navigate("/(tabs)"');
+});
+
+test("Pencil add screens do not allow future transaction dates", () => {
+  expect(transactionSheetsSource).toContain("maximumDate={new Date()}");
+  expect(pencilTransferEntrySource).toContain("maximumDate={new Date()}");
+});
+
 test("Pencil transfer entry supports transfer side pickers and calendar", () => {
   expect(transferEntrySource).toContain('activeTab="transfer"');
   expect(transferEntrySource).toContain("usePencilTransferEntry");

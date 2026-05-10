@@ -1,3 +1,4 @@
+import { clampDateToToday } from "@/shared/lib";
 import type { TransactionFormInput } from "../lib/mutation-service";
 import type { TransactionState } from "./state";
 
@@ -13,6 +14,6 @@ export function toTransactionFormInput(state: TransactionFormState): Transaction
     categoryId: state.categoryId,
     accountId: state.accountId,
     description: state.description,
-    date: state.date,
+    date: clampDateToToday(state.date),
   };
 }

@@ -20,7 +20,7 @@ function PickerSheetFrame({ children, onClose, testID, visible }: PickerSheetFra
   const modalBackdrop = useThemeColor("modalBackdrop");
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable
         testID={testID}
         style={{ flex: 1, justifyContent: "flex-end", backgroundColor: `${modalBackdrop}40` }}
@@ -182,7 +182,9 @@ export function TransactionDatePickerSheet(props: {
           value={props.date}
           mode="date"
           display={Platform.OS === "ios" ? "spinner" : "default"}
+          maximumDate={new Date()}
           onChange={(_event, nextDate) => {
+            if (Platform.OS !== "ios") props.onClose();
             if (nextDate) props.onChange(nextDate);
           }}
         />

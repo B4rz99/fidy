@@ -10,12 +10,12 @@ export type {
 export {
   ActionSheetIOS,
   ActivityIndicator,
+  AccessibilityInfo,
   Alert,
   Appearance,
   AppState,
   FlatList,
   Image,
-  InteractionManager,
   Keyboard,
   KeyboardAvoidingView,
   Linking,

@@ -7,7 +7,7 @@ import {
 } from "@/shared/components/PencilEntryScaffold";
 import { Modal, Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { formatInputDisplay } from "@/shared/lib";
+import { formatInputDisplay, showSuccessToast } from "@/shared/lib";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { handleNumpadPress } from "@/features/transactions/display.public";
 import type { TransferSide } from "../lib/build-transfer";
@@ -28,7 +28,10 @@ function getPencilTransferSideTitle(
 
 export function usePencilTransferEntry(props: { readonly enabled?: boolean } = {}) {
   const { t } = useTranslation();
-  const form = useTransferForm({ enabled: props.enabled ?? true });
+  const form = useTransferForm({
+    enabled: props.enabled ?? true,
+    onSuccessfulSave: () => showSuccessToast(t("transfers.saved"), 1.6),
+  });
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
@@ -125,6 +128,7 @@ export function usePencilTransferEntry(props: { readonly enabled?: boolean } = {
                 value={form.date}
                 mode="date"
                 display={Platform.OS === "ios" ? "spinner" : "default"}
+                maximumDate={new Date()}
                 onChange={form.handleDateChange}
               />
               <Pressable
