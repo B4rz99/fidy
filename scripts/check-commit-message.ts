@@ -1,5 +1,16 @@
 #!/usr/bin/env bun
 
+const COMMIT_MESSAGE_FORMAT = `Required commit message format:
+type(scope): message
+
+- concise body bullet
+- another body bullet
+
+Rules:
+- type: feat|fix|refactor|chore|docs|test|perf|ci
+- scope: required, lowercase letters/numbers/hyphens
+- body: required, bullet lines must start with "- "`;
+
 export const validateCommitMessage = (message: string): string[] => {
   const lines = message.split(/\r?\n/);
   const header = lines[0] ?? "";
@@ -25,6 +36,9 @@ export const validateCommitMessage = (message: string): string[] => {
   return [];
 };
 
+export const formatCommitMessageErrors = (errors: readonly string[]): string =>
+  `${errors.join("\n")}\n\n${COMMIT_MESSAGE_FORMAT}`;
+
 if (import.meta.main) {
   const messagePath = Bun.argv[2];
 
@@ -37,7 +51,7 @@ if (import.meta.main) {
   const errors = validateCommitMessage(message);
 
   if (errors.length > 0) {
-    console.error(errors.join("\n"));
+    console.error(formatCommitMessageErrors(errors));
     process.exit(1);
   }
 }
