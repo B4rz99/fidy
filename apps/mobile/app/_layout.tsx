@@ -238,6 +238,7 @@ function RootLayout() {
             <Stack.Screen name="failed-emails" options={iosHeaderOptions} />
             <Stack.Screen name="profile" options={iosHeaderOptions} />
             <Stack.Screen name="settings" options={iosHeaderOptions} />
+            {__DEV__ ? <Stack.Screen name="design-system" options={iosHeaderOptions} /> : null}
             <Stack.Screen
               name="financial-account-identifier"
               options={{ ...SHEET, ...iosHeaderOptions, sheetAllowedDetents: [0.62] }}

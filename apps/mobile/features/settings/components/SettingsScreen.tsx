@@ -21,6 +21,7 @@ import {
   Sparkles,
   Tag,
   Wallet,
+  Wrench,
 } from "@/shared/components/icons";
 import { Linking, Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -228,6 +229,14 @@ export function SettingsScreen() {
               void openBrowserAsync(buildTermsUrl(locale));
             }}
           />
+          {__DEV__ ? (
+            <SettingsRow
+              icon={Wrench}
+              label={t("settings.designSystem")}
+              subtitle={t("settings.designSystemSubtitle")}
+              onPress={() => push("/design-system" as never)}
+            />
+          ) : null}
           <SettingsRow
             icon={Info}
             label={t("settings.version")}

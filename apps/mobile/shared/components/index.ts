@@ -1,4 +1,6 @@
 export { AppToastHost } from "./AppToastHost";
+export { Button } from "./Button";
+export { Card } from "./Card";
 export { ComingSoonScreen } from "./ComingSoonScreen";
 export { ErrorFallback } from "./ErrorFallback";
 export { FidyLogo } from "./FidyLogo";
