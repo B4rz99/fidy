@@ -1,5 +1,5 @@
 import * as Haptics from "expo-haptics";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useState } from "react";
 import { useOptionalUserId } from "@/features/auth";
 import { getNeedsReviewEmailByTransactionId } from "@/features/email-capture";
@@ -15,20 +15,15 @@ import {
   TransactionForm,
   updateTransactionDirect,
 } from "@/features/transactions";
-import { InteractionManager } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useMountEffect, useTranslation } from "@/shared/hooks";
-import { showErrorToast } from "@/shared/lib";
+import { clampDateToToday, showErrorToast, waitForNavigationTransition } from "@/shared/lib";
 import { requireTransactionId } from "@/shared/types/assertions";
 import type { CategoryId, FinancialAccountId, ProcessedEmailId } from "@/shared/types/branded";
 
-const afterDismiss = () =>
-  new Promise<void>((resolve) => {
-    InteractionManager.runAfterInteractions(() => resolve());
-  });
-
 export default function EditTransactionScreen() {
   const { transactionId: routeTransactionId } = useLocalSearchParams<{ transactionId?: string }>();
+  const navigation = useNavigation();
   const router = useRouter();
   const { t } = useTranslation();
   const userId = useOptionalUserId();
@@ -83,6 +78,12 @@ export default function EditTransactionScreen() {
 
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
 
+  const dismissAndWait = () => {
+    const pendingTransition = waitForNavigationTransition(navigation, { closing: true, fallbackMs: 2000 });
+    router.back();
+    return pendingTransition;
+  };
+
   const handleSave = () => {
     void guardedSave(async () => {
       if (transactionId == null || !db || !userId) {
@@ -90,8 +91,7 @@ export default function EditTransactionScreen() {
         return;
       }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.back();
-      await afterDismiss();
+      await dismissAndWait();
       try {
         const result = await updateTransactionDirect({
           db,
@@ -103,7 +103,7 @@ export default function EditTransactionScreen() {
             categoryId,
             accountId,
             description,
-            date,
+            date: clampDateToToday(date),
           },
         });
         if (!result.success) {
@@ -122,8 +122,7 @@ export default function EditTransactionScreen() {
         return;
       }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.back();
-      await afterDismiss();
+      await dismissAndWait();
       try {
         await deleteTransaction(db, userId, transactionId);
       } catch {

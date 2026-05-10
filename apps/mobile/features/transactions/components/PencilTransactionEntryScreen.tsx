@@ -1,5 +1,4 @@
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
 import { useReducer } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
@@ -20,7 +19,12 @@ import { View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useSubscription, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
-import { captureError, formatInputDisplay, trackTransactionCreated } from "@/shared/lib";
+import {
+  captureError,
+  formatInputDisplay,
+  showSuccessToast,
+  trackTransactionCreated,
+} from "@/shared/lib";
 import { CATEGORIES } from "../lib/categories";
 import { getDateLabel } from "../lib/format-date";
 import { handleNumpadPress } from "../lib/handle-numpad-press";
@@ -48,7 +52,6 @@ export function PencilTransactionEntryScreen() {
     entryMode: "expense",
     sheet: null,
   });
-  const { navigate } = useRouter();
   const { t, locale } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
@@ -125,7 +128,7 @@ export function PencilTransactionEntryScreen() {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       trackTransactionCreated({ type, category: String(categoryId ?? ""), source: "manual" });
       resetForm();
-      navigate("/(tabs)" as never);
+      showSuccessToast(t("transactions.saved"), 1.6);
     });
   };
   const transactionFields = (

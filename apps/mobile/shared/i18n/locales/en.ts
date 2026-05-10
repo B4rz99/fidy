@@ -103,6 +103,7 @@ const en = {
   transactions: {
     expense: "Expense",
     income: "Income",
+    saved: "Transaction saved",
     saveTransaction: "Save Transaction",
     descriptionOptional: "Description (optional)",
     noTransactionsYet: "No transactions yet",
@@ -134,6 +135,7 @@ const en = {
     chooseSide: "Choose side",
     chooseSideHint: "Choose an account or Outside Fidy",
     chooseDifferentSide: "Choose different side",
+    saved: "Transfer saved",
     save: "Record transfer",
     outsideFidy: "Outside Fidy",
     outsideFidyDescription: "Cash or another untracked side",

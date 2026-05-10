@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
-import { InteractionManager, type TextInput } from "@/shared/components/rn";
+import { useNavigation } from "expo-router";
+import type { TextInput } from "@/shared/components/rn";
 import { useMountEffect } from "@/shared/hooks";
+import { runAfterNavigationTransition } from "@/shared/lib";
 import type { SearchFilters } from "../../lib/types";
 import { executeSearch, updateSearchFilters } from "../../store";
 import type {
@@ -35,13 +37,16 @@ function bootstrapSearch(
 }
 
 export function useSearchInitialization(args: SearchInitializationArgs) {
+  const navigation = useNavigation();
   const [ready, setReady] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<TextInput>(null);
 
   useMountEffect(() => {
-    const handle = InteractionManager.runAfterInteractions(() =>
-      bootstrapSearch(args, inputRef as SearchInputRef, setReady)
+    const handle = runAfterNavigationTransition(
+      navigation,
+      () => bootstrapSearch(args, inputRef as SearchInputRef, setReady),
+      { closing: false, fallbackMs: null }
     );
 
     return () => {
