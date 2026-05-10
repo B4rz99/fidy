@@ -5,7 +5,7 @@ export default function AddTransactionRoute() {
   return (
     <>
       <Stack.Screen options={{ gestureEnabled: true }} />
-      <PencilTransactionEntryScreen />
+      <PencilTransactionEntryScreen includesNativeHeader={false} />
     </>
   );
 }

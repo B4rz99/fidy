@@ -46,7 +46,13 @@ function mergeUiState(state: AddEntryUiState, patch: Partial<AddEntryUiState>): 
   return { ...state, ...patch };
 }
 
-export function PencilTransactionEntryScreen() {
+type PencilTransactionEntryScreenProps = {
+  readonly includesNativeHeader?: boolean;
+};
+
+export function PencilTransactionEntryScreen({
+  includesNativeHeader = true,
+}: PencilTransactionEntryScreenProps = {}) {
   const [uiState, setUiState] = useReducer(mergeUiState, {
     accounts: [],
     entryMode: "expense",
@@ -186,6 +192,7 @@ export function PencilTransactionEntryScreen() {
           { key: "transfer", label: t("transfers.activity.generic") },
         ]}
         fields={isTransfer ? transferEntry.fields : transactionFields}
+        includesNativeHeader={includesNativeHeader}
       />
       {transferEntry.overlays}
       <TransactionAccountPickerSheet

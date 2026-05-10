@@ -6,6 +6,7 @@ import { usePencilTransferEntry } from "./PencilTransferEntryContent";
 export function PencilTransferEntryScreen(
   props: {
     readonly onTransactionTabSelect?: (tab: Exclude<PencilEntryTab, "transfer">) => void;
+    readonly includesNativeHeader?: boolean;
   } = {}
 ) {
   const { t } = useTranslation();
@@ -33,6 +34,7 @@ export function PencilTransferEntryScreen(
           { key: "transfer", label: t("transfers.activity.generic") },
         ]}
         fields={transferEntry.fields}
+        includesNativeHeader={props.includesNativeHeader}
       />
       {transferEntry.overlays}
     </>
