@@ -6,13 +6,15 @@ process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
 process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
 
 vi.mock("@supabase/supabase-js", () => ({
-  createClient: vi.fn(() => ({ auth: { getSession: vi.fn() } })),
+  createClient: vi.fn<() => { auth: { getSession: () => void } }>(() => ({
+    auth: { getSession: vi.fn<() => void>() },
+  })),
 }));
 
 vi.mock("expo-secure-store", () => ({
-  getItemAsync: vi.fn(),
-  setItemAsync: vi.fn(),
-  deleteItemAsync: vi.fn(),
+  getItemAsync: vi.fn<() => Promise<string | null>>(),
+  setItemAsync: vi.fn<() => Promise<void>>(),
+  deleteItemAsync: vi.fn<() => Promise<void>>(),
 }));
 
 describe("getSupabase", () => {
