@@ -102,9 +102,6 @@ function logParseApiFailureEffect(
   throwOnApiFailure: boolean
 ) {
   const diagnostics = buildParseApiFailureDiagnostics(response);
-  if (typeof __DEV__ !== "undefined" && __DEV__) {
-    console.info(`[email-capture] ${warningPrefix}_api_failed`, diagnostics);
-  }
 
   return Effect.zipRight(
     captureWarningEffect(`${warningPrefix}_api_failed`, diagnostics),

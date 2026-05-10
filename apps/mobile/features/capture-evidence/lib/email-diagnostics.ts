@@ -21,15 +21,3 @@ export function summarizeEmailEvidenceInputDiagnostics(input: {
     ),
   };
 }
-
-export function logEmailEvidenceInputDiagnostics(input: {
-  readonly family: string;
-  readonly rawText: string;
-}) {
-  if (typeof __DEV__ === "undefined" || !__DEV__) return;
-
-  const diagnostics = summarizeEmailEvidenceInputDiagnostics(input);
-  if (!diagnostics.hasPaymentMethodLabel && diagnostics.maskedPaymentMethodMatchCount === 0) return;
-
-  console.info("[capture-evidence] email_input_shape", diagnostics);
-}

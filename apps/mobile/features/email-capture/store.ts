@@ -8,7 +8,6 @@ import {
   getNeedsReviewEmails,
 } from "./lib/repository";
 import { shareEmailParseImprovementRequests } from "./services/email-parse-improvement-sharing";
-import { logEmailCaptureDevDiagnostic } from "./services/email-capture-dev-diagnostics";
 import {
   applyEmailCaptureCandidateLimit,
   createEmailFetchClientIds,
@@ -159,17 +158,6 @@ export async function fetchAndProcessEmails(
       captureWarning("email_capture_fetch_no_accounts");
       return EMPTY_FETCH_OUTCOME;
     }
-    logEmailCaptureDevDiagnostic("sync_policy", {
-      source: "email",
-      schema: "email_sync_policy_v1",
-      parseProfile: syncPolicy.parseProfile,
-      advancesLastFetchedAt: syncPolicy.advancesLastFetchedAt,
-      maxCandidateEmails: syncPolicy.maxCandidateEmails ?? "none",
-      runRetries: syncPolicy.runRetries,
-      showsProgress: syncPolicy.showsProgress,
-      accountCount: accounts.length,
-    });
-
     const summary = await fetchEmailAccountBatch({
       accounts,
       clientIds: createEmailFetchClientIds(gmailClientId, outlookClientId),

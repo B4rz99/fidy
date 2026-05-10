@@ -76,6 +76,7 @@ Deno.serve(async (req) => {
     const deleteResult = await deleteAccountRemoteData(serviceClient, userId);
 
     if (!deleteResult.success) {
+      // eslint-disable-next-line no-console -- Supabase Edge Function operational error log.
       console.error("Failed to delete account remote data:", deleteResult.failures);
       return jsonResponse(
         {
@@ -90,6 +91,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    // eslint-disable-next-line no-console -- Supabase Edge Function operational error log.
     console.error("Delete account error:", message);
     return jsonResponse({ success: false, error: "internal_error" }, 500);
   }

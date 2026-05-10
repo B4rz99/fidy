@@ -181,6 +181,7 @@ function structuredLog(fields: {
   error_type: string | null;
   email_count?: number;
 }): void {
+  // eslint-disable-next-line no-console -- Supabase Edge Function structured request log.
   console.log(
     JSON.stringify({
       ...fields,

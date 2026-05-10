@@ -1,6 +1,5 @@
 import { capturePipelineEvent } from "@/shared/lib";
 import type { RetryResult } from "../pipeline.public";
-import { logEmailCaptureDevDiagnostic } from "./email-capture-dev-diagnostics";
 
 type EmailFetchTelemetryResult = {
   readonly account: { readonly provider: string };
@@ -32,7 +31,6 @@ export function captureEmailFetchBatchTelemetry(input: {
       ...input.fetchResults.map((result) => result.fetchDurationMs)
     ),
   };
-  logEmailCaptureDevDiagnostic("fetch_batch", event);
   capturePipelineEvent(event);
 }
 
@@ -48,6 +46,5 @@ export function captureEmailRetryBatchTelemetry(input: {
     permanentlyFailed: input.retryResult.permanentlyFailed,
     retryDurationMs: input.retryDurationMs,
   };
-  logEmailCaptureDevDiagnostic("retry_batch", event);
   capturePipelineEvent(event);
 }

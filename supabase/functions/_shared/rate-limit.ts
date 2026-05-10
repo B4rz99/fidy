@@ -28,12 +28,14 @@ export async function checkRateLimit(
     });
 
     if (error) {
+      // eslint-disable-next-line no-console -- Supabase Edge Function operational error log.
       console.error("Rate limit RPC error, failing closed:", error.message);
       return { allowed: false, count: 0, retryAfterSeconds, unavailable: true };
     }
 
     const row = Array.isArray(data) ? data[0] : data;
     if (!row || typeof row.allowed !== "boolean") {
+      // eslint-disable-next-line no-console -- Supabase Edge Function operational error log.
       console.error("Rate limit RPC returned no data, failing closed");
       return { allowed: false, count: 0, retryAfterSeconds, unavailable: true };
     }
@@ -44,6 +46,7 @@ export async function checkRateLimit(
 
     return { allowed: false, count: row.current_count, retryAfterSeconds };
   } catch (err) {
+    // eslint-disable-next-line no-console -- Supabase Edge Function operational error log.
     console.error("Rate limit check failed, failing closed:", err);
     return { allowed: false, count: 0, retryAfterSeconds, unavailable: true };
   }
