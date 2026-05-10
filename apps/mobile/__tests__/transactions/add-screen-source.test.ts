@@ -144,8 +144,8 @@ test("Pencil transaction entry confirms saves with a toast without leaving the a
 });
 
 test("Pencil add screens do not allow future transaction dates", () => {
-  expect(transactionSheetsSource).toContain("maximumDate={maximumDate}");
-  expect(pencilTransferEntrySource).toContain("maximumDate={maximumDate}");
+  expect(transactionSheetsSource).toContain("useCurrentDate");
+  expect(pencilTransferEntrySource).toContain("useCurrentDate");
 });
 
 test("Pencil transfer entry supports transfer side pickers and calendar", () => {

@@ -13,9 +13,14 @@ type ProfileAvatarButtonProps = {
 export function ProfileAvatarButton({ size = 36 }: ProfileAvatarButtonProps) {
   const { push } = useRouter();
   const { fullName, email, profileImageUrl } = useAuthIdentity();
-  const [didImageFail, setDidImageFail] = useState(false);
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
   const accentGreen = useThemeColor("accentGreen");
-  const avatar = deriveProfileAvatar({ fullName, email, profileImageUrl, didImageFail });
+  const avatar = deriveProfileAvatar({
+    fullName,
+    email,
+    profileImageUrl,
+    didImageFail: profileImageUrl === failedImageUrl,
+  });
 
   return (
     <Pressable
@@ -30,7 +35,7 @@ export function ProfileAvatarButton({ size = 36 }: ProfileAvatarButtonProps) {
           source={{ uri: avatar.uri }}
           style={{ width: size, height: size }}
           contentFit="cover"
-          onError={() => setDidImageFail(true)}
+          onError={() => setFailedImageUrl(avatar.uri)}
         />
       ) : (
         <View className="items-center justify-center" style={{ width: size, height: size }}>

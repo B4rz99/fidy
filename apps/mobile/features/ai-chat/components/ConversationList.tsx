@@ -22,6 +22,10 @@ type ConversationListProps = {
 
 const ItemSeparator = () => <View style={{ height: 10 }} />;
 
+function AndroidTabBarSpacer() {
+  return Platform.OS === "ios" ? null : <View style={{ height: TAB_BAR_CLEARANCE }} />;
+}
+
 const SessionCard = memo(function SessionCardInner({
   session,
   onDeleteSession,
@@ -177,6 +181,7 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
             </Text>
           </View>
         }
+        ListFooterComponent={AndroidTabBarSpacer}
       />
     </ScreenLayout>
   );

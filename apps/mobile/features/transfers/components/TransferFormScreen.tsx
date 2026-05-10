@@ -1,8 +1,7 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import { ScreenLayout } from "@/shared/components";
-import { useTranslation } from "@/shared/hooks";
+import { useCurrentDate, useTranslation } from "@/shared/hooks";
 import type { TransferFormScreenProps } from "./transfer-form/TransferForm.types";
 import { TransferFormContent } from "./transfer-form/TransferFormContent";
 import { TransferSidePicker } from "./transfer-form/TransferSidePicker";
@@ -12,7 +11,7 @@ export function TransferFormScreen(props: TransferFormScreenProps = {}) {
   const { back } = useRouter();
   const { t } = useTranslation();
   const form = useTransferForm(props);
-  const [maximumDate] = useState(() => new Date());
+  const maximumDate = useCurrentDate();
 
   return (
     <>
