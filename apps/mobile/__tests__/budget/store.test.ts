@@ -1,13 +1,31 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: focused store test uses lightweight mocks
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type {
+  BudgetMonthSnapshot,
+  BudgetMonitoringModule,
+  BudgetMonitoringPorts,
+} from "@/features/budget/lib/monitoring";
+import type { Budget } from "@/features/budget/schema";
 import type * as TransactionsModule from "@/features/transactions";
-import type { CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
+import type { AnyDb } from "@/shared/db";
+import type {
+  BudgetId,
+  CategoryId,
+  CopAmount,
+  IsoDateTime,
+  Month,
+  UserId,
+} from "@/shared/types/branded";
 
-const mockCreateBudgetMonitoringModule = vi.fn();
-const mockRefreshMonth = vi.fn();
-const mockLoadAutoSuggestions = vi.fn();
-const mockAcknowledgeAlert = vi.fn();
-const mockInsertNotificationRecord = vi.fn();
+const USER_ID = "user-1" as UserId;
+const NOW = "2026-03-01T00:00:00.000Z" as IsoDateTime;
+
+const mockCreateBudgetMonitoringModule =
+  vi.fn<(ports: BudgetMonitoringPorts) => BudgetMonitoringModule>();
+const mockRefreshMonth =
+  vi.fn<(input: { readonly month: Month }) => Promise<BudgetMonthSnapshot>>();
+const mockLoadAutoSuggestions = vi.fn<BudgetMonitoringModule["loadAutoSuggestions"]>();
+const mockAcknowledgeAlert = vi.fn<BudgetMonitoringModule["acknowledgeAlert"]>();
+const mockInsertNotificationRecord = vi.fn<(...args: unknown[]) => unknown>();
 
 vi.mock("@/features/budget/lib/monitoring", () => ({
   createBudgetMonitoringModule: mockCreateBudgetMonitoringModule.mockImplementation(() => ({
@@ -39,30 +57,33 @@ vi.mock("@/features/transactions", async (importOriginal) => {
 });
 
 vi.mock("@/shared/i18n", () => ({
-  getCategoryLabel: vi.fn((category: { id?: string }, _locale: string) => category.id ?? "unknown"),
+  getCategoryLabel: vi.fn<(category: { id?: string }, _locale: string) => string>(
+    (category) => category.id ?? "unknown"
+  ),
   useLocaleStore: {
     getState: () => ({ locale: "es" }),
   },
 }));
 
 vi.mock("@/features/budget/lib/notifications", () => ({
-  scheduleBudgetAlert: vi.fn(),
+  scheduleBudgetAlert: vi.fn<() => void>(),
 }));
 
-const USER_ID = "user-1" as UserId;
-const mockDb = {} as any;
+const mockDb = {} as AnyDb;
 
-type BudgetRefreshSnapshot = {
-  budgets: any[];
-  budgetProgress: any[];
-  summary: { totalBudget: number; totalSpent: number; percentUsed: number };
-  autoSuggestions: any[];
-  pendingAlerts: any[];
-  pendingPermissionRequest: boolean;
-};
+const makeBudget = (id: string, categoryId: CategoryId, month: Month): Budget => ({
+  id: id as BudgetId,
+  userId: USER_ID,
+  categoryId,
+  amount: 100000 as CopAmount,
+  month,
+  createdAt: NOW,
+  updatedAt: NOW,
+  deletedAt: null,
+});
 
-const EMPTY_BUDGET_REFRESH_SNAPSHOT: BudgetRefreshSnapshot = {
-  budgets: [{ id: "budget-1", categoryId: "food", month: "2026-03" as Month }],
+const EMPTY_BUDGET_REFRESH_SNAPSHOT: BudgetMonthSnapshot = {
+  budgets: [makeBudget("budget-1", "food" as CategoryId, "2026-03" as Month)],
   budgetProgress: [],
   summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
   autoSuggestions: [],
@@ -70,15 +91,15 @@ const EMPTY_BUDGET_REFRESH_SNAPSHOT: BudgetRefreshSnapshot = {
   pendingPermissionRequest: false,
 };
 
-const MARCH_STALE_SNAPSHOT: BudgetRefreshSnapshot = {
+const MARCH_STALE_SNAPSHOT: BudgetMonthSnapshot = {
   ...EMPTY_BUDGET_REFRESH_SNAPSHOT,
-  budgets: [{ id: "budget-march", categoryId: "food", month: "2026-03" as Month }],
+  budgets: [makeBudget("budget-march", "food" as CategoryId, "2026-03" as Month)],
   summary: { totalBudget: 100000, totalSpent: 85000, percentUsed: 85 },
 };
 
-const APRIL_FRESH_SNAPSHOT: BudgetRefreshSnapshot = {
+const APRIL_FRESH_SNAPSHOT: BudgetMonthSnapshot = {
   ...EMPTY_BUDGET_REFRESH_SNAPSHOT,
-  budgets: [{ id: "budget-april", categoryId: "transport", month: "2026-04" as Month }],
+  budgets: [makeBudget("budget-april", "transport" as CategoryId, "2026-04" as Month)],
   summary: { totalBudget: 120000, totalSpent: 10000, percentUsed: 8 },
 };
 
@@ -113,7 +134,7 @@ describe("useBudgetStore", () => {
   });
 
   it("ignores stale budget refresh results after the month changes", async () => {
-    const deferredMarch = createDeferred<BudgetRefreshSnapshot>();
+    const deferredMarch = createDeferred<BudgetMonthSnapshot>();
 
     mockRefreshMonth.mockImplementation(({ month }: { month: Month }) =>
       month === ("2026-03" as Month) ? deferredMarch.promise : Promise.resolve(APRIL_FRESH_SNAPSHOT)
@@ -136,7 +157,7 @@ describe("useBudgetStore", () => {
   });
 
   it("clears loading when context changes without starting a newer refresh", async () => {
-    const deferredSnapshot = createDeferred<BudgetRefreshSnapshot>();
+    const deferredSnapshot = createDeferred<BudgetMonthSnapshot>();
     mockRefreshMonth.mockReturnValueOnce(deferredSnapshot.promise);
 
     const { initializeBudgetSession, loadBudgetsForUser, useBudgetStore } =
@@ -151,7 +172,7 @@ describe("useBudgetStore", () => {
   });
 
   it("drops stale notification side effects after the active user changes", async () => {
-    const deferredSnapshot = createDeferred<BudgetRefreshSnapshot>();
+    const deferredSnapshot = createDeferred<BudgetMonthSnapshot>();
     mockRefreshMonth.mockReturnValueOnce(deferredSnapshot.promise);
 
     const { initializeBudgetSession, loadBudgetsForUser } = await initializeBudgetStore(
@@ -163,6 +184,7 @@ describe("useBudgetStore", () => {
       mockCreateBudgetMonitoringModule.mock.calls[monitoringCallsBeforeLoad]?.[0];
 
     expect(initialMonitoringPorts).toBeDefined();
+    if (!initialMonitoringPorts) throw new Error("Expected monitoring ports");
 
     initializeBudgetSession("user-2" as UserId);
     initialMonitoringPorts.insertNotification({
@@ -193,7 +215,7 @@ describe("useBudgetStore", () => {
     const { loadBudgetAutoSuggestions, useBudgetStore } = await initializeBudgetStore();
     useBudgetStore.setState({
       currentMonth: "2026-03" as Month,
-      budgets: [{ id: "budget-1", categoryId: "food" as CategoryId }] as any[],
+      budgets: [makeBudget("budget-1", "food" as CategoryId, "2026-03" as Month)],
     });
 
     loadBudgetAutoSuggestions(mockDb, USER_ID);
