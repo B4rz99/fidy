@@ -2,28 +2,34 @@ import { openDatabaseSync } from "expo-sqlite";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb, resetDb } from "@/shared/db/client";
 
-const mockCaptureError = vi.fn();
+const mockCaptureError = vi.fn<(...args: any[]) => any>();
 
 vi.mock("@/shared/lib/sentry", () => ({
   captureError: (...args: unknown[]) => mockCaptureError(...args),
 }));
 
 vi.mock("expo-sqlite", () => ({
-  openDatabaseSync: vi.fn(() => ({ execSync: vi.fn(), closeSync: vi.fn() })),
-  deleteDatabaseAsync: vi.fn(() => Promise.resolve()),
+  openDatabaseSync: vi.fn<(...args: any[]) => any>(() => ({
+    execSync: vi.fn<(...args: any[]) => any>(),
+    closeSync: vi.fn<(...args: any[]) => any>(),
+  })),
+  deleteDatabaseAsync: vi.fn<(...args: any[]) => any>(() => Promise.resolve()),
 }));
 
 vi.mock("drizzle-orm/expo-sqlite", () => ({
-  drizzle: vi.fn((sqliteDb: unknown) => ({ _: "drizzle-instance", sqliteDb })),
+  drizzle: vi.fn<(...args: any[]) => any>((sqliteDb: unknown) => ({
+    _: "drizzle-instance",
+    sqliteDb,
+  })),
 }));
 
 vi.mock("expo-secure-store", () => ({
-  getItem: vi.fn(),
-  setItem: vi.fn(),
+  getItem: vi.fn<(...args: any[]) => any>(),
+  setItem: vi.fn<(...args: any[]) => any>(),
 }));
 
 vi.mock("expo-crypto", () => ({
-  getRandomBytes: vi.fn(() => new Uint8Array(32)),
+  getRandomBytes: vi.fn<(...args: any[]) => any>(() => new Uint8Array(32)),
 }));
 
 describe("getDb error path", () => {
@@ -45,10 +51,10 @@ describe("getDb error path", () => {
   it("calls captureError and re-throws when PRAGMA key fails", () => {
     const pragmaError = new Error("PRAGMA key failed");
     vi.mocked(openDatabaseSync).mockReturnValueOnce({
-      execSync: vi.fn(() => {
+      execSync: vi.fn<(...args: any[]) => any>(() => {
         throw pragmaError;
       }),
-      closeSync: vi.fn(),
+      closeSync: vi.fn<(...args: any[]) => any>(),
     } as unknown as ReturnType<typeof openDatabaseSync>);
 
     expect(() => getDb("user-123")).toThrow("PRAGMA key failed");

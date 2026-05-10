@@ -4,30 +4,33 @@ import type { RawEmail } from "@/features/email-capture/schema";
 import { processEmails } from "@/features/email-capture/services/email-pipeline";
 import { requireUserId } from "@/shared/types/assertions";
 
-const mockCaptureError = vi.fn();
+const mockCaptureError = vi.fn<(...args: any[]) => any>();
 
 vi.mock("@/shared/lib/sentry", () => ({
   captureError: (...args: unknown[]) => mockCaptureError(...args),
-  capturePipelineEvent: vi.fn(),
-  captureWarning: vi.fn(),
+  capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
+  captureWarning: vi.fn<(...args: any[]) => any>(),
 }));
 
-const mockGetProcessedExternalIds = vi.fn().mockResolvedValue(new Set<string>());
-const mockInsertProcessedEmail = vi.fn();
-const mockInsertTransaction = vi.fn();
-const mockLookupMerchantRule = vi.fn().mockResolvedValue(null);
-const mockInsertMerchantRule = vi.fn();
-const mockParseEmailApi = vi.fn().mockResolvedValue(null);
-const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);
-const mockEnsureDefaultFinancialAccount = vi
-  .fn()
-  .mockImplementation((_: unknown, userId: string) => ({ id: `fa-default-${userId}` }));
-const mockGetPendingRetryEmails = vi.fn().mockResolvedValue([]);
-const mockMarkForRetry = vi.fn();
-const mockMarkPermanentlyFailed = vi.fn();
-const mockMarkRetrySuccess = vi.fn();
-const mockUpdateProcessedEmailStatus = vi.fn();
-const mockBuildEmailCaptureEvidence = vi.fn().mockReturnValue([
+const mockGetProcessedExternalIds = vi
+  .fn<(...args: any[]) => any>()
+  .mockResolvedValue(new Set<string>());
+const mockInsertProcessedEmail = vi.fn<(...args: any[]) => any>();
+const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
+const mockLookupMerchantRule = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
+const mockInsertMerchantRule = vi.fn<(...args: any[]) => any>();
+const mockParseEmailApi = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
+const mockFindDuplicateTransaction = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
+const mockEnsureDefaultFinancialAccount = vi.fn<(...args: any[]) => any>();
+mockEnsureDefaultFinancialAccount.mockImplementation((_: unknown, userId: string) => ({
+  id: `fa-default-${userId}`,
+}));
+const mockGetPendingRetryEmails = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
+const mockMarkForRetry = vi.fn<(...args: any[]) => any>();
+const mockMarkPermanentlyFailed = vi.fn<(...args: any[]) => any>();
+const mockMarkRetrySuccess = vi.fn<(...args: any[]) => any>();
+const mockUpdateProcessedEmailStatus = vi.fn<(...args: any[]) => any>();
+const mockBuildEmailCaptureEvidence = vi.fn<(...args: any[]) => any>().mockReturnValue([
   {
     sourceFamily: "bancolombia",
     evidenceType: "sender_email",
@@ -35,8 +38,8 @@ const mockBuildEmailCaptureEvidence = vi.fn().mockReturnValue([
     value: "notificaciones@bancolombia.com.co",
   },
 ]);
-const mockSaveCaptureEvidenceRows = vi.fn();
-const mockLinkCaptureEvidenceToTransaction = vi.fn();
+const mockSaveCaptureEvidenceRows = vi.fn<(...args: any[]) => any>();
+const mockLinkCaptureEvidenceToTransaction = vi.fn<(...args: any[]) => any>();
 
 type MaterializedEvidenceLink = Record<string, unknown>;
 type MaterializedEvidenceRow = Record<string, unknown> & { id: string; deletedAt: null };
@@ -93,7 +96,7 @@ vi.mock("@/features/email-capture/services/parse-email-api", () => ({
   retryableParseEmailApi: (...args: unknown[]) => mockParseEmailApi(...args),
 }));
 
-const mockGenerateId = vi.fn();
+const mockGenerateId = vi.fn<(...args: any[]) => any>();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: unknown[]) => mockGenerateId(...args),
   generateTransactionId: () => mockGenerateId("tx"),

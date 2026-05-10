@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { createAnalyticsService } from "@/features/analytics/services/create-analytics-service";
 import type { CategoryId, CopAmount, UserId } from "@/shared/types/branded";
 
-const mockGetIncomeExpenseForPeriod = vi.fn();
-const mockGetSpendingByCategoryForPeriod = vi.fn();
+const mockGetIncomeExpenseForPeriod = vi.fn<(...args: any[]) => any>();
+const mockGetSpendingByCategoryForPeriod = vi.fn<(...args: any[]) => any>();
 const testNow = () => new Date(2026, 2, 23);
 
 const currentIncomeExpense = {

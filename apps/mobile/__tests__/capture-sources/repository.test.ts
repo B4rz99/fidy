@@ -15,16 +15,16 @@ import type {
 } from "@/shared/types/branded";
 
 vi.mock("drizzle-orm", () => ({
-  eq: vi.fn((...args: any[]) => ({ eq: args })),
-  and: vi.fn((...args: any[]) => ({ and: args })),
-  desc: vi.fn((...args: any[]) => ({ desc: args })),
-  gte: vi.fn((...args: any[]) => ({ gte: args })),
-  lt: vi.fn((...args: any[]) => ({ lt: args })),
-  count: vi.fn(() => "count(*)"),
+  eq: vi.fn<(...args: any[]) => any>((...args: any[]) => ({ eq: args })),
+  and: vi.fn<(...args: any[]) => any>((...args: any[]) => ({ and: args })),
+  desc: vi.fn<(...args: any[]) => any>((...args: any[]) => ({ desc: args })),
+  gte: vi.fn<(...args: any[]) => any>((...args: any[]) => ({ gte: args })),
+  lt: vi.fn<(...args: any[]) => any>((...args: any[]) => ({ lt: args })),
+  count: vi.fn<(...args: any[]) => any>(() => "count(*)"),
 }));
 
 vi.mock("date-fns", () => ({
-  addDays: vi.fn((date: Date, days: number) => {
+  addDays: vi.fn<(...args: any[]) => any>((date: Date, days: number) => {
     const result = new Date(date);
     result.setDate(result.getDate() + days);
     return result;
@@ -51,22 +51,22 @@ vi.mock("@/shared/db/schema", () => ({
 }));
 
 vi.mock("@/shared/lib/generate-id", () => ({
-  generateId: vi.fn(() => "ns-mock-id"),
+  generateId: vi.fn<(...args: any[]) => any>(() => "ns-mock-id"),
   generateNotificationSourceId: () => "ns-mock-id",
 }));
 
-const mockOnConflictDoNothing = vi.fn().mockResolvedValue(undefined);
-const mockOnConflictDoUpdate = vi.fn().mockResolvedValue(undefined);
-const mockValues = vi.fn().mockReturnThis();
-const mockInsert = vi.fn(() => ({ values: mockValues }));
-const mockSelect = vi.fn().mockReturnThis();
-const mockFrom = vi.fn().mockReturnThis();
-const mockWhere = vi.fn().mockReturnThis();
-const mockLimit = vi.fn().mockResolvedValue([]);
-const mockOrderBy = vi.fn().mockResolvedValue([]);
-const mockUpdate = vi.fn().mockReturnThis();
-const mockSet = vi.fn().mockReturnThis();
-const mockUpdateWhere = vi.fn().mockResolvedValue([]);
+const mockOnConflictDoNothing = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
+const mockOnConflictDoUpdate = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
+const mockValues = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockInsert = vi.fn<(...args: any[]) => any>(() => ({ values: mockValues }));
+const mockSelect = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockFrom = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockWhere = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockLimit = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
+const mockOrderBy = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
+const mockUpdate = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockSet = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockUpdateWhere = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
 
 const mockDb = {
   insert: mockInsert,
@@ -129,9 +129,8 @@ describe("capture-sources repository", () => {
     ];
     mockOrderBy.mockResolvedValueOnce(rows);
 
-    const { getProcessedCapturesBySource } = await import(
-      "@/features/capture-sources/lib/repository"
-    );
+    const { getProcessedCapturesBySource } =
+      await import("@/features/capture-sources/lib/repository");
     const result = await getProcessedCapturesBySource(mockDb, "sms");
 
     expect(mockSelect).toHaveBeenCalled();

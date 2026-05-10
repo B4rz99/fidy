@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockCreateParseEmailService } = vi.hoisted(() => ({
-  mockCreateParseEmailService: vi.fn((config: unknown) => ({ config })),
+  mockCreateParseEmailService: vi.fn<(...args: any[]) => any>((config: unknown) => ({
+    config,
+  })),
 }));
 
 vi.mock("@/shared/categories", () => ({
@@ -19,9 +21,8 @@ describe("parse-email service wiring", () => {
   });
 
   it("creates live and retryable services with the shared category allow-list", async () => {
-    const { liveParseEmailService, retryableParseEmailService } = await import(
-      "@/features/email-capture/services/parse-email-service"
-    );
+    const { liveParseEmailService, retryableParseEmailService } =
+      await import("@/features/email-capture/services/parse-email-service");
 
     expect(mockCreateParseEmailService).toHaveBeenNthCalledWith(1, {
       validCategoryIds: ["food", "transport"],

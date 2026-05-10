@@ -113,12 +113,12 @@ describe("streaming chat service", () => {
 
   it("creates a session, streams the reply, executes add actions, and resets stream state", async () => {
     const state = createState();
-    const executeAction = vi.fn().mockResolvedValue(undefined);
-    const createChatSession = vi.fn().mockImplementation(async () => {
+    const executeAction = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
+    const createChatSession = vi.fn<(...args: any[]) => any>().mockImplementation(async () => {
       state.setCurrentSessionId("chat-1" as ChatSessionId);
       return "chat-1" as ChatSessionId;
     });
-    const addUserChatMessage = vi.fn().mockImplementation(async () => {
+    const addUserChatMessage = vi.fn<(...args: any[]) => any>().mockImplementation(async () => {
       state.appendMessage({
         id: "message-user" as never,
         sessionId: "chat-1" as ChatSessionId,
@@ -129,10 +129,12 @@ describe("streaming chat service", () => {
         createdAt: "2026-04-18T10:10:00.000Z" as IsoDateTime,
       });
     });
-    const addAssistantChatMessage = vi.fn().mockResolvedValue(makeAssistantMessage("hello back"));
-    const trackAiMessageSent = vi.fn();
-    const captureWarning = vi.fn();
-    const captureError = vi.fn();
+    const addAssistantChatMessage = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue(makeAssistantMessage("hello back"));
+    const trackAiMessageSent = vi.fn<(...args: any[]) => any>();
+    const captureWarning = vi.fn<(...args: any[]) => any>();
+    const captureError = vi.fn<(...args: any[]) => any>();
     const telemetry = makeTelemetry({ captureWarning, captureError });
 
     const service = createStreamingChatService({
@@ -180,8 +182,8 @@ describe("streaming chat service", () => {
     const state = createState();
     state.setCurrentSessionId("chat-1" as ChatSessionId);
     const packet = makeFinancialContextPacket();
-    const buildFinancialContextPacket = vi.fn().mockResolvedValue(packet);
-    const streamChat = vi.fn(async (_messages, callbacks) => {
+    const buildFinancialContextPacket = vi.fn<(...args: any[]) => any>().mockResolvedValue(packet);
+    const streamChat = vi.fn<(...args: any[]) => any>(async (_messages, callbacks) => {
       callbacks.onDone();
     });
 
@@ -191,11 +193,13 @@ describe("streaming chat service", () => {
       setStreamingContent: state.setStreamingContent,
       streamChat,
       buildFinancialContextPacket,
-      createChatSession: vi.fn(),
-      addUserChatMessage: vi.fn().mockResolvedValue(undefined),
-      addAssistantChatMessage: vi.fn().mockResolvedValue(makeAssistantMessage("")),
+      createChatSession: vi.fn<(...args: any[]) => any>(),
+      addUserChatMessage: vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined),
+      addAssistantChatMessage: vi
+        .fn<(...args: any[]) => any>()
+        .mockResolvedValue(makeAssistantMessage("")),
       parseActionFromResponse: () => null,
-      trackAiMessageSent: vi.fn(),
+      trackAiMessageSent: vi.fn<(...args: any[]) => any>(),
       telemetry: makeTelemetry().telemetry,
     });
 
@@ -203,7 +207,7 @@ describe("streaming chat service", () => {
       db: mockDb,
       userId: USER_ID,
       text: "how am I doing?",
-      executeAction: vi.fn(),
+      executeAction: vi.fn<(...args: any[]) => any>(),
     });
 
     expect(buildFinancialContextPacket).toHaveBeenCalledWith({ db: mockDb, userId: USER_ID });
@@ -220,8 +224,10 @@ describe("streaming chat service", () => {
   it("captures action failures without breaking the assistant reply", async () => {
     const state = createState();
     state.setCurrentSessionId("chat-1" as ChatSessionId);
-    const executeAction = vi.fn().mockRejectedValue(new Error("action failed"));
-    const telemetry = makeTelemetry({ captureWarning: vi.fn() });
+    const executeAction = vi
+      .fn<(...args: any[]) => any>()
+      .mockRejectedValue(new Error("action failed"));
+    const telemetry = makeTelemetry({ captureWarning: vi.fn<(...args: any[]) => any>() });
 
     const service = createStreamingChatService({
       getState: state.getState,
@@ -231,11 +237,13 @@ describe("streaming chat service", () => {
         callbacks.onChunk("reply");
         callbacks.onDone();
       },
-      createChatSession: vi.fn(),
-      addUserChatMessage: vi.fn().mockResolvedValue(undefined),
-      addAssistantChatMessage: vi.fn().mockResolvedValue(makeAssistantMessage("reply")),
+      createChatSession: vi.fn<(...args: any[]) => any>(),
+      addUserChatMessage: vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined),
+      addAssistantChatMessage: vi
+        .fn<(...args: any[]) => any>()
+        .mockResolvedValue(makeAssistantMessage("reply")),
       parseActionFromResponse: () => makeAddAction(),
-      trackAiMessageSent: vi.fn(),
+      trackAiMessageSent: vi.fn<(...args: any[]) => any>(),
       telemetry: telemetry.telemetry,
     });
 
@@ -255,7 +263,9 @@ describe("streaming chat service", () => {
   it("persists an assistant error message when the stream reports an error", async () => {
     const state = createState();
     state.setCurrentSessionId("chat-1" as ChatSessionId);
-    const addAssistantChatMessage = vi.fn().mockResolvedValue(makeAssistantMessage("partial"));
+    const addAssistantChatMessage = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue(makeAssistantMessage("partial"));
 
     const service = createStreamingChatService({
       getState: state.getState,
@@ -265,11 +275,11 @@ describe("streaming chat service", () => {
         callbacks.onChunk("partial");
         callbacks.onError("boom");
       },
-      createChatSession: vi.fn(),
-      addUserChatMessage: vi.fn().mockResolvedValue(undefined),
+      createChatSession: vi.fn<(...args: any[]) => any>(),
+      addUserChatMessage: vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined),
       addAssistantChatMessage,
       parseActionFromResponse: () => null,
-      trackAiMessageSent: vi.fn(),
+      trackAiMessageSent: vi.fn<(...args: any[]) => any>(),
       telemetry: makeTelemetry().telemetry,
     });
 
@@ -277,7 +287,7 @@ describe("streaming chat service", () => {
       db: mockDb,
       userId: USER_ID,
       text: "hello",
-      executeAction: vi.fn(),
+      executeAction: vi.fn<(...args: any[]) => any>(),
     });
 
     expect(addAssistantChatMessage).toHaveBeenCalledWith(mockDb, USER_ID, "partial");
@@ -306,11 +316,13 @@ describe("streaming chat service", () => {
           resolveStarted?.();
           options?.signal?.addEventListener("abort", () => resolve());
         }),
-      createChatSession: vi.fn(),
-      addUserChatMessage: vi.fn().mockResolvedValue(undefined),
-      addAssistantChatMessage: vi.fn().mockResolvedValue(makeAssistantMessage("reply")),
+      createChatSession: vi.fn<(...args: any[]) => any>(),
+      addUserChatMessage: vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined),
+      addAssistantChatMessage: vi
+        .fn<(...args: any[]) => any>()
+        .mockResolvedValue(makeAssistantMessage("reply")),
       parseActionFromResponse: () => null,
-      trackAiMessageSent: vi.fn(),
+      trackAiMessageSent: vi.fn<(...args: any[]) => any>(),
       telemetry: makeTelemetry().telemetry,
     });
 
@@ -318,7 +330,7 @@ describe("streaming chat service", () => {
       db: mockDb,
       userId: USER_ID,
       text: "hello",
-      executeAction: vi.fn(),
+      executeAction: vi.fn<(...args: any[]) => any>(),
     });
 
     await started;
@@ -372,11 +384,13 @@ describe("streaming chat service", () => {
           options?.signal?.addEventListener("abort", () => resolve());
         });
       },
-      createChatSession: vi.fn(),
-      addUserChatMessage: vi.fn().mockResolvedValue(undefined),
-      addAssistantChatMessage: vi.fn().mockResolvedValue(makeAssistantMessage("reply")),
+      createChatSession: vi.fn<(...args: any[]) => any>(),
+      addUserChatMessage: vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined),
+      addAssistantChatMessage: vi
+        .fn<(...args: any[]) => any>()
+        .mockResolvedValue(makeAssistantMessage("reply")),
       parseActionFromResponse: () => null,
-      trackAiMessageSent: vi.fn(),
+      trackAiMessageSent: vi.fn<(...args: any[]) => any>(),
       telemetry: makeTelemetry().telemetry,
     });
 
@@ -384,7 +398,7 @@ describe("streaming chat service", () => {
       db: mockDb,
       userId: USER_ID,
       text: "first",
-      executeAction: vi.fn(),
+      executeAction: vi.fn<(...args: any[]) => any>(),
     });
 
     await firstStarted;
@@ -394,7 +408,7 @@ describe("streaming chat service", () => {
       db: mockDb,
       userId: USER_ID,
       text: "second",
-      executeAction: vi.fn(),
+      executeAction: vi.fn<(...args: any[]) => any>(),
     });
 
     await secondStarted;

@@ -116,9 +116,9 @@ describe("private backup health", () => {
 
 describe("createPrivateBackup", () => {
   it("uploads the encrypted backup before returning ready metadata", async () => {
-    const exportSnapshot = vi.fn().mockReturnValue(SNAPSHOT);
-    const encryptSnapshot = vi.fn().mockResolvedValue(ENCRYPTED_BACKUP);
-    const uploadBackup = vi.fn().mockResolvedValue(METADATA);
+    const exportSnapshot = vi.fn<(...args: any[]) => any>().mockReturnValue(SNAPSHOT);
+    const encryptSnapshot = vi.fn<(...args: any[]) => any>().mockResolvedValue(ENCRYPTED_BACKUP);
+    const uploadBackup = vi.fn<(...args: any[]) => any>().mockResolvedValue(METADATA);
 
     await expect(
       createPrivateBackup({
@@ -149,9 +149,11 @@ describe("createPrivateBackup", () => {
   });
 
   it("sends only encrypted payloads and remote metadata to backup upload", async () => {
-    const exportSnapshot = vi.fn().mockReturnValue(SNAPSHOT_WITH_FINANCIAL_DATA);
-    const encryptSnapshot = vi.fn().mockResolvedValue(ENCRYPTED_BACKUP);
-    const uploadBackup = vi.fn().mockResolvedValue(METADATA);
+    const exportSnapshot = vi
+      .fn<(...args: any[]) => any>()
+      .mockReturnValue(SNAPSHOT_WITH_FINANCIAL_DATA);
+    const encryptSnapshot = vi.fn<(...args: any[]) => any>().mockResolvedValue(ENCRYPTED_BACKUP);
+    const uploadBackup = vi.fn<(...args: any[]) => any>().mockResolvedValue(METADATA);
 
     await createPrivateBackup(
       privateBackupInput({ exportSnapshot, encryptSnapshot, uploadBackup })
@@ -172,12 +174,12 @@ describe("createPrivateBackup", () => {
   });
 
   it("refuses to encrypt or upload an invalid local ledger snapshot", async () => {
-    const exportSnapshot = vi.fn().mockReturnValue({
+    const exportSnapshot = vi.fn<(...args: any[]) => any>().mockReturnValue({
       ...SNAPSHOT,
       version: 999,
     });
-    const encryptSnapshot = vi.fn().mockResolvedValue(ENCRYPTED_BACKUP);
-    const uploadBackup = vi.fn().mockResolvedValue(METADATA);
+    const encryptSnapshot = vi.fn<(...args: any[]) => any>().mockResolvedValue(ENCRYPTED_BACKUP);
+    const uploadBackup = vi.fn<(...args: any[]) => any>().mockResolvedValue(METADATA);
 
     await expect(
       createPrivateBackup({
@@ -225,8 +227,10 @@ function privateBackupInput(
 
 describe("rotatePrivateBackupRecoveryKeySafely", () => {
   it("keeps the old backup metadata when replacement upload fails", async () => {
-    const rotate = vi.fn().mockResolvedValue(ENCRYPTED_BACKUP);
-    const uploadReplacement = vi.fn().mockRejectedValue(new Error("network down"));
+    const rotate = vi.fn<(...args: any[]) => any>().mockResolvedValue(ENCRYPTED_BACKUP);
+    const uploadReplacement = vi
+      .fn<(...args: any[]) => any>()
+      .mockRejectedValue(new Error("network down"));
 
     await expect(
       rotatePrivateBackupRecoveryKeySafely({

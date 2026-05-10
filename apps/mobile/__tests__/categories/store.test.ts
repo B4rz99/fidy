@@ -10,8 +10,8 @@ const MOCK_NOW = "2026-03-21T12:00:00.000Z" as IsoDateTime;
 
 // Mock the repository
 vi.mock("@/features/categories/lib/repository", () => ({
-  getUserCategoriesForUser: vi.fn<typeof getUserCategoriesForUser>().mockReturnValue([]),
-  insertUserCategory: vi.fn<typeof insertUserCategory>(),
+  getUserCategoriesForUser: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
+  insertUserCategory: vi.fn<(...args: any[]) => any>(),
 }));
 
 // Mock the icon-map
@@ -26,16 +26,16 @@ vi.mock("@/shared/lib", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/shared/lib")>();
   return {
     ...actual,
-    generateUserCategoryId: vi.fn<() => UserCategoryId>().mockReturnValue(GENERATED_CATEGORY_ID),
-    toIsoDateTime: vi.fn<() => IsoDateTime>().mockReturnValue(MOCK_NOW),
+    generateUserCategoryId: vi.fn<(...args: any[]) => any>().mockReturnValue("ucat-test-123"),
+    toIsoDateTime: vi.fn<(...args: any[]) => any>().mockReturnValue("2026-03-21T12:00:00.000Z"),
   };
 });
 
 const mockDb = {
-  insert: vi.fn<() => unknown>(),
-  select: vi.fn<() => unknown>(),
-  transaction: vi.fn<(fn: (tx: AnyDb) => void) => void>((fn) => fn(mockDb as unknown as AnyDb)),
-} as unknown as AnyDb;
+  insert: vi.fn<(...args: any[]) => any>(),
+  select: vi.fn<(...args: any[]) => any>(),
+  transaction: vi.fn<(...args: any[]) => any>((fn: (tx: any) => void) => fn(mockDb)),
+} as any;
 
 describe("useCategoriesStore", () => {
   beforeEach(() => {

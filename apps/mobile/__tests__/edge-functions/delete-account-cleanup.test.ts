@@ -94,30 +94,32 @@ function createDeleteAccountSupabase(options: {
   readonly storageError?: { readonly message: string };
 }) {
   const tableDeleteCalls: string[] = [];
-  const eq = vi.fn(() => Promise.resolve({ error: null }));
-  const deleteTable = vi.fn((tableName: string) => {
+  const eq = vi.fn<(...args: any[]) => any>(() => Promise.resolve({ error: null }));
+  const deleteTable = vi.fn<(...args: any[]) => any>((tableName: string) => {
     tableDeleteCalls.push(tableName);
     return { eq };
   });
-  const range = vi.fn((from: number, to: number) =>
+  const range = vi.fn<(...args: any[]) => any>((from: number, to: number) =>
     Promise.resolve({
       data: options.backupRows.slice(from, to + 1),
       error: options.backupListError ?? null,
     })
   );
-  const order = vi.fn(() => ({ range }));
-  const selectEq = vi.fn(() => ({ order }));
-  const select = vi.fn(() => ({ eq: selectEq }));
-  const storageRemove = vi.fn(() => Promise.resolve({ error: options.storageError ?? null }));
-  const deleteUser = vi.fn(() => Promise.resolve({ error: null }));
+  const order = vi.fn<(...args: any[]) => any>(() => ({ range }));
+  const selectEq = vi.fn<(...args: any[]) => any>(() => ({ order }));
+  const select = vi.fn<(...args: any[]) => any>(() => ({ eq: selectEq }));
+  const storageRemove = vi.fn<(...args: any[]) => any>(() =>
+    Promise.resolve({ error: options.storageError ?? null })
+  );
+  const deleteUser = vi.fn<(...args: any[]) => any>(() => Promise.resolve({ error: null }));
   const client = {
     auth: { admin: { deleteUser } },
-    from: vi.fn((tableName: string) => ({
+    from: vi.fn<(...args: any[]) => any>((tableName: string) => ({
       delete: () => deleteTable(tableName),
       select,
     })),
     storage: {
-      from: vi.fn(() => ({ remove: storageRemove })),
+      from: vi.fn<(...args: any[]) => any>(() => ({ remove: storageRemove })),
     },
   };
 

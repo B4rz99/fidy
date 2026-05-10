@@ -47,11 +47,15 @@ vi.mock("@/shared/db", () => ({
 }));
 
 vi.mock("drizzle-orm", () => ({
-  and: vi.fn((...args: unknown[]) => ({ type: "and", args })),
-  asc: vi.fn((column: unknown) => ({ type: "asc", column })),
-  desc: vi.fn((column: unknown) => ({ type: "desc", column })),
-  eq: vi.fn((left: unknown, right: unknown) => ({ type: "eq", left, right })),
-  isNull: vi.fn((value: unknown) => ({ type: "isNull", value })),
+  and: vi.fn<(...args: any[]) => any>((...args: unknown[]) => ({ type: "and", args })),
+  asc: vi.fn<(...args: any[]) => any>((column: unknown) => ({ type: "asc", column })),
+  desc: vi.fn<(...args: any[]) => any>((column: unknown) => ({ type: "desc", column })),
+  eq: vi.fn<(...args: any[]) => any>((left: unknown, right: unknown) => ({
+    type: "eq",
+    left,
+    right,
+  })),
+  isNull: vi.fn<(...args: any[]) => any>((value: unknown) => ({ type: "isNull", value })),
 }));
 
 function createDeferred<T>() {
@@ -101,10 +105,10 @@ describe("ai chat store boundary", () => {
 
   it("loads sessions for the active user through the explicit boundary", async () => {
     const rows = [makeSession()];
-    const orderBy = vi.fn().mockResolvedValue(rows);
-    const where = vi.fn().mockReturnValue({ orderBy });
-    const from = vi.fn().mockReturnValue({ where });
-    const select = vi.fn().mockReturnValue({ from });
+    const orderBy = vi.fn<(...args: any[]) => any>().mockResolvedValue(rows);
+    const where = vi.fn<(...args: any[]) => any>().mockReturnValue({ orderBy });
+    const from = vi.fn<(...args: any[]) => any>().mockReturnValue({ where });
+    const select = vi.fn<(...args: any[]) => any>().mockReturnValue({ from });
     const db = { select } as never;
 
     initializeChatSession("user-1" as UserId);
@@ -119,10 +123,10 @@ describe("ai chat store boundary", () => {
 
   it("drops stale session results after the active user changes", async () => {
     const deferred = createDeferred<readonly ReturnType<typeof makeSession>[]>();
-    const orderBy = vi.fn().mockReturnValue(deferred.promise);
-    const where = vi.fn().mockReturnValue({ orderBy });
-    const from = vi.fn().mockReturnValue({ where });
-    const select = vi.fn().mockReturnValue({ from });
+    const orderBy = vi.fn<(...args: any[]) => any>().mockReturnValue(deferred.promise);
+    const where = vi.fn<(...args: any[]) => any>().mockReturnValue({ orderBy });
+    const from = vi.fn<(...args: any[]) => any>().mockReturnValue({ where });
+    const select = vi.fn<(...args: any[]) => any>().mockReturnValue({ from });
     const db = { select } as never;
 
     initializeChatSession("user-1" as UserId);
@@ -143,8 +147,8 @@ describe("ai chat store boundary", () => {
 
   it("drops stale create-session completions after the active user changes", async () => {
     const deferred = createDeferred<void>();
-    const values = vi.fn().mockReturnValue(deferred.promise);
-    const insert = vi.fn().mockReturnValue({ values });
+    const values = vi.fn<(...args: any[]) => any>().mockReturnValue(deferred.promise);
+    const insert = vi.fn<(...args: any[]) => any>().mockReturnValue({ values });
     const db = { insert } as never;
 
     initializeChatSession("user-1" as UserId);
@@ -165,10 +169,10 @@ describe("ai chat store boundary", () => {
 
   it("drops stale session-message loads after another session becomes active", async () => {
     const deferred = createDeferred<readonly ReturnType<typeof makeMessage>[]>();
-    const orderBy = vi.fn().mockReturnValue(deferred.promise);
-    const where = vi.fn().mockReturnValue({ orderBy });
-    const from = vi.fn().mockReturnValue({ where });
-    const select = vi.fn().mockReturnValue({ from });
+    const orderBy = vi.fn<(...args: any[]) => any>().mockReturnValue(deferred.promise);
+    const where = vi.fn<(...args: any[]) => any>().mockReturnValue({ orderBy });
+    const from = vi.fn<(...args: any[]) => any>().mockReturnValue({ where });
+    const select = vi.fn<(...args: any[]) => any>().mockReturnValue({ from });
     const db = { select } as never;
 
     initializeChatSession("user-1" as UserId);
@@ -193,10 +197,10 @@ describe("ai chat store boundary", () => {
 
   it("clears the previous session messages while the next session loads", async () => {
     const deferred = createDeferred<readonly ReturnType<typeof makeMessage>[]>();
-    const orderBy = vi.fn().mockReturnValue(deferred.promise);
-    const where = vi.fn().mockReturnValue({ orderBy });
-    const from = vi.fn().mockReturnValue({ where });
-    const select = vi.fn().mockReturnValue({ from });
+    const orderBy = vi.fn<(...args: any[]) => any>().mockReturnValue(deferred.promise);
+    const where = vi.fn<(...args: any[]) => any>().mockReturnValue({ orderBy });
+    const from = vi.fn<(...args: any[]) => any>().mockReturnValue({ where });
+    const select = vi.fn<(...args: any[]) => any>().mockReturnValue({ from });
     const db = { select } as never;
 
     initializeChatSession("user-1" as UserId);

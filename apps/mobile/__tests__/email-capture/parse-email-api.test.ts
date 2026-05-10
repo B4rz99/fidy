@@ -7,7 +7,7 @@ import {
   summarizeLlmEmailInputDiagnostics,
 } from "@/features/email-capture/services/parse-email-api";
 
-const mockInvoke = vi.fn();
+const mockInvoke = vi.fn<(...args: any[]) => any>();
 
 vi.mock("@/shared/db/supabase", () => ({
   getSupabase: () => ({

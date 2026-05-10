@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { insertNotificationParseImprovementSample } from "@/features/capture-sources/lib/notification-parse-improvement-repository";
 
-const mockInsert = vi.fn();
+const mockInsert = vi.fn<(...args: any[]) => any>();
 
 vi.mock("@/shared/db", () => ({
   getSupabase: () => ({

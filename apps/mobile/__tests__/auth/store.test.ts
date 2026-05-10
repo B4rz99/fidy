@@ -13,7 +13,7 @@ const {
   mockGetOnboardingCompleteFromStore,
   mockClearOnboardingFromStore,
 } = vi.hoisted(() => {
-  const mockCleanupCurrentPushToken = vi.fn(() => Promise.resolve());
+  const mockCleanupCurrentPushToken = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
   const mockLoadLocalQaSession = vi.fn<
     () => Promise<{
       userId: string;
@@ -23,7 +23,7 @@ const {
       email: string;
     } | null>
   >(() => Promise.resolve(null));
-  const mockStartLocalQaSession = vi.fn((profile?: string) =>
+  const mockStartLocalQaSession = vi.fn<(...args: any[]) => any>((profile?: string) =>
     Promise.resolve({
       userId: profile === "transfer-ready" ? "qa-local-transfer-ready" : "qa-local-default",
       profile: profile === "transfer-ready" ? "transfer-ready" : "default",
@@ -33,9 +33,9 @@ const {
         profile === "transfer-ready" ? "local-qa+transfer-ready@fidy.dev" : "local-qa@fidy.dev",
     })
   );
-  const mockClearLocalQaSession = vi.fn(() => Promise.resolve());
-  const mockGetOnboardingCompleteFromStore = vi.fn(() => false);
-  const mockClearOnboardingFromStore = vi.fn(() => Promise.resolve());
+  const mockClearLocalQaSession = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
+  const mockGetOnboardingCompleteFromStore = vi.fn<(...args: any[]) => any>(() => false);
+  const mockClearOnboardingFromStore = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
 
   return {
     mockCleanupCurrentPushToken,
@@ -59,14 +59,16 @@ const {
     user: { id: "user-1", email: "test@example.com" },
     access_token: "token",
   };
-  const mockSetSession = vi.fn(() =>
+  const mockSetSession = vi.fn<(...args: any[]) => any>(() =>
     Promise.resolve({ data: { session: hoistedSession }, error: null })
   );
-  const mockSignInWithOAuth = vi.fn(() =>
+  const mockSignInWithOAuth = vi.fn<(...args: any[]) => any>(() =>
     Promise.resolve({ data: { url: "https://example.com" }, error: null })
   );
-  const mockSignOut = vi.fn(() => Promise.resolve({ error: null }));
-  const mockGetSession = vi.fn(() => Promise.resolve({ data: { session: null }, error: null }));
+  const mockSignOut = vi.fn<(...args: any[]) => any>(() => Promise.resolve({ error: null }));
+  const mockGetSession = vi.fn<(...args: any[]) => any>(() =>
+    Promise.resolve({ data: { session: null }, error: null })
+  );
   const mockGetUser = vi.fn<
     () => Promise<{
       data: { user: typeof hoistedSession.user | null };
@@ -106,7 +108,7 @@ const mockOpenAuthSession = vi.fn<
 
 vi.mock("expo-web-browser", () => ({
   openAuthSessionAsync: (url: string, redirect: string) => mockOpenAuthSession(url, redirect),
-  maybeCompleteAuthSession: vi.fn(),
+  maybeCompleteAuthSession: vi.fn<(...args: any[]) => any>(),
 }));
 
 vi.mock("@/features/notifications/public", () => ({

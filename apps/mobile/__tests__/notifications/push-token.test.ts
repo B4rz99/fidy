@@ -7,8 +7,8 @@ const MOCK_TOKEN = "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]";
 const MOCK_USER_ID = "user-123" as UserId;
 
 // --- Supabase mock ---
-const mockUpsert = vi.fn(() => Promise.resolve({ error: null }));
-const mockEq = vi.fn();
+const mockUpsert = vi.fn<(...args: any[]) => any>(() => Promise.resolve({ error: null }));
+const mockEq = vi.fn<(...args: any[]) => any>();
 
 vi.mock("@/shared/db/supabase", () => ({
   getSupabase: () => ({
@@ -25,23 +25,27 @@ vi.mock("@/shared/db/supabase", () => ({
 }));
 
 // --- expo-notifications mock ---
-const mockGetExpoPushTokenAsync = vi.fn((_opts?: unknown) => Promise.resolve({ data: MOCK_TOKEN }));
-const mockGetDevicePushTokenAsync = vi.fn((_opts?: unknown) => Promise.resolve());
+const mockGetExpoPushTokenAsync = vi.fn<(...args: any[]) => any>((_opts?: unknown) =>
+  Promise.resolve({ data: MOCK_TOKEN })
+);
+const mockGetDevicePushTokenAsync = vi.fn<(...args: any[]) => any>((_opts?: unknown) =>
+  Promise.resolve()
+);
 
 vi.mock("expo-notifications", () => ({
   getExpoPushTokenAsync: (opts?: unknown) => mockGetExpoPushTokenAsync(opts),
   getDevicePushTokenAsync: (opts?: unknown) => mockGetDevicePushTokenAsync(opts),
-  setNotificationHandler: vi.fn(),
-  getPermissionsAsync: vi.fn(() =>
+  setNotificationHandler: vi.fn<(...args: any[]) => any>(),
+  getPermissionsAsync: vi.fn<(...args: any[]) => any>(() =>
     Promise.resolve({ status: "granted", granted: true, canAskAgain: true })
   ),
-  requestPermissionsAsync: vi.fn(() =>
+  requestPermissionsAsync: vi.fn<(...args: any[]) => any>(() =>
     Promise.resolve({ status: "granted", granted: true, canAskAgain: true })
   ),
-  scheduleNotificationAsync: vi.fn(),
-  cancelScheduledNotificationAsync: vi.fn(),
-  addPushTokenListener: vi.fn(),
-  addNotificationResponseReceivedListener: vi.fn(),
+  scheduleNotificationAsync: vi.fn<(...args: any[]) => any>(),
+  cancelScheduledNotificationAsync: vi.fn<(...args: any[]) => any>(),
+  addPushTokenListener: vi.fn<(...args: any[]) => any>(),
+  addNotificationResponseReceivedListener: vi.fn<(...args: any[]) => any>(),
 }));
 
 // --- expo-constants mock ---

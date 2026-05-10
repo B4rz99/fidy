@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchGmailEmailsWithToken } from "@/features/email-capture/services/gmail-adapter";
 
 const { mockCaptureError, mockCaptureWarning } = vi.hoisted(() => ({
-  mockCaptureError: vi.fn(),
-  mockCaptureWarning: vi.fn(),
+  mockCaptureError: vi.fn<(...args: any[]) => any>(),
+  mockCaptureWarning: vi.fn<(...args: any[]) => any>(),
 }));
 
 vi.mock("@/shared/lib", () => ({
@@ -12,7 +12,7 @@ vi.mock("@/shared/lib", () => ({
   captureWarning: (...args: unknown[]) => mockCaptureWarning(...args),
 }));
 
-const mockFetch = vi.fn();
+const mockFetch = vi.fn<(...args: any[]) => any>();
 global.fetch = mockFetch;
 
 describe("gmail adapter", () => {

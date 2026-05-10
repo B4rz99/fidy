@@ -2,13 +2,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { IsoDateTime, UserCategoryId, UserId } from "@/shared/types/branded";
 
-const mockRun = vi.fn();
-const mockAll = vi.fn().mockReturnValue([]);
-const mockValues = vi.fn().mockReturnThis();
-const mockInsert = vi.fn(() => ({ values: mockValues }));
-const mockSelect = vi.fn().mockReturnThis();
-const mockFrom = vi.fn().mockReturnThis();
-const mockWhere = vi.fn().mockReturnThis();
+const mockRun = vi.fn<(...args: any[]) => any>();
+const mockAll = vi.fn<(...args: any[]) => any>().mockReturnValue([]);
+const mockValues = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockInsert = vi.fn<(...args: any[]) => any>(() => ({ values: mockValues }));
+const mockSelect = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockFrom = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockWhere = vi.fn<(...args: any[]) => any>().mockReturnThis();
 
 const mockDb = {
   insert: mockInsert,

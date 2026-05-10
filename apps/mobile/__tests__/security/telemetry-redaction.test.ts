@@ -3,16 +3,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const sentryMocks = vi.hoisted(() => {
   const scope = {
-    setContext: vi.fn(),
-    setLevel: vi.fn(),
+    setContext: vi.fn<(...args: any[]) => any>(),
+    setLevel: vi.fn<(...args: any[]) => any>(),
   };
   return {
-    captureException: vi.fn(),
-    captureMessage: vi.fn(),
-    init: vi.fn(),
+    captureException: vi.fn<(...args: any[]) => any>(),
+    captureMessage: vi.fn<(...args: any[]) => any>(),
+    init: vi.fn<(...args: any[]) => any>(),
     scope,
-    setUser: vi.fn(),
-    withScope: vi.fn(
+    setUser: vi.fn<(...args: any[]) => any>(),
+    withScope: vi.fn<(...args: any[]) => any>(
       (
         callback: (scopeArg: {
           setContext: typeof scope.setContext;
@@ -20,7 +20,7 @@ const sentryMocks = vi.hoisted(() => {
         }) => void
       ) => callback(scope)
     ),
-    wrap: vi.fn((component: unknown) => component),
+    wrap: vi.fn<(...args: any[]) => any>((component: unknown) => component),
   };
 });
 

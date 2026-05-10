@@ -25,7 +25,7 @@ const mockRefreshMonth =
   vi.fn<(input: { readonly month: Month }) => Promise<BudgetMonthSnapshot>>();
 const mockLoadAutoSuggestions = vi.fn<BudgetMonitoringModule["loadAutoSuggestions"]>();
 const mockAcknowledgeAlert = vi.fn<BudgetMonitoringModule["acknowledgeAlert"]>();
-const mockInsertNotificationRecord = vi.fn<(...args: unknown[]) => unknown>();
+const mockInsertNotificationRecord = vi.fn<(...args: any[]) => any>();
 
 vi.mock("@/features/budget/lib/monitoring", () => ({
   createBudgetMonitoringModule: mockCreateBudgetMonitoringModule.mockImplementation(() => ({

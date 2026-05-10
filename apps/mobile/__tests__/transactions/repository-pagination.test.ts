@@ -2,15 +2,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { IsoDate, Month, UserId } from "@/shared/types/branded";
 
-const mockAll = vi.fn().mockReturnValue([]);
-const mockGet = vi.fn().mockReturnValue(undefined);
-const mockSelect = vi.fn().mockReturnThis();
-const mockFrom = vi.fn().mockReturnThis();
-const mockWhere = vi.fn().mockReturnThis();
-const mockOrderBy = vi.fn().mockReturnThis();
-const mockLimit = vi.fn().mockReturnThis();
-const mockOffset = vi.fn().mockReturnThis();
-const mockGroupBy = vi.fn().mockReturnThis();
+const mockAll = vi.fn<(...args: any[]) => any>().mockReturnValue([]);
+const mockGet = vi.fn<(...args: any[]) => any>().mockReturnValue(undefined);
+const mockSelect = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockFrom = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockWhere = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockOrderBy = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockLimit = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockOffset = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockGroupBy = vi.fn<(...args: any[]) => any>().mockReturnThis();
 
 const mockDb = {
   select: mockSelect,
@@ -171,9 +171,8 @@ describe("getSpendingByCategoryAggregate", () => {
     ];
     mockAll.mockReturnValueOnce(mockResult);
 
-    const { getSpendingByCategoryAggregate } = await import(
-      "@/features/transactions/lib/repository"
-    );
+    const { getSpendingByCategoryAggregate } =
+      await import("@/features/transactions/lib/repository");
     const result = getSpendingByCategoryAggregate(mockDb, "user-1" as UserId, "2026-03" as Month);
 
     expect(result).toEqual(mockResult);
@@ -182,18 +181,16 @@ describe("getSpendingByCategoryAggregate", () => {
   it("returns empty array when no expenses in month", async () => {
     mockAll.mockReturnValueOnce([]);
 
-    const { getSpendingByCategoryAggregate } = await import(
-      "@/features/transactions/lib/repository"
-    );
+    const { getSpendingByCategoryAggregate } =
+      await import("@/features/transactions/lib/repository");
     const result = getSpendingByCategoryAggregate(mockDb, "user-1" as UserId, "2026-03" as Month);
 
     expect(result).toEqual([]);
   });
 
   it("calls groupBy for category aggregation", async () => {
-    const { getSpendingByCategoryAggregate } = await import(
-      "@/features/transactions/lib/repository"
-    );
+    const { getSpendingByCategoryAggregate } =
+      await import("@/features/transactions/lib/repository");
     getSpendingByCategoryAggregate(mockDb, "user-1" as UserId, "2026-03" as Month);
 
     expect(mockGroupBy).toHaveBeenCalled();

@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockGetSession = vi.fn();
-const mockGetDb = vi.fn(() => ({}));
-const mockInitializeEmailCaptureSession = vi.fn();
-const mockLoadEmailAccounts = vi.fn().mockResolvedValue(undefined);
-const mockFetchAndProcessEmails = vi.fn().mockResolvedValue(undefined);
-const mockHydrateSettings = vi.fn();
-const mockGetSettingsState = vi.fn();
+const mockGetSession = vi.fn<(...args: any[]) => any>();
+const mockGetDb = vi.fn<(...args: any[]) => any>(() => ({}));
+const mockInitializeEmailCaptureSession = vi.fn<(...args: any[]) => any>();
+const mockLoadEmailAccounts = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
+const mockFetchAndProcessEmails = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
+const mockHydrateSettings = vi.fn<(...args: any[]) => any>();
+const mockGetSettingsState = vi.fn<(...args: any[]) => any>();
 
 describe("background email fetch task", () => {
   beforeEach(() => {
@@ -54,7 +54,7 @@ async function loadBackgroundTask() {
     BackgroundTaskResult: { Success: 1, Failed: 2 },
   }));
   vi.doMock("expo-task-manager", () => ({
-    defineTask: vi.fn((_name: string, handler: () => Promise<number>) => {
+    defineTask: vi.fn<(...args: any[]) => any>((_name: string, handler: () => Promise<number>) => {
       task = handler;
     }),
   }));
@@ -75,7 +75,7 @@ async function loadBackgroundTask() {
     getDb: (...args: unknown[]) => (mockGetDb as (...args: unknown[]) => unknown)(...args),
     getSupabase: () => ({ auth: { getSession: mockGetSession } }),
   }));
-  vi.doMock("@/shared/lib", () => ({ captureError: vi.fn() }));
+  vi.doMock("@/shared/lib", () => ({ captureError: vi.fn<(...args: any[]) => any>() }));
 
   await import("@/features/background-fetch/task");
   if (!task) {

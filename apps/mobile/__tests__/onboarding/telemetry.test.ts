@@ -6,7 +6,7 @@ import {
 } from "@/features/onboarding/lib/telemetry";
 
 const { mockCapturePipelineEvent } = vi.hoisted(() => ({
-  mockCapturePipelineEvent: vi.fn(),
+  mockCapturePipelineEvent: vi.fn<(...args: any[]) => any>(),
 }));
 
 vi.mock("@/shared/lib", () => ({

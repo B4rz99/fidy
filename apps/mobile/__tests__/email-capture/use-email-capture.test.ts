@@ -3,15 +3,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { requireUserId } from "@/shared/types/assertions";
 
 const mockDb = {} as any;
-const mockRefreshTransactions = vi.fn();
+const mockRefreshTransactions = vi.fn<(...args: any[]) => any>();
 const mockUseSettingsStore = Object.assign(
-  vi.fn((selector: any) => selector({ shareAnonymizedParseSamples: false })),
+  vi.fn<(...args: any[]) => any>((selector: any) =>
+    selector({ shareAnonymizedParseSamples: false })
+  ),
   { getState: () => ({ shareAnonymizedParseSamples: false }) }
 );
-const mockInitializeEmailCaptureSession = vi.fn();
-const mockLoadEmailAccounts = vi.fn();
-const mockFetchAndProcessEmails = vi.fn();
-const mockAddEventListener = vi.fn();
+const mockInitializeEmailCaptureSession = vi.fn<(...args: any[]) => any>();
+const mockLoadEmailAccounts = vi.fn<(...args: any[]) => any>();
+const mockFetchAndProcessEmails = vi.fn<(...args: any[]) => any>();
+const mockAddEventListener = vi.fn<(...args: any[]) => any>();
 
 describe("useEmailCapture", () => {
   beforeEach(() => {
@@ -24,7 +26,7 @@ describe("useEmailCapture", () => {
       needsReviewCount: 0,
       failedCount: 0,
     });
-    mockAddEventListener.mockReturnValue({ remove: vi.fn() });
+    mockAddEventListener.mockReturnValue({ remove: vi.fn<(...args: any[]) => any>() });
   });
 
   it("initializes the email session before the app-open foreground fetch", async () => {
@@ -71,7 +73,7 @@ async function loadUseEmailCapture() {
     },
   }));
   vi.doMock("@/shared/lib", () => ({
-    handleRecoverableError: () => vi.fn(),
+    handleRecoverableError: () => vi.fn<(...args: any[]) => any>(),
   }));
   vi.doMock("@/features/email-capture/schema", () => ({
     getGmailClientId: () => "gmail-client-id",

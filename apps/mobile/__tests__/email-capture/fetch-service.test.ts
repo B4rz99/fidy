@@ -14,26 +14,26 @@ import type { EmailAccountId, IsoDateTime, UserId } from "@/shared/types/branded
 
 const { mockFetchEmails, mockEnsureBankSenders, mockCapturePipelineEvent, mockCaptureWarning } =
   vi.hoisted(() => ({
-    mockFetchEmails: vi.fn(),
-    mockEnsureBankSenders: vi.fn(),
-    mockCapturePipelineEvent: vi.fn(),
-    mockCaptureWarning: vi.fn(),
+    mockFetchEmails: vi.fn<(...args: any[]) => any>(),
+    mockEnsureBankSenders: vi.fn<(...args: any[]) => any>(),
+    mockCapturePipelineEvent: vi.fn<(...args: any[]) => any>(),
+    mockCaptureWarning: vi.fn<(...args: any[]) => any>(),
   }));
 
 vi.mock("@/features/capture-sources/ingestion.public", () => ({
-  createCaptureIngestionPort: vi.fn(),
+  createCaptureIngestionPort: vi.fn<(...args: any[]) => any>(),
 }));
 
 vi.mock("@/features/email-capture/lib/repository", () => ({
-  getFailedEmails: vi.fn(),
-  getNeedsReviewEmails: vi.fn(),
-  updateLastFetchedAt: vi.fn(),
+  getFailedEmails: vi.fn<(...args: any[]) => any>(),
+  getNeedsReviewEmails: vi.fn<(...args: any[]) => any>(),
+  updateLastFetchedAt: vi.fn<(...args: any[]) => any>(),
 }));
 
 vi.mock("@/features/email-capture/pipeline.public", () => ({
-  processBackgroundEmails: vi.fn(),
-  processEmails: vi.fn(),
-  processRetries: vi.fn(),
+  processBackgroundEmails: vi.fn<(...args: any[]) => any>(),
+  processEmails: vi.fn<(...args: any[]) => any>(),
+  processRetries: vi.fn<(...args: any[]) => any>(),
 }));
 
 vi.mock("@/features/email-capture/queries/bank-senders", () => ({
@@ -41,7 +41,7 @@ vi.mock("@/features/email-capture/queries/bank-senders", () => ({
 }));
 
 vi.mock("@/features/email-capture/services/email-adapter", () => ({
-  getAdapter: vi.fn(() => ({
+  getAdapter: vi.fn<(...args: any[]) => any>(() => ({
     fetchEmails: mockFetchEmails,
   })),
 }));
@@ -266,7 +266,7 @@ describe("ingestFetchedEmails", () => {
 
   it("emits privacy-safe retry timing telemetry", async () => {
     vi.mocked(createCaptureIngestionPort).mockReturnValue({
-      ingest: vi.fn(async (command: { kind: string }) =>
+      ingest: vi.fn<(...args: any[]) => any>(async (command: { kind: string }) =>
         command.kind === "email_retry"
           ? { retried: 2, succeeded: 1, permanentlyFailed: 1 }
           : {
@@ -303,7 +303,11 @@ describe("ingestFetchedEmails", () => {
 
   it("does not emit retry telemetry for no-op retry checks", async () => {
     vi.mocked(createCaptureIngestionPort).mockReturnValue({
-      ingest: vi.fn(async () => ({ retried: 0, succeeded: 0, permanentlyFailed: 0 })),
+      ingest: vi.fn<(...args: any[]) => any>(async () => ({
+        retried: 0,
+        succeeded: 0,
+        permanentlyFailed: 0,
+      })),
     } as never);
 
     await ingestFetchedEmails({

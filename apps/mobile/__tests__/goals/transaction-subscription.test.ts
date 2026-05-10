@@ -7,8 +7,8 @@ describe("goal transaction subscription", () => {
     let hasLoadedGoals = false;
     let currentRevision = 0;
 
-    const unsubscribe = vi.fn();
-    const reload = vi.fn();
+    const unsubscribe = vi.fn<(...args: any[]) => any>();
+    const reload = vi.fn<(...args: any[]) => any>();
 
     const cleanup = subscribeGoalsToTransactions({
       subscribeTransactions: (listener) => {

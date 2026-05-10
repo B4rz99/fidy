@@ -15,27 +15,27 @@ import type {
 type SharedLibModule = typeof SharedLibModuleImport;
 
 const mocks = vi.hoisted(() => ({
-  insertTransaction: vi.fn(),
-  upsertTransaction: vi.fn(),
-  softDeleteTransaction: vi.fn(),
-  insertBill: vi.fn(),
-  insertBillPayment: vi.fn(),
-  deleteBillPayment: vi.fn(),
-  deleteBill: vi.fn(),
-  updateBill: vi.fn(),
-  insertUserCategory: vi.fn(),
-  insertGoal: vi.fn(),
-  insertContribution: vi.fn(),
-  softDeleteGoal: vi.fn(),
-  softDeleteContribution: vi.fn(),
-  updateGoal: vi.fn(),
-  insertBudget: vi.fn(),
-  updateBudgetAmount: vi.fn(),
-  softDeleteBudget: vi.fn(),
-  copyBudgetsToMonth: vi.fn(() => []),
-  insertNotification: vi.fn(() => ({ changes: 1 })),
-  getAllNotificationIds: vi.fn(() => []),
-  softDeleteAllNotifications: vi.fn(),
+  insertTransaction: vi.fn<(...args: any[]) => any>(),
+  upsertTransaction: vi.fn<(...args: any[]) => any>(),
+  softDeleteTransaction: vi.fn<(...args: any[]) => any>(),
+  insertBill: vi.fn<(...args: any[]) => any>(),
+  insertBillPayment: vi.fn<(...args: any[]) => any>(),
+  deleteBillPayment: vi.fn<(...args: any[]) => any>(),
+  deleteBill: vi.fn<(...args: any[]) => any>(),
+  updateBill: vi.fn<(...args: any[]) => any>(),
+  insertUserCategory: vi.fn<(...args: any[]) => any>(),
+  insertGoal: vi.fn<(...args: any[]) => any>(),
+  insertContribution: vi.fn<(...args: any[]) => any>(),
+  softDeleteGoal: vi.fn<(...args: any[]) => any>(),
+  softDeleteContribution: vi.fn<(...args: any[]) => any>(),
+  updateGoal: vi.fn<(...args: any[]) => any>(),
+  insertBudget: vi.fn<(...args: any[]) => any>(),
+  updateBudgetAmount: vi.fn<(...args: any[]) => any>(),
+  softDeleteBudget: vi.fn<(...args: any[]) => any>(),
+  copyBudgetsToMonth: vi.fn<(...args: any[]) => any>(() => []),
+  insertNotification: vi.fn<(...args: any[]) => any>(() => ({ changes: 1 })),
+  getAllNotificationIds: vi.fn<(...args: any[]) => any>(() => []),
+  softDeleteAllNotifications: vi.fn<(...args: any[]) => any>(),
 }));
 
 vi.mock("@/features/transactions/lib/repository", () => ({
@@ -81,12 +81,12 @@ vi.mock("@/shared/lib", async () => {
   const actual = await vi.importActual<SharedLibModule>("@/shared/lib");
   return {
     ...actual,
-    generateBudgetId: vi.fn(() => "budget-generated"),
+    generateBudgetId: vi.fn<(...args: any[]) => any>(() => "budget-generated"),
   };
 });
 
 const mockDb = {
-  transaction: vi.fn((fn: (tx: AnyDb) => unknown) => fn(mockDb as AnyDb)),
+  transaction: vi.fn<(...args: any[]) => any>((fn: (tx: AnyDb) => unknown) => fn(mockDb as AnyDb)),
 } as unknown as AnyDb;
 
 type TransactionRowOverrides = Partial<{
@@ -228,7 +228,7 @@ describe("app write-through mutations", () => {
 
   it("fails without side effects when the transaction wrapper throws", async () => {
     const { createWriteThroughMutationModule } = await loadModule();
-    const transaction = vi.fn(() => {
+    const transaction = vi.fn<(...args: any[]) => any>(() => {
       throw new Error("db failure");
     });
     const failingDb = { transaction } as unknown as AnyDb;

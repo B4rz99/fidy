@@ -11,19 +11,21 @@ import {
 import { requireIsoDateTime, requireUserId } from "@/shared/types/assertions";
 import type { FinancialAccountId } from "@/shared/types/branded";
 
-const mockGetProcessedExternalIds = vi.fn().mockResolvedValue(new Set<string>());
-const mockInsertProcessedEmail = vi.fn();
-const mockInsertTransaction = vi.fn();
-const mockLookupMerchantRule = vi.fn().mockResolvedValue(null);
-const mockInsertMerchantRule = vi.fn();
-const mockParseEmailApi = vi.fn().mockResolvedValue(null);
-const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);
-const mockGetPendingRetryEmails = vi.fn().mockResolvedValue([]);
-const mockMarkForRetry = vi.fn();
-const mockMarkPermanentlyFailed = vi.fn();
-const mockMarkRetrySuccess = vi.fn();
-const mockUpdateProcessedEmailStatus = vi.fn();
-const mockEnsureDefaultFinancialAccount = vi.fn().mockReturnValue({
+const mockGetProcessedExternalIds = vi
+  .fn<(...args: any[]) => any>()
+  .mockResolvedValue(new Set<string>());
+const mockInsertProcessedEmail = vi.fn<(...args: any[]) => any>();
+const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
+const mockLookupMerchantRule = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
+const mockInsertMerchantRule = vi.fn<(...args: any[]) => any>();
+const mockParseEmailApi = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
+const mockFindDuplicateTransaction = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
+const mockGetPendingRetryEmails = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
+const mockMarkForRetry = vi.fn<(...args: any[]) => any>();
+const mockMarkPermanentlyFailed = vi.fn<(...args: any[]) => any>();
+const mockMarkRetrySuccess = vi.fn<(...args: any[]) => any>();
+const mockUpdateProcessedEmailStatus = vi.fn<(...args: any[]) => any>();
+const mockEnsureDefaultFinancialAccount = vi.fn<(...args: any[]) => any>().mockReturnValue({
   id: "fa-default-user-1" as FinancialAccountId,
   userId: requireUserId("user-1"),
   name: "Cash",
@@ -33,7 +35,7 @@ const mockEnsureDefaultFinancialAccount = vi.fn().mockReturnValue({
   updatedAt: "2026-04-18T10:00:00.000Z",
   deletedAt: null,
 });
-const mockBuildEmailCaptureEvidence = vi.fn().mockReturnValue([
+const mockBuildEmailCaptureEvidence = vi.fn<(...args: any[]) => any>().mockReturnValue([
   {
     sourceFamily: "bancolombia",
     evidenceType: "sender_email",
@@ -47,8 +49,8 @@ const mockBuildEmailCaptureEvidence = vi.fn().mockReturnValue([
     value: "bancolombia.com.co",
   },
 ]);
-const mockSaveCaptureEvidenceRows = vi.fn();
-const mockLinkCaptureEvidenceToTransaction = vi.fn();
+const mockSaveCaptureEvidenceRows = vi.fn<(...args: any[]) => any>();
+const mockLinkCaptureEvidenceToTransaction = vi.fn<(...args: any[]) => any>();
 
 function buildCaptureEvidenceRow(
   row: Record<string, unknown>,
@@ -112,12 +114,12 @@ vi.mock("@/features/capture-evidence", () => ({
 }));
 
 vi.mock("@/shared/lib/sentry", () => ({
-  captureError: vi.fn(),
-  capturePipelineEvent: vi.fn(),
-  captureWarning: vi.fn(),
+  captureError: vi.fn<(...args: any[]) => any>(),
+  capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
+  captureWarning: vi.fn<(...args: any[]) => any>(),
 }));
 
-const mockGenerateId = vi.fn();
+const mockGenerateId = vi.fn<(...args: any[]) => any>();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: unknown[]) => mockGenerateId(...args),
   generateTransactionId: () => mockGenerateId("tx"),
@@ -212,7 +214,7 @@ function createTestEmailPipelineService(overrides: Record<string, unknown> = {})
     linkCaptureEvidenceToTransaction: mockLinkCaptureEvidenceToTransaction,
     insertTransaction: mockInsertTransaction,
     insertMerchantRule: mockInsertMerchantRule,
-    trackTransactionCreated: vi.fn(),
+    trackTransactionCreated: vi.fn<(...args: any[]) => any>(),
     ...overrides,
   });
 }
@@ -339,11 +341,11 @@ describe("email processing pipeline", () => {
   });
 
   it("emits privacy-safe diagnostics for skipped emails and batch outcomes", async () => {
-    const capturePipelineEvent = vi.fn();
+    const capturePipelineEvent = vi.fn<(...args: any[]) => any>();
     const service = createTestEmailPipelineService({
       telemetry: {
-        captureError: vi.fn(),
-        captureWarning: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
+        captureWarning: vi.fn<(...args: any[]) => any>(),
         capturePipelineEvent,
       },
     });
@@ -391,12 +393,12 @@ describe("email processing pipeline", () => {
   });
 
   it("reports parser exceptions without exception messages", async () => {
-    const captureWarning = vi.fn();
+    const captureWarning = vi.fn<(...args: any[]) => any>();
     const service = createTestEmailPipelineService({
       telemetry: {
-        captureError: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
         captureWarning,
-        capturePipelineEvent: vi.fn(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
     mockParseEmailApi.mockRejectedValueOnce(new Error("Compra en Exito por $50.000"));
@@ -412,11 +414,11 @@ describe("email processing pipeline", () => {
   });
 
   it("reports first-saved timing without transaction content", async () => {
-    const capturePipelineEvent = vi.fn();
+    const capturePipelineEvent = vi.fn<(...args: any[]) => any>();
     const service = createTestEmailPipelineService({
       telemetry: {
-        captureError: vi.fn(),
-        captureWarning: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
+        captureWarning: vi.fn<(...args: any[]) => any>(),
         capturePipelineEvent,
       },
     });
@@ -438,11 +440,11 @@ describe("email processing pipeline", () => {
   });
 
   it("reports first-saved timing when the persisted transaction needs review", async () => {
-    const capturePipelineEvent = vi.fn();
+    const capturePipelineEvent = vi.fn<(...args: any[]) => any>();
     const service = createTestEmailPipelineService({
       telemetry: {
-        captureError: vi.fn(),
-        captureWarning: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
+        captureWarning: vi.fn<(...args: any[]) => any>(),
         capturePipelineEvent,
       },
     });
@@ -463,7 +465,7 @@ describe("email processing pipeline", () => {
 
   it("saves transaction and caches merchant rule when LLM returns high confidence", async () => {
     const emails = [makeRawEmail()];
-    const trackTransactionCreated = vi.fn();
+    const trackTransactionCreated = vi.fn<(...args: any[]) => any>();
     const service = createTestEmailPipelineService({ trackTransactionCreated });
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
 
@@ -514,7 +516,9 @@ describe("email processing pipeline", () => {
 
   it("persists a new transaction and its processed email in one database transaction", async () => {
     const dbWithTransaction = {
-      transaction: vi.fn((operation: (tx: unknown) => unknown) => operation(mockDb)),
+      transaction: vi.fn<(...args: any[]) => any>((operation: (tx: unknown) => unknown) =>
+        operation(mockDb)
+      ),
     } as any;
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
 
@@ -561,7 +565,7 @@ describe("email processing pipeline", () => {
   });
 
   it("does not track low-confidence persisted email transactions", async () => {
-    const trackTransactionCreated = vi.fn(() => {
+    const trackTransactionCreated = vi.fn<(...args: any[]) => any>(() => {
       throw new Error("should not track needs_review");
     });
     const service = createTestEmailPipelineService({ trackTransactionCreated });
@@ -575,7 +579,9 @@ describe("email processing pipeline", () => {
 
   it("does not report saved when a bundled async write rejects", async () => {
     const dbWithTransaction = {
-      transaction: vi.fn((operation: (tx: unknown) => unknown) => operation(mockDb)),
+      transaction: vi.fn<(...args: any[]) => any>((operation: (tx: unknown) => unknown) =>
+        operation(mockDb)
+      ),
     } as any;
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
     mockInsertProcessedEmail.mockRejectedValueOnce(new Error("processed email insert failed"));
@@ -1264,7 +1270,7 @@ describe("processRetries", () => {
 
   it("creates transaction on successful retry", async () => {
     const row = makePendingRetryRow();
-    const trackTransactionCreated = vi.fn();
+    const trackTransactionCreated = vi.fn<(...args: any[]) => any>();
     const service = createTestEmailPipelineService({ trackTransactionCreated });
     mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
@@ -1332,7 +1338,7 @@ describe("processRetries", () => {
 
   it("marks as needs_review when confidence < 0.7 on retry", async () => {
     const row = makePendingRetryRow();
-    const trackTransactionCreated = vi.fn();
+    const trackTransactionCreated = vi.fn<(...args: any[]) => any>();
     const service = createTestEmailPipelineService({ trackTransactionCreated });
     mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({

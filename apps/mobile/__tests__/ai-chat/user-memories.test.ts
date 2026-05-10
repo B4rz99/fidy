@@ -8,15 +8,15 @@ import {
 } from "@/features/ai-chat/data/create-user-memory-remote-service";
 import type { UserId, UserMemoryId } from "@/shared/types/branded";
 
-const mockSelect = vi.fn();
-const mockEqSelect = vi.fn();
-const mockIs = vi.fn();
-const mockOrder = vi.fn();
-const mockUpdate = vi.fn();
-const mockEqUpdate = vi.fn();
-const mockInvoke = vi.fn();
+const mockSelect = vi.fn<(...args: any[]) => any>();
+const mockEqSelect = vi.fn<(...args: any[]) => any>();
+const mockIs = vi.fn<(...args: any[]) => any>();
+const mockOrder = vi.fn<(...args: any[]) => any>();
+const mockUpdate = vi.fn<(...args: any[]) => any>();
+const mockEqUpdate = vi.fn<(...args: any[]) => any>();
+const mockInvoke = vi.fn<(...args: any[]) => any>();
 const AUTHORIZATION_HEADER = "Authorization";
-const mockFrom = vi.fn((table: string) => {
+const mockFrom = vi.fn<(...args: any[]) => any>((table: string) => {
   if (table === "user_memories") {
     return {
       select: mockSelect.mockReturnValue({
