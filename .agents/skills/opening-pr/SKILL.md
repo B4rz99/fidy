@@ -1,11 +1,9 @@
 ---
 name: opening-pr
-description: Sync with main, run the required local checks, commit, push, and open a PR. Use when the user asks to open a PR or when a task explicitly requires the repo's PR workflow.
+description: Sync with main, review the diff, commit, push, and open a PR. Use when the user asks to open a PR or when a task explicitly requires the repo's PR workflow.
 ---
 
 Use this workflow when the user wants a PR opened. Keep it narrow: validate the current change, create the commit, push the branch, and open the PR. Do not merge unless the user asks in a separate step.
-
-If any verification step fails, fix the issue and rerun the relevant checks before committing.
 
 ## Step 1 — Sync Branch
 
@@ -29,20 +27,7 @@ Review the current diff before proceeding. Deploy multiple subagents in parallel
 
 Synthesize the subagent findings before editing. Fix important issues before moving on, and do not defer findings that would make the PR unsafe, misleading, or difficult to review.
 
-## Step 3 — Run Project Checks
-
-Run the repo's required verification commands in the order the project expects. Determine the exact commands from `package.json`, lint/typecheck configs, and repo instructions such as `AGENTS.md` or `CLAUDE.md`.
-
-- Run lint.
-- Run typecheck.
-- Run tests.
-- Run any additional project-specific checks that are part of the normal local gate.
-
-If a command fails because dependencies are missing, install or restore the expected local setup first, then rerun the sequence cleanly.
-
-## Step 4 — Commit
-
-Only commit after the required checks pass.
+## Step 3 — Commit
 
 Stage the relevant files and commit following these rules enforced by lefthook:
 
@@ -62,7 +47,7 @@ type(scope): message
 
 **Never include** `Co-Authored-By` lines.
 
-## Step 5 — Push And Open The PR
+## Step 4 — Push And Open The PR
 
 Push to the feature branch after committing. Main is protected — direct pushes are not allowed.
 

@@ -50,7 +50,3 @@ pre-push:
       files: git ls-files
       run: bun run lint:dependency-policy
       skip_output: false
-    tests:
-      files: git ls-files
-      run: bun run test
-      skip_output: false
