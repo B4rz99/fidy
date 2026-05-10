@@ -56,9 +56,15 @@ function useTransferFormRouteContext() {
 
 function useTransferFormDerivedState(
   route: ReturnType<typeof useTransferFormRouteContext>,
+  props: TransferFormScreenProps,
   state: ReturnType<typeof useTransferFormState>
 ) {
   const isReclassification = state.sourceTransaction != null;
+  const defaultAccount =
+    state.accounts.find((account) => account.isDefault) ?? state.accounts[0] ?? null;
+  const defaultFromSide = defaultAccount
+    ? ({ kind: "account", accountId: defaultAccount.id } as const)
+    : null;
   const presentationInput = {
     date: state.date,
     digits: state.digits,
@@ -70,14 +76,17 @@ function useTransferFormDerivedState(
   return {
     actions: useTransferFormActions({
       date: state.date,
+      defaultFromSide,
       description: state.description,
       db: route.db,
       digits: state.digits,
       fromSide: state.fromSide,
       isIos: route.isIos,
-      onSuccessfulSave: route.onSuccessfulSave,
+      onSuccessfulSave: props.onSuccessfulSave ?? route.onSuccessfulSave,
       processedEmailId: route.processedEmailId,
       setDate: state.setDate,
+      setDescription: state.setDescription,
+      setDigits: state.setDigits,
       setFromSide: state.setFromSide,
       setLastEditedSide: state.setLastEditedSide,
       setPickerTarget: state.setPickerTarget,
@@ -95,7 +104,7 @@ function useTransferFormDerivedState(
 export function useTransferForm(props: TransferFormScreenProps) {
   const state = useTransferFormState();
   const route = useTransferFormRouteContext();
-  const derived = useTransferFormDerivedState(route, state);
+  const derived = useTransferFormDerivedState(route, props, state);
 
   useHydrateTransferForm({
     db: route.db,

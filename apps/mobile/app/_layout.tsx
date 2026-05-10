@@ -28,7 +28,7 @@ import {
 } from "@/features/auth/hooks.public";
 import { isLocalQaAvailable, useQaDevtoolsRuntime } from "@/features/qa/hooks.public";
 import { QaStatusBanner } from "@/features/qa/ui.public";
-import { ErrorFallback } from "@/shared/components";
+import { AppToastHost, ErrorFallback } from "@/shared/components";
 import { Platform, useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 import { type AnyDb, getDb } from "@/shared/db";
@@ -451,6 +451,7 @@ function RootLayout() {
           )}
         </QueryProvider>
       </SentryErrorBoundary>
+      <AppToastHost />
       <QaStatusBanner />
       <StatusBar style="auto" />
     </GestureHandlerRootView>

@@ -3,13 +3,15 @@ import { useCallback } from "react";
 import type { StoredTransaction } from "@/features/transactions/query.public";
 import type { TransferSide } from "@/features/transfers/lib/build-transfer";
 import { useAsyncGuard, useTranslation } from "@/shared/hooks";
-import { showErrorToast } from "@/shared/lib";
+import { clampDateToToday, showErrorToast } from "@/shared/lib";
+import { resetSavedTransferDraft } from "./resetTransferDraft";
 import { submitTransferForm } from "./saveTransferForm";
 import { getTransferErrorMessageKey } from "./TransferForm.helpers";
 import type { PickerTarget } from "./TransferForm.types";
 
 async function saveTransferFormAction(input: {
   readonly date: Date;
+  readonly defaultFromSide: TransferSide | null;
   readonly description: string;
   readonly db: Parameters<typeof submitTransferForm>[0]["db"];
   readonly digits: string;
@@ -17,11 +19,12 @@ async function saveTransferFormAction(input: {
   readonly onError: (error: Parameters<typeof getTransferErrorMessageKey>[0]) => void;
   readonly onSuccessfulSave: (destination: "needs-review" | "tabs") => Promise<void> | void;
   readonly processedEmailId: Parameters<typeof submitTransferForm>[0]["processedEmailId"];
+  readonly resetDraft: (() => void) | null;
   readonly sourceTransaction: StoredTransaction | null;
   readonly toSide: TransferSide | null;
   readonly userId: Parameters<typeof submitTransferForm>[0]["userId"];
 }) {
-  const result = await submitTransferForm(input);
+  const result = await submitTransferForm({ ...input, date: clampDateToToday(input.date) });
 
   if (!result.success) {
     input.onError(result.error);
@@ -30,10 +33,12 @@ async function saveTransferFormAction(input: {
 
   void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   await input.onSuccessfulSave(result.destination);
+  input.resetDraft?.();
 }
 
 export function useTransferFormActions(input: {
   readonly date: Date;
+  readonly defaultFromSide: TransferSide | null;
   readonly description: string;
   readonly db: Parameters<typeof submitTransferForm>[0]["db"];
   readonly digits: string;
@@ -42,6 +47,8 @@ export function useTransferFormActions(input: {
   readonly onSuccessfulSave: (destination: "needs-review" | "tabs") => Promise<void> | void;
   readonly processedEmailId: Parameters<typeof submitTransferForm>[0]["processedEmailId"];
   readonly setDate: (date: Date) => void;
+  readonly setDescription: (description: string) => void;
+  readonly setDigits: (digits: string) => void;
   readonly setFromSide: (
     side: TransferSide | null | ((current: TransferSide | null) => TransferSide | null)
   ) => void;
@@ -71,7 +78,7 @@ export function useTransferFormActions(input: {
     handleDateChange: useCallback(
       (_event: unknown, nextDate?: Date) => {
         if (!input.isIos) input.setShowDatePicker(false);
-        if (nextDate) input.setDate(nextDate);
+        if (nextDate) input.setDate(clampDateToToday(nextDate));
       },
       [input]
     ),
@@ -80,6 +87,7 @@ export function useTransferFormActions(input: {
       void guardedSave(() =>
         saveTransferFormAction({
           date: input.date,
+          defaultFromSide: input.defaultFromSide,
           description: input.description,
           db: input.db,
           digits: input.digits,
@@ -87,6 +95,10 @@ export function useTransferFormActions(input: {
           onError: (error) => showErrorToast(t(getTransferErrorMessageKey(error))),
           onSuccessfulSave: input.onSuccessfulSave,
           processedEmailId: input.processedEmailId,
+          resetDraft:
+            input.sourceTransaction == null
+              ? () => resetSavedTransferDraft(input, input.defaultFromSide)
+              : null,
           sourceTransaction: input.sourceTransaction,
           toSide: input.toSide,
           userId: input.userId,

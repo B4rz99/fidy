@@ -94,6 +94,7 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
                 value={props.form.date}
                 mode="date"
                 display="compact"
+                maximumDate={new Date()}
                 onChange={props.form.handleDateChange}
               />
             ) : (

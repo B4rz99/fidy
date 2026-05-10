@@ -84,9 +84,9 @@ export function SettingsScreen() {
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 16,
+          paddingBottom: TAB_BAR_CLEARANCE,
           gap: 24,
         }}
-        contentInset={{ bottom: TAB_BAR_CLEARANCE }}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
@@ -221,7 +221,6 @@ export function SettingsScreen() {
             isLast
           />
         </SettingsSection>
-        {Platform.OS === "android" ? <View style={{ height: TAB_BAR_CLEARANCE }} /> : null}
       </ScrollView>
     </ScreenLayout>
   );
