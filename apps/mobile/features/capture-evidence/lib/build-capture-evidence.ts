@@ -1,7 +1,9 @@
-import type { ApplePayIntentData, NotificationData } from "@/features/capture-sources/schema";
-import { KNOWN_BANK_PACKAGES } from "@/features/capture-sources/schema";
-import { extractDomain } from "@/features/email-capture/lib/bank-senders";
-import { htmlToPlainText } from "@/shared/lib/html-to-text";
+import type {
+  ApplePayIntentData,
+  NotificationData,
+} from "@/features/capture-sources/schema.public";
+import { KNOWN_BANK_PACKAGES } from "@/features/capture-sources/schema.public";
+import { extractEmailDomain, htmlToPlainText } from "@/shared/lib.public";
 import type { CaptureEvidenceSeed } from "../schema";
 
 export { summarizeEmailEvidenceInputDiagnostics } from "./email-diagnostics";
@@ -179,7 +181,7 @@ export function buildEmailCaptureEvidence(
   input: EmailCaptureInput
 ): readonly CaptureEvidenceSeed[] {
   const senderEmail = normalizeWhitespace(input.from);
-  const senderDomain = extractDomain(senderEmail);
+  const senderDomain = extractEmailDomain(senderEmail);
   const family = familyFromDomain(senderDomain);
   const body = input.body ?? "";
 

@@ -1,6 +1,6 @@
-import type { ProcessedEmailRow } from "@/features/email-capture/lib/repository";
 import { getBuiltInCategoryId, isValidCategoryId } from "@/shared/categories";
 import { assertCopAmount, assertIsoDate, requireIsoDateTime } from "@/shared/types/assertions";
+import type { ProcessedEmailRow } from "../../lib/repository";
 import type {
   AppendEmailParseImprovementRequestInput,
   DuplicateProcessedEmailRowInput,

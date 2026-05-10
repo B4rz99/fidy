@@ -9,7 +9,7 @@ import {
   initializeEmailCaptureSession,
   loadEmailAccounts,
   useEmailCaptureStore,
-} from "@/features/email-capture";
+} from "@/features/email-capture/public";
 import { tryEnsureDefaultFinancialAccount } from "@/features/financial-accounts";
 import {
   BudgetSetupStep,
