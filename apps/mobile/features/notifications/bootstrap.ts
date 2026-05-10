@@ -55,13 +55,9 @@ export const useNotificationBootstrap = ({
 
     configureNotificationHandler();
     registerCurrentPushToken(userId);
-    const tokenSub = Notifications.addPushTokenListener(() => {
-      registerCurrentPushToken(userId);
-    });
     const responseSub = subscribeNotificationNavigation({ navigateToRoute });
 
     return () => {
-      tokenSub.remove();
       responseSub.remove();
     };
   }, [enableRemoteEffects, navigateToRoute, userId]);

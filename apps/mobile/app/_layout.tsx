@@ -9,6 +9,7 @@ import {
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useFonts } from "expo-font";
 import { getLocales } from "expo-localization";
+import { NavigationBar } from "expo-navigation-bar";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -309,6 +310,7 @@ function RootLayout() {
       <AppToastHost />
       <QaStatusBanner />
       <StatusBar style="auto" />
+      <NavigationBar style="auto" hidden={false} />
     </GestureHandlerRootView>
   );
 }

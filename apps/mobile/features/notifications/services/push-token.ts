@@ -7,6 +7,14 @@ import type { UserId } from "@/shared/types/branded";
 
 const easConfig = Constants.expoConfig?.extra?.eas as { projectId?: string } | undefined;
 export const PROJECT_ID = easConfig?.projectId ?? "";
+const TRANSIENT_PUSH_TOKEN_COOLDOWN_MS = 60_000;
+
+const pushTokenRegistrations = new Map<UserId, Promise<string | null>>();
+const transientPushTokenFailureUntilByUserId = new Map<UserId, number>();
+
+const isTransientPushTokenFetchError = (error: unknown): boolean =>
+  error instanceof Error &&
+  /fetch failed: (Fetch request has been canceled|The operation was aborted)/i.test(error.message);
 
 async function upsertPushToken(userId: UserId, token: string): Promise<string | null> {
   const supabase = getSupabase();
@@ -38,13 +46,34 @@ async function upsertPushToken(userId: UserId, token: string): Promise<string | 
  * Called after permission grant and on app launch (idempotent upsert).
  */
 export async function registerPushToken(userId: UserId): Promise<string | null> {
+  if (Date.now() < (transientPushTokenFailureUntilByUserId.get(userId) ?? 0)) return null;
+
+  const existingRegistration = pushTokenRegistrations.get(userId);
+  if (existingRegistration !== undefined) return existingRegistration;
+
+  const registration = registerPushTokenOnce(userId).finally(() => {
+    pushTokenRegistrations.delete(userId);
+  });
+  pushTokenRegistrations.set(userId, registration);
+
+  return registration;
+}
+
+async function registerPushTokenOnce(userId: UserId): Promise<string | null> {
   try {
-    const { data: token } = await Notifications.getExpoPushTokenAsync({
-      projectId: PROJECT_ID,
-    });
+    const permission = await Notifications.getPermissionsAsync();
+    if (permission.status !== "granted") return null;
+
+    const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
 
     return await upsertPushToken(userId, token);
   } catch (err) {
+    if (isTransientPushTokenFetchError(err)) {
+      transientPushTokenFailureUntilByUserId.set(
+        userId,
+        Date.now() + TRANSIENT_PUSH_TOKEN_COOLDOWN_MS
+      );
+    }
     captureWarning("push_token_register_failed", {
       errorType: err instanceof Error ? err.message : "unknown",
     });
