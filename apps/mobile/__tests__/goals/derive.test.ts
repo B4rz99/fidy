@@ -254,12 +254,10 @@ describe("deriveDebtProjection", () => {
       100_000
     );
     expect(result.status).toBe("ok");
-    if (result.status === "ok") {
-      expect(result.monthsToGo).toBeGreaterThan(0);
-      expect(result.projectedDate).toBeInstanceOf(Date);
-      // Verify no NaN/Infinity
-      expect(Number.isFinite(result.monthsToGo)).toBe(true);
-    }
+    expect(result).toMatchObject({ projectedDate: expect.any(Date) });
+    const monthsToGo = "monthsToGo" in result ? result.monthsToGo : Number.NaN;
+    expect(monthsToGo).toBeGreaterThan(0);
+    expect(Number.isFinite(monthsToGo)).toBe(true);
   });
 
   it("returns 'zero_rate' for zero interest rate", () => {
@@ -270,10 +268,7 @@ describe("deriveDebtProjection", () => {
       200_000
     );
     expect(result.status).toBe("zero_rate");
-    if (result.status === "zero_rate") {
-      expect(result.monthsToGo).toBe(5);
-      expect(result.projectedDate).toBeInstanceOf(Date);
-    }
+    expect(result).toMatchObject({ monthsToGo: 5, projectedDate: expect.any(Date) });
   });
 
   it("returns 'zero_rate' for null interest rate", () => {
@@ -283,9 +278,7 @@ describe("deriveDebtProjection", () => {
       200_000
     );
     expect(result.status).toBe("zero_rate");
-    if (result.status === "zero_rate") {
-      expect(result.monthsToGo).toBe(5);
-    }
+    expect(result).toMatchObject({ monthsToGo: 5 });
   });
 
   it("returns 'payment_too_low' when payment cannot cover interest", () => {
@@ -316,9 +309,7 @@ describe("deriveDebtProjection", () => {
       100_000
     );
     expect(result.status).toBe("complete");
-    if (result.status === "complete") {
-      expect(result.monthsToGo).toBe(0);
-    }
+    expect(result).toMatchObject({ monthsToGo: 0 });
   });
 
   it("returns 'complete' when over-paid", () => {
@@ -342,10 +333,9 @@ describe("deriveDebtProjection", () => {
         current,
         payment
       );
-      if ("monthsToGo" in result) {
-        expect(Number.isNaN(result.monthsToGo)).toBe(false);
-        expect(Number.isFinite(result.monthsToGo)).toBe(true);
-      }
+      const monthsToGo = "monthsToGo" in result ? result.monthsToGo : 0;
+      expect(Number.isNaN(monthsToGo)).toBe(false);
+      expect(Number.isFinite(monthsToGo)).toBe(true);
     });
   });
 
@@ -665,13 +655,13 @@ describe("deriveGoalPaceGuidance", () => {
       createdAt: "2025-03-19T00:00:00.000Z",
     };
     const result = deriveGoalPaceGuidance(goal, 0, true, FIXED_NOW);
-    expect(result).not.toBeNull();
-    expect(result?.type).toBe("pace_behind");
-    if (result?.type === "pace_behind") {
-      expect(result.reason).toBe("below_pace");
-      expect(Number.isInteger(result.amountBehind)).toBe(true);
-      expect(result.amountBehind).toBe(Math.round(500_000.5));
-    }
+    expect(result).toEqual({
+      type: "pace_behind",
+      amountBehind: Math.round(500_000.5),
+      reason: "below_pace",
+    });
+    const amountBehind = result?.type === "pace_behind" ? result.amountBehind : Number.NaN;
+    expect(Number.isInteger(amountBehind)).toBe(true);
   });
 
   it("returns pace_ahead with amountAhead 0 when today is before createdAt (elapsedDays clamped to 0)", () => {
