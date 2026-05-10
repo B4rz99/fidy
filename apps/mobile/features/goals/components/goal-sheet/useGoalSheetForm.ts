@@ -60,6 +60,7 @@ function useGoalSheetDates(initialTargetDate: Date | null) {
     }, []),
     handleDateChange: useCallback((_event: unknown, date?: Date) => {
       if (Platform.OS === "android") setShowDatePicker(false);
+      if (isDatePickerDismissed(_event)) return;
       if (date) setTargetDate(date);
     }, []),
     handleDateFieldPress: useCallback(() => {
@@ -70,6 +71,12 @@ function useGoalSheetDates(initialTargetDate: Date | null) {
     showDatePicker,
     targetDate,
   };
+}
+
+function isDatePickerDismissed(event: unknown) {
+  return (
+    typeof event === "object" && event !== null && "type" in event && event.type === "dismissed"
+  );
 }
 
 function useGoalSheetNumpad(

@@ -1,4 +1,4 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker from "@expo/ui/community/datetime-picker";
 import { Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { useCurrentDate, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getMinimumGoalDate } from "./GoalDateField.helpers";
@@ -63,7 +63,8 @@ export function GoalDateField({
           mode="date"
           display={Platform.OS === "ios" ? "inline" : "default"}
           minimumDate={minimumDate}
-          onChange={onChange}
+          onValueChange={onChange}
+          onDismiss={() => onChange({ type: "dismissed" })}
           accentColor={accentGreen}
         />
       ) : null}

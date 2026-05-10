@@ -1,4 +1,4 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker from "@expo/ui/community/datetime-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
 import {
@@ -140,9 +140,7 @@ export function AddBillFormContent({
               value={startDate}
               mode="date"
               display="compact"
-              onChange={(_event, date) => {
-                if (date) onStartDateChange(date);
-              }}
+              onValueChange={(_event, date) => onStartDateChange(date)}
               style={styles.datePicker}
             />
           </View>

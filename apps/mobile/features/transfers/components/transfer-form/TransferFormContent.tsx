@@ -1,4 +1,4 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker from "@expo/ui/community/datetime-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TriangleAlert } from "@/shared/components/icons";
 import {
@@ -96,7 +96,8 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
                 mode="date"
                 display="compact"
                 maximumDate={maximumDate}
-                onChange={props.form.handleDateChange}
+                onValueChange={props.form.handleDateChange}
+                onDismiss={() => props.form.handleDateChange({ type: "dismissed" })}
               />
             ) : (
               <Pressable
