@@ -5,28 +5,34 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb, resetDb, resetDbForUser, tryGetDb } from "@/shared/db/client";
 
 vi.mock("expo-sqlite", () => ({
-  openDatabaseSync: vi.fn(() => ({ execSync: vi.fn(), closeSync: vi.fn() })),
-  deleteDatabaseAsync: vi.fn(() => Promise.resolve()),
+  openDatabaseSync: vi.fn<() => { execSync: () => void; closeSync: () => void }>(() => ({
+    execSync: vi.fn<() => void>(),
+    closeSync: vi.fn<() => void>(),
+  })),
+  deleteDatabaseAsync: vi.fn<() => Promise<void>>(() => Promise.resolve()),
 }));
 
 vi.mock("drizzle-orm/expo-sqlite", () => ({
-  drizzle: vi.fn((sqliteDb: unknown) => ({ _: "drizzle-instance", sqliteDb })),
+  drizzle: vi.fn<(sqliteDb: unknown) => { _: string; sqliteDb: unknown }>((sqliteDb) => ({
+    _: "drizzle-instance",
+    sqliteDb,
+  })),
 }));
 
 vi.mock("expo-secure-store", () => ({
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  deleteItemAsync: vi.fn(),
+  getItem: vi.fn<() => string | null>(),
+  setItem: vi.fn<() => void>(),
+  deleteItemAsync: vi.fn<() => Promise<void>>(),
 }));
 
 vi.mock("expo-crypto", () => ({
-  getRandomBytes: vi.fn(() => new Uint8Array(32)),
+  getRandomBytes: vi.fn<() => Uint8Array>(() => new Uint8Array(32)),
 }));
 
 vi.mock("@/shared/lib/sentry", () => ({
-  captureError: vi.fn(),
-  capturePipelineEvent: vi.fn(),
-  captureWarning: vi.fn(),
+  captureError: vi.fn<() => void>(),
+  capturePipelineEvent: vi.fn<() => void>(),
+  captureWarning: vi.fn<() => void>(),
 }));
 
 describe("getDb", () => {
@@ -71,10 +77,10 @@ describe("getDb", () => {
   });
 
   it("uses raw hex PRAGMA key syntax", () => {
-    const mockExecSync = vi.fn();
+    const mockExecSync = vi.fn<() => void>();
     vi.mocked(openDatabaseSync).mockReturnValueOnce({
       execSync: mockExecSync,
-      closeSync: vi.fn(),
+      closeSync: vi.fn<() => void>(),
     } as unknown as ReturnType<typeof openDatabaseSync>);
 
     getDb("user-123");
@@ -99,9 +105,9 @@ describe("getDb", () => {
   });
 
   it("resets and closes the connection on resetDb", () => {
-    const mockCloseSync = vi.fn();
+    const mockCloseSync = vi.fn<() => void>();
     vi.mocked(openDatabaseSync).mockReturnValueOnce({
-      execSync: vi.fn(),
+      execSync: vi.fn<() => void>(),
       closeSync: mockCloseSync,
     } as unknown as ReturnType<typeof openDatabaseSync>);
 
@@ -130,9 +136,9 @@ describe("getDb", () => {
   });
 
   it("auto-resets when called with a different userId", () => {
-    const mockCloseSync = vi.fn();
+    const mockCloseSync = vi.fn<() => void>();
     vi.mocked(openDatabaseSync).mockReturnValueOnce({
-      execSync: vi.fn(),
+      execSync: vi.fn<() => void>(),
       closeSync: mockCloseSync,
     } as unknown as ReturnType<typeof openDatabaseSync>);
 
