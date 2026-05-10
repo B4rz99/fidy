@@ -34,6 +34,10 @@ pre-push:
       files: git ls-files
       run: bun run lint:mobile
       skip_output: false
+    mobile-typecheck:
+      files: git ls-files
+      run: bun run typecheck
+      skip_output: false
     complexity:
       files: git ls-files
       run: bun run lint:complexity
