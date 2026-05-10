@@ -37,7 +37,7 @@ const createStateDeps = () => {
 
 describe("streaming chat runtime", () => {
   it("trims valid input and rejects empty or missing request fields", () => {
-    const executeAction = vi.fn();
+    const executeAction = vi.fn<(...args: any[]) => any>();
 
     expect(
       toReadySendMessageInput({
@@ -81,7 +81,7 @@ describe("streaming chat runtime", () => {
         db: mockDb,
         userId: USER_ID,
         text: "hello",
-        executeAction: vi.fn(),
+        executeAction: vi.fn<(...args: any[]) => any>(),
       },
       runId: 1,
     });

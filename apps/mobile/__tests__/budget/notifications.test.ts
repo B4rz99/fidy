@@ -3,30 +3,38 @@ import type { BudgetAlert } from "@/features/budget/lib/derive";
 import type { BudgetId, CategoryId, CopAmount } from "@/shared/types/branded";
 
 // --- expo-secure-store mock ---
-const mockGetItemAsync = vi.fn((_key?: string) => Promise.resolve(null));
+const mockGetItemAsync = vi.fn<(...args: any[]) => any>((_key?: string) => Promise.resolve(null));
 
 vi.mock("expo-secure-store", () => ({
   getItemAsync: (key: string) => mockGetItemAsync(key),
-  setItemAsync: vi.fn(() => Promise.resolve()),
+  setItemAsync: vi.fn<(...args: any[]) => any>(() => Promise.resolve()),
 }));
 
 // --- expo-notifications mock ---
-const mockGetPermissionsAsync = vi.fn(() =>
+const mockGetPermissionsAsync = vi.fn<(...args: any[]) => any>(() =>
   Promise.resolve({ status: "granted", granted: true, canAskAgain: true })
 );
-const mockScheduleNotificationAsync = vi.fn((_input?: unknown) => Promise.resolve("notif-id-123"));
+const mockScheduleNotificationAsync = vi.fn<(...args: any[]) => any>((_input?: unknown) =>
+  Promise.resolve("notif-id-123")
+);
 
 vi.mock("expo-notifications", () => ({
   getPermissionsAsync: () => mockGetPermissionsAsync(),
-  requestPermissionsAsync: vi.fn(() =>
+  requestPermissionsAsync: vi.fn<(...args: any[]) => any>(() =>
     Promise.resolve({ status: "granted", granted: true, canAskAgain: true })
   ),
   scheduleNotificationAsync: (input: unknown) => mockScheduleNotificationAsync(input),
-  cancelScheduledNotificationAsync: vi.fn(),
-  setNotificationHandler: vi.fn(),
-  getExpoPushTokenAsync: vi.fn(() => Promise.resolve({ data: "ExponentPushToken[mock]" })),
-  addPushTokenListener: vi.fn(() => ({ remove: vi.fn() })),
-  addNotificationResponseReceivedListener: vi.fn(() => ({ remove: vi.fn() })),
+  cancelScheduledNotificationAsync: vi.fn<(...args: any[]) => any>(),
+  setNotificationHandler: vi.fn<(...args: any[]) => any>(),
+  getExpoPushTokenAsync: vi.fn<(...args: any[]) => any>(() =>
+    Promise.resolve({ data: "ExponentPushToken[mock]" })
+  ),
+  addPushTokenListener: vi.fn<(...args: any[]) => any>(() => ({
+    remove: vi.fn<(...args: any[]) => any>(),
+  })),
+  addNotificationResponseReceivedListener: vi.fn<(...args: any[]) => any>(() => ({
+    remove: vi.fn<(...args: any[]) => any>(),
+  })),
 }));
 
 const MOCK_ALERT: BudgetAlert = {

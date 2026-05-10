@@ -6,11 +6,11 @@ import { createCaptureIngestionPort } from "@/features/capture-sources/services/
 import type { RawEmail } from "@/features/email-capture/schema";
 import type { UserId } from "@/shared/types/branded";
 
-const mockProcessNotification = vi.fn();
-const mockProcessApplePayIntent = vi.fn();
-const mockProcessWidgetTransactions = vi.fn();
-const mockProcessEmails = vi.fn();
-const mockProcessRetries = vi.fn();
+const mockProcessNotification = vi.fn<(...args: any[]) => any>();
+const mockProcessApplePayIntent = vi.fn<(...args: any[]) => any>();
+const mockProcessWidgetTransactions = vi.fn<(...args: any[]) => any>();
+const mockProcessEmails = vi.fn<(...args: any[]) => any>();
+const mockProcessRetries = vi.fn<(...args: any[]) => any>();
 
 const mockDb = {} as any;
 const USER_ID = "user-1" as UserId;
@@ -117,7 +117,7 @@ describe("capture ingestion port", () => {
         provider: "gmail",
       },
     ];
-    const onProgress = vi.fn();
+    const onProgress = vi.fn<(...args: any[]) => any>();
 
     mockProcessEmails.mockImplementationOnce(async (_db, _userId, passedEmails, progress) => {
       progress?.({ total: passedEmails.length, completed: 1, saved: 1, failed: 0, needsReview: 0 });

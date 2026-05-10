@@ -9,7 +9,9 @@ describe("QA network inspector", () => {
   });
 
   it("captures successful fetch requests when the network inspector is enabled", async () => {
-    globalThis.fetch = vi.fn(async () => new Response("ok", { status: 200 })) as typeof fetch;
+    globalThis.fetch = vi.fn<(...args: any[]) => any>(
+      async () => new Response("ok", { status: 200 })
+    ) as typeof fetch;
 
     const { useQaDevtoolsStore } = await import("@/features/qa/devtools-store");
     const { installQaFetchInspector } = await import("@/features/qa/network-inspector");
@@ -39,7 +41,9 @@ describe("QA network inspector", () => {
   });
 
   it("blocks requests when simulateOffline is enabled", async () => {
-    globalThis.fetch = vi.fn(async () => new Response("ok", { status: 200 })) as typeof fetch;
+    globalThis.fetch = vi.fn<(...args: any[]) => any>(
+      async () => new Response("ok", { status: 200 })
+    ) as typeof fetch;
 
     const { useQaDevtoolsStore } = await import("@/features/qa/devtools-store");
     const { installQaFetchInspector } = await import("@/features/qa/network-inspector");

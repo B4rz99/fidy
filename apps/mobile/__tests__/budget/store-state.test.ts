@@ -8,7 +8,7 @@ const INITIAL_MONTH = "2026-03" as Month;
 const ACKNOWLEDGED_ALERT_KEY = "budget-1:80";
 const BUDGET_ID = "budget-1" as BudgetId;
 
-function createStore(acknowledgeAlert = vi.fn()) {
+function createStore(acknowledgeAlert = vi.fn<(...args: any[]) => any>()) {
   return create(createBudgetStoreState(INITIAL_MONTH, { acknowledgeAlert }));
 }
 
@@ -65,7 +65,7 @@ describe("budget store state helper", () => {
   });
 
   it("delegates alert acknowledgement through the manager", () => {
-    const acknowledgeAlert = vi.fn().mockReturnValue({
+    const acknowledgeAlert = vi.fn<(...args: any[]) => any>().mockReturnValue({
       acknowledgedAlerts: new Set([ACKNOWLEDGED_ALERT_KEY]),
       pendingAlerts: [],
     });

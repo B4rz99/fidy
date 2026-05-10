@@ -9,7 +9,7 @@ vi.mock("expo/fetch", () => ({
 
 describe("createAiChatApiService", () => {
   it("streams chunks with auth headers from Supabase session", async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(
+    const fetchImpl = vi.fn<(...args: any[]) => any>().mockResolvedValue(
       new Response('data: {"content":"Hello"}\n\ndata: [DONE]\n\n', {
         status: 200,
         headers: { "Content-Type": "text/event-stream" },
@@ -23,22 +23,22 @@ describe("createAiChatApiService", () => {
         getSupabase: () =>
           ({
             auth: {
-              getSession: vi.fn().mockResolvedValue({
+              getSession: vi.fn<(...args: any[]) => any>().mockResolvedValue({
                 data: { session: { access_token: "token-123" } },
               }),
             },
           }) as never,
       },
       telemetry: {
-        captureError: vi.fn(),
-        captureWarning: vi.fn(),
-        capturePipelineEvent: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
+        captureWarning: vi.fn<(...args: any[]) => any>(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
 
-    const onChunk = vi.fn();
-    const onDone = vi.fn();
-    const onError = vi.fn();
+    const onChunk = vi.fn<(...args: any[]) => any>();
+    const onDone = vi.fn<(...args: any[]) => any>();
+    const onError = vi.fn<(...args: any[]) => any>();
 
     await service.streamChat([{ role: "user", content: "hello" }], {
       onChunk,
@@ -62,7 +62,7 @@ describe("createAiChatApiService", () => {
   });
 
   it("sends an app-built financial context packet with chat messages", async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(
+    const fetchImpl = vi.fn<(...args: any[]) => any>().mockResolvedValue(
       new Response("data: [DONE]\n\n", {
         status: 200,
         headers: { "Content-Type": "text/event-stream" },
@@ -76,25 +76,25 @@ describe("createAiChatApiService", () => {
         getSupabase: () =>
           ({
             auth: {
-              getSession: vi.fn().mockResolvedValue({
+              getSession: vi.fn<(...args: any[]) => any>().mockResolvedValue({
                 data: { session: { access_token: "token-123" } },
               }),
             },
           }) as never,
       },
       telemetry: {
-        captureError: vi.fn(),
-        captureWarning: vi.fn(),
-        capturePipelineEvent: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
+        captureWarning: vi.fn<(...args: any[]) => any>(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
 
     await service.streamChat(
       [{ role: "user", content: "how am I doing?" }],
       {
-        onChunk: vi.fn(),
-        onDone: vi.fn(),
-        onError: vi.fn(),
+        onChunk: vi.fn<(...args: any[]) => any>(),
+        onDone: vi.fn<(...args: any[]) => any>(),
+        onError: vi.fn<(...args: any[]) => any>(),
       },
       {
         financialContextPacket: {
@@ -142,8 +142,8 @@ describe("createAiChatApiService", () => {
   });
 
   it("captures chunk callback failures without crashing the stream", async () => {
-    const captureError = vi.fn().mockResolvedValue(undefined);
-    const fetchImpl = vi.fn().mockResolvedValue(
+    const captureError = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
+    const fetchImpl = vi.fn<(...args: any[]) => any>().mockResolvedValue(
       new Response('data: {"content":"Hello"}\n\ndata: [DONE]\n\n', {
         status: 200,
         headers: { "Content-Type": "text/event-stream" },
@@ -157,7 +157,7 @@ describe("createAiChatApiService", () => {
         getSupabase: () =>
           ({
             auth: {
-              getSession: vi.fn().mockResolvedValue({
+              getSession: vi.fn<(...args: any[]) => any>().mockResolvedValue({
                 data: { session: { access_token: "token-123" } },
               }),
             },
@@ -165,19 +165,19 @@ describe("createAiChatApiService", () => {
       },
       telemetry: {
         captureError,
-        captureWarning: vi.fn(),
-        capturePipelineEvent: vi.fn(),
+        captureWarning: vi.fn<(...args: any[]) => any>(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
 
-    const onDone = vi.fn();
+    const onDone = vi.fn<(...args: any[]) => any>();
 
     await service.streamChat([{ role: "user", content: "hello" }], {
       onChunk: () => {
         throw new Error("callback boom");
       },
       onDone,
-      onError: vi.fn(),
+      onError: vi.fn<(...args: any[]) => any>(),
     });
 
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -186,7 +186,9 @@ describe("createAiChatApiService", () => {
   });
 
   it("reports non-OK responses as stream errors", async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(new Response("nope", { status: 503 }));
+    const fetchImpl = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue(new Response("nope", { status: 503 }));
 
     const service = createAiChatApiService({
       fetchImpl: fetchImpl as never,
@@ -195,24 +197,24 @@ describe("createAiChatApiService", () => {
         getSupabase: () =>
           ({
             auth: {
-              getSession: vi.fn().mockResolvedValue({
+              getSession: vi.fn<(...args: any[]) => any>().mockResolvedValue({
                 data: { session: { access_token: "token-123" } },
               }),
             },
           }) as never,
       },
       telemetry: {
-        captureError: vi.fn(),
-        captureWarning: vi.fn(),
-        capturePipelineEvent: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
+        captureWarning: vi.fn<(...args: any[]) => any>(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
 
-    const onError = vi.fn();
+    const onError = vi.fn<(...args: any[]) => any>();
 
     await service.streamChat([{ role: "user", content: "hello" }], {
-      onChunk: vi.fn(),
-      onDone: vi.fn(),
+      onChunk: vi.fn<(...args: any[]) => any>(),
+      onDone: vi.fn<(...args: any[]) => any>(),
       onError,
     });
 
@@ -220,7 +222,7 @@ describe("createAiChatApiService", () => {
   });
 
   it("reports auth header resolution failures through onError", async () => {
-    const fetchImpl = vi.fn();
+    const fetchImpl = vi.fn<(...args: any[]) => any>();
 
     const service = createAiChatApiService({
       fetchImpl: fetchImpl as never,
@@ -229,23 +231,25 @@ describe("createAiChatApiService", () => {
         getSupabase: () =>
           ({
             auth: {
-              getSession: vi.fn().mockRejectedValue(new Error("session offline")),
+              getSession: vi
+                .fn<(...args: any[]) => any>()
+                .mockRejectedValue(new Error("session offline")),
             },
           }) as never,
       },
       telemetry: {
-        captureError: vi.fn(),
-        captureWarning: vi.fn(),
-        capturePipelineEvent: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
+        captureWarning: vi.fn<(...args: any[]) => any>(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
 
-    const onError = vi.fn();
+    const onError = vi.fn<(...args: any[]) => any>();
 
     await expect(
       service.streamChat([{ role: "user", content: "hello" }], {
-        onChunk: vi.fn(),
-        onDone: vi.fn(),
+        onChunk: vi.fn<(...args: any[]) => any>(),
+        onDone: vi.fn<(...args: any[]) => any>(),
         onError,
       })
     ).resolves.toBeUndefined();

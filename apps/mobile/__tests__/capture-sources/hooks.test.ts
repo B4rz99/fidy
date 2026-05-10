@@ -2,15 +2,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { requireUserId } from "@/shared/types/assertions";
 
-const mockAddLogTransactionListener = vi.fn().mockReturnValue({ remove: vi.fn() });
-const mockAddDetectBankSmsListener = vi.fn().mockReturnValue({ remove: vi.fn() });
-const mockIsAvailable = vi.fn().mockReturnValue(true);
-const mockProcessApplePayIntent = vi.fn().mockResolvedValue({ saved: true });
-const mockProcessNotification = vi.fn().mockResolvedValue({ saved: true });
-const mockInsertDetectedSmsEvent = vi.fn().mockResolvedValue(undefined);
-const mockRefreshDetectedSms = vi.fn();
-const mockAndroidAddListener = vi.fn().mockReturnValue({ remove: vi.fn() });
-const mockAndroidSetAllowedPackages = vi.fn();
+const mockAddLogTransactionListener = vi
+  .fn<(...args: any[]) => any>()
+  .mockReturnValue({ remove: vi.fn<(...args: any[]) => any>() });
+const mockAddDetectBankSmsListener = vi
+  .fn<(...args: any[]) => any>()
+  .mockReturnValue({ remove: vi.fn<(...args: any[]) => any>() });
+const mockIsAvailable = vi.fn<(...args: any[]) => any>().mockReturnValue(true);
+const mockProcessApplePayIntent = vi
+  .fn<(...args: any[]) => any>()
+  .mockResolvedValue({ saved: true });
+const mockProcessNotification = vi.fn<(...args: any[]) => any>().mockResolvedValue({ saved: true });
+const mockInsertDetectedSmsEvent = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
+const mockRefreshDetectedSms = vi.fn<(...args: any[]) => any>();
+const mockAndroidAddListener = vi
+  .fn<(...args: any[]) => any>()
+  .mockReturnValue({ remove: vi.fn<(...args: any[]) => any>() });
+const mockAndroidSetAllowedPackages = vi.fn<(...args: any[]) => any>();
 
 vi.mock("@/modules/expo-app-intents", () => ({
   isAvailable: () => mockIsAvailable(),
@@ -55,7 +63,7 @@ describe("setupApplePayCapture", () => {
 
   it("registers listener and returns cleanup function", async () => {
     const { setupApplePayCapture } = await loadSetup();
-    const mockRemove = vi.fn();
+    const mockRemove = vi.fn<(...args: any[]) => any>();
     mockAddLogTransactionListener.mockReturnValueOnce({ remove: mockRemove });
 
     const cleanup = await setupApplePayCapture(mockDb, USER_ID);
@@ -79,10 +87,10 @@ describe("setupApplePayCapture", () => {
 
   it("calls processApplePayIntent when listener fires", async () => {
     const { setupApplePayCapture } = await loadSetup();
-    let capturedListener: (event: any) => void = vi.fn();
+    let capturedListener: (event: any) => void = vi.fn<(...args: any[]) => any>();
     mockAddLogTransactionListener.mockImplementationOnce((listener: any) => {
       capturedListener = listener;
-      return { remove: vi.fn() };
+      return { remove: vi.fn<(...args: any[]) => any>() };
     });
 
     await setupApplePayCapture(mockDb, USER_ID);
@@ -98,10 +106,10 @@ describe("setupApplePayCapture", () => {
 
   it("ignores malformed Apple Pay intent payloads", async () => {
     const { setupApplePayCapture } = await loadSetup();
-    let capturedListener: (event: any) => void = vi.fn();
+    let capturedListener: (event: any) => void = vi.fn<(...args: any[]) => any>();
     mockAddLogTransactionListener.mockImplementationOnce((listener: any) => {
       capturedListener = listener;
-      return { remove: vi.fn() };
+      return { remove: vi.fn<(...args: any[]) => any>() };
     });
 
     await setupApplePayCapture(mockDb, USER_ID);
@@ -121,7 +129,7 @@ describe("setupSmsDetection", () => {
 
   it("registers listener and returns cleanup function", async () => {
     const { setupSmsDetection } = await loadSetup();
-    const mockRemove = vi.fn();
+    const mockRemove = vi.fn<(...args: any[]) => any>();
     mockAddDetectBankSmsListener.mockReturnValueOnce({ remove: mockRemove });
 
     const cleanup = await setupSmsDetection(mockDb, USER_ID, mockRefreshDetectedSms);
@@ -134,10 +142,10 @@ describe("setupSmsDetection", () => {
 
   it("inserts SMS event when listener fires", async () => {
     const { setupSmsDetection } = await loadSetup();
-    let capturedListener: (event: any) => void = vi.fn();
+    let capturedListener: (event: any) => void = vi.fn<(...args: any[]) => any>();
     mockAddDetectBankSmsListener.mockImplementationOnce((listener: any) => {
       capturedListener = listener;
-      return { remove: vi.fn() };
+      return { remove: vi.fn<(...args: any[]) => any>() };
     });
 
     await setupSmsDetection(mockDb, USER_ID, mockRefreshDetectedSms);
@@ -155,10 +163,10 @@ describe("setupSmsDetection", () => {
 
   it("normalizes epoch-millisecond SMS timestamps before insert", async () => {
     const { setupSmsDetection } = await loadSetup();
-    let capturedListener: (event: any) => void = vi.fn();
+    let capturedListener: (event: any) => void = vi.fn<(...args: any[]) => any>();
     mockAddDetectBankSmsListener.mockImplementationOnce((listener: any) => {
       capturedListener = listener;
-      return { remove: vi.fn() };
+      return { remove: vi.fn<(...args: any[]) => any>() };
     });
 
     const epochTimestamp = String(Date.UTC(2026, 2, 7, 14, 30, 0));
@@ -176,10 +184,10 @@ describe("setupSmsDetection", () => {
 
   it("ignores invalid SMS timestamps without throwing from the listener", async () => {
     const { setupSmsDetection } = await loadSetup();
-    let capturedListener: (event: any) => void = vi.fn();
+    let capturedListener: (event: any) => void = vi.fn<(...args: any[]) => any>();
     mockAddDetectBankSmsListener.mockImplementationOnce((listener: any) => {
       capturedListener = listener;
-      return { remove: vi.fn() };
+      return { remove: vi.fn<(...args: any[]) => any>() };
     });
 
     await setupSmsDetection(mockDb, USER_ID, mockRefreshDetectedSms);
@@ -193,10 +201,10 @@ describe("setupSmsDetection", () => {
 
   it("ignores malformed SMS payloads before reading fields", async () => {
     const { setupSmsDetection } = await loadSetup();
-    let capturedListener: (event: any) => void = vi.fn();
+    let capturedListener: (event: any) => void = vi.fn<(...args: any[]) => any>();
     mockAddDetectBankSmsListener.mockImplementationOnce((listener: any) => {
       capturedListener = listener;
-      return { remove: vi.fn() };
+      return { remove: vi.fn<(...args: any[]) => any>() };
     });
 
     await setupSmsDetection(mockDb, USER_ID, mockRefreshDetectedSms);
@@ -214,7 +222,7 @@ describe("setupNotificationCapture", () => {
 
   it("sets allowed packages and registers listener", async () => {
     const { setupNotificationCapture } = await loadSetup();
-    const mockRemove = vi.fn();
+    const mockRemove = vi.fn<(...args: any[]) => any>();
     mockAndroidAddListener.mockReturnValueOnce({ remove: mockRemove });
     const packages = ["com.todo1.mobile.co.bancolombia"];
 
@@ -232,10 +240,10 @@ describe("setupNotificationCapture", () => {
 
   it("calls processNotification when listener fires", async () => {
     const { setupNotificationCapture } = await loadSetup();
-    let capturedListener: (event: any) => void = vi.fn();
+    let capturedListener: (event: any) => void = vi.fn<(...args: any[]) => any>();
     mockAndroidAddListener.mockImplementationOnce((_event: any, listener: any) => {
       capturedListener = listener;
-      return { remove: vi.fn() };
+      return { remove: vi.fn<(...args: any[]) => any>() };
     });
 
     await setupNotificationCapture(mockDb, USER_ID, ["com.todo1.mobile.co.bancolombia"]);
@@ -254,11 +262,11 @@ describe("setupNotificationCapture", () => {
 
   it("requests parse improvement sharing after failed notification parsing", async () => {
     const { setupNotificationCapture } = await loadSetup();
-    const mockRequestParseImprovementSample = vi.fn();
-    let capturedListener: (event: any) => void = vi.fn();
+    const mockRequestParseImprovementSample = vi.fn<(...args: any[]) => any>();
+    let capturedListener: (event: any) => void = vi.fn<(...args: any[]) => any>();
     mockAndroidAddListener.mockImplementationOnce((_event: any, listener: any) => {
       capturedListener = listener;
-      return { remove: vi.fn() };
+      return { remove: vi.fn<(...args: any[]) => any>() };
     });
     mockProcessNotification.mockResolvedValueOnce({
       saved: false,
@@ -295,10 +303,10 @@ describe("setupNotificationCapture", () => {
 
   it("ignores malformed notification payloads", async () => {
     const { setupNotificationCapture } = await loadSetup();
-    let capturedListener: (event: any) => void = vi.fn();
+    let capturedListener: (event: any) => void = vi.fn<(...args: any[]) => any>();
     mockAndroidAddListener.mockImplementationOnce((_event: any, listener: any) => {
       capturedListener = listener;
-      return { remove: vi.fn() };
+      return { remove: vi.fn<(...args: any[]) => any>() };
     });
 
     await setupNotificationCapture(mockDb, USER_ID, ["com.todo1.mobile.co.bancolombia"]);

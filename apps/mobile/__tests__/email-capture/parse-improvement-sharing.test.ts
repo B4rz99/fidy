@@ -3,8 +3,10 @@ import { shareEmailParseImprovementRequests } from "@/features/email-capture/ser
 import type { UserId } from "@/shared/types/branded";
 
 const { mockCaptureError, mockShareCaptureParseImprovementSample } = vi.hoisted(() => ({
-  mockCaptureError: vi.fn((_error: unknown) => undefined),
-  mockShareCaptureParseImprovementSample: vi.fn((_sample: unknown) => Promise.resolve()),
+  mockCaptureError: vi.fn<(...args: any[]) => any>((_error: unknown) => undefined),
+  mockShareCaptureParseImprovementSample: vi.fn<(...args: any[]) => any>((_sample: unknown) =>
+    Promise.resolve()
+  ),
 }));
 
 vi.mock("@/features/capture-sources/diagnostics.public", () => ({

@@ -4,14 +4,14 @@ import { resetSavedTransferDraft } from "@/features/transfers/components/transfe
 describe("transfer form draft", () => {
   it("clears saved create-mode transfer fields so the Add tab cannot resubmit the same draft", () => {
     const setters = {
-      setDate: vi.fn(),
-      setDescription: vi.fn(),
-      setDigits: vi.fn(),
-      setFromSide: vi.fn(),
-      setLastEditedSide: vi.fn(),
-      setPickerTarget: vi.fn(),
-      setShowDatePicker: vi.fn(),
-      setToSide: vi.fn(),
+      setDate: vi.fn<(...args: any[]) => any>(),
+      setDescription: vi.fn<(...args: any[]) => any>(),
+      setDigits: vi.fn<(...args: any[]) => any>(),
+      setFromSide: vi.fn<(...args: any[]) => any>(),
+      setLastEditedSide: vi.fn<(...args: any[]) => any>(),
+      setPickerTarget: vi.fn<(...args: any[]) => any>(),
+      setShowDatePicker: vi.fn<(...args: any[]) => any>(),
+      setToSide: vi.fn<(...args: any[]) => any>(),
     };
 
     const defaultFromSide = { kind: "account", accountId: "account-1" as never } as const;

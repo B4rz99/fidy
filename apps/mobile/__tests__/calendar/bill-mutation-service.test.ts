@@ -65,15 +65,17 @@ describe("calendar bill mutation service", () => {
   }
 
   beforeEach(() => {
-    currentCommit = vi.fn().mockResolvedValue({ success: true, didMutate: true });
+    currentCommit = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue({ success: true, didMutate: true });
     currentUserId = "user-1" as UserId;
-    requestNotificationPermissionsMock = vi.fn().mockResolvedValue(true);
-    scheduleBillNotificationsMock = vi.fn().mockResolvedValue(undefined);
-    reportAsyncErrorMock = vi.fn();
-    addTransactionToCacheMock = vi.fn();
-    removeTransactionFromCacheMock = vi.fn();
-    trackCreatedMock = vi.fn();
-    trackPaymentRecordedMock = vi.fn();
+    requestNotificationPermissionsMock = vi.fn<(...args: any[]) => any>().mockResolvedValue(true);
+    scheduleBillNotificationsMock = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
+    reportAsyncErrorMock = vi.fn<(...args: any[]) => any>();
+    addTransactionToCacheMock = vi.fn<(...args: any[]) => any>();
+    removeTransactionFromCacheMock = vi.fn<(...args: any[]) => any>();
+    trackCreatedMock = vi.fn<(...args: any[]) => any>();
+    trackPaymentRecordedMock = vi.fn<(...args: any[]) => any>();
     requestNotificationPermissions =
       requestNotificationPermissionsMock as ServiceDeps["requestNotificationPermissions"];
     scheduleBillNotifications =
@@ -193,7 +195,9 @@ describe("calendar bill mutation service", () => {
       })
     ).resolves.toEqual({ success: false });
 
-    currentCommit = vi.fn().mockResolvedValue({ success: false, error: "db failed" });
+    currentCommit = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue({ success: false, error: "db failed" });
     await expect(
       service.addBill({
         name: "Rent",
@@ -227,7 +231,7 @@ describe("calendar bill mutation service", () => {
   });
 
   it("returns false when updateBill commit throws", async () => {
-    currentCommit = vi.fn().mockRejectedValue(new Error("boom"));
+    currentCommit = vi.fn<(...args: any[]) => any>().mockRejectedValue(new Error("boom"));
     const service = createService();
 
     await expect(service.updateBill("bill-1" as BillId, { name: "Updated" })).resolves.toBe(false);
@@ -249,12 +253,14 @@ describe("calendar bill mutation service", () => {
     await expect(service.updateBill("bill-1" as BillId, { name: "Updated" })).resolves.toBe(false);
     await expect(service.deleteBill("bill-1" as BillId)).resolves.toBe(false);
 
-    currentCommit = vi.fn().mockResolvedValue({ success: false, error: "nope" });
+    currentCommit = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue({ success: false, error: "nope" });
     await expect(service.deleteBill("bill-1" as BillId)).resolves.toBe(false);
   });
 
   it("returns false when deleteBill commit throws", async () => {
-    currentCommit = vi.fn().mockRejectedValue(new Error("boom"));
+    currentCommit = vi.fn<(...args: any[]) => any>().mockRejectedValue(new Error("boom"));
     const service = createService();
 
     await expect(service.deleteBill("bill-1" as BillId)).resolves.toBe(false);
@@ -301,14 +307,16 @@ describe("calendar bill mutation service", () => {
       service.markBillPaid([bill], bill.id as BillId, "2026-04-12" as IsoDate)
     ).resolves.toEqual({ success: false });
 
-    currentCommit = vi.fn().mockRejectedValue(new Error("boom"));
+    currentCommit = vi.fn<(...args: any[]) => any>().mockRejectedValue(new Error("boom"));
     await expect(
       service.markBillPaid([bill], bill.id as BillId, "2026-04-12" as IsoDate)
     ).resolves.toEqual({ success: false });
   });
 
   it("returns false when markBillPaid receives a failed commit result", async () => {
-    currentCommit = vi.fn().mockResolvedValue({ success: false, error: "nope" });
+    currentCommit = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue({ success: false, error: "nope" });
     const service = createService();
 
     await expect(
@@ -360,7 +368,7 @@ describe("calendar bill mutation service", () => {
     vi.resetModules();
 
     const transactionRow = { id: "txn-row" };
-    const toTransactionRowMock = vi.fn(() => transactionRow);
+    const toTransactionRowMock = vi.fn<(...args: any[]) => any>(() => transactionRow);
 
     vi.doMock("@/features/transactions/query.public", () => ({
       toTransactionRow: toTransactionRowMock,
@@ -371,21 +379,22 @@ describe("calendar bill mutation service", () => {
       },
     }));
 
-    const { createCalendarBillMutationService: createServiceFromPublic } = await import(
-      "@/features/calendar/lib/bill-mutation-service"
-    );
-    const commit = vi.fn().mockResolvedValue({ success: true, didMutate: true });
+    const { createCalendarBillMutationService: createServiceFromPublic } =
+      await import("@/features/calendar/lib/bill-mutation-service");
+    const commit = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue({ success: true, didMutate: true });
 
     const service = createServiceFromPublic({
       getCommit: () => commit,
       getUserId: () => "user-1" as UserId,
       requestNotificationPermissions: async () => true,
-      scheduleBillNotifications: vi.fn(),
-      reportAsyncError: vi.fn(),
-      addTransactionToCache: vi.fn(),
-      removeTransactionFromCache: vi.fn(),
-      trackCreated: vi.fn(),
-      trackPaymentRecorded: vi.fn(),
+      scheduleBillNotifications: vi.fn<(...args: any[]) => any>(),
+      reportAsyncError: vi.fn<(...args: any[]) => any>(),
+      addTransactionToCache: vi.fn<(...args: any[]) => any>(),
+      removeTransactionFromCache: vi.fn<(...args: any[]) => any>(),
+      trackCreated: vi.fn<(...args: any[]) => any>(),
+      trackPaymentRecorded: vi.fn<(...args: any[]) => any>(),
       now: () => now,
       createPaymentId: () => "pay-generated" as BillPaymentId,
       createTransactionId: () => "txn-generated" as TransactionId,
@@ -457,7 +466,9 @@ describe("calendar bill mutation service", () => {
   });
 
   it("returns false when unmarkBillPaid receives a failed commit result", async () => {
-    currentCommit = vi.fn().mockResolvedValue({ success: false, error: "nope" });
+    currentCommit = vi
+      .fn<(...args: any[]) => any>()
+      .mockResolvedValue({ success: false, error: "nope" });
     const service = createService();
     const withTransaction: BillPayment = {
       id: "pay-1" as BillPaymentId,

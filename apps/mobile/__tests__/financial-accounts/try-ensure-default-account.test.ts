@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { tryEnsureDefaultFinancialAccount } from "@/features/financial-accounts/services/try-ensure-default-account";
 import { requireUserId } from "@/shared/types/assertions";
 
-const mockEnsureDefaultFinancialAccount = vi.fn();
-const mockCaptureError = vi.fn();
+const mockEnsureDefaultFinancialAccount = vi.fn<(...args: any[]) => any>();
+const mockCaptureError = vi.fn<(...args: any[]) => any>();
 
 vi.mock("@/features/financial-accounts/lib/repository", () => ({
   ensureDefaultFinancialAccount: (...args: unknown[]) => mockEnsureDefaultFinancialAccount(...args),

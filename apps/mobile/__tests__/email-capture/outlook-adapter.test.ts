@@ -3,14 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchOutlookEmailsWithToken } from "@/features/email-capture/services/outlook-adapter";
 
 const { mockCaptureWarning } = vi.hoisted(() => ({
-  mockCaptureWarning: vi.fn(),
+  mockCaptureWarning: vi.fn<(...args: any[]) => any>(),
 }));
 
 vi.mock("@/shared/lib", () => ({
   captureWarning: (...args: unknown[]) => mockCaptureWarning(...args),
 }));
 
-const mockFetch = vi.fn();
+const mockFetch = vi.fn<(...args: any[]) => any>();
 global.fetch = mockFetch;
 
 describe("outlook adapter", () => {

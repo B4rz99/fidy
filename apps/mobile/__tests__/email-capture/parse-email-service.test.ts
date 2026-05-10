@@ -6,7 +6,7 @@ const AUTHORIZATION_HEADER = "Authorization";
 
 describe("createParseEmailService", () => {
   it("classifies merchants through the parse-email edge function", async () => {
-    const mockInvoke = vi.fn().mockResolvedValue({
+    const mockInvoke = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       data: { success: true, data: { categoryId: "food" } },
       error: null,
     });
@@ -20,9 +20,9 @@ describe("createParseEmailService", () => {
           }) as never,
       },
       telemetry: {
-        captureError: vi.fn(),
-        captureWarning: vi.fn(),
-        capturePipelineEvent: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
+        captureWarning: vi.fn<(...args: any[]) => any>(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
 
@@ -33,7 +33,7 @@ describe("createParseEmailService", () => {
   });
 
   it("returns a validated transaction for full_parse mode", async () => {
-    const mockInvoke = vi.fn().mockResolvedValue({
+    const mockInvoke = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       data: {
         success: true,
         data: {
@@ -61,9 +61,9 @@ describe("createParseEmailService", () => {
           }) as never,
       },
       telemetry: {
-        captureError: vi.fn(),
-        captureWarning: vi.fn(),
-        capturePipelineEvent: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
+        captureWarning: vi.fn<(...args: any[]) => any>(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
 
@@ -79,7 +79,7 @@ describe("createParseEmailService", () => {
   });
 
   it("passes the current user access token to the parse-email function", async () => {
-    const mockInvoke = vi.fn().mockResolvedValue({
+    const mockInvoke = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       data: {
         success: true,
         data: {
@@ -113,9 +113,9 @@ describe("createParseEmailService", () => {
           }) as never,
       },
       telemetry: {
-        captureError: vi.fn(),
-        captureWarning: vi.fn(),
-        capturePipelineEvent: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
+        captureWarning: vi.fn<(...args: any[]) => any>(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
 
@@ -128,8 +128,8 @@ describe("createParseEmailService", () => {
   });
 
   it("returns null when the parse-email function rejects the authenticated request", async () => {
-    const captureWarning = vi.fn();
-    const mockInvoke = vi.fn().mockResolvedValue({
+    const captureWarning = vi.fn<(...args: any[]) => any>();
+    const mockInvoke = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       data: { success: false, error: "invalid_auth" },
       error: { message: "Invalid JWT" },
     });
@@ -143,9 +143,9 @@ describe("createParseEmailService", () => {
           }) as never,
       },
       telemetry: {
-        captureError: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
         captureWarning,
-        capturePipelineEvent: vi.fn(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
 
@@ -157,8 +157,8 @@ describe("createParseEmailService", () => {
   });
 
   it("throws on parse-email failure when configured for retryable pipeline parsing", async () => {
-    const captureWarning = vi.fn();
-    const mockInvoke = vi.fn().mockResolvedValue({
+    const captureWarning = vi.fn<(...args: any[]) => any>();
+    const mockInvoke = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       data: { success: false, error: "invalid_auth" },
       error: { message: "Invalid JWT" },
     });
@@ -173,9 +173,9 @@ describe("createParseEmailService", () => {
           }) as never,
       },
       telemetry: {
-        captureError: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
         captureWarning,
-        capturePipelineEvent: vi.fn(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
 
@@ -187,8 +187,8 @@ describe("createParseEmailService", () => {
   });
 
   it("surfaces sanitized parse-email function data errors for diagnostics", async () => {
-    const captureWarning = vi.fn();
-    const mockInvoke = vi.fn().mockResolvedValue({
+    const captureWarning = vi.fn<(...args: any[]) => any>();
+    const mockInvoke = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       data: {
         success: false,
         error: "openai_error:400:unsupported_value:temperature:invalid_request_error",
@@ -206,9 +206,9 @@ describe("createParseEmailService", () => {
           }) as never,
       },
       telemetry: {
-        captureError: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
         captureWarning,
-        capturePipelineEvent: vi.fn(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
 
@@ -222,8 +222,8 @@ describe("createParseEmailService", () => {
   });
 
   it("surfaces parse-email rate limits from the Edge Function response", async () => {
-    const captureWarning = vi.fn();
-    const mockInvoke = vi.fn().mockResolvedValue({
+    const captureWarning = vi.fn<(...args: any[]) => any>();
+    const mockInvoke = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       data: null,
       error: {
         message: "Edge Function returned a non-2xx status code",
@@ -244,9 +244,9 @@ describe("createParseEmailService", () => {
           }) as never,
       },
       telemetry: {
-        captureError: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
         captureWarning,
-        capturePipelineEvent: vi.fn(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
 
@@ -260,8 +260,8 @@ describe("createParseEmailService", () => {
   });
 
   it("returns null and captures a warning when local notification validation rejects a candidate", async () => {
-    const captureWarning = vi.fn();
-    const mockInvoke = vi.fn().mockResolvedValue({
+    const captureWarning = vi.fn<(...args: any[]) => any>();
+    const mockInvoke = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       data: {
         success: true,
         data: {
@@ -286,9 +286,9 @@ describe("createParseEmailService", () => {
           }) as never,
       },
       telemetry: {
-        captureError: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
         captureWarning,
-        capturePipelineEvent: vi.fn(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
 
@@ -299,8 +299,8 @@ describe("createParseEmailService", () => {
   });
 
   it("returns null instead of throwing when a transaction candidate has zero amount", async () => {
-    const captureWarning = vi.fn();
-    const mockInvoke = vi.fn().mockResolvedValue({
+    const captureWarning = vi.fn<(...args: any[]) => any>();
+    const mockInvoke = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       data: {
         success: true,
         data: {
@@ -325,9 +325,9 @@ describe("createParseEmailService", () => {
           }) as never,
       },
       telemetry: {
-        captureError: vi.fn(),
+        captureError: vi.fn<(...args: any[]) => any>(),
         captureWarning,
-        capturePipelineEvent: vi.fn(),
+        capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
       },
     });
 

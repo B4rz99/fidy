@@ -2,11 +2,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { UserId } from "@/shared/types/branded";
 
-const mockGetItemAsync = vi.fn();
-const mockSetItemAsync = vi.fn();
-const mockCountNotificationsSince = vi.fn();
-const mockGetNotifications = vi.fn(() => []);
-const mockCommit = vi.fn();
+const mockGetItemAsync = vi.fn<(...args: any[]) => any>();
+const mockSetItemAsync = vi.fn<(...args: any[]) => any>();
+const mockCountNotificationsSince = vi.fn<(...args: any[]) => any>();
+const mockGetNotifications = vi.fn<(...args: any[]) => any>(() => []);
+const mockCommit = vi.fn<(...args: any[]) => any>();
 
 vi.mock("expo-secure-store", () => ({
   getItemAsync: mockGetItemAsync,
@@ -19,13 +19,13 @@ vi.mock("@/features/notifications/repository", () => ({
 }));
 
 vi.mock("@/shared/lib", () => ({
-  captureWarning: vi.fn(),
-  generateNotificationId: vi.fn(() => "notif-generated"),
-  toIsoDateTime: vi.fn(() => "2026-04-12T10:00:00.000Z"),
+  captureWarning: vi.fn<(...args: any[]) => any>(),
+  generateNotificationId: vi.fn<(...args: any[]) => any>(() => "notif-generated"),
+  toIsoDateTime: vi.fn<(...args: any[]) => any>(() => "2026-04-12T10:00:00.000Z"),
 }));
 
 vi.mock("@/mutations", () => ({
-  createWriteThroughMutationModule: vi.fn(() => ({
+  createWriteThroughMutationModule: vi.fn<(...args: any[]) => any>(() => ({
     commit: mockCommit,
   })),
 }));

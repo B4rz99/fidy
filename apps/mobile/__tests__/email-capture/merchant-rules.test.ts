@@ -7,8 +7,8 @@ import {
 } from "../../features/email-capture/lib/merchant-rules";
 
 vi.mock("drizzle-orm", () => ({
-  and: vi.fn((...args: unknown[]) => args),
-  eq: vi.fn((col: unknown, val: unknown) => ({ col, val })),
+  and: vi.fn<(...args: any[]) => any>((...args: unknown[]) => args),
+  eq: vi.fn<(...args: any[]) => any>((col: unknown, val: unknown) => ({ col, val })),
 }));
 
 vi.mock("@/shared/db/schema", () => ({
@@ -25,19 +25,19 @@ vi.mock("@/shared/lib", () => ({
   generateMerchantRuleId: () => "merchant-rule-1",
 }));
 
-const mockWhere = vi.fn();
-const mockValues = vi.fn(() => ({
+const mockWhere = vi.fn<(...args: any[]) => any>();
+const mockValues = vi.fn<(...args: any[]) => any>(() => ({
   onConflictDoUpdate: mockOnConflictDoUpdate,
 }));
-const mockOnConflictDoUpdate = vi.fn();
+const mockOnConflictDoUpdate = vi.fn<(...args: any[]) => any>();
 
 const mockDb = {
-  select: vi.fn(() => ({
-    from: vi.fn(() => ({
+  select: vi.fn<(...args: any[]) => any>(() => ({
+    from: vi.fn<(...args: any[]) => any>(() => ({
       where: mockWhere,
     })),
   })),
-  insert: vi.fn(() => ({
+  insert: vi.fn<(...args: any[]) => any>(() => ({
     values: mockValues,
   })),
   // biome-ignore lint/suspicious/noExplicitAny: mock DB object for testing

@@ -7,8 +7,10 @@ import {
 } from "@/modules/expo-app-intents";
 
 const { mockAddListener, mockIsAvailable } = vi.hoisted(() => ({
-  mockAddListener: vi.fn(() => ({ remove: vi.fn() })),
-  mockIsAvailable: vi.fn(() => true),
+  mockAddListener: vi.fn<(...args: any[]) => any>(() => ({
+    remove: vi.fn<(...args: any[]) => any>(),
+  })),
+  mockIsAvailable: vi.fn<(...args: any[]) => any>(() => true),
 }));
 
 vi.mock("expo", () => ({
@@ -45,7 +47,7 @@ describe("expo-app-intents JS API", () => {
 
   describe("addLogTransactionListener", () => {
     it("subscribes to onLogTransaction event", () => {
-      const listener = vi.fn();
+      const listener = vi.fn<(...args: any[]) => any>();
       const subscription = addLogTransactionListener(listener);
 
       expect(mockAddListener).toHaveBeenCalledWith("onLogTransaction", listener);
@@ -53,10 +55,10 @@ describe("expo-app-intents JS API", () => {
     });
 
     it("returns a removable subscription", () => {
-      const mockRemove = vi.fn();
+      const mockRemove = vi.fn<(...args: any[]) => any>();
       mockAddListener.mockReturnValueOnce({ remove: mockRemove });
 
-      const subscription = addLogTransactionListener(vi.fn());
+      const subscription = addLogTransactionListener(vi.fn<(...args: any[]) => any>());
       subscription.remove();
 
       expect(mockRemove).toHaveBeenCalled();
@@ -65,7 +67,7 @@ describe("expo-app-intents JS API", () => {
 
   describe("addDetectBankSmsListener", () => {
     it("subscribes to onDetectBankSms event", () => {
-      const listener = vi.fn();
+      const listener = vi.fn<(...args: any[]) => any>();
       const subscription = addDetectBankSmsListener(listener);
 
       expect(mockAddListener).toHaveBeenCalledWith("onDetectBankSms", listener);
@@ -85,7 +87,7 @@ describe("expo-app-intents on Android", () => {
     vi.doMock("expo", () => ({
       requireNativeModule: () => ({
         isAvailable: () => true,
-        addListener: vi.fn(),
+        addListener: vi.fn<(...args: any[]) => any>(),
       }),
     }));
 

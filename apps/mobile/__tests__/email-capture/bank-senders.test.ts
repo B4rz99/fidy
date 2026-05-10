@@ -14,11 +14,11 @@ import {
 import { getSupabase } from "@/shared/db/supabase";
 
 vi.mock("@/shared/db/supabase", () => ({
-  getSupabase: vi.fn(),
+  getSupabase: vi.fn<(...args: any[]) => any>(),
 }));
 
-const mockFrom = vi.fn();
-const mockSelect = vi.fn();
+const mockFrom = vi.fn<(...args: any[]) => any>();
+const mockSelect = vi.fn<(...args: any[]) => any>();
 
 beforeEach(() => {
   mockSelect.mockReset();

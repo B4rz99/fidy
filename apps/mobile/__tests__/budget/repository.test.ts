@@ -20,17 +20,17 @@ type BudgetRow = {
   deletedAt: IsoDateTime | null;
 };
 
-const mockRun = vi.fn();
-const mockAll = vi.fn().mockReturnValue([]);
-const mockOnConflictDoUpdate = vi.fn().mockReturnThis();
-const mockValues = vi.fn().mockReturnThis();
-const mockInsert = vi.fn(() => ({ values: mockValues }));
-const mockSelect = vi.fn().mockReturnThis();
-const mockFrom = vi.fn().mockReturnThis();
-const mockWhere = vi.fn().mockReturnThis();
-const mockUpdate = vi.fn().mockReturnThis();
-const mockSet = vi.fn().mockReturnThis();
-const mockUpdateWhere = vi.fn().mockReturnThis();
+const mockRun = vi.fn<(...args: any[]) => any>();
+const mockAll = vi.fn<(...args: any[]) => any>().mockReturnValue([]);
+const mockOnConflictDoUpdate = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockValues = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockInsert = vi.fn<(...args: any[]) => any>(() => ({ values: mockValues }));
+const mockSelect = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockFrom = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockWhere = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockUpdate = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockSet = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockUpdateWhere = vi.fn<(...args: any[]) => any>().mockReturnThis();
 
 const mockDb = {
   insert: mockInsert,
@@ -220,7 +220,9 @@ describe("budget repository", () => {
       ]);
 
       let idCounter = 0;
-      const generateId = vi.fn(() => `new-budget-${++idCounter}` as BudgetId);
+      const generateId = vi.fn<(...args: any[]) => any>(
+        () => `new-budget-${++idCounter}` as BudgetId
+      );
       const newIds = await runCopyBudgets(generateId);
 
       expect(newIds).toEqual(["new-budget-1", "new-budget-2"]);
@@ -231,7 +233,7 @@ describe("budget repository", () => {
     it("returns empty array when source month has no budgets", async () => {
       mockCopySourceAndTarget([]);
 
-      const generateId = vi.fn(() => "new-id" as BudgetId);
+      const generateId = vi.fn<(...args: any[]) => any>(() => "new-id" as BudgetId);
       const newIds = await runCopyBudgets(generateId);
 
       expect(newIds).toEqual([]);
@@ -243,7 +245,7 @@ describe("budget repository", () => {
       mockCopySourceAndTarget([makeBudgetRow({ month: SOURCE_MONTH })]);
 
       let counter = 0;
-      const generateId = vi.fn(() => `new-${++counter}` as BudgetId);
+      const generateId = vi.fn<(...args: any[]) => any>(() => `new-${++counter}` as BudgetId);
       const newIds = await runCopyBudgets(generateId);
 
       expect(newIds).toHaveLength(1);
@@ -273,7 +275,7 @@ describe("budget repository", () => {
       );
 
       let counter = 0;
-      const generateId = vi.fn(() => `new-${++counter}` as BudgetId);
+      const generateId = vi.fn<(...args: any[]) => any>(() => `new-${++counter}` as BudgetId);
       const newIds = await runCopyBudgets(generateId);
 
       expect(newIds).toHaveLength(1);

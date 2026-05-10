@@ -2,17 +2,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CategoryId, IsoDateTime, NotificationId, UserId } from "@/shared/types/branded";
 
-const mockRun = vi.fn();
-const mockAll = vi.fn().mockReturnValue([]);
-const mockGet = vi.fn();
-const mockOnConflictDoNothing = vi.fn().mockReturnValue({ run: mockRun });
-const mockValues = vi.fn().mockReturnValue({ onConflictDoNothing: mockOnConflictDoNothing });
-const mockInsert = vi.fn(() => ({ values: mockValues }));
-const mockSelect = vi.fn().mockReturnThis();
-const mockFrom = vi.fn().mockReturnThis();
-const mockWhere = vi.fn().mockReturnThis();
-const mockOrderBy = vi.fn().mockReturnThis();
-const mockLimit = vi.fn().mockReturnValue({ all: mockAll });
+const mockRun = vi.fn<(...args: any[]) => any>();
+const mockAll = vi.fn<(...args: any[]) => any>().mockReturnValue([]);
+const mockGet = vi.fn<(...args: any[]) => any>();
+const mockOnConflictDoNothing = vi.fn<(...args: any[]) => any>().mockReturnValue({ run: mockRun });
+const mockValues = vi
+  .fn<(...args: any[]) => any>()
+  .mockReturnValue({ onConflictDoNothing: mockOnConflictDoNothing });
+const mockInsert = vi.fn<(...args: any[]) => any>(() => ({ values: mockValues }));
+const mockSelect = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockFrom = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockWhere = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockOrderBy = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockLimit = vi.fn<(...args: any[]) => any>().mockReturnValue({ all: mockAll });
 
 const mockDb = {
   insert: mockInsert,

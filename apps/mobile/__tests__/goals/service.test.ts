@@ -4,11 +4,11 @@ import { createGoalMutationService } from "@/features/goals/services/create-goal
 import { createGoalQueryService } from "@/features/goals/services/create-goal-query-service";
 import type { UserId } from "@/shared/types/branded";
 
-const mockGetGoalsForUser = vi.fn();
-const mockGetGoalCurrentAmount = vi.fn();
-const mockGetMonthlyTotalsByType = vi.fn();
-const mockGetContributionMonthCount = vi.fn();
-const mockGetContributionsForGoal = vi.fn();
+const mockGetGoalsForUser = vi.fn<(...args: any[]) => any>();
+const mockGetGoalCurrentAmount = vi.fn<(...args: any[]) => any>();
+const mockGetMonthlyTotalsByType = vi.fn<(...args: any[]) => any>();
+const mockGetContributionMonthCount = vi.fn<(...args: any[]) => any>();
+const mockGetContributionsForGoal = vi.fn<(...args: any[]) => any>();
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -102,9 +102,9 @@ function createQueryService() {
 }
 
 function createMilestoneService() {
-  const insertNotification = vi.fn().mockResolvedValue(true);
-  const schedulePush = vi.fn();
-  const trackMilestoneReached = vi.fn();
+  const insertNotification = vi.fn<(...args: any[]) => any>().mockResolvedValue(true);
+  const schedulePush = vi.fn<(...args: any[]) => any>();
+  const trackMilestoneReached = vi.fn<(...args: any[]) => any>();
 
   return {
     insertNotification,
@@ -113,7 +113,7 @@ function createMilestoneService() {
     service: createGoalMutationService({
       db: {} as never,
       userId: "user-1" as UserId,
-      commit: vi.fn().mockResolvedValue(true),
+      commit: vi.fn<(...args: any[]) => any>().mockResolvedValue(true),
       insertNotification,
       schedulePush,
       translateMilestoneTitle: ({ goalName, milestone }) => `${goalName}:${milestone}`,
@@ -196,8 +196,8 @@ it("loads contribution history for the selected goal", async () => {
 });
 
 it("commits normalized goal saves and tracks successful creates", async () => {
-  const commit = vi.fn().mockResolvedValue(true);
-  const trackCreated = vi.fn();
+  const commit = vi.fn<(...args: any[]) => any>().mockResolvedValue(true);
+  const trackCreated = vi.fn<(...args: any[]) => any>();
 
   const service = createGoalMutationService({
     db: {} as never,
@@ -221,7 +221,7 @@ it("commits normalized goal saves and tracks successful creates", async () => {
 });
 
 it("commits validated goal updates", async () => {
-  const commit = vi.fn().mockResolvedValue(true);
+  const commit = vi.fn<(...args: any[]) => any>().mockResolvedValue(true);
   const service = createGoalMutationService({
     db: {} as never,
     userId: "user-1" as UserId,
@@ -248,7 +248,7 @@ it("commits validated goal updates", async () => {
 });
 
 it("rejects invalid goal updates before they reach the mutation boundary", async () => {
-  const commit = vi.fn().mockResolvedValue(true);
+  const commit = vi.fn<(...args: any[]) => any>().mockResolvedValue(true);
   const service = createGoalMutationService({
     db: {} as never,
     userId: "user-1" as UserId,

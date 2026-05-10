@@ -5,16 +5,16 @@ import type { NotificationData } from "@/features/capture-sources/schema";
 import { processNotification } from "@/features/capture-sources/services/notification-pipeline";
 import type { FinancialAccountId } from "@/shared/types/branded";
 
-const mockInsertTransaction = vi.fn();
-const mockLookupMerchantRule = vi.fn().mockResolvedValue(null);
-const mockInsertMerchantRule = vi.fn();
-const mockParseNotificationApi = vi.fn().mockResolvedValue(null);
-const mockIsCaptureProcessed = vi.fn().mockResolvedValue(false);
-const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);
-const mockCaptureFingerprint = vi.fn().mockReturnValue("test-fingerprint");
-const mockInsertProcessedCapture = vi.fn();
-const mockStripPii = vi.fn().mockImplementation((t: string) => t);
-const mockEnsureDefaultFinancialAccount = vi.fn().mockReturnValue({
+const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
+const mockLookupMerchantRule = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
+const mockInsertMerchantRule = vi.fn<(...args: any[]) => any>();
+const mockParseNotificationApi = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
+const mockIsCaptureProcessed = vi.fn<(...args: any[]) => any>().mockResolvedValue(false);
+const mockFindDuplicateTransaction = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
+const mockCaptureFingerprint = vi.fn<(...args: any[]) => any>().mockReturnValue("test-fingerprint");
+const mockInsertProcessedCapture = vi.fn<(...args: any[]) => any>();
+const mockStripPii = vi.fn<(...args: any[]) => any>().mockImplementation((t: string) => t);
+const mockEnsureDefaultFinancialAccount = vi.fn<(...args: any[]) => any>().mockReturnValue({
   id: "fa-default-user-1" as FinancialAccountId,
   userId: "user-1",
   name: "Cash",
@@ -24,7 +24,7 @@ const mockEnsureDefaultFinancialAccount = vi.fn().mockReturnValue({
   updatedAt: "2026-04-18T10:00:00.000Z",
   deletedAt: null,
 });
-const mockBuildNotificationCaptureEvidence = vi.fn().mockReturnValue([
+const mockBuildNotificationCaptureEvidence = vi.fn<(...args: any[]) => any>().mockReturnValue([
   {
     sourceFamily: "bancolombia",
     evidenceType: "last4",
@@ -32,9 +32,11 @@ const mockBuildNotificationCaptureEvidence = vi.fn().mockReturnValue([
     value: "1234",
   },
 ]);
-const mockBuildNotificationLlmAccountHintCaptureEvidence = vi.fn().mockReturnValue([]);
-const mockSaveCaptureEvidenceRows = vi.fn();
-const mockFindMatchingFinancialAccountId = vi.fn().mockReturnValue(null);
+const mockBuildNotificationLlmAccountHintCaptureEvidence = vi
+  .fn<(...args: any[]) => any>()
+  .mockReturnValue([]);
+const mockSaveCaptureEvidenceRows = vi.fn<(...args: any[]) => any>();
+const mockFindMatchingFinancialAccountId = vi.fn<(...args: any[]) => any>().mockReturnValue(null);
 const DEFAULT_NOTIFICATION_CAPTURE_EVIDENCE = {
   sourceFamily: "bancolombia",
   evidenceType: "last4",
@@ -99,7 +101,7 @@ vi.mock("@/features/capture-evidence", () => ({
   saveCaptureEvidenceRows: (...args: any[]) => mockSaveCaptureEvidenceRows(...args),
 }));
 
-const mockGenerateId = vi.fn();
+const mockGenerateId = vi.fn<(...args: any[]) => any>();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: any[]) => mockGenerateId(...args),
   generateTransactionId: () => mockGenerateId("tx"),

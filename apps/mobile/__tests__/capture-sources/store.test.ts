@@ -9,10 +9,10 @@ import {
 } from "@/features/capture-sources/store";
 import { requireUserId } from "@/shared/types/assertions";
 
-const mockGetEnabledPackages = vi.fn().mockResolvedValue([]);
-const mockUpsertNotificationSource = vi.fn();
-const mockHasProcessedCaptures = vi.fn().mockResolvedValue(false);
-const mockGetTodaySmsEventCount = vi.fn().mockResolvedValue(0);
+const mockGetEnabledPackages = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
+const mockUpsertNotificationSource = vi.fn<(...args: any[]) => any>();
+const mockHasProcessedCaptures = vi.fn<(...args: any[]) => any>().mockResolvedValue(false);
+const mockGetTodaySmsEventCount = vi.fn<(...args: any[]) => any>().mockResolvedValue(0);
 
 vi.mock("@/features/capture-sources/lib/repository", () => ({
   getEnabledPackages: (...args: any[]) => mockGetEnabledPackages(...args),

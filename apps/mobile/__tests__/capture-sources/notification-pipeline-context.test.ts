@@ -8,7 +8,7 @@ import {
 } from "@/features/capture-sources/services/notification-pipeline/context";
 
 vi.mock("@/features/email-capture/parsing.public", () => ({
-  stripPii: vi.fn((text: string) => `sanitized:${text}`),
+  stripPii: vi.fn<(...args: any[]) => any>((text: string) => `sanitized:${text}`),
 }));
 
 vi.mock("@/features/transactions/write.public", () => ({

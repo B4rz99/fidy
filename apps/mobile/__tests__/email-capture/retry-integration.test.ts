@@ -26,19 +26,19 @@ import { processedEmails, transactions } from "@/shared/db/schema";
 import { requireUserId } from "@/shared/types/assertions";
 import type { IsoDateTime, ProcessedEmailId, TransactionId } from "@/shared/types/branded";
 
-const mockParseEmailApi = vi.fn();
+const mockParseEmailApi = vi.fn<(...args: any[]) => any>();
 vi.mock("@/features/email-capture/services/parse-email-api", () => ({
   parseEmailApi: (...args: unknown[]) => mockParseEmailApi(...args),
   retryableParseEmailApi: (...args: unknown[]) => mockParseEmailApi(...args),
 }));
 
 vi.mock("@/shared/lib/sentry", () => ({
-  captureError: vi.fn(),
-  capturePipelineEvent: vi.fn(),
-  captureWarning: vi.fn(),
+  captureError: vi.fn<(...args: any[]) => any>(),
+  capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
+  captureWarning: vi.fn<(...args: any[]) => any>(),
 }));
 
-const mockFindDuplicateTransaction = vi.fn().mockResolvedValue(null);
+const mockFindDuplicateTransaction = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
 vi.mock("@/features/capture-sources/lib/dedup", () => ({
   findDuplicateTransaction: (...args: unknown[]) => mockFindDuplicateTransaction(...args),
 }));

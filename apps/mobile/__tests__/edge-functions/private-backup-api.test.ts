@@ -479,7 +479,7 @@ function createPrivateBackupApiDeps(
 ) {
   const store = createPrivateBackupStore(options);
   const allowedRateLimit = { allowed: true } satisfies RateLimitResult;
-  const rateLimit = vi.fn(() =>
+  const rateLimit = vi.fn<(...args: any[]) => any>(() =>
     options.rateLimitError === undefined
       ? Promise.resolve(options.rateLimit ?? allowedRateLimit)
       : Promise.reject(options.rateLimitError)
@@ -490,7 +490,7 @@ function createPrivateBackupApiDeps(
     deps: {
       auth: {
         auth: {
-          getUser: vi.fn(() => Promise.resolve(authResponse(options))),
+          getUser: vi.fn<(...args: any[]) => any>(() => Promise.resolve(authResponse(options))),
         },
       },
       rateLimit,
@@ -602,6 +602,19 @@ function expectNoStoreCalls(store: ReturnType<typeof createPrivateBackupStore>) 
   expect(store.deleteObject).not.toHaveBeenCalled();
 }
 
+function listBackupsForUser(backups: ReadonlyMap<string, RemoteBackupMetadata>, userId: string) {
+  return [...backups.values()]
+    .filter((backup) => backup.userId === userId)
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+}
+
+function getCurrentBackupForUser(
+  backups: ReadonlyMap<string, RemoteBackupMetadata>,
+  userId: string
+) {
+  return listBackupsForUser(backups, userId)[0] ?? null;
+}
+
 function createPrivateBackupStore(options: {
   readonly backups?: readonly RemoteBackupMetadata[];
   readonly deleteBackupMetadataError?: Error;
@@ -619,24 +632,16 @@ function createPrivateBackupStore(options: {
   const operationLog: string[] = [];
 
   const store = {
-    loadBackup: vi.fn((userId: string, backupId: string) =>
+    loadBackup: vi.fn<(...args: any[]) => any>((userId: string, backupId: string) =>
       Promise.resolve(backups.get(`${userId}/${backupId}`) ?? null)
     ),
-    listBackups: vi.fn((userId: string) =>
-      Promise.resolve(
-        [...backups.values()]
-          .filter((backup) => backup.userId === userId)
-          .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
-      )
+    listBackups: vi.fn<(...args: any[]) => any>((userId: string) =>
+      Promise.resolve(listBackupsForUser(backups, userId))
     ),
-    loadCurrentBackup: vi.fn((userId: string) =>
-      Promise.resolve(
-        [...backups.values()]
-          .filter((backup) => backup.userId === userId)
-          .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] ?? null
-      )
+    loadCurrentBackup: vi.fn<(...args: any[]) => any>((userId: string) =>
+      Promise.resolve(getCurrentBackupForUser(backups, userId))
     ),
-    createSignedUploadUrl: vi.fn((path: string, options?: unknown) => {
+    createSignedUploadUrl: vi.fn<(...args: any[]) => any>((path: string, options?: unknown) => {
       uploadUrls.push(path);
       uploadUrlOptions.push(options);
       return Promise.resolve({
@@ -644,22 +649,22 @@ function createPrivateBackupStore(options: {
         token: "signed-upload-token",
       });
     }),
-    createSignedDownloadUrl: vi.fn((path: string) => {
+    createSignedDownloadUrl: vi.fn<(...args: any[]) => any>((path: string) => {
       downloadUrls.push(path);
       return Promise.resolve("https://storage.example/download");
     }),
-    downloadObject: vi.fn((path: string) =>
+    downloadObject: vi.fn<(...args: any[]) => any>((path: string) =>
       options.downloadObjectError === undefined
         ? Promise.resolve(options.objects?.get(path) ?? null)
         : Promise.reject(options.downloadObjectError)
     ),
-    confirmBackup: vi.fn((backup: RemoteBackupMetadata) => {
+    confirmBackup: vi.fn<(...args: any[]) => any>((backup: RemoteBackupMetadata) => {
       operationLog.push(`confirm:${backup.userId}/${backup.backupId}`);
       confirmed.push(backup);
       backups.set(`${backup.userId}/${backup.backupId}`, backup);
       return Promise.resolve();
     }),
-    deleteBackupMetadata: vi.fn((userId: string, backupId: string) => {
+    deleteBackupMetadata: vi.fn<(...args: any[]) => any>((userId: string, backupId: string) => {
       operationLog.push(`deleteMetadata:${userId}/${backupId}`);
       if (options.deleteBackupMetadataError !== undefined) {
         return Promise.reject(options.deleteBackupMetadataError);
@@ -667,7 +672,7 @@ function createPrivateBackupStore(options: {
       backups.delete(`${userId}/${backupId}`);
       return Promise.resolve();
     }),
-    deleteObject: vi.fn((path: string) => {
+    deleteObject: vi.fn<(...args: any[]) => any>((path: string) => {
       operationLog.push(`deleteObject:${path}`);
       deletedObjects.push(path);
       return Promise.resolve();
@@ -678,10 +683,7 @@ function createPrivateBackupStore(options: {
     createdDownloadUrls: () => downloadUrls,
     deletedObjects: () => deletedObjects,
     operations: () => operationLog,
-    currentBackup: () =>
-      [...backups.values()]
-        .filter((backup) => backup.userId === USER_ID)
-        .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] ?? null,
+    currentBackup: () => getCurrentBackupForUser(backups, USER_ID),
   };
 
   return store;

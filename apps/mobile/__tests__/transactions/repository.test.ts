@@ -10,20 +10,20 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
-const mockRun = vi.fn();
-const mockAll = vi.fn().mockReturnValue([]);
-const mockValues = vi.fn().mockReturnThis();
-const mockInsert = vi.fn(() => ({ values: mockValues }));
-const mockSelect = vi.fn().mockReturnThis();
-const mockFrom = vi.fn().mockReturnThis();
-const mockWhere = vi.fn().mockReturnThis();
-const mockOrderBy = vi.fn().mockReturnThis();
-const mockDelete = vi.fn().mockReturnThis();
-const mockDeleteWhere = vi.fn().mockReturnThis();
-const mockUpdate = vi.fn().mockReturnThis();
-const mockSet = vi.fn().mockReturnThis();
-const mockUpdateWhere = vi.fn().mockReturnThis();
-const mockOnConflictDoUpdate = vi.fn().mockReturnThis();
+const mockRun = vi.fn<(...args: any[]) => any>();
+const mockAll = vi.fn<(...args: any[]) => any>().mockReturnValue([]);
+const mockValues = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockInsert = vi.fn<(...args: any[]) => any>(() => ({ values: mockValues }));
+const mockSelect = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockFrom = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockWhere = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockOrderBy = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockDelete = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockDeleteWhere = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockUpdate = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockSet = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockUpdateWhere = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockOnConflictDoUpdate = vi.fn<(...args: any[]) => any>().mockReturnThis();
 
 const mockDb = {
   insert: mockInsert,

@@ -147,8 +147,12 @@ const MERGED_TRANSFER_ROWS = [
 ];
 
 function createActivityServiceHarness(input: ActivityServiceHarnessInput) {
-  const getTransactionsPaginated = vi.fn().mockReturnValue(input.transactionRows);
-  const getTransfersPaginated = vi.fn().mockReturnValue(input.transferRows);
+  const getTransactionsPaginated = vi
+    .fn<(...args: any[]) => any>()
+    .mockReturnValue(input.transactionRows);
+  const getTransfersPaginated = vi
+    .fn<(...args: any[]) => any>()
+    .mockReturnValue(input.transferRows);
 
   return {
     getTransactionsPaginated,
@@ -242,7 +246,7 @@ describe("activity query service", () => {
       new Date(Date.UTC(2026, 3, 19 - dayOffset, 12, 0, 0)).toISOString() as IsoDateTime;
     const buildDate = (dayOffset: number): IsoDate =>
       buildTimestamp(dayOffset).slice(0, 10) as IsoDate;
-    const getTransactionsPaginated = vi.fn().mockReturnValue(
+    const getTransactionsPaginated = vi.fn<(...args: any[]) => any>().mockReturnValue(
       Array.from({ length: totalItems }, (_, index) =>
         makeTransactionRow({
           id: `tx-${index}` as TransactionId,
@@ -252,7 +256,7 @@ describe("activity query service", () => {
         })
       )
     );
-    const getTransfersPaginated = vi.fn().mockReturnValue(
+    const getTransfersPaginated = vi.fn<(...args: any[]) => any>().mockReturnValue(
       Array.from({ length: totalItems }, (_, index) =>
         makeTransferRow({
           id: `tr-${index}` as TransferId,

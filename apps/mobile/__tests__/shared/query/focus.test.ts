@@ -1,8 +1,8 @@
 // biome-ignore-all lint/style/useNamingConvention: mocked React Native module preserves API names
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const setFocused = vi.fn();
-const addEventListener = vi.fn();
+const setFocused = vi.fn<(...args: any[]) => any>();
+const addEventListener = vi.fn<(...args: any[]) => any>();
 
 vi.mock("@tanstack/react-query", () => ({
   focusManager: {
@@ -22,7 +22,7 @@ describe("installQueryFocusSubscription", () => {
   });
 
   test("syncs Query focus with active app state and cleans up the listener", async () => {
-    const remove = vi.fn();
+    const remove = vi.fn<(...args: any[]) => any>();
     addEventListener.mockReturnValue({ remove });
 
     const { installQueryFocusSubscription } = await import("@/shared/query/focus");
