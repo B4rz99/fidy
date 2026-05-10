@@ -2,12 +2,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { UserId } from "@/shared/types/branded";
-
-vi.mock("@/shared/db", () => ({
-  getSupabase: vi.fn(),
-}));
-
 import {
   deleteAccountRequest,
   fetchNotificationPreferences,
@@ -17,6 +11,11 @@ import {
 import { getSupabase } from "@/shared/db";
 import en from "@/shared/i18n/locales/en";
 import es from "@/shared/i18n/locales/es";
+import type { UserId } from "@/shared/types/branded";
+
+vi.mock("@/shared/db", () => ({
+  getSupabase: vi.fn(),
+}));
 
 const mockSelect = vi.fn();
 const mockEq = vi.fn();

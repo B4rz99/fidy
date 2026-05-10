@@ -1,4 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import { submitTransferForm } from "@/features/transfers/components/transfer-form/saveTransferForm";
 import type { AnyDb } from "@/shared/db";
 import type { FinancialAccountId, UserId } from "@/shared/types/branded";
 
@@ -14,8 +15,6 @@ vi.mock("@/features/transactions/store.public", () => ({
 vi.mock("@/features/transfers/lib/reclassify-transaction-as-transfer", () => ({
   reclassifyTransactionAsTransfer: reclassifyTransactionAsTransferMock,
 }));
-
-import { submitTransferForm } from "@/features/transfers/components/transfer-form/saveTransferForm";
 
 const db = {} as AnyDb;
 const userId = "user-1" as UserId;

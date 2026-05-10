@@ -1,12 +1,11 @@
 // biome-ignore-all lint/style/useNamingConvention: test fixtures mirror HTTP headers and Supabase payloads
 import { describe, expect, it, vi } from "vitest";
+import { createAiChatApiService } from "@/features/ai-chat/services/create-ai-chat-api-service";
+import { requireMonth } from "@/shared/types/assertions";
 
 vi.mock("expo/fetch", () => ({
   fetch: globalThis.fetch,
 }));
-
-import { createAiChatApiService } from "@/features/ai-chat/services/create-ai-chat-api-service";
-import { requireMonth } from "@/shared/types/assertions";
 
 describe("createAiChatApiService", () => {
   it("streams chunks with auth headers from Supabase session", async () => {

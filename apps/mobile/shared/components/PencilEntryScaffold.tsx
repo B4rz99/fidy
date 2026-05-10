@@ -17,9 +17,9 @@ import {
   View,
 } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { styles } from "./PencilEntryScaffold.styles";
 export { PencilEntryField, PencilEntryTextInputField } from "./PencilEntryField";
 export type { PencilEntryFieldProps } from "./PencilEntryField";
-import { styles } from "./PencilEntryScaffold.styles";
 
 export type PencilEntryTab = "expense" | "income" | "transfer";
 
