@@ -68,6 +68,7 @@ module.exports = defineConfig([
     },
     settings: {
       "boundaries/elements": BOUNDARY_ELEMENTS,
+      "import/core-modules": ["expo-navigation-bar"],
     },
   },
   {
