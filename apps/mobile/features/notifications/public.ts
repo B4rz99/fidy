@@ -1,4 +1,5 @@
 import * as Notifications from "expo-notifications";
+import { deletePushToken, PROJECT_ID } from "./services/push-token";
 
 export type { AlertAction } from "./lib/permission";
 export { determineAlertAction, PRE_PERMISSION_KEY } from "./lib/permission";
@@ -9,8 +10,6 @@ export type {
   StoredNotification,
 } from "./lib/types";
 export { scheduleLocalPush } from "./services/local-push";
-
-import { deletePushToken, PROJECT_ID } from "./services/push-token";
 
 export { deletePushToken, PROJECT_ID, registerPushToken } from "./services/push-token";
 export {

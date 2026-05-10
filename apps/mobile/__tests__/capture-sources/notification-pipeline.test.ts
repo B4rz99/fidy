@@ -118,28 +118,6 @@ function makeNotification(overrides: Partial<NotificationData> = {}): Notificati
   };
 }
 
-function expectSavedNotificationTransaction(transactionId: string) {
-  expect(mockInsertTransaction).toHaveBeenCalledWith(
-    mockDb,
-    expect.objectContaining({
-      userId: USER_ID,
-      type: "expense",
-      amount: 50000,
-      description: "EDS LA CASTELLANA",
-      accountId: "fa-default-user-1",
-      accountAttributionState: "unresolved",
-      source: "notification_android",
-    })
-  );
-  expect(mockInsertProcessedCapture).toHaveBeenCalledWith(
-    mockDb,
-    expect.objectContaining({
-      status: "success",
-      transactionId,
-    })
-  );
-}
-
 function expectSavedNotificationEvidence(transactionId: string) {
   expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
     mockDb,

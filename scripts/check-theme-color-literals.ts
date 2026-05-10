@@ -28,8 +28,10 @@ const ALLOWED_FILES = new Set([
   normalizePath(join("apps", "mobile", "shared", "constants", "theme.ts")),
 ]);
 
-const withOptions = (options: CliOptions, patch: Partial<CliOptions>): CliOptions =>
-  Object.assign({}, options, patch);
+const withOptions = (options: CliOptions, patch: Partial<CliOptions>): CliOptions => ({
+  ...options,
+  ...patch,
+});
 
 function normalizePath(path: string): string {
   return path.replaceAll("\\", "/");

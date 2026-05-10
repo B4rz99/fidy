@@ -26,9 +26,7 @@ export async function scheduleBillNotifications(_bill: Bill): Promise<string[]> 
 /**
  * Cancel bill notifications — no-op.
  */
-export async function cancelBillNotifications(_ids: string[]): Promise<void> {
-  return;
-}
+export async function cancelBillNotifications(_ids: string[]): Promise<void> {}
 
 /**
  * Request notification permissions — no-op, returns false.

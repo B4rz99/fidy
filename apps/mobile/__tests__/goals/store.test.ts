@@ -9,6 +9,7 @@ import {
 } from "@/features/goals/store";
 import type { GoalWithProgress } from "@/features/goals/types";
 import { insertNotificationRecord } from "@/features/notifications";
+import type * as SharedLib from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 
 const mockLoadGoals = vi.fn();
@@ -61,7 +62,7 @@ vi.mock("@/features/notifications", () => ({
 }));
 
 vi.mock("@/shared/lib", async () => {
-  const actual = await vi.importActual<typeof import("@/shared/lib")>("@/shared/lib");
+  const actual = await vi.importActual<typeof SharedLib>("@/shared/lib");
   return {
     ...actual,
     captureError: vi.fn(),

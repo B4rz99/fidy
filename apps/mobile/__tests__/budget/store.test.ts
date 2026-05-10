@@ -1,5 +1,6 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: focused store test uses lightweight mocks
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type * as TransactionsModule from "@/features/transactions";
 import type { CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
 
 const mockCreateBudgetMonitoringModule = vi.fn();
@@ -29,7 +30,7 @@ vi.mock("@/features/settings", () => ({
 }));
 
 vi.mock("@/features/transactions", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/features/transactions")>();
+  const actual = await importOriginal<typeof TransactionsModule>();
   return {
     ...actual,
     // biome-ignore lint/style/useNamingConvention: mock matches exported constant name

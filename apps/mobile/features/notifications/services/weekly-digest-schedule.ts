@@ -42,9 +42,7 @@ export async function cancelWeeklyDigestNotification(userId: UserId): Promise<vo
   try {
     await SecureStore.deleteItemAsync(WEEKLY_DIGEST_NOTIFICATION_KEY);
     await SecureStore.deleteItemAsync(legacyScheduledDigestKey(userId));
-  } catch {
-    return;
-  }
+  } catch {}
 }
 
 export async function cleanupLegacyWeeklyDigestNotificationSchedules(
