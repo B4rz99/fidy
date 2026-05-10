@@ -14,7 +14,7 @@ export function useCurrentDate(): Date {
     let timeout: ReturnType<typeof setTimeout> | null = null;
     const scheduleNextTick = () => {
       timeout = setTimeout(() => {
-      setCurrentDate(new Date());
+        setCurrentDate(new Date());
         scheduleNextTick();
       }, getMsUntilTomorrow(new Date()));
     };

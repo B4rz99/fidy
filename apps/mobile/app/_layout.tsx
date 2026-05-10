@@ -112,110 +112,6 @@ function AuthenticatedShell({
   return null;
 }
 
-type RootStackScreensInput = {
-  readonly localQaAvailable: boolean;
-  readonly theme: (typeof Colors)["light"];
-};
-
-function renderRootStackScreens({ localQaAvailable, theme }: RootStackScreensInput) {
-  const iosHeaderOptions = {
-    headerShown: Platform.OS === "ios",
-    headerStyle: { backgroundColor: theme.page },
-    headerTintColor: theme.primary,
-  };
-  const iosHeaderRoutes = [
-    "analytics",
-    "notifications",
-    "search",
-    "connected-accounts",
-    "account-suggestions",
-    "create-financial-account",
-    "financial-accounts",
-    "financial-account-details",
-    "financial-account-form",
-    "failed-emails",
-    "profile",
-    "settings",
-    "goal-detail",
-    "bills-calendar",
-    "ai-memories",
-    "notification-preferences",
-    "categories",
-  ];
-  const fitFormSheetRoutes = [
-    "create-budget",
-    "auto-suggest-budgets",
-    "create-goal",
-    "add-payment",
-    "edit-goal",
-    "create-category",
-  ];
-
-  return (
-    <>
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
-      {localQaAvailable ? <Stack.Screen name="qa-tools" options={iosHeaderOptions} /> : null}
-      {localQaAvailable ? <Stack.Screen name="qa-open" options={iosHeaderOptions} /> : null}
-      <Stack.Screen name="add-bill" options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }} />
-      <Stack.Screen
-        name="day-detail"
-        options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
-      />
-      <Stack.Screen name="theme-picker" options={{ ...SHEET, sheetAllowedDetents: [0.24] }} />
-      <Stack.Screen name="language-picker" options={{ ...SHEET, sheetAllowedDetents: [0.18] }} />
-      <Stack.Screen
-        name="delete-account"
-        options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
-      />
-      <Stack.Screen
-        name="enable-notifications"
-        options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
-      />
-      {iosHeaderRoutes.map((name) => (
-        <Stack.Screen key={name} name={name} options={iosHeaderOptions} />
-      ))}
-      <Stack.Screen
-        name="financial-account-identifier"
-        options={{ ...SHEET, ...iosHeaderOptions, sheetAllowedDetents: [0.62] }}
-      />
-      <Stack.Screen
-        name="link-suggested-account"
-        options={{ ...SHEET, ...iosHeaderOptions, sheetAllowedDetents: [0.8] }}
-      />
-      {fitFormSheetRoutes.map((name) => (
-        <Stack.Screen
-          key={name}
-          name={name}
-          options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
-        />
-      ))}
-      <Stack.Screen
-        name="add-transaction"
-        options={{
-          ...SHEET,
-          sheetAllowedDetents: [0.65],
-          gestureEnabled: false,
-          sheetGrabberVisible: false,
-        }}
-      />
-      <Stack.Screen name="add-transfer" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="edit-transaction"
-        options={{
-          ...SHEET,
-          sheetAllowedDetents: [0.65],
-          gestureEnabled: false,
-          sheetGrabberVisible: false,
-        }}
-      />
-      {localQaAvailable ? (
-        <Stack.Screen name="qa-transfer-conflict" options={{ headerShown: false }} />
-      ) : null}
-    </>
-  );
-}
-
 function RootLayout() {
   const isAuthLoading = useAuthStore((s) => s.isLoading);
   const authMode = useAuthMode();
@@ -293,13 +189,114 @@ function RootLayout() {
   }
 
   const db = userId ? getDb(userId) : null;
-  const rootStackScreens = renderRootStackScreens({ localQaAvailable, theme });
+  const iosHeaderOptions = {
+    headerShown: Platform.OS === "ios",
+    headerStyle: { backgroundColor: theme.page },
+    headerTintColor: theme.primary,
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SentryErrorBoundary fallback={ErrorFallback}>
         <QueryProvider>
-          <Stack screenOptions={{ headerShown: false }}>{rootStackScreens}</Stack>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            {localQaAvailable ? <Stack.Screen name="qa-tools" options={iosHeaderOptions} /> : null}
+            {localQaAvailable ? <Stack.Screen name="qa-open" options={iosHeaderOptions} /> : null}
+            <Stack.Screen
+              name="add-bill"
+              options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="day-detail"
+              options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen name="theme-picker" options={{ ...SHEET, sheetAllowedDetents: [0.24] }} />
+            <Stack.Screen
+              name="language-picker"
+              options={{ ...SHEET, sheetAllowedDetents: [0.18] }}
+            />
+            <Stack.Screen
+              name="delete-account"
+              options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="enable-notifications"
+              options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen name="analytics" options={iosHeaderOptions} />
+            <Stack.Screen name="notifications" options={iosHeaderOptions} />
+            <Stack.Screen name="search" options={iosHeaderOptions} />
+            <Stack.Screen name="connected-accounts" options={iosHeaderOptions} />
+            <Stack.Screen name="account-suggestions" options={iosHeaderOptions} />
+            <Stack.Screen name="create-financial-account" options={iosHeaderOptions} />
+            <Stack.Screen name="financial-accounts" options={iosHeaderOptions} />
+            <Stack.Screen name="financial-account-details" options={iosHeaderOptions} />
+            <Stack.Screen name="financial-account-form" options={iosHeaderOptions} />
+            <Stack.Screen name="failed-emails" options={iosHeaderOptions} />
+            <Stack.Screen name="profile" options={iosHeaderOptions} />
+            <Stack.Screen name="settings" options={iosHeaderOptions} />
+            <Stack.Screen
+              name="financial-account-identifier"
+              options={{ ...SHEET, ...iosHeaderOptions, sheetAllowedDetents: [0.62] }}
+            />
+            <Stack.Screen
+              name="link-suggested-account"
+              options={{ ...SHEET, ...iosHeaderOptions, sheetAllowedDetents: [0.8] }}
+            />
+            <Stack.Screen
+              name="create-budget"
+              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="auto-suggest-budgets"
+              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen name="goal-detail" options={iosHeaderOptions} />
+            <Stack.Screen
+              name="create-goal"
+              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="add-payment"
+              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="edit-goal"
+              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="add-transaction"
+              options={{
+                ...SHEET,
+                sheetAllowedDetents: [0.65],
+                gestureEnabled: false,
+                sheetGrabberVisible: false,
+              }}
+            />
+            <Stack.Screen name="add-transfer" options={{ headerShown: false }} />
+            <Stack.Screen name="bills-calendar" options={iosHeaderOptions} />
+            <Stack.Screen name="ai-memories" options={iosHeaderOptions} />
+            <Stack.Screen name="notification-preferences" options={iosHeaderOptions} />
+            <Stack.Screen name="categories" options={iosHeaderOptions} />
+            <Stack.Screen
+              name="create-category"
+              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+            />
+            <Stack.Screen
+              name="edit-transaction"
+              options={{
+                ...SHEET,
+                sheetAllowedDetents: [0.65],
+                gestureEnabled: false,
+                sheetGrabberVisible: false,
+              }}
+            />
+            {localQaAvailable ? (
+              <Stack.Screen name="qa-transfer-conflict" options={{ headerShown: false }} />
+            ) : null}
+          </Stack>
           {db && userId && onboardingComplete && (
             <AuthenticatedShell
               db={db}
