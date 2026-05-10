@@ -47,12 +47,10 @@
         "expo": "56.0.0-preview.7",
         "expo-android-notification-listener-service": "^1.1.0",
         "expo-background-task": "~56.0.5",
-        "expo-blur": "~56.0.3",
         "expo-constants": "~56.0.6",
         "expo-crypto": "~56.0.3",
         "expo-dev-client": "~56.0.5",
         "expo-font": "~56.0.3",
-        "expo-glass-effect": "~56.0.4",
         "expo-haptics": "~56.0.3",
         "expo-image": "~56.0.4",
         "expo-linking": "~56.0.4",
@@ -1568,8 +1566,6 @@
     "expo-atlas": ["expo-atlas@0.4.3", "", { "dependencies": { "@expo/server": "^0.5.0", "arg": "^5.0.2", "chalk": "^4.1.2", "compression": "^1.7.4", "connect": "^3.7.0", "express": "^4.19.2", "freeport-async": "^2.0.0", "getenv": "^2.0.0", "morgan": "^1.10.0", "open": "^8.4.2", "serve-static": "^1.15.0", "stream-json": "^1.8.0" }, "peerDependencies": { "expo": "*" }, "bin": { "expo-atlas": "build/src/cli/bin.js" } }, "sha512-nN2bouxFvMsqZqLl0ka+eI9Ofida0PcuoE4v+7fHlgyp95X2cCL8Acf0nRKXmmIBEYazdw0d7BAOZfC0b41oxA=="],
 
     "expo-background-task": ["expo-background-task@56.0.5", "", { "dependencies": { "expo-task-manager": "~56.0.5" }, "peerDependencies": { "expo": "*" } }, "sha512-h0GDlqGWmgr1U2A+MNxNMJuAeZaVulu/EKEQfNukWTrqmH0S1LjJp1Qe1w95E5rRY4geMhvB+al4QXEifk6hFA=="],
-
-    "expo-blur": ["expo-blur@56.0.3", "", { "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "sha512-KDDtrpWc2tYlm1WCPaOgBtv+YEGqe5ELheFPIgSNgHt28NQUDcfBcFsA9Us2StDh6osmSD6NbKxOt5bU6PcDbQ=="],
 
     "expo-constants": ["expo-constants@56.0.6", "", { "dependencies": { "@expo/env": "~2.2.0" }, "peerDependencies": { "expo": "*", "react-native": "*" } }, "sha512-3i1yDPKrHFyfBXNx9FzJUbIAJ5Lmmp+LGy9vtFCavidrf4geZywty1aPQWZCAw0LPFBrEEiROREV9ABHGGDbwA=="],
 
