@@ -1,14 +1,27 @@
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
-import { PRE_PERMISSION_KEY, registerPushToken } from "@/features/notifications/hooks.public";
+import {
+  PRE_PERMISSION_KEY,
+  registerPushToken,
+  requestNotificationPermissionStatus,
+} from "@/features/notifications/hooks.public";
 import { Bell } from "@/shared/components/icons";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { captureError } from "@/shared/lib";
+import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
+import { captureError, captureWarning } from "@/shared/lib";
+
+const PERMISSION_REQUEST_TIMEOUT_MS = 2500;
+
+const logNotificationPromptStage = (stage: string, details?: Record<string, unknown>) => {
+  if (!__DEV__) return;
+
+  // eslint-disable-next-line no-console -- temporary prompt diagnostics for Expo notification hangs.
+  console.info("[notifications:enable-prompt]", stage, details ?? {});
+};
 
 export default function EnableNotificationsSheet() {
   const { t } = useTranslation();
@@ -18,29 +31,62 @@ export default function EnableNotificationsSheet() {
   const accentGreen = useThemeColor("accentGreen");
   const borderColor = useThemeColor("borderSubtle");
   const [isRequesting, setIsRequesting] = useState(false);
+  const isMountedRef = useRef(true);
+  const actionVersionRef = useRef(0);
 
-  const handleEnable = async () => {
-    setIsRequesting(true);
-    const status = await Notifications.requestPermissionsAsync()
-      .then((result) => result.status)
-      .catch((err) => {
-        captureError(err instanceof Error ? err : new Error("Permission request failed"));
-        return null;
-      });
+  useMountEffect(() => () => {
+    isMountedRef.current = false;
+  });
 
-    if (status === "granted" && userId) {
-      await registerPushToken(userId).catch(captureError);
-    }
+  const markPrePermissionSeen = () => {
+    void SecureStore.setItemAsync(PRE_PERMISSION_KEY, "true").catch(captureError);
+  };
 
-    // Mark pre-permission as seen regardless of outcome.
-    await SecureStore.setItemAsync(PRE_PERMISSION_KEY, "true").catch(captureError);
-    setIsRequesting(false);
+  const dismissSheet = () => {
+    markPrePermissionSeen();
+    if (isMountedRef.current) setIsRequesting(false);
+    logNotificationPromptStage("dismiss");
     router.back();
   };
 
-  const handleNotNow = async () => {
-    await SecureStore.setItemAsync(PRE_PERMISSION_KEY, "true").catch(captureError);
-    router.back();
+  const handleEnable = async () => {
+    const actionVersion = actionVersionRef.current + 1;
+
+    actionVersionRef.current = actionVersion;
+    logNotificationPromptStage("enable_tapped");
+    setIsRequesting(true);
+    const permissionRequest = Notifications.requestPermissionsAsync();
+
+    void permissionRequest
+      .then((result) => {
+        if (result.status !== "granted" || !userId || actionVersionRef.current !== actionVersion) {
+          return;
+        }
+
+        logNotificationPromptStage("register_push_token", { timing: "permission_result" });
+        void registerPushToken(userId).catch(captureError);
+      })
+      .catch(() => undefined);
+
+    const status = await requestNotificationPermissionStatus({
+      captureWarning,
+      requestPermissions: () => permissionRequest,
+      timeoutMs: PERMISSION_REQUEST_TIMEOUT_MS,
+    });
+    logNotificationPromptStage("permission_finished", { status });
+
+    if (actionVersionRef.current !== actionVersion || !isMountedRef.current) {
+      logNotificationPromptStage("stale_enable_ignored", { status });
+      return;
+    }
+
+    dismissSheet();
+  };
+
+  const handleNotNow = () => {
+    actionVersionRef.current += 1;
+    logNotificationPromptStage("not_now_tapped");
+    dismissSheet();
   };
 
   return (
@@ -105,7 +151,6 @@ export default function EnableNotificationsSheet() {
           onPress={() => {
             void handleNotNow();
           }}
-          disabled={isRequesting}
           style={{
             height: 48,
             borderRadius: 16,
