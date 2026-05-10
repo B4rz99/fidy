@@ -1,9 +1,12 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: mock db needs flexible typing
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getUserCategoriesForUser, insertUserCategory } from "@/features/categories/lib/repository";
 import { CATEGORIES, CATEGORY_ROWS } from "@/features/transactions/lib/categories";
+import type { AnyDb } from "@/shared/db";
 import type { IsoDateTime, UserCategoryId, UserId } from "@/shared/types/branded";
+
+const GENERATED_CATEGORY_ID = "ucat-test-123" as UserCategoryId;
+const MOCK_NOW = "2026-03-21T12:00:00.000Z" as IsoDateTime;
 
 // Mock the repository
 vi.mock("@/features/categories/lib/repository", () => ({
