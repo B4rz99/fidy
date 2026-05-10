@@ -28,6 +28,9 @@ vi.mock("@/shared/db/supabase", () => ({
 const mockGetExpoPushTokenAsync = vi.fn<(...args: any[]) => any>((_opts?: unknown) =>
   Promise.resolve({ data: MOCK_TOKEN })
 );
+const mockGetPermissionsAsync = vi.fn<(...args: any[]) => any>(() =>
+  Promise.resolve({ status: "granted", granted: true, canAskAgain: true })
+);
 const mockGetDevicePushTokenAsync = vi.fn<(...args: any[]) => any>((_opts?: unknown) =>
   Promise.resolve()
 );
@@ -36,9 +39,7 @@ vi.mock("expo-notifications", () => ({
   getExpoPushTokenAsync: (opts?: unknown) => mockGetExpoPushTokenAsync(opts),
   getDevicePushTokenAsync: (opts?: unknown) => mockGetDevicePushTokenAsync(opts),
   setNotificationHandler: vi.fn<(...args: any[]) => any>(),
-  getPermissionsAsync: vi.fn<(...args: any[]) => any>(() =>
-    Promise.resolve({ status: "granted", granted: true, canAskAgain: true })
-  ),
+  getPermissionsAsync: (...args: any[]) => mockGetPermissionsAsync(...args),
   requestPermissionsAsync: vi.fn<(...args: any[]) => any>(() =>
     Promise.resolve({ status: "granted", granted: true, canAskAgain: true })
   ),
@@ -61,6 +62,9 @@ vi.mock("expo-constants", () => ({
 describe("push-token service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
+    mockGetPermissionsAsync.mockResolvedValue({ status: "granted", granted: true, canAskAgain: true });
+    mockGetExpoPushTokenAsync.mockResolvedValue({ data: MOCK_TOKEN });
     mockEq.mockReturnValue(Promise.resolve({ error: null }));
   });
 
@@ -105,6 +109,41 @@ describe("push-token service", () => {
 
       const token = await registerPushToken(MOCK_USER_ID);
       expect(token).toBeNull();
+    });
+
+    it("does not request an Expo token before notification permission is granted", async () => {
+      mockGetPermissionsAsync.mockResolvedValueOnce({
+        status: "undetermined",
+        granted: false,
+        canAskAgain: true,
+      });
+
+      const { registerPushToken } = await import("@/features/notifications/services/push-token");
+
+      const token = await registerPushToken(MOCK_USER_ID);
+
+      expect(token).toBeNull();
+      expect(mockGetExpoPushTokenAsync).not.toHaveBeenCalled();
+      expect(mockUpsert).not.toHaveBeenCalled();
+    });
+
+    it("retries canceled fetches when requesting the Expo push token", async () => {
+      vi.useFakeTimers();
+      mockGetExpoPushTokenAsync
+        .mockRejectedValueOnce(new Error("fetch failed: Fetch request has been canceled"))
+        .mockResolvedValueOnce({ data: MOCK_TOKEN });
+
+      const { registerPushToken } = await import("@/features/notifications/services/push-token");
+      const result = registerPushToken(MOCK_USER_ID);
+
+      await vi.advanceTimersByTimeAsync(750);
+
+      await expect(result).resolves.toBe(MOCK_TOKEN);
+      expect(mockGetExpoPushTokenAsync).toHaveBeenCalledTimes(2);
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({ expo_push_token: MOCK_TOKEN }),
+        { onConflict: "user_id,expo_push_token" }
+      );
     });
 
     it("upserts known listener tokens without fetching a fresh Expo token", async () => {

@@ -7,6 +7,12 @@ import type { UserId } from "@/shared/types/branded";
 
 const easConfig = Constants.expoConfig?.extra?.eas as { projectId?: string } | undefined;
 export const PROJECT_ID = easConfig?.projectId ?? "";
+const PUSH_TOKEN_RETRY_DELAYS_MS = [750, 2000] as const;
+
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isCanceledFetchError = (error: unknown): boolean =>
+  error instanceof Error && /fetch failed: Fetch request has been canceled/i.test(error.message);
 
 async function upsertPushToken(userId: UserId, token: string): Promise<string | null> {
   const supabase = getSupabase();
@@ -39,9 +45,19 @@ async function upsertPushToken(userId: UserId, token: string): Promise<string | 
  */
 export async function registerPushToken(userId: UserId): Promise<string | null> {
   try {
-    const { data: token } = await Notifications.getExpoPushTokenAsync({
-      projectId: PROJECT_ID,
-    });
+    const permission = await Notifications.getPermissionsAsync();
+    if (permission.status !== "granted") return null;
+
+    const { data: token } = await PUSH_TOKEN_RETRY_DELAYS_MS.reduce<Promise<{ data: string }>>(
+      (attempt, delayMs) =>
+        attempt.catch(async (error) => {
+          if (!isCanceledFetchError(error)) throw error;
+
+          await sleep(delayMs);
+          return Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
+        }),
+      Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID })
+    );
 
     return await upsertPushToken(userId, token);
   } catch (err) {
