@@ -28,12 +28,17 @@ Fidy is designed for people who want to:
 
 ## Features
 
-- Digital transaction capture from supported payment and notification surfaces.
-- Local-first ledger for transactions, transfers, accounts, budgets, goals, and financial derivations.
-- Capture evidence interpretation for turning raw signals into reviewable financial records.
-- AI-assisted transaction interpretation and personal finance guidance.
-- Private recovery through encrypted backups instead of plaintext financial sync.
-- Mobile-first flows for everyday budgeting, goal tracking, and financial review.
+- **A clear money home**: See balances, recent activity, spending trends, and items that need attention from one dashboard.
+- **Fast transaction tracking**: Add expenses, income, and transfers manually, or let Fidy capture digital transactions where supported.
+- **Account organization**: Track cash, bank accounts, wallets, and credit cards, including account details that help Fidy place future transactions correctly.
+- **Budget control**: Set monthly spending limits, copy budgets forward, and get alerts when a category is close to or over budget.
+- **Savings and debt goals**: Create goals, record contributions, follow progress, and see simple recommendations for staying on pace.
+- **Spending insights**: Review income, expenses, category breakdowns, and period-over-period changes across weekly, monthly, quarterly, and yearly views.
+- **AI finance chat**: Ask Fidy questions about spending, trends, transactions, and next steps in plain language.
+- **Review queues for accuracy**: Confirm ambiguous captures, choose the right account owner, and correct transactions before they affect the wrong place.
+- **Search and categorization**: Find transactions by text, date, amount, category, or type, and customize categories to match how you think about spending.
+- **Notifications and weekly summaries**: Get budget alerts, goal milestone updates, spending alerts, and private weekly money summaries.
+- **Private backup**: Recover financial records through encrypted backups without turning Fidy servers into a readable copy of the ledger.
 
 ## Stack
 
