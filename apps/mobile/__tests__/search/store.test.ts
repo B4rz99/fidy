@@ -1,4 +1,3 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: search store tests use flexible mock rows
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_FILTERS } from "@/features/search/public";
 import {
@@ -7,25 +6,33 @@ import {
   updateSearchQuery,
   useSearchStore,
 } from "@/features/search/store";
+import type { StoredTransaction } from "@/features/transactions/query.public";
+import type { AnyDb } from "@/shared/db/client";
 import { requireUserId } from "@/shared/types/assertions";
 
-const mockSearchTransactionsPaginated = vi.fn();
-const mockSearchTransactionsAggregate = vi.fn();
-const mockToStoredTransaction = vi.fn((row: any) => ({
-  ...row,
-  converted: true,
-}));
+type SearchRow = ReturnType<typeof makeRow>;
+type SearchSummary = { readonly count: number; readonly total: number };
+
+const mockSearchTransactionsPaginated = vi.fn<(...args: unknown[]) => SearchRow[]>();
+const mockSearchTransactionsAggregate = vi.fn<(...args: unknown[]) => SearchSummary>();
+const mockToStoredTransaction = vi.fn<(row: SearchRow) => StoredTransaction & { converted: true }>(
+  (row) =>
+    ({
+      ...row,
+      converted: true,
+    }) as unknown as StoredTransaction & { converted: true }
+);
 
 vi.mock("@/features/search/lib/repository", () => ({
-  searchTransactionsPaginated: (...args: any[]) => mockSearchTransactionsPaginated(...args),
-  searchTransactionsAggregate: (...args: any[]) => mockSearchTransactionsAggregate(...args),
+  searchTransactionsPaginated: (...args: unknown[]) => mockSearchTransactionsPaginated(...args),
+  searchTransactionsAggregate: (...args: unknown[]) => mockSearchTransactionsAggregate(...args),
 }));
 
 vi.mock("@/features/transactions/query.public", () => ({
-  toStoredTransaction: (row: any) => mockToStoredTransaction(row),
+  toStoredTransaction: (row: SearchRow) => mockToStoredTransaction(row),
 }));
 
-const mockDb = {} as any;
+const mockDb = {} as unknown as AnyDb;
 const USER_ID = requireUserId("user-1");
 
 const makeRow = (id: string) => ({
@@ -77,7 +84,7 @@ describe("search store boundary", () => {
 
   it("loads the next page through the explicit boundary", () => {
     useSearchStore.setState({
-      results: [makeRow("tx-1")] as any,
+      results: [mockToStoredTransaction(makeRow("tx-1"))],
       offset: 1,
       hasMore: true,
     });
@@ -93,7 +100,7 @@ describe("search store boundary", () => {
       offset: 1,
     });
     expect(useSearchStore.getState().results).toEqual([
-      makeRow("tx-1"),
+      mockToStoredTransaction(makeRow("tx-1")),
       expect.objectContaining({ id: "tx-2" }),
       expect.objectContaining({ id: "tx-3" }),
     ]);
