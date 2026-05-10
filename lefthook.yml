@@ -13,13 +13,15 @@ pre-commit:
 
 commit-msg:
   commands:
-    commit-msg-format:
-      run: bun scripts/check-commit-message.ts {1}
-    commit-body-format:
+    commit-message-format:
       run: bun scripts/check-commit-message.ts {1}
 
 pre-push:
   commands:
+    pushed-commit-messages:
+      files: git ls-files
+      run: bun scripts/check-pushed-commit-messages.ts
+      skip_output: false
     root-oxlint:
       files: git ls-files
       run: bun run lint
