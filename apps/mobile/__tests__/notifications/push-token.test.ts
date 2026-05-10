@@ -63,7 +63,11 @@ describe("push-token service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useRealTimers();
-    mockGetPermissionsAsync.mockResolvedValue({ status: "granted", granted: true, canAskAgain: true });
+    mockGetPermissionsAsync.mockResolvedValue({
+      status: "granted",
+      granted: true,
+      canAskAgain: true,
+    });
     mockGetExpoPushTokenAsync.mockResolvedValue({ data: MOCK_TOKEN });
     mockEq.mockReturnValue(Promise.resolve({ error: null }));
   });
