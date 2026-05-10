@@ -869,7 +869,6 @@
     "@react-native/js-polyfills": ["@react-native/js-polyfills@0.85.3", "", {}, "sha512-U2+aMshIXf1uFn77tpBb/xhHWB9vkVrMpt7kkucAugF8hJKYTDGB587X7WwelHduK2KBfhl4giSv0rzZGoef9A=="],
 
     "@react-native/metro-babel-transformer": ["@react-native/metro-babel-transformer@0.85.3", "", { "dependencies": { "@babel/core": "^7.25.2", "@react-native/babel-preset": "0.85.3", "hermes-parser": "0.33.3", "nullthrows": "^1.1.1" } }, "sha512-omuKq+r7jM4XvCMIlNMPP7Up3SyB8o5EAdZtF7YXniKyq7UOMBqhYHFqgsdOXr0lT+3ADf7VCJG3sb82jlBrrQ=="],
-
     "@react-native/metro-config": ["@react-native/metro-config@0.85.3", "", { "dependencies": { "@react-native/js-polyfills": "0.85.3", "@react-native/metro-babel-transformer": "0.85.3", "metro-config": "^0.84.3", "metro-runtime": "^0.84.3" } }, "sha512-sVo6HepUmCcpdfozEf91lA0FjpLNNZYu/Zi9FiYiAQTK8pzATXDVTqhvdxpFrQn435p5eUTSbllvbH/KN+bnyA=="],
 
     "@react-native/normalize-colors": ["@react-native/normalize-colors@0.85.3", "", {}, "sha512-hj0PScZEhIbcOvQV5yMKX3ha4XEIOy/SVE1Rrpp0beW0dpNLOgSC7KDxGewmDnIHK9YdQUXGY9eMEfShUMIaZw=="],
