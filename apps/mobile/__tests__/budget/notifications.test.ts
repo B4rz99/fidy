@@ -112,6 +112,36 @@ describe("scheduleBudgetAlert", () => {
     expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
   });
 
+  it("shows the permission prompt only while permission is undetermined and unseen", async () => {
+    mockGetPermissionsAsync.mockResolvedValue({
+      status: "undetermined",
+      granted: false,
+      canAskAgain: true,
+    });
+    mockGetItemAsync.mockResolvedValue(null);
+    const { shouldShowNotificationPrePermissionPrompt } =
+      await import("@/features/notifications/public");
+
+    await expect(shouldShowNotificationPrePermissionPrompt()).resolves.toBe(true);
+
+    mockGetPermissionsAsync.mockResolvedValue({
+      status: "granted",
+      granted: true,
+      canAskAgain: true,
+    });
+
+    await expect(shouldShowNotificationPrePermissionPrompt()).resolves.toBe(false);
+
+    mockGetPermissionsAsync.mockResolvedValue({
+      status: "undetermined",
+      granted: false,
+      canAskAgain: true,
+    });
+    mockGetItemAsync.mockResolvedValue("true" as unknown as null);
+
+    await expect(shouldShowNotificationPrePermissionPrompt()).resolves.toBe(false);
+  });
+
   it("returns { type: 'needs_permission' } when SecureStore lookup fails", async () => {
     mockGetPermissionsAsync.mockResolvedValue({
       status: "undetermined",

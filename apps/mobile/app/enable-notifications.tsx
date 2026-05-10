@@ -1,11 +1,11 @@
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import { useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
-  PRE_PERMISSION_KEY,
+  markPrePermissionSeen,
+  markPrePermissionSeenAsync,
   registerPushToken,
   requestNotificationPermissionStatus,
 } from "@/features/notifications/hooks.public";
@@ -15,13 +15,6 @@ import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError, captureWarning } from "@/shared/lib";
 
 const PERMISSION_REQUEST_TIMEOUT_MS = 2500;
-
-const logNotificationPromptStage = (stage: string, details?: Record<string, unknown>) => {
-  if (!__DEV__) return;
-
-  // eslint-disable-next-line no-console -- temporary prompt diagnostics for Expo notification hangs.
-  console.info("[notifications:enable-prompt]", stage, details ?? {});
-};
 
 export default function EnableNotificationsSheet() {
   const { t } = useTranslation();
@@ -38,14 +31,14 @@ export default function EnableNotificationsSheet() {
     isMountedRef.current = false;
   });
 
-  const markPrePermissionSeen = () => {
-    void SecureStore.setItemAsync(PRE_PERMISSION_KEY, "true").catch(captureError);
-  };
-
   const dismissSheet = () => {
-    markPrePermissionSeen();
+    try {
+      markPrePermissionSeen();
+    } catch (error) {
+      captureError(error);
+      void markPrePermissionSeenAsync().catch(captureError);
+    }
     if (isMountedRef.current) setIsRequesting(false);
-    logNotificationPromptStage("dismiss");
     router.back();
   };
 
@@ -53,8 +46,13 @@ export default function EnableNotificationsSheet() {
     const actionVersion = actionVersionRef.current + 1;
 
     actionVersionRef.current = actionVersion;
-    logNotificationPromptStage("enable_tapped");
     setIsRequesting(true);
+    try {
+      markPrePermissionSeen();
+    } catch (error) {
+      captureError(error);
+      void markPrePermissionSeenAsync().catch(captureError);
+    }
     const permissionRequest = Notifications.requestPermissionsAsync();
 
     void permissionRequest
@@ -63,20 +61,17 @@ export default function EnableNotificationsSheet() {
           return;
         }
 
-        logNotificationPromptStage("register_push_token", { timing: "permission_result" });
         void registerPushToken(userId).catch(captureError);
       })
       .catch(() => undefined);
 
-    const status = await requestNotificationPermissionStatus({
+    await requestNotificationPermissionStatus({
       captureWarning,
       requestPermissions: () => permissionRequest,
       timeoutMs: PERMISSION_REQUEST_TIMEOUT_MS,
     });
-    logNotificationPromptStage("permission_finished", { status });
 
     if (actionVersionRef.current !== actionVersion || !isMountedRef.current) {
-      logNotificationPromptStage("stale_enable_ignored", { status });
       return;
     }
 
@@ -85,7 +80,6 @@ export default function EnableNotificationsSheet() {
 
   const handleNotNow = () => {
     actionVersionRef.current += 1;
-    logNotificationPromptStage("not_now_tapped");
     dismissSheet();
   };
 

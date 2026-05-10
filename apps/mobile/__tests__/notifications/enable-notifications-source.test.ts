@@ -21,19 +21,18 @@ describe("enable notifications sheet", () => {
     expect(source).toContain("actionVersionRef.current !== actionVersion");
   });
 
-  it("does not block dismissal on persisting the pre-permission flag", () => {
-    expect(source).toContain("void SecureStore.setItemAsync(PRE_PERMISSION_KEY");
-    expect(source).not.toContain("await SecureStore.setItemAsync(PRE_PERMISSION_KEY");
+  it("persists the pre-permission flag synchronously before requesting native permission", () => {
+    expect(source).toContain("markPrePermissionSeen");
+    expect(source).toContain("markPrePermissionSeenAsync");
+    expect(source).toMatch(/markPrePermissionSeen\(\);[\s\S]+const permissionRequest/);
   });
 
   it("keeps the Not Now action available while the enable request is pending", () => {
     expect(source.match(/disabled=\{isRequesting\}/g)).toHaveLength(1);
   });
 
-  it("emits development-stage logs for diagnosing native notification hangs", () => {
-    expect(source).toContain("[notifications:enable-prompt]");
-    expect(source).toContain("enable_tapped");
-    expect(source).toContain("permission_finished");
-    expect(source).toContain("not_now_tapped");
+  it("does not leave temporary console diagnostics in the prompt", () => {
+    expect(source).not.toContain("console.");
+    expect(source).not.toContain("[notifications:");
   });
 });

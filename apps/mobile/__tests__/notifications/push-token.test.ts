@@ -106,6 +106,23 @@ describe("push-token service", () => {
       const token = await registerPushToken(MOCK_USER_ID);
       expect(token).toBeNull();
     });
+
+    it("upserts known listener tokens without fetching a fresh Expo token", async () => {
+      const { registerKnownPushToken } =
+        await import("@/features/notifications/services/push-token");
+
+      const token = await registerKnownPushToken(MOCK_USER_ID, MOCK_TOKEN);
+
+      expect(mockGetExpoPushTokenAsync).not.toHaveBeenCalled();
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: MOCK_USER_ID,
+          expo_push_token: MOCK_TOKEN,
+        }),
+        { onConflict: "user_id,expo_push_token" }
+      );
+      expect(token).toBe(MOCK_TOKEN);
+    });
   });
 
   describe("deletePushToken", () => {
