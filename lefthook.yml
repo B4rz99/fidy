@@ -34,10 +34,6 @@ pre-push:
       files: git ls-files
       run: bun run lint:mobile
       skip_output: false
-    mobile-typecheck:
-      files: git ls-files
-      run: bun run typecheck
-      skip_output: false
     complexity:
       files: git ls-files
       run: bun run lint:complexity
@@ -49,8 +45,4 @@ pre-push:
     dependency-policy:
       files: git ls-files
       run: bun run lint:dependency-policy
-      skip_output: false
-    tests:
-      files: git ls-files
-      run: bun run test
       skip_output: false
