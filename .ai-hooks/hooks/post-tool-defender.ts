@@ -226,6 +226,7 @@ async function main(): Promise<void> {
       decision: "block",
       reason: warning,
     };
+    // eslint-disable-next-line no-console -- Hook protocol writes JSON decisions to stdout.
     console.log(JSON.stringify(output));
   }
 

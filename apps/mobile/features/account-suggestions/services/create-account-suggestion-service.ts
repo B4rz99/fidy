@@ -36,7 +36,6 @@ import {
   getAccountSuggestionDismissalsForUser,
   saveAccountSuggestionDismissal,
 } from "../lib/dismissals-repository";
-import { logAccountSuggestionDiagnostics } from "./diagnostics";
 
 type CreateAccountSuggestionServiceDeps = {
   readonly getRepeatedCaptureEvidenceForUser?: typeof getRepeatedCaptureEvidenceForUser;
@@ -205,10 +204,6 @@ export function createAccountSuggestionService({
   return {
     listSuggestions(input: ListSuggestionsInput): readonly AccountCreationSuggestion[] {
       const minimumOccurrences = input.minimumOccurrences ?? 2;
-      const evidenceGroups =
-        typeof __DEV__ !== "undefined" && __DEV__
-          ? loadRepeatedCaptureEvidenceForUser(input.db, input.userId, 1)
-          : [];
       const suggestions = filterDismissedSuggestions(
         filterAlreadyLinkedSuggestions(
           deriveAccountSuggestions(
@@ -218,8 +213,6 @@ export function createAccountSuggestionService({
         ),
         loadAccountSuggestionDismissalsForUser(input.db, input.userId)
       );
-
-      logAccountSuggestionDiagnostics(suggestions, input, evidenceGroups);
 
       return applyLimit(suggestions, input.limit);
     },
