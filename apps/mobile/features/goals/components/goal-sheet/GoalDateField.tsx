@@ -1,6 +1,6 @@
-import DateTimePicker from "@expo/ui/community/datetime-picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { Platform, Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useCurrentDate, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getMinimumGoalDate } from "./GoalDateField.helpers";
 import { styles } from "./GoalSheet.styles";
 
@@ -28,7 +28,8 @@ export function GoalDateField({
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
   const borderSubtle = useThemeColor("borderSubtle");
-  const minimumDate = getMinimumGoalDate();
+  const currentDate = useCurrentDate();
+  const minimumDate = getMinimumGoalDate(currentDate);
 
   return (
     <View style={styles.fieldGroup}>
@@ -58,7 +59,7 @@ export function GoalDateField({
       </Pressable>
       {showDatePicker ? (
         <DateTimePicker
-          value={targetDate ?? new Date()}
+          value={targetDate ?? currentDate}
           mode="date"
           display={Platform.OS === "ios" ? "inline" : "default"}
           minimumDate={minimumDate}

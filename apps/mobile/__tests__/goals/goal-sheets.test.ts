@@ -39,7 +39,7 @@ test("keeps the edit-goal sheet wired to the shared form and delete flow", () =>
 test("keeps the shared goal-sheet cluster wired to the date picker and numpad flow", () => {
   expect(formSource).toContain("<GoalAmountField");
   expect(formSource).toContain("<GoalDateField");
-  expect(dateFieldSource).toContain("@expo/ui/community/datetime-picker");
+  expect(dateFieldSource).toContain("@react-native-community/datetimepicker");
   expect(formSource).toContain("<GoalTypeToggle");
   expect(formHookSource).toContain("handleNumpadPress");
   expect(formHookSource).toContain("setShowDatePicker(true)");

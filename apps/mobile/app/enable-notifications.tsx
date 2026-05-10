@@ -18,7 +18,7 @@ const PERMISSION_REQUEST_TIMEOUT_MS = 2500;
 
 export default function EnableNotificationsSheet() {
   const { t } = useTranslation();
-  const router = useRouter();
+  const { back } = useRouter();
   const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const accentGreen = useThemeColor("accentGreen");
@@ -39,7 +39,7 @@ export default function EnableNotificationsSheet() {
       void markPrePermissionSeenAsync().catch(captureError);
     }
     if (isMountedRef.current) setIsRequesting(false);
-    router.back();
+    back();
   };
 
   const handleEnable = async () => {
@@ -88,10 +88,11 @@ export default function EnableNotificationsSheet() {
       className="flex-1 bg-card dark:bg-card-dark"
       contentContainerStyle={{
         padding: 24,
-        paddingBottom: bottom + 24,
+        paddingBottom: 24,
         alignItems: "center",
         gap: 16,
       }}
+      contentInset={{ bottom }}
       contentInsetAdjustmentBehavior="automatic"
     >
       <View
