@@ -19,12 +19,12 @@ function collectSourceFiles(dir: string): readonly string[] {
   });
 }
 
-describe("navigation focus hooks", () => {
-  it("uses Expo Router focus hooks instead of direct React Navigation imports", () => {
+describe("navigation imports", () => {
+  it("uses Expo Router APIs instead of direct React Navigation imports", () => {
     const offenders = collectSourceFiles(appRoot).filter((filePath) => {
       const source = readFileSync(filePath, "utf-8");
 
-      return /from\s+["']@react-navigation\/native["']/.test(source);
+      return /from\s+["']@react-navigation\//.test(source);
     });
 
     expect(offenders.map((filePath) => filePath.replace(`${appRoot}/`, ""))).toEqual([]);
