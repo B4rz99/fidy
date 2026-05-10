@@ -78,22 +78,16 @@ export function ActionButton({
   const accentGreen = useThemeColor("accentGreen");
   const peachLight = useThemeColor("peachLight");
 
-  const buttonStyle =
-    variant === "solid"
-      ? {
-          backgroundColor: accentGreen,
-          borderColor: accentGreen,
-        }
-      : variant === "outline"
-        ? {
-            backgroundColor: card,
-            borderColor: borderSubtle,
-          }
-        : {
-            backgroundColor: peachLight,
-            borderColor: peachLight,
-          };
-  const labelColor = variant === "solid" ? "#FFFFFF" : variant === "ghost" ? secondary : primary;
+  const buttonStyle = (() => {
+    if (variant === "solid") return { backgroundColor: accentGreen, borderColor: accentGreen };
+    if (variant === "outline") return { backgroundColor: card, borderColor: borderSubtle };
+    return { backgroundColor: peachLight, borderColor: peachLight };
+  })();
+  const labelColor = (() => {
+    if (variant === "solid") return "#FFFFFF";
+    if (variant === "ghost") return secondary;
+    return primary;
+  })();
 
   return (
     <Pressable

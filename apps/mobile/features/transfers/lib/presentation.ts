@@ -25,14 +25,20 @@ export function getTransferActivityCopy(
 ) {
   const fromLabel = getTransferSideLabel(transfer.fromSide, accountNames, t);
   const toLabel = getTransferSideLabel(transfer.toSide, accountNames, t);
+  const title = (() => {
+    if (transfer.toSide.kind === "account") {
+      return t("transfers.activity.toAccount", { name: toLabel });
+    }
+
+    if (transfer.fromSide.kind === "account") {
+      return t("transfers.activity.fromAccount", { name: fromLabel });
+    }
+
+    return t("transfers.activity.generic");
+  })();
 
   return {
-    title:
-      transfer.toSide.kind === "account"
-        ? t("transfers.activity.toAccount", { name: toLabel })
-        : transfer.fromSide.kind === "account"
-          ? t("transfers.activity.fromAccount", { name: fromLabel })
-          : t("transfers.activity.generic"),
+    title,
     route: t("transfers.activity.route", { from: fromLabel, to: toLabel }),
   };
 }

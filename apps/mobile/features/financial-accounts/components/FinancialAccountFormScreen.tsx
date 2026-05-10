@@ -92,6 +92,27 @@ export function FinancialAccountFormScreen() {
 
   const screenState = getFinancialAccountFormScreenState({ accountId, lookupStatus });
   const exitToAccountList = () => router.replace("/financial-accounts");
+  const onManageIdentifiers = accountId
+    ? () =>
+        router.push({
+          pathname: "/financial-account-identifier",
+          params: { accountId },
+        })
+    : null;
+  const formContent = (() => {
+    if (screenState === "loading") return <FinancialAccountFormLoadingState />;
+    if (screenState === "missing") {
+      return <FinancialAccountFormMissingState onExit={exitToAccountList} />;
+    }
+
+    return (
+      <FinancialAccountFormBody
+        key={accountId ?? "create"}
+        existingDetails={existingDetails}
+        onManageIdentifiers={onManageIdentifiers}
+      />
+    );
+  })();
 
   return (
     <ScreenLayout
@@ -101,25 +122,7 @@ export function FinancialAccountFormScreen() {
       variant="sub"
       onBack={screenState === "missing" ? exitToAccountList : () => router.back()}
     >
-      {screenState === "loading" ? (
-        <FinancialAccountFormLoadingState />
-      ) : screenState === "missing" ? (
-        <FinancialAccountFormMissingState onExit={exitToAccountList} />
-      ) : (
-        <FinancialAccountFormBody
-          key={accountId ?? "create"}
-          existingDetails={existingDetails}
-          onManageIdentifiers={
-            accountId
-              ? () =>
-                  router.push({
-                    pathname: "/financial-account-identifier",
-                    params: { accountId },
-                  })
-              : null
-          }
-        />
-      )}
+      {formContent}
     </ScreenLayout>
   );
 }
