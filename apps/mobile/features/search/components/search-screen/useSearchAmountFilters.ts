@@ -15,8 +15,9 @@ export function useSearchAmountFilters({ db, userId }: SearchAmountFiltersArgs) 
   const handleMinChange = useCallback(
     (digits: string) => {
       setMinDigits(digits);
-      if (db && userId)
+      if (db && userId) {
         updateSearchFilters(db, userId, { amountMin: amountDigitsToAmount(digits) });
+      }
     },
     [db, userId]
   );
@@ -24,8 +25,9 @@ export function useSearchAmountFilters({ db, userId }: SearchAmountFiltersArgs) 
   const handleMaxChange = useCallback(
     (digits: string) => {
       setMaxDigits(digits);
-      if (db && userId)
+      if (db && userId) {
         updateSearchFilters(db, userId, { amountMax: amountDigitsToAmount(digits) });
+      }
     },
     [db, userId]
   );
