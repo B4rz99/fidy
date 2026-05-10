@@ -1,6 +1,14 @@
 // biome-ignore-all lint/style/useNamingConvention: mock exports must match library API names
 import { vi } from "vitest";
 
+type MockImplementation<TArgs extends readonly unknown[] = [], TReturn = void> = (
+  ...args: TArgs
+) => TReturn;
+
+const createMock = <TArgs extends readonly unknown[] = [], TReturn = void>(
+  implementation?: MockImplementation<TArgs, TReturn>
+) => vi.fn<MockImplementation<TArgs, TReturn>>(implementation);
+
 process.env.EXPO_PUBLIC_GMAIL_CLIENT_ID = "test-gmail-client-id.apps.googleusercontent.com";
 process.env.EXPO_PUBLIC_OUTLOOK_CLIENT_ID = "test-outlook-client-id";
 
@@ -115,20 +123,20 @@ vi.mock("react-native", () => ({
   Switch: "Switch",
   Image: "Image",
   ActivityIndicator: "ActivityIndicator",
-  ActionSheetIOS: { showActionSheetWithOptions: vi.fn() },
-  Alert: { alert: vi.fn() },
-  Appearance: { setColorScheme: vi.fn() },
+  ActionSheetIOS: { showActionSheetWithOptions: createMock() },
+  Alert: { alert: createMock() },
+  Appearance: { setColorScheme: createMock() },
   StyleSheet: { create: (styles: Record<string, unknown>) => styles },
-  Keyboard: { dismiss: vi.fn() },
+  Keyboard: { dismiss: createMock() },
   KeyboardAvoidingView: "KeyboardAvoidingView",
   Linking: {
-    openSettings: vi.fn(),
-    sendIntent: vi.fn(() => Promise.resolve()),
+    openSettings: createMock(),
+    sendIntent: createMock(() => Promise.resolve()),
   },
   Platform: { OS: "ios", select: (obj: Record<string, unknown>) => obj.ios },
   useColorScheme: () => "light",
   AppState: {
-    addEventListener: vi.fn(() => ({ remove: vi.fn() })),
+    addEventListener: createMock(() => ({ remove: createMock() })),
   },
 }));
 
@@ -143,9 +151,9 @@ vi.mock("nativewind/preset", () => ({ default: {} }));
 
 // Mock expo-haptics
 vi.mock("expo-haptics", () => ({
-  impactAsync: vi.fn(),
-  notificationAsync: vi.fn(),
-  selectionAsync: vi.fn(),
+  impactAsync: createMock(),
+  notificationAsync: createMock(),
+  selectionAsync: createMock(),
   ImpactFeedbackStyle: { Light: "Light", Medium: "Medium", Heavy: "Heavy" },
   NotificationFeedbackType: {
     Success: "Success",
@@ -193,7 +201,7 @@ vi.mock("react-native-reanimated", () => {
     withRepeat: (val: any) => val,
     // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
     withSequence: (...vals: any[]) => vals[0],
-    cancelAnimation: vi.fn(),
+    cancelAnimation: createMock(),
     // biome-ignore lint/suspicious/noExplicitAny: mock needs flexible typing
     runOnJS: (fn: any) => fn,
   };
@@ -201,17 +209,17 @@ vi.mock("react-native-reanimated", () => {
 
 // Mock expo-sqlite
 vi.mock("expo-sqlite", () => ({
-  openDatabaseSync: vi.fn(() => ({ execSync: vi.fn(), closeSync: vi.fn() })),
-  deleteDatabaseAsync: vi.fn(() => Promise.resolve()),
+  openDatabaseSync: createMock(() => ({ execSync: createMock(), closeSync: createMock() })),
+  deleteDatabaseAsync: createMock(() => Promise.resolve()),
 }));
 
 // Note: date-fns is NOT mocked globally. Tests that need deterministic date
 // behavior should mock it at the file level with vi.mock or vi.doMock.
 
 // Mock expo-router
-export const mockReplace = vi.fn();
-export const mockPush = vi.fn();
-export const mockBack = vi.fn();
+export const mockReplace = createMock();
+export const mockPush = createMock();
+export const mockBack = createMock();
 
 vi.mock("expo-router", () => ({
   useRouter: () => ({ replace: mockReplace, push: mockPush, back: mockBack }),
@@ -224,35 +232,35 @@ vi.mock("@expo/vector-icons/Ionicons", () => ({
 
 // Mock @supabase/supabase-js
 vi.mock("@supabase/supabase-js", () => ({
-  createClient: vi.fn(() => ({
+  createClient: createMock(() => ({
     auth: {
-      getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
-      onAuthStateChange: vi.fn(() => ({
-        data: { subscription: { unsubscribe: vi.fn() } },
+      getSession: createMock(() => Promise.resolve({ data: { session: null }, error: null })),
+      onAuthStateChange: createMock(() => ({
+        data: { subscription: { unsubscribe: createMock() } },
       })),
-      signInWithOAuth: vi.fn(),
-      signOut: vi.fn(),
+      signInWithOAuth: createMock(),
+      signOut: createMock(),
     },
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({ data: [], error: null })),
-      upsert: vi.fn(() => ({ error: null })),
-      delete: vi.fn(() => ({ error: null })),
+    from: createMock(() => ({
+      select: createMock(() => ({ data: [], error: null })),
+      upsert: createMock(() => ({ error: null })),
+      delete: createMock(() => ({ error: null })),
     })),
   })),
 }));
 
 // Mock expo-secure-store
 vi.mock("expo-secure-store", () => ({
-  getItemAsync: vi.fn(() => Promise.resolve(null)),
-  setItemAsync: vi.fn(() => Promise.resolve()),
-  deleteItemAsync: vi.fn(() => Promise.resolve()),
-  getItem: vi.fn(),
-  setItem: vi.fn(),
+  getItemAsync: createMock(() => Promise.resolve(null)),
+  setItemAsync: createMock(() => Promise.resolve()),
+  deleteItemAsync: createMock(() => Promise.resolve()),
+  getItem: createMock(),
+  setItem: createMock(),
 }));
 
 // Mock expo-crypto
 vi.mock("expo-crypto", () => ({
-  getRandomBytes: vi.fn(() => new Uint8Array(32)),
+  getRandomBytes: createMock(() => new Uint8Array(32)),
 }));
 
 // Mock @react-native-community/datetimepicker
@@ -263,52 +271,52 @@ vi.mock("@react-native-community/datetimepicker", () => ({
 // Mock @react-native-community/netinfo
 vi.mock("@react-native-community/netinfo", () => ({
   default: {
-    addEventListener: vi.fn(() => vi.fn()),
-    fetch: vi.fn(() => Promise.resolve({ isConnected: true })),
+    addEventListener: createMock(() => createMock()),
+    fetch: createMock(() => Promise.resolve({ isConnected: true })),
   },
 }));
 
 // Mock expo-web-browser
 vi.mock("expo-web-browser", () => ({
-  openAuthSessionAsync: vi.fn(() => Promise.resolve({ type: "dismiss" })),
-  maybeCompleteAuthSession: vi.fn(),
-  openBrowserAsync: vi.fn(),
+  openAuthSessionAsync: createMock(() => Promise.resolve({ type: "dismiss" })),
+  maybeCompleteAuthSession: createMock(),
+  openBrowserAsync: createMock(),
 }));
 
 // Mock @sentry/react-native
 vi.mock("@sentry/react-native", () => ({
-  init: vi.fn(),
-  captureException: vi.fn(),
-  captureMessage: vi.fn(),
-  setUser: vi.fn(),
-  withScope: vi.fn((cb: (scope: unknown) => void) =>
-    cb({ setContext: vi.fn(), setLevel: vi.fn() })
+  init: createMock(),
+  captureException: createMock(),
+  captureMessage: createMock(),
+  setUser: createMock(),
+  withScope: createMock<[cb: (scope: unknown) => void], void>((cb) =>
+    cb({ setContext: createMock(), setLevel: createMock() })
   ),
   ErrorBoundary: "SentryErrorBoundary",
-  wrap: vi.fn((component: unknown) => component),
+  wrap: createMock<[component: unknown], unknown>((component) => component),
 }));
 
 // Mock burnt
 vi.mock("burnt", () => ({
-  toast: vi.fn(),
+  toast: createMock(),
 }));
 
 // Mock expo-updates
 vi.mock("expo-updates", () => ({
-  reloadAsync: vi.fn(),
+  reloadAsync: createMock(),
 }));
 
 // Mock expo-background-task
 vi.mock("expo-background-task", () => ({
-  registerTaskAsync: vi.fn(),
-  unregisterTaskAsync: vi.fn(),
+  registerTaskAsync: createMock(),
+  unregisterTaskAsync: createMock(),
   BackgroundTaskResult: { Success: 1, Failed: 2 },
 }));
 
 // Mock expo-task-manager
 vi.mock("expo-task-manager", () => ({
-  defineTask: vi.fn(),
-  isTaskRegisteredAsync: vi.fn().mockResolvedValue(false),
+  defineTask: createMock(),
+  isTaskRegisteredAsync: createMock<[], Promise<boolean>>().mockResolvedValue(false),
 }));
 
 // Mock react-native-svg
@@ -329,9 +337,9 @@ vi.mock("react-native-svg", () => ({
 
 // Mock expo-android-notification-listener-service
 vi.mock("expo-android-notification-listener-service", () => ({
-  addListener: vi.fn(() => ({ remove: vi.fn() })),
-  setAllowedPackages: vi.fn(),
-  isPermissionGranted: vi.fn(() => Promise.resolve(false)),
+  addListener: createMock(() => ({ remove: createMock() })),
+  setAllowedPackages: createMock(),
+  isPermissionGranted: createMock(() => Promise.resolve(false)),
 }));
 
 // Mock @fidy/assets (monorepo package with SVG logo paths)
@@ -347,20 +355,20 @@ vi.mock("@fidy/assets", () => ({
 
 // Mock expo-notifications
 vi.mock("expo-notifications", () => ({
-  scheduleNotificationAsync: vi.fn(),
-  cancelScheduledNotificationAsync: vi.fn(),
-  getAllScheduledNotificationsAsync: vi.fn(() => Promise.resolve([])),
+  scheduleNotificationAsync: createMock(),
+  cancelScheduledNotificationAsync: createMock(),
+  getAllScheduledNotificationsAsync: createMock(() => Promise.resolve([])),
   SchedulableTriggerInputTypes: { WEEKLY: "weekly" },
-  getPermissionsAsync: vi.fn(() =>
+  getPermissionsAsync: createMock(() =>
     Promise.resolve({ status: "undetermined", granted: false, canAskAgain: true })
   ),
-  requestPermissionsAsync: vi.fn(() =>
+  requestPermissionsAsync: createMock(() =>
     Promise.resolve({ status: "granted", granted: true, canAskAgain: true })
   ),
-  setNotificationHandler: vi.fn(),
-  getExpoPushTokenAsync: vi.fn(() => Promise.resolve({ data: "ExponentPushToken[mock]" })),
-  addPushTokenListener: vi.fn(() => ({ remove: vi.fn() })),
-  addNotificationResponseReceivedListener: vi.fn(() => ({ remove: vi.fn() })),
+  setNotificationHandler: createMock(),
+  getExpoPushTokenAsync: createMock(() => Promise.resolve({ data: "ExponentPushToken[mock]" })),
+  addPushTokenListener: createMock(() => ({ remove: createMock() })),
+  addNotificationResponseReceivedListener: createMock(() => ({ remove: createMock() })),
 }));
 
 // Mock expo-constants
@@ -375,17 +383,17 @@ vi.mock("expo-constants", () => ({
 
 // Mock expo native module bridge (used by local expo-app-intents module)
 vi.mock("expo", () => ({
-  requireNativeModule: vi.fn(() => ({
-    isAvailable: vi.fn(() => false),
-    addListener: vi.fn(() => ({ remove: vi.fn() })),
+  requireNativeModule: createMock(() => ({
+    isAvailable: createMock(() => false),
+    addListener: createMock(() => ({ remove: createMock() })),
   })),
 }));
 
 // Mock posthog-react-native (native module, not transformable in Vitest node env)
 vi.mock("posthog-react-native", () => ({
   default: class {
-    identify = vi.fn();
-    capture = vi.fn();
-    reset = vi.fn();
+    identify = createMock();
+    capture = createMock();
+    reset = createMock();
   },
 }));
