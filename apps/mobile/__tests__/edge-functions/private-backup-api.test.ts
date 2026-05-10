@@ -602,6 +602,19 @@ function expectNoStoreCalls(store: ReturnType<typeof createPrivateBackupStore>) 
   expect(store.deleteObject).not.toHaveBeenCalled();
 }
 
+function listBackupsForUser(backups: ReadonlyMap<string, RemoteBackupMetadata>, userId: string) {
+  return [...backups.values()]
+    .filter((backup) => backup.userId === userId)
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+}
+
+function getCurrentBackupForUser(
+  backups: ReadonlyMap<string, RemoteBackupMetadata>,
+  userId: string
+) {
+  return listBackupsForUser(backups, userId)[0] ?? null;
+}
+
 function createPrivateBackupStore(options: {
   readonly backups?: readonly RemoteBackupMetadata[];
   readonly deleteBackupMetadataError?: Error;
@@ -623,18 +636,10 @@ function createPrivateBackupStore(options: {
       Promise.resolve(backups.get(`${userId}/${backupId}`) ?? null)
     ),
     listBackups: vi.fn<(...args: any[]) => any>((userId: string) =>
-      Promise.resolve(
-        [...backups.values()]
-          .filter((backup) => backup.userId === userId)
-          .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
-      )
+      Promise.resolve(listBackupsForUser(backups, userId))
     ),
     loadCurrentBackup: vi.fn<(...args: any[]) => any>((userId: string) =>
-      Promise.resolve(
-        [...backups.values()]
-          .filter((backup) => backup.userId === userId)
-          .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] ?? null
-      )
+      Promise.resolve(getCurrentBackupForUser(backups, userId))
     ),
     createSignedUploadUrl: vi.fn<(...args: any[]) => any>((path: string, options?: unknown) => {
       uploadUrls.push(path);
@@ -678,10 +683,7 @@ function createPrivateBackupStore(options: {
     createdDownloadUrls: () => downloadUrls,
     deletedObjects: () => deletedObjects,
     operations: () => operationLog,
-    currentBackup: () =>
-      [...backups.values()]
-        .filter((backup) => backup.userId === USER_ID)
-        .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] ?? null,
+    currentBackup: () => getCurrentBackupForUser(backups, USER_ID),
   };
 
   return store;
