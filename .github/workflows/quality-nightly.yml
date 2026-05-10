@@ -16,7 +16,7 @@ jobs:
         with:
           bun-version: "1.3.13"
       - name: Install dependencies
-        run: bun install
+        run: bun install --minimum-release-age=0
       - name: Knip
         run: bun run lint:dead-code
 
@@ -29,7 +29,7 @@ jobs:
         with:
           bun-version: "1.3.13"
       - name: Install dependencies
-        run: bun install
+        run: bun install --minimum-release-age=0
       - name: jscpd
         run: bun run lint:duplication
 
@@ -45,9 +45,9 @@ jobs:
           bun-version: "1.3.13"
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26.1.0
       - name: Install dependencies
-        run: bun install
+        run: bun install --minimum-release-age=0
       - name: StrykerJS
         run: bun run test:mutation:mobile
 
@@ -61,9 +61,9 @@ jobs:
           bun-version: "1.3.13"
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26.1.0
       - name: Install dependencies
-        run: bun install
+        run: bun install --minimum-release-age=0
       - name: Export Expo bundle with Atlas
         run: bun run perf:bundle:mobile
       - name: Upload Atlas artifact

@@ -13,7 +13,8 @@ let pushTokenRegistration: Promise<string | null> | null = null;
 let transientPushTokenFailureUntil = 0;
 
 const isTransientPushTokenFetchError = (error: unknown): boolean =>
-  error instanceof Error && /fetch failed: (Fetch request has been canceled|The operation was aborted)/i.test(error.message);
+  error instanceof Error &&
+  /fetch failed: (Fetch request has been canceled|The operation was aborted)/i.test(error.message);
 
 async function upsertPushToken(userId: UserId, token: string): Promise<string | null> {
   const supabase = getSupabase();
