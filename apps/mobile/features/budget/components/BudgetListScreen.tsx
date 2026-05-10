@@ -49,7 +49,9 @@ export function BudgetListScreen() {
           push("/enable-notifications");
         })
         .catch(captureError)
-        .finally(clearPendingPermissionRequest);
+        .finally(() => {
+          if (!cancelled) clearPendingPermissionRequest();
+        });
 
       return () => {
         cancelled = true;

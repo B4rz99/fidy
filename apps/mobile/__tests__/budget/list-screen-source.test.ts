@@ -14,7 +14,8 @@ describe("BudgetListScreen notification prompt routing", () => {
     expect(source).toContain("if (cancelled || !shouldShowPrompt) return");
     expect(source).toContain('push("/enable-notifications")');
     expect(source).toContain(".catch(captureError)");
-    expect(source).toContain(".finally(clearPendingPermissionRequest)");
+    expect(source).toContain(".finally(() =>");
+    expect(source).toContain("if (!cancelled) clearPendingPermissionRequest()");
     expect(source).not.toMatch(/\{\s+clearPendingPermissionRequest\(\);\s+let cancelled = false;/);
   });
 });
