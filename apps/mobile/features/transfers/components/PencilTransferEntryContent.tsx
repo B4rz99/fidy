@@ -33,6 +33,7 @@ export function usePencilTransferEntry(props: { readonly enabled?: boolean } = {
     onSuccessfulSave: () => showSuccessToast(t("transfers.saved"), 1.6),
   });
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [maximumDate] = useState(() => new Date());
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const card = useThemeColor("card");
@@ -128,7 +129,7 @@ export function usePencilTransferEntry(props: { readonly enabled?: boolean } = {
                 value={form.date}
                 mode="date"
                 display={Platform.OS === "ios" ? "spinner" : "default"}
-                maximumDate={new Date()}
+                maximumDate={maximumDate}
                 onChange={form.handleDateChange}
               />
               <Pressable

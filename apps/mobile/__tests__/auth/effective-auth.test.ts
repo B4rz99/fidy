@@ -47,7 +47,49 @@ describe("effective auth", () => {
       fullName: "Local QA",
       email: "local-qa@fidy.dev",
       accountCreatedAt: "",
+      profileImageUrl: null,
     });
+  });
+
+  it("derives provider profile image urls from remote auth metadata", () => {
+    expect(
+      deriveAuthIdentity({
+        session: {
+          user: {
+            id: "remote-user",
+            email: "remote@example.com",
+            created_at: "2026-04-19T00:00:00Z",
+            user_metadata: {
+              full_name: "Remote User",
+              avatar_url: "https://accounts.google.com/avatar.png",
+            },
+          },
+        } as never,
+        localQaSession: null,
+      })
+    ).toEqual({
+      fullName: "Remote User",
+      email: "remote@example.com",
+      accountCreatedAt: "2026-04-19T00:00:00Z",
+      profileImageUrl: "https://accounts.google.com/avatar.png",
+    });
+
+    expect(
+      deriveAuthIdentity({
+        session: {
+          user: {
+            id: "remote-user",
+            email: "remote@example.com",
+            created_at: "2026-04-19T00:00:00Z",
+            user_metadata: {
+              full_name: "Remote User",
+              picture: "https://graph.microsoft.com/avatar.jpg",
+            },
+          },
+        } as never,
+        localQaSession: null,
+      }).profileImageUrl
+    ).toBe("https://graph.microsoft.com/avatar.jpg");
   });
 
   it("derives stable primitive identity fields for local QA mode", () => {

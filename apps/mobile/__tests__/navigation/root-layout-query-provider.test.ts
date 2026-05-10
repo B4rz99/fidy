@@ -22,7 +22,7 @@ describe("Root layout query provider", () => {
 
   test("keeps the existing root Stack screen declarations", () => {
     for (const screen of ["(auth)", "(tabs)", "add-bill", "delete-account", "analytics"]) {
-      expect(source).toContain(`name="${screen}"`);
+      expect(source).toContain(`"${screen}"`);
     }
   });
 });

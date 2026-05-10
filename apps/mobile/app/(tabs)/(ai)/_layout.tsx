@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
-import { Platform, useColorScheme } from "@/shared/components/rn";
+import { ProfileAvatarButton } from "@/features/settings/ui.public";
+import { useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 
 export default function AiStackLayout() {
@@ -8,7 +9,8 @@ export default function AiStackLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: Platform.OS === "ios",
+        headerShown: true,
+        headerLeft: () => <ProfileAvatarButton />,
         headerStyle: { backgroundColor: theme.page },
         headerTintColor: theme.primary,
       }}

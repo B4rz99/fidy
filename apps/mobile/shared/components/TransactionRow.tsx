@@ -68,7 +68,7 @@ export function TransactionRow({
   const content = (
     <View className="flex-row items-center py-3">
       <View
-        className="h-10 w-10 items-center justify-center rounded-icon"
+        className="size-10 items-center justify-center rounded-icon"
         style={{ backgroundColor: iconBgColor ?? defaultIconBg }}
       >
         <Text style={{ color: iconColor }}>{icon}</Text>

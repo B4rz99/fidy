@@ -36,7 +36,7 @@ const formatPrivateBackupCreatedAt = (createdAt: string, locale: string) =>
   format(new Date(createdAt), "PPp", { locale: getDateFnsLocale(locale) });
 
 export function PrivateBackupScreen() {
-  const router = useRouter();
+  const { back } = useRouter();
   const userId = useOptionalUserId();
   const { t, locale } = useTranslation();
   const { bottom } = useSafeAreaInsets();
@@ -132,15 +132,16 @@ export function PrivateBackupScreen() {
   })();
 
   return (
-    <ScreenLayout variant="sub" title={t("privateBackup.title")} onBack={() => router.back()}>
+    <ScreenLayout variant="sub" title={t("privateBackup.title")} onBack={back}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 16,
-          paddingBottom: bottom + 40,
+          paddingBottom: 40,
           gap: 12,
         }}
+        contentInset={{ bottom }}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
@@ -201,7 +202,7 @@ export function PrivateBackupScreen() {
             />
             <BackupActionButton
               label={t("privateBackup.finishLater")}
-              onPress={() => router.back()}
+              onPress={back}
               variant="secondary"
             />
           </>

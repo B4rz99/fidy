@@ -1,4 +1,5 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TriangleAlert } from "@/shared/components/icons";
 import {
@@ -20,6 +21,7 @@ import type { useTransferForm } from "./useTransferForm";
 export function TransferFormContent(props: { readonly form: ReturnType<typeof useTransferForm> }) {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
+  const [maximumDate] = useState(() => new Date());
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
@@ -94,7 +96,7 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
                 value={props.form.date}
                 mode="date"
                 display="compact"
-                maximumDate={new Date()}
+                maximumDate={maximumDate}
                 onChange={props.form.handleDateChange}
               />
             ) : (

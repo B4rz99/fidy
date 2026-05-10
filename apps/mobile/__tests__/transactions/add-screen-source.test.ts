@@ -6,7 +6,7 @@ function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
 }
 
-const addRouteSource = readSource("../../app/(tabs)/add.tsx");
+const addRouteSource = readSource("../../app/(tabs)/add/index.tsx");
 const addTransactionRouteSource = readSource("../../app/add-transaction.tsx");
 const addTransferRouteSource = readSource("../../app/add-transfer.tsx");
 const transactionEntrySource = readSource(
@@ -144,8 +144,8 @@ test("Pencil transaction entry confirms saves with a toast without leaving the a
 });
 
 test("Pencil add screens do not allow future transaction dates", () => {
-  expect(transactionSheetsSource).toContain("maximumDate={new Date()}");
-  expect(pencilTransferEntrySource).toContain("maximumDate={new Date()}");
+  expect(transactionSheetsSource).toContain("maximumDate={maximumDate}");
+  expect(pencilTransferEntrySource).toContain("maximumDate={maximumDate}");
 });
 
 test("Pencil transfer entry supports transfer side pickers and calendar", () => {

@@ -1,5 +1,5 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { Wallet } from "@/shared/components/icons";
 import { Modal, Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
@@ -160,6 +160,7 @@ export function TransactionDatePickerSheet(props: {
   const card = useThemeColor("card");
   const accentGreen = useThemeColor("accentGreen");
   const onAccent = useThemeColor("onAccent");
+  const [maximumDate] = useState(() => new Date());
 
   return (
     <PickerSheetFrame
@@ -182,7 +183,7 @@ export function TransactionDatePickerSheet(props: {
           value={props.date}
           mode="date"
           display={Platform.OS === "ios" ? "spinner" : "default"}
-          maximumDate={new Date()}
+          maximumDate={maximumDate}
           onChange={(_event, nextDate) => {
             if (Platform.OS !== "ios") props.onClose();
             if (nextDate) props.onChange(nextDate);

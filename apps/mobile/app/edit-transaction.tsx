@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import { useState } from "react";
+import { useReducer, useRef, useState } from "react";
 import { useOptionalUserId } from "@/features/auth";
 import { getNeedsReviewEmailByTransactionId } from "@/features/email-capture";
 import {
@@ -21,25 +21,52 @@ import { clampDateToToday, showErrorToast, waitForNavigationTransition } from "@
 import { requireTransactionId } from "@/shared/types/assertions";
 import type { CategoryId, FinancialAccountId, ProcessedEmailId } from "@/shared/types/branded";
 
+type EditTransactionDraft = {
+  readonly accountId: FinancialAccountId | null;
+  readonly categoryId: CategoryId | null;
+  readonly date: Date;
+  readonly description: string;
+  readonly digits: string;
+  readonly reclassificationProcessedEmailId: ProcessedEmailId | null;
+  readonly source: string;
+  readonly type: TransactionType;
+};
+
+type DigitsInput = string | ((currentDigits: string) => string);
+
+const initialDraft: EditTransactionDraft = {
+  accountId: null,
+  categoryId: null,
+  date: new Date(),
+  description: "",
+  digits: "",
+  reclassificationProcessedEmailId: null,
+  source: "manual",
+  type: "expense",
+};
+
+function updateDraft(
+  draft: EditTransactionDraft,
+  update: Partial<EditTransactionDraft>
+): EditTransactionDraft {
+  return { ...draft, ...update };
+}
+
+function resolveDigitsInput(currentDigits: string, input: DigitsInput): string {
+  return typeof input === "function" ? input(currentDigits) : input;
+}
+
 export default function EditTransactionScreen() {
   const { transactionId: routeTransactionId } = useLocalSearchParams<{ transactionId?: string }>();
   const navigation = useNavigation();
-  const router = useRouter();
+  const { back, push } = useRouter();
   const { t } = useTranslation();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
 
-  const [type, setType] = useState<TransactionType>("expense");
-  const [digits, setDigits] = useState("");
-  const [categoryId, setCategoryId] = useState<CategoryId | null>(null);
-  const [accountId, setAccountId] = useState<FinancialAccountId | null>(null);
-  const [description, setDescription] = useState("");
-  const [date, setDate] = useState(new Date());
-  const [source, setSource] = useState("manual");
-  const [loaded, setLoaded] = useState(false);
+  const [draft, setDraft] = useReducer(updateDraft, initialDraft);
+  const loadedRef = useRef(false);
   const [accounts, setAccounts] = useState<readonly FinancialAccountRow[]>([]);
-  const [reclassificationProcessedEmailId, setReclassificationProcessedEmailId] =
-    useState<ProcessedEmailId | null>(null);
   const transactionId =
     typeof routeTransactionId === "string" && routeTransactionId.trim().length > 0
       ? requireTransactionId(routeTransactionId.trim())
@@ -47,7 +74,7 @@ export default function EditTransactionScreen() {
 
   useMountEffect(() => {
     if (transactionId == null || !db || !userId) {
-      router.back();
+      back();
       return;
     }
 
@@ -56,7 +83,7 @@ export default function EditTransactionScreen() {
       setAccounts(getFinancialAccountsForUser(db, userId));
       const tx = getStoredTransactionById(db, userId, transactionId);
       if (!tx) {
-        router.back();
+        back();
         return;
       }
 
@@ -64,15 +91,17 @@ export default function EditTransactionScreen() {
         () => null
       );
 
-      setType(tx.type);
-      setDigits(String(tx.amount));
-      setCategoryId(tx.categoryId);
-      setAccountId(tx.accountId);
-      setDescription(tx.description);
-      setDate(tx.date);
-      setSource(tx.source ?? "manual");
-      setReclassificationProcessedEmailId(reviewEmail?.id ?? null);
-      setLoaded(true);
+      setDraft({
+        accountId: tx.accountId,
+        categoryId: tx.categoryId,
+        date: tx.date,
+        description: tx.description,
+        digits: String(tx.amount),
+        reclassificationProcessedEmailId: reviewEmail?.id ?? null,
+        source: tx.source ?? "manual",
+        type: tx.type,
+      });
+      loadedRef.current = true;
     })();
   });
 
@@ -83,7 +112,7 @@ export default function EditTransactionScreen() {
       closing: true,
       fallbackMs: 2000,
     });
-    router.back();
+    back();
     return pendingTransition;
   };
 
@@ -101,12 +130,12 @@ export default function EditTransactionScreen() {
           userId,
           id: transactionId,
           fields: {
-            type,
-            digits,
-            categoryId,
-            accountId,
-            description,
-            date: clampDateToToday(date),
+            type: draft.type,
+            digits: draft.digits,
+            categoryId: draft.categoryId,
+            accountId: draft.accountId,
+            description: draft.description,
+            date: clampDateToToday(draft.date),
           },
         });
         if (!result.success) {
@@ -134,37 +163,37 @@ export default function EditTransactionScreen() {
     });
   };
 
-  if (!loaded) return null;
+  if (!loadedRef.current) return null;
 
   return (
     <TransactionForm
-      type={type}
-      digits={digits}
-      categoryId={categoryId}
+      type={draft.type}
+      digits={draft.digits}
+      categoryId={draft.categoryId}
       accounts={accounts}
-      accountId={accountId}
-      description={description}
-      date={date}
+      accountId={draft.accountId}
+      description={draft.description}
+      date={draft.date}
       saveLabel={t("common.save")}
       isSaving={isSaving}
-      onTypeChange={setType}
-      onDigitsChange={setDigits}
-      onCategoryChange={setCategoryId}
-      onAccountChange={setAccountId}
-      onDescriptionChange={setDescription}
+      onTypeChange={(type) => setDraft({ type })}
+      onDigitsChange={(digits) => setDraft({ digits: resolveDigitsInput(draft.digits, digits) })}
+      onCategoryChange={(categoryId) => setDraft({ categoryId })}
+      onAccountChange={(accountId) => setDraft({ accountId })}
+      onDescriptionChange={(description) => setDraft({ description })}
       onSave={handleSave}
       onDelete={handleDelete}
-      onClose={() => router.back()}
-      extraActionLabel={source === "manual" ? undefined : t("transactions.convertToTransfer")}
+      onClose={back}
+      extraActionLabel={draft.source === "manual" ? undefined : t("transactions.convertToTransfer")}
       onExtraAction={
-        source === "manual" || transactionId == null
+        draft.source === "manual" || transactionId == null
           ? undefined
           : () =>
-              router.push({
+              push({
                 pathname: "/reclassify-transaction",
                 params: {
                   transactionId,
-                  processedEmailId: reclassificationProcessedEmailId ?? undefined,
+                  processedEmailId: draft.reclassificationProcessedEmailId ?? undefined,
                 },
               })
       }

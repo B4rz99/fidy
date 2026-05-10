@@ -76,6 +76,14 @@ _Avoid_: Backup, recovery
 The authenticated server-side boundary that owns operational remote reads and writes instead of exposing Fidy-controlled tables or storage directly to the mobile app.
 _Avoid_: API extra layer, proxy, backend wrapper
 
+**User Profile**:
+The authenticated user's non-financial identity details used for account UI, such as display name, email address, and provider profile image.
+_Avoid_: Financial profile, remote profile
+
+**Profile Image**:
+A provider-supplied user avatar used as an account navigation affordance and backed by initials when unavailable.
+_Avoid_: Settings icon, uploaded document, financial image
+
 ## Relationships
 
 - The **Local Ledger** is the source of truth for transactions, transfers, financial accounts, budgets, goals, capture evidence, and financial derivations
@@ -116,6 +124,8 @@ _Avoid_: API extra layer, proxy, backend wrapper
 - A confirmed **Encrypted Backup** is immutable; creating a newer recovery artifact uses a new backup id instead of overwriting the existing one
 - Fidy keeps at most one confirmed **Encrypted Backup** per user; the user-facing **Private Backup** status shows when that backup was last updated
 - A newer **Encrypted Backup** replaces the previous one only after local snapshot validation, upload, server-side object integrity verification, and metadata confirmation succeed
+- A **User Profile** may come from Supabase Auth provider metadata and must remain separate from the **Local Ledger**
+- A **Profile Image** may be loaded directly from the provider URL when available, with initials as the fallback
 
 ## Example dialogue
 
@@ -137,3 +147,4 @@ _Avoid_: API extra layer, proxy, backend wrapper
 - "template" could mean a raw bank email sample or a safe structural shape. Resolved: use **Template Shape** for redacted structure and avoid storing raw capture content.
 - "account hint" was used for both specific card endings and generic product labels. Resolved: use **Account Identity Evidence** for specific account-identifying signals and **Account Type Hint** for product/kind labels.
 - "account hint" also absorbed merchants and payees returned by AI. Resolved: use **Counterparty Evidence** for merchant, payee, and payer facts, and keep it out of account attribution.
+- "profile" could mean either financial behavior/persona or authenticated identity details. Resolved: use **User Profile** only for non-financial identity UI.

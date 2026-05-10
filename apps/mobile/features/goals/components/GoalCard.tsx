@@ -11,6 +11,62 @@ type GoalCardProps = {
   readonly onAddPayment: () => void;
 };
 
+type GoalCardStatusValue = NonNullable<ReturnType<typeof deriveGoalCardStatus>>;
+
+function GoalCardStatus(props: {
+  readonly accentGreen: string;
+  readonly accentRed: string;
+  readonly cardStatus: GoalCardStatusValue | null;
+  readonly secondaryColor: string;
+  readonly t: ReturnType<typeof useTranslation>["t"];
+}) {
+  if (props.cardStatus === null) return null;
+  if (props.cardStatus.kind === "completed" || props.cardStatus.kind === "almost_there") {
+    const label =
+      props.cardStatus.kind === "completed"
+        ? props.t("goals.card.completed")
+        : props.t("goals.card.almostThere");
+    return (
+      <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: props.accentGreen }}>
+        {label}
+      </Text>
+    );
+  }
+
+  const chip = (() => {
+    if (props.cardStatus.kind === "pace_ahead") {
+      return {
+        color: props.accentGreen,
+        label: props.t("goals.card.paceAhead", { amount: formatMoney(props.cardStatus.amount) }),
+      };
+    }
+
+    if (props.cardStatus.kind === "pace_behind") {
+      return {
+        color: props.accentRed,
+        label: props.t("goals.card.paceBehind", { amount: formatMoney(props.cardStatus.amount) }),
+      };
+    }
+
+    return { color: props.secondaryColor, label: props.t("goals.card.startSaving") };
+  })();
+
+  return (
+    <View
+      style={{
+        paddingVertical: 3,
+        paddingHorizontal: 8,
+        borderRadius: 8,
+        backgroundColor: `${chip.color}26`,
+      }}
+    >
+      <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: chip.color }}>
+        {chip.label}
+      </Text>
+    </View>
+  );
+}
+
 function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProps) {
   const { t } = useTranslation();
   const cardBg = useThemeColor("card");
@@ -26,51 +82,6 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
   const progressWidth = Math.min(progress.percentComplete, 100);
 
   const cardStatus = deriveGoalCardStatus(progress, paceGuidance);
-
-  const renderStatus = () => {
-    if (cardStatus === null) return null;
-    if (cardStatus.kind === "completed" || cardStatus.kind === "almost_there") {
-      const label =
-        cardStatus.kind === "completed" ? t("goals.card.completed") : t("goals.card.almostThere");
-      return (
-        <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: accentGreen }}>
-          {label}
-        </Text>
-      );
-    }
-    // Pace chip variants
-    const chip = (() => {
-      if (cardStatus.kind === "pace_ahead") {
-        return {
-          color: accentGreen,
-          label: t("goals.card.paceAhead", { amount: formatMoney(cardStatus.amount) }),
-        };
-      }
-
-      if (cardStatus.kind === "pace_behind") {
-        return {
-          color: accentRed,
-          label: t("goals.card.paceBehind", { amount: formatMoney(cardStatus.amount) }),
-        };
-      }
-
-      return { color: secondaryColor, label: t("goals.card.startSaving") };
-    })();
-    return (
-      <View
-        style={{
-          paddingVertical: 3,
-          paddingHorizontal: 8,
-          borderRadius: 8,
-          backgroundColor: `${chip.color}26`,
-        }}
-      >
-        <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 11, color: chip.color }}>
-          {chip.label}
-        </Text>
-      </View>
-    );
-  };
 
   return (
     <Pressable
@@ -108,7 +119,13 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
               })
             : ""}
         </Text>
-        {renderStatus()}
+        <GoalCardStatus
+          accentGreen={accentGreen}
+          accentRed={accentRed}
+          cardStatus={cardStatus}
+          secondaryColor={secondaryColor}
+          t={t}
+        />
       </View>
 
       {/* Progress bar */}
@@ -136,7 +153,7 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
           style={{
             paddingLeft: 10,
             fontFamily: "Poppins_500Medium",
-            fontSize: 11,
+            fontSize: 12,
             color: primaryColor,
           }}
           numberOfLines={1}

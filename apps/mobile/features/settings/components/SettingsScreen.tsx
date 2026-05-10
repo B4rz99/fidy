@@ -51,7 +51,7 @@ function getPrivateBackupStatusLabelKey(status: PrivateBackupHealthStatus) {
 }
 
 export function SettingsScreen() {
-  const { push } = useRouter();
+  const { back, push } = useRouter();
   const { t, locale } = useTranslation();
 
   const { fullName, email } = useAuthIdentity();
@@ -77,16 +77,17 @@ export function SettingsScreen() {
   const version = Constants.expoConfig?.version ?? "0.0.1";
 
   return (
-    <ScreenLayout variant="tab" title={t("settings.title")}>
+    <ScreenLayout variant="sub" title={t("settings.title")} onBack={back}>
       {Platform.OS === "ios" && <Stack.Screen options={{ title: t("settings.title") }} />}
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 16,
-          paddingBottom: TAB_BAR_CLEARANCE,
+          paddingBottom: 16,
           gap: 24,
         }}
+        contentInset={{ bottom: TAB_BAR_CLEARANCE }}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >

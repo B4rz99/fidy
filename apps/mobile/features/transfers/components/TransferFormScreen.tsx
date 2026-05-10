@@ -1,5 +1,6 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import { ScreenLayout } from "@/shared/components";
 import { useTranslation } from "@/shared/hooks";
 import type { TransferFormScreenProps } from "./transfer-form/TransferForm.types";
@@ -8,16 +9,17 @@ import { TransferSidePicker } from "./transfer-form/TransferSidePicker";
 import { useTransferForm } from "./transfer-form/useTransferForm";
 
 export function TransferFormScreen(props: TransferFormScreenProps = {}) {
-  const router = useRouter();
+  const { back } = useRouter();
   const { t } = useTranslation();
   const form = useTransferForm(props);
+  const [maximumDate] = useState(() => new Date());
 
   return (
     <>
       <ScreenLayout
         title={form.isReclassification ? t("transfers.reclassifyTitle") : t("transfers.title")}
         variant="sub"
-        onBack={() => router.back()}
+        onBack={back}
       >
         <TransferFormContent form={form} />
       </ScreenLayout>
@@ -37,7 +39,7 @@ export function TransferFormScreen(props: TransferFormScreenProps = {}) {
           value={form.date}
           mode="date"
           display="default"
-          maximumDate={new Date()}
+          maximumDate={maximumDate}
           onChange={form.handleDateChange}
         />
       ) : null}

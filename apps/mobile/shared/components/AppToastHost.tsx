@@ -58,7 +58,7 @@ export function AppToastHost() {
             top: top + 12,
             backgroundColor: card,
             borderColor: accentGreen,
-            shadowColor: primary,
+            boxShadow: `0 8px 24px ${primary}29`,
           },
           animatedToastStyle,
         ]}
@@ -94,7 +94,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     borderRadius: 18,
     borderWidth: 1,
-    elevation: 8,
     flexDirection: "row",
     gap: 12,
     maxWidth: 360,
@@ -102,9 +101,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     position: "absolute",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
     width: "88%",
   },
 });

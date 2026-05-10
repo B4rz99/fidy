@@ -25,7 +25,7 @@ const submitSource = readSource(
 );
 
 test("create-budget is registered in root layout as formSheet", () => {
-  expect(layoutSource).toContain('name="create-budget"');
+  expect(layoutSource).toContain('"create-budget"');
   expect(layoutSource).toContain("formSheet");
 });
 

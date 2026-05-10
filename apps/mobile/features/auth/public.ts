@@ -5,6 +5,7 @@ import {
   deriveAuthEmail,
   deriveAuthFullName,
   deriveAuthMode,
+  deriveAuthProfileImageUrl,
   deriveEffectiveOnboardingComplete,
 } from "./lib/effective-auth";
 import { useAuthStore } from "./store";
@@ -26,8 +27,11 @@ export const useAuthIdentity = () => {
   const accountCreatedAt = useAuthStore((state) =>
     deriveAccountCreatedAt({ session: state.session, localQaSession: state.localQaSession })
   );
+  const profileImageUrl = useAuthStore((state) =>
+    deriveAuthProfileImageUrl({ session: state.session, localQaSession: state.localQaSession })
+  );
 
-  return { fullName, email, accountCreatedAt };
+  return { fullName, email, accountCreatedAt, profileImageUrl };
 };
 
 export const useAccountCreatedAt = () =>
