@@ -81,7 +81,6 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
         project: "fidy-mobile",
       },
     ],
-    "@sentry/react-native",
     [
       "expo-notifications",
       {

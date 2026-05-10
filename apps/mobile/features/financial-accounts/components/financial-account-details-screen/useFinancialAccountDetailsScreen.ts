@@ -1,5 +1,4 @@
-import { useFocusEffect } from "@react-navigation/native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
