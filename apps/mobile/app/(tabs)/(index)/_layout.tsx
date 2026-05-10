@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { ProfileAvatarButton } from "@/features/settings/ui.public";
+import { ProfileAvatarButton } from "@/features/settings/header.public";
 import { useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 
@@ -11,6 +11,7 @@ export default function HomeStackLayout() {
       screenOptions={{
         headerShown: true,
         headerLeft: () => <ProfileAvatarButton />,
+        headerTitle: "",
         headerStyle: { backgroundColor: theme.page },
         headerTintColor: theme.primary,
       }}

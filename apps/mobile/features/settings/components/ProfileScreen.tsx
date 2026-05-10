@@ -1,4 +1,6 @@
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthIdentity, useAuthMode, useAuthStore } from "@/features/auth/public";
 import { LocalQaProfileTools } from "@/features/qa/routes.public";
@@ -6,16 +8,22 @@ import { ScreenLayout } from "@/shared/components";
 import { Brain, LogOut } from "@/shared/components/icons";
 import { Alert, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { getUserInitials } from "../lib/settings-links";
+import { deriveProfileAvatar } from "../lib/profile-avatar";
 
 export function ProfileScreen() {
-  const router = useRouter();
+  const { back, push } = useRouter();
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
 
-  const { fullName, email } = useAuthIdentity();
+  const { fullName, email, profileImageUrl } = useAuthIdentity();
   const authMode = useAuthMode();
-  const initials = getUserInitials(fullName, email);
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
+  const avatar = deriveProfileAvatar({
+    fullName,
+    email,
+    profileImageUrl,
+    didImageFail: profileImageUrl === failedImageUrl,
+  });
 
   const accentGreen = useThemeColor("accentGreen");
   const secondaryColor = useThemeColor("secondary");
@@ -35,18 +43,19 @@ export function ProfileScreen() {
   };
 
   const handleDeleteAccount = () => {
-    router.push("/delete-account");
+    push("/delete-account");
   };
 
   return (
-    <ScreenLayout variant="sub" title={t("settings.profileTitle")} onBack={() => router.back()}>
+    <ScreenLayout variant="sub" title={t("settings.profileTitle")} onBack={back}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 32,
-          paddingBottom: bottom + 40,
+          paddingBottom: 40,
         }}
+        contentInset={{ bottom }}
         contentInsetAdjustmentBehavior="automatic"
       >
         {/* Avatar & Info */}
@@ -57,11 +66,21 @@ export function ProfileScreen() {
               width: 80,
               height: 80,
               backgroundColor: accentGreen,
+              overflow: "hidden",
             }}
           >
-            <Text className="font-poppins-bold text-white" style={{ fontSize: 28 }}>
-              {initials}
-            </Text>
+            {avatar.type === "image" ? (
+              <Image
+                source={{ uri: avatar.uri }}
+                style={{ width: 80, height: 80 }}
+                contentFit="cover"
+                onError={() => setFailedImageUrl(avatar.uri)}
+              />
+            ) : (
+              <Text className="font-poppins-bold text-white" style={{ fontSize: 28 }}>
+                {avatar.initials}
+              </Text>
+            )}
           </View>
           <View className="items-center" style={{ gap: 4 }}>
             <Text className="font-poppins-semibold text-lg text-primary dark:text-primary-dark">
@@ -77,7 +96,7 @@ export function ProfileScreen() {
         <View style={{ gap: 16, marginTop: 32 }} className="items-center">
           {/* AI Memories */}
           <Pressable
-            onPress={() => router.push("/ai-memories")}
+            onPress={() => push("/ai-memories")}
             className="flex-row items-center justify-center bg-card dark:bg-card-dark rounded-2xl w-full"
             style={{
               height: 52,

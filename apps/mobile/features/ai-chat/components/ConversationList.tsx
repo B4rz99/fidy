@@ -1,7 +1,7 @@
 import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { Stack } from "expo-router";
-import { ProfileAvatarButton } from "@/features/settings/ui.public";
+import { ProfileAvatarButton } from "@/features/settings/header.public";
 import { memo, useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
@@ -126,7 +126,7 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
       {Platform.OS === "ios" && (
         <Stack.Screen
           options={{
-            title: t("aiChat.title"),
+            headerTitle: "",
             headerLeft: () => <ProfileAvatarButton />,
             headerRight: () => <NewChatButton onPress={onNewChat} />,
           }}

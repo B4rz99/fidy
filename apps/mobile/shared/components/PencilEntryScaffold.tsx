@@ -79,7 +79,7 @@ export function PencilEntryScaffold({
   const keyBg = useThemeColor("numpadKey");
   const specialKeyBg = useThemeColor("numpadSpecialKey");
   const activeColor = getTabIndicatorColor({ accentGreen, accentRed, tab: activeTab, tertiary });
-  const { bottom, top } = useSafeAreaInsets();
+  const { bottom } = useSafeAreaInsets();
   const tabBarHeight = Platform.OS === "ios" ? ANDROID_TAB_BAR_HEIGHT / 8 : ANDROID_TAB_BAR_HEIGHT;
   const tabBarClearance = tabBarHeight + Math.max(bottom, 16);
   const activeTabIndex = tabs.findIndex((tab) => tab.key === activeTab);
@@ -125,7 +125,7 @@ export function PencilEntryScaffold({
         {
           backgroundColor: page,
           paddingBottom: tabBarClearance,
-          paddingTop: top + 20,
+          paddingTop: 16,
         },
       ]}
     >
