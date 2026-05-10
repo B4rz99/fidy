@@ -59,27 +59,22 @@ export const applyEmailCaptureCandidateLimit = <T extends EmailBatchLike>(
 
 export const resolveEmailCaptureSyncPolicy = (
   parseProfile: EmailCaptureParseProfile | undefined
-): EmailCaptureSyncPolicy =>
-  parseProfile === "background"
-    ? {
-        parseProfile,
-        advancesLastFetchedAt: false,
-        maxCandidateEmails: null,
-        runRetries: false,
-        showsProgress: false,
-      }
-    : parseProfile === "initial_sync"
-      ? {
-          parseProfile,
-          advancesLastFetchedAt: false,
-          maxCandidateEmails: null,
-          runRetries: false,
-          showsProgress: true,
-        }
-      : {
-          parseProfile: parseProfile ?? "foreground",
-          advancesLastFetchedAt: true,
-          maxCandidateEmails: null,
-          runRetries: true,
-          showsProgress: true,
-        };
+): EmailCaptureSyncPolicy => {
+  if (parseProfile === "background" || parseProfile === "initial_sync") {
+    return {
+      parseProfile,
+      advancesLastFetchedAt: false,
+      maxCandidateEmails: null,
+      runRetries: false,
+      showsProgress: parseProfile === "initial_sync",
+    };
+  }
+
+  return {
+    parseProfile: parseProfile ?? "foreground",
+    advancesLastFetchedAt: true,
+    maxCandidateEmails: null,
+    runRetries: true,
+    showsProgress: true,
+  };
+};

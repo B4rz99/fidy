@@ -26,6 +26,13 @@ function isActiveChatSession(userId: UserId, sessionId: number): boolean {
   return chatStoreSessionId === sessionId && useChatStore.getState().activeUserId === userId;
 }
 
+function getActionStatus(action: ChatAction | null): ActionStatus | null {
+  if (!action) return null;
+  if (action.type === "add") return "confirmed";
+  if (action.type === "delete") return "pending";
+  return null;
+}
+
 export function initializeChatSession(userId: UserId): void {
   chatStoreSessionId += 1;
   loadChatSessionsRequestId += 1;
@@ -183,13 +190,7 @@ export async function addAssistantChatMessage(
   const currentSessionId = useChatStore.getState().currentSessionId;
   if (!currentSessionId) throw new Error("No active session");
 
-  const actionStatus: ActionStatus | null = action
-    ? action.type === "add"
-      ? "confirmed"
-      : action.type === "delete"
-        ? "pending"
-        : null
-    : null;
+  const actionStatus = getActionStatus(action);
 
   const message: ChatMessage = {
     id: generateChatMessageId(),

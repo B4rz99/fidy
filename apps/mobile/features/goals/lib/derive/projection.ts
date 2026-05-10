@@ -113,12 +113,11 @@ export function deriveGoalProgress(
   goal: { readonly targetAmount: number },
   currentAmount: number
 ): GoalProgress {
-  const percentComplete =
-    goal.targetAmount > 0
-      ? Math.round((currentAmount / goal.targetAmount) * 100)
-      : currentAmount > 0
-        ? 100
-        : 0;
+  const percentComplete = (() => {
+    if (goal.targetAmount > 0) return Math.round((currentAmount / goal.targetAmount) * 100);
+    if (currentAmount > 0) return 100;
+    return 0;
+  })();
 
   const remaining = goal.targetAmount - currentAmount;
   const isComplete = currentAmount >= goal.targetAmount;

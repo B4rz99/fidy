@@ -39,29 +39,34 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
       );
     }
     // Pace chip variants
-    const chipColor =
-      cardStatus.kind === "pace_ahead"
-        ? accentGreen
-        : cardStatus.kind === "pace_behind"
-          ? accentRed
-          : secondaryColor;
-    const chipLabel =
-      cardStatus.kind === "pace_ahead"
-        ? t("goals.card.paceAhead", { amount: formatMoney(cardStatus.amount) })
-        : cardStatus.kind === "pace_behind"
-          ? t("goals.card.paceBehind", { amount: formatMoney(cardStatus.amount) })
-          : t("goals.card.startSaving");
+    const chip = (() => {
+      if (cardStatus.kind === "pace_ahead") {
+        return {
+          color: accentGreen,
+          label: t("goals.card.paceAhead", { amount: formatMoney(cardStatus.amount) }),
+        };
+      }
+
+      if (cardStatus.kind === "pace_behind") {
+        return {
+          color: accentRed,
+          label: t("goals.card.paceBehind", { amount: formatMoney(cardStatus.amount) }),
+        };
+      }
+
+      return { color: secondaryColor, label: t("goals.card.startSaving") };
+    })();
     return (
       <View
         style={{
           paddingVertical: 3,
           paddingHorizontal: 8,
           borderRadius: 8,
-          backgroundColor: `${chipColor}26`,
+          backgroundColor: `${chip.color}26`,
         }}
       >
-        <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 11, color: chipColor }}>
-          {chipLabel}
+        <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 11, color: chip.color }}>
+          {chip.label}
         </Text>
       </View>
     );

@@ -66,12 +66,12 @@ export function SyncProgressStep() {
     const getHasAccountSuggestions = () =>
       Boolean(
         db &&
-          userId &&
-          suggestionService.listSuggestions({
-            db,
-            userId,
-            limit: 2,
-          }).length > 0
+        userId &&
+        suggestionService.listSuggestions({
+          db,
+          userId,
+          limit: 2,
+        }).length > 0
       );
 
     const unlockSync = (input: {
@@ -228,11 +228,11 @@ export function SyncProgressStep() {
     const cleanup = startSync();
     return cleanup;
   });
-  const livePercent = progress
-    ? progress.total > 0
-      ? Math.round((progress.completed / progress.total) * 100)
-      : 0
-    : 0;
+  const livePercent = (() => {
+    if (!progress) return 0;
+    if (progress.total <= 0) return 0;
+    return Math.round((progress.completed / progress.total) * 100);
+  })();
 
   const importComplete = syncOutcome?.importComplete ?? false;
   const percent = importComplete ? 100 : livePercent;
