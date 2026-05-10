@@ -30,6 +30,7 @@ import {
   loadNeedsReviewEmails,
   useEmailCaptureStore,
 } from "@/features/email-capture/store";
+import type * as SharedLib from "@/shared/lib";
 import type {
   EmailAccountId,
   IsoDateTime,
@@ -45,7 +46,7 @@ const { mockCaptureWarning } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/shared/lib", async () => {
-  const actual = await vi.importActual<typeof import("@/shared/lib")>("@/shared/lib");
+  const actual = await vi.importActual<typeof SharedLib>("@/shared/lib");
   return {
     ...actual,
     captureWarning: mockCaptureWarning,

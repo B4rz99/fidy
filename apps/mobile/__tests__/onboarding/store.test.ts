@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ONBOARDING_STEP } from "@/features/onboarding/lib/flow";
 import { useLocalOnboardingState } from "@/features/onboarding/lib/local-onboarding-state";
 import { useOnboardingStore } from "@/features/onboarding/store";
+import type * as CheckOnboarding from "@/features/onboarding/lib/check-onboarding";
 
 const { mockLogOnboardingEvent, mockMarkOnboardingComplete, mockTrackOnboardingEvent } = vi.hoisted(
   () => ({
@@ -17,7 +18,7 @@ vi.mock("@/features/onboarding/lib/telemetry", () => ({
 }));
 
 vi.mock("@/features/onboarding/lib/check-onboarding", async () => {
-  const actual = await vi.importActual<typeof import("@/features/onboarding/lib/check-onboarding")>(
+  const actual = await vi.importActual<typeof CheckOnboarding>(
     "@/features/onboarding/lib/check-onboarding"
   );
 

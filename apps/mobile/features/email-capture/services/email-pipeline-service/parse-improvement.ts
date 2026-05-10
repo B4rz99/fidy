@@ -1,6 +1,5 @@
-import { getTransactionSource } from "./shared";
+import { appendEmailParseImprovementRequest, getTransactionSource } from "./shared";
 import type { PipelineResult, RawEmail } from "./types";
-import { appendEmailParseImprovementRequest } from "./shared";
 
 const buildEmailParseImprovementRawText = (email: RawEmail): string =>
   [email.subject, email.body].filter((part) => part.trim().length > 0).join("\n\n");

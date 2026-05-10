@@ -17,8 +17,10 @@ const FEATURES_ROOT = join("apps", "mobile", "features");
 const TEST_FILE_PATTERN = /\.test\.(ts|tsx)$/;
 const FEATURE_IMPORT_PATTERN =
   /(?:^|\n)\s*(?:import|export)(?:\s+type)?[\s\S]*?\bfrom\s+["']@\/features\/([^/"']+)["']/g;
-const withOptions = (options: CliOptions, patch: Partial<CliOptions>): CliOptions =>
-  Object.assign({}, options, patch);
+const withOptions = (options: CliOptions, patch: Partial<CliOptions>): CliOptions => ({
+  ...options,
+  ...patch,
+});
 const normalizePath = (path: string): string => path.replaceAll("\\", "/");
 
 const isTsSourceFile = (path: string) => {

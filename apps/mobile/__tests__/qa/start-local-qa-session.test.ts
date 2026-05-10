@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { startLocalQaSession } from "@/features/qa";
+import type * as LocalSession from "@/features/qa/local-session";
 
 const mockClear = vi.fn(() => Promise.resolve());
 const mockSetLocalOnboardingComplete = vi.fn();
@@ -87,9 +88,7 @@ vi.mock("@/features/qa/lib/build-local-qa-seed", () => ({
 }));
 
 vi.mock("@/features/qa/local-session", async () => {
-  const actual = await vi.importActual<typeof import("@/features/qa/local-session")>(
-    "@/features/qa/local-session"
-  );
+  const actual = await vi.importActual<typeof LocalSession>("@/features/qa/local-session");
 
   return {
     ...actual,

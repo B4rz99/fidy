@@ -9,6 +9,7 @@ import {
 import { createCaptureIngestionPort } from "@/features/capture-sources/ingestion.public";
 import type { AnyDb } from "@/shared/db";
 import { updateLastFetchedAt } from "@/features/email-capture/lib/repository";
+import type * as SharedLib from "@/shared/lib";
 import type { EmailAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
 
 const { mockFetchEmails, mockEnsureBankSenders, mockCapturePipelineEvent, mockCaptureWarning } =
@@ -50,7 +51,7 @@ vi.mock("@/shared/query", () => ({
 }));
 
 vi.mock("@/shared/lib", async () => {
-  const actual = await vi.importActual<typeof import("@/shared/lib")>("@/shared/lib");
+  const actual = await vi.importActual<typeof SharedLib>("@/shared/lib");
   return {
     ...actual,
     captureWarning: (...args: unknown[]) => mockCaptureWarning(...args),
