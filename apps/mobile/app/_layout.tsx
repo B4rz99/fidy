@@ -88,7 +88,8 @@ function AuthenticatedShell({
   const captureUserId = enableRemoteEffects ? userId : null;
   const navigateToRoute = useCallback(
     (route: string) => {
-      router.push(route as never);
+      const href = route as unknown as Parameters<typeof router.push>[0];
+      router.push(href);
     },
     [router]
   );
