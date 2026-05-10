@@ -11,8 +11,9 @@ describe("notification bootstrap", () => {
   it("does not recursively fetch push tokens from the push-token listener", () => {
     expect(source).toContain("registerCurrentPushToken(userId)");
     expect(source).toContain("addPushTokenListener");
-    expect(source).toContain("registerKnownPushToken(userId, token.data)");
-    expect(source).not.toContain("addPushTokenListener(() =>");
+    expect(source).toContain("addPushTokenListener(() =>");
+    expect(source).toMatch(/addPushTokenListener\(\(\) => \{\s+registerCurrentPushToken\(userId\);\s+\}\)/);
+    expect(source).not.toContain("registerKnownPushToken(userId, token.data)");
   });
 
   it("keeps notification response navigation subscribed", () => {

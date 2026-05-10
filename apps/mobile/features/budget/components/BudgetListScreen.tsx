@@ -40,7 +40,6 @@ export function BudgetListScreen() {
   // chain and cannot call router.push() directly — this is a Zustand subscription pattern.
   useSubscription(
     () => {
-      clearPendingPermissionRequest();
       let cancelled = false;
 
       void shouldShowNotificationPrePermissionPrompt()
@@ -49,7 +48,8 @@ export function BudgetListScreen() {
 
           push("/enable-notifications");
         })
-        .catch(captureError);
+        .catch(captureError)
+        .finally(clearPendingPermissionRequest);
 
       return () => {
         cancelled = true;

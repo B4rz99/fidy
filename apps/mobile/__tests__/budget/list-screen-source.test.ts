@@ -9,10 +9,12 @@ const source = readFileSync(
 
 describe("BudgetListScreen notification prompt routing", () => {
   it("guards stale pending permission signals before opening the notification sheet", () => {
-    expect(source).toContain("clearPendingPermissionRequest()");
+    expect(source).toContain("clearPendingPermissionRequest");
     expect(source).toContain("shouldShowNotificationPrePermissionPrompt()");
     expect(source).toContain("if (cancelled || !shouldShowPrompt) return");
     expect(source).toContain('push("/enable-notifications")');
     expect(source).toContain(".catch(captureError)");
+    expect(source).toContain(".finally(clearPendingPermissionRequest)");
+    expect(source).not.toMatch(/\{\s+clearPendingPermissionRequest\(\);\s+let cancelled = false;/);
   });
 });
