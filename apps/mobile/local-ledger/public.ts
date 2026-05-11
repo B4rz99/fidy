@@ -1,16 +1,30 @@
 export type {
   FinancialAccountId,
+  LocalLedgerCaptureEvidence,
   LocalLedgerCommandId,
   LocalLedgerDomainEvent,
   LocalLedgerEntry,
   LocalLedgerEntryId,
   LocalLedgerMoney,
+  LocalLedgerProcessedSourceEventId,
+  LocalLedgerProcessedSourceEventStatus,
+  LocalLedgerReviewCandidate,
+  LocalLedgerReviewCandidateId,
+  LocalLedgerReviewCandidateStatus,
   LocalLedgerSourceId,
   LocalLedgerTransfer,
   LocalLedgerTransferSide,
   TransferId,
   UserId,
 } from "./domain/public";
+export {
+  createReviewCandidateUseCase,
+  type CreateReviewCandidate,
+  type CreateReviewCandidateCommand,
+  type CreateReviewCandidateCommitPort,
+  type CreateReviewCandidateInput,
+  toCreateReviewCandidateCommand,
+} from "./use-cases/intake.public";
 export type {
   IntakeLocalLedgerCandidate,
   IntakeLocalLedgerCandidateHandler,

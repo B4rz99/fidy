@@ -22,6 +22,7 @@ const MUTATION_POLICY: Record<MutationCommand["kind"], MutationPolicy> = {
   "calendar.bill.delete": "local-only",
   "calendar.bill.markPaid": "ledger-backed",
   "calendar.bill.unmarkPaid": "ledger-backed",
+  "localLedger.reviewCandidate.create": "local-only",
 };
 
 export function getMutationPolicy(kind: MutationCommand["kind"]): MutationPolicy {

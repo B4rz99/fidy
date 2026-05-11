@@ -61,6 +61,7 @@ function persistCaptureEvidence(db: AnyDb, row: CaptureEvidenceRow) {
         transferId: row.transferId ?? null,
         processedEmailId: row.processedEmailId,
         processedCaptureId: row.processedCaptureId,
+        processedSourceEventId: row.processedSourceEventId,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         deletedAt: row.deletedAt,

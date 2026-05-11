@@ -21,9 +21,29 @@
       "reason": "ESLint 10 should wait for eslint-config-expo compatibility confirmation."
     },
     {
+      "name": "knip",
+      "until": "2026-06-01",
+      "reason": "Minor dead-code tooling update should land in a dedicated tooling PR so unused-export reports can be reviewed separately."
+    },
+    {
+      "name": "oxfmt",
+      "until": "2026-06-01",
+      "reason": "Minor formatter update should land in a dedicated tooling PR so formatting churn can be reviewed separately."
+    },
+    {
+      "name": "oxlint",
+      "until": "2026-06-01",
+      "reason": "Minor lint tooling update should land in a dedicated tooling PR so rule and diagnostic changes can be reviewed separately."
+    },
+    {
       "name": "tailwindcss",
       "until": "2026-06-01",
       "reason": "Tailwind 4 requires NativeWind compatibility proof and a dedicated styling migration."
+    },
+    {
+      "name": "xcodebuildmcp",
+      "until": "2026-06-01",
+      "reason": "Minor native tooling update should land in a dedicated tooling PR so simulator and Xcode workflow changes can be reviewed separately."
     }
   ]
 }

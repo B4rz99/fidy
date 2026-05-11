@@ -1,14 +1,18 @@
+import type { AnyDb } from "@/shared/db/client";
 import type {
-  AnyDb,
   billPayments,
   bills,
   budgets,
+  captureEvidence,
   goalContributions,
   goals,
   notifications,
+  processedSourceEvents,
+  reviewCandidateCaptureEvidence,
+  reviewCandidates,
   transactions,
   userCategories,
-} from "@/shared/db";
+} from "@/shared/db/schema";
 import type {
   BillId,
   BudgetId,
@@ -44,6 +48,10 @@ type NotificationRow = typeof notifications.$inferInsert;
 type UserCategoryRow = typeof userCategories.$inferInsert;
 type BillRow = typeof bills.$inferInsert;
 type BillPaymentRow = typeof billPayments.$inferInsert;
+type ProcessedSourceEventRow = typeof processedSourceEvents.$inferInsert;
+type ReviewCandidateRow = typeof reviewCandidates.$inferInsert;
+type CaptureEvidenceRow = typeof captureEvidence.$inferInsert;
+type ReviewCandidateCaptureEvidenceRow = typeof reviewCandidateCaptureEvidence.$inferInsert;
 
 type TransactionSaveCommand = {
   kind: "transaction.save";
@@ -192,6 +200,15 @@ type CalendarBillUnmarkPaidCommand = {
   afterCommit?: readonly MutationEffect[];
 };
 
+type LocalLedgerReviewCandidateCreateCommand = {
+  kind: "localLedger.reviewCandidate.create";
+  processedSourceEventRow: ProcessedSourceEventRow;
+  reviewCandidateRow: ReviewCandidateRow;
+  evidenceRows: readonly CaptureEvidenceRow[];
+  evidenceLinkRows: readonly ReviewCandidateCaptureEvidenceRow[];
+  afterCommit?: readonly MutationEffect[];
+};
+
 export type MutationCommand =
   | TransactionSaveCommand
   | TransactionDeleteCommand
@@ -211,7 +228,8 @@ export type MutationCommand =
   | CalendarBillUpdateCommand
   | CalendarBillDeleteCommand
   | CalendarBillMarkPaidCommand
-  | CalendarBillUnmarkPaidCommand;
+  | CalendarBillUnmarkPaidCommand
+  | LocalLedgerReviewCandidateCreateCommand;
 
 type TransactionCallback = Parameters<AnyDb["transaction"]>[0];
 export type MutationDb = Parameters<TransactionCallback>[0];

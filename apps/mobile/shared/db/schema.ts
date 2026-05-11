@@ -31,6 +31,9 @@ import type {
   OpeningBalanceId,
   ProcessedCaptureId,
   ProcessedEmailId,
+  ProcessedSourceEventId,
+  ReviewCandidateCaptureEvidenceId,
+  ReviewCandidateId,
   TransactionId,
   TransferId,
   UserCategoryId,
@@ -201,6 +204,7 @@ export const captureEvidence = sqliteTable(
     transferId: text("transfer_id").$type<TransferId>(),
     processedEmailId: text("processed_email_id").$type<ProcessedEmailId>(),
     processedCaptureId: text("processed_capture_id").$type<ProcessedCaptureId>(),
+    processedSourceEventId: text("processed_source_event_id").$type<ProcessedSourceEventId>(),
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
     updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
     deletedAt: text("deleted_at").$type<IsoDateTime>(),
@@ -208,7 +212,7 @@ export const captureEvidence = sqliteTable(
   (table) => [
     check(
       "ck_capture_evidence_source_record",
-      sql`(case when ${table.processedEmailId} is not null then 1 else 0 end) + (case when ${table.processedCaptureId} is not null then 1 else 0 end) = 1`
+      sql`(case when ${table.processedEmailId} is not null then 1 else 0 end) + (case when ${table.processedCaptureId} is not null then 1 else 0 end) + (case when ${table.processedSourceEventId} is not null then 1 else 0 end) = 1`
     ),
     check(
       "ck_capture_evidence_financial_link",
@@ -220,12 +224,87 @@ export const captureEvidence = sqliteTable(
     uniqueIndex("uq_capture_evidence_capture")
       .on(table.userId, table.processedCaptureId, table.scope, table.value)
       .where(sql`${table.processedCaptureId} is not null and ${table.deletedAt} is null`),
+    uniqueIndex("uq_capture_evidence_source_event")
+      .on(table.userId, table.processedSourceEventId, table.scope, table.value)
+      .where(sql`${table.processedSourceEventId} is not null and ${table.deletedAt} is null`),
     index("idx_capture_evidence_user_scope_value").on(table.userId, table.scope, table.value),
     index("idx_capture_evidence_transaction").on(table.transactionId),
     index("idx_capture_evidence_transfer").on(table.transferId),
     index("idx_capture_evidence_processed_email").on(table.processedEmailId),
     index("idx_capture_evidence_processed_capture").on(table.processedCaptureId),
+    index("idx_capture_evidence_processed_source_event").on(table.processedSourceEventId),
     index("idx_capture_evidence_user_updated").on(table.userId, table.updatedAt),
+  ]
+);
+
+export const processedSourceEvents = sqliteTable(
+  "processed_source_events",
+  {
+    id: text("id").$type<ProcessedSourceEventId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    sourceFamily: text("source_family").notNull(),
+    sourceId: text("source_id").notNull(),
+    sourceEventId: text("source_event_id").notNull(),
+    status: text("status").notNull(),
+    failureReason: text("failure_reason"),
+    receivedAt: text("received_at").$type<IsoDateTime>().notNull(),
+    processedAt: text("processed_at").$type<IsoDateTime>().notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [
+    uniqueIndex("uq_processed_source_event")
+      .on(table.userId, table.sourceFamily, table.sourceId, table.sourceEventId)
+      .where(sql`${table.deletedAt} is null`),
+    index("idx_processed_source_events_user_status").on(table.userId, table.status),
+    index("idx_processed_source_events_user_updated").on(table.userId, table.updatedAt),
+  ]
+);
+
+export const reviewCandidates = sqliteTable(
+  "review_candidates",
+  {
+    id: text("id").$type<ReviewCandidateId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    processedSourceEventId: text("processed_source_event_id")
+      .$type<ProcessedSourceEventId>()
+      .notNull(),
+    status: text("status").notNull(),
+    candidateKind: text("candidate_kind").notNull(),
+    occurredAt: text("occurred_at").$type<IsoDateTime>(),
+    amount: integer("amount").$type<CopAmount>(),
+    currency: text("currency").notNull().default("COP"),
+    description: text("description"),
+    confidence: real("confidence"),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [
+    index("idx_review_candidates_user_status").on(table.userId, table.status),
+    index("idx_review_candidates_source_event").on(table.processedSourceEventId),
+    index("idx_review_candidates_user_updated").on(table.userId, table.updatedAt),
+  ]
+);
+
+export const reviewCandidateCaptureEvidence = sqliteTable(
+  "review_candidate_capture_evidence",
+  {
+    id: text("id").$type<ReviewCandidateCaptureEvidenceId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    reviewCandidateId: text("review_candidate_id").$type<ReviewCandidateId>().notNull(),
+    captureEvidenceId: text("capture_evidence_id").$type<CaptureEvidenceId>().notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [
+    uniqueIndex("uq_review_candidate_capture_evidence")
+      .on(table.userId, table.reviewCandidateId, table.captureEvidenceId)
+      .where(sql`${table.deletedAt} is null`),
+    index("idx_review_candidate_capture_evidence_user").on(table.userId),
+    index("idx_review_candidate_capture_evidence_candidate").on(table.reviewCandidateId),
+    index("idx_review_candidate_capture_evidence_evidence").on(table.captureEvidenceId),
   ]
 );
 

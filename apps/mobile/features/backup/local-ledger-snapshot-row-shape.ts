@@ -1,3 +1,4 @@
+import { captureEvidenceTypeSchema } from "@/features/capture-evidence/schema.public";
 import type { BackupSnapshot, LocalLedgerBackupSnapshotData } from "./local-ledger-snapshot";
 import {
   assertBoolean,
@@ -13,6 +14,7 @@ import {
   assertValidMonth,
   validateBaseLedgerFields,
 } from "./local-ledger-snapshot-row-assertions";
+import { INTAKE_ROW_SPECS } from "./local-ledger-snapshot-row-shape-intake";
 
 export function validateSnapshotRows(snapshot: BackupSnapshot) {
   assertValidIsoDateTime(snapshot.exportedAt, "exportedAt");
@@ -37,11 +39,14 @@ export const BACKUP_DATA_KEYS = [
   "accountSuggestionDismissals",
   "processedEmails",
   "processedCaptures",
+  "processedSourceEvents",
+  "reviewCandidates",
+  "reviewCandidateCaptureEvidence",
 ] as const;
 
 export type BackupDataKey = (typeof BACKUP_DATA_KEYS)[number];
 
-type RowSpec<Key extends BackupDataKey = BackupDataKey> = {
+export type RowSpec<Key extends BackupDataKey = BackupDataKey> = {
   readonly key: Key;
   readonly validate: (row: LocalLedgerBackupSnapshotData[Key][number]) => void;
 };
@@ -200,29 +205,16 @@ const ROW_SPECS: readonly RowSpec[] = [
           userId: (value) => assertString(value, "userId"),
           sourceFamily: (value) => assertString(value, "sourceFamily"),
           evidenceType: (value) =>
-            assertOneOf(
-              [
-                "sender_email",
-                "sender_domain",
-                "package_name",
-                "alias_token",
-                "card_hint",
-                "last4",
-                "llm_account_hint",
-                "card_product_hint",
-                "account_type_hint",
-                "counterparty_hint",
-              ],
-              value,
-              "evidenceType"
-            ),
+            assertOneOf(captureEvidenceTypeSchema.options, value, "evidenceType"),
           scope: (value) => assertString(value, "scope"),
           value: (value) => assertString(value, "value"),
           transactionId: (value) => assertNullableString(value, "transactionId"),
           transferId: (value) => assertNullableString(value, "transferId"),
           processedEmailId: (value) => assertNullableString(value, "processedEmailId"),
           processedCaptureId: (value) => assertNullableString(value, "processedCaptureId"),
-        })
+          processedSourceEventId: (value) => assertNullableString(value, "processedSourceEventId"),
+        }),
+        ["processedSourceEventId"]
       ),
   },
   {
@@ -280,19 +272,5 @@ const ROW_SPECS: readonly RowSpec[] = [
         ["rawBody", "retryCount", "nextRetryAt"]
       ),
   },
-  {
-    key: "processedCaptures",
-    validate: (row) =>
-      assertRecordShape(row, "processedCaptures", {
-        id: (value) => assertString(value, "id"),
-        fingerprintHash: (value) => assertString(value, "fingerprintHash"),
-        source: (value) => assertString(value, "source"),
-        status: (value) => assertString(value, "status"),
-        rawText: (value) => assertNullableString(value, "rawText"),
-        transactionId: (value) => assertNullableString(value, "transactionId"),
-        confidence: (value) => assertNullableNumber(value, "confidence"),
-        receivedAt: (value) => assertValidIsoDateTime(value, "receivedAt"),
-        createdAt: (value) => assertValidIsoDateTime(value, "createdAt"),
-      }),
-  },
+  ...INTAKE_ROW_SPECS,
 ] as const;

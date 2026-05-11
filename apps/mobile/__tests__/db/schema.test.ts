@@ -1,6 +1,14 @@
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { billPayments, bills, captureEvidence, transactions } from "@/shared/db/schema";
+import {
+  billPayments,
+  bills,
+  captureEvidence,
+  processedSourceEvents,
+  reviewCandidateCaptureEvidence,
+  reviewCandidates,
+  transactions,
+} from "@/shared/db/schema";
 
 describe("transactions table schema", () => {
   it("is named 'transactions'", () => {
@@ -87,10 +95,11 @@ describe("captureEvidence table schema", () => {
     expect(names).toContain("transferId");
     expect(names).toContain("processedEmailId");
     expect(names).toContain("processedCaptureId");
+    expect(names).toContain("processedSourceEventId");
     expect(names).toContain("createdAt");
     expect(names).toContain("updatedAt");
     expect(names).toContain("deletedAt");
-    expect(names).toHaveLength(13);
+    expect(names).toHaveLength(14);
   });
 
   it("requires userId, scope, and value", () => {
@@ -99,6 +108,36 @@ describe("captureEvidence table schema", () => {
     expect(cols.userId.notNull).toBe(true);
     expect(cols.scope.notNull).toBe(true);
     expect(cols.value.notNull).toBe(true);
+  });
+});
+
+describe("local ledger intake schema", () => {
+  it("stores source event processing separately from review candidate status", () => {
+    expect(getTableName(processedSourceEvents)).toBe("processed_source_events");
+    expect(getTableName(reviewCandidates)).toBe("review_candidates");
+
+    const sourceEventCols = getTableColumns(processedSourceEvents);
+    const reviewCandidateCols = getTableColumns(reviewCandidates);
+
+    expect(sourceEventCols.status.notNull).toBe(true);
+    expect(reviewCandidateCols.status.notNull).toBe(true);
+    expect(reviewCandidateCols.processedSourceEventId.notNull).toBe(true);
+    expect(Object.keys(sourceEventCols)).toEqual(
+      expect.arrayContaining(["sourceFamily", "sourceId", "sourceEventId", "status"])
+    );
+    expect(Object.keys(reviewCandidateCols)).toEqual(
+      expect.arrayContaining(["candidateKind", "amount", "confidence", "status"])
+    );
+  });
+
+  it("links review candidates to capture evidence separately from committed records", () => {
+    expect(getTableName(reviewCandidateCaptureEvidence)).toBe("review_candidate_capture_evidence");
+
+    const cols = getTableColumns(reviewCandidateCaptureEvidence);
+
+    expect(cols.userId.notNull).toBe(true);
+    expect(cols.reviewCandidateId.notNull).toBe(true);
+    expect(cols.captureEvidenceId.notNull).toBe(true);
   });
 });
 

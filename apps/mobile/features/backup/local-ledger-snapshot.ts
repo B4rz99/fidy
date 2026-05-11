@@ -9,6 +9,9 @@ import {
   openingBalances,
   processedCaptures,
   processedEmails,
+  processedSourceEvents,
+  reviewCandidateCaptureEvidence,
+  reviewCandidates,
   transactions,
   transfers,
   userCategories,
@@ -78,6 +81,18 @@ export function exportLocalLedgerBackupSnapshot(
         db,
         processedCaptures
       ) as readonly (typeof processedCaptures.$inferSelect)[],
+      processedSourceEvents: selectRows(
+        db,
+        processedSourceEvents
+      ) as readonly (typeof processedSourceEvents.$inferSelect)[],
+      reviewCandidates: selectRows(
+        db,
+        reviewCandidates
+      ) as readonly (typeof reviewCandidates.$inferSelect)[],
+      reviewCandidateCaptureEvidence: selectRows(
+        db,
+        reviewCandidateCaptureEvidence
+      ) as readonly (typeof reviewCandidateCaptureEvidence.$inferSelect)[],
     },
   };
 }
@@ -97,7 +112,14 @@ export function importLocalLedgerBackupSnapshot(db: BackupDb, snapshot: unknown)
     insertRows(tx, goalContributions, validatedSnapshot.data.goalContributions);
     insertRows(tx, processedEmails, validatedSnapshot.data.processedEmails);
     insertRows(tx, processedCaptures, validatedSnapshot.data.processedCaptures);
+    insertRows(tx, processedSourceEvents, validatedSnapshot.data.processedSourceEvents);
+    insertRows(tx, reviewCandidates, validatedSnapshot.data.reviewCandidates);
     insertRows(tx, captureEvidence, validatedSnapshot.data.captureEvidence);
+    insertRows(
+      tx,
+      reviewCandidateCaptureEvidence,
+      validatedSnapshot.data.reviewCandidateCaptureEvidence
+    );
     insertRows(tx, accountSuggestionDismissals, validatedSnapshot.data.accountSuggestionDismissals);
   });
 }
@@ -136,6 +158,9 @@ export type LocalLedgerBackupSnapshotData = {
   readonly accountSuggestionDismissals: readonly (typeof accountSuggestionDismissals.$inferSelect)[];
   readonly processedEmails: readonly (typeof processedEmails.$inferSelect)[];
   readonly processedCaptures: readonly (typeof processedCaptures.$inferSelect)[];
+  readonly processedSourceEvents: readonly (typeof processedSourceEvents.$inferSelect)[];
+  readonly reviewCandidates: readonly (typeof reviewCandidates.$inferSelect)[];
+  readonly reviewCandidateCaptureEvidence: readonly (typeof reviewCandidateCaptureEvidence.$inferSelect)[];
 };
 
 type BackupTable =
@@ -149,6 +174,9 @@ type BackupTable =
   | typeof openingBalances
   | typeof processedCaptures
   | typeof processedEmails
+  | typeof processedSourceEvents
+  | typeof reviewCandidateCaptureEvidence
+  | typeof reviewCandidates
   | typeof transactions
   | typeof transfers
   | typeof userCategories;
