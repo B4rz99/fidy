@@ -1,4 +1,5 @@
 export type {
+  FinancialAccountId,
   LocalLedgerCommandId,
   LocalLedgerDomainEvent,
   LocalLedgerEntry,
@@ -7,7 +8,6 @@ export type {
   LocalLedgerSourceId,
   LocalLedgerTransfer,
   LocalLedgerTransferSide,
-  FinancialAccountId,
   TransferId,
   UserId,
 } from "./domain/public";
@@ -18,6 +18,16 @@ export type {
 } from "./use-cases/intake.public";
 export {
   createRecordTransfer,
+  recordTransaction,
+  type RecordTransactionAccepted,
+  type RecordTransactionAccountAttributionState,
+  type RecordTransactionCommand,
+  type RecordTransactionEvent,
+  type RecordTransactionInput,
+  type RecordTransactionPorts,
+  type RecordTransactionRejectCode,
+  type RecordTransactionResult,
+  type RecordTransactionSource,
   type RecordTransfer,
   type RecordTransferCommand,
   type RecordTransferDependencies,
@@ -28,6 +38,6 @@ export {
 } from "./use-cases/write.public";
 export type {
   LocalLedgerEntryRepository,
-  LocalLedgerTransferRepository,
   LocalLedgerTransferRecordResult,
+  LocalLedgerTransferRepository,
 } from "./ports/public";
