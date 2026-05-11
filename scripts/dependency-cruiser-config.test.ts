@@ -13,6 +13,11 @@ const config = require("../.dependency-cruiser.cjs") as {
   readonly forbidden: readonly ForbiddenRule[];
 };
 
+const extractPackageAlternatives = (packagePattern: string): readonly string[] => {
+  const match = packagePattern.match(/^\^\(node_modules\/\)\?\((.*)\)$/);
+  return match?.[1]?.split("|") ?? [];
+};
+
 test("guards pure local-ledger code from app layers and runtime infrastructure", () => {
   const internalsRule = config.forbidden.find(
     (forbiddenRule) => forbiddenRule.name === "local-ledger-must-not-import-app-runtime-internals"
@@ -40,10 +45,15 @@ test("guards pure local-ledger code from app layers and runtime infrastructure",
 
   const forbiddenPackages = packagesRule?.to?.path ?? "";
   expect(forbiddenPackages).toContain("^(node_modules/)?");
-  expect(forbiddenPackages).toContain("drizzle-orm");
-  expect(forbiddenPackages).toContain("react-native");
-  expect(forbiddenPackages).toContain("expo");
-  expect(forbiddenPackages).toContain("@supabase/");
-  expect(forbiddenPackages).toContain("@sentry/");
-  expect(forbiddenPackages).toContain("zustand");
+  expect(extractPackageAlternatives(forbiddenPackages)).toEqual([
+    "drizzle-orm",
+    "react",
+    "react-native",
+    "expo",
+    "expo-[^/]+",
+    "@expo/",
+    "zustand",
+    "@supabase/",
+    "@sentry/",
+  ]);
 });
