@@ -50,11 +50,20 @@ module.exports = {
       to: { path: "^apps/mobile/(app|modules)/" },
     },
     {
-      name: "local-ledger-pure-must-stay-independent",
+      name: "local-ledger-must-not-import-app-runtime-internals",
       severity: "error",
       from: { path: "^apps/mobile/local-ledger/" },
       to: {
-        path: "^apps/mobile/features/|^apps/mobile/app/|^apps/mobile/modules/|^apps/mobile/shared/db($|/)|^apps/mobile/infrastructure/|^apps/mobile/shared/(query|effect|components)($|/)|node_modules/(drizzle-orm|react|react-native|expo|expo-[^/]+|@expo/|zustand|@supabase/|@sentry/)",
+        path: "^apps/mobile/features/|^apps/mobile/app/|^apps/mobile/modules/|^apps/mobile/shared/db($|/)|^apps/mobile/infrastructure/|^apps/mobile/shared/(query|effect|components)($|/)|^apps/mobile/shared/lib($|\\.public\\.ts|/index\\.ts)|^apps/mobile/shared/lib/(analytics|sentry|toast)\\.ts",
+      },
+    },
+    {
+      name: "local-ledger-must-not-import-runtime-packages",
+      severity: "error",
+      from: { path: "^apps/mobile/local-ledger/" },
+      to: {
+        dependencyTypes: ["npm", "npm-dev", "npm-optional", "npm-peer"],
+        path: "^(node_modules/)?(drizzle-orm|react|react-native|expo|expo-[^/]+|@expo/|zustand|@supabase/|@sentry/)",
       },
     },
     {
@@ -65,7 +74,8 @@ module.exports = {
     },
   ],
   options: {
-    includeOnly: "^((apps/mobile)|(packages))/",
+    includeOnly:
+      "^((apps/mobile)|(packages)|node_modules/(drizzle-orm|react|react-native|expo|expo-[^/]+|@expo/|zustand|@supabase/|@sentry/))",
     doNotFollow: {
       path: ["node_modules", "\\.expo", "\\.worktrees", "dist", "coverage"],
     },

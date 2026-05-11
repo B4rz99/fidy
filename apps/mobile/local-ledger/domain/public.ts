@@ -1,3 +1,5 @@
+import type { CopAmount } from "@/shared/types/branded";
+
 export type LocalLedgerCommandId = string & { readonly __brand: "LocalLedgerCommandId" };
 
 export type LocalLedgerEntryId = string & { readonly __brand: "LocalLedgerEntryId" };
@@ -5,7 +7,7 @@ export type LocalLedgerEntryId = string & { readonly __brand: "LocalLedgerEntryI
 export type LocalLedgerSourceId = string & { readonly __brand: "LocalLedgerSourceId" };
 
 export type LocalLedgerMoney = {
-  readonly amountCents: number;
+  readonly amount: CopAmount;
   readonly currency: "COP";
 };
 
