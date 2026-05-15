@@ -1,0 +1,41 @@
+apps/mobile/__tests__/local-ledger/source-events.test.ts
+  s_7a8d46ac5720b2::t_67543374097897 1-287
+apps/mobile/__tests__/capture-sources/dedup.test.ts
+  s_7a8d46ac5720b2::t_67543374097897 77-78,81-87,95-110,114-161
+apps/mobile/features/capture-sources/services/notification-pipeline.ts
+  s_7a8d46ac5720b2::t_67543374097897 136-144
+apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts
+  s_7a8d46ac5720b2::t_67543374097897 2,13-18,119-125,127-138,153-159,161-163,188-189,191-217,219-222,224-233
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_7a8d46ac5720b2::t_67543374097897 2-8,15,85,88-117,120-123,149-154,156-158,182-192,196-204,206,215-233,235-252,256
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_7a8d46ac5720b2::t_67543374097897 1-7,41-45,51-52,96-102,104-114,129-136,138,146-148,150-176,179-182,192-209
+apps/mobile/infrastructure/local-ledger/record-transaction.ts
+  s_7a8d46ac5720b2::t_67543374097897 6,13-20,40-47,53-57,71-74,168,180-210
+apps/mobile/infrastructure/local-ledger/source-events.ts
+  s_7a8d46ac5720b2::t_67543374097897 1-241
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_7a8d46ac5720b2::t_67543374097897 16-18,63-80,85-101,162,164-173,241-243,316-317,337-344,358-360,373,376-377,379-381,453,455
+apps/mobile/features/capture-sources/lib/dedup.ts
+  s_7a8d46ac5720b2::t_67543374097897 1,4,22-28,41-57,60-61
+apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts
+  s_7a8d46ac5720b2::t_67543374097897 16-18,59-76,81-93,155,162,164-173,194-200,203,228-230,241,244-245,307,310-331
+apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts
+  s_7a8d46ac5720b2::t_67543374097897 11-14,19-21,27-42,47-63,117-125,148,165,337-339,353,355-356,361,368-369,372-373,400-436
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "bf8936b6b69b38228ae40b4f71dfcafe14177b68",
+  "prompts": {},
+  "sessions": {
+    "s_7a8d46ac5720b2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e29fc-b5bb-7c82-89f2-82f57611667a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
