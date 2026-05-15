@@ -83,9 +83,9 @@ function saveAccountTransaction(
       date: entry.date as IsoDate,
       createdAt: NOW,
       updatedAt: NOW,
-      deletedAt: null,
+      voidedAt: null,
       supersededAt: entry.supersededAt ?? null,
-      source: entry.accountAttributionState === "unresolved" ? "gmail" : "manual",
+      source: entry.accountAttributionState === "unresolved" ? "automated" : "manual",
     })
     .run();
 }

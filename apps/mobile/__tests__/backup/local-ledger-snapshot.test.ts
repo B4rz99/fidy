@@ -85,10 +85,11 @@ function seedActivity() {
   sourceSqlite.exec(`
     insert into transactions (
       id, user_id, type, amount, category_id, description, date, account_id,
-      account_attribution_state, superseded_at, created_at, updated_at, deleted_at, source
+      account_attribution_state, superseded_at, superseded_by_transfer_id, created_at, updated_at,
+      voided_at, source
     ) values (
       'txn-1', 'user-1', 'expense', 42000, 'uc-food', 'Lunch', '2026-04-20', 'fa-bank',
-      'confirmed', null, '${NOW}', '${NOW}', null, 'email'
+      'confirmed', null, null, '${NOW}', '${NOW}', null, 'automated'
     );
 
     insert into transfers (
@@ -314,13 +315,15 @@ function transactionRow(overrides: Record<string, unknown> = {}) {
     amount: 42000,
     categoryId: "uc-food",
     description: "Lunch",
+    counterpartyName: null,
     date: "2026-04-20",
     accountId: "fa-rollback",
     accountAttributionState: "confirmed",
     supersededAt: null,
+    supersededByTransferId: null,
     createdAt: NOW,
     updatedAt: NOW,
-    deletedAt: null,
+    voidedAt: null,
     source: "manual",
     ...overrides,
   };
@@ -530,12 +533,21 @@ describe("local ledger backup snapshots", () => {
   });
 
   it("accepts legacy version 1 rows that predate additive defaulted columns", () => {
+    const legacyTransaction = {
+      ...withoutKeys(transactionRow(), [
+        "counterpartyName",
+        "supersededByTransferId",
+        "voidedAt",
+        "source",
+      ]),
+      deletedAt: null,
+    };
     const snapshot = validSnapshot({
       userCategories: [userCategoryRow()],
       financialAccounts: [
         withoutKeys(rollbackAccountRow(), ["statementClosingDay", "paymentDueDay"]),
       ],
-      transactions: [withoutKeys(transactionRow(), ["source"])],
+      transactions: [legacyTransaction],
       processedEmails: [withoutKeys(processedEmailRow(), ["rawBody", "retryCount", "nextRetryAt"])],
     });
 
@@ -543,6 +555,15 @@ describe("local ledger backup snapshots", () => {
       ...snapshot,
       data: {
         ...snapshot.data,
+        transactions: [
+          {
+            ...withoutKeys(legacyTransaction, ["deletedAt"]),
+            counterpartyName: null,
+            supersededByTransferId: null,
+            voidedAt: null,
+            source: "manual",
+          },
+        ],
         processedSourceEvents: [],
         reviewCandidates: [],
         reviewCandidateCaptureEvidence: [],

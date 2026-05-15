@@ -85,10 +85,10 @@ function insertSuggestionTransactionRecord(
     categoryId: "shopping" as CategoryId,
     date: "2026-04-19" as IsoDate,
     accountAttributionState: state,
-    source: "notification_android",
+    source: "automated",
     createdAt: NOW,
     updatedAt: NOW,
-    deletedAt: null,
+    voidedAt: null,
   });
 }
 
@@ -692,10 +692,10 @@ describe("account suggestion service", () => {
       date: "2026-04-19" as IsoDate,
       accountId: "fa-default-user-1" as FinancialAccountId,
       accountAttributionState: "unresolved",
-      source: "notification_android",
+      source: "automated",
       createdAt: NOW,
       updatedAt: NOW,
-      deletedAt: null,
+      voidedAt: null,
     });
 
     saveEvidenceRow("ce-create-1", {

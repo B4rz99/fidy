@@ -18,11 +18,13 @@ export function assertRecordShape(
   const expectedKeys = Object.keys(validators).sort();
   const actualKeys = Object.keys(row).sort();
   const requiredKeys = expectedKeys.filter((name) => !optionalKeys.includes(name));
-  if (requiredKeys.some((name) => !actualKeys.includes(name))) {
-    throw new Error(`Malformed local ledger backup row in ${key}`);
+  const missingKeys = requiredKeys.filter((name) => !actualKeys.includes(name));
+  if (missingKeys.length > 0) {
+    throw new Error(`Malformed local ledger backup row in ${key}: missing ${missingKeys[0]}`);
   }
-  if (actualKeys.some((name) => !expectedKeys.includes(name))) {
-    throw new Error(`Malformed local ledger backup row in ${key}`);
+  const extraKeys = actualKeys.filter((name) => !expectedKeys.includes(name));
+  if (extraKeys.length > 0) {
+    throw new Error(`Malformed local ledger backup row in ${key}: unexpected ${extraKeys[0]}`);
   }
 
   actualKeys.forEach((name) => {

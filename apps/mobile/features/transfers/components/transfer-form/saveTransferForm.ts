@@ -13,6 +13,7 @@ import type {
 import { reclassifyTransactionAsTransfer } from "@/features/transfers/lib/reclassify-transaction-as-transfer";
 import { saveTransfer } from "@/features/transfers/lib/repository";
 import type { AnyDb } from "@/shared/db";
+import { captureWarning } from "@/shared/lib";
 import type { ProcessedEmailId, UserId } from "@/shared/types/branded";
 
 type SubmitTransferFormInput = {
@@ -94,7 +95,12 @@ function runReclassifiedTransfer(
       description: input.sourceTransaction.description,
       date: input.date,
     });
-  } catch {
+  } catch (error) {
+    captureWarning("transfer_reclassification_save_failed", {
+      operation: "reclassify_transaction_as_transfer",
+      hasProcessedEmail: input.processedEmailId != null,
+      errorType: error instanceof Error ? error.name : typeof error,
+    });
     return { success: false, error: "saveFailed" } as const;
   }
 }

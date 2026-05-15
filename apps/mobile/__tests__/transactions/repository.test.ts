@@ -77,11 +77,13 @@ describe("transaction repository", () => {
       amount: 4520,
       categoryId: "food",
       description: "Groceries",
+      counterpartyName: null,
       date: "2026-03-04",
       accountId: buildDefaultFinancialAccountId("user-1" as UserId),
       accountAttributionState: "confirmed",
       source: "manual",
       supersededAt: null,
+      supersededByTransferId: null,
       createdAt: "2026-03-04T10:00:00.000Z",
       updatedAt: "2026-03-04T10:00:00.000Z",
     });
@@ -100,7 +102,7 @@ describe("transaction repository", () => {
         date: "2026-03-04",
         createdAt: "2026-03-04T10:00:00.000Z",
         updatedAt: "2026-03-04T10:00:00.000Z",
-        deletedAt: null,
+        voidedAt: null,
       },
     ];
     mockAll.mockReturnValueOnce(mockRows);
@@ -116,7 +118,7 @@ describe("transaction repository", () => {
     expect(result).toEqual(mockRows);
   });
 
-  it("softDeleteTransaction sets deletedAt and updatedAt", async () => {
+  it("softDeleteTransaction sets voidedAt and updatedAt", async () => {
     const { softDeleteTransaction } = await import("@/features/transactions/lib/repository");
 
     softDeleteTransaction(
@@ -128,7 +130,7 @@ describe("transaction repository", () => {
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith(
       expect.objectContaining({
-        deletedAt: expect.any(String),
+        voidedAt: expect.any(String),
         updatedAt: expect.any(String),
       })
     );
@@ -146,7 +148,7 @@ describe("transaction repository", () => {
       date: "2026-03-04",
       createdAt: "2026-03-04T10:00:00.000Z",
       updatedAt: "2026-03-04T10:00:00.000Z",
-      deletedAt: null,
+      voidedAt: null,
     };
     mockAll.mockReturnValueOnce([mockRow]);
 
@@ -179,6 +181,7 @@ describe("transaction repository", () => {
       date: "2026-03-04" as IsoDate,
       createdAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
       updatedAt: "2026-03-04T12:00:00.000Z" as IsoDateTime,
+      source: "email_gmail",
     };
 
     upsertTransaction(mockDb, row);
@@ -187,9 +190,11 @@ describe("transaction repository", () => {
     expect(mockValues).toHaveBeenCalledWith({
       ...row,
       accountId: buildDefaultFinancialAccountId("user-1" as UserId),
-      accountAttributionState: "confirmed",
-      source: "manual",
+      accountAttributionState: "unresolved",
+      source: "automated",
       supersededAt: null,
+      supersededByTransferId: null,
+      counterpartyName: null,
     });
     expect(mockOnConflictDoUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -197,6 +202,7 @@ describe("transaction repository", () => {
           type: row.type,
           amount: row.amount,
           description: row.description,
+          source: "automated",
         }),
       })
     );

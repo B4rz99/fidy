@@ -86,7 +86,7 @@ const insertExpense = (
     date: (overrides.date ?? `${overrides.month ?? CURRENT_MONTH}-10`) as IsoDate,
     createdAt: "2026-03-10T10:00:00.000Z" as IsoDateTime,
     updatedAt: "2026-03-10T10:00:00.000Z" as IsoDateTime,
-    deletedAt: null,
+    voidedAt: null,
     source: "manual",
   });
 

@@ -43,9 +43,10 @@ describe("buildTransaction", () => {
     expect(result.transaction.categoryId).toBe("food");
     expect(result.transaction.accountId).toBe("fa-default-user-1");
     expect(result.transaction.accountAttributionState).toBe("confirmed");
+    expect(result.transaction.counterpartyName).toBe("");
     expect(result.transaction.createdAt).toBe(NOW);
     expect(result.transaction.updatedAt).toBe(NOW);
-    expect(result.transaction.deletedAt).toBeNull();
+    expect(result.transaction.voidedAt).toBeNull();
   });
 
   test("returns error for zero amount", () => {
@@ -103,13 +104,13 @@ describe("toStoredTransaction branch coverage", () => {
       date: "2026-03-01" as IsoDate,
       createdAt: "2026-03-01T10:00:00.000Z" as IsoDateTime,
       updatedAt: "2026-03-01T10:00:00.000Z" as IsoDateTime,
-      deletedAt: null,
+      voidedAt: null,
     };
     const result = toStoredTransaction(row);
     expect(result.description).toBe("");
   });
 
-  test("handles non-null deletedAt by converting to Date", () => {
+  test("handles non-null voidedAt by converting to Date", () => {
     const row = {
       id: "tx-da" as TransactionId,
       userId: "user-1" as UserId,
@@ -120,11 +121,11 @@ describe("toStoredTransaction branch coverage", () => {
       date: "2026-03-01" as IsoDate,
       createdAt: "2026-03-01T10:00:00.000Z" as IsoDateTime,
       updatedAt: "2026-03-01T10:00:00.000Z" as IsoDateTime,
-      deletedAt: "2026-03-02T10:00:00.000Z" as IsoDateTime,
+      voidedAt: "2026-03-02T10:00:00.000Z" as IsoDateTime,
     };
     const result = toStoredTransaction(row);
-    expect(result.deletedAt).toBeInstanceOf(Date);
-    expect(result.deletedAt?.toISOString()).toBe("2026-03-02T10:00:00.000Z");
+    expect(result.voidedAt).toBeInstanceOf(Date);
+    expect(result.voidedAt?.toISOString()).toBe("2026-03-02T10:00:00.000Z");
   });
 });
 
@@ -136,10 +137,11 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     amount: 5000 as CopAmount,
     categoryId: "other" as CategoryId,
     description: "Monthly",
+    counterpartyName: "",
     date: new Date(2026, 2, 1),
     createdAt: new Date(2026, 2, 1, 10, 0, 0),
     updatedAt: new Date(2026, 2, 1, 10, 0, 0),
-    deletedAt: null,
+    voidedAt: null,
     accountId: "fa-default-user-1" as FinancialAccountId,
     accountAttributionState: "confirmed",
     supersededAt: null,
@@ -170,7 +172,7 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     expect(roundTripped.date.getFullYear()).toBe(stored.date.getFullYear());
     expect(roundTripped.date.getMonth()).toBe(stored.date.getMonth());
     expect(roundTripped.date.getDate()).toBe(stored.date.getDate());
-    expect(roundTripped.deletedAt).toBeNull();
+    expect(roundTripped.voidedAt).toBeNull();
     expect(roundTripped.accountId).toBe(stored.accountId);
     expect(roundTripped.accountAttributionState).toBe(stored.accountAttributionState);
     expect(roundTripped.supersededAt).toBeNull();
@@ -191,8 +193,8 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
       supersededAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
       createdAt: "2026-03-03T10:00:00.000Z" as IsoDateTime,
       updatedAt: "2026-03-03T12:00:00.000Z" as IsoDateTime,
-      deletedAt: null,
-      source: "email_gmail",
+      voidedAt: null,
+      source: "automated",
     };
 
     const storedTransaction = toStoredTransaction(row);
@@ -201,10 +203,10 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     expect(storedTransaction.accountId).toBe("fa-credit-card");
     expect(storedTransaction.accountAttributionState).toBe("unresolved");
     expect(storedTransaction.supersededAt?.toISOString()).toBe("2026-03-04T10:00:00.000Z");
-    expect(storedTransaction.source).toBe("email_gmail");
+    expect(storedTransaction.source).toBe("automated");
     expect(serialized.accountId).toBe("fa-credit-card");
     expect(serialized.accountAttributionState).toBe("unresolved");
     expect(serialized.supersededAt).toBe("2026-03-04T10:00:00.000Z");
-    expect(serialized.source).toBe("email_gmail");
+    expect(serialized.source).toBe("automated");
   });
 });

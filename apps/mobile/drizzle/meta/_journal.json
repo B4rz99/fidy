@@ -183,6 +183,13 @@
       "when": 1778457600000,
       "tag": "0025_review_candidate_intake",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1778544000000,
+      "tag": "0026_align_transaction_domain",
+      "breakpoints": true
     }
   ]
 }

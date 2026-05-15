@@ -1,5 +1,5 @@
 import type { AnyDb } from "@/shared/db";
-import type { IsoDateTime, TransactionId } from "@/shared/types/branded";
+import type { IsoDateTime, TransactionId, TransferId } from "@/shared/types/branded";
 import { getTransactionById, upsertTransaction } from "./lib/repository";
 
 export { getTransactionById };
@@ -9,6 +9,7 @@ export function markTransactionSuperseded(
   input: {
     readonly id: TransactionId;
     readonly supersededAt: IsoDateTime;
+    readonly supersededByTransferId?: TransferId | null;
     readonly updatedAt: IsoDateTime;
   }
 ) {
@@ -18,6 +19,7 @@ export function markTransactionSuperseded(
   upsertTransaction(db, {
     ...transaction,
     supersededAt: input.supersededAt,
+    supersededByTransferId: input.supersededByTransferId ?? null,
     updatedAt: input.updatedAt,
   });
 }

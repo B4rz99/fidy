@@ -62,9 +62,9 @@ function insertOriginalTransactionRecord() {
     accountAttributionState: "confirmed",
     createdAt: ORIGINAL_CREATED_AT,
     updatedAt: ORIGINAL_CREATED_AT,
-    deletedAt: null,
+    voidedAt: null,
     supersededAt: null,
-    source: "email_gmail",
+    source: "automated",
   });
 }
 
@@ -144,7 +144,7 @@ function expectCreatedTransferState() {
   expect(getTransactionById(db as any, ORIGINAL_TRANSACTION_ID)).toMatchObject({
     id: ORIGINAL_TRANSACTION_ID,
     supersededAt: NOW,
-    deletedAt: null,
+    voidedAt: null,
     updatedAt: NOW,
   });
   expect(getCaptureEvidenceById(db as any, "ce-1" as CaptureEvidenceId)).toMatchObject({

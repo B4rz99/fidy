@@ -23,7 +23,7 @@ function makeStoredTransaction(overrides: Partial<{ id: TransactionId }> = {}) {
     date: new Date("2026-03-04T00:00:00.000Z"),
     createdAt: new Date("2026-03-04T10:00:00.000Z"),
     updatedAt: new Date("2026-03-04T10:00:00.000Z"),
-    deletedAt: null,
+    voidedAt: null,
     accountId: DEFAULT_ACCOUNT_ID,
     accountAttributionState: "confirmed" as const,
     ...overrides,

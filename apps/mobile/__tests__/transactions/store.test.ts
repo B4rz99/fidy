@@ -55,7 +55,7 @@ function makeStoredTransaction(overrides: Partial<{ id: TransactionId; updatedAt
     date: new Date("2026-03-04T00:00:00.000Z"),
     createdAt: new Date("2026-03-04T10:00:00.000Z"),
     updatedAt: new Date("2026-03-04T10:00:00.000Z"),
-    deletedAt: null,
+    voidedAt: null,
     accountId: "fa-default-user-1" as FinancialAccountId,
     accountAttributionState: "confirmed" as const,
     ...overrides,
@@ -72,7 +72,7 @@ function makeRow(
     date: IsoDate;
     createdAt: IsoDateTime;
     updatedAt: IsoDateTime;
-    deletedAt: IsoDateTime | null;
+    voidedAt: IsoDateTime | null;
   }> = {}
 ) {
   return {
@@ -85,7 +85,7 @@ function makeRow(
     date: "2026-03-04" as IsoDate,
     createdAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
     updatedAt: "2026-03-04T10:00:00.000Z" as IsoDateTime,
-    deletedAt: null,
+    voidedAt: null,
     accountId: "fa-default-user-1" as FinancialAccountId,
     accountAttributionState: "confirmed" as const,
     source: "manual",
