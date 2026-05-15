@@ -11,7 +11,7 @@ import type {
   ReclassifyTransactionAsTransferResult,
 } from "@/features/transfers/lib/reclassify-transaction-as-transfer";
 import { reclassifyTransactionAsTransfer } from "@/features/transfers/lib/reclassify-transaction-as-transfer";
-import { saveTransfer } from "@/features/transfers/lib/repository";
+import { recordManualTransferWithLocalLedger } from "@/infrastructure/local-ledger/record-transfer";
 import type { AnyDb } from "@/shared/db";
 import type { ProcessedEmailId, UserId } from "@/shared/types/branded";
 
@@ -50,7 +50,7 @@ async function saveNewTransfer(
     getDb: () => input.db,
     getUserId: () => input.userId,
     refresh: () => refreshTransactions(input.db, input.userId),
-    saveTransferRow: saveTransfer,
+    recordTransfer: recordManualTransferWithLocalLedger,
   }).save({
     digits: input.digits,
     fromSide: input.fromSide,
