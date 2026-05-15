@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OUTSIDE_FIDY_LABEL } from "@/features/transfers/lib/build-transfer";
 import { createTransferMutationService } from "@/features/transfers/lib/mutation-service";
-import type { TransferRow } from "@/features/transfers/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import type { FinancialAccountId, TransferId, UserId } from "@/shared/types/branded";
 
@@ -21,16 +20,16 @@ describe("transfer mutation service", () => {
   let currentUserId: UserId | null;
   let currentDb: AnyDb | null;
   let refresh: ServiceDeps["refresh"];
-  let saveTransferRow: ServiceDeps["saveTransferRow"];
+  let recordTransfer: ServiceDeps["recordTransfer"];
   let refreshMock: ReturnType<typeof vi.fn>;
-  let saveTransferRowMock: ReturnType<typeof vi.fn>;
+  let recordTransferMock: ReturnType<typeof vi.fn>;
 
   function createService() {
     return createTransferMutationService({
       getUserId: () => currentUserId,
       getDb: () => currentDb,
       refresh,
-      saveTransferRow,
+      recordTransfer,
       now: () => now,
       createId: () => "tr-new" as TransferId,
     });
@@ -40,9 +39,23 @@ describe("transfer mutation service", () => {
     currentUserId = "user-1" as UserId;
     currentDb = {} as AnyDb;
     refreshMock = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
-    saveTransferRowMock = vi.fn<(...args: any[]) => any>();
+    recordTransferMock = vi.fn<(...args: any[]) => any>().mockResolvedValue({
+      success: true,
+      transfer: {
+        id: "tr-new" as TransferId,
+        userId: "user-1" as UserId,
+        amount: 450000,
+        fromSide: validInput.fromSide,
+        toSide: validInput.toSide,
+        description: "Visa payment",
+        date: "2026-04-19",
+        createdAt: "2026-04-19T10:00:00.000Z",
+        updatedAt: "2026-04-19T10:00:00.000Z",
+        deletedAt: null,
+      },
+    });
     refresh = refreshMock as ServiceDeps["refresh"];
-    saveTransferRow = saveTransferRowMock as ServiceDeps["saveTransferRow"];
+    recordTransfer = recordTransferMock as ServiceDeps["recordTransfer"];
   });
 
   it("returns store-not-initialized when the user is unavailable", async () => {
@@ -55,7 +68,11 @@ describe("transfer mutation service", () => {
     });
   });
 
-  it("returns transfer validation failures directly", async () => {
+  it("delegates invalid transfer commands to the Local Ledger writer", async () => {
+    recordTransferMock.mockResolvedValueOnce({
+      success: false,
+      error: "distinctSidesRequired",
+    });
     const service = createService();
 
     await expect(
@@ -70,9 +87,11 @@ describe("transfer mutation service", () => {
       success: false,
       error: "distinctSidesRequired",
     });
+    expect(recordTransferMock).toHaveBeenCalledOnce();
+    expect(refreshMock).not.toHaveBeenCalled();
   });
 
-  it("saves a valid transfer row and refreshes the caller boundary", async () => {
+  it("records a valid transfer through the Local Ledger writer and refreshes the caller boundary", async () => {
     const service = createService();
 
     const result = await service.save(validInput);
@@ -85,20 +104,32 @@ describe("transfer mutation service", () => {
         amount: 450000 as never,
       }),
     });
-    expect(saveTransferRowMock).toHaveBeenCalledWith(
-      currentDb,
-      expect.objectContaining<Partial<TransferRow>>({
-        id: "tr-new" as TransferId,
-        amount: 450000 as never,
-        fromAccountId: "fa-checking" as FinancialAccountId,
-        toExternalLabel: OUTSIDE_FIDY_LABEL,
-      })
-    );
+    expect(recordTransferMock).toHaveBeenCalledWith({
+      db: currentDb,
+      userId: "user-1" as UserId,
+      transferId: "tr-new" as TransferId,
+      input: validInput,
+      now,
+    });
     expect(refreshMock).toHaveBeenCalledOnce();
   });
 
+  it("returns Local Ledger validation failures without refreshing", async () => {
+    recordTransferMock.mockResolvedValueOnce({
+      success: false,
+      error: "accountNotUsable",
+    });
+    const service = createService();
+
+    await expect(service.save(validInput)).resolves.toEqual({
+      success: false,
+      error: "accountNotUsable",
+    });
+    expect(refreshMock).not.toHaveBeenCalled();
+  });
+
   it("maps thrown persistence failures to a save error", async () => {
-    saveTransferRowMock.mockImplementation(() => {
+    recordTransferMock.mockImplementation(() => {
       throw new Error("db failed");
     });
     const service = createService();
@@ -122,7 +153,7 @@ describe("transfer mutation service", () => {
         id: "tr-new" as TransferId,
       }),
     });
-    expect(saveTransferRowMock).toHaveBeenCalledOnce();
+    expect(recordTransferMock).toHaveBeenCalledOnce();
     expect(refreshMock).toHaveBeenCalledOnce();
   });
 });

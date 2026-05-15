@@ -1,14 +1,10 @@
+import type { LocalLedgerTransfer } from "@/local-ledger/public";
 import type { AnyDb } from "@/shared/db";
+import { parseIsoDate } from "@/shared/lib/format-date";
 import { generateTransferId } from "@/shared/lib/generate-id";
+import { captureError } from "@/shared/lib/sentry";
 import type { TransferId, UserId } from "@/shared/types/branded";
-import {
-  type BuildTransferInput,
-  buildTransfer,
-  type StoredTransfer,
-  type TransferBuildError,
-  toTransferRow,
-} from "./build-transfer";
-import type { TransferRow } from "./repository";
+import type { BuildTransferInput, StoredTransfer } from "./build-transfer";
 
 export type TransferFormInput = {
   readonly digits: BuildTransferInput["digits"];
@@ -18,7 +14,18 @@ export type TransferFormInput = {
   readonly date: BuildTransferInput["date"];
 };
 
-export type TransferMutationError = TransferBuildError | "storeNotInitialized" | "saveFailed";
+export type TransferMutationError =
+  | "amountRequired"
+  | "amountNotPositive"
+  | "distinctSidesRequired"
+  | "fromSideRequired"
+  | "toSideRequired"
+  | "trackedAccountRequired"
+  | "storeNotInitialized"
+  | "saveFailed"
+  | "accountNotUsable"
+  | "futureDated"
+  | "externalLabelRequired";
 
 export type TransferMutationResult =
   | { success: true; transfer: StoredTransfer }
@@ -28,16 +35,35 @@ type CreateTransferMutationServiceDeps = {
   readonly getDb: () => AnyDb | null;
   readonly getUserId: () => UserId | null;
   readonly refresh: () => Promise<void>;
-  readonly saveTransferRow: (db: AnyDb, row: TransferRow) => void;
+  readonly recordTransfer: (input: {
+    readonly db: AnyDb;
+    readonly userId: UserId;
+    readonly transferId: TransferId;
+    readonly input: TransferFormInput;
+    readonly now: Date;
+  }) => Promise<
+    | { success: true; transfer: LocalLedgerTransfer }
+    | { success: false; error: TransferMutationError }
+  >;
   readonly now?: () => Date;
   readonly createId?: () => TransferId;
 };
+
+function toStoredTransfer(transfer: LocalLedgerTransfer): StoredTransfer {
+  return {
+    ...transfer,
+    date: parseIsoDate(transfer.date),
+    createdAt: new Date(transfer.createdAt),
+    updatedAt: new Date(transfer.updatedAt),
+    deletedAt: transfer.deletedAt == null ? null : new Date(transfer.deletedAt),
+  };
+}
 
 export function createTransferMutationService({
   getDb,
   getUserId,
   refresh,
-  saveTransferRow,
+  recordTransfer,
   now = () => new Date(),
   createId = generateTransferId,
 }: CreateTransferMutationServiceDeps) {
@@ -50,21 +76,25 @@ export function createTransferMutationService({
         return { success: false, error: "storeNotInitialized" };
       }
 
-      const built = buildTransfer({
-        input,
-        userId,
-        id: createId(),
-        now: now(),
-      });
-      if (!built.success) {
-        return built;
-      }
+      const transferId = createId();
+      const currentTime = now();
 
+      let result:
+        | { success: true; transfer: LocalLedgerTransfer }
+        | { success: false; error: TransferMutationError };
       try {
-        saveTransferRow(db, toTransferRow(built.transfer));
-      } catch {
+        result = await recordTransfer({
+          db,
+          userId,
+          transferId,
+          input,
+          now: currentTime,
+        });
+      } catch (error) {
+        captureError(error);
         return { success: false, error: "saveFailed" };
       }
+      if (!result.success) return result;
 
       try {
         await refresh();
@@ -72,7 +102,7 @@ export function createTransferMutationService({
         // Keep the persisted transfer successful even if the caller refresh fails.
       }
 
-      return { success: true, transfer: built.transfer };
+      return { success: true, transfer: toStoredTransfer(result.transfer) };
     },
   };
 }

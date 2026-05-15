@@ -34,8 +34,12 @@ type TransferFormCopy = Pick<
 >;
 
 const TRANSFER_ERROR_MESSAGE_KEYS = {
+  accountNotUsable: "transfers.errors.saveFailed",
   amountRequired: "transfers.errors.amountRequired",
+  amountNotPositive: "transfers.errors.amountRequired",
   distinctSidesRequired: "transfers.errors.distinctSidesRequired",
+  externalLabelRequired: "transfers.errors.saveFailed",
+  futureDated: "transfers.errors.saveFailed",
   saveFailed: "transfers.errors.saveFailed",
   storeNotInitialized: "transfers.errors.saveFailed",
   trackedAccountRequired: "transfers.errors.trackedAccountRequired",
