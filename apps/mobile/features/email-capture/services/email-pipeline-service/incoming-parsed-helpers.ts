@@ -2,7 +2,7 @@ import { currentIsoDateTimeEffect } from "@/shared/effect/clock";
 import { captureErrorEffect } from "@/shared/effect/telemetry";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { findDuplicateTransactionEffect, insertMerchantRuleEffect } from "./runtime";
-import { getPersistedCategoryId } from "./shared";
+import { getParsedCounterpartyName, getPersistedCategoryId } from "./shared";
 import type { DuplicateLookupOutcome, EmailBatchContext, LlmParsedTransaction } from "./types";
 
 export async function lookupIncomingDuplicate(
@@ -30,7 +30,7 @@ export async function cacheMerchantRule(input: {
       insertMerchantRuleEffect({
         db: input.context.db,
         userId: input.context.userId,
-        merchantKey: normalizeMerchant(input.parsed.description),
+        merchantKey: normalizeMerchant(getParsedCounterpartyName(input.parsed)),
         categoryId: getPersistedCategoryId(input.parsed.categoryId),
         createdAt,
       })

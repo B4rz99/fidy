@@ -1,3 +1,4 @@
+import { normalizeTransactionSource } from "@/shared/lib/transaction-source";
 import type { BackupSnapshot, LocalLedgerBackupSnapshotData } from "./local-ledger-snapshot";
 import type { BackupDataKey } from "./local-ledger-snapshot-row-shape";
 
@@ -54,5 +55,5 @@ const legacyTransactionTextDefaults = (row: TransactionRow) => ({
 
 const legacyTransactionStateDefaults = (row: TransactionRow, deletedAt: unknown) => ({
   voidedAt: (row.voidedAt ?? deletedAt ?? null) as TransactionRow["voidedAt"],
-  source: row.source ?? "manual",
+  source: normalizeTransactionSource(row.source),
 });

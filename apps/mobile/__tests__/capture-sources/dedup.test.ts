@@ -104,8 +104,10 @@ describe("findDuplicateTransaction", () => {
     mockWhere.mockResolvedValue([]);
   });
 
-  it("returns transaction ID when match found (same amount + date + normalized merchant)", async () => {
-    mockWhere.mockResolvedValueOnce([{ id: "tx-1", description: "Uber Eats" }]);
+  it("returns transaction ID when counterparty match found (same amount + date + normalized merchant)", async () => {
+    mockWhere.mockResolvedValueOnce([
+      { id: "tx-1", description: "Dinner with Ana", counterpartyName: "Uber Eats" },
+    ]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
     const result = await findDuplicateTransaction({
@@ -135,7 +137,9 @@ describe("findDuplicateTransaction", () => {
   });
 
   it("handles merchant normalization (case insensitive, trimmed)", async () => {
-    mockWhere.mockResolvedValueOnce([{ id: "tx-2", description: "  UBER   EATS  " }]);
+    mockWhere.mockResolvedValueOnce([
+      { id: "tx-2", description: "Lunch", counterpartyName: "  UBER   EATS  " },
+    ]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
     const result = await findDuplicateTransaction({
@@ -150,7 +154,9 @@ describe("findDuplicateTransaction", () => {
   });
 
   it("returns null when amount+date match but merchant differs", async () => {
-    mockWhere.mockResolvedValueOnce([{ id: "tx-3", description: "Starbucks" }]);
+    mockWhere.mockResolvedValueOnce([
+      { id: "tx-3", description: "Coffee", counterpartyName: "Starbucks" },
+    ]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
     const result = await findDuplicateTransaction({
@@ -165,7 +171,9 @@ describe("findDuplicateTransaction", () => {
   });
 
   it("matches when DB description contains the incoming merchant (substring)", async () => {
-    mockWhere.mockResolvedValueOnce([{ id: "tx-sub-1", description: "BOLD Natural Medical" }]);
+    mockWhere.mockResolvedValueOnce([
+      { id: "tx-sub-1", description: "Checkup", counterpartyName: "BOLD Natural Medical" },
+    ]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
     const result = await findDuplicateTransaction({
@@ -180,7 +188,9 @@ describe("findDuplicateTransaction", () => {
   });
 
   it("matches when incoming merchant contains the DB description (substring)", async () => {
-    mockWhere.mockResolvedValueOnce([{ id: "tx-sub-2", description: "HARISSA" }]);
+    mockWhere.mockResolvedValueOnce([
+      { id: "tx-sub-2", description: "Dinner", counterpartyName: "HARISSA" },
+    ]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
     const result = await findDuplicateTransaction({
@@ -195,7 +205,9 @@ describe("findDuplicateTransaction", () => {
   });
 
   it("does not substring-match when DB description is very short (< 3 chars)", async () => {
-    mockWhere.mockResolvedValueOnce([{ id: "tx-short", description: "AB" }]);
+    mockWhere.mockResolvedValueOnce([
+      { id: "tx-short", description: "Note", counterpartyName: "AB" },
+    ]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
     const result = await findDuplicateTransaction({
@@ -211,6 +223,54 @@ describe("findDuplicateTransaction", () => {
 
   it("handles null description in DB row without false match", async () => {
     mockWhere.mockResolvedValueOnce([{ id: "tx-null", description: null }]);
+
+    const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
+    const result = await findDuplicateTransaction({
+      db: mockDb,
+      userId: "user-1",
+      amount: 5000,
+      date: "2026-03-07",
+      merchant: "Uber Eats",
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it("returns null without querying when incoming merchant is empty", async () => {
+    const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
+    const result = await findDuplicateTransaction({
+      db: mockDb,
+      userId: "user-1",
+      amount: 5000,
+      date: "2026-03-07",
+      merchant: "   ",
+    });
+
+    expect(result).toBeNull();
+    expect(mockSelect).not.toHaveBeenCalled();
+  });
+
+  it("does not match amount and date when stored counterparty is empty", async () => {
+    mockWhere.mockResolvedValueOnce([
+      { id: "tx-empty-counterparty", description: null, counterpartyName: "   " },
+    ]);
+
+    const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
+    const result = await findDuplicateTransaction({
+      db: mockDb,
+      userId: "user-1",
+      amount: 5000,
+      date: "2026-03-07",
+      merchant: "Uber Eats",
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it("does not match user-authored description when counterparty is missing", async () => {
+    mockWhere.mockResolvedValueOnce([
+      { id: "tx-description-only", description: "Uber Eats", counterpartyName: null },
+    ]);
 
     const { findDuplicateTransaction } = await import("@/features/capture-sources/lib/dedup");
     const result = await findDuplicateTransaction({

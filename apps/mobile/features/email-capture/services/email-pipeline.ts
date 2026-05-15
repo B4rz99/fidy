@@ -6,6 +6,11 @@ import {
 import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
 import { insertTransaction } from "@/features/transactions/lib/repository";
+import {
+  type CreateReviewCandidateInput,
+  createReviewCandidateUseCase,
+} from "@/local-ledger/public";
+import { createWriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import { trackTransactionCreated } from "@/shared/lib/analytics";
 import type { UserId } from "@/shared/types/branded";
@@ -55,6 +60,10 @@ const emailPipelineDeps = {
   insertTransaction,
   insertMerchantRule,
   trackTransactionCreated,
+  createReviewCandidate: (db: AnyDb, input: CreateReviewCandidateInput) =>
+    createReviewCandidateUseCase({
+      commit: (command) => createWriteThroughMutationModule(db).commit(command as never),
+    })(input),
 };
 
 const emailPipeline = createEmailPipelineService({

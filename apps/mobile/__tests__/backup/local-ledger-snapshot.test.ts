@@ -571,7 +571,7 @@ describe("local ledger backup snapshots", () => {
     });
   });
 
-  it("rejects legacy transaction rows with unsupported source values", () => {
+  it("normalizes legacy non-manual transaction source values as automated", () => {
     const legacyTransaction = {
       ...withoutKeys(transactionRow({ source: "email_gmail" }), [
         "counterpartyName",
@@ -581,15 +581,15 @@ describe("local ledger backup snapshots", () => {
       deletedAt: null,
     };
 
-    expect(() =>
-      validateBackupSnapshot(
-        validSnapshot({
-          userCategories: [userCategoryRow()],
-          financialAccounts: [rollbackAccountRow()],
-          transactions: [legacyTransaction],
-        })
-      )
-    ).toThrow("Malformed local ledger backup row: source is not supported");
+    const snapshot = validateBackupSnapshot(
+      validSnapshot({
+        userCategories: [userCategoryRow()],
+        financialAccounts: [rollbackAccountRow()],
+        transactions: [legacyTransaction],
+      })
+    );
+
+    expect(snapshot.data.transactions[0]).toEqual(expect.objectContaining({ source: "automated" }));
   });
 
   it("rejects duplicate primary IDs inside backed-up collections", () => {

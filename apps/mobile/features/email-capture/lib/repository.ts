@@ -27,7 +27,7 @@ type RetrySuccessInput = {
   readonly db: AnyDb;
   readonly id: ProcessedEmailId;
   readonly status: "success" | "needs_review";
-  readonly transactionId: TransactionId;
+  readonly transactionId: TransactionId | null;
   readonly confidence: number;
 };
 

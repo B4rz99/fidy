@@ -17,6 +17,9 @@ import type {
   OpeningBalanceId,
   ProcessedCaptureId,
   ProcessedEmailId,
+  ProcessedSourceEventId,
+  ReviewCandidateCaptureEvidenceId,
+  ReviewCandidateId,
   TransactionId,
   TransferId,
   UserCategoryId,
@@ -109,6 +112,18 @@ export function generateProcessedCaptureId(): ProcessedCaptureId {
 
 export function generateProcessedEmailId(): ProcessedEmailId {
   return generateId("pe") as ProcessedEmailId;
+}
+
+export function generateProcessedSourceEventId(): ProcessedSourceEventId {
+  return generateId("pse") as ProcessedSourceEventId;
+}
+
+export function generateReviewCandidateId(): ReviewCandidateId {
+  return generateId("rc") as ReviewCandidateId;
+}
+
+export function generateReviewCandidateCaptureEvidenceId(): ReviewCandidateCaptureEvidenceId {
+  return generateId("rce") as ReviewCandidateCaptureEvidenceId;
 }
 
 export function generateDetectedSmsEventId(): DetectedSmsEventId {

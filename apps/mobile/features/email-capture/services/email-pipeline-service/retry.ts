@@ -113,20 +113,22 @@ async function lookupRetryDuplicate(
 async function finalizeRetrySuccess(input: {
   readonly context: RetryBatchContext;
   readonly emailId: ProcessedEmailId;
-  readonly transactionId: TransactionId;
+  readonly transactionId: TransactionId | null;
   readonly status: EmailSaveStatus;
   readonly confidence: number;
 }) {
   const updatedAt = await input.context.runtime.runClockEffect(currentIsoDateTimeEffect);
 
-  await input.context.runtime.runEmailEffect(
-    linkCaptureEvidenceToTransactionEffect({
-      db: input.context.db,
-      processedEmailId: input.emailId,
-      transactionId: input.transactionId,
-      updatedAt,
-    })
-  );
+  if (input.transactionId !== null) {
+    await input.context.runtime.runEmailEffect(
+      linkCaptureEvidenceToTransactionEffect({
+        db: input.context.db,
+        processedEmailId: input.emailId,
+        transactionId: input.transactionId,
+        updatedAt,
+      })
+    );
+  }
   await input.context.runtime.runEmailEffect(
     markRetrySuccessEffect({
       db: input.context.db,

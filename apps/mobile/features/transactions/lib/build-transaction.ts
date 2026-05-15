@@ -1,5 +1,6 @@
 import { buildDefaultFinancialAccountId } from "@/features/financial-accounts/lib/default-account";
 import { parseDigitsToAmount, parseIsoDate, toIsoDate, toIsoDateTime } from "@/shared/lib";
+import { normalizeTransactionSource } from "@/shared/lib/transaction-source";
 import type {
   CategoryId,
   FinancialAccountId,
@@ -57,9 +58,6 @@ type BuildTransactionContext = {
 
 const OTHER_CATEGORY_ID = getBuiltInCategoryId("other");
 const TRANSACTION_SOURCES_WITH_CONFIRMED_DEFAULT = new Set(["manual"]);
-
-const toTransactionSource = (source: string | undefined | null): "manual" | "automated" =>
-  source === "manual" || source == null ? "manual" : "automated";
 
 const isAccountAttributionState = (state: string | undefined): state is AccountAttributionState =>
   state === "confirmed" || state === "inferred" || state === "unresolved";
@@ -136,7 +134,7 @@ const mapBuiltTransaction = ({
   accountAttributionState: resolveAccountAttribution(existing),
   supersededAt: resolveSupersededAt(existing),
   supersededByTransferId: resolveSupersededByTransferId(existing),
-  source: toTransactionSource(existing?.source),
+  source: normalizeTransactionSource(existing?.source),
 });
 
 const getRowAccountId = (row: TransactionRow): FinancialAccountId =>
@@ -196,7 +194,7 @@ const toStoredTransactionMetadata = (row: TransactionRow) => ({
   accountAttributionState: getRowAttributionState(row),
   supersededAt: toNullableDate(row.supersededAt),
   supersededByTransferId: row.supersededByTransferId ?? null,
-  source: toTransactionSource(row.source),
+  source: normalizeTransactionSource(row.source),
 });
 
 export const toStoredTransaction = (row: TransactionRow): StoredTransaction => ({
@@ -221,5 +219,5 @@ export const toTransactionRow = (tx: StoredTransaction): TransactionRow => ({
   createdAt: toIsoDateTime(tx.createdAt),
   updatedAt: toIsoDateTime(tx.updatedAt),
   voidedAt: serializeNullableDate(tx.voidedAt),
-  source: toTransactionSource(tx.source),
+  source: normalizeTransactionSource(tx.source),
 });

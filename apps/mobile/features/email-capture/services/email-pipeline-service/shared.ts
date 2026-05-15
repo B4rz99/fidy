@@ -18,6 +18,14 @@ export function getTransactionSource(provider: string) {
   return provider === "gmail" ? "email_gmail" : "email_outlook";
 }
 
+export const getParsedCounterpartyName = (parsed: {
+  readonly description: string;
+  readonly counterpartyHint?: string;
+}) => {
+  const hint = parsed.counterpartyHint?.trim();
+  return hint && hint.length > 0 ? hint : parsed.description.trim();
+};
+
 export function getPersistedCategoryId(categoryId: string) {
   return isValidCategoryId(categoryId) ? categoryId : getBuiltInCategoryId("other");
 }

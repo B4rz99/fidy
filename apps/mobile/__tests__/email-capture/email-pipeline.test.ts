@@ -16,6 +16,9 @@ const mockGetProcessedExternalIds = vi
   .mockResolvedValue(new Set<string>());
 const mockInsertProcessedEmail = vi.fn<(...args: any[]) => any>();
 const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
+const mockRecordTransaction = vi.fn<(...args: any[]) => any>();
+const mockCreateReviewCandidate = vi.fn<(...args: any[]) => any>();
+const mockWriteThroughCommit = vi.fn<(...args: any[]) => any>();
 const mockLookupMerchantRule = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
 const mockInsertMerchantRule = vi.fn<(...args: any[]) => any>();
 const mockParseEmailApi = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
@@ -76,6 +79,22 @@ vi.mock("@/features/capture-sources/lib/dedup", () => ({
   findDuplicateTransaction: (...args: unknown[]) => mockFindDuplicateTransaction(...args),
 }));
 
+vi.mock("@/local-ledger/public", () => ({
+  createReviewCandidateUseCase:
+    ({ commit }: { commit: (command: unknown) => Promise<unknown> }) =>
+    async (input: unknown) => {
+      await commit({ type: "test-review-candidate" });
+      return { success: true, candidate: input };
+    },
+  recordTransaction: (...args: unknown[]) => mockRecordTransaction(...args),
+}));
+
+vi.mock("@/mutations", () => ({
+  createWriteThroughMutationModule: (db: unknown) => ({
+    commit: (command: unknown) => mockWriteThroughCommit(db, command),
+  }),
+}));
+
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getProcessedExternalIds: (...args: unknown[]) => mockGetProcessedExternalIds(...args),
   insertProcessedEmail: (...args: unknown[]) => mockInsertProcessedEmail(...args),
@@ -124,11 +143,18 @@ vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: unknown[]) => mockGenerateId(...args),
   generateTransactionId: () => mockGenerateId("tx"),
   generateProcessedEmailId: () => mockGenerateId("pe"),
+  generateCaptureEvidenceId: () => mockGenerateId("ce"),
+  generateProcessedSourceEventId: () => mockGenerateId("pse"),
+  generateReviewCandidateId: () => mockGenerateId("rc"),
+  generateReviewCandidateCaptureEvidenceId: () => mockGenerateId("rce"),
 }));
 
 const mockDb = {} as any;
 const USER_ID = requireUserId("user-1");
 let idCounter = 0;
+
+const normalizeLedgerText = (value: string | null | undefined) =>
+  (value ?? "").trim().slice(0, 200);
 
 function makeRawEmail(overrides: Partial<RawEmail> = {}): RawEmail {
   return {
@@ -166,6 +192,25 @@ function resetPipelineMocks() {
   mockGetProcessedExternalIds.mockResolvedValue(new Set<string>());
   mockInsertProcessedEmail.mockResolvedValue(undefined);
   mockInsertTransaction.mockResolvedValue(undefined);
+  mockRecordTransaction.mockImplementation(async ({ ports, command }) => {
+    const transaction = {
+      id: ports.generateEntryId(),
+      userId: command.userId,
+      type: command.type,
+      amount: command.amount,
+      accountId: command.accountId,
+      accountAttributionState: command.accountAttributionState,
+      categoryId: command.categoryId,
+      occurredOn: command.occurredOn,
+      description: normalizeLedgerText(command.description),
+      counterpartyName: normalizeLedgerText(command.counterpartyName),
+      source: command.source,
+    };
+    await ports.commit(transaction);
+    return { ok: true, transaction, events: [] };
+  });
+  mockCreateReviewCandidate.mockResolvedValue({ success: true });
+  mockWriteThroughCommit.mockResolvedValue(undefined);
   mockLookupMerchantRule.mockResolvedValue(null);
   mockInsertMerchantRule.mockResolvedValue(undefined);
   mockParseEmailApi.mockResolvedValue(null);
@@ -213,6 +258,8 @@ function createTestEmailPipelineService(overrides: Record<string, unknown> = {})
     saveCaptureEvidenceRows: mockSaveCaptureEvidenceRows,
     linkCaptureEvidenceToTransaction: mockLinkCaptureEvidenceToTransaction,
     insertTransaction: mockInsertTransaction,
+    recordTransaction: mockRecordTransaction,
+    createReviewCandidate: mockCreateReviewCandidate,
     insertMerchantRule: mockInsertMerchantRule,
     trackTransactionCreated: vi.fn<(...args: any[]) => any>(),
     ...overrides,
@@ -292,8 +339,7 @@ function expectProgressIncludesNeedsReview(
   expect(progressCalls[0]).toEqual(
     expect.objectContaining({ total: 2, completed: 0, saved: 0, failed: 0, needsReview: 0 })
   );
-  expect(progressCalls[1]?.needsReview).toBe(1);
-  expect(progressCalls[1]?.saved).toBe(0);
+  expect(progressCalls.some((progress) => progress.needsReview === 1)).toBe(true);
   expect(progressCalls.at(-1)?.needsReview).toBe(1);
   expect(progressCalls.at(-1)?.saved).toBe(1);
 }
@@ -467,7 +513,7 @@ describe("email processing pipeline", () => {
     const emails = [makeRawEmail()];
     const trackTransactionCreated = vi.fn<(...args: any[]) => any>();
     const service = createTestEmailPipelineService({ trackTransactionCreated });
-    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult({ counterpartyHint: "   " }));
 
     const result = await service.processEmails(mockDb, USER_ID, emails);
 
@@ -480,7 +526,9 @@ describe("email processing pipeline", () => {
       amount: 50000,
       accountId: "fa-default-user-1",
       accountAttributionState: "unresolved",
-      source: "email_gmail",
+      description: null,
+      counterpartyName: "Compra en Exito",
+      source: "automated",
     });
     expectProcessedEmailSaved({
       externalId: "ext-1",
@@ -494,6 +542,9 @@ describe("email processing pipeline", () => {
       "compra en exito",
       "other",
       expect.any(String)
+    );
+    expect(mockFindDuplicateTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ merchant: "Compra en Exito" })
     );
     expect(trackTransactionCreated).toHaveBeenCalledWith({
       type: "expense",
@@ -575,6 +626,32 @@ describe("email processing pipeline", () => {
 
     expect(result.needsReview).toBe(1);
     expect(trackTransactionCreated).not.toHaveBeenCalled();
+  });
+
+  it("persists review candidates and processed email markers in one database transaction", async () => {
+    const txDb = { tx: true };
+    const dbWithTransaction = {
+      transaction: vi.fn<(...args: any[]) => any>((operation: (tx: unknown) => unknown) =>
+        operation(txDb)
+      ),
+    } as any;
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult({ confidence: 0.5 }));
+
+    const result = await processEmails(dbWithTransaction, USER_ID, [makeRawEmail()]);
+
+    expect(result.needsReview).toBe(1);
+    expect(dbWithTransaction.transaction).toHaveBeenCalledTimes(1);
+    expect(mockWriteThroughCommit).toHaveBeenCalledWith(
+      txDb,
+      expect.objectContaining({ type: "test-review-candidate" })
+    );
+    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+      txDb,
+      expect.objectContaining({
+        externalId: "ext-1",
+        status: "needs_review",
+      })
+    );
   });
 
   it("does not report saved when a bundled async write rejects", async () => {
@@ -709,7 +786,9 @@ describe("email processing pipeline", () => {
     pendingParses[0]?.(null);
     await vi.waitFor(() => expect(parseStarts).toContain("parse:Compra 16"));
 
-    pendingParses.slice(1).forEach((resolve) => resolve(null));
+    pendingParses.slice(1).forEach((resolve) => {
+      resolve(null);
+    });
     await processing;
   }
 
@@ -747,7 +826,7 @@ describe("email processing pipeline", () => {
       id: string;
       amount: number;
       date: string;
-      description: string;
+      counterpartyName: string;
     }> = [];
     let releaseFirstInsert!: () => void;
     const firstInsertStarted = new Promise<void>((resolve) => {
@@ -763,7 +842,7 @@ describe("email processing pipeline", () => {
           id: row.id,
           amount: row.amount,
           date: row.date,
-          description: row.description,
+          counterpartyName: row.counterpartyName,
         });
       });
     });
@@ -776,7 +855,7 @@ describe("email processing pipeline", () => {
         (transaction) =>
           transaction.amount === amount &&
           transaction.date === date &&
-          transaction.description === merchant
+          transaction.counterpartyName === merchant
       );
 
       return existing?.id ?? null;
@@ -880,7 +959,7 @@ describe("email processing pipeline", () => {
     });
   });
 
-  it("saves transaction as needs_review when LLM returns low confidence", async () => {
+  it("creates a review candidate without committing a transaction when LLM returns low confidence", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
@@ -891,17 +970,37 @@ describe("email processing pipeline", () => {
       confidence: 0.5,
     });
 
-    const result = await processEmails(mockDb, USER_ID, emails);
+    const result = await createTestEmailPipelineService().processEmails(mockDb, USER_ID, emails);
 
     expect(result.needsReview).toBe(1);
     expect(result.saved).toBe(0);
     expect(result.failed).toBe(0);
-    expect(mockInsertTransaction).toHaveBeenCalled();
+    expect(mockInsertTransaction).not.toHaveBeenCalled();
+    expect(mockRecordTransaction).not.toHaveBeenCalled();
+    expect(mockCreateReviewCandidate).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        source: expect.objectContaining({
+          sourceFamily: "email",
+          sourceId: "email_gmail",
+          sourceEventId: "ext-1",
+          status: "needs_review",
+        }),
+        candidate: expect.objectContaining({
+          candidateKind: "transaction",
+          status: "pending",
+          money: { amount: 50000, currency: "COP" },
+          description: null,
+          confidence: 0.5,
+        }),
+      })
+    );
     expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
         externalId: "ext-1",
         status: "needs_review",
+        transactionId: null,
         confidence: 0.5,
       })
     );
@@ -916,6 +1015,37 @@ describe("email processing pipeline", () => {
         parseMethod: "llm",
       },
     ]);
+  });
+
+  it("uses the production email-pipeline review candidate adapter for low-confidence emails", async () => {
+    const emails = [makeRawEmail()];
+    mockParseEmailApi.mockResolvedValueOnce({
+      type: "expense",
+      amount: 50000,
+      categoryId: "other",
+      description: "Compra en Exito",
+      date: "2026-03-05",
+      confidence: 0.5,
+    });
+
+    const result = await processEmails(mockDb, USER_ID, emails);
+
+    expect(result.needsReview).toBe(1);
+    expect(mockWriteThroughCommit).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        type: "test-review-candidate",
+      })
+    );
+    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        externalId: "ext-1",
+        status: "needs_review",
+        transactionId: null,
+        confidence: 0.5,
+      })
+    );
   });
 
   it("uses typed LLM account hints as capture evidence for account suggestions", async () => {
@@ -941,6 +1071,7 @@ describe("email processing pipeline", () => {
       amount: 50000,
       categoryId: "other",
       description: "Compra en Exito",
+      counterpartyHint: "   ",
       date: "2026-03-05",
       confidence: 0.8,
     });
@@ -1008,7 +1139,26 @@ describe("email processing pipeline", () => {
     expect(result.saved).toBe(1);
     expect(mockInsertTransaction).toHaveBeenCalledWith(
       mockDb,
-      expect.objectContaining({ source: "email_outlook" })
+      expect.objectContaining({ source: "automated", counterpartyName: "Deposito" })
+    );
+  });
+
+  it("stores the local-ledger accepted counterparty value", async () => {
+    const longCounterparty = "Counterparty ".repeat(30);
+    mockParseEmailApi.mockResolvedValueOnce(
+      makeParsedEmailResult({
+        description: "Parser description",
+        counterpartyHint: longCounterparty,
+      })
+    );
+
+    await processEmails(mockDb, USER_ID, [makeRawEmail()]);
+
+    expect(mockInsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        counterpartyName: longCounterparty.trim().slice(0, 200),
+      })
     );
   });
 
@@ -1173,7 +1323,9 @@ describe("email processing pipeline", () => {
       needsReview: number;
     }[] = [];
 
-    await processEmails(mockDb, USER_ID, emails, (p) => progressCalls.push(p));
+    await createTestEmailPipelineService().processEmails(mockDb, USER_ID, emails, (p) =>
+      progressCalls.push(p)
+    );
 
     expectProgressIncludesNeedsReview(progressCalls);
   });
@@ -1250,6 +1402,24 @@ describe("processRetries", () => {
     mockMarkPermanentlyFailed.mockResolvedValue(undefined);
     mockMarkRetrySuccess.mockResolvedValue(undefined);
     mockInsertTransaction.mockResolvedValue(undefined);
+    mockRecordTransaction.mockImplementation(async ({ ports, command }) => {
+      const transaction = {
+        id: ports.generateEntryId(),
+        userId: command.userId,
+        type: command.type,
+        amount: command.amount,
+        accountId: command.accountId,
+        accountAttributionState: command.accountAttributionState,
+        categoryId: command.categoryId,
+        occurredOn: command.occurredOn,
+        description: command.description ?? "",
+        counterpartyName: normalizeLedgerText(command.counterpartyName),
+        source: command.source,
+      };
+      await ports.commit(transaction);
+      return { ok: true, transaction, events: [] };
+    });
+    mockCreateReviewCandidate.mockResolvedValue({ success: true });
     mockLookupMerchantRule.mockResolvedValue(null);
     mockInsertMerchantRule.mockResolvedValue(undefined);
     mockParseEmailApi.mockResolvedValue(null);
@@ -1277,7 +1447,8 @@ describe("processRetries", () => {
       type: "expense",
       amount: 50000,
       categoryId: "other",
-      description: "Compra en Exito",
+      description: "Compra con tarjeta terminada en 1234",
+      counterpartyHint: "Exito",
       date: "2026-03-05",
       confidence: 0.9,
     });
@@ -1299,7 +1470,7 @@ describe("processRetries", () => {
     expect(mockInsertMerchantRule).toHaveBeenCalledWith(
       mockDb,
       USER_ID,
-      "compra en exito",
+      "exito",
       "other",
       expect.any(String)
     );
@@ -1336,7 +1507,7 @@ describe("processRetries", () => {
     );
   });
 
-  it("marks as needs_review when confidence < 0.7 on retry", async () => {
+  it("creates a review candidate without a transaction when confidence < 0.7 on retry", async () => {
     const row = makePendingRetryRow();
     const trackTransactionCreated = vi.fn<(...args: any[]) => any>();
     const service = createTestEmailPipelineService({ trackTransactionCreated });
@@ -1352,15 +1523,35 @@ describe("processRetries", () => {
 
     await service.processRetries(mockDb, USER_ID);
 
+    expect(mockInsertTransaction).not.toHaveBeenCalled();
+    expect(mockCreateReviewCandidate).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        source: expect.objectContaining({
+          sourceFamily: "email",
+          sourceId: "email_gmail",
+          sourceEventId: "ext-retry-1",
+          status: "needs_review",
+        }),
+        candidate: expect.objectContaining({
+          candidateKind: "transaction",
+          status: "pending",
+          money: { amount: 50000, currency: "COP" },
+          description: null,
+          confidence: 0.5,
+        }),
+      })
+    );
     expect(mockMarkRetrySuccess).toHaveBeenCalledWith(
       expect.objectContaining({
         db: mockDb,
         id: "pe-retry-1",
         status: "needs_review",
-        transactionId: expect.stringMatching(/^tx-/),
+        transactionId: null,
         confidence: 0.5,
       })
     );
+    expect(mockLinkCaptureEvidenceToTransaction).not.toHaveBeenCalled();
     expect(mockInsertMerchantRule).not.toHaveBeenCalled();
     expect(trackTransactionCreated).not.toHaveBeenCalled();
   });

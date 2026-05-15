@@ -1,8 +1,9 @@
-import { buildDefaultFinancialAccountId } from "@/shared/lib/default-financial-account-id";
 import type { RecordTransactionAccepted, RecordTransactionSource } from "@/local-ledger/public";
+import type { transactions } from "@/shared/db/schema";
+import { buildDefaultFinancialAccountId } from "@/shared/lib/default-financial-account-id";
+import { normalizeTransactionSource } from "@/shared/lib/transaction-source";
 import { requireTransactionId } from "@/shared/types/assertions";
 import type { FinancialAccountId, IsoDateTime } from "@/shared/types/branded";
-import type { transactions } from "@/shared/db/schema";
 
 type TransactionStorageRow = typeof transactions.$inferInsert;
 
@@ -29,7 +30,7 @@ type TransactionStorageInput = {
 const toClosedSource = (source: RecordTransactionSource): RecordTransactionSource => source;
 
 const toStorageSource = (source: string | null | undefined): RecordTransactionSource =>
-  source === "manual" || source == null ? "manual" : "automated";
+  normalizeTransactionSource(source);
 
 const defaultAccountAttributionState = (source: RecordTransactionSource): string =>
   source === "manual" ? "confirmed" : "unresolved";
