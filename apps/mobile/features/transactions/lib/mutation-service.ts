@@ -21,6 +21,12 @@ type CreateTransactionMutationServiceDeps = {
   getCommit: () => WriteThroughMutationModule["commit"] | null;
   getUserId: () => UserId | null;
   getTransactionById: (id: TransactionId) => StoredTransaction | null;
+  recordManualTransaction: (input: {
+    readonly userId: UserId;
+    readonly transactionId: TransactionId;
+    readonly input: TransactionFormInput;
+    readonly now: Date;
+  }) => Promise<TransactionMutationResult>;
   refresh: () => Promise<void>;
   resetForm: () => void;
   trackDeleted: () => void;
@@ -87,6 +93,30 @@ async function commitTransaction(
   }
 }
 
+async function recordManualTransaction(
+  deps: Pick<CreateTransactionMutationServiceDeps, "recordManualTransaction">,
+  input: {
+    readonly userId: UserId;
+    readonly transactionId: TransactionId;
+    readonly form: TransactionFormInput;
+    readonly now: Date;
+  }
+): Promise<TransactionMutationResult> {
+  try {
+    return await deps.recordManualTransaction({
+      userId: input.userId,
+      transactionId: input.transactionId,
+      input: input.form,
+      now: input.now,
+    });
+  } catch (error) {
+    captureWarning("transaction_manual_record_exception", {
+      errorType: errorType(error),
+    });
+    return fail("Failed to save transaction");
+  }
+}
+
 function buildMutationTransaction(input: BuildMutationTransactionInput) {
   if (!input.userId) {
     return fail("Store not initialized");
@@ -110,29 +140,23 @@ export function createTransactionMutationService(
 
   return {
     save: async (input) => {
-      const built = buildMutationTransaction({
-        form: input,
-        userId: deps.getUserId(),
-        transactionId: createId(),
-        now: now(),
-        existing: null,
-      });
-      if (!built.success) {
-        return built;
+      const userId = deps.getUserId();
+      if (!userId) {
+        return fail("Store not initialized");
       }
 
-      const committed = await commitTransaction(
-        deps.getCommit(),
-        "insert",
-        built.transaction,
-        "Failed to save transaction"
-      );
-      if (!committed.success) {
-        return committed;
+      const result = await recordManualTransaction(deps, {
+        userId,
+        transactionId: createId(),
+        form: input,
+        now: now(),
+      });
+      if (!result.success) {
+        return result;
       }
 
       await deps.refresh();
-      return { success: true, transaction: built.transaction };
+      return result;
     },
 
     update: async (id, input) => {

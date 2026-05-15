@@ -1,15 +1,18 @@
 import { createWriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import {
+  captureWarning,
   generateTransactionId,
   trackTransactionDeleted,
   trackTransactionEdited,
 } from "@/shared/lib";
+import { recordManualTransactionWithLocalLedger } from "@/infrastructure/local-ledger/record-transaction";
 import type { CategoryId, FinancialAccountId, TransactionId, UserId } from "@/shared/types/branded";
 import {
   createTransactionMutationService,
   type TransactionMutationResult,
 } from "./lib/mutation-service";
+import { toStoredTransaction } from "./lib/build-transaction";
 import type { StoredTransaction, TransactionType } from "./schema";
 import { createTransactionQueryService } from "./services/create-transaction-query-service";
 import { toTransactionFormInput } from "./store/form-input";
@@ -47,6 +50,9 @@ function isCurrentTransactionsRequest(
   return loadTransactionsRequestId === requestId && isActiveTransactionSession(userId, sessionId);
 }
 
+const getErrorType = (error: unknown): string =>
+  error instanceof Error ? error.name : typeof error;
+
 function createLiveTransactionMutationService(db: AnyDb, userId: UserId, sessionId: number) {
   const mutations = createWriteThroughMutationModule(db);
 
@@ -54,6 +60,18 @@ function createLiveTransactionMutationService(db: AnyDb, userId: UserId, session
     getCommit: () => mutations.commit,
     getUserId: () => userId,
     getTransactionById: (id) => getStoredTransactionById(db, userId, id),
+    recordManualTransaction: async (input) => {
+      const result = await recordManualTransactionWithLocalLedger({
+        db,
+        userId: input.userId,
+        transactionId: input.transactionId,
+        input: input.input,
+        now: input.now,
+      });
+      return result.success
+        ? { success: true, transaction: toStoredTransaction(result.transaction) }
+        : result;
+    },
     refresh: async () => {
       if (!isActiveTransactionSession(userId, sessionId)) return;
       await refreshTransactions(db, userId);
@@ -145,8 +163,10 @@ export async function refreshTransactions(db: AnyDb, userId: UserId): Promise<vo
     });
     if (!isCurrentTransactionsRequest(requestId, userId, sessionId)) return;
     useTransactionStore.getState().applyRefreshSnapshot(snapshot);
-  } catch {
-    // Refresh failed — keep existing state
+  } catch (error) {
+    captureWarning("transactions_refresh_failed", {
+      errorType: getErrorType(error),
+    });
   }
 }
 
