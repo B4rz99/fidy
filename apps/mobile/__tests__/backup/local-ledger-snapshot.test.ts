@@ -539,7 +539,15 @@ describe("local ledger backup snapshots", () => {
       processedEmails: [withoutKeys(processedEmailRow(), ["rawBody", "retryCount", "nextRetryAt"])],
     });
 
-    expect(validateBackupSnapshot(snapshot)).toBe(snapshot);
+    expect(validateBackupSnapshot(snapshot)).toEqual({
+      ...snapshot,
+      data: {
+        ...snapshot.data,
+        processedSourceEvents: [],
+        reviewCandidates: [],
+        reviewCandidateCaptureEvidence: [],
+      },
+    });
   });
 
   it("rejects duplicate primary IDs inside backed-up collections", () => {

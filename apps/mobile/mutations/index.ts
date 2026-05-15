@@ -27,6 +27,7 @@ import { categoryHandlers } from "../mutation-runtime/category-handlers";
 import type { MutationHandlerRegistry } from "../mutation-runtime/common";
 import { goalHandlers } from "../mutation-runtime/goal-handlers";
 import { notificationHandlers } from "../mutation-runtime/notification-handlers";
+import { localLedgerHandlers } from "../mutation-runtime/local-ledger-handlers";
 import { transactionHandlers } from "../mutation-runtime/transaction-handlers";
 
 const mutationHandlers: MutationHandlerRegistry = {
@@ -36,6 +37,7 @@ const mutationHandlers: MutationHandlerRegistry = {
   ...notificationHandlers,
   ...categoryHandlers,
   ...calendarHandlers,
+  ...localLedgerHandlers,
 };
 
 const applyCommand = (db: MutationDb, command: MutationCommand) =>

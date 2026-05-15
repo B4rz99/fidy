@@ -47,6 +47,9 @@ const SNAPSHOT = {
     accountSuggestionDismissals: [],
     processedEmails: [],
     processedCaptures: [],
+    processedSourceEvents: [],
+    reviewCandidates: [],
+    reviewCandidateCaptureEvidence: [],
   },
 } satisfies BackupSnapshot;
 

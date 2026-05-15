@@ -1,3 +1,4 @@
+import type { CaptureEvidenceType } from "@/features/capture-evidence/schema.public";
 import type {
   CopAmount,
   FinancialAccountId,
@@ -14,6 +15,14 @@ export type LocalLedgerCommandId = string & { readonly __brand: "LocalLedgerComm
 export type LocalLedgerEntryId = string & { readonly __brand: "LocalLedgerEntryId" };
 
 export type LocalLedgerSourceId = string & { readonly __brand: "LocalLedgerSourceId" };
+
+export type LocalLedgerProcessedSourceEventId = string & {
+  readonly __brand: "LocalLedgerProcessedSourceEventId";
+};
+
+export type LocalLedgerReviewCandidateId = string & {
+  readonly __brand: "LocalLedgerReviewCandidateId";
+};
 
 export type LocalLedgerMoney = {
   readonly amount: CopAmount;
@@ -59,3 +68,26 @@ export type LocalLedgerTransferRecorded = {
 };
 
 export type LocalLedgerDomainEvent = LocalLedgerTransferRecorded;
+
+export type LocalLedgerCaptureEvidence = {
+  readonly id: string;
+  readonly linkId: string;
+  readonly sourceFamily: string;
+  readonly evidenceType: CaptureEvidenceType;
+  readonly scope: string;
+  readonly value: string;
+};
+
+export type LocalLedgerProcessedSourceEventStatus = "processed" | "needs_review" | "failed";
+
+export type LocalLedgerReviewCandidateStatus = "pending" | "accepted" | "rejected";
+
+export type LocalLedgerReviewCandidate = {
+  readonly id: LocalLedgerReviewCandidateId;
+  readonly candidateKind: "transaction" | "transfer";
+  readonly status: LocalLedgerReviewCandidateStatus;
+  readonly occurredAt: string | null;
+  readonly money: LocalLedgerMoney | null;
+  readonly description: string | null;
+  readonly confidence: number | null;
+};

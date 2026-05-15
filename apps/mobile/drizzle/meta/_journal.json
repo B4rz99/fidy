@@ -176,6 +176,13 @@
       "when": 1777824000000,
       "tag": "0024_unique_email_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1778457600000,
+      "tag": "0025_review_candidate_intake",
+      "breakpoints": true
     }
   ]
 }
