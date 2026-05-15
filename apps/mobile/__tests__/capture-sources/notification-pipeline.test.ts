@@ -13,6 +13,9 @@ const mockIsCaptureProcessed = vi.fn<(...args: any[]) => any>().mockResolvedValu
 const mockFindDuplicateTransaction = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
 const mockCaptureFingerprint = vi.fn<(...args: any[]) => any>().mockReturnValue("test-fingerprint");
 const mockInsertProcessedCapture = vi.fn<(...args: any[]) => any>();
+const mockPersistProcessedSourceEvent = vi.fn<(...args: any[]) => any>();
+const mockPersistCommittedCaptureSourceEvent = vi.fn<(...args: any[]) => any>();
+const mockPersistReviewCandidateCapture = vi.fn<(...args: any[]) => any>();
 const mockStripPii = vi.fn<(...args: any[]) => any>().mockImplementation((t: string) => t);
 const mockEnsureDefaultFinancialAccount = vi.fn<(...args: any[]) => any>().mockReturnValue({
   id: "fa-default-user-1" as FinancialAccountId,
@@ -57,8 +60,43 @@ function materializeCaptureEvidenceRows(evidence: any[], link: Record<string, un
   return evidence.map((row, index) => materializeCaptureEvidenceRow(link, row, index));
 }
 
+function mockRecordedTransaction(input: any) {
+  const { command } = input;
+  mockInsertTransaction(input.db, {
+    id: input.transactionId,
+    userId: command.userId,
+    type: command.type,
+    amount: command.amount,
+    categoryId: command.categoryId,
+    description: command.description,
+    date: command.occurredOn,
+    accountId: command.accountId,
+    accountAttributionState: command.accountAttributionState,
+    source: command.source,
+    createdAt: input.now,
+    updatedAt: input.now,
+  });
+}
+
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
+}));
+
+vi.mock("@/infrastructure/local-ledger/record-transaction", () => ({
+  recordAutomatedTransactionWithLocalLedger: async (input: any) => {
+    input.afterRecord?.(input.db, { id: input.transactionId });
+    mockRecordedTransaction(input);
+    return { success: true, transaction: { id: input.transactionId } };
+  },
+}));
+
+vi.mock("@/infrastructure/local-ledger/source-events", () => ({
+  persistProcessedSourceEvent: (...args: any[]) => mockPersistProcessedSourceEvent(...args),
+  persistCommittedCaptureSourceEvent: (...args: any[]) =>
+    mockPersistCommittedCaptureSourceEvent(...args),
+  persistCommittedCaptureSourceEventInTransaction: (...args: any[]) =>
+    mockPersistCommittedCaptureSourceEvent(...args),
+  persistReviewCandidateCapture: (...args: any[]) => mockPersistReviewCandidateCapture(...args),
 }));
 
 vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
@@ -121,18 +159,18 @@ function makeNotification(overrides: Partial<NotificationData> = {}): Notificati
 }
 
 function expectSavedNotificationEvidence(transactionId: string) {
-  expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
+  expect(mockPersistCommittedCaptureSourceEvent).toHaveBeenCalledWith(
     mockDb,
-    expect.arrayContaining([
-      expect.objectContaining({
-        userId: USER_ID,
-        processedCaptureId: expect.any(String),
-        processedEmailId: null,
-        transactionId,
-        scope: "notification:bancolombia:last4",
-        value: "1234",
-      }),
-    ])
+    expect.objectContaining({
+      userId: USER_ID,
+      transactionId,
+      evidence: expect.arrayContaining([
+        expect.objectContaining({
+          scope: "notification:bancolombia:last4",
+          value: "1234",
+        }),
+      ]),
+    })
   );
 }
 
@@ -200,6 +238,9 @@ describe("processNotification", () => {
     mockBuildNotificationLlmAccountHintCaptureEvidence.mockReturnValue([]);
     mockFindMatchingFinancialAccountId.mockReturnValue(null);
     mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
+    mockPersistProcessedSourceEvent.mockReturnValue(undefined);
+    mockPersistCommittedCaptureSourceEvent.mockReturnValue(undefined);
+    mockPersistReviewCandidateCapture.mockReturnValue(undefined);
   });
 
   it("saves transaction when LLM parses a notification with regex hints", async () => {
@@ -272,9 +313,8 @@ describe("processNotification", () => {
     expect(result.saved).toBe(false);
     expect(result.skippedDuplicate).toBe(false);
     expect(mockInsertTransaction).not.toHaveBeenCalled();
-    expect(mockInsertProcessedCapture).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({ status: "failed" })
+    expect(mockPersistProcessedSourceEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ db: mockDb, status: "failed", failureReason: "parse_failed" })
     );
   });
 
@@ -294,14 +334,14 @@ describe("processNotification", () => {
       makeNotification({ text: "Formato raro con $35,000" })
     );
 
-    expect(result.saved).toBe(true);
-    expect(mockInsertTransaction).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({ type: "income", amount: 35000 })
-    );
-    expect(mockInsertProcessedCapture).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({ status: "needs_review", confidence: 0.5 })
+    expect(result.saved).toBe(false);
+    expect(mockInsertTransaction).not.toHaveBeenCalled();
+    expect(mockPersistReviewCandidateCapture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        db: mockDb,
+        status: "needs_review",
+        candidate: expect.objectContaining({ amount: 35000, confidence: 0.5 }),
+      })
     );
     expect(mockInsertMerchantRule).not.toHaveBeenCalled();
   });
@@ -315,7 +355,9 @@ describe("processNotification", () => {
     expect(result.saved).toBe(false);
     expect(result.skippedDuplicate).toBe(true);
     expect(mockInsertTransaction).not.toHaveBeenCalled();
-    expect(mockInsertProcessedCapture).not.toHaveBeenCalled();
+    expect(mockPersistProcessedSourceEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "processed", failureReason: "already_processed_duplicate" })
+    );
   });
 
   it("skips when cross-source duplicate found", async () => {
@@ -328,11 +370,15 @@ describe("processNotification", () => {
     expect(result.skippedDuplicate).toBe(true);
     expect(result.transactionId).toBe("existing-tx-1");
     expect(mockInsertTransaction).not.toHaveBeenCalled();
-    expect(mockInsertProcessedCapture).toHaveBeenCalledWith(
+    expect(mockPersistCommittedCaptureSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        status: "skipped_duplicate",
+        status: "processed",
+        failureReason: "duplicate:existing-tx-1",
         transactionId: "existing-tx-1",
+        evidence: expect.arrayContaining([
+          expect.objectContaining({ scope: "notification:bancolombia:last4" }),
+        ]),
       })
     );
   });
@@ -404,9 +450,9 @@ describe("processNotification", () => {
     );
 
     expect(result.saved).toBe(true);
-    expect(mockInsertTransaction).toHaveBeenCalledWith(
+    expect(mockPersistCommittedCaptureSourceEvent).toHaveBeenCalledWith(
       mockDb,
-      expect.objectContaining({ source: "google_pay" })
+      expect.objectContaining({ sourceFamily: "google_pay", status: "processed" })
     );
   });
 });

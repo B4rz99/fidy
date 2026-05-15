@@ -3,13 +3,21 @@ import {
   recordTransaction,
   type LocalLedgerEntryId,
   type RecordTransactionAccepted,
+  type RecordTransactionCommand,
   type RecordTransactionRejectCode,
 } from "@/local-ledger/public";
 import { getBuiltInCategoryId, isValidCategoryId } from "@/shared/categories";
 import type { AnyDb } from "@/shared/db";
 import { financialAccounts, transactions, userCategories } from "@/shared/db/schema";
 import { parseDigitsToAmount, toIsoDate, toIsoDateTime } from "@/shared/lib";
-import type { CategoryId, FinancialAccountId, TransactionId, UserId } from "@/shared/types/branded";
+import { requireIsoDate } from "@/shared/types/assertions";
+import type {
+  CategoryId,
+  FinancialAccountId,
+  IsoDateTime,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 import { toTransactionStorageRow } from "./transaction-storage";
 
 type ManualTransactionInput = {
@@ -29,10 +37,23 @@ type RecordManualTransactionInput = {
   readonly now: Date;
 };
 
+type RecordAutomatedTransactionInput = {
+  readonly db: AnyDb;
+  readonly command: RecordTransactionCommand;
+  readonly transactionId: TransactionId;
+  readonly now: IsoDateTime;
+  readonly afterRecord?: (tx: AnyDb, transaction: RecordTransactionAccepted) => void;
+};
+
 type CommitPolicyRejection = {
   readonly ok: false;
   readonly code: "account-not-usable" | "category-not-usable";
 };
+
+function toLocalLedgerEntryId(transactionId: TransactionId): LocalLedgerEntryId {
+  // Transaction-backed ledger entries use the persisted transaction ID as their ledger entry ID.
+  return transactionId as unknown as LocalLedgerEntryId;
+}
 
 export type RecordManualTransactionResult =
   | { readonly success: true; readonly transaction: typeof transactions.$inferInsert }
@@ -46,6 +67,10 @@ export type RecordManualTransactionError =
   | "missingAccount"
   | "missingCategory"
   | "manualSourceRequiresResolvedAccount";
+
+export type RecordAutomatedTransactionResult =
+  | { readonly success: true; readonly transaction: RecordTransactionAccepted }
+  | { readonly success: false; readonly error: RecordTransactionRejectCode };
 
 const rejectionErrorMap: Record<RecordTransactionRejectCode, RecordManualTransactionError> = {
   "account-not-usable": "accountNotUsable",
@@ -140,7 +165,7 @@ export async function recordManualTransactionWithLocalLedger({
           tx.insert(transactions).values(row).run();
           return { ok: true, transaction };
         }),
-      generateEntryId: () => transactionId as string as LocalLedgerEntryId,
+      generateEntryId: () => toLocalLedgerEntryId(transactionId),
       today: () => toIsoDate(now),
     },
   });
@@ -151,4 +176,36 @@ export async function recordManualTransactionWithLocalLedger({
         transaction: toTransactionStorageRow({ transaction: result.transaction, now: nowIso }),
       }
     : { success: false, error: rejectionErrorMap[result.code] };
+}
+
+export async function recordAutomatedTransactionWithLocalLedger({
+  db,
+  command,
+  transactionId,
+  now,
+  afterRecord,
+}: RecordAutomatedTransactionInput): Promise<RecordAutomatedTransactionResult> {
+  const result = await recordTransaction({
+    command: { ...command, source: "automated" },
+    ports: {
+      canUseAccount: async ({ accountId }) =>
+        hasActiveFinancialAccount(db, command.userId, accountId),
+      canUseCategory: async ({ categoryId }) => hasUsableCategory(db, command.userId, categoryId),
+      today: () => requireIsoDate(now.slice(0, 10)),
+      generateEntryId: () => toLocalLedgerEntryId(transactionId),
+      commit: async (transaction) =>
+        db.transaction((tx) => {
+          const policyRejection = getCommitPolicyRejection(tx, transaction);
+          if (policyRejection) return policyRejection;
+
+          tx.insert(transactions).values(toTransactionStorageRow({ transaction, now })).run();
+          afterRecord?.(tx, transaction);
+          return { ok: true, transaction };
+        }),
+    },
+  });
+
+  return result.ok
+    ? { success: true, transaction: result.transaction }
+    : { success: false, error: result.code };
 }

@@ -74,11 +74,17 @@ describe("isCaptureProcessed", () => {
     mockWhere.mockResolvedValue([]);
   });
 
-  it("returns true when fingerprint exists in DB", async () => {
-    mockWhere.mockResolvedValueOnce([{ id: "pc-1" }]);
+  it("returns true when matching non-failed processed source event exists", async () => {
+    mockWhere.mockResolvedValueOnce([{ id: "pse-1", status: "processed" }]);
 
     const { isCaptureProcessed } = await import("@/features/capture-sources/lib/dedup");
-    const result = await isCaptureProcessed(mockDb, "fp-hash-123");
+    const result = await isCaptureProcessed({
+      db: mockDb,
+      userId: "user-1",
+      sourceFamily: "notification",
+      sourceId: "notification",
+      sourceEventId: "fp-hash-123",
+    });
 
     expect(result).toBe(true);
     expect(mockSelect).toHaveBeenCalled();
@@ -86,11 +92,73 @@ describe("isCaptureProcessed", () => {
     expect(mockWhere).toHaveBeenCalled();
   });
 
-  it("returns false when fingerprint is not found", async () => {
+  it("does not block retries for failed processed source events", async () => {
+    mockWhere.mockResolvedValueOnce([{ id: "pse-1", status: "failed" }]).mockResolvedValueOnce([]);
+
+    const { isCaptureProcessed } = await import("@/features/capture-sources/lib/dedup");
+    const result = await isCaptureProcessed({
+      db: mockDb,
+      userId: "user-1",
+      sourceFamily: "widget",
+      sourceId: "widget",
+      sourceEventId: "fp-hash-retry",
+    });
+
+    expect(result).toBe(false);
+  });
+
+  it("uses the processed source event semantic key for lookup", async () => {
     mockWhere.mockResolvedValueOnce([]);
 
     const { isCaptureProcessed } = await import("@/features/capture-sources/lib/dedup");
-    const result = await isCaptureProcessed(mockDb, "fp-hash-missing");
+    await isCaptureProcessed({
+      db: mockDb,
+      userId: "user-1",
+      sourceFamily: "notification",
+      sourceId: "notification",
+      sourceEventId: "fp-hash-123",
+    });
+
+    expect(mockWhere).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        op: "and",
+        args: expect.arrayContaining([
+          expect.objectContaining({ val: "user-1" }),
+          expect.objectContaining({ val: "notification" }),
+          expect.objectContaining({ val: "fp-hash-123" }),
+          expect.objectContaining({ op: "isNull" }),
+        ]),
+      })
+    );
+  });
+
+  it("keeps legacy processed capture fallback", async () => {
+    mockWhere.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: "pc-1" }]);
+
+    const { isCaptureProcessed } = await import("@/features/capture-sources/lib/dedup");
+    const result = await isCaptureProcessed({
+      db: mockDb,
+      userId: "user-1",
+      sourceFamily: "notification",
+      sourceId: "notification",
+      sourceEventId: "fp-hash-123",
+    });
+
+    expect(result).toBe(true);
+  });
+
+  it("returns false when fingerprint is not found", async () => {
+    mockWhere.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+
+    const { isCaptureProcessed } = await import("@/features/capture-sources/lib/dedup");
+    const result = await isCaptureProcessed({
+      db: mockDb,
+      userId: "user-1",
+      sourceFamily: "notification",
+      sourceId: "notification",
+      sourceEventId: "fp-hash-missing",
+    });
 
     expect(result).toBe(false);
   });
