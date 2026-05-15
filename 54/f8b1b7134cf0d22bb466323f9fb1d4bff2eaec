@@ -1,0 +1,39 @@
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_c2cc405fecdf17::t_8ad4d750326027 82-87
+  s_c2cc405fecdf17::t_673ca87e332883 81,89-96,986-1025
+  s_c2cc405fecdf17::t_f61a826ea6ea19 969
+  s_c2cc405fecdf17::t_09048edc1d2b7f 88
+apps/mobile/features/email-capture/services/email-pipeline-service/transactions.ts
+  s_c2cc405fecdf17::t_3dc6a4432847cf 85-87
+  s_c2cc405fecdf17::t_3e925c34ae0754 141
+  s_c2cc405fecdf17::t_f61a826ea6ea19 35,67-84,88-90,97,118-122,129-133,231,246-247
+  s_c2cc405fecdf17::t_b1fe736ab88233 25-30
+  s_c2cc405fecdf17::t_765720b773c69d 11,13
+  s_c2cc405fecdf17::t_8ad4d750326027 225
+apps/mobile/__tests__/backup/local-ledger-snapshot.test.ts
+  s_c2cc405fecdf17::t_f61a826ea6ea19 574,584-591
+  s_c2cc405fecdf17::t_3dc6a4432847cf 592
+apps/mobile/features/email-capture/services/email-pipeline-service/review-candidate.ts
+  s_c2cc405fecdf17::t_4751ca4a5632c8 73-98,101-102
+  s_c2cc405fecdf17::t_b1fe736ab88233 1,9-72,99-100,103-104
+  s_c2cc405fecdf17::t_765720b773c69d 2-8
+apps/mobile/features/email-capture/services/email-pipeline-service/transaction-recording.ts
+  s_c2cc405fecdf17::t_b1fe736ab88233 1-7,9-88
+  s_c2cc405fecdf17::t_765720b773c69d 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "54f8b1b7134cf0d22bb466323f9fb1d4bff2eaec",
+  "prompts": {},
+  "sessions": {
+    "s_c2cc405fecdf17": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e29f5-9c42-7322-88b2-338723aecaf0",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
