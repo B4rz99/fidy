@@ -1,0 +1,27 @@
+apps/mobile/features/email-capture/services/email-pipeline-service/review-candidate.ts
+  s_c2cc405fecdf17::t_765720b773c69d 2-8
+  s_c2cc405fecdf17::t_4751ca4a5632c8 73-98,101-102
+  s_c2cc405fecdf17::t_b1fe736ab88233 1,9-72,99-100,103-104
+apps/mobile/features/email-capture/services/email-pipeline-service/transactions.ts
+  s_c2cc405fecdf17::t_765720b773c69d 11,13
+  s_c2cc405fecdf17::t_b1fe736ab88233 25-30
+apps/mobile/features/email-capture/services/email-pipeline-service/transaction-recording.ts
+  s_c2cc405fecdf17::t_765720b773c69d 8
+  s_c2cc405fecdf17::t_b1fe736ab88233 1-7,9-88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "f6e68ef8ca147f2d181ceab0bb28e802ca49a2b7",
+  "prompts": {},
+  "sessions": {
+    "s_c2cc405fecdf17": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e29f5-9c42-7322-88b2-338723aecaf0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
