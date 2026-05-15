@@ -1,0 +1,76 @@
+apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts
+  s_7a8d46ac5720b2::t_7cba7c90b85e26 18,82-83
+  s_7a8d46ac5720b2::t_9c4c74675c9cf2 316-331
+  s_7a8d46ac5720b2::t_01b53241ad7f29 90-91
+  s_7a8d46ac5720b2::t_a56f258dd9c94f 196-200
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 16-17,59-70,72-76,81,84-89,92-93,162,164-173,194-195,228-230,241,244-245,307,310-312
+  s_7a8d46ac5720b2::t_9858d014524f89 71,155,203
+apps/mobile/__tests__/local-ledger/source-events.test.ts
+  s_7a8d46ac5720b2::t_5c0526f0e2e533 16-18
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 1-15,19-25,30-43,45-71,75-79,92-197,286-287
+  s_7a8d46ac5720b2::t_f83ef0d94b0278 44,80-91,198-234
+  s_7a8d46ac5720b2::t_38781186b74a42 26-29,72-74,235-285
+apps/mobile/shared/lib/generate-id.ts
+  s_7a8d46ac5720b2::t_b1f9866ef27371 20-22,117-126
+apps/mobile/features/capture-sources/services/notification-pipeline.ts
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 136-144
+apps/mobile/infrastructure/local-ledger/source-events.ts
+  s_7a8d46ac5720b2::t_96797d1805d8c7 77
+  s_7a8d46ac5720b2::t_ac0b8e3120e283 10-15
+  s_7a8d46ac5720b2::t_2a9862db700d69 176,187-195
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 1-9,16-54,61-63,66-76,86,102-108,117-136,139-175,177-186,196-241
+  s_7a8d46ac5720b2::t_003a0072e54b63 55-56,60,65,78,85,87-101,109-116,137-138
+  s_7a8d46ac5720b2::t_0f57abe92823bc 57-59,64,79-84
+apps/mobile/features/capture-sources/lib/dedup.ts
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 4,22-28,41-50,53-57,60-61
+  s_7a8d46ac5720b2::t_fc13b78168f733 1,51-52
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 16-18,63-80,85-96,99-101,162,164-173,241-243,316-317,337-344,358-360,376-377,453,455
+  s_7a8d46ac5720b2::t_de147a88aca58e 373,379-381
+  s_7a8d46ac5720b2::t_8939041273ee95 97-98
+apps/mobile/__tests__/capture-sources/dedup.test.ts
+  s_7a8d46ac5720b2::t_4fc312a2463aa6 130
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 77-78,81-87,95-110,114-129,131-161
+apps/mobile/infrastructure/local-ledger/record-transaction.ts
+  s_7a8d46ac5720b2::t_8b7bdc3f419f55 193
+  s_7a8d46ac5720b2::t_07ff91105d9fa8 168,180-192
+  s_7a8d46ac5720b2::t_a72c28eb460b93 13-20,40-47,53,55-56
+  s_7a8d46ac5720b2::t_784bead30cd81f 54
+apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts
+  s_7a8d46ac5720b2::t_8119e3a9df6580 221-222,224-231
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 2,13-15,17-18,119-125,127-138,153-159,161-163,188-189,191-204,206-217,219-220,232-233
+  s_7a8d46ac5720b2::t_ab523dd96f56a3 16,205
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_7a8d46ac5720b2::t_51bd494e608255 5,105
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 2-4,6-8,15,85,88-104,106-117,120-123,151-154,156-158,182-192,197-204,215-233,235-252,256
+  s_7a8d46ac5720b2::t_e8d60fc59a1e76 149-150,196
+  s_7a8d46ac5720b2::t_fddb652f3edfc5 206
+apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts
+  s_7a8d46ac5720b2::t_bef150765311bf 121-125
+  s_7a8d46ac5720b2::t_8efa3c83db4b0a 418-438
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 11-12,19-21,27-36,38-42,47-51,54-59,62-63,117-119,337-339,353,355-356,372-373
+  s_7a8d46ac5720b2::t_909396d9cb2619 13,37,61,120,148,165,361,368-369,400-415
+  s_7a8d46ac5720b2::t_a7bd163c0281cf 14,52-53
+  s_7a8d46ac5720b2::t_8dc495b719de39 60
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 1-4,6-7,51-52,96-102,104-114,129-136,138,146-148,150-163,165-176,179,181-182
+  s_7a8d46ac5720b2::t_4951a328075c64 5,164
+  s_7a8d46ac5720b2::t_830048100fc5e5 192-209
+  s_7a8d46ac5720b2::t_96b77c532ed61f 41-45,180
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "c8c2adf9ac2b7b01f0f69429251ba88179815e8c",
+  "prompts": {},
+  "sessions": {
+    "s_7a8d46ac5720b2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e29fc-b5bb-7c82-89f2-82f57611667a",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
