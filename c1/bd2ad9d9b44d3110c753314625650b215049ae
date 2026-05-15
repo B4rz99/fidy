@@ -1,0 +1,43 @@
+apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 2,13-17,118-124,126-137,152-158,160-162,187,189-191,193-221
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 16-18,85-87,89-99,160,162-171,239-241,314-315,335-342,356-358,371,373-374,446,448
+  s_7a8d46ac5720b2::t_236cdf3a080b91 63-80,88
+apps/mobile/features/capture-sources/services/notification-pipeline.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 136-144
+apps/mobile/features/capture-sources/lib/dedup.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 4,22-28,41-56,59-60
+apps/mobile/__tests__/capture-sources/dedup.test.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 77-78,81-87,95,99-145
+apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 11-12,17-19,45-51,53-62,116-118,330-332,346,348-349,361,364-365
+  s_7a8d46ac5720b2::t_abf21c7925fbea 25-40,52
+apps/mobile/__tests__/local-ledger/source-events.test.ts
+  s_7a8d46ac5720b2::t_cdc7368733532e 1-178
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_7a8d46ac5720b2::t_cdc7368733532e 46-47
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 1-7,91-97,99-109,124-131,133,141-143,145-171,174-177,187-197
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 2-7,14,84,87-116,119-122,148-153,155-157,181-191,195-204,213-248,250,254
+apps/mobile/infrastructure/local-ledger/source-events.ts
+  s_7a8d46ac5720b2::t_cdc7368733532e 1-206
+apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts
+  s_7a8d46ac5720b2::t_85f68853258aa7 58-75,83
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 16-17,80-82,84-93,162,164-173,194-195,223-225,236,239-240,302,305-307
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "c1bd2ad9d9b44d3110c753314625650b215049ae",
+  "prompts": {},
+  "sessions": {
+    "s_7a8d46ac5720b2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e29fc-b5bb-7c82-89f2-82f57611667a",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
