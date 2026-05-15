@@ -1,0 +1,39 @@
+apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts
+  10773f2d62de16dd 15-21,23,25,44,61-81,101-124,238-422,469-498
+  s_10773f2d62de16::t_1233956c7da010 423-468
+apps/mobile/features/transfers/reclassification.public.ts
+  10773f2d62de16dd 1-10
+apps/mobile/features/transfers/lib/reclassify-transactions-as-transfer.ts
+  s_10773f2d62de16::t_1233956c7da010 63,67-68,78-92,123-124
+  10773f2d62de16dd 1-62,64-66,69-77,95-122,125-176
+  s_10773f2d62de16::t_02d01141d7dc63 93-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "64d02a98d019a2bc480bbb1ea8569b47758ba1c9",
+  "prompts": {
+    "10773f2d62de16dd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e29fc-24f9-7113-aef7-b66feca7f17d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa",
+      "total_additions": 459,
+      "total_deletions": 12,
+      "accepted_lines": 434,
+      "overriden_lines": 0
+    }
+  },
+  "sessions": {
+    "s_10773f2d62de16": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e29fc-24f9-7113-aef7-b66feca7f17d",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
