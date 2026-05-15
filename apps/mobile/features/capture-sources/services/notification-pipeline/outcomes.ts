@@ -1,17 +1,18 @@
-import {
-  materializeCaptureEvidenceRows,
-  saveCaptureEvidenceRows,
-} from "@/features/capture-evidence/public";
 import { insertMerchantRule } from "@/features/email-capture/merchant-rules.public";
-import { insertTransaction } from "@/features/transactions/write.public";
+import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/record-transaction";
+import {
+  persistCommittedCaptureSourceEvent,
+  persistCommittedCaptureSourceEventInTransaction,
+  persistProcessedSourceEvent,
+  persistReviewCandidateCapture,
+} from "@/infrastructure/local-ledger/source-events";
 import {
   capturePipelineEvent,
-  generateProcessedCaptureId,
   generateTransactionId,
   toIsoDateTime,
   trackTransactionCreated,
 } from "@/shared/lib";
-import { insertProcessedCapture } from "../../lib/repository";
+import { requireIsoDateTime } from "@/shared/types/assertions";
 import { buildFailedFingerprint } from "./context";
 import type {
   DuplicateCheckResult,
@@ -19,40 +20,8 @@ import type {
   NotificationStageContext,
   NotificationStageMetrics,
   ParsedNotificationContext,
-  PersistedCaptureOutcome,
   ResolvedNotificationContext,
 } from "./types";
-
-async function persistCaptureOutcome(
-  context: NotificationStageContext,
-  outcome: PersistedCaptureOutcome
-) {
-  const processedCaptureId = generateProcessedCaptureId();
-
-  await insertProcessedCapture(context.db, {
-    id: processedCaptureId,
-    fingerprintHash: outcome.fingerprintHash,
-    source: context.source,
-    status: outcome.status,
-    rawText: context.sanitizedText,
-    transactionId: outcome.transactionId,
-    confidence: outcome.confidence,
-    receivedAt: context.receivedAt,
-    createdAt: outcome.now,
-  });
-
-  await saveCaptureEvidenceRows(
-    context.db,
-    materializeCaptureEvidenceRows(context.captureEvidence, {
-      userId: context.userId,
-      transactionId: outcome.transactionId,
-      processedEmailId: null,
-      processedCaptureId,
-      createdAt: outcome.now,
-      updatedAt: outcome.now,
-    })
-  );
-}
 
 async function cacheMerchantRuleIfEligible(context: ResolvedNotificationContext) {
   if (context.parsed.confidence < 0.7) {
@@ -113,23 +82,44 @@ function buildParseImprovementRequest(
   };
 }
 
-function saveTransactionRecord(context: ResolvedNotificationContext) {
+async function saveTransactionRecord(context: ResolvedNotificationContext) {
   const transactionId = generateTransactionId();
 
-  insertTransaction(context.db, {
-    id: transactionId,
-    userId: context.userId,
-    type: context.parsed.type,
-    amount: context.parsed.amount,
-    categoryId: context.categoryId,
-    description: context.parsed.merchant,
-    date: context.parsed.date,
-    accountId: context.accountId,
-    accountAttributionState: context.accountAttributionState,
-    source: context.source,
-    createdAt: context.now,
-    updatedAt: context.now,
+  const result = await recordAutomatedTransactionWithLocalLedger({
+    db: context.db,
+    transactionId,
+    now: context.now,
+    command: {
+      userId: context.userId,
+      type: context.parsed.type,
+      amount: context.parsed.amount,
+      accountId: context.accountId,
+      accountAttributionState: context.accountAttributionState,
+      categoryId: context.categoryId,
+      occurredOn: context.parsed.date,
+      description: context.parsed.merchant,
+      counterpartyName: context.parsed.merchant,
+      source: "automated",
+    },
+    afterRecord: (tx) => {
+      persistCommittedCaptureSourceEventInTransaction(tx, {
+        userId: context.userId,
+        sourceFamily: context.source,
+        sourceId: context.source,
+        sourceEventId: context.fingerprint,
+        status: "processed",
+        failureReason: null,
+        receivedAt: context.receivedAt,
+        processedAt: context.now,
+        transactionId,
+        evidence: context.captureEvidence,
+      });
+    },
   });
+
+  if (!result.success) {
+    throw new Error(`Local Ledger rejected notification transaction: ${result.error}`);
+  }
 
   return transactionId;
 }
@@ -156,13 +146,16 @@ export async function persistFailedNotification(
   context: NotificationStageContext
 ): Promise<NotificationPipelineResult> {
   const now = toIsoDateTime(new Date());
-
-  await persistCaptureOutcome(context, {
+  persistProcessedSourceEvent({
+    db: context.db,
+    userId: context.userId,
+    sourceFamily: context.source,
+    sourceId: context.source,
+    sourceEventId: buildFailedFingerprint(context.notification),
     status: "failed",
-    fingerprintHash: buildFailedFingerprint(context.notification),
-    transactionId: null,
-    confidence: null,
-    now,
+    failureReason: "parse_failed",
+    receivedAt: context.receivedAt,
+    processedAt: now,
   });
   trackNotificationPipeline(context, {
     saved: 0,
@@ -186,15 +179,31 @@ export async function persistDuplicateNotification(
   duplicate: DuplicateCheckResult
 ): Promise<NotificationPipelineResult> {
   if (duplicate.kind === "already_processed") {
+    persistProcessedSourceEvent({
+      db: context.db,
+      userId: context.userId,
+      sourceFamily: context.source,
+      sourceId: context.source,
+      sourceEventId: context.fingerprint,
+      status: "processed",
+      failureReason: "already_processed_duplicate",
+      receivedAt: context.receivedAt,
+      processedAt: toIsoDateTime(new Date()),
+    });
     return reportSkippedDuplicate(context, null);
   }
 
-  await persistCaptureOutcome(context, {
-    status: "skipped_duplicate",
-    fingerprintHash: context.fingerprint,
+  persistCommittedCaptureSourceEvent(context.db, {
+    userId: context.userId,
+    sourceFamily: context.source,
+    sourceId: context.source,
+    sourceEventId: context.fingerprint,
+    status: "processed",
+    failureReason: `duplicate:${duplicate.transactionId}`,
+    receivedAt: context.receivedAt,
+    processedAt: toIsoDateTime(new Date()),
     transactionId: duplicate.transactionId,
-    confidence: context.parsed.confidence,
-    now: toIsoDateTime(new Date()),
+    evidence: context.captureEvidence,
   });
 
   return reportSkippedDuplicate(context, duplicate.transactionId);
@@ -203,27 +212,46 @@ export async function persistDuplicateNotification(
 export async function persistSuccessfulNotification(
   context: ResolvedNotificationContext
 ): Promise<NotificationPipelineResult> {
-  const transactionId = saveTransactionRecord(context);
+  if (resolveProcessedCaptureStatus(context) === "needs_review") {
+    persistReviewCandidateCapture({
+      db: context.db,
+      userId: context.userId,
+      sourceFamily: context.source,
+      sourceId: context.source,
+      sourceEventId: context.fingerprint,
+      status: "needs_review",
+      failureReason: "low_confidence",
+      receivedAt: context.receivedAt,
+      processedAt: context.now,
+      candidate: {
+        occurredAt: requireIsoDateTime(`${context.parsed.date}T00:00:00.000Z`),
+        amount: context.parsed.amount,
+        description: context.parsed.merchant,
+        confidence: context.parsed.confidence,
+      },
+      evidence: context.captureEvidence,
+    });
 
-  await persistCaptureOutcome(context, {
-    status: resolveProcessedCaptureStatus(context),
-    fingerprintHash: context.fingerprint,
-    transactionId,
-    confidence: context.parsed.confidence,
-    now: context.now,
-  });
+    trackNotificationPipeline(context, {
+      saved: 0,
+      skippedDuplicate: 0,
+      parseFailed: 0,
+    });
+
+    return {
+      saved: false,
+      skippedDuplicate: false,
+      transactionId: null,
+      parseImprovementRequest: buildParseImprovementRequest(context, {
+        status: "needs_review",
+        confidence: context.parsed.confidence,
+      }),
+    };
+  }
+
+  const transactionId = await saveTransactionRecord(context);
   await cacheMerchantRuleIfEligible(context);
   await trackSuccessfulNotification(context);
 
-  return resolveProcessedCaptureStatus(context) === "needs_review"
-    ? {
-        saved: true,
-        skippedDuplicate: false,
-        transactionId,
-        parseImprovementRequest: buildParseImprovementRequest(context, {
-          status: "needs_review",
-          confidence: context.parsed.confidence,
-        }),
-      }
-    : { saved: true, skippedDuplicate: false, transactionId };
+  return { saved: true, skippedDuplicate: false, transactionId };
 }

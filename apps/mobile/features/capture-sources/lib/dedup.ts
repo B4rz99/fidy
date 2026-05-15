@@ -1,7 +1,7 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { getActiveTransactionConditions } from "@/features/transactions/lib/active-transaction-conditions";
 import type { AnyDb } from "@/shared/db/client";
-import { processedCaptures, transactions } from "@/shared/db/schema";
+import { processedCaptures, processedSourceEvents, transactions } from "@/shared/db/schema";
 import { merchantsMatch, normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { assertCopAmount, assertIsoDate, assertUserId } from "@/shared/types/assertions";
 import type { TransactionId } from "@/shared/types/branded";
@@ -19,6 +19,13 @@ type DuplicateTransactionLookupInput = {
   readonly date: string;
   readonly merchant: string;
 };
+type CaptureProcessedLookupInput = {
+  readonly db: AnyDb;
+  readonly userId: string;
+  readonly sourceFamily: string;
+  readonly sourceId: string;
+  readonly sourceEventId: string;
+};
 
 /**
  * Creates a fingerprint hash for deduplication across capture sources.
@@ -31,12 +38,27 @@ export function captureFingerprint(input: CaptureFingerprintInput): string {
 /**
  * Checks whether a capture with this fingerprint has already been processed.
  */
-export async function isCaptureProcessed(db: AnyDb, fingerprintHash: string): Promise<boolean> {
-  const rows = await db
+export async function isCaptureProcessed(input: CaptureProcessedLookupInput): Promise<boolean> {
+  assertUserId(input.userId);
+  const sourceEventRows = await input.db
+    .select({ id: processedSourceEvents.id, status: processedSourceEvents.status })
+    .from(processedSourceEvents)
+    .where(
+      and(
+        eq(processedSourceEvents.userId, input.userId),
+        eq(processedSourceEvents.sourceFamily, input.sourceFamily),
+        eq(processedSourceEvents.sourceId, input.sourceId),
+        eq(processedSourceEvents.sourceEventId, input.sourceEventId),
+        isNull(processedSourceEvents.deletedAt)
+      )
+    );
+  if (sourceEventRows.some((row) => row.status !== "failed")) return true;
+
+  const legacyRows = await input.db
     .select({ id: processedCaptures.id })
     .from(processedCaptures)
-    .where(eq(processedCaptures.fingerprintHash, fingerprintHash));
-  return rows.length > 0;
+    .where(eq(processedCaptures.fingerprintHash, input.sourceEventId));
+  return legacyRows.length > 0;
 }
 
 /**

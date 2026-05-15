@@ -133,7 +133,15 @@ async function handleParsedNotification(
 async function findDuplicateCapture(
   context: ParsedNotificationContext
 ): Promise<DuplicateCheckResult | null> {
-  if (await isCaptureProcessed(context.db, context.fingerprint)) {
+  if (
+    await isCaptureProcessed({
+      db: context.db,
+      userId: context.userId,
+      sourceFamily: context.source,
+      sourceId: context.source,
+      sourceEventId: context.fingerprint,
+    })
+  ) {
     return { kind: "already_processed" };
   }
 

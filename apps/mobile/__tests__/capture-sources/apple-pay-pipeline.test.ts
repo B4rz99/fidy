@@ -13,6 +13,9 @@ const mockIsCaptureProcessed = vi.fn<(...args: any[]) => any>().mockResolvedValu
 const mockFindDuplicateTransaction = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
 const mockCaptureFingerprint = vi.fn<(...args: any[]) => any>().mockReturnValue("test-fingerprint");
 const mockInsertProcessedCapture = vi.fn<(...args: any[]) => any>();
+const mockPersistProcessedSourceEvent = vi.fn<(...args: any[]) => any>();
+const mockPersistCommittedCaptureSourceEvent = vi.fn<(...args: any[]) => any>();
+const mockRecordAutomatedTransactionWithLocalLedger = vi.fn<(...args: any[]) => any>();
 const mockEnsureDefaultFinancialAccount = vi.fn<(...args: any[]) => any>().mockReturnValue({
   id: "fa-default-user-1" as FinancialAccountId,
   userId: "user-1",
@@ -53,8 +56,39 @@ function materializeCaptureEvidenceRows(evidence: any[], link: Record<string, un
   return evidence.map((row, index) => materializeCaptureEvidenceRow(link, row, index));
 }
 
+function mockRecordedApplePayTransaction(input: any) {
+  const { command } = input;
+  mockInsertTransaction(input.db, {
+    id: input.transactionId,
+    userId: command.userId,
+    type: command.type,
+    amount: command.amount,
+    categoryId: command.categoryId,
+    description: command.description,
+    date: command.occurredOn,
+    accountId: command.accountId,
+    accountAttributionState: command.accountAttributionState,
+    source: command.source,
+    createdAt: input.now,
+    updatedAt: input.now,
+  });
+}
+
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
+}));
+
+vi.mock("@/infrastructure/local-ledger/record-transaction", () => ({
+  recordAutomatedTransactionWithLocalLedger: (...args: any[]) =>
+    mockRecordAutomatedTransactionWithLocalLedger(...args),
+}));
+
+vi.mock("@/infrastructure/local-ledger/source-events", () => ({
+  persistProcessedSourceEvent: (...args: any[]) => mockPersistProcessedSourceEvent(...args),
+  persistCommittedCaptureSourceEvent: (...args: any[]) =>
+    mockPersistCommittedCaptureSourceEvent(...args),
+  persistCommittedCaptureSourceEventInTransaction: (...args: any[]) =>
+    mockPersistCommittedCaptureSourceEvent(...args),
 }));
 
 vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
@@ -118,25 +152,25 @@ function expectSavedApplePayTransaction(transactionId: string) {
       description: "Farmatodo",
       accountId: "fa-default-user-1",
       accountAttributionState: "unresolved",
-      source: "apple_pay",
+      source: "automated",
     })
   );
   expect(transactionId).toBe("tx-1");
 }
 
 function expectSavedApplePayEvidence(transactionId: string) {
-  expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
+  expect(mockPersistCommittedCaptureSourceEvent).toHaveBeenCalledWith(
     mockDb,
-    expect.arrayContaining([
-      expect.objectContaining({
-        userId: USER_ID,
-        processedCaptureId: expect.any(String),
-        processedEmailId: null,
-        transactionId,
-        scope: "apple_pay:card_hint",
-        value: "visa *1234",
-      }),
-    ])
+    expect.objectContaining({
+      userId: USER_ID,
+      transactionId,
+      evidence: expect.arrayContaining([
+        expect.objectContaining({
+          scope: "apple_pay:card_hint",
+          value: "visa *1234",
+        }),
+      ]),
+    })
   );
 }
 
@@ -157,9 +191,16 @@ describe("processApplePayIntent", () => {
     mockBuildApplePayCaptureEvidence.mockReturnValue([DEFAULT_APPLE_PAY_CAPTURE_EVIDENCE]);
     mockFindMatchingFinancialAccountId.mockReturnValue(null);
     mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
+    mockPersistProcessedSourceEvent.mockReturnValue(undefined);
+    mockPersistCommittedCaptureSourceEvent.mockReturnValue(undefined);
+    mockRecordAutomatedTransactionWithLocalLedger.mockImplementation(async (input: any) => {
+      input.afterRecord?.(input.db, { id: input.transactionId });
+      mockRecordedApplePayTransaction(input);
+      return { success: true, transaction: { id: input.transactionId } };
+    });
   });
 
-  it("saves transaction with apple_pay source", async () => {
+  it("saves automated transaction with Apple Pay source event evidence", async () => {
     const result = await processApplePayIntent(mockDb, USER_ID, makeIntent());
 
     expect(result.saved).toBe(true);
@@ -184,6 +225,9 @@ describe("processApplePayIntent", () => {
     expect(result.saved).toBe(false);
     expect(result.skippedDuplicate).toBe(true);
     expect(mockInsertTransaction).not.toHaveBeenCalled();
+    expect(mockPersistProcessedSourceEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "processed", failureReason: "already_processed_duplicate" })
+    );
   });
 
   it("skips when cross-source duplicate found", async () => {
@@ -194,10 +238,11 @@ describe("processApplePayIntent", () => {
     expect(result.saved).toBe(false);
     expect(result.skippedDuplicate).toBe(true);
     expect(result.transactionId).toBe("existing-tx-1");
-    expect(mockInsertProcessedCapture).toHaveBeenCalledWith(
+    expect(mockPersistCommittedCaptureSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        status: "skipped_duplicate",
+        status: "processed",
+        failureReason: "duplicate:existing-tx-1",
         transactionId: "existing-tx-1",
       })
     );
@@ -259,12 +304,31 @@ describe("processApplePayIntent", () => {
   it("records processed capture on success", async () => {
     await processApplePayIntent(mockDb, USER_ID, makeIntent());
 
-    expect(mockInsertProcessedCapture).toHaveBeenCalledWith(
+    expect(mockPersistCommittedCaptureSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        source: "apple_pay",
-        status: "success",
-        confidence: 1.0,
+        sourceFamily: "apple_pay",
+        status: "processed",
+        failureReason: null,
+      })
+    );
+  });
+
+  it("records failed source event before throwing when Local Ledger rejects", async () => {
+    mockRecordAutomatedTransactionWithLocalLedger.mockResolvedValueOnce({
+      success: false,
+      error: "account-not-usable",
+    });
+
+    await expect(processApplePayIntent(mockDb, USER_ID, makeIntent())).rejects.toThrow(
+      "Local Ledger rejected Apple Pay transaction: account-not-usable"
+    );
+
+    expect(mockPersistProcessedSourceEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceFamily: "apple_pay",
+        status: "failed",
+        failureReason: "local_ledger_rejected:account-not-usable",
       })
     );
   });

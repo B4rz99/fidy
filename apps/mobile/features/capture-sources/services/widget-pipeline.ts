@@ -1,10 +1,15 @@
-import { insertTransaction, isValidCategoryId } from "@/features/transactions/write.public";
+import { isValidCategoryId } from "@/features/transactions/write.public";
+import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
+import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/record-transaction";
+import {
+  persistCommittedCaptureSourceEventInTransaction,
+  persistProcessedSourceEvent,
+} from "@/infrastructure/local-ledger/source-events";
 import type { AnyDb } from "@/shared/db";
 import {
   captureError,
   capturePipelineEvent,
   captureWarning,
-  generateProcessedCaptureId,
   toIsoDate,
   toIsoDateTime,
   trackTransactionCreated,
@@ -12,7 +17,6 @@ import {
 import { assertCopAmount, assertTransactionId } from "@/shared/types/assertions";
 import type { TransactionId, UserId } from "@/shared/types/branded";
 import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
-import { insertProcessedCapture } from "../lib/repository";
 
 // Guard against concurrent invocations (mount + immediate AppState "active").
 const inFlightFingerprints = new Set<string>();
@@ -34,14 +38,18 @@ export type WidgetPipelineResult = {
 };
 
 const errorType = (error: unknown): string => (error instanceof Error ? error.name : typeof error);
+const localLedgerRejectionReason = (error: string): string => `local_ledger_rejected:${error}`;
+const failureReason = (error: unknown): string =>
+  error instanceof Error && error.message.startsWith("local_ledger_rejected:")
+    ? error.message
+    : errorType(error);
 
 export async function processWidgetTransactions(
   db: AnyDb,
   userId: UserId
 ): Promise<WidgetPipelineResult> {
-  const { isAvailable, getPendingTransactions, removePendingTransactions } = await import(
-    "@/modules/expo-app-intents"
-  );
+  const { isAvailable, getPendingTransactions, removePendingTransactions } =
+    await import("@/modules/expo-app-intents");
 
   if (!isAvailable()) {
     return { saved: 0, skippedDuplicate: 0, errors: 0 };
@@ -85,8 +93,25 @@ export async function processWidgetTransactions(
     inFlightFingerprints.add(fingerprint);
 
     try {
-      const alreadyProcessed = await isCaptureProcessed(db, fingerprint);
+      const alreadyProcessed = await isCaptureProcessed({
+        db,
+        userId,
+        sourceFamily: "widget",
+        sourceId: "widget",
+        sourceEventId: fingerprint,
+      });
       if (alreadyProcessed) {
+        persistProcessedSourceEvent({
+          db,
+          userId,
+          sourceFamily: "widget",
+          sourceId: "widget",
+          sourceEventId: fingerprint,
+          status: "processed",
+          failureReason: "already_processed_duplicate",
+          receivedAt: now,
+          processedAt: now,
+        });
         skippedDuplicate++;
         succeededEntryIds.push(item.id);
         continue;
@@ -101,16 +126,16 @@ export async function processWidgetTransactions(
       });
 
       if (existingTxId) {
-        await insertProcessedCapture(db, {
-          id: generateProcessedCaptureId(),
-          fingerprintHash: fingerprint,
-          source: "widget",
-          status: "skipped_duplicate",
-          rawText: description,
-          transactionId: existingTxId,
-          confidence: null,
+        persistProcessedSourceEvent({
+          db,
+          userId,
+          sourceFamily: "widget",
+          sourceId: "widget",
+          sourceEventId: fingerprint,
+          status: "processed",
+          failureReason: `duplicate:${existingTxId}`,
           receivedAt: now,
-          createdAt: now,
+          processedAt: now,
         });
 
         skippedDuplicate++;
@@ -118,30 +143,42 @@ export async function processWidgetTransactions(
         continue;
       }
 
-      insertTransaction(db, {
-        id: txId,
-        userId,
-        type,
-        amount,
-        categoryId,
-        description,
-        date,
-        source: "widget",
-        createdAt: now,
-        updatedAt: now,
+      const defaultAccount = ensureDefaultFinancialAccount(db, userId, { now });
+      const recordResult = await recordAutomatedTransactionWithLocalLedger({
+        db,
+        transactionId: txId,
+        now,
+        command: {
+          userId,
+          type,
+          amount,
+          categoryId,
+          description,
+          counterpartyName: description,
+          occurredOn: date,
+          accountId: defaultAccount.id,
+          accountAttributionState: "unresolved",
+          source: "automated",
+        },
+        afterRecord: (tx) => {
+          persistCommittedCaptureSourceEventInTransaction(tx, {
+            userId,
+            sourceFamily: "widget",
+            sourceId: "widget",
+            sourceEventId: fingerprint,
+            status: "processed",
+            failureReason: null,
+            receivedAt: now,
+            processedAt: now,
+            transactionId: txId,
+            evidence: [],
+          });
+        },
       });
 
-      await insertProcessedCapture(db, {
-        id: generateProcessedCaptureId(),
-        fingerprintHash: fingerprint,
-        source: "widget",
-        status: "success",
-        rawText: description,
-        transactionId: txId,
-        confidence: null,
-        receivedAt: now,
-        createdAt: now,
-      });
+      if (!recordResult.success) {
+        throw new Error(localLedgerRejectionReason(recordResult.error));
+      }
 
       trackTransactionCreated({
         type,
@@ -152,6 +189,24 @@ export async function processWidgetTransactions(
       saved++;
       succeededEntryIds.push(item.id);
     } catch (error) {
+      try {
+        persistProcessedSourceEvent({
+          db,
+          userId,
+          sourceFamily: "widget",
+          sourceId: "widget",
+          sourceEventId: fingerprint,
+          status: "failed",
+          failureReason: failureReason(error),
+          receivedAt: now,
+          processedAt: now,
+        });
+      } catch (persistError) {
+        captureWarning("widget_failed_source_event_persist_failed", {
+          sourceEventId: fingerprint,
+          errorType: errorType(persistError),
+        });
+      }
       captureError(error);
       errors++;
     } finally {

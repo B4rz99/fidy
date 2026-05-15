@@ -1,9 +1,5 @@
 import { findMatchingFinancialAccountId } from "@/features/account-suggestions/public";
-import {
-  buildApplePayCaptureEvidence,
-  materializeCaptureEvidenceRows,
-  saveCaptureEvidenceRows,
-} from "@/features/capture-evidence/public";
+import { buildApplePayCaptureEvidence } from "@/features/capture-evidence/public";
 import {
   buildTransactionCandidate,
   validateCaptureCandidateForLocalLedger,
@@ -14,12 +10,16 @@ import {
 } from "@/features/email-capture/merchant-rules.public";
 import { classifyMerchantApi } from "@/features/email-capture/parsing.public";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
-import { insertTransaction } from "@/features/transactions/write.public";
+import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/record-transaction";
+import {
+  persistCommittedCaptureSourceEvent,
+  persistCommittedCaptureSourceEventInTransaction,
+  persistProcessedSourceEvent,
+} from "@/infrastructure/local-ledger/source-events";
 import { CATEGORY_IDS } from "@/shared/categories";
 import type { AnyDb } from "@/shared/db";
 import {
   capturePipelineEvent,
-  generateProcessedCaptureId,
   generateTransactionId,
   normalizeMerchant,
   toIsoDate,
@@ -29,7 +29,6 @@ import {
 import { assertCopAmount, assertUserId } from "@/shared/types/assertions";
 import type { CategoryId, IsoDate, TransactionId } from "@/shared/types/branded";
 import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
-import { insertProcessedCapture } from "../lib/repository";
 import type { ApplePayIntentData } from "../schema";
 
 const inFlightFingerprints = new Set<string>();
@@ -117,8 +116,26 @@ export async function processApplePayIntent(
   inFlightFingerprints.add(fingerprint);
 
   try {
-    const alreadyProcessed = await isCaptureProcessed(db, fingerprint);
+    const alreadyProcessed = await isCaptureProcessed({
+      db,
+      userId,
+      sourceFamily: source,
+      sourceId: source,
+      sourceEventId: fingerprint,
+    });
     if (alreadyProcessed) {
+      const now = toIsoDateTime(new Date());
+      persistProcessedSourceEvent({
+        db,
+        userId,
+        sourceFamily: source,
+        sourceId: source,
+        sourceEventId: fingerprint,
+        status: "processed",
+        failureReason: "already_processed_duplicate",
+        receivedAt: now,
+        processedAt: now,
+      });
       capturePipelineEvent({ source: "apple_pay", saved: 0, skippedDuplicate: 1 });
       return { saved: false, skippedDuplicate: true, transactionId: null };
     }
@@ -133,29 +150,18 @@ export async function processApplePayIntent(
 
     if (existingTxId) {
       const now = toIsoDateTime(new Date());
-      const processedCaptureId = generateProcessedCaptureId();
-      await insertProcessedCapture(db, {
-        id: processedCaptureId,
-        fingerprintHash: fingerprint,
-        source,
-        status: "skipped_duplicate",
-        rawText: `${intent.merchant} $${intent.amount}`,
-        transactionId: existingTxId,
-        confidence: 1.0,
+      persistCommittedCaptureSourceEvent(db, {
+        userId,
+        sourceFamily: source,
+        sourceId: source,
+        sourceEventId: fingerprint,
+        status: "processed",
+        failureReason: `duplicate:${existingTxId}`,
         receivedAt: now,
-        createdAt: now,
+        processedAt: now,
+        transactionId: existingTxId,
+        evidence: captureEvidence,
       });
-      await saveCaptureEvidenceRows(
-        db,
-        materializeCaptureEvidenceRows(captureEvidence, {
-          userId,
-          transactionId: existingTxId,
-          processedEmailId: null,
-          processedCaptureId,
-          createdAt: now,
-          updatedAt: now,
-        })
-      );
       capturePipelineEvent({ source: "apple_pay", saved: 0, skippedDuplicate: 1 });
       return { saved: false, skippedDuplicate: true, transactionId: existingTxId };
     }
@@ -179,45 +185,52 @@ export async function processApplePayIntent(
     const defaultAccount = ensureDefaultFinancialAccount(db, userId, { now });
     const matchedAccountId = findMatchingFinancialAccountId(db, userId, captureEvidence);
 
-    insertTransaction(db, {
-      id: txId,
-      userId,
-      type: "expense",
-      amount,
-      categoryId,
-      description: intent.merchant,
-      date: today,
-      accountId: matchedAccountId ?? defaultAccount.id,
-      accountAttributionState: matchedAccountId ? "inferred" : "unresolved",
-      source,
-      createdAt: now,
-      updatedAt: now,
+    const recordResult = await recordAutomatedTransactionWithLocalLedger({
+      db,
+      transactionId: txId,
+      now,
+      command: {
+        userId,
+        type: "expense",
+        amount,
+        categoryId,
+        description: intent.merchant,
+        counterpartyName: intent.merchant,
+        occurredOn: today,
+        accountId: matchedAccountId ?? defaultAccount.id,
+        accountAttributionState: matchedAccountId ? "inferred" : "unresolved",
+        source: "automated",
+      },
+      afterRecord: (tx) => {
+        persistCommittedCaptureSourceEventInTransaction(tx, {
+          userId,
+          sourceFamily: source,
+          sourceId: source,
+          sourceEventId: fingerprint,
+          status: "processed",
+          failureReason: null,
+          receivedAt: now,
+          processedAt: now,
+          transactionId: txId,
+          evidence: captureEvidence,
+        });
+      },
     });
 
-    // Record in processedCaptures
-    const processedCaptureId = generateProcessedCaptureId();
-    await insertProcessedCapture(db, {
-      id: processedCaptureId,
-      fingerprintHash: fingerprint,
-      source,
-      status: "success",
-      rawText: `${intent.merchant} $${intent.amount}`,
-      transactionId: txId,
-      confidence: 1.0,
-      receivedAt: now,
-      createdAt: now,
-    });
-    await saveCaptureEvidenceRows(
-      db,
-      materializeCaptureEvidenceRows(captureEvidence, {
+    if (!recordResult.success) {
+      persistProcessedSourceEvent({
+        db,
         userId,
-        transactionId: txId,
-        processedEmailId: null,
-        processedCaptureId,
-        createdAt: now,
-        updatedAt: now,
-      })
-    );
+        sourceFamily: source,
+        sourceId: source,
+        sourceEventId: fingerprint,
+        status: "failed",
+        failureReason: `local_ledger_rejected:${recordResult.error}`,
+        receivedAt: now,
+        processedAt: now,
+      });
+      throw new Error(`Local Ledger rejected Apple Pay transaction: ${recordResult.error}`);
+    }
 
     // Always cache merchant rule (Apple Pay data is high confidence)
     await insertMerchantRule(db, userId, merchantKey, categoryId, now);

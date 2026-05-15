@@ -8,17 +8,57 @@ const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
 const mockIsCaptureProcessed = vi.fn<(...args: any[]) => any>();
 const mockFindDuplicateTransaction = vi.fn<(...args: any[]) => any>();
 const mockInsertProcessedCapture = vi.fn<(...args: any[]) => any>();
+const mockPersistProcessedSourceEvent = vi.fn<(...args: any[]) => any>();
+const mockPersistCommittedCaptureSourceEvent = vi.fn<(...args: any[]) => any>();
+const mockPersistCommittedCaptureSourceEventInTransaction = vi.fn<(...args: any[]) => any>();
+const mockRecordAutomatedTransactionWithLocalLedger = vi.fn<(...args: any[]) => any>();
 const mockGetPendingTransactions = vi.fn<(...args: any[]) => any>();
 const mockRemovePendingTransactions = vi.fn<(...args: any[]) => any>();
 const mockIsAvailable = vi.fn<(...args: any[]) => any>();
 const mockGenerateProcessedCaptureId = vi.fn<(...args: any[]) => any>();
+const mockEnsureDefaultFinancialAccount = vi.fn<(...args: any[]) => any>().mockReturnValue({
+  id: "fa-default-user-1",
+});
 type CaptureFingerprintArgs = readonly [string, number, string, string];
 
 const buildFingerprint = ([source, amount, date, merchant]: CaptureFingerprintArgs) =>
   `fp:${source}:${amount}:${date}:${merchant}`;
 
+function mockRecordedWidgetTransaction(input: any) {
+  const { command } = input;
+  mockInsertTransaction(input.db, {
+    id: input.transactionId,
+    userId: command.userId,
+    type: command.type,
+    amount: command.amount,
+    categoryId: command.categoryId,
+    description: command.description,
+    date: command.occurredOn,
+    source: command.source,
+    createdAt: input.now,
+    updatedAt: input.now,
+  });
+}
+
 vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
+}));
+
+vi.mock("@/features/financial-accounts/public", () => ({
+  ensureDefaultFinancialAccount: (...args: any[]) => mockEnsureDefaultFinancialAccount(...args),
+}));
+
+vi.mock("@/infrastructure/local-ledger/record-transaction", () => ({
+  recordAutomatedTransactionWithLocalLedger: (...args: any[]) =>
+    mockRecordAutomatedTransactionWithLocalLedger(...args),
+}));
+
+vi.mock("@/infrastructure/local-ledger/source-events", () => ({
+  persistProcessedSourceEvent: (...args: any[]) => mockPersistProcessedSourceEvent(...args),
+  persistCommittedCaptureSourceEvent: (...args: any[]) =>
+    mockPersistCommittedCaptureSourceEvent(...args),
+  persistCommittedCaptureSourceEventInTransaction: (...args: any[]) =>
+    mockPersistCommittedCaptureSourceEventInTransaction(...args),
 }));
 
 vi.mock("@/features/transactions/lib/categories", () => ({
@@ -74,6 +114,15 @@ describe("processWidgetTransactions", () => {
     mockIsCaptureProcessed.mockResolvedValue(false);
     mockFindDuplicateTransaction.mockResolvedValue(null);
     mockGenerateProcessedCaptureId.mockReturnValue("pc-1");
+    mockEnsureDefaultFinancialAccount.mockReturnValue({ id: "fa-default-user-1" });
+    mockPersistProcessedSourceEvent.mockReturnValue(undefined);
+    mockPersistCommittedCaptureSourceEvent.mockReturnValue(undefined);
+    mockPersistCommittedCaptureSourceEventInTransaction.mockReturnValue(undefined);
+    mockRecordAutomatedTransactionWithLocalLedger.mockImplementation(async (input: any) => {
+      input.afterRecord?.(input.db, { id: input.transactionId });
+      mockRecordedWidgetTransaction(input);
+      return { success: true, transaction: { id: input.transactionId } };
+    });
   });
 
   it("early-returns when isAvailable() is false", async () => {
@@ -96,7 +145,7 @@ describe("processWidgetTransactions", () => {
     expect(result).toEqual({ saved: 0, skippedDuplicate: 0, errors: 0 });
   });
 
-  it("saves a single pending transaction with widget source", async () => {
+  it("saves a single pending transaction through the automated ledger source", async () => {
     mockGetPendingTransactions.mockResolvedValue([
       { id: "abc-123", amount: 25000, createdAt: "2026-03-27T10:00:00Z" },
     ]);
@@ -113,7 +162,7 @@ describe("processWidgetTransactions", () => {
         amount: 25000,
         categoryId: "other",
         description: "",
-        source: "widget",
+        source: "automated",
       })
     );
     expect(result.saved).toBe(1);
@@ -285,6 +334,9 @@ describe("processWidgetTransactions", () => {
 
     expect(mockInsertTransaction).not.toHaveBeenCalled();
     expect(result.skippedDuplicate).toBe(1);
+    expect(mockPersistProcessedSourceEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "processed", failureReason: "already_processed_duplicate" })
+    );
     expect(mockRemovePendingTransactions).toHaveBeenCalledWith(["seen-before"]);
   });
 
@@ -298,27 +350,27 @@ describe("processWidgetTransactions", () => {
 
     expect(mockInsertTransaction).not.toHaveBeenCalled();
     expect(result.skippedDuplicate).toBe(1);
-    expect(mockInsertProcessedCapture).toHaveBeenCalledWith(
-      mockDb,
+    expect(mockPersistProcessedSourceEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        status: "skipped_duplicate",
-        transactionId: "txn-existing-1",
+        status: "processed",
+        failureReason: "duplicate:txn-existing-1",
       })
     );
   });
 
-  it("records processed capture on success", async () => {
+  it("records processed capture on success inside the ledger transaction", async () => {
     mockGetPendingTransactions.mockResolvedValue([
       { id: "cap-test", amount: 7000, createdAt: "2026-03-27T10:00:00Z" },
     ]);
 
     await processWidgetTransactions(mockDb, USER_ID);
 
-    expect(mockInsertProcessedCapture).toHaveBeenCalledWith(
+    expect(mockPersistCommittedCaptureSourceEvent).not.toHaveBeenCalled();
+    expect(mockPersistCommittedCaptureSourceEventInTransaction).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        source: "widget",
-        status: "success",
+        sourceFamily: "widget",
+        status: "processed",
         transactionId: "txn-widget-cap-test",
       })
     );
@@ -343,6 +395,45 @@ describe("processWidgetTransactions", () => {
     expect(result.saved).toBe(2);
     expect(result.errors).toBe(1);
     expect(mockRemovePendingTransactions).toHaveBeenCalledWith(["good-1", "good-2"]);
+  });
+
+  it("continues processing when failed source-event persistence also fails", async () => {
+    mockGetPendingTransactions.mockResolvedValue([
+      { id: "bad-audit", amount: 1000, createdAt: "2026-03-27T10:00:00Z" },
+      { id: "good-after-audit", amount: 2000, createdAt: "2026-03-27T10:00:00Z" },
+    ]);
+    mockIsCaptureProcessed
+      .mockRejectedValueOnce(new Error("dedup failed"))
+      .mockResolvedValueOnce(false);
+    mockPersistProcessedSourceEvent.mockImplementationOnce(() => {
+      throw new Error("failed audit write");
+    });
+
+    const result = await processWidgetTransactions(mockDb, USER_ID);
+
+    expect(result).toEqual({ saved: 1, skippedDuplicate: 0, errors: 1 });
+    expect(mockRemovePendingTransactions).toHaveBeenCalledWith(["good-after-audit"]);
+  });
+
+  it("records Local Ledger rejection reason when widget recording fails", async () => {
+    mockGetPendingTransactions.mockResolvedValue([
+      { id: "bad-ledger", amount: 1000, createdAt: "2026-03-27T10:00:00Z" },
+    ]);
+    mockRecordAutomatedTransactionWithLocalLedger.mockResolvedValueOnce({
+      success: false,
+      error: "category-not-usable",
+    });
+
+    const result = await processWidgetTransactions(mockDb, USER_ID);
+
+    expect(result.errors).toBe(1);
+    expect(mockPersistProcessedSourceEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "failed",
+        failureReason: "local_ledger_rejected:category-not-usable",
+      })
+    );
+    expect(mockRemovePendingTransactions).not.toHaveBeenCalled();
   });
 
   it("does not remove entries that failed processing", async () => {
