@@ -1,6 +1,11 @@
 import type { CaptureEvidenceRow, CaptureEvidenceSeed } from "@/features/capture-evidence/public";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { TransactionRow } from "@/features/transactions/query.public";
+import type {
+  CreateReviewCandidateInput,
+  RecordTransactionInput,
+  RecordTransactionResult,
+} from "@/local-ledger/public";
 import type { AnyDb } from "@/shared/db";
 import type { AppClock } from "@/shared/effect/clock";
 import type { AppTelemetry } from "@/shared/effect/telemetry";
@@ -16,7 +21,6 @@ import type { RawEmail } from "../../schema";
 import type { ParseContext } from "../create-parse-email-service";
 import type { LlmParsedTransaction } from "../llm-parser";
 
-export type { ProcessedEmailRow } from "../../lib/repository";
 export type {
   CategoryId,
   IsoDateTime,
@@ -24,6 +28,7 @@ export type {
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
+export type { ProcessedEmailRow } from "../../lib/repository";
 export type { RawEmail } from "../../schema";
 export type { LlmParsedTransaction } from "../llm-parser";
 
@@ -92,7 +97,7 @@ export type CreateEmailPipelineServiceDeps = {
     readonly db: AnyDb;
     readonly id: ProcessedEmailId;
     readonly status: "success" | "needs_review";
-    readonly transactionId: TransactionId;
+    readonly transactionId: TransactionId | null;
     readonly confidence: number;
   }) => Promise<void>;
   readonly updateProcessedEmailStatus: (input: {
@@ -128,6 +133,11 @@ export type CreateEmailPipelineServiceDeps = {
     options?: { now?: IsoDateTime }
   ) => FinancialAccountRow;
   readonly insertTransaction: (db: AnyDb, row: TransactionRow) => void | Promise<void>;
+  readonly recordTransaction?: (input: RecordTransactionInput) => Promise<RecordTransactionResult>;
+  readonly createReviewCandidate?: (
+    db: AnyDb,
+    input: CreateReviewCandidateInput
+  ) => Promise<{ readonly success: true } | { readonly success: false; readonly error: string }>;
   readonly insertMerchantRule: (
     db: AnyDb,
     userId: UserId,

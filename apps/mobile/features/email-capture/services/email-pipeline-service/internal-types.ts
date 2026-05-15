@@ -96,7 +96,7 @@ export type RetrySuccessEffectInput = {
   readonly db: AnyDb;
   readonly id: ProcessedEmailId;
   readonly status: EmailSaveStatus;
-  readonly transactionId: TransactionId;
+  readonly transactionId: TransactionId | null;
   readonly confidence: number;
 };
 
@@ -258,7 +258,6 @@ export type DuplicateProcessedEmailRowInput = {
 export type TrackSavedTransactionInput = {
   readonly parsed: LlmParsedTransaction;
   readonly categoryId: CategoryId;
-  readonly status: EmailSaveStatus;
 };
 
 export type IncomingEmailPersistenceInput = {

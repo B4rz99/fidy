@@ -9,6 +9,7 @@ import { fromPromise, fromThunk, makeAppService } from "@/shared/effect/runtime"
 import { type AppTelemetry, bindAppTelemetry } from "@/shared/effect/telemetry";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { computeNextRetryAt } from "../../lib/retry-backoff";
+import { getParsedCounterpartyName } from "./shared";
 import type {
   CaptureEvidenceRowsInput,
   CaptureEvidenceSaveInput,
@@ -44,7 +45,7 @@ export function parseBodyEffect(db: AnyDb, userId: UserId, body: string) {
     );
     if (!llmResult) return null;
 
-    const merchantKey = normalizeMerchant(llmResult.description);
+    const merchantKey = normalizeMerchant(getParsedCounterpartyName(llmResult));
     const cachedCategoryId = yield* fromPromise(() => lookupMerchantRule(db, userId, merchantKey));
 
     return cachedCategoryId
@@ -77,7 +78,7 @@ export function findDuplicateTransactionEffect(
         userId,
         amount: parsed.amount,
         date: parsed.date,
-        merchant: parsed.description,
+        merchant: getParsedCounterpartyName(parsed),
       })
     )
   );

@@ -51,10 +51,13 @@ export async function findDuplicateTransaction(
   assertCopAmount(input.amount);
   assertIsoDate(input.date);
   const normalized = normalizeMerchant(input.merchant);
+  if (normalized.length === 0) return null;
+
   const rows = await input.db
     .select({
       id: transactions.id,
       description: transactions.description,
+      counterpartyName: transactions.counterpartyName,
     })
     .from(transactions)
     .where(
@@ -66,8 +69,8 @@ export async function findDuplicateTransaction(
     );
 
   const match = rows.find((row) => {
-    const desc = normalizeMerchant(row.description ?? "");
-    return merchantsMatch(desc, normalized);
+    const desc = normalizeMerchant(row.counterpartyName ?? "");
+    return desc.length > 0 && merchantsMatch(desc, normalized);
   });
 
   return match?.id ?? null;
