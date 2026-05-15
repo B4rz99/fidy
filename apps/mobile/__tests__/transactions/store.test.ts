@@ -39,8 +39,26 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   upsertTransaction: vi.fn<(...args: any[]) => any>(),
 }));
 
+const insertedTransactionRows: unknown[] = [];
+let canUseSelectedAccount = true;
 const mockDb = {
   transaction: vi.fn<(...args: any[]) => any>((fn: (tx: unknown) => unknown) => fn(mockDb)),
+  select: () => ({
+    from: () => ({
+      where: () => ({
+        limit: () => ({
+          all: () => (canUseSelectedAccount ? [{ id: "usable-row" }] : []),
+        }),
+      }),
+    }),
+  }),
+  insert: () => ({
+    values: (row: unknown) => ({
+      run: () => {
+        insertedTransactionRows.push(row);
+      },
+    }),
+  }),
 } as unknown as AnyDb;
 const mockUserId = "user-1" as UserId;
 
@@ -96,6 +114,8 @@ function makeRow(
 describe("transaction boundaries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    insertedTransactionRows.length = 0;
+    canUseSelectedAccount = true;
     initializeTransactionSession(mockUserId);
     useTransactionStore.getState().setDefaultAccountId("fa-default-user-1" as FinancialAccountId);
   });
@@ -165,17 +185,30 @@ describe("transaction boundaries", () => {
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.transaction.amount).toBe(4520);
-    expect(insertTransaction).toHaveBeenCalledWith(
-      mockDb,
+    expect(insertTransaction).not.toHaveBeenCalled();
+    expect(insertedTransactionRows).toEqual([
       expect.objectContaining({
         amount: 4520,
         categoryId: "food",
         userId: mockUserId,
         updatedAt: expect.any(String),
-      })
-    );
+      }),
+    ]);
     expect(getTransactionsPaginated).toHaveBeenCalled();
     expect(getSpendingByCategoryAggregate).toHaveBeenCalled();
+  });
+
+  it("enforces Local Ledger validation for manual transaction saves", async () => {
+    canUseSelectedAccount = false;
+    useTransactionStore.getState().setDigits("4520");
+    useTransactionStore.getState().setCategoryId("food" as CategoryId);
+
+    const result = await saveCurrentTransaction(mockDb, mockUserId);
+
+    expect(result).toEqual({ success: false, error: "accountNotUsable" });
+    expect(insertTransaction).not.toHaveBeenCalled();
+    expect(insertedTransactionRows).toEqual([]);
+    expect(getTransactionsPaginated).not.toHaveBeenCalled();
   });
 
   it("defaults to the other category when saving without a selection", async () => {

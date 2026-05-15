@@ -54,11 +54,13 @@ describe("transaction mutation service", () => {
   let trackDeleted: ServiceDeps["trackDeleted"];
   let trackEdited: ServiceDeps["trackEdited"];
   let getTransactionById: ServiceDeps["getTransactionById"];
+  let recordManualTransaction: ServiceDeps["recordManualTransaction"];
   let refreshMock: ReturnType<typeof vi.fn>;
   let resetFormMock: ReturnType<typeof vi.fn>;
   let trackDeletedMock: ReturnType<typeof vi.fn>;
   let trackEditedMock: ReturnType<typeof vi.fn>;
   let getTransactionByIdMock: ReturnType<typeof vi.fn>;
+  let recordManualTransactionMock: ReturnType<typeof vi.fn>;
 
   function createService() {
     return createTransactionMutationService({
@@ -69,6 +71,7 @@ describe("transaction mutation service", () => {
       trackDeleted,
       trackEdited,
       getTransactionById,
+      recordManualTransaction,
       now: () => now,
       createId: () => "txn-1" as TransactionId,
     });
@@ -82,11 +85,33 @@ describe("transaction mutation service", () => {
     trackDeletedMock = vi.fn<(...args: any[]) => any>();
     trackEditedMock = vi.fn<(...args: any[]) => any>();
     getTransactionByIdMock = vi.fn<(...args: any[]) => any>().mockReturnValue(null);
+    recordManualTransactionMock = vi.fn<(...args: any[]) => any>().mockResolvedValue({
+      success: true,
+      transaction: {
+        id: "txn-1" as TransactionId,
+        userId: "user-1" as UserId,
+        type: "expense",
+        amount: 1200 as CopAmount,
+        categoryId: "food" as CategoryId,
+        description: "Lunch",
+        counterpartyName: "",
+        date: now,
+        createdAt: now,
+        updatedAt: now,
+        voidedAt: null,
+        accountId: "fa-default-user-1" as FinancialAccountId,
+        accountAttributionState: "confirmed",
+        supersededAt: null,
+        supersededByTransferId: null,
+        source: "manual",
+      },
+    });
     refresh = refreshMock as ServiceDeps["refresh"];
     resetForm = resetFormMock as ServiceDeps["resetForm"];
     trackDeleted = trackDeletedMock as ServiceDeps["trackDeleted"];
     trackEdited = trackEditedMock as ServiceDeps["trackEdited"];
     getTransactionById = getTransactionByIdMock as ServiceDeps["getTransactionById"];
+    recordManualTransaction = recordManualTransactionMock as ServiceDeps["recordManualTransaction"];
   });
 
   it("returns store-not-initialized when the user is unavailable", async () => {
@@ -99,35 +124,42 @@ describe("transaction mutation service", () => {
     });
   });
 
-  it("returns build validation failures directly", async () => {
-    const service = createService();
-    const result = await service.save({
-      ...input,
-      digits: "",
+  it("returns Local Ledger validation failures directly", async () => {
+    recordManualTransactionMock.mockResolvedValueOnce({
+      success: false,
+      error: "amountNotPositive",
     });
+    const service = createService();
+    const result = await service.save({ ...input, digits: "" });
 
-    expect(result.success).toBe(false);
-    if (result.success) return;
-    expect(result.error).toEqual(expect.any(String));
+    expect(result).toEqual({ success: false, error: "amountNotPositive" });
   });
 
-  it("maps failed insert commits to a save error", async () => {
-    currentCommit = vi.fn<(...args: any[]) => any>().mockResolvedValue({
+  it("maps failed manual Local Ledger writes to a save error", async () => {
+    recordManualTransactionMock.mockResolvedValueOnce({
       success: false,
-      error: "db failed",
+      error: "accountNotUsable",
     });
+    const service = createService();
+
+    await expect(service.save(input)).resolves.toEqual({
+      success: false,
+      error: "accountNotUsable",
+    });
+  });
+
+  it("maps manual Local Ledger writer exceptions to a save error", async () => {
+    recordManualTransactionMock.mockRejectedValueOnce(new Error("sqlite locked"));
     const service = createService();
 
     await expect(service.save(input)).resolves.toEqual({
       success: false,
       error: "Failed to save transaction",
     });
+    expect(refreshMock).not.toHaveBeenCalled();
   });
 
-  it("saves valid transactions through the write-through boundary", async () => {
-    currentCommit = vi
-      .fn<(...args: any[]) => any>()
-      .mockResolvedValue({ success: true, didMutate: true });
+  it("saves valid transactions through the Local Ledger writer", async () => {
     const service = createService();
 
     const result = await service.save(input);
@@ -142,23 +174,19 @@ describe("transaction mutation service", () => {
         accountId: "fa-default-user-1",
       }),
     });
-    expect(currentCommit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        kind: "transaction.save",
-        mode: "insert",
-      })
-    );
+    expect(recordManualTransactionMock).toHaveBeenCalledWith({
+      userId: "user-1",
+      transactionId: "txn-1",
+      input,
+      now,
+    });
+    expect(currentCommit).not.toHaveBeenCalled();
     expect(refreshMock).toHaveBeenCalledOnce();
   });
 
-  it("treats missing or throwing commits as save/update failures", async () => {
+  it("treats throwing update commits as update failures", async () => {
     currentCommit = null;
     const service = createService();
-
-    await expect(service.save(input)).resolves.toEqual({
-      success: false,
-      error: "Store not initialized",
-    });
 
     currentCommit = vi.fn<(...args: any[]) => any>().mockRejectedValue(new Error("boom"));
     await expect(service.updateDirect("txn-9" as TransactionId, input)).resolves.toEqual({
@@ -323,11 +351,15 @@ describe("transaction mutation service", () => {
   });
 
   it("returns a validation failure when no owning account is selected", async () => {
+    recordManualTransactionMock.mockResolvedValueOnce({
+      success: false,
+      error: "missingAccount",
+    });
     const service = createService();
 
     await expect(service.save({ ...input, accountId: null })).resolves.toEqual({
       success: false,
-      error: "Account is required",
+      error: "missingAccount",
     });
     expect(currentCommit).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
