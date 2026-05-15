@@ -1,0 +1,40 @@
+apps/mobile/features/transfers/lib/reclassify-transactions-as-transfer.ts
+  10773f2d62de16dd 1-62,64-66,69-77,88,95-122,125-176
+  s_10773f2d62de16::t_02d01141d7dc63 89-94,123-124
+  s_10773f2d62de16::t_20374cbe9041e8 68,78,80,82-84,86
+  s_10773f2d62de16::t_3767914762019f 63,67,79,81,85,87
+apps/mobile/features/transfers/reclassification.public.ts
+  10773f2d62de16dd 1-10
+apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts
+  10773f2d62de16dd 15-21,23,25,44,61-81,101-124,238-422,469-498
+  s_10773f2d62de16::t_f7e5c04c2383e1 423-468
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "aeff64528d6b0f4351549064b91b21a91e85c659",
+  "prompts": {
+    "10773f2d62de16dd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e29fc-24f9-7113-aef7-b66feca7f17d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa",
+      "total_additions": 459,
+      "total_deletions": 12,
+      "accepted_lines": 435,
+      "overriden_lines": 0
+    }
+  },
+  "sessions": {
+    "s_10773f2d62de16": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e29fc-24f9-7113-aef7-b66feca7f17d",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
