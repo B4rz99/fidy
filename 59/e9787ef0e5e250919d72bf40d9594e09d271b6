@@ -1,0 +1,41 @@
+apps/mobile/shared/mutations/write-through/policy.ts
+  s_cd11e6a0356710::t_98c5c069adc400 26
+apps/mobile/__tests__/local-ledger/intake-mutation.test.ts
+  s_cd11e6a0356710::t_7d27436be9c12f 48-71
+  s_cd11e6a0356710::t_98c5c069adc400 10,30-40,307-376
+  s_cd11e6a0356710::t_8c0a66189a3951 44-47
+  s_cd11e6a0356710::t_2a1adf291061db 378-406
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_cd11e6a0356710::t_98c5c069adc400 16,87-88,238-242,324-342
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_cd11e6a0356710::t_98c5c069adc400 121-131
+apps/mobile/local-ledger/use-cases/review-candidate-resolution.public.ts
+  s_cd11e6a0356710::t_0bae6e3af0a8be 2-228
+  s_cd11e6a0356710::t_0c24289990db91 1
+apps/mobile/mutation-runtime/local-ledger-handlers.ts
+  s_cd11e6a0356710::t_98c5c069adc400 14,64-77,80-92,96-108,110
+  s_cd11e6a0356710::t_c2a5402f9b7f89 3,78-79,94-95
+  s_cd11e6a0356710::t_64a5084f07b699 93
+apps/mobile/local-ledger/domain/public.ts
+  s_cd11e6a0356710::t_ba41267fb15910 7,24
+apps/mobile/shared/mutations/write-through/commands.ts
+  s_cd11e6a0356710::t_98c5c069adc400 24-25,214-224,245-246
+apps/mobile/local-ledger/public.ts
+  s_cd11e6a0356710::t_98c5c069adc400 53-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "59e9787ef0e5e250919d72bf40d9594e09d271b6",
+  "prompts": {},
+  "sessions": {
+    "s_cd11e6a0356710": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2d21-f9e9-7f00-b3b9-9ddcbcbf7d56",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
