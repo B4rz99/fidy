@@ -118,6 +118,17 @@ async function saveTransactionRecord(context: ResolvedNotificationContext) {
   });
 
   if (!result.success) {
+    persistProcessedSourceEvent({
+      db: context.db,
+      userId: context.userId,
+      sourceFamily: context.source,
+      sourceId: context.source,
+      sourceEventId: context.fingerprint,
+      status: "failed",
+      failureReason: `local_ledger_rejected:${result.error}`,
+      receivedAt: context.receivedAt,
+      processedAt: context.now,
+    });
     throw new Error(`Local Ledger rejected notification transaction: ${result.error}`);
   }
 

@@ -7,6 +7,7 @@ import {
   type LocalLedgerProcessedSourceEventId,
   type LocalLedgerReviewCandidateId,
   type LocalLedgerSourceId,
+  toRejectReviewCandidateCommand,
 } from "@/local-ledger/public";
 import {
   captureEvidence,
@@ -26,10 +27,47 @@ import type {
 } from "@/shared/types/branded";
 import { localLedgerHandlers } from "../../mutation-runtime/local-ledger-handlers";
 
-const applyLocalLedgerCommand = (db: MutationDb, command: MutationCommand) =>
-  localLedgerHandlers["localLedger.reviewCandidate.create"](db, command as never);
+const applyLocalLedgerCommand = (db: MutationDb, command: MutationCommand) => {
+  if (command.kind === "localLedger.reviewCandidate.create") {
+    return localLedgerHandlers["localLedger.reviewCandidate.create"](db, command);
+  }
+
+  if (command.kind === "localLedger.reviewCandidate.resolve") {
+    return localLedgerHandlers["localLedger.reviewCandidate.resolve"](db, command);
+  }
+
+  throw new Error(`Unsupported local ledger command: ${command.kind}`);
+};
 
 const NOW = "2026-04-12T10:00:00.000Z" as IsoDateTime;
+
+function collectSqlConditionTokens(
+  value: unknown,
+  seen = new WeakSet<object>()
+): readonly string[] {
+  if (value === null || value === undefined) return [];
+  if (typeof value === "string") return [value];
+  if (typeof value !== "object") return [];
+  if (seen.has(value)) return [];
+  seen.add(value);
+
+  const record = value as Record<string, unknown>;
+  const ownTokens = typeof record.name === "string" ? [record.name] : [];
+  const nestedTokens = Object.values(record).flatMap((entry) =>
+    Array.isArray(entry)
+      ? entry.flatMap((item) => collectSqlConditionTokens(item, seen))
+      : collectSqlConditionTokens(entry, seen)
+  );
+
+  return [...ownTokens, ...nestedTokens];
+}
+
+function expectActiveRowGuard(condition: unknown) {
+  const tokens = collectSqlConditionTokens(condition);
+
+  expect(tokens).toContain("deleted_at");
+  expect(tokens).toContain(" is null");
+}
 
 type CreateReviewCandidateMutationCommand = Extract<
   MutationCommand,
@@ -265,5 +303,105 @@ describe("local ledger intake mutations", () => {
       error: expect.stringContaining("UNIQUE constraint failed"),
     });
     expect(committed).toEqual([]);
+  });
+
+  it("maps dismissal to a write-through command that preserves source-event idempotency", async () => {
+    expect(
+      toRejectReviewCandidateCommand({
+        userId: "user-1" as UserId,
+        candidateId: "rc-1" as LocalLedgerReviewCandidateId,
+        processedSourceEventId: "pse-1" as ProcessedSourceEventId,
+        now: NOW,
+      })
+    ).toEqual({
+      kind: "localLedger.reviewCandidate.resolve",
+      userId: "user-1",
+      reviewCandidateId: "rc-1",
+      processedSourceEventId: "pse-1",
+      reviewCandidateStatus: "rejected",
+      processedSourceEventStatus: "processed",
+      now: NOW,
+    });
+  });
+
+  it("fails resolution when the pending candidate row is not updated", () => {
+    const db = {
+      update: vi.fn<(...args: any[]) => any>((table) => ({
+        set: vi.fn<(...args: any[]) => any>(() => ({
+          where: vi.fn<(...args: any[]) => any>(() => ({
+            run: vi.fn<(...args: any[]) => any>(() => ({
+              changes: getTableName(table) === getTableName(reviewCandidates) ? 0 : 1,
+            })),
+          })),
+        })),
+      })),
+    } as unknown as MutationDb;
+
+    expect(() =>
+      localLedgerHandlers["localLedger.reviewCandidate.resolve"](
+        db,
+        toRejectReviewCandidateCommand({
+          userId: "user-1" as UserId,
+          candidateId: "rc-1" as LocalLedgerReviewCandidateId,
+          processedSourceEventId: "pse-1" as ProcessedSourceEventId,
+          now: NOW,
+        })
+      )
+    ).toThrow("Review candidate resolution target was not found");
+  });
+
+  it("fails resolution when the source event row is not updated", () => {
+    const db = {
+      update: vi.fn<(...args: any[]) => any>((table) => ({
+        set: vi.fn<(...args: any[]) => any>(() => ({
+          where: vi.fn<(...args: any[]) => any>(() => ({
+            run: vi.fn<(...args: any[]) => any>(() => ({
+              changes: getTableName(table) === getTableName(processedSourceEvents) ? 0 : 1,
+            })),
+          })),
+        })),
+      })),
+    } as unknown as MutationDb;
+
+    expect(() =>
+      localLedgerHandlers["localLedger.reviewCandidate.resolve"](
+        db,
+        toRejectReviewCandidateCommand({
+          userId: "user-1" as UserId,
+          candidateId: "rc-1" as LocalLedgerReviewCandidateId,
+          processedSourceEventId: "pse-1" as ProcessedSourceEventId,
+          now: NOW,
+        })
+      )
+    ).toThrow("Review candidate source event was not found");
+  });
+
+  it("guards resolution updates to active candidate and source-event rows", () => {
+    const whereConditions: unknown[] = [];
+    const db = {
+      update: vi.fn<(...args: any[]) => any>(() => ({
+        set: vi.fn<(...args: any[]) => any>(() => ({
+          where: vi.fn<(...args: any[]) => any>((condition) => {
+            whereConditions.push(condition);
+            return {
+              run: vi.fn<(...args: any[]) => any>(() => ({ changes: 1 })),
+            };
+          }),
+        })),
+      })),
+    } as unknown as MutationDb;
+
+    localLedgerHandlers["localLedger.reviewCandidate.resolve"](
+      db,
+      toRejectReviewCandidateCommand({
+        userId: "user-1" as UserId,
+        candidateId: "rc-1" as LocalLedgerReviewCandidateId,
+        processedSourceEventId: "pse-1" as ProcessedSourceEventId,
+        now: NOW,
+      })
+    );
+
+    expect(whereConditions).toHaveLength(2);
+    whereConditions.forEach(expectActiveRowGuard);
   });
 });

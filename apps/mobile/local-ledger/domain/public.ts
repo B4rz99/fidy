@@ -4,6 +4,7 @@ import type {
   FinancialAccountId,
   IsoDate,
   IsoDateTime,
+  ReviewCandidateId,
   TransferId,
   UserId,
 } from "@/shared/types/branded";
@@ -20,9 +21,7 @@ export type LocalLedgerProcessedSourceEventId = string & {
   readonly __brand: "LocalLedgerProcessedSourceEventId";
 };
 
-export type LocalLedgerReviewCandidateId = string & {
-  readonly __brand: "LocalLedgerReviewCandidateId";
-};
+export type LocalLedgerReviewCandidateId = ReviewCandidateId;
 
 export type LocalLedgerMoney = {
   readonly amount: CopAmount;
