@@ -1,0 +1,40 @@
+apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 11-12,17-19,29-57,111-113,325-327,341,343-344,356,359-360
+apps/mobile/features/capture-sources/lib/dedup.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 4,22-28,41-56,59-60
+apps/mobile/__tests__/capture-sources/dedup.test.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 77-78,81-87,95,99-145
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 2-7,14,84,87-116,119-122,148-153,155-157,181-191,195-204,213-248,250,254
+apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 16-17,62-88,157,159-168,189-190,218-220,231,234-235,297,300-302
+apps/mobile/infrastructure/local-ledger/source-events.ts
+  s_7a8d46ac5720b2::t_cdc7368733532e 1-206
+apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 2,13-17,118-124,126-137,152-158,160-162,187,189-191,193-221
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 1-7,91-97,99-109,124-131,133,141-143,145-171,174-177,187-197
+  s_7a8d46ac5720b2::t_cdc7368733532e 46-47
+apps/mobile/features/capture-sources/services/notification-pipeline.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 136-144
+apps/mobile/__tests__/local-ledger/source-events.test.ts
+  s_7a8d46ac5720b2::t_cdc7368733532e 1-178
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_7a8d46ac5720b2::t_288ee9877d9cdb 16-18,67-94,155,157-166,234-236,309-310,330-337,351-353,366,368-369,441,443
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "3a08f29ff6c1836c34f938a74b7925bec7863c9f",
+  "prompts": {},
+  "sessions": {
+    "s_7a8d46ac5720b2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e29fc-b5bb-7c82-89f2-82f57611667a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
