@@ -1,0 +1,52 @@
+apps/mobile/features/capture-sources/services/notification-pipeline.ts
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 136-144
+apps/mobile/__tests__/local-ledger/source-events.test.ts
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 1-37,39-70,83-188,226-227
+  s_7a8d46ac5720b2::t_f83ef0d94b0278 38,71-82,189-225
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_7a8d46ac5720b2::t_fddb652f3edfc5 205
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 2-7,14,84,87-116,119-122,150-153,155-157,181-191,196-203,214-232,234-251,255
+  s_7a8d46ac5720b2::t_e8d60fc59a1e76 148-149,195
+apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts
+  s_7a8d46ac5720b2::t_8efa3c83db4b0a 395-415
+  s_7a8d46ac5720b2::t_bef150765311bf 117-121
+  s_7a8d46ac5720b2::t_a7bd163c0281cf 13,51-52
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 11-12,18-20,26-41,46-50,53-60,114-116,333-335,349,351-352,364,367-368
+apps/mobile/features/capture-sources/lib/dedup.ts
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 4,22-28,41-56,59-60
+apps/mobile/__tests__/capture-sources/dedup.test.ts
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 77-78,81-87,95-110,114-160
+apps/mobile/infrastructure/local-ledger/source-events.ts
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 1-60,67-70,72-82,87,103-109,118-137,140-233
+  s_7a8d46ac5720b2::t_003a0072e54b63 61-66,71,83-86,88-102,110-117,138-139
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 16-18,63-80,85-99,160,162-171,239-241,314-315,335-342,356-358,374-375,451,453
+  s_7a8d46ac5720b2::t_de147a88aca58e 371,377-379
+apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 2,13-17,118-124,126-137,152-158,160-162,187-188,190-216,218-219,231-232
+  s_7a8d46ac5720b2::t_8119e3a9df6580 220-221,223-230
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 1-7,51-52,96-102,104-114,129-136,138,146-148,150-176,179,181-182,192-198,200-202
+  s_7a8d46ac5720b2::t_96b77c532ed61f 41-45,180,199
+apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts
+  s_7a8d46ac5720b2::t_9c4c74675c9cf2 314-329
+  s_7a8d46ac5720b2::t_a56f258dd9c94f 194-198
+  s_7a8d46ac5720b2::t_7cba7c90b85e26 18,82-83
+  s_7a8d46ac5720b2::t_70d6d694a5e4fd 16-17,59-76,81,84-91,160,162-171,192-193,226-228,239,242-243,305,308-310
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "3c408721d0c3bc5e9e2f0eca5a7ec22c10cbc345",
+  "prompts": {},
+  "sessions": {
+    "s_7a8d46ac5720b2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e29fc-b5bb-7c82-89f2-82f57611667a",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
