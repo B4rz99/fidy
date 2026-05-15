@@ -1,0 +1,30 @@
+apps/mobile/features/transactions/lib/mutation-service.ts
+  9773c4dc2efe36ab 24-29,96-119,143-149,151,154-155,159
+apps/mobile/features/transactions/store.ts
+  9773c4dc2efe36ab 4,9,15,53-55,63-74,166-169
+apps/mobile/__tests__/transactions/mutation-service.test.ts
+  9773c4dc2efe36ab 57,63,74,88-108,114,127-130,132-133,135,138-139,141,145-154,159,162,177-183,187,354-357,362
+apps/mobile/__tests__/transactions/store.test.ts
+  9773c4dc2efe36ab 42-43,46-61,117-118,188-189,195-196,201-211
+apps/mobile/__tests__/local-ledger/manual-transaction-local-ledger.test.ts
+  9773c4dc2efe36ab 1-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "b1a3ad29700461d9a648eb129525e53eed7c369d",
+  "prompts": {
+    "9773c4dc2efe36ab": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e29fb-5b12-7061-bc0d-f70c010da21d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>",
+      "total_additions": 277,
+      "total_deletions": 62,
+      "accepted_lines": 264,
+      "overriden_lines": 0
+    }
+  }
+}
