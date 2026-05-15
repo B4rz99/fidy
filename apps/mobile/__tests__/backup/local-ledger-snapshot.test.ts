@@ -571,6 +571,27 @@ describe("local ledger backup snapshots", () => {
     });
   });
 
+  it("rejects legacy transaction rows with unsupported source values", () => {
+    const legacyTransaction = {
+      ...withoutKeys(transactionRow({ source: "email_gmail" }), [
+        "counterpartyName",
+        "supersededByTransferId",
+        "voidedAt",
+      ]),
+      deletedAt: null,
+    };
+
+    expect(() =>
+      validateBackupSnapshot(
+        validSnapshot({
+          userCategories: [userCategoryRow()],
+          financialAccounts: [rollbackAccountRow()],
+          transactions: [legacyTransaction],
+        })
+      )
+    ).toThrow("Malformed local ledger backup row: source is not supported");
+  });
+
   it("rejects duplicate primary IDs inside backed-up collections", () => {
     expect(() =>
       validateBackupSnapshot(
@@ -591,6 +612,18 @@ describe("local ledger backup snapshots", () => {
         })
       )
     ).toThrow("Local ledger backup has unresolved reference: transactions.accountId");
+  });
+
+  it("rejects unresolved superseding transfer references inside transaction rows", () => {
+    expect(() =>
+      validateBackupSnapshot(
+        validSnapshot({
+          userCategories: [userCategoryRow()],
+          financialAccounts: [rollbackAccountRow()],
+          transactions: [transactionRow({ supersededByTransferId: "transfer-missing" })],
+        })
+      )
+    ).toThrow("Local ledger backup has unresolved reference: transactions.supersededByTransferId");
   });
 
   it("rejects snapshot rows that violate local ledger invariants", () => {

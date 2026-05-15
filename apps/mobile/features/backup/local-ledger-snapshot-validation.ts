@@ -89,6 +89,11 @@ function validateSnapshotReferences(data: LocalLedgerBackupSnapshotData) {
   data.transactions.forEach((row) => {
     assertKnownReference(accountIds, row.accountId, "transactions.accountId");
     assertKnownReference(categoryIds, row.categoryId, "transactions.categoryId");
+    assertOptionalKnownReference(
+      transferIds,
+      row.supersededByTransferId,
+      "transactions.supersededByTransferId"
+    );
   });
   data.transfers.forEach((row) => {
     assertOptionalKnownReference(accountIds, row.fromAccountId, "transfers.fromAccountId");

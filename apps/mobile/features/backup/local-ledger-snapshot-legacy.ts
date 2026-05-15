@@ -54,5 +54,5 @@ const legacyTransactionTextDefaults = (row: TransactionRow) => ({
 
 const legacyTransactionStateDefaults = (row: TransactionRow, deletedAt: unknown) => ({
   voidedAt: (row.voidedAt ?? deletedAt ?? null) as TransactionRow["voidedAt"],
-  source: row.source === "manual" ? "manual" : row.source == null ? "manual" : "automated",
+  source: row.source ?? "manual",
 });

@@ -59,7 +59,7 @@ const OTHER_CATEGORY_ID = getBuiltInCategoryId("other");
 const TRANSACTION_SOURCES_WITH_CONFIRMED_DEFAULT = new Set(["manual"]);
 
 const toTransactionSource = (source: string | undefined | null): "manual" | "automated" =>
-  source === "automated" ? "automated" : "manual";
+  source === "manual" || source == null ? "manual" : "automated";
 
 const isAccountAttributionState = (state: string | undefined): state is AccountAttributionState =>
   state === "confirmed" || state === "inferred" || state === "unresolved";

@@ -209,4 +209,30 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     expect(serialized.supersededAt).toBe("2026-03-04T10:00:00.000Z");
     expect(serialized.source).toBe("automated");
   });
+
+  test("normalizes legacy non-manual transaction sources as automated", () => {
+    const row = {
+      id: "tx-legacy-source" as TransactionId,
+      userId: "user-1" as UserId,
+      type: "expense",
+      amount: 8200 as CopAmount,
+      categoryId: "food" as CategoryId,
+      description: "Captured lunch",
+      date: "2026-03-03" as IsoDate,
+      accountId: "fa-credit-card" as FinancialAccountId,
+      accountAttributionState: undefined,
+      supersededAt: null,
+      createdAt: "2026-03-03T10:00:00.000Z" as IsoDateTime,
+      updatedAt: "2026-03-03T12:00:00.000Z" as IsoDateTime,
+      voidedAt: null,
+      source: "email_gmail",
+    };
+
+    const storedTransaction = toStoredTransaction(row);
+    const serialized = toTransactionRow(storedTransaction);
+
+    expect(storedTransaction.accountAttributionState).toBe("unresolved");
+    expect(storedTransaction.source).toBe("automated");
+    expect(serialized.source).toBe("automated");
+  });
 });
