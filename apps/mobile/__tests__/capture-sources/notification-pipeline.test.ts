@@ -13,6 +13,7 @@ const mockIsCaptureProcessed = vi.fn<(...args: any[]) => any>().mockResolvedValu
 const mockFindDuplicateTransaction = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
 const mockCaptureFingerprint = vi.fn<(...args: any[]) => any>().mockReturnValue("test-fingerprint");
 const mockInsertProcessedCapture = vi.fn<(...args: any[]) => any>();
+const mockRecordAutomatedTransactionWithLocalLedger = vi.fn<(...args: any[]) => any>();
 const mockPersistProcessedSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockPersistCommittedCaptureSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockPersistReviewCandidateCapture = vi.fn<(...args: any[]) => any>();
@@ -83,11 +84,8 @@ vi.mock("@/features/transactions/lib/repository", () => ({
 }));
 
 vi.mock("@/infrastructure/local-ledger/record-transaction", () => ({
-  recordAutomatedTransactionWithLocalLedger: async (input: any) => {
-    input.afterRecord?.(input.db, { id: input.transactionId });
-    mockRecordedTransaction(input);
-    return { success: true, transaction: { id: input.transactionId } };
-  },
+  recordAutomatedTransactionWithLocalLedger: (...args: any[]) =>
+    mockRecordAutomatedTransactionWithLocalLedger(...args),
 }));
 
 vi.mock("@/infrastructure/local-ledger/source-events", () => ({
@@ -237,6 +235,11 @@ describe("processNotification", () => {
     mockBuildNotificationCaptureEvidence.mockReturnValue([DEFAULT_NOTIFICATION_CAPTURE_EVIDENCE]);
     mockBuildNotificationLlmAccountHintCaptureEvidence.mockReturnValue([]);
     mockFindMatchingFinancialAccountId.mockReturnValue(null);
+    mockRecordAutomatedTransactionWithLocalLedger.mockImplementation(async (input: any) => {
+      input.afterRecord?.(input.db, { id: input.transactionId });
+      mockRecordedTransaction(input);
+      return { success: true, transaction: { id: input.transactionId } };
+    });
     mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
     mockPersistProcessedSourceEvent.mockReturnValue(undefined);
     mockPersistCommittedCaptureSourceEvent.mockReturnValue(undefined);
@@ -315,6 +318,28 @@ describe("processNotification", () => {
     expect(mockInsertTransaction).not.toHaveBeenCalled();
     expect(mockPersistProcessedSourceEvent).toHaveBeenCalledWith(
       expect.objectContaining({ db: mockDb, status: "failed", failureReason: "parse_failed" })
+    );
+  });
+
+  it("records failed source event before throwing when Local Ledger rejects", async () => {
+    mockNotificationLlmAccountHintParse();
+    mockRecordAutomatedTransactionWithLocalLedger.mockResolvedValueOnce({
+      success: false,
+      error: "account-not-usable",
+    });
+
+    await expect(processNotification(mockDb, USER_ID, makeNotification())).rejects.toThrow(
+      "Local Ledger rejected notification transaction: account-not-usable"
+    );
+
+    expect(mockPersistProcessedSourceEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        db: mockDb,
+        sourceFamily: "notification_android",
+        sourceEventId: "test-fingerprint",
+        status: "failed",
+        failureReason: "local_ledger_rejected:account-not-usable",
+      })
     );
   });
 

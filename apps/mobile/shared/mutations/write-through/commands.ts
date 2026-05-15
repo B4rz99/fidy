@@ -21,6 +21,8 @@ import type {
   IsoDate,
   IsoDateTime,
   Month,
+  ProcessedSourceEventId,
+  ReviewCandidateId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
@@ -209,6 +211,17 @@ type LocalLedgerReviewCandidateCreateCommand = {
   afterCommit?: readonly MutationEffect[];
 };
 
+type LocalLedgerReviewCandidateResolveCommand = {
+  kind: "localLedger.reviewCandidate.resolve";
+  userId: UserId;
+  reviewCandidateId: ReviewCandidateId;
+  processedSourceEventId: ProcessedSourceEventId;
+  reviewCandidateStatus: "accepted" | "rejected";
+  processedSourceEventStatus: "processed";
+  now: IsoDateTime;
+  afterCommit?: readonly MutationEffect[];
+};
+
 export type MutationCommand =
   | TransactionSaveCommand
   | TransactionDeleteCommand
@@ -229,7 +242,8 @@ export type MutationCommand =
   | CalendarBillDeleteCommand
   | CalendarBillMarkPaidCommand
   | CalendarBillUnmarkPaidCommand
-  | LocalLedgerReviewCandidateCreateCommand;
+  | LocalLedgerReviewCandidateCreateCommand
+  | LocalLedgerReviewCandidateResolveCommand;
 
 type TransactionCallback = Parameters<AnyDb["transaction"]>[0];
 export type MutationDb = Parameters<TransactionCallback>[0];
