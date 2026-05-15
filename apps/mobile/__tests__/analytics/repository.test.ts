@@ -59,7 +59,7 @@ const insertTransactionRow = (
     date: overrides.date ?? PERIOD_START,
     createdAt: CREATED_AT,
     updatedAt: CREATED_AT,
-    deletedAt: null,
+    voidedAt: null,
     source: "manual",
   });
 

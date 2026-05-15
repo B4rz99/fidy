@@ -50,7 +50,7 @@ async function commitBillPayment({
     date: parseIsoDate(dueDate),
     createdAt: timestamp,
     updatedAt: timestamp,
-    deletedAt: null,
+    voidedAt: null,
     accountId: buildDefaultFinancialAccountId(userId),
     accountAttributionState: "confirmed",
   };

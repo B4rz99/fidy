@@ -28,11 +28,13 @@ describe("transactions table schema", () => {
     expect(names).toContain("date");
     expect(names).toContain("accountId");
     expect(names).toContain("accountAttributionState");
+    expect(names).toContain("counterpartyName");
+    expect(names).toContain("voidedAt");
     expect(names).toContain("supersededAt");
+    expect(names).toContain("supersededByTransferId");
     expect(names).toContain("createdAt");
     expect(names).toContain("updatedAt");
-    expect(names).toContain("deletedAt");
-    expect(names).toHaveLength(14);
+    expect(names).toHaveLength(16);
   });
 
   it("id is primary key", () => {
@@ -45,9 +47,9 @@ describe("transactions table schema", () => {
     expect(cols.description.notNull).toBe(false);
   });
 
-  it("deletedAt is nullable (soft delete)", () => {
+  it("voidedAt is nullable", () => {
     const cols = getTableColumns(transactions);
-    expect(cols.deletedAt.notNull).toBe(false);
+    expect(cols.voidedAt.notNull).toBe(false);
   });
 
   it("userId is not null", () => {
@@ -68,6 +70,12 @@ describe("transactions table schema", () => {
   it("supersededAt is nullable", () => {
     const cols = getTableColumns(transactions);
     expect(cols.supersededAt.notNull).toBe(false);
+  });
+
+  it("counterpartyName and supersededByTransferId are nullable", () => {
+    const cols = getTableColumns(transactions);
+    expect(cols.counterpartyName.notNull).toBe(false);
+    expect(cols.supersededByTransferId.notNull).toBe(false);
   });
 
   it("has source column", () => {

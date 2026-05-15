@@ -1,6 +1,12 @@
 import { buildDefaultFinancialAccountId } from "@/features/financial-accounts/lib/default-account";
 import { parseDigitsToAmount, parseIsoDate, toIsoDate, toIsoDateTime } from "@/shared/lib";
-import type { CategoryId, FinancialAccountId, TransactionId, UserId } from "@/shared/types/branded";
+import type {
+  CategoryId,
+  FinancialAccountId,
+  TransactionId,
+  TransferId,
+  UserId,
+} from "@/shared/types/branded";
 import type {
   AccountAttributionState,
   CreateTransactionInput,
@@ -52,7 +58,8 @@ type BuildTransactionContext = {
 const OTHER_CATEGORY_ID = getBuiltInCategoryId("other");
 const TRANSACTION_SOURCES_WITH_CONFIRMED_DEFAULT = new Set(["manual"]);
 
-const toTransactionSource = (source: string | undefined | null): string => source ?? "manual";
+const toTransactionSource = (source: string | undefined | null): "manual" | "automated" =>
+  source === "manual" || source == null ? "manual" : "automated";
 
 const isAccountAttributionState = (state: string | undefined): state is AccountAttributionState =>
   state === "confirmed" || state === "inferred" || state === "unresolved";
@@ -95,11 +102,14 @@ const getBuildError = (error: string): TransactionBuildResult => ({ success: fal
 const resolveCreatedAt = (existing: StoredTransaction | null, now: Date): Date =>
   existing?.createdAt ?? now;
 
-const resolveDeletedAt = (existing: StoredTransaction | null): Date | null =>
-  existing?.deletedAt ?? null;
+const resolveVoidedAt = (existing: StoredTransaction | null): Date | null =>
+  existing?.voidedAt ?? null;
 
 const resolveSupersededAt = (existing: StoredTransaction | null): Date | null =>
   existing?.supersededAt ?? null;
+
+const resolveSupersededByTransferId = (existing: StoredTransaction | null): TransferId | null =>
+  existing?.supersededByTransferId ?? null;
 
 const resolveAccountAttribution = (existing: StoredTransaction | null): AccountAttributionState =>
   existing?.accountAttributionState ?? getDefaultAccountAttributionState(existing?.source);
@@ -117,13 +127,15 @@ const mapBuiltTransaction = ({
   amount: validated.amount,
   categoryId: validated.categoryId,
   description: validated.description ?? "",
+  counterpartyName: existing?.counterpartyName ?? "",
   date: validated.date,
   createdAt: resolveCreatedAt(existing, now),
   updatedAt: now,
-  deletedAt: resolveDeletedAt(existing),
+  voidedAt: resolveVoidedAt(existing),
   accountId: validated.accountId,
   accountAttributionState: resolveAccountAttribution(existing),
   supersededAt: resolveSupersededAt(existing),
+  supersededByTransferId: resolveSupersededByTransferId(existing),
   source: toTransactionSource(existing?.source),
 });
 
@@ -162,21 +174,35 @@ export const buildTransaction = ({
   };
 };
 
-export const toStoredTransaction = (row: TransactionRow): StoredTransaction => ({
+const toStoredTransactionIdentity = (row: TransactionRow) => ({
   id: row.id,
   userId: row.userId,
   type: row.type as TransactionType,
   amount: row.amount,
   categoryId: getRowCategoryId(row.categoryId),
   description: row.description ?? "",
+  counterpartyName: row.counterpartyName ?? "",
+});
+
+const toStoredTransactionDates = (row: TransactionRow) => ({
   date: parseIsoDate(row.date),
   createdAt: new Date(row.createdAt),
   updatedAt: new Date(row.updatedAt),
-  deletedAt: toNullableDate(row.deletedAt),
+  voidedAt: toNullableDate(row.voidedAt),
+});
+
+const toStoredTransactionMetadata = (row: TransactionRow) => ({
   accountId: getRowAccountId(row),
   accountAttributionState: getRowAttributionState(row),
   supersededAt: toNullableDate(row.supersededAt),
+  supersededByTransferId: row.supersededByTransferId ?? null,
   source: toTransactionSource(row.source),
+});
+
+export const toStoredTransaction = (row: TransactionRow): StoredTransaction => ({
+  ...toStoredTransactionIdentity(row),
+  ...toStoredTransactionDates(row),
+  ...toStoredTransactionMetadata(row),
 });
 
 export const toTransactionRow = (tx: StoredTransaction): TransactionRow => ({
@@ -186,12 +212,14 @@ export const toTransactionRow = (tx: StoredTransaction): TransactionRow => ({
   amount: tx.amount,
   categoryId: tx.categoryId,
   description: toNullableDescription(tx.description),
+  counterpartyName: toNullableDescription(tx.counterpartyName ?? ""),
   date: toIsoDate(tx.date),
   accountId: tx.accountId,
   accountAttributionState: tx.accountAttributionState,
   supersededAt: serializeNullableDate(tx.supersededAt),
+  supersededByTransferId: tx.supersededByTransferId ?? null,
   createdAt: toIsoDateTime(tx.createdAt),
   updatedAt: toIsoDateTime(tx.updatedAt),
-  deletedAt: serializeNullableDate(tx.deletedAt),
+  voidedAt: serializeNullableDate(tx.voidedAt),
   source: toTransactionSource(tx.source),
 });

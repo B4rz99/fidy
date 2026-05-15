@@ -67,7 +67,7 @@ export function reclassifyTransactionAsTransfer(
   if (
     existingTransaction == null ||
     existingTransaction.userId !== input.userId ||
-    existingTransaction.deletedAt != null ||
+    existingTransaction.voidedAt != null ||
     existingTransaction.supersededAt != null
   ) {
     return { success: false, error: "transactionNotFound" };
@@ -99,6 +99,7 @@ export function reclassifyTransactionAsTransfer(
     saveTransactionRow(tx, {
       ...existingTransaction,
       supersededAt: updatedAt,
+      supersededByTransferId: built.transfer.id,
       updatedAt,
     });
 

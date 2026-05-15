@@ -58,21 +58,26 @@ const ROW_SPECS: readonly RowSpec[] = [
       assertRecordShape(
         row,
         "transactions",
-        validateBaseLedgerFields({
+        {
           id: (value) => assertString(value, "id"),
           userId: (value) => assertString(value, "userId"),
           type: (value) => assertOneOf(["expense", "income"], value, "type"),
           amount: (value) => assertCopAmountValue(value, "amount"),
           categoryId: (value) => assertString(value, "categoryId"),
           description: (value) => assertNullableString(value, "description"),
+          counterpartyName: (value) => assertNullableString(value, "counterpartyName"),
           date: (value) => assertValidIsoDate(value, "date"),
           accountId: (value) => assertString(value, "accountId"),
           accountAttributionState: (value) =>
             assertOneOf(["confirmed", "inferred", "unresolved"], value, "accountAttributionState"),
           supersededAt: (value) => assertNullableIsoDateTime(value, "supersededAt"),
-          source: (value) => assertString(value, "source"),
-        }),
-        ["source"]
+          supersededByTransferId: (value) => assertNullableString(value, "supersededByTransferId"),
+          source: (value) => assertOneOf(["manual", "automated"], value, "source"),
+          voidedAt: (value) => assertNullableIsoDateTime(value, "voidedAt"),
+          createdAt: (value) => assertValidIsoDateTime(value, "createdAt"),
+          updatedAt: (value) => assertValidIsoDateTime(value, "updatedAt"),
+        },
+        ["counterpartyName", "supersededByTransferId"]
       ),
   },
   {

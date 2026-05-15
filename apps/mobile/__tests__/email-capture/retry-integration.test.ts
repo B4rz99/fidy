@@ -124,7 +124,7 @@ async function expectSuccessfulRetryArtifacts() {
   expect(txRow).toEqual(
     expect.objectContaining({
       amount: 50000,
-      source: "email_gmail",
+      source: "automated",
       accountId: `fa-default-${USER_ID}`,
       accountAttributionState: "unresolved",
     })

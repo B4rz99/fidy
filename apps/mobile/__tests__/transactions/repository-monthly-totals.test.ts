@@ -60,7 +60,7 @@ const insertTransactionRow = (
     date: overrides.date ?? ("2026-03-01" as IsoDate),
     createdAt: CREATED_AT,
     updatedAt: CREATED_AT,
-    deletedAt: null,
+    voidedAt: null,
     source: "manual",
   });
 

@@ -22,7 +22,7 @@ type StoredRowOverrides = Partial<{
   date: IsoDate;
   createdAt: IsoDateTime;
   updatedAt: IsoDateTime;
-  deletedAt: IsoDateTime | null;
+  voidedAt: IsoDateTime | null;
 }>;
 
 const defaultStoredRow = {
@@ -35,7 +35,7 @@ const defaultStoredRow = {
   date: "2026-04-12" as IsoDate,
   createdAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
   updatedAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
-  deletedAt: null,
+  voidedAt: null,
   accountId: "fa-default-user-1" as FinancialAccountId,
   accountAttributionState: "confirmed" as const,
   source: "manual" as const,
@@ -52,7 +52,7 @@ const currentPages = [
     date: new Date("2026-04-12T00:00:00.000Z"),
     createdAt: new Date("2026-04-12T10:00:00.000Z"),
     updatedAt: new Date("2026-04-12T10:00:00.000Z"),
-    deletedAt: null,
+    voidedAt: null,
     accountId: "fa-default-user-1" as FinancialAccountId,
     accountAttributionState: "confirmed" as const,
   },
@@ -158,7 +158,7 @@ describe("transaction query service", () => {
     const getTransactionById = vi.fn<(...args: any[]) => any>();
     getTransactionById
       .mockReturnValueOnce(makeRow({ userId: "user-2" as UserId }))
-      .mockReturnValueOnce(makeRow({ deletedAt: "2026-04-13T08:00:00.000Z" as IsoDateTime }));
+      .mockReturnValueOnce(makeRow({ voidedAt: "2026-04-13T08:00:00.000Z" as IsoDateTime }));
     const service = createTransactionQueryService({ getTransactionById });
 
     expect(

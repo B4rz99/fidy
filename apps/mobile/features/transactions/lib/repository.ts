@@ -1,11 +1,13 @@
 import { and, between, desc, eq, like, or, sql, sum } from "drizzle-orm";
-import { buildDefaultFinancialAccountId } from "@/features/financial-accounts/lib/default-account";
+import {
+  normalizeTransactionStorageRow,
+  type TransactionStorageWriteRow,
+} from "@/infrastructure/local-ledger/transaction-storage";
 import type { AnyDb } from "@/shared/db/client";
 import { transactions } from "@/shared/db/schema";
 import type {
   CategoryId,
   CopAmount,
-  FinancialAccountId,
   IsoDate,
   IsoDateTime,
   Month,
@@ -14,9 +16,7 @@ import type {
 } from "@/shared/types/branded";
 import type { AccountAttributionState } from "../schema";
 import { getActiveTransactionConditions } from "./active-transaction-conditions";
-import { getDefaultAccountAttributionState } from "./build-transaction";
 
-type PersistedTransactionRow = typeof transactions.$inferInsert;
 type TransactionsPageInput = {
   readonly db: AnyDb;
   readonly userId: UserId;
@@ -37,43 +37,12 @@ type RecentTransactionsInput = {
   readonly previousMonth: Month;
 };
 
-export type TransactionRow = Omit<
-  PersistedTransactionRow,
-  "accountId" | "accountAttributionState" | "supersededAt"
-> & {
-  accountId?: FinancialAccountId;
+export type TransactionRow = TransactionStorageWriteRow & {
   accountAttributionState?: AccountAttributionState | string;
-  supersededAt?: IsoDateTime | null;
 };
 
-function resolveTransactionSource(row: TransactionRow): string {
-  return row.source ?? "manual";
-}
-
-function resolveTransactionAccountId(row: TransactionRow): FinancialAccountId {
-  return row.accountId ?? buildDefaultFinancialAccountId(row.userId);
-}
-
-function resolveTransactionAttributionState(
-  row: TransactionRow,
-  source: string
-): AccountAttributionState | string {
-  return row.accountAttributionState ?? getDefaultAccountAttributionState(source);
-}
-
-function normalizeTransactionRow(row: TransactionRow): PersistedTransactionRow {
-  const source = resolveTransactionSource(row);
-  return {
-    ...row,
-    source,
-    accountId: resolveTransactionAccountId(row),
-    accountAttributionState: resolveTransactionAttributionState(row, source),
-    supersededAt: row.supersededAt ?? null,
-  };
-}
-
 export function insertTransaction(db: AnyDb, row: TransactionRow) {
-  db.insert(transactions).values(normalizeTransactionRow(row)).run();
+  db.insert(transactions).values(normalizeTransactionStorageRow(row)).run();
 }
 
 export function getAllTransactions(db: AnyDb, userId: UserId): TransactionRow[] {
@@ -220,7 +189,7 @@ export function getRecentTransactions(input: RecentTransactionsInput): Transacti
 
 export function softDeleteTransaction(db: AnyDb, id: TransactionId, now: IsoDateTime) {
   db.update(transactions)
-    .set({ deletedAt: now, updatedAt: now })
+    .set({ voidedAt: now, updatedAt: now })
     .where(eq(transactions.id, id))
     .run();
 }
@@ -235,7 +204,7 @@ export function getTransactionById(db: AnyDb, id: TransactionId): TransactionRow
 }
 
 export function upsertTransaction(db: AnyDb, row: TransactionRow) {
-  const normalizedRow = normalizeTransactionRow(row);
+  const normalizedRow = normalizeTransactionStorageRow(row);
   db.insert(transactions)
     .values(normalizedRow)
     .onConflictDoUpdate({
@@ -245,12 +214,15 @@ export function upsertTransaction(db: AnyDb, row: TransactionRow) {
         amount: normalizedRow.amount,
         categoryId: normalizedRow.categoryId,
         description: normalizedRow.description,
+        counterpartyName: normalizedRow.counterpartyName,
         date: normalizedRow.date,
         accountId: normalizedRow.accountId,
         accountAttributionState: normalizedRow.accountAttributionState,
         supersededAt: normalizedRow.supersededAt,
+        supersededByTransferId: normalizedRow.supersededByTransferId,
+        source: normalizedRow.source,
         updatedAt: normalizedRow.updatedAt,
-        deletedAt: normalizedRow.deletedAt,
+        voidedAt: normalizedRow.voidedAt,
       },
     })
     .run();

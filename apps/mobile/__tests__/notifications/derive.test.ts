@@ -38,7 +38,7 @@ const makeTx = (overrides: Partial<StoredTransaction> = {}): StoredTransaction =
   date: new Date("2026-03-16T12:00:00"),
   createdAt: new Date(),
   updatedAt: new Date(),
-  deletedAt: null,
+  voidedAt: null,
   accountId: "fa-default-u1" as FinancialAccountId,
   accountAttributionState: "confirmed",
   ...overrides,

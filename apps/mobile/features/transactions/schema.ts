@@ -6,6 +6,7 @@ import type {
   CopAmount,
   FinancialAccountId,
   TransactionId,
+  TransferId,
   UserId,
 } from "@/shared/types/branded";
 
@@ -53,12 +54,14 @@ export type StoredTransaction = {
   readonly amount: CopAmount;
   readonly categoryId: CategoryId;
   readonly description: string;
+  readonly counterpartyName?: string;
   readonly date: Date;
   readonly createdAt: Date;
   readonly updatedAt: Date;
-  readonly deletedAt: Date | null;
+  readonly voidedAt?: Date | null;
   readonly accountId: FinancialAccountId;
   readonly accountAttributionState: AccountAttributionState;
   readonly supersededAt?: Date | null;
-  readonly source?: string;
+  readonly supersededByTransferId?: TransferId | null;
+  readonly source?: "manual" | "automated";
 };

@@ -18,7 +18,7 @@ function makeTx(overrides: Partial<StoredTransaction> & { date: Date }): StoredT
     description: "Test",
     createdAt: new Date(),
     updatedAt: new Date(),
-    deletedAt: null,
+    voidedAt: null,
     accountId: "fa-default-user-1" as FinancialAccountId,
     accountAttributionState: "confirmed",
     ...overrides,
