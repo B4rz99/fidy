@@ -1,0 +1,21 @@
+apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts
+  s_06776aec0c8ddc::t_fb979ee8e0816a 392-405
+apps/mobile/features/email-capture/lib/repository.ts
+  s_06776aec0c8ddc::t_24ca8ccbe25f67 114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "81b1d96e3e984b4f8ec26f69d3921a32d4b9babd",
+  "prompts": {},
+  "sessions": {
+    "s_06776aec0c8ddc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3257-fe5b-7e91-9611-21f4b0ac8221",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
