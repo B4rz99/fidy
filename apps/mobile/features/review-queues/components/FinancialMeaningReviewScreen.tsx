@@ -15,7 +15,7 @@ import { ScrollView, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
-import { formatMoney, showErrorToast } from "@/shared/lib";
+import { formatMoney, formatSignedMoney, showErrorToast } from "@/shared/lib";
 import { requireProcessedSourceEventId, requireReviewCandidateId } from "@/shared/types/assertions";
 import { useFinancialMeaningReviewQueue } from "../hooks/use-financial-meaning-review-queue";
 import { styles } from "./FinancialMeaningReviewScreen.styles";
@@ -65,6 +65,8 @@ export function FinancialMeaningReviewScreen() {
   const tertiary = useThemeColor("tertiary");
   const card = useThemeColor("card");
   const borderSubtle = useThemeColor("borderSubtle");
+  const accentGreen = useThemeColor("accentGreen");
+  const accentRed = useThemeColor("accentRed");
 
   if (hasLoadedQueue && reviewItem == null) {
     return (
@@ -139,7 +141,27 @@ export function FinancialMeaningReviewScreen() {
   const subtitleDate =
     reviewItem.reviewCandidate.occurredAt ?? reviewItem.processedSourceEvent.receivedAt;
   const amount = reviewItem.reviewCandidate.amount;
+  const transactionType = reviewItem.reviewCandidate.transactionType;
+  const amountColor =
+    transactionType === "income"
+      ? accentGreen
+      : transactionType === "expense"
+        ? accentRed
+        : primary;
   const subject = reviewItem.processedSourceEvent.subject ?? "";
+
+  const handleConvertToTransfer = () => {
+    if (reviewItem.processedSourceEvent.transactionId == null) return;
+
+    router.push({
+      pathname: "/reclassify-transaction",
+      params: {
+        transactionId: reviewItem.processedSourceEvent.transactionId,
+        processedSourceEventId: reviewItem.processedSourceEvent.id,
+        reviewCandidateId: reviewItem.reviewCandidate.id,
+      },
+    } as never);
+  };
 
   return (
     <ScreenLayout
@@ -168,7 +190,11 @@ export function FinancialMeaningReviewScreen() {
               </Text>
             </View>
             {amount != null ? (
-              <Text style={[styles.amount, { color: primary }]}>{formatMoney(amount)}</Text>
+              <Text style={[styles.amount, { color: amountColor }]}>
+                {transactionType == null
+                  ? formatMoney(amount)
+                  : formatSignedMoney(amount, transactionType)}
+              </Text>
             ) : null}
           </View>
 
@@ -192,6 +218,12 @@ export function FinancialMeaningReviewScreen() {
             label={t("financialMeaningReview.itsTransaction")}
             onPress={handleConfirmTransaction}
             disabled={isBusy}
+          />
+          <ActionButton
+            label={t("financialMeaningReview.transfer")}
+            onPress={handleConvertToTransfer}
+            variant="outline"
+            disabled={isBusy || reviewItem.processedSourceEvent.transactionId == null}
           />
           <ActionButton
             label={t("financialMeaningReview.dismiss")}

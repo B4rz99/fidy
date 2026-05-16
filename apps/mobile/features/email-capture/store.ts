@@ -3,7 +3,9 @@ import { captureError, captureWarning, toIsoDateTime } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import {
   getEmailAccounts,
+  getFailedEmails,
   getFailedEmailSourceEvents,
+  getNeedsReviewEmails,
   getNeedsReviewEmailSourceEvents,
   updateProcessedSourceEventStatus,
 } from "./lib/repository";
@@ -89,9 +91,12 @@ export async function loadFailedEmails(db: AnyDb, userId: UserId) {
   const request = beginEmailCaptureRequest("failedEmails", userId);
 
   try {
-    const failedEmailSourceEvents = await getFailedEmailSourceEvents(db, userId);
+    const [failedEmails, failedEmailSourceEvents] = await Promise.all([
+      getFailedEmails(db),
+      getFailedEmailSourceEvents(db, userId),
+    ]);
     if (!isCurrentEmailCaptureRequest(request)) return;
-    useEmailCaptureStore.getState().setFailedEmails([]);
+    useEmailCaptureStore.getState().setFailedEmails(failedEmails);
     useEmailCaptureStore.getState().setFailedEmailSourceEvents(failedEmailSourceEvents);
   } catch (error) {
     if (!isCurrentEmailCaptureRequest(request)) return;
@@ -106,9 +111,12 @@ export async function loadNeedsReviewEmails(db: AnyDb, userId: UserId) {
   const request = beginEmailCaptureRequest("needsReview", userId);
 
   try {
-    const needsReviewEmailSourceEvents = await getNeedsReviewEmailSourceEvents(db, userId);
+    const [needsReviewEmails, needsReviewEmailSourceEvents] = await Promise.all([
+      getNeedsReviewEmails(db),
+      getNeedsReviewEmailSourceEvents(db, userId),
+    ]);
     if (!isCurrentEmailCaptureRequest(request)) return;
-    useEmailCaptureStore.getState().setNeedsReviewEmails([]);
+    useEmailCaptureStore.getState().setNeedsReviewEmails(needsReviewEmails);
     useEmailCaptureStore.getState().setNeedsReviewEmailSourceEvents(needsReviewEmailSourceEvents);
   } catch (error) {
     if (!isCurrentEmailCaptureRequest(request)) return;

@@ -1,5 +1,8 @@
 import { relinkCaptureEvidenceToTransfer } from "@/features/capture-evidence/public";
-import { markProcessedSourceEventReclassifiedAsTransfer } from "@/features/email-capture/transfer-reclassification.public";
+import {
+  markProcessedEmailReclassifiedAsTransfer,
+  markProcessedSourceEventReclassifiedAsTransfer,
+} from "@/features/email-capture/transfer-reclassification.public";
 import {
   getTransactionById,
   markTransactionSuperseded,
@@ -9,6 +12,7 @@ import type {
   IsoDateTime,
   ProcessedEmailId,
   ProcessedSourceEventId,
+  ReviewCandidateId,
   TransactionId,
   TransferId,
   UserId,
@@ -28,6 +32,7 @@ type ReclassifyTransactionAsTransferInput = {
   readonly transactionId: TransactionId;
   readonly processedEmailId?: ProcessedEmailId;
   readonly processedSourceEventId?: ProcessedSourceEventId;
+  readonly reviewCandidateId?: ReviewCandidateId;
   readonly digits: string;
   readonly fromSide: TransferSide | null;
   readonly toSide: TransferSide | null;
@@ -42,6 +47,7 @@ type ReclassifyTransactionAsTransferDeps = {
   readonly loadTransactionById?: typeof getTransactionById;
   readonly saveTransactionRow?: typeof markTransactionSuperseded;
   readonly relinkEvidenceToTransfer?: typeof relinkCaptureEvidenceToTransfer;
+  readonly saveProcessedEmailStatus?: typeof markProcessedEmailReclassifiedAsTransfer;
   readonly saveProcessedSourceEventStatus?: typeof markProcessedSourceEventReclassifiedAsTransfer;
 };
 
@@ -61,6 +67,7 @@ export function reclassifyTransactionAsTransfer(
     loadTransactionById = getTransactionById,
     saveTransactionRow = markTransactionSuperseded,
     relinkEvidenceToTransfer = relinkCaptureEvidenceToTransfer,
+    saveProcessedEmailStatus = markProcessedEmailReclassifiedAsTransfer,
     saveProcessedSourceEventStatus = markProcessedSourceEventReclassifiedAsTransfer,
   }: ReclassifyTransactionAsTransferDeps = {}
 ): ReclassifyTransactionAsTransferResult {
@@ -112,11 +119,19 @@ export function reclassifyTransactionAsTransfer(
       updatedAt,
     });
 
-    if (input.processedSourceEventId) {
+    if (input.processedSourceEventId && input.reviewCandidateId) {
       saveProcessedSourceEventStatus({
         db: tx,
         id: input.processedSourceEventId,
         userId: input.userId,
+        reviewCandidateId: input.reviewCandidateId,
+        transactionId: existingTransaction.id,
+        updatedAt,
+      });
+    } else if (input.processedEmailId) {
+      saveProcessedEmailStatus({
+        db: tx,
+        id: input.processedEmailId,
         transactionId: existingTransaction.id,
       });
     }

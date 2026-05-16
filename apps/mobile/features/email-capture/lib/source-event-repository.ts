@@ -122,17 +122,20 @@ export function updateProcessedSourceEventStatusInTransaction(input: {
   readonly userId: UserId;
   readonly status: string;
   readonly transactionId: TransactionId | null;
+  readonly updatedAt: IsoDateTime;
 }) {
   const update = input.db
     .update(processedSourceEvents)
     .set({
       status: input.status,
       transactionId: input.transactionId,
+      updatedAt: input.updatedAt,
     })
     .where(
       and(
         eq(processedSourceEvents.id, input.id),
         eq(processedSourceEvents.userId, input.userId),
+        eq(processedSourceEvents.sourceFamily, "email"),
         eq(processedSourceEvents.status, "needs_review"),
         isNull(processedSourceEvents.deletedAt)
       )

@@ -24,6 +24,7 @@ export {
   dismissSourceEventFinancialMeaningReviewById,
   getFinancialMeaningSourceEventReviewRows,
   getSourceEventReviewCandidateById,
+  markSourceEventReviewCandidateReclassifiedAsTransfer,
   type FinancialMeaningSourceEventReviewRow,
 } from "./source-event-review-repository";
 export {

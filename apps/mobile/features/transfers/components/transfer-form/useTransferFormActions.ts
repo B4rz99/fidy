@@ -22,6 +22,7 @@ async function saveTransferFormAction(input: {
   readonly processedSourceEventId: Parameters<
     typeof submitTransferForm
   >[0]["processedSourceEventId"];
+  readonly reviewCandidateId: Parameters<typeof submitTransferForm>[0]["reviewCandidateId"];
   readonly resetDraft: (() => void) | null;
   readonly sourceTransaction: StoredTransaction | null;
   readonly toSide: TransferSide | null;
@@ -52,6 +53,7 @@ export function useTransferFormActions(input: {
   readonly processedSourceEventId: Parameters<
     typeof submitTransferForm
   >[0]["processedSourceEventId"];
+  readonly reviewCandidateId: Parameters<typeof submitTransferForm>[0]["reviewCandidateId"];
   readonly setDate: (date: Date) => void;
   readonly setDescription: (description: string) => void;
   readonly setDigits: (digits: string) => void;
@@ -103,6 +105,7 @@ export function useTransferFormActions(input: {
           onSuccessfulSave: input.onSuccessfulSave,
           processedEmailId: input.processedEmailId,
           processedSourceEventId: input.processedSourceEventId,
+          reviewCandidateId: input.reviewCandidateId,
           resetDraft:
             input.sourceTransaction == null
               ? () => resetSavedTransferDraft(input, input.defaultFromSide)

@@ -6,6 +6,7 @@ import { tryGetDb } from "@/shared/db";
 import {
   requireProcessedEmailId,
   requireProcessedSourceEventId,
+  requireReviewCandidateId,
   requireTransactionId,
 } from "@/shared/types/assertions";
 import type { TransferFormScreenProps } from "./TransferForm.types";
@@ -35,6 +36,14 @@ function parseReclassificationProcessedSourceEventId(
     : null;
 }
 
+function parseReclassificationReviewCandidateId(
+  rawReviewCandidateId: string | string[] | undefined
+) {
+  return typeof rawReviewCandidateId === "string" && rawReviewCandidateId.trim().length > 0
+    ? requireReviewCandidateId(rawReviewCandidateId.trim())
+    : null;
+}
+
 async function navigateAfterTransferSave(
   destination: "needs-review" | "tabs",
   replace: ReturnType<typeof useRouter>["replace"],
@@ -53,10 +62,12 @@ function useTransferFormRouteContext() {
     transactionId: rawTransactionId,
     processedEmailId: rawProcessedEmailId,
     processedSourceEventId: rawProcessedSourceEventId,
+    reviewCandidateId: rawReviewCandidateId,
   } = useLocalSearchParams<{
     transactionId?: string;
     processedEmailId?: string;
     processedSourceEventId?: string;
+    reviewCandidateId?: string;
   }>();
   const { back, navigate, replace } = useRouter();
   const userId = useOptionalUserId();
@@ -72,6 +83,7 @@ function useTransferFormRouteContext() {
     ),
     processedEmailId: parseReclassificationProcessedEmailId(rawProcessedEmailId),
     processedSourceEventId: parseReclassificationProcessedSourceEventId(rawProcessedSourceEventId),
+    reviewCandidateId: parseReclassificationReviewCandidateId(rawReviewCandidateId),
     reclassificationTransactionId: parseReclassificationTransactionId(rawTransactionId),
     userId,
   };
@@ -108,6 +120,7 @@ function useTransferFormDerivedState(
       onSuccessfulSave: props.onSuccessfulSave ?? route.onSuccessfulSave,
       processedEmailId: route.processedEmailId,
       processedSourceEventId: route.processedSourceEventId,
+      reviewCandidateId: route.reviewCandidateId,
       setDate: state.setDate,
       setDescription: state.setDescription,
       setDigits: state.setDigits,

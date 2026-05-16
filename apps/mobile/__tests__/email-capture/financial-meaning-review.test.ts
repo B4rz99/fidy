@@ -12,6 +12,7 @@ import {
   resolveFinancialMeaningReview,
 } from "@/features/email-capture/lib/financial-meaning-review";
 import {
+  getFailedEmailSourceEvents,
   getNeedsReviewEmails,
   getNeedsReviewEmailSourceEvents,
   getProcessedEmailByExternalId,
@@ -270,6 +271,24 @@ describe("financial meaning review", () => {
     ]);
   });
 
+  it("does not include retry-scheduled source events in the failed queue", async () => {
+    insertNeedsReviewSourceEvent({
+      id: "pse-failed" as ProcessedSourceEventId,
+      status: "failed",
+      failureReason: "parse failed",
+    });
+    insertNeedsReviewSourceEvent({
+      id: "pse-retry" as ProcessedSourceEventId,
+      sourceEventId: "ext-source-retry",
+      status: "pending_retry",
+      failureReason: "temporary failure",
+    });
+
+    await expect(getFailedEmailSourceEvents(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({ id: "pse-failed" }),
+    ]);
+  });
+
   it("resolving a missing review item is a no-op", async () => {
     await expect(
       resolveFinancialMeaningReview(db as any, "pe-missing" as ProcessedEmailId)
@@ -448,6 +467,35 @@ describe("financial meaning review", () => {
       expect.objectContaining({
         id: "rc-review-1",
         status: "accepted",
+      }),
+    ]);
+  });
+
+  it("does not confirm non-email source-event review candidates", async () => {
+    insertNeedsReviewSourceEvent({ sourceFamily: "sms", sourceId: "notification_listener" });
+    insertReviewCandidate();
+
+    await expect(
+      confirmSourceEventFinancialMeaningReview(db as any, {
+        userId: USER_ID,
+        processedSourceEventId: "pse-review-1" as ProcessedSourceEventId,
+        reviewCandidateId: "rc-review-1" as ReviewCandidateId,
+        now: () => "2026-04-19T11:00:00.000Z" as IsoDateTime,
+      })
+    ).resolves.toBe(false);
+
+    expect(db.select().from(processedSourceEvents).all()).toEqual([
+      expect.objectContaining({
+        id: "pse-review-1",
+        sourceFamily: "sms",
+        status: "needs_review",
+        transactionId: null,
+      }),
+    ]);
+    expect(db.select().from(reviewCandidates).all()).toEqual([
+      expect.objectContaining({
+        id: "rc-review-1",
+        status: "pending",
       }),
     ]);
   });

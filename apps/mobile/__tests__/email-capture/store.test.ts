@@ -606,20 +606,28 @@ describe("email capture boundary", () => {
   });
 
   it("loadFailedEmails fetches from DB and sets state", async () => {
+    const mockLegacyFailed = [makeProcessedEmail({ id: "pe-legacy" as ProcessedEmailId })];
     const mockFailed = [
       makeProcessedEmailSourceEvent({ failureReason: "parse error", subject: "Compra" }),
     ];
+    vi.mocked(getFailedEmails).mockResolvedValueOnce(mockLegacyFailed);
     vi.mocked(getFailedEmailSourceEvents).mockResolvedValueOnce(mockFailed);
 
     await loadFailedEmails(mockDb, mockUserId as UserId);
 
-    expect(getFailedEmails).not.toHaveBeenCalled();
+    expect(getFailedEmails).toHaveBeenCalledWith(mockDb);
     expect(getFailedEmailSourceEvents).toHaveBeenCalledWith(mockDb, mockUserId);
-    expect(useEmailCaptureStore.getState().failedEmails).toEqual([]);
+    expect(useEmailCaptureStore.getState().failedEmails).toEqual(mockLegacyFailed);
     expect(useEmailCaptureStore.getState().failedEmailSourceEvents).toEqual(mockFailed);
   });
 
   it("loadNeedsReview fetches from DB and sets state", async () => {
+    const mockLegacyReview = [
+      makeProcessedEmail({
+        id: "pe-review-legacy" as ProcessedEmailId,
+        status: "needs_review",
+      }),
+    ];
     const mockReview = [
       makeProcessedEmailSourceEvent({
         id: "pse-2" as ProcessedSourceEventId,
@@ -630,13 +638,14 @@ describe("email capture boundary", () => {
         confidence: 0.5,
       }),
     ];
+    vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce(mockLegacyReview);
     vi.mocked(getNeedsReviewEmailSourceEvents).mockResolvedValueOnce(mockReview);
 
     await loadNeedsReviewEmails(mockDb, mockUserId as UserId);
 
-    expect(getNeedsReviewEmails).not.toHaveBeenCalled();
+    expect(getNeedsReviewEmails).toHaveBeenCalledWith(mockDb);
     expect(getNeedsReviewEmailSourceEvents).toHaveBeenCalledWith(mockDb, mockUserId);
-    expect(useEmailCaptureStore.getState().needsReviewEmails).toEqual([]);
+    expect(useEmailCaptureStore.getState().needsReviewEmails).toEqual(mockLegacyReview);
     expect(useEmailCaptureStore.getState().needsReviewEmailSourceEvents).toEqual(mockReview);
   });
 

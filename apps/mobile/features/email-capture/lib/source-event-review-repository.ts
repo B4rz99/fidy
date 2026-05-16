@@ -57,6 +57,7 @@ export function getSourceEventReviewCandidateById(
       and(
         eq(processedSourceEvents.id, input.processedSourceEventId),
         eq(processedSourceEvents.userId, input.userId),
+        eq(processedSourceEvents.sourceFamily, "email"),
         eq(reviewCandidates.id, input.reviewCandidateId),
         eq(reviewCandidates.userId, input.userId),
         eq(reviewCandidates.status, "pending"),
@@ -106,6 +107,7 @@ const markSourceEventReviewProcessed = (
       and(
         eq(processedSourceEvents.id, input.processedSourceEventId),
         eq(processedSourceEvents.userId, input.userId),
+        eq(processedSourceEvents.sourceFamily, "email"),
         eq(processedSourceEvents.status, "needs_review"),
         isNull(processedSourceEvents.deletedAt)
       )
@@ -222,6 +224,7 @@ const markSourceEventAfterReviewDismissal = (
       and(
         eq(processedSourceEvents.id, input.processedSourceEventId),
         eq(processedSourceEvents.userId, input.userId),
+        eq(processedSourceEvents.sourceFamily, "email"),
         eq(processedSourceEvents.status, "needs_review"),
         isNull(processedSourceEvents.deletedAt)
       )
@@ -248,5 +251,30 @@ export function dismissSourceEventFinancialMeaningReviewById(
     if (sourceEventUpdate.changes !== 1) {
       throw new Error("Review source event was not active");
     }
+  });
+}
+
+export function markSourceEventReviewCandidateReclassifiedAsTransfer(
+  db: AnyDb,
+  input: {
+    readonly userId: UserId;
+    readonly processedSourceEventId: ProcessedSourceEventId;
+    readonly reviewCandidateId: ReviewCandidateId;
+    readonly transactionId: TransactionId;
+    readonly updatedAt: IsoDateTime;
+  }
+) {
+  db.transaction((tx) => {
+    const sourceEventUpdate = markSourceEventReviewProcessed(tx, input);
+    if (sourceEventUpdate.changes !== 1) {
+      throw new Error("Review source event was not active");
+    }
+
+    const rejectedCandidateUpdate = rejectPendingReviewCandidate(tx, input);
+    if (rejectedCandidateUpdate.changes !== 1) {
+      throw new Error("Review candidate resolution target was not found");
+    }
+
+    rejectPendingSiblingCandidates(tx, input);
   });
 }

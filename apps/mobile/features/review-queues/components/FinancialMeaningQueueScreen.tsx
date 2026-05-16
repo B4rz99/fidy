@@ -16,7 +16,7 @@ import { Pressable, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
-import { formatMoney, showErrorToast } from "@/shared/lib";
+import { formatMoney, formatSignedMoney, showErrorToast } from "@/shared/lib";
 import type { ProcessedSourceEventId, ReviewCandidateId } from "@/shared/types/branded";
 import { useFinancialMeaningReviewQueue } from "../hooks/use-financial-meaning-review-queue";
 import { styles } from "./FinancialMeaningQueueScreen.styles";
@@ -41,6 +41,8 @@ function FinancialMeaningQueueCard({
   const tertiary = useThemeColor("tertiary");
   const card = useThemeColor("card");
   const borderSubtle = useThemeColor("borderSubtle");
+  const accentGreen = useThemeColor("accentGreen");
+  const accentRed = useThemeColor("accentRed");
   const providerLabel =
     item.processedSourceEvent.sourceId === "email_gmail"
       ? t("financialMeaningReview.providers.gmail")
@@ -52,6 +54,13 @@ function FinancialMeaningQueueCard({
     t("common.unknown");
   const subtitleDate = item.reviewCandidate.occurredAt ?? item.processedSourceEvent.receivedAt;
   const amount = item.reviewCandidate.amount;
+  const transactionType = item.reviewCandidate.transactionType;
+  const amountColor =
+    transactionType === "income"
+      ? accentGreen
+      : transactionType === "expense"
+        ? accentRed
+        : primary;
 
   return (
     <View style={[styles.card, { backgroundColor: card, borderColor: borderSubtle }]}>
@@ -78,11 +87,13 @@ function FinancialMeaningQueueCard({
               style={[
                 styles.cardAmount,
                 {
-                  color: primary,
+                  color: amountColor,
                 },
               ]}
             >
-              {formatMoney(amount)}
+              {transactionType == null
+                ? formatMoney(amount)
+                : formatSignedMoney(amount, transactionType)}
             </Text>
           ) : null}
         </View>

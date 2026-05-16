@@ -23,7 +23,7 @@ import { markTransactionSuperseded } from "@/features/transactions/transfer-recl
 import { reclassifyTransactionAsTransfer } from "@/features/transfers/lib/reclassify-transaction-as-transfer";
 import { reclassifyTransactionsAsTransfer } from "@/features/transfers/lib/reclassify-transactions-as-transfer";
 import { getTransferById } from "@/features/transfers/lib/repository";
-import { financialAccounts, processedSourceEvents } from "@/shared/db/schema";
+import { financialAccounts, processedSourceEvents, reviewCandidates } from "@/shared/db/schema";
 import type {
   CaptureEvidenceId,
   CategoryId,
@@ -33,6 +33,7 @@ import type {
   IsoDateTime,
   ProcessedEmailId,
   ProcessedSourceEventId,
+  ReviewCandidateId,
   TransactionId,
   TransferId,
   UserId,
@@ -185,6 +186,26 @@ function insertPendingProcessedSourceEvent() {
       deletedAt: null,
     })
     .run();
+
+  db.insert(reviewCandidates)
+    .values({
+      id: "rc-1" as ReviewCandidateId,
+      userId: USER_ID,
+      processedSourceEventId: "pse-1" as ProcessedSourceEventId,
+      status: "pending",
+      candidateKind: "transaction",
+      amount: 350000 as CopAmount,
+      currency: "COP",
+      occurredAt: ORIGINAL_CREATED_AT,
+      description: "Transfer to savings",
+      categoryId: null,
+      transactionType: "expense",
+      confidence: 0.52,
+      createdAt: ORIGINAL_CREATED_AT,
+      updatedAt: ORIGINAL_CREATED_AT,
+      deletedAt: null,
+    })
+    .run();
 }
 
 function seedReclassificationScenario() {
@@ -206,6 +227,7 @@ function runReclassification() {
       description: "Move to savings",
       date: new Date("2026-04-18T12:00:00.000Z"),
       processedSourceEventId: "pse-1" as ProcessedSourceEventId,
+      reviewCandidateId: "rc-1" as ReviewCandidateId,
     },
     {
       now: () => new Date(NOW),
@@ -261,6 +283,20 @@ function expectProcessedSourceEventSucceeded() {
       id: "pse-1",
       status: "processed",
       transactionId: ORIGINAL_TRANSACTION_ID,
+      updatedAt: NOW,
+    })
+  );
+  expect(
+    db
+      .select()
+      .from(reviewCandidates)
+      .where(eq(reviewCandidates.id, "rc-1" as ReviewCandidateId))
+      .get()
+  ).toEqual(
+    expect.objectContaining({
+      id: "rc-1",
+      status: "rejected",
+      updatedAt: NOW,
     })
   );
 }

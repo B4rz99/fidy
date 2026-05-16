@@ -20,7 +20,7 @@ export async function getFailedEmailSourceEvents(db: AnyDb, userId: UserId) {
   return db
     .select({ ...sourceEventQueueColumns, rawBody: sql<null>`null` })
     .from(processedSourceEvents)
-    .where(emailSourceEventQueueFilter(userId, ["failed", "pending_retry"]))
+    .where(emailSourceEventQueueFilter(userId, ["failed"]))
     .orderBy(desc(processedSourceEvents.receivedAt));
 }
 
