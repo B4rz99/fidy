@@ -1,0 +1,35 @@
+apps/mobile/__tests__/transfers/manual-transfer-local-ledger.test.ts
+  s_4bee7d48547a1f::t_4dfadcb6f4a44e 4-15,137-155
+  s_4bee7d48547a1f::t_3e5c5c7e1376a7 94
+apps/mobile/__tests__/transfers/mutation-service.test.ts
+  s_4bee7d48547a1f::t_c0d83bd6daca30 54,117-142
+  s_4bee7d48547a1f::t_3023f7863e2e01 143
+apps/mobile/infrastructure/local-ledger/record-transfer.ts
+  s_4bee7d48547a1f::t_4dfadcb6f4a44e 73
+  s_4bee7d48547a1f::t_af17eb96507134 86
+apps/mobile/features/transfers/lib/mutation-service.ts
+  s_4bee7d48547a1f::t_4dfadcb6f4a44e 54-59
+  s_4bee7d48547a1f::t_af17eb96507134 63
+apps/mobile/local-ledger/domain/public.ts
+  s_4bee7d48547a1f::t_af17eb96507134 59
+apps/mobile/local-ledger/use-cases/record-transfer-builders.ts
+  s_4bee7d48547a1f::t_af17eb96507134 19
+apps/mobile/__tests__/local-ledger/record-transfer.test.ts
+  s_4bee7d48547a1f::t_2e8cb93f5609d8 78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "7534ad3979e141999de8b44cf2384753fd48d661",
+  "prompts": {},
+  "sessions": {
+    "s_4bee7d48547a1f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2e4c-539f-7b63-9a62-272401c272ce",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
