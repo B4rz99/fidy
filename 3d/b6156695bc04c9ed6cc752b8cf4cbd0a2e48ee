@@ -1,0 +1,19 @@
+apps/mobile/features/email-capture/services/email-pipeline-service/retry-transaction-bundle.ts
+  s_b481c7ac3047cb::t_386b5e51cab25d 76-77,81-82,94,96-102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "3db6156695bc04c9ed6cc752b8cf4cbd0a2e48ee",
+  "prompts": {},
+  "sessions": {
+    "s_b481c7ac3047cb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3135-728d-73d0-b748-bae1f1529710",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
