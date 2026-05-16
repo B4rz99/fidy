@@ -1,4 +1,4 @@
-import type { CaptureEvidenceType } from "@/features/capture-evidence/schema.public";
+import type { CaptureEvidenceType } from "@/shared/capture-evidence/types";
 import type {
   CopAmount,
   FinancialAccountId,

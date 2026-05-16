@@ -14,9 +14,10 @@ type ImportViolation = {
 
 const DEFAULT_ROOT = process.cwd();
 const FEATURES_ROOT = join("apps", "mobile", "features");
+const LOCAL_LEDGER_ROOT = join("apps", "mobile", "local-ledger");
 const TEST_FILE_PATTERN = /\.test\.(ts|tsx)$/;
-const FEATURE_IMPORT_PATTERN =
-  /(?:^|\n)\s*(?:import|export)(?:\s+type)?[\s\S]*?\bfrom\s+["']@\/features\/([^/"']+)["']/g;
+const FEATURE_IMPORT_PATTERN = String.raw`(?:^|\n)\s*(?:import|export)(?:\s+type)?[\s\S]*?\bfrom\s+["']@\/features\/([^/"']+)["']`;
+const ANY_FEATURE_IMPORT_PATTERN = String.raw`(?:^|\n)\s*(?:import|export)(?:\s+type)?[\s\S]*?\bfrom\s+["']@\/features\/([^/"']+)(?:\/[^"']*)?["']`;
 const withOptions = (options: CliOptions, patch: Partial<CliOptions>): CliOptions => ({
   ...options,
   ...patch,
@@ -60,7 +61,18 @@ const getDeclarationOffset = (match: RegExpMatchArray): number | null => {
 const collectFeatureImports = (
   source: string
 ): readonly { readonly importedFeature: string; readonly line: number }[] =>
-  Array.from(source.matchAll(FEATURE_IMPORT_PATTERN)).flatMap((match) => {
+  collectImportsMatchingPattern(source, FEATURE_IMPORT_PATTERN);
+
+const collectAnyFeatureImports = (
+  source: string
+): readonly { readonly importedFeature: string; readonly line: number }[] =>
+  collectImportsMatchingPattern(source, ANY_FEATURE_IMPORT_PATTERN);
+
+const collectImportsMatchingPattern = (
+  source: string,
+  pattern: string
+): readonly { readonly importedFeature: string; readonly line: number }[] =>
+  Array.from(source.matchAll(new RegExp(pattern, "g"))).flatMap((match) => {
     const importedFeature = match[1];
     const matchIndex = match.index;
     const declarationOffset = getDeclarationOffset(match);
@@ -97,6 +109,24 @@ export const collectFeaturePublicImportViolations = (root: string): readonly Imp
     });
 };
 
+export const collectLocalLedgerFeatureImportViolations = (
+  root: string
+): readonly ImportViolation[] => {
+  const localLedgerRoot = join(root, LOCAL_LEDGER_ROOT);
+
+  return walk(localLedgerRoot)
+    .filter(isTsSourceFile)
+    .filter((path) => !isIgnoredSourceFile(path))
+    .flatMap((path) => {
+      const source = readFileSync(path, "utf8");
+      return collectAnyFeatureImports(source).map((importedFeature) => ({
+        importer: normalizePath(relative(root, path)),
+        importedFeature: importedFeature.importedFeature,
+        line: importedFeature.line,
+      }));
+    });
+};
+
 const parseArgs = (argv: readonly string[]): CliOptions =>
   argv.reduce<CliOptions>(
     (options, arg, index, allArgs) => {
@@ -117,12 +147,16 @@ const parseArgs = (argv: readonly string[]): CliOptions =>
 const formatViolation = (violation: ImportViolation): string =>
   `${violation.importer}:${violation.line} imports @/features/${violation.importedFeature}`;
 
-const reportViolations = (violations: readonly ImportViolation[]): void => {
+const reportViolations = (
+  violations: readonly ImportViolation[],
+  label: string,
+  emptyMessage: string
+): void => {
   const total = violations.length;
-  console.log(`Broad cross-feature barrel imports: ${total}`);
+  console.log(`${label}: ${total}`);
 
   if (total === 0) {
-    console.log("No broad cross-feature barrel imports found.");
+    console.log(emptyMessage);
     return;
   }
 
@@ -136,10 +170,23 @@ const reportViolations = (violations: readonly ImportViolation[]): void => {
 
 const main = (argv: readonly string[]): number => {
   const options = parseArgs(argv);
-  const violations = collectFeaturePublicImportViolations(options.root);
-  reportViolations(violations);
+  const featureImportViolations = collectFeaturePublicImportViolations(options.root);
+  const localLedgerImportViolations = collectLocalLedgerFeatureImportViolations(options.root);
+  reportViolations(
+    featureImportViolations,
+    "Broad cross-feature barrel imports",
+    "No broad cross-feature barrel imports found."
+  );
+  reportViolations(
+    localLedgerImportViolations,
+    "Local Ledger feature imports",
+    "No Local Ledger feature imports found."
+  );
 
-  return options.enforce && violations.length > 0 ? 1 : 0;
+  return options.enforce &&
+    (featureImportViolations.length > 0 || localLedgerImportViolations.length > 0)
+    ? 1
+    : 0;
 };
 
 if (import.meta.main) {
