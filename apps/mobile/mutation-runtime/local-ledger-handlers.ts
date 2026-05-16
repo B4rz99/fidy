@@ -1,12 +1,13 @@
 /* eslint-disable no-restricted-imports */
 
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import {
   captureEvidence,
   processedSourceEvents,
   reviewCandidateCaptureEvidence,
   reviewCandidates,
 } from "@/shared/db/schema";
+import type { ProcessedSourceEventId } from "@/shared/types/branded";
 import type { MutationCommandByKind, MutationHandlerSubset } from "./common";
 import { completeCommand } from "./common";
 
@@ -49,17 +50,86 @@ const applyCreateReviewCandidate = (
 ) => {
   assertConsistentReviewCandidateGraph(command);
 
-  db.insert(processedSourceEvents).values(command.processedSourceEventRow).run();
-  db.insert(reviewCandidates).values(command.reviewCandidateRow).run();
-  command.evidenceRows.forEach((row) => {
-    db.insert(captureEvidence).values(row).run();
-  });
-  command.evidenceLinkRows.forEach((row) => {
-    db.insert(reviewCandidateCaptureEvidence).values(row).run();
-  });
+  insertProcessedSourceEvent(db, command);
+  const persistedSourceEvent = loadPersistedSourceEvent(db, command);
+  if (persistedSourceEvent.id !== command.processedSourceEventRow.id) {
+    return completeCommand(command.afterCommit);
+  }
+  insertReviewCandidateGraph(db, command, persistedSourceEvent.id);
 
   return completeCommand(command.afterCommit);
 };
+
+function insertProcessedSourceEvent(
+  db: Parameters<
+    MutationHandlerSubset<"localLedger.reviewCandidate.create">["localLedger.reviewCandidate.create"]
+  >[0],
+  command: CreateReviewCandidateCommand
+) {
+  db.insert(processedSourceEvents)
+    .values(command.processedSourceEventRow)
+    .onConflictDoNothing({
+      target: [
+        processedSourceEvents.userId,
+        processedSourceEvents.sourceFamily,
+        processedSourceEvents.sourceId,
+        processedSourceEvents.sourceEventId,
+      ],
+      where: sql`${processedSourceEvents.deletedAt} is null`,
+    })
+    .run();
+}
+
+function loadPersistedSourceEvent(
+  db: Parameters<
+    MutationHandlerSubset<"localLedger.reviewCandidate.create">["localLedger.reviewCandidate.create"]
+  >[0],
+  command: CreateReviewCandidateCommand
+) {
+  const [persistedSourceEvent] = db
+    .select({ id: processedSourceEvents.id })
+    .from(processedSourceEvents)
+    .where(
+      and(
+        eq(processedSourceEvents.userId, command.processedSourceEventRow.userId),
+        eq(processedSourceEvents.sourceFamily, command.processedSourceEventRow.sourceFamily),
+        eq(processedSourceEvents.sourceId, command.processedSourceEventRow.sourceId),
+        eq(processedSourceEvents.sourceEventId, command.processedSourceEventRow.sourceEventId),
+        isNull(processedSourceEvents.deletedAt)
+      )
+    )
+    .limit(1)
+    .all();
+  if (!persistedSourceEvent) {
+    throw new Error("Review candidate source event was not persisted");
+  }
+  return { id: persistedSourceEvent.id as ProcessedSourceEventId };
+}
+
+function insertReviewCandidateGraph(
+  db: Parameters<
+    MutationHandlerSubset<"localLedger.reviewCandidate.create">["localLedger.reviewCandidate.create"]
+  >[0],
+  command: CreateReviewCandidateCommand,
+  normalizedSourceEventId: ProcessedSourceEventId
+) {
+  db.insert(reviewCandidates)
+    .values({
+      ...command.reviewCandidateRow,
+      processedSourceEventId: normalizedSourceEventId,
+    })
+    .onConflictDoNothing()
+    .run();
+  command.evidenceRows.forEach((row) => {
+    db.insert(captureEvidence)
+      .values({ ...row, processedSourceEventId: normalizedSourceEventId })
+      .onConflictDoNothing()
+      .run();
+  });
+  command.evidenceLinkRows.forEach((row) => {
+    db.insert(reviewCandidateCaptureEvidence).values(row).onConflictDoNothing().run();
+  });
+}
 
 const applyResolveReviewCandidate = (
   db: Parameters<

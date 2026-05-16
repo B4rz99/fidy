@@ -11,7 +11,7 @@ import { EmailPipelineDeps } from "./runtime";
 import { getParsedCounterpartyName } from "./shared";
 import type { CreateEmailPipelineServiceDeps, PersistedTransactionContext } from "./types";
 
-const buildTransactionRow = (
+export const buildTransactionRow = (
   context: PersistedTransactionContext,
   transaction: RecordTransactionAccepted
 ): TransactionRow => ({
@@ -30,12 +30,10 @@ const buildTransactionRow = (
   updatedAt: context.now,
 });
 
-export const recordTransactionToDb = async (
+export const prepareRecordedTransaction = async (
   context: PersistedTransactionContext,
   input: {
-    readonly insertTransaction: CreateEmailPipelineServiceDeps["insertTransaction"];
     readonly recordTransaction: NonNullable<CreateEmailPipelineServiceDeps["recordTransaction"]>;
-    readonly db: PersistedTransactionContext["db"];
   }
 ) => {
   const result = await input.recordTransaction({
@@ -52,10 +50,7 @@ export const recordTransactionToDb = async (
       source: "email_capture",
     },
     ports: {
-      commit: async (transaction) => {
-        await input.insertTransaction(input.db, buildTransactionRow(context, transaction));
-        return { ok: true as const, transaction };
-      },
+      commit: async (transaction) => ({ ok: true as const, transaction }),
       canUseAccount: async () => true,
       canUseCategory: async () => true,
       today: () => requireIsoDate(context.now.slice(0, 10)),
@@ -63,6 +58,21 @@ export const recordTransactionToDb = async (
     },
   });
   if (!result.ok) throw new Error(`RecordTransaction rejected: ${result.code}`);
+  return result.transaction;
+};
+
+export const recordTransactionToDb = async (
+  context: PersistedTransactionContext,
+  input: {
+    readonly insertTransaction: CreateEmailPipelineServiceDeps["insertTransaction"];
+    readonly recordTransaction: NonNullable<CreateEmailPipelineServiceDeps["recordTransaction"]>;
+    readonly db: PersistedTransactionContext["db"];
+  }
+) => {
+  const transaction = await prepareRecordedTransaction(context, {
+    recordTransaction: input.recordTransaction,
+  });
+  await input.insertTransaction(input.db, buildTransactionRow(context, transaction));
 };
 
 export function persistTransactionRecordEffect(context: PersistedTransactionContext) {

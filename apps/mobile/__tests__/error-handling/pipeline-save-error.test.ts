@@ -15,7 +15,11 @@ vi.mock("@/shared/lib/sentry", () => ({
 const mockGetProcessedExternalIds = vi
   .fn<(...args: any[]) => any>()
   .mockResolvedValue(new Set<string>());
+const mockGetProcessedEmailSourceEventIds = vi
+  .fn<(...args: any[]) => any>()
+  .mockResolvedValue(new Set<string>());
 const mockInsertProcessedEmail = vi.fn<(...args: any[]) => any>();
+const mockInsertProcessedEmailSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
 const mockLookupMerchantRule = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
 const mockInsertMerchantRule = vi.fn<(...args: any[]) => any>();
@@ -25,11 +29,11 @@ const mockEnsureDefaultFinancialAccount = vi.fn<(...args: any[]) => any>();
 mockEnsureDefaultFinancialAccount.mockImplementation((_: unknown, userId: string) => ({
   id: `fa-default-${userId}`,
 }));
-const mockGetPendingRetryEmails = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
-const mockMarkForRetry = vi.fn<(...args: any[]) => any>();
-const mockMarkPermanentlyFailed = vi.fn<(...args: any[]) => any>();
-const mockMarkRetrySuccess = vi.fn<(...args: any[]) => any>();
-const mockUpdateProcessedEmailStatus = vi.fn<(...args: any[]) => any>();
+const mockGetPendingRetryEmailSourceEvents = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
+const mockMarkSourceEventForRetry = vi.fn<(...args: any[]) => any>();
+const mockMarkSourceEventPermanentlyFailed = vi.fn<(...args: any[]) => any>();
+const mockMarkSourceEventRetrySuccess = vi.fn<(...args: any[]) => any>();
+const mockUpdateProcessedSourceEventStatus = vi.fn<(...args: any[]) => any>();
 const mockBuildEmailCaptureEvidence = vi.fn<(...args: any[]) => any>().mockReturnValue([
   {
     sourceFamily: "bancolombia",
@@ -59,12 +63,19 @@ vi.mock("@/features/capture-sources/lib/dedup", () => ({
 
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getProcessedExternalIds: (...args: unknown[]) => mockGetProcessedExternalIds(...args),
+  getProcessedEmailSourceEventIds: (...args: unknown[]) =>
+    mockGetProcessedEmailSourceEventIds(...args),
   insertProcessedEmail: (...args: unknown[]) => mockInsertProcessedEmail(...args),
-  getPendingRetryEmails: (...args: unknown[]) => mockGetPendingRetryEmails(...args),
-  markForRetry: (...args: unknown[]) => mockMarkForRetry(...args),
-  markPermanentlyFailed: (...args: unknown[]) => mockMarkPermanentlyFailed(...args),
-  markRetrySuccess: (...args: unknown[]) => mockMarkRetrySuccess(...args),
-  updateProcessedEmailStatus: (...args: unknown[]) => mockUpdateProcessedEmailStatus(...args),
+  insertProcessedEmailSourceEvent: (...args: unknown[]) =>
+    mockInsertProcessedEmailSourceEvent(...args),
+  getPendingRetryEmailSourceEvents: (...args: unknown[]) =>
+    mockGetPendingRetryEmailSourceEvents(...args),
+  markSourceEventForRetry: (...args: unknown[]) => mockMarkSourceEventForRetry(...args),
+  markSourceEventPermanentlyFailed: (...args: unknown[]) =>
+    mockMarkSourceEventPermanentlyFailed(...args),
+  markSourceEventRetrySuccess: (...args: unknown[]) => mockMarkSourceEventRetrySuccess(...args),
+  updateProcessedSourceEventStatus: (...args: unknown[]) =>
+    mockUpdateProcessedSourceEventStatus(...args),
 }));
 
 vi.mock("@/features/transactions/lib/repository", () => ({
@@ -101,6 +112,7 @@ vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: unknown[]) => mockGenerateId(...args),
   generateTransactionId: () => mockGenerateId("tx"),
   generateProcessedEmailId: () => mockGenerateId("pe"),
+  generateProcessedSourceEventId: () => mockGenerateId("pse"),
 }));
 
 const mockDb = {} as any;
@@ -128,18 +140,22 @@ describe("pipeline worker save error path", () => {
       idCounter++;
       return `${prefix}-${idCounter}`;
     });
+    mockGetProcessedExternalIds.mockReset();
+    mockGetProcessedEmailSourceEventIds.mockReset();
     mockGetProcessedExternalIds.mockResolvedValue(new Set<string>());
+    mockGetProcessedEmailSourceEventIds.mockResolvedValue(new Set<string>());
     mockInsertProcessedEmail.mockResolvedValue(undefined);
+    mockInsertProcessedEmailSourceEvent.mockResolvedValue(undefined);
     mockInsertTransaction.mockResolvedValue(undefined);
     mockLookupMerchantRule.mockResolvedValue(null);
     mockInsertMerchantRule.mockResolvedValue(undefined);
     mockParseEmailApi.mockResolvedValue(null);
     mockFindDuplicateTransaction.mockResolvedValue(null);
-    mockGetPendingRetryEmails.mockResolvedValue([]);
-    mockMarkForRetry.mockResolvedValue(undefined);
-    mockMarkPermanentlyFailed.mockResolvedValue(undefined);
-    mockMarkRetrySuccess.mockResolvedValue(undefined);
-    mockUpdateProcessedEmailStatus.mockResolvedValue(undefined);
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValue([]);
+    mockMarkSourceEventForRetry.mockResolvedValue(undefined);
+    mockMarkSourceEventPermanentlyFailed.mockResolvedValue(undefined);
+    mockMarkSourceEventRetrySuccess.mockResolvedValue(undefined);
+    mockUpdateProcessedSourceEventStatus.mockResolvedValue(undefined);
     mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
     mockLinkCaptureEvidenceToTransaction.mockResolvedValue(undefined);
   });

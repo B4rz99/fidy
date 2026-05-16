@@ -14,7 +14,11 @@ import type { FinancialAccountId } from "@/shared/types/branded";
 const mockGetProcessedExternalIds = vi
   .fn<(...args: any[]) => any>()
   .mockResolvedValue(new Set<string>());
+const mockGetProcessedEmailSourceEventIds = vi
+  .fn<(...args: any[]) => any>()
+  .mockResolvedValue(new Set<string>());
 const mockInsertProcessedEmail = vi.fn<(...args: any[]) => any>();
+const mockInsertProcessedEmailSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
 const mockRecordTransaction = vi.fn<(...args: any[]) => any>();
 const mockCreateReviewCandidate = vi.fn<(...args: any[]) => any>();
@@ -23,11 +27,11 @@ const mockLookupMerchantRule = vi.fn<(...args: any[]) => any>().mockResolvedValu
 const mockInsertMerchantRule = vi.fn<(...args: any[]) => any>();
 const mockParseEmailApi = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
 const mockFindDuplicateTransaction = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
-const mockGetPendingRetryEmails = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
-const mockMarkForRetry = vi.fn<(...args: any[]) => any>();
-const mockMarkPermanentlyFailed = vi.fn<(...args: any[]) => any>();
-const mockMarkRetrySuccess = vi.fn<(...args: any[]) => any>();
-const mockUpdateProcessedEmailStatus = vi.fn<(...args: any[]) => any>();
+const mockGetPendingRetryEmailSourceEvents = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
+const mockMarkSourceEventForRetry = vi.fn<(...args: any[]) => any>();
+const mockMarkSourceEventPermanentlyFailed = vi.fn<(...args: any[]) => any>();
+const mockMarkSourceEventRetrySuccess = vi.fn<(...args: any[]) => any>();
+const mockUpdateProcessedSourceEventStatus = vi.fn<(...args: any[]) => any>();
 const mockEnsureDefaultFinancialAccount = vi.fn<(...args: any[]) => any>().mockReturnValue({
   id: "fa-default-user-1" as FinancialAccountId,
   userId: requireUserId("user-1"),
@@ -97,12 +101,19 @@ vi.mock("@/mutations", () => ({
 
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getProcessedExternalIds: (...args: unknown[]) => mockGetProcessedExternalIds(...args),
+  getProcessedEmailSourceEventIds: (...args: unknown[]) =>
+    mockGetProcessedEmailSourceEventIds(...args),
   insertProcessedEmail: (...args: unknown[]) => mockInsertProcessedEmail(...args),
-  getPendingRetryEmails: (...args: unknown[]) => mockGetPendingRetryEmails(...args),
-  markForRetry: (...args: unknown[]) => mockMarkForRetry(...args),
-  markPermanentlyFailed: (...args: unknown[]) => mockMarkPermanentlyFailed(...args),
-  markRetrySuccess: (...args: unknown[]) => mockMarkRetrySuccess(...args),
-  updateProcessedEmailStatus: (...args: unknown[]) => mockUpdateProcessedEmailStatus(...args),
+  insertProcessedEmailSourceEvent: (...args: unknown[]) =>
+    mockInsertProcessedEmailSourceEvent(...args),
+  getPendingRetryEmailSourceEvents: (...args: unknown[]) =>
+    mockGetPendingRetryEmailSourceEvents(...args),
+  markSourceEventForRetry: (...args: unknown[]) => mockMarkSourceEventForRetry(...args),
+  markSourceEventPermanentlyFailed: (...args: unknown[]) =>
+    mockMarkSourceEventPermanentlyFailed(...args),
+  markSourceEventRetrySuccess: (...args: unknown[]) => mockMarkSourceEventRetrySuccess(...args),
+  updateProcessedSourceEventStatus: (...args: unknown[]) =>
+    mockUpdateProcessedSourceEventStatus(...args),
 }));
 
 vi.mock("@/features/transactions/lib/repository", () => ({
@@ -189,8 +200,29 @@ function resetGeneratedIds() {
 }
 
 function resetPipelineMocks() {
+  [
+    mockGetProcessedExternalIds,
+    mockGetProcessedEmailSourceEventIds,
+    mockInsertProcessedEmail,
+    mockInsertProcessedEmailSourceEvent,
+    mockInsertTransaction,
+    mockRecordTransaction,
+    mockCreateReviewCandidate,
+    mockWriteThroughCommit,
+    mockLookupMerchantRule,
+    mockInsertMerchantRule,
+    mockParseEmailApi,
+    mockFindDuplicateTransaction,
+    mockGetPendingRetryEmailSourceEvents,
+    mockMarkSourceEventForRetry,
+    mockMarkSourceEventPermanentlyFailed,
+    mockMarkSourceEventRetrySuccess,
+    mockUpdateProcessedSourceEventStatus,
+  ].forEach((mock) => mock.mockReset());
   mockGetProcessedExternalIds.mockResolvedValue(new Set<string>());
+  mockGetProcessedEmailSourceEventIds.mockResolvedValue(new Set<string>());
   mockInsertProcessedEmail.mockResolvedValue(undefined);
+  mockInsertProcessedEmailSourceEvent.mockResolvedValue(undefined);
   mockInsertTransaction.mockResolvedValue(undefined);
   mockRecordTransaction.mockImplementation(async ({ ports, command }) => {
     const transaction = {
@@ -215,11 +247,11 @@ function resetPipelineMocks() {
   mockInsertMerchantRule.mockResolvedValue(undefined);
   mockParseEmailApi.mockResolvedValue(null);
   mockFindDuplicateTransaction.mockResolvedValue(null);
-  mockGetPendingRetryEmails.mockResolvedValue([]);
-  mockMarkForRetry.mockResolvedValue(undefined);
-  mockMarkPermanentlyFailed.mockResolvedValue(undefined);
-  mockMarkRetrySuccess.mockResolvedValue(undefined);
-  mockUpdateProcessedEmailStatus.mockResolvedValue(undefined);
+  mockGetPendingRetryEmailSourceEvents.mockResolvedValue([]);
+  mockMarkSourceEventForRetry.mockResolvedValue(undefined);
+  mockMarkSourceEventPermanentlyFailed.mockResolvedValue(undefined);
+  mockMarkSourceEventRetrySuccess.mockResolvedValue(undefined);
+  mockUpdateProcessedSourceEventStatus.mockResolvedValue(undefined);
 }
 
 function resetCaptureEvidenceMocks() {
@@ -246,13 +278,15 @@ function createTestEmailPipelineService(overrides: Record<string, unknown> = {})
     parseEmailApi: mockParseEmailApi,
     lookupMerchantRule: mockLookupMerchantRule,
     findDuplicateTransaction: mockFindDuplicateTransaction,
+    getProcessedEmailSourceEventIds: mockGetProcessedEmailSourceEventIds,
     getProcessedExternalIds: mockGetProcessedExternalIds,
-    getPendingRetryEmails: mockGetPendingRetryEmails,
+    getPendingRetryEmailSourceEvents: mockGetPendingRetryEmailSourceEvents,
     insertProcessedEmail: mockInsertProcessedEmail,
-    markForRetry: mockMarkForRetry,
-    markPermanentlyFailed: mockMarkPermanentlyFailed,
-    markRetrySuccess: mockMarkRetrySuccess,
-    updateProcessedEmailStatus: mockUpdateProcessedEmailStatus,
+    insertProcessedEmailSourceEvent: mockInsertProcessedEmailSourceEvent,
+    markSourceEventForRetry: mockMarkSourceEventForRetry,
+    markSourceEventPermanentlyFailed: mockMarkSourceEventPermanentlyFailed,
+    markSourceEventRetrySuccess: mockMarkSourceEventRetrySuccess,
+    updateProcessedSourceEventStatus: mockUpdateProcessedSourceEventStatus,
     ensureDefaultFinancialAccount: mockEnsureDefaultFinancialAccount,
     buildEmailCaptureEvidence: mockBuildEmailCaptureEvidence,
     saveCaptureEvidenceRows: mockSaveCaptureEvidenceRows,
@@ -270,8 +304,11 @@ function expectSavedTransaction(matcher: Record<string, unknown>) {
   expect(mockInsertTransaction).toHaveBeenCalledWith(mockDb, expect.objectContaining(matcher));
 }
 
-function expectProcessedEmailSaved(matcher: Record<string, unknown>) {
-  expect(mockInsertProcessedEmail).toHaveBeenCalledWith(mockDb, expect.objectContaining(matcher));
+function expectProcessedSourceEventSaved(matcher: Record<string, unknown>) {
+  expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
+    mockDb,
+    expect.objectContaining(matcher)
+  );
 }
 
 function expectCaptureEvidenceSaved(transactionId: string | null) {
@@ -280,7 +317,8 @@ function expectCaptureEvidenceSaved(transactionId: string | null) {
     expect.arrayContaining([
       expect.objectContaining({
         userId: USER_ID,
-        processedEmailId: expect.any(String),
+        processedEmailId: null,
+        processedSourceEventId: expect.any(String),
         processedCaptureId: null,
         transactionId,
         scope: "email:bancolombia:sender",
@@ -352,12 +390,21 @@ describe("email processing pipeline", () => {
     resetCaptureEvidenceMocks();
   });
 
-  it("skips already processed emails", async () => {
-    mockGetProcessedExternalIds.mockResolvedValueOnce(new Set(["ext-1"]));
+  it("uses legacy processed email ids as a migration fallback for incoming idempotency", async () => {
+    mockGetProcessedExternalIds.mockResolvedValueOnce(new Set(["email_gmail:ext-1"]));
 
-    const emails = [makeRawEmail()];
+    const result = await processEmails(mockDb, USER_ID, [makeRawEmail()]);
 
-    const result = await processEmails(mockDb, USER_ID, emails);
+    expect(mockGetProcessedExternalIds).toHaveBeenCalledWith(mockDb, [makeRawEmail()]);
+    expect(mockParseEmailApi).not.toHaveBeenCalled();
+    expect(result.saved).toBe(0);
+    expect(result.skippedDuplicate).toBe(1);
+  });
+
+  it("skips already processed email source events", async () => {
+    mockGetProcessedEmailSourceEventIds.mockResolvedValueOnce(new Set(["email_gmail:ext-1"]));
+
+    const result = await processEmails(mockDb, USER_ID, [makeRawEmail()]);
 
     expect(mockParseEmailApi).not.toHaveBeenCalled();
     expect(result.skippedDuplicate).toBe(1);
@@ -372,11 +419,11 @@ describe("email processing pipeline", () => {
     expect(result.filtered).toBe(1);
     expect(result.failed).toBe(0);
     expect(result.saved).toBe(0);
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        externalId: "ext-1",
-        status: "skipped",
+        sourceEventId: "ext-1",
+        status: "dismissed",
         failureReason: null,
         subject: "",
         rawBodyPreview: "",
@@ -530,9 +577,9 @@ describe("email processing pipeline", () => {
       counterpartyName: "Compra en Exito",
       source: "email_capture",
     });
-    expectProcessedEmailSaved({
-      externalId: "ext-1",
-      status: "success",
+    expectProcessedSourceEventSaved({
+      sourceEventId: "ext-1",
+      status: "processed",
       confidence: 0.9,
     });
     expectCaptureEvidenceSaved("tx-1");
@@ -559,7 +606,7 @@ describe("email processing pipeline", () => {
 
     await processEmails(mockDb, USER_ID, [makeRawEmail({ body: longBody })]);
 
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({ rawBodyPreview: "x".repeat(500) })
     );
@@ -578,7 +625,7 @@ describe("email processing pipeline", () => {
     expect(result.saved).toBe(1);
     expect(dbWithTransaction.transaction).toHaveBeenCalledTimes(1);
     expect(mockInsertTransaction).toHaveBeenCalledWith(mockDb, expect.any(Object));
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(mockDb, expect.any(Object));
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(mockDb, expect.any(Object));
     expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(mockDb, expect.any(Array));
   });
 
@@ -594,7 +641,7 @@ describe("email processing pipeline", () => {
       expect.objectContaining({ now: expect.any(String) })
     );
     expect(mockInsertTransaction).toHaveBeenCalledWith(mockDb, expect.any(Object));
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(mockDb, expect.any(Object));
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(mockDb, expect.any(Object));
     expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(mockDb, expect.any(Array));
   });
 
@@ -609,7 +656,7 @@ describe("email processing pipeline", () => {
       dbWithNonFunctionTransaction,
       expect.any(Object)
     );
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       dbWithNonFunctionTransaction,
       expect.any(Object)
     );
@@ -645,10 +692,10 @@ describe("email processing pipeline", () => {
       txDb,
       expect.objectContaining({ type: "test-review-candidate" })
     );
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       txDb,
       expect.objectContaining({
-        externalId: "ext-1",
+        sourceEventId: "ext-1",
         status: "needs_review",
       })
     );
@@ -661,7 +708,9 @@ describe("email processing pipeline", () => {
       ),
     } as any;
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
-    mockInsertProcessedEmail.mockRejectedValueOnce(new Error("processed email insert failed"));
+    mockInsertProcessedEmailSourceEvent.mockRejectedValueOnce(
+      new Error("processed email insert failed")
+    );
 
     const result = await processEmails(dbWithTransaction, USER_ID, [makeRawEmail()]);
 
@@ -684,7 +733,7 @@ describe("email processing pipeline", () => {
 
     await service.processEmails(mockDb, USER_ID, [makeRawEmail()]);
 
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
         createdAt: fixedNow,
@@ -805,7 +854,9 @@ describe("email processing pipeline", () => {
   });
 
   it("does not bound background parsing after durable skips", async () => {
-    mockGetProcessedExternalIds.mockResolvedValueOnce(new Set(["ext-1", "ext-2"]));
+    mockGetProcessedEmailSourceEventIds.mockResolvedValueOnce(
+      new Set(["email_gmail:ext-1", "email_gmail:ext-2"])
+    );
     mockParseEmailApi.mockResolvedValue(makeParsedEmailResult());
 
     await processBackgroundEmails(
@@ -876,11 +927,11 @@ describe("email processing pipeline", () => {
     expect(mockInsertTransaction).toHaveBeenCalledTimes(1);
     expect(result.saved).toBe(1);
     expect(result.skippedCrossSource).toBe(1);
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        externalId: "ext-2",
-        status: "skipped_duplicate",
+        sourceEventId: "ext-2",
+        status: "duplicate",
         transactionId: expect.stringMatching(/^tx-/),
       })
     );
@@ -995,10 +1046,10 @@ describe("email processing pipeline", () => {
         }),
       })
     );
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        externalId: "ext-1",
+        sourceEventId: "ext-1",
         status: "needs_review",
         transactionId: null,
         confidence: 0.5,
@@ -1037,10 +1088,10 @@ describe("email processing pipeline", () => {
         type: "test-review-candidate",
       })
     );
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        externalId: "ext-1",
+        sourceEventId: "ext-1",
         status: "needs_review",
         transactionId: null,
         confidence: 0.5,
@@ -1088,7 +1139,7 @@ describe("email processing pipeline", () => {
       })
     );
     // Confidence should be 1.0 for merchant rule hits
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
         confidence: 1.0,
@@ -1143,6 +1194,36 @@ describe("email processing pipeline", () => {
     );
   });
 
+  it("records successful email intake on processed source events with source-event evidence", async () => {
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+
+    const result = await processEmails(mockDb, USER_ID, [makeRawEmail()]);
+
+    expect(result.saved).toBe(1);
+    expect(mockInsertProcessedEmail).not.toHaveBeenCalled();
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        userId: USER_ID,
+        sourceFamily: "email",
+        sourceId: "email_gmail",
+        sourceEventId: "ext-1",
+        status: "processed",
+        transactionId: expect.stringMatching(/^tx-/),
+      })
+    );
+    expect(mockSaveCaptureEvidenceRows).toHaveBeenCalledWith(
+      mockDb,
+      expect.arrayContaining([
+        expect.objectContaining({
+          processedEmailId: null,
+          processedSourceEventId: expect.stringMatching(/^pse-/),
+          transactionId: expect.stringMatching(/^tx-/),
+        }),
+      ])
+    );
+  });
+
   it("stores the local-ledger accepted counterparty value", async () => {
     const longCounterparty = "Counterparty ".repeat(30);
     mockParseEmailApi.mockResolvedValueOnce(
@@ -1171,7 +1252,7 @@ describe("email processing pipeline", () => {
     expect(result.failed).toBe(1);
     expect(result.pendingRetry).toBe(1);
     expect(result.saved).toBe(0);
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
         status: "pending_retry",
@@ -1181,7 +1262,7 @@ describe("email processing pipeline", () => {
       })
     );
     // nextRetryAt should be set
-    const call = mockInsertProcessedEmail.mock.calls[0]?.[1];
+    const call = mockInsertProcessedEmailSourceEvent.mock.calls[0]?.[1];
     expect(call.nextRetryAt).toBeTruthy();
     expect(result.parseImprovementRequests).toEqual([
       {
@@ -1205,7 +1286,7 @@ describe("email processing pipeline", () => {
     expect(result.pendingRetry).toBe(1);
     expect(result.saved).toBe(0);
     expect(mockInsertTransaction).not.toHaveBeenCalled();
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
         status: "pending_retry",
@@ -1229,7 +1310,7 @@ describe("email processing pipeline", () => {
     expect(result.failed).toBe(1);
     expect(result.pendingRetry).toBe(1);
     expect(result.saved).toBe(0);
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
         status: "pending_retry",
@@ -1244,9 +1325,9 @@ describe("email processing pipeline", () => {
   it("does not insert a second processed email row after a partial save already persisted one", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
-    mockGetProcessedExternalIds
+    mockGetProcessedEmailSourceEventIds
       .mockResolvedValueOnce(new Set<string>())
-      .mockResolvedValueOnce(new Set<string>(["ext-1"]));
+      .mockResolvedValueOnce(new Set<string>(["email_gmail:ext-1"]));
     mockSaveCaptureEvidenceRows.mockImplementationOnce(() => {
       throw new Error("capture evidence failed");
     });
@@ -1254,11 +1335,11 @@ describe("email processing pipeline", () => {
     const result = await processEmails(mockDb, USER_ID, emails);
 
     expect(result.failed).toBe(1);
-    expect(mockInsertProcessedEmail).toHaveBeenCalledTimes(1);
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledTimes(1);
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        status: "success",
+        status: "processed",
         transactionId: expect.stringMatching(/^tx-/),
       })
     );
@@ -1299,15 +1380,15 @@ describe("email processing pipeline", () => {
     const result = await processEmails(mockDb, USER_ID, emails);
 
     expect(result.filtered).toBe(1);
-    expect(mockInsertProcessedEmail).toHaveBeenCalledWith(
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        status: "skipped",
+        status: "dismissed",
         failureReason: null,
       })
     );
     // rawBody should NOT be cached for skipped emails
-    const call = mockInsertProcessedEmail.mock.calls[0]?.[1];
+    const call = mockInsertProcessedEmailSourceEvent.mock.calls[0]?.[1];
     expect(call.rawBody).toBeUndefined();
   });
 
@@ -1367,24 +1448,42 @@ describe("email processing pipeline", () => {
     expect(result.saved + result.needsReview + result.filtered).toBeLessThanOrEqual(1);
     expect(result.skippedDuplicate).toBeGreaterThanOrEqual(1);
   });
+
+  it("does not deduplicate matching source event ids from different providers", async () => {
+    mockParseEmailApi.mockResolvedValue(makeParsedEmailResult());
+
+    const result = await processEmails(mockDb, USER_ID, [
+      makeRawEmail({ externalId: "same-provider-id", provider: "gmail" }),
+      makeRawEmail({ externalId: "same-provider-id", provider: "outlook" }),
+    ]);
+
+    expect(mockParseEmailApi).toHaveBeenCalledTimes(2);
+    expect(result.saved).toBe(2);
+    expect(result.skippedDuplicate).toBe(0);
+  });
 });
 
-function makePendingRetryRow(overrides: Record<string, unknown> = {}) {
+function makePendingRetrySourceEventRow(overrides: Record<string, unknown> = {}) {
   return {
-    id: "pe-retry-1",
-    externalId: "ext-retry-1",
-    provider: "gmail",
+    id: "pse-retry-1",
+    userId: USER_ID,
+    sourceFamily: "email",
+    sourceId: "email_gmail",
+    sourceEventId: "ext-retry-1",
     status: "pending_retry",
     failureReason: "parse_error",
     subject: "Compra aprobada",
     rawBodyPreview: "Su compra por $50.000...",
     rawBody: "Su compra por $50.000 fue aprobada",
-    receivedAt: "2026-03-05T10:00:00Z",
-    transactionId: null,
-    confidence: null,
     retryCount: 1,
     nextRetryAt: "2026-03-15T11:00:00Z",
+    transactionId: null,
+    confidence: null,
+    receivedAt: "2026-03-05T10:00:00Z",
+    processedAt: "2026-03-05T10:00:00Z",
     createdAt: "2026-03-05T10:00:00Z",
+    updatedAt: "2026-03-05T10:00:00Z",
+    deletedAt: null,
     ...overrides,
   };
 }
@@ -1397,10 +1496,13 @@ describe("processRetries", () => {
       idCounter++;
       return `${prefix}-${idCounter}`;
     });
-    mockGetPendingRetryEmails.mockResolvedValue([]);
-    mockMarkForRetry.mockResolvedValue(undefined);
-    mockMarkPermanentlyFailed.mockResolvedValue(undefined);
-    mockMarkRetrySuccess.mockResolvedValue(undefined);
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValue([]);
+    mockMarkSourceEventForRetry.mockResolvedValue(undefined);
+    mockMarkSourceEventForRetry.mockResolvedValue(undefined);
+    mockMarkSourceEventPermanentlyFailed.mockResolvedValue(undefined);
+    mockMarkSourceEventPermanentlyFailed.mockResolvedValue(undefined);
+    mockMarkSourceEventRetrySuccess.mockResolvedValue(undefined);
+    mockMarkSourceEventRetrySuccess.mockResolvedValue(undefined);
     mockInsertTransaction.mockResolvedValue(undefined);
     mockRecordTransaction.mockImplementation(async ({ ports, command }) => {
       const transaction = {
@@ -1423,26 +1525,47 @@ describe("processRetries", () => {
     mockLookupMerchantRule.mockResolvedValue(null);
     mockInsertMerchantRule.mockResolvedValue(undefined);
     mockParseEmailApi.mockResolvedValue(null);
-    mockUpdateProcessedEmailStatus.mockResolvedValue(undefined);
+    mockUpdateProcessedSourceEventStatus.mockResolvedValue(undefined);
+    mockUpdateProcessedSourceEventStatus.mockResolvedValue(undefined);
     mockFindDuplicateTransaction.mockResolvedValue(null);
   });
 
+  it("picks up due pending_retry email source events and marks retry success on the source event", async () => {
+    const row = makePendingRetrySourceEventRow();
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+
+    await processRetries(mockDb, USER_ID);
+
+    expect(mockGetPendingRetryEmailSourceEvents).toHaveBeenCalledWith(mockDb, USER_ID);
+    expect(mockParseEmailApi).toHaveBeenCalledWith(row.rawBody);
+    expect(mockMarkSourceEventRetrySuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        db: mockDb,
+        id: "pse-retry-1",
+        status: "processed",
+        transactionId: expect.stringMatching(/^tx-/),
+        confidence: 0.9,
+      })
+    );
+  });
+
   it("picks up due pending_retry emails and calls parseEmailApi with cached rawBody", async () => {
-    const row = makePendingRetryRow();
-    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    const row = makePendingRetrySourceEventRow();
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce(null);
 
     await processRetries(mockDb, USER_ID);
 
-    expect(mockGetPendingRetryEmails).toHaveBeenCalledWith(mockDb);
+    expect(mockGetPendingRetryEmailSourceEvents).toHaveBeenCalledWith(mockDb, USER_ID);
     expect(mockParseEmailApi).toHaveBeenCalledWith(row.rawBody);
   });
 
   it("creates transaction on successful retry", async () => {
-    const row = makePendingRetryRow();
+    const row = makePendingRetrySourceEventRow();
     const trackTransactionCreated = vi.fn<(...args: any[]) => any>();
     const service = createTestEmailPipelineService({ trackTransactionCreated });
-    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
       amount: 50000,
@@ -1482,9 +1605,9 @@ describe("processRetries", () => {
     expect(result.succeeded).toBe(1);
   });
 
-  it("calls markRetrySuccess with correct status/transactionId/confidence", async () => {
-    const row = makePendingRetryRow();
-    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+  it("calls markSourceEventRetrySuccess with correct status/transactionId/confidence", async () => {
+    const row = makePendingRetrySourceEventRow();
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
       amount: 50000,
@@ -1496,11 +1619,11 @@ describe("processRetries", () => {
 
     await processRetries(mockDb, USER_ID);
 
-    expect(mockMarkRetrySuccess).toHaveBeenCalledWith(
+    expect(mockMarkSourceEventRetrySuccess).toHaveBeenCalledWith(
       expect.objectContaining({
         db: mockDb,
-        id: "pe-retry-1",
-        status: "success",
+        id: "pse-retry-1",
+        status: "processed",
         transactionId: expect.stringMatching(/^tx-/),
         confidence: 0.9,
       })
@@ -1508,10 +1631,10 @@ describe("processRetries", () => {
   });
 
   it("creates a review candidate without a transaction when confidence < 0.7 on retry", async () => {
-    const row = makePendingRetryRow();
+    const row = makePendingRetrySourceEventRow();
     const trackTransactionCreated = vi.fn<(...args: any[]) => any>();
     const service = createTestEmailPipelineService({ trackTransactionCreated });
-    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
       amount: 50000,
@@ -1528,10 +1651,14 @@ describe("processRetries", () => {
       mockDb,
       expect.objectContaining({
         source: expect.objectContaining({
+          processedSourceEventId: "pse-retry-1",
           sourceFamily: "email",
           sourceId: "email_gmail",
           sourceEventId: "ext-retry-1",
           status: "needs_review",
+          subject: "Compra aprobada",
+          rawBodyPreview: "Su compra por $50.000 fue aprobada",
+          confidence: 0.5,
         }),
         candidate: expect.objectContaining({
           candidateKind: "transaction",
@@ -1542,31 +1669,23 @@ describe("processRetries", () => {
         }),
       })
     );
-    expect(mockMarkRetrySuccess).toHaveBeenCalledWith(
-      expect.objectContaining({
-        db: mockDb,
-        id: "pe-retry-1",
-        status: "needs_review",
-        transactionId: null,
-        confidence: 0.5,
-      })
-    );
+    expect(mockMarkSourceEventRetrySuccess).not.toHaveBeenCalled();
     expect(mockLinkCaptureEvidenceToTransaction).not.toHaveBeenCalled();
     expect(mockInsertMerchantRule).not.toHaveBeenCalled();
     expect(trackTransactionCreated).not.toHaveBeenCalled();
   });
 
   it("increments retryCount on failure and schedules next retry", async () => {
-    const row = makePendingRetryRow({ retryCount: 2 });
-    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    const row = makePendingRetrySourceEventRow({ retryCount: 2 });
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockRejectedValueOnce(new Error("LLM timeout"));
 
     const result = await processRetries(mockDb, USER_ID);
 
-    expect(mockMarkForRetry).toHaveBeenCalledWith(
+    expect(mockMarkSourceEventForRetry).toHaveBeenCalledWith(
       expect.objectContaining({
         db: mockDb,
-        id: "pe-retry-1",
+        id: "pse-retry-1",
         retryCount: 3,
         nextRetryAt: expect.any(String),
       })
@@ -1576,8 +1695,8 @@ describe("processRetries", () => {
   });
 
   it("reschedules retry when parsed output is malformed", async () => {
-    const row = makePendingRetryRow({ retryCount: 1 });
-    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    const row = makePendingRetrySourceEventRow({ retryCount: 1 });
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
       amount: -1,
@@ -1589,10 +1708,10 @@ describe("processRetries", () => {
 
     const result = await processRetries(mockDb, USER_ID);
 
-    expect(mockMarkForRetry).toHaveBeenCalledWith(
+    expect(mockMarkSourceEventForRetry).toHaveBeenCalledWith(
       expect.objectContaining({
         db: mockDb,
-        id: "pe-retry-1",
+        id: "pse-retry-1",
         retryCount: 2,
         nextRetryAt: expect.any(String),
       })
@@ -1602,36 +1721,36 @@ describe("processRetries", () => {
   });
 
   it("marks as permanently failed when max retries reached", async () => {
-    const row = makePendingRetryRow({ retryCount: 4 });
-    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    const row = makePendingRetrySourceEventRow({ retryCount: 4 });
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockRejectedValueOnce(new Error("LLM timeout"));
 
     const result = await processRetries(mockDb, USER_ID);
 
-    expect(mockMarkPermanentlyFailed).toHaveBeenCalledWith(mockDb, "pe-retry-1");
+    expect(mockMarkSourceEventPermanentlyFailed).toHaveBeenCalledWith(mockDb, "pse-retry-1");
     expect(result.permanentlyFailed).toBe(1);
   });
 
   it("marks as skipped when LLM returns null on retry", async () => {
-    const row = makePendingRetryRow();
-    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    const row = makePendingRetrySourceEventRow();
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce(null);
 
     await processRetries(mockDb, USER_ID);
 
-    expect(mockUpdateProcessedEmailStatus).toHaveBeenCalledWith(
+    expect(mockUpdateProcessedSourceEventStatus).toHaveBeenCalledWith(
       expect.objectContaining({
         db: mockDb,
-        id: "pe-retry-1",
-        status: "skipped",
+        id: "pse-retry-1",
+        status: "dismissed",
         transactionId: null,
       })
     );
   });
 
   it("skips duplicate transaction from another source on retry", async () => {
-    const row = makePendingRetryRow();
-    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    const row = makePendingRetrySourceEventRow();
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
       amount: 50000,
@@ -1645,11 +1764,11 @@ describe("processRetries", () => {
     const result = await processRetries(mockDb, USER_ID);
 
     expect(mockInsertTransaction).not.toHaveBeenCalled();
-    expect(mockMarkRetrySuccess).toHaveBeenCalledWith(
+    expect(mockMarkSourceEventRetrySuccess).toHaveBeenCalledWith(
       expect.objectContaining({
         db: mockDb,
-        id: "pe-retry-1",
-        status: "success",
+        id: "pse-retry-1",
+        status: "duplicate",
         transactionId: "tx-existing",
         confidence: 0.9,
       })
@@ -1658,19 +1777,19 @@ describe("processRetries", () => {
   });
 
   it("permanently fails email with missing rawBody", async () => {
-    const row = makePendingRetryRow({ rawBody: null });
-    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    const row = makePendingRetrySourceEventRow({ rawBody: null });
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
 
     const result = await processRetries(mockDb, USER_ID);
 
-    expect(mockMarkPermanentlyFailed).toHaveBeenCalledWith(mockDb, "pe-retry-1");
+    expect(mockMarkSourceEventPermanentlyFailed).toHaveBeenCalledWith(mockDb, "pse-retry-1");
     expect(result.permanentlyFailed).toBe(1);
     expect(mockParseEmailApi).not.toHaveBeenCalled();
   });
 
   it("schedules retry with backoff when save fails", async () => {
-    const row = makePendingRetryRow({ retryCount: 1 });
-    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    const row = makePendingRetrySourceEventRow({ retryCount: 1 });
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
       amount: 50000,
@@ -1685,10 +1804,10 @@ describe("processRetries", () => {
 
     const result = await processRetries(mockDb, USER_ID);
 
-    expect(mockMarkForRetry).toHaveBeenCalledWith(
+    expect(mockMarkSourceEventForRetry).toHaveBeenCalledWith(
       expect.objectContaining({
         db: mockDb,
-        id: "pe-retry-1",
+        id: "pse-retry-1",
         retryCount: 2,
         nextRetryAt: expect.any(String),
       })
@@ -1698,8 +1817,8 @@ describe("processRetries", () => {
   });
 
   it("permanently fails when save fails at max retries", async () => {
-    const row = makePendingRetryRow({ retryCount: 4 });
-    mockGetPendingRetryEmails.mockResolvedValueOnce([row]);
+    const row = makePendingRetrySourceEventRow({ retryCount: 4 });
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
       amount: 50000,
@@ -1714,12 +1833,12 @@ describe("processRetries", () => {
 
     const result = await processRetries(mockDb, USER_ID);
 
-    expect(mockMarkPermanentlyFailed).toHaveBeenCalledWith(mockDb, "pe-retry-1");
+    expect(mockMarkSourceEventPermanentlyFailed).toHaveBeenCalledWith(mockDb, "pse-retry-1");
     expect(result.permanentlyFailed).toBe(1);
   });
 
   it("returns correct counts", async () => {
-    mockGetPendingRetryEmails.mockResolvedValueOnce([]);
+    mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([]);
 
     const result = await processRetries(mockDb, USER_ID);
 

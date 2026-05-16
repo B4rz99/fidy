@@ -11,6 +11,8 @@ import type {
   IsoDateTime,
   Month,
   ProcessedEmailId,
+  ProcessedSourceEventId,
+  ReviewCandidateId,
   TransactionId,
   TransferId,
   UserId,
@@ -178,6 +180,16 @@ export function assertProcessedEmailId(value: string): asserts value is Processe
   assertNonEmptyString(value, "processedEmailId");
 }
 
+export function assertProcessedSourceEventId(
+  value: string
+): asserts value is ProcessedSourceEventId {
+  assertNonEmptyString(value, "processedSourceEventId");
+}
+
+export function assertReviewCandidateId(value: string): asserts value is ReviewCandidateId {
+  assertNonEmptyString(value, "reviewCandidateId");
+}
+
 export function assertUserMemoryId(value: string): asserts value is UserMemoryId {
   assertNonEmptyString(value, "userMemoryId");
 }
@@ -220,6 +232,14 @@ export function requireTransferId(value: string): TransferId {
 
 export function requireProcessedEmailId(value: string): ProcessedEmailId {
   return requireValue(value, assertProcessedEmailId);
+}
+
+export function requireProcessedSourceEventId(value: string): ProcessedSourceEventId {
+  return requireValue(value, assertProcessedSourceEventId);
+}
+
+export function requireReviewCandidateId(value: string): ReviewCandidateId {
+  return requireValue(value, assertReviewCandidateId);
 }
 
 export function requireCopAmount(value: number): CopAmount {

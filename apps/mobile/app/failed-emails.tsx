@@ -1,12 +1,14 @@
 import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth";
 import {
   dismissFailedEmail,
+  dismissFailedEmailSourceEvent,
   type ProcessedEmailRow,
+  type ProcessedSourceEventRow,
   useEmailCaptureStore,
 } from "@/features/email-capture";
 import { ScreenLayout } from "@/shared/components";
@@ -25,18 +27,31 @@ export default function FailedEmailsScreen() {
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const failedEmails = useEmailCaptureStore((s) => s.failedEmails);
+  const failedEmailSourceEvents = useEmailCaptureStore((s) => s.failedEmailSourceEvents);
+  const failedItems = useMemo(
+    () =>
+      [
+        ...failedEmails.map((email) => ({ kind: "legacy" as const, email })),
+        ...failedEmailSourceEvents.map((email) => ({ kind: "source_event" as const, email })),
+      ].sort((left, right) => right.email.receivedAt.localeCompare(left.email.receivedAt)),
+    [failedEmailSourceEvents, failedEmails]
+  );
 
   const handleAddManually = useCallback(() => {
     push("/add-transaction");
   }, [push]);
 
   const renderItem = useCallback(
-    ({ item }: { item: ProcessedEmailRow }) => (
+    ({ item }: { item: (typeof failedItems)[number] }) => (
       <FailedEmailCard
-        email={item}
+        email={item.email}
         onDismiss={() => {
           if (!db || !userId) return;
-          void dismissFailedEmail(db, userId, item.id);
+          if (item.kind === "legacy") {
+            void dismissFailedEmail(db, userId, item.email.id);
+            return;
+          }
+          void dismissFailedEmailSourceEvent(db, userId, item.email.id);
         }}
         onAddManually={handleAddManually}
       />
@@ -47,9 +62,9 @@ export default function FailedEmailsScreen() {
   return (
     <ScreenLayout title={t("failedEmails.title")} variant="sub" onBack={() => back()}>
       <FlashList
-        data={failedEmails}
+        data={failedItems}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => `${item.kind}:${item.email.id}`}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
           paddingBottom: bottom + 40,
@@ -78,7 +93,7 @@ function FailedEmailCard({
   onDismiss,
   onAddManually,
 }: {
-  email: ProcessedEmailRow;
+  email: ProcessedEmailRow | ProcessedSourceEventRow;
   onDismiss: () => void;
   onAddManually: () => void;
 }) {
@@ -97,7 +112,7 @@ function FailedEmailCard({
         <View className="flex-row items-center" style={{ gap: 10 }}>
           <TriangleAlert size={18} color={redColor} />
           <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-            {email.provider === "gmail" ? "Gmail" : "Outlook"}
+            {getProviderLabel(email)}
           </Text>
         </View>
         <Text className="font-poppins-medium text-caption text-tertiary dark:text-tertiary-dark">
@@ -155,4 +170,9 @@ function formatReason(reason: string, t: (key: string) => string): string {
   if (reason === "parse_error") return t("failedEmails.parseErrorReason");
   if (reason.startsWith("validation:")) return reason.replace("validation: ", "");
   return reason;
+}
+
+function getProviderLabel(email: ProcessedEmailRow | ProcessedSourceEventRow) {
+  if ("provider" in email) return email.provider === "gmail" ? "Gmail" : "Outlook";
+  return email.sourceId === "email_outlook" ? "Outlook" : "Gmail";
 }

@@ -5,6 +5,8 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  confirmSourceEventFinancialMeaningReview,
+  dismissSourceEventFinancialMeaningReview,
   dismissFinancialMeaningReview,
   getFinancialMeaningReviewItems,
   resolveFinancialMeaningReview,
@@ -16,6 +18,7 @@ import {
   insertProcessedEmail,
 } from "@/features/email-capture/lib/repository";
 import { getTransactionById, insertTransaction } from "@/features/transactions/lib/repository";
+import { processedSourceEvents, reviewCandidates } from "@/shared/db/schema";
 import type {
   CategoryId,
   CopAmount,
@@ -23,6 +26,8 @@ import type {
   IsoDate,
   IsoDateTime,
   ProcessedEmailId,
+  ProcessedSourceEventId,
+  ReviewCandidateId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
@@ -60,6 +65,9 @@ type NeedsReviewEmailOverrides = Partial<{
   transactionId: TransactionId | null;
   confidence: number;
 }>;
+
+type NeedsReviewSourceEventOverrides = Partial<typeof processedSourceEvents.$inferInsert>;
+type ReviewCandidateOverrides = Partial<typeof reviewCandidates.$inferInsert>;
 
 const defaultEmailTransaction = {
   id: "tx-1" as TransactionId,
@@ -158,6 +166,54 @@ async function insertNeedsReviewEmail(overrides: NeedsReviewEmailOverrides = {})
   });
 }
 
+function insertNeedsReviewSourceEvent(overrides: NeedsReviewSourceEventOverrides = {}) {
+  db.insert(processedSourceEvents)
+    .values({
+      id: "pse-review-1" as ProcessedSourceEventId,
+      userId: USER_ID,
+      sourceFamily: "email",
+      sourceId: "email_gmail",
+      sourceEventId: "ext-source-review-1",
+      status: "needs_review",
+      failureReason: null,
+      subject: "Bancolombia alert",
+      rawBodyPreview: "Pago por revisar",
+      rawBody: "Pago por revisar",
+      retryCount: 0,
+      nextRetryAt: null,
+      transactionId: null,
+      confidence: 0.42,
+      receivedAt: NOW,
+      processedAt: NOW,
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+      ...overrides,
+    })
+    .run();
+}
+
+function insertReviewCandidate(overrides: ReviewCandidateOverrides = {}) {
+  db.insert(reviewCandidates)
+    .values({
+      id: "rc-review-1" as ReviewCandidateId,
+      userId: USER_ID,
+      processedSourceEventId: "pse-review-1" as ProcessedSourceEventId,
+      status: "pending",
+      candidateKind: "transaction",
+      occurredAt: NOW,
+      amount: 450000 as CopAmount,
+      currency: "COP",
+      description: "Pago tarjeta de crédito",
+      confidence: 0.42,
+      createdAt: NOW,
+      updatedAt: NOW,
+      deletedAt: null,
+      ...overrides,
+    })
+    .run();
+}
+
 describe("financial meaning review", () => {
   it("marks a reviewed low-confidence email as success without deleting the linked transaction", async () => {
     insertEmailTransactionRow();
@@ -179,10 +235,23 @@ describe("financial meaning review", () => {
     reviewCandidateTransactions.forEach(insertEmailTransactionRow);
     await Promise.all(reviewCandidateEmails.map(insertNeedsReviewEmail));
 
-    await expect(getFinancialMeaningReviewItems(db as any)).resolves.toEqual([
+    await expect(getFinancialMeaningReviewItems(db as any, USER_ID)).resolves.toEqual([
       expect.objectContaining({
         processedEmail: expect.objectContaining({ id: "pe-active" }),
         transaction: expect.objectContaining({ id: "tx-active" }),
+      }),
+    ]);
+  });
+
+  it("lists source-event needs-review candidates in the financial meaning queue", async () => {
+    insertNeedsReviewSourceEvent();
+    insertReviewCandidate();
+
+    await expect(getFinancialMeaningReviewItems(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({
+        kind: "source_event",
+        processedSourceEvent: expect.objectContaining({ id: "pse-review-1" }),
+        reviewCandidate: expect.objectContaining({ id: "rc-review-1" }),
       }),
     ]);
   });
@@ -275,5 +344,60 @@ describe("financial meaning review", () => {
         transactionId: null,
       })
     );
+  });
+
+  it("dismisses a source-event review candidate through source-event status", async () => {
+    insertNeedsReviewSourceEvent();
+    insertReviewCandidate();
+
+    await dismissSourceEventFinancialMeaningReview(
+      db as any,
+      USER_ID,
+      "pse-review-1" as ProcessedSourceEventId,
+      () => "2026-04-19T11:00:00.000Z" as IsoDateTime
+    );
+
+    expect(db.select().from(processedSourceEvents).all()).toEqual([
+      expect.objectContaining({
+        id: "pse-review-1",
+        status: "dismissed",
+        updatedAt: "2026-04-19T11:00:00.000Z",
+      }),
+    ]);
+    expect(db.select().from(reviewCandidates).all()).toEqual([
+      expect.objectContaining({
+        id: "rc-review-1",
+        status: "rejected",
+        updatedAt: "2026-04-19T11:00:00.000Z",
+      }),
+    ]);
+  });
+
+  it("confirms a source-event review candidate as an unresolved transaction", async () => {
+    insertNeedsReviewSourceEvent();
+    insertReviewCandidate();
+
+    await expect(
+      confirmSourceEventFinancialMeaningReview(db as any, {
+        userId: USER_ID,
+        processedSourceEventId: "pse-review-1" as ProcessedSourceEventId,
+        reviewCandidateId: "rc-review-1" as ReviewCandidateId,
+        now: () => "2026-04-19T11:00:00.000Z" as IsoDateTime,
+      })
+    ).resolves.toBe(true);
+
+    expect(db.select().from(processedSourceEvents).all()).toEqual([
+      expect.objectContaining({
+        id: "pse-review-1",
+        status: "processed",
+        transactionId: expect.any(String),
+      }),
+    ]);
+    expect(db.select().from(reviewCandidates).all()).toEqual([
+      expect.objectContaining({
+        id: "rc-review-1",
+        status: "accepted",
+      }),
+    ]);
   });
 });

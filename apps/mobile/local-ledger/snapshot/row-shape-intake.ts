@@ -2,6 +2,7 @@ import type { RowSpec } from "./row-shape";
 import {
   assertNullableIsoDateTime,
   assertNullableNumber,
+  assertNullableOneOf,
   assertNullableString,
   assertOneOf,
   assertRecordShape,
@@ -40,14 +41,30 @@ export const INTAKE_ROW_SPECS: readonly RowSpec[] = [
           sourceEventId: (value) => assertString(value, "sourceEventId"),
           status: (value) =>
             assertOneOf(
-              ["processed", "needs_review", "failed", "duplicate", "dismissed"],
+              ["processed", "needs_review", "failed", "duplicate", "dismissed", "pending_retry"],
               value,
               "status"
             ),
           failureReason: (value) => assertNullableString(value, "failureReason"),
+          subject: (value) => assertNullableString(value, "subject"),
+          rawBodyPreview: (value) => assertNullableString(value, "rawBodyPreview"),
+          rawBody: (value) => assertNullableString(value, "rawBody"),
+          retryCount: (value) => assertNullableNumber(value, "retryCount"),
+          nextRetryAt: (value) => assertNullableIsoDateTime(value, "nextRetryAt"),
+          transactionId: (value) => assertNullableString(value, "transactionId"),
+          confidence: (value) => assertNullableNumber(value, "confidence"),
           receivedAt: (value) => assertValidIsoDateTime(value, "receivedAt"),
           processedAt: (value) => assertValidIsoDateTime(value, "processedAt"),
-        })
+        }),
+        [
+          "subject",
+          "rawBodyPreview",
+          "rawBody",
+          "retryCount",
+          "nextRetryAt",
+          "transactionId",
+          "confidence",
+        ]
       ),
   },
   {
@@ -65,6 +82,9 @@ export const INTAKE_ROW_SPECS: readonly RowSpec[] = [
           occurredAt: (value) => assertNullableIsoDateTime(value, "occurredAt"),
           amount: (value) => assertNullableNumber(value, "amount"),
           currency: (value) => assertOneOf(["COP"], value, "currency"),
+          transactionType: (value) =>
+            assertNullableOneOf(["expense", "income"], value, "transactionType"),
+          categoryId: (value) => assertNullableString(value, "categoryId"),
           description: (value) => assertNullableString(value, "description"),
           confidence: (value) => assertNullableNumber(value, "confidence"),
         })

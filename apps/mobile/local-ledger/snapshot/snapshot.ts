@@ -151,6 +151,13 @@ export type ProcessedSourceEventSnapshotRow = SoftDeletedSnapshotRow & {
   readonly sourceEventId: string;
   readonly status: string;
   readonly failureReason: string | null;
+  readonly subject: string | null;
+  readonly rawBodyPreview: string | null;
+  readonly rawBody: string | null;
+  readonly retryCount: number;
+  readonly nextRetryAt: string | null;
+  readonly transactionId: string | null;
+  readonly confidence: number | null;
   readonly receivedAt: string;
   readonly processedAt: string;
 };
@@ -162,6 +169,8 @@ export type ReviewCandidateSnapshotRow = SoftDeletedSnapshotRow & {
   readonly occurredAt: string | null;
   readonly amount: number | null;
   readonly currency: string;
+  readonly transactionType: string | null;
+  readonly categoryId: string | null;
   readonly description: string | null;
   readonly confidence: number | null;
 };

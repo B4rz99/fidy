@@ -5,37 +5,34 @@ import {
 } from "@/features/capture-evidence/public";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { currentIsoDateTimeEffect } from "@/shared/effect/clock";
-import { fromPromise, fromThunk } from "@/shared/effect/runtime";
-import { generateProcessedEmailId, generateTransactionId } from "@/shared/lib/generate-id";
-import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
+import { fromPromise } from "@/shared/effect/runtime";
+import {
+  generateProcessedEmailId,
+  generateProcessedSourceEventId,
+  generateTransactionId,
+} from "@/shared/lib/generate-id";
 import { assertIsoDateTime, requireIsoDateTime } from "@/shared/types/assertions";
 import type { IsoDateTime } from "@/shared/types/branded";
 import { commitReviewCandidate, persistReviewCandidateEffect } from "./review-candidate";
+import { EmailPipelineDeps, ensureDefaultFinancialAccountEffect } from "./runtime";
 import {
-  EmailPipelineDeps,
-  ensureDefaultFinancialAccountEffect,
-  insertMerchantRuleEffect,
-} from "./runtime";
+  persistSuccessfulRetryBundleEffect,
+  persistSuccessfulRetrySideEffectsEffect,
+} from "./retry-transaction-bundle";
 import {
   assertParsedTransaction,
-  getParsedCounterpartyName,
   getPersistedCategoryId,
   getTransactionSource,
   resolveEmailStatus,
 } from "./shared";
-import {
-  defaultRecordTransaction,
-  persistTransactionRecordEffect,
-  recordTransactionToDb,
-} from "./transaction-recording";
+import { defaultRecordTransaction, recordTransactionToDb } from "./transaction-recording";
+import { trackSavedTransactionEffect } from "./transaction-tracking";
 import type {
   CreateEmailPipelineServiceDeps,
   EmailTransactionContext,
-  ProcessedEmailRow,
   RetryTransactionContext,
   SaveRetryTransactionInput,
   SaveTransactionInput,
-  TrackSavedTransactionInput,
 } from "./types";
 
 function buildTransactionCaptureEvidenceRows(
@@ -55,44 +52,53 @@ function buildTransactionCaptureEvidenceRows(
     {
       userId: context.userId,
       transactionId: context.txId,
-      processedEmailId: context.processedEmailId,
+      processedEmailId: null,
       processedCaptureId: null,
+      processedSourceEventId: context.processedSourceEventId,
       createdAt: context.now,
       updatedAt: context.now,
     }
   );
 }
 
-const buildReviewProcessedEmailRow = (context: EmailTransactionContext): ProcessedEmailRow => ({
-  id: context.processedEmailId,
-  externalId: context.email.externalId,
-  provider: context.email.provider,
+const buildReviewProcessedSourceEventRow = (context: EmailTransactionContext) => ({
+  id: context.processedSourceEventId,
+  userId: context.userId,
+  sourceFamily: "email",
+  sourceId: getTransactionSource(context.email.provider),
+  sourceEventId: context.email.externalId,
   status: "needs_review",
   failureReason: null,
   subject: context.email.subject,
   rawBodyPreview: context.email.body.slice(0, 500),
+  rawBody: null,
+  retryCount: 0,
+  nextRetryAt: null,
   receivedAt: requireIsoDateTime(context.email.receivedAt),
+  processedAt: context.now,
   transactionId: null,
   confidence: context.parsed.confidence,
   createdAt: context.now,
+  updatedAt: context.now,
+  deletedAt: null,
 });
 
 function persistReviewCandidateBundleEffect(context: EmailTransactionContext) {
   return Effect.gen(function* () {
     const deps = yield* EmailPipelineDeps.tag;
-    const processedEmailRow = buildReviewProcessedEmailRow(context);
+    const processedSourceEventRow = buildReviewProcessedSourceEventRow(context);
 
     yield* fromPromise(async () => {
       if ("transaction" in context.db && typeof context.db.transaction === "function") {
         await context.db.transaction(async (tx) => {
           await commitReviewCandidate({ ...context, db: tx }, deps);
-          await deps.insertProcessedEmail(tx, processedEmailRow);
+          await deps.insertProcessedEmailSourceEvent(tx, processedSourceEventRow);
         });
         return;
       }
 
       await commitReviewCandidate(context, deps);
-      await deps.insertProcessedEmail(context.db, processedEmailRow);
+      await deps.insertProcessedEmailSourceEvent(context.db, processedSourceEventRow);
     });
   });
 }
@@ -101,23 +107,28 @@ function persistTransactionBundleEffect(context: EmailTransactionContext) {
   return Effect.gen(function* () {
     const {
       buildEmailCaptureEvidence,
-      insertProcessedEmail,
+      insertProcessedEmailSourceEvent,
       insertTransaction,
       recordTransaction = defaultRecordTransaction,
       saveCaptureEvidenceRows,
     } = yield* EmailPipelineDeps.tag;
-    const processedEmailRow = {
-      id: context.processedEmailId,
-      externalId: context.email.externalId,
-      provider: context.email.provider,
-      status: context.status,
+    const processedSourceEventRow = {
+      id: context.processedSourceEventId,
+      userId: context.userId,
+      sourceFamily: "email",
+      sourceId: getTransactionSource(context.email.provider),
+      sourceEventId: context.email.externalId,
+      status: "processed",
       failureReason: null,
       subject: context.email.subject,
       rawBodyPreview: context.email.body.slice(0, 500),
       receivedAt: requireIsoDateTime(context.email.receivedAt),
+      processedAt: context.now,
       transactionId: context.txId,
       confidence: context.parsed.confidence,
       createdAt: context.now,
+      updatedAt: context.now,
+      deletedAt: null,
     };
     const evidenceRows = buildTransactionCaptureEvidenceRows(context, buildEmailCaptureEvidence);
 
@@ -129,7 +140,7 @@ function persistTransactionBundleEffect(context: EmailTransactionContext) {
             recordTransaction,
             db: tx,
           });
-          await insertProcessedEmail(tx, processedEmailRow);
+          await insertProcessedEmailSourceEvent(tx, processedSourceEventRow);
           await saveCaptureEvidenceRows(tx, evidenceRows);
         });
         return;
@@ -140,22 +151,10 @@ function persistTransactionBundleEffect(context: EmailTransactionContext) {
         recordTransaction,
         db: context.db,
       });
-      await insertProcessedEmail(context.db, processedEmailRow);
+      await insertProcessedEmailSourceEvent(context.db, processedSourceEventRow);
       await saveCaptureEvidenceRows(context.db, evidenceRows);
     });
   });
-}
-
-function trackSavedTransactionEffect(input: TrackSavedTransactionInput) {
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ trackTransactionCreated }) =>
-    fromThunk(() =>
-      trackTransactionCreated({
-        type: input.parsed.type,
-        category: String(input.categoryId),
-        source: "email",
-      })
-    )
-  );
 }
 
 function createEmailTransactionContext(
@@ -172,6 +171,7 @@ function createEmailTransactionContext(
     now,
     txId: generateTransactionId(),
     processedEmailId: generateProcessedEmailId(),
+    processedSourceEventId: generateProcessedSourceEventId(),
     categoryId: getPersistedCategoryId(input.parsed.categoryId),
     source: getTransactionSource(input.email.provider),
     defaultAccount,
@@ -194,6 +194,7 @@ function createRetryTransactionContext(
     categoryId: getPersistedCategoryId(input.parsed.categoryId),
     source: getTransactionSource(input.email.provider),
     defaultAccount,
+    processedSourceEventId: input.processedSourceEventId,
   };
 }
 
@@ -224,22 +225,6 @@ function createRetryTransactionContextEffect(input: SaveRetryTransactionInput) {
   });
 }
 
-function persistSuccessfulRetrySideEffectsEffect(context: RetryTransactionContext) {
-  return Effect.gen(function* () {
-    yield* insertMerchantRuleEffect({
-      db: context.db,
-      userId: context.userId,
-      merchantKey: normalizeMerchant(getParsedCounterpartyName(context.parsed)),
-      categoryId: context.categoryId,
-      createdAt: context.now,
-    });
-    yield* trackSavedTransactionEffect({
-      parsed: context.parsed,
-      categoryId: context.categoryId,
-    });
-  });
-}
-
 export function saveTransactionEffect(input: SaveTransactionInput) {
   return Effect.gen(function* () {
     const context = yield* createEmailTransactionContextEffect(input);
@@ -267,7 +252,7 @@ export function saveRetryTransactionEffect(input: SaveRetryTransactionInput) {
       return { txId: null, status: context.status };
     }
 
-    yield* persistTransactionRecordEffect(context);
+    yield* persistSuccessfulRetryBundleEffect(context);
     yield* persistSuccessfulRetrySideEffectsEffect(context);
     return { txId: context.txId, status: context.status };
   });

@@ -2,10 +2,12 @@ import type { AnyDb } from "@/shared/db";
 import { capturePipelineEventEffect } from "@/shared/effect/telemetry";
 import { buildEmailPipelineBatchTelemetry } from "./email-telemetry";
 import { processIncomingEmail } from "./incoming-email";
-import { getProcessedExternalIdsEffect } from "./runtime";
+import { getProcessedEmailSourceEventIdsEffect, getProcessedExternalIdsEffect } from "./runtime";
 import {
   createPipelineResult,
   dedupeRawEmails,
+  getEmailSourceEventKey,
+  getTransactionSource,
   getNextQueuedEmail,
   getProgressSnapshot,
   mergePipelineResults,
@@ -42,17 +44,26 @@ const nowMs = (): number => Date.now();
 async function createEmailBatchPlan(
   runtime: PipelineRuntime,
   db: AnyDb,
+  userId: ProcessEmailsInput["userId"],
   rawEmails: RawEmail[]
 ): Promise<EmailBatchPlan> {
   const uniqueEmails = dedupeRawEmails(rawEmails);
   const dedupedInBatch = rawEmails.length - uniqueEmails.length;
-  const processedIds = await runtime.runEmailEffect(
-    getProcessedExternalIdsEffect(
-      db,
-      uniqueEmails.map((email) => email.externalId)
-    )
+  const sourceEvents = uniqueEmails.map((email) => ({
+    sourceId: getTransactionSource(email.provider),
+    sourceEventId: email.externalId,
+  }));
+  const sourceEventIds = await runtime.runEmailEffect(
+    getProcessedEmailSourceEventIdsEffect(db, userId, sourceEvents)
   );
-  const toProcess = uniqueEmails.filter((email) => !processedIds.has(email.externalId));
+  const legacyProcessedIds = await runtime.runEmailEffect(
+    getProcessedExternalIdsEffect(db, uniqueEmails)
+  );
+  const toProcess = uniqueEmails.filter(
+    (email) =>
+      !sourceEventIds.has(getEmailSourceEventKey(email)) &&
+      !legacyProcessedIds.has(getEmailSourceEventKey(email))
+  );
   const boundedToProcess =
     runtime.maxCandidateEmails == null ? toProcess : toProcess.slice(0, runtime.maxCandidateEmails);
   const skippedAlreadyProcessed = uniqueEmails.length - toProcess.length;
@@ -167,7 +178,7 @@ const summarizeBatchTiming = (
 
 export async function processEmailBatch(runtime: PipelineRuntime, input: ProcessEmailsInput) {
   const batchStartedAt = nowMs();
-  const batch = await createEmailBatchPlan(runtime, input.db, input.rawEmails);
+  const batch = await createEmailBatchPlan(runtime, input.db, input.userId, input.rawEmails);
   const context: EmailBatchContext = {
     runtime,
     db: input.db,

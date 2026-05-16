@@ -8,6 +8,7 @@ import type {
   CategoryId,
   IsoDateTime,
   ProcessedEmailId,
+  ProcessedSourceEventId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
@@ -49,7 +50,8 @@ export type CaptureEvidenceRowsInput = {
   readonly cardProductHint?: string;
   readonly accountTypeHint?: string;
   readonly counterpartyHint?: string;
-  readonly processedEmailId: ProcessedEmailId;
+  readonly processedEmailId: ProcessedEmailId | null;
+  readonly processedSourceEventId?: ProcessedSourceEventId | null;
   readonly transactionId: TransactionId | null;
   readonly now: IsoDateTime;
   readonly buildEmailCaptureEvidence: (input: {
@@ -73,6 +75,7 @@ export type CaptureEvidenceSaveInput = Omit<
 export type LinkCaptureEvidenceInput = {
   readonly db: AnyDb;
   readonly processedEmailId: ProcessedEmailId;
+  readonly processedSourceEventId?: ProcessedSourceEventId | null;
   readonly transactionId: TransactionId;
   readonly updatedAt: IsoDateTime;
 };
@@ -85,26 +88,27 @@ export type MerchantRuleEffectInput = {
   readonly createdAt: IsoDateTime;
 };
 
-export type RetryScheduleEffectInput = {
+export type SourceEventRetryScheduleEffectInput = {
   readonly db: AnyDb;
-  readonly id: ProcessedEmailId;
+  readonly id: ProcessedSourceEventId;
   readonly retryCount: number;
   readonly nextRetryAt: IsoDateTime;
 };
 
-export type RetrySuccessEffectInput = {
+export type SourceEventRetrySuccessEffectInput = {
   readonly db: AnyDb;
-  readonly id: ProcessedEmailId;
-  readonly status: EmailSaveStatus;
+  readonly id: ProcessedSourceEventId;
+  readonly status: "processed" | "needs_review" | "duplicate";
   readonly transactionId: TransactionId | null;
   readonly confidence: number;
 };
 
-export type ProcessedEmailStatusEffectInput = {
+export type ProcessedSourceEventStatusEffectInput = {
   readonly db: AnyDb;
-  readonly id: ProcessedEmailId;
+  readonly id: ProcessedSourceEventId;
   readonly status: string;
   readonly transactionId: TransactionId | null;
+  readonly rawBody?: string | null;
 };
 
 export type DefaultAccountInput = {
@@ -121,11 +125,16 @@ export type SaveTransactionInput = {
   readonly status: EmailSaveStatus;
 };
 
+export type RetryEmailSnapshot = Omit<ProcessedEmailRow, "id"> & {
+  readonly id: string;
+};
+
 export type SaveRetryTransactionInput = {
   readonly db: AnyDb;
   readonly userId: UserId;
   readonly parsed: LlmParsedTransaction;
-  readonly email: ProcessedEmailRow;
+  readonly email: RetryEmailSnapshot;
+  readonly processedSourceEventId?: ProcessedSourceEventId;
 };
 
 export type PersistedTransactionContext = {
@@ -142,12 +151,14 @@ export type PersistedTransactionContext = {
 export type EmailTransactionContext = PersistedTransactionContext & {
   readonly email: RawEmail;
   readonly status: EmailSaveStatus;
-  readonly processedEmailId: ProcessedEmailId;
+  readonly processedEmailId: ProcessedEmailId | null;
+  readonly processedSourceEventId: ProcessedSourceEventId;
 };
 
 export type RetryTransactionContext = PersistedTransactionContext & {
-  readonly email: ProcessedEmailRow;
+  readonly email: RetryEmailSnapshot;
   readonly status: EmailSaveStatus;
+  readonly processedSourceEventId?: ProcessedSourceEventId;
 };
 
 export type ProcessEmailsInput = {
@@ -247,6 +258,15 @@ export type UnparsedProcessedEmailRowInput = {
   readonly nextRetryAt: IsoDateTime | null;
 };
 
+export type UnparsedProcessedSourceEventRowInput = Omit<
+  UnparsedProcessedEmailRowInput,
+  "processedEmailId" | "status"
+> & {
+  readonly userId: UserId;
+  readonly processedSourceEventId: ProcessedSourceEventId;
+  readonly status: "pending_retry" | "dismissed";
+};
+
 export type DuplicateProcessedEmailRowInput = {
   readonly email: RawEmail;
   readonly processedEmailId: ProcessedEmailId;
@@ -255,16 +275,15 @@ export type DuplicateProcessedEmailRowInput = {
   readonly createdAt: IsoDateTime;
 };
 
+export type DuplicateProcessedSourceEventRowInput = Omit<
+  DuplicateProcessedEmailRowInput,
+  "processedEmailId"
+> & {
+  readonly userId: UserId;
+  readonly processedSourceEventId: ProcessedSourceEventId;
+};
+
 export type TrackSavedTransactionInput = {
   readonly parsed: LlmParsedTransaction;
   readonly categoryId: CategoryId;
-};
-
-export type IncomingEmailPersistenceInput = {
-  readonly context: EmailBatchContext;
-  readonly email: RawEmail;
-  readonly row: ProcessedEmailRow;
-  readonly processedEmailId: ProcessedEmailId;
-  readonly transactionId: TransactionId | null;
-  readonly createdAt: IsoDateTime;
 };

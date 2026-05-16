@@ -32,7 +32,7 @@ export function useFinancialMeaningReviewQueue({
     }
 
     try {
-      const nextItems = await getFinancialMeaningReviewItems(db);
+      const nextItems = await getFinancialMeaningReviewItems(db, userId);
       setItems(nextItems);
       await loadNeedsReviewEmails(db, userId);
     } catch (error) {

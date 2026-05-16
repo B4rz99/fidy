@@ -126,6 +126,13 @@ function validateSnapshotReferences(data: LocalLedgerBackupSnapshotData) {
       "processedCaptures.transactionId"
     );
   });
+  data.processedSourceEvents.forEach((row) => {
+    assertOptionalKnownReference(
+      transactionIds,
+      row.transactionId,
+      "processedSourceEvents.transactionId"
+    );
+  });
   data.captureEvidence.forEach((row) => {
     assertOptionalKnownReference(
       transactionIds,
@@ -278,10 +285,10 @@ function assertKnownReference(ids: ReadonlySet<string>, value: string, label: st
 
 function assertOptionalKnownReference(
   ids: ReadonlySet<string>,
-  value: string | null,
+  value: string | null | undefined,
   label: string
 ) {
-  if (value !== null) {
+  if (value != null) {
     assertKnownReference(ids, value, label);
   }
 }

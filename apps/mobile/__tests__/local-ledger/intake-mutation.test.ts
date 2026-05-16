@@ -69,6 +69,18 @@ function expectActiveRowGuard(condition: unknown) {
   expect(tokens).toContain(" is null");
 }
 
+function makeSourceEventIdSelect(id: ProcessedSourceEventId) {
+  return vi.fn<(...args: unknown[]) => unknown>(() => ({
+    from: vi.fn<(...args: unknown[]) => unknown>(() => ({
+      where: vi.fn<(...args: unknown[]) => unknown>(() => ({
+        limit: vi.fn<(...args: unknown[]) => unknown>(() => ({
+          all: vi.fn<(...args: unknown[]) => unknown>(() => [{ id }]),
+        })),
+      })),
+    })),
+  }));
+}
+
 type CreateReviewCandidateMutationCommand = Extract<
   MutationCommand,
   { kind: "localLedger.reviewCandidate.create" }
@@ -231,10 +243,19 @@ describe("local ledger intake mutations", () => {
     const inserted: { table: string; row: unknown }[] = [];
     const db = {
       transaction: vi.fn<(...args: any[]) => any>((fn: (tx: AnyDb) => unknown) => fn(db as AnyDb)),
+      select: makeSourceEventIdSelect("pse-1" as ProcessedSourceEventId),
       insert: vi.fn<(...args: any[]) => any>((table) => ({
         values: vi.fn<(...args: any[]) => any>((row) => {
           inserted.push({ table: getTableName(table), row });
-          return { run: vi.fn<(...args: any[]) => any>() };
+          return {
+            onConflictDoUpdate: vi.fn<(...args: any[]) => any>(() => ({
+              run: vi.fn<(...args: any[]) => any>(),
+            })),
+            onConflictDoNothing: vi.fn<(...args: any[]) => any>(() => ({
+              run: vi.fn<(...args: any[]) => any>(),
+            })),
+            run: vi.fn<(...args: any[]) => any>(),
+          };
         }),
       })),
     } as unknown as AnyDb;
@@ -252,7 +273,7 @@ describe("local ledger intake mutations", () => {
     ]);
   });
 
-  it("rolls back source event, candidate, evidence, and links when a later intake insert fails", async () => {
+  it("treats duplicate source-event intake rows as idempotent replay", async () => {
     const committed: { table: string; row: unknown }[] = [];
     let staged: { table: string; row: unknown }[] | null = null;
     const db = {
@@ -267,8 +288,21 @@ describe("local ledger intake mutations", () => {
           staged = null;
         }
       }),
+      select: makeSourceEventIdSelect("pse-1" as ProcessedSourceEventId),
       insert: vi.fn<(...args: any[]) => any>((table) => ({
         values: vi.fn<(...args: any[]) => any>((row) => ({
+          onConflictDoUpdate: vi.fn<(...args: any[]) => any>(() => ({
+            run: vi.fn<(...args: any[]) => any>(() => {
+              staged?.push({ table: getTableName(table), row });
+            }),
+          })),
+          onConflictDoNothing: vi.fn<(...args: any[]) => any>(() => ({
+            run: vi.fn<(...args: any[]) => any>(() => {
+              const tableName = getTableName(table);
+              if (staged?.some((entry) => entry.table === tableName)) return;
+              staged?.push({ table: tableName, row });
+            }),
+          })),
           run: vi.fn<(...args: any[]) => any>(() => {
             const tableName = getTableName(table);
             if (
@@ -298,11 +332,13 @@ describe("local ledger intake mutations", () => {
 
     const result = await module.commit(command);
 
-    expect(result).toEqual({
-      success: false,
-      error: expect.stringContaining("UNIQUE constraint failed"),
-    });
-    expect(committed).toEqual([]);
+    expect(result).toEqual({ success: true, didMutate: true });
+    expect(committed.map((entry) => entry.table)).toEqual([
+      getTableName(processedSourceEvents),
+      getTableName(reviewCandidates),
+      getTableName(captureEvidence),
+      getTableName(reviewCandidateCaptureEvidence),
+    ]);
   });
 
   it("maps dismissal to an explicit dismissed source-event outcome", async () => {

@@ -1,73 +1,93 @@
-import { currentIsoDateTimeEffect } from "@/shared/effect/clock";
-import { captureErrorEffect, captureWarningEffect } from "@/shared/effect/telemetry";
+import { captureErrorEffect } from "@/shared/effect/telemetry";
 import { isMaxRetriesReached } from "../../lib/retry-backoff";
 import {
   findDuplicateTransactionEffect,
-  getPendingRetryEmailsEffect,
-  linkCaptureEvidenceToTransactionEffect,
-  markForRetryEffect,
-  markPermanentlyFailedEffect,
-  markRetrySuccessEffect,
+  getPendingRetryEmailSourceEventsEffect,
+  markSourceEventForRetryEffect,
+  markSourceEventPermanentlyFailedEffect,
+  markSourceEventRetrySuccessEffect,
   nextRetryAtEffect,
-  parseBodyEffect,
-  updateProcessedEmailStatusEffect,
+  updateProcessedSourceEventStatusEffect,
 } from "./runtime";
+import { parseEmailBodyOrReport } from "./parse-email-body";
 import { incrementRetryMetric } from "./shared";
 import { saveRetryTransactionEffect } from "./transactions";
 import type {
   EmailSaveStatus,
   LlmParsedTransaction,
-  ProcessedEmailId,
-  ProcessedEmailRow,
+  ProcessedSourceEventId,
+  ProcessedSourceEventRow,
   ProcessRetriesInput,
   RetryBatchContext,
   RetryDuplicateOutcome,
+  RetryEmailSnapshot,
   RetryParseOutcome,
   RetryResult,
   TransactionId,
 } from "./types";
 
+const getRetryEmailProvider = (email: ProcessedSourceEventRow) =>
+  email.sourceId === "email_outlook" ? "outlook" : "gmail";
+
+const toRetryEmailSnapshot = (email: ProcessedSourceEventRow): RetryEmailSnapshot => ({
+  id: email.id,
+  externalId: email.sourceEventId,
+  provider: getRetryEmailProvider(email),
+  status: email.status,
+  failureReason: email.failureReason,
+  subject: email.subject ?? "",
+  rawBodyPreview: email.rawBodyPreview,
+  receivedAt: email.receivedAt,
+  transactionId: email.transactionId,
+  confidence: email.confidence,
+  createdAt: email.createdAt,
+  rawBody: email.rawBody,
+  retryCount: email.retryCount,
+  nextRetryAt: email.nextRetryAt,
+});
+
 async function parseRetryEmail(
   context: RetryBatchContext,
   input: {
-    readonly provider: ProcessedEmailRow["provider"];
+    readonly provider: "gmail" | "outlook";
     readonly rawBody: string;
   }
 ): Promise<RetryParseOutcome> {
-  try {
-    const parsed = await context.runtime.runEmailEffect(
-      parseBodyEffect(context.db, context.userId, input.rawBody)
-    );
-    return parsed ? { kind: "parsed", parsed } : { kind: "skipped" };
-  } catch (error) {
-    await context.runtime.runTelemetryEffect(
-      captureWarningEffect("email_retry_parse_exception", {
-        provider: input.provider,
-        errorType: error instanceof Error ? error.message : "unknown",
-      })
-    );
-    return { kind: "retry" };
-  }
+  const result = await parseEmailBodyOrReport(context, {
+    body: input.rawBody,
+    provider: input.provider,
+    warningName: "email_retry_parse_exception",
+  });
+  return result.kind === "failed"
+    ? { kind: "retry" }
+    : result.parsed
+      ? { kind: "parsed", parsed: result.parsed }
+      : { kind: "skipped" };
 }
 
-async function markRetryAsPermanentlyFailed(context: RetryBatchContext, id: ProcessedEmailId) {
-  await context.runtime.runEmailEffect(markPermanentlyFailedEffect(context.db, id));
+async function markRetryAsPermanentlyFailed(
+  context: RetryBatchContext,
+  email: ProcessedSourceEventRow
+) {
+  await context.runtime.runEmailEffect(
+    markSourceEventPermanentlyFailedEffect(context.db, email.id as ProcessedSourceEventId)
+  );
   incrementRetryMetric(context.result, "permanentlyFailed");
 }
 
-async function scheduleRetryOrFail(context: RetryBatchContext, email: ProcessedEmailRow) {
+async function scheduleRetryOrFail(context: RetryBatchContext, email: ProcessedSourceEventRow) {
   const retryCount = (email.retryCount ?? 0) + 1;
   const nextRetryAt = await context.runtime.runClockEffect(nextRetryAtEffect(retryCount));
 
   if (isMaxRetriesReached(retryCount)) {
-    await markRetryAsPermanentlyFailed(context, email.id);
+    await markRetryAsPermanentlyFailed(context, email);
     return;
   }
 
   await context.runtime.runEmailEffect(
-    markForRetryEffect({
+    markSourceEventForRetryEffect({
       db: context.db,
-      id: email.id,
+      id: email.id as ProcessedSourceEventId,
       retryCount,
       nextRetryAt,
     })
@@ -77,7 +97,7 @@ async function scheduleRetryOrFail(context: RetryBatchContext, email: ProcessedE
 
 async function handleRetryParseOutcome(
   context: RetryBatchContext,
-  email: ProcessedEmailRow,
+  email: ProcessedSourceEventRow,
   kind: Exclude<RetryParseOutcome["kind"], "parsed">
 ) {
   if (kind === "retry") {
@@ -86,11 +106,12 @@ async function handleRetryParseOutcome(
   }
 
   await context.runtime.runEmailEffect(
-    updateProcessedEmailStatusEffect({
+    updateProcessedSourceEventStatusEffect({
       db: context.db,
-      id: email.id,
-      status: "skipped",
+      id: email.id as ProcessedSourceEventId,
+      status: "dismissed",
       transactionId: null,
+      rawBody: null,
     })
   );
 }
@@ -112,28 +133,21 @@ async function lookupRetryDuplicate(
 
 async function finalizeRetrySuccess(input: {
   readonly context: RetryBatchContext;
-  readonly emailId: ProcessedEmailId;
+  readonly email: ProcessedSourceEventRow;
   readonly transactionId: TransactionId | null;
-  readonly status: EmailSaveStatus;
+  readonly status: EmailSaveStatus | "duplicate";
   readonly confidence: number;
 }) {
-  const updatedAt = await input.context.runtime.runClockEffect(currentIsoDateTimeEffect);
-
-  if (input.transactionId !== null) {
-    await input.context.runtime.runEmailEffect(
-      linkCaptureEvidenceToTransactionEffect({
-        db: input.context.db,
-        processedEmailId: input.emailId,
-        transactionId: input.transactionId,
-        updatedAt,
-      })
-    );
-  }
   await input.context.runtime.runEmailEffect(
-    markRetrySuccessEffect({
+    markSourceEventRetrySuccessEffect({
       db: input.context.db,
-      id: input.emailId,
-      status: input.status,
+      id: input.email.id as ProcessedSourceEventId,
+      status:
+        input.status === "duplicate"
+          ? "duplicate"
+          : input.status === "success"
+            ? "processed"
+            : "needs_review",
       transactionId: input.transactionId,
       confidence: input.confidence,
     })
@@ -143,25 +157,20 @@ async function finalizeRetrySuccess(input: {
 
 async function persistRetryTransaction(input: {
   readonly context: RetryBatchContext;
-  readonly email: ProcessedEmailRow;
+  readonly email: ProcessedSourceEventRow;
   readonly parsed: LlmParsedTransaction;
 }) {
   try {
-    const { txId, status } = await input.context.runtime.runEmailWithClock(
+    await input.context.runtime.runEmailWithClock(
       saveRetryTransactionEffect({
         db: input.context.db,
         userId: input.context.userId,
         parsed: input.parsed,
-        email: input.email,
+        email: toRetryEmailSnapshot(input.email),
+        processedSourceEventId: input.email.id,
       })
     );
-    await finalizeRetrySuccess({
-      context: input.context,
-      emailId: input.email.id,
-      transactionId: txId,
-      status,
-      confidence: input.parsed.confidence,
-    });
+    incrementRetryMetric(input.context.result, "succeeded");
     return true;
   } catch (error) {
     await input.context.runtime.runTelemetryEffect(captureErrorEffect(error));
@@ -171,7 +180,7 @@ async function persistRetryTransaction(input: {
 
 async function processParsedRetryEmail(
   context: RetryBatchContext,
-  email: ProcessedEmailRow,
+  email: ProcessedSourceEventRow,
   parsed: LlmParsedTransaction
 ) {
   const duplicate = await lookupRetryDuplicate(context, parsed);
@@ -183,9 +192,9 @@ async function processParsedRetryEmail(
   if (duplicate.kind === "duplicate") {
     await finalizeRetrySuccess({
       context,
-      emailId: email.id,
+      email,
       transactionId: duplicate.transactionId,
-      status: "success",
+      status: "duplicate",
       confidence: parsed.confidence,
     });
     return;
@@ -197,15 +206,15 @@ async function processParsedRetryEmail(
   }
 }
 
-async function processRetryEmail(context: RetryBatchContext, email: ProcessedEmailRow) {
+async function processRetryEmail(context: RetryBatchContext, email: ProcessedSourceEventRow) {
   const { rawBody } = email;
   if (!rawBody) {
-    await markRetryAsPermanentlyFailed(context, email.id);
+    await markRetryAsPermanentlyFailed(context, email);
     return;
   }
 
   const parsed = await parseRetryEmail(context, {
-    provider: email.provider,
+    provider: getRetryEmailProvider(email),
     rawBody,
   });
   if (parsed.kind !== "parsed") {
@@ -227,9 +236,11 @@ export async function processRetryBatch(
     userId: input.userId,
     result,
   };
-  const pendingEmails = await runtime.runEmailEffect(getPendingRetryEmailsEffect(input.db));
+  const pendingSourceEvents = await runtime.runEmailEffect(
+    getPendingRetryEmailSourceEventsEffect(input.db, input.userId)
+  );
 
-  for (const email of pendingEmails) {
+  for (const email of pendingSourceEvents) {
     await processRetryEmail(context, email);
   }
 

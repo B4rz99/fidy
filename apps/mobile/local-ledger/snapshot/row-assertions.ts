@@ -99,6 +99,12 @@ export function assertOneOf(values: readonly string[], value: unknown, label: st
   }
 }
 
+export function assertNullableOneOf(values: readonly string[], value: unknown, label: string) {
+  if (value !== null) {
+    assertOneOf(values, value, label);
+  }
+}
+
 export const validateBaseLedgerFields = (validators: Record<string, (value: unknown) => void>) => ({
   ...validators,
   createdAt: (value: unknown) => assertValidIsoDateTime(value, "createdAt"),

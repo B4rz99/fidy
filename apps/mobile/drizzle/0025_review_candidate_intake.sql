@@ -120,6 +120,8 @@ CREATE TABLE `review_candidates` (
 	`occurred_at` text,
 	`amount` integer,
 	`currency` text DEFAULT 'COP' NOT NULL,
+	`transaction_type` text,
+	`category_id` text,
 	`description` text,
 	`confidence` real,
 	`created_at` text NOT NULL,

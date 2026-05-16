@@ -4,8 +4,8 @@ import { captureWarning, toIsoDateTime } from "@/shared/lib";
 import { queryClient } from "@/shared/query";
 import type { EmailAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
 import { isFirstFetchForAny, shouldShowProgress } from "../lib/progress-phases";
-import type { EmailAccountRow, ProcessedEmailRow } from "../lib/repository";
-import { getFailedEmails, getNeedsReviewEmails, updateLastFetchedAt } from "../lib/repository";
+import type { EmailAccountRow } from "../lib/repository";
+import { updateLastFetchedAt } from "../lib/repository";
 import type { PipelineResult, ProgressCallback, RawEmail, RetryResult } from "../pipeline.public";
 import {
   processBackgroundEmails,
@@ -20,6 +20,7 @@ import {
   captureEmailFetchBatchTelemetry,
   captureEmailRetryBatchTelemetry,
 } from "./email-capture-fetch-telemetry";
+import { getDurablyProcessedFetches } from "./email-fetch-durability";
 import { getAdapter } from "./email-adapter";
 export {
   applyEmailCaptureCandidateLimit,
@@ -71,11 +72,6 @@ export type PersistedFetchedAccounts = {
   readonly updatedAccountIds: ReadonlySet<EmailAccountId>;
 };
 
-export type EmailCaptureQueues = {
-  readonly failedEmails: readonly ProcessedEmailRow[];
-  readonly needsReviewEmails: readonly ProcessedEmailRow[];
-};
-
 type FetchEmailAccountsCommand = {
   readonly accounts: readonly EmailAccountRow[];
   readonly clientIds: EmailFetchClientIds;
@@ -90,6 +86,7 @@ type FetchEmailAccountCommand = {
 
 type PersistFetchedAccountsCommand = {
   readonly db: AnyDb;
+  readonly userId: UserId;
   readonly fetchResults: readonly ProcessedEmailAccountFetchResult[];
 };
 
@@ -128,16 +125,6 @@ const createFetchSummary = (
     showProgress: shouldShowProgress(allEmails.length, isFirstFetchForAny(accounts)),
   };
 };
-
-const getDurablyProcessedFetches = (
-  fetchResults: readonly ProcessedEmailAccountFetchResult[]
-): readonly ProcessedEmailAccountFetchResult[] =>
-  fetchResults.filter(
-    (result) =>
-      result.fetchOk &&
-      (result.processingResult.failed === 0 ||
-        result.processingResult.failed === result.processingResult.pendingRetry)
-  );
 
 const isSupportedEmailProvider = (provider: string): provider is EmailProvider =>
   provider === "gmail" || provider === "outlook";
@@ -260,7 +247,11 @@ export async function ingestFetchedEmails(input: {
 export async function persistFetchedAccounts(
   command: PersistFetchedAccountsCommand
 ): Promise<PersistedFetchedAccounts> {
-  const successfulFetches = getDurablyProcessedFetches(command.fetchResults);
+  const successfulFetches = await getDurablyProcessedFetches(
+    command.db,
+    command.userId,
+    command.fetchResults
+  );
   const fetchedAt = toIsoDateTime(new Date());
 
   await Promise.all(
@@ -271,13 +262,4 @@ export async function persistFetchedAccounts(
     fetchedAt,
     updatedAccountIds: new Set(successfulFetches.map((result) => result.account.id)),
   };
-}
-
-export async function loadEmailCaptureQueues(db: AnyDb): Promise<EmailCaptureQueues> {
-  const [failedEmails, needsReviewEmails] = await Promise.all([
-    getFailedEmails(db),
-    getNeedsReviewEmails(db),
-  ]);
-
-  return { failedEmails, needsReviewEmails };
 }

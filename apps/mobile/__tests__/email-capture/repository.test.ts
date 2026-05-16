@@ -216,16 +216,23 @@ describe("email capture repository", () => {
   });
 
   it("getProcessedExternalIds queries DB and returns Set for non-empty array", async () => {
-    const mockRows = [{ externalId: "msg-1" }, { externalId: "msg-2" }];
+    const mockRows = [
+      { externalId: "msg-1", provider: "gmail" },
+      { externalId: "msg-2", provider: "outlook" },
+    ];
     mockWhere.mockResolvedValueOnce(mockRows);
 
     const { getProcessedExternalIds } = await import("@/features/email-capture/lib/repository");
-    const result = await getProcessedExternalIds(mockDb, ["msg-1", "msg-2", "msg-3"]);
+    const result = await getProcessedExternalIds(mockDb, [
+      { provider: "gmail", externalId: "msg-1" },
+      { provider: "outlook", externalId: "msg-2" },
+      { provider: "gmail", externalId: "msg-3" },
+    ]);
 
     expect(mockSelect).toHaveBeenCalled();
     expect(mockFrom).toHaveBeenCalled();
     expect(mockWhere).toHaveBeenCalled();
-    expect(result).toEqual(new Set(["msg-1", "msg-2"]));
+    expect(result).toEqual(new Set(["email_gmail:msg-1", "email_outlook:msg-2"]));
   });
 
   it("getNeedsReviewEmails returns emails with needs_review status", async () => {

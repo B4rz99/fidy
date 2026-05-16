@@ -4,11 +4,16 @@ import {
   deleteEmailAccount,
   dismissProcessedEmail,
   getEmailAccounts,
+  getFailedEmailSourceEvents,
   getFailedEmails,
+  getNeedsReviewEmailSourceEvents,
   getNeedsReviewEmails,
+  getProcessedEmailSourceEventIds,
+  getProcessedExternalIds,
   insertEmailAccount,
   updateLastFetchedAt,
   updateProcessedEmailStatus,
+  updateProcessedSourceEventStatus,
 } from "@/features/email-capture/lib/repository";
 import { getAdapter } from "@/features/email-capture/services/email-adapter";
 import { summarizeFetchedEmailDiagnostics } from "@/features/email-capture/services/email-capture-fetch-service";
@@ -23,6 +28,7 @@ import {
   connectEmailAccount,
   disconnectEmailAccount,
   dismissFailedEmail,
+  dismissFailedEmailSourceEvent,
   fetchAndProcessEmails,
   initializeEmailCaptureSession,
   loadEmailAccounts,
@@ -35,6 +41,7 @@ import type {
   EmailAccountId,
   IsoDateTime,
   ProcessedEmailId,
+  ProcessedSourceEventId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
@@ -60,10 +67,22 @@ vi.mock("@/features/email-capture/lib/repository", () => ({
   insertEmailAccount: vi.fn<typeof insertEmailAccount>().mockResolvedValue(true),
   deleteEmailAccount: vi.fn<typeof deleteEmailAccount>(),
   getFailedEmails: vi.fn<typeof getFailedEmails>().mockResolvedValue([]),
+  getFailedEmailSourceEvents: vi.fn<typeof getFailedEmailSourceEvents>().mockResolvedValue([]),
   getNeedsReviewEmails: vi.fn<typeof getNeedsReviewEmails>().mockResolvedValue([]),
+  getNeedsReviewEmailSourceEvents: vi
+    .fn<typeof getNeedsReviewEmailSourceEvents>()
+    .mockResolvedValue([]),
+  getProcessedEmailSourceEventIds: vi
+    .fn<typeof getProcessedEmailSourceEventIds>()
+    .mockImplementation(
+      async (_db, _userId, sourceEvents) =>
+        new Set(sourceEvents.map((event) => `${event.sourceId}:${event.sourceEventId}`))
+    ),
+  getProcessedExternalIds: vi.fn<typeof getProcessedExternalIds>().mockResolvedValue(new Set()),
   dismissProcessedEmail: vi.fn<typeof dismissProcessedEmail>(),
   updateLastFetchedAt: vi.fn<typeof updateLastFetchedAt>(),
   updateProcessedEmailStatus: vi.fn<typeof updateProcessedEmailStatus>(),
+  updateProcessedSourceEventStatus: vi.fn<typeof updateProcessedSourceEventStatus>(),
 }));
 
 const mockAdapter = {
@@ -413,7 +432,9 @@ describe("email capture boundary", () => {
     useEmailCaptureStore.setState({
       accounts: [],
       failedEmails: [],
+      failedEmailSourceEvents: [],
       needsReviewEmails: [],
+      needsReviewEmailSourceEvents: [],
       isFetching: false,
       progress: null,
       phase: null,
@@ -526,6 +547,46 @@ describe("email capture boundary", () => {
 
     expect(dismissProcessedEmail).toHaveBeenCalledWith(mockDb, "pe-1");
     expect(useEmailCaptureStore.getState().failedEmails).toHaveLength(0);
+  });
+
+  it("dismissFailedEmailSourceEvent removes source-event failures from DB and state", async () => {
+    useEmailCaptureStore.setState({
+      failedEmailSourceEvents: [
+        {
+          id: "pse-1" as ProcessedSourceEventId,
+          userId: mockUserId as UserId,
+          sourceFamily: "email",
+          sourceId: "email_gmail",
+          sourceEventId: "msg-1",
+          status: "failed",
+          failureReason: "parse_error",
+          subject: "Compra",
+          rawBodyPreview: "Body",
+          rawBody: null,
+          retryCount: 0,
+          nextRetryAt: null,
+          transactionId: null,
+          confidence: null,
+          receivedAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
+          processedAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
+          createdAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
+          updatedAt: "2026-03-01T00:00:00.000Z" as IsoDateTime,
+          deletedAt: null,
+        },
+      ],
+    });
+
+    await dismissFailedEmailSourceEvent(mockDb, mockUserId as UserId, "pse-1");
+
+    expect(updateProcessedSourceEventStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        db: mockDb,
+        id: "pse-1",
+        status: "dismissed",
+        transactionId: null,
+      })
+    );
+    expect(useEmailCaptureStore.getState().failedEmailSourceEvents).toHaveLength(0);
   });
 
   it("connectEmail calls adapter and saves normalized account", async () => {

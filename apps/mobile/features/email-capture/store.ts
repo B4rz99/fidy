@@ -4,8 +4,11 @@ import type { UserId } from "@/shared/types/branded";
 import {
   dismissProcessedEmail,
   getEmailAccounts,
+  getFailedEmailSourceEvents,
   getFailedEmails,
+  getNeedsReviewEmailSourceEvents,
   getNeedsReviewEmails,
+  updateProcessedSourceEventStatus,
 } from "./lib/repository";
 import { shareEmailParseImprovementRequests } from "./services/email-parse-improvement-sharing";
 import {
@@ -14,12 +17,12 @@ import {
   type EmailCaptureParseProfile,
   fetchEmailAccountBatch,
   ingestFetchedEmails,
-  loadEmailCaptureQueues,
   type ProcessedEmailAccountFetchResult,
   persistFetchedAccounts,
   resolveEmailCaptureSyncPolicy,
   sortFetchResultsByNewestEmail,
 } from "./services/email-capture-fetch-service";
+import { loadEmailCaptureQueues } from "./services/email-capture-queues";
 import { aggregatePipelineResults } from "./services/email-capture-result";
 import {
   applyEmailCaptureFetchSummary,
@@ -99,19 +102,35 @@ export async function loadFailedEmails(db: AnyDb, userId: UserId): Promise<void>
   const request = beginEmailCaptureRequest("failedEmails", userId);
 
   try {
-    const failedEmails = await getFailedEmails(db);
+    const [failedEmails, failedEmailSourceEvents] = await Promise.all([
+      getFailedEmails(db),
+      getFailedEmailSourceEvents(db, userId),
+    ]);
     if (!isCurrentEmailCaptureRequest(request)) return;
     useEmailCaptureStore.getState().setFailedEmails(failedEmails);
-  } catch {}
+    useEmailCaptureStore.getState().setFailedEmailSourceEvents(failedEmailSourceEvents);
+  } catch (error) {
+    captureWarning("email_capture_failed_queue_load_failed", {
+      errorType: error instanceof Error ? error.name : "unknown",
+    });
+  }
 }
 export async function loadNeedsReviewEmails(db: AnyDb, userId: UserId): Promise<void> {
   const request = beginEmailCaptureRequest("needsReview", userId);
 
   try {
-    const needsReviewEmails = await getNeedsReviewEmails(db);
+    const [needsReviewEmails, needsReviewEmailSourceEvents] = await Promise.all([
+      getNeedsReviewEmails(db),
+      getNeedsReviewEmailSourceEvents(db, userId),
+    ]);
     if (!isCurrentEmailCaptureRequest(request)) return;
     useEmailCaptureStore.getState().setNeedsReviewEmails(needsReviewEmails);
-  } catch {}
+    useEmailCaptureStore.getState().setNeedsReviewEmailSourceEvents(needsReviewEmailSourceEvents);
+  } catch (error) {
+    captureWarning("email_capture_needs_review_queue_load_failed", {
+      errorType: error instanceof Error ? error.name : "unknown",
+    });
+  }
 }
 export async function dismissFailedEmail(
   db: AnyDb,
@@ -127,6 +146,26 @@ export async function dismissFailedEmail(
   await dismissProcessedEmail(db, failedEmail.id);
   if (!isActiveEmailCaptureSession(session)) return;
   useEmailCaptureStore.getState().removeFailedEmail(processedEmailId);
+}
+export async function dismissFailedEmailSourceEvent(
+  db: AnyDb,
+  userId: UserId,
+  processedSourceEventId: string
+): Promise<void> {
+  const session = createEmailCaptureSession(userId);
+  const failedEvent = useEmailCaptureStore
+    .getState()
+    .failedEmailSourceEvents.find((event) => event.id === processedSourceEventId);
+  if (!failedEvent || !isActiveEmailCaptureSession(session)) return;
+
+  await updateProcessedSourceEventStatus({
+    db,
+    id: failedEvent.id,
+    status: "dismissed",
+    transactionId: null,
+  });
+  if (!isActiveEmailCaptureSession(session)) return;
+  useEmailCaptureStore.getState().removeFailedEmail(processedSourceEventId);
 }
 export async function fetchAndProcessEmails(
   db: AnyDb,
@@ -219,16 +258,29 @@ export async function fetchAndProcessEmails(
       requests: processingResult.parseImprovementRequests,
     });
 
+    const queues = await loadEmailCaptureQueues(db, userId).catch((error) => {
+      captureWarning("email_capture_queue_refresh_failed", {
+        errorType: error instanceof Error ? error.name : "unknown",
+      });
+      return {
+        failedEmails: [],
+        failedEmailSourceEvents: [],
+        needsReviewEmails: [],
+        needsReviewEmailSourceEvents: [],
+      };
+    });
+
     await applyEmailCaptureFetchOutcome({
       run,
       showProgress,
       persistedAccounts: syncPolicy.advancesLastFetchedAt
         ? await persistFetchedAccounts({
             db,
+            userId,
             fetchResults: processedFetchResults,
           })
         : { fetchedAt: toIsoDateTime(new Date()), updatedAccountIds: new Set() },
-      queues: await loadEmailCaptureQueues(db),
+      queues,
       refreshTransactions,
     });
 

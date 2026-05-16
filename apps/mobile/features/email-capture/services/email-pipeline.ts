@@ -16,13 +16,15 @@ import { trackTransactionCreated } from "@/shared/lib/analytics";
 import type { UserId } from "@/shared/types/branded";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
 import {
-  getPendingRetryEmails,
+  getPendingRetryEmailSourceEvents,
   getProcessedExternalIds,
+  getProcessedEmailSourceEventIds,
   insertProcessedEmail,
-  markForRetry,
-  markPermanentlyFailed,
-  markRetrySuccess,
-  updateProcessedEmailStatus,
+  insertProcessedEmailSourceEvent,
+  markSourceEventForRetry,
+  markSourceEventPermanentlyFailed,
+  markSourceEventRetrySuccess,
+  updateProcessedSourceEventStatus,
 } from "../lib/repository";
 import type { RawEmail } from "../schema";
 import {
@@ -46,13 +48,15 @@ const emailPipelineDeps = {
   parseEmailApi: retryableParseEmailApi,
   lookupMerchantRule,
   findDuplicateTransaction,
+  getProcessedEmailSourceEventIds,
   getProcessedExternalIds,
-  getPendingRetryEmails,
+  getPendingRetryEmailSourceEvents,
   insertProcessedEmail,
-  markForRetry,
-  markPermanentlyFailed,
-  markRetrySuccess,
-  updateProcessedEmailStatus,
+  insertProcessedEmailSourceEvent,
+  markSourceEventForRetry,
+  markSourceEventPermanentlyFailed,
+  markSourceEventRetrySuccess,
+  updateProcessedSourceEventStatus,
   buildEmailCaptureEvidence,
   saveCaptureEvidenceRows,
   linkCaptureEvidenceToTransaction,
