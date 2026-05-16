@@ -20,14 +20,11 @@ export function getTransactionSource(provider: string) {
   return provider === "gmail" ? "email_gmail" : "email_outlook";
 }
 
-export const getEmailSourceId = (email: {
-  readonly provider: string;
-  readonly sourceId?: string;
-}) => email.sourceId ?? getTransactionSource(email.provider);
+export const getEmailSourceId = (email: { readonly provider: string }) =>
+  getTransactionSource(email.provider);
 
 export const getEmailSourceEventKey = (email: {
   readonly provider: string;
-  readonly sourceId?: string;
   readonly externalId: string;
 }) => `${getEmailSourceId(email)}:${email.externalId}`;
 

@@ -15,7 +15,6 @@ export type ProcessedEmailStatus = z.infer<typeof processedEmailStatusSchema>;
 
 export const rawEmailSchema = z.object({
   externalId: z.string(),
-  sourceId: z.string().optional(),
   from: z.string().email(),
   subject: z.string(),
   body: z.string(),

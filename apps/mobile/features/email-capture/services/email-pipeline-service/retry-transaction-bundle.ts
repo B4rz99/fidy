@@ -1,9 +1,8 @@
 import { Effect } from "effect";
-import { normalizeTransactionStorageRow } from "@/infrastructure/local-ledger/transaction-storage";
 import { fromPromise } from "@/shared/effect/runtime";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { and, eq, isNull } from "drizzle-orm";
-import { captureEvidence, processedSourceEvents, transactions } from "@/shared/db/schema";
+import { captureEvidence, processedSourceEvents } from "@/shared/db/schema";
 import { EmailPipelineDeps, insertMerchantRuleEffect } from "./runtime";
 import { getParsedCounterpartyName } from "./shared";
 import {
@@ -13,6 +12,12 @@ import {
 } from "./transaction-recording";
 import { trackSavedTransactionEffect } from "./transaction-tracking";
 import type { RetryTransactionContext } from "./types";
+
+const isPromiseLike = (value: unknown): value is Promise<unknown> =>
+  typeof value === "object" &&
+  value !== null &&
+  "then" in value &&
+  typeof (value as { readonly then?: unknown }).then === "function";
 
 export function persistSuccessfulRetrySideEffectsEffect(context: RetryTransactionContext) {
   return Effect.catchAll(
@@ -45,10 +50,6 @@ export function persistSuccessfulRetryBundleEffect(context: RetryTransactionCont
       const transaction = await prepareRecordedTransaction(context, { recordTransaction });
       const persistTransaction = (db: RetryTransactionContext["db"]) =>
         insertTransaction(db, buildTransactionRow(context, transaction));
-      const transactionRow = {
-        ...buildTransactionRow(context, transaction),
-        accountId: context.defaultAccount.id,
-      };
       const persistSourceEventStatus = (db: RetryTransactionContext["db"]) =>
         markSourceEventRetrySuccess({
           db,
@@ -73,7 +74,10 @@ export function persistSuccessfulRetryBundleEffect(context: RetryTransactionCont
 
       if ("transaction" in context.db && typeof context.db.transaction === "function") {
         context.db.transaction((tx) => {
-          tx.insert(transactions).values(normalizeTransactionStorageRow(transactionRow)).run();
+          const transactionWrite = persistTransaction(tx);
+          if (isPromiseLike(transactionWrite)) {
+            throw new Error("Transactional retry inserts must be synchronous");
+          }
           tx.update(processedSourceEvents)
             .set({
               status: "processed",

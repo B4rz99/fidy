@@ -152,11 +152,10 @@ async function fetchEmailsForAccount(
       resolveFetchSince(command.account, command.minSince),
       [...command.senderEmails]
     );
-    const sourceId = `${provider === "gmail" ? "email_gmail" : "email_outlook"}:${command.account.id}`;
 
     return {
       account: command.account,
-      rawEmails: rawEmails.map((email) => ({ ...email, sourceId })),
+      rawEmails,
       fetchOk: true,
       fetchDurationMs: Date.now() - fetchStartedAt,
     };

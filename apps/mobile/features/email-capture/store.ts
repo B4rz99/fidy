@@ -53,7 +53,6 @@ export type EmailCaptureFetchOutcome =
       readonly failedCount: number;
     }
   | { readonly status: "skipped"; readonly reason: "already_fetching" | "missing_context" };
-
 const EMPTY_FETCH_OUTCOME: EmailCaptureFetchOutcome = {
   status: "completed",
   savedCount: 0,
@@ -81,7 +80,7 @@ registerEmailCaptureStoreRuntime({
 export function initializeEmailCaptureSession(userId: UserId): void {
   initializeEmailCaptureStoreSession(userId);
 }
-export async function loadEmailAccounts(db: AnyDb, userId: UserId): Promise<void> {
+export async function loadEmailAccounts(db: AnyDb, userId: UserId) {
   const request = beginEmailCaptureRequest("accounts", userId);
   try {
     const accounts = await getEmailAccounts(db, userId);
@@ -89,7 +88,7 @@ export async function loadEmailAccounts(db: AnyDb, userId: UserId): Promise<void
     useEmailCaptureStore.getState().setAccounts(accounts);
   } catch {}
 }
-export async function loadFailedEmails(db: AnyDb, userId: UserId): Promise<void> {
+export async function loadFailedEmails(db: AnyDb, userId: UserId) {
   const request = beginEmailCaptureRequest("failedEmails", userId);
   const [failedEmailsResult, sourceEventsResult] = await Promise.allSettled([
     getFailedEmails(db),
@@ -99,6 +98,7 @@ export async function loadFailedEmails(db: AnyDb, userId: UserId): Promise<void>
   if (failedEmailsResult.status === "fulfilled") {
     useEmailCaptureStore.getState().setFailedEmails(failedEmailsResult.value);
   } else {
+    useEmailCaptureStore.getState().setFailedEmails([]);
     captureWarning("email_capture_failed_queue_load_failed", {
       errorType:
         failedEmailsResult.reason instanceof Error ? failedEmailsResult.reason.name : "unknown",
@@ -107,13 +107,14 @@ export async function loadFailedEmails(db: AnyDb, userId: UserId): Promise<void>
   if (sourceEventsResult.status === "fulfilled") {
     useEmailCaptureStore.getState().setFailedEmailSourceEvents(sourceEventsResult.value);
   } else {
+    useEmailCaptureStore.getState().setFailedEmailSourceEvents([]);
     captureWarning("email_capture_failed_source_event_queue_load_failed", {
       errorType:
         sourceEventsResult.reason instanceof Error ? sourceEventsResult.reason.name : "unknown",
     });
   }
 }
-export async function loadNeedsReviewEmails(db: AnyDb, userId: UserId): Promise<void> {
+export async function loadNeedsReviewEmails(db: AnyDb, userId: UserId) {
   const request = beginEmailCaptureRequest("needsReview", userId);
   const [needsReviewEmailsResult, sourceEventsResult] = await Promise.allSettled([
     getNeedsReviewEmails(db),
@@ -123,6 +124,7 @@ export async function loadNeedsReviewEmails(db: AnyDb, userId: UserId): Promise<
   if (needsReviewEmailsResult.status === "fulfilled") {
     useEmailCaptureStore.getState().setNeedsReviewEmails(needsReviewEmailsResult.value);
   } else {
+    useEmailCaptureStore.getState().setNeedsReviewEmails([]);
     captureWarning("email_capture_needs_review_queue_load_failed", {
       errorType:
         needsReviewEmailsResult.reason instanceof Error
@@ -133,6 +135,7 @@ export async function loadNeedsReviewEmails(db: AnyDb, userId: UserId): Promise<
   if (sourceEventsResult.status === "fulfilled") {
     useEmailCaptureStore.getState().setNeedsReviewEmailSourceEvents(sourceEventsResult.value);
   } else {
+    useEmailCaptureStore.getState().setNeedsReviewEmailSourceEvents([]);
     captureWarning("email_capture_needs_review_source_event_queue_load_failed", {
       errorType:
         sourceEventsResult.reason instanceof Error ? sourceEventsResult.reason.name : "unknown",
@@ -220,7 +223,6 @@ export async function fetchAndProcessEmails(
       async (processedPromise, fetchResult) => {
         const processed = await processedPromise;
         if (!fetchResult.fetchOk) return processed;
-
         const previousResult = aggregatePipelineResults(
           processed.map((result) => result.processingResult)
         );

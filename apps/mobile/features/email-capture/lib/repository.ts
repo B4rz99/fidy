@@ -92,7 +92,7 @@ export async function getProcessedEmailById(db: AnyDb, id: ProcessedEmailId) {
 const getLegacyEmailSourceEventKey = (row: {
   readonly provider: string;
   readonly externalId: string;
-}) => `${row.provider === "outlook" ? "email_outlook" : "email_gmail"}:${row.externalId}`;
+}) => `${row.provider === "gmail" ? "email_gmail" : "email_outlook"}:${row.externalId}`;
 
 async function canUseLegacyProcessedEmailFallback(db: AnyDb, userId: UserId) {
   const owners = await db
