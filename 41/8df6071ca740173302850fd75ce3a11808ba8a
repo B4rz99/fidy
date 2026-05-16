@@ -1,0 +1,296 @@
+apps/mobile/features/email-capture/services/email-pipeline-service/parse-email-body.ts
+  s_b481c7ac3047cb::t_d8ac6946fd767a 5-8
+  s_b481c7ac3047cb::t_cd77aad35b86c6 2,27-28,33
+  s_b481c7ac3047cb::t_b178075f70d950 29-32,34-38
+  s_b481c7ac3047cb::t_8c1dbe880743f7 1,3-4,9-26,39-41
+apps/mobile/shared/types/assertions.ts
+  s_b481c7ac3047cb::t_ad24e4f8e82e88 14-15,183-192,237-242
+apps/mobile/local-ledger/snapshot/row-shape-intake.ts
+  s_b481c7ac3047cb::t_abda222ec7b3c9 57-66
+  s_b481c7ac3047cb::t_1f8b76ec1617fe 48-54
+  s_b481c7ac3047cb::t_ebf521c736484d 43
+apps/mobile/shared/db/schema.ts
+  s_b481c7ac3047cb::t_0887e9d7d69f9e 254-260
+  s_b481c7ac3047cb::t_bd701eac8a9e2a 272-277
+apps/mobile/features/email-capture/lib/source-event-repository.ts
+  s_b481c7ac3047cb::t_7862d9f222d4ad 186-187
+  s_b481c7ac3047cb::t_372c9f041c23ee 4-10,14-17
+  s_b481c7ac3047cb::t_0f3a9b30c66bfb 134-148,160-161,163-172,185
+  s_b481c7ac3047cb::t_ee248c84ac4f16 2-3,11-13,18,31-78,80-86,184,188-203,207-214,218-268,270,272-274,276
+  s_b481c7ac3047cb::t_b65c5ea8f08f3e 269
+  s_b481c7ac3047cb::t_117b9dc35e7ec6 204-206,215-217,271,275
+  s_b481c7ac3047cb::t_75aee4601955a8 19-30,116
+  s_b481c7ac3047cb::t_f67d9b0fda84fb 107-115,117
+  s_b481c7ac3047cb::t_483a121965988f 79
+  s_b481c7ac3047cb::t_dbf28293999298 1
+  s_b481c7ac3047cb::t_111bb67e290365 149,154-156,162,173,179-181
+  s_b481c7ac3047cb::t_35fdeb0657f21b 87-97
+  s_b481c7ac3047cb::t_c1fe2ae96582e0 98-106,118-133,150-153,157-159,174-178,182-183
+apps/mobile/features/email-capture/services/email-fetch-durability.ts
+  s_b481c7ac3047cb::t_9bfc40e7531612 1-2,4-7,11-13,19,29-33
+  s_b481c7ac3047cb::t_fa3819f17466d0 9,21-28,43-44,48-49
+  s_b481c7ac3047cb::t_370d0fcd5ebc7d 3,8,10,14,18,38-41
+  s_b481c7ac3047cb::t_372c9f041c23ee 15-17,45-46
+  s_b481c7ac3047cb::t_d8ac6946fd767a 34-37,42,47
+apps/mobile/features/email-capture/services/email-pipeline-service/public-types.ts
+  s_b481c7ac3047cb::t_908afe676fcace 16,20,29,33,88-90,92,97,100,102-106,108,112-116,118-119,123,125,147
+  s_b481c7ac3047cb::t_e0792a252a7bae 93-96
+  s_b481c7ac3047cb::t_060a77ebcd9009 91
+  s_b481c7ac3047cb::t_f3638955e2c6bb 98-99
+  s_b481c7ac3047cb::t_b65c5ea8f08f3e 128
+apps/mobile/features/email-capture/public.ts
+  s_b481c7ac3047cb::t_cc3fdd99719b51 2,9,22
+  s_b481c7ac3047cb::t_7c74fa8d6be5f5 4
+apps/mobile/features/email-capture/lib/source-event-queue-repository.ts
+  s_b481c7ac3047cb::t_dbf28293999298 1-31
+apps/mobile/features/email-capture/lib/repository.ts
+  s_b481c7ac3047cb::t_dbf28293999298 26-29
+  s_b481c7ac3047cb::t_e0792a252a7bae 96-101,103,105-111
+  s_b481c7ac3047cb::t_c71995ad990656 11,13-16,18-25
+  s_b481c7ac3047cb::t_f97bb375a7da33 92-95
+  s_b481c7ac3047cb::t_7b71fd0b88c49d 12,17
+apps/mobile/features/dashboard/components/NeedsReviewBanner.tsx
+  s_b481c7ac3047cb::t_5af5a85b6c3d97 8-10
+apps/mobile/features/email-capture/services/email-pipeline-service/shared.ts
+  s_b481c7ac3047cb::t_a061212211ecd6 170,220
+  s_b481c7ac3047cb::t_8e64cf343898ae 3
+  s_b481c7ac3047cb::t_6e796ba2930b4c 23-27
+  s_b481c7ac3047cb::t_1bc37e4b17e58a 7,16,167-169,171-198,216-219,221-234
+  s_b481c7ac3047cb::t_8784149b9f192e 122
+  s_b481c7ac3047cb::t_c877964ede2dbe 123
+apps/mobile/drizzle/0028_email_source_event_status.sql
+  s_b481c7ac3047cb::t_59eb7af34e920e 7-49
+  s_b481c7ac3047cb::t_8deb101ad946b6 1-6
+  s_b481c7ac3047cb::t_a5c97cea335bbe 51-52
+  s_b481c7ac3047cb::t_c8f9d40d0e7642 50
+apps/mobile/features/review-queues/components/FinancialMeaningQueueScreen.styles.ts
+  s_b481c7ac3047cb::t_617c76e9575209 1-60
+apps/mobile/features/review-queues/components/FinancialMeaningReviewScreen.styles.ts
+  s_b481c7ac3047cb::t_4f615fbc84f1ce 1-80
+apps/mobile/features/email-capture/services/email-pipeline-service/review-candidate.ts
+  s_b481c7ac3047cb::t_73819aa55ec3f5 35,61
+  s_b481c7ac3047cb::t_c877964ede2dbe 48-50
+  s_b481c7ac3047cb::t_18cc6b0ca5c6ff 18,28,37,47,58-60,62-64
+apps/mobile/__tests__/error-handling/pipeline-save-error.test.ts
+  s_b481c7ac3047cb::t_60c0db75a06558 18-20,22,32-36,66-67,69-78,115,146,148,154-158
+  s_b481c7ac3047cb::t_eaeefd7ca6a40a 143-144
+apps/mobile/mutation-runtime/local-ledger-handlers.ts
+  s_b481c7ac3047cb::t_b8148a50b528fc 3,72-77,130
+  s_b481c7ac3047cb::t_bf23ab305d1e5d 10,90-102,108,116-122,124-127
+  s_b481c7ac3047cb::t_4948165005befd 59-62,64-68,81-82,84-88,107,109-115,132
+  s_b481c7ac3047cb::t_604c4b7fb2b9c2 69-70
+  s_b481c7ac3047cb::t_c680fc2f42b9c4 78
+  s_b481c7ac3047cb::t_3a66774caaa289 53-58,63,71,83,89,103-106
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-batch.ts
+  s_b481c7ac3047cb::t_adc18e3981f309 5,59,63-64
+  s_b481c7ac3047cb::t_c7f00a581941cc 56-57
+  s_b481c7ac3047cb::t_346de42af3b5ae 9-10,52-55,62
+  s_b481c7ac3047cb::t_89358bd25c4dc2 47,181
+  s_b481c7ac3047cb::t_e0792a252a7bae 60,65
+apps/mobile/__tests__/email-capture/store.test.ts
+  s_b481c7ac3047cb::t_956be7e52e02c1 7,9,11,70,72-76
+  s_b481c7ac3047cb::t_27dbfa49d43eda 16,31,44,85,435,437,552-589
+  s_b481c7ac3047cb::t_3f2ece5ab5ac9d 80
+  s_b481c7ac3047cb::t_c680fc2f42b9c4 12,81
+  s_b481c7ac3047cb::t_c877964ede2dbe 77-79
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-email.ts
+  s_b481c7ac3047cb::t_32e60867bbbf95 16
+  s_b481c7ac3047cb::t_8728f29ddcc85f 40-43,47,49
+  s_b481c7ac3047cb::t_f0fef059f38c53 79
+  s_b481c7ac3047cb::t_7eaf1061746b95 83-86,149
+  s_b481c7ac3047cb::t_bfbc17104eb546 88,90-91,101-102
+  s_b481c7ac3047cb::t_c877964ede2dbe 120-123,125,127-128,130,135-137
+  s_b481c7ac3047cb::t_e97242f17882f4 48
+  s_b481c7ac3047cb::t_cbd8f1691120d1 75
+  s_b481c7ac3047cb::t_cb2a5a96b85485 4
+  s_b481c7ac3047cb::t_f97bb375a7da33 44-46
+apps/mobile/features/review-queues/components/FinancialMeaningReviewScreen.tsx
+  s_b481c7ac3047cb::t_9c18b26139912d 127,132-135
+  s_b481c7ac3047cb::t_e193109c6531c7 77-78
+  s_b481c7ac3047cb::t_c9515cdaf91712 7,9,22-26,38-41,49-53,64-72,80-86,88,124-126,128-131,136,153-155,161,171-181,186-190,214,217-221,228-230,234-235,259-269
+  s_b481c7ac3047cb::t_ac08a50aef4b44 75,79
+  s_b481c7ac3047cb::t_c877964ede2dbe 31-33
+  s_b481c7ac3047cb::t_340d854c7167ff 34-37,42-46
+  s_b481c7ac3047cb::t_35fdeb0657f21b 87,156-160,182-184,209,212
+  s_b481c7ac3047cb::t_f82414f0e45c4c 17,28
+  s_b481c7ac3047cb::t_3d74683a99f0d4 21,185,222-227,231-233
+apps/mobile/features/email-capture/services/email-pipeline-service/runtime.ts
+  s_b481c7ac3047cb::t_4f7915885fdf22 87
+  s_b481c7ac3047cb::t_c877964ede2dbe 117,241-242
+  s_b481c7ac3047cb::t_c23451b55daab3 41-47,51
+  s_b481c7ac3047cb::t_9f72d77b3395ec 23-24
+  s_b481c7ac3047cb::t_b1b22383f7291c 25-27,68-70,72-73,118-120,136,164,178,206-207,209,219-221,225-226
+  s_b481c7ac3047cb::t_b08332daa91fd0 71,74
+  s_b481c7ac3047cb::t_e0792a252a7bae 78-79
+  s_b481c7ac3047cb::t_6158b59f6f782f 52-53
+apps/mobile/features/email-capture/services/email-pipeline-service/types.ts
+  s_b481c7ac3047cb::t_7f6c095fd8a98a 27
+  s_b481c7ac3047cb::t_ca4e9dce47c7b7 8,22,28-29,36,50-51
+apps/mobile/__tests__/local-ledger/intake-mutation.test.ts
+  s_b481c7ac3047cb::t_3938618fa1ee80 250-253,257-258,294-298
+  s_b481c7ac3047cb::t_c254033d226567 72-83,246,291
+  s_b481c7ac3047cb::t_f74c8861c2e6e9 254-256,276,299-305,335-341
+apps/mobile/local-ledger/use-cases/intake.public.ts
+  s_b481c7ac3047cb::t_5ad994e46ce8a9 102-108
+  s_b481c7ac3047cb::t_21b8564bf56bba 36-42,136-142
+apps/mobile/features/capture-evidence/lib/repository.ts
+  s_b481c7ac3047cb::t_560e3449c8d075 12,119
+apps/mobile/features/email-capture/store.ts
+  s_b481c7ac3047cb::t_126db844bc3f88 112-116,129-133
+  s_b481c7ac3047cb::t_03a63e073858ee 25
+  s_b481c7ac3047cb::t_d2df866be3d83b 261-272,283
+  s_b481c7ac3047cb::t_c5899d4768c64a 279
+  s_b481c7ac3047cb::t_23d9a54caebcf9 11,150-168
+  s_b481c7ac3047cb::t_c09f4c300db19a 107,124
+  s_b481c7ac3047cb::t_76eb3e09e91360 7,9,105-106,108,111,122-123,125,128
+apps/mobile/__tests__/email-capture/fetch-service.test.ts
+  s_b481c7ac3047cb::t_9e5c09c666f172 183
+  s_b481c7ac3047cb::t_97ce328e473241 196,237
+  s_b481c7ac3047cb::t_446cded5c78963 233
+  s_b481c7ac3047cb::t_d405503d832a22 11-14,32,34-35
+apps/mobile/features/email-capture/services/email-pipeline-service/retry.ts
+  s_b481c7ac3047cb::t_26b364b1572b8c 5-8,10,18-19,31,72,74,83,195,212,239,241
+  s_b481c7ac3047cb::t_50c086c172f87c 217
+  s_b481c7ac3047cb::t_32c202f75a582e 138,145-150,197
+  s_b481c7ac3047cb::t_b65c5ea8f08f3e 114
+  s_b481c7ac3047cb::t_ec9810c43d0240 23,32-48,169-170
+  s_b481c7ac3047cb::t_b5eec06ed9c7d2 52
+  s_b481c7ac3047cb::t_d1f8ef25587f1e 1,12,56-65
+  s_b481c7ac3047cb::t_32f8457b0f7ec5 240
+  s_b481c7ac3047cb::t_3c7f8630fcbabd 164,173
+  s_b481c7ac3047cb::t_dc7bc7060ba882 29-30,68-71,73,78,88,90,100,109,111-112,136,142,144,160,183,209
+  s_b481c7ac3047cb::t_ffda0129280b73 243
+apps/mobile/features/email-capture/lib/financial-meaning-review.ts
+  s_b481c7ac3047cb::t_734b31858bd6e0 152,163-168
+  s_b481c7ac3047cb::t_d8ac6946fd767a 89-91,95-97
+  s_b481c7ac3047cb::t_a8418a5cb6ce77 126-129,132-134,136-141,143-151,153-160,182-183,185-189,192-193
+  s_b481c7ac3047cb::t_95cc7cb8d89d68 15,21,142,161-162,169-181,184,190-191,194
+  s_b481c7ac3047cb::t_ba00f36ec2f9a5 4-8,16,25
+  s_b481c7ac3047cb::t_ca52855f850ae5 36-43,46-47,60,73,79-88,238-239,241-243
+  s_b481c7ac3047cb::t_654ae9bb30f3fc 13,17-19,22-23
+  s_b481c7ac3047cb::t_cf41826ca59ed1 1,9,12,14,20,31,114-124
+  s_b481c7ac3047cb::t_f2b95d8443e5b2 26-28,44-45,56,58,240,244-247
+  s_b481c7ac3047cb::t_50b2ce5ed71696 94,125,130-131,135
+apps/mobile/app/failed-emails.tsx
+  s_b481c7ac3047cb::t_a26d724c593cd6 36
+  s_b481c7ac3047cb::t_e52eecf6429502 4,30-35,37-38
+  s_b481c7ac3047cb::t_1dfc2e8042ad71 67
+  s_b481c7ac3047cb::t_2d99135419d69b 9,11,45,47,50-54,65,96,115,174-177
+apps/mobile/features/email-capture/store/state.ts
+  s_b481c7ac3047cb::t_a447248d7cd103 13-14
+  s_b481c7ac3047cb::t_18a4f53d286cd6 6-10,27,29,40,42-44,64,66,83-84,86-87,103-105,110-112,168,170
+apps/mobile/drizzle/migrations.js
+  s_b481c7ac3047cb::t_703aabf132eead 30,64
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_b481c7ac3047cb::t_fc7b8213232ad9 1546
+  s_b481c7ac3047cb::t_716d094dc1619f 203-221
+  s_b481c7ac3047cb::t_83a68d883bf4d7 307,422,580,609,628,644,659,695,1338
+  s_b481c7ac3047cb::t_50420c451fb35e 1659
+  s_b481c7ac3047cb::t_5d611a8ef414db 425,581,698
+  s_b481c7ac3047cb::t_c680fc2f42b9c4 398
+  s_b481c7ac3047cb::t_106284c6f70331 1342
+  s_b481c7ac3047cb::t_1153c15fc58307 108,285,1203
+  s_b481c7ac3047cb::t_d2e38747eb4035 17-19,21,30-33,104-105,107,109-116,223,225,252,281,283,286-289
+  s_b481c7ac3047cb::t_5bf4ef245617cb 1197-1201,1204-1209,1212-1225
+  s_b481c7ac3047cb::t_2d40511adde2df 405,426
+  s_b481c7ac3047cb::t_c0f1033b88d596 396
+  s_b481c7ac3047cb::t_6816b2042102e9 1539
+  s_b481c7ac3047cb::t_8b48b6da64660e 1202
+  s_b481c7ac3047cb::t_e36a2691da23d5 393,399-401
+  s_b481c7ac3047cb::t_3d27bedca7db82 404,406-407
+  s_b481c7ac3047cb::t_e05b3dba967e06 857-858
+  s_b481c7ac3047cb::t_c877964ede2dbe 308-311,711-713
+  s_b481c7ac3047cb::t_3d83f7bec5804d 34,250-251,253-254,1500-1501,1504-1505,1528,1554-1555,1560,1565,1568,1608-1610,1622,1625,1679-1680,1685,1688,1698-1699,1711,1714,1724-1725,1730,1735-1736,1741,1744-1745,1752-1753,1767,1770,1780-1781,1785,1791-1792,1807,1810,1820
+  s_b481c7ac3047cb::t_55b20b3b519222 320-321
+  s_b481c7ac3047cb::t_d05f1d1a4afcdf 394
+  s_b481c7ac3047cb::t_23833b8b59df30 582,933
+  s_b481c7ac3047cb::t_6a2f46bed9fab3 1210
+  s_b481c7ac3047cb::t_c00ca61dc39fdf 1451-1462
+  s_b481c7ac3047cb::t_1308edd9df4c16 1468-1472,1480-1483,1485-1486,1499,1502-1503,1533-1538,1540-1545,1547-1549
+  s_b481c7ac3047cb::t_c69a8b39886628 1660
+  s_b481c7ac3047cb::t_4db83396bdebfc 934,1211,1626,1771
+apps/mobile/features/email-capture/services/email-capture-fetch-service.ts
+  s_b481c7ac3047cb::t_20e6a00282ba9e 250-253
+  s_b481c7ac3047cb::t_7d7903e4a398d0 89
+  s_b481c7ac3047cb::t_42353b4a31a9e5 7-8
+  s_b481c7ac3047cb::t_7332de6a03e8c8 23
+apps/mobile/__tests__/email-capture/repository.test.ts
+  s_b481c7ac3047cb::t_c680fc2f42b9c4 219-222,226-230,235
+apps/mobile/features/email-capture/services/email-pipeline.ts
+  s_b481c7ac3047cb::t_6d367b342293d5 19,21,23-27,51,53,55-59
+apps/mobile/__tests__/email-capture/retry-integration.test.ts
+  s_b481c7ac3047cb::t_c6611bf204c106 20-22,26,29,31-36,94-125,127,141,144-145,173,175,284-339,341,353,363-366,369,375,383-385
+apps/mobile/features/email-capture/services/email-capture-queues.ts
+  s_b481c7ac3047cb::t_7bafd2aac32801 1-36
+apps/mobile/features/email-capture/services/email-pipeline-service/transactions.ts
+  s_b481c7ac3047cb::t_d8cdf50568a16c 9-13,115-117
+  s_b481c7ac3047cb::t_c877964ede2dbe 28
+  s_b481c7ac3047cb::t_4c05f18ad7a7e4 64-69,74
+  s_b481c7ac3047cb::t_57a3e9ed27f8e5 8,29
+  s_b481c7ac3047cb::t_b11f776aaa7c2b 19-21
+package.json
+  s_b481c7ac3047cb::t_39e8df334d5c1c 64
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-parse.ts
+  s_b481c7ac3047cb::t_9809d3bddcc7a1 4,11-20
+  s_b481c7ac3047cb::t_fa3ef2cfca56d9 1-3,5-10,21-33
+apps/mobile/features/review-queues/hooks/use-financial-meaning-review-queue.ts
+  s_b481c7ac3047cb::t_367397af222cb5 35
+apps/mobile/features/email-capture/services/email-pipeline-service/retry-transaction-bundle.ts
+  s_b481c7ac3047cb::t_dc1fa6c374407b 2,13-14
+  s_b481c7ac3047cb::t_2ea3c6129ebf3e 23-36,38
+  s_b481c7ac3047cb::t_fb907e65cb268f 6-7,46
+  s_b481c7ac3047cb::t_72b28c547921ca 1,3,15,22,39-45,47-49,51,53-62,84-89
+  s_b481c7ac3047cb::t_2651c38d668f91 4-5,8-12,50,52,63-64,66,69-80,82-83
+  s_b481c7ac3047cb::t_913851dc929b36 37
+  s_b481c7ac3047cb::t_5a9673978b6654 16-21,65,67-68,81
+apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts
+  s_b481c7ac3047cb::t_0a4cc8b8fa507e 8,372-392,394-399
+  s_b481c7ac3047cb::t_5648781879d048 238,250,355
+  s_b481c7ac3047cb::t_910424d8f00a34 9,21,29-30,69-71,169-214,246-249,251-258,348-354,356-371,400-401
+  s_b481c7ac3047cb::t_0f0b478428affd 393
+apps/mobile/local-ledger/snapshot/validation.ts
+  s_b481c7ac3047cb::t_5a5a99b88c6fe5 288,291
+  s_b481c7ac3047cb::t_2f7176d259c4c5 129-135
+apps/mobile/features/email-capture/services/email-pipeline-service/transaction-recording.ts
+  s_b481c7ac3047cb::t_453d0c59abcb26 14,33,53,61-75
+apps/mobile/local-ledger/snapshot/snapshot.ts
+  s_b481c7ac3047cb::t_4b1f4ce835daa8 154-160
+apps/mobile/features/review-queues/components/FinancialMeaningQueueScreen.tsx
+  s_b481c7ac3047cb::t_1dfc2e8042ad71 29-31
+  s_b481c7ac3047cb::t_c877964ede2dbe 62-64
+  s_b481c7ac3047cb::t_ed7f2b03388bbb 224-230
+  s_b481c7ac3047cb::t_105c7334f6e5d2 9,26-28,32,54,65-73,85,90,93,96-100,107-109,172-173,175-180,221-223,231-233,237,239
+  s_b481c7ac3047cb::t_3b7f2e636991bb 16,23
+  s_b481c7ac3047cb::t_a97b2dda6c2148 20,74,101-106,113-114
+  s_b481c7ac3047cb::t_f2edbfb7415ae2 21,55-59,174
+  s_b481c7ac3047cb::t_60fce953e23028 181
+  s_b481c7ac3047cb::t_7e28f13491f829 110-112
+apps/mobile/features/email-capture/services/email-pipeline-service/transaction-tracking.ts
+  s_b481c7ac3047cb::t_140800fbd808c0 1-16
+apps/mobile/features/email-capture/components/FailedEmailsBanner.tsx
+  s_b481c7ac3047cb::t_f5405e7cb44e23 8-10
+apps/mobile/features/email-capture/services/email-pipeline-service/internal-types.ts
+  s_b481c7ac3047cb::t_03ef039ffb2881 128
+  s_b481c7ac3047cb::t_af34c93a3418c7 11,54,78,100-101,261,263,278,280
+  s_b481c7ac3047cb::t_0bdaeed1b19e73 53
+  s_b481c7ac3047cb::t_b3a973ce0362d4 262,279
+  s_b481c7ac3047cb::t_e704911e71ae10 264
+  s_b481c7ac3047cb::t_b7a2302793c93a 91,93,98,106,108
+  s_b481c7ac3047cb::t_b65c5ea8f08f3e 111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "418df6071ca740173302850fd75ce3a11808ba8a",
+  "prompts": {},
+  "sessions": {
+    "s_b481c7ac3047cb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3135-728d-73d0-b748-bae1f1529710",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
