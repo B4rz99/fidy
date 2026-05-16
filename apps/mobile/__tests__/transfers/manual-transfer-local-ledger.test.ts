@@ -1,8 +1,18 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: boundary test uses a focused Drizzle double
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { submitTransferForm } from "@/features/transfers/components/transfer-form/saveTransferForm";
-import { recordManualTransferWithLocalLedger } from "@/infrastructure/local-ledger/record-transfer";
-import type { FinancialAccountId, TransferId, UserId } from "@/shared/types/branded";
+import {
+  recordManualTransferWithLocalLedger,
+  toTransferRow,
+} from "@/infrastructure/local-ledger/record-transfer";
+import type {
+  CopAmount,
+  FinancialAccountId,
+  IsoDate,
+  IsoDateTime,
+  TransferId,
+  UserId,
+} from "@/shared/types/branded";
 
 const { refreshTransactionsMock } = vi.hoisted(() => ({
   refreshTransactionsMock: vi.fn<(...args: any[]) => any>(),
@@ -81,7 +91,7 @@ describe("manual transfer Local Ledger writer", () => {
         date: "2026-04-18",
         createdAt: "2026-04-18T10:00:00.000Z",
         updatedAt: "2026-04-18T10:00:00.000Z",
-        deletedAt: null,
+        voidedAt: null,
       },
     });
     expect(insertedTransfers).toEqual([
@@ -122,6 +132,27 @@ describe("manual transfer Local Ledger writer", () => {
 
     expect(result).toEqual({ success: false, error: "accountNotUsable" });
     expect(insertedTransfers).toEqual([]);
+  });
+
+  it("maps a voided Local Ledger transfer to the legacy deletedAt storage column", () => {
+    const row = toTransferRow({
+      id: "tr-voided" as TransferId,
+      userId: USER_ID,
+      amount: 450000 as CopAmount,
+      fromSide: { kind: "account", accountId: ACTIVE_ACCOUNT_ID },
+      toSide: { kind: "external", label: "Outside Fidy" },
+      description: "Voided transfer",
+      date: "2026-04-18" as IsoDate,
+      createdAt: "2026-04-18T10:00:00.000Z" as IsoDateTime,
+      updatedAt: "2026-04-18T10:00:00.000Z" as IsoDateTime,
+      voidedAt: "2026-04-18T11:00:00.000Z" as IsoDateTime,
+    });
+
+    expect(row).toMatchObject({
+      id: "tr-voided",
+      deletedAt: "2026-04-18T11:00:00.000Z",
+    });
+    expect(row).not.toHaveProperty("voidedAt");
   });
 
   it("enforces Local Ledger validation through the full manual transfer form save path", async () => {

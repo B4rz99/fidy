@@ -51,11 +51,16 @@ type CreateTransferMutationServiceDeps = {
 
 function toStoredTransfer(transfer: LocalLedgerTransfer): StoredTransfer {
   return {
-    ...transfer,
+    id: transfer.id,
+    userId: transfer.userId,
+    amount: transfer.amount,
+    fromSide: transfer.fromSide,
+    toSide: transfer.toSide,
+    description: transfer.description,
     date: parseIsoDate(transfer.date),
     createdAt: new Date(transfer.createdAt),
     updatedAt: new Date(transfer.updatedAt),
-    deletedAt: transfer.deletedAt == null ? null : new Date(transfer.deletedAt),
+    deletedAt: transfer.voidedAt == null ? null : new Date(transfer.voidedAt),
   };
 }
 

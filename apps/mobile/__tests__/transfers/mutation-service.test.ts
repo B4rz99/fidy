@@ -51,7 +51,7 @@ describe("transfer mutation service", () => {
         date: "2026-04-19",
         createdAt: "2026-04-19T10:00:00.000Z",
         updatedAt: "2026-04-19T10:00:00.000Z",
-        deletedAt: null,
+        voidedAt: null,
       },
     });
     refresh = refreshMock as ServiceDeps["refresh"];
@@ -112,6 +112,35 @@ describe("transfer mutation service", () => {
       now,
     });
     expect(refreshMock).toHaveBeenCalledOnce();
+  });
+
+  it("maps Local Ledger voided transfer state into the existing transfer read model", async () => {
+    recordTransferMock.mockResolvedValueOnce({
+      success: true,
+      transfer: {
+        id: "tr-new" as TransferId,
+        userId: "user-1" as UserId,
+        amount: 450000,
+        fromSide: validInput.fromSide,
+        toSide: validInput.toSide,
+        description: "Visa payment",
+        date: "2026-04-19",
+        createdAt: "2026-04-19T10:00:00.000Z",
+        updatedAt: "2026-04-19T10:00:00.000Z",
+        voidedAt: "2026-04-20T08:00:00.000Z",
+      },
+    });
+    const service = createService();
+
+    const result = await service.save(validInput);
+
+    expect(result).toEqual({
+      success: true,
+      transfer: expect.objectContaining({
+        deletedAt: new Date("2026-04-20T08:00:00.000Z"),
+      }),
+    });
+    expect(result.success ? result.transfer : null).not.toHaveProperty("voidedAt");
   });
 
   it("returns Local Ledger validation failures without refreshing", async () => {
