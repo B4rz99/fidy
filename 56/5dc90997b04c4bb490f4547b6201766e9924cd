@@ -1,0 +1,41 @@
+apps/mobile/features/email-capture/lib/repository.ts
+  s_06776aec0c8ddc::t_410d2969b9053c 3,128,130,132-133,137,139,141-142
+  s_06776aec0c8ddc::t_94dedaba21f906 1
+apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts
+  s_06776aec0c8ddc::t_e3b0df07f01ed8 239-258,371-383
+  s_06776aec0c8ddc::t_7f79fda0d14485 324-353
+apps/mobile/features/transfers/lib/reclassify-transaction-as-transfer.ts
+  s_06776aec0c8ddc::t_71abfba6f81a99 54-57,87-88
+apps/mobile/features/email-capture/services/email-capture-queues.ts
+  s_06776aec0c8ddc::t_bb1eee85cf18bb 24,26
+apps/mobile/features/transfers/components/transfer-form/TransferForm.helpers.ts
+  s_06776aec0c8ddc::t_71abfba6f81a99 43
+apps/mobile/__tests__/email-capture/repository.test.ts
+  s_06776aec0c8ddc::t_9216ffa31eed32 19,48-54,207,210,261,264
+apps/mobile/features/email-capture/store.ts
+  s_06776aec0c8ddc::t_bb1eee85cf18bb 95,115
+apps/mobile/features/transfers/components/transfer-form/useTransferForm.ts
+  s_06776aec0c8ddc::t_c45ba5d542cb65 47-60,88-91,103-104
+apps/mobile/__tests__/email-capture/store.test.ts
+  s_06776aec0c8ddc::t_3164b3d194cd79 618,646
+apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts
+  s_06776aec0c8ddc::t_1adaf8e4654db8 15
+  s_06776aec0c8ddc::t_aff2f9f92841e3 56,294-329
+  s_06776aec0c8ddc::t_9363ec2111a424 228,379
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "565dc90997b04c4bb490f4547b6201766e9924cd",
+  "prompts": {},
+  "sessions": {
+    "s_06776aec0c8ddc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3257-fe5b-7e91-9611-21f4b0ac8221",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
