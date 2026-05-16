@@ -1,0 +1,82 @@
+apps/mobile/features/email-capture/services/email-pipeline-service/runtime.ts
+  s_b481c7ac3047cb::t_bb8fe2c0fd4835 80,84
+apps/mobile/features/email-capture/services/email-pipeline-service/retry-transaction-bundle.ts
+  s_b481c7ac3047cb::t_e276edf9f420c9 6,53-59,61,77-86
+  s_b481c7ac3047cb::t_af27cc55732837 48-51
+  s_b481c7ac3047cb::t_75c15712de2b6c 2,76
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_b481c7ac3047cb::t_92ac70cb2f67cb 398
+apps/mobile/infrastructure/local-ledger/source-events.ts
+  s_b481c7ac3047cb::t_bb8fe2c0fd4835 25-31,69-70
+apps/mobile/features/email-capture/store.ts
+  s_b481c7ac3047cb::t_de6b559682338c 103-104,111-112,137-138
+  s_b481c7ac3047cb::t_deeb257d887e15 94-97,100,108,118-121,124,128-129,134
+  s_b481c7ac3047cb::t_2e03d2cf7b03d5 98-99,101,105-107,109-110,122-123,125,127,130-133,135-136,265,267-270
+apps/mobile/features/email-capture/schema.ts
+  s_b481c7ac3047cb::t_354e8e44f43ed4 18
+apps/mobile/features/email-capture/services/email-pipeline-service/transaction-tracking.ts
+  s_b481c7ac3047cb::t_bb8fe2c0fd4835 7-17
+apps/mobile/features/email-capture/services/email-pipeline-service/retry.ts
+  s_b481c7ac3047cb::t_435646663a05e7 30
+apps/mobile/features/email-capture/services/email-capture-fetch-service.ts
+  s_b481c7ac3047cb::t_354e8e44f43ed4 155,159
+apps/mobile/features/email-capture/lib/financial-meaning-review.ts
+  s_b481c7ac3047cb::t_4599afda9d8115 7,194,204-205
+apps/mobile/local-ledger/use-cases/intake.public.ts
+  s_b481c7ac3047cb::t_4599afda9d8115 152-154,162
+apps/mobile/features/email-capture/services/email-pipeline-service/shared.ts
+  s_b481c7ac3047cb::t_de6b559682338c 23-26
+  s_b481c7ac3047cb::t_435646663a05e7 180,230
+  s_b481c7ac3047cb::t_354e8e44f43ed4 27,30,32
+apps/mobile/features/email-capture/services/email-pipeline-service/transactions.ts
+  s_b481c7ac3047cb::t_435646663a05e7 24,69,120
+apps/mobile/features/email-capture/services/email-pipeline-service/public-types.ts
+  s_b481c7ac3047cb::t_bb8fe2c0fd4835 95
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-email.ts
+  s_b481c7ac3047cb::t_435646663a05e7 20,77
+  s_b481c7ac3047cb::t_bb8fe2c0fd4835 80-86
+  s_b481c7ac3047cb::t_135ccdbc12f625 11
+apps/mobile/features/email-capture/lib/repository.ts
+  s_b481c7ac3047cb::t_bb8fe2c0fd4835 95-103,107,111
+apps/mobile/features/email-capture/services/email-pipeline-service/review-candidate.ts
+  s_b481c7ac3047cb::t_435646663a05e7 20,52
+apps/mobile/__tests__/email-capture/store.test.ts
+  s_b481c7ac3047cb::t_deeb257d887e15 222
+  s_b481c7ac3047cb::t_1ed22bf216f121 324-327,813,901,934
+apps/mobile/__tests__/email-capture/fetch-service.test.ts
+  s_b481c7ac3047cb::t_894ef8bdc25aea 12,36,186
+apps/mobile/mutation-runtime/local-ledger-handlers.ts
+  s_b481c7ac3047cb::t_0cddf577c1ce77 16-18,49,59,82,98-108,113-164,168,185-190,192-198
+  s_b481c7ac3047cb::t_de6b559682338c 65,80,109-112
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-batch.ts
+  s_b481c7ac3047cb::t_bb8fe2c0fd4835 60
+  s_b481c7ac3047cb::t_435646663a05e7 9,53
+apps/mobile/__tests__/email-capture/repository.test.ts
+  s_b481c7ac3047cb::t_95b708540182ba 16-17,30,46-47,217,228,232
+  s_b481c7ac3047cb::t_92542c14521ba7 42
+apps/mobile/app/failed-emails.tsx
+  s_b481c7ac3047cb::t_4599afda9d8115 23-36,48-49,59
+apps/mobile/features/email-capture/lib/source-event-queue-repository.ts
+  s_b481c7ac3047cb::t_bb8fe2c0fd4835 8,21
+apps/mobile/features/email-capture/services/email-pipeline-service/internal-types.ts
+  s_b481c7ac3047cb::t_bb8fe2c0fd4835 137,161
+apps/mobile/features/email-capture/services/email-fetch-durability.ts
+  s_b481c7ac3047cb::t_bb8fe2c0fd4835 41
+  s_b481c7ac3047cb::t_435646663a05e7 5,24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "9ade6900851e8e729db9f2d56b32c986d73d4038",
+  "prompts": {},
+  "sessions": {
+    "s_b481c7ac3047cb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3135-728d-73d0-b748-bae1f1529710",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
