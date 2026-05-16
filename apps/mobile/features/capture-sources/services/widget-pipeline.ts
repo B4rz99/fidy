@@ -44,6 +44,9 @@ const failureReason = (error: unknown): string =>
     ? error.message
     : errorType(error);
 
+const userAuthoredWidgetDescription = (description: string | undefined): string => description ?? "";
+const widgetCounterpartyName = (): string => "";
+
 export async function processWidgetTransactions(
   db: AnyDb,
   userId: UserId
@@ -80,8 +83,8 @@ export async function processWidgetTransactions(
     const categoryId =
       item.category && isValidCategoryId(item.category) ? item.category : fallbackCategoryId;
     const type = item.type === "income" ? "income" : "expense";
-    const description = item.description ?? "";
-    const counterpartyName = "";
+    const description = userAuthoredWidgetDescription(item.description);
+    const counterpartyName = widgetCounterpartyName();
 
     const fingerprint = widgetFingerprint(item.id, amount, date);
 

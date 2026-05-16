@@ -303,7 +303,7 @@ describe("processWidgetTransactions", () => {
     );
   });
 
-  it("skips cross-source duplicate lookup when widget has no counterparty text", async () => {
+  it("treats widget description as user-authored text, not counterparty text", async () => {
     mockGetPendingTransactions.mockResolvedValue([
       {
         id: "desc-dedup-test",
@@ -316,6 +316,13 @@ describe("processWidgetTransactions", () => {
     await processWidgetTransactions(mockDb, USER_ID);
 
     expect(mockFindDuplicateTransaction).not.toHaveBeenCalled();
+    expect(mockInsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        description: "Coffee at Juan Valdez",
+        counterpartyName: "",
+      })
+    );
   });
 
   it("defaults optional fields when absent", async () => {
@@ -351,7 +358,7 @@ describe("processWidgetTransactions", () => {
     expect(mockRemovePendingTransactions).toHaveBeenCalledWith(["seen-before"]);
   });
 
-  it("does not cross-source dedup widget descriptions as inferred merchant text", async () => {
+  it("does not cross-source dedup widget descriptions as inferred counterparty text", async () => {
     mockFindDuplicateTransaction.mockResolvedValue("txn-existing-1");
     mockGetPendingTransactions.mockResolvedValue([
       {
