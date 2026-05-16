@@ -51,13 +51,7 @@ export async function upsertNotificationSource(
     });
 }
 
-// -- processedCaptures CRUD --
-
-export type ProcessedCaptureRow = typeof processedCaptures.$inferInsert;
-
-export async function insertProcessedCapture(db: AnyDb, row: ProcessedCaptureRow) {
-  await db.insert(processedCaptures).values(row).onConflictDoNothing();
-}
+// -- processedCaptures reads --
 
 export async function getProcessedCapturesBySource(db: AnyDb, source: string) {
   return db

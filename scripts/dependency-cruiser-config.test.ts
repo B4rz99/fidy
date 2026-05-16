@@ -2,10 +2,11 @@ import { expect, test } from "bun:test";
 
 type ForbiddenRule = {
   readonly name: string;
-  readonly from?: { readonly path?: string };
+  readonly from?: { readonly path?: string; readonly pathNot?: string };
   readonly to?: {
     readonly dependencyTypes?: readonly string[];
     readonly path?: string;
+    readonly pathNot?: string;
   };
 };
 
@@ -56,4 +57,19 @@ test("guards pure local-ledger code from app layers and runtime infrastructure",
     "@supabase/",
     "@sentry/",
   ]);
+});
+
+test("guards local-ledger internals behind public entrypoints for consumers", () => {
+  const publicImportsRule = config.forbidden.find(
+    (forbiddenRule) => forbiddenRule.name === "local-ledger-consumers-must-use-public-entrypoints"
+  );
+
+  expect(publicImportsRule).toBeDefined();
+  expect(publicImportsRule?.from?.pathNot).toBe(
+    "^apps/mobile/(local-ledger/|infrastructure/local-ledger/|__tests__/)"
+  );
+  expect(publicImportsRule?.to?.path).toBe("^apps/mobile/local-ledger/");
+  expect(publicImportsRule?.to?.pathNot).toBe(
+    "^apps/mobile/local-ledger/(public|snapshot\\.public)\\.ts$"
+  );
 });

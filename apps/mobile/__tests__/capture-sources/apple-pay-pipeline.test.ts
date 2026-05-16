@@ -12,7 +12,6 @@ const mockClassifyMerchantApi = vi.fn<(...args: any[]) => any>().mockResolvedVal
 const mockIsCaptureProcessed = vi.fn<(...args: any[]) => any>().mockResolvedValue(false);
 const mockFindDuplicateTransaction = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
 const mockCaptureFingerprint = vi.fn<(...args: any[]) => any>().mockReturnValue("test-fingerprint");
-const mockInsertProcessedCapture = vi.fn<(...args: any[]) => any>();
 const mockPersistProcessedSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockPersistCommittedCaptureSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockRecordAutomatedTransactionWithLocalLedger = vi.fn<(...args: any[]) => any>();
@@ -104,10 +103,6 @@ vi.mock("@/features/capture-sources/lib/dedup", () => ({
   isCaptureProcessed: (...args: any[]) => mockIsCaptureProcessed(...args),
   findDuplicateTransaction: (...args: any[]) => mockFindDuplicateTransaction(...args),
   captureFingerprint: (...args: any[]) => mockCaptureFingerprint(...args),
-}));
-
-vi.mock("@/features/capture-sources/lib/repository", () => ({
-  insertProcessedCapture: (...args: any[]) => mockInsertProcessedCapture(...args),
 }));
 
 vi.mock("@/features/financial-accounts", () => ({

@@ -9,9 +9,9 @@ import {
   getProcessedCapturesBySource,
   getUndismissedSmsEvents,
   insertDetectedSmsEvent,
-  insertProcessedCapture,
   upsertNotificationSource,
 } from "@/features/capture-sources/lib/repository";
+import { processedCaptures } from "@/shared/db/schema";
 import type {
   DetectedSmsEventId,
   IsoDateTime,
@@ -56,7 +56,7 @@ const insertSmsEventRow = (
     createdAt: CREATED_AT,
   });
 
-const insertProcessedCaptureRow = (
+const seedLegacyProcessedCaptureRow = (
   overrides: Partial<{
     id: ProcessedCaptureId;
     fingerprintHash: string;
@@ -68,17 +68,20 @@ const insertProcessedCaptureRow = (
     receivedAt: IsoDateTime;
   }> = {}
 ) =>
-  insertProcessedCapture(db as any, {
-    id: overrides.id ?? ("pc-1" as ProcessedCaptureId),
-    fingerprintHash: overrides.fingerprintHash ?? "hash-1",
-    source: overrides.source ?? "sms",
-    status: overrides.status ?? "accepted",
-    rawText: overrides.rawText ?? "Compra aprobada",
-    transactionId: overrides.transactionId ?? null,
-    confidence: overrides.confidence ?? 0.9,
-    receivedAt: overrides.receivedAt ?? ("2026-04-10T08:00:00.000Z" as IsoDateTime),
-    createdAt: CREATED_AT,
-  });
+  db
+    .insert(processedCaptures)
+    .values({
+      id: overrides.id ?? ("pc-1" as ProcessedCaptureId),
+      fingerprintHash: overrides.fingerprintHash ?? "hash-1",
+      source: overrides.source ?? "sms",
+      status: overrides.status ?? "accepted",
+      rawText: overrides.rawText ?? "Compra aprobada",
+      transactionId: overrides.transactionId ?? null,
+      confidence: overrides.confidence ?? 0.9,
+      receivedAt: overrides.receivedAt ?? ("2026-04-10T08:00:00.000Z" as IsoDateTime),
+      createdAt: CREATED_AT,
+    })
+    .run();
 
 const insertNotificationSourceRow = (
   overrides: Partial<{
@@ -173,21 +176,21 @@ describe("capture-sources repository SMS events", () => {
   });
 
   it("returns only captures for the requested source in newest-first order", async () => {
-    await insertProcessedCaptureRow({
+    await seedLegacyProcessedCaptureRow({
       id: "pc-1" as ProcessedCaptureId,
       fingerprintHash: "hash-1",
       source: "sms",
       receivedAt: "2026-04-10T08:00:00.000Z" as IsoDateTime,
       rawText: "Older SMS capture",
     });
-    await insertProcessedCaptureRow({
+    await seedLegacyProcessedCaptureRow({
       id: "pc-2" as ProcessedCaptureId,
       fingerprintHash: "hash-2",
       source: "push",
       receivedAt: "2026-04-10T09:30:00.000Z" as IsoDateTime,
       rawText: "Other source capture",
     });
-    await insertProcessedCaptureRow({
+    await seedLegacyProcessedCaptureRow({
       id: "pc-3" as ProcessedCaptureId,
       fingerprintHash: "hash-3",
       source: "sms",

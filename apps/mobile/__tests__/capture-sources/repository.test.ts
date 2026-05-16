@@ -6,13 +6,7 @@ import {
   requireTransactionId,
   requireUserId,
 } from "@/shared/types/assertions";
-import type {
-  DetectedSmsEventId,
-  IsoDateTime,
-  ProcessedCaptureId,
-  TransactionId,
-  UserId,
-} from "@/shared/types/branded";
+import type { DetectedSmsEventId, IsoDateTime, UserId } from "@/shared/types/branded";
 
 vi.mock("drizzle-orm", () => ({
   eq: vi.fn<(...args: any[]) => any>((...args: any[]) => ({ eq: args })),
@@ -55,7 +49,6 @@ vi.mock("@/shared/lib/generate-id", () => ({
   generateNotificationSourceId: () => "ns-mock-id",
 }));
 
-const mockOnConflictDoNothing = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
 const mockOnConflictDoUpdate = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
 const mockValues = vi.fn<(...args: any[]) => any>().mockReturnThis();
 const mockInsert = vi.fn<(...args: any[]) => any>(() => ({ values: mockValues }));
@@ -89,35 +82,10 @@ describe("capture-sources repository", () => {
     mockWhere.mockReturnValue({ orderBy: mockOrderBy, limit: mockLimit });
     mockInsert.mockReturnValue({ values: mockValues });
     mockValues.mockReturnValue({
-      onConflictDoNothing: mockOnConflictDoNothing,
       onConflictDoUpdate: mockOnConflictDoUpdate,
     });
     mockUpdate.mockReturnValue({ set: mockSet });
     mockSet.mockReturnValue({ where: mockUpdateWhere });
-  });
-
-  // -- insertProcessedCapture --
-
-  it("insertProcessedCapture calls db.insert with correct data", async () => {
-    const { insertProcessedCapture } = await import("@/features/capture-sources/lib/repository");
-
-    const row = {
-      id: "pc-1" as ProcessedCaptureId,
-      fingerprintHash: "abc123",
-      source: "sms",
-      status: "success",
-      rawText: "Compra aprobada",
-      transactionId: "tx-1" as TransactionId,
-      confidence: 0.95,
-      receivedAt: "2026-03-07T10:00:00Z" as IsoDateTime,
-      createdAt: "2026-03-07T10:00:00Z" as IsoDateTime,
-    };
-
-    await insertProcessedCapture(mockDb, row);
-
-    expect(mockInsert).toHaveBeenCalled();
-    expect(mockValues).toHaveBeenCalledWith(row);
-    expect(mockOnConflictDoNothing).toHaveBeenCalled();
   });
 
   // -- hasProcessedCaptures --

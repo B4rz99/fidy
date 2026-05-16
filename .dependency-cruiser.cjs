@@ -67,6 +67,17 @@ module.exports = {
       },
     },
     {
+      name: "local-ledger-consumers-must-use-public-entrypoints",
+      severity: "error",
+      from: {
+        pathNot: "^apps/mobile/(local-ledger/|infrastructure/local-ledger/|__tests__/)",
+      },
+      to: {
+        path: "^apps/mobile/local-ledger/",
+        pathNot: "^apps/mobile/local-ledger/(public|snapshot\\.public)\\.ts$",
+      },
+    },
+    {
       name: "only-app-or-features-may-depend-on-mutations",
       severity: "error",
       from: { pathNot: "^apps/mobile/(app/.+|features/.+)" },
