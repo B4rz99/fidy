@@ -90,7 +90,7 @@ export type ResolveReviewCandidateCommand = {
   readonly reviewCandidateId: LocalLedgerReviewCandidateId;
   readonly processedSourceEventId: ProcessedSourceEventId;
   readonly reviewCandidateStatus: "accepted" | "rejected";
-  readonly processedSourceEventStatus: "processed";
+  readonly processedSourceEventStatus: "processed" | "dismissed";
   readonly now: IsoDateTime;
 };
 
@@ -157,7 +157,10 @@ export const toAcceptReviewCandidateCommand = (
 
 export const toRejectReviewCandidateCommand = (
   input: ReviewCandidateResolutionCommitInput
-): ResolveReviewCandidateCommand => toResolveReviewCandidateCommand(input, "rejected");
+): ResolveReviewCandidateCommand => ({
+  ...toResolveReviewCandidateCommand(input, "rejected"),
+  processedSourceEventStatus: "dismissed",
+});
 
 async function validateCandidate(
   input: ReviewCandidateResolutionInput,

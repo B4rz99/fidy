@@ -217,7 +217,7 @@ type LocalLedgerReviewCandidateResolveCommand = {
   reviewCandidateId: ReviewCandidateId;
   processedSourceEventId: ProcessedSourceEventId;
   reviewCandidateStatus: "accepted" | "rejected";
-  processedSourceEventStatus: "processed";
+  processedSourceEventStatus: "processed" | "dismissed";
   now: IsoDateTime;
   afterCommit?: readonly MutationEffect[];
 };

@@ -38,7 +38,12 @@ export const INTAKE_ROW_SPECS: readonly RowSpec[] = [
           sourceFamily: (value) => assertString(value, "sourceFamily"),
           sourceId: (value) => assertString(value, "sourceId"),
           sourceEventId: (value) => assertString(value, "sourceEventId"),
-          status: (value) => assertString(value, "status"),
+          status: (value) =>
+            assertOneOf(
+              ["processed", "needs_review", "failed", "duplicate", "dismissed"],
+              value,
+              "status"
+            ),
           failureReason: (value) => assertNullableString(value, "failureReason"),
           receivedAt: (value) => assertValidIsoDateTime(value, "receivedAt"),
           processedAt: (value) => assertValidIsoDateTime(value, "processedAt"),

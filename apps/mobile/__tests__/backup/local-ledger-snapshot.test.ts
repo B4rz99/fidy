@@ -517,6 +517,23 @@ function processedEmailRow() {
   };
 }
 
+function processedSourceEventRow(status: string, id = `pse-${status}`) {
+  return {
+    id,
+    userId: "user-1",
+    sourceFamily: "email",
+    sourceId: "gmail-primary",
+    sourceEventId: `gmail-message-${status}`,
+    status,
+    failureReason: null,
+    receivedAt: NOW,
+    processedAt: NOW,
+    createdAt: NOW,
+    updatedAt: NOW,
+    deletedAt: null,
+  };
+}
+
 function captureEvidenceRow(overrides: Record<string, unknown> = {}) {
   return {
     id: "ce-1",
@@ -827,6 +844,27 @@ describe("local ledger backup snapshots", () => {
         })
       )
     ).toThrow("Malformed local ledger backup row: name must be a non-empty string");
+  });
+
+  it("accepts the expanded processed source-event status set", () => {
+    const statuses = ["processed", "needs_review", "failed", "duplicate", "dismissed"];
+    const snapshot = validateBackupSnapshot(
+      validSnapshot({
+        processedSourceEvents: statuses.map((status) => processedSourceEventRow(status)),
+      })
+    );
+
+    expect(snapshot.data.processedSourceEvents.map((row) => row.status)).toEqual(statuses);
+  });
+
+  it("rejects unsupported processed source-event statuses", () => {
+    expect(() =>
+      validateBackupSnapshot(
+        validSnapshot({
+          processedSourceEvents: [processedSourceEventRow("ignored")],
+        })
+      )
+    ).toThrow("Malformed local ledger backup row: status is not supported");
   });
 
   it("accepts legacy version 1 rows that predate additive defaulted columns", () => {

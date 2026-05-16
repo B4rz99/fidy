@@ -382,7 +382,7 @@ describe("processNotification", () => {
     expect(result.skippedDuplicate).toBe(true);
     expect(mockInsertTransaction).not.toHaveBeenCalled();
     expect(mockPersistProcessedSourceEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "processed", failureReason: "already_processed_duplicate" })
+      expect.objectContaining({ status: "duplicate", failureReason: null })
     );
   });
 
@@ -399,8 +399,8 @@ describe("processNotification", () => {
     expect(mockPersistCommittedCaptureSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        status: "processed",
-        failureReason: "duplicate:existing-tx-1",
+        status: "duplicate",
+        failureReason: null,
         transactionId: "existing-tx-1",
         evidence: expect.arrayContaining([
           expect.objectContaining({ scope: "notification:bancolombia:last4" }),

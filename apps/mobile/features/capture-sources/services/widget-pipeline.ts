@@ -111,8 +111,8 @@ export async function processWidgetTransactions(
           sourceFamily: "widget",
           sourceId: "widget",
           sourceEventId: fingerprint,
-          status: "processed",
-          failureReason: "already_processed_duplicate",
+          status: "duplicate",
+          failureReason: null,
           receivedAt: now,
           processedAt: now,
         });
