@@ -1,0 +1,30 @@
+apps/mobile/features/email-capture/services/email-pipeline-service/shared.ts
+  s_b481c7ac3047cb::t_1f9ae4e4df9d8e 23-24
+apps/mobile/features/email-capture/services/email-pipeline-service/retry-transaction-bundle.ts
+  s_b481c7ac3047cb::t_a5e416881d867c 5,16-21,77-80
+apps/mobile/__tests__/email-capture/store.test.ts
+  s_b481c7ac3047cb::t_086b79d237fb2e 808,896,929
+apps/mobile/features/email-capture/services/email-capture-fetch-service.ts
+  s_b481c7ac3047cb::t_1f9ae4e4df9d8e 158
+apps/mobile/features/email-capture/lib/repository.ts
+  s_b481c7ac3047cb::t_1f9ae4e4df9d8e 95
+apps/mobile/features/email-capture/store.ts
+  s_b481c7ac3047cb::t_3722c970f11a6a 83,91,117
+  s_b481c7ac3047cb::t_775702a7111924 101,110,127,138
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "06832133abde6f9f98ac081de949f709c775a84c",
+  "prompts": {},
+  "sessions": {
+    "s_b481c7ac3047cb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3135-728d-73d0-b748-bae1f1529710",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
