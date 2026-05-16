@@ -1,0 +1,75 @@
+apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts
+  s_41abc827bb8a2d::t_dd09aeaeaa3155 150
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_41abc827bb8a2d::t_e9df363f195212 102
+apps/mobile/local-ledger/snapshot/row-shape.ts
+  s_41abc827bb8a2d::t_ea5730c63e88d8 2,76
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_41abc827bb8a2d::t_a4d4aa636e2325 531,1142
+apps/mobile/__tests__/financial-accounts/balance-repository.test.ts
+  s_41abc827bb8a2d::t_1ee519fe8fba1d 88
+apps/mobile/features/transactions/schema.ts
+  s_41abc827bb8a2d::t_39710776446c09 3,67
+apps/mobile/__tests__/shared/transaction-source.test.ts
+  s_41abc827bb8a2d::t_8160f491c1e508 1-16,18-21
+  s_41abc827bb8a2d::t_986b41d72aecc7 17
+apps/mobile/__tests__/local-ledger/transaction-storage-mapper.test.ts
+  s_41abc827bb8a2d::t_872633cfdcc763 28,54,79
+apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts
+  s_41abc827bb8a2d::t_ef3f3f3d3ccc31 97,116,347,394,440
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_41abc827bb8a2d::t_f6ae1e5fb4df97 161
+apps/mobile/__tests__/local-ledger/record-transaction.test.ts
+  s_41abc827bb8a2d::t_93b45f13733365 116,129
+apps/mobile/local-ledger/use-cases/write.public.ts
+  s_41abc827bb8a2d::t_6e1c0b36cac20f 8,100
+apps/mobile/__tests__/email-capture/retry-integration.test.ts
+  s_41abc827bb8a2d::t_1221d2fa28524e 127
+apps/mobile/__tests__/account-suggestions/service.test.ts
+  s_41abc827bb8a2d::t_ef3f3f3d3ccc31 88,695
+apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts
+  s_41abc827bb8a2d::t_e7ea53bb1272ef 202
+apps/mobile/__tests__/review-queues/attribution-review-service.test.ts
+  s_41abc827bb8a2d::t_ef3f3f3d3ccc31 131
+apps/mobile/__tests__/transactions/build-transaction.test.ts
+  s_41abc827bb8a2d::t_e3e7f0d36ed3a1 206,210,213,235-236
+  s_41abc827bb8a2d::t_ef3f3f3d3ccc31 197
+apps/mobile/__tests__/transactions/repository.test.ts
+  s_41abc827bb8a2d::t_ef3f3f3d3ccc31 194,205
+apps/mobile/features/email-capture/services/email-pipeline-service/transaction-recording.ts
+  s_41abc827bb8a2d::t_4e2a461bc366b9 52
+apps/mobile/__tests__/backup/local-ledger-snapshot.test.ts
+  s_41abc827bb8a2d::t_8b9fb7800db135 852,870-872
+  s_41abc827bb8a2d::t_edea326fe17d33 99
+apps/mobile/__tests__/transactions/mutation-service.test.ts
+  s_41abc827bb8a2d::t_ef3f3f3d3ccc31 42,269
+apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts
+  s_41abc827bb8a2d::t_d724f3e4925835 160
+apps/mobile/shared/lib/transaction-source.ts
+  s_41abc827bb8a2d::t_b6d5ba4940435d 16
+  s_41abc827bb8a2d::t_fe2ba2e4cd3f59 34
+  s_41abc827bb8a2d::t_e4bfb8f39f3f3f 1-15,17-25,29-33
+apps/mobile/__tests__/local-ledger/automated-transaction-source.test.ts
+  s_41abc827bb8a2d::t_e1c4bb75631af3 1-75
+apps/mobile/infrastructure/local-ledger/record-transaction.ts
+  s_41abc827bb8a2d::t_0aadf33fdeb48f 191
+  s_41abc827bb8a2d::t_ddc03526c7ba76 42-44
+apps/mobile/__tests__/local-ledger/review-candidate-resolution.test.ts
+  s_41abc827bb8a2d::t_ef3f3f3d3ccc31 35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "93f8f78ee52590e5f04dfc509bdefbcc4e1c5363",
+  "prompts": {},
+  "sessions": {
+    "s_41abc827bb8a2d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2e49-0646-7c11-8e05-c3bf73ffd543",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
