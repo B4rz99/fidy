@@ -1,0 +1,116 @@
+apps/mobile/features/email-capture/components/FailedEmailsBanner.tsx
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 6-10,27
+apps/mobile/features/email-capture/lib/financial-meaning-review-preview.ts
+  s_434d7b23e1d46b::t_9fe63f8fba4c8b 1-55
+  s_434d7b23e1d46b::t_603f1951719a7d 56
+apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 212,216,236
+apps/mobile/features/email-capture/services/email-pipeline-service/shared.ts
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 17-18,153
+apps/mobile/features/review-queues/hooks/use-financial-meaning-review-queue.ts
+  s_434d7b23e1d46b::t_756ebb29fcb125 35
+apps/mobile/__tests__/email-capture/failed-emails-banner.test.ts
+  s_434d7b23e1d46b::t_4039acf97a06c2 1-2,4-9,11
+apps/mobile/features/email-capture/services/email-pipeline.ts
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 21,25,53,57
+dependency-policy.json
+  s_434d7b23e1d46b::t_44773ac3179fe0 24-27
+plans/lizard-complexity-debt.json
+  s_434d7b23e1d46b::t_cb4dafb8464a83 25-26
+  s_434d7b23e1d46b::t_68692288e956b2 43,48
+  s_434d7b23e1d46b::t_d12aa6b6df9d02 14-24,27-42,44-47,49-51
+apps/mobile/features/email-capture/store/reviewed-email.ts
+  s_434d7b23e1d46b::t_6f25d10eb53b5e 67-73
+  s_434d7b23e1d46b::t_a4404ed032751d 8
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 62,66,74-90
+apps/mobile/__tests__/error-handling/pipeline-save-error.test.ts
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 19,33,64,69,135,145
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-email.ts
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 17
+  s_434d7b23e1d46b::t_554e5e0ed4d3ef 116-122
+apps/mobile/features/email-capture/services/email-pipeline-service/retry.ts
+  s_434d7b23e1d46b::t_836897a711a798 230-232
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 10,89
+apps/mobile/features/email-capture/lib/financial-meaning-review.ts
+  s_434d7b23e1d46b::t_2521e12f8b5985 199-201
+  s_434d7b23e1d46b::t_5905f804062ffc 108-111
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 1,5,11,13,16-19,21-26,45-53,57-76,78-90,92-93,196-197,204-208,233,248-253
+  s_434d7b23e1d46b::t_107e2a9a9a1c96 2,6-10,14,20,37-43,54-56,77,91,94-103,173-185,189-190,192,195,229,231-232,247
+  s_434d7b23e1d46b::t_ab3f720d00596f 104-107,112-172,186-188,191,193-194
+  s_434d7b23e1d46b::t_529f11f8dbfac9 27-28
+apps/mobile/features/email-capture/services/email-pipeline-service/runtime.ts
+  s_434d7b23e1d46b::t_864c12a3517594 63,65
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 93-102,218-219,221
+apps/mobile/features/email-capture/services/email-pipeline-service/public-types.ts
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 92-96,111
+  s_434d7b23e1d46b::t_e9cb4d4ab482b7 87-90
+apps/mobile/drizzle/0028_source_event_email_retry.sql
+  s_434d7b23e1d46b::t_2140b2cc3e559d 32,44,53-60,63
+  s_1e2bbf6ce59b7c::t_7ae89d7cf7a165 11-31,33-43,45-52,61-62,64-71
+  s_1e2bbf6ce59b7c::t_57576354709d2b 1-10,72
+apps/mobile/__tests__/email-capture/store.test.ts
+  s_434d7b23e1d46b::t_00d2c0912b36d2 1361,1377,1379-1381,1397,1411
+  s_434d7b23e1d46b::t_1e4ddb19201abf 2,70-71
+  s_434d7b23e1d46b::t_b11338da79997c 498,518
+  s_434d7b23e1d46b::t_f447b9defa1731 405,414
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 1346,1360,1362-1376,1378,1382-1396,1398-1410,1412-1415
+apps/mobile/features/email-capture/services/email-capture-fetch-service.ts
+  s_434d7b23e1d46b::t_d227418fea6f9a 276-279,281-282
+apps/mobile/__tests__/email-capture/retry-integration.test.ts
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 12,26,50-53,70-78,81,83,87-88,91,93,121-122,147-154,180-186,189-190,196-197,202,205-301,311,345,350-359,365-369,371-373,381,387-397,444,446
+  s_434d7b23e1d46b::t_b941a79177215d 308,319,333
+  s_434d7b23e1d46b::t_4b5f1670e61db1 97,101-120,411-420,431
+apps/mobile/features/email-capture/store.ts
+  s_434d7b23e1d46b::t_af00df304ff02d 102,111,231
+apps/mobile/features/email-capture/store/state.ts
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 6,25,36
+apps/mobile/features/transfers/lib/reclassify-transaction-as-transfer.ts
+  s_434d7b23e1d46b::t_3ae6a7f80213ed 7
+apps/mobile/features/email-capture/lib/repository.ts
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 2,5,10,23-30,50-59,111,113-115,117-123,129-133,138-151,153-154,157-160,189-197,208-211,215,217,221-223,226,228-229,233-240,245-247,251-272
+  s_434d7b23e1d46b::t_b819660ddf9450 60,128,152
+  s_434d7b23e1d46b::t_9943980f41c01c 110,116,126,136-137,214,220
+  s_434d7b23e1d46b::t_3f3076dc244b04 14-19
+apps/mobile/__tests__/email-capture/repository.test.ts
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 7,18,44-45,192-205,213-221,224,229-231,255,257-267,276-287,329-344,357-366,396-397,416-439
+  s_434d7b23e1d46b::t_df4f7e697ceca0 210,273,351
+  s_434d7b23e1d46b::t_32ea03f1cfb579 290
+apps/mobile/shared/db/schema.ts
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 256-260,270-274
+apps/mobile/drizzle/migrations.js
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 30,64
+apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts
+  s_434d7b23e1d46b::t_e766c9e3cb19ec 264-273
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 19,27,31,164-200,202,212,218,222-226,230-242,253-263,274-291,306,312,335-336,354,369-370
+  s_434d7b23e1d46b::t_0090631e225638 228
+  s_434d7b23e1d46b::t_90b93228aa01f7 208,331
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_434d7b23e1d46b::t_bb5fdddefee5b3 18,31,102,107,196,225,255,259,281-290,1200-1205,1217-1236,1257-1262,1287-1292,1456,1674
+  s_434d7b23e1d46b::t_b4eead4abbebcf 1489
+apps/mobile/features/email-capture/lib/repository-mappers.ts
+  s_434d7b23e1d46b::t_cba8e3d51dab8b 1-115
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "9b1afe873b7c514ae8707ef3053549b877fc123c",
+  "prompts": {},
+  "sessions": {
+    "s_1e2bbf6ce59b7c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e31b6-0687-7942-a5a0-7dbc77639394",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_434d7b23e1d46b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3136-33a8-7241-ad35-084bfb317d4c",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
