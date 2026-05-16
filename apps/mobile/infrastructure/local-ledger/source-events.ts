@@ -22,7 +22,7 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
-type SourceEventStatus = "processed" | "needs_review" | "failed";
+type SourceEventStatus = "processed" | "needs_review" | "failed" | "duplicate" | "dismissed";
 
 type SourceEventInput = {
   readonly userId: UserId;
@@ -56,7 +56,11 @@ type PersistCommittedCaptureInput = PersistSourceEventInput & {
 };
 
 const isSourceEventStatus = (status: string): status is SourceEventStatus =>
-  status === "processed" || status === "needs_review" || status === "failed";
+  status === "processed" ||
+  status === "needs_review" ||
+  status === "failed" ||
+  status === "duplicate" ||
+  status === "dismissed";
 
 const findSourceEvent = (
   db: AnyDb,

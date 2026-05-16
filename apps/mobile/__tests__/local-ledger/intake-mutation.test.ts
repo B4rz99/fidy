@@ -305,7 +305,7 @@ describe("local ledger intake mutations", () => {
     expect(committed).toEqual([]);
   });
 
-  it("maps dismissal to a write-through command that preserves source-event idempotency", async () => {
+  it("maps dismissal to an explicit dismissed source-event outcome", async () => {
     expect(
       toRejectReviewCandidateCommand({
         userId: "user-1" as UserId,
@@ -319,7 +319,7 @@ describe("local ledger intake mutations", () => {
       reviewCandidateId: "rc-1",
       processedSourceEventId: "pse-1",
       reviewCandidateStatus: "rejected",
-      processedSourceEventStatus: "processed",
+      processedSourceEventStatus: "dismissed",
       now: NOW,
     });
   });

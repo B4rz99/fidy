@@ -80,7 +80,12 @@ export type LocalLedgerCaptureEvidence = {
   readonly value: string;
 };
 
-export type LocalLedgerProcessedSourceEventStatus = "processed" | "needs_review" | "failed";
+export type LocalLedgerProcessedSourceEventStatus =
+  | "processed"
+  | "needs_review"
+  | "failed"
+  | "duplicate"
+  | "dismissed";
 
 export type LocalLedgerReviewCandidateStatus = "pending" | "accepted" | "rejected";
 

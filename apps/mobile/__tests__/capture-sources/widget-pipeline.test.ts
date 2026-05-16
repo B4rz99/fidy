@@ -353,7 +353,7 @@ describe("processWidgetTransactions", () => {
     expect(mockInsertTransaction).not.toHaveBeenCalled();
     expect(result.skippedDuplicate).toBe(1);
     expect(mockPersistProcessedSourceEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "processed", failureReason: "already_processed_duplicate" })
+      expect.objectContaining({ status: "duplicate", failureReason: null })
     );
     expect(mockRemovePendingTransactions).toHaveBeenCalledWith(["seen-before"]);
   });
