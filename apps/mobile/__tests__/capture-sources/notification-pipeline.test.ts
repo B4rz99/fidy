@@ -69,6 +69,7 @@ function mockRecordedTransaction(input: any) {
     amount: command.amount,
     categoryId: command.categoryId,
     description: command.description,
+    counterpartyName: command.counterpartyName,
     date: command.occurredOn,
     accountId: command.accountId,
     accountAttributionState: command.accountAttributionState,
@@ -206,7 +207,8 @@ function expectSavedLlmNotificationTransaction() {
     expect.objectContaining({
       amount: 35000,
       categoryId: "food",
-      description: "Restaurante XYZ",
+      description: "",
+      counterpartyName: "Restaurante XYZ",
     })
   );
 }
@@ -360,7 +362,11 @@ describe("processNotification", () => {
       expect.objectContaining({
         db: mockDb,
         status: "needs_review",
-        candidate: expect.objectContaining({ amount: 35000, confidence: 0.5 }),
+        candidate: expect.objectContaining({
+          amount: 35000,
+          confidence: 0.5,
+          description: "",
+        }),
       })
     );
     expect(mockInsertMerchantRule).not.toHaveBeenCalled();

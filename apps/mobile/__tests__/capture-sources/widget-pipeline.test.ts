@@ -32,6 +32,7 @@ function mockRecordedWidgetTransaction(input: any) {
     amount: command.amount,
     categoryId: command.categoryId,
     description: command.description,
+    counterpartyName: command.counterpartyName,
     date: command.occurredOn,
     source: command.source,
     createdAt: input.now,
@@ -298,7 +299,47 @@ describe("processWidgetTransactions", () => {
 
     expect(mockInsertTransaction).toHaveBeenCalledWith(
       mockDb,
-      expect.objectContaining({ description: "Coffee at Juan Valdez" })
+      expect.objectContaining({ description: "Coffee at Juan Valdez", counterpartyName: "" })
+    );
+  });
+
+  it("skips cross-source duplicate lookup when widget has no counterparty text", async () => {
+    mockGetPendingTransactions.mockResolvedValue([
+      {
+        id: "desc-dedup-test",
+        amount: 12000,
+        createdAt: "2026-03-27T10:00:00Z",
+        description: "Coffee at Juan Valdez",
+      },
+    ]);
+
+    await processWidgetTransactions(mockDb, USER_ID);
+
+    expect(mockFindDuplicateTransaction).not.toHaveBeenCalled();
+  });
+
+  it("uses widget counterparty text for duplicate lookup when present", async () => {
+    mockGetPendingTransactions.mockResolvedValue([
+      {
+        id: "counterparty-dedup-test",
+        amount: 12000,
+        createdAt: "2026-03-27T10:00:00Z",
+        description: "Coffee after lunch",
+        counterpartyName: "Juan Valdez",
+      },
+    ]);
+
+    await processWidgetTransactions(mockDb, USER_ID);
+
+    expect(mockFindDuplicateTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ merchant: "Juan Valdez" })
+    );
+    expect(mockInsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        description: "Coffee after lunch",
+        counterpartyName: "Juan Valdez",
+      })
     );
   });
 
@@ -335,10 +376,15 @@ describe("processWidgetTransactions", () => {
     expect(mockRemovePendingTransactions).toHaveBeenCalledWith(["seen-before"]);
   });
 
-  it("skips entries that match an existing transaction (cross-source dedup)", async () => {
+  it("skips entries with counterparty text that match an existing transaction", async () => {
     mockFindDuplicateTransaction.mockResolvedValue("txn-existing-1");
     mockGetPendingTransactions.mockResolvedValue([
-      { id: "dup-entry", amount: 5000, createdAt: "2026-03-27T10:00:00Z", description: "Coffee" },
+      {
+        id: "dup-entry",
+        amount: 5000,
+        createdAt: "2026-03-27T10:00:00Z",
+        counterpartyName: "Coffee Shop",
+      },
     ]);
 
     const result = await processWidgetTransactions(mockDb, USER_ID);

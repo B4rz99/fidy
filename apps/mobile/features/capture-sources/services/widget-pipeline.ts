@@ -81,6 +81,7 @@ export async function processWidgetTransactions(
       item.category && isValidCategoryId(item.category) ? item.category : fallbackCategoryId;
     const type = item.type === "income" ? "income" : "expense";
     const description = item.description ?? "";
+    const counterpartyName = item.counterpartyName?.trim() ?? "";
 
     const fingerprint = widgetFingerprint(item.id, amount, date);
 
@@ -117,13 +118,16 @@ export async function processWidgetTransactions(
         continue;
       }
 
-      const existingTxId = await findDuplicateTransaction({
-        db,
-        userId,
-        amount,
-        date,
-        merchant: description,
-      });
+      const existingTxId =
+        counterpartyName.length > 0
+          ? await findDuplicateTransaction({
+              db,
+              userId,
+              amount,
+              date,
+              merchant: counterpartyName,
+            })
+          : null;
 
       if (existingTxId) {
         persistProcessedSourceEvent({
@@ -154,7 +158,7 @@ export async function processWidgetTransactions(
           amount,
           categoryId,
           description,
-          counterpartyName: description,
+          counterpartyName,
           occurredOn: date,
           accountId: defaultAccount.id,
           accountAttributionState: "unresolved",

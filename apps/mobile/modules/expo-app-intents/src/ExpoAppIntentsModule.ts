@@ -7,6 +7,7 @@ export type PendingWidgetTransaction = {
   category?: string;
   type?: string;
   description?: string;
+  counterpartyName?: string;
 };
 
 export type ExpoAppIntentsModule = {
