@@ -73,10 +73,13 @@ export function persistSuccessfulRetryBundleEffect(context: RetryTransactionCont
           : undefined;
 
       if ("transaction" in context.db && typeof context.db.transaction === "function") {
+        let pendingTransactionWrite: Promise<unknown> | null = null;
+        let wroteStatusInTransaction = false;
         context.db.transaction((tx) => {
           const transactionWrite = persistTransaction(tx);
           if (isPromiseLike(transactionWrite)) {
-            throw new Error("Transactional retry inserts must be synchronous");
+            pendingTransactionWrite = transactionWrite;
+            return;
           }
           tx.update(processedSourceEvents)
             .set({
@@ -88,7 +91,15 @@ export function persistSuccessfulRetryBundleEffect(context: RetryTransactionCont
             .where(eq(processedSourceEvents.id, context.processedSourceEventId))
             .run();
           linkSourceEventEvidence(tx);
+          wroteStatusInTransaction = true;
         });
+        if (pendingTransactionWrite) {
+          await pendingTransactionWrite;
+        }
+        if (!wroteStatusInTransaction) {
+          await persistSourceEventStatus(context.db);
+          linkSourceEventEvidence(context.db);
+        }
         return;
       }
 

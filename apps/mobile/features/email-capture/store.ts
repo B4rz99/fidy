@@ -124,7 +124,6 @@ export async function loadNeedsReviewEmails(db: AnyDb, userId: UserId) {
   if (needsReviewEmailsResult.status === "fulfilled") {
     useEmailCaptureStore.getState().setNeedsReviewEmails(needsReviewEmailsResult.value);
   } else {
-    useEmailCaptureStore.getState().setNeedsReviewEmails([]);
     captureWarning("email_capture_needs_review_queue_load_failed", {
       errorType:
         needsReviewEmailsResult.reason instanceof Error
@@ -135,7 +134,6 @@ export async function loadNeedsReviewEmails(db: AnyDb, userId: UserId) {
   if (sourceEventsResult.status === "fulfilled") {
     useEmailCaptureStore.getState().setNeedsReviewEmailSourceEvents(sourceEventsResult.value);
   } else {
-    useEmailCaptureStore.getState().setNeedsReviewEmailSourceEvents([]);
     captureWarning("email_capture_needs_review_source_event_queue_load_failed", {
       errorType:
         sourceEventsResult.reason instanceof Error ? sourceEventsResult.reason.name : "unknown",
