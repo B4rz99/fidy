@@ -99,11 +99,19 @@ const getLegacyEmailSourceEventKey = (row: {
 }) => `${row.provider === "gmail" ? "email_gmail" : "email_outlook"}:${row.externalId}`;
 
 async function canUseLegacyProcessedEmailFallback(db: AnyDb, userId: UserId) {
-  const owners = await db
+  const emailAccountOwners = await db
     .selectDistinct({ userId: emailAccounts.userId })
     .from(emailAccounts)
     .limit(2);
-  return owners.length === 1 && owners[0]?.userId === userId;
+  const transactionOwners = await db
+    .selectDistinct({ userId: transactions.userId })
+    .from(transactions)
+    .limit(2);
+  const owners = new Set([
+    ...emailAccountOwners.map((owner) => owner.userId),
+    ...transactionOwners.map((owner) => owner.userId),
+  ]);
+  return owners.size === 1 && owners.has(userId);
 }
 
 export async function getProcessedExternalIds(

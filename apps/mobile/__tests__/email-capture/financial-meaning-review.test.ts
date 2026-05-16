@@ -348,6 +348,7 @@ describe("financial meaning review", () => {
 
   it("keeps unlinked legacy failed emails in single-owner databases", async () => {
     insertEmailAccount();
+    insertEmailTransactionRow({ id: "tx-user" as TransactionId });
     await insertProcessedEmail(db as any, {
       ...defaultNeedsReviewEmail,
       id: "pe-unlinked-failed" as ProcessedEmailId,
@@ -358,6 +359,33 @@ describe("financial meaning review", () => {
 
     await expect(getFailedEmails(db as any, USER_ID)).resolves.toEqual([
       expect.objectContaining({ id: "pe-unlinked-failed" }),
+    ]);
+  });
+
+  it("does not use global legacy queues when stale transactions belong to another owner", async () => {
+    insertEmailAccount();
+    insertEmailTransactionRow({ id: "tx-user" as TransactionId });
+    insertEmailTransactionRow({
+      id: "tx-other" as TransactionId,
+      userId: "other-user" as UserId,
+    });
+    await insertProcessedEmail(db as any, {
+      ...defaultNeedsReviewEmail,
+      id: "pe-unlinked-failed" as ProcessedEmailId,
+      externalId: "ext-unlinked-failed",
+      status: "failed",
+      transactionId: null,
+    });
+    await insertProcessedEmail(db as any, {
+      ...defaultNeedsReviewEmail,
+      id: "pe-linked-failed" as ProcessedEmailId,
+      externalId: "ext-linked-failed",
+      status: "failed",
+      transactionId: "tx-user" as TransactionId,
+    });
+
+    await expect(getFailedEmails(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({ id: "pe-linked-failed" }),
     ]);
   });
 
