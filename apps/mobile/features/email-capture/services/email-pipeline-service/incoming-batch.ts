@@ -2,7 +2,7 @@ import type { AnyDb } from "@/shared/db";
 import { capturePipelineEventEffect } from "@/shared/effect/telemetry";
 import { buildEmailPipelineBatchTelemetry } from "./email-telemetry";
 import { processIncomingEmail } from "./incoming-email";
-import { getProcessedEmailSourceEventIdsEffect, getProcessedExternalIdsEffect } from "./runtime";
+import { getProcessedEmailSourceEventIdsEffect } from "./runtime";
 import {
   createPipelineResult,
   dedupeRawEmails,
@@ -56,13 +56,8 @@ async function createEmailBatchPlan(
   const sourceEventIds = await runtime.runEmailEffect(
     getProcessedEmailSourceEventIdsEffect(db, userId, sourceEvents)
   );
-  const legacyProcessedIds = await runtime.runEmailEffect(
-    getProcessedExternalIdsEffect(db, userId, uniqueEmails)
-  );
   const toProcess = uniqueEmails.filter(
-    (email) =>
-      !sourceEventIds.has(getEmailSourceEventKey(email)) &&
-      !legacyProcessedIds.has(getEmailSourceEventKey(email))
+    (email) => !sourceEventIds.has(getEmailSourceEventKey(email))
   );
   const boundedToProcess =
     runtime.maxCandidateEmails == null ? toProcess : toProcess.slice(0, runtime.maxCandidateEmails);

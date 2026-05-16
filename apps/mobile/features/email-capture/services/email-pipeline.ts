@@ -17,7 +17,6 @@ import type { UserId } from "@/shared/types/branded";
 import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
 import {
   getPendingRetryEmailSourceEvents,
-  getProcessedExternalIds,
   getProcessedEmailSourceEventIds,
   insertProcessedEmail,
   insertProcessedEmailSourceEvent,
@@ -49,7 +48,6 @@ const emailPipelineDeps = {
   lookupMerchantRule,
   findDuplicateTransaction,
   getProcessedEmailSourceEventIds,
-  getProcessedExternalIds,
   getPendingRetryEmailSourceEvents,
   insertProcessedEmail,
   insertProcessedEmailSourceEvent,

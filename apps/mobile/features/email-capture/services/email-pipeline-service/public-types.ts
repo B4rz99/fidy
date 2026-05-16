@@ -90,11 +90,6 @@ export type CreateEmailPipelineServiceDeps = {
     userId: UserId,
     sourceEvents: readonly { readonly sourceId: string; readonly sourceEventId: string }[]
   ) => Promise<Set<string>>;
-  readonly getProcessedExternalIds: (
-    db: AnyDb,
-    userId: UserId,
-    sourceEvents: readonly { readonly provider: string; readonly externalId: string }[]
-  ) => Promise<Set<string>>;
   readonly getPendingRetryEmailSourceEvents: (
     db: AnyDb,
     userId: UserId

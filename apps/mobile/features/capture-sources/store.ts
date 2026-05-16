@@ -1,12 +1,13 @@
 import { create } from "zustand";
 import { Platform } from "@/shared/components/rn";
-import type { AnyDb } from "@/shared/db";
-import { captureWarning, toIsoDateTime } from "@/shared/lib";
+import type { AnyDb } from "@/shared/db/client";
+import { toIsoDateTime } from "@/shared/lib/format-date";
+import { captureWarning } from "@/shared/lib/sentry";
 import type { UserId } from "@/shared/types/branded";
 import {
   getEnabledPackages,
   getTodaySmsEventCount,
-  hasProcessedCaptures,
+  hasProcessedSourceEventsBySource,
   upsertNotificationSource,
 } from "./lib/repository";
 import { KNOWN_BANK_PACKAGES } from "./schema";
@@ -106,7 +107,7 @@ export async function hydrateCaptureSources(db: AnyDb, userId: UserId): Promise<
   const results = await Promise.allSettled([
     loadCaptureSourceConfig(db, userId),
     checkCaptureSourcePermissions(),
-    refreshCaptureSourceStatus(db),
+    refreshCaptureSourceStatus(db, userId),
     refreshDetectedSmsCount(db, userId),
   ]);
   reportHydrationFailures(results);
@@ -136,8 +137,8 @@ export async function toggleCaptureSourcePackage(
   useCaptureSourcesStore.getState().setEnabledPackages(updated);
 }
 
-export async function refreshCaptureSourceStatus(db: AnyDb): Promise<void> {
-  const isApplePaySetupComplete = await hasProcessedCaptures(db, "apple_pay");
+export async function refreshCaptureSourceStatus(db: AnyDb, userId: UserId): Promise<void> {
+  const isApplePaySetupComplete = await hasProcessedSourceEventsBySource(db, userId, "apple_pay");
   useCaptureSourcesStore.getState().setApplePaySetupComplete(isApplePaySetupComplete);
 }
 

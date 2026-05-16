@@ -18,8 +18,6 @@ export {
   notificationSources,
   notifications,
   openingBalances,
-  processedCaptures,
-  processedEmails,
   transactions,
   transfers,
   userCategories,

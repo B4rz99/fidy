@@ -220,35 +220,6 @@ describe("email capture repository", () => {
     expect(mockDeleteWhere).toHaveBeenCalled();
   });
 
-  it("getProcessedExternalIds returns empty Set for empty array", async () => {
-    const { getProcessedExternalIds } = await import("@/features/email-capture/lib/repository");
-    const result = await getProcessedExternalIds(mockDb, "user-1" as UserId, []);
-
-    expect(result).toEqual(new Set());
-    expect(mockSelect).not.toHaveBeenCalled();
-  });
-
-  it("getProcessedExternalIds queries DB and returns Set for non-empty array", async () => {
-    const mockRows = [
-      { externalId: "msg-1", provider: "gmail" },
-      { externalId: "msg-2", provider: "outlook" },
-    ];
-    mockLimit.mockResolvedValueOnce([{ userId: "user-1" }]);
-    mockWhere.mockResolvedValueOnce(mockRows);
-
-    const { getProcessedExternalIds } = await import("@/features/email-capture/lib/repository");
-    const result = await getProcessedExternalIds(mockDb, "user-1" as UserId, [
-      { provider: "gmail", externalId: "msg-1" },
-      { provider: "outlook", externalId: "msg-2" },
-      { provider: "gmail", externalId: "msg-3" },
-    ]);
-
-    expect(mockSelect).toHaveBeenCalled();
-    expect(mockFrom).toHaveBeenCalled();
-    expect(mockWhere).toHaveBeenCalled();
-    expect(result).toEqual(new Set(["email_gmail:msg-1", "email_outlook:msg-2"]));
-  });
-
   it("getNeedsReviewEmails returns emails with needs_review status", async () => {
     const mockRows = [
       { id: "pe-1", status: "needs_review", subject: "Review this" },

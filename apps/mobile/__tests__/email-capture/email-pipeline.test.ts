@@ -11,9 +11,6 @@ import {
 import { requireIsoDateTime, requireUserId } from "@/shared/types/assertions";
 import type { FinancialAccountId } from "@/shared/types/branded";
 
-const mockGetProcessedExternalIds = vi
-  .fn<(...args: any[]) => any>()
-  .mockResolvedValue(new Set<string>());
 const mockGetProcessedEmailSourceEventIds = vi
   .fn<(...args: any[]) => any>()
   .mockResolvedValue(new Set<string>());
@@ -100,7 +97,6 @@ vi.mock("@/mutations", () => ({
 }));
 
 vi.mock("@/features/email-capture/lib/repository", () => ({
-  getProcessedExternalIds: (...args: unknown[]) => mockGetProcessedExternalIds(...args),
   getProcessedEmailSourceEventIds: (...args: unknown[]) =>
     mockGetProcessedEmailSourceEventIds(...args),
   insertProcessedEmail: (...args: unknown[]) => mockInsertProcessedEmail(...args),
@@ -201,7 +197,6 @@ function resetGeneratedIds() {
 
 function resetPipelineMocks() {
   [
-    mockGetProcessedExternalIds,
     mockGetProcessedEmailSourceEventIds,
     mockInsertProcessedEmail,
     mockInsertProcessedEmailSourceEvent,
@@ -219,7 +214,6 @@ function resetPipelineMocks() {
     mockMarkSourceEventRetrySuccess,
     mockUpdateProcessedSourceEventStatus,
   ].forEach((mock) => mock.mockReset());
-  mockGetProcessedExternalIds.mockResolvedValue(new Set<string>());
   mockGetProcessedEmailSourceEventIds.mockResolvedValue(new Set<string>());
   mockInsertProcessedEmail.mockResolvedValue(undefined);
   mockInsertProcessedEmailSourceEvent.mockResolvedValue(undefined);
@@ -279,7 +273,6 @@ function createTestEmailPipelineService(overrides: Record<string, unknown> = {})
     lookupMerchantRule: mockLookupMerchantRule,
     findDuplicateTransaction: mockFindDuplicateTransaction,
     getProcessedEmailSourceEventIds: mockGetProcessedEmailSourceEventIds,
-    getProcessedExternalIds: mockGetProcessedExternalIds,
     getPendingRetryEmailSourceEvents: mockGetPendingRetryEmailSourceEvents,
     insertProcessedEmail: mockInsertProcessedEmail,
     insertProcessedEmailSourceEvent: mockInsertProcessedEmailSourceEvent,
@@ -388,17 +381,6 @@ describe("email processing pipeline", () => {
     resetGeneratedIds();
     resetPipelineMocks();
     resetCaptureEvidenceMocks();
-  });
-
-  it("uses legacy processed email ids as a migration fallback for incoming idempotency", async () => {
-    mockGetProcessedExternalIds.mockResolvedValueOnce(new Set(["email_gmail:ext-1"]));
-
-    const result = await processEmails(mockDb, USER_ID, [makeRawEmail()]);
-
-    expect(mockGetProcessedExternalIds).toHaveBeenCalledWith(mockDb, USER_ID, [makeRawEmail()]);
-    expect(mockParseEmailApi).not.toHaveBeenCalled();
-    expect(result.saved).toBe(0);
-    expect(result.skippedDuplicate).toBe(1);
   });
 
   it("skips already processed email source events", async () => {

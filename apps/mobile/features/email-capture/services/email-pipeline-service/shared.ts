@@ -1,9 +1,8 @@
 import { getBuiltInCategoryId, isValidCategoryId } from "@/shared/categories";
 import { assertCopAmount, assertIsoDate, requireIsoDateTime } from "@/shared/types/assertions";
-import type { ProcessedEmailRow, ProcessedSourceEventRow } from "../../lib/repository";
+import type { ProcessedSourceEventRow } from "../../lib/repository";
 import type {
   AppendEmailParseImprovementRequestInput,
-  DuplicateProcessedEmailRowInput,
   DuplicateProcessedSourceEventRowInput,
   EmailBatchContext,
   EmailMetric,
@@ -12,7 +11,6 @@ import type {
   PipelineResult,
   RetryResult,
   TrackSavedTransactionInput,
-  UnparsedProcessedEmailRowInput,
   UnparsedProcessedSourceEventRowInput,
 } from "./types";
 
@@ -140,33 +138,6 @@ export function createPipelineResult(skippedDuplicate: number): PipelineResult {
   };
 }
 
-export function buildUnparsedProcessedEmailRow(
-  input: UnparsedProcessedEmailRowInput
-): ProcessedEmailRow {
-  const baseRow: ProcessedEmailRow = {
-    id: input.processedEmailId,
-    externalId: input.email.externalId,
-    provider: input.email.provider,
-    status: input.status,
-    failureReason: input.failureReason,
-    subject: input.email.subject,
-    rawBodyPreview: input.email.body.slice(0, 500),
-    receivedAt: requireIsoDateTime(input.email.receivedAt),
-    transactionId: null,
-    confidence: null,
-    createdAt: input.createdAt,
-  };
-
-  return input.status === "pending_retry"
-    ? {
-        ...baseRow,
-        rawBody: input.email.body,
-        retryCount: 0,
-        nextRetryAt: input.nextRetryAt,
-      }
-    : baseRow;
-}
-
 export function buildUnparsedProcessedSourceEventRow(
   input: UnparsedProcessedSourceEventRowInput
 ): ProcessedSourceEventRow {
@@ -197,24 +168,6 @@ export function buildUnparsedProcessedSourceEventRow(
         nextRetryAt: input.nextRetryAt,
       }
     : baseRow;
-}
-
-export function buildDuplicateProcessedEmailRow(
-  input: DuplicateProcessedEmailRowInput
-): ProcessedEmailRow {
-  return {
-    id: input.processedEmailId,
-    externalId: input.email.externalId,
-    provider: input.email.provider,
-    status: "skipped_duplicate",
-    failureReason: null,
-    subject: input.email.subject,
-    rawBodyPreview: input.email.body.slice(0, 500),
-    receivedAt: requireIsoDateTime(input.email.receivedAt),
-    transactionId: input.transactionId,
-    confidence: input.confidence,
-    createdAt: input.createdAt,
-  };
 }
 
 export function buildDuplicateProcessedSourceEventRow(
