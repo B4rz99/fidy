@@ -1,0 +1,62 @@
+apps/mobile/features/email-capture/services/email-capture-queues.ts
+  s_06776aec0c8ddc::t_7896677ea8d9fe 22-28
+  s_06776aec0c8ddc::t_5c157c46babed4 4-9,31,33
+apps/mobile/features/email-capture/store.ts
+  s_06776aec0c8ddc::t_5c157c46babed4 6,8,94-97,99,114-117,119
+apps/mobile/features/transfers/components/transfer-form/saveTransferForm.ts
+  s_06776aec0c8ddc::t_79d64b3bd2b074 87-106,108-116,125,127
+  s_06776aec0c8ddc::t_158ae3f01009e3 17-22,32
+  s_06776aec0c8ddc::t_96a3421829ce63 107
+apps/mobile/features/transfers/lib/reclassify-transaction-as-transfer.ts
+  s_06776aec0c8ddc::t_158ae3f01009e3 3-5,15,35,50,70,122,127-134
+apps/mobile/features/email-capture/transfer-reclassification.public.ts
+  s_06776aec0c8ddc::t_158ae3f01009e3 2-26,32,34,37,39,41
+  s_06776aec0c8ddc::t_6489c4cf4ec1a0 36
+apps/mobile/features/transfers/components/transfer-form/useTransferForm.ts
+  s_06776aec0c8ddc::t_0f1222f981f6ea 9,42-46,65,70,86,123
+  s_06776aec0c8ddc::t_7896677ea8d9fe 39-41
+apps/mobile/features/transfers/components/transfer-form/useTransferFormActions.ts
+  s_06776aec0c8ddc::t_0f1222f981f6ea 25,56,108
+apps/mobile/features/email-capture/lib/source-event-review-repository.ts
+  s_06776aec0c8ddc::t_ea9a9c3b127a3d 60,110,227,256-278
+apps/mobile/features/email-capture/lib/repository.ts
+  s_06776aec0c8ddc::t_ea9a9c3b127a3d 27
+apps/mobile/features/email-capture/lib/source-event-queue-repository.ts
+  s_06776aec0c8ddc::t_5c157c46babed4 23
+apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts
+  s_06776aec0c8ddc::t_291e3ea2a99d01 15
+  s_06776aec0c8ddc::t_078bc28fcc3e15 474-502
+  s_06776aec0c8ddc::t_412afbfe7105f3 274-291
+apps/mobile/__tests__/email-capture/store.test.ts
+  s_06776aec0c8ddc::t_159c7363be4ea2 609,613,618,620,625-630,641,646,648
+apps/mobile/features/email-capture/lib/source-event-repository.ts
+  s_06776aec0c8ddc::t_ea9a9c3b127a3d 125,132,138
+apps/mobile/features/review-queues/components/FinancialMeaningReviewScreen.tsx
+  s_06776aec0c8ddc::t_8a8aab76775e91 18,68-69,144-145,153,156-158,160-165,193-197,222-225
+  s_06776aec0c8ddc::t_6489c4cf4ec1a0 154,159,226
+  s_06776aec0c8ddc::t_7896677ea8d9fe 146-150
+  s_06776aec0c8ddc::t_a7d885e3d67703 155
+apps/mobile/features/review-queues/components/FinancialMeaningQueueScreen.tsx
+  s_06776aec0c8ddc::t_8a8aab76775e91 19,44-45,57-58,90
+  s_06776aec0c8ddc::t_7896677ea8d9fe 59-63,94-96
+apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts
+  s_06776aec0c8ddc::t_6489c4cf4ec1a0 199
+  s_06776aec0c8ddc::t_b977b66b2f54dd 26,36,189-195,197-198,200-208,230,286-299
+  s_06776aec0c8ddc::t_aaa0e887834111 196
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "c385bd1f50b771a7c7b494e99cd7d38b7c58c3bf",
+  "prompts": {},
+  "sessions": {
+    "s_06776aec0c8ddc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3257-fe5b-7e91-9611-21f4b0ac8221",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
