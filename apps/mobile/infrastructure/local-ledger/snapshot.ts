@@ -1,3 +1,5 @@
+import type { SQL } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import {
   accountSuggestionDismissals,
   budgets,
@@ -16,22 +18,43 @@ import {
   transfers,
   userCategories,
 } from "@/shared/db/schema";
-import { validateBackupSnapshot } from "./local-ledger-snapshot-validation";
-import { LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION } from "./local-ledger-snapshot-version";
+import type { UserId } from "@/shared/types/branded";
+import { requireUserId } from "@/shared/types/assertions";
+import {
+  type BackupSnapshot,
+  type LocalLedgerBackupSnapshotData,
+  LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION,
+  validateBackupSnapshot,
+} from "@/local-ledger/snapshot.public";
 
 export { LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION, validateBackupSnapshot };
-
-export type BackupSnapshot = {
-  readonly version: typeof LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION;
-  readonly exportedAt: string;
-  readonly data: LocalLedgerBackupSnapshotData;
-};
+export type { BackupSnapshot, LocalLedgerBackupSnapshotData };
 
 export type ExportLocalLedgerBackupSnapshotOptions = {
   readonly exportedAt: string;
 };
 
+export type ImportLocalLedgerBackupSnapshotOptions = {
+  readonly userId?: UserId;
+};
+
 const MAX_ROWS_PER_INSERT = 50;
+const USER_SCOPED_BACKUP_DATA_KEYS = [
+  "transactions",
+  "transfers",
+  "userCategories",
+  "financialAccounts",
+  "openingBalances",
+  "budgets",
+  "goals",
+  "goalContributions",
+  "captureEvidence",
+  "financialAccountIdentifiers",
+  "accountSuggestionDismissals",
+  "processedSourceEvents",
+  "reviewCandidates",
+  "reviewCandidateCaptureEvidence",
+] as const;
 
 export function exportLocalLedgerBackupSnapshot(
   db: BackupSelectDb,
@@ -97,10 +120,18 @@ export function exportLocalLedgerBackupSnapshot(
   };
 }
 
-export function importLocalLedgerBackupSnapshot(db: BackupDb, snapshot: unknown) {
+export function importLocalLedgerBackupSnapshot(
+  db: BackupDb,
+  snapshot: unknown,
+  options: ImportLocalLedgerBackupSnapshotOptions = {}
+) {
   const validatedSnapshot = validateBackupSnapshot(snapshot);
+  const userIds = options.userId
+    ? [options.userId]
+    : collectSnapshotUserIds(validatedSnapshot.data);
 
   db.transaction((tx) => {
+    clearSnapshotTables(tx, userIds);
     insertRows(tx, userCategories, validatedSnapshot.data.userCategories);
     insertRows(tx, financialAccounts, validatedSnapshot.data.financialAccounts);
     insertRows(tx, financialAccountIdentifiers, validatedSnapshot.data.financialAccountIdentifiers);
@@ -124,6 +155,46 @@ export function importLocalLedgerBackupSnapshot(db: BackupDb, snapshot: unknown)
   });
 }
 
+function collectSnapshotUserIds(data: LocalLedgerBackupSnapshotData): readonly UserId[] {
+  return Array.from(
+    new Set(USER_SCOPED_BACKUP_DATA_KEYS.flatMap((key) => data[key].map((row) => row.userId)))
+  ).map(requireUserId);
+}
+
+function clearSnapshotTables(db: BackupDeleteDb, userIds: readonly UserId[]) {
+  if (userIds.length === 0) return;
+
+  [
+    reviewCandidateCaptureEvidence,
+    captureEvidence,
+    reviewCandidates,
+    processedSourceEvents,
+    accountSuggestionDismissals,
+    goalContributions,
+    goals,
+    budgets,
+    transfers,
+    transactions,
+    openingBalances,
+    financialAccountIdentifiers,
+    financialAccounts,
+    userCategories,
+  ].forEach((table) => {
+    db.delete(table).where(toUserIdCondition(table.userId, userIds)).run();
+  });
+
+  [processedCaptures, processedEmails].forEach((table) => {
+    db.delete(table).run();
+  });
+}
+
+function toUserIdCondition(column: UserScopedBackupTable["userId"], userIds: readonly UserId[]) {
+  const [firstUserId] = userIds;
+  return userIds.length === 1 && firstUserId !== undefined
+    ? eq(column, firstUserId)
+    : inArray(column, userIds);
+}
+
 function insertRows(
   db: BackupInsertDb,
   table: BackupTable,
@@ -144,25 +215,6 @@ function selectRows(db: BackupSelectDb, table: BackupTable): readonly Record<str
   return db.select().from(table).all();
 }
 
-export type LocalLedgerBackupSnapshotData = {
-  readonly transactions: readonly (typeof transactions.$inferSelect)[];
-  readonly transfers: readonly (typeof transfers.$inferSelect)[];
-  readonly userCategories: readonly (typeof userCategories.$inferSelect)[];
-  readonly financialAccounts: readonly (typeof financialAccounts.$inferSelect)[];
-  readonly openingBalances: readonly (typeof openingBalances.$inferSelect)[];
-  readonly budgets: readonly (typeof budgets.$inferSelect)[];
-  readonly goals: readonly (typeof goals.$inferSelect)[];
-  readonly goalContributions: readonly (typeof goalContributions.$inferSelect)[];
-  readonly captureEvidence: readonly (typeof captureEvidence.$inferSelect)[];
-  readonly financialAccountIdentifiers: readonly (typeof financialAccountIdentifiers.$inferSelect)[];
-  readonly accountSuggestionDismissals: readonly (typeof accountSuggestionDismissals.$inferSelect)[];
-  readonly processedEmails: readonly (typeof processedEmails.$inferSelect)[];
-  readonly processedCaptures: readonly (typeof processedCaptures.$inferSelect)[];
-  readonly processedSourceEvents: readonly (typeof processedSourceEvents.$inferSelect)[];
-  readonly reviewCandidates: readonly (typeof reviewCandidates.$inferSelect)[];
-  readonly reviewCandidateCaptureEvidence: readonly (typeof reviewCandidateCaptureEvidence.$inferSelect)[];
-};
-
 type BackupTable =
   | typeof accountSuggestionDismissals
   | typeof budgets
@@ -181,6 +233,11 @@ type BackupTable =
   | typeof transfers
   | typeof userCategories;
 
+type UserScopedBackupTable = Exclude<
+  BackupTable,
+  typeof processedCaptures | typeof processedEmails
+>;
+
 type BackupSelectDb = {
   readonly select: () => {
     readonly from: (table: BackupTable) => {
@@ -195,7 +252,14 @@ type BackupInsertDb = {
   };
 };
 
+type BackupDeleteDb = {
+  readonly delete: (table: BackupTable) => {
+    readonly where: (condition: SQL) => { readonly run: () => unknown };
+    readonly run: () => unknown;
+  };
+};
+
 type BackupDb = BackupSelectDb &
   BackupInsertDb & {
-    readonly transaction: (callback: (tx: BackupInsertDb) => unknown) => unknown;
+    readonly transaction: (callback: (tx: BackupInsertDb & BackupDeleteDb) => unknown) => unknown;
   };

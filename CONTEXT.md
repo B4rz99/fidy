@@ -8,9 +8,25 @@ Fidy keeps the user's financial source of truth on device while allowing explici
 The AI-assisted ingestion boundary that turns capture evidence into a structured transaction, transfer, or review candidate.
 _Avoid_: Regex parser, email parser
 
+**Review Candidate**:
+A proposed financial record or attribution that needs user confirmation before it becomes a committed Local Ledger record.
+_Avoid_: Low-confidence transaction, pending transaction
+
+**Account Attribution Review**:
+A review of which financial account owns an already committed transaction.
+_Avoid_: Review candidate, financial meaning review
+
+**Transaction Source**:
+The closed origin category that explains how a committed transaction entered the Local Ledger.
+_Avoid_: Provider name, bank source, free-form source string
+
 **Capture Evidence**:
 Observed source facts from emails, notifications, wallets, or payment surfaces that can support transaction interpretation or account attribution.
 _Avoid_: Parsed transaction, raw email data
+
+**Processed Source Event**:
+The Local Ledger intake record that marks a captured source event as handled, needing review, dismissed, duplicated, or failed.
+_Avoid_: Raw email, raw notification, source archive
 
 **Evidence Extractor**:
 A deterministic source-specific or generic rule that turns capture text shape into Capture Evidence without storing the source content.
@@ -31,6 +47,14 @@ _Avoid_: Account identity, merchant name
 **Counterparty Evidence**:
 Capture Evidence that describes the merchant, payee, payer, or other transaction counterparty and must not be used as account attribution evidence.
 _Avoid_: Account hint, card product
+
+**Transaction Description**:
+User-authored ledger text that labels or notes a committed transaction without necessarily identifying the counterparty.
+_Avoid_: Merchant, counterparty
+
+**Counterparty**:
+The merchant, payee, payer, or other party on the other side of a financial movement.
+_Avoid_: Description, category, account
 
 **Template Shape**:
 A non-sensitive structural representation of a capture source template made from canonical field names and redacted value types.
@@ -87,6 +111,7 @@ _Avoid_: Settings icon, uploaded document, financial image
 ## Relationships
 
 - The **Local Ledger** is the source of truth for transactions, transfers, financial accounts, budgets, goals, capture evidence, and financial derivations
+- Committed transactions and committed transfers are both first-class **Local Ledger** financial records
 - **Capture Evidence** belongs in the **Local Ledger** unless it is sent transiently for **Cloud AI Processing**
 - **Account Identity Evidence** is stronger than an **Account Type Hint** for account suggestions and future account attribution
 - **Account Product Hints** are weaker than **Account Identity Evidence** but stronger than generic **Account Type Hints** for onboarding suggestions
@@ -111,7 +136,24 @@ _Avoid_: Settings icon, uploaded document, financial image
 - **Cloud AI Processing** may receive **Plaintext Financial Data** only for explicit ingestion or advisor tasks
 - **Cloud AI Processing** must not persist **Plaintext Financial Data** as Fidy financial records
 - A **Capture Interpreter** may use **Cloud AI Processing** to interpret fragile capture evidence
+- Low-confidence capture interpretation must create a **Review Candidate**, not a committed transaction
+- A **Review Candidate** becomes a committed transaction only after user confirmation or another high-confidence domain decision
+- A **Review Candidate** must not affect balances, budgets, analytics, search, or other Local Ledger financial derivations until it becomes a committed transaction
+- A **Review Candidate** resolves whether captured evidence should become a financial record; **Account Attribution Review** resolves which account owns an already committed transaction
+- High-confidence capture interpretation may create a committed transaction automatically after deterministic validation, duplicate checks, account attribution policy, and Capture Evidence linkage succeed
+- A committed transaction created from Capture Evidence must be saved atomically with its Capture Evidence linkage
+- A committed transaction created from a captured source event must be saved atomically with that source event's processed status
+- A **Review Candidate** created from a captured source event must be saved atomically with its Capture Evidence and processed status
+- A **Processed Source Event** exists to make capture intake idempotent without storing raw source content as a corpus
+- A **Transaction Source** is limited to domain origin categories such as manual entry or capture-driven entry; provider, bank, and template details belong in Capture Evidence or source metadata
+- Duplicate detection is an import decision for capture and retry flows, not a reason to reject deliberate manual transaction entry
+- Committed transactions and committed transfers must not be future-dated
+- Automated transfer interpretation requires very high-confidence two-sided evidence, such as matching outgoing and incoming values for the same movement
+- When committed transactions are reclassified as a transfer, the original transactions must be preserved for audit history but excluded from income, spending, and budget derivations
+- Reclassifying committed transactions as a transfer must be one atomic Local Ledger operation
 - A **Capture Interpreter** must keep account evidence separate from **Counterparty Evidence** so merchants such as Rappi are not suggested as bank accounts or cards
+- Automated capture may populate a **Counterparty**, but it must not treat inferred counterparty text as a user-authored **Transaction Description**
+- UI may display a **Counterparty** as the primary transaction label when no **Transaction Description** exists
 - Deterministic ledger validation owns the final save decision after a **Capture Interpreter** produces a candidate
 - Deterministic **Evidence Extractors** should handle high-confidence structural evidence, while the **Capture Interpreter** remains a fallback for fragile or ambiguous capture evidence
 - A **Financial Context Packet** is narrower than the **Local Ledger** and should be built per advisor request

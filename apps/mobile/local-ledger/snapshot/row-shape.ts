@@ -1,5 +1,5 @@
-import { captureEvidenceTypeSchema } from "@/features/capture-evidence/schema.public";
-import type { BackupSnapshot, LocalLedgerBackupSnapshotData } from "./local-ledger-snapshot";
+import { CAPTURE_EVIDENCE_TYPES } from "@/shared/capture-evidence/types";
+import type { BackupSnapshot, LocalLedgerBackupSnapshotData } from "./snapshot";
 import {
   assertBoolean,
   assertCopAmountValue,
@@ -13,8 +13,8 @@ import {
   assertValidIsoDateTime,
   assertValidMonth,
   validateBaseLedgerFields,
-} from "./local-ledger-snapshot-row-assertions";
-import { INTAKE_ROW_SPECS } from "./local-ledger-snapshot-row-shape-intake";
+} from "./row-assertions";
+import { INTAKE_ROW_SPECS } from "./row-shape-intake";
 
 export function validateSnapshotRows(snapshot: BackupSnapshot) {
   assertValidIsoDateTime(snapshot.exportedAt, "exportedAt");
@@ -209,8 +209,7 @@ const ROW_SPECS: readonly RowSpec[] = [
           id: (value) => assertString(value, "id"),
           userId: (value) => assertString(value, "userId"),
           sourceFamily: (value) => assertString(value, "sourceFamily"),
-          evidenceType: (value) =>
-            assertOneOf(captureEvidenceTypeSchema.options, value, "evidenceType"),
+          evidenceType: (value) => assertOneOf(CAPTURE_EVIDENCE_TYPES, value, "evidenceType"),
           scope: (value) => assertString(value, "scope"),
           value: (value) => assertString(value, "value"),
           transactionId: (value) => assertNullableString(value, "transactionId"),

@@ -12,6 +12,7 @@ import { CheckCircle, KeyRound, RefreshCcw, Shield, Smartphone } from "@/shared/
 import { Alert, Platform, ScrollView, Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
+import { captureError } from "@/shared/lib";
 import { uploadConfirmedPrivateBackup } from "../lib/private-backup-upload";
 import { useSettingsStore } from "../store";
 import { BackupStatusCard } from "./BackupStatusCard";
@@ -75,7 +76,8 @@ export function PrivateBackupScreen() {
         recoveryKey,
         confirmedRecoveryKey: recoveryKey,
       });
-    } catch {
+    } catch (error) {
+      captureError(error);
       markPrivateBackupUploadFailed(new Date().toISOString());
       Alert.alert(t("privateBackup.uploadFailedTitle"), t("privateBackup.uploadFailedBody"));
       return null;

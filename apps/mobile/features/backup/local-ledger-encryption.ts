@@ -1,3 +1,4 @@
+import type { BackupSnapshot } from "@/local-ledger/snapshot.public";
 import {
   decodeUtf8,
   decryptAesGcm,
@@ -11,7 +12,6 @@ import {
 } from "./local-ledger-crypto";
 import { isEncryptedBackupMetadataValid } from "./local-ledger-encryption-metadata";
 import { containsLocalLedgerBackupSecret } from "./local-ledger-secret-guard";
-import type { BackupSnapshot } from "./local-ledger-snapshot";
 
 export const LOCAL_LEDGER_ENCRYPTED_BACKUP_VERSION = 1;
 
