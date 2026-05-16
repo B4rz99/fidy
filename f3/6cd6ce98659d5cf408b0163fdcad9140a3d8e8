@@ -1,0 +1,43 @@
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_eb6b431da0c0e2::t_cdde6bab3391a4 385,402-403
+apps/mobile/__tests__/backup/local-ledger-snapshot.test.ts
+  s_eb6b431da0c0e2::t_b265d76cbee1f8 520-536,849-867
+apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts
+  s_eb6b431da0c0e2::t_cdde6bab3391a4 356
+apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts
+  s_eb6b431da0c0e2::t_cdde6bab3391a4 226,241-242
+apps/mobile/local-ledger/use-cases/review-candidate-resolution.public.ts
+  s_eb6b431da0c0e2::t_1025e9d923da7a 93,160-163
+apps/mobile/__tests__/local-ledger/intake-mutation.test.ts
+  s_eb6b431da0c0e2::t_b1661752587afe 308,322
+apps/mobile/infrastructure/local-ledger/source-events.ts
+  s_eb6b431da0c0e2::t_1025e9d923da7a 25,59-63
+apps/mobile/shared/mutations/write-through/commands.ts
+  s_eb6b431da0c0e2::t_d9142851b27fb9 220
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_eb6b431da0c0e2::t_91663a5c10d807 199-200,212-213
+apps/mobile/local-ledger/domain/public.ts
+  s_eb6b431da0c0e2::t_1025e9d923da7a 83-88
+apps/mobile/local-ledger/snapshot/row-shape-intake.ts
+  s_eb6b431da0c0e2::t_d9142851b27fb9 41-46
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_eb6b431da0c0e2::t_91663a5c10d807 114-115
+apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts
+  s_eb6b431da0c0e2::t_91663a5c10d807 134-135,158-159
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "f36cd6ce98659d5cf408b0163fdcad9140a3d8e8",
+  "prompts": {},
+  "sessions": {
+    "s_eb6b431da0c0e2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2e68-4d16-7521-ba6e-2cff01b98d05",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
