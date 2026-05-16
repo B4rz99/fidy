@@ -1,0 +1,65 @@
+apps/mobile/features/settings/components/PrivateBackupScreen.tsx
+  s_8613050f95c97f::t_7d84dc5ace6f4b 15,79-80
+apps/mobile/features/backup/public.ts
+  s_8613050f95c97f::t_adfc379086f933 24,30
+  s_8613050f95c97f::t_3661bf9a483234 23
+apps/mobile/local-ledger/snapshot/snapshot.ts
+  s_8613050f95c97f::t_6bc33867545850 1-192
+apps/mobile/shared/capture-evidence/types.ts
+  s_8613050f95c97f::t_1810c775f86d51 1-12
+apps/mobile/local-ledger/snapshot/validation.ts
+  s_8613050f95c97f::t_f848ccd0b77d6a 11-13
+  s_8613050f95c97f::t_aecf8de6d7e0e5 2-10,231
+  s_8613050f95c97f::t_d46d5d41da11d1 183,191,199,209,216,234
+apps/mobile/features/backup/local-ledger-encryption.ts
+  s_8613050f95c97f::t_0182f9a75f3804 1
+apps/mobile/local-ledger/snapshot/legacy.ts
+  s_8613050f95c97f::t_f848ccd0b77d6a 2-3
+apps/mobile/local-ledger/snapshot/row-shape.ts
+  s_8613050f95c97f::t_927f30bf84e83c 212
+  s_8613050f95c97f::t_f848ccd0b77d6a 2,16-17
+  s_8613050f95c97f::t_38801a90335540 1
+apps/mobile/infrastructure/local-ledger/snapshot.ts
+  s_8613050f95c97f::t_2c70732705a07e 22,161
+  s_8613050f95c97f::t_b75daf75ca1a8d 23-28
+  s_8613050f95c97f::t_88d29d49e59f62 31
+  s_8613050f95c97f::t_a81009fcded191 1-2,21,33,37-38,42-57,123-127,129-131,134,158-160,162-197,236-240,255-261,264
+apps/mobile/local-ledger/snapshot.public.ts
+  s_8613050f95c97f::t_b7cff24e46ee6c 1-2
+apps/mobile/local-ledger/snapshot/row-shape-intake.ts
+  s_8613050f95c97f::t_f848ccd0b77d6a 1,11
+apps/mobile/features/backup/private-backup.ts
+  s_8613050f95c97f::t_adfc379086f933 6
+  s_8613050f95c97f::t_fd25aa517e8116 7-11
+apps/mobile/features/capture-evidence/schema.ts
+  s_8613050f95c97f::t_49a55c518d80a6 2,4
+apps/mobile/__tests__/backup/local-ledger-snapshot.test.ts
+  s_8613050f95c97f::t_43e41be06a1079 650,654
+  s_8613050f95c97f::t_48d95ceb44848d 548-549,562-564
+  s_8613050f95c97f::t_adfc379086f933 12
+  s_8613050f95c97f::t_3ab54bf0eafc32 550,561
+  s_8613050f95c97f::t_6bc529714d2204 529
+  s_8613050f95c97f::t_15229172b0def4 160-201,327-347
+  s_8613050f95c97f::t_e5eb5e6b255c45 674-687
+  s_8613050f95c97f::t_534c406f3a35f2 96-97,100-103,627-634
+  s_8613050f95c97f::t_c0f1071f435119 25-27,109-110,113-116,204,226-245,250-251,253-259,313-321,617-619,622-626,635-643
+  s_8613050f95c97f::t_3e2dee155cf36c 3,348-350,545-547,565-567,651,655-673,688-703,705-706
+  s_8613050f95c97f::t_ab15a0fcd596ae 21,30,141-159,647-649,652-653,704,707-736
+  s_8613050f95c97f::t_dd8595682b5710 551-560
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "3ef2e70c6d17e0d7c428cc82d299c29bb0624645",
+  "prompts": {},
+  "sessions": {
+    "s_8613050f95c97f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2d50-94c5-7f13-904c-ac038f04b1a5",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
