@@ -1,32 +1,14 @@
 import { and, asc, eq, inArray, isNull, lte, sql } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
-import { processedSourceEvents, reviewCandidates } from "@/shared/db/schema";
+import { processedSourceEvents } from "@/shared/db/schema";
 import type {
   IsoDateTime,
   ProcessedSourceEventId,
-  ReviewCandidateId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
 
 export type ProcessedSourceEventRow = typeof processedSourceEvents.$inferInsert;
-export type ReviewCandidateRow = typeof reviewCandidates.$inferSelect;
-export type FinancialMeaningSourceEventReviewRow = {
-  readonly processedSourceEvent: typeof processedSourceEvents.$inferSelect;
-  readonly reviewCandidate: ReviewCandidateRow;
-};
-
-const selectFinancialMeaningSourceEventReviewRows = (db: AnyDb) =>
-  db
-    .select({
-      processedSourceEvent: processedSourceEvents,
-      reviewCandidate: reviewCandidates,
-    })
-    .from(processedSourceEvents)
-    .innerJoin(
-      reviewCandidates,
-      eq(reviewCandidates.processedSourceEventId, processedSourceEvents.id)
-    );
 
 export async function getProcessedEmailSourceEventIds(
   db: AnyDb,
@@ -78,147 +60,6 @@ export async function getPendingRetryEmailSourceEvents(db: AnyDb, userId: UserId
     )
     .orderBy(asc(processedSourceEvents.nextRetryAt), asc(processedSourceEvents.receivedAt))
     .limit(50);
-}
-
-export async function getFinancialMeaningSourceEventReviewRows(
-  db: AnyDb,
-  userId: UserId
-): Promise<readonly FinancialMeaningSourceEventReviewRow[]> {
-  return selectFinancialMeaningSourceEventReviewRows(db).where(
-    and(
-      eq(processedSourceEvents.userId, userId),
-      eq(reviewCandidates.userId, userId),
-      eq(processedSourceEvents.sourceFamily, "email"),
-      eq(processedSourceEvents.status, "needs_review"),
-      eq(reviewCandidates.status, "pending"),
-      isNull(processedSourceEvents.deletedAt),
-      isNull(reviewCandidates.deletedAt)
-    )
-  );
-}
-
-export function getSourceEventReviewCandidateById(
-  db: AnyDb,
-  input: {
-    readonly userId: UserId;
-    readonly processedSourceEventId: ProcessedSourceEventId;
-    readonly reviewCandidateId: ReviewCandidateId;
-  }
-): FinancialMeaningSourceEventReviewRow | null {
-  const filters = [
-    eq(processedSourceEvents.id, input.processedSourceEventId),
-    eq(processedSourceEvents.userId, input.userId),
-    eq(reviewCandidates.id, input.reviewCandidateId),
-    eq(reviewCandidates.userId, input.userId),
-    eq(reviewCandidates.status, "pending"),
-    isNull(processedSourceEvents.deletedAt),
-    isNull(reviewCandidates.deletedAt),
-  ];
-  const rows = selectFinancialMeaningSourceEventReviewRows(db)
-    .where(and(...filters))
-    .limit(1)
-    .all();
-  return rows[0] ?? null;
-}
-
-export function acceptSourceEventFinancialMeaningReviewById(
-  db: AnyDb,
-  input: {
-    readonly userId: UserId;
-    readonly processedSourceEventId: ProcessedSourceEventId;
-    readonly reviewCandidateId: ReviewCandidateId;
-    readonly transactionId: TransactionId;
-    readonly updatedAt: IsoDateTime;
-  }
-) {
-  if (!markSourceEventReviewAccepted(db, input)) return false;
-  assertReviewCandidateAccepted(db, input);
-  return true;
-}
-
-function markSourceEventReviewAccepted(
-  db: AnyDb,
-  input: {
-    readonly userId: UserId;
-    readonly processedSourceEventId: ProcessedSourceEventId;
-    readonly transactionId: TransactionId;
-    readonly updatedAt: IsoDateTime;
-  }
-) {
-  const update = db
-    .update(processedSourceEvents)
-    .set({ status: "processed", transactionId: input.transactionId, updatedAt: input.updatedAt })
-    .where(
-      and(
-        eq(processedSourceEvents.id, input.processedSourceEventId),
-        eq(processedSourceEvents.userId, input.userId),
-        eq(processedSourceEvents.status, "needs_review"),
-        isNull(processedSourceEvents.deletedAt)
-      )
-    )
-    .run();
-  return update.changes === 1;
-}
-
-function assertReviewCandidateAccepted(
-  db: AnyDb,
-  input: {
-    readonly userId: UserId;
-    readonly processedSourceEventId: ProcessedSourceEventId;
-    readonly reviewCandidateId: ReviewCandidateId;
-    readonly updatedAt: IsoDateTime;
-  }
-) {
-  const update = db
-    .update(reviewCandidates)
-    .set({ status: "accepted", updatedAt: input.updatedAt })
-    .where(
-      and(
-        eq(reviewCandidates.id, input.reviewCandidateId),
-        eq(reviewCandidates.processedSourceEventId, input.processedSourceEventId),
-        eq(reviewCandidates.userId, input.userId),
-        eq(reviewCandidates.status, "pending"),
-        isNull(reviewCandidates.deletedAt)
-      )
-    )
-    .run();
-  if (update.changes !== 1) {
-    throw new Error("Review candidate resolution target was not found");
-  }
-}
-
-export function dismissSourceEventFinancialMeaningReviewById(
-  db: AnyDb,
-  input: {
-    readonly userId: UserId;
-    readonly processedSourceEventId: ProcessedSourceEventId;
-    readonly updatedAt: IsoDateTime;
-  }
-) {
-  db.transaction((tx) => {
-    tx.update(processedSourceEvents)
-      .set({ status: "dismissed", updatedAt: input.updatedAt })
-      .where(
-        and(
-          eq(processedSourceEvents.id, input.processedSourceEventId),
-          eq(processedSourceEvents.userId, input.userId),
-          eq(processedSourceEvents.status, "needs_review"),
-          isNull(processedSourceEvents.deletedAt)
-        )
-      )
-      .run();
-    tx.update(reviewCandidates)
-      .set({ status: "rejected", updatedAt: input.updatedAt })
-      .where(
-        and(
-          eq(reviewCandidates.processedSourceEventId, input.processedSourceEventId),
-          eq(reviewCandidates.userId, input.userId),
-          eq(reviewCandidates.status, "pending"),
-          isNull(reviewCandidates.deletedAt)
-        )
-      )
-      .run();
-  });
 }
 
 function getProcessedSourceEventUpdateQuery(
@@ -274,4 +115,31 @@ export async function updateProcessedSourceEventStatus(input: {
     transactionId: input.transactionId,
     ...rawBodyFields,
   });
+}
+export function updateProcessedSourceEventStatusInTransaction(input: {
+  readonly db: AnyDb;
+  readonly id: ProcessedSourceEventId;
+  readonly userId: UserId;
+  readonly status: string;
+  readonly transactionId: TransactionId | null;
+}) {
+  const update = input.db
+    .update(processedSourceEvents)
+    .set({
+      status: input.status,
+      transactionId: input.transactionId,
+    })
+    .where(
+      and(
+        eq(processedSourceEvents.id, input.id),
+        eq(processedSourceEvents.userId, input.userId),
+        eq(processedSourceEvents.status, "needs_review"),
+        isNull(processedSourceEvents.deletedAt)
+      )
+    )
+    .run();
+
+  if (update.changes !== 1) {
+    throw new Error("Processed source event reclassification target was not found");
+  }
 }

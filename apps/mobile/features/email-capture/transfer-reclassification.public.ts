@@ -1,16 +1,18 @@
 import type { AnyDb } from "@/shared/db";
-import type { ProcessedEmailId, TransactionId } from "@/shared/types/branded";
-import { updateProcessedEmailStatusInTransaction } from "./lib/repository";
+import type { ProcessedSourceEventId, TransactionId, UserId } from "@/shared/types/branded";
+import { updateProcessedSourceEventStatusInTransaction } from "./lib/repository";
 
-export function markProcessedEmailReclassifiedAsTransfer(input: {
+export function markProcessedSourceEventReclassifiedAsTransfer(input: {
   readonly db: AnyDb;
-  readonly id: ProcessedEmailId;
+  readonly id: ProcessedSourceEventId;
+  readonly userId: UserId;
   readonly transactionId: TransactionId;
 }) {
-  updateProcessedEmailStatusInTransaction({
+  updateProcessedSourceEventStatusInTransaction({
     db: input.db,
     id: input.id,
-    status: "success",
+    userId: input.userId,
+    status: "processed",
     transactionId: input.transactionId,
   });
 }

@@ -9,20 +9,23 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 export {
-  acceptSourceEventFinancialMeaningReviewById,
-  dismissSourceEventFinancialMeaningReviewById,
-  getFinancialMeaningSourceEventReviewRows,
   getPendingRetryEmailSourceEvents,
   getProcessedEmailSourceEventIds,
-  getSourceEventReviewCandidateById,
   insertProcessedEmailSourceEvent,
   markSourceEventForRetry,
   markSourceEventPermanentlyFailed,
   markSourceEventRetrySuccess,
   updateProcessedSourceEventStatus,
-  type FinancialMeaningSourceEventReviewRow,
+  updateProcessedSourceEventStatusInTransaction,
   type ProcessedSourceEventRow,
 } from "./source-event-repository";
+export {
+  acceptSourceEventFinancialMeaningReviewById,
+  dismissSourceEventFinancialMeaningReviewById,
+  getFinancialMeaningSourceEventReviewRows,
+  getSourceEventReviewCandidateById,
+  type FinancialMeaningSourceEventReviewRow,
+} from "./source-event-review-repository";
 export {
   getFailedEmailSourceEvents,
   getNeedsReviewEmailSourceEvents,

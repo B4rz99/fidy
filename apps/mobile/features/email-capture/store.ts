@@ -2,12 +2,9 @@ import type { AnyDb } from "@/shared/db";
 import { captureError, captureWarning, toIsoDateTime } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import {
-  dismissProcessedEmail,
   getEmailAccounts,
   getFailedEmailSourceEvents,
-  getFailedEmails,
   getNeedsReviewEmailSourceEvents,
-  getNeedsReviewEmails,
   updateProcessedSourceEventStatus,
 } from "./lib/repository";
 import { shareEmailParseImprovementRequests } from "./services/email-parse-improvement-sharing";
@@ -90,58 +87,40 @@ export async function loadEmailAccounts(db: AnyDb, userId: UserId) {
 }
 export async function loadFailedEmails(db: AnyDb, userId: UserId) {
   const request = beginEmailCaptureRequest("failedEmails", userId);
-  const [failedEmailsResult, sourceEventsResult] = await Promise.allSettled([
-    getFailedEmails(db),
-    getFailedEmailSourceEvents(db, userId),
-  ]);
-  if (!isCurrentEmailCaptureRequest(request)) return;
-  if (failedEmailsResult.status === "fulfilled") {
-    useEmailCaptureStore.getState().setFailedEmails(failedEmailsResult.value);
-  } else {
+
+  try {
+    const failedEmailSourceEvents = await getFailedEmailSourceEvents(db, userId);
+    if (!isCurrentEmailCaptureRequest(request)) return;
     useEmailCaptureStore.getState().setFailedEmails([]);
-    captureWarning("email_capture_failed_queue_load_failed", {
-      errorType:
-        failedEmailsResult.reason instanceof Error ? failedEmailsResult.reason.name : "unknown",
-    });
-  }
-  if (sourceEventsResult.status === "fulfilled") {
-    useEmailCaptureStore.getState().setFailedEmailSourceEvents(sourceEventsResult.value);
-  } else {
+    useEmailCaptureStore.getState().setFailedEmailSourceEvents(failedEmailSourceEvents);
+  } catch (error) {
+    if (!isCurrentEmailCaptureRequest(request)) return;
+    useEmailCaptureStore.getState().setFailedEmails([]);
     useEmailCaptureStore.getState().setFailedEmailSourceEvents([]);
-    captureWarning("email_capture_failed_source_event_queue_load_failed", {
-      errorType:
-        sourceEventsResult.reason instanceof Error ? sourceEventsResult.reason.name : "unknown",
+    captureWarning("email_capture_failed_queue_load_failed", {
+      errorType: error instanceof Error ? error.name : "unknown",
     });
   }
 }
 export async function loadNeedsReviewEmails(db: AnyDb, userId: UserId) {
   const request = beginEmailCaptureRequest("needsReview", userId);
-  const [needsReviewEmailsResult, sourceEventsResult] = await Promise.allSettled([
-    getNeedsReviewEmails(db),
-    getNeedsReviewEmailSourceEvents(db, userId),
-  ]);
-  if (!isCurrentEmailCaptureRequest(request)) return;
-  if (needsReviewEmailsResult.status === "fulfilled") {
-    useEmailCaptureStore.getState().setNeedsReviewEmails(needsReviewEmailsResult.value);
-  } else {
+
+  try {
+    const needsReviewEmailSourceEvents = await getNeedsReviewEmailSourceEvents(db, userId);
+    if (!isCurrentEmailCaptureRequest(request)) return;
+    useEmailCaptureStore.getState().setNeedsReviewEmails([]);
+    useEmailCaptureStore.getState().setNeedsReviewEmailSourceEvents(needsReviewEmailSourceEvents);
+  } catch (error) {
+    if (!isCurrentEmailCaptureRequest(request)) return;
+    useEmailCaptureStore.getState().setNeedsReviewEmails([]);
+    useEmailCaptureStore.getState().setNeedsReviewEmailSourceEvents([]);
     captureWarning("email_capture_needs_review_queue_load_failed", {
-      errorType:
-        needsReviewEmailsResult.reason instanceof Error
-          ? needsReviewEmailsResult.reason.name
-          : "unknown",
-    });
-  }
-  if (sourceEventsResult.status === "fulfilled") {
-    useEmailCaptureStore.getState().setNeedsReviewEmailSourceEvents(sourceEventsResult.value);
-  } else {
-    captureWarning("email_capture_needs_review_source_event_queue_load_failed", {
-      errorType:
-        sourceEventsResult.reason instanceof Error ? sourceEventsResult.reason.name : "unknown",
+      errorType: error instanceof Error ? error.name : "unknown",
     });
   }
 }
 export async function dismissFailedEmail(
-  db: AnyDb,
+  _db: AnyDb,
   userId: UserId,
   processedEmailId: string
 ): Promise<void> {
@@ -150,7 +129,7 @@ export async function dismissFailedEmail(
     .getState()
     .failedEmails.find((email) => email.id === processedEmailId);
   if (!failedEmail || !isActiveEmailCaptureSession(session)) return;
-  await dismissProcessedEmail(db, failedEmail.id);
+
   if (!isActiveEmailCaptureSession(session)) return;
   useEmailCaptureStore.getState().removeFailedEmail(processedEmailId);
 }

@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { insertMerchantRule } from "@/features/email-capture/lib/merchant-rules";
 import {
+  getFinancialMeaningQueueItemId,
+  selectFailedEmailBannerCount,
+  selectNeedsReviewBannerCount,
+} from "@/features/email-capture/lib/review-queue-selectors";
+import {
   deleteEmailAccount,
   dismissProcessedEmail,
   getEmailAccounts,
@@ -40,6 +45,7 @@ import type * as SharedLib from "@/shared/lib";
 import type {
   EmailAccountId,
   IsoDateTime,
+  ReviewCandidateId,
   ProcessedEmailId,
   ProcessedSourceEventId,
   TransactionId,
@@ -299,9 +305,55 @@ function makeProcessedEmail(overrides: Record<string, unknown> = {}) {
     transactionId: null as TransactionId | null,
     confidence: null as number | null,
     createdAt: "2026-03-05T10:00:00Z" as IsoDateTime,
-    rawBody: null as string | null,
+    rawBody: null,
     retryCount: 0,
     nextRetryAt: null as IsoDateTime | null,
+    ...overrides,
+  };
+}
+
+function makeProcessedEmailSourceEvent(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "pse-1" as ProcessedSourceEventId,
+    userId: mockUserId as UserId,
+    sourceFamily: "email",
+    sourceId: "email_gmail",
+    sourceEventId: "msg-1",
+    status: "failed",
+    failureReason: null as string | null,
+    subject: "Test",
+    rawBodyPreview: null as string | null,
+    rawBody: null,
+    retryCount: 0,
+    nextRetryAt: null as IsoDateTime | null,
+    transactionId: null as TransactionId | null,
+    confidence: null as number | null,
+    receivedAt: "2026-03-05T10:00:00Z" as IsoDateTime,
+    processedAt: "2026-03-05T10:00:00Z" as IsoDateTime,
+    createdAt: "2026-03-05T10:00:00Z" as IsoDateTime,
+    updatedAt: "2026-03-05T10:00:00Z" as IsoDateTime,
+    deletedAt: null as IsoDateTime | null,
+    ...overrides,
+  };
+}
+
+function makeReviewCandidate(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "rc-1" as ReviewCandidateId,
+    userId: mockUserId as UserId,
+    processedSourceEventId: "pse-1" as ProcessedSourceEventId,
+    status: "pending",
+    candidateKind: "transaction",
+    occurredAt: "2026-03-05T10:00:00Z" as IsoDateTime,
+    amount: null,
+    currency: "COP",
+    transactionType: null,
+    categoryId: null,
+    description: "Review candidate",
+    confidence: 0.5,
+    createdAt: "2026-03-05T10:00:00Z" as IsoDateTime,
+    updatedAt: "2026-03-05T10:00:00Z" as IsoDateTime,
+    deletedAt: null as IsoDateTime | null,
     ...overrides,
   };
 }
@@ -325,8 +377,8 @@ function setAccounts(accounts: TestEmailAccount[] = [makeAccount()]) {
 }
 
 function mockEmptyReviewLoads() {
-  vi.mocked(getFailedEmails).mockResolvedValueOnce([]);
-  vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce([]);
+  vi.mocked(getFailedEmailSourceEvents).mockResolvedValueOnce([]);
+  vi.mocked(getNeedsReviewEmailSourceEvents).mockResolvedValueOnce([]);
 }
 
 function mockProcessResult(overrides: Partial<ProcessSummary> = {}) {
@@ -477,6 +529,56 @@ describe("email capture boundary", () => {
     });
   });
 
+  it("failed banner count ignores legacy processedEmails-backed state", () => {
+    useEmailCaptureStore.setState({
+      failedEmails: [makeProcessedEmail({ id: "pe-legacy" as ProcessedEmailId })],
+      failedEmailSourceEvents: [
+        makeProcessedEmailSourceEvent({ id: "pse-1" as ProcessedSourceEventId }),
+        makeProcessedEmailSourceEvent({ id: "pse-2" as ProcessedSourceEventId }),
+      ],
+    });
+
+    expect(selectFailedEmailBannerCount(useEmailCaptureStore.getState())).toBe(2);
+  });
+
+  it("needs-review banner count ignores legacy processedEmails-backed state", () => {
+    useEmailCaptureStore.setState({
+      needsReviewEmails: [
+        makeProcessedEmail({ id: "pe-legacy" as ProcessedEmailId, status: "needs_review" }),
+      ],
+      needsReviewEmailSourceEvents: [
+        makeProcessedEmailSourceEvent({
+          id: "pse-review" as ProcessedSourceEventId,
+          status: "needs_review",
+        }),
+      ],
+    });
+
+    expect(selectNeedsReviewBannerCount(useEmailCaptureStore.getState())).toBe(1);
+  });
+
+  it("financial meaning queue item ids are scoped to review candidates", () => {
+    const processedSourceEvent = makeProcessedEmailSourceEvent({
+      id: "pse-shared" as ProcessedSourceEventId,
+      status: "needs_review",
+    });
+
+    expect(
+      [
+        {
+          kind: "source_event" as const,
+          processedSourceEvent,
+          reviewCandidate: makeReviewCandidate({ id: "rc-1" as ReviewCandidateId }),
+        },
+        {
+          kind: "source_event" as const,
+          processedSourceEvent,
+          reviewCandidate: makeReviewCandidate({ id: "rc-2" as ReviewCandidateId }),
+        },
+      ].map(getFinancialMeaningQueueItemId)
+    ).toEqual(["rc-1", "rc-2"]);
+  });
+
   it("loadAccounts fetches from DB and sets state", async () => {
     const mockAccounts = [makeAccount()];
     vi.mocked(getEmailAccounts).mockResolvedValueOnce(mockAccounts);
@@ -504,33 +606,38 @@ describe("email capture boundary", () => {
   });
 
   it("loadFailedEmails fetches from DB and sets state", async () => {
-    const mockFailed = [makeProcessedEmail({ failureReason: "parse error", subject: "Compra" })];
-    vi.mocked(getFailedEmails).mockResolvedValueOnce(mockFailed);
+    const mockFailed = [
+      makeProcessedEmailSourceEvent({ failureReason: "parse error", subject: "Compra" }),
+    ];
+    vi.mocked(getFailedEmailSourceEvents).mockResolvedValueOnce(mockFailed);
 
     await loadFailedEmails(mockDb, mockUserId as UserId);
 
-    expect(getFailedEmails).toHaveBeenCalledWith(mockDb);
-    expect(useEmailCaptureStore.getState().failedEmails).toEqual(mockFailed);
-    expect(useEmailCaptureStore.getState().failedEmails).toHaveLength(1);
+    expect(getFailedEmails).not.toHaveBeenCalled();
+    expect(getFailedEmailSourceEvents).toHaveBeenCalledWith(mockDb, mockUserId);
+    expect(useEmailCaptureStore.getState().failedEmails).toEqual([]);
+    expect(useEmailCaptureStore.getState().failedEmailSourceEvents).toEqual(mockFailed);
   });
 
   it("loadNeedsReview fetches from DB and sets state", async () => {
     const mockReview = [
-      makeProcessedEmail({
-        id: "pe-2" as ProcessedEmailId,
-        externalId: "msg-2",
+      makeProcessedEmailSourceEvent({
+        id: "pse-2" as ProcessedSourceEventId,
+        sourceEventId: "msg-2",
         status: "needs_review",
         subject: "Compra aprobada",
         transactionId: "tx-1" as TransactionId,
         confidence: 0.5,
       }),
     ];
-    vi.mocked(getNeedsReviewEmails).mockResolvedValueOnce(mockReview);
+    vi.mocked(getNeedsReviewEmailSourceEvents).mockResolvedValueOnce(mockReview);
 
     await loadNeedsReviewEmails(mockDb, mockUserId as UserId);
 
-    expect(getNeedsReviewEmails).toHaveBeenCalledWith(mockDb);
-    expect(useEmailCaptureStore.getState().needsReviewEmails).toEqual(mockReview);
+    expect(getNeedsReviewEmails).not.toHaveBeenCalled();
+    expect(getNeedsReviewEmailSourceEvents).toHaveBeenCalledWith(mockDb, mockUserId);
+    expect(useEmailCaptureStore.getState().needsReviewEmails).toEqual([]);
+    expect(useEmailCaptureStore.getState().needsReviewEmailSourceEvents).toEqual(mockReview);
   });
 
   it("dismissBanner sets bannerDismissed to true", () => {
@@ -538,14 +645,14 @@ describe("email capture boundary", () => {
     expect(useEmailCaptureStore.getState().bannerDismissed).toBe(true);
   });
 
-  it("dismissFailedEmail removes from DB and state", async () => {
+  it("dismissFailedEmail only clears legacy state without mutating processedEmails", async () => {
     useEmailCaptureStore.setState({
       failedEmails: [makeProcessedEmail()],
     });
 
     await dismissFailedEmail(mockDb, mockUserId as UserId, "pe-1");
 
-    expect(dismissProcessedEmail).toHaveBeenCalledWith(mockDb, "pe-1");
+    expect(dismissProcessedEmail).not.toHaveBeenCalled();
     expect(useEmailCaptureStore.getState().failedEmails).toHaveLength(0);
   });
 

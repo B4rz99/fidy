@@ -1,6 +1,7 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: integration test uses a real SQLite DB
 import { resolve } from "node:path";
 import Database from "better-sqlite3";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -22,7 +23,7 @@ import { markTransactionSuperseded } from "@/features/transactions/transfer-recl
 import { reclassifyTransactionAsTransfer } from "@/features/transfers/lib/reclassify-transaction-as-transfer";
 import { reclassifyTransactionsAsTransfer } from "@/features/transfers/lib/reclassify-transactions-as-transfer";
 import { getTransferById } from "@/features/transfers/lib/repository";
-import { financialAccounts } from "@/shared/db/schema";
+import { financialAccounts, processedSourceEvents } from "@/shared/db/schema";
 import type {
   CaptureEvidenceId,
   CategoryId,
@@ -31,6 +32,7 @@ import type {
   IsoDate,
   IsoDateTime,
   ProcessedEmailId,
+  ProcessedSourceEventId,
   TransactionId,
   TransferId,
   UserId,
@@ -159,9 +161,36 @@ async function insertPendingProcessedEmail() {
   });
 }
 
+function insertPendingProcessedSourceEvent() {
+  db.insert(processedSourceEvents)
+    .values({
+      id: "pse-1" as ProcessedSourceEventId,
+      userId: USER_ID,
+      sourceFamily: "email",
+      sourceId: "email_gmail",
+      sourceEventId: "ext-1",
+      status: "needs_review",
+      failureReason: null,
+      subject: "Transfer alert",
+      rawBodyPreview: "Transfer to savings",
+      rawBody: null,
+      retryCount: 0,
+      nextRetryAt: null,
+      transactionId: ORIGINAL_TRANSACTION_ID,
+      confidence: 0.52,
+      receivedAt: ORIGINAL_CREATED_AT,
+      processedAt: ORIGINAL_CREATED_AT,
+      createdAt: ORIGINAL_CREATED_AT,
+      updatedAt: ORIGINAL_CREATED_AT,
+      deletedAt: null,
+    })
+    .run();
+}
+
 function seedReclassificationScenario() {
   insertOriginalTransactionRecord();
   insertTransferEvidence();
+  insertPendingProcessedSourceEvent();
   return insertPendingProcessedEmail();
 }
 
@@ -176,7 +205,7 @@ function runReclassification() {
       toSide: { kind: "account", accountId: SAVINGS_ACCOUNT_ID },
       description: "Move to savings",
       date: new Date("2026-04-18T12:00:00.000Z"),
-      processedEmailId: "pe-1" as ProcessedEmailId,
+      processedSourceEventId: "pse-1" as ProcessedSourceEventId,
     },
     {
       now: () => new Date(NOW),
@@ -210,11 +239,27 @@ function expectCreatedTransferState() {
   });
 }
 
-async function expectProcessedEmailSucceeded() {
+async function expectProcessedEmailUnchanged() {
   await expect(getProcessedEmailById(db as any, "pe-1" as ProcessedEmailId)).resolves.toEqual(
     expect.objectContaining({
       id: "pe-1",
-      status: "success",
+      status: "needs_review",
+      transactionId: ORIGINAL_TRANSACTION_ID,
+    })
+  );
+}
+
+function expectProcessedSourceEventSucceeded() {
+  expect(
+    db
+      .select()
+      .from(processedSourceEvents)
+      .where(eq(processedSourceEvents.id, "pse-1" as ProcessedSourceEventId))
+      .get()
+  ).toEqual(
+    expect.objectContaining({
+      id: "pse-1",
+      status: "processed",
       transactionId: ORIGINAL_TRANSACTION_ID,
     })
   );
@@ -234,7 +279,8 @@ describe("reclassifyTransactionAsTransfer", () => {
       }),
     });
     expectCreatedTransferState();
-    await expectProcessedEmailSucceeded();
+    expectProcessedSourceEventSucceeded();
+    await expectProcessedEmailUnchanged();
   });
 });
 

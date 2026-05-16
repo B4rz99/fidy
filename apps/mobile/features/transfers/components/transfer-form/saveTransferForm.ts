@@ -14,7 +14,7 @@ import { reclassifyTransactionAsTransfer } from "@/features/transfers/lib/reclas
 import { recordManualTransferWithLocalLedger } from "@/infrastructure/local-ledger/record-transfer";
 import type { AnyDb } from "@/shared/db";
 import { captureWarning } from "@/shared/lib";
-import type { ProcessedEmailId, UserId } from "@/shared/types/branded";
+import type { ProcessedEmailId, ProcessedSourceEventId, UserId } from "@/shared/types/branded";
 
 type SubmitTransferFormInput = {
   readonly date: Date;
@@ -23,6 +23,7 @@ type SubmitTransferFormInput = {
   readonly digits: string;
   readonly fromSide: TransferSide | null;
   readonly processedEmailId: ProcessedEmailId | null;
+  readonly processedSourceEventId?: ProcessedSourceEventId | null;
   readonly sourceTransaction: StoredTransaction | null;
   readonly toSide: TransferSide | null;
   readonly userId: UserId | null | undefined;
@@ -89,6 +90,7 @@ function runReclassifiedTransfer(
       userId: input.userId,
       transactionId: input.sourceTransaction.id,
       processedEmailId: input.processedEmailId ?? undefined,
+      processedSourceEventId: input.processedSourceEventId ?? undefined,
       digits: input.digits,
       fromSide: input.fromSide,
       toSide: input.toSide,
@@ -99,6 +101,7 @@ function runReclassifiedTransfer(
     captureWarning("transfer_reclassification_save_failed", {
       operation: "reclassify_transaction_as_transfer",
       hasProcessedEmail: input.processedEmailId != null,
+      hasProcessedSourceEvent: input.processedSourceEventId != null,
       errorType: error instanceof Error ? error.name : typeof error,
     });
     return { success: false, error: "saveFailed" } as const;
@@ -119,8 +122,11 @@ function didTransferSaveSucceed(
   return result.success;
 }
 
-function resolveTransferDestination(processedEmailId: ProcessedEmailId | null) {
-  return processedEmailId ? "needs-review" : "tabs";
+function resolveTransferDestination(input: {
+  readonly processedEmailId: ProcessedEmailId | null;
+  readonly processedSourceEventId: ProcessedSourceEventId | null;
+}) {
+  return input.processedEmailId || input.processedSourceEventId ? "needs-review" : "tabs";
 }
 
 export async function submitTransferForm(
@@ -144,6 +150,9 @@ export async function submitTransferForm(
 
   return {
     success: true,
-    destination: resolveTransferDestination(input.processedEmailId),
+    destination: resolveTransferDestination({
+      processedEmailId: input.processedEmailId,
+      processedSourceEventId: input.processedSourceEventId ?? null,
+    }),
   };
 }

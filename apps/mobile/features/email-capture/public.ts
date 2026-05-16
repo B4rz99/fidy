@@ -6,6 +6,10 @@ export {
   resolveFinancialMeaningReview,
 } from "./lib/financial-meaning-review";
 export { insertMerchantRule, lookupMerchantRule } from "./lib/merchant-rules";
+export {
+  getFinancialMeaningQueueItemId,
+  selectNeedsReviewBannerCount,
+} from "./lib/review-queue-selectors";
 export type { ProcessedEmailRow, ProcessedSourceEventRow } from "./lib/repository";
 export { getNeedsReviewEmailByTransactionId } from "./lib/repository";
 export type { BankSender } from "./lib/bank-senders";

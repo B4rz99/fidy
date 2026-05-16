@@ -1,5 +1,5 @@
 import { relinkCaptureEvidenceToTransfer } from "@/features/capture-evidence/public";
-import { markProcessedEmailReclassifiedAsTransfer } from "@/features/email-capture/transfer-reclassification.public";
+import { markProcessedSourceEventReclassifiedAsTransfer } from "@/features/email-capture/transfer-reclassification.public";
 import {
   getTransactionById,
   markTransactionSuperseded,
@@ -8,6 +8,7 @@ import { generateTransferId, toIsoDateTime } from "@/shared/lib.public";
 import type {
   IsoDateTime,
   ProcessedEmailId,
+  ProcessedSourceEventId,
   TransactionId,
   TransferId,
   UserId,
@@ -26,6 +27,7 @@ type ReclassifyTransactionAsTransferInput = {
   readonly userId: UserId;
   readonly transactionId: TransactionId;
   readonly processedEmailId?: ProcessedEmailId;
+  readonly processedSourceEventId?: ProcessedSourceEventId;
   readonly digits: string;
   readonly fromSide: TransferSide | null;
   readonly toSide: TransferSide | null;
@@ -40,7 +42,7 @@ type ReclassifyTransactionAsTransferDeps = {
   readonly loadTransactionById?: typeof getTransactionById;
   readonly saveTransactionRow?: typeof markTransactionSuperseded;
   readonly relinkEvidenceToTransfer?: typeof relinkCaptureEvidenceToTransfer;
-  readonly saveProcessedEmailStatus?: typeof markProcessedEmailReclassifiedAsTransfer;
+  readonly saveProcessedSourceEventStatus?: typeof markProcessedSourceEventReclassifiedAsTransfer;
 };
 
 export type ReclassifyTransactionAsTransferError = TransferBuildError | "transactionNotFound";
@@ -59,7 +61,7 @@ export function reclassifyTransactionAsTransfer(
     loadTransactionById = getTransactionById,
     saveTransactionRow = markTransactionSuperseded,
     relinkEvidenceToTransfer = relinkCaptureEvidenceToTransfer,
-    saveProcessedEmailStatus = markProcessedEmailReclassifiedAsTransfer,
+    saveProcessedSourceEventStatus = markProcessedSourceEventReclassifiedAsTransfer,
   }: ReclassifyTransactionAsTransferDeps = {}
 ): ReclassifyTransactionAsTransferResult {
   const existingTransaction = loadTransactionById(db, input.transactionId);
@@ -110,10 +112,11 @@ export function reclassifyTransactionAsTransfer(
       updatedAt,
     });
 
-    if (input.processedEmailId) {
-      saveProcessedEmailStatus({
+    if (input.processedSourceEventId) {
+      saveProcessedSourceEventStatus({
         db: tx,
-        id: input.processedEmailId,
+        id: input.processedSourceEventId,
+        userId: input.userId,
         transactionId: existingTransaction.id,
       });
     }

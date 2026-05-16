@@ -13,6 +13,7 @@ import {
 } from "@/features/email-capture/lib/financial-meaning-review";
 import {
   getNeedsReviewEmails,
+  getNeedsReviewEmailSourceEvents,
   getProcessedEmailByExternalId,
   getProcessedEmailById,
   insertProcessedEmail,
@@ -231,16 +232,11 @@ describe("financial meaning review", () => {
     );
   });
 
-  it("lists only active low-confidence emails that still point at active transactions", async () => {
+  it("does not list legacy processed emails as financial meaning review items", async () => {
     reviewCandidateTransactions.forEach(insertEmailTransactionRow);
     await Promise.all(reviewCandidateEmails.map(insertNeedsReviewEmail));
 
-    await expect(getFinancialMeaningReviewItems(db as any, USER_ID)).resolves.toEqual([
-      expect.objectContaining({
-        processedEmail: expect.objectContaining({ id: "pe-active" }),
-        transaction: expect.objectContaining({ id: "tx-active" }),
-      }),
-    ]);
+    await expect(getFinancialMeaningReviewItems(db as any, USER_ID)).resolves.toEqual([]);
   });
 
   it("lists source-event needs-review candidates in the financial meaning queue", async () => {
@@ -253,6 +249,24 @@ describe("financial meaning review", () => {
         processedSourceEvent: expect.objectContaining({ id: "pse-review-1" }),
         reviewCandidate: expect.objectContaining({ id: "rc-review-1" }),
       }),
+    ]);
+  });
+
+  it("loads needs-review email source events only when a pending review candidate exists", async () => {
+    insertNeedsReviewSourceEvent();
+    insertNeedsReviewSourceEvent({
+      id: "pse-review-without-candidate" as ProcessedSourceEventId,
+      sourceEventId: "ext-source-review-without-candidate",
+    });
+    insertReviewCandidate();
+    insertReviewCandidate({
+      id: "rc-review-rejected" as ReviewCandidateId,
+      processedSourceEventId: "pse-review-without-candidate" as ProcessedSourceEventId,
+      status: "rejected",
+    });
+
+    await expect(getNeedsReviewEmailSourceEvents(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({ id: "pse-review-1" }),
     ]);
   });
 
@@ -354,6 +368,7 @@ describe("financial meaning review", () => {
       db as any,
       USER_ID,
       "pse-review-1" as ProcessedSourceEventId,
+      "rc-review-1" as ReviewCandidateId,
       () => "2026-04-19T11:00:00.000Z" as IsoDateTime
     );
 
@@ -369,6 +384,42 @@ describe("financial meaning review", () => {
         id: "rc-review-1",
         status: "rejected",
         updatedAt: "2026-04-19T11:00:00.000Z",
+      }),
+    ]);
+  });
+
+  it("dismisses only the selected review candidate when sibling candidates remain", async () => {
+    insertNeedsReviewSourceEvent();
+    insertReviewCandidate();
+    insertReviewCandidate({
+      id: "rc-review-2" as ReviewCandidateId,
+      description: "Second possible meaning",
+    });
+
+    await dismissSourceEventFinancialMeaningReview(
+      db as any,
+      USER_ID,
+      "pse-review-1" as ProcessedSourceEventId,
+      "rc-review-1" as ReviewCandidateId,
+      () => "2026-04-19T11:00:00.000Z" as IsoDateTime
+    );
+
+    expect(db.select().from(processedSourceEvents).all()).toEqual([
+      expect.objectContaining({
+        id: "pse-review-1",
+        status: "needs_review",
+        updatedAt: "2026-04-19T11:00:00.000Z",
+      }),
+    ]);
+    expect(db.select().from(reviewCandidates).orderBy(reviewCandidates.id).all()).toEqual([
+      expect.objectContaining({
+        id: "rc-review-1",
+        status: "rejected",
+        updatedAt: "2026-04-19T11:00:00.000Z",
+      }),
+      expect.objectContaining({
+        id: "rc-review-2",
+        status: "pending",
       }),
     ]);
   });
@@ -397,6 +448,42 @@ describe("financial meaning review", () => {
       expect.objectContaining({
         id: "rc-review-1",
         status: "accepted",
+      }),
+    ]);
+  });
+
+  it("accepting one source-event review candidate rejects pending sibling candidates", async () => {
+    insertNeedsReviewSourceEvent();
+    insertReviewCandidate();
+    insertReviewCandidate({
+      id: "rc-review-2" as ReviewCandidateId,
+      description: "Second possible meaning",
+    });
+
+    await expect(
+      confirmSourceEventFinancialMeaningReview(db as any, {
+        userId: USER_ID,
+        processedSourceEventId: "pse-review-1" as ProcessedSourceEventId,
+        reviewCandidateId: "rc-review-1" as ReviewCandidateId,
+        now: () => "2026-04-19T11:00:00.000Z" as IsoDateTime,
+      })
+    ).resolves.toBe(true);
+
+    expect(db.select().from(processedSourceEvents).all()).toEqual([
+      expect.objectContaining({
+        id: "pse-review-1",
+        status: "processed",
+        transactionId: expect.any(String),
+      }),
+    ]);
+    expect(db.select().from(reviewCandidates).orderBy(reviewCandidates.id).all()).toEqual([
+      expect.objectContaining({
+        id: "rc-review-1",
+        status: "accepted",
+      }),
+      expect.objectContaining({
+        id: "rc-review-2",
+        status: "rejected",
       }),
     ]);
   });
