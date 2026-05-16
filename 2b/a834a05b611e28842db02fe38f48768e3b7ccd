@@ -1,0 +1,20 @@
+plans/legacy-processed-intake-audit-447.md
+  s_acf8922e9282b5::t_8d2f3fe2506c3b 1-16,19-27,33-39,42-47
+  s_acf8922e9282b5::t_dc09a564d025f5 17-18,28-32,40-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "2ba834a05b611e28842db02fe38f48768e3b7ccd",
+  "prompts": {},
+  "sessions": {
+    "s_acf8922e9282b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e312a-9a72-79f3-9f55-01b1c2c7dc9f",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
