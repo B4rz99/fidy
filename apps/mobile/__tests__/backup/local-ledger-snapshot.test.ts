@@ -466,6 +466,25 @@ function transactionRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function transferRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "trf-1",
+    userId: "user-1",
+    amount: 100000,
+    fromAccountId: "fa-rollback",
+    toAccountId: null,
+    fromExternalLabel: null,
+    toExternalLabel: "Broker",
+    description: "Investment",
+    date: "2026-04-21",
+    source: "manual",
+    createdAt: NOW,
+    updatedAt: NOW,
+    deletedAt: null,
+    ...overrides,
+  };
+}
+
 function openingBalanceRow(id = "ob-1") {
   return {
     id,
@@ -870,6 +889,27 @@ describe("local ledger backup snapshots", () => {
     expect(snapshot.data.transactions[0]).toEqual(
       expect.objectContaining({ source: "email_capture" })
     );
+  });
+
+  it("defaults only missing legacy transfer source values before validation", () => {
+    const legacyTransfer = withoutKeys(transferRow(), ["source"]);
+
+    const snapshot = validateBackupSnapshot(
+      validSnapshot({
+        financialAccounts: [rollbackAccountRow()],
+        transfers: [legacyTransfer],
+      })
+    );
+
+    expect(snapshot.data.transfers[0]).toEqual(expect.objectContaining({ source: "manual" }));
+    expect(() =>
+      validateBackupSnapshot(
+        validSnapshot({
+          financialAccounts: [rollbackAccountRow()],
+          transfers: [transferRow({ source: "misspelled-source" })],
+        })
+      )
+    ).toThrow("Malformed local ledger backup row: source is not supported");
   });
 
   it("rejects duplicate primary IDs inside backed-up collections", () => {

@@ -48,6 +48,7 @@ export type TransferSnapshotRow = SoftDeletedSnapshotRow & {
   readonly toExternalLabel: string | null;
   readonly description: string | null;
   readonly date: string;
+  readonly source: string;
 };
 
 export type UserCategorySnapshotRow = SoftDeletedSnapshotRow & {

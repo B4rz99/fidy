@@ -97,6 +97,8 @@ const ROW_SPECS: readonly RowSpec[] = [
           toExternalLabel: (value) => assertNullableString(value, "toExternalLabel"),
           description: (value) => assertNullableString(value, "description"),
           date: (value) => assertValidIsoDate(value, "date"),
+          source: (value) =>
+            assertOneOf(["manual", "capture-match", "review-confirmation"], value, "source"),
         })
       ),
   },

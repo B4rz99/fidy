@@ -37,6 +37,7 @@ export function upsertTransfer(db: AnyDb, row: TransferRow) {
         toExternalLabel: row.toExternalLabel,
         description: row.description,
         date: row.date,
+        source: row.source,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         deletedAt: row.deletedAt,

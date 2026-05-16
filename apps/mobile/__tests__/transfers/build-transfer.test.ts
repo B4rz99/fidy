@@ -31,6 +31,7 @@ describe("buildTransfer", () => {
       userId: "user-1" as UserId,
       id: "tr-1" as TransferId,
       now: NOW,
+      source: "manual",
     });
 
     expect(result).toMatchObject({
@@ -52,12 +53,14 @@ describe("buildTransfer", () => {
       userId: "user-1" as UserId,
       id: "tr-2" as TransferId,
       now: NOW,
+      source: "manual",
     });
     const missingTo = buildTransfer({
       input: { ...validInput, toSide: null },
       userId: "user-1" as UserId,
       id: "tr-3" as TransferId,
       now: NOW,
+      source: "manual",
     });
 
     expect(missingFrom).toEqual({ success: false, error: "fromSideRequired" });
@@ -73,6 +76,7 @@ describe("buildTransfer", () => {
       userId: "user-1" as UserId,
       id: "tr-4" as TransferId,
       now: NOW,
+      source: "manual",
     });
     const outsideToOutside = buildTransfer({
       input: {
@@ -83,6 +87,7 @@ describe("buildTransfer", () => {
       userId: "user-1" as UserId,
       id: "tr-5" as TransferId,
       now: NOW,
+      source: "manual",
     });
 
     expect(trackedToOutside).toMatchObject({
@@ -103,6 +108,7 @@ describe("buildTransfer", () => {
       userId: "user-1" as UserId,
       id: "tr-6" as TransferId,
       now: NOW,
+      source: "manual",
     });
 
     expect(result).toEqual({ success: false, error: "distinctSidesRequired" });
@@ -122,6 +128,7 @@ describe("toStoredTransfer / toTransferRow round-trip", () => {
       createdAt: NOW,
       updatedAt: NOW,
       deletedAt: null,
+      source: "manual" as const,
     };
 
     const row = toTransferRow(storedTransfer);

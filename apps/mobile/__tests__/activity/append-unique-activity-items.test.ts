@@ -52,6 +52,7 @@ function makeTransferItem(id: TransferId) {
       createdAt: new Date("2026-04-19T09:00:00.000Z"),
       updatedAt: new Date("2026-04-19T11:00:00.000Z"),
       deletedAt: null,
+      source: "manual" as const,
     },
   };
 }

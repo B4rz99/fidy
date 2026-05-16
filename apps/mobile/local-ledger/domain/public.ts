@@ -46,6 +46,8 @@ export type LocalLedgerTransferSide =
       readonly label: string;
     };
 
+export type TransferSource = "manual" | "capture-match" | "review-confirmation";
+
 export type LocalLedgerTransfer = {
   readonly id: TransferId;
   readonly userId: UserId;
@@ -54,6 +56,7 @@ export type LocalLedgerTransfer = {
   readonly toSide: LocalLedgerTransferSide;
   readonly description: string;
   readonly date: IsoDate;
+  readonly source: TransferSource;
   readonly createdAt: IsoDateTime;
   readonly updatedAt: IsoDateTime;
   readonly voidedAt: IsoDateTime | null;

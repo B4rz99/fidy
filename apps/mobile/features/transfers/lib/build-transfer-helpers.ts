@@ -104,5 +104,6 @@ export function buildStoredTransfer(
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
     deletedAt: existing?.deletedAt ?? null,
+    source: command.source,
   };
 }
