@@ -1,0 +1,35 @@
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_38e0371102b177::t_102ffa8c9fade0 72,210-211
+  s_38e0371102b177::t_b21a5826b44bfa 365-369
+apps/mobile/modules/expo-app-intents/src/ExpoAppIntentsModule.ts
+  s_38e0371102b177::t_427d26d188f3c9 10
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_38e0371102b177::t_5de68cc317840e 84,121-130
+  s_38e0371102b177::t_102ffa8c9fade0 161
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_38e0371102b177::t_1f552629a179b0 240
+  s_38e0371102b177::t_102ffa8c9fade0 100
+apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts
+  s_38e0371102b177::t_102ffa8c9fade0 197
+apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts
+  s_38e0371102b177::t_1e0080b8420cb3 306,318-333,335-342,379,382-387
+  s_38e0371102b177::t_102ffa8c9fade0 35,302-305,307-317,334
+apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts
+  s_38e0371102b177::t_102ffa8c9fade0 67,148-149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "6c70326133564f712ef22f2a65d4c392928b340a",
+  "prompts": {},
+  "sessions": {
+    "s_38e0371102b177": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2e66-2b51-72c0-a480-8ba8490250a3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
