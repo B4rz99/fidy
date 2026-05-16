@@ -1,28 +1,24 @@
-import { currentIsoDateTimeEffect } from "@/shared/effect/clock";
-import {
-  captureErrorEffect,
-  capturePipelineEventEffect,
-  captureWarningEffect,
-} from "@/shared/effect/telemetry";
-import { generateProcessedEmailId } from "@/shared/lib/generate-id";
-import { assertIsoDateTime } from "@/shared/types/assertions";
+import { captureErrorEffect, capturePipelineEventEffect } from "@/shared/effect/telemetry";
 import { buildSkippedEmailDiagnostics } from "./email-telemetry";
 import { cacheMerchantRule, lookupIncomingDuplicate } from "./incoming-parsed-helpers";
+import { createIncomingEmailPersistenceState, parseIncomingEmail } from "./incoming-parse";
 import {
   appendFailedEmailParseImprovementRequest,
   appendNeedsReviewEmailParseImprovementRequest,
 } from "./parse-improvement";
 import {
+  getProcessedEmailSourceEventIdsEffect,
   getProcessedExternalIdsEffect,
-  insertProcessedEmailEffect,
+  insertProcessedEmailSourceEventEffect,
   nextRetryAtEffect,
-  parseBodyEffect,
   saveEmailCaptureEvidenceEffect,
 } from "./runtime";
 import {
-  buildDuplicateProcessedEmailRow,
-  buildUnparsedProcessedEmailRow,
+  buildDuplicateProcessedSourceEventRow,
+  buildUnparsedProcessedSourceEventRow,
   createPipelineMetricResult,
+  getEmailSourceId,
+  getEmailSourceEventKey,
   mergePipelineResults,
   resolveEmailStatus,
   runSerializedPersistence,
@@ -33,8 +29,6 @@ import type {
   EmailSaveStatus,
   IncomingEmailOutcome,
   IncomingEmailPersistenceOutcome,
-  IncomingEmailPersistenceInput,
-  IncomingParseOutcome,
   LlmParsedTransaction,
   PipelineResult,
   RawEmail,
@@ -44,37 +38,20 @@ import type {
 
 const nowMs = (): number => Date.now();
 
-async function parseIncomingEmail(
-  context: EmailBatchContext,
-  email: RawEmail
-): Promise<IncomingParseOutcome> {
-  try {
-    const parsed = await context.runtime.runEmailEffect(
-      parseBodyEffect(context.db, context.userId, email.body)
-    );
-    return parsed ? { kind: "parsed", parsed } : { kind: "filtered" };
-  } catch (error) {
-    await context.runtime.runTelemetryEffect(
-      captureWarningEffect("email_parse_exception", {
-        provider: email.provider,
-        errorType: error instanceof Error ? error.name : "unknown",
-      })
-    );
-    return { kind: "failed" };
-  }
-}
-
-async function createIncomingEmailPersistenceState(context: EmailBatchContext, email: RawEmail) {
-  assertIsoDateTime(email.receivedAt);
-  return {
-    createdAt: await context.runtime.runClockEffect(currentIsoDateTimeEffect),
-    processedEmailId: generateProcessedEmailId(),
-  };
-}
+type IncomingEmailPersistenceInput = {
+  readonly context: EmailBatchContext;
+  readonly email: RawEmail;
+  readonly sourceEventRow: Parameters<typeof insertProcessedEmailSourceEventEffect>[1];
+  readonly processedSourceEventId: Parameters<
+    typeof saveEmailCaptureEvidenceEffect
+  >[0]["processedSourceEventId"];
+  readonly transactionId: TransactionId | null;
+  readonly createdAt: Parameters<typeof saveEmailCaptureEvidenceEffect>[0]["now"];
+};
 
 async function persistIncomingEmailRecord(input: IncomingEmailPersistenceInput) {
   await input.context.runtime.runEmailEffect(
-    insertProcessedEmailEffect(input.context.db, input.row)
+    insertProcessedEmailSourceEventEffect(input.context.db, input.sourceEventRow)
   );
   await input.context.runtime.runEmailEffect(
     saveEmailCaptureEvidenceEffect({
@@ -82,7 +59,8 @@ async function persistIncomingEmailRecord(input: IncomingEmailPersistenceInput) 
       userId: input.context.userId,
       from: input.email.from,
       body: input.email.body,
-      processedEmailId: input.processedEmailId,
+      processedEmailId: null,
+      processedSourceEventId: input.processedSourceEventId,
       transactionId: input.transactionId,
       now: input.createdAt,
     })
@@ -94,18 +72,30 @@ async function persistPendingRetryIncomingEmail(
   email: RawEmail,
   failureReason: string | null
 ): Promise<PipelineResult> {
-  const processedIds = await context.runtime.runEmailEffect(
-    getProcessedExternalIdsEffect(context.db, [email.externalId])
+  const sourceEventIds = await context.runtime.runEmailEffect(
+    getProcessedEmailSourceEventIdsEffect(context.db, context.userId, [
+      { sourceId: getEmailSourceId(email), sourceEventId: email.externalId },
+    ])
   );
-  if (processedIds.has(email.externalId)) {
+  const legacyProcessedIds = await context.runtime.runEmailEffect(
+    getProcessedExternalIdsEffect(context.db, context.userId, [email])
+  );
+  if (
+    sourceEventIds.has(getEmailSourceEventKey(email)) ||
+    legacyProcessedIds.has(getEmailSourceEventKey(email))
+  ) {
     return createPipelineMetricResult("failed");
   }
 
-  const { createdAt, processedEmailId } = await createIncomingEmailPersistenceState(context, email);
+  const { createdAt, processedSourceEventId } = await createIncomingEmailPersistenceState(
+    context,
+    email
+  );
   const nextRetryAt = await context.runtime.runClockEffect(nextRetryAtEffect(0));
-  const row = buildUnparsedProcessedEmailRow({
+  const sourceEventRow = buildUnparsedProcessedSourceEventRow({
     email,
-    processedEmailId,
+    userId: context.userId,
+    processedSourceEventId,
     createdAt,
     status: "pending_retry",
     failureReason,
@@ -115,8 +105,8 @@ async function persistPendingRetryIncomingEmail(
   await persistIncomingEmailRecord({
     context,
     email,
-    row,
-    processedEmailId,
+    sourceEventRow,
+    processedSourceEventId,
     transactionId: null,
     createdAt,
   });
@@ -134,18 +124,24 @@ async function persistSkippedIncomingEmail(
   email: RawEmail,
   kind: Exclude<UnparsedIncomingEmailKind, "failed">
 ): Promise<PipelineResult> {
-  const { createdAt, processedEmailId } = await createIncomingEmailPersistenceState(context, email);
+  const { createdAt, processedSourceEventId } = await createIncomingEmailPersistenceState(
+    context,
+    email
+  );
   const metadataOnlyEmail = { ...email, subject: "", body: "" };
-  const row = buildUnparsedProcessedEmailRow({
+  const sourceEventRow = buildUnparsedProcessedSourceEventRow({
     email: metadataOnlyEmail,
-    processedEmailId,
+    userId: context.userId,
+    processedSourceEventId,
     createdAt,
-    status: "skipped",
+    status: "dismissed",
     failureReason: null,
     nextRetryAt: null,
   });
 
-  await context.runtime.runEmailEffect(insertProcessedEmailEffect(context.db, row));
+  await context.runtime.runEmailEffect(
+    insertProcessedEmailSourceEventEffect(context.db, sourceEventRow)
+  );
   const diagnostics = buildSkippedEmailDiagnostics({ email, reason: kind });
   await context.runtime.runTelemetryEffect(capturePipelineEventEffect(diagnostics));
   return createPipelineMetricResult(kind === "filtered" ? "filtered" : "failed");
@@ -157,13 +153,14 @@ async function persistDuplicateIncomingEmail(input: {
   readonly parsed: LlmParsedTransaction;
   readonly transactionId: TransactionId;
 }) {
-  const { createdAt, processedEmailId } = await createIncomingEmailPersistenceState(
+  const { createdAt, processedSourceEventId } = await createIncomingEmailPersistenceState(
     input.context,
     input.email
   );
-  const row = buildDuplicateProcessedEmailRow({
+  const sourceEventRow = buildDuplicateProcessedSourceEventRow({
     email: input.email,
-    processedEmailId,
+    userId: input.context.userId,
+    processedSourceEventId,
     transactionId: input.transactionId,
     confidence: input.parsed.confidence,
     createdAt,
@@ -172,8 +169,8 @@ async function persistDuplicateIncomingEmail(input: {
   await persistIncomingEmailRecord({
     context: input.context,
     email: input.email,
-    row,
-    processedEmailId,
+    sourceEventRow,
+    processedSourceEventId,
     transactionId: input.transactionId,
     createdAt,
   });

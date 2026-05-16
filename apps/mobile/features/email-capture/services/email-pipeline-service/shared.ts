@@ -1,9 +1,10 @@
 import { getBuiltInCategoryId, isValidCategoryId } from "@/shared/categories";
 import { assertCopAmount, assertIsoDate, requireIsoDateTime } from "@/shared/types/assertions";
-import type { ProcessedEmailRow } from "../../lib/repository";
+import type { ProcessedEmailRow, ProcessedSourceEventRow } from "../../lib/repository";
 import type {
   AppendEmailParseImprovementRequestInput,
   DuplicateProcessedEmailRowInput,
+  DuplicateProcessedSourceEventRowInput,
   EmailBatchContext,
   EmailMetric,
   EmailQueue,
@@ -12,11 +13,20 @@ import type {
   RetryResult,
   TrackSavedTransactionInput,
   UnparsedProcessedEmailRowInput,
+  UnparsedProcessedSourceEventRowInput,
 } from "./types";
 
 export function getTransactionSource(provider: string) {
   return provider === "gmail" ? "email_gmail" : "email_outlook";
 }
+
+export const getEmailSourceId = (email: { readonly provider: string }) =>
+  getTransactionSource(email.provider);
+
+export const getEmailSourceEventKey = (email: {
+  readonly provider: string;
+  readonly externalId: string;
+}) => `${getEmailSourceId(email)}:${email.externalId}`;
 
 export const getParsedCounterpartyName = (parsed: {
   readonly description: string;
@@ -112,7 +122,9 @@ export async function runSerializedPersistence<T>(
 }
 
 export function dedupeRawEmails(rawEmails: EmailQueue["emails"]) {
-  return Array.from(new Map(rawEmails.map((email) => [email.externalId, email])).values());
+  return Array.from(
+    new Map(rawEmails.map((email) => [getEmailSourceEventKey(email), email])).values()
+  );
 }
 
 export function createPipelineResult(skippedDuplicate: number): PipelineResult {
@@ -155,6 +167,38 @@ export function buildUnparsedProcessedEmailRow(
     : baseRow;
 }
 
+export function buildUnparsedProcessedSourceEventRow(
+  input: UnparsedProcessedSourceEventRowInput
+): ProcessedSourceEventRow {
+  const baseRow: ProcessedSourceEventRow = {
+    id: input.processedSourceEventId,
+    userId: input.userId,
+    sourceFamily: "email",
+    sourceId: getEmailSourceId(input.email),
+    sourceEventId: input.email.externalId,
+    status: input.status,
+    failureReason: input.failureReason,
+    subject: input.email.subject,
+    rawBodyPreview: input.email.body.slice(0, 500),
+    receivedAt: requireIsoDateTime(input.email.receivedAt),
+    processedAt: input.createdAt,
+    createdAt: input.createdAt,
+    updatedAt: input.createdAt,
+    deletedAt: null,
+    transactionId: null,
+    confidence: null,
+  };
+
+  return input.status === "pending_retry"
+    ? {
+        ...baseRow,
+        rawBody: input.email.body,
+        retryCount: 0,
+        nextRetryAt: input.nextRetryAt,
+      }
+    : baseRow;
+}
+
 export function buildDuplicateProcessedEmailRow(
   input: DuplicateProcessedEmailRowInput
 ): ProcessedEmailRow {
@@ -170,5 +214,28 @@ export function buildDuplicateProcessedEmailRow(
     transactionId: input.transactionId,
     confidence: input.confidence,
     createdAt: input.createdAt,
+  };
+}
+
+export function buildDuplicateProcessedSourceEventRow(
+  input: DuplicateProcessedSourceEventRowInput
+): ProcessedSourceEventRow {
+  return {
+    id: input.processedSourceEventId,
+    userId: input.userId,
+    sourceFamily: "email",
+    sourceId: getEmailSourceId(input.email),
+    sourceEventId: input.email.externalId,
+    status: "duplicate",
+    failureReason: null,
+    subject: input.email.subject,
+    rawBodyPreview: input.email.body.slice(0, 500),
+    receivedAt: requireIsoDateTime(input.email.receivedAt),
+    processedAt: input.createdAt,
+    createdAt: input.createdAt,
+    updatedAt: input.createdAt,
+    deletedAt: null,
+    transactionId: input.transactionId,
+    confidence: input.confidence,
   };
 }

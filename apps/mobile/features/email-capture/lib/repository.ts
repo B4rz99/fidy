@@ -8,6 +8,25 @@ import type {
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
+export {
+  acceptSourceEventFinancialMeaningReviewById,
+  dismissSourceEventFinancialMeaningReviewById,
+  getFinancialMeaningSourceEventReviewRows,
+  getPendingRetryEmailSourceEvents,
+  getProcessedEmailSourceEventIds,
+  getSourceEventReviewCandidateById,
+  insertProcessedEmailSourceEvent,
+  markSourceEventForRetry,
+  markSourceEventPermanentlyFailed,
+  markSourceEventRetrySuccess,
+  updateProcessedSourceEventStatus,
+  type FinancialMeaningSourceEventReviewRow,
+  type ProcessedSourceEventRow,
+} from "./source-event-repository";
+export {
+  getFailedEmailSourceEvents,
+  getNeedsReviewEmailSourceEvents,
+} from "./source-event-queue-repository";
 
 export type EmailAccountRow = typeof emailAccounts.$inferInsert;
 export type ProcessedEmailRow = typeof processedEmails.$inferInsert;
@@ -70,13 +89,36 @@ export async function getProcessedEmailById(db: AnyDb, id: ProcessedEmailId) {
   return rows[0] ?? null;
 }
 
-export async function getProcessedExternalIds(db: AnyDb, externalIds: string[]) {
-  if (externalIds.length === 0) return new Set<string>();
+const getLegacyEmailSourceEventKey = (row: {
+  readonly provider: string;
+  readonly externalId: string;
+}) => `${row.provider === "gmail" ? "email_gmail" : "email_outlook"}:${row.externalId}`;
+
+async function canUseLegacyProcessedEmailFallback(db: AnyDb, userId: UserId) {
+  const owners = await db
+    .selectDistinct({ userId: emailAccounts.userId })
+    .from(emailAccounts)
+    .limit(2);
+  return owners.length === 1 && owners[0]?.userId === userId;
+}
+
+export async function getProcessedExternalIds(
+  db: AnyDb,
+  userId: UserId,
+  sourceEvents: readonly { readonly provider: string; readonly externalId: string }[]
+) {
+  if (sourceEvents.length === 0) return new Set<string>();
+  if (!(await canUseLegacyProcessedEmailFallback(db, userId))) return new Set<string>();
   const rows = await db
-    .select({ externalId: processedEmails.externalId })
+    .select({ externalId: processedEmails.externalId, provider: processedEmails.provider })
     .from(processedEmails)
-    .where(inArray(processedEmails.externalId, externalIds));
-  return new Set(rows.map((r) => r.externalId));
+    .where(
+      inArray(
+        processedEmails.externalId,
+        sourceEvents.map((event) => event.externalId)
+      )
+    );
+  return new Set(rows.map(getLegacyEmailSourceEventKey));
 }
 
 export async function getFailedEmails(db: AnyDb) {

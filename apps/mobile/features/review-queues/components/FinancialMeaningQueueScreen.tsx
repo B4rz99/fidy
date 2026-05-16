@@ -6,20 +6,29 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import {
   dismissFinancialMeaningReview,
+  dismissSourceEventFinancialMeaningReview,
   loadNeedsReviewEmails,
 } from "@/features/email-capture/public";
 import { getTransactionDisplayName } from "@/features/transactions/display.public";
 import { refreshTransactions } from "@/features/transactions/store.public";
 import { ScreenLayout } from "@/shared/components";
 import { ChevronRight, TriangleAlert } from "@/shared/components/icons";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Pressable, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
-import { formatSignedMoney, showErrorToast } from "@/shared/lib";
-import type { ProcessedEmailId } from "@/shared/types/branded";
+import { formatMoney, formatSignedMoney, showErrorToast } from "@/shared/lib";
+import type { ProcessedEmailId, ProcessedSourceEventId } from "@/shared/types/branded";
 import { useFinancialMeaningReviewQueue } from "../hooks/use-financial-meaning-review-queue";
+import { styles } from "./FinancialMeaningQueueScreen.styles";
 import { ActionButton, EmptyState, SummaryCard } from "./shared";
+
+type FinancialMeaningQueueItem = ReturnType<typeof useFinancialMeaningReviewQueue>["items"][number];
+
+const getQueueItemId = (item: FinancialMeaningQueueItem) =>
+  item.kind === "legacy_email"
+    ? item.processedEmail.id
+    : `${item.processedSourceEvent.id}:${item.reviewCandidate.id}`;
 
 function FinancialMeaningQueueCard({
   item,
@@ -42,10 +51,29 @@ function FinancialMeaningQueueCard({
   const borderSubtle = useThemeColor("borderSubtle");
   const accentRed = useThemeColor("accentRed");
   const accentGreen = useThemeColor("accentGreen");
-  const providerLabel =
-    item.processedEmail.provider === "gmail"
+  const isLegacyItem = item.kind === "legacy_email";
+  const providerLabel = isLegacyItem
+    ? item.processedEmail.provider === "gmail"
+      ? t("financialMeaningReview.providers.gmail")
+      : t("financialMeaningReview.providers.outlook")
+    : item.processedSourceEvent.sourceId === "email_gmail"
       ? t("financialMeaningReview.providers.gmail")
       : t("financialMeaningReview.providers.outlook");
+  const subject = isLegacyItem
+    ? item.processedEmail.subject
+    : (item.processedSourceEvent.subject ?? "");
+  const title = isLegacyItem
+    ? getTransactionDisplayName(item.transaction, t("common.unknown"))
+    : (item.reviewCandidate.description ??
+      item.processedSourceEvent.rawBodyPreview ??
+      t("common.unknown"));
+  const subtitleDate = isLegacyItem
+    ? item.transaction.date
+    : (item.reviewCandidate.occurredAt ?? item.processedSourceEvent.receivedAt);
+  const amount = isLegacyItem ? item.transaction.amount : item.reviewCandidate.amount;
+  const transactionType = isLegacyItem
+    ? item.transaction.type
+    : item.reviewCandidate.transactionType;
 
   return (
     <View style={[styles.card, { backgroundColor: card, borderColor: borderSubtle }]}>
@@ -56,27 +84,36 @@ function FinancialMeaningQueueCard({
         </View>
 
         <Text style={[styles.subjectLabel, { color: secondary }]} numberOfLines={1}>
-          {item.processedEmail.subject}
+          {subject}
         </Text>
         <View style={styles.cardHeaderRow}>
           <View style={styles.cardTitleWrap}>
             <Text style={[styles.cardTitle, { color: primary }]} numberOfLines={2}>
-              {getTransactionDisplayName(item.transaction, t("common.unknown"))}
+              {title}
             </Text>
             <Text style={[styles.cardSubtitle, { color: secondary }]}>
-              {format(item.transaction.date, "PP", { locale: getDateFnsLocale(locale) })}
+              {format(subtitleDate, "PP", { locale: getDateFnsLocale(locale) })}
             </Text>
           </View>
-          <Text
-            style={[
-              styles.cardAmount,
-              {
-                color: item.transaction.type === "income" ? accentGreen : accentRed,
-              },
-            ]}
-          >
-            {formatSignedMoney(item.transaction.amount, item.transaction.type)}
-          </Text>
+          {amount != null ? (
+            <Text
+              style={[
+                styles.cardAmount,
+                {
+                  color:
+                    transactionType == null
+                      ? primary
+                      : transactionType === "income"
+                        ? accentGreen
+                        : accentRed,
+                },
+              ]}
+            >
+              {transactionType == null
+                ? formatMoney(amount)
+                : formatSignedMoney(amount, transactionType)}
+            </Text>
+          ) : null}
         </View>
       </Pressable>
 
@@ -113,7 +150,7 @@ export function FinancialMeaningQueueScreen() {
   const { isBusy, run: guardedAction } = useAsyncGuard();
   const [skippedIds, setSkippedIds] = useState<readonly string[]>([]);
 
-  const visibleItems = items.filter((item) => !skippedIds.includes(item.processedEmail.id));
+  const visibleItems = items.filter((item) => !skippedIds.includes(getQueueItemId(item)));
 
   const handleDismiss = (processedEmailId: ProcessedEmailId) => {
     void guardedAction(async () => {
@@ -123,6 +160,23 @@ export function FinancialMeaningQueueScreen() {
 
       try {
         await dismissFinancialMeaningReview(db, processedEmailId);
+        await loadNeedsReviewEmails(db, userId);
+        await refreshTransactions(db, userId);
+        await reloadQueue();
+      } catch {
+        showErrorToast(t("financialMeaningReview.errors.dismissFailed"));
+      }
+    });
+  };
+
+  const handleDismissSourceEvent = (processedSourceEventId: ProcessedSourceEventId) => {
+    void guardedAction(async () => {
+      if (!db || !userId) {
+        return;
+      }
+
+      try {
+        await dismissSourceEventFinancialMeaningReview(db, userId, processedSourceEventId);
         await loadNeedsReviewEmails(db, userId);
         await refreshTransactions(db, userId);
         await reloadQueue();
@@ -146,7 +200,7 @@ export function FinancialMeaningQueueScreen() {
       ) : (
         <FlashList
           data={visibleItems}
-          keyExtractor={(item) => item.processedEmail.id}
+          keyExtractor={getQueueItemId}
           contentContainerStyle={[styles.listContent, { paddingBottom: bottom + 28 }]}
           contentInsetAdjustmentBehavior="automatic"
           ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
@@ -162,17 +216,29 @@ export function FinancialMeaningQueueScreen() {
               item={item}
               disabled={isBusy}
               onReview={() =>
-                router.push({
-                  pathname: "/meaning-review",
-                  params: { processedEmailId: item.processedEmail.id },
-                } as never)
+                item.kind === "legacy_email"
+                  ? router.push({
+                      pathname: "/meaning-review",
+                      params: { processedEmailId: item.processedEmail.id },
+                    } as never)
+                  : router.push({
+                      pathname: "/meaning-review",
+                      params: {
+                        processedSourceEventId: item.processedSourceEvent.id,
+                        reviewCandidateId: item.reviewCandidate.id,
+                      },
+                    } as never)
               }
-              onDismiss={() => handleDismiss(item.processedEmail.id)}
+              onDismiss={() =>
+                item.kind === "legacy_email"
+                  ? handleDismiss(item.processedEmail.id)
+                  : handleDismissSourceEvent(item.processedSourceEvent.id)
+              }
               onSkip={() =>
                 setSkippedIds((current) =>
-                  current.includes(item.processedEmail.id)
+                  current.includes(getQueueItemId(item))
                     ? current
-                    : [...current, item.processedEmail.id]
+                    : [...current, getQueueItemId(item)]
                 )
               }
             />
@@ -182,62 +248,3 @@ export function FinancialMeaningQueueScreen() {
     </ScreenLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 28,
-    gap: 14,
-  },
-  card: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 14,
-    gap: 14,
-  },
-  cardPressable: {
-    gap: 8,
-  },
-  cardMetaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  cardMetaLabel: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 10,
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
-  },
-  subjectLabel: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 12,
-  },
-  cardHeaderRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-  },
-  cardTitleWrap: {
-    flex: 1,
-    gap: 4,
-  },
-  cardTitle: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 18,
-    lineHeight: 22,
-  },
-  cardSubtitle: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 12,
-  },
-  cardAmount: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 16,
-    textAlign: "right",
-  },
-  actionRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-});

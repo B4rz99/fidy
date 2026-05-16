@@ -33,6 +33,13 @@ export type CreateReviewCandidateCommand = {
     readonly sourceEventId: string;
     readonly status: LocalLedgerProcessedSourceEventStatus;
     readonly failureReason: string | null;
+    readonly subject?: string | null;
+    readonly rawBodyPreview?: string | null;
+    readonly rawBody?: string | null;
+    readonly retryCount?: number;
+    readonly nextRetryAt?: string | null;
+    readonly transactionId?: string | null;
+    readonly confidence?: number | null;
     readonly receivedAt: string;
     readonly processedAt: string;
     readonly createdAt: string;
@@ -48,6 +55,8 @@ export type CreateReviewCandidateCommand = {
     readonly occurredAt: string | null;
     readonly amount: number | null;
     readonly currency: "COP";
+    readonly transactionType?: "expense" | "income" | null;
+    readonly categoryId?: string | null;
     readonly description: string | null;
     readonly confidence: number | null;
     readonly createdAt: string;
@@ -92,6 +101,13 @@ export type CreateReviewCandidateInput = {
     readonly processedAt: string;
     readonly status: LocalLedgerProcessedSourceEventStatus;
     readonly failureReason: string | null;
+    readonly subject?: string | null;
+    readonly rawBodyPreview?: string | null;
+    readonly rawBody?: string | null;
+    readonly retryCount?: number;
+    readonly nextRetryAt?: string | null;
+    readonly transactionId?: string | null;
+    readonly confidence?: number | null;
   };
   readonly candidate: LocalLedgerReviewCandidate;
   readonly evidence: readonly LocalLedgerCaptureEvidence[];
@@ -119,6 +135,13 @@ const toProcessedSourceEventRow = (input: CreateReviewCandidateInput) => ({
   sourceEventId: input.source.sourceEventId,
   status: input.source.status,
   failureReason: input.source.failureReason,
+  subject: input.source.subject,
+  rawBodyPreview: input.source.rawBodyPreview,
+  rawBody: input.source.rawBody,
+  retryCount: input.source.retryCount,
+  nextRetryAt: input.source.nextRetryAt,
+  transactionId: input.source.transactionId,
+  confidence: input.source.confidence,
   receivedAt: input.source.receivedAt,
   processedAt: input.source.processedAt,
   createdAt: input.now,
@@ -126,7 +149,9 @@ const toProcessedSourceEventRow = (input: CreateReviewCandidateInput) => ({
   deletedAt: null,
 });
 
-const toReviewCandidateRow = (input: CreateReviewCandidateInput) => ({
+const toReviewCandidateRow = (
+  input: CreateReviewCandidateInput
+): CreateReviewCandidateCommand["reviewCandidateRow"] => ({
   id: input.candidate.id,
   userId: input.userId,
   processedSourceEventId: input.source.processedSourceEventId,
@@ -134,7 +159,9 @@ const toReviewCandidateRow = (input: CreateReviewCandidateInput) => ({
   candidateKind: input.candidate.candidateKind,
   occurredAt: input.candidate.occurredAt,
   amount: input.candidate.money?.amount ?? null,
-  currency: "COP" as const,
+  currency: "COP",
+  transactionType: input.candidate.transactionType ?? null,
+  categoryId: input.candidate.categoryId ?? null,
   description: input.candidate.description,
   confidence: input.candidate.confidence,
   createdAt: input.now,

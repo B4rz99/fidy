@@ -1,6 +1,7 @@
 import type { CaptureEvidenceType } from "@/shared/capture-evidence/types";
 import type {
   CopAmount,
+  CategoryId,
   FinancialAccountId,
   IsoDate,
   IsoDateTime,
@@ -95,6 +96,8 @@ export type LocalLedgerReviewCandidate = {
   readonly status: LocalLedgerReviewCandidateStatus;
   readonly occurredAt: string | null;
   readonly money: LocalLedgerMoney | null;
+  readonly transactionType?: "expense" | "income" | null;
+  readonly categoryId?: CategoryId | null;
   readonly description: string | null;
   readonly confidence: number | null;
 };

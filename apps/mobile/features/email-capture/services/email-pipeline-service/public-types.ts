@@ -13,10 +13,11 @@ import type {
   CategoryId,
   IsoDateTime,
   ProcessedEmailId,
+  ProcessedSourceEventId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
-import type { ProcessedEmailRow } from "../../lib/repository";
+import type { ProcessedEmailRow, ProcessedSourceEventRow } from "../../lib/repository";
 import type { RawEmail } from "../../schema";
 import type { ParseContext } from "../create-parse-email-service";
 import type { LlmParsedTransaction } from "../llm-parser";
@@ -25,10 +26,11 @@ export type {
   CategoryId,
   IsoDateTime,
   ProcessedEmailId,
+  ProcessedSourceEventId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
-export type { ProcessedEmailRow } from "../../lib/repository";
+export type { ProcessedEmailRow, ProcessedSourceEventRow } from "../../lib/repository";
 export type { RawEmail } from "../../schema";
 export type { LlmParsedTransaction } from "../llm-parser";
 
@@ -83,28 +85,48 @@ export type CreateEmailPipelineServiceDeps = {
     readonly date: LlmParsedTransaction["date"];
     readonly merchant: string;
   }) => Promise<TransactionId | null>;
-  readonly getProcessedExternalIds: (db: AnyDb, externalIds: string[]) => Promise<Set<string>>;
-  readonly getPendingRetryEmails: (db: AnyDb) => Promise<readonly ProcessedEmailRow[]>;
+  readonly getProcessedEmailSourceEventIds: (
+    db: AnyDb,
+    userId: UserId,
+    sourceEvents: readonly { readonly sourceId: string; readonly sourceEventId: string }[]
+  ) => Promise<Set<string>>;
+  readonly getProcessedExternalIds: (
+    db: AnyDb,
+    userId: UserId,
+    sourceEvents: readonly { readonly provider: string; readonly externalId: string }[]
+  ) => Promise<Set<string>>;
+  readonly getPendingRetryEmailSourceEvents: (
+    db: AnyDb,
+    userId: UserId
+  ) => Promise<readonly ProcessedSourceEventRow[]>;
   readonly insertProcessedEmail: (db: AnyDb, row: ProcessedEmailRow) => Promise<void>;
-  readonly markForRetry: (input: {
+  readonly insertProcessedEmailSourceEvent: (
+    db: AnyDb,
+    row: ProcessedSourceEventRow
+  ) => Promise<void>;
+  readonly markSourceEventForRetry: (input: {
     readonly db: AnyDb;
-    readonly id: ProcessedEmailId;
+    readonly id: ProcessedSourceEventId;
     readonly retryCount: number;
     readonly nextRetryAt: IsoDateTime;
   }) => Promise<void>;
-  readonly markPermanentlyFailed: (db: AnyDb, id: ProcessedEmailId) => Promise<void>;
-  readonly markRetrySuccess: (input: {
+  readonly markSourceEventPermanentlyFailed: (
+    db: AnyDb,
+    id: ProcessedSourceEventId
+  ) => Promise<void>;
+  readonly markSourceEventRetrySuccess: (input: {
     readonly db: AnyDb;
-    readonly id: ProcessedEmailId;
-    readonly status: "success" | "needs_review";
+    readonly id: ProcessedSourceEventId;
+    readonly status: "processed" | "needs_review" | "duplicate";
     readonly transactionId: TransactionId | null;
     readonly confidence: number;
   }) => Promise<void>;
-  readonly updateProcessedEmailStatus: (input: {
+  readonly updateProcessedSourceEventStatus: (input: {
     readonly db: AnyDb;
-    readonly id: ProcessedEmailId;
+    readonly id: ProcessedSourceEventId;
     readonly status: string;
     readonly transactionId: TransactionId | null;
+    readonly rawBody?: string | null;
   }) => Promise<void>;
   readonly buildEmailCaptureEvidence: (input: {
     readonly from: string;
@@ -123,6 +145,7 @@ export type CreateEmailPipelineServiceDeps = {
     db: AnyDb,
     input: {
       readonly processedEmailId: ProcessedEmailId;
+      readonly processedSourceEventId?: ProcessedSourceEventId | null;
       readonly transactionId: TransactionId;
       readonly updatedAt: IsoDateTime;
     }

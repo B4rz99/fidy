@@ -3,13 +3,15 @@ import { captureWarning } from "@/shared/lib";
 import { assertEmailAccountId } from "@/shared/types/assertions";
 import type { EmailAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
 import type { ProgressPhase } from "../lib/progress-phases";
-import type { EmailAccountRow, ProcessedEmailRow } from "../lib/repository";
+import type {
+  EmailAccountRow,
+  ProcessedEmailRow,
+  ProcessedSourceEventRow,
+} from "../lib/repository";
 import type { ProgressCallback } from "../pipeline.public";
 import type { EmailProvider } from "../schema";
-import type {
-  EmailCaptureQueues,
-  PersistedFetchedAccounts,
-} from "../services/email-capture-fetch-service";
+import type { PersistedFetchedAccounts } from "../services/email-capture-fetch-service";
+import type { EmailCaptureQueues } from "../services/email-capture-queues";
 import {
   type EmailCaptureFetchRun,
   isCurrentEmailCaptureFetchRun,
@@ -22,7 +24,9 @@ export type EmailCaptureState = {
   readonly activeUserId: UserId | null;
   readonly accounts: readonly EmailAccountRow[];
   readonly failedEmails: readonly ProcessedEmailRow[];
+  readonly failedEmailSourceEvents: readonly ProcessedSourceEventRow[];
   readonly needsReviewEmails: readonly ProcessedEmailRow[];
+  readonly needsReviewEmailSourceEvents: readonly ProcessedSourceEventRow[];
   readonly isFetching: boolean;
   readonly progress: ProgressSnapshot | null;
   readonly phase: ProgressPhase | null;
@@ -33,7 +37,11 @@ export type EmailCaptureActions = {
   beginSession: (userId: UserId) => void;
   setAccounts: (accounts: readonly EmailAccountRow[]) => void;
   setFailedEmails: (failedEmails: readonly ProcessedEmailRow[]) => void;
+  setFailedEmailSourceEvents: (failedEmailSourceEvents: readonly ProcessedSourceEventRow[]) => void;
   setNeedsReviewEmails: (needsReviewEmails: readonly ProcessedEmailRow[]) => void;
+  setNeedsReviewEmailSourceEvents: (
+    needsReviewEmailSourceEvents: readonly ProcessedSourceEventRow[]
+  ) => void;
   setIsFetching: (isFetching: boolean) => void;
   setProgress: (progress: ProgressSnapshot | null) => void;
   setPhase: (phase: ProgressPhase | null) => void;
@@ -53,7 +61,9 @@ export function createEmailCaptureState(activeUserId: UserId | null): EmailCaptu
     activeUserId,
     accounts: [],
     failedEmails: [],
+    failedEmailSourceEvents: [],
     needsReviewEmails: [],
+    needsReviewEmailSourceEvents: [],
     isFetching: false,
     progress: null,
     phase: null,
@@ -70,7 +80,11 @@ export function createEmailCaptureActions(set: EmailCaptureSetState): EmailCaptu
     beginSession: beginEmailCaptureSession(set),
     setAccounts: (accounts) => set({ accounts: [...accounts] }),
     setFailedEmails: (failedEmails) => set({ failedEmails: [...failedEmails] }),
+    setFailedEmailSourceEvents: (failedEmailSourceEvents) =>
+      set({ failedEmailSourceEvents: [...failedEmailSourceEvents] }),
     setNeedsReviewEmails: (needsReviewEmails) => set({ needsReviewEmails: [...needsReviewEmails] }),
+    setNeedsReviewEmailSourceEvents: (needsReviewEmailSourceEvents) =>
+      set({ needsReviewEmailSourceEvents: [...needsReviewEmailSourceEvents] }),
     setIsFetching: (isFetching) => set({ isFetching }),
     setProgress: (progress) => set({ progress }),
     setPhase: (phase) => set({ phase }),
@@ -86,10 +100,16 @@ export function createEmailCaptureActions(set: EmailCaptureSetState): EmailCaptu
     removeFailedEmail: (processedEmailId) =>
       set((state) => ({
         failedEmails: state.failedEmails.filter((email) => email.id !== processedEmailId),
+        failedEmailSourceEvents: state.failedEmailSourceEvents.filter(
+          (email) => email.id !== processedEmailId
+        ),
       })),
     removeNeedsReviewEmail: (processedEmailId) =>
       set((state) => ({
         needsReviewEmails: state.needsReviewEmails.filter((email) => email.id !== processedEmailId),
+        needsReviewEmailSourceEvents: state.needsReviewEmailSourceEvents.filter(
+          (email) => email.id !== processedEmailId
+        ),
       })),
     markAccountsFetched: (accountIds, fetchedAt) =>
       set((state) => ({
@@ -145,7 +165,9 @@ export async function applyEmailCaptureFetchOutcome(input: {
     input.persistedAccounts.fetchedAt
   );
   state.setFailedEmails(input.queues.failedEmails);
+  state.setFailedEmailSourceEvents(input.queues.failedEmailSourceEvents);
   state.setNeedsReviewEmails(input.queues.needsReviewEmails);
+  state.setNeedsReviewEmailSourceEvents(input.queues.needsReviewEmailSourceEvents);
   if (input.showProgress) state.setPhase("complete");
   await input.refreshTransactions();
 }

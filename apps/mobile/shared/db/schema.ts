@@ -251,6 +251,13 @@ export const processedSourceEvents = sqliteTable(
     sourceEventId: text("source_event_id").notNull(),
     status: text("status").notNull(),
     failureReason: text("failure_reason"),
+    subject: text("subject"),
+    rawBodyPreview: text("raw_body_preview"),
+    rawBody: text("raw_body"),
+    retryCount: integer("retry_count").notNull().default(0),
+    nextRetryAt: text("next_retry_at").$type<IsoDateTime>(),
+    transactionId: text("transaction_id").$type<TransactionId>(),
+    confidence: real("confidence"),
     receivedAt: text("received_at").$type<IsoDateTime>().notNull(),
     processedAt: text("processed_at").$type<IsoDateTime>().notNull(),
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
@@ -262,6 +269,12 @@ export const processedSourceEvents = sqliteTable(
       .on(table.userId, table.sourceFamily, table.sourceId, table.sourceEventId)
       .where(sql`${table.deletedAt} is null`),
     index("idx_processed_source_events_user_status").on(table.userId, table.status),
+    index("idx_processed_source_events_retry_due").on(
+      table.userId,
+      table.sourceFamily,
+      table.status,
+      table.nextRetryAt
+    ),
     index("idx_processed_source_events_user_updated").on(table.userId, table.updatedAt),
   ]
 );
@@ -279,6 +292,8 @@ export const reviewCandidates = sqliteTable(
     occurredAt: text("occurred_at").$type<IsoDateTime>(),
     amount: integer("amount").$type<CopAmount>(),
     currency: text("currency").notNull().default("COP"),
+    transactionType: text("transaction_type").$type<"expense" | "income">(),
+    categoryId: text("category_id").$type<CategoryId>(),
     description: text("description"),
     confidence: real("confidence"),
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),

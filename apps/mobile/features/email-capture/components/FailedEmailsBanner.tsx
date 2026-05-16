@@ -5,7 +5,9 @@ import { useEmailCaptureStore } from "../store";
 
 export const FailedEmailsBanner = ({ onPress }: { onPress: () => void }) => {
   const { t } = useTranslation();
-  const failedCount = useEmailCaptureStore((s) => s.failedEmails.length);
+  const failedCount = useEmailCaptureStore(
+    (s) => s.failedEmails.length + s.failedEmailSourceEvents.length
+  );
   const iconColor = useThemeColor("accentRed");
 
   if (failedCount === 0) return null;

@@ -1,10 +1,12 @@
 export {
+  confirmSourceEventFinancialMeaningReview,
   dismissFinancialMeaningReview,
+  dismissSourceEventFinancialMeaningReview,
   getFinancialMeaningReviewItems,
   resolveFinancialMeaningReview,
 } from "./lib/financial-meaning-review";
 export { insertMerchantRule, lookupMerchantRule } from "./lib/merchant-rules";
-export type { ProcessedEmailRow } from "./lib/repository";
+export type { ProcessedEmailRow, ProcessedSourceEventRow } from "./lib/repository";
 export { getNeedsReviewEmailByTransactionId } from "./lib/repository";
 export type { BankSender } from "./lib/bank-senders";
 export type { EmailProvider } from "./schema";
@@ -17,6 +19,7 @@ export {
   connectEmailAccount,
   disconnectEmailAccount,
   dismissFailedEmail,
+  dismissFailedEmailSourceEvent,
   fetchAndProcessEmails,
   initializeEmailCaptureSession,
   loadEmailAccounts,

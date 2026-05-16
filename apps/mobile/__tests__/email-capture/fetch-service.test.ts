@@ -8,7 +8,11 @@ import {
 } from "@/features/email-capture/services/email-capture-fetch-service";
 import { createCaptureIngestionPort } from "@/features/capture-sources/ingestion.public";
 import type { AnyDb } from "@/shared/db";
-import { updateLastFetchedAt } from "@/features/email-capture/lib/repository";
+import {
+  getProcessedExternalIds,
+  getProcessedEmailSourceEventIds,
+  updateLastFetchedAt,
+} from "@/features/email-capture/lib/repository";
 import type * as SharedLib from "@/shared/lib";
 import type { EmailAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
 
@@ -26,7 +30,11 @@ vi.mock("@/features/capture-sources/ingestion.public", () => ({
 
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getFailedEmails: vi.fn<(...args: any[]) => any>(),
+  getFailedEmailSourceEvents: vi.fn<(...args: any[]) => any>(),
   getNeedsReviewEmails: vi.fn<(...args: any[]) => any>(),
+  getNeedsReviewEmailSourceEvents: vi.fn<(...args: any[]) => any>(),
+  getProcessedExternalIds: vi.fn<(...args: any[]) => any>(),
+  getProcessedEmailSourceEventIds: vi.fn<(...args: any[]) => any>(),
   updateLastFetchedAt: vi.fn<(...args: any[]) => any>(),
 }));
 
@@ -174,6 +182,8 @@ describe("persistFetchedAccounts", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-20T12:00:00.000Z"));
     vi.clearAllMocks();
+    vi.mocked(getProcessedEmailSourceEventIds).mockResolvedValue(new Set(["email_gmail:ext-1"]));
+    vi.mocked(getProcessedExternalIds).mockResolvedValue(new Set());
   });
 
   afterEach(() => {
@@ -186,6 +196,7 @@ describe("persistFetchedAccounts", () => {
 
     const result = await persistFetchedAccounts({
       db,
+      userId: "user-1" as UserId,
       fetchResults: [
         {
           account,
@@ -222,9 +233,11 @@ describe("persistFetchedAccounts", () => {
   it("does not advance lastFetchedAt when fetched email failures are not durably accounted for", async () => {
     const db = {} as AnyDb;
     const account = makeAccount();
+    vi.mocked(getProcessedEmailSourceEventIds).mockResolvedValueOnce(new Set());
 
     const result = await persistFetchedAccounts({
       db,
+      userId: "user-1" as UserId,
       fetchResults: [
         {
           account,

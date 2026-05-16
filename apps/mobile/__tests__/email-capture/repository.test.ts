@@ -13,6 +13,8 @@ const mockRun = vi.fn<(...args: any[]) => any>().mockReturnValue({ changes: 1 })
 const mockOnConflictDoNothing = vi.fn<(...args: any[]) => any>().mockReturnValue({ run: mockRun });
 const mockInsert = vi.fn<(...args: any[]) => any>(() => ({ values: mockValues }));
 const mockSelect = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockSelectDistinct = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockLimit = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
 const mockFrom = vi.fn<(...args: any[]) => any>().mockReturnThis();
 const mockWhere = vi.fn<(...args: any[]) => any>().mockReturnThis();
 const mockOrderBy = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
@@ -25,6 +27,7 @@ const mockUpdateWhere = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
 const mockDb = {
   insert: mockInsert,
   select: mockSelect,
+  selectDistinct: mockSelectDistinct,
   from: mockFrom,
   where: mockWhere,
   orderBy: mockOrderBy,
@@ -36,10 +39,12 @@ describe("email capture repository", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRun.mockReturnValue({ changes: 1 });
+    mockLimit.mockResolvedValue([]);
     mockOnConflictDoNothing.mockReturnValue({ run: mockRun });
     mockValues.mockReturnValue({ onConflictDoNothing: mockOnConflictDoNothing });
     mockSelect.mockReturnValue({ from: mockFrom });
-    mockFrom.mockReturnValue({ where: mockWhere, orderBy: mockOrderBy });
+    mockSelectDistinct.mockReturnValue({ from: mockFrom });
+    mockFrom.mockReturnValue({ where: mockWhere, orderBy: mockOrderBy, limit: mockLimit });
     mockWhere.mockReturnValue({ orderBy: mockOrderBy });
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
     mockUpdate.mockReturnValue({ set: mockSet });
@@ -209,23 +214,31 @@ describe("email capture repository", () => {
 
   it("getProcessedExternalIds returns empty Set for empty array", async () => {
     const { getProcessedExternalIds } = await import("@/features/email-capture/lib/repository");
-    const result = await getProcessedExternalIds(mockDb, []);
+    const result = await getProcessedExternalIds(mockDb, "user-1" as UserId, []);
 
     expect(result).toEqual(new Set());
     expect(mockSelect).not.toHaveBeenCalled();
   });
 
   it("getProcessedExternalIds queries DB and returns Set for non-empty array", async () => {
-    const mockRows = [{ externalId: "msg-1" }, { externalId: "msg-2" }];
+    const mockRows = [
+      { externalId: "msg-1", provider: "gmail" },
+      { externalId: "msg-2", provider: "outlook" },
+    ];
+    mockLimit.mockResolvedValueOnce([{ userId: "user-1" }]);
     mockWhere.mockResolvedValueOnce(mockRows);
 
     const { getProcessedExternalIds } = await import("@/features/email-capture/lib/repository");
-    const result = await getProcessedExternalIds(mockDb, ["msg-1", "msg-2", "msg-3"]);
+    const result = await getProcessedExternalIds(mockDb, "user-1" as UserId, [
+      { provider: "gmail", externalId: "msg-1" },
+      { provider: "outlook", externalId: "msg-2" },
+      { provider: "gmail", externalId: "msg-3" },
+    ]);
 
     expect(mockSelect).toHaveBeenCalled();
     expect(mockFrom).toHaveBeenCalled();
     expect(mockWhere).toHaveBeenCalled();
-    expect(result).toEqual(new Set(["msg-1", "msg-2"]));
+    expect(result).toEqual(new Set(["email_gmail:msg-1", "email_outlook:msg-2"]));
   });
 
   it("getNeedsReviewEmails returns emails with needs_review status", async () => {

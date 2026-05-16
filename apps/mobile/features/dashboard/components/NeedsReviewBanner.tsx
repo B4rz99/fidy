@@ -5,7 +5,9 @@ import { useTranslation } from "@/shared/hooks";
 
 export const NeedsReviewBanner = ({ onPress }: { onPress: () => void }) => {
   const { t } = useTranslation();
-  const count = useEmailCaptureStore((s) => s.needsReviewEmails.length);
+  const count = useEmailCaptureStore(
+    (s) => s.needsReviewEmails.length + s.needsReviewEmailSourceEvents.length
+  );
 
   if (count === 0) return null;
 

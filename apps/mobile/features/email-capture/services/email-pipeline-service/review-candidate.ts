@@ -15,8 +15,9 @@ import {
   generateReviewCandidateId,
 } from "@/shared/lib/generate-id";
 import { requireCopAmount, requireIsoDate, requireIsoDateTime } from "@/shared/types/assertions";
+import type { ProcessedSourceEventId } from "@/shared/types/branded";
 import { EmailPipelineDeps } from "./runtime";
-import { getTransactionSource } from "./shared";
+import { getEmailSourceId } from "./shared";
 import type { CreateEmailPipelineServiceDeps, EmailTransactionContext } from "./types";
 
 type ReviewCandidateContext = Pick<
@@ -24,13 +25,16 @@ type ReviewCandidateContext = Pick<
   "db" | "userId" | "parsed" | "categoryId" | "now"
 > & {
   readonly email: {
+    readonly subject?: string | null;
     readonly externalId: string;
     readonly provider: string;
     readonly from?: string;
     readonly body?: string | null;
     readonly rawBody?: string | null;
     readonly receivedAt: string;
+    readonly retryCount?: number | null;
   };
+  readonly processedSourceEventId?: ProcessedSourceEventId;
 };
 
 const toReviewCandidateInput = (
@@ -40,14 +44,24 @@ const toReviewCandidateInput = (
   commandId: generateId("llc") as LocalLedgerCommandId,
   userId: context.userId,
   source: {
-    processedSourceEventId: generateId("pse") as LocalLedgerProcessedSourceEventId,
+    processedSourceEventId:
+      (context.processedSourceEventId as unknown as
+        | LocalLedgerProcessedSourceEventId
+        | undefined) ?? (generateId("pse") as LocalLedgerProcessedSourceEventId),
     sourceFamily: "email",
-    sourceId: getTransactionSource(context.email.provider) as LocalLedgerSourceId,
+    sourceId: getEmailSourceId(context.email) as LocalLedgerSourceId,
     sourceEventId: context.email.externalId,
     receivedAt: requireIsoDateTime(context.email.receivedAt),
     processedAt: context.now,
     status: "needs_review",
     failureReason: null,
+    subject: context.email.subject ?? null,
+    rawBodyPreview: (context.email.body ?? context.email.rawBody ?? "").slice(0, 500),
+    rawBody: null,
+    retryCount: context.email.retryCount ?? 0,
+    nextRetryAt: null,
+    transactionId: null,
+    confidence: context.parsed.confidence,
   },
   candidate: {
     id: generateReviewCandidateId() as unknown as LocalLedgerReviewCandidateId,
@@ -55,6 +69,8 @@ const toReviewCandidateInput = (
     candidateKind: "transaction",
     occurredAt: requireIsoDate(context.parsed.date),
     money: { amount: requireCopAmount(context.parsed.amount), currency: "COP" },
+    transactionType: context.parsed.type,
+    categoryId: context.categoryId,
     description: null,
     confidence: context.parsed.confidence,
   },

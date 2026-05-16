@@ -19,11 +19,12 @@ import type {
   LlmParsedTransaction,
   MerchantRuleEffectInput,
   PipelineRuntime,
-  ProcessedEmailId,
   ProcessedEmailRow,
-  ProcessedEmailStatusEffectInput,
-  RetryScheduleEffectInput,
-  RetrySuccessEffectInput,
+  ProcessedSourceEventId,
+  ProcessedSourceEventRow,
+  ProcessedSourceEventStatusEffectInput,
+  SourceEventRetryScheduleEffectInput,
+  SourceEventRetrySuccessEffectInput,
   UserId,
 } from "./types";
 
@@ -37,11 +38,21 @@ const DEFAULT_PARSE_RATE_LIMIT_CONCURRENCY: number | null = null;
 const sleep = (delayMs: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, delayMs));
 
+export class EmailParseApiError extends Error {
+  constructor(readonly originalError: unknown) {
+    super("Email parse API failed");
+    this.name = "EmailParseApiError";
+  }
+}
+
 export function parseBodyEffect(db: AnyDb, userId: UserId, body: string) {
   return Effect.gen(function* () {
     const { parseEmailApi, parseContext, lookupMerchantRule } = yield* EmailPipelineDeps.tag;
-    const llmResult = yield* fromPromise(() =>
-      parseContext ? parseEmailApi(body, { parseContext }) : parseEmailApi(body)
+    const llmResult = yield* Effect.mapError(
+      fromPromise(() =>
+        parseContext ? parseEmailApi(body, { parseContext }) : parseEmailApi(body)
+      ),
+      (error) => new EmailParseApiError(error)
     );
     if (!llmResult) return null;
 
@@ -54,15 +65,29 @@ export function parseBodyEffect(db: AnyDb, userId: UserId, body: string) {
   });
 }
 
-export function getProcessedExternalIdsEffect(db: AnyDb, externalIds: string[]) {
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ getProcessedExternalIds }) =>
-    fromPromise(() => getProcessedExternalIds(db, externalIds))
+export function getProcessedEmailSourceEventIdsEffect(
+  db: AnyDb,
+  userId: UserId,
+  sourceEvents: readonly { readonly sourceId: string; readonly sourceEventId: string }[]
+) {
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ getProcessedEmailSourceEventIds }) =>
+    fromPromise(() => getProcessedEmailSourceEventIds(db, userId, sourceEvents))
   );
 }
 
-export function getPendingRetryEmailsEffect(db: AnyDb) {
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ getPendingRetryEmails }) =>
-    fromPromise(() => getPendingRetryEmails(db))
+export function getProcessedExternalIdsEffect(
+  db: AnyDb,
+  userId: UserId,
+  sourceEvents: readonly { readonly provider: string; readonly externalId: string }[]
+) {
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ getProcessedExternalIds }) =>
+    fromPromise(() => getProcessedExternalIds(db, userId, sourceEvents))
+  );
+}
+
+export function getPendingRetryEmailSourceEventsEffect(db: AnyDb, userId: UserId) {
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ getPendingRetryEmailSourceEvents }) =>
+    fromPromise(() => getPendingRetryEmailSourceEvents(db, userId))
   );
 }
 
@@ -90,6 +115,12 @@ export function insertProcessedEmailEffect(db: AnyDb, row: ProcessedEmailRow) {
   );
 }
 
+export function insertProcessedEmailSourceEventEffect(db: AnyDb, row: ProcessedSourceEventRow) {
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ insertProcessedEmailSourceEvent }) =>
+    fromPromise(() => insertProcessedEmailSourceEvent(db, row))
+  );
+}
+
 function buildEmailCaptureEvidenceRows(input: CaptureEvidenceRowsInput) {
   return materializeCaptureEvidenceRows(
     input.buildEmailCaptureEvidence({
@@ -105,6 +136,7 @@ function buildEmailCaptureEvidenceRows(input: CaptureEvidenceRowsInput) {
       userId: input.userId,
       transactionId: input.transactionId,
       processedEmailId: input.processedEmailId,
+      processedSourceEventId: input.processedSourceEventId ?? null,
       processedCaptureId: null,
       createdAt: input.now,
       updatedAt: input.now,
@@ -132,6 +164,7 @@ export function saveEmailCaptureEvidenceEffect(input: CaptureEvidenceSaveInput) 
         accountTypeHint: input.accountTypeHint,
         counterpartyHint: input.counterpartyHint,
         processedEmailId: input.processedEmailId,
+        processedSourceEventId: input.processedSourceEventId ?? null,
         transactionId: input.transactionId,
         now: input.now,
         buildEmailCaptureEvidence,
@@ -145,6 +178,7 @@ export function linkCaptureEvidenceToTransactionEffect(input: LinkCaptureEvidenc
     fromThunk(() =>
       linkCaptureEvidenceToTransaction(input.db, {
         processedEmailId: input.processedEmailId,
+        processedSourceEventId: input.processedSourceEventId ?? null,
         transactionId: input.transactionId,
         updatedAt: input.updatedAt,
       })
@@ -172,10 +206,10 @@ export function insertMerchantRuleEffect(input: MerchantRuleEffectInput) {
   );
 }
 
-export function markForRetryEffect(input: RetryScheduleEffectInput) {
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ markForRetry }) =>
+export function markSourceEventForRetryEffect(input: SourceEventRetryScheduleEffectInput) {
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ markSourceEventForRetry }) =>
     fromPromise(() =>
-      markForRetry({
+      markSourceEventForRetry({
         db: input.db,
         id: input.id,
         retryCount: input.retryCount,
@@ -185,16 +219,16 @@ export function markForRetryEffect(input: RetryScheduleEffectInput) {
   );
 }
 
-export function markPermanentlyFailedEffect(db: AnyDb, id: ProcessedEmailId) {
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ markPermanentlyFailed }) =>
-    fromPromise(() => markPermanentlyFailed(db, id))
+export function markSourceEventPermanentlyFailedEffect(db: AnyDb, id: ProcessedSourceEventId) {
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ markSourceEventPermanentlyFailed }) =>
+    fromPromise(() => markSourceEventPermanentlyFailed(db, id))
   );
 }
 
-export function markRetrySuccessEffect(input: RetrySuccessEffectInput) {
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ markRetrySuccess }) =>
+export function markSourceEventRetrySuccessEffect(input: SourceEventRetrySuccessEffectInput) {
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ markSourceEventRetrySuccess }) =>
     fromPromise(() =>
-      markRetrySuccess({
+      markSourceEventRetrySuccess({
         db: input.db,
         id: input.id,
         status: input.status,
@@ -205,14 +239,17 @@ export function markRetrySuccessEffect(input: RetrySuccessEffectInput) {
   );
 }
 
-export function updateProcessedEmailStatusEffect(input: ProcessedEmailStatusEffectInput) {
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ updateProcessedEmailStatus }) =>
+export function updateProcessedSourceEventStatusEffect(
+  input: ProcessedSourceEventStatusEffectInput
+) {
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ updateProcessedSourceEventStatus }) =>
     fromPromise(() =>
-      updateProcessedEmailStatus({
+      updateProcessedSourceEventStatus({
         db: input.db,
         id: input.id,
         status: input.status,
         transactionId: input.transactionId,
+        rawBody: input.rawBody,
       })
     )
   );

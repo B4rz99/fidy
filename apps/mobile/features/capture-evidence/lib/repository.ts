@@ -9,6 +9,7 @@ type CaptureEvidenceLink = Pick<
   CaptureEvidenceRow,
   | "processedEmailId"
   | "processedCaptureId"
+  | "processedSourceEventId"
   | "transactionId"
   | "transferId"
   | "userId"
@@ -115,6 +116,7 @@ export function materializeCaptureEvidenceRows(
     transferId: link.transferId ?? null,
     processedEmailId: link.processedEmailId,
     processedCaptureId: link.processedCaptureId,
+    processedSourceEventId: link.processedSourceEventId,
     createdAt: link.createdAt,
     updatedAt: link.updatedAt,
     deletedAt: null,
