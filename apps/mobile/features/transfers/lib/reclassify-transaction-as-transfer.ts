@@ -51,7 +51,10 @@ type ReclassifyTransactionAsTransferDeps = {
   readonly saveProcessedSourceEventStatus?: typeof markProcessedSourceEventReclassifiedAsTransfer;
 };
 
-export type ReclassifyTransactionAsTransferError = TransferBuildError | "transactionNotFound";
+export type ReclassifyTransactionAsTransferError =
+  | TransferBuildError
+  | "reviewCandidateRequired"
+  | "transactionNotFound";
 
 export type ReclassifyTransactionAsTransferResult =
   | { success: true; transfer: StoredTransfer }
@@ -80,6 +83,9 @@ export function reclassifyTransactionAsTransfer(
     existingTransaction.supersededAt != null
   ) {
     return { success: false, error: "transactionNotFound" };
+  }
+  if (input.processedSourceEventId && !input.reviewCandidateId) {
+    return { success: false, error: "reviewCandidateRequired" };
   }
 
   const nowDate = now();

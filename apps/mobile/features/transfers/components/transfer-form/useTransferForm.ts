@@ -44,6 +44,20 @@ function parseReclassificationReviewCandidateId(
     : null;
 }
 
+function parseSourceEventReviewRouteParams(input: {
+  readonly processedSourceEventId: string | string[] | undefined;
+  readonly reviewCandidateId: string | string[] | undefined;
+}) {
+  const processedSourceEventId = parseReclassificationProcessedSourceEventId(
+    input.processedSourceEventId
+  );
+  const reviewCandidateId = parseReclassificationReviewCandidateId(input.reviewCandidateId);
+
+  return processedSourceEventId && reviewCandidateId
+    ? { processedSourceEventId, reviewCandidateId }
+    : { processedSourceEventId: null, reviewCandidateId: null };
+}
+
 async function navigateAfterTransferSave(
   destination: "needs-review" | "tabs",
   replace: ReturnType<typeof useRouter>["replace"],
@@ -71,6 +85,10 @@ function useTransferFormRouteContext() {
   }>();
   const { back, navigate, replace } = useRouter();
   const userId = useOptionalUserId();
+  const sourceEventReviewParams = parseSourceEventReviewRouteParams({
+    processedSourceEventId: rawProcessedSourceEventId,
+    reviewCandidateId: rawReviewCandidateId,
+  });
 
   return {
     db: userId ? tryGetDb(userId) : null,
@@ -82,8 +100,8 @@ function useTransferFormRouteContext() {
       [navigate, replace]
     ),
     processedEmailId: parseReclassificationProcessedEmailId(rawProcessedEmailId),
-    processedSourceEventId: parseReclassificationProcessedSourceEventId(rawProcessedSourceEventId),
-    reviewCandidateId: parseReclassificationReviewCandidateId(rawReviewCandidateId),
+    processedSourceEventId: sourceEventReviewParams.processedSourceEventId,
+    reviewCandidateId: sourceEventReviewParams.reviewCandidateId,
     reclassificationTransactionId: parseReclassificationTransactionId(rawTransactionId),
     userId,
   };

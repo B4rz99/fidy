@@ -615,7 +615,7 @@ describe("email capture boundary", () => {
 
     await loadFailedEmails(mockDb, mockUserId as UserId);
 
-    expect(getFailedEmails).toHaveBeenCalledWith(mockDb);
+    expect(getFailedEmails).toHaveBeenCalledWith(mockDb, mockUserId);
     expect(getFailedEmailSourceEvents).toHaveBeenCalledWith(mockDb, mockUserId);
     expect(useEmailCaptureStore.getState().failedEmails).toEqual(mockLegacyFailed);
     expect(useEmailCaptureStore.getState().failedEmailSourceEvents).toEqual(mockFailed);
@@ -643,7 +643,7 @@ describe("email capture boundary", () => {
 
     await loadNeedsReviewEmails(mockDb, mockUserId as UserId);
 
-    expect(getNeedsReviewEmails).toHaveBeenCalledWith(mockDb);
+    expect(getNeedsReviewEmails).toHaveBeenCalledWith(mockDb, mockUserId);
     expect(getNeedsReviewEmailSourceEvents).toHaveBeenCalledWith(mockDb, mockUserId);
     expect(useEmailCaptureStore.getState().needsReviewEmails).toEqual(mockLegacyReview);
     expect(useEmailCaptureStore.getState().needsReviewEmailSourceEvents).toEqual(mockReview);

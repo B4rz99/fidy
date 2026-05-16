@@ -21,9 +21,9 @@ export async function loadEmailCaptureQueues(
 ): Promise<EmailCaptureQueues> {
   const [failedEmails, failedEmailSourceEvents, needsReviewEmails, needsReviewEmailSourceEvents] =
     await Promise.all([
-      getFailedEmails(db),
+      getFailedEmails(db, userId),
       getFailedEmailSourceEvents(db, userId),
-      getNeedsReviewEmails(db),
+      getNeedsReviewEmails(db, userId),
       getNeedsReviewEmailSourceEvents(db, userId),
     ]);
 

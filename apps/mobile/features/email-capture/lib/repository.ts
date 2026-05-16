@@ -1,6 +1,6 @@
-import { and, desc, eq, inArray, lte, sql } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, inArray, lte, sql } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
-import { emailAccounts, processedEmails } from "@/shared/db";
+import { emailAccounts, processedEmails, transactions } from "@/shared/db";
 import type {
   EmailAccountId,
   IsoDateTime,
@@ -125,19 +125,21 @@ export async function getProcessedExternalIds(
   return new Set(rows.map(getLegacyEmailSourceEventKey));
 }
 
-export async function getFailedEmails(db: AnyDb) {
+export async function getFailedEmails(db: AnyDb, userId: UserId) {
   return db
-    .select()
+    .select({ ...getTableColumns(processedEmails) })
     .from(processedEmails)
-    .where(eq(processedEmails.status, "failed"))
+    .innerJoin(transactions, eq(transactions.id, processedEmails.transactionId))
+    .where(and(eq(processedEmails.status, "failed"), eq(transactions.userId, userId)))
     .orderBy(desc(processedEmails.receivedAt));
 }
 
-export async function getNeedsReviewEmails(db: AnyDb) {
+export async function getNeedsReviewEmails(db: AnyDb, userId: UserId) {
   return db
-    .select()
+    .select({ ...getTableColumns(processedEmails) })
     .from(processedEmails)
-    .where(eq(processedEmails.status, "needs_review"))
+    .innerJoin(transactions, eq(transactions.id, processedEmails.transactionId))
+    .where(and(eq(processedEmails.status, "needs_review"), eq(transactions.userId, userId)))
     .orderBy(desc(processedEmails.receivedAt));
 }
 

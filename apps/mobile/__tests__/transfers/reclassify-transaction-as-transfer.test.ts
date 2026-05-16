@@ -236,6 +236,26 @@ function runReclassification() {
   );
 }
 
+function runReclassificationWithoutReviewCandidate() {
+  return reclassifyTransactionAsTransfer(
+    db as any,
+    {
+      userId: USER_ID,
+      transactionId: ORIGINAL_TRANSACTION_ID,
+      digits: "350000",
+      fromSide: { kind: "account", accountId: ACCOUNT_ID },
+      toSide: { kind: "account", accountId: SAVINGS_ACCOUNT_ID },
+      description: "Move to savings",
+      date: new Date("2026-04-18T12:00:00.000Z"),
+      processedSourceEventId: "pse-1" as ProcessedSourceEventId,
+    },
+    {
+      now: () => new Date(NOW),
+      createId: () => TRANSFER_ID,
+    }
+  );
+}
+
 function expectCreatedTransferState() {
   expect(getTransferById(db as any, TRANSFER_ID)).toMatchObject({
     id: TRANSFER_ID,
@@ -301,6 +321,36 @@ function expectProcessedSourceEventSucceeded() {
   );
 }
 
+function expectProcessedSourceEventPending() {
+  expect(
+    db
+      .select()
+      .from(processedSourceEvents)
+      .where(eq(processedSourceEvents.id, "pse-1" as ProcessedSourceEventId))
+      .get()
+  ).toEqual(
+    expect.objectContaining({
+      id: "pse-1",
+      status: "needs_review",
+      transactionId: ORIGINAL_TRANSACTION_ID,
+      updatedAt: ORIGINAL_CREATED_AT,
+    })
+  );
+  expect(
+    db
+      .select()
+      .from(reviewCandidates)
+      .where(eq(reviewCandidates.id, "rc-1" as ReviewCandidateId))
+      .get()
+  ).toEqual(
+    expect.objectContaining({
+      id: "rc-1",
+      status: "pending",
+      updatedAt: ORIGINAL_CREATED_AT,
+    })
+  );
+}
+
 describe("reclassifyTransactionAsTransfer", () => {
   it("creates a transfer, supersedes the original transaction, relinks capture evidence,", async () => {
     await seedReclassificationScenario();
@@ -316,6 +366,21 @@ describe("reclassifyTransactionAsTransfer", () => {
     });
     expectCreatedTransferState();
     expectProcessedSourceEventSucceeded();
+    await expectProcessedEmailUnchanged();
+  });
+
+  it("rejects source-event transfer reclassification without a review candidate", async () => {
+    await seedReclassificationScenario();
+    const result = runReclassificationWithoutReviewCandidate();
+
+    expect(result).toEqual({ success: false, error: "reviewCandidateRequired" });
+    expect(getTransferById(db as any, TRANSFER_ID)).toBeNull();
+    expect(getTransactionById(db as any, ORIGINAL_TRANSACTION_ID)).toMatchObject({
+      supersededAt: null,
+      supersededByTransferId: null,
+      updatedAt: ORIGINAL_CREATED_AT,
+    });
+    expectProcessedSourceEventPending();
     await expectProcessedEmailUnchanged();
   });
 });

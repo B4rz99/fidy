@@ -12,6 +12,7 @@ import {
   resolveFinancialMeaningReview,
 } from "@/features/email-capture/lib/financial-meaning-review";
 import {
+  getFailedEmails,
   getFailedEmailSourceEvents,
   getNeedsReviewEmails,
   getNeedsReviewEmailSourceEvents,
@@ -52,6 +53,7 @@ afterEach(() => {
 
 type EmailTransactionOverrides = Partial<{
   id: TransactionId;
+  userId: UserId;
   amount: CopAmount;
   description: string;
   date: IsoDate;
@@ -223,7 +225,7 @@ describe("financial meaning review", () => {
 
     await resolveFinancialMeaningReview(db as any, "pe-1" as ProcessedEmailId);
 
-    expect(await getNeedsReviewEmails(db as any)).toEqual([]);
+    expect(await getNeedsReviewEmails(db as any, USER_ID)).toEqual([]);
     expect(await getProcessedEmailByExternalId(db as any, "ext-1")).toEqual(
       expect.objectContaining({
         id: "pe-1",
@@ -289,6 +291,45 @@ describe("financial meaning review", () => {
     ]);
   });
 
+  it("scopes legacy failed and needs-review email queues to the active user", async () => {
+    insertEmailTransactionRow({ id: "tx-user" as TransactionId });
+    insertEmailTransactionRow({
+      id: "tx-other" as TransactionId,
+      userId: "other-user" as UserId,
+    });
+    await insertNeedsReviewEmail({
+      id: "pe-user-review" as ProcessedEmailId,
+      externalId: "ext-user-review",
+      transactionId: "tx-user" as TransactionId,
+    });
+    await insertNeedsReviewEmail({
+      id: "pe-other-review" as ProcessedEmailId,
+      externalId: "ext-other-review",
+      transactionId: "tx-other" as TransactionId,
+    });
+    await insertProcessedEmail(db as any, {
+      ...defaultNeedsReviewEmail,
+      id: "pe-user-failed" as ProcessedEmailId,
+      externalId: "ext-user-failed",
+      status: "failed",
+      transactionId: "tx-user" as TransactionId,
+    });
+    await insertProcessedEmail(db as any, {
+      ...defaultNeedsReviewEmail,
+      id: "pe-other-failed" as ProcessedEmailId,
+      externalId: "ext-other-failed",
+      status: "failed",
+      transactionId: "tx-other" as TransactionId,
+    });
+
+    await expect(getNeedsReviewEmails(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({ id: "pe-user-review" }),
+    ]);
+    await expect(getFailedEmails(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({ id: "pe-user-failed" }),
+    ]);
+  });
+
   it("resolving a missing review item is a no-op", async () => {
     await expect(
       resolveFinancialMeaningReview(db as any, "pe-missing" as ProcessedEmailId)
@@ -335,7 +376,7 @@ describe("financial meaning review", () => {
       now: () => "2026-04-19T11:00:00.000Z" as IsoDateTime,
     });
 
-    expect(await getNeedsReviewEmails(db as any)).toEqual([]);
+    expect(await getNeedsReviewEmails(db as any, USER_ID)).toEqual([]);
     expect(await getProcessedEmailById(db as any, "pe-2" as ProcessedEmailId)).toEqual(
       expect.objectContaining({
         id: "pe-2",

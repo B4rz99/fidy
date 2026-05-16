@@ -92,7 +92,7 @@ export async function loadFailedEmails(db: AnyDb, userId: UserId) {
 
   try {
     const [failedEmails, failedEmailSourceEvents] = await Promise.all([
-      getFailedEmails(db),
+      getFailedEmails(db, userId),
       getFailedEmailSourceEvents(db, userId),
     ]);
     if (!isCurrentEmailCaptureRequest(request)) return;
@@ -112,7 +112,7 @@ export async function loadNeedsReviewEmails(db: AnyDb, userId: UserId) {
 
   try {
     const [needsReviewEmails, needsReviewEmailSourceEvents] = await Promise.all([
-      getNeedsReviewEmails(db),
+      getNeedsReviewEmails(db, userId),
       getNeedsReviewEmailSourceEvents(db, userId),
     ]);
     if (!isCurrentEmailCaptureRequest(request)) return;
