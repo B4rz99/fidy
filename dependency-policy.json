@@ -36,11 +36,6 @@
       "reason": "Minor lint tooling update should land in a dedicated tooling PR so rule and diagnostic changes can be reviewed separately."
     },
     {
-      "name": "posthog-react-native",
-      "until": "2026-06-01",
-      "reason": "Minor analytics SDK update should land in a dedicated observability PR with capture verification and native QA."
-    },
-    {
       "name": "tailwindcss",
       "until": "2026-06-01",
       "reason": "Tailwind 4 requires NativeWind compatibility proof and a dedicated styling migration."
