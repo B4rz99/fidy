@@ -239,12 +239,12 @@ describe("reclassifyTransactionAsTransfer", () => {
 });
 
 describe("reclassifyTransactionsAsTransfer", () => {
-  it("creates one transfer and supersedes the matching outgoing and incoming transactions", () => {
+  it("creates one transfer and supersedes the matching outgoing and incoming transactions", async () => {
     insertReclassificationAccounts();
     insertOriginalTransactionRecord();
     insertIncomingTransactionRecord();
 
-    const result = reclassifyTransactionsAsTransfer(
+    const result = await reclassifyTransactionsAsTransfer(
       db as any,
       {
         userId: USER_ID,
@@ -291,12 +291,12 @@ describe("reclassifyTransactionsAsTransfer", () => {
     expect(getSpendingByCategoryAggregate(db as any, USER_ID, "2026-04" as any)).toEqual([]);
   });
 
-  it("rolls back the transfer and supersession links when the atomic commit fails", () => {
+  it("rolls back the transfer and supersession links when the atomic commit fails", async () => {
     insertReclassificationAccounts();
     insertOriginalTransactionRecord();
     insertIncomingTransactionRecord();
 
-    expect(() =>
+    await expect(
       reclassifyTransactionsAsTransfer(
         db as any,
         {
@@ -316,7 +316,7 @@ describe("reclassifyTransactionsAsTransfer", () => {
           },
         }
       )
-    ).toThrow("failed to supersede incoming transaction");
+    ).rejects.toThrow("failed to supersede incoming transaction");
 
     expect(getTransferById(db as any, TRANSFER_ID)).toBeNull();
     expect(getTransactionById(db as any, ORIGINAL_TRANSACTION_ID)).toMatchObject({
@@ -331,7 +331,45 @@ describe("reclassifyTransactionsAsTransfer", () => {
     });
   });
 
-  it("rejects transactions that do not both belong to the user", () => {
+  it("rolls back when a supersession writer silently skips one source transaction", async () => {
+    insertReclassificationAccounts();
+    insertOriginalTransactionRecord();
+    insertIncomingTransactionRecord();
+
+    await expect(
+      reclassifyTransactionsAsTransfer(
+        db as any,
+        {
+          userId: USER_ID,
+          outgoingTransactionId: ORIGINAL_TRANSACTION_ID,
+          incomingTransactionId: INCOMING_TRANSACTION_ID,
+          description: "Move to savings",
+        },
+        {
+          now: () => new Date(NOW),
+          createId: () => TRANSFER_ID,
+          saveTransactionRow: (tx, input) => {
+            if (input.id === INCOMING_TRANSACTION_ID) return;
+            return markTransactionSuperseded(tx, input);
+          },
+        }
+      )
+    ).rejects.toThrow("transfer reclassification did not supersede both source transactions");
+
+    expect(getTransferById(db as any, TRANSFER_ID)).toBeNull();
+    expect(getTransactionById(db as any, ORIGINAL_TRANSACTION_ID)).toMatchObject({
+      supersededAt: null,
+      supersededByTransferId: null,
+      updatedAt: ORIGINAL_CREATED_AT,
+    });
+    expect(getTransactionById(db as any, INCOMING_TRANSACTION_ID)).toMatchObject({
+      supersededAt: null,
+      supersededByTransferId: null,
+      updatedAt: ORIGINAL_CREATED_AT,
+    });
+  });
+
+  it("rejects transactions that do not both belong to the user", async () => {
     insertOriginalTransactionRecord();
     insertTransaction(db as any, {
       id: INCOMING_TRANSACTION_ID,
@@ -350,7 +388,7 @@ describe("reclassifyTransactionsAsTransfer", () => {
       source: "email_capture",
     });
 
-    const result = reclassifyTransactionsAsTransfer(
+    const result = await reclassifyTransactionsAsTransfer(
       db as any,
       {
         userId: USER_ID,
@@ -376,7 +414,7 @@ describe("reclassifyTransactionsAsTransfer", () => {
     });
   });
 
-  it("rejects same-amount transactions from different dates", () => {
+  it("rejects same-amount transactions from different dates", async () => {
     insertReclassificationAccounts();
     insertOriginalTransactionRecord();
     insertIncomingTransactionRecord();
@@ -397,7 +435,7 @@ describe("reclassifyTransactionsAsTransfer", () => {
       source: "email_capture",
     });
 
-    const result = reclassifyTransactionsAsTransfer(
+    const result = await reclassifyTransactionsAsTransfer(
       db as any,
       {
         userId: USER_ID,
@@ -423,7 +461,7 @@ describe("reclassifyTransactionsAsTransfer", () => {
     });
   });
 
-  it("rejects transactions with unresolved account attribution", () => {
+  it("rejects transactions with unresolved account attribution", async () => {
     insertReclassificationAccounts();
     insertOriginalTransactionRecord();
     insertTransaction(db as any, {
@@ -443,7 +481,7 @@ describe("reclassifyTransactionsAsTransfer", () => {
       source: "email_capture",
     });
 
-    const result = reclassifyTransactionsAsTransfer(
+    const result = await reclassifyTransactionsAsTransfer(
       db as any,
       {
         userId: USER_ID,
@@ -469,13 +507,13 @@ describe("reclassifyTransactionsAsTransfer", () => {
     });
   });
 
-  it("rejects transactions whose accounts are not active accounts for the user", () => {
+  it("rejects transactions whose accounts are not active accounts for the user", async () => {
     insertFinancialAccount(ACCOUNT_ID);
     insertFinancialAccount(SAVINGS_ACCOUNT_ID, { userId: "other-user" as UserId });
     insertOriginalTransactionRecord();
     insertIncomingTransactionRecord();
 
-    const result = reclassifyTransactionsAsTransfer(
+    const result = await reclassifyTransactionsAsTransfer(
       db as any,
       {
         userId: USER_ID,

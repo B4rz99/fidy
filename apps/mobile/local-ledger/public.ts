@@ -32,6 +32,18 @@ export type {
   IntakeLocalLedgerCandidateResult,
 } from "./use-cases/intake.public";
 export {
+  createReclassifyTransactionsAsTransfer,
+  type ReclassifiableTransaction,
+  type ReclassifyTransactionsAsTransfer,
+  type ReclassifyTransactionsAsTransferCommand,
+  type ReclassifyTransactionsAsTransferCommitInput,
+  type ReclassifyTransactionsAsTransferCommitResult,
+  type ReclassifyTransactionsAsTransferDependencies,
+  type ReclassifyTransactionsAsTransferPorts,
+  type ReclassifyTransactionsAsTransferRejectionReason,
+  type ReclassifyTransactionsAsTransferResult,
+} from "./use-cases/reclassify-transactions-as-transfer.public";
+export {
   createRecordTransfer,
   recordTransaction,
   type RecordTransactionAccepted,
