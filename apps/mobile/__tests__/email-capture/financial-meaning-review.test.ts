@@ -389,6 +389,28 @@ describe("financial meaning review", () => {
     ]);
   });
 
+  it("does not use global legacy queues without an email-account owner", async () => {
+    insertEmailTransactionRow({ id: "tx-user" as TransactionId });
+    await insertProcessedEmail(db as any, {
+      ...defaultNeedsReviewEmail,
+      id: "pe-unlinked-failed" as ProcessedEmailId,
+      externalId: "ext-unlinked-failed-no-owner",
+      status: "failed",
+      transactionId: null,
+    });
+    await insertProcessedEmail(db as any, {
+      ...defaultNeedsReviewEmail,
+      id: "pe-linked-failed" as ProcessedEmailId,
+      externalId: "ext-linked-failed-no-owner",
+      status: "failed",
+      transactionId: "tx-user" as TransactionId,
+    });
+
+    await expect(getFailedEmails(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({ id: "pe-linked-failed" }),
+    ]);
+  });
+
   it("resolving a missing review item is a no-op", async () => {
     await expect(
       resolveFinancialMeaningReview(db as any, "pe-missing" as ProcessedEmailId)

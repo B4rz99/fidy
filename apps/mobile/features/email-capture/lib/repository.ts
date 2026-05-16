@@ -111,7 +111,7 @@ async function canUseLegacyProcessedEmailFallback(db: AnyDb, userId: UserId) {
     ...emailAccountOwners.map((owner) => owner.userId),
     ...transactionOwners.map((owner) => owner.userId),
   ]);
-  return owners.size === 1 && owners.has(userId);
+  return emailAccountOwners.length === 1 && owners.size === 1 && owners.has(userId);
 }
 
 export async function getProcessedExternalIds(
