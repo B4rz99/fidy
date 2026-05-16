@@ -21,11 +21,12 @@ import {
   insertProcessedEmail,
 } from "@/features/email-capture/lib/repository";
 import { getTransactionById, insertTransaction } from "@/features/transactions/lib/repository";
-import { processedSourceEvents, reviewCandidates } from "@/shared/db/schema";
+import { emailAccounts, processedSourceEvents, reviewCandidates } from "@/shared/db/schema";
 import type {
   CategoryId,
   CopAmount,
   FinancialAccountId,
+  EmailAccountId,
   IsoDate,
   IsoDateTime,
   ProcessedEmailId,
@@ -218,6 +219,19 @@ function insertReviewCandidate(overrides: ReviewCandidateOverrides = {}) {
     .run();
 }
 
+function insertEmailAccount(userId: UserId = USER_ID) {
+  db.insert(emailAccounts)
+    .values({
+      id: `ea-${userId}` as EmailAccountId,
+      userId,
+      provider: "gmail",
+      email: `${userId}@example.com`,
+      lastFetchedAt: null,
+      createdAt: NOW,
+    })
+    .run();
+}
+
 describe("financial meaning review", () => {
   it("marks a reviewed low-confidence email as success without deleting the linked transaction", async () => {
     insertEmailTransactionRow();
@@ -292,6 +306,8 @@ describe("financial meaning review", () => {
   });
 
   it("scopes legacy failed and needs-review email queues to the active user", async () => {
+    insertEmailAccount();
+    insertEmailAccount("other-user" as UserId);
     insertEmailTransactionRow({ id: "tx-user" as TransactionId });
     insertEmailTransactionRow({
       id: "tx-other" as TransactionId,
@@ -327,6 +343,21 @@ describe("financial meaning review", () => {
     ]);
     await expect(getFailedEmails(db as any, USER_ID)).resolves.toEqual([
       expect.objectContaining({ id: "pe-user-failed" }),
+    ]);
+  });
+
+  it("keeps unlinked legacy failed emails in single-owner databases", async () => {
+    insertEmailAccount();
+    await insertProcessedEmail(db as any, {
+      ...defaultNeedsReviewEmail,
+      id: "pe-unlinked-failed" as ProcessedEmailId,
+      externalId: "ext-unlinked-failed",
+      status: "failed",
+      transactionId: null,
+    });
+
+    await expect(getFailedEmails(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({ id: "pe-unlinked-failed" }),
     ]);
   });
 

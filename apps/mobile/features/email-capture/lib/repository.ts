@@ -125,22 +125,33 @@ export async function getProcessedExternalIds(
   return new Set(rows.map(getLegacyEmailSourceEventKey));
 }
 
-export async function getFailedEmails(db: AnyDb, userId: UserId) {
+function getProcessedEmailsByStatus(db: AnyDb, status: string) {
   return db
-    .select({ ...getTableColumns(processedEmails) })
+    .select()
     .from(processedEmails)
-    .innerJoin(transactions, eq(transactions.id, processedEmails.transactionId))
-    .where(and(eq(processedEmails.status, "failed"), eq(transactions.userId, userId)))
+    .where(eq(processedEmails.status, status))
     .orderBy(desc(processedEmails.receivedAt));
 }
 
-export async function getNeedsReviewEmails(db: AnyDb, userId: UserId) {
+function getUserLinkedProcessedEmailsByStatus(db: AnyDb, userId: UserId, status: string) {
   return db
     .select({ ...getTableColumns(processedEmails) })
     .from(processedEmails)
     .innerJoin(transactions, eq(transactions.id, processedEmails.transactionId))
-    .where(and(eq(processedEmails.status, "needs_review"), eq(transactions.userId, userId)))
+    .where(and(eq(processedEmails.status, status), eq(transactions.userId, userId)))
     .orderBy(desc(processedEmails.receivedAt));
+}
+
+export async function getFailedEmails(db: AnyDb, userId: UserId) {
+  return (await canUseLegacyProcessedEmailFallback(db, userId))
+    ? getProcessedEmailsByStatus(db, "failed")
+    : getUserLinkedProcessedEmailsByStatus(db, userId, "failed");
+}
+
+export async function getNeedsReviewEmails(db: AnyDb, userId: UserId) {
+  return (await canUseLegacyProcessedEmailFallback(db, userId))
+    ? getProcessedEmailsByStatus(db, "needs_review")
+    : getUserLinkedProcessedEmailsByStatus(db, userId, "needs_review");
 }
 
 export async function getNeedsReviewEmailByTransactionId(db: AnyDb, transactionId: TransactionId) {
