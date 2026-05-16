@@ -26,6 +26,7 @@ function makeCommand(overrides: Partial<RecordTransferCommand> = {}): RecordTran
     description: "Move to savings",
     date: TODAY,
     now: NOW,
+    source: "manual",
     ...overrides,
   };
 }
@@ -73,6 +74,7 @@ describe("RecordTransfer", () => {
         toSide: { kind: "account", accountId: TO_ACCOUNT_ID },
         description: "Move to savings",
         date: TODAY,
+        source: "manual",
         createdAt: NOW,
         updatedAt: NOW,
         voidedAt: null,

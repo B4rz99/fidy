@@ -194,6 +194,7 @@ function expectCreatedTransferState() {
     toAccountId: SAVINGS_ACCOUNT_ID,
     description: "Move to savings",
     date: "2026-04-18",
+    source: "capture-match",
   });
   expect(getTransactionById(db as any, ORIGINAL_TRANSACTION_ID)).toMatchObject({
     id: ORIGINAL_TRANSACTION_ID,
@@ -229,6 +230,7 @@ describe("reclassifyTransactionAsTransfer", () => {
       transfer: expect.objectContaining({
         id: TRANSFER_ID,
         amount: 350000,
+        source: "capture-match",
       }),
     });
     expectCreatedTransferState();
@@ -271,6 +273,7 @@ describe("reclassifyTransactionsAsTransfer", () => {
       toAccountId: SAVINGS_ACCOUNT_ID,
       description: "Move to savings",
       date: "2026-04-18",
+      source: "capture-match",
     });
     expect(getTransactionById(db as any, ORIGINAL_TRANSACTION_ID)).toMatchObject({
       supersededAt: NOW,

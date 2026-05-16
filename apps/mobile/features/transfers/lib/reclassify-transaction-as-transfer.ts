@@ -85,6 +85,7 @@ export function reclassifyTransactionAsTransfer(
     userId: input.userId,
     id: createId(),
     now: nowDate,
+    source: "capture-match",
   });
 
   if (!built.success) {

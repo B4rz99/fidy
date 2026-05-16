@@ -26,6 +26,7 @@ import m0023 from "./0023_capture_evidence_transfer_id.sql";
 import m0024 from "./0024_unique_email_accounts.sql";
 import m0025 from "./0025_review_candidate_intake.sql";
 import m0026 from "./0026_align_transaction_domain.sql";
+import m0027 from "./0027_transfer_source.sql";
 import journal from "./meta/_journal.json";
 
 export default {
@@ -58,5 +59,6 @@ export default {
     m0024,
     m0025,
     m0026,
+    m0027,
   },
 };

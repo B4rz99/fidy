@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import type { TransferSource } from "@/local-ledger/public";
 import {
   check,
   index,
@@ -135,6 +136,7 @@ export const transfers = sqliteTable(
     toExternalLabel: text("to_external_label"),
     description: text("description"),
     date: text("date").$type<IsoDate>().notNull(),
+    source: text("source").$type<TransferSource>().notNull().default("manual"),
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
     updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
     deletedAt: text("deleted_at").$type<IsoDateTime>(),

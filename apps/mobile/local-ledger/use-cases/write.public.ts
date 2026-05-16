@@ -13,6 +13,7 @@ import type {
   LocalLedgerEntryId,
   LocalLedgerTransfer,
   LocalLedgerTransferSide,
+  TransferSource,
   TransferId,
   UserId,
 } from "../domain/public";
@@ -40,6 +41,7 @@ export type RecordTransferCommand = {
   readonly toSide: LocalLedgerTransferSide | null;
   readonly description: string;
   readonly date: IsoDate;
+  readonly source: TransferSource;
   readonly now: IsoDateTime;
 };
 

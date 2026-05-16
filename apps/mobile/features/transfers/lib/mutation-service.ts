@@ -61,6 +61,7 @@ function toStoredTransfer(transfer: LocalLedgerTransfer): StoredTransfer {
     createdAt: new Date(transfer.createdAt),
     updatedAt: new Date(transfer.updatedAt),
     deletedAt: transfer.voidedAt == null ? null : new Date(transfer.voidedAt),
+    source: transfer.source,
   };
 }
 

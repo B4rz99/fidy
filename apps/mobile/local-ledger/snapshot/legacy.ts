@@ -15,6 +15,7 @@ export function withLegacyEmptyCollections(snapshot: BackupSnapshot): BackupSnap
     data: {
       ...snapshot.data,
       transactions: normalizeLegacyTransactionRows(snapshot.data.transactions),
+      transfers: normalizeLegacyTransferRows(snapshot.data.transfers),
       processedSourceEvents: data.processedSourceEvents ?? [],
       reviewCandidates: data.reviewCandidates ?? [],
       reviewCandidateCaptureEvidence: data.reviewCandidateCaptureEvidence ?? [],
@@ -37,6 +38,8 @@ function normalizeLegacyTransactionRows(rows: BackupSnapshot["data"]["transactio
 
 type TransactionRow = BackupSnapshot["data"]["transactions"][number];
 type LegacyTransactionRow = TransactionRow & { readonly deletedAt?: unknown };
+type TransferRow = BackupSnapshot["data"]["transfers"][number];
+type LegacyTransferRow = Omit<TransferRow, "source"> & { readonly source?: unknown };
 
 function normalizeLegacyTransactionRow(row: TransactionRow): TransactionRow {
   const legacyRow = row as LegacyTransactionRow;
@@ -57,3 +60,15 @@ const legacyTransactionStateDefaults = (row: TransactionRow, deletedAt: unknown)
   voidedAt: (row.voidedAt ?? deletedAt ?? null) as TransactionRow["voidedAt"],
   source: normalizeTransactionSource(row.source),
 });
+
+function normalizeLegacyTransferRows(rows: BackupSnapshot["data"]["transfers"]) {
+  return rows.map(normalizeLegacyTransferRow);
+}
+
+function normalizeLegacyTransferRow(row: TransferRow): TransferRow {
+  const legacyRow = row as LegacyTransferRow;
+  return {
+    ...row,
+    source: (legacyRow.source ?? "manual") as TransferRow["source"],
+  };
+}

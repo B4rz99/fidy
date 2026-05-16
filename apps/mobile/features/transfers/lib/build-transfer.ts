@@ -1,3 +1,4 @@
+import type { TransferSource } from "@/local-ledger/public";
 import type { CopAmount, FinancialAccountId, TransferId, UserId } from "@/shared/types/branded";
 import {
   buildStoredTransfer,
@@ -30,6 +31,7 @@ export type StoredTransfer = {
   readonly createdAt: Date;
   readonly updatedAt: Date;
   readonly deletedAt: Date | null;
+  readonly source: TransferSource;
 };
 
 export type BuildTransferInput = {
@@ -45,6 +47,7 @@ export type BuildTransferCommand = {
   readonly userId: UserId;
   readonly id: TransferId;
   readonly now: Date;
+  readonly source: TransferSource;
   readonly existing?: StoredTransfer | null;
 };
 

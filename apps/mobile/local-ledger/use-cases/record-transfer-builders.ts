@@ -14,6 +14,7 @@ export function toLocalLedgerTransfer(
     toSide: command.toSide,
     description: command.description,
     date: command.date,
+    source: command.source,
     createdAt: command.now,
     updatedAt: command.now,
     voidedAt: null,

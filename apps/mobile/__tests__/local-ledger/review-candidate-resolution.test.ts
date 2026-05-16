@@ -55,6 +55,7 @@ const transferCommand: RecordTransferCommand = {
   toSide: { kind: "account", accountId: "account-2" as FinancialAccountId },
   description: "Move funds",
   date: "2026-04-12" as IsoDate,
+  source: "review-confirmation",
   now: "2026-04-12T10:00:00.000Z" as IsoDateTime,
 };
 

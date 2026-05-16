@@ -34,6 +34,7 @@ export function toStoredTransfer(row: TransferRow): StoredTransfer {
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
     deletedAt: toStoredTransferDeletedAt(row.deletedAt),
+    source: row.source ?? "manual",
   };
 }
 
@@ -51,5 +52,6 @@ export function toTransferRow(transfer: StoredTransfer): TransferRow {
     createdAt: toIsoDateTime(transfer.createdAt),
     updatedAt: toIsoDateTime(transfer.updatedAt),
     deletedAt: transfer.deletedAt ? toIsoDateTime(transfer.deletedAt) : null,
+    source: transfer.source,
   };
 }

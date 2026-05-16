@@ -14,6 +14,7 @@ export type {
   LocalLedgerSourceId,
   LocalLedgerTransfer,
   LocalLedgerTransferSide,
+  TransferSource,
   TransferId,
   UserId,
 } from "./domain/public";

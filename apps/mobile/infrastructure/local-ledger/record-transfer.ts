@@ -81,6 +81,7 @@ export function toTransferRow(transfer: LocalLedgerTransfer): typeof transfers.$
     toExternalLabel: transfer.toSide.kind === "external" ? transfer.toSide.label : null,
     description: transfer.description || null,
     date: transfer.date,
+    source: transfer.source,
     createdAt: transfer.createdAt,
     updatedAt: transfer.updatedAt,
     deletedAt: transfer.voidedAt,
@@ -131,6 +132,7 @@ export async function recordManualTransferWithLocalLedger({
     toSide: input.toSide,
     description: normalizedDescription,
     date: toIsoDate(input.date),
+    source: "manual",
     now: toIsoDateTime(now),
   });
 
