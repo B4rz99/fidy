@@ -42,12 +42,9 @@ import {
   useEmailCaptureStore,
   warnFetchMissingContext,
 } from "./store/state";
-
 export { confirmReviewedEmail } from "./store/reviewed-email";
 export { connectEmailAccount, disconnectEmailAccount } from "./store/account-actions";
-
 const noopRefreshTransactions: RefreshTransactions = () => undefined;
-
 export type EmailCaptureFetchOutcome =
   | {
       readonly status: "completed";
@@ -63,19 +60,15 @@ const EMPTY_FETCH_OUTCOME: EmailCaptureFetchOutcome = {
   needsReviewCount: 0,
   failedCount: 0,
 };
-
 const alreadyFetchingOutcome: EmailCaptureFetchOutcome = {
   status: "skipped",
   reason: "already_fetching",
 };
-
 const missingContextOutcome: EmailCaptureFetchOutcome = {
   status: "skipped",
   reason: "missing_context",
 };
-
 export { useEmailCaptureStore };
-
 registerEmailCaptureStoreRuntime({
   beginSession: (userId) => useEmailCaptureStore.getState().beginSession(userId),
   getActiveUserId: () => useEmailCaptureStore.getState().activeUserId,
@@ -85,13 +78,11 @@ registerEmailCaptureStoreRuntime({
   setPhase: (phase) => useEmailCaptureStore.getState().setPhase(phase),
   setProgress: (progress) => useEmailCaptureStore.getState().setProgress(progress),
 });
-
 export function initializeEmailCaptureSession(userId: UserId): void {
   initializeEmailCaptureStoreSession(userId);
 }
 export async function loadEmailAccounts(db: AnyDb, userId: UserId): Promise<void> {
   const request = beginEmailCaptureRequest("accounts", userId);
-
   try {
     const accounts = await getEmailAccounts(db, userId);
     if (!isCurrentEmailCaptureRequest(request)) return;
@@ -100,35 +91,51 @@ export async function loadEmailAccounts(db: AnyDb, userId: UserId): Promise<void
 }
 export async function loadFailedEmails(db: AnyDb, userId: UserId): Promise<void> {
   const request = beginEmailCaptureRequest("failedEmails", userId);
-
-  try {
-    const [failedEmails, failedEmailSourceEvents] = await Promise.all([
-      getFailedEmails(db),
-      getFailedEmailSourceEvents(db, userId),
-    ]);
-    if (!isCurrentEmailCaptureRequest(request)) return;
-    useEmailCaptureStore.getState().setFailedEmails(failedEmails);
-    useEmailCaptureStore.getState().setFailedEmailSourceEvents(failedEmailSourceEvents);
-  } catch (error) {
+  const [failedEmailsResult, sourceEventsResult] = await Promise.allSettled([
+    getFailedEmails(db),
+    getFailedEmailSourceEvents(db, userId),
+  ]);
+  if (!isCurrentEmailCaptureRequest(request)) return;
+  if (failedEmailsResult.status === "fulfilled") {
+    useEmailCaptureStore.getState().setFailedEmails(failedEmailsResult.value);
+  } else {
     captureWarning("email_capture_failed_queue_load_failed", {
-      errorType: error instanceof Error ? error.name : "unknown",
+      errorType:
+        failedEmailsResult.reason instanceof Error ? failedEmailsResult.reason.name : "unknown",
+    });
+  }
+  if (sourceEventsResult.status === "fulfilled") {
+    useEmailCaptureStore.getState().setFailedEmailSourceEvents(sourceEventsResult.value);
+  } else {
+    captureWarning("email_capture_failed_source_event_queue_load_failed", {
+      errorType:
+        sourceEventsResult.reason instanceof Error ? sourceEventsResult.reason.name : "unknown",
     });
   }
 }
 export async function loadNeedsReviewEmails(db: AnyDb, userId: UserId): Promise<void> {
   const request = beginEmailCaptureRequest("needsReview", userId);
-
-  try {
-    const [needsReviewEmails, needsReviewEmailSourceEvents] = await Promise.all([
-      getNeedsReviewEmails(db),
-      getNeedsReviewEmailSourceEvents(db, userId),
-    ]);
-    if (!isCurrentEmailCaptureRequest(request)) return;
-    useEmailCaptureStore.getState().setNeedsReviewEmails(needsReviewEmails);
-    useEmailCaptureStore.getState().setNeedsReviewEmailSourceEvents(needsReviewEmailSourceEvents);
-  } catch (error) {
+  const [needsReviewEmailsResult, sourceEventsResult] = await Promise.allSettled([
+    getNeedsReviewEmails(db),
+    getNeedsReviewEmailSourceEvents(db, userId),
+  ]);
+  if (!isCurrentEmailCaptureRequest(request)) return;
+  if (needsReviewEmailsResult.status === "fulfilled") {
+    useEmailCaptureStore.getState().setNeedsReviewEmails(needsReviewEmailsResult.value);
+  } else {
     captureWarning("email_capture_needs_review_queue_load_failed", {
-      errorType: error instanceof Error ? error.name : "unknown",
+      errorType:
+        needsReviewEmailsResult.reason instanceof Error
+          ? needsReviewEmailsResult.reason.name
+          : "unknown",
+    });
+  }
+  if (sourceEventsResult.status === "fulfilled") {
+    useEmailCaptureStore.getState().setNeedsReviewEmailSourceEvents(sourceEventsResult.value);
+  } else {
+    captureWarning("email_capture_needs_review_source_event_queue_load_failed", {
+      errorType:
+        sourceEventsResult.reason instanceof Error ? sourceEventsResult.reason.name : "unknown",
     });
   }
 }
@@ -142,7 +149,6 @@ export async function dismissFailedEmail(
     .getState()
     .failedEmails.find((email) => email.id === processedEmailId);
   if (!failedEmail || !isActiveEmailCaptureSession(session)) return;
-
   await dismissProcessedEmail(db, failedEmail.id);
   if (!isActiveEmailCaptureSession(session)) return;
   useEmailCaptureStore.getState().removeFailedEmail(processedEmailId);
@@ -157,7 +163,6 @@ export async function dismissFailedEmailSourceEvent(
     .getState()
     .failedEmailSourceEvents.find((event) => event.id === processedSourceEventId);
   if (!failedEvent || !isActiveEmailCaptureSession(session)) return;
-
   await updateProcessedSourceEventStatus({
     db,
     id: failedEvent.id,
@@ -187,10 +192,8 @@ export async function fetchAndProcessEmails(
     captureWarning("email_capture_fetch_already_running");
     return alreadyFetchingOutcome;
   }
-
   const run = fetchStart.run;
   const syncPolicy = resolveEmailCaptureSyncPolicy(options.parseProfile);
-
   try {
     const accounts = useEmailCaptureStore.getState().accounts;
     if (accounts.length === 0) {
@@ -225,7 +228,6 @@ export async function fetchAndProcessEmails(
           (completed, result) => completed + result.rawEmails.length,
           0
         );
-
         const processingResult = await ingestFetchedEmails({
           db,
           userId,
@@ -241,7 +243,6 @@ export async function fetchAndProcessEmails(
           runRetries: false,
           parseProfile: syncPolicy.parseProfile,
         });
-
         return [...processed, { ...fetchResult, processingResult }];
       },
       Promise.resolve([] as ProcessedEmailAccountFetchResult[])
@@ -257,19 +258,18 @@ export async function fetchAndProcessEmails(
       userId,
       requests: processingResult.parseImprovementRequests,
     });
-
     const queues = await loadEmailCaptureQueues(db, userId).catch((error) => {
       captureWarning("email_capture_queue_refresh_failed", {
         errorType: error instanceof Error ? error.name : "unknown",
       });
+      const currentQueues = useEmailCaptureStore.getState();
       return {
-        failedEmails: [],
-        failedEmailSourceEvents: [],
-        needsReviewEmails: [],
-        needsReviewEmailSourceEvents: [],
+        failedEmails: [...currentQueues.failedEmails],
+        failedEmailSourceEvents: [...currentQueues.failedEmailSourceEvents],
+        needsReviewEmails: [...currentQueues.needsReviewEmails],
+        needsReviewEmailSourceEvents: [...currentQueues.needsReviewEmailSourceEvents],
       };
     });
-
     await applyEmailCaptureFetchOutcome({
       run,
       showProgress,
@@ -283,7 +283,6 @@ export async function fetchAndProcessEmails(
       queues,
       refreshTransactions,
     });
-
     return {
       status: "completed",
       savedCount: processingResult.saved,

@@ -4,6 +4,7 @@ import { toStoredTransaction } from "@/features/transactions/lib/build-transacti
 import {
   getTransactionById,
   insertTransaction,
+  type TransactionRow,
   upsertTransaction,
 } from "@/features/transactions/lib/repository";
 import { getBuiltInCategoryId } from "@/shared/categories";
@@ -190,7 +191,7 @@ function buildSourceEventReviewTransactionRow(
   },
   row: NonNullable<ReturnType<typeof getSourceEventReviewCandidateById>>,
   occurredOn: IsoDate
-) {
+): TransactionRow {
   return {
     id: input.transactionId,
     userId: input.userId,
@@ -200,8 +201,8 @@ function buildSourceEventReviewTransactionRow(
     description: getReviewCandidateDescription(row),
     date: occurredOn,
     accountId: input.defaultAccountId,
-    accountAttributionState: "unresolved" as const,
-    source: "email_capture" as const,
+    accountAttributionState: "unresolved",
+    source: "email_capture",
     createdAt: input.updatedAt,
     updatedAt: input.updatedAt,
   };

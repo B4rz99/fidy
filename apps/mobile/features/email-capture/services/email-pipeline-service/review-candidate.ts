@@ -17,7 +17,7 @@ import {
 import { requireCopAmount, requireIsoDate, requireIsoDateTime } from "@/shared/types/assertions";
 import type { ProcessedSourceEventId } from "@/shared/types/branded";
 import { EmailPipelineDeps } from "./runtime";
-import { getTransactionSource } from "./shared";
+import { getEmailSourceId } from "./shared";
 import type { CreateEmailPipelineServiceDeps, EmailTransactionContext } from "./types";
 
 type ReviewCandidateContext = Pick<
@@ -49,7 +49,7 @@ const toReviewCandidateInput = (
         | LocalLedgerProcessedSourceEventId
         | undefined) ?? (generateId("pse") as LocalLedgerProcessedSourceEventId),
     sourceFamily: "email",
-    sourceId: getTransactionSource(context.email.provider) as LocalLedgerSourceId,
+    sourceId: getEmailSourceId(context.email) as LocalLedgerSourceId,
     sourceEventId: context.email.externalId,
     receivedAt: requireIsoDateTime(context.email.receivedAt),
     processedAt: context.now,

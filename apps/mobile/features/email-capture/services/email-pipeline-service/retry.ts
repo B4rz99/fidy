@@ -27,7 +27,7 @@ import type {
 } from "./types";
 
 const getRetryEmailProvider = (email: ProcessedSourceEventRow) =>
-  email.sourceId === "email_outlook" ? "outlook" : "gmail";
+  email.sourceId.startsWith("email_outlook") ? "outlook" : "gmail";
 
 const toRetryEmailSnapshot = (email: ProcessedSourceEventRow): RetryEmailSnapshot => ({
   id: email.id,

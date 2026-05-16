@@ -395,7 +395,7 @@ describe("email processing pipeline", () => {
 
     const result = await processEmails(mockDb, USER_ID, [makeRawEmail()]);
 
-    expect(mockGetProcessedExternalIds).toHaveBeenCalledWith(mockDb, [makeRawEmail()]);
+    expect(mockGetProcessedExternalIds).toHaveBeenCalledWith(mockDb, USER_ID, [makeRawEmail()]);
     expect(mockParseEmailApi).not.toHaveBeenCalled();
     expect(result.saved).toBe(0);
     expect(result.skippedDuplicate).toBe(1);

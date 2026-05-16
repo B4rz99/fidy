@@ -6,8 +6,8 @@ import { getProcessedEmailSourceEventIdsEffect, getProcessedExternalIdsEffect } 
 import {
   createPipelineResult,
   dedupeRawEmails,
+  getEmailSourceId,
   getEmailSourceEventKey,
-  getTransactionSource,
   getNextQueuedEmail,
   getProgressSnapshot,
   mergePipelineResults,
@@ -50,14 +50,14 @@ async function createEmailBatchPlan(
   const uniqueEmails = dedupeRawEmails(rawEmails);
   const dedupedInBatch = rawEmails.length - uniqueEmails.length;
   const sourceEvents = uniqueEmails.map((email) => ({
-    sourceId: getTransactionSource(email.provider),
+    sourceId: getEmailSourceId(email),
     sourceEventId: email.externalId,
   }));
   const sourceEventIds = await runtime.runEmailEffect(
     getProcessedEmailSourceEventIdsEffect(db, userId, sourceEvents)
   );
   const legacyProcessedIds = await runtime.runEmailEffect(
-    getProcessedExternalIdsEffect(db, uniqueEmails)
+    getProcessedExternalIdsEffect(db, userId, uniqueEmails)
   );
   const toProcess = uniqueEmails.filter(
     (email) =>

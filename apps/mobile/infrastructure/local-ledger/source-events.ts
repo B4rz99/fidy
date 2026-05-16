@@ -22,7 +22,13 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 
-type SourceEventStatus = "processed" | "needs_review" | "failed" | "duplicate" | "dismissed";
+type SourceEventStatus =
+  | "processed"
+  | "needs_review"
+  | "failed"
+  | "duplicate"
+  | "dismissed"
+  | "pending_retry";
 
 type SourceEventInput = {
   readonly userId: UserId;
@@ -60,7 +66,8 @@ const isSourceEventStatus = (status: string): status is SourceEventStatus =>
   status === "needs_review" ||
   status === "failed" ||
   status === "duplicate" ||
-  status === "dismissed";
+  status === "dismissed" ||
+  status === "pending_retry";
 
 const findSourceEvent = (
   db: AnyDb,

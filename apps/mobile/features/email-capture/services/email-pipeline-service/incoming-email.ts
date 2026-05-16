@@ -8,6 +8,7 @@ import {
 } from "./parse-improvement";
 import {
   getProcessedEmailSourceEventIdsEffect,
+  getProcessedExternalIdsEffect,
   insertProcessedEmailSourceEventEffect,
   nextRetryAtEffect,
   saveEmailCaptureEvidenceEffect,
@@ -16,8 +17,8 @@ import {
   buildDuplicateProcessedSourceEventRow,
   buildUnparsedProcessedSourceEventRow,
   createPipelineMetricResult,
+  getEmailSourceId,
   getEmailSourceEventKey,
-  getTransactionSource,
   mergePipelineResults,
   resolveEmailStatus,
   runSerializedPersistence,
@@ -73,10 +74,16 @@ async function persistPendingRetryIncomingEmail(
 ): Promise<PipelineResult> {
   const sourceEventIds = await context.runtime.runEmailEffect(
     getProcessedEmailSourceEventIdsEffect(context.db, context.userId, [
-      { sourceId: getTransactionSource(email.provider), sourceEventId: email.externalId },
+      { sourceId: getEmailSourceId(email), sourceEventId: email.externalId },
     ])
   );
-  if (sourceEventIds.has(getEmailSourceEventKey(email))) {
+  const legacyProcessedIds = await context.runtime.runEmailEffect(
+    getProcessedExternalIdsEffect(context.db, context.userId, [email])
+  );
+  if (
+    sourceEventIds.has(getEmailSourceEventKey(email)) ||
+    legacyProcessedIds.has(getEmailSourceEventKey(email))
+  ) {
     return createPipelineMetricResult("failed");
   }
 

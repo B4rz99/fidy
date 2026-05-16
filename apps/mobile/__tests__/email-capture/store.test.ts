@@ -219,6 +219,7 @@ type TestEmailAccount = {
 
 type RawEmail = {
   externalId: string;
+  sourceId?: string;
   from: string;
   subject: string;
   body: string;
@@ -318,6 +319,10 @@ function createDeferred<T>() {
 
 function makeRawEmail(overrides: Partial<RawEmail> = {}): RawEmail {
   return { ...DEFAULT_RAW_EMAIL, ...overrides };
+}
+
+function withFetchedSourceId(email: RawEmail): RawEmail {
+  return { ...email, sourceId: "email_gmail:ea-1" };
 }
 
 function setAccounts(accounts: TestEmailAccount[] = [makeAccount()]) {
@@ -805,7 +810,7 @@ describe("email capture boundary", () => {
       expect(processEmails).toHaveBeenCalledWith(
         mockDb,
         mockUserId,
-        mockRawEmails,
+        mockRawEmails.map(withFetchedSourceId),
         expect.any(Function)
       );
     });
@@ -893,7 +898,7 @@ describe("email capture boundary", () => {
       expect(processInitialSyncEmails).toHaveBeenCalledWith(
         mockDb,
         mockUserId,
-        mockRawEmails,
+        mockRawEmails.map(withFetchedSourceId),
         expect.any(Function)
       );
       expect(processEmails).not.toHaveBeenCalled();
@@ -926,7 +931,7 @@ describe("email capture boundary", () => {
       expect(processBackgroundEmails).toHaveBeenCalledWith(
         mockDb,
         mockUserId,
-        mockRawEmails.slice().reverse(),
+        mockRawEmails.slice().reverse().map(withFetchedSourceId),
         expect.any(Function)
       );
       expect(updateLastFetchedAt).not.toHaveBeenCalled();

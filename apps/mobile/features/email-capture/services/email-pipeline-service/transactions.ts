@@ -21,6 +21,7 @@ import {
 } from "./retry-transaction-bundle";
 import {
   assertParsedTransaction,
+  getEmailSourceId,
   getPersistedCategoryId,
   getTransactionSource,
   resolveEmailStatus,
@@ -65,7 +66,7 @@ const buildReviewProcessedSourceEventRow = (context: EmailTransactionContext) =>
   id: context.processedSourceEventId,
   userId: context.userId,
   sourceFamily: "email",
-  sourceId: getTransactionSource(context.email.provider),
+  sourceId: getEmailSourceId(context.email),
   sourceEventId: context.email.externalId,
   status: "needs_review",
   failureReason: null,
@@ -116,7 +117,7 @@ function persistTransactionBundleEffect(context: EmailTransactionContext) {
       id: context.processedSourceEventId,
       userId: context.userId,
       sourceFamily: "email",
-      sourceId: getTransactionSource(context.email.provider),
+      sourceId: getEmailSourceId(context.email),
       sourceEventId: context.email.externalId,
       status: "processed",
       failureReason: null,

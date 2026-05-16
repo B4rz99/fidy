@@ -1,8 +1,9 @@
 import { Effect } from "effect";
+import { normalizeTransactionStorageRow } from "@/infrastructure/local-ledger/transaction-storage";
 import { fromPromise } from "@/shared/effect/runtime";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { and, eq, isNull } from "drizzle-orm";
-import { captureEvidence, processedSourceEvents } from "@/shared/db/schema";
+import { captureEvidence, processedSourceEvents, transactions } from "@/shared/db/schema";
 import { EmailPipelineDeps, insertMerchantRuleEffect } from "./runtime";
 import { getParsedCounterpartyName } from "./shared";
 import {
@@ -12,12 +13,6 @@ import {
 } from "./transaction-recording";
 import { trackSavedTransactionEffect } from "./transaction-tracking";
 import type { RetryTransactionContext } from "./types";
-
-const isPromiseLike = (value: unknown): value is Promise<unknown> =>
-  typeof value === "object" &&
-  value !== null &&
-  "then" in value &&
-  typeof (value as { readonly then?: unknown }).then === "function";
 
 export function persistSuccessfulRetrySideEffectsEffect(context: RetryTransactionContext) {
   return Effect.catchAll(
@@ -50,18 +45,20 @@ export function persistSuccessfulRetryBundleEffect(context: RetryTransactionCont
       const transaction = await prepareRecordedTransaction(context, { recordTransaction });
       const persistTransaction = (db: RetryTransactionContext["db"]) =>
         insertTransaction(db, buildTransactionRow(context, transaction));
+      const transactionRow = {
+        ...buildTransactionRow(context, transaction),
+        accountId: context.defaultAccount.id,
+      };
       const persistSourceEventStatus = (db: RetryTransactionContext["db"]) =>
-        context.processedSourceEventId
-          ? markSourceEventRetrySuccess({
-              db,
-              id: context.processedSourceEventId,
-              status: "processed",
-              transactionId: context.txId,
-              confidence: context.parsed.confidence,
-            })
-          : Promise.resolve();
+        markSourceEventRetrySuccess({
+          db,
+          id: context.processedSourceEventId,
+          status: "processed",
+          transactionId: context.txId,
+          confidence: context.parsed.confidence,
+        });
       const linkSourceEventEvidence = (db: RetryTransactionContext["db"]) =>
-        context.processedSourceEventId && "update" in db && typeof db.update === "function"
+        "update" in db && typeof db.update === "function"
           ? db
               .update(captureEvidence)
               .set({ transactionId: context.txId, transferId: null, updatedAt: context.now })
@@ -75,24 +72,19 @@ export function persistSuccessfulRetryBundleEffect(context: RetryTransactionCont
           : undefined;
 
       if ("transaction" in context.db && typeof context.db.transaction === "function") {
-        const pendingWrites: Promise<unknown>[] = [];
         context.db.transaction((tx) => {
-          const transactionWrite = persistTransaction(tx);
-          if (isPromiseLike(transactionWrite)) pendingWrites.push(transactionWrite);
-          if (context.processedSourceEventId) {
-            tx.update(processedSourceEvents)
-              .set({
-                status: "processed",
-                transactionId: context.txId,
-                confidence: context.parsed.confidence,
-                rawBody: null,
-              })
-              .where(eq(processedSourceEvents.id, context.processedSourceEventId))
-              .run();
-            linkSourceEventEvidence(tx);
-          }
+          tx.insert(transactions).values(normalizeTransactionStorageRow(transactionRow)).run();
+          tx.update(processedSourceEvents)
+            .set({
+              status: "processed",
+              transactionId: context.txId,
+              confidence: context.parsed.confidence,
+              rawBody: null,
+            })
+            .where(eq(processedSourceEvents.id, context.processedSourceEventId))
+            .run();
+          linkSourceEventEvidence(tx);
         });
-        await Promise.all(pendingWrites);
         return;
       }
 

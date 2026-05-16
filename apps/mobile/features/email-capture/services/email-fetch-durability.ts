@@ -2,7 +2,7 @@ import type { AnyDb } from "@/shared/db";
 import type { UserId } from "@/shared/types/branded";
 import { getProcessedEmailSourceEventIds, getProcessedExternalIds } from "../lib/repository";
 import type { RawEmail } from "../pipeline.public";
-import { getEmailSourceEventKey, getTransactionSource } from "./email-pipeline-service/shared";
+import { getEmailSourceEventKey, getEmailSourceId } from "./email-pipeline-service/shared";
 import type { ProcessedEmailAccountFetchResult } from "./email-capture-fetch-service";
 
 function hasPersistedSourceEventsForFetch(
@@ -21,7 +21,7 @@ function hasPersistedSourceEventsForFetch(
 const toSourceEvents = (fetchResults: readonly ProcessedEmailAccountFetchResult[]) =>
   fetchResults.flatMap((result) =>
     result.rawEmails.map((email: RawEmail) => ({
-      sourceId: getTransactionSource(email.provider),
+      sourceId: getEmailSourceId(email),
       sourceEventId: email.externalId,
     }))
   );
@@ -38,6 +38,7 @@ export const getDurablyProcessedFetches = async (
   );
   const legacyKeys = await getProcessedExternalIds(
     db,
+    userId,
     fetchResults.flatMap((result) => result.rawEmails)
   );
   const fetchDurability = fetchResults.map((result) => ({

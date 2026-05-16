@@ -92,13 +92,23 @@ export async function getProcessedEmailById(db: AnyDb, id: ProcessedEmailId) {
 const getLegacyEmailSourceEventKey = (row: {
   readonly provider: string;
   readonly externalId: string;
-}) => `${row.provider === "gmail" ? "email_gmail" : "email_outlook"}:${row.externalId}`;
+}) => `${row.provider === "outlook" ? "email_outlook" : "email_gmail"}:${row.externalId}`;
+
+async function canUseLegacyProcessedEmailFallback(db: AnyDb, userId: UserId) {
+  const owners = await db
+    .selectDistinct({ userId: emailAccounts.userId })
+    .from(emailAccounts)
+    .limit(2);
+  return owners.length === 1 && owners[0]?.userId === userId;
+}
 
 export async function getProcessedExternalIds(
   db: AnyDb,
+  userId: UserId,
   sourceEvents: readonly { readonly provider: string; readonly externalId: string }[]
 ) {
   if (sourceEvents.length === 0) return new Set<string>();
+  if (!(await canUseLegacyProcessedEmailFallback(db, userId))) return new Set<string>();
   const rows = await db
     .select({ externalId: processedEmails.externalId, provider: processedEmails.provider })
     .from(processedEmails)

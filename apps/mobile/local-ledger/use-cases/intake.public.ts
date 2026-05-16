@@ -149,7 +149,9 @@ const toProcessedSourceEventRow = (input: CreateReviewCandidateInput) => ({
   deletedAt: null,
 });
 
-const toReviewCandidateRow = (input: CreateReviewCandidateInput) => ({
+const toReviewCandidateRow = (
+  input: CreateReviewCandidateInput
+): CreateReviewCandidateCommand["reviewCandidateRow"] => ({
   id: input.candidate.id,
   userId: input.userId,
   processedSourceEventId: input.source.processedSourceEventId,
@@ -157,7 +159,7 @@ const toReviewCandidateRow = (input: CreateReviewCandidateInput) => ({
   candidateKind: input.candidate.candidateKind,
   occurredAt: input.candidate.occurredAt,
   amount: input.candidate.money?.amount ?? null,
-  currency: "COP" as const,
+  currency: "COP",
   transactionType: input.candidate.transactionType ?? null,
   categoryId: input.candidate.categoryId ?? null,
   description: input.candidate.description,

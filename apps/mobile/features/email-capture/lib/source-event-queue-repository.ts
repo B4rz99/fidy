@@ -5,7 +5,7 @@ import type { UserId } from "@/shared/types/branded";
 
 const emailSourceEventQueueFilter = (
   userId: UserId,
-  statuses: readonly ("failed" | "pending_retry" | "needs_review")[]
+  statuses: readonly ("failed" | "needs_review")[]
 ) =>
   and(
     eq(processedSourceEvents.userId, userId),
@@ -18,7 +18,7 @@ export async function getFailedEmailSourceEvents(db: AnyDb, userId: UserId) {
   return db
     .select()
     .from(processedSourceEvents)
-    .where(emailSourceEventQueueFilter(userId, ["failed", "pending_retry"]))
+    .where(emailSourceEventQueueFilter(userId, ["failed"]))
     .orderBy(desc(processedSourceEvents.receivedAt));
 }
 

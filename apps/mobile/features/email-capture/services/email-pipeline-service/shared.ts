@@ -20,10 +20,16 @@ export function getTransactionSource(provider: string) {
   return provider === "gmail" ? "email_gmail" : "email_outlook";
 }
 
+export const getEmailSourceId = (email: {
+  readonly provider: string;
+  readonly sourceId?: string;
+}) => email.sourceId ?? getTransactionSource(email.provider);
+
 export const getEmailSourceEventKey = (email: {
   readonly provider: string;
+  readonly sourceId?: string;
   readonly externalId: string;
-}) => `${getTransactionSource(email.provider)}:${email.externalId}`;
+}) => `${getEmailSourceId(email)}:${email.externalId}`;
 
 export const getParsedCounterpartyName = (parsed: {
   readonly description: string;
@@ -171,7 +177,7 @@ export function buildUnparsedProcessedSourceEventRow(
     id: input.processedSourceEventId,
     userId: input.userId,
     sourceFamily: "email",
-    sourceId: getTransactionSource(input.email.provider),
+    sourceId: getEmailSourceId(input.email),
     sourceEventId: input.email.externalId,
     status: input.status,
     failureReason: input.failureReason,
@@ -221,7 +227,7 @@ export function buildDuplicateProcessedSourceEventRow(
     id: input.processedSourceEventId,
     userId: input.userId,
     sourceFamily: "email",
-    sourceId: getTransactionSource(input.email.provider),
+    sourceId: getEmailSourceId(input.email),
     sourceEventId: input.email.externalId,
     status: "duplicate",
     failureReason: null,

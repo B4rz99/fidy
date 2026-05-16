@@ -20,6 +20,20 @@ import { getDateFnsLocale } from "@/shared/i18n";
 
 const ItemSeparator = () => <View style={{ height: 10 }} />;
 
+type FailedEmailItem =
+  | { readonly kind: "legacy"; readonly email: ProcessedEmailRow }
+  | { readonly kind: "source_event"; readonly email: ProcessedSourceEventRow };
+
+const toLegacyFailedItem = (email: ProcessedEmailRow): FailedEmailItem => ({
+  kind: "legacy",
+  email,
+});
+
+const toSourceEventFailedItem = (email: ProcessedSourceEventRow): FailedEmailItem => ({
+  kind: "source_event",
+  email,
+});
+
 export default function FailedEmailsScreen() {
   const { back, push } = useRouter();
   const { t } = useTranslation();
@@ -31,8 +45,8 @@ export default function FailedEmailsScreen() {
   const failedItems = useMemo(
     () =>
       [
-        ...failedEmails.map((email) => ({ kind: "legacy" as const, email })),
-        ...failedEmailSourceEvents.map((email) => ({ kind: "source_event" as const, email })),
+        ...failedEmails.map(toLegacyFailedItem),
+        ...failedEmailSourceEvents.map(toSourceEventFailedItem),
       ].sort((left, right) => right.email.receivedAt.localeCompare(left.email.receivedAt)),
     [failedEmailSourceEvents, failedEmails]
   );
@@ -42,7 +56,7 @@ export default function FailedEmailsScreen() {
   }, [push]);
 
   const renderItem = useCallback(
-    ({ item }: { item: (typeof failedItems)[number] }) => (
+    ({ item }: { item: FailedEmailItem }) => (
       <FailedEmailCard
         email={item.email}
         onDismiss={() => {

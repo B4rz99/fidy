@@ -77,10 +77,11 @@ export function getProcessedEmailSourceEventIdsEffect(
 
 export function getProcessedExternalIdsEffect(
   db: AnyDb,
+  userId: UserId,
   sourceEvents: readonly { readonly provider: string; readonly externalId: string }[]
 ) {
   return Effect.flatMap(EmailPipelineDeps.tag, ({ getProcessedExternalIds }) =>
-    fromPromise(() => getProcessedExternalIds(db, sourceEvents))
+    fromPromise(() => getProcessedExternalIds(db, userId, sourceEvents))
   );
 }
 

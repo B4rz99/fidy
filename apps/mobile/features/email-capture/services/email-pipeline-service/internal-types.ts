@@ -134,7 +134,7 @@ export type SaveRetryTransactionInput = {
   readonly userId: UserId;
   readonly parsed: LlmParsedTransaction;
   readonly email: RetryEmailSnapshot;
-  readonly processedSourceEventId?: ProcessedSourceEventId;
+  readonly processedSourceEventId: ProcessedSourceEventId;
 };
 
 export type PersistedTransactionContext = {
@@ -158,7 +158,7 @@ export type EmailTransactionContext = PersistedTransactionContext & {
 export type RetryTransactionContext = PersistedTransactionContext & {
   readonly email: RetryEmailSnapshot;
   readonly status: EmailSaveStatus;
-  readonly processedSourceEventId?: ProcessedSourceEventId;
+  readonly processedSourceEventId: ProcessedSourceEventId;
 };
 
 export type ProcessEmailsInput = {

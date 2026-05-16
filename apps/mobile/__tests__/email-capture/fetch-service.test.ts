@@ -9,6 +9,7 @@ import {
 import { createCaptureIngestionPort } from "@/features/capture-sources/ingestion.public";
 import type { AnyDb } from "@/shared/db";
 import {
+  getProcessedExternalIds,
   getProcessedEmailSourceEventIds,
   updateLastFetchedAt,
 } from "@/features/email-capture/lib/repository";
@@ -32,6 +33,7 @@ vi.mock("@/features/email-capture/lib/repository", () => ({
   getFailedEmailSourceEvents: vi.fn<(...args: any[]) => any>(),
   getNeedsReviewEmails: vi.fn<(...args: any[]) => any>(),
   getNeedsReviewEmailSourceEvents: vi.fn<(...args: any[]) => any>(),
+  getProcessedExternalIds: vi.fn<(...args: any[]) => any>(),
   getProcessedEmailSourceEventIds: vi.fn<(...args: any[]) => any>(),
   updateLastFetchedAt: vi.fn<(...args: any[]) => any>(),
 }));
@@ -181,6 +183,7 @@ describe("persistFetchedAccounts", () => {
     vi.setSystemTime(new Date("2026-04-20T12:00:00.000Z"));
     vi.clearAllMocks();
     vi.mocked(getProcessedEmailSourceEventIds).mockResolvedValue(new Set(["email_gmail:ext-1"]));
+    vi.mocked(getProcessedExternalIds).mockResolvedValue(new Set());
   });
 
   afterEach(() => {
