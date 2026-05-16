@@ -157,7 +157,7 @@ describe("processWidgetTransactions", () => {
         amount: 25000,
         categoryId: "other",
         description: "",
-        source: "automated",
+        source: "widget_capture",
       })
     );
     expect(result.saved).toBe(1);

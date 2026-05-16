@@ -147,7 +147,7 @@ function expectSavedApplePayTransaction(transactionId: string) {
       description: "Farmatodo",
       accountId: "fa-default-user-1",
       accountAttributionState: "unresolved",
-      source: "automated",
+      source: "apple_pay_capture",
     })
   );
   expect(transactionId).toBe("tx-1");

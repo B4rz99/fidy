@@ -113,7 +113,7 @@ describe("RecordTransaction", () => {
         ...validCommand,
         description: "  User note  ",
         counterpartyName: longCounterparty,
-        source: "automated",
+        source: "email_capture",
         accountAttributionState: "unresolved",
       },
       ports: createPorts(),
@@ -126,7 +126,7 @@ describe("RecordTransaction", () => {
       userId: "user-1",
       description: "User note",
       counterpartyName: "Counterparty ".repeat(30).slice(0, 200),
-      source: "automated",
+      source: "email_capture",
       accountAttributionState: "unresolved",
     });
     expect(result.events).toEqual([

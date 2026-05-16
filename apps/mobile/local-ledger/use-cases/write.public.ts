@@ -5,6 +5,7 @@ import type {
   IsoDate,
   IsoDateTime,
 } from "@/shared/types/branded";
+import type { NormalizedTransactionSource } from "@/shared/lib/transaction-source";
 import type {
   LocalLedgerCommandId,
   LocalLedgerDomainEvent,
@@ -96,7 +97,7 @@ async function recordValidatedTransfer(
   };
 }
 
-export type RecordTransactionSource = "manual" | "automated";
+export type RecordTransactionSource = NormalizedTransactionSource;
 
 export type RecordTransactionAccountAttributionState = "confirmed" | "inferred" | "unresolved";
 

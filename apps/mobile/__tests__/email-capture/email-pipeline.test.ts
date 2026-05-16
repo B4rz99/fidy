@@ -528,7 +528,7 @@ describe("email processing pipeline", () => {
       accountAttributionState: "unresolved",
       description: null,
       counterpartyName: "Compra en Exito",
-      source: "automated",
+      source: "email_capture",
     });
     expectProcessedEmailSaved({
       externalId: "ext-1",
@@ -1139,7 +1139,7 @@ describe("email processing pipeline", () => {
     expect(result.saved).toBe(1);
     expect(mockInsertTransaction).toHaveBeenCalledWith(
       mockDb,
-      expect.objectContaining({ source: "automated", counterpartyName: "Deposito" })
+      expect.objectContaining({ source: "email_capture", counterpartyName: "Deposito" })
     );
   });
 

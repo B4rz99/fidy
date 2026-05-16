@@ -25,7 +25,7 @@ const acceptedTransaction: RecordTransactionAccepted = {
   occurredOn: "2026-05-11" as IsoDate,
   description: "User note",
   counterpartyName: "Cafe",
-  source: "automated",
+  source: "email_capture",
 };
 
 describe("Local Ledger transaction storage mapping", () => {
@@ -51,7 +51,7 @@ describe("Local Ledger transaction storage mapping", () => {
       voidedAt: null,
       supersededAt: null,
       supersededByTransferId: null,
-      source: "automated",
+      source: "email_capture",
     });
   });
 
@@ -76,7 +76,7 @@ describe("Local Ledger transaction storage mapping", () => {
       counterpartyName: null,
       supersededAt: null,
       supersededByTransferId: null,
-      source: "automated",
+      source: "email_capture",
     });
   });
 });

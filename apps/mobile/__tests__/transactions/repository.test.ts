@@ -191,7 +191,7 @@ describe("transaction repository", () => {
       ...row,
       accountId: buildDefaultFinancialAccountId("user-1" as UserId),
       accountAttributionState: "unresolved",
-      source: "automated",
+      source: "email_capture",
       supersededAt: null,
       supersededByTransferId: null,
       counterpartyName: null,
@@ -202,7 +202,7 @@ describe("transaction repository", () => {
           type: row.type,
           amount: row.amount,
           description: row.description,
-          source: "automated",
+          source: "email_capture",
         }),
       })
     );

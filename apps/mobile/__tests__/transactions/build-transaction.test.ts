@@ -194,7 +194,7 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
       createdAt: "2026-03-03T10:00:00.000Z" as IsoDateTime,
       updatedAt: "2026-03-03T12:00:00.000Z" as IsoDateTime,
       voidedAt: null,
-      source: "automated",
+      source: "email_capture",
     };
 
     const storedTransaction = toStoredTransaction(row);
@@ -203,14 +203,14 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     expect(storedTransaction.accountId).toBe("fa-credit-card");
     expect(storedTransaction.accountAttributionState).toBe("unresolved");
     expect(storedTransaction.supersededAt?.toISOString()).toBe("2026-03-04T10:00:00.000Z");
-    expect(storedTransaction.source).toBe("automated");
+    expect(storedTransaction.source).toBe("email_capture");
     expect(serialized.accountId).toBe("fa-credit-card");
     expect(serialized.accountAttributionState).toBe("unresolved");
     expect(serialized.supersededAt).toBe("2026-03-04T10:00:00.000Z");
-    expect(serialized.source).toBe("automated");
+    expect(serialized.source).toBe("email_capture");
   });
 
-  test("normalizes legacy non-manual transaction sources as automated", () => {
+  test("normalizes legacy non-manual transaction sources as closed capture categories", () => {
     const row = {
       id: "tx-legacy-source" as TransactionId,
       userId: "user-1" as UserId,
@@ -232,7 +232,7 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     const serialized = toTransactionRow(storedTransaction);
 
     expect(storedTransaction.accountAttributionState).toBe("unresolved");
-    expect(storedTransaction.source).toBe("automated");
-    expect(serialized.source).toBe("automated");
+    expect(storedTransaction.source).toBe("email_capture");
+    expect(serialized.source).toBe("email_capture");
   });
 });

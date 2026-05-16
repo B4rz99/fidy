@@ -158,7 +158,7 @@ export async function processWidgetTransactions(
           occurredOn: date,
           accountId: defaultAccount.id,
           accountAttributionState: "unresolved",
-          source: "automated",
+          source: "widget_capture",
         },
         afterRecord: (tx) => {
           persistCommittedCaptureSourceEventInTransaction(tx, {

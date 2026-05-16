@@ -99,7 +99,7 @@ async function saveTransactionRecord(context: ResolvedNotificationContext) {
       occurredOn: context.parsed.date,
       description: context.parsed.merchant,
       counterpartyName: context.parsed.merchant,
-      source: "automated",
+      source: "notification_capture",
     },
     afterRecord: (tx) => {
       persistCommittedCaptureSourceEventInTransaction(tx, {

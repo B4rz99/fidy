@@ -39,7 +39,9 @@ type RecordManualTransactionInput = {
 
 type RecordAutomatedTransactionInput = {
   readonly db: AnyDb;
-  readonly command: RecordTransactionCommand;
+  readonly command: Omit<RecordTransactionCommand, "source"> & {
+    readonly source: Exclude<RecordTransactionCommand["source"], "manual">;
+  };
   readonly transactionId: TransactionId;
   readonly now: IsoDateTime;
   readonly afterRecord?: (tx: AnyDb, transaction: RecordTransactionAccepted) => void;
@@ -186,7 +188,7 @@ export async function recordAutomatedTransactionWithLocalLedger({
   afterRecord,
 }: RecordAutomatedTransactionInput): Promise<RecordAutomatedTransactionResult> {
   const result = await recordTransaction({
-    command: { ...command, source: "automated" },
+    command,
     ports: {
       canUseAccount: async ({ accountId }) =>
         hasActiveFinancialAccount(db, command.userId, accountId),
