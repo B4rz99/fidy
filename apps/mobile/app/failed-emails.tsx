@@ -1,13 +1,11 @@
 import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth";
 import {
-  dismissFailedEmail,
   dismissFailedEmailSourceEvent,
-  type ProcessedEmailRow,
   type ProcessedSourceEventRow,
   useEmailCaptureStore,
 } from "@/features/email-capture";
@@ -20,52 +18,25 @@ import { getDateFnsLocale } from "@/shared/i18n";
 
 const ItemSeparator = () => <View style={{ height: 10 }} />;
 
-type FailedEmailItem =
-  | { readonly kind: "legacy"; readonly email: ProcessedEmailRow }
-  | { readonly kind: "source_event"; readonly email: ProcessedSourceEventRow };
-
-const toLegacyFailedItem = (email: ProcessedEmailRow): FailedEmailItem => ({
-  kind: "legacy",
-  email,
-});
-
-const toSourceEventFailedItem = (email: ProcessedSourceEventRow): FailedEmailItem => ({
-  kind: "source_event",
-  email,
-});
-
 export default function FailedEmailsScreen() {
   const { back, push } = useRouter();
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
-  const failedEmails = useEmailCaptureStore((s) => s.failedEmails);
-  const failedEmailSourceEvents = useEmailCaptureStore((s) => s.failedEmailSourceEvents);
-  const failedItems = useMemo(
-    () =>
-      [
-        ...failedEmails.map(toLegacyFailedItem),
-        ...failedEmailSourceEvents.map(toSourceEventFailedItem),
-      ].sort((left, right) => right.email.receivedAt.localeCompare(left.email.receivedAt)),
-    [failedEmailSourceEvents, failedEmails]
-  );
+  const failedItems = useEmailCaptureStore((s) => s.failedEmailSourceEvents);
 
   const handleAddManually = useCallback(() => {
     push("/add-transaction");
   }, [push]);
 
   const renderItem = useCallback(
-    ({ item }: { item: FailedEmailItem }) => (
+    ({ item }: { item: ProcessedSourceEventRow }) => (
       <FailedEmailCard
-        email={item.email}
+        email={item}
         onDismiss={() => {
           if (!db || !userId) return;
-          if (item.kind === "legacy") {
-            void dismissFailedEmail(db, userId, item.email.id);
-            return;
-          }
-          void dismissFailedEmailSourceEvent(db, userId, item.email.id);
+          void dismissFailedEmailSourceEvent(db, userId, item.id);
         }}
         onAddManually={handleAddManually}
       />
@@ -78,7 +49,7 @@ export default function FailedEmailsScreen() {
       <FlashList
         data={failedItems}
         renderItem={renderItem}
-        keyExtractor={(item) => `${item.kind}:${item.email.id}`}
+        keyExtractor={(item) => item.id}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
           paddingBottom: bottom + 40,
@@ -107,7 +78,7 @@ function FailedEmailCard({
   onDismiss,
   onAddManually,
 }: {
-  email: ProcessedEmailRow | ProcessedSourceEventRow;
+  email: ProcessedSourceEventRow;
   onDismiss: () => void;
   onAddManually: () => void;
 }) {
@@ -186,7 +157,6 @@ function formatReason(reason: string, t: (key: string) => string): string {
   return reason;
 }
 
-function getProviderLabel(email: ProcessedEmailRow | ProcessedSourceEventRow) {
-  if ("provider" in email) return email.provider === "gmail" ? "Gmail" : "Outlook";
+function getProviderLabel(email: ProcessedSourceEventRow) {
   return email.sourceId === "email_outlook" ? "Outlook" : "Gmail";
 }

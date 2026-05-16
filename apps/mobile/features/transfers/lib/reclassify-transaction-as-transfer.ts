@@ -1,5 +1,8 @@
 import { relinkCaptureEvidenceToTransfer } from "@/features/capture-evidence/public";
-import { markProcessedEmailReclassifiedAsTransfer } from "@/features/email-capture/transfer-reclassification.public";
+import {
+  markProcessedEmailReclassifiedAsTransfer,
+  markProcessedSourceEventReclassifiedAsTransfer,
+} from "@/features/email-capture/transfer-reclassification.public";
 import {
   getTransactionById,
   markTransactionSuperseded,
@@ -8,6 +11,8 @@ import { generateTransferId, toIsoDateTime } from "@/shared/lib.public";
 import type {
   IsoDateTime,
   ProcessedEmailId,
+  ProcessedSourceEventId,
+  ReviewCandidateId,
   TransactionId,
   TransferId,
   UserId,
@@ -26,6 +31,8 @@ type ReclassifyTransactionAsTransferInput = {
   readonly userId: UserId;
   readonly transactionId: TransactionId;
   readonly processedEmailId?: ProcessedEmailId;
+  readonly processedSourceEventId?: ProcessedSourceEventId;
+  readonly reviewCandidateId?: ReviewCandidateId;
   readonly digits: string;
   readonly fromSide: TransferSide | null;
   readonly toSide: TransferSide | null;
@@ -41,9 +48,13 @@ type ReclassifyTransactionAsTransferDeps = {
   readonly saveTransactionRow?: typeof markTransactionSuperseded;
   readonly relinkEvidenceToTransfer?: typeof relinkCaptureEvidenceToTransfer;
   readonly saveProcessedEmailStatus?: typeof markProcessedEmailReclassifiedAsTransfer;
+  readonly saveProcessedSourceEventStatus?: typeof markProcessedSourceEventReclassifiedAsTransfer;
 };
 
-export type ReclassifyTransactionAsTransferError = TransferBuildError | "transactionNotFound";
+export type ReclassifyTransactionAsTransferError =
+  | TransferBuildError
+  | "reviewCandidateRequired"
+  | "transactionNotFound";
 
 export type ReclassifyTransactionAsTransferResult =
   | { success: true; transfer: StoredTransfer }
@@ -60,6 +71,7 @@ export function reclassifyTransactionAsTransfer(
     saveTransactionRow = markTransactionSuperseded,
     relinkEvidenceToTransfer = relinkCaptureEvidenceToTransfer,
     saveProcessedEmailStatus = markProcessedEmailReclassifiedAsTransfer,
+    saveProcessedSourceEventStatus = markProcessedSourceEventReclassifiedAsTransfer,
   }: ReclassifyTransactionAsTransferDeps = {}
 ): ReclassifyTransactionAsTransferResult {
   const existingTransaction = loadTransactionById(db, input.transactionId);
@@ -71,6 +83,9 @@ export function reclassifyTransactionAsTransfer(
     existingTransaction.supersededAt != null
   ) {
     return { success: false, error: "transactionNotFound" };
+  }
+  if (input.processedSourceEventId && !input.reviewCandidateId) {
+    return { success: false, error: "reviewCandidateRequired" };
   }
 
   const nowDate = now();
@@ -110,7 +125,16 @@ export function reclassifyTransactionAsTransfer(
       updatedAt,
     });
 
-    if (input.processedEmailId) {
+    if (input.processedSourceEventId && input.reviewCandidateId) {
+      saveProcessedSourceEventStatus({
+        db: tx,
+        id: input.processedSourceEventId,
+        userId: input.userId,
+        reviewCandidateId: input.reviewCandidateId,
+        transactionId: existingTransaction.id,
+        updatedAt,
+      });
+    } else if (input.processedEmailId) {
       saveProcessedEmailStatus({
         db: tx,
         id: input.processedEmailId,

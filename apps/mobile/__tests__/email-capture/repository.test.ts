@@ -16,6 +16,7 @@ const mockSelect = vi.fn<(...args: any[]) => any>().mockReturnThis();
 const mockSelectDistinct = vi.fn<(...args: any[]) => any>().mockReturnThis();
 const mockLimit = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
 const mockFrom = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockInnerJoin = vi.fn<(...args: any[]) => any>().mockReturnThis();
 const mockWhere = vi.fn<(...args: any[]) => any>().mockReturnThis();
 const mockOrderBy = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
 const mockDelete = vi.fn<(...args: any[]) => any>().mockReturnThis();
@@ -44,7 +45,13 @@ describe("email capture repository", () => {
     mockValues.mockReturnValue({ onConflictDoNothing: mockOnConflictDoNothing });
     mockSelect.mockReturnValue({ from: mockFrom });
     mockSelectDistinct.mockReturnValue({ from: mockFrom });
-    mockFrom.mockReturnValue({ where: mockWhere, orderBy: mockOrderBy, limit: mockLimit });
+    mockFrom.mockReturnValue({
+      innerJoin: mockInnerJoin,
+      where: mockWhere,
+      orderBy: mockOrderBy,
+      limit: mockLimit,
+    });
+    mockInnerJoin.mockReturnValue({ where: mockWhere });
     mockWhere.mockReturnValue({ orderBy: mockOrderBy });
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
     mockUpdate.mockReturnValue({ set: mockSet });
@@ -197,9 +204,10 @@ describe("email capture repository", () => {
     mockOrderBy.mockResolvedValueOnce(mockRows);
 
     const { getFailedEmails } = await import("@/features/email-capture/lib/repository");
-    const result = await getFailedEmails(mockDb);
+    const result = await getFailedEmails(mockDb, "user-1" as UserId);
 
     expect(mockSelect).toHaveBeenCalled();
+    expect(mockInnerJoin).toHaveBeenCalled();
     expect(result).toEqual(mockRows);
   });
 
@@ -250,9 +258,10 @@ describe("email capture repository", () => {
     mockOrderBy.mockResolvedValueOnce(mockRows);
 
     const { getNeedsReviewEmails } = await import("@/features/email-capture/lib/repository");
-    const result = await getNeedsReviewEmails(mockDb);
+    const result = await getNeedsReviewEmails(mockDb, "user-1" as UserId);
 
     expect(mockSelect).toHaveBeenCalled();
+    expect(mockInnerJoin).toHaveBeenCalled();
     expect(result).toEqual(mockRows);
   });
 

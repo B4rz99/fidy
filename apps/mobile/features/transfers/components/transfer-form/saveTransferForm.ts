@@ -14,7 +14,12 @@ import { reclassifyTransactionAsTransfer } from "@/features/transfers/lib/reclas
 import { recordManualTransferWithLocalLedger } from "@/infrastructure/local-ledger/record-transfer";
 import type { AnyDb } from "@/shared/db";
 import { captureWarning } from "@/shared/lib";
-import type { ProcessedEmailId, UserId } from "@/shared/types/branded";
+import type {
+  ProcessedEmailId,
+  ProcessedSourceEventId,
+  ReviewCandidateId,
+  UserId,
+} from "@/shared/types/branded";
 
 type SubmitTransferFormInput = {
   readonly date: Date;
@@ -23,6 +28,8 @@ type SubmitTransferFormInput = {
   readonly digits: string;
   readonly fromSide: TransferSide | null;
   readonly processedEmailId: ProcessedEmailId | null;
+  readonly processedSourceEventId?: ProcessedSourceEventId | null;
+  readonly reviewCandidateId?: ReviewCandidateId | null;
   readonly sourceTransaction: StoredTransaction | null;
   readonly toSide: TransferSide | null;
   readonly userId: UserId | null | undefined;
@@ -77,6 +84,36 @@ async function saveReclassifiedTransfer(
   return result;
 }
 
+function buildReclassificationInput(
+  input: SubmitTransferFormInput & {
+    readonly sourceTransaction: StoredTransaction;
+    readonly userId: UserId;
+  }
+) {
+  return {
+    userId: input.userId,
+    transactionId: input.sourceTransaction.id,
+    processedEmailId: input.processedEmailId ?? undefined,
+    processedSourceEventId: input.processedSourceEventId ?? undefined,
+    reviewCandidateId: input.reviewCandidateId ?? undefined,
+    digits: input.digits,
+    fromSide: input.fromSide,
+    toSide: input.toSide,
+    description: input.sourceTransaction.description,
+    date: input.date,
+  };
+}
+
+function captureReclassificationSaveFailure(input: SubmitTransferFormInput, error: unknown) {
+  captureWarning("transfer_reclassification_save_failed", {
+    operation: "reclassify_transaction_as_transfer",
+    hasProcessedEmail: input.processedEmailId != null,
+    hasProcessedSourceEvent: input.processedSourceEventId != null,
+    hasReviewCandidate: input.reviewCandidateId != null,
+    errorType: error instanceof Error ? error.name : typeof error,
+  });
+}
+
 function runReclassifiedTransfer(
   input: SubmitTransferFormInput & {
     readonly db: AnyDb;
@@ -85,22 +122,9 @@ function runReclassifiedTransfer(
   }
 ) {
   try {
-    return reclassifyTransactionAsTransfer(input.db, {
-      userId: input.userId,
-      transactionId: input.sourceTransaction.id,
-      processedEmailId: input.processedEmailId ?? undefined,
-      digits: input.digits,
-      fromSide: input.fromSide,
-      toSide: input.toSide,
-      description: input.sourceTransaction.description,
-      date: input.date,
-    });
+    return reclassifyTransactionAsTransfer(input.db, buildReclassificationInput(input));
   } catch (error) {
-    captureWarning("transfer_reclassification_save_failed", {
-      operation: "reclassify_transaction_as_transfer",
-      hasProcessedEmail: input.processedEmailId != null,
-      errorType: error instanceof Error ? error.name : typeof error,
-    });
+    captureReclassificationSaveFailure(input, error);
     return { success: false, error: "saveFailed" } as const;
   }
 }
@@ -119,8 +143,11 @@ function didTransferSaveSucceed(
   return result.success;
 }
 
-function resolveTransferDestination(processedEmailId: ProcessedEmailId | null) {
-  return processedEmailId ? "needs-review" : "tabs";
+function resolveTransferDestination(input: {
+  readonly processedEmailId: ProcessedEmailId | null;
+  readonly processedSourceEventId: ProcessedSourceEventId | null;
+}) {
+  return input.processedEmailId || input.processedSourceEventId ? "needs-review" : "tabs";
 }
 
 export async function submitTransferForm(
@@ -144,6 +171,9 @@ export async function submitTransferForm(
 
   return {
     success: true,
-    destination: resolveTransferDestination(input.processedEmailId),
+    destination: resolveTransferDestination({
+      processedEmailId: input.processedEmailId,
+      processedSourceEventId: input.processedSourceEventId ?? null,
+    }),
   };
 }

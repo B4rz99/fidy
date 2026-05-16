@@ -5,11 +5,10 @@ import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import {
-  dismissFinancialMeaningReview,
   dismissSourceEventFinancialMeaningReview,
+  getFinancialMeaningQueueItemId,
   loadNeedsReviewEmails,
 } from "@/features/email-capture/public";
-import { getTransactionDisplayName } from "@/features/transactions/display.public";
 import { refreshTransactions } from "@/features/transactions/store.public";
 import { ScreenLayout } from "@/shared/components";
 import { ChevronRight, TriangleAlert } from "@/shared/components/icons";
@@ -18,17 +17,10 @@ import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { formatMoney, formatSignedMoney, showErrorToast } from "@/shared/lib";
-import type { ProcessedEmailId, ProcessedSourceEventId } from "@/shared/types/branded";
+import type { ProcessedSourceEventId, ReviewCandidateId } from "@/shared/types/branded";
 import { useFinancialMeaningReviewQueue } from "../hooks/use-financial-meaning-review-queue";
 import { styles } from "./FinancialMeaningQueueScreen.styles";
 import { ActionButton, EmptyState, SummaryCard } from "./shared";
-
-type FinancialMeaningQueueItem = ReturnType<typeof useFinancialMeaningReviewQueue>["items"][number];
-
-const getQueueItemId = (item: FinancialMeaningQueueItem) =>
-  item.kind === "legacy_email"
-    ? item.processedEmail.id
-    : `${item.processedSourceEvent.id}:${item.reviewCandidate.id}`;
 
 function FinancialMeaningQueueCard({
   item,
@@ -49,31 +41,26 @@ function FinancialMeaningQueueCard({
   const tertiary = useThemeColor("tertiary");
   const card = useThemeColor("card");
   const borderSubtle = useThemeColor("borderSubtle");
-  const accentRed = useThemeColor("accentRed");
   const accentGreen = useThemeColor("accentGreen");
-  const isLegacyItem = item.kind === "legacy_email";
-  const providerLabel = isLegacyItem
-    ? item.processedEmail.provider === "gmail"
-      ? t("financialMeaningReview.providers.gmail")
-      : t("financialMeaningReview.providers.outlook")
-    : item.processedSourceEvent.sourceId === "email_gmail"
+  const accentRed = useThemeColor("accentRed");
+  const providerLabel =
+    item.processedSourceEvent.sourceId === "email_gmail"
       ? t("financialMeaningReview.providers.gmail")
       : t("financialMeaningReview.providers.outlook");
-  const subject = isLegacyItem
-    ? item.processedEmail.subject
-    : (item.processedSourceEvent.subject ?? "");
-  const title = isLegacyItem
-    ? getTransactionDisplayName(item.transaction, t("common.unknown"))
-    : (item.reviewCandidate.description ??
-      item.processedSourceEvent.rawBodyPreview ??
-      t("common.unknown"));
-  const subtitleDate = isLegacyItem
-    ? item.transaction.date
-    : (item.reviewCandidate.occurredAt ?? item.processedSourceEvent.receivedAt);
-  const amount = isLegacyItem ? item.transaction.amount : item.reviewCandidate.amount;
-  const transactionType = isLegacyItem
-    ? item.transaction.type
-    : item.reviewCandidate.transactionType;
+  const subject = item.processedSourceEvent.subject ?? "";
+  const title =
+    item.reviewCandidate.description ??
+    item.processedSourceEvent.rawBodyPreview ??
+    t("common.unknown");
+  const subtitleDate = item.reviewCandidate.occurredAt ?? item.processedSourceEvent.receivedAt;
+  const amount = item.reviewCandidate.amount;
+  const transactionType = item.reviewCandidate.transactionType;
+  const amountColor =
+    transactionType === "income"
+      ? accentGreen
+      : transactionType === "expense"
+        ? accentRed
+        : primary;
 
   return (
     <View style={[styles.card, { backgroundColor: card, borderColor: borderSubtle }]}>
@@ -100,12 +87,7 @@ function FinancialMeaningQueueCard({
               style={[
                 styles.cardAmount,
                 {
-                  color:
-                    transactionType == null
-                      ? primary
-                      : transactionType === "income"
-                        ? accentGreen
-                        : accentRed,
+                  color: amountColor,
                 },
               ]}
             >
@@ -150,33 +132,26 @@ export function FinancialMeaningQueueScreen() {
   const { isBusy, run: guardedAction } = useAsyncGuard();
   const [skippedIds, setSkippedIds] = useState<readonly string[]>([]);
 
-  const visibleItems = items.filter((item) => !skippedIds.includes(getQueueItemId(item)));
+  const visibleItems = items.filter(
+    (item) => !skippedIds.includes(getFinancialMeaningQueueItemId(item))
+  );
 
-  const handleDismiss = (processedEmailId: ProcessedEmailId) => {
+  const handleDismissSourceEvent = (
+    processedSourceEventId: ProcessedSourceEventId,
+    reviewCandidateId: ReviewCandidateId
+  ) => {
     void guardedAction(async () => {
       if (!db || !userId) {
         return;
       }
 
       try {
-        await dismissFinancialMeaningReview(db, processedEmailId);
-        await loadNeedsReviewEmails(db, userId);
-        await refreshTransactions(db, userId);
-        await reloadQueue();
-      } catch {
-        showErrorToast(t("financialMeaningReview.errors.dismissFailed"));
-      }
-    });
-  };
-
-  const handleDismissSourceEvent = (processedSourceEventId: ProcessedSourceEventId) => {
-    void guardedAction(async () => {
-      if (!db || !userId) {
-        return;
-      }
-
-      try {
-        await dismissSourceEventFinancialMeaningReview(db, userId, processedSourceEventId);
+        await dismissSourceEventFinancialMeaningReview(
+          db,
+          userId,
+          processedSourceEventId,
+          reviewCandidateId
+        );
         await loadNeedsReviewEmails(db, userId);
         await refreshTransactions(db, userId);
         await reloadQueue();
@@ -200,7 +175,7 @@ export function FinancialMeaningQueueScreen() {
       ) : (
         <FlashList
           data={visibleItems}
-          keyExtractor={getQueueItemId}
+          keyExtractor={getFinancialMeaningQueueItemId}
           contentContainerStyle={[styles.listContent, { paddingBottom: bottom + 28 }]}
           contentInsetAdjustmentBehavior="automatic"
           ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
@@ -216,29 +191,22 @@ export function FinancialMeaningQueueScreen() {
               item={item}
               disabled={isBusy}
               onReview={() =>
-                item.kind === "legacy_email"
-                  ? router.push({
-                      pathname: "/meaning-review",
-                      params: { processedEmailId: item.processedEmail.id },
-                    } as never)
-                  : router.push({
-                      pathname: "/meaning-review",
-                      params: {
-                        processedSourceEventId: item.processedSourceEvent.id,
-                        reviewCandidateId: item.reviewCandidate.id,
-                      },
-                    } as never)
+                router.push({
+                  pathname: "/meaning-review",
+                  params: {
+                    processedSourceEventId: item.processedSourceEvent.id,
+                    reviewCandidateId: item.reviewCandidate.id,
+                  },
+                } as never)
               }
               onDismiss={() =>
-                item.kind === "legacy_email"
-                  ? handleDismiss(item.processedEmail.id)
-                  : handleDismissSourceEvent(item.processedSourceEvent.id)
+                handleDismissSourceEvent(item.processedSourceEvent.id, item.reviewCandidate.id)
               }
               onSkip={() =>
                 setSkippedIds((current) =>
-                  current.includes(getQueueItemId(item))
+                  current.includes(getFinancialMeaningQueueItemId(item))
                     ? current
-                    : [...current, getQueueItemId(item)]
+                    : [...current, getFinancialMeaningQueueItemId(item)]
                 )
               }
             />

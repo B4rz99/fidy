@@ -1,6 +1,5 @@
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
 import { isActiveTransactionRow } from "@/features/transactions/lib/active-transaction-conditions";
-import { toStoredTransaction } from "@/features/transactions/lib/build-transaction";
 import {
   getTransactionById,
   insertTransaction,
@@ -27,24 +26,17 @@ import {
   dismissSourceEventFinancialMeaningReviewById,
   type FinancialMeaningSourceEventReviewRow,
   getFinancialMeaningSourceEventReviewRows,
-  getNeedsReviewEmails,
   getProcessedEmailById,
   getSourceEventReviewCandidateById,
   updateProcessedEmailStatus,
   updateProcessedEmailStatusInTransaction,
 } from "./repository";
 
-export type FinancialMeaningReviewItem =
-  | {
-      readonly kind: "legacy_email";
-      readonly processedEmail: Awaited<ReturnType<typeof getNeedsReviewEmails>>[number];
-      readonly transaction: ReturnType<typeof toStoredTransaction>;
-    }
-  | {
-      readonly kind: "source_event";
-      readonly processedSourceEvent: FinancialMeaningSourceEventReviewRow["processedSourceEvent"];
-      readonly reviewCandidate: FinancialMeaningSourceEventReviewRow["reviewCandidate"];
-    };
+export type FinancialMeaningReviewItem = {
+  readonly kind: "source_event";
+  readonly processedSourceEvent: FinancialMeaningSourceEventReviewRow["processedSourceEvent"];
+  readonly reviewCandidate: FinancialMeaningSourceEventReviewRow["reviewCandidate"];
+};
 
 type DismissFinancialMeaningReviewDeps = {
   readonly now?: () => IsoDateTime;
@@ -55,47 +47,19 @@ type DismissFinancialMeaningReviewDeps = {
 };
 
 export async function getFinancialMeaningReviewItems(db: AnyDb, userId: UserId) {
-  const emails = await getNeedsReviewEmails(db);
   const sourceEventRows = await getFinancialMeaningSourceEventReviewRows(db, userId);
-
-  const legacyItems = emails.flatMap((processedEmail): FinancialMeaningReviewItem[] => {
-    if (processedEmail.transactionId == null) {
-      return [];
-    }
-
-    const transaction = getTransactionById(db, processedEmail.transactionId);
-
-    if (transaction == null || !isActiveTransactionRow(transaction)) {
-      return [];
-    }
-
-    return [
-      {
-        kind: "legacy_email",
-        processedEmail,
-        transaction: toStoredTransaction(transaction),
-      },
-    ];
-  });
-
-  return [
-    ...legacyItems,
-    ...sourceEventRows.map(
+  return sourceEventRows
+    .map(
       (row): FinancialMeaningReviewItem => ({
         kind: "source_event",
         processedSourceEvent: row.processedSourceEvent,
         reviewCandidate: row.reviewCandidate,
       })
-    ),
-  ].sort((left, right) =>
-    getReviewItemReceivedAt(right).localeCompare(getReviewItemReceivedAt(left))
-  );
+    )
+    .sort((left, right) =>
+      right.processedSourceEvent.receivedAt.localeCompare(left.processedSourceEvent.receivedAt)
+    );
 }
-
-const getReviewItemReceivedAt = (item: FinancialMeaningReviewItem) =>
-  item.kind === "legacy_email"
-    ? item.processedEmail.receivedAt
-    : item.processedSourceEvent.receivedAt;
 
 export async function resolveFinancialMeaningReview(db: AnyDb, processedEmailId: ProcessedEmailId) {
   const processedEmail = await getProcessedEmailById(db, processedEmailId);
@@ -253,11 +217,13 @@ export async function dismissSourceEventFinancialMeaningReview(
   db: AnyDb,
   userId: UserId,
   processedSourceEventId: ProcessedSourceEventId,
+  reviewCandidateId: ReviewCandidateId,
   now: () => IsoDateTime = () => toIsoDateTime(new Date())
 ) {
   dismissSourceEventFinancialMeaningReviewById(db, {
     userId,
     processedSourceEventId,
+    reviewCandidateId,
     updatedAt: now(),
   });
 }

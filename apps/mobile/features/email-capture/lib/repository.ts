@@ -1,6 +1,6 @@
-import { and, desc, eq, inArray, lte, sql } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, inArray, lte, sql } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
-import { emailAccounts, processedEmails } from "@/shared/db";
+import { emailAccounts, processedEmails, transactions } from "@/shared/db";
 import type {
   EmailAccountId,
   IsoDateTime,
@@ -9,20 +9,24 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 export {
-  acceptSourceEventFinancialMeaningReviewById,
-  dismissSourceEventFinancialMeaningReviewById,
-  getFinancialMeaningSourceEventReviewRows,
   getPendingRetryEmailSourceEvents,
   getProcessedEmailSourceEventIds,
-  getSourceEventReviewCandidateById,
   insertProcessedEmailSourceEvent,
   markSourceEventForRetry,
   markSourceEventPermanentlyFailed,
   markSourceEventRetrySuccess,
   updateProcessedSourceEventStatus,
-  type FinancialMeaningSourceEventReviewRow,
+  updateProcessedSourceEventStatusInTransaction,
   type ProcessedSourceEventRow,
 } from "./source-event-repository";
+export {
+  acceptSourceEventFinancialMeaningReviewById,
+  dismissSourceEventFinancialMeaningReviewById,
+  getFinancialMeaningSourceEventReviewRows,
+  getSourceEventReviewCandidateById,
+  markSourceEventReviewCandidateReclassifiedAsTransfer,
+  type FinancialMeaningSourceEventReviewRow,
+} from "./source-event-review-repository";
 export {
   getFailedEmailSourceEvents,
   getNeedsReviewEmailSourceEvents,
@@ -95,11 +99,19 @@ const getLegacyEmailSourceEventKey = (row: {
 }) => `${row.provider === "gmail" ? "email_gmail" : "email_outlook"}:${row.externalId}`;
 
 async function canUseLegacyProcessedEmailFallback(db: AnyDb, userId: UserId) {
-  const owners = await db
+  const emailAccountOwners = await db
     .selectDistinct({ userId: emailAccounts.userId })
     .from(emailAccounts)
     .limit(2);
-  return owners.length === 1 && owners[0]?.userId === userId;
+  const transactionOwners = await db
+    .selectDistinct({ userId: transactions.userId })
+    .from(transactions)
+    .limit(2);
+  const owners = new Set([
+    ...emailAccountOwners.map((owner) => owner.userId),
+    ...transactionOwners.map((owner) => owner.userId),
+  ]);
+  return emailAccountOwners.length === 1 && owners.size === 1 && owners.has(userId);
 }
 
 export async function getProcessedExternalIds(
@@ -121,20 +133,33 @@ export async function getProcessedExternalIds(
   return new Set(rows.map(getLegacyEmailSourceEventKey));
 }
 
-export async function getFailedEmails(db: AnyDb) {
+function getProcessedEmailsByStatus(db: AnyDb, status: string) {
   return db
     .select()
     .from(processedEmails)
-    .where(eq(processedEmails.status, "failed"))
+    .where(eq(processedEmails.status, status))
     .orderBy(desc(processedEmails.receivedAt));
 }
 
-export async function getNeedsReviewEmails(db: AnyDb) {
+function getUserLinkedProcessedEmailsByStatus(db: AnyDb, userId: UserId, status: string) {
   return db
-    .select()
+    .select({ ...getTableColumns(processedEmails) })
     .from(processedEmails)
-    .where(eq(processedEmails.status, "needs_review"))
+    .innerJoin(transactions, eq(transactions.id, processedEmails.transactionId))
+    .where(and(eq(processedEmails.status, status), eq(transactions.userId, userId)))
     .orderBy(desc(processedEmails.receivedAt));
+}
+
+export async function getFailedEmails(db: AnyDb, userId: UserId) {
+  return (await canUseLegacyProcessedEmailFallback(db, userId))
+    ? getProcessedEmailsByStatus(db, "failed")
+    : getUserLinkedProcessedEmailsByStatus(db, userId, "failed");
+}
+
+export async function getNeedsReviewEmails(db: AnyDb, userId: UserId) {
+  return (await canUseLegacyProcessedEmailFallback(db, userId))
+    ? getProcessedEmailsByStatus(db, "needs_review")
+    : getUserLinkedProcessedEmailsByStatus(db, userId, "needs_review");
 }
 
 export async function getNeedsReviewEmailByTransactionId(db: AnyDb, transactionId: TransactionId) {

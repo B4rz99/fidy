@@ -12,17 +12,21 @@ import {
   resolveFinancialMeaningReview,
 } from "@/features/email-capture/lib/financial-meaning-review";
 import {
+  getFailedEmails,
+  getFailedEmailSourceEvents,
   getNeedsReviewEmails,
+  getNeedsReviewEmailSourceEvents,
   getProcessedEmailByExternalId,
   getProcessedEmailById,
   insertProcessedEmail,
 } from "@/features/email-capture/lib/repository";
 import { getTransactionById, insertTransaction } from "@/features/transactions/lib/repository";
-import { processedSourceEvents, reviewCandidates } from "@/shared/db/schema";
+import { emailAccounts, processedSourceEvents, reviewCandidates } from "@/shared/db/schema";
 import type {
   CategoryId,
   CopAmount,
   FinancialAccountId,
+  EmailAccountId,
   IsoDate,
   IsoDateTime,
   ProcessedEmailId,
@@ -50,6 +54,7 @@ afterEach(() => {
 
 type EmailTransactionOverrides = Partial<{
   id: TransactionId;
+  userId: UserId;
   amount: CopAmount;
   description: string;
   date: IsoDate;
@@ -214,6 +219,19 @@ function insertReviewCandidate(overrides: ReviewCandidateOverrides = {}) {
     .run();
 }
 
+function insertEmailAccount(userId: UserId = USER_ID) {
+  db.insert(emailAccounts)
+    .values({
+      id: `ea-${userId}` as EmailAccountId,
+      userId,
+      provider: "gmail",
+      email: `${userId}@example.com`,
+      lastFetchedAt: null,
+      createdAt: NOW,
+    })
+    .run();
+}
+
 describe("financial meaning review", () => {
   it("marks a reviewed low-confidence email as success without deleting the linked transaction", async () => {
     insertEmailTransactionRow();
@@ -221,7 +239,7 @@ describe("financial meaning review", () => {
 
     await resolveFinancialMeaningReview(db as any, "pe-1" as ProcessedEmailId);
 
-    expect(await getNeedsReviewEmails(db as any)).toEqual([]);
+    expect(await getNeedsReviewEmails(db as any, USER_ID)).toEqual([]);
     expect(await getProcessedEmailByExternalId(db as any, "ext-1")).toEqual(
       expect.objectContaining({
         id: "pe-1",
@@ -231,16 +249,11 @@ describe("financial meaning review", () => {
     );
   });
 
-  it("lists only active low-confidence emails that still point at active transactions", async () => {
+  it("does not list legacy processed emails as financial meaning review items", async () => {
     reviewCandidateTransactions.forEach(insertEmailTransactionRow);
     await Promise.all(reviewCandidateEmails.map(insertNeedsReviewEmail));
 
-    await expect(getFinancialMeaningReviewItems(db as any, USER_ID)).resolves.toEqual([
-      expect.objectContaining({
-        processedEmail: expect.objectContaining({ id: "pe-active" }),
-        transaction: expect.objectContaining({ id: "tx-active" }),
-      }),
-    ]);
+    await expect(getFinancialMeaningReviewItems(db as any, USER_ID)).resolves.toEqual([]);
   });
 
   it("lists source-event needs-review candidates in the financial meaning queue", async () => {
@@ -253,6 +266,148 @@ describe("financial meaning review", () => {
         processedSourceEvent: expect.objectContaining({ id: "pse-review-1" }),
         reviewCandidate: expect.objectContaining({ id: "rc-review-1" }),
       }),
+    ]);
+  });
+
+  it("loads needs-review email source events only when a pending review candidate exists", async () => {
+    insertNeedsReviewSourceEvent();
+    insertNeedsReviewSourceEvent({
+      id: "pse-review-without-candidate" as ProcessedSourceEventId,
+      sourceEventId: "ext-source-review-without-candidate",
+    });
+    insertReviewCandidate();
+    insertReviewCandidate({
+      id: "rc-review-rejected" as ReviewCandidateId,
+      processedSourceEventId: "pse-review-without-candidate" as ProcessedSourceEventId,
+      status: "rejected",
+    });
+
+    await expect(getNeedsReviewEmailSourceEvents(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({ id: "pse-review-1" }),
+    ]);
+  });
+
+  it("does not include retry-scheduled source events in the failed queue", async () => {
+    insertNeedsReviewSourceEvent({
+      id: "pse-failed" as ProcessedSourceEventId,
+      status: "failed",
+      failureReason: "parse failed",
+    });
+    insertNeedsReviewSourceEvent({
+      id: "pse-retry" as ProcessedSourceEventId,
+      sourceEventId: "ext-source-retry",
+      status: "pending_retry",
+      failureReason: "temporary failure",
+    });
+
+    await expect(getFailedEmailSourceEvents(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({ id: "pse-failed" }),
+    ]);
+  });
+
+  it("scopes legacy failed and needs-review email queues to the active user", async () => {
+    insertEmailAccount();
+    insertEmailAccount("other-user" as UserId);
+    insertEmailTransactionRow({ id: "tx-user" as TransactionId });
+    insertEmailTransactionRow({
+      id: "tx-other" as TransactionId,
+      userId: "other-user" as UserId,
+    });
+    await insertNeedsReviewEmail({
+      id: "pe-user-review" as ProcessedEmailId,
+      externalId: "ext-user-review",
+      transactionId: "tx-user" as TransactionId,
+    });
+    await insertNeedsReviewEmail({
+      id: "pe-other-review" as ProcessedEmailId,
+      externalId: "ext-other-review",
+      transactionId: "tx-other" as TransactionId,
+    });
+    await insertProcessedEmail(db as any, {
+      ...defaultNeedsReviewEmail,
+      id: "pe-user-failed" as ProcessedEmailId,
+      externalId: "ext-user-failed",
+      status: "failed",
+      transactionId: "tx-user" as TransactionId,
+    });
+    await insertProcessedEmail(db as any, {
+      ...defaultNeedsReviewEmail,
+      id: "pe-other-failed" as ProcessedEmailId,
+      externalId: "ext-other-failed",
+      status: "failed",
+      transactionId: "tx-other" as TransactionId,
+    });
+
+    await expect(getNeedsReviewEmails(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({ id: "pe-user-review" }),
+    ]);
+    await expect(getFailedEmails(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({ id: "pe-user-failed" }),
+    ]);
+  });
+
+  it("keeps unlinked legacy failed emails in single-owner databases", async () => {
+    insertEmailAccount();
+    insertEmailTransactionRow({ id: "tx-user" as TransactionId });
+    await insertProcessedEmail(db as any, {
+      ...defaultNeedsReviewEmail,
+      id: "pe-unlinked-failed" as ProcessedEmailId,
+      externalId: "ext-unlinked-failed",
+      status: "failed",
+      transactionId: null,
+    });
+
+    await expect(getFailedEmails(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({ id: "pe-unlinked-failed" }),
+    ]);
+  });
+
+  it("does not use global legacy queues when stale transactions belong to another owner", async () => {
+    insertEmailAccount();
+    insertEmailTransactionRow({ id: "tx-user" as TransactionId });
+    insertEmailTransactionRow({
+      id: "tx-other" as TransactionId,
+      userId: "other-user" as UserId,
+    });
+    await insertProcessedEmail(db as any, {
+      ...defaultNeedsReviewEmail,
+      id: "pe-unlinked-failed" as ProcessedEmailId,
+      externalId: "ext-unlinked-failed",
+      status: "failed",
+      transactionId: null,
+    });
+    await insertProcessedEmail(db as any, {
+      ...defaultNeedsReviewEmail,
+      id: "pe-linked-failed" as ProcessedEmailId,
+      externalId: "ext-linked-failed",
+      status: "failed",
+      transactionId: "tx-user" as TransactionId,
+    });
+
+    await expect(getFailedEmails(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({ id: "pe-linked-failed" }),
+    ]);
+  });
+
+  it("does not use global legacy queues without an email-account owner", async () => {
+    insertEmailTransactionRow({ id: "tx-user" as TransactionId });
+    await insertProcessedEmail(db as any, {
+      ...defaultNeedsReviewEmail,
+      id: "pe-unlinked-failed" as ProcessedEmailId,
+      externalId: "ext-unlinked-failed-no-owner",
+      status: "failed",
+      transactionId: null,
+    });
+    await insertProcessedEmail(db as any, {
+      ...defaultNeedsReviewEmail,
+      id: "pe-linked-failed" as ProcessedEmailId,
+      externalId: "ext-linked-failed-no-owner",
+      status: "failed",
+      transactionId: "tx-user" as TransactionId,
+    });
+
+    await expect(getFailedEmails(db as any, USER_ID)).resolves.toEqual([
+      expect.objectContaining({ id: "pe-linked-failed" }),
     ]);
   });
 
@@ -302,7 +457,7 @@ describe("financial meaning review", () => {
       now: () => "2026-04-19T11:00:00.000Z" as IsoDateTime,
     });
 
-    expect(await getNeedsReviewEmails(db as any)).toEqual([]);
+    expect(await getNeedsReviewEmails(db as any, USER_ID)).toEqual([]);
     expect(await getProcessedEmailById(db as any, "pe-2" as ProcessedEmailId)).toEqual(
       expect.objectContaining({
         id: "pe-2",
@@ -354,6 +509,7 @@ describe("financial meaning review", () => {
       db as any,
       USER_ID,
       "pse-review-1" as ProcessedSourceEventId,
+      "rc-review-1" as ReviewCandidateId,
       () => "2026-04-19T11:00:00.000Z" as IsoDateTime
     );
 
@@ -369,6 +525,42 @@ describe("financial meaning review", () => {
         id: "rc-review-1",
         status: "rejected",
         updatedAt: "2026-04-19T11:00:00.000Z",
+      }),
+    ]);
+  });
+
+  it("dismisses only the selected review candidate when sibling candidates remain", async () => {
+    insertNeedsReviewSourceEvent();
+    insertReviewCandidate();
+    insertReviewCandidate({
+      id: "rc-review-2" as ReviewCandidateId,
+      description: "Second possible meaning",
+    });
+
+    await dismissSourceEventFinancialMeaningReview(
+      db as any,
+      USER_ID,
+      "pse-review-1" as ProcessedSourceEventId,
+      "rc-review-1" as ReviewCandidateId,
+      () => "2026-04-19T11:00:00.000Z" as IsoDateTime
+    );
+
+    expect(db.select().from(processedSourceEvents).all()).toEqual([
+      expect.objectContaining({
+        id: "pse-review-1",
+        status: "needs_review",
+        updatedAt: "2026-04-19T11:00:00.000Z",
+      }),
+    ]);
+    expect(db.select().from(reviewCandidates).orderBy(reviewCandidates.id).all()).toEqual([
+      expect.objectContaining({
+        id: "rc-review-1",
+        status: "rejected",
+        updatedAt: "2026-04-19T11:00:00.000Z",
+      }),
+      expect.objectContaining({
+        id: "rc-review-2",
+        status: "pending",
       }),
     ]);
   });
@@ -397,6 +589,71 @@ describe("financial meaning review", () => {
       expect.objectContaining({
         id: "rc-review-1",
         status: "accepted",
+      }),
+    ]);
+  });
+
+  it("does not confirm non-email source-event review candidates", async () => {
+    insertNeedsReviewSourceEvent({ sourceFamily: "sms", sourceId: "notification_listener" });
+    insertReviewCandidate();
+
+    await expect(
+      confirmSourceEventFinancialMeaningReview(db as any, {
+        userId: USER_ID,
+        processedSourceEventId: "pse-review-1" as ProcessedSourceEventId,
+        reviewCandidateId: "rc-review-1" as ReviewCandidateId,
+        now: () => "2026-04-19T11:00:00.000Z" as IsoDateTime,
+      })
+    ).resolves.toBe(false);
+
+    expect(db.select().from(processedSourceEvents).all()).toEqual([
+      expect.objectContaining({
+        id: "pse-review-1",
+        sourceFamily: "sms",
+        status: "needs_review",
+        transactionId: null,
+      }),
+    ]);
+    expect(db.select().from(reviewCandidates).all()).toEqual([
+      expect.objectContaining({
+        id: "rc-review-1",
+        status: "pending",
+      }),
+    ]);
+  });
+
+  it("accepting one source-event review candidate rejects pending sibling candidates", async () => {
+    insertNeedsReviewSourceEvent();
+    insertReviewCandidate();
+    insertReviewCandidate({
+      id: "rc-review-2" as ReviewCandidateId,
+      description: "Second possible meaning",
+    });
+
+    await expect(
+      confirmSourceEventFinancialMeaningReview(db as any, {
+        userId: USER_ID,
+        processedSourceEventId: "pse-review-1" as ProcessedSourceEventId,
+        reviewCandidateId: "rc-review-1" as ReviewCandidateId,
+        now: () => "2026-04-19T11:00:00.000Z" as IsoDateTime,
+      })
+    ).resolves.toBe(true);
+
+    expect(db.select().from(processedSourceEvents).all()).toEqual([
+      expect.objectContaining({
+        id: "pse-review-1",
+        status: "processed",
+        transactionId: expect.any(String),
+      }),
+    ]);
+    expect(db.select().from(reviewCandidates).orderBy(reviewCandidates.id).all()).toEqual([
+      expect.objectContaining({
+        id: "rc-review-1",
+        status: "accepted",
+      }),
+      expect.objectContaining({
+        id: "rc-review-2",
+        status: "rejected",
       }),
     ]);
   });

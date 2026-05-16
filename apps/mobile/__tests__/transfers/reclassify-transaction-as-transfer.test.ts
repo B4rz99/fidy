@@ -1,6 +1,7 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: integration test uses a real SQLite DB
 import { resolve } from "node:path";
 import Database from "better-sqlite3";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -22,7 +23,7 @@ import { markTransactionSuperseded } from "@/features/transactions/transfer-recl
 import { reclassifyTransactionAsTransfer } from "@/features/transfers/lib/reclassify-transaction-as-transfer";
 import { reclassifyTransactionsAsTransfer } from "@/features/transfers/lib/reclassify-transactions-as-transfer";
 import { getTransferById } from "@/features/transfers/lib/repository";
-import { financialAccounts } from "@/shared/db/schema";
+import { financialAccounts, processedSourceEvents, reviewCandidates } from "@/shared/db/schema";
 import type {
   CaptureEvidenceId,
   CategoryId,
@@ -31,6 +32,8 @@ import type {
   IsoDate,
   IsoDateTime,
   ProcessedEmailId,
+  ProcessedSourceEventId,
+  ReviewCandidateId,
   TransactionId,
   TransferId,
   UserId,
@@ -159,9 +162,56 @@ async function insertPendingProcessedEmail() {
   });
 }
 
+function insertPendingProcessedSourceEvent() {
+  db.insert(processedSourceEvents)
+    .values({
+      id: "pse-1" as ProcessedSourceEventId,
+      userId: USER_ID,
+      sourceFamily: "email",
+      sourceId: "email_gmail",
+      sourceEventId: "ext-1",
+      status: "needs_review",
+      failureReason: null,
+      subject: "Transfer alert",
+      rawBodyPreview: "Transfer to savings",
+      rawBody: null,
+      retryCount: 0,
+      nextRetryAt: null,
+      transactionId: ORIGINAL_TRANSACTION_ID,
+      confidence: 0.52,
+      receivedAt: ORIGINAL_CREATED_AT,
+      processedAt: ORIGINAL_CREATED_AT,
+      createdAt: ORIGINAL_CREATED_AT,
+      updatedAt: ORIGINAL_CREATED_AT,
+      deletedAt: null,
+    })
+    .run();
+
+  db.insert(reviewCandidates)
+    .values({
+      id: "rc-1" as ReviewCandidateId,
+      userId: USER_ID,
+      processedSourceEventId: "pse-1" as ProcessedSourceEventId,
+      status: "pending",
+      candidateKind: "transaction",
+      amount: 350000 as CopAmount,
+      currency: "COP",
+      occurredAt: ORIGINAL_CREATED_AT,
+      description: "Transfer to savings",
+      categoryId: null,
+      transactionType: "expense",
+      confidence: 0.52,
+      createdAt: ORIGINAL_CREATED_AT,
+      updatedAt: ORIGINAL_CREATED_AT,
+      deletedAt: null,
+    })
+    .run();
+}
+
 function seedReclassificationScenario() {
   insertOriginalTransactionRecord();
   insertTransferEvidence();
+  insertPendingProcessedSourceEvent();
   return insertPendingProcessedEmail();
 }
 
@@ -176,7 +226,28 @@ function runReclassification() {
       toSide: { kind: "account", accountId: SAVINGS_ACCOUNT_ID },
       description: "Move to savings",
       date: new Date("2026-04-18T12:00:00.000Z"),
-      processedEmailId: "pe-1" as ProcessedEmailId,
+      processedSourceEventId: "pse-1" as ProcessedSourceEventId,
+      reviewCandidateId: "rc-1" as ReviewCandidateId,
+    },
+    {
+      now: () => new Date(NOW),
+      createId: () => TRANSFER_ID,
+    }
+  );
+}
+
+function runReclassificationWithoutReviewCandidate() {
+  return reclassifyTransactionAsTransfer(
+    db as any,
+    {
+      userId: USER_ID,
+      transactionId: ORIGINAL_TRANSACTION_ID,
+      digits: "350000",
+      fromSide: { kind: "account", accountId: ACCOUNT_ID },
+      toSide: { kind: "account", accountId: SAVINGS_ACCOUNT_ID },
+      description: "Move to savings",
+      date: new Date("2026-04-18T12:00:00.000Z"),
+      processedSourceEventId: "pse-1" as ProcessedSourceEventId,
     },
     {
       now: () => new Date(NOW),
@@ -210,12 +281,72 @@ function expectCreatedTransferState() {
   });
 }
 
-async function expectProcessedEmailSucceeded() {
+async function expectProcessedEmailUnchanged() {
   await expect(getProcessedEmailById(db as any, "pe-1" as ProcessedEmailId)).resolves.toEqual(
     expect.objectContaining({
       id: "pe-1",
-      status: "success",
+      status: "needs_review",
       transactionId: ORIGINAL_TRANSACTION_ID,
+    })
+  );
+}
+
+function expectProcessedSourceEventSucceeded() {
+  expect(
+    db
+      .select()
+      .from(processedSourceEvents)
+      .where(eq(processedSourceEvents.id, "pse-1" as ProcessedSourceEventId))
+      .get()
+  ).toEqual(
+    expect.objectContaining({
+      id: "pse-1",
+      status: "processed",
+      transactionId: ORIGINAL_TRANSACTION_ID,
+      updatedAt: NOW,
+    })
+  );
+  expect(
+    db
+      .select()
+      .from(reviewCandidates)
+      .where(eq(reviewCandidates.id, "rc-1" as ReviewCandidateId))
+      .get()
+  ).toEqual(
+    expect.objectContaining({
+      id: "rc-1",
+      status: "rejected",
+      updatedAt: NOW,
+    })
+  );
+}
+
+function expectProcessedSourceEventPending() {
+  expect(
+    db
+      .select()
+      .from(processedSourceEvents)
+      .where(eq(processedSourceEvents.id, "pse-1" as ProcessedSourceEventId))
+      .get()
+  ).toEqual(
+    expect.objectContaining({
+      id: "pse-1",
+      status: "needs_review",
+      transactionId: ORIGINAL_TRANSACTION_ID,
+      updatedAt: ORIGINAL_CREATED_AT,
+    })
+  );
+  expect(
+    db
+      .select()
+      .from(reviewCandidates)
+      .where(eq(reviewCandidates.id, "rc-1" as ReviewCandidateId))
+      .get()
+  ).toEqual(
+    expect.objectContaining({
+      id: "rc-1",
+      status: "pending",
+      updatedAt: ORIGINAL_CREATED_AT,
     })
   );
 }
@@ -234,7 +365,23 @@ describe("reclassifyTransactionAsTransfer", () => {
       }),
     });
     expectCreatedTransferState();
-    await expectProcessedEmailSucceeded();
+    expectProcessedSourceEventSucceeded();
+    await expectProcessedEmailUnchanged();
+  });
+
+  it("rejects source-event transfer reclassification without a review candidate", async () => {
+    await seedReclassificationScenario();
+    const result = runReclassificationWithoutReviewCandidate();
+
+    expect(result).toEqual({ success: false, error: "reviewCandidateRequired" });
+    expect(getTransferById(db as any, TRANSFER_ID)).toBeNull();
+    expect(getTransactionById(db as any, ORIGINAL_TRANSACTION_ID)).toMatchObject({
+      supersededAt: null,
+      supersededByTransferId: null,
+      updatedAt: ORIGINAL_CREATED_AT,
+    });
+    expectProcessedSourceEventPending();
+    await expectProcessedEmailUnchanged();
   });
 });
 

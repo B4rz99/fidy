@@ -1,13 +1,12 @@
 import { TriangleAlert } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { selectFailedEmailBannerCount } from "../lib/review-queue-selectors";
 import { useEmailCaptureStore } from "../store";
 
 export const FailedEmailsBanner = ({ onPress }: { onPress: () => void }) => {
   const { t } = useTranslation();
-  const failedCount = useEmailCaptureStore(
-    (s) => s.failedEmails.length + s.failedEmailSourceEvents.length
-  );
+  const failedCount = useEmailCaptureStore(selectFailedEmailBannerCount);
   const iconColor = useThemeColor("accentRed");
 
   if (failedCount === 0) return null;

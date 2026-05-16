@@ -2,10 +2,10 @@ import type { AnyDb } from "@/shared/db";
 import type { UserId } from "@/shared/types/branded";
 import type { ProcessedEmailRow, ProcessedSourceEventRow } from "../lib/repository";
 import {
-  getFailedEmailSourceEvents,
   getFailedEmails,
-  getNeedsReviewEmailSourceEvents,
+  getFailedEmailSourceEvents,
   getNeedsReviewEmails,
+  getNeedsReviewEmailSourceEvents,
 } from "../lib/repository";
 
 export type EmailCaptureQueues = {
@@ -21,9 +21,9 @@ export async function loadEmailCaptureQueues(
 ): Promise<EmailCaptureQueues> {
   const [failedEmails, failedEmailSourceEvents, needsReviewEmails, needsReviewEmailSourceEvents] =
     await Promise.all([
-      getFailedEmails(db),
+      getFailedEmails(db, userId),
       getFailedEmailSourceEvents(db, userId),
-      getNeedsReviewEmails(db),
+      getNeedsReviewEmails(db, userId),
       getNeedsReviewEmailSourceEvents(db, userId),
     ]);
 

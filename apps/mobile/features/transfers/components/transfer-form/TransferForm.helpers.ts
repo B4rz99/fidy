@@ -40,6 +40,7 @@ const TRANSFER_ERROR_MESSAGE_KEYS = {
   distinctSidesRequired: "transfers.errors.distinctSidesRequired",
   externalLabelRequired: "transfers.errors.saveFailed",
   futureDated: "transfers.errors.saveFailed",
+  reviewCandidateRequired: "transfers.errors.reclassifyFailed",
   saveFailed: "transfers.errors.saveFailed",
   storeNotInitialized: "transfers.errors.saveFailed",
   trackedAccountRequired: "transfers.errors.trackedAccountRequired",

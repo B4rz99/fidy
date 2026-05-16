@@ -1,13 +1,14 @@
-import { useEmailCaptureStore } from "@/features/email-capture/public";
+import {
+  selectNeedsReviewBannerCount,
+  useEmailCaptureStore,
+} from "@/features/email-capture/public";
 import { ChevronRight, TriangleAlert } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 
 export const NeedsReviewBanner = ({ onPress }: { onPress: () => void }) => {
   const { t } = useTranslation();
-  const count = useEmailCaptureStore(
-    (s) => s.needsReviewEmails.length + s.needsReviewEmailSourceEvents.length
-  );
+  const count = useEmailCaptureStore(selectNeedsReviewBannerCount);
 
   if (count === 0) return null;
 

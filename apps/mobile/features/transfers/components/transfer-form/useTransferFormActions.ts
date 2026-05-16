@@ -19,6 +19,10 @@ async function saveTransferFormAction(input: {
   readonly onError: (error: Parameters<typeof getTransferErrorMessageKey>[0]) => void;
   readonly onSuccessfulSave: (destination: "needs-review" | "tabs") => Promise<void> | void;
   readonly processedEmailId: Parameters<typeof submitTransferForm>[0]["processedEmailId"];
+  readonly processedSourceEventId: Parameters<
+    typeof submitTransferForm
+  >[0]["processedSourceEventId"];
+  readonly reviewCandidateId: Parameters<typeof submitTransferForm>[0]["reviewCandidateId"];
   readonly resetDraft: (() => void) | null;
   readonly sourceTransaction: StoredTransaction | null;
   readonly toSide: TransferSide | null;
@@ -46,6 +50,10 @@ export function useTransferFormActions(input: {
   readonly isIos: boolean;
   readonly onSuccessfulSave: (destination: "needs-review" | "tabs") => Promise<void> | void;
   readonly processedEmailId: Parameters<typeof submitTransferForm>[0]["processedEmailId"];
+  readonly processedSourceEventId: Parameters<
+    typeof submitTransferForm
+  >[0]["processedSourceEventId"];
+  readonly reviewCandidateId: Parameters<typeof submitTransferForm>[0]["reviewCandidateId"];
   readonly setDate: (date: Date) => void;
   readonly setDescription: (description: string) => void;
   readonly setDigits: (digits: string) => void;
@@ -96,6 +104,8 @@ export function useTransferFormActions(input: {
           onError: (error) => showErrorToast(t(getTransferErrorMessageKey(error))),
           onSuccessfulSave: input.onSuccessfulSave,
           processedEmailId: input.processedEmailId,
+          processedSourceEventId: input.processedSourceEventId,
+          reviewCandidateId: input.reviewCandidateId,
           resetDraft:
             input.sourceTransaction == null
               ? () => resetSavedTransferDraft(input, input.defaultFromSide)

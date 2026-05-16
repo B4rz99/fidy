@@ -3,7 +3,12 @@ import { useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { Platform } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
-import { requireProcessedEmailId, requireTransactionId } from "@/shared/types/assertions";
+import {
+  requireProcessedEmailId,
+  requireProcessedSourceEventId,
+  requireReviewCandidateId,
+  requireTransactionId,
+} from "@/shared/types/assertions";
 import type { TransferFormScreenProps } from "./TransferForm.types";
 import { useHydrateTransferForm } from "./useHydrateTransferForm";
 import { useTransferFormActions } from "./useTransferFormActions";
@@ -22,6 +27,37 @@ function parseReclassificationProcessedEmailId(rawProcessedEmailId: string | str
     : null;
 }
 
+function parseReclassificationProcessedSourceEventId(
+  rawProcessedSourceEventId: string | string[] | undefined
+) {
+  return typeof rawProcessedSourceEventId === "string" &&
+    rawProcessedSourceEventId.trim().length > 0
+    ? requireProcessedSourceEventId(rawProcessedSourceEventId.trim())
+    : null;
+}
+
+function parseReclassificationReviewCandidateId(
+  rawReviewCandidateId: string | string[] | undefined
+) {
+  return typeof rawReviewCandidateId === "string" && rawReviewCandidateId.trim().length > 0
+    ? requireReviewCandidateId(rawReviewCandidateId.trim())
+    : null;
+}
+
+function parseSourceEventReviewRouteParams(input: {
+  readonly processedSourceEventId: string | string[] | undefined;
+  readonly reviewCandidateId: string | string[] | undefined;
+}) {
+  const processedSourceEventId = parseReclassificationProcessedSourceEventId(
+    input.processedSourceEventId
+  );
+  const reviewCandidateId = parseReclassificationReviewCandidateId(input.reviewCandidateId);
+
+  return processedSourceEventId && reviewCandidateId
+    ? { processedSourceEventId, reviewCandidateId }
+    : { processedSourceEventId: null, reviewCandidateId: null };
+}
+
 async function navigateAfterTransferSave(
   destination: "needs-review" | "tabs",
   replace: ReturnType<typeof useRouter>["replace"],
@@ -36,10 +72,23 @@ async function navigateAfterTransferSave(
 }
 
 function useTransferFormRouteContext() {
-  const { transactionId: rawTransactionId, processedEmailId: rawProcessedEmailId } =
-    useLocalSearchParams<{ transactionId?: string; processedEmailId?: string }>();
+  const {
+    transactionId: rawTransactionId,
+    processedEmailId: rawProcessedEmailId,
+    processedSourceEventId: rawProcessedSourceEventId,
+    reviewCandidateId: rawReviewCandidateId,
+  } = useLocalSearchParams<{
+    transactionId?: string;
+    processedEmailId?: string;
+    processedSourceEventId?: string;
+    reviewCandidateId?: string;
+  }>();
   const { back, navigate, replace } = useRouter();
   const userId = useOptionalUserId();
+  const sourceEventReviewParams = parseSourceEventReviewRouteParams({
+    processedSourceEventId: rawProcessedSourceEventId,
+    reviewCandidateId: rawReviewCandidateId,
+  });
 
   return {
     db: userId ? tryGetDb(userId) : null,
@@ -51,6 +100,8 @@ function useTransferFormRouteContext() {
       [navigate, replace]
     ),
     processedEmailId: parseReclassificationProcessedEmailId(rawProcessedEmailId),
+    processedSourceEventId: sourceEventReviewParams.processedSourceEventId,
+    reviewCandidateId: sourceEventReviewParams.reviewCandidateId,
     reclassificationTransactionId: parseReclassificationTransactionId(rawTransactionId),
     userId,
   };
@@ -86,6 +137,8 @@ function useTransferFormDerivedState(
       isIos: route.isIos,
       onSuccessfulSave: props.onSuccessfulSave ?? route.onSuccessfulSave,
       processedEmailId: route.processedEmailId,
+      processedSourceEventId: route.processedSourceEventId,
+      reviewCandidateId: route.reviewCandidateId,
       setDate: state.setDate,
       setDescription: state.setDescription,
       setDigits: state.setDigits,
