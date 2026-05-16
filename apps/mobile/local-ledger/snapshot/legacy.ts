@@ -1,6 +1,6 @@
 import { normalizeTransactionSource } from "@/shared/lib/transaction-source";
-import type { BackupSnapshot, LocalLedgerBackupSnapshotData } from "./local-ledger-snapshot";
-import type { BackupDataKey } from "./local-ledger-snapshot-row-shape";
+import type { BackupSnapshot, LocalLedgerBackupSnapshotData } from "./snapshot";
+import type { BackupDataKey } from "./row-shape";
 
 const LEGACY_EMPTY_DATA_KEYS = [
   "processedSourceEvents",

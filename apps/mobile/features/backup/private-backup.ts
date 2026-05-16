@@ -1,14 +1,14 @@
-import type { EncryptedLocalLedgerBackupSnapshot } from "./local-ledger-encryption";
-import {
-  encryptLocalLedgerBackupSnapshot,
-  rotateLocalLedgerBackupRecoveryKey,
-} from "./local-ledger-encryption";
 import {
   type BackupSnapshot,
   exportLocalLedgerBackupSnapshot,
   LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION,
   validateBackupSnapshot,
-} from "./local-ledger-snapshot";
+} from "@/infrastructure/local-ledger/snapshot";
+import type { EncryptedLocalLedgerBackupSnapshot } from "./local-ledger-encryption";
+import {
+  encryptLocalLedgerBackupSnapshot,
+  rotateLocalLedgerBackupRecoveryKey,
+} from "./local-ledger-encryption";
 import type { RemoteBackupMetadata, UploadEncryptedRemoteBackupInput } from "./remote-storage";
 import { uploadEncryptedRemoteBackup } from "./remote-storage";
 

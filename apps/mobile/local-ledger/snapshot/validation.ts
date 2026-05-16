@@ -1,15 +1,16 @@
 import type {
-  budgets,
-  captureEvidence,
-  financialAccountIdentifiers,
-  financialAccounts,
-  openingBalances,
-  transfers,
-} from "@/shared/db/schema";
-import type { BackupSnapshot, LocalLedgerBackupSnapshotData } from "./local-ledger-snapshot";
-import { rowsForBackupKey, withLegacyEmptyCollections } from "./local-ledger-snapshot-legacy";
-import { BACKUP_DATA_KEYS, validateSnapshotRows } from "./local-ledger-snapshot-row-shape";
-import { LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION } from "./local-ledger-snapshot-version";
+  BackupSnapshot,
+  BudgetSnapshotRow,
+  CaptureEvidenceSnapshotRow,
+  FinancialAccountIdentifierSnapshotRow,
+  FinancialAccountSnapshotRow,
+  LocalLedgerBackupSnapshotData,
+  OpeningBalanceSnapshotRow,
+  TransferSnapshotRow,
+} from "./snapshot";
+import { rowsForBackupKey, withLegacyEmptyCollections } from "./legacy";
+import { BACKUP_DATA_KEYS, validateSnapshotRows } from "./row-shape";
+import { LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION } from "./version";
 
 const BUILT_IN_CATEGORY_IDS = [
   "food",
@@ -178,18 +179,14 @@ function validateLocalLedgerInvariants(data: LocalLedgerBackupSnapshotData) {
   data.captureEvidence.forEach(assertValidCaptureEvidenceLinks);
 }
 
-function assertUniqueActiveOpeningBalancePerAccount(
-  rows: readonly (typeof openingBalances.$inferSelect)[]
-) {
+function assertUniqueActiveOpeningBalancePerAccount(rows: readonly OpeningBalanceSnapshotRow[]) {
   assertUniqueValues(
     rows.filter((row) => row.deletedAt === null).map((row) => row.accountId),
     "Local ledger backup has multiple active opening balances for an account"
   );
 }
 
-function assertUniqueDefaultAccountPerUser(
-  rows: readonly (typeof financialAccounts.$inferSelect)[]
-) {
+function assertUniqueDefaultAccountPerUser(rows: readonly FinancialAccountSnapshotRow[]) {
   assertUniqueValues(
     rows.filter((row) => row.deletedAt === null && row.isDefault).map((row) => row.userId),
     "Local ledger backup has multiple default financial accounts for a user"
@@ -197,7 +194,7 @@ function assertUniqueDefaultAccountPerUser(
 }
 
 function assertUniqueActiveAccountIdentifiers(
-  rows: readonly (typeof financialAccountIdentifiers.$inferSelect)[]
+  rows: readonly FinancialAccountIdentifierSnapshotRow[]
 ) {
   assertUniqueValues(
     rows
@@ -207,14 +204,14 @@ function assertUniqueActiveAccountIdentifiers(
   );
 }
 
-function assertUniqueBudgets(rows: readonly (typeof budgets.$inferSelect)[]) {
+function assertUniqueBudgets(rows: readonly BudgetSnapshotRow[]) {
   assertUniqueValues(
     rows.map((row) => [row.userId, row.categoryId, row.month].join("\u0000")),
     "Local ledger backup has duplicate budgets for a user category month"
   );
 }
 
-function assertValidTransferEndpoints(row: typeof transfers.$inferSelect) {
+function assertValidTransferEndpoints(row: TransferSnapshotRow) {
   if (!hasTransferEndpoint(row.fromAccountId, row.fromExternalLabel)) {
     throw new Error("Local ledger backup transfer is missing a required endpoint");
   }
@@ -229,10 +226,10 @@ function assertValidTransferEndpoints(row: typeof transfers.$inferSelect) {
 const hasTransferEndpoint = (accountId: string | null, externalLabel: string | null) =>
   accountId !== null || hasText(externalLabel);
 
-const usesSameTrackedAccount = (row: typeof transfers.$inferSelect) =>
+const usesSameTrackedAccount = (row: TransferSnapshotRow) =>
   row.fromAccountId !== null && row.fromAccountId === row.toAccountId;
 
-function assertValidCaptureEvidenceLinks(row: typeof captureEvidence.$inferSelect) {
+function assertValidCaptureEvidenceLinks(row: CaptureEvidenceSnapshotRow) {
   const sourceRecords = [
     row.processedEmailId,
     row.processedCaptureId,

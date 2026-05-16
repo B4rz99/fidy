@@ -1,4 +1,4 @@
-import type { RowSpec } from "./local-ledger-snapshot-row-shape";
+import type { RowSpec } from "./row-shape";
 import {
   assertNullableIsoDateTime,
   assertNullableNumber,
@@ -8,7 +8,7 @@ import {
   assertString,
   assertValidIsoDateTime,
   validateBaseLedgerFields,
-} from "./local-ledger-snapshot-row-assertions";
+} from "./row-assertions";
 
 export const INTAKE_ROW_SPECS: readonly RowSpec[] = [
   {

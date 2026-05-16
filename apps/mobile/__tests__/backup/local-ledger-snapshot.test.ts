@@ -1,5 +1,6 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: integration test uses a real SQLite DB
 import { resolve } from "node:path";
+import { getTableName } from "drizzle-orm";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -8,7 +9,7 @@ import {
   exportLocalLedgerBackupSnapshot,
   importLocalLedgerBackupSnapshot,
   validateBackupSnapshot,
-} from "@/features/backup/public";
+} from "@/infrastructure/local-ledger/snapshot";
 import {
   accountSuggestionDismissals,
   budgets,
@@ -17,11 +18,16 @@ import {
   financialAccounts,
   goalContributions,
   goals,
+  notifications,
   openingBalances,
   processedCaptures,
   processedEmails,
+  processedSourceEvents,
+  reviewCandidateCaptureEvidence,
+  reviewCandidates,
   transactions,
   transfers,
+  userMemories,
   userCategories,
 } from "@/shared/db/schema";
 
@@ -87,17 +93,27 @@ function seedActivity() {
       id, user_id, type, amount, category_id, description, date, account_id,
       account_attribution_state, superseded_at, superseded_by_transfer_id, created_at, updated_at,
       voided_at, source
-    ) values (
+    ) values
+    (
       'txn-1', 'user-1', 'expense', 42000, 'uc-food', 'Lunch', '2026-04-20', 'fa-bank',
       'confirmed', null, null, '${NOW}', '${NOW}', null, 'automated'
+    ),
+    (
+      'txn-voided', 'user-1', 'expense', 18000, 'uc-food', 'Voided lunch', '2026-04-18',
+      'fa-bank', 'confirmed', null, null, '${NOW}', '${NOW}', '${NOW}', 'manual'
     );
 
     insert into transfers (
       id, user_id, amount, from_account_id, to_account_id, from_external_label, to_external_label,
       description, date, created_at, updated_at, deleted_at
-    ) values (
+    ) values
+    (
       'trf-1', 'user-1', 100000, 'fa-bank', null, null, 'Broker',
       'Investment', '2026-04-21', '${NOW}', '${NOW}', null
+    ),
+    (
+      'trf-deleted', 'user-1', 65000, null, 'fa-bank', 'Cash', null,
+      'Restored inactive transfer', '2026-04-19', '${NOW}', '${NOW}', '${NOW}'
     );
   `);
 }
@@ -122,8 +138,70 @@ function seedPlanningRows() {
   `);
 }
 
+function seedExcludedRows() {
+  sourceSqlite.exec(`
+    insert into notifications (
+      id, user_id, type, dedup_key, category_id, goal_id, title_key, message_key,
+      params, created_at, updated_at, deleted_at
+    ) values (
+      'notif-1', 'user-1', 'budget_alert', 'budget-alert-1', 'uc-food', null,
+      'notifications.budget.title', 'notifications.budget.message', '{"amount":42000}',
+      '${NOW}', '${NOW}', null
+    );
+
+    insert into user_memories (
+      id, user_id, fact, category, created_at, updated_at
+    ) values (
+      'memory-1', 'user-1', 'Usually buys lunch near work', 'preference', '${NOW}', '${NOW}'
+    );
+  `);
+}
+
+function seedStaleLocalLedgerRows() {
+  targetSqlite.exec(`
+    insert into user_categories (
+      id, user_id, name, icon_name, color_hex, created_at, updated_at, deleted_at
+    ) values ('uc-stale', 'user-1', 'Stale category', 'archive', '#111111', '${NOW}', '${NOW}', null);
+
+    insert into financial_accounts (
+      id, user_id, name, kind, is_default, statement_closing_day, payment_due_day,
+      created_at, updated_at, deleted_at
+    ) values ('fa-bank', 'user-1', 'Old Bancolombia', 'checking', 1, null, null, '${NOW}', '${NOW}', null);
+
+    insert into processed_source_events (
+      id, user_id, source_family, source_id, source_event_id, status, failure_reason,
+      received_at, processed_at, created_at, updated_at, deleted_at
+    ) values (
+      'pse-stale', 'user-1', 'email', 'gmail-primary', 'gmail-stale',
+      'needs_review', null, '${NOW}', '${NOW}', '${NOW}', '${NOW}', null
+    );
+
+    insert into review_candidates (
+      id, user_id, processed_source_event_id, status, candidate_kind, occurred_at,
+      amount, currency, description, confidence, created_at, updated_at, deleted_at
+    ) values (
+      'rc-stale', 'user-1', 'pse-stale', 'pending', 'transaction', '${NOW}',
+      9000, 'COP', 'Stale review candidate', 0.25, '${NOW}', '${NOW}', null
+    );
+
+    insert into capture_evidence (
+      id, user_id, source_family, evidence_type, scope, value, transaction_id, transfer_id,
+      processed_email_id, processed_capture_id, processed_source_event_id, created_at, updated_at,
+      deleted_at
+    ) values (
+      'ce-stale', 'user-1', 'email', 'counterparty_hint', 'merchant', 'Stale Cafe',
+      null, null, null, null, 'pse-stale', '${NOW}', '${NOW}', null
+    );
+
+    insert into review_candidate_capture_evidence (
+      id, user_id, review_candidate_id, capture_evidence_id, created_at, deleted_at
+    ) values ('rcce-stale', 'user-1', 'rc-stale', 'ce-stale', '${NOW}', null);
+  `);
+}
+
 function seedCaptureAndReviewState() {
   seedProcessedCaptures();
+  seedProcessedSourceEventsAndReviewCandidates();
   seedCaptureEvidence();
   seedDismissalsAndConflicts();
 }
@@ -145,14 +223,40 @@ function seedProcessedCaptures() {
   `);
 }
 
+function seedProcessedSourceEventsAndReviewCandidates() {
+  sourceSqlite.exec(`
+    insert into processed_source_events (
+      id, user_id, source_family, source_id, source_event_id, status, failure_reason,
+      received_at, processed_at, created_at, updated_at, deleted_at
+    ) values (
+      'pse-1', 'user-1', 'email', 'gmail-primary', 'gmail-message-1',
+      'needs_review', 'ambiguous_account', '${NOW}', '${NOW}', '${NOW}', '${NOW}', null
+    );
+
+    insert into review_candidates (
+      id, user_id, processed_source_event_id, status, candidate_kind, occurred_at,
+      amount, currency, description, confidence, created_at, updated_at, deleted_at
+    ) values (
+      'rc-1', 'user-1', 'pse-1', 'pending', 'transaction', '${NOW}',
+      12500, 'COP', 'Low confidence cafe capture', 0.42, '${NOW}', '${NOW}', null
+    );
+  `);
+}
+
 function seedCaptureEvidence() {
   sourceSqlite.exec(`
     insert into capture_evidence (
       id, user_id, source_family, evidence_type, scope, value, transaction_id, transfer_id,
-      processed_email_id, processed_capture_id, created_at, updated_at, deleted_at
+      processed_email_id, processed_capture_id, processed_source_event_id, created_at, updated_at,
+      deleted_at
     ) values
-      ('ce-email', 'user-1', 'gmail', 'last4', 'last4', '1234', 'txn-1', null, 'email-1', null, '${NOW}', '${NOW}', null),
-      ('ce-capture', 'user-1', 'push', 'alias_token', 'alias', 'Broker', null, 'trf-1', null, 'capture-1', '${NOW}', '${NOW}', null);
+      ('ce-email', 'user-1', 'gmail', 'last4', 'last4', '1234', 'txn-1', null, 'email-1', null, null, '${NOW}', '${NOW}', null),
+      ('ce-capture', 'user-1', 'push', 'alias_token', 'alias', 'Broker', null, 'trf-1', null, 'capture-1', null, '${NOW}', '${NOW}', null),
+      ('ce-review', 'user-1', 'email', 'counterparty_hint', 'merchant', 'Cafe', null, null, null, null, 'pse-1', '${NOW}', '${NOW}', null);
+
+    insert into review_candidate_capture_evidence (
+      id, user_id, review_candidate_id, capture_evidence_id, created_at, deleted_at
+    ) values ('rcce-1', 'user-1', 'rc-1', 'ce-review', '${NOW}', null);
   `);
 }
 
@@ -206,8 +310,41 @@ function expectRestoredCaptureAndReviewState() {
   expect(targetDb.select().from(captureEvidence).all()).toEqual(
     sourceDb.select().from(captureEvidence).all()
   );
+  expect(targetDb.select().from(processedSourceEvents).all()).toEqual(
+    sourceDb.select().from(processedSourceEvents).all()
+  );
+  expect(targetDb.select().from(reviewCandidates).all()).toEqual(
+    sourceDb.select().from(reviewCandidates).all()
+  );
+  expect(targetDb.select().from(reviewCandidateCaptureEvidence).all()).toEqual(
+    sourceDb.select().from(reviewCandidateCaptureEvidence).all()
+  );
   expect(targetDb.select().from(accountSuggestionDismissals).all()).toEqual(
     sourceDb.select().from(accountSuggestionDismissals).all()
+  );
+}
+
+function expectRestoredRowsReplacedStaleState() {
+  expect(targetDb.select().from(userCategories).all()).toEqual(
+    sourceDb.select().from(userCategories).all()
+  );
+  expect(targetDb.select().from(financialAccounts).all()).toEqual(
+    sourceDb.select().from(financialAccounts).all()
+  );
+  expect(targetDb.select().from(transactions).all()).toEqual(
+    sourceDb.select().from(transactions).all()
+  );
+  expect(targetDb.select().from(processedSourceEvents).all()).toEqual(
+    sourceDb.select().from(processedSourceEvents).all()
+  );
+  expect(targetDb.select().from(reviewCandidates).all()).toEqual(
+    sourceDb.select().from(reviewCandidates).all()
+  );
+  expect(targetDb.select().from(captureEvidence).all()).toEqual(
+    sourceDb.select().from(captureEvidence).all()
+  );
+  expect(targetDb.select().from(reviewCandidateCaptureEvidence).all()).toEqual(
+    sourceDb.select().from(reviewCandidateCaptureEvidence).all()
   );
 }
 
@@ -389,6 +526,7 @@ function withoutKeys<Row extends Record<string, unknown>>(row: Row, keys: readon
 function createCappedInsertDb(maxRowsPerInsert: number) {
   let insertedRows = 0;
   const tx = {
+    delete: () => ({ run: () => undefined, where: () => ({ run: () => undefined }) }),
     insert: () => ({
       values: (rows: Record<string, unknown>[]) => {
         if (rows.length > maxRowsPerInsert) {
@@ -401,6 +539,29 @@ function createCappedInsertDb(maxRowsPerInsert: number) {
   return {
     db: { transaction: (callback: (transaction: typeof tx) => unknown) => callback(tx) },
     getInsertedRows: () => insertedRows,
+  };
+}
+
+function createFailingInsertDb(tableName: string) {
+  return {
+    transaction: (callback: (tx: typeof targetDb) => unknown) =>
+      targetDb.transaction((tx) => {
+        const failingTx = Object.create(tx) as typeof targetDb;
+        failingTx.insert = ((table: Parameters<typeof tx.insert>[0]) => {
+          if (getTableName(table) === tableName) {
+            return {
+              values: () => ({
+                run: () => {
+                  throw new Error(`Injected ${tableName} insert failure`);
+                },
+              }),
+            };
+          }
+          return tx.insert(table);
+        }) as typeof tx.insert;
+
+        return callback(failingTx);
+      }),
   };
 }
 
@@ -453,9 +614,126 @@ describe("local ledger backup snapshots", () => {
         accountSuggestionDismissals: expect.any(Array),
         processedEmails: expect.any(Array),
         processedCaptures: expect.any(Array),
+        processedSourceEvents: expect.any(Array),
+        reviewCandidates: expect.any(Array),
+        reviewCandidateCaptureEvidence: expect.any(Array),
       },
     });
+    expect(snapshot.data.transfers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "trf-deleted",
+          deletedAt: NOW,
+        }),
+      ])
+    );
+    expect(snapshot.data.transactions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "txn-voided",
+          voidedAt: NOW,
+        }),
+      ])
+    );
+    expect(snapshot.data.reviewCandidates).toEqual([
+      expect.objectContaining({
+        id: "rc-1",
+        processedSourceEventId: "pse-1",
+      }),
+    ]);
     expectRestoredLedgerToMatchSource();
+  });
+
+  it("replaces existing local ledger rows atomically during restore", () => {
+    seedLocalLedgerFixture();
+    const snapshot = exportLocalLedgerBackupSnapshot(sourceDb as any, { exportedAt: NOW });
+    seedStaleLocalLedgerRows();
+
+    importLocalLedgerBackupSnapshot(targetDb as any, snapshot);
+
+    expectRestoredRowsReplacedStaleState();
+  });
+
+  it("preserves other users when restoring one user's local ledger rows", () => {
+    seedLocalLedgerFixture();
+    const snapshot = exportLocalLedgerBackupSnapshot(sourceDb as any, { exportedAt: NOW });
+
+    targetSqlite.exec(`
+      insert into user_categories (
+        id, user_id, name, icon_name, color_hex, created_at, updated_at, deleted_at
+      ) values ('uc-other', 'user-2', 'Other user food', 'utensils', '#222222', '${NOW}', '${NOW}', null);
+
+      insert into financial_accounts (
+        id, user_id, name, kind, is_default, statement_closing_day, payment_due_day,
+        created_at, updated_at, deleted_at
+      ) values ('fa-other', 'user-2', 'Other wallet', 'wallet', 1, null, null, '${NOW}', '${NOW}', null);
+    `);
+
+    importLocalLedgerBackupSnapshot(targetDb as any, snapshot);
+
+    expect(targetDb.select().from(userCategories).all()).toEqual(
+      expect.arrayContaining([
+        ...sourceDb.select().from(userCategories).all(),
+        expect.objectContaining({ id: "uc-other", userId: "user-2" }),
+      ])
+    );
+    expect(targetDb.select().from(userCategories).all()).toHaveLength(2);
+    expect(targetDb.select().from(financialAccounts).all()).toEqual(
+      expect.arrayContaining([
+        ...sourceDb.select().from(financialAccounts).all(),
+        expect.objectContaining({ id: "fa-other", userId: "user-2" }),
+      ])
+    );
+    expect(targetDb.select().from(financialAccounts).all()).toHaveLength(2);
+  });
+
+  it("rolls back cleared rows when restore insertion fails inside the transaction", () => {
+    seedLocalLedgerFixture();
+    const snapshot = exportLocalLedgerBackupSnapshot(sourceDb as any, { exportedAt: NOW });
+
+    targetSqlite.exec(`
+      insert into user_categories (
+        id, user_id, name, icon_name, color_hex, created_at, updated_at, deleted_at
+      ) values ('uc-stale', 'user-1', 'Stale category', 'archive', '#111111', '${NOW}', '${NOW}', null);
+    `);
+    const beforeRestore = targetDb.select().from(userCategories).all();
+    const failingDb = createFailingInsertDb("financial_accounts");
+
+    expect(() => importLocalLedgerBackupSnapshot(failingDb as any, snapshot)).toThrow(
+      "Injected financial_accounts insert failure"
+    );
+
+    expect(targetDb.select().from(userCategories).all()).toEqual(beforeRestore);
+  });
+
+  it("excludes cache, UI state, and derived read-model tables from the snapshot", () => {
+    seedLocalLedgerFixture();
+    seedExcludedRows();
+
+    const snapshot = exportLocalLedgerBackupSnapshot(sourceDb as any, { exportedAt: NOW });
+
+    expect(Object.keys(snapshot.data).sort()).toEqual([
+      "accountSuggestionDismissals",
+      "budgets",
+      "captureEvidence",
+      "financialAccountIdentifiers",
+      "financialAccounts",
+      "goalContributions",
+      "goals",
+      "openingBalances",
+      "processedCaptures",
+      "processedEmails",
+      "processedSourceEvents",
+      "reviewCandidateCaptureEvidence",
+      "reviewCandidates",
+      "transactions",
+      "transfers",
+      "userCategories",
+    ]);
+    expect(JSON.stringify(snapshot.data)).not.toContain("notif-1");
+    expect(JSON.stringify(snapshot.data)).not.toContain("memory-1");
+    expect(sourceDb.select().from(notifications).all()).toHaveLength(1);
+    expect(sourceDb.select().from(userMemories).all()).toHaveLength(1);
   });
 
   it("rejects unsupported snapshot versions", () => {
