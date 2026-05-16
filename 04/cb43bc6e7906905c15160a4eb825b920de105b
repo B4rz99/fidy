@@ -1,0 +1,35 @@
+apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts
+  s_be080ac74da214::t_95ab470b249b3b 242,247,294,299,319,334-372,391,417,438,464,484,510,516
+apps/mobile/__tests__/local-ledger/record-transfer.test.ts
+  s_be080ac74da214::t_e12d817ada19ee 193
+  s_be080ac74da214::t_95ab470b249b3b 4,8,13,19-20,146-192,194-209,218,238,240-241,245-246,302,310-311,317
+  s_be080ac74da214::t_8c98cfb733585b 210-217,219-237,239,242-244,247-301,303-309,312-316,318-324
+apps/mobile/local-ledger/use-cases/reclassify-transactions-as-transfer.public.ts
+  s_be080ac74da214::t_0b9e51325721e3 1-174
+apps/mobile/features/transfers/lib/reclassify-transactions-as-transfer.ts
+  s_be080ac74da214::t_8c98cfb733585b 214-217
+  s_be080ac74da214::t_95ab470b249b3b 3-6,11,23,37-40,69-76,78-81,105-167,247,254,258,260-261,264-268,288,291-294,297-299
+  s_be080ac74da214::t_3b52c0f3d9024d 77
+  s_be080ac74da214::t_fd0e75d693775f 45-60,168-192,197-198,200-205,211,218-230,238,240-244,275-287
+  s_be080ac74da214::t_9beff83fdc56c5 193-196,206-210,231-237,239
+  s_be080ac74da214::t_c26e643d60ff1c 269-274
+apps/mobile/local-ledger/public.ts
+  s_be080ac74da214::t_95ab470b249b3b 35-44
+  s_be080ac74da214::t_4d40a88a683d90 45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "04cb43bc6e7906905c15160a4eb825b920de105b",
+  "prompts": {},
+  "sessions": {
+    "s_be080ac74da214": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2e67-7659-7773-aab7-8fce362d3639",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
