@@ -1,0 +1,27 @@
+apps/mobile/__tests__/capture-sources/repository.test.ts
+  ai_agent 9
+apps/mobile/__tests__/capture-sources/repository-sms-events.test.ts
+  s_1fdd92c646c23a::t_117a589911d3d9 14,59,71-84,179,186,193
+.dependency-cruiser.cjs
+  s_1fdd92c646c23a::t_117a589911d3d9 70-79
+apps/mobile/features/capture-sources/lib/repository.ts
+  s_1fdd92c646c23a::t_117a589911d3d9 54
+scripts/dependency-cruiser-config.test.ts
+  s_1fdd92c646c23a::t_117a589911d3d9 5,9,61-74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "6a189c64c8c182fd53b7201471bfe63a80840b4e",
+  "prompts": {},
+  "sessions": {
+    "s_1fdd92c646c23a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2e2c-ee72-7593-8ece-3efa19db7d36",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
