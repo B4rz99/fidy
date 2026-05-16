@@ -1,0 +1,63 @@
+apps/mobile/features/backup/local-ledger-encryption.ts
+  s_8613050f95c97f::t_0182f9a75f3804 1
+apps/mobile/features/backup/public.ts
+  s_8613050f95c97f::t_3661bf9a483234 23
+  s_8613050f95c97f::t_0182f9a75f3804 24,30
+apps/mobile/features/capture-evidence/schema.ts
+  s_8613050f95c97f::t_49a55c518d80a6 2,4
+apps/mobile/local-ledger/snapshot/validation.ts
+  s_8613050f95c97f::t_f848ccd0b77d6a 9-12
+apps/mobile/local-ledger/snapshot/legacy.ts
+  s_8613050f95c97f::t_f848ccd0b77d6a 2-3
+apps/mobile/local-ledger/snapshot/row-shape.ts
+  s_8613050f95c97f::t_38801a90335540 1
+  s_8613050f95c97f::t_f848ccd0b77d6a 2,16-17
+  s_8613050f95c97f::t_927f30bf84e83c 212
+apps/mobile/features/backup/private-backup.ts
+  s_8613050f95c97f::t_0182f9a75f3804 6
+  s_8613050f95c97f::t_fd25aa517e8116 7-11
+apps/mobile/__tests__/backup/local-ledger-snapshot.test.ts
+  s_8613050f95c97f::t_0182f9a75f3804 12
+  s_8613050f95c97f::t_c0f1071f435119 25-27,109-110,113-116,162,184-203,208-209,211-217,271-279,551-553,556-560,569-577
+  s_8613050f95c97f::t_dd8595682b5710 485-494
+  s_8613050f95c97f::t_3e2dee155cf36c 3,479-481,499-501,594-622,635-666,681-696,698-699
+  s_8613050f95c97f::t_ab15a0fcd596ae 21,30,141-159,581-593,623-634,697,700-729
+  s_8613050f95c97f::t_3ab54bf0eafc32 484,495
+  s_8613050f95c97f::t_48d95ceb44848d 482-483,496-498
+  s_8613050f95c97f::t_e5eb5e6b255c45 667-680
+  s_8613050f95c97f::t_534c406f3a35f2 96-97,100-103,561-568
+  s_8613050f95c97f::t_6bc529714d2204 463
+apps/mobile/local-ledger/snapshot/row-shape-intake.ts
+  s_8613050f95c97f::t_f848ccd0b77d6a 1,11
+apps/mobile/shared/capture-evidence/types.ts
+  s_8613050f95c97f::t_1810c775f86d51 1-12
+apps/mobile/local-ledger/snapshot.public.ts
+  s_8613050f95c97f::t_b7cff24e46ee6c 1-12
+apps/mobile/features/settings/components/PrivateBackupScreen.tsx
+  s_8613050f95c97f::t_7d84dc5ace6f4b 15,79-80
+apps/mobile/local-ledger/snapshot/snapshot.ts
+  s_8613050f95c97f::t_927f30bf84e83c 129-131
+  s_8613050f95c97f::t_33015162a10f3d 2,189-190
+  s_8613050f95c97f::t_c4a13e872d5107 1,183,185-188,191,255-258,276-277
+  s_8613050f95c97f::t_d46d5d41da11d1 259,279-280
+  s_8613050f95c97f::t_f848ccd0b77d6a 22-23
+  s_8613050f95c97f::t_f7c6ba6f7c5c70 21,37-40,123-127,134,158-159,161-166,275,278
+  s_8613050f95c97f::t_bb0c0f6cf4b653 42-57,160,192-195
+  s_8613050f95c97f::t_8662028f82555d 167-182,184,196-197,274,283
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "966db284df8ec7f259daebf483139ce9571d960b",
+  "prompts": {},
+  "sessions": {
+    "s_8613050f95c97f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2d50-94c5-7f13-904c-ac038f04b1a5",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
