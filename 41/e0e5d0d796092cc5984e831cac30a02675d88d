@@ -1,0 +1,21 @@
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_38e0371102b177::t_2be6e5a443fc5c 47-49,86-87
+apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts
+  s_38e0371102b177::t_d6defb81a01bca 306,319-325,361
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "41e0e5d0d796092cc5984e831cac30a02675d88d",
+  "prompts": {},
+  "sessions": {
+    "s_38e0371102b177": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2e66-2b51-72c0-a480-8ba8490250a3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
