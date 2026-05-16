@@ -1,0 +1,42 @@
+apps/mobile/features/review-queues/components/AttributionReviewScreen.tsx
+  s_38e0371102b177::t_f8673301b8fb06 6,113
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_38e0371102b177::t_26705851af23e4 19
+  s_38e0371102b177::t_abd211fcace9e7 84
+dependency-policy.json
+  s_38e0371102b177::t_d67788d98f4532 39-42
+apps/mobile/features/dashboard/components/home-screen/ActivityFeedItem.tsx
+  s_38e0371102b177::t_f8673301b8fb06 3,52
+apps/mobile/features/review-queues/components/FinancialMeaningQueueScreen.tsx
+  s_38e0371102b177::t_f8673301b8fb06 11,64
+apps/mobile/__tests__/transactions/display-name.test.ts
+  s_38e0371102b177::t_443ef483cf003e 1-26
+apps/mobile/features/review-queues/components/AttributionQueueScreen.tsx
+  s_38e0371102b177::t_f8673301b8fb06 6,54
+apps/mobile/features/review-queues/components/FinancialMeaningReviewScreen.tsx
+  s_38e0371102b177::t_f8673301b8fb06 11,129
+apps/mobile/features/transactions/display.public.ts
+  s_38e0371102b177::t_443ef483cf003e 2
+apps/mobile/features/transactions/lib/display-name.ts
+  s_38e0371102b177::t_443ef483cf003e 1-14
+apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts
+  s_38e0371102b177::t_abd211fcace9e7 354,361,367-370,372
+apps/mobile/features/search/components/search-screen/SearchTransactionItem.tsx
+  s_38e0371102b177::t_f8673301b8fb06 2,40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "ada2da15a2bc0126e5f8cae4696945f890ee823e",
+  "prompts": {},
+  "sessions": {
+    "s_38e0371102b177": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2e66-2b51-72c0-a480-8ba8490250a3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
