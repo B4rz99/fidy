@@ -8,6 +8,7 @@ import {
   dismissFinancialMeaningReview,
   loadNeedsReviewEmails,
 } from "@/features/email-capture/public";
+import { getTransactionDisplayName } from "@/features/transactions/display.public";
 import { refreshTransactions } from "@/features/transactions/store.public";
 import { ScreenLayout } from "@/shared/components";
 import { ChevronRight, TriangleAlert } from "@/shared/components/icons";
@@ -60,7 +61,7 @@ function FinancialMeaningQueueCard({
         <View style={styles.cardHeaderRow}>
           <View style={styles.cardTitleWrap}>
             <Text style={[styles.cardTitle, { color: primary }]} numberOfLines={2}>
-              {item.transaction.description || t("common.unknown")}
+              {getTransactionDisplayName(item.transaction, t("common.unknown"))}
             </Text>
             <Text style={[styles.cardSubtitle, { color: secondary }]}>
               {format(item.transaction.date, "PP", { locale: getDateFnsLocale(locale) })}

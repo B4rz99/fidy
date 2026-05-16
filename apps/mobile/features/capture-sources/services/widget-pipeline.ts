@@ -16,7 +16,7 @@ import {
 } from "@/shared/lib";
 import { assertCopAmount, assertTransactionId } from "@/shared/types/assertions";
 import type { TransactionId, UserId } from "@/shared/types/branded";
-import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
+import { captureFingerprint, isCaptureProcessed } from "../lib/dedup";
 
 // Guard against concurrent invocations (mount + immediate AppState "active").
 const inFlightFingerprints = new Set<string>();
@@ -81,7 +81,7 @@ export async function processWidgetTransactions(
       item.category && isValidCategoryId(item.category) ? item.category : fallbackCategoryId;
     const type = item.type === "income" ? "income" : "expense";
     const description = item.description ?? "";
-    const counterpartyName = item.counterpartyName?.trim() ?? "";
+    const counterpartyName = "";
 
     const fingerprint = widgetFingerprint(item.id, amount, date);
 
@@ -113,35 +113,6 @@ export async function processWidgetTransactions(
           receivedAt: now,
           processedAt: now,
         });
-        skippedDuplicate++;
-        succeededEntryIds.push(item.id);
-        continue;
-      }
-
-      const existingTxId =
-        counterpartyName.length > 0
-          ? await findDuplicateTransaction({
-              db,
-              userId,
-              amount,
-              date,
-              merchant: counterpartyName,
-            })
-          : null;
-
-      if (existingTxId) {
-        persistProcessedSourceEvent({
-          db,
-          userId,
-          sourceFamily: "widget",
-          sourceId: "widget",
-          sourceEventId: fingerprint,
-          status: "processed",
-          failureReason: `duplicate:${existingTxId}`,
-          receivedAt: now,
-          processedAt: now,
-        });
-
         skippedDuplicate++;
         succeededEntryIds.push(item.id);
         continue;

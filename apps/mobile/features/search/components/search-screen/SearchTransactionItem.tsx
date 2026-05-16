@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { makeDateLabel } from "@/features/transactions/display.public";
+import { getTransactionDisplayName, makeDateLabel } from "@/features/transactions/display.public";
 import type { StoredTransaction } from "@/features/transactions/query.public";
 import { CATEGORY_MAP } from "@/shared/categories";
 import { TransactionRow } from "@/shared/components";
@@ -37,7 +37,7 @@ export const SearchTransactionItem = memo(function SearchTransactionItem({
       <View className="px-4">
         <TransactionRow
           icon={category?.icon ?? "✨"}
-          name={tx.description || t("common.unknown")}
+          name={getTransactionDisplayName(tx, t("common.unknown"))}
           amount={formatSignedMoney(tx.amount, tx.type)}
           category={category ? getCategoryLabel(category, locale) : t("common.other")}
           isPositive={tx.type === "income"}

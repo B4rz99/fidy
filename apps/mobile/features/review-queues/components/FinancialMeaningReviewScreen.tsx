@@ -8,6 +8,7 @@ import {
   loadNeedsReviewEmails,
   resolveFinancialMeaningReview,
 } from "@/features/email-capture/public";
+import { getTransactionDisplayName } from "@/features/transactions/display.public";
 import { refreshTransactions } from "@/features/transactions/store.public";
 import { ScreenLayout } from "@/shared/components";
 import { ArrowLeftRight, TriangleAlert } from "@/shared/components/icons";
@@ -125,7 +126,7 @@ export function FinancialMeaningReviewScreen() {
           <View style={styles.titleRow}>
             <View style={styles.titleWrap}>
               <Text style={[styles.title, { color: primary }]}>
-                {reviewItem.transaction.description || t("common.unknown")}
+                {getTransactionDisplayName(reviewItem.transaction, t("common.unknown"))}
               </Text>
               <Text style={[styles.subtitle, { color: secondary }]}>
                 {format(reviewItem.transaction.date, "PP", { locale: getDateFnsLocale(locale) })}
