@@ -97,7 +97,7 @@ async function saveTransactionRecord(context: ResolvedNotificationContext) {
       accountAttributionState: context.accountAttributionState,
       categoryId: context.categoryId,
       occurredOn: context.parsed.date,
-      description: context.parsed.merchant,
+      description: "",
       counterpartyName: context.parsed.merchant,
       source: "notification_capture",
     },
@@ -237,7 +237,7 @@ export async function persistSuccessfulNotification(
       candidate: {
         occurredAt: requireIsoDateTime(`${context.parsed.date}T00:00:00.000Z`),
         amount: context.parsed.amount,
-        description: context.parsed.merchant,
+        description: "",
         confidence: context.parsed.confidence,
       },
       evidence: context.captureEvidence,

@@ -194,7 +194,7 @@ export async function processApplePayIntent(
         type: "expense",
         amount,
         categoryId,
-        description: intent.merchant,
+        description: "",
         counterpartyName: intent.merchant,
         occurredOn: today,
         accountId: matchedAccountId ?? defaultAccount.id,

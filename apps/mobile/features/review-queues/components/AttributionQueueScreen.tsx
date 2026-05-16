@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
+import { getTransactionDisplayName } from "@/features/transactions/display.public";
 import { refreshTransactions } from "@/features/transactions/store.public";
 import { ScreenLayout } from "@/shared/components";
 import { ChevronRight, Landmark } from "@/shared/components/icons";
@@ -50,7 +51,7 @@ function AttributionQueueCard({
         <View style={styles.titleRow}>
           <View style={styles.titleWrap}>
             <Text style={[styles.title, { color: primary }]} numberOfLines={2}>
-              {item.transaction.description || t("common.unknown")}
+              {getTransactionDisplayName(item.transaction, t("common.unknown"))}
             </Text>
             <Text style={[styles.supportingCopy, { color: secondary }]}>{item.evidenceLabel}</Text>
           </View>

@@ -16,7 +16,7 @@ import {
 } from "@/shared/lib";
 import { assertCopAmount, assertTransactionId } from "@/shared/types/assertions";
 import type { TransactionId, UserId } from "@/shared/types/branded";
-import { captureFingerprint, findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
+import { captureFingerprint, isCaptureProcessed } from "../lib/dedup";
 
 // Guard against concurrent invocations (mount + immediate AppState "active").
 const inFlightFingerprints = new Set<string>();
@@ -43,6 +43,9 @@ const failureReason = (error: unknown): string =>
   error instanceof Error && error.message.startsWith("local_ledger_rejected:")
     ? error.message
     : errorType(error);
+
+const userAuthoredWidgetDescription = (description: string | undefined): string => description ?? "";
+const widgetCounterpartyName = (): string => "";
 
 export async function processWidgetTransactions(
   db: AnyDb,
@@ -80,7 +83,8 @@ export async function processWidgetTransactions(
     const categoryId =
       item.category && isValidCategoryId(item.category) ? item.category : fallbackCategoryId;
     const type = item.type === "income" ? "income" : "expense";
-    const description = item.description ?? "";
+    const description = userAuthoredWidgetDescription(item.description);
+    const counterpartyName = widgetCounterpartyName();
 
     const fingerprint = widgetFingerprint(item.id, amount, date);
 
@@ -117,32 +121,6 @@ export async function processWidgetTransactions(
         continue;
       }
 
-      const existingTxId = await findDuplicateTransaction({
-        db,
-        userId,
-        amount,
-        date,
-        merchant: description,
-      });
-
-      if (existingTxId) {
-        persistProcessedSourceEvent({
-          db,
-          userId,
-          sourceFamily: "widget",
-          sourceId: "widget",
-          sourceEventId: fingerprint,
-          status: "processed",
-          failureReason: `duplicate:${existingTxId}`,
-          receivedAt: now,
-          processedAt: now,
-        });
-
-        skippedDuplicate++;
-        succeededEntryIds.push(item.id);
-        continue;
-      }
-
       const defaultAccount = ensureDefaultFinancialAccount(db, userId, { now });
       const recordResult = await recordAutomatedTransactionWithLocalLedger({
         db,
@@ -154,7 +132,7 @@ export async function processWidgetTransactions(
           amount,
           categoryId,
           description,
-          counterpartyName: description,
+          counterpartyName,
           occurredOn: date,
           accountId: defaultAccount.id,
           accountAttributionState: "unresolved",

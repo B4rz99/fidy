@@ -1,6 +1,6 @@
 import { memo, useCallback } from "react";
 import type { StoredActivityItem } from "@/features/activity/services/create-activity-query-service";
-import { makeDateLabel } from "@/features/transactions/display.public";
+import { getTransactionDisplayName, makeDateLabel } from "@/features/transactions/display.public";
 import type { StoredTransaction } from "@/features/transactions/query.public";
 import { getTransferActivityCopy } from "@/features/transfers/lib/presentation";
 import { CATEGORY_MAP } from "@/shared/categories";
@@ -49,7 +49,7 @@ const TransactionActivityItem = memo(function TransactionActivityItem({
       <View className="px-4">
         <TransactionRow
           icon={category?.icon ?? "✨"}
-          name={tx.description || t("common.unknown")}
+          name={getTransactionDisplayName(tx, t("common.unknown"))}
           amount={formatSignedMoney(tx.amount, tx.type)}
           category={category ? getCategoryLabel(category, locale) : t("common.other")}
           isPositive={tx.type === "income"}

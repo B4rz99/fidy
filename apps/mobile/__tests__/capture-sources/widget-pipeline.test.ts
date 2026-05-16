@@ -32,6 +32,7 @@ function mockRecordedWidgetTransaction(input: any) {
     amount: command.amount,
     categoryId: command.categoryId,
     description: command.description,
+    counterpartyName: command.counterpartyName,
     date: command.occurredOn,
     source: command.source,
     createdAt: input.now,
@@ -298,7 +299,29 @@ describe("processWidgetTransactions", () => {
 
     expect(mockInsertTransaction).toHaveBeenCalledWith(
       mockDb,
-      expect.objectContaining({ description: "Coffee at Juan Valdez" })
+      expect.objectContaining({ description: "Coffee at Juan Valdez", counterpartyName: "" })
+    );
+  });
+
+  it("treats widget description as user-authored text, not counterparty text", async () => {
+    mockGetPendingTransactions.mockResolvedValue([
+      {
+        id: "desc-dedup-test",
+        amount: 12000,
+        createdAt: "2026-03-27T10:00:00Z",
+        description: "Coffee at Juan Valdez",
+      },
+    ]);
+
+    await processWidgetTransactions(mockDb, USER_ID);
+
+    expect(mockFindDuplicateTransaction).not.toHaveBeenCalled();
+    expect(mockInsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        description: "Coffee at Juan Valdez",
+        counterpartyName: "",
+      })
     );
   });
 
@@ -335,22 +358,25 @@ describe("processWidgetTransactions", () => {
     expect(mockRemovePendingTransactions).toHaveBeenCalledWith(["seen-before"]);
   });
 
-  it("skips entries that match an existing transaction (cross-source dedup)", async () => {
+  it("does not cross-source dedup widget descriptions as inferred counterparty text", async () => {
     mockFindDuplicateTransaction.mockResolvedValue("txn-existing-1");
     mockGetPendingTransactions.mockResolvedValue([
-      { id: "dup-entry", amount: 5000, createdAt: "2026-03-27T10:00:00Z", description: "Coffee" },
+      {
+        id: "dup-entry",
+        amount: 5000,
+        createdAt: "2026-03-27T10:00:00Z",
+        description: "Coffee",
+      },
     ]);
 
     const result = await processWidgetTransactions(mockDb, USER_ID);
 
-    expect(mockInsertTransaction).not.toHaveBeenCalled();
-    expect(result.skippedDuplicate).toBe(1);
-    expect(mockPersistProcessedSourceEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        status: "processed",
-        failureReason: "duplicate:txn-existing-1",
-      })
+    expect(mockFindDuplicateTransaction).not.toHaveBeenCalled();
+    expect(mockInsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({ description: "Coffee", counterpartyName: "" })
     );
+    expect(result.saved).toBe(1);
   });
 
   it("records processed capture on success inside the ledger transaction", async () => {
