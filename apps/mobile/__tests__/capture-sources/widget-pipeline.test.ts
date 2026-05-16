@@ -7,7 +7,6 @@ import type { UserId } from "@/shared/types/branded";
 const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
 const mockIsCaptureProcessed = vi.fn<(...args: any[]) => any>();
 const mockFindDuplicateTransaction = vi.fn<(...args: any[]) => any>();
-const mockInsertProcessedCapture = vi.fn<(...args: any[]) => any>();
 const mockPersistProcessedSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockPersistCommittedCaptureSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockPersistCommittedCaptureSourceEventInTransaction = vi.fn<(...args: any[]) => any>();
@@ -80,10 +79,6 @@ vi.mock("@/features/capture-sources/lib/dedup", () => ({
   isCaptureProcessed: (...args: any[]) => mockIsCaptureProcessed(...args),
   findDuplicateTransaction: (...args: any[]) => mockFindDuplicateTransaction(...args),
   captureFingerprint: (...args: CaptureFingerprintArgs) => buildFingerprint(args),
-}));
-
-vi.mock("@/features/capture-sources/lib/repository", () => ({
-  insertProcessedCapture: (...args: any[]) => mockInsertProcessedCapture(...args),
 }));
 
 vi.mock("@/modules/expo-app-intents", () => ({
