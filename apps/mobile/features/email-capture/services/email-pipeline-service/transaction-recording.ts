@@ -49,7 +49,7 @@ export const recordTransactionToDb = async (
       occurredOn: requireIsoDate(context.parsed.date),
       description: null,
       counterpartyName: getParsedCounterpartyName(context.parsed),
-      source: "automated",
+      source: "email_capture",
     },
     ports: {
       commit: async (transaction) => {

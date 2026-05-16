@@ -32,7 +32,7 @@ const transactionCommand: RecordTransactionCommand = {
   occurredOn: "2026-04-12" as IsoDate,
   description: "Cafe",
   counterpartyName: "Cafe",
-  source: "automated",
+  source: "email_capture",
 };
 
 const pendingTransactionCandidate = {

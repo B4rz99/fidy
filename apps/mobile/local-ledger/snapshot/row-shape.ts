@@ -1,4 +1,5 @@
 import { CAPTURE_EVIDENCE_TYPES } from "@/shared/capture-evidence/types";
+import { TRANSACTION_SOURCES } from "@/shared/lib/transaction-source";
 import type { BackupSnapshot, LocalLedgerBackupSnapshotData } from "./snapshot";
 import {
   assertBoolean,
@@ -72,7 +73,7 @@ const ROW_SPECS: readonly RowSpec[] = [
             assertOneOf(["confirmed", "inferred", "unresolved"], value, "accountAttributionState"),
           supersededAt: (value) => assertNullableIsoDateTime(value, "supersededAt"),
           supersededByTransferId: (value) => assertNullableString(value, "supersededByTransferId"),
-          source: (value) => assertOneOf(["manual", "automated"], value, "source"),
+          source: (value) => assertOneOf(TRANSACTION_SOURCES, value, "source"),
           voidedAt: (value) => assertNullableIsoDateTime(value, "voidedAt"),
           createdAt: (value) => assertValidIsoDateTime(value, "createdAt"),
           updatedAt: (value) => assertValidIsoDateTime(value, "updatedAt"),

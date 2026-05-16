@@ -96,7 +96,7 @@ function seedActivity() {
     ) values
     (
       'txn-1', 'user-1', 'expense', 42000, 'uc-food', 'Lunch', '2026-04-20', 'fa-bank',
-      'confirmed', null, null, '${NOW}', '${NOW}', null, 'automated'
+      'confirmed', null, null, '${NOW}', '${NOW}', null, 'email_capture'
     ),
     (
       'txn-voided', 'user-1', 'expense', 18000, 'uc-food', 'Voided lunch', '2026-04-18',
@@ -849,7 +849,7 @@ describe("local ledger backup snapshots", () => {
     });
   });
 
-  it("normalizes legacy non-manual transaction source values as automated", () => {
+  it("normalizes legacy non-manual transaction source values as closed capture categories", () => {
     const legacyTransaction = {
       ...withoutKeys(transactionRow({ source: "email_gmail" }), [
         "counterpartyName",
@@ -867,7 +867,9 @@ describe("local ledger backup snapshots", () => {
       })
     );
 
-    expect(snapshot.data.transactions[0]).toEqual(expect.objectContaining({ source: "automated" }));
+    expect(snapshot.data.transactions[0]).toEqual(
+      expect.objectContaining({ source: "email_capture" })
+    );
   });
 
   it("rejects duplicate primary IDs inside backed-up collections", () => {

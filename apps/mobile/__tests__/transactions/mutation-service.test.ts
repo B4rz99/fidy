@@ -39,7 +39,7 @@ function makeCapturedStoredTransaction(
     accountId: "fa-card-1" as FinancialAccountId,
     accountAttributionState: "unresolved",
     supersededAt: new Date("2026-04-11T10:00:00.000Z"),
-    source: "automated",
+    source: "email_capture",
     ...overrides,
   };
 }
@@ -266,7 +266,7 @@ describe("transaction mutation service", () => {
           accountId: "fa-card-1",
           accountAttributionState: "unresolved",
           supersededAt: "2026-04-11T10:00:00.000Z",
-          source: "automated",
+          source: "email_capture",
           createdAt: "2026-04-10T10:00:00.000Z",
           updatedAt: "2026-04-12T10:00:00.000Z",
         }),

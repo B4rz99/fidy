@@ -199,7 +199,7 @@ export async function processApplePayIntent(
         occurredOn: today,
         accountId: matchedAccountId ?? defaultAccount.id,
         accountAttributionState: matchedAccountId ? "inferred" : "unresolved",
-        source: "automated",
+        source: "apple_pay_capture",
       },
       afterRecord: (tx) => {
         persistCommittedCaptureSourceEventInTransaction(tx, {

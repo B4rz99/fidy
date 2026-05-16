@@ -85,7 +85,7 @@ function saveAccountTransaction(
       updatedAt: NOW,
       voidedAt: null,
       supersededAt: entry.supersededAt ?? null,
-      source: entry.accountAttributionState === "unresolved" ? "automated" : "manual",
+      source: entry.accountAttributionState === "unresolved" ? "email_capture" : "manual",
     })
     .run();
 }

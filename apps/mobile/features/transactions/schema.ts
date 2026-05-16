@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { categoryIdSchema } from "@/shared/categories";
+import type { NormalizedTransactionSource } from "@/shared/lib/transaction-source";
 import { requireCopAmount, requireFinancialAccountId } from "@/shared/types/assertions";
 import type {
   CategoryId,
@@ -63,5 +64,5 @@ export type StoredTransaction = {
   readonly accountAttributionState: AccountAttributionState;
   readonly supersededAt?: Date | null;
   readonly supersededByTransferId?: TransferId | null;
-  readonly source?: "manual" | "automated";
+  readonly source?: NormalizedTransactionSource;
 };

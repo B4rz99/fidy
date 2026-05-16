@@ -128,7 +128,7 @@ function insertReviewTransaction(input: ReviewTransactionInput) {
     date: input.date,
     accountId: input.accountId ?? ("fa-default-user-1" as FinancialAccountId),
     accountAttributionState: "unresolved",
-    source: "automated",
+    source: "email_capture",
     createdAt: NOW,
     updatedAt: NOW,
     voidedAt: null,

@@ -94,7 +94,7 @@ function insertOriginalTransactionRecord() {
     updatedAt: ORIGINAL_CREATED_AT,
     voidedAt: null,
     supersededAt: null,
-    source: "automated",
+    source: "email_capture",
   });
 }
 
@@ -113,7 +113,7 @@ function insertIncomingTransactionRecord() {
     updatedAt: ORIGINAL_CREATED_AT,
     voidedAt: null,
     supersededAt: null,
-    source: "automated",
+    source: "email_capture",
   });
 }
 
@@ -344,7 +344,7 @@ describe("reclassifyTransactionsAsTransfer", () => {
       updatedAt: ORIGINAL_CREATED_AT,
       voidedAt: null,
       supersededAt: null,
-      source: "automated",
+      source: "email_capture",
     });
 
     const result = reclassifyTransactionsAsTransfer(
@@ -391,7 +391,7 @@ describe("reclassifyTransactionsAsTransfer", () => {
       updatedAt: ORIGINAL_CREATED_AT,
       voidedAt: null,
       supersededAt: null,
-      source: "automated",
+      source: "email_capture",
     });
 
     const result = reclassifyTransactionsAsTransfer(
@@ -437,7 +437,7 @@ describe("reclassifyTransactionsAsTransfer", () => {
       updatedAt: ORIGINAL_CREATED_AT,
       voidedAt: null,
       supersededAt: null,
-      source: "automated",
+      source: "email_capture",
     });
 
     const result = reclassifyTransactionsAsTransfer(
