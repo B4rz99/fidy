@@ -7,10 +7,10 @@ import {
   linkCaptureEvidenceToTransactionEffect,
   markForRetryEffect,
   markPermanentlyFailedEffect,
+  markRetryTerminalStatusEffect,
   markRetrySuccessEffect,
   nextRetryAtEffect,
   parseBodyEffect,
-  updateProcessedEmailStatusEffect,
 } from "./runtime";
 import { incrementRetryMetric } from "./shared";
 import { saveRetryTransactionEffect } from "./transactions";
@@ -86,7 +86,7 @@ async function handleRetryParseOutcome(
   }
 
   await context.runtime.runEmailEffect(
-    updateProcessedEmailStatusEffect({
+    markRetryTerminalStatusEffect({
       db: context.db,
       id: email.id,
       status: "skipped",
@@ -227,7 +227,9 @@ export async function processRetryBatch(
     userId: input.userId,
     result,
   };
-  const pendingEmails = await runtime.runEmailEffect(getPendingRetryEmailsEffect(input.db));
+  const pendingEmails = await runtime.runEmailEffect(
+    getPendingRetryEmailsEffect(input.db, input.userId)
+  );
 
   for (const email of pendingEmails) {
     await processRetryEmail(context, email);

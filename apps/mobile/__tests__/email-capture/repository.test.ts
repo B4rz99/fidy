@@ -4,6 +4,7 @@ import type {
   EmailAccountId,
   IsoDateTime,
   ProcessedEmailId,
+  ProcessedSourceEventId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
@@ -14,6 +15,7 @@ const mockOnConflictDoNothing = vi.fn<(...args: any[]) => any>().mockReturnValue
 const mockInsert = vi.fn<(...args: any[]) => any>(() => ({ values: mockValues }));
 const mockSelect = vi.fn<(...args: any[]) => any>().mockReturnThis();
 const mockFrom = vi.fn<(...args: any[]) => any>().mockReturnThis();
+const mockInnerJoin = vi.fn<(...args: any[]) => any>().mockReturnThis();
 const mockWhere = vi.fn<(...args: any[]) => any>().mockReturnThis();
 const mockOrderBy = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
 const mockDelete = vi.fn<(...args: any[]) => any>().mockReturnThis();
@@ -39,7 +41,8 @@ describe("email capture repository", () => {
     mockOnConflictDoNothing.mockReturnValue({ run: mockRun });
     mockValues.mockReturnValue({ onConflictDoNothing: mockOnConflictDoNothing });
     mockSelect.mockReturnValue({ from: mockFrom });
-    mockFrom.mockReturnValue({ where: mockWhere, orderBy: mockOrderBy });
+    mockFrom.mockReturnValue({ where: mockWhere, orderBy: mockOrderBy, innerJoin: mockInnerJoin });
+    mockInnerJoin.mockReturnValue({ where: mockWhere });
     mockWhere.mockReturnValue({ orderBy: mockOrderBy });
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
     mockUpdate.mockReturnValue({ set: mockSet });
@@ -186,25 +189,46 @@ describe("email capture repository", () => {
     expect(result).toBeNull();
   });
 
-  it("getFailedEmails returns emails with failed status", async () => {
-    const mockRows = [{ id: "pe-1", status: "failed", subject: "Could not parse" }];
+  it("getFailedEmails returns failed email source events", async () => {
+    const mockRows = [
+      {
+        id: "pse-1" as ProcessedSourceEventId,
+        sourceFamily: "email",
+        sourceId: "email_gmail",
+        sourceEventId: "gmail-message-1",
+        status: "failed",
+        failureReason: "parse_error",
+        receivedAt: "2026-04-19T11:00:00Z" as IsoDateTime,
+        processedAt: "2026-04-19T11:01:00Z" as IsoDateTime,
+        createdAt: "2026-04-19T11:01:00Z" as IsoDateTime,
+      },
+    ];
     mockWhere.mockReturnValueOnce({ orderBy: mockOrderBy });
     mockOrderBy.mockResolvedValueOnce(mockRows);
 
     const { getFailedEmails } = await import("@/features/email-capture/lib/repository");
-    const result = await getFailedEmails(mockDb);
+    const result = await getFailedEmails(mockDb, "user-1" as UserId);
 
     expect(mockSelect).toHaveBeenCalled();
-    expect(result).toEqual(mockRows);
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: "pse-1",
+        externalId: "gmail-message-1",
+        provider: "gmail",
+        status: "failed",
+        failureReason: "parse_error",
+      }),
+    ]);
   });
 
-  it("dismissProcessedEmail deletes by id", async () => {
+  it("dismissProcessedEmail dismisses the source event by id", async () => {
     const { dismissProcessedEmail } = await import("@/features/email-capture/lib/repository");
 
     await dismissProcessedEmail(mockDb, "pe-1" as ProcessedEmailId);
 
-    expect(mockDelete).toHaveBeenCalled();
-    expect(mockDeleteWhere).toHaveBeenCalled();
+    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockSet).toHaveBeenCalledWith({ status: "dismissed" });
+    expect(mockDelete).not.toHaveBeenCalled();
   });
 
   it("getProcessedExternalIds returns empty Set for empty array", async () => {
@@ -228,29 +252,43 @@ describe("email capture repository", () => {
     expect(result).toEqual(new Set(["msg-1", "msg-2"]));
   });
 
-  it("getNeedsReviewEmails returns emails with needs_review status", async () => {
+  it("getNeedsReviewEmails returns pending email review candidates", async () => {
     const mockRows = [
-      { id: "pe-1", status: "needs_review", subject: "Review this" },
-      { id: "pe-2", status: "needs_review", subject: "And this" },
+      {
+        candidateId: "rc-1",
+        sourceEventId: "pse-1",
+        sourceId: "email_gmail",
+        externalId: "gmail-message-1",
+        status: "needs_review",
+        failureReason: null,
+        receivedAt: "2026-04-19T11:00:00Z" as IsoDateTime,
+        createdAt: "2026-04-19T11:01:00Z" as IsoDateTime,
+        confidence: 0.5,
+      },
     ];
     mockWhere.mockReturnValueOnce({ orderBy: mockOrderBy });
     mockOrderBy.mockResolvedValueOnce(mockRows);
 
     const { getNeedsReviewEmails } = await import("@/features/email-capture/lib/repository");
-    const result = await getNeedsReviewEmails(mockDb);
+    const result = await getNeedsReviewEmails(mockDb, "user-1" as UserId);
 
     expect(mockSelect).toHaveBeenCalled();
-    expect(result).toEqual(mockRows);
+    expect(mockInnerJoin).toHaveBeenCalled();
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: "rc-1",
+        reviewCandidateId: "rc-1",
+        processedSourceEventId: "pse-1",
+        externalId: "gmail-message-1",
+        provider: "gmail",
+        status: "needs_review",
+        confidence: 0.5,
+      }),
+    ]);
   });
 
-  it("getNeedsReviewEmailByTransactionId returns the most recent linked review email", async () => {
+  it("getNeedsReviewEmailByTransactionId returns legacy processed email review rows", async () => {
     const mockRows = [
-      {
-        id: "pe-2",
-        transactionId: "tx-1",
-        status: "needs_review",
-        receivedAt: "2026-04-19T11:00:00Z",
-      },
       {
         id: "pe-1",
         transactionId: "tx-1",
@@ -288,20 +326,44 @@ describe("email capture repository", () => {
   });
 
   it("getPendingRetryEmails returns pending_retry emails where nextRetryAt <= now", async () => {
-    const mockRows = [{ id: "pe-1", status: "pending_retry", rawBody: "body", retryCount: 1 }];
+    const mockRows = [
+      {
+        id: "pse-1",
+        sourceEventId: "gmail-message-1",
+        sourceId: "email_gmail",
+        status: "pending_retry",
+        failureReason: "parse_error",
+        retryRawBody: "body",
+        retryCount: 1,
+        nextRetryAt: "2026-03-15T13:00:00Z",
+        retryTransactionId: null,
+        retryConfidence: null,
+        receivedAt: "2026-03-15T12:00:00Z",
+        createdAt: "2026-03-15T12:00:00Z",
+      },
+    ];
     const mockLimit = vi.fn<(...args: any[]) => any>().mockResolvedValueOnce(mockRows);
     mockWhere.mockReturnValueOnce({
       orderBy: vi.fn<(...args: any[]) => any>().mockReturnValueOnce({ limit: mockLimit }),
     });
 
     const { getPendingRetryEmails } = await import("@/features/email-capture/lib/repository");
-    const result = await getPendingRetryEmails(mockDb);
+    const result = await getPendingRetryEmails(mockDb, "user-1" as UserId);
 
     expect(mockSelect).toHaveBeenCalled();
     expect(mockFrom).toHaveBeenCalled();
     expect(mockWhere).toHaveBeenCalled();
     expect(mockLimit).toHaveBeenCalledWith(50);
-    expect(result).toEqual(mockRows);
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: "pse-1",
+        externalId: "gmail-message-1",
+        provider: "gmail",
+        status: "pending_retry",
+        rawBody: "body",
+        retryCount: 1,
+      }),
+    ]);
   });
 
   it("markForRetry updates status, retryCount, nextRetryAt, rawBody", async () => {
@@ -331,7 +393,8 @@ describe("email capture repository", () => {
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith({
       status: "failed",
-      rawBody: null,
+      retryRawBody: null,
+      nextRetryAt: null,
     });
     expect(mockUpdateWhere).toHaveBeenCalled();
   });
@@ -350,9 +413,30 @@ describe("email capture repository", () => {
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockSet).toHaveBeenCalledWith({
       status: "success",
-      transactionId: "tx-5",
-      confidence: 0.95,
-      rawBody: null,
+      retryTransactionId: "tx-5",
+      retryConfidence: 0.95,
+      retryRawBody: null,
+      nextRetryAt: null,
+    });
+    expect(mockUpdateWhere).toHaveBeenCalled();
+  });
+
+  it("markRetryTerminalStatus updates only source-event retry state", async () => {
+    const { markRetryTerminalStatus } = await import("@/features/email-capture/lib/repository");
+
+    await markRetryTerminalStatus({
+      db: mockDb,
+      id: "pse-1" as ProcessedEmailId,
+      status: "skipped",
+      transactionId: null,
+    });
+
+    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockSet).toHaveBeenCalledWith({
+      status: "skipped",
+      retryTransactionId: null,
+      retryRawBody: null,
+      nextRetryAt: null,
     });
     expect(mockUpdateWhere).toHaveBeenCalled();
   });

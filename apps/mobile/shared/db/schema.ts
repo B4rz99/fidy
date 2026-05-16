@@ -253,6 +253,11 @@ export const processedSourceEvents = sqliteTable(
     failureReason: text("failure_reason"),
     receivedAt: text("received_at").$type<IsoDateTime>().notNull(),
     processedAt: text("processed_at").$type<IsoDateTime>().notNull(),
+    retryRawBody: text("retry_raw_body"),
+    retryCount: integer("retry_count").notNull().default(0),
+    nextRetryAt: text("next_retry_at").$type<IsoDateTime>(),
+    retryTransactionId: text("retry_transaction_id").$type<TransactionId>(),
+    retryConfidence: real("retry_confidence"),
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
     updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
     deletedAt: text("deleted_at").$type<IsoDateTime>(),
@@ -262,6 +267,11 @@ export const processedSourceEvents = sqliteTable(
       .on(table.userId, table.sourceFamily, table.sourceId, table.sourceEventId)
       .where(sql`${table.deletedAt} is null`),
     index("idx_processed_source_events_user_status").on(table.userId, table.status),
+    index("idx_processed_source_events_retry_due").on(
+      table.sourceFamily,
+      table.status,
+      table.nextRetryAt
+    ),
     index("idx_processed_source_events_user_updated").on(table.userId, table.updatedAt),
   ]
 );

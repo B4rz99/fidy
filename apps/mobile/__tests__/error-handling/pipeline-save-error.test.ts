@@ -16,6 +16,7 @@ const mockGetProcessedExternalIds = vi
   .fn<(...args: any[]) => any>()
   .mockResolvedValue(new Set<string>());
 const mockInsertProcessedEmail = vi.fn<(...args: any[]) => any>();
+const mockInsertPendingRetrySourceEvent = vi.fn<(...args: any[]) => any>();
 const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
 const mockLookupMerchantRule = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
 const mockInsertMerchantRule = vi.fn<(...args: any[]) => any>();
@@ -29,7 +30,7 @@ const mockGetPendingRetryEmails = vi.fn<(...args: any[]) => any>().mockResolvedV
 const mockMarkForRetry = vi.fn<(...args: any[]) => any>();
 const mockMarkPermanentlyFailed = vi.fn<(...args: any[]) => any>();
 const mockMarkRetrySuccess = vi.fn<(...args: any[]) => any>();
-const mockUpdateProcessedEmailStatus = vi.fn<(...args: any[]) => any>();
+const mockMarkRetryTerminalStatus = vi.fn<(...args: any[]) => any>();
 const mockBuildEmailCaptureEvidence = vi.fn<(...args: any[]) => any>().mockReturnValue([
   {
     sourceFamily: "bancolombia",
@@ -60,11 +61,12 @@ vi.mock("@/features/capture-sources/lib/dedup", () => ({
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getProcessedExternalIds: (...args: unknown[]) => mockGetProcessedExternalIds(...args),
   insertProcessedEmail: (...args: unknown[]) => mockInsertProcessedEmail(...args),
+  insertPendingRetrySourceEvent: (...args: unknown[]) => mockInsertPendingRetrySourceEvent(...args),
   getPendingRetryEmails: (...args: unknown[]) => mockGetPendingRetryEmails(...args),
   markForRetry: (...args: unknown[]) => mockMarkForRetry(...args),
   markPermanentlyFailed: (...args: unknown[]) => mockMarkPermanentlyFailed(...args),
   markRetrySuccess: (...args: unknown[]) => mockMarkRetrySuccess(...args),
-  updateProcessedEmailStatus: (...args: unknown[]) => mockUpdateProcessedEmailStatus(...args),
+  markRetryTerminalStatus: (...args: unknown[]) => mockMarkRetryTerminalStatus(...args),
 }));
 
 vi.mock("@/features/transactions/lib/repository", () => ({
@@ -130,6 +132,7 @@ describe("pipeline worker save error path", () => {
     });
     mockGetProcessedExternalIds.mockResolvedValue(new Set<string>());
     mockInsertProcessedEmail.mockResolvedValue(undefined);
+    mockInsertPendingRetrySourceEvent.mockResolvedValue(undefined);
     mockInsertTransaction.mockResolvedValue(undefined);
     mockLookupMerchantRule.mockResolvedValue(null);
     mockInsertMerchantRule.mockResolvedValue(undefined);
@@ -139,7 +142,7 @@ describe("pipeline worker save error path", () => {
     mockMarkForRetry.mockResolvedValue(undefined);
     mockMarkPermanentlyFailed.mockResolvedValue(undefined);
     mockMarkRetrySuccess.mockResolvedValue(undefined);
-    mockUpdateProcessedEmailStatus.mockResolvedValue(undefined);
+    mockMarkRetryTerminalStatus.mockResolvedValue(undefined);
     mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
     mockLinkCaptureEvidenceToTransaction.mockResolvedValue(undefined);
   });

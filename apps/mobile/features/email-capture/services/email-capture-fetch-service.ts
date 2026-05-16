@@ -273,10 +273,13 @@ export async function persistFetchedAccounts(
   };
 }
 
-export async function loadEmailCaptureQueues(db: AnyDb): Promise<EmailCaptureQueues> {
+export async function loadEmailCaptureQueues(
+  db: AnyDb,
+  userId: UserId
+): Promise<EmailCaptureQueues> {
   const [failedEmails, needsReviewEmails] = await Promise.all([
-    getFailedEmails(db),
-    getNeedsReviewEmails(db),
+    getFailedEmails(db, userId),
+    getNeedsReviewEmails(db, userId),
   ]);
 
   return { failedEmails, needsReviewEmails };

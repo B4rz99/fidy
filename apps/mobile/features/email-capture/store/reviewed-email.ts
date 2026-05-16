@@ -5,7 +5,7 @@ import { transactions } from "@/shared/db";
 import { normalizeMerchant, toIsoDateTime } from "@/shared/lib";
 import type { CategoryId, IsoDateTime, TransactionId, UserId } from "@/shared/types/branded";
 import { insertMerchantRule } from "../lib/merchant-rules";
-import { updateProcessedEmailStatus } from "../lib/repository";
+import { acceptFinancialMeaningReviewCandidate } from "../lib/financial-meaning-review";
 import {
   createEmailCaptureSession,
   isActiveEmailCaptureSession,
@@ -59,9 +59,34 @@ export async function confirmReviewedEmail(
   if (!isActiveEmailCaptureSession(session)) return;
 
   const processedEmail = getNeedsReviewEmailById(processedEmailId);
-  if (!processedEmail?.transactionId || !isValidCategoryId(categoryId)) return;
+  if (!processedEmail || !isValidCategoryId(categoryId)) return;
 
   const now = toIsoDateTime(new Date());
+
+  if (processedEmail.reviewCandidateId && processedEmail.processedSourceEventId) {
+    const accepted = await acceptFinancialMeaningReviewCandidate({
+      db,
+      candidateId: processedEmail.reviewCandidateId,
+      categoryId,
+      now,
+    });
+    if (!accepted) return;
+
+    await saveMerchantRuleForReviewedEmail({
+      db,
+      userId,
+      description: processedEmail.reviewCandidateDescription ?? processedEmail.subject,
+      categoryId,
+      now,
+    });
+    if (!isActiveEmailCaptureSession(session)) return;
+
+    useEmailCaptureStore.getState().removeNeedsReviewEmail(processedEmailId);
+    await refreshTransactions();
+    return;
+  }
+
+  if (!processedEmail.transactionId) return;
 
   await db
     .update(transactions)
@@ -76,12 +101,6 @@ export async function confirmReviewedEmail(
     now,
   });
 
-  await updateProcessedEmailStatus({
-    db,
-    id: processedEmail.id,
-    status: "success",
-    transactionId: processedEmail.transactionId,
-  });
   if (!isActiveEmailCaptureSession(session)) return;
 
   useEmailCaptureStore.getState().removeNeedsReviewEmail(processedEmailId);

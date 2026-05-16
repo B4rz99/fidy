@@ -99,7 +99,7 @@ export async function loadFailedEmails(db: AnyDb, userId: UserId): Promise<void>
   const request = beginEmailCaptureRequest("failedEmails", userId);
 
   try {
-    const failedEmails = await getFailedEmails(db);
+    const failedEmails = await getFailedEmails(db, userId);
     if (!isCurrentEmailCaptureRequest(request)) return;
     useEmailCaptureStore.getState().setFailedEmails(failedEmails);
   } catch {}
@@ -108,7 +108,7 @@ export async function loadNeedsReviewEmails(db: AnyDb, userId: UserId): Promise<
   const request = beginEmailCaptureRequest("needsReview", userId);
 
   try {
-    const needsReviewEmails = await getNeedsReviewEmails(db);
+    const needsReviewEmails = await getNeedsReviewEmails(db, userId);
     if (!isCurrentEmailCaptureRequest(request)) return;
     useEmailCaptureStore.getState().setNeedsReviewEmails(needsReviewEmails);
   } catch {}
@@ -228,7 +228,7 @@ export async function fetchAndProcessEmails(
             fetchResults: processedFetchResults,
           })
         : { fetchedAt: toIsoDateTime(new Date()), updatedAccountIds: new Set() },
-      queues: await loadEmailCaptureQueues(db),
+      queues: await loadEmailCaptureQueues(db, userId),
       refreshTransactions,
     });
 

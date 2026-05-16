@@ -21,6 +21,11 @@
       "reason": "ESLint 10 should wait for eslint-config-expo compatibility confirmation."
     },
     {
+      "name": "jscpd",
+      "until": "2026-06-01",
+      "reason": "Minor duplication tooling update should land in a dedicated tooling PR so duplicate-code reports can be reviewed separately."
+    },
+    {
       "name": "knip",
       "until": "2026-06-01",
       "reason": "Minor dead-code tooling update should land in a dedicated tooling PR so unused-export reports can be reviewed separately."

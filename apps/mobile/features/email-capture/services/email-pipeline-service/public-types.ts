@@ -84,8 +84,16 @@ export type CreateEmailPipelineServiceDeps = {
     readonly merchant: string;
   }) => Promise<TransactionId | null>;
   readonly getProcessedExternalIds: (db: AnyDb, externalIds: string[]) => Promise<Set<string>>;
-  readonly getPendingRetryEmails: (db: AnyDb) => Promise<readonly ProcessedEmailRow[]>;
+  readonly getPendingRetryEmails: (
+    db: AnyDb,
+    userId: UserId
+  ) => Promise<readonly ProcessedEmailRow[]>;
   readonly insertProcessedEmail: (db: AnyDb, row: ProcessedEmailRow) => Promise<void>;
+  readonly insertPendingRetrySourceEvent: (input: {
+    readonly db: AnyDb;
+    readonly userId: UserId;
+    readonly row: ProcessedEmailRow;
+  }) => Promise<void>;
   readonly markForRetry: (input: {
     readonly db: AnyDb;
     readonly id: ProcessedEmailId;
@@ -100,7 +108,7 @@ export type CreateEmailPipelineServiceDeps = {
     readonly transactionId: TransactionId | null;
     readonly confidence: number;
   }) => Promise<void>;
-  readonly updateProcessedEmailStatus: (input: {
+  readonly markRetryTerminalStatus: (input: {
     readonly db: AnyDb;
     readonly id: ProcessedEmailId;
     readonly status: string;

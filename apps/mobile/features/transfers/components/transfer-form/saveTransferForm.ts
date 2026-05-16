@@ -88,7 +88,6 @@ function runReclassifiedTransfer(
     return reclassifyTransactionAsTransfer(input.db, {
       userId: input.userId,
       transactionId: input.sourceTransaction.id,
-      processedEmailId: input.processedEmailId ?? undefined,
       digits: input.digits,
       fromSide: input.fromSide,
       toSide: input.toSide,

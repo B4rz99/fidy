@@ -14,6 +14,7 @@ import {
 } from "./parse-improvement";
 import {
   getProcessedExternalIdsEffect,
+  insertPendingRetrySourceEventEffect,
   insertProcessedEmailEffect,
   nextRetryAtEffect,
   parseBodyEffect,
@@ -112,6 +113,13 @@ async function persistPendingRetryIncomingEmail(
     nextRetryAt,
   });
 
+  await context.runtime.runEmailEffect(
+    insertPendingRetrySourceEventEffect({
+      db: context.db,
+      userId: context.userId,
+      row,
+    })
+  );
   await persistIncomingEmailRecord({
     context,
     email,

@@ -3,6 +3,11 @@ import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useEmailCaptureStore } from "../store";
 
+type BannerTranslation = (key: string, options?: { count: number }) => string;
+
+export const getFailedEmailsBannerTitle = (t: BannerTranslation, failedCount: number) =>
+  t("emailCapture.unprocessedEmails", { count: failedCount });
+
 export const FailedEmailsBanner = ({ onPress }: { onPress: () => void }) => {
   const { t } = useTranslation();
   const failedCount = useEmailCaptureStore((s) => s.failedEmails.length);
@@ -19,7 +24,7 @@ export const FailedEmailsBanner = ({ onPress }: { onPress: () => void }) => {
       <TriangleAlert size={20} color={iconColor} />
       <View className="flex-1">
         <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-          {t("emailCapture.unprocessedEmails", { count: failedCount })}
+          {getFailedEmailsBannerTitle(t, failedCount)}
         </Text>
         <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
           {t("emailCapture.tapToReview")}

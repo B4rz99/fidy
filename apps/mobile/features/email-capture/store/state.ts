@@ -3,7 +3,7 @@ import { captureWarning } from "@/shared/lib";
 import { assertEmailAccountId } from "@/shared/types/assertions";
 import type { EmailAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
 import type { ProgressPhase } from "../lib/progress-phases";
-import type { EmailAccountRow, ProcessedEmailRow } from "../lib/repository";
+import type { EmailAccountRow, EmailReviewRow, ProcessedEmailRow } from "../lib/repository";
 import type { ProgressCallback } from "../pipeline.public";
 import type { EmailProvider } from "../schema";
 import type {
@@ -22,7 +22,7 @@ export type EmailCaptureState = {
   readonly activeUserId: UserId | null;
   readonly accounts: readonly EmailAccountRow[];
   readonly failedEmails: readonly ProcessedEmailRow[];
-  readonly needsReviewEmails: readonly ProcessedEmailRow[];
+  readonly needsReviewEmails: readonly EmailReviewRow[];
   readonly isFetching: boolean;
   readonly progress: ProgressSnapshot | null;
   readonly phase: ProgressPhase | null;
@@ -33,7 +33,7 @@ export type EmailCaptureActions = {
   beginSession: (userId: UserId) => void;
   setAccounts: (accounts: readonly EmailAccountRow[]) => void;
   setFailedEmails: (failedEmails: readonly ProcessedEmailRow[]) => void;
-  setNeedsReviewEmails: (needsReviewEmails: readonly ProcessedEmailRow[]) => void;
+  setNeedsReviewEmails: (needsReviewEmails: readonly EmailReviewRow[]) => void;
   setIsFetching: (isFetching: boolean) => void;
   setProgress: (progress: ProgressSnapshot | null) => void;
   setPhase: (phase: ProgressPhase | null) => void;

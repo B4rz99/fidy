@@ -60,9 +60,9 @@ export function getProcessedExternalIdsEffect(db: AnyDb, externalIds: string[]) 
   );
 }
 
-export function getPendingRetryEmailsEffect(db: AnyDb) {
+export function getPendingRetryEmailsEffect(db: AnyDb, userId: UserId) {
   return Effect.flatMap(EmailPipelineDeps.tag, ({ getPendingRetryEmails }) =>
-    fromPromise(() => getPendingRetryEmails(db))
+    fromPromise(() => getPendingRetryEmails(db, userId))
   );
 }
 
@@ -87,6 +87,16 @@ export function findDuplicateTransactionEffect(
 export function insertProcessedEmailEffect(db: AnyDb, row: ProcessedEmailRow) {
   return Effect.flatMap(EmailPipelineDeps.tag, ({ insertProcessedEmail }) =>
     fromPromise(() => insertProcessedEmail(db, row))
+  );
+}
+
+export function insertPendingRetrySourceEventEffect(input: {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly row: ProcessedEmailRow;
+}) {
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ insertPendingRetrySourceEvent }) =>
+    fromPromise(() => insertPendingRetrySourceEvent(input))
   );
 }
 
@@ -205,10 +215,10 @@ export function markRetrySuccessEffect(input: RetrySuccessEffectInput) {
   );
 }
 
-export function updateProcessedEmailStatusEffect(input: ProcessedEmailStatusEffectInput) {
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ updateProcessedEmailStatus }) =>
+export function markRetryTerminalStatusEffect(input: ProcessedEmailStatusEffectInput) {
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ markRetryTerminalStatus }) =>
     fromPromise(() =>
-      updateProcessedEmailStatus({
+      markRetryTerminalStatus({
         db: input.db,
         id: input.id,
         status: input.status,

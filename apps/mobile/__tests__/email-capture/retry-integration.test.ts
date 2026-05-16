@@ -9,6 +9,7 @@
  */
 // biome-ignore-all lint/suspicious/noExplicitAny: integration test needs flexible typing
 
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import Database from "better-sqlite3";
 import { eq } from "drizzle-orm";
@@ -22,7 +23,7 @@ import {
   markRetrySuccess,
 } from "@/features/email-capture/lib/repository";
 import { processRetries } from "@/features/email-capture/services/email-pipeline";
-import { processedEmails, transactions } from "@/shared/db/schema";
+import { processedEmails, processedSourceEvents, transactions } from "@/shared/db/schema";
 import { requireUserId } from "@/shared/types/assertions";
 import type { IsoDateTime, ProcessedEmailId, TransactionId } from "@/shared/types/branded";
 
@@ -46,6 +47,10 @@ vi.mock("@/features/capture-sources/lib/dedup", () => ({
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
 const USER_ID = requireUserId("user-1");
+const retryMigrationSql = readFileSync(
+  resolve(__dirname, "../../drizzle/0028_source_event_email_retry.sql"),
+  "utf8"
+).replaceAll("--> statement-breakpoint", "");
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -62,24 +67,57 @@ afterEach(() => {
 });
 
 function insertRetryEmail(overrides: Partial<typeof processedEmails.$inferInsert> = {}) {
+  const retryRawBody =
+    overrides.rawBody === undefined
+      ? "Su compra por $50.000 fue aprobada en EXITO"
+      : overrides.rawBody;
+  const nextRetryAt = overrides.nextRetryAt ?? null;
+  const retryCount = overrides.retryCount ?? 0;
+  const status = overrides.status ?? "pending_retry";
+  const externalId = overrides.externalId ?? "ext-retry-1";
+  const receivedAt = (overrides.receivedAt ?? "2026-03-05T10:00:00.000Z") as IsoDateTime;
   const row = {
     id: "pe-retry-1" as ProcessedEmailId,
-    externalId: "ext-retry-1",
+    externalId,
     provider: "gmail",
-    status: "pending_retry",
+    status,
     failureReason: "parse_error",
     subject: "Compra aprobada",
     rawBodyPreview: "Su compra por $50.000...",
-    rawBody: "Su compra por $50.000 fue aprobada en EXITO",
-    receivedAt: "2026-03-05T10:00:00.000Z" as IsoDateTime,
+    rawBody: retryRawBody,
+    receivedAt,
     transactionId: null,
     confidence: null,
-    retryCount: 0,
+    retryCount,
     createdAt: "2026-03-05T10:00:00.000Z" as IsoDateTime,
+    nextRetryAt,
     ...overrides,
   };
   db.insert(processedEmails).values(row).run();
+  db.insert(processedSourceEvents).values(toRetrySourceEvent(row)).run();
   return row;
+}
+
+function toRetrySourceEvent(row: typeof processedEmails.$inferInsert) {
+  return {
+    id: "pse-retry-1" as any,
+    userId: USER_ID,
+    sourceFamily: "email",
+    sourceId: "email_gmail",
+    sourceEventId: row.externalId,
+    status: row.status,
+    failureReason: "parse_error",
+    receivedAt: row.receivedAt,
+    processedAt: "2026-03-05T10:00:00.000Z" as IsoDateTime,
+    retryRawBody: row.rawBody ?? null,
+    retryCount: row.retryCount ?? 0,
+    nextRetryAt: row.nextRetryAt ?? null,
+    retryTransactionId: null,
+    retryConfidence: null,
+    createdAt: "2026-03-05T10:00:00.000Z" as IsoDateTime,
+    updatedAt: "2026-03-05T10:00:00.000Z" as IsoDateTime,
+    deletedAt: null,
+  };
 }
 
 function queueDueRetryEmail(overrides: Partial<typeof processedEmails.$inferInsert> = {}) {
@@ -103,6 +141,14 @@ async function getRetryEmail() {
     .select()
     .from(processedEmails)
     .where(eq(processedEmails.id, "pe-retry-1" as ProcessedEmailId));
+  return row ?? null;
+}
+
+async function getRetrySourceEvent() {
+  const [row] = await db
+    .select()
+    .from(processedSourceEvents)
+    .where(eq(processedSourceEvents.id, "pse-retry-1" as any));
   return row ?? null;
 }
 
@@ -132,33 +178,137 @@ async function expectSuccessfulRetryArtifacts() {
 
   expect(await getRetryEmail()).toEqual(
     expect.objectContaining({
+      status: "pending_retry",
+      rawBody: "Su compra por $50.000 fue aprobada en EXITO",
+      transactionId: null,
+    })
+  );
+  expect(await getRetrySourceEvent()).toEqual(
+    expect.objectContaining({
       status: "success",
-      rawBody: null,
-      transactionId: txRow?.id,
+      retryRawBody: null,
+      retryTransactionId: txRow?.id,
     })
   );
 }
 
 describe("retry queue integration (real SQLite)", () => {
-  it("migration adds rawBody, retryCount, nextRetryAt columns", () => {
-    const columns = sqlite.pragma("table_info(processed_emails)") as {
+  it("migration adds source-event retry columns", () => {
+    const columns = sqlite.pragma("table_info(processed_source_events)") as {
       name: string;
     }[];
     const columnNames = columns.map((c) => c.name);
 
-    expect(columnNames).toContain("raw_body");
+    expect(columnNames).toContain("retry_raw_body");
     expect(columnNames).toContain("retry_count");
     expect(columnNames).toContain("next_retry_at");
+    expect(columnNames).toContain("retry_transaction_id");
+    expect(columnNames).toContain("retry_confidence");
+  });
+
+  it("migration backfills existing legacy pending retries into source events", () => {
+    const legacySqlite = new Database(":memory:");
+    const longLegacyRawBody = "x".repeat(6_000);
+    try {
+      legacySqlite.exec(`
+        create table email_accounts (
+          id text primary key,
+          user_id text not null,
+          provider text not null,
+          email text not null,
+          last_fetched_at text,
+          created_at text not null
+        );
+        create table processed_emails (
+          id text primary key,
+          external_id text not null,
+          provider text not null,
+          status text not null,
+          failure_reason text,
+          subject text not null,
+          raw_body_preview text,
+          received_at text not null,
+          transaction_id text,
+          confidence real,
+          created_at text not null,
+          raw_body text,
+          retry_count integer default 0 not null,
+          next_retry_at text
+        );
+        create table processed_source_events (
+          id text primary key,
+          user_id text not null,
+          source_family text not null,
+          source_id text not null,
+          source_event_id text not null,
+          status text not null,
+          failure_reason text,
+          received_at text not null,
+          processed_at text not null,
+          created_at text not null,
+          updated_at text not null,
+          deleted_at text
+        );
+        create unique index uq_processed_source_event
+          on processed_source_events (user_id, source_family, source_id, source_event_id)
+          where deleted_at is null;
+        insert into email_accounts values (
+          'ea-1',
+          '${USER_ID}',
+          'gmail',
+          'user@example.com',
+          null,
+          '2026-03-01T10:00:00.000Z'
+        );
+        insert into processed_emails values (
+          'pe-legacy-1',
+          'gmail-legacy-1',
+          'gmail',
+          'pending_retry',
+          'parse_error',
+          'Compra aprobada',
+          'preview',
+          '2026-03-05T10:00:00.000Z',
+          null,
+          null,
+          '2026-03-05T10:01:00.000Z',
+          '${longLegacyRawBody}',
+          2,
+          '2026-03-05T10:05:00.000Z'
+        );
+      `);
+
+      legacySqlite.exec(retryMigrationSql);
+
+      const rows = legacySqlite
+        .prepare("select * from processed_source_events where source_event_id = ?")
+        .all("gmail-legacy-1") as Record<string, unknown>[];
+
+      expect(rows).toEqual([
+        expect.objectContaining({
+          id: "pse_legacy_retry_pe-legacy-1",
+          user_id: USER_ID,
+          source_family: "email",
+          source_id: "email_gmail",
+          status: "pending_retry",
+          retry_raw_body: "x".repeat(5_000),
+          retry_count: 2,
+          next_retry_at: "2026-03-05T10:05:00.000Z",
+        }),
+      ]);
+    } finally {
+      legacySqlite.close();
+    }
   });
 
   it("getPendingRetryEmails picks up emails with nextRetryAt in the past", async () => {
     const pastTime = new Date(Date.now() - 60_000).toISOString() as IsoDateTime;
     insertRetryEmail({ nextRetryAt: pastTime });
 
-    const results = await getPendingRetryEmails(db as any);
+    const results = await getPendingRetryEmails(db as any, USER_ID);
 
     expect(results).toHaveLength(1);
-    expect(results[0]?.id).toBe("pe-retry-1");
+    expect(results[0]?.id).toBe("pse-retry-1");
     expect(results[0]?.rawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
   });
 
@@ -166,7 +316,7 @@ describe("retry queue integration (real SQLite)", () => {
     const futureTime = new Date(Date.now() + 600_000).toISOString() as IsoDateTime;
     insertRetryEmail({ nextRetryAt: futureTime });
 
-    const results = await getPendingRetryEmails(db as any);
+    const results = await getPendingRetryEmails(db as any, USER_ID);
 
     expect(results).toHaveLength(0);
   });
@@ -180,7 +330,7 @@ describe("retry queue integration (real SQLite)", () => {
       nextRetryAt: pastTime,
     });
 
-    const results = await getPendingRetryEmails(db as any);
+    const results = await getPendingRetryEmails(db as any, USER_ID);
 
     expect(results).toHaveLength(0);
   });
@@ -192,32 +342,35 @@ describe("retry queue integration (real SQLite)", () => {
     const futureTime = new Date(Date.now() + 300_000).toISOString() as IsoDateTime;
     await markForRetry({
       db: db as any,
-      id: "pe-retry-1" as ProcessedEmailId,
+      id: "pse-retry-1" as ProcessedEmailId,
       retryCount: 2,
       nextRetryAt: futureTime,
     });
 
-    const [row] = await db
-      .select()
-      .from(processedEmails)
-      .where(eq(processedEmails.id, "pe-retry-1" as ProcessedEmailId));
-    expect(row?.retryCount).toBe(2);
-    expect(row?.nextRetryAt).toBe(futureTime);
-    expect(row?.rawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
-    expect(row?.status).toBe("pending_retry");
+    const sourceEvent = await getRetrySourceEvent();
+    expect(sourceEvent?.retryCount).toBe(2);
+    expect(sourceEvent?.nextRetryAt).toBe(futureTime);
+    expect(sourceEvent?.retryRawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
+    expect(sourceEvent?.status).toBe("pending_retry");
+
+    const legacyEmail = await getRetryEmail();
+    expect(legacyEmail?.retryCount).toBe(1);
+    expect(legacyEmail?.nextRetryAt).toBe(pastTime);
+    expect(legacyEmail?.rawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
   });
 
   it("markPermanentlyFailed sets status=failed and clears rawBody", async () => {
     insertRetryEmail({ nextRetryAt: new Date().toISOString() as IsoDateTime });
 
-    await markPermanentlyFailed(db as any, "pe-retry-1" as ProcessedEmailId);
+    await markPermanentlyFailed(db as any, "pse-retry-1" as ProcessedEmailId);
 
-    const [row] = await db
-      .select()
-      .from(processedEmails)
-      .where(eq(processedEmails.id, "pe-retry-1" as ProcessedEmailId));
-    expect(row?.status).toBe("failed");
-    expect(row?.rawBody).toBeNull();
+    const sourceEvent = await getRetrySourceEvent();
+    expect(sourceEvent?.status).toBe("failed");
+    expect(sourceEvent?.retryRawBody).toBeNull();
+
+    const legacyEmail = await getRetryEmail();
+    expect(legacyEmail?.status).toBe("pending_retry");
+    expect(legacyEmail?.rawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
   });
 
   it("markRetrySuccess sets status/transactionId/confidence and clears rawBody", async () => {
@@ -225,20 +378,23 @@ describe("retry queue integration (real SQLite)", () => {
 
     await markRetrySuccess({
       db: db as any,
-      id: "pe-retry-1" as ProcessedEmailId,
+      id: "pse-retry-1" as ProcessedEmailId,
       status: "success",
       transactionId: "tx-42" as TransactionId,
       confidence: 0.95,
     });
 
-    const [row] = await db
-      .select()
-      .from(processedEmails)
-      .where(eq(processedEmails.id, "pe-retry-1" as ProcessedEmailId));
-    expect(row?.status).toBe("success");
-    expect(row?.transactionId).toBe("tx-42");
-    expect(row?.confidence).toBe(0.95);
-    expect(row?.rawBody).toBeNull();
+    const sourceEvent = await getRetrySourceEvent();
+    expect(sourceEvent?.status).toBe("success");
+    expect(sourceEvent?.retryTransactionId).toBe("tx-42");
+    expect(sourceEvent?.retryConfidence).toBe(0.95);
+    expect(sourceEvent?.retryRawBody).toBeNull();
+
+    const legacyEmail = await getRetryEmail();
+    expect(legacyEmail?.status).toBe("pending_retry");
+    expect(legacyEmail?.transactionId).toBeNull();
+    expect(legacyEmail?.confidence).toBeNull();
+    expect(legacyEmail?.rawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
   });
 
   it("full flow: pending_retry email → successful retry → transaction created", async () => {
@@ -252,6 +408,16 @@ describe("retry queue integration (real SQLite)", () => {
     await expectSuccessfulRetryArtifacts();
   });
 
+  async function expectRetryRescheduled() {
+    const pe = await getRetrySourceEvent();
+    expect(pe?.retryCount).toBe(3);
+    expect(pe?.status).toBe("pending_retry");
+    expect(pe?.retryRawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
+
+    const nextRetry = new Date(pe?.nextRetryAt ?? "");
+    expect(nextRetry.getTime()).toBeGreaterThan(Date.now());
+  }
+
   it("full flow: pending_retry email → parse fails again → rescheduled with backoff", async () => {
     const pastTime = new Date(Date.now() - 60_000).toISOString() as IsoDateTime;
     insertRetryEmail({ nextRetryAt: pastTime, retryCount: 2 });
@@ -262,19 +428,7 @@ describe("retry queue integration (real SQLite)", () => {
 
     expect(result.retried).toBe(1);
     expect(result.succeeded).toBe(0);
-
-    // Verify retryCount incremented and nextRetryAt pushed forward
-    const [pe] = await db
-      .select()
-      .from(processedEmails)
-      .where(eq(processedEmails.id, "pe-retry-1" as ProcessedEmailId));
-    expect(pe?.retryCount).toBe(3);
-    expect(pe?.status).toBe("pending_retry");
-    expect(pe?.rawBody).toBe("Su compra por $50.000 fue aprobada en EXITO");
-
-    // nextRetryAt should be in the future
-    const nextRetry = new Date(pe?.nextRetryAt ?? "");
-    expect(nextRetry.getTime()).toBeGreaterThan(Date.now());
+    await expectRetryRescheduled();
   });
 
   it("full flow: max retries reached → permanently failed", async () => {
@@ -287,12 +441,9 @@ describe("retry queue integration (real SQLite)", () => {
 
     expect(result.permanentlyFailed).toBe(1);
 
-    const [pe] = await db
-      .select()
-      .from(processedEmails)
-      .where(eq(processedEmails.id, "pe-retry-1" as ProcessedEmailId));
+    const pe = await getRetrySourceEvent();
     expect(pe?.status).toBe("failed");
-    expect(pe?.rawBody).toBeNull();
+    expect(pe?.retryRawBody).toBeNull();
   });
 
   it("ISO timestamp comparison is correct in SQLite", () => {

@@ -14,6 +14,8 @@ import type {
   UnparsedProcessedEmailRowInput,
 } from "./types";
 
+const RETRY_RAW_BODY_MAX_LENGTH = 5_000;
+
 export function getTransactionSource(provider: string) {
   return provider === "gmail" ? "email_gmail" : "email_outlook";
 }
@@ -148,7 +150,7 @@ export function buildUnparsedProcessedEmailRow(
   return input.status === "pending_retry"
     ? {
         ...baseRow,
-        rawBody: input.email.body,
+        rawBody: input.email.body.slice(0, RETRY_RAW_BODY_MAX_LENGTH),
         retryCount: 0,
         nextRetryAt: input.nextRetryAt,
       }

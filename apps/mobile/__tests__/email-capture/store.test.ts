@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { acceptFinancialMeaningReviewCandidate } from "@/features/email-capture/lib/financial-meaning-review";
 import { insertMerchantRule } from "@/features/email-capture/lib/merchant-rules";
 import {
   deleteEmailAccount,
@@ -64,6 +65,10 @@ vi.mock("@/features/email-capture/lib/repository", () => ({
   dismissProcessedEmail: vi.fn<typeof dismissProcessedEmail>(),
   updateLastFetchedAt: vi.fn<typeof updateLastFetchedAt>(),
   updateProcessedEmailStatus: vi.fn<typeof updateProcessedEmailStatus>(),
+}));
+
+vi.mock("@/features/email-capture/lib/financial-meaning-review", () => ({
+  acceptFinancialMeaningReviewCandidate: vi.fn<typeof acceptFinancialMeaningReviewCandidate>(),
 }));
 
 const mockAdapter = {
@@ -397,6 +402,7 @@ describe("email capture boundary", () => {
     vi.mocked(processBackgroundEmails).mockReset();
     vi.mocked(processInitialSyncEmails).mockReset();
     vi.mocked(processRetries).mockReset();
+    vi.mocked(acceptFinancialMeaningReviewCandidate).mockReset();
     vi.mocked(processEmails).mockResolvedValue({ ...EMPTY_PROCESS_SUMMARY });
     vi.mocked(processBackgroundEmails).mockResolvedValue({ ...EMPTY_PROCESS_SUMMARY });
     vi.mocked(processInitialSyncEmails).mockResolvedValue({ ...EMPTY_PROCESS_SUMMARY });
@@ -405,6 +411,7 @@ describe("email capture boundary", () => {
       succeeded: 0,
       permanentlyFailed: 0,
     });
+    vi.mocked(acceptFinancialMeaningReviewCandidate).mockResolvedValue(false);
     vi.mocked(insertEmailAccount).mockResolvedValue(true);
     mockEnsureBankSenders.mockResolvedValue([
       { bank: "Bancolombia", email: "notificaciones@bancolombia.com.co" },
@@ -488,7 +495,7 @@ describe("email capture boundary", () => {
 
     await loadFailedEmails(mockDb, mockUserId as UserId);
 
-    expect(getFailedEmails).toHaveBeenCalledWith(mockDb);
+    expect(getFailedEmails).toHaveBeenCalledWith(mockDb, mockUserId);
     expect(useEmailCaptureStore.getState().failedEmails).toEqual(mockFailed);
     expect(useEmailCaptureStore.getState().failedEmails).toHaveLength(1);
   });
@@ -508,7 +515,7 @@ describe("email capture boundary", () => {
 
     await loadNeedsReviewEmails(mockDb, mockUserId as UserId);
 
-    expect(getNeedsReviewEmails).toHaveBeenCalledWith(mockDb);
+    expect(getNeedsReviewEmails).toHaveBeenCalledWith(mockDb, mockUserId);
     expect(useEmailCaptureStore.getState().needsReviewEmails).toEqual(mockReview);
   });
 
@@ -1336,12 +1343,7 @@ describe("email capture boundary", () => {
 
       await confirmReviewedEmail(mockDb, mockUserId as UserId, "pe-1", "food", mockRefresh);
 
-      expect(updateProcessedEmailStatus).toHaveBeenCalledWith({
-        db: mockDb,
-        id: "pe-1",
-        status: "success",
-        transactionId: "tx-1",
-      });
+      expect(updateProcessedEmailStatus).not.toHaveBeenCalled();
       expect(useEmailCaptureStore.getState().needsReviewEmails).toHaveLength(0);
       // Verify merchant rule was saved
       expect(insertMerchantRule).toHaveBeenCalledWith(
@@ -1353,6 +1355,64 @@ describe("email capture boundary", () => {
       );
       // Verify transactions were reloaded
       expect(mockRefresh).toHaveBeenCalled();
+    });
+
+    it("accepts Local Ledger review candidates without requiring a processed email transaction", async () => {
+      vi.mocked(acceptFinancialMeaningReviewCandidate).mockResolvedValueOnce(true);
+      useEmailCaptureStore.setState({
+        needsReviewEmails: [
+          makeProcessedEmail({
+            id: "rc-1",
+            reviewCandidateId: "rc-1",
+            processedSourceEventId: "pse-1",
+            reviewCandidateDescription: "Candidate merchant",
+            status: "needs_review",
+            transactionId: null,
+          }),
+        ],
+      });
+
+      await confirmReviewedEmail(mockDb, mockUserId as UserId, "rc-1", "food", mockRefresh);
+
+      expect(acceptFinancialMeaningReviewCandidate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          db: mockDb,
+          candidateId: "rc-1",
+          categoryId: "food",
+        })
+      );
+      expect(updateProcessedEmailStatus).not.toHaveBeenCalled();
+      expect(insertMerchantRule).toHaveBeenCalledWith(
+        mockDb,
+        mockUserId,
+        "candidate merchant",
+        "food",
+        expect.any(String)
+      );
+      expect(useEmailCaptureStore.getState().needsReviewEmails).toHaveLength(0);
+      expect(mockRefresh).toHaveBeenCalled();
+    });
+
+    it("does not save candidate merchant rules when review resolution fails", async () => {
+      vi.mocked(acceptFinancialMeaningReviewCandidate).mockResolvedValueOnce(false);
+      useEmailCaptureStore.setState({
+        needsReviewEmails: [
+          makeProcessedEmail({
+            id: "rc-1",
+            reviewCandidateId: "rc-1",
+            processedSourceEventId: "pse-1",
+            reviewCandidateDescription: "Candidate merchant",
+            status: "needs_review",
+            transactionId: null,
+          }),
+        ],
+      });
+
+      await confirmReviewedEmail(mockDb, mockUserId as UserId, "rc-1", "food", mockRefresh);
+
+      expect(insertMerchantRule).not.toHaveBeenCalled();
+      expect(useEmailCaptureStore.getState().needsReviewEmails).toHaveLength(1);
+      expect(mockRefresh).not.toHaveBeenCalled();
     });
 
     it("does nothing when processed email not found", async () => {

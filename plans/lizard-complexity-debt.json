@@ -11,5 +11,42 @@
       "parameterCount": 4
     }
   },
-  "violations": []
+  "violations": [
+    {
+      "key": "(anonymous)@209-301@apps/mobile/__tests__/email-capture/retry-integration.test.ts",
+      "file": "apps/mobile/__tests__/email-capture/retry-integration.test.ts",
+      "function": "(anonymous)",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 1,
+      "nloc": 90,
+      "parameterCount": 0
+    },
+    {
+      "key": "generateId@76-93@apps/mobile/features/email-capture/lib/repository-mappers.ts",
+      "file": "apps/mobile/features/email-capture/lib/repository-mappers.ts",
+      "function": "generateId",
+      "thresholdProfile": "lib",
+      "cyclomaticComplexity": 7,
+      "nloc": 18,
+      "parameterCount": 0
+    },
+    {
+      "key": "insertRetryEmail@69-99@apps/mobile/__tests__/email-capture/retry-integration.test.ts",
+      "file": "apps/mobile/__tests__/email-capture/retry-integration.test.ts",
+      "function": "insertRetryEmail",
+      "thresholdProfile": "default",
+      "cyclomaticComplexity": 12,
+      "nloc": 31,
+      "parameterCount": 1
+    },
+    {
+      "key": "toCandidatePreviewTransactionRow@62-120@apps/mobile/features/email-capture/lib/financial-meaning-review.ts",
+      "file": "apps/mobile/features/email-capture/lib/financial-meaning-review.ts",
+      "function": "toCandidatePreviewTransactionRow",
+      "thresholdProfile": "lib",
+      "cyclomaticComplexity": 8,
+      "nloc": 56,
+      "parameterCount": 2
+    }
+  ]
 }

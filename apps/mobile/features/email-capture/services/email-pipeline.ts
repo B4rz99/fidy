@@ -18,11 +18,12 @@ import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
 import {
   getPendingRetryEmails,
   getProcessedExternalIds,
+  insertPendingRetrySourceEvent,
   insertProcessedEmail,
   markForRetry,
   markPermanentlyFailed,
+  markRetryTerminalStatus,
   markRetrySuccess,
-  updateProcessedEmailStatus,
 } from "../lib/repository";
 import type { RawEmail } from "../schema";
 import {
@@ -49,10 +50,11 @@ const emailPipelineDeps = {
   getProcessedExternalIds,
   getPendingRetryEmails,
   insertProcessedEmail,
+  insertPendingRetrySourceEvent,
   markForRetry,
   markPermanentlyFailed,
   markRetrySuccess,
-  updateProcessedEmailStatus,
+  markRetryTerminalStatus,
   buildEmailCaptureEvidence,
   saveCaptureEvidenceRows,
   linkCaptureEvidenceToTransaction,

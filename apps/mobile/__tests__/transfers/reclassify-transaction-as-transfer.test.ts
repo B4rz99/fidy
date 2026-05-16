@@ -176,7 +176,6 @@ function runReclassification() {
       toSide: { kind: "account", accountId: SAVINGS_ACCOUNT_ID },
       description: "Move to savings",
       date: new Date("2026-04-18T12:00:00.000Z"),
-      processedEmailId: "pe-1" as ProcessedEmailId,
     },
     {
       now: () => new Date(NOW),
@@ -210,11 +209,11 @@ function expectCreatedTransferState() {
   });
 }
 
-async function expectProcessedEmailSucceeded() {
+async function expectProcessedEmailUnchanged() {
   await expect(getProcessedEmailById(db as any, "pe-1" as ProcessedEmailId)).resolves.toEqual(
     expect.objectContaining({
       id: "pe-1",
-      status: "success",
+      status: "needs_review",
       transactionId: ORIGINAL_TRANSACTION_ID,
     })
   );
@@ -234,7 +233,7 @@ describe("reclassifyTransactionAsTransfer", () => {
       }),
     });
     expectCreatedTransferState();
-    await expectProcessedEmailSucceeded();
+    await expectProcessedEmailUnchanged();
   });
 });
 

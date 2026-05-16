@@ -1,17 +1,10 @@
 import { relinkCaptureEvidenceToTransfer } from "@/features/capture-evidence/public";
-import { markProcessedEmailReclassifiedAsTransfer } from "@/features/email-capture/transfer-reclassification.public";
 import {
   getTransactionById,
   markTransactionSuperseded,
 } from "@/features/transactions/transfer-reclassification.public";
 import { generateTransferId, toIsoDateTime } from "@/shared/lib.public";
-import type {
-  IsoDateTime,
-  ProcessedEmailId,
-  TransactionId,
-  TransferId,
-  UserId,
-} from "@/shared/types/branded";
+import type { IsoDateTime, TransactionId, TransferId, UserId } from "@/shared/types/branded";
 import {
   buildTransfer,
   type StoredTransfer,
@@ -25,7 +18,6 @@ import { saveTransfer } from "./repository";
 type ReclassifyTransactionAsTransferInput = {
   readonly userId: UserId;
   readonly transactionId: TransactionId;
-  readonly processedEmailId?: ProcessedEmailId;
   readonly digits: string;
   readonly fromSide: TransferSide | null;
   readonly toSide: TransferSide | null;
@@ -40,7 +32,6 @@ type ReclassifyTransactionAsTransferDeps = {
   readonly loadTransactionById?: typeof getTransactionById;
   readonly saveTransactionRow?: typeof markTransactionSuperseded;
   readonly relinkEvidenceToTransfer?: typeof relinkCaptureEvidenceToTransfer;
-  readonly saveProcessedEmailStatus?: typeof markProcessedEmailReclassifiedAsTransfer;
 };
 
 export type ReclassifyTransactionAsTransferError = TransferBuildError | "transactionNotFound";
@@ -59,7 +50,6 @@ export function reclassifyTransactionAsTransfer(
     loadTransactionById = getTransactionById,
     saveTransactionRow = markTransactionSuperseded,
     relinkEvidenceToTransfer = relinkCaptureEvidenceToTransfer,
-    saveProcessedEmailStatus = markProcessedEmailReclassifiedAsTransfer,
   }: ReclassifyTransactionAsTransferDeps = {}
 ): ReclassifyTransactionAsTransferResult {
   const existingTransaction = loadTransactionById(db, input.transactionId);
@@ -109,14 +99,6 @@ export function reclassifyTransactionAsTransfer(
       transferId: built.transfer.id,
       updatedAt,
     });
-
-    if (input.processedEmailId) {
-      saveProcessedEmailStatus({
-        db: tx,
-        id: input.processedEmailId,
-        transactionId: existingTransaction.id,
-      });
-    }
   });
 
   return {
