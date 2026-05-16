@@ -1,0 +1,76 @@
+apps/mobile/__tests__/transfers/presentation.test.ts
+  s_95540407999222::t_2f844181c614e8 33
+apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts
+  s_95540407999222::t_4bf3080b09f304 197,233,276
+apps/mobile/__tests__/backup/local-ledger-snapshot.test.ts
+  s_95540407999222::t_e29a3dacd0b1f0 469-487,892-910
+apps/mobile/features/transfers/lib/build-transfer-helpers.ts
+  s_95540407999222::t_096af20536d704 107
+apps/mobile/local-ledger/domain/public.ts
+  s_95540407999222::t_815fbb9b796df4 50,59
+  s_95540407999222::t_ea54661d1736e4 49
+apps/mobile/local-ledger/snapshot/legacy.ts
+  s_95540407999222::t_f37eacd8333a75 72
+  s_95540407999222::t_80c4325fdc7161 18,41-42,63-71,73-74
+apps/mobile/infrastructure/local-ledger/record-transfer.ts
+  s_95540407999222::t_69589c14ecd698 84,135
+apps/mobile/shared/db/schema.ts
+  s_95540407999222::t_eb71df15d7ec8a 2
+  s_95540407999222::t_5c4fcf2a139f3d 139
+apps/mobile/local-ledger/snapshot/row-shape.ts
+  s_95540407999222::t_976ff953ce5f8d 99
+  s_95540407999222::t_80c4325fdc7161 100
+apps/mobile/drizzle/migrations.js
+  s_95540407999222::t_e88d7b1829abef 29,62
+apps/mobile/features/transfers/lib/repository.ts
+  s_95540407999222::t_bc41f0d06ae936 40
+apps/mobile/drizzle/0027_transfer_source.sql
+  s_95540407999222::t_e88d7b1829abef 1
+apps/mobile/features/transfers/lib/reclassify-transactions-as-transfer.ts
+  s_95540407999222::t_233beeeb12af2d 145
+apps/mobile/features/transfers/lib/transfer-row-mappers.ts
+  s_95540407999222::t_233beeeb12af2d 55
+  s_95540407999222::t_654614f4da2053 37
+apps/mobile/__tests__/transfers/build-transfer.test.ts
+  s_95540407999222::t_2f844181c614e8 131
+  s_95540407999222::t_fb05be749fd1df 34,56,63,79,90,111
+apps/mobile/local-ledger/use-cases/write.public.ts
+  s_95540407999222::t_815fbb9b796df4 15,43
+apps/mobile/local-ledger/use-cases/record-transfer-builders.ts
+  s_95540407999222::t_815fbb9b796df4 17
+apps/mobile/__tests__/transfers/manual-transfer-local-ledger.test.ts
+  s_95540407999222::t_d9def7e8a5f1ea 82,99
+apps/mobile/__tests__/activity/append-unique-activity-items.test.ts
+  s_95540407999222::t_2f844181c614e8 55
+apps/mobile/local-ledger/public.ts
+  s_95540407999222::t_815fbb9b796df4 17
+apps/mobile/local-ledger/snapshot/snapshot.ts
+  s_95540407999222::t_976ff953ce5f8d 51
+apps/mobile/__tests__/local-ledger/record-transfer.test.ts
+  s_95540407999222::t_de3839c30ccb27 29
+  s_95540407999222::t_e422ba428e3457 77
+apps/mobile/__tests__/local-ledger/review-candidate-resolution.test.ts
+  s_95540407999222::t_32a568d9830aaa 58
+apps/mobile/features/transfers/lib/reclassify-transaction-as-transfer.ts
+  s_95540407999222::t_233beeeb12af2d 88
+apps/mobile/features/transfers/lib/build-transfer.ts
+  s_95540407999222::t_096af20536d704 50
+  s_95540407999222::t_fd1c0652372b1d 1
+  s_95540407999222::t_233beeeb12af2d 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "54419534ea91b32361bd3e4bc189d372a3cd0160",
+  "prompts": {},
+  "sessions": {
+    "s_95540407999222": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2e4c-e4cb-7162-bf07-8710032fa022",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
