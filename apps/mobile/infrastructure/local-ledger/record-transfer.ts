@@ -70,7 +70,7 @@ function hasActiveFinancialAccount(db: AnyDb, userId: UserId, accountId: Financi
   return rows.length > 0;
 }
 
-function toTransferRow(transfer: LocalLedgerTransfer): typeof transfers.$inferInsert {
+export function toTransferRow(transfer: LocalLedgerTransfer): typeof transfers.$inferInsert {
   return {
     id: transfer.id,
     userId: transfer.userId,
@@ -83,7 +83,7 @@ function toTransferRow(transfer: LocalLedgerTransfer): typeof transfers.$inferIn
     date: transfer.date,
     createdAt: transfer.createdAt,
     updatedAt: transfer.updatedAt,
-    deletedAt: transfer.deletedAt,
+    deletedAt: transfer.voidedAt,
   };
 }
 

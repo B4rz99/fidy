@@ -75,7 +75,7 @@ describe("RecordTransfer", () => {
         date: TODAY,
         createdAt: NOW,
         updatedAt: NOW,
-        deletedAt: null,
+        voidedAt: null,
       },
       events: [
         {

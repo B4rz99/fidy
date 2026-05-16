@@ -16,7 +16,7 @@ export function toLocalLedgerTransfer(
     date: command.date,
     createdAt: command.now,
     updatedAt: command.now,
-    deletedAt: null,
+    voidedAt: null,
   };
 }
 

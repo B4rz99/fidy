@@ -56,7 +56,7 @@ export type LocalLedgerTransfer = {
   readonly date: IsoDate;
   readonly createdAt: IsoDateTime;
   readonly updatedAt: IsoDateTime;
-  readonly deletedAt: IsoDateTime | null;
+  readonly voidedAt: IsoDateTime | null;
 };
 
 export type LocalLedgerTransferRecorded = {
