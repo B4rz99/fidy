@@ -10,3 +10,12 @@ export const CAPTURE_EVIDENCE_TYPES = [
   "account_type_hint",
   "counterparty_hint",
 ] as const;
+
+export type CaptureEvidenceType = (typeof CAPTURE_EVIDENCE_TYPES)[number];
+
+export type CaptureEvidenceSeed = {
+  readonly sourceFamily: string;
+  readonly evidenceType: CaptureEvidenceType;
+  readonly scope: string;
+  readonly value: string;
+};

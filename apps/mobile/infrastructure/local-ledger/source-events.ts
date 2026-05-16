@@ -1,5 +1,5 @@
 import { and, eq, isNull } from "drizzle-orm";
-import type { CaptureEvidenceSeed } from "@/features/capture-evidence/schema.public";
+import type { CaptureEvidenceSeed } from "@/shared/capture-evidence/types";
 import type { AnyDb } from "@/shared/db";
 import {
   captureEvidence,
