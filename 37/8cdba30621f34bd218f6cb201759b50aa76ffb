@@ -1,0 +1,36 @@
+apps/mobile/infrastructure/local-ledger/source-events.ts
+  s_5a27818b42d5ab::t_caf2c1c3b9a59f 2
+apps/mobile/local-ledger/domain/public.ts
+  s_5a27818b42d5ab::t_caf2c1c3b9a59f 1
+scripts/dependency-cruiser-config.test.ts
+  s_5a27818b42d5ab::t_c0b8633fc117e0 35,37-38
+  s_5a27818b42d5ab::t_77b0adc7428bae 18-21,29-34,36,39-47,68-74
+  s_5a27818b42d5ab::t_a3523d86c8c878 15
+scripts/check-feature-public-imports.ts
+  s_5a27818b42d5ab::t_09f1c3c98a7d91 64,68-69,73,75,114,150-154,156,159,175-184
+  s_5a27818b42d5ab::t_fd31e8f88bf2b6 17,112-113,115-121,123-126,173-174,186-189
+  s_5a27818b42d5ab::t_a430a6020a6fe5 19-20
+  s_5a27818b42d5ab::t_824653e5e7736a 65-67,70-72,74,122
+apps/mobile/shared/capture-evidence/types.ts
+  s_5a27818b42d5ab::t_caf2c1c3b9a59f 13-21
+scripts/check-feature-public-imports.test.ts
+  s_5a27818b42d5ab::t_976005b60f8789 83-84,110-129
+apps/mobile/features/capture-evidence/schema.ts
+  s_5a27818b42d5ab::t_09f1c3c98a7d91 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "378cdba30621f34bd218f6cb201759b50aa76ffb",
+  "prompts": {},
+  "sessions": {
+    "s_5a27818b42d5ab": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2e48-4fbc-77b1-abde-bdb8e403a7cc",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
