@@ -1,0 +1,21 @@
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_6b7d4add335b23::t_45829171127e11 10,1355-1357,1361,1378
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_6b7d4add335b23::t_45829171127e11 6,380-381,383,389
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "7bc6c6c17419f5055d5906a07a3a0febffe30083",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
