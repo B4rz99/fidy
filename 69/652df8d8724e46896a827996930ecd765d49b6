@@ -1,0 +1,32 @@
+apps/mobile/local-ledger/use-cases/intake.public.ts
+  s_6b7d4add335b23::t_7d315f31b7525c 99
+  s_6b7d4add335b23::t_df30e134386469 40-41,48-49,51-54,57-59,62-63,66,69-70,73-75,80-82,88,94-95,100,105
+  s_6b7d4add335b23::t_7676940697f538 9-19
+apps/mobile/__tests__/local-ledger/intake-mutation.test.ts
+  s_6b7d4add335b23::t_589d3b4a97c596 153-154,162,177
+  s_6b7d4add335b23::t_0c21269c54e548 22
+  s_6b7d4add335b23::t_3f07b423eb42f2 147,169-170
+apps/mobile/features/email-capture/services/email-pipeline-service/review-candidate.ts
+  s_6b7d4add335b23::t_83c84c767567d5 16,65
+apps/mobile/local-ledger/domain/public.ts
+  s_6b7d4add335b23::t_865885a403e307 98
+  s_6b7d4add335b23::t_c1b26793d7e38d 3,9,11,24,77-78
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_6b7d4add335b23::t_d68927114581bf 1346
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "69652df8d8724e46896a827996930ecd765d49b6",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
