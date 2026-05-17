@@ -6,6 +6,17 @@ import type {
   LocalLedgerReviewCandidate,
   LocalLedgerSourceId,
 } from "../domain/public";
+import type {
+  CaptureEvidenceId,
+  CategoryId,
+  CopAmount,
+  IsoDateTime,
+  ProcessedSourceEventId,
+  ReviewCandidateCaptureEvidenceId,
+  ReviewCandidateId,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 export type IntakeLocalLedgerCandidate = {
   readonly commandId: LocalLedgerCommandId;
@@ -26,72 +37,72 @@ export type IntakeLocalLedgerCandidateHandler = (
 export type CreateReviewCandidateCommand = {
   readonly kind: "localLedger.reviewCandidate.create";
   readonly sourceEvent: {
-    readonly id: string;
-    readonly userId: string;
+    readonly id: ProcessedSourceEventId;
+    readonly userId: UserId;
     readonly sourceFamily: string;
     readonly sourceId: string;
     readonly sourceEventId: string;
     readonly status: LocalLedgerProcessedSourceEventStatus;
     readonly failureReason: string | null;
     readonly retryCount?: number;
-    readonly nextRetryAt?: string | null;
-    readonly transactionId?: string | null;
+    readonly nextRetryAt?: IsoDateTime | null;
+    readonly transactionId?: TransactionId | null;
     readonly confidence?: number | null;
-    readonly receivedAt: string;
-    readonly processedAt: string;
-    readonly createdAt: string;
-    readonly updatedAt: string;
+    readonly receivedAt: IsoDateTime;
+    readonly processedAt: IsoDateTime;
+    readonly createdAt: IsoDateTime;
+    readonly updatedAt: IsoDateTime;
   };
   readonly candidate: {
-    readonly id: string;
-    readonly userId: string;
-    readonly processedSourceEventId: string;
+    readonly id: ReviewCandidateId;
+    readonly userId: UserId;
+    readonly processedSourceEventId: ProcessedSourceEventId;
     readonly status: LocalLedgerReviewCandidate["status"];
     readonly candidateKind: LocalLedgerReviewCandidate["candidateKind"];
-    readonly occurredAt: string | null;
-    readonly amount: number | null;
+    readonly occurredAt: IsoDateTime | null;
+    readonly amount: CopAmount | null;
     readonly currency: "COP";
     readonly transactionType?: "expense" | "income" | null;
-    readonly categoryId?: string | null;
+    readonly categoryId?: CategoryId | null;
     readonly description: string | null;
     readonly confidence: number | null;
-    readonly createdAt: string;
-    readonly updatedAt: string;
+    readonly createdAt: IsoDateTime;
+    readonly updatedAt: IsoDateTime;
   };
   readonly evidence: readonly {
-    readonly id: string;
-    readonly linkId: string;
-    readonly userId: string;
+    readonly id: CaptureEvidenceId;
+    readonly linkId: ReviewCandidateCaptureEvidenceId;
+    readonly userId: UserId;
     readonly sourceFamily: string;
     readonly evidenceType: string;
     readonly scope: string;
     readonly value: string;
-    readonly processedSourceEventId: string;
-    readonly createdAt: string;
-    readonly updatedAt: string;
+    readonly processedSourceEventId: ProcessedSourceEventId;
+    readonly createdAt: IsoDateTime;
+    readonly updatedAt: IsoDateTime;
   }[];
 };
 
 export type CreateReviewCandidateInput = {
   readonly commandId: LocalLedgerCommandId;
-  readonly userId: string;
+  readonly userId: UserId;
   readonly source: {
     readonly processedSourceEventId: LocalLedgerProcessedSourceEventId;
     readonly sourceFamily: string;
     readonly sourceId: LocalLedgerSourceId;
     readonly sourceEventId: string;
-    readonly receivedAt: string;
-    readonly processedAt: string;
+    readonly receivedAt: IsoDateTime;
+    readonly processedAt: IsoDateTime;
     readonly status: LocalLedgerProcessedSourceEventStatus;
     readonly failureReason: string | null;
     readonly retryCount?: number;
-    readonly nextRetryAt?: string | null;
-    readonly transactionId?: string | null;
+    readonly nextRetryAt?: IsoDateTime | null;
+    readonly transactionId?: TransactionId | null;
     readonly confidence?: number | null;
   };
   readonly candidate: LocalLedgerReviewCandidate;
   readonly evidence: readonly LocalLedgerCaptureEvidence[];
-  readonly now: string;
+  readonly now: IsoDateTime;
 };
 
 export type CreateReviewCandidateCommitPort = {

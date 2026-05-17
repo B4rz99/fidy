@@ -1,11 +1,14 @@
 import type { CaptureEvidenceType } from "@/shared/capture-evidence/types";
 import type {
+  CaptureEvidenceId,
   CopAmount,
   CategoryId,
   FinancialAccountId,
   IsoDate,
   IsoDateTime,
+  ProcessedSourceEventId,
   ReviewCandidateId,
+  ReviewCandidateCaptureEvidenceId,
   TransferId,
   UserId,
 } from "@/shared/types/branded";
@@ -18,9 +21,7 @@ export type LocalLedgerEntryId = string & { readonly __brand: "LocalLedgerEntryI
 
 export type LocalLedgerSourceId = string & { readonly __brand: "LocalLedgerSourceId" };
 
-export type LocalLedgerProcessedSourceEventId = string & {
-  readonly __brand: "LocalLedgerProcessedSourceEventId";
-};
+export type LocalLedgerProcessedSourceEventId = ProcessedSourceEventId;
 
 export type LocalLedgerReviewCandidateId = ReviewCandidateId;
 
@@ -73,8 +74,8 @@ export type LocalLedgerTransferRecorded = {
 export type LocalLedgerDomainEvent = LocalLedgerTransferRecorded;
 
 export type LocalLedgerCaptureEvidence = {
-  readonly id: string;
-  readonly linkId: string;
+  readonly id: CaptureEvidenceId;
+  readonly linkId: ReviewCandidateCaptureEvidenceId;
   readonly sourceFamily: string;
   readonly evidenceType: CaptureEvidenceType;
   readonly scope: string;
@@ -94,7 +95,7 @@ export type LocalLedgerReviewCandidate = {
   readonly id: LocalLedgerReviewCandidateId;
   readonly candidateKind: "unknown" | "transaction" | "transfer";
   readonly status: LocalLedgerReviewCandidateStatus;
-  readonly occurredAt: string | null;
+  readonly occurredAt: IsoDateTime | null;
   readonly money: LocalLedgerMoney | null;
   readonly transactionType?: "expense" | "income" | null;
   readonly categoryId?: CategoryId | null;

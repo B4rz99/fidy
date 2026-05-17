@@ -19,6 +19,7 @@ import { createGenericWriteThroughMutationModule } from "@/shared/mutations";
 import type { MutationCommand, MutationDb } from "@/shared/mutations/write-through";
 import type {
   CopAmount,
+  CaptureEvidenceId,
   IsoDateTime,
   ProcessedSourceEventId,
   ReviewCandidateCaptureEvidenceId,
@@ -143,14 +144,14 @@ function makeCreateReviewCandidateCommand(
 const makeCreateReviewCandidateInput = () =>
   ({
     commandId: "cmd-1" as LocalLedgerCommandId,
-    userId: "user-1",
+    userId: "user-1" as UserId,
     source: {
       processedSourceEventId: "pse-1" as LocalLedgerProcessedSourceEventId,
       sourceFamily: "email",
       sourceId: "gmail-primary" as LocalLedgerSourceId,
       sourceEventId: "gmail-message-1",
-      receivedAt: "2026-04-12T09:00:00.000Z",
-      processedAt: "2026-04-12T10:00:00.000Z",
+      receivedAt: "2026-04-12T09:00:00.000Z" as IsoDateTime,
+      processedAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
       status: "needs_review",
       failureReason: null,
     },
@@ -158,22 +159,22 @@ const makeCreateReviewCandidateInput = () =>
       id: "rc-1" as LocalLedgerReviewCandidateId,
       candidateKind: "transaction",
       status: "pending",
-      occurredAt: "2026-04-12T09:00:00.000Z",
+      occurredAt: "2026-04-12T09:00:00.000Z" as IsoDateTime,
       money: { amount: 12500 as CopAmount, currency: "COP" },
       description: "Low confidence cafe capture",
       confidence: 0.42,
     },
     evidence: [
       {
-        id: "ce-1",
-        linkId: "rcce-1",
+        id: "ce-1" as CaptureEvidenceId,
+        linkId: "rcce-1" as ReviewCandidateCaptureEvidenceId,
         sourceFamily: "email",
         evidenceType: "counterparty_hint",
         scope: "merchant",
         value: "Cafe",
       },
     ],
-    now: "2026-04-12T10:00:00.000Z",
+    now: "2026-04-12T10:00:00.000Z" as IsoDateTime,
   }) as const;
 
 describe("local ledger intake mutations", () => {

@@ -56,7 +56,7 @@ export const createReviewCandidateWithLocalLedger = (
   input: CreateReviewCandidateInput
 ) =>
   createReviewCandidateUseCase({
-    commit: (command) => createWriteThroughMutationModule(db).commit(command as never),
+    commit: (command) => createWriteThroughMutationModule(db).commit(command),
   })(input);
 
 export {
