@@ -18,6 +18,7 @@ export function validateRecordTransfer(
   command: RecordTransferCommand,
   dependencies: RecordTransferDependencies
 ): AcceptedRecordTransferCommand | RejectedRecordTransferCommand {
+  if (command.userId !== dependencies.userId) return reject("command-user-mismatch");
   if (command.date > dependencies.today()) return reject("future-dated");
   if (!isPositiveCopAmount(command.amount)) return reject("amount-not-positive");
   if (command.fromSide == null) return reject("from-side-required");

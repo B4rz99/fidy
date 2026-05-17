@@ -49,6 +49,7 @@ const pendingTransferCandidate = {
 };
 
 const transferCommand: RecordTransferCommand = {
+  userId: USER_ID,
   transferId: "transfer-1" as TransferId,
   amount: 12_500 as CopAmount,
   fromSide: { kind: "account", accountId: "account-1" as FinancialAccountId },
@@ -144,6 +145,22 @@ describe("review candidate resolution", () => {
     });
 
     expect(confirmTransfer).toHaveBeenCalledWith({ ...resolutionInput, command: transferCommand });
+  });
+
+  it("rejects transfer confirmation commands for a different user before commit", async () => {
+    const confirmTransfer = vi.fn<(...args: any[]) => any>();
+
+    await expect(
+      confirmReviewCandidateAsTransfer(
+        { ...resolutionInput, command: { ...transferCommand, userId: "user-2" as UserId } },
+        {
+          loadCandidate: async () => pendingTransferCandidate,
+          confirmTransfer,
+        }
+      )
+    ).resolves.toEqual({ ok: false, code: "record-command-user-mismatch" });
+
+    expect(confirmTransfer).not.toHaveBeenCalled();
   });
 
   it("returns transaction commit failures from the atomic confirmation port", async () => {

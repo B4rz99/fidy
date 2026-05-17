@@ -87,27 +87,32 @@ export async function confirmSourceEventFinancialMeaningReview(
           };
         }
 
-        const recorded = await recordAutomatedTransactionWithLocalLedger({
-          db,
-          command: automatedCommand,
-          transactionId,
-          now: updatedAt,
-          afterRecord: (tx) => {
-            const accepted = acceptSourceEventFinancialMeaningReviewByIdInTransaction(tx, {
-              ...input,
-              transactionId,
-              updatedAt,
-            });
-            if (!accepted) throw new Error("Review candidate resolution target was not found");
-          },
-        }).catch((error: unknown) => ({
-          success: false as const,
-          error: error instanceof Error ? error.message : "Review candidate commit failed",
-        }));
+        try {
+          const recorded = await recordAutomatedTransactionWithLocalLedger({
+            db,
+            command: automatedCommand,
+            transactionId,
+            now: updatedAt,
+            afterRecord: (tx) => {
+              const accepted = acceptSourceEventFinancialMeaningReviewByIdInTransaction(tx, {
+                ...input,
+                transactionId,
+                updatedAt,
+              });
+              if (!accepted) throw new Error("Review candidate resolution target was not found");
+            },
+          });
 
-        return recorded.success
-          ? { ok: true, recorded: { ok: true, transaction: recorded.transaction, events: [] } }
-          : { ok: false, code: "recording-rejected", reason: recorded.error };
+          return recorded.success
+            ? { ok: true, recorded: { ok: true, transaction: recorded.transaction, events: [] } }
+            : { ok: false, code: "recording-rejected", reason: recorded.error };
+        } catch (error) {
+          return {
+            ok: false,
+            code: "commit-failed",
+            reason: error instanceof Error ? error.message : "Review candidate commit failed",
+          };
+        }
       },
     }
   );

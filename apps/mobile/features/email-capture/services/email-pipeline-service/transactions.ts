@@ -91,7 +91,6 @@ function persistTransactionBundleEffect(context: EmailTransactionContext) {
       status: "processed",
       failureReason: null,
       subject: context.email.subject,
-      rawBodyPreview: context.email.body.slice(0, 500),
       receivedAt: requireIsoDateTime(context.email.receivedAt),
       processedAt: context.now,
       transactionId: context.txId,

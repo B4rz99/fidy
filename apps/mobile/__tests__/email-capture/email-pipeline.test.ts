@@ -399,7 +399,6 @@ describe("email processing pipeline", () => {
         status: "dismissed",
         failureReason: null,
         subject: "",
-        rawBodyPreview: "",
       })
     );
     expect(mockSaveCaptureEvidenceRows).not.toHaveBeenCalled();
@@ -573,7 +572,7 @@ describe("email processing pipeline", () => {
     });
   });
 
-  it("truncates persisted raw body previews to 500 characters", async () => {
+  it("does not persist raw body previews for processed source events", async () => {
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
     const longBody = "x".repeat(501);
 
@@ -581,7 +580,7 @@ describe("email processing pipeline", () => {
 
     expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
-      expect.objectContaining({ rawBodyPreview: "x".repeat(500) })
+      expect.not.objectContaining({ rawBodyPreview: expect.any(String) })
     );
   });
 
@@ -1606,7 +1605,6 @@ describe("processRetries", () => {
           sourceEventId: "ext-retry-1",
           status: "needs_review",
           subject: "Compra aprobada",
-          rawBodyPreview: "Su compra por $50.000 fue aprobada",
           confidence: 0.5,
         }),
         candidate: expect.objectContaining({

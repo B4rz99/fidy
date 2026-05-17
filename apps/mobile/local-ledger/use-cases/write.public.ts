@@ -5,7 +5,7 @@ import type {
   IsoDate,
   IsoDateTime,
 } from "@/shared/types/branded";
-import type { NormalizedTransactionSource } from "@/shared/lib/transaction-source";
+import type { NormalizedTransactionSource } from "@/shared/lib";
 import type {
   LocalLedgerCommandId,
   LocalLedgerDomainEvent,
@@ -35,6 +35,7 @@ export type WriteLocalLedgerEntry = (
 ) => Promise<LocalLedgerEntry>;
 
 export type RecordTransferCommand = {
+  readonly userId: UserId;
   readonly transferId: TransferId;
   readonly amount: CopAmount;
   readonly fromSide: LocalLedgerTransferSide | null;
@@ -65,7 +66,8 @@ export type RecordTransferRejectionReason =
   | "tracked-account-required"
   | "same-account"
   | "account-not-usable"
-  | "external-label-required";
+  | "external-label-required"
+  | "command-user-mismatch";
 
 export type RecordTransfer = (command: RecordTransferCommand) => Promise<RecordTransferResult>;
 
@@ -77,7 +79,7 @@ export type RecordTransferDependencies = {
 
 export function createRecordTransfer(dependencies: RecordTransferDependencies): RecordTransfer {
   return async (command) => {
-    const validated = await validateRecordTransfer(command, dependencies);
+    const validated = validateRecordTransfer(command, dependencies);
     if (validated.code === "rejected") return validated;
 
     return recordValidatedTransfer(validated.command, dependencies);
@@ -142,7 +144,9 @@ export type RecordTransactionRejectCode =
   | "account-not-usable"
   | "missing-category"
   | "category-not-usable"
-  | "manual-source-requires-resolved-account";
+  | "manual-source-requires-resolved-account"
+  | "description-too-long"
+  | "counterparty-name-too-long";
 
 export type RecordTransactionResult =
   | {
@@ -179,8 +183,17 @@ export type RecordTransactionInput = {
 
 const MAX_TEXT_LENGTH = 200;
 
-const normalizeText = (value: string | null): string =>
-  (value ?? "").trim().slice(0, MAX_TEXT_LENGTH);
+const normalizeText = (value: string | null): string => (value ?? "").trim();
+
+const textRejectCode = (
+  description: string,
+  counterpartyName: string
+): RecordTransactionRejectCode | null => {
+  if (description.length > MAX_TEXT_LENGTH) return "description-too-long";
+  if (counterpartyName.length > MAX_TEXT_LENGTH) return "counterparty-name-too-long";
+
+  return null;
+};
 
 const isFutureDated = (occurredOn: IsoDate, today: IsoDate): boolean => occurredOn > today;
 
@@ -197,18 +210,20 @@ const rejectTransaction = (code: RecordTransactionRejectCode): RecordTransaction
 const getCommandRejectCode = (
   command: RecordTransactionCommand,
   today: IsoDate
-): RecordTransactionRejectCode | null =>
-  isFutureDated(command.occurredOn, today)
-    ? "future-dated-transaction"
-    : command.amount <= 0
-      ? "non-positive-amount"
-      : command.accountId === null
-        ? "missing-account"
-        : command.categoryId === null
-          ? "missing-category"
-          : command.source === "manual" && command.accountAttributionState === "unresolved"
-            ? "manual-source-requires-resolved-account"
-            : null;
+): RecordTransactionRejectCode | null => {
+  const description = normalizeText(command.description);
+  const counterpartyName = normalizeText(command.counterpartyName);
+
+  if (isFutureDated(command.occurredOn, today)) return "future-dated-transaction";
+  if (command.amount <= 0) return "non-positive-amount";
+  if (command.accountId === null) return "missing-account";
+  if (command.categoryId === null) return "missing-category";
+  if (command.source === "manual" && command.accountAttributionState === "unresolved") {
+    return "manual-source-requires-resolved-account";
+  }
+
+  return textRejectCode(description, counterpartyName);
+};
 
 const getPolicyRejectCode = async (
   command: RecordTransactionCommand & {
@@ -216,12 +231,16 @@ const getPolicyRejectCode = async (
     readonly categoryId: CategoryId;
   },
   ports: RecordTransactionPorts
-): Promise<RecordTransactionRejectCode | null> =>
-  !(await ports.canUseAccount({ userId: command.userId, accountId: command.accountId }))
-    ? "account-not-usable"
-    : !(await ports.canUseCategory({ userId: command.userId, categoryId: command.categoryId }))
-      ? "category-not-usable"
-      : null;
+): Promise<RecordTransactionRejectCode | null> => {
+  if (!(await ports.canUseAccount({ userId: command.userId, accountId: command.accountId }))) {
+    return "account-not-usable";
+  }
+  if (!(await ports.canUseCategory({ userId: command.userId, categoryId: command.categoryId }))) {
+    return "category-not-usable";
+  }
+
+  return null;
+};
 
 const toAcceptedTransaction = (
   command: RecordTransactionCommand & {
@@ -249,8 +268,11 @@ const toSuccess = (transaction: RecordTransactionAccepted): RecordTransactionRes
   events: [toEvent(transaction)],
 });
 
-const toCommitResult = (result: RecordTransactionCommitResult): RecordTransactionResult =>
-  result.ok ? toSuccess(result.transaction) : result;
+const toCommitResult = (result: RecordTransactionCommitResult): RecordTransactionResult => {
+  if (result.ok) return toSuccess(result.transaction);
+
+  return result;
+};
 
 export const recordTransaction = async ({
   command,

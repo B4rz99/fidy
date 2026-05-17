@@ -55,8 +55,6 @@ const toReviewCandidateInput = (
     status: "needs_review",
     failureReason: null,
     subject: context.email.subject ?? null,
-    rawBodyPreview: (context.email.body ?? context.email.rawBody ?? "").slice(0, 500),
-    rawBody: null,
     retryCount: context.email.retryCount ?? 0,
     nextRetryAt: null,
     transactionId: null,

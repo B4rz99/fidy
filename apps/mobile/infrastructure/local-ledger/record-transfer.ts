@@ -1,14 +1,14 @@
-import { and, eq, isNull } from "drizzle-orm";
 import {
   createRecordTransfer,
   type LocalLedgerTransfer,
   type RecordTransferRejectionReason,
 } from "@/local-ledger/public";
 import type { AnyDb } from "@/shared/db";
-import { financialAccounts, transfers } from "@/shared/db/schema";
+import { transfers } from "@/shared/db/schema";
 import { toIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
-import { parseDigitsToAmount } from "@/shared/lib/format-money";
-import type { CopAmount, FinancialAccountId, TransferId, UserId } from "@/shared/types/branded";
+import { parseDigitsToAmount } from "@/shared/lib";
+import type { TransferId, UserId } from "@/shared/types/branded";
+import { hasActiveFinancialAccount } from "./account-policy.ts";
 
 type ManualTransferInput = {
   readonly digits: string;
@@ -46,6 +46,7 @@ type RecordManualTransferError =
 const rejectionErrorMap: Record<RecordTransferRejectionReason, RecordManualTransferError> = {
   "account-not-usable": "accountNotUsable",
   "amount-not-positive": "amountNotPositive",
+  "command-user-mismatch": "accountNotUsable",
   "external-label-required": "externalLabelRequired",
   "from-side-required": "fromSideRequired",
   "future-dated": "futureDated",
@@ -53,22 +54,6 @@ const rejectionErrorMap: Record<RecordTransferRejectionReason, RecordManualTrans
   "to-side-required": "toSideRequired",
   "tracked-account-required": "trackedAccountRequired",
 };
-
-function hasActiveFinancialAccount(db: AnyDb, userId: UserId, accountId: FinancialAccountId) {
-  const rows = db
-    .select({ id: financialAccounts.id })
-    .from(financialAccounts)
-    .where(
-      and(
-        eq(financialAccounts.id, accountId),
-        eq(financialAccounts.userId, userId),
-        isNull(financialAccounts.deletedAt)
-      )
-    )
-    .limit(1)
-    .all();
-  return rows.length > 0;
-}
 
 export function toTransferRow(transfer: LocalLedgerTransfer): typeof transfers.$inferInsert {
   return {
@@ -126,8 +111,9 @@ export async function recordManualTransferWithLocalLedger({
   });
 
   const result = await recordTransfer({
+    userId,
     transferId,
-    amount: amount as CopAmount,
+    amount,
     fromSide: input.fromSide,
     toSide: input.toSide,
     description: normalizedDescription,
