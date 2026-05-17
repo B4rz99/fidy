@@ -2,7 +2,7 @@ import {
   buildEmailCaptureEvidence,
   saveCaptureEvidenceRows,
 } from "@/features/capture-evidence/public";
-import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
+import { findDuplicateTransaction } from "@/features/capture-sources/dedup.public";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
 import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import {

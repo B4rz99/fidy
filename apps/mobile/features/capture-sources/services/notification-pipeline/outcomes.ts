@@ -4,7 +4,7 @@ import {
   persistCommittedCaptureSourceEvent,
   persistCommittedCaptureSourceEventInTransaction,
   persistProcessedSourceEvent,
-  persistReviewCandidateCapture,
+  recordReviewCandidateCaptureWithLocalLedger,
 } from "@/infrastructure/local-ledger/public";
 import { capturePipelineEvent, generateTransactionId, trackTransactionCreated } from "@/shared/lib";
 import { toIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
@@ -230,7 +230,7 @@ export async function persistSuccessfulNotification(
   context: ResolvedNotificationContext
 ): Promise<NotificationPipelineResult> {
   if (resolveProcessedCaptureStatus(context) === "needs_review") {
-    persistReviewCandidateCapture({
+    await recordReviewCandidateCaptureWithLocalLedger({
       db: context.db,
       userId: context.userId,
       sourceFamily: context.source,
@@ -243,6 +243,8 @@ export async function persistSuccessfulNotification(
       candidate: {
         occurredAt: requireIsoDateTime(`${context.parsed.date}T00:00:00.000Z`),
         amount: context.parsed.amount,
+        transactionType: context.parsed.type,
+        categoryId: context.categoryId,
         description: "",
         confidence: context.parsed.confidence,
       },

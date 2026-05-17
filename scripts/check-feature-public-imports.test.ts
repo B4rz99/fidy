@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import {
+  collectCrossFeatureInternalImportViolations,
   collectFeatureUnsafeLocalLedgerInfrastructurePublicImportViolations,
   extractOwnerFeatureFromPath,
 } from "./check-feature-public-imports";
@@ -53,6 +54,56 @@ test("reports broad barrel imports across feature boundaries", () => {
   const stdout = normalizePathSeparators(result.stdout.toString());
   expect(stdout).toContain("Broad cross-feature barrel imports: 1");
   expect(stdout).toContain("apps/mobile/features/budget/store.ts:1 imports @/features/auth");
+});
+
+test("reports cross-feature internal imports", () => {
+  const root = createTempDir();
+  writeSourceFile(
+    root,
+    "apps/mobile/features/email-capture/services/email-pipeline.ts",
+    'import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";\n'
+  );
+  writeSourceFile(
+    root,
+    "apps/mobile/features/email-capture/services/own.ts",
+    'import { normalizeEmail } from "@/features/email-capture/lib/normalize";\n'
+  );
+  writeSourceFile(
+    root,
+    "apps/mobile/features/email-capture/services/public-import.ts",
+    'import { findDuplicateTransaction } from "@/features/capture-sources/dedup.public";\n'
+  );
+
+  expect(collectCrossFeatureInternalImportViolations(root)).toEqual([
+    {
+      importer: "apps/mobile/features/email-capture/services/email-pipeline.ts",
+      importedPath: "@/features/capture-sources/lib/dedup",
+      line: 1,
+    },
+  ]);
+});
+
+test("fails in enforce mode for cross-feature internal imports", () => {
+  const root = createTempDir();
+  writeSourceFile(
+    root,
+    "apps/mobile/features/email-capture/services/email-pipeline.ts",
+    'import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";\n'
+  );
+
+  const result = Bun.spawnSync({
+    cmd: ["bun", "scripts/check-feature-public-imports.ts", "--root", root, "--enforce"],
+    cwd: process.cwd(),
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  expect(result.exitCode).toBe(1);
+  const stdout = normalizePathSeparators(result.stdout.toString());
+  expect(stdout).toContain("Cross-feature internal imports: 1");
+  expect(stdout).toContain(
+    "apps/mobile/features/email-capture/services/email-pipeline.ts:1 imports @/features/capture-sources/lib/dedup"
+  );
 });
 
 test("ignores same-feature barrels, tests, and explicit public imports", () => {

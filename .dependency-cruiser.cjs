@@ -74,7 +74,7 @@ module.exports = {
       },
       to: {
         path: "^apps/mobile/local-ledger/",
-        pathNot: "^apps/mobile/local-ledger/(public|snapshot\\.public)\\.ts$",
+        pathNot: "^apps/mobile/local-ledger/(public|snapshot\\.public|intake\\.public)\\.ts$",
       },
     },
     {

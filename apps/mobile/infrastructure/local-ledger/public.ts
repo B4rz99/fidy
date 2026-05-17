@@ -21,8 +21,8 @@ export {
   persistCommittedCaptureSourceEvent,
   persistCommittedCaptureSourceEventInTransaction,
   persistProcessedSourceEvent,
-  persistReviewCandidateCapture,
 } from "./source-events";
+export { recordReviewCandidateCaptureWithLocalLedger } from "./review-candidate-capture";
 export { updateTransactionAccountAttribution } from "./transaction-attribution";
 export { seedLocalLedgerRowsForQa } from "./qa-seed";
 export type { RecordAutomatedTransactionResult } from "./record-transaction";

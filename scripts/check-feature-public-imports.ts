@@ -1,4 +1,5 @@
 import {
+  collectCrossFeatureInternalImportViolations,
   collectFeaturePublicImportViolations,
   collectFeatureRawLocalLedgerInfrastructureImportViolations,
   collectFeatureUnsafeLocalLedgerInfrastructurePublicImportViolations,
@@ -10,6 +11,7 @@ import {
 } from "./feature-public-import-collectors";
 
 export {
+  collectCrossFeatureInternalImportViolations,
   collectFeaturePublicImportViolations,
   collectFeatureRawLocalLedgerInfrastructureImportViolations,
   collectFeatureUnsafeLocalLedgerInfrastructurePublicImportViolations,
@@ -76,6 +78,9 @@ const report = <T>(
 const main = (argv: readonly string[]): number => {
   const options = parseArgs(argv);
   const featureImportViolations = collectFeaturePublicImportViolations(options.root);
+  const crossFeatureInternalImportViolations = collectCrossFeatureInternalImportViolations(
+    options.root
+  );
   const localLedgerImportViolations = collectLocalLedgerFeatureImportViolations(options.root);
   const rawInfraImportViolations = collectFeatureRawLocalLedgerInfrastructureImportViolations(
     options.root
@@ -88,6 +93,12 @@ const main = (argv: readonly string[]): number => {
     "Broad cross-feature barrel imports",
     "No broad cross-feature barrel imports found.",
     formatViolation
+  );
+  report(
+    crossFeatureInternalImportViolations,
+    "Cross-feature internal imports",
+    "No cross-feature internal imports found.",
+    formatPathViolation
   );
   report(
     localLedgerImportViolations,
@@ -110,6 +121,7 @@ const main = (argv: readonly string[]): number => {
 
   const hasViolations =
     featureImportViolations.length > 0 ||
+    crossFeatureInternalImportViolations.length > 0 ||
     localLedgerImportViolations.length > 0 ||
     rawInfraImportViolations.length > 0 ||
     unsafeInfraPublicImportViolations.length > 0;

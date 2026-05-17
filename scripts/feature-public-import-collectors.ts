@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, relative } from "node:path";
+import { LEGACY_CROSS_FEATURE_INTERNAL_IMPORTS } from "./legacy-cross-feature-internal-imports";
 
 export type ImportViolation = {
   readonly importer: string;
@@ -25,6 +26,7 @@ const LOCAL_LEDGER_ROOT = join("apps", "mobile", "local-ledger");
 const TEST_FILE_PATTERN = /\.test\.(ts|tsx)$/;
 const FEATURE_IMPORT_PATTERN = String.raw`(?:^|\n)\s*(?:import|export)(?:\s+type)?[^;]*?\bfrom\s+["']@\/features\/([^/"']+)["']`;
 const ANY_FEATURE_IMPORT_PATTERN = String.raw`(?:^|\n)\s*(?:import|export)(?:\s+type)?[^;]*?\bfrom\s+["']@\/features\/([^/"']+)(?:\/[^"']*)?["']`;
+const ANY_FEATURE_IMPORT_PATH_PATTERN = String.raw`(?:^|\n)\s*(?:import|export)(?:\s+type)?[^;]*?\bfrom\s+["'](@\/features\/([^/"']+)(?:\/[^"']*)?)["']`;
 const RAW_LOCAL_LEDGER_INFRA_IMPORT_PATTERN = String.raw`(?:^|\n)\s*(?:import|export)(?:\s+type)?[^;]*?\bfrom\s+["'](@\/infrastructure\/local-ledger\/(?!public["'])[^"']+)["']`;
 const LOCAL_LEDGER_INFRA_PUBLIC_IMPORT_PATTERN = String.raw`(?:^|\n)\s*(?:import|export)\s+(?:type\s+)?\{([^;]*?)\}\s+from\s+["'](@\/infrastructure\/local-ledger\/public)["']`;
 const UNSAFE_LOCAL_LEDGER_INFRA_PUBLIC_EXPORTS = new Set([
@@ -35,6 +37,7 @@ const UNSAFE_LOCAL_LEDGER_INFRA_PUBLIC_EXPORTS = new Set([
 ]);
 
 const normalizePath = (path: string): string => path.replaceAll("\\", "/");
+const toImportKey = (importer: string, importedPath: string) => `${importer} -> ${importedPath}`;
 const isTsSourceFile = (path: string) => {
   const extension = extname(path);
   return extension === ".ts" || extension === ".tsx";
@@ -94,6 +97,41 @@ const collectAnyFeatureImports = (
   source: string
 ): readonly { readonly importedFeature: string; readonly line: number }[] =>
   collectImportsMatchingPattern(source, ANY_FEATURE_IMPORT_PATTERN);
+
+const isPublicFeatureSurface = (importedPath: string): boolean => {
+  const segments = importedPath.split("/");
+  const lastSegment = segments.at(-1) ?? "";
+  return lastSegment === "public" || lastSegment.endsWith(".public");
+};
+
+const collectAnyFeatureImportPaths = (
+  source: string
+): readonly {
+  readonly importedFeature: string;
+  readonly importedPath: string;
+  readonly line: number;
+}[] =>
+  Array.from(source.matchAll(new RegExp(ANY_FEATURE_IMPORT_PATH_PATTERN, "g"))).flatMap((match) => {
+    const importedPath = match[1];
+    const importedFeature = match[2];
+    const matchIndex = match.index;
+    const declarationOffset = getDeclarationOffset(match);
+    if (
+      importedPath == null ||
+      importedFeature == null ||
+      matchIndex == null ||
+      declarationOffset == null
+    ) {
+      return [];
+    }
+    return [
+      {
+        importedFeature,
+        importedPath,
+        line: countNewlines(source.slice(0, matchIndex + declarationOffset)) + 1,
+      },
+    ];
+  });
 
 const collectRawLocalLedgerInfrastructureImports = (
   source: string
@@ -157,6 +195,33 @@ export const collectFeaturePublicImportViolations = (root: string): readonly Imp
           importer: normalizePath(relative(root, path)),
           importedFeature: importedFeature.importedFeature,
           line: importedFeature.line,
+        }));
+    });
+
+export const collectCrossFeatureInternalImportViolations = (
+  root: string
+): readonly PathImportViolation[] =>
+  walk(join(root, FEATURES_ROOT))
+    .filter(isTsSourceFile)
+    .filter((path) => !isIgnoredSourceFile(path))
+    .flatMap((path) => {
+      const ownerFeature = extractOwnerFeatureFromPath(path);
+      if (ownerFeature == null) return [];
+
+      const source = readFileSync(path, "utf8");
+      return collectAnyFeatureImportPaths(source)
+        .filter((imported) => imported.importedFeature !== ownerFeature)
+        .filter((imported) => !isPublicFeatureSurface(imported.importedPath))
+        .filter(
+          (imported) =>
+            !LEGACY_CROSS_FEATURE_INTERNAL_IMPORTS.has(
+              toImportKey(normalizePath(relative(root, path)), imported.importedPath)
+            )
+        )
+        .map((imported) => ({
+          importer: normalizePath(relative(root, path)),
+          importedPath: imported.importedPath,
+          line: imported.line,
         }));
     });
 

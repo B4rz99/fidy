@@ -15,7 +15,7 @@ const mockCaptureFingerprint = vi.fn<(...args: any[]) => any>().mockReturnValue(
 const mockRecordAutomatedTransactionWithLocalLedger = vi.fn<(...args: any[]) => any>();
 const mockPersistProcessedSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockPersistCommittedCaptureSourceEvent = vi.fn<(...args: any[]) => any>();
-const mockPersistReviewCandidateCapture = vi.fn<(...args: any[]) => any>();
+const mockRecordReviewCandidateCaptureWithLocalLedger = vi.fn<(...args: any[]) => any>();
 const mockStripPii = vi.fn<(...args: any[]) => any>().mockImplementation((t: string) => t);
 const mockEnsureDefaultFinancialAccount = vi.fn<(...args: any[]) => any>().mockReturnValue({
   id: "fa-default-user-1" as FinancialAccountId,
@@ -94,7 +94,11 @@ vi.mock("@/infrastructure/local-ledger/source-events", () => ({
     mockPersistCommittedCaptureSourceEvent(...args),
   persistCommittedCaptureSourceEventInTransaction: (...args: any[]) =>
     mockPersistCommittedCaptureSourceEvent(...args),
-  persistReviewCandidateCapture: (...args: any[]) => mockPersistReviewCandidateCapture(...args),
+}));
+
+vi.mock("@/infrastructure/local-ledger/review-candidate-capture", () => ({
+  recordReviewCandidateCaptureWithLocalLedger: (...args: any[]) =>
+    mockRecordReviewCandidateCaptureWithLocalLedger(...args),
 }));
 
 vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
@@ -239,7 +243,7 @@ describe("processNotification", () => {
     mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
     mockPersistProcessedSourceEvent.mockReturnValue(undefined);
     mockPersistCommittedCaptureSourceEvent.mockReturnValue(undefined);
-    mockPersistReviewCandidateCapture.mockReturnValue(undefined);
+    mockRecordReviewCandidateCaptureWithLocalLedger.mockResolvedValue({ success: true });
   });
 
   it("saves transaction when LLM parses a notification with regex hints", async () => {
@@ -357,7 +361,7 @@ describe("processNotification", () => {
 
     expect(result.saved).toBe(false);
     expect(mockInsertTransaction).not.toHaveBeenCalled();
-    expect(mockPersistReviewCandidateCapture).toHaveBeenCalledWith(
+    expect(mockRecordReviewCandidateCaptureWithLocalLedger).toHaveBeenCalledWith(
       expect.objectContaining({
         db: mockDb,
         status: "needs_review",
@@ -392,7 +396,7 @@ describe("processNotification", () => {
 
       expect(result.saved).toBe(false);
       expect(mockInsertTransaction).not.toHaveBeenCalled();
-      expect(mockPersistReviewCandidateCapture).toHaveBeenCalledWith(
+      expect(mockRecordReviewCandidateCaptureWithLocalLedger).toHaveBeenCalledWith(
         expect.objectContaining({
           db: mockDb,
           status: "needs_review",

@@ -129,11 +129,11 @@ describe("Local Ledger source-event persistence", () => {
   });
 
   it("creates needs-review source event, review candidate, evidence, and link atomically", async () => {
-    const { persistReviewCandidateCapture } =
-      await import("@/infrastructure/local-ledger/source-events");
+    const { recordReviewCandidateCaptureWithLocalLedger } =
+      await import("@/infrastructure/local-ledger/review-candidate-capture");
     const { db, inserted } = makeDb();
 
-    persistReviewCandidateCapture({
+    await recordReviewCandidateCaptureWithLocalLedger({
       db,
       ...baseSource,
       candidate: {
@@ -165,15 +165,15 @@ describe("Local Ledger source-event persistence", () => {
   });
 
   it("does not create child rows when the source event already exists", async () => {
-    const { persistReviewCandidateCapture } =
-      await import("@/infrastructure/local-ledger/source-events");
+    const { recordReviewCandidateCaptureWithLocalLedger } =
+      await import("@/infrastructure/local-ledger/review-candidate-capture");
     const { db, inserted } = makeDb({
       id: "pse-existing",
       ...baseSource,
       deletedAt: null,
     });
 
-    persistReviewCandidateCapture({
+    await recordReviewCandidateCaptureWithLocalLedger({
       db,
       ...baseSource,
       candidate: {
@@ -189,12 +189,12 @@ describe("Local Ledger source-event persistence", () => {
   });
 
   it("rejects review candidate persistence for non-review source-event status", async () => {
-    const { persistReviewCandidateCapture } =
-      await import("@/infrastructure/local-ledger/source-events");
+    const { recordReviewCandidateCaptureWithLocalLedger } =
+      await import("@/infrastructure/local-ledger/review-candidate-capture");
     const { db, inserted } = makeDb();
 
-    expect(() =>
-      persistReviewCandidateCapture({
+    await expect(
+      recordReviewCandidateCaptureWithLocalLedger({
         db,
         ...baseSource,
         status: "processed",
@@ -207,7 +207,7 @@ describe("Local Ledger source-event persistence", () => {
         },
         evidence: [],
       } as any)
-    ).toThrow("Review candidate captures must use needs_review source-event status");
+    ).rejects.toThrow("Review candidate captures must use needs_review source-event status");
     expect(db.transaction).not.toHaveBeenCalled();
     expect(inserted).toEqual([]);
   });
