@@ -24,10 +24,10 @@ test("keeps bill mutation service routed through extracted helpers", () => {
   expect(serviceSource).toContain("toBillUpdateFields");
 });
 
-test("keeps payment commit logic responsible for transaction-row creation", () => {
-  expect(paymentCommitSource).toContain("buildDefaultFinancialAccountId");
-  expect(paymentCommitSource).toContain("toTransactionRow(transaction)");
-  expect(paymentCommitSource).toContain('kind: "calendar.bill.markPaid"');
+test("keeps payment commit logic delegated to the Local Ledger payment recorder", () => {
+  expect(paymentCommitSource).toContain("recordBillPayment");
+  expect(paymentCommitSource).not.toContain("buildDefaultFinancialAccountId");
+  expect(paymentCommitSource).not.toContain("toTransactionRow(transaction)");
 });
 
 test("keeps notification and update-field helpers as the side-effect and normalization seams", () => {

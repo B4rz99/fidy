@@ -1,5 +1,6 @@
 import { CAPTURE_EVIDENCE_TYPES } from "@/shared/capture-evidence/types";
 import { TRANSACTION_SOURCES } from "@/shared/lib/transaction-source";
+import { TRANSFER_SOURCES } from "@/shared/types/ledger-source";
 import type { BackupSnapshot, LocalLedgerBackupSnapshotData } from "./snapshot";
 import {
   assertBoolean,
@@ -82,23 +83,21 @@ const ROW_SPECS: readonly RowSpec[] = [
   {
     key: "transfers",
     validate: (row) =>
-      assertRecordShape(
-        row,
-        "transfers",
-        validateBaseLedgerFields({
-          id: (value) => assertString(value, "id"),
-          userId: (value) => assertString(value, "userId"),
-          amount: (value) => assertCopAmountValue(value, "amount"),
-          fromAccountId: (value) => assertNullableString(value, "fromAccountId"),
-          toAccountId: (value) => assertNullableString(value, "toAccountId"),
-          fromExternalLabel: (value) => assertNullableString(value, "fromExternalLabel"),
-          toExternalLabel: (value) => assertNullableString(value, "toExternalLabel"),
-          description: (value) => assertNullableString(value, "description"),
-          date: (value) => assertValidIsoDate(value, "date"),
-          source: (value) =>
-            assertOneOf(["manual", "capture-match", "review-confirmation"], value, "source"),
-        })
-      ),
+      assertRecordShape(row, "transfers", {
+        id: (value) => assertString(value, "id"),
+        userId: (value) => assertString(value, "userId"),
+        amount: (value) => assertCopAmountValue(value, "amount"),
+        fromAccountId: (value) => assertNullableString(value, "fromAccountId"),
+        toAccountId: (value) => assertNullableString(value, "toAccountId"),
+        fromExternalLabel: (value) => assertNullableString(value, "fromExternalLabel"),
+        toExternalLabel: (value) => assertNullableString(value, "toExternalLabel"),
+        description: (value) => assertNullableString(value, "description"),
+        date: (value) => assertValidIsoDate(value, "date"),
+        source: (value) => assertOneOf(TRANSFER_SOURCES, value, "source"),
+        createdAt: (value) => assertValidIsoDateTime(value, "createdAt"),
+        updatedAt: (value) => assertValidIsoDateTime(value, "updatedAt"),
+        voidedAt: (value) => assertNullableIsoDateTime(value, "voidedAt"),
+      }),
   },
   {
     key: "userCategories",

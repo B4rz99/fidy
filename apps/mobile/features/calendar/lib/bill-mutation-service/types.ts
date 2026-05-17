@@ -29,6 +29,17 @@ export type UnmarkBillPaidResult = { success: true } | { success: false };
 export type CreateCalendarBillMutationServiceDeps = {
   getCommit: () => WriteThroughMutationModule["commit"] | null;
   getUserId: () => UserId | null;
+  recordBillPayment: (input: {
+    readonly userId: UserId;
+    readonly transactionId: TransactionId;
+    readonly payment: BillPayment;
+    readonly bill: Bill;
+    readonly dueDate: IsoDate;
+    readonly now: Date;
+  }) => Promise<
+    | { readonly success: true; readonly transaction: StoredTransaction }
+    | { readonly success: false }
+  >;
   requestNotificationPermissions: () => Promise<boolean>;
   scheduleBillNotifications: (bill: Bill) => unknown;
   reportAsyncError: (error: unknown) => void;

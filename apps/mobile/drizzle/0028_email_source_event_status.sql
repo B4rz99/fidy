@@ -1,6 +1,3 @@
-ALTER TABLE `processed_source_events` ADD `subject` text;--> statement-breakpoint
-ALTER TABLE `processed_source_events` ADD `raw_body_preview` text;--> statement-breakpoint
-ALTER TABLE `processed_source_events` ADD `raw_body` text;--> statement-breakpoint
 ALTER TABLE `processed_source_events` ADD `retry_count` integer DEFAULT 0 NOT NULL;--> statement-breakpoint
 ALTER TABLE `processed_source_events` ADD `next_retry_at` text;--> statement-breakpoint
 ALTER TABLE `processed_source_events` ADD `transaction_id` text;--> statement-breakpoint
@@ -13,9 +10,6 @@ INSERT OR IGNORE INTO `processed_source_events` (
   `source_event_id`,
   `status`,
   `failure_reason`,
-  `subject`,
-  `raw_body_preview`,
-  `raw_body`,
   `retry_count`,
   `next_retry_at`,
   `transaction_id`,
@@ -34,9 +28,6 @@ SELECT
   pe.`external_id`,
   CASE WHEN pe.`status` = 'success' THEN 'processed' WHEN pe.`status` = 'skipped' THEN 'dismissed' ELSE pe.`status` END,
   pe.`failure_reason`,
-  pe.`subject`,
-  pe.`raw_body_preview`,
-  pe.`raw_body`,
   pe.`retry_count`,
   pe.`next_retry_at`,
   pe.`transaction_id`,

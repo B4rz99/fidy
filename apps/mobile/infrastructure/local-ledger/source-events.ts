@@ -1,21 +1,12 @@
 import { and, eq, isNull } from "drizzle-orm";
 import type { CaptureEvidenceSeed } from "@/shared/capture-evidence/types";
 import type { AnyDb } from "@/shared/db";
-import {
-  captureEvidence,
-  processedSourceEvents,
-  reviewCandidateCaptureEvidence,
-  reviewCandidates,
-} from "@/shared/db/schema";
+import { captureEvidence, processedSourceEvents } from "@/shared/db/schema";
 import {
   generateCaptureEvidenceId,
   generateProcessedSourceEventId,
-  generateReviewCandidateCaptureEvidenceId,
-  generateReviewCandidateId,
 } from "@/shared/lib/generate-id";
 import type {
-  CaptureEvidenceId,
-  CopAmount,
   IsoDateTime,
   ProcessedSourceEventId,
   TransactionId,
@@ -43,17 +34,6 @@ type SourceEventInput = {
 
 type PersistSourceEventInput = SourceEventInput & {
   readonly db: AnyDb;
-};
-
-type PersistReviewCandidateInput = Omit<PersistSourceEventInput, "status"> & {
-  readonly status: "needs_review";
-  readonly candidate: {
-    readonly occurredAt: IsoDateTime | null;
-    readonly amount: CopAmount | null;
-    readonly description: string | null;
-    readonly confidence: number | null;
-  };
-  readonly evidence: readonly CaptureEvidenceSeed[];
 };
 
 type PersistCommittedCaptureInput = PersistSourceEventInput & {
@@ -203,53 +183,5 @@ export const persistCommittedCaptureSourceEvent = (
 ) => {
   db.transaction((tx) => {
     persistCommittedCaptureSourceEventInTransaction(tx, input);
-  });
-};
-
-export const persistReviewCandidateCapture = (input: PersistReviewCandidateInput) => {
-  if (input.status !== "needs_review") {
-    throw new Error("Review candidate captures must use needs_review source-event status");
-  }
-
-  input.db.transaction((tx) => {
-    const sourceEvent = insertSourceEvent(tx, input);
-    if (!sourceEvent.inserted) return;
-
-    const reviewCandidateId = generateReviewCandidateId();
-    tx.insert(reviewCandidates)
-      .values({
-        id: reviewCandidateId,
-        userId: input.userId,
-        processedSourceEventId: sourceEvent.id,
-        status: "pending",
-        candidateKind: "transaction",
-        occurredAt: input.candidate.occurredAt,
-        amount: input.candidate.amount,
-        currency: "COP",
-        description: input.candidate.description,
-        confidence: input.candidate.confidence,
-        createdAt: input.processedAt,
-        updatedAt: input.processedAt,
-        deletedAt: null,
-      })
-      .run();
-
-    const evidenceIds = insertCaptureEvidence(tx, {
-      ...input,
-      processedSourceEventId: sourceEvent.id,
-      transactionId: null,
-    });
-    evidenceIds.forEach((captureEvidenceId: CaptureEvidenceId) => {
-      tx.insert(reviewCandidateCaptureEvidence)
-        .values({
-          id: generateReviewCandidateCaptureEvidenceId(),
-          userId: input.userId,
-          reviewCandidateId,
-          captureEvidenceId,
-          createdAt: input.processedAt,
-          deletedAt: null,
-        })
-        .run();
-    });
   });
 };

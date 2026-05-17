@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTransactionMutationService } from "@/features/transactions/lib/mutation-service";
-import type { StoredTransaction } from "@/features/transactions/schema";
-import type { WriteThroughMutationModule } from "@/shared/mutations";
 import type {
   CategoryId,
   CopAmount,
@@ -21,57 +19,35 @@ const input = {
   date: new Date("2026-04-12T00:00:00.000Z"),
 };
 
-function makeCapturedStoredTransaction(
-  overrides: Partial<StoredTransaction> = {}
-): StoredTransaction {
-  return {
-    id: "txn-9" as TransactionId,
-    userId: "user-1" as UserId,
-    type: "expense",
-    amount: 9800 as CopAmount,
-    categoryId: "food" as CategoryId,
-    description: "Original capture",
-    counterpartyName: "",
-    date: new Date("2026-04-10T00:00:00.000Z"),
-    createdAt: new Date("2026-04-10T10:00:00.000Z"),
-    updatedAt: new Date("2026-04-10T10:00:00.000Z"),
-    voidedAt: null,
-    accountId: "fa-card-1" as FinancialAccountId,
-    accountAttributionState: "unresolved",
-    supersededAt: new Date("2026-04-11T10:00:00.000Z"),
-    source: "email_capture",
-    ...overrides,
-  };
-}
-
 describe("transaction mutation service", () => {
   type ServiceDeps = Parameters<typeof createTransactionMutationService>[0];
 
-  let currentCommit: WriteThroughMutationModule["commit"] | null;
   let currentUserId: UserId | null;
   let refresh: ServiceDeps["refresh"];
   let resetForm: ServiceDeps["resetForm"];
   let trackDeleted: ServiceDeps["trackDeleted"];
   let trackEdited: ServiceDeps["trackEdited"];
-  let getTransactionById: ServiceDeps["getTransactionById"];
   let recordManualTransaction: ServiceDeps["recordManualTransaction"];
+  let amendManualTransaction: ServiceDeps["amendManualTransaction"];
+  let voidTransaction: ServiceDeps["voidTransaction"];
   let refreshMock: ReturnType<typeof vi.fn>;
   let resetFormMock: ReturnType<typeof vi.fn>;
   let trackDeletedMock: ReturnType<typeof vi.fn>;
   let trackEditedMock: ReturnType<typeof vi.fn>;
-  let getTransactionByIdMock: ReturnType<typeof vi.fn>;
   let recordManualTransactionMock: ReturnType<typeof vi.fn>;
+  let amendManualTransactionMock: ReturnType<typeof vi.fn>;
+  let voidTransactionMock: ReturnType<typeof vi.fn>;
 
   function createService() {
     return createTransactionMutationService({
-      getCommit: () => currentCommit,
       getUserId: () => currentUserId,
       refresh,
       resetForm,
       trackDeleted,
       trackEdited,
-      getTransactionById,
       recordManualTransaction,
+      amendManualTransaction,
+      voidTransaction,
       now: () => now,
       createId: () => "txn-1" as TransactionId,
     });
@@ -79,12 +55,10 @@ describe("transaction mutation service", () => {
 
   beforeEach(() => {
     currentUserId = "user-1" as UserId;
-    currentCommit = vi.fn<(...args: any[]) => any>();
     refreshMock = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
     resetFormMock = vi.fn<(...args: any[]) => any>();
     trackDeletedMock = vi.fn<(...args: any[]) => any>();
     trackEditedMock = vi.fn<(...args: any[]) => any>();
-    getTransactionByIdMock = vi.fn<(...args: any[]) => any>().mockReturnValue(null);
     recordManualTransactionMock = vi.fn<(...args: any[]) => any>().mockResolvedValue({
       success: true,
       transaction: {
@@ -106,12 +80,35 @@ describe("transaction mutation service", () => {
         source: "manual",
       },
     });
+    amendManualTransactionMock = vi.fn<(...args: any[]) => any>().mockResolvedValue({
+      success: true,
+      transaction: {
+        id: "txn-9" as TransactionId,
+        userId: "user-1" as UserId,
+        type: "expense",
+        amount: 1200 as CopAmount,
+        categoryId: "food" as CategoryId,
+        description: "Lunch",
+        counterpartyName: "",
+        date: now,
+        createdAt: now,
+        updatedAt: now,
+        voidedAt: null,
+        accountId: "fa-default-user-1" as FinancialAccountId,
+        accountAttributionState: "confirmed",
+        supersededAt: null,
+        supersededByTransferId: null,
+        source: "manual",
+      },
+    });
+    voidTransactionMock = vi.fn<(...args: any[]) => any>().mockResolvedValue({ success: true });
     refresh = refreshMock as ServiceDeps["refresh"];
     resetForm = resetFormMock as ServiceDeps["resetForm"];
     trackDeleted = trackDeletedMock as ServiceDeps["trackDeleted"];
     trackEdited = trackEditedMock as ServiceDeps["trackEdited"];
-    getTransactionById = getTransactionByIdMock as ServiceDeps["getTransactionById"];
     recordManualTransaction = recordManualTransactionMock as ServiceDeps["recordManualTransaction"];
+    amendManualTransaction = amendManualTransactionMock as ServiceDeps["amendManualTransaction"];
+    voidTransaction = voidTransactionMock as ServiceDeps["voidTransaction"];
   });
 
   it("returns store-not-initialized when the user is unavailable", async () => {
@@ -180,15 +177,13 @@ describe("transaction mutation service", () => {
       input,
       now,
     });
-    expect(currentCommit).not.toHaveBeenCalled();
     expect(refreshMock).toHaveBeenCalledOnce();
   });
 
-  it("treats throwing update commits as update failures", async () => {
-    currentCommit = null;
+  it("treats throwing amend writers as update failures", async () => {
+    amendManualTransactionMock.mockRejectedValueOnce(new Error("boom"));
     const service = createService();
 
-    currentCommit = vi.fn<(...args: any[]) => any>().mockRejectedValue(new Error("boom"));
     await expect(service.updateDirect("txn-9" as TransactionId, input)).resolves.toEqual({
       success: false,
       error: "Failed to update transaction",
@@ -196,9 +191,6 @@ describe("transaction mutation service", () => {
   });
 
   it("updates transactions and resets the form on success", async () => {
-    currentCommit = vi
-      .fn<(...args: any[]) => any>()
-      .mockResolvedValue({ success: true, didMutate: true });
     const service = createService();
 
     const result = await service.update("txn-9" as TransactionId, input);
@@ -207,21 +199,27 @@ describe("transaction mutation service", () => {
       success: true,
       transaction: expect.objectContaining({ id: "txn-9" }),
     });
+    expect(amendManualTransactionMock).toHaveBeenCalledWith({
+      userId: "user-1",
+      transactionId: "txn-9",
+      input,
+      now,
+    });
     expect(trackEditedMock).toHaveBeenCalledWith({ category: "food" });
     expect(resetFormMock).toHaveBeenCalledOnce();
     expect(refreshMock).toHaveBeenCalledOnce();
   });
 
-  it("returns a failed update result when the commit reports no mutation", async () => {
-    currentCommit = vi.fn<(...args: any[]) => any>().mockResolvedValue({
+  it("returns a failed update result when the amend writer rejects", async () => {
+    amendManualTransactionMock.mockResolvedValueOnce({
       success: false,
-      error: "write-through rejected update",
+      error: "categoryNotUsable",
     });
     const service = createService();
 
     await expect(service.update("txn-9" as TransactionId, input)).resolves.toEqual({
       success: false,
-      error: "Failed to update transaction",
+      error: "categoryNotUsable",
     });
     expect(trackEditedMock).not.toHaveBeenCalled();
     expect(resetFormMock).not.toHaveBeenCalled();
@@ -229,9 +227,6 @@ describe("transaction mutation service", () => {
   });
 
   it("updates transactions directly without resetting the form", async () => {
-    currentCommit = vi
-      .fn<(...args: any[]) => any>()
-      .mockResolvedValue({ success: true, didMutate: true });
     const service = createService();
 
     const result = await service.updateDirect("txn-9" as TransactionId, input);
@@ -245,11 +240,7 @@ describe("transaction mutation service", () => {
     expect(refreshMock).toHaveBeenCalledOnce();
   });
 
-  it("preserves ownership metadata when updating a captured transaction", async () => {
-    currentCommit = vi
-      .fn<(...args: any[]) => any>()
-      .mockResolvedValue({ success: true, didMutate: true });
-    getTransactionByIdMock.mockReturnValue(makeCapturedStoredTransaction());
+  it("delegates captured transaction metadata preservation to Local Ledger amend writer", async () => {
     const service = createService();
 
     await service.updateDirect("txn-9" as TransactionId, {
@@ -257,25 +248,16 @@ describe("transaction mutation service", () => {
       accountId: "fa-card-1" as FinancialAccountId,
     });
 
-    expect(currentCommit).toHaveBeenCalledWith(
+    expect(amendManualTransactionMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        kind: "transaction.save",
-        mode: "update",
-        row: expect.objectContaining({
-          id: "txn-9",
-          accountId: "fa-card-1",
-          accountAttributionState: "unresolved",
-          supersededAt: "2026-04-11T10:00:00.000Z",
-          source: "email_capture",
-          createdAt: "2026-04-10T10:00:00.000Z",
-          updatedAt: "2026-04-12T10:00:00.000Z",
-        }),
+        transactionId: "txn-9",
+        input: expect.objectContaining({ accountId: "fa-card-1" }),
       })
     );
   });
 
-  it("returns an update error without side effects when the write-through update fails", async () => {
-    currentCommit = vi.fn<(...args: any[]) => any>().mockResolvedValue({
+  it("returns an update error without side effects when the Local Ledger amend fails", async () => {
+    amendManualTransactionMock.mockResolvedValueOnce({
       success: false,
       error: "update failed",
     });
@@ -283,7 +265,7 @@ describe("transaction mutation service", () => {
 
     await expect(service.update("txn-9" as TransactionId, input)).resolves.toEqual({
       success: false,
-      error: "Failed to update transaction",
+      error: "update failed",
     });
 
     expect(trackEditedMock).not.toHaveBeenCalled();
@@ -303,6 +285,10 @@ describe("transaction mutation service", () => {
         service.updateDirect("txn-9" as TransactionId, { ...input, digits: "" }),
     ],
   ])("returns validation failures from %s without side effects", async (_method, runMutation) => {
+    amendManualTransactionMock.mockResolvedValueOnce({
+      success: false,
+      error: "amountNotPositive",
+    });
     const service = createService();
 
     const result = await runMutation(service);
@@ -310,42 +296,36 @@ describe("transaction mutation service", () => {
     expect(result.success).toBe(false);
     if (result.success) return;
     expect(result.error).toEqual(expect.any(String));
-    expect(currentCommit).not.toHaveBeenCalled();
     expect(trackEditedMock).not.toHaveBeenCalled();
     expect(resetFormMock).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
   });
 
-  it("throws on failed deletes and still refreshes when commits are unavailable", async () => {
-    const failingCommit = vi.fn<(...args: any[]) => any>().mockResolvedValue({
+  it("throws on failed deletes and still refreshes when user is unavailable", async () => {
+    voidTransactionMock.mockResolvedValueOnce({
       success: false,
       error: "delete failed",
     });
-    currentCommit = failingCommit;
     const service = createService();
 
     await expect(service.remove("txn-2" as TransactionId)).rejects.toThrow("delete failed");
     expect(trackDeletedMock).not.toHaveBeenCalled();
 
-    currentCommit = null;
+    currentUserId = null;
     await service.remove("txn-3" as TransactionId);
     expect(refreshMock).toHaveBeenCalledTimes(1);
   });
 
   it("tracks successful deletes and refreshes afterward", async () => {
-    currentCommit = vi
-      .fn<(...args: any[]) => any>()
-      .mockResolvedValue({ success: true, didMutate: true });
     const service = createService();
 
     await service.remove("txn-4" as TransactionId);
 
-    expect(currentCommit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        kind: "transaction.delete",
-        transactionId: "txn-4",
-      })
-    );
+    expect(voidTransactionMock).toHaveBeenCalledWith({
+      userId: "user-1",
+      transactionId: "txn-4",
+      now,
+    });
     expect(trackDeletedMock).toHaveBeenCalledOnce();
     expect(refreshMock).toHaveBeenCalledOnce();
   });
@@ -361,7 +341,6 @@ describe("transaction mutation service", () => {
       success: false,
       error: "missingAccount",
     });
-    expect(currentCommit).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
   });
 });

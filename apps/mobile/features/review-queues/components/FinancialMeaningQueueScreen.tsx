@@ -19,6 +19,7 @@ import { getDateFnsLocale } from "@/shared/i18n";
 import { formatMoney, formatSignedMoney, showErrorToast } from "@/shared/lib";
 import type { ProcessedSourceEventId, ReviewCandidateId } from "@/shared/types/branded";
 import { useFinancialMeaningReviewQueue } from "../hooks/use-financial-meaning-review-queue";
+import { getReviewQueueProviderLabel } from "../lib/source-labels";
 import { styles } from "./FinancialMeaningQueueScreen.styles";
 import { ActionButton, EmptyState, SummaryCard } from "./shared";
 
@@ -43,15 +44,9 @@ function FinancialMeaningQueueCard({
   const borderSubtle = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
-  const providerLabel =
-    item.processedSourceEvent.sourceId === "email_gmail"
-      ? t("financialMeaningReview.providers.gmail")
-      : t("financialMeaningReview.providers.outlook");
-  const subject = item.processedSourceEvent.subject ?? "";
-  const title =
-    item.reviewCandidate.description ??
-    item.processedSourceEvent.rawBodyPreview ??
-    t("common.unknown");
+  const providerLabel = getReviewQueueProviderLabel(item.processedSourceEvent, t);
+  const subject = item.processedSourceEvent.sourceEventId;
+  const title = item.reviewCandidate.description ?? t("common.unknown");
   const subtitleDate = item.reviewCandidate.occurredAt ?? item.processedSourceEvent.receivedAt;
   const amount = item.reviewCandidate.amount;
   const transactionType = item.reviewCandidate.transactionType;

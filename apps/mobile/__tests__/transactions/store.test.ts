@@ -205,14 +205,13 @@ describe("transaction boundaries", () => {
     expect(getTransactionsPaginated).not.toHaveBeenCalled();
   });
 
-  it("defaults to the other category when saving without a selection", async () => {
+  it("rejects manual saves without a selected category", async () => {
     useTransactionStore.getState().setDigits("1000");
 
     const result = await saveCurrentTransaction(mockDb, mockUserId);
 
-    expect(result.success).toBe(true);
-    if (!result.success) return;
-    expect(result.transaction.categoryId).toBe("other");
+    expect(result).toEqual({ success: false, error: "missingCategory" });
+    expect(insertedTransactionRows).toEqual([]);
   });
 
   it("loads the initial transaction snapshot with aggregates", async () => {

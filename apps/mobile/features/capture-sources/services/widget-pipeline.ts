@@ -1,10 +1,10 @@
 import { isValidCategoryId } from "@/features/transactions/write.public";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
-import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/record-transaction";
+import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import {
-  persistCommittedCaptureSourceEventInTransaction,
-  persistProcessedSourceEvent,
-} from "@/infrastructure/local-ledger/source-events";
+  recordCommittedCaptureSourceEventInTransactionWithLocalLedger,
+  recordProcessedCaptureSourceEventWithLocalLedger,
+} from "@/infrastructure/local-ledger/public";
 import type { AnyDb } from "@/shared/db";
 import {
   captureError,
@@ -44,7 +44,8 @@ const failureReason = (error: unknown): string =>
     ? error.message
     : errorType(error);
 
-const userAuthoredWidgetDescription = (description: string | undefined): string => description ?? "";
+const userAuthoredWidgetDescription = (description: string | undefined): string =>
+  description ?? "";
 const widgetCounterpartyName = (): string => "";
 
 export async function processWidgetTransactions(
@@ -105,7 +106,7 @@ export async function processWidgetTransactions(
         sourceEventId: fingerprint,
       });
       if (alreadyProcessed) {
-        persistProcessedSourceEvent({
+        recordProcessedCaptureSourceEventWithLocalLedger({
           db,
           userId,
           sourceFamily: "widget",
@@ -139,7 +140,7 @@ export async function processWidgetTransactions(
           source: "widget_capture",
         },
         afterRecord: (tx) => {
-          persistCommittedCaptureSourceEventInTransaction(tx, {
+          recordCommittedCaptureSourceEventInTransactionWithLocalLedger(tx, {
             userId,
             sourceFamily: "widget",
             sourceId: "widget",
@@ -168,7 +169,7 @@ export async function processWidgetTransactions(
       succeededEntryIds.push(item.id);
     } catch (error) {
       try {
-        persistProcessedSourceEvent({
+        recordProcessedCaptureSourceEventWithLocalLedger({
           db,
           userId,
           sourceFamily: "widget",

@@ -1,9 +1,7 @@
-import { and, desc, eq, getTableColumns, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db";
 import { processedSourceEvents, reviewCandidates } from "@/shared/db/schema";
 import type { UserId } from "@/shared/types/branded";
-
-const { rawBody: _rawBody, ...sourceEventQueueColumns } = getTableColumns(processedSourceEvents);
 
 const emailSourceEventQueueFilter = (
   userId: UserId,
@@ -18,7 +16,7 @@ const emailSourceEventQueueFilter = (
 
 export async function getFailedEmailSourceEvents(db: AnyDb, userId: UserId) {
   return db
-    .select({ ...sourceEventQueueColumns, rawBody: sql<null>`null` })
+    .select()
     .from(processedSourceEvents)
     .where(emailSourceEventQueueFilter(userId, ["failed"]))
     .orderBy(desc(processedSourceEvents.receivedAt));
@@ -26,7 +24,7 @@ export async function getFailedEmailSourceEvents(db: AnyDb, userId: UserId) {
 
 export async function getNeedsReviewEmailSourceEvents(db: AnyDb, userId: UserId) {
   return db
-    .select({ ...sourceEventQueueColumns, rawBody: sql<null>`null` })
+    .select()
     .from(processedSourceEvents)
     .where(
       and(

@@ -1,12 +1,9 @@
-export const TRANSACTION_SOURCES = [
-  "manual",
-  "email_capture",
-  "notification_capture",
-  "widget_capture",
-  "apple_pay_capture",
-] as const;
+import {
+  TRANSACTION_SOURCES,
+  type NormalizedTransactionSource,
+} from "@/shared/types/ledger-source";
 
-export type NormalizedTransactionSource = (typeof TRANSACTION_SOURCES)[number];
+export { TRANSACTION_SOURCES, type NormalizedTransactionSource };
 
 export const isTransactionSource = (source: string): source is NormalizedTransactionSource =>
   TRANSACTION_SOURCES.includes(source as NormalizedTransactionSource);

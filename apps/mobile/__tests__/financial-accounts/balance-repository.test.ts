@@ -106,7 +106,7 @@ function saveAccountTransfer(
       date: entry.date as IsoDate,
       createdAt: NOW,
       updatedAt: NOW,
-      deletedAt: null,
+      voidedAt: null,
     })
     .run();
 }

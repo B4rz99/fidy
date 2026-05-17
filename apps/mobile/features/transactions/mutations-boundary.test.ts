@@ -205,24 +205,18 @@ describe("app write-through mutations", () => {
     expect(mocks.insertBill).toHaveBeenCalledOnce();
   });
 
-  it("writes both transaction and bill payment when marking bills paid", async () => {
+  it("writes only bill payment when marking bills paid", async () => {
     const { createWriteThroughMutationModule } = await loadModule();
     const module = createWriteThroughMutationModule(mockDb);
 
     const result = await module.commit({
       kind: "calendar.bill.markPaid",
-      transactionRow: makeTransactionRow({
-        id: "tx-paid-1" as TransactionId,
-        amount: 250000 as CopAmount,
-        categoryId: "housing" as CategoryId,
-        description: "Rent",
-      }),
       paymentRow: makePaymentRow(),
     });
 
     expect(result).toEqual({ success: true, didMutate: true });
     expect(mockDb.transaction).toHaveBeenCalledOnce();
-    expect(mocks.insertTransaction).toHaveBeenCalledOnce();
+    expect(mocks.insertTransaction).not.toHaveBeenCalled();
     expect(mocks.insertBillPayment).toHaveBeenCalledOnce();
   });
 

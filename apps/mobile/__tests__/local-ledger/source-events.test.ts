@@ -8,7 +8,13 @@ import {
   reviewCandidateCaptureEvidence,
   reviewCandidates,
 } from "@/shared/db/schema";
-import type { CopAmount, IsoDateTime, TransactionId, UserId } from "@/shared/types/branded";
+import type {
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 vi.mock("@/shared/lib/generate-id", () => ({
   generateCaptureEvidenceId: vi.fn(() => "ce-1"),
@@ -19,13 +25,17 @@ vi.mock("@/shared/lib/generate-id", () => ({
 }));
 
 const NOW = "2026-04-12T10:00:00.000Z" as IsoDateTime;
+const OCCURRED_ON = "2026-04-12" as IsoDate;
 const USER_ID = "user-1" as UserId;
 
 type InsertedRow = { readonly table: string; readonly row: any };
 
 function makeDb(
   existingSourceEvent: any | null = null,
-  options: { readonly failCaptureEvidenceInsert?: boolean } = {}
+  options: {
+    readonly failCaptureEvidenceInsert?: boolean;
+    readonly conflictingSourceEventOnInsert?: any;
+  } = {}
 ) {
   const inserted: InsertedRow[] = [];
   const sourceRows = existingSourceEvent ? [existingSourceEvent] : [];
@@ -81,6 +91,10 @@ function makeDb(
                 existing.deletedAt === null
             );
             if (!duplicate) {
+              if (options.conflictingSourceEventOnInsert != null) {
+                activeSourceRows().push(options.conflictingSourceEventOnInsert);
+                return;
+              }
               activeSourceRows().push(row);
               activeInserted().push({ table: getTableName(table as never), row });
             }
@@ -129,15 +143,15 @@ describe("Local Ledger source-event persistence", () => {
   });
 
   it("creates needs-review source event, review candidate, evidence, and link atomically", async () => {
-    const { persistReviewCandidateCapture } =
-      await import("@/infrastructure/local-ledger/source-events");
+    const { recordReviewCandidateCaptureWithLocalLedger } =
+      await import("@/infrastructure/local-ledger/review-candidate-capture");
     const { db, inserted } = makeDb();
 
-    persistReviewCandidateCapture({
+    await recordReviewCandidateCaptureWithLocalLedger({
       db,
       ...baseSource,
       candidate: {
-        occurredAt: NOW,
+        occurredAt: OCCURRED_ON,
         amount: 12500 as CopAmount,
         description: "Low confidence cafe capture",
         confidence: 0.42,
@@ -165,19 +179,19 @@ describe("Local Ledger source-event persistence", () => {
   });
 
   it("does not create child rows when the source event already exists", async () => {
-    const { persistReviewCandidateCapture } =
-      await import("@/infrastructure/local-ledger/source-events");
+    const { recordReviewCandidateCaptureWithLocalLedger } =
+      await import("@/infrastructure/local-ledger/review-candidate-capture");
     const { db, inserted } = makeDb({
       id: "pse-existing",
       ...baseSource,
       deletedAt: null,
     });
 
-    persistReviewCandidateCapture({
+    await recordReviewCandidateCaptureWithLocalLedger({
       db,
       ...baseSource,
       candidate: {
-        occurredAt: NOW,
+        occurredAt: OCCURRED_ON,
         amount: 12500 as CopAmount,
         description: "Low confidence cafe capture",
         confidence: 0.42,
@@ -188,26 +202,103 @@ describe("Local Ledger source-event persistence", () => {
     expect(inserted).toEqual([]);
   });
 
+  it("transitions pending retry source events to review and inserts candidate children", async () => {
+    const { recordReviewCandidateCaptureWithLocalLedger } =
+      await import("@/infrastructure/local-ledger/review-candidate-capture");
+    const { db, inserted } = makeDb({
+      id: "pse-retry",
+      ...baseSource,
+      status: "pending_retry",
+      failureReason: "parse_failed",
+      deletedAt: null,
+    });
+
+    await recordReviewCandidateCaptureWithLocalLedger({
+      db,
+      ...baseSource,
+      candidate: {
+        occurredAt: OCCURRED_ON,
+        amount: 12500 as CopAmount,
+        description: "Retry review candidate",
+        confidence: 0.42,
+      },
+      evidence: [
+        {
+          sourceFamily: "notification",
+          evidenceType: "counterparty_hint",
+          scope: "merchant",
+          value: "Cafe",
+        },
+      ],
+    });
+
+    expect(inserted.map((entry) => entry.table)).toEqual([
+      getTableName(processedSourceEvents),
+      getTableName(reviewCandidates),
+      getTableName(captureEvidence),
+      getTableName(reviewCandidateCaptureEvidence),
+    ]);
+    expect(inserted[0]?.row).toEqual(
+      expect.objectContaining({ status: "needs_review", failureReason: "low_confidence" })
+    );
+    expect(inserted[1]?.row).toEqual(
+      expect.objectContaining({ processedSourceEventId: "pse-retry", status: "pending" })
+    );
+  });
+
+  it("does not link review-candidate children to a generated source event after insert conflict", async () => {
+    const { recordReviewCandidateCaptureWithLocalLedger } =
+      await import("@/infrastructure/local-ledger/review-candidate-capture");
+    const { db, inserted } = makeDb(null, {
+      conflictingSourceEventOnInsert: {
+        id: "pse-existing",
+        ...baseSource,
+        deletedAt: null,
+      },
+    });
+
+    await recordReviewCandidateCaptureWithLocalLedger({
+      db,
+      ...baseSource,
+      candidate: {
+        occurredAt: OCCURRED_ON,
+        amount: 12500 as CopAmount,
+        description: "Low confidence cafe capture",
+        confidence: 0.42,
+      },
+      evidence: [
+        {
+          sourceFamily: "notification",
+          evidenceType: "counterparty_hint",
+          scope: "merchant",
+          value: "Cafe",
+        },
+      ],
+    });
+
+    expect(inserted).toEqual([]);
+  });
+
   it("rejects review candidate persistence for non-review source-event status", async () => {
-    const { persistReviewCandidateCapture } =
-      await import("@/infrastructure/local-ledger/source-events");
+    const { recordReviewCandidateCaptureWithLocalLedger } =
+      await import("@/infrastructure/local-ledger/review-candidate-capture");
     const { db, inserted } = makeDb();
 
-    expect(() =>
-      persistReviewCandidateCapture({
+    await expect(
+      recordReviewCandidateCaptureWithLocalLedger({
         db,
         ...baseSource,
         status: "processed",
         failureReason: null,
         candidate: {
-          occurredAt: NOW,
+          occurredAt: OCCURRED_ON,
           amount: 12500 as CopAmount,
           description: "Contradictory review candidate",
           confidence: 1,
         },
         evidence: [],
       } as any)
-    ).toThrow("Review candidate captures must use needs_review source-event status");
+    ).rejects.toThrow("Review candidate captures must use needs_review source-event status");
     expect(db.transaction).not.toHaveBeenCalled();
     expect(inserted).toEqual([]);
   });

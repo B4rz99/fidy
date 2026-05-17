@@ -1,6 +1,6 @@
 import type { StoredTransaction } from "@/features/transactions/query.public";
 import { refreshTransactions } from "@/features/transactions/store.public";
-import type { TransferSide } from "@/features/transfers/lib/build-transfer";
+import type { TransferSide } from "@/features/transfers/build.public";
 import type {
   TransferMutationError,
   TransferMutationResult,
@@ -11,7 +11,7 @@ import type {
   ReclassifyTransactionAsTransferResult,
 } from "@/features/transfers/lib/reclassify-transaction-as-transfer";
 import { reclassifyTransactionAsTransfer } from "@/features/transfers/lib/reclassify-transaction-as-transfer";
-import { recordManualTransferWithLocalLedger } from "@/infrastructure/local-ledger/record-transfer";
+import { recordManualTransferWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import type { AnyDb } from "@/shared/db";
 import { captureWarning } from "@/shared/lib";
 import type { ProcessedSourceEventId, ReviewCandidateId, UserId } from "@/shared/types/branded";

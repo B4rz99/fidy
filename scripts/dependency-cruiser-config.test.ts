@@ -92,6 +92,23 @@ test("guards pure local-ledger code from app layers and runtime infrastructure",
   ]);
 });
 
+test("guards shared code from depending on local-ledger", () => {
+  const sharedRule = config.forbidden.find(
+    (forbiddenRule) => forbiddenRule.name === "shared-must-not-depend-on-local-ledger"
+  );
+
+  expect(sharedRule).toBeDefined();
+  expect(sharedRule?.from?.path).toBe("^apps/mobile/shared/");
+  expect(sharedRule?.to?.path).toBe("^apps/mobile/local-ledger/");
+  expect(
+    matchesRule(sharedRule!, {
+      from: "apps/mobile/shared/lib/transaction-source.ts",
+      to: "apps/mobile/local-ledger/public.ts",
+      dependencyTypes: ["local"],
+    })
+  ).toBe(true);
+});
+
 test("guards local-ledger internals behind public entrypoints for consumers", () => {
   const publicImportsRule = config.forbidden.find(
     (forbiddenRule) => forbiddenRule.name === "local-ledger-consumers-must-use-public-entrypoints"
@@ -103,6 +120,41 @@ test("guards local-ledger internals behind public entrypoints for consumers", ()
   );
   expect(publicImportsRule?.to?.path).toBe("^apps/mobile/local-ledger/");
   expect(publicImportsRule?.to?.pathNot).toBe(
-    "^apps/mobile/local-ledger/(public|snapshot\\.public)\\.ts$"
+    "^apps/mobile/local-ledger/(public|snapshot\\.public|intake\\.public)\\.ts$"
   );
+});
+
+test("guards local-ledger infrastructure from feature and UI runtime dependencies", () => {
+  const featureRule = config.forbidden.find(
+    (forbiddenRule) => forbiddenRule.name === "local-ledger-infrastructure-must-not-import-features"
+  );
+  const runtimeRule = config.forbidden.find(
+    (forbiddenRule) =>
+      forbiddenRule.name === "local-ledger-infrastructure-must-not-import-ui-or-app-runtime"
+  );
+
+  expect(featureRule).toBeDefined();
+  expect(featureRule?.from?.path).toBe("^apps/mobile/infrastructure/local-ledger/");
+  expect(featureRule?.to?.path).toBe("^apps/mobile/features/");
+  expect(
+    matchesRule(featureRule!, {
+      from: "apps/mobile/infrastructure/local-ledger/transfer-reclassification.ts",
+      to: "apps/mobile/features/transfers/lib/build-transfer.ts",
+      dependencyTypes: ["local"],
+    })
+  ).toBe(true);
+
+  expect(runtimeRule).toBeDefined();
+  expect(runtimeRule?.from?.path).toBe("^apps/mobile/infrastructure/local-ledger/");
+  expect(runtimeRule?.to?.path).toContain("^apps/mobile/app/");
+  expect(runtimeRule?.to?.path).toContain("^apps/mobile/modules/");
+  expect(runtimeRule?.to?.path).toContain("^apps/mobile/shared/(components|hooks|query)($|/)");
+  expect(runtimeRule?.to?.path).toContain("^apps/mobile/shared/lib/(analytics|sentry|toast)\\.ts");
+  expect(
+    matchesRule(runtimeRule!, {
+      from: "apps/mobile/infrastructure/local-ledger/public.ts",
+      to: "apps/mobile/shared/components/index.ts",
+      dependencyTypes: ["local"],
+    })
+  ).toBe(true);
 });

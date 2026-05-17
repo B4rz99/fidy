@@ -19,8 +19,8 @@ function toStoredTransferDescription(description: TransferRow["description"]): s
   return description ?? "";
 }
 
-function toStoredTransferDeletedAt(deletedAt: TransferRow["deletedAt"]): Date | null {
-  return deletedAt ? new Date(deletedAt) : null;
+function toStoredTransferDeletedAt(voidedAt: TransferRow["voidedAt"]): Date | null {
+  return voidedAt ? new Date(voidedAt) : null;
 }
 
 export function toStoredTransfer(row: TransferRow): StoredTransfer {
@@ -34,7 +34,7 @@ export function toStoredTransfer(row: TransferRow): StoredTransfer {
     date: parseIsoDate(row.date),
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
-    deletedAt: toStoredTransferDeletedAt(row.deletedAt),
+    deletedAt: toStoredTransferDeletedAt(row.voidedAt),
     source: row.source ?? "manual",
   };
 }
@@ -68,7 +68,7 @@ export function toTransferRow(transfer: StoredTransfer): TransferRow {
     date: toIsoDate(transfer.date),
     createdAt: toIsoDateTime(transfer.createdAt),
     updatedAt: toIsoDateTime(transfer.updatedAt),
-    deletedAt: transfer.deletedAt ? toIsoDateTime(transfer.deletedAt) : null,
+    voidedAt: transfer.deletedAt ? toIsoDateTime(transfer.deletedAt) : null,
     source: transfer.source,
   };
 }

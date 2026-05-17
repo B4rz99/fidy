@@ -1,5 +1,4 @@
 import { sql } from "drizzle-orm";
-import type { TransferSource } from "@/local-ledger/public";
 import {
   check,
   index,
@@ -9,6 +8,7 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+import type { TransferSource } from "@/shared/types/ledger-source";
 import type {
   AccountSuggestionDismissalId,
   BillId,
@@ -137,7 +137,7 @@ export const transfers = sqliteTable(
     source: text("source").$type<TransferSource>().notNull().default("manual"),
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
     updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
-    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+    voidedAt: text("voided_at").$type<IsoDateTime>(),
   },
   (table) => [
     index("idx_transfers_user_date").on(table.userId, table.date),
@@ -237,9 +237,6 @@ export const processedSourceEvents = sqliteTable(
     sourceEventId: text("source_event_id").notNull(),
     status: text("status").notNull(),
     failureReason: text("failure_reason"),
-    subject: text("subject"),
-    rawBodyPreview: text("raw_body_preview"),
-    rawBody: text("raw_body"),
     retryCount: integer("retry_count").notNull().default(0),
     nextRetryAt: text("next_retry_at").$type<IsoDateTime>(),
     transactionId: text("transaction_id").$type<TransactionId>(),
@@ -275,7 +272,7 @@ export const reviewCandidates = sqliteTable(
       .notNull(),
     status: text("status").notNull(),
     candidateKind: text("candidate_kind").notNull(),
-    occurredAt: text("occurred_at").$type<IsoDateTime>(),
+    occurredAt: text("occurred_at").$type<IsoDate>(),
     amount: integer("amount").$type<CopAmount>(),
     currency: text("currency").notNull().default("COP"),
     transactionType: text("transaction_type").$type<"expense" | "income">(),

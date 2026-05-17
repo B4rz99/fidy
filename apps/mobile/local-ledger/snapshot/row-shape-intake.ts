@@ -1,5 +1,6 @@
 import type { RowSpec } from "./row-shape";
 import {
+  assertNullableIsoDate,
   assertNullableIsoDateTime,
   assertNullableNumber,
   assertNullableOneOf,
@@ -31,9 +32,6 @@ export const INTAKE_ROW_SPECS: readonly RowSpec[] = [
               "status"
             ),
           failureReason: (value) => assertNullableString(value, "failureReason"),
-          subject: (value) => assertNullableString(value, "subject"),
-          rawBodyPreview: (value) => assertNullableString(value, "rawBodyPreview"),
-          rawBody: (value) => assertNullableString(value, "rawBody"),
           retryCount: (value) => assertNullableNumber(value, "retryCount"),
           nextRetryAt: (value) => assertNullableIsoDateTime(value, "nextRetryAt"),
           transactionId: (value) => assertNullableString(value, "transactionId"),
@@ -41,15 +39,7 @@ export const INTAKE_ROW_SPECS: readonly RowSpec[] = [
           receivedAt: (value) => assertValidIsoDateTime(value, "receivedAt"),
           processedAt: (value) => assertValidIsoDateTime(value, "processedAt"),
         }),
-        [
-          "subject",
-          "rawBodyPreview",
-          "rawBody",
-          "retryCount",
-          "nextRetryAt",
-          "transactionId",
-          "confidence",
-        ]
+        ["retryCount", "nextRetryAt", "transactionId", "confidence"]
       ),
   },
   {
@@ -64,7 +54,7 @@ export const INTAKE_ROW_SPECS: readonly RowSpec[] = [
           processedSourceEventId: (value) => assertString(value, "processedSourceEventId"),
           status: (value) => assertString(value, "status"),
           candidateKind: (value) => assertString(value, "candidateKind"),
-          occurredAt: (value) => assertNullableIsoDateTime(value, "occurredAt"),
+          occurredAt: (value) => assertNullableIsoDate(value, "occurredAt"),
           amount: (value) => assertNullableNumber(value, "amount"),
           currency: (value) => assertOneOf(["COP"], value, "currency"),
           transactionType: (value) =>

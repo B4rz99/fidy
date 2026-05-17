@@ -7,6 +7,7 @@ import {
   markSourceEventPermanentlyFailedEffect,
   markSourceEventRetrySuccessEffect,
   nextRetryAtEffect,
+  resolveRetryEmailBodyEffect,
   updateProcessedSourceEventStatusEffect,
 } from "./runtime";
 import { parseEmailBodyOrReport } from "./parse-email-body";
@@ -29,7 +30,6 @@ import type {
 const getRetryEmailProvider = (email: ProcessedSourceEventRow) =>
   email.sourceId.startsWith("email_outlook") ? "outlook" : "gmail";
 
-const optionalText = (value: string | null | undefined, fallback: string) => value ?? fallback;
 const nullableValue = <T>(value: T | null | undefined) => value ?? null;
 
 const toRetryEmailSnapshot = (email: ProcessedSourceEventRow): RetryEmailSnapshot => ({
@@ -38,13 +38,13 @@ const toRetryEmailSnapshot = (email: ProcessedSourceEventRow): RetryEmailSnapsho
   provider: getRetryEmailProvider(email),
   status: email.status,
   failureReason: nullableValue(email.failureReason),
-  subject: optionalText(email.subject, ""),
-  rawBodyPreview: nullableValue(email.rawBodyPreview),
+  subject: "",
+  rawBodyPreview: null,
   receivedAt: email.receivedAt,
   transactionId: nullableValue(email.transactionId),
   confidence: nullableValue(email.confidence),
   createdAt: email.createdAt,
-  rawBody: email.rawBody,
+  rawBody: null,
   retryCount: email.retryCount,
   nextRetryAt: email.nextRetryAt,
 });
@@ -114,7 +114,6 @@ async function handleRetryParseOutcome(
       id: email.id as ProcessedSourceEventId,
       status: "dismissed",
       transactionId: null,
-      rawBody: null,
     })
   );
 }
@@ -210,7 +209,9 @@ async function processParsedRetryEmail(
 }
 
 async function processRetryEmail(context: RetryBatchContext, email: ProcessedSourceEventRow) {
-  const { rawBody } = email;
+  const rawBody = await context.runtime.runEmailEffect(
+    resolveRetryEmailBodyEffect(context.db, context.userId, email)
+  );
   if (!rawBody) {
     await markRetryAsPermanentlyFailed(context, email);
     return;

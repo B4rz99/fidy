@@ -1,18 +1,14 @@
 import { insertMerchantRule } from "@/features/email-capture/merchant-rules.public";
-import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/record-transaction";
+import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import {
-  persistCommittedCaptureSourceEvent,
-  persistCommittedCaptureSourceEventInTransaction,
-  persistProcessedSourceEvent,
-  persistReviewCandidateCapture,
-} from "@/infrastructure/local-ledger/source-events";
-import {
-  capturePipelineEvent,
-  generateTransactionId,
-  toIsoDateTime,
-  trackTransactionCreated,
-} from "@/shared/lib";
-import { requireIsoDateTime } from "@/shared/types/assertions";
+  recordCommittedCaptureSourceEventWithLocalLedger,
+  recordCommittedCaptureSourceEventInTransactionWithLocalLedger,
+  recordProcessedCaptureSourceEventWithLocalLedger,
+  recordReviewCandidateCaptureWithLocalLedger,
+} from "@/infrastructure/local-ledger/public";
+import { capturePipelineEvent, generateTransactionId, trackTransactionCreated } from "@/shared/lib";
+import { toIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
+import { requireIsoDate } from "@/shared/types/assertions";
 import { buildFailedFingerprint } from "./context";
 import type {
   DuplicateCheckResult,
@@ -42,7 +38,17 @@ async function cacheMerchantRuleIfEligible(context: ResolvedNotificationContext)
 }
 
 function resolveProcessedCaptureStatus(context: ResolvedNotificationContext) {
-  return context.parsed.confidence < 0.7 ? "needs_review" : "success";
+  return context.parsed.confidence < 0.7 || isFutureDatedCapture(context)
+    ? "needs_review"
+    : "success";
+}
+
+function isFutureDatedCapture(context: ResolvedNotificationContext) {
+  return context.parsed.date > toIsoDate(new Date(context.now));
+}
+
+function resolveReviewFailureReason(context: ResolvedNotificationContext) {
+  return isFutureDatedCapture(context) ? "future_dated" : "low_confidence";
 }
 
 function trackNotificationPipeline(
@@ -102,7 +108,7 @@ async function saveTransactionRecord(context: ResolvedNotificationContext) {
       source: "notification_capture",
     },
     afterRecord: (tx) => {
-      persistCommittedCaptureSourceEventInTransaction(tx, {
+      recordCommittedCaptureSourceEventInTransactionWithLocalLedger(tx, {
         userId: context.userId,
         sourceFamily: context.source,
         sourceId: context.source,
@@ -118,7 +124,7 @@ async function saveTransactionRecord(context: ResolvedNotificationContext) {
   });
 
   if (!result.success) {
-    persistProcessedSourceEvent({
+    recordProcessedCaptureSourceEventWithLocalLedger({
       db: context.db,
       userId: context.userId,
       sourceFamily: context.source,
@@ -157,7 +163,7 @@ export async function persistFailedNotification(
   context: NotificationStageContext
 ): Promise<NotificationPipelineResult> {
   const now = toIsoDateTime(new Date());
-  persistProcessedSourceEvent({
+  recordProcessedCaptureSourceEventWithLocalLedger({
     db: context.db,
     userId: context.userId,
     sourceFamily: context.source,
@@ -190,7 +196,7 @@ export async function persistDuplicateNotification(
   duplicate: DuplicateCheckResult
 ): Promise<NotificationPipelineResult> {
   if (duplicate.kind === "already_processed") {
-    persistProcessedSourceEvent({
+    recordProcessedCaptureSourceEventWithLocalLedger({
       db: context.db,
       userId: context.userId,
       sourceFamily: context.source,
@@ -204,7 +210,7 @@ export async function persistDuplicateNotification(
     return reportSkippedDuplicate(context, null);
   }
 
-  persistCommittedCaptureSourceEvent(context.db, {
+  recordCommittedCaptureSourceEventWithLocalLedger(context.db, {
     userId: context.userId,
     sourceFamily: context.source,
     sourceId: context.source,
@@ -224,19 +230,21 @@ export async function persistSuccessfulNotification(
   context: ResolvedNotificationContext
 ): Promise<NotificationPipelineResult> {
   if (resolveProcessedCaptureStatus(context) === "needs_review") {
-    persistReviewCandidateCapture({
+    await recordReviewCandidateCaptureWithLocalLedger({
       db: context.db,
       userId: context.userId,
       sourceFamily: context.source,
       sourceId: context.source,
       sourceEventId: context.fingerprint,
       status: "needs_review",
-      failureReason: "low_confidence",
+      failureReason: resolveReviewFailureReason(context),
       receivedAt: context.receivedAt,
       processedAt: context.now,
       candidate: {
-        occurredAt: requireIsoDateTime(`${context.parsed.date}T00:00:00.000Z`),
+        occurredAt: requireIsoDate(context.parsed.date),
         amount: context.parsed.amount,
+        transactionType: context.parsed.type,
+        categoryId: context.categoryId,
         description: "",
         confidence: context.parsed.confidence,
       },

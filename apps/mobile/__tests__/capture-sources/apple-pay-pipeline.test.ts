@@ -78,16 +78,14 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
 }));
 
-vi.mock("@/infrastructure/local-ledger/record-transaction", () => ({
+vi.mock("@/infrastructure/local-ledger/public", () => ({
   recordAutomatedTransactionWithLocalLedger: (...args: any[]) =>
     mockRecordAutomatedTransactionWithLocalLedger(...args),
-}));
-
-vi.mock("@/infrastructure/local-ledger/source-events", () => ({
-  persistProcessedSourceEvent: (...args: any[]) => mockPersistProcessedSourceEvent(...args),
-  persistCommittedCaptureSourceEvent: (...args: any[]) =>
+  recordProcessedCaptureSourceEventWithLocalLedger: (...args: any[]) =>
+    mockPersistProcessedSourceEvent(...args),
+  recordCommittedCaptureSourceEventWithLocalLedger: (...args: any[]) =>
     mockPersistCommittedCaptureSourceEvent(...args),
-  persistCommittedCaptureSourceEventInTransaction: (...args: any[]) =>
+  recordCommittedCaptureSourceEventInTransactionWithLocalLedger: (...args: any[]) =>
     mockPersistCommittedCaptureSourceEvent(...args),
 }));
 

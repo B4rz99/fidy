@@ -1,8 +1,8 @@
 import { memo, useCallback } from "react";
-import type { StoredActivityItem } from "@/features/activity/services/create-activity-query-service";
+import type { StoredActivityItem } from "@/features/activity/query.public";
 import { getTransactionDisplayName, makeDateLabel } from "@/features/transactions/display.public";
 import type { StoredTransaction } from "@/features/transactions/query.public";
-import { getTransferActivityCopy } from "@/features/transfers/lib/presentation";
+import { getTransferActivityCopy } from "@/features/transfers/display.public";
 import { CATEGORY_MAP } from "@/shared/categories";
 import { TransactionRow } from "@/shared/components";
 import { View } from "@/shared/components/rn";

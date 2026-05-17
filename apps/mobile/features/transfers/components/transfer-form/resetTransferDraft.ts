@@ -1,4 +1,4 @@
-import type { TransferSide } from "@/features/transfers/lib/build-transfer";
+import type { TransferSide } from "@/features/transfers/build.public";
 import type { PickerTarget } from "./TransferForm.types";
 
 type TransferDraftResetSetters = {

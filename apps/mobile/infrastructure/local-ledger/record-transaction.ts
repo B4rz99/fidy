@@ -1,15 +1,16 @@
 import { and, eq, isNull } from "drizzle-orm";
 import {
-  recordTransaction,
+  createRecordTransactionUseCase,
   type LocalLedgerEntryId,
   type RecordTransactionAccepted,
   type RecordTransactionCommand,
   type RecordTransactionRejectCode,
 } from "@/local-ledger/public";
-import { getBuiltInCategoryId, isValidCategoryId } from "@/shared/categories";
+import { isValidCategoryId } from "@/shared/categories";
 import type { AnyDb } from "@/shared/db";
 import { transactions, userCategories } from "@/shared/db/schema";
-import { parseDigitsToAmount, toIsoDate, toIsoDateTime } from "@/shared/lib";
+import { toIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
+import { parseDigitsToAmount } from "@/shared/lib/format-money";
 import { requireIsoDate } from "@/shared/types/assertions";
 import type {
   CategoryId,
@@ -21,7 +22,7 @@ import type {
 import { hasActiveFinancialAccount } from "./account-policy.ts";
 import { toTransactionStorageRow } from "./transaction-storage";
 
-type ManualTransactionInput = {
+export type ManualTransactionInput = {
   readonly type: "expense" | "income";
   readonly digits: string;
   readonly categoryId: CategoryId | null;
@@ -30,7 +31,7 @@ type ManualTransactionInput = {
   readonly date: Date;
 };
 
-type RecordManualTransactionInput = {
+export type RecordManualTransactionInput = {
   readonly db: AnyDb;
   readonly userId: UserId;
   readonly transactionId: TransactionId;
@@ -40,9 +41,7 @@ type RecordManualTransactionInput = {
 
 export type RecordAutomatedTransactionInput = {
   readonly db: AnyDb;
-  readonly command: Omit<RecordTransactionCommand, "source"> & {
-    readonly source: Exclude<RecordTransactionCommand["source"], "manual">;
-  };
+  readonly command: RecordTransactionCommand;
   readonly transactionId: TransactionId;
   readonly now: IsoDateTime;
   readonly afterRecord?: (tx: AnyDb, transaction: RecordTransactionAccepted) => void;
@@ -53,7 +52,7 @@ type CommitPolicyRejection = {
   readonly code: "account-not-usable" | "category-not-usable";
 };
 
-function toLocalLedgerEntryId(transactionId: TransactionId): LocalLedgerEntryId {
+export function toLocalLedgerEntryId(transactionId: TransactionId): LocalLedgerEntryId {
   // Transaction-backed ledger entries use the persisted transaction ID as their ledger entry ID.
   return transactionId as unknown as LocalLedgerEntryId;
 }
@@ -74,22 +73,27 @@ export type RecordManualTransactionError =
   | "manualSourceRequiresResolvedAccount";
 
 export type RecordAutomatedTransactionResult =
-  | { readonly success: true; readonly transaction: RecordTransactionAccepted }
+  | {
+      readonly success: true;
+      readonly transaction: RecordTransactionAccepted;
+      readonly transactionRow: typeof transactions.$inferInsert;
+    }
   | { readonly success: false; readonly error: RecordTransactionRejectCode };
 
-const rejectionErrorMap: Record<RecordTransactionRejectCode, RecordManualTransactionError> = {
-  "account-not-usable": "accountNotUsable",
-  "category-not-usable": "categoryNotUsable",
-  "counterparty-name-too-long": "counterpartyNameTooLong",
-  "description-too-long": "descriptionTooLong",
-  "future-dated-transaction": "futureDatedTransaction",
-  "manual-source-requires-resolved-account": "manualSourceRequiresResolvedAccount",
-  "missing-account": "missingAccount",
-  "missing-category": "missingCategory",
-  "non-positive-amount": "amountNotPositive",
-};
+export const rejectionErrorMap: Record<RecordTransactionRejectCode, RecordManualTransactionError> =
+  {
+    "account-not-usable": "accountNotUsable",
+    "category-not-usable": "categoryNotUsable",
+    "counterparty-name-too-long": "counterpartyNameTooLong",
+    "description-too-long": "descriptionTooLong",
+    "future-dated-transaction": "futureDatedTransaction",
+    "manual-source-requires-resolved-account": "manualSourceRequiresResolvedAccount",
+    "missing-account": "missingAccount",
+    "missing-category": "missingCategory",
+    "non-positive-amount": "amountNotPositive",
+  };
 
-function hasUsableCategory(db: AnyDb, userId: UserId, categoryId: CategoryId) {
+export function hasUsableCategory(db: AnyDb, userId: UserId, categoryId: CategoryId) {
   if (isValidCategoryId(categoryId)) return true;
 
   const rows = db
@@ -107,7 +111,7 @@ function hasUsableCategory(db: AnyDb, userId: UserId, categoryId: CategoryId) {
   return rows.length > 0;
 }
 
-function getCommitPolicyRejection(
+export function getCommitPolicyRejection(
   db: AnyDb,
   transaction: RecordTransactionAccepted
 ): CommitPolicyRejection | null {
@@ -130,20 +134,7 @@ export async function recordManualTransactionWithLocalLedger({
   now,
 }: RecordManualTransactionInput): Promise<RecordManualTransactionResult> {
   const nowIso = toIsoDateTime(now);
-  const categoryId = input.categoryId ?? getBuiltInCategoryId("other");
-  const result = await recordTransaction({
-    command: {
-      userId,
-      type: input.type,
-      amount: parseDigitsToAmount(input.digits),
-      accountId: input.accountId,
-      accountAttributionState: "confirmed",
-      categoryId,
-      occurredOn: toIsoDate(input.date),
-      description: input.description,
-      counterpartyName: null,
-      source: "manual",
-    },
+  const recordTransaction = createRecordTransactionUseCase({
     ports: {
       canUseAccount: async ({ accountId }) => hasActiveFinancialAccount(db, userId, accountId),
       canUseCategory: async ({ categoryId }) => hasUsableCategory(db, userId, categoryId),
@@ -161,6 +152,19 @@ export async function recordManualTransactionWithLocalLedger({
     },
   });
 
+  const result = await recordTransaction({
+    userId,
+    type: input.type,
+    amount: parseDigitsToAmount(input.digits),
+    accountId: input.accountId,
+    accountAttributionState: "confirmed",
+    categoryId: input.categoryId,
+    occurredOn: toIsoDate(input.date),
+    description: input.description,
+    counterpartyName: null,
+    source: "manual",
+  });
+
   return result.ok
     ? {
         success: true,
@@ -176,8 +180,7 @@ export async function recordAutomatedTransactionWithLocalLedger({
   now,
   afterRecord,
 }: RecordAutomatedTransactionInput): Promise<RecordAutomatedTransactionResult> {
-  const result = await recordTransaction({
-    command,
+  const recordTransaction = createRecordTransactionUseCase({
     ports: {
       canUseAccount: async ({ accountId }) =>
         hasActiveFinancialAccount(db, command.userId, accountId),
@@ -195,8 +198,13 @@ export async function recordAutomatedTransactionWithLocalLedger({
         }),
     },
   });
+  const result = await recordTransaction(command);
 
   return result.ok
-    ? { success: true, transaction: result.transaction }
+    ? {
+        success: true,
+        transaction: result.transaction,
+        transactionRow: toTransactionStorageRow({ transaction: result.transaction, now }),
+      }
     : { success: false, error: result.code };
 }

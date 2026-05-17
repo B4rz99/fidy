@@ -1,16 +1,20 @@
 import type { CaptureEvidenceType } from "@/shared/capture-evidence/types";
 import type {
+  CaptureEvidenceId,
   CopAmount,
   CategoryId,
   FinancialAccountId,
   IsoDate,
   IsoDateTime,
+  ProcessedSourceEventId,
   ReviewCandidateId,
+  ReviewCandidateCaptureEvidenceId,
   TransferId,
   UserId,
 } from "@/shared/types/branded";
+import type { TransferSource } from "@/shared/types/ledger-source";
 
-export type { FinancialAccountId, TransferId, UserId };
+export type { FinancialAccountId, TransferSource, TransferId, UserId };
 
 export type LocalLedgerCommandId = string & { readonly __brand: "LocalLedgerCommandId" };
 
@@ -18,9 +22,7 @@ export type LocalLedgerEntryId = string & { readonly __brand: "LocalLedgerEntryI
 
 export type LocalLedgerSourceId = string & { readonly __brand: "LocalLedgerSourceId" };
 
-export type LocalLedgerProcessedSourceEventId = string & {
-  readonly __brand: "LocalLedgerProcessedSourceEventId";
-};
+export type LocalLedgerProcessedSourceEventId = ProcessedSourceEventId;
 
 export type LocalLedgerReviewCandidateId = ReviewCandidateId;
 
@@ -47,8 +49,6 @@ export type LocalLedgerTransferSide =
       readonly label: string;
     };
 
-export type TransferSource = "manual" | "capture-match" | "review-confirmation";
-
 export type LocalLedgerTransfer = {
   readonly id: TransferId;
   readonly userId: UserId;
@@ -73,8 +73,8 @@ export type LocalLedgerTransferRecorded = {
 export type LocalLedgerDomainEvent = LocalLedgerTransferRecorded;
 
 export type LocalLedgerCaptureEvidence = {
-  readonly id: string;
-  readonly linkId: string;
+  readonly id: CaptureEvidenceId;
+  readonly linkId: ReviewCandidateCaptureEvidenceId;
   readonly sourceFamily: string;
   readonly evidenceType: CaptureEvidenceType;
   readonly scope: string;
@@ -92,9 +92,9 @@ export type LocalLedgerReviewCandidateStatus = "pending" | "accepted" | "rejecte
 
 export type LocalLedgerReviewCandidate = {
   readonly id: LocalLedgerReviewCandidateId;
-  readonly candidateKind: "transaction" | "transfer";
+  readonly candidateKind: "unknown" | "transaction" | "transfer";
   readonly status: LocalLedgerReviewCandidateStatus;
-  readonly occurredAt: string | null;
+  readonly occurredAt: IsoDate | null;
   readonly money: LocalLedgerMoney | null;
   readonly transactionType?: "expense" | "income" | null;
   readonly categoryId?: CategoryId | null;

@@ -113,19 +113,18 @@ export function createCalendarBillMutationService(
 
     markBillPaid: async (bills, billId, dueDate) => {
       const userId = deps.getUserId();
-      const commit = deps.getCommit();
       const bill = getBillForPayment(bills, billId);
-      if (!userId || !commit || bill == null) {
+      if (!userId || bill == null) {
         return { success: false };
       }
 
       const commitResult = await commitBillPaymentSafely({
-        commit,
         bill,
         billId,
         dueDate,
         userId,
         timestamp: now(),
+        recordBillPayment: deps.recordBillPayment,
         createPaymentId,
         createTransactionId,
       });
@@ -139,7 +138,8 @@ export function createCalendarBillMutationService(
 
     unmarkBillPaid: async (payments, billId, dueDate) => {
       const commit = deps.getCommit();
-      if (!commit) {
+      const userId = deps.getUserId();
+      if (!commit || !userId) {
         return { success: false };
       }
 
@@ -150,6 +150,7 @@ export function createCalendarBillMutationService(
       try {
         const result = await commit({
           kind: "calendar.bill.unmarkPaid",
+          userId,
           billId,
           dueDate,
           transactionId: payment?.transactionId ?? null,

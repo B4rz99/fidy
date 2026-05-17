@@ -1,5 +1,5 @@
 import { and, between, desc, eq, sql, sum } from "drizzle-orm";
-import { getActiveTransactionConditions } from "@/features/transactions/lib/active-transaction-conditions";
+import { getActiveTransactionConditions } from "@/features/transactions/query.public";
 import type { AnyDb } from "@/shared/db/client";
 import { transactions } from "@/shared/db/schema";
 import type { CategoryId, CopAmount, IsoDate, UserId } from "@/shared/types/branded";

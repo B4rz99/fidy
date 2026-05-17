@@ -7,10 +7,7 @@ import {
   insertBillPayment,
   updateBill,
 } from "@/features/calendar/lib/repository";
-import {
-  insertTransactionStorageRow,
-  softDeleteTransactionStorageRow,
-} from "@/infrastructure/local-ledger/transaction-storage";
+import { voidTransactionWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import type { MutationCommandByKind, MutationHandlerSubset } from "./common";
 import { completeCommand } from "./common";
 
@@ -52,7 +49,6 @@ const applyCalendarBillMarkPaid = (
   db: Parameters<MutationHandlerSubset<"calendar.bill.markPaid">["calendar.bill.markPaid"]>[0],
   command: CalendarBillMarkPaidCommand
 ) => {
-  insertTransactionStorageRow(db, command.transactionRow);
   insertBillPayment(db, command.paymentRow);
   return completeCommand(command.afterCommit);
 };
@@ -62,7 +58,15 @@ const applyCalendarBillUnmarkPaid = (
   command: CalendarBillUnmarkPaidCommand
 ) => {
   if (command.transactionId) {
-    softDeleteTransactionStorageRow(db, command.transactionId, command.now);
+    const result = voidTransactionWithLocalLedger({
+      db,
+      userId: command.userId,
+      transactionId: command.transactionId,
+      now: command.now,
+    });
+    if (!result.success) {
+      throw new Error(result.error);
+    }
   }
 
   deleteBillPayment(db, command.billId, command.dueDate);

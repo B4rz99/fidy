@@ -21,9 +21,12 @@ export type FetchEmailsFn = (
   senderEmails: string[]
 ) => Promise<RawEmail[]>;
 
+export type FetchEmailByIdFn = (token: string, id: string) => Promise<RawEmail | null>;
+
 export type EmailAdapter = {
   isConnected: () => Promise<boolean>;
   connect: (clientId: string) => Promise<ConnectResult>;
   disconnect: () => Promise<void>;
   fetchEmails: (clientId: string, since: string, senderEmails: string[]) => Promise<RawEmail[]>;
+  fetchEmailById: (clientId: string, id: string) => Promise<RawEmail | null>;
 };

@@ -3,7 +3,7 @@ import type { RecordTransactionAccepted, RecordTransactionSource } from "@/local
 import type { AnyDb } from "@/shared/db/client";
 import type { transactions } from "@/shared/db/schema";
 import { transactions as transactionsTable } from "@/shared/db/schema";
-import { buildDefaultFinancialAccountId } from "@/shared/lib";
+import { buildDefaultFinancialAccountId } from "@/shared/lib/default-financial-account-id";
 import { normalizeTransactionSource } from "@/shared/lib/transaction-source.public";
 import { requireTransactionId } from "@/shared/types/assertions";
 import type { FinancialAccountId, IsoDateTime, TransactionId } from "@/shared/types/branded";

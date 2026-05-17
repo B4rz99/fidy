@@ -2,7 +2,11 @@ import { afterEach, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { extractOwnerFeatureFromPath } from "./check-feature-public-imports";
+import {
+  collectCrossFeatureInternalImportViolations,
+  collectFeatureUnsafeLocalLedgerInfrastructurePublicImportViolations,
+  extractOwnerFeatureFromPath,
+} from "./check-feature-public-imports";
 
 const tempDirs: string[] = [];
 
@@ -50,6 +54,73 @@ test("reports broad barrel imports across feature boundaries", () => {
   const stdout = normalizePathSeparators(result.stdout.toString());
   expect(stdout).toContain("Broad cross-feature barrel imports: 1");
   expect(stdout).toContain("apps/mobile/features/budget/store.ts:1 imports @/features/auth");
+});
+
+test("reports cross-feature internal imports", () => {
+  const root = createTempDir();
+  writeSourceFile(
+    root,
+    "apps/mobile/features/email-capture/services/email-pipeline.ts",
+    'import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";\n'
+  );
+  writeSourceFile(
+    root,
+    "apps/mobile/features/email-capture/services/own.ts",
+    'import { normalizeEmail } from "@/features/email-capture/lib/normalize";\n'
+  );
+  writeSourceFile(
+    root,
+    "apps/mobile/features/email-capture/services/public-import.ts",
+    'import { findDuplicateTransaction } from "@/features/capture-sources/dedup.public";\n'
+  );
+
+  expect(collectCrossFeatureInternalImportViolations(root)).toEqual([
+    {
+      importer: "apps/mobile/features/email-capture/services/email-pipeline.ts",
+      importedPath: "@/features/capture-sources/lib/dedup",
+      line: 1,
+    },
+  ]);
+});
+
+test("fails in enforce mode for cross-feature internal imports", () => {
+  const root = createTempDir();
+  writeSourceFile(
+    root,
+    "apps/mobile/features/email-capture/services/email-pipeline.ts",
+    'import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";\n'
+  );
+
+  const result = Bun.spawnSync({
+    cmd: ["bun", "scripts/check-feature-public-imports.ts", "--root", root, "--enforce"],
+    cwd: process.cwd(),
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  expect(result.exitCode).toBe(1);
+  const stdout = normalizePathSeparators(result.stdout.toString());
+  expect(stdout).toContain("Cross-feature internal imports: 1");
+  expect(stdout).toContain(
+    "apps/mobile/features/email-capture/services/email-pipeline.ts:1 imports @/features/capture-sources/lib/dedup"
+  );
+});
+
+test("reports cross-feature internal dynamic imports", () => {
+  const root = createTempDir();
+  writeSourceFile(
+    root,
+    "apps/mobile/features/auth/store.ts",
+    'const qa = await import("@/features/qa/start-local-qa-session");\n'
+  );
+
+  expect(collectCrossFeatureInternalImportViolations(root)).toEqual([
+    {
+      importer: "apps/mobile/features/auth/store.ts",
+      importedPath: "@/features/qa/start-local-qa-session",
+      line: 1,
+    },
+  ]);
 });
 
 test("ignores same-feature barrels, tests, and explicit public imports", () => {
@@ -105,6 +176,106 @@ test("fails in enforce mode when violations are present", () => {
   expect(stdout).toContain(
     "apps/mobile/features/search/store.ts:1 imports @/features/transactions"
   );
+});
+
+test("fails for feature imports of unsafe Local Ledger infrastructure public exports", () => {
+  const root = createTempDir();
+  writeSourceFile(
+    root,
+    "apps/mobile/features/qa/start-local-qa-session.ts",
+    [
+      "import {",
+      "  recordManualTransactionWithLocalLedger,",
+      "  upsertTransferStorageRow as writeTransfer,",
+      '} from "@/infrastructure/local-ledger/public";',
+      "",
+    ].join("\n")
+  );
+
+  const result = Bun.spawnSync({
+    cmd: ["bun", "scripts/check-feature-public-imports.ts", "--root", root, "--enforce"],
+    cwd: process.cwd(),
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  expect(result.exitCode).toBe(1);
+  const stdout = normalizePathSeparators(result.stdout.toString());
+  expect(stdout).toContain("Feature unsafe Local Ledger infrastructure public imports: 1");
+  expect(stdout).toContain(
+    "apps/mobile/features/qa/start-local-qa-session.ts:1 imports upsertTransferStorageRow from @/infrastructure/local-ledger/public"
+  );
+  expect(stdout).not.toContain("recordManualTransactionWithLocalLedger");
+});
+
+test("reports unsafe Local Ledger infrastructure public imports through exported helper", () => {
+  const root = createTempDir();
+  writeSourceFile(
+    root,
+    "apps/mobile/features/review-queues/lib/attribution-review-confirmation.ts",
+    'import { upsertTransactionStorageRow } from "@/infrastructure/local-ledger/public";\n'
+  );
+
+  expect(collectFeatureUnsafeLocalLedgerInfrastructurePublicImportViolations(root)).toEqual([
+    {
+      importer: "apps/mobile/features/review-queues/lib/attribution-review-confirmation.ts",
+      importedName: "upsertTransactionStorageRow",
+      importedPath: "@/infrastructure/local-ledger/public",
+      line: 1,
+    },
+  ]);
+});
+
+test("fails when root flag is missing a path value", () => {
+  const result = Bun.spawnSync({
+    cmd: ["bun", "scripts/check-feature-public-imports.ts", "--root", "--enforce"],
+    cwd: process.cwd(),
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.stderr.toString()).toContain("--root requires a path value");
+});
+
+test("reports unsafe Local Ledger infrastructure public re-exports", () => {
+  const root = createTempDir();
+  writeSourceFile(
+    root,
+    "apps/mobile/features/review-queues/public.ts",
+    'export { upsertTransactionStorageRow } from "@/infrastructure/local-ledger/public";\n'
+  );
+
+  expect(collectFeatureUnsafeLocalLedgerInfrastructurePublicImportViolations(root)).toEqual([
+    {
+      importer: "apps/mobile/features/review-queues/public.ts",
+      importedName: "upsertTransactionStorageRow",
+      importedPath: "@/infrastructure/local-ledger/public",
+      line: 1,
+    },
+  ]);
+});
+
+test("keeps violation line numbers on the matching declaration", () => {
+  const root = createTempDir();
+  writeSourceFile(
+    root,
+    "apps/mobile/features/review-queues/public.ts",
+    [
+      'import { allowed } from "@/infrastructure/local-ledger/public";',
+      'import { upsertTransactionStorageRow } from "@/infrastructure/local-ledger/public";',
+      "",
+    ].join("\n")
+  );
+
+  expect(collectFeatureUnsafeLocalLedgerInfrastructurePublicImportViolations(root)).toEqual([
+    {
+      importer: "apps/mobile/features/review-queues/public.ts",
+      importedName: "upsertTransactionStorageRow",
+      importedPath: "@/infrastructure/local-ledger/public",
+      line: 2,
+    },
+  ]);
 });
 
 test("fails for Local Ledger feature imports including type-only imports", () => {

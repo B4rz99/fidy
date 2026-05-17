@@ -112,6 +112,8 @@ const fetchGmailMessage = async (token: string, id: string): Promise<RawEmail | 
 const fetchGmailMessageOrNull = (token: string, id: string): Promise<RawEmail | null> =>
   fetchGmailMessage(token, id).catch(() => null);
 
+export const fetchGmailEmailByIdWithToken = fetchGmailMessageOrNull;
+
 const collectBatchEmails = async (token: string, batch: string[]): Promise<RawEmail[]> =>
   (await Promise.all(batch.map((id) => fetchGmailMessageOrNull(token, id)))).filter(isNonNull);
 

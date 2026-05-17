@@ -18,6 +18,7 @@ import { getDateFnsLocale } from "@/shared/i18n";
 import { formatMoney, formatSignedMoney, showErrorToast } from "@/shared/lib";
 import { requireProcessedSourceEventId, requireReviewCandidateId } from "@/shared/types/assertions";
 import { useFinancialMeaningReviewQueue } from "../hooks/use-financial-meaning-review-queue";
+import { getReviewQueueProviderLabel } from "../lib/source-labels";
 import { styles } from "./FinancialMeaningReviewScreen.styles";
 import { ActionButton, EmptyState, SummaryCard } from "./shared";
 
@@ -134,10 +135,8 @@ export function FinancialMeaningReviewScreen() {
     });
   };
 
-  const title =
-    reviewItem.reviewCandidate.description ??
-    reviewItem.processedSourceEvent.rawBodyPreview ??
-    t("common.unknown");
+  const providerLabel = getReviewQueueProviderLabel(reviewItem.processedSourceEvent, t);
+  const title = reviewItem.reviewCandidate.description ?? providerLabel;
   const subtitleDate =
     reviewItem.reviewCandidate.occurredAt ?? reviewItem.processedSourceEvent.receivedAt;
   const amount = reviewItem.reviewCandidate.amount;
@@ -148,7 +147,7 @@ export function FinancialMeaningReviewScreen() {
       : transactionType === "expense"
         ? accentRed
         : primary;
-  const subject = reviewItem.processedSourceEvent.subject ?? "";
+  const subject = providerLabel;
 
   const handleConvertToTransfer = () => {
     if (reviewItem.processedSourceEvent.transactionId == null) return;

@@ -1,4 +1,4 @@
-import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
+import { readFinancialAccountKind } from "@/features/financial-accounts/display.public";
 import {
   CreditCard,
   Landmark,

@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { fetchOutlookEmailsWithToken } from "@/features/email-capture/services/outlook-adapter";
+import {
+  fetchOutlookEmailByIdWithToken,
+  fetchOutlookEmailsWithToken,
+} from "@/features/email-capture/services/outlook-adapter";
 
 const { mockCaptureWarning } = vi.hoisted(() => ({
   mockCaptureWarning: vi.fn<(...args: any[]) => any>(),
@@ -163,6 +166,40 @@ describe("outlook adapter", () => {
       expect(mockFetch.mock.calls[1]?.[0]).toBe(
         "https://graph.microsoft.com/v1.0/me/messages?page=2"
       );
+    });
+  });
+
+  describe("fetchOutlookEmailByIdWithToken", () => {
+    it("fetches one message by id", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: "msg-1",
+            subject: "Transaction Alert",
+            from: { emailAddress: { address: "bank@example.com" } },
+            body: { content: "<p>Your purchase of $50,000</p>" },
+            receivedDateTime: "2026-03-05T10:00:00Z",
+          }),
+      });
+
+      const email = await fetchOutlookEmailByIdWithToken("access-token", "msg-1");
+
+      expect(email).toMatchObject({
+        externalId: "msg-1",
+        from: "bank@example.com",
+        subject: "Transaction Alert",
+        body: "Your purchase of $50,000",
+      });
+      expect(mockFetch.mock.calls[0]?.[0]).toBe(
+        "https://graph.microsoft.com/v1.0/me/messages/msg-1?$select=id,subject,body,from,receivedDateTime"
+      );
+    });
+
+    it("returns null when the message fetch fails", async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
+
+      await expect(fetchOutlookEmailByIdWithToken("access-token", "missing")).resolves.toBeNull();
     });
   });
 });

@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { RecordAutomatedTransactionInput } from "@/infrastructure/local-ledger/record-transaction";
+import type { RecordAutomatedTransactionInput } from "@/infrastructure/local-ledger/public";
 import { fromPromise } from "@/shared/effect/runtime";
 import { requireCopAmount, requireIsoDate } from "@/shared/types/assertions";
 import { EmailPipelineDeps } from "./runtime";

@@ -1,5 +1,5 @@
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
-import type { TransferSide } from "@/features/transfers/lib/build-transfer";
+import type { TransferSide } from "@/features/transfers/build.public";
 
 export type PickerTarget = "from" | "to";
 

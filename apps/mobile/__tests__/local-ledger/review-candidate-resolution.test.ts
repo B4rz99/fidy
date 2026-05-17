@@ -48,6 +48,11 @@ const pendingTransferCandidate = {
   candidateKind: "transfer" as const,
 };
 
+const pendingUnknownCandidate = {
+  ...pendingTransactionCandidate,
+  candidateKind: "unknown" as const,
+};
+
 const transferCommand: RecordTransferCommand = {
   userId: USER_ID,
   transferId: "transfer-1" as TransferId,
@@ -121,6 +126,48 @@ describe("review candidate resolution", () => {
     ).resolves.toEqual({ ok: true, code: "accepted", recorded: { id: "transfer-1" } });
 
     expect(confirmTransfer).toHaveBeenCalledWith({ ...resolutionInput, command: transferCommand });
+  });
+
+  it("allows unknown candidates to be confirmed as a transaction after user review", async () => {
+    const confirmTransaction = vi.fn<(...args: any[]) => any>().mockResolvedValue({
+      ok: true,
+      recorded: {
+        ok: true,
+        transaction: { id: "tx-1" },
+        events: [],
+      },
+    });
+
+    await expect(
+      confirmReviewCandidateAsTransaction(
+        { ...resolutionInput, command: transactionCommand },
+        {
+          loadCandidate: async () => pendingUnknownCandidate,
+          confirmTransaction,
+        }
+      )
+    ).resolves.toEqual({ ok: true, code: "accepted", recorded: { id: "tx-1" } });
+  });
+
+  it("allows unknown candidates to be confirmed as a transfer after user review", async () => {
+    const confirmTransfer = vi.fn<(...args: any[]) => any>().mockResolvedValue({
+      ok: true,
+      recorded: {
+        code: "recorded",
+        transfer: { id: "transfer-1" },
+        events: [],
+      },
+    });
+
+    await expect(
+      confirmReviewCandidateAsTransfer(
+        { ...resolutionInput, command: transferCommand },
+        {
+          loadCandidate: async () => pendingUnknownCandidate,
+          confirmTransfer,
+        }
+      )
+    ).resolves.toEqual({ ok: true, code: "accepted", recorded: { id: "transfer-1" } });
   });
 
   it("returns transfer commit failures from the atomic confirmation port", async () => {

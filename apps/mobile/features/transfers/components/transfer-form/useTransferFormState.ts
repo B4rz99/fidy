@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { StoredTransaction } from "@/features/transactions/query.public";
-import type { TransferSide } from "@/features/transfers/lib/build-transfer";
+import type { TransferSide } from "@/features/transfers/build.public";
 import type { AccountBalanceMap, PickerTarget } from "./TransferForm.types";
 
 function useTransferFormDraftState() {

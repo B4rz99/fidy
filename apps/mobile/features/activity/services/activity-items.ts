@@ -1,8 +1,8 @@
-import { toStoredTransaction } from "@/features/transactions/lib/build-transaction";
-import type { TransactionRow } from "@/features/transactions/lib/repository";
-import type { StoredTransaction } from "@/features/transactions/schema";
-import { type StoredTransfer, toStoredTransfer } from "@/features/transfers/lib/build-transfer";
-import type { TransferRow } from "@/features/transfers/lib/repository";
+import { toStoredTransaction } from "@/features/transactions/query.public";
+import type { TransactionRow } from "@/features/transactions/query.public";
+import type { StoredTransaction } from "@/features/transactions/query.public";
+import { type StoredTransfer, toStoredTransfer } from "@/features/transfers/build.public";
+import type { TransferRow } from "@/features/transfers/query.public";
 
 export type StoredActivityItem =
   | {

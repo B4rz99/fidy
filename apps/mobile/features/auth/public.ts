@@ -1,4 +1,4 @@
-import { useLocalOnboardingState } from "@/features/onboarding/lib/local-onboarding-state";
+import { useLocalOnboardingState } from "@/features/onboarding/store.public";
 import { requireUserId } from "@/shared/types/assertions";
 import {
   deriveAccountCreatedAt,

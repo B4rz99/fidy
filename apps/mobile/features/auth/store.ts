@@ -1,13 +1,13 @@
 import type { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
-import { clearOnboardingFromStore } from "@/features/onboarding/lib/check-onboarding";
-import { useLocalOnboardingState } from "@/features/onboarding/lib/local-onboarding-state";
+import { clearOnboardingFromStore } from "@/features/onboarding/store.public";
+import { useLocalOnboardingState } from "@/features/onboarding/store.public";
 import {
   clearLocalQaSession,
   type LocalQaProfile,
   type LocalQaSession,
   loadLocalQaSession,
-} from "@/features/qa/local-session";
+} from "@/features/qa/session.public";
 import { getSupabase } from "@/shared/db/supabase";
 import { captureWarning, identifyUser, resetAnalyticsUser } from "@/shared/lib";
 import { readSupabaseSessionTokens, type SupabaseAuthTokens } from "./oauth-callback";
@@ -235,9 +235,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     const transitionVersion = beginAuthTransition();
     set({ isLoading: true });
     try {
-      const { startLocalQaSession: prepareLocalQaSession } = await import(
-        "@/features/qa/start-local-qa-session"
-      );
+      const { startLocalQaSession: prepareLocalQaSession } =
+        await import("@/features/qa/session-start.public");
       const localQaSession = await prepareLocalQaSession(profile);
       if (!isCurrentAuthTransition(transitionVersion)) return;
       identifyUser(localQaSession.userId);

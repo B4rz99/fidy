@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { useCallback, useMemo } from "react";
 import type { ListRenderItemInfo } from "react-native";
-import type { StoredActivityItem } from "@/features/activity/services/create-activity-query-service";
+import type { StoredActivityItem } from "@/features/activity/query.public";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { FlatList, Platform } from "@/shared/components/rn";
 import { EmptyTransactions } from "../EmptyTransactions";

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { NotificationData } from "@/features/capture-sources/schema";
 import { processNotification } from "@/features/capture-sources/services/notification-pipeline";
+import { toIsoDate } from "@/shared/lib/format-date";
 import type { FinancialAccountId } from "@/shared/types/branded";
 
 const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
@@ -15,7 +16,7 @@ const mockCaptureFingerprint = vi.fn<(...args: any[]) => any>().mockReturnValue(
 const mockRecordAutomatedTransactionWithLocalLedger = vi.fn<(...args: any[]) => any>();
 const mockPersistProcessedSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockPersistCommittedCaptureSourceEvent = vi.fn<(...args: any[]) => any>();
-const mockPersistReviewCandidateCapture = vi.fn<(...args: any[]) => any>();
+const mockRecordReviewCandidateCaptureWithLocalLedger = vi.fn<(...args: any[]) => any>();
 const mockStripPii = vi.fn<(...args: any[]) => any>().mockImplementation((t: string) => t);
 const mockEnsureDefaultFinancialAccount = vi.fn<(...args: any[]) => any>().mockReturnValue({
   id: "fa-default-user-1" as FinancialAccountId,
@@ -83,18 +84,17 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: any[]) => mockInsertTransaction(...args),
 }));
 
-vi.mock("@/infrastructure/local-ledger/record-transaction", () => ({
+vi.mock("@/infrastructure/local-ledger/public", () => ({
   recordAutomatedTransactionWithLocalLedger: (...args: any[]) =>
     mockRecordAutomatedTransactionWithLocalLedger(...args),
-}));
-
-vi.mock("@/infrastructure/local-ledger/source-events", () => ({
-  persistProcessedSourceEvent: (...args: any[]) => mockPersistProcessedSourceEvent(...args),
-  persistCommittedCaptureSourceEvent: (...args: any[]) =>
+  recordProcessedCaptureSourceEventWithLocalLedger: (...args: any[]) =>
+    mockPersistProcessedSourceEvent(...args),
+  recordCommittedCaptureSourceEventWithLocalLedger: (...args: any[]) =>
     mockPersistCommittedCaptureSourceEvent(...args),
-  persistCommittedCaptureSourceEventInTransaction: (...args: any[]) =>
+  recordCommittedCaptureSourceEventInTransactionWithLocalLedger: (...args: any[]) =>
     mockPersistCommittedCaptureSourceEvent(...args),
-  persistReviewCandidateCapture: (...args: any[]) => mockPersistReviewCandidateCapture(...args),
+  recordReviewCandidateCaptureWithLocalLedger: (...args: any[]) =>
+    mockRecordReviewCandidateCaptureWithLocalLedger(...args),
 }));
 
 vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
@@ -239,7 +239,7 @@ describe("processNotification", () => {
     mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
     mockPersistProcessedSourceEvent.mockReturnValue(undefined);
     mockPersistCommittedCaptureSourceEvent.mockReturnValue(undefined);
-    mockPersistReviewCandidateCapture.mockReturnValue(undefined);
+    mockRecordReviewCandidateCaptureWithLocalLedger.mockResolvedValue({ success: true });
   });
 
   it("saves transaction when LLM parses a notification with regex hints", async () => {
@@ -357,7 +357,7 @@ describe("processNotification", () => {
 
     expect(result.saved).toBe(false);
     expect(mockInsertTransaction).not.toHaveBeenCalled();
-    expect(mockPersistReviewCandidateCapture).toHaveBeenCalledWith(
+    expect(mockRecordReviewCandidateCaptureWithLocalLedger).toHaveBeenCalledWith(
       expect.objectContaining({
         db: mockDb,
         status: "needs_review",
@@ -369,6 +369,46 @@ describe("processNotification", () => {
       })
     );
     expect(mockInsertMerchantRule).not.toHaveBeenCalled();
+  });
+
+  it("persists local-future notification parses as needs_review", async () => {
+    const now = new Date("2026-05-18T02:00:00.000Z");
+    const futureDate = toIsoDate(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+    mockParseNotificationApi.mockResolvedValueOnce({
+      type: "expense",
+      amount: 35000,
+      categoryId: "other",
+      description: "Compra programada",
+      date: futureDate,
+      confidence: 0.95,
+    });
+
+    try {
+      const result = await processNotification(
+        mockDb,
+        USER_ID,
+        makeNotification({ text: "Compra programada por $35,000" })
+      );
+
+      expect(result.saved).toBe(false);
+      expect(mockInsertTransaction).not.toHaveBeenCalled();
+      expect(mockRecordReviewCandidateCaptureWithLocalLedger).toHaveBeenCalledWith(
+        expect.objectContaining({
+          db: mockDb,
+          status: "needs_review",
+          failureReason: "future_dated",
+          candidate: expect.objectContaining({
+            amount: 35000,
+            confidence: 0.95,
+          }),
+        })
+      );
+      expect(mockInsertMerchantRule).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("skips when fingerprint already processed", async () => {

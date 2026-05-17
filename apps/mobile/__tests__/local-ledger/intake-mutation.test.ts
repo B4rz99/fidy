@@ -19,6 +19,8 @@ import { createGenericWriteThroughMutationModule } from "@/shared/mutations";
 import type { MutationCommand, MutationDb } from "@/shared/mutations/write-through";
 import type {
   CopAmount,
+  CaptureEvidenceId,
+  IsoDate,
   IsoDateTime,
   ProcessedSourceEventId,
   ReviewCandidateCaptureEvidenceId,
@@ -98,7 +100,6 @@ const makeProcessedSourceEventRow = () => ({
   processedAt: NOW,
   createdAt: NOW,
   updatedAt: NOW,
-  deletedAt: null,
 });
 
 const makeReviewCandidateRow = () => ({
@@ -107,14 +108,13 @@ const makeReviewCandidateRow = () => ({
   processedSourceEventId: "pse-1" as ProcessedSourceEventId,
   status: "pending",
   candidateKind: "transaction",
-  occurredAt: "2026-04-12T09:00:00.000Z" as IsoDateTime,
+  occurredAt: "2026-04-12" as IsoDate,
   amount: 12500 as CopAmount,
   currency: "COP",
   description: "Low confidence cafe capture",
   confidence: 0.42,
   createdAt: NOW,
   updatedAt: NOW,
-  deletedAt: null,
 });
 
 const makeEvidenceRow = () => ({
@@ -122,23 +122,12 @@ const makeEvidenceRow = () => ({
   userId: "user-1" as UserId,
   sourceFamily: "email",
   evidenceType: "counterparty_hint",
+  linkId: "rcce-1" as ReviewCandidateCaptureEvidenceId,
   scope: "merchant",
   value: "Cafe",
-  transactionId: null,
-  transferId: null,
   processedSourceEventId: "pse-1" as ProcessedSourceEventId,
   createdAt: NOW,
   updatedAt: NOW,
-  deletedAt: null,
-});
-
-const makeEvidenceLinkRow = () => ({
-  id: "rcce-1" as ReviewCandidateCaptureEvidenceId,
-  userId: "user-1" as UserId,
-  reviewCandidateId: "rc-1" as ReviewCandidateId,
-  captureEvidenceId: "ce-1" as never,
-  createdAt: NOW,
-  deletedAt: null,
 });
 
 function makeCreateReviewCandidateCommand(
@@ -146,10 +135,9 @@ function makeCreateReviewCandidateCommand(
 ): CreateReviewCandidateMutationCommand {
   return {
     kind: "localLedger.reviewCandidate.create",
-    processedSourceEventRow: makeProcessedSourceEventRow(),
-    reviewCandidateRow: makeReviewCandidateRow(),
-    evidenceRows: [makeEvidenceRow()],
-    evidenceLinkRows: [makeEvidenceLinkRow()],
+    sourceEvent: makeProcessedSourceEventRow(),
+    candidate: makeReviewCandidateRow(),
+    evidence: [makeEvidenceRow()],
     ...overrides,
   };
 }
@@ -157,14 +145,14 @@ function makeCreateReviewCandidateCommand(
 const makeCreateReviewCandidateInput = () =>
   ({
     commandId: "cmd-1" as LocalLedgerCommandId,
-    userId: "user-1",
+    userId: "user-1" as UserId,
     source: {
       processedSourceEventId: "pse-1" as LocalLedgerProcessedSourceEventId,
       sourceFamily: "email",
       sourceId: "gmail-primary" as LocalLedgerSourceId,
       sourceEventId: "gmail-message-1",
-      receivedAt: "2026-04-12T09:00:00.000Z",
-      processedAt: "2026-04-12T10:00:00.000Z",
+      receivedAt: "2026-04-12T09:00:00.000Z" as IsoDateTime,
+      processedAt: "2026-04-12T10:00:00.000Z" as IsoDateTime,
       status: "needs_review",
       failureReason: null,
     },
@@ -172,22 +160,22 @@ const makeCreateReviewCandidateInput = () =>
       id: "rc-1" as LocalLedgerReviewCandidateId,
       candidateKind: "transaction",
       status: "pending",
-      occurredAt: "2026-04-12T09:00:00.000Z",
+      occurredAt: "2026-04-12" as IsoDate,
       money: { amount: 12500 as CopAmount, currency: "COP" },
       description: "Low confidence cafe capture",
       confidence: 0.42,
     },
     evidence: [
       {
-        id: "ce-1",
-        linkId: "rcce-1",
+        id: "ce-1" as CaptureEvidenceId,
+        linkId: "rcce-1" as ReviewCandidateCaptureEvidenceId,
         sourceFamily: "email",
         evidenceType: "counterparty_hint",
         scope: "merchant",
         value: "Cafe",
       },
     ],
-    now: "2026-04-12T10:00:00.000Z",
+    now: "2026-04-12T10:00:00.000Z" as IsoDateTime,
   }) as const;
 
 describe("local ledger intake mutations", () => {
@@ -205,30 +193,21 @@ describe("local ledger intake mutations", () => {
     expect(commit).toHaveBeenCalledWith(
       expect.objectContaining({
         kind: "localLedger.reviewCandidate.create",
-        processedSourceEventRow: expect.objectContaining({
+        sourceEvent: expect.objectContaining({
           id: "pse-1",
           status: "needs_review",
         }),
-        reviewCandidateRow: expect.objectContaining({
+        candidate: expect.objectContaining({
           id: "rc-1",
           processedSourceEventId: "pse-1",
           status: "pending",
           amount: 12500,
         }),
-        evidenceRows: [
+        evidence: [
           expect.objectContaining({
             id: "ce-1",
-            transactionId: null,
-            transferId: null,
+            linkId: "rcce-1",
             processedSourceEventId: "pse-1",
-          }),
-        ],
-        evidenceLinkRows: [
-          expect.objectContaining({
-            id: "rcce-1",
-            userId: "user-1",
-            reviewCandidateId: "rc-1",
-            captureEvidenceId: "ce-1",
           }),
         ],
       })
@@ -315,15 +294,11 @@ describe("local ledger intake mutations", () => {
     const module = createGenericWriteThroughMutationModule(db as never, applyLocalLedgerCommand);
 
     const duplicateLink = {
-      id: "rcce-2" as ReviewCandidateCaptureEvidenceId,
-      userId: "user-1" as UserId,
-      reviewCandidateId: "rc-1" as ReviewCandidateId,
-      captureEvidenceId: "ce-1" as never,
-      createdAt: NOW,
-      deletedAt: null,
+      ...makeEvidenceRow(),
+      linkId: "rcce-2" as ReviewCandidateCaptureEvidenceId,
     };
     const command = makeCreateReviewCandidateCommand({
-      evidenceLinkRows: [makeCreateReviewCandidateCommand().evidenceLinkRows[0]!, duplicateLink],
+      evidence: [makeCreateReviewCandidateCommand().evidence[0]!, duplicateLink],
     });
 
     const result = await module.commit(command);

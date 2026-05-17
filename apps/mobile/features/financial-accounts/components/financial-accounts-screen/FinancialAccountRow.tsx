@@ -1,7 +1,7 @@
 import {
   canFinancialAccountHaveIdentifiers,
   readFinancialAccountKind,
-} from "@/features/financial-accounts/lib/kind";
+} from "@/features/financial-accounts/display.public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/schema";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";

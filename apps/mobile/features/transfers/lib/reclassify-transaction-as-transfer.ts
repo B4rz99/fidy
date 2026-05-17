@@ -1,11 +1,11 @@
-import { relinkCaptureEvidenceToTransfer } from "@/features/capture-evidence/public";
-import { markProcessedSourceEventReclassifiedAsTransfer } from "@/features/email-capture/transfer-reclassification.public";
 import {
-  getTransactionById,
-  markTransactionSuperseded,
-} from "@/features/transactions/transfer-reclassification.public";
-import { saveTransferStorageRow } from "@/infrastructure/local-ledger/record-transfer";
-import { generateTransferId, toIsoDateTime } from "@/shared/lib.public";
+  reclassifyTransactionAsTransfer as reclassifyTransactionWithLocalLedger,
+  type ReclassifyTransactionAsTransferError as LocalLedgerReclassificationError,
+} from "@/infrastructure/local-ledger/public";
+import type { LocalLedgerTransfer } from "@/local-ledger/public";
+import type { AnyDb } from "@/shared/db";
+import { toIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
+import { generateTransferId } from "@/shared/lib.public";
 import type {
   IsoDateTime,
   ProcessedSourceEventId,
@@ -19,9 +19,7 @@ import {
   type StoredTransfer,
   type TransferBuildError,
   type TransferSide,
-  toTransferRow,
 } from "./build-transfer";
-import type { TransferRow } from "./repository";
 
 type ReclassifyTransactionAsTransferInput = {
   readonly userId: UserId;
@@ -38,52 +36,38 @@ type ReclassifyTransactionAsTransferInput = {
 type ReclassifyTransactionAsTransferDeps = {
   readonly now?: () => Date;
   readonly createId?: () => TransferId;
-  readonly saveTransferRow?: (
-    db: Parameters<typeof saveTransferStorageRow>[0],
-    row: TransferRow
-  ) => void;
-  readonly loadTransactionById?: typeof getTransactionById;
-  readonly saveTransactionRow?: typeof markTransactionSuperseded;
-  readonly relinkEvidenceToTransfer?: typeof relinkCaptureEvidenceToTransfer;
-  readonly saveProcessedSourceEventStatus?: typeof markProcessedSourceEventReclassifiedAsTransfer;
 };
 
 export type ReclassifyTransactionAsTransferError =
   | TransferBuildError
-  | "reviewCandidateRequired"
-  | "transactionNotFound";
+  | LocalLedgerReclassificationError;
 
 export type ReclassifyTransactionAsTransferResult =
   | { success: true; transfer: StoredTransfer }
   | { success: false; error: ReclassifyTransactionAsTransferError };
 
+const toLocalLedgerTransfer = (transfer: StoredTransfer): LocalLedgerTransfer => ({
+  id: transfer.id,
+  userId: transfer.userId,
+  amount: transfer.amount,
+  fromSide: transfer.fromSide,
+  toSide: transfer.toSide,
+  description: transfer.description,
+  date: toIsoDate(transfer.date),
+  createdAt: toIsoDateTime(transfer.createdAt),
+  updatedAt: toIsoDateTime(transfer.updatedAt),
+  voidedAt: transfer.deletedAt ? toIsoDateTime(transfer.deletedAt) : null,
+  source: transfer.source,
+});
+
 export function reclassifyTransactionAsTransfer(
-  db: Parameters<typeof saveTransferStorageRow>[0],
+  db: AnyDb,
   input: ReclassifyTransactionAsTransferInput,
   {
     now = () => new Date(),
     createId = generateTransferId,
-    saveTransferRow = saveTransferStorageRow,
-    loadTransactionById = getTransactionById,
-    saveTransactionRow = markTransactionSuperseded,
-    relinkEvidenceToTransfer = relinkCaptureEvidenceToTransfer,
-    saveProcessedSourceEventStatus = markProcessedSourceEventReclassifiedAsTransfer,
   }: ReclassifyTransactionAsTransferDeps = {}
 ): ReclassifyTransactionAsTransferResult {
-  const existingTransaction = loadTransactionById(db, input.transactionId);
-
-  if (
-    existingTransaction == null ||
-    existingTransaction.userId !== input.userId ||
-    existingTransaction.voidedAt != null ||
-    existingTransaction.supersededAt != null
-  ) {
-    return { success: false, error: "transactionNotFound" };
-  }
-  if (input.processedSourceEventId && !input.reviewCandidateId) {
-    return { success: false, error: "reviewCandidateRequired" };
-  }
-
   const nowDate = now();
   const built = buildTransfer({
     input: {
@@ -99,42 +83,17 @@ export function reclassifyTransactionAsTransfer(
     source: "capture-match",
   });
 
-  if (!built.success) {
-    return built;
-  }
+  if (!built.success) return built;
 
   const updatedAt = toIsoDateTime(nowDate) as IsoDateTime;
-
-  db.transaction((tx) => {
-    saveTransferRow(tx, toTransferRow(built.transfer));
-
-    saveTransactionRow(tx, {
-      ...existingTransaction,
-      supersededAt: updatedAt,
-      supersededByTransferId: built.transfer.id,
-      updatedAt,
-    });
-
-    relinkEvidenceToTransfer(tx, {
-      transactionId: existingTransaction.id,
-      transferId: built.transfer.id,
-      updatedAt,
-    });
-
-    if (input.processedSourceEventId && input.reviewCandidateId) {
-      saveProcessedSourceEventStatus({
-        db: tx,
-        id: input.processedSourceEventId,
-        userId: input.userId,
-        reviewCandidateId: input.reviewCandidateId,
-        transactionId: existingTransaction.id,
-        updatedAt,
-      });
-    }
+  const result = reclassifyTransactionWithLocalLedger(db, {
+    userId: input.userId,
+    transactionId: input.transactionId,
+    processedSourceEventId: input.processedSourceEventId,
+    reviewCandidateId: input.reviewCandidateId,
+    transfer: toLocalLedgerTransfer(built.transfer),
+    updatedAt,
   });
 
-  return {
-    success: true,
-    transfer: built.transfer,
-  };
+  return result.success ? { success: true, transfer: built.transfer } : result;
 }

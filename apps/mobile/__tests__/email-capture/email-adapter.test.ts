@@ -551,6 +551,43 @@ describe("createAdapter", () => {
       expect(refreshBody).toContain("scope=read+User.Read");
     });
   });
+
+  describe("fetchEmailById", () => {
+    it("returns null when no fetch-by-id function is configured", async () => {
+      const adapter = createAdapter(testConfig, stubFetch);
+
+      await expect(adapter.fetchEmailById("client-id", "msg-1")).resolves.toBeNull();
+      expect(mockGetItemAsync).not.toHaveBeenCalled();
+    });
+
+    it("delegates to fetchByIdFn when token is valid", async () => {
+      mockGetItemAsync.mockResolvedValueOnce("valid-token");
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
+
+      const fetchByIdFn = vi.fn<(...args: any[]) => any>().mockResolvedValue({
+        externalId: "msg-1",
+        from: "bank@example.com",
+        subject: "Alert",
+        body: "Body",
+        receivedAt: "2026-03-01T00:00:00Z",
+        provider: "gmail",
+      });
+      const adapter = createAdapter(testConfig, stubFetch, fetchByIdFn);
+      const result = await adapter.fetchEmailById("client-id", "msg-1");
+
+      expect(fetchByIdFn).toHaveBeenCalledWith("valid-token", "msg-1");
+      expect(result?.body).toBe("Body");
+    });
+
+    it("returns null when fetch-by-id has no usable token", async () => {
+      mockGetItemAsync.mockResolvedValueOnce(null);
+      const fetchByIdFn = vi.fn<(...args: any[]) => any>();
+      const adapter = createAdapter(testConfig, stubFetch, fetchByIdFn);
+
+      await expect(adapter.fetchEmailById("client-id", "msg-1")).resolves.toBeNull();
+      expect(fetchByIdFn).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe("getAdapter", () => {

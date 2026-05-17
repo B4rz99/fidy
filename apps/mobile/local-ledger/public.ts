@@ -19,6 +19,25 @@ export type {
   UserId,
 } from "./domain/public";
 export {
+  isTransactionSource,
+  normalizeTransactionSource,
+  TRANSACTION_SOURCES,
+  type LocalLedgerTransactionSource,
+} from "./domain/transaction-source";
+export {
+  createAmendTransactionUseCase,
+  createVoidTransactionUseCase,
+  type AmendableTransaction,
+  type AmendTransaction,
+  type AmendTransactionCommand,
+  type AmendTransactionPorts,
+  type AmendTransactionResult,
+  type VoidTransaction,
+  type VoidTransactionCommand,
+  type VoidTransactionPorts,
+  type VoidTransactionResult,
+} from "./use-cases/amend-transaction.public";
+export {
   createReviewCandidateUseCase,
   type CreateReviewCandidate,
   type CreateReviewCandidateCommand,
@@ -45,12 +64,13 @@ export {
 } from "./use-cases/reclassify-transactions-as-transfer.public";
 export {
   createRecordTransfer,
-  recordTransaction,
+  createRecordTransactionUseCase,
   type RecordTransactionAccepted,
   type RecordTransactionAccountAttributionState,
   type RecordTransactionCommand,
+  type RecordTransaction,
+  type RecordTransactionDependencies,
   type RecordTransactionEvent,
-  type RecordTransactionInput,
   type RecordTransactionPorts,
   type RecordTransactionRejectCode,
   type RecordTransactionResult,

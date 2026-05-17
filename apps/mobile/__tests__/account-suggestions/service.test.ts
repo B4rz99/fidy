@@ -719,7 +719,7 @@ describe("account suggestion service", () => {
       now: () => "2026-04-19T12:00:00.000Z" as IsoDateTime,
       createAccountId: () => "fa-created" as FinancialAccountId,
       createIdentifierId: () => "fai-created" as never,
-      upsertTransaction: () => {
+      updateTransactionAccountAttribution: () => {
         throw new Error("transaction write failed");
       },
     });

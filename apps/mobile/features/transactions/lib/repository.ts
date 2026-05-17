@@ -1,5 +1,4 @@
 import { and, between, desc, eq, like, or, sql, sum } from "drizzle-orm";
-import type { TransactionStorageWriteRow } from "@/infrastructure/local-ledger/transaction-storage";
 import type { AnyDb } from "@/shared/db/client";
 import { transactions } from "@/shared/db/schema";
 import type {
@@ -11,6 +10,8 @@ import type {
   UserId,
 } from "@/shared/types/branded";
 import { getActiveTransactionConditions } from "./active-transaction-conditions";
+
+type TransactionStorageRow = typeof transactions.$inferInsert;
 
 type TransactionsPageInput = {
   readonly db: AnyDb;
@@ -32,7 +33,22 @@ type RecentTransactionsInput = {
   readonly previousMonth: Month;
 };
 
-export type TransactionRow = TransactionStorageWriteRow;
+export type TransactionRow = Omit<
+  TransactionStorageRow,
+  | "accountId"
+  | "accountAttributionState"
+  | "counterpartyName"
+  | "supersededAt"
+  | "supersededByTransferId"
+  | "source"
+> & {
+  readonly accountId?: TransactionStorageRow["accountId"];
+  readonly accountAttributionState?: TransactionStorageRow["accountAttributionState"];
+  readonly counterpartyName?: TransactionStorageRow["counterpartyName"];
+  readonly supersededAt?: TransactionStorageRow["supersededAt"];
+  readonly supersededByTransferId?: TransactionStorageRow["supersededByTransferId"];
+  readonly source?: TransactionStorageRow["source"];
+};
 
 export function getAllTransactions(db: AnyDb, userId: UserId): TransactionRow[] {
   return db

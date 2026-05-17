@@ -6,6 +6,7 @@ import {
 import type { FinancialAccountRow } from "@/features/financial-accounts/write.public";
 import { currentIsoDateTimeEffect } from "@/shared/effect/clock";
 import { fromPromise } from "@/shared/effect/runtime";
+import { toIsoDate } from "@/shared/lib/format-date";
 import { generateProcessedSourceEventId, generateTransactionId } from "@/shared/lib/generate-id";
 import { assertIsoDateTime, requireIsoDateTime } from "@/shared/types/assertions";
 import type { IsoDateTime } from "@/shared/types/branded";
@@ -27,6 +28,7 @@ import { trackSavedTransactionEffect } from "./transaction-tracking";
 import type {
   CreateEmailPipelineServiceDeps,
   EmailTransactionContext,
+  PersistedTransactionContext,
   RetryTransactionContext,
   SaveRetryTransactionInput,
   SaveTransactionInput,
@@ -68,6 +70,9 @@ function persistReviewCandidateBundleEffect(context: EmailTransactionContext) {
     yield* fromPromise(() => commitReviewCandidate(context, deps));
   });
 }
+
+const isFutureDatedAutomatedCapture = (context: PersistedTransactionContext): boolean =>
+  context.parsed.date > toIsoDate(new Date(context.now));
 
 function persistTransactionBundleEffect(context: EmailTransactionContext) {
   return Effect.gen(function* () {
@@ -185,9 +190,9 @@ function createRetryTransactionContextEffect(input: SaveRetryTransactionInput) {
 export function saveTransactionEffect(input: SaveTransactionInput) {
   return Effect.gen(function* () {
     const context = yield* createEmailTransactionContextEffect(input);
-    if (context.status === "needs_review") {
+    if (context.status === "needs_review" || isFutureDatedAutomatedCapture(context)) {
       yield* persistReviewCandidateBundleEffect(context);
-      return context.txId;
+      return "needs_review" as const;
     }
 
     yield* persistTransactionBundleEffect(context);
@@ -195,14 +200,14 @@ export function saveTransactionEffect(input: SaveTransactionInput) {
       parsed: context.parsed,
       categoryId: context.categoryId,
     });
-    return context.txId;
+    return "success" as const;
   });
 }
 
 export function saveRetryTransactionEffect(input: SaveRetryTransactionInput) {
   return Effect.gen(function* () {
     const context = yield* createRetryTransactionContextEffect(input);
-    if (context.status === "needs_review") {
+    if (context.status === "needs_review" || isFutureDatedAutomatedCapture(context)) {
       yield* persistReviewCandidateEffect({
         ...context,
       });

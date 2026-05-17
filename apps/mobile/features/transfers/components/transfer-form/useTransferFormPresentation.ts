@@ -1,5 +1,5 @@
-import { getDateLabel } from "@/features/transactions/lib/format-date";
-import type { TransferSide } from "@/features/transfers/lib/build-transfer";
+import { getDateLabel } from "@/features/transactions/display.public";
+import type { TransferSide } from "@/features/transfers/build.public";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { parseDigitsToAmount } from "@/shared/lib";

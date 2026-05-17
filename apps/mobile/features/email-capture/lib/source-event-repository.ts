@@ -84,7 +84,7 @@ export async function markSourceEventForRetry(input: {
 }
 
 export async function markSourceEventPermanentlyFailed(db: AnyDb, id: ProcessedSourceEventId) {
-  await getProcessedSourceEventUpdateQuery(db, id, { status: "failed", rawBody: null });
+  await getProcessedSourceEventUpdateQuery(db, id, { status: "failed" });
 }
 
 export async function markSourceEventRetrySuccess(input: {
@@ -98,7 +98,6 @@ export async function markSourceEventRetrySuccess(input: {
     status: input.status,
     transactionId: input.transactionId,
     confidence: input.confidence,
-    rawBody: null,
   });
 }
 
@@ -107,13 +106,10 @@ export async function updateProcessedSourceEventStatus(input: {
   readonly id: ProcessedSourceEventId;
   readonly status: string;
   readonly transactionId: TransactionId | null;
-  readonly rawBody?: string | null;
 }) {
-  const rawBodyFields = input.rawBody === undefined ? {} : { rawBody: input.rawBody };
   await getProcessedSourceEventUpdateQuery(input.db, input.id, {
     status: input.status,
     transactionId: input.transactionId,
-    ...rawBodyFields,
   });
 }
 export function updateProcessedSourceEventStatusInTransaction(input: {

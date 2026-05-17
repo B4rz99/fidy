@@ -1,5 +1,5 @@
 import { and, eq, isNull, lte, sql } from "drizzle-orm";
-import { getActiveTransactionConditions } from "@/features/transactions/lib/active-transaction-conditions";
+import { getActiveTransactionConditions } from "@/features/transactions/query.public";
 import type { AnyDb } from "@/shared/db/client";
 import { financialAccounts, openingBalances, transactions, transfers } from "@/shared/db/schema";
 import type { CopAmount, FinancialAccountId, IsoDate, UserId } from "@/shared/types/branded";
@@ -103,7 +103,7 @@ function getOutgoingTransferBalanceEffects(
     .where(
       and(
         eq(transfers.userId, userId),
-        isNull(transfers.deletedAt),
+        isNull(transfers.voidedAt),
         lte(transfers.date, asOfDate),
         sql`${transfers.fromAccountId} is not null`
       )
@@ -130,7 +130,7 @@ function getIncomingTransferBalanceEffects(
     .where(
       and(
         eq(transfers.userId, userId),
-        isNull(transfers.deletedAt),
+        isNull(transfers.voidedAt),
         lte(transfers.date, asOfDate),
         sql`${transfers.toAccountId} is not null`
       )

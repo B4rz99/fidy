@@ -24,7 +24,6 @@ type ReviewCandidateContext = Pick<
   "db" | "userId" | "parsed" | "categoryId" | "now"
 > & {
   readonly email: {
-    readonly subject?: string | null;
     readonly externalId: string;
     readonly provider: string;
     readonly from?: string;
@@ -54,7 +53,6 @@ const toReviewCandidateInput = (
     processedAt: context.now,
     status: "needs_review",
     failureReason: null,
-    subject: context.email.subject ?? null,
     retryCount: context.email.retryCount ?? 0,
     nextRetryAt: null,
     transactionId: null,

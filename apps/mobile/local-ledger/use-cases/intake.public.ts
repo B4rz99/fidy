@@ -6,6 +6,18 @@ import type {
   LocalLedgerReviewCandidate,
   LocalLedgerSourceId,
 } from "../domain/public";
+import type {
+  CaptureEvidenceId,
+  CategoryId,
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  ProcessedSourceEventId,
+  ReviewCandidateCaptureEvidenceId,
+  ReviewCandidateId,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 export type IntakeLocalLedgerCandidate = {
   readonly commandId: LocalLedgerCommandId;
@@ -25,87 +37,73 @@ export type IntakeLocalLedgerCandidateHandler = (
 
 export type CreateReviewCandidateCommand = {
   readonly kind: "localLedger.reviewCandidate.create";
-  readonly processedSourceEventRow: {
-    readonly id: string;
-    readonly userId: string;
+  readonly sourceEvent: {
+    readonly id: ProcessedSourceEventId;
+    readonly userId: UserId;
     readonly sourceFamily: string;
     readonly sourceId: string;
     readonly sourceEventId: string;
     readonly status: LocalLedgerProcessedSourceEventStatus;
     readonly failureReason: string | null;
-    readonly subject?: string | null;
     readonly retryCount?: number;
-    readonly nextRetryAt?: string | null;
-    readonly transactionId?: string | null;
+    readonly nextRetryAt?: IsoDateTime | null;
+    readonly transactionId?: TransactionId | null;
     readonly confidence?: number | null;
-    readonly receivedAt: string;
-    readonly processedAt: string;
-    readonly createdAt: string;
-    readonly updatedAt: string;
-    readonly deletedAt: string | null;
+    readonly receivedAt: IsoDateTime;
+    readonly processedAt: IsoDateTime;
+    readonly createdAt: IsoDateTime;
+    readonly updatedAt: IsoDateTime;
   };
-  readonly reviewCandidateRow: {
-    readonly id: string;
-    readonly userId: string;
-    readonly processedSourceEventId: string;
+  readonly candidate: {
+    readonly id: ReviewCandidateId;
+    readonly userId: UserId;
+    readonly processedSourceEventId: ProcessedSourceEventId;
     readonly status: LocalLedgerReviewCandidate["status"];
     readonly candidateKind: LocalLedgerReviewCandidate["candidateKind"];
-    readonly occurredAt: string | null;
-    readonly amount: number | null;
+    readonly occurredAt: IsoDate | null;
+    readonly amount: CopAmount | null;
     readonly currency: "COP";
     readonly transactionType?: "expense" | "income" | null;
-    readonly categoryId?: string | null;
+    readonly categoryId?: CategoryId | null;
     readonly description: string | null;
     readonly confidence: number | null;
-    readonly createdAt: string;
-    readonly updatedAt: string;
-    readonly deletedAt: string | null;
+    readonly createdAt: IsoDateTime;
+    readonly updatedAt: IsoDateTime;
   };
-  readonly evidenceRows: readonly {
-    readonly id: string;
-    readonly userId: string;
+  readonly evidence: readonly {
+    readonly id: CaptureEvidenceId;
+    readonly linkId: ReviewCandidateCaptureEvidenceId;
+    readonly userId: UserId;
     readonly sourceFamily: string;
     readonly evidenceType: string;
     readonly scope: string;
     readonly value: string;
-    readonly transactionId: null;
-    readonly transferId: null;
-    readonly processedSourceEventId: string;
-    readonly createdAt: string;
-    readonly updatedAt: string;
-    readonly deletedAt: string | null;
-  }[];
-  readonly evidenceLinkRows: readonly {
-    readonly id: string;
-    readonly userId: string;
-    readonly reviewCandidateId: string;
-    readonly captureEvidenceId: string;
-    readonly createdAt: string;
-    readonly deletedAt: string | null;
+    readonly processedSourceEventId: ProcessedSourceEventId;
+    readonly createdAt: IsoDateTime;
+    readonly updatedAt: IsoDateTime;
   }[];
 };
 
 export type CreateReviewCandidateInput = {
   readonly commandId: LocalLedgerCommandId;
-  readonly userId: string;
+  readonly userId: UserId;
   readonly source: {
     readonly processedSourceEventId: LocalLedgerProcessedSourceEventId;
     readonly sourceFamily: string;
     readonly sourceId: LocalLedgerSourceId;
     readonly sourceEventId: string;
-    readonly receivedAt: string;
-    readonly processedAt: string;
+    readonly receivedAt: IsoDateTime;
+    readonly processedAt: IsoDateTime;
     readonly status: LocalLedgerProcessedSourceEventStatus;
     readonly failureReason: string | null;
-    readonly subject?: string | null;
     readonly retryCount?: number;
-    readonly nextRetryAt?: string | null;
-    readonly transactionId?: string | null;
+    readonly nextRetryAt?: IsoDateTime | null;
+    readonly transactionId?: TransactionId | null;
     readonly confidence?: number | null;
   };
   readonly candidate: LocalLedgerReviewCandidate;
   readonly evidence: readonly LocalLedgerCaptureEvidence[];
-  readonly now: string;
+  readonly now: IsoDateTime;
 };
 
 export type CreateReviewCandidateCommitPort = {
@@ -121,7 +119,7 @@ export type CreateReviewCandidate = (
   input: CreateReviewCandidateInput
 ) => Promise<{ readonly success: true } | { readonly success: false; readonly error: string }>;
 
-const toProcessedSourceEventRow = (input: CreateReviewCandidateInput) => ({
+const toProcessedSourceEventIntent = (input: CreateReviewCandidateInput) => ({
   id: input.source.processedSourceEventId,
   userId: input.userId,
   sourceFamily: input.source.sourceFamily,
@@ -129,7 +127,6 @@ const toProcessedSourceEventRow = (input: CreateReviewCandidateInput) => ({
   sourceEventId: input.source.sourceEventId,
   status: input.source.status,
   failureReason: input.source.failureReason,
-  subject: input.source.subject,
   retryCount: input.source.retryCount,
   nextRetryAt: input.source.nextRetryAt,
   transactionId: input.source.transactionId,
@@ -138,12 +135,11 @@ const toProcessedSourceEventRow = (input: CreateReviewCandidateInput) => ({
   processedAt: input.source.processedAt,
   createdAt: input.now,
   updatedAt: input.now,
-  deletedAt: null,
 });
 
-const toReviewCandidateRow = (
+const toReviewCandidateIntent = (
   input: CreateReviewCandidateInput
-): CreateReviewCandidateCommand["reviewCandidateRow"] => ({
+): CreateReviewCandidateCommand["candidate"] => ({
   id: input.candidate.id,
   userId: input.userId,
   processedSourceEventId: input.source.processedSourceEventId,
@@ -158,31 +154,19 @@ const toReviewCandidateRow = (
   confidence: input.candidate.confidence,
   createdAt: input.now,
   updatedAt: input.now,
-  deletedAt: null,
 });
 
-const toEvidenceRow = (input: CreateReviewCandidateInput, row: LocalLedgerCaptureEvidence) => ({
+const toEvidenceIntent = (input: CreateReviewCandidateInput, row: LocalLedgerCaptureEvidence) => ({
   id: row.id,
+  linkId: row.linkId,
   userId: input.userId,
   sourceFamily: row.sourceFamily,
   evidenceType: row.evidenceType,
   scope: row.scope,
   value: row.value,
-  transactionId: null,
-  transferId: null,
   processedSourceEventId: input.source.processedSourceEventId,
   createdAt: input.now,
   updatedAt: input.now,
-  deletedAt: null,
-});
-
-const toEvidenceLinkRow = (input: CreateReviewCandidateInput, row: LocalLedgerCaptureEvidence) => ({
-  id: row.linkId,
-  userId: input.userId,
-  reviewCandidateId: input.candidate.id,
-  captureEvidenceId: row.id,
-  createdAt: input.now,
-  deletedAt: null,
 });
 
 export function toCreateReviewCandidateCommand(
@@ -190,10 +174,9 @@ export function toCreateReviewCandidateCommand(
 ): CreateReviewCandidateCommand {
   return {
     kind: "localLedger.reviewCandidate.create",
-    processedSourceEventRow: toProcessedSourceEventRow(input),
-    reviewCandidateRow: toReviewCandidateRow(input),
-    evidenceRows: input.evidence.map((row) => toEvidenceRow(input, row)),
-    evidenceLinkRows: input.evidence.map((row) => toEvidenceLinkRow(input, row)),
+    sourceEvent: toProcessedSourceEventIntent(input),
+    candidate: toReviewCandidateIntent(input),
+    evidence: input.evidence.map((row) => toEvidenceIntent(input, row)),
   };
 }
 

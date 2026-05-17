@@ -1,6 +1,6 @@
-import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
+import { readFinancialAccountKind } from "@/features/financial-accounts/display.public";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
-import type { TransferSide } from "@/features/transfers/lib/build-transfer";
+import type { TransferSide } from "@/features/transfers/build.public";
 import type { TransferMutationError } from "@/features/transfers/lib/mutation-service";
 import type { ReclassifyTransactionAsTransferError } from "@/features/transfers/lib/reclassify-transaction-as-transfer";
 import type { LucideIcon } from "@/shared/components/icons";

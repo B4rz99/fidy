@@ -32,6 +32,12 @@ module.exports = {
       to: { path: "^apps/mobile/modules/" },
     },
     {
+      name: "shared-must-not-depend-on-local-ledger",
+      severity: "error",
+      from: { path: "^apps/mobile/shared/" },
+      to: { path: "^apps/mobile/local-ledger/" },
+    },
+    {
       name: "app-routes-must-not-be-imported-from-outside-app",
       severity: "error",
       from: { pathNot: "^apps/mobile/app/" },
@@ -74,7 +80,21 @@ module.exports = {
       },
       to: {
         path: "^apps/mobile/local-ledger/",
-        pathNot: "^apps/mobile/local-ledger/(public|snapshot\\.public)\\.ts$",
+        pathNot: "^apps/mobile/local-ledger/(public|snapshot\\.public|intake\\.public)\\.ts$",
+      },
+    },
+    {
+      name: "local-ledger-infrastructure-must-not-import-features",
+      severity: "error",
+      from: { path: "^apps/mobile/infrastructure/local-ledger/" },
+      to: { path: "^apps/mobile/features/" },
+    },
+    {
+      name: "local-ledger-infrastructure-must-not-import-ui-or-app-runtime",
+      severity: "error",
+      from: { path: "^apps/mobile/infrastructure/local-ledger/" },
+      to: {
+        path: "^apps/mobile/app/|^apps/mobile/modules/|^apps/mobile/shared/(components|hooks|query)($|/)|^apps/mobile/shared/lib(/index)?\\.ts|^apps/mobile/shared/lib/(analytics|sentry|toast)\\.ts",
       },
     },
     {

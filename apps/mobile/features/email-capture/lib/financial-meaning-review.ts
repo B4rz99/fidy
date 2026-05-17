@@ -1,5 +1,5 @@
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/write.public";
-import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/record-transaction";
+import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import {
   confirmReviewCandidateAsTransaction,
   type ReviewCandidateResolutionRecord,
