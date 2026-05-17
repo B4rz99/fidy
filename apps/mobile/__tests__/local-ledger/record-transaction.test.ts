@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
+  createRecordTransactionUseCase,
   type LocalLedgerEntryId,
-  recordTransaction,
   type RecordTransactionPorts,
 } from "@/local-ledger/public";
 import type {
@@ -34,73 +34,64 @@ const createPorts = (overrides: Partial<RecordTransactionPorts> = {}): RecordTra
   ...overrides,
 });
 
+const createRecordTransaction = (ports: RecordTransactionPorts = createPorts()) =>
+  createRecordTransactionUseCase({ ports });
+
 describe("RecordTransaction", () => {
   test("rejects transactions dated after the injected local ledger today", async () => {
-    const result = await recordTransaction({
-      command: {
-        ...validCommand,
-        occurredOn: "2026-05-12" as IsoDate,
-      },
-      ports: createPorts({
+    const result = await createRecordTransaction(
+      createPorts({
         commit: async (transaction) => {
           void transaction;
           throw new Error("commit should not run");
         },
-      }),
+      })
+    )({
+      ...validCommand,
+      occurredOn: "2026-05-12" as IsoDate,
     });
 
     expect(result).toEqual({ ok: false, code: "future-dated-transaction" });
   });
 
   test("rejects transactions without an account", async () => {
-    const result = await recordTransaction({
-      command: { ...validCommand, accountId: null },
-      ports: createPorts(),
-    });
+    const result = await createRecordTransaction()({ ...validCommand, accountId: null });
 
     expect(result).toEqual({ ok: false, code: "missing-account" });
   });
 
   test("rejects transactions without a positive amount", async () => {
-    const result = await recordTransaction({
-      command: { ...validCommand, amount: 0 as CopAmount },
-      ports: createPorts(),
-    });
+    const result = await createRecordTransaction()({ ...validCommand, amount: 0 as CopAmount });
 
     expect(result).toEqual({ ok: false, code: "non-positive-amount" });
   });
 
   test("rejects accounts the user cannot use", async () => {
-    const result = await recordTransaction({
-      command: validCommand,
-      ports: createPorts({ canUseAccount: async () => false }),
-    });
+    const result = await createRecordTransaction(createPorts({ canUseAccount: async () => false }))(
+      validCommand
+    );
 
     expect(result).toEqual({ ok: false, code: "account-not-usable" });
   });
 
   test("rejects transactions without a category", async () => {
-    const result = await recordTransaction({
-      command: { ...validCommand, categoryId: null },
-      ports: createPorts(),
-    });
+    const result = await createRecordTransaction()({ ...validCommand, categoryId: null });
 
     expect(result).toEqual({ ok: false, code: "missing-category" });
   });
 
   test("rejects categories the user cannot use", async () => {
-    const result = await recordTransaction({
-      command: validCommand,
-      ports: createPorts({ canUseCategory: async () => false }),
-    });
+    const result = await createRecordTransaction(
+      createPorts({ canUseCategory: async () => false })
+    )(validCommand);
 
     expect(result).toEqual({ ok: false, code: "category-not-usable" });
   });
 
   test("rejects manual source transactions with unresolved account attribution", async () => {
-    const result = await recordTransaction({
-      command: { ...validCommand, accountAttributionState: "unresolved" },
-      ports: createPorts(),
+    const result = await createRecordTransaction()({
+      ...validCommand,
+      accountAttributionState: "unresolved",
     });
 
     expect(result).toEqual({ ok: false, code: "manual-source-requires-resolved-account" });
@@ -110,36 +101,27 @@ describe("RecordTransaction", () => {
     const overlongText = "x".repeat(201);
 
     await expect(
-      recordTransaction({
-        command: {
-          ...validCommand,
-          description: overlongText,
-        },
-        ports: createPorts(),
+      createRecordTransaction()({
+        ...validCommand,
+        description: overlongText,
       })
     ).resolves.toEqual({ ok: false, code: "description-too-long" });
 
     await expect(
-      recordTransaction({
-        command: {
-          ...validCommand,
-          counterpartyName: overlongText,
-        },
-        ports: createPorts(),
+      createRecordTransaction()({
+        ...validCommand,
+        counterpartyName: overlongText,
       })
     ).resolves.toEqual({ ok: false, code: "counterparty-name-too-long" });
   });
 
   test("records an accepted transaction with normalized note and counterparty text", async () => {
-    const result = await recordTransaction({
-      command: {
-        ...validCommand,
-        description: "  User note  ",
-        counterpartyName: "  Cafe Central  ",
-        source: "email_capture",
-        accountAttributionState: "unresolved",
-      },
-      ports: createPorts(),
+    const result = await createRecordTransaction()({
+      ...validCommand,
+      description: "  User note  ",
+      counterpartyName: "  Cafe Central  ",
+      source: "email_capture",
+      accountAttributionState: "unresolved",
     });
 
     expect(result.ok).toBe(true);
@@ -157,11 +139,23 @@ describe("RecordTransaction", () => {
     ]);
   });
 
-  test("returns a commit-time policy rejection without a recorded event", async () => {
-    const result = await recordTransaction({
-      command: validCommand,
-      ports: createPorts({ commit: async () => ({ ok: false, code: "account-not-usable" }) }),
+  test("preserves absent counterparty as null", async () => {
+    const result = await createRecordTransaction()({
+      ...validCommand,
+      counterpartyName: "   ",
+      source: "email_capture",
+      accountAttributionState: "unresolved",
     });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.transaction.counterpartyName).toBeNull();
+  });
+
+  test("returns a commit-time policy rejection without a recorded event", async () => {
+    const result = await createRecordTransaction(
+      createPorts({ commit: async () => ({ ok: false, code: "account-not-usable" }) })
+    )(validCommand);
 
     expect(result).toEqual({ ok: false, code: "account-not-usable" });
   });

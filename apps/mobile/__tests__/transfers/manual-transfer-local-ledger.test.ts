@@ -109,7 +109,7 @@ describe("manual transfer Local Ledger writer", () => {
         source: "manual",
         createdAt: "2026-04-18T10:00:00.000Z",
         updatedAt: "2026-04-18T10:00:00.000Z",
-        deletedAt: null,
+        voidedAt: null,
       },
     ]);
     expect(transactionCalls).toHaveLength(1);
@@ -136,7 +136,7 @@ describe("manual transfer Local Ledger writer", () => {
     expect(insertedTransfers).toEqual([]);
   });
 
-  it("maps a voided Local Ledger transfer to the legacy deletedAt storage column", () => {
+  it("maps a voided Local Ledger transfer to the voidedAt storage column", () => {
     const row = toTransferRow({
       id: "tr-voided" as TransferId,
       userId: USER_ID,
@@ -153,9 +153,9 @@ describe("manual transfer Local Ledger writer", () => {
 
     expect(row).toMatchObject({
       id: "tr-voided",
-      deletedAt: "2026-04-18T11:00:00.000Z",
+      voidedAt: "2026-04-18T11:00:00.000Z",
     });
-    expect(row).not.toHaveProperty("voidedAt");
+    expect(row).not.toHaveProperty("deletedAt");
   });
 
   it("enforces Local Ledger validation through the full manual transfer form save path", async () => {

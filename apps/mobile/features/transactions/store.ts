@@ -1,4 +1,3 @@
-import { createWriteThroughMutationModule } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import {
   captureWarning,
@@ -6,7 +5,11 @@ import {
   trackTransactionDeleted,
   trackTransactionEdited,
 } from "@/shared/lib";
-import { recordManualTransactionWithLocalLedger } from "@/infrastructure/local-ledger/record-transaction";
+import {
+  amendManualTransactionWithLocalLedger,
+  recordManualTransactionWithLocalLedger,
+  voidTransactionWithLocalLedger,
+} from "@/infrastructure/local-ledger/public";
 import type { CategoryId, FinancialAccountId, TransactionId, UserId } from "@/shared/types/branded";
 import {
   createTransactionMutationService,
@@ -54,12 +57,8 @@ const getErrorType = (error: unknown): string =>
   error instanceof Error ? error.name : typeof error;
 
 function createLiveTransactionMutationService(db: AnyDb, userId: UserId, sessionId: number) {
-  const mutations = createWriteThroughMutationModule(db);
-
   return createTransactionMutationService({
-    getCommit: () => mutations.commit,
     getUserId: () => userId,
-    getTransactionById: (id) => getStoredTransactionById(db, userId, id),
     recordManualTransaction: async (input) => {
       const result = await recordManualTransactionWithLocalLedger({
         db,
@@ -72,6 +71,25 @@ function createLiveTransactionMutationService(db: AnyDb, userId: UserId, session
         ? { success: true, transaction: toStoredTransaction(result.transaction) }
         : result;
     },
+    amendManualTransaction: async (input) => {
+      const result = await amendManualTransactionWithLocalLedger({
+        db,
+        userId: input.userId,
+        transactionId: input.transactionId,
+        input: input.input,
+        now: input.now,
+      });
+      return result.success
+        ? { success: true, transaction: toStoredTransaction(result.transaction) }
+        : result;
+    },
+    voidTransaction: async (input) =>
+      voidTransactionWithLocalLedger({
+        db,
+        userId: input.userId,
+        transactionId: input.transactionId,
+        now: input.now,
+      }),
     refresh: async () => {
       if (!isActiveTransactionSession(userId, sessionId)) return;
       await refreshTransactions(db, userId);

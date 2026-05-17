@@ -6,7 +6,7 @@ import type { FinancialAccountRow } from "@/features/financial-accounts/write.pu
 import type {
   RecordAutomatedTransactionInput,
   RecordAutomatedTransactionResult,
-} from "@/infrastructure/local-ledger/record-transaction";
+} from "@/infrastructure/local-ledger/public";
 import type { CreateReviewCandidateInput } from "@/local-ledger/public";
 import type { AnyDb } from "@/shared/db";
 import type { AppClock } from "@/shared/effect/clock";
@@ -94,6 +94,11 @@ export type CreateEmailPipelineServiceDeps = {
     db: AnyDb,
     userId: UserId
   ) => Promise<readonly ProcessedSourceEventRow[]>;
+  readonly resolveRetryEmailBody?: (
+    db: AnyDb,
+    userId: UserId,
+    sourceEvent: ProcessedSourceEventRow
+  ) => Promise<string | null>;
   readonly insertProcessedEmailSourceEvent: (
     db: AnyDb,
     row: ProcessedSourceEventRow

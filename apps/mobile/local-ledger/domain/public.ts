@@ -92,7 +92,7 @@ export type LocalLedgerReviewCandidateStatus = "pending" | "accepted" | "rejecte
 
 export type LocalLedgerReviewCandidate = {
   readonly id: LocalLedgerReviewCandidateId;
-  readonly candidateKind: "transaction" | "transfer";
+  readonly candidateKind: "unknown" | "transaction" | "transfer";
   readonly status: LocalLedgerReviewCandidateStatus;
   readonly occurredAt: string | null;
   readonly money: LocalLedgerMoney | null;

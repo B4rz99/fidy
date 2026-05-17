@@ -170,7 +170,7 @@ function buildTransfers(
       date: toIsoDate(now),
       createdAt: toIsoDateTime(new Date("2026-04-19T15:00:00.000Z")),
       updatedAt: toIsoDateTime(new Date("2026-04-19T15:00:00.000Z")),
-      deletedAt: null,
+      voidedAt: null,
     },
   ];
 }

@@ -58,7 +58,6 @@ export function persistSuccessfulRetryBundleEffect(context: RetryTransactionCont
               status: "processed",
               transactionId: context.txId,
               confidence: context.parsed.confidence,
-              rawBody: null,
             })
             .where(eq(processedSourceEvents.id, context.processedSourceEventId))
             .run();

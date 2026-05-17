@@ -1,8 +1,5 @@
-import { buildDefaultFinancialAccountId } from "@/features/financial-accounts/public";
 import type { StoredTransaction } from "@/features/transactions/query.public";
-import { toTransactionRow } from "@/features/transactions/query.public";
-import { parseIsoDate, toIsoDateTime } from "@/shared/lib";
-import type { WriteThroughMutationModule } from "@/shared/mutations";
+import { toIsoDateTime } from "@/shared/lib";
 import { assertCopAmount } from "@/shared/types/assertions";
 import type { BillId, BillPaymentId, IsoDate, TransactionId, UserId } from "@/shared/types/branded";
 import type { Bill, BillPayment } from "../../schema";
@@ -10,10 +7,20 @@ import type { Bill, BillPayment } from "../../schema";
 type CommitBillPaymentInput = {
   readonly bill: Bill;
   readonly billId: BillId;
-  readonly commit: WriteThroughMutationModule["commit"];
   readonly createPaymentId: () => BillPaymentId;
   readonly createTransactionId: () => TransactionId;
   readonly dueDate: IsoDate;
+  readonly recordBillPayment: (input: {
+    readonly userId: UserId;
+    readonly transactionId: TransactionId;
+    readonly payment: BillPayment;
+    readonly bill: Bill;
+    readonly dueDate: IsoDate;
+    readonly now: Date;
+  }) => Promise<
+    | { readonly success: true; readonly transaction: StoredTransaction }
+    | { readonly success: false }
+  >;
   readonly timestamp: Date;
   readonly userId: UserId;
 };
@@ -25,10 +32,10 @@ export function getBillForPayment(bills: readonly Bill[], billId: BillId): Bill 
 async function commitBillPayment({
   bill,
   billId,
-  commit,
   createPaymentId,
   createTransactionId,
   dueDate,
+  recordBillPayment,
   timestamp,
   userId,
 }: CommitBillPaymentInput): Promise<{
@@ -40,21 +47,6 @@ async function commitBillPayment({
   const amount = bill.amount;
   assertCopAmount(amount);
 
-  const transaction: StoredTransaction = {
-    id: transactionId,
-    userId,
-    type: "expense",
-    amount,
-    categoryId: bill.categoryId,
-    description: bill.name,
-    date: parseIsoDate(dueDate),
-    createdAt: timestamp,
-    updatedAt: timestamp,
-    voidedAt: null,
-    accountId: buildDefaultFinancialAccountId(userId),
-    accountAttributionState: "confirmed",
-  };
-
   const payment: BillPayment = {
     id: createPaymentId(),
     billId,
@@ -64,17 +56,18 @@ async function commitBillPayment({
     createdAt: nowIso,
   };
 
-  const result = await commit({
-    kind: "calendar.bill.markPaid",
-    transactionRow: toTransactionRow(transaction),
-    paymentRow: payment,
+  const result = await recordBillPayment({
+    userId,
+    transactionId,
+    payment,
+    bill,
+    dueDate,
+    now: timestamp,
   });
 
-  if (!result.success) {
-    return null;
-  }
+  if (!result.success) return null;
 
-  return { transaction, payment };
+  return { transaction: result.transaction, payment };
 }
 
 export async function commitBillPaymentSafely(input: CommitBillPaymentInput) {

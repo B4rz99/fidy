@@ -4,7 +4,7 @@ import {
 } from "@/features/capture-evidence/public";
 import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
-import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/record-transaction";
+import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import {
   type CreateReviewCandidateInput,
   createReviewCandidateUseCase,
@@ -23,7 +23,7 @@ import {
   markSourceEventRetrySuccess,
   updateProcessedSourceEventStatus,
 } from "../lib/repository";
-import type { RawEmail } from "../schema";
+import { getGmailClientId, getOutlookClientId, type RawEmail } from "../schema";
 import {
   createEmailPipelineService,
   type PipelineResult,
@@ -32,6 +32,7 @@ import {
   type ProgressCallback,
   type RetryResult,
 } from "./create-email-pipeline-service";
+import { getAdapter } from "./email-adapter-registry";
 import { retryableParseEmailApi } from "./parse-email-api";
 
 export type { PipelineResult, ProcessEmails, ProcessRetries, ProgressCallback, RetryResult };
@@ -41,12 +42,37 @@ const BACKGROUND_PARSE_START_DELAY_MS = 0;
 const INITIAL_SYNC_PARSE_START_DELAY_MS = 0;
 const PARSE_CONCURRENCY = 15;
 
+export async function resolveRetryEmailBody(
+  _db: AnyDb,
+  _userId: UserId,
+  sourceEvent: Parameters<
+    NonNullable<Parameters<typeof createEmailPipelineService>[0]["resolveRetryEmailBody"]>
+  >[2]
+) {
+  const provider =
+    sourceEvent.sourceId === "email_gmail"
+      ? "gmail"
+      : sourceEvent.sourceId === "email_outlook"
+        ? "outlook"
+        : null;
+  if (provider === null) return null;
+
+  try {
+    const clientId = provider === "gmail" ? getGmailClientId() : getOutlookClientId();
+    const email = await getAdapter(provider).fetchEmailById(clientId, sourceEvent.sourceEventId);
+    return email?.body ?? null;
+  } catch {
+    return null;
+  }
+}
+
 const emailPipelineDeps = {
   parseEmailApi: retryableParseEmailApi,
   lookupMerchantRule,
   findDuplicateTransaction,
   getProcessedEmailSourceEventIds,
   getPendingRetryEmailSourceEvents,
+  resolveRetryEmailBody,
   insertProcessedEmailSourceEvent,
   markSourceEventForRetry,
   markSourceEventPermanentlyFailed,

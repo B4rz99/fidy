@@ -103,4 +103,26 @@ describe("manual transaction Local Ledger writer", () => {
     expect(result).toEqual({ success: false, error: "accountNotUsable" });
     expect(insertedTransactions).toEqual([]);
   });
+
+  it("rejects missing category instead of silently defaulting to other", async () => {
+    const { db, insertedTransactions } = createDbDouble([true]);
+
+    const result = await recordManualTransactionWithLocalLedger({
+      db: db as any,
+      userId: USER_ID,
+      transactionId: TRANSACTION_ID,
+      input: {
+        type: "expense",
+        digits: "45200",
+        categoryId: null,
+        accountId: ACCOUNT_ID,
+        description: "Groceries",
+        date: NOW,
+      },
+      now: NOW,
+    });
+
+    expect(result).toEqual({ success: false, error: "missingCategory" });
+    expect(insertedTransactions).toEqual([]);
+  });
 });

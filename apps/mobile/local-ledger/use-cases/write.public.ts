@@ -5,7 +5,6 @@ import type {
   IsoDate,
   IsoDateTime,
 } from "@/shared/types/branded";
-import type { NormalizedTransactionSource } from "@/shared/lib/transaction-source.public";
 import type {
   LocalLedgerCommandId,
   LocalLedgerDomainEvent,
@@ -17,6 +16,7 @@ import type {
   TransferId,
   UserId,
 } from "../domain/public";
+import type { LocalLedgerTransactionSource } from "../domain/transaction-source";
 import type { LocalLedgerTransferRepository } from "../ports/public";
 import { toLocalLedgerTransfer, transferRecordedEvent } from "./record-transfer-builders";
 import { reject } from "./record-transfer-result";
@@ -101,7 +101,7 @@ async function recordValidatedTransfer(
   };
 }
 
-export type RecordTransactionSource = NormalizedTransactionSource;
+export type RecordTransactionSource = LocalLedgerTransactionSource;
 
 export type RecordTransactionAccountAttributionState = "confirmed" | "inferred" | "unresolved";
 
@@ -128,7 +128,7 @@ export type RecordTransactionAccepted = {
   readonly categoryId: CategoryId;
   readonly occurredOn: IsoDate;
   readonly description: string;
-  readonly counterpartyName: string;
+  readonly counterpartyName: string | null;
   readonly source: RecordTransactionSource;
 };
 
@@ -176,10 +176,13 @@ export type RecordTransactionPorts = {
   readonly generateEntryId: () => LocalLedgerEntryId;
 };
 
-export type RecordTransactionInput = {
-  readonly command: RecordTransactionCommand;
+export type RecordTransactionDependencies = {
   readonly ports: RecordTransactionPorts;
 };
+
+export type RecordTransaction = (
+  command: RecordTransactionCommand
+) => Promise<RecordTransactionResult>;
 
 const MAX_TEXT_LENGTH = 200;
 
@@ -258,7 +261,7 @@ const toAcceptedTransaction = (
   categoryId: command.categoryId,
   occurredOn: command.occurredOn,
   description: normalizeText(command.description),
-  counterpartyName: normalizeText(command.counterpartyName),
+  counterpartyName: normalizeText(command.counterpartyName) || null,
   source: command.source,
 });
 
@@ -274,21 +277,22 @@ const toCommitResult = (result: RecordTransactionCommitResult): RecordTransactio
   return result;
 };
 
-export const recordTransaction = async ({
-  command,
+export function createRecordTransactionUseCase({
   ports,
-}: RecordTransactionInput): Promise<RecordTransactionResult> => {
-  const commandRejectCode = getCommandRejectCode(command, ports.today());
-  if (commandRejectCode !== null) return rejectTransaction(commandRejectCode);
+}: RecordTransactionDependencies): RecordTransaction {
+  return async (command) => {
+    const commandRejectCode = getCommandRejectCode(command, ports.today());
+    if (commandRejectCode !== null) return rejectTransaction(commandRejectCode);
 
-  const acceptedCommand = command as RecordTransactionCommand & {
-    readonly accountId: FinancialAccountId;
-    readonly categoryId: CategoryId;
+    const acceptedCommand = command as RecordTransactionCommand & {
+      readonly accountId: FinancialAccountId;
+      readonly categoryId: CategoryId;
+    };
+    const policyRejectCode = await getPolicyRejectCode(acceptedCommand, ports);
+    if (policyRejectCode !== null) return rejectTransaction(policyRejectCode);
+
+    return toCommitResult(
+      await ports.commit(toAcceptedTransaction(acceptedCommand, ports.generateEntryId()))
+    );
   };
-  const policyRejectCode = await getPolicyRejectCode(acceptedCommand, ports);
-  if (policyRejectCode !== null) return rejectTransaction(policyRejectCode);
-
-  return toCommitResult(
-    await ports.commit(toAcceptedTransaction(acceptedCommand, ports.generateEntryId()))
-  );
-};
+}

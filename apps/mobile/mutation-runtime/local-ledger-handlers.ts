@@ -18,26 +18,23 @@ type ReviewCandidateDb = Parameters<
 >[0];
 
 function assertConsistentReviewCandidateGraph(command: CreateReviewCandidateCommand) {
-  const userId = command.processedSourceEventRow.userId;
-  const processedSourceEventId = command.processedSourceEventRow.id;
-  const reviewCandidateId = command.reviewCandidateRow.id;
-  const evidenceIds = new Set(command.evidenceRows.map((row) => row.id));
+  const userId = command.sourceEvent.userId;
+  const processedSourceEventId = command.sourceEvent.id;
+  const reviewCandidateId = command.candidate.id;
+  const evidenceIds = new Set(command.evidence.map((row) => row.id));
 
   if (
-    command.reviewCandidateRow.userId !== userId ||
-    command.reviewCandidateRow.processedSourceEventId !== processedSourceEventId
+    command.candidate.userId !== userId ||
+    command.candidate.processedSourceEventId !== processedSourceEventId
   ) {
     throw new Error("Review candidate intake graph is inconsistent");
   }
 
-  const hasInconsistentEvidence = command.evidenceRows.some(
+  const hasInconsistentEvidence = command.evidence.some(
     (row) => row.userId !== userId || row.processedSourceEventId !== processedSourceEventId
   );
-  const hasInconsistentLink = command.evidenceLinkRows.some(
-    (row) =>
-      row.userId !== userId ||
-      row.reviewCandidateId !== reviewCandidateId ||
-      !evidenceIds.has(row.captureEvidenceId)
+  const hasInconsistentLink = command.evidence.some(
+    (row) => row.userId !== userId || !evidenceIds.has(row.id) || reviewCandidateId == null
   );
 
   if (hasInconsistentEvidence || hasInconsistentLink) {
@@ -53,7 +50,7 @@ const applyCreateReviewCandidate = (
 
   insertProcessedSourceEvent(db, command);
   const persistedSourceEvent = loadPersistedSourceEvent(db, command);
-  if (persistedSourceEvent.id !== command.processedSourceEventRow.id) {
+  if (persistedSourceEvent.id !== command.sourceEvent.id) {
     return completeCommand(command.afterCommit);
   }
   updateReviewableSourceEvent(db, command, persistedSourceEvent);
@@ -64,7 +61,7 @@ const applyCreateReviewCandidate = (
 
 function insertProcessedSourceEvent(db: ReviewCandidateDb, command: CreateReviewCandidateCommand) {
   db.insert(processedSourceEvents)
-    .values(command.processedSourceEventRow)
+    .values({ ...command.sourceEvent, deletedAt: null })
     .onConflictDoNothing({
       target: [
         processedSourceEvents.userId,
@@ -83,10 +80,10 @@ function loadPersistedSourceEvent(db: ReviewCandidateDb, command: CreateReviewCa
     .from(processedSourceEvents)
     .where(
       and(
-        eq(processedSourceEvents.userId, command.processedSourceEventRow.userId),
-        eq(processedSourceEvents.sourceFamily, command.processedSourceEventRow.sourceFamily),
-        eq(processedSourceEvents.sourceId, command.processedSourceEventRow.sourceId),
-        eq(processedSourceEvents.sourceEventId, command.processedSourceEventRow.sourceEventId),
+        eq(processedSourceEvents.userId, command.sourceEvent.userId),
+        eq(processedSourceEvents.sourceFamily, command.sourceEvent.sourceFamily),
+        eq(processedSourceEvents.sourceId, command.sourceEvent.sourceId),
+        eq(processedSourceEvents.sourceEventId, command.sourceEvent.sourceEventId),
         isNull(processedSourceEvents.deletedAt)
       )
     )
@@ -115,18 +112,15 @@ function updateReviewableSourceEvent(
 
   db.update(processedSourceEvents)
     .set({
-      status: command.processedSourceEventRow.status,
-      failureReason: command.processedSourceEventRow.failureReason,
-      subject: command.processedSourceEventRow.subject,
-      rawBodyPreview: command.processedSourceEventRow.rawBodyPreview,
-      rawBody: command.processedSourceEventRow.rawBody,
-      retryCount: command.processedSourceEventRow.retryCount,
-      nextRetryAt: command.processedSourceEventRow.nextRetryAt,
-      transactionId: command.processedSourceEventRow.transactionId,
-      confidence: command.processedSourceEventRow.confidence,
-      receivedAt: command.processedSourceEventRow.receivedAt,
-      processedAt: command.processedSourceEventRow.processedAt,
-      updatedAt: command.processedSourceEventRow.updatedAt,
+      status: command.sourceEvent.status,
+      failureReason: command.sourceEvent.failureReason,
+      retryCount: command.sourceEvent.retryCount,
+      nextRetryAt: command.sourceEvent.nextRetryAt,
+      transactionId: command.sourceEvent.transactionId,
+      confidence: command.sourceEvent.confidence,
+      receivedAt: command.sourceEvent.receivedAt,
+      processedAt: command.sourceEvent.processedAt,
+      updatedAt: command.sourceEvent.updatedAt,
     })
     .where(
       and(
@@ -139,7 +133,7 @@ function updateReviewableSourceEvent(
 
 function loadPersistedEvidenceId(
   db: ReviewCandidateDb,
-  row: CreateReviewCandidateCommand["evidenceRows"][number],
+  row: CreateReviewCandidateCommand["evidence"][number],
   processedSourceEventId: ProcessedSourceEventId
 ) {
   const [persistedEvidence] = db
@@ -171,28 +165,39 @@ function insertReviewCandidateGraph(
 ) {
   db.insert(reviewCandidates)
     .values({
-      ...command.reviewCandidateRow,
+      ...command.candidate,
       processedSourceEventId: normalizedSourceEventId,
+      deletedAt: null,
     })
     .onConflictDoNothing()
     .run();
-  command.evidenceRows.forEach((row) => {
+  command.evidence.forEach((row) => {
     db.insert(captureEvidence)
-      .values({ ...row, processedSourceEventId: normalizedSourceEventId })
+      .values({
+        ...row,
+        transactionId: null,
+        transferId: null,
+        processedSourceEventId: normalizedSourceEventId,
+        deletedAt: null,
+      })
       .onConflictDoNothing()
       .run();
   });
   const persistedEvidenceIds = new Map(
-    command.evidenceRows.map((row) => [
+    command.evidence.map((row) => [
       row.id,
       loadPersistedEvidenceId(db, row, normalizedSourceEventId),
     ])
   );
-  command.evidenceLinkRows.forEach((row) => {
+  command.evidence.forEach((row) => {
     db.insert(reviewCandidateCaptureEvidence)
       .values({
-        ...row,
-        captureEvidenceId: persistedEvidenceIds.get(row.captureEvidenceId) ?? row.captureEvidenceId,
+        id: row.linkId,
+        userId: row.userId,
+        reviewCandidateId: command.candidate.id,
+        captureEvidenceId: persistedEvidenceIds.get(row.id) ?? row.id,
+        createdAt: row.createdAt,
+        deletedAt: null,
       })
       .onConflictDoNothing()
       .run();

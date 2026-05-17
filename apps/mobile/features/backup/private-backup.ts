@@ -3,7 +3,7 @@ import {
   exportLocalLedgerBackupSnapshot,
   LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION,
   validateBackupSnapshot,
-} from "@/infrastructure/local-ledger/snapshot";
+} from "@/infrastructure/local-ledger/public";
 import type { EncryptedLocalLedgerBackupSnapshot } from "./local-ledger-encryption";
 import {
   encryptLocalLedgerBackupSnapshot,

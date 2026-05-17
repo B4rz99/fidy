@@ -103,7 +103,7 @@ function getOutgoingTransferBalanceEffects(
     .where(
       and(
         eq(transfers.userId, userId),
-        isNull(transfers.deletedAt),
+        isNull(transfers.voidedAt),
         lte(transfers.date, asOfDate),
         sql`${transfers.fromAccountId} is not null`
       )
@@ -130,7 +130,7 @@ function getIncomingTransferBalanceEffects(
     .where(
       and(
         eq(transfers.userId, userId),
-        isNull(transfers.deletedAt),
+        isNull(transfers.voidedAt),
         lte(transfers.date, asOfDate),
         sql`${transfers.toAccountId} is not null`
       )

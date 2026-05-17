@@ -21,13 +21,13 @@ export type {
   BackupSnapshot,
   ExportLocalLedgerBackupSnapshotOptions,
   ImportLocalLedgerBackupSnapshotOptions,
-} from "@/infrastructure/local-ledger/snapshot";
+} from "@/infrastructure/local-ledger/public";
 export {
   exportLocalLedgerBackupSnapshot,
   importLocalLedgerBackupSnapshot,
   LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION,
   validateBackupSnapshot,
-} from "@/infrastructure/local-ledger/snapshot";
+} from "@/infrastructure/local-ledger/public";
 export type {
   CreatePrivateBackupInput,
   PrivateBackupHealth,

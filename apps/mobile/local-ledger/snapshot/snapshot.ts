@@ -40,7 +40,7 @@ export type TransactionSnapshotRow = UserScopedSnapshotRow & {
   readonly source: string;
 };
 
-export type TransferSnapshotRow = SoftDeletedSnapshotRow & {
+export type TransferSnapshotRow = UserScopedSnapshotRow & {
   readonly amount: number;
   readonly fromAccountId: string | null;
   readonly toAccountId: string | null;
@@ -49,6 +49,9 @@ export type TransferSnapshotRow = SoftDeletedSnapshotRow & {
   readonly description: string | null;
   readonly date: string;
   readonly source: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly voidedAt: string | null;
 };
 
 export type UserCategorySnapshotRow = SoftDeletedSnapshotRow & {
@@ -122,9 +125,6 @@ export type ProcessedSourceEventSnapshotRow = SoftDeletedSnapshotRow & {
   readonly sourceEventId: string;
   readonly status: string;
   readonly failureReason: string | null;
-  readonly subject: string | null;
-  readonly rawBodyPreview: string | null;
-  readonly rawBody: string | null;
   readonly retryCount: number;
   readonly nextRetryAt: string | null;
   readonly transactionId: string | null;

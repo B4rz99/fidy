@@ -1,10 +1,10 @@
 import { isValidCategoryId } from "@/features/transactions/write.public";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
-import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/record-transaction";
+import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import {
   persistCommittedCaptureSourceEventInTransaction,
   persistProcessedSourceEvent,
-} from "@/infrastructure/local-ledger/source-events";
+} from "@/infrastructure/local-ledger/public";
 import type { AnyDb } from "@/shared/db";
 import {
   captureError,
@@ -44,7 +44,8 @@ const failureReason = (error: unknown): string =>
     ? error.message
     : errorType(error);
 
-const userAuthoredWidgetDescription = (description: string | undefined): string => description ?? "";
+const userAuthoredWidgetDescription = (description: string | undefined): string =>
+  description ?? "";
 const widgetCounterpartyName = (): string => "";
 
 export async function processWidgetTransactions(

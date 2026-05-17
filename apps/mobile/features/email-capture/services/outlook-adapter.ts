@@ -17,6 +17,24 @@ const toInitialMessagesUrl = (senderEmails: string[], since: string) =>
     buildOutlookFilter(senderEmails, since)
   )}&$select=id,subject,body,from,receivedDateTime`;
 
+const toMessageUrl = (id: string) =>
+  `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(
+    id
+  )}?$select=id,subject,body,from,receivedDateTime`;
+
+async function fetchOutlookJson(url: string, token: string) {
+  const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  return response.ok ? ((await response.json()) as OutlookMessage) : null;
+}
+
+export async function fetchOutlookEmailByIdWithToken(
+  token: string,
+  id: string
+): Promise<RawEmail | null> {
+  const message = await fetchOutlookJson(toMessageUrl(id), token);
+  return message === null ? null : toRawOutlookEmail(message);
+}
+
 export async function fetchOutlookEmailsWithToken(
   token: string,
   since: string,

@@ -90,6 +90,9 @@ function FailedEmailCard({
   const dateStr = email.receivedAt
     ? format(new Date(email.receivedAt), "PP", { locale: getDateFnsLocale(locale) })
     : "";
+  const displayLabel = email.failureReason
+    ? formatReason(email.failureReason, t)
+    : t("failedEmails.manualReviewLabel");
 
   return (
     <View className="rounded-chart bg-card p-4 dark:bg-card-dark" style={{ gap: 12 }}>
@@ -109,7 +112,7 @@ function FailedEmailCard({
         className="font-poppins-medium text-label text-secondary dark:text-secondary-dark"
         numberOfLines={2}
       >
-        {email.subject}
+        {displayLabel}
       </Text>
 
       {email.failureReason ? (
@@ -158,5 +161,7 @@ function formatReason(reason: string, t: (key: string) => string): string {
 }
 
 function getProviderLabel(email: ProcessedSourceEventRow) {
-  return email.sourceId === "email_outlook" ? "Outlook" : "Gmail";
+  if (email.sourceId === "email_gmail") return "Gmail";
+  if (email.sourceId === "email_outlook") return "Outlook";
+  return email.sourceId;
 }

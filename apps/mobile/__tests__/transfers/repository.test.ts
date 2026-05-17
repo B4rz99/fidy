@@ -46,7 +46,7 @@ function makeTransfer(overrides: Partial<TransferInput> = {}): TransferInput {
     date: TRANSFER_DATE,
     createdAt: NOW,
     updatedAt: NOW,
-    deletedAt: null,
+    voidedAt: null,
     ...overrides,
   };
 }

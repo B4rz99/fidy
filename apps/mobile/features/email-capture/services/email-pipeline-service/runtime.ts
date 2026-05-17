@@ -79,6 +79,16 @@ export function getPendingRetryEmailSourceEventsEffect(db: AnyDb, userId: UserId
   );
 }
 
+export function resolveRetryEmailBodyEffect(
+  db: AnyDb,
+  userId: UserId,
+  sourceEvent: ProcessedSourceEventRow
+) {
+  return Effect.flatMap(EmailPipelineDeps.tag, ({ resolveRetryEmailBody }) =>
+    fromPromise(() => resolveRetryEmailBody?.(db, userId, sourceEvent) ?? Promise.resolve(null))
+  );
+}
+
 export function findDuplicateTransactionEffect(
   db: AnyDb,
   userId: UserId,

@@ -257,7 +257,7 @@ export type UnparsedProcessedSourceEventRowInput = {
   readonly nextRetryAt: IsoDateTime | null;
   readonly userId: UserId;
   readonly processedSourceEventId: ProcessedSourceEventId;
-  readonly status: "pending_retry" | "dismissed";
+  readonly status: "failed" | "pending_retry" | "dismissed";
 };
 
 export type DuplicateProcessedSourceEventRowInput = {

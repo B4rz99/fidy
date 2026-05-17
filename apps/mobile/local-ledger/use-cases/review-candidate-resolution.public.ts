@@ -12,7 +12,7 @@ export type ReviewCandidateResolutionRecord = {
   readonly userId: UserId;
   readonly processedSourceEventId: ProcessedSourceEventId;
   readonly status: "pending" | "accepted" | "rejected";
-  readonly candidateKind: "transaction" | "transfer";
+  readonly candidateKind: "unknown" | "transaction" | "transfer";
 };
 
 export type ReviewCandidateResolutionInput = {
@@ -177,7 +177,11 @@ async function validateCandidate(
     return reject("source-event-mismatch");
   }
   if (candidate.status !== "pending") return reject("candidate-not-pending");
-  if (expectedKind !== null && candidate.candidateKind !== expectedKind) {
+  if (
+    expectedKind !== null &&
+    candidate.candidateKind !== expectedKind &&
+    candidate.candidateKind !== "unknown"
+  ) {
     return reject("candidate-kind-mismatch");
   }
 

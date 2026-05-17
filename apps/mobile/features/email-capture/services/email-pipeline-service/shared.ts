@@ -149,7 +149,6 @@ export function buildUnparsedProcessedSourceEventRow(
     sourceEventId: input.email.externalId,
     status: input.status,
     failureReason: input.failureReason,
-    subject: input.email.subject,
     receivedAt: requireIsoDateTime(input.email.receivedAt),
     processedAt: input.createdAt,
     createdAt: input.createdAt,
@@ -162,7 +161,6 @@ export function buildUnparsedProcessedSourceEventRow(
   return input.status === "pending_retry"
     ? {
         ...baseRow,
-        rawBody: input.email.body,
         retryCount: 0,
         nextRetryAt: input.nextRetryAt,
       }
@@ -180,7 +178,6 @@ export function buildDuplicateProcessedSourceEventRow(
     sourceEventId: input.email.externalId,
     status: "duplicate",
     failureReason: null,
-    subject: input.email.subject,
     receivedAt: requireIsoDateTime(input.email.receivedAt),
     processedAt: input.createdAt,
     createdAt: input.createdAt,

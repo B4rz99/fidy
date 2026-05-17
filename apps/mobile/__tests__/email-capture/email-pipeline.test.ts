@@ -6,7 +6,6 @@ import {
   processBackgroundEmails,
   processEmails,
   processInitialSyncEmails,
-  processRetries,
 } from "@/features/email-capture/services/email-pipeline";
 import { requireIsoDateTime, requireUserId } from "@/shared/types/assertions";
 import type { FinancialAccountId } from "@/shared/types/branded";
@@ -323,6 +322,8 @@ function createTestEmailPipelineService(overrides: Record<string, unknown> = {})
     findDuplicateTransaction: mockFindDuplicateTransaction,
     getProcessedEmailSourceEventIds: mockGetProcessedEmailSourceEventIds,
     getPendingRetryEmailSourceEvents: mockGetPendingRetryEmailSourceEvents,
+    resolveRetryEmailBody: async (_db: unknown, _userId: unknown, sourceEvent: unknown) =>
+      (sourceEvent as { readonly rawBody?: string | null }).rawBody ?? null,
     insertProcessedEmailSourceEvent: mockInsertProcessedEmailSourceEvent,
     markSourceEventForRetry: mockMarkSourceEventForRetry,
     markSourceEventPermanentlyFailed: mockMarkSourceEventPermanentlyFailed,
@@ -460,7 +461,6 @@ describe("email processing pipeline", () => {
         sourceEventId: "ext-1",
         status: "dismissed",
         failureReason: null,
-        subject: "",
       })
     );
     expect(mockSaveCaptureEvidenceRows).not.toHaveBeenCalled();
@@ -744,7 +744,7 @@ describe("email processing pipeline", () => {
 
     expect(result.saved).toBe(0);
     expect(result.failed).toBe(1);
-    expect(result.pendingRetry).toBe(1);
+    expect(result.pendingRetry).toBe(0);
     expect(mockInsertMerchantRule).not.toHaveBeenCalled();
   });
 
@@ -765,8 +765,10 @@ describe("email processing pipeline", () => {
       mockDb,
       expect.objectContaining({
         createdAt: fixedNow,
-        nextRetryAt: "2026-04-18T12:35:56.000Z",
       })
+    );
+    expect(mockInsertProcessedEmailSourceEvent.mock.calls[0]?.[1]).not.toHaveProperty(
+      "nextRetryAt"
     );
   });
 
@@ -1253,27 +1255,22 @@ describe("email processing pipeline", () => {
     );
   });
 
-  it("marks email as pending_retry with cached rawBody when LLM throws", async () => {
+  it("marks email as failed without caching rawBody when LLM throws", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockRejectedValueOnce(new Error("LLM timeout"));
 
     const result = await processEmails(mockDb, USER_ID, emails);
 
     expect(result.failed).toBe(1);
-    expect(result.pendingRetry).toBe(1);
+    expect(result.pendingRetry).toBe(0);
     expect(result.saved).toBe(0);
     expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        status: "pending_retry",
+        status: "failed",
         failureReason: "parse_error",
-        rawBody: "Su compra por $50.000 fue aprobada",
-        retryCount: 0,
       })
     );
-    // nextRetryAt should be set
-    const call = mockInsertProcessedEmailSourceEvent.mock.calls[0]?.[1];
-    expect(call.nextRetryAt).toBeTruthy();
     expect(result.parseImprovementRequests).toEqual([
       {
         rawText: "Compra aprobada\n\nSu compra por $50.000 fue aprobada",
@@ -1285,7 +1282,7 @@ describe("email processing pipeline", () => {
     ]);
   });
 
-  it("marks parsed email as pending_retry when duplicate lookup fails", async () => {
+  it("marks parsed email as failed when duplicate lookup fails", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
     mockFindDuplicateTransaction.mockRejectedValueOnce(new Error("dedup lookup down"));
@@ -1293,22 +1290,20 @@ describe("email processing pipeline", () => {
     const result = await processEmails(mockDb, USER_ID, emails);
 
     expect(result.failed).toBe(1);
-    expect(result.pendingRetry).toBe(1);
+    expect(result.pendingRetry).toBe(0);
     expect(result.saved).toBe(0);
     expect(mockInsertTransaction).not.toHaveBeenCalled();
     expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        status: "pending_retry",
+        status: "failed",
         failureReason: null,
-        rawBody: "Su compra por $50.000 fue aprobada",
-        retryCount: 0,
       })
     );
     expect(result.parseImprovementRequests).toEqual([]);
   });
 
-  it("marks parsed email as pending_retry when transaction save fails", async () => {
+  it("marks parsed email as failed when transaction save fails", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
     mockInsertTransaction.mockImplementationOnce(() => {
@@ -1318,44 +1313,69 @@ describe("email processing pipeline", () => {
     const result = await processEmails(mockDb, USER_ID, emails);
 
     expect(result.failed).toBe(1);
-    expect(result.pendingRetry).toBe(1);
+    expect(result.pendingRetry).toBe(0);
     expect(result.saved).toBe(0);
     expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        status: "pending_retry",
+        status: "failed",
         failureReason: null,
-        rawBody: "Su compra por $50.000 fue aprobada",
-        retryCount: 0,
       })
     );
     expect(result.parseImprovementRequests).toEqual([]);
   });
 
-  it("marks parsed email as pending_retry when Local Ledger rejects the transaction", async () => {
+  it("marks parsed email as failed when Local Ledger rejects the transaction for non-reviewable reasons", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
     mockRecordAutomatedTransactionWithLocalLedger.mockResolvedValueOnce({
       success: false,
-      error: "futureDated",
+      error: "account-not-usable",
     });
 
     const result = await processEmails(mockDb, USER_ID, emails);
 
     expect(result.failed).toBe(1);
-    expect(result.pendingRetry).toBe(1);
+    expect(result.pendingRetry).toBe(0);
     expect(result.saved).toBe(0);
     expect(mockInsertTransaction).not.toHaveBeenCalled();
     expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        status: "pending_retry",
+        status: "failed",
         failureReason: null,
-        rawBody: "Su compra por $50.000 fue aprobada",
-        retryCount: 0,
       })
     );
     expect(mockInsertMerchantRule).not.toHaveBeenCalled();
+  });
+
+  it("routes local-future automated email captures to review before recording", async () => {
+    const emails = [makeRawEmail()];
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult({ date: "2026-05-18" }));
+
+    const result = await createTestEmailPipelineService({
+      clock: {
+        now: () => new Date("2026-05-18T02:00:00.000Z"),
+        nowIsoDateTime: () => requireIsoDateTime("2026-05-18T02:00:00.000Z"),
+      },
+    }).processEmails(mockDb, USER_ID, emails);
+
+    expect(result.needsReview).toBe(1);
+    expect(result.failed).toBe(0);
+    expect(result.saved).toBe(0);
+    expect(mockRecordAutomatedTransactionWithLocalLedger).not.toHaveBeenCalled();
+    expect(mockCreateReviewCandidate).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        source: expect.objectContaining({
+          status: "needs_review",
+        }),
+        candidate: expect.objectContaining({
+          candidateKind: "transaction",
+          occurredAt: "2026-05-18",
+        }),
+      })
+    );
   });
 
   it("does not insert a second processed email row after a partial save already persisted one", async () => {
@@ -1506,7 +1526,7 @@ function makePendingRetrySourceEventRow(overrides: Record<string, unknown> = {})
     sourceFamily: "email",
     sourceId: "email_gmail",
     sourceEventId: "ext-retry-1",
-    status: "pending_retry",
+    status: "failed",
     failureReason: "parse_error",
     subject: "Compra aprobada",
     rawBodyPreview: "Su compra por $50.000...",
@@ -1571,7 +1591,7 @@ describe("processRetries", () => {
     mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
 
-    await processRetries(mockDb, USER_ID);
+    await createTestEmailPipelineService().processRetries(mockDb, USER_ID);
 
     expect(mockGetPendingRetryEmailSourceEvents).toHaveBeenCalledWith(mockDb, USER_ID);
     expect(mockParseEmailApi).toHaveBeenCalledWith(row.rawBody);
@@ -1590,7 +1610,7 @@ describe("processRetries", () => {
     mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce(null);
 
-    await processRetries(mockDb, USER_ID);
+    await createTestEmailPipelineService().processRetries(mockDb, USER_ID);
 
     expect(mockGetPendingRetryEmailSourceEvents).toHaveBeenCalledWith(mockDb, USER_ID);
     expect(mockParseEmailApi).toHaveBeenCalledWith(row.rawBody);
@@ -1652,7 +1672,7 @@ describe("processRetries", () => {
       confidence: 0.9,
     });
 
-    await processRetries(mockDb, USER_ID);
+    await createTestEmailPipelineService().processRetries(mockDb, USER_ID);
 
     expect(mockRecordAutomatedTransactionWithLocalLedger).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1690,7 +1710,6 @@ describe("processRetries", () => {
           sourceId: "email_gmail",
           sourceEventId: "ext-retry-1",
           status: "needs_review",
-          subject: "Compra aprobada",
           confidence: 0.5,
         }),
         candidate: expect.objectContaining({
@@ -1713,7 +1732,7 @@ describe("processRetries", () => {
     mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockRejectedValueOnce(new Error("LLM timeout"));
 
-    const result = await processRetries(mockDb, USER_ID);
+    const result = await createTestEmailPipelineService().processRetries(mockDb, USER_ID);
 
     expect(mockMarkSourceEventForRetry).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1739,7 +1758,7 @@ describe("processRetries", () => {
       confidence: 0.9,
     });
 
-    const result = await processRetries(mockDb, USER_ID);
+    const result = await createTestEmailPipelineService().processRetries(mockDb, USER_ID);
 
     expect(mockMarkSourceEventForRetry).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1758,7 +1777,7 @@ describe("processRetries", () => {
     mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockRejectedValueOnce(new Error("LLM timeout"));
 
-    const result = await processRetries(mockDb, USER_ID);
+    const result = await createTestEmailPipelineService().processRetries(mockDb, USER_ID);
 
     expect(mockMarkSourceEventPermanentlyFailed).toHaveBeenCalledWith(mockDb, "pse-retry-1");
     expect(result.permanentlyFailed).toBe(1);
@@ -1769,7 +1788,7 @@ describe("processRetries", () => {
     mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
     mockParseEmailApi.mockResolvedValueOnce(null);
 
-    await processRetries(mockDb, USER_ID);
+    await createTestEmailPipelineService().processRetries(mockDb, USER_ID);
 
     expect(mockUpdateProcessedSourceEventStatus).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1794,7 +1813,7 @@ describe("processRetries", () => {
     });
     mockFindDuplicateTransaction.mockResolvedValueOnce("tx-existing");
 
-    const result = await processRetries(mockDb, USER_ID);
+    const result = await createTestEmailPipelineService().processRetries(mockDb, USER_ID);
 
     expect(mockInsertTransaction).not.toHaveBeenCalled();
     expect(mockMarkSourceEventRetrySuccess).toHaveBeenCalledWith(
@@ -1813,7 +1832,7 @@ describe("processRetries", () => {
     const row = makePendingRetrySourceEventRow({ rawBody: null });
     mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([row]);
 
-    const result = await processRetries(mockDb, USER_ID);
+    const result = await createTestEmailPipelineService().processRetries(mockDb, USER_ID);
 
     expect(mockMarkSourceEventPermanentlyFailed).toHaveBeenCalledWith(mockDb, "pse-retry-1");
     expect(result.permanentlyFailed).toBe(1);
@@ -1835,7 +1854,7 @@ describe("processRetries", () => {
       throw new Error("DB constraint error");
     });
 
-    const result = await processRetries(mockDb, USER_ID);
+    const result = await createTestEmailPipelineService().processRetries(mockDb, USER_ID);
 
     expect(mockMarkSourceEventForRetry).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1864,7 +1883,7 @@ describe("processRetries", () => {
       throw new Error("DB constraint error");
     });
 
-    const result = await processRetries(mockDb, USER_ID);
+    const result = await createTestEmailPipelineService().processRetries(mockDb, USER_ID);
 
     expect(mockMarkSourceEventPermanentlyFailed).toHaveBeenCalledWith(mockDb, "pse-retry-1");
     expect(result.permanentlyFailed).toBe(1);
@@ -1873,7 +1892,7 @@ describe("processRetries", () => {
   it("returns correct counts", async () => {
     mockGetPendingRetryEmailSourceEvents.mockResolvedValueOnce([]);
 
-    const result = await processRetries(mockDb, USER_ID);
+    const result = await createTestEmailPipelineService().processRetries(mockDb, USER_ID);
 
     expect(result).toEqual({ retried: 0, succeeded: 0, permanentlyFailed: 0 });
   });

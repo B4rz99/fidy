@@ -6,7 +6,7 @@ import {
 import type { AnyDb } from "@/shared/db";
 import { transfers } from "@/shared/db/schema";
 import { toIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
-import { parseDigitsToAmount } from "@/shared/lib";
+import { parseDigitsToAmount } from "@/shared/lib/format-money";
 import type { TransferId, UserId } from "@/shared/types/branded";
 import { hasActiveFinancialAccount } from "./account-policy.ts";
 
@@ -69,7 +69,7 @@ export function toTransferRow(transfer: LocalLedgerTransfer): typeof transfers.$
     source: transfer.source,
     createdAt: transfer.createdAt,
     updatedAt: transfer.updatedAt,
-    deletedAt: transfer.voidedAt,
+    voidedAt: transfer.voidedAt,
   };
 }
 
@@ -90,7 +90,7 @@ export function upsertTransferStorageRow(db: AnyDb, row: typeof transfers.$infer
         source: row.source,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
-        deletedAt: row.deletedAt,
+        voidedAt: row.voidedAt,
       },
     })
     .run();

@@ -103,7 +103,7 @@ function seedActivity() {
 
     insert into transfers (
       id, user_id, amount, from_account_id, to_account_id, from_external_label, to_external_label,
-      description, date, created_at, updated_at, deleted_at
+      description, date, created_at, updated_at, voided_at
     ) values
     (
       'trf-1', 'user-1', 100000, 'fa-bank', null, null, 'Broker',
@@ -591,7 +591,7 @@ describe("local ledger backup snapshots", () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: "trf-deleted",
-          deletedAt: NOW,
+          voidedAt: NOW,
         }),
       ])
     );

@@ -10,12 +10,12 @@ import {
 } from "@/features/email-capture/merchant-rules.public";
 import { classifyMerchantApi } from "@/features/email-capture/parsing.public";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
-import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/record-transaction";
+import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import {
   persistCommittedCaptureSourceEvent,
   persistCommittedCaptureSourceEventInTransaction,
   persistProcessedSourceEvent,
-} from "@/infrastructure/local-ledger/source-events";
+} from "@/infrastructure/local-ledger/public";
 import { CATEGORY_IDS } from "@/shared/categories";
 import type { AnyDb } from "@/shared/db";
 import {

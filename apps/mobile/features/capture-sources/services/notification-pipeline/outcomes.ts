@@ -1,17 +1,13 @@
 import { insertMerchantRule } from "@/features/email-capture/merchant-rules.public";
-import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/record-transaction";
+import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import {
   persistCommittedCaptureSourceEvent,
   persistCommittedCaptureSourceEventInTransaction,
   persistProcessedSourceEvent,
   persistReviewCandidateCapture,
-} from "@/infrastructure/local-ledger/source-events";
-import {
-  capturePipelineEvent,
-  generateTransactionId,
-  toIsoDateTime,
-  trackTransactionCreated,
-} from "@/shared/lib";
+} from "@/infrastructure/local-ledger/public";
+import { capturePipelineEvent, generateTransactionId, trackTransactionCreated } from "@/shared/lib";
+import { toIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
 import { requireIsoDateTime } from "@/shared/types/assertions";
 import { buildFailedFingerprint } from "./context";
 import type {
@@ -42,7 +38,17 @@ async function cacheMerchantRuleIfEligible(context: ResolvedNotificationContext)
 }
 
 function resolveProcessedCaptureStatus(context: ResolvedNotificationContext) {
-  return context.parsed.confidence < 0.7 ? "needs_review" : "success";
+  return context.parsed.confidence < 0.7 || isFutureDatedCapture(context)
+    ? "needs_review"
+    : "success";
+}
+
+function isFutureDatedCapture(context: ResolvedNotificationContext) {
+  return context.parsed.date > toIsoDate(new Date(context.now));
+}
+
+function resolveReviewFailureReason(context: ResolvedNotificationContext) {
+  return isFutureDatedCapture(context) ? "future_dated" : "low_confidence";
 }
 
 function trackNotificationPipeline(
@@ -231,7 +237,7 @@ export async function persistSuccessfulNotification(
       sourceId: context.source,
       sourceEventId: context.fingerprint,
       status: "needs_review",
-      failureReason: "low_confidence",
+      failureReason: resolveReviewFailureReason(context),
       receivedAt: context.receivedAt,
       processedAt: context.now,
       candidate: {

@@ -495,6 +495,7 @@ const en = {
       "These bank emails couldn't be processed automatically. You can add them as transactions manually.",
     empty: "No unprocessed emails",
     addManually: "Add manually",
+    manualReviewLabel: "Needs manual review",
     parseFailedReason: "Could not extract transaction data",
     parseErrorReason: "Error while processing email",
   },

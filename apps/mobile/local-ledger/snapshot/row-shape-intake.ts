@@ -31,9 +31,6 @@ export const INTAKE_ROW_SPECS: readonly RowSpec[] = [
               "status"
             ),
           failureReason: (value) => assertNullableString(value, "failureReason"),
-          subject: (value) => assertNullableString(value, "subject"),
-          rawBodyPreview: (value) => assertNullableString(value, "rawBodyPreview"),
-          rawBody: (value) => assertNullableString(value, "rawBody"),
           retryCount: (value) => assertNullableNumber(value, "retryCount"),
           nextRetryAt: (value) => assertNullableIsoDateTime(value, "nextRetryAt"),
           transactionId: (value) => assertNullableString(value, "transactionId"),
@@ -41,15 +38,7 @@ export const INTAKE_ROW_SPECS: readonly RowSpec[] = [
           receivedAt: (value) => assertValidIsoDateTime(value, "receivedAt"),
           processedAt: (value) => assertValidIsoDateTime(value, "processedAt"),
         }),
-        [
-          "subject",
-          "rawBodyPreview",
-          "rawBody",
-          "retryCount",
-          "nextRetryAt",
-          "transactionId",
-          "confidence",
-        ]
+        ["retryCount", "nextRetryAt", "transactionId", "confidence"]
       ),
   },
   {

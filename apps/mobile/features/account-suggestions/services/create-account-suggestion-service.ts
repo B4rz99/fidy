@@ -11,7 +11,7 @@ import {
 } from "@/features/financial-accounts/public";
 import { isActiveTransactionRow } from "@/features/transactions/lib/active-transaction-conditions";
 import { getTransactionById } from "@/features/transactions/lib/repository";
-import { upsertTransactionStorageRow } from "@/infrastructure/local-ledger/transaction-storage";
+import { updateTransactionAccountAttribution } from "@/infrastructure/local-ledger/public";
 import type { AnyDb } from "@/shared/db";
 import {
   generateAccountSuggestionDismissalId,
@@ -47,7 +47,7 @@ type CreateAccountSuggestionServiceDeps = {
   readonly saveFinancialAccount?: typeof saveFinancialAccount;
   readonly saveFinancialAccountIdentifierInTransaction?: typeof saveFinancialAccountIdentifierInTransaction;
   readonly getTransactionById?: typeof getTransactionById;
-  readonly upsertTransaction?: typeof upsertTransactionStorageRow;
+  readonly updateTransactionAccountAttribution?: typeof updateTransactionAccountAttribution;
   readonly now?: () => IsoDateTime;
   readonly createAccountId?: () => FinancialAccountId;
   readonly createDismissalId?: () => AccountSuggestionDismissalId;
@@ -136,7 +136,8 @@ export function createAccountSuggestionService({
   saveFinancialAccountIdentifierInTransaction:
     persistFinancialAccountIdentifierInTransaction = saveFinancialAccountIdentifierInTransaction,
   getTransactionById: loadTransactionById = getTransactionById,
-  upsertTransaction: persistTransaction = upsertTransactionStorageRow,
+  updateTransactionAccountAttribution:
+    persistTransactionAttribution = updateTransactionAccountAttribution,
   now = () => toIsoDateTime(new Date()),
   createAccountId = generateFinancialAccountId,
   createDismissalId = generateAccountSuggestionDismissalId,
@@ -181,13 +182,9 @@ export function createAccountSuggestionService({
     );
 
     reprocessedTransactionIds.forEach((transactionId) => {
-      const transaction = loadTransactionById(db, transactionId);
-      if (!transaction) {
-        return;
-      }
-
-      persistTransaction(db, {
-        ...transaction,
+      persistTransactionAttribution(db, {
+        userId,
+        transactionId,
         accountId,
         accountAttributionState: "inferred",
         updatedAt,

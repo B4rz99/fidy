@@ -188,13 +188,13 @@ type CalendarBillDeleteCommand = {
 
 type CalendarBillMarkPaidCommand = {
   kind: "calendar.bill.markPaid";
-  transactionRow: TransactionRow;
   paymentRow: BillPaymentRow;
   afterCommit?: readonly MutationEffect[];
 };
 
 type CalendarBillUnmarkPaidCommand = {
   kind: "calendar.bill.unmarkPaid";
+  userId: UserId;
   billId: BillId;
   dueDate: IsoDate;
   transactionId: TransactionId | null;
@@ -204,10 +204,11 @@ type CalendarBillUnmarkPaidCommand = {
 
 type LocalLedgerReviewCandidateCreateCommand = {
   kind: "localLedger.reviewCandidate.create";
-  processedSourceEventRow: ProcessedSourceEventRow;
-  reviewCandidateRow: ReviewCandidateRow;
-  evidenceRows: readonly CaptureEvidenceRow[];
-  evidenceLinkRows: readonly ReviewCandidateCaptureEvidenceRow[];
+  sourceEvent: Omit<ProcessedSourceEventRow, "deletedAt">;
+  candidate: Omit<ReviewCandidateRow, "deletedAt">;
+  evidence: readonly (Omit<CaptureEvidenceRow, "transactionId" | "transferId" | "deletedAt"> & {
+    linkId: ReviewCandidateCaptureEvidenceRow["id"];
+  })[];
   afterCommit?: readonly MutationEffect[];
 };
 

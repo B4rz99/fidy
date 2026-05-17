@@ -35,6 +35,7 @@ describe("calendar bill mutation service", () => {
   let scheduleBillNotifications: ServiceDeps["scheduleBillNotifications"];
   let reportAsyncError: ServiceDeps["reportAsyncError"];
   let addTransactionToCache: ServiceDeps["addTransactionToCache"];
+  let recordBillPayment: ServiceDeps["recordBillPayment"];
   let removeTransactionFromCache: ServiceDeps["removeTransactionFromCache"];
   let trackCreated: ServiceDeps["trackCreated"];
   let trackPaymentRecorded: ServiceDeps["trackPaymentRecorded"];
@@ -42,6 +43,7 @@ describe("calendar bill mutation service", () => {
   let scheduleBillNotificationsMock: ReturnType<typeof vi.fn>;
   let reportAsyncErrorMock: ReturnType<typeof vi.fn>;
   let addTransactionToCacheMock: ReturnType<typeof vi.fn>;
+  let recordBillPaymentMock: ReturnType<typeof vi.fn>;
   let removeTransactionFromCacheMock: ReturnType<typeof vi.fn>;
   let trackCreatedMock: ReturnType<typeof vi.fn>;
   let trackPaymentRecordedMock: ReturnType<typeof vi.fn>;
@@ -50,6 +52,7 @@ describe("calendar bill mutation service", () => {
     return createCalendarBillMutationService({
       getCommit: () => currentCommit,
       getUserId: () => currentUserId,
+      recordBillPayment,
       requestNotificationPermissions,
       scheduleBillNotifications,
       reportAsyncError,
@@ -73,6 +76,27 @@ describe("calendar bill mutation service", () => {
     scheduleBillNotificationsMock = vi.fn<(...args: any[]) => any>().mockResolvedValue(undefined);
     reportAsyncErrorMock = vi.fn<(...args: any[]) => any>();
     addTransactionToCacheMock = vi.fn<(...args: any[]) => any>();
+    recordBillPaymentMock = vi.fn<(...args: any[]) => any>().mockResolvedValue({
+      success: true,
+      transaction: {
+        id: "txn-generated" as TransactionId,
+        userId: "user-1" as UserId,
+        type: "expense",
+        amount: 100000 as CopAmount,
+        categoryId: "home" as CategoryId,
+        description: "Rent",
+        counterpartyName: "",
+        date: now,
+        createdAt: now,
+        updatedAt: now,
+        voidedAt: null,
+        accountId: "fa-default-user-1",
+        accountAttributionState: "confirmed",
+        supersededAt: null,
+        supersededByTransferId: null,
+        source: "manual",
+      },
+    });
     removeTransactionFromCacheMock = vi.fn<(...args: any[]) => any>();
     trackCreatedMock = vi.fn<(...args: any[]) => any>();
     trackPaymentRecordedMock = vi.fn<(...args: any[]) => any>();
@@ -82,6 +106,7 @@ describe("calendar bill mutation service", () => {
       scheduleBillNotificationsMock as ServiceDeps["scheduleBillNotifications"];
     reportAsyncError = reportAsyncErrorMock as ServiceDeps["reportAsyncError"];
     addTransactionToCache = addTransactionToCacheMock as ServiceDeps["addTransactionToCache"];
+    recordBillPayment = recordBillPaymentMock as ServiceDeps["recordBillPayment"];
     removeTransactionFromCache =
       removeTransactionFromCacheMock as ServiceDeps["removeTransactionFromCache"];
     trackCreated = trackCreatedMock as ServiceDeps["trackCreated"];
@@ -282,9 +307,11 @@ describe("calendar bill mutation service", () => {
         createdAt: nowIso,
       },
     });
-    expect(currentCommit).toHaveBeenCalledWith(
+    expect(recordBillPaymentMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        kind: "calendar.bill.markPaid",
+        transactionId: "txn-generated",
+        bill,
+        dueDate: "2026-04-12",
       })
     );
     expect(addTransactionToCacheMock).toHaveBeenCalledWith(
@@ -296,27 +323,26 @@ describe("calendar bill mutation service", () => {
     expect(trackPaymentRecordedMock).toHaveBeenCalledOnce();
   });
 
-  it("returns false for markBillPaid when initialization, lookup, or commit fails", async () => {
+  it("returns false for markBillPaid when initialization, lookup, or recording fails", async () => {
     const service = createService();
     await expect(
       service.markBillPaid([], bill.id as BillId, "2026-04-12" as IsoDate)
     ).resolves.toEqual({ success: false });
 
-    currentCommit = null;
+    currentUserId = null;
     await expect(
       service.markBillPaid([bill], bill.id as BillId, "2026-04-12" as IsoDate)
     ).resolves.toEqual({ success: false });
 
-    currentCommit = vi.fn<(...args: any[]) => any>().mockRejectedValue(new Error("boom"));
+    currentUserId = "user-1" as UserId;
+    recordBillPaymentMock.mockRejectedValueOnce(new Error("boom"));
     await expect(
       service.markBillPaid([bill], bill.id as BillId, "2026-04-12" as IsoDate)
     ).resolves.toEqual({ success: false });
   });
 
-  it("returns false when markBillPaid receives a failed commit result", async () => {
-    currentCommit = vi
-      .fn<(...args: any[]) => any>()
-      .mockResolvedValue({ success: false, error: "nope" });
+  it("returns false when markBillPaid receives a failed record result", async () => {
+    recordBillPaymentMock.mockResolvedValueOnce({ success: false });
     const service = createService();
 
     await expect(
@@ -340,11 +366,7 @@ describe("calendar bill mutation service", () => {
       payment: expect.objectContaining({ transactionId: "txn-generated" }),
     });
 
-    expect(currentCommit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        kind: "calendar.bill.markPaid",
-      })
-    );
+    expect(recordBillPaymentMock).toHaveBeenCalledOnce();
     expect(trackPaymentRecordedMock).toHaveBeenCalledOnce();
   });
 
@@ -359,65 +381,9 @@ describe("calendar bill mutation service", () => {
       )
     ).resolves.toEqual({ success: false });
 
-    expect(currentCommit).not.toHaveBeenCalled();
+    expect(recordBillPaymentMock).not.toHaveBeenCalled();
     expect(addTransactionToCacheMock).not.toHaveBeenCalled();
     expect(trackPaymentRecordedMock).not.toHaveBeenCalled();
-  });
-
-  it("loads transaction adapters from the transactions query public surface", async () => {
-    vi.resetModules();
-
-    const transactionRow = { id: "txn-row" };
-    const toTransactionRowMock = vi.fn<(...args: any[]) => any>(() => transactionRow);
-
-    vi.doMock("@/features/transactions/query.public", () => ({
-      toTransactionRow: toTransactionRowMock,
-    }));
-    vi.doMock("@/features/transactions/lib/build-transaction", () => ({
-      toTransactionRow: () => {
-        throw new Error("bill mutation service should not import transaction internals");
-      },
-    }));
-
-    const { createCalendarBillMutationService: createServiceFromPublic } =
-      await import("@/features/calendar/lib/bill-mutation-service");
-    const commit = vi
-      .fn<(...args: any[]) => any>()
-      .mockResolvedValue({ success: true, didMutate: true });
-
-    const service = createServiceFromPublic({
-      getCommit: () => commit,
-      getUserId: () => "user-1" as UserId,
-      requestNotificationPermissions: async () => true,
-      scheduleBillNotifications: vi.fn<(...args: any[]) => any>(),
-      reportAsyncError: vi.fn<(...args: any[]) => any>(),
-      addTransactionToCache: vi.fn<(...args: any[]) => any>(),
-      removeTransactionFromCache: vi.fn<(...args: any[]) => any>(),
-      trackCreated: vi.fn<(...args: any[]) => any>(),
-      trackPaymentRecorded: vi.fn<(...args: any[]) => any>(),
-      now: () => now,
-      createPaymentId: () => "pay-generated" as BillPaymentId,
-      createTransactionId: () => "txn-generated" as TransactionId,
-    });
-
-    await expect(
-      service.markBillPaid([bill], bill.id as BillId, "2026-04-12" as IsoDate)
-    ).resolves.toEqual({
-      success: true,
-      payment: expect.objectContaining({ transactionId: "txn-generated" }),
-    });
-
-    expect(toTransactionRowMock).toHaveBeenCalledOnce();
-    expect(commit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        kind: "calendar.bill.markPaid",
-        transactionRow,
-      })
-    );
-
-    vi.doUnmock("@/features/transactions/query.public");
-    vi.doUnmock("@/features/transactions/lib/build-transaction");
-    vi.resetModules();
   });
 
   it("unmarks payments and only clears cache when a linked transaction exists", async () => {
@@ -459,6 +425,7 @@ describe("calendar bill mutation service", () => {
     expect(currentCommit).toHaveBeenCalledWith(
       expect.objectContaining({
         kind: "calendar.bill.unmarkPaid",
+        userId: "user-1",
         transactionId: null,
       })
     );

@@ -78,6 +78,20 @@ module.exports = {
       },
     },
     {
+      name: "local-ledger-infrastructure-must-not-import-features",
+      severity: "error",
+      from: { path: "^apps/mobile/infrastructure/local-ledger/" },
+      to: { path: "^apps/mobile/features/" },
+    },
+    {
+      name: "local-ledger-infrastructure-must-not-import-ui-or-app-runtime",
+      severity: "error",
+      from: { path: "^apps/mobile/infrastructure/local-ledger/" },
+      to: {
+        path: "^apps/mobile/app/|^apps/mobile/modules/|^apps/mobile/shared/(components|hooks|query)($|/)|^apps/mobile/shared/lib(/index)?\\.ts|^apps/mobile/shared/lib/(analytics|sentry|toast)\\.ts",
+      },
+    },
+    {
       name: "only-app-or-features-may-depend-on-mutations",
       severity: "error",
       from: { pathNot: "^apps/mobile/(app/.+|features/.+)" },

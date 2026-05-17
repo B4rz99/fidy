@@ -9,7 +9,6 @@ import {
 import {
   getProcessedEmailSourceEventIdsEffect,
   insertProcessedEmailSourceEventEffect,
-  nextRetryAtEffect,
   saveEmailCaptureEvidenceEffect,
 } from "./runtime";
 import {
@@ -18,7 +17,6 @@ import {
   createPipelineMetricResult,
   getEmailSourceId,
   getEmailSourceEventKey,
-  mergePipelineResults,
   resolveEmailStatus,
   runSerializedPersistence,
 } from "./shared";
@@ -65,7 +63,7 @@ async function persistIncomingEmailRecord(input: IncomingEmailPersistenceInput) 
   );
 }
 
-async function persistPendingRetryIncomingEmail(
+async function persistFailedIncomingEmail(
   context: EmailBatchContext,
   email: RawEmail,
   failureReason: string | null
@@ -83,15 +81,14 @@ async function persistPendingRetryIncomingEmail(
     context,
     email
   );
-  const nextRetryAt = await context.runtime.runClockEffect(nextRetryAtEffect(0));
   const sourceEventRow = buildUnparsedProcessedSourceEventRow({
     email,
     userId: context.userId,
     processedSourceEventId,
     createdAt,
-    status: "pending_retry",
+    status: "failed",
     failureReason,
-    nextRetryAt,
+    nextRetryAt: null,
   });
 
   await persistIncomingEmailRecord({
@@ -102,10 +99,7 @@ async function persistPendingRetryIncomingEmail(
     transactionId: null,
     createdAt,
   });
-  const result = mergePipelineResults([
-    createPipelineMetricResult("failed"),
-    createPipelineMetricResult("pendingRetry"),
-  ]);
+  const result = createPipelineMetricResult("failed");
   return failureReason === "parse_error"
     ? appendFailedEmailParseImprovementRequest(result, email)
     : result;
@@ -174,9 +168,9 @@ async function persistIncomingTransaction(input: {
   readonly email: RawEmail;
   readonly parsed: LlmParsedTransaction;
   readonly status: EmailSaveStatus;
-}) {
+}): Promise<EmailSaveStatus | null> {
   try {
-    await input.context.runtime.runEmailWithClock(
+    const persistedStatus = await input.context.runtime.runEmailWithClock(
       saveTransactionEffect({
         db: input.context.db,
         userId: input.context.userId,
@@ -185,13 +179,13 @@ async function persistIncomingTransaction(input: {
         status: input.status,
       })
     );
-    if (input.status === "success") {
+    if (persistedStatus === "success") {
       await cacheMerchantRule({ context: input.context, parsed: input.parsed });
     }
-    return true;
+    return persistedStatus;
   } catch (error) {
     await input.context.runtime.runTelemetryEffect(captureErrorEffect(error));
-    return false;
+    return null;
   }
 }
 
@@ -204,7 +198,7 @@ async function processParsedIncomingEmail(
   const result = await runSerializedPersistence(context, async () => {
     const duplicate = await lookupIncomingDuplicate(context, parsed);
     if (duplicate.kind === "failed") {
-      return persistPendingRetryIncomingEmail(context, email, null);
+      return persistFailedIncomingEmail(context, email, null);
     }
 
     if (duplicate.kind === "duplicate") {
@@ -217,13 +211,15 @@ async function processParsedIncomingEmail(
     }
 
     const status = resolveEmailStatus(parsed.confidence);
-    const saved = await persistIncomingTransaction({ context, email, parsed, status });
-    if (!saved) {
-      return persistPendingRetryIncomingEmail(context, email, null);
+    const persistedStatus = await persistIncomingTransaction({ context, email, parsed, status });
+    if (persistedStatus === null) {
+      return persistFailedIncomingEmail(context, email, null);
     }
 
-    const savedResult = createPipelineMetricResult(status === "success" ? "saved" : "needsReview");
-    if (status === "needs_review") {
+    const savedResult = createPipelineMetricResult(
+      persistedStatus === "success" ? "saved" : "needsReview"
+    );
+    if (persistedStatus === "needs_review") {
       return appendNeedsReviewEmailParseImprovementRequest(savedResult, email, parsed.confidence);
     }
     return savedResult;
@@ -246,7 +242,7 @@ export async function processIncomingEmail(
   if (parsed.kind !== "parsed") {
     if (parsed.kind === "failed") {
       const persistenceStartedAt = nowMs();
-      const result = await persistPendingRetryIncomingEmail(context, email, "parse_error");
+      const result = await persistFailedIncomingEmail(context, email, "parse_error");
       return {
         result,
         parseDurationMs,

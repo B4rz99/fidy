@@ -4,7 +4,12 @@ import { captureError, captureWarning } from "@/shared/lib";
 import type { ConnectResult, RawEmail } from "../schema";
 import { readOauthCallbackCode } from "./email-adapter-callback";
 import { generatePkce } from "./email-adapter-pkce";
-import type { EmailAdapter, EmailProviderConfig, FetchEmailsFn } from "./email-adapter-types";
+import type {
+  EmailAdapter,
+  EmailProviderConfig,
+  FetchEmailByIdFn,
+  FetchEmailsFn,
+} from "./email-adapter-types";
 
 type TokenResponse = {
   access_token: string;
@@ -241,7 +246,11 @@ async function getValidToken(input: {
   }
 }
 
-export function createAdapter(config: EmailProviderConfig, fetchFn: FetchEmailsFn): EmailAdapter {
+export function createAdapter(
+  config: EmailProviderConfig,
+  fetchFn: FetchEmailsFn,
+  fetchByIdFn?: FetchEmailByIdFn
+): EmailAdapter {
   return {
     isConnected: () => hasStoredToken(config),
     disconnect: () => clearStoredTokens(config),
@@ -253,6 +262,11 @@ export function createAdapter(config: EmailProviderConfig, fetchFn: FetchEmailsF
     ): Promise<RawEmail[]> => {
       const token = await getValidToken({ config, clientId });
       return token == null ? [] : fetchFn(token, since, senderEmails);
+    },
+    fetchEmailById: async (clientId: string, id: string): Promise<RawEmail | null> => {
+      if (fetchByIdFn === undefined) return null;
+      const token = await getValidToken({ config, clientId });
+      return token == null ? null : fetchByIdFn(token, id);
     },
   };
 }

@@ -25,7 +25,7 @@ export type IntakeLocalLedgerCandidateHandler = (
 
 export type CreateReviewCandidateCommand = {
   readonly kind: "localLedger.reviewCandidate.create";
-  readonly processedSourceEventRow: {
+  readonly sourceEvent: {
     readonly id: string;
     readonly userId: string;
     readonly sourceFamily: string;
@@ -33,7 +33,6 @@ export type CreateReviewCandidateCommand = {
     readonly sourceEventId: string;
     readonly status: LocalLedgerProcessedSourceEventStatus;
     readonly failureReason: string | null;
-    readonly subject?: string | null;
     readonly retryCount?: number;
     readonly nextRetryAt?: string | null;
     readonly transactionId?: string | null;
@@ -42,9 +41,8 @@ export type CreateReviewCandidateCommand = {
     readonly processedAt: string;
     readonly createdAt: string;
     readonly updatedAt: string;
-    readonly deletedAt: string | null;
   };
-  readonly reviewCandidateRow: {
+  readonly candidate: {
     readonly id: string;
     readonly userId: string;
     readonly processedSourceEventId: string;
@@ -59,29 +57,18 @@ export type CreateReviewCandidateCommand = {
     readonly confidence: number | null;
     readonly createdAt: string;
     readonly updatedAt: string;
-    readonly deletedAt: string | null;
   };
-  readonly evidenceRows: readonly {
+  readonly evidence: readonly {
     readonly id: string;
+    readonly linkId: string;
     readonly userId: string;
     readonly sourceFamily: string;
     readonly evidenceType: string;
     readonly scope: string;
     readonly value: string;
-    readonly transactionId: null;
-    readonly transferId: null;
     readonly processedSourceEventId: string;
     readonly createdAt: string;
     readonly updatedAt: string;
-    readonly deletedAt: string | null;
-  }[];
-  readonly evidenceLinkRows: readonly {
-    readonly id: string;
-    readonly userId: string;
-    readonly reviewCandidateId: string;
-    readonly captureEvidenceId: string;
-    readonly createdAt: string;
-    readonly deletedAt: string | null;
   }[];
 };
 
@@ -97,7 +84,6 @@ export type CreateReviewCandidateInput = {
     readonly processedAt: string;
     readonly status: LocalLedgerProcessedSourceEventStatus;
     readonly failureReason: string | null;
-    readonly subject?: string | null;
     readonly retryCount?: number;
     readonly nextRetryAt?: string | null;
     readonly transactionId?: string | null;
@@ -121,7 +107,7 @@ export type CreateReviewCandidate = (
   input: CreateReviewCandidateInput
 ) => Promise<{ readonly success: true } | { readonly success: false; readonly error: string }>;
 
-const toProcessedSourceEventRow = (input: CreateReviewCandidateInput) => ({
+const toProcessedSourceEventIntent = (input: CreateReviewCandidateInput) => ({
   id: input.source.processedSourceEventId,
   userId: input.userId,
   sourceFamily: input.source.sourceFamily,
@@ -129,7 +115,6 @@ const toProcessedSourceEventRow = (input: CreateReviewCandidateInput) => ({
   sourceEventId: input.source.sourceEventId,
   status: input.source.status,
   failureReason: input.source.failureReason,
-  subject: input.source.subject,
   retryCount: input.source.retryCount,
   nextRetryAt: input.source.nextRetryAt,
   transactionId: input.source.transactionId,
@@ -138,12 +123,11 @@ const toProcessedSourceEventRow = (input: CreateReviewCandidateInput) => ({
   processedAt: input.source.processedAt,
   createdAt: input.now,
   updatedAt: input.now,
-  deletedAt: null,
 });
 
-const toReviewCandidateRow = (
+const toReviewCandidateIntent = (
   input: CreateReviewCandidateInput
-): CreateReviewCandidateCommand["reviewCandidateRow"] => ({
+): CreateReviewCandidateCommand["candidate"] => ({
   id: input.candidate.id,
   userId: input.userId,
   processedSourceEventId: input.source.processedSourceEventId,
@@ -158,31 +142,19 @@ const toReviewCandidateRow = (
   confidence: input.candidate.confidence,
   createdAt: input.now,
   updatedAt: input.now,
-  deletedAt: null,
 });
 
-const toEvidenceRow = (input: CreateReviewCandidateInput, row: LocalLedgerCaptureEvidence) => ({
+const toEvidenceIntent = (input: CreateReviewCandidateInput, row: LocalLedgerCaptureEvidence) => ({
   id: row.id,
+  linkId: row.linkId,
   userId: input.userId,
   sourceFamily: row.sourceFamily,
   evidenceType: row.evidenceType,
   scope: row.scope,
   value: row.value,
-  transactionId: null,
-  transferId: null,
   processedSourceEventId: input.source.processedSourceEventId,
   createdAt: input.now,
   updatedAt: input.now,
-  deletedAt: null,
-});
-
-const toEvidenceLinkRow = (input: CreateReviewCandidateInput, row: LocalLedgerCaptureEvidence) => ({
-  id: row.linkId,
-  userId: input.userId,
-  reviewCandidateId: input.candidate.id,
-  captureEvidenceId: row.id,
-  createdAt: input.now,
-  deletedAt: null,
 });
 
 export function toCreateReviewCandidateCommand(
@@ -190,10 +162,9 @@ export function toCreateReviewCandidateCommand(
 ): CreateReviewCandidateCommand {
   return {
     kind: "localLedger.reviewCandidate.create",
-    processedSourceEventRow: toProcessedSourceEventRow(input),
-    reviewCandidateRow: toReviewCandidateRow(input),
-    evidenceRows: input.evidence.map((row) => toEvidenceRow(input, row)),
-    evidenceLinkRows: input.evidence.map((row) => toEvidenceLinkRow(input, row)),
+    sourceEvent: toProcessedSourceEventIntent(input),
+    candidate: toReviewCandidateIntent(input),
+    evidence: input.evidence.map((row) => toEvidenceIntent(input, row)),
   };
 }
 

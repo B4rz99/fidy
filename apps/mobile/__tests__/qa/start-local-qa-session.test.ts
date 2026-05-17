@@ -6,7 +6,8 @@ const mockClear = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
 const mockSetLocalOnboardingComplete = vi.fn<(...args: any[]) => any>();
 const mockOnboardingReset = vi.fn<(...args: any[]) => any>();
 const mockResetDbForUser = vi.fn<(userId: string) => Promise<void>>(() => Promise.resolve());
-const mockGetDb = vi.fn<(userId: string) => { _: string }>(() => ({ _: "db" }));
+const mockDb = { _: "db", transaction: (fn: (tx: unknown) => unknown) => fn(mockDb) };
+const mockGetDb = vi.fn<(userId: string) => typeof mockDb>(() => mockDb);
 const mockMigrate = vi.fn<(db: unknown, config: unknown) => Promise<void>>(() => Promise.resolve());
 const mockUpsertFinancialAccount = vi.fn<(db: unknown, row: unknown) => void>();
 const mockInsertTransaction = vi.fn<(db: unknown, row: unknown) => void>();
@@ -74,6 +75,7 @@ vi.mock("@/infrastructure/local-ledger/transaction-storage", () => ({
 }));
 
 vi.mock("@/infrastructure/local-ledger/record-transfer", () => ({
+  saveTransferStorageRow: (db: unknown, row: unknown) => mockUpsertTransfer(db, row),
   upsertTransferStorageRow: (db: unknown, row: unknown) => mockUpsertTransfer(db, row),
 }));
 

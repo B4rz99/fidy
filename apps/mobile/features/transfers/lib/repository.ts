@@ -14,7 +14,7 @@ function queryActiveTransfers(db: AnyDb, userId: TransferRow["userId"]) {
   return db
     .select()
     .from(transfers)
-    .where(and(eq(transfers.userId, userId), isNull(transfers.deletedAt)))
+    .where(and(eq(transfers.userId, userId), isNull(transfers.voidedAt)))
     .orderBy(desc(transfers.date), desc(transfers.updatedAt), desc(transfers.id));
 }
 

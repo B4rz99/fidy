@@ -137,7 +137,7 @@ export const transfers = sqliteTable(
     source: text("source").$type<TransferSource>().notNull().default("manual"),
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
     updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
-    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+    voidedAt: text("voided_at").$type<IsoDateTime>(),
   },
   (table) => [
     index("idx_transfers_user_date").on(table.userId, table.date),
@@ -237,9 +237,6 @@ export const processedSourceEvents = sqliteTable(
     sourceEventId: text("source_event_id").notNull(),
     status: text("status").notNull(),
     failureReason: text("failure_reason"),
-    subject: text("subject"),
-    rawBodyPreview: text("raw_body_preview"),
-    rawBody: text("raw_body"),
     retryCount: integer("retry_count").notNull().default(0),
     nextRetryAt: text("next_retry_at").$type<IsoDateTime>(),
     transactionId: text("transaction_id").$type<TransactionId>(),

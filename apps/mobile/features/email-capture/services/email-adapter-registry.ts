@@ -3,8 +3,8 @@ import type { EmailProvider } from "../schema";
 import { EMAIL_REDIRECT_URI, getGmailRedirectUri } from "../schema";
 import { createAdapter } from "./create-email-adapter";
 import type { EmailAdapter, EmailProviderConfig } from "./email-adapter-types";
-import { fetchGmailEmailsWithToken } from "./gmail-adapter";
-import { fetchOutlookEmailsWithToken } from "./outlook-adapter";
+import { fetchGmailEmailByIdWithToken, fetchGmailEmailsWithToken } from "./gmail-adapter";
+import { fetchOutlookEmailByIdWithToken, fetchOutlookEmailsWithToken } from "./outlook-adapter";
 
 const gmailConfig: EmailProviderConfig = {
   provider: "gmail",
@@ -42,8 +42,12 @@ const outlookConfig: EmailProviderConfig = {
 };
 
 const adapters: Record<EmailProvider, EmailAdapter> = {
-  gmail: createAdapter(gmailConfig, fetchGmailEmailsWithToken),
-  outlook: createAdapter(outlookConfig, fetchOutlookEmailsWithToken),
+  gmail: createAdapter(gmailConfig, fetchGmailEmailsWithToken, fetchGmailEmailByIdWithToken),
+  outlook: createAdapter(
+    outlookConfig,
+    fetchOutlookEmailsWithToken,
+    fetchOutlookEmailByIdWithToken
+  ),
 };
 
 export function getAdapter(provider: EmailProvider): EmailAdapter {

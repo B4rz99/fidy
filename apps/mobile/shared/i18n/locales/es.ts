@@ -502,6 +502,7 @@ const es = {
       "Estos correos bancarios no pudieron procesarse automáticamente. Puedes agregarlos como transacciones manualmente.",
     empty: "No hay correos sin procesar",
     addManually: "Agregar manualmente",
+    manualReviewLabel: "Necesita revisión manual",
     parseFailedReason: "No se pudo extraer datos de la transacción",
     parseErrorReason: "Error al procesar el correo",
   },

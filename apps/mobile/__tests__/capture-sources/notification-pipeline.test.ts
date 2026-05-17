@@ -371,6 +371,44 @@ describe("processNotification", () => {
     expect(mockInsertMerchantRule).not.toHaveBeenCalled();
   });
 
+  it("persists local-future notification parses as needs_review", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-18T02:00:00.000Z"));
+    mockParseNotificationApi.mockResolvedValueOnce({
+      type: "expense",
+      amount: 35000,
+      categoryId: "other",
+      description: "Compra programada",
+      date: "2026-05-18",
+      confidence: 0.95,
+    });
+
+    try {
+      const result = await processNotification(
+        mockDb,
+        USER_ID,
+        makeNotification({ text: "Compra programada por $35,000" })
+      );
+
+      expect(result.saved).toBe(false);
+      expect(mockInsertTransaction).not.toHaveBeenCalled();
+      expect(mockPersistReviewCandidateCapture).toHaveBeenCalledWith(
+        expect.objectContaining({
+          db: mockDb,
+          status: "needs_review",
+          failureReason: "future_dated",
+          candidate: expect.objectContaining({
+            amount: 35000,
+            confidence: 0.95,
+          }),
+        })
+      );
+      expect(mockInsertMerchantRule).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("skips when fingerprint already processed", async () => {
     mockNotificationLlmAccountHintParse();
     mockIsCaptureProcessed.mockResolvedValueOnce(true);
