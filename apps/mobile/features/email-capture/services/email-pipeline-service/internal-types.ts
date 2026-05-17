@@ -48,7 +48,7 @@ export type CaptureEvidenceRowsInput = {
   readonly cardProductHint?: string;
   readonly accountTypeHint?: string;
   readonly counterpartyHint?: string;
-  readonly processedSourceEventId?: ProcessedSourceEventId | null;
+  readonly processedSourceEventId: ProcessedSourceEventId;
   readonly transactionId: TransactionId | null;
   readonly now: IsoDateTime;
   readonly buildEmailCaptureEvidence: (input: {

@@ -27,11 +27,10 @@ CREATE TABLE `capture_evidence_new` (
 	`value` text NOT NULL,
 	`transaction_id` text,
 	`transfer_id` text,
-	`processed_source_event_id` text,
+	`processed_source_event_id` text NOT NULL,
 	`created_at` text NOT NULL,
 	`updated_at` text NOT NULL,
 	`deleted_at` text,
-	CONSTRAINT "ck_capture_evidence_source_record" CHECK(`processed_source_event_id` is not null),
 	CONSTRAINT "ck_capture_evidence_financial_link" CHECK(`transaction_id` is null or `transfer_id` is null)
 );
 --> statement-breakpoint

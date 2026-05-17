@@ -204,13 +204,14 @@ export const captureEvidence = sqliteTable(
     value: text("value").notNull(),
     transactionId: text("transaction_id").$type<TransactionId>(),
     transferId: text("transfer_id").$type<TransferId>(),
-    processedSourceEventId: text("processed_source_event_id").$type<ProcessedSourceEventId>(),
+    processedSourceEventId: text("processed_source_event_id")
+      .$type<ProcessedSourceEventId>()
+      .notNull(),
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
     updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
     deletedAt: text("deleted_at").$type<IsoDateTime>(),
   },
   (table) => [
-    check("ck_capture_evidence_source_record", sql`${table.processedSourceEventId} is not null`),
     check(
       "ck_capture_evidence_financial_link",
       sql`${table.transactionId} is null or ${table.transferId} is null`

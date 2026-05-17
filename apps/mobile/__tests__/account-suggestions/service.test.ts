@@ -57,7 +57,7 @@ function saveEvidenceRow(id: string, row: Partial<SuggestionEvidenceInput>) {
     scope: "notification:bancolombia:last4",
     value: "1234",
     transactionId: null,
-    processedSourceEventId: null,
+    processedSourceEventId: `${id}-source-event` as ProcessedSourceEventId,
     createdAt: NOW,
     updatedAt: NOW,
     deletedAt: null,
