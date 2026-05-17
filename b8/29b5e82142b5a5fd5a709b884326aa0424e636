@@ -1,0 +1,64 @@
+apps/mobile/features/email-capture/lib/repository.ts
+  s_acf8922e9282b5::t_b7ddf8a78f2731 1,106,110
+  s_acf8922e9282b5::t_eed1c99052d16c 2
+  s_acf8922e9282b5::t_7114a737b7002e 3
+apps/mobile/__tests__/email-capture/financial-meaning-review.test.ts
+  s_acf8922e9282b5::t_ac6b91ae13fbec 349,376
+apps/mobile/__tests__/capture-sources/repository.test.ts
+  s_acf8922e9282b5::t_a0e5e212e62afc 16,30-34,93,95-96,98,100,109,112-114
+apps/mobile/__tests__/capture-sources/store.test.ts
+  s_acf8922e9282b5::t_a0e5e212e62afc 14-16,22-23,45,54,88,90
+  s_acf8922e9282b5::t_7fae7024132148 60,92
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-parse.ts
+  s_acf8922e9282b5::t_0e03da8ece781b 2
+apps/mobile/features/email-capture/services/email-pipeline-service/internal-types.ts
+  s_acf8922e9282b5::t_774caca8f4ae91 118,120-132,265
+  s_acf8922e9282b5::t_320f615e4b7bee 51,157,255
+apps/mobile/features/email-capture/services/email-pipeline-service/transactions.ts
+  s_acf8922e9282b5::t_d8d53eacde17a8 9
+  s_acf8922e9282b5::t_0e03da8ece781b 170
+apps/mobile/features/email-capture/services/email-pipeline-service/retry.ts
+  s_acf8922e9282b5::t_f5be29ec5b6b52 32-34,40-42,44-45
+plans/legacy-processed-intake-audit-447.md
+  s_acf8922e9282b5::t_8d2f3fe2506c3b 1-16,19-27,33-39,42-47
+  s_acf8922e9282b5::t_dc09a564d025f5 17-18,28-32,40-41
+apps/mobile/features/capture-sources/lib/repository.ts
+  s_acf8922e9282b5::t_33a1525e58634c 5-6
+  s_acf8922e9282b5::t_54c681d5b5a69e 2
+  s_acf8922e9282b5::t_870779aef68a03 55,57-61,63-71
+  s_acf8922e9282b5::t_c0ea740e2bee49 4
+  s_acf8922e9282b5::t_eed1c99052d16c 3
+apps/mobile/__tests__/capture-sources/repository-sms-events.test.ts
+  s_acf8922e9282b5::t_7fae7024132148 13
+apps/mobile/features/email-capture/services/email-fetch-durability.ts
+  s_acf8922e9282b5::t_c0ea740e2bee49 3,13,36
+apps/mobile/features/capture-sources/store.ts
+  s_acf8922e9282b5::t_7fae7024132148 141
+  s_acf8922e9282b5::t_870779aef68a03 10,110,140
+  s_acf8922e9282b5::t_33a1525e58634c 3-5
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-email.ts
+  s_acf8922e9282b5::t_c0ea740e2bee49 79
+apps/mobile/features/email-capture/services/email-pipeline-service/shared.ts
+  s_acf8922e9282b5::t_774caca8f4ae91 3
+apps/mobile/features/email-capture/services/email-capture-queues.ts
+  s_acf8922e9282b5::t_c0ea740e2bee49 4,17-20,23,25
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-batch.ts
+  s_acf8922e9282b5::t_41f7ccafdd4b25 5
+  s_acf8922e9282b5::t_d8d53eacde17a8 60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "b829b5e82142b5a5fd5a709b884326aa0424e636",
+  "prompts": {},
+  "sessions": {
+    "s_acf8922e9282b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e312a-9a72-79f3-9f55-01b1c2c7dc9f",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
