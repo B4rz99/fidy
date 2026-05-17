@@ -1,0 +1,47 @@
+apps/mobile/infrastructure/local-ledger/capture-source-events.ts
+  s_6b7d4add335b23::t_b99afb6bd38339 1-5
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_6b7d4add335b23::t_26c1189def2fd9 5-6,109,143,172
+apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts
+  s_6b7d4add335b23::t_26c1189def2fd9 15-17,128,153,205,221
+apps/mobile/mutations/index.ts
+  s_6b7d4add335b23::t_86528ae82a6231 17-19,54-60
+apps/mobile/__tests__/capture-sources/apple-pay-pipeline.test.ts
+  s_6b7d4add335b23::t_8bd0b7f66f1cf6 81,84-85
+  s_6b7d4add335b23::t_26c1189def2fd9 86,88
+apps/mobile/features/email-capture/services/email-pipeline.ts
+  s_6b7d4add335b23::t_170d4d3785a44b 8
+  s_6b7d4add335b23::t_604bdbc5ea5cb4 9
+  s_6b7d4add335b23::t_b99afb6bd38339 85
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_6b7d4add335b23::t_26c1189def2fd9 92,94
+  s_6b7d4add335b23::t_65e25858337c85 87,90-91
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_6b7d4add335b23::t_84d9503b57d586 105
+  s_6b7d4add335b23::t_21ba5c534dc163 1026
+  s_6b7d4add335b23::t_6e30bfff3634c9 689,691-693,1073,1076-1079
+  s_6b7d4add335b23::t_921af74a7dba37 100,106
+apps/mobile/infrastructure/local-ledger/public.ts
+  s_6b7d4add335b23::t_b99afb6bd38339 21-24
+apps/mobile/__tests__/capture-sources/widget-pipeline.test.ts
+  s_6b7d4add335b23::t_26c1189def2fd9 55,57
+  s_6b7d4add335b23::t_c1470691207e8e 50,53-54
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_6b7d4add335b23::t_26c1189def2fd9 4-6,111,127,166,199,213
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "1fd0b4d404a5d10e19ab166cce6327308a6ef7a5",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
