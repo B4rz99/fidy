@@ -1,0 +1,43 @@
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_6b7d4add335b23::t_a544165c02cc74 18,97-98,243,361,396
+.dependency-cruiser.cjs
+  s_6b7d4add335b23::t_3453e6605f206f 77
+apps/mobile/infrastructure/local-ledger/public.ts
+  s_6b7d4add335b23::t_3453e6605f206f 24
+apps/mobile/local-ledger/intake.public.ts
+  s_6b7d4add335b23::t_3453e6605f206f 1-13
+apps/mobile/__tests__/local-ledger/source-events.test.ts
+  s_6b7d4add335b23::t_c95fd10ab751c5 132,136,168,176,192,196-197,210
+apps/mobile/features/email-capture/services/email-pipeline.ts
+  s_6b7d4add335b23::t_3453e6605f206f 5
+apps/mobile/infrastructure/local-ledger/source-events.ts
+  s_6b7d4add335b23::t_a6432bb6c8e57d 137
+  s_6b7d4add335b23::t_1a445ca1fa4fc3 17,28-29,345,360-361,385-387
+  s_6b7d4add335b23::t_3453e6605f206f 2-6,24,62-63,127-136,138-147,241-266,268-269,271-304,308-321,326-342,346-349,355-359,362-384,388-415
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_6b7d4add335b23::t_3453e6605f206f 7,233,246-247
+scripts/check-feature-public-imports.ts
+  s_6b7d4add335b23::t_36774ebdd42899 2,14,81-83,97-102,124
+scripts/feature-public-import-collectors.ts
+  s_6b7d4add335b23::t_4b5239e78b2bca 37-94,97,272-277
+  s_6b7d4add335b23::t_36774ebdd42899 28,158-170,183,192,258-271,278-281
+  s_6b7d4add335b23::t_46fe2ed736a2c8 171-182,184-191
+scripts/check-feature-public-imports.test.ts
+  s_6b7d4add335b23::t_8ed0022a5a2a00 6,59-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "41a18796af5a3f67b1c9afd98ffab2479e3a0fd3",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
