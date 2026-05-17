@@ -7,7 +7,6 @@ import type {
   LocalLedgerSourceId,
 } from "@/local-ledger/public";
 import { fromPromise } from "@/shared/effect/runtime";
-// eslint-disable-next-line no-restricted-imports -- avoid shared/lib barrel pulling React Native into pure pipeline code
 import {
   generateCaptureEvidenceId,
   generateId,

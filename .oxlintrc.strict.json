@@ -62,7 +62,11 @@
           "@/features/*/schema",
           "@/features/*/services/*",
           "@/shared/lib/*",
+          "!@/shared/lib/format-date",
+          "!@/shared/lib/generate-id",
           "@/shared/db/*",
+          "!@/shared/db/client",
+          "!@/shared/db/schema",
           "react-native",
           "lucide-react-native"
         ]

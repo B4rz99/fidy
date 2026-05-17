@@ -1,7 +1,5 @@
 import { and, eq, isNull } from "drizzle-orm";
-// eslint-disable-next-line no-restricted-imports -- DB repository needs schema table access without widening shared/db barrel
 import type { AnyDb } from "@/shared/db/client";
-// eslint-disable-next-line no-restricted-imports -- DB repository needs schema table access without widening shared/db barrel
 import { processedSourceEvents, reviewCandidates } from "@/shared/db/schema";
 import type {
   IsoDateTime,

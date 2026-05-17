@@ -6,9 +6,7 @@ import {
 } from "@/local-ledger/public";
 import { getBuiltInCategoryId } from "@/shared/categories";
 import type { AnyDb } from "@/shared/db";
-// eslint-disable-next-line no-restricted-imports -- avoid shared/lib barrel pulling React Native into pure review code
 import { toIsoDateTime } from "@/shared/lib/format-date";
-// eslint-disable-next-line no-restricted-imports -- avoid shared/lib barrel pulling React Native into pure review code
 import { generateTransactionId } from "@/shared/lib/generate-id";
 import type {
   CopAmount,
@@ -153,7 +151,8 @@ function toReviewCandidateResolutionRecord(
     userId: row.reviewCandidate.userId,
     processedSourceEventId: row.reviewCandidate.processedSourceEventId,
     status: row.reviewCandidate.status as ReviewCandidateResolutionRecord["status"],
-    candidateKind: row.reviewCandidate.candidateKind as ReviewCandidateResolutionRecord["candidateKind"],
+    candidateKind: row.reviewCandidate
+      .candidateKind as ReviewCandidateResolutionRecord["candidateKind"],
   };
 }
 
@@ -161,7 +160,9 @@ function buildSourceEventReviewTransactionCommand(
   userId: UserId,
   row: NonNullable<ReturnType<typeof getSourceEventReviewCandidateById>>,
   input: {
-    readonly accountId: Parameters<typeof recordAutomatedTransactionWithLocalLedger>[0]["command"]["accountId"];
+    readonly accountId: Parameters<
+      typeof recordAutomatedTransactionWithLocalLedger
+    >[0]["command"]["accountId"];
     readonly occurredOn: IsoDate;
   }
 ): Parameters<typeof recordAutomatedTransactionWithLocalLedger>[0]["command"] {

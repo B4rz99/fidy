@@ -6,7 +6,6 @@ import {
 import type { FinancialAccountRow } from "@/features/financial-accounts/write.public";
 import { currentIsoDateTimeEffect } from "@/shared/effect/clock";
 import { fromPromise } from "@/shared/effect/runtime";
-// eslint-disable-next-line no-restricted-imports -- avoid shared/lib barrel pulling React Native into pure pipeline code
 import { generateProcessedSourceEventId, generateTransactionId } from "@/shared/lib/generate-id";
 import { assertIsoDateTime, requireIsoDateTime } from "@/shared/types/assertions";
 import type { IsoDateTime } from "@/shared/types/branded";
