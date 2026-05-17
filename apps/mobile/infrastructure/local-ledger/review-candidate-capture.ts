@@ -135,6 +135,8 @@ const insertReviewSourceEvent = (
     })
     .onConflictDoNothing()
     .run();
+
+  return findReviewSourceEvent(db, input);
 };
 
 const upsertReviewSourceEvent = (
@@ -148,7 +150,8 @@ const upsertReviewSourceEvent = (
   if (existing?.status === "failed") {
     updateFailedSourceEventForReview(db, command.sourceEvent, sourceEventId);
   } else {
-    insertReviewSourceEvent(db, command.sourceEvent, sourceEventId);
+    const persisted = insertReviewSourceEvent(db, command.sourceEvent, sourceEventId);
+    if (persisted?.id !== sourceEventId) return null;
   }
 
   return sourceEventId;

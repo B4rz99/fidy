@@ -25,7 +25,10 @@ type InsertedRow = { readonly table: string; readonly row: any };
 
 function makeDb(
   existingSourceEvent: any | null = null,
-  options: { readonly failCaptureEvidenceInsert?: boolean } = {}
+  options: {
+    readonly failCaptureEvidenceInsert?: boolean;
+    readonly conflictingSourceEventOnInsert?: any;
+  } = {}
 ) {
   const inserted: InsertedRow[] = [];
   const sourceRows = existingSourceEvent ? [existingSourceEvent] : [];
@@ -81,6 +84,10 @@ function makeDb(
                 existing.deletedAt === null
             );
             if (!duplicate) {
+              if (options.conflictingSourceEventOnInsert != null) {
+                activeSourceRows().push(options.conflictingSourceEventOnInsert);
+                return;
+              }
               activeSourceRows().push(row);
               activeInserted().push({ table: getTableName(table as never), row });
             }
@@ -183,6 +190,39 @@ describe("Local Ledger source-event persistence", () => {
         confidence: 0.42,
       },
       evidence: [],
+    });
+
+    expect(inserted).toEqual([]);
+  });
+
+  it("does not link review-candidate children to a generated source event after insert conflict", async () => {
+    const { recordReviewCandidateCaptureWithLocalLedger } =
+      await import("@/infrastructure/local-ledger/review-candidate-capture");
+    const { db, inserted } = makeDb(null, {
+      conflictingSourceEventOnInsert: {
+        id: "pse-existing",
+        ...baseSource,
+        deletedAt: null,
+      },
+    });
+
+    await recordReviewCandidateCaptureWithLocalLedger({
+      db,
+      ...baseSource,
+      candidate: {
+        occurredAt: NOW,
+        amount: 12500 as CopAmount,
+        description: "Low confidence cafe capture",
+        confidence: 0.42,
+      },
+      evidence: [
+        {
+          sourceFamily: "notification",
+          evidenceType: "counterparty_hint",
+          scope: "merchant",
+          value: "Cafe",
+        },
+      ],
     });
 
     expect(inserted).toEqual([]);
