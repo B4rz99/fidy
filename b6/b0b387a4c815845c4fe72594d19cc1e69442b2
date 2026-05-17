@@ -1,0 +1,22 @@
+apps/mobile/shared/lib/route-params.ts
+  s_6b7d4add335b23::t_6e100ab5ae6260 1,6,8
+  s_6b7d4add335b23::t_339e6a5dd8c9fd 4-5
+apps/mobile/__tests__/shared/route-params.test.ts
+  s_6b7d4add335b23::t_6e100ab5ae6260 1-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "b6b0b387a4c815845c4fe72594d19cc1e69442b2",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
