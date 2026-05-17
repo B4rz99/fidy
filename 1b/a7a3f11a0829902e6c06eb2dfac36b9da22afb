@@ -1,0 +1,42 @@
+apps/mobile/features/email-capture/lib/source-event-repository.ts
+  s_6b7d4add335b23::t_1f86eaf22777cb 44-45
+apps/mobile/features/capture-evidence/write.public.ts
+  s_6b7d4add335b23::t_a391efa61230f1 1
+apps/mobile/features/email-capture/services/email-pipeline-service/public-types.ts
+  s_6b7d4add335b23::t_3469a2ca5ee8d7 1-2
+  s_b481c7ac3047cb::t_908afe676fcace 98
+apps/mobile/__tests__/error-handling/pipeline-save-error.test.ts
+  s_6b7d4add335b23::t_516ac3851bb939 107
+  s_6b7d4add335b23::t_dc9d2fdc5daa30 139-140,150,181
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_6b7d4add335b23::t_5c49f5470b289f 1307,1656
+  s_6b7d4add335b23::t_1f86eaf22777cb 214-215,261,663,665,668,1011,1016,1050,1616
+apps/mobile/features/email-capture/services/email-pipeline-service/runtime.ts
+  s_6b7d4add335b23::t_5c49f5470b289f 5,10,230-231
+  s_6b7d4add335b23::t_1f86eaf22777cb 102
+  s_6b7d4add335b23::t_a391efa61230f1 7,9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "1ba7a3f11a0829902e6c06eb2dfac36b9da22afb",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_b481c7ac3047cb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3135-728d-73d0-b748-bae1f1529710",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
