@@ -8,7 +8,10 @@ import {
   getTransactionById,
   markTransactionSuperseded,
 } from "@/features/transactions/transfer-reclassification.public";
-import { saveTransferStorageRow, toTransferRow } from "@/infrastructure/local-ledger/record-transfer";
+import {
+  saveTransferStorageRow,
+  toTransferRow,
+} from "@/infrastructure/local-ledger/record-transfer";
 import type { AnyDb } from "@/shared/db";
 import { financialAccounts } from "@/shared/db/schema";
 import { parseIsoDate, toIsoDateTime } from "@/shared/lib/format-date";

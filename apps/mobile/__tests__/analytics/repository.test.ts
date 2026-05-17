@@ -8,7 +8,10 @@ import {
   getIncomeExpenseForPeriod,
   getSpendingByCategoryForPeriod,
 } from "@/features/analytics/lib/repository";
-import { insertTransactionStorageRow as insertTransaction, softDeleteTransactionStorageRow as softDeleteTransaction } from "@/infrastructure/local-ledger/transaction-storage";
+import {
+  insertTransactionStorageRow as insertTransaction,
+  softDeleteTransactionStorageRow as softDeleteTransaction,
+} from "@/infrastructure/local-ledger/transaction-storage";
 import type {
   CategoryId,
   CopAmount,

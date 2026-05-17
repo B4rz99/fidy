@@ -55,9 +55,8 @@ describe("transaction repository", () => {
   });
 
   it("insertTransactionStorageRow calls db.insert with correct row", async () => {
-    const { insertTransactionStorageRow } = await import(
-      "@/infrastructure/local-ledger/transaction-storage"
-    );
+    const { insertTransactionStorageRow } =
+      await import("@/infrastructure/local-ledger/transaction-storage");
 
     insertTransactionStorageRow(mockDb, {
       id: "tx-123" as TransactionId,
@@ -121,9 +120,8 @@ describe("transaction repository", () => {
   });
 
   it("softDeleteTransactionStorageRow sets voidedAt and updatedAt", async () => {
-    const { softDeleteTransactionStorageRow } = await import(
-      "@/infrastructure/local-ledger/transaction-storage"
-    );
+    const { softDeleteTransactionStorageRow } =
+      await import("@/infrastructure/local-ledger/transaction-storage");
 
     softDeleteTransactionStorageRow(
       mockDb,
@@ -173,9 +171,8 @@ describe("transaction repository", () => {
   });
 
   it("upsertTransactionStorageRow calls insert with onConflictDoUpdate", async () => {
-    const { upsertTransactionStorageRow } = await import(
-      "@/infrastructure/local-ledger/transaction-storage"
-    );
+    const { upsertTransactionStorageRow } =
+      await import("@/infrastructure/local-ledger/transaction-storage");
 
     const row = {
       id: "tx-1" as TransactionId,

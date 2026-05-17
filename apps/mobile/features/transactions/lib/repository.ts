@@ -177,10 +177,6 @@ export function getRecentTransactions(input: RecentTransactionsInput): Transacti
 }
 
 export function getTransactionById(db: AnyDb, id: TransactionId): TransactionRow | null {
-  const rows = db
-    .select()
-    .from(transactions)
-    .where(eq(transactions.id, id))
-    .all();
+  const rows = db.select().from(transactions).where(eq(transactions.id, id)).all();
   return rows[0] ?? null;
 }

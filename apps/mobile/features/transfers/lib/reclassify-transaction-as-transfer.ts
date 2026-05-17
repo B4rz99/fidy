@@ -38,7 +38,10 @@ type ReclassifyTransactionAsTransferInput = {
 type ReclassifyTransactionAsTransferDeps = {
   readonly now?: () => Date;
   readonly createId?: () => TransferId;
-  readonly saveTransferRow?: (db: Parameters<typeof saveTransferStorageRow>[0], row: TransferRow) => void;
+  readonly saveTransferRow?: (
+    db: Parameters<typeof saveTransferStorageRow>[0],
+    row: TransferRow
+  ) => void;
   readonly loadTransactionById?: typeof getTransactionById;
   readonly saveTransactionRow?: typeof markTransactionSuperseded;
   readonly relinkEvidenceToTransfer?: typeof relinkCaptureEvidenceToTransfer;
