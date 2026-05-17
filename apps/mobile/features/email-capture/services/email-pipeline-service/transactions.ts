@@ -61,49 +61,16 @@ function buildTransactionCaptureEvidenceRows(
   );
 }
 
-const buildReviewProcessedSourceEventRow = (context: EmailTransactionContext) => ({
-  id: context.processedSourceEventId,
-  userId: context.userId,
-  sourceFamily: "email",
-  sourceId: getEmailSourceId(context.email),
-  sourceEventId: context.email.externalId,
-  status: "needs_review",
-  failureReason: null,
-  subject: context.email.subject,
-  rawBodyPreview: context.email.body.slice(0, 500),
-  rawBody: null,
-  retryCount: 0,
-  nextRetryAt: null,
-  receivedAt: requireIsoDateTime(context.email.receivedAt),
-  processedAt: context.now,
-  transactionId: null,
-  confidence: context.parsed.confidence,
-  createdAt: context.now,
-  updatedAt: context.now,
-  deletedAt: null,
-});
+const ensureSyncWrite = (result: unknown, operation: string) => {
+  if (result instanceof Promise) {
+    throw new Error(`${operation} must be synchronous inside an Expo SQLite transaction`);
+  }
+};
 
 function persistReviewCandidateBundleEffect(context: EmailTransactionContext) {
   return Effect.gen(function* () {
     const deps = yield* EmailPipelineDeps.tag;
-    const processedSourceEventRow = buildReviewProcessedSourceEventRow(context);
-
-    yield* fromPromise(async () => {
-      if ("transaction" in context.db && typeof context.db.transaction === "function") {
-        let commitPromise:
-          | ReturnType<typeof commitReviewCandidate>
-          | undefined;
-        context.db.transaction((tx) => {
-          commitPromise = commitReviewCandidate({ ...context, db: tx }, deps);
-          void deps.insertProcessedEmailSourceEvent(tx, processedSourceEventRow);
-        });
-        await commitPromise;
-        return;
-      }
-
-      await commitReviewCandidate(context, deps);
-      await deps.insertProcessedEmailSourceEvent(context.db, processedSourceEventRow);
-    });
+    yield* fromPromise(() => commitReviewCandidate(context, deps));
   });
 }
 
@@ -142,9 +109,15 @@ function persistTransactionBundleEffect(context: EmailTransactionContext) {
     yield* fromPromise(async () => {
       if ("transaction" in context.db && typeof context.db.transaction === "function") {
         context.db.transaction((tx) => {
-          void insertTransaction(tx, buildTransactionRow(context, transaction));
-          void insertProcessedEmailSourceEvent(tx, processedSourceEventRow);
-          void saveCaptureEvidenceRows(tx, evidenceRows);
+          ensureSyncWrite(
+            insertTransaction(tx, buildTransactionRow(context, transaction)),
+            "insertTransaction"
+          );
+          ensureSyncWrite(
+            insertProcessedEmailSourceEvent(tx, processedSourceEventRow),
+            "insertProcessedEmailSourceEvent"
+          );
+          ensureSyncWrite(saveCaptureEvidenceRows(tx, evidenceRows), "saveCaptureEvidenceRows");
         });
         return;
       }
