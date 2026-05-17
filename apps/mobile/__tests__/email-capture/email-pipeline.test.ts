@@ -7,6 +7,7 @@ import {
   processEmails,
   processInitialSyncEmails,
 } from "@/features/email-capture/services/email-pipeline";
+import { toIsoDate } from "@/shared/lib/format-date";
 import { requireIsoDateTime, requireUserId } from "@/shared/types/assertions";
 import type { FinancialAccountId } from "@/shared/types/branded";
 
@@ -1351,11 +1352,13 @@ describe("email processing pipeline", () => {
 
   it("routes local-future automated email captures to review before recording", async () => {
     const emails = [makeRawEmail()];
-    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult({ date: "2026-05-18" }));
+    const now = new Date("2026-05-18T02:00:00.000Z");
+    const futureDate = toIsoDate(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult({ date: futureDate }));
 
     const result = await createTestEmailPipelineService({
       clock: {
-        now: () => new Date("2026-05-18T02:00:00.000Z"),
+        now: () => now,
         nowIsoDateTime: () => requireIsoDateTime("2026-05-18T02:00:00.000Z"),
       },
     }).processEmails(mockDb, USER_ID, emails);
@@ -1372,7 +1375,7 @@ describe("email processing pipeline", () => {
         }),
         candidate: expect.objectContaining({
           candidateKind: "transaction",
-          occurredAt: "2026-05-18",
+          occurredAt: futureDate,
         }),
       })
     );

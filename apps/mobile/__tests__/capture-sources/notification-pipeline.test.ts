@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { NotificationData } from "@/features/capture-sources/schema";
 import { processNotification } from "@/features/capture-sources/services/notification-pipeline";
+import { toIsoDate } from "@/shared/lib/format-date";
 import type { FinancialAccountId } from "@/shared/types/branded";
 
 const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
@@ -376,14 +377,16 @@ describe("processNotification", () => {
   });
 
   it("persists local-future notification parses as needs_review", async () => {
+    const now = new Date("2026-05-18T02:00:00.000Z");
+    const futureDate = toIsoDate(new Date(now.getTime() + 24 * 60 * 60 * 1000));
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-05-18T02:00:00.000Z"));
+    vi.setSystemTime(now);
     mockParseNotificationApi.mockResolvedValueOnce({
       type: "expense",
       amount: 35000,
       categoryId: "other",
       description: "Compra programada",
-      date: "2026-05-18",
+      date: futureDate,
       confidence: 0.95,
     });
 
