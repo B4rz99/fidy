@@ -32,6 +32,12 @@ module.exports = {
       to: { path: "^apps/mobile/modules/" },
     },
     {
+      name: "shared-must-not-depend-on-local-ledger",
+      severity: "error",
+      from: { path: "^apps/mobile/shared/" },
+      to: { path: "^apps/mobile/local-ledger/" },
+    },
+    {
       name: "app-routes-must-not-be-imported-from-outside-app",
       severity: "error",
       from: { pathNot: "^apps/mobile/app/" },

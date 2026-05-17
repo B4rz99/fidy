@@ -92,6 +92,23 @@ test("guards pure local-ledger code from app layers and runtime infrastructure",
   ]);
 });
 
+test("guards shared code from depending on local-ledger", () => {
+  const sharedRule = config.forbidden.find(
+    (forbiddenRule) => forbiddenRule.name === "shared-must-not-depend-on-local-ledger"
+  );
+
+  expect(sharedRule).toBeDefined();
+  expect(sharedRule?.from?.path).toBe("^apps/mobile/shared/");
+  expect(sharedRule?.to?.path).toBe("^apps/mobile/local-ledger/");
+  expect(
+    matchesRule(sharedRule!, {
+      from: "apps/mobile/shared/lib/transaction-source.ts",
+      to: "apps/mobile/local-ledger/public.ts",
+      dependencyTypes: ["local"],
+    })
+  ).toBe(true);
+});
+
 test("guards local-ledger internals behind public entrypoints for consumers", () => {
   const publicImportsRule = config.forbidden.find(
     (forbiddenRule) => forbiddenRule.name === "local-ledger-consumers-must-use-public-entrypoints"
