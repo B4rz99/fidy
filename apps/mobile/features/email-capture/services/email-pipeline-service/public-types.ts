@@ -3,12 +3,11 @@ import type {
   CaptureEvidenceSeed,
 } from "@/features/capture-evidence/write.public";
 import type { FinancialAccountRow } from "@/features/financial-accounts/write.public";
-import type { TransactionRow } from "@/features/transactions/query.public";
 import type {
-  CreateReviewCandidateInput,
-  RecordTransactionInput,
-  RecordTransactionResult,
-} from "@/local-ledger/public";
+  RecordAutomatedTransactionInput,
+  RecordAutomatedTransactionResult,
+} from "@/infrastructure/local-ledger/record-transaction";
+import type { CreateReviewCandidateInput } from "@/local-ledger/public";
 import type { AnyDb } from "@/shared/db";
 import type { AppClock } from "@/shared/effect/clock";
 import type { AppTelemetry } from "@/shared/effect/telemetry";
@@ -141,8 +140,9 @@ export type CreateEmailPipelineServiceDeps = {
     userId: UserId,
     options?: { now?: IsoDateTime }
   ) => FinancialAccountRow;
-  readonly insertTransaction: (db: AnyDb, row: TransactionRow) => void | Promise<void>;
-  readonly recordTransaction?: (input: RecordTransactionInput) => Promise<RecordTransactionResult>;
+  readonly recordAutomatedTransactionWithLocalLedger: (
+    input: RecordAutomatedTransactionInput
+  ) => Promise<RecordAutomatedTransactionResult>;
   readonly createReviewCandidate?: (
     db: AnyDb,
     input: CreateReviewCandidateInput

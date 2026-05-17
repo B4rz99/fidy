@@ -4,7 +4,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { saveTransfer } from "@/features/transfers";
+import { saveTransfer } from "@/features/transfers/lib/repository";
 import type {
   CopAmount,
   FinancialAccountId,

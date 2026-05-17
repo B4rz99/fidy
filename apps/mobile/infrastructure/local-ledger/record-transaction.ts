@@ -38,7 +38,7 @@ type RecordManualTransactionInput = {
   readonly now: Date;
 };
 
-type RecordAutomatedTransactionInput = {
+export type RecordAutomatedTransactionInput = {
   readonly db: AnyDb;
   readonly command: Omit<RecordTransactionCommand, "source"> & {
     readonly source: Exclude<RecordTransactionCommand["source"], "manual">;

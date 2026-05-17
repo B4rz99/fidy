@@ -23,9 +23,7 @@ import {
   resolveEmailStatus,
 } from "./shared";
 import {
-  buildTransactionRow,
-  defaultRecordTransaction,
-  prepareRecordedTransaction,
+  buildAutomatedTransactionCommand,
 } from "./transaction-recording";
 import { trackSavedTransactionEffect } from "./transaction-tracking";
 import type {
@@ -78,8 +76,7 @@ function persistTransactionBundleEffect(context: EmailTransactionContext) {
     const {
       buildEmailCaptureEvidence,
       insertProcessedEmailSourceEvent,
-      insertTransaction,
-      recordTransaction = defaultRecordTransaction,
+      recordAutomatedTransactionWithLocalLedger,
       saveCaptureEvidenceRows,
     } = yield* EmailPipelineDeps.tag;
     const processedSourceEventRow = {
@@ -100,29 +97,22 @@ function persistTransactionBundleEffect(context: EmailTransactionContext) {
       deletedAt: null,
     };
     const evidenceRows = buildTransactionCaptureEvidenceRows(context, buildEmailCaptureEvidence);
-    const transaction = yield* fromPromise(() =>
-      prepareRecordedTransaction(context, { recordTransaction })
-    );
 
     yield* fromPromise(async () => {
-      if ("transaction" in context.db && typeof context.db.transaction === "function") {
-        context.db.transaction((tx) => {
-          ensureSyncWrite(
-            insertTransaction(tx, buildTransactionRow(context, transaction)),
-            "insertTransaction"
-          );
+      const result = await recordAutomatedTransactionWithLocalLedger({
+        db: context.db,
+        command: buildAutomatedTransactionCommand(context),
+        transactionId: context.txId,
+        now: context.now,
+        afterRecord: (tx) => {
           ensureSyncWrite(
             insertProcessedEmailSourceEvent(tx, processedSourceEventRow),
             "insertProcessedEmailSourceEvent"
           );
           ensureSyncWrite(saveCaptureEvidenceRows(tx, evidenceRows), "saveCaptureEvidenceRows");
-        });
-        return;
-      }
-
-      await insertTransaction(context.db, buildTransactionRow(context, transaction));
-      await insertProcessedEmailSourceEvent(context.db, processedSourceEventRow);
-      await saveCaptureEvidenceRows(context.db, evidenceRows);
+        },
+      });
+      if (!result.success) throw new Error(`RecordTransaction rejected: ${result.error}`);
     });
   });
 }

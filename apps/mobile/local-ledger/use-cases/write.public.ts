@@ -5,7 +5,7 @@ import type {
   IsoDate,
   IsoDateTime,
 } from "@/shared/types/branded";
-import type { NormalizedTransactionSource } from "@/shared/lib";
+import type { NormalizedTransactionSource } from "@/shared/lib/transaction-source.public";
 import type {
   LocalLedgerCommandId,
   LocalLedgerDomainEvent,

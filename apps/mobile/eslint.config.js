@@ -17,8 +17,14 @@ const BARREL_PATTERNS = [
   { group: ["@/features/*/schema"], message: "Import from @/features/<name> barrel instead" },
   { group: ["@/features/*/services/*"], message: "Import from @/features/<name> barrel instead" },
   {
-    group: ["@/shared/lib/*", "!@/shared/lib/format-date", "!@/shared/lib/generate-id"],
-    message: "Import from @/shared/lib barrel instead, unless using a trusted constructor module",
+    group: [
+      "@/shared/lib/*",
+      "!@/shared/lib/*.public",
+      "!@/shared/lib/format-date",
+      "!@/shared/lib/generate-id",
+    ],
+    message:
+      "Import from @/shared/lib barrel instead, unless using a trusted constructor module or narrow public surface",
   },
   {
     group: ["@/shared/db/*", "!@/shared/db/client", "!@/shared/db/schema"],

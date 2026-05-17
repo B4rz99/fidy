@@ -4,7 +4,7 @@ import {
 } from "@/features/capture-evidence/public";
 import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
-import { insertTransaction } from "@/features/transactions/lib/repository";
+import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/record-transaction";
 import {
   type CreateReviewCandidateInput,
   createReviewCandidateUseCase,
@@ -55,7 +55,7 @@ const emailPipelineDeps = {
   buildEmailCaptureEvidence,
   saveCaptureEvidenceRows,
   ensureDefaultFinancialAccount,
-  insertTransaction,
+  recordAutomatedTransactionWithLocalLedger,
   insertMerchantRule,
   trackTransactionCreated,
   createReviewCandidate: (db: AnyDb, input: CreateReviewCandidateInput) =>
