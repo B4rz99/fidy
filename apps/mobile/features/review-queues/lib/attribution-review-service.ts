@@ -1,19 +1,19 @@
 import {
   type AccountCreationSuggestion,
   createAccountSuggestionFingerprint,
-} from "@/features/account-suggestions/lib/derive-account-suggestions";
-import { buildSuggestedFinancialAccountDraft } from "@/features/account-suggestions/lib/presentation";
-import { createAccountSuggestionService } from "@/features/account-suggestions/services/create-account-suggestion-service";
-import { getCaptureEvidenceRowsForTransaction } from "@/features/capture-evidence/lib/repository";
+} from "@/features/account-suggestions/public";
+import { buildSuggestedFinancialAccountDraft } from "@/features/account-suggestions/public";
+import { createAccountSuggestionService } from "@/features/account-suggestions/public";
+import { getCaptureEvidenceRowsForTransaction } from "@/features/capture-evidence/query.public";
 import {
   type FinancialAccountRow,
   getFinancialAccountsForUser,
-} from "@/features/financial-accounts/lib/repository";
-import { toStoredTransaction } from "@/features/transactions/lib/build-transaction";
+} from "@/features/financial-accounts/query.public";
+import { toStoredTransaction } from "@/features/transactions/query.public";
 import {
   getAllTransactions,
   getTransactionById as loadTransactionById,
-} from "@/features/transactions/lib/repository";
+} from "@/features/transactions/query.public";
 import type { AnyDb } from "@/shared/db/client";
 import { toIsoDateTime } from "@/shared/lib/format-date";
 import type { IsoDateTime, TransactionId, UserId } from "@/shared/types/branded";

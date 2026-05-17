@@ -1,5 +1,5 @@
 import { and, count, desc, eq, gte, inArray, like, lte, type SQL, sql } from "drizzle-orm";
-import { getActiveTransactionConditions } from "@/features/transactions/lib/active-transaction-conditions";
+import { getActiveTransactionConditions } from "@/features/transactions/query.public";
 import type { AnyDb } from "@/shared/db/client";
 import { transactions } from "@/shared/db/schema";
 import { requireCategoryId, requireCopAmount, requireIsoDate } from "@/shared/types/assertions";

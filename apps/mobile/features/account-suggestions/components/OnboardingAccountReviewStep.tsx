@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
-import { trackOnboardingEvent } from "@/features/onboarding/lib/telemetry";
-import { useOnboardingStore } from "@/features/onboarding/store";
+import { trackOnboardingEvent } from "@/features/onboarding/telemetry.public";
+import { useOnboardingStore } from "@/features/onboarding/store.public";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";

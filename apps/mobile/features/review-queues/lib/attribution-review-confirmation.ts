@@ -1,7 +1,7 @@
-import type { AccountCreationSuggestion } from "@/features/account-suggestions/lib/derive-account-suggestions";
-import type { createAccountSuggestionService } from "@/features/account-suggestions/services/create-account-suggestion-service";
-import type { FinancialAccountRow } from "@/features/financial-accounts/lib/repository";
-import { type getTransactionById as loadTransactionById } from "@/features/transactions/lib/repository";
+import type { AccountCreationSuggestion } from "@/features/account-suggestions/public";
+import type { createAccountSuggestionService } from "@/features/account-suggestions/public";
+import type { FinancialAccountRow } from "@/features/financial-accounts/write.public";
+import { type getTransactionById as loadTransactionById } from "@/features/transactions/query.public";
 import { updateTransactionAccountAttribution } from "@/infrastructure/local-ledger/public";
 import type { AnyDb } from "@/shared/db/client";
 import type {

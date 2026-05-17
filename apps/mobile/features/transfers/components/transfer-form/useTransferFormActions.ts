@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { useCallback } from "react";
 import type { StoredTransaction } from "@/features/transactions/query.public";
-import type { TransferSide } from "@/features/transfers/lib/build-transfer";
+import type { TransferSide } from "@/features/transfers/build.public";
 import { useAsyncGuard, useTranslation } from "@/shared/hooks";
 import { clampDateToToday, showErrorToast } from "@/shared/lib";
 import { resetSavedTransferDraft } from "./resetTransferDraft";

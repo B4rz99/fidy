@@ -1,5 +1,5 @@
 import { useOptionalUserId } from "@/features/auth/public";
-import { useAttributionReviewQueue } from "@/features/review-queues/hooks/use-attribution-review-queue";
+import { useAttributionReviewQueue } from "@/features/review-queues/public";
 import { ChevronRight, Landmark } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";

@@ -1,4 +1,4 @@
-import { buildTransferQaPreset } from "@/features/transfers/lib/qa-preset";
+import { buildTransferQaPreset } from "@/features/transfers/qa.public";
 import { TransferFormScreen } from "@/features/transfers/routes.public";
 import { isLocalQaAvailable } from "../local-session";
 

@@ -9,8 +9,8 @@ import {
   saveFinancialAccount,
   saveFinancialAccountIdentifierInTransaction,
 } from "@/features/financial-accounts/public";
-import { isActiveTransactionRow } from "@/features/transactions/lib/active-transaction-conditions";
-import { getTransactionById } from "@/features/transactions/lib/repository";
+import { isActiveTransactionRow } from "@/features/transactions/query.public";
+import { getTransactionById } from "@/features/transactions/query.public";
 import { updateTransactionAccountAttribution } from "@/infrastructure/local-ledger/public";
 import type { AnyDb } from "@/shared/db";
 import {

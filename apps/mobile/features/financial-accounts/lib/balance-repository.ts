@@ -1,5 +1,5 @@
 import { and, eq, isNull, lte, sql } from "drizzle-orm";
-import { getActiveTransactionConditions } from "@/features/transactions/lib/active-transaction-conditions";
+import { getActiveTransactionConditions } from "@/features/transactions/query.public";
 import type { AnyDb } from "@/shared/db/client";
 import { financialAccounts, openingBalances, transactions, transfers } from "@/shared/db/schema";
 import type { CopAmount, FinancialAccountId, IsoDate, UserId } from "@/shared/types/branded";

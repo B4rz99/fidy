@@ -1,5 +1,5 @@
-import { getTransactionsPaginated } from "@/features/transactions/lib/repository";
-import { getTransfersPaginated } from "@/features/transfers/lib/repository";
+import { getTransactionsPaginated } from "@/features/transactions/query.public";
+import { getTransfersPaginated } from "@/features/transfers/query.public";
 import type { AnyDb } from "@/shared/db/client";
 import type { UserId } from "@/shared/types/branded";
 import { type StoredActivityItem, toStoredActivityItems } from "./activity-items";

@@ -1,4 +1,4 @@
-import { ONBOARDING_STEP, type OnboardingStep } from "@/features/onboarding/lib/flow";
+import { ONBOARDING_STEP, type OnboardingStep } from "@/features/onboarding/flow.public";
 
 type SuggestionFingerprint = {
   readonly fingerprint: string;

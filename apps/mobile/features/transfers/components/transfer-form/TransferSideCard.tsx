@@ -1,6 +1,6 @@
-import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
+import { readFinancialAccountKind } from "@/features/financial-accounts/display.public";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
-import type { TransferSide } from "@/features/transfers/lib/build-transfer";
+import type { TransferSide } from "@/features/transfers/build.public";
 import { ChevronRight, ExternalLink, Landmark } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";

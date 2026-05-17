@@ -1,7 +1,7 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
-import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
+import { readFinancialAccountKind } from "@/features/financial-accounts/display.public";
 import { createFinancialAccountManagementService } from "@/features/financial-accounts/lib/management-service";
 import type { FinancialAccountDetails } from "@/features/financial-accounts/lib/management-service/types";
 import { parseFinancialAccountRouteParam } from "@/features/financial-accounts/lib/route-params";

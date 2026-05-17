@@ -1,9 +1,9 @@
 import { migrate } from "drizzle-orm/expo-sqlite/migrator";
 import migrations from "@/drizzle/migrations";
-import { upsertFinancialAccount } from "@/features/financial-accounts/lib/repository";
-import { clearOnboardingFromStore } from "@/features/onboarding/lib/check-onboarding";
-import { useLocalOnboardingState } from "@/features/onboarding/lib/local-onboarding-state";
-import { useOnboardingStore } from "@/features/onboarding/store";
+import { upsertFinancialAccount } from "@/features/financial-accounts/write.public";
+import { clearOnboardingFromStore } from "@/features/onboarding/store.public";
+import { useLocalOnboardingState } from "@/features/onboarding/store.public";
+import { useOnboardingStore } from "@/features/onboarding/store.public";
 import { seedLocalLedgerRowsForQa } from "@/infrastructure/local-ledger/public";
 import { getDb, resetDbForUser } from "@/shared/db";
 import { queryClient } from "@/shared/query/client";

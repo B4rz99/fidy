@@ -106,6 +106,23 @@ test("fails in enforce mode for cross-feature internal imports", () => {
   );
 });
 
+test("reports cross-feature internal dynamic imports", () => {
+  const root = createTempDir();
+  writeSourceFile(
+    root,
+    "apps/mobile/features/auth/store.ts",
+    'const qa = await import("@/features/qa/start-local-qa-session");\n'
+  );
+
+  expect(collectCrossFeatureInternalImportViolations(root)).toEqual([
+    {
+      importer: "apps/mobile/features/auth/store.ts",
+      importedPath: "@/features/qa/start-local-qa-session",
+      line: 1,
+    },
+  ]);
+});
+
 test("ignores same-feature barrels, tests, and explicit public imports", () => {
   const root = createTempDir();
   writeSourceFile(

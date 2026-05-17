@@ -1,5 +1,5 @@
 import { and, eq, isNull } from "drizzle-orm";
-import { getActiveTransactionConditions } from "@/features/transactions/lib/active-transaction-conditions";
+import { getActiveTransactionConditions } from "@/features/transactions/query.public";
 import type { AnyDb } from "@/shared/db/client";
 import { processedSourceEvents, transactions } from "@/shared/db/schema";
 import { merchantsMatch, normalizeMerchant } from "@/shared/lib/normalize-merchant";

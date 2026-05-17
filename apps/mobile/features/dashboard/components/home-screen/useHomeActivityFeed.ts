@@ -1,10 +1,10 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { appendUniqueActivityItems } from "@/features/activity/lib/append-unique-activity-items";
+import { appendUniqueActivityItems } from "@/features/activity/query.public";
 import {
   createActivityQueryService,
   type StoredActivityItem,
-} from "@/features/activity/services/create-activity-query-service";
+} from "@/features/activity/query.public";
 import { deleteTransaction } from "@/features/transactions/store.public";
 import { Alert } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db";

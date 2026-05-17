@@ -1,7 +1,7 @@
-import { buildDefaultFinancialAccountId } from "@/features/financial-accounts/lib/default-account";
-import type { FinancialAccountRow } from "@/features/financial-accounts/lib/repository";
-import type { TransactionRow } from "@/features/transactions/lib/repository";
-import type { TransferRow } from "@/features/transfers/lib/repository";
+import { buildDefaultFinancialAccountId } from "@/features/financial-accounts/seed.public";
+import type { FinancialAccountRow } from "@/features/financial-accounts/write.public";
+import type { TransactionRow } from "@/features/transactions/query.public";
+import type { TransferRow } from "@/features/transfers/query.public";
 import { getBuiltInCategoryId } from "@/shared/categories";
 import {
   generateFinancialAccountId,

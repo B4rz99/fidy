@@ -1,6 +1,6 @@
 import type { StoredTransaction } from "@/features/transactions/query.public";
 import { refreshTransactions } from "@/features/transactions/store.public";
-import type { TransferSide } from "@/features/transfers/lib/build-transfer";
+import type { TransferSide } from "@/features/transfers/build.public";
 import type {
   TransferMutationError,
   TransferMutationResult,

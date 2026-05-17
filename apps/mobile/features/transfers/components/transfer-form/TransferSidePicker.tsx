@@ -1,8 +1,8 @@
-import { readFinancialAccountKind } from "@/features/financial-accounts/lib/kind";
+import { readFinancialAccountKind } from "@/features/financial-accounts/display.public";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
-import type { TransferSide } from "@/features/transfers/lib/build-transfer";
-import { OUTSIDE_FIDY_LABEL } from "@/features/transfers/lib/build-transfer";
-import { isTransferSideSelected } from "@/features/transfers/lib/presentation";
+import type { TransferSide } from "@/features/transfers/build.public";
+import { OUTSIDE_FIDY_LABEL } from "@/features/transfers/build.public";
+import { isTransferSideSelected } from "@/features/transfers/display.public";
 import { ChevronRight, ExternalLink } from "@/shared/components/icons";
 import { Modal, Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
