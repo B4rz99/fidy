@@ -1,0 +1,27 @@
+apps/mobile/__tests__/email-capture/store-orchestration.test.ts
+  s_fadedd8498de1f::t_c25eb52e20c6d4 1-4,6-44,64-197,199-212,214-285
+  s_fadedd8498de1f::t_3edc8ea12d3b0a 45-63
+  s_fadedd8498de1f::t_eb962cdb4fa3fb 286-376
+apps/mobile/vitest.config.ts
+  s_fadedd8498de1f::t_0fbfbd45b2bc21 53-56
+apps/mobile/__tests__/email-capture/store-state.test.ts
+  s_fadedd8498de1f::t_e7398dfef60323 80,82,86-88
+  s_fadedd8498de1f::t_ca8e2aba5445a8 315
+  s_fadedd8498de1f::t_dae159b484fe6e 1,4-25,29-34,36-37,46,51-79,81,83-85,89-96,144-314,316-318
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "98d31f2b438855f161bb3e14f0c011e22b8b3e3b",
+  "prompts": {},
+  "sessions": {
+    "s_fadedd8498de1f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3431-74c6-7923-80eb-e88d914db211",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
