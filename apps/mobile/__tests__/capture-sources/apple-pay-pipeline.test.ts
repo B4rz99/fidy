@@ -124,7 +124,6 @@ const mockGenerateId = vi.fn<(...args: any[]) => any>();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: any[]) => mockGenerateId(...args),
   generateTransactionId: () => mockGenerateId("tx"),
-  generateProcessedCaptureId: () => mockGenerateId("pc"),
 }));
 
 const mockDb = {} as any;

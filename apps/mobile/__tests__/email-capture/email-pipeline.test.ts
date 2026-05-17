@@ -14,7 +14,6 @@ import type { FinancialAccountId } from "@/shared/types/branded";
 const mockGetProcessedEmailSourceEventIds = vi
   .fn<(...args: any[]) => any>()
   .mockResolvedValue(new Set<string>());
-const mockInsertProcessedEmail = vi.fn<(...args: any[]) => any>();
 const mockInsertProcessedEmailSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
 const mockRecordTransaction = vi.fn<(...args: any[]) => any>();
@@ -99,7 +98,6 @@ vi.mock("@/mutations", () => ({
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getProcessedEmailSourceEventIds: (...args: unknown[]) =>
     mockGetProcessedEmailSourceEventIds(...args),
-  insertProcessedEmail: (...args: unknown[]) => mockInsertProcessedEmail(...args),
   insertProcessedEmailSourceEvent: (...args: unknown[]) =>
     mockInsertProcessedEmailSourceEvent(...args),
   getPendingRetryEmailSourceEvents: (...args: unknown[]) =>
@@ -149,7 +147,6 @@ const mockGenerateId = vi.fn<(...args: any[]) => any>();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: unknown[]) => mockGenerateId(...args),
   generateTransactionId: () => mockGenerateId("tx"),
-  generateProcessedEmailId: () => mockGenerateId("pe"),
   generateCaptureEvidenceId: () => mockGenerateId("ce"),
   generateProcessedSourceEventId: () => mockGenerateId("pse"),
   generateReviewCandidateId: () => mockGenerateId("rc"),
@@ -198,7 +195,6 @@ function resetGeneratedIds() {
 function resetPipelineMocks() {
   [
     mockGetProcessedEmailSourceEventIds,
-    mockInsertProcessedEmail,
     mockInsertProcessedEmailSourceEvent,
     mockInsertTransaction,
     mockRecordTransaction,
@@ -215,7 +211,6 @@ function resetPipelineMocks() {
     mockUpdateProcessedSourceEventStatus,
   ].forEach((mock) => mock.mockReset());
   mockGetProcessedEmailSourceEventIds.mockResolvedValue(new Set<string>());
-  mockInsertProcessedEmail.mockResolvedValue(undefined);
   mockInsertProcessedEmailSourceEvent.mockResolvedValue(undefined);
   mockInsertTransaction.mockResolvedValue(undefined);
   mockRecordTransaction.mockImplementation(async ({ ports, command }) => {
@@ -274,7 +269,6 @@ function createTestEmailPipelineService(overrides: Record<string, unknown> = {})
     findDuplicateTransaction: mockFindDuplicateTransaction,
     getProcessedEmailSourceEventIds: mockGetProcessedEmailSourceEventIds,
     getPendingRetryEmailSourceEvents: mockGetPendingRetryEmailSourceEvents,
-    insertProcessedEmail: mockInsertProcessedEmail,
     insertProcessedEmailSourceEvent: mockInsertProcessedEmailSourceEvent,
     markSourceEventForRetry: mockMarkSourceEventForRetry,
     markSourceEventPermanentlyFailed: mockMarkSourceEventPermanentlyFailed,
@@ -283,7 +277,6 @@ function createTestEmailPipelineService(overrides: Record<string, unknown> = {})
     ensureDefaultFinancialAccount: mockEnsureDefaultFinancialAccount,
     buildEmailCaptureEvidence: mockBuildEmailCaptureEvidence,
     saveCaptureEvidenceRows: mockSaveCaptureEvidenceRows,
-    linkCaptureEvidenceToTransaction: mockLinkCaptureEvidenceToTransaction,
     insertTransaction: mockInsertTransaction,
     recordTransaction: mockRecordTransaction,
     createReviewCandidate: mockCreateReviewCandidate,
@@ -310,9 +303,7 @@ function expectCaptureEvidenceSaved(transactionId: string | null) {
     expect.arrayContaining([
       expect.objectContaining({
         userId: USER_ID,
-        processedEmailId: null,
         processedSourceEventId: expect.any(String),
-        processedCaptureId: null,
         transactionId,
         scope: "email:bancolombia:sender",
         value: "notificaciones@bancolombia.com.co",
@@ -1182,7 +1173,6 @@ describe("email processing pipeline", () => {
     const result = await processEmails(mockDb, USER_ID, [makeRawEmail()]);
 
     expect(result.saved).toBe(1);
-    expect(mockInsertProcessedEmail).not.toHaveBeenCalled();
     expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
@@ -1198,7 +1188,6 @@ describe("email processing pipeline", () => {
       mockDb,
       expect.arrayContaining([
         expect.objectContaining({
-          processedEmailId: null,
           processedSourceEventId: expect.stringMatching(/^pse-/),
           transactionId: expect.stringMatching(/^tx-/),
         }),

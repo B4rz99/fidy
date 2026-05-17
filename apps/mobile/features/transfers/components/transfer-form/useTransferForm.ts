@@ -4,7 +4,6 @@ import { useOptionalUserId } from "@/features/auth/public";
 import { Platform } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import {
-  requireProcessedEmailId,
   requireProcessedSourceEventId,
   requireReviewCandidateId,
   requireTransactionId,
@@ -18,12 +17,6 @@ import { useTransferFormState } from "./useTransferFormState";
 function parseReclassificationTransactionId(rawTransactionId: string | string[] | undefined) {
   return typeof rawTransactionId === "string" && rawTransactionId.trim().length > 0
     ? requireTransactionId(rawTransactionId.trim())
-    : null;
-}
-
-function parseReclassificationProcessedEmailId(rawProcessedEmailId: string | string[] | undefined) {
-  return typeof rawProcessedEmailId === "string" && rawProcessedEmailId.trim().length > 0
-    ? requireProcessedEmailId(rawProcessedEmailId.trim())
     : null;
 }
 
@@ -74,12 +67,10 @@ async function navigateAfterTransferSave(
 function useTransferFormRouteContext() {
   const {
     transactionId: rawTransactionId,
-    processedEmailId: rawProcessedEmailId,
     processedSourceEventId: rawProcessedSourceEventId,
     reviewCandidateId: rawReviewCandidateId,
   } = useLocalSearchParams<{
     transactionId?: string;
-    processedEmailId?: string;
     processedSourceEventId?: string;
     reviewCandidateId?: string;
   }>();
@@ -99,7 +90,6 @@ function useTransferFormRouteContext() {
         navigateAfterTransferSave(destination, replace, navigate),
       [navigate, replace]
     ),
-    processedEmailId: parseReclassificationProcessedEmailId(rawProcessedEmailId),
     processedSourceEventId: sourceEventReviewParams.processedSourceEventId,
     reviewCandidateId: sourceEventReviewParams.reviewCandidateId,
     reclassificationTransactionId: parseReclassificationTransactionId(rawTransactionId),
@@ -136,7 +126,6 @@ function useTransferFormDerivedState(
       fromSide: state.fromSide,
       isIos: route.isIos,
       onSuccessfulSave: props.onSuccessfulSave ?? route.onSuccessfulSave,
-      processedEmailId: route.processedEmailId,
       processedSourceEventId: route.processedSourceEventId,
       reviewCandidateId: route.reviewCandidateId,
       setDate: state.setDate,

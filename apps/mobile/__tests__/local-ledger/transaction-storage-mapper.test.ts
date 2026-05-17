@@ -55,7 +55,24 @@ describe("Local Ledger transaction storage mapping", () => {
     });
   });
 
-  test("normalizes legacy transaction write rows through the infrastructure boundary", () => {
+  test("rejects provider identifiers at the infrastructure boundary", () => {
+    expect(() =>
+      normalizeTransactionStorageRow({
+        id: "transaction-2" as TransactionId,
+        userId: "user-1" as UserId,
+        type: "expense",
+        amount: 42_000 as CopAmount,
+        categoryId: "transport" as CategoryId,
+        description: "Cab",
+        date: "2026-05-12" as IsoDate,
+        source: "email_gmail",
+        createdAt: "2026-05-12T12:00:00.000Z" as IsoDateTime,
+        updatedAt: "2026-05-12T12:00:00.000Z" as IsoDateTime,
+      })
+    ).toThrow("Unsupported transaction source: email_gmail");
+  });
+
+  test("fills defaults for current transaction write rows through the infrastructure boundary", () => {
     const row = normalizeTransactionStorageRow({
       id: "transaction-2" as TransactionId,
       userId: "user-1" as UserId,
@@ -64,7 +81,7 @@ describe("Local Ledger transaction storage mapping", () => {
       categoryId: "transport" as CategoryId,
       description: "Cab",
       date: "2026-05-12" as IsoDate,
-      source: "email_gmail",
+      source: "email_capture",
       createdAt: "2026-05-12T12:00:00.000Z" as IsoDateTime,
       updatedAt: "2026-05-12T12:00:00.000Z" as IsoDateTime,
     });

@@ -56,8 +56,6 @@ export {
   generateNotificationId,
   generateNotificationSourceId,
   generateOpeningBalanceId,
-  generateProcessedCaptureId,
-  generateProcessedEmailId,
   generateTransactionId,
   generateTransferId,
   generateUserCategoryId,

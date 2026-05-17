@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { getActiveTransactionConditions } from "@/features/transactions/lib/active-transaction-conditions";
 import type { AnyDb } from "@/shared/db/client";
-import { processedCaptures, processedSourceEvents, transactions } from "@/shared/db/schema";
+import { processedSourceEvents, transactions } from "@/shared/db/schema";
 import { merchantsMatch, normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { assertCopAmount, assertIsoDate, assertUserId } from "@/shared/types/assertions";
 import type { TransactionId } from "@/shared/types/branded";
@@ -54,11 +54,7 @@ export async function isCaptureProcessed(input: CaptureProcessedLookupInput): Pr
     );
   if (sourceEventRows.some((row) => row.status !== "failed")) return true;
 
-  const legacyRows = await input.db
-    .select({ id: processedCaptures.id })
-    .from(processedCaptures)
-    .where(eq(processedCaptures.fingerprintHash, input.sourceEventId));
-  return legacyRows.length > 0;
+  return false;
 }
 
 /**

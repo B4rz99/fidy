@@ -25,8 +25,6 @@ const SNAPSHOT = {
     captureEvidence: [],
     financialAccountIdentifiers: [],
     accountSuggestionDismissals: [],
-    processedEmails: [],
-    processedCaptures: [],
   },
 } as unknown as BackupSnapshot;
 

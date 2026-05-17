@@ -38,8 +38,6 @@ export const BACKUP_DATA_KEYS = [
   "captureEvidence",
   "financialAccountIdentifiers",
   "accountSuggestionDismissals",
-  "processedEmails",
-  "processedCaptures",
   "processedSourceEvents",
   "reviewCandidates",
   "reviewCandidateCaptureEvidence",
@@ -217,8 +215,6 @@ const ROW_SPECS: readonly RowSpec[] = [
           value: (value) => assertString(value, "value"),
           transactionId: (value) => assertNullableString(value, "transactionId"),
           transferId: (value) => assertNullableString(value, "transferId"),
-          processedEmailId: (value) => assertNullableString(value, "processedEmailId"),
-          processedCaptureId: (value) => assertNullableString(value, "processedCaptureId"),
           processedSourceEventId: (value) => assertNullableString(value, "processedSourceEventId"),
         }),
         ["processedSourceEventId"]
@@ -252,31 +248,6 @@ const ROW_SPECS: readonly RowSpec[] = [
           value: (value) => assertString(value, "value"),
           dismissedScore: (value) => assertCopAmountValue(value, "dismissedScore"),
         })
-      ),
-  },
-  {
-    key: "processedEmails",
-    validate: (row) =>
-      assertRecordShape(
-        row,
-        "processedEmails",
-        {
-          id: (value) => assertString(value, "id"),
-          externalId: (value) => assertString(value, "externalId"),
-          provider: (value) => assertString(value, "provider"),
-          status: (value) => assertString(value, "status"),
-          failureReason: (value) => assertNullableString(value, "failureReason"),
-          subject: (value) => assertString(value, "subject"),
-          rawBodyPreview: (value) => assertNullableString(value, "rawBodyPreview"),
-          receivedAt: (value) => assertValidIsoDateTime(value, "receivedAt"),
-          transactionId: (value) => assertNullableString(value, "transactionId"),
-          confidence: (value) => assertNullableNumber(value, "confidence"),
-          createdAt: (value) => assertValidIsoDateTime(value, "createdAt"),
-          rawBody: (value) => assertNullableString(value, "rawBody"),
-          retryCount: (value) => assertCopAmountValue(value, "retryCount"),
-          nextRetryAt: (value) => assertNullableIsoDateTime(value, "nextRetryAt"),
-        },
-        ["rawBody", "retryCount", "nextRetryAt"]
       ),
   },
   ...INTAKE_ROW_SPECS,

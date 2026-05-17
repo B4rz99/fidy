@@ -117,9 +117,7 @@ function buildEmailCaptureEvidenceRows(input: CaptureEvidenceRowsInput) {
     {
       userId: input.userId,
       transactionId: input.transactionId,
-      processedEmailId: input.processedEmailId,
-      processedSourceEventId: input.processedSourceEventId ?? null,
-      processedCaptureId: null,
+      processedSourceEventId: input.processedSourceEventId,
       createdAt: input.now,
       updatedAt: input.now,
     }
@@ -145,8 +143,7 @@ export function saveEmailCaptureEvidenceEffect(input: CaptureEvidenceSaveInput) 
         cardProductHint: input.cardProductHint,
         accountTypeHint: input.accountTypeHint,
         counterpartyHint: input.counterpartyHint,
-        processedEmailId: input.processedEmailId,
-        processedSourceEventId: input.processedSourceEventId ?? null,
+        processedSourceEventId: input.processedSourceEventId,
         transactionId: input.transactionId,
         now: input.now,
         buildEmailCaptureEvidence,

@@ -7,14 +7,7 @@ import type { CaptureEvidenceSeed } from "../schema";
 export type CaptureEvidenceRow = typeof captureEvidence.$inferInsert;
 type CaptureEvidenceLink = Pick<
   CaptureEvidenceRow,
-  | "processedEmailId"
-  | "processedCaptureId"
-  | "processedSourceEventId"
-  | "transactionId"
-  | "transferId"
-  | "userId"
-  | "createdAt"
-  | "updatedAt"
+  "processedSourceEventId" | "transactionId" | "transferId" | "userId" | "createdAt" | "updatedAt"
 >;
 
 type RepeatedCaptureEvidenceRow = {
@@ -23,12 +16,6 @@ type RepeatedCaptureEvidenceRow = {
   readonly sourceFamily: string;
   readonly evidenceType: string;
   readonly occurrences: number;
-};
-
-type LinkCaptureEvidenceToTransactionInput = {
-  readonly processedEmailId: NonNullable<CaptureEvidenceRow["processedEmailId"]>;
-  readonly transactionId: NonNullable<CaptureEvidenceRow["transactionId"]>;
-  readonly updatedAt: CaptureEvidenceRow["updatedAt"];
 };
 
 type RelinkCaptureEvidenceToTransferInput = {
@@ -60,8 +47,6 @@ function persistCaptureEvidence(db: AnyDb, row: CaptureEvidenceRow) {
         value: row.value,
         transactionId: row.transactionId,
         transferId: row.transferId ?? null,
-        processedEmailId: row.processedEmailId,
-        processedCaptureId: row.processedCaptureId,
         processedSourceEventId: row.processedSourceEventId,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
@@ -114,48 +99,11 @@ export function materializeCaptureEvidenceRows(
     value: row.value,
     transactionId: link.transactionId ?? null,
     transferId: link.transferId ?? null,
-    processedEmailId: link.processedEmailId,
-    processedCaptureId: link.processedCaptureId,
     processedSourceEventId: link.processedSourceEventId,
     createdAt: link.createdAt,
     updatedAt: link.updatedAt,
     deletedAt: null,
   }));
-}
-
-export function linkCaptureEvidenceToTransaction(
-  db: AnyDb,
-  input: LinkCaptureEvidenceToTransactionInput
-) {
-  const rows = db
-    .select()
-    .from(captureEvidence)
-    .where(
-      and(
-        eq(captureEvidence.processedEmailId, input.processedEmailId),
-        isNull(captureEvidence.deletedAt)
-      )
-    )
-    .all();
-
-  if (rows.length === 0) {
-    return;
-  }
-
-  db.transaction((tx) => {
-    rows.forEach((row) => {
-      if (row.transactionId === input.transactionId && row.updatedAt >= input.updatedAt) {
-        return;
-      }
-
-      saveCaptureEvidenceInTransaction(tx, {
-        ...row,
-        transactionId: input.transactionId,
-        transferId: null,
-        updatedAt: input.updatedAt,
-      });
-    });
-  });
 }
 
 export function relinkCaptureEvidenceToTransfer(

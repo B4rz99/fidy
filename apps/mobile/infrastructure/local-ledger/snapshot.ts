@@ -9,8 +9,6 @@ import {
   goalContributions,
   goals,
   openingBalances,
-  processedCaptures,
-  processedEmails,
   processedSourceEvents,
   reviewCandidateCaptureEvidence,
   reviewCandidates,
@@ -96,14 +94,6 @@ export function exportLocalLedgerBackupSnapshot(
         db,
         accountSuggestionDismissals
       ) as readonly (typeof accountSuggestionDismissals.$inferSelect)[],
-      processedEmails: selectRows(
-        db,
-        processedEmails
-      ) as readonly (typeof processedEmails.$inferSelect)[],
-      processedCaptures: selectRows(
-        db,
-        processedCaptures
-      ) as readonly (typeof processedCaptures.$inferSelect)[],
       processedSourceEvents: selectRows(
         db,
         processedSourceEvents
@@ -141,8 +131,6 @@ export function importLocalLedgerBackupSnapshot(
     insertRows(tx, budgets, validatedSnapshot.data.budgets);
     insertRows(tx, goals, validatedSnapshot.data.goals);
     insertRows(tx, goalContributions, validatedSnapshot.data.goalContributions);
-    insertRows(tx, processedEmails, validatedSnapshot.data.processedEmails);
-    insertRows(tx, processedCaptures, validatedSnapshot.data.processedCaptures);
     insertRows(tx, processedSourceEvents, validatedSnapshot.data.processedSourceEvents);
     insertRows(tx, reviewCandidates, validatedSnapshot.data.reviewCandidates);
     insertRows(tx, captureEvidence, validatedSnapshot.data.captureEvidence);
@@ -182,10 +170,6 @@ function clearSnapshotTables(db: BackupDeleteDb, userIds: readonly UserId[]) {
   ].forEach((table) => {
     db.delete(table).where(toUserIdCondition(table.userId, userIds)).run();
   });
-
-  [processedCaptures, processedEmails].forEach((table) => {
-    db.delete(table).run();
-  });
 }
 
 function toUserIdCondition(column: UserScopedBackupTable["userId"], userIds: readonly UserId[]) {
@@ -224,8 +208,6 @@ type BackupTable =
   | typeof goalContributions
   | typeof goals
   | typeof openingBalances
-  | typeof processedCaptures
-  | typeof processedEmails
   | typeof processedSourceEvents
   | typeof reviewCandidateCaptureEvidence
   | typeof reviewCandidates
@@ -233,10 +215,7 @@ type BackupTable =
   | typeof transfers
   | typeof userCategories;
 
-type UserScopedBackupTable = Exclude<
-  BackupTable,
-  typeof processedCaptures | typeof processedEmails
->;
+type UserScopedBackupTable = BackupTable;
 
 type BackupSelectDb = {
   readonly select: () => {

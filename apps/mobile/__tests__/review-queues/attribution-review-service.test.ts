@@ -15,7 +15,7 @@ import type {
   FinancialAccountId,
   IsoDate,
   IsoDateTime,
-  ProcessedCaptureId,
+  ProcessedSourceEventId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
@@ -39,7 +39,7 @@ afterEach(() => {
 type SavedEvidenceInput = {
   readonly transactionId: string | null;
   readonly value: string;
-  readonly processedCaptureId: string;
+  readonly processedSourceEventId: string;
   readonly updatedAt?: IsoDateTime;
 };
 
@@ -93,13 +93,13 @@ const attributionEvidence = [
     id: "ce-reviewed",
     transactionId: "tx-reviewed",
     value: "4931",
-    processedCaptureId: "pc-1",
+    processedSourceEventId: "pse-1",
   },
   {
     id: "ce-related",
     transactionId: "tx-related",
     value: "4931",
-    processedCaptureId: "pc-2",
+    processedSourceEventId: "pse-2",
     updatedAt: "2026-04-19T11:00:00.000Z" as IsoDateTime,
   },
 ];
@@ -145,8 +145,7 @@ function saveEvidence(id: string, input: SavedEvidenceInput) {
     value: input.value,
     transactionId: input.transactionId as TransactionId | null,
     transferId: null,
-    processedEmailId: null,
-    processedCaptureId: input.processedCaptureId as ProcessedCaptureId,
+    processedSourceEventId: input.processedSourceEventId as ProcessedSourceEventId,
     createdAt: input.updatedAt ?? NOW,
     updatedAt: input.updatedAt ?? NOW,
     deletedAt: null,
@@ -284,7 +283,7 @@ describe("attribution review service", () => {
     saveEvidence("ce-reviewed", {
       transactionId: "tx-reviewed",
       value: "4931",
-      processedCaptureId: "pc-1",
+      processedSourceEventId: "pse-1",
     });
 
     const service = createAttributionReviewService();

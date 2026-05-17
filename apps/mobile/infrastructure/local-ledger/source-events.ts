@@ -170,8 +170,6 @@ const insertCaptureEvidence = (
         value: row.value,
         transactionId: input.transactionId,
         transferId: null,
-        processedEmailId: null,
-        processedCaptureId: null,
         processedSourceEventId: input.processedSourceEventId,
         createdAt: input.processedAt,
         updatedAt: input.processedAt,

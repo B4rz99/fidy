@@ -28,9 +28,7 @@ vi.mock("@/features/capture-sources/ingestion.public", () => ({
 }));
 
 vi.mock("@/features/email-capture/lib/repository", () => ({
-  getFailedEmails: vi.fn<(...args: any[]) => any>(),
   getFailedEmailSourceEvents: vi.fn<(...args: any[]) => any>(),
-  getNeedsReviewEmails: vi.fn<(...args: any[]) => any>(),
   getNeedsReviewEmailSourceEvents: vi.fn<(...args: any[]) => any>(),
   getProcessedEmailSourceEventIds: vi.fn<(...args: any[]) => any>(),
   updateLastFetchedAt: vi.fn<(...args: any[]) => any>(),

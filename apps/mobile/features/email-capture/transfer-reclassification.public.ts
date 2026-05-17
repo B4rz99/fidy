@@ -1,29 +1,12 @@
 import type { AnyDb } from "@/shared/db";
 import type {
   IsoDateTime,
-  ProcessedEmailId,
   ProcessedSourceEventId,
   ReviewCandidateId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
-import {
-  markSourceEventReviewCandidateReclassifiedAsTransfer,
-  updateProcessedEmailStatusInTransaction,
-} from "./lib/repository";
-
-export function markProcessedEmailReclassifiedAsTransfer(input: {
-  readonly db: AnyDb;
-  readonly id: ProcessedEmailId;
-  readonly transactionId: TransactionId;
-}) {
-  updateProcessedEmailStatusInTransaction({
-    db: input.db,
-    id: input.id,
-    status: "success",
-    transactionId: input.transactionId,
-  });
-}
+import { markSourceEventReviewCandidateReclassifiedAsTransfer } from "./lib/repository";
 
 export function markProcessedSourceEventReclassifiedAsTransfer(input: {
   readonly db: AnyDb;

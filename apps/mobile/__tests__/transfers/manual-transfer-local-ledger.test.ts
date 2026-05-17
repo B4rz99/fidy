@@ -167,7 +167,7 @@ describe("manual transfer Local Ledger writer", () => {
       db: db as any,
       digits: "450000",
       fromSide: { kind: "account", accountId: ACTIVE_ACCOUNT_ID },
-      processedEmailId: null,
+      processedSourceEventId: null,
       sourceTransaction: null,
       toSide: { kind: "external", label: "Outside Fidy" },
       userId: USER_ID,

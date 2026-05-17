@@ -72,8 +72,6 @@ export type CreateReviewCandidateCommand = {
     readonly value: string;
     readonly transactionId: null;
     readonly transferId: null;
-    readonly processedEmailId: null;
-    readonly processedCaptureId: null;
     readonly processedSourceEventId: string;
     readonly createdAt: string;
     readonly updatedAt: string;
@@ -178,8 +176,6 @@ const toEvidenceRow = (input: CreateReviewCandidateInput, row: LocalLedgerCaptur
   value: row.value,
   transactionId: null,
   transferId: null,
-  processedEmailId: null,
-  processedCaptureId: null,
   processedSourceEventId: input.source.processedSourceEventId,
   createdAt: input.now,
   updatedAt: input.now,

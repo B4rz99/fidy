@@ -17,9 +17,9 @@ describe("transaction callers", () => {
     );
   });
 
-  test("edit screen forwards the linked review email when reclassifying a captured transaction", () => {
-    expect(editTransactionSource).toContain(
-      "processedEmailId: draft.reclassificationProcessedEmailId ?? undefined"
-    );
+  test("edit screen reclassifies captured transactions by transaction id only", () => {
+    expect(editTransactionSource).toContain('pathname: "/reclassify-transaction"');
+    expect(editTransactionSource).toContain("transactionId,");
+    expect(editTransactionSource).not.toContain("processedEmailId");
   });
 });

@@ -3,11 +3,7 @@ import { captureWarning } from "@/shared/lib";
 import { assertEmailAccountId } from "@/shared/types/assertions";
 import type { EmailAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
 import type { ProgressPhase } from "../lib/progress-phases";
-import type {
-  EmailAccountRow,
-  ProcessedEmailRow,
-  ProcessedSourceEventRow,
-} from "../lib/repository";
+import type { EmailAccountRow, ProcessedSourceEventRow } from "../lib/repository";
 import type { ProgressCallback } from "../pipeline.public";
 import type { EmailProvider } from "../schema";
 import type { PersistedFetchedAccounts } from "../services/email-capture-fetch-service";
@@ -23,9 +19,7 @@ export type RefreshTransactions = () => Promise<void> | void;
 export type EmailCaptureState = {
   readonly activeUserId: UserId | null;
   readonly accounts: readonly EmailAccountRow[];
-  readonly failedEmails: readonly ProcessedEmailRow[];
   readonly failedEmailSourceEvents: readonly ProcessedSourceEventRow[];
-  readonly needsReviewEmails: readonly ProcessedEmailRow[];
   readonly needsReviewEmailSourceEvents: readonly ProcessedSourceEventRow[];
   readonly isFetching: boolean;
   readonly progress: ProgressSnapshot | null;
@@ -36,9 +30,7 @@ export type EmailCaptureState = {
 export type EmailCaptureActions = {
   beginSession: (userId: UserId) => void;
   setAccounts: (accounts: readonly EmailAccountRow[]) => void;
-  setFailedEmails: (failedEmails: readonly ProcessedEmailRow[]) => void;
   setFailedEmailSourceEvents: (failedEmailSourceEvents: readonly ProcessedSourceEventRow[]) => void;
-  setNeedsReviewEmails: (needsReviewEmails: readonly ProcessedEmailRow[]) => void;
   setNeedsReviewEmailSourceEvents: (
     needsReviewEmailSourceEvents: readonly ProcessedSourceEventRow[]
   ) => void;
@@ -48,8 +40,7 @@ export type EmailCaptureActions = {
   dismissBanner: () => void;
   appendAccount: (account: EmailAccountRow) => void;
   removeAccount: (accountId: string) => void;
-  removeFailedEmail: (processedEmailId: string) => void;
-  removeNeedsReviewEmail: (processedEmailId: string) => void;
+  removeFailedEmail: (processedSourceEventId: string) => void;
   markAccountsFetched: (accountIds: ReadonlySet<EmailAccountId>, fetchedAt: IsoDateTime) => void;
 };
 
@@ -60,9 +51,7 @@ export function createEmailCaptureState(activeUserId: UserId | null): EmailCaptu
   return {
     activeUserId,
     accounts: [],
-    failedEmails: [],
     failedEmailSourceEvents: [],
-    needsReviewEmails: [],
     needsReviewEmailSourceEvents: [],
     isFetching: false,
     progress: null,
@@ -79,10 +68,8 @@ export function createEmailCaptureActions(set: EmailCaptureSetState): EmailCaptu
   return {
     beginSession: beginEmailCaptureSession(set),
     setAccounts: (accounts) => set({ accounts: [...accounts] }),
-    setFailedEmails: (failedEmails) => set({ failedEmails: [...failedEmails] }),
     setFailedEmailSourceEvents: (failedEmailSourceEvents) =>
       set({ failedEmailSourceEvents: [...failedEmailSourceEvents] }),
-    setNeedsReviewEmails: (needsReviewEmails) => set({ needsReviewEmails: [...needsReviewEmails] }),
     setNeedsReviewEmailSourceEvents: (needsReviewEmailSourceEvents) =>
       set({ needsReviewEmailSourceEvents: [...needsReviewEmailSourceEvents] }),
     setIsFetching: (isFetching) => set({ isFetching }),
@@ -97,18 +84,10 @@ export function createEmailCaptureActions(set: EmailCaptureSetState): EmailCaptu
       set((state) => ({
         accounts: state.accounts.filter((account) => account.id !== accountId),
       })),
-    removeFailedEmail: (processedEmailId) =>
+    removeFailedEmail: (processedSourceEventId) =>
       set((state) => ({
-        failedEmails: state.failedEmails.filter((email) => email.id !== processedEmailId),
         failedEmailSourceEvents: state.failedEmailSourceEvents.filter(
-          (email) => email.id !== processedEmailId
-        ),
-      })),
-    removeNeedsReviewEmail: (processedEmailId) =>
-      set((state) => ({
-        needsReviewEmails: state.needsReviewEmails.filter((email) => email.id !== processedEmailId),
-        needsReviewEmailSourceEvents: state.needsReviewEmailSourceEvents.filter(
-          (email) => email.id !== processedEmailId
+          (email) => email.id !== processedSourceEventId
         ),
       })),
     markAccountsFetched: (accountIds, fetchedAt) =>
@@ -164,9 +143,7 @@ export async function applyEmailCaptureFetchOutcome(input: {
     input.persistedAccounts.updatedAccountIds,
     input.persistedAccounts.fetchedAt
   );
-  state.setFailedEmails(input.queues.failedEmails);
   state.setFailedEmailSourceEvents(input.queues.failedEmailSourceEvents);
-  state.setNeedsReviewEmails(input.queues.needsReviewEmails);
   state.setNeedsReviewEmailSourceEvents(input.queues.needsReviewEmailSourceEvents);
   if (input.showProgress) state.setPhase("complete");
   await input.refreshTransactions();

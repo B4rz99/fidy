@@ -12,12 +12,11 @@ import type { AppTelemetry } from "@/shared/effect/telemetry";
 import type {
   CategoryId,
   IsoDateTime,
-  ProcessedEmailId,
   ProcessedSourceEventId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
-import type { ProcessedEmailRow, ProcessedSourceEventRow } from "../../lib/repository";
+import type { ProcessedSourceEventRow } from "../../lib/repository";
 import type { RawEmail } from "../../schema";
 import type { ParseContext } from "../create-parse-email-service";
 import type { LlmParsedTransaction } from "../llm-parser";
@@ -25,12 +24,11 @@ import type { LlmParsedTransaction } from "../llm-parser";
 export type {
   CategoryId,
   IsoDateTime,
-  ProcessedEmailId,
   ProcessedSourceEventId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
-export type { ProcessedEmailRow, ProcessedSourceEventRow } from "../../lib/repository";
+export type { ProcessedSourceEventRow } from "../../lib/repository";
 export type { RawEmail } from "../../schema";
 export type { LlmParsedTransaction } from "../llm-parser";
 
@@ -94,7 +92,6 @@ export type CreateEmailPipelineServiceDeps = {
     db: AnyDb,
     userId: UserId
   ) => Promise<readonly ProcessedSourceEventRow[]>;
-  readonly insertProcessedEmail: (db: AnyDb, row: ProcessedEmailRow) => Promise<void>;
   readonly insertProcessedEmailSourceEvent: (
     db: AnyDb,
     row: ProcessedSourceEventRow
@@ -135,15 +132,6 @@ export type CreateEmailPipelineServiceDeps = {
   readonly saveCaptureEvidenceRows: (
     db: AnyDb,
     rows: readonly CaptureEvidenceRow[]
-  ) => void | Promise<void>;
-  readonly linkCaptureEvidenceToTransaction: (
-    db: AnyDb,
-    input: {
-      readonly processedEmailId: ProcessedEmailId;
-      readonly processedSourceEventId?: ProcessedSourceEventId | null;
-      readonly transactionId: TransactionId;
-      readonly updatedAt: IsoDateTime;
-    }
   ) => void | Promise<void>;
   readonly ensureDefaultFinancialAccount: (
     db: AnyDb,

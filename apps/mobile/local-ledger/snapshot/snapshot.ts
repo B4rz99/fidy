@@ -101,8 +101,6 @@ export type CaptureEvidenceSnapshotRow = SoftDeletedSnapshotRow & {
   readonly value: string;
   readonly transactionId: string | null;
   readonly transferId: string | null;
-  readonly processedEmailId: string | null;
-  readonly processedCaptureId: string | null;
   readonly processedSourceEventId: string | null;
 };
 
@@ -116,33 +114,6 @@ export type AccountSuggestionDismissalSnapshotRow = SoftDeletedSnapshotRow & {
   readonly scope: string;
   readonly value: string;
   readonly dismissedScore: number;
-};
-
-export type ProcessedEmailSnapshotRow = SnapshotBaseRow & {
-  readonly externalId: string;
-  readonly provider: string;
-  readonly status: string;
-  readonly failureReason: string | null;
-  readonly subject: string;
-  readonly rawBodyPreview: string | null;
-  readonly receivedAt: string;
-  readonly transactionId: string | null;
-  readonly confidence: number | null;
-  readonly createdAt: string;
-  readonly rawBody: string | null;
-  readonly retryCount: number;
-  readonly nextRetryAt: string | null;
-};
-
-export type ProcessedCaptureSnapshotRow = SnapshotBaseRow & {
-  readonly fingerprintHash: string;
-  readonly source: string;
-  readonly status: string;
-  readonly rawText: string | null;
-  readonly transactionId: string | null;
-  readonly confidence: number | null;
-  readonly receivedAt: string;
-  readonly createdAt: string;
 };
 
 export type ProcessedSourceEventSnapshotRow = SoftDeletedSnapshotRow & {
@@ -194,8 +165,6 @@ export type LocalLedgerBackupSnapshotData = {
   readonly captureEvidence: readonly CaptureEvidenceSnapshotRow[];
   readonly financialAccountIdentifiers: readonly FinancialAccountIdentifierSnapshotRow[];
   readonly accountSuggestionDismissals: readonly AccountSuggestionDismissalSnapshotRow[];
-  readonly processedEmails: readonly ProcessedEmailSnapshotRow[];
-  readonly processedCaptures: readonly ProcessedCaptureSnapshotRow[];
   readonly processedSourceEvents: readonly ProcessedSourceEventSnapshotRow[];
   readonly reviewCandidates: readonly ReviewCandidateSnapshotRow[];
   readonly reviewCandidateCaptureEvidence: readonly ReviewCandidateCaptureEvidenceSnapshotRow[];

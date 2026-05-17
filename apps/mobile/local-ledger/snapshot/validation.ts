@@ -8,7 +8,6 @@ import type {
   OpeningBalanceSnapshotRow,
   TransferSnapshotRow,
 } from "./snapshot";
-import { rowsForBackupKey, withLegacyEmptyCollections } from "./legacy";
 import { BACKUP_DATA_KEYS, validateSnapshotRows } from "./row-shape";
 import { LOCAL_LEDGER_BACKUP_SNAPSHOT_VERSION } from "./version";
 
@@ -29,7 +28,7 @@ export function validateBackupSnapshot(snapshot: unknown): BackupSnapshot {
   assertSupportedSnapshotVersion(snapshot);
   assertVersionOneSnapshotShape(snapshot);
 
-  const typedSnapshot = withLegacyEmptyCollections(snapshot as BackupSnapshot);
+  const typedSnapshot = snapshot as BackupSnapshot;
   validateSnapshotRows(typedSnapshot);
   validateDuplicatePrimaryIds(typedSnapshot.data);
   validateSnapshotReferences(typedSnapshot.data);
@@ -77,8 +76,6 @@ function validateSnapshotReferences(data: LocalLedgerBackupSnapshotData) {
   const transactionIds = toIdSet(data.transactions);
   const transferIds = toIdSet(data.transfers);
   const goalIds = toIdSet(data.goals);
-  const processedEmailIds = toIdSet(data.processedEmails);
-  const processedCaptureIds = toIdSet(data.processedCaptures);
   const processedSourceEventIds = toIdSet(data.processedSourceEvents);
   const reviewCandidateIds = toIdSet(data.reviewCandidates);
   const captureEvidenceIds = toIdSet(data.captureEvidence);
@@ -112,20 +109,6 @@ function validateSnapshotReferences(data: LocalLedgerBackupSnapshotData) {
   data.goalContributions.forEach((row) => {
     assertKnownReference(goalIds, row.goalId, "goalContributions.goalId");
   });
-  data.processedEmails.forEach((row) => {
-    assertOptionalKnownReference(
-      transactionIds,
-      row.transactionId,
-      "processedEmails.transactionId"
-    );
-  });
-  data.processedCaptures.forEach((row) => {
-    assertOptionalKnownReference(
-      transactionIds,
-      row.transactionId,
-      "processedCaptures.transactionId"
-    );
-  });
   data.processedSourceEvents.forEach((row) => {
     assertOptionalKnownReference(
       transactionIds,
@@ -140,16 +123,6 @@ function validateSnapshotReferences(data: LocalLedgerBackupSnapshotData) {
       "captureEvidence.transactionId"
     );
     assertOptionalKnownReference(transferIds, row.transferId, "captureEvidence.transferId");
-    assertOptionalKnownReference(
-      processedEmailIds,
-      row.processedEmailId,
-      "captureEvidence.processedEmailId"
-    );
-    assertOptionalKnownReference(
-      processedCaptureIds,
-      row.processedCaptureId,
-      "captureEvidence.processedCaptureId"
-    );
     assertOptionalKnownReference(
       processedSourceEventIds,
       row.processedSourceEventId,
@@ -237,11 +210,7 @@ const usesSameTrackedAccount = (row: TransferSnapshotRow) =>
   row.fromAccountId !== null && row.fromAccountId === row.toAccountId;
 
 function assertValidCaptureEvidenceLinks(row: CaptureEvidenceSnapshotRow) {
-  const sourceRecords = [
-    row.processedEmailId,
-    row.processedCaptureId,
-    row.processedSourceEventId,
-  ].filter(isPresent).length;
+  const sourceRecords = [row.processedSourceEventId].filter(isPresent).length;
   const financialLinks = [row.transactionId, row.transferId].filter(isPresent).length;
 
   if (sourceRecords !== 1) {
@@ -255,12 +224,12 @@ function assertValidCaptureEvidenceLinks(row: CaptureEvidenceSnapshotRow) {
 }
 
 function hasBackupTableArrays(data: Record<string, unknown>) {
-  return BACKUP_DATA_KEYS.every((key) => Array.isArray(rowsForBackupKey(data, key)));
+  return BACKUP_DATA_KEYS.every((key) => Array.isArray(data[key]));
 }
 
 function hasBackupTableRows(data: Record<string, unknown>) {
   return BACKUP_DATA_KEYS.every((key) => {
-    const rows = rowsForBackupKey(data, key);
+    const rows = data[key];
     return Array.isArray(rows) && rows.every(isRecord);
   });
 }

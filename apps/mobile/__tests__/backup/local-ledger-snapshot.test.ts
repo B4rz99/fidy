@@ -20,8 +20,6 @@ import {
   goals,
   notifications,
   openingBalances,
-  processedCaptures,
-  processedEmails,
   processedSourceEvents,
   reviewCandidateCaptureEvidence,
   reviewCandidates,
@@ -186,11 +184,10 @@ function seedStaleLocalLedgerRows() {
 
     insert into capture_evidence (
       id, user_id, source_family, evidence_type, scope, value, transaction_id, transfer_id,
-      processed_email_id, processed_capture_id, processed_source_event_id, created_at, updated_at,
-      deleted_at
+      processed_source_event_id, created_at, updated_at, deleted_at
     ) values (
       'ce-stale', 'user-1', 'email', 'counterparty_hint', 'merchant', 'Stale Cafe',
-      null, null, null, null, 'pse-stale', '${NOW}', '${NOW}', null
+      null, null, 'pse-stale', '${NOW}', '${NOW}', null
     );
 
     insert into review_candidate_capture_evidence (
@@ -200,27 +197,9 @@ function seedStaleLocalLedgerRows() {
 }
 
 function seedCaptureAndReviewState() {
-  seedProcessedCaptures();
   seedProcessedSourceEventsAndReviewCandidates();
   seedCaptureEvidence();
   seedDismissalsAndConflicts();
-}
-
-function seedProcessedCaptures() {
-  sourceSqlite.exec(`
-    insert into processed_emails (
-      id, external_id, provider, status, failure_reason, subject, raw_body_preview,
-      received_at, transaction_id, confidence, created_at, raw_body, retry_count, next_retry_at
-    ) values (
-      'email-1', 'provider-message-1', 'gmail', 'needs_review', 'ambiguous_account',
-      'Purchase alert', 'Paid with card ending 1234', '${NOW}', 'txn-1', 0.62,
-      '${NOW}', 'Paid with card ending 1234 at Store', 1, null
-    );
-
-    insert into processed_captures (
-      id, fingerprint_hash, source, status, raw_text, transaction_id, confidence, received_at, created_at
-    ) values ('capture-1', 'hash-1', 'notification', 'success', 'Transfer sent', null, 0.91, '${NOW}', '${NOW}');
-  `);
 }
 
 function seedProcessedSourceEventsAndReviewCandidates() {
@@ -231,6 +210,12 @@ function seedProcessedSourceEventsAndReviewCandidates() {
     ) values (
       'pse-1', 'user-1', 'email', 'gmail-primary', 'gmail-message-1',
       'needs_review', 'ambiguous_account', '${NOW}', '${NOW}', '${NOW}', '${NOW}', null
+    ), (
+      'pse-transaction', 'user-1', 'email', 'gmail-primary', 'gmail-message-transaction',
+      'processed', null, '${NOW}', '${NOW}', '${NOW}', '${NOW}', null
+    ), (
+      'pse-transfer', 'user-1', 'notification', 'push-primary', 'push-message-transfer',
+      'processed', null, '${NOW}', '${NOW}', '${NOW}', '${NOW}', null
     );
 
     insert into review_candidates (
@@ -247,12 +232,11 @@ function seedCaptureEvidence() {
   sourceSqlite.exec(`
     insert into capture_evidence (
       id, user_id, source_family, evidence_type, scope, value, transaction_id, transfer_id,
-      processed_email_id, processed_capture_id, processed_source_event_id, created_at, updated_at,
-      deleted_at
+      processed_source_event_id, created_at, updated_at, deleted_at
     ) values
-      ('ce-email', 'user-1', 'gmail', 'last4', 'last4', '1234', 'txn-1', null, 'email-1', null, null, '${NOW}', '${NOW}', null),
-      ('ce-capture', 'user-1', 'push', 'alias_token', 'alias', 'Broker', null, 'trf-1', null, 'capture-1', null, '${NOW}', '${NOW}', null),
-      ('ce-review', 'user-1', 'email', 'counterparty_hint', 'merchant', 'Cafe', null, null, null, null, 'pse-1', '${NOW}', '${NOW}', null);
+      ('ce-email', 'user-1', 'gmail', 'last4', 'last4', '1234', 'txn-1', null, 'pse-transaction', '${NOW}', '${NOW}', null),
+      ('ce-capture', 'user-1', 'push', 'alias_token', 'alias', 'Broker', null, 'trf-1', 'pse-transfer', '${NOW}', '${NOW}', null),
+      ('ce-review', 'user-1', 'email', 'counterparty_hint', 'merchant', 'Cafe', null, null, 'pse-1', '${NOW}', '${NOW}', null);
 
     insert into review_candidate_capture_evidence (
       id, user_id, review_candidate_id, capture_evidence_id, created_at, deleted_at
@@ -301,12 +285,6 @@ function expectRestoredPlanningRows() {
 }
 
 function expectRestoredCaptureAndReviewState() {
-  expect(targetDb.select().from(processedEmails).all()).toEqual(
-    sourceDb.select().from(processedEmails).all()
-  );
-  expect(targetDb.select().from(processedCaptures).all()).toEqual(
-    sourceDb.select().from(processedCaptures).all()
-  );
   expect(targetDb.select().from(captureEvidence).all()).toEqual(
     sourceDb.select().from(captureEvidence).all()
   );
@@ -393,8 +371,9 @@ function emptySnapshotData(overrides: Record<string, unknown> = {}) {
     captureEvidence: [],
     financialAccountIdentifiers: [],
     accountSuggestionDismissals: [],
-    processedEmails: [],
-    processedCaptures: [],
+    processedSourceEvents: [],
+    reviewCandidates: [],
+    reviewCandidateCaptureEvidence: [],
     ...overrides,
   };
 }
@@ -466,25 +445,6 @@ function transactionRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function transferRow(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "trf-1",
-    userId: "user-1",
-    amount: 100000,
-    fromAccountId: "fa-rollback",
-    toAccountId: null,
-    fromExternalLabel: null,
-    toExternalLabel: "Broker",
-    description: "Investment",
-    date: "2026-04-21",
-    source: "manual",
-    createdAt: NOW,
-    updatedAt: NOW,
-    deletedAt: null,
-    ...overrides,
-  };
-}
-
 function openingBalanceRow(id = "ob-1") {
   return {
     id,
@@ -495,25 +455,6 @@ function openingBalanceRow(id = "ob-1") {
     createdAt: NOW,
     updatedAt: NOW,
     deletedAt: null,
-  };
-}
-
-function processedEmailRow() {
-  return {
-    id: "email-1",
-    externalId: "provider-message-1",
-    provider: "gmail",
-    status: "success",
-    failureReason: null,
-    subject: "Purchase alert",
-    rawBodyPreview: "Paid with card ending 1234",
-    receivedAt: NOW,
-    transactionId: "txn-1",
-    confidence: 0.9,
-    createdAt: NOW,
-    rawBody: "Paid with card ending 1234 at Store",
-    retryCount: 0,
-    nextRetryAt: null,
   };
 }
 
@@ -544,19 +485,12 @@ function captureEvidenceRow(overrides: Record<string, unknown> = {}) {
     value: "1234",
     transactionId: "txn-1",
     transferId: null,
-    processedEmailId: "email-1",
-    processedCaptureId: null,
+    processedSourceEventId: "source-event-1",
     createdAt: NOW,
     updatedAt: NOW,
     deletedAt: null,
     ...overrides,
   };
-}
-
-function withoutKeys<Row extends Record<string, unknown>>(row: Row, keys: readonly (keyof Row)[]) {
-  return Object.fromEntries(
-    Object.entries(row).filter(([key]) => !keys.includes(key as keyof Row))
-  );
 }
 
 function createCappedInsertDb(maxRowsPerInsert: number) {
@@ -648,8 +582,6 @@ describe("local ledger backup snapshots", () => {
         captureEvidence: expect.any(Array),
         financialAccountIdentifiers: expect.any(Array),
         accountSuggestionDismissals: expect.any(Array),
-        processedEmails: expect.any(Array),
-        processedCaptures: expect.any(Array),
         processedSourceEvents: expect.any(Array),
         reviewCandidates: expect.any(Array),
         reviewCandidateCaptureEvidence: expect.any(Array),
@@ -757,8 +689,6 @@ describe("local ledger backup snapshots", () => {
       "goalContributions",
       "goals",
       "openingBalances",
-      "processedCaptures",
-      "processedEmails",
       "processedSourceEvents",
       "reviewCandidateCaptureEvidence",
       "reviewCandidates",
@@ -867,89 +797,6 @@ describe("local ledger backup snapshots", () => {
     ).toThrow("Malformed local ledger backup row: status is not supported");
   });
 
-  it("accepts legacy version 1 rows that predate additive defaulted columns", () => {
-    const legacyTransaction = {
-      ...withoutKeys(transactionRow(), [
-        "counterpartyName",
-        "supersededByTransferId",
-        "voidedAt",
-        "source",
-      ]),
-      deletedAt: null,
-    };
-    const snapshot = validSnapshot({
-      userCategories: [userCategoryRow()],
-      financialAccounts: [
-        withoutKeys(rollbackAccountRow(), ["statementClosingDay", "paymentDueDay"]),
-      ],
-      transactions: [legacyTransaction],
-      processedEmails: [withoutKeys(processedEmailRow(), ["rawBody", "retryCount", "nextRetryAt"])],
-    });
-
-    expect(validateBackupSnapshot(snapshot)).toEqual({
-      ...snapshot,
-      data: {
-        ...snapshot.data,
-        transactions: [
-          {
-            ...withoutKeys(legacyTransaction, ["deletedAt"]),
-            counterpartyName: null,
-            supersededByTransferId: null,
-            voidedAt: null,
-            source: "manual",
-          },
-        ],
-        processedSourceEvents: [],
-        reviewCandidates: [],
-        reviewCandidateCaptureEvidence: [],
-      },
-    });
-  });
-
-  it("normalizes legacy non-manual transaction source values as closed capture categories", () => {
-    const legacyTransaction = {
-      ...withoutKeys(transactionRow({ source: "email_gmail" }), [
-        "counterpartyName",
-        "supersededByTransferId",
-        "voidedAt",
-      ]),
-      deletedAt: null,
-    };
-
-    const snapshot = validateBackupSnapshot(
-      validSnapshot({
-        userCategories: [userCategoryRow()],
-        financialAccounts: [rollbackAccountRow()],
-        transactions: [legacyTransaction],
-      })
-    );
-
-    expect(snapshot.data.transactions[0]).toEqual(
-      expect.objectContaining({ source: "email_capture" })
-    );
-  });
-
-  it("defaults only missing legacy transfer source values before validation", () => {
-    const legacyTransfer = withoutKeys(transferRow(), ["source"]);
-
-    const snapshot = validateBackupSnapshot(
-      validSnapshot({
-        financialAccounts: [rollbackAccountRow()],
-        transfers: [legacyTransfer],
-      })
-    );
-
-    expect(snapshot.data.transfers[0]).toEqual(expect.objectContaining({ source: "manual" }));
-    expect(() =>
-      validateBackupSnapshot(
-        validSnapshot({
-          financialAccounts: [rollbackAccountRow()],
-          transfers: [transferRow({ source: "misspelled-source" })],
-        })
-      )
-    ).toThrow("Malformed local ledger backup row: source is not supported");
-  });
-
   it("rejects duplicate primary IDs inside backed-up collections", () => {
     expect(() =>
       validateBackupSnapshot(
@@ -1002,10 +849,11 @@ describe("local ledger backup snapshots", () => {
           userCategories: [userCategoryRow()],
           financialAccounts: [rollbackAccountRow()],
           transactions: [transactionRow()],
-          processedEmails: [processedEmailRow()],
-          captureEvidence: [captureEvidenceRow({ processedCaptureId: "capture-1" })],
+          captureEvidence: [captureEvidenceRow({ processedSourceEventId: "missing-source-event" })],
         })
       )
-    ).toThrow("Local ledger backup has unresolved reference: captureEvidence.processedCaptureId");
+    ).toThrow(
+      "Local ledger backup has unresolved reference: captureEvidence.processedSourceEventId"
+    );
   });
 });

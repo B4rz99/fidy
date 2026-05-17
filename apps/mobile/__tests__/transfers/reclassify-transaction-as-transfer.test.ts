@@ -10,10 +10,6 @@ import {
   saveCaptureEvidence,
 } from "@/features/capture-evidence/lib/repository";
 import {
-  getProcessedEmailById,
-  insertProcessedEmail,
-} from "@/features/email-capture/lib/repository";
-import {
   getBalanceAggregate,
   getSpendingByCategoryAggregate,
   getTransactionById,
@@ -31,7 +27,6 @@ import type {
   FinancialAccountId,
   IsoDate,
   IsoDateTime,
-  ProcessedEmailId,
   ProcessedSourceEventId,
   ReviewCandidateId,
   TransactionId,
@@ -135,30 +130,10 @@ function insertTransferEvidence() {
     value: "transfer to savings",
     transactionId: ORIGINAL_TRANSACTION_ID,
     transferId: null,
-    processedEmailId: "pe-1" as ProcessedEmailId,
-    processedCaptureId: null,
+    processedSourceEventId: "pse-1" as ProcessedSourceEventId,
     createdAt: ORIGINAL_CREATED_AT,
     updatedAt: ORIGINAL_CREATED_AT,
     deletedAt: null,
-  });
-}
-
-async function insertPendingProcessedEmail() {
-  await insertProcessedEmail(db as any, {
-    id: "pe-1" as ProcessedEmailId,
-    externalId: "ext-1",
-    provider: "gmail",
-    status: "needs_review",
-    failureReason: null,
-    subject: "Transfer alert",
-    rawBodyPreview: "Transfer to savings",
-    receivedAt: ORIGINAL_CREATED_AT,
-    transactionId: ORIGINAL_TRANSACTION_ID,
-    confidence: 0.52,
-    createdAt: ORIGINAL_CREATED_AT,
-    rawBody: null,
-    retryCount: 0,
-    nextRetryAt: null,
   });
 }
 
@@ -212,7 +187,6 @@ function seedReclassificationScenario() {
   insertOriginalTransactionRecord();
   insertTransferEvidence();
   insertPendingProcessedSourceEvent();
-  return insertPendingProcessedEmail();
 }
 
 function runReclassification() {
@@ -281,16 +255,6 @@ function expectCreatedTransferState() {
   });
 }
 
-async function expectProcessedEmailUnchanged() {
-  await expect(getProcessedEmailById(db as any, "pe-1" as ProcessedEmailId)).resolves.toEqual(
-    expect.objectContaining({
-      id: "pe-1",
-      status: "needs_review",
-      transactionId: ORIGINAL_TRANSACTION_ID,
-    })
-  );
-}
-
 function expectProcessedSourceEventSucceeded() {
   expect(
     db
@@ -353,7 +317,7 @@ function expectProcessedSourceEventPending() {
 
 describe("reclassifyTransactionAsTransfer", () => {
   it("creates a transfer, supersedes the original transaction, relinks capture evidence,", async () => {
-    await seedReclassificationScenario();
+    seedReclassificationScenario();
     const result = runReclassification();
 
     expect(result).toEqual({
@@ -366,11 +330,10 @@ describe("reclassifyTransactionAsTransfer", () => {
     });
     expectCreatedTransferState();
     expectProcessedSourceEventSucceeded();
-    await expectProcessedEmailUnchanged();
   });
 
   it("rejects source-event transfer reclassification without a review candidate", async () => {
-    await seedReclassificationScenario();
+    seedReclassificationScenario();
     const result = runReclassificationWithoutReviewCandidate();
 
     expect(result).toEqual({ success: false, error: "reviewCandidateRequired" });
@@ -381,7 +344,6 @@ describe("reclassifyTransactionAsTransfer", () => {
       updatedAt: ORIGINAL_CREATED_AT,
     });
     expectProcessedSourceEventPending();
-    await expectProcessedEmailUnchanged();
   });
 });
 

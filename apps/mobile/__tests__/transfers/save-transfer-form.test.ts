@@ -31,7 +31,7 @@ function buildReclassificationInput(): Parameters<typeof submitTransferForm>[0] 
     db,
     digits: "450000",
     fromSide: { kind: "account", accountId },
-    processedEmailId: null,
+    processedSourceEventId: null,
     sourceTransaction,
     toSide: { kind: "external", label: "Outside Fidy" },
     userId,
