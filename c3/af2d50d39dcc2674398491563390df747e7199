@@ -1,0 +1,28 @@
+apps/mobile/__tests__/email-capture/store-orchestration.test.ts
+  s_fadedd8498de1f::t_3edc8ea12d3b0a 49-67
+  s_fadedd8498de1f::t_eb962cdb4fa3fb 300-390
+  s_fadedd8498de1f::t_f97abec1a213f5 3-6,37-38,95-98,196-198,211-213,257-266
+  s_fadedd8498de1f::t_c25eb52e20c6d4 1-2,7-36,39-48,68-94,99-195,199-210,214-256,267-299
+apps/mobile/vitest.config.ts
+  s_fadedd8498de1f::t_0fbfbd45b2bc21 53-56
+apps/mobile/__tests__/email-capture/store-state.test.ts
+  s_fadedd8498de1f::t_ca8e2aba5445a8 315
+  s_fadedd8498de1f::t_dae159b484fe6e 1,4-25,29-34,36-37,46,51-79,81,83-85,89-96,144-314,316-318
+  s_fadedd8498de1f::t_e7398dfef60323 80,82,86-88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "c3af2d50d39dcc2674398491563390df747e7199",
+  "prompts": {},
+  "sessions": {
+    "s_fadedd8498de1f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3431-74c6-7923-80eb-e88d914db211",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
