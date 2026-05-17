@@ -1,8 +1,9 @@
-export type RouteParamValue = string | string[] | undefined;
+export type RouteParamValue = string | readonly string[] | undefined;
 
 export function getFirstNonEmptyRouteParam(value: RouteParamValue): string | null {
-  const candidate = Array.isArray(value) ? value[0] : value;
-  const trimmed = candidate?.trim();
+  const values: readonly (string | undefined)[] =
+    typeof value === "string" || value === undefined ? [value] : value;
+  const trimmed = values.map((entry) => entry?.trim() ?? "").find((entry) => entry.length > 0);
 
-  return trimmed === "" ? null : (trimmed ?? null);
+  return trimmed ?? null;
 }
