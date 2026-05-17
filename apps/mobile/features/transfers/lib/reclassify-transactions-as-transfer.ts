@@ -14,7 +14,7 @@ import {
 } from "@/infrastructure/local-ledger/record-transfer";
 import type { AnyDb } from "@/shared/db";
 import { financialAccounts } from "@/shared/db/schema";
-import { parseIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
+import { toIsoDateTime } from "@/shared/lib/format-date";
 import { generateTransferId } from "@/shared/lib.public";
 import type {
   FinancialAccountId,
@@ -23,7 +23,7 @@ import type {
   TransferId,
   UserId,
 } from "@/shared/types/branded";
-import type { StoredTransfer } from "./build-transfer";
+import { type StoredTransfer, toStoredTransferFromLocalLedger } from "./build-transfer";
 
 type ReclassifyTransactionsAsTransferInput = {
   readonly userId: UserId;
@@ -67,20 +67,6 @@ export type ReclassifyTransactionsAsTransferError =
 export type ReclassifyTransactionsAsTransferResult =
   | { readonly success: true; readonly transfer: StoredTransfer }
   | { readonly success: false; readonly error: ReclassifyTransactionsAsTransferError };
-
-const toStoredTransfer = (transfer: LocalLedgerTransfer): StoredTransfer => ({
-  id: transfer.id,
-  userId: transfer.userId,
-  amount: transfer.amount,
-  fromSide: transfer.fromSide,
-  toSide: transfer.toSide,
-  description: transfer.description,
-  date: parseIsoDate(transfer.date),
-  source: transfer.source,
-  createdAt: new Date(transfer.createdAt),
-  updatedAt: new Date(transfer.updatedAt),
-  deletedAt: transfer.voidedAt === null ? null : new Date(transfer.voidedAt),
-});
 
 const countActiveAccountsForReclassification = (
   db: AnyDb,
@@ -297,6 +283,6 @@ export async function reclassifyTransactionsAsTransfer(
   });
 
   return result.code === "reclassified"
-    ? { success: true, transfer: toStoredTransfer(result.transfer) }
+    ? { success: true, transfer: toStoredTransferFromLocalLedger(result.transfer) }
     : { success: false, error: mapReclassificationError(result.reason) };
 }

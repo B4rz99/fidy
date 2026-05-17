@@ -1332,6 +1332,32 @@ describe("email processing pipeline", () => {
     expect(result.parseImprovementRequests).toEqual([]);
   });
 
+  it("marks parsed email as pending_retry when Local Ledger rejects the transaction", async () => {
+    const emails = [makeRawEmail()];
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+    mockRecordAutomatedTransactionWithLocalLedger.mockResolvedValueOnce({
+      success: false,
+      error: "futureDated",
+    });
+
+    const result = await processEmails(mockDb, USER_ID, emails);
+
+    expect(result.failed).toBe(1);
+    expect(result.pendingRetry).toBe(1);
+    expect(result.saved).toBe(0);
+    expect(mockInsertTransaction).not.toHaveBeenCalled();
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        status: "pending_retry",
+        failureReason: null,
+        rawBody: "Su compra por $50.000 fue aprobada",
+        retryCount: 0,
+      })
+    );
+    expect(mockInsertMerchantRule).not.toHaveBeenCalled();
+  });
+
   it("does not insert a second processed email row after a partial save already persisted one", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());

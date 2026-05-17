@@ -6,7 +6,11 @@ import {
   validateTransferSides,
 } from "./build-transfer-helpers";
 
-export { toStoredTransfer, toTransferRow } from "./transfer-row-mappers";
+export {
+  toStoredTransfer,
+  toStoredTransferFromLocalLedger,
+  toTransferRow,
+} from "./transfer-row-mappers";
 
 export const OUTSIDE_FIDY_LABEL = "Outside Fidy";
 

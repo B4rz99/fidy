@@ -1,10 +1,13 @@
 import type { LocalLedgerTransfer } from "@/local-ledger/public";
 import type { AnyDb } from "@/shared/db";
-import { parseIsoDate } from "@/shared/lib/format-date";
 import { generateTransferId } from "@/shared/lib/generate-id";
 import { captureError } from "@/shared/lib/sentry";
 import type { TransferId, UserId } from "@/shared/types/branded";
-import type { BuildTransferInput, StoredTransfer } from "./build-transfer";
+import {
+  type BuildTransferInput,
+  type StoredTransfer,
+  toStoredTransferFromLocalLedger,
+} from "./build-transfer";
 
 export type TransferFormInput = {
   readonly digits: BuildTransferInput["digits"];
@@ -49,22 +52,6 @@ type CreateTransferMutationServiceDeps = {
   readonly createId?: () => TransferId;
 };
 
-function toStoredTransfer(transfer: LocalLedgerTransfer): StoredTransfer {
-  return {
-    id: transfer.id,
-    userId: transfer.userId,
-    amount: transfer.amount,
-    fromSide: transfer.fromSide,
-    toSide: transfer.toSide,
-    description: transfer.description,
-    date: parseIsoDate(transfer.date),
-    createdAt: new Date(transfer.createdAt),
-    updatedAt: new Date(transfer.updatedAt),
-    deletedAt: transfer.voidedAt == null ? null : new Date(transfer.voidedAt),
-    source: transfer.source,
-  };
-}
-
 export function createTransferMutationService({
   getDb,
   getUserId,
@@ -108,7 +95,7 @@ export function createTransferMutationService({
         // Keep the persisted transfer successful even if the caller refresh fails.
       }
 
-      return { success: true, transfer: toStoredTransfer(result.transfer) };
+      return { success: true, transfer: toStoredTransferFromLocalLedger(result.transfer) };
     },
   };
 }
