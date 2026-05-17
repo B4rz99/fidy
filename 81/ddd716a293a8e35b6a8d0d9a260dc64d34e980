@@ -1,0 +1,21 @@
+scripts/dependency-cruiser-config.test.ts
+  s_6b7d4add335b23::t_ab8a3ff4ee5b2d 95-111
+.dependency-cruiser.cjs
+  s_6b7d4add335b23::t_139327057a5507 35-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "81ddd716a293a8e35b6a8d0d9a260dc64d34e980",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
