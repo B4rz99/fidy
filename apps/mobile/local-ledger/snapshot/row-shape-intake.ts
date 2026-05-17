@@ -13,21 +13,6 @@ import {
 
 export const INTAKE_ROW_SPECS: readonly RowSpec[] = [
   {
-    key: "processedCaptures",
-    validate: (row) =>
-      assertRecordShape(row, "processedCaptures", {
-        id: (value) => assertString(value, "id"),
-        fingerprintHash: (value) => assertString(value, "fingerprintHash"),
-        source: (value) => assertString(value, "source"),
-        status: (value) => assertString(value, "status"),
-        rawText: (value) => assertNullableString(value, "rawText"),
-        transactionId: (value) => assertNullableString(value, "transactionId"),
-        confidence: (value) => assertNullableNumber(value, "confidence"),
-        receivedAt: (value) => assertValidIsoDateTime(value, "receivedAt"),
-        createdAt: (value) => assertValidIsoDateTime(value, "createdAt"),
-      }),
-  },
-  {
     key: "processedSourceEvents",
     validate: (row) =>
       assertRecordShape(

@@ -26,8 +26,8 @@ describe("email capture store state helper", () => {
     store.setState({
       activeUserId: "user-0" as UserId,
       accounts: [makeAccount()],
-      failedEmails: [{ id: "failed-1" }] as never[],
-      needsReviewEmails: [{ id: "review-1" }] as never[],
+      failedEmailSourceEvents: [{ id: "failed-1" }] as never[],
+      needsReviewEmailSourceEvents: [{ id: "review-1" }] as never[],
       isFetching: true,
       progress: { total: 2, completed: 1, saved: 1, failed: 0, needsReview: 0 },
       phase: "processing",
@@ -39,8 +39,8 @@ describe("email capture store state helper", () => {
     expect(store.getState()).toMatchObject({
       activeUserId: USER_ID,
       accounts: [],
-      failedEmails: [],
-      needsReviewEmails: [],
+      failedEmailSourceEvents: [],
+      needsReviewEmailSourceEvents: [],
       isFetching: false,
       progress: null,
       phase: null,

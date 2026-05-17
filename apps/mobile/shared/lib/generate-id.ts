@@ -15,8 +15,6 @@ import type {
   NotificationId,
   NotificationSourceId,
   OpeningBalanceId,
-  ProcessedCaptureId,
-  ProcessedEmailId,
   ProcessedSourceEventId,
   ReviewCandidateCaptureEvidenceId,
   ReviewCandidateId,
@@ -104,14 +102,6 @@ export function generateNotificationSourceId(): NotificationSourceId {
 
 export function generateOpeningBalanceId(): OpeningBalanceId {
   return generateId("ob") as OpeningBalanceId;
-}
-
-export function generateProcessedCaptureId(): ProcessedCaptureId {
-  return generateId("pc") as ProcessedCaptureId;
-}
-
-export function generateProcessedEmailId(): ProcessedEmailId {
-  return generateId("pe") as ProcessedEmailId;
 }
 
 export function generateProcessedSourceEventId(): ProcessedSourceEventId {

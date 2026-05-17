@@ -10,12 +10,14 @@ describe("normalizeTransactionSource", () => {
     expect(normalizeTransactionSource("apple_pay_capture")).toBe("apple_pay_capture");
   });
 
-  it("normalizes legacy automated aliases into closed source categories", () => {
-    expect(normalizeTransactionSource("automated")).toBe("email_capture");
-    expect(normalizeTransactionSource("email_gmail")).toBe("email_capture");
-    expect(normalizeTransactionSource("notification_android")).toBe("notification_capture");
-    expect(normalizeTransactionSource("google_pay")).toBe("notification_capture");
-    expect(normalizeTransactionSource("widget")).toBe("widget_capture");
-    expect(normalizeTransactionSource("apple_pay")).toBe("apple_pay_capture");
+  it("defaults missing sources to manual", () => {
+    expect(normalizeTransactionSource(null)).toBe("manual");
+    expect(normalizeTransactionSource(undefined)).toBe("manual");
+  });
+
+  it("rejects non-transaction source identifiers", () => {
+    expect(() => normalizeTransactionSource("email_gmail")).toThrow(
+      "Unsupported transaction source: email_gmail"
+    );
   });
 });

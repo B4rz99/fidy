@@ -2,7 +2,6 @@ import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useReducer, useRef, useState } from "react";
 import { useOptionalUserId } from "@/features/auth";
-import { getNeedsReviewEmailByTransactionId } from "@/features/email-capture";
 import {
   type FinancialAccountRow,
   getFinancialAccountsForUser,
@@ -19,7 +18,7 @@ import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useMountEffect, useTranslation } from "@/shared/hooks";
 import { clampDateToToday, showErrorToast, waitForNavigationTransition } from "@/shared/lib";
 import { requireTransactionId } from "@/shared/types/assertions";
-import type { CategoryId, FinancialAccountId, ProcessedEmailId } from "@/shared/types/branded";
+import type { CategoryId, FinancialAccountId } from "@/shared/types/branded";
 
 type EditTransactionDraft = {
   readonly accountId: FinancialAccountId | null;
@@ -27,7 +26,6 @@ type EditTransactionDraft = {
   readonly date: Date;
   readonly description: string;
   readonly digits: string;
-  readonly reclassificationProcessedEmailId: ProcessedEmailId | null;
   readonly source: string;
   readonly type: TransactionType;
 };
@@ -44,7 +42,6 @@ const initialDraft: EditTransactionDraft = {
   date: new Date(),
   description: "",
   digits: "",
-  reclassificationProcessedEmailId: null,
   source: "manual",
   type: "expense",
 };
@@ -95,10 +92,6 @@ export default function EditTransactionScreen() {
         return;
       }
 
-      const reviewEmail = await getNeedsReviewEmailByTransactionId(db, transactionId).catch(
-        () => null
-      );
-
       setDraft({
         type: "update",
         update: {
@@ -107,7 +100,6 @@ export default function EditTransactionScreen() {
           date: tx.date,
           description: tx.description,
           digits: String(tx.amount),
-          reclassificationProcessedEmailId: reviewEmail?.id ?? null,
           source: tx.source ?? "manual",
           type: tx.type,
         },
@@ -204,7 +196,6 @@ export default function EditTransactionScreen() {
                 pathname: "/reclassify-transaction",
                 params: {
                   transactionId,
-                  processedEmailId: draft.reclassificationProcessedEmailId ?? undefined,
                 },
               })
       }

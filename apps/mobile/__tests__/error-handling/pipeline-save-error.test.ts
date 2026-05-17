@@ -15,7 +15,6 @@ vi.mock("@/shared/lib/sentry", () => ({
 const mockGetProcessedEmailSourceEventIds = vi
   .fn<(...args: any[]) => any>()
   .mockResolvedValue(new Set<string>());
-const mockInsertProcessedEmail = vi.fn<(...args: any[]) => any>();
 const mockInsertProcessedEmailSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
 const mockLookupMerchantRule = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
@@ -61,7 +60,6 @@ vi.mock("@/features/capture-sources/lib/dedup", () => ({
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getProcessedEmailSourceEventIds: (...args: unknown[]) =>
     mockGetProcessedEmailSourceEventIds(...args),
-  insertProcessedEmail: (...args: unknown[]) => mockInsertProcessedEmail(...args),
   insertProcessedEmailSourceEvent: (...args: unknown[]) =>
     mockInsertProcessedEmailSourceEvent(...args),
   getPendingRetryEmailSourceEvents: (...args: unknown[]) =>
@@ -107,7 +105,6 @@ const mockGenerateId = vi.fn<(...args: any[]) => any>();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: unknown[]) => mockGenerateId(...args),
   generateTransactionId: () => mockGenerateId("tx"),
-  generateProcessedEmailId: () => mockGenerateId("pe"),
   generateProcessedSourceEventId: () => mockGenerateId("pse"),
 }));
 
@@ -138,7 +135,6 @@ describe("pipeline worker save error path", () => {
     });
     mockGetProcessedEmailSourceEventIds.mockReset();
     mockGetProcessedEmailSourceEventIds.mockResolvedValue(new Set<string>());
-    mockInsertProcessedEmail.mockResolvedValue(undefined);
     mockInsertProcessedEmailSourceEvent.mockResolvedValue(undefined);
     mockInsertTransaction.mockResolvedValue(undefined);
     mockLookupMerchantRule.mockResolvedValue(null);

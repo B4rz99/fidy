@@ -30,8 +30,6 @@ import type {
   NotificationId,
   NotificationSourceId,
   OpeningBalanceId,
-  ProcessedCaptureId,
-  ProcessedEmailId,
   ProcessedSourceEventId,
   ReviewCandidateCaptureEvidenceId,
   ReviewCandidateId,
@@ -206,36 +204,23 @@ export const captureEvidence = sqliteTable(
     value: text("value").notNull(),
     transactionId: text("transaction_id").$type<TransactionId>(),
     transferId: text("transfer_id").$type<TransferId>(),
-    processedEmailId: text("processed_email_id").$type<ProcessedEmailId>(),
-    processedCaptureId: text("processed_capture_id").$type<ProcessedCaptureId>(),
     processedSourceEventId: text("processed_source_event_id").$type<ProcessedSourceEventId>(),
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
     updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
     deletedAt: text("deleted_at").$type<IsoDateTime>(),
   },
   (table) => [
-    check(
-      "ck_capture_evidence_source_record",
-      sql`(case when ${table.processedEmailId} is not null then 1 else 0 end) + (case when ${table.processedCaptureId} is not null then 1 else 0 end) + (case when ${table.processedSourceEventId} is not null then 1 else 0 end) = 1`
-    ),
+    check("ck_capture_evidence_source_record", sql`${table.processedSourceEventId} is not null`),
     check(
       "ck_capture_evidence_financial_link",
       sql`${table.transactionId} is null or ${table.transferId} is null`
     ),
-    uniqueIndex("uq_capture_evidence_email")
-      .on(table.userId, table.processedEmailId, table.scope, table.value)
-      .where(sql`${table.processedEmailId} is not null and ${table.deletedAt} is null`),
-    uniqueIndex("uq_capture_evidence_capture")
-      .on(table.userId, table.processedCaptureId, table.scope, table.value)
-      .where(sql`${table.processedCaptureId} is not null and ${table.deletedAt} is null`),
     uniqueIndex("uq_capture_evidence_source_event")
       .on(table.userId, table.processedSourceEventId, table.scope, table.value)
       .where(sql`${table.processedSourceEventId} is not null and ${table.deletedAt} is null`),
     index("idx_capture_evidence_user_scope_value").on(table.userId, table.scope, table.value),
     index("idx_capture_evidence_transaction").on(table.transactionId),
     index("idx_capture_evidence_transfer").on(table.transferId),
-    index("idx_capture_evidence_processed_email").on(table.processedEmailId),
-    index("idx_capture_evidence_processed_capture").on(table.processedCaptureId),
     index("idx_capture_evidence_processed_source_event").on(table.processedSourceEventId),
     index("idx_capture_evidence_user_updated").on(table.userId, table.updatedAt),
   ]
@@ -363,30 +348,6 @@ export const emailAccounts = sqliteTable(
   ]
 );
 
-export const processedEmails = sqliteTable(
-  "processed_emails",
-  {
-    id: text("id").$type<ProcessedEmailId>().primaryKey(),
-    externalId: text("external_id").notNull(),
-    provider: text("provider").notNull(),
-    status: text("status").notNull(),
-    failureReason: text("failure_reason"),
-    subject: text("subject").notNull(),
-    rawBodyPreview: text("raw_body_preview"),
-    receivedAt: text("received_at").$type<IsoDateTime>().notNull(),
-    transactionId: text("transaction_id").$type<TransactionId>(),
-    confidence: real("confidence"),
-    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
-    rawBody: text("raw_body"),
-    retryCount: integer("retry_count").notNull().default(0),
-    nextRetryAt: text("next_retry_at").$type<IsoDateTime>(),
-  },
-  (table) => [
-    uniqueIndex("uq_processed_external_id").on(table.externalId),
-    index("idx_processed_status").on(table.status),
-  ]
-);
-
 export const merchantRules = sqliteTable(
   "merchant_rules",
   {
@@ -413,25 +374,6 @@ export const notificationSources = sqliteTable(
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
   },
   (table) => [uniqueIndex("uq_notification_source").on(table.userId, table.packageName)]
-);
-
-export const processedCaptures = sqliteTable(
-  "processed_captures",
-  {
-    id: text("id").$type<ProcessedCaptureId>().primaryKey(),
-    fingerprintHash: text("fingerprint_hash").notNull(),
-    source: text("source").notNull(),
-    status: text("status").notNull(),
-    rawText: text("raw_text"),
-    transactionId: text("transaction_id").$type<TransactionId>(),
-    confidence: real("confidence"),
-    receivedAt: text("received_at").$type<IsoDateTime>().notNull(),
-    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
-  },
-  (table) => [
-    uniqueIndex("uq_capture_fingerprint").on(table.fingerprintHash),
-    index("idx_capture_source").on(table.source),
-  ]
 );
 
 export const detectedSmsEvents = sqliteTable(

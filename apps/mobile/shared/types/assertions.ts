@@ -10,7 +10,6 @@ import type {
   IsoDate,
   IsoDateTime,
   Month,
-  ProcessedEmailId,
   ProcessedSourceEventId,
   ReviewCandidateId,
   TransactionId,
@@ -176,10 +175,6 @@ export function assertFinancialAccountId(value: string): asserts value is Financ
   assertNonEmptyString(value, "financialAccountId");
 }
 
-export function assertProcessedEmailId(value: string): asserts value is ProcessedEmailId {
-  assertNonEmptyString(value, "processedEmailId");
-}
-
 export function assertProcessedSourceEventId(
   value: string
 ): asserts value is ProcessedSourceEventId {
@@ -228,10 +223,6 @@ export function requireTransactionId(value: string): TransactionId {
 
 export function requireTransferId(value: string): TransferId {
   return requireValue(value, assertTransferId);
-}
-
-export function requireProcessedEmailId(value: string): ProcessedEmailId {
-  return requireValue(value, assertProcessedEmailId);
 }
 
 export function requireProcessedSourceEventId(value: string): ProcessedSourceEventId {

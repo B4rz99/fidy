@@ -9,7 +9,6 @@ import {
   getCaptureEvidenceById,
   getCaptureEvidenceRowsForScopeValue,
   getRepeatedCaptureEvidenceForUser,
-  linkCaptureEvidenceToTransaction,
   relinkCaptureEvidenceToTransfer,
   saveCaptureEvidence,
   saveCaptureEvidenceRows,
@@ -18,8 +17,7 @@ import {
 import type {
   CaptureEvidenceId,
   IsoDateTime,
-  ProcessedCaptureId,
-  ProcessedEmailId,
+  ProcessedSourceEventId,
   TransactionId,
   TransferId,
   UserId,
@@ -54,8 +52,7 @@ function makeCaptureEvidence(overrides: Partial<CaptureEvidenceInput> = {}): Cap
     value: "1234",
     transactionId: "tx-1" as TransactionId,
     transferId: null,
-    processedEmailId: null,
-    processedCaptureId: "pc-1" as ProcessedCaptureId,
+    processedSourceEventId: "pse-1" as ProcessedSourceEventId,
     createdAt: NOW,
     updatedAt: NOW,
     deletedAt: null,
@@ -72,14 +69,14 @@ function seedRepeatedCaptureEvidence() {
   saveEvidence({
     id: "ce-2" as CaptureEvidenceId,
     transactionId: null,
-    processedCaptureId: "pc-2" as ProcessedCaptureId,
+    processedSourceEventId: "pse-2" as ProcessedSourceEventId,
     createdAt: LATER,
     updatedAt: LATER,
   });
   saveEvidence({
     id: "ce-deleted" as CaptureEvidenceId,
     transactionId: null,
-    processedCaptureId: "pc-deleted" as ProcessedCaptureId,
+    processedSourceEventId: "pse-deleted" as ProcessedSourceEventId,
     deletedAt: LATER,
   });
   saveEvidence({
@@ -87,8 +84,7 @@ function seedRepeatedCaptureEvidence() {
     evidenceType: "sender_email",
     scope: "email:bancolombia:sender",
     value: "notificaciones@bancolombia.com.co",
-    processedEmailId: "pe-1" as ProcessedEmailId,
-    processedCaptureId: null,
+    processedSourceEventId: "pse-1" as ProcessedSourceEventId,
   });
 }
 
@@ -105,39 +101,6 @@ function expectRepeatedCaptureEvidenceCounts() {
       occurrences: 2,
     },
   ]);
-}
-
-function seedEmailEvidenceForLinking() {
-  saveCaptureEvidenceRows(db as any, [
-    makeCaptureEvidence({
-      id: "ce-email-1" as CaptureEvidenceId,
-      transactionId: null,
-      processedEmailId: "pe-link" as ProcessedEmailId,
-      processedCaptureId: null,
-    }),
-    makeCaptureEvidence({
-      id: "ce-email-2" as CaptureEvidenceId,
-      evidenceType: "sender_email",
-      scope: "email:bancolombia:sender",
-      value: "notificaciones@bancolombia.com.co",
-      transactionId: "tx-linked" as TransactionId,
-      processedEmailId: "pe-link" as ProcessedEmailId,
-      processedCaptureId: null,
-      updatedAt: LATER,
-    }),
-  ]);
-}
-
-function expectEmailEvidenceLinkingResult() {
-  expect(getCaptureEvidenceById(db as any, "ce-email-1" as CaptureEvidenceId)).toEqual(
-    expect.objectContaining({
-      transactionId: "tx-linked",
-      updatedAt: "2026-04-19T10:30:00.000Z",
-    })
-  );
-  expect(getCaptureEvidenceById(db as any, "ce-email-2" as CaptureEvidenceId)).toEqual(
-    expect.objectContaining({ updatedAt: LATER })
-  );
 }
 
 describe("capture evidence repository", () => {
@@ -180,25 +143,8 @@ describe("capture evidence repository", () => {
     );
   });
 
-  it("links email evidence to a transaction when the link is fresher", () => {
-    seedEmailEvidenceForLinking();
-
-    linkCaptureEvidenceToTransaction(db as any, {
-      processedEmailId: "pe-link" as ProcessedEmailId,
-      transactionId: "tx-linked" as TransactionId,
-      updatedAt: "2026-04-19T10:30:00.000Z" as IsoDateTime,
-    });
-
-    expectEmailEvidenceLinkingResult();
-  });
-
   it("does nothing for empty batch saves and missing relink targets", () => {
     saveCaptureEvidenceRows(db as any, []);
-    linkCaptureEvidenceToTransaction(db as any, {
-      processedEmailId: "pe-missing" as ProcessedEmailId,
-      transactionId: "tx-missing" as TransactionId,
-      updatedAt: LATER,
-    });
     relinkCaptureEvidenceToTransfer(db as any, {
       transactionId: "tx-missing" as TransactionId,
       transferId: "tr-missing" as TransferId,
@@ -211,7 +157,7 @@ describe("capture evidence repository", () => {
   it("ignores stale relink-to-transfer updates", () => {
     saveEvidence({
       id: "ce-stale" as CaptureEvidenceId,
-      processedCaptureId: "pc-stale" as ProcessedCaptureId,
+      processedSourceEventId: "pse-stale" as ProcessedSourceEventId,
     });
 
     relinkCaptureEvidenceToTransfer(db as any, {
@@ -238,7 +184,7 @@ describe("capture evidence repository", () => {
           id: "ce-invalid" as CaptureEvidenceId,
           value: "9999",
           transferId: "tr-1" as TransferId,
-          processedCaptureId: "pc-invalid" as ProcessedCaptureId,
+          processedSourceEventId: "pse-invalid" as ProcessedSourceEventId,
         })
       )
     ).toThrow();

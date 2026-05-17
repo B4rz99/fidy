@@ -48,7 +48,6 @@ export type CaptureEvidenceRowsInput = {
   readonly cardProductHint?: string;
   readonly accountTypeHint?: string;
   readonly counterpartyHint?: string;
-  readonly processedEmailId: null;
   readonly processedSourceEventId?: ProcessedSourceEventId | null;
   readonly transactionId: TransactionId | null;
   readonly now: IsoDateTime;
@@ -154,7 +153,6 @@ export type PersistedTransactionContext = {
 export type EmailTransactionContext = PersistedTransactionContext & {
   readonly email: RawEmail;
   readonly status: EmailSaveStatus;
-  readonly processedEmailId: null;
   readonly processedSourceEventId: ProcessedSourceEventId;
 };
 

@@ -1,6 +1,5 @@
 import {
   buildEmailCaptureEvidence,
-  linkCaptureEvidenceToTransaction,
   saveCaptureEvidenceRows,
 } from "@/features/capture-evidence/public";
 import { findDuplicateTransaction } from "@/features/capture-sources/lib/dedup";
@@ -18,7 +17,6 @@ import { insertMerchantRule, lookupMerchantRule } from "../lib/merchant-rules";
 import {
   getPendingRetryEmailSourceEvents,
   getProcessedEmailSourceEventIds,
-  insertProcessedEmail,
   insertProcessedEmailSourceEvent,
   markSourceEventForRetry,
   markSourceEventPermanentlyFailed,
@@ -49,7 +47,6 @@ const emailPipelineDeps = {
   findDuplicateTransaction,
   getProcessedEmailSourceEventIds,
   getPendingRetryEmailSourceEvents,
-  insertProcessedEmail,
   insertProcessedEmailSourceEvent,
   markSourceEventForRetry,
   markSourceEventPermanentlyFailed,
@@ -57,7 +54,6 @@ const emailPipelineDeps = {
   updateProcessedSourceEventStatus,
   buildEmailCaptureEvidence,
   saveCaptureEvidenceRows,
-  linkCaptureEvidenceToTransaction,
   ensureDefaultFinancialAccount,
   insertTransaction,
   insertMerchantRule,

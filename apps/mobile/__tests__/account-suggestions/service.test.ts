@@ -19,8 +19,7 @@ import type {
   FinancialAccountId,
   IsoDate,
   IsoDateTime,
-  ProcessedCaptureId,
-  ProcessedEmailId,
+  ProcessedSourceEventId,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
@@ -58,8 +57,7 @@ function saveEvidenceRow(id: string, row: Partial<SuggestionEvidenceInput>) {
     scope: "notification:bancolombia:last4",
     value: "1234",
     transactionId: null,
-    processedEmailId: null,
-    processedCaptureId: null,
+    processedSourceEventId: null,
     createdAt: NOW,
     updatedAt: NOW,
     deletedAt: null,
@@ -106,11 +104,11 @@ function getFirstSuggestion(service = createSuggestionService()) {
 
 function seedRepeatedScopedSuggestionEvidence() {
   saveEvidenceRow("ce-last4-1", {
-    processedCaptureId: "pc-1" as ProcessedCaptureId,
+    processedSourceEventId: "pse-1" as ProcessedSourceEventId,
     transactionId: "tx-1" as TransactionId,
   });
   saveEvidenceRow("ce-last4-2", {
-    processedCaptureId: "pc-2" as ProcessedCaptureId,
+    processedSourceEventId: "pse-2" as ProcessedSourceEventId,
     transactionId: "tx-2" as TransactionId,
     updatedAt: "2026-04-19T11:00:00.000Z" as IsoDateTime,
   });
@@ -118,13 +116,13 @@ function seedRepeatedScopedSuggestionEvidence() {
     evidenceType: "sender_email",
     scope: "email:bancolombia:sender",
     value: "notificaciones@bancolombia.com.co",
-    processedEmailId: "pe-1" as ProcessedEmailId,
+    processedSourceEventId: "pse-1" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-sender-2", {
     evidenceType: "sender_email",
     scope: "email:bancolombia:sender",
     value: "notificaciones@bancolombia.com.co",
-    processedEmailId: "pe-2" as ProcessedEmailId,
+    processedSourceEventId: "pse-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:30:00.000Z" as IsoDateTime,
   });
 }
@@ -146,33 +144,33 @@ function seedSuggestionAcceptanceScenario(linkedAccountId: FinancialAccountId) {
     description: "Compra confirmada 1234",
   });
   saveEvidenceRow("ce-match-1", {
-    processedCaptureId: "pc-1" as ProcessedCaptureId,
+    processedSourceEventId: "pse-1" as ProcessedSourceEventId,
     transactionId: "tx-unresolved" as TransactionId,
   });
   saveEvidenceRow("ce-match-2", {
-    processedCaptureId: "pc-2" as ProcessedCaptureId,
+    processedSourceEventId: "pse-2" as ProcessedSourceEventId,
     transactionId: "tx-confirmed" as TransactionId,
     updatedAt: "2026-04-19T11:00:00.000Z" as IsoDateTime,
   });
 }
 
 function seedLast4RankingEvidence() {
-  saveEvidenceRow("ce-last4-a-1", { processedCaptureId: "pc-1" as ProcessedCaptureId });
+  saveEvidenceRow("ce-last4-a-1", { processedSourceEventId: "pse-1" as ProcessedSourceEventId });
   saveEvidenceRow("ce-last4-a-2", {
-    processedCaptureId: "pc-2" as ProcessedCaptureId,
+    processedSourceEventId: "pse-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:00:00.000Z" as IsoDateTime,
   });
   saveEvidenceRow("ce-last4-b-1", {
     sourceFamily: "davivienda",
     scope: "notification:davivienda:last4",
     value: "9999",
-    processedCaptureId: "pc-3" as ProcessedCaptureId,
+    processedSourceEventId: "pse-3" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-last4-b-2", {
     sourceFamily: "davivienda",
     scope: "notification:davivienda:last4",
     value: "9999",
-    processedCaptureId: "pc-4" as ProcessedCaptureId,
+    processedSourceEventId: "pse-4" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:10:00.000Z" as IsoDateTime,
   });
 }
@@ -183,14 +181,14 @@ function seedCardHintRankingEvidence() {
     evidenceType: "card_hint",
     scope: "apple_pay:card_hint",
     value: "visa platinum 1234",
-    processedCaptureId: "pc-5" as ProcessedCaptureId,
+    processedSourceEventId: "pse-5" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-card-2", {
     sourceFamily: "apple_pay",
     evidenceType: "card_hint",
     scope: "apple_pay:card_hint",
     value: "visa platinum 1234",
-    processedCaptureId: "pc-6" as ProcessedCaptureId,
+    processedSourceEventId: "pse-6" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:20:00.000Z" as IsoDateTime,
   });
 }
@@ -201,14 +199,14 @@ function seedAliasRankingEvidence() {
     evidenceType: "alias_token",
     scope: "notification:nequi:alias",
     value: "debito",
-    processedCaptureId: "pc-7" as ProcessedCaptureId,
+    processedSourceEventId: "pse-7" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-alias-2", {
     sourceFamily: "nequi",
     evidenceType: "alias_token",
     scope: "notification:nequi:alias",
     value: "debito",
-    processedCaptureId: "pc-8" as ProcessedCaptureId,
+    processedSourceEventId: "pse-8" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:30:00.000Z" as IsoDateTime,
   });
 }
@@ -219,13 +217,13 @@ function seedSameSourceAliasAndLast4Evidence() {
     evidenceType: "alias_token",
     scope: "email:bancolombia:alias",
     value: "credito",
-    processedEmailId: "pe-alias-1" as ProcessedEmailId,
+    processedSourceEventId: "pse-alias-1" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-alias-same-source-2", {
     evidenceType: "alias_token",
     scope: "email:bancolombia:alias",
     value: "credito",
-    processedEmailId: "pe-alias-2" as ProcessedEmailId,
+    processedSourceEventId: "pse-alias-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:40:00.000Z" as IsoDateTime,
   });
 }
@@ -235,13 +233,13 @@ function seedLlmAccountHintEvidence() {
     evidenceType: "llm_account_hint",
     scope: "email:bancolombia:llm_account_hint",
     value: "tarjeta credito bancolombia",
-    processedEmailId: "pe-llm-1" as ProcessedEmailId,
+    processedSourceEventId: "pse-llm-1" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-llm-hint-2", {
     evidenceType: "llm_account_hint",
     scope: "email:bancolombia:llm_account_hint",
     value: "tarjeta credito bancolombia",
-    processedEmailId: "pe-llm-2" as ProcessedEmailId,
+    processedSourceEventId: "pse-llm-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
   });
 }
@@ -252,14 +250,14 @@ function seedEquivalentLlmAccountHintEvidence() {
     evidenceType: "llm_account_hint",
     scope: "email:davibank:llm_account_hint",
     value: "davibank visa oro",
-    processedEmailId: "pe-davibank-1" as ProcessedEmailId,
+    processedSourceEventId: "pse-davibank-1" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-davibank-hint-2", {
     sourceFamily: "davibank",
     evidenceType: "llm_account_hint",
     scope: "email:davibank:llm_account_hint",
     value: "davibank visa oro",
-    processedEmailId: "pe-davibank-2" as ProcessedEmailId,
+    processedSourceEventId: "pse-davibank-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
   });
   saveEvidenceRow("ce-davibank-hint-3", {
@@ -267,7 +265,7 @@ function seedEquivalentLlmAccountHintEvidence() {
     evidenceType: "llm_account_hint",
     scope: "email:davibank:llm_account_hint",
     value: "tarjeta visa oro",
-    processedEmailId: "pe-davibank-3" as ProcessedEmailId,
+    processedSourceEventId: "pse-davibank-3" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:51:00.000Z" as IsoDateTime,
   });
   saveEvidenceRow("ce-davibank-hint-4", {
@@ -275,7 +273,7 @@ function seedEquivalentLlmAccountHintEvidence() {
     evidenceType: "llm_account_hint",
     scope: "email:davibank:llm_account_hint",
     value: "tarjeta visa oro",
-    processedEmailId: "pe-davibank-4" as ProcessedEmailId,
+    processedSourceEventId: "pse-davibank-4" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:52:00.000Z" as IsoDateTime,
   });
 }
@@ -286,14 +284,14 @@ function seedDistinctLlmAccountHintEvidence() {
     evidenceType: "llm_account_hint",
     scope: "email:davibank:llm_account_hint",
     value: "tarjeta visa oro",
-    processedEmailId: "pe-distinct-1" as ProcessedEmailId,
+    processedSourceEventId: "pse-distinct-1" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-distinct-hint-2", {
     sourceFamily: "davibank",
     evidenceType: "llm_account_hint",
     scope: "email:davibank:llm_account_hint",
     value: "tarjeta visa oro",
-    processedEmailId: "pe-distinct-2" as ProcessedEmailId,
+    processedSourceEventId: "pse-distinct-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
   });
   saveEvidenceRow("ce-distinct-hint-3", {
@@ -301,7 +299,7 @@ function seedDistinctLlmAccountHintEvidence() {
     evidenceType: "llm_account_hint",
     scope: "email:davibank:llm_account_hint",
     value: "mastercard black",
-    processedEmailId: "pe-distinct-3" as ProcessedEmailId,
+    processedSourceEventId: "pse-distinct-3" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:51:00.000Z" as IsoDateTime,
   });
   saveEvidenceRow("ce-distinct-hint-4", {
@@ -309,7 +307,7 @@ function seedDistinctLlmAccountHintEvidence() {
     evidenceType: "llm_account_hint",
     scope: "email:davibank:llm_account_hint",
     value: "mastercard black",
-    processedEmailId: "pe-distinct-4" as ProcessedEmailId,
+    processedSourceEventId: "pse-distinct-4" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:52:00.000Z" as IsoDateTime,
   });
 }
@@ -320,14 +318,14 @@ function seedMerchantLikeLlmAccountHintEvidence() {
     evidenceType: "llm_account_hint",
     scope: "email:davibank:llm_account_hint",
     value: "rappi colombia",
-    processedEmailId: "pe-merchant-1" as ProcessedEmailId,
+    processedSourceEventId: "pse-merchant-1" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-merchant-hint-2", {
     sourceFamily: "davibank",
     evidenceType: "llm_account_hint",
     scope: "email:davibank:llm_account_hint",
     value: "rappi colombia",
-    processedEmailId: "pe-merchant-2" as ProcessedEmailId,
+    processedSourceEventId: "pse-merchant-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
   });
 }
@@ -338,14 +336,14 @@ function seedCardProductHintEvidence() {
     evidenceType: "card_product_hint",
     scope: "email:davibank:card_product_hint",
     value: "visa oro",
-    processedEmailId: "pe-product-1" as ProcessedEmailId,
+    processedSourceEventId: "pse-product-1" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-product-2", {
     sourceFamily: "davibank",
     evidenceType: "card_product_hint",
     scope: "email:davibank:card_product_hint",
     value: "visa oro",
-    processedEmailId: "pe-product-2" as ProcessedEmailId,
+    processedSourceEventId: "pse-product-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
   });
 }
@@ -356,14 +354,14 @@ function seedAccountTypeHintEvidence() {
     evidenceType: "account_type_hint",
     scope: "email:davibank:account_type_hint",
     value: "tarjeta de credito",
-    processedEmailId: "pe-type-1" as ProcessedEmailId,
+    processedSourceEventId: "pse-type-1" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-type-2", {
     sourceFamily: "davibank",
     evidenceType: "account_type_hint",
     scope: "email:davibank:account_type_hint",
     value: "tarjeta de credito",
-    processedEmailId: "pe-type-2" as ProcessedEmailId,
+    processedSourceEventId: "pse-type-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
   });
 }
@@ -374,14 +372,14 @@ function seedCounterpartyHintEvidence() {
     evidenceType: "counterparty_hint",
     scope: "email:davibank:counterparty_hint",
     value: "rappi colombia",
-    processedEmailId: "pe-counterparty-1" as ProcessedEmailId,
+    processedSourceEventId: "pse-counterparty-1" as ProcessedSourceEventId,
   });
   saveEvidenceRow("ce-counterparty-2", {
     sourceFamily: "davibank",
     evidenceType: "counterparty_hint",
     scope: "email:davibank:counterparty_hint",
     value: "rappi colombia",
-    processedEmailId: "pe-counterparty-2" as ProcessedEmailId,
+    processedSourceEventId: "pse-counterparty-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:50:00.000Z" as IsoDateTime,
   });
 }
@@ -397,11 +395,11 @@ function seedSuggestedAccountCreationScenario() {
     amount: 145000 as CopAmount,
   });
   saveEvidenceRow("ce-create-1", {
-    processedCaptureId: "pc-1" as ProcessedCaptureId,
+    processedSourceEventId: "pse-1" as ProcessedSourceEventId,
     transactionId: "tx-create-account" as TransactionId,
   });
   saveEvidenceRow("ce-create-2", {
-    processedCaptureId: "pc-2" as ProcessedCaptureId,
+    processedSourceEventId: "pse-2" as ProcessedSourceEventId,
     updatedAt: "2026-04-19T11:00:00.000Z" as IsoDateTime,
   });
 }
@@ -492,7 +490,7 @@ describe("account suggestion service", () => {
       evidenceType: "last4",
       scope: "notification:bancolombia:last4",
       value: "1234",
-      processedCaptureId: "pc-3" as ProcessedCaptureId,
+      processedSourceEventId: "pse-3" as ProcessedSourceEventId,
       transactionId: "tx-3" as TransactionId,
       updatedAt: "2026-04-19T12:00:00.000Z" as IsoDateTime,
     });
@@ -703,7 +701,7 @@ describe("account suggestion service", () => {
       evidenceType: "last4",
       scope: "notification:bancolombia:last4",
       value: "1234",
-      processedCaptureId: "pc-1" as ProcessedCaptureId,
+      processedSourceEventId: "pse-1" as ProcessedSourceEventId,
       transactionId: "tx-create-account" as TransactionId,
     });
 
@@ -712,7 +710,7 @@ describe("account suggestion service", () => {
       evidenceType: "last4",
       scope: "notification:bancolombia:last4",
       value: "1234",
-      processedCaptureId: "pc-2" as ProcessedCaptureId,
+      processedSourceEventId: "pse-2" as ProcessedSourceEventId,
       updatedAt: "2026-04-19T11:00:00.000Z" as IsoDateTime,
     });
 

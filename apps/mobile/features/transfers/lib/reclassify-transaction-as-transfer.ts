@@ -1,8 +1,5 @@
 import { relinkCaptureEvidenceToTransfer } from "@/features/capture-evidence/public";
-import {
-  markProcessedEmailReclassifiedAsTransfer,
-  markProcessedSourceEventReclassifiedAsTransfer,
-} from "@/features/email-capture/transfer-reclassification.public";
+import { markProcessedSourceEventReclassifiedAsTransfer } from "@/features/email-capture/transfer-reclassification.public";
 import {
   getTransactionById,
   markTransactionSuperseded,
@@ -10,7 +7,6 @@ import {
 import { generateTransferId, toIsoDateTime } from "@/shared/lib.public";
 import type {
   IsoDateTime,
-  ProcessedEmailId,
   ProcessedSourceEventId,
   ReviewCandidateId,
   TransactionId,
@@ -30,7 +26,6 @@ import { saveTransfer } from "./repository";
 type ReclassifyTransactionAsTransferInput = {
   readonly userId: UserId;
   readonly transactionId: TransactionId;
-  readonly processedEmailId?: ProcessedEmailId;
   readonly processedSourceEventId?: ProcessedSourceEventId;
   readonly reviewCandidateId?: ReviewCandidateId;
   readonly digits: string;
@@ -47,7 +42,6 @@ type ReclassifyTransactionAsTransferDeps = {
   readonly loadTransactionById?: typeof getTransactionById;
   readonly saveTransactionRow?: typeof markTransactionSuperseded;
   readonly relinkEvidenceToTransfer?: typeof relinkCaptureEvidenceToTransfer;
-  readonly saveProcessedEmailStatus?: typeof markProcessedEmailReclassifiedAsTransfer;
   readonly saveProcessedSourceEventStatus?: typeof markProcessedSourceEventReclassifiedAsTransfer;
 };
 
@@ -70,7 +64,6 @@ export function reclassifyTransactionAsTransfer(
     loadTransactionById = getTransactionById,
     saveTransactionRow = markTransactionSuperseded,
     relinkEvidenceToTransfer = relinkCaptureEvidenceToTransfer,
-    saveProcessedEmailStatus = markProcessedEmailReclassifiedAsTransfer,
     saveProcessedSourceEventStatus = markProcessedSourceEventReclassifiedAsTransfer,
   }: ReclassifyTransactionAsTransferDeps = {}
 ): ReclassifyTransactionAsTransferResult {
@@ -133,12 +126,6 @@ export function reclassifyTransactionAsTransfer(
         reviewCandidateId: input.reviewCandidateId,
         transactionId: existingTransaction.id,
         updatedAt,
-      });
-    } else if (input.processedEmailId) {
-      saveProcessedEmailStatus({
-        db: tx,
-        id: input.processedEmailId,
-        transactionId: existingTransaction.id,
       });
     }
   });

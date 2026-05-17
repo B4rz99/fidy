@@ -11,7 +11,6 @@ export {
   getCaptureEvidenceRowsForScopeValue,
   getCaptureEvidenceRowsForTransaction,
   getRepeatedCaptureEvidenceForUser,
-  linkCaptureEvidenceToTransaction,
   materializeCaptureEvidenceRows,
   relinkCaptureEvidenceToTransfer,
   saveCaptureEvidence,

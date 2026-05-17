@@ -68,7 +68,9 @@ describe("captureFingerprint", () => {
 
 describe("isCaptureProcessed", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockSelect.mockReset();
+    mockFrom.mockReset();
+    mockWhere.mockReset();
     mockSelect.mockReturnValue({ from: mockFrom });
     mockFrom.mockReturnValue({ where: mockWhere });
     mockWhere.mockResolvedValue([]);
@@ -133,23 +135,8 @@ describe("isCaptureProcessed", () => {
     );
   });
 
-  it("keeps legacy processed capture fallback", async () => {
-    mockWhere.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: "pc-1" }]);
-
-    const { isCaptureProcessed } = await import("@/features/capture-sources/lib/dedup");
-    const result = await isCaptureProcessed({
-      db: mockDb,
-      userId: "user-1",
-      sourceFamily: "notification",
-      sourceId: "notification",
-      sourceEventId: "fp-hash-123",
-    });
-
-    expect(result).toBe(true);
-  });
-
   it("returns false when fingerprint is not found", async () => {
-    mockWhere.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    mockWhere.mockResolvedValueOnce([]);
 
     const { isCaptureProcessed } = await import("@/features/capture-sources/lib/dedup");
     const result = await isCaptureProcessed({
@@ -166,7 +153,9 @@ describe("isCaptureProcessed", () => {
 
 describe("findDuplicateTransaction", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockSelect.mockReset();
+    mockFrom.mockReset();
+    mockWhere.mockReset();
     mockSelect.mockReturnValue({ from: mockFrom });
     mockFrom.mockReturnValue({ where: mockWhere });
     mockWhere.mockResolvedValue([]);

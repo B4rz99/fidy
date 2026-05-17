@@ -1,13 +1,7 @@
-import { and, desc, eq, getTableColumns, lte, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { AnyDb } from "@/shared/db/client";
-import { emailAccounts, processedEmails, transactions } from "@/shared/db/schema";
-import type {
-  EmailAccountId,
-  IsoDateTime,
-  ProcessedEmailId,
-  TransactionId,
-  UserId,
-} from "@/shared/types/branded";
+import { emailAccounts } from "@/shared/db/schema";
+import type { EmailAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
 export {
   getPendingRetryEmailSourceEvents,
   getProcessedEmailSourceEventIds,
@@ -33,26 +27,6 @@ export {
 } from "./source-event-queue-repository";
 
 export type EmailAccountRow = typeof emailAccounts.$inferInsert;
-export type ProcessedEmailRow = typeof processedEmails.$inferInsert;
-type ProcessedEmailStatusUpdateInput = {
-  readonly db: AnyDb;
-  readonly id: ProcessedEmailId;
-  readonly status: string;
-  readonly transactionId: TransactionId | null;
-};
-type RetryScheduleInput = {
-  readonly db: AnyDb;
-  readonly id: ProcessedEmailId;
-  readonly retryCount: number;
-  readonly nextRetryAt: IsoDateTime;
-};
-type RetrySuccessInput = {
-  readonly db: AnyDb;
-  readonly id: ProcessedEmailId;
-  readonly status: "success" | "needs_review";
-  readonly transactionId: TransactionId | null;
-  readonly confidence: number;
-};
 
 export async function insertEmailAccount(db: AnyDb, row: EmailAccountRow): Promise<boolean> {
   const result = await db.insert(emailAccounts).values(row).onConflictDoNothing().run();
@@ -74,118 +48,4 @@ export async function deleteEmailAccount(db: AnyDb, id: EmailAccountId) {
 
 export async function updateLastFetchedAt(db: AnyDb, id: EmailAccountId, timestamp: IsoDateTime) {
   await db.update(emailAccounts).set({ lastFetchedAt: timestamp }).where(eq(emailAccounts.id, id));
-}
-
-export async function insertProcessedEmail(db: AnyDb, row: ProcessedEmailRow) {
-  await db.insert(processedEmails).values(row);
-}
-
-export async function getProcessedEmailByExternalId(db: AnyDb, externalId: string) {
-  const rows = await db
-    .select()
-    .from(processedEmails)
-    .where(eq(processedEmails.externalId, externalId));
-  return rows[0] ?? null;
-}
-
-export async function getProcessedEmailById(db: AnyDb, id: ProcessedEmailId) {
-  const rows = await db.select().from(processedEmails).where(eq(processedEmails.id, id));
-  return rows[0] ?? null;
-}
-
-function getUserLinkedProcessedEmailsByStatus(db: AnyDb, userId: UserId, status: string) {
-  return db
-    .select({ ...getTableColumns(processedEmails) })
-    .from(processedEmails)
-    .innerJoin(transactions, eq(transactions.id, processedEmails.transactionId))
-    .where(and(eq(processedEmails.status, status), eq(transactions.userId, userId)))
-    .orderBy(desc(processedEmails.receivedAt));
-}
-
-export async function getFailedEmails(db: AnyDb, userId: UserId) {
-  return getUserLinkedProcessedEmailsByStatus(db, userId, "failed");
-}
-
-export async function getNeedsReviewEmails(db: AnyDb, userId: UserId) {
-  return getUserLinkedProcessedEmailsByStatus(db, userId, "needs_review");
-}
-
-export async function getNeedsReviewEmailByTransactionId(db: AnyDb, transactionId: TransactionId) {
-  const rows = await db
-    .select()
-    .from(processedEmails)
-    .where(
-      and(
-        eq(processedEmails.transactionId, transactionId),
-        eq(processedEmails.status, "needs_review")
-      )
-    )
-    .orderBy(desc(processedEmails.receivedAt))
-    .limit(1);
-
-  return rows[0] ?? null;
-}
-
-function getProcessedEmailUpdateQuery(
-  db: AnyDb,
-  id: ProcessedEmailId,
-  fields: Partial<ProcessedEmailRow>
-) {
-  return db.update(processedEmails).set(fields).where(eq(processedEmails.id, id));
-}
-
-export async function updateProcessedEmailStatus(input: ProcessedEmailStatusUpdateInput) {
-  await getProcessedEmailUpdateQuery(input.db, input.id, {
-    status: input.status,
-    transactionId: input.transactionId,
-  });
-}
-
-export function updateProcessedEmailStatusInTransaction(input: ProcessedEmailStatusUpdateInput) {
-  getProcessedEmailUpdateQuery(input.db, input.id, {
-    status: input.status,
-    transactionId: input.transactionId,
-  }).run();
-}
-
-export async function dismissProcessedEmail(db: AnyDb, id: ProcessedEmailId) {
-  await db.delete(processedEmails).where(eq(processedEmails.id, id));
-}
-
-export async function getPendingRetryEmails(db: AnyDb) {
-  return db
-    .select()
-    .from(processedEmails)
-    .where(
-      and(
-        eq(processedEmails.status, "pending_retry"),
-        lte(processedEmails.nextRetryAt, sql`strftime('%Y-%m-%dT%H:%M:%fZ', 'now')`)
-      )
-    )
-    .orderBy(desc(processedEmails.receivedAt))
-    .limit(50);
-}
-
-export async function markForRetry(input: RetryScheduleInput) {
-  await getProcessedEmailUpdateQuery(input.db, input.id, {
-    status: "pending_retry",
-    retryCount: input.retryCount,
-    nextRetryAt: input.nextRetryAt,
-  });
-}
-
-export async function markPermanentlyFailed(db: AnyDb, id: ProcessedEmailId) {
-  await db
-    .update(processedEmails)
-    .set({ status: "failed", rawBody: null })
-    .where(eq(processedEmails.id, id));
-}
-
-export async function markRetrySuccess(input: RetrySuccessInput) {
-  await getProcessedEmailUpdateQuery(input.db, input.id, {
-    status: input.status,
-    transactionId: input.transactionId,
-    confidence: input.confidence,
-    rawBody: null,
-  });
 }

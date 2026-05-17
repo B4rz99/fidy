@@ -49,8 +49,6 @@ function buildTransactionCaptureEvidenceRows(
     {
       userId: context.userId,
       transactionId: context.txId,
-      processedEmailId: null,
-      processedCaptureId: null,
       processedSourceEventId: context.processedSourceEventId,
       createdAt: context.now,
       updatedAt: context.now,
@@ -167,7 +165,6 @@ function createEmailTransactionContext(
     status: input.status,
     now,
     txId: generateTransactionId(),
-    processedEmailId: null,
     processedSourceEventId: generateProcessedSourceEventId(),
     categoryId: getPersistedCategoryId(input.parsed.categoryId),
     source: getTransactionSource(input.email.provider),

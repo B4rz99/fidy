@@ -14,7 +14,6 @@ const mockRecordAutomatedTransactionWithLocalLedger = vi.fn<(...args: any[]) => 
 const mockGetPendingTransactions = vi.fn<(...args: any[]) => any>();
 const mockRemovePendingTransactions = vi.fn<(...args: any[]) => any>();
 const mockIsAvailable = vi.fn<(...args: any[]) => any>();
-const mockGenerateProcessedCaptureId = vi.fn<(...args: any[]) => any>();
 const mockEnsureDefaultFinancialAccount = vi.fn<(...args: any[]) => any>().mockReturnValue({
   id: "fa-default-user-1",
 });
@@ -92,7 +91,6 @@ vi.mock("@/shared/lib", () => ({
   captureError: vi.fn<(...args: any[]) => any>(),
   capturePipelineEvent: vi.fn<(...args: any[]) => any>(),
   captureWarning: vi.fn<(...args: any[]) => any>(),
-  generateProcessedCaptureId: () => mockGenerateProcessedCaptureId(),
   toIsoDate: (d: Date) => d.toISOString().slice(0, 10),
   toIsoDateTime: (d: Date) => d.toISOString(),
   trackTransactionCreated: vi.fn<(...args: any[]) => any>(),
@@ -109,7 +107,6 @@ describe("processWidgetTransactions", () => {
     mockRemovePendingTransactions.mockResolvedValue(undefined);
     mockIsCaptureProcessed.mockResolvedValue(false);
     mockFindDuplicateTransaction.mockResolvedValue(null);
-    mockGenerateProcessedCaptureId.mockReturnValue("pc-1");
     mockEnsureDefaultFinancialAccount.mockReturnValue({ id: "fa-default-user-1" });
     mockPersistProcessedSourceEvent.mockReturnValue(undefined);
     mockPersistCommittedCaptureSourceEvent.mockReturnValue(undefined);

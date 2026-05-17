@@ -28,6 +28,7 @@ import m0025 from "./0025_review_candidate_intake.sql";
 import m0026 from "./0026_align_transaction_domain.sql";
 import m0027 from "./0027_transfer_source.sql";
 import m0028 from "./0028_email_source_event_status.sql";
+import m0029 from "./0029_retire_legacy_processed_tables.sql";
 import journal from "./meta/_journal.json";
 
 export default {
@@ -62,5 +63,6 @@ export default {
     m0026,
     m0027,
     m0028,
+    m0029,
   },
 };

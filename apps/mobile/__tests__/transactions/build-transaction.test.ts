@@ -210,7 +210,7 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
     expect(serialized.source).toBe("email_capture");
   });
 
-  test("normalizes legacy non-manual transaction sources as closed capture categories", () => {
+  test("rejects provider identifiers as transaction sources", () => {
     const row = {
       id: "tx-legacy-source" as TransactionId,
       userId: "user-1" as UserId,
@@ -228,11 +228,6 @@ describe("toStoredTransaction / toTransactionRow round-trip", () => {
       source: "email_gmail",
     };
 
-    const storedTransaction = toStoredTransaction(row);
-    const serialized = toTransactionRow(storedTransaction);
-
-    expect(storedTransaction.accountAttributionState).toBe("unresolved");
-    expect(storedTransaction.source).toBe("email_capture");
-    expect(serialized.source).toBe("email_capture");
+    expect(() => toStoredTransaction(row)).toThrow("Unsupported transaction source: email_gmail");
   });
 });
