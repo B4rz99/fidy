@@ -1,5 +1,5 @@
-import type { CaptureEvidenceRow, CaptureEvidenceSeed } from "@/features/capture-evidence/public";
-import type { FinancialAccountRow } from "@/features/financial-accounts/public";
+import type { CaptureEvidenceRow, CaptureEvidenceSeed } from "@/features/capture-evidence/write.public";
+import type { FinancialAccountRow } from "@/features/financial-accounts/write.public";
 import type { TransactionRow } from "@/features/transactions/query.public";
 import type {
   CreateReviewCandidateInput,
@@ -95,7 +95,7 @@ export type CreateEmailPipelineServiceDeps = {
   readonly insertProcessedEmailSourceEvent: (
     db: AnyDb,
     row: ProcessedSourceEventRow
-  ) => Promise<void>;
+  ) => void | Promise<void>;
   readonly markSourceEventForRetry: (input: {
     readonly db: AnyDb;
     readonly id: ProcessedSourceEventId;

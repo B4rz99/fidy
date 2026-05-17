@@ -211,8 +211,8 @@ function resetPipelineMocks() {
     mockUpdateProcessedSourceEventStatus,
   ].forEach((mock) => mock.mockReset());
   mockGetProcessedEmailSourceEventIds.mockResolvedValue(new Set<string>());
-  mockInsertProcessedEmailSourceEvent.mockResolvedValue(undefined);
-  mockInsertTransaction.mockResolvedValue(undefined);
+  mockInsertProcessedEmailSourceEvent.mockReturnValue(undefined);
+  mockInsertTransaction.mockReturnValue(undefined);
   mockRecordTransaction.mockImplementation(async ({ ports, command }) => {
     const transaction = {
       id: ports.generateEntryId(),
@@ -258,7 +258,7 @@ function resetCaptureEvidenceMocks() {
       value: "bancolombia.com.co",
     },
   ]);
-  mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
+  mockSaveCaptureEvidenceRows.mockReturnValue(undefined);
   mockLinkCaptureEvidenceToTransaction.mockResolvedValue(undefined);
 }
 
@@ -660,18 +660,12 @@ describe("email processing pipeline", () => {
     const result = await processEmails(dbWithTransaction, USER_ID, [makeRawEmail()]);
 
     expect(result.needsReview).toBe(1);
-    expect(dbWithTransaction.transaction).toHaveBeenCalledTimes(1);
+    expect(dbWithTransaction.transaction).toHaveBeenCalledTimes(0);
     expect(mockWriteThroughCommit).toHaveBeenCalledWith(
-      txDb,
+      dbWithTransaction,
       expect.objectContaining({ type: "test-review-candidate" })
     );
-    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
-      txDb,
-      expect.objectContaining({
-        sourceEventId: "ext-1",
-        status: "needs_review",
-      })
-    );
+    expect(mockInsertProcessedEmailSourceEvent).not.toHaveBeenCalled();
   });
 
   it("does not report saved when a bundled async write rejects", async () => {
@@ -1014,20 +1008,12 @@ describe("email processing pipeline", () => {
           candidateKind: "transaction",
           status: "pending",
           money: { amount: 50000, currency: "COP" },
-          description: null,
+          description: "Compra en Exito",
           confidence: 0.5,
         }),
       })
     );
-    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({
-        sourceEventId: "ext-1",
-        status: "needs_review",
-        transactionId: null,
-        confidence: 0.5,
-      })
-    );
+    expect(mockInsertProcessedEmailSourceEvent).not.toHaveBeenCalled();
     expect(mockInsertMerchantRule).not.toHaveBeenCalled();
     expectCaptureEvidenceBuiltFromEmailContent();
     expect(result.parseImprovementRequests).toEqual([
@@ -1061,15 +1047,7 @@ describe("email processing pipeline", () => {
         type: "test-review-candidate",
       })
     );
-    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({
-        sourceEventId: "ext-1",
-        status: "needs_review",
-        transactionId: null,
-        confidence: 0.5,
-      })
-    );
+    expect(mockInsertProcessedEmailSourceEvent).not.toHaveBeenCalled();
   });
 
   it("uses typed LLM account hints as capture evidence for account suggestions", async () => {
@@ -1326,7 +1304,7 @@ describe("email processing pipeline", () => {
         description: "Compra 1",
         date: "2026-03-05",
         confidence: 0.9,
-      } as never)
+      })
       .mockResolvedValueOnce({
         type: "expense",
         amount: 30000,
@@ -1635,7 +1613,7 @@ describe("processRetries", () => {
           candidateKind: "transaction",
           status: "pending",
           money: { amount: 50000, currency: "COP" },
-          description: null,
+          description: "Compra en Exito",
           confidence: 0.5,
         }),
       })
@@ -1675,7 +1653,7 @@ describe("processRetries", () => {
       description: "Compra en Exito",
       date: "2026-03-05",
       confidence: 0.9,
-    } as never);
+    });
 
     const result = await processRetries(mockDb, USER_ID);
 

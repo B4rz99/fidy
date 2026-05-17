@@ -2,12 +2,12 @@ import { Effect } from "effect";
 import {
   type CaptureEvidenceRow,
   materializeCaptureEvidenceRows,
-} from "@/features/capture-evidence/public";
+} from "@/features/capture-evidence/write.public";
 import type { AnyDb } from "@/shared/db";
-import { type AppClock, bindAppClock, currentDateEffect } from "@/shared/effect/clock";
+import { bindAppClock, currentDateEffect } from "@/shared/effect/clock";
 import { fromPromise, fromThunk, makeAppService } from "@/shared/effect/runtime";
-import { type AppTelemetry, bindAppTelemetry } from "@/shared/effect/telemetry";
-import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
+import { bindAppTelemetry } from "@/shared/effect/telemetry";
+import { normalizeMerchant } from "@/shared/lib";
 import { computeNextRetryAt } from "../../lib/retry-backoff";
 import { getParsedCounterpartyName } from "./shared";
 import type {
@@ -99,7 +99,7 @@ export function findDuplicateTransactionEffect(
 
 export function insertProcessedEmailSourceEventEffect(db: AnyDb, row: ProcessedSourceEventRow) {
   return Effect.flatMap(EmailPipelineDeps.tag, ({ insertProcessedEmailSourceEvent }) =>
-    fromPromise(() => insertProcessedEmailSourceEvent(db, row))
+    fromThunk(() => insertProcessedEmailSourceEvent(db, row))
   );
 }
 
@@ -227,8 +227,8 @@ export function nextRetryAtEffect(retryCount: number) {
 
 export function createPipelineRuntime(deps: CreateEmailPipelineServiceDeps): PipelineRuntime {
   const { clock, telemetry, parseRateLimit, maxCandidateEmails, ...runtimeDeps } = deps;
-  const clockRuntime = bindAppClock(clock as AppClock | undefined);
-  const telemetryRuntime = bindAppTelemetry(telemetry as AppTelemetry | undefined);
+  const clockRuntime = bindAppClock(clock);
+  const telemetryRuntime = bindAppTelemetry(telemetry);
   const runtime = EmailPipelineDeps.bind(runtimeDeps);
 
   return {

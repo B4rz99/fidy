@@ -104,6 +104,7 @@ vi.mock("@/features/email-capture/services/parse-email-api", () => ({
 const mockGenerateId = vi.fn<(...args: any[]) => any>();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: unknown[]) => mockGenerateId(...args),
+  generateCaptureEvidenceId: () => mockGenerateId("ce"),
   generateTransactionId: () => mockGenerateId("tx"),
   generateProcessedSourceEventId: () => mockGenerateId("pse"),
 }));
@@ -135,8 +136,8 @@ describe("pipeline worker save error path", () => {
     });
     mockGetProcessedEmailSourceEventIds.mockReset();
     mockGetProcessedEmailSourceEventIds.mockResolvedValue(new Set<string>());
-    mockInsertProcessedEmailSourceEvent.mockResolvedValue(undefined);
-    mockInsertTransaction.mockResolvedValue(undefined);
+    mockInsertProcessedEmailSourceEvent.mockReturnValue(undefined);
+    mockInsertTransaction.mockReturnValue(undefined);
     mockLookupMerchantRule.mockResolvedValue(null);
     mockInsertMerchantRule.mockResolvedValue(undefined);
     mockParseEmailApi.mockResolvedValue(null);
@@ -146,7 +147,7 @@ describe("pipeline worker save error path", () => {
     mockMarkSourceEventPermanentlyFailed.mockResolvedValue(undefined);
     mockMarkSourceEventRetrySuccess.mockResolvedValue(undefined);
     mockUpdateProcessedSourceEventStatus.mockResolvedValue(undefined);
-    mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
+    mockSaveCaptureEvidenceRows.mockReturnValue(undefined);
     mockLinkCaptureEvidenceToTransaction.mockResolvedValue(undefined);
   });
 
@@ -177,7 +178,7 @@ describe("pipeline worker save error path", () => {
       date: "2026-03-05",
       confidence: 0.9,
     });
-    mockInsertTransaction.mockResolvedValueOnce(undefined);
+    mockInsertTransaction.mockReturnValueOnce(undefined);
 
     const result = await processEmails(mockDb, USER_ID, emails);
 
