@@ -11,7 +11,8 @@ import {
   getFinancialAccountIdentifiersForAccount,
   upsertFinancialAccount,
 } from "@/features/financial-accounts";
-import { getTransactionById, insertTransaction } from "@/features/transactions/lib/repository";
+import { getTransactionById } from "@/features/transactions/lib/repository";
+import { insertTransactionStorageRow as insertTransaction } from "@/infrastructure/local-ledger/transaction-storage";
 import type {
   CaptureEvidenceId,
   CategoryId,

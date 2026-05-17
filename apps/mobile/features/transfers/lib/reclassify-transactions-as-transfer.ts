@@ -8,10 +8,13 @@ import {
   getTransactionById,
   markTransactionSuperseded,
 } from "@/features/transactions/transfer-reclassification.public";
-import { toTransferRow } from "@/infrastructure/local-ledger/record-transfer";
+import {
+  saveTransferStorageRow,
+  toTransferRow,
+} from "@/infrastructure/local-ledger/record-transfer";
 import type { AnyDb } from "@/shared/db";
 import { financialAccounts } from "@/shared/db/schema";
-import { parseIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
+import { toIsoDateTime } from "@/shared/lib/format-date";
 import { generateTransferId } from "@/shared/lib.public";
 import type {
   FinancialAccountId,
@@ -20,8 +23,7 @@ import type {
   TransferId,
   UserId,
 } from "@/shared/types/branded";
-import type { StoredTransfer } from "./build-transfer";
-import { saveTransfer } from "./repository";
+import { type StoredTransfer, toStoredTransferFromLocalLedger } from "./build-transfer";
 
 type ReclassifyTransactionsAsTransferInput = {
   readonly userId: UserId;
@@ -35,7 +37,7 @@ type ReclassifyTransactionsAsTransferDeps = {
   readonly createId?: () => TransferId;
   readonly loadTransactionById?: typeof getTransactionById;
   readonly saveTransferRow?: (
-    db: Parameters<typeof saveTransfer>[0],
+    db: Parameters<typeof saveTransferStorageRow>[0],
     row: ReturnType<typeof toTransferRow>
   ) => void;
   readonly saveTransactionRow?: typeof markTransactionSuperseded;
@@ -50,7 +52,7 @@ type ReclassificationCommitDeps = {
 };
 
 type ReclassificationCommitInput = {
-  readonly db: Parameters<typeof saveTransfer>[0];
+  readonly db: Parameters<typeof saveTransferStorageRow>[0];
   readonly userId: UserId;
   readonly transfer: LocalLedgerTransfer;
   readonly outgoingTransactionId: TransactionId;
@@ -65,20 +67,6 @@ export type ReclassifyTransactionsAsTransferError =
 export type ReclassifyTransactionsAsTransferResult =
   | { readonly success: true; readonly transfer: StoredTransfer }
   | { readonly success: false; readonly error: ReclassifyTransactionsAsTransferError };
-
-const toStoredTransfer = (transfer: LocalLedgerTransfer): StoredTransfer => ({
-  id: transfer.id,
-  userId: transfer.userId,
-  amount: transfer.amount,
-  fromSide: transfer.fromSide,
-  toSide: transfer.toSide,
-  description: transfer.description,
-  date: parseIsoDate(transfer.date),
-  source: transfer.source,
-  createdAt: new Date(transfer.createdAt),
-  updatedAt: new Date(transfer.updatedAt),
-  deletedAt: transfer.voidedAt === null ? null : new Date(transfer.voidedAt),
-});
 
 const countActiveAccountsForReclassification = (
   db: AnyDb,
@@ -175,7 +163,7 @@ const getTransferAccountIds = (
 };
 
 const hasCommittedSupersessions = (
-  db: Parameters<typeof saveTransfer>[0],
+  db: Parameters<typeof saveTransferStorageRow>[0],
   input: ReclassificationCommitInput,
   loadTransactionById: typeof getTransactionById
 ): boolean =>
@@ -245,13 +233,13 @@ function commitReclassification(
 }
 
 export async function reclassifyTransactionsAsTransfer(
-  db: Parameters<typeof saveTransfer>[0],
+  db: Parameters<typeof saveTransferStorageRow>[0],
   input: ReclassifyTransactionsAsTransferInput,
   {
     now = () => new Date(),
     createId = generateTransferId,
     loadTransactionById = getTransactionById,
-    saveTransferRow = saveTransfer,
+    saveTransferRow = saveTransferStorageRow,
     saveTransactionRow = markTransactionSuperseded,
     canUseAccounts = canUseAccountsForReclassification,
   }: ReclassifyTransactionsAsTransferDeps = {}
@@ -295,6 +283,6 @@ export async function reclassifyTransactionsAsTransfer(
   });
 
   return result.code === "reclassified"
-    ? { success: true, transfer: toStoredTransfer(result.transfer) }
+    ? { success: true, transfer: toStoredTransferFromLocalLedger(result.transfer) }
     : { success: false, error: mapReclassificationError(result.reason) };
 }

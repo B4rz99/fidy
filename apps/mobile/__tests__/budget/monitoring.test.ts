@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { BudgetAlertState, BudgetMonitoringPorts } from "@/features/budget/lib/monitoring";
 import { createBudgetMonitoringModule } from "@/features/budget/lib/monitoring";
 import { insertBudget } from "@/features/budget/lib/repository";
-import { insertTransaction } from "@/features/transactions/lib/repository";
+import { insertTransactionStorageRow as insertTransaction } from "@/infrastructure/local-ledger/transaction-storage";
 import type { AnyDb } from "@/shared/db";
 import type {
   BudgetId,

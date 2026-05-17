@@ -106,13 +106,36 @@ describe("RecordTransaction", () => {
     expect(result).toEqual({ ok: false, code: "manual-source-requires-resolved-account" });
   });
 
+  test("rejects overlong note and counterparty text instead of truncating it", async () => {
+    const overlongText = "x".repeat(201);
+
+    await expect(
+      recordTransaction({
+        command: {
+          ...validCommand,
+          description: overlongText,
+        },
+        ports: createPorts(),
+      })
+    ).resolves.toEqual({ ok: false, code: "description-too-long" });
+
+    await expect(
+      recordTransaction({
+        command: {
+          ...validCommand,
+          counterpartyName: overlongText,
+        },
+        ports: createPorts(),
+      })
+    ).resolves.toEqual({ ok: false, code: "counterparty-name-too-long" });
+  });
+
   test("records an accepted transaction with normalized note and counterparty text", async () => {
-    const longCounterparty = `  ${"Counterparty ".repeat(30)}  `;
     const result = await recordTransaction({
       command: {
         ...validCommand,
         description: "  User note  ",
-        counterpartyName: longCounterparty,
+        counterpartyName: "  Cafe Central  ",
         source: "email_capture",
         accountAttributionState: "unresolved",
       },
@@ -125,7 +148,7 @@ describe("RecordTransaction", () => {
       id: "entry-1",
       userId: "user-1",
       description: "User note",
-      counterpartyName: "Counterparty ".repeat(30).slice(0, 200),
+      counterpartyName: "Cafe Central",
       source: "email_capture",
       accountAttributionState: "unresolved",
     });

@@ -4,11 +4,11 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getMonthlyTotalsByType } from "@/features/transactions/lib/repository";
 import {
-  getMonthlyTotalsByType,
-  insertTransaction,
-  softDeleteTransaction,
-} from "@/features/transactions/lib/repository";
+  insertTransactionStorageRow as insertTransaction,
+  softDeleteTransactionStorageRow as softDeleteTransaction,
+} from "@/infrastructure/local-ledger/transaction-storage";
 import type {
   CategoryId,
   CopAmount,

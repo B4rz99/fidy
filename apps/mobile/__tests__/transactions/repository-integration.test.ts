@@ -9,8 +9,8 @@ import {
   getAllTransactions,
   getBalanceAggregate,
   getTransactionById,
-  insertTransaction,
 } from "@/features/transactions/lib/repository";
+import { insertTransactionStorageRow as insertTransaction } from "@/infrastructure/local-ledger/transaction-storage";
 import type {
   CategoryId,
   CopAmount,

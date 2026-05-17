@@ -17,6 +17,7 @@ const mockGetProcessedEmailSourceEventIds = vi
   .mockResolvedValue(new Set<string>());
 const mockInsertProcessedEmailSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
+const mockRecordAutomatedTransactionWithLocalLedger = vi.fn<(...args: any[]) => any>();
 const mockLookupMerchantRule = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
 const mockInsertMerchantRule = vi.fn<(...args: any[]) => any>();
 const mockParseEmailApi = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
@@ -76,6 +77,11 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: unknown[]) => mockInsertTransaction(...args),
 }));
 
+vi.mock("@/infrastructure/local-ledger/record-transaction", () => ({
+  recordAutomatedTransactionWithLocalLedger: (...args: unknown[]) =>
+    mockRecordAutomatedTransactionWithLocalLedger(...args),
+}));
+
 vi.mock("@/features/financial-accounts", () => ({
   ensureDefaultFinancialAccount: (...args: unknown[]) => mockEnsureDefaultFinancialAccount(...args),
 }));
@@ -104,6 +110,7 @@ vi.mock("@/features/email-capture/services/parse-email-api", () => ({
 const mockGenerateId = vi.fn<(...args: any[]) => any>();
 vi.mock("@/shared/lib/generate-id", () => ({
   generateId: (...args: unknown[]) => mockGenerateId(...args),
+  generateCaptureEvidenceId: () => mockGenerateId("ce"),
   generateTransactionId: () => mockGenerateId("tx"),
   generateProcessedSourceEventId: () => mockGenerateId("pse"),
 }));
@@ -135,8 +142,40 @@ describe("pipeline worker save error path", () => {
     });
     mockGetProcessedEmailSourceEventIds.mockReset();
     mockGetProcessedEmailSourceEventIds.mockResolvedValue(new Set<string>());
-    mockInsertProcessedEmailSourceEvent.mockResolvedValue(undefined);
-    mockInsertTransaction.mockResolvedValue(undefined);
+    mockInsertProcessedEmailSourceEvent.mockReturnValue(undefined);
+    mockInsertTransaction.mockReturnValue(undefined);
+    mockRecordAutomatedTransactionWithLocalLedger.mockImplementation(async (input) => {
+      const transaction = {
+        id: input.transactionId,
+        userId: input.command.userId,
+        type: input.command.type,
+        amount: input.command.amount,
+        accountId: input.command.accountId,
+        accountAttributionState: input.command.accountAttributionState,
+        categoryId: input.command.categoryId,
+        occurredOn: input.command.occurredOn,
+        description: input.command.description ?? "",
+        counterpartyName: input.command.counterpartyName ?? "",
+        source: input.command.source,
+      };
+      mockInsertTransaction(input.db, {
+        id: input.transactionId,
+        userId: input.command.userId,
+        type: input.command.type,
+        amount: input.command.amount,
+        accountId: input.command.accountId,
+        accountAttributionState: input.command.accountAttributionState,
+        categoryId: input.command.categoryId,
+        description: input.command.description,
+        counterpartyName: input.command.counterpartyName,
+        date: input.command.occurredOn,
+        source: input.command.source,
+        createdAt: input.now,
+        updatedAt: input.now,
+      });
+      input.afterRecord?.(input.db, transaction);
+      return { success: true, transaction };
+    });
     mockLookupMerchantRule.mockResolvedValue(null);
     mockInsertMerchantRule.mockResolvedValue(undefined);
     mockParseEmailApi.mockResolvedValue(null);
@@ -146,7 +185,7 @@ describe("pipeline worker save error path", () => {
     mockMarkSourceEventPermanentlyFailed.mockResolvedValue(undefined);
     mockMarkSourceEventRetrySuccess.mockResolvedValue(undefined);
     mockUpdateProcessedSourceEventStatus.mockResolvedValue(undefined);
-    mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
+    mockSaveCaptureEvidenceRows.mockReturnValue(undefined);
     mockLinkCaptureEvidenceToTransaction.mockResolvedValue(undefined);
   });
 
@@ -155,7 +194,7 @@ describe("pipeline worker save error path", () => {
 
     const saveError = new Error("DB write failed");
 
-    // First email: LLM returns valid result but insertTransaction throws
+    // First email: LLM returns valid result but the Local Ledger infrastructure writer throws
     mockParseEmailApi.mockResolvedValueOnce({
       type: "expense",
       amount: 50000,
@@ -164,7 +203,7 @@ describe("pipeline worker save error path", () => {
       date: "2026-03-05",
       confidence: 0.9,
     });
-    mockInsertTransaction.mockImplementationOnce(() => {
+    mockRecordAutomatedTransactionWithLocalLedger.mockImplementationOnce(() => {
       throw saveError;
     });
 
@@ -177,8 +216,6 @@ describe("pipeline worker save error path", () => {
       date: "2026-03-05",
       confidence: 0.9,
     });
-    mockInsertTransaction.mockResolvedValueOnce(undefined);
-
     const result = await processEmails(mockDb, USER_ID, emails);
 
     // First email failed, second succeeded

@@ -171,17 +171,17 @@ async function validateCandidate(
 ) {
   const candidate = await loadCandidate(input);
 
-  return candidate === null
-    ? reject("candidate-not-found")
-    : candidate.userId !== input.userId
-      ? reject("candidate-owner-mismatch")
-      : candidate.processedSourceEventId !== input.processedSourceEventId
-        ? reject("source-event-mismatch")
-        : candidate.status !== "pending"
-          ? reject("candidate-not-pending")
-          : expectedKind !== null && candidate.candidateKind !== expectedKind
-            ? reject("candidate-kind-mismatch")
-            : null;
+  if (candidate === null) return reject("candidate-not-found");
+  if (candidate.userId !== input.userId) return reject("candidate-owner-mismatch");
+  if (candidate.processedSourceEventId !== input.processedSourceEventId) {
+    return reject("source-event-mismatch");
+  }
+  if (candidate.status !== "pending") return reject("candidate-not-pending");
+  if (expectedKind !== null && candidate.candidateKind !== expectedKind) {
+    return reject("candidate-kind-mismatch");
+  }
+
+  return null;
 }
 
 export async function confirmReviewCandidateAsTransaction(
@@ -207,6 +207,7 @@ export async function confirmReviewCandidateAsTransfer(
 ): Promise<ConfirmReviewCandidateResult> {
   const validation = await validateCandidate(input, "transfer", ports.loadCandidate);
   if (validation !== null) return validation;
+  if (input.command.userId !== input.userId) return reject("record-command-user-mismatch");
 
   const commitResult = await ports.confirmTransfer({
     ...toCommitInput(input),

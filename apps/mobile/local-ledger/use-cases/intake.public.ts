@@ -34,8 +34,6 @@ export type CreateReviewCandidateCommand = {
     readonly status: LocalLedgerProcessedSourceEventStatus;
     readonly failureReason: string | null;
     readonly subject?: string | null;
-    readonly rawBodyPreview?: string | null;
-    readonly rawBody?: string | null;
     readonly retryCount?: number;
     readonly nextRetryAt?: string | null;
     readonly transactionId?: string | null;
@@ -100,8 +98,6 @@ export type CreateReviewCandidateInput = {
     readonly status: LocalLedgerProcessedSourceEventStatus;
     readonly failureReason: string | null;
     readonly subject?: string | null;
-    readonly rawBodyPreview?: string | null;
-    readonly rawBody?: string | null;
     readonly retryCount?: number;
     readonly nextRetryAt?: string | null;
     readonly transactionId?: string | null;
@@ -134,8 +130,6 @@ const toProcessedSourceEventRow = (input: CreateReviewCandidateInput) => ({
   status: input.source.status,
   failureReason: input.source.failureReason,
   subject: input.source.subject,
-  rawBodyPreview: input.source.rawBodyPreview,
-  rawBody: input.source.rawBody,
   retryCount: input.source.retryCount,
   nextRetryAt: input.source.nextRetryAt,
   transactionId: input.source.transactionId,

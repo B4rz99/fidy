@@ -2,8 +2,8 @@ import { Effect } from "effect";
 import {
   type CaptureEvidenceRow,
   materializeCaptureEvidenceRows,
-} from "@/features/capture-evidence/public";
-import type { FinancialAccountRow } from "@/features/financial-accounts/public";
+} from "@/features/capture-evidence/write.public";
+import type { FinancialAccountRow } from "@/features/financial-accounts/write.public";
 import { currentIsoDateTimeEffect } from "@/shared/effect/clock";
 import { fromPromise } from "@/shared/effect/runtime";
 import { generateProcessedSourceEventId, generateTransactionId } from "@/shared/lib/generate-id";
@@ -22,7 +22,7 @@ import {
   getTransactionSource,
   resolveEmailStatus,
 } from "./shared";
-import { defaultRecordTransaction, recordTransactionToDb } from "./transaction-recording";
+import { buildAutomatedTransactionCommand } from "./transaction-recording";
 import { trackSavedTransactionEffect } from "./transaction-tracking";
 import type {
   CreateEmailPipelineServiceDeps,
@@ -56,45 +56,16 @@ function buildTransactionCaptureEvidenceRows(
   );
 }
 
-const buildReviewProcessedSourceEventRow = (context: EmailTransactionContext) => ({
-  id: context.processedSourceEventId,
-  userId: context.userId,
-  sourceFamily: "email",
-  sourceId: getEmailSourceId(context.email),
-  sourceEventId: context.email.externalId,
-  status: "needs_review",
-  failureReason: null,
-  subject: context.email.subject,
-  rawBodyPreview: context.email.body.slice(0, 500),
-  rawBody: null,
-  retryCount: 0,
-  nextRetryAt: null,
-  receivedAt: requireIsoDateTime(context.email.receivedAt),
-  processedAt: context.now,
-  transactionId: null,
-  confidence: context.parsed.confidence,
-  createdAt: context.now,
-  updatedAt: context.now,
-  deletedAt: null,
-});
+const ensureSyncWrite = (result: unknown, operation: string) => {
+  if (result instanceof Promise) {
+    throw new Error(`${operation} must be synchronous inside an Expo SQLite transaction`);
+  }
+};
 
 function persistReviewCandidateBundleEffect(context: EmailTransactionContext) {
   return Effect.gen(function* () {
     const deps = yield* EmailPipelineDeps.tag;
-    const processedSourceEventRow = buildReviewProcessedSourceEventRow(context);
-
-    yield* fromPromise(async () => {
-      if ("transaction" in context.db && typeof context.db.transaction === "function") {
-        await context.db.transaction(async (tx) => {
-          await commitReviewCandidate({ ...context, db: tx }, deps);
-          await deps.insertProcessedEmailSourceEvent(tx, processedSourceEventRow);
-        });
-        return;
-      }
-
-      await commitReviewCandidate(context, deps);
-      await deps.insertProcessedEmailSourceEvent(context.db, processedSourceEventRow);
-    });
+    yield* fromPromise(() => commitReviewCandidate(context, deps));
   });
 }
 
@@ -103,8 +74,7 @@ function persistTransactionBundleEffect(context: EmailTransactionContext) {
     const {
       buildEmailCaptureEvidence,
       insertProcessedEmailSourceEvent,
-      insertTransaction,
-      recordTransaction = defaultRecordTransaction,
+      recordAutomatedTransactionWithLocalLedger,
       saveCaptureEvidenceRows,
     } = yield* EmailPipelineDeps.tag;
     const processedSourceEventRow = {
@@ -116,7 +86,6 @@ function persistTransactionBundleEffect(context: EmailTransactionContext) {
       status: "processed",
       failureReason: null,
       subject: context.email.subject,
-      rawBodyPreview: context.email.body.slice(0, 500),
       receivedAt: requireIsoDateTime(context.email.receivedAt),
       processedAt: context.now,
       transactionId: context.txId,
@@ -128,26 +97,20 @@ function persistTransactionBundleEffect(context: EmailTransactionContext) {
     const evidenceRows = buildTransactionCaptureEvidenceRows(context, buildEmailCaptureEvidence);
 
     yield* fromPromise(async () => {
-      if ("transaction" in context.db && typeof context.db.transaction === "function") {
-        await context.db.transaction(async (tx) => {
-          await recordTransactionToDb(context, {
-            insertTransaction,
-            recordTransaction,
-            db: tx,
-          });
-          await insertProcessedEmailSourceEvent(tx, processedSourceEventRow);
-          await saveCaptureEvidenceRows(tx, evidenceRows);
-        });
-        return;
-      }
-
-      await recordTransactionToDb(context, {
-        insertTransaction,
-        recordTransaction,
+      const result = await recordAutomatedTransactionWithLocalLedger({
         db: context.db,
+        command: buildAutomatedTransactionCommand(context),
+        transactionId: context.txId,
+        now: context.now,
+        afterRecord: (tx) => {
+          ensureSyncWrite(
+            insertProcessedEmailSourceEvent(tx, processedSourceEventRow),
+            "insertProcessedEmailSourceEvent"
+          );
+          ensureSyncWrite(saveCaptureEvidenceRows(tx, evidenceRows), "saveCaptureEvidenceRows");
+        },
       });
-      await insertProcessedEmailSourceEvent(context.db, processedSourceEventRow);
-      await saveCaptureEvidenceRows(context.db, evidenceRows);
+      if (!result.success) throw new Error(`RecordTransaction rejected: ${result.error}`);
     });
   });
 }

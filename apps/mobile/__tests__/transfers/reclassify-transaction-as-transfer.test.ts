@@ -13,8 +13,8 @@ import {
   getBalanceAggregate,
   getSpendingByCategoryAggregate,
   getTransactionById,
-  insertTransaction,
 } from "@/features/transactions/lib/repository";
+import { insertTransactionStorageRow as insertTransaction } from "@/infrastructure/local-ledger/transaction-storage";
 import { markTransactionSuperseded } from "@/features/transactions/transfer-reclassification.public";
 import { reclassifyTransactionAsTransfer } from "@/features/transfers/lib/reclassify-transaction-as-transfer";
 import { reclassifyTransactionsAsTransfer } from "@/features/transfers/lib/reclassify-transactions-as-transfer";

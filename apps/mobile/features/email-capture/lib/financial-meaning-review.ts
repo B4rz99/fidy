@@ -1,21 +1,23 @@
-import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
-import { insertTransaction, type TransactionRow } from "@/features/transactions/lib/repository";
+import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/write.public";
+import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/record-transaction";
+import {
+  confirmReviewCandidateAsTransaction,
+  type ReviewCandidateResolutionRecord,
+} from "@/local-ledger/public";
 import { getBuiltInCategoryId } from "@/shared/categories";
-import type { AnyDb } from "@/shared/db/client";
+import type { AnyDb } from "@/shared/db";
 import { toIsoDateTime } from "@/shared/lib/format-date";
 import { generateTransactionId } from "@/shared/lib/generate-id";
 import type {
   CopAmount,
-  FinancialAccountId,
   IsoDate,
   IsoDateTime,
   ProcessedSourceEventId,
   ReviewCandidateId,
-  TransactionId,
   UserId,
 } from "@/shared/types/branded";
 import {
-  acceptSourceEventFinancialMeaningReviewById,
+  acceptSourceEventFinancialMeaningReviewByIdInTransaction,
   dismissSourceEventFinancialMeaningReviewById,
   type FinancialMeaningSourceEventReviewRow,
   getFinancialMeaningSourceEventReviewRows,
@@ -53,52 +55,83 @@ export async function confirmSourceEventFinancialMeaningReview(
   }
 ) {
   const updatedAt = input.now?.() ?? toIsoDateTime(new Date());
-  const defaultAccount = ensureDefaultFinancialAccount(db, input.userId, { now: updatedAt });
   const transactionId = generateTransactionId();
-
-  return db.transaction((tx) =>
-    confirmSourceEventReviewInTransaction(tx, {
-      ...input,
-      defaultAccountId: defaultAccount.id,
-      transactionId,
-      updatedAt,
-    })
-  );
-}
-
-function confirmSourceEventReviewInTransaction(
-  tx: AnyDb,
-  input: {
-    readonly userId: UserId;
-    readonly processedSourceEventId: ProcessedSourceEventId;
-    readonly reviewCandidateId: ReviewCandidateId;
-    readonly defaultAccountId: FinancialAccountId;
-    readonly transactionId: TransactionId;
-    readonly updatedAt: IsoDateTime;
-  }
-) {
-  const row = getSourceEventReviewCandidateById(tx, {
+  const defaultAccount = ensureDefaultFinancialAccount(db, input.userId, { now: updatedAt });
+  const row = getSourceEventReviewCandidateById(db, {
     userId: input.userId,
     processedSourceEventId: input.processedSourceEventId,
     reviewCandidateId: input.reviewCandidateId,
   });
   if (!canConfirmSourceEventReview(row)) return false;
 
-  const occurredOn = (row.reviewCandidate.occurredAt ?? row.processedSourceEvent.receivedAt).slice(
-    0,
-    10
-  ) as IsoDate;
-  const accepted = acceptSourceEventFinancialMeaningReviewById(tx, input);
-  if (!accepted) return false;
+  const result = await confirmReviewCandidateAsTransaction(
+    {
+      userId: input.userId,
+      processedSourceEventId: input.processedSourceEventId,
+      candidateId: input.reviewCandidateId,
+      now: updatedAt,
+      command: buildSourceEventReviewTransactionCommand(input.userId, row, {
+        accountId: defaultAccount.id,
+        occurredOn: occurredOnFromRow(row),
+      }),
+    },
+    {
+      loadCandidate: async () => toReviewCandidateResolutionRecord(row),
+      confirmTransaction: async ({ command }) => {
+        const automatedCommand = toAutomatedReviewTransactionCommand(command);
+        if (automatedCommand === null) {
+          return {
+            ok: false,
+            code: "recording-rejected",
+            reason: "review candidate transactions must use an automated source",
+          };
+        }
 
-  insertTransaction(tx, buildSourceEventReviewTransactionRow(input, row, occurredOn));
-  return true;
+        try {
+          const recorded = await recordAutomatedTransactionWithLocalLedger({
+            db,
+            command: automatedCommand,
+            transactionId,
+            now: updatedAt,
+            afterRecord: (tx) => {
+              const accepted = acceptSourceEventFinancialMeaningReviewByIdInTransaction(tx, {
+                ...input,
+                transactionId,
+                updatedAt,
+              });
+              if (!accepted) throw new Error("Review candidate resolution target was not found");
+            },
+          });
+
+          return recorded.success
+            ? { ok: true, recorded: { ok: true, transaction: recorded.transaction, events: [] } }
+            : { ok: false, code: "recording-rejected", reason: recorded.error };
+        } catch (error) {
+          return {
+            ok: false,
+            code: "commit-failed",
+            reason: error instanceof Error ? error.message : "Review candidate commit failed",
+          };
+        }
+      },
+    }
+  );
+
+  return result.ok;
+}
+
+function toAutomatedReviewTransactionCommand(
+  command: Parameters<typeof confirmReviewCandidateAsTransaction>[0]["command"]
+): Parameters<typeof recordAutomatedTransactionWithLocalLedger>[0]["command"] | null {
+  return command.source === "manual"
+    ? null
+    : (command as Parameters<typeof recordAutomatedTransactionWithLocalLedger>[0]["command"]);
 }
 
 function canConfirmSourceEventReview(
   row: ReturnType<typeof getSourceEventReviewCandidateById>
 ): row is NonNullable<ReturnType<typeof getSourceEventReviewCandidateById>> {
-  return row != null && row.reviewCandidate.amount != null;
+  return row?.reviewCandidate.amount != null;
 }
 
 const getReviewCandidateTransactionType = (
@@ -109,33 +142,49 @@ const getReviewCandidateCategoryId = (
   row: NonNullable<ReturnType<typeof getSourceEventReviewCandidateById>>
 ) => row.reviewCandidate.categoryId ?? getBuiltInCategoryId("other");
 
-const getReviewCandidateDescription = (
+const getReviewCandidateCounterpartyName = (
   row: NonNullable<ReturnType<typeof getSourceEventReviewCandidateById>>
-) => row.reviewCandidate.description ?? row.processedSourceEvent.rawBodyPreview ?? null;
+) => row.reviewCandidate.description ?? null;
 
-function buildSourceEventReviewTransactionRow(
-  input: {
-    readonly userId: UserId;
-    readonly defaultAccountId: FinancialAccountId;
-    readonly transactionId: TransactionId;
-    readonly updatedAt: IsoDateTime;
-  },
-  row: NonNullable<ReturnType<typeof getSourceEventReviewCandidateById>>,
-  occurredOn: IsoDate
-): TransactionRow {
+const occurredOnFromRow = (
+  row: NonNullable<ReturnType<typeof getSourceEventReviewCandidateById>>
+): IsoDate =>
+  (row.reviewCandidate.occurredAt ?? row.processedSourceEvent.receivedAt).slice(0, 10) as IsoDate;
+
+function toReviewCandidateResolutionRecord(
+  row: NonNullable<ReturnType<typeof getSourceEventReviewCandidateById>>
+): ReviewCandidateResolutionRecord {
   return {
-    id: input.transactionId,
-    userId: input.userId,
+    id: row.reviewCandidate.id,
+    userId: row.reviewCandidate.userId,
+    processedSourceEventId: row.reviewCandidate.processedSourceEventId,
+    status: row.reviewCandidate.status as ReviewCandidateResolutionRecord["status"],
+    candidateKind: row.reviewCandidate
+      .candidateKind as ReviewCandidateResolutionRecord["candidateKind"],
+  };
+}
+
+function buildSourceEventReviewTransactionCommand(
+  userId: UserId,
+  row: NonNullable<ReturnType<typeof getSourceEventReviewCandidateById>>,
+  input: {
+    readonly accountId: Parameters<
+      typeof recordAutomatedTransactionWithLocalLedger
+    >[0]["command"]["accountId"];
+    readonly occurredOn: IsoDate;
+  }
+): Parameters<typeof recordAutomatedTransactionWithLocalLedger>[0]["command"] {
+  return {
+    userId,
     type: getReviewCandidateTransactionType(row),
     amount: row.reviewCandidate.amount as CopAmount,
     categoryId: getReviewCandidateCategoryId(row),
-    description: getReviewCandidateDescription(row),
-    date: occurredOn,
-    accountId: input.defaultAccountId,
+    description: null,
+    counterpartyName: getReviewCandidateCounterpartyName(row),
+    occurredOn: input.occurredOn,
+    accountId: input.accountId,
     accountAttributionState: "unresolved",
     source: "email_capture",
-    createdAt: input.updatedAt,
-    updatedAt: input.updatedAt,
   };
 }
 

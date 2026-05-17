@@ -22,6 +22,7 @@ export {
 export type { CurrencyConfig } from "./currency";
 export { getActiveCurrency } from "./currency";
 export { clampDateToToday } from "./date-constraints";
+export { buildDefaultFinancialAccountId } from "./default-financial-account-id";
 export {
   formatDateDisplay,
   parseIsoDate,
@@ -38,6 +39,7 @@ export {
   MAX_AMOUNT_DIGITS,
   parseDigitsToAmount,
 } from "./format-money";
+export type { NormalizedTransactionSource } from "./transaction-source";
 export {
   generateAccountSuggestionDismissalId,
   generateBackupId,
@@ -63,6 +65,7 @@ export {
 } from "./generate-id";
 export { runAfterNavigationTransition, waitForNavigationTransition } from "./navigation-transition";
 export { merchantsMatch, normalizeMerchant } from "./normalize-merchant";
+export { getFirstNonEmptyRouteParam, type RouteParamValue } from "./route-params";
 export {
   captureError,
   capturePipelineEvent,

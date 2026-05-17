@@ -1,23 +1,13 @@
 import { Effect } from "effect";
 import { fromPromise } from "@/shared/effect/runtime";
-import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
+import { normalizeMerchant } from "@/shared/lib";
 import { and, eq, isNull } from "drizzle-orm";
 import { captureEvidence, processedSourceEvents } from "@/shared/db/schema";
 import { EmailPipelineDeps, insertMerchantRuleEffect } from "./runtime";
 import { getParsedCounterpartyName } from "./shared";
-import {
-  buildTransactionRow,
-  defaultRecordTransaction,
-  prepareRecordedTransaction,
-} from "./transaction-recording";
+import { buildAutomatedTransactionCommand } from "./transaction-recording";
 import { trackSavedTransactionEffect } from "./transaction-tracking";
 import type { RetryTransactionContext } from "./types";
-
-const isPromiseLike = (value: unknown): value is Promise<unknown> =>
-  typeof value === "object" &&
-  value !== null &&
-  "then" in value &&
-  typeof (value as { readonly then?: unknown }).then === "function";
 
 export function persistSuccessfulRetrySideEffectsEffect(context: RetryTransactionContext) {
   return Effect.catchAll(
@@ -40,24 +30,9 @@ export function persistSuccessfulRetrySideEffectsEffect(context: RetryTransactio
 
 export function persistSuccessfulRetryBundleEffect(context: RetryTransactionContext) {
   return Effect.gen(function* () {
-    const {
-      insertTransaction,
-      markSourceEventRetrySuccess,
-      recordTransaction = defaultRecordTransaction,
-    } = yield* EmailPipelineDeps.tag;
+    const { recordAutomatedTransactionWithLocalLedger } = yield* EmailPipelineDeps.tag;
 
     yield* fromPromise(async () => {
-      const transaction = await prepareRecordedTransaction(context, { recordTransaction });
-      const persistTransaction = (db: RetryTransactionContext["db"]) =>
-        insertTransaction(db, buildTransactionRow(context, transaction));
-      const persistSourceEventStatus = (db: RetryTransactionContext["db"]) =>
-        markSourceEventRetrySuccess({
-          db,
-          id: context.processedSourceEventId,
-          status: "processed",
-          transactionId: context.txId,
-          confidence: context.parsed.confidence,
-        });
       const linkSourceEventEvidence = (db: RetryTransactionContext["db"]) =>
         "update" in db && typeof db.update === "function"
           ? db
@@ -72,15 +47,12 @@ export function persistSuccessfulRetryBundleEffect(context: RetryTransactionCont
               .run()
           : undefined;
 
-      if ("transaction" in context.db && typeof context.db.transaction === "function") {
-        let pendingTransactionWrite: Promise<unknown> | null = null;
-        let wroteStatusInTransaction = false;
-        context.db.transaction((tx) => {
-          const transactionWrite = persistTransaction(tx);
-          if (isPromiseLike(transactionWrite)) {
-            pendingTransactionWrite = transactionWrite;
-            return;
-          }
+      const result = await recordAutomatedTransactionWithLocalLedger({
+        db: context.db,
+        command: buildAutomatedTransactionCommand(context),
+        transactionId: context.txId,
+        now: context.now,
+        afterRecord: (tx) => {
           tx.update(processedSourceEvents)
             .set({
               status: "processed",
@@ -91,21 +63,9 @@ export function persistSuccessfulRetryBundleEffect(context: RetryTransactionCont
             .where(eq(processedSourceEvents.id, context.processedSourceEventId))
             .run();
           linkSourceEventEvidence(tx);
-          wroteStatusInTransaction = true;
-        });
-        if (pendingTransactionWrite) {
-          await pendingTransactionWrite;
-        }
-        if (!wroteStatusInTransaction) {
-          await persistSourceEventStatus(context.db);
-          linkSourceEventEvidence(context.db);
-        }
-        return;
-      }
-
-      await persistTransaction(context.db);
-      await persistSourceEventStatus(context.db);
-      linkSourceEventEvidence(context.db);
+        },
+      });
+      if (!result.success) throw new Error(`RecordTransaction rejected: ${result.error}`);
     });
   });
 }

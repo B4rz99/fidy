@@ -1,10 +1,10 @@
 /* eslint-disable no-restricted-imports */
 
 import {
-  insertTransaction,
-  softDeleteTransaction,
-  upsertTransaction,
-} from "@/features/transactions/lib/repository";
+  insertTransactionStorageRow,
+  softDeleteTransactionStorageRow,
+  upsertTransactionStorageRow,
+} from "@/infrastructure/local-ledger/transaction-storage";
 import type { MutationCommandByKind, MutationHandlerSubset } from "./common";
 import { completeCommand } from "./common";
 
@@ -15,7 +15,8 @@ const applyTransactionSave = (
   db: Parameters<MutationHandlerSubset<"transaction.save">["transaction.save"]>[0],
   command: TransactionSaveCommand
 ) => {
-  const persistTransaction = command.mode === "insert" ? insertTransaction : upsertTransaction;
+  const persistTransaction =
+    command.mode === "insert" ? insertTransactionStorageRow : upsertTransactionStorageRow;
 
   persistTransaction(db, command.row);
 
@@ -26,7 +27,7 @@ const applyTransactionDelete = (
   db: Parameters<MutationHandlerSubset<"transaction.delete">["transaction.delete"]>[0],
   command: TransactionDeleteCommand
 ) => {
-  softDeleteTransaction(db, command.transactionId, command.now);
+  softDeleteTransactionStorageRow(db, command.transactionId, command.now);
   return completeCommand(command.afterCommit);
 };
 

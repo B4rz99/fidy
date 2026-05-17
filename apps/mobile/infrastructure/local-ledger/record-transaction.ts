@@ -8,7 +8,7 @@ import {
 } from "@/local-ledger/public";
 import { getBuiltInCategoryId, isValidCategoryId } from "@/shared/categories";
 import type { AnyDb } from "@/shared/db";
-import { financialAccounts, transactions, userCategories } from "@/shared/db/schema";
+import { transactions, userCategories } from "@/shared/db/schema";
 import { parseDigitsToAmount, toIsoDate, toIsoDateTime } from "@/shared/lib";
 import { requireIsoDate } from "@/shared/types/assertions";
 import type {
@@ -18,6 +18,7 @@ import type {
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
+import { hasActiveFinancialAccount } from "./account-policy.ts";
 import { toTransactionStorageRow } from "./transaction-storage";
 
 type ManualTransactionInput = {
@@ -37,7 +38,7 @@ type RecordManualTransactionInput = {
   readonly now: Date;
 };
 
-type RecordAutomatedTransactionInput = {
+export type RecordAutomatedTransactionInput = {
   readonly db: AnyDb;
   readonly command: Omit<RecordTransactionCommand, "source"> & {
     readonly source: Exclude<RecordTransactionCommand["source"], "manual">;
@@ -65,6 +66,8 @@ export type RecordManualTransactionError =
   | "accountNotUsable"
   | "amountNotPositive"
   | "categoryNotUsable"
+  | "counterpartyNameTooLong"
+  | "descriptionTooLong"
   | "futureDatedTransaction"
   | "missingAccount"
   | "missingCategory"
@@ -77,28 +80,14 @@ export type RecordAutomatedTransactionResult =
 const rejectionErrorMap: Record<RecordTransactionRejectCode, RecordManualTransactionError> = {
   "account-not-usable": "accountNotUsable",
   "category-not-usable": "categoryNotUsable",
+  "counterparty-name-too-long": "counterpartyNameTooLong",
+  "description-too-long": "descriptionTooLong",
   "future-dated-transaction": "futureDatedTransaction",
   "manual-source-requires-resolved-account": "manualSourceRequiresResolvedAccount",
   "missing-account": "missingAccount",
   "missing-category": "missingCategory",
   "non-positive-amount": "amountNotPositive",
 };
-
-function hasActiveFinancialAccount(db: AnyDb, userId: UserId, accountId: FinancialAccountId) {
-  const rows = db
-    .select({ id: financialAccounts.id })
-    .from(financialAccounts)
-    .where(
-      and(
-        eq(financialAccounts.id, accountId),
-        eq(financialAccounts.userId, userId),
-        isNull(financialAccounts.deletedAt)
-      )
-    )
-    .limit(1)
-    .all();
-  return rows.length > 0;
-}
 
 function hasUsableCategory(db: AnyDb, userId: UserId, categoryId: CategoryId) {
   if (isValidCategoryId(categoryId)) return true;

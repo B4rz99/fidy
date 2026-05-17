@@ -7,7 +7,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { saveCaptureEvidence } from "@/features/capture-evidence/lib/repository";
 import { upsertFinancialAccount } from "@/features/financial-accounts";
 import { createAttributionReviewService } from "@/features/review-queues/lib/attribution-review-service";
-import { getTransactionById, insertTransaction } from "@/features/transactions/lib/repository";
+import { getTransactionById } from "@/features/transactions/lib/repository";
+import { insertTransactionStorageRow as insertTransaction } from "@/infrastructure/local-ledger/transaction-storage";
 import type {
   CaptureEvidenceId,
   CategoryId,

@@ -1,6 +1,7 @@
 import type { AnyDb } from "@/shared/db";
 import type { IsoDateTime, TransactionId, TransferId } from "@/shared/types/branded";
-import { getTransactionById, upsertTransaction } from "./lib/repository";
+import { markTransactionSupersededStorageRow } from "@/infrastructure/local-ledger/transaction-storage";
+import { getTransactionById } from "./lib/repository";
 
 export { getTransactionById };
 
@@ -16,8 +17,8 @@ export function markTransactionSuperseded(
   const transaction = getTransactionById(db, input.id);
   if (transaction == null) return;
 
-  upsertTransaction(db, {
-    ...transaction,
+  markTransactionSupersededStorageRow(db, {
+    id: transaction.id,
     supersededAt: input.supersededAt,
     supersededByTransferId: input.supersededByTransferId ?? null,
     updatedAt: input.updatedAt,

@@ -18,10 +18,4 @@ export {
   type ReclassifyTransactionAsTransferResult,
   reclassifyTransactionAsTransfer,
 } from "./lib/reclassify-transaction-as-transfer";
-export {
-  getTransferById,
-  getTransfersForUser,
-  saveTransfer,
-  type TransferRow,
-  upsertTransfer,
-} from "./lib/repository";
+export { getTransferById, getTransfersForUser, type TransferRow } from "./lib/repository";

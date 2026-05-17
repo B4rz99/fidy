@@ -17,6 +17,7 @@ const mockGetProcessedEmailSourceEventIds = vi
 const mockInsertProcessedEmailSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
 const mockRecordTransaction = vi.fn<(...args: any[]) => any>();
+const mockRecordAutomatedTransactionWithLocalLedger = vi.fn<(...args: any[]) => any>();
 const mockCreateReviewCandidate = vi.fn<(...args: any[]) => any>();
 const mockWriteThroughCommit = vi.fn<(...args: any[]) => any>();
 const mockLookupMerchantRule = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
@@ -114,6 +115,11 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: unknown[]) => mockInsertTransaction(...args),
 }));
 
+vi.mock("@/infrastructure/local-ledger/record-transaction", () => ({
+  recordAutomatedTransactionWithLocalLedger: (...args: unknown[]) =>
+    mockRecordAutomatedTransactionWithLocalLedger(...args),
+}));
+
 vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
   lookupMerchantRule: (...args: unknown[]) => mockLookupMerchantRule(...args),
   insertMerchantRule: (...args: unknown[]) => mockInsertMerchantRule(...args),
@@ -153,7 +159,15 @@ vi.mock("@/shared/lib/generate-id", () => ({
   generateReviewCandidateCaptureEvidenceId: () => mockGenerateId("rce"),
 }));
 
-const mockDb = {} as any;
+const mockDb = {
+  update: vi.fn<(...args: any[]) => any>(() => ({
+    set: vi.fn<(...args: any[]) => any>(() => ({
+      where: vi.fn<(...args: any[]) => any>(() => ({
+        run: vi.fn<(...args: any[]) => any>(),
+      })),
+    })),
+  })),
+} as any;
 const USER_ID = requireUserId("user-1");
 let idCounter = 0;
 
@@ -211,8 +225,8 @@ function resetPipelineMocks() {
     mockUpdateProcessedSourceEventStatus,
   ].forEach((mock) => mock.mockReset());
   mockGetProcessedEmailSourceEventIds.mockResolvedValue(new Set<string>());
-  mockInsertProcessedEmailSourceEvent.mockResolvedValue(undefined);
-  mockInsertTransaction.mockResolvedValue(undefined);
+  mockInsertProcessedEmailSourceEvent.mockReturnValue(undefined);
+  mockInsertTransaction.mockReturnValue(undefined);
   mockRecordTransaction.mockImplementation(async ({ ports, command }) => {
     const transaction = {
       id: ports.generateEntryId(),
@@ -258,8 +272,48 @@ function resetCaptureEvidenceMocks() {
       value: "bancolombia.com.co",
     },
   ]);
-  mockSaveCaptureEvidenceRows.mockResolvedValue(undefined);
+  mockSaveCaptureEvidenceRows.mockReturnValue(undefined);
   mockLinkCaptureEvidenceToTransaction.mockResolvedValue(undefined);
+  mockRecordAutomatedTransactionWithLocalLedger.mockImplementation(async (input) => {
+    const row = {
+      id: input.transactionId,
+      userId: input.command.userId,
+      type: input.command.type,
+      amount: input.command.amount,
+      accountId: input.command.accountId,
+      accountAttributionState: input.command.accountAttributionState,
+      categoryId: input.command.categoryId,
+      description: input.command.description,
+      counterpartyName: input.command.counterpartyName,
+      date: input.command.occurredOn,
+      source: input.command.source,
+      createdAt: input.now,
+      updatedAt: input.now,
+    };
+    const transaction = {
+      id: input.transactionId,
+      userId: input.command.userId,
+      type: input.command.type,
+      amount: input.command.amount,
+      accountId: input.command.accountId,
+      accountAttributionState: input.command.accountAttributionState,
+      categoryId: input.command.categoryId,
+      occurredOn: input.command.occurredOn,
+      description: input.command.description ?? "",
+      counterpartyName: input.command.counterpartyName ?? "",
+      source: input.command.source,
+    };
+    if ("transaction" in input.db && typeof input.db.transaction === "function") {
+      input.db.transaction((tx: unknown) => {
+        mockInsertTransaction(tx, row);
+        input.afterRecord?.(tx, transaction);
+      });
+    } else {
+      mockInsertTransaction(input.db, row);
+      input.afterRecord?.(input.db, transaction);
+    }
+    return { success: true, transaction };
+  });
 }
 
 function createTestEmailPipelineService(overrides: Record<string, unknown> = {}) {
@@ -277,8 +331,7 @@ function createTestEmailPipelineService(overrides: Record<string, unknown> = {})
     ensureDefaultFinancialAccount: mockEnsureDefaultFinancialAccount,
     buildEmailCaptureEvidence: mockBuildEmailCaptureEvidence,
     saveCaptureEvidenceRows: mockSaveCaptureEvidenceRows,
-    insertTransaction: mockInsertTransaction,
-    recordTransaction: mockRecordTransaction,
+    recordAutomatedTransactionWithLocalLedger: mockRecordAutomatedTransactionWithLocalLedger,
     createReviewCandidate: mockCreateReviewCandidate,
     insertMerchantRule: mockInsertMerchantRule,
     trackTransactionCreated: vi.fn<(...args: any[]) => any>(),
@@ -287,7 +340,16 @@ function createTestEmailPipelineService(overrides: Record<string, unknown> = {})
 }
 
 function expectSavedTransaction(matcher: Record<string, unknown>) {
-  expect(mockInsertTransaction).toHaveBeenCalledWith(mockDb, expect.objectContaining(matcher));
+  const { date, ...rest } = matcher;
+  expect(mockRecordAutomatedTransactionWithLocalLedger).toHaveBeenCalledWith(
+    expect.objectContaining({
+      db: mockDb,
+      command: expect.objectContaining({
+        ...rest,
+        ...(date === undefined ? {} : { occurredOn: date }),
+      }),
+    })
+  );
 }
 
 function expectProcessedSourceEventSaved(matcher: Record<string, unknown>) {
@@ -399,7 +461,6 @@ describe("email processing pipeline", () => {
         status: "dismissed",
         failureReason: null,
         subject: "",
-        rawBodyPreview: "",
       })
     );
     expect(mockSaveCaptureEvidenceRows).not.toHaveBeenCalled();
@@ -573,7 +634,7 @@ describe("email processing pipeline", () => {
     });
   });
 
-  it("truncates persisted raw body previews to 500 characters", async () => {
+  it("does not persist raw body previews for processed source events", async () => {
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
     const longBody = "x".repeat(501);
 
@@ -581,7 +642,7 @@ describe("email processing pipeline", () => {
 
     expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
       mockDb,
-      expect.objectContaining({ rawBodyPreview: "x".repeat(500) })
+      expect.not.objectContaining({ rawBodyPreview: expect.any(String) })
     );
   });
 
@@ -660,18 +721,12 @@ describe("email processing pipeline", () => {
     const result = await processEmails(dbWithTransaction, USER_ID, [makeRawEmail()]);
 
     expect(result.needsReview).toBe(1);
-    expect(dbWithTransaction.transaction).toHaveBeenCalledTimes(1);
+    expect(dbWithTransaction.transaction).toHaveBeenCalledTimes(0);
     expect(mockWriteThroughCommit).toHaveBeenCalledWith(
-      txDb,
+      dbWithTransaction,
       expect.objectContaining({ type: "test-review-candidate" })
     );
-    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
-      txDb,
-      expect.objectContaining({
-        sourceEventId: "ext-1",
-        status: "needs_review",
-      })
-    );
+    expect(mockInsertProcessedEmailSourceEvent).not.toHaveBeenCalled();
   });
 
   it("does not report saved when a bundled async write rejects", async () => {
@@ -1014,20 +1069,12 @@ describe("email processing pipeline", () => {
           candidateKind: "transaction",
           status: "pending",
           money: { amount: 50000, currency: "COP" },
-          description: null,
+          description: "Compra en Exito",
           confidence: 0.5,
         }),
       })
     );
-    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({
-        sourceEventId: "ext-1",
-        status: "needs_review",
-        transactionId: null,
-        confidence: 0.5,
-      })
-    );
+    expect(mockInsertProcessedEmailSourceEvent).not.toHaveBeenCalled();
     expect(mockInsertMerchantRule).not.toHaveBeenCalled();
     expectCaptureEvidenceBuiltFromEmailContent();
     expect(result.parseImprovementRequests).toEqual([
@@ -1061,15 +1108,7 @@ describe("email processing pipeline", () => {
         type: "test-review-candidate",
       })
     );
-    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
-      mockDb,
-      expect.objectContaining({
-        sourceEventId: "ext-1",
-        status: "needs_review",
-        transactionId: null,
-        confidence: 0.5,
-      })
-    );
+    expect(mockInsertProcessedEmailSourceEvent).not.toHaveBeenCalled();
   });
 
   it("uses typed LLM account hints as capture evidence for account suggestions", async () => {
@@ -1196,11 +1235,11 @@ describe("email processing pipeline", () => {
   });
 
   it("stores the local-ledger accepted counterparty value", async () => {
-    const longCounterparty = "Counterparty ".repeat(30);
+    const counterparty = "Counterparty Central";
     mockParseEmailApi.mockResolvedValueOnce(
       makeParsedEmailResult({
         description: "Parser description",
-        counterpartyHint: longCounterparty,
+        counterpartyHint: counterparty,
       })
     );
 
@@ -1209,7 +1248,7 @@ describe("email processing pipeline", () => {
     expect(mockInsertTransaction).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        counterpartyName: longCounterparty.trim().slice(0, 200),
+        counterpartyName: counterparty,
       })
     );
   });
@@ -1293,6 +1332,32 @@ describe("email processing pipeline", () => {
     expect(result.parseImprovementRequests).toEqual([]);
   });
 
+  it("marks parsed email as pending_retry when Local Ledger rejects the transaction", async () => {
+    const emails = [makeRawEmail()];
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+    mockRecordAutomatedTransactionWithLocalLedger.mockResolvedValueOnce({
+      success: false,
+      error: "futureDated",
+    });
+
+    const result = await processEmails(mockDb, USER_ID, emails);
+
+    expect(result.failed).toBe(1);
+    expect(result.pendingRetry).toBe(1);
+    expect(result.saved).toBe(0);
+    expect(mockInsertTransaction).not.toHaveBeenCalled();
+    expect(mockInsertProcessedEmailSourceEvent).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        status: "pending_retry",
+        failureReason: null,
+        rawBody: "Su compra por $50.000 fue aprobada",
+        retryCount: 0,
+      })
+    );
+    expect(mockInsertMerchantRule).not.toHaveBeenCalled();
+  });
+
   it("does not insert a second processed email row after a partial save already persisted one", async () => {
     const emails = [makeRawEmail()];
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
@@ -1326,7 +1391,7 @@ describe("email processing pipeline", () => {
         description: "Compra 1",
         date: "2026-03-05",
         confidence: 0.9,
-      } as never)
+      })
       .mockResolvedValueOnce({
         type: "expense",
         amount: 30000,
@@ -1510,13 +1575,12 @@ describe("processRetries", () => {
 
     expect(mockGetPendingRetryEmailSourceEvents).toHaveBeenCalledWith(mockDb, USER_ID);
     expect(mockParseEmailApi).toHaveBeenCalledWith(row.rawBody);
-    expect(mockMarkSourceEventRetrySuccess).toHaveBeenCalledWith(
+    expect(mockRecordAutomatedTransactionWithLocalLedger).toHaveBeenCalledWith(
       expect.objectContaining({
         db: mockDb,
-        id: "pse-retry-1",
-        status: "processed",
         transactionId: expect.stringMatching(/^tx-/),
-        confidence: 0.9,
+        command: expect.objectContaining({ source: "email_capture" }),
+        afterRecord: expect.any(Function),
       })
     );
   });
@@ -1590,13 +1654,12 @@ describe("processRetries", () => {
 
     await processRetries(mockDb, USER_ID);
 
-    expect(mockMarkSourceEventRetrySuccess).toHaveBeenCalledWith(
+    expect(mockRecordAutomatedTransactionWithLocalLedger).toHaveBeenCalledWith(
       expect.objectContaining({
         db: mockDb,
-        id: "pse-retry-1",
-        status: "processed",
         transactionId: expect.stringMatching(/^tx-/),
-        confidence: 0.9,
+        command: expect.objectContaining({ source: "email_capture" }),
+        afterRecord: expect.any(Function),
       })
     );
   });
@@ -1628,14 +1691,13 @@ describe("processRetries", () => {
           sourceEventId: "ext-retry-1",
           status: "needs_review",
           subject: "Compra aprobada",
-          rawBodyPreview: "Su compra por $50.000 fue aprobada",
           confidence: 0.5,
         }),
         candidate: expect.objectContaining({
           candidateKind: "transaction",
           status: "pending",
           money: { amount: 50000, currency: "COP" },
-          description: null,
+          description: "Compra en Exito",
           confidence: 0.5,
         }),
       })
@@ -1675,7 +1737,7 @@ describe("processRetries", () => {
       description: "Compra en Exito",
       date: "2026-03-05",
       confidence: 0.9,
-    } as never);
+    });
 
     const result = await processRetries(mockDb, USER_ID);
 

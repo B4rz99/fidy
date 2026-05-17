@@ -1,92 +1,50 @@
 import { Effect } from "effect";
-import type { TransactionRow } from "@/features/transactions/lib/repository";
-import {
-  recordTransaction as defaultRecordTransaction,
-  type LocalLedgerEntryId,
-  type RecordTransactionAccepted,
-} from "@/local-ledger/public";
+import type { RecordAutomatedTransactionInput } from "@/infrastructure/local-ledger/record-transaction";
 import { fromPromise } from "@/shared/effect/runtime";
-import { requireCopAmount, requireIsoDate, requireTransactionId } from "@/shared/types/assertions";
+import { requireCopAmount, requireIsoDate } from "@/shared/types/assertions";
 import { EmailPipelineDeps } from "./runtime";
 import { getParsedCounterpartyName } from "./shared";
 import type { CreateEmailPipelineServiceDeps, PersistedTransactionContext } from "./types";
 
-export const buildTransactionRow = (
-  context: PersistedTransactionContext,
-  transaction: RecordTransactionAccepted
-): TransactionRow => ({
-  id: requireTransactionId(transaction.id),
-  userId: transaction.userId,
-  type: transaction.type,
-  amount: transaction.amount,
-  categoryId: transaction.categoryId,
-  description: transaction.description === "" ? null : transaction.description,
-  counterpartyName: transaction.counterpartyName === "" ? null : transaction.counterpartyName,
-  date: transaction.occurredOn,
-  accountId: transaction.accountId,
-  accountAttributionState: transaction.accountAttributionState,
-  source: transaction.source,
-  createdAt: context.now,
-  updatedAt: context.now,
+export const buildAutomatedTransactionCommand = (
+  context: PersistedTransactionContext
+): RecordAutomatedTransactionInput["command"] => ({
+  userId: context.userId,
+  type: context.parsed.type,
+  amount: requireCopAmount(context.parsed.amount),
+  accountId: context.defaultAccount.id,
+  accountAttributionState: "unresolved",
+  categoryId: context.categoryId,
+  occurredOn: requireIsoDate(context.parsed.date),
+  description: null,
+  counterpartyName: getParsedCounterpartyName(context.parsed),
+  source: "email_capture",
 });
 
-export const prepareRecordedTransaction = async (
+export const recordTransactionWithLocalLedger = async (
   context: PersistedTransactionContext,
   input: {
-    readonly recordTransaction: NonNullable<CreateEmailPipelineServiceDeps["recordTransaction"]>;
-  }
-) => {
-  const result = await input.recordTransaction({
-    command: {
-      userId: context.userId,
-      type: context.parsed.type,
-      amount: requireCopAmount(context.parsed.amount),
-      accountId: context.defaultAccount.id,
-      accountAttributionState: "unresolved",
-      categoryId: context.categoryId,
-      occurredOn: requireIsoDate(context.parsed.date),
-      description: null,
-      counterpartyName: getParsedCounterpartyName(context.parsed),
-      source: "email_capture",
-    },
-    ports: {
-      commit: async (transaction) => ({ ok: true as const, transaction }),
-      canUseAccount: async () => true,
-      canUseCategory: async () => true,
-      today: () => requireIsoDate(context.now.slice(0, 10)),
-      generateEntryId: () => context.txId as unknown as LocalLedgerEntryId,
-    },
-  });
-  if (!result.ok) throw new Error(`RecordTransaction rejected: ${result.code}`);
-  return result.transaction;
-};
-
-export const recordTransactionToDb = async (
-  context: PersistedTransactionContext,
-  input: {
-    readonly insertTransaction: CreateEmailPipelineServiceDeps["insertTransaction"];
-    readonly recordTransaction: NonNullable<CreateEmailPipelineServiceDeps["recordTransaction"]>;
+    readonly recordAutomatedTransactionWithLocalLedger: CreateEmailPipelineServiceDeps["recordAutomatedTransactionWithLocalLedger"];
     readonly db: PersistedTransactionContext["db"];
   }
 ) => {
-  const transaction = await prepareRecordedTransaction(context, {
-    recordTransaction: input.recordTransaction,
+  const result = await input.recordAutomatedTransactionWithLocalLedger({
+    db: input.db,
+    command: buildAutomatedTransactionCommand(context),
+    transactionId: context.txId,
+    now: context.now,
   });
-  await input.insertTransaction(input.db, buildTransactionRow(context, transaction));
+  if (!result.success) throw new Error(`RecordTransaction rejected: ${result.error}`);
 };
 
 export function persistTransactionRecordEffect(context: PersistedTransactionContext) {
   return Effect.gen(function* () {
-    const { insertTransaction, recordTransaction = defaultRecordTransaction } =
-      yield* EmailPipelineDeps.tag;
+    const { recordAutomatedTransactionWithLocalLedger } = yield* EmailPipelineDeps.tag;
     yield* fromPromise(() =>
-      recordTransactionToDb(context, {
-        insertTransaction,
-        recordTransaction,
+      recordTransactionWithLocalLedger(context, {
+        recordAutomatedTransactionWithLocalLedger,
         db: context.db,
       })
     );
   });
 }
-
-export { defaultRecordTransaction };

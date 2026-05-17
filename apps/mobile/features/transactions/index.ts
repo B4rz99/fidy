@@ -21,9 +21,6 @@ export {
   getSpendingByCategoryAggregate,
   getSpendingByCategoryDateRangeAggregate,
   getTransactionById,
-  insertTransaction,
-  softDeleteTransaction,
-  upsertTransaction,
 } from "./lib/repository";
 export type { CreateTransactionInput, StoredTransaction, TransactionType } from "./schema";
 export { categoryIdSchema } from "./schema";

@@ -4,6 +4,7 @@ import {
   getTransactionById,
   markTransactionSuperseded,
 } from "@/features/transactions/transfer-reclassification.public";
+import { saveTransferStorageRow } from "@/infrastructure/local-ledger/record-transfer";
 import { generateTransferId, toIsoDateTime } from "@/shared/lib.public";
 import type {
   IsoDateTime,
@@ -21,7 +22,6 @@ import {
   toTransferRow,
 } from "./build-transfer";
 import type { TransferRow } from "./repository";
-import { saveTransfer } from "./repository";
 
 type ReclassifyTransactionAsTransferInput = {
   readonly userId: UserId;
@@ -38,7 +38,10 @@ type ReclassifyTransactionAsTransferInput = {
 type ReclassifyTransactionAsTransferDeps = {
   readonly now?: () => Date;
   readonly createId?: () => TransferId;
-  readonly saveTransferRow?: (db: Parameters<typeof saveTransfer>[0], row: TransferRow) => void;
+  readonly saveTransferRow?: (
+    db: Parameters<typeof saveTransferStorageRow>[0],
+    row: TransferRow
+  ) => void;
   readonly loadTransactionById?: typeof getTransactionById;
   readonly saveTransactionRow?: typeof markTransactionSuperseded;
   readonly relinkEvidenceToTransfer?: typeof relinkCaptureEvidenceToTransfer;
@@ -55,12 +58,12 @@ export type ReclassifyTransactionAsTransferResult =
   | { success: false; error: ReclassifyTransactionAsTransferError };
 
 export function reclassifyTransactionAsTransfer(
-  db: Parameters<typeof saveTransfer>[0],
+  db: Parameters<typeof saveTransferStorageRow>[0],
   input: ReclassifyTransactionAsTransferInput,
   {
     now = () => new Date(),
     createId = generateTransferId,
-    saveTransferRow = saveTransfer,
+    saveTransferRow = saveTransferStorageRow,
     loadTransactionById = getTransactionById,
     saveTransactionRow = markTransactionSuperseded,
     relinkEvidenceToTransfer = relinkCaptureEvidenceToTransfer,

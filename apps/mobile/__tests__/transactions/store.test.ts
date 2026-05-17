@@ -4,7 +4,6 @@ import {
   getSpendingByCategoryAggregate,
   getTransactionById,
   getTransactionsPaginated,
-  insertTransaction,
 } from "@/features/transactions/lib/repository";
 import {
   getStoredTransactionById,
@@ -29,14 +28,11 @@ import type {
 } from "@/shared/types/branded";
 
 vi.mock("@/features/transactions/lib/repository", () => ({
-  insertTransaction: vi.fn<(...args: any[]) => any>(),
   getTransactionsPaginated: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
   getSpendingByCategoryAggregate: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
   getDailySpendingAggregate: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
   getRecentTransactions: vi.fn<(...args: any[]) => any>().mockReturnValue([]),
   getTransactionById: vi.fn<(...args: any[]) => any>().mockReturnValue(null),
-  softDeleteTransaction: vi.fn<(...args: any[]) => any>(),
-  upsertTransaction: vi.fn<(...args: any[]) => any>(),
 }));
 
 const insertedTransactionRows: unknown[] = [];
@@ -185,7 +181,6 @@ describe("transaction boundaries", () => {
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.transaction.amount).toBe(4520);
-    expect(insertTransaction).not.toHaveBeenCalled();
     expect(insertedTransactionRows).toEqual([
       expect.objectContaining({
         amount: 4520,
@@ -206,7 +201,6 @@ describe("transaction boundaries", () => {
     const result = await saveCurrentTransaction(mockDb, mockUserId);
 
     expect(result).toEqual({ success: false, error: "accountNotUsable" });
-    expect(insertTransaction).not.toHaveBeenCalled();
     expect(insertedTransactionRows).toEqual([]);
     expect(getTransactionsPaginated).not.toHaveBeenCalled();
   });

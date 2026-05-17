@@ -23,6 +23,7 @@ const TODAY = "2026-04-18" as IsoDate;
 
 function makeCommand(overrides: Partial<RecordTransferCommand> = {}): RecordTransferCommand {
   return {
+    userId: USER_ID,
     transferId: TRANSFER_ID,
     amount: 250000 as CopAmount,
     fromSide: { kind: "account", accountId: FROM_ACCOUNT_ID },
@@ -113,6 +114,7 @@ describe("RecordTransfer", () => {
     ["amount-not-positive", { amount: -1 as CopAmount }],
     ["amount-not-positive", { amount: Number.NaN as CopAmount }],
     ["amount-not-positive", { amount: 10.5 as CopAmount }],
+    ["command-user-mismatch", { userId: "user-2" as UserId }],
     ["from-side-required", { fromSide: null }],
     ["to-side-required", { toSide: null }],
     [

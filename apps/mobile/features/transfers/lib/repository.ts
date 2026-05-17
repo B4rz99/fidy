@@ -23,33 +23,6 @@ export function getTransferById(db: AnyDb, id: TransferRow["id"]) {
   return rows[0] ?? null;
 }
 
-export function upsertTransfer(db: AnyDb, row: TransferRow) {
-  db.insert(transfers)
-    .values(row)
-    .onConflictDoUpdate({
-      target: transfers.id,
-      set: {
-        userId: row.userId,
-        amount: row.amount,
-        fromAccountId: row.fromAccountId,
-        toAccountId: row.toAccountId,
-        fromExternalLabel: row.fromExternalLabel,
-        toExternalLabel: row.toExternalLabel,
-        description: row.description,
-        date: row.date,
-        source: row.source,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        deletedAt: row.deletedAt,
-      },
-    })
-    .run();
-}
-
-export function saveTransfer(db: AnyDb, row: TransferRow) {
-  upsertTransfer(db, row);
-}
-
 export function getTransfersForUser(db: AnyDb, userId: TransferRow["userId"]) {
   return queryActiveTransfers(db, userId).all();
 }

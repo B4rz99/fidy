@@ -1,3 +1,4 @@
+import type { LocalLedgerTransfer } from "@/local-ledger/public";
 import { parseIsoDate, toIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
 import type { StoredTransfer } from "./build-transfer";
 import {
@@ -35,6 +36,22 @@ export function toStoredTransfer(row: TransferRow): StoredTransfer {
     updatedAt: new Date(row.updatedAt),
     deletedAt: toStoredTransferDeletedAt(row.deletedAt),
     source: row.source ?? "manual",
+  };
+}
+
+export function toStoredTransferFromLocalLedger(transfer: LocalLedgerTransfer): StoredTransfer {
+  return {
+    id: transfer.id,
+    userId: transfer.userId,
+    amount: transfer.amount,
+    fromSide: transfer.fromSide,
+    toSide: transfer.toSide,
+    description: transfer.description,
+    date: parseIsoDate(transfer.date),
+    createdAt: new Date(transfer.createdAt),
+    updatedAt: new Date(transfer.updatedAt),
+    deletedAt: transfer.voidedAt == null ? null : new Date(transfer.voidedAt),
+    source: transfer.source,
   };
 }
 

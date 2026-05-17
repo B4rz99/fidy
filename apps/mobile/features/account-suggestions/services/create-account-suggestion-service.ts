@@ -10,7 +10,8 @@ import {
   saveFinancialAccountIdentifierInTransaction,
 } from "@/features/financial-accounts/public";
 import { isActiveTransactionRow } from "@/features/transactions/lib/active-transaction-conditions";
-import { getTransactionById, upsertTransaction } from "@/features/transactions/lib/repository";
+import { getTransactionById } from "@/features/transactions/lib/repository";
+import { upsertTransactionStorageRow } from "@/infrastructure/local-ledger/transaction-storage";
 import type { AnyDb } from "@/shared/db";
 import {
   generateAccountSuggestionDismissalId,
@@ -46,7 +47,7 @@ type CreateAccountSuggestionServiceDeps = {
   readonly saveFinancialAccount?: typeof saveFinancialAccount;
   readonly saveFinancialAccountIdentifierInTransaction?: typeof saveFinancialAccountIdentifierInTransaction;
   readonly getTransactionById?: typeof getTransactionById;
-  readonly upsertTransaction?: typeof upsertTransaction;
+  readonly upsertTransaction?: typeof upsertTransactionStorageRow;
   readonly now?: () => IsoDateTime;
   readonly createAccountId?: () => FinancialAccountId;
   readonly createDismissalId?: () => AccountSuggestionDismissalId;
@@ -135,7 +136,7 @@ export function createAccountSuggestionService({
   saveFinancialAccountIdentifierInTransaction:
     persistFinancialAccountIdentifierInTransaction = saveFinancialAccountIdentifierInTransaction,
   getTransactionById: loadTransactionById = getTransactionById,
-  upsertTransaction: persistTransaction = upsertTransaction,
+  upsertTransaction: persistTransaction = upsertTransactionStorageRow,
   now = () => toIsoDateTime(new Date()),
   createAccountId = generateFinancialAccountId,
   createDismissalId = generateAccountSuggestionDismissalId,

@@ -41,8 +41,8 @@ export async function getProcessedEmailSourceEventIds(
   );
 }
 
-export async function insertProcessedEmailSourceEvent(db: AnyDb, row: ProcessedSourceEventRow) {
-  await db.insert(processedSourceEvents).values(row).onConflictDoNothing();
+export function insertProcessedEmailSourceEvent(db: AnyDb, row: ProcessedSourceEventRow) {
+  db.insert(processedSourceEvents).values(row).onConflictDoNothing().run();
 }
 
 export async function getPendingRetryEmailSourceEvents(db: AnyDb, userId: UserId) {

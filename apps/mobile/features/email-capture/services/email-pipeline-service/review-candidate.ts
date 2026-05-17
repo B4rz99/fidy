@@ -4,7 +4,6 @@ import type {
   LocalLedgerCaptureEvidence,
   LocalLedgerCommandId,
   LocalLedgerProcessedSourceEventId,
-  LocalLedgerReviewCandidateId,
   LocalLedgerSourceId,
 } from "@/local-ledger/public";
 import { fromPromise } from "@/shared/effect/runtime";
@@ -17,7 +16,7 @@ import {
 import { requireCopAmount, requireIsoDate, requireIsoDateTime } from "@/shared/types/assertions";
 import type { ProcessedSourceEventId } from "@/shared/types/branded";
 import { EmailPipelineDeps } from "./runtime";
-import { getEmailSourceId } from "./shared";
+import { getEmailSourceId, getParsedCounterpartyName } from "./shared";
 import type { CreateEmailPipelineServiceDeps, EmailTransactionContext } from "./types";
 
 type ReviewCandidateContext = Pick<
@@ -56,22 +55,20 @@ const toReviewCandidateInput = (
     status: "needs_review",
     failureReason: null,
     subject: context.email.subject ?? null,
-    rawBodyPreview: (context.email.body ?? context.email.rawBody ?? "").slice(0, 500),
-    rawBody: null,
     retryCount: context.email.retryCount ?? 0,
     nextRetryAt: null,
     transactionId: null,
     confidence: context.parsed.confidence,
   },
   candidate: {
-    id: generateReviewCandidateId() as unknown as LocalLedgerReviewCandidateId,
+    id: generateReviewCandidateId(),
     status: "pending",
     candidateKind: "transaction",
     occurredAt: requireIsoDate(context.parsed.date),
     money: { amount: requireCopAmount(context.parsed.amount), currency: "COP" },
     transactionType: context.parsed.type,
     categoryId: context.categoryId,
-    description: null,
+    description: getParsedCounterpartyName(context.parsed),
     confidence: context.parsed.confidence,
   },
   evidence: evidenceSeeds.map(
