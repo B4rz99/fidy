@@ -1,0 +1,19 @@
+apps/mobile/vitest.config.ts
+  s_fadedd8498de1f::t_9f9eab9040f653 52-59,61-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "46c6f87d05ff17c7c96e9b1f2affe876a4b9528a",
+  "prompts": {},
+  "sessions": {
+    "s_fadedd8498de1f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3431-74c6-7923-80eb-e88d914db211",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
