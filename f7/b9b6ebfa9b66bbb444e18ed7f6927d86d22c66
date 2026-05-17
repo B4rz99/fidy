@@ -1,0 +1,47 @@
+.dependency-cruiser.cjs
+  s_6b7d4add335b23::t_3453e6605f206f 77
+scripts/feature-public-import-collectors.ts
+  s_6b7d4add335b23::t_46fe2ed736a2c8 114-125,127-134
+  s_6b7d4add335b23::t_4b5239e78b2bca 40,215-220
+  s_6b7d4add335b23::t_36774ebdd42899 29,101-113,126,135,201-214,221-224
+  s_6b7d4add335b23::t_9c9c219d499e19 3
+apps/mobile/__tests__/local-ledger/source-events.test.ts
+  s_6b7d4add335b23::t_1300eb1f3fa458 132-133,136,168-169,176,192-193
+scripts/check-feature-public-imports.ts
+  s_6b7d4add335b23::t_36774ebdd42899 2,14,81-83,97-102,124
+apps/mobile/infrastructure/local-ledger/public.ts
+  s_6b7d4add335b23::t_bedc02cea6158a 25
+apps/mobile/local-ledger/intake.public.ts
+  s_6b7d4add335b23::t_3453e6605f206f 1-13
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_6b7d4add335b23::t_a544165c02cc74 18,100-101,246,364,399
+  s_6b7d4add335b23::t_d4664f9304f1f0 97-99
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_6b7d4add335b23::t_3453e6605f206f 7,233,246-247
+apps/mobile/infrastructure/local-ledger/review-candidate-capture.ts
+  s_6b7d4add335b23::t_bedc02cea6158a 1-291
+apps/mobile/infrastructure/local-ledger/source-events.ts
+  s_6b7d4add335b23::t_bedc02cea6158a 4
+scripts/check-feature-public-imports.test.ts
+  s_6b7d4add335b23::t_8ed0022a5a2a00 6,59-106
+apps/mobile/features/email-capture/services/email-pipeline.ts
+  s_6b7d4add335b23::t_3453e6605f206f 5
+scripts/legacy-cross-feature-internal-imports.ts
+  s_6b7d4add335b23::t_9c9c219d499e19 1-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "f7b9b6ebfa9b66bbb444e18ed7f6927d86d22c66",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
