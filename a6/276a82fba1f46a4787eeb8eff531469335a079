@@ -1,0 +1,322 @@
+apps/mobile/__tests__/calendar/bill-mutation-service.test.ts
+  s_6b7d4add335b23::t_24faf5478e8dd6 428
+  s_6b7d4add335b23::t_2b168e181672af 38,46,55,79-99,109
+  s_6b7d4add335b23::t_43e2e2236824ea 310,312-314,326,332,337-338,344-345,369,384
+apps/mobile/features/transactions/transfer-reclassification.public.ts
+  s_6b7d4add335b23::t_95f560ea504dfb 4,17
+apps/mobile/features/review-queues/lib/attribution-review-confirmation.ts
+  s_6b7d4add335b23::t_55d4720b382523 5,51-53
+apps/mobile/features/account-suggestions/services/create-account-suggestion-service.ts
+  s_6b7d4add335b23::t_884122e19e9b0d 14,50,185-186
+  s_6b7d4add335b23::t_a12025560da539 139-140
+  s_6b7d4add335b23::t_8bf953c07b88b0 187
+apps/mobile/__tests__/local-ledger/manual-transaction-local-ledger.test.ts
+  s_6b7d4add335b23::t_2260ac41d05a54 106-127
+apps/mobile/features/capture-sources/services/apple-pay-pipeline.ts
+  s_6b7d4add335b23::t_11a65015e83332 13,18
+apps/mobile/features/email-capture/lib/source-event-repository.ts
+  s_6b7d4add335b23::t_ea51e0c6f765e3 87
+apps/mobile/local-ledger/domain/transaction-source.ts
+  s_6b7d4add335b23::t_ecfa2e65249bef 1-20
+apps/mobile/features/transfers/lib/transfer-row-mappers.ts
+  s_6b7d4add335b23::t_754ff5b67d96ae 22-23,37,71
+apps/mobile/shared/i18n/locales/es.ts
+  s_6b7d4add335b23::t_66296717620d45 505
+apps/mobile/infrastructure/local-ledger/transfer-reclassification-single.ts
+  s_6b7d4add335b23::t_4747865ae59c93 35-37,45,152-163,165,169-172,174-195,206,209
+  s_6b7d4add335b23::t_324eb20a28b36a 164,166-168,211-213
+  s_6b7d4add335b23::t_ce11697ccd4823 2,4,12,18,23-24,31-32,63,65-76,82-149,151,196-197,220
+  s_6b7d4add335b23::t_3b3d1b13c3ca97 1,77-81
+  s_6b7d4add335b23::t_6e7e9082f2a0c0 38-44,54-55,57,173,201,203-204,217
+  s_6b7d4add335b23::t_e6e4b529ca5cb1 46-53,56
+  s_6b7d4add335b23::t_11a65015e83332 3,5-11,13-17,19-22,25-30,33-34,58-62,64,150,198-200,202,205,207-208,210,214-216,218-219,221
+apps/mobile/local-ledger/use-cases/amend-transaction.public.ts
+  s_6b7d4add335b23::t_76c1939cd4faec 1-36,51-97,100-101,103-104,107-109,111-114
+  s_6b7d4add335b23::t_d76afacf222477 37-50
+  s_6b7d4add335b23::t_f1b171fcdf1044 98-99,102,105-106,110
+apps/mobile/__tests__/local-ledger/intake-mutation.test.ts
+  s_6b7d4add335b23::t_d422cc3ca5f926 295-296
+  s_6b7d4add335b23::t_c325b66bf6a20a 123,136-138
+  s_6b7d4add335b23::t_e0b9c36516f3a2 194,198,204,207
+apps/mobile/features/email-capture/services/outlook-adapter.ts
+  s_6b7d4add335b23::t_2cb6bf399a3df3 20-37
+apps/mobile/features/transfers/lib/reclassify-transaction-as-transfer.ts
+  s_6b7d4add335b23::t_ea4c3443a5ff5a 2-3,5-6,43,49-62,64,86,89-95,98
+  s_6b7d4add335b23::t_11a65015e83332 4
+  s_6b7d4add335b23::t_c62aedc9258475 7-8
+apps/mobile/__tests__/email-capture/retry-integration.test.ts
+  s_6b7d4add335b23::t_b2a3326f6f7cd1 189,195-196,199,207,209,212-213
+  s_6b7d4add335b23::t_7753b063b97dcc 25
+.dependency-cruiser.cjs
+  s_6b7d4add335b23::t_343806a5285d55 91
+  s_230f328744e8be::t_3e696e009acb2b 81-90,92-93
+apps/mobile/features/email-capture/services/email-pipeline.ts
+  s_6b7d4add335b23::t_11a65015e83332 7
+  s_6b7d4add335b23::t_9c7d25f9e590a1 26,35,46-59,67-68,75
+  s_6b7d4add335b23::t_62fa8888d18686 60-66
+  s_6b7d4add335b23::t_21ab8e89da07ed 45
+apps/mobile/local-ledger/domain/public.ts
+  s_6b7d4add335b23::t_9d5c22fb66bbba 95
+apps/mobile/__tests__/local-ledger/review-candidate-resolution.test.ts
+  s_6b7d4add335b23::t_b573576533b04a 51-55,131-170
+apps/mobile/__tests__/transactions/store.test.ts
+  s_6b7d4add335b23::t_7075132dbff9ab 208,213-214
+apps/mobile/features/email-capture/services/email-pipeline-service/runtime.ts
+  s_6b7d4add335b23::t_175c053768f070 82-91
+apps/mobile/features/financial-accounts/lib/balance-repository.ts
+  s_6b7d4add335b23::t_4682c3ee181250 106,133
+apps/mobile/features/capture-sources/services/widget-pipeline.ts
+  s_6b7d4add335b23::t_11a65015e83332 3,7
+  s_6b7d4add335b23::t_a12025560da539 47-48
+apps/mobile/local-ledger/snapshot/row-shape-intake.ts
+  s_6b7d4add335b23::t_c6554d57b239a2 41
+apps/mobile/__tests__/email-capture/email-adapter.test.ts
+  s_6b7d4add335b23::t_df0b337a088da4 554-590
+apps/mobile/features/transactions/lib/repository.ts
+  s_6b7d4add335b23::t_1c174fa3b1f636 14-15,36-51
+apps/mobile/__tests__/backup/local-ledger-snapshot.test.ts
+  s_6b7d4add335b23::t_f2df045482464a 106,594
+apps/mobile/features/email-capture/lib/source-event-queue-repository.ts
+  s_6b7d4add335b23::t_df66bf9eeecc1c 1
+  s_6b7d4add335b23::t_c0009bbb74c18d 19,27
+apps/mobile/local-ledger/use-cases/review-candidate-resolution.public.ts
+  s_6b7d4add335b23::t_caf840a6b4f5ae 15,180-184
+scripts/check-feature-public-imports.ts
+  s_6b7d4add335b23::t_a12025560da539 80-82
+  s_6b7d4add335b23::t_0f527bfa50a0f1 1-5,7-10,34-35,37,49-56,58-59,61,63,70,72,83-86,89-90,92,95-108,111-116
+  s_6b7d4add335b23::t_772237cad7a355 6,11-18
+  s_6b7d4add335b23::t_546859958087dc 38-39,41,120-125
+apps/mobile/infrastructure/local-ledger/transaction-attribution.ts
+  s_6b7d4add335b23::t_6d8361c06565aa 1-2,4-22,40-53,57
+  s_6b7d4add335b23::t_d47989c351c495 3,23-39,54-56
+apps/mobile/infrastructure/local-ledger/qa-seed.ts
+  s_6b7d4add335b23::t_5a67daafa359ca 1-13,21-22
+  s_6b7d4add335b23::t_ef8b4f706c2392 14-20
+apps/mobile/features/review-queues/components/FinancialMeaningQueueScreen.tsx
+  s_6b7d4add335b23::t_2315cb5bedc61e 22,47
+  s_6b7d4add335b23::t_c475eb30b28b10 48
+  s_6b7d4add335b23::t_6672abe78dcb54 49
+apps/mobile/infrastructure/local-ledger/transfer-reclassification-transactions.ts
+  s_6b7d4add335b23::t_87edb6d0ea13d0 28-30
+  s_6b7d4add335b23::t_11a65015e83332 1-27,31-59
+apps/mobile/features/email-capture/services/gmail-adapter.ts
+  s_6b7d4add335b23::t_8d1a503832831f 115-116
+apps/mobile/drizzle/0019_watery_leopardon.sql
+  s_6b7d4add335b23::t_f9b4dd1989d1df 52
+apps/mobile/features/email-capture/services/email-pipeline-service/transactions.ts
+  s_6b7d4add335b23::t_6f13bf403284b9 195,203
+  s_6b7d4add335b23::t_8e566701686a61 9,75
+  s_6b7d4add335b23::t_fc39f7ea4e3cb2 74,76,193,210
+  s_6b7d4add335b23::t_c10f84373cfa72 31
+apps/mobile/features/calendar/lib/bill-mutation-service.ts
+  s_6b7d4add335b23::t_da9bcf38909939 141-142,153
+  s_6b7d4add335b23::t_f9a52e8c7a9d0f 117,127
+apps/mobile/app/failed-emails.tsx
+  s_6b7d4add335b23::t_204b33e64ed7cd 93-95
+  s_6b7d4add335b23::t_27846a47dbf5ed 115,164-166
+apps/mobile/local-ledger/snapshot/row-shape.ts
+  s_6b7d4add335b23::t_d422cc3ca5f926 85-100
+apps/mobile/local-ledger/public.ts
+  s_6b7d4add335b23::t_26f8be958923c3 22-26
+  s_6b7d4add335b23::t_2ad6dafebe9ac3 28-39
+  s_6b7d4add335b23::t_11a65015e83332 67,71-72
+apps/mobile/features/email-capture/services/create-email-adapter.ts
+  s_6b7d4add335b23::t_58a00823eb6c4e 7-12,249-251,253,266,268-269
+  s_6b7d4add335b23::t_4fea67f09299c3 252,267
+apps/mobile/__tests__/calendar/bill-mutation-service-source.test.ts
+  s_6b7d4add335b23::t_59caf30fc916c1 27-30
+apps/mobile/features/transactions/mutations-boundary.test.ts
+  s_6b7d4add335b23::t_8a52595bb821ef 208,219
+apps/mobile/infrastructure/local-ledger/transaction-storage.ts
+  s_6b7d4add335b23::t_bafde74c8f23ae 6
+apps/mobile/__tests__/email-capture/outlook-adapter.test.ts
+  s_6b7d4add335b23::t_ceed762f8cc0e6 3-6,171-202
+apps/mobile/features/email-capture/lib/financial-meaning-review.ts
+  s_6b7d4add335b23::t_11a65015e83332 2
+apps/mobile/features/qa/start-local-qa-session.ts
+  s_6b7d4add335b23::t_d5ca1fa1b0d74f 7,29-31
+apps/mobile/features/email-capture/services/email-pipeline-service/transaction-recording.ts
+  s_6b7d4add335b23::t_11a65015e83332 2
+apps/mobile/__tests__/account-suggestions/service.test.ts
+  s_6b7d4add335b23::t_3d609812a2bd40 722
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-email.ts
+  s_6b7d4add335b23::t_3a3886b193e3f4 171,173,182,185,188,214-215,219-222
+  s_6b7d4add335b23::t_bea31cba8f62a6 66,89,91,102,201,216,245
+apps/mobile/__tests__/email-capture/email-pipeline-retry-resolver.test.ts
+  s_6b7d4add335b23::t_e75c14d74a67fe 42-44,67-69
+  s_6b7d4add335b23::t_bbb8fd0abadead 1-41,45-66,70-71
+apps/mobile/__tests__/transfers/manual-transfer-local-ledger.test.ts
+  s_6b7d4add335b23::t_d49b597ef94ff8 112,139,156,158
+apps/mobile/features/transfers/lib/reclassify-transactions-as-transfer.ts
+  s_6b7d4add335b23::t_11a65015e83332 3-4
+  s_6b7d4add335b23::t_eb925e455943f1 2,5-6,8,15,17-18,20
+apps/mobile/local-ledger/snapshot/snapshot.ts
+  s_6b7d4add335b23::t_5f817d046cb95a 43,52-54
+apps/mobile/__tests__/capture-sources/notification-pipeline.test.ts
+  s_6b7d4add335b23::t_a0862e93606ccd 374-376,382,386-391,393-409
+  s_6b7d4add335b23::t_ed4ae71992299c 377-381,383-385,392,410-411
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_6b7d4add335b23::t_c599f5b069165f 1594,1613,1675,1735,1761,1780,1791,1816,1835,1857,1886,1895
+  s_6b7d4add335b23::t_fc9f0649f94e94 1352,1354,1356-1361,1375
+  s_6b7d4add335b23::t_f6ad904e71564b 770-771
+  s_6b7d4add335b23::t_b17dd0e23b4a13 325-326
+  s_6b7d4add335b23::t_cbfe62b869b174 1328,1333,1353,1355,1362-1374,1376-1378
+  s_6b7d4add335b23::t_126a85d544a407 747,1258,1265,1270,1285,1293,1299,1306,1316,1321,1339,1345,1529
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_6b7d4add335b23::t_cf24db74d94dfe 41-44,46
+  s_6b7d4add335b23::t_11a65015e83332 2,8
+  s_6b7d4add335b23::t_e75c14d74a67fe 9
+  s_6b7d4add335b23::t_93505373f2d12f 45
+apps/mobile/shared/lib/transaction-source.ts
+  s_6b7d4add335b23::t_dd6188cd7757df 1-6
+apps/mobile/infrastructure/local-ledger/transfer-reclassification.ts
+  s_6b7d4add335b23::t_92e20f7c2bb2e2 28
+  s_6b7d4add335b23::t_a12025560da539 8-14
+  s_6b7d4add335b23::t_2eb0e71ed6151e 73
+  s_6b7d4add335b23::t_11a65015e83332 1-7,15-27,29-72,74-242
+apps/mobile/features/transfers/lib/repository.ts
+  s_6b7d4add335b23::t_33b88150690356 17
+apps/mobile/shared/db/schema.ts
+  s_6b7d4add335b23::t_a81dd9d8d51012 140
+apps/mobile/local-ledger/use-cases/intake.public.ts
+  s_6b7d4add335b23::t_214c2c1ba0efd1 28,45,61,63,110,128,130,147,149,165-167
+apps/mobile/features/qa/lib/build-local-qa-seed.ts
+  s_6b7d4add335b23::t_8db59ef5c91aae 173
+apps/mobile/features/email-capture/services/email-pipeline-service/retry.ts
+  s_6b7d4add335b23::t_cecbd994844dc2 10,212-214
+  s_6b7d4add335b23::t_7344e1cab1f1f9 41-42,47
+apps/mobile/features/email-capture/services/email-pipeline-service/internal-types.ts
+  s_6b7d4add335b23::t_f4dfbb7a712a3d 260
+apps/mobile/features/backup/private-backup.ts
+  s_6b7d4add335b23::t_11a65015e83332 6
+apps/mobile/features/calendar/store/live-bill-mutations.ts
+  s_6b7d4add335b23::t_de57b09865a38e 51
+  s_6b7d4add335b23::t_05efae511f3806 13
+  s_6b7d4add335b23::t_2bbc7f98b60b15 26-27,35
+  s_6b7d4add335b23::t_2733dbd359fce9 2-3,5
+  s_6b7d4add335b23::t_24452febea27a5 1,7-12,24-25,28-34,36-50,52-54
+apps/mobile/__tests__/financial-accounts/balance-repository.test.ts
+  s_6b7d4add335b23::t_43c498112d0bd5 109
+apps/mobile/shared/i18n/locales/en.ts
+  s_6b7d4add335b23::t_10cc8346cbc80b 498
+apps/mobile/features/transactions/store.ts
+  s_6b7d4add335b23::t_4415166fa4b2ef 79
+  s_6b7d4add335b23::t_dd955fbd934340 8-12,74-78,86-92
+apps/mobile/features/email-capture/services/email-adapter-registry.ts
+  s_6b7d4add335b23::t_e75c14d74a67fe 7
+  s_6b7d4add335b23::t_9ef33bf15f9ce3 6,45-47
+apps/mobile/infrastructure/local-ledger/record-transaction.ts
+  s_6b7d4add335b23::t_9136b2ed645a2c 162-163
+  s_6b7d4add335b23::t_ea528d0f35d6dd 25,34,55
+  s_6b7d4add335b23::t_40651a79fca0b6 12-13
+  s_6b7d4add335b23::t_b3be9546bb72b7 83-94
+  s_6b7d4add335b23::t_308a63d094d7fb 44
+  s_6b7d4add335b23::t_d143d54649812f 9,161
+  s_6b7d4add335b23::t_d7a1d7f73b1642 76-80
+  s_6b7d4add335b23::t_a12025560da539 155
+  s_6b7d4add335b23::t_11a65015e83332 3,156-157
+apps/mobile/mutation-runtime/calendar-handlers.ts
+  s_6b7d4add335b23::t_01004608254a01 65
+  s_6b7d4add335b23::t_89bc85c382b67e 10,61-64,66-69
+apps/mobile/infrastructure/local-ledger/public.ts
+  s_6b7d4add335b23::t_267014f304559f 2
+  s_6b7d4add335b23::t_11a65015e83332 1,6-11,13-25,28-37
+  s_6b7d4add335b23::t_64a3ed8ffb307a 12
+  s_6b7d4add335b23::t_e9d14bef430e7f 26-27
+  s_6b7d4add335b23::t_e7a118abc14fa7 3-5
+apps/mobile/__tests__/transactions/mutation-service.test.ts
+  s_6b7d4add335b23::t_84548d976cf4d4 31-32,38-39,49-50,83-104,110-111
+  s_6b7d4add335b23::t_e1dad1607f2b1c 268,288-291
+  s_6b7d4add335b23::t_af57f8517b25ed 183-184,202-207,213-214,216,222,243,251,253-254,259-260,304-305,314,324-328
+apps/mobile/features/transfers/components/transfer-form/saveTransferForm.ts
+  s_6b7d4add335b23::t_11a65015e83332 14
+apps/mobile/features/calendar/lib/bill-mutation-service/commit-bill-payment.ts
+  s_6b7d4add335b23::t_1a9396ffbd55b9 2,13-19,38,59-65,68,70
+  s_6b7d4add335b23::t_b3209fe48e48ff 20-23
+apps/mobile/features/review-queues/components/FinancialMeaningReviewScreen.tsx
+  s_6b7d4add335b23::t_21d22fedf193b9 21,138-139,150
+apps/mobile/infrastructure/local-ledger/amend-transaction.ts
+  s_6b7d4add335b23::t_48459355b182af 10-11
+  s_6b7d4add335b23::t_df74d2018c2508 192
+  s_6b7d4add335b23::t_4652b346933f89 1,8-9,13-29,31-37,51-63,72-78,81-82,84-85,92-102,106-122,128,130,132-136,138-144,148-149,159-160,198
+  s_6b7d4add335b23::t_5a423a5c100ec6 64,155-157
+  s_6b7d4add335b23::t_9b06f5ea046344 161
+  s_6b7d4add335b23::t_195220b5fb8e4e 12,30,162
+  s_6b7d4add335b23::t_dad4eda115027f 41-50
+  s_6b7d4add335b23::t_5ac22e629f5ce0 86-91,103-105,145-147,152-154,171,185
+  s_6b7d4add335b23::t_75326710c16c70 2-7,65-71,79-80,83,123-127,129,131,150-151,158,163,165-170,172-177,179-184,186-191,193-197
+  s_6b7d4add335b23::t_df012e9b676e02 137
+  s_6b7d4add335b23::t_e95b79dc90b652 164,178
+  s_6b7d4add335b23::t_eb38baca6ae375 38-40
+apps/mobile/__tests__/local-ledger/amend-transaction-use-case.test.ts
+  s_6b7d4add335b23::t_8df9ed797bc25d 1-118
+apps/mobile/__tests__/qa/start-local-qa-session.test.ts
+  s_6b7d4add335b23::t_e2e5241bf6d9b7 9-10
+  s_6b7d4add335b23::t_32a2bc060a40bb 78
+apps/mobile/features/email-capture/services/email-pipeline-service/public-types.ts
+  s_6b7d4add335b23::t_a0f0cc3a04c2b5 97-101
+  s_6b7d4add335b23::t_11a65015e83332 9
+apps/mobile/infrastructure/local-ledger/record-transfer.ts
+  s_6b7d4add335b23::t_bb0add952b11df 9
+  s_6b7d4add335b23::t_e78c7cf1ade513 72,93
+apps/mobile/shared/mutations/write-through/commands.ts
+  s_6b7d4add335b23::t_90b82c487d56b3 197
+  s_6b7d4add335b23::t_96ca5d0bc31ff2 207-211
+apps/mobile/features/transactions/lib/mutation-service.ts
+  s_6b7d4add335b23::t_12e17045b220f3 1,26-36,59-65,67,69-73,76,79,83-84,93,100,103,135-141,143,146-147,150,153,157-163,165,168-169,172,174,178-182,184-193,196
+apps/mobile/features/review-queues/lib/source-labels.ts
+  s_6b7d4add335b23::t_870219e88f79d1 1-15
+apps/mobile/__tests__/transfers/repository.test.ts
+  s_6b7d4add335b23::t_b5598cbfac9302 49
+apps/mobile/infrastructure/local-ledger/transfer-reclassification-accounts.ts
+  s_6b7d4add335b23::t_11a65015e83332 1-27
+scripts/feature-public-import-collectors.ts
+  s_6b7d4add335b23::t_2c276c33fedf9e 1-25,30-207
+  s_6b7d4add335b23::t_d898813c5ce8d1 26-29
+apps/mobile/mutation-runtime/local-ledger-handlers.ts
+  s_6b7d4add335b23::t_62f253c4a2e241 21-24,27-28,33,36-37,53,64,83-86,115-123,136,168,170,174,176-182,187,192,195-200
+scripts/check-feature-public-imports.test.ts
+  s_230f328744e8be::t_80928b18f6a9fb 5-8,113-152,154-157
+  s_6b7d4add335b23::t_a12025560da539 153
+  s_6b7d4add335b23::t_b104ab3f213951 161-212
+apps/mobile/features/calendar/lib/bill-mutation-service/types.ts
+  s_6b7d4add335b23::t_b3209fe48e48ff 39-42
+  s_6b7d4add335b23::t_a310be06cdca8b 32-38
+apps/mobile/features/backup/public.ts
+  s_6b7d4add335b23::t_11a65015e83332 24,30
+scripts/dependency-cruiser-config.test.ts
+  s_230f328744e8be::t_80928b18f6a9fb 109-111,113-142
+  s_6b7d4add335b23::t_a12025560da539 112
+apps/mobile/__tests__/local-ledger/record-transaction.test.ts
+  s_6b7d4add335b23::t_11a65015e83332 3,37-39,42-43,48-49,58,64,78,84-86,92-94,104,111,119,142-147
+  s_6b7d4add335b23::t_a12025560da539 50-51,70-72,105-106,112-113,120-124
+apps/mobile/features/email-capture/services/email-adapter-types.ts
+  s_6b7d4add335b23::t_cf6e4aa01f3207 24-25,31
+apps/mobile/local-ledger/use-cases/write.public.ts
+  s_6b7d4add335b23::t_11a65015e83332 131,179,183-186,264,280,282-285,287-292,294-298
+  s_6b7d4add335b23::t_5ed3952d817ad4 19,104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "a6276a82fba1f46a4787eeb8eff531469335a079",
+  "prompts": {},
+  "sessions": {
+    "s_230f328744e8be": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e36bf-86b6-75b3-92f7-59f608d16bec",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
