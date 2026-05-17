@@ -1,0 +1,66 @@
+apps/mobile/features/account-suggestions/services/create-account-suggestion-service.ts
+  s_6b7d4add335b23::t_a348a5ef4b7730 13-14,50,139
+apps/mobile/__tests__/budget/monitoring.test.ts
+  s_6b7d4add335b23::t_4bd669e632fc21 9
+apps/mobile/infrastructure/local-ledger/record-transfer.ts
+  s_6b7d4add335b23::t_87b088c8d52a30 76-102
+apps/mobile/__tests__/transactions/repository-monthly-totals.test.ts
+  s_6b7d4add335b23::t_c125c676130cb9 10
+apps/mobile/__tests__/qa/start-local-qa-session.test.ts
+  s_6b7d4add335b23::t_295e478ad93fa7 72-73,76-77
+apps/mobile/infrastructure/local-ledger/transaction-storage.ts
+  s_6b7d4add335b23::t_baf2106cf50a84 3,6-7
+  s_6b7d4add335b23::t_87b088c8d52a30 1,5,9,88-142
+apps/mobile/shared/lib/index.ts
+  s_6b7d4add335b23::t_7e7bda3ff7bccc 25
+apps/mobile/__tests__/transactions/repository-integration.test.ts
+  s_6b7d4add335b23::t_c125c676130cb9 13
+apps/mobile/__tests__/transactions/repository.test.ts
+  s_6b7d4add335b23::t_724500da67ba80 57-60,62,123-126
+apps/mobile/mutation-runtime/calendar-handlers.ts
+  s_6b7d4add335b23::t_6b231cd0ff3dc4 10-13,55,65
+apps/mobile/features/qa/start-local-qa-session.ts
+  s_6b7d4add335b23::t_97d1b8d9fc1b3c 7-8,31,34
+apps/mobile/features/transactions/lib/repository.ts
+  s_6b7d4add335b23::t_baf2106cf50a84 2,35,43,54,176
+apps/mobile/__tests__/account-suggestions/service.test.ts
+  s_6b7d4add335b23::t_c125c676130cb9 14-15
+apps/mobile/features/email-capture/services/email-pipeline-service/transactions.ts
+  s_6b7d4add335b23::t_1ead2e9e69af4c 25
+apps/mobile/__tests__/transfers/repository.test.ts
+  s_6b7d4add335b23::t_4bd669e632fc21 7
+apps/mobile/features/transfers/lib/reclassify-transactions-as-transfer.ts
+  s_6b7d4add335b23::t_a348a5ef4b7730 11,37,52,177,247,253
+apps/mobile/__tests__/analytics/repository.test.ts
+  s_6b7d4add335b23::t_4bd669e632fc21 11
+apps/mobile/mutation-runtime/transaction-handlers.ts
+  s_6b7d4add335b23::t_6b231cd0ff3dc4 4-7,18-19,30
+apps/mobile/__tests__/review-queues/attribution-review-service.test.ts
+  s_6b7d4add335b23::t_c125c676130cb9 10-11
+apps/mobile/features/review-queues/lib/attribution-review-confirmation.ts
+  s_6b7d4add335b23::t_a348a5ef4b7730 4-5,51
+apps/mobile/features/transactions/transfer-reclassification.public.ts
+  s_6b7d4add335b23::t_6b231cd0ff3dc4 3-4,20-21
+apps/mobile/features/transfers/index.ts
+  s_6b7d4add335b23::t_1ead2e9e69af4c 21
+apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts
+  s_6b7d4add335b23::t_c125c676130cb9 17
+apps/mobile/features/transfers/lib/reclassify-transaction-as-transfer.ts
+  s_6b7d4add335b23::t_a348a5ef4b7730 7,41,58,63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "62e33480f179bfafc3c3aa0bd3a16c51ca79ed46",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
