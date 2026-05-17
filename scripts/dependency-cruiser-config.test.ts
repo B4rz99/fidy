@@ -103,7 +103,7 @@ test("guards local-ledger internals behind public entrypoints for consumers", ()
   );
   expect(publicImportsRule?.to?.path).toBe("^apps/mobile/local-ledger/");
   expect(publicImportsRule?.to?.pathNot).toBe(
-    "^apps/mobile/local-ledger/(public|snapshot\\.public)\\.ts$"
+    "^apps/mobile/local-ledger/(public|snapshot\\.public|intake\\.public)\\.ts$"
   );
 });
 

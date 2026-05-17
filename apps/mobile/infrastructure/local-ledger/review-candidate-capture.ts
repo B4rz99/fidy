@@ -109,6 +109,9 @@ const updateFailedSourceEventForReview = (
     .run();
 };
 
+const canTransitionSourceEventToReview = (status: string) =>
+  status === "failed" || status === "pending_retry";
+
 const insertReviewSourceEvent = (
   db: AnyDb,
   input: CreateReviewCandidateCommand["sourceEvent"],
@@ -144,10 +147,10 @@ const upsertReviewSourceEvent = (
   command: CreateReviewCandidateCommand
 ): ProcessedSourceEventId | null => {
   const existing = findReviewSourceEvent(db, command.sourceEvent);
-  if (existing !== null && existing.status !== "failed") return null;
+  if (existing !== null && !canTransitionSourceEventToReview(existing.status)) return null;
 
   const sourceEventId = (existing?.id ?? command.sourceEvent.id) as ProcessedSourceEventId;
-  if (existing?.status === "failed") {
+  if (existing !== null) {
     updateFailedSourceEventForReview(db, command.sourceEvent, sourceEventId);
   } else {
     const persisted = insertReviewSourceEvent(db, command.sourceEvent, sourceEventId);

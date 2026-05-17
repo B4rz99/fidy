@@ -12,8 +12,9 @@ import type {
   TransferId,
   UserId,
 } from "@/shared/types/branded";
+import type { TransferSource } from "@/shared/types/ledger-source";
 
-export type { FinancialAccountId, TransferId, UserId };
+export type { FinancialAccountId, TransferSource, TransferId, UserId };
 
 export type LocalLedgerCommandId = string & { readonly __brand: "LocalLedgerCommandId" };
 
@@ -47,8 +48,6 @@ export type LocalLedgerTransferSide =
       readonly kind: "external";
       readonly label: string;
     };
-
-export type TransferSource = "manual" | "capture-match" | "review-confirmation";
 
 export type LocalLedgerTransfer = {
   readonly id: TransferId;

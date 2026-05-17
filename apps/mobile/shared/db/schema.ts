@@ -1,5 +1,4 @@
 import { sql } from "drizzle-orm";
-import type { TransferSource } from "@/local-ledger/public";
 import {
   check,
   index,
@@ -9,6 +8,7 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+import type { TransferSource } from "@/shared/types/ledger-source";
 import type {
   AccountSuggestionDismissalId,
   BillId,

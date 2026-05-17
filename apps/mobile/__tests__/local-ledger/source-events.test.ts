@@ -195,6 +195,50 @@ describe("Local Ledger source-event persistence", () => {
     expect(inserted).toEqual([]);
   });
 
+  it("transitions pending retry source events to review and inserts candidate children", async () => {
+    const { recordReviewCandidateCaptureWithLocalLedger } =
+      await import("@/infrastructure/local-ledger/review-candidate-capture");
+    const { db, inserted } = makeDb({
+      id: "pse-retry",
+      ...baseSource,
+      status: "pending_retry",
+      failureReason: "parse_failed",
+      deletedAt: null,
+    });
+
+    await recordReviewCandidateCaptureWithLocalLedger({
+      db,
+      ...baseSource,
+      candidate: {
+        occurredAt: NOW,
+        amount: 12500 as CopAmount,
+        description: "Retry review candidate",
+        confidence: 0.42,
+      },
+      evidence: [
+        {
+          sourceFamily: "notification",
+          evidenceType: "counterparty_hint",
+          scope: "merchant",
+          value: "Cafe",
+        },
+      ],
+    });
+
+    expect(inserted.map((entry) => entry.table)).toEqual([
+      getTableName(processedSourceEvents),
+      getTableName(reviewCandidates),
+      getTableName(captureEvidence),
+      getTableName(reviewCandidateCaptureEvidence),
+    ]);
+    expect(inserted[0]?.row).toEqual(
+      expect.objectContaining({ status: "needs_review", failureReason: "low_confidence" })
+    );
+    expect(inserted[1]?.row).toEqual(
+      expect.objectContaining({ processedSourceEventId: "pse-retry", status: "pending" })
+    );
+  });
+
   it("does not link review-candidate children to a generated source event after insert conflict", async () => {
     const { recordReviewCandidateCaptureWithLocalLedger } =
       await import("@/infrastructure/local-ledger/review-candidate-capture");
