@@ -1,0 +1,54 @@
+apps/mobile/infrastructure/local-ledger/record-transaction.ts
+  s_6b7d4add335b23::t_25f0c23fab3a36 69-70,83-84
+  s_6b7d4add335b23::t_4957bb9d616a36 21
+  s_6b7d4add335b23::t_deb010638680c9 11
+apps/mobile/infrastructure/local-ledger/record-transfer.ts
+  s_6b7d4add335b23::t_25f0c23fab3a36 49,114
+  s_6b7d4add335b23::t_4e518373184b6c 9-10,116
+  s_6b7d4add335b23::t_deb010638680c9 7
+  s_6b7d4add335b23::t_4957bb9d616a36 11
+apps/mobile/local-ledger/use-cases/write.public.ts
+  s_6b7d4add335b23::t_4e518373184b6c 82,217-225
+  s_6b7d4add335b23::t_be3662bbd4f387 8,191-196,234-243,271-275
+  s_6b7d4add335b23::t_25f0c23fab3a36 38,69-70,147-149,186-190,213-216,226
+apps/mobile/local-ledger/use-cases/review-candidate-resolution.public.ts
+  s_6b7d4add335b23::t_4e518373184b6c 174-184
+  s_6b7d4add335b23::t_25f0c23fab3a36 210
+apps/mobile/__tests__/local-ledger/record-transaction.test.ts
+  s_6b7d4add335b23::t_cc9d4cfa2d0025 109-132,138,151
+apps/mobile/shared/lib/route-params.ts
+  s_6b7d4add335b23::t_4e518373184b6c 1
+  s_6b7d4add335b23::t_4957bb9d616a36 7
+  s_6b7d4add335b23::t_25f0c23fab3a36 2-6,8
+apps/mobile/__tests__/local-ledger/review-candidate-resolution.test.ts
+  s_6b7d4add335b23::t_cc9d4cfa2d0025 52,150-163
+apps/mobile/__tests__/local-ledger/record-transfer.test.ts
+  s_6b7d4add335b23::t_cc9d4cfa2d0025 26,117
+apps/mobile/shared/lib/index.ts
+  s_6b7d4add335b23::t_deb010638680c9 67
+  s_6b7d4add335b23::t_be3662bbd4f387 41
+apps/mobile/features/email-capture/lib/financial-meaning-review.ts
+  s_6b7d4add335b23::t_83048e4880d6d9 90-104,106-115
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_6b7d4add335b23::t_3a2ea664c57c0c 575,583
+apps/mobile/infrastructure/local-ledger/account-policy.ts
+  s_6b7d4add335b23::t_4e518373184b6c 1-25
+apps/mobile/local-ledger/use-cases/record-transfer-validation.ts
+  s_6b7d4add335b23::t_25f0c23fab3a36 21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "bb2365faba2254c58c744a16451987b57496b7cc",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
