@@ -39,7 +39,7 @@ vi.mock("@/features/notifications", () => ({
   insertNotificationRecord: (...args: unknown[]) => mockInsertNotificationRecord(...args),
 }));
 
-vi.mock("@/features/settings", () => ({
+vi.mock("@/features/settings/public", () => ({
   useSettingsStore: {
     getState: () => ({
       notificationPreferences: { budgetAlerts: true },
