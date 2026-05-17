@@ -1,0 +1,19 @@
+cubic.yaml
+  s_ddcc23e05e5217::t_51dade390f30bd 1-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "5677a51956026586334f6249a2603a07a967b367",
+  "prompts": {},
+  "sessions": {
+    "s_ddcc23e05e5217": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e37cc-7c6e-79b3-88ed-230b5d67c5e7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
