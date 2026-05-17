@@ -94,7 +94,7 @@ export type LocalLedgerReviewCandidate = {
   readonly id: LocalLedgerReviewCandidateId;
   readonly candidateKind: "unknown" | "transaction" | "transfer";
   readonly status: LocalLedgerReviewCandidateStatus;
-  readonly occurredAt: IsoDateTime | null;
+  readonly occurredAt: IsoDate | null;
   readonly money: LocalLedgerMoney | null;
   readonly transactionType?: "expense" | "income" | null;
   readonly categoryId?: CategoryId | null;

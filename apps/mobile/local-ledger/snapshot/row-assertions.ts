@@ -87,6 +87,12 @@ export function assertNullableIsoDateTime(value: unknown, label: string) {
   }
 }
 
+export function assertNullableIsoDate(value: unknown, label: string) {
+  if (value !== null) {
+    assertValidIsoDate(value, label);
+  }
+}
+
 export function assertValidMonth(value: unknown, label: string) {
   assertString(value, label);
   assertMonth(value);

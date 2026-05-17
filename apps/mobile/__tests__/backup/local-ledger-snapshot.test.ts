@@ -178,7 +178,7 @@ function seedStaleLocalLedgerRows() {
       id, user_id, processed_source_event_id, status, candidate_kind, occurred_at,
       amount, currency, description, confidence, created_at, updated_at, deleted_at
     ) values (
-      'rc-stale', 'user-1', 'pse-stale', 'pending', 'transaction', '${NOW}',
+      'rc-stale', 'user-1', 'pse-stale', 'pending', 'transaction', '2026-04-12',
       9000, 'COP', 'Stale review candidate', 0.25, '${NOW}', '${NOW}', null
     );
 
@@ -222,7 +222,7 @@ function seedProcessedSourceEventsAndReviewCandidates() {
       id, user_id, processed_source_event_id, status, candidate_kind, occurred_at,
       amount, currency, description, confidence, created_at, updated_at, deleted_at
     ) values (
-      'rc-1', 'user-1', 'pse-1', 'pending', 'transaction', '${NOW}',
+      'rc-1', 'user-1', 'pse-1', 'pending', 'transaction', '2026-04-12',
       12500, 'COP', 'Low confidence cafe capture', 0.42, '${NOW}', '${NOW}', null
     );
   `);

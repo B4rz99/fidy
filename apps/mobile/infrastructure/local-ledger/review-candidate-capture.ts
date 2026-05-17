@@ -23,6 +23,7 @@ import type {
   CaptureEvidenceId,
   CategoryId,
   CopAmount,
+  IsoDate,
   IsoDateTime,
   ProcessedSourceEventId,
   ReviewCandidateCaptureEvidenceId,
@@ -41,7 +42,7 @@ type PersistReviewCandidateInput = {
   readonly receivedAt: IsoDateTime;
   readonly processedAt: IsoDateTime;
   readonly candidate: {
-    readonly occurredAt: IsoDateTime | null;
+    readonly occurredAt: IsoDate | null;
     readonly amount: CopAmount | null;
     readonly transactionType?: "expense" | "income" | null;
     readonly categoryId?: CategoryId | null;
@@ -172,7 +173,7 @@ const insertReviewCandidate = (
       processedSourceEventId: sourceEventId,
       status: command.candidate.status,
       candidateKind: command.candidate.candidateKind,
-      occurredAt: command.candidate.occurredAt as IsoDateTime | null,
+      occurredAt: command.candidate.occurredAt as IsoDate | null,
       amount: command.candidate.amount as CopAmount | null,
       currency: command.candidate.currency,
       transactionType: command.candidate.transactionType ?? null,

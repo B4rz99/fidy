@@ -8,7 +8,13 @@ import {
   reviewCandidateCaptureEvidence,
   reviewCandidates,
 } from "@/shared/db/schema";
-import type { CopAmount, IsoDateTime, TransactionId, UserId } from "@/shared/types/branded";
+import type {
+  CopAmount,
+  IsoDate,
+  IsoDateTime,
+  TransactionId,
+  UserId,
+} from "@/shared/types/branded";
 
 vi.mock("@/shared/lib/generate-id", () => ({
   generateCaptureEvidenceId: vi.fn(() => "ce-1"),
@@ -19,6 +25,7 @@ vi.mock("@/shared/lib/generate-id", () => ({
 }));
 
 const NOW = "2026-04-12T10:00:00.000Z" as IsoDateTime;
+const OCCURRED_ON = "2026-04-12" as IsoDate;
 const USER_ID = "user-1" as UserId;
 
 type InsertedRow = { readonly table: string; readonly row: any };
@@ -144,7 +151,7 @@ describe("Local Ledger source-event persistence", () => {
       db,
       ...baseSource,
       candidate: {
-        occurredAt: NOW,
+        occurredAt: OCCURRED_ON,
         amount: 12500 as CopAmount,
         description: "Low confidence cafe capture",
         confidence: 0.42,
@@ -184,7 +191,7 @@ describe("Local Ledger source-event persistence", () => {
       db,
       ...baseSource,
       candidate: {
-        occurredAt: NOW,
+        occurredAt: OCCURRED_ON,
         amount: 12500 as CopAmount,
         description: "Low confidence cafe capture",
         confidence: 0.42,
@@ -210,7 +217,7 @@ describe("Local Ledger source-event persistence", () => {
       db,
       ...baseSource,
       candidate: {
-        occurredAt: NOW,
+        occurredAt: OCCURRED_ON,
         amount: 12500 as CopAmount,
         description: "Retry review candidate",
         confidence: 0.42,
@@ -254,7 +261,7 @@ describe("Local Ledger source-event persistence", () => {
       db,
       ...baseSource,
       candidate: {
-        occurredAt: NOW,
+        occurredAt: OCCURRED_ON,
         amount: 12500 as CopAmount,
         description: "Low confidence cafe capture",
         confidence: 0.42,
@@ -284,7 +291,7 @@ describe("Local Ledger source-event persistence", () => {
         status: "processed",
         failureReason: null,
         candidate: {
-          occurredAt: NOW,
+          occurredAt: OCCURRED_ON,
           amount: 12500 as CopAmount,
           description: "Contradictory review candidate",
           confidence: 1,

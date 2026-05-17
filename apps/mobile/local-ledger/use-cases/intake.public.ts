@@ -10,6 +10,7 @@ import type {
   CaptureEvidenceId,
   CategoryId,
   CopAmount,
+  IsoDate,
   IsoDateTime,
   ProcessedSourceEventId,
   ReviewCandidateCaptureEvidenceId,
@@ -59,7 +60,7 @@ export type CreateReviewCandidateCommand = {
     readonly processedSourceEventId: ProcessedSourceEventId;
     readonly status: LocalLedgerReviewCandidate["status"];
     readonly candidateKind: LocalLedgerReviewCandidate["candidateKind"];
-    readonly occurredAt: IsoDateTime | null;
+    readonly occurredAt: IsoDate | null;
     readonly amount: CopAmount | null;
     readonly currency: "COP";
     readonly transactionType?: "expense" | "income" | null;

@@ -8,7 +8,7 @@ import {
 } from "@/infrastructure/local-ledger/public";
 import { capturePipelineEvent, generateTransactionId, trackTransactionCreated } from "@/shared/lib";
 import { toIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
-import { requireIsoDateTime } from "@/shared/types/assertions";
+import { requireIsoDate } from "@/shared/types/assertions";
 import { buildFailedFingerprint } from "./context";
 import type {
   DuplicateCheckResult,
@@ -241,7 +241,7 @@ export async function persistSuccessfulNotification(
       receivedAt: context.receivedAt,
       processedAt: context.now,
       candidate: {
-        occurredAt: requireIsoDateTime(`${context.parsed.date}T00:00:00.000Z`),
+        occurredAt: requireIsoDate(context.parsed.date),
         amount: context.parsed.amount,
         transactionType: context.parsed.type,
         categoryId: context.categoryId,

@@ -168,7 +168,7 @@ function insertPendingProcessedSourceEvent() {
       candidateKind: "transaction",
       amount: 350000 as CopAmount,
       currency: "COP",
-      occurredAt: ORIGINAL_CREATED_AT,
+      occurredAt: "2026-04-18" as IsoDate,
       description: "Transfer to savings",
       categoryId: null,
       transactionType: "expense",

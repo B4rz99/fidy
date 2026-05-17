@@ -1343,7 +1343,7 @@ describe("email processing pipeline", () => {
         }),
         candidate: expect.objectContaining({
           candidateKind: "transaction",
-          occurredAt: `${futureDate}T00:00:00.000Z`,
+          occurredAt: futureDate,
         }),
       })
     );

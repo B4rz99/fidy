@@ -1,5 +1,6 @@
 import type { RowSpec } from "./row-shape";
 import {
+  assertNullableIsoDate,
   assertNullableIsoDateTime,
   assertNullableNumber,
   assertNullableOneOf,
@@ -53,7 +54,7 @@ export const INTAKE_ROW_SPECS: readonly RowSpec[] = [
           processedSourceEventId: (value) => assertString(value, "processedSourceEventId"),
           status: (value) => assertString(value, "status"),
           candidateKind: (value) => assertString(value, "candidateKind"),
-          occurredAt: (value) => assertNullableIsoDateTime(value, "occurredAt"),
+          occurredAt: (value) => assertNullableIsoDate(value, "occurredAt"),
           amount: (value) => assertNullableNumber(value, "amount"),
           currency: (value) => assertOneOf(["COP"], value, "currency"),
           transactionType: (value) =>

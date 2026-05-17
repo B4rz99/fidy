@@ -272,7 +272,7 @@ export const reviewCandidates = sqliteTable(
       .notNull(),
     status: text("status").notNull(),
     candidateKind: text("candidate_kind").notNull(),
-    occurredAt: text("occurred_at").$type<IsoDateTime>(),
+    occurredAt: text("occurred_at").$type<IsoDate>(),
     amount: integer("amount").$type<CopAmount>(),
     currency: text("currency").notNull().default("COP"),
     transactionType: text("transaction_type").$type<"expense" | "income">(),

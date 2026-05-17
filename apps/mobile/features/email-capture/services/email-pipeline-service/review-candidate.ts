@@ -13,7 +13,7 @@ import {
   generateReviewCandidateCaptureEvidenceId,
   generateReviewCandidateId,
 } from "@/shared/lib/generate-id";
-import { requireCopAmount, requireIsoDateTime } from "@/shared/types/assertions";
+import { requireCopAmount, requireIsoDate, requireIsoDateTime } from "@/shared/types/assertions";
 import type { ProcessedSourceEventId } from "@/shared/types/branded";
 import { EmailPipelineDeps } from "./runtime";
 import { getEmailSourceId, getParsedCounterpartyName } from "./shared";
@@ -62,7 +62,7 @@ const toReviewCandidateInput = (
     id: generateReviewCandidateId(),
     status: "pending",
     candidateKind: "transaction",
-    occurredAt: requireIsoDateTime(`${context.parsed.date}T00:00:00.000Z`),
+    occurredAt: requireIsoDate(context.parsed.date),
     money: { amount: requireCopAmount(context.parsed.amount), currency: "COP" },
     transactionType: context.parsed.type,
     categoryId: context.categoryId,
