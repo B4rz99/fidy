@@ -1,0 +1,29 @@
+apps/mobile/__tests__/transactions/repository.test.ts
+  s_6b7d4add335b23::t_bfd5525d992618 58-59,123-124,174-175
+apps/mobile/features/transactions/lib/repository.ts
+  s_6b7d4add335b23::t_bfd5525d992618 180
+apps/mobile/features/transfers/lib/reclassify-transactions-as-transfer.ts
+  s_6b7d4add335b23::t_bfd5525d992618 11-14
+apps/mobile/features/transfers/lib/reclassify-transaction-as-transfer.ts
+  s_6b7d4add335b23::t_bfd5525d992618 41-44
+apps/mobile/__tests__/transactions/repository-monthly-totals.test.ts
+  s_6b7d4add335b23::t_bfd5525d992618 7
+apps/mobile/__tests__/analytics/repository.test.ts
+  s_6b7d4add335b23::t_bfd5525d992618 11-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "5317cf23dd1be96a744e7c7bc6b26338bdb34c41",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
