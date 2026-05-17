@@ -100,7 +100,10 @@ export async function confirmSourceEventFinancialMeaningReview(
             });
             if (!accepted) throw new Error("Review candidate resolution target was not found");
           },
-        });
+        }).catch((error: unknown) => ({
+          success: false as const,
+          error: error instanceof Error ? error.message : "Review candidate commit failed",
+        }));
 
         return recorded.success
           ? { ok: true, recorded: { ok: true, transaction: recorded.transaction, events: [] } }

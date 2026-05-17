@@ -1,4 +1,7 @@
-import type { CaptureEvidenceRow, CaptureEvidenceSeed } from "@/features/capture-evidence/write.public";
+import type {
+  CaptureEvidenceRow,
+  CaptureEvidenceSeed,
+} from "@/features/capture-evidence/write.public";
 import type { FinancialAccountRow } from "@/features/financial-accounts/write.public";
 import type { TransactionRow } from "@/features/transactions/query.public";
 import type {
