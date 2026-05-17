@@ -1,8 +1,9 @@
 import { addDays } from "date-fns";
-import { and, count, desc, eq, gte, lt } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db";
-import { detectedSmsEvents, notificationSources, processedCaptures } from "@/shared/db";
-import { generateNotificationSourceId, toIsoDate } from "@/shared/lib";
+import { and, count, desc, eq, gte, isNull, lt } from "drizzle-orm";
+import type { AnyDb } from "@/shared/db/client";
+import { detectedSmsEvents, notificationSources, processedSourceEvents } from "@/shared/db/schema";
+import { toIsoDate } from "@/shared/lib/format-date";
+import { generateNotificationSourceId } from "@/shared/lib/generate-id";
 import { requireIsoDateTime } from "@/shared/types/assertions";
 import type {
   DetectedSmsEventId,
@@ -51,21 +52,23 @@ export async function upsertNotificationSource(
     });
 }
 
-// -- processedCaptures reads --
+// -- processedSourceEvents reads --
 
-export async function getProcessedCapturesBySource(db: AnyDb, source: string) {
-  return db
-    .select()
-    .from(processedCaptures)
-    .where(eq(processedCaptures.source, source))
-    .orderBy(desc(processedCaptures.receivedAt));
-}
-
-export async function hasProcessedCaptures(db: AnyDb, source: string): Promise<boolean> {
+export async function hasProcessedSourceEventsBySource(
+  db: AnyDb,
+  userId: UserId,
+  source: string
+): Promise<boolean> {
   const rows = await db
-    .select({ id: processedCaptures.id })
-    .from(processedCaptures)
-    .where(eq(processedCaptures.source, source))
+    .select({ id: processedSourceEvents.id })
+    .from(processedSourceEvents)
+    .where(
+      and(
+        eq(processedSourceEvents.userId, userId),
+        eq(processedSourceEvents.sourceFamily, source),
+        isNull(processedSourceEvents.deletedAt)
+      )
+    )
     .limit(1);
   return rows.length > 0;
 }

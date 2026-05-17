@@ -11,13 +11,16 @@ import { requireUserId } from "@/shared/types/assertions";
 
 const mockGetEnabledPackages = vi.fn<(...args: any[]) => any>().mockResolvedValue([]);
 const mockUpsertNotificationSource = vi.fn<(...args: any[]) => any>();
-const mockHasProcessedCaptures = vi.fn<(...args: any[]) => any>().mockResolvedValue(false);
+const mockHasProcessedSourceEventsBySource = vi
+  .fn<(...args: any[]) => any>()
+  .mockResolvedValue(false);
 const mockGetTodaySmsEventCount = vi.fn<(...args: any[]) => any>().mockResolvedValue(0);
 
 vi.mock("@/features/capture-sources/lib/repository", () => ({
   getEnabledPackages: (...args: any[]) => mockGetEnabledPackages(...args),
   upsertNotificationSource: (...args: any[]) => mockUpsertNotificationSource(...args),
-  hasProcessedCaptures: (...args: any[]) => mockHasProcessedCaptures(...args),
+  hasProcessedSourceEventsBySource: (...args: any[]) =>
+    mockHasProcessedSourceEventsBySource(...args),
   getTodaySmsEventCount: (...args: any[]) => mockGetTodaySmsEventCount(...args),
 }));
 
@@ -39,7 +42,7 @@ describe("useCaptureSourcesStore", () => {
       detectedSmsCount: 0,
     });
     mockGetEnabledPackages.mockResolvedValue([]);
-    mockHasProcessedCaptures.mockResolvedValue(false);
+    mockHasProcessedSourceEventsBySource.mockResolvedValue(false);
     mockGetTodaySmsEventCount.mockResolvedValue(0);
   });
 
@@ -48,13 +51,13 @@ describe("useCaptureSourcesStore", () => {
       "com.todo1.mobile.co.bancolombia",
       "com.nequi.MobileApp",
     ]);
-    mockHasProcessedCaptures.mockResolvedValueOnce(true);
+    mockHasProcessedSourceEventsBySource.mockResolvedValueOnce(true);
     mockGetTodaySmsEventCount.mockResolvedValueOnce(3);
 
     await hydrateCaptureSources(mockDb, USER_ID);
 
     expect(mockGetEnabledPackages).toHaveBeenCalledWith(mockDb, USER_ID);
-    expect(mockHasProcessedCaptures).toHaveBeenCalledWith(mockDb, "apple_pay");
+    expect(mockHasProcessedSourceEventsBySource).toHaveBeenCalledWith(mockDb, USER_ID, "apple_pay");
     expect(mockGetTodaySmsEventCount).toHaveBeenCalledWith(mockDb, USER_ID, expect.any(Date));
     expect(useCaptureSourcesStore.getState()).toMatchObject({
       enabledPackages: ["com.todo1.mobile.co.bancolombia", "com.nequi.MobileApp"],
@@ -82,11 +85,11 @@ describe("useCaptureSourcesStore", () => {
   });
 
   it("refreshes Apple Pay setup status through the explicit boundary", async () => {
-    mockHasProcessedCaptures.mockResolvedValueOnce(true);
+    mockHasProcessedSourceEventsBySource.mockResolvedValueOnce(true);
 
-    await refreshCaptureSourceStatus(mockDb);
+    await refreshCaptureSourceStatus(mockDb, USER_ID);
 
-    expect(mockHasProcessedCaptures).toHaveBeenCalledWith(mockDb, "apple_pay");
+    expect(mockHasProcessedSourceEventsBySource).toHaveBeenCalledWith(mockDb, USER_ID, "apple_pay");
     expect(useCaptureSourcesStore.getState().isApplePaySetupComplete).toBe(true);
   });
 

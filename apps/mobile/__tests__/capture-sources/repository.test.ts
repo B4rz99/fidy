@@ -13,6 +13,7 @@ vi.mock("drizzle-orm", () => ({
   and: vi.fn<(...args: any[]) => any>((...args: any[]) => ({ and: args })),
   desc: vi.fn<(...args: any[]) => any>((...args: any[]) => ({ desc: args })),
   gte: vi.fn<(...args: any[]) => any>((...args: any[]) => ({ gte: args })),
+  isNull: vi.fn<(...args: any[]) => any>((...args: any[]) => ({ isNull: args })),
   lt: vi.fn<(...args: any[]) => any>((...args: any[]) => ({ lt: args })),
   count: vi.fn<(...args: any[]) => any>(() => "count(*)"),
 }));
@@ -26,10 +27,11 @@ vi.mock("date-fns", () => ({
 }));
 
 vi.mock("@/shared/db/schema", () => ({
-  processedCaptures: {
-    id: "processedCaptures.id",
-    source: "processedCaptures.source",
-    receivedAt: "processedCaptures.receivedAt",
+  processedSourceEvents: {
+    id: "processedSourceEvents.id",
+    userId: "processedSourceEvents.userId",
+    sourceFamily: "processedSourceEvents.sourceFamily",
+    deletedAt: "processedSourceEvents.deletedAt",
   },
   notificationSources: {
     userId: "notificationSources.userId",
@@ -88,31 +90,14 @@ describe("capture-sources repository", () => {
     mockSet.mockReturnValue({ where: mockUpdateWhere });
   });
 
-  // -- hasProcessedCaptures --
+  // -- hasProcessedSourceEventsBySource --
 
-  it("getProcessedCapturesBySource returns source rows newest first", async () => {
-    const rows = [
-      { id: "pc-2", source: "sms", receivedAt: "2026-03-07T11:00:00Z" },
-      { id: "pc-1", source: "sms", receivedAt: "2026-03-07T10:00:00Z" },
-    ];
-    mockOrderBy.mockResolvedValueOnce(rows);
+  it("hasProcessedSourceEventsBySource returns true when records exist", async () => {
+    mockLimit.mockResolvedValueOnce([{ id: "pse-1" }]);
 
-    const { getProcessedCapturesBySource } =
+    const { hasProcessedSourceEventsBySource } =
       await import("@/features/capture-sources/lib/repository");
-    const result = await getProcessedCapturesBySource(mockDb, "sms");
-
-    expect(mockSelect).toHaveBeenCalled();
-    expect(mockFrom).toHaveBeenCalled();
-    expect(mockWhere).toHaveBeenCalledWith({ eq: ["processedCaptures.source", "sms"] });
-    expect(mockOrderBy).toHaveBeenCalledWith({ desc: ["processedCaptures.receivedAt"] });
-    expect(result).toEqual(rows);
-  });
-
-  it("hasProcessedCaptures returns true when records exist", async () => {
-    mockLimit.mockResolvedValueOnce([{ id: "pc-1" }]);
-
-    const { hasProcessedCaptures } = await import("@/features/capture-sources/lib/repository");
-    const result = await hasProcessedCaptures(mockDb, "sms");
+    const result = await hasProcessedSourceEventsBySource(mockDb, USER_ID, "apple_pay");
 
     expect(mockSelect).toHaveBeenCalled();
     expect(mockFrom).toHaveBeenCalled();
@@ -121,11 +106,12 @@ describe("capture-sources repository", () => {
     expect(result).toBe(true);
   });
 
-  it("hasProcessedCaptures returns false when empty", async () => {
+  it("hasProcessedSourceEventsBySource returns false when empty", async () => {
     mockLimit.mockResolvedValueOnce([]);
 
-    const { hasProcessedCaptures } = await import("@/features/capture-sources/lib/repository");
-    const result = await hasProcessedCaptures(mockDb, "sms");
+    const { hasProcessedSourceEventsBySource } =
+      await import("@/features/capture-sources/lib/repository");
+    const result = await hasProcessedSourceEventsBySource(mockDb, USER_ID, "apple_pay");
 
     expect(result).toBe(false);
   });

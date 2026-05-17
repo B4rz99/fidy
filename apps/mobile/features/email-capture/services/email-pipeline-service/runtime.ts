@@ -15,11 +15,9 @@ import type {
   CaptureEvidenceSaveInput,
   CreateEmailPipelineServiceDeps,
   DefaultAccountInput,
-  LinkCaptureEvidenceInput,
   LlmParsedTransaction,
   MerchantRuleEffectInput,
   PipelineRuntime,
-  ProcessedEmailRow,
   ProcessedSourceEventId,
   ProcessedSourceEventRow,
   ProcessedSourceEventStatusEffectInput,
@@ -75,16 +73,6 @@ export function getProcessedEmailSourceEventIdsEffect(
   );
 }
 
-export function getProcessedExternalIdsEffect(
-  db: AnyDb,
-  userId: UserId,
-  sourceEvents: readonly { readonly provider: string; readonly externalId: string }[]
-) {
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ getProcessedExternalIds }) =>
-    fromPromise(() => getProcessedExternalIds(db, userId, sourceEvents))
-  );
-}
-
 export function getPendingRetryEmailSourceEventsEffect(db: AnyDb, userId: UserId) {
   return Effect.flatMap(EmailPipelineDeps.tag, ({ getPendingRetryEmailSourceEvents }) =>
     fromPromise(() => getPendingRetryEmailSourceEvents(db, userId))
@@ -106,12 +94,6 @@ export function findDuplicateTransactionEffect(
         merchant: getParsedCounterpartyName(parsed),
       })
     )
-  );
-}
-
-export function insertProcessedEmailEffect(db: AnyDb, row: ProcessedEmailRow) {
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ insertProcessedEmail }) =>
-    fromPromise(() => insertProcessedEmail(db, row))
   );
 }
 
@@ -168,19 +150,6 @@ export function saveEmailCaptureEvidenceEffect(input: CaptureEvidenceSaveInput) 
         transactionId: input.transactionId,
         now: input.now,
         buildEmailCaptureEvidence,
-      })
-    )
-  );
-}
-
-export function linkCaptureEvidenceToTransactionEffect(input: LinkCaptureEvidenceInput) {
-  return Effect.flatMap(EmailPipelineDeps.tag, ({ linkCaptureEvidenceToTransaction }) =>
-    fromThunk(() =>
-      linkCaptureEvidenceToTransaction(input.db, {
-        processedEmailId: input.processedEmailId,
-        processedSourceEventId: input.processedSourceEventId ?? null,
-        transactionId: input.transactionId,
-        updatedAt: input.updatedAt,
       })
     )
   );

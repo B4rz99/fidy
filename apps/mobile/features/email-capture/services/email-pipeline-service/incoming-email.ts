@@ -8,7 +8,6 @@ import {
 } from "./parse-improvement";
 import {
   getProcessedEmailSourceEventIdsEffect,
-  getProcessedExternalIdsEffect,
   insertProcessedEmailSourceEventEffect,
   nextRetryAtEffect,
   saveEmailCaptureEvidenceEffect,
@@ -77,13 +76,7 @@ async function persistPendingRetryIncomingEmail(
       { sourceId: getEmailSourceId(email), sourceEventId: email.externalId },
     ])
   );
-  const legacyProcessedIds = await context.runtime.runEmailEffect(
-    getProcessedExternalIdsEffect(context.db, context.userId, [email])
-  );
-  if (
-    sourceEventIds.has(getEmailSourceEventKey(email)) ||
-    legacyProcessedIds.has(getEmailSourceEventKey(email))
-  ) {
+  if (sourceEventIds.has(getEmailSourceEventKey(email))) {
     return createPipelineMetricResult("failed");
   }
 

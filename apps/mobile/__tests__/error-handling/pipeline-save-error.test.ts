@@ -12,9 +12,6 @@ vi.mock("@/shared/lib/sentry", () => ({
   captureWarning: vi.fn<(...args: any[]) => any>(),
 }));
 
-const mockGetProcessedExternalIds = vi
-  .fn<(...args: any[]) => any>()
-  .mockResolvedValue(new Set<string>());
 const mockGetProcessedEmailSourceEventIds = vi
   .fn<(...args: any[]) => any>()
   .mockResolvedValue(new Set<string>());
@@ -62,7 +59,6 @@ vi.mock("@/features/capture-sources/lib/dedup", () => ({
 }));
 
 vi.mock("@/features/email-capture/lib/repository", () => ({
-  getProcessedExternalIds: (...args: unknown[]) => mockGetProcessedExternalIds(...args),
   getProcessedEmailSourceEventIds: (...args: unknown[]) =>
     mockGetProcessedEmailSourceEventIds(...args),
   insertProcessedEmail: (...args: unknown[]) => mockInsertProcessedEmail(...args),
@@ -140,9 +136,7 @@ describe("pipeline worker save error path", () => {
       idCounter++;
       return `${prefix}-${idCounter}`;
     });
-    mockGetProcessedExternalIds.mockReset();
     mockGetProcessedEmailSourceEventIds.mockReset();
-    mockGetProcessedExternalIds.mockResolvedValue(new Set<string>());
     mockGetProcessedEmailSourceEventIds.mockResolvedValue(new Set<string>());
     mockInsertProcessedEmail.mockResolvedValue(undefined);
     mockInsertProcessedEmailSourceEvent.mockResolvedValue(undefined);

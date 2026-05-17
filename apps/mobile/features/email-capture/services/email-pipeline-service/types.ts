@@ -4,7 +4,6 @@ export type {
   AppendEmailParseImprovementRequestInput,
   DefaultAccountInput,
   DuplicateLookupOutcome,
-  DuplicateProcessedEmailRowInput,
   DuplicateProcessedSourceEventRowInput,
   EmailBatchContext,
   EmailBatchPlan,
@@ -14,7 +13,6 @@ export type {
   IncomingEmailOutcome,
   IncomingEmailPersistenceOutcome,
   IncomingParseOutcome,
-  LinkCaptureEvidenceInput,
   MerchantRuleEffectInput,
   PersistedTransactionContext,
   PipelineRuntime,
@@ -32,7 +30,6 @@ export type {
   SaveTransactionInput,
   TrackSavedTransactionInput,
   UnparsedIncomingEmailKind,
-  UnparsedProcessedEmailRowInput,
   UnparsedProcessedSourceEventRowInput,
 } from "./internal-types";
 export type {
@@ -45,8 +42,6 @@ export type {
   LlmParsedTransaction,
   PipelineResult,
   ProcessEmails,
-  ProcessedEmailId,
-  ProcessedEmailRow,
   ProcessedSourceEventId,
   ProcessedSourceEventRow,
   ProcessRetries,

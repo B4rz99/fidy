@@ -6,19 +6,11 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   getNotificationSources,
-  getProcessedCapturesBySource,
   getUndismissedSmsEvents,
   insertDetectedSmsEvent,
   upsertNotificationSource,
 } from "@/features/capture-sources/lib/repository";
-import { processedCaptures } from "@/shared/db/schema";
-import type {
-  DetectedSmsEventId,
-  IsoDateTime,
-  ProcessedCaptureId,
-  TransactionId,
-  UserId,
-} from "@/shared/types/branded";
+import type { DetectedSmsEventId, IsoDateTime, UserId } from "@/shared/types/branded";
 
 let sqlite: InstanceType<typeof Database>;
 let db: ReturnType<typeof drizzle>;
@@ -55,33 +47,6 @@ const insertSmsEventRow = (
     linkedTransactionId: null,
     createdAt: CREATED_AT,
   });
-
-const seedLegacyProcessedCaptureRow = (
-  overrides: Partial<{
-    id: ProcessedCaptureId;
-    fingerprintHash: string;
-    source: string;
-    status: string;
-    rawText: string | null;
-    transactionId: TransactionId | null;
-    confidence: number | null;
-    receivedAt: IsoDateTime;
-  }> = {}
-) =>
-  db
-    .insert(processedCaptures)
-    .values({
-      id: overrides.id ?? ("pc-1" as ProcessedCaptureId),
-      fingerprintHash: overrides.fingerprintHash ?? "hash-1",
-      source: overrides.source ?? "sms",
-      status: overrides.status ?? "accepted",
-      rawText: overrides.rawText ?? "Compra aprobada",
-      transactionId: overrides.transactionId ?? null,
-      confidence: overrides.confidence ?? 0.9,
-      receivedAt: overrides.receivedAt ?? ("2026-04-10T08:00:00.000Z" as IsoDateTime),
-      createdAt: CREATED_AT,
-    })
-    .run();
 
 const insertNotificationSourceRow = (
   overrides: Partial<{
@@ -172,38 +137,6 @@ describe("capture-sources repository SMS events", () => {
     expect(events.map(({ senderLabel }) => senderLabel)).toEqual([
       "Newest visible",
       "Older visible",
-    ]);
-  });
-
-  it("returns only captures for the requested source in newest-first order", async () => {
-    await seedLegacyProcessedCaptureRow({
-      id: "pc-1" as ProcessedCaptureId,
-      fingerprintHash: "hash-1",
-      source: "sms",
-      receivedAt: "2026-04-10T08:00:00.000Z" as IsoDateTime,
-      rawText: "Older SMS capture",
-    });
-    await seedLegacyProcessedCaptureRow({
-      id: "pc-2" as ProcessedCaptureId,
-      fingerprintHash: "hash-2",
-      source: "push",
-      receivedAt: "2026-04-10T09:30:00.000Z" as IsoDateTime,
-      rawText: "Other source capture",
-    });
-    await seedLegacyProcessedCaptureRow({
-      id: "pc-3" as ProcessedCaptureId,
-      fingerprintHash: "hash-3",
-      source: "sms",
-      receivedAt: "2026-04-10T11:30:00.000Z" as IsoDateTime,
-      rawText: "Newest SMS capture",
-    });
-
-    const captures = await getProcessedCapturesBySource(db as any, "sms");
-
-    expect(captures.map(({ id }) => id)).toEqual(["pc-3", "pc-1"]);
-    expect(captures.map(({ rawText }) => rawText)).toEqual([
-      "Newest SMS capture",
-      "Older SMS capture",
     ]);
   });
 });

@@ -14,7 +14,6 @@ import {
   getNeedsReviewEmailSourceEvents,
   getNeedsReviewEmails,
   getProcessedEmailSourceEventIds,
-  getProcessedExternalIds,
   insertEmailAccount,
   updateLastFetchedAt,
   updateProcessedEmailStatus,
@@ -84,7 +83,6 @@ vi.mock("@/features/email-capture/lib/repository", () => ({
       async (_db, _userId, sourceEvents) =>
         new Set(sourceEvents.map((event) => `${event.sourceId}:${event.sourceEventId}`))
     ),
-  getProcessedExternalIds: vi.fn<typeof getProcessedExternalIds>().mockResolvedValue(new Set()),
   dismissProcessedEmail: vi.fn<typeof dismissProcessedEmail>(),
   updateLastFetchedAt: vi.fn<typeof updateLastFetchedAt>(),
   updateProcessedEmailStatus: vi.fn<typeof updateProcessedEmailStatus>(),

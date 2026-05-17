@@ -1,5 +1,5 @@
 import { currentIsoDateTimeEffect } from "@/shared/effect/clock";
-import { generateProcessedEmailId, generateProcessedSourceEventId } from "@/shared/lib/generate-id";
+import { generateProcessedSourceEventId } from "@/shared/lib/generate-id";
 import { assertIsoDateTime } from "@/shared/types/assertions";
 import { parseEmailBodyOrReport } from "./parse-email-body";
 import type { EmailBatchContext, IncomingParseOutcome, RawEmail } from "./types";
@@ -27,7 +27,6 @@ export async function createIncomingEmailPersistenceState(
   assertIsoDateTime(email.receivedAt);
   return {
     createdAt: await context.runtime.runClockEffect(currentIsoDateTimeEffect),
-    processedEmailId: generateProcessedEmailId(),
     processedSourceEventId: generateProcessedSourceEventId(),
   };
 }

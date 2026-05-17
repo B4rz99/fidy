@@ -6,11 +6,7 @@ import {
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { currentIsoDateTimeEffect } from "@/shared/effect/clock";
 import { fromPromise } from "@/shared/effect/runtime";
-import {
-  generateProcessedEmailId,
-  generateProcessedSourceEventId,
-  generateTransactionId,
-} from "@/shared/lib/generate-id";
+import { generateProcessedSourceEventId, generateTransactionId } from "@/shared/lib/generate-id";
 import { assertIsoDateTime, requireIsoDateTime } from "@/shared/types/assertions";
 import type { IsoDateTime } from "@/shared/types/branded";
 import { commitReviewCandidate, persistReviewCandidateEffect } from "./review-candidate";
@@ -171,7 +167,7 @@ function createEmailTransactionContext(
     status: input.status,
     now,
     txId: generateTransactionId(),
-    processedEmailId: generateProcessedEmailId(),
+    processedEmailId: null,
     processedSourceEventId: generateProcessedSourceEventId(),
     categoryId: getPersistedCategoryId(input.parsed.categoryId),
     source: getTransactionSource(input.email.provider),

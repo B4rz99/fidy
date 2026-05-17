@@ -29,17 +29,20 @@ import type {
 const getRetryEmailProvider = (email: ProcessedSourceEventRow) =>
   email.sourceId.startsWith("email_outlook") ? "outlook" : "gmail";
 
+const optionalText = (value: string | null | undefined, fallback: string) => value ?? fallback;
+const nullableValue = <T>(value: T | null | undefined) => value ?? null;
+
 const toRetryEmailSnapshot = (email: ProcessedSourceEventRow): RetryEmailSnapshot => ({
   id: email.id,
   externalId: email.sourceEventId,
   provider: getRetryEmailProvider(email),
   status: email.status,
-  failureReason: email.failureReason,
-  subject: email.subject ?? "",
-  rawBodyPreview: email.rawBodyPreview,
+  failureReason: nullableValue(email.failureReason),
+  subject: optionalText(email.subject, ""),
+  rawBodyPreview: nullableValue(email.rawBodyPreview),
   receivedAt: email.receivedAt,
-  transactionId: email.transactionId,
-  confidence: email.confidence,
+  transactionId: nullableValue(email.transactionId),
+  confidence: nullableValue(email.confidence),
   createdAt: email.createdAt,
   rawBody: email.rawBody,
   retryCount: email.retryCount,

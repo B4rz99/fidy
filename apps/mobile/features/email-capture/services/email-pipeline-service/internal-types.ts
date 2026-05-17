@@ -7,7 +7,6 @@ import type { AppTelemetry } from "@/shared/effect/telemetry";
 import type {
   CategoryId,
   IsoDateTime,
-  ProcessedEmailId,
   ProcessedSourceEventId,
   TransactionId,
   UserId,
@@ -18,7 +17,6 @@ import type {
   EmailSaveStatus,
   LlmParsedTransaction,
   PipelineResult,
-  ProcessedEmailRow,
   ProgressCallback,
   RawEmail,
   RetryResult,
@@ -50,7 +48,7 @@ export type CaptureEvidenceRowsInput = {
   readonly cardProductHint?: string;
   readonly accountTypeHint?: string;
   readonly counterpartyHint?: string;
-  readonly processedEmailId: ProcessedEmailId | null;
+  readonly processedEmailId: null;
   readonly processedSourceEventId?: ProcessedSourceEventId | null;
   readonly transactionId: TransactionId | null;
   readonly now: IsoDateTime;
@@ -70,14 +68,6 @@ export type CaptureEvidenceSaveInput = Omit<
   "buildEmailCaptureEvidence"
 > & {
   readonly db: AnyDb;
-};
-
-export type LinkCaptureEvidenceInput = {
-  readonly db: AnyDb;
-  readonly processedEmailId: ProcessedEmailId;
-  readonly processedSourceEventId?: ProcessedSourceEventId | null;
-  readonly transactionId: TransactionId;
-  readonly updatedAt: IsoDateTime;
 };
 
 export type MerchantRuleEffectInput = {
@@ -125,8 +115,21 @@ export type SaveTransactionInput = {
   readonly status: EmailSaveStatus;
 };
 
-export type RetryEmailSnapshot = Omit<ProcessedEmailRow, "id"> & {
+export type RetryEmailSnapshot = {
   readonly id: string;
+  readonly externalId: string;
+  readonly provider: string;
+  readonly status: string;
+  readonly failureReason: string | null;
+  readonly subject: string;
+  readonly rawBodyPreview: string | null;
+  readonly receivedAt: IsoDateTime;
+  readonly transactionId: TransactionId | null;
+  readonly confidence: number | null;
+  readonly createdAt: IsoDateTime;
+  readonly rawBody?: string | null;
+  readonly retryCount?: number;
+  readonly nextRetryAt?: IsoDateTime | null;
 };
 
 export type SaveRetryTransactionInput = {
@@ -151,7 +154,7 @@ export type PersistedTransactionContext = {
 export type EmailTransactionContext = PersistedTransactionContext & {
   readonly email: RawEmail;
   readonly status: EmailSaveStatus;
-  readonly processedEmailId: ProcessedEmailId | null;
+  readonly processedEmailId: null;
   readonly processedSourceEventId: ProcessedSourceEventId;
 };
 
@@ -249,36 +252,21 @@ export type AppendEmailParseImprovementRequestInput = {
   readonly request: EmailParseImprovementRequest;
 };
 
-export type UnparsedProcessedEmailRowInput = {
+export type UnparsedProcessedSourceEventRowInput = {
   readonly email: RawEmail;
-  readonly processedEmailId: ProcessedEmailId;
   readonly createdAt: IsoDateTime;
-  readonly status: "pending_retry" | "skipped";
   readonly failureReason: string | null;
   readonly nextRetryAt: IsoDateTime | null;
-};
-
-export type UnparsedProcessedSourceEventRowInput = Omit<
-  UnparsedProcessedEmailRowInput,
-  "processedEmailId" | "status"
-> & {
   readonly userId: UserId;
   readonly processedSourceEventId: ProcessedSourceEventId;
   readonly status: "pending_retry" | "dismissed";
 };
 
-export type DuplicateProcessedEmailRowInput = {
+export type DuplicateProcessedSourceEventRowInput = {
   readonly email: RawEmail;
-  readonly processedEmailId: ProcessedEmailId;
   readonly transactionId: TransactionId;
   readonly confidence: number;
   readonly createdAt: IsoDateTime;
-};
-
-export type DuplicateProcessedSourceEventRowInput = Omit<
-  DuplicateProcessedEmailRowInput,
-  "processedEmailId"
-> & {
   readonly userId: UserId;
   readonly processedSourceEventId: ProcessedSourceEventId;
 };
