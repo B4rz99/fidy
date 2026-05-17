@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db/client";
-import { emailAccounts } from "@/shared/db/schema";
+import { emailAccounts, type AnyDb } from "@/shared/db";
 import type { EmailAccountId, IsoDateTime, UserId } from "@/shared/types/branded";
 export {
   getPendingRetryEmailSourceEvents,
@@ -15,6 +14,7 @@ export {
 } from "./source-event-repository";
 export {
   acceptSourceEventFinancialMeaningReviewById,
+  acceptSourceEventFinancialMeaningReviewByIdInTransaction,
   dismissSourceEventFinancialMeaningReviewById,
   getFinancialMeaningSourceEventReviewRows,
   getSourceEventReviewCandidateById,
@@ -29,7 +29,7 @@ export {
 export type EmailAccountRow = typeof emailAccounts.$inferInsert;
 
 export async function insertEmailAccount(db: AnyDb, row: EmailAccountRow): Promise<boolean> {
-  const result = await db.insert(emailAccounts).values(row).onConflictDoNothing().run();
+  const result = db.insert(emailAccounts).values(row).onConflictDoNothing().run();
   return result.changes > 0;
 }
 

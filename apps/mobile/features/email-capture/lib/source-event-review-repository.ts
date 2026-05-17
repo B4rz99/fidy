@@ -1,6 +1,5 @@
 import { and, eq, isNull } from "drizzle-orm";
-import type { AnyDb } from "@/shared/db";
-import { processedSourceEvents, reviewCandidates } from "@/shared/db/schema";
+import { processedSourceEvents, reviewCandidates, type AnyDb } from "@/shared/db";
 import type {
   IsoDateTime,
   ProcessedSourceEventId,
@@ -137,8 +136,8 @@ const acceptPendingReviewCandidate = (
     )
     .run();
 
-export function acceptSourceEventFinancialMeaningReviewById(
-  db: AnyDb,
+export function acceptSourceEventFinancialMeaningReviewByIdInTransaction(
+  tx: AnyDb,
   input: {
     readonly userId: UserId;
     readonly processedSourceEventId: ProcessedSourceEventId;
@@ -147,17 +146,24 @@ export function acceptSourceEventFinancialMeaningReviewById(
     readonly updatedAt: IsoDateTime;
   }
 ) {
+  const sourceEventUpdate = markSourceEventReviewProcessed(tx, input);
+  if (sourceEventUpdate.changes !== 1) return false;
+
+  const acceptedCandidateUpdate = acceptPendingReviewCandidate(tx, input);
+  if (acceptedCandidateUpdate.changes !== 1) {
+    throw new Error("Review candidate resolution target was not found");
+  }
+
+  rejectPendingSiblingCandidates(tx, input);
+  return true;
+}
+
+export function acceptSourceEventFinancialMeaningReviewById(
+  db: AnyDb,
+  input: Parameters<typeof acceptSourceEventFinancialMeaningReviewByIdInTransaction>[1]
+) {
   return db.transaction((tx) => {
-    const sourceEventUpdate = markSourceEventReviewProcessed(tx, input);
-    if (sourceEventUpdate.changes !== 1) return false;
-
-    const acceptedCandidateUpdate = acceptPendingReviewCandidate(tx, input);
-    if (acceptedCandidateUpdate.changes !== 1) {
-      throw new Error("Review candidate resolution target was not found");
-    }
-
-    rejectPendingSiblingCandidates(tx, input);
-    return true;
+    return acceptSourceEventFinancialMeaningReviewByIdInTransaction(tx, input);
   });
 }
 

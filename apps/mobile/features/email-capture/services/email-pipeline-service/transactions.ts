@@ -2,10 +2,11 @@ import { Effect } from "effect";
 import {
   type CaptureEvidenceRow,
   materializeCaptureEvidenceRows,
-} from "@/features/capture-evidence/public";
-import type { FinancialAccountRow } from "@/features/financial-accounts/public";
+} from "@/features/capture-evidence/write.public";
+import type { FinancialAccountRow } from "@/features/financial-accounts/write.public";
 import { currentIsoDateTimeEffect } from "@/shared/effect/clock";
 import { fromPromise } from "@/shared/effect/runtime";
+// eslint-disable-next-line no-restricted-imports -- avoid shared/lib barrel pulling React Native into pure pipeline code
 import { generateProcessedSourceEventId, generateTransactionId } from "@/shared/lib/generate-id";
 import { assertIsoDateTime, requireIsoDateTime } from "@/shared/types/assertions";
 import type { IsoDateTime } from "@/shared/types/branded";
@@ -22,7 +23,11 @@ import {
   getTransactionSource,
   resolveEmailStatus,
 } from "./shared";
-import { defaultRecordTransaction, recordTransactionToDb } from "./transaction-recording";
+import {
+  buildTransactionRow,
+  defaultRecordTransaction,
+  prepareRecordedTransaction,
+} from "./transaction-recording";
 import { trackSavedTransactionEffect } from "./transaction-tracking";
 import type {
   CreateEmailPipelineServiceDeps,
@@ -85,10 +90,14 @@ function persistReviewCandidateBundleEffect(context: EmailTransactionContext) {
 
     yield* fromPromise(async () => {
       if ("transaction" in context.db && typeof context.db.transaction === "function") {
-        await context.db.transaction(async (tx) => {
-          await commitReviewCandidate({ ...context, db: tx }, deps);
-          await deps.insertProcessedEmailSourceEvent(tx, processedSourceEventRow);
+        let commitPromise:
+          | ReturnType<typeof commitReviewCandidate>
+          | undefined;
+        context.db.transaction((tx) => {
+          commitPromise = commitReviewCandidate({ ...context, db: tx }, deps);
+          void deps.insertProcessedEmailSourceEvent(tx, processedSourceEventRow);
         });
+        await commitPromise;
         return;
       }
 
@@ -126,26 +135,21 @@ function persistTransactionBundleEffect(context: EmailTransactionContext) {
       deletedAt: null,
     };
     const evidenceRows = buildTransactionCaptureEvidenceRows(context, buildEmailCaptureEvidence);
+    const transaction = yield* fromPromise(() =>
+      prepareRecordedTransaction(context, { recordTransaction })
+    );
 
     yield* fromPromise(async () => {
       if ("transaction" in context.db && typeof context.db.transaction === "function") {
-        await context.db.transaction(async (tx) => {
-          await recordTransactionToDb(context, {
-            insertTransaction,
-            recordTransaction,
-            db: tx,
-          });
-          await insertProcessedEmailSourceEvent(tx, processedSourceEventRow);
-          await saveCaptureEvidenceRows(tx, evidenceRows);
+        context.db.transaction((tx) => {
+          void insertTransaction(tx, buildTransactionRow(context, transaction));
+          void insertProcessedEmailSourceEvent(tx, processedSourceEventRow);
+          void saveCaptureEvidenceRows(tx, evidenceRows);
         });
         return;
       }
 
-      await recordTransactionToDb(context, {
-        insertTransaction,
-        recordTransaction,
-        db: context.db,
-      });
+      await insertTransaction(context.db, buildTransactionRow(context, transaction));
       await insertProcessedEmailSourceEvent(context.db, processedSourceEventRow);
       await saveCaptureEvidenceRows(context.db, evidenceRows);
     });

@@ -41,6 +41,7 @@ export type EmailCaptureActions = {
   appendAccount: (account: EmailAccountRow) => void;
   removeAccount: (accountId: string) => void;
   removeFailedEmail: (processedSourceEventId: string) => void;
+  removeNeedsReviewEmail: (processedSourceEventId: string) => void;
   markAccountsFetched: (accountIds: ReadonlySet<EmailAccountId>, fetchedAt: IsoDateTime) => void;
 };
 
@@ -87,6 +88,12 @@ export function createEmailCaptureActions(set: EmailCaptureSetState): EmailCaptu
     removeFailedEmail: (processedSourceEventId) =>
       set((state) => ({
         failedEmailSourceEvents: state.failedEmailSourceEvents.filter(
+          (email) => email.id !== processedSourceEventId
+        ),
+      })),
+    removeNeedsReviewEmail: (processedSourceEventId) =>
+      set((state) => ({
+        needsReviewEmailSourceEvents: state.needsReviewEmailSourceEvents.filter(
           (email) => email.id !== processedSourceEventId
         ),
       })),

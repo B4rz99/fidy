@@ -4,10 +4,10 @@ import type {
   LocalLedgerCaptureEvidence,
   LocalLedgerCommandId,
   LocalLedgerProcessedSourceEventId,
-  LocalLedgerReviewCandidateId,
   LocalLedgerSourceId,
 } from "@/local-ledger/public";
 import { fromPromise } from "@/shared/effect/runtime";
+// eslint-disable-next-line no-restricted-imports -- avoid shared/lib barrel pulling React Native into pure pipeline code
 import {
   generateCaptureEvidenceId,
   generateId,
@@ -17,7 +17,7 @@ import {
 import { requireCopAmount, requireIsoDate, requireIsoDateTime } from "@/shared/types/assertions";
 import type { ProcessedSourceEventId } from "@/shared/types/branded";
 import { EmailPipelineDeps } from "./runtime";
-import { getEmailSourceId } from "./shared";
+import { getEmailSourceId, getParsedCounterpartyName } from "./shared";
 import type { CreateEmailPipelineServiceDeps, EmailTransactionContext } from "./types";
 
 type ReviewCandidateContext = Pick<
@@ -64,14 +64,14 @@ const toReviewCandidateInput = (
     confidence: context.parsed.confidence,
   },
   candidate: {
-    id: generateReviewCandidateId() as unknown as LocalLedgerReviewCandidateId,
+    id: generateReviewCandidateId(),
     status: "pending",
     candidateKind: "transaction",
     occurredAt: requireIsoDate(context.parsed.date),
     money: { amount: requireCopAmount(context.parsed.amount), currency: "COP" },
     transactionType: context.parsed.type,
     categoryId: context.categoryId,
-    description: null,
+    description: getParsedCounterpartyName(context.parsed),
     confidence: context.parsed.confidence,
   },
   evidence: evidenceSeeds.map(
