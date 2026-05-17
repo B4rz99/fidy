@@ -5,11 +5,8 @@ import {
 import { findDuplicateTransaction } from "@/features/capture-sources/dedup.public";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
 import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/public";
-import {
-  type CreateReviewCandidateInput,
-  createReviewCandidateUseCase,
-} from "@/local-ledger/public";
-import { createWriteThroughMutationModule } from "@/mutations";
+import type { CreateReviewCandidateInput } from "@/local-ledger/intake.public";
+import { createReviewCandidateWithLocalLedger } from "@/mutations";
 import type { AnyDb } from "@/shared/db";
 import { trackTransactionCreated } from "@/shared/lib/analytics";
 import type { UserId } from "@/shared/types/branded";
@@ -85,9 +82,7 @@ const emailPipelineDeps = {
   insertMerchantRule,
   trackTransactionCreated,
   createReviewCandidate: (db: AnyDb, input: CreateReviewCandidateInput) =>
-    createReviewCandidateUseCase({
-      commit: (command) => createWriteThroughMutationModule(db).commit(command as never),
-    })(input),
+    createReviewCandidateWithLocalLedger(db, input),
 };
 
 const emailPipeline = createEmailPipelineService({

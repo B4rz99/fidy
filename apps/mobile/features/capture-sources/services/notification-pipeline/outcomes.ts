@@ -1,9 +1,9 @@
 import { insertMerchantRule } from "@/features/email-capture/merchant-rules.public";
 import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import {
-  persistCommittedCaptureSourceEvent,
-  persistCommittedCaptureSourceEventInTransaction,
-  persistProcessedSourceEvent,
+  recordCommittedCaptureSourceEventWithLocalLedger,
+  recordCommittedCaptureSourceEventInTransactionWithLocalLedger,
+  recordProcessedCaptureSourceEventWithLocalLedger,
   recordReviewCandidateCaptureWithLocalLedger,
 } from "@/infrastructure/local-ledger/public";
 import { capturePipelineEvent, generateTransactionId, trackTransactionCreated } from "@/shared/lib";
@@ -108,7 +108,7 @@ async function saveTransactionRecord(context: ResolvedNotificationContext) {
       source: "notification_capture",
     },
     afterRecord: (tx) => {
-      persistCommittedCaptureSourceEventInTransaction(tx, {
+      recordCommittedCaptureSourceEventInTransactionWithLocalLedger(tx, {
         userId: context.userId,
         sourceFamily: context.source,
         sourceId: context.source,
@@ -124,7 +124,7 @@ async function saveTransactionRecord(context: ResolvedNotificationContext) {
   });
 
   if (!result.success) {
-    persistProcessedSourceEvent({
+    recordProcessedCaptureSourceEventWithLocalLedger({
       db: context.db,
       userId: context.userId,
       sourceFamily: context.source,
@@ -163,7 +163,7 @@ export async function persistFailedNotification(
   context: NotificationStageContext
 ): Promise<NotificationPipelineResult> {
   const now = toIsoDateTime(new Date());
-  persistProcessedSourceEvent({
+  recordProcessedCaptureSourceEventWithLocalLedger({
     db: context.db,
     userId: context.userId,
     sourceFamily: context.source,
@@ -196,7 +196,7 @@ export async function persistDuplicateNotification(
   duplicate: DuplicateCheckResult
 ): Promise<NotificationPipelineResult> {
   if (duplicate.kind === "already_processed") {
-    persistProcessedSourceEvent({
+    recordProcessedCaptureSourceEventWithLocalLedger({
       db: context.db,
       userId: context.userId,
       sourceFamily: context.source,
@@ -210,7 +210,7 @@ export async function persistDuplicateNotification(
     return reportSkippedDuplicate(context, null);
   }
 
-  persistCommittedCaptureSourceEvent(context.db, {
+  recordCommittedCaptureSourceEventWithLocalLedger(context.db, {
     userId: context.userId,
     sourceFamily: context.source,
     sourceId: context.source,

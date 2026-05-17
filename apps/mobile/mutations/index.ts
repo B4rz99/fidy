@@ -14,6 +14,10 @@ import type { NotificationRow as RepoNotificationRow } from "@/features/notifica
 import type { TransactionRow as RepoTransactionRow } from "@/features/transactions/lib/repository";
 import type { AnyDb } from "@/shared/db";
 import {
+  createReviewCandidateUseCase,
+  type CreateReviewCandidateInput,
+} from "@/local-ledger/intake.public";
+import {
   createGenericWriteThroughMutationModule,
   getMutationPolicy,
   type MutationCommand,
@@ -46,6 +50,14 @@ const applyCommand = (db: MutationDb, command: MutationCommand) =>
 export function createWriteThroughMutationModule(db: AnyDb): WriteThroughMutationModule {
   return createGenericWriteThroughMutationModule(db, applyCommand);
 }
+
+export const createReviewCandidateWithLocalLedger = (
+  db: AnyDb,
+  input: CreateReviewCandidateInput
+) =>
+  createReviewCandidateUseCase({
+    commit: (command) => createWriteThroughMutationModule(db).commit(command as never),
+  })(input);
 
 export {
   getMutationPolicy,

@@ -16,10 +16,8 @@ const mockGetProcessedEmailSourceEventIds = vi
   .mockResolvedValue(new Set<string>());
 const mockInsertProcessedEmailSourceEvent = vi.fn<(...args: any[]) => any>();
 const mockInsertTransaction = vi.fn<(...args: any[]) => any>();
-const mockRecordTransaction = vi.fn<(...args: any[]) => any>();
 const mockRecordAutomatedTransactionWithLocalLedger = vi.fn<(...args: any[]) => any>();
 const mockCreateReviewCandidate = vi.fn<(...args: any[]) => any>();
-const mockWriteThroughCommit = vi.fn<(...args: any[]) => any>();
 const mockLookupMerchantRule = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
 const mockInsertMerchantRule = vi.fn<(...args: any[]) => any>();
 const mockParseEmailApi = vi.fn<(...args: any[]) => any>().mockResolvedValue(null);
@@ -80,22 +78,6 @@ vi.mock("@/features/capture-sources/lib/dedup", () => ({
   findDuplicateTransaction: (...args: unknown[]) => mockFindDuplicateTransaction(...args),
 }));
 
-vi.mock("@/local-ledger/public", () => ({
-  createReviewCandidateUseCase:
-    ({ commit }: { commit: (command: unknown) => Promise<unknown> }) =>
-    async (input: unknown) => {
-      await commit({ type: "test-review-candidate" });
-      return { success: true, candidate: input };
-    },
-  recordTransaction: (...args: unknown[]) => mockRecordTransaction(...args),
-}));
-
-vi.mock("@/mutations", () => ({
-  createWriteThroughMutationModule: (db: unknown) => ({
-    commit: (command: unknown) => mockWriteThroughCommit(db, command),
-  }),
-}));
-
 vi.mock("@/features/email-capture/lib/repository", () => ({
   getProcessedEmailSourceEventIds: (...args: unknown[]) =>
     mockGetProcessedEmailSourceEventIds(...args),
@@ -115,9 +97,13 @@ vi.mock("@/features/transactions/lib/repository", () => ({
   insertTransaction: (...args: unknown[]) => mockInsertTransaction(...args),
 }));
 
-vi.mock("@/infrastructure/local-ledger/record-transaction", () => ({
+vi.mock("@/infrastructure/local-ledger/public", () => ({
   recordAutomatedTransactionWithLocalLedger: (...args: unknown[]) =>
     mockRecordAutomatedTransactionWithLocalLedger(...args),
+}));
+
+vi.mock("@/mutations", () => ({
+  createReviewCandidateWithLocalLedger: (...args: unknown[]) => mockCreateReviewCandidate(...args),
 }));
 
 vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
@@ -171,9 +157,6 @@ const mockDb = {
 const USER_ID = requireUserId("user-1");
 let idCounter = 0;
 
-const normalizeLedgerText = (value: string | null | undefined) =>
-  (value ?? "").trim().slice(0, 200);
-
 function makeRawEmail(overrides: Partial<RawEmail> = {}): RawEmail {
   return {
     externalId: "ext-1",
@@ -211,9 +194,7 @@ function resetPipelineMocks() {
     mockGetProcessedEmailSourceEventIds,
     mockInsertProcessedEmailSourceEvent,
     mockInsertTransaction,
-    mockRecordTransaction,
     mockCreateReviewCandidate,
-    mockWriteThroughCommit,
     mockLookupMerchantRule,
     mockInsertMerchantRule,
     mockParseEmailApi,
@@ -227,25 +208,7 @@ function resetPipelineMocks() {
   mockGetProcessedEmailSourceEventIds.mockResolvedValue(new Set<string>());
   mockInsertProcessedEmailSourceEvent.mockReturnValue(undefined);
   mockInsertTransaction.mockReturnValue(undefined);
-  mockRecordTransaction.mockImplementation(async ({ ports, command }) => {
-    const transaction = {
-      id: ports.generateEntryId(),
-      userId: command.userId,
-      type: command.type,
-      amount: command.amount,
-      accountId: command.accountId,
-      accountAttributionState: command.accountAttributionState,
-      categoryId: command.categoryId,
-      occurredOn: command.occurredOn,
-      description: normalizeLedgerText(command.description),
-      counterpartyName: normalizeLedgerText(command.counterpartyName),
-      source: command.source,
-    };
-    await ports.commit(transaction);
-    return { ok: true, transaction, events: [] };
-  });
   mockCreateReviewCandidate.mockResolvedValue({ success: true });
-  mockWriteThroughCommit.mockResolvedValue(undefined);
   mockLookupMerchantRule.mockResolvedValue(null);
   mockInsertMerchantRule.mockResolvedValue(undefined);
   mockParseEmailApi.mockResolvedValue(null);
@@ -723,9 +686,11 @@ describe("email processing pipeline", () => {
 
     expect(result.needsReview).toBe(1);
     expect(dbWithTransaction.transaction).toHaveBeenCalledTimes(0);
-    expect(mockWriteThroughCommit).toHaveBeenCalledWith(
+    expect(mockCreateReviewCandidate).toHaveBeenCalledWith(
       dbWithTransaction,
-      expect.objectContaining({ type: "test-review-candidate" })
+      expect.objectContaining({
+        candidate: expect.objectContaining({ candidateKind: "transaction" }),
+      })
     );
     expect(mockInsertProcessedEmailSourceEvent).not.toHaveBeenCalled();
   });
@@ -1058,7 +1023,7 @@ describe("email processing pipeline", () => {
     expect(result.saved).toBe(0);
     expect(result.failed).toBe(0);
     expect(mockInsertTransaction).not.toHaveBeenCalled();
-    expect(mockRecordTransaction).not.toHaveBeenCalled();
+    expect(mockRecordAutomatedTransactionWithLocalLedger).not.toHaveBeenCalled();
     expect(mockCreateReviewCandidate).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
@@ -1105,10 +1070,13 @@ describe("email processing pipeline", () => {
     const result = await processEmails(mockDb, USER_ID, emails);
 
     expect(result.needsReview).toBe(1);
-    expect(mockWriteThroughCommit).toHaveBeenCalledWith(
+    expect(mockCreateReviewCandidate).toHaveBeenCalledWith(
       mockDb,
       expect.objectContaining({
-        type: "test-review-candidate",
+        candidate: expect.objectContaining({
+          candidateKind: "transaction",
+          description: "Compra en Exito",
+        }),
       })
     );
     expect(mockInsertProcessedEmailSourceEvent).not.toHaveBeenCalled();
@@ -1563,23 +1531,6 @@ describe("processRetries", () => {
     mockMarkSourceEventRetrySuccess.mockResolvedValue(undefined);
     mockMarkSourceEventRetrySuccess.mockResolvedValue(undefined);
     mockInsertTransaction.mockResolvedValue(undefined);
-    mockRecordTransaction.mockImplementation(async ({ ports, command }) => {
-      const transaction = {
-        id: ports.generateEntryId(),
-        userId: command.userId,
-        type: command.type,
-        amount: command.amount,
-        accountId: command.accountId,
-        accountAttributionState: command.accountAttributionState,
-        categoryId: command.categoryId,
-        occurredOn: command.occurredOn,
-        description: command.description ?? "",
-        counterpartyName: normalizeLedgerText(command.counterpartyName),
-        source: command.source,
-      };
-      await ports.commit(transaction);
-      return { ok: true, transaction, events: [] };
-    });
     mockCreateReviewCandidate.mockResolvedValue({ success: true });
     mockLookupMerchantRule.mockResolvedValue(null);
     mockInsertMerchantRule.mockResolvedValue(undefined);

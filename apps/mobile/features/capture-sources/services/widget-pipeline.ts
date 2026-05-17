@@ -2,8 +2,8 @@ import { isValidCategoryId } from "@/features/transactions/write.public";
 import { ensureDefaultFinancialAccount } from "@/features/financial-accounts/public";
 import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/public";
 import {
-  persistCommittedCaptureSourceEventInTransaction,
-  persistProcessedSourceEvent,
+  recordCommittedCaptureSourceEventInTransactionWithLocalLedger,
+  recordProcessedCaptureSourceEventWithLocalLedger,
 } from "@/infrastructure/local-ledger/public";
 import type { AnyDb } from "@/shared/db";
 import {
@@ -106,7 +106,7 @@ export async function processWidgetTransactions(
         sourceEventId: fingerprint,
       });
       if (alreadyProcessed) {
-        persistProcessedSourceEvent({
+        recordProcessedCaptureSourceEventWithLocalLedger({
           db,
           userId,
           sourceFamily: "widget",
@@ -140,7 +140,7 @@ export async function processWidgetTransactions(
           source: "widget_capture",
         },
         afterRecord: (tx) => {
-          persistCommittedCaptureSourceEventInTransaction(tx, {
+          recordCommittedCaptureSourceEventInTransactionWithLocalLedger(tx, {
             userId,
             sourceFamily: "widget",
             sourceId: "widget",
@@ -169,7 +169,7 @@ export async function processWidgetTransactions(
       succeededEntryIds.push(item.id);
     } catch (error) {
       try {
-        persistProcessedSourceEvent({
+        recordProcessedCaptureSourceEventWithLocalLedger({
           db,
           userId,
           sourceFamily: "widget",

@@ -18,10 +18,10 @@ export {
   type ReclassifyTransactionsAsTransferResult,
 } from "./transfer-reclassification";
 export {
-  persistCommittedCaptureSourceEvent,
-  persistCommittedCaptureSourceEventInTransaction,
-  persistProcessedSourceEvent,
-} from "./source-events";
+  recordCommittedCaptureSourceEventInTransactionWithLocalLedger,
+  recordCommittedCaptureSourceEventWithLocalLedger,
+  recordProcessedCaptureSourceEventWithLocalLedger,
+} from "./capture-source-events";
 export { recordReviewCandidateCaptureWithLocalLedger } from "./review-candidate-capture";
 export { updateTransactionAccountAttribution } from "./transaction-attribution";
 export { seedLocalLedgerRowsForQa } from "./qa-seed";
