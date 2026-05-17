@@ -1,0 +1,23 @@
+apps/mobile/features/transfers/lib/reclassify-transactions-as-transfer.ts
+  s_6b7d4add335b23::t_329d9112c6329e 17,27,287
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_6b7d4add335b23::t_830b4d315dcec8 1335-1360
+apps/mobile/features/transfers/lib/local-ledger-transfer-mappers.ts
+  s_6b7d4add335b23::t_329d9112c6329e 1-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "589d53ab2572a007a2a469e56488d8b75e3f04f2",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
