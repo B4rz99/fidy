@@ -1,0 +1,46 @@
+apps/mobile/__tests__/backup/local-ledger-snapshot.test.ts
+  s_6b7d4add335b23::t_089ba455a10dcb 181,225
+apps/mobile/features/email-capture/services/email-pipeline-service/review-candidate.ts
+  s_6b7d4add335b23::t_830240509b83b7 16,65
+apps/mobile/shared/db/schema.ts
+  s_6b7d4add335b23::t_e384c7f15da30d 275
+apps/mobile/local-ledger/snapshot/row-shape.ts
+  s_6b7d4add335b23::t_017c4340cb030d 3,96
+apps/mobile/local-ledger/use-cases/intake.public.ts
+  s_6b7d4add335b23::t_ca3de0000a0e22 13,63
+apps/mobile/local-ledger/snapshot/row-assertions.ts
+  s_6b7d4add335b23::t_142f185ff5fb2d 90-95
+apps/mobile/local-ledger/domain/public.ts
+  s_6b7d4add335b23::t_58b365c9020439 97
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_6b7d4add335b23::t_fc10e124bbd4a1 11,244
+apps/mobile/local-ledger/snapshot/row-shape-intake.ts
+  s_6b7d4add335b23::t_7f0ddce8ae3edd 3,57
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_6b7d4add335b23::t_bf50e4261ad0a0 1346
+apps/mobile/__tests__/local-ledger/intake-mutation.test.ts
+  s_6b7d4add335b23::t_dfd084c18dc713 23,111,163
+apps/mobile/infrastructure/local-ledger/review-candidate-capture.ts
+  s_6b7d4add335b23::t_4fd8a17a652406 26,45,176
+apps/mobile/__tests__/local-ledger/source-events.test.ts
+  s_6b7d4add335b23::t_c6228285f4aa88 28,154,194,220,264,294
+  s_6b7d4add335b23::t_79f89729c2b3cf 11-17
+apps/mobile/__tests__/transfers/reclassify-transaction-as-transfer.test.ts
+  s_6b7d4add335b23::t_f3a115b711669b 171
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "052abbc9c8781de680bca1aa55863c26647e225d",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
