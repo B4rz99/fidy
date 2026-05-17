@@ -1,0 +1,56 @@
+apps/mobile/__tests__/capture-sources/store.test.ts
+  s_acf8922e9282b5::t_7fae7024132148 60,92
+  s_acf8922e9282b5::t_a0e5e212e62afc 14-16,22-23,45,54,88,90
+apps/mobile/features/capture-sources/store.ts
+  s_acf8922e9282b5::t_33a1525e58634c 3-5
+  s_acf8922e9282b5::t_7fae7024132148 141
+  s_acf8922e9282b5::t_870779aef68a03 10,110,140
+apps/mobile/features/email-capture/services/email-pipeline-service/transactions.ts
+  s_acf8922e9282b5::t_0e03da8ece781b 170
+  s_acf8922e9282b5::t_d8d53eacde17a8 9
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-batch.ts
+  s_acf8922e9282b5::t_41f7ccafdd4b25 5
+  s_acf8922e9282b5::t_d8d53eacde17a8 60
+apps/mobile/__tests__/capture-sources/repository.test.ts
+  s_acf8922e9282b5::t_a0e5e212e62afc 16,30-35,97,99-100,102,104,113,116-118
+apps/mobile/features/email-capture/lib/repository.ts
+  s_acf8922e9282b5::t_7114a737b7002e 3
+  s_acf8922e9282b5::t_eed1c99052d16c 2
+apps/mobile/features/email-capture/services/email-pipeline-service/retry.ts
+  s_acf8922e9282b5::t_0a21bf46abaf92 37
+  s_acf8922e9282b5::t_e6957ed4753e7d 39,41-42
+apps/mobile/features/email-capture/services/email-pipeline-service/internal-types.ts
+  s_acf8922e9282b5::t_320f615e4b7bee 51,157,255
+  s_acf8922e9282b5::t_774caca8f4ae91 118,120-132,265
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-parse.ts
+  s_acf8922e9282b5::t_0e03da8ece781b 2
+apps/mobile/features/capture-sources/lib/repository.ts
+  s_acf8922e9282b5::t_55b2da048a5cab 4-9,78-80,85
+  s_acf8922e9282b5::t_33a1525e58634c 10-11
+  s_acf8922e9282b5::t_eed1c99052d16c 3
+  s_acf8922e9282b5::t_54c681d5b5a69e 2
+  s_acf8922e9282b5::t_870779aef68a03 60,62-66,68-76
+apps/mobile/features/email-capture/services/email-pipeline-service/shared.ts
+  s_acf8922e9282b5::t_774caca8f4ae91 3
+plans/legacy-processed-intake-audit-447.md
+  s_acf8922e9282b5::t_8d2f3fe2506c3b 1-16,19-27,33-39,42-47
+  s_acf8922e9282b5::t_dc09a564d025f5 17-18,28-32,40-41
+apps/mobile/__tests__/capture-sources/repository-sms-events.test.ts
+  s_acf8922e9282b5::t_7fae7024132148 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "0228e76e09dd9aac3e70875a4341e833efbd9531",
+  "prompts": {},
+  "sessions": {
+    "s_acf8922e9282b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e312a-9a72-79f3-9f55-01b1c2c7dc9f",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
