@@ -1,0 +1,21 @@
+apps/mobile/features/email-capture/services/email-pipeline-service/transactions.ts
+  s_6b7d4add335b23::t_cdab306b916ac3 64-68,73,112-120
+apps/mobile/features/email-capture/lib/source-event-review-repository.ts
+  s_6b7d4add335b23::t_06dc895cf0da7e 2-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "3b18c513fe7d3abbfd369f1e214d76f80cc5ccc7",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
