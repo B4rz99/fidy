@@ -73,6 +73,33 @@ export function toTransferRow(transfer: LocalLedgerTransfer): typeof transfers.$
   };
 }
 
+export function upsertTransferStorageRow(db: AnyDb, row: typeof transfers.$inferInsert) {
+  db.insert(transfers)
+    .values(row)
+    .onConflictDoUpdate({
+      target: transfers.id,
+      set: {
+        userId: row.userId,
+        amount: row.amount,
+        fromAccountId: row.fromAccountId,
+        toAccountId: row.toAccountId,
+        fromExternalLabel: row.fromExternalLabel,
+        toExternalLabel: row.toExternalLabel,
+        description: row.description,
+        date: row.date,
+        source: row.source,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        deletedAt: row.deletedAt,
+      },
+    })
+    .run();
+}
+
+export function saveTransferStorageRow(db: AnyDb, row: typeof transfers.$inferInsert) {
+  upsertTransferStorageRow(db, row);
+}
+
 function insertTransfer(db: AnyDb, transfer: LocalLedgerTransfer) {
   const row = toTransferRow(transfer);
   db.insert(transfers).values(row).run();

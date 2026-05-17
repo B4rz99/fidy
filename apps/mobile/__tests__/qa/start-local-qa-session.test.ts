@@ -69,12 +69,12 @@ vi.mock("@/features/financial-accounts/lib/repository", () => ({
   upsertFinancialAccount: (db: unknown, row: unknown) => mockUpsertFinancialAccount(db, row),
 }));
 
-vi.mock("@/features/transactions/lib/repository", () => ({
-  insertTransaction: (db: unknown, row: unknown) => mockInsertTransaction(db, row),
+vi.mock("@/infrastructure/local-ledger/transaction-storage", () => ({
+  insertTransactionStorageRow: (db: unknown, row: unknown) => mockInsertTransaction(db, row),
 }));
 
-vi.mock("@/features/transfers/lib/repository", () => ({
-  upsertTransfer: (db: unknown, row: unknown) => mockUpsertTransfer(db, row),
+vi.mock("@/infrastructure/local-ledger/record-transfer", () => ({
+  upsertTransferStorageRow: (db: unknown, row: unknown) => mockUpsertTransfer(db, row),
 }));
 
 vi.mock("@/shared/query/client", () => ({

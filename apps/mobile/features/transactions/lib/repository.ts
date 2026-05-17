@@ -1,20 +1,15 @@
 import { and, between, desc, eq, like, or, sql, sum } from "drizzle-orm";
-import {
-  normalizeTransactionStorageRow,
-  type TransactionStorageWriteRow,
-} from "@/infrastructure/local-ledger/transaction-storage";
+import type { TransactionStorageWriteRow } from "@/infrastructure/local-ledger/transaction-storage";
 import type { AnyDb } from "@/shared/db/client";
 import { transactions } from "@/shared/db/schema";
 import type {
   CategoryId,
   CopAmount,
   IsoDate,
-  IsoDateTime,
   Month,
   TransactionId,
   UserId,
 } from "@/shared/types/branded";
-import type { AccountAttributionState } from "../schema";
 import { getActiveTransactionConditions } from "./active-transaction-conditions";
 
 type TransactionsPageInput = {
@@ -37,13 +32,7 @@ type RecentTransactionsInput = {
   readonly previousMonth: Month;
 };
 
-export type TransactionRow = TransactionStorageWriteRow & {
-  accountAttributionState?: AccountAttributionState | string;
-};
-
-export function insertTransaction(db: AnyDb, row: TransactionRow) {
-  db.insert(transactions).values(normalizeTransactionStorageRow(row)).run();
-}
+export type TransactionRow = TransactionStorageWriteRow;
 
 export function getAllTransactions(db: AnyDb, userId: UserId): TransactionRow[] {
   return db
@@ -51,7 +40,7 @@ export function getAllTransactions(db: AnyDb, userId: UserId): TransactionRow[] 
     .from(transactions)
     .where(and(...getActiveTransactionConditions(userId)))
     .orderBy(desc(transactions.date))
-    .all() as TransactionRow[];
+    .all();
 }
 
 export function getTransactionsPaginated(input: TransactionsPageInput): TransactionRow[] {
@@ -62,7 +51,7 @@ export function getTransactionsPaginated(input: TransactionsPageInput): Transact
     .orderBy(desc(transactions.date), desc(transactions.createdAt))
     .limit(input.limit + 1)
     .offset(input.offset)
-    .all() as TransactionRow[];
+    .all();
 }
 
 export function getBalanceAggregate(db: AnyDb, userId: UserId): CopAmount {
@@ -184,14 +173,7 @@ export function getRecentTransactions(input: RecentTransactionsInput): Transacti
       )
     )
     .orderBy(desc(transactions.date))
-    .all() as TransactionRow[];
-}
-
-export function softDeleteTransaction(db: AnyDb, id: TransactionId, now: IsoDateTime) {
-  db.update(transactions)
-    .set({ voidedAt: now, updatedAt: now })
-    .where(eq(transactions.id, id))
-    .run();
+    .all();
 }
 
 export function getTransactionById(db: AnyDb, id: TransactionId): TransactionRow | null {
@@ -199,31 +181,6 @@ export function getTransactionById(db: AnyDb, id: TransactionId): TransactionRow
     .select()
     .from(transactions)
     .where(eq(transactions.id, id))
-    .all() as TransactionRow[];
+    .all();
   return rows[0] ?? null;
-}
-
-export function upsertTransaction(db: AnyDb, row: TransactionRow) {
-  const normalizedRow = normalizeTransactionStorageRow(row);
-  db.insert(transactions)
-    .values(normalizedRow)
-    .onConflictDoUpdate({
-      target: transactions.id,
-      set: {
-        type: normalizedRow.type,
-        amount: normalizedRow.amount,
-        categoryId: normalizedRow.categoryId,
-        description: normalizedRow.description,
-        counterpartyName: normalizedRow.counterpartyName,
-        date: normalizedRow.date,
-        accountId: normalizedRow.accountId,
-        accountAttributionState: normalizedRow.accountAttributionState,
-        supersededAt: normalizedRow.supersededAt,
-        supersededByTransferId: normalizedRow.supersededByTransferId,
-        source: normalizedRow.source,
-        updatedAt: normalizedRow.updatedAt,
-        voidedAt: normalizedRow.voidedAt,
-      },
-    })
-    .run();
 }

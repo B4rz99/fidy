@@ -1,9 +1,12 @@
+import { eq } from "drizzle-orm";
 import type { RecordTransactionAccepted, RecordTransactionSource } from "@/local-ledger/public";
+import type { AnyDb } from "@/shared/db/client";
 import type { transactions } from "@/shared/db/schema";
-import { buildDefaultFinancialAccountId } from "@/shared/lib/default-financial-account-id";
-import { normalizeTransactionSource } from "@/shared/lib/transaction-source";
+import { transactions as transactionsTable } from "@/shared/db/schema";
+import { buildDefaultFinancialAccountId } from "@/shared/lib";
+import { normalizeTransactionSource } from "@/shared/lib/transaction-source.public";
 import { requireTransactionId } from "@/shared/types/assertions";
-import type { FinancialAccountId, IsoDateTime } from "@/shared/types/branded";
+import type { FinancialAccountId, IsoDateTime, TransactionId } from "@/shared/types/branded";
 
 type TransactionStorageRow = typeof transactions.$inferInsert;
 
@@ -82,3 +85,58 @@ export const toTransactionStorageRow = ({
   supersededByTransferId: null,
   source: toClosedSource(transaction.source),
 });
+
+export function insertTransactionStorageRow(db: AnyDb, row: TransactionStorageWriteRow) {
+  db.insert(transactionsTable).values(normalizeTransactionStorageRow(row)).run();
+}
+
+export function upsertTransactionStorageRow(db: AnyDb, row: TransactionStorageWriteRow) {
+  const normalizedRow = normalizeTransactionStorageRow(row);
+  db.insert(transactionsTable)
+    .values(normalizedRow)
+    .onConflictDoUpdate({
+      target: transactionsTable.id,
+      set: {
+        type: normalizedRow.type,
+        amount: normalizedRow.amount,
+        categoryId: normalizedRow.categoryId,
+        description: normalizedRow.description,
+        counterpartyName: normalizedRow.counterpartyName,
+        date: normalizedRow.date,
+        accountId: normalizedRow.accountId,
+        accountAttributionState: normalizedRow.accountAttributionState,
+        supersededAt: normalizedRow.supersededAt,
+        supersededByTransferId: normalizedRow.supersededByTransferId,
+        source: normalizedRow.source,
+        updatedAt: normalizedRow.updatedAt,
+        voidedAt: normalizedRow.voidedAt,
+      },
+    })
+    .run();
+}
+
+export function softDeleteTransactionStorageRow(db: AnyDb, id: TransactionId, now: IsoDateTime) {
+  db.update(transactionsTable)
+    .set({ voidedAt: now, updatedAt: now })
+    .where(eq(transactionsTable.id, id))
+    .run();
+}
+
+export function markTransactionSupersededStorageRow(
+  db: AnyDb,
+  input: {
+    readonly id: TransactionId;
+    readonly supersededAt: IsoDateTime;
+    readonly supersededByTransferId?: TransactionStorageRow["supersededByTransferId"] | null;
+    readonly updatedAt: IsoDateTime;
+  }
+) {
+  db.update(transactionsTable)
+    .set({
+      supersededAt: input.supersededAt,
+      supersededByTransferId: input.supersededByTransferId ?? null,
+      updatedAt: input.updatedAt,
+    })
+    .where(eq(transactionsTable.id, input.id))
+    .run();
+}

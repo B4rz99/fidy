@@ -1,10 +1,8 @@
 import type { AccountCreationSuggestion } from "@/features/account-suggestions/lib/derive-account-suggestions";
 import type { createAccountSuggestionService } from "@/features/account-suggestions/services/create-account-suggestion-service";
 import type { FinancialAccountRow } from "@/features/financial-accounts/lib/repository";
-import {
-  type getTransactionById as loadTransactionById,
-  upsertTransaction,
-} from "@/features/transactions/lib/repository";
+import { type getTransactionById as loadTransactionById } from "@/features/transactions/lib/repository";
+import { upsertTransactionStorageRow } from "@/infrastructure/local-ledger/transaction-storage";
 import type { AnyDb } from "@/shared/db/client";
 import type {
   FinancialAccountId,
@@ -50,7 +48,7 @@ function applySuggestedOwnerConfirmation(
     suggestion,
   });
 
-  upsertTransaction(tx, {
+  upsertTransactionStorageRow(tx, {
     ...currentTransaction,
     accountId: suggestedAccount.id,
     accountAttributionState: "confirmed",

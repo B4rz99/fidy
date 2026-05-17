@@ -54,10 +54,12 @@ describe("transaction repository", () => {
     mockOnConflictDoUpdate.mockReturnValue({ run: mockRun });
   });
 
-  it("insertTransaction calls db.insert with correct row", async () => {
-    const { insertTransaction } = await import("@/features/transactions/lib/repository");
+  it("insertTransactionStorageRow calls db.insert with correct row", async () => {
+    const { insertTransactionStorageRow } = await import(
+      "@/infrastructure/local-ledger/transaction-storage"
+    );
 
-    insertTransaction(mockDb, {
+    insertTransactionStorageRow(mockDb, {
       id: "tx-123" as TransactionId,
       userId: "user-1" as UserId,
       type: "expense",
@@ -118,10 +120,12 @@ describe("transaction repository", () => {
     expect(result).toEqual(mockRows);
   });
 
-  it("softDeleteTransaction sets voidedAt and updatedAt", async () => {
-    const { softDeleteTransaction } = await import("@/features/transactions/lib/repository");
+  it("softDeleteTransactionStorageRow sets voidedAt and updatedAt", async () => {
+    const { softDeleteTransactionStorageRow } = await import(
+      "@/infrastructure/local-ledger/transaction-storage"
+    );
 
-    softDeleteTransaction(
+    softDeleteTransactionStorageRow(
       mockDb,
       "tx-123" as TransactionId,
       "2026-03-04T10:00:00.000Z" as IsoDateTime
@@ -168,8 +172,10 @@ describe("transaction repository", () => {
     expect(result).toBeNull();
   });
 
-  it("upsertTransaction calls insert with onConflictDoUpdate", async () => {
-    const { upsertTransaction } = await import("@/features/transactions/lib/repository");
+  it("upsertTransactionStorageRow calls insert with onConflictDoUpdate", async () => {
+    const { upsertTransactionStorageRow } = await import(
+      "@/infrastructure/local-ledger/transaction-storage"
+    );
 
     const row = {
       id: "tx-1" as TransactionId,
@@ -184,7 +190,7 @@ describe("transaction repository", () => {
       source: "email_capture",
     };
 
-    upsertTransaction(mockDb, row);
+    upsertTransactionStorageRow(mockDb, row);
 
     expect(mockInsert).toHaveBeenCalled();
     expect(mockValues).toHaveBeenCalledWith({

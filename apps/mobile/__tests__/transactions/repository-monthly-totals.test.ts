@@ -6,9 +6,11 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getMonthlyTotalsByType,
-  insertTransaction,
-  softDeleteTransaction,
 } from "@/features/transactions/lib/repository";
+import {
+  insertTransactionStorageRow as insertTransaction,
+  softDeleteTransactionStorageRow as softDeleteTransaction,
+} from "@/infrastructure/local-ledger/transaction-storage";
 import type {
   CategoryId,
   CopAmount,

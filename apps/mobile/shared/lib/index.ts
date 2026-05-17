@@ -22,6 +22,7 @@ export {
 export type { CurrencyConfig } from "./currency";
 export { getActiveCurrency } from "./currency";
 export { clampDateToToday } from "./date-constraints";
+export { buildDefaultFinancialAccountId } from "./default-financial-account-id";
 export {
   formatDateDisplay,
   parseIsoDate,

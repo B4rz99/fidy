@@ -22,9 +22,7 @@ import {
   getTransactionSource,
   resolveEmailStatus,
 } from "./shared";
-import {
-  buildAutomatedTransactionCommand,
-} from "./transaction-recording";
+import { buildAutomatedTransactionCommand } from "./transaction-recording";
 import { trackSavedTransactionEffect } from "./transaction-tracking";
 import type {
   CreateEmailPipelineServiceDeps,

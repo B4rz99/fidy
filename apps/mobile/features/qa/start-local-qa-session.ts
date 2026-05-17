@@ -4,8 +4,8 @@ import { upsertFinancialAccount } from "@/features/financial-accounts/lib/reposi
 import { clearOnboardingFromStore } from "@/features/onboarding/lib/check-onboarding";
 import { useLocalOnboardingState } from "@/features/onboarding/lib/local-onboarding-state";
 import { useOnboardingStore } from "@/features/onboarding/store";
-import { insertTransaction } from "@/features/transactions/lib/repository";
-import { upsertTransfer } from "@/features/transfers/lib/repository";
+import { upsertTransferStorageRow } from "@/infrastructure/local-ledger/record-transfer";
+import { insertTransactionStorageRow } from "@/infrastructure/local-ledger/transaction-storage";
 import { getDb, resetDbForUser } from "@/shared/db";
 import { queryClient } from "@/shared/query/client";
 import { buildLocalQaSeed } from "./lib/build-local-qa-seed";
@@ -28,10 +28,10 @@ export async function startLocalQaSession(profile: LocalQaProfile = "default") {
     upsertFinancialAccount(db, account);
   });
   seed.transactions.forEach((transaction) => {
-    insertTransaction(db, transaction);
+    insertTransactionStorageRow(db, transaction);
   });
   seed.transfers.forEach((transfer) => {
-    upsertTransfer(db, transfer);
+    upsertTransferStorageRow(db, transfer);
   });
 
   await persistLocalQaSession(seed.session);
