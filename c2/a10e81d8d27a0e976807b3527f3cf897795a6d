@@ -1,0 +1,51 @@
+apps/mobile/features/email-capture/services/email-pipeline.ts
+  s_6b7d4add335b23::t_5e8aeb701eb030 7,58
+apps/mobile/features/email-capture/services/email-pipeline-service/transaction-recording.ts
+  s_6b7d4add335b23::t_5f5daef663c188 24
+  s_6b7d4add335b23::t_6d834c1f690086 27
+  s_6b7d4add335b23::t_3b003a76617929 44
+  s_6b7d4add335b23::t_a7d99feeacdbfc 2,4,9-21,31-35,37,42,45
+apps/mobile/__tests__/email-capture/email-pipeline.test.ts
+  s_6b7d4add335b23::t_946a6a3267f19c 20,118-122,277,293-305,315-316,334,344-346,351-352
+  s_6b7d4add335b23::t_7be16a87bf732f 278-292,306-314
+  s_6b7d4add335b23::t_caef1f6890ea3e 162-170
+  s_6b7d4add335b23::t_f676210f974b11 343,347-350
+  s_6b7d4add335b23::t_583bdc0a10c748 1238,1242,1251,1552,1556-1557,1631,1635-1636
+apps/mobile/shared/lib/transaction-source.public.ts
+  s_6b7d4add335b23::t_5e8aeb701eb030 1-2
+apps/mobile/infrastructure/local-ledger/record-transaction.ts
+  s_6b7d4add335b23::t_5e8aeb701eb030 41
+apps/mobile/__tests__/error-handling/pipeline-save-error.test.ts
+  s_6b7d4add335b23::t_60460fc191d50d 20,80-84,147,149-159,175,178,197,206
+  s_6b7d4add335b23::t_2de28083fe5078 148,160-174,176-177
+apps/mobile/features/email-capture/services/email-pipeline-service/retry-transaction-bundle.ts
+  s_6b7d4add335b23::t_b1a77ddc6bd45e 8,33,50-55,66-68
+  s_6b7d4add335b23::t_995af79ec56fca 3
+apps/mobile/local-ledger/use-cases/write.public.ts
+  s_6b7d4add335b23::t_5e8aeb701eb030 8
+apps/mobile/__tests__/transfers/repository.test.ts
+  s_6b7d4add335b23::t_fd67414a92bbc1 7
+apps/mobile/features/email-capture/services/email-pipeline-service/public-types.ts
+  s_6b7d4add335b23::t_2c141fe36a33d6 7-9,145
+  s_6b7d4add335b23::t_5e8aeb701eb030 10,143-144
+apps/mobile/features/email-capture/services/email-pipeline-service/transactions.ts
+  s_6b7d4add335b23::t_3f77e9fa76fa2b 102-104
+apps/mobile/eslint.config.js
+  s_6b7d4add335b23::t_f63021e861b35a 20-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "c2a10e81d8d27a0e976807b3527f3cf897795a6d",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
