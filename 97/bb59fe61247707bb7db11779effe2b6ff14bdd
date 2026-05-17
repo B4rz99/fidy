@@ -1,0 +1,21 @@
+apps/mobile/__tests__/local-ledger/source-events.test.ts
+  s_6b7d4add335b23::t_1f6a68d90b407a 28-31,87-90,198-225
+apps/mobile/infrastructure/local-ledger/review-candidate-capture.ts
+  s_6b7d4add335b23::t_1a168f3733fc3d 138-139,153-154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "97bb59fe61247707bb7db11779effe2b6ff14bdd",
+  "prompts": {},
+  "sessions": {
+    "s_6b7d4add335b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3689-4adb-7100-84d5-2f411342bc26",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
