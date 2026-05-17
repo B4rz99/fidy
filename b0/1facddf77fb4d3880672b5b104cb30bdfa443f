@@ -1,0 +1,19 @@
+apps/mobile/__tests__/budget/store.test.ts
+  s_5e260cc16c7a67::t_9c486b85c40474 42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "b01facddf77fb4d3880672b5b104cb30bdfa443f",
+  "prompts": {},
+  "sessions": {
+    "s_5e260cc16c7a67": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3680-894e-7de3-95c5-5150962df3db",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
