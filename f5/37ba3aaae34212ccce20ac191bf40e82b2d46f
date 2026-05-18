@@ -1,0 +1,51 @@
+apps/mobile/features/onboarding/components/SyncProgressStep.styles.ts
+  s_c470af7990caf6::t_7512d76338f439 31-33
+apps/mobile/plugins/withFidyWidget.js
+  s_ebe4870b4c75d4::t_79610aca5e2776 293
+  s_ebe4870b4c75d4::t_13636c203943d5 276,289-292
+  s_ebe4870b4c75d4::t_4cb32c21b9dba8 285-288
+  s_ebe4870b4c75d4::t_a2df0ae8c95d8a 18-21
+apps/mobile/features/onboarding/components/SyncProgressStep.helpers.ts
+  s_ebe4870b4c75d4::t_5f9ba2a560ccc1 1-6
+  s_ebe4870b4c75d4::t_2baf1d1f0c46f3 13-16
+  s_ebe4870b4c75d4::t_36a57a02b105f7 7-12
+apps/mobile/plugins/withFidyWidget.deploymentTarget.js
+  s_ebe4870b4c75d4::t_c01ef5a52829cf 35-36
+  s_ebe4870b4c75d4::t_a2df0ae8c95d8a 1-2,4-6,9-13,15,30,32,34,38-41,43,45-47,49,59,61-67
+  s_ebe4870b4c75d4::t_83751759a51a44 3,7-8,16-29,31,33,37,42,44,48,50-58,60
+  s_ebe4870b4c75d4::t_f19edd5b3b412a 14
+.agents/skills/review/SKILL.md
+  s_ebe4870b4c75d4::t_2295b7e53f3732 1-34
+apps/mobile/features/onboarding/components/SyncTransactionPreview.tsx
+  s_c470af7990caf6::t_262df39028212b 2,24-35
+apps/mobile/features/onboarding/components/SyncProgressStep.tsx
+  s_ebe4870b4c75d4::t_f19edd5b3b412a 239-240
+  s_ebe4870b4c75d4::t_5f9ba2a560ccc1 20,22-24
+  s_ebe4870b4c75d4::t_32a380b35edebd 21,38,196-198
+.agents/skills/opening-pr/SKILL.md
+  s_ebe4870b4c75d4::t_c1c770514a76af 3,6,16,36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "f537ba3aaae34212ccce20ac191bf40e82b2d46f",
+  "prompts": {},
+  "sessions": {
+    "s_c470af7990caf6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3b3d-cc9c-7860-84a1-925c43e5aef2",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_ebe4870b4c75d4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3972-ef05-7533-9129-f201230636a9",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
