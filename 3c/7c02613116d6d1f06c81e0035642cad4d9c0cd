@@ -1,0 +1,20 @@
+package.json
+  s_dc500e53eb2a69::t_4cb52925ea67cb 36
+  s_dc500e53eb2a69::t_77be091e17cf62 31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "3c7c02613116d6d1f06c81e0035642cad4d9c0cd",
+  "prompts": {},
+  "sessions": {
+    "s_dc500e53eb2a69": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3971-08c7-7da1-b043-4515f66dd876",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
