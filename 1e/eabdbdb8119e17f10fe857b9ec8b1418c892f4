@@ -1,0 +1,23 @@
+.agents/skills/review/SKILL.md
+  s_ebe4870b4c75d4::t_2295b7e53f3732 1-34
+.agents/skills/opening-pr/SKILL.md
+  s_ebe4870b4c75d4::t_c1c770514a76af 3,6,16,36
+apps/mobile/plugins/withFidyWidget.js
+  s_ebe4870b4c75d4::t_79610aca5e2776 15-16,35-46,86-89,125-133,300-316,323,332-334
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "1eeabdbdb8119e17f10fe857b9ec8b1418c892f4",
+  "prompts": {},
+  "sessions": {
+    "s_ebe4870b4c75d4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3972-ef05-7533-9129-f201230636a9",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
