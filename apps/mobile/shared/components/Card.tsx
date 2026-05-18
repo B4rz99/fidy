@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { ViewProps } from "react-native";
-import { View } from "@/shared/components/rn";
+import { GlassSurface } from "./GlassSurface";
 
 type CardProps = ViewProps & {
   children: ReactNode;
@@ -10,11 +10,8 @@ type CardProps = ViewProps & {
 
 export function Card({ children, padded = true, className, ...viewProps }: CardProps) {
   return (
-    <View
-      {...viewProps}
-      className={`rounded-2xl bg-card dark:bg-card-dark ${padded ? "p-4" : ""} ${className ?? ""}`}
-    >
+    <GlassSurface {...viewProps} padded={padded} className={className}>
       {children}
-    </View>
+    </GlassSurface>
   );
 }

@@ -229,8 +229,14 @@ vi.mock("@react-native-vector-icons/ionicons", () => ({
   default: "Ionicons",
 }));
 
-vi.mock("@react-native-vector-icons/material-icons", () => ({
-  default: "MaterialIcons",
+vi.mock("@expo/ui/swift-ui", () => ({
+  Host: "Host",
+  Toggle: "Toggle",
+}));
+
+vi.mock("@expo/ui/swift-ui/modifiers", () => ({
+  tint: (color: string) => ({ color, type: "tint" }),
+  toggleStyle: (style: string) => ({ style, type: "toggleStyle" }),
 }));
 
 // Mock @supabase/supabase-js
