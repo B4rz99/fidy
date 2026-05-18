@@ -1,0 +1,19 @@
+package.json
+  s_dc500e53eb2a69::t_4cb52925ea67cb 36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "e64803b93a3d0c2606a54e9e0261c3d86f1cb24a",
+  "prompts": {},
+  "sessions": {
+    "s_dc500e53eb2a69": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3971-08c7-7da1-b043-4515f66dd876",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
