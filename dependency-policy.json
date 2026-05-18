@@ -21,11 +21,6 @@
       "reason": "ESLint 10 should wait for eslint-config-expo compatibility confirmation."
     },
     {
-      "name": "knip",
-      "until": "2026-06-01",
-      "reason": "Minor dead-code tooling update should land in a dedicated tooling PR so unused-export reports can be reviewed separately."
-    },
-    {
       "name": "oxfmt",
       "until": "2026-06-01",
       "reason": "Minor formatter update should land in a dedicated tooling PR so formatting churn can be reviewed separately."
