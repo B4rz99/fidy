@@ -17,15 +17,13 @@ import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { SYNC_EARLY_UNLOCK_TIMEOUT_MS, shouldUnlockEmailSyncStep } from "../lib/sync-unlock";
 import { logOnboardingEvent, trackOnboardingEvent } from "../lib/telemetry";
 import { useOnboardingStore } from "../store";
+import {
+  getRecentTransactionPreview,
+  RECENT_TRANSACTION_PREVIEW_LIMIT,
+  type SyncOutcome,
+} from "./SyncProgressStep.helpers";
 import { styles } from "./SyncProgressStep.styles";
 import { SyncTransactionPreview } from "./SyncTransactionPreview";
-
-type SyncOutcome = {
-  readonly savedCount: number;
-  readonly hasAccountSuggestions: boolean;
-  readonly importComplete: boolean;
-};
-const RECENT_TRANSACTION_PREVIEW_LIMIT = 3;
 
 export function SyncProgressStep() {
   const { t } = useTranslation();
@@ -37,7 +35,7 @@ export function SyncProgressStep() {
   const shareAnonymizedParseSamples = useSettingsStore((s) => s.shareAnonymizedParseSamples);
   const [syncOutcome, setSyncOutcome] = useState<SyncOutcome | null>(null);
   const recentTransactions = useTransactionStore(
-    useShallow((s) => s.pages.slice(0, RECENT_TRANSACTION_PREVIEW_LIMIT))
+    useShallow((s) => getRecentTransactionPreview(s.pages))
   );
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
@@ -195,7 +193,9 @@ export function SyncProgressStep() {
               failedCount: outcome.failedCount,
               foundCount,
               hasAccountSuggestions,
-              recentTransactionCount: useTransactionStore.getState().pages.slice(0, 3).length,
+              recentTransactionCount: getRecentTransactionPreview(
+                useTransactionStore.getState().pages
+              ).length,
             });
             unlockSync({
               foundCount,
@@ -236,8 +236,8 @@ export function SyncProgressStep() {
 
   const importComplete = syncOutcome?.importComplete ?? false;
   const percent = importComplete ? 100 : livePercent;
-  const savedCount =
-    syncOutcome?.savedCount ?? (progress ? progress.saved + progress.needsReview : 0);
+  const liveFoundCount = progress ? progress.saved + progress.needsReview : 0;
+  const savedCount = Math.max(syncOutcome?.savedCount ?? 0, liveFoundCount);
   const hasAccountSuggestions = syncOutcome?.hasAccountSuggestions ?? false;
 
   return (

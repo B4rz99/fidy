@@ -1,9 +1,9 @@
 ---
 name: opening-pr
-description: Sync with main, review the diff, commit, push, and open a PR. Use when the user asks to open a PR or when a task explicitly requires the repo's PR workflow.
+description: Sync with main, commit, push, and open a PR. Use when the user asks to open a PR or when a task explicitly requires the repo's PR workflow.
 ---
 
-Use this workflow when the user wants a PR opened. Keep it narrow: validate the current change, create the commit, push the branch, and open the PR. Do not merge unless the user asks in a separate step.
+Use this workflow when the user wants a PR opened. Keep it narrow: sync the branch, create the commit, push the branch, and open the PR. Do not merge unless the user asks in a separate step.
 
 ## Step 1 — Sync Branch
 
@@ -13,21 +13,7 @@ git pull --rebase --autostash origin main
 
 Start from an up-to-date branch before verifying or committing.
 
-## Step 2 — Review The Diff
-
-Review the current diff before proceeding. Deploy multiple subagents in parallel, each focused on one review lens:
-
-- perform a high-quality security review, including secrets, unsafe data handling, auth boundaries, privacy leaks, and injection risks
-- perform a quality code review, including correctness, regressions, edge cases, error handling, naming, and missing tests
-- simplify code by consolidating related logic where reuse would reduce duplication or clarify ownership
-- check functional programming patterns, especially avoiding unnecessary mutation in pure modules
-- check atomicity patterns, especially transaction boundaries, partial writes, stale completions, and cleanup on failure
-- check purism patterns, especially side effects leaking into `lib/`, schemas, utilities, or other pure surfaces
-- identify where Sentry logs or breadcrumbs are necessary for production diagnosability without adding noisy or sensitive logging
-
-Synthesize the subagent findings before editing. Fix important issues before moving on, and do not defer findings that would make the PR unsafe, misleading, or difficult to review.
-
-## Step 3 — Commit
+## Step 2 — Commit
 
 Stage the relevant files and commit following these rules enforced by lefthook:
 
@@ -47,7 +33,7 @@ type(scope): message
 
 **Never include** `Co-Authored-By` lines.
 
-## Step 4 — Push And Open The PR
+## Step 3 — Push And Open The PR
 
 Push to the feature branch after committing. Main is protected — direct pushes are not allowed.
 

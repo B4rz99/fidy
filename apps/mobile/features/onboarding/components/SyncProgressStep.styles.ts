@@ -28,6 +28,9 @@ export const styles = StyleSheet.create({
   previewSection: {
     gap: 8,
   },
+  previewList: {
+    maxHeight: 168,
+  },
   previewTitle: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 13,
