@@ -15,6 +15,11 @@ const {
   withXcodeProject,
 } = require("expo/config-plugins");
 const {
+  reconcileAppDeploymentTarget,
+  withIosDeploymentTarget,
+  withPodsDeploymentTarget,
+} = require("./withFidyWidget.deploymentTarget");
+const {
   copyWidgetFiles,
   deploymentTarget: DEPLOYMENT_TARGET,
   extensionName: EXTENSION_NAME,
@@ -25,14 +30,6 @@ const {
   swiftFiles: SWIFT_FILES,
   swiftVersion: SWIFT_VERSION,
 } = require("./withFidyWidget.files");
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Xcode helpers
-// ---------------------------------------------------------------------------
 
 const generateUuid = (project) => project.generateUuid();
 
@@ -276,6 +273,7 @@ const withWidgetExtensionTarget = (config) =>
     const project = modConfig.modResults;
 
     copyWidgetFiles(projectRoot, config);
+    reconcileAppDeploymentTarget(project, DEPLOYMENT_TARGET);
     addWidgetExtensionTarget(project, config);
 
     return modConfig;
@@ -284,7 +282,15 @@ const withWidgetExtensionTarget = (config) =>
 const withFidyWidget = (config) => {
   const configWithEntitlements = withAppGroupEntitlement(config);
   const configWithInfoPlist = withAppGroupInfoPlistKey(configWithEntitlements);
-  const configWithExtension = withWidgetExtensionTarget(configWithInfoPlist);
+  const configWithDeploymentTarget = withIosDeploymentTarget(
+    configWithInfoPlist,
+    DEPLOYMENT_TARGET
+  );
+  const configWithPodsDeploymentTarget = withPodsDeploymentTarget(
+    configWithDeploymentTarget,
+    DEPLOYMENT_TARGET
+  );
+  const configWithExtension = withWidgetExtensionTarget(configWithPodsDeploymentTarget);
   return configWithExtension;
 };
 
