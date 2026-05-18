@@ -1,0 +1,29 @@
+apps/mobile/__tests__/setup.ts
+  s_653d99b63fbd7f::t_3d19722680e504 232-238
+apps/mobile/shared/components/Card.tsx
+  s_653d99b63fbd7f::t_3d19722680e504 3,13,15
+apps/mobile/package.json
+  s_653d99b63fbd7f::t_a4e4314d214750 50
+apps/mobile/shared/components/index.ts
+  s_653d99b63fbd7f::t_3d19722680e504 8
+apps/mobile/shared/components/GlassSurface.tsx
+  s_653d99b63fbd7f::t_3d19722680e504 1-4,6-15,17-35,37-39
+apps/mobile/features/settings/components/SettingsRow.tsx
+  s_653d99b63fbd7f::t_3d19722680e504 1-2,5,66-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "c6cc54d991ca3cafb82b25fc8c0ff6d297a70e50",
+  "prompts": {},
+  "sessions": {
+    "s_653d99b63fbd7f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3cf6-7a91-7ed3-9b11-683766724045",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
