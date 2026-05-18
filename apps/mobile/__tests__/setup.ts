@@ -230,6 +230,7 @@ vi.mock("@react-native-vector-icons/ionicons", () => ({
 }));
 
 vi.mock("@expo/ui/swift-ui", () => ({
+  Host: "Host",
   Toggle: "Toggle",
 }));
 

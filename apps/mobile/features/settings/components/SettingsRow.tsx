@@ -1,4 +1,4 @@
-import { Toggle } from "@expo/ui/swift-ui";
+import { Host, Toggle } from "@expo/ui/swift-ui";
 import { tint, toggleStyle } from "@expo/ui/swift-ui/modifiers";
 import type { LucideIcon } from "@/shared/components/icons";
 import { ChevronRight } from "@/shared/components/icons";
@@ -64,11 +64,13 @@ export function SettingsRow({
       {accessory === "chevron" ? <ChevronRight size={18} color={tertiaryColor} /> : null}
       {accessory === "switch" ? (
         Platform.OS === "ios" ? (
-          <Toggle
-            isOn={switchValue}
-            onIsOnChange={onSwitchChange}
-            modifiers={[toggleStyle("switch"), tint(accentGreen)]}
-          />
+          <Host matchContents>
+            <Toggle
+              isOn={switchValue}
+              onIsOnChange={onSwitchChange}
+              modifiers={[toggleStyle("switch"), tint(accentGreen)]}
+            />
+          </Host>
         ) : (
           <Switch
             value={switchValue}
