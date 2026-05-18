@@ -1,6 +1,8 @@
+import { Toggle } from "@expo/ui/swift-ui";
+import { tint, toggleStyle } from "@expo/ui/swift-ui/modifiers";
 import type { LucideIcon } from "@/shared/components/icons";
 import { ChevronRight } from "@/shared/components/icons";
-import { Pressable, StyleSheet, Switch, Text, View } from "@/shared/components/rn";
+import { Platform, Pressable, StyleSheet, Switch, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 
 type SettingsRowProps = {
@@ -61,11 +63,19 @@ export function SettingsRow({
       </View>
       {accessory === "chevron" ? <ChevronRight size={18} color={tertiaryColor} /> : null}
       {accessory === "switch" ? (
-        <Switch
-          value={switchValue}
-          onValueChange={onSwitchChange}
-          trackColor={{ true: accentGreen }}
-        />
+        Platform.OS === "ios" ? (
+          <Toggle
+            isOn={switchValue}
+            onIsOnChange={onSwitchChange}
+            modifiers={[toggleStyle("switch"), tint(accentGreen)]}
+          />
+        ) : (
+          <Switch
+            value={switchValue}
+            onValueChange={onSwitchChange}
+            trackColor={{ true: accentGreen }}
+          />
+        )
       ) : null}
       {accessory === "text" && rightText ? (
         <Text className="font-poppins text-xs text-tertiary dark:text-tertiary-dark">

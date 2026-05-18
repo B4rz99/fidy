@@ -31,7 +31,6 @@
         "@fidy/utils": "workspace:*",
         "@react-native-community/netinfo": "12.0.1",
         "@react-native-vector-icons/ionicons": "^13.1.1",
-        "@react-native-vector-icons/material-icons": "^13.1.1",
         "@sentry/cli": "3.4.1",
         "@sentry/react-native": "~7.11.0",
         "@shopify/flash-list": "2.0.2",
@@ -48,6 +47,7 @@
         "expo-crypto": "~56.0.3",
         "expo-dev-client": "~56.0.5",
         "expo-font": "~56.0.3",
+        "expo-glass-effect": "~56.0.4",
         "expo-haptics": "~56.0.3",
         "expo-image": "~56.0.4",
         "expo-linking": "~56.0.4",
@@ -59,7 +59,6 @@
         "expo-splash-screen": "~56.0.4",
         "expo-sqlite": "~56.0.3",
         "expo-status-bar": "~56.0.4",
-        "expo-symbols": "~56.0.5",
         "expo-system-ui": "~56.0.4",
         "expo-task-manager": "~56.0.5",
         "expo-updates": "~56.0.6",
@@ -735,8 +734,6 @@
     "@react-native-vector-icons/common": ["@react-native-vector-icons/common@13.0.0", "", { "dependencies": { "find-up": "^7.0.0", "picocolors": "^1.1.1", "plist": "^3.1.0" }, "peerDependencies": { "@react-native-vector-icons/get-image": "^13.0.0", "@react-native/assets-registry": "*", "react": "*", "react-native": "*" }, "optionalPeers": ["@react-native-vector-icons/get-image", "@react-native/assets-registry"], "bin": { "rnvi-update-plist": "lib/commonjs/scripts/updatePlist.js" } }, "sha512-FJ0Ql5UTGVtK0ak4vLTxmhFHadb8NmTk4yOWoggh7UvC2pVQNyJK7L9nIZeIZ0IaVJtKfmKXtBWA0nKqqzQ/FQ=="],
 
     "@react-native-vector-icons/ionicons": ["@react-native-vector-icons/ionicons@13.1.1", "", { "dependencies": { "@react-native-vector-icons/common": "^13.0.0" }, "peerDependencies": { "@expo/config-plugins": ">=10.0.0", "react": "*", "react-native": "*" }, "optionalPeers": ["@expo/config-plugins"] }, "sha512-OAIEf7HW5SnDi+YMRR1W/HBwzWmQiQ4msY8aSQRdVisPvbVFvO6vaWJdV33QI2aj1/5lVLh9oKJGcRsSaBzh2Q=="],
-
-    "@react-native-vector-icons/material-icons": ["@react-native-vector-icons/material-icons@13.1.1", "", { "dependencies": { "@react-native-vector-icons/common": "^13.0.0" }, "peerDependencies": { "@expo/config-plugins": ">=10.0.0", "react": "*", "react-native": "*" }, "optionalPeers": ["@expo/config-plugins"] }, "sha512-u13/5ITff+qGBZBnv3QQ+vLNCNgJzxUfXnMnZDK1rHgpUjH6lex3tSORX5XLYbCuaHDW7WFF0cqzoaephYZApg=="],
 
     "@react-native/assets-registry": ["@react-native/assets-registry@0.85.3", "", {}, "sha512-u9ZiYP23vA2IFtdFQFmetzSmk6SM0xgKIoiOsr1hXNHjHaLhOm+/Ph1ud57wX6+Dbwdzx8coJgnzSKL3W21PCg=="],
 
