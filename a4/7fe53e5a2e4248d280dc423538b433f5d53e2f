@@ -1,0 +1,21 @@
+apps/mobile/features/settings/components/SettingsRow.tsx
+  s_653d99b63fbd7f::t_bfe3439cf5c485 1,67-73
+apps/mobile/__tests__/setup.ts
+  s_653d99b63fbd7f::t_bfe3439cf5c485 233
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "a47fe53e5a2e4248d280dc423538b433f5d53e2f",
+  "prompts": {},
+  "sessions": {
+    "s_653d99b63fbd7f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3cf6-7a91-7ed3-9b11-683766724045",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
