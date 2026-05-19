@@ -5,10 +5,13 @@ import { describe, expect, test } from "vitest";
 const source = readFileSync(resolve(__dirname, "../../app/day-detail.tsx"), "utf-8");
 const layoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
 
-describe("day-detail formSheet screen", () => {
-  test("is registered in root layout as formSheet", () => {
+describe("day-detail dialog modal screen", () => {
+  test("is registered in root layout as a dialog modal", () => {
     expect(layoutSource).toContain('name="day-detail"');
-    expect(layoutSource).toContain("formSheet");
+    expect(source).toContain("DialogRouteFrame");
+    const dayDetailBlock = layoutSource.slice(layoutSource.indexOf('name="day-detail"'));
+    expect(dayDetailBlock.slice(0, 140)).toContain("DIALOG_MODAL");
+    expect(layoutSource).not.toContain("formSheet");
   });
 
   test("accepts date param via useLocalSearchParams", () => {

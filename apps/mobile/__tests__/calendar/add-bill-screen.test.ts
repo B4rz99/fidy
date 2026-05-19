@@ -18,9 +18,12 @@ const authFormSource = readSource(
 );
 const submitSource = readSource("../../features/calendar/components/add-bill/useAddBillSubmit.ts");
 
-test("add-bill is registered in root layout as formSheet", () => {
+test("add-bill is registered in root layout as a dialog modal", () => {
   expect(layoutSource).toContain('name="add-bill"');
-  expect(layoutSource).toContain("formSheet");
+  expect(routeSource).toContain("DialogRouteFrame");
+  const addBillBlock = layoutSource.slice(layoutSource.indexOf('name="add-bill"'));
+  expect(addBillBlock.slice(0, 140)).toContain("DIALOG_MODAL");
+  expect(layoutSource).not.toContain("formSheet");
 });
 
 test("add-bill routes through the extracted screen module", () => {

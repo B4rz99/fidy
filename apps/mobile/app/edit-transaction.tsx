@@ -14,6 +14,7 @@ import {
   TransactionForm,
   updateTransactionDirect,
 } from "@/features/transactions";
+import { DialogRouteFrame } from "@/shared/components";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useMountEffect, useTranslation } from "@/shared/hooks";
 import { clampDateToToday, showErrorToast, waitForNavigationTransition } from "@/shared/lib";
@@ -169,36 +170,42 @@ export default function EditTransactionScreen() {
   if (!loadedRef.current) return null;
 
   return (
-    <TransactionForm
-      type={draft.type}
-      digits={draft.digits}
-      categoryId={draft.categoryId}
-      accounts={accounts}
-      accountId={draft.accountId}
-      description={draft.description}
-      date={draft.date}
-      saveLabel={t("common.save")}
-      isSaving={isSaving}
-      onTypeChange={(type) => setDraft({ type: "update", update: { type } })}
-      onDigitsChange={(digits) => setDraft({ type: "setDigits", digits })}
-      onCategoryChange={(categoryId) => setDraft({ type: "update", update: { categoryId } })}
-      onAccountChange={(accountId) => setDraft({ type: "update", update: { accountId } })}
-      onDescriptionChange={(description) => setDraft({ type: "update", update: { description } })}
-      onSave={handleSave}
-      onDelete={handleDelete}
-      onClose={back}
-      extraActionLabel={draft.source === "manual" ? undefined : t("transactions.convertToTransfer")}
-      onExtraAction={
-        draft.source === "manual" || transactionId == null
-          ? undefined
-          : () =>
-              push({
-                pathname: "/reclassify-transaction",
-                params: {
-                  transactionId,
-                },
-              })
-      }
-    />
+    <DialogRouteFrame>
+      <TransactionForm
+        type={draft.type}
+        digits={draft.digits}
+        categoryId={draft.categoryId}
+        accounts={accounts}
+        accountId={draft.accountId}
+        description={draft.description}
+        date={draft.date}
+        saveLabel={t("common.save")}
+        isSaving={isSaving}
+        onTypeChange={(type) => setDraft({ type: "update", update: { type } })}
+        onDigitsChange={(digits) => setDraft({ type: "setDigits", digits })}
+        onCategoryChange={(categoryId) => setDraft({ type: "update", update: { categoryId } })}
+        onAccountChange={(accountId) => setDraft({ type: "update", update: { accountId } })}
+        onDescriptionChange={(description) =>
+          setDraft({ type: "update", update: { description } })
+        }
+        onSave={handleSave}
+        onDelete={handleDelete}
+        onClose={back}
+        extraActionLabel={
+          draft.source === "manual" ? undefined : t("transactions.convertToTransfer")
+        }
+        onExtraAction={
+          draft.source === "manual" || transactionId == null
+            ? undefined
+            : () =>
+                push({
+                  pathname: "/reclassify-transaction",
+                  params: {
+                    transactionId,
+                  },
+                })
+        }
+      />
+    </DialogRouteFrame>
   );
 }

@@ -1,6 +1,4 @@
-import type { FlashListRef } from "@shopify/flash-list";
-import { FlashList } from "@shopify/flash-list";
-import { memo, useCallback, useRef } from "react";
+import { memo, useCallback } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { removeTransaction } from "@/features/transactions/store.public";
@@ -13,6 +11,7 @@ import type { ChatMessageId } from "@/shared/types/branded";
 import { useStreamingChat } from "../hooks/use-streaming-chat";
 import type { ActionStatus, ChatMessage } from "../schema";
 import { updateChatActionStatus, useChatStore } from "../store";
+import { ChatConversationShell } from "./ChatConversationShell";
 import { ChatInput } from "./ChatInput";
 import { MessageBubble } from "./MessageBubble";
 import { NewChatButton } from "./NewChatButton";
@@ -44,7 +43,6 @@ export function ChatScreen({ onBack, onNewChat }: ChatScreenProps) {
   const { t } = useTranslation();
   useMountEffect(() => trackAiChatOpened());
   const userId = useOptionalUserId();
-  const listRef = useRef<FlashListRef<ChatMessage>>(null);
   const { top: safeTop } = useSafeAreaInsets();
   const db = userId ? tryGetDb(userId) : null;
 
@@ -105,9 +103,6 @@ export function ChatScreen({ onBack, onNewChat }: ChatScreenProps) {
   const handleSend = useCallback(
     (text: string) => {
       void sendMessage(text);
-      setTimeout(() => {
-        listRef.current?.scrollToEnd({ animated: true });
-      }, 100);
     },
     [sendMessage]
   );
@@ -118,8 +113,6 @@ export function ChatScreen({ onBack, onNewChat }: ChatScreenProps) {
     },
     [handleSend]
   );
-
-  const isEmpty = messages.length === 0 && !isStreaming;
 
   return (
     <ScreenLayout
@@ -134,41 +127,26 @@ export function ChatScreen({ onBack, onNewChat }: ChatScreenProps) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? safeTop + HEADER_HEIGHT : HEADER_HEIGHT}
       >
-        {isEmpty ? (
-          <View
-            style={{ flex: 1 }}
-            onStartShouldSetResponder={() => {
-              Keyboard.dismiss();
-              return false;
-            }}
-          >
-            <StarterSuggestions onSelect={handleSuggestionSelect} />
-          </View>
-        ) : (
-          <FlashList
-            ref={listRef}
-            data={messages}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            keyboardDismissMode="on-drag"
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{
-              paddingHorizontal: 16,
-              paddingTop: 12,
-              paddingBottom: 12,
-            }}
-            contentInsetAdjustmentBehavior="automatic"
-            showsVerticalScrollIndicator={false}
-            onContentSizeChange={() => {
-              listRef.current?.scrollToEnd({ animated: false });
-            }}
-            ListFooterComponent={
-              isStreaming ? <StreamingBubble content={streamingContent} /> : null
-            }
-          />
-        )}
-
-        <ChatInput onSend={handleSend} disabled={isStreaming} />
+        <ChatConversationShell
+          messages={messages}
+          renderMessage={renderItem}
+          keyExtractor={keyExtractor}
+          isStreaming={isStreaming}
+          streamingBubble={<StreamingBubble content={streamingContent} />}
+          scrollToBottomLabel={t("aiChat.scrollToBottom")}
+          composer={<ChatInput onSend={handleSend} disabled={isStreaming} />}
+          emptyState={
+            <View
+              style={{ flex: 1 }}
+              onStartShouldSetResponder={() => {
+                Keyboard.dismiss();
+                return false;
+              }}
+            >
+              <StarterSuggestions onSelect={handleSuggestionSelect} />
+            </View>
+          }
+        />
       </KeyboardAvoidingView>
     </ScreenLayout>
   );

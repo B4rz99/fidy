@@ -1,15 +1,20 @@
+import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { ScreenLayout } from "@/shared/components";
-import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
 import { useAccountSuggestions } from "../hooks/use-account-suggestions";
+import type { AccountCreationSuggestion } from "../lib/derive-account-suggestions";
 import { createAccountSuggestionService } from "../services/create-account-suggestion-service";
 import { AccountSuggestionCard } from "./AccountSuggestionCard";
+
+const suggestionKeyExtractor = (item: AccountCreationSuggestion) => item.fingerprint;
+const SuggestionItemSeparator = () => <View style={styles.itemSeparator} />;
 
 export function AccountSuggestionReviewScreen() {
   const router = useRouter();
@@ -26,35 +31,92 @@ export function AccountSuggestionReviewScreen() {
   const secondary = useThemeColor("secondary");
   const { run: guardedMutation } = useAsyncGuard();
 
-  const handleCreate = (fingerprint: string) => {
-    router.push({
-      pathname: "/create-financial-account",
-      params: { fingerprint },
-    } as never);
-  };
+  const handleCreate = useCallback(
+    (fingerprint: string) => {
+      router.push({
+        pathname: "/create-financial-account",
+        params: { fingerprint },
+      } as never);
+    },
+    [router]
+  );
 
-  const handleLink = (fingerprint: string) => {
-    router.push({
-      pathname: "/link-suggested-account",
-      params: { fingerprint },
-    } as never);
-  };
+  const handleLink = useCallback(
+    (fingerprint: string) => {
+      router.push({
+        pathname: "/link-suggested-account",
+        params: { fingerprint },
+      } as never);
+    },
+    [router]
+  );
 
-  const handleSkip = (fingerprint: string) => {
-    const suggestion = suggestions.find((item) => item.fingerprint === fingerprint);
-    if (!db || !userId || !suggestion) {
-      return;
-    }
-
-    void guardedMutation(async () => {
-      try {
-        service.dismissSuggestion({ db, userId, suggestion });
-        reloadSuggestions();
-      } catch {
-        showErrorToast(t("accountSuggestions.review.dismissFailed"));
+  const handleSkip = useCallback(
+    (fingerprint: string) => {
+      const suggestion = suggestions.find((item) => item.fingerprint === fingerprint);
+      if (!db || !userId || !suggestion) {
+        return;
       }
-    });
-  };
+
+      void guardedMutation(async () => {
+        try {
+          service.dismissSuggestion({ db, userId, suggestion });
+          reloadSuggestions();
+        } catch {
+          showErrorToast(t("accountSuggestions.review.dismissFailed"));
+        }
+      });
+    },
+    [db, guardedMutation, reloadSuggestions, service, suggestions, t, userId]
+  );
+
+  const handleCreateSuggestion = useCallback(
+    (suggestion: AccountCreationSuggestion) => handleCreate(suggestion.fingerprint),
+    [handleCreate]
+  );
+
+  const handleLinkSuggestion = useCallback(
+    (suggestion: AccountCreationSuggestion) => handleLink(suggestion.fingerprint),
+    [handleLink]
+  );
+
+  const handleSkipSuggestion = useCallback(
+    (suggestion: AccountCreationSuggestion) => handleSkip(suggestion.fingerprint),
+    [handleSkip]
+  );
+
+  const renderSuggestion = useCallback(
+    ({ item }: ListRenderItemInfo<AccountCreationSuggestion>) => (
+      <AccountSuggestionCard
+        suggestion={item}
+        onCreate={handleCreateSuggestion}
+        onLink={handleLinkSuggestion}
+        onSkip={handleSkipSuggestion}
+      />
+    ),
+    [handleCreateSuggestion, handleLinkSuggestion, handleSkipSuggestion]
+  );
+
+  const listHeader = useMemo(
+    () => (
+      <Text style={[styles.subtitle, { color: secondary }]}>
+        {t("accountSuggestions.review.subtitle")}
+      </Text>
+    ),
+    [secondary, t]
+  );
+
+  const emptyState =
+    hasLoadedSuggestions && suggestions.length === 0 ? (
+      <View style={styles.emptyState}>
+        <Text style={[styles.emptyTitle, { color: primary }]}>
+          {t("accountSuggestions.review.emptyTitle")}
+        </Text>
+        <Text style={[styles.emptySubtitle, { color: secondary }]}>
+          {t("accountSuggestions.review.emptySubtitle")}
+        </Text>
+      </View>
+    ) : null;
 
   return (
     <ScreenLayout
@@ -62,36 +124,17 @@ export function AccountSuggestionReviewScreen() {
       variant="sub"
       onBack={() => router.back()}
     >
-      <ScrollView
+      <FlashList
+        data={suggestions}
+        renderItem={renderSuggestion}
+        keyExtractor={suggestionKeyExtractor}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={emptyState}
+        ItemSeparatorComponent={SuggestionItemSeparator}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={[styles.content, { paddingBottom: bottom + 32 }]}
         showsVerticalScrollIndicator={false}
-      >
-        <Text style={[styles.subtitle, { color: secondary }]}>
-          {t("accountSuggestions.review.subtitle")}
-        </Text>
-
-        {hasLoadedSuggestions && suggestions.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyTitle, { color: primary }]}>
-              {t("accountSuggestions.review.emptyTitle")}
-            </Text>
-            <Text style={[styles.emptySubtitle, { color: secondary }]}>
-              {t("accountSuggestions.review.emptySubtitle")}
-            </Text>
-          </View>
-        ) : (
-          suggestions.map((suggestion) => (
-            <AccountSuggestionCard
-              key={suggestion.fingerprint}
-              suggestion={suggestion}
-              onCreate={(item) => handleCreate(item.fingerprint)}
-              onLink={(item) => handleLink(item.fingerprint)}
-              onSkip={(item) => handleSkip(item.fingerprint)}
-            />
-          ))
-        )}
-      </ScrollView>
+      />
     </ScreenLayout>
   );
 }
@@ -100,12 +143,15 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 16,
     paddingBottom: 32,
-    gap: 16,
+  },
+  itemSeparator: {
+    height: 16,
   },
   subtitle: {
     fontFamily: "Poppins_500Medium",
     fontSize: 13,
     lineHeight: 18,
+    marginBottom: 16,
   },
   emptyState: {
     flex: 1,

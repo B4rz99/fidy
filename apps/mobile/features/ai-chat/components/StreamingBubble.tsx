@@ -1,16 +1,47 @@
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { Sparkles } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { getStreamingBubbleDisplay } from "../lib/streaming-bubble-display";
 
 type StreamingBubbleProps = {
   readonly content: string;
 };
 
+function ThinkingDots({ color }: { readonly color: string }) {
+  const [activeDot, setActiveDot] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setActiveDot((dot) => (dot + 1) % 3);
+    }, 260);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <View style={{ flexDirection: "row", gap: 4, paddingTop: 2 }}>
+      {[0, 1, 2].map((dot) => (
+        <View
+          key={dot}
+          style={{
+            width: 5,
+            height: 5,
+            borderRadius: 2.5,
+            backgroundColor: color,
+            opacity: dot === activeDot ? 1 : 0.28,
+          }}
+        />
+      ))}
+    </View>
+  );
+}
+
 function StreamingBubbleInner({ content }: StreamingBubbleProps) {
+  const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
   const chatAssistantBubble = useThemeColor("chatAssistantBubble");
   const chatAssistantText = useThemeColor("chatAssistantText");
+  const display = getStreamingBubbleDisplay(content, t("aiChat.thinking"));
 
   return (
     <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 4 }}>
@@ -37,9 +68,19 @@ function StreamingBubbleInner({ content }: StreamingBubbleProps) {
             paddingHorizontal: 14,
           }}
         >
-          <Text className="font-poppins-medium text-body" style={{ color: chatAssistantText }}>
-            {content || "..."}
-          </Text>
+          {display.phase === "waiting" ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Text className="font-poppins-medium text-body" style={{ color: chatAssistantText }}>
+                {display.label}
+              </Text>
+              <ThinkingDots color={chatAssistantText} />
+            </View>
+          ) : (
+            <Text className="font-poppins-medium text-body" style={{ color: chatAssistantText }}>
+              {display.content}
+              <Text style={{ color: chatAssistantText, opacity: 0.45 }}> |</Text>
+            </Text>
+          )}
         </View>
       </View>
     </View>

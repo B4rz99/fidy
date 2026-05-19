@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SendHorizonal } from "@/shared/components/icons";
-import { Keyboard, Platform, Pressable, TextInput, View } from "@/shared/components/rn";
-import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
+import { Pressable, TextInput, View } from "@/shared/components/rn";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { resolveChatComposerSend } from "../lib/chat-composer";
 
 type ChatInputProps = {
   readonly onSend: (text: string) => void;
@@ -12,41 +12,34 @@ type ChatInputProps = {
 export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   const { t } = useTranslation();
   const [text, setText] = useState("");
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const { bottom: safeBottom } = useSafeAreaInsets();
   const borderSubtle = useThemeColor("borderSubtle");
   const tertiary = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
 
-  useSubscription(() => {
-    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-    const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
-    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
-
   const handleSend = useCallback(() => {
-    const trimmed = text.trim();
-    if (!trimmed || disabled) return;
-    onSend(trimmed);
-    setText("");
+    const result = resolveChatComposerSend({ text, disabled });
+    if (!result.canSend || !result.message) return;
+    onSend(result.message);
+    setText(result.nextText);
   }, [text, disabled, onSend]);
 
   const canSend = !disabled && text.trim().length > 0;
 
   return (
     <View
-      className="flex-row items-center gap-2 bg-card dark:bg-card-dark"
+      className="flex-row items-end gap-2 bg-card dark:bg-card-dark"
       style={{
-        paddingTop: 8,
-        paddingBottom: keyboardVisible ? 8 : Math.max(safeBottom, 8),
-        paddingHorizontal: 16,
-        borderTopWidth: 1,
+        marginHorizontal: 12,
+        padding: 10,
+        borderRadius: 24,
+        borderWidth: 1,
         borderTopColor: borderSubtle,
+        borderColor: borderSubtle,
+        shadowColor: "#000",
+        shadowOpacity: 0.12,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 4,
       }}
     >
       <View

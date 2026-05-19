@@ -628,6 +628,8 @@ const es = {
     noConversations: "Aún no hay conversaciones",
     tapToStart: "Toca + para iniciar un nuevo chat",
     placeholder: "Pregunta sobre tus finanzas...",
+    scrollToBottom: "Ir al final",
+    thinking: "Fidy está pensando",
     cleanupMessage: {
       one: "%{count} conversación expirada fue eliminada",
       other: "%{count} conversaciones expiradas fueron eliminadas",

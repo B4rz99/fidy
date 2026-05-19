@@ -7,6 +7,7 @@ import {
   useSuggestionSelection,
 } from "@/features/budget/hooks.public";
 import { CATEGORY_MAP } from "@/features/transactions";
+import { DialogRouteFrame } from "@/shared/components";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -69,16 +70,17 @@ export default function AutoSuggestBudgetsScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScrollView
-        style={[styles.container, { backgroundColor: cardBg }]}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 24 }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
+    <DialogRouteFrame>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
+        <ScrollView
+          style={[styles.container, { backgroundColor: cardBg }]}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 24 }]}
+          contentInsetAdjustmentBehavior="automatic"
+          keyboardShouldPersistTaps="handled"
+        >
         <Text style={[styles.title, { color: primaryColor }]}>
           {t("budgets.autoSuggest.title")}
         </Text>
@@ -159,8 +161,9 @@ export default function AutoSuggestBudgetsScreen() {
             </Text>
           </Pressable>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </DialogRouteFrame>
   );
 }
 

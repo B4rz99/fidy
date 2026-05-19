@@ -17,13 +17,16 @@ describe("Root layout native headers", () => {
     expect(source).toContain("theme.page");
   });
 
-  test("formSheet modals use SHEET constant with headerShown: false", () => {
-    expect(source).toContain(
-      'const SHEET = { headerShown: false, presentation: "formSheet" } as const'
-    );
+  test("dialog modal routes use DIALOG_MODAL without sheet detents", () => {
+    expect(source).toContain("const DIALOG_MODAL = {");
+    expect(source).toContain('presentation: "transparentModal"');
+    expect(source).toContain('animation: "fade"');
+    expect(source).toContain('contentStyle: { backgroundColor: "transparent" }');
+    expect(source).not.toContain("formSheet");
+    expect(source).not.toContain("sheetAllowedDetents");
     expect(source).toContain('name="add-bill"');
-    // add-bill options must spread SHEET
+    // add-bill options must use the shared dialog modal presentation.
     const addBillBlock = source.slice(source.indexOf('name="add-bill"'));
-    expect(addBillBlock.slice(0, 200)).toContain("...SHEET");
+    expect(addBillBlock.slice(0, 200)).toContain("DIALOG_MODAL");
   });
 });

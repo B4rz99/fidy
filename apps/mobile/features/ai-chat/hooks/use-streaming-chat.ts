@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import { buildFinancialContextPacket } from "@/features/advisor/public";
 import { useOptionalUserId } from "@/features/auth/public";
 import { saveCurrentTransaction, useTransactionStore } from "@/features/transactions/store.public";
@@ -6,6 +6,7 @@ import { tryGetDb } from "@/shared/db";
 import { parseIsoDate, trackAiMessageSent, trackTransactionCreated } from "@/shared/lib";
 import { listUserMemories } from "../data/user-memories";
 import { parseActionFromResponse } from "../lib/parse-action";
+import { createStreamingTextStore } from "../services/streaming-text-store";
 import type { ChatAction } from "../schema";
 import { streamChat } from "../services/ai-chat-api";
 import { createStreamingChatService } from "../services/create-streaming-chat-service";
@@ -17,6 +18,7 @@ import {
 } from "../store";
 
 const MAX_CONTEXT_MEMORIES = 20;
+const streamingTextStore = createStreamingTextStore();
 
 const streamingChatService = createStreamingChatService({
   getState: () => {
@@ -28,7 +30,9 @@ const streamingChatService = createStreamingChatService({
     };
   },
   setStreaming: (isStreaming) => useChatStore.getState().setStreaming(isStreaming),
-  setStreamingContent: (content) => useChatStore.getState().setStreamingContent(content),
+  setStreamingContent: (content) => {
+    streamingTextStore.set(content);
+  },
   streamChat,
   buildFinancialContextPacket: async (input) => {
     const [packet, memories] = await Promise.all([
@@ -100,7 +104,11 @@ export function useStreamingChat() {
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const isStreaming = useChatStore((s) => s.isStreaming);
-  const streamingContent = useChatStore((s) => s.streamingContent);
+  const streamingContent = useSyncExternalStore(
+    streamingTextStore.subscribe,
+    streamingTextStore.getSnapshot,
+    streamingTextStore.getSnapshot
+  );
 
   const executeAction = useCallback(
     async (action: ChatAction) => {

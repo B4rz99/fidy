@@ -7,6 +7,7 @@ export { FidyLogo } from "./FidyLogo";
 export { FidyNumpad } from "./FidyNumpad";
 export { GlassSurface } from "./GlassSurface";
 export { CustomTabBar } from "./navigation/CustomTabBar";
+export { DialogRouteFrame } from "./DialogRouteFrame";
 export { ProgressBar } from "./ProgressBar";
 export { HEADER_HEIGHT, ScreenLayout, TAB_BAR_CLEARANCE } from "./ScreenLayout";
 export { SettingsSection } from "./SettingsSection";
