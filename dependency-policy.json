@@ -1,6 +1,21 @@
 {
   "deferredUpdates": [
     {
+      "name": "@react-native-community/datetimepicker",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
+    },
+    {
+      "name": "@react-native-community/netinfo",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
+    },
+    {
+      "name": "@react-navigation/bottom-tabs",
+      "until": "2026-06-01",
+      "reason": "Navigation minor update should land separately from the SDK 55 restoration."
+    },
+    {
       "name": "@sentry/react-native",
       "until": "2026-06-01",
       "reason": "Major v8 migration needs a dedicated Sentry PR with config review, source map verification, and native QA."
@@ -9,6 +24,41 @@
       "name": "@shopify/flash-list",
       "until": "2026-06-01",
       "reason": "Expo SDK 56 expects 2.0.2; newer native versions need Expo compatibility confirmation."
+    },
+    {
+      "name": "posthog-react-native",
+      "until": "2026-06-01",
+      "reason": "React Native analytics update should land separately from the SDK 55 restoration."
+    },
+    {
+      "name": "react-native",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible React Native version; newer React Native versions require an SDK migration PR."
+    },
+    {
+      "name": "react-native-gesture-handler",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
+    },
+    {
+      "name": "react-native-reanimated",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
+    },
+    {
+      "name": "react-native-safe-area-context",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
+    },
+    {
+      "name": "react-native-screens",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
+    },
+    {
+      "name": "react-native-worklets",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; newer native versions belong in a dedicated SDK migration PR."
     },
     {
       "name": "dependency-cruiser",

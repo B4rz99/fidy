@@ -15,26 +15,36 @@ function readSources(dir: string): readonly { readonly path: string; readonly so
 }
 
 describe("date picker imports", () => {
-  it("uses the Expo UI DateTimePicker drop-in instead of the community package", () => {
+  it("uses the SDK 55 community DateTimePicker package", () => {
     const sources = sourceRoots.flatMap((root) => readSources(resolve(appRoot, root)));
     const communityImports = sources.filter(({ source }) =>
       source.includes("@react-native-community/datetimepicker")
     );
 
-    expect(communityImports).toEqual([]);
+    expect(communityImports).not.toEqual([]);
     expect(
-      sources.some(({ source }) => source.includes("@expo/ui/community/datetime-picker"))
-    ).toBe(true);
+      sources.filter(({ source }) => source.includes("@expo/ui/community/datetime-picker"))
+    ).toEqual([]);
   });
 
-  it("uses Expo UI value and dismiss events instead of deprecated DateTimePicker onChange", () => {
+  it("uses the SDK 55 DateTimePicker change event", () => {
     const sources = sourceRoots.flatMap((root) => readSources(resolve(appRoot, root)));
     const datePickerSources = sources.filter(({ source }) =>
-      source.includes("@expo/ui/community/datetime-picker")
+      source.includes("@react-native-community/datetimepicker")
     );
 
     expect(datePickerSources).not.toEqual([]);
-    expect(datePickerSources.filter(({ source }) => source.includes("onChange="))).toEqual([]);
-    expect(datePickerSources.every(({ source }) => source.includes("onValueChange="))).toBe(true);
+    expect(datePickerSources.every(({ source }) => source.includes("onChange="))).toBe(true);
+    expect(datePickerSources.filter(({ source }) => source.includes("onValueChange="))).toEqual([]);
+  });
+
+  it("keeps DateTimePicker accentColor scoped to iOS", () => {
+    const source = readFileSync(
+      resolve(appRoot, "features/goals/components/goal-sheet/GoalDateField.tsx"),
+      "utf-8"
+    );
+
+    expect(source).toContain('Platform.OS === "ios" ? { accentColor: accentGreen } : {}');
+    expect(source).toContain("{...iosPickerStyleProps}");
   });
 });

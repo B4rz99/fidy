@@ -79,3 +79,11 @@ test("add-bill content uses Pressable per ui-pressable rule", () => {
   expect(formContentSource).toContain("Pressable");
   expect(formContentSource).not.toContain("TouchableOpacity");
 });
+
+test("add-bill date picker uses Android-safe display and press gate", () => {
+  expect(formContentSource).toContain('display={Platform.OS === "ios" ? "compact" : "default"}');
+  expect(formContentSource).toContain("showAndroidDatePicker");
+  expect(formContentSource).toContain(
+    'if (Platform.OS === "android") setShowAndroidDatePicker(false)'
+  );
+});

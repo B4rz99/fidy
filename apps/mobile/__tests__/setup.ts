@@ -151,6 +151,14 @@ vi.mock("lucide-react-native", () => lucideReactNativeMock);
 // Mock expo-image native component
 vi.mock("expo-image", () => ({ Image: "Image" }));
 
+// Mock expo-glass-effect native component
+vi.mock("expo-glass-effect", () => ({
+  GlassView: "GlassView",
+  GlassContainer: "GlassContainer",
+  isLiquidGlassAvailable: () => false,
+  isGlassEffectAPIAvailable: () => false,
+}));
+
 // Mock nativewind/preset (needed for tailwind config import)
 vi.mock("nativewind/preset", () => ({ default: {} }));
 
@@ -225,18 +233,8 @@ vi.mock("expo-router", () => ({
 }));
 
 // Mock vector icon packages
-vi.mock("@react-native-vector-icons/ionicons", () => ({
+vi.mock("@expo/vector-icons/Ionicons", () => ({
   default: "Ionicons",
-}));
-
-vi.mock("@expo/ui/swift-ui", () => ({
-  Host: "Host",
-  Toggle: "Toggle",
-}));
-
-vi.mock("@expo/ui/swift-ui/modifiers", () => ({
-  tint: (color: string) => ({ color, type: "tint" }),
-  toggleStyle: (style: string) => ({ style, type: "toggleStyle" }),
 }));
 
 // Mock @supabase/supabase-js
@@ -273,7 +271,7 @@ vi.mock("expo-crypto", () => ({
 }));
 
 // Mock Expo UI DateTimePicker drop-in
-vi.mock("@expo/ui/community/datetime-picker", () => ({
+vi.mock("@react-native-community/datetimepicker", () => ({
   default: "DateTimePicker",
 }));
 

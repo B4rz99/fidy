@@ -1,4 +1,4 @@
-import DateTimePicker from "@expo/ui/community/datetime-picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import type { ReactNode } from "react";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import { Wallet } from "@/shared/components/icons";
@@ -184,11 +184,12 @@ export function TransactionDatePickerSheet(props: {
           mode="date"
           display={Platform.OS === "ios" ? "spinner" : "default"}
           maximumDate={maximumDate}
-          onValueChange={(_event, nextDate) => {
+          onChange={(_event, nextDate) => {
             if (Platform.OS !== "ios") props.onClose();
-            props.onChange(nextDate);
+            if (nextDate) {
+              props.onChange(nextDate);
+            }
           }}
-          onDismiss={props.onClose}
         />
         <Pressable
           style={{

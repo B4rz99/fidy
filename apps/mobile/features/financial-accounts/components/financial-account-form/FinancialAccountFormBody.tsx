@@ -1,4 +1,4 @@
-import DateTimePicker from "@expo/ui/community/datetime-picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -180,13 +180,14 @@ export function FinancialAccountFormBody({
               value={effectiveDate ?? datePickerFallback}
               mode="date"
               display={Platform.OS === "ios" ? "spinner" : "default"}
-              onValueChange={(_event, date) => {
+              onChange={(_event, date) => {
                 if (Platform.OS === "android") {
                   setShowDatePicker(false);
                 }
-                setEffectiveDate(date);
+                if (date) {
+                  setEffectiveDate(date);
+                }
               }}
-              onDismiss={() => setShowDatePicker(false)}
             />
           ) : null}
         </View>
