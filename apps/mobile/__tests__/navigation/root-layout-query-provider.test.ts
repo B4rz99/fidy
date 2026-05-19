@@ -29,4 +29,10 @@ describe("Root layout query provider", () => {
   test("declares status bar system UI", () => {
     expect(source).toContain('<StatusBar style="auto" />');
   });
+
+  test("hydrates settings before showing the first app frame", () => {
+    expect(source).toContain("useSettingsStore.getState().hydrate()");
+    expect(source).toContain("settingsHydrated");
+    expect(source).toContain("isAuthLoading || !settingsHydrated");
+  });
 });

@@ -31,6 +31,7 @@ const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
 
 type SettingsState = {
   themePreference: ThemePreference;
+  isHydrated: boolean;
   notificationPreferences: NotificationPreferences;
   areAllNotificationsOff: boolean;
   privateBackup: PrivateBackupSettingsState;
@@ -106,10 +107,7 @@ const loadStoredSettings = async () => {
 };
 
 const applyStoredThemePreference = (set: SetSettingsState, storedTheme: string | null) => {
-  const themePreference = resolveThemePreference(storedTheme);
-  if (!themePreference) {
-    return;
-  }
+  const themePreference = resolveThemePreference(storedTheme) ?? "system";
 
   set({ themePreference });
   Appearance.setColorScheme(toColorScheme(themePreference));
@@ -138,6 +136,7 @@ const applyStoredNotificationPreferences = (set: SetSettingsState, storedPrefs: 
 
 export const useSettingsStore = create<SettingsState & SettingsActions>((set, get) => ({
   themePreference: "system",
+  isHydrated: false,
   notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
   areAllNotificationsOff: false,
   privateBackup: DEFAULT_PRIVATE_BACKUP_STATE,
@@ -227,6 +226,10 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
       set({ shareAnonymizedParseSamples: stored.storedShareAnonymizedParseSamples === "true" });
     } catch {
       // SecureStore unavailable (e.g., in tests)
+      Appearance.setColorScheme(toColorScheme("system"));
+      set({ themePreference: "system" });
+    } finally {
+      set({ isHydrated: true });
     }
   },
 }));

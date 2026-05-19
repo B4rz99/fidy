@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { useSettingsStore } from "@/features/settings/store";
+import { Appearance } from "@/shared/components/rn";
 import { requireBackupId, requireIsoDateTime, requireUserId } from "@/shared/types/assertions";
 
 const BACKUP_METADATA = {
@@ -22,6 +23,7 @@ describe("useSettingsStore", () => {
     });
     const initial = useSettingsStore.getInitialState();
     expect(initial.themePreference).toBe("system");
+    expect(initial.isHydrated).toBe(false);
     expect(initial.notificationPreferences).toEqual({
       budgetAlerts: true,
       goalMilestones: true,
@@ -34,6 +36,7 @@ describe("useSettingsStore", () => {
   beforeEach(() => {
     vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
     vi.mocked(SecureStore.setItemAsync).mockClear();
+    vi.mocked(Appearance.setColorScheme).mockClear();
     useSettingsStore.setState(useSettingsStore.getInitialState());
   });
 
@@ -68,6 +71,26 @@ describe("useSettingsStore", () => {
     await useSettingsStore.getState().hydrate();
 
     expect(useSettingsStore.getState().shareAnonymizedParseSamples).toBe(true);
+  });
+
+  test("hydrates missing theme preference as system before first render", async () => {
+    await useSettingsStore.getState().hydrate();
+
+    expect(useSettingsStore.getState().themePreference).toBe("system");
+    expect(useSettingsStore.getState().isHydrated).toBe(true);
+    expect(Appearance.setColorScheme).toHaveBeenCalledWith("unspecified");
+  });
+
+  test("hydrates stored theme preference before first render", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockImplementation((key) =>
+      Promise.resolve(key === "theme_preference" ? "dark" : null)
+    );
+
+    await useSettingsStore.getState().hydrate();
+
+    expect(useSettingsStore.getState().themePreference).toBe("dark");
+    expect(useSettingsStore.getState().isHydrated).toBe(true);
+    expect(Appearance.setColorScheme).toHaveBeenCalledWith("dark");
   });
 
   test("tracks Private Backup setup until the Recovery Key is confirmed", () => {

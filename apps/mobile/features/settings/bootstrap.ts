@@ -6,6 +6,8 @@ import { useSettingsStore } from "./public";
 export const settingsBootstrapTask: BootstrapTask<AuthenticatedBootstrapContext> = {
   id: "settings",
   run: () => {
+    if (useSettingsStore.getState().isHydrated) return;
+
     void useSettingsStore
       .getState()
       .hydrate()

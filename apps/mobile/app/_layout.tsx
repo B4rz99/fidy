@@ -28,6 +28,7 @@ import {
 } from "@/features/auth/hooks.public";
 import { isLocalQaAvailable, useQaDevtoolsRuntime } from "@/features/qa/hooks.public";
 import { QaStatusBanner } from "@/features/qa/ui.public";
+import { useSettingsStore } from "@/features/settings/hooks.public";
 import { AppToastHost, ErrorFallback } from "@/shared/components";
 import { Platform, useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
@@ -115,6 +116,7 @@ function AuthenticatedShell({
 function RootLayout() {
   const isAuthLoading = useAuthStore((s) => s.isLoading);
   const authMode = useAuthMode();
+  const settingsHydrated = useSettingsStore((s) => s.isHydrated);
   const userId = useOptionalUserId();
   const onboardingComplete = useEffectiveOnboardingComplete();
   const { replace } = useRouter();
@@ -134,6 +136,7 @@ function RootLayout() {
 
   useMountEffect(() => {
     void useAuthStore.getState().restoreSession();
+    void useSettingsStore.getState().hydrate();
   });
 
   // Side effects when session changes: set Sentry user
@@ -145,8 +148,8 @@ function RootLayout() {
     () => {
       if (!userId) void SplashScreen.hideAsync();
     },
-    [fontsLoaded, fontsError, isAuthLoading, userId],
-    (fontsLoaded || fontsError != null) && !isAuthLoading
+    [fontsLoaded, fontsError, isAuthLoading, settingsHydrated, userId],
+    (fontsLoaded || fontsError != null) && !isAuthLoading && settingsHydrated
   );
 
   // Three-state routing: no user → login, user + not onboarded → onboarding, user + onboarded → tabs
@@ -177,14 +180,14 @@ function RootLayout() {
       }
     },
     [localQaAvailable, onboardingComplete, replace, segments, userId],
-    !isAuthLoading && (fontsLoaded || fontsError != null)
+    !isAuthLoading && settingsHydrated && (fontsLoaded || fontsError != null)
   );
 
   if (!fontsLoaded && !fontsError) {
     return null;
   }
 
-  if (isAuthLoading) {
+  if (isAuthLoading || !settingsHydrated) {
     return null;
   }
 
