@@ -1,0 +1,26 @@
+apps/mobile/features/account-suggestions/components/AccountSuggestionReviewScreen.tsx
+  s_1ffb8c14dc19d9::t_880213dcf67c4f 1,3,7,12,16-18,34-42,44-52,54-58,60-72,88-91,95-96,98-119,127-133,137,146-148,154
+  s_1ffb8c14dc19d9::t_347370e909e0e6 73-87,92-94,97
+apps/mobile/features/account-suggestions/components/AccountSuggestionCard.tsx
+  s_1ffb8c14dc19d9::t_14ec71a5af8737 1,41,104,110,116,126
+  s_1ffb8c14dc19d9::t_347370e909e0e6 59-61
+apps/mobile/features/budget/components/BudgetListScreen.tsx
+  s_1ffb8c14dc19d9::t_14ec71a5af8737 78,80,96,98,100,102,152
+  s_1ffb8c14dc19d9::t_880213dcf67c4f 1,3,9,13,28-29,112-151,153,170-175,179-180,186-187,196-197
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "580ba3e136cbfca48d55a0707a311ba6da5546c4",
+  "prompts": {},
+  "sessions": {
+    "s_1ffb8c14dc19d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e40fb-00e7-7041-ba73-867ad938be0a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
