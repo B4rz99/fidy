@@ -1,0 +1,28 @@
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_b2219b9683913c::t_69f4fa4c4fa859 33-34
+apps/mobile/__tests__/navigation/custom-tab-bar.test.ts
+  s_b2219b9683913c::t_69f4fa4c4fa859 11
+apps/mobile/__tests__/shared/screen-layout.test.ts
+  s_b2219b9683913c::t_06eca25f49bc9e 57-59
+  s_b2219b9683913c::t_69f4fa4c4fa859 56,60-61
+apps/mobile/__tests__/ai-chat/callers.test.ts
+  s_b2219b9683913c::t_69f4fa4c4fa859 39-43
+apps/mobile/features/ai-chat/components/ChatScreen.tsx
+  s_b2219b9683913c::t_69f4fa4c4fa859 135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "3b7f7c8ce625ef56d6b8eac71f39b49c6e031011",
+  "prompts": {},
+  "sessions": {
+    "s_b2219b9683913c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3eb4-9e50-7d31-ab24-3cdf117d694c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
