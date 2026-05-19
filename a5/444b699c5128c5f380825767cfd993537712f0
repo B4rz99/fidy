@@ -1,0 +1,31 @@
+apps/mobile/plugins/withFidyWidget.js
+  s_c470af7990caf6::t_d8878174e03783 14,18-19,246-254,261-262,295-297
+  s_9bd463cf30949a::t_1bde72db015bd2 256,258-260,263-264,288-291
+  s_c470af7990caf6::t_3442488fa05ceb 350-351
+  s_c470af7990caf6::t_655469dedc2504 352
+  s_9bd463cf30949a::t_1b7a2b920a038a 245,255,257,265-287,292-294
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "a5444b699c5128c5f380825767cfd993537712f0",
+  "prompts": {},
+  "sessions": {
+    "s_9bd463cf30949a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3d7e-e89b-79c3-999c-8aaf0e6b6974",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_c470af7990caf6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3b3d-cc9c-7860-84a1-925c43e5aef2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
