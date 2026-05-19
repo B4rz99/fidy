@@ -1,0 +1,62 @@
+apps/mobile/features/transfers/components/transfer-form/TransferFormContent.tsx
+  s_c470af7990caf6::t_0edbafc3106c36 1
+  s_c470af7990caf6::t_067c84120b399c 99
+apps/mobile/features/goals/components/goal-sheet/GoalDateField.tsx
+  s_c470af7990caf6::t_0edbafc3106c36 1
+  s_c470af7990caf6::t_067c84120b399c 66
+apps/mobile/features/settings/components/SettingsRow.tsx
+  s_c470af7990caf6::t_d9c27776afbb45 3,64-68
+apps/mobile/__tests__/setup.ts
+  s_c470af7990caf6::t_0edbafc3106c36 228,266
+apps/mobile/features/transfers/components/TransferFormScreen.tsx
+  s_c470af7990caf6::t_0edbafc3106c36 1
+  s_c470af7990caf6::t_067c84120b399c 42
+apps/mobile/__tests__/navigation/root-layout-query-provider.test.ts
+  s_c470af7990caf6::t_ede38b933cc4ce 29
+apps/mobile/features/auth/components/icons/AppleIcon.tsx
+  s_c470af7990caf6::t_0edbafc3106c36 1
+apps/mobile/features/transactions/components/PencilTransactionEntrySheets.tsx
+  s_c470af7990caf6::t_067c84120b399c 187
+  s_c470af7990caf6::t_184be47c010681 189-191
+  s_c470af7990caf6::t_0edbafc3106c36 1
+apps/mobile/features/calendar/components/add-bill/AddBillFormContent.tsx
+  s_c470af7990caf6::t_184be47c010681 143-145
+  s_c470af7990caf6::t_0edbafc3106c36 1
+apps/mobile/__tests__/goals/goal-sheets.test.ts
+  s_c470af7990caf6::t_0edbafc3106c36 42
+apps/mobile/features/onboarding/components/CompleteStep.tsx
+  s_c470af7990caf6::t_0edbafc3106c36 1
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx
+  s_c470af7990caf6::t_067c84120b399c 183
+  s_c470af7990caf6::t_0edbafc3106c36 1
+  s_c470af7990caf6::t_184be47c010681 187-189
+apps/mobile/features/transfers/components/PencilTransferEntryContent.tsx
+  s_c470af7990caf6::t_0edbafc3106c36 1
+  s_c470af7990caf6::t_067c84120b399c 133
+apps/mobile/package.json
+  s_c470af7990caf6::t_268e65add464f9 34,36,48,54,73-76,78,81-82,84,87,91,94,96,98,100,104
+  s_c470af7990caf6::t_67f9d03b8c069b 32-33,35,45,49-53,55-68,79-80
+apps/mobile/features/auth/components/icons/GoogleIcon.tsx
+  s_c470af7990caf6::t_0edbafc3106c36 1
+apps/mobile/__tests__/ui/date-picker-imports.test.ts
+  s_c470af7990caf6::t_2e3117982a4ff0 18,24
+  s_c470af7990caf6::t_067c84120b399c 30,37-38
+  s_c470af7990caf6::t_0edbafc3106c36 33
+  s_c470af7990caf6::t_2f009c2af5afc4 26-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "b5a7a6f6650789bc63856c92a7ca3e14bf514171",
+  "prompts": {},
+  "sessions": {
+    "s_c470af7990caf6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3b3d-cc9c-7860-84a1-925c43e5aef2",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
