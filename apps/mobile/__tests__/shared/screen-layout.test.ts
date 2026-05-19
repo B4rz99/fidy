@@ -37,8 +37,26 @@ describe("ScreenLayout", () => {
     expect(source).toContain("headerRight: () => rightActions");
   });
 
+  test("does not clear inherited iOS header actions when rightActions is omitted", () => {
+    expect(source).toContain("rightActions != null");
+    expect(source).toContain("iosHeaderOptions");
+  });
+
   test("accepts onBack function prop", () => {
     expect(source).toMatch(/onBack\??\s*:\s*\(\)\s*=>\s*void/);
+  });
+
+  test("can reserve iOS status-bar space when no native header is present", () => {
+    expect(source).toContain("includesNativeHeader?: boolean");
+    expect(source).toContain("includesNativeHeader = true");
+    expect(source).toContain("shouldRenderCustomHeader");
+    expect(source).toContain("!shouldRenderCustomHeader");
+  });
+
+  test("renders a custom iOS header for hidden-header sub screens", () => {
+    expect(source).toContain(
+      "!includesNativeHeader && (!isTab || rightActions != null || onBack != null)"
+    );
   });
 
   test("accepts children ReactNode prop", () => {

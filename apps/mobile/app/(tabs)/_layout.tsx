@@ -21,6 +21,10 @@ function IosTabs() {
         <NativeTabs.Trigger.Icon sf="plus" />
         <NativeTabs.Trigger.Label>{t("tabs.add")}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="(budget)">
+        <NativeTabs.Trigger.Icon sf="wallet.pass.fill" />
+        <NativeTabs.Trigger.Label>{t("tabs.budgets")}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(finance)">
         <NativeTabs.Trigger.Icon sf="chart.bar.fill" />
         <NativeTabs.Trigger.Label>{t("tabs.finance")}</NativeTabs.Trigger.Label>
@@ -41,6 +45,7 @@ function AndroidTabs() {
       <Tabs.Screen name="(index)" options={{ title: t("tabs.home") }} />
       <Tabs.Screen name="(ai)" options={{ title: t("tabs.ai") }} />
       <Tabs.Screen name="add" options={{ title: t("tabs.add") }} />
+      <Tabs.Screen name="(budget)" options={{ title: t("tabs.budgets") }} />
       <Tabs.Screen name="(finance)" options={{ title: t("tabs.finance") }} />
     </Tabs>
   );

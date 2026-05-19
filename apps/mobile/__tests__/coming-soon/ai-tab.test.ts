@@ -13,6 +13,12 @@ describe("AI tab", () => {
     expect(source).toContain("ChatScreen");
   });
 
+  test("passes new-chat action into the chat view", () => {
+    expect(source).toContain(
+      "<ChatScreen onBack={handleBackFromChat} onNewChat={handleNewChat} />"
+    );
+  });
+
   test("manages view state for navigation", () => {
     expect(source).toContain("AiView");
     expect(source).toContain('"list"');

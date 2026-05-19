@@ -36,8 +36,9 @@ describe("calendar screen", () => {
     expect(financeTabSource).toContain("{ paddingBottom: tabBarClearance }");
   });
 
-  test("add-bill header actions use white plus icons", () => {
+  test("add-bill header actions use visible plus icons", () => {
     expect(billsCalendarSource).toContain("Colors.light.card");
-    expect(financeTabSource).toContain("Colors.light.card");
+    expect(financeTabSource).toContain('useThemeColor("primary")');
+    expect(financeTabSource).not.toContain("Colors.light.card");
   });
 });

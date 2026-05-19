@@ -31,4 +31,14 @@ describe("ai chat callers", () => {
       'void updateChatActionStatus({ db, userId, messageId, status: "dismissed" })'
     );
   });
+
+  test("ChatScreen exposes a header action for starting a new chat", () => {
+    expect(chatScreenSource).toContain("rightActions={<NewChatButton onPress={onNewChat} />}");
+    expect(chatScreenSource).toContain("readonly onNewChat: () => void");
+  });
+
+  test("ChatScreen keyboard offset matches the custom header height", () => {
+    expect(chatScreenSource).toContain("safeTop + HEADER_HEIGHT");
+    expect(chatScreenSource).not.toContain("safeTop + 54");
+  });
 });

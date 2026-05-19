@@ -27,6 +27,15 @@ test("keeps HomeScreen routed through the extracted dashboard modules", () => {
   expect(contentSource).toContain("<ActivityFeedItem");
 });
 
+test("keeps home header actions wired through ScreenLayout", () => {
+  const layoutSource = readSource("../../app/(tabs)/(index)/_layout.tsx");
+
+  expect(contentSource).toContain("HomeScreenActions");
+  expect(contentSource).toContain("rightActions={headerActions}");
+  expect(layoutSource).not.toContain("HomeScreenActions");
+  expect(layoutSource).not.toContain("headerRight");
+});
+
 test("keeps the home activity feed wired to pagination and transaction mutations", () => {
   expect(activityFeedSource).toContain("activityQueryService.loadPage");
   expect(activityFeedSource).toContain("appendUniqueActivityItems");

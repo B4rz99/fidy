@@ -614,6 +614,7 @@ const en = {
     title: "AI Chat",
     fidyAi: "Fidy AI",
     memories: "Memory",
+    newChat: "New chat",
     noConversations: "No conversations yet",
     tapToStart: "Tap + to start a new chat",
     placeholder: "Ask about your finances...",

@@ -15,11 +15,13 @@ import type { ActionStatus, ChatMessage } from "../schema";
 import { updateChatActionStatus, useChatStore } from "../store";
 import { ChatInput } from "./ChatInput";
 import { MessageBubble } from "./MessageBubble";
+import { NewChatButton } from "./NewChatButton";
 import { StarterSuggestions } from "./StarterSuggestions";
 import { StreamingBubble } from "./StreamingBubble";
 
 type ChatScreenProps = {
   readonly onBack: () => void;
+  readonly onNewChat: () => void;
 };
 
 const keyExtractor = (item: ChatMessage) => item.id;
@@ -38,7 +40,7 @@ const MemoizedMessageBubble = memo(function MemoizedBubble({
   );
 });
 
-export function ChatScreen({ onBack }: ChatScreenProps) {
+export function ChatScreen({ onBack, onNewChat }: ChatScreenProps) {
   const { t } = useTranslation();
   useMountEffect(() => trackAiChatOpened());
   const userId = useOptionalUserId();
@@ -120,11 +122,17 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
   const isEmpty = messages.length === 0 && !isStreaming;
 
   return (
-    <ScreenLayout title={title} variant="sub" onBack={onBack}>
+    <ScreenLayout
+      title={title}
+      variant="sub"
+      onBack={onBack}
+      includesNativeHeader={false}
+      rightActions={<NewChatButton onPress={onNewChat} />}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? safeTop + 54 : HEADER_HEIGHT}
+        keyboardVerticalOffset={Platform.OS === "ios" ? safeTop + HEADER_HEIGHT : HEADER_HEIGHT}
       >
         {isEmpty ? (
           <View

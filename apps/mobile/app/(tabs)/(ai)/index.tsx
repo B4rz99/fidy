@@ -50,7 +50,7 @@ export default function AiTab() {
 
   switch (view) {
     case "chat":
-      return <ChatScreen onBack={handleBackFromChat} />;
+      return <ChatScreen onBack={handleBackFromChat} onNewChat={handleNewChat} />;
     case "list":
       return (
         <ConversationList

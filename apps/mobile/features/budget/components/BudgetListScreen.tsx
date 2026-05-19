@@ -109,6 +109,7 @@ export function BudgetListScreen() {
   return (
     <ScreenLayout
       title={t("budgets.title")}
+      includesNativeHeader={false}
       rightActions={
         Platform.OS !== "ios" ? <AddBudgetButton onPress={handleAddBudget} /> : undefined
       }

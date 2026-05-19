@@ -7,6 +7,7 @@ describe("Tab layout", () => {
   const primaryStackLayoutSources = [
     "../../app/(tabs)/(index)/_layout.tsx",
     "../../app/(tabs)/(ai)/_layout.tsx",
+    "../../app/(tabs)/(budget)/_layout.tsx",
     "../../app/(tabs)/add/_layout.tsx",
     "../../app/(tabs)/(finance)/_layout.tsx",
   ].map((path) => readFileSync(resolve(__dirname, path), "utf-8"));
@@ -15,8 +16,8 @@ describe("Tab layout", () => {
     expect(layoutSource).not.toContain('name="history"');
   });
 
-  test("has four primary tabs and no settings tab", () => {
-    const expectedTabs = ["(index)", "(ai)", "add", "(finance)"];
+  test("has five primary tabs including budget and no settings tab", () => {
+    const expectedTabs = ["(index)", "(ai)", "add", "(budget)", "(finance)"];
 
     const iosMatch = layoutSource.match(/function\s+IosTabs\b[\s\S]*?^}/m);
     expect(iosMatch).not.toBeNull();
@@ -30,12 +31,24 @@ describe("Tab layout", () => {
     expect(layoutSource).not.toContain('name="(menu)"');
   });
 
-  test("uses the profile avatar as the settings entry point", () => {
-    expect(primaryStackLayoutSources).toHaveLength(4);
-    for (const stackLayoutSource of primaryStackLayoutSources) {
-      expect(stackLayoutSource).toContain("ProfileAvatarButton");
-      expect(stackLayoutSource).toContain("headerLeft");
-    }
+  test("uses the profile avatar only on the home tab stack", () => {
+    expect(primaryStackLayoutSources).toHaveLength(5);
+    const [homeSource, aiSource, budgetSource, addSource, financeSource] =
+      primaryStackLayoutSources;
+
+    expect(homeSource).toContain("ProfileAvatarButton");
+    expect(homeSource).toContain("headerLeft");
+    expect(aiSource).not.toContain("ProfileAvatarButton");
+    expect(budgetSource).not.toContain("ProfileAvatarButton");
+    expect(addSource).not.toContain("ProfileAvatarButton");
+    expect(financeSource).not.toContain("ProfileAvatarButton");
+  });
+
+  test("removes native header shadows from visible tab headers", () => {
+    const [homeSource, , , , financeSource] = primaryStackLayoutSources;
+
+    expect(homeSource).toContain("headerShadowVisible: false");
+    expect(financeSource).toContain("headerShadowVisible: false");
   });
 
   test("settings is a pushed route instead of a tab route", () => {
@@ -47,6 +60,17 @@ describe("Tab layout", () => {
 
   test("does not include a standalone goals tab", () => {
     expect(layoutSource).not.toContain('name="goals"');
+  });
+
+  test("finance screen no longer owns the budget panel", () => {
+    const financeSource = readFileSync(
+      resolve(__dirname, "../../app/(tabs)/(finance)/index.tsx"),
+      "utf-8"
+    );
+
+    expect(financeSource).not.toContain("BudgetListScreen");
+    expect(financeSource).not.toContain('"budgets"');
+    expect(financeSource).not.toContain('t("budgets.title")');
   });
 
   test("does not reference MenuPanel", () => {

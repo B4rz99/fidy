@@ -2,14 +2,15 @@ import { describe, expect, test } from "vitest";
 import { TAB_CONFIG } from "@/shared/components/navigation/tab-config";
 
 describe("TAB_CONFIG", () => {
-  test("includes home, ai, and finance tab routes", () => {
+  test("includes home, ai, budget, and finance tab routes", () => {
     expect(TAB_CONFIG).toHaveProperty("(index)");
     expect(TAB_CONFIG).toHaveProperty("(ai)");
+    expect(TAB_CONFIG).toHaveProperty("(budget)");
     expect(TAB_CONFIG).toHaveProperty("(finance)");
   });
 
-  test("has exactly 3 configured routes", () => {
-    expect(Object.keys(TAB_CONFIG)).toHaveLength(3);
+  test("has exactly 4 configured routes", () => {
+    expect(Object.keys(TAB_CONFIG)).toHaveLength(4);
   });
 
   test("does not include history or goals route", () => {
@@ -20,6 +21,7 @@ describe("TAB_CONFIG", () => {
   test("has correct labels", () => {
     expect(TAB_CONFIG["(index)"]?.label).toBe("HOME");
     expect(TAB_CONFIG["(ai)"]?.label).toBe("AI");
+    expect(TAB_CONFIG["(budget)"]?.label).toBe("BUDGET");
     expect(TAB_CONFIG["(finance)"]?.label).toBe("FINANCE");
   });
 

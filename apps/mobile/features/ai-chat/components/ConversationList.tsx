@@ -1,11 +1,9 @@
 import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
-import { Stack } from "expo-router";
-import { ProfileAvatarButton } from "@/features/settings/header.public";
 import { memo, useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
-import { MessageSquare, Plus, Trash2, X } from "@/shared/components/icons";
+import { MessageSquare, Trash2, X } from "@/shared/components/icons";
 import { Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -14,6 +12,7 @@ import type { ChatSessionId } from "@/shared/types/branded";
 import { useSessionCleanup } from "../hooks/use-session-cleanup";
 import type { ChatSession } from "../schema";
 import { deleteChatSession, loadChatSessions, useChatStore } from "../store";
+import { NewChatButton } from "./NewChatButton";
 
 type ConversationListProps = {
   readonly onSelectSession: (id: ChatSessionId) => void;
@@ -75,16 +74,6 @@ const SessionCard = memo(function SessionCardInner({
   );
 });
 
-function NewChatButton({ onPress }: { readonly onPress: () => void }) {
-  const iconColor = useThemeColor("primary");
-
-  return (
-    <Pressable onPress={onPress} hitSlop={12}>
-      <Plus size={24} color={iconColor} />
-    </Pressable>
-  );
-}
-
 export function ConversationList({ onSelectSession, onNewChat }: ConversationListProps) {
   const { t } = useTranslation();
   const userId = useOptionalUserId();
@@ -121,17 +110,9 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
   return (
     <ScreenLayout
       title={t("aiChat.title")}
-      rightActions={Platform.OS !== "ios" ? <NewChatButton onPress={onNewChat} /> : undefined}
+      includesNativeHeader={false}
+      rightActions={<NewChatButton onPress={onNewChat} />}
     >
-      {Platform.OS === "ios" && (
-        <Stack.Screen
-          options={{
-            headerTitle: "",
-            headerLeft: () => <ProfileAvatarButton />,
-            headerRight: () => <NewChatButton onPress={onNewChat} />,
-          }}
-        />
-      )}
       <FlashList
         data={sessions}
         renderItem={renderItem}

@@ -66,7 +66,7 @@ async function scheduleBudgetNotification(
         budgetId: alert.budgetId,
         categoryId: alert.categoryId,
         threshold: alert.threshold,
-        route: "/(tabs)/(finance)",
+        route: "/(tabs)/(budget)",
       },
     },
     trigger: null, // immediate

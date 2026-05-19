@@ -8,6 +8,6 @@ describe("CustomTabBar", () => {
 
   test("re-exports TAB_CONFIG", () => {
     expect(TAB_CONFIG).toBeDefined();
-    expect(Object.keys(TAB_CONFIG)).toHaveLength(3);
+    expect(Object.keys(TAB_CONFIG)).toHaveLength(4);
   });
 });
