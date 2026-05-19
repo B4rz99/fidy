@@ -1,0 +1,26 @@
+apps/mobile/features/onboarding/components/BudgetSetupStep.tsx
+  s_ca5a38e9d6cfe9::t_b0aa449828c28b 8,25,49,51-54,56-58
+  s_ca5a38e9d6cfe9::t_2a8634d5a8ca2b 45,50,55,59
+  s_ca5a38e9d6cfe9::t_3b5aa6ea15e948 46-48
+apps/mobile/features/onboarding/components/BudgetSetupStep.helpers.ts
+  s_ca5a38e9d6cfe9::t_2a8634d5a8ca2b 9
+apps/mobile/__tests__/onboarding/budget-setup-step.test.ts
+  s_ca5a38e9d6cfe9::t_808b579709b57c 24
+  s_ca5a38e9d6cfe9::t_2a8634d5a8ca2b 16-23,25-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "4e915d01edf05bce1b82a254464a6334cf37fe6c",
+  "prompts": {},
+  "sessions": {
+    "s_ca5a38e9d6cfe9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4101-ca83-7e10-9cdd-73bb5b478bb5",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
