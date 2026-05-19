@@ -19,6 +19,9 @@ import {
 import { NotificationCard } from "./NotificationCard";
 import { NotificationEmptyState } from "./NotificationEmptyState";
 
+const notificationKeyExtractor = (item: NotificationDisplay) => item.id;
+const NotificationItemSeparator = () => <View style={styles.separator} />;
+
 export const NotificationsScreen = () => {
   const router = useRouter();
   const { t } = useTranslation();
@@ -64,6 +67,20 @@ export const NotificationsScreen = () => {
     [router]
   );
 
+  const renderItem = useCallback(
+    ({ item }: { item: NotificationDisplay }) => (
+      <NotificationCard notification={item} onPress={handlePress} />
+    ),
+    [handlePress]
+  );
+
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: { title: string } }) => (
+      <Text style={[styles.sectionLabel, { color: tertiaryColor }]}>{section.title}</Text>
+    ),
+    [tertiaryColor]
+  );
+
   return (
     <ScreenLayout
       title={t("notifications.title")}
@@ -98,12 +115,10 @@ export const NotificationsScreen = () => {
       ) : (
         <SectionList
           sections={sections}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <NotificationCard notification={item} onPress={handlePress} />}
-          renderSectionHeader={({ section }) => (
-            <Text style={[styles.sectionLabel, { color: tertiaryColor }]}>{section.title}</Text>
-          )}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          keyExtractor={notificationKeyExtractor}
+          renderItem={renderItem}
+          renderSectionHeader={renderSectionHeader}
+          ItemSeparatorComponent={NotificationItemSeparator}
           contentContainerStyle={[styles.listContent, { paddingBottom: bottom + 16 }]}
           contentInsetAdjustmentBehavior="automatic"
           stickySectionHeadersEnabled={false}

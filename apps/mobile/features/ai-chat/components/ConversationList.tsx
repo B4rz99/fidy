@@ -21,6 +21,8 @@ type ConversationListProps = {
 
 const ItemSeparator = () => <View style={{ height: 10 }} />;
 
+const sessionKeyExtractor = (item: ChatSession) => item.id;
+
 function AndroidTabBarSpacer() {
   return Platform.OS === "ios" ? null : <View style={{ height: TAB_BAR_CLEARANCE }} />;
 }
@@ -116,7 +118,7 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
       <FlashList
         data={sessions}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={sessionKeyExtractor}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
           paddingBottom: 0,

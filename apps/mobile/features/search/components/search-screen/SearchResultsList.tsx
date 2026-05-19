@@ -1,7 +1,8 @@
+import { FlashList } from "@shopify/flash-list";
 import { useCallback, useMemo } from "react";
 import type { StoredTransaction } from "@/features/transactions/query.public";
 import { TAB_BAR_CLEARANCE } from "@/shared/components";
-import { FlatList } from "@/shared/components/rn";
+import { StyleSheet } from "@/shared/components/rn";
 import { toIsoDate } from "@/shared/lib";
 import { hasActiveFilters } from "../../lib/filters";
 import { SearchEmptyState } from "../SearchEmptyState";
@@ -57,7 +58,7 @@ export function SearchResultsList({
   );
 
   return (
-    <FlatList
+    <FlashList
       data={results}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
@@ -79,7 +80,13 @@ export function SearchResultsList({
       }
       showsVerticalScrollIndicator={false}
       contentInsetAdjustmentBehavior="automatic"
-      contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }}
+      contentContainerStyle={styles.listContent}
     />
   );
 }
+
+const styles = StyleSheet.create({
+  listContent: {
+    paddingBottom: TAB_BAR_CLEARANCE,
+  },
+});

@@ -26,6 +26,11 @@
       "reason": "Expo SDK 56 expects 2.0.2; newer native versions need Expo compatibility confirmation."
     },
     {
+      "name": "better-sqlite3",
+      "until": "2026-06-01",
+      "reason": "Native test database addon update should land in a dedicated dependency PR with install and DB test verification."
+    },
+    {
       "name": "posthog-react-native",
       "until": "2026-06-01",
       "reason": "React Native analytics update should land separately from the SDK 55 restoration."

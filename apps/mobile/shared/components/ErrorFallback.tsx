@@ -1,5 +1,6 @@
+import { Image } from "expo-image";
 import * as Updates from "expo-updates";
-import { Image, Pressable, Text, View } from "@/shared/components/rn";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 import { useTranslation } from "@/shared/hooks/use-translation";
 
@@ -7,43 +8,15 @@ export function ErrorFallback() {
   const { t } = useTranslation();
 
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 32,
-        backgroundColor: Colors.light.page,
-      }}
-    >
+    <View style={styles.container}>
       <Image
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- static asset require
         source={require("../../assets/images/icon.png")}
-        style={{ width: 80, height: 80, marginBottom: 24, borderRadius: 16 }}
+        style={styles.icon}
+        contentFit="cover"
       />
-      <Text
-        style={{
-          fontSize: 22,
-          fontFamily: "Poppins_700Bold",
-          color: Colors.light.primary,
-          marginBottom: 8,
-          textAlign: "center",
-        }}
-      >
-        {t("errorFallback.title")}
-      </Text>
-      <Text
-        style={{
-          fontSize: 15,
-          fontFamily: "Poppins_500Medium",
-          color: Colors.light.secondary,
-          textAlign: "center",
-          marginBottom: 32,
-          lineHeight: 22,
-        }}
-      >
-        {t("errorFallback.body")}
-      </Text>
+      <Text style={styles.title}>{t("errorFallback.title")}</Text>
+      <Text style={styles.body}>{t("errorFallback.body")}</Text>
       <Pressable
         onPress={() => {
           void Updates.reloadAsync().catch(() => undefined);
@@ -69,3 +42,34 @@ export function ErrorFallback() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+    backgroundColor: Colors.light.page,
+  },
+  icon: {
+    width: 80,
+    height: 80,
+    marginBottom: 24,
+    borderRadius: 16,
+  },
+  title: {
+    fontSize: 22,
+    fontFamily: "Poppins_700Bold",
+    color: Colors.light.primary,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  body: {
+    fontSize: 15,
+    fontFamily: "Poppins_500Medium",
+    color: Colors.light.secondary,
+    textAlign: "center",
+    marginBottom: 32,
+    lineHeight: 22,
+  },
+});

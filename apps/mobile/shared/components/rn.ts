@@ -15,7 +15,6 @@ export {
   Appearance,
   AppState,
   FlatList,
-  Image,
   Keyboard,
   KeyboardAvoidingView,
   Linking,

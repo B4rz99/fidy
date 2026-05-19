@@ -1,5 +1,6 @@
 import { Plus } from "@/shared/components/icons";
-import { Pressable } from "@/shared/components/rn";
+import { GlassSurface } from "@/shared/components";
+import { Pressable, StyleSheet } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 export function NewChatButton({ onPress }: { readonly onPress: () => void }) {
@@ -13,7 +14,20 @@ export function NewChatButton({ onPress }: { readonly onPress: () => void }) {
       accessibilityRole="button"
       accessibilityLabel={t("aiChat.newChat")}
     >
-      <Plus size={24} color={iconColor} />
+      <GlassSurface padded={false} style={styles.surface}>
+        <Plus size={24} color={iconColor} />
+      </GlassSurface>
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  surface: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

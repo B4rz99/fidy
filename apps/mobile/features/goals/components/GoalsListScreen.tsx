@@ -1,9 +1,10 @@
+import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Target } from "@/shared/components/icons";
-import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { selectGoal, useGoalStore } from "../store";
@@ -114,7 +115,7 @@ export function GoalsListScreen() {
       {!hasGoals && !isLoading ? (
         <GoalsEmpty onCreateGoal={handleCreateGoal} />
       ) : (
-        <FlatList
+        <FlashList
           data={goals}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
