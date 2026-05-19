@@ -2,14 +2,15 @@ const { withDangerousMod } = require("expo/config-plugins");
 const { readFileSync, writeFileSync } = require("node:fs");
 const path = require("node:path");
 
-const legacyWindowCreation =
-  "    window = UIWindow(frame: UIScreen.main.bounds)\n" + "    factory.startReactNative(\n";
-const sceneAwareWindowCreation =
-  "    window = makeRootWindow(for: application)\n" + "    factory.startReactNative(\n";
-const legacyOpenUrlSignature = "  public override func application(\n    _ app: UIApplication,";
+const legacyWindowCreationPattern =
+  /^(\s*)window\s*=\s*UIWindow\(frame:\s*UIScreen\.main\.bounds\)(\s*\n\s*factory\.startReactNative\()/m;
 const annotatedOpenUrlSignature =
   "  @available(iOS, introduced: 9.0, deprecated: 26.0)\n  public override func application(\n    _ app: UIApplication,";
-const reactNativeDelegateMarker = "\nclass ReactNativeDelegate: ExpoReactNativeFactoryDelegate {";
+const openUrlSignaturePattern =
+  /^(\s*)public\s+override\s+func\s+application\(\s*\n\s*_ app:\s*UIApplication,/m;
+const reactNativeDelegatePattern =
+  /^class\s+ReactNativeDelegate:\s+ExpoReactNativeFactoryDelegate\s*\{/m;
+const reactNativeDelegateDeclaration = "class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {";
 const rootWindowHelpers =
   "\n#if os(iOS) || os(tvOS)\n" +
   "private func makeRootWindow(for application: UIApplication) -> UIWindow {\n" +
@@ -27,6 +28,44 @@ const rootWindowHelpers =
   "}\n" +
   "#endif\n";
 
+const replaceRequired = (source, pattern, replacement, label) => {
+  const patched = source.replace(pattern, replacement);
+  if (patched === source) {
+    throw new Error(`Unable to patch generated AppDelegate.swift ${label}`);
+  }
+  return patched;
+};
+
+const patchRootWindowCreation = (source) =>
+  source.includes("window = makeRootWindow(for:")
+    ? source
+    : replaceRequired(
+        source,
+        legacyWindowCreationPattern,
+        "$1window = makeRootWindow(for: application)$2",
+        "root window creation"
+      );
+
+const patchOpenUrlAvailability = (source) =>
+  source.includes(annotatedOpenUrlSignature)
+    ? source
+    : replaceRequired(
+        source,
+        openUrlSignaturePattern,
+        annotatedOpenUrlSignature,
+        "open URL availability annotation"
+      );
+
+const insertRootWindowHelpers = (source) =>
+  source.includes("private func makeRootWindow(")
+    ? source
+    : replaceRequired(
+        source,
+        reactNativeDelegatePattern,
+        `${rootWindowHelpers}${reactNativeDelegateDeclaration}`,
+        "root window helpers"
+      );
+
 const getAppDelegatePath = (modConfig) =>
   path.join(
     modConfig.modRequest.platformProjectRoot,
@@ -35,13 +74,9 @@ const getAppDelegatePath = (modConfig) =>
   );
 
 const patchAppDelegateSource = (source) => {
-  const windowPatched = source.replace(legacyWindowCreation, sceneAwareWindowCreation);
-  const openUrlPatched = windowPatched.includes(annotatedOpenUrlSignature)
-    ? windowPatched
-    : windowPatched.replace(legacyOpenUrlSignature, annotatedOpenUrlSignature);
-  return openUrlPatched.includes("private func makeRootWindow(")
-    ? openUrlPatched
-    : openUrlPatched.replace(reactNativeDelegateMarker, `${rootWindowHelpers}${reactNativeDelegateMarker}`);
+  const windowPatched = patchRootWindowCreation(source);
+  const openUrlPatched = patchOpenUrlAvailability(windowPatched);
+  return insertRootWindowHelpers(openUrlPatched);
 };
 
 const markAppDelegateIos26Compatibility = (config) =>
