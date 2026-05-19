@@ -1,0 +1,56 @@
+apps/mobile/shared/components/TransactionRow.tsx
+  s_4a62205a5e0570::t_7eef1ba34dec34 2,55
+  s_4a62205a5e0570::t_c718f69701ffab 3-5,24-25,75,81-98,100-101,103-111,113-114,116-126,157-166
+  s_4a62205a5e0570::t_2dcc1e9a2e635a 6,76-80,99,102,112,115,168-173
+  ai_agent 7
+apps/mobile/shared/components/ErrorFallback.tsx
+  s_1ffb8c14dc19d9::t_99355d31ba22b8 1,3,11,15-16,49-74
+  ai_agent 18
+apps/mobile/features/review-queues/components/FinancialMeaningQueueScreen.tsx
+  s_1ffb8c14dc19d9::t_0464efbedafd00 37-45,67-78,82,120,125,131,201-203
+  s_1ffb8c14dc19d9::t_71dc2ba728a8a6 4,26-27,154-158,160-200,204-207,226,234
+apps/mobile/features/review-queues/components/AttributionQueueScreen.tsx
+  s_1ffb8c14dc19d9::t_dbd5ab7d8a8d37 3,18-23,34-37,46,51-56,60,103,108,114,135-147,149-151,154-177,179-182,186-195
+  ai_agent 47-50,183-185
+apps/mobile/features/ai-chat/components/ConversationList.tsx
+  s_1ffb8c14dc19d9::t_d0a398aa10b6e4 24-25,121
+apps/mobile/features/ai-chat/components/MemoryManager.tsx
+  s_1ffb8c14dc19d9::t_d0a398aa10b6e4 17-18,97
+apps/mobile/features/goals/components/GoalsListScreen.tsx
+  s_1ffb8c14dc19d9::t_99355d31ba22b8 1,7,118
+apps/mobile/features/review-queues/components/FinancialMeaningQueueScreen.styles.ts
+  s_1ffb8c14dc19d9::t_0464efbedafd00 9-11
+apps/mobile/features/search/components/search-screen/SearchResultsList.tsx
+  s_1ffb8c14dc19d9::t_99355d31ba22b8 1,5,61,83,87-92
+apps/mobile/features/notifications/components/NotificationsScreen.tsx
+  s_1ffb8c14dc19d9::t_d0a398aa10b6e4 22-24,70-83,118-121
+apps/mobile/shared/lib/format-money.ts
+  s_1ffb8c14dc19d9::t_3051969fc5f6b4 14-15,17-32
+apps/mobile/features/dashboard/components/home-screen/HomeScreenContent.tsx
+  s_1ffb8c14dc19d9::t_99355d31ba22b8 5,16-17,46,49,56,63-68
+  s_1ffb8c14dc19d9::t_d628cc3ece66fe 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "8624ec54bd3ec785e6df43e5c2663ae3714d4c13",
+  "prompts": {},
+  "sessions": {
+    "s_1ffb8c14dc19d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e40fb-00e7-7041-ba73-867ad938be0a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_4a62205a5e0570": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e40f6-4cad-7771-907a-b0c5d22836d3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
