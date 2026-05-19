@@ -1,8 +1,3 @@
-import type { EmailCaptureState } from "../store/state";
-
-export const selectFailedEmailBannerCount = (state: EmailCaptureState) =>
-  state.failedEmailSourceEvents.length;
-
 export const selectNeedsReviewBannerCount = (state: {
   readonly needsReviewEmailSourceEvents: readonly unknown[];
 }) => state.needsReviewEmailSourceEvents.length;

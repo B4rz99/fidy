@@ -10,7 +10,7 @@ import {
   getGmailClientId,
   getOutlookClientId,
 } from "@/features/email-capture/public";
-import { EmailConnectBanner, FailedEmailsBanner } from "@/features/email-capture/ui.public";
+import { EmailConnectBanner } from "@/features/email-capture/ui.public";
 import { Platform, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { AttributionReviewBanner } from "../AttributionReviewBanner";
@@ -46,7 +46,6 @@ export function HomeScreenHeader({
           void connectEmailAccount(db, userId, provider, clientId);
         }}
       />
-      <FailedEmailsBanner onPress={() => push("/failed-emails" as never)} />
       <NeedsReviewBanner onPress={() => push("/needs-review" as never)} />
       <AttributionReviewBanner onPress={() => push("/attribution-review-queue" as never)} />
       <AccountSuggestionsPromptBanner
