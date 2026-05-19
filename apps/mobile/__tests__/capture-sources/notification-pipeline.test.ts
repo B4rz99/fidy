@@ -270,6 +270,59 @@ describe("processNotification", () => {
     expectSavedLlmNotificationTransaction();
   });
 
+  it("uses deterministic regex parsing before the LLM for known bank notifications", async () => {
+    const result = await processNotification(
+      mockDb,
+      USER_ID,
+      makeNotification({
+        packageName: "com.bbva.nxt_colombia",
+        text: "Compra aprobada en EXITO COLOMBIA por $50.000 el 18/05/2026 con tarjeta terminada en 1234.",
+        timestamp: new Date("2026-05-18T19:04:59.000Z").getTime(),
+      })
+    );
+
+    expect(result.saved).toBe(true);
+    expect(mockParseNotificationApi).not.toHaveBeenCalled();
+    expect(mockInsertTransaction).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        amount: 50000,
+        categoryId: "other",
+        counterpartyName: "EXITO COLOMBIA",
+        date: "2026-05-18",
+      })
+    );
+    expect(mockBuildNotificationLlmAccountHintCaptureEvidence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cardProductHint: "tarjeta 1234",
+        counterpartyHint: "EXITO COLOMBIA",
+      })
+    );
+  });
+
+  it("falls back to LLM and requests a regex template when known notification regex misses", async () => {
+    mockNotificationLlmAccountHintParse();
+
+    const result = await processNotification(
+      mockDb,
+      USER_ID,
+      makeNotification({
+        packageName: "com.bbva.nxt_colombia",
+        text: "Formato nuevo de compra en Super Nuevo Comercio con tarjeta 1234.",
+      })
+    );
+
+    expect(result.saved).toBe(true);
+    expect(mockParseNotificationApi).toHaveBeenCalled();
+    expect(result.parseImprovementRequest).toEqual({
+      source: "notification_android",
+      status: "failed",
+      confidence: null,
+      parseMethod: "regex",
+      parserTemplate: "[ENTITY] nuevo de [COUNTERPARTY] con tarjeta [CARD].",
+    });
+  });
+
   it("uses generic regex matches as LLM hints instead of saving fallback categories", async () => {
     mockNotificationLlmAccountHintParse();
     mockStripPii.mockReturnValueOnce("Tu compra fue aprobada por [AMOUNT] en [MERCHANT].");

@@ -19,7 +19,9 @@ vi.mock("@/shared/lib", () => ({
 }));
 
 const request = {
+  parserTemplate: "Subject Body",
   rawText: "Subject\n\nBody",
+  senderDomain: "davibank.com",
   source: "email_gmail" as const,
   status: "needs_review" as const,
   confidence: 0.4,

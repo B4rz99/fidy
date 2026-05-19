@@ -28,7 +28,9 @@ describe("email parse improvement requests", () => {
 
     expect(result.parseImprovementRequests).toEqual([
       {
+        parserTemplate: "Compra aprobada",
         rawText: "Compra aprobada",
+        senderDomain: "example.com",
         source: "email_gmail",
         status: "failed",
         confidence: null,
@@ -53,7 +55,9 @@ describe("email parse improvement requests", () => {
 
     expect(result.parseImprovementRequests).toEqual([
       {
+        parserTemplate: "Compra aprobada Su compra por [AMOUNT] fue aprobada",
         rawText: "Compra aprobada\n\nSu compra por $50.000 fue aprobada",
+        senderDomain: "example.com",
         source: "email_outlook",
         status: "needs_review",
         confidence: 0.4,

@@ -8,6 +8,8 @@ export type ConfidenceBucket = "none" | "low" | "medium" | "high";
 
 export type ParseImprovementInput = {
   readonly rawText: string;
+  readonly parserTemplate?: string;
+  readonly senderDomain?: string | null;
   readonly source: string;
   readonly status: ParseImprovementStatus;
   readonly confidence: number | null;
@@ -33,6 +35,10 @@ const SENSITIVE_VALUE_RULES: readonly RedactionRule[] = [
   { pattern: /\b\d{3}\.\d{3}\.\d{3,4}-?\d?\b/g, replacement: "[ID]" },
   {
     pattern: /\btarjeta\s+(?:terminada|finalizada)\s+en\s+\d{4}\b/gi,
+    replacement: "tarjeta [CARD]",
+  },
+  {
+    pattern: /\btarjeta\s+\d{4}\b/gi,
     replacement: "tarjeta [CARD]",
   },
   { pattern: /\b\d{11,14}\b/g, replacement: "[ACCOUNT]" },
@@ -134,7 +140,8 @@ export function anonymizeNotificationParseSample(rawText: string): string {
 
 export function buildNotificationParseImprovementSample(input: ParseImprovementInput) {
   return {
-    template: anonymizeNotificationParseSample(input.rawText),
+    template: input.parserTemplate ?? anonymizeNotificationParseSample(input.rawText),
+    ...(input.senderDomain ? { senderDomain: input.senderDomain } : {}),
     source: input.source,
     status: input.status,
     confidenceBucket: confidenceBucket(input.confidence),

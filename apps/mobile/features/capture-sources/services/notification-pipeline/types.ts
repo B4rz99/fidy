@@ -55,6 +55,7 @@ export type NotificationContext = NotificationCommand & {
 
 export type NotificationStageContext = NotificationContext & {
   parseMethod: NotificationParseMethod;
+  regexParseImprovementTemplate?: string;
 };
 
 export type ParsedNotificationContext = NotificationStageContext & {
@@ -95,5 +96,6 @@ export type NotificationPipelineResult = {
     readonly status: "failed" | "needs_review";
     readonly confidence: number | null;
     readonly parseMethod: NotificationParseMethod;
+    readonly parserTemplate?: string;
   };
 };

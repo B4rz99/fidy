@@ -167,11 +167,13 @@ export type ProcessEmailsInput = {
   readonly userId: UserId;
   readonly rawEmails: RawEmail[];
   readonly onProgress?: ProgressCallback;
+  readonly signal?: AbortSignal;
 };
 
 export type ProcessRetriesInput = {
   readonly db: AnyDb;
   readonly userId: UserId;
+  readonly signal?: AbortSignal;
 };
 
 export type EmailBatchPlan = {
@@ -186,6 +188,7 @@ export type EmailBatchContext = {
   readonly runtime: PipelineRuntime;
   readonly db: AnyDb;
   readonly userId: UserId;
+  readonly signal?: AbortSignal;
   parseStarts: number;
   parseStartGate: Promise<void>;
   persistenceGate: Promise<void>;
@@ -195,6 +198,7 @@ export type RetryBatchContext = {
   readonly runtime: PipelineRuntime;
   readonly db: AnyDb;
   readonly userId: UserId;
+  readonly signal?: AbortSignal;
   readonly result: RetryResult;
 };
 
@@ -204,15 +208,29 @@ export type EmailQueue = {
 };
 
 export type IncomingParseOutcome =
-  | { readonly kind: "parsed"; readonly parsed: LlmParsedTransaction }
-  | { readonly kind: "filtered" }
-  | { readonly kind: "failed" };
+  | {
+      readonly kind: "parsed";
+      readonly parsed: LlmParsedTransaction;
+      readonly parseImprovementRequest?: EmailParseImprovementRequest;
+      readonly regexParseStatus: "parsed" | "missed" | "unsupported";
+    }
+  | {
+      readonly kind: "filtered";
+      readonly parseImprovementRequest?: EmailParseImprovementRequest;
+      readonly regexParseStatus: "parsed" | "missed" | "unsupported";
+    }
+  | {
+      readonly kind: "failed";
+      readonly parseImprovementRequest?: EmailParseImprovementRequest;
+      readonly regexParseStatus: "parsed" | "missed" | "unsupported";
+    };
 
 export type IncomingEmailOutcome = {
   readonly result: PipelineResult;
   readonly parseDurationMs: number;
   readonly persistenceDurationMs: number;
   readonly savedTransaction: boolean;
+  readonly regexParseStatus: "parsed" | "missed" | "unsupported";
 };
 
 export type IncomingEmailPersistenceOutcome = {
