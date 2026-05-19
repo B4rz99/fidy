@@ -1,5 +1,6 @@
 import { captureErrorEffect, capturePipelineEventEffect } from "@/shared/effect/telemetry";
 import { buildSkippedEmailDiagnostics } from "./email-telemetry";
+import { persistIncomingEmailRecord } from "./incoming-email-record";
 import { cacheMerchantRule, lookupIncomingDuplicate } from "./incoming-parsed-helpers";
 import { createIncomingEmailPersistenceState, parseIncomingEmail } from "./incoming-parse";
 import {
@@ -9,7 +10,6 @@ import {
 import {
   getProcessedEmailSourceEventIdsEffect,
   insertProcessedEmailSourceEventEffect,
-  saveEmailCaptureEvidenceEffect,
 } from "./runtime";
 import {
   buildDuplicateProcessedSourceEventRow,
@@ -36,34 +36,6 @@ import type {
 } from "./types";
 
 const nowMs = (): number => Date.now();
-
-type IncomingEmailPersistenceInput = {
-  readonly context: EmailBatchContext;
-  readonly email: RawEmail;
-  readonly sourceEventRow: Parameters<typeof insertProcessedEmailSourceEventEffect>[1];
-  readonly processedSourceEventId: Parameters<
-    typeof saveEmailCaptureEvidenceEffect
-  >[0]["processedSourceEventId"];
-  readonly transactionId: TransactionId | null;
-  readonly createdAt: Parameters<typeof saveEmailCaptureEvidenceEffect>[0]["now"];
-};
-
-async function persistIncomingEmailRecord(input: IncomingEmailPersistenceInput) {
-  await input.context.runtime.runEmailEffect(
-    insertProcessedEmailSourceEventEffect(input.context.db, input.sourceEventRow)
-  );
-  await input.context.runtime.runEmailEffect(
-    saveEmailCaptureEvidenceEffect({
-      db: input.context.db,
-      userId: input.context.userId,
-      from: input.email.from,
-      body: input.email.body,
-      processedSourceEventId: input.processedSourceEventId,
-      transactionId: input.transactionId,
-      now: input.createdAt,
-    })
-  );
-}
 
 async function persistFailedIncomingEmail(
   context: EmailBatchContext,

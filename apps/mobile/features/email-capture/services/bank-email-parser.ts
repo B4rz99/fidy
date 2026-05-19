@@ -30,6 +30,9 @@ const KNOWN_BANK_DOMAINS = [
   { domain: "rappi.com", parserKey: "rappicard" },
 ] as const;
 
+const PURCHASE_PATTERN =
+  /\b(?:compra|purchase|pago|payment)\b(?:\s+aprobada|\s+aprobado|\s+realizada|\s+exitos[ao])?\s+(?:en|at)\s+(.+?)\s+(?:por|for)\s+(?:\$|COP)?\s*([\d.,]+)(?:\s+(?:el|on)\s+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}))?/i;
+
 export const buildEmailParseImprovementRawText = (email: RawEmail): string =>
   [email.subject, email.body].filter((part) => part.trim().length > 0).join("\n\n");
 
@@ -74,9 +77,7 @@ const parseCardProductHint = (text: string): string | undefined => {
 };
 
 const parsePurchase = (text: string, email: RawEmail): LlmParsedTransaction | null => {
-  const match = text.match(
-    /\b(?:compra|purchase|pago|payment)\b(?:\s+aprobada|\s+aprobado|\s+realizada|\s+exitos[ao])?\s+(?:en|at)\s+(.+?)\s+(?:por|for)\s+(?:\$|COP)?\s*([\d.,]+)(?:\s+(?:el|on)\s+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}))?/i
-  );
+  const match = text.match(PURCHASE_PATTERN);
   const merchant = match?.[1]?.trim();
   const amount = match?.[2] ? parseCopAmount(match[2]) : null;
   const date = match?.[3] ? parseDate(match[3]) : getReceivedDate(email);

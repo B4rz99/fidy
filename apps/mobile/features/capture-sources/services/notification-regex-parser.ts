@@ -27,6 +27,9 @@ const KNOWN_REGEX_PACKAGES = new Set([
   "com.davivienda.daviplataapp",
 ]);
 
+const PURCHASE_PATTERN =
+  /\b(?:compra|purchase|pago|payment)\b(?:\s+aprobada|\s+aprobado|\s+realizada|\s+exitos[ao])?\s+(?:en|at)\s+(.+?)\s+(?:por|for)\s+(?:\$|COP)?\s*([\d.,]+)(?:\s+(?:el|on)\s+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}))?/i;
+
 const normalizeNotificationText = (text: string): string =>
   text
     .normalize("NFC")
@@ -63,9 +66,7 @@ const parsePurchaseNotification = (
   text: string,
   notification: NotificationData
 ): RawParsedNotification | null => {
-  const match = text.match(
-    /\b(?:compra|purchase|pago|payment)\b(?:\s+aprobada|\s+aprobado|\s+realizada|\s+exitos[ao])?\s+(?:en|at)\s+(.+?)\s+(?:por|for)\s+(?:\$|COP)?\s*([\d.,]+)(?:\s+(?:el|on)\s+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}))?/i
-  );
+  const match = text.match(PURCHASE_PATTERN);
   const merchant = match?.[1]?.trim();
   const amount = match?.[2] ? parseCopAmount(match[2]) : null;
   const date = match?.[3] ? parseDate(match[3]) : notificationDate(notification);
