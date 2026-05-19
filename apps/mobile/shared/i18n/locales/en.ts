@@ -488,27 +488,10 @@ const en = {
     syncing: "Syncing...",
   },
 
-  // Failed Emails
-  failedEmails: {
-    title: "Unprocessed Emails",
-    subtitle:
-      "These bank emails couldn't be processed automatically. You can add them as transactions manually.",
-    empty: "No unprocessed emails",
-    addManually: "Add manually",
-    manualReviewLabel: "Needs manual review",
-    parseFailedReason: "Could not extract transaction data",
-    parseErrorReason: "Error while processing email",
-  },
-
   // Email Capture
   emailCapture: {
     autoCapture: "Auto-capture transactions",
     connectDescription: "Connect your email to automatically capture bank transactions.",
-    unprocessedEmails: {
-      one: "%{count} unprocessed email",
-      other: "%{count} unprocessed emails",
-    },
-    tapToReview: "Tap to review and add manually",
   },
 
   // Progress

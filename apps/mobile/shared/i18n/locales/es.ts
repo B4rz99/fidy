@@ -495,27 +495,10 @@ const es = {
     syncing: "Sincronizando...",
   },
 
-  // Failed Emails
-  failedEmails: {
-    title: "Correos No Procesados",
-    subtitle:
-      "Estos correos bancarios no pudieron procesarse automáticamente. Puedes agregarlos como transacciones manualmente.",
-    empty: "No hay correos sin procesar",
-    addManually: "Agregar manualmente",
-    manualReviewLabel: "Necesita revisión manual",
-    parseFailedReason: "No se pudo extraer datos de la transacción",
-    parseErrorReason: "Error al procesar el correo",
-  },
-
   // Email Capture
   emailCapture: {
     autoCapture: "Auto-captura de transacciones",
     connectDescription: "Conecta tu correo para capturar transacciones bancarias automáticamente.",
-    unprocessedEmails: {
-      one: "%{count} correo sin procesar",
-      other: "%{count} correos sin procesar",
-    },
-    tapToReview: "Toca para revisar y agregar manualmente",
   },
 
   // Progress
