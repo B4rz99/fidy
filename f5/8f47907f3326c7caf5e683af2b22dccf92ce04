@@ -1,0 +1,21 @@
+apps/mobile/features/dashboard/components/home-screen/HomeScreenHeader.tsx
+  s_ccc71f994528f7::t_4937c5da64d4e8 13
+apps/mobile/__tests__/navigation/root-layout-headers.test.ts
+  s_ccc71f994528f7::t_4937c5da64d4e8 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "f58f47907f3326c7caf5e683af2b22dccf92ce04",
+  "prompts": {},
+  "sessions": {
+    "s_ccc71f994528f7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3ebd-b051-79d0-9646-a558b76ea90f",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
