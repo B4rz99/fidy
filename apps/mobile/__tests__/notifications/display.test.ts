@@ -47,7 +47,7 @@ describe("deriveNotificationDisplay", () => {
     expect(result.iconName).toBe("triangle-alert");
     expect(result.iconColor).toBe("#F57C00");
     expect(result.iconBgColor).toBe("#FFF3E0");
-    expect(result.route).toBe("/(tabs)/(finance)");
+    expect(result.route).toBe("/(tabs)/(budget)");
   });
 
   it("resolves budget_alert with threshold 100 to error icon and red color", () => {
@@ -59,7 +59,7 @@ describe("deriveNotificationDisplay", () => {
     expect(result.iconName).toBe("circle-x");
     expect(result.iconColor).toBe("#D45B5B");
     expect(result.iconBgColor).toBe("#FFEBEE");
-    expect(result.route).toBe("/(tabs)/(finance)");
+    expect(result.route).toBe("/(tabs)/(budget)");
   });
 
   it("resolves spending_anomaly with category-specific icon and route", () => {
@@ -85,7 +85,7 @@ describe("deriveNotificationDisplay", () => {
     expect(result.iconBgColor).toBe("#FFF0ED");
   });
 
-  it("resolves budget_pace with category-specific icon and finance route", () => {
+  it("resolves budget_pace with category-specific icon and budget route", () => {
     const n = makeNotification({
       type: "budget_pace",
       categoryId: "entertainment" as CategoryId,
@@ -94,7 +94,7 @@ describe("deriveNotificationDisplay", () => {
     expect(result.iconName).toBe("clapperboard");
     expect(result.iconColor).toBe("#F5C842");
     expect(result.iconBgColor).toBe("#FFFDE7");
-    expect(result.route).toBe("/(tabs)/(finance)");
+    expect(result.route).toBe("/(tabs)/(budget)");
   });
 
   it("resolves goal_milestone with trophy icon and goal route", () => {
@@ -185,7 +185,7 @@ describe("deriveNotificationDisplay", () => {
     expect(result.iconName).toBe("circle-x");
     expect(result.iconColor).toBe("#D45B5B");
     expect(result.iconBgColor).toBe("#FFEBEE");
-    expect(result.route).toBe("/(tabs)/(finance)");
+    expect(result.route).toBe("/(tabs)/(budget)");
   });
 });
 

@@ -107,7 +107,7 @@ export const deriveNotificationDisplay = (
       case "budget_alert":
         return {
           ...resolveBudgetAlert(parsed),
-          route: "/(tabs)/(finance)" as string | null,
+          route: "/(tabs)/(budget)" as string | null,
         };
       case "spending_anomaly":
         return {
@@ -117,7 +117,7 @@ export const deriveNotificationDisplay = (
       case "budget_pace":
         return {
           ...getCategoryVisuals(notification.categoryId),
-          route: "/(tabs)/(finance)" as string | null,
+          route: "/(tabs)/(budget)" as string | null,
         };
       case "goal_milestone":
         return {

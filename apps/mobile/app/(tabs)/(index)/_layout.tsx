@@ -12,6 +12,7 @@ export default function HomeStackLayout() {
         headerShown: true,
         headerLeft: () => <ProfileAvatarButton />,
         headerTitle: "",
+        headerShadowVisible: false,
         headerStyle: { backgroundColor: theme.page },
         headerTintColor: theme.primary,
       }}

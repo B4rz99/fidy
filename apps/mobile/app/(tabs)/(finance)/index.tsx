@@ -3,7 +3,6 @@ import { useCallback, useMemo, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnalyticsScreen } from "@/features/analytics";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
-import { BudgetListScreen } from "@/features/budget/ui.public";
 import {
   CalendarGrid,
   MonthNavigator,
@@ -16,12 +15,11 @@ import { GoalsListScreen } from "@/features/goals/ui.public";
 import { TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus } from "@/shared/components/icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
-import { Colors } from "@/shared/constants/theme";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
 
-type FinanceTab = "budgets" | "calendar" | "goals" | "analytics";
+type FinanceTab = "calendar" | "goals" | "analytics";
 
 function SegmentControl({
   active,
@@ -36,7 +34,6 @@ function SegmentControl({
   const secondary = useThemeColor("secondary");
 
   const tabs: readonly { key: FinanceTab; label: string }[] = [
-    { key: "budgets", label: t("budgets.title") },
     { key: "calendar", label: t("calendar.title") },
     { key: "goals", label: t("goals.title") },
     { key: "analytics", label: t("analytics.title") },
@@ -118,19 +115,9 @@ function useHeaderRight(activeTab: FinanceTab) {
   const { push } = useRouter();
   const { t } = useTranslation();
   const primaryColor = useThemeColor("primary");
-  const accentGreen = useThemeColor("accentGreen");
   const goals = useGoalStore((s) => s.goals);
 
   return useMemo(() => {
-    if (activeTab === "budgets") {
-      return function AddBudgetAction() {
-        return (
-          <Pressable onPress={() => push("/create-budget")} hitSlop={12}>
-            <Plus size={24} color={primaryColor} />
-          </Pressable>
-        );
-      };
-    }
     if (activeTab === "calendar") {
       return function AddBillAction() {
         return (
@@ -140,7 +127,7 @@ function useHeaderRight(activeTab: FinanceTab) {
             accessibilityRole="button"
             accessibilityLabel={t("bills.addBill")}
           >
-            <Plus size={24} color={Colors.light.card} />
+            <Plus size={24} color={primaryColor} />
           </Pressable>
         );
       };
@@ -149,7 +136,7 @@ function useHeaderRight(activeTab: FinanceTab) {
       return function AddGoalAction() {
         return (
           <Pressable onPress={() => push("/create-goal")} hitSlop={12}>
-            <Plus size={24} color={accentGreen} />
+            <Plus size={24} color={primaryColor} />
           </Pressable>
         );
       };
@@ -157,11 +144,11 @@ function useHeaderRight(activeTab: FinanceTab) {
     return function NoAction() {
       return null;
     };
-  }, [activeTab, goals.length, primaryColor, accentGreen, push, t]);
+  }, [activeTab, goals.length, primaryColor, push, t]);
 }
 
 export default function FinanceScreen() {
-  const [activeTab, setActiveTab] = useState<FinanceTab>("budgets");
+  const [activeTab, setActiveTab] = useState<FinanceTab>("calendar");
   const headerRight = useHeaderRight(activeTab);
   const pageBg = useThemeColor("page");
 
@@ -180,7 +167,6 @@ export default function FinanceScreen() {
           <SegmentControl active={activeTab} onSwitch={setActiveTab} />
         </View>
       )}
-      {activeTab === "budgets" && <BudgetListScreen />}
       {activeTab === "calendar" && <FinanceCalendarPanel />}
       {activeTab === "goals" && <GoalsListScreen />}
       {activeTab === "analytics" && <AnalyticsScreen />}
@@ -196,7 +182,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderRadius: 12,
     padding: 4,
-    width: 360,
+    width: 320,
   },
   segmentButton: {
     flex: 1,

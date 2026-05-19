@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
 
-export default function AiStackLayout() {
+export default function BudgetStackLayout() {
   return <Stack screenOptions={{ headerShown: false }} />;
 }

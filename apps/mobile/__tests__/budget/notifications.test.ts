@@ -89,7 +89,7 @@ describe("scheduleBudgetAlert", () => {
           budgetId: "budget-1",
           categoryId: "food",
           threshold: 100,
-          route: "/(tabs)/(finance)",
+          route: "/(tabs)/(budget)",
         },
       },
       trigger: null,

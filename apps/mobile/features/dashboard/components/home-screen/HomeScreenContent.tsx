@@ -1,4 +1,3 @@
-import { Stack } from "expo-router";
 import { useCallback, useMemo } from "react";
 import type { ListRenderItemInfo } from "react-native";
 import type { StoredActivityItem } from "@/features/activity/query.public";
@@ -39,19 +38,15 @@ export function HomeScreenContent({ model }: HomeScreenContentProps) {
     [model.balance, model.categorySpending, model.dailySpending]
   );
 
+  const headerActions =
+    Platform.OS === "ios" ? (
+      <HomeScreenActions gap={20} paddingHorizontal={4} />
+    ) : (
+      <HomeScreenActions gap={16} />
+    );
+
   return (
-    <ScreenLayout
-      title="fidy"
-      rightActions={Platform.OS !== "ios" ? <HomeScreenActions gap={16} /> : undefined}
-    >
-      {Platform.OS === "ios" ? (
-        <Stack.Screen
-          options={{
-            headerTitle: "",
-            headerRight: () => <HomeScreenActions gap={20} paddingHorizontal={4} />,
-          }}
-        />
-      ) : null}
+    <ScreenLayout title="fidy" rightActions={headerActions}>
       <FlatList
         data={model.activityFeed.activityPages}
         renderItem={renderItem}
