@@ -1,0 +1,55 @@
+apps/mobile/features/ai-chat/lib/message-content.ts
+  s_1ffb8c14dc19d9::t_399a853bb158d6 30
+apps/mobile/__tests__/ai-chat/streaming-bubble-display.test.ts
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 1-18
+apps/mobile/__tests__/ai-chat/message-content.test.ts
+  s_1ffb8c14dc19d9::t_399a853bb158d6 9-13
+apps/mobile/shared/i18n/locales/es.ts
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 632
+  s_d8e92b357a5027::t_429c4f4f47411e 631
+apps/mobile/features/ai-chat/components/ChatInput.tsx
+  s_d8e92b357a5027::t_23bd3e4e693158 3-5,20-23,30,32-36,38-43
+apps/mobile/shared/i18n/locales/en.ts
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 623
+  s_d8e92b357a5027::t_429c4f4f47411e 622
+apps/mobile/__tests__/ai-chat/chat-shell-layout.test.ts
+  s_1ffb8c14dc19d9::t_1e099a951e7f99 1-15
+apps/mobile/features/ai-chat/components/MessageBubble.tsx
+  s_1ffb8c14dc19d9::t_399a853bb158d6 75-101
+apps/mobile/features/ai-chat/lib/streaming-bubble-display.ts
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 1-13
+apps/mobile/features/ai-chat/components/ChatScreen.tsx
+  s_d8e92b357a5027::t_db016894c1a2c4 1,14,130-149
+apps/mobile/features/ai-chat/components/StreamingBubble.tsx
+  s_1ffb8c14dc19d9::t_2ee693ec848d9e 72-75,77
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 4-5,40,44,71,78-83
+  s_d8e92b357a5027::t_2e362dda8b6336 1,11-38,76
+apps/mobile/features/ai-chat/components/ChatConversationShell.tsx
+  s_d8e92b357a5027::t_db016894c1a2c4 1-171
+apps/mobile/features/ai-chat/lib/chat-shell-layout.ts
+  s_1ffb8c14dc19d9::t_1e099a951e7f99 1-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "18ad67120f8ac79263d8c498c5226fb7dd4288b1",
+  "prompts": {},
+  "sessions": {
+    "s_1ffb8c14dc19d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e40fb-00e7-7041-ba73-867ad938be0a",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_d8e92b357a5027": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4114-9b58-73e0-a558-74eba15eadad",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
