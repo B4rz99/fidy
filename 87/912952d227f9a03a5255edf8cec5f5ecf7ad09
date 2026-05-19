@@ -1,0 +1,23 @@
+apps/mobile/shared/i18n/locales/en.ts
+  s_e6640baae8b728::t_0a17105703a690 394
+apps/mobile/shared/i18n/locales/es.ts
+  s_e6640baae8b728::t_547717291c1b95 401
+apps/mobile/features/goals/components/goal-sheet/useGoalEditActions.ts
+  s_e6640baae8b728::t_7be91d12cb283d 78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "87912952d227f9a03a5255edf8cec5f5ecf7ad09",
+  "prompts": {},
+  "sessions": {
+    "s_e6640baae8b728": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3edf-4161-7632-b2ba-9181bc1a915c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
