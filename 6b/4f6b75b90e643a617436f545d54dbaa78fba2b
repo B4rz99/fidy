@@ -1,0 +1,24 @@
+apps/mobile/shared/components/TransactionRow.tsx
+  s_4a62205a5e0570::t_b33ec0e893ee89 6,33-34,36-53,109-110,123,150,200-202
+  s_4a62205a5e0570::t_72dd4287c8a36d 1,35
+apps/mobile/features/ai-chat/components/NewChatButton.tsx
+  s_4a62205a5e0570::t_a6b8036b12e38f 2,18-19
+  s_4a62205a5e0570::t_db1dda7b5c905e 3,23-29,32-33
+  s_4a62205a5e0570::t_6b144db80f7fa1 17,30-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "6b4f6b75b90e643a617436f545d54dbaa78fba2b",
+  "prompts": {},
+  "sessions": {
+    "s_4a62205a5e0570": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e40f6-4cad-7771-907a-b0c5d22836d3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
