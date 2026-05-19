@@ -1,0 +1,28 @@
+apps/mobile/__tests__/dashboard/home-screen.test.ts
+  s_b2219b9683913c::t_ca9b1fd9d1e139 59-68
+apps/mobile/features/dashboard/components/ChartSection.tsx
+  s_b2219b9683913c::t_ca9b1fd9d1e139 2-3,65-87
+  s_b2219b9683913c::t_ccff3e58103726 43
+apps/mobile/features/dashboard/components/home-screen/HomeScreenHeader.tsx
+  s_b2219b9683913c::t_ca9b1fd9d1e139 20
+  s_b2219b9683913c::t_ccff3e58103726 27
+apps/mobile/features/dashboard/components/home-screen/HomeScreenContent.tsx
+  s_b2219b9683913c::t_ccff3e58103726 31
+  s_b2219b9683913c::t_ca9b1fd9d1e139 32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "c9565f2eb36d7d25e9b0ccb79a62e89e1cae7a9b",
+  "prompts": {},
+  "sessions": {
+    "s_b2219b9683913c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3eb4-9e50-7d31-ab24-3cdf117d694c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
