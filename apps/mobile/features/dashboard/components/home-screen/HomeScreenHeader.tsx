@@ -17,19 +17,14 @@ import { AttributionReviewBanner } from "../AttributionReviewBanner";
 import { BalanceSection } from "../BalanceSection";
 import { ChartSection } from "../ChartSection";
 import { NeedsReviewBanner } from "../NeedsReviewBanner";
-import type { CategorySpendingItem, DailySpendingItem } from "./useHomeScreen";
+import type { CategorySpendingItem } from "./useHomeScreen";
 
 type HomeScreenHeaderProps = {
   readonly balance: number;
   readonly categorySpending: readonly CategorySpendingItem[];
-  readonly dailySpending: readonly DailySpendingItem[];
 };
 
-export function HomeScreenHeader({
-  balance,
-  categorySpending,
-  dailySpending,
-}: HomeScreenHeaderProps) {
+export function HomeScreenHeader({ balance, categorySpending }: HomeScreenHeaderProps) {
   const { push } = useRouter();
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
@@ -58,7 +53,6 @@ export function HomeScreenHeader({
       <BalanceSection balance={balance} />
       <ChartSection
         categorySpending={categorySpending}
-        dailySpending={dailySpending}
         totalSpent={balance}
         onPress={() => push("/analytics" as never)}
       />

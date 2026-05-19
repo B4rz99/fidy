@@ -9,16 +9,10 @@ export type CategorySpendingItem = {
   readonly total: number;
 };
 
-export type DailySpendingItem = {
-  readonly date: string;
-  readonly total: number;
-};
-
 export type HomeScreenModel = {
   readonly activityFeed: HomeActivityFeedModel;
   readonly balance: number;
   readonly categorySpending: readonly CategorySpendingItem[];
-  readonly dailySpending: readonly DailySpendingItem[];
   readonly showEmptyTransactions: boolean;
 };
 
@@ -27,7 +21,6 @@ export function useHomeScreen(): HomeScreenModel {
   const db = userId ? tryGetDb(userId) : null;
   const balance = useTransactionStore((state) => state.balance);
   const categorySpending = useTransactionStore((state) => state.categorySpending);
-  const dailySpending = useTransactionStore((state) => state.dailySpending);
   const dataRevision = useTransactionStore((state) => state.dataRevision);
   const phase = useEmailCaptureStore((state) => state.phase);
 
@@ -35,7 +28,6 @@ export function useHomeScreen(): HomeScreenModel {
     activityFeed: useHomeActivityFeed({ dataRevision, db, userId }),
     balance,
     categorySpending,
-    dailySpending,
     showEmptyTransactions: phase === null,
   };
 }

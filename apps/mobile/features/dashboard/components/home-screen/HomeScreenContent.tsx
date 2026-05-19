@@ -28,14 +28,8 @@ export function HomeScreenContent({ model }: HomeScreenContentProps) {
   );
 
   const listHeader = useMemo(
-    () => (
-      <HomeScreenHeader
-        balance={model.balance}
-        categorySpending={model.categorySpending}
-        dailySpending={model.dailySpending}
-      />
-    ),
-    [model.balance, model.categorySpending, model.dailySpending]
+    () => <HomeScreenHeader balance={model.balance} categorySpending={model.categorySpending} />,
+    [model.balance, model.categorySpending]
   );
 
   const headerActions =
