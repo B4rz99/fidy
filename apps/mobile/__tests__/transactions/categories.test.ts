@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { getBuiltInCategoryId } from "@/features/transactions";
-import { getBuiltInCategory } from "@/features/transactions/categories.public";
+import {
+  getBuiltInCategory,
+  getBuiltInCategoryId,
+} from "@/features/transactions/categories.public";
 import {
   CATEGORIES,
   CATEGORY_IDS,
