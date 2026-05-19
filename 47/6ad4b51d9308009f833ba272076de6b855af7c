@@ -1,0 +1,27 @@
+apps/mobile/app/_layout.tsx
+  s_b2219b9683913c::t_055315e1035b42 31,119,139,151-152,183,190
+apps/mobile/__tests__/settings/store.test.ts
+  s_b2219b9683913c::t_c468c4015edef1 4,26,39,76-93
+apps/mobile/__tests__/navigation/root-layout-query-provider.test.ts
+  s_b2219b9683913c::t_c468c4015edef1 32-37
+apps/mobile/features/settings/bootstrap.ts
+  s_b2219b9683913c::t_055315e1035b42 9-10
+apps/mobile/features/settings/store.ts
+  s_b2219b9683913c::t_055315e1035b42 34,110,139,229-232
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "476ad4b51d9308009f833ba272076de6b855af7c",
+  "prompts": {},
+  "sessions": {
+    "s_b2219b9683913c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3eb4-9e50-7d31-ab24-3cdf117d694c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
