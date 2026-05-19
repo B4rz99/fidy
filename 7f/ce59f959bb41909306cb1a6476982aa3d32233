@@ -1,0 +1,21 @@
+apps/mobile/__tests__/budget/create-budget-draft.test.ts
+  s_1ffb8c14dc19d9::t_401a71848cdaed 3
+apps/mobile/__tests__/transactions/categories.test.ts
+  s_1ffb8c14dc19d9::t_401a71848cdaed 2-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "7fce59f959bb41909306cb1a6476982aa3d32233",
+  "prompts": {},
+  "sessions": {
+    "s_1ffb8c14dc19d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e40fb-00e7-7041-ba73-867ad938be0a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
