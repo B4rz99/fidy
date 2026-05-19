@@ -69,7 +69,6 @@ async function persistFailedIncomingEmail(
     context,
     email,
     sourceEventRow,
-    processedSourceEventId,
     transactionId: null,
     createdAt,
   });
@@ -130,7 +129,6 @@ async function persistDuplicateIncomingEmail(input: {
     context: input.context,
     email: input.email,
     sourceEventRow,
-    processedSourceEventId,
     transactionId: input.transactionId,
     createdAt,
   });

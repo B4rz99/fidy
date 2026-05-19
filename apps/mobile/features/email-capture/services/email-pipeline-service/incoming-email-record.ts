@@ -5,9 +5,6 @@ type IncomingEmailPersistenceInput = {
   readonly context: EmailBatchContext;
   readonly email: RawEmail;
   readonly sourceEventRow: Parameters<typeof insertProcessedEmailSourceEventEffect>[1];
-  readonly processedSourceEventId: Parameters<
-    typeof saveEmailCaptureEvidenceEffect
-  >[0]["processedSourceEventId"];
   readonly transactionId: TransactionId | null;
   readonly createdAt: Parameters<typeof saveEmailCaptureEvidenceEffect>[0]["now"];
 };
@@ -22,7 +19,7 @@ export async function persistIncomingEmailRecord(input: IncomingEmailPersistence
       userId: input.context.userId,
       from: input.email.from,
       body: input.email.body,
-      processedSourceEventId: input.processedSourceEventId,
+      processedSourceEventId: input.sourceEventRow.id,
       transactionId: input.transactionId,
       now: input.createdAt,
     })
