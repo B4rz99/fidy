@@ -1,8 +1,7 @@
 import { appendEmailParseImprovementRequest, getTransactionSource } from "./shared";
+import { buildEmailParseImprovementRawText, getEmailSenderDomain } from "../bank-email-parser";
+import { buildEmailParserTemplate } from "../email-parser-template";
 import type { PipelineResult, RawEmail } from "./types";
-
-const buildEmailParseImprovementRawText = (email: RawEmail): string =>
-  [email.subject, email.body].filter((part) => part.trim().length > 0).join("\n\n");
 
 export function appendFailedEmailParseImprovementRequest(
   result: PipelineResult,
@@ -12,6 +11,8 @@ export function appendFailedEmailParseImprovementRequest(
     result,
     request: {
       rawText: buildEmailParseImprovementRawText(email),
+      parserTemplate: buildEmailParserTemplate(buildEmailParseImprovementRawText(email)),
+      senderDomain: getEmailSenderDomain(email),
       source: getTransactionSource(email.provider),
       status: "failed",
       confidence: null,
@@ -29,6 +30,8 @@ export function appendNeedsReviewEmailParseImprovementRequest(
     result,
     request: {
       rawText: buildEmailParseImprovementRawText(email),
+      parserTemplate: buildEmailParserTemplate(buildEmailParseImprovementRawText(email)),
+      senderDomain: getEmailSenderDomain(email),
       source: getTransactionSource(email.provider),
       status: "needs_review",
       confidence,

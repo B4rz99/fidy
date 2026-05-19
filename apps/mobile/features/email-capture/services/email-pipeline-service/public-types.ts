@@ -47,10 +47,12 @@ export type PipelineResult = {
 
 export type EmailParseImprovementRequest = {
   readonly rawText: string;
+  readonly parserTemplate?: string;
+  readonly senderDomain?: string | null;
   readonly source: "email_gmail" | "email_outlook";
   readonly status: "failed" | "needs_review";
   readonly confidence: number | null;
-  readonly parseMethod: "llm";
+  readonly parseMethod: "llm" | "regex";
 };
 
 export type ProgressCallback = (progress: {
@@ -70,7 +72,7 @@ export type RetryResult = {
 export type CreateEmailPipelineServiceDeps = {
   readonly parseEmailApi: (
     body: string,
-    options?: { readonly parseContext?: ParseContext }
+    options?: { readonly parseContext?: ParseContext; readonly signal?: AbortSignal }
   ) => Promise<LlmParsedTransaction | null>;
   readonly parseContext?: ParseContext;
   readonly lookupMerchantRule: (
@@ -179,7 +181,8 @@ export type EmailPipelineService = {
     db: AnyDb,
     userId: UserId,
     rawEmails: RawEmail[],
-    onProgress?: ProgressCallback
+    onProgress?: ProgressCallback,
+    signal?: AbortSignal
   ) => Promise<PipelineResult>;
   readonly processRetries: (db: AnyDb, userId: UserId) => Promise<RetryResult>;
 };

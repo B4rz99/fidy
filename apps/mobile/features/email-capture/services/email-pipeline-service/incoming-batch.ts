@@ -39,7 +39,37 @@ type EmailBatchTimingAccumulator = {
   readonly persistenceTotalDurationMs: number;
 };
 
+type RegexParseAccumulator = {
+  readonly parsed: number;
+  readonly missed: number;
+  readonly unsupported: number;
+};
+
 const nowMs = (): number => Date.now();
+
+const isEmailCaptureDebugEnabled = (): boolean =>
+  process.env.EXPO_PUBLIC_EMAIL_CAPTURE_DEBUG === "1";
+
+const logRegexSummaryForDebug = (input: {
+  readonly emailCount: number;
+  readonly regex: RegexParseAccumulator;
+  readonly result: PipelineResult;
+}): void => {
+  if (!isEmailCaptureDebugEnabled()) return;
+
+  // eslint-disable-next-line no-console
+  console.log("[email-capture] regex.summary", {
+    emailCount: input.emailCount,
+    regexCandidates: input.regex.parsed + input.regex.missed,
+    regexParsed: input.regex.parsed,
+    regexMissed: input.regex.missed,
+    regexUnsupported: input.regex.unsupported,
+    saved: input.result.saved,
+    needsReview: input.result.needsReview,
+    filtered: input.result.filtered,
+    failed: input.result.failed,
+  });
+};
 
 async function createEmailBatchPlan(
   runtime: PipelineRuntime,
@@ -111,9 +141,11 @@ async function runEmailWorker(input: {
 }): Promise<void> {
   // FP exemption: workers share a queue so parse calls can run without artificial batching.
   while (true) {
+    if (input.context.signal?.aborted) return;
     const email = getNextQueuedEmail(input.queue);
     if (!email) return;
     await waitForParseRateLimit(input.context);
+    if (input.context.signal?.aborted) return;
     input.onOutcome(await processIncomingEmail(input.context, email));
   }
 }
@@ -147,6 +179,12 @@ const createTimingAccumulator = (): EmailBatchTimingAccumulator => ({
   persistenceTotalDurationMs: 0,
 });
 
+const createRegexAccumulator = (): RegexParseAccumulator => ({
+  parsed: 0,
+  missed: 0,
+  unsupported: 0,
+});
+
 const addOutcomeTiming = (
   timing: EmailBatchTimingAccumulator,
   outcome: IncomingEmailOutcome
@@ -171,6 +209,14 @@ const summarizeBatchTiming = (
   firstSavedLatencyMs,
 });
 
+const addRegexOutcome = (
+  regex: RegexParseAccumulator,
+  outcome: IncomingEmailOutcome
+): RegexParseAccumulator => ({
+  ...regex,
+  [outcome.regexParseStatus]: regex[outcome.regexParseStatus] + 1,
+});
+
 export async function processEmailBatch(runtime: PipelineRuntime, input: ProcessEmailsInput) {
   const batchStartedAt = nowMs();
   const batch = await createEmailBatchPlan(runtime, input.db, input.userId, input.rawEmails);
@@ -178,6 +224,7 @@ export async function processEmailBatch(runtime: PipelineRuntime, input: Process
     runtime,
     db: input.db,
     userId: input.userId,
+    signal: input.signal,
     parseStarts: 0,
     parseStartGate: Promise.resolve(),
     persistenceGate: Promise.resolve(),
@@ -185,6 +232,7 @@ export async function processEmailBatch(runtime: PipelineRuntime, input: Process
   let completed = 0;
   let firstSavedLatencyMs: number | null = null;
   let timing = createTimingAccumulator();
+  let regex = createRegexAccumulator();
   let progressResult = batch.result;
   const reportProgress = () => {
     input.onProgress?.(getProgressSnapshot(batch.total, completed, progressResult));
@@ -197,6 +245,7 @@ export async function processEmailBatch(runtime: PipelineRuntime, input: Process
     onOutcome: (outcome) => {
       completed += 1;
       timing = addOutcomeTiming(timing, outcome);
+      regex = addRegexOutcome(regex, outcome);
       if (firstSavedLatencyMs === null && outcome.savedTransaction) {
         firstSavedLatencyMs = nowMs() - batchStartedAt;
       }
@@ -211,5 +260,10 @@ export async function processEmailBatch(runtime: PipelineRuntime, input: Process
     timing: summarizeBatchTiming(timing, nowMs() - batchStartedAt, firstSavedLatencyMs),
   });
   await runtime.runTelemetryEffect(capturePipelineEventEffect(telemetry));
+  logRegexSummaryForDebug({
+    emailCount: batch.total,
+    regex,
+    result: progressResult,
+  });
   return progressResult;
 }

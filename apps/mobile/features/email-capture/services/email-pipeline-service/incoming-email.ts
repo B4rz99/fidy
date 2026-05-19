@@ -1,5 +1,6 @@
 import { captureErrorEffect, capturePipelineEventEffect } from "@/shared/effect/telemetry";
 import { buildSkippedEmailDiagnostics } from "./email-telemetry";
+import { persistIncomingEmailRecord } from "./incoming-email-record";
 import { cacheMerchantRule, lookupIncomingDuplicate } from "./incoming-parsed-helpers";
 import { createIncomingEmailPersistenceState, parseIncomingEmail } from "./incoming-parse";
 import {
@@ -9,11 +10,11 @@ import {
 import {
   getProcessedEmailSourceEventIdsEffect,
   insertProcessedEmailSourceEventEffect,
-  saveEmailCaptureEvidenceEffect,
 } from "./runtime";
 import {
   buildDuplicateProcessedSourceEventRow,
   buildUnparsedProcessedSourceEventRow,
+  appendEmailParseImprovementRequest,
   createPipelineMetricResult,
   getEmailSourceId,
   getEmailSourceEventKey,
@@ -26,6 +27,7 @@ import type {
   EmailSaveStatus,
   IncomingEmailOutcome,
   IncomingEmailPersistenceOutcome,
+  EmailParseImprovementRequest,
   LlmParsedTransaction,
   PipelineResult,
   RawEmail,
@@ -34,34 +36,6 @@ import type {
 } from "./types";
 
 const nowMs = (): number => Date.now();
-
-type IncomingEmailPersistenceInput = {
-  readonly context: EmailBatchContext;
-  readonly email: RawEmail;
-  readonly sourceEventRow: Parameters<typeof insertProcessedEmailSourceEventEffect>[1];
-  readonly processedSourceEventId: Parameters<
-    typeof saveEmailCaptureEvidenceEffect
-  >[0]["processedSourceEventId"];
-  readonly transactionId: TransactionId | null;
-  readonly createdAt: Parameters<typeof saveEmailCaptureEvidenceEffect>[0]["now"];
-};
-
-async function persistIncomingEmailRecord(input: IncomingEmailPersistenceInput) {
-  await input.context.runtime.runEmailEffect(
-    insertProcessedEmailSourceEventEffect(input.context.db, input.sourceEventRow)
-  );
-  await input.context.runtime.runEmailEffect(
-    saveEmailCaptureEvidenceEffect({
-      db: input.context.db,
-      userId: input.context.userId,
-      from: input.email.from,
-      body: input.email.body,
-      processedSourceEventId: input.processedSourceEventId,
-      transactionId: input.transactionId,
-      now: input.createdAt,
-    })
-  );
-}
 
 async function persistFailedIncomingEmail(
   context: EmailBatchContext,
@@ -95,7 +69,6 @@ async function persistFailedIncomingEmail(
     context,
     email,
     sourceEventRow,
-    processedSourceEventId,
     transactionId: null,
     createdAt,
   });
@@ -156,7 +129,6 @@ async function persistDuplicateIncomingEmail(input: {
     context: input.context,
     email: input.email,
     sourceEventRow,
-    processedSourceEventId,
     transactionId: input.transactionId,
     createdAt,
   });
@@ -168,6 +140,7 @@ async function persistIncomingTransaction(input: {
   readonly email: RawEmail;
   readonly parsed: LlmParsedTransaction;
   readonly status: EmailSaveStatus;
+  readonly regexParseStatus: IncomingEmailOutcome["regexParseStatus"];
 }): Promise<EmailSaveStatus | null> {
   try {
     const persistedStatus = await input.context.runtime.runEmailWithClock(
@@ -180,7 +153,11 @@ async function persistIncomingTransaction(input: {
       })
     );
     if (persistedStatus === "success") {
-      await cacheMerchantRule({ context: input.context, parsed: input.parsed });
+      await cacheMerchantRule({
+        context: input.context,
+        parsed: input.parsed,
+        regexParseStatus: input.regexParseStatus,
+      });
     }
     return persistedStatus;
   } catch (error) {
@@ -192,7 +169,9 @@ async function persistIncomingTransaction(input: {
 async function processParsedIncomingEmail(
   context: EmailBatchContext,
   email: RawEmail,
-  parsed: LlmParsedTransaction
+  parsed: LlmParsedTransaction,
+  regexParseStatus: IncomingEmailOutcome["regexParseStatus"],
+  parseImprovementRequest?: EmailParseImprovementRequest
 ): Promise<IncomingEmailPersistenceOutcome> {
   const persistenceStartedAt = nowMs();
   const result = await runSerializedPersistence(context, async () => {
@@ -211,7 +190,13 @@ async function processParsedIncomingEmail(
     }
 
     const status = resolveEmailStatus(parsed.confidence);
-    const persistedStatus = await persistIncomingTransaction({ context, email, parsed, status });
+    const persistedStatus = await persistIncomingTransaction({
+      context,
+      email,
+      parsed,
+      status,
+      regexParseStatus,
+    });
     if (persistedStatus === null) {
       return persistFailedIncomingEmail(context, email, null);
     }
@@ -225,12 +210,21 @@ async function processParsedIncomingEmail(
     return savedResult;
   });
 
+  const resultWithParseImprovement = parseImprovementRequest
+    ? appendEmailParseImprovementRequest({ result, request: parseImprovementRequest })
+    : result;
   return {
-    result,
+    result: resultWithParseImprovement,
     persistenceDurationMs: nowMs() - persistenceStartedAt,
-    savedTransaction: result.saved > 0 || result.needsReview > 0,
+    savedTransaction:
+      resultWithParseImprovement.saved > 0 || resultWithParseImprovement.needsReview > 0,
   };
 }
+
+const appendOptionalParseImprovementRequest = (
+  result: PipelineResult,
+  request?: EmailParseImprovementRequest
+): PipelineResult => (request ? appendEmailParseImprovementRequest({ result, request }) : result);
 
 export async function processIncomingEmail(
   context: EmailBatchContext,
@@ -242,30 +236,45 @@ export async function processIncomingEmail(
   if (parsed.kind !== "parsed") {
     if (parsed.kind === "failed") {
       const persistenceStartedAt = nowMs();
-      const result = await persistFailedIncomingEmail(context, email, "parse_error");
+      const result = appendOptionalParseImprovementRequest(
+        await persistFailedIncomingEmail(context, email, "parse_error"),
+        parsed.parseImprovementRequest
+      );
       return {
         result,
         parseDurationMs,
         persistenceDurationMs: nowMs() - persistenceStartedAt,
         savedTransaction: false,
+        regexParseStatus: parsed.regexParseStatus,
       };
     }
 
     const persistenceStartedAt = nowMs();
-    const result = await persistSkippedIncomingEmail(context, email, parsed.kind);
+    const result = appendOptionalParseImprovementRequest(
+      await persistSkippedIncomingEmail(context, email, parsed.kind),
+      parsed.parseImprovementRequest
+    );
     return {
       result,
       parseDurationMs,
       persistenceDurationMs: nowMs() - persistenceStartedAt,
       savedTransaction: false,
+      regexParseStatus: parsed.regexParseStatus,
     };
   }
 
-  const persistence = await processParsedIncomingEmail(context, email, parsed.parsed);
+  const persistence = await processParsedIncomingEmail(
+    context,
+    email,
+    parsed.parsed,
+    parsed.regexParseStatus,
+    parsed.parseImprovementRequest
+  );
   return {
     result: persistence.result,
     parseDurationMs,
     persistenceDurationMs: persistence.persistenceDurationMs,
     savedTransaction: persistence.savedTransaction,
+    regexParseStatus: parsed.regexParseStatus,
   };
 }

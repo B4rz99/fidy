@@ -10,6 +10,10 @@ const EMAIL_SOURCES_MIGRATION = resolve(
   __dirname,
   "../../supabase/migrations/20260503153000_parse_improvement_email_sources.sql"
 );
+const EMAIL_CONTEXT_MIGRATION = resolve(
+  __dirname,
+  "../../supabase/migrations/20260518152000_parse_improvement_email_context.sql"
+);
 
 describe("notification parse improvement remote schema", () => {
   it("stores anonymized templates with insert-only RLS and review indexing", () => {
@@ -48,5 +52,15 @@ describe("notification parse improvement remote schema", () => {
     expect(sql).toContain(
       "check (source in ('notification_android', 'google_pay', 'email_gmail', 'email_outlook'))"
     );
+  });
+
+  it("adds nullable sender-domain context for email template review", () => {
+    const sql = readFileSync(EMAIL_CONTEXT_MIGRATION, "utf8").toLowerCase();
+
+    expect(sql).toContain("add column if not exists sender_domain text");
+    expect(sql).toContain("notification_parse_improvement_samples_sender_domain_check");
+    expect(sql).toContain("sender_domain is null");
+    expect(sql).toContain("idx_notification_parse_samples_sender_domain");
+    expect(sql).not.toMatch(/raw_text|raw_body|merchant_name|amount_value/u);
   });
 });

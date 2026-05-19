@@ -19,6 +19,7 @@ const {
   withIosDeploymentTarget,
   withPodsDeploymentTarget,
 } = require("./withFidyWidget.deploymentTarget");
+const { markAppDelegateIos26Compatibility } = require("./withFidyWidget.appDelegate");
 const {
   copyWidgetFiles,
   deploymentTarget: DEPLOYMENT_TARGET,
@@ -239,10 +240,6 @@ const addWidgetExtensionTarget = (project, config) => {
   reconcileBuildSettings(project, settings);
 };
 
-// ---------------------------------------------------------------------------
-// Plugin composition
-// ---------------------------------------------------------------------------
-
 const withAppGroupEntitlement = (config) => {
   const appGroup = getAppGroup(config);
 
@@ -291,7 +288,8 @@ const withFidyWidget = (config) => {
     DEPLOYMENT_TARGET
   );
   const configWithExtension = withWidgetExtensionTarget(configWithPodsDeploymentTarget);
-  return configWithExtension;
+  const configWithAppDelegateCompatibility = markAppDelegateIos26Compatibility(configWithExtension);
+  return configWithAppDelegateCompatibility;
 };
 
 module.exports = createRunOncePlugin(withFidyWidget, "withFidyWidget", "1.0.0");

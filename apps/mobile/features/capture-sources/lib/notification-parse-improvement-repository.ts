@@ -2,6 +2,7 @@ import { getSupabase } from "@/shared/db";
 
 export type PersistedNotificationParseImprovementSample = {
   readonly template: string;
+  readonly senderDomain?: string | null;
   readonly source: string;
   readonly status: "failed" | "needs_review";
   readonly confidenceBucket: "none" | "low" | "medium" | "high";
@@ -89,6 +90,7 @@ export async function insertNotificationParseImprovementSample(
     .insert({
       user_id: input.userId,
       source: input.sample.source,
+      sender_domain: input.sample.senderDomain ?? null,
       status: input.sample.status,
       confidence_bucket: input.sample.confidenceBucket,
       parse_method: input.sample.parseMethod,

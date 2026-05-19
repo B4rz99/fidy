@@ -114,6 +114,7 @@ vi.mock("@/features/email-capture/lib/merchant-rules", () => ({
 vi.mock("@/features/email-capture/services/parse-email-api", () => ({
   parseEmailApi: (...args: unknown[]) => mockParseEmailApi(...args),
   retryableParseEmailApi: (...args: unknown[]) => mockParseEmailApi(...args),
+  stripPii: (text: string) => text,
 }));
 
 vi.mock("@/features/financial-accounts", () => ({
@@ -598,6 +599,66 @@ describe("email processing pipeline", () => {
     });
   });
 
+  it("uses deterministic bank parsing before the LLM for known bank emails", async () => {
+    const email = makeRawEmail({
+      from: "alertas@davibank.com",
+      subject: "Compra aprobada",
+      body: "Compra aprobada en EXITO COLOMBIA por $50.000 el 18/05/2026 con tarjeta **** 1234.",
+      receivedAt: "2026-05-18T19:04:59.000Z",
+    });
+
+    const result = await processEmails(mockDb, USER_ID, [email]);
+
+    expect(result.saved).toBe(1);
+    expect(mockParseEmailApi).not.toHaveBeenCalled();
+    expectSavedTransaction({
+      userId: USER_ID,
+      type: "expense",
+      amount: 50000,
+      accountId: "fa-default-user-1",
+      accountAttributionState: "unresolved",
+      description: null,
+      counterpartyName: "EXITO COLOMBIA",
+      source: "email_capture",
+      date: "2026-05-18",
+    });
+    expect(mockBuildEmailCaptureEvidence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: "alertas@davibank.com",
+        body: email.body,
+        cardProductHint: "tarjeta 1234",
+        counterpartyHint: "EXITO COLOMBIA",
+      })
+    );
+    expect(mockInsertMerchantRule).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the LLM and records a regex template when a known bank regex misses", async () => {
+    const email = makeRawEmail({
+      from: "alertas@davibank.com",
+      subject: "Compra aprobada",
+      body: "Operacion bancaria nueva en Super Nuevo Comercio con tarjeta 1234.",
+    });
+    mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
+
+    const result = await processEmails(mockDb, USER_ID, [email]);
+
+    expect(result.saved).toBe(1);
+    expect(mockParseEmailApi).toHaveBeenCalledWith(email.body);
+    expect(result.parseImprovementRequests).toEqual([
+      expect.objectContaining({
+        parserTemplate:
+          "Compra aprobada Operacion bancaria nueva en [MERCHANT] con tarjeta [CARD].",
+        senderDomain: "davibank.com",
+        source: "email_gmail",
+        status: "failed",
+        confidence: null,
+        parseMethod: "regex",
+      }),
+    ]);
+    expect(result.parseImprovementRequests[0]?.rawText).toContain("Super Nuevo Comercio");
+  });
+
   it("does not persist raw body previews for processed source events", async () => {
     mockParseEmailApi.mockResolvedValueOnce(makeParsedEmailResult());
     const longBody = "x".repeat(501);
@@ -808,7 +869,8 @@ describe("email processing pipeline", () => {
     processEmailsFn:
       | typeof processEmails
       | typeof processBackgroundEmails
-      | typeof processInitialSyncEmails
+      | typeof processInitialSyncEmails,
+    expectedConcurrency = 15
   ) {
     const parseStarts: string[] = [];
     const pendingParses: Array<(result: null) => void> = [];
@@ -820,16 +882,18 @@ describe("email processing pipeline", () => {
     const processing = processEmailsFn(
       mockDb,
       USER_ID,
-      Array.from({ length: 16 }, (_, index) =>
+      Array.from({ length: expectedConcurrency + 1 }, (_, index) =>
         makeRawEmail({ externalId: `ext-${index + 1}`, body: `Compra ${index + 1}` })
       )
     );
 
-    await vi.waitFor(() => expect(parseStarts).toHaveLength(15));
-    expect(parseStarts).not.toContain("parse:Compra 16");
+    await vi.waitFor(() => expect(parseStarts).toHaveLength(expectedConcurrency));
+    expect(parseStarts).not.toContain(`parse:Compra ${expectedConcurrency + 1}`);
 
     pendingParses[0]?.(null);
-    await vi.waitFor(() => expect(parseStarts).toContain("parse:Compra 16"));
+    await vi.waitFor(() =>
+      expect(parseStarts).toContain(`parse:Compra ${expectedConcurrency + 1}`)
+    );
 
     pendingParses.slice(1).forEach((resolve) => {
       resolve(null);
@@ -958,7 +1022,7 @@ describe("email processing pipeline", () => {
     await processing;
   });
 
-  it("does not stop scheduling initial sync parses after the preview target is reached", async () => {
+  it("starts larger initial sync batches within the shared parse concurrency", async () => {
     const events: string[] = [];
     const pendingParses: Array<(result: ReturnType<typeof makeParsedEmailResult>) => void> = [];
     mockParseEmailApi.mockImplementation(async (body: string) => {
@@ -983,13 +1047,9 @@ describe("email processing pipeline", () => {
       "parse:Compra 5",
       "parse:Compra 6",
     ]);
-
-    pendingParses[0]?.(makeParsedEmailResult({ description: "Compra 1" }));
-    pendingParses[1]?.(makeParsedEmailResult({ description: "Compra 2" }));
-    pendingParses[2]?.(makeParsedEmailResult({ description: "Compra 3" }));
-    pendingParses[3]?.(makeParsedEmailResult({ description: "Compra 4" }));
-    pendingParses[4]?.(makeParsedEmailResult({ description: "Compra 5" }));
-    pendingParses[5]?.(makeParsedEmailResult({ description: "Compra 6" }));
+    pendingParses.forEach((resolve, index) => {
+      resolve(makeParsedEmailResult({ description: `Compra ${index + 1}` }));
+    });
 
     const result = await processing;
 
@@ -1052,6 +1112,8 @@ describe("email processing pipeline", () => {
         status: "needs_review",
         confidence: 0.5,
         parseMethod: "llm",
+        parserTemplate: "Compra aprobada Su compra por [AMOUNT] fue aprobada",
+        senderDomain: "bancolombia.com.co",
       },
     ]);
   });
@@ -1247,6 +1309,8 @@ describe("email processing pipeline", () => {
         status: "failed",
         confidence: null,
         parseMethod: "llm",
+        parserTemplate: "Compra aprobada Su compra por [AMOUNT] fue aprobada",
+        senderDomain: "bancolombia.com.co",
       },
     ]);
   });

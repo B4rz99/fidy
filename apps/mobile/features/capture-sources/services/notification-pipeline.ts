@@ -8,6 +8,7 @@ import type { CategoryId } from "@/shared/types/branded";
 import { findDuplicateTransaction, isCaptureProcessed } from "../lib/dedup";
 import { parseNotificationLocalHint } from "../lib/notification-parser";
 import type { NotificationData } from "../schema";
+import { parseNotificationWithRegex } from "./notification-regex-parser";
 import {
   appendParsedNotificationEvidence,
   buildNotificationFingerprint,
@@ -26,7 +27,6 @@ import {
 import type {
   DuplicateCheckResult,
   NotificationContext,
-  NotificationParseMethod,
   NotificationPipelineResult,
   ParsedNotificationContext,
   ParseStageResult,
@@ -64,13 +64,37 @@ export async function processNotification(
 }
 
 async function parseNotificationStage(context: NotificationContext): Promise<ParseStageResult> {
-  const parseMethod: NotificationParseMethod = "llm";
+  const regexParse = parseNotificationWithRegex(context.notification, context.notificationText);
+  if (regexParse.kind === "parsed") {
+    const parsed = normalizeParsedNotification(regexParse.parsed);
+    const parsedContext = appendParsedNotificationEvidence(context, parsed);
+    const fingerprint = buildNotificationFingerprint(context, parsed);
+    return {
+      kind: "parsed",
+      context: {
+        ...parsedContext,
+        parseMethod: "regex",
+        parsed,
+        fingerprint,
+      },
+    };
+  }
+
   const localHint = parseNotificationLocalHint(context.notificationText);
   const rawParsed = await parseNotificationWithLlm(
     buildNotificationLlmInput(context.sanitizedText, localHint)
   );
   if (!rawParsed) {
-    return { kind: "failed", context: { ...context, parseMethod } };
+    return {
+      kind: "failed",
+      context: {
+        ...context,
+        parseMethod: "llm",
+        ...(regexParse.kind === "failed"
+          ? { regexParseImprovementTemplate: regexParse.parserTemplate }
+          : {}),
+      },
+    };
   }
   const parsed = normalizeParsedNotification(rawParsed);
   const parsedContext = appendParsedNotificationEvidence(context, parsed);
@@ -79,7 +103,10 @@ async function parseNotificationStage(context: NotificationContext): Promise<Par
     kind: "parsed",
     context: {
       ...parsedContext,
-      parseMethod,
+      parseMethod: "llm",
+      ...(regexParse.kind === "failed"
+        ? { regexParseImprovementTemplate: regexParse.parserTemplate }
+        : {}),
       parsed,
       fingerprint,
     },

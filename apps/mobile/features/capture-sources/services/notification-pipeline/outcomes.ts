@@ -84,7 +84,10 @@ function buildParseImprovementRequest(
     source: context.source,
     status: input.status,
     confidence: input.confidence,
-    parseMethod: context.parseMethod,
+    parseMethod: context.regexParseImprovementTemplate ? "regex" : context.parseMethod,
+    ...(context.regexParseImprovementTemplate
+      ? { parserTemplate: context.regexParseImprovementTemplate }
+      : {}),
   };
 }
 
@@ -272,5 +275,17 @@ export async function persistSuccessfulNotification(
   await cacheMerchantRuleIfEligible(context);
   await trackSuccessfulNotification(context);
 
-  return { saved: true, skippedDuplicate: false, transactionId };
+  return {
+    saved: true,
+    skippedDuplicate: false,
+    transactionId,
+    ...(context.regexParseImprovementTemplate
+      ? {
+          parseImprovementRequest: buildParseImprovementRequest(context, {
+            status: "failed",
+            confidence: null,
+          }),
+        }
+      : {}),
+  };
 }

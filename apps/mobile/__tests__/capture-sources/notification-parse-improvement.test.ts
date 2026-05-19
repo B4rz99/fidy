@@ -164,4 +164,30 @@ describe("notification parse improvement samples", () => {
     expect(JSON.stringify(mockCapturePipelineEvent.mock.calls)).not.toContain("1234");
     expect(JSON.stringify(mockCapturePipelineEvent.mock.calls)).not.toContain("MERCHANT");
   });
+
+  it("uses a prebuilt parser template for opted-in email samples", async () => {
+    await shareNotificationParseImprovementSample({
+      consent: true,
+      userId: "user-1",
+      parserTemplate: "Compra [MERCHANT] por [AMOUNT] con tarjeta [CARD].",
+      rawText: "Compra EXITO por $50,000 con tarjeta *1234.",
+      senderDomain: "davibank.com",
+      source: "email_gmail",
+      status: "needs_review",
+      confidence: 0.4,
+      parseMethod: "llm",
+    });
+
+    expect(mockInsertNotificationParseImprovementSample).toHaveBeenCalledWith({
+      userId: "user-1",
+      sample: {
+        template: "Compra [MERCHANT] por [AMOUNT] con tarjeta [CARD].",
+        senderDomain: "davibank.com",
+        source: "email_gmail",
+        status: "needs_review",
+        confidenceBucket: "low",
+        parseMethod: "llm",
+      },
+    });
+  });
 });

@@ -24,6 +24,7 @@ describe("notification parse improvement repository", () => {
       userId: "user-1",
       sample: {
         template: "Compra por [AMOUNT] en [MERCHANT].",
+        senderDomain: "davibank.com",
         source: "notification_android",
         status: "failed",
         confidenceBucket: "none",
@@ -36,6 +37,7 @@ describe("notification parse improvement repository", () => {
       expect.objectContaining({
         user_id: "user-1",
         template: "Compra por [AMOUNT] en [MERCHANT].",
+        sender_domain: "davibank.com",
         source: "notification_android",
         status: "failed",
         confidence_bucket: "none",

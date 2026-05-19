@@ -3,7 +3,12 @@ import { captureErrorEffect } from "@/shared/effect/telemetry";
 import { normalizeMerchant } from "@/shared/lib/normalize-merchant";
 import { findDuplicateTransactionEffect, insertMerchantRuleEffect } from "./runtime";
 import { getParsedCounterpartyName, getPersistedCategoryId } from "./shared";
-import type { DuplicateLookupOutcome, EmailBatchContext, LlmParsedTransaction } from "./types";
+import type {
+  DuplicateLookupOutcome,
+  EmailBatchContext,
+  IncomingEmailOutcome,
+  LlmParsedTransaction,
+} from "./types";
 
 export async function lookupIncomingDuplicate(
   context: EmailBatchContext,
@@ -23,7 +28,12 @@ export async function lookupIncomingDuplicate(
 export async function cacheMerchantRule(input: {
   readonly context: EmailBatchContext;
   readonly parsed: LlmParsedTransaction;
+  readonly regexParseStatus: IncomingEmailOutcome["regexParseStatus"];
 }) {
+  if (input.regexParseStatus === "parsed" && input.parsed.categoryId === "other") {
+    return;
+  }
+
   try {
     const createdAt = await input.context.runtime.runClockEffect(currentIsoDateTimeEffect);
     await input.context.runtime.runEmailEffect(
