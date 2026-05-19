@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import * as Haptics from "expo-haptics";
 import Animated, {
   useAnimatedStyle,
   useDerivedValue,
@@ -12,9 +13,11 @@ import {
   Keyboard,
   Platform,
   Pressable,
+  type StyleProp,
   Text,
   useWindowDimensions,
   View,
+  type ViewStyle,
 } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { styles } from "./PencilEntryScaffold.styles";
@@ -46,6 +49,7 @@ const ANDROID_TAB_BAR_HEIGHT = 64;
 const PENCIL_ENTRY_HORIZONTAL_PADDING = 16;
 const SWIPE_TAB_THRESHOLD = 56;
 const TAB_GAP = 8;
+const NUMPAD_RIPPLE_COLOR = "rgba(255, 255, 255, 0.42)";
 
 function getTabIndicatorColor(input: {
   readonly accentGreen: string;
@@ -56,6 +60,54 @@ function getTabIndicatorColor(input: {
   if (input.tab === "expense") return input.accentRed;
   if (input.tab === "income") return input.accentGreen;
   return input.tertiary;
+}
+
+type PencilNumpadButtonProps = {
+  readonly accessibilityLabel?: string;
+  readonly children: ReactNode;
+  readonly disabled?: boolean;
+  readonly onPress?: () => void;
+  readonly style: StyleProp<ViewStyle>;
+  readonly testID?: string;
+};
+
+function PencilNumpadButton({
+  accessibilityLabel,
+  children,
+  disabled = false,
+  onPress,
+  style,
+  testID,
+}: PencilNumpadButtonProps) {
+  const feedback = useSharedValue(0);
+  const feedbackStyle = useAnimatedStyle(() => ({
+    opacity: feedback.value,
+    transform: [{ scale: 0.88 + feedback.value * 0.12 }],
+  }));
+  const showFeedback = () => {
+    if (disabled) return;
+    feedback.value = withTiming(1, { duration: 80 });
+  };
+  const hideFeedback = () => {
+    feedback.value = withTiming(0, { duration: 180 });
+  };
+
+  return (
+    <Pressable
+      testID={testID}
+      style={style}
+      android_ripple={{ color: NUMPAD_RIPPLE_COLOR, borderless: false }}
+      disabled={disabled}
+      onPress={onPress}
+      onPressIn={showFeedback}
+      onPressOut={hideFeedback}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
+      <Animated.View pointerEvents="none" style={[styles.keyFeedback, feedbackStyle]} />
+      {children}
+    </Pressable>
+  );
 }
 
 export function PencilEntryScaffold({
@@ -103,6 +155,14 @@ export function PencilEntryScaffold({
       transform: [{ translateX: animatedTabPillX.value }],
     };
   });
+  const handleKeyPress = (key: string) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onKeyPress(key);
+  };
+  const handleConfirmPress = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onConfirm();
+  };
   const tabSwipe = Gesture.Pan()
     .runOnJS(true)
     .activeOffsetX([-16, 16])
@@ -184,15 +244,14 @@ export function PencilEntryScaffold({
                   if (key === "delete") {
                     return (
                       <View key={key} style={styles.rightColumn}>
-                        <Pressable
+                        <PencilNumpadButton
                           style={[styles.key, { backgroundColor: specialKeyBg }]}
-                          onPress={() => onKeyPress(key)}
-                          accessibilityRole="button"
+                          onPress={() => handleKeyPress(key)}
                           accessibilityLabel={t("common.delete")}
                         >
                           <Delete size={20} color={tertiary} />
-                        </Pressable>
-                        <Pressable
+                        </PencilNumpadButton>
+                        <PencilNumpadButton
                           testID="keyConfirm"
                           style={[
                             styles.key,
@@ -202,25 +261,23 @@ export function PencilEntryScaffold({
                             },
                           ]}
                           disabled={isConfirmDisabled}
-                          onPress={isConfirmDisabled ? undefined : onConfirm}
-                          accessibilityRole="button"
+                          onPress={isConfirmDisabled ? undefined : handleConfirmPress}
                         >
                           <Check size={22} color={onAccent} />
-                        </Pressable>
+                        </PencilNumpadButton>
                       </View>
                     );
                   }
 
                   return (
-                    <Pressable
+                    <PencilNumpadButton
                       key={key}
                       style={[styles.key, { backgroundColor: keyBg }]}
-                      onPress={() => onKeyPress(key)}
-                      accessibilityRole="button"
+                      onPress={() => handleKeyPress(key)}
                       accessibilityLabel={key}
                     >
                       <Text style={[styles.keyText, { color: primary }]}>{key}</Text>
-                    </Pressable>
+                    </PencilNumpadButton>
                   );
                 })}
               </View>

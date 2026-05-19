@@ -1,20 +1,63 @@
-import Animated, { type AnimatedStyle } from "react-native-reanimated";
-import { StyleSheet, View, type ViewStyle } from "@/shared/components/rn";
+import { useEffect } from "react";
+import Animated, {
+  type AnimatedStyle,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
+import { StyleSheet, useWindowDimensions, View, type ViewStyle } from "@/shared/components/rn";
 import { useAnimatedProgress, useThemeColor } from "@/shared/hooks";
 
 type Props = {
   readonly percent: number;
   readonly height?: number;
+  readonly completeTone?: "danger" | "success";
+  readonly shimmering?: boolean;
 };
 
-export function ProgressBar({ percent, height = 8 }: Props) {
+const SHIMMER_WIDTH = 72;
+
+export function ProgressBar({
+  percent,
+  height = 8,
+  completeTone = "danger",
+  shimmering = false,
+}: Props) {
+  const { width } = useWindowDimensions();
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
   const borderColor = useThemeColor("borderSubtle");
+  const shimmerX = useSharedValue(-SHIMMER_WIDTH);
 
   const { animatedStyle } = useAnimatedProgress(Math.min(percent, 100) / 100, 600);
 
-  const barColor = percent >= 100 ? accentRed : accentGreen;
+  useEffect(() => {
+    if (!shimmering) {
+      shimmerX.value = -SHIMMER_WIDTH;
+      return;
+    }
+
+    shimmerX.value = withRepeat(
+      withSequence(
+        withTiming(width + SHIMMER_WIDTH, {
+          duration: 1300,
+          easing: Easing.inOut(Easing.quad),
+        }),
+        withTiming(-SHIMMER_WIDTH, { duration: 0 })
+      ),
+      -1,
+      false
+    );
+  }, [shimmerX, shimmering, width]);
+
+  const shimmerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shimmerX.value }],
+  }));
+
+  const barColor = percent >= 100 && completeTone === "danger" ? accentRed : accentGreen;
 
   return (
     <View style={[styles.track, { height, backgroundColor: borderColor }]}>
@@ -25,11 +68,23 @@ export function ProgressBar({ percent, height = 8 }: Props) {
           animatedStyle as AnimatedStyle<ViewStyle>,
         ]}
       />
+      {shimmering ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.shimmer, { height, width: SHIMMER_WIDTH }, shimmerStyle]}
+        />
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  track: { borderRadius: 4, overflow: "hidden" },
+  track: { borderRadius: 4, overflow: "hidden", position: "relative" },
   fill: { borderRadius: 4 },
+  shimmer: {
+    backgroundColor: "rgba(255, 255, 255, 0.42)",
+    borderRadius: 4,
+    position: "absolute",
+    top: 0,
+  },
 });

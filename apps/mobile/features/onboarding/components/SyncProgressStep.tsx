@@ -10,7 +10,6 @@ import {
 } from "@/features/email-capture/public";
 import { useSettingsStore } from "@/features/settings/hooks.public";
 import { refreshTransactions, useTransactionStore } from "@/features/transactions/store.public";
-import { ProgressBar } from "@/shared/components";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -23,6 +22,7 @@ import {
   type SyncOutcome,
 } from "./SyncProgressStep.helpers";
 import { styles } from "./SyncProgressStep.styles";
+import { SyncImportProgress } from "./SyncImportProgress";
 import { SyncTransactionPreview } from "./SyncTransactionPreview";
 
 export function SyncProgressStep() {
@@ -247,12 +247,12 @@ export function SyncProgressStep() {
           {t("onboarding.syncing.processing")}
         </Text>
 
-        <View style={styles.progressSection}>
-          <ProgressBar percent={percent} height={10} />
-          <Text style={[styles.counter, { color: accentGreen }]}>
-            {t("onboarding.syncing.transactionsFound", { count: savedCount })}
-          </Text>
-        </View>
+        <SyncImportProgress
+          importComplete={importComplete}
+          isWaiting={syncOutcome === null}
+          percent={percent}
+          savedCount={savedCount}
+        />
 
         <SyncTransactionPreview
           fallbackLabel={t("common.transaction")}

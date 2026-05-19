@@ -74,6 +74,26 @@ test("Pencil entry scaffold matches the requested layout structure", () => {
   expect(scaffoldSource).toContain("$0");
 });
 
+test("Pencil entry numpad keeps the final row aligned to three columns", () => {
+  expect(scaffoldSource).toContain('["000", "0", "delete"]');
+  expect(scaffoldSource).toContain("<View key={key} style={styles.rightColumn}>");
+  expect(scaffoldSource).not.toContain("style={({ pressed })");
+  expect(scaffoldStylesSource).toContain("rightColumn: {");
+  expect(scaffoldStylesSource).toContain("flex: 1");
+  expect(scaffoldStylesSource).not.toContain("flex: 2");
+  expect(scaffoldStylesSource).not.toContain("flexBasis");
+  expect(scaffoldStylesSource).not.toContain("minWidth");
+});
+
+test("Pencil entry numpad feedback does not own layout styles", () => {
+  expect(scaffoldSource).toContain("PencilNumpadButton");
+  expect(scaffoldSource).toContain("Haptics.impactAsync");
+  expect(scaffoldSource).toContain("android_ripple");
+  expect(scaffoldSource).toContain("styles.keyFeedback");
+  expect(scaffoldStylesSource).toContain("keyFeedback");
+  expect(scaffoldStylesSource).not.toContain("keyPressed");
+});
+
 test("Pencil entry tab indicator uses a centered pill instead of an underline", () => {
   expect(scaffoldSource).toContain("animatedTabPillStyle");
   expect(scaffoldSource).toContain("animatedTabPillX");
