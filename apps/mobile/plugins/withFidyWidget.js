@@ -11,17 +11,15 @@
 const {
   createRunOncePlugin,
   withEntitlementsPlist,
-  withDangerousMod,
   withInfoPlist,
   withXcodeProject,
 } = require("expo/config-plugins");
-const { readFileSync, writeFileSync } = require("node:fs");
-const path = require("node:path");
 const {
   reconcileAppDeploymentTarget,
   withIosDeploymentTarget,
   withPodsDeploymentTarget,
 } = require("./withFidyWidget.deploymentTarget");
+const { markAppDelegateIos26Compatibility } = require("./withFidyWidget.appDelegate");
 const {
   copyWidgetFiles,
   deploymentTarget: DEPLOYMENT_TARGET,
@@ -242,63 +240,6 @@ const addWidgetExtensionTarget = (project, config) => {
   reconcileBuildSettings(project, settings);
 };
 
-const markAppDelegateIos26Compatibility = (config) =>
-  withDangerousMod(config, [
-    "ios",
-    (modConfig) => {
-      const appDelegatePath = path.join(
-        modConfig.modRequest.platformProjectRoot,
-        modConfig.modRequest.projectName,
-        "AppDelegate.swift"
-      );
-      const source = readFileSync(appDelegatePath, "utf8");
-      const legacyWindowCreation =
-        "    window = UIWindow(frame: UIScreen.main.bounds)\n" +
-        "    factory.startReactNative(\n";
-      const sceneAwareWindowCreation =
-        "    window = makeRootWindow(for: application)\n" +
-        "    factory.startReactNative(\n";
-      const legacyOpenUrlSignature = "  public override func application(\n    _ app: UIApplication,";
-      const annotatedOpenUrlSignature =
-        "  @available(iOS, introduced: 9.0, deprecated: 26.0)\n  public override func application(\n    _ app: UIApplication,";
-      const reactNativeDelegateMarker = "\nclass ReactNativeDelegate: ExpoReactNativeFactoryDelegate {";
-      const rootWindowHelpers =
-        "\n#if os(iOS) || os(tvOS)\n" +
-        "private func makeRootWindow(for application: UIApplication) -> UIWindow {\n" +
-        "  if let windowScene = application.connectedScenes.compactMap({ $0 as? UIWindowScene }).first {\n" +
-        "    return UIWindow(windowScene: windowScene)\n" +
-        "  }\n" +
-        "\n" +
-        "  return makeLegacyRootWindow()\n" +
-        "}\n" +
-        "\n" +
-        "@available(iOS, deprecated: 26.0)\n" +
-        "@available(tvOS, deprecated: 26.0)\n" +
-        "private func makeLegacyRootWindow() -> UIWindow {\n" +
-        "  UIWindow(frame: UIScreen.main.bounds)\n" +
-        "}\n" +
-        "#endif\n";
-
-      const windowPatched = source.replace(legacyWindowCreation, sceneAwareWindowCreation);
-      const openUrlPatched = windowPatched.includes(annotatedOpenUrlSignature)
-        ? windowPatched
-        : windowPatched.replace(legacyOpenUrlSignature, annotatedOpenUrlSignature);
-      const helpersPatched = openUrlPatched.includes("private func makeRootWindow(")
-        ? openUrlPatched
-        : openUrlPatched.replace(reactNativeDelegateMarker, `${rootWindowHelpers}${reactNativeDelegateMarker}`);
-
-      if (helpersPatched !== source) {
-        writeFileSync(appDelegatePath, helpersPatched);
-      }
-
-      return modConfig;
-    },
-  ]);
-
-// ---------------------------------------------------------------------------
-// Plugin composition
-// ---------------------------------------------------------------------------
-
 const withAppGroupEntitlement = (config) => {
   const appGroup = getAppGroup(config);
 
@@ -347,8 +288,7 @@ const withFidyWidget = (config) => {
     DEPLOYMENT_TARGET
   );
   const configWithExtension = withWidgetExtensionTarget(configWithPodsDeploymentTarget);
-  const configWithAppDelegateCompatibility =
-    markAppDelegateIos26Compatibility(configWithExtension);
+  const configWithAppDelegateCompatibility = markAppDelegateIos26Compatibility(configWithExtension);
   return configWithAppDelegateCompatibility;
 };
 
