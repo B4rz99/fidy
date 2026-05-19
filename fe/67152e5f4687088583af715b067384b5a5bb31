@@ -1,0 +1,79 @@
+apps/mobile/__tests__/email-capture/use-email-capture.test.ts
+  s_cb4e7a09c1bd42::t_4f4672fa6171d6 7,14,29,45-47,58
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 12-13,15-17
+  s_cb4e7a09c1bd42::t_89e9cb2078f141 56
+apps/mobile/shared/lib/generate-id.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 12,84-85
+apps/mobile/__tests__/capture-sources/notification-parse-improvement.test.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 193-230
+apps/mobile/__tests__/email-capture/bank-email-parser.test.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 86-105,108-156
+  s_cb4e7a09c1bd42::t_a1e23bdc3f0071 106-107
+apps/mobile/features/email-capture/bootstrap.ts
+  s_cb4e7a09c1bd42::t_6fa8ad6833bd87 11-12,22,24-31
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 1-7,9-10,17-21,32-34
+  s_cb4e7a09c1bd42::t_1140721fac6764 23
+apps/mobile/shared/db/schema.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 24,266-289
+apps/mobile/features/email-capture/store.ts
+  s_cb4e7a09c1bd42::t_dc9f9270b700a3 2,33-36
+  s_cb4e7a09c1bd42::t_998bc5eef31864 194
+apps/mobile/features/email-capture/store/fetch-processing.ts
+  s_cb4e7a09c1bd42::t_dc9f9270b700a3 1-18,24-156
+  s_cb4e7a09c1bd42::t_027f87fec4566b 19-23
+apps/mobile/shared/types/branded.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 18
+apps/mobile/features/email-capture/services/bank-email-parser.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 36-50,94-137,139-140,142-196,238-239
+  s_cb4e7a09c1bd42::t_6fa8ad6833bd87 138,141
+apps/mobile/__tests__/setup.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 270-271
+apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts
+  s_cb4e7a09c1bd42::t_cf17bffd9b1055 123,143-163
+  s_cb4e7a09c1bd42::t_1140721fac6764 35-47
+  s_cb4e7a09c1bd42::t_6fa8ad6833bd87 1-34,112-122,124-141
+  s_cb4e7a09c1bd42::t_15d60d3f657917 48
+apps/mobile/features/email-capture/hooks/useEmailCapture.ts
+  s_cb4e7a09c1bd42::t_6fa8ad6833bd87 18,31
+apps/mobile/drizzle/migrations.js
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 32,68
+apps/mobile/features/capture-sources/lib/notification-parse-improvement-repository.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 1,13-34,41-42,96-106,130-133
+apps/mobile/features/settings/components/parse-improvement-sharing-toggle.ts
+  s_cb4e7a09c1bd42::t_81ffdba587cc67 1-57
+apps/mobile/bootstrap/authenticated-shell.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 17-20,45
+apps/mobile/features/email-capture/services/email-parse-improvement-sharing.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 1-2,5-24,27,32-35,37-41,58-73,75-81
+  s_cb4e7a09c1bd42::t_6fa8ad6833bd87 36,42-57
+apps/mobile/__tests__/email-capture/parse-improvement-outbox.test.ts
+  s_cb4e7a09c1bd42::t_bec34d9dab146c 68-203
+  s_cb4e7a09c1bd42::t_c057b0a127e541 13,211-218
+apps/mobile/features/settings/components/SettingsScreen.tsx
+  s_cb4e7a09c1bd42::t_d81a24c0836dae 85-90
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 6,58,212,245
+  s_cb4e7a09c1bd42::t_81ffdba587cc67 31
+apps/mobile/features/capture-sources/lib/notification-parse-improvement.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 24-25,144-147,149,169-172
+apps/mobile/__tests__/email-capture/parse-improvement-sharing.test.ts
+  s_cb4e7a09c1bd42::t_4f4672fa6171d6 54,62,80,96-98,102,104-107,109-123
+  s_cb4e7a09c1bd42::t_84642d4b6753c3 49,66-79,81-87,144-165,184-198
+  s_cb4e7a09c1bd42::t_74409c7f5994de 126-143
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 3,6-14,16-19,22-26,31,34-35,50-51,56,58,63,88,90,92-95,101,168,170,174,176,182-183,199-214
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "fe67152e5f4687088583af715b067384b5a5bb31",
+  "prompts": {},
+  "sessions": {
+    "s_cb4e7a09c1bd42": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3eb2-2838-7f80-8802-f556eeaa9709",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
