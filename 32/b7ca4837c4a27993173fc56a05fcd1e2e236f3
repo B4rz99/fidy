@@ -1,0 +1,33 @@
+apps/mobile/features/capture-sources/services/notification-regex-parser.ts
+  s_c470af7990caf6::t_d2149e90a57325 30-32,69
+apps/mobile/features/email-capture/services/bank-email-parser.ts
+  s_9bd463cf30949a::t_b0141ac2c6c24c 33-35,80
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-email.ts
+  s_9bd463cf30949a::t_b0141ac2c6c24c 3
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-email-record.ts
+  s_9bd463cf30949a::t_b0141ac2c6c24c 1-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "32b7ca4837c4a27993173fc56a05fcd1e2e236f3",
+  "prompts": {},
+  "sessions": {
+    "s_9bd463cf30949a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3d7e-e89b-79c3-999c-8aaf0e6b6974",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_c470af7990caf6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3b3d-cc9c-7860-84a1-925c43e5aef2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
