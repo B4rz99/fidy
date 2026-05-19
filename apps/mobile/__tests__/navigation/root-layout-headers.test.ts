@@ -10,7 +10,7 @@ describe("Root layout native headers", () => {
   });
 
   test("detail screens enable native headers on iOS with themed colors", () => {
-    for (const screen of ["search", "connected-accounts", "failed-emails", "profile"]) {
+    for (const screen of ["search", "connected-accounts", "profile"]) {
       expect(source).toContain(`"${screen}"`);
     }
     expect(source).toContain('headerShown: Platform.OS === "ios"');

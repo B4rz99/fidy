@@ -234,7 +234,6 @@ function RootLayout() {
             <Stack.Screen name="financial-accounts" options={iosHeaderOptions} />
             <Stack.Screen name="financial-account-details" options={iosHeaderOptions} />
             <Stack.Screen name="financial-account-form" options={iosHeaderOptions} />
-            <Stack.Screen name="failed-emails" options={iosHeaderOptions} />
             <Stack.Screen name="profile" options={iosHeaderOptions} />
             <Stack.Screen name="settings" options={iosHeaderOptions} />
             {__DEV__ ? <Stack.Screen name="design-system" options={iosHeaderOptions} /> : null}
