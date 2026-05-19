@@ -1,0 +1,63 @@
+apps/mobile/features/ai-chat/lib/message-content.ts
+  s_1ffb8c14dc19d9::t_399a853bb158d6 30
+apps/mobile/__tests__/ai-chat/message-content.test.ts
+  s_1ffb8c14dc19d9::t_399a853bb158d6 9-13
+apps/mobile/features/ai-chat/lib/streaming-bubble-display.ts
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 1-13
+apps/mobile/features/ai-chat/lib/chat-shell-layout.ts
+  s_d8e92b357a5027::t_786f65f64c3eae 26
+  s_1ffb8c14dc19d9::t_1e099a951e7f99 1-5,11-25
+  s_d8e92b357a5027::t_a67556e497f4ee 6-10,27-30
+apps/mobile/shared/i18n/locales/es.ts
+  s_d8e92b357a5027::t_429c4f4f47411e 631
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 632
+apps/mobile/__tests__/ai-chat/streaming-bubble-display.test.ts
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 1-18
+apps/mobile/features/ai-chat/components/ChatScreen.tsx
+  s_d8e92b357a5027::t_db016894c1a2c4 1,14,130-149
+apps/mobile/features/ai-chat/components/MessageBubble.tsx
+  s_1ffb8c14dc19d9::t_399a853bb158d6 75-101
+apps/mobile/features/ai-chat/components/ChatInput.tsx
+  s_d8e92b357a5027::t_23bd3e4e693158 3-5,20-23,30,32-35,37-42
+apps/mobile/__tests__/ai-chat/chat-shell-layout.test.ts
+  s_d8e92b357a5027::t_a67556e497f4ee 17-22
+  s_1ffb8c14dc19d9::t_1e099a951e7f99 1-2,4-14,23-24
+  s_d8e92b357a5027::t_786f65f64c3eae 3,15-16
+apps/mobile/features/ai-chat/components/ChatConversationShell.tsx
+  s_d8e92b357a5027::t_786f65f64c3eae 17-21
+  s_d8e92b357a5027::t_db016894c1a2c4 1-3,5-6,9-16,22-31,33-50,52-116,129-181,183-186
+  s_d8e92b357a5027::t_9556f6ce844d6a 4
+  s_d8e92b357a5027::t_a67556e497f4ee 7-8,51,118-128,182
+  s_d8e92b357a5027::t_b8dce3b21f89da 32
+apps/mobile/shared/i18n/locales/en.ts
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 623
+  s_d8e92b357a5027::t_429c4f4f47411e 622
+apps/mobile/features/ai-chat/components/StreamingBubble.tsx
+  s_d8e92b357a5027::t_2e362dda8b6336 1,11-38,76
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 4-5,40,44,71,78-83
+  s_1ffb8c14dc19d9::t_2ee693ec848d9e 72-75,77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "f34cf7ff2ebd85f3716233386599a4045c3d352d",
+  "prompts": {},
+  "sessions": {
+    "s_1ffb8c14dc19d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e40fb-00e7-7041-ba73-867ad938be0a",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_d8e92b357a5027": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4114-9b58-73e0-a558-74eba15eadad",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
