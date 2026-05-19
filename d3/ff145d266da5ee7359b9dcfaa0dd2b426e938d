@@ -1,0 +1,164 @@
+apps/mobile/app/create-budget.tsx
+  s_4b359c4b5b3df2::t_d0661d1cec54b6 1-10
+apps/mobile/__tests__/navigation/root-layout-headers.test.ts
+  s_4b359c4b5b3df2::t_8f319d2f1421c7 20,25-26,28,30
+  s_4b359c4b5b3df2::t_93e7a96ade6a25 21-24
+apps/mobile/app/add-transfer.tsx
+  s_4b359c4b5b3df2::t_a896a68e5201a2 3,15-17
+apps/mobile/app/auto-suggest-budgets.tsx
+  s_4b359c4b5b3df2::t_dd50b215c579bc 10,73-76,78-83
+apps/mobile/features/ai-chat/lib/chat-shell-layout.ts
+  s_1ffb8c14dc19d9::t_1e099a951e7f99 1-5,17-31
+  s_d8e92b357a5027::t_4c98b243674172 11-13,15-16,37-38,40-41
+  s_1ffb8c14dc19d9::t_d64159890c5176 14,39,42
+  s_d8e92b357a5027::t_786f65f64c3eae 32
+  s_d8e92b357a5027::t_a67556e497f4ee 6-10,33-36
+apps/mobile/app/_layout.tsx
+  s_4b359c4b5b3df2::t_c42d6d1bc4274e 49-54
+  s_4b359c4b5b3df2::t_bdefbc12b236a1 231
+apps/mobile/app/create-goal.tsx
+  s_4b359c4b5b3df2::t_f7058805fca022 2,5-9
+apps/mobile/app/edit-transaction.tsx
+  s_4b359c4b5b3df2::t_5540e2b872836d 17,173-187,189-207
+  ai_agent 188
+apps/mobile/__tests__/ai-chat/message-content.test.ts
+  s_1ffb8c14dc19d9::t_399a853bb158d6 9-13
+  s_1ffb8c14dc19d9::t_1c4ca93606c01c 29
+  s_1ffb8c14dc19d9::t_9fa584981f359b 15-28,30-35,48,54-65
+  s_1ffb8c14dc19d9::t_989dd59d2bb895 49-51
+  s_1ffb8c14dc19d9::t_5966f6c4db8678 36-47
+apps/mobile/features/ai-chat/components/StreamingBubble.tsx
+  s_d8e92b357a5027::t_2e362dda8b6336 1,11-38,76
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 4-5,40,44,71,78-83
+  s_1ffb8c14dc19d9::t_2ee693ec848d9e 72-75,77
+apps/mobile/__tests__/ai-chat/conversation-scroll.test.ts
+  s_1ffb8c14dc19d9::t_1c1fadd8593a97 51-61
+apps/mobile/__tests__/calendar/day-detail-screen.test.ts
+  s_4b359c4b5b3df2::t_36671e8adbe52a 11
+  s_4b359c4b5b3df2::t_1c4abd9b191993 8-9,12-14
+designs/budget-proposals/index.html
+  s_ba4ae3ba75e237::t_4e5ace30d8e958 1-779
+apps/mobile/features/transfers/components/PencilTransferEntryContent.tsx
+  s_4b359c4b5b3df2::t_30c07a847034ef 112-117,123-126,167-172,178-181
+apps/mobile/app/add-transaction.tsx
+  s_4b359c4b5b3df2::t_a896a68e5201a2 3,9-11
+apps/mobile/app/day-detail.tsx
+  s_4b359c4b5b3df2::t_b55033690329d3 13,78-86
+apps/mobile/app/add-bill.tsx
+  s_4b359c4b5b3df2::t_f7058805fca022 2,5-9
+apps/mobile/features/ai-chat/components/ChatConversationShell.tsx
+  s_d8e92b357a5027::t_a67556e497f4ee 8-9,52,131-141,200
+  s_d8e92b357a5027::t_df221d23bac054 6,190
+  s_d8e92b357a5027::t_db016894c1a2c4 1-3,5,7,10-16,23-32,34-51,53-99,112-129,142-160,162-168,174-189,191-199,201-204
+  s_d8e92b357a5027::t_9556f6ce844d6a 4
+  s_d8e92b357a5027::t_786f65f64c3eae 17-19,21-22
+  s_d8e92b357a5027::t_4c98b243674172 20
+  s_1ffb8c14dc19d9::t_e96f8c6ab5d6b8 100-111,161,169-173
+  s_d8e92b357a5027::t_b8dce3b21f89da 33
+apps/mobile/shared/i18n/locales/es.ts
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 632
+  s_d8e92b357a5027::t_429c4f4f47411e 631
+apps/mobile/app/delete-account.tsx
+  s_4b359c4b5b3df2::t_21922b26f98ed4 4,27,29-30,32,34-36,39,42-46,48-72,74-97,99
+apps/mobile/shared/components/DialogRouteFrame.tsx
+  s_4b359c4b5b3df2::t_93e7a96ade6a25 2,7
+  s_4b359c4b5b3df2::t_cdd856872227eb 1,3-6,8-45
+apps/mobile/app/add-payment.tsx
+  s_4b359c4b5b3df2::t_f7058805fca022 2,5-9
+apps/mobile/features/ai-chat/lib/message-content.ts
+  s_1ffb8c14dc19d9::t_62dac9353b8c17 27,73-85,87-88
+  s_1ffb8c14dc19d9::t_399a853bb158d6 30
+  s_1ffb8c14dc19d9::t_e5fcf5e8961a9c 49
+  s_1ffb8c14dc19d9::t_df19ae1239bbb8 86
+apps/mobile/__tests__/ai-chat/streaming-bubble-display.test.ts
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 1-18
+apps/mobile/app/language-picker.tsx
+  s_4b359c4b5b3df2::t_47dfbeca09b1a3 2,26-30,32-46,48-58
+apps/mobile/features/ai-chat/lib/streaming-bubble-display.ts
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 1-13
+apps/mobile/__tests__/transactions/add-screen-source.test.ts
+  s_4b359c4b5b3df2::t_7fdcdb8082a04b 132-133,135-136,140
+apps/mobile/__tests__/ai-chat/chat-shell-layout.test.ts
+  s_1ffb8c14dc19d9::t_1e099a951e7f99 1-2,4-5,7-15,44-45
+  s_d8e92b357a5027::t_a67556e497f4ee 18-23
+  s_1ffb8c14dc19d9::t_1c1fadd8593a97 27-43
+  s_d8e92b357a5027::t_4c98b243674172 6,24-26
+  s_d8e92b357a5027::t_786f65f64c3eae 3,16-17
+apps/mobile/app/theme-picker.tsx
+  s_4b359c4b5b3df2::t_47dfbeca09b1a3 3,28-32,34-48,50-60
+apps/mobile/__tests__/budget/create-budget-screen.test.ts
+  s_4b359c4b5b3df2::t_36671e8adbe52a 29
+  s_4b359c4b5b3df2::t_b91de3da9cfc6d 27,30-32
+apps/mobile/features/budget/components/BudgetListScreen.tsx
+  s_ba4ae3ba75e237::t_437f76e9af203c 3
+apps/mobile/app/enable-notifications.tsx
+  s_4b359c4b5b3df2::t_9fe1f810142dea 12,88-93,95,97-98,100,102-104,107,110-114,116-158,160-169
+apps/mobile/features/transfers/components/transfer-form/TransferForm.styles.ts
+  s_4b359c4b5b3df2::t_ffb98f6e169d94 63-64,90-93
+apps/mobile/shared/components/index.ts
+  s_4b359c4b5b3df2::t_c633eea2155b2d 10
+apps/mobile/features/ai-chat/lib/conversation-scroll.ts
+  s_1ffb8c14dc19d9::t_d64159890c5176 22
+apps/mobile/features/ai-chat/components/ChatScreen.tsx
+  s_d8e92b357a5027::t_db016894c1a2c4 1,14,130-149
+apps/mobile/app/create-category.tsx
+  s_4b359c4b5b3df2::t_f7058805fca022 2,5-9
+apps/mobile/__tests__/calendar/add-bill-screen.test.ts
+  s_4b359c4b5b3df2::t_5a866cf66d16c6 21,24-26
+  s_4b359c4b5b3df2::t_36671e8adbe52a 23
+apps/mobile/shared/i18n/locales/en.ts
+  s_1ffb8c14dc19d9::t_a2676103b2ab42 623
+  s_d8e92b357a5027::t_429c4f4f47411e 622
+apps/mobile/app/edit-goal.tsx
+  s_4b359c4b5b3df2::t_f7058805fca022 2,5-9
+apps/mobile/app/financial-account-identifier.tsx
+  s_4b359c4b5b3df2::t_d0661d1cec54b6 1-10
+apps/mobile/app/link-suggested-account.tsx
+  s_4b359c4b5b3df2::t_d0661d1cec54b6 1-10
+apps/mobile/features/transactions/components/PencilTransactionEntrySheets.tsx
+  s_4b359c4b5b3df2::t_c6f72c2e265daf 26-31,82-85,181-184
+apps/mobile/features/ai-chat/components/ChatInput.tsx
+  s_d8e92b357a5027::t_23bd3e4e693158 3-5,20-23,30,32-35,37-42
+apps/mobile/features/ai-chat/components/MessageBubble.tsx
+  s_1ffb8c14dc19d9::t_399a853bb158d6 75-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "d3ff145d266da5ee7359b9dcfaa0dd2b426e938d",
+  "prompts": {},
+  "sessions": {
+    "s_1ffb8c14dc19d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e40fb-00e7-7041-ba73-867ad938be0a",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_4b359c4b5b3df2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4147-15e0-74d0-89b7-1789ad9ab4b7",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_ba4ae3ba75e237": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e413a-4518-7a72-9810-e7254197a355",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_d8e92b357a5027": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4114-9b58-73e0-a558-74eba15eadad",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
