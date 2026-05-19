@@ -1,0 +1,43 @@
+apps/mobile/features/capture-sources/services/notification-regex-parser.ts
+  s_c470af7990caf6::t_3e0ec64ba63df2 1-29,33-48,53-68,70-99,32
+  s_c470af7990caf6::t_2cfdebefaa5c72 49-52
+  s_c470af7990caf6::t_d2149e90a57325 30-31,69
+apps/mobile/features/email-capture/services/bank-email-parser.ts
+  s_c470af7990caf6::t_805e577c69f7f1 1,7-32,36-45,49-60,65-79,81-83,85-93,95-128,35
+  s_c470af7990caf6::t_b7a69988dc17a7 2-6
+  s_c470af7990caf6::t_c952525ccdda9c 46-48
+  s_c470af7990caf6::t_2cfdebefaa5c72 61-64,84,94
+  s_9bd463cf30949a::t_b0141ac2c6c24c 33-34,80
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-email.ts
+  s_c470af7990caf6::t_7c2fd8a6a5200f 17,30,174,176,215-217,219,226-228,230,241-244,255-258,268-271,273-274
+  s_c470af7990caf6::t_c952525ccdda9c 145,158-162,175,195-201,272
+  s_c470af7990caf6::t_b7a69988dc17a7 221-222,229
+  s_c470af7990caf6::t_76da4b762ef01f 250,264,280
+  s_9bd463cf30949a::t_b0141ac2c6c24c 3
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-email-record.ts
+  s_9bd463cf30949a::t_b0141ac2c6c24c 1-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "ac620e4ec7e68ff3aca9c0f1ac6ec1c4c4d16363",
+  "prompts": {},
+  "sessions": {
+    "s_9bd463cf30949a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3d7e-e89b-79c3-999c-8aaf0e6b6974",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_c470af7990caf6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3b3d-cc9c-7860-84a1-925c43e5aef2",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}

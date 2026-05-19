@@ -1,0 +1,43 @@
+apps/mobile/plugins/withFidyWidget.js
+  s_c470af7990caf6::t_d8878174e03783 14,18-19,246-254,261-262,295-297
+  s_ebe4870b4c75d4::t_a2df0ae8c95d8a 21-24
+  s_9bd463cf30949a::t_1b7a2b920a038a 245,255,257,265-287,292-294
+  s_9bd463cf30949a::t_1bde72db015bd2 256,258-260,263-264,288-291
+  s_ebe4870b4c75d4::t_13636c203943d5 332,345-348
+  s_ebe4870b4c75d4::t_4cb32c21b9dba8 341-344
+  s_ebe4870b4c75d4::t_79610aca5e2776 349
+  s_c470af7990caf6::t_3442488fa05ceb 350-351
+  s_c470af7990caf6::t_655469dedc2504 352
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "6219d81aaaf8f71fd842a9e8739bac960a397d88",
+  "prompts": {},
+  "sessions": {
+    "s_9bd463cf30949a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3d7e-e89b-79c3-999c-8aaf0e6b6974",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_c470af7990caf6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3b3d-cc9c-7860-84a1-925c43e5aef2",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_ebe4870b4c75d4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3972-ef05-7533-9129-f201230636a9",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
