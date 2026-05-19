@@ -30,7 +30,8 @@ export function ScreenLayout({
   const isTab = variant === "tab";
   const customHeaderTopInset = process.env.EXPO_OS === "web" ? 0 : insets.top;
   const shouldRenderCustomHeader =
-    Platform.OS !== "ios" || (!includesNativeHeader && (rightActions != null || onBack != null));
+    Platform.OS !== "ios" ||
+    (!includesNativeHeader && (!isTab || rightActions != null || onBack != null));
   const iosHeaderOptions = {
     title: isTab ? "" : title,
     ...(rightActions != null && {

@@ -53,6 +53,12 @@ describe("ScreenLayout", () => {
     expect(source).toContain("!shouldRenderCustomHeader");
   });
 
+  test("renders a custom iOS header for hidden-header sub screens", () => {
+    expect(source).toContain(
+      "!includesNativeHeader && (!isTab || rightActions != null || onBack != null)"
+    );
+  });
+
   test("accepts children ReactNode prop", () => {
     expect(source).toContain("children: ReactNode");
   });

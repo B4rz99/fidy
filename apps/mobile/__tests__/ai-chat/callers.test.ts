@@ -36,4 +36,9 @@ describe("ai chat callers", () => {
     expect(chatScreenSource).toContain("rightActions={<NewChatButton onPress={onNewChat} />}");
     expect(chatScreenSource).toContain("readonly onNewChat: () => void");
   });
+
+  test("ChatScreen keyboard offset matches the custom header height", () => {
+    expect(chatScreenSource).toContain("safeTop + HEADER_HEIGHT");
+    expect(chatScreenSource).not.toContain("safeTop + 54");
+  });
 });
