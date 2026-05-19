@@ -1,5 +1,10 @@
 import { AddBillScreen } from "@/features/calendar/routes.public";
+import { DialogRouteFrame } from "@/shared/components";
 
 export default function AddBillRoute() {
-  return <AddBillScreen />;
+  return (
+    <DialogRouteFrame>
+      <AddBillScreen />
+    </DialogRouteFrame>
+  );
 }

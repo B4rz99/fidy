@@ -1,14 +1,16 @@
+import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { MonthNavigator } from "@/features/calendar/public";
 import { shouldShowNotificationPrePermissionPrompt } from "@/features/notifications/public";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Wallet } from "@/shared/components/icons";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
+import type { BudgetProgress } from "../lib/derive";
 import { nextBudgetMonth, prevBudgetMonth, useBudgetStore } from "../store";
 import { BudgetCard } from "./BudgetCard";
 import { BudgetSummaryCard } from "./BudgetSummaryCard";
@@ -22,6 +24,8 @@ function AddBudgetButton({ onPress }: { readonly onPress: () => void }) {
     </Pressable>
   );
 }
+
+const budgetKeyExtractor = (item: BudgetProgress) => item.budgetId;
 
 export function BudgetListScreen() {
   const { t } = useTranslation();
@@ -71,9 +75,9 @@ export function BudgetListScreen() {
     1
   );
 
-  const handleAddBudget = () => {
+  const handleAddBudget = useCallback(() => {
     push("/create-budget");
-  };
+  }, [push]);
 
   const handleNextMonth = useCallback(() => {
     if (!userId) return;
@@ -89,13 +93,13 @@ export function BudgetListScreen() {
     void prevBudgetMonth(db, userId);
   }, [userId]);
 
-  const handleAutoSetup = () => {
+  const handleAutoSetup = useCallback(() => {
     push("/auto-suggest-budgets");
-  };
+  }, [push]);
 
-  const handleCreateManually = () => {
+  const handleCreateManually = useCallback(() => {
     push("/create-budget");
-  };
+  }, [push]);
 
   const handleBudgetPress = useCallback(
     (budgetId: string) => {
@@ -105,6 +109,48 @@ export function BudgetListScreen() {
   );
 
   const hasBudgets = budgets.length > 0;
+  const renderBudget = useCallback(
+    ({ item }: ListRenderItemInfo<BudgetProgress>) => (
+      <BudgetCard progress={item} onPress={handleBudgetPress} />
+    ),
+    [handleBudgetPress]
+  );
+  const budgetSummary = useMemo(
+    () =>
+      hasBudgets ? (
+        <BudgetSummaryCard
+          totalBudget={summary.totalBudget}
+          totalSpent={summary.totalSpent}
+          percentUsed={summary.percentUsed}
+        />
+      ) : null,
+    [hasBudgets, summary.percentUsed, summary.totalBudget, summary.totalSpent]
+  );
+  const emptyState = useMemo(
+    () => (
+      <View style={styles.emptyState}>
+        <Wallet size={48} color={secondaryColor} />
+        <Text style={[styles.emptyTitle, { color: primaryColor }]}>{t("budgets.empty.title")}</Text>
+        <Text style={[styles.emptySubtitle, { color: secondaryColor }]}>
+          {t("budgets.empty.subtitle")}
+        </Text>
+        <View style={styles.emptyActions}>
+          <Pressable
+            style={[styles.autoSetupButton, { backgroundColor: accentGreen }]}
+            onPress={handleAutoSetup}
+          >
+            <Text style={styles.autoSetupText}>{t("budgets.empty.autoSetup")}</Text>
+          </Pressable>
+          <Pressable onPress={handleCreateManually}>
+            <Text style={[styles.createManuallyText, { color: accentGreen }]}>
+              {t("budgets.empty.createManually")}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    ),
+    [accentGreen, handleAutoSetup, handleCreateManually, primaryColor, secondaryColor, t]
+  );
 
   return (
     <ScreenLayout
@@ -121,56 +167,23 @@ export function BudgetListScreen() {
           onNext={handleNextMonth}
         />
 
-        <ScrollView
+        <FlashList
+          data={hasBudgets ? budgetProgress : []}
+          renderItem={renderBudget}
+          keyExtractor={budgetKeyExtractor}
+          ListHeaderComponent={budgetSummary}
+          ListEmptyComponent={emptyState}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: TAB_BAR_CLEARANCE }]}
           contentInsetAdjustmentBehavior="automatic"
           showsVerticalScrollIndicator={false}
-        >
-          {hasBudgets ? (
-            <View style={styles.budgetContent}>
-              <BudgetSummaryCard
-                totalBudget={summary.totalBudget}
-                totalSpent={summary.totalSpent}
-                percentUsed={summary.percentUsed}
-              />
-
-              {budgetProgress.map((progress) => (
-                <BudgetCard
-                  key={progress.budgetId}
-                  progress={progress}
-                  onPress={handleBudgetPress}
-                />
-              ))}
-            </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <Wallet size={48} color={secondaryColor} />
-              <Text style={[styles.emptyTitle, { color: primaryColor }]}>
-                {t("budgets.empty.title")}
-              </Text>
-              <Text style={[styles.emptySubtitle, { color: secondaryColor }]}>
-                {t("budgets.empty.subtitle")}
-              </Text>
-              <View style={styles.emptyActions}>
-                <Pressable
-                  style={[styles.autoSetupButton, { backgroundColor: accentGreen }]}
-                  onPress={handleAutoSetup}
-                >
-                  <Text style={styles.autoSetupText}>{t("budgets.empty.autoSetup")}</Text>
-                </Pressable>
-                <Pressable onPress={handleCreateManually}>
-                  <Text style={[styles.createManuallyText, { color: accentGreen }]}>
-                    {t("budgets.empty.createManually")}
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          )}
-        </ScrollView>
+          ItemSeparatorComponent={BudgetItemSeparator}
+        />
       </View>
     </ScreenLayout>
   );
 }
+
+const BudgetItemSeparator = () => <View style={styles.itemSeparator} />;
 
 const styles = StyleSheet.create({
   content: {
@@ -180,8 +193,8 @@ const styles = StyleSheet.create({
   scrollContent: {
     gap: 12,
   },
-  budgetContent: {
-    gap: 12,
+  itemSeparator: {
+    height: 12,
   },
   emptyState: {
     alignItems: "center",

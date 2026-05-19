@@ -9,6 +9,7 @@ import {
   registerPushToken,
   requestNotificationPermissionStatus,
 } from "@/features/notifications/hooks.public";
+import { DialogRouteFrame } from "@/shared/components";
 import { Bell } from "@/shared/components/icons";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -84,85 +85,87 @@ export default function EnableNotificationsSheet() {
   };
 
   return (
-    <ScrollView
-      className="flex-1 bg-card dark:bg-card-dark"
-      contentContainerStyle={{
-        padding: 24,
-        paddingBottom: 24,
-        alignItems: "center",
-        gap: 16,
-      }}
-      contentInset={{ bottom }}
-      contentInsetAdjustmentBehavior="automatic"
-    >
-      <View
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: 32,
+    <DialogRouteFrame>
+      <ScrollView
+        className="bg-card dark:bg-card-dark"
+        contentContainerStyle={{
+          padding: 24,
+          paddingBottom: 24,
           alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: `${accentGreen}1A`,
+          gap: 16,
         }}
+        contentInset={{ bottom }}
+        contentInsetAdjustmentBehavior="automatic"
       >
-        <Bell size={32} color={accentGreen} />
-      </View>
-      <Text
-        className="font-poppins-semibold text-primary dark:text-primary-dark"
-        style={{ fontSize: 16 }}
-      >
-        {t("notifications.enableNotifications.title")}
-      </Text>
-      <Text
-        className="font-poppins text-secondary dark:text-secondary-dark"
-        style={{ fontSize: 13, lineHeight: 20, textAlign: "center" }}
-      >
-        {t("notifications.enableNotifications.description")}
-      </Text>
-      <View style={{ width: "100%", gap: 12 }}>
-        <Pressable
-          onPress={() => {
-            void handleEnable();
-          }}
-          disabled={isRequesting}
+        <View
           style={{
-            height: 48,
-            borderRadius: 16,
-            backgroundColor: accentGreen,
+            width: 64,
+            height: 64,
+            borderRadius: 32,
             alignItems: "center",
             justifyContent: "center",
-            opacity: isRequesting ? 0.6 : 1,
+            backgroundColor: `${accentGreen}1A`,
           }}
         >
-          {isRequesting ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text className="font-poppins-semibold" style={{ fontSize: 15, color: "#FFFFFF" }}>
-              {t("notifications.enableNotifications.enable")}
-            </Text>
-          )}
-        </Pressable>
-        <Pressable
-          onPress={() => {
-            void handleNotNow();
-          }}
-          style={{
-            height: 48,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          <Bell size={32} color={accentGreen} />
+        </View>
+        <Text
+          className="font-poppins-semibold text-primary dark:text-primary-dark"
+          style={{ fontSize: 16 }}
         >
-          <Text
-            className="font-poppins-semibold text-primary dark:text-primary-dark"
-            style={{ fontSize: 15 }}
+          {t("notifications.enableNotifications.title")}
+        </Text>
+        <Text
+          className="font-poppins text-secondary dark:text-secondary-dark"
+          style={{ fontSize: 13, lineHeight: 20, textAlign: "center" }}
+        >
+          {t("notifications.enableNotifications.description")}
+        </Text>
+        <View style={{ width: "100%", gap: 12 }}>
+          <Pressable
+            onPress={() => {
+              void handleEnable();
+            }}
+            disabled={isRequesting}
+            style={{
+              height: 48,
+              borderRadius: 16,
+              backgroundColor: accentGreen,
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: isRequesting ? 0.6 : 1,
+            }}
           >
-            {t("notifications.enableNotifications.notNow")}
-          </Text>
-        </Pressable>
-      </View>
-    </ScrollView>
+            {isRequesting ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text className="font-poppins-semibold" style={{ fontSize: 15, color: "#FFFFFF" }}>
+                {t("notifications.enableNotifications.enable")}
+              </Text>
+            )}
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              void handleNotNow();
+            }}
+            style={{
+              height: 48,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text
+              className="font-poppins-semibold text-primary dark:text-primary-dark"
+              style={{ fontSize: 15 }}
+            >
+              {t("notifications.enableNotifications.notNow")}
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </DialogRouteFrame>
   );
 }

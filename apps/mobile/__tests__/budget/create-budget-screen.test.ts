@@ -24,9 +24,12 @@ const submitSource = readSource(
   "../../features/budget/components/create-budget/useCreateBudgetSubmit.ts"
 );
 
-test("create-budget is registered in root layout as formSheet", () => {
+test("create-budget is registered in root layout as a dialog modal", () => {
   expect(layoutSource).toContain('"create-budget"');
-  expect(layoutSource).toContain("formSheet");
+  expect(routeSource).toContain("DialogRouteFrame");
+  const createBudgetBlock = layoutSource.slice(layoutSource.indexOf('name="create-budget"'));
+  expect(createBudgetBlock.slice(0, 140)).toContain("DIALOG_MODAL");
+  expect(layoutSource).not.toContain("formSheet");
 });
 
 test("create-budget route uses the budget public route surface", () => {

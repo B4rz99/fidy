@@ -23,7 +23,12 @@ function PickerSheetFrame({ children, onClose, testID, visible }: PickerSheetFra
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable
         testID={testID}
-        style={{ flex: 1, justifyContent: "flex-end", backgroundColor: `${modalBackdrop}40` }}
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          backgroundColor: `${modalBackdrop}40`,
+          padding: 24,
+        }}
         onPress={onClose}
       >
         {children}
@@ -74,8 +79,10 @@ function SheetBody(props: { readonly children: ReactNode; readonly maxHeight?: "
       style={{
         maxHeight: props.maxHeight,
         gap: 12,
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
+        width: "100%",
+        maxWidth: 480,
+        alignSelf: "center",
+        borderRadius: 24,
         backgroundColor: page,
         padding: 16,
       }}
@@ -171,8 +178,10 @@ export function TransactionDatePickerSheet(props: {
       <View
         style={{
           gap: 12,
-          borderTopLeftRadius: 28,
-          borderTopRightRadius: 28,
+          width: "100%",
+          maxWidth: 480,
+          alignSelf: "center",
+          borderRadius: 24,
           backgroundColor: card,
           padding: 16,
         }}

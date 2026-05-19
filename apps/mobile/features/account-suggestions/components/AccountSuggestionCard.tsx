@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react";
 import { Building2, CreditCard, Sparkles, Wallet } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -37,7 +38,7 @@ function getAccountIcon(kind: string) {
   return Building2;
 }
 
-export function AccountSuggestionCard({
+function AccountSuggestionCardInner({
   suggestion,
   onCreate,
   onLink,
@@ -55,6 +56,9 @@ export function AccountSuggestionCard({
   const accentGreenLight = useThemeColor("accentGreenLight");
   const peachLight = useThemeColor("peachLight");
   const AccountIcon = getAccountIcon(draft.kind);
+  const handleCreate = useCallback(() => onCreate(suggestion), [onCreate, suggestion]);
+  const handleLink = useCallback(() => onLink(suggestion), [onLink, suggestion]);
+  const handleSkip = useCallback(() => onSkip(suggestion), [onSkip, suggestion]);
 
   return (
     <View style={[styles.card, { backgroundColor: card, borderColor: borderSubtle }]}>
@@ -97,19 +101,19 @@ export function AccountSuggestionCard({
       <View style={styles.actionsRow}>
         <Pressable
           style={[styles.primaryAction, { backgroundColor: accentGreen }]}
-          onPress={() => onCreate(suggestion)}
+          onPress={handleCreate}
         >
           <Text style={styles.primaryActionText}>{t("accountSuggestions.card.create")}</Text>
         </Pressable>
         <Pressable
           style={[styles.secondaryAction, { backgroundColor: peachLight }]}
-          onPress={() => onLink(suggestion)}
+          onPress={handleLink}
         >
           <Text style={[styles.secondaryActionText, { color: primary }]}>
             {t("accountSuggestions.card.linkExisting")}
           </Text>
         </Pressable>
-        <Pressable style={styles.skipAction} onPress={() => onSkip(suggestion)}>
+        <Pressable style={styles.skipAction} onPress={handleSkip}>
           <Text style={[styles.skipActionText, { color: secondary }]}>
             {t("accountSuggestions.card.skipForNow")}
           </Text>
@@ -118,6 +122,8 @@ export function AccountSuggestionCard({
     </View>
   );
 }
+
+export const AccountSuggestionCard = memo(AccountSuggestionCardInner);
 
 const styles = StyleSheet.create({
   card: {

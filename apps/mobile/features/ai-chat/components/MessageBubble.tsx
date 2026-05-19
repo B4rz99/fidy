@@ -3,7 +3,7 @@ import { CircleCheck, Sparkles } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import type { ChatMessageId } from "@/shared/types/branded";
-import { ACTION_BLOCK_REGEX } from "../lib/parse-action";
+import { getAssistantDisplayBlocks, getPlainMessageText } from "../lib/message-content";
 import type { ChatMessage } from "../schema";
 import { ActionCard } from "./ActionCard";
 
@@ -23,7 +23,8 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
 
   const isUser = message.role === "user";
 
-  const contentWithoutAction = message.content.replace(ACTION_BLOCK_REGEX, "").trim();
+  const contentWithoutAction = getPlainMessageText(message.content);
+  const assistantBlocks = isUser ? [] : getAssistantDisplayBlocks(message.content);
 
   return (
     <View style={{ marginBottom: 4 }}>
@@ -69,9 +70,44 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
                 paddingHorizontal: 14,
               }}
             >
-              <Text className="font-poppins-medium text-body" style={{ color: chatAssistantText }}>
-                {contentWithoutAction}
-              </Text>
+              {assistantBlocks.map((block) =>
+                block.type === "bullet" ? (
+                  <View key={block.key} style={{ flexDirection: "row", gap: 8, marginBottom: 4 }}>
+                    <Text
+                      className="font-poppins-medium text-body"
+                      style={{ color: chatAssistantText }}
+                    >
+                      -
+                    </Text>
+                    <Text
+                      className="font-poppins-medium text-body"
+                      style={{ color: chatAssistantText, flex: 1 }}
+                    >
+                      {block.text}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text
+                    key={block.key}
+                    className="font-poppins-medium text-body"
+                    style={{ color: chatAssistantText, marginBottom: 4 }}
+                  >
+                    {block.segments.map((segment) => (
+                      <Text
+                        key={segment.key}
+                        className={
+                          segment.strong
+                            ? "font-poppins-semibold text-body"
+                            : "font-poppins-medium text-body"
+                        }
+                        style={{ color: chatAssistantText }}
+                      >
+                        {segment.text}
+                      </Text>
+                    ))}
+                  </Text>
+                )
+              )}
             </View>
           </View>
         </View>

@@ -109,14 +109,21 @@ export function usePencilTransferEntry(props: { readonly enabled?: boolean } = {
         >
           <Pressable
             testID="calendar-picker.backdrop"
-            style={{ flex: 1, justifyContent: "flex-end", backgroundColor: `${modalBackdrop}40` }}
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              backgroundColor: `${modalBackdrop}40`,
+              padding: 24,
+            }}
             onPress={() => form.setShowDatePicker(false)}
           >
             <View
               style={{
                 gap: 12,
-                borderTopLeftRadius: 28,
-                borderTopRightRadius: 28,
+                width: "100%",
+                maxWidth: 480,
+                alignSelf: "center",
+                borderRadius: 24,
                 backgroundColor: card,
                 padding: 16,
               }}
@@ -157,14 +164,21 @@ export function usePencilTransferEntry(props: { readonly enabled?: boolean } = {
         >
           <Pressable
             testID="category-picker.backdrop"
-            style={{ flex: 1, justifyContent: "flex-end", backgroundColor: `${modalBackdrop}40` }}
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              backgroundColor: `${modalBackdrop}40`,
+              padding: 24,
+            }}
             onPress={() => setShowCategoryPicker(false)}
           >
             <View
               style={{
                 gap: 12,
-                borderTopLeftRadius: 28,
-                borderTopRightRadius: 28,
+                width: "100%",
+                maxWidth: 480,
+                alignSelf: "center",
+                borderRadius: 24,
                 backgroundColor: page,
                 padding: 16,
               }}

@@ -10,6 +10,7 @@ import {
   unmarkBillPaid,
   useCalendarStore,
 } from "@/features/calendar";
+import { DialogRouteFrame } from "@/shared/components";
 import { Check, Pencil, Trash2 } from "@/shared/components/icons";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
@@ -74,14 +75,15 @@ export default function DayDetailScreen() {
   };
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: cardBg }]}
-      contentContainerStyle={[styles.content, { paddingBottom: bottom + 24 }]}
-      contentInsetAdjustmentBehavior="automatic"
-    >
-      <Text style={[styles.title, { color: primaryColor }]}>
-        {format(dateObj, "EEEE, PP", { locale: getDateFnsLocale(locale) })}
-      </Text>
+    <DialogRouteFrame>
+      <ScrollView
+        style={[styles.container, { backgroundColor: cardBg }]}
+        contentContainerStyle={[styles.content, { paddingBottom: bottom + 24 }]}
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        <Text style={[styles.title, { color: primaryColor }]}>
+          {format(dateObj, "EEEE, PP", { locale: getDateFnsLocale(locale) })}
+        </Text>
 
       {billsForDate.length === 0 ? (
         <View style={styles.emptyState}>
@@ -146,7 +148,8 @@ export default function DayDetailScreen() {
           })}
         </View>
       )}
-    </ScrollView>
+      </ScrollView>
+    </DialogRouteFrame>
   );
 }
 

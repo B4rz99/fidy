@@ -60,7 +60,8 @@ export const styles = StyleSheet.create({
   },
   pickerBackdrop: {
     flex: 1,
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    padding: 24,
     backgroundColor: "rgba(0, 0, 0, 0.28)",
   },
   pickerHandle: {
@@ -86,8 +87,10 @@ export const styles = StyleSheet.create({
     gap: 2,
   },
   pickerSheet: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
+    borderRadius: 24,
     paddingHorizontal: 16,
     paddingTop: 12,
     gap: 12,

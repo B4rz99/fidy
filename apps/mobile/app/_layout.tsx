@@ -46,7 +46,12 @@ import { QueryProvider } from "@/shared/query";
 import type { UserId } from "@/shared/types/branded";
 import migrations from "../drizzle/migrations";
 
-const SHEET = { headerShown: false, presentation: "formSheet" } as const;
+const DIALOG_MODAL = {
+  animation: "fade",
+  contentStyle: { backgroundColor: "transparent" },
+  headerShown: false,
+  presentation: "transparentModal",
+} as const;
 const ONBOARDING_ALLOWED_ROUTES = new Set(["create-financial-account", "link-suggested-account"]);
 
 // Init locale synchronously before first render
@@ -209,24 +214,21 @@ function RootLayout() {
             {localQaAvailable ? <Stack.Screen name="qa-open" options={iosHeaderOptions} /> : null}
             <Stack.Screen
               name="add-bill"
-              options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+              options={DIALOG_MODAL}
             />
             <Stack.Screen
               name="day-detail"
-              options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+              options={DIALOG_MODAL}
             />
-            <Stack.Screen name="theme-picker" options={{ ...SHEET, sheetAllowedDetents: [0.24] }} />
-            <Stack.Screen
-              name="language-picker"
-              options={{ ...SHEET, sheetAllowedDetents: [0.18] }}
-            />
+            <Stack.Screen name="theme-picker" options={DIALOG_MODAL} />
+            <Stack.Screen name="language-picker" options={DIALOG_MODAL} />
             <Stack.Screen
               name="delete-account"
-              options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+              options={DIALOG_MODAL}
             />
             <Stack.Screen
               name="enable-notifications"
-              options={{ ...SHEET, sheetAllowedDetents: "fitToContents" }}
+              options={DIALOG_MODAL}
             />
             <Stack.Screen name="analytics" options={iosHeaderOptions} />
             <Stack.Screen name="notifications" options={iosHeaderOptions} />
@@ -242,38 +244,37 @@ function RootLayout() {
             {__DEV__ ? <Stack.Screen name="design-system" options={iosHeaderOptions} /> : null}
             <Stack.Screen
               name="financial-account-identifier"
-              options={{ ...SHEET, ...iosHeaderOptions, sheetAllowedDetents: [0.62] }}
+              options={{ ...DIALOG_MODAL, ...iosHeaderOptions }}
             />
             <Stack.Screen
               name="link-suggested-account"
-              options={{ ...SHEET, ...iosHeaderOptions, sheetAllowedDetents: [0.8] }}
+              options={{ ...DIALOG_MODAL, ...iosHeaderOptions }}
             />
             <Stack.Screen
               name="create-budget"
-              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+              options={DIALOG_MODAL}
             />
             <Stack.Screen
               name="auto-suggest-budgets"
-              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+              options={DIALOG_MODAL}
             />
             <Stack.Screen name="goal-detail" options={iosHeaderOptions} />
             <Stack.Screen
               name="create-goal"
-              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+              options={DIALOG_MODAL}
             />
             <Stack.Screen
               name="add-payment"
-              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+              options={DIALOG_MODAL}
             />
             <Stack.Screen
               name="edit-goal"
-              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+              options={DIALOG_MODAL}
             />
             <Stack.Screen
               name="add-transaction"
               options={{
-                ...SHEET,
-                sheetAllowedDetents: [0.65],
+                ...DIALOG_MODAL,
                 gestureEnabled: false,
                 sheetGrabberVisible: false,
               }}
@@ -285,13 +286,12 @@ function RootLayout() {
             <Stack.Screen name="categories" options={iosHeaderOptions} />
             <Stack.Screen
               name="create-category"
-              options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents" }}
+              options={DIALOG_MODAL}
             />
             <Stack.Screen
               name="edit-transaction"
               options={{
-                ...SHEET,
-                sheetAllowedDetents: [0.65],
+                ...DIALOG_MODAL,
                 gestureEnabled: false,
                 sheetGrabberVisible: false,
               }}

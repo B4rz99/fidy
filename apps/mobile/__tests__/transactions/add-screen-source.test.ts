@@ -129,10 +129,15 @@ test("Pencil entry dismisses the description keyboard from outside taps", () => 
 test("Pencil entry picker backdrops are translucent and do not slide the screen", () => {
   expect(themeSource).toContain('modalBackdrop: "#000000"');
   expect(transactionSheetsSource).toContain("backgroundColor: `${modalBackdrop}40`");
+  expect(transactionSheetsSource).toContain('justifyContent: "center"');
+  expect(transactionSheetsSource).toContain("maxWidth: 480");
   expect(pencilTransferEntrySource).toContain("backgroundColor: `${modalBackdrop}40`");
+  expect(pencilTransferEntrySource).toContain('justifyContent: "center"');
+  expect(pencilTransferEntrySource).toContain("maxWidth: 480");
   expect(transferSidePickerSource).toContain('animationType="fade"');
   expect(transferSidePickerSource).not.toContain('animationType="slide"');
   expect(transferSidePickerSource).toContain("backgroundColor: `${modalBackdrop}40`");
+  expect(transferSidePickerSource).toContain("styles.pickerSheet");
 });
 
 test("Pencil transaction entry supports expense income transfer and calendar", () => {

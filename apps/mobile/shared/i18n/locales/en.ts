@@ -619,6 +619,8 @@ const en = {
     noConversations: "No conversations yet",
     tapToStart: "Tap + to start a new chat",
     placeholder: "Ask about your finances...",
+    scrollToBottom: "Scroll to bottom",
+    thinking: "Fidy is thinking",
     cleanupMessage: {
       one: "%{count} expired conversation was removed",
       other: "%{count} expired conversations were removed",

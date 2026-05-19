@@ -1,5 +1,10 @@
 import { AddPaymentSheet } from "@/features/goals/ui.public";
+import { DialogRouteFrame } from "@/shared/components";
 
 export default function AddPaymentRoute() {
-  return <AddPaymentSheet />;
+  return (
+    <DialogRouteFrame>
+      <AddPaymentSheet />
+    </DialogRouteFrame>
+  );
 }
