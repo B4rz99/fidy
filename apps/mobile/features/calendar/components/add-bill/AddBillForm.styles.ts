@@ -35,6 +35,10 @@ export const styles = StyleSheet.create({
   datePicker: {
     alignSelf: "flex-start",
   },
+  dateText: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 14,
+  },
   chipRow: {
     flexDirection: "row",
     flexWrap: "wrap",

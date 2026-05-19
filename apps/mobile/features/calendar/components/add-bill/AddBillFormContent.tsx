@@ -1,4 +1,5 @@
-import DateTimePicker from "@expo/ui/community/datetime-picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
 import {
@@ -58,6 +59,17 @@ export function AddBillFormContent({
   const pageBg = useThemeColor("page");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
+  const [showAndroidDatePicker, setShowAndroidDatePicker] = useState(false);
+  const formattedStartDate = startDate.toLocaleDateString(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const handleDateChange = (_event: unknown, date?: Date) => {
+    if (Platform.OS === "android") setShowAndroidDatePicker(false);
+    if (date) onStartDateChange(date);
+  };
+  const shouldRenderDatePicker = Platform.OS === "ios" || showAndroidDatePicker;
 
   return (
     <KeyboardAvoidingView
@@ -136,13 +148,23 @@ export function AddBillFormContent({
             <Text style={[styles.inputLabel, { color: secondaryColor }]}>
               {t("bills.startDate")}
             </Text>
-            <DateTimePicker
-              value={startDate}
-              mode="date"
-              display="compact"
-              onValueChange={(_event, date) => onStartDateChange(date)}
-              style={styles.datePicker}
-            />
+            {Platform.OS === "android" ? (
+              <Pressable
+                style={[styles.input, { backgroundColor: pageBg, borderColor }]}
+                onPress={() => setShowAndroidDatePicker(true)}
+              >
+                <Text style={[styles.dateText, { color: primaryColor }]}>{formattedStartDate}</Text>
+              </Pressable>
+            ) : null}
+            {shouldRenderDatePicker ? (
+              <DateTimePicker
+                value={startDate}
+                mode="date"
+                display={Platform.OS === "ios" ? "compact" : "default"}
+                onChange={handleDateChange}
+                style={styles.datePicker}
+              />
+            ) : null}
           </View>
 
           <View style={styles.inputGroup}>
