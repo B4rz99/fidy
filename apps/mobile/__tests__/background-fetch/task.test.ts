@@ -43,7 +43,11 @@ describe("background email fetch task", () => {
       "gmail-client",
       "outlook-client",
       undefined,
-      { parseProfile: "background", shareParseImprovementSamples: true }
+      {
+        parseProfile: "background",
+        shareParseImprovementSamples: true,
+        isShareParseImprovementSamplesEnabled: expect.any(Function),
+      }
     );
   });
 });

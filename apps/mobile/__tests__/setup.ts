@@ -267,6 +267,8 @@ vi.mock("expo-secure-store", () => ({
 
 // Mock expo-crypto
 vi.mock("expo-crypto", () => ({
+  CryptoDigestAlgorithm: { SHA256: "SHA-256" },
+  digest: createMock(() => Promise.resolve(new Uint8Array(32))),
   getRandomBytes: createMock(() => new Uint8Array(32)),
 }));
 

@@ -133,7 +133,7 @@ export async function applyEmailCaptureFetchOutcome(input: {
   readonly run: EmailCaptureFetchRun;
   readonly showProgress: boolean;
   readonly persistedAccounts: PersistedFetchedAccounts;
-  readonly queues: EmailCaptureQueues;
+  readonly queues: EmailCaptureQueues | null;
   readonly refreshTransactions: RefreshTransactions;
 }): Promise<void> {
   if (!isCurrentEmailCaptureFetchRun(input.run)) return;
@@ -143,8 +143,8 @@ export async function applyEmailCaptureFetchOutcome(input: {
     input.persistedAccounts.updatedAccountIds,
     input.persistedAccounts.fetchedAt
   );
-  state.setFailedEmailSourceEvents(input.queues.failedEmailSourceEvents);
-  state.setNeedsReviewEmailSourceEvents(input.queues.needsReviewEmailSourceEvents);
+  state.setFailedEmailSourceEvents(input.queues?.failedEmailSourceEvents ?? []);
+  state.setNeedsReviewEmailSourceEvents(input.queues?.needsReviewEmailSourceEvents ?? []);
   if (input.showProgress) state.setPhase("complete");
   await input.refreshTransactions();
 }

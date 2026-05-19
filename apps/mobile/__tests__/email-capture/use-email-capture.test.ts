@@ -4,11 +4,17 @@ import { requireUserId } from "@/shared/types/assertions";
 
 const mockDb = {} as any;
 const mockRefreshTransactions = vi.fn<(...args: any[]) => any>();
+const mockHydrateSettings = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
 const mockUseSettingsStore = Object.assign(
   vi.fn<(...args: any[]) => any>((selector: any) =>
     selector({ shareAnonymizedParseSamples: false })
   ),
-  { getState: () => ({ shareAnonymizedParseSamples: false }) }
+  {
+    getState: () => ({
+      hydrate: mockHydrateSettings,
+      shareAnonymizedParseSamples: false,
+    }),
+  }
 );
 const mockInitializeEmailCaptureSession = vi.fn<(...args: any[]) => any>();
 const mockLoadEmailAccounts = vi.fn<(...args: any[]) => any>();
@@ -20,6 +26,7 @@ describe("useEmailCapture", () => {
     vi.resetModules();
     vi.clearAllMocks();
     mockLoadEmailAccounts.mockResolvedValue(undefined);
+    mockHydrateSettings.mockResolvedValue(undefined);
     mockFetchAndProcessEmails.mockResolvedValue({
       status: "completed",
       savedCount: 0,
@@ -43,16 +50,20 @@ describe("useEmailCapture", () => {
     const userId = requireUserId("user-1");
 
     useEmailCapture(mockDb, userId);
-    await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(calls).toEqual(["init", "loadAccounts", "fetch"]);
+    expect(mockHydrateSettings).not.toHaveBeenCalled();
     expect(mockFetchAndProcessEmails).toHaveBeenCalledWith(
       mockDb,
       userId,
       "gmail-client-id",
       "outlook-client-id",
       expect.any(Function),
-      { shareParseImprovementSamples: false }
+      {
+        shareParseImprovementSamples: false,
+        isShareParseImprovementSamplesEnabled: expect.any(Function),
+      }
     );
   });
 });

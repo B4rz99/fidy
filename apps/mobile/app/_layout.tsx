@@ -16,6 +16,7 @@ import { useCallback } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   runAuthenticatedBootstrap,
+  runAuthenticatedMaintenanceBootstrap,
   subscribeAuthenticatedTransactionRefreshes,
   useAuthenticatedCapturePipelines,
   useAuthenticatedNotificationBootstrap,
@@ -68,30 +69,42 @@ function AuthenticatedShell({
   db,
   userId,
   enableRemoteEffects,
+  onboardingComplete,
 }: {
   db: AnyDb;
   userId: UserId;
   enableRemoteEffects: boolean;
+  onboardingComplete: boolean;
 }) {
   const { push } = useRouter();
   const { success: migrationsReady, error: migrationsError } = useMigrations(db, migrations);
 
   useSubscription(
     () => {
-      void runAuthenticatedBootstrap({ db, enableRemoteEffects, userId }).catch(captureError);
+      void runAuthenticatedMaintenanceBootstrap({ db, enableRemoteEffects, userId }).catch(
+        captureError
+      );
     },
     [db, enableRemoteEffects, userId],
     migrationsReady
   );
 
   useSubscription(
-    () => subscribeAuthenticatedTransactionRefreshes({ db, enableRemoteEffects, userId }),
-    [db, enableRemoteEffects, userId],
-    migrationsReady
+    () => {
+      void runAuthenticatedBootstrap({ db, enableRemoteEffects, userId }).catch(captureError);
+    },
+    [db, enableRemoteEffects, onboardingComplete, userId],
+    migrationsReady && onboardingComplete
   );
 
-  const captureDb = enableRemoteEffects && migrationsReady ? db : null;
-  const captureUserId = enableRemoteEffects ? userId : null;
+  useSubscription(
+    () => subscribeAuthenticatedTransactionRefreshes({ db, enableRemoteEffects, userId }),
+    [db, enableRemoteEffects, onboardingComplete, userId],
+    migrationsReady && onboardingComplete
+  );
+
+  const captureDb = enableRemoteEffects && migrationsReady && onboardingComplete ? db : null;
+  const captureUserId = enableRemoteEffects && onboardingComplete ? userId : null;
   const navigateToRoute = useCallback(
     (route: string) => {
       const href = route as unknown as Parameters<typeof push>[0];
@@ -101,7 +114,7 @@ function AuthenticatedShell({
   );
   useAuthenticatedCapturePipelines({ db: captureDb, userId: captureUserId });
   useAuthenticatedNotificationBootstrap({
-    enableRemoteEffects,
+    enableRemoteEffects: enableRemoteEffects && onboardingComplete,
     navigateToRoute,
     userId,
   });
@@ -271,11 +284,12 @@ function RootLayout() {
               <Stack.Screen name="qa-transfer-conflict" options={{ headerShown: false }} />
             ) : null}
           </Stack>
-          {db && userId && onboardingComplete && (
+          {db && userId && (
             <AuthenticatedShell
               db={db}
               userId={userId}
               enableRemoteEffects={authMode === "remote"}
+              onboardingComplete={onboardingComplete}
             />
           )}
         </QueryProvider>

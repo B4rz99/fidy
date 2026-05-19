@@ -1,5 +1,5 @@
 import type { AnyDb } from "@/shared/db";
-import { captureError, captureWarning, toIsoDateTime } from "@/shared/lib";
+import { captureError, captureWarning } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import {
   getEmailAccounts,
@@ -14,12 +14,8 @@ import {
   type EmailCaptureParseProfile,
   fetchEmailAccountBatch,
   ingestFetchedEmails,
-  type ProcessedEmailAccountFetchResult,
-  persistFetchedAccounts,
   resolveEmailCaptureSyncPolicy,
-  sortFetchResultsByNewestEmail,
 } from "./services/email-capture-fetch-service";
-import { loadEmailCaptureQueues } from "./services/email-capture-queues";
 import { aggregatePipelineResults } from "./services/email-capture-result";
 import {
   applyEmailCaptureFetchSummary,
@@ -34,7 +30,10 @@ import {
   registerEmailCaptureStoreRuntime,
 } from "./services/email-capture-store-runtime";
 import {
-  applyEmailCaptureFetchOutcome,
+  processFetchedAccountResults,
+  refreshEmailCaptureQueuesAndOutcome,
+} from "./store/fetch-processing";
+import {
   type RefreshTransactions,
   useEmailCaptureStore,
   warnFetchMissingContext,
@@ -142,6 +141,7 @@ export async function fetchAndProcessEmails(
   options: {
     readonly parseProfile?: EmailCaptureParseProfile;
     readonly shareParseImprovementSamples?: boolean;
+    readonly isShareParseImprovementSamplesEnabled?: () => boolean;
   } = {}
 ): Promise<EmailCaptureFetchOutcome> {
   const fetchStart = beginEmailCaptureFetchRun(userId);
@@ -177,36 +177,14 @@ export async function fetchAndProcessEmails(
       emailCount: allEmails.length,
     });
     const onProgress = createEmailCaptureFetchProgressHandler(run, refreshTransactions);
-    const processedFetchResults = await sortFetchResultsByNewestEmail(fetchResults).reduce(
-      async (processedPromise, fetchResult) => {
-        const processed = await processedPromise;
-        if (!fetchResult.fetchOk) return processed;
-        const previousResult = aggregatePipelineResults(
-          processed.map((result) => result.processingResult)
-        );
-        const completedBefore = processed.reduce(
-          (completed, result) => completed + result.rawEmails.length,
-          0
-        );
-        const processingResult = await ingestFetchedEmails({
-          db,
-          userId,
-          emails: fetchResult.rawEmails,
-          onProgress: (progress) =>
-            onProgress({
-              total: allEmails.length,
-              completed: completedBefore + progress.completed,
-              saved: previousResult.saved + progress.saved,
-              failed: previousResult.failed + progress.failed,
-              needsReview: previousResult.needsReview + progress.needsReview,
-            }),
-          runRetries: false,
-          parseProfile: syncPolicy.parseProfile,
-        });
-        return [...processed, { ...fetchResult, processingResult }];
-      },
-      Promise.resolve([] as ProcessedEmailAccountFetchResult[])
-    );
+    const processedFetchResults = await processFetchedAccountResults({
+      db,
+      userId,
+      fetchResults,
+      allEmails,
+      onProgress,
+      parseProfile: syncPolicy.parseProfile,
+    });
     if (syncPolicy.runRetries) {
       await ingestFetchedEmails({ db, userId, emails: [], parseProfile: syncPolicy.parseProfile });
     }
@@ -214,31 +192,19 @@ export async function fetchAndProcessEmails(
       processedFetchResults.map((result) => result.processingResult)
     );
     await shareEmailParseImprovementRequests({
+      db,
       enabled: options.shareParseImprovementSamples === true,
       userId,
       requests: processingResult.parseImprovementRequests,
+      isSharingEnabled: options.isShareParseImprovementSamplesEnabled,
     });
-    const queues = await loadEmailCaptureQueues(db, userId).catch((error) => {
-      captureWarning("email_capture_queue_refresh_failed", {
-        errorType: error instanceof Error ? error.name : "unknown",
-      });
-      const currentQueues = useEmailCaptureStore.getState();
-      return {
-        failedEmailSourceEvents: [...currentQueues.failedEmailSourceEvents],
-        needsReviewEmailSourceEvents: [...currentQueues.needsReviewEmailSourceEvents],
-      };
-    });
-    await applyEmailCaptureFetchOutcome({
+    await refreshEmailCaptureQueuesAndOutcome({
+      db,
+      userId,
       run,
       showProgress,
-      persistedAccounts: syncPolicy.advancesLastFetchedAt
-        ? await persistFetchedAccounts({
-            db,
-            userId,
-            fetchResults: processedFetchResults,
-          })
-        : { fetchedAt: toIsoDateTime(new Date()), updatedAccountIds: new Set() },
-      queues,
+      syncPolicy,
+      processedFetchResults,
       refreshTransactions,
     });
     return {

@@ -1,3 +1,4 @@
+import { CryptoDigestAlgorithm, digest } from "expo-crypto";
 import { getSupabase } from "@/shared/db";
 
 export type PersistedNotificationParseImprovementSample = {
@@ -9,14 +10,36 @@ export type PersistedNotificationParseImprovementSample = {
   readonly parseMethod: "regex" | "llm";
 };
 
+export class ParseImprovementSampleInsertError extends Error {
+  readonly code: string | null;
+  readonly details: string | null;
+
+  constructor(input: { readonly code?: string; readonly details?: string }) {
+    super("Unable to store parse improvement sample");
+    this.name = "ParseImprovementSampleInsertError";
+    this.code = input.code ?? null;
+    this.details = input.details ?? null;
+  }
+}
+
+export class ParseImprovementSamplePrivacyError extends Error {
+  readonly reason: string;
+
+  constructor(reason: string) {
+    super("Parse improvement sample still contains sensitive values");
+    this.name = "ParseImprovementSamplePrivacyError";
+    this.reason = reason;
+  }
+}
+
 type InsertNotificationParseImprovementSampleInput = {
   readonly userId: string;
   readonly sample: PersistedNotificationParseImprovementSample;
 };
 
 async function sha256Hex(value: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  const hash = await digest(CryptoDigestAlgorithm.SHA256, new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 const SENSITIVE_TEMPLATE_PATTERNS = [
@@ -70,13 +93,17 @@ const hasResidualTitleEntity = (template: string): boolean =>
   );
 
 function assertTemplateIsAnonymized(template: string): void {
-  if (
-    SENSITIVE_TEMPLATE_PATTERNS.some((pattern) => pattern.test(template)) ||
-    LOWERCASE_COUNTERPARTY_PATTERN.test(template) ||
-    RESIDUAL_ENTITY_PATTERN.test(template) ||
-    hasResidualTitleEntity(template)
-  ) {
-    throw new Error("Parse improvement sample still contains sensitive values");
+  if (SENSITIVE_TEMPLATE_PATTERNS.some((pattern) => pattern.test(template))) {
+    throw new ParseImprovementSamplePrivacyError("sensitive_value_pattern");
+  }
+  if (LOWERCASE_COUNTERPARTY_PATTERN.test(template)) {
+    throw new ParseImprovementSamplePrivacyError("lowercase_counterparty_pattern");
+  }
+  if (RESIDUAL_ENTITY_PATTERN.test(template)) {
+    throw new ParseImprovementSamplePrivacyError("residual_entity_pattern");
+  }
+  if (hasResidualTitleEntity(template)) {
+    throw new ParseImprovementSamplePrivacyError("residual_title_entity");
   }
 }
 
@@ -100,6 +127,9 @@ export async function insertNotificationParseImprovementSample(
     });
 
   if (error != null) {
-    throw new Error("Unable to store parse improvement sample");
+    throw new ParseImprovementSampleInsertError({
+      code: error.code,
+      details: error.details,
+    });
   }
 }

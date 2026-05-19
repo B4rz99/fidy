@@ -14,7 +14,10 @@ import {
   useCaptureSourcesBootstrap,
 } from "@/features/capture-sources/bootstrap";
 import { categoriesBootstrapTask } from "@/features/categories/bootstrap";
-import { useEmailCaptureBootstrap } from "@/features/email-capture/bootstrap";
+import {
+  emailCaptureMaintenanceBootstrapTask,
+  useEmailCaptureBootstrap,
+} from "@/features/email-capture/bootstrap";
 import { goalsBootstrapTask, goalsTransactionSubscriptionTask } from "@/features/goals/bootstrap";
 import {
   notificationsBootstrapTask,
@@ -43,6 +46,8 @@ const AUTHENTICATED_BOOTSTRAP_TASKS = [
   backgroundFetchBootstrapTask,
 ] as const;
 
+const AUTHENTICATED_MAINTENANCE_BOOTSTRAP_TASKS = [emailCaptureMaintenanceBootstrapTask] as const;
+
 const AUTHENTICATED_TRANSACTION_SUBSCRIPTIONS = [
   budgetTransactionSubscriptionTask,
   goalsTransactionSubscriptionTask,
@@ -51,6 +56,10 @@ const AUTHENTICATED_TRANSACTION_SUBSCRIPTIONS = [
 
 export const runAuthenticatedBootstrap = (context: AuthenticatedBootstrapContext): Promise<void> =>
   runBootstrapTasks(context, AUTHENTICATED_BOOTSTRAP_TASKS);
+
+export const runAuthenticatedMaintenanceBootstrap = (
+  context: AuthenticatedBootstrapContext
+): Promise<void> => runBootstrapTasks(context, AUTHENTICATED_MAINTENANCE_BOOTSTRAP_TASKS);
 
 export const subscribeAuthenticatedTransactionRefreshes = (
   context: AuthenticatedBootstrapContext

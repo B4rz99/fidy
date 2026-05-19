@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import { openBrowserAsync } from "expo-web-browser";
-import { useAuthIdentity } from "@/features/auth/public";
+import { useAuthIdentity, useOptionalUserId } from "@/features/auth/public";
 import type { PrivateBackupHealthStatus } from "@/features/backup/public";
 import { useEmailCaptureStore } from "@/features/email-capture/public";
 import { ScreenLayout, SettingsSection, TAB_BAR_CLEARANCE } from "@/shared/components";
@@ -28,6 +28,7 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { deriveProfileAvatar } from "../lib/profile-avatar";
 import { buildPrivacyUrl, buildTermsUrl, buildWhatsAppUrl } from "../lib/settings-links";
 import { useSettingsStore } from "../store";
+import { applyParseImprovementSharingToggle } from "./parse-improvement-sharing-toggle";
 import { SettingsRow } from "./SettingsRow";
 
 const THEME_LABEL_KEYS: Record<string, string> = {
@@ -54,6 +55,7 @@ export function SettingsScreen() {
   const { t, locale } = useTranslation();
 
   const { fullName, email, profileImageUrl } = useAuthIdentity();
+  const userId = useOptionalUserId();
   const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
   const avatar = deriveProfileAvatar({
     fullName,
@@ -80,6 +82,12 @@ export function SettingsScreen() {
     : t("settings.languageEnglish");
 
   const version = Constants.expoConfig?.version ?? "0.0.1";
+  const handleParseImprovementSharingChange = (enabled: boolean) =>
+    applyParseImprovementSharingToggle({
+      enabled,
+      userId,
+      setShareAnonymizedParseSamples,
+    });
 
   return (
     <ScreenLayout variant="sub" title={t("settings.title")} onBack={back}>
@@ -201,7 +209,7 @@ export function SettingsScreen() {
             subtitle={t("settings.parseImprovementSharingSubtitle")}
             accessory="switch"
             switchValue={shareAnonymizedParseSamples}
-            onSwitchChange={setShareAnonymizedParseSamples}
+            onSwitchChange={handleParseImprovementSharingChange}
             isLast
           />
         </SettingsSection>
@@ -234,7 +242,7 @@ export function SettingsScreen() {
               icon={Wrench}
               label={t("settings.designSystem")}
               subtitle={t("settings.designSystemSubtitle")}
-              onPress={() => push("/design-system" as never)}
+              onPress={() => push("/design-system")}
             />
           ) : null}
           <SettingsRow

@@ -15,6 +15,7 @@ export type ChatSessionId = Brand<string, "ChatSessionId">;
 export type ChatMessageId = Brand<string, "ChatMessageId">;
 export type UserMemoryId = Brand<string, "UserMemoryId">;
 export type EmailAccountId = Brand<string, "EmailAccountId">;
+export type EmailParseImprovementSampleId = Brand<string, "EmailParseImprovementSampleId">;
 export type TransferId = Brand<string, "TransferId">;
 export type MerchantRuleId = Brand<string, "MerchantRuleId">;
 export type NotificationSourceId = Brand<string, "NotificationSourceId">;
