@@ -1,0 +1,19 @@
+apps/mobile/features/email-capture/services/email-pipeline-service/incoming-email-record.ts
+  s_c470af7990caf6::t_034c4bf057831d 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "80a510e08a17df67ab1df014fb0335208ec24a2d",
+  "prompts": {},
+  "sessions": {
+    "s_c470af7990caf6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3b3d-cc9c-7860-84a1-925c43e5aef2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
