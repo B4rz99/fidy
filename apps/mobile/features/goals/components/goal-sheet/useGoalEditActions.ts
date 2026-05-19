@@ -78,9 +78,9 @@ function showDeleteConfirmation({
     t("goals.edit.deleteConfirmTitle"),
     t("goals.edit.deleteConfirmMessage", { goalName }),
     [
-      { text: t("common.cancel"), style: "cancel" },
+      { text: t("goals.edit.keepGoal"), style: "cancel" },
       {
-        text: t("common.delete"),
+        text: t("goals.edit.deleteGoal"),
         style: "destructive",
         onPress: () => {
           const db = tryGetDb(userId);

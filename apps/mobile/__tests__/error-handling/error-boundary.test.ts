@@ -29,8 +29,8 @@ describe("ErrorFallback component", () => {
       "utf-8"
     );
 
-    expect(source).toContain("Something went wrong");
-    expect(source).toContain("Restart App");
+    expect(source).toContain('t("errorFallback.title")');
+    expect(source).toContain('t("errorFallback.restart")');
     expect(source).toContain("reloadAsync");
   });
 

@@ -43,7 +43,7 @@ describe("i18n core", () => {
     const { default: i18n } = await import("@/shared/i18n/i18n");
     i18n.locale = "es";
     expect(i18n.t("bills.deleteBillConfirm", { billName: "Netflix" })).toBe(
-      '¿Estás seguro de que quieres eliminar "Netflix"?'
+      '¿Eliminar "Netflix"? Se detendrán los recordatorios futuros de este gasto fijo.'
     );
   });
 });

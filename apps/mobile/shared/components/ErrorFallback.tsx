@@ -1,8 +1,11 @@
 import * as Updates from "expo-updates";
 import { Image, Pressable, Text, View } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
+import { useTranslation } from "@/shared/hooks/use-translation";
 
 export function ErrorFallback() {
+  const { t } = useTranslation();
+
   return (
     <View
       style={{
@@ -27,7 +30,7 @@ export function ErrorFallback() {
           textAlign: "center",
         }}
       >
-        Something went wrong
+        {t("errorFallback.title")}
       </Text>
       <Text
         style={{
@@ -39,7 +42,7 @@ export function ErrorFallback() {
           lineHeight: 22,
         }}
       >
-        {"Don't worry — your data is safe.\nPlease restart the app to continue."}
+        {t("errorFallback.body")}
       </Text>
       <Pressable
         onPress={() => {
@@ -60,7 +63,7 @@ export function ErrorFallback() {
             color: Colors.light.card,
           }}
         >
-          Restart App
+          {t("errorFallback.restart")}
         </Text>
       </Pressable>
     </View>

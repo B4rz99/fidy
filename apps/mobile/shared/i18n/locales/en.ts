@@ -104,24 +104,24 @@ const en = {
     expense: "Expense",
     income: "Income",
     saved: "Transaction saved",
-    saveTransaction: "Save Transaction",
+    saveTransaction: "Save transaction",
     descriptionOptional: "Description (optional)",
     noTransactionsYet: "No transactions yet",
-    noTransactionsHint: "Connect an email account or add transactions manually to get started",
-    deleteConfirmTitle: "Delete Transaction",
-    deleteConfirmMessage: "Are you sure you want to delete this transaction?",
-    editTransaction: "Edit Transaction",
-    deleteTransaction: "Delete",
+    noTransactionsHint: "Connect an email account or add your first transaction.",
+    deleteConfirmTitle: "Delete transaction?",
+    deleteConfirmMessage: "It will no longer count in your spending, budgets, or reports.",
+    keepTransaction: "Keep transaction",
+    deleteTransaction: "Delete transaction",
+    editTransaction: "Edit transaction",
     convertToTransfer: "Convert to transfer",
-    updateFailed: "Could not update transaction",
-    deleteFailed: "Could not delete transaction",
+    updateFailed: "Transaction was not updated. Check the details and try again.",
+    deleteFailed: "Transaction was not deleted. Check your connection and try again.",
   },
 
   transfers: {
     title: "New transfer",
     reclassifyTitle: "Convert to transfer",
-    subtitle:
-      "Transfers move money between accounts or between one tracked account and an explicit outside-fidy side.",
+    subtitle: "Transfers move money between tracked accounts, cash, or another untracked account.",
     reclassifySubtitle:
       "Replace this captured transaction with the transfer it actually represents, without losing the original evidence.",
     outsideSubtitle:
@@ -133,14 +133,14 @@ const en = {
     toLabel: "To",
     dateLabel: "Transfer date",
     chooseSide: "Choose side",
-    chooseSideHint: "Choose an account or Outside Fidy",
+    chooseSideHint: "Choose an account, cash, or another untracked account",
     chooseDifferentSide: "Choose different side",
     saved: "Transfer saved",
     save: "Record transfer",
     outsideFidy: "Outside Fidy",
-    outsideFidyDescription: "Cash or another untracked side",
+    outsideFidyDescription: "Cash or another untracked account",
     outsideHint:
-      "Need cash or another untracked side? Choose it explicitly from the side picker instead of saving a fake expense.",
+      "Need cash or another untracked account? Choose it explicitly instead of saving a fake expense.",
     reclassifyHint:
       "Saving will supersede the original transaction, keep the capture evidence attached, and stop the old record from counting as spending.",
     outsideSelectedHint:
@@ -149,7 +149,7 @@ const en = {
       "Choose two different sides. A transfer cannot start and end in the same financial account.",
     pickerTitle: "Choose transfer side",
     pickerSubtitle:
-      "Pick a tracked financial account, or explicitly choose an outside-Fidy side for cash or external funding.",
+      "Pick a tracked financial account, or choose Outside Fidy for cash or external funding.",
     a11y: {
       amountField: "Edit transfer amount",
       selectSide: "Select %{side} side",
@@ -161,7 +161,7 @@ const en = {
       trackedAccountRequired: "At least one side must be a tracked account",
       distinctSidesRequired: "Choose two different sides",
       reclassifyFailed: "Could not convert this transaction into a transfer",
-      saveFailed: "Could not save transfer",
+      saveFailed: "Transfer was not saved. Check both sides and try again.",
     },
     reclassifySave: "Convert to transfer",
     activity: {
@@ -192,7 +192,7 @@ const en = {
       settingsRow: "Financial accounts",
       title: "Financial accounts",
       subtitle:
-        "Create and edit the accounts you use for balances, transfers, and manual entry. Connected capture sources stay in Connected Accounts.",
+        "Create and edit the accounts you use for balances, transfers, and manual entry. Email and notification capture stay in Connected accounts.",
       regularSection: "Cash and bank accounts",
       creditSection: "Credit cards",
       emptyTitle: "No financial accounts yet",
@@ -217,7 +217,7 @@ const en = {
       editCta: "Edit account",
       billingGapTitle: "Card cycle dates missing",
       billingGapBody:
-        "Statement-aware card features stay off until you add fecha de corte and fecha limite de pago.",
+        "Statement-aware card features stay off until you add the statement closing day and payment due day.",
     },
     form: {
       createTitle: "Add account",
@@ -233,7 +233,7 @@ const en = {
       datePlaceholder: "Choose a date",
       dayPlaceholder: "Day",
       billingHint:
-        "Optional. Add fecha de corte and fecha limite de pago later if you do not have them yet.",
+        "Optional. Add the statement closing day and payment due day later if you do not have them yet.",
       statementClosingDay: "Fecha de corte",
       paymentDueDay: "Fecha limite de pago",
       saveCreate: "Create account",
@@ -245,7 +245,7 @@ const en = {
       missingCta: "Back to accounts",
       invalidOpeningBalance: "Add both an amount and an effective date, or leave both empty.",
       invalidBillingDay: "Enter a day between 1 and 31.",
-      saveFailed: "Could not save account",
+      saveFailed: "Account was not saved. Check the details and try again.",
     },
     identifierSheet: {
       title: "Add identifier",
@@ -254,20 +254,20 @@ const en = {
       placeholder: "e.g. Visa gold",
       note: "Keep it short and stable. You can add more hints later.",
       save: "Save identifier",
-      saveFailed: "Could not save identifier",
+      saveFailed: "Identifier was not saved. Try again.",
     },
   },
 
   // Bills / Calendar
   bills: {
-    addBill: "Add Bill",
-    editBill: "Edit Bill",
+    addBill: "Add bill",
+    editBill: "Edit bill",
     frequency: "Frequency",
-    startDate: "Start Date",
-    saveChanges: "Save Changes",
+    startDate: "Start date",
+    saveChanges: "Save changes",
     add: "Add",
-    deleteBill: "Delete Bill",
-    deleteBillConfirm: 'Are you sure you want to delete "%{billName}"?',
+    deleteBill: "Delete bill",
+    deleteBillConfirm: 'Delete "%{billName}"? Future reminders for this bill will stop.',
     noBillsOnDay: "No bills on this day",
     weekly: "Weekly",
     biweekly: "Biweekly",
@@ -310,7 +310,7 @@ const en = {
       nameTooLong: "Name must be under 32 characters",
       iconRequired: "Please select an icon",
       colorRequired: "Please select a color",
-      saveFailed: "Could not save category",
+      saveFailed: "Category was not saved. Choose a name, icon, and color, then try again.",
     },
   },
 
@@ -324,13 +324,13 @@ const en = {
       createManually: "Create manually",
     },
     create: {
-      title: "Create Budget",
+      title: "Create budget",
       selectCategory: "Select a category",
       enterAmount: "Monthly budget amount",
       lastMonthHint: "You spent %{amount} on %{category} last month",
     },
     edit: {
-      title: "Edit Budget",
+      title: "Edit budget",
     },
     card: {
       remaining: "%{amount} remaining",
@@ -338,7 +338,7 @@ const en = {
       used: "%{percent}% used",
     },
     summary: {
-      totalBudget: "Total Budget",
+      totalBudget: "Total budget",
       used: "%{percent}% used",
     },
     alerts: {
@@ -348,14 +348,14 @@ const en = {
       overBudget: "%{category} is over budget at %{percent}%",
     },
     autoSuggest: {
-      title: "Auto-setup Budgets",
+      title: "Auto-setup budgets",
       subtitle: "Based on last month's spending",
       skipAll: "Skip",
       acceptSelected: "Accept selected",
       noSuggestions: "No spending data from last month",
     },
     upcomingBills: {
-      title: "Upcoming Bills",
+      title: "Upcoming bills",
       seeAll: "See all",
       noBills: "No upcoming bills",
     },
@@ -375,7 +375,7 @@ const en = {
       createGoal: "Create a goal",
     },
     create: {
-      title: "Create Goal",
+      title: "Create goal",
       goalName: "Goal name",
       goalNamePlaceholder: "e.g., Trip to Holland",
       targetAmount: "Target amount",
@@ -387,17 +387,18 @@ const en = {
       noProjectionHint: "Add income transactions for a projection",
     },
     edit: {
-      title: "Edit Goal",
-      saveChanges: "Save Changes",
-      deleteGoal: "Delete Goal",
-      deleteConfirmTitle: "Delete Goal",
-      deleteConfirmMessage: 'Are you sure you want to delete "%{goalName}"?',
+      title: "Edit goal",
+      saveChanges: "Save changes",
+      deleteGoal: "Delete goal",
+      deleteConfirmTitle: 'Delete "%{goalName}"?',
+      deleteConfirmMessage: "This will remove the goal and its contribution history.",
+      keepGoal: "Keep goal",
     },
     card: {
       installments: "%{current}/%{total}",
       almostThere: "Almost there!",
       completed: "Completed!",
-      addPayment: "+ Add Payment",
+      addPayment: "+ Add payment",
       paceAhead: "↑ Ahead %{amount}",
       paceBehind: "↓ Behind %{amount}",
       startSaving: "Start saving",
@@ -412,7 +413,7 @@ const en = {
       paymentTooLow: "Payment doesn't cover interest",
       progress: "%{percent}% complete",
       remaining: "%{amount} remaining",
-      addPayment: "Add Payment",
+      addPayment: "Add payment",
       noContributions: "No contributions yet",
       contributionNote: "Note: %{note}",
       recommendation: "Fidy's recommendation",
@@ -422,8 +423,8 @@ const en = {
       manualPayment: "Manual payment",
     },
     payment: {
-      title: "Add Payment",
-      addPaymentCta: "+ Add Payment",
+      title: "Add payment",
+      addPaymentCta: "+ Add payment",
       amount: "Amount",
       noteOptional: "Note (optional)",
       notePlaceholder: "e.g., Monthly savings",
@@ -475,7 +476,7 @@ const en = {
 
   // Connected Accounts
   connectedAccounts: {
-    title: "Connected Accounts",
+    title: "Connected accounts",
     subtitle:
       "Manage your connected accounts and capture sources for automatic transaction tracking.",
     connected: "Connected",
@@ -611,7 +612,7 @@ const en = {
 
   // AI Chat
   aiChat: {
-    title: "AI Chat",
+    title: "AI chat",
     fidyAi: "Fidy AI",
     memories: "Memory",
     newChat: "New chat",
@@ -658,13 +659,13 @@ const en = {
     language: "Language",
     languageEnglish: "English",
     languageSpanish: "Español",
-    connectedEmails: "Connected Emails",
+    connectedEmails: "Connected emails",
     connectedEmailsCount: {
       one: "%{count} account",
       other: "%{count} accounts",
     },
     notifications: "Notifications",
-    privateBackup: "Private Backup",
+    privateBackup: "Private backup",
     parseImprovementSharing: "Improve capture parsing",
     parseImprovementSharingSubtitle:
       "Share redacted email and notification formats when parsing struggles. Amounts, merchants, dates, names, and cards are removed first.",
@@ -676,25 +677,26 @@ const en = {
     },
     on: "On",
     off: "Off",
-    helpSupport: "Help & Support",
-    privacyPolicy: "Privacy Policy",
-    termsOfService: "Terms of Service",
+    helpSupport: "Help & support",
+    privacyPolicy: "Privacy policy",
+    termsOfService: "Terms of service",
     designSystem: "Design system",
     designSystemSubtitle: "Preview shared UI components",
     version: "Version",
-    deleteAccount: "Delete Account",
-    deleteAccountTitle: "Delete Account",
+    deleteAccount: "Delete account",
+    deleteAccountTitle: "Delete account",
     deleteAccountWarning:
       "This will permanently delete your account, encrypted backups, and all remote data. Old encrypted backups cannot be recovered after deletion.",
     deleteAccountUnsyncedWarning: {
       one: "You have %{count} unsynced change that will be lost.",
       other: "You have %{count} unsynced changes that will be lost.",
     },
-    deleteAccountConfirm: "Delete My Account",
+    deleteAccountConfirm: "Delete my account",
     profileTitle: "Profile",
-    logout: "Log Out",
-    logoutConfirmTitle: "Log Out",
-    logoutConfirmMessage: "Are you sure you want to log out?",
+    logout: "Log out",
+    logoutConfirmTitle: "Log out?",
+    logoutConfirmMessage: "You will need to sign in again to sync or restore backups.",
+    staySignedIn: "Stay signed in",
     localQaTitle: "Local QA",
     localQaDescription: "Reset or switch local-only QA scenarios without touching a real account.",
     localQaReset: "Reset current scenario",
@@ -727,9 +729,9 @@ const en = {
   },
 
   privateBackup: {
-    title: "Private Backup",
+    title: "Private backup",
     status: {
-      notSetUp: "Private Backup off",
+      notSetUp: "Private backup off",
       recoveryKeyNotConfirmed: "Save Recovery Key",
       ready: "Recovery Key saved",
       backupFailed: "Backup needs retry",
@@ -739,10 +741,10 @@ const en = {
       "Fidy can save a backup that only your Recovery Key or a trusted device can unlock.",
     confirmTitle: "Save your Recovery Key now",
     confirmBody:
-      "Same-device restore can stay quiet, but a new phone needs your saved Recovery Key. Fidy cannot recreate it later.",
+      "This device can restore without asking for the key, but a new phone needs your saved Recovery Key. Fidy cannot recreate it later.",
     readyTitle: "Your backup is healthy",
     readyBody:
-      "This device can restore quietly, and a new phone can unlock the same backup with your saved Recovery Key.",
+      "This device can restore without asking for the key, and a new phone can unlock the same backup with your saved Recovery Key.",
     failedTitle: "Backup upload failed",
     failedBody: "Your current phone still has your data. Retry when your connection is steady.",
     recoveryKeyLabel: "Recovery Key",
@@ -752,7 +754,7 @@ const en = {
     saveKey: "Save Recovery Key",
     savingBackup: "Saving backup...",
     finishLater: "Finish later",
-    setUp: "Set up Private Backup",
+    setUp: "Set up private backup",
     retryBackup: "Retry backup",
     viewKey: "View key",
     rotateKey: "Rotate key",
@@ -782,6 +784,12 @@ const en = {
     body: "We can share this redacted format to improve future parsing:\n\n%{template}\n\nAmounts, merchants, dates, names, and cards are removed first.",
     share: "Share redacted format",
     notNow: "Not now",
+  },
+
+  errorFallback: {
+    title: "Fidy could not load this screen",
+    body: "Close and reopen the app. If it keeps happening, your local data is still on this device.",
+    restart: "Restart app",
   },
 
   qaTools: {
@@ -868,11 +876,11 @@ const en = {
 
   // Notification Capture
   notificationCapture: {
-    title: "Notification Capture",
+    title: "Notification capture",
     description: "Automatically capture transactions from your bank app notifications.",
     listening: "Listening",
     permissionRequired: "Permission required",
-    grantAccess: "Grant Access",
+    grantAccess: "Grant access",
   },
 
   // Apple Pay / SMS
@@ -938,7 +946,7 @@ const en = {
     welcome: {
       hero: "Your finances, on autopilot",
       subtitle: "Connect your email and let Fidy capture your transactions automatically.",
-      getStarted: "Get Started",
+      getStarted: "Get started",
       alreadyHaveAccount: "I already have an account",
     },
     connectEmail: {
@@ -969,14 +977,14 @@ const en = {
       subtitle: "Based on your recent spending",
       perMonth: "/month",
       basedOnSpending: "Based on last month's spending",
-      saveBudgets: "Save Budgets",
+      saveBudgets: "Save budgets",
       skipForNow: "Skip for now",
       noSuggestions: "No spending data yet — you can set budgets later from the Budgets tab.",
     },
     complete: {
       title: "You're all set!",
       stats: "We found %{transactionCount} transactions and set up %{budgetCount} budgets for you.",
-      goToDashboard: "Go to Dashboard",
+      goToDashboard: "Go to dashboard",
     },
   },
 
@@ -1077,11 +1085,11 @@ const en = {
 
     // Pre-permission screen
     enableNotifications: {
-      title: "Stay on Top of Your Finances",
+      title: "Stay on top of your finances",
       description:
         "Fidy can alert you when you're approaching your budget limit, celebrate your goal milestones, and send a weekly summary of your finances.",
-      enable: "Enable Notifications",
-      notNow: "Not Now",
+      enable: "Enable notifications",
+      notNow: "Not now",
     },
   },
 

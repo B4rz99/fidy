@@ -31,7 +31,7 @@ export function ProfileScreen() {
 
   const handleLogOut = () => {
     Alert.alert(t("settings.logoutConfirmTitle"), t("settings.logoutConfirmMessage"), [
-      { text: t("common.cancel"), style: "cancel" },
+      { text: t("settings.staySignedIn"), style: "cancel" },
       {
         text: t("settings.logout"),
         style: "destructive",
@@ -111,7 +111,7 @@ export function ProfileScreen() {
             </Text>
           </Pressable>
 
-          {/* Log Out Button */}
+          {/* Sign-out button */}
           <Pressable
             onPress={handleLogOut}
             className="flex-row items-center justify-center bg-card dark:bg-card-dark rounded-2xl w-full"

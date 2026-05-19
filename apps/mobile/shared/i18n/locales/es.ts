@@ -107,25 +107,25 @@ const es = {
     expense: "Gasto",
     income: "Ingreso",
     saved: "Transacción guardada",
-    saveTransaction: "Guardar Transacción",
+    saveTransaction: "Guardar transacción",
     descriptionOptional: "Descripción (opcional)",
     noTransactionsYet: "Aún no hay transacciones",
-    noTransactionsHint:
-      "Conecta una cuenta de correo o agrega transacciones manualmente para comenzar",
-    deleteConfirmTitle: "Eliminar Transacción",
-    deleteConfirmMessage: "¿Estás seguro de que quieres eliminar esta transacción?",
-    editTransaction: "Editar Transacción",
-    deleteTransaction: "Eliminar",
+    noTransactionsHint: "Conecta un correo o agrega tu primera transacción.",
+    deleteConfirmTitle: "¿Eliminar transacción?",
+    deleteConfirmMessage: "Ya no contará en tus gastos, presupuestos ni reportes.",
+    keepTransaction: "Conservar transacción",
+    deleteTransaction: "Eliminar transacción",
+    editTransaction: "Editar transacción",
     convertToTransfer: "Convertir en transferencia",
-    updateFailed: "No se pudo actualizar la transacción",
-    deleteFailed: "No se pudo eliminar la transacción",
+    updateFailed: "La transacción no se actualizó. Revisa los datos e intenta de nuevo.",
+    deleteFailed: "La transacción no se eliminó. Revisa tu conexión e intenta de nuevo.",
   },
 
   transfers: {
     title: "Nueva transferencia",
     reclassifyTitle: "Convertir en transferencia",
     subtitle:
-      "Las transferencias mueven dinero entre cuentas o entre una cuenta rastreada y un lado explícito fuera de Fidy.",
+      "Las transferencias mueven dinero entre cuentas rastreadas, efectivo u otra cuenta sin seguimiento.",
     reclassifySubtitle:
       "Reemplaza esta transacción capturada por la transferencia que realmente representa, sin perder la evidencia original.",
     outsideSubtitle:
@@ -137,14 +137,14 @@ const es = {
     toLabel: "Hacia",
     dateLabel: "Fecha de transferencia",
     chooseSide: "Elegir lado",
-    chooseSideHint: "Elige una cuenta o Fuera de Fidy",
+    chooseSideHint: "Elige una cuenta, efectivo u otra cuenta sin seguimiento",
     chooseDifferentSide: "Elige otro lado",
     saved: "Transferencia guardada",
     save: "Registrar transferencia",
     outsideFidy: "Fuera de Fidy",
-    outsideFidyDescription: "Efectivo u otro lado no rastreado",
+    outsideFidyDescription: "Efectivo u otra cuenta sin seguimiento",
     outsideHint:
-      "¿Necesitas efectivo u otro lado no rastreado? Elígelo explícitamente en el selector en lugar de guardar un gasto falso.",
+      "¿Necesitas efectivo u otra cuenta sin seguimiento? Elígela explícitamente en lugar de guardar un gasto falso.",
     reclassifyHint:
       "Al guardar se sustituirá la transacción original, la evidencia de captura seguirá adjunta y el registro viejo dejará de contar como gasto.",
     outsideSelectedHint:
@@ -153,7 +153,7 @@ const es = {
       "Elige dos lados distintos. Una transferencia no puede empezar y terminar en la misma cuenta financiera.",
     pickerTitle: "Elige el lado de la transferencia",
     pickerSubtitle:
-      "Elige una cuenta financiera rastreada, o selecciona explícitamente un lado fuera de Fidy para efectivo o fondos externos.",
+      "Elige una cuenta financiera rastreada, o elige Fuera de Fidy para efectivo o fondos externos.",
     a11y: {
       amountField: "Editar monto de la transferencia",
       selectSide: "Seleccionar lado %{side}",
@@ -165,7 +165,7 @@ const es = {
       trackedAccountRequired: "Al menos un lado debe ser una cuenta rastreada",
       distinctSidesRequired: "Elige dos lados distintos",
       reclassifyFailed: "No se pudo convertir esta transacción en transferencia",
-      saveFailed: "No se pudo guardar la transferencia",
+      saveFailed: "La transferencia no se guardó. Revisa ambos lados e intenta de nuevo.",
     },
     reclassifySave: "Convertir en transferencia",
     activity: {
@@ -196,7 +196,7 @@ const es = {
       settingsRow: "Cuentas financieras",
       title: "Cuentas financieras",
       subtitle:
-        "Crea y edita las cuentas que usas para saldos, transferencias y registro manual. Las fuentes de captura siguen en Cuentas conectadas.",
+        "Crea y edita las cuentas que usas para saldos, transferencias y registro manual. La captura de correos y notificaciones sigue en Cuentas conectadas.",
       regularSection: "Efectivo y bancos",
       creditSection: "Tarjetas de crédito",
       emptyTitle: "Aún no hay cuentas financieras",
@@ -222,7 +222,7 @@ const es = {
       editCta: "Editar cuenta",
       billingGapTitle: "Faltan fechas del ciclo",
       billingGapBody:
-        "Las funciones de tarjetas por ciclo seguirán apagadas hasta que agregues fecha de corte y fecha limite de pago.",
+        "Las funciones de tarjetas por ciclo seguirán apagadas hasta que agregues el día de corte y el día límite de pago.",
     },
     form: {
       createTitle: "Agregar cuenta",
@@ -238,7 +238,7 @@ const es = {
       datePlaceholder: "Elige una fecha",
       dayPlaceholder: "Día",
       billingHint:
-        "Opcional. Agrega fecha de corte y fecha limite de pago después si todavía no las tienes.",
+        "Opcional. Agrega el día de corte y el día límite de pago después si todavía no los tienes.",
       statementClosingDay: "Fecha de corte",
       paymentDueDay: "Fecha limite de pago",
       saveCreate: "Crear cuenta",
@@ -251,7 +251,7 @@ const es = {
       invalidOpeningBalance:
         "Agrega monto y fecha efectiva al mismo tiempo, o deja ambos campos vacíos.",
       invalidBillingDay: "Ingresa un día entre 1 y 31.",
-      saveFailed: "No se pudo guardar la cuenta",
+      saveFailed: "La cuenta no se guardó. Revisa los datos e intenta de nuevo.",
     },
     identifierSheet: {
       title: "Agregar identificador",
@@ -260,20 +260,21 @@ const es = {
       placeholder: "ej. Visa gold",
       note: "Mantenlo corto y estable. Puedes agregar más pistas después.",
       save: "Guardar identificador",
-      saveFailed: "No se pudo guardar el identificador",
+      saveFailed: "El identificador no se guardó. Intenta de nuevo.",
     },
   },
 
   // Bills / Calendar
   bills: {
-    addBill: "Agregar Gasto Fijo",
-    editBill: "Editar Gasto Fijo",
+    addBill: "Agregar gasto fijo",
+    editBill: "Editar gasto fijo",
     frequency: "Frecuencia",
     startDate: "Fecha de inicio",
-    saveChanges: "Guardar Cambios",
+    saveChanges: "Guardar cambios",
     add: "Agregar",
-    deleteBill: "Eliminar Gasto Fijo",
-    deleteBillConfirm: '¿Estás seguro de que quieres eliminar "%{billName}"?',
+    deleteBill: "Eliminar gasto fijo",
+    deleteBillConfirm:
+      '¿Eliminar "%{billName}"? Se detendrán los recordatorios futuros de este gasto fijo.',
     noBillsOnDay: "No hay gastos fijos este día",
     weekly: "Semanal",
     biweekly: "Quincenal",
@@ -316,7 +317,7 @@ const es = {
       nameTooLong: "El nombre debe tener menos de 32 caracteres",
       iconRequired: "Por favor selecciona un ícono",
       colorRequired: "Por favor selecciona un color",
-      saveFailed: "No se pudo guardar la categoría",
+      saveFailed: "La categoría no se guardó. Elige nombre, ícono y color, e intenta de nuevo.",
     },
   },
 
@@ -330,13 +331,13 @@ const es = {
       createManually: "Crear manualmente",
     },
     create: {
-      title: "Crear Presupuesto",
+      title: "Crear presupuesto",
       selectCategory: "Selecciona una categoría",
       enterAmount: "Monto del presupuesto mensual",
       lastMonthHint: "Gastaste %{amount} en %{category} el mes pasado",
     },
     edit: {
-      title: "Editar Presupuesto",
+      title: "Editar presupuesto",
     },
     card: {
       remaining: "%{amount} restante",
@@ -344,7 +345,7 @@ const es = {
       used: "%{percent}% usado",
     },
     summary: {
-      totalBudget: "Presupuesto Total",
+      totalBudget: "Presupuesto total",
       used: "%{percent}% usado",
     },
     alerts: {
@@ -354,14 +355,14 @@ const es = {
       overBudget: "%{category} excedió el presupuesto al %{percent}%",
     },
     autoSuggest: {
-      title: "Configurar Presupuestos",
+      title: "Configurar presupuestos",
       subtitle: "Basado en los gastos del mes pasado",
       skipAll: "Omitir",
       acceptSelected: "Aceptar seleccionados",
       noSuggestions: "Sin datos de gastos del mes pasado",
     },
     upcomingBills: {
-      title: "Próximos Gastos Fijos",
+      title: "Próximos gastos fijos",
       seeAll: "Ver todos",
       noBills: "No hay gastos fijos próximos",
     },
@@ -381,7 +382,7 @@ const es = {
       createGoal: "Crear una meta",
     },
     create: {
-      title: "Crear Meta",
+      title: "Crear meta",
       goalName: "Nombre de la meta",
       goalNamePlaceholder: "ej., Viaje a Holanda",
       targetAmount: "Monto objetivo",
@@ -393,17 +394,18 @@ const es = {
       noProjectionHint: "Agrega transacciones de ingreso para una proyección",
     },
     edit: {
-      title: "Editar Meta",
-      saveChanges: "Guardar Cambios",
-      deleteGoal: "Eliminar Meta",
-      deleteConfirmTitle: "Eliminar Meta",
-      deleteConfirmMessage: '¿Estás seguro de que quieres eliminar "%{goalName}"?',
+      title: "Editar meta",
+      saveChanges: "Guardar cambios",
+      deleteGoal: "Eliminar meta",
+      deleteConfirmTitle: '¿Eliminar "%{goalName}"?',
+      deleteConfirmMessage: "Esto eliminará la meta y su historial de contribuciones.",
+      keepGoal: "Conservar meta",
     },
     card: {
       installments: "%{current}/%{total}",
       almostThere: "¡Ya casi!",
       completed: "¡Completado!",
-      addPayment: "+ Agregar Pago",
+      addPayment: "+ Agregar pago",
       paceAhead: "↑ Adelantado %{amount}",
       paceBehind: "↓ Atrasado %{amount}",
       startSaving: "Empieza a ahorrar",
@@ -419,7 +421,7 @@ const es = {
       paymentTooLow: "El pago no cubre los intereses",
       progress: "%{percent}% completado",
       remaining: "%{amount} restante",
-      addPayment: "Agregar Pago",
+      addPayment: "Agregar pago",
       noContributions: "Aún no hay contribuciones",
       contributionNote: "Nota: %{note}",
       recommendation: "Recomendación de Fidy",
@@ -429,8 +431,8 @@ const es = {
       manualPayment: "Pago manual",
     },
     payment: {
-      title: "Agregar Pago",
-      addPaymentCta: "+ Agregar Pago",
+      title: "Agregar pago",
+      addPaymentCta: "+ Agregar pago",
       amount: "Monto",
       noteOptional: "Nota (opcional)",
       notePlaceholder: "ej., Ahorro mensual",
@@ -482,7 +484,7 @@ const es = {
 
   // Connected Accounts
   connectedAccounts: {
-    title: "Cuentas Conectadas",
+    title: "Cuentas conectadas",
     subtitle:
       "Administra tus cuentas conectadas y fuentes de captura para el seguimiento automático de transacciones.",
     connected: "Conectado",
@@ -666,7 +668,7 @@ const es = {
     language: "Idioma",
     languageEnglish: "English",
     languageSpanish: "Español",
-    connectedEmails: "Correos Conectados",
+    connectedEmails: "Correos conectados",
     connectedEmailsCount: {
       one: "%{count} cuenta",
       other: "%{count} cuentas",
@@ -684,25 +686,27 @@ const es = {
     },
     on: "Activadas",
     off: "Desactivadas",
-    helpSupport: "Ayuda y Soporte",
-    privacyPolicy: "Política de Privacidad",
-    termsOfService: "Términos de Servicio",
+    helpSupport: "Ayuda y soporte",
+    privacyPolicy: "Política de privacidad",
+    termsOfService: "Términos de servicio",
     designSystem: "Sistema de diseño",
     designSystemSubtitle: "Previsualiza componentes compartidos",
     version: "Versión",
-    deleteAccount: "Eliminar Cuenta",
-    deleteAccountTitle: "Eliminar Cuenta",
+    deleteAccount: "Eliminar cuenta",
+    deleteAccountTitle: "Eliminar cuenta",
     deleteAccountWarning:
       "Esto eliminará permanentemente tu cuenta, tus copias privadas y todos tus datos remotos. Las copias privadas anteriores no se podrán recuperar después.",
     deleteAccountUnsyncedWarning: {
       one: "Tienes %{count} cambio sin sincronizar que se perderá.",
       other: "Tienes %{count} cambios sin sincronizar que se perderán.",
     },
-    deleteAccountConfirm: "Eliminar Mi Cuenta",
+    deleteAccountConfirm: "Eliminar mi cuenta",
     profileTitle: "Perfil",
-    logout: "Cerrar Sesión",
-    logoutConfirmTitle: "Cerrar Sesión",
-    logoutConfirmMessage: "¿Estás seguro de que quieres cerrar sesión?",
+    logout: "Cerrar sesión",
+    logoutConfirmTitle: "¿Cerrar sesión?",
+    logoutConfirmMessage:
+      "Tendrás que iniciar sesión de nuevo para sincronizar o restaurar copias.",
+    staySignedIn: "Seguir conectado",
     localQaTitle: "QA local",
     localQaDescription:
       "Reinicia o cambia escenarios de QA solo locales sin tocar una cuenta real.",
@@ -748,10 +752,10 @@ const es = {
       "Fidy puede guardar una copia que solo tu Llave de recuperación o un dispositivo confiable pueden abrir.",
     confirmTitle: "Guarda tu Llave de recuperación ahora",
     confirmBody:
-      "Este celular puede restaurar en silencio, pero un celular nuevo necesita tu Llave de recuperación guardada. Fidy no puede recrearla después.",
+      "Este celular puede restaurar sin pedir la llave, pero un celular nuevo necesita tu Llave de recuperación guardada. Fidy no puede recrearla después.",
     readyTitle: "Tu copia está saludable",
     readyBody:
-      "Este dispositivo puede restaurar en silencio, y un celular nuevo puede abrir la misma copia con tu Llave de recuperación guardada.",
+      "Este dispositivo puede restaurar sin pedir la llave, y un celular nuevo puede abrir la misma copia con tu Llave de recuperación guardada.",
     failedTitle: "Falló la subida de la copia",
     failedBody:
       "Tu celular actual todavía tiene tus datos. Reintenta cuando la conexión esté estable.",
@@ -762,7 +766,7 @@ const es = {
     saveKey: "Guardar Llave",
     savingBackup: "Guardando copia...",
     finishLater: "Terminar después",
-    setUp: "Configurar Copia privada",
+    setUp: "Configurar copia privada",
     retryBackup: "Reintentar copia",
     viewKey: "Ver llave",
     rotateKey: "Rotar llave",
@@ -795,6 +799,12 @@ const es = {
     body: "Podemos compartir este formato redactado para mejorar futuras lecturas:\n\n%{template}\n\nPrimero se quitan montos, comercios, fechas, nombres y tarjetas.",
     share: "Compartir formato redactado",
     notNow: "Ahora no",
+  },
+
+  errorFallback: {
+    title: "Fidy no pudo cargar esta pantalla",
+    body: "Cierra y vuelve a abrir la app. Si sigue pasando, tus datos locales siguen en este dispositivo.",
+    restart: "Reiniciar app",
   },
 
   qaTools: {
@@ -885,11 +895,11 @@ const es = {
 
   // Notification Capture
   notificationCapture: {
-    title: "Captura de Notificaciones",
+    title: "Captura de notificaciones",
     description: "Captura automáticamente transacciones de las notificaciones de tu app bancaria.",
     listening: "Escuchando",
     permissionRequired: "Permiso requerido",
-    grantAccess: "Conceder Acceso",
+    grantAccess: "Conceder acceso",
   },
 
   // Apple Pay / SMS (already Spanish)
@@ -986,7 +996,7 @@ const es = {
       subtitle: "Basado en tus gastos recientes",
       perMonth: "/mes",
       basedOnSpending: "Basado en los gastos del mes pasado",
-      saveBudgets: "Guardar Presupuestos",
+      saveBudgets: "Guardar presupuestos",
       skipForNow: "Omitir por ahora",
       noSuggestions:
         "Aún no hay datos de gastos — puedes configurar presupuestos después desde la pestaña de Presupuestos.",
@@ -995,7 +1005,7 @@ const es = {
       title: "¡Todo listo!",
       stats:
         "Encontramos %{transactionCount} transacciones y configuramos %{budgetCount} presupuestos para ti.",
-      goToDashboard: "Ir al Panel",
+      goToDashboard: "Ir al panel",
     },
   },
 
@@ -1096,11 +1106,11 @@ const es = {
 
     // Pantalla de pre-permiso
     enableNotifications: {
-      title: "Mantente al Día con tus Finanzas",
+      title: "Mantente al día con tus finanzas",
       description:
         "Fidy puede alertarte cuando te acerques a tu límite de presupuesto, celebrar los hitos de tus metas, y enviarte un resumen semanal de tus finanzas.",
-      enable: "Activar Notificaciones",
-      notNow: "Ahora No",
+      enable: "Activar notificaciones",
+      notNow: "Ahora no",
     },
   },
 
