@@ -1,9 +1,9 @@
-import { useCallback } from "react";
+import { useCallback, type ReactNode } from "react";
 import * as Haptics from "expo-haptics";
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
-import type { SharedValue } from "react-native-reanimated";
+import Animated, { type SharedValue, useAnimatedStyle } from "react-native-reanimated";
 import {
   ActionSheetIOS,
   Platform,
@@ -29,6 +29,27 @@ type TransactionRowProps = {
 };
 
 const SWIPE_ACTION_WIDTH = 88;
+
+type SwipeActionPanelProps = {
+  readonly actionWidth: number;
+  readonly children: ReactNode;
+  readonly translation: SharedValue<number>;
+};
+
+function SwipeActionPanel({ actionWidth, children, translation }: SwipeActionPanelProps) {
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: Math.max(translation.value + actionWidth, 0) }],
+  }));
+
+  return (
+    <Animated.View
+      className="flex-row items-stretch py-3"
+      style={[styles.swipeActionPanel, { width: actionWidth }, animatedStyle]}
+    >
+      {children}
+    </Animated.View>
+  );
+}
 
 function getAmountClassName(amountTone: NonNullable<TransactionRowProps["amountTone"]>): string {
   if (amountTone === "positive") return "text-accent-green dark:text-accent-green-dark";
@@ -85,6 +106,8 @@ export function TransactionRow({
       _translation: SharedValue<number>,
       swipeable: SwipeableMethods
     ) => {
+      const actionCount = Number(onEdit != null) + Number(onDelete != null);
+      const actionWidth = SWIPE_ACTION_WIDTH * actionCount;
       const handleEditPress = () => {
         swipeable.close();
         void Haptics.selectionAsync();
@@ -97,7 +120,7 @@ export function TransactionRow({
       };
 
       return (
-        <View className="flex-row items-stretch py-3">
+        <SwipeActionPanel actionWidth={actionWidth} translation={_translation}>
           {onEdit ? (
             <Pressable
               accessibilityRole="button"
@@ -124,7 +147,7 @@ export function TransactionRow({
               </Text>
             </Pressable>
           ) : null}
-        </View>
+        </SwipeActionPanel>
       );
     },
     [onDelete, onEdit, t]
@@ -174,6 +197,9 @@ export function TransactionRow({
 }
 
 const styles = StyleSheet.create({
+  swipeActionPanel: {
+    overflow: "hidden",
+  },
   swipeAction: {
     width: SWIPE_ACTION_WIDTH,
   },
