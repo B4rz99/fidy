@@ -1,0 +1,78 @@
+apps/mobile/features/budget/components/BudgetListScreen.tsx
+  s_b2219b9683913c::t_bfe50f3baaea5f 112
+apps/mobile/app/(tabs)/add/index.tsx
+  s_b2219b9683913c::t_bfe50f3baaea5f 1-5
+apps/mobile/__tests__/calendar/calendar-screen.test.ts
+  s_b2219b9683913c::t_bfe50f3baaea5f 39,41-42
+apps/mobile/__tests__/notifications/display.test.ts
+  s_b2219b9683913c::t_bfe50f3baaea5f 50,62,88,97,188
+apps/mobile/__tests__/ai-chat/callers.test.ts
+  s_b2219b9683913c::t_bfe50f3baaea5f 34-38
+apps/mobile/features/ai-chat/components/ConversationList.tsx
+  s_b2219b9683913c::t_bfe50f3baaea5f 6,15,113-114
+apps/mobile/features/dashboard/components/home-screen/HomeScreenContent.tsx
+  s_b2219b9683913c::t_bfe50f3baaea5f 41-47,49
+apps/mobile/__tests__/dashboard/home-screen.test.ts
+  s_b2219b9683913c::t_bfe50f3baaea5f 30-38
+apps/mobile/__tests__/budget/notifications.test.ts
+  s_b2219b9683913c::t_bfe50f3baaea5f 92
+apps/mobile/__tests__/navigation/tab-config.test.ts
+  s_b2219b9683913c::t_bfe50f3baaea5f 5,8,12-13,24
+apps/mobile/app/(tabs)/(budget)/index.tsx
+  s_b2219b9683913c::t_1905bfae798a89 1
+apps/mobile/app/(tabs)/(finance)/_layout.tsx
+  s_b2219b9683913c::t_bfe50f3baaea5f 13
+apps/mobile/app/(tabs)/(budget)/_layout.tsx
+  s_b2219b9683913c::t_1905bfae798a89 1-3,5
+  s_b2219b9683913c::t_83caf69cedcaee 4
+apps/mobile/app/(tabs)/(ai)/index.tsx
+  s_b2219b9683913c::t_bfe50f3baaea5f 53
+apps/mobile/features/ai-chat/components/ChatScreen.tsx
+  s_b2219b9683913c::t_bfe50f3baaea5f 18,24,43,125-131
+apps/mobile/app/(tabs)/(finance)/index.tsx
+  s_b2219b9683913c::t_bfe50f3baaea5f 22,130,139,147,151,185
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_b2219b9683913c::t_bfe50f3baaea5f 16,25,31-46,50-52,75-85
+apps/mobile/app/(tabs)/add/_layout.tsx
+  s_b2219b9683913c::t_bfe50f3baaea5f 4
+apps/mobile/__tests__/navigation/tab-layout.test.ts
+  s_b2219b9683913c::t_bfe50f3baaea5f 10,19-20,34-51,65-73
+apps/mobile/features/notifications/lib/display.ts
+  s_b2219b9683913c::t_bfe50f3baaea5f 110,120
+apps/mobile/__tests__/shared/screen-layout.test.ts
+  s_b2219b9683913c::t_bfe50f3baaea5f 40-44,49-53
+apps/mobile/__tests__/coming-soon/ai-tab.test.ts
+  s_b2219b9683913c::t_bfe50f3baaea5f 16-21
+apps/mobile/shared/i18n/locales/en.ts
+  s_b2219b9683913c::t_bfe50f3baaea5f 634
+apps/mobile/features/ai-chat/components/NewChatButton.tsx
+  s_b2219b9683913c::t_60cfed5087c6b9 1-19
+apps/mobile/shared/i18n/locales/es.ts
+  s_b2219b9683913c::t_bfe50f3baaea5f 642
+apps/mobile/app/(tabs)/_layout.tsx
+  s_b2219b9683913c::t_bfe50f3baaea5f 24-27,48
+apps/mobile/shared/components/navigation/tab-config.ts
+  s_b2219b9683913c::t_bfe50f3baaea5f 7
+apps/mobile/app/(tabs)/(index)/_layout.tsx
+  s_b2219b9683913c::t_bfe50f3baaea5f 15
+apps/mobile/app/(tabs)/(ai)/_layout.tsx
+  s_b2219b9683913c::t_bfe50f3baaea5f 4
+apps/mobile/features/budget/lib/notifications.ts
+  s_b2219b9683913c::t_bfe50f3baaea5f 69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "e36b13b365dc5b69cc382152972a9d6a77e72d6c",
+  "prompts": {},
+  "sessions": {
+    "s_b2219b9683913c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3eb4-9e50-7d31-ab24-3cdf117d694c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
