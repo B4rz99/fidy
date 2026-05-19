@@ -52,6 +52,11 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
   },
+  keyFeedback: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.42)",
+    borderRadius: 14,
+  },
   keyText: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 19,
