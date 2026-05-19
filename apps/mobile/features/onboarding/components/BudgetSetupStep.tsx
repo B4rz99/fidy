@@ -5,6 +5,7 @@ import {
   loadBudgetAutoSuggestions,
   useBudgetStore,
 } from "@/features/budget/public";
+import { useEmailCaptureStore } from "@/features/email-capture/public";
 import { CATEGORY_MAP } from "@/shared/categories";
 import {
   Pressable,
@@ -21,6 +22,7 @@ import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney } from "@/shared/lib";
 import { logOnboardingEvent, trackOnboardingEvent } from "../lib/telemetry";
 import { useOnboardingStore } from "../store";
+import { shouldRefreshBudgetSuggestions } from "./BudgetSetupStep.helpers";
 
 export function BudgetSetupStep() {
   const { t, locale } = useTranslation();
@@ -38,13 +40,23 @@ export function BudgetSetupStep() {
 
   const { isBusy, run: guardedRun } = useAsyncGuard();
 
-  // Load suggestions on mount
   useMountEffect(() => {
     if (!userId || !db) return;
-    logOnboardingEvent("budget_suggestions_load_start");
-    loadBudgetAutoSuggestions(db, userId);
-    trackOnboardingEvent("budget_suggestions_loaded", {
-      suggestionCount: useBudgetStore.getState().autoSuggestions.length,
+    const loadSuggestions = (trackLoaded: boolean) => {
+      if (trackLoaded) {
+        logOnboardingEvent("budget_suggestions_load_start");
+      }
+      loadBudgetAutoSuggestions(db, userId);
+      if (!trackLoaded) return;
+      trackOnboardingEvent("budget_suggestions_loaded", {
+        suggestionCount: useBudgetStore.getState().autoSuggestions.length,
+      });
+    };
+    loadSuggestions(true);
+
+    return useEmailCaptureStore.subscribe((state, previousState) => {
+      if (!shouldRefreshBudgetSuggestions(previousState, state)) return;
+      loadSuggestions(false);
     });
   });
 
