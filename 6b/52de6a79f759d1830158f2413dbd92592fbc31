@@ -1,0 +1,57 @@
+apps/mobile/features/email-capture/services/email-parse-improvement-sharing.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 1-2,5-24,27,32-63,65-71
+apps/mobile/__tests__/capture-sources/notification-parse-improvement.test.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 193-230
+apps/mobile/bootstrap/authenticated-shell.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 17-20,45
+apps/mobile/features/settings/components/SettingsScreen.tsx
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 6,8-11,31,33,45-56,75,102-125,247,280
+apps/mobile/__tests__/email-capture/use-email-capture.test.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 11-16
+apps/mobile/__tests__/email-capture/parse-improvement-sharing.test.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 3,6-14,16-19,22-26,31,34-35,49-50,53,55,57,61-66,69,71,73,77,80,82,86,88,94-111
+apps/mobile/shared/types/branded.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 18
+apps/mobile/features/email-capture/hooks/useEmailCapture.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 18-34
+apps/mobile/features/email-capture/store.ts
+  s_cb4e7a09c1bd42::t_998bc5eef31864 194
+  s_cb4e7a09c1bd42::t_dc9f9270b700a3 2,33-36
+apps/mobile/shared/db/schema.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 24,266-289
+apps/mobile/drizzle/migrations.js
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 32,68
+apps/mobile/__tests__/setup.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 270-271
+apps/mobile/features/email-capture/services/bank-email-parser.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 36-50,94-195,237-238
+apps/mobile/features/capture-sources/lib/notification-parse-improvement-repository.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 1,13-34,41-42,96-106,130-133
+apps/mobile/features/email-capture/store/fetch-processing.ts
+  s_cb4e7a09c1bd42::t_dc9f9270b700a3 1-18,24-156
+  s_cb4e7a09c1bd42::t_027f87fec4566b 19-23
+apps/mobile/features/email-capture/bootstrap.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 1-7,9-11,16-30
+apps/mobile/features/capture-sources/lib/notification-parse-improvement.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 24-25,144-147,149,169-172
+apps/mobile/shared/lib/generate-id.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 12,84-85
+apps/mobile/__tests__/email-capture/bank-email-parser.test.ts
+  s_cb4e7a09c1bd42::t_88604ae1b305e4 86-155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "6b52de6a79f759d1830158f2413dbd92592fbc31",
+  "prompts": {},
+  "sessions": {
+    "s_cb4e7a09c1bd42": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3eb2-2838-7f80-8802-f556eeaa9709",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
