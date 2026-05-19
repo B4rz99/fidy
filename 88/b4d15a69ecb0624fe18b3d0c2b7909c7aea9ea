@@ -1,0 +1,33 @@
+apps/mobile/features/settings/components/ProfileScreen.tsx
+  s_e6640baae8b728::t_a2a080304eea81 34,114
+apps/mobile/__tests__/i18n/i18n.test.ts
+  s_e6640baae8b728::t_a2a080304eea81 46
+apps/mobile/shared/i18n/locales/en.ts
+  s_e6640baae8b728::t_a2a080304eea81 107,110-115,117-118,124,136,141,143,152,164,195,220,236,248,257,263-264,266-267,269-270,313,327,333,341,351,358,378,390-395,401,416,426-427,479,615,661,667,679-681,685-686,693,695-698,731,733,743,746,756,788-793,878,882,948,979,986,1087,1090-1091
+apps/mobile/features/goals/components/goal-sheet/useGoalEditActions.ts
+  s_e6640baae8b728::t_a2a080304eea81 81,83
+apps/mobile/shared/i18n/locales/es.ts
+  s_e6640baae8b728::t_a2a080304eea81 110,113-118,120-121,128,140,145,147,156,168,199,225,241,254,263,269-270,273,275-277,320,334,340,348,358,365,385,397-402,408,424,434-435,487,670,688-690,694-695,702,704-708,754,757,768,803-808,897,901,998,1007,1108,1111-1112
+apps/mobile/shared/components/ErrorFallback.tsx
+  s_e6640baae8b728::t_a2a080304eea81 4,7-8,33,45,66
+apps/mobile/features/dashboard/components/home-screen/useHomeActivityFeed.ts
+  s_e6640baae8b728::t_a2a080304eea81 147,149
+apps/mobile/__tests__/error-handling/error-boundary.test.ts
+  s_e6640baae8b728::t_a2a080304eea81 32-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "88b4d15a69ecb0624fe18b3d0c2b7909c7aea9ea",
+  "prompts": {},
+  "sessions": {
+    "s_e6640baae8b728": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3edf-4161-7632-b2ba-9181bc1a915c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
