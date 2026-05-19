@@ -75,7 +75,7 @@ function showDeleteConfirmation({
   readonly userId: UserId;
 }) {
   Alert.alert(
-    t("goals.edit.deleteConfirmTitle"),
+    t("goals.edit.deleteConfirmTitle", { goalName }),
     t("goals.edit.deleteConfirmMessage", { goalName }),
     [
       { text: t("goals.edit.keepGoal"), style: "cancel" },

@@ -398,7 +398,7 @@ const es = {
       saveChanges: "Guardar cambios",
       deleteGoal: "Eliminar meta",
       deleteConfirmTitle: '¿Eliminar "%{goalName}"?',
-      deleteConfirmMessage: "Esto eliminará la meta y su historial de contribuciones.",
+      deleteConfirmMessage: "Esto quitará la meta de tus metas activas.",
       keepGoal: "Conservar meta",
     },
     card: {

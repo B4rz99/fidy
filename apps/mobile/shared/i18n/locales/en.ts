@@ -391,7 +391,7 @@ const en = {
       saveChanges: "Save changes",
       deleteGoal: "Delete goal",
       deleteConfirmTitle: 'Delete "%{goalName}"?',
-      deleteConfirmMessage: "This will remove the goal and its contribution history.",
+      deleteConfirmMessage: "This will remove the goal from your active goals.",
       keepGoal: "Keep goal",
     },
     card: {
