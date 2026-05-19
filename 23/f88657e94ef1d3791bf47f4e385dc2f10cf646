@@ -1,0 +1,19 @@
+apps/mobile/plugins/withFidyWidget.appDelegate.js
+  s_c470af7990caf6::t_c045570b7a2b0c 5-6,9-13,31-68,77-79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "23f88657e94ef1d3791bf47f4e385dc2f10cf646",
+  "prompts": {},
+  "sessions": {
+    "s_c470af7990caf6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3b3d-cc9c-7860-84a1-925c43e5aef2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
