@@ -144,9 +144,9 @@ export function useHomeActivityFeed({
   const onDeleteTransaction = useCallback(
     (id: TransactionId) => {
       Alert.alert(t("transactions.deleteConfirmTitle"), t("transactions.deleteConfirmMessage"), [
-        { text: t("common.cancel"), style: "cancel" },
+        { text: t("transactions.keepTransaction"), style: "cancel" },
         {
-          text: t("common.delete"),
+          text: t("transactions.deleteTransaction"),
           style: "destructive",
           onPress: () => {
             if (!db || !userId) return;
