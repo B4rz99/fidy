@@ -11,10 +11,25 @@ const makeFormatter = (config: CurrencyConfig): Intl.NumberFormat =>
     minimumFractionDigits: config.exponent,
   });
 
-const defaultFormatter = makeFormatter(getActiveCurrency());
+const formatterKey = (config: CurrencyConfig): string =>
+  `${config.locale}:${config.code}:${config.exponent}`;
 
-const getFormatter = (config?: CurrencyConfig): Intl.NumberFormat =>
-  config ? makeFormatter(config) : defaultFormatter;
+const activeCurrency = getActiveCurrency();
+const formatterCache = new Map<string, Intl.NumberFormat>([
+  [formatterKey(activeCurrency), makeFormatter(activeCurrency)],
+]);
+
+const getFormatter = (config: CurrencyConfig = activeCurrency): Intl.NumberFormat => {
+  const key = formatterKey(config);
+  const cached = formatterCache.get(key);
+  if (cached) {
+    return cached;
+  }
+
+  const formatter = makeFormatter(config);
+  formatterCache.set(key, formatter);
+  return formatter;
+};
 
 /** Remove locale-inserted whitespace between currency symbol and number. */
 const stripCurrencySpace = (formatted: string): string => formatted.replace(/\s+/g, "");

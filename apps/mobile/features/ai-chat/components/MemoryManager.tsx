@@ -14,6 +14,8 @@ type MemoryManagerProps = {
 
 const ItemSeparator = () => <View style={{ height: 8 }} />;
 
+const memoryKeyExtractor = (item: UserMemory) => item.id;
+
 const MemoryCard = memo(function MemoryCardInner({
   memory,
   onDelete,
@@ -92,7 +94,7 @@ export function MemoryManager({ onBack }: MemoryManagerProps) {
       <FlashList
         data={memories}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={memoryKeyExtractor}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
           paddingBottom: TAB_BAR_CLEARANCE,

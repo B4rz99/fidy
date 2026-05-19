@@ -1,8 +1,8 @@
+import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
 import { useCallback, useMemo } from "react";
-import type { ListRenderItemInfo } from "react-native";
 import type { StoredActivityItem } from "@/features/activity/query.public";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
-import { FlatList, Platform } from "@/shared/components/rn";
+import { Platform, StyleSheet } from "@/shared/components/rn";
 import { EmptyTransactions } from "../EmptyTransactions";
 import { ActivityFeedItem } from "./ActivityFeedItem";
 import { HomeScreenActions } from "./HomeScreenActions";
@@ -12,6 +12,8 @@ import type { HomeScreenModel } from "./useHomeScreen";
 type HomeScreenContentProps = {
   readonly model: HomeScreenModel;
 };
+
+const keyExtractor = (item: StoredActivityItem) => item.id;
 
 export function HomeScreenContent({ model }: HomeScreenContentProps) {
   const renderItem = useCallback(
@@ -41,20 +43,26 @@ export function HomeScreenContent({ model }: HomeScreenContentProps) {
 
   return (
     <ScreenLayout title="fidy" rightActions={headerActions}>
-      <FlatList
+      <FlashList
         data={model.activityFeed.activityPages}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={keyExtractor}
         onEndReached={model.activityFeed.handleEndReached}
         onEndReachedThreshold={0.1}
         scrollEventThrottle={16}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={model.showEmptyTransactions ? <EmptyTransactions /> : undefined}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 0 }}
+        contentContainerStyle={styles.listContent}
         contentInset={{ bottom: TAB_BAR_CLEARANCE }}
         contentInsetAdjustmentBehavior="automatic"
       />
     </ScreenLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  listContent: {
+    paddingBottom: 0,
+  },
+});

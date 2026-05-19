@@ -6,6 +6,9 @@ export const styles = StyleSheet.create({
     paddingBottom: 28,
     gap: 14,
   },
+  itemSeparator: {
+    height: 14,
+  },
   card: {
     borderRadius: 20,
     borderWidth: 1,

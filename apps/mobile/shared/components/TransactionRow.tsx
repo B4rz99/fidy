@@ -1,5 +1,17 @@
 import { useCallback } from "react";
-import { ActionSheetIOS, Platform, Pressable, Text, View } from "@/shared/components/rn";
+import * as Haptics from "expo-haptics";
+import ReanimatedSwipeable, {
+  type SwipeableMethods,
+} from "react-native-gesture-handler/ReanimatedSwipeable";
+import type { SharedValue } from "react-native-reanimated";
+import {
+  ActionSheetIOS,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 type TransactionRowProps = {
@@ -15,6 +27,8 @@ type TransactionRowProps = {
   onEdit?: () => void;
   onDelete?: () => void;
 };
+
+const SWIPE_ACTION_WIDTH = 88;
 
 function getAmountClassName(amountTone: NonNullable<TransactionRowProps["amountTone"]>): string {
   if (amountTone === "positive") return "text-accent-green dark:text-accent-green-dark";
@@ -45,6 +59,8 @@ export function TransactionRow({
   const handleLongPress = useCallback(() => {
     if (Platform.OS !== "ios") return;
 
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
     const options = [
       ...(onEdit ? [t("common.edit")] : []),
       ...(onDelete ? [t("common.delete")] : []),
@@ -63,7 +79,58 @@ export function TransactionRow({
     );
   }, [onEdit, onDelete, t]);
 
-  const hasActions = (onEdit != null || onDelete != null) && Platform.OS === "ios";
+  const renderRightActions = useCallback(
+    (
+      _progress: SharedValue<number>,
+      _translation: SharedValue<number>,
+      swipeable: SwipeableMethods
+    ) => {
+      const handleEditPress = () => {
+        swipeable.close();
+        void Haptics.selectionAsync();
+        onEdit?.();
+      };
+      const handleDeletePress = () => {
+        swipeable.close();
+        void Haptics.selectionAsync();
+        onDelete?.();
+      };
+
+      return (
+        <View className="flex-row items-stretch py-3">
+          {onEdit ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("common.edit")}
+              className="items-center justify-center bg-secondary dark:bg-secondary-dark"
+              style={styles.swipeAction}
+              onPress={handleEditPress}
+            >
+              <Text className="font-poppins-semibold text-caption text-white">
+                {t("common.edit")}
+              </Text>
+            </Pressable>
+          ) : null}
+          {onDelete ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("common.delete")}
+              className="items-center justify-center bg-accent-red dark:bg-accent-red-dark"
+              style={styles.swipeAction}
+              onPress={handleDeletePress}
+            >
+              <Text className="font-poppins-semibold text-caption text-white">
+                {t("common.delete")}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+      );
+    },
+    [onDelete, onEdit, t]
+  );
+
+  const hasActions = onEdit != null || onDelete != null;
 
   const content = (
     <View className="flex-row items-center py-3">
@@ -94,5 +161,20 @@ export function TransactionRow({
 
   if (!hasActions) return content;
 
-  return <Pressable onLongPress={handleLongPress}>{content}</Pressable>;
+  return (
+    <ReanimatedSwipeable
+      friction={2}
+      rightThreshold={SWIPE_ACTION_WIDTH}
+      overshootRight={false}
+      renderRightActions={renderRightActions}
+    >
+      <Pressable onLongPress={handleLongPress}>{content}</Pressable>
+    </ReanimatedSwipeable>
+  );
 }
+
+const styles = StyleSheet.create({
+  swipeAction: {
+    width: SWIPE_ACTION_WIDTH,
+  },
+});

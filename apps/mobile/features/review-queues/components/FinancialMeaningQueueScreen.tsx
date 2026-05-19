@@ -1,7 +1,7 @@
 import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import {
@@ -23,6 +23,8 @@ import { getReviewQueueProviderLabel } from "../lib/source-labels";
 import { styles } from "./FinancialMeaningQueueScreen.styles";
 import { ActionButton, EmptyState, SummaryCard } from "./shared";
 
+const QueueItemSeparator = () => <View style={styles.itemSeparator} />;
+
 function FinancialMeaningQueueCard({
   item,
   disabled,
@@ -32,9 +34,15 @@ function FinancialMeaningQueueCard({
 }: {
   readonly item: ReturnType<typeof useFinancialMeaningReviewQueue>["items"][number];
   readonly disabled: boolean;
-  readonly onReview: () => void;
-  readonly onDismiss: () => void;
-  readonly onSkip: () => void;
+  readonly onReview: (
+    processedSourceEventId: ProcessedSourceEventId,
+    reviewCandidateId: ReviewCandidateId
+  ) => void;
+  readonly onDismiss: (
+    processedSourceEventId: ProcessedSourceEventId,
+    reviewCandidateId: ReviewCandidateId
+  ) => void;
+  readonly onSkip: (id: string) => void;
 }) {
   const { t, locale } = useTranslation();
   const primary = useThemeColor("primary");
@@ -56,10 +64,22 @@ function FinancialMeaningQueueCard({
       : transactionType === "expense"
         ? accentRed
         : primary;
+  const reviewCandidateId = item.reviewCandidate.id;
+  const processedSourceEventId = item.processedSourceEvent.id;
+  const itemId = getFinancialMeaningQueueItemId(item);
+  const handleReviewPress = useCallback(
+    () => onReview(processedSourceEventId, reviewCandidateId),
+    [onReview, processedSourceEventId, reviewCandidateId]
+  );
+  const handleDismissPress = useCallback(
+    () => onDismiss(processedSourceEventId, reviewCandidateId),
+    [onDismiss, processedSourceEventId, reviewCandidateId]
+  );
+  const handleSkipPress = useCallback(() => onSkip(itemId), [itemId, onSkip]);
 
   return (
     <View style={[styles.card, { backgroundColor: card, borderColor: borderSubtle }]}>
-      <Pressable onPress={onReview} disabled={disabled} style={styles.cardPressable}>
+      <Pressable onPress={handleReviewPress} disabled={disabled} style={styles.cardPressable}>
         <View style={styles.cardMetaRow}>
           <Text style={[styles.cardMetaLabel, { color: tertiary }]}>{providerLabel}</Text>
           <ChevronRight size={16} color={tertiary} />
@@ -97,18 +117,18 @@ function FinancialMeaningQueueCard({
       <View style={styles.actionRow}>
         <ActionButton
           label={t("financialMeaningReview.reviewMeaning")}
-          onPress={onReview}
+          onPress={handleReviewPress}
           disabled={disabled}
         />
         <ActionButton
           label={t("financialMeaningReview.dismiss")}
-          onPress={onDismiss}
+          onPress={handleDismissPress}
           variant="outline"
           disabled={disabled}
         />
         <ActionButton
           label={t("financialMeaningReview.skip")}
-          onPress={onSkip}
+          onPress={handleSkipPress}
           variant="ghost"
           disabled={disabled}
         />
@@ -131,30 +151,60 @@ export function FinancialMeaningQueueScreen() {
     (item) => !skippedIds.includes(getFinancialMeaningQueueItemId(item))
   );
 
-  const handleDismissSourceEvent = (
-    processedSourceEventId: ProcessedSourceEventId,
-    reviewCandidateId: ReviewCandidateId
-  ) => {
-    void guardedAction(async () => {
-      if (!db || !userId) {
-        return;
-      }
-
-      try {
-        await dismissSourceEventFinancialMeaningReview(
-          db,
-          userId,
+  const handleReview = useCallback(
+    (processedSourceEventId: ProcessedSourceEventId, reviewCandidateId: ReviewCandidateId) => {
+      router.push({
+        pathname: "/meaning-review",
+        params: {
           processedSourceEventId,
-          reviewCandidateId
-        );
-        await loadNeedsReviewEmails(db, userId);
-        await refreshTransactions(db, userId);
-        await reloadQueue();
-      } catch {
-        showErrorToast(t("financialMeaningReview.errors.dismissFailed"));
-      }
-    });
-  };
+          reviewCandidateId,
+        },
+      } as never);
+    },
+    [router]
+  );
+
+  const handleDismissSourceEvent = useCallback(
+    (processedSourceEventId: ProcessedSourceEventId, reviewCandidateId: ReviewCandidateId) => {
+      void guardedAction(async () => {
+        if (!db || !userId) {
+          return;
+        }
+
+        try {
+          await dismissSourceEventFinancialMeaningReview(
+            db,
+            userId,
+            processedSourceEventId,
+            reviewCandidateId
+          );
+          await loadNeedsReviewEmails(db, userId);
+          await refreshTransactions(db, userId);
+          await reloadQueue();
+        } catch {
+          showErrorToast(t("financialMeaningReview.errors.dismissFailed"));
+        }
+      });
+    },
+    [db, guardedAction, reloadQueue, t, userId]
+  );
+
+  const handleSkip = useCallback((id: string) => {
+    setSkippedIds((current) => (current.includes(id) ? current : [...current, id]));
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: (typeof visibleItems)[number] }) => (
+      <FinancialMeaningQueueCard
+        item={item}
+        disabled={isBusy}
+        onReview={handleReview}
+        onDismiss={handleDismissSourceEvent}
+        onSkip={handleSkip}
+      />
+    ),
+    [handleDismissSourceEvent, handleReview, handleSkip, isBusy]
+  );
 
   return (
     <ScreenLayout
@@ -173,7 +223,7 @@ export function FinancialMeaningQueueScreen() {
           keyExtractor={getFinancialMeaningQueueItemId}
           contentContainerStyle={[styles.listContent, { paddingBottom: bottom + 28 }]}
           contentInsetAdjustmentBehavior="automatic"
-          ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
+          ItemSeparatorComponent={QueueItemSeparator}
           ListHeaderComponent={
             <SummaryCard
               icon={TriangleAlert}
@@ -181,31 +231,7 @@ export function FinancialMeaningQueueScreen() {
               subtitle={t("financialMeaningReview.queueSubtitle")}
             />
           }
-          renderItem={({ item }) => (
-            <FinancialMeaningQueueCard
-              item={item}
-              disabled={isBusy}
-              onReview={() =>
-                router.push({
-                  pathname: "/meaning-review",
-                  params: {
-                    processedSourceEventId: item.processedSourceEvent.id,
-                    reviewCandidateId: item.reviewCandidate.id,
-                  },
-                } as never)
-              }
-              onDismiss={() =>
-                handleDismissSourceEvent(item.processedSourceEvent.id, item.reviewCandidate.id)
-              }
-              onSkip={() =>
-                setSkippedIds((current) =>
-                  current.includes(getFinancialMeaningQueueItemId(item))
-                    ? current
-                    : [...current, getFinancialMeaningQueueItemId(item)]
-                )
-              }
-            />
-          )}
+          renderItem={renderItem}
         />
       )}
     </ScreenLayout>
