@@ -156,6 +156,16 @@ describe("useBudgetStore", () => {
     expect(useBudgetStore.getState().isLoading).toBe(false);
   });
 
+  it("keeps loaded budget totals addressable by month", async () => {
+    mockRefreshMonth.mockResolvedValueOnce(MARCH_STALE_SNAPSHOT);
+
+    const { loadBudgetsForUser, useBudgetStore } = await initializeBudgetStore("2026-03" as Month);
+
+    await loadBudgetsForUser(mockDb, USER_ID);
+
+    expect(useBudgetStore.getState().budgetTotalByMonth["2026-03" as Month]).toBe(100000);
+  });
+
   it("clears loading when context changes without starting a newer refresh", async () => {
     const deferredSnapshot = createDeferred<BudgetMonthSnapshot>();
     mockRefreshMonth.mockReturnValueOnce(deferredSnapshot.promise);

@@ -41,6 +41,14 @@ const QA_TARGET_BY_KEY: Record<QaTargetKey, QaTarget> = {
   [QA_TARGET_KEYS.profile]: QA_TARGETS.profile,
   [QA_TARGET_KEYS.qaTools]: QA_TARGETS.qaTools,
 };
+const DEFAULT_QA_TARGET_BY_PROFILE = {
+  default: QA_TARGETS.home,
+  empty: QA_TARGETS.onboarding,
+  "home-activity": QA_TARGETS.home,
+  "transfer-ready": QA_TARGETS.addTransfer,
+  "transfer-conflict": QA_TARGETS.transferConflict,
+  "two-accounts": QA_TARGETS.financialAccounts,
+} satisfies Record<LocalQaProfile, QaTarget>;
 
 export { isLocalQaProfile };
 
@@ -57,9 +65,5 @@ export function getQaTargetFromKey(key: QaTargetKey): QaTarget {
 }
 
 export function getDefaultQaTarget(profile: LocalQaProfile): QaTarget {
-  if (profile === "empty") return QA_TARGETS.onboarding;
-  if (profile === "two-accounts") return QA_TARGETS.financialAccounts;
-  if (profile === "transfer-ready") return QA_TARGETS.addTransfer;
-  if (profile === "transfer-conflict") return QA_TARGETS.transferConflict;
-  return QA_TARGETS.home;
+  return DEFAULT_QA_TARGET_BY_PROFILE[profile];
 }

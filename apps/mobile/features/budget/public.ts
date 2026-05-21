@@ -29,6 +29,7 @@ export {
 export type { Budget, CreateBudgetInput } from "./schema";
 export { createBudgetSchema } from "./schema";
 export { subscribeBudgetToTransactions } from "./services/subscribe-budget-to-transactions";
+export { formatBudgetMonth } from "./store/month";
 export {
   acceptBudgetSuggestions,
   copyBudgetsForward,

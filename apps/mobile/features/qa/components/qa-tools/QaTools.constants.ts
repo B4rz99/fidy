@@ -3,6 +3,7 @@ import { getDefaultQaTarget, type LocalQaProfile, QA_TARGETS, type QaTarget } fr
 
 export const QA_PROFILES = [
   "default",
+  "home-activity",
   "empty",
   "two-accounts",
   "transfer-ready",

@@ -6,6 +6,7 @@ const LOCAL_QA_SESSION_KEY = "qa_local_session_v1";
 
 const LOCAL_QA_PROFILES = [
   "default",
+  "home-activity",
   "empty",
   "two-accounts",
   "transfer-ready",

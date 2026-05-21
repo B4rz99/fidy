@@ -7,7 +7,7 @@ type DateHeaderProps = {
 
 export const DateHeader = memo(function DateHeader({ label }: DateHeaderProps) {
   return (
-    <View className="bg-page px-4 py-2 dark:bg-page-dark">
+    <View className="px-4 pb-2 pt-4">
       <Text className="font-poppins-semibold text-caption uppercase tracking-widest text-secondary dark:text-secondary-dark">
         {label}
       </Text>

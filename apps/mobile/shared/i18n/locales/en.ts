@@ -41,6 +41,14 @@ const en = {
 
   // Dashboard
   dashboard: {
+    average: "Average",
+    categoryBars: "Spending by category",
+    dailyPace: "Daily",
+    dailyPaceGuidance: "Spend up to %{amount} per day to stay within budget.",
+    monthlySpend: "Monthly spend",
+    noBudgetGuidance:
+      "Set a monthly budget to see your daily spending limit. Current average: %{amount}.",
+    spendingSummary: "Monthly spending summary",
     spentThisMonth: "Spent this month",
   },
 
@@ -821,6 +829,10 @@ const en = {
       default: {
         title: "Default",
         description: "One default cash account and onboarding complete.",
+      },
+      "home-activity": {
+        title: "Home activity",
+        description: "Recent expenses and one transfer for dashboard visual QA.",
       },
       empty: {
         title: "Empty",
