@@ -1,0 +1,59 @@
+apps/mobile/features/dashboard/components/home-screen/HomeScreenHeader.tsx
+  s_4906ed59644b6a::t_0123b4c38dd8d1 6,18,24,27-31,34,37,41-61,63,65-66
+apps/mobile/__tests__/qa/entry-points.test.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 12,29
+apps/mobile/features/qa/lib/entry-points.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 62
+apps/mobile/features/settings/ui.public.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 2
+package.json
+  s_4906ed59644b6a::t_0123b4c38dd8d1 19-21
+apps/mobile/shared/i18n/locales/en.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 44-50,832-835
+apps/mobile/features/dashboard/components/home-screen/ActivityFeedItem.tsx
+  s_4906ed59644b6a::t_0123b4c38dd8d1 8,29-30,51-62,80-81,98-109,141-154
+apps/mobile/app/(tabs)/(index)/_layout.tsx
+  s_4906ed59644b6a::t_0123b4c38dd8d1 4
+apps/mobile/features/qa/start-local-qa-session.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 3,8,31-33,38-42
+apps/mobile/features/budget/public.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 32
+apps/mobile/features/qa/lib/build-local-qa-seed.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 1,9,18,25,32,53-82,130,135-255,314,340
+apps/mobile/__tests__/setup.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 336-337,344
+apps/mobile/features/dashboard/components/home-screen/useHomeScreen.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 1,3,18,28-29,31-39,45
+apps/mobile/features/qa/local-session.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 9
+apps/mobile/__tests__/qa/build-local-qa-seed.test.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 70-89
+apps/mobile/shared/i18n/locales/es.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 44-50,848-851
+apps/mobile/__tests__/dashboard/home-screen.test.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 19,35-36,49-54,62-71,75
+apps/mobile/features/dashboard/components/home-screen/HomeScreenContent.tsx
+  s_4906ed59644b6a::t_0123b4c38dd8d1 4,6-7,10,22-24,39-46,57-80
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_4906ed59644b6a::t_0123b4c38dd8d1 14-16,26-28,56-57,62-63,80-89
+apps/mobile/features/dashboard/components/DateHeader.tsx
+  s_4906ed59644b6a::t_0123b4c38dd8d1 10
+apps/mobile/features/qa/components/qa-tools/QaTools.constants.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "5b60acbdfdc319e2d6160ba28f2015233e4e0c73",
+  "prompts": {},
+  "sessions": {
+    "s_4906ed59644b6a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4b8c-65eb-7b62-b755-28dd498aba70",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
