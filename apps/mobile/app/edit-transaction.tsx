@@ -185,12 +185,9 @@ export default function EditTransactionScreen() {
         onDigitsChange={(digits) => setDraft({ type: "setDigits", digits })}
         onCategoryChange={(categoryId) => setDraft({ type: "update", update: { categoryId } })}
         onAccountChange={(accountId) => setDraft({ type: "update", update: { accountId } })}
-        onDescriptionChange={(description) =>
-          setDraft({ type: "update", update: { description } })
-        }
+        onDescriptionChange={(description) => setDraft({ type: "update", update: { description } })}
         onSave={handleSave}
         onDelete={handleDelete}
-        onClose={back}
         extraActionLabel={
           draft.source === "manual" ? undefined : t("transactions.convertToTransfer")
         }
@@ -201,6 +198,7 @@ export default function EditTransactionScreen() {
                 push({
                   pathname: "/reclassify-transaction",
                   params: {
+                    nestedDialog: "1",
                     transactionId,
                   },
                 })

@@ -73,6 +73,24 @@ describe("Tab layout", () => {
     expect(financeSource).not.toContain('t("budgets.title")');
   });
 
+  test("finance segment defaults to analytics and orders goals before calendar", () => {
+    const financeSource = readFileSync(
+      resolve(__dirname, "../../app/(tabs)/(finance)/index.tsx"),
+      "utf-8"
+    );
+
+    expect(financeSource).toContain('useState<FinanceTab>("analytics")');
+    const analyticsIndex = financeSource.indexOf('{ key: "analytics"');
+    const goalsIndex = financeSource.indexOf('{ key: "goals"');
+    const calendarIndex = financeSource.indexOf('{ key: "calendar"');
+
+    expect(analyticsIndex).toBeGreaterThanOrEqual(0);
+    expect(goalsIndex).toBeGreaterThanOrEqual(0);
+    expect(calendarIndex).toBeGreaterThanOrEqual(0);
+    expect(analyticsIndex).toBeLessThan(goalsIndex);
+    expect(goalsIndex).toBeLessThan(calendarIndex);
+  });
+
   test("does not reference MenuPanel", () => {
     expect(layoutSource).not.toContain("MenuPanel");
   });

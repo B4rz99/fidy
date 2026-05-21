@@ -1,8 +1,7 @@
 import { StyleSheet } from "@/shared/components/rn";
 
 export const styles = StyleSheet.create({
-  container: { flex: 1 },
-  grabBar: { width: 36, height: 5, borderRadius: 3, alignSelf: "center" },
+  container: {},
   scrollContent: { padding: 24, gap: 16 },
   title: { fontFamily: "Poppins_700Bold", fontSize: 18, textAlign: "center" },
   toggleRow: { flexDirection: "row", gap: 8 },

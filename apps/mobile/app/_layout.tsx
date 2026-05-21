@@ -212,24 +212,12 @@ function RootLayout() {
             <Stack.Screen name="(tabs)" />
             {localQaAvailable ? <Stack.Screen name="qa-tools" options={iosHeaderOptions} /> : null}
             {localQaAvailable ? <Stack.Screen name="qa-open" options={iosHeaderOptions} /> : null}
-            <Stack.Screen
-              name="add-bill"
-              options={DIALOG_MODAL}
-            />
-            <Stack.Screen
-              name="day-detail"
-              options={DIALOG_MODAL}
-            />
+            <Stack.Screen name="add-bill" options={DIALOG_MODAL} />
+            <Stack.Screen name="day-detail" options={DIALOG_MODAL} />
             <Stack.Screen name="theme-picker" options={DIALOG_MODAL} />
             <Stack.Screen name="language-picker" options={DIALOG_MODAL} />
-            <Stack.Screen
-              name="delete-account"
-              options={DIALOG_MODAL}
-            />
-            <Stack.Screen
-              name="enable-notifications"
-              options={DIALOG_MODAL}
-            />
+            <Stack.Screen name="delete-account" options={DIALOG_MODAL} />
+            <Stack.Screen name="enable-notifications" options={DIALOG_MODAL} />
             <Stack.Screen name="analytics" options={iosHeaderOptions} />
             <Stack.Screen name="notifications" options={iosHeaderOptions} />
             <Stack.Screen name="search" options={iosHeaderOptions} />
@@ -250,27 +238,12 @@ function RootLayout() {
               name="link-suggested-account"
               options={{ ...DIALOG_MODAL, ...iosHeaderOptions }}
             />
-            <Stack.Screen
-              name="create-budget"
-              options={DIALOG_MODAL}
-            />
-            <Stack.Screen
-              name="auto-suggest-budgets"
-              options={DIALOG_MODAL}
-            />
+            <Stack.Screen name="create-budget" options={DIALOG_MODAL} />
+            <Stack.Screen name="auto-suggest-budgets" options={DIALOG_MODAL} />
             <Stack.Screen name="goal-detail" options={iosHeaderOptions} />
-            <Stack.Screen
-              name="create-goal"
-              options={DIALOG_MODAL}
-            />
-            <Stack.Screen
-              name="add-payment"
-              options={DIALOG_MODAL}
-            />
-            <Stack.Screen
-              name="edit-goal"
-              options={DIALOG_MODAL}
-            />
+            <Stack.Screen name="create-goal" options={DIALOG_MODAL} />
+            <Stack.Screen name="add-payment" options={DIALOG_MODAL} />
+            <Stack.Screen name="edit-goal" options={DIALOG_MODAL} />
             <Stack.Screen
               name="add-transaction"
               options={{
@@ -284,10 +257,7 @@ function RootLayout() {
             <Stack.Screen name="ai-memories" options={iosHeaderOptions} />
             <Stack.Screen name="notification-preferences" options={iosHeaderOptions} />
             <Stack.Screen name="categories" options={iosHeaderOptions} />
-            <Stack.Screen
-              name="create-category"
-              options={DIALOG_MODAL}
-            />
+            <Stack.Screen name="create-category" options={DIALOG_MODAL} />
             <Stack.Screen
               name="edit-transaction"
               options={{
@@ -296,6 +266,7 @@ function RootLayout() {
                 sheetGrabberVisible: false,
               }}
             />
+            <Stack.Screen name="reclassify-transaction" options={DIALOG_MODAL} />
             {localQaAvailable ? (
               <Stack.Screen name="qa-transfer-conflict" options={{ headerShown: false }} />
             ) : null}

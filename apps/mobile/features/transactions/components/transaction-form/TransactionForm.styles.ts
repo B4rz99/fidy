@@ -23,9 +23,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
   },
-  container: {
-    flex: 1,
-  },
+  container: {},
   dateChip: {
     alignItems: "center",
     borderRadius: 10,
@@ -72,7 +70,6 @@ export const styles = StyleSheet.create({
     gap: 4,
   },
   headerZone: {
-    flex: 1,
     gap: 12,
     justifyContent: "center",
     paddingHorizontal: 24,

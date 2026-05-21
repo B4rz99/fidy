@@ -1,6 +1,9 @@
 import { StyleSheet } from "@/shared/components/rn";
 
 export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   amountCard: {
     borderRadius: 18,
     paddingHorizontal: 16,

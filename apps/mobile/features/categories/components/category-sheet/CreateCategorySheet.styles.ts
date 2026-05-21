@@ -1,18 +1,12 @@
 import { StyleSheet } from "@/shared/components/rn";
 
 export const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {},
   scrollContent: {
     paddingTop: 12,
     paddingHorizontal: 24,
     paddingBottom: 24,
     gap: 16,
-  },
-  grabBar: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: "center",
   },
   title: {
     fontFamily: "Poppins_600SemiBold",

@@ -53,8 +53,7 @@ export function TransactionFormContent({
 
   return (
     <Pressable
-      style={styles.container}
-      className="bg-page dark:bg-page-dark"
+      style={[styles.container, { backgroundColor: cardColor }]}
       onPress={Keyboard.dismiss}
     >
       <View style={styles.headerZone}>

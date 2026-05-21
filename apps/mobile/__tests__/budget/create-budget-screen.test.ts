@@ -8,6 +8,7 @@ function readSource(relativePath: string) {
 
 const routeSource = readSource("../../app/create-budget.tsx");
 const layoutSource = readSource("../../app/_layout.tsx");
+const autoSuggestBudgetsSource = readSource("../../app/auto-suggest-budgets.tsx");
 const screenSource = readSource(
   "../../features/budget/components/create-budget/CreateBudgetScreen.tsx"
 );
@@ -30,6 +31,15 @@ test("create-budget is registered in root layout as a dialog modal", () => {
   const createBudgetBlock = layoutSource.slice(layoutSource.indexOf('name="create-budget"'));
   expect(createBudgetBlock.slice(0, 140)).toContain("DIALOG_MODAL");
   expect(layoutSource).not.toContain("formSheet");
+});
+
+test("auto-suggest budgets keeps the scroll view bounded inside the dialog", () => {
+  expect(autoSuggestBudgetsSource).toContain("style={styles.flex}");
+  expect(autoSuggestBudgetsSource).toContain(
+    "style={[styles.container, { backgroundColor: cardBg }]}"
+  );
+  expect(autoSuggestBudgetsSource).toContain("flex: { flex: 1 }");
+  expect(autoSuggestBudgetsSource).toContain("container: { flex: 1 }");
 });
 
 test("create-budget route uses the budget public route surface", () => {

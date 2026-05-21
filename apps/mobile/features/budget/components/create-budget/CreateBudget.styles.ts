@@ -20,9 +20,7 @@ export const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 8,
   },
-  container: {
-    flex: 1,
-  },
+  container: {},
   deleteButton: {
     alignItems: "center",
     borderCurve: "continuous",
