@@ -1,0 +1,99 @@
+apps/mobile/features/dashboard/components/DateHeader.tsx
+  s_4906ed59644b6a::t_0123b4c38dd8d1 10
+package.json
+  s_4906ed59644b6a::t_0123b4c38dd8d1 19-21
+  s_4906ed59644b6a::t_c7d0f799b37ea7 56
+apps/mobile/features/qa/lib/home-activity-seed.ts
+  s_4906ed59644b6a::t_9ccaaf32068967 1-163
+apps/mobile/features/qa/components/qa-tools/QaTools.constants.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 6
+apps/mobile/__tests__/qa/start-local-qa-session.test.ts
+  s_4906ed59644b6a::t_83f28736163a71 91
+  s_4906ed59644b6a::t_c8a19f3b4b983d 13-21,39,83-90,92-93,139,142-144
+apps/mobile/features/qa/lib/entry-points.ts
+  s_4906ed59644b6a::t_0a77df7f394262 44,46-50
+  s_4906ed59644b6a::t_43bd70d1a3460a 45,51,68
+apps/mobile/features/budget/public.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 32
+apps/mobile/features/dashboard/components/home-screen/ActivityFeedItem.tsx
+  s_4906ed59644b6a::t_0123b4c38dd8d1 8,29-30,51-62,80-81,98-109,141-154
+apps/mobile/features/dashboard/components/home-screen/HomeSpendingCard.tsx
+  s_4906ed59644b6a::t_ed82191ab44f54 70-74
+  s_4906ed59644b6a::t_a1bfef547ab707 136
+apps/mobile/features/dashboard/components/home-screen/HomeScreenHeader.tsx
+  s_4906ed59644b6a::t_0123b4c38dd8d1 6,18,24,27-31,34,36,44-64,66,68-69
+  s_4906ed59644b6a::t_3fe76e5fd957d4 37-40
+apps/mobile/features/qa/local-session.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 9
+apps/mobile/features/qa/lib/build-local-qa-seed.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 1,53-56,59,107,112,115
+  s_4906ed59644b6a::t_aed55b5c931c84 20,57-58,113-114
+apps/mobile/features/dashboard/components/home-screen/useHomeScreen.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 17,28-29
+  s_4906ed59644b6a::t_1d29961ae1479c 27
+  s_4906ed59644b6a::t_7063267f5a174b 2,30-32
+  s_4906ed59644b6a::t_fc2c9d648302b3 34
+  s_4906ed59644b6a::t_ff00d112133a44 35
+apps/mobile/__tests__/shared/screen-layout.test.ts
+  s_4906ed59644b6a::t_a82fb62bfdc717 57,59
+apps/mobile/__tests__/qa/entry-points.test.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 12,29
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_4906ed59644b6a::t_0123b4c38dd8d1 14-16,26-28,57-58,63-64,81-90
+  s_4906ed59644b6a::t_c38a5779130c58 40-41
+apps/mobile/features/dashboard/components/home-screen/HomeScreenContent.tsx
+  s_4906ed59644b6a::t_0123b4c38dd8d1 4,6-7,10,22-24,39-46,57-80
+apps/mobile/shared/i18n/locales/es.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 44-46,851-853
+  s_4906ed59644b6a::t_0c5505c3a4509e 47-52
+apps/mobile/__tests__/navigation/tab-layout.test.ts
+  s_4906ed59644b6a::t_ab9b90da805814 34,38-45,55
+apps/mobile/shared/i18n/locales/en.ts
+  s_4906ed59644b6a::t_0c5505c3a4509e 49-51
+  s_4906ed59644b6a::t_0123b4c38dd8d1 44-48,834-836
+apps/mobile/__tests__/dashboard/home-screen.test.ts
+  s_4906ed59644b6a::t_7bac993301153a 54-55
+  s_4906ed59644b6a::t_0c5505c3a4509e 19-21
+  s_4906ed59644b6a::t_0123b4c38dd8d1 37-38,51-53,56-57,65-74,78
+apps/mobile/features/qa/start-local-qa-session.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 38-40,45-48
+  s_4906ed59644b6a::t_0c5505c3a4509e 3-7,12-15
+apps/mobile/app/(tabs)/(index)/_layout.tsx
+  s_4906ed59644b6a::t_0123b4c38dd8d1 4
+apps/mobile/shared/components/PencilEntryScaffold.styles.ts
+  s_4906ed59644b6a::t_195546895027e5 56
+apps/mobile/features/settings/ui.public.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 2
+apps/mobile/app/edit-transaction.tsx
+  s_4906ed59644b6a::t_b9ed23ad0f3916 3,74,108,170
+apps/mobile/__tests__/budget/store.test.ts
+  s_4906ed59644b6a::t_ff00d112133a44 162
+  s_4906ed59644b6a::t_3a697f218116d5 159-161,163-166
+apps/mobile/features/budget/store/state.ts
+  s_4906ed59644b6a::t_1729ee61f109fb 17,55,75-78
+apps/mobile/__tests__/setup.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 336-337,344
+apps/mobile/package.json
+  s_4906ed59644b6a::t_953b918c985e95 32-33,48,50,52-53,56-63,66-69,74-76,78-82,84
+  s_4906ed59644b6a::t_2cde3c6e0254fe 46
+  s_4906ed59644b6a::t_ee28ceef6f6354 49,51,54-55,64-65
+  s_4906ed59644b6a::t_cea1af21ada7a6 96,100
+apps/mobile/__tests__/qa/build-local-qa-seed.test.ts
+  s_4906ed59644b6a::t_0123b4c38dd8d1 70-89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "673c60923006a38d2cc384f91cf60a7ab5cd6e8b",
+  "prompts": {},
+  "sessions": {
+    "s_4906ed59644b6a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4b8c-65eb-7b62-b755-28dd498aba70",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
