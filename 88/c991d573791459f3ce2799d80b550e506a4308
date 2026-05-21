@@ -1,0 +1,42 @@
+apps/mobile/features/onboarding/components/SyncProgressStep.tsx
+  s_cb4e7a09c1bd42::t_632c3fa9421cfb 181-182
+apps/mobile/features/settings/components/parse-improvement-sharing-toggle.ts
+  s_cb4e7a09c1bd42::t_632c3fa9421cfb 31
+apps/mobile/features/email-capture/services/bank-email-parser.ts
+  s_cb4e7a09c1bd42::t_8c7514c3a8dbc6 37-42
+apps/mobile/__tests__/email-capture/store-orchestration.test.ts
+  s_cb4e7a09c1bd42::t_632c3fa9421cfb 289-345
+apps/mobile/__tests__/email-capture/parse-improvement-outbox.test.ts
+  s_cb4e7a09c1bd42::t_4f533589f4d542 315-338
+apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts
+  s_cb4e7a09c1bd42::t_632c3fa9421cfb 131-135
+apps/mobile/features/email-capture/store/fetch-processing.ts
+  s_cb4e7a09c1bd42::t_632c3fa9421cfb 63-66
+apps/mobile/features/email-capture/services/email-parse-improvement-sharing.ts
+  s_cb4e7a09c1bd42::t_8c7514c3a8dbc6 42-52
+  s_cb4e7a09c1bd42::t_632c3fa9421cfb 78
+apps/mobile/__tests__/email-capture/bank-email-parser.test.ts
+  s_cb4e7a09c1bd42::t_4f533589f4d542 133
+  s_cb4e7a09c1bd42::t_632c3fa9421cfb 191-209
+apps/mobile/package.json
+  s_cb4e7a09c1bd42::t_a2d45ee922c413 71
+apps/mobile/__tests__/email-capture/parse-improvement-sharing.test.ts
+  s_cb4e7a09c1bd42::t_632c3fa9421cfb 218-241
+  s_cb4e7a09c1bd42::t_4f533589f4d542 122-134
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "88c991d573791459f3ce2799d80b550e506a4308",
+  "prompts": {},
+  "sessions": {
+    "s_cb4e7a09c1bd42": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3eb2-2838-7f80-8802-f556eeaa9709",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
