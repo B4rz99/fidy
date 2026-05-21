@@ -1,0 +1,54 @@
+apps/mobile/__tests__/email-capture/store-state.test.ts
+  s_cb4e7a09c1bd42::t_9b5c5bd4b7e607 301-325
+apps/mobile/features/settings/components/parse-improvement-sharing-toggle.ts
+  s_cb4e7a09c1bd42::t_25059c1f0028f7 20-87
+apps/mobile/infrastructure/local-ledger/source-events.ts
+  s_cb4e7a09c1bd42::t_92601a449318bf 209
+  s_cb4e7a09c1bd42::t_25059c1f0028f7 202-203
+apps/mobile/__tests__/email-capture/parse-improvement-outbox.test.ts
+  s_cb4e7a09c1bd42::t_25059c1f0028f7 429-437,443-453
+  s_cb4e7a09c1bd42::t_9b5c5bd4b7e607 400-428,438-442,459-465
+apps/mobile/features/email-capture/store/state.ts
+  s_cb4e7a09c1bd42::t_25059c1f0028f7 136
+  s_cb4e7a09c1bd42::t_92601a449318bf 146-147
+apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts
+  s_cb4e7a09c1bd42::t_bbba523fb4fb63 21-287
+apps/mobile/drizzle/0030_email_parse_improvement_outbox.sql
+  s_cb4e7a09c1bd42::t_92601a449318bf 15
+apps/mobile/features/email-capture/services/bank-email-parser.ts
+  s_cb4e7a09c1bd42::t_25059c1f0028f7 37-52,75-104,106-112,115-116,123-231
+apps/mobile/__tests__/settings/parse-improvement-sharing-toggle.test.ts
+  s_cb4e7a09c1bd42::t_25059c1f0028f7 11-119
+apps/mobile/__tests__/email-capture/store-orchestration.test.ts
+  s_cb4e7a09c1bd42::t_25059c1f0028f7 346-374
+apps/mobile/features/email-capture/services/email-parse-improvement-dedupe.ts
+  s_cb4e7a09c1bd42::t_25059c1f0028f7 1-42
+apps/mobile/shared/db/schema.ts
+  s_cb4e7a09c1bd42::t_ade07594bdb6e5 282-289
+apps/mobile/__tests__/email-capture/bank-email-parser.test.ts
+  s_cb4e7a09c1bd42::t_25059c1f0028f7 169-306
+dependency-policy.json
+  s_cb4e7a09c1bd42::t_51000322271a8c 74-192
+apps/mobile/features/email-capture/store/fetch-processing.ts
+  s_cb4e7a09c1bd42::t_25059c1f0028f7 108-116,118-127,129-130
+  s_cb4e7a09c1bd42::t_92601a449318bf 128
+  s_cb4e7a09c1bd42::t_ade07594bdb6e5 117
+apps/mobile/__tests__/email-capture/use-email-capture.test.ts
+  s_cb4e7a09c1bd42::t_25059c1f0028f7 56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "fef1b38a025f4e2646892dc1e514219cf986c98a",
+  "prompts": {},
+  "sessions": {
+    "s_cb4e7a09c1bd42": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3eb2-2838-7f80-8802-f556eeaa9709",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
