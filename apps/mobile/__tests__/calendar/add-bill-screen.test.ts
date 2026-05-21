@@ -13,6 +13,9 @@ const formSource = readSource("../../features/calendar/components/add-bill/AddBi
 const formContentSource = readSource(
   "../../features/calendar/components/add-bill/AddBillFormContent.tsx"
 );
+const formStylesSource = readSource(
+  "../../features/calendar/components/add-bill/AddBillForm.styles.ts"
+);
 const authFormSource = readSource(
   "../../features/calendar/components/add-bill/AuthenticatedAddBillForm.tsx"
 );
@@ -33,6 +36,12 @@ test("add-bill routes through the extracted screen module", () => {
 
 test("add-bill content uses KeyboardAvoidingView for keyboard handling", () => {
   expect(formContentSource).toContain("KeyboardAvoidingView");
+});
+
+test("add-bill dialog keeps keyboard and scroll containers bounded", () => {
+  expect(formContentSource).toContain("style={styles.container}");
+  expect(formContentSource).toContain("style={[styles.container, { backgroundColor: cardBg }]}");
+  expect(formStylesSource).toContain("container: { flex: 1 }");
 });
 
 test("add-bill content has name and amount text inputs", () => {

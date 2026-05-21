@@ -41,8 +41,6 @@ export function CreateCategorySheetContent({
       automaticallyAdjustKeyboardInsets
       bounces={false}
     >
-      <View style={[styles.grabBar, { backgroundColor: tertiaryColor, opacity: 0.3 }]} />
-
       <Text style={[styles.title, { color: primaryColor }]}>{t("categories.create.title")}</Text>
 
       <View style={styles.previewRow}>

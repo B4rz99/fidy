@@ -34,9 +34,9 @@ function SegmentControl({
   const secondary = useThemeColor("secondary");
 
   const tabs: readonly { key: FinanceTab; label: string }[] = [
-    { key: "calendar", label: t("calendar.title") },
-    { key: "goals", label: t("goals.title") },
     { key: "analytics", label: t("analytics.title") },
+    { key: "goals", label: t("goals.title") },
+    { key: "calendar", label: t("calendar.title") },
   ];
 
   return (
@@ -148,7 +148,7 @@ function useHeaderRight(activeTab: FinanceTab) {
 }
 
 export default function FinanceScreen() {
-  const [activeTab, setActiveTab] = useState<FinanceTab>("calendar");
+  const [activeTab, setActiveTab] = useState<FinanceTab>("analytics");
   const headerRight = useHeaderRight(activeTab);
   const pageBg = useThemeColor("page");
 

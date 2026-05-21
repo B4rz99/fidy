@@ -18,6 +18,7 @@ export type TransferFormScreenProps = {
     accounts: readonly FinancialAccountRow[]
   ) => TransferFormInitialDraft | null;
   readonly onSuccessfulSave?: (destination: "needs-review" | "tabs") => Promise<void> | void;
+  readonly presentation?: "dialog" | "screen";
 };
 
 export const TRANSFER_FORM_TEST_IDS = {

@@ -85,78 +85,81 @@ export default function DayDetailScreen() {
           {format(dateObj, "EEEE, PP", { locale: getDateFnsLocale(locale) })}
         </Text>
 
-      {billsForDate.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={[styles.emptyText, { color: secondaryColor }]}>
-            {t("bills.noBillsOnDay")}
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.billList}>
-          {billsForDate.map((bill) => {
-            const billId = requireBillId(bill.id);
-            const paid = isPaymentPaid(billId);
-            return (
-              <View
-                key={billId}
-                style={[
-                  styles.billRow,
-                  {
-                    backgroundColor: paid ? accentGreenLight : pageBg,
-                    borderColor,
-                  },
-                ]}
-              >
-                <View style={styles.billInfo}>
-                  <Text style={[styles.billName, { color: primaryColor }, paid && styles.paidText]}>
-                    {bill.name}
-                  </Text>
-                  <Text style={[styles.billAmount, { color: secondaryColor }]}>
-                    {formatMoney(bill.amount)}
-                  </Text>
+        {billsForDate.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={[styles.emptyText, { color: secondaryColor }]}>
+              {t("bills.noBillsOnDay")}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.billList}>
+            {billsForDate.map((bill) => {
+              const billId = requireBillId(bill.id);
+              const paid = isPaymentPaid(billId);
+              return (
+                <View
+                  key={billId}
+                  style={[
+                    styles.billRow,
+                    {
+                      backgroundColor: paid ? accentGreenLight : pageBg,
+                      borderColor,
+                    },
+                  ]}
+                >
+                  <View style={styles.billInfo}>
+                    <Text
+                      style={[styles.billName, { color: primaryColor }, paid && styles.paidText]}
+                    >
+                      {bill.name}
+                    </Text>
+                    <Text style={[styles.billAmount, { color: secondaryColor }]}>
+                      {formatMoney(bill.amount)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.actions}>
+                    <Pressable
+                      style={[
+                        styles.actionButton,
+                        { backgroundColor: paid ? accentGreen : peachBg },
+                      ]}
+                      onPress={() => {
+                        void handleTogglePaid(billId);
+                      }}
+                      hitSlop={8}
+                    >
+                      <Check size={16} color={paid ? "#FFFFFF" : primaryColor} />
+                    </Pressable>
+
+                    <Pressable
+                      style={[styles.actionButton, { backgroundColor: peachBg }]}
+                      onPress={() => handleEdit(billId)}
+                      hitSlop={8}
+                    >
+                      <Pencil size={16} color={primaryColor} />
+                    </Pressable>
+
+                    <Pressable
+                      style={[styles.actionButton, { backgroundColor: peachBg }]}
+                      onPress={() => handleDelete(billId, bill.name)}
+                      hitSlop={8}
+                    >
+                      <Trash2 size={16} color={accentRed} />
+                    </Pressable>
+                  </View>
                 </View>
-
-                <View style={styles.actions}>
-                  <Pressable
-                    style={[styles.actionButton, { backgroundColor: paid ? accentGreen : peachBg }]}
-                    onPress={() => {
-                      void handleTogglePaid(billId);
-                    }}
-                    hitSlop={8}
-                  >
-                    <Check size={16} color={paid ? "#FFFFFF" : primaryColor} />
-                  </Pressable>
-
-                  <Pressable
-                    style={[styles.actionButton, { backgroundColor: peachBg }]}
-                    onPress={() => handleEdit(billId)}
-                    hitSlop={8}
-                  >
-                    <Pencil size={16} color={primaryColor} />
-                  </Pressable>
-
-                  <Pressable
-                    style={[styles.actionButton, { backgroundColor: peachBg }]}
-                    onPress={() => handleDelete(billId, bill.name)}
-                    hitSlop={8}
-                  >
-                    <Trash2 size={16} color={accentRed} />
-                  </Pressable>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-      )}
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
     </DialogRouteFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: {},
   content: {
     padding: 24,
     gap: 16,

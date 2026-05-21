@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FidyNumpad } from "@/shared/components";
-import { ScrollView, Text, View } from "@/shared/components/rn";
+import { ScrollView, Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { styles } from "./GoalSheet.styles";
 
@@ -19,7 +19,6 @@ export function GoalSheetFrame({
   title,
 }: GoalSheetFrameProps) {
   const card = useThemeColor("card");
-  const borderSubtle = useThemeColor("borderSubtle");
   const primary = useThemeColor("primary");
   const { bottom } = useSafeAreaInsets();
 
@@ -30,7 +29,6 @@ export function GoalSheetFrame({
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
     >
-      <View style={[styles.grabBar, { backgroundColor: borderSubtle }]} />
       <Text style={[styles.title, { color: primary }]}>{title}</Text>
       {children}
       {numpadEnabled ? <FidyNumpad onKeyPress={onKeyPress} /> : null}

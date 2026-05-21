@@ -1,6 +1,7 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import { ScreenLayout } from "@/shared/components";
+import { Text, View } from "@/shared/components/rn";
 import { useCurrentDate, useTranslation } from "@/shared/hooks";
 import type { TransferFormScreenProps } from "./transfer-form/TransferForm.types";
 import { TransferFormContent } from "./transfer-form/TransferFormContent";
@@ -12,16 +13,29 @@ export function TransferFormScreen(props: TransferFormScreenProps = {}) {
   const { t } = useTranslation();
   const form = useTransferForm(props);
   const maximumDate = useCurrentDate();
+  const title = form.isReclassification ? t("transfers.reclassifyTitle") : t("transfers.title");
+  const content = (
+    <>
+      {props.presentation === "dialog" ? (
+        <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+          <Text className="font-poppins-bold text-title text-primary dark:text-primary-dark">
+            {title}
+          </Text>
+        </View>
+      ) : null}
+      <TransferFormContent form={form} />
+    </>
+  );
 
   return (
     <>
-      <ScreenLayout
-        title={form.isReclassification ? t("transfers.reclassifyTitle") : t("transfers.title")}
-        variant="sub"
-        onBack={back}
-      >
-        <TransferFormContent form={form} />
-      </ScreenLayout>
+      {props.presentation === "dialog" ? (
+        content
+      ) : (
+        <ScreenLayout title={title} variant="sub" onBack={back}>
+          {content}
+        </ScreenLayout>
+      )}
 
       <TransferSidePicker
         visible={form.pickerTarget != null}

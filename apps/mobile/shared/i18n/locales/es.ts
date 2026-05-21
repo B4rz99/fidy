@@ -6,6 +6,7 @@ const es = {
     delete: "Eliminar",
     confirm: "Confirmar",
     dismiss: "Descartar",
+    back: "Atrás",
     close: "Cerrar",
     edit: "Editar",
     category: "Categoría",

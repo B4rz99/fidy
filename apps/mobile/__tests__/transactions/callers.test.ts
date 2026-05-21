@@ -6,6 +6,11 @@ const editTransactionSource = readFileSync(
   resolve(__dirname, "../../app/edit-transaction.tsx"),
   "utf-8"
 ).replace(/\r\n/g, "\n");
+const reclassifyTransactionRouteSource = readFileSync(
+  resolve(__dirname, "../../app/reclassify-transaction.tsx"),
+  "utf-8"
+).replace(/\r\n/g, "\n");
+const rootLayoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
 
 describe("transaction callers", () => {
   test("edit screen surfaces save and delete failures before navigating away when auth/db is missing", () => {
@@ -19,7 +24,18 @@ describe("transaction callers", () => {
 
   test("edit screen reclassifies captured transactions by transaction id only", () => {
     expect(editTransactionSource).toContain('pathname: "/reclassify-transaction"');
+    expect(editTransactionSource).toContain('nestedDialog: "1"');
     expect(editTransactionSource).toContain("transactionId,");
     expect(editTransactionSource).not.toContain("processedEmailId");
+  });
+
+  test("reclassification opens as a centered dialog route", () => {
+    expect(rootLayoutSource).toContain('name="reclassify-transaction"');
+    expect(rootLayoutSource).toContain("DIALOG_MODAL");
+    expect(reclassifyTransactionRouteSource).toContain("DialogRouteFrame");
+    expect(reclassifyTransactionRouteSource).toContain('presentation="dialog"');
+    expect(reclassifyTransactionRouteSource).toContain("showBack={isNestedDialog}");
+    expect(reclassifyTransactionRouteSource).toContain("closeDepth={isNestedDialog ? 2 : 1}");
+    expect(editTransactionSource).not.toContain("onClose={back}");
   });
 });

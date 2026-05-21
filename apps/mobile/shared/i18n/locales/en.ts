@@ -6,6 +6,7 @@ const en = {
     delete: "Delete",
     confirm: "Confirm",
     dismiss: "Dismiss",
+    back: "Back",
     close: "Close",
     edit: "Edit",
     category: "Category",
