@@ -1,0 +1,68 @@
+apps/mobile/app/edit-transaction.tsx
+  s_4b359c4b5b3df2::t_cc5b5c12e5a928 201
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 188
+apps/mobile/features/goals/components/goal-sheet/GoalSheet.styles.ts
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 4
+apps/mobile/features/categories/components/category-sheet/CreateCategorySheet.styles.ts
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 4
+apps/mobile/__tests__/budget/create-budget-screen.test.ts
+  s_4b359c4b5b3df2::t_3901cfa0e994a8 11,36-42
+apps/mobile/app/(tabs)/(finance)/index.tsx
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 38-39,151
+apps/mobile/shared/components/DialogRouteFrame.tsx
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 3,5,9-10,13-17,19,22,29,34,36-42,44-59,80-91
+  s_4b359c4b5b3df2::t_9ae4b3871f47de 23,43
+apps/mobile/features/transactions/components/transaction-form/TransactionForm.styles.ts
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 26
+apps/mobile/__tests__/navigation/tab-layout.test.ts
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 76-90
+apps/mobile/shared/i18n/locales/en.ts
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 9
+apps/mobile/features/budget/components/create-budget/CreateBudget.styles.ts
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 23
+apps/mobile/package.json
+  s_4b359c4b5b3df2::t_bed9e817d618e6 71
+apps/mobile/app/auto-suggest-budgets.tsx
+  s_4b359c4b5b3df2::t_9ae4b3871f47de 173-174
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 84-89,91-97,99-136,139-141,143-145,147-165
+apps/mobile/app/day-detail.tsx
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 88-119,121-133,135-141,143-150,152-155,162
+apps/mobile/__tests__/transactions/callers.test.ts
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 9-13,27,31-39
+apps/mobile/app/_layout.tsx
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 215-216,219-220,241-242,244-246,260,269
+apps/mobile/features/goals/components/goal-sheet/GoalSheetFrame.tsx
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 4
+apps/mobile/features/calendar/components/add-bill/AddBillForm.styles.ts
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 4
+apps/mobile/__tests__/navigation/dialog-route-frame.test.ts
+  s_4b359c4b5b3df2::t_3901cfa0e994a8 1-20
+apps/mobile/app/reclassify-transaction.tsx
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 1-14
+apps/mobile/features/transactions/components/transaction-form/TransactionFormContent.tsx
+  s_4b359c4b5b3df2::t_cc5b5c12e5a928 56
+apps/mobile/features/transfers/components/TransferFormScreen.tsx
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 4,16-28,32-38
+apps/mobile/features/transfers/components/transfer-form/TransferForm.types.ts
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 21
+apps/mobile/features/transfers/components/transfer-form/TransferFormContent.tsx
+  s_4b359c4b5b3df2::t_cc5b5c12e5a928 30
+apps/mobile/shared/i18n/locales/es.ts
+  s_4b359c4b5b3df2::t_8ea0a6fecb6ed8 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "c5dc765d1b2deec9b0edfbf93af5bfdeff4cfbb4",
+  "prompts": {},
+  "sessions": {
+    "s_4b359c4b5b3df2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4147-15e0-74d0-89b7-1789ad9ab4b7",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
