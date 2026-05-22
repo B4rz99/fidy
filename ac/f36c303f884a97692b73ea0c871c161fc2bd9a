@@ -1,0 +1,32 @@
+.coderabbit.yaml
+  s_00e6116bab7d64::t_6eda06a2eceaf7 1-40
+apps/mobile/__tests__/dashboard/home-screen.test.ts
+  s_522233d6b58289::t_d89eda714e1418 83-85
+apps/mobile/__tests__/navigation/root-layout-headers.test.ts
+  s_522233d6b58289::t_0d1e17099ab479 17
+  s_522233d6b58289::t_d4ee299c6d2b3b 15-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "acf36c303f884a97692b73ea0c871c161fc2bd9a",
+  "prompts": {},
+  "sessions": {
+    "s_00e6116bab7d64": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e508b-0475-77c0-bb56-22124a41ba1a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_522233d6b58289": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5035-ede4-70a3-ae96-f7ec75039ed1",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
