@@ -1,7 +1,8 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { LucideIcon } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useColorScheme, useThemeColor } from "@/shared/hooks";
+import { AppAuroraBackground } from "./AppAuroraBackground";
 
 type ComingSoonScreenProps = {
   // biome-ignore lint/style/useNamingConvention: PascalCase required for React component prop
@@ -18,10 +19,12 @@ export function ComingSoonScreen({
   description,
 }: ComingSoonScreenProps) {
   const insets = useSafeAreaInsets();
+  const isDark = useColorScheme() === "dark";
   const iconColor = useThemeColor("accentGreen");
 
   return (
-    <View className="flex-1 bg-page dark:bg-page-dark" style={{ paddingTop: insets.top }}>
+    <View className="flex-1" style={{ paddingTop: insets.top }}>
+      <AppAuroraBackground isDark={isDark} />
       <View className="px-4 pb-2">
         <Text className="font-poppins-semibold text-section text-primary dark:text-primary-dark">
           {headerTitle}

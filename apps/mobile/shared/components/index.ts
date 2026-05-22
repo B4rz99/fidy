@@ -1,4 +1,5 @@
 export { AppToastHost } from "./AppToastHost";
+export { AppAuroraBackground } from "./AppAuroraBackground";
 export { Button } from "./Button";
 export { Card } from "./Card";
 export { ComingSoonScreen } from "./ComingSoonScreen";

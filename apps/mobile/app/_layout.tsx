@@ -212,7 +212,7 @@ function RootLayout() {
   const db = userId ? getDb(userId) : null;
   const iosHeaderOptions = {
     headerShown: Platform.OS === "ios",
-    headerStyle: { backgroundColor: theme.page },
+    headerStyle: { backgroundColor: "transparent" },
     headerTintColor: theme.primary,
   };
 

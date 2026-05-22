@@ -12,11 +12,11 @@ import {
 } from "@/features/calendar";
 import { useGoalStore } from "@/features/goals/hooks.public";
 import { GoalsListScreen } from "@/features/goals/ui.public";
-import { TAB_BAR_CLEARANCE } from "@/shared/components";
+import { AppAuroraBackground, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus } from "@/shared/components/icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
 
 type FinanceTab = "calendar" | "goals" | "analytics";
@@ -65,7 +65,6 @@ function FinanceCalendarPanel() {
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
   const userId = useOptionalUserId();
-  const pageBg = useThemeColor("page");
   const insets = useSafeAreaInsets();
   const tabBarClearance = Platform.OS === "ios" ? insets.bottom + 72 : TAB_BAR_CLEARANCE;
 
@@ -84,13 +83,7 @@ function FinanceCalendarPanel() {
   }, [userId]);
 
   return (
-    <View
-      style={[
-        styles.calendarPanel,
-        { backgroundColor: pageBg },
-        { paddingBottom: tabBarClearance },
-      ]}
-    >
+    <View style={[styles.calendarPanel, { paddingBottom: tabBarClearance }]}>
       <MonthNavigator
         currentMonth={currentMonth}
         onPrev={handlePrevMonth}
@@ -150,10 +143,11 @@ function useHeaderRight(activeTab: FinanceTab) {
 export default function FinanceScreen() {
   const [activeTab, setActiveTab] = useState<FinanceTab>("analytics");
   const headerRight = useHeaderRight(activeTab);
-  const pageBg = useThemeColor("page");
+  const isDark = useColorScheme() === "dark";
 
   return (
-    <View style={[styles.container, { backgroundColor: pageBg }]}>
+    <View style={styles.container}>
+      <AppAuroraBackground isDark={isDark} />
       {Platform.OS === "ios" && (
         <Stack.Screen
           options={{

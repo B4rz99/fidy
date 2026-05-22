@@ -55,7 +55,8 @@ describe("ComingSoonScreen", () => {
   });
 
   test("supports dark mode", () => {
-    expect(source).toContain("dark:bg-page-dark");
+    expect(source).toContain("useColorScheme");
+    expect(source).toContain("<AppAuroraBackground");
     expect(source).toContain("dark:text-primary-dark");
   });
 });

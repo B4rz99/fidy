@@ -2,17 +2,19 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@/features/auth/hooks.public";
 import { GoogleIcon, MicrosoftIcon, OAuthButton } from "@/features/auth/ui.public";
 import { LocalQaLoginButton } from "@/features/qa/ui.public";
-import { FidyLogo } from "@/shared/components";
+import { AppAuroraBackground, FidyLogo } from "@/shared/components";
 import { ActivityIndicator, Text, View } from "@/shared/components/rn";
-import { useTranslation } from "@/shared/hooks";
+import { useColorScheme, useTranslation } from "@/shared/hooks";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const isDark = useColorScheme() === "dark";
   const isSigningIn = useAuthStore((s) => s.isSigningIn);
 
   return (
-    <View className="flex-1 bg-login-bg dark:bg-login-bg-dark" style={{ paddingTop: insets.top }}>
+    <View className="flex-1" style={{ paddingTop: insets.top }}>
+      <AppAuroraBackground isDark={isDark} />
       <View className="flex-1 justify-center px-8 pb-8 gap-8">
         <View className="h-10" />
 

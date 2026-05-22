@@ -2,7 +2,8 @@ import { useRouter } from "expo-router";
 import type { ReactNode } from "react";
 import { ChevronLeft, X } from "@/shared/components/icons";
 import { Pressable, StyleSheet, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
+import { AppAuroraBackground } from "./AppAuroraBackground";
 
 type DialogRouteFrameProps = {
   readonly children: ReactNode;
@@ -17,53 +18,60 @@ export function DialogRouteFrame({
 }: DialogRouteFrameProps) {
   const router = useRouter();
   const { t } = useTranslation();
+  const isDark = useColorScheme() === "dark";
   const card = useThemeColor("card");
   const modalBackdrop = useThemeColor("modalBackdrop");
   const secondary = useThemeColor("secondary");
   const closeToOrigin = () => router.dismiss(closeDepth);
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      style={[styles.backdrop, { backgroundColor: `${modalBackdrop}66` }]}
-      onPress={closeToOrigin}
-    >
-      <View
-        style={[styles.dialog, { backgroundColor: card }]}
-        onStartShouldSetResponder={() => true}
-        onTouchEnd={(event) => event.stopPropagation()}
+    <View style={styles.root}>
+      <AppAuroraBackground isDark={isDark} />
+      <Pressable
+        accessibilityRole="button"
+        style={[styles.backdrop, { backgroundColor: `${modalBackdrop}66` }]}
+        onPress={closeToOrigin}
       >
-        <View style={styles.header}>
-          {showBack ? (
+        <View
+          style={[styles.dialog, { backgroundColor: card }]}
+          onStartShouldSetResponder={() => true}
+          onTouchEnd={(event) => event.stopPropagation()}
+        >
+          <View style={styles.header}>
+            {showBack ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("common.back")}
+                hitSlop={12}
+                style={styles.headerButton}
+                onPress={() => router.dismiss()}
+              >
+                <ChevronLeft size={24} color={secondary} />
+              </Pressable>
+            ) : (
+              <View style={styles.headerButton} />
+            )}
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={t("common.back")}
+              accessibilityLabel={t("common.close")}
               hitSlop={12}
               style={styles.headerButton}
-              onPress={() => router.dismiss()}
+              onPress={closeToOrigin}
             >
-              <ChevronLeft size={24} color={secondary} />
+              <X size={22} color={secondary} />
             </Pressable>
-          ) : (
-            <View style={styles.headerButton} />
-          )}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("common.close")}
-            hitSlop={12}
-            style={styles.headerButton}
-            onPress={closeToOrigin}
-          >
-            <X size={22} color={secondary} />
-          </Pressable>
+          </View>
+          {children}
         </View>
-        {children}
-      </View>
-    </Pressable>
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   backdrop: {
     flex: 1,
     alignItems: "center",

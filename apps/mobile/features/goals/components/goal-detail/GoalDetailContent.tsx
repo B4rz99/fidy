@@ -1,6 +1,7 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppAuroraBackground } from "@/shared/components";
 import { ScrollView, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useColorScheme } from "@/shared/hooks";
 import type { GoalProjection, Milestone } from "../../lib/derive";
 import type { CelebrationMilestone } from "../CelebrationModal";
 import { CelebrationModal } from "../CelebrationModal";
@@ -27,11 +28,12 @@ export function GoalDetailContent(props: {
   readonly milestones: readonly Milestone[];
   readonly targetAmount: number;
 }) {
-  const pageBg = useThemeColor("page");
+  const isDark = useColorScheme() === "dark";
   const { bottom } = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { backgroundColor: pageBg }]}>
+    <View style={styles.container}>
+      <AppAuroraBackground isDark={isDark} />
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 32 }]}
         showsVerticalScrollIndicator={false}

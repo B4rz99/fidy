@@ -30,9 +30,10 @@ import {
   loadInitialTransactions,
   useTransactionStore,
 } from "@/features/transactions";
+import { AppAuroraBackground } from "@/shared/components";
 import { StyleSheet, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
-import { useSubscription, useThemeColor } from "@/shared/hooks";
+import { useColorScheme, useSubscription } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
 import type { UserId } from "@/shared/types/branded";
 import migrations from "../../drizzle/migrations";
@@ -40,10 +41,14 @@ import migrations from "../../drizzle/migrations";
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const userId = useOptionalUserId();
-  const pageBg = useThemeColor("page");
+  const isDark = useColorScheme() === "dark";
 
   if (!userId) {
-    return <View style={[styles.container, { backgroundColor: pageBg }]} />;
+    return (
+      <View style={styles.container}>
+        <AppAuroraBackground isDark={isDark} />
+      </View>
+    );
   }
 
   return <AuthenticatedOnboardingScreen insets={insets} userId={userId} />;
@@ -58,7 +63,7 @@ function AuthenticatedOnboardingScreen({
 }) {
   const step = useOnboardingStore((s) => s.step);
   const shouldReviewAccounts = useOnboardingStore((s) => s.shouldReviewAccounts);
-  const pageBg = useThemeColor("page");
+  const isDark = useColorScheme() === "dark";
   const [storesReady, setStoresReady] = useState(false);
   const db = getDb(userId);
   const { success: migrationsReady } = useMigrations(db, migrations);
@@ -108,7 +113,11 @@ function AuthenticatedOnboardingScreen({
   );
 
   if (!storesReady) {
-    return <View style={[styles.container, { backgroundColor: pageBg }]} />;
+    return (
+      <View style={styles.container}>
+        <AppAuroraBackground isDark={isDark} />
+      </View>
+    );
   }
 
   const renderStep = () => {
@@ -131,12 +140,8 @@ function AuthenticatedOnboardingScreen({
   };
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: pageBg, paddingTop: insets.top, paddingBottom: insets.bottom },
-      ]}
-    >
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <AppAuroraBackground isDark={isDark} />
       <StepIndicator
         currentStep={getVisibleOnboardingStepIndex(step, shouldReviewAccounts)}
         totalSteps={getVisibleOnboardingStepCount(shouldReviewAccounts)}

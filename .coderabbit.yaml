@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+reviews:
+  profile: "assertive"
+  high_level_summary: true
+  path_filters:
+    - "apps/mobile/**"
+    - "docs/adr/**"
+    - "docs/superpowers/plans/**"
+    - "CONTEXT.md"
+    - ".dependency-cruiser.cjs"
+    - "apps/mobile/eslint.config.js"
+    - "!apps/mobile/node_modules/**"
+    - "!apps/mobile/.expo/**"
+    - "!apps/mobile/coverage/**"
+    - "!apps/mobile/dist/**"
+  path_instructions:
+    - path: "apps/mobile/local-ledger/**"
+      instructions: |
+        Review PRs for high-level architecture drift in Fidy's mobile app.
+
+        Flag changes that weaken the Local Ledger Clean Architecture boundary documented in docs/adr/0005-local-ledger-clean-architecture-boundary.md and CONTEXT.md.
+
+        Specifically flag PR code when:
+        - apps/mobile/local-ledger/** imports UI, framework, infrastructure, or feature code, including app/**, features/**, modules/**, shared/db, Drizzle, React, React Native, Expo, Zustand, Supabase clients, analytics, logging, broad runtime barrels, or infrastructure/local-ledger/**.
+        - Local Ledger use cases depend on concrete repositories, stores, write-through modules, database rows, generated IDs, wall-clock time, Sentry/logging, analytics, i18n, or UI strings instead of async ports, injected clock/id dependencies, typed result codes, and returned domain events.
+        - Features, capture pipelines, review queues, calendar/bill flows, backup restore, or tests create/amend/void transactions, transfers, review candidates, processed source events, or account-attribution resolutions by calling feature repositories or database adapters directly instead of Local Ledger public surfaces or app-wired infrastructure composition.
+        - Automated capture writes parser/merchant/counterparty text into user-authored transaction descriptions instead of counterpartyName, or uses description for merchant/category learning or duplicate detection.
+        - Low-confidence capture creates committed transactions/transfers instead of Review Candidates, or high-confidence capture commits without deterministic validation, duplicate checks, account/category/account-attribution policy, and atomic Capture Evidence plus Processed Source Event linkage.
+        - Transactions and transfers can be future-dated, zero/negative amount, hard-deleted, or written without validating account/user ownership and category usability where applicable.
+        - Transfers are modeled as transaction categories or transaction types, counted as income/spending/budget consumption, or reclassification is not atomic with superseding the original transactions.
+        - Backup/snapshot changes treat read models, analytics caches, query caches, or remote plaintext financial tables as Local Ledger source of truth.
+
+        Prefer findings that identify a concrete boundary violation, missing invariant, or bypass path. Do not flag cosmetic naming, harmless read-model code, UI presentation choices, or intentionally separate feature-owned reads unless they enable canonical ledger writes to bypass Local Ledger policy.
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "docs/adr/**/*.md"
+      - "CONTEXT.md"

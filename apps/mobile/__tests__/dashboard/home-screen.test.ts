@@ -22,9 +22,7 @@ const homeModelSource = readSource(
 const activityItemSource = readSource(
   "../../features/dashboard/components/home-screen/ActivityFeedItem.tsx"
 );
-const auroraBackgroundSource = readSource(
-  "../../features/dashboard/components/home-screen/HomeAuroraBackground.tsx"
-);
+const auroraBackgroundSource = readSource("../../shared/components/AppAuroraBackground.tsx");
 
 test("keeps HomeScreen routed through the extracted dashboard modules", () => {
   expect(homeScreenSource).toContain("useHomeScreen");
@@ -77,8 +75,36 @@ test("keeps the home feed aurora background visible behind section headers and r
 
 test("keeps the aurora blur mobile-friendly", () => {
   expect(auroraBackgroundSource).toContain('stdDeviation="14"');
-  expect(auroraBackgroundSource).toContain('<G filter="url(#softAuroraBlur)">');
-  expect(auroraBackgroundSource).not.toContain('filter="url(#softAuroraBlur)"\n          opacity');
+  expect(auroraBackgroundSource).toContain("<G filter={`url(#${softAuroraBlurId})`}>");
+  expect(auroraBackgroundSource).not.toContain('filter="url(#softAuroraBlur)"');
+});
+
+test("keeps dark mode aurora visible through the lower screen", () => {
+  expect(auroraBackgroundSource).toMatch(/r=\{isDark \? "\d+%" : "\d+%"\}/);
+  expect(auroraBackgroundSource).toMatch(/cy=\{isDark \? "\d+%" : "\d+%"\}/);
+  expect(auroraBackgroundSource).toContain("stopOpacity={isDark ?");
+});
+
+test("keeps aurora SVG definitions instance-scoped", () => {
+  expect(auroraBackgroundSource).toContain("useId");
+  expect(auroraBackgroundSource).toContain('useId().replaceAll(":", "")');
+  for (const id of [
+    "topLeftGreenId",
+    "topRightPeachId",
+    "topRightPeachCoreId",
+    "lowerLeftPeachId",
+    "lowerRightGreenId",
+    "bottomFadeId",
+    "peachBandId",
+    "greenBandId",
+    "peachCoreBandId",
+    "softAuroraBlurId",
+  ]) {
+    expect(auroraBackgroundSource).toContain(`id={${id}}`);
+    expect(auroraBackgroundSource).toContain(`url(#${"${"}${id}})`);
+  }
+  expect(auroraBackgroundSource).not.toContain('id="topLeftGreen"');
+  expect(auroraBackgroundSource).not.toContain('fill="url(#greenBand)"');
 });
 
 test("keeps the header wired to banners and analytics navigation", () => {

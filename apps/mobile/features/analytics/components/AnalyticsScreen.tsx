@@ -1,7 +1,6 @@
 import { memo, useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { TAB_BAR_CLEARANCE } from "@/shared/components";
-import type { ViewStyle } from "@/shared/components/rn";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -79,15 +78,12 @@ export function AnalyticsScreen() {
     [userId]
   );
 
-  const pageBg = useThemeColor("page");
   const secondaryColor = useThemeColor("secondary");
   const showEmpty = !incomeExpense && !isLoading;
 
-  const scrollBg: ViewStyle = { backgroundColor: pageBg };
-
   return (
     <ScrollView
-      style={[styles.scrollView, scrollBg]}
+      style={styles.scrollView}
       contentContainerStyle={[
         styles.contentContainer,
         { paddingBottom: ANALYTICS_CONTENT_PADDING + TAB_BAR_CLEARANCE },

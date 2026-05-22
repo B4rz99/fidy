@@ -92,8 +92,8 @@ describe("ScreenLayout", () => {
   });
 
   test("supports both light and dark mode", () => {
-    expect(source).toContain("bg-page");
-    expect(source).toContain("dark:bg-page-dark");
+    expect(source).toContain("useColorScheme");
+    expect(source).toContain("<AppAuroraBackground");
   });
 
   test("header uses px-4 for horizontal padding", () => {

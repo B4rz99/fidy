@@ -8,6 +8,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppAuroraBackground } from "@/shared/components/AppAuroraBackground";
 import { Check, Delete } from "@/shared/components/icons";
 import {
   Keyboard,
@@ -19,7 +20,7 @@ import {
   View,
   type ViewStyle,
 } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { styles } from "./PencilEntryScaffold.styles";
 export { PencilEntryField, PencilEntryTextInputField } from "./PencilEntryField";
 export type { PencilEntryFieldProps } from "./PencilEntryField";
@@ -124,7 +125,7 @@ export function PencilEntryScaffold({
   const { width } = useWindowDimensions();
   const tabBarWidth = useSharedValue(Math.max(width - PENCIL_ENTRY_HORIZONTAL_PADDING * 2, 0));
   const { t } = useTranslation();
-  const page = useThemeColor("page");
+  const isDark = useColorScheme() === "dark";
   const primary = useThemeColor("primary");
   const tertiary = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
@@ -185,12 +186,12 @@ export function PencilEntryScaffold({
       style={[
         styles.container,
         {
-          backgroundColor: page,
           paddingBottom: tabBarClearance,
           paddingTop: includesNativeHeader ? 16 : top + 16,
         },
       ]}
     >
+      <AppAuroraBackground isDark={isDark} />
       <View
         style={styles.tabs}
         onLayout={(event) => {
