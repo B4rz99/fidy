@@ -3,6 +3,7 @@ import type {
   BillId,
   BudgetId,
   CategoryId,
+  ChatSessionId,
   CopAmount,
   DetectedSmsEventId,
   EmailAccountId,
@@ -163,6 +164,10 @@ export function assertCategoryId(value: string): asserts value is CategoryId {
   assertNonEmptyString(value, "categoryId");
 }
 
+export function assertChatSessionId(value: string): asserts value is ChatSessionId {
+  assertNonEmptyString(value, "chatSessionId");
+}
+
 export function assertDetectedSmsEventId(value: string): asserts value is DetectedSmsEventId {
   assertNonEmptyString(value, "detectedSmsEventId");
 }
@@ -251,6 +256,10 @@ export function requireBudgetId(value: string): BudgetId {
 
 export function requireCategoryId(value: string): CategoryId {
   return requireValue(value, assertCategoryId);
+}
+
+export function requireChatSessionId(value: string): ChatSessionId {
+  return requireValue(value, assertChatSessionId);
 }
 
 export function requireDetectedSmsEventId(value: string): DetectedSmsEventId {

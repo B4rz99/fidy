@@ -619,9 +619,15 @@ const en = {
     moreCategories: "%{count}+ more",
   },
 
+  dateGroups: {
+    today: "Today",
+    yesterday: "Yesterday",
+  },
+
   // AI Chat
   aiChat: {
     title: "AI chat",
+    conversationsSubtitle: "Resume a conversation or start a new financial question.",
     fidyAi: "Fidy AI",
     memories: "Memory",
     newChat: "New chat",
@@ -630,6 +636,12 @@ const en = {
     placeholder: "Ask about your finances...",
     scrollToBottom: "Scroll to bottom",
     thinking: "Fidy is thinking",
+    concierge: {
+      label: "Financial assistant",
+      title: "Ask without opening spreadsheets.",
+      subtitle:
+        "Fidy can explain your month, find unusual spending, or help you record transactions.",
+    },
     cleanupMessage: {
       one: "%{count} expired conversation was removed",
       other: "%{count} expired conversations were removed",
@@ -637,9 +649,17 @@ const en = {
     askAnything: "Ask me anything about your finances",
     suggestions: {
       monthSpending: "How much did I spend this month?",
-      biggestExpense: "What's my biggest expense?",
-      compareMonths: "Compare my spending to last month",
-      addExpense: "Add a food expense for today",
+      biggestExpense: "What was my biggest expense?",
+      compareMonths: "Compare this month to the previous one",
+      addExpense: "Record a lunch expense",
+    },
+    actions: {
+      deleteTransaction: "Delete transaction",
+    },
+    status: {
+      added: "Added",
+      deleted: "Deleted",
+      dismissed: "Dismissed",
     },
     memoriesDescription:
       "Things Fidy AI remembers about you. Delete any memory you'd like it to forget.",

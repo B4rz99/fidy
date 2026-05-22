@@ -1,11 +1,12 @@
 import { memo } from "react";
-import { CircleCheck, Sparkles } from "@/shared/components/icons";
+import { CircleCheck } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { ChatMessageId } from "@/shared/types/branded";
 import { getAssistantDisplayBlocks, getPlainMessageText } from "../lib/message-content";
 import type { ChatMessage } from "../schema";
 import { ActionCard } from "./ActionCard";
+import { useAiSupportTextColor } from "./use-ai-support-text-color";
 
 type MessageBubbleProps = {
   readonly message: ChatMessage;
@@ -14,8 +15,10 @@ type MessageBubbleProps = {
 };
 
 function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: MessageBubbleProps) {
+  const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
+  const supportTextColor = useAiSupportTextColor();
   const chatAssistantBubble = useThemeColor("chatAssistantBubble");
   const chatAssistantText = useThemeColor("chatAssistantText");
   const chatUserBubble = useThemeColor("chatUserBubble");
@@ -25,19 +28,20 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
 
   const contentWithoutAction = getPlainMessageText(message.content);
   const assistantBlocks = isUser ? [] : getAssistantDisplayBlocks(message.content);
+  const agentIcon = "✦";
 
   return (
-    <View style={{ marginBottom: 4 }}>
+    <View style={{ marginBottom: 10 }}>
       {isUser ? (
         <View style={{ alignItems: "flex-end" }}>
           <View
             style={{
               maxWidth: "85%",
               backgroundColor: chatUserBubble,
-              borderRadius: 16,
-              borderBottomRightRadius: 4,
-              paddingVertical: 10,
-              paddingHorizontal: 14,
+              borderRadius: 18,
+              borderBottomRightRadius: 6,
+              paddingVertical: 12,
+              paddingHorizontal: 15,
             }}
           >
             <Text className="font-poppins-medium text-body" style={{ color: chatUserText }}>
@@ -49,25 +53,27 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
         <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
           <View
             style={{
-              width: 28,
-              height: 28,
-              borderRadius: 14,
+              width: 30,
+              height: 30,
+              borderRadius: 15,
               backgroundColor: chatAssistantBubble,
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <Sparkles size={16} color={accentGreen} />
+            <Text className="font-poppins-semibold text-body" style={{ color: accentGreen }}>
+              {agentIcon}
+            </Text>
           </View>
           <View style={{ flex: 1 }}>
             <View
               style={{
                 maxWidth: "90%",
-                borderRadius: 16,
-                borderBottomLeftRadius: 4,
+                borderRadius: 18,
+                borderBottomLeftRadius: 6,
                 backgroundColor: chatAssistantBubble,
-                paddingVertical: 10,
-                paddingHorizontal: 14,
+                paddingVertical: 12,
+                paddingHorizontal: 15,
               }}
             >
               {assistantBlocks.map((block) =>
@@ -125,7 +131,7 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
         >
           <CircleCheck size={14} color={accentGreen} />
           <Text className="font-poppins-semibold text-caption" style={{ color: accentGreen }}>
-            Added
+            {t("aiChat.status.added")}
           </Text>
         </View>
       )}
@@ -154,15 +160,15 @@ function MessageBubbleInner({ message, onConfirmAction, onDismissAction }: Messa
           >
             <CircleCheck size={14} color={accentRed} />
             <Text className="font-poppins-semibold text-caption" style={{ color: accentRed }}>
-              Deleted
+              {t("aiChat.status.deleted")}
             </Text>
           </View>
         )}
 
       {message.action && message.actionStatus === "dismissed" && (
         <View style={{ paddingLeft: 36, marginTop: 4 }}>
-          <Text className="font-poppins-medium text-caption text-tertiary dark:text-tertiary-dark">
-            Dismissed
+          <Text className="font-poppins-medium text-caption" style={{ color: supportTextColor }}>
+            {t("aiChat.status.dismissed")}
           </Text>
         </View>
       )}

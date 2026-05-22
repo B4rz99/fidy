@@ -3,6 +3,7 @@ import { SendHorizonal } from "@/shared/components/icons";
 import { Pressable, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { resolveChatComposerSend } from "../lib/chat-composer";
+import { useAiSupportTextColor } from "./use-ai-support-text-color";
 
 type ChatInputProps = {
   readonly onSend: (text: string) => void;
@@ -15,6 +16,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   const borderSubtle = useThemeColor("borderSubtle");
   const tertiary = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
+  const supportTextColor = useAiSupportTextColor();
 
   const handleSend = useCallback(() => {
     const result = resolveChatComposerSend({ text, disabled });
@@ -50,7 +52,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           className="flex-1 text-primary dark:text-primary-dark"
           style={{ fontFamily: "poppins-medium", fontSize: 14, maxHeight: 100, padding: 0 }}
           placeholder={t("aiChat.placeholder")}
-          placeholderTextColor={tertiary}
+          placeholderTextColor={supportTextColor}
           value={text}
           onChangeText={setText}
           multiline

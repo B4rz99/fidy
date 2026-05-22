@@ -1,8 +1,9 @@
 import { Trash2 } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import type { ChatAction } from "../schema";
+import { useAiSupportTextColor } from "./use-ai-support-text-color";
 
 type ActionCardProps = {
   readonly action: ChatAction;
@@ -11,6 +12,8 @@ type ActionCardProps = {
 };
 
 export function ActionCard({ action, onConfirm, onDismiss }: ActionCardProps) {
+  const { t } = useTranslation();
+  const supportTextColor = useAiSupportTextColor();
   const accentRed = useThemeColor("accentRed");
   const borderSubtle = useThemeColor("borderSubtle");
 
@@ -20,7 +23,7 @@ export function ActionCard({ action, onConfirm, onDismiss }: ActionCardProps) {
     <View
       className="bg-card dark:bg-card-dark"
       style={{
-        borderRadius: 16,
+        borderRadius: 18,
         padding: 16,
         gap: 12,
         borderWidth: 1,
@@ -31,12 +34,12 @@ export function ActionCard({ action, onConfirm, onDismiss }: ActionCardProps) {
         <Trash2 size={20} color={accentRed} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-            Delete transaction
+            {t("aiChat.actions.deleteTransaction")}
           </Text>
-          <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark">
-            {formatMoney(action.amount)} — {action.description}
+          <Text className="font-poppins-medium text-label" style={{ color: supportTextColor }}>
+            {formatMoney(action.amount)} - {action.description}
           </Text>
-          <Text className="font-poppins-medium text-caption text-tertiary dark:text-tertiary-dark">
+          <Text className="font-poppins-medium text-caption" style={{ color: supportTextColor }}>
             {action.date}
           </Text>
         </View>
@@ -53,8 +56,8 @@ export function ActionCard({ action, onConfirm, onDismiss }: ActionCardProps) {
             justifyContent: "center",
           }}
         >
-          <Text className="font-poppins-semibold text-label text-secondary dark:text-secondary-dark">
-            Cancel
+          <Text className="font-poppins-semibold text-label" style={{ color: supportTextColor }}>
+            {t("common.cancel")}
           </Text>
         </Pressable>
         <Pressable
@@ -69,7 +72,7 @@ export function ActionCard({ action, onConfirm, onDismiss }: ActionCardProps) {
           }}
         >
           <Text className="font-poppins-semibold text-label" style={{ color: "#FFFFFF" }}>
-            Delete
+            {t("common.delete")}
           </Text>
         </Pressable>
       </View>

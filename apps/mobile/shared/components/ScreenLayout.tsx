@@ -44,6 +44,10 @@ export function ScreenLayout({
     (!includesNativeHeader &&
       (!isTab || leftAction != null || rightActions != null || onBack != null));
   const iosHeaderOptions = {
+    contentStyle: { backgroundColor: "transparent" },
+    headerShadowVisible: false,
+    headerStyle: { backgroundColor: "transparent" },
+    headerTransparent: true,
     title: isTab ? "" : title,
     ...(rightActions != null && {
       headerRight: () => rightActions,

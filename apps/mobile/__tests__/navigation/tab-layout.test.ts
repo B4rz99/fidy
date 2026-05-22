@@ -53,6 +53,7 @@ describe("Tab layout", () => {
     const [homeSource, , , , financeSource] = primaryStackLayoutSources;
 
     expect(homeSource).toContain("headerShown: false");
+    expect(financeSource).toContain('headerTransparent: Platform.OS === "ios"');
     expect(financeSource).toContain("headerShadowVisible: false");
   });
 

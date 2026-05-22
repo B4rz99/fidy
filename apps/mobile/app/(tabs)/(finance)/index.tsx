@@ -21,6 +21,9 @@ import { captureError } from "@/shared/lib";
 
 type FinanceTab = "calendar" | "goals" | "analytics";
 
+const FINANCE_NATIVE_HEADER_CONTENT_HEIGHT = 56;
+const FINANCE_NATIVE_TAB_BAR_OFFSET = 72;
+
 function SegmentControl({
   active,
   onSwitch,
@@ -59,14 +62,15 @@ function SegmentControl({
   );
 }
 
-function FinanceCalendarPanel() {
+function FinanceCalendarPanel({ topClearance }: { readonly topClearance: number }) {
   const { push } = useRouter();
   const currentMonth = useCalendarStore((s) => s.currentMonth);
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
   const userId = useOptionalUserId();
   const insets = useSafeAreaInsets();
-  const tabBarClearance = Platform.OS === "ios" ? insets.bottom + 72 : TAB_BAR_CLEARANCE;
+  const tabBarClearance =
+    Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE;
 
   const handleNextMonth = useCallback(() => {
     if (!userId) return;
@@ -83,7 +87,9 @@ function FinanceCalendarPanel() {
   }, [userId]);
 
   return (
-    <View style={[styles.calendarPanel, { paddingBottom: tabBarClearance }]}>
+    <View
+      style={[styles.calendarPanel, { paddingBottom: tabBarClearance, paddingTop: topClearance }]}
+    >
       <MonthNavigator
         currentMonth={currentMonth}
         onPrev={handlePrevMonth}
@@ -144,6 +150,9 @@ export default function FinanceScreen() {
   const [activeTab, setActiveTab] = useState<FinanceTab>("analytics");
   const headerRight = useHeaderRight(activeTab);
   const isDark = useColorScheme() === "dark";
+  const insets = useSafeAreaInsets();
+  const calendarTopClearance =
+    Platform.OS === "ios" ? insets.top + FINANCE_NATIVE_HEADER_CONTENT_HEIGHT : 0;
 
   return (
     <View style={styles.container}>
@@ -161,9 +170,11 @@ export default function FinanceScreen() {
           <SegmentControl active={activeTab} onSwitch={setActiveTab} />
         </View>
       )}
-      {activeTab === "calendar" && <FinanceCalendarPanel />}
-      {activeTab === "goals" && <GoalsListScreen />}
-      {activeTab === "analytics" && <AnalyticsScreen />}
+      <View style={{ flex: 1 }}>
+        {activeTab === "calendar" && <FinanceCalendarPanel topClearance={calendarTopClearance} />}
+        {activeTab === "goals" && <GoalsListScreen />}
+        {activeTab === "analytics" && <AnalyticsScreen />}
+      </View>
     </View>
   );
 }

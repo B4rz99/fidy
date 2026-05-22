@@ -211,8 +211,11 @@ function RootLayout() {
 
   const db = userId ? getDb(userId) : null;
   const iosHeaderOptions = {
+    contentStyle: { backgroundColor: "transparent" },
+    headerShadowVisible: false,
     headerShown: Platform.OS === "ios",
     headerStyle: { backgroundColor: "transparent" },
+    headerTransparent: true,
     headerTintColor: theme.primary,
   };
 
