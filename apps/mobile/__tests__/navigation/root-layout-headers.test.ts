@@ -18,6 +18,7 @@ describe("Root layout native headers", () => {
     }
     expect(source).toContain('headerShown: Platform.OS === "ios"');
     expect(source).toContain('headerStyle: { backgroundColor: "transparent" }');
+    expect(source).toContain("headerTransparent: true");
     expect(source).toContain("theme.primary");
   });
 
