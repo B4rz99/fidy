@@ -1,0 +1,64 @@
+apps/mobile/features/goals/components/goal-detail/GoalDetailContent.tsx
+  s_522233d6b58289::t_7c49e51d3af384 2,4,31,35-36
+apps/mobile/__tests__/shared/screen-layout.test.ts
+  s_522233d6b58289::t_4478353d011fa0 97-98
+apps/mobile/shared/components/PencilEntryScaffold.styles.ts
+  s_522233d6b58289::t_400f3110c6badd 56
+apps/mobile/__tests__/navigation/root-layout-headers.test.ts
+  s_522233d6b58289::t_b866d4bb4bef8d 12,17-19
+apps/mobile/shared/components/DialogRouteFrame.tsx
+  s_522233d6b58289::t_b112a72e526c90 5-6,21,28-33,35-53,56,59,61,63-64,66-67,72-74
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_522233d6b58289::t_b112a72e526c90 6-7,36,62
+apps/mobile/app/(tabs)/(finance)/index.tsx
+  s_522233d6b58289::t_7c49e51d3af384 15,19,86,146,149-150
+apps/mobile/shared/components/index.ts
+  s_522233d6b58289::t_b112a72e526c90 2
+apps/mobile/features/settings/components/SettingsScreen.tsx
+  s_522233d6b58289::t_920e9d7cfee166 54,85-91,100,116,164,170,175,188,193,199,210
+  s_522233d6b58289::t_a65341e644815e 3,26
+  s_522233d6b58289::t_2744c0d6ab5519 251
+apps/mobile/features/analytics/components/AnalyticsScreen.tsx
+  s_522233d6b58289::t_7c49e51d3af384 86
+apps/mobile/app/(auth)/login.tsx
+  s_522233d6b58289::t_7c49e51d3af384 5,7,12,16-17
+apps/mobile/__tests__/dashboard/home-screen.test.ts
+  s_522233d6b58289::t_352803665d478c 25
+  s_522233d6b58289::t_63759f53fec78d 78-79,87-108
+  s_522233d6b58289::t_76464470f94564 82-86
+apps/mobile/__tests__/coming-soon/coming-soon-screen.test.ts
+  s_522233d6b58289::t_4478353d011fa0 58-59
+apps/mobile/features/dashboard/components/home-screen/HomeAuroraBackground.tsx
+  s_522233d6b58289::t_290e52ff7ad2d3 1
+apps/mobile/app/(tabs)/(finance)/_layout.tsx
+  s_522233d6b58289::t_8d467be21cf2b9 14
+apps/mobile/shared/components/ComingSoonScreen.tsx
+  s_522233d6b58289::t_7c49e51d3af384 4-5,22,26-27
+apps/mobile/app/(auth)/onboarding.tsx
+  s_522233d6b58289::t_352803665d478c 143
+  s_522233d6b58289::t_7c49e51d3af384 33,36,44,47-51,66,116-120,144
+apps/mobile/shared/components/AppAuroraBackground.tsx
+  s_522233d6b58289::t_290e52ff7ad2d3 2-21,33-35,38,40-49,52-54,56-57,59,61-62,65-67,72,74-76,78-79,81,83-84,86,89,91,93-94,96,98-99,101,103-104,106-109,116-117,119-122,124-127,130-131,133-136
+  s_522233d6b58289::t_4eac68d0ba6b92 36-37,39,51,58,60,64,69-71,73,80,82,87-88,92,97,102,129
+  s_522233d6b58289::t_d2a07ad5242dda 1,22-32,50,55,63,68,77,85,90,95,100,105,110-115,118,123,128,132
+apps/mobile/shared/components/PencilEntryScaffold.tsx
+  s_522233d6b58289::t_b62815054be6ba 11,23,128,194
+apps/mobile/app/_layout.tsx
+  s_522233d6b58289::t_8d467be21cf2b9 215
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "399edaa3f14e53afa4dd2c3946e3dd912d2cf9c2",
+  "prompts": {},
+  "sessions": {
+    "s_522233d6b58289": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5035-ede4-70a3-ae96-f7ec75039ed1",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
