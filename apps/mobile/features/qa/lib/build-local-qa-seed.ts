@@ -1,3 +1,4 @@
+import type { BudgetRow } from "@/features/budget/public";
 import { buildDefaultFinancialAccountId } from "@/features/financial-accounts/seed.public";
 import type { FinancialAccountRow } from "@/features/financial-accounts/write.public";
 import type { TransactionRow } from "@/features/transactions/query.public";
@@ -16,15 +17,18 @@ import {
   requireUserId,
 } from "@/shared/types/assertions";
 import type { LocalQaProfile, LocalQaSession } from "../local-session";
+import { buildHomeActivityBudgets, buildHomeActivityTransactions } from "./home-activity-seed";
 
 type LocalQaSeed = {
   readonly session: LocalQaSession;
+  readonly budgets: readonly BudgetRow[];
   readonly financialAccounts: readonly FinancialAccountRow[];
   readonly transactions: readonly TransactionRow[];
   readonly transfers: readonly TransferRow[];
 };
 
 function getDisplayName(profile: LocalQaProfile): string {
+  if (profile === "home-activity") return "Local QA Home Activity";
   if (profile === "transfer-ready") return "Local QA Transfer Ready";
   if (profile === "transfer-conflict") return "Local QA Transfer Conflict";
   if (profile === "two-accounts") return "Local QA Two Accounts";
@@ -43,6 +47,14 @@ function getSessionForProfile(profile: LocalQaProfile): LocalQaSession {
     displayName,
     email: `local-qa+${profile}@fidy.dev`,
   };
+}
+
+function buildBudgets(
+  userId: LocalQaSession["userId"],
+  now: Date,
+  profile: LocalQaProfile
+): readonly BudgetRow[] {
+  return profile === "home-activity" ? buildHomeActivityBudgets(userId, now) : [];
 }
 
 function buildAccounts(
@@ -92,10 +104,14 @@ function buildTransactions(
   accounts: readonly FinancialAccountRow[],
   profile: LocalQaProfile
 ): readonly TransactionRow[] {
-  if (profile !== "transfer-ready") return [];
+  if (profile !== "transfer-ready" && profile !== "home-activity") return [];
 
   const defaultAccountId = buildDefaultFinancialAccountId(userId);
   const bankAccountId = accounts[1]?.id ?? defaultAccountId;
+
+  if (profile === "home-activity") {
+    return buildHomeActivityTransactions(userId, now, accounts);
+  }
 
   return [
     {
@@ -155,7 +171,7 @@ function buildTransfers(
   accounts: readonly FinancialAccountRow[],
   profile: LocalQaProfile
 ): readonly TransferRow[] {
-  if (profile !== "transfer-ready") return [];
+  if (profile !== "transfer-ready" && profile !== "home-activity") return [];
 
   return [
     {
@@ -181,6 +197,7 @@ export function buildLocalQaSeed(profile: LocalQaProfile, now: Date = new Date()
 
   return {
     session,
+    budgets: buildBudgets(session.userId, now, profile),
     financialAccounts,
     transactions: buildTransactions(session.userId, now, financialAccounts, profile),
     transfers: buildTransfers(session.userId, now, financialAccounts, profile),

@@ -14,6 +14,7 @@ export type BudgetState = {
     readonly totalSpent: number;
     readonly percentUsed: number;
   };
+  readonly budgetTotalByMonth: Readonly<Partial<Record<Month, number>>>;
   readonly autoSuggestions: readonly BudgetSuggestion[];
   readonly acknowledgedAlerts: ReadonlySet<string>;
   readonly pendingAlerts: readonly BudgetAlert[];
@@ -51,6 +52,7 @@ export function createBudgetState(currentMonth: Month, activeUserId: UserId | nu
     budgets: [],
     budgetProgress: [],
     summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
+    budgetTotalByMonth: {},
     autoSuggestions: [],
     acknowledgedAlerts: new Set(),
     pendingAlerts: [],
@@ -70,6 +72,10 @@ function setBudgetSnapshot(set: BudgetSetState): BudgetActions["setSnapshot"] {
       budgets: snapshot.budgets as Budget[],
       budgetProgress: snapshot.budgetProgress as BudgetProgress[],
       summary: snapshot.summary,
+      budgetTotalByMonth: {
+        ...state.budgetTotalByMonth,
+        [state.currentMonth]: snapshot.summary.totalBudget,
+      },
       autoSuggestions: snapshot.autoSuggestions as BudgetSuggestion[],
       pendingAlerts: snapshot.pendingAlerts,
       pendingPermissionRequest: state.pendingPermissionRequest || snapshot.pendingPermissionRequest,

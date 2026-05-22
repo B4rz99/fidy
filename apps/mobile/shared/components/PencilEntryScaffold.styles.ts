@@ -53,7 +53,7 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
   },
   keyFeedback: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(255, 255, 255, 0.42)",
     borderRadius: 14,
   },

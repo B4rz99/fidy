@@ -16,6 +16,9 @@
     "qa:seed": "bun ./scripts/mobile-qa.ts seed",
     "qa:open": "bun ./scripts/mobile-qa.ts open",
     "qa:smoke": "bun ./scripts/mobile-qa.ts smoke",
+    "sim:serve": "bunx serve-sim --detach",
+    "sim:serve:list": "bunx serve-sim --list",
+    "sim:serve:kill": "bunx serve-sim --kill",
     "analyze:complexity:strict:update-ledger": "bun ./scripts/run-lizard-strict.ts --write-ledger",
     "analyze:file-size": "bun ./scripts/check-max-file-lines.ts",
     "mcp:xcodebuild": "xcodebuildmcp mcp",
@@ -50,6 +53,7 @@
     "oxfmt": "0.47.0",
     "oxlint": "1.62.0",
     "oxlint-tsgolint": "0.22.1",
+    "serve-sim": "0.1.36",
     "typescript": "6.0.3",
     "xcodebuildmcp": "2.3.2"
   },

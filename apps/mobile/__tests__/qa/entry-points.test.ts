@@ -9,6 +9,7 @@ import {
 describe("QA entry points", () => {
   it("accepts the supported local QA profiles", () => {
     expect(isLocalQaProfile("default")).toBe(true);
+    expect(isLocalQaProfile("home-activity")).toBe(true);
     expect(isLocalQaProfile("empty")).toBe(true);
     expect(isLocalQaProfile("two-accounts")).toBe(true);
     expect(isLocalQaProfile("transfer-ready")).toBe(true);
@@ -25,6 +26,7 @@ describe("QA entry points", () => {
 
   it("maps each seeded profile to its default target", () => {
     expect(getDefaultQaTarget("default")).toBe(QA_TARGETS.home);
+    expect(getDefaultQaTarget("home-activity")).toBe(QA_TARGETS.home);
     expect(getDefaultQaTarget("empty")).toBe(QA_TARGETS.onboarding);
     expect(getDefaultQaTarget("two-accounts")).toBe(QA_TARGETS.financialAccounts);
     expect(getDefaultQaTarget("transfer-ready")).toBe(QA_TARGETS.addTransfer);

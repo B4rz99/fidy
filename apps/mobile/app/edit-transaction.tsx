@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import { useReducer, useRef, useState } from "react";
+import { useReducer, useState } from "react";
 import { useOptionalUserId } from "@/features/auth";
 import {
   type FinancialAccountRow,
@@ -71,7 +71,7 @@ export default function EditTransactionScreen() {
   const db = userId ? tryGetDb(userId) : null;
 
   const [draft, setDraft] = useReducer(updateDraft, initialDraft);
-  const loadedRef = useRef(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [accounts, setAccounts] = useState<readonly FinancialAccountRow[]>([]);
   const transactionId =
     typeof routeTransactionId === "string" && routeTransactionId.trim().length > 0
@@ -105,7 +105,7 @@ export default function EditTransactionScreen() {
           type: tx.type,
         },
       });
-      loadedRef.current = true;
+      setIsLoaded(true);
     })();
   });
 
@@ -167,7 +167,7 @@ export default function EditTransactionScreen() {
     });
   };
 
-  if (!loadedRef.current) return null;
+  if (!isLoaded) return null;
 
   return (
     <DialogRouteFrame>

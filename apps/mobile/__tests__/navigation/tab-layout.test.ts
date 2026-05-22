@@ -31,13 +31,18 @@ describe("Tab layout", () => {
     expect(layoutSource).not.toContain('name="(menu)"');
   });
 
-  test("uses the profile avatar only on the home tab stack", () => {
+  test("keeps the profile avatar owned by the home screen content", () => {
     expect(primaryStackLayoutSources).toHaveLength(5);
     const [homeSource, aiSource, budgetSource, addSource, financeSource] =
       primaryStackLayoutSources;
+    const homeContentSource = readFileSync(
+      resolve(__dirname, "../../features/dashboard/components/home-screen/HomeScreenContent.tsx"),
+      "utf-8"
+    );
 
-    expect(homeSource).toContain("ProfileAvatarButton");
-    expect(homeSource).toContain("headerLeft");
+    expect(homeSource).not.toContain("ProfileAvatarButton");
+    expect(homeContentSource).toContain("ProfileAvatarButton");
+    expect(homeContentSource).toContain("leftAction");
     expect(aiSource).not.toContain("ProfileAvatarButton");
     expect(budgetSource).not.toContain("ProfileAvatarButton");
     expect(addSource).not.toContain("ProfileAvatarButton");
@@ -47,7 +52,7 @@ describe("Tab layout", () => {
   test("removes native header shadows from visible tab headers", () => {
     const [homeSource, , , , financeSource] = primaryStackLayoutSources;
 
-    expect(homeSource).toContain("headerShadowVisible: false");
+    expect(homeSource).toContain("headerShown: false");
     expect(financeSource).toContain("headerShadowVisible: false");
   });
 

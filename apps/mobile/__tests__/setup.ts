@@ -335,12 +335,15 @@ vi.mock("react-native-svg", () => ({
   Circle: "Circle",
   Rect: "Rect",
   Path: "Path",
+  Filter: "Filter",
+  FeGaussianBlur: "FeGaussianBlur",
   G: "G",
   Text: "SvgText",
   Line: "Line",
   Polyline: "Polyline",
   Defs: "Defs",
   LinearGradient: "LinearGradient",
+  RadialGradient: "RadialGradient",
   Stop: "Stop",
 }));
 

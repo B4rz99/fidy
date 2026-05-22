@@ -10,6 +10,15 @@ const mockDb = { _: "db", transaction: (fn: (tx: unknown) => unknown) => fn(mock
 const mockGetDb = vi.fn<(userId: string) => typeof mockDb>(() => mockDb);
 const mockMigrate = vi.fn<(db: unknown, config: unknown) => Promise<void>>(() => Promise.resolve());
 const mockUpsertFinancialAccount = vi.fn<(db: unknown, row: unknown) => void>();
+const mockInsertBudget = vi.fn<(db: unknown, row: unknown) => void>();
+const mockInitializeBudgetSession = vi.fn<(userId: string) => void>();
+const mockLoadBudgetsForUser = vi.fn<(db: unknown, userId: string) => Promise<void>>(() =>
+  Promise.resolve()
+);
+const mockInitializeTransactionSession = vi.fn<(userId: string) => void>();
+const mockLoadInitialTransactions = vi.fn<(db: unknown, userId: string) => Promise<void>>(() =>
+  Promise.resolve()
+);
 const mockInsertTransaction = vi.fn<(db: unknown, row: unknown) => void>();
 const mockUpsertTransfer = vi.fn<(db: unknown, row: unknown) => void>();
 const mockPersistLocalQaSession = vi.fn<(session: unknown) => Promise<void>>(() =>
@@ -27,6 +36,7 @@ const session = {
 
 const seed = {
   session,
+  budgets: [{ id: "budget-1", userId: session.userId } as never],
   financialAccounts: [{ id: "account-1", userId: session.userId } as never],
   transactions: [{ id: "txn-1", userId: session.userId } as never],
   transfers: [{ id: "transfer-1", userId: session.userId } as never],
@@ -68,6 +78,17 @@ vi.mock("@/drizzle/migrations", () => ({
 
 vi.mock("@/features/financial-accounts/lib/repository", () => ({
   upsertFinancialAccount: (db: unknown, row: unknown) => mockUpsertFinancialAccount(db, row),
+}));
+
+vi.mock("@/features/budget/public", () => ({
+  initializeBudgetSession: (userId: string) => mockInitializeBudgetSession(userId),
+  insertBudget: (db: unknown, row: unknown) => mockInsertBudget(db, row),
+  loadBudgetsForUser: (db: unknown, userId: string) => mockLoadBudgetsForUser(db, userId),
+}));
+
+vi.mock("@/features/transactions/store.public", () => ({
+  initializeTransactionSession: (userId: string) => mockInitializeTransactionSession(userId),
+  loadInitialTransactions: (db: unknown, userId: string) => mockLoadInitialTransactions(db, userId),
 }));
 
 vi.mock("@/infrastructure/local-ledger/transaction-storage", () => ({
@@ -115,8 +136,13 @@ describe("startLocalQaSession", () => {
     expect(mockGetDb).toHaveBeenCalledWith("qa-local-transfer-ready");
     expect(mockMigrate).toHaveBeenCalledOnce();
     expect(mockUpsertFinancialAccount).toHaveBeenCalledTimes(1);
+    expect(mockInsertBudget).toHaveBeenCalledTimes(1);
     expect(mockInsertTransaction).toHaveBeenCalledTimes(1);
     expect(mockUpsertTransfer).toHaveBeenCalledTimes(1);
+    expect(mockInitializeTransactionSession).toHaveBeenCalledWith("qa-local-transfer-ready");
+    expect(mockInitializeBudgetSession).toHaveBeenCalledWith("qa-local-transfer-ready");
+    expect(mockLoadInitialTransactions).toHaveBeenCalledWith(mockDb, "qa-local-transfer-ready");
+    expect(mockLoadBudgetsForUser).toHaveBeenCalledWith(mockDb, "qa-local-transfer-ready");
     expect(mockPersistLocalQaSession).toHaveBeenCalledWith(session);
     expect(result).toEqual(session);
   });

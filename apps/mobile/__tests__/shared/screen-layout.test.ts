@@ -42,6 +42,11 @@ describe("ScreenLayout", () => {
     expect(source).toContain("iosHeaderOptions");
   });
 
+  test("does not reserve right action space for sub screens without right actions", () => {
+    expect(source).toContain("shouldRenderRightSlot");
+    expect(source).toContain('isTab ? "flex-1 flex-row justify-end" : "flex-row justify-end"');
+  });
+
   test("accepts onBack function prop", () => {
     expect(source).toMatch(/onBack\??\s*:\s*\(\)\s*=>\s*void/);
   });
@@ -54,8 +59,9 @@ describe("ScreenLayout", () => {
   });
 
   test("renders a custom iOS header for hidden-header sub screens", () => {
+    expect(source).toContain("!includesNativeHeader &&");
     expect(source).toContain(
-      "!includesNativeHeader && (!isTab || rightActions != null || onBack != null)"
+      "!isTab || leftAction != null || rightActions != null || onBack != null"
     );
   });
 

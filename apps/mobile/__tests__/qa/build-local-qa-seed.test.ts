@@ -67,4 +67,24 @@ describe("buildLocalQaSeed", () => {
       }),
     ]);
   });
+
+  it("builds a home-activity scenario with recent activity for dashboard QA", () => {
+    const seed = buildLocalQaSeed("home-activity", now);
+
+    expect(seed.session.profile).toBe("home-activity");
+    expect(seed.session.userId).toBe("qa-local-home-activity");
+    expect(seed.financialAccounts.map((account) => account.name)).toEqual(["Cash", "Bancolombia"]);
+    expect(seed.budgets.reduce((total, budget) => total + budget.amount, 0)).toBe(10_000_000);
+    expect(seed.transactions).toHaveLength(7);
+    expect(seed.transactions.map((transaction) => transaction.categoryId)).toEqual([
+      "food",
+      "health",
+      "entertainment",
+      "home",
+      "clothing",
+      "transport",
+      "education",
+    ]);
+    expect(seed.transfers).toHaveLength(1);
+  });
 });

@@ -41,6 +41,15 @@ const es = {
 
   // Dashboard
   dashboard: {
+    average: "Promedio",
+    categoryBars: "Gasto por categoría",
+    dailyPace: "Diario",
+    dailyPaceGuidance:
+      "Puedes gastar hasta %{amount} al día para mantenerte dentro de tu presupuesto.",
+    monthlySpend: "Gasto del mes",
+    noBudgetGuidance:
+      "Configura un presupuesto mensual para ver tu límite diario. Promedio actual: %{amount}.",
+    spendingSummary: "Resumen del gasto mensual",
     spentThisMonth: "Gastado este mes",
   },
 
@@ -837,6 +846,10 @@ const es = {
       default: {
         title: "Predeterminado",
         description: "Una cuenta de efectivo predeterminada y onboarding completo.",
+      },
+      "home-activity": {
+        title: "Actividad de inicio",
+        description: "Gastos recientes y una transferencia para QA visual del inicio.",
       },
       empty: {
         title: "Vacío",
