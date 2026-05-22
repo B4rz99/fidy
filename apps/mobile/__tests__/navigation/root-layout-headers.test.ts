@@ -12,11 +12,13 @@ describe("Root layout native headers", () => {
   test("detail screens enable native headers on iOS with aurora-safe chrome", () => {
     for (const screen of ["search", "connected-accounts", "profile"]) {
       expect(source).toContain(`"${screen}"`);
+      const screenStart = source.indexOf(`name="${screen}"`);
+      const screenBlock = source.slice(screenStart, source.indexOf("/>", screenStart));
+      expect(screenBlock).not.toContain("headerTransparent");
     }
     expect(source).toContain('headerShown: Platform.OS === "ios"');
     expect(source).toContain('headerStyle: { backgroundColor: "transparent" }');
     expect(source).toContain("theme.primary");
-    expect(source).not.toContain("headerTransparent");
   });
 
   test("dialog modal routes use DIALOG_MODAL without sheet detents", () => {

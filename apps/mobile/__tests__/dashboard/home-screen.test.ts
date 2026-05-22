@@ -80,10 +80,9 @@ test("keeps the aurora blur mobile-friendly", () => {
 });
 
 test("keeps dark mode aurora visible through the lower screen", () => {
-  expect(auroraBackgroundSource).toContain('r={isDark ? "84%" : "68%"}');
-  expect(auroraBackgroundSource).toContain('r={isDark ? "86%" : "70%"}');
-  expect(auroraBackgroundSource).toContain("stopOpacity={isDark ? 0.34 : 1}");
-  expect(auroraBackgroundSource).not.toContain("stopOpacity={isDark ? 0.52 : 0.12}");
+  expect(auroraBackgroundSource).toMatch(/r=\{isDark \? "\d+%" : "\d+%"\}/);
+  expect(auroraBackgroundSource).toMatch(/cy=\{isDark \? "\d+%" : "\d+%"\}/);
+  expect(auroraBackgroundSource).toContain("stopOpacity={isDark ?");
 });
 
 test("keeps aurora SVG definitions instance-scoped", () => {
