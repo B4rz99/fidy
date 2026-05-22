@@ -4,10 +4,8 @@ import type { StoredActivityItem } from "@/features/activity/query.public";
 import { ProfileAvatarButton } from "@/features/settings/header.public";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Platform, StyleSheet, View } from "@/shared/components/rn";
-import { useColorScheme } from "@/shared/hooks";
 import { EmptyTransactions } from "../EmptyTransactions";
 import { ActivityFeedItem } from "./ActivityFeedItem";
-import { HomeAuroraBackground } from "./HomeAuroraBackground";
 import { HomeScreenActions } from "./HomeScreenActions";
 import { HomeScreenHeader } from "./HomeScreenHeader";
 import type { HomeScreenModel } from "./useHomeScreen";
@@ -19,9 +17,6 @@ type HomeScreenContentProps = {
 const keyExtractor = (item: StoredActivityItem) => item.id;
 
 export function HomeScreenContent({ model }: HomeScreenContentProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
-  const backgroundColor = isDark ? "#0D0D0D" : "#FDFCF9";
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<StoredActivityItem>) => (
       <ActivityFeedItem
@@ -56,8 +51,6 @@ export function HomeScreenContent({ model }: HomeScreenContentProps) {
   return (
     <ScreenLayout
       title="fidy"
-      backgroundColor={backgroundColor}
-      backgroundLayer={<HomeAuroraBackground isDark={isDark} />}
       leftAction={<ProfileAvatarButton size={36} />}
       rightActions={headerActions}
       includesNativeHeader={false}

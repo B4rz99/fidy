@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
 import { Image } from "expo-image";
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { openBrowserAsync } from "expo-web-browser";
 import { useAuthIdentity, useOptionalUserId } from "@/features/auth/public";
@@ -23,7 +23,7 @@ import {
   Wallet,
   Wrench,
 } from "@/shared/components/icons";
-import { Linking, Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { Linking, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { deriveProfileAvatar } from "../lib/profile-avatar";
 import { buildPrivacyUrl, buildTermsUrl, buildWhatsAppUrl } from "../lib/settings-links";
@@ -51,7 +51,7 @@ function getPrivateBackupStatusLabelKey(status: PrivateBackupHealthStatus) {
 }
 
 export function SettingsScreen() {
-  const { back, push } = useRouter();
+  const router = useRouter();
   const { t, locale } = useTranslation();
 
   const { fullName, email, profileImageUrl } = useAuthIdentity();
@@ -82,6 +82,13 @@ export function SettingsScreen() {
     : t("settings.languageEnglish");
 
   const version = Constants.expoConfig?.version ?? "0.0.1";
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/(tabs)/(index)");
+  };
   const handleParseImprovementSharingChange = (enabled: boolean) =>
     applyParseImprovementSharingToggle({
       enabled,
@@ -90,8 +97,7 @@ export function SettingsScreen() {
     });
 
   return (
-    <ScreenLayout variant="sub" title={t("settings.title")} onBack={back}>
-      {Platform.OS === "ios" && <Stack.Screen options={{ title: t("settings.title") }} />}
+    <ScreenLayout variant="sub" title={t("settings.title")} onBack={handleBack}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
@@ -107,7 +113,7 @@ export function SettingsScreen() {
         {/* ACCOUNT */}
         <SettingsSection label={t("settings.accountSection")}>
           <Pressable
-            onPress={() => push("/profile")}
+            onPress={() => router.push("/profile")}
             className="flex-row items-center"
             style={{
               height: 64,
@@ -155,18 +161,18 @@ export function SettingsScreen() {
             icon={Palette}
             label={t("settings.theme")}
             subtitle={themeLabel}
-            onPress={() => push("/theme-picker")}
+            onPress={() => router.push("/theme-picker")}
           />
           <SettingsRow
             icon={Globe}
             label={t("settings.language")}
             subtitle={languageLabel}
-            onPress={() => push("/language-picker")}
+            onPress={() => router.push("/language-picker")}
           />
           <SettingsRow
             icon={Tag}
             label={t("categories.settingsRow")}
-            onPress={() => push("/categories")}
+            onPress={() => router.push("/categories")}
             isLast
           />
         </SettingsSection>
@@ -179,18 +185,18 @@ export function SettingsScreen() {
             subtitle={t("settings.connectedEmailsCount", {
               count: connectedCount,
             })}
-            onPress={() => push("/connected-accounts")}
+            onPress={() => router.push("/connected-accounts")}
           />
           <SettingsRow
             icon={Wallet}
             label={t("financialAccounts.list.settingsRow")}
-            onPress={() => push("/financial-accounts")}
+            onPress={() => router.push("/financial-accounts")}
           />
           <SettingsRow
             icon={Bell}
             label={t("settings.notifications")}
             subtitle={areAllNotificationsOff ? t("settings.off") : t("settings.on")}
-            onPress={() => push("/notification-preferences")}
+            onPress={() => router.push("/notification-preferences")}
             isLast
           />
         </SettingsSection>
@@ -201,7 +207,7 @@ export function SettingsScreen() {
             icon={KeyRound}
             label={t("settings.privateBackup")}
             subtitle={t(getPrivateBackupStatusLabelKey(privateBackupHealth))}
-            onPress={() => push("/private-backup")}
+            onPress={() => router.push("/private-backup")}
           />
           <SettingsRow
             icon={Sparkles}
@@ -242,7 +248,7 @@ export function SettingsScreen() {
               icon={Wrench}
               label={t("settings.designSystem")}
               subtitle={t("settings.designSystemSubtitle")}
-              onPress={() => push("/design-system")}
+              onPress={() => router.push("/design-system")}
             />
           ) : null}
           <SettingsRow

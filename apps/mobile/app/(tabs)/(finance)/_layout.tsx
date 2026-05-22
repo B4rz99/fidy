@@ -11,7 +11,7 @@ export default function FinanceStackLayout() {
         headerShown: true,
         headerTitle: "",
         headerShadowVisible: false,
-        headerStyle: { backgroundColor: theme.page },
+        headerStyle: { backgroundColor: "transparent" },
         headerTintColor: theme.primary,
       }}
     />
