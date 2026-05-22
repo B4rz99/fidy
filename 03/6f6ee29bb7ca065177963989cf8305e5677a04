@@ -1,0 +1,81 @@
+apps/mobile/features/qa/local-session.ts
+  s_d910271353effc::t_fb1ab461de85af 9
+apps/mobile/features/dashboard/components/home-screen/HomeScreenContent.tsx
+  s_d910271353effc::t_fb1ab461de85af 4,6-7,10,22-24,39-46,57-80
+apps/mobile/__tests__/qa/build-local-qa-seed.test.ts
+  s_d910271353effc::t_fb1ab461de85af 70-89
+apps/mobile/shared/i18n/locales/es.ts
+  s_d910271353effc::t_fb1ab461de85af 44-52,850-852
+apps/mobile/features/qa/lib/build-local-qa-seed.ts
+  s_d910271353effc::t_fb1ab461de85af 1,20,24,31,52-59,107,112-115,174,200
+apps/mobile/app/edit-transaction.tsx
+  s_d910271353effc::t_fb1ab461de85af 3,74,108,170
+apps/mobile/features/budget/public.ts
+  s_d910271353effc::t_fb1ab461de85af 32
+apps/mobile/features/dashboard/components/home-screen/HomeSpendingCard.tsx
+  s_d910271353effc::t_fb1ab461de85af 1-221
+apps/mobile/features/dashboard/components/DateHeader.tsx
+  s_d910271353effc::t_fb1ab461de85af 10
+apps/mobile/__tests__/navigation/tab-layout.test.ts
+  s_d910271353effc::t_fb1ab461de85af 34,38-45,55
+apps/mobile/__tests__/qa/entry-points.test.ts
+  s_d910271353effc::t_fb1ab461de85af 12,29
+apps/mobile/shared/components/PencilEntryScaffold.styles.ts
+  s_d910271353effc::t_fb1ab461de85af 56
+apps/mobile/features/dashboard/components/home-screen/HomeScreenHeader.tsx
+  s_d910271353effc::t_fb1ab461de85af 6,18,24,27-31,34,36-40,44-64,66,68-69
+apps/mobile/__tests__/dashboard/home-screen.test.ts
+  s_d910271353effc::t_fb1ab461de85af 19-21,25-27,40-41,54-60,68-83,87
+package.json
+  s_d910271353effc::t_fb1ab461de85af 19-21,56
+apps/mobile/app/(tabs)/(index)/_layout.tsx
+  s_d910271353effc::t_fb1ab461de85af 4
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_d910271353effc::t_fb1ab461de85af 14-16,26-28,38-39,42-43,59-60,65-66,83-94
+apps/mobile/__tests__/budget/store.test.ts
+  s_d910271353effc::t_fb1ab461de85af 159-168
+apps/mobile/features/qa/lib/entry-points.ts
+  s_d910271353effc::t_fb1ab461de85af 44-51,68
+apps/mobile/__tests__/setup.ts
+  s_d910271353effc::t_fb1ab461de85af 338-339,346
+apps/mobile/shared/i18n/locales/en.ts
+  s_d910271353effc::t_fb1ab461de85af 44-51,833-835
+apps/mobile/features/budget/store/state.ts
+  s_d910271353effc::t_fb1ab461de85af 17,55,75-78
+apps/mobile/features/dashboard/components/home-screen/ActivityFeedItem.tsx
+  s_d910271353effc::t_fb1ab461de85af 8,29-30,51-62,80-81,98-109,141-154
+apps/mobile/features/dashboard/components/home-screen/useHomeScreen.ts
+  s_d910271353effc::t_fb1ab461de85af 2,17,27-32,34-35,41
+apps/mobile/__tests__/shared/screen-layout.test.ts
+  s_d910271353effc::t_fb1ab461de85af 45-49,62,64
+apps/mobile/__tests__/qa/start-local-qa-session.test.ts
+  s_d910271353effc::t_fb1ab461de85af 13-21,39,83-93,139,142-145
+apps/mobile/__tests__/dashboard/home-spending-card.test.ts
+  s_d910271353effc::t_fb1ab461de85af 1-72
+apps/mobile/features/dashboard/components/home-screen/HomeAuroraBackground.tsx
+  s_d910271353effc::t_fb1ab461de85af 1-122
+apps/mobile/features/settings/ui.public.ts
+  s_d910271353effc::t_fb1ab461de85af 2
+apps/mobile/features/qa/components/qa-tools/QaTools.constants.ts
+  s_d910271353effc::t_fb1ab461de85af 6
+apps/mobile/features/qa/lib/home-activity-seed.ts
+  s_d910271353effc::t_fb1ab461de85af 1-163
+apps/mobile/features/qa/start-local-qa-session.ts
+  s_d910271353effc::t_fb1ab461de85af 3-7,12-15,38-40,45-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "036f6ee29bb7ca065177963989cf8305e5677a04",
+  "prompts": {},
+  "sessions": {
+    "s_d910271353effc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e422e-6086-7a70-bd4c-747d012cf7d9",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
