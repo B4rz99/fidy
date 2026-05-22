@@ -1,0 +1,19 @@
+.coderabbit.yaml
+  s_00e6116bab7d64::t_6eda06a2eceaf7 1-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "096d07a5e0a8514790beac5ecd50c8826e726b59",
+  "prompts": {},
+  "sessions": {
+    "s_00e6116bab7d64": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e508b-0475-77c0-bb56-22124a41ba1a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
