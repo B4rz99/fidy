@@ -1,5 +1,6 @@
 import type { AnyDb } from "@/shared/db";
 import { capturePipelineEventEffect } from "@/shared/effect/telemetry";
+import { isEmailCaptureDebugEnabled } from "../email-capture-debug";
 import { buildEmailPipelineBatchTelemetry } from "./email-telemetry";
 import { processIncomingEmail } from "./incoming-email";
 import { getProcessedEmailSourceEventIdsEffect } from "./runtime";
@@ -46,9 +47,6 @@ type RegexParseAccumulator = {
 };
 
 const nowMs = (): number => Date.now();
-
-const isEmailCaptureDebugEnabled = (): boolean =>
-  process.env.EXPO_PUBLIC_EMAIL_CAPTURE_DEBUG === "1";
 
 const logRegexSummaryForDebug = (input: {
   readonly emailCount: number;

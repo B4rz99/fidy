@@ -21,6 +21,7 @@ import type {
   CopAmount,
   DetectedSmsEventId,
   EmailAccountId,
+  EmailParseImprovementSampleId,
   FinancialAccountId,
   FinancialAccountIdentifierId,
   IsoDate,
@@ -259,6 +260,40 @@ export const processedSourceEvents = sqliteTable(
       table.nextRetryAt
     ),
     index("idx_processed_source_events_user_updated").on(table.userId, table.updatedAt),
+  ]
+);
+
+export const emailParseImprovementSamples = sqliteTable(
+  "email_parse_improvement_samples",
+  {
+    id: text("id").$type<EmailParseImprovementSampleId>().primaryKey(),
+    userId: text("user_id").$type<UserId>().notNull(),
+    template: text("template").notNull(),
+    senderDomain: text("sender_domain"),
+    source: text("source").notNull(),
+    status: text("status").notNull(),
+    confidence: real("confidence"),
+    parseMethod: text("parse_method").notNull(),
+    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
+    sharedAt: text("shared_at").$type<IsoDateTime>(),
+    deletedAt: text("deleted_at").$type<IsoDateTime>(),
+  },
+  (table) => [
+    uniqueIndex("uq_email_parse_improvement_sample").on(
+      table.userId,
+      table.source,
+      table.status,
+      table.parseMethod,
+      sql`coalesce(${table.senderDomain}, '')`,
+      table.template
+    ),
+    index("idx_email_parse_improvement_samples_pending").on(
+      table.userId,
+      table.sharedAt,
+      table.deletedAt,
+      table.createdAt,
+      table.id
+    ),
   ]
 );
 

@@ -15,7 +15,7 @@ export function useEmailCapture(db: AnyDb | null, userId: UserId | null) {
       initializeEmailCaptureSession(userId);
 
       const runFetch = () => {
-        fetchAndProcessEmails(
+        void fetchAndProcessEmails(
           db,
           userId,
           getGmailClientId(),
@@ -23,6 +23,8 @@ export function useEmailCapture(db: AnyDb | null, userId: UserId | null) {
           () => refreshTransactions(db, userId),
           {
             shareParseImprovementSamples: useSettingsStore.getState().shareAnonymizedParseSamples,
+            isShareParseImprovementSamplesEnabled: () =>
+              useSettingsStore.getState().shareAnonymizedParseSamples,
           }
         ).catch(handleRecoverableError("Email sync failed"));
       };

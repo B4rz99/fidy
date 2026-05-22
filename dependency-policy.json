@@ -71,6 +71,126 @@
       "reason": "Minor dependency update should land in a dedicated tooling PR so architecture reports can be reviewed separately."
     },
     {
+      "name": "babel-preset-expo",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "eslint-config-expo",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-background-task",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-blur",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-constants",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-crypto",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-dev-client",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-font",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-glass-effect",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-haptics",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-image",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-linking",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-localization",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-notifications",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-router",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-secure-store",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-splash-screen",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-sqlite",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-status-bar",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-symbols",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-system-ui",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-task-manager",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-updates",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
+      "name": "expo-web-browser",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
       "name": "eslint",
       "until": "2026-06-01",
       "reason": "ESLint 10 should wait for eslint-config-expo compatibility confirmation."

@@ -94,7 +94,7 @@
     "@vitest/coverage-v8": "^4.0.18",
     "babel-plugin-inline-import": "3.0.0",
     "babel-preset-expo": "~55.0.8",
-    "better-sqlite3": "12.9.0",
+    "better-sqlite3": "12.10.0",
     "drizzle-kit": "0.31.9",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~55.0.1",

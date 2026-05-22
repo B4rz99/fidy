@@ -30,6 +30,8 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
     await fetchAndProcessEmails(db, userId, getGmailClientId(), getOutlookClientId(), undefined, {
       parseProfile: "background",
       shareParseImprovementSamples: useSettingsStore.getState().shareAnonymizedParseSamples,
+      isShareParseImprovementSamplesEnabled: () =>
+        useSettingsStore.getState().shareAnonymizedParseSamples,
     });
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch (error) {

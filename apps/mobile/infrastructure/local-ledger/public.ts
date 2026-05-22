@@ -18,6 +18,7 @@ export {
   type ReclassifyTransactionsAsTransferResult,
 } from "./transfer-reclassification";
 export {
+  pruneStaleCaptureSourceEventsWithLocalLedger,
   recordCommittedCaptureSourceEventInTransactionWithLocalLedger,
   recordCommittedCaptureSourceEventWithLocalLedger,
   recordProcessedCaptureSourceEventWithLocalLedger,

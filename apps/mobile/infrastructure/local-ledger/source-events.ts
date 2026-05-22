@@ -1,4 +1,4 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, lt } from "drizzle-orm";
 import type { CaptureEvidenceSeed } from "@/shared/capture-evidence/types";
 import type { AnyDb } from "@/shared/db";
 import { captureEvidence, processedSourceEvents } from "@/shared/db/schema";
@@ -34,6 +34,15 @@ type SourceEventInput = {
 
 type PersistSourceEventInput = SourceEventInput & {
   readonly db: AnyDb;
+};
+
+type PruneStaleCaptureSourceEventsInput = {
+  readonly db: AnyDb;
+  readonly userId: UserId;
+  readonly sourceFamily: string;
+  readonly status: SourceEventStatus;
+  readonly retentionBoundary: IsoDateTime;
+  readonly deletedAt: IsoDateTime;
 };
 
 type PersistCommittedCaptureInput = PersistSourceEventInput & {
@@ -185,3 +194,20 @@ export const persistCommittedCaptureSourceEvent = (
     persistCommittedCaptureSourceEventInTransaction(tx, input);
   });
 };
+
+export const pruneStaleCaptureSourceEventsWithLocalLedger = (
+  input: PruneStaleCaptureSourceEventsInput
+): number =>
+  input.db
+    .update(processedSourceEvents)
+    .set({ deletedAt: input.deletedAt, updatedAt: input.deletedAt })
+    .where(
+      and(
+        eq(processedSourceEvents.userId, input.userId),
+        eq(processedSourceEvents.sourceFamily, input.sourceFamily),
+        eq(processedSourceEvents.status, input.status),
+        lt(processedSourceEvents.processedAt, input.retentionBoundary),
+        isNull(processedSourceEvents.deletedAt)
+      )
+    )
+    .run().changes;

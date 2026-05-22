@@ -298,6 +298,31 @@ describe("email capture store runtime", () => {
     expect(runtimeState().progress).toBeNull();
   });
 
+  it("clears queue slices when fetch outcome queue refresh fails", async () => {
+    const refreshTransactions = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const account = makeAccount();
+    runtimeState().setAccounts([account]);
+    runtimeState().setFailedEmailSourceEvents([sourceEvent("stale-failed")]);
+    runtimeState().setNeedsReviewEmailSourceEvents([sourceEvent("stale-review")]);
+    const start = beginEmailCaptureFetchRun(USER_ID);
+    expect(start.kind).toBe("ready");
+    if (start.kind !== "ready") return;
+
+    await applyEmailCaptureFetchOutcome({
+      run: start.run,
+      showProgress: true,
+      persistedAccounts: {
+        updatedAccountIds: new Set([account.id]),
+        fetchedAt: NOW,
+      },
+      queues: null,
+      refreshTransactions,
+    });
+
+    expect(runtimeState().failedEmailSourceEvents).toEqual([]);
+    expect(runtimeState().needsReviewEmailSourceEvents).toEqual([]);
+  });
+
   it("clears non-complete fetch state immediately and ignores stale runs", () => {
     const start = beginEmailCaptureFetchRun(USER_ID);
     expect(start.kind).toBe("ready");

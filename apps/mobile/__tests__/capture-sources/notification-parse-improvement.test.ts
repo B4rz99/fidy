@@ -190,4 +190,42 @@ describe("notification parse improvement samples", () => {
       },
     });
   });
+
+  it("sanitizes prebuilt parser templates before storing opted-in email samples", async () => {
+    await shareNotificationParseImprovementSample({
+      consent: true,
+      userId: "user-1",
+      parserTemplate: "Compra EXITO por 50000 con tarjeta 1234.",
+      rawText: "Compra EXITO por $50,000 con tarjeta *1234.",
+      senderDomain: "davibank.com",
+      source: "email_gmail",
+      status: "failed",
+      confidence: null,
+      parseMethod: "regex",
+    });
+
+    expect(mockInsertNotificationParseImprovementSample).toHaveBeenCalledWith({
+      userId: "user-1",
+      sample: {
+        template: "Compra [MERCHANT] por [AMOUNT] con tarjeta [CARD].",
+        senderDomain: "davibank.com",
+        source: "email_gmail",
+        status: "failed",
+        confidenceBucket: "none",
+        parseMethod: "regex",
+      },
+    });
+  });
+
+  it("clamps oversized templates to the remote table limit", () => {
+    const sample = buildNotificationParseImprovementSample({
+      rawText: "Compra ".repeat(300),
+      source: "email_gmail",
+      status: "failed",
+      confidence: null,
+      parseMethod: "regex",
+    });
+
+    expect(sample.template.length).toBeLessThanOrEqual(1000);
+  });
 });

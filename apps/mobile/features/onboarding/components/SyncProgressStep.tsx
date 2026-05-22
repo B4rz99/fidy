@@ -24,7 +24,6 @@ import {
 import { styles } from "./SyncProgressStep.styles";
 import { SyncImportProgress } from "./SyncImportProgress";
 import { SyncTransactionPreview } from "./SyncTransactionPreview";
-
 export function SyncProgressStep() {
   const { t } = useTranslation();
   const userId = useOptionalUserId();
@@ -60,7 +59,6 @@ export function SyncProgressStep() {
       resolveIdle?.(shouldRetry);
       resolveIdle = null;
     };
-
     const getHasAccountSuggestions = () =>
       Boolean(
         db &&
@@ -180,6 +178,8 @@ export function SyncProgressStep() {
           {
             parseProfile: "initial_sync",
             shareParseImprovementSamples: shareAnonymizedParseSamples,
+            isShareParseImprovementSamplesEnabled: () =>
+              useSettingsStore.getState().shareAnonymizedParseSamples,
           }
         );
 

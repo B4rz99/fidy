@@ -21,6 +21,8 @@ export type ShareParseImprovementInput = ParseImprovementInput & {
   readonly userId: string;
 };
 
+const MAX_PARSE_IMPROVEMENT_TEMPLATE_LENGTH = 1000;
+
 type RedactionRule = {
   readonly pattern: RegExp;
   readonly replacement: string;
@@ -139,8 +141,12 @@ export function anonymizeNotificationParseSample(rawText: string): string {
 }
 
 export function buildNotificationParseImprovementSample(input: ParseImprovementInput) {
+  const template = clampParseImprovementTemplate(
+    anonymizeNotificationParseSample(input.parserTemplate ?? input.rawText)
+  );
+
   return {
-    template: input.parserTemplate ?? anonymizeNotificationParseSample(input.rawText),
+    template,
     ...(input.senderDomain ? { senderDomain: input.senderDomain } : {}),
     source: input.source,
     status: input.status,
@@ -159,6 +165,11 @@ const LENGTH_BUCKETS = [
 
 const lengthBucket = (value: string): string =>
   LENGTH_BUCKETS.find((bucket) => value.length < bucket.max)?.label ?? "500_plus";
+
+const clampParseImprovementTemplate = (template: string): string =>
+  template.length <= MAX_PARSE_IMPROVEMENT_TEMPLATE_LENGTH
+    ? template
+    : template.slice(0, MAX_PARSE_IMPROVEMENT_TEMPLATE_LENGTH).trim();
 
 export async function shareNotificationParseImprovementSample(
   input: ShareParseImprovementInput

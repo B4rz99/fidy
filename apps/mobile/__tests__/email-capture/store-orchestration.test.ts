@@ -286,6 +286,94 @@ describe("email capture store orchestration", () => {
     expect(mocks.captureError).toHaveBeenCalledWith(expect.any(Error));
   });
 
+  it("counts skipped emails when reporting per-account fetch progress", async () => {
+    const store = await loadStoreModule();
+    const progressCalls: Array<{
+      readonly total: number;
+      readonly completed: number;
+      readonly saved: number;
+      readonly failed: number;
+      readonly needsReview: number;
+    }> = [];
+    store.useEmailCaptureStore
+      .getState()
+      .setAccounts([
+        account({ id: "ea-1" as EmailAccountId }),
+        account({ id: "ea-2" as EmailAccountId, email: "second@gmail.com" }),
+      ]);
+    mocks.fetchEmailAccountBatch.mockResolvedValueOnce({
+      showProgress: true,
+      fetchResults: [
+        {
+          account: account({ id: "ea-1" as EmailAccountId }),
+          fetchOk: true,
+          rawEmails: [{ id: "email-1", receivedAt: NOW }],
+        },
+        {
+          account: account({ id: "ea-2" as EmailAccountId, email: "second@gmail.com" }),
+          fetchOk: true,
+          rawEmails: [
+            { id: "email-2", receivedAt: NOW },
+            { id: "email-3", receivedAt: NOW },
+          ],
+        },
+      ],
+    });
+    mocks.ingestFetchedEmails
+      .mockImplementationOnce(async (input) => {
+        input.onProgress?.({ total: 1, completed: 1, saved: 1, failed: 0, needsReview: 0 });
+        return { saved: 1, needsReview: 0, failed: 0, parseImprovementRequests: [] };
+      })
+      .mockImplementationOnce(async (input) => {
+        input.onProgress?.({ total: 0, completed: 0, saved: 0, failed: 0, needsReview: 0 });
+        return { saved: 0, needsReview: 0, failed: 0, parseImprovementRequests: [] };
+      });
+    store.useEmailCaptureStore.subscribe((state) => {
+      if (state.progress) progressCalls.push(state.progress);
+    });
+
+    await store.fetchAndProcessEmails(db, USER_ID, "gmail-client", "outlook-client");
+
+    expect(progressCalls).toContainEqual({
+      total: 3,
+      completed: 3,
+      saved: 1,
+      failed: 0,
+      needsReview: 0,
+    });
+  });
+
+  it("persists account cursors when queue refresh fails after processing", async () => {
+    const store = await loadStoreModule();
+    store.useEmailCaptureStore.getState().setAccounts([account()]);
+    mocks.fetchEmailAccountBatch.mockResolvedValueOnce({
+      showProgress: true,
+      fetchResults: [
+        {
+          account: account(),
+          fetchOk: true,
+          rawEmails: [{ id: "email-1", receivedAt: NOW }],
+        },
+      ],
+    });
+    mocks.ingestFetchedEmails.mockResolvedValueOnce({
+      saved: 0,
+      needsReview: 1,
+      failed: 0,
+      parseImprovementRequests: [],
+    });
+    mocks.loadEmailCaptureQueues.mockRejectedValueOnce(new Error("queue failed"));
+
+    await expect(
+      store.fetchAndProcessEmails(db, USER_ID, "gmail-client", "outlook-client")
+    ).resolves.toEqual({ status: "completed", savedCount: 0, needsReviewCount: 1, failedCount: 0 });
+
+    expect(mocks.captureWarning).toHaveBeenCalledWith("email_capture_queue_refresh_failed", {
+      errorType: "Error",
+    });
+    expect(mocks.persistFetchedAccounts).toHaveBeenCalled();
+  });
+
   it("connects managed email accounts and reports account connection failures", async () => {
     const store = await loadStoreModule();
     const adapter = {

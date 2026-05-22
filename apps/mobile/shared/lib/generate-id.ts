@@ -9,6 +9,7 @@ import type {
   ChatSessionId,
   DetectedSmsEventId,
   EmailAccountId,
+  EmailParseImprovementSampleId,
   FinancialAccountId,
   FinancialAccountIdentifierId,
   MerchantRuleId,
@@ -78,6 +79,10 @@ export function generateUserMemoryId(): UserMemoryId {
 
 export function generateEmailAccountId(): EmailAccountId {
   return generateId("ea") as EmailAccountId;
+}
+
+export function generateEmailParseImprovementSampleId(): EmailParseImprovementSampleId {
+  return generateId("epis") as EmailParseImprovementSampleId;
 }
 
 export function generateFinancialAccountId(): FinancialAccountId {

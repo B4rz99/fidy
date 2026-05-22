@@ -1,5 +1,6 @@
 export {
   persistCommittedCaptureSourceEvent as recordCommittedCaptureSourceEventWithLocalLedger,
+  pruneStaleCaptureSourceEventsWithLocalLedger,
   persistCommittedCaptureSourceEventInTransaction as recordCommittedCaptureSourceEventInTransactionWithLocalLedger,
   persistProcessedSourceEvent as recordProcessedCaptureSourceEventWithLocalLedger,
 } from "./source-events";
