@@ -1,0 +1,60 @@
+apps/mobile/app/(tabs)/(finance)/index.tsx
+  s_522233d6b58289::t_7c49e51d3af384 15,19,86,146,149-150
+apps/mobile/app/(auth)/login.tsx
+  s_522233d6b58289::t_7c49e51d3af384 5,7,12,16-17
+apps/mobile/__tests__/shared/screen-layout.test.ts
+  s_522233d6b58289::t_4478353d011fa0 97-98
+apps/mobile/shared/components/ComingSoonScreen.tsx
+  s_522233d6b58289::t_7c49e51d3af384 4-5,22,26-27
+apps/mobile/__tests__/dashboard/home-spending-card.test.ts
+  s_522233d6b58289::t_727dab5c4cc519 28,30,46
+apps/mobile/features/settings/components/SettingsScreen.tsx
+  s_522233d6b58289::t_920e9d7cfee166 54,85-91,100,116,164,170,175,188,193,199,210
+  s_522233d6b58289::t_2744c0d6ab5519 251
+  s_522233d6b58289::t_a65341e644815e 3,26
+apps/mobile/app/_layout.tsx
+  s_522233d6b58289::t_8d467be21cf2b9 215-216
+apps/mobile/__tests__/dashboard/home-screen.test.ts
+  s_522233d6b58289::t_352803665d478c 25
+apps/mobile/shared/components/DialogRouteFrame.tsx
+  s_522233d6b58289::t_b112a72e526c90 5-6,21,28-33,35-53,56,59,61,63-64,66-67,72-74
+apps/mobile/shared/components/PencilEntryScaffold.tsx
+  s_522233d6b58289::t_b62815054be6ba 11,23,128,194
+apps/mobile/shared/components/index.ts
+  s_522233d6b58289::t_b112a72e526c90 2
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_522233d6b58289::t_b112a72e526c90 6-7,36,62
+apps/mobile/app/(tabs)/(finance)/_layout.tsx
+  s_522233d6b58289::t_8d467be21cf2b9 14-15
+apps/mobile/shared/components/AppAuroraBackground.tsx
+  s_522233d6b58289::t_290e52ff7ad2d3 1-125
+apps/mobile/features/analytics/components/AnalyticsScreen.tsx
+  s_522233d6b58289::t_7c49e51d3af384 86
+apps/mobile/features/dashboard/components/home-screen/HomeAuroraBackground.tsx
+  s_522233d6b58289::t_290e52ff7ad2d3 1
+apps/mobile/app/(auth)/onboarding.tsx
+  s_522233d6b58289::t_352803665d478c 143
+  s_522233d6b58289::t_7c49e51d3af384 33,36,44,47-51,66,116-120,144
+apps/mobile/__tests__/coming-soon/coming-soon-screen.test.ts
+  s_522233d6b58289::t_4478353d011fa0 58-59
+apps/mobile/features/dashboard/components/home-screen/HomeSpendingCard.tsx
+  s_522233d6b58289::t_af588d46bc604a 52
+apps/mobile/features/goals/components/goal-detail/GoalDetailContent.tsx
+  s_522233d6b58289::t_7c49e51d3af384 2,4,31,35-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "f003fcc016c1c068658f6915c2441cf018400ea1",
+  "prompts": {},
+  "sessions": {
+    "s_522233d6b58289": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5035-ede4-70a3-ae96-f7ec75039ed1",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
