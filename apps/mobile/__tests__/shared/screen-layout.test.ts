@@ -60,9 +60,10 @@ describe("ScreenLayout", () => {
 
   test("renders a custom iOS header for hidden-header sub screens", () => {
     expect(source).toContain("!includesNativeHeader &&");
-    expect(source).toContain(
-      "!isTab || leftAction != null || rightActions != null || onBack != null"
-    );
+    expect(source).toContain("centerAction != null");
+    expect(source).toContain("leftAction != null");
+    expect(source).toContain("rightActions != null");
+    expect(source).toContain("onBack != null");
   });
 
   test("accepts children ReactNode prop", () => {

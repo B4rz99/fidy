@@ -1,11 +1,9 @@
 import { memo } from "react";
 import { CATEGORY_MAP } from "@/shared/categories";
-import { ProgressBar } from "@/shared/components";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { formatMoney } from "@/shared/lib";
-import type { BudgetProgress } from "../lib/derive";
+import { deriveBudgetPulseCardModel, type BudgetProgress } from "../lib/derive";
 
 type Props = {
   readonly progress: BudgetProgress;
@@ -20,15 +18,17 @@ function BudgetCardInner({ progress, onPress }: Props) {
   const borderColor = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
+  const peachLight = useThemeColor("peachLight");
 
   const category = CATEGORY_MAP[progress.categoryId] ?? null;
   const CategoryIcon = category?.icon;
   const categoryLabel = category ? getCategoryLabel(category, locale) : progress.categoryId;
-  const badgeColor = progress.isOverBudget ? accentRed : accentGreen;
-
-  const remainingText = progress.isOverBudget
-    ? t("budgets.card.over", { amount: formatMoney(Math.abs(progress.remaining)) })
-    : t("budgets.card.remaining", { amount: formatMoney(progress.remaining) });
+  const model = deriveBudgetPulseCardModel({ progress, t });
+  const badgeColor =
+    model.tone === "danger" ? accentRed : model.tone === "warning" ? peachLight : accentGreen;
+  const badgeTextColor = model.tone === "warning" ? "#3A2820" : "#0D0D0D";
+  const progressColor = model.tone === "danger" ? accentRed : accentGreen;
+  const progressWidth = `${Math.max(0, Math.min(progress.percentUsed, 100))}%` as `${number}%`;
 
   const handlePress = () => onPress(progress.budgetId);
 
@@ -40,30 +40,35 @@ function BudgetCardInner({ progress, onPress }: Props) {
       <View style={styles.header}>
         <View style={styles.categoryRow}>
           {category && CategoryIcon ? (
-            <Text style={{ color: category.color }}>{CategoryIcon}</Text>
+            <View style={[styles.emojiBubble, { backgroundColor: `${category.color}24` }]}>
+              <Text style={styles.emoji}>{CategoryIcon}</Text>
+            </View>
           ) : null}
-          <Text style={[styles.categoryName, { color: primaryColor }]}>{categoryLabel}</Text>
+          <View style={styles.categoryText}>
+            <Text style={[styles.categoryName, { color: primaryColor }]}>{categoryLabel}</Text>
+            <Text style={[styles.amountLine, { color: secondaryColor }]}>{model.amountLine}</Text>
+          </View>
         </View>
         <View style={[styles.badge, { backgroundColor: badgeColor }]}>
-          <Text style={styles.badgeText}>
-            {t("budgets.card.used", { percent: progress.percentUsed })}
-          </Text>
+          <Text style={[styles.badgeText, { color: badgeTextColor }]}>{model.percentLabel}</Text>
         </View>
       </View>
 
-      <ProgressBar percent={progress.percentUsed} />
+      <View style={[styles.progressTrack, { backgroundColor: borderColor }]}>
+        <View
+          style={[styles.progressFill, { backgroundColor: progressColor, width: progressWidth }]}
+        />
+      </View>
 
       <View style={styles.footer}>
-        <Text style={[styles.spentText, { color: secondaryColor }]}>
-          {formatMoney(progress.spent)} / {formatMoney(progress.amount)}
-        </Text>
+        <Text style={[styles.spentText, { color: secondaryColor }]}>{model.remainingLabel}</Text>
         <Text
           style={[
             styles.remainingText,
-            { color: progress.isOverBudget ? accentRed : secondaryColor },
+            { color: model.tone === "danger" ? accentRed : primaryColor },
           ]}
         >
-          {remainingText}
+          {model.statusLabel}
         </Text>
       </View>
     </Pressable>
@@ -74,10 +79,10 @@ export const BudgetCard = memo(BudgetCardInner);
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 12,
+    borderRadius: 10,
     borderCurve: "continuous",
     borderWidth: 1,
-    padding: 16,
+    padding: 14,
     gap: 12,
   },
   header: {
@@ -86,23 +91,52 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   categoryRow: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
+    minWidth: 0,
+  },
+  emojiBubble: {
+    alignItems: "center",
+    borderRadius: 8,
+    height: 36,
+    justifyContent: "center",
+    width: 36,
+  },
+  emoji: {
+    fontSize: 18,
+  },
+  categoryText: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
   },
   categoryName: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 14,
   },
+  amountLine: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 12,
+  },
   badge: {
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   badgeText: {
-    fontFamily: "Poppins_500Medium",
+    fontFamily: "Poppins_700Bold",
     fontSize: 11,
-    color: "#FFFFFF",
+  },
+  progressTrack: {
+    borderRadius: 999,
+    height: 7,
+    overflow: "hidden",
+  },
+  progressFill: {
+    borderRadius: 999,
+    height: 7,
   },
   footer: {
     flexDirection: "row",
@@ -114,7 +148,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   remainingText: {
-    fontFamily: "Poppins_500Medium",
+    fontFamily: "Poppins_700Bold",
     fontSize: 12,
   },
 });

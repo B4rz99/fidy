@@ -1,4 +1,5 @@
 import { differenceInCalendarDays, endOfMonth } from "date-fns";
+import { formatMoney } from "@/shared/lib/format-money";
 import type { BudgetId, CategoryId, CopAmount, Month } from "@/shared/types/branded";
 
 export type BudgetProgress = {
@@ -52,8 +53,8 @@ export function deriveBudgetProgress(
 
 /** Pure derivation: aggregate totals across all budget progresses. */
 export function deriveBudgetSummary(progresses: readonly BudgetProgress[]): {
-  readonly totalBudget: number;
-  readonly totalSpent: number;
+  readonly totalBudget: CopAmount;
+  readonly totalSpent: CopAmount;
   readonly percentUsed: number;
 } {
   const { totalBudget, totalSpent } = progresses.reduce(
@@ -68,7 +69,81 @@ export function deriveBudgetSummary(progresses: readonly BudgetProgress[]): {
     if (totalSpent > 0) return 100;
     return 0;
   })();
-  return { totalBudget, totalSpent, percentUsed };
+  return {
+    totalBudget: totalBudget as CopAmount,
+    totalSpent: totalSpent as CopAmount,
+    percentUsed,
+  };
+}
+
+type TranslateBudgetPulse = (
+  key: string,
+  params?: Readonly<Record<string, string | number>>
+) => string;
+
+export type BudgetPulseSummaryModel = {
+  readonly totalBudgetLabel: string;
+  readonly percentLabel: string;
+  readonly guidance: string;
+  readonly remaining: CopAmount;
+  readonly isOverBudget: boolean;
+};
+
+export function deriveBudgetPulseSummaryModel(input: {
+  readonly totalBudget: CopAmount;
+  readonly totalSpent: CopAmount;
+  readonly percentUsed: number;
+  readonly t: TranslateBudgetPulse;
+}): BudgetPulseSummaryModel {
+  const remaining = (input.totalBudget - input.totalSpent) as CopAmount;
+  const amount = formatMoney(Math.abs(remaining));
+  const isOverBudget = remaining < 0;
+
+  return {
+    totalBudgetLabel: formatMoney(input.totalBudget),
+    percentLabel: `${input.percentUsed}%`,
+    guidance: input.t(isOverBudget ? "budgets.summary.over" : "budgets.summary.remaining", {
+      amount,
+    }),
+    remaining,
+    isOverBudget,
+  };
+}
+
+export type BudgetPulseCardModel = {
+  readonly amountLine: string;
+  readonly percentLabel: string;
+  readonly remainingLabel: string;
+  readonly statusLabel: string;
+  readonly tone: "default" | "warning" | "danger";
+};
+
+export function deriveBudgetPulseCardModel(input: {
+  readonly progress: BudgetProgress;
+  readonly t: TranslateBudgetPulse;
+}): BudgetPulseCardModel {
+  const { progress, t } = input;
+  const tone = (() => {
+    if (progress.isOverBudget) return "danger" as const;
+    if (progress.isNearLimit) return "warning" as const;
+    return "default" as const;
+  })();
+  const remainingAmount = formatMoney(Math.abs(progress.remaining));
+  const statusKey = (() => {
+    if (progress.isOverBudget) return "budgets.card.status.over";
+    if (progress.isNearLimit) return "budgets.card.status.nearLimit";
+    return "budgets.card.status.onTrack";
+  })();
+
+  return {
+    amountLine: `${formatMoney(progress.spent)} / ${formatMoney(progress.amount)}`,
+    percentLabel: `${progress.percentUsed}%`,
+    remainingLabel: t(progress.isOverBudget ? "budgets.card.over" : "budgets.card.remaining", {
+      amount: remainingAmount,
+    }),
+    statusLabel: t(statusKey),
+    tone,
+  };
 }
 
 /**

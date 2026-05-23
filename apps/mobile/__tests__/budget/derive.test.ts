@@ -4,6 +4,8 @@ import {
   computeDaysLeft,
   deriveAutoSuggestBudgets,
   deriveBudgetAlerts,
+  deriveBudgetPulseCardModel,
+  deriveBudgetPulseSummaryModel,
   deriveBudgetProgress,
   deriveBudgetSummary,
 } from "@/features/budget/lib/derive";
@@ -26,6 +28,49 @@ const makeProgress = (overrides: Partial<BudgetProgress> = {}): BudgetProgress =
   isOverBudget: false,
   isNearLimit: false,
   ...overrides,
+});
+
+const translateFrom =
+  (translations: Readonly<Record<string, string>>) =>
+  (key: string, params?: Readonly<Record<string, string | number>>): string => {
+    const template = translations[key];
+    if (!template) throw new Error(`Unexpected key: ${key}`);
+    return Object.entries(params ?? {}).reduce(
+      (result, [name, value]) => result.replace(`%{${name}}`, String(value)),
+      template
+    );
+  };
+
+const nearLimitPulseProgress = makeProgress({
+  amount: 900_000 as CopAmount,
+  spent: 840_000 as CopAmount,
+  percentUsed: 93,
+  remaining: 60_000 as CopAmount,
+  isNearLimit: true,
+});
+
+const onTrackPulseProgress = makeProgress({
+  amount: 420_000 as CopAmount,
+  spent: 260_000 as CopAmount,
+  percentUsed: 62,
+  remaining: 160_000 as CopAmount,
+});
+
+const overLimitPulseProgress = makeProgress({
+  amount: 360_000 as CopAmount,
+  spent: 410_000 as CopAmount,
+  percentUsed: 114,
+  remaining: -50_000 as CopAmount,
+  isOverBudget: true,
+  isNearLimit: true,
+});
+
+const pulseCardTranslations = translateFrom({
+  "budgets.card.remaining": "Quedan %{amount}",
+  "budgets.card.over": "%{amount} sobre el presupuesto",
+  "budgets.card.status.onTrack": "Vas bien",
+  "budgets.card.status.nearLimit": "Cerca del límite",
+  "budgets.card.status.over": "Sobre el límite",
 });
 
 describe("deriveBudgetProgress", () => {
@@ -117,6 +162,82 @@ describe("deriveBudgetSummary", () => {
     expect(result.totalBudget).toBe(0);
     expect(result.totalSpent).toBe(0);
     expect(result.percentUsed).toBe(0);
+  });
+});
+
+describe("deriveBudgetPulseSummaryModel", () => {
+  it("communicates the remaining monthly amount in the hero card", () => {
+    const result = deriveBudgetPulseSummaryModel({
+      totalBudget: 2_800_000 as CopAmount,
+      totalSpent: 1_940_000 as CopAmount,
+      percentUsed: 69,
+      t: translateFrom({
+        "budgets.summary.remaining": "Te quedan %{amount} para cerrar el mes.",
+      }),
+    });
+
+    expect(result.totalBudgetLabel).toBe("$2.800.000");
+    expect(result.percentLabel).toBe("69%");
+    expect(result.guidance).toBe("Te quedan $860.000 para cerrar el mes.");
+    expect(result.remaining).toBe(860_000);
+    expect(result.isOverBudget).toBe(false);
+  });
+
+  it("uses over-budget copy when the month total is exceeded", () => {
+    const result = deriveBudgetPulseSummaryModel({
+      totalBudget: 900_000 as CopAmount,
+      totalSpent: 1_120_000 as CopAmount,
+      percentUsed: 124,
+      t: translateFrom({
+        "budgets.summary.over": "Te pasaste por %{amount} este mes.",
+      }),
+    });
+
+    expect(result.percentLabel).toBe("124%");
+    expect(result.guidance).toBe("Te pasaste por $220.000 este mes.");
+    expect(result.remaining).toBe(-220_000);
+    expect(result.isOverBudget).toBe(true);
+  });
+});
+
+describe("deriveBudgetPulseCardModel", () => {
+  it("labels on-track category budgets as default tone", () => {
+    const result = deriveBudgetPulseCardModel({
+      progress: onTrackPulseProgress,
+      t: pulseCardTranslations,
+    });
+
+    expect(result.percentLabel).toBe("62%");
+    expect(result.amountLine).toBe("$260.000 / $420.000");
+    expect(result.remainingLabel).toBe("Quedan $160.000");
+    expect(result.statusLabel).toBe("Vas bien");
+    expect(result.tone).toBe("default");
+  });
+
+  it("labels near-limit category budgets as close to the limit", () => {
+    const result = deriveBudgetPulseCardModel({
+      progress: nearLimitPulseProgress,
+      t: pulseCardTranslations,
+    });
+
+    expect(result.percentLabel).toBe("93%");
+    expect(result.amountLine).toBe("$840.000 / $900.000");
+    expect(result.remainingLabel).toBe("Quedan $60.000");
+    expect(result.statusLabel).toBe("Cerca del límite");
+    expect(result.tone).toBe("warning");
+  });
+
+  it("labels over-limit category budgets as danger tone", () => {
+    const result = deriveBudgetPulseCardModel({
+      progress: overLimitPulseProgress,
+      t: pulseCardTranslations,
+    });
+
+    expect(result.percentLabel).toBe("114%");
+    expect(result.amountLine).toBe("$410.000 / $360.000");
+    expect(result.remainingLabel).toBe("$50.000 sobre el presupuesto");
+    expect(result.statusLabel).toBe("Sobre el límite");
+    expect(result.tone).toBe("danger");
   });
 });
 

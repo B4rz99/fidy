@@ -7,14 +7,8 @@ import type {
 import type { Budget } from "@/features/budget/schema";
 import type * as TransactionsModule from "@/features/transactions";
 import type { AnyDb } from "@/shared/db";
-import type {
-  BudgetId,
-  CategoryId,
-  CopAmount,
-  IsoDateTime,
-  Month,
-  UserId,
-} from "@/shared/types/branded";
+import { requireCopAmount } from "@/shared/types/assertions";
+import type { BudgetId, CategoryId, IsoDateTime, Month, UserId } from "@/shared/types/branded";
 
 const USER_ID = "user-1" as UserId;
 const NOW = "2026-03-01T00:00:00.000Z" as IsoDateTime;
@@ -75,7 +69,7 @@ const makeBudget = (id: string, categoryId: CategoryId, month: Month): Budget =>
   id: id as BudgetId,
   userId: USER_ID,
   categoryId,
-  amount: 100000 as CopAmount,
+  amount: requireCopAmount(100000),
   month,
   createdAt: NOW,
   updatedAt: NOW,
@@ -85,7 +79,7 @@ const makeBudget = (id: string, categoryId: CategoryId, month: Month): Budget =>
 const EMPTY_BUDGET_REFRESH_SNAPSHOT: BudgetMonthSnapshot = {
   budgets: [makeBudget("budget-1", "food" as CategoryId, "2026-03" as Month)],
   budgetProgress: [],
-  summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
+  summary: { totalBudget: requireCopAmount(0), totalSpent: requireCopAmount(0), percentUsed: 0 },
   autoSuggestions: [],
   pendingAlerts: [],
   pendingPermissionRequest: false,
@@ -94,13 +88,21 @@ const EMPTY_BUDGET_REFRESH_SNAPSHOT: BudgetMonthSnapshot = {
 const MARCH_STALE_SNAPSHOT: BudgetMonthSnapshot = {
   ...EMPTY_BUDGET_REFRESH_SNAPSHOT,
   budgets: [makeBudget("budget-march", "food" as CategoryId, "2026-03" as Month)],
-  summary: { totalBudget: 100000, totalSpent: 85000, percentUsed: 85 },
+  summary: {
+    totalBudget: requireCopAmount(100000),
+    totalSpent: requireCopAmount(85000),
+    percentUsed: 85,
+  },
 };
 
 const APRIL_FRESH_SNAPSHOT: BudgetMonthSnapshot = {
   ...EMPTY_BUDGET_REFRESH_SNAPSHOT,
   budgets: [makeBudget("budget-april", "transport" as CategoryId, "2026-04" as Month)],
-  summary: { totalBudget: 120000, totalSpent: 10000, percentUsed: 8 },
+  summary: {
+    totalBudget: requireCopAmount(120000),
+    totalSpent: requireCopAmount(10000),
+    percentUsed: 8,
+  },
 };
 
 function createDeferred<T>() {
@@ -217,7 +219,7 @@ describe("useBudgetStore", () => {
     const suggestions = [
       {
         categoryId: "entertainment" as CategoryId,
-        suggestedAmount: 44000 as CopAmount,
+        suggestedAmount: requireCopAmount(44000),
       },
     ];
     mockLoadAutoSuggestions.mockReturnValue(suggestions);

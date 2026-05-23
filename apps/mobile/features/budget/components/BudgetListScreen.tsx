@@ -2,24 +2,40 @@ import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
-import { MonthNavigator } from "@/features/calendar/public";
+import { formatMonthYear } from "@/features/calendar/public";
 import { shouldShowNotificationPrePermissionPrompt } from "@/features/notifications/public";
 import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Wallet } from "@/shared/components/icons";
-import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
+import { getDateFnsLocale } from "@/shared/i18n";
 import { captureError } from "@/shared/lib";
 import type { BudgetProgress } from "../lib/derive";
 import { nextBudgetMonth, prevBudgetMonth, useBudgetStore } from "../store";
 import { BudgetCard } from "./BudgetCard";
+import { BudgetHeaderMonthNavigator } from "./BudgetHeaderMonthNavigator";
 import { BudgetSummaryCard } from "./BudgetSummaryCard";
 
-function AddBudgetButton({ onPress }: { readonly onPress: () => void }) {
+function AddBudgetButton({
+  accessibilityHint,
+  accessibilityLabel,
+  onPress,
+}: {
+  readonly accessibilityHint: string;
+  readonly accessibilityLabel: string;
+  readonly onPress: () => void;
+}) {
   const primaryColor = useThemeColor("primary");
 
   return (
-    <Pressable onPress={onPress} hitSlop={12}>
+    <Pressable
+      accessibilityHint={accessibilityHint}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      onPress={onPress}
+      hitSlop={12}
+    >
       <Plus size={24} color={primaryColor} />
     </Pressable>
   );
@@ -28,7 +44,7 @@ function AddBudgetButton({ onPress }: { readonly onPress: () => void }) {
 const budgetKeyExtractor = (item: BudgetProgress) => item.budgetId;
 
 export function BudgetListScreen() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { push } = useRouter();
 
   const currentMonth = useBudgetStore((s) => s.currentMonth);
@@ -74,6 +90,7 @@ export function BudgetListScreen() {
     Number.parseInt(currentMonth.slice(5, 7), 10) - 1,
     1
   );
+  const monthLabel = formatMonthYear(monthAsDate, getDateFnsLocale(locale));
 
   const handleAddBudget = useCallback(() => {
     push("/create-budget");
@@ -154,19 +171,28 @@ export function BudgetListScreen() {
 
   return (
     <ScreenLayout
-      title={t("budgets.title")}
+      title=""
       includesNativeHeader={false}
-      rightActions={
-        Platform.OS !== "ios" ? <AddBudgetButton onPress={handleAddBudget} /> : undefined
-      }
-    >
-      <View style={styles.content}>
-        <MonthNavigator
-          currentMonth={monthAsDate}
+      centerAction={
+        <BudgetHeaderMonthNavigator
+          monthLabel={monthLabel}
+          prevMonthLabel={t("budgets.header.previousMonthLabel")}
+          prevMonthHint={t("budgets.header.previousMonthHint")}
+          nextMonthLabel={t("budgets.header.nextMonthLabel")}
+          nextMonthHint={t("budgets.header.nextMonthHint")}
           onPrev={handlePrevMonth}
           onNext={handleNextMonth}
         />
-
+      }
+      rightActions={
+        <AddBudgetButton
+          accessibilityLabel={t("budgets.header.addLabel")}
+          accessibilityHint={t("budgets.header.addHint")}
+          onPress={handleAddBudget}
+        />
+      }
+    >
+      <View style={styles.content}>
         <FlashList
           data={hasBudgets ? budgetProgress : []}
           renderItem={renderBudget}
@@ -189,12 +215,13 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 16,
+    gap: 8,
   },
   scrollContent: {
-    gap: 12,
+    gap: 8,
   },
   itemSeparator: {
-    height: 12,
+    height: 8,
   },
   emptyState: {
     alignItems: "center",

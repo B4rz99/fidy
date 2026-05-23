@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { create } from "zustand";
 import { createBudgetStoreState } from "@/features/budget/store/state";
-import { requireUserId } from "@/shared/types/assertions";
+import { requireCopAmount, requireUserId } from "@/shared/types/assertions";
 import type { BudgetId, Month } from "@/shared/types/branded";
 
 const INITIAL_MONTH = "2026-03" as Month;
@@ -16,7 +16,11 @@ function applySnapshot(store: ReturnType<typeof createStore>) {
   store.getState().setSnapshot({
     budgets: [{ id: "budget-1", categoryId: "food", month: INITIAL_MONTH }] as never[],
     budgetProgress: [] as never[],
-    summary: { totalBudget: 100000, totalSpent: 25000, percentUsed: 25 },
+    summary: {
+      totalBudget: requireCopAmount(100000),
+      totalSpent: requireCopAmount(25000),
+      percentUsed: 25,
+    },
     autoSuggestions: [] as never[],
     pendingAlerts: [
       {

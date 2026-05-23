@@ -326,6 +326,14 @@ const en = {
   // Budgets
   budgets: {
     title: "Budgets",
+    header: {
+      previousMonthLabel: "Previous month",
+      previousMonthHint: "Shows budgets for the previous month",
+      nextMonthLabel: "Next month",
+      nextMonthHint: "Shows budgets for the next month",
+      addLabel: "Add budget",
+      addHint: "Opens the form to create a budget",
+    },
     empty: {
       title: "No budgets yet",
       subtitle: "Set spending limits and track your money",
@@ -342,13 +350,20 @@ const en = {
       title: "Edit budget",
     },
     card: {
-      remaining: "%{amount} remaining",
+      remaining: "%{amount} left",
       over: "%{amount} over budget",
       used: "%{percent}% used",
+      status: {
+        onTrack: "On track",
+        nearLimit: "Close to limit",
+        over: "Over limit",
+      },
     },
     summary: {
       totalBudget: "Total budget",
       used: "%{percent}% used",
+      remaining: "You have %{amount} left to close the month.",
+      over: "You are %{amount} over this month.",
     },
     alerts: {
       nearLimitTitle: "Budget warning",

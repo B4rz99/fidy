@@ -1,5 +1,6 @@
 import type { StateCreator } from "zustand";
-import type { BudgetId, Month, UserId } from "@/shared/types/branded";
+import { requireCopAmount } from "@/shared/types/assertions";
+import type { BudgetId, CopAmount, Month, UserId } from "@/shared/types/branded";
 import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "../lib/derive";
 import type { BudgetAlertState, BudgetMonthSnapshot } from "../lib/monitoring";
 import type { Budget } from "../schema";
@@ -10,11 +11,11 @@ export type BudgetState = {
   readonly budgets: readonly Budget[];
   readonly budgetProgress: readonly BudgetProgress[];
   readonly summary: {
-    readonly totalBudget: number;
-    readonly totalSpent: number;
+    readonly totalBudget: CopAmount;
+    readonly totalSpent: CopAmount;
     readonly percentUsed: number;
   };
-  readonly budgetTotalByMonth: Readonly<Partial<Record<Month, number>>>;
+  readonly budgetTotalByMonth: Readonly<Partial<Record<Month, CopAmount>>>;
   readonly autoSuggestions: readonly BudgetSuggestion[];
   readonly acknowledgedAlerts: ReadonlySet<string>;
   readonly pendingAlerts: readonly BudgetAlert[];
@@ -51,7 +52,7 @@ export function createBudgetState(currentMonth: Month, activeUserId: UserId | nu
     currentMonth,
     budgets: [],
     budgetProgress: [],
-    summary: { totalBudget: 0, totalSpent: 0, percentUsed: 0 },
+    summary: { totalBudget: requireCopAmount(0), totalSpent: requireCopAmount(0), percentUsed: 0 },
     budgetTotalByMonth: {},
     autoSuggestions: [],
     acknowledgedAlerts: new Set(),

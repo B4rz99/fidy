@@ -3,7 +3,7 @@ import { getSpendingByCategoryAggregate } from "@/features/transactions/query.pu
 import type { AnyDb } from "@/shared/db/client";
 import { formatMoney, toMonth } from "@/shared/lib";
 import { assertCopAmount } from "@/shared/types/assertions";
-import type { BudgetId, CategoryId, Month, UserId } from "@/shared/types/branded";
+import type { BudgetId, CategoryId, CopAmount, Month, UserId } from "@/shared/types/branded";
 import type { Budget } from "../schema";
 import type { BudgetAlert, BudgetProgress, BudgetSuggestion } from "./derive";
 import {
@@ -25,8 +25,8 @@ export type BudgetMonthSnapshot = {
   readonly budgets: readonly Budget[];
   readonly budgetProgress: readonly BudgetProgress[];
   readonly summary: {
-    readonly totalBudget: number;
-    readonly totalSpent: number;
+    readonly totalBudget: CopAmount;
+    readonly totalSpent: CopAmount;
     readonly percentUsed: number;
   };
   readonly autoSuggestions: readonly BudgetSuggestion[];
