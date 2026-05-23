@@ -334,6 +334,14 @@ const es = {
   // Presupuestos
   budgets: {
     title: "Presupuestos",
+    header: {
+      previousMonthLabel: "Mes anterior",
+      previousMonthHint: "Muestra los presupuestos del mes anterior",
+      nextMonthLabel: "Mes siguiente",
+      nextMonthHint: "Muestra los presupuestos del mes siguiente",
+      addLabel: "Agregar presupuesto",
+      addHint: "Abre el formulario para crear un presupuesto",
+    },
     empty: {
       title: "Aún no hay presupuestos",
       subtitle: "Establece límites de gasto y controla tu dinero",
@@ -350,13 +358,20 @@ const es = {
       title: "Editar presupuesto",
     },
     card: {
-      remaining: "%{amount} restante",
+      remaining: "Quedan %{amount}",
       over: "%{amount} sobre el presupuesto",
       used: "%{percent}% usado",
+      status: {
+        onTrack: "Vas bien",
+        nearLimit: "Cerca del límite",
+        over: "Sobre el límite",
+      },
     },
     summary: {
       totalBudget: "Presupuesto total",
       used: "%{percent}% usado",
+      remaining: "Te quedan %{amount} para cerrar el mes.",
+      over: "Te pasaste por %{amount} este mes.",
     },
     alerts: {
       nearLimitTitle: "Advertencia de presupuesto",

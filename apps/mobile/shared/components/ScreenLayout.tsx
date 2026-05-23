@@ -14,6 +14,7 @@ type ScreenLayoutProps = {
   variant?: "tab" | "sub";
   backgroundColor?: string;
   backgroundLayer?: ReactNode;
+  centerAction?: ReactNode;
   leftAction?: ReactNode;
   rightActions?: ReactNode;
   onBack?: () => void;
@@ -26,6 +27,7 @@ export function ScreenLayout({
   variant = "tab",
   backgroundColor,
   backgroundLayer,
+  centerAction,
   leftAction,
   rightActions,
   onBack,
@@ -42,7 +44,11 @@ export function ScreenLayout({
   const shouldRenderCustomHeader =
     Platform.OS !== "ios" ||
     (!includesNativeHeader &&
-      (!isTab || leftAction != null || rightActions != null || onBack != null));
+      (!isTab ||
+        centerAction != null ||
+        leftAction != null ||
+        rightActions != null ||
+        onBack != null));
   const iosHeaderOptions = {
     contentStyle: { backgroundColor: "transparent" },
     headerShadowVisible: false,
@@ -87,7 +93,16 @@ export function ScreenLayout({
                 {isTab ? "" : title}
               </Text>
             </View>
-            {isTab && leftAction != null ? (
+            {isTab && centerAction != null ? (
+              <View
+                className="absolute left-16 right-16 items-center"
+                pointerEvents="box-none"
+                style={styles.centerActionSlot}
+              >
+                {centerAction}
+              </View>
+            ) : null}
+            {isTab && leftAction != null && centerAction == null ? (
               <Text
                 className="absolute left-0 right-0 text-center font-poppins-extrabold text-logo text-primary dark:text-primary-dark"
                 pointerEvents="none"
@@ -97,7 +112,9 @@ export function ScreenLayout({
               </Text>
             ) : null}
             {shouldRenderRightSlot ? (
-              <View className={rightSlotClassName}>{rightActions}</View>
+              <View className={rightSlotClassName} pointerEvents="box-none">
+                {rightActions}
+              </View>
             ) : null}
           </View>
         </View>
@@ -116,3 +133,10 @@ export function ScreenLayout({
     </View>
   );
 }
+
+const styles = {
+  // Header center content is reserved for compact controls; side actions should stay icon-sized.
+  centerActionSlot: {
+    maxWidth: "70%" as const,
+  },
+};
