@@ -1,7 +1,8 @@
-import { toIsoDate } from "@/shared/lib";
+import { formatMoney, formatSignedMoney, toIsoDate } from "@/shared/lib";
 import type { CategoryId, CopAmount, IsoDate } from "@/shared/types/branded";
 
 export type AnalyticsPeriod = "W" | "M" | "Q" | "Y";
+export type DeltaTrend = "increased" | "decreased" | "unchanged";
 
 export type PeriodRange = {
   readonly current: { readonly start: IsoDate; readonly end: IsoDate };
@@ -29,7 +30,24 @@ export type PeriodDelta = {
     readonly categoryId: CategoryId;
     readonly delta: CopAmount;
     readonly deltaPercent: number;
-    readonly increased: boolean;
+    readonly trend: DeltaTrend;
+  }[];
+};
+
+export type PeriodShiftView = {
+  readonly totalDeltaPercentText: string;
+  readonly totalDeltaAmountText: string;
+  readonly totalDeltaAbsoluteAmountText: string;
+  readonly totalDeltaDirection: "increased" | "decreased" | "unchanged";
+  readonly categoryBars: readonly {
+    readonly categoryId: CategoryId;
+    readonly total: CopAmount;
+    readonly heightPercent: number;
+  }[];
+  readonly categoryChanges: readonly {
+    readonly categoryId: CategoryId;
+    readonly deltaText: string;
+    readonly trend: DeltaTrend;
   }[];
 };
 
@@ -45,6 +63,15 @@ const computeDeltaPercent = (curr: number, prev: number): number => {
   if (prev > 0) return Math.round(((curr - prev) / prev) * 100);
   if (curr > 0) return 100;
   return 0;
+};
+
+const formatSignedPercent = (percent: number): string =>
+  percent === 0 ? "0%" : `${percent > 0 ? "+" : "-"}${Math.abs(percent)}%`;
+
+const getDeltaDirection = (amount: number): DeltaTrend => {
+  if (amount > 0) return "increased";
+  if (amount < 0) return "decreased";
+  return "unchanged";
 };
 
 /** Period window sizes in days (inclusive range length - 1). */
@@ -119,7 +146,7 @@ export function deriveCategoryBreakdown(
 
 /**
  * Pure derivation: compute spending deltas between current and previous periods.
- * For categories present in current but not in previous, previous total is treated as 0.
+ * Missing category totals in either period are treated as 0.
  */
 export function derivePeriodDelta(
   current: {
@@ -144,16 +171,26 @@ export function derivePeriodDelta(
   const previousByCategory = new Map(
     previous.categorySpending.map((item) => [item.categoryId, item.total])
   );
+  const currentByCategory = new Map(
+    current.categorySpending.map((item) => [item.categoryId, item.total])
+  );
+  const categoryIds = Array.from(
+    new Set([
+      ...current.categorySpending.map((item) => item.categoryId),
+      ...previous.categorySpending.map((item) => item.categoryId),
+    ])
+  );
 
-  const categoryDeltas = current.categorySpending.map((item) => {
-    const previousTotal = (previousByCategory.get(item.categoryId) ?? 0) as CopAmount;
-    const delta = (item.total - previousTotal) as CopAmount;
-    const deltaPercent = computeDeltaPercent(item.total, previousTotal);
+  const categoryDeltas = categoryIds.map((categoryId) => {
+    const currentTotal = (currentByCategory.get(categoryId) ?? 0) as CopAmount;
+    const previousTotal = (previousByCategory.get(categoryId) ?? 0) as CopAmount;
+    const delta = (currentTotal - previousTotal) as CopAmount;
+    const deltaPercent = computeDeltaPercent(currentTotal, previousTotal);
     return {
-      categoryId: item.categoryId,
+      categoryId,
       delta,
       deltaPercent,
-      increased: delta > 0,
+      trend: getDeltaDirection(delta),
     };
   });
 
@@ -162,5 +199,43 @@ export function derivePeriodDelta(
     totalDeltaPercent,
     spendingIncreased: totalDelta > 0,
     categoryDeltas,
+  };
+}
+
+export function derivePeriodShiftView(input: {
+  readonly categoryBreakdown: readonly CategoryBreakdownItem[];
+  readonly periodDelta: PeriodDelta;
+}): PeriodShiftView {
+  const maxCategoryTotal = Math.max(...input.categoryBreakdown.map((item) => item.total), 1);
+  const deltaByCategory = new Map(
+    input.periodDelta.categoryDeltas.map((item) => [item.categoryId, item])
+  );
+  const breakdownCategoryIds = new Set(input.categoryBreakdown.map((item) => item.categoryId));
+  const droppedCategoryIds = input.periodDelta.categoryDeltas
+    .map((item) => item.categoryId)
+    .filter((categoryId) => !breakdownCategoryIds.has(categoryId));
+  const categoryChangeIds = [
+    ...droppedCategoryIds,
+    ...input.categoryBreakdown.map((item) => item.categoryId),
+  ];
+
+  return {
+    totalDeltaPercentText: formatSignedPercent(input.periodDelta.totalDeltaPercent),
+    totalDeltaAmountText: formatSignedMoney(input.periodDelta.totalDelta),
+    totalDeltaAbsoluteAmountText: formatMoney(Math.abs(input.periodDelta.totalDelta)),
+    totalDeltaDirection: getDeltaDirection(input.periodDelta.totalDelta),
+    categoryBars: input.categoryBreakdown.map((item) => ({
+      categoryId: item.categoryId,
+      total: item.total,
+      heightPercent: Math.round((item.total / maxCategoryTotal) * 100),
+    })),
+    categoryChanges: categoryChangeIds
+      .map((categoryId) => deltaByCategory.get(categoryId))
+      .filter((item): item is NonNullable<typeof item> => item != null)
+      .map((item) => ({
+        categoryId: item.categoryId,
+        deltaText: `${formatSignedMoney(item.delta)} (${formatSignedPercent(item.deltaPercent)})`,
+        trend: item.trend,
+      })),
   };
 }

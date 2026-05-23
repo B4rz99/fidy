@@ -46,8 +46,8 @@ const expectedSnapshot = {
     totalDeltaPercent: 100,
     spendingIncreased: true,
     categoryDeltas: [
-      { categoryId: "food", delta: 50000, deltaPercent: 50, increased: true },
-      { categoryId: "transport", delta: 50000, deltaPercent: 100, increased: true },
+      { categoryId: "food", delta: 50000, deltaPercent: 50, trend: "increased" },
+      { categoryId: "transport", delta: 50000, deltaPercent: 100, trend: "increased" },
     ],
   },
 };
