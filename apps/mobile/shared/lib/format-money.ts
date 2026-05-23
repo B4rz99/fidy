@@ -56,18 +56,31 @@ export const parseDigitsToAmount = (digits: string): CopAmount => {
 export const formatMoney = (amount: number, config?: CurrencyConfig): string =>
   stripCurrencySpace(getFormatter(config).format(amount));
 
-/**
- * Formats a numeric amount with a sign prefix based on transaction type.
- * (50000, "expense") → "-$50.000", (50000, "income") → "+$50.000"
- */
-export const formatSignedMoney = (
+export function formatSignedMoney(amount: number, config?: CurrencyConfig): string;
+export function formatSignedMoney(
   amount: number,
   type: "expense" | "income",
   config?: CurrencyConfig
-): string => {
-  const formatted = formatMoney(amount, config);
-  return type === "income" ? `+${formatted}` : `-${formatted}`;
-};
+): string;
+
+/**
+ * Formats a numeric amount with a sign prefix.
+ * 50000 → "+$50.000", -50000 → "-$50.000", 0 → "$0"
+ * (50000, "expense") → "-$50.000", (50000, "income") → "+$50.000"
+ */
+export function formatSignedMoney(
+  amount: number,
+  typeOrConfig?: "expense" | "income" | CurrencyConfig,
+  config?: CurrencyConfig
+): string {
+  if (typeOrConfig === "expense" || typeOrConfig === "income") {
+    const formatted = formatMoney(amount, config);
+    return typeOrConfig === "income" ? `+${formatted}` : `-${formatted}`;
+  }
+
+  if (amount === 0) return formatMoney(0, typeOrConfig);
+  return `${amount > 0 ? "+" : "-"}${formatMoney(Math.abs(amount), typeOrConfig)}`;
+}
 
 /**
  * Formats a raw digit string as a currency display string for input fields.

@@ -4,7 +4,9 @@ import {
   deriveCategoryBreakdown,
   deriveIncomeExpense,
   derivePeriodDelta,
+  derivePeriodShiftView,
 } from "@/features/analytics/lib/derive";
+import { formatMoney, formatSignedMoney } from "@/shared/lib";
 import type { CategoryId, CopAmount } from "@/shared/types/branded";
 
 // ---------------------------------------------------------------------------
@@ -15,6 +17,109 @@ const categorySpending = (categoryId: string, total: number) => ({
   categoryId: categoryId as CategoryId,
   total: total as CopAmount,
 });
+
+type PeriodShiftInput = Parameters<typeof derivePeriodShiftView>[0];
+
+const formatDeltaText = (amount: number, percent: number): string =>
+  `${formatSignedMoney(amount)} (${percent === 0 ? "0%" : `${percent > 0 ? "+" : "-"}${Math.abs(percent)}%`})`;
+
+const periodShiftGrowthInput = (): PeriodShiftInput => ({
+  categoryBreakdown: [
+    { categoryId: "food" as CategoryId, total: 880000 as CopAmount, percent: 36 },
+    { categoryId: "transport" as CategoryId, total: 536800 as CopAmount, percent: 22 },
+    { categoryId: "health" as CategoryId, total: 188000 as CopAmount, percent: 8 },
+  ],
+  periodDelta: {
+    totalDelta: 260000 as CopAmount,
+    totalDeltaPercent: 12,
+    spendingIncreased: true,
+    categoryDeltas: [
+      {
+        categoryId: "health" as CategoryId,
+        delta: 18000 as CopAmount,
+        deltaPercent: 11,
+        trend: "increased",
+      },
+      {
+        categoryId: "food" as CategoryId,
+        delta: 148000 as CopAmount,
+        deltaPercent: 20,
+        trend: "increased",
+      },
+      {
+        categoryId: "transport" as CategoryId,
+        delta: -38000 as CopAmount,
+        deltaPercent: -7,
+        trend: "decreased",
+      },
+    ],
+  },
+});
+
+const periodShiftUnchangedInput = (): PeriodShiftInput => ({
+  categoryBreakdown: [
+    { categoryId: "food" as CategoryId, total: 300000 as CopAmount, percent: 100 },
+  ],
+  periodDelta: {
+    totalDelta: 0 as CopAmount,
+    totalDeltaPercent: 0,
+    spendingIncreased: false,
+    categoryDeltas: [
+      {
+        categoryId: "food" as CategoryId,
+        delta: 0 as CopAmount,
+        deltaPercent: 0,
+        trend: "unchanged",
+      },
+    ],
+  },
+});
+
+const periodShiftDroppedCategoryTruncationInput: PeriodShiftInput = {
+  categoryBreakdown: [
+    { categoryId: "food" as CategoryId, total: 500000 as CopAmount, percent: 40 },
+    { categoryId: "transport" as CategoryId, total: 300000 as CopAmount, percent: 24 },
+    { categoryId: "health" as CategoryId, total: 250000 as CopAmount, percent: 20 },
+    { categoryId: "education" as CategoryId, total: 200000 as CopAmount, percent: 16 },
+  ],
+  periodDelta: {
+    totalDelta: 250000 as CopAmount,
+    totalDeltaPercent: 25,
+    spendingIncreased: true,
+    categoryDeltas: [
+      {
+        categoryId: "food" as CategoryId,
+        delta: 100000 as CopAmount,
+        deltaPercent: 25,
+        trend: "increased",
+      },
+      {
+        categoryId: "transport" as CategoryId,
+        delta: 50000 as CopAmount,
+        deltaPercent: 20,
+        trend: "increased",
+      },
+      {
+        categoryId: "health" as CategoryId,
+        delta: 50000 as CopAmount,
+        deltaPercent: 25,
+        trend: "increased",
+      },
+      {
+        categoryId: "education" as CategoryId,
+        delta: 50000 as CopAmount,
+        deltaPercent: 33,
+        trend: "increased",
+      },
+      {
+        categoryId: "entertainment" as CategoryId,
+        delta: -90000 as CopAmount,
+        deltaPercent: -100,
+        trend: "decreased",
+      },
+    ],
+  },
+};
 
 // ---------------------------------------------------------------------------
 // computePeriodRange
@@ -245,6 +350,7 @@ describe("derivePeriodDelta", () => {
     expect(result.totalDelta).toBe(-100000);
     expect(result.spendingIncreased).toBe(false);
     expect(result.totalDeltaPercent).toBe(-20);
+    expect(result.categoryDeltas[0]?.trend).toBe("decreased");
   });
 
   it("returns zero totalDelta and spendingIncreased=false when unchanged", () => {
@@ -302,7 +408,7 @@ describe("derivePeriodDelta", () => {
     expect(result.categoryDeltas[0]?.categoryId).toBe("food");
     expect(result.categoryDeltas[0]?.delta).toBe(300000);
     expect(result.categoryDeltas[0]?.deltaPercent).toBe(100);
-    expect(result.categoryDeltas[0]?.increased).toBe(true);
+    expect(result.categoryDeltas[0]?.trend).toBe("increased");
   });
 
   it("computes correct per-category deltas for multiple categories", () => {
@@ -318,12 +424,12 @@ describe("derivePeriodDelta", () => {
     );
     const byId = new Map(result.categoryDeltas.map((d) => [d.categoryId, d]));
     expect(byId.get("food" as CategoryId)?.delta).toBe(100000);
-    expect(byId.get("food" as CategoryId)?.increased).toBe(true);
+    expect(byId.get("food" as CategoryId)?.trend).toBe("increased");
     expect(byId.get("transport" as CategoryId)?.delta).toBe(0);
-    expect(byId.get("transport" as CategoryId)?.increased).toBe(false);
+    expect(byId.get("transport" as CategoryId)?.trend).toBe("unchanged");
   });
 
-  it("returns empty categoryDeltas when current has no category spending", () => {
+  it("includes previous-only categories as decreases", () => {
     const result = derivePeriodDelta(
       { totalExpenses: 0 as CopAmount, categorySpending: [] },
       {
@@ -331,7 +437,14 @@ describe("derivePeriodDelta", () => {
         categorySpending: [categorySpending("food", 500000)],
       }
     );
-    expect(result.categoryDeltas).toHaveLength(0);
+    expect(result.categoryDeltas).toEqual([
+      {
+        categoryId: "food",
+        delta: -500000,
+        deltaPercent: -100,
+        trend: "decreased",
+      },
+    ]);
   });
 
   it("rounds deltaPercent to nearest integer", () => {
@@ -347,5 +460,105 @@ describe("derivePeriodDelta", () => {
       }
     );
     expect(result.categoryDeltas[0]?.deltaPercent).toBe(50);
+  });
+});
+
+describe("derivePeriodShiftView", () => {
+  it("builds normalized category bars and category changes for the selected period", () => {
+    const result = derivePeriodShiftView(periodShiftGrowthInput());
+
+    expect(result.totalDeltaPercentText).toBe("+12%");
+    expect(result.totalDeltaAmountText).toBe(formatSignedMoney(260000));
+    expect(result.totalDeltaAbsoluteAmountText).toBe(formatMoney(260000));
+    expect(result.totalDeltaDirection).toBe("increased");
+    expect(result.categoryBars).toEqual([
+      {
+        categoryId: "food",
+        total: 880000,
+        heightPercent: 100,
+      },
+      {
+        categoryId: "transport",
+        total: 536800,
+        heightPercent: 61,
+      },
+      {
+        categoryId: "health",
+        total: 188000,
+        heightPercent: 21,
+      },
+    ]);
+    expect(result.categoryChanges).toEqual([
+      {
+        categoryId: "food",
+        deltaText: formatDeltaText(148000, 20),
+        trend: "increased",
+      },
+      {
+        categoryId: "transport",
+        deltaText: formatDeltaText(-38000, -7),
+        trend: "decreased",
+      },
+      {
+        categoryId: "health",
+        deltaText: formatDeltaText(18000, 11),
+        trend: "increased",
+      },
+    ]);
+  });
+
+  it("formats unchanged total and category deltas without positive or negative signs", () => {
+    const result = derivePeriodShiftView(periodShiftUnchangedInput());
+
+    expect(result.totalDeltaPercentText).toBe("0%");
+    expect(result.totalDeltaAmountText).toBe(formatSignedMoney(0));
+    expect(result.totalDeltaAbsoluteAmountText).toBe(formatMoney(0));
+    expect(result.totalDeltaDirection).toBe("unchanged");
+    expect(result.categoryChanges).toEqual([
+      {
+        categoryId: "food",
+        deltaText: formatDeltaText(0, 0),
+        trend: "unchanged",
+      },
+    ]);
+  });
+
+  it("includes previous-only category changes", () => {
+    const result = derivePeriodShiftView({
+      ...periodShiftUnchangedInput(),
+      categoryBreakdown: [],
+      periodDelta: {
+        totalDelta: -500000 as CopAmount,
+        totalDeltaPercent: -100,
+        spendingIncreased: false,
+        categoryDeltas: [
+          {
+            categoryId: "food" as CategoryId,
+            delta: -500000 as CopAmount,
+            deltaPercent: -100,
+            trend: "decreased",
+          },
+        ],
+      },
+    });
+
+    expect(result.categoryChanges).toEqual([
+      {
+        categoryId: "food",
+        deltaText: formatDeltaText(-500000, -100),
+        trend: "decreased",
+      },
+    ]);
+  });
+
+  it("orders dropped categories before current categories so truncation keeps them visible", () => {
+    const result = derivePeriodShiftView(periodShiftDroppedCategoryTruncationInput);
+
+    expect(result.categoryChanges.slice(0, 4).map((item) => item.categoryId)).toEqual([
+      "entertainment",
+      "food",
+      "transport",
+      "health",
+    ]);
   });
 });

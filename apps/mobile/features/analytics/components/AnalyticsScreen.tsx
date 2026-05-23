@@ -1,58 +1,19 @@
-import { memo, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { TAB_BAR_CLEARANCE } from "@/shared/components";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
+import type { CategoryId } from "@/shared/types/branded";
 import type { AnalyticsPeriod } from "../lib/derive";
+import { derivePeriodShiftView } from "../lib/derive";
 import { loadAnalyticsForUser, selectAnalyticsPeriod, useAnalyticsStore } from "../store";
-import { CategoryBreakdownCard } from "./CategoryBreakdownCard";
-import { IncomeExpenseCard } from "./IncomeExpenseCard";
-import { PeriodDeltaCard } from "./PeriodDeltaCard";
+import { PeriodSelector } from "./PeriodSelector";
+import { PeriodShiftContent } from "./PeriodShiftContent";
 
-const PERIODS: readonly AnalyticsPeriod[] = ["W", "M", "Q", "Y"];
-const ANALYTICS_CONTENT_PADDING = 16;
-
-type PeriodSelectorProps = {
-  readonly activePeriod: AnalyticsPeriod;
-  readonly onSelect: (period: AnalyticsPeriod) => void;
-};
-
-const PeriodSelector = memo(function PeriodSelector({
-  activePeriod,
-  onSelect,
-}: PeriodSelectorProps) {
-  const peachLight = useThemeColor("peachLight");
-  const accentGreen = useThemeColor("accentGreen");
-  const secondaryColor = useThemeColor("secondary");
-
-  return (
-    <View style={[styles.selectorContainer, { backgroundColor: peachLight }]}>
-      {PERIODS.map((period) => {
-        const isActive = period === activePeriod;
-        return (
-          <Pressable
-            key={period}
-            onPress={() => onSelect(period)}
-            style={[styles.segment, isActive && { backgroundColor: accentGreen }]}
-          >
-            <Text
-              style={[
-                styles.segmentText,
-                // White on accentGreen has sufficient contrast in both light and dark themes
-                { color: isActive ? "#FFFFFF" : secondaryColor },
-                isActive && styles.segmentTextActive,
-              ]}
-            >
-              {period}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-});
+const ANALYTICS_CARD_GAP = 8;
+const ANALYTICS_CONTENT_PADDING = 14;
 
 export function AnalyticsScreen() {
   const { t } = useTranslation();
@@ -62,6 +23,7 @@ export function AnalyticsScreen() {
   const periodDelta = useAnalyticsStore((s) => s.periodDelta);
   const isLoading = useAnalyticsStore((s) => s.isLoading);
   const userId = useOptionalUserId();
+  const [selectedCategoryId, setSelectedCategoryId] = useState<CategoryId | null>(null);
 
   // Load data on mount if boot-time load failed or hasn't completed
   useMountEffect(() => {
@@ -79,7 +41,14 @@ export function AnalyticsScreen() {
   );
 
   const secondaryColor = useThemeColor("secondary");
-  const showEmpty = !incomeExpense && !isLoading;
+  const shiftView = useMemo(
+    () =>
+      incomeExpense && periodDelta
+        ? derivePeriodShiftView({ categoryBreakdown, periodDelta })
+        : null,
+    [categoryBreakdown, incomeExpense, periodDelta]
+  );
+  const showEmpty = !shiftView && !isLoading;
 
   return (
     <ScrollView
@@ -98,11 +67,16 @@ export function AnalyticsScreen() {
           <Text style={[styles.emptyText, { color: secondaryColor }]}>{t("analytics.noData")}</Text>
         </View>
       ) : (
-        <>
-          {incomeExpense != null && <IncomeExpenseCard data={incomeExpense} />}
-          {categoryBreakdown.length > 0 && <CategoryBreakdownCard data={categoryBreakdown} />}
-          {periodDelta != null && <PeriodDeltaCard period={period} data={periodDelta} />}
-        </>
+        shiftView &&
+        incomeExpense &&
+        periodDelta && (
+          <PeriodShiftContent
+            incomeExpense={incomeExpense}
+            selectedCategoryId={selectedCategoryId}
+            setSelectedCategoryId={setSelectedCategoryId}
+            shiftView={shiftView}
+          />
+        )
       )}
     </ScrollView>
   );
@@ -114,29 +88,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: ANALYTICS_CONTENT_PADDING,
-    gap: 16,
-  },
-  selectorContainer: {
-    height: 36,
-    borderRadius: 20,
-    borderCurve: "continuous",
-    flexDirection: "row",
-    padding: 3,
-    gap: 4,
-  },
-  segment: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 17,
-    borderCurve: "continuous",
-  },
-  segmentText: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 13,
-  },
-  segmentTextActive: {
-    fontFamily: "Poppins_600SemiBold",
+    gap: ANALYTICS_CARD_GAP,
   },
   emptyState: {
     flex: 1,

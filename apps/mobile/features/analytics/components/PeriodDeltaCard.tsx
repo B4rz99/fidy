@@ -13,6 +13,7 @@ type PeriodDeltaCardProps = {
 
 /** Format a delta amount + percent: "+$45.000 (+7%)" or "-$30.000 (-9%)" */
 const formatDelta = (delta: number, deltaPercent: number): string => {
+  if (delta === 0) return `${formatMoney(0)} (0%)`;
   const sign = delta >= 0 ? "+" : "-";
   const absAmount = Math.abs(delta);
   const absPercent = Math.abs(deltaPercent);
@@ -30,9 +31,11 @@ const PeriodDeltaCard = memo(function PeriodDeltaCard({ period, data }: PeriodDe
   const { totalDeltaPercent, spendingIncreased, categoryDeltas } = data;
 
   // For spending: increase = bad (red), decrease = good (green)
-  const totalColor = spendingIncreased ? accentRed : accentGreen;
+  const totalColor =
+    totalDeltaPercent === 0 ? secondaryColor : spendingIncreased ? accentRed : accentGreen;
   const totalSign = totalDeltaPercent >= 0 ? "+" : "-";
-  const totalPercentText = `${totalSign}${Math.abs(totalDeltaPercent)}%`;
+  const totalPercentText =
+    totalDeltaPercent === 0 ? "0%" : `${totalSign}${Math.abs(totalDeltaPercent)}%`;
 
   return (
     <View style={[styles.card, { backgroundColor: cardBg }]}>
@@ -50,7 +53,12 @@ const PeriodDeltaCard = memo(function PeriodDeltaCard({ period, data }: PeriodDe
       {categoryDeltas.map((item) => {
         const category = CATEGORY_MAP[item.categoryId];
         const label = category ? getCategoryLabel(category, locale) : String(item.categoryId);
-        const deltaColor = item.increased ? accentRed : accentGreen;
+        const deltaColor =
+          item.trend === "increased"
+            ? accentRed
+            : item.trend === "decreased"
+              ? accentGreen
+              : secondaryColor;
         const deltaText = formatDelta(item.delta, item.deltaPercent);
 
         return (
