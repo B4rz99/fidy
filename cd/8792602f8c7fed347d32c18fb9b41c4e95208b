@@ -1,0 +1,56 @@
+apps/mobile/features/analytics/components/PeriodDeltaCard.tsx
+  s_967b9fafeb50d1::t_ea424c2b96d9d5 16
+  s_967b9fafeb50d1::t_c8a0a7582b9547 34-35,37-38
+  s_967b9fafeb50d1::t_ddb05a947c60fa 56-61
+apps/mobile/features/analytics/components/IncomeExpenseStrip.tsx
+  s_967b9fafeb50d1::t_49d2968051ec7f 1-76
+apps/mobile/shared/i18n/locales/en.ts
+  s_967b9fafeb50d1::t_86bb78e1f4e373 1151,1154-1160
+  s_967b9fafeb50d1::t_dbea4153bad019 1161-1166
+apps/mobile/features/analytics/components/PeriodSelector.tsx
+  s_967b9fafeb50d1::t_73fa64786f07b3 3,6-14,28,32,48
+  s_967b9fafeb50d1::t_54bbc080e37188 1-2,4-5,15-27,29-31,33-47,49-80
+apps/mobile/features/analytics/lib/derive.ts
+  s_967b9fafeb50d1::t_86bb78e1f4e373 1,37-49,68-73,75-79,197-223,225
+  s_967b9fafeb50d1::t_27f6f6ce8df0c9 5,33,50,74,186,224
+apps/mobile/features/analytics/components/AnalyticsScreen.tsx
+  s_967b9fafeb50d1::t_9b9e52a360a569 1,4,12-13,73-78
+  s_967b9fafeb50d1::t_86bb78e1f4e373 8,10,15-16,26,44-51,70,79,91
+  s_967b9fafeb50d1::t_019fe1d3278f06 71-72
+apps/mobile/__tests__/analytics/derive.test.ts
+  s_967b9fafeb50d1::t_2f68eac40e1eb1 315
+  s_967b9fafeb50d1::t_467b76bfa660ea 20-39,52-54,56-75,82-85
+  s_967b9fafeb50d1::t_7c7e2ea13404f8 40-42,44-48,50-51,76-79,81
+  s_967b9fafeb50d1::t_86bb78e1f4e373 7,420-422,424-449,451-454,456-459,461-465,467-475,477-478
+  s_967b9fafeb50d1::t_122542b2eb49f6 43,49,55,80,373,389,391,450,455,460,476
+  s_967b9fafeb50d1::t_0b18c7834147b4 423,466
+apps/mobile/features/analytics/components/PeriodShiftContent.tsx
+  s_967b9fafeb50d1::t_afcbc9242778be 1-7,10-57,66-174,177,191-231
+  s_967b9fafeb50d1::t_980d1bc6198d16 9
+  s_967b9fafeb50d1::t_80cdade0a91c25 178-180,189-190
+  s_967b9fafeb50d1::t_bce71a3f0c275e 8,58-65
+  s_967b9fafeb50d1::t_7c7e2ea13404f8 175-176
+  s_967b9fafeb50d1::t_696abac66958bf 181-188
+  s_967b9fafeb50d1::t_304275c655bf99 232-288
+apps/mobile/__tests__/analytics/service.test.ts
+  s_967b9fafeb50d1::t_5afee7e3afe4bf 49-50
+apps/mobile/shared/i18n/locales/es.ts
+  s_967b9fafeb50d1::t_86bb78e1f4e373 1173,1176-1182
+  s_967b9fafeb50d1::t_97be277a4700b1 1183-1188
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "cd8792602f8c7fed347d32c18fb9b41c4e95208b",
+  "prompts": {},
+  "sessions": {
+    "s_967b9fafeb50d1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e558d-cb05-79b0-a238-5c09f221ea49",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
