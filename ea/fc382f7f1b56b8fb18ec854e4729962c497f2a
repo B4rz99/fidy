@@ -1,0 +1,41 @@
+apps/mobile/features/analytics/components/IncomeExpenseStrip.tsx
+  s_967b9fafeb50d1::t_49d2968051ec7f 1-76
+apps/mobile/features/analytics/components/PeriodShiftContent.tsx
+  s_967b9fafeb50d1::t_304275c655bf99 215-271
+  s_967b9fafeb50d1::t_980d1bc6198d16 9
+  s_967b9fafeb50d1::t_afcbc9242778be 1-8,10-169,172-214
+  s_967b9fafeb50d1::t_7c7e2ea13404f8 170-171
+apps/mobile/features/analytics/lib/derive.ts
+  s_967b9fafeb50d1::t_86bb78e1f4e373 1,36-52,67-78,196-224
+apps/mobile/shared/i18n/locales/en.ts
+  s_967b9fafeb50d1::t_86bb78e1f4e373 1151,1154-1160
+apps/mobile/shared/i18n/locales/es.ts
+  s_967b9fafeb50d1::t_86bb78e1f4e373 1173,1176-1182
+apps/mobile/features/analytics/components/PeriodSelector.tsx
+  s_967b9fafeb50d1::t_54bbc080e37188 1-71
+apps/mobile/features/analytics/components/AnalyticsScreen.tsx
+  s_967b9fafeb50d1::t_019fe1d3278f06 72-73,76
+  s_967b9fafeb50d1::t_9b9e52a360a569 1,4,12-13,74-75,77-80
+  s_967b9fafeb50d1::t_86bb78e1f4e373 8,10,15-16,26,44-52,56,71,81,93
+apps/mobile/__tests__/analytics/derive.test.ts
+  s_967b9fafeb50d1::t_86bb78e1f4e373 7,419-421,423-464,466-477
+  s_967b9fafeb50d1::t_467b76bfa660ea 20-39,52-75,82-85
+  s_967b9fafeb50d1::t_0b18c7834147b4 422,465
+  s_967b9fafeb50d1::t_7c7e2ea13404f8 40-51,76-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "eafc382f7f1b56b8fb18ec854e4729962c497f2a",
+  "prompts": {},
+  "sessions": {
+    "s_967b9fafeb50d1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e558d-cb05-79b0-a238-5c09f221ea49",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
