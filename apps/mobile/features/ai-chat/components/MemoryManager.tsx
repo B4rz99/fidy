@@ -7,6 +7,7 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { UserMemoryId } from "@/shared/types/branded";
 import { useDeleteUserMemoryMutation, useUserMemoriesQuery } from "../hooks/use-user-memories";
 import type { UserMemory } from "../schema";
+import { useAiSupportTextColor } from "./use-ai-support-text-color";
 
 type MemoryManagerProps = {
   readonly onBack: () => void;
@@ -24,6 +25,7 @@ const MemoryCard = memo(function MemoryCardInner({
   readonly onDelete: () => void;
 }) {
   const { t } = useTranslation();
+  const supportTextColor = useAiSupportTextColor();
   const accentRed = useThemeColor("accentRed");
   const translated = t(`aiChat.memoryCategories.${memory.category}`);
   const categoryLabel =
@@ -55,10 +57,7 @@ const MemoryCard = memo(function MemoryCardInner({
             paddingHorizontal: 8,
           }}
         >
-          <Text
-            className="font-poppins-medium text-tertiary dark:text-tertiary-dark"
-            style={{ fontSize: 11 }}
-          >
+          <Text className="font-poppins-medium" style={{ color: supportTextColor, fontSize: 11 }}>
             {categoryLabel}
           </Text>
         </View>
@@ -72,6 +71,7 @@ const MemoryCard = memo(function MemoryCardInner({
 
 export function MemoryManager({ onBack }: MemoryManagerProps) {
   const { t } = useTranslation();
+  const supportTextColor = useAiSupportTextColor();
   const memories = useUserMemoriesQuery().data ?? [];
   const deleteMemory = useDeleteUserMemoryMutation();
 
@@ -103,17 +103,26 @@ export function MemoryManager({ onBack }: MemoryManagerProps) {
         ItemSeparatorComponent={ItemSeparator}
         ListHeaderComponent={
           <View style={{ paddingBottom: 16 }}>
-            <Text className="font-poppins-medium text-label text-tertiary dark:text-tertiary-dark leading-relaxed">
+            <Text
+              className="font-poppins-medium text-label leading-relaxed"
+              style={{ color: supportTextColor }}
+            >
               {t("aiChat.memoriesDescription")}
             </Text>
           </View>
         }
         ListEmptyComponent={
           <View style={{ alignItems: "center", paddingTop: 60, gap: 8 }}>
-            <Text className="font-poppins-medium text-body text-tertiary dark:text-tertiary-dark text-center">
+            <Text
+              className="font-poppins-medium text-body text-center"
+              style={{ color: supportTextColor }}
+            >
               {t("aiChat.noMemories")}
             </Text>
-            <Text className="font-poppins-medium text-label text-tertiary dark:text-tertiary-dark text-center">
+            <Text
+              className="font-poppins-medium text-label text-center"
+              style={{ color: supportTextColor }}
+            >
               {t("aiChat.noMemoriesHint")}
             </Text>
           </View>

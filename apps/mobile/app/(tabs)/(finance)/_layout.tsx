@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { useColorScheme } from "@/shared/components/rn";
+import { Platform, useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 
 export default function FinanceStackLayout() {
@@ -8,6 +8,8 @@ export default function FinanceStackLayout() {
   return (
     <Stack
       screenOptions={{
+        contentStyle: { backgroundColor: "transparent" },
+        headerTransparent: Platform.OS === "ios",
         headerShown: true,
         headerTitle: "",
         headerShadowVisible: false,

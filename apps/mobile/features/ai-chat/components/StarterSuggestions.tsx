@@ -1,7 +1,8 @@
 import { useMemo } from "react";
-import { Sparkles } from "@/shared/components/icons";
+import { ChevronRight } from "@/shared/components/icons";
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useAiSupportTextColor } from "./use-ai-support-text-color";
 
 type StarterSuggestionsProps = {
   readonly onSelect: (text: string) => void;
@@ -9,9 +10,8 @@ type StarterSuggestionsProps = {
 
 export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
   const { t } = useTranslation();
-  const accentGreenLight = useThemeColor("accentGreenLight");
-  const accentGreen = useThemeColor("accentGreen");
   const borderSubtle = useThemeColor("borderSubtle");
+  const supportTextColor = useAiSupportTextColor();
   const suggestions = useMemo(
     () => [
       t("aiChat.suggestions.monthSpending"),
@@ -26,33 +26,33 @@ export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
     <ScrollView
       contentContainerStyle={{
         flexGrow: 1,
-        alignItems: "center",
         justifyContent: "center",
-        paddingHorizontal: 32,
-        paddingVertical: 24,
-        gap: 24,
+        paddingHorizontal: 20,
+        paddingTop: 28,
+        paddingBottom: 180,
+        gap: 44,
       }}
       contentInsetAdjustmentBehavior="automatic"
       showsVerticalScrollIndicator={false}
     >
-      <View style={{ alignItems: "center", gap: 8 }}>
-        <View
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            backgroundColor: accentGreenLight,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+      <View style={{ gap: 12 }}>
+        <Text
+          className="font-poppins-semibold text-caption uppercase"
+          style={{ color: supportTextColor }}
         >
-          <Sparkles size={24} color={accentGreen} />
-        </View>
-        <Text className="font-poppins-bold text-title text-primary dark:text-primary-dark">
-          {t("aiChat.fidyAi")}
+          {t("aiChat.concierge.label")}
         </Text>
-        <Text className="font-poppins-medium text-body text-tertiary dark:text-tertiary-dark text-center">
-          {t("aiChat.askAnything")}
+        <Text
+          className="font-poppins-bold text-primary dark:text-primary-dark"
+          style={{ fontSize: 32, lineHeight: 38 }}
+        >
+          {t("aiChat.concierge.title")}
+        </Text>
+        <Text
+          className="font-poppins-medium text-body"
+          style={{ color: supportTextColor, lineHeight: 22, maxWidth: 320 }}
+        >
+          {t("aiChat.concierge.subtitle")}
         </Text>
       </View>
       <View style={{ width: "100%", gap: 10 }}>
@@ -60,20 +60,26 @@ export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
           <Pressable
             key={suggestion}
             onPress={() => onSelect(suggestion)}
-            className="bg-peach-light dark:bg-peach-light-dark"
+            className="bg-card/80 dark:bg-card-dark/80"
             style={{
-              borderRadius: 24,
+              borderRadius: 18,
               borderWidth: 1,
               borderColor: borderSubtle,
-              paddingVertical: 12,
+              paddingVertical: 14,
               paddingHorizontal: 16,
               alignItems: "center",
+              flexDirection: "row",
               justifyContent: "center",
+              gap: 10,
             }}
           >
-            <Text className="font-poppins-medium text-label text-primary dark:text-primary-dark">
+            <Text
+              className="font-poppins-semibold text-label text-primary dark:text-primary-dark"
+              style={{ flex: 1 }}
+            >
               {suggestion}
             </Text>
+            <ChevronRight size={18} color={supportTextColor} />
           </Pressable>
         ))}
       </View>

@@ -30,10 +30,13 @@ describe("calendar screen", () => {
 
   test("finance calendar leaves room for the native iOS tab bar", () => {
     expect(financeTabSource).toContain("useSafeAreaInsets");
+    expect(financeTabSource).toContain("FINANCE_NATIVE_TAB_BAR_OFFSET = 72");
     expect(financeTabSource).toContain(
-      'Platform.OS === "ios" ? insets.bottom + 72 : TAB_BAR_CLEARANCE'
+      'Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE'
     );
-    expect(financeTabSource).toContain("{ paddingBottom: tabBarClearance }");
+    expect(financeTabSource).toContain("FINANCE_NATIVE_HEADER_CONTENT_HEIGHT = 56");
+    expect(financeTabSource).toContain("paddingBottom: tabBarClearance");
+    expect(financeTabSource).toContain("paddingTop: topClearance");
   });
 
   test("add-bill header actions use visible plus icons", () => {
