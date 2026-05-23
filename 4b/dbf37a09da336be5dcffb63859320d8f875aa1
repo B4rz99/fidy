@@ -1,0 +1,49 @@
+apps/mobile/__tests__/budget/derive.test.ts
+  s_d492952f128ba4::t_4f3031afe2a2b7 33-43,155-174
+  s_d492952f128ba4::t_e5c06570ad5745 44-56,187-188
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_1887049d0f7cca::t_8c87662ee3cfe6 17,30
+  s_1887049d0f7cca::t_e20dd38c064157 92-97
+apps/mobile/features/budget/components/BudgetHeaderMonthNavigator.tsx
+  s_d492952f128ba4::t_a33e881ce778f5 1-58
+apps/mobile/features/budget/components/BudgetCard.tsx
+  s_d492952f128ba4::t_222a121dcc65ae 27-28
+  s_d492952f128ba4::t_786bb14d4943b9 6,21,26,29-30,42-44,46-49,52,56-63,66,70,73,84,87,96,99-115,121-124,126-128,131,133-141,153
+apps/mobile/features/budget/components/BudgetListScreen.tsx
+  s_d492952f128ba4::t_93fdc465cd972c 17,163
+  s_d492952f128ba4::t_eadbc8af1e9de0 9,12,168,170-171
+  s_1887049d0f7cca::t_d9ad33bd4851ff 33,79
+  s_d492952f128ba4::t_aa3cfcf2c48365 5
+  s_1887049d0f7cca::t_736ee769e55a19 194,197,200
+  s_1887049d0f7cca::t_1555f5bd409a47 160,162,164,169
+apps/mobile/shared/i18n/locales/es.ts
+  s_d492952f128ba4::t_86a8c719ac1522 353,356-360,365-366
+apps/mobile/shared/i18n/locales/en.ts
+  s_d492952f128ba4::t_724a590f6d2672 345,348-352,357-358
+apps/mobile/features/calendar/index.ts
+  s_d492952f128ba4::t_63361c4900b754 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "4bdbf37a09da336be5dcffb63859320d8f875aa1",
+  "prompts": {},
+  "sessions": {
+    "s_1887049d0f7cca": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e50ad-e17d-7d12-b6ea-4ab5cfd4b273",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_d492952f128ba4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e52a7-ccfd-7241-9c78-746de64bb2da",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
