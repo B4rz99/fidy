@@ -1,0 +1,44 @@
+apps/mobile/features/calendar/index.ts
+  s_d492952f128ba4::t_63361c4900b754 3
+apps/mobile/features/budget/components/BudgetListScreen.tsx
+  s_1887049d0f7cca::t_1555f5bd409a47 46-54,57-59,61-67,198,200-202,207,239-243,251-254
+  s_1887049d0f7cca::t_d9ad33bd4851ff 71,117
+  s_d492952f128ba4::t_aa3cfcf2c48365 5
+  s_1887049d0f7cca::t_fcff832c037e21 55-56,60
+  s_1887049d0f7cca::t_736ee769e55a19 29-31,33-34,37,40-42,232,235,238
+  s_d492952f128ba4::t_eadbc8af1e9de0 8-9,12,32,35-36,38-39,43-45,206,208-209,244-250
+apps/mobile/shared/i18n/locales/en.ts
+  s_d492952f128ba4::t_724a590f6d2672 345,348-352,357-358
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_1887049d0f7cca::t_8c87662ee3cfe6 17,30
+  s_1887049d0f7cca::t_e20dd38c064157 92-97
+apps/mobile/shared/i18n/locales/es.ts
+  s_d492952f128ba4::t_86a8c719ac1522 353,356-360,365-366
+apps/mobile/features/budget/components/BudgetCard.tsx
+  s_d492952f128ba4::t_222a121dcc65ae 27-28
+  s_d492952f128ba4::t_786bb14d4943b9 6,21,26,29-30,42-44,46-49,52,56-63,66,70,73,84,87,96,99-115,121-124,126-128,131,133-141,153
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "7337d5fd4a9532d911e1ea76a2ae6fcb96af8c3e",
+  "prompts": {},
+  "sessions": {
+    "s_1887049d0f7cca": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e50ad-e17d-7d12-b6ea-4ab5cfd4b273",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_d492952f128ba4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e52a7-ccfd-7241-9c78-746de64bb2da",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
