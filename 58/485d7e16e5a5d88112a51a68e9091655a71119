@@ -1,0 +1,75 @@
+apps/mobile/features/analytics/components/PeriodSelector.tsx
+  s_967b9fafeb50d1::t_6a166f34bbb763 7,49,54-56
+  s_967b9fafeb50d1::t_9fa32a52d790c6 11-30
+  s_967b9fafeb50d1::t_54bbc080e37188 1-2,4-5,32-44,46-48,50-53,57-67,69-100
+  s_967b9fafeb50d1::t_73fa64786f07b3 3,6,8-10,31,45,68
+apps/mobile/shared/i18n/locales/es.ts
+  s_967b9fafeb50d1::t_c15c1ed820ee8a 1183
+  s_967b9fafeb50d1::t_86bb78e1f4e373 1173,1176-1182
+  s_967b9fafeb50d1::t_97be277a4700b1 1184-1189
+  s_967b9fafeb50d1::t_ae1782fdc03eed 1190-1195
+apps/mobile/features/analytics/lib/derive.ts
+  s_967b9fafeb50d1::t_86bb78e1f4e373 1,37-49,68-73,75-79,207-215,224-234
+  s_967b9fafeb50d1::t_59cfaa5bb80796 217-219,221
+  s_967b9fafeb50d1::t_b0aa65212b3e9e 152,177-185,187-191,193
+  s_967b9fafeb50d1::t_80e61afe2e3e1c 216,220,222-223,235-242
+  s_967b9fafeb50d1::t_27f6f6ce8df0c9 5,33,50,74,196
+apps/mobile/shared/i18n/locales/en.ts
+  s_967b9fafeb50d1::t_641b0d91a4e35f 1161
+  s_967b9fafeb50d1::t_dbea4153bad019 1162-1167
+  s_967b9fafeb50d1::t_15949d3d04fe88 1168-1173
+  s_967b9fafeb50d1::t_86bb78e1f4e373 1151,1154-1160
+apps/mobile/features/analytics/components/AnalyticsScreen.tsx
+  s_967b9fafeb50d1::t_86bb78e1f4e373 8,10,15-16,26,44-46,48-51,70,79,91
+  s_967b9fafeb50d1::t_9b9e52a360a569 1,4,12-13,73-78
+  s_967b9fafeb50d1::t_56d27d4c964044 47
+  s_967b9fafeb50d1::t_019fe1d3278f06 71-72
+apps/mobile/features/analytics/components/IncomeExpenseStrip.tsx
+  s_967b9fafeb50d1::t_49d2968051ec7f 1-76
+apps/mobile/__tests__/analytics/service.test.ts
+  s_967b9fafeb50d1::t_5afee7e3afe4bf 49-50
+apps/mobile/features/analytics/components/PeriodDeltaCard.tsx
+  s_967b9fafeb50d1::t_c8a0a7582b9547 34-35,37-38
+  s_967b9fafeb50d1::t_ddb05a947c60fa 56-61
+  s_967b9fafeb50d1::t_ea424c2b96d9d5 16
+apps/mobile/features/analytics/components/PeriodShiftContent.tsx
+  s_967b9fafeb50d1::t_437bc3426a6c22 129-135
+  s_967b9fafeb50d1::t_afcbc9242778be 1-7,10-57,66-115,118-125,127,137-180,183,197-237
+  s_967b9fafeb50d1::t_304275c655bf99 238-294
+  s_967b9fafeb50d1::t_980d1bc6198d16 9
+  s_967b9fafeb50d1::t_7c7e2ea13404f8 181-182
+  s_967b9fafeb50d1::t_bce71a3f0c275e 8,58-65
+  s_967b9fafeb50d1::t_80cdade0a91c25 184-186,195-196
+  s_967b9fafeb50d1::t_7de368aad719a5 116-117,126,128,136
+  s_967b9fafeb50d1::t_696abac66958bf 187-194
+apps/mobile/__tests__/analytics/derive.test.ts
+  s_967b9fafeb50d1::t_0b18c7834147b4 473,516
+  s_967b9fafeb50d1::t_467b76bfa660ea 21-22,31-42,55-57,59-72,79-82
+  s_967b9fafeb50d1::t_998d6be4d71e40 437,445-452
+  s_967b9fafeb50d1::t_2e84432c8083e9 530-552,554-557
+  s_967b9fafeb50d1::t_86bb78e1f4e373 7,470-472,474-475,478-498,501-503,506-508,511-515,517-518,521-524
+  s_967b9fafeb50d1::t_7c7e2ea13404f8 43-45,47-51,53-54,73-76,78
+  s_967b9fafeb50d1::t_497f9fba783952 558-559,561-568
+  s_967b9fafeb50d1::t_122542b2eb49f6 46,52,58,77,416,432,434,500,505,510,526
+  s_967b9fafeb50d1::t_70e886ec5cfaf2 476-477,499,504,509,519-520,525,553
+  s_967b9fafeb50d1::t_31b19a26d6a7bc 9,24-26
+  s_967b9fafeb50d1::t_b1ccf21e047fe0 83-128,560
+  s_967b9fafeb50d1::t_0bf3b3111ce226 23,27-30
+  s_967b9fafeb50d1::t_2f68eac40e1eb1 358
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "58485d7e16e5a5d88112a51a68e9091655a71119",
+  "prompts": {},
+  "sessions": {
+    "s_967b9fafeb50d1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e558d-cb05-79b0-a238-5c09f221ea49",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
