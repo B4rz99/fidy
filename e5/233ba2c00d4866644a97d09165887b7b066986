@@ -1,0 +1,70 @@
+scripts/mobile-qa.ts
+  s_1887049d0f7cca::t_04b9f59a9cab46 10
+apps/mobile/app/(tabs)/(ai)/_layout.tsx
+  s_1887049d0f7cca::t_04b9f59a9cab46 4-11
+apps/mobile/app/(tabs)/(budget)/_layout.tsx
+  s_1887049d0f7cca::t_04b9f59a9cab46 4-11
+apps/mobile/features/ai-chat/components/StarterSuggestions.tsx
+  s_1887049d0f7cca::t_dce593f1a5ccbc 82
+  s_1887049d0f7cca::t_04b9f59a9cab46 2,5,14,30-33,38-41,43,45-55,63,65,68,71,73,76-79
+apps/mobile/features/ai-chat/components/ActionCard.tsx
+  s_1887049d0f7cca::t_04b9f59a9cab46 3,6,15-16,26,37,39-40,42,59-60,75
+.agents/skills/mobile-qa/SKILL.md
+  s_1887049d0f7cca::t_e217e3ee8a0383 51
+  s_1887049d0f7cca::t_04b9f59a9cab46 4-6,11-13,15,17,19-20,22-25,27,29-33,35-36,38-40,42,44-46,48,50,52-53,55,57-60,62-63,65,67-71,73,75-78,80-81,83,85-92
+apps/mobile/app/(tabs)/add/_layout.tsx
+  s_1887049d0f7cca::t_04b9f59a9cab46 4-11
+apps/mobile/app/(tabs)/(finance)/index.tsx
+  s_1887049d0f7cca::t_dce593f1a5ccbc 26,72
+  s_1887049d0f7cca::t_04b9f59a9cab46 174-175
+  s_1887049d0f7cca::t_e217e3ee8a0383 1,25,65,73,153-154,172-173
+  s_1887049d0f7cca::t_1402cbe79a9a21 90-92
+apps/mobile/app/(tabs)/(index)/_layout.tsx
+  s_1887049d0f7cca::t_04b9f59a9cab46 4-11
+apps/mobile/__tests__/ai-chat/screen-redesign.test.ts
+  s_1887049d0f7cca::t_dce593f1a5ccbc 10-11
+  s_1887049d0f7cca::t_6c7cf95a442490 29-80
+apps/mobile/shared/i18n/locales/en.ts
+  s_1887049d0f7cca::t_dce593f1a5ccbc 659-662
+  s_1887049d0f7cca::t_04b9f59a9cab46 622-626,630,639-644,652-657
+apps/mobile/features/ai-chat/components/MessageBubble.tsx
+  s_1887049d0f7cca::t_dce593f1a5ccbc 4,18,134,163,171
+  s_1887049d0f7cca::t_04b9f59a9cab46 2,9,21,31,34,41-44,56-58,64-66,72-73,75-76,170
+apps/mobile/features/ai-chat/lib/session-list-items.ts
+  s_1887049d0f7cca::t_0c210d21c48ffd 9-16
+  s_1887049d0f7cca::t_e217e3ee8a0383 20
+  s_1887049d0f7cca::t_ba5ebfcf513647 27-45
+apps/mobile/features/ai-chat/components/ChatInput.tsx
+  s_1887049d0f7cca::t_04b9f59a9cab46 6,19,55
+apps/mobile/app/(tabs)/(finance)/_layout.tsx
+  s_1887049d0f7cca::t_04b9f59a9cab46 11-12
+apps/mobile/app/_layout.tsx
+  s_1887049d0f7cca::t_04b9f59a9cab46 214-215,218
+apps/mobile/features/ai-chat/components/use-ai-support-text-color.ts
+  s_1887049d0f7cca::t_dce593f1a5ccbc 3-7
+apps/mobile/features/ai-chat/components/ConversationList.tsx
+  s_1887049d0f7cca::t_04b9f59a9cab46 3,13-14,18,27-28,44,56-57,64,72,84,89,91-95,111-131,141,152-156,170-171,176,179
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_1887049d0f7cca::t_04b9f59a9cab46 47-50
+apps/mobile/features/ai-chat/components/MemoryManager.tsx
+  s_1887049d0f7cca::t_04b9f59a9cab46 10,28,60,74,106-109,116-119,122-125
+apps/mobile/shared/i18n/locales/es.ts
+  s_1887049d0f7cca::t_04b9f59a9cab46 632-636,640,649-654,662-667
+  s_1887049d0f7cca::t_dce593f1a5ccbc 669-672
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "e5233ba2c00d4866644a97d09165887b7b066986",
+  "prompts": {},
+  "sessions": {
+    "s_1887049d0f7cca": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e50ad-e17d-7d12-b6ea-4ab5cfd4b273",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
