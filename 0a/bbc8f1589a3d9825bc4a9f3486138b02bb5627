@@ -1,0 +1,27 @@
+apps/mobile/shared/i18n/locales/en.ts
+  s_967b9fafeb50d1::t_86bb78e1f4e373 1151,1154-1160
+apps/mobile/__tests__/analytics/derive.test.ts
+  s_967b9fafeb50d1::t_86bb78e1f4e373 7,353-471
+apps/mobile/shared/i18n/locales/es.ts
+  s_967b9fafeb50d1::t_86bb78e1f4e373 1173,1176-1182
+apps/mobile/features/analytics/components/AnalyticsScreen.tsx
+  s_967b9fafeb50d1::t_86bb78e1f4e373 1,3,8,10-11,13,17-20,63,70,88-115,119,134-266,278,281-282,292,297,313-419
+apps/mobile/features/analytics/lib/derive.ts
+  s_967b9fafeb50d1::t_86bb78e1f4e373 1,36-52,67-78,196-224
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "0abbc8f1589a3d9825bc4a9f3486138b02bb5627",
+  "prompts": {},
+  "sessions": {
+    "s_967b9fafeb50d1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e558d-cb05-79b0-a238-5c09f221ea49",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
