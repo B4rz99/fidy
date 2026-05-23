@@ -1,0 +1,80 @@
+apps/mobile/shared/i18n/locales/en.ts
+  s_d492952f128ba4::t_493a634cacabc0 329-333,336
+  s_d492952f128ba4::t_724a590f6d2672 353,356-360,365-366
+  s_d492952f128ba4::t_ea20ac69704ef1 334-335
+apps/mobile/features/budget/components/BudgetCard.tsx
+  s_d492952f128ba4::t_d309ce6511e942 31
+  s_d492952f128ba4::t_ce7bd04953d036 59
+  s_d492952f128ba4::t_786bb14d4943b9 6,21,26,29-30,43-45,47-50,53,57-58,60-61,64,68,71,82,85,94,97-113,119-122,124-126,129,131-136
+  s_d492952f128ba4::t_222a121dcc65ae 27-28
+apps/mobile/features/calendar/index.ts
+  s_d492952f128ba4::t_63361c4900b754 3
+apps/mobile/__tests__/budget/store.test.ts
+  s_d492952f128ba4::t_bcd90182383209 88,97-101,107-111
+apps/mobile/features/budget/lib/derive.ts
+  s_d492952f128ba4::t_5cb51c00288052 56-57,72-76
+  s_d492952f128ba4::t_a300b51891428e 88-98
+apps/mobile/features/budget/components/BudgetHeaderMonthNavigator.tsx
+  s_d492952f128ba4::t_e4a66c046c90d4 6-8,13-19,23-31,38-39,42-43,46-54,59-65,69-75
+  s_d492952f128ba4::t_a33e881ce778f5 1-5,9-12,20-22,32-37,40-41,44-45,55-58,66-68,76-97
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_d492952f128ba4::t_f211142ad5375b 97-101,134-140
+  s_1887049d0f7cca::t_8c87662ee3cfe6 17,30
+  s_1887049d0f7cca::t_e20dd38c064157 96,102-105
+  s_d492952f128ba4::t_dbb910dad37c88 47-51
+apps/mobile/__tests__/shared/screen-layout.test.ts
+  s_d492952f128ba4::t_5b98b0ba2671aa 63-66
+apps/mobile/shared/i18n/locales/es.ts
+  s_d492952f128ba4::t_86a8c719ac1522 361,364-368,373-374
+  s_d492952f128ba4::t_7978b9dc99db5c 337-341,344
+  s_d492952f128ba4::t_cb4477f44b8912 342-343
+apps/mobile/__tests__/budget/derive.test.ts
+  s_d492952f128ba4::t_e5c06570ad5745 44-51,68-69,72,74-75,219-220
+  s_d492952f128ba4::t_fe41d90874be0a 171-172,188-189
+  s_d492952f128ba4::t_4f3031afe2a2b7 33-43,174-187,190-193
+  s_d492952f128ba4::t_13a3bff1a786fd 52-67,70-71,73,204-216,228-240
+apps/mobile/__tests__/budget/store-state.test.ts
+  s_d492952f128ba4::t_c7d5487d0b6b53 5,19
+apps/mobile/features/budget/lib/monitoring.ts
+  s_d492952f128ba4::t_5f9f30096cccb2 6,28-29
+apps/mobile/features/budget/components/BudgetListScreen.tsx
+  s_1887049d0f7cca::t_d9ad33bd4851ff 47,93
+  s_1887049d0f7cca::t_1555f5bd409a47 174,176,178
+  s_d492952f128ba4::t_05552d66c279a4 20-28,32-38,188-192
+  s_d492952f128ba4::t_eadbc8af1e9de0 9,12,186
+  s_d492952f128ba4::t_93fdc465cd972c 17,177
+  s_d492952f128ba4::t_aa3cfcf2c48365 5
+  s_1887049d0f7cca::t_736ee769e55a19 218,221,224
+  s_d492952f128ba4::t_1bff72a5747ca7 179-182
+apps/mobile/features/budget/components/BudgetSummaryCard.tsx
+  s_d492952f128ba4::t_ca65854336b0ff 22
+  s_d492952f128ba4::t_ce7bd04953d036 40
+  s_d492952f128ba4::t_bd07717b89925c 3-4,7-8
+apps/mobile/features/budget/store/state.ts
+  s_d492952f128ba4::t_038f2a05bb2817 2,18,55
+  s_d492952f128ba4::t_884fb62ac7a5c0 3,14-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "30cd54386c8bc358fdc152a473157960ea5cc0e1",
+  "prompts": {},
+  "sessions": {
+    "s_1887049d0f7cca": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e50ad-e17d-7d12-b6ea-4ab5cfd4b273",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_d492952f128ba4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e52a7-ccfd-7241-9c78-746de64bb2da",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
