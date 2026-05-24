@@ -1,0 +1,19 @@
+apps/mobile/drizzle/0031_drop_user_memories.sql
+  s_4031bf65e6227e::t_68bd123036bf86 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.1",
+  "base_commit_sha": "1ee96ed6dafb2d61dca2e7c90be420544200572f",
+  "prompts": {},
+  "sessions": {
+    "s_4031bf65e6227e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5c4f-b653-7193-9804-125585e1cc4e",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
