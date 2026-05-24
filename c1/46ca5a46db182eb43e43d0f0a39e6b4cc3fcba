@@ -1,0 +1,19 @@
+.agents/plugins/marketplace.json
+  s_de942f9fd3c95c::t_2894500b96697b 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.1",
+  "base_commit_sha": "c146ca5a46db182eb43e43d0f0a39e6b4cc3fcba",
+  "prompts": {},
+  "sessions": {
+    "s_de942f9fd3c95c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5ac2-04aa-7391-ad7f-9188370d8544",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
