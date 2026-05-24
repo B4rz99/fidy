@@ -1,0 +1,109 @@
+apps/mobile/features/goals/components/GoalCreateSheet.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 16
+apps/mobile/__tests__/calendar/calendar-utils.test.ts
+  s_11fb3699e0675b::t_996260fe1472f4 4,11-18,31-72
+apps/mobile/app/day-detail.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 2,13,17,19,23-37,43,57,93-102,104,148,177,182-184
+apps/mobile/__tests__/calendar/bill-mutation-service-source.test.ts
+  s_11fb3699e0675b::t_996260fe1472f4 19,34-38
+apps/mobile/app/add-payment.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 1,3,6-7,9-17,19
+apps/mobile/features/calendar/components/MonthNavigator.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 19,25,36,40-46
+apps/mobile/features/calendar/store/live-bill-mutations.ts
+  s_11fb3699e0675b::t_996260fe1472f4 2-5,31
+apps/mobile/__tests__/calendar/calendar-screen.test.ts
+  s_11fb3699e0675b::t_996260fe1472f4 11-13,15-17,25-36,43-81,88,94-118
+apps/mobile/features/transactions/display.public.ts
+  s_11fb3699e0675b::t_996260fe1472f4 2
+apps/mobile/features/calendar/schema.ts
+  s_11fb3699e0675b::t_996260fe1472f4 3,106
+apps/mobile/features/goals/components/goal-sheet/GoalSheetForm.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 14,22,31,55
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 98,140
+apps/mobile/app/edit-goal.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 1,3,6-7,9-17,19
+apps/mobile/features/goals/components/goal-sheet/GoalEditSheetLoaded.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 26
+apps/mobile/shared/i18n/locales/es.ts
+  s_11fb3699e0675b::t_996260fe1472f4 298-304,440-444
+apps/mobile/features/goals/components/AddPaymentSheet.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 7-10,21-27,35,41,51,61,92-98,100-142,144-163,166-184,191-197,212-213
+apps/mobile/app/(tabs)/(finance)/index.tsx
+  s_11fb3699e0675b::t_4f80e5bf1507cb 155
+  s_11fb3699e0675b::t_996260fe1472f4 7-9,12,14-15,21,24-25,69,71,94-140,142-143,145-154
+apps/mobile/features/goals/components/goal-sheet/GoalSheet.styles.ts
+  s_11fb3699e0675b::t_996260fe1472f4 7-26,30-31,37,39-40,43,50,52,57,59,61,63
+apps/mobile/features/goals/components/goal-sheet/GoalSheetFrame.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 3-5,10,18,24,26-60,69
+apps/mobile/shared/i18n/locales/en.ts
+  s_11fb3699e0675b::t_996260fe1472f4 290-296,432-436
+apps/mobile/features/calendar/lib/calendar-utils.ts
+  s_11fb3699e0675b::t_996260fe1472f4 14,26-47,97-140,145-146
+apps/mobile/features/goals/components/GoalsListScreen.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 26-39,127,134-135,147-153,155-157,175,190-192
+apps/mobile/features/transactions/components/PencilTransactionEntrySheets.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 161,163-164,173-174,200
+apps/mobile/app/_layout.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 231-232,260-262
+apps/mobile/__tests__/goals/goal-sheets.test.ts
+  s_11fb3699e0675b::t_996260fe1472f4 10-17,23-27,37,39,46,48,57-58,64-140
+apps/mobile/features/calendar/components/CalendarDayCell.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 14,20-21,27-28,32-36,40-53,55,57,65,69-71,74,76,78-79,81-83,85-88,91,93
+apps/mobile/__tests__/calendar/day-detail-screen.test.ts
+  s_11fb3699e0675b::t_996260fe1472f4 8-9,11,13-14
+apps/mobile/features/goals/components/goal-sheet/useGoalSheetForm.ts
+  s_11fb3699e0675b::t_996260fe1472f4 3,17-18,62-63,65,131
+apps/mobile/app/add-bill.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 1,3,6-9,11-19,21
+apps/mobile/app/create-goal.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 1,3,6-7,9-17,19
+apps/mobile/features/goals/components/GoalDetail.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 24-25
+apps/mobile/__tests__/calendar/add-bill-screen.test.ts
+  s_11fb3699e0675b::t_996260fe1472f4 24,26-34,47,49-50,79-81,105-112
+apps/mobile/features/calendar/index.ts
+  s_11fb3699e0675b::t_996260fe1472f4 1,4-10
+apps/mobile/shared/components/FidyNumpad.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 8,19,31,33,39-43,80-84,90-93,100-101
+apps/mobile/features/calendar/components/add-bill/AddBillForm.styles.ts
+  s_11fb3699e0675b::t_996260fe1472f4 33-34
+apps/mobile/__tests__/shared/screen-layout.test.ts
+  s_11fb3699e0675b::t_996260fe1472f4 50-57
+apps/mobile/app/bills-calendar.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 5-7,10,12-13,17,21-22,42-84,101-109
+  s_11fb3699e0675b::t_4f80e5bf1507cb 110
+apps/mobile/features/goals/components/goal-sheet/GoalDateField.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 1-2,9-10,20,61-68
+apps/mobile/features/goals/components/GoalEditSheet.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 1-3,11-12,16-20
+apps/mobile/__tests__/calendar/schema.test.ts
+  s_11fb3699e0675b::t_996260fe1472f4 120-122
+apps/mobile/features/calendar/components/add-bill/AddBillFormContent.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 3,5,14,56,62,71-72,74,76,79,139-143,147-152,198-204
+apps/mobile/features/goals/components/goal-sheet/GoalTypeToggle.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 22,24,28
+apps/mobile/metro.config.js
+  s_11fb3699e0675b::t_996260fe1472f4 7
+apps/mobile/features/goals/components/GoalCard.tsx
+  s_11fb3699e0675b::t_996260fe1472f4 2,79,81,84-86,91-120,123-126,128-134,136-150,152-166,171-280
+tsconfig.json
+  s_11fb3699e0675b::t_4f80e5bf1507cb 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.1",
+  "base_commit_sha": "4fb53b837660e10451792c95b0ff0f914802dd9b",
+  "prompts": {},
+  "sessions": {
+    "s_11fb3699e0675b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e571c-a298-79d3-b6e0-69322d45fb2d",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
