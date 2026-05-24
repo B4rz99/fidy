@@ -62,7 +62,8 @@ test("keeps content and results rendering wired to the extracted list modules", 
 
 test("keeps the transaction search redesign surfaces wired into the screen", () => {
   expect(contentSource).toContain('variant="sub"');
-  expect(inputBarSource).toContain("Search");
+  expect(contentSource).toContain('placeholder={t("search.placeholder")}');
+  expect(inputBarSource).toContain("placeholder={placeholder}");
   expect(listHeaderSource).toContain("filterDock");
   expect(summarySource).toContain("summaryCard");
   expect(summarySource).toContain("search.resultTotal");
