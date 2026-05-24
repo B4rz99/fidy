@@ -1,6 +1,6 @@
 import { ScreenLayout } from "@/shared/components";
+import { Platform, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
-import { SearchInputBar } from "./SearchInputBar";
 import { SearchResultsList } from "./SearchResultsList";
 import type { SearchScreenViewModel } from "./SearchScreen.types";
 
@@ -29,23 +29,22 @@ export function SearchScreenContent({
     <ScreenLayout title={t("search.title")} variant="sub" onBack={onBack}>
       {ready ? (
         <>
-          <SearchInputBar
-            handleTextChange={handleTextChange}
-            inputRef={inputRef}
-            inputText={inputText}
-            peachLight={peachLight}
-            placeholder={t("search.placeholder")}
-            primary={primary}
-            secondary={secondary}
-          />
+          <View style={styles.nativeHeaderClearance} />
           <SearchResultsList
             activePanel={activePanel}
             filterPanel={filterPanel}
             filters={filters}
             handleClearAll={handleClearAll}
             handleEndReached={handleEndReached}
+            handleTextChange={handleTextChange}
             handleTogglePanel={handleTogglePanel}
+            inputRef={inputRef}
+            inputText={inputText}
+            peachLight={peachLight}
+            placeholder={t("search.placeholder")}
+            primary={primary}
             results={results}
+            secondary={secondary}
             showSummary={showSummary}
             summary={summary}
           />
@@ -54,3 +53,9 @@ export function SearchScreenContent({
     </ScreenLayout>
   );
 }
+
+const styles = {
+  nativeHeaderClearance: {
+    height: Platform.OS === "ios" ? 116 : 0,
+  },
+};

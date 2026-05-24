@@ -1,23 +1,30 @@
 import { memo } from "react";
 import { getTransactionDisplayName, makeDateLabel } from "@/features/transactions/display.public";
-import type { StoredTransaction } from "@/features/transactions/query.public";
+import { getTransferActivityCopy } from "@/features/transfers/display.public";
 import { CATEGORY_MAP } from "@/shared/categories";
 import { Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { getCategoryLabel, getDateFnsLocale } from "@/shared/i18n";
-import { formatSignedMoney } from "@/shared/lib";
+import { formatMoney, formatSignedMoney } from "@/shared/lib";
+import type { SearchResult } from "../../lib/types";
 
 type SearchTransactionItemProps = {
   readonly showDateHeader: boolean;
-  readonly tx: StoredTransaction;
+  readonly item: SearchResult;
 };
 
 export const SearchTransactionItem = memo(function SearchTransactionItem({
+  item,
   showDateHeader,
-  tx,
 }: SearchTransactionItemProps) {
   const { t, locale } = useTranslation();
-  const category = CATEGORY_MAP[tx.categoryId];
+  const tx = item.kind === "transaction" ? item.transaction : null;
+  const transfer = item.kind === "transfer" ? item.transfer : null;
+  const category = tx ? CATEGORY_MAP[tx.categoryId] : null;
+  const transferPresentation = transfer
+    ? getTransferActivityCopy(transfer, item.kind === "transfer" ? item.accountNames : {}, t)
+    : null;
+  const date = tx?.date ?? transfer?.date ?? new Date();
 
   return (
     <View>
@@ -25,7 +32,7 @@ export const SearchTransactionItem = memo(function SearchTransactionItem({
         <View className="px-4 pt-4 pb-2">
           <Text className="font-poppins-semibold text-caption text-primary dark:text-primary-dark">
             {makeDateLabel({
-              date: tx.date,
+              date,
               todayLabel: t("dates.today"),
               yesterdayLabel: t("dates.yesterday"),
               dateFnsLocale: getDateFnsLocale(locale),
@@ -48,20 +55,28 @@ export const SearchTransactionItem = memo(function SearchTransactionItem({
           </View>
           <View className="ml-3 flex-1">
             <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-              {getTransactionDisplayName(tx, t("common.unknown"))}
+              {tx
+                ? getTransactionDisplayName(tx, t("common.unknown"))
+                : (transferPresentation?.title ?? t("transfers.activity.generic"))}
             </Text>
             <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark">
-              {category ? getCategoryLabel(category, locale) : t("common.other")}
+              {tx
+                ? category
+                  ? getCategoryLabel(category, locale)
+                  : t("common.other")
+                : (transferPresentation?.route ?? t("search.transfers"))}
             </Text>
           </View>
           <Text
             className={`font-poppins-semibold text-body ${
-              tx.type === "income"
+              tx?.type === "income"
                 ? "text-accent-green dark:text-accent-green-dark"
-                : "text-accent-red dark:text-accent-red-dark"
+                : transfer
+                  ? "text-secondary dark:text-secondary-dark"
+                  : "text-accent-red dark:text-accent-red-dark"
             }`}
           >
-            {formatSignedMoney(tx.amount, tx.type)}
+            {tx ? formatSignedMoney(tx.amount, tx.type) : formatMoney(transfer?.amount ?? 0)}
           </Text>
         </View>
       </View>

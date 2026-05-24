@@ -1,5 +1,6 @@
 import { buildDefaultFinancialAccountId } from "@/features/financial-accounts/seed.public";
-import { parseDigitsToAmount, parseIsoDate, toIsoDate, toIsoDateTime } from "@/shared/lib";
+import { parseIsoDate, toIsoDate, toIsoDateTime } from "@/shared/lib/format-date";
+import { parseDigitsToAmount } from "@/shared/lib/format-money";
 import { normalizeTransactionSource } from "@/shared/lib/transaction-source";
 import type {
   CategoryId,

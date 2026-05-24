@@ -53,6 +53,10 @@ describe("hasActiveFilters", () => {
     expect(hasActiveFilters(withFilters({ type: "income" }))).toBe(true);
   });
 
+  it("returns true when type is transfer", () => {
+    expect(hasActiveFilters(withFilters({ type: "transfer" }))).toBe(true);
+  });
+
   it("returns false when type is all", () => {
     expect(hasActiveFilters(withFilters({ type: "all" }))).toBe(false);
   });
@@ -86,7 +90,7 @@ describe("countActiveFilters", () => {
   });
 
   it("counts type as one dimension", () => {
-    expect(countActiveFilters(withFilters({ type: "expense" }))).toBe(1);
+    expect(countActiveFilters(withFilters({ type: "transfer" }))).toBe(1);
   });
 
   it("counts all five dimensions correctly", () => {

@@ -27,6 +27,20 @@ const withFilters = (overrides: Partial<SearchFilters>): SearchFilters => ({
   ...overrides,
 });
 
+function collectSqlText(value: unknown, seen = new WeakSet<object>()): string {
+  if (typeof value === "string") return value;
+  if (value === null || typeof value !== "object") return "";
+  if (seen.has(value)) return "";
+  seen.add(value);
+  if ("value" in value && Array.isArray(value.value)) {
+    return value.value.map((entry) => collectSqlText(entry, seen)).join(" ");
+  }
+  if ("queryChunks" in value && Array.isArray(value.queryChunks)) {
+    return value.queryChunks.map((entry) => collectSqlText(entry, seen)).join(" ");
+  }
+  return "";
+}
+
 describe("search repository", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -214,5 +228,50 @@ describe("search repository", () => {
     });
 
     expect(result).toEqual(mockRows);
+  });
+
+  it("searchTransfersPaginated calls db with limit+1 for hasMore detection", async () => {
+    const { searchTransfersPaginated } = await import("../../features/search/lib/repository");
+
+    searchTransfersPaginated({
+      db: mockDb,
+      userId: USER_ID,
+      filters: EMPTY_FILTERS,
+      limit: 30,
+      offset: 0,
+    });
+
+    expect(mockSelect).toHaveBeenCalled();
+    expect(mockFrom).toHaveBeenCalled();
+    expect(mockWhere).toHaveBeenCalled();
+    expect(mockOrderBy).toHaveBeenCalled();
+    expect(mockLimit).toHaveBeenCalledWith(31);
+    expect(mockOffset).toHaveBeenCalledWith(0);
+    expect(mockAll).toHaveBeenCalled();
+  });
+
+  it("searchTransfersAggregate returns count and total", async () => {
+    mockGet.mockReturnValueOnce({ count: 2, total: 7000 });
+
+    const { searchTransfersAggregate } = await import("../../features/search/lib/repository");
+
+    const result = searchTransfersAggregate(mockDb, USER_ID, EMPTY_FILTERS);
+
+    expect(result).toEqual({ count: 2, total: 7000 });
+  });
+
+  it("excludes transfers when category filters are active", async () => {
+    const { searchTransfersPaginated } = await import("../../features/search/lib/repository");
+
+    searchTransfersPaginated({
+      db: mockDb,
+      userId: USER_ID,
+      filters: withFilters({ categoryIds: ["food"] }),
+      limit: 30,
+      offset: 0,
+    });
+
+    const condition = mockWhere.mock.calls[0]?.[0];
+    expect(collectSqlText(condition)).toContain("1 = 0");
   });
 });

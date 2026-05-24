@@ -24,6 +24,7 @@ const en = {
     none: "(none)",
     name: "Name",
     other: "Other",
+    clear: "Clear",
     clearAll: "Clear all",
   },
 
@@ -975,15 +976,17 @@ const en = {
     resultTotal: "Result total",
     movements: "Movements",
     today: "Today",
-    thisWeek: "This week",
-    thisMonth: "This month",
+    thisWeek: "Week",
+    thisMonth: "Month",
     lastMonth: "Last month",
     customRange: "Custom range",
+    chooseDate: "Choose",
     from: "From",
     to: "To",
     min: "Min",
     max: "Max",
     allTypes: "All",
+    transfers: "Transfers",
   },
 
   // Detected Transactions Banner

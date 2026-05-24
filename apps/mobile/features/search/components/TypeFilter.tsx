@@ -2,7 +2,7 @@ import * as Haptics from "expo-haptics";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
-type FilterType = "all" | "expense" | "income";
+type FilterType = "all" | "expense" | "income" | "transfer";
 
 type TypeFilterProps = {
   value: FilterType;
@@ -16,10 +16,8 @@ export const TypeFilter = ({ value, onChange }: TypeFilterProps) => {
   const secondary = useThemeColor("secondary");
 
   const handlePress = (type: FilterType) => {
-    if (type !== value) {
-      void Haptics.selectionAsync();
-      onChange(type);
-    }
+    void Haptics.selectionAsync();
+    onChange(type === value ? "all" : type);
   };
 
   const getStyle = (type: FilterType) => {
@@ -36,17 +34,6 @@ export const TypeFilter = ({ value, onChange }: TypeFilterProps) => {
 
   return (
     <View className="h-10 flex-row rounded-full bg-peach-light p-[3px] dark:bg-peach-light-dark">
-      <Pressable
-        className="flex-1 items-center justify-center rounded-full"
-        style={getStyle("all")}
-        onPress={() => handlePress("all")}
-        accessibilityRole="button"
-        accessibilityState={{ selected: value === "all" }}
-      >
-        <Text className="font-poppins-semibold text-[14px]" style={{ color: getColor("all") }}>
-          {t("search.allTypes")}
-        </Text>
-      </Pressable>
       <Pressable
         className="flex-1 items-center justify-center rounded-full"
         style={getStyle("expense")}
@@ -67,6 +54,17 @@ export const TypeFilter = ({ value, onChange }: TypeFilterProps) => {
       >
         <Text className="font-poppins-semibold text-[14px]" style={{ color: getColor("income") }}>
           {t("transactions.income")}
+        </Text>
+      </Pressable>
+      <Pressable
+        className="flex-1 items-center justify-center rounded-full"
+        style={getStyle("transfer")}
+        onPress={() => handlePress("transfer")}
+        accessibilityRole="button"
+        accessibilityState={{ selected: value === "transfer" }}
+      >
+        <Text className="font-poppins-semibold text-[14px]" style={{ color: getColor("transfer") }}>
+          {t("search.transfers")}
         </Text>
       </Pressable>
     </View>

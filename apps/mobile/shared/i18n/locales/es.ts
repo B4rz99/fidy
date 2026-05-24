@@ -24,6 +24,7 @@ const es = {
     none: "(ninguno)",
     name: "Nombre",
     other: "Otro",
+    clear: "Limpiar",
     clearAll: "Limpiar todo",
   },
 
@@ -995,15 +996,17 @@ const es = {
     resultTotal: "Resultado total",
     movements: "Movimientos",
     today: "Hoy",
-    thisWeek: "Esta semana",
-    thisMonth: "Este mes",
+    thisWeek: "Semana",
+    thisMonth: "Mes",
     lastMonth: "Mes pasado",
     customRange: "Rango personalizado",
+    chooseDate: "Elegir",
     from: "Desde",
     to: "Hasta",
     min: "Mín",
     max: "Máx",
     allTypes: "Todos",
+    transfers: "Transferencias",
   },
 
   // Detected Transactions Banner (already Spanish)
