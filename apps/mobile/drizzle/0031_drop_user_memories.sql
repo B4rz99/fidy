@@ -1,1 +1,1 @@
-DROP TABLE `user_memories`;
+DROP TABLE IF EXISTS `user_memories`;
