@@ -48,7 +48,7 @@ describe("Root layout native headers", () => {
     expect(addBillBlock).not.toContain("DIALOG_MODAL");
   });
 
-  test("bills-calendar leaves Android custom ScreenLayout as the only header", () => {
+  test("bills-calendar uses iosHeaderOptions to enable iOS-only native header", () => {
     expect(source).toContain('<Stack.Screen name="bills-calendar" options={iosHeaderOptions} />');
   });
 });
