@@ -49,7 +49,7 @@ export const NotificationsScreen = () => {
     userId != null
   );
 
-  const sections = useMemo(() => {
+  const feedItems = useMemo(() => {
     const displays = notifications.map((n) => deriveNotificationDisplay(n, t));
     return getNotificationFeedItems(displays);
   }, [notifications, t]);
@@ -92,11 +92,11 @@ export const NotificationsScreen = () => {
           }}
         />
       )}
-      {!isLoading && sections.length === 0 ? (
+      {!isLoading && feedItems.length === 0 ? (
         <NotificationEmptyState />
       ) : (
         <FlatList
-          data={sections}
+          data={feedItems}
           keyExtractor={notificationKeyExtractor}
           renderItem={renderItem}
           ItemSeparatorComponent={NotificationItemSeparator}
