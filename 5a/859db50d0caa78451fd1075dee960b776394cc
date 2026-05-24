@@ -1,0 +1,39 @@
+CONTEXT.md
+  s_4031bf65e6227e::t_71bfbbcff9a689 162,164
+apps/mobile/supabase/migrations/20260524120000_drop_user_memories.sql
+  s_4031bf65e6227e::t_6e7cf9a6153e87 1
+apps/mobile/drizzle/0031_drop_user_memories.sql
+  s_4031bf65e6227e::t_6e7cf9a6153e87 1
+apps/mobile/__tests__/coming-soon/ai-tab.test.ts
+  s_4031bf65e6227e::t_02fee5334abd8b 28-30
+apps/mobile/features/ai-chat/schema.ts
+  s_4031bf65e6227e::t_544597cd3ef860 3
+apps/mobile/app/(tabs)/(ai)/index.tsx
+  s_4031bf65e6227e::t_9f6eeb80586995 37
+apps/mobile/drizzle/migrations.js
+  s_4031bf65e6227e::t_02fee5334abd8b 33,70
+apps/mobile/features/ai-chat/hooks/use-streaming-chat.ts
+  s_4031bf65e6227e::t_9f6eeb80586995 35
+apps/mobile/features/settings/components/ProfileScreen.tsx
+  s_4031bf65e6227e::t_9f6eeb80586995 8
+plans/remote-api-boundary-encrypted-backup.md
+  s_4031bf65e6227e::t_71bfbbcff9a689 7,36
+apps/mobile/__tests__/edge-functions/ai-chat-privacy-boundary.test.ts
+  s_4031bf65e6227e::t_02fee5334abd8b 24-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.1",
+  "base_commit_sha": "5a859db50d0caa78451fd1075dee960b776394cc",
+  "prompts": {},
+  "sessions": {
+    "s_4031bf65e6227e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5c4f-b653-7193-9804-125585e1cc4e",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
