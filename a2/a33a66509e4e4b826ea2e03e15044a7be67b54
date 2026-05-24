@@ -1,0 +1,19 @@
+apps/mobile/__tests__/search/search-screen.test.ts
+  s_11fb3699e0675b::t_7f71921416c705 65-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.1",
+  "base_commit_sha": "a2a33a66509e4e4b826ea2e03e15044a7be67b54",
+  "prompts": {},
+  "sessions": {
+    "s_11fb3699e0675b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e571c-a298-79d3-b6e0-69322d45fb2d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
