@@ -21,14 +21,14 @@ describe("ai-chat Edge Function privacy boundary", () => {
     expect(source).toContain("buildSystemPrompt({ packet: financialContextPacket })");
   });
 
-  it("keeps saved memories in chat prompts through the app-provided packet", () => {
-    expect(source).toContain("context.packet.memories");
-    expect(source).toContain("## What you know about this user");
-    expect(source).not.toContain('from("user_memories").select("fact, category")');
+  it("does not read or prompt with saved memories", () => {
+    expect(source).not.toContain("context.packet.memories");
+    expect(source).not.toContain("## What you know about this user");
+    expect(source).not.toContain('from("user_memories")');
+    expect(source).not.toContain("extract_memories");
   });
 
   it("validates packet collections before building chat prompts", () => {
-    expect(source).toContain("isOptionalArrayOf(value.memories, isMemorySummary)");
     expect(source).toContain("isOptionalArrayOf(value.goals, isGoalSummary)");
     expect(source).toContain('typeof value.targetAmount === "number"');
     expect(source).toContain("invalid_context_packet");

@@ -657,7 +657,6 @@ const en = {
     title: "AI chat",
     conversationsSubtitle: "Resume a conversation or start a new financial question.",
     fidyAi: "Fidy AI",
-    memories: "Memory",
     newChat: "New chat",
     noConversations: "No conversations yet",
     tapToStart: "Tap + to start a new chat",
@@ -688,16 +687,6 @@ const en = {
       added: "Added",
       deleted: "Deleted",
       dismissed: "Dismissed",
-    },
-    memoriesDescription:
-      "Things Fidy AI remembers about you. Delete any memory you'd like it to forget.",
-    noMemories: "No memories yet",
-    noMemoriesHint: "Fidy AI will learn about you as you chat",
-    memoryCategories: {
-      habit: "Habit",
-      preference: "Preference",
-      situation: "Situation",
-      goal: "Goal",
     },
   },
 

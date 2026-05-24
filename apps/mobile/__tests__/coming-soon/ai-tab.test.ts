@@ -25,8 +25,8 @@ describe("AI tab", () => {
     expect(source).toContain('"chat"');
   });
 
-  test("extracts memories through the query mutation when leaving chat", () => {
-    expect(source).toContain("useExtractUserMemoriesMutation");
-    expect(source).not.toContain("extractAndSaveMemories");
+  test("does not extract memories when leaving chat", () => {
+    expect(source).not.toContain("useExtractUserMemoriesMutation");
+    expect(source).not.toContain("extract_memories");
   });
 });

@@ -119,7 +119,6 @@ describe("createAiChatApiService", () => {
           goals: [],
           accounts: [],
           captureEvidence: [],
-          memories: [{ fact: "Prefers cash envelopes", category: "preference" }],
         },
       }
     );
@@ -136,7 +135,6 @@ describe("createAiChatApiService", () => {
             description: "Lunch",
           },
         ],
-        memories: [{ fact: "Prefers cash envelopes", category: "preference" }],
       },
     });
   });

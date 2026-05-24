@@ -25,7 +25,6 @@ import {
   reviewCandidates,
   transactions,
   transfers,
-  userMemories,
   userCategories,
 } from "@/shared/db/schema";
 
@@ -147,11 +146,6 @@ function seedExcludedRows() {
       '${NOW}', '${NOW}', null
     );
 
-    insert into user_memories (
-      id, user_id, fact, category, created_at, updated_at
-    ) values (
-      'memory-1', 'user-1', 'Usually buys lunch near work', 'preference', '${NOW}', '${NOW}'
-    );
   `);
 }
 
@@ -697,9 +691,7 @@ describe("local ledger backup snapshots", () => {
       "userCategories",
     ]);
     expect(JSON.stringify(snapshot.data)).not.toContain("notif-1");
-    expect(JSON.stringify(snapshot.data)).not.toContain("memory-1");
     expect(sourceDb.select().from(notifications).all()).toHaveLength(1);
-    expect(sourceDb.select().from(userMemories).all()).toHaveLength(1);
   });
 
   it("rejects unsupported snapshot versions", () => {

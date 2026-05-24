@@ -21,6 +21,5 @@ export {
   transactions,
   transfers,
   userCategories,
-  userMemories,
 } from "./schema";
 export { getSupabase, resetSupabase } from "./supabase";

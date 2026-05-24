@@ -22,7 +22,6 @@ import type {
   TransactionId,
   TransferId,
   UserCategoryId,
-  UserMemoryId,
 } from "@/shared/types/branded";
 
 /** Pure ID builder — all inputs explicit. */
@@ -71,10 +70,6 @@ export function generateChatSessionId(): ChatSessionId {
 
 export function generateChatMessageId(): ChatMessageId {
   return generateId("msg") as ChatMessageId;
-}
-
-export function generateUserMemoryId(): UserMemoryId {
-  return generateId("memory") as UserMemoryId;
 }
 
 export function generateEmailAccountId(): EmailAccountId {

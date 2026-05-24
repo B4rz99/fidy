@@ -278,7 +278,6 @@ function RootLayout() {
             />
             <Stack.Screen name="add-transfer" options={{ headerShown: false }} />
             <Stack.Screen name="bills-calendar" options={iosHeaderOptions} />
-            <Stack.Screen name="ai-memories" options={iosHeaderOptions} />
             <Stack.Screen name="notification-preferences" options={iosHeaderOptions} />
             <Stack.Screen name="categories" options={iosHeaderOptions} />
             <Stack.Screen name="create-category" options={DIALOG_MODAL} />

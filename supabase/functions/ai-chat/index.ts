@@ -16,8 +16,6 @@ const CATEGORY_IDS = [
   "other",
 ] as const;
 
-const MEMORY_CATEGORIES = ["habit", "preference", "situation", "goal"] as const;
-
 const SYSTEM_PROMPT = `You are Fidy AI, a financial mirror for the user's personal finances in Colombia.
 
 ## Rules
@@ -42,53 +40,12 @@ Valid categoryIds: ${CATEGORY_IDS.join(", ")}
 
 Always confirm what you're about to do BEFORE the action block. The app will show a confirmation card.`;
 
-const EXTRACT_MEMORIES_PROMPT = `Extract factual information about the user from this conversation.
-Return a JSON array of objects with "fact" and "category" fields.
-Categories: ${MEMORY_CATEGORIES.join(", ")}
-- habit: recurring behaviors (e.g., "Eats out every Friday")
-- preference: likes/dislikes (e.g., "Prefers cash over card")
-- situation: life circumstances (e.g., "Has a car loan")
-- goal: financial goals (e.g., "Saving for a vacation")
-
-Only extract CLEAR facts stated or strongly implied by the user. If no facts found, return an empty array.
-Return ONLY valid JSON, no markdown.`;
-
-const EXTRACT_MEMORIES_SCHEMA = {
-  name: "extracted_memories",
-  strict: true,
-  schema: {
-    type: "object",
-    properties: {
-      memories: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            fact: { type: "string" },
-            category: { type: "string", enum: [...MEMORY_CATEGORIES] },
-          },
-          required: ["fact", "category"],
-          additionalProperties: false,
-        },
-      },
-    },
-    required: ["memories"],
-    additionalProperties: false,
-  },
-};
-
 const MODEL = "gpt-5-nano-2025-08-07";
 const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
   Deno.env.get("SUPABASE_ANON_KEY") ?? ""
 );
-
-function createUserClient(token: string) {
-  return createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
-}
 
 function jsonResponse(
   body: unknown,
@@ -132,7 +89,6 @@ type FinancialContextPacket = {
   readonly summary: unknown;
   readonly recentTransactions?: readonly unknown[];
   readonly budgets?: readonly unknown[];
-  readonly memories?: readonly { readonly fact: string; readonly category: string }[];
   readonly goals?: readonly GoalSummary[];
   readonly accounts?: readonly unknown[];
   readonly captureEvidence?: readonly unknown[];
@@ -145,13 +101,6 @@ function formatGoalLine(g: GoalSummary): string {
 
 function buildSystemPrompt(context: { packet: FinancialContextPacket }): string {
   const parts = [SYSTEM_PROMPT];
-
-  if ((context.packet.memories ?? []).length > 0) {
-    const memoryLines = (context.packet.memories ?? [])
-      .map((memory) => `- [${memory.category}] ${memory.fact}`)
-      .join("\n");
-    parts.push(`\n## What you know about this user\n${memoryLines}`);
-  }
 
   if ((context.packet.goals ?? []).length > 0) {
     const goalLines = (context.packet.goals ?? []).map(formatGoalLine).join("\n");
@@ -191,10 +140,6 @@ function isUnknownItem(_value: unknown): boolean {
   return true;
 }
 
-function isMemorySummary(value: unknown): boolean {
-  return isRecord(value) && typeof value.fact === "string" && typeof value.category === "string";
-}
-
 function isGoalSummary(value: unknown): boolean {
   return (
     isRecord(value) &&
@@ -211,7 +156,6 @@ function isFinancialContextPacket(value: unknown): value is FinancialContextPack
   return (
     isOptionalArrayOf(value.recentTransactions, isUnknownItem) &&
     isOptionalArrayOf(value.budgets, isUnknownItem) &&
-    isOptionalArrayOf(value.memories, isMemorySummary) &&
     isOptionalArrayOf(value.goals, isGoalSummary) &&
     isOptionalArrayOf(value.accounts, isUnknownItem) &&
     isOptionalArrayOf(value.captureEvidence, isUnknownItem)
@@ -301,127 +245,6 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: "invalid_json" }, 400);
     }
     mode = (body.mode as string) ?? "chat";
-
-    // Memory extraction mode — non-streaming
-    if (mode === "extract_memories") {
-      const { messages } = body;
-      if (!Array.isArray(messages) || messages.length === 0) {
-        structuredLog({
-          request_id: requestId,
-          user_id: userId,
-          mode,
-          success: false,
-          latency_ms: Date.now() - startTime,
-          error_type: "invalid_request",
-        });
-        return jsonResponse({ success: false, error: "invalid_request" }, 400);
-      }
-
-      const completion = await openai.chat.completions.create({
-        model: MODEL,
-        messages: [{ role: "system", content: EXTRACT_MEMORIES_PROMPT }, ...messages],
-        response_format: { type: "json_schema", json_schema: EXTRACT_MEMORIES_SCHEMA },
-      });
-
-      const text = completion.choices[0]?.message?.content;
-      if (!text) {
-        structuredLog({
-          request_id: requestId,
-          user_id: userId,
-          mode,
-          success: false,
-          latency_ms: Date.now() - startTime,
-          error_type: "empty_llm_response",
-        });
-        return jsonResponse({ success: false, error: "empty_llm_response" }, 502);
-      }
-
-      const extracted: { fact: string; category: string }[] = JSON.parse(text).memories;
-      if (extracted.length === 0) {
-        structuredLog({
-          request_id: requestId,
-          user_id: userId,
-          mode,
-          success: true,
-          latency_ms: Date.now() - startTime,
-          error_type: null,
-          message_count: messages.length,
-        });
-        return jsonResponse({ success: true, data: [] });
-      }
-
-      // Server-side deduplication
-      const userClient = createUserClient(token);
-      const { data: existing, error: existingError } = await userClient
-        .from("user_memories")
-        .select("fact")
-        .is("deleted_at", null);
-
-      if (existingError) {
-        structuredLog({
-          request_id: requestId,
-          user_id: userId,
-          mode,
-          success: false,
-          latency_ms: Date.now() - startTime,
-          error_type: "memory_read_error",
-        });
-        return jsonResponse({ success: false, error: "memory_read_error" }, 500);
-      }
-
-      const existingLower = new Set(
-        (existing ?? []).map((m: { fact: string }) => m.fact.toLowerCase())
-      );
-      const seen = new Set<string>();
-      const newFacts = extracted.filter((f) => {
-        const lower = f.fact.toLowerCase();
-        if (existingLower.has(lower) || seen.has(lower)) return false;
-        seen.add(lower);
-        return true;
-      });
-
-      if (newFacts.length === 0) {
-        structuredLog({
-          request_id: requestId,
-          user_id: userId,
-          mode,
-          success: true,
-          latency_ms: Date.now() - startTime,
-          error_type: null,
-          message_count: messages.length,
-        });
-        return jsonResponse({ success: true, data: [] });
-      }
-
-      const { data: inserted, error: insertError } = await userClient
-        .from("user_memories")
-        .insert(newFacts.map((f) => ({ user_id: userId, fact: f.fact, category: f.category })))
-        .select("id, fact, category, created_at");
-
-      if (insertError) {
-        structuredLog({
-          request_id: requestId,
-          user_id: userId,
-          mode,
-          success: false,
-          latency_ms: Date.now() - startTime,
-          error_type: insertError.message,
-        });
-        return jsonResponse({ success: false, error: "memory_insert_failed" }, 500);
-      }
-
-      structuredLog({
-        request_id: requestId,
-        user_id: userId,
-        mode,
-        success: true,
-        latency_ms: Date.now() - startTime,
-        error_type: null,
-        message_count: messages.length,
-      });
-
-      return jsonResponse({ success: true, data: inserted ?? [] });
-    }
 
     // Chat mode — streaming
     const { messages } = body;

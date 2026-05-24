@@ -1,16 +1,7 @@
 import { z } from "zod";
 import { requireIsoDate, requireTransactionId } from "@/shared/types/assertions";
-import type {
-  ChatMessageId,
-  ChatSessionId,
-  IsoDateTime,
-  UserId,
-  UserMemoryId,
-} from "@/shared/types/branded";
+import type { ChatMessageId, ChatSessionId, IsoDateTime, UserId } from "@/shared/types/branded";
 import { categoryIdSchema, transactionTypeSchema } from "../transactions/schema";
-
-export const memoryCategory = z.enum(["habit", "preference", "situation", "goal"]);
-export type MemoryCategory = z.infer<typeof memoryCategory>;
 
 export const chatRoleSchema = z.enum(["user", "assistant"]);
 export type ChatRole = z.infer<typeof chatRoleSchema>;
@@ -94,13 +85,4 @@ export type ChatMessage = {
   readonly action: ChatAction | null;
   readonly actionStatus: ActionStatus | null;
   readonly createdAt: IsoDateTime;
-};
-
-export type UserMemory = {
-  readonly id: UserMemoryId;
-  readonly userId: UserId;
-  readonly fact: string;
-  readonly category: MemoryCategory;
-  readonly createdAt: IsoDateTime;
-  readonly updatedAt: IsoDateTime;
 };

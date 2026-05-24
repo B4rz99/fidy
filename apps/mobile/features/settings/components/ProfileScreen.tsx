@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthIdentity, useAuthMode, useAuthStore } from "@/features/auth/public";
 import { LocalQaProfileTools } from "@/features/qa/routes.public";
 import { ScreenLayout } from "@/shared/components";
-import { Brain, LogOut } from "@/shared/components/icons";
+import { LogOut } from "@/shared/components/icons";
 import { Alert, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { deriveProfileAvatar } from "../lib/profile-avatar";
@@ -94,23 +94,6 @@ export function ProfileScreen() {
 
         {/* Actions */}
         <View style={{ gap: 16, marginTop: 32 }} className="items-center">
-          {/* AI Memories */}
-          <Pressable
-            onPress={() => push("/ai-memories")}
-            className="flex-row items-center justify-center bg-card dark:bg-card-dark rounded-2xl w-full"
-            style={{
-              height: 52,
-              gap: 8,
-              borderWidth: 1,
-              borderColor,
-            }}
-          >
-            <Brain size={20} color={secondaryColor} />
-            <Text className="font-poppins-semibold text-sm text-primary dark:text-primary-dark">
-              {t("aiChat.memories")}
-            </Text>
-          </Pressable>
-
           {/* Sign-out button */}
           <Pressable
             onPress={handleLogOut}

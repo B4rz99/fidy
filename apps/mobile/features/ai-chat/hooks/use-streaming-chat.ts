@@ -4,7 +4,6 @@ import { useOptionalUserId } from "@/features/auth/public";
 import { saveCurrentTransaction, useTransactionStore } from "@/features/transactions/store.public";
 import { tryGetDb } from "@/shared/db";
 import { parseIsoDate, trackAiMessageSent, trackTransactionCreated } from "@/shared/lib";
-import { listUserMemories } from "../data/user-memories";
 import { parseActionFromResponse } from "../lib/parse-action";
 import { createStreamingTextStore } from "../services/streaming-text-store";
 import type { ChatAction } from "../schema";
@@ -17,7 +16,6 @@ import {
   useChatStore,
 } from "../store";
 
-const MAX_CONTEXT_MEMORIES = 20;
 const streamingTextStore = createStreamingTextStore();
 
 const streamingChatService = createStreamingChatService({
@@ -34,19 +32,7 @@ const streamingChatService = createStreamingChatService({
     streamingTextStore.set(content);
   },
   streamChat,
-  buildFinancialContextPacket: async (input) => {
-    const [packet, memories] = await Promise.all([
-      buildFinancialContextPacket(input),
-      listUserMemories(input.userId).catch(() => []),
-    ]);
-    return {
-      ...packet,
-      memories: memories.slice(0, MAX_CONTEXT_MEMORIES).map((memory) => ({
-        fact: memory.fact,
-        category: memory.category,
-      })),
-    };
-  },
+  buildFinancialContextPacket,
   createChatSession,
   addUserChatMessage,
   addAssistantChatMessage,
