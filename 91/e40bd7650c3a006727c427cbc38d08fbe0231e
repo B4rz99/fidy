@@ -1,0 +1,27 @@
+apps/mobile/features/goals/components/GoalDetail.tsx
+  s_11fb3699e0675b::t_3dbe29d32c8c03 2,21-34
+apps/mobile/__tests__/navigation/root-layout-headers.test.ts
+  s_11fb3699e0675b::t_aded518dacd0d3 37-40,50-52
+apps/mobile/__tests__/goals/goal-sheets.test.ts
+  s_11fb3699e0675b::t_aded518dacd0d3 144-146
+apps/mobile/app/_layout.tsx
+  s_11fb3699e0675b::t_3dbe29d32c8c03 222-223,225-227,280
+apps/mobile/__tests__/calendar/calendar-screen.test.ts
+  s_11fb3699e0675b::t_aded518dacd0d3 43-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.1",
+  "base_commit_sha": "91e40bd7650c3a006727c427cbc38d08fbe0231e",
+  "prompts": {},
+  "sessions": {
+    "s_11fb3699e0675b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e571c-a298-79d3-b6e0-69322d45fb2d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
