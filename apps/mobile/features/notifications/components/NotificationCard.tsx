@@ -71,6 +71,7 @@ export const NotificationCard = React.memo(function NotificationCard({
   const secondaryColor = useThemeColor("secondary");
   const tertiaryColor = useThemeColor("tertiary");
   const cardColor = useThemeColor("card");
+  const borderColor = useThemeColor("borderSubtle");
 
   const IconComponent = ICON_MAP[notification.iconName] ?? TriangleAlert;
 
@@ -87,7 +88,7 @@ export const NotificationCard = React.memo(function NotificationCard({
     <Pressable
       onPress={notification.route ? handlePress : undefined}
       disabled={!notification.route}
-      style={[styles.container, { backgroundColor: cardColor }]}
+      style={[styles.container, { backgroundColor: cardColor, borderColor }]}
     >
       <View style={[styles.iconCircle, { backgroundColor: notification.iconBgColor }]}>
         <IconComponent size={16} color={notification.iconColor} />
@@ -114,14 +115,15 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
+    padding: 14,
     gap: 12,
-    borderRadius: 16,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   iconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -132,10 +134,12 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 14,
+    lineHeight: 20,
   },
   message: {
-    fontFamily: "Poppins_400Regular",
-    fontSize: 13,
+    fontFamily: "Poppins_500Medium",
+    fontSize: 12,
+    lineHeight: 17,
   },
   rightColumn: {
     alignItems: "flex-end",
