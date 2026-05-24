@@ -20,6 +20,16 @@ const baseHookSource = readSource(
 const resultsListSource = readSource(
   "../../features/search/components/search-screen/SearchResultsList.tsx"
 );
+const listHeaderSource = readSource(
+  "../../features/search/components/search-screen/SearchListHeader.tsx"
+);
+const summarySource = readSource("../../features/search/components/ResultsSummary.tsx");
+const transactionItemSource = readSource(
+  "../../features/search/components/search-screen/SearchTransactionItem.tsx"
+);
+const inputBarSource = readSource(
+  "../../features/search/components/search-screen/SearchInputBar.tsx"
+);
 
 test("keeps SearchScreen routed through the extracted search-screen modules", () => {
   expect(screenSource).toContain("useSearchScreen");
@@ -48,4 +58,16 @@ test("keeps content and results rendering wired to the extracted list modules", 
   expect(contentSource).toContain("<SearchResultsList");
   expect(resultsListSource).toContain("<SearchListHeader");
   expect(resultsListSource).toContain("<SearchTransactionItem");
+});
+
+test("keeps the transaction search redesign surfaces wired into the screen", () => {
+  expect(contentSource).toContain('variant="sub"');
+  expect(contentSource).toContain('placeholder={t("search.placeholder")}');
+  expect(inputBarSource).toContain("placeholder={placeholder}");
+  expect(listHeaderSource).toContain("filterDock");
+  expect(summarySource).toContain("summaryCard");
+  expect(summarySource).toContain("search.resultTotal");
+  expect(summarySource).toContain("search.movements");
+  expect(transactionItemSource).toContain("resultCard");
+  expect(transactionItemSource).toContain("showDateHeader");
 });

@@ -117,10 +117,23 @@ describe("toBillRow / fromBillRow", () => {
     const row = toBillRow(bill, "user-1" as UserId, "2026-03-04T10:00:00.000Z" as IsoDateTime);
     const restored = fromBillRow(row);
     expect(restored.startDate).toBeInstanceOf(Date);
-    // toBillRow stores date-only (YYYY-MM-DD); new Date("YYYY-MM-DD") parses as UTC midnight
-    expect(restored.startDate.getUTCFullYear()).toBe(2025);
-    expect(restored.startDate.getUTCMonth()).toBe(0); // January
-    expect(restored.startDate.getUTCDate()).toBe(15);
+    expect(restored.startDate.getFullYear()).toBe(2025);
+    expect(restored.startDate.getMonth()).toBe(0);
+    expect(restored.startDate.getDate()).toBe(15);
+  });
+
+  test("fromBillRow fails fast for invalid persisted startDate values", () => {
+    expect(() =>
+      fromBillRow({
+        id: "bill-1",
+        name: "Netflix",
+        amount: 35000,
+        frequency: "monthly",
+        categoryId: "services",
+        startDate: "2026-01-15T00:00:00.000Z",
+        isActive: true,
+      })
+    ).toThrow("Invalid bill startDate for bill-1: 2026-01-15T00:00:00.000Z");
   });
 
   test("roundtrip preserves all bill fields", () => {

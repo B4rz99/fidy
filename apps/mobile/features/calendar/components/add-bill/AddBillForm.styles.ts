@@ -30,8 +30,8 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     minHeight: 44,
   },
-  datePicker: {
-    alignSelf: "flex-start",
+  dateInput: {
+    justifyContent: "center",
   },
   dateText: {
     fontFamily: "Poppins_500Medium",

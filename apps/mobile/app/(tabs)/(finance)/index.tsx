@@ -4,25 +4,32 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnalyticsScreen } from "@/features/analytics";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
-  CalendarGrid,
-  MonthNavigator,
+  deleteBill,
+  markBillPaid,
   nextMonth,
   prevMonth,
+  unmarkBillPaid,
   useCalendarStore,
-} from "@/features/calendar";
+} from "@/features/calendar/routes.public";
+import {
+  CalendarMonthBoard,
+  type Bill,
+  type CalendarBillOccurrence,
+} from "@/features/calendar/ui.public";
 import { useGoalStore } from "@/features/goals/hooks.public";
 import { GoalsListScreen } from "@/features/goals/ui.public";
 import { AppAuroraBackground, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus } from "@/shared/components/icons";
-import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
-import { captureError } from "@/shared/lib";
+import { captureError, toIsoDate } from "@/shared/lib";
+import { requireBillId, requireIsoDate } from "@/shared/types/assertions";
 
 type FinanceTab = "calendar" | "goals" | "analytics";
 
-const FINANCE_NATIVE_HEADER_CONTENT_HEIGHT = 56;
 const FINANCE_NATIVE_TAB_BAR_OFFSET = 72;
+const FINANCE_IOS_HEADER_CONTENT_HEIGHT = 44;
 
 function SegmentControl({
   active,
@@ -62,13 +69,16 @@ function SegmentControl({
   );
 }
 
-function FinanceCalendarPanel({ topClearance }: { readonly topClearance: number }) {
+function FinanceCalendarPanel() {
   const { push } = useRouter();
+  const { t } = useTranslation();
   const currentMonth = useCalendarStore((s) => s.currentMonth);
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
   const userId = useOptionalUserId();
   const insets = useSafeAreaInsets();
+  const headerClearance =
+    Platform.OS === "ios" ? insets.top + FINANCE_IOS_HEADER_CONTENT_HEIGHT : 0;
   const tabBarClearance =
     Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE;
 
@@ -86,26 +96,69 @@ function FinanceCalendarPanel({ topClearance }: { readonly topClearance: number 
     void prevMonth(db).catch(captureError);
   }, [userId]);
 
+  const handleToggleBillPaid = useCallback(
+    (occurrence: CalendarBillOccurrence) => {
+      if (!userId) return;
+      const db = tryGetDb(userId);
+      if (!db) return;
+      const command = {
+        db,
+        userId,
+        billId: requireBillId(occurrence.bill.id),
+        dueDate: requireIsoDate(occurrence.dueDate),
+      };
+      const action = occurrence.isPaid ? unmarkBillPaid(command) : markBillPaid(command);
+      void action.catch(captureError);
+    },
+    [userId]
+  );
+
+  const handleEditBill = useCallback(
+    (bill: Bill) => {
+      push({ pathname: "/add-bill", params: { billId: bill.id } });
+    },
+    [push]
+  );
+
+  const handleDeleteBill = useCallback(
+    (bill: Bill) => {
+      Alert.alert(t("bills.deleteBill"), t("bills.deleteBillConfirm", { billName: bill.name }), [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.delete"),
+          style: "destructive",
+          onPress: () => {
+            if (!userId) return;
+            const db = tryGetDb(userId);
+            if (!db) return;
+            void deleteBill({
+              db,
+              userId,
+              billId: requireBillId(bill.id),
+            }).catch(captureError);
+          },
+        },
+      ]);
+    },
+    [t, userId]
+  );
+
   return (
-    <View
-      style={[styles.calendarPanel, { paddingBottom: tabBarClearance, paddingTop: topClearance }]}
-    >
-      <MonthNavigator
+    <View style={styles.calendarPanel}>
+      <CalendarMonthBoard
         currentMonth={currentMonth}
-        onPrev={handlePrevMonth}
-        onNext={handleNextMonth}
+        bills={bills}
+        payments={payments}
+        cellMinHeight={54}
+        paddingBottom={tabBarClearance}
+        paddingTop={headerClearance}
+        onBillDelete={handleDeleteBill}
+        onBillEdit={handleEditBill}
+        onBillPaymentToggle={handleToggleBillPaid}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
+        onDayPress={(date) => push({ pathname: "/day-detail", params: { date: toIsoDate(date) } })}
       />
-      <View style={styles.calendarGridWrap}>
-        <CalendarGrid
-          currentMonth={currentMonth}
-          bills={bills}
-          payments={payments}
-          cellMinHeight={54}
-          onDayPress={(date) =>
-            push({ pathname: "/day-detail", params: { date: date.toISOString() } })
-          }
-        />
-      </View>
     </View>
   );
 }
@@ -150,9 +203,6 @@ export default function FinanceScreen() {
   const [activeTab, setActiveTab] = useState<FinanceTab>("analytics");
   const headerRight = useHeaderRight(activeTab);
   const isDark = useColorScheme() === "dark";
-  const insets = useSafeAreaInsets();
-  const calendarTopClearance =
-    Platform.OS === "ios" ? insets.top + FINANCE_NATIVE_HEADER_CONTENT_HEIGHT : 0;
 
   return (
     <View style={styles.container}>
@@ -171,7 +221,7 @@ export default function FinanceScreen() {
         </View>
       )}
       <View style={{ flex: 1 }}>
-        {activeTab === "calendar" && <FinanceCalendarPanel topClearance={calendarTopClearance} />}
+        {activeTab === "calendar" && <FinanceCalendarPanel />}
         {activeTab === "goals" && <GoalsListScreen />}
         {activeTab === "analytics" && <AnalyticsScreen />}
       </View>
@@ -205,10 +255,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   calendarPanel: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  calendarGridWrap: {
     flex: 1,
   },
 });

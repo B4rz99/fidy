@@ -295,6 +295,15 @@ const es = {
   // Calendar
   calendar: {
     title: "Calendario",
+    thisMonth: "Este mes",
+    previousMonth: "Mes anterior",
+    nextMonth: "Mes siguiente",
+    paid: "Pagado",
+    pending: "Pendiente",
+    pendingPayments: {
+      one: "Te falta 1 pago por marcar.",
+      other: "Te faltan %{count} pagos por marcar.",
+    },
     weekdays: {
       mon: "L",
       tue: "M",
@@ -430,7 +439,11 @@ const es = {
       installments: "%{current}/%{total}",
       almostThere: "¡Ya casi!",
       completed: "¡Completado!",
-      addPayment: "+ Agregar pago",
+      amountOfTarget: "%{current} de %{target}",
+      remaining: "Faltan %{amount}",
+      debt: "Deuda",
+      detail: "Detalle",
+      addPayment: "Agregar pago",
       paceAhead: "↑ Adelantado %{amount}",
       paceBehind: "↓ Atrasado %{amount}",
       startSaving: "Empieza a ahorrar",
@@ -990,6 +1003,8 @@ const es = {
     noResults: "No hay transacciones",
     clearFilters: "Limpiar filtros",
     resultsSummary: "%{count} transacciones · %{total} total",
+    resultTotal: "Resultado total",
+    movements: "Movimientos",
     today: "Hoy",
     thisWeek: "Esta semana",
     thisMonth: "Este mes",

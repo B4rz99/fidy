@@ -1,5 +1,8 @@
 import { insertBillPayment } from "@/features/calendar/lib/repository";
-import { buildDefaultFinancialAccountId } from "@/features/financial-accounts/public";
+import {
+  buildDefaultFinancialAccountId,
+  ensureDefaultFinancialAccount,
+} from "@/features/financial-accounts/public";
 import { toStoredTransaction } from "@/features/transactions/query.public";
 import { useTransactionStore } from "@/features/transactions/store.public";
 import { recordAutomatedTransactionWithLocalLedger } from "@/infrastructure/local-ledger/public";
@@ -25,6 +28,7 @@ export function createLiveCalendarBillMutations({ db, userId }: CalendarActor) {
       const nowIso = toIsoDateTime(input.now);
       const amount = input.bill.amount;
       assertCopAmount(amount);
+      ensureDefaultFinancialAccount(db, input.userId, { now: nowIso });
       const result = await recordAutomatedTransactionWithLocalLedger({
         db,
         transactionId: input.transactionId,

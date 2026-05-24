@@ -1,20 +1,27 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
-  CalendarGrid,
-  MonthNavigator,
+  deleteBill,
+  markBillPaid,
   nextMonth,
   prevMonth,
+  unmarkBillPaid,
   useCalendarStore,
-} from "@/features/calendar";
+} from "@/features/calendar/routes.public";
+import {
+  CalendarMonthBoard,
+  type Bill,
+  type CalendarBillOccurrence,
+} from "@/features/calendar/ui.public";
 import { ScreenLayout } from "@/shared/components";
 import { Plus } from "@/shared/components/icons";
-import { Pressable, View } from "@/shared/components/rn";
+import { Alert, Pressable } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 import { getDb } from "@/shared/db";
 import { useTranslation } from "@/shared/hooks";
-import { captureError } from "@/shared/lib";
+import { captureError, toIsoDate } from "@/shared/lib";
+import { requireBillId, requireIsoDate } from "@/shared/types/assertions";
 
 export default function BillsCalendarScreen() {
   const { back, push } = useRouter();
@@ -34,6 +41,49 @@ export default function BillsCalendarScreen() {
     void prevMonth(getDb(userId)).catch(captureError);
   }, [userId]);
 
+  const handleToggleBillPaid = useCallback(
+    (occurrence: CalendarBillOccurrence) => {
+      if (!userId) return;
+      const command = {
+        db: getDb(userId),
+        userId,
+        billId: requireBillId(occurrence.bill.id),
+        dueDate: requireIsoDate(occurrence.dueDate),
+      };
+      const action = occurrence.isPaid ? unmarkBillPaid(command) : markBillPaid(command);
+      void action.catch(captureError);
+    },
+    [userId]
+  );
+
+  const handleEditBill = useCallback(
+    (bill: Bill) => {
+      push({ pathname: "/add-bill", params: { billId: bill.id } });
+    },
+    [push]
+  );
+
+  const handleDeleteBill = useCallback(
+    (bill: Bill) => {
+      Alert.alert(t("bills.deleteBill"), t("bills.deleteBillConfirm", { billName: bill.name }), [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.delete"),
+          style: "destructive",
+          onPress: () => {
+            if (!userId) return;
+            void deleteBill({
+              db: getDb(userId),
+              userId,
+              billId: requireBillId(bill.id),
+            }).catch(captureError);
+          },
+        },
+      ]);
+    },
+    [t, userId]
+  );
+
   return (
     <ScreenLayout
       title={t("calendar.title")}
@@ -50,23 +100,17 @@ export default function BillsCalendarScreen() {
       }
       onBack={() => back()}
     >
-      <View className="flex-1 px-4">
-        <MonthNavigator
-          currentMonth={currentMonth}
-          onPrev={handlePrevMonth}
-          onNext={handleNextMonth}
-        />
-        <View className="flex-1">
-          <CalendarGrid
-            currentMonth={currentMonth}
-            bills={bills}
-            payments={payments}
-            onDayPress={(date) =>
-              push({ pathname: "/day-detail", params: { date: date.toISOString() } })
-            }
-          />
-        </View>
-      </View>
+      <CalendarMonthBoard
+        currentMonth={currentMonth}
+        bills={bills}
+        payments={payments}
+        onBillDelete={handleDeleteBill}
+        onBillEdit={handleEditBill}
+        onBillPaymentToggle={handleToggleBillPaid}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
+        onDayPress={(date) => push({ pathname: "/day-detail", params: { date: toIsoDate(date) } })}
+      />
     </ScreenLayout>
   );
 }

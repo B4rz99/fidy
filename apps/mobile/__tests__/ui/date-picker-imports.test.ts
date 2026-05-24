@@ -38,13 +38,15 @@ describe("date picker imports", () => {
     expect(datePickerSources.filter(({ source }) => source.includes("onValueChange="))).toEqual([]);
   });
 
-  it("keeps DateTimePicker accentColor scoped to iOS", () => {
+  it("keeps goal date selection on the shared transaction date picker sheet", () => {
     const source = readFileSync(
       resolve(appRoot, "features/goals/components/goal-sheet/GoalDateField.tsx"),
       "utf-8"
     );
 
-    expect(source).toContain('Platform.OS === "ios" ? { accentColor: accentGreen } : {}');
-    expect(source).toContain("{...iosPickerStyleProps}");
+    expect(source).toContain("TransactionDatePickerSheet");
+    expect(source).toContain("allowFuture");
+    expect(source).toContain("minimumDate={minimumDate}");
+    expect(source).not.toContain("@react-native-community/datetimepicker");
   });
 });

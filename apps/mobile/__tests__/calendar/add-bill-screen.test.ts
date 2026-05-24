@@ -21,11 +21,18 @@ const authFormSource = readSource(
 );
 const submitSource = readSource("../../features/calendar/components/add-bill/useAddBillSubmit.ts");
 
-test("add-bill is registered in root layout as a dialog modal", () => {
+test("add-bill is registered in root layout as a full screen route", () => {
   expect(layoutSource).toContain('name="add-bill"');
-  expect(routeSource).toContain("DialogRouteFrame");
-  const addBillBlock = layoutSource.slice(layoutSource.indexOf('name="add-bill"'));
-  expect(addBillBlock.slice(0, 140)).toContain("DIALOG_MODAL");
+  expect(routeSource).not.toContain("DialogRouteFrame");
+  expect(routeSource).toContain('headerBackTitle: ""');
+  expect(routeSource).toContain("headerTitle: title");
+  const addBillStart = layoutSource.indexOf('name="add-bill"');
+  const dayDetailStart = layoutSource.indexOf('name="day-detail"');
+  expect(addBillStart).toBeGreaterThan(-1);
+  expect(dayDetailStart).toBeGreaterThan(addBillStart);
+  const addBillBlock = layoutSource.slice(addBillStart, dayDetailStart);
+  expect(addBillBlock).toContain("fullScreenHeaderOptions");
+  expect(addBillBlock).not.toContain("DIALOG_MODAL");
   expect(layoutSource).not.toContain("formSheet");
 });
 
@@ -38,9 +45,10 @@ test("add-bill content uses KeyboardAvoidingView for keyboard handling", () => {
   expect(formContentSource).toContain("KeyboardAvoidingView");
 });
 
-test("add-bill dialog keeps keyboard and scroll containers bounded", () => {
+test("add-bill screen keeps keyboard and scroll containers bounded over aurora", () => {
   expect(formContentSource).toContain("style={styles.container}");
-  expect(formContentSource).toContain("style={[styles.container, { backgroundColor: cardBg }]}");
+  expect(formContentSource).toContain("<AppAuroraBackground");
+  expect(formContentSource).not.toContain("styles.title");
   expect(formStylesSource).toContain("container: { flex: 1 }");
 });
 
@@ -69,6 +77,9 @@ test("add-bill screen uses router.back() on successful save", () => {
 
 test("add-bill screen supports edit mode via billId param", () => {
   expect(screenSource).toContain("billId");
+  expect(routeSource).toContain("useLocalSearchParams");
+  expect(routeSource).toContain('t("bills.editBill")');
+  expect(routeSource).toContain('t("bills.addBill")');
 });
 
 test("add-bill submit only closes edit mode after a successful update", () => {
@@ -92,10 +103,13 @@ test("add-bill content uses Pressable per ui-pressable rule", () => {
   expect(formContentSource).not.toContain("TouchableOpacity");
 });
 
-test("add-bill date picker uses Android-safe display and press gate", () => {
-  expect(formContentSource).toContain('display={Platform.OS === "ios" ? "compact" : "default"}');
-  expect(formContentSource).toContain("showAndroidDatePicker");
-  expect(formContentSource).toContain(
-    'if (Platform.OS === "android") setShowAndroidDatePicker(false)'
+test("add-bill date picker uses the shared scrollable calendar sheet", () => {
+  expect(formContentSource).toContain("TransactionDatePickerSheet");
+  expect(formContentSource).toContain("showDatePicker");
+  expect(formContentSource).toContain("setShowDatePicker(true)");
+  expect(formContentSource).toContain("allowFuture");
+  expect(formContentSource).not.toContain("@react-native-community/datetimepicker");
+  expect(formContentSource).not.toContain(
+    'display={Platform.OS === "ios" ? "compact" : "default"}'
   );
 });

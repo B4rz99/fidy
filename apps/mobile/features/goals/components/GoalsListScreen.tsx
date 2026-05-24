@@ -23,19 +23,21 @@ function GoalsEmpty({ onCreateGoal }: { readonly onCreateGoal: () => void }) {
 
   return (
     <View style={styles.emptyContainer}>
-      <View style={[styles.iconCircle, { backgroundColor: accentGreenLight }]}>
-        <Target size={40} color={accentGreen} />
+      <View style={[styles.emptyCard, { backgroundColor: accentGreenLight }]}>
+        <View style={[styles.iconCircle, { backgroundColor: "#FFFFFF66" }]}>
+          <Target size={36} color={accentGreen} />
+        </View>
+        <Text style={[styles.emptyTitle, { color: primaryColor }]}>{t("goals.empty.title")}</Text>
+        <Text style={[styles.emptySubtitle, { color: secondaryColor }]}>
+          {t("goals.empty.subtitle")}
+        </Text>
+        <Pressable
+          style={[styles.createButton, { backgroundColor: accentGreen }]}
+          onPress={onCreateGoal}
+        >
+          <Text style={styles.createButtonText}>{t("goals.empty.createGoal")}</Text>
+        </Pressable>
       </View>
-      <Text style={[styles.emptyTitle, { color: primaryColor }]}>{t("goals.empty.title")}</Text>
-      <Text style={[styles.emptySubtitle, { color: secondaryColor }]}>
-        {t("goals.empty.subtitle")}
-      </Text>
-      <Pressable
-        style={[styles.createButton, { backgroundColor: accentGreen }]}
-        onPress={onCreateGoal}
-      >
-        <Text style={styles.createButtonText}>{t("goals.empty.createGoal")}</Text>
-      </Pressable>
     </View>
   );
 }
@@ -122,11 +124,14 @@ export function GoalsListScreen() {
           contentContainerStyle={[styles.listContent, { paddingBottom: TAB_BAR_CLEARANCE }]}
           showsVerticalScrollIndicator={false}
           contentInsetAdjustmentBehavior="automatic"
+          ItemSeparatorComponent={GoalItemSeparator}
         />
       )}
     </ScreenLayout>
   );
 }
+
+const GoalItemSeparator = () => <View style={styles.itemSeparator} />;
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -139,10 +144,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 32,
   },
+  emptyCard: {
+    alignSelf: "stretch",
+    alignItems: "center",
+    borderRadius: 12,
+    borderCurve: "continuous",
+    padding: 24,
+  },
   iconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -160,7 +172,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   createButton: {
-    borderRadius: 12,
+    borderRadius: 8,
     borderCurve: "continuous",
     paddingVertical: 14,
     paddingHorizontal: 32,
@@ -175,6 +187,8 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    gap: 12,
+  },
+  itemSeparator: {
+    height: 12,
   },
 });

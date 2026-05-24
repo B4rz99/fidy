@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { categoryIdSchema } from "@/shared/categories";
-import { toIsoDate } from "@/shared/lib";
+import { parseOptionalIsoDate, toIsoDate } from "@/shared/lib";
 import { requireBillId, requireCategoryId, requireCopAmount } from "@/shared/types/assertions";
 import type {
   BillId,
@@ -97,13 +97,27 @@ export function fromBillRow(row: {
   startDate: string;
   isActive: boolean;
 }): Bill {
+  const startDate = parseRequiredBillStartDate(row);
+
   return {
     id: row.id,
     name: row.name,
     amount: row.amount,
     frequency: row.frequency as BillFrequency,
     categoryId: requireCategoryId(row.categoryId),
-    startDate: new Date(row.startDate),
+    startDate,
     isActive: row.isActive,
   };
+}
+
+function parseRequiredBillStartDate(row: { readonly id: string; readonly startDate: string }) {
+  try {
+    const parsed = parseOptionalIsoDate(row.startDate);
+    if (parsed == null) {
+      throw new Error("missing date");
+    }
+    return parsed;
+  } catch (error) {
+    throw new Error(`Invalid bill startDate for ${row.id}: ${row.startDate}`, { cause: error });
+  }
 }

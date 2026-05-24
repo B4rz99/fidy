@@ -1,12 +1,13 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { Platform, Pressable, Text, View } from "@/shared/components/rn";
+import { TransactionDatePickerSheet } from "@/features/transactions/display.public";
+import { Pressable, Text, View } from "@/shared/components/rn";
 import { useCurrentDate, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getMinimumGoalDate } from "./GoalDateField.helpers";
 import { styles } from "./GoalSheet.styles";
 
 type GoalDateFieldProps = {
   readonly locale: string;
-  readonly onChange: (_event: unknown, date?: Date) => void;
+  readonly onChange: (date: Date) => void;
+  readonly onClose: () => void;
   readonly onClear: () => void;
   readonly onPress: () => void;
   readonly showDatePicker: boolean;
@@ -16,6 +17,7 @@ type GoalDateFieldProps = {
 export function GoalDateField({
   locale,
   onChange,
+  onClose,
   onClear,
   onPress,
   showDatePicker,
@@ -25,12 +27,10 @@ export function GoalDateField({
   const card = useThemeColor("card");
   const primary = useThemeColor("primary");
   const tertiary = useThemeColor("tertiary");
-  const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
   const borderSubtle = useThemeColor("borderSubtle");
   const currentDate = useCurrentDate();
   const minimumDate = getMinimumGoalDate(currentDate);
-  const iosPickerStyleProps = Platform.OS === "ios" ? { accentColor: accentGreen } : {};
 
   return (
     <View style={styles.fieldGroup}>
@@ -58,16 +58,14 @@ export function GoalDateField({
           </Pressable>
         ) : null}
       </Pressable>
-      {showDatePicker ? (
-        <DateTimePicker
-          value={targetDate ?? currentDate}
-          mode="date"
-          display={Platform.OS === "ios" ? "inline" : "default"}
-          minimumDate={minimumDate}
-          onChange={onChange}
-          {...iosPickerStyleProps}
-        />
-      ) : null}
+      <TransactionDatePickerSheet
+        allowFuture
+        date={targetDate ?? minimumDate}
+        minimumDate={minimumDate}
+        onChange={onChange}
+        onClose={onClose}
+        visible={showDatePicker}
+      />
     </View>
   );
 }

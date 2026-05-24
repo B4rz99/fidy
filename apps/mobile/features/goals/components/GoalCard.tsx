@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import { deriveGoalCardStatus } from "../lib/derive";
@@ -76,110 +76,205 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
   const accentGreenLight = useThemeColor("accentGreenLight");
   const accentRed = useThemeColor("accentRed");
   const borderColor = useThemeColor("borderSubtle");
+  const peachLight = useThemeColor("peachLight");
 
-  const { goal, currentAmount, progress, installments, paceGuidance } = goalWithProgress;
+  const { goal, currentAmount, progress, paceGuidance } = goalWithProgress;
 
   const progressWidth = Math.min(progress.percentComplete, 100);
+  const remainingAmount = Math.max(goal.targetAmount - currentAmount, 0);
+  const goalIcon = goal.iconName ?? (goal.type === "debt" ? "💳" : "🎯");
+  const goalColor = goal.type === "debt" ? accentRed : (goal.colorHex ?? accentGreen);
 
   const cardStatus = deriveGoalCardStatus(progress, paceGuidance);
 
   return (
-    <Pressable
-      style={{
-        backgroundColor: cardBg,
-        borderColor,
-        borderWidth: 1,
-        borderRadius: 16,
-        borderCurve: "continuous",
-        padding: 16,
-        gap: 12,
-      }}
-      onPress={onPress}
-    >
-      {/* Header row: name + target */}
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <Text
-          style={{ flex: 1, fontFamily: "Poppins_600SemiBold", fontSize: 15, color: primaryColor }}
-          numberOfLines={1}
-        >
-          {goal.name}
-        </Text>
-        <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 13, color: accentGreen }}>
-          {formatMoney(goal.targetAmount)}
-        </Text>
-      </View>
+    <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
+      <Pressable style={styles.summaryArea} onPress={onPress}>
+        <View style={styles.headerRow}>
+          <View style={styles.titleGroup}>
+            <View style={[styles.iconBadge, { backgroundColor: goalColor }]}>
+              <Text style={styles.iconText}>{goalIcon}</Text>
+            </View>
+            <View style={styles.titleCopy}>
+              <Text style={[styles.goalName, { color: primaryColor }]} numberOfLines={1}>
+                {goal.name}
+              </Text>
+              <Text style={[styles.amountLine, { color: secondaryColor }]} numberOfLines={1}>
+                {t("goals.card.amountOfTarget", {
+                  current: formatMoney(currentAmount),
+                  target: formatMoney(goal.targetAmount),
+                })}
+              </Text>
+            </View>
+          </View>
+          <View
+            style={[
+              styles.percentPill,
+              { backgroundColor: goal.type === "debt" ? peachLight : accentGreenLight },
+            ]}
+          >
+            <Text style={[styles.percentText, { color: goalColor }]}>
+              {Math.round(progress.percentComplete)}%
+            </Text>
+          </View>
+        </View>
 
-      {/* Progress info row */}
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <Text style={{ fontFamily: "Poppins_500Medium", fontSize: 12, color: secondaryColor }}>
-          {installments.total > 0
-            ? t("goals.card.installments", {
-                current: String(installments.current),
-                total: String(installments.total),
-              })
-            : ""}
-        </Text>
-        <GoalCardStatus
-          accentGreen={accentGreen}
-          accentRed={accentRed}
-          cardStatus={cardStatus}
-          secondaryColor={secondaryColor}
-          t={t}
-        />
-      </View>
-
-      {/* Progress bar */}
-      <View
-        style={{
-          height: 24,
-          borderRadius: 12,
-          backgroundColor: accentGreenLight,
-          overflow: "hidden",
-          justifyContent: "center",
-        }}
-      >
         <View
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            bottom: 0,
-            borderRadius: 12,
-            backgroundColor: accentGreen,
-            width: `${progressWidth}%`,
-          }}
-        />
-        <Text
-          style={{
-            paddingLeft: 10,
-            fontFamily: "Poppins_500Medium",
-            fontSize: 12,
-            color: primaryColor,
-          }}
-          numberOfLines={1}
+          style={[
+            styles.progressTrack,
+            { backgroundColor: goal.type === "debt" ? peachLight : accentGreenLight },
+          ]}
         >
-          {formatMoney(currentAmount)}
-        </Text>
-      </View>
+          <View
+            style={[
+              styles.progressFill,
+              { backgroundColor: goalColor, width: `${progressWidth}%` },
+            ]}
+          />
+        </View>
 
-      {/* Add payment button */}
-      <Pressable
-        style={{
-          height: 40,
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: 12,
-          borderCurve: "continuous",
-          backgroundColor: accentGreen,
-        }}
-        onPress={onAddPayment}
-      >
-        <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 14, color: "#FFFFFF" }}>
-          {t("goals.card.addPayment")}
-        </Text>
+        <View style={styles.footerRow}>
+          <Text style={[styles.remainingText, { color: secondaryColor }]} numberOfLines={1}>
+            {t("goals.card.remaining", { amount: formatMoney(remainingAmount) })}
+          </Text>
+          <GoalCardStatus
+            accentGreen={accentGreen}
+            accentRed={accentRed}
+            cardStatus={goal.type === "debt" ? null : cardStatus}
+            secondaryColor={secondaryColor}
+            t={t}
+          />
+          {goal.type === "debt" ? (
+            <Text style={[styles.statusText, { color: accentRed }]}>{t("goals.card.debt")}</Text>
+          ) : null}
+        </View>
       </Pressable>
-    </Pressable>
+
+      <View style={styles.actionRow}>
+        <Pressable
+          style={[styles.primaryButton, { backgroundColor: accentGreen }]}
+          onPress={onAddPayment}
+        >
+          <Text style={styles.primaryButtonText}>{t("goals.card.addPayment")}</Text>
+        </Pressable>
+        <Pressable style={[styles.secondaryButton, { borderColor }]} onPress={onPress}>
+          <Text style={[styles.secondaryButtonText, { color: primaryColor }]}>
+            {t("goals.card.detail")}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
 export const GoalCard = memo(GoalCardInner);
+
+const styles = StyleSheet.create({
+  card: {
+    borderWidth: 1,
+    borderRadius: 12,
+    borderCurve: "continuous",
+    padding: 16,
+    gap: 12,
+  },
+  summaryArea: {
+    gap: 12,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  titleGroup: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  iconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconText: {
+    fontSize: 18,
+  },
+  titleCopy: {
+    flex: 1,
+  },
+  goalName: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 15,
+  },
+  amountLine: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 12,
+  },
+  percentPill: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  percentText: {
+    fontFamily: "Poppins_800ExtraBold",
+    fontSize: 12,
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 4,
+  },
+  footerRow: {
+    minHeight: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  remainingText: {
+    flex: 1,
+    fontFamily: "Poppins_500Medium",
+    fontSize: 12,
+  },
+  statusText: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 12,
+  },
+  actionRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  primaryButton: {
+    flex: 1,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+    borderCurve: "continuous",
+  },
+  primaryButtonText: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 14,
+    color: "#FFFFFF",
+  },
+  secondaryButton: {
+    flex: 1,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+    borderCurve: "continuous",
+    borderWidth: 1,
+  },
+  secondaryButtonText: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 14,
+  },
+});

@@ -8,8 +8,8 @@ import { CalendarDayCell } from "./CalendarDayCell";
 
 type Props = {
   currentMonth: Date;
-  bills: Bill[];
-  payments: BillPayment[];
+  bills: readonly Bill[];
+  payments: readonly BillPayment[];
   cellMinHeight?: number;
   onDayPress: (date: Date) => void;
 };

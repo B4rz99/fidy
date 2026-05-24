@@ -20,7 +20,7 @@ describe("calendar query service", () => {
         amount: 35000 as CopAmount,
         frequency: "monthly",
         categoryId: "services" as CategoryId,
-        startDate: "2026-01-15T00:00:00.000Z" as IsoDate,
+        startDate: "2026-01-15" as IsoDate,
         isActive: true,
         createdAt: "2026-01-01T00:00:00.000Z" as IsoDateTime,
         updatedAt: "2026-01-01T00:00:00.000Z" as IsoDateTime,

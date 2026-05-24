@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { Platform, Pressable, Text } from "@/shared/components/rn";
+import { Pressable, Text } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { styles } from "./goal-detail/GoalDetail.styles";
 import { GoalDetailContent } from "./goal-detail/GoalDetailContent";
@@ -18,20 +18,20 @@ export function GoalDetailScreen() {
 
   return (
     <>
-      {Platform.OS === "ios" ? (
-        <Stack.Screen
-          options={{
-            headerTitle: goal.name,
-            headerRight: () => (
-              <Pressable onPress={detail.onEditGoal} hitSlop={8}>
-                <Text style={[styles.editHeaderButton, { color: accentGreen }]}>
-                  {t("common.edit")}
-                </Text>
-              </Pressable>
-            ),
-          }}
-        />
-      ) : null}
+      <Stack.Screen
+        options={{
+          headerBackButtonDisplayMode: "minimal",
+          headerBackTitle: "",
+          headerTitle: goal.name,
+          headerRight: () => (
+            <Pressable onPress={detail.onEditGoal} hitSlop={8}>
+              <Text style={[styles.editHeaderButton, { color: accentGreen }]}>
+                {t("common.edit")}
+              </Text>
+            </Pressable>
+          ),
+        }}
+      />
       <GoalDetailContent
         activeTab={detail.activeTab}
         celebrationMilestone={detail.celebrationMilestone}

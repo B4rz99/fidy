@@ -2,9 +2,10 @@ import * as Haptics from "expo-haptics";
 import { memo } from "react";
 import { Delete } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 type FidyNumpadProps = {
+  compact?: boolean;
   onKeyPress: (key: string) => void;
 };
 
@@ -15,7 +16,8 @@ const ROWS = [
   ["000", "0", "delete"],
 ] as const;
 
-export const FidyNumpad = memo(({ onKeyPress }: FidyNumpadProps) => {
+export const FidyNumpad = memo(({ compact = false, onKeyPress }: FidyNumpadProps) => {
+  const { t } = useTranslation();
   const keyBg = useThemeColor("numpadKey");
   const specialKeyBg = useThemeColor("numpadSpecialKey");
   const keyText = useThemeColor("primary");
@@ -27,18 +29,22 @@ export const FidyNumpad = memo(({ onKeyPress }: FidyNumpadProps) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, compact ? styles.compactContainer : undefined]}>
       {ROWS.map((row) => (
-        <View key={row.join("-")} style={styles.row}>
+        <View key={row.join("-")} style={[styles.row, compact ? styles.compactRow : undefined]}>
           {row.map((key) => {
             const isSpecial = key === "000" || key === "delete";
             return (
               <Pressable
                 key={key}
-                style={[styles.key, { backgroundColor: isSpecial ? specialKeyBg : keyBg }]}
+                style={[
+                  styles.key,
+                  compact ? styles.compactKey : undefined,
+                  { backgroundColor: isSpecial ? specialKeyBg : keyBg },
+                ]}
                 onPress={() => handlePress(key)}
                 accessibilityRole="button"
-                accessibilityLabel={key === "delete" ? "Delete" : key}
+                accessibilityLabel={key === "delete" ? t("common.delete") : key}
               >
                 {key === "delete" ? (
                   <Delete size={24} color={specialText} />
@@ -72,8 +78,17 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 8,
   },
+  compactContainer: {
+    gap: 6,
+    paddingTop: 0,
+    paddingBottom: 0,
+  },
   row: {
     flexDirection: "row",
+    gap: 6,
+    height: 52,
+  },
+  compactRow: {
     gap: 6,
     height: 52,
   },
@@ -82,6 +97,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
+  },
+  compactKey: {
+    borderRadius: 10,
   },
   keyLabel: {
     fontFamily: "Poppins_600SemiBold",

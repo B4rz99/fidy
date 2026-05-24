@@ -11,6 +11,7 @@ import {
   startOfMonth,
 } from "date-fns";
 import type { Bill } from "../schema";
+import type { BillPayment } from "../schema";
 
 /** Clamp a day-of-month to the max days in the target month. */
 function clampDay(day: number, year: number, month: number): number {
@@ -20,6 +21,28 @@ function clampDay(day: number, year: number, month: number): number {
 export type CalendarDay = {
   day: number | null;
   date: Date | null;
+};
+
+export type CalendarBillOccurrence = {
+  readonly bill: Bill;
+  readonly date: Date;
+  readonly dueDate: string;
+  readonly isPaid: boolean;
+};
+
+export type CalendarMonthSummary = {
+  readonly monthOccurrences: readonly CalendarBillOccurrence[];
+  readonly totalAmount: number;
+  readonly paidAmount: number;
+  readonly pendingAmount: number;
+  readonly pendingCount: number;
+  readonly upcomingPending: readonly CalendarBillOccurrence[];
+};
+
+type CalendarMonthSummaryInput = {
+  readonly bills: readonly Bill[];
+  readonly currentMonth: Date;
+  readonly payments: readonly BillPayment[];
 };
 
 type CalendarDateContext = {
@@ -66,13 +89,61 @@ export function getMonthGrid(year: number, month: number): CalendarDay[][] {
 /**
  * Returns bills that occur on a specific date based on their frequency.
  */
-export function getBillsForDate(bills: Bill[], date: Date): Bill[] {
+export function getBillsForDate(bills: readonly Bill[], date: Date): Bill[] {
   const calendarDate = getCalendarDateContext(date);
   return bills.filter((bill) => billOccursOnDate(bill, calendarDate));
 }
 
+export function buildCalendarMonthSummary({
+  bills,
+  currentMonth,
+  payments,
+}: CalendarMonthSummaryInput): CalendarMonthSummary {
+  const occurrences = getMonthGrid(currentMonth.getFullYear(), currentMonth.getMonth())
+    .flat()
+    .filter(
+      (cell): cell is CalendarDay & { readonly date: Date; readonly day: number } =>
+        cell.date != null && cell.day != null
+    )
+    .flatMap((cell) =>
+      getBillsForDate(bills, cell.date).map((bill) => {
+        const dueDate = toCalendarIsoDate(cell.date);
+        return {
+          bill,
+          date: cell.date,
+          dueDate,
+          isPaid: payments.some(
+            (payment) => payment.billId === bill.id && payment.dueDate === dueDate
+          ),
+        };
+      })
+    );
+
+  const paidAmount = occurrences
+    .filter((occurrence) => occurrence.isPaid)
+    .reduce((total, occurrence) => total + occurrence.bill.amount, 0);
+  const pendingOccurrences = occurrences.filter((occurrence) => !occurrence.isPaid);
+  const pendingAmount = pendingOccurrences.reduce(
+    (total, occurrence) => total + occurrence.bill.amount,
+    0
+  );
+
+  return {
+    monthOccurrences: occurrences,
+    totalAmount: paidAmount + pendingAmount,
+    paidAmount,
+    pendingAmount,
+    pendingCount: pendingOccurrences.length,
+    upcomingPending: pendingOccurrences.slice(0, 3),
+  };
+}
+
 export function formatMonthYear(date: Date, dateFnsLocale?: Locale): string {
   return format(date, "MMMM yyyy", dateFnsLocale ? { locale: dateFnsLocale } : undefined);
+}
+
+function toCalendarIsoDate(date: Date): string {
+  return format(date, "yyyy-MM-dd");
 }
 
 /**

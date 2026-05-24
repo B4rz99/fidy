@@ -1,14 +1,21 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  buildCalendarMonthSummary,
   formatMonthYear,
   getBillsForDate,
   getMonthGrid,
   getNextOccurrence,
   WEEKDAY_LABELS,
 } from "@/features/calendar/lib/calendar-utils";
-import type { Bill } from "@/features/calendar/schema";
-import type { CategoryId } from "@/shared/types/branded";
+import type { Bill, BillPayment } from "@/features/calendar/schema";
+import type {
+  BillId,
+  BillPaymentId,
+  CategoryId,
+  IsoDate,
+  IsoDateTime,
+} from "@/shared/types/branded";
 
 const makeBill = (overrides: Partial<Bill> = {}): Bill => ({
   id: "b1",
@@ -19,6 +26,50 @@ const makeBill = (overrides: Partial<Bill> = {}): Bill => ({
   startDate: new Date(2025, 0, 15),
   isActive: true,
   ...overrides,
+});
+
+const makePayment = (overrides: Partial<BillPayment> = {}): BillPayment => ({
+  id: "payment-1" as BillPaymentId,
+  billId: "b1" as BillId,
+  dueDate: "2026-05-15" as IsoDate,
+  paidAt: "2026-05-15T12:00:00.000Z" as IsoDateTime,
+  transactionId: null,
+  createdAt: "2026-05-15T12:00:00.000Z" as IsoDateTime,
+  ...overrides,
+});
+
+describe("buildCalendarMonthSummary", () => {
+  test("summarizes the selected month by paid and pending bill occurrences", () => {
+    const bills = [
+      makeBill({ id: "rent", amount: 520000, startDate: new Date(2026, 4, 20) }),
+      makeBill({ id: "power", amount: 220000, startDate: new Date(2026, 4, 26) }),
+      makeBill({
+        id: "weekly",
+        amount: 100000,
+        frequency: "weekly",
+        startDate: new Date(2026, 4, 5),
+      }),
+    ];
+
+    const summary = buildCalendarMonthSummary({
+      bills,
+      currentMonth: new Date(2026, 4, 1),
+      payments: [
+        makePayment({ billId: "weekly" as BillId, dueDate: "2026-05-05" as IsoDate }),
+        makePayment({ billId: "weekly" as BillId, dueDate: "2026-05-12" as IsoDate }),
+      ],
+    });
+
+    expect(summary.totalAmount).toBe(1140000);
+    expect(summary.paidAmount).toBe(200000);
+    expect(summary.pendingAmount).toBe(940000);
+    expect(summary.pendingCount).toBe(4);
+    expect(summary.upcomingPending.map(({ bill, dueDate }) => `${bill.id}:${dueDate}`)).toEqual([
+      "weekly:2026-05-19",
+      "rent:2026-05-20",
+      "power:2026-05-26",
+    ]);
+  });
 });
 
 // ─── WEEKDAY_LABELS ───

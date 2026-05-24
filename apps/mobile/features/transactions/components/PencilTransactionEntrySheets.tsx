@@ -158,7 +158,10 @@ export function TransactionAccountPickerSheet(props: {
 }
 
 export function TransactionDatePickerSheet(props: {
+  readonly allowFuture?: boolean;
   readonly date: Date;
+  readonly maximumDate?: Date;
+  readonly minimumDate?: Date;
   readonly onChange: (date: Date) => void;
   readonly onClose: () => void;
   readonly visible: boolean;
@@ -167,7 +170,8 @@ export function TransactionDatePickerSheet(props: {
   const card = useThemeColor("card");
   const accentGreen = useThemeColor("accentGreen");
   const onAccent = useThemeColor("onAccent");
-  const maximumDate = useCurrentDate();
+  const currentDate = useCurrentDate();
+  const maximumDate = props.allowFuture ? undefined : (props.maximumDate ?? currentDate);
 
   return (
     <PickerSheetFrame
@@ -193,6 +197,7 @@ export function TransactionDatePickerSheet(props: {
           mode="date"
           display={Platform.OS === "ios" ? "spinner" : "default"}
           maximumDate={maximumDate}
+          minimumDate={props.minimumDate}
           onChange={(_event, nextDate) => {
             if (Platform.OS !== "ios") props.onClose();
             if (nextDate) {

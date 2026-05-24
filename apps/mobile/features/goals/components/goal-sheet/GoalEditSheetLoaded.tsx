@@ -23,7 +23,7 @@ export function GoalEditSheetLoaded({ goal, goalId }: GoalEditSheetLoadedProps) 
   const editActions = useGoalEditActions(goal, goalId, form);
 
   return (
-    <GoalSheetForm title={t("goals.edit.title")} form={form}>
+    <GoalSheetForm title={t("goals.edit.title")} form={form} fullScreen>
       <GoalSheetActionButton
         label={t("goals.edit.saveChanges")}
         busy={editActions.isSaving}

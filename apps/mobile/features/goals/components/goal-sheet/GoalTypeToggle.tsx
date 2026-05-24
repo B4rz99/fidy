@@ -19,11 +19,13 @@ function GoalTypeButton({ goalType, isActive, label, onPress }: GoalTypeButtonPr
   const card = useThemeColor("card");
   const secondary = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
+  const accentRed = useThemeColor("accentRed");
   const borderSubtle = useThemeColor("borderSubtle");
+  const activeColor = goalType === "debt" ? accentRed : accentGreen;
   const buttonStyle = [
     styles.toggleButton,
     isActive
-      ? { backgroundColor: accentGreen }
+      ? { backgroundColor: activeColor }
       : { backgroundColor: card, borderColor: borderSubtle, borderWidth: 1 },
   ];
   const textColor = isActive ? "#FFFFFF" : secondary;

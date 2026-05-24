@@ -11,6 +11,7 @@ import type { GoalSheetFormModel } from "./useGoalSheetForm";
 type GoalSheetFormProps = {
   readonly children: ReactNode;
   readonly form: GoalSheetFormModel;
+  readonly fullScreen?: boolean;
   readonly showGoalTypeToggle?: boolean;
   readonly title: string;
 };
@@ -18,6 +19,7 @@ type GoalSheetFormProps = {
 export function GoalSheetForm({
   children,
   form,
+  fullScreen = false,
   showGoalTypeToggle = false,
   title,
 }: GoalSheetFormProps) {
@@ -26,6 +28,7 @@ export function GoalSheetForm({
   return (
     <GoalSheetFrame
       title={title}
+      fullScreen={fullScreen}
       numpadEnabled={form.numpadTarget != null}
       onKeyPress={form.handleKey}
     >
@@ -49,6 +52,7 @@ export function GoalSheetForm({
       <GoalDateField
         locale={locale}
         onChange={form.handleDateChange}
+        onClose={form.handleDatePickerClose}
         onClear={form.clearTargetDate}
         onPress={form.handleDateFieldPress}
         showDatePicker={form.showDatePicker}

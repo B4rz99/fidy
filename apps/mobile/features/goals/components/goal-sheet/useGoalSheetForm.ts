@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { handleNumpadPress } from "@/features/transactions/display.public";
-import { Keyboard, Platform } from "@/shared/components/rn";
+import { Keyboard } from "@/shared/components/rn";
 import { useBlinkingCursor } from "@/shared/hooks";
 import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
 import type { GoalType } from "../../schema";
@@ -14,7 +14,8 @@ export type GoalSheetFormModel = {
   readonly displayAmount: string;
   readonly goalType: GoalType;
   readonly handleAmountPress: () => void;
-  readonly handleDateChange: (_event: unknown, date?: Date) => void;
+  readonly handleDateChange: (date: Date) => void;
+  readonly handleDatePickerClose: () => void;
   readonly handleDateFieldPress: () => void;
   readonly handleInterestRateFocus: () => void;
   readonly handleKey: (key: string) => void;
@@ -58,11 +59,10 @@ function useGoalSheetDates(initialTargetDate: Date | null) {
       setTargetDate(null);
       setShowDatePicker(false);
     }, []),
-    handleDateChange: useCallback((_event: unknown, date?: Date) => {
-      if (Platform.OS === "android") setShowDatePicker(false);
-      if (isDatePickerDismissed(_event)) return;
-      if (date) setTargetDate(date);
+    handleDateChange: useCallback((date: Date) => {
+      setTargetDate(date);
     }, []),
+    handleDatePickerClose: useCallback(() => setShowDatePicker(false), []),
     handleDateFieldPress: useCallback(() => {
       Keyboard.dismiss();
       setShowDatePicker(true);
@@ -71,12 +71,6 @@ function useGoalSheetDates(initialTargetDate: Date | null) {
     showDatePicker,
     targetDate,
   };
-}
-
-function isDatePickerDismissed(event: unknown) {
-  return (
-    typeof event === "object" && event !== null && "type" in event && event.type === "dismissed"
-  );
 }
 
 function useGoalSheetNumpad(
@@ -134,6 +128,7 @@ export function useGoalSheetForm(options: GoalSheetFormOptions): GoalSheetFormMo
     goalType,
     handleAmountPress: numpad.handleAmountPress,
     handleDateChange: dates.handleDateChange,
+    handleDatePickerClose: dates.handleDatePickerClose,
     handleDateFieldPress: useCallback(() => {
       handleManualFieldFocus();
       dates.handleDateFieldPress();

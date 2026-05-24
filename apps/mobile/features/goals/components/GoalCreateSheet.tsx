@@ -1,5 +1,4 @@
 import { useTranslation } from "@/shared/hooks";
-import { GoalProjectionHint } from "./goal-sheet/GoalProjectionHint";
 import { GoalSheetActionButton } from "./goal-sheet/GoalSheetActionButton";
 import { GoalSheetForm } from "./goal-sheet/GoalSheetForm";
 import { useGoalCreateActions } from "./goal-sheet/useGoalCreateActions";
@@ -14,8 +13,7 @@ export function GoalCreateSheet() {
   const createActions = useGoalCreateActions(form);
 
   return (
-    <GoalSheetForm title={t("goals.create.title")} form={form} showGoalTypeToggle>
-      <GoalProjectionHint estimatedMonths={createActions.estimatedMonths} />
+    <GoalSheetForm title={t("goals.create.title")} form={form} fullScreen showGoalTypeToggle>
       <GoalSheetActionButton
         label={t("goals.create.title")}
         busy={createActions.isCreating}

@@ -1,37 +1,52 @@
 import { format } from "date-fns";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
-  type BillPayment,
   deleteBill,
   getBillsForDate,
   markBillPaid,
   unmarkBillPaid,
   useCalendarStore,
-} from "@/features/calendar";
-import { DialogRouteFrame } from "@/shared/components";
+} from "@/features/calendar/routes.public";
+import type { BillPayment } from "@/features/calendar/ui.public";
+import { AppAuroraBackground } from "@/shared/components";
 import { Check, Pencil, Trash2 } from "@/shared/components/icons";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
-import { captureError, formatMoney, toIsoDate } from "@/shared/lib";
+import { captureError, formatMoney, parseOptionalIsoDate, toIsoDate } from "@/shared/lib";
 import { requireBillId } from "@/shared/types/assertions";
 import type { BillId } from "@/shared/types/branded";
+
+function parseDayDetailDateParam(value: string | undefined): Date {
+  if (!value) return new Date();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    try {
+      return parseOptionalIsoDate(value) ?? new Date();
+    } catch {
+      return new Date();
+    }
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+}
 
 export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
   const router = useRouter();
   const { t, locale } = useTranslation();
   const { bottom } = useSafeAreaInsets();
+  const isDark = useColorScheme() === "dark";
   const bills = useCalendarStore((s) => s.bills);
   const payments = useCalendarStore((s) => s.payments);
   const userId = useOptionalUserId();
 
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
-  const cardBg = useThemeColor("card");
   const pageBg = useThemeColor("page");
   const borderColor = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
@@ -39,7 +54,7 @@ export default function DayDetailScreen() {
   const accentRed = useThemeColor("accentRed");
   const peachBg = useThemeColor("peachLight");
 
-  const dateObj = date ? new Date(date) : new Date();
+  const dateObj = parseDayDetailDateParam(date);
   const dueDateStr = toIsoDate(dateObj);
   const billsForDate = getBillsForDate(bills, dateObj);
 
@@ -75,16 +90,21 @@ export default function DayDetailScreen() {
   };
 
   return (
-    <DialogRouteFrame>
+    <View style={[styles.screen, { backgroundColor: pageBg }]}>
+      <Stack.Screen
+        options={{
+          headerBackButtonDisplayMode: "minimal",
+          headerBackTitle: "",
+          headerTitle: format(dateObj, "EEEE, PP", { locale: getDateFnsLocale(locale) }),
+          title: format(dateObj, "EEEE, PP", { locale: getDateFnsLocale(locale) }),
+        }}
+      />
+      <AppAuroraBackground isDark={isDark} />
       <ScrollView
-        style={[styles.container, { backgroundColor: cardBg }]}
+        style={styles.container}
         contentContainerStyle={[styles.content, { paddingBottom: bottom + 24 }]}
         contentInsetAdjustmentBehavior="automatic"
       >
-        <Text style={[styles.title, { color: primaryColor }]}>
-          {format(dateObj, "EEEE, PP", { locale: getDateFnsLocale(locale) })}
-        </Text>
-
         {billsForDate.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={[styles.emptyText, { color: secondaryColor }]}>
@@ -125,7 +145,7 @@ export default function DayDetailScreen() {
                         { backgroundColor: paid ? accentGreen : peachBg },
                       ]}
                       onPress={() => {
-                        void handleTogglePaid(billId);
+                        void handleTogglePaid(billId).catch(captureError);
                       }}
                       hitSlop={8}
                     >
@@ -154,19 +174,18 @@ export default function DayDetailScreen() {
           </View>
         )}
       </ScrollView>
-    </DialogRouteFrame>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   container: {},
   content: {
     padding: 24,
     gap: 16,
-  },
-  title: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 18,
   },
   emptyState: {
     paddingVertical: 32,

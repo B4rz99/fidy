@@ -1,10 +1,21 @@
+import { Stack } from "expo-router";
 import { GoalCreateSheet } from "@/features/goals/ui.public";
-import { DialogRouteFrame } from "@/shared/components";
+import { useTranslation } from "@/shared/hooks";
 
 export default function CreateGoalRoute() {
+  const { t } = useTranslation();
+
   return (
-    <DialogRouteFrame>
+    <>
+      <Stack.Screen
+        options={{
+          headerBackTitle: "",
+          headerBackButtonDisplayMode: "minimal",
+          headerTitle: t("goals.create.title"),
+          title: t("goals.create.title"),
+        }}
+      />
       <GoalCreateSheet />
-    </DialogRouteFrame>
+    </>
   );
 }
