@@ -1,0 +1,19 @@
+apps/mobile/__tests__/navigation/root-layout-headers.test.ts
+  s_11fb3699e0675b::t_1957df6b5c998b 51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.1",
+  "base_commit_sha": "7556034e8b75de86184a86b5e137aa99f01b7dcf",
+  "prompts": {},
+  "sessions": {
+    "s_11fb3699e0675b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e571c-a298-79d3-b6e0-69322d45fb2d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
