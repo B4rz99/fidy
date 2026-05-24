@@ -74,6 +74,10 @@ export const FilterChipRow = ({
               backgroundColor: isActive ? accentGreen : peachLight,
               borderWidth: isOpen ? 1.5 : 0,
               borderColor: isOpen ? primary : "transparent",
+              shadowColor: isOpen ? primary : "transparent",
+              shadowOpacity: isOpen ? 0.12 : 0,
+              shadowRadius: isOpen ? 8 : 0,
+              shadowOffset: { width: 0, height: 4 },
             }}
             onPress={() => {
               void Haptics.selectionAsync();

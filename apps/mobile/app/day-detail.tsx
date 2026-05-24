@@ -1,15 +1,15 @@
 import { format } from "date-fns";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
-  type BillPayment,
   deleteBill,
   getBillsForDate,
   markBillPaid,
   unmarkBillPaid,
   useCalendarStore,
-} from "@/features/calendar";
+} from "@/features/calendar/routes.public";
+import type { BillPayment } from "@/features/calendar/ui.public";
 import { AppAuroraBackground } from "@/shared/components";
 import { Check, Pencil, Trash2 } from "@/shared/components/icons";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";

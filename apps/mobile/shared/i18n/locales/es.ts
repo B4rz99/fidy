@@ -296,6 +296,8 @@ const es = {
   calendar: {
     title: "Calendario",
     thisMonth: "Este mes",
+    previousMonth: "Mes anterior",
+    nextMonth: "Mes siguiente",
     paid: "Pagado",
     pending: "Pendiente",
     pendingPayments: {
@@ -1001,6 +1003,8 @@ const es = {
     noResults: "No hay transacciones",
     clearFilters: "Limpiar filtros",
     resultsSummary: "%{count} transacciones · %{total} total",
+    resultTotal: "Resultado total",
+    movements: "Movimientos",
     today: "Hoy",
     thisWeek: "Esta semana",
     thisMonth: "Este mes",

@@ -1,17 +1,19 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { useOptionalUserId } from "@/features/auth";
+import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
-  CalendarMonthBoard,
   deleteBill,
   markBillPaid,
   nextMonth,
   prevMonth,
   unmarkBillPaid,
   useCalendarStore,
+} from "@/features/calendar/routes.public";
+import {
+  CalendarMonthBoard,
   type Bill,
   type CalendarBillOccurrence,
-} from "@/features/calendar";
+} from "@/features/calendar/ui.public";
 import { ScreenLayout } from "@/shared/components";
 import { Plus } from "@/shared/components/icons";
 import { Alert, Pressable } from "@/shared/components/rn";

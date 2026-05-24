@@ -4,8 +4,14 @@ export const styles = StyleSheet.create({
   container: {},
   scrollContent: { padding: 24, gap: 16 },
   title: { fontFamily: "Poppins_700Bold", fontSize: 18, textAlign: "center" },
-  fullScreenContainer: {
+  fullScreenShell: {
     flex: 1,
+  },
+  fullScreenScroller: {
+    flex: 1,
+  },
+  fullScreenContainer: {
+    flexGrow: 1,
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingTop: 4,

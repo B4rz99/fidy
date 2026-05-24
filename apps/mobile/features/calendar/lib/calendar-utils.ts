@@ -89,7 +89,7 @@ export function getMonthGrid(year: number, month: number): CalendarDay[][] {
 /**
  * Returns bills that occur on a specific date based on their frequency.
  */
-export function getBillsForDate(bills: Bill[], date: Date): Bill[] {
+export function getBillsForDate(bills: readonly Bill[], date: Date): Bill[] {
   const calendarDate = getCalendarDateContext(date);
   return bills.filter((bill) => billOccursOnDate(bill, calendarDate));
 }
@@ -106,7 +106,7 @@ export function buildCalendarMonthSummary({
         cell.date != null && cell.day != null
     )
     .flatMap((cell) =>
-      getBillsForDate([...bills], cell.date).map((bill) => {
+      getBillsForDate(bills, cell.date).map((bill) => {
         const dueDate = toCalendarIsoDate(cell.date);
         return {
           bill,

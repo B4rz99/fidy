@@ -97,13 +97,27 @@ export function fromBillRow(row: {
   startDate: string;
   isActive: boolean;
 }): Bill {
+  const startDate = parseRequiredBillStartDate(row);
+
   return {
     id: row.id,
     name: row.name,
     amount: row.amount,
     frequency: row.frequency as BillFrequency,
     categoryId: requireCategoryId(row.categoryId),
-    startDate: parseOptionalIsoDate(row.startDate) ?? new Date(),
+    startDate,
     isActive: row.isActive,
   };
+}
+
+function parseRequiredBillStartDate(row: { readonly id: string; readonly startDate: string }) {
+  try {
+    const parsed = parseOptionalIsoDate(row.startDate);
+    if (parsed == null) {
+      throw new Error("missing date");
+    }
+    return parsed;
+  } catch (error) {
+    throw new Error(`Invalid bill startDate for ${row.id}: ${row.startDate}`, { cause: error });
+  }
 }

@@ -29,9 +29,18 @@ describe("Root layout native headers", () => {
     expect(source).toContain('contentStyle: { backgroundColor: "transparent" }');
     expect(source).not.toContain("formSheet");
     expect(source).not.toContain("sheetAllowedDetents");
+  });
+
+  test("promoted full-screen routes keep native headers on every platform", () => {
+    expect(source).toContain("const fullScreenHeaderOptions = {");
+    expect(source).toContain("headerShown: true");
     expect(source).toContain('name="add-bill"');
-    // add-bill options must use the shared dialog modal presentation.
-    const addBillBlock = source.slice(source.indexOf('name="add-bill"'));
-    expect(addBillBlock.slice(0, 200)).toContain("DIALOG_MODAL");
+    const addBillStart = source.indexOf('name="add-bill"');
+    const dayDetailStart = source.indexOf('name="day-detail"');
+    expect(addBillStart).toBeGreaterThan(-1);
+    expect(dayDetailStart).toBeGreaterThan(addBillStart);
+    const addBillBlock = source.slice(addBillStart, dayDetailStart);
+    expect(addBillBlock).toContain("fullScreenHeaderOptions");
+    expect(addBillBlock).not.toContain("DIALOG_MODAL");
   });
 });

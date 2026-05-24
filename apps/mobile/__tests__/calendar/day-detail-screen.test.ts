@@ -9,9 +9,13 @@ describe("day-detail screen", () => {
   test("is registered in root layout as a full screen route", () => {
     expect(layoutSource).toContain('name="day-detail"');
     expect(source).not.toContain("DialogRouteFrame");
-    const dayDetailBlock = layoutSource.slice(layoutSource.indexOf('name="day-detail"'));
-    expect(dayDetailBlock.slice(0, 80)).toContain("iosHeaderOptions");
-    expect(dayDetailBlock.slice(0, 80)).not.toContain("DIALOG_MODAL");
+    const dayDetailStart = layoutSource.indexOf('name="day-detail"');
+    const themePickerStart = layoutSource.indexOf('name="theme-picker"');
+    expect(dayDetailStart).toBeGreaterThan(-1);
+    expect(themePickerStart).toBeGreaterThan(dayDetailStart);
+    const dayDetailBlock = layoutSource.slice(dayDetailStart, themePickerStart);
+    expect(dayDetailBlock).toContain("fullScreenHeaderOptions");
+    expect(dayDetailBlock).not.toContain("DIALOG_MODAL");
     expect(layoutSource).not.toContain("formSheet");
   });
 

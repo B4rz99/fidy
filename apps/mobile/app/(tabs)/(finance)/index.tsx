@@ -4,16 +4,18 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnalyticsScreen } from "@/features/analytics";
 import { useOptionalUserId } from "@/features/auth/hooks.public";
 import {
-  CalendarMonthBoard,
   deleteBill,
   markBillPaid,
   nextMonth,
   prevMonth,
   unmarkBillPaid,
   useCalendarStore,
+} from "@/features/calendar/routes.public";
+import {
+  CalendarMonthBoard,
   type Bill,
   type CalendarBillOccurrence,
-} from "@/features/calendar";
+} from "@/features/calendar/ui.public";
 import { useGoalStore } from "@/features/goals/hooks.public";
 import { GoalsListScreen } from "@/features/goals/ui.public";
 import { AppAuroraBackground, TAB_BAR_CLEARANCE } from "@/shared/components";
@@ -27,6 +29,7 @@ import { requireBillId, requireIsoDate } from "@/shared/types/assertions";
 type FinanceTab = "calendar" | "goals" | "analytics";
 
 const FINANCE_NATIVE_TAB_BAR_OFFSET = 72;
+const FINANCE_IOS_HEADER_CONTENT_HEIGHT = 44;
 
 function SegmentControl({
   active,
@@ -74,6 +77,8 @@ function FinanceCalendarPanel() {
   const payments = useCalendarStore((s) => s.payments);
   const userId = useOptionalUserId();
   const insets = useSafeAreaInsets();
+  const headerClearance =
+    Platform.OS === "ios" ? insets.top + FINANCE_IOS_HEADER_CONTENT_HEIGHT : 0;
   const tabBarClearance =
     Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE;
 
@@ -146,7 +151,7 @@ function FinanceCalendarPanel() {
         payments={payments}
         cellMinHeight={54}
         paddingBottom={tabBarClearance}
-        paddingTop={Platform.OS === "ios" ? 96 : 0}
+        paddingTop={headerClearance}
         onBillDelete={handleDeleteBill}
         onBillEdit={handleEditBill}
         onBillPaymentToggle={handleToggleBillPaid}

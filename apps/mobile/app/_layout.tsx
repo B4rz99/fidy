@@ -218,6 +218,10 @@ function RootLayout() {
     headerTransparent: true,
     headerTintColor: theme.primary,
   };
+  const fullScreenHeaderOptions = {
+    ...iosHeaderOptions,
+    headerShown: true,
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -228,8 +232,8 @@ function RootLayout() {
             <Stack.Screen name="(tabs)" />
             {localQaAvailable ? <Stack.Screen name="qa-tools" options={iosHeaderOptions} /> : null}
             {localQaAvailable ? <Stack.Screen name="qa-open" options={iosHeaderOptions} /> : null}
-            <Stack.Screen name="add-bill" options={iosHeaderOptions} />
-            <Stack.Screen name="day-detail" options={iosHeaderOptions} />
+            <Stack.Screen name="add-bill" options={fullScreenHeaderOptions} />
+            <Stack.Screen name="day-detail" options={fullScreenHeaderOptions} />
             <Stack.Screen name="theme-picker" options={DIALOG_MODAL} />
             <Stack.Screen name="language-picker" options={DIALOG_MODAL} />
             <Stack.Screen name="delete-account" options={DIALOG_MODAL} />
@@ -256,10 +260,10 @@ function RootLayout() {
             />
             <Stack.Screen name="create-budget" options={DIALOG_MODAL} />
             <Stack.Screen name="auto-suggest-budgets" options={DIALOG_MODAL} />
-            <Stack.Screen name="goal-detail" options={iosHeaderOptions} />
-            <Stack.Screen name="create-goal" options={iosHeaderOptions} />
-            <Stack.Screen name="add-payment" options={iosHeaderOptions} />
-            <Stack.Screen name="edit-goal" options={iosHeaderOptions} />
+            <Stack.Screen name="goal-detail" options={fullScreenHeaderOptions} />
+            <Stack.Screen name="create-goal" options={fullScreenHeaderOptions} />
+            <Stack.Screen name="add-payment" options={fullScreenHeaderOptions} />
+            <Stack.Screen name="edit-goal" options={fullScreenHeaderOptions} />
             <Stack.Screen
               name="add-transaction"
               options={{
@@ -269,7 +273,7 @@ function RootLayout() {
               }}
             />
             <Stack.Screen name="add-transfer" options={{ headerShown: false }} />
-            <Stack.Screen name="bills-calendar" options={iosHeaderOptions} />
+            <Stack.Screen name="bills-calendar" options={fullScreenHeaderOptions} />
             <Stack.Screen name="ai-memories" options={iosHeaderOptions} />
             <Stack.Screen name="notification-preferences" options={iosHeaderOptions} />
             <Stack.Screen name="categories" options={iosHeaderOptions} />

@@ -68,8 +68,8 @@ export function CalendarMonthBoard({
         <View style={styles.calendarFrame}>
           <CalendarGrid
             currentMonth={currentMonth}
-            bills={[...bills]}
-            payments={[...payments]}
+            bills={bills}
+            payments={payments}
             cellMinHeight={cellMinHeight}
             onDayPress={onDayPress}
           />

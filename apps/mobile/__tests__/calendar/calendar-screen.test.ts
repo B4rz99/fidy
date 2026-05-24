@@ -27,6 +27,8 @@ describe("calendar screen", () => {
     expect(monthNavigatorSource).toContain("previousButton");
     expect(monthNavigatorSource).toContain("nextButton");
     expect(monthNavigatorSource).toContain('position: "absolute"');
+    expect(monthNavigatorSource).toContain('accessibilityLabel={t("calendar.previousMonth")}');
+    expect(monthNavigatorSource).toContain('accessibilityLabel={t("calendar.nextMonth")}');
   });
 
   test("finance analytics cards use home activity spacing", () => {
@@ -52,6 +54,10 @@ describe("calendar screen", () => {
     expect(monthBoardSource).not.toContain("bounces={false}");
     expect(monthBoardSource).toContain("alwaysBounceVertical={false}");
     expect(monthBoardSource).toContain('contentInsetAdjustmentBehavior="never"');
+    expect(monthBoardSource).toContain("bills={bills}");
+    expect(monthBoardSource).toContain("payments={payments}");
+    expect(monthBoardSource).not.toContain("bills={[...bills]}");
+    expect(monthBoardSource).not.toContain("payments={[...payments]}");
     expect(monthBoardSource).toContain('t("calendar.paid")');
     expect(monthBoardSource).toContain('t("calendar.pending")');
     expect(billsCalendarSource).toContain("<CalendarMonthBoard");
@@ -88,20 +94,22 @@ describe("calendar screen", () => {
   test("finance calendar starts after the native header and leaves room for the tab bar", () => {
     expect(financeTabSource).toContain("useSafeAreaInsets");
     expect(financeTabSource).toContain("FINANCE_NATIVE_TAB_BAR_OFFSET = 72");
+    expect(financeTabSource).toContain("FINANCE_IOS_HEADER_CONTENT_HEIGHT = 44");
+    expect(financeTabSource).toContain("insets.top + FINANCE_IOS_HEADER_CONTENT_HEIGHT");
     expect(financeTabSource).toContain(
       'Platform.OS === "ios" ? insets.bottom + FINANCE_NATIVE_TAB_BAR_OFFSET : TAB_BAR_CLEARANCE'
     );
-    expect(financeTabSource).not.toContain("FINANCE_NATIVE_HEADER_CONTENT_HEIGHT");
     expect(financeTabSource).toContain("paddingBottom={tabBarClearance}");
-    expect(financeTabSource).toContain('paddingTop={Platform.OS === "ios" ? 96 : 0}');
+    expect(financeTabSource).toContain("paddingTop={headerClearance}");
   });
 
   test("day detail is a full screen route so bill editing pushes normally", () => {
-    const dayDetailBlock = rootLayoutSource.slice(
-      rootLayoutSource.indexOf('name="day-detail"'),
-      rootLayoutSource.indexOf('name="theme-picker"')
-    );
-    expect(dayDetailBlock).toContain("iosHeaderOptions");
+    const dayDetailStart = rootLayoutSource.indexOf('name="day-detail"');
+    const themePickerStart = rootLayoutSource.indexOf('name="theme-picker"');
+    expect(dayDetailStart).toBeGreaterThan(-1);
+    expect(themePickerStart).toBeGreaterThan(dayDetailStart);
+    const dayDetailBlock = rootLayoutSource.slice(dayDetailStart, themePickerStart);
+    expect(dayDetailBlock).toContain("fullScreenHeaderOptions");
     expect(dayDetailBlock).not.toContain("DIALOG_MODAL");
     expect(dayDetailSource).not.toContain("DialogRouteFrame");
     expect(dayDetailSource).toContain("<Stack.Screen");

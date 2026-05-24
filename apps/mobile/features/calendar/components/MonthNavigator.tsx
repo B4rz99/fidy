@@ -11,18 +11,30 @@ type Props = {
 };
 
 export function MonthNavigator({ currentMonth, onPrev, onNext }: Props) {
-  const { locale } = useTranslation();
+  const { locale, t } = useTranslation();
   const primaryColor = useThemeColor("primary");
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={onPrev} hitSlop={12} style={styles.previousButton}>
+      <Pressable
+        onPress={onPrev}
+        hitSlop={12}
+        style={styles.previousButton}
+        accessibilityRole="button"
+        accessibilityLabel={t("calendar.previousMonth")}
+      >
         <ChevronLeft size={24} color={primaryColor} />
       </Pressable>
       <Text style={[styles.monthText, { color: primaryColor }]}>
         {formatMonthYear(currentMonth, getDateFnsLocale(locale))}
       </Text>
-      <Pressable onPress={onNext} hitSlop={12} style={styles.nextButton}>
+      <Pressable
+        onPress={onNext}
+        hitSlop={12}
+        style={styles.nextButton}
+        accessibilityRole="button"
+        accessibilityLabel={t("calendar.nextMonth")}
+      >
         <ChevronRight size={24} color={primaryColor} />
       </Pressable>
     </View>

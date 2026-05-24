@@ -288,6 +288,8 @@ const en = {
   calendar: {
     title: "Calendar",
     thisMonth: "This month",
+    previousMonth: "Previous month",
+    nextMonth: "Next month",
     paid: "Paid",
     pending: "Pending",
     pendingPayments: {
@@ -981,6 +983,8 @@ const en = {
     noResults: "No transactions match",
     clearFilters: "Clear filters",
     resultsSummary: "%{count} transactions · %{total} total",
+    resultTotal: "Result total",
+    movements: "Movements",
     today: "Today",
     thisWeek: "This week",
     thisMonth: "This month",

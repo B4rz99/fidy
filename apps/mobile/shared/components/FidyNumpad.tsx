@@ -2,7 +2,7 @@ import * as Haptics from "expo-haptics";
 import { memo } from "react";
 import { Delete } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 type FidyNumpadProps = {
   compact?: boolean;
@@ -17,6 +17,7 @@ const ROWS = [
 ] as const;
 
 export const FidyNumpad = memo(({ compact = false, onKeyPress }: FidyNumpadProps) => {
+  const { t } = useTranslation();
   const keyBg = useThemeColor("numpadKey");
   const specialKeyBg = useThemeColor("numpadSpecialKey");
   const keyText = useThemeColor("primary");
@@ -43,7 +44,7 @@ export const FidyNumpad = memo(({ compact = false, onKeyPress }: FidyNumpadProps
                 ]}
                 onPress={() => handlePress(key)}
                 accessibilityRole="button"
-                accessibilityLabel={key === "delete" ? "Delete" : key}
+                accessibilityLabel={key === "delete" ? t("common.delete") : key}
               >
                 {key === "delete" ? (
                   <Delete size={24} color={specialText} />

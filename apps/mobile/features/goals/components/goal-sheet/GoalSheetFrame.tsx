@@ -47,14 +47,20 @@ export function GoalSheetFrame({
 
   if (fullScreen) {
     return (
-      <View
-        style={[
-          styles.fullScreenContainer,
-          { backgroundColor: page, paddingBottom: bottom + 12, paddingTop: top + 72 },
-        ]}
-      >
+      <View style={[styles.fullScreenShell, { backgroundColor: page }]}>
         <AppAuroraBackground isDark={isDark} />
-        {content}
+        <ScrollView
+          style={styles.fullScreenScroller}
+          contentContainerStyle={[
+            styles.fullScreenContainer,
+            { paddingBottom: bottom + 12, paddingTop: top + 72 },
+          ]}
+          contentInsetAdjustmentBehavior="never"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {content}
+        </ScrollView>
       </View>
     );
   }

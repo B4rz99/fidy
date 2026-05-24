@@ -26,11 +26,12 @@ test("add-bill is registered in root layout as a full screen route", () => {
   expect(routeSource).not.toContain("DialogRouteFrame");
   expect(routeSource).toContain('headerBackTitle: ""');
   expect(routeSource).toContain("headerTitle: title");
-  const addBillBlock = layoutSource.slice(
-    layoutSource.indexOf('name="add-bill"'),
-    layoutSource.indexOf('name="day-detail"')
-  );
-  expect(addBillBlock).toContain("iosHeaderOptions");
+  const addBillStart = layoutSource.indexOf('name="add-bill"');
+  const dayDetailStart = layoutSource.indexOf('name="day-detail"');
+  expect(addBillStart).toBeGreaterThan(-1);
+  expect(dayDetailStart).toBeGreaterThan(addBillStart);
+  const addBillBlock = layoutSource.slice(addBillStart, dayDetailStart);
+  expect(addBillBlock).toContain("fullScreenHeaderOptions");
   expect(addBillBlock).not.toContain("DIALOG_MODAL");
   expect(layoutSource).not.toContain("formSheet");
 });

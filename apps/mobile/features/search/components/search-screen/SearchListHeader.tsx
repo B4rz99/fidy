@@ -1,4 +1,4 @@
-import { View } from "@/shared/components/rn";
+import { StyleSheet, View } from "@/shared/components/rn";
 import { FilterChipRow } from "../FilterChipRow";
 import { ResultsSummary } from "../ResultsSummary";
 import type { SearchScreenViewModel } from "./SearchScreen.types";
@@ -33,8 +33,8 @@ export function SearchListHeader({
       />
       {filterPanel ? (
         <View
-          className="mx-4 mb-3 rounded-xl bg-card dark:bg-card-dark"
-          style={{ overflow: "hidden" }}
+          className="mx-4 mb-3 rounded-lg bg-card/90 dark:bg-card-dark/90"
+          style={styles.filterDock}
         >
           {filterPanel}
         </View>
@@ -43,3 +43,15 @@ export function SearchListHeader({
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  filterDock: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(15, 23, 42, 0.08)",
+    overflow: "hidden",
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+  },
+});
