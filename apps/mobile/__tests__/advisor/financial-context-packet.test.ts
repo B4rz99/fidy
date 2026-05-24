@@ -62,7 +62,6 @@ describe("financial context packet", () => {
       goals: [{ name: "Emergency fund", currentAmount: 250000, progressPct: 25 }],
       accounts: [{ name: "Cash" }],
       captureEvidence: [{ value: "Market", occurrences: 3 }],
-      memories: [],
     });
   });
 });

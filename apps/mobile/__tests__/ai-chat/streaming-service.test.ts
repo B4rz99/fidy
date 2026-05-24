@@ -46,7 +46,6 @@ function makeFinancialContextPacket() {
     goals: [],
     accounts: [],
     captureEvidence: [],
-    memories: [{ fact: "Prefers cash envelopes", category: "preference" }],
   };
 }
 

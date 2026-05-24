@@ -4,7 +4,7 @@
 
 Harden Supabase access by moving **Encrypted Backup** remote operations behind the **Remote API Boundary** before launch.
 
-The first slice covers only encrypted backup metadata and blob access. Other operational capabilities, including notification preferences, push device registration, and user memories, come later after the backup boundary is proven.
+The first slice covers only encrypted backup metadata and blob access. Other operational capabilities, including notification preferences and push device registration, come later after the backup boundary is proven.
 
 ## Current State
 
@@ -33,7 +33,7 @@ The first slice covers only encrypted backup metadata and blob access. Other ope
 - Do not change backup encryption.
 - Do not add plaintext remote financial storage.
 - Do not proxy full backup blobs through Edge Functions.
-- Do not harden notification preferences, push devices, or user memories in this slice.
+- Do not harden notification preferences or push devices in this slice.
 
 ## Implementation Slices
 
@@ -152,6 +152,5 @@ After Encrypted Backup is hardened, repeat the **Remote API Boundary** pattern f
 
 - notification preferences
 - push device registration and deletion
-- user memory list and deletion
 
 Each later capability should get its own Edge Function or clearly scoped function surface, validation contract, rate-limit policy, and revocation migration.

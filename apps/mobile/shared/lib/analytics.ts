@@ -74,10 +74,6 @@ export function trackAiMessageSent(): void {
   posthog.capture("ai_message_sent");
 }
 
-export function trackAiMemoryViewed(): void {
-  posthog.capture("ai_memory_viewed");
-}
-
 export function trackNotificationCenterOpened(): void {
   posthog.capture("notification_center_opened");
 }

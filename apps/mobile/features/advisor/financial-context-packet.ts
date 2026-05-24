@@ -52,10 +52,6 @@ export type FinancialContextPacket = {
     readonly evidenceType: string;
     readonly occurrences: number;
   }[];
-  readonly memories: readonly {
-    readonly fact: string;
-    readonly category: string;
-  }[];
 };
 
 export type BuildFinancialContextPacketInput = {
@@ -177,7 +173,6 @@ export function createFinancialContextPacketBuilder(ports: FinancialContextPacke
       goals,
       accounts: ports.getAccounts(input.db, input.userId),
       captureEvidence: ports.getCaptureEvidence(input.db, input.userId),
-      memories: [],
     };
   };
 }

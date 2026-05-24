@@ -16,7 +16,6 @@ import type {
   TransactionId,
   TransferId,
   UserId,
-  UserMemoryId,
 } from "@/shared/types/branded";
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -190,10 +189,6 @@ export function assertReviewCandidateId(value: string): asserts value is ReviewC
   assertNonEmptyString(value, "reviewCandidateId");
 }
 
-export function assertUserMemoryId(value: string): asserts value is UserMemoryId {
-  assertNonEmptyString(value, "userMemoryId");
-}
-
 export function assertCopAmount(value: number): asserts value is CopAmount {
   if (!Number.isInteger(value) || value < 0) {
     throw new Error("amount must be a non-negative integer");
@@ -280,8 +275,4 @@ export function requireIsoDate(value: string): IsoDate {
 
 export function requireIsoDateTime(value: string): IsoDateTime {
   return requireValue(value, assertIsoDateTime);
-}
-
-export function requireUserMemoryId(value: string): UserMemoryId {
-  return requireValue(value, assertUserMemoryId);
 }

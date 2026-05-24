@@ -38,7 +38,6 @@ import type {
   TransferId,
   UserCategoryId,
   UserId,
-  UserMemoryId,
 } from "@/shared/types/branded";
 
 export const bills = sqliteTable(
@@ -451,19 +450,6 @@ export const chatMessages = sqliteTable(
     createdAt: text("created_at").$type<IsoDateTime>().notNull(),
   },
   (table) => [index("idx_chat_messages_session_created").on(table.sessionId, table.createdAt)]
-);
-
-export const userMemories = sqliteTable(
-  "user_memories",
-  {
-    id: text("id").$type<UserMemoryId>().primaryKey(),
-    userId: text("user_id").$type<UserId>().notNull(),
-    fact: text("fact").notNull(),
-    category: text("category").notNull(),
-    createdAt: text("created_at").$type<IsoDateTime>().notNull(),
-    updatedAt: text("updated_at").$type<IsoDateTime>().notNull(),
-  },
-  (table) => [index("idx_user_memories_user").on(table.userId)]
 );
 
 export const budgets = sqliteTable(

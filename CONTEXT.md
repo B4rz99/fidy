@@ -159,9 +159,9 @@ _Avoid_: Settings icon, uploaded document, financial image
 - A **Financial Context Packet** is narrower than the **Local Ledger** and should be built per advisor request
 - AI advisor features should use **Financial Context Packets** instead of server-side queries over plaintext financial tables
 - Weekly digest-style insights should be generated from the **Local Ledger** on device unless the user explicitly opts into **Cloud AI Processing**
-- The **Remote API Boundary** owns operational remote access for Encrypted Backups, notification preferences, push device registration, and user memories
+- The **Remote API Boundary** owns operational remote access for Encrypted Backups, notification preferences, and push device registration
 - The **Remote API Boundary** does not replace Supabase Auth, and table RLS remains defense-in-depth behind it
-- The **Remote API Boundary** is capability-scoped so backup, notification, push-device, and memory operations can be validated, rate-limited, and revoked independently
+- The **Remote API Boundary** is capability-scoped so backup, notification, and push-device operations can be validated, rate-limited, and revoked independently
 - **Encrypted Backup** blob transfer uses short-lived signed storage URLs while backup metadata remains owned by the **Remote API Boundary**
 - A confirmed **Encrypted Backup** is immutable; creating a newer recovery artifact uses a new backup id instead of overwriting the existing one
 - Fidy keeps at most one confirmed **Encrypted Backup** per user; the user-facing **Private Backup** status shows when that backup was last updated

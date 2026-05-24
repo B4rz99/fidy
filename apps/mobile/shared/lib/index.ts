@@ -2,7 +2,6 @@ export {
   identifyUser,
   resetAnalyticsUser,
   trackAiChatOpened,
-  trackAiMemoryViewed,
   trackAiMessageSent,
   trackBillCreated,
   trackBillPaymentRecorded,
@@ -61,7 +60,6 @@ export {
   generateTransactionId,
   generateTransferId,
   generateUserCategoryId,
-  generateUserMemoryId,
 } from "./generate-id";
 export { runAfterNavigationTransition, waitForNavigationTransition } from "./navigation-transition";
 export { merchantsMatch, normalizeMerchant } from "./normalize-merchant";
