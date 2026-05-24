@@ -1,0 +1,93 @@
+apps/mobile/__tests__/navigation/root-layout-headers.test.ts
+  s_11fb3699e0675b::t_9b76f99ef1b179 32-36,38-44
+apps/mobile/__tests__/search/search-screen.test.ts
+  s_11fb3699e0675b::t_b2385bfbe69f9d 24,26,28,31
+  s_8b9b979aad4f69::t_50c11d30818b14 23,25,27,29-30,32,62-71
+apps/mobile/shared/i18n/locales/es.ts
+  s_8b9b979aad4f69::t_f28e754267f2c1 299-300,1006-1007
+apps/mobile/__tests__/calendar/schema.test.ts
+  s_11fb3699e0675b::t_b362ee0f0be486 125-138
+apps/mobile/features/calendar/components/MonthNavigator.tsx
+  s_11fb3699e0675b::t_56f6f285acb173 14,19-25,31-37
+apps/mobile/features/search/components/search-screen/SearchInputBar.tsx
+  s_8b9b979aad4f69::t_a1ee21f182c2b0 1,25-43
+apps/mobile/__tests__/calendar/add-bill-screen.test.ts
+  s_11fb3699e0675b::t_4a78e837d2aca8 29-34
+apps/mobile/__tests__/calendar/query-service.test.ts
+  s_11fb3699e0675b::t_4a78e837d2aca8 23
+apps/mobile/features/calendar/schema.ts
+  s_11fb3699e0675b::t_56f6f285acb173 100-101,108,112-122
+apps/mobile/features/calendar/ui.public.ts
+  s_11fb3699e0675b::t_56f6f285acb173 1-2
+  s_11fb3699e0675b::t_b362ee0f0be486 3
+apps/mobile/features/calendar/components/CalendarMonthBoard.tsx
+  s_11fb3699e0675b::t_56f6f285acb173 71-72
+apps/mobile/app/(tabs)/(finance)/index.tsx
+  s_11fb3699e0675b::t_b2385bfbe69f9d 80-81
+  s_11fb3699e0675b::t_56f6f285acb173 13-15,18,32,154
+apps/mobile/features/calendar/lib/calendar-utils.ts
+  s_11fb3699e0675b::t_56f6f285acb173 92,109
+apps/mobile/shared/components/FidyNumpad.tsx
+  s_11fb3699e0675b::t_56f6f285acb173 5,20,47
+apps/mobile/features/search/components/search-screen/SearchTransactionItem.tsx
+  s_8b9b979aad4f69::t_dfb08b518cfbaa 43-45
+  s_8b9b979aad4f69::t_79275807d5627c 25-26,36-42,46-53,55-66
+  s_11fb3699e0675b::t_b2385bfbe69f9d 54
+apps/mobile/features/goals/components/goal-sheet/GoalSheet.styles.ts
+  s_11fb3699e0675b::t_a702558778037c 7-10,12-14
+apps/mobile/app/_layout.tsx
+  s_11fb3699e0675b::t_56f6f285acb173 221-224,235-236,263-266,276
+apps/mobile/features/calendar/routes.public.ts
+  s_11fb3699e0675b::t_b362ee0f0be486 2
+  s_11fb3699e0675b::t_56f6f285acb173 3-10
+apps/mobile/features/calendar/components/CalendarGrid.tsx
+  s_11fb3699e0675b::t_56f6f285acb173 11-12
+apps/mobile/__tests__/calendar/calendar-screen.test.ts
+  s_11fb3699e0675b::t_4a78e837d2aca8 30-31,57-60,97-98,103,107-112
+apps/mobile/__tests__/calendar/day-detail-screen.test.ts
+  s_11fb3699e0675b::t_4a78e837d2aca8 12-18
+apps/mobile/__tests__/goals/goal-sheets.test.ts
+  s_11fb3699e0675b::t_4a78e837d2aca8 101-106,117-125,127,134-135
+apps/mobile/__tests__/ui/date-picker-imports.test.ts
+  s_11fb3699e0675b::t_4a78e837d2aca8 41,47-50
+apps/mobile/shared/i18n/locales/en.ts
+  s_8b9b979aad4f69::t_9154aba2983cca 291-292,986-987
+apps/mobile/features/search/components/search-screen/SearchListHeader.tsx
+  s_8b9b979aad4f69::t_f78443e90283d8 1,36-37,46-57
+apps/mobile/features/search/components/FilterChipRow.tsx
+  s_8b9b979aad4f69::t_414ed2aeb1de5e 77-80
+apps/mobile/features/goals/components/goal-sheet/GoalSheetFrame.tsx
+  s_11fb3699e0675b::t_56f6f285acb173 52-63
+  s_11fb3699e0675b::t_b2385bfbe69f9d 50
+apps/mobile/app/bills-calendar.tsx
+  s_11fb3699e0675b::t_56f6f285acb173 11-13,16
+  s_11fb3699e0675b::t_b362ee0f0be486 3
+apps/mobile/app/day-detail.tsx
+  s_11fb3699e0675b::t_b362ee0f0be486 4,11-12
+apps/mobile/features/search/components/ResultsSummary.tsx
+  s_8b9b979aad4f69::t_d5422bb285803d 1,14-35,39-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.1",
+  "base_commit_sha": "5ed3f577b06f8d915dcf4572c47162b6d9cacf6c",
+  "prompts": {},
+  "sessions": {
+    "s_11fb3699e0675b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e571c-a298-79d3-b6e0-69322d45fb2d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_8b9b979aad4f69": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5b37-a807-75d0-a4a9-92f727224dac",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
