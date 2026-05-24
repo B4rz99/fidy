@@ -1,0 +1,19 @@
+apps/mobile/features/notifications/components/NotificationsScreen.tsx
+  s_572a7841e572d9::t_75cc354d62132c 52,95,99
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.1",
+  "base_commit_sha": "2baff473185b258b56d7062bc4a541a747f3f513",
+  "prompts": {},
+  "sessions": {
+    "s_572a7841e572d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5b3a-9a3b-7683-8384-569fb79c711f",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
