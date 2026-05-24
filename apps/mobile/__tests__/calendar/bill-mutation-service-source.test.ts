@@ -16,6 +16,7 @@ const notificationsSource = readSource(
 const updateFieldsSource = readSource(
   "../../features/calendar/lib/bill-mutation-service/to-bill-update-fields.ts"
 );
+const liveMutationsSource = readSource("../../features/calendar/store/live-bill-mutations.ts");
 
 test("keeps bill mutation service routed through extracted helpers", () => {
   expect(serviceSource).toContain("commitBillPaymentSafely");
@@ -28,6 +29,13 @@ test("keeps payment commit logic delegated to the Local Ledger payment recorder"
   expect(paymentCommitSource).toContain("recordBillPayment");
   expect(paymentCommitSource).not.toContain("buildDefaultFinancialAccountId");
   expect(paymentCommitSource).not.toContain("toTransactionRow(transaction)");
+});
+
+test("ensures the default financial account before recording a bill payment transaction", () => {
+  expect(liveMutationsSource).toContain("ensureDefaultFinancialAccount");
+  expect(liveMutationsSource.indexOf("ensureDefaultFinancialAccount")).toBeLessThan(
+    liveMutationsSource.indexOf("recordAutomatedTransactionWithLocalLedger")
+  );
 });
 
 test("keeps notification and update-field helpers as the side-effect and normalization seams", () => {

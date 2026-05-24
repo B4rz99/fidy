@@ -21,6 +21,8 @@ export function GoalDetailScreen() {
       {Platform.OS === "ios" ? (
         <Stack.Screen
           options={{
+            headerBackButtonDisplayMode: "minimal",
+            headerBackTitle: "",
             headerTitle: goal.name,
             headerRight: () => (
               <Pressable onPress={detail.onEditGoal} hitSlop={8}>

@@ -228,8 +228,8 @@ function RootLayout() {
             <Stack.Screen name="(tabs)" />
             {localQaAvailable ? <Stack.Screen name="qa-tools" options={iosHeaderOptions} /> : null}
             {localQaAvailable ? <Stack.Screen name="qa-open" options={iosHeaderOptions} /> : null}
-            <Stack.Screen name="add-bill" options={DIALOG_MODAL} />
-            <Stack.Screen name="day-detail" options={DIALOG_MODAL} />
+            <Stack.Screen name="add-bill" options={iosHeaderOptions} />
+            <Stack.Screen name="day-detail" options={iosHeaderOptions} />
             <Stack.Screen name="theme-picker" options={DIALOG_MODAL} />
             <Stack.Screen name="language-picker" options={DIALOG_MODAL} />
             <Stack.Screen name="delete-account" options={DIALOG_MODAL} />
@@ -257,9 +257,9 @@ function RootLayout() {
             <Stack.Screen name="create-budget" options={DIALOG_MODAL} />
             <Stack.Screen name="auto-suggest-budgets" options={DIALOG_MODAL} />
             <Stack.Screen name="goal-detail" options={iosHeaderOptions} />
-            <Stack.Screen name="create-goal" options={DIALOG_MODAL} />
-            <Stack.Screen name="add-payment" options={DIALOG_MODAL} />
-            <Stack.Screen name="edit-goal" options={DIALOG_MODAL} />
+            <Stack.Screen name="create-goal" options={iosHeaderOptions} />
+            <Stack.Screen name="add-payment" options={iosHeaderOptions} />
+            <Stack.Screen name="edit-goal" options={iosHeaderOptions} />
             <Stack.Screen
               name="add-transaction"
               options={{

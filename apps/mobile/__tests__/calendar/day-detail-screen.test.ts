@@ -5,12 +5,13 @@ import { describe, expect, test } from "vitest";
 const source = readFileSync(resolve(__dirname, "../../app/day-detail.tsx"), "utf-8");
 const layoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
 
-describe("day-detail dialog modal screen", () => {
-  test("is registered in root layout as a dialog modal", () => {
+describe("day-detail screen", () => {
+  test("is registered in root layout as a full screen route", () => {
     expect(layoutSource).toContain('name="day-detail"');
-    expect(source).toContain("DialogRouteFrame");
+    expect(source).not.toContain("DialogRouteFrame");
     const dayDetailBlock = layoutSource.slice(layoutSource.indexOf('name="day-detail"'));
-    expect(dayDetailBlock.slice(0, 140)).toContain("DIALOG_MODAL");
+    expect(dayDetailBlock.slice(0, 80)).toContain("iosHeaderOptions");
+    expect(dayDetailBlock.slice(0, 80)).not.toContain("DIALOG_MODAL");
     expect(layoutSource).not.toContain("formSheet");
   });
 

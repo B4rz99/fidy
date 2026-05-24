@@ -10,5 +10,6 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true
   },
-  "exclude": ["apps/**", "supabase/**", "**/node_modules/**", "**/dist/**"]
+  "exclude": ["apps/**", "supabase/**", "**/node_modules/**", "**/dist/**"],
+  "extends": "expo/tsconfig.base"
 }

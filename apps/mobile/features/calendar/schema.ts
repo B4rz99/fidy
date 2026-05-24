@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { categoryIdSchema } from "@/shared/categories";
-import { toIsoDate } from "@/shared/lib";
+import { parseOptionalIsoDate, toIsoDate } from "@/shared/lib";
 import { requireBillId, requireCategoryId, requireCopAmount } from "@/shared/types/assertions";
 import type {
   BillId,
@@ -103,7 +103,7 @@ export function fromBillRow(row: {
     amount: row.amount,
     frequency: row.frequency as BillFrequency,
     categoryId: requireCategoryId(row.categoryId),
-    startDate: new Date(row.startDate),
+    startDate: parseOptionalIsoDate(row.startDate) ?? new Date(),
     isActive: row.isActive,
   };
 }

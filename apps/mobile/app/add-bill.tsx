@@ -1,10 +1,23 @@
+import { Stack, useLocalSearchParams } from "expo-router";
 import { AddBillScreen } from "@/features/calendar/routes.public";
-import { DialogRouteFrame } from "@/shared/components";
+import { useTranslation } from "@/shared/hooks";
 
 export default function AddBillRoute() {
+  const { t } = useTranslation();
+  const { billId } = useLocalSearchParams<{ billId?: string | string[] }>();
+  const title = billId == null ? t("bills.addBill") : t("bills.editBill");
+
   return (
-    <DialogRouteFrame>
+    <>
+      <Stack.Screen
+        options={{
+          headerBackButtonDisplayMode: "minimal",
+          headerBackTitle: "",
+          headerTitle: title,
+          title,
+        }}
+      />
       <AddBillScreen />
-    </DialogRouteFrame>
+    </>
   );
 }

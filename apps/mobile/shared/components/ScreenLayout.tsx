@@ -95,7 +95,7 @@ export function ScreenLayout({
             </View>
             {isTab && centerAction != null ? (
               <View
-                className="absolute left-16 right-16 items-center"
+                className="absolute left-0 right-0 items-center"
                 pointerEvents="box-none"
                 style={styles.centerActionSlot}
               >
@@ -137,6 +137,6 @@ export function ScreenLayout({
 const styles = {
   // Header center content is reserved for compact controls; side actions should stay icon-sized.
   centerActionSlot: {
-    maxWidth: "70%" as const,
+    paddingHorizontal: 64,
   },
 };

@@ -16,13 +16,13 @@ export function MonthNavigator({ currentMonth, onPrev, onNext }: Props) {
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={onPrev} hitSlop={12}>
+      <Pressable onPress={onPrev} hitSlop={12} style={styles.previousButton}>
         <ChevronLeft size={24} color={primaryColor} />
       </Pressable>
       <Text style={[styles.monthText, { color: primaryColor }]}>
         {formatMonthYear(currentMonth, getDateFnsLocale(locale))}
       </Text>
-      <Pressable onPress={onNext} hitSlop={12}>
+      <Pressable onPress={onNext} hitSlop={12} style={styles.nextButton}>
         <ChevronRight size={24} color={primaryColor} />
       </Pressable>
     </View>
@@ -33,9 +33,17 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     paddingHorizontal: 8,
     paddingVertical: 12,
+  },
+  previousButton: {
+    left: 8,
+    position: "absolute",
+  },
+  nextButton: {
+    position: "absolute",
+    right: 8,
   },
   monthText: {
     fontFamily: "Poppins_600SemiBold",

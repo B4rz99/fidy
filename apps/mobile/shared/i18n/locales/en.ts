@@ -287,6 +287,13 @@ const en = {
   // Calendar
   calendar: {
     title: "Calendar",
+    thisMonth: "This month",
+    paid: "Paid",
+    pending: "Pending",
+    pendingPayments: {
+      one: "You have 1 payment left to mark.",
+      other: "You have %{count} payments left to mark.",
+    },
     weekdays: {
       mon: "M",
       tue: "T",
@@ -422,7 +429,11 @@ const en = {
       installments: "%{current}/%{total}",
       almostThere: "Almost there!",
       completed: "Completed!",
-      addPayment: "+ Add payment",
+      amountOfTarget: "%{current} of %{target}",
+      remaining: "%{amount} left",
+      debt: "Debt",
+      detail: "Detail",
+      addPayment: "Add payment",
       paceAhead: "↑ Ahead %{amount}",
       paceBehind: "↓ Behind %{amount}",
       startSaving: "Start saving",

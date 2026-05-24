@@ -47,6 +47,14 @@ describe("ScreenLayout", () => {
     expect(source).toContain('isTab ? "flex-1 flex-row justify-end" : "flex-row justify-end"');
   });
 
+  test("centers tab centerAction across the full header instead of anchoring to the left", () => {
+    expect(source).toContain("centerActionSlot");
+    expect(source).toContain('className="absolute left-0 right-0 items-center"');
+    expect(source).toContain("paddingHorizontal: 64");
+    expect(source).not.toContain("left-16 right-16");
+    expect(source).not.toContain('maxWidth: "70%"');
+  });
+
   test("accepts onBack function prop", () => {
     expect(source).toMatch(/onBack\??\s*:\s*\(\)\s*=>\s*void/);
   });

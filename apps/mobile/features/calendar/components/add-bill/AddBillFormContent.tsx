@@ -1,17 +1,17 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { TransactionDatePickerSheet } from "@/features/transactions/display.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
+import { AppAuroraBackground } from "@/shared/components";
 import {
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
 } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { type BillFrequency, FREQUENCIES } from "../../schema";
 import { styles } from "./AddBillForm.styles";
@@ -53,39 +53,31 @@ export function AddBillFormContent({
 }: AddBillFormContentProps) {
   const { t, locale } = useTranslation();
   const { bottom } = useSafeAreaInsets();
+  const isDark = useColorScheme() === "dark";
   const accentGreen = useThemeColor("accentGreen");
   const borderColor = useThemeColor("borderSubtle");
-  const cardBg = useThemeColor("card");
   const pageBg = useThemeColor("page");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
-  const [showAndroidDatePicker, setShowAndroidDatePicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const formattedStartDate = startDate.toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-  const handleDateChange = (_event: unknown, date?: Date) => {
-    if (Platform.OS === "android") setShowAndroidDatePicker(false);
-    if (date) onStartDateChange(date);
-  };
-  const shouldRenderDatePicker = Platform.OS === "ios" || showAndroidDatePicker;
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={[styles.container, { backgroundColor: pageBg }]}
+      behavior="padding"
     >
+      <AppAuroraBackground isDark={isDark} />
       <ScrollView
-        style={[styles.container, { backgroundColor: cardBg }]}
+        style={styles.container}
         contentContainerStyle={[styles.content, { paddingBottom: bottom + 24 }]}
         contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps="always"
       >
-        <Text style={[styles.title, { color: primaryColor }]}>
-          {isEdit ? t("bills.editBill") : t("bills.addBill")}
-        </Text>
-
         <View style={styles.formGrid}>
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: secondaryColor }]}>{t("common.name")}</Text>
@@ -144,28 +136,20 @@ export function AddBillFormContent({
             </View>
           </View>
 
-          <View style={styles.inputGroup}>
+          <Pressable
+            style={styles.inputGroup}
+            onPress={() => setShowDatePicker(true)}
+            accessibilityRole="button"
+          >
             <Text style={[styles.inputLabel, { color: secondaryColor }]}>
               {t("bills.startDate")}
             </Text>
-            {Platform.OS === "android" ? (
-              <Pressable
-                style={[styles.input, { backgroundColor: pageBg, borderColor }]}
-                onPress={() => setShowAndroidDatePicker(true)}
-              >
-                <Text style={[styles.dateText, { color: primaryColor }]}>{formattedStartDate}</Text>
-              </Pressable>
-            ) : null}
-            {shouldRenderDatePicker ? (
-              <DateTimePicker
-                value={startDate}
-                mode="date"
-                display={Platform.OS === "ios" ? "compact" : "default"}
-                onChange={handleDateChange}
-                style={styles.datePicker}
-              />
-            ) : null}
-          </View>
+            <View
+              style={[styles.input, styles.dateInput, { backgroundColor: pageBg, borderColor }]}
+            >
+              <Text style={[styles.dateText, { color: primaryColor }]}>{formattedStartDate}</Text>
+            </View>
+          </Pressable>
 
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: secondaryColor }]}>
@@ -211,6 +195,13 @@ export function AddBillFormContent({
           </Text>
         </Pressable>
       </ScrollView>
+      <TransactionDatePickerSheet
+        allowFuture
+        date={startDate}
+        onChange={onStartDateChange}
+        onClose={() => setShowDatePicker(false)}
+        visible={showDatePicker}
+      />
     </KeyboardAvoidingView>
   );
 }
