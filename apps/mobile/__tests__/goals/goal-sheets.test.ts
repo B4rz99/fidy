@@ -141,4 +141,7 @@ test("create-goal full screen avoids nested card and uses debt red state", () =>
 test("goal detail hides inherited tab title from the back button", () => {
   expect(goalDetailSource).toContain('headerBackTitle: ""');
   expect(goalDetailSource).toContain('headerBackButtonDisplayMode: "minimal"');
+  expect(goalDetailSource).toContain("headerTitle: goal.name");
+  expect(goalDetailSource).toContain("headerRight: () =>");
+  expect(goalDetailSource).not.toContain('Platform.OS === "ios"');
 });

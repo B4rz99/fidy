@@ -219,8 +219,12 @@ function RootLayout() {
     headerTintColor: theme.primary,
   };
   const fullScreenHeaderOptions = {
-    ...iosHeaderOptions,
+    contentStyle: { backgroundColor: "transparent" },
+    headerShadowVisible: false,
     headerShown: true,
+    headerStyle: { backgroundColor: Platform.OS === "ios" ? "transparent" : theme.page },
+    headerTransparent: Platform.OS === "ios",
+    headerTintColor: theme.primary,
   };
 
   return (
@@ -273,7 +277,7 @@ function RootLayout() {
               }}
             />
             <Stack.Screen name="add-transfer" options={{ headerShown: false }} />
-            <Stack.Screen name="bills-calendar" options={fullScreenHeaderOptions} />
+            <Stack.Screen name="bills-calendar" options={iosHeaderOptions} />
             <Stack.Screen name="ai-memories" options={iosHeaderOptions} />
             <Stack.Screen name="notification-preferences" options={iosHeaderOptions} />
             <Stack.Screen name="categories" options={iosHeaderOptions} />

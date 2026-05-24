@@ -34,6 +34,10 @@ describe("Root layout native headers", () => {
   test("promoted full-screen routes keep native headers on every platform", () => {
     expect(source).toContain("const fullScreenHeaderOptions = {");
     expect(source).toContain("headerShown: true");
+    expect(source).toContain('headerTransparent: Platform.OS === "ios"');
+    expect(source).toContain(
+      'headerStyle: { backgroundColor: Platform.OS === "ios" ? "transparent" : theme.page }'
+    );
     expect(source).toContain('name="add-bill"');
     const addBillStart = source.indexOf('name="add-bill"');
     const dayDetailStart = source.indexOf('name="day-detail"');
@@ -42,5 +46,9 @@ describe("Root layout native headers", () => {
     const addBillBlock = source.slice(addBillStart, dayDetailStart);
     expect(addBillBlock).toContain("fullScreenHeaderOptions");
     expect(addBillBlock).not.toContain("DIALOG_MODAL");
+  });
+
+  test("bills-calendar leaves Android custom ScreenLayout as the only header", () => {
+    expect(source).toContain('<Stack.Screen name="bills-calendar" options={iosHeaderOptions} />');
   });
 });

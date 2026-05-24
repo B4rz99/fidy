@@ -40,6 +40,9 @@ describe("calendar screen", () => {
     expect(billsCalendarSource).toContain("rightActions");
     expect(billsCalendarSource).toContain('push("/add-bill")');
     expect(billsCalendarSource).toContain('accessibilityLabel={t("bills.addBill")}');
+    expect(rootLayoutSource).toContain(
+      '<Stack.Screen name="bills-calendar" options={iosHeaderOptions} />'
+    );
   });
 
   test("calendar proposal keeps the calendar, legend, and upcoming pending list without summary card", () => {
