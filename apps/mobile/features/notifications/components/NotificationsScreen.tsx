@@ -5,7 +5,7 @@ import { useOptionalUserId } from "@/features/auth/public";
 import { ScreenLayout } from "@/shared/components";
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
-import { useMountEffect, useSubscription, useTranslation } from "@/shared/hooks";
+import { useMountEffect, useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { trackNotificationCenterOpened } from "@/shared/lib";
 import { deriveNotificationDisplay, getNotificationFeedItems } from "../lib/display";
 import type { NotificationDisplay } from "../lib/types";
@@ -27,6 +27,7 @@ export const NotificationsScreen = () => {
   const userId = useOptionalUserId();
   const notifications = useNotificationStore((s) => s.notifications);
   const isLoading = useNotificationStore((s) => s.isLoading);
+  const accentRed = useThemeColor("accentRed");
   const { bottom } = useSafeAreaInsets();
   const hasNotifications = notifications.length > 0;
 
@@ -76,7 +77,7 @@ export const NotificationsScreen = () => {
       rightActions={
         hasNotifications ? (
           <Pressable onPress={handleClearAll} hitSlop={12}>
-            <Text style={styles.clearButton}>{t("common.clear")}</Text>
+            <Text style={[styles.clearButton, { color: accentRed }]}>{t("common.clear")}</Text>
           </Pressable>
         ) : undefined
       }
@@ -86,7 +87,7 @@ export const NotificationsScreen = () => {
           options={{
             headerRight: () => (
               <Pressable onPress={handleClearAll} hitSlop={12}>
-                <Text style={styles.clearButton}>{t("common.clear")}</Text>
+                <Text style={[styles.clearButton, { color: accentRed }]}>{t("common.clear")}</Text>
               </Pressable>
             ),
           }}
@@ -115,7 +116,6 @@ const styles = StyleSheet.create({
   clearButton: {
     fontFamily: "Poppins_500Medium",
     fontSize: 13,
-    color: "#E06060",
   },
   listContent: {
     paddingHorizontal: 16,

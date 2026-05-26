@@ -23,7 +23,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 520,
     paddingHorizontal: 24,
   },
   title: {
