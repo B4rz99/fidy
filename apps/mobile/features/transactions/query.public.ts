@@ -15,4 +15,3 @@ export {
   getTransactionsPaginated,
 } from "./lib/repository";
 export type { StoredTransaction, TransactionType } from "./schema";
-export { getStoredTransactionById } from "./store";

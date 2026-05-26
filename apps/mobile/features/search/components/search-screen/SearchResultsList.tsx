@@ -1,10 +1,9 @@
-import { FlashList } from "@shopify/flash-list";
 import { useCallback, useMemo } from "react";
-import type { StoredTransaction } from "@/features/transactions/query.public";
 import { TAB_BAR_CLEARANCE } from "@/shared/components";
-import { StyleSheet } from "@/shared/components/rn";
+import { FlatList, StyleSheet } from "@/shared/components/rn";
 import { toIsoDate } from "@/shared/lib";
 import { hasActiveFilters } from "../../lib/filters";
+import type { SearchResult } from "../../lib/types";
 import { SearchEmptyState } from "../SearchEmptyState";
 import { SearchListHeader } from "./SearchListHeader";
 import type { SearchScreenViewModel } from "./SearchScreen.types";
@@ -17,11 +16,19 @@ type SearchResultsListProps = Pick<
   | "filters"
   | "handleClearAll"
   | "handleEndReached"
+  | "handleTextChange"
   | "handleTogglePanel"
+  | "inputRef"
+  | "inputText"
+  | "peachLight"
+  | "primary"
   | "results"
+  | "secondary"
   | "showSummary"
   | "summary"
->;
+> & {
+  readonly placeholder: string;
+};
 
 export function SearchResultsList({
   activePanel,
@@ -29,11 +36,20 @@ export function SearchResultsList({
   filters,
   handleClearAll,
   handleEndReached,
+  handleTextChange,
   handleTogglePanel,
+  inputRef,
+  inputText,
+  peachLight,
+  placeholder,
+  primary,
   results,
+  secondary,
   showSummary,
   summary,
 }: SearchResultsListProps) {
+  const hasFilters = hasActiveFilters(filters);
+
   const dateBreaks = useMemo(() => {
     const breaks = new Set<string>();
     let lastDateKey: string | null = null;
@@ -49,16 +65,17 @@ export function SearchResultsList({
     return breaks;
   }, [results]);
 
-  const keyExtractor = useCallback((item: StoredTransaction) => item.id, []);
+  const keyExtractor = useCallback((item: SearchResult) => `${item.kind}:${item.id}`, []);
   const renderItem = useCallback(
-    ({ item }: { item: StoredTransaction }) => (
-      <SearchTransactionItem tx={item} showDateHeader={dateBreaks.has(item.id)} />
+    ({ item }: { item: SearchResult }) => (
+      <SearchTransactionItem item={item} showDateHeader={dateBreaks.has(item.id)} />
     ),
     [dateBreaks]
   );
 
   return (
-    <FlashList
+    <FlatList
+      key={hasFilters ? "filtered-results" : "unfiltered-results"}
       data={results}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
@@ -70,13 +87,20 @@ export function SearchResultsList({
           filterPanel={filterPanel}
           filters={filters}
           handleClearAll={handleClearAll}
+          handleTextChange={handleTextChange}
           handleTogglePanel={handleTogglePanel}
+          inputRef={inputRef}
+          inputText={inputText}
+          peachLight={peachLight}
+          placeholder={placeholder}
+          primary={primary}
+          secondary={secondary}
           showSummary={showSummary}
           summary={summary}
         />
       }
       ListEmptyComponent={
-        hasActiveFilters(filters) ? <SearchEmptyState onClearFilters={handleClearAll} /> : undefined
+        hasFilters ? <SearchEmptyState onClearFilters={handleClearAll} /> : undefined
       }
       showsVerticalScrollIndicator={false}
       contentInsetAdjustmentBehavior="automatic"

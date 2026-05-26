@@ -1,6 +1,6 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback } from "react";
-import { getStoredTransactionById } from "@/features/transactions/query.public";
+import { getStoredTransactionById } from "@/features/transactions/store.public";
 import type { AnyDb } from "@/shared/db";
 import type { UserId } from "@/shared/types/branded";
 import type { TransactionId } from "./hydration";

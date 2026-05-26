@@ -11,6 +11,9 @@ const contentSource = readSource(
   "../../features/search/components/search-screen/SearchScreenContent.tsx"
 );
 const hookSource = readSource("../../features/search/components/search-screen/useSearchScreen.tsx");
+const controlsSource = readSource(
+  "../../features/search/components/search-screen/useSearchScreenControls.ts"
+);
 const initHookSource = readSource(
   "../../features/search/components/search-screen/useSearchInitialization.ts"
 );
@@ -30,6 +33,9 @@ const transactionItemSource = readSource(
 const inputBarSource = readSource(
   "../../features/search/components/search-screen/SearchInputBar.tsx"
 );
+const categoryFilterSource = readSource("../../features/search/components/CategoryFilter.tsx");
+const dateFilterSource = readSource("../../features/search/components/DateFilter.tsx");
+const typeFilterSource = readSource("../../features/search/components/TypeFilter.tsx");
 
 test("keeps SearchScreen routed through the extracted search-screen modules", () => {
   expect(screenSource).toContain("useSearchScreen");
@@ -62,12 +68,32 @@ test("keeps content and results rendering wired to the extracted list modules", 
 
 test("keeps the transaction search redesign surfaces wired into the screen", () => {
   expect(contentSource).toContain('variant="sub"');
-  expect(contentSource).toContain('placeholder={t("search.placeholder")}');
+  expect(contentSource).not.toContain("<SearchInputBar");
   expect(inputBarSource).toContain("placeholder={placeholder}");
-  expect(listHeaderSource).toContain("filterDock");
+  expect(listHeaderSource).toContain("<SearchInputBar");
+  expect(resultsListSource).toContain("handleTextChange={handleTextChange}");
+  expect(controlsSource).not.toContain("previousCategoryCount > 0");
+  expect(controlsSource).not.toContain("panel.setActivePanel(null)");
   expect(summarySource).toContain("summaryCard");
   expect(summarySource).toContain("search.resultTotal");
   expect(summarySource).toContain("search.movements");
   expect(transactionItemSource).toContain("resultCard");
   expect(transactionItemSource).toContain("showDateHeader");
+});
+
+test("keeps search filters aligned with the requested mobile interactions", () => {
+  expect(categoryFilterSource).not.toContain("<Check");
+  expect(categoryFilterSource).toContain('className="h-11 w-11');
+  expect(categoryFilterSource).toContain('className="h-0.5 w-5 rounded-full"');
+  expect(categoryFilterSource).toContain("backgroundColor: peachLight");
+  expect(categoryFilterSource).not.toContain(
+    "backgroundColor: isSelected ? category.color : peachLight"
+  );
+  expect(dateFilterSource).toContain("TransactionDatePickerSheet");
+  expect(dateFilterSource).not.toContain("<TextInput");
+  expect(dateFilterSource).toContain('preset.key === "lastMonth" ? { flex: 1.35 } : { flex: 1 }');
+  expect(typeFilterSource).not.toContain('style={getStyle("all")}');
+  expect(typeFilterSource).toContain('style={getStyle("transfer")}');
+  expect(typeFilterSource).toContain("search.transfers");
+  expect(transactionItemSource).toContain("getTransferActivityCopy");
 });

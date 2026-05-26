@@ -1,9 +1,8 @@
 import type { ReactNode, RefObject } from "react";
-import type { StoredTransaction } from "@/features/transactions/query.public";
 import type { TextInput } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db/client";
 import type { UserId } from "@/shared/types/branded";
-import type { SearchFilters, SearchSummary } from "../../lib/types";
+import type { SearchFilters, SearchResult, SearchSummary } from "../../lib/types";
 import type { FilterKey } from "../FilterChipRow";
 
 export type SearchDb = AnyDb | null;
@@ -25,7 +24,7 @@ export type SearchScreenViewModel = {
   readonly peachLight: string;
   readonly primary: string;
   readonly ready: boolean;
-  readonly results: readonly StoredTransaction[];
+  readonly results: readonly SearchResult[];
   readonly secondary: string;
   readonly showSummary: boolean;
   readonly summary: SearchSummary | null;

@@ -1,7 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { memo } from "react";
 import { CATEGORIES, CATEGORY_ROWS, type Category } from "@/shared/categories";
-import { Check } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
@@ -22,7 +21,6 @@ const FilterPill = memo(
     onToggle: (categoryId: string) => void;
   }) => {
     const { locale } = useTranslation();
-    const card = useThemeColor("card");
     const peachLight = useThemeColor("peachLight");
 
     const handlePress = () => {
@@ -32,14 +30,22 @@ const FilterPill = memo(
 
     return (
       <Pressable
-        className="size-8 items-center justify-center rounded-full"
-        style={{ backgroundColor: isSelected ? category.color : peachLight }}
+        className="h-11 w-11 items-center justify-center gap-1"
         onPress={handlePress}
         accessibilityRole="button"
         accessibilityState={{ selected: isSelected }}
         accessibilityLabel={getCategoryLabel(category, locale)}
       >
-        {isSelected ? <Check size={16} color={card} /> : <Text>{category.icon}</Text>}
+        <View
+          className="size-8 items-center justify-center rounded-full"
+          style={{ backgroundColor: peachLight }}
+        >
+          <Text>{category.icon}</Text>
+        </View>
+        <View
+          className="h-0.5 w-5 rounded-full"
+          style={{ backgroundColor: isSelected ? category.color : "transparent" }}
+        />
       </Pressable>
     );
   }
