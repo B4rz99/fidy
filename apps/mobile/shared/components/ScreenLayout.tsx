@@ -41,6 +41,7 @@ export function ScreenLayout({
   const customHeaderTopInset = process.env.EXPO_OS === "web" ? 0 : insets.top;
   const shouldRenderRightSlot = rightActions != null || (isTab && leftAction != null);
   const rightSlotClassName = isTab ? "flex-1 flex-row justify-end" : "flex-row justify-end";
+  const shouldRenderCenterAction = centerAction != null;
   const shouldRenderCustomHeader =
     Platform.OS !== "ios" ||
     (!includesNativeHeader &&
@@ -82,18 +83,20 @@ export function ScreenLayout({
                   <ChevronLeft size={24} color={primaryColor} />
                 </Pressable>
               )}
-              <Text
-                className={
-                  isTab
-                    ? "font-poppins-extrabold text-logo text-primary dark:text-primary-dark"
-                    : "font-poppins-bold text-title text-primary dark:text-primary-dark"
-                }
-                numberOfLines={1}
-              >
-                {isTab ? "" : title}
-              </Text>
+              {!shouldRenderCenterAction ? (
+                <Text
+                  className={
+                    isTab
+                      ? "font-poppins-extrabold text-logo text-primary dark:text-primary-dark"
+                      : "font-poppins-bold text-title text-primary dark:text-primary-dark"
+                  }
+                  numberOfLines={1}
+                >
+                  {isTab ? "" : title}
+                </Text>
+              ) : null}
             </View>
-            {isTab && centerAction != null ? (
+            {shouldRenderCenterAction ? (
               <View
                 className="absolute left-0 right-0 items-center"
                 pointerEvents="box-none"

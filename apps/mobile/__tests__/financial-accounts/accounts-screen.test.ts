@@ -34,11 +34,28 @@ test("keeps the list hook wired to account lookup and navigation", () => {
   expect(hookSource).toContain('router.push("/financial-account-form")');
 });
 
-test("keeps the extracted content wired to list sections and the add CTA", () => {
+test("keeps the extracted content wired to counted list sections and the header add action", () => {
   expect(contentSource).toContain("<FinancialAccountsSection");
   expect(contentSource).toContain('t("financialAccounts.list.regularSection")');
   expect(contentSource).toContain('t("financialAccounts.list.creditSection")');
-  expect(contentSource).toContain('t("financialAccounts.list.addCta")');
+  expect(contentSource).toContain("<FinancialAccountAddButton");
+  expect(contentSource).toContain('t("financialAccounts.list.addLabel")');
+  expect(contentSource).toContain("count={regularAccounts.length}");
+  expect(contentSource).toContain("count={creditCardAccounts.length}");
+  expect(contentSource).not.toContain('t("financialAccounts.list.addCta")');
+});
+
+test("matches the selected simple ledger account list direction", () => {
+  expect(contentSource).toContain("<Stack.Screen options={{ headerShown: false }} />");
+  expect(contentSource).toContain("includesNativeHeader={false}");
+  expect(contentSource).toContain("centerAction={");
+  expect(contentSource).toContain("styles.headerTitle");
+  expect(contentSource).toContain("backgroundLayer={<FinancialAccountsAuroraLayer />}");
+  expect(contentSource).toContain("styles.introCopy");
+  expect(contentSource).not.toContain("styles.subtitle");
+  expect(rowSource).toContain("styles.accountCard");
+  expect(rowSource).toContain("styles.accountIcon");
+  expect(rowSource).toContain('kind === "credit_card" ? peachLight : accentGreenLight');
 });
 
 test("keeps the extracted row wired to identifiers and billing-gap presentation", () => {

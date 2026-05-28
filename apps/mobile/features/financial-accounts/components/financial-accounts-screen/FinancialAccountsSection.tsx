@@ -5,14 +5,17 @@ import { styles } from "./FinancialAccountsScreen.styles";
 import type { FinancialAccountListItem } from "./FinancialAccountsScreen.types";
 
 export function FinancialAccountsSection({
+  count,
   items,
   label,
   onOpenAccount,
 }: {
+  readonly count: number;
   readonly items: readonly FinancialAccountListItem[];
   readonly label: string;
   readonly onOpenAccount: (accountId: FinancialAccountListItem["account"]["id"]) => void;
 }) {
+  const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
 
   if (items.length === 0) {
@@ -21,7 +24,10 @@ export function FinancialAccountsSection({
 
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionLabel, { color: secondary }]}>{label}</Text>
+      <View style={styles.sectionHeading}>
+        <Text style={[styles.sectionLabel, { color: primary }]}>{label}</Text>
+        <Text style={[styles.sectionCount, { color: secondary }]}>{count}</Text>
+      </View>
       {items.map((item) => (
         <FinancialAccountRow
           key={item.account.id}

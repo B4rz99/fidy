@@ -10,20 +10,36 @@ import { styles } from "./FinancialAccountForm.styles";
 
 export const ACCOUNT_KIND_OPTIONS = financialAccountKindSchema.options;
 
+export function getKindEmoji(kind: FinancialAccountKind) {
+  if (kind === "credit_card") return "💳";
+  if (kind === "wallet") return "👛";
+  if (kind === "cash") return "💵";
+  if (kind === "savings") return "🐷";
+  return "🏦";
+}
+
 export function FormSection({
+  optionalLabel,
   title,
   children,
 }: {
+  readonly optionalLabel?: string;
   readonly title: string;
   readonly children: ReactNode;
 }) {
-  const primary = useThemeColor("primary");
+  const secondary = useThemeColor("secondary");
   const card = useThemeColor("card");
+  const borderSubtle = useThemeColor("borderSubtle");
 
   return (
-    <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: primary }]}>{title}</Text>
-      <View style={[styles.card, { backgroundColor: card }]}>{children}</View>
+    <View style={[styles.formSection, { backgroundColor: card, borderColor: borderSubtle }]}>
+      <View style={styles.sectionTitleRow}>
+        <Text style={[styles.sectionTitle, { color: secondary }]}>{title}</Text>
+        {optionalLabel ? (
+          <Text style={[styles.sectionOptionalLabel, { color: secondary }]}>{optionalLabel}</Text>
+        ) : null}
+      </View>
+      {children}
     </View>
   );
 }
@@ -44,24 +60,25 @@ export function KindChip({
 }) {
   const { t } = useTranslation();
   const primary = useThemeColor("primary");
-  const card = useThemeColor("card");
+  const onAccent = useThemeColor("onAccent");
+  const peachLight = useThemeColor("peachLight");
   const borderSubtle = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
-  const accentGreenLight = useThemeColor("accentGreenLight");
 
   return (
     <Pressable
       style={[
         styles.kindChip,
+        isSelected ? styles.kindChipSelected : null,
         {
-          backgroundColor: isSelected ? accentGreenLight : card,
+          backgroundColor: isSelected ? accentGreen : peachLight,
           borderColor: isSelected ? accentGreen : borderSubtle,
         },
       ]}
       onPress={onPress}
     >
-      <Text style={[styles.kindChipText, { color: primary }]}>
-        {t(`financialAccounts.kinds.${kind}`)}
+      <Text style={[styles.kindChipText, { color: isSelected ? onAccent : primary }]}>
+        {getKindEmoji(kind)} {t(`financialAccounts.kinds.${kind}`)}
       </Text>
     </Pressable>
   );

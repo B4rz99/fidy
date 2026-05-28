@@ -76,13 +76,20 @@ export function FinancialAccountFormBody({
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      <Text style={[styles.subtitle, { color: secondary }]}>
-        {isEdit
-          ? t("financialAccounts.form.editSubtitle")
-          : t("financialAccounts.form.createSubtitle")}
-      </Text>
+      <FormSection title={t("financialAccounts.form.kindLabel")}>
+        <View style={[styles.kindWrap, styles.typeFirstSection]}>
+          {ACCOUNT_KIND_OPTIONS.map((option) => (
+            <KindChip
+              key={option}
+              kind={option}
+              isSelected={option === kind}
+              onPress={() => setKind(option)}
+            />
+          ))}
+        </View>
+      </FormSection>
 
-      <FormSection title={t("financialAccounts.detail.accountSection")}>
+      <FormSection title={t("financialAccounts.form.basicInfoSection")}>
         <View style={styles.fieldBlock}>
           <FieldLabel>{t("financialAccounts.form.nameLabel")}</FieldLabel>
           <TextInput
@@ -101,22 +108,31 @@ export function FinancialAccountFormBody({
           />
         </View>
 
-        <View style={styles.fieldBlock}>
-          <FieldLabel>{t("financialAccounts.form.kindLabel")}</FieldLabel>
-          <View style={styles.kindWrap}>
-            {ACCOUNT_KIND_OPTIONS.map((option) => (
-              <KindChip
-                key={option}
-                kind={option}
-                isSelected={option === kind}
-                onPress={() => setKind(option)}
-              />
-            ))}
+        {canFinancialAccountHaveIdentifiers(kind) && !isEdit ? (
+          <View style={styles.fieldBlock}>
+            <FieldLabel>{t("financialAccounts.identifierSheet.label")}</FieldLabel>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: card,
+                  borderColor: borderSubtle,
+                  color: primary,
+                },
+              ]}
+              value={manualIdentifierValue}
+              onChangeText={setManualIdentifierValue}
+              placeholder={t("financialAccounts.identifierSheet.placeholder")}
+              placeholderTextColor={tertiary}
+            />
           </View>
-        </View>
+        ) : null}
       </FormSection>
 
-      <FormSection title={t("financialAccounts.detail.openingBalanceSection")}>
+      <FormSection
+        title={t("financialAccounts.detail.openingBalanceSection")}
+        optionalLabel={t("financialAccounts.form.optionalLabel")}
+      >
         <View style={styles.fieldBlock}>
           <FieldLabel>
             {kind === "credit_card"
@@ -243,7 +259,7 @@ export function FinancialAccountFormBody({
         </FormSection>
       ) : null}
 
-      {canFinancialAccountHaveIdentifiers(kind) ? (
+      {isEdit && canFinancialAccountHaveIdentifiers(kind) ? (
         <FinancialAccountIdentifiersSection
           borderSubtle={borderSubtle}
           card={card}

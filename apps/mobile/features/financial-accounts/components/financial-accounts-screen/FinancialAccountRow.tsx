@@ -27,12 +27,17 @@ export function FinancialAccountRow({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
+  const card = useThemeColor("card");
   const borderSubtle = useThemeColor("borderSubtle");
   const accentRed = useThemeColor("accentRed");
   const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
+  const peach = useThemeColor("peach");
+  const peachLight = useThemeColor("peachLight");
   const kind = readFinancialAccountKind(item.account.kind);
   const icon = getKindIcon(kind);
+  const iconBackgroundColor = kind === "credit_card" ? peachLight : accentGreenLight;
+  const iconColor = kind === "credit_card" ? peach : accentGreen;
   const subtitleParts = [
     t(`financialAccounts.kinds.${kind}`),
     canFinancialAccountHaveIdentifiers(kind) && item.identifiersCount > 0
@@ -42,12 +47,12 @@ export function FinancialAccountRow({
 
   return (
     <Pressable
-      style={[styles.row, { borderColor: borderSubtle }]}
+      style={[styles.accountCard, { backgroundColor: card, borderColor: borderSubtle }]}
       onPress={onPress}
       accessibilityRole="button"
     >
-      <View style={[styles.iconWrap, { backgroundColor: accentGreenLight }]}>
-        <Text style={{ color: accentGreen }}>{icon}</Text>
+      <View style={[styles.accountIcon, { backgroundColor: iconBackgroundColor }]}>
+        <Text style={{ color: iconColor }}>{icon}</Text>
       </View>
 
       <View style={styles.rowContent}>
