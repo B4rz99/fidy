@@ -1,0 +1,75 @@
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsSection.tsx
+  s_572a7841e572d9::t_91760d048ff022 8,13,18,27-30
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountRow.tsx
+  s_572a7841e572d9::t_91760d048ff022 30,36,39
+  s_acc6f33c266700::t_862d0b56be3ba8 50,54
+  s_acc6f33c266700::t_57a606c66d6d85 35,40,55
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreenContent.tsx
+  s_acc6f33c266700::t_c853624ecefc72 63-67
+  s_572a7841e572d9::t_91760d048ff022 11-32
+  s_acc6f33c266700::t_978e27722bb81c 33-36
+  s_acc6f33c266700::t_d215a1ca3494db 1,57-62,68-75,77-80,82-113
+apps/mobile/package.json
+  s_6a0b96bd54bfbc::t_3341e86b4a7c1f 9
+apps/mobile/__tests__/financial-accounts/accounts-screen.test.ts
+  s_acc6f33c266700::t_f9efb1d80a9f73 51-52
+  s_572a7841e572d9::t_91760d048ff022 37,41-45
+  s_acc6f33c266700::t_a0e4a355dd8af3 49
+  s_acc6f33c266700::t_bbb671ec2f0c39 48,50,53-58
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreen.styles.ts
+  s_acc6f33c266700::t_211708fef9134b 4-7,9,11,14-16,19,26-27,41,43,47,50,59-62,64,95,99-101
+  s_acc6f33c266700::t_196c6deaa34512 21-25
+  s_572a7841e572d9::t_91760d048ff022 13,17-18,34-38,46,48-49,52-53,67-68,97
+apps/mobile/__tests__/financial-accounts/account-form-screen.test.ts
+  s_acc6f33c266700::t_f1322a45fd444c 1-22,25-37
+  s_acc6f33c266700::t_35dab11869e8c0 23-24
+apps/mobile/features/financial-accounts/components/FinancialAccountFormScreen.tsx
+  s_acc6f33c266700::t_b0c14c04e16539 1,64,118-139
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx
+  s_acc6f33c266700::t_1e2d44a4b7b668 79-90,92,111-127,129,132-135
+  s_acc6f33c266700::t_b9dcbd7e6f193e 262
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx
+  s_acc6f33c266700::t_183bf691fb3cb1 13-20,22,26,30,32,35-42,63-64,72,74,80-81
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountForm.styles.ts
+  s_acc6f33c266700::t_b5df283d392746 5,7-12,36-45,47-50,53-56,58-60,63,66,72-76,88-90,92,96,99-101,103,116-117,155-156,162
+apps/mobile/shared/i18n/locales/es.ts
+  s_acc6f33c266700::t_a5bd8499447544 246-247
+  s_572a7841e572d9::t_91760d048ff022 209,216
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_acc6f33c266700::t_b78fc5bdadb141 44,86-97,99
+apps/mobile/shared/i18n/locales/en.ts
+  s_572a7841e572d9::t_91760d048ff022 204,210
+  s_acc6f33c266700::t_fb0dd33c195469 240-241
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "3da3475b34b925e90fe6c2492d3ec11670a56979",
+  "prompts": {},
+  "sessions": {
+    "s_572a7841e572d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5b3a-9a3b-7683-8384-569fb79c711f",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_6a0b96bd54bfbc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e6e76-02e6-7ff1-a648-78d444541ca4",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_acc6f33c266700": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e6e70-0f56-72b2-9921-a3e2f318667c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
