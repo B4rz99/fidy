@@ -1,0 +1,42 @@
+apps/mobile/__tests__/financial-accounts/account-form-screen.test.ts
+  s_acc6f33c266700::t_f0db8d990a3b02 30
+  s_acc6f33c266700::t_05938c91918a23 31-33
+  s_acc6f33c266700::t_98b51105371001 4-5
+apps/mobile/features/financial-accounts/lib/kind-display.ts
+  s_acc6f33c266700::t_4b51c0f874fd72 1-20
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreenContent.tsx
+  s_acc6f33c266700::t_dfa77ab2eb72fe 51,65
+apps/mobile/package.json
+  s_acc6f33c266700::t_3be49ca66fe133 9
+apps/mobile/shared/components/ScreenLayout.tsx
+  s_acc6f33c266700::t_59bffd7c6979b4 13,26
+apps/mobile/features/financial-accounts/components/FinancialAccountFormScreen.tsx
+  s_acc6f33c266700::t_99c7aee1f891a1 65-67,128
+scripts/mobile-qa.ts
+  s_acc6f33c266700::t_6f664be00b9109 10
+apps/mobile/__tests__/financial-accounts/accounts-screen.test.ts
+  s_acc6f33c266700::t_68e6996033e69c 1,3,5-6,9-27,50-51,65
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountRow.tsx
+  s_acc6f33c266700::t_cefc9072668e76 12-27,48-49,53-57,59-62,76-77
+  s_acc6f33c266700::t_923f63be231909 50,58
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsSection.tsx
+  s_acc6f33c266700::t_36968cf45f15e5 27
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx
+  s_acc6f33c266700::t_97b8bf67f61547 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "c8c2a35d6a379f61788cce696b6dfd2367c4701b",
+  "prompts": {},
+  "sessions": {
+    "s_acc6f33c266700": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e6e70-0f56-72b2-9921-a3e2f318667c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
