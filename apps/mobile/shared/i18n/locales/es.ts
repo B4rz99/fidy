@@ -206,14 +206,14 @@ const es = {
     list: {
       settingsRow: "Cuentas financieras",
       title: "Cuentas financieras",
-      subtitle:
-        "Crea y edita las cuentas que usas para saldos, transferencias y registro manual. La captura de correos y notificaciones sigue en Cuentas conectadas.",
+      subtitle: "Cuentas que usas para saldos, transferencias y registro manual.",
       regularSection: "Efectivo y bancos",
       creditSection: "Tarjetas de crédito",
       emptyTitle: "Aún no hay cuentas financieras",
       emptySubtitle:
         "Agrega una cuenta cuando quieras manejar saldos y transferencias fuera del flujo de captura.",
       addCta: "Agregar cuenta",
+      addLabel: "Agregar cuenta",
       billingGap: "Faltan fechas del ciclo",
       identifiersCount: { one: "%{count} identificador", other: "%{count} identificadores" },
     },
@@ -243,6 +243,8 @@ const es = {
       nameLabel: "Nombre de la cuenta",
       namePlaceholder: "ej. Corriente Bancolombia",
       kindLabel: "Tipo de cuenta",
+      basicInfoSection: "Información básica",
+      optionalLabel: "Opcional",
       balanceLabel: "Saldo inicial",
       debtLabel: "Deuda inicial",
       dateLabel: "Fecha efectiva",

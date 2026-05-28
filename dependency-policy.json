@@ -81,6 +81,11 @@
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
     },
     {
+      "name": "expo",
+      "until": "2026-06-01",
+      "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."
+    },
+    {
       "name": "expo-background-task",
       "until": "2026-06-01",
       "reason": "Held to the Expo SDK 55-compatible version; SDK 56 belongs in a dedicated Expo migration PR."

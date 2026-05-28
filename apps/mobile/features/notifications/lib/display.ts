@@ -159,6 +159,10 @@ const sortByCreatedAtDesc = (
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
+export const getNotificationFeedItems = (
+  notifications: readonly NotificationDisplay[]
+): readonly NotificationDisplay[] => sortByCreatedAtDesc(notifications);
+
 export const groupNotificationsBySection = (
   notifications: readonly NotificationDisplay[],
   today: Date,

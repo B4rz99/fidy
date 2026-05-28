@@ -20,8 +20,9 @@ describe("ScreenLayout", () => {
     expect(source).toContain("HEADER_HEIGHT = 48");
   });
 
-  test("accepts title string prop", () => {
-    expect(source).toContain("title: string");
+  test("accepts optional title string prop", () => {
+    expect(source).toContain("title?: string");
+    expect(source).toContain('title = ""');
   });
 
   test('accepts variant prop with "tab" | "sub" types', () => {

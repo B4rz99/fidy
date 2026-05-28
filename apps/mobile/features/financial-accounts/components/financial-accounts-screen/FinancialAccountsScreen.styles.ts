@@ -1,38 +1,71 @@
 import { StyleSheet } from "@/shared/components/rn";
 
 export const styles = StyleSheet.create({
-  content: {
-    paddingHorizontal: 16,
-    paddingBottom: 32,
-    gap: 20,
+  auroraLayer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(139, 195, 74, 0.04)",
   },
-  subtitle: {
-    fontFamily: "Poppins_500Medium",
+  content: {
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+    gap: 18,
+  },
+  headerAddButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(240, 240, 240, 0.1)",
+  },
+  headerTitle: {
+    maxWidth: 250,
+    fontFamily: "Poppins_700Bold",
+    fontSize: 20,
+  },
+  introCopy: {
+    fontFamily: "Poppins_700Bold",
     fontSize: 13,
     lineHeight: 19,
   },
   section: {
     gap: 10,
   },
+  sectionHeading: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 2,
+  },
   sectionLabel: {
-    fontFamily: "Poppins_700Bold",
+    fontFamily: "Poppins_800ExtraBold",
     fontSize: 11,
-    letterSpacing: 0.6,
+    letterSpacing: 0.8,
     textTransform: "uppercase",
   },
-  row: {
+  sectionCount: {
+    fontFamily: "Poppins_800ExtraBold",
+    fontSize: 12,
+  },
+  accountCard: {
     borderWidth: 1,
-    borderRadius: 18,
+    borderRadius: 8,
+    borderCurve: "continuous",
     paddingHorizontal: 14,
     paddingVertical: 14,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    shadowColor: "#000000",
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 12 },
   },
-  iconWrap: {
+  accountIcon: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 8,
+    borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -59,9 +92,13 @@ export const styles = StyleSheet.create({
     fontSize: 11,
   },
   badge: {
+    minHeight: 24,
     borderRadius: 999,
+    borderCurve: "continuous",
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 0,
+    alignItems: "center",
+    justifyContent: "center",
   },
   badgeText: {
     fontFamily: "Poppins_600SemiBold",
@@ -85,19 +122,5 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     textAlign: "center",
-  },
-  primaryButton: {
-    minHeight: 52,
-    borderRadius: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    marginTop: 4,
-  },
-  primaryButtonText: {
-    color: "#FFFFFF",
-    fontFamily: "Poppins_700Bold",
-    fontSize: 14,
   },
 });

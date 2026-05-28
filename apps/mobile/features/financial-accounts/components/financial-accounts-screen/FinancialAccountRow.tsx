@@ -9,11 +9,22 @@ import { styles } from "./FinancialAccountsScreen.styles";
 import type { FinancialAccountListItem } from "./FinancialAccountsScreen.types";
 
 function getKindIcon(kind: FinancialAccountKind) {
-  if (kind === "credit_card") return "💳";
-  if (kind === "wallet") return "👛";
-  if (kind === "cash") return "💵";
-  if (kind === "savings") return "🐷";
-  return "🏦";
+  switch (kind) {
+    case "checking":
+      return "🏦";
+    case "savings":
+      return "🐷";
+    case "wallet":
+      return "👛";
+    case "cash":
+      return "💵";
+    case "credit_card":
+      return "💳";
+    default: {
+      const exhaustiveKind: never = kind;
+      return exhaustiveKind;
+    }
+  }
 }
 
 export function FinancialAccountRow({
@@ -27,12 +38,28 @@ export function FinancialAccountRow({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
+  const card = useThemeColor("card");
   const borderSubtle = useThemeColor("borderSubtle");
   const accentRed = useThemeColor("accentRed");
   const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
+  const peach = useThemeColor("peach");
+  const peachLight = useThemeColor("peachLight");
+  const chartBg = useThemeColor("chartBg");
+  const numpadKey = useThemeColor("numpadKey");
+  const numpadSpecialKey = useThemeColor("numpadSpecialKey");
   const kind = readFinancialAccountKind(item.account.kind);
   const icon = getKindIcon(kind);
+  const iconPalette = {
+    checking: { backgroundColor: accentGreenLight, color: accentGreen },
+    savings: { backgroundColor: peachLight, color: peach },
+    wallet: { backgroundColor: chartBg, color: secondary },
+    cash: { backgroundColor: numpadKey, color: tertiary },
+    credit_card: { backgroundColor: numpadSpecialKey, color: peach },
+  } satisfies Record<
+    FinancialAccountKind,
+    { readonly backgroundColor: string; readonly color: string }
+  >;
   const subtitleParts = [
     t(`financialAccounts.kinds.${kind}`),
     canFinancialAccountHaveIdentifiers(kind) && item.identifiersCount > 0
@@ -42,12 +69,12 @@ export function FinancialAccountRow({
 
   return (
     <Pressable
-      style={[styles.row, { borderColor: borderSubtle }]}
+      style={[styles.accountCard, { backgroundColor: card, borderColor: borderSubtle }]}
       onPress={onPress}
       accessibilityRole="button"
     >
-      <View style={[styles.iconWrap, { backgroundColor: accentGreenLight }]}>
-        <Text style={{ color: accentGreen }}>{icon}</Text>
+      <View style={[styles.accountIcon, { backgroundColor: iconPalette[kind].backgroundColor }]}>
+        <Text style={{ color: iconPalette[kind].color }}>{icon}</Text>
       </View>
 
       <View style={styles.rowContent}>

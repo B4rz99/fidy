@@ -1,4 +1,4 @@
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import {
@@ -61,6 +61,10 @@ export function FinancialAccountFormScreen() {
   const { accountId: rawAccountId } = useLocalSearchParams<{ accountId?: string }>();
   const accountId = parseFinancialAccountRouteParam(rawAccountId);
   const { t } = useTranslation();
+  const primary = useThemeColor("primary");
+  const title = accountId
+    ? t("financialAccounts.form.editTitle")
+    : t("financialAccounts.form.createTitle");
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const [existingDetails, setExistingDetails] = useState<FinancialAccountFormDetails | null>(null);
@@ -114,14 +118,20 @@ export function FinancialAccountFormScreen() {
   })();
 
   return (
-    <ScreenLayout
-      title={
-        accountId ? t("financialAccounts.form.editTitle") : t("financialAccounts.form.createTitle")
-      }
-      variant="sub"
-      onBack={screenState === "missing" ? exitToAccountList : back}
-    >
-      {formContent}
-    </ScreenLayout>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScreenLayout
+        variant="sub"
+        includesNativeHeader={false}
+        centerAction={
+          <Text style={[styles.headerTitle, { color: primary }]} numberOfLines={1}>
+            {title}
+          </Text>
+        }
+        onBack={screenState === "missing" ? exitToAccountList : back}
+      >
+        {formContent}
+      </ScreenLayout>
+    </>
   );
 }

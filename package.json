@@ -52,7 +52,7 @@
     "lefthook": "2.1.6",
     "oxfmt": "0.47.0",
     "oxlint": "1.62.0",
-    "oxlint-tsgolint": "0.22.1",
+    "oxlint-tsgolint": "0.23.0",
     "serve-sim": "0.1.36",
     "typescript": "6.0.3",
     "xcodebuildmcp": "2.3.2"

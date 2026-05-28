@@ -1,14 +1,13 @@
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAccountCreatedAt, useOptionalUserId } from "@/features/auth/public";
+import { useOptionalUserId } from "@/features/auth/public";
 import { ScreenLayout } from "@/shared/components";
-import { Platform, Pressable, SectionList, StyleSheet, Text, View } from "@/shared/components/rn";
+import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
 import { useMountEffect, useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { trackNotificationCenterOpened } from "@/shared/lib";
-import { deriveNotificationDisplay, groupNotificationsBySection } from "../lib/display";
-import { isFirstWeek } from "../lib/first-week";
+import { deriveNotificationDisplay, getNotificationFeedItems } from "../lib/display";
 import type { NotificationDisplay } from "../lib/types";
 import {
   clearAllNotifications,
@@ -28,12 +27,9 @@ export const NotificationsScreen = () => {
   const userId = useOptionalUserId();
   const notifications = useNotificationStore((s) => s.notifications);
   const isLoading = useNotificationStore((s) => s.isLoading);
-  const tertiaryColor = useThemeColor("tertiary");
   const accentRed = useThemeColor("accentRed");
   const { bottom } = useSafeAreaInsets();
   const hasNotifications = notifications.length > 0;
-  const accountCreatedAt = useAccountCreatedAt();
-  const firstWeek = isFirstWeek(accountCreatedAt, new Date());
 
   const handleClearAll = useCallback(() => {
     if (!userId) return;
@@ -54,10 +50,9 @@ export const NotificationsScreen = () => {
     userId != null
   );
 
-  const sections = useMemo(() => {
+  const feedItems = useMemo(() => {
     const displays = notifications.map((n) => deriveNotificationDisplay(n, t));
-    const grouped = groupNotificationsBySection(displays, new Date(), t);
-    return grouped.map((s) => ({ title: s.label, data: s.notifications as NotificationDisplay[] }));
+    return getNotificationFeedItems(displays);
   }, [notifications, t]);
 
   const handlePress = useCallback(
@@ -74,13 +69,6 @@ export const NotificationsScreen = () => {
     [handlePress]
   );
 
-  const renderSectionHeader = useCallback(
-    ({ section }: { section: { title: string } }) => (
-      <Text style={[styles.sectionLabel, { color: tertiaryColor }]}>{section.title}</Text>
-    ),
-    [tertiaryColor]
-  );
-
   return (
     <ScreenLayout
       title={t("notifications.title")}
@@ -89,7 +77,7 @@ export const NotificationsScreen = () => {
       rightActions={
         hasNotifications ? (
           <Pressable onPress={handleClearAll} hitSlop={12}>
-            <Text style={[styles.clearButton, { color: accentRed }]}>{t("common.clearAll")}</Text>
+            <Text style={[styles.clearButton, { color: accentRed }]}>{t("common.clear")}</Text>
           </Pressable>
         ) : undefined
       }
@@ -99,29 +87,22 @@ export const NotificationsScreen = () => {
           options={{
             headerRight: () => (
               <Pressable onPress={handleClearAll} hitSlop={12}>
-                <Text style={[styles.clearButton, { color: accentRed }]}>
-                  {t("common.clearAll")}
-                </Text>
+                <Text style={[styles.clearButton, { color: accentRed }]}>{t("common.clear")}</Text>
               </Pressable>
             ),
           }}
         />
       )}
-      {!isLoading && sections.length === 0 ? (
-        <NotificationEmptyState
-          titleKey={firstWeek ? "notifications.firstWeekTitle" : "notifications.emptyTitle"}
-          subtitleKey={firstWeek ? "notifications.firstWeekMessage" : "notifications.emptySubtitle"}
-        />
+      {!isLoading && feedItems.length === 0 ? (
+        <NotificationEmptyState />
       ) : (
-        <SectionList
-          sections={sections}
+        <FlatList
+          data={feedItems}
           keyExtractor={notificationKeyExtractor}
           renderItem={renderItem}
-          renderSectionHeader={renderSectionHeader}
           ItemSeparatorComponent={NotificationItemSeparator}
           contentContainerStyle={[styles.listContent, { paddingBottom: bottom + 16 }]}
           contentInsetAdjustmentBehavior="automatic"
-          stickySectionHeadersEnabled={false}
         />
       )}
     </ScreenLayout>
@@ -129,22 +110,15 @@ export const NotificationsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  sectionLabel: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 11,
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
-    marginBottom: 12,
-    marginTop: 20,
-  },
   separator: {
-    height: 12,
+    height: 10,
   },
   clearButton: {
     fontFamily: "Poppins_500Medium",
-    fontSize: 14,
+    fontSize: 13,
   },
   listContent: {
     paddingHorizontal: 16,
+    paddingTop: 6,
   },
 });

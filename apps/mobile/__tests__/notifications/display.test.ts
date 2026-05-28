@@ -8,6 +8,7 @@ import type { CategoryId, IsoDateTime, NotificationId, UserId } from "@/shared/t
 
 import {
   deriveNotificationDisplay,
+  getNotificationFeedItems,
   groupNotificationsBySection,
 } from "@/features/notifications/lib/display";
 
@@ -320,5 +321,42 @@ describe("groupNotificationsBySection", () => {
     };
     groupNotificationsBySection([display], Today, capturingT);
     expect(capturedParams).toEqual({ weekRange: "Mar 16\u201322" });
+  });
+});
+
+describe("getNotificationFeedItems", () => {
+  const makeDisplay = (overrides: Partial<NotificationDisplay> = {}): NotificationDisplay => ({
+    id: "nf-1" as NotificationId,
+    type: "budget_alert",
+    title: "Title",
+    message: "Message",
+    iconName: "triangle-alert",
+    iconColor: "#F57C00",
+    iconBgColor: "#FFF3E0",
+    route: null,
+    createdAt: "2026-03-18T12:00:00.000Z" as IsoDateTime,
+    ...overrides,
+  });
+
+  it("returns every notification in a single newest-first feed", () => {
+    const result = getNotificationFeedItems([
+      makeDisplay({
+        id: "older-budget" as NotificationId,
+        type: "budget_alert",
+        createdAt: "2026-05-20T15:00:00.000Z" as IsoDateTime,
+      }),
+      makeDisplay({
+        id: "weekly-move" as NotificationId,
+        type: "budget_pace",
+        createdAt: "2026-05-24T12:00:00.000Z" as IsoDateTime,
+      }),
+      makeDisplay({
+        id: "newest-goal" as NotificationId,
+        type: "goal_milestone",
+        createdAt: "2026-05-24T13:00:00.000Z" as IsoDateTime,
+      }),
+    ]);
+
+    expect(result.map((item) => item.id)).toEqual(["newest-goal", "weekly-move", "older-budget"]);
   });
 });
