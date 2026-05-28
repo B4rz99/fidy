@@ -3,20 +3,13 @@ import {
   type FinancialAccountKind,
   financialAccountKindSchema,
 } from "@/features/financial-accounts/public";
+import { getKindEmoji } from "@/features/financial-accounts/lib/kind-display";
 import { ChevronRight } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { styles } from "./FinancialAccountForm.styles";
 
 export const ACCOUNT_KIND_OPTIONS = financialAccountKindSchema.options;
-
-export function getKindEmoji(kind: FinancialAccountKind) {
-  if (kind === "credit_card") return "💳";
-  if (kind === "wallet") return "👛";
-  if (kind === "cash") return "💵";
-  if (kind === "savings") return "🐷";
-  return "🏦";
-}
 
 export function FormSection({
   optionalLabel,

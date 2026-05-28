@@ -10,7 +10,7 @@ export const TAB_BAR_CLEARANCE = Platform.OS === "ios" ? 0 : 96;
 export const HEADER_HEIGHT = 48;
 
 type ScreenLayoutProps = {
-  title: string;
+  title?: string;
   variant?: "tab" | "sub";
   backgroundColor?: string;
   backgroundLayer?: ReactNode;
@@ -23,7 +23,7 @@ type ScreenLayoutProps = {
 };
 
 export function ScreenLayout({
-  title,
+  title = "",
   variant = "tab",
   backgroundColor,
   backgroundLayer,

@@ -48,6 +48,7 @@ export function FinancialAccountsScreenContent({
   readonly regularAccounts: readonly FinancialAccountListItem[];
 }) {
   const { t } = useTranslation();
+  const title = t("financialAccounts.list.title");
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const { bottom } = useSafeAreaInsets();
@@ -57,12 +58,11 @@ export function FinancialAccountsScreenContent({
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <ScreenLayout
-        title={t("financialAccounts.list.title")}
         variant="sub"
         includesNativeHeader={false}
         centerAction={
           <Text style={[styles.headerTitle, { color: primary }]} numberOfLines={1}>
-            {t("financialAccounts.list.title")}
+            {title}
           </Text>
         }
         backgroundLayer={<FinancialAccountsAuroraLayer />}
@@ -86,13 +86,11 @@ export function FinancialAccountsScreenContent({
           {hasItems ? (
             <>
               <FinancialAccountsSection
-                count={regularAccounts.length}
                 label={t("financialAccounts.list.regularSection")}
                 items={regularAccounts}
                 onOpenAccount={onOpenAccount}
               />
               <FinancialAccountsSection
-                count={creditCardAccounts.length}
                 label={t("financialAccounts.list.creditSection")}
                 items={creditCardAccounts}
                 onOpenAccount={onOpenAccount}

@@ -62,6 +62,9 @@ export function FinancialAccountFormScreen() {
   const accountId = parseFinancialAccountRouteParam(rawAccountId);
   const { t } = useTranslation();
   const primary = useThemeColor("primary");
+  const title = accountId
+    ? t("financialAccounts.form.editTitle")
+    : t("financialAccounts.form.createTitle");
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const [existingDetails, setExistingDetails] = useState<FinancialAccountFormDetails | null>(null);
@@ -118,18 +121,11 @@ export function FinancialAccountFormScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <ScreenLayout
-        title={
-          accountId
-            ? t("financialAccounts.form.editTitle")
-            : t("financialAccounts.form.createTitle")
-        }
         variant="sub"
         includesNativeHeader={false}
         centerAction={
           <Text style={[styles.headerTitle, { color: primary }]} numberOfLines={1}>
-            {accountId
-              ? t("financialAccounts.form.editTitle")
-              : t("financialAccounts.form.createTitle")}
+            {title}
           </Text>
         }
         onBack={screenState === "missing" ? exitToAccountList : back}
