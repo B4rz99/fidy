@@ -8,6 +8,7 @@ import type { FinancialAccountListItem } from "@/features/financial-accounts/com
 import { i18n, useLocaleStore } from "@/shared/i18n";
 import type { FinancialAccountId } from "@/shared/types/branded";
 import { createFinancialAccountFixture } from "./fixtures";
+import type { ReactTestInstance } from "react-test-renderer";
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
@@ -71,6 +72,17 @@ function hasJsxComponent(sourceFile: ts.SourceFile, componentName: string) {
       ts.isIdentifier(node.tagName) &&
       node.tagName.text === componentName
   );
+}
+
+function expectSectionCount(screen: ReturnType<typeof renderFidy>, label: string, count: number) {
+  const heading = screen.getByText(label).parent;
+
+  expect(heading?.findAll(isText(String(count)))).toHaveLength(1);
+}
+
+function isText(text: string) {
+  return (node: ReactTestInstance) =>
+    Array.isArray(node.children) && node.children.join("") === text;
 }
 
 const checkingAccount = {
@@ -141,6 +153,8 @@ describe("FinancialAccountsScreenContent", () => {
 
     expect(screen.getByText("Cash and bank accounts")).toBeTruthy();
     expect(screen.getByText("Credit cards")).toBeTruthy();
+    expectSectionCount(screen, "Cash and bank accounts", 2);
+    expectSectionCount(screen, "Credit cards", 1);
     expect(screen.getByText("Bancolombia checking")).toBeTruthy();
     expect(screen.getByText("Cash pocket")).toBeTruthy();
     expect(screen.getByText("Visa gold")).toBeTruthy();
