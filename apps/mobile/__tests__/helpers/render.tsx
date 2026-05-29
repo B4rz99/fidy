@@ -1,5 +1,9 @@
 import type { ReactElement } from "react";
-import TestRenderer, { act, type ReactTestInstance } from "react-test-renderer";
+import TestRenderer, {
+  act,
+  type ReactTestInstance,
+  type ReactTestRenderer,
+} from "react-test-renderer";
 
 const pressEvent = {
   nativeEvent: {},
@@ -7,7 +11,7 @@ const pressEvent = {
 };
 
 export function renderFidy(ui: ReactElement) {
-  let renderer: TestRenderer.ReactTestRenderer | undefined;
+  let renderer: ReactTestRenderer | undefined;
 
   act(() => {
     renderer = TestRenderer.create(ui);
@@ -50,7 +54,7 @@ export function renderFidy(ui: ReactElement) {
   return {
     root,
     toJSON: () => activeRenderer.toJSON(),
-    press: (node: TestRenderer.ReactTestInstance) => {
+    press: (node: ReactTestInstance) => {
       act(() => {
         node.props.onPress(pressEvent);
       });

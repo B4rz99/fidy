@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 const createNoop = () => () => undefined;
 
 export const View = "View";
@@ -12,14 +14,14 @@ export const Image = "Image";
 export const Modal = "Modal";
 export const ActivityIndicator = "ActivityIndicator";
 export const KeyboardAvoidingView = "KeyboardAvoidingView";
-export const ActionSheetIOS = { showActionSheetWithOptions: createNoop() };
-export const Alert = { alert: createNoop() };
-export const Appearance = { setColorScheme: createNoop() };
+export const ActionSheetIOS = { showActionSheetWithOptions: vi.fn(createNoop()) };
+export const Alert = { alert: vi.fn(createNoop()) };
+export const Appearance = { setColorScheme: vi.fn(createNoop()) };
 export const StyleSheet = { create: (styles: Record<string, unknown>) => styles };
 export const Keyboard = { dismiss: createNoop() };
 export const Linking = {
-  openSettings: createNoop(),
-  sendIntent: () => Promise.resolve(),
+  openSettings: vi.fn(createNoop()),
+  sendIntent: vi.fn(() => Promise.resolve()),
 };
 export const Platform = {
   OS: "ios",
@@ -28,8 +30,8 @@ export const Platform = {
 export const useColorScheme = () => "light";
 export const useWindowDimensions = () => ({ width: 390, height: 844, scale: 3, fontScale: 1 });
 export const AccessibilityInfo = {
-  announceForAccessibility: createNoop(),
+  announceForAccessibility: vi.fn(createNoop()),
 };
 export const AppState = {
-  addEventListener: () => ({ remove: createNoop() }),
+  addEventListener: vi.fn(() => ({ remove: createNoop() })),
 };
