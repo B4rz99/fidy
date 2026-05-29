@@ -5,6 +5,15 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": resolve(__dirname, "."),
+      "react-native": resolve(__dirname, "__tests__/helpers/react-native-mock.ts"),
+      "react-native-safe-area-context": resolve(
+        __dirname,
+        "__tests__/helpers/safe-area-context-mock.ts"
+      ),
+      "lucide-react-native": resolve(__dirname, "__tests__/helpers/lucide-react-native-mock.ts"),
+      "react-native-reanimated": resolve(__dirname, "__tests__/helpers/reanimated-mock.ts"),
+      "expo-glass-effect": resolve(__dirname, "__tests__/helpers/expo-glass-effect-mock.ts"),
+      "expo-image": resolve(__dirname, "__tests__/helpers/expo-image-mock.ts"),
     },
   },
   test: {
@@ -13,7 +22,7 @@ export default defineConfig({
     clearMocks: true,
     testTimeout: 60000,
     setupFiles: ["./__tests__/setup.ts"],
-    include: ["__tests__/**/*.test.ts"],
+    include: ["__tests__/**/*.test.{ts,tsx}"],
     server: {
       deps: {
         inline: [/expo-sqlite/],

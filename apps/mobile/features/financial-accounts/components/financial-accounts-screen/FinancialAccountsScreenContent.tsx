@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ScreenLayout } from "@/shared/components";
+import { ScreenLayout } from "@/shared/components/ScreenLayout";
 import { Plus } from "@/shared/components/icons";
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
