@@ -8,7 +8,6 @@ import type { FinancialAccountListItem } from "@/features/financial-accounts/com
 import { i18n, useLocaleStore } from "@/shared/i18n";
 import type { FinancialAccountId } from "@/shared/types/branded";
 import { createFinancialAccountFixture } from "./fixtures";
-import type { ReactTestInstance } from "react-test-renderer";
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
@@ -92,12 +91,11 @@ function hasJsxComponent(sourceFile: ts.SourceFile, componentName: string) {
 function expectSectionCount(screen: ReturnType<typeof renderFidy>, label: string, count: number) {
   const heading = screen.getByText(label).parent;
 
-  expect(heading?.findAll(isText(String(count)))).toHaveLength(1);
-}
-
-function isText(text: string) {
-  return (node: ReactTestInstance) =>
-    Array.isArray(node.children) && node.children.join("") === text;
+  expect(
+    heading?.findAll(
+      (node) => Array.isArray(node.children) && node.children.join("") === String(count)
+    )
+  ).toHaveLength(1);
 }
 
 const checkingAccount = {

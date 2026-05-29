@@ -17,7 +17,11 @@ export const KeyboardAvoidingView = "KeyboardAvoidingView";
 export const ActionSheetIOS = { showActionSheetWithOptions: vi.fn(createNoop()) };
 export const Alert = { alert: vi.fn(createNoop()) };
 export const Appearance = { setColorScheme: vi.fn(createNoop()) };
-export const StyleSheet = { create: (styles: Record<string, unknown>) => styles };
+export const StyleSheet = {
+  create: (styles: Record<string, unknown>) => styles,
+  flatten: (style: unknown) =>
+    Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style,
+};
 export const Keyboard = { dismiss: createNoop() };
 export const Linking = {
   openSettings: vi.fn(createNoop()),

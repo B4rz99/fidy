@@ -1,74 +1,72 @@
+import { createRequire } from "node:module";
 import type { ReactElement } from "react";
-import TestRenderer, {
-  act,
-  type ReactTestInstance,
-  type ReactTestRenderer,
-} from "react-test-renderer";
+import * as reactNativeMock from "./react-native-mock";
+
+type TestNode = {
+  readonly children: readonly unknown[];
+  readonly parent: TestNode | null;
+  readonly props: Record<string, unknown>;
+  findAll(predicate: (node: TestNode) => boolean): TestNode[];
+};
+
+type TestingLibrary = {
+  readonly fireEvent: {
+    press(element: TestNode, ...data: unknown[]): void;
+  };
+  render(ui: ReactElement): {
+    readonly root: TestNode;
+    getAllByText(text: string | RegExp): TestNode[];
+    getByLabelText(text: string | RegExp): TestNode;
+    getByText(text: string | RegExp): TestNode;
+    queryAllByLabelText(text: string | RegExp): TestNode[];
+    queryAllByText(text: string | RegExp): TestNode[];
+    queryByLabelText(text: string | RegExp): TestNode | null;
+    queryByText(text: string | RegExp): TestNode | null;
+    toJSON(): unknown;
+  };
+};
+
+const require = createRequire(import.meta.url);
+let testingLibrary: TestingLibrary | undefined;
 
 const pressEvent = {
   nativeEvent: {},
   target: null,
 };
 
-function matchesText(text: string | RegExp, value: string) {
-  if (typeof text === "string") {
-    return value === text;
+function stableText(text: string | RegExp) {
+  return typeof text === "string" ? text : new RegExp(text.source, text.flags.replace(/[gy]/g, ""));
+}
+
+function getTestingLibrary() {
+  if (testingLibrary != null) {
+    return testingLibrary;
   }
 
-  return new RegExp(text.source, text.flags.replace(/[gy]/g, "")).test(value);
+  const reactNativePath = require.resolve("react-native");
+  require.cache[reactNativePath] = {
+    exports: reactNativeMock,
+  } as NodeJS.Module;
+  testingLibrary = require("@testing-library/react-native/pure") as TestingLibrary;
+
+  return testingLibrary;
 }
 
 export function renderFidy(ui: ReactElement) {
-  let renderer: ReactTestRenderer | undefined;
-
-  act(() => {
-    renderer = TestRenderer.create(ui);
-  });
-
-  if (renderer == null) {
-    throw new Error("React Native tree was not rendered");
-  }
-
-  const activeRenderer = renderer;
+  const { fireEvent, render } = getTestingLibrary();
+  const activeRenderer = render(ui);
   const root = activeRenderer.root;
-  const textNodes = () =>
-    root.findAll(
-      (node: ReactTestInstance) =>
-        Array.isArray(node.children) &&
-        node.children.length > 0 &&
-        typeof node.children[0] === "string"
-    );
   const queryByText = (text: string | RegExp) =>
-    textNodes().find((node: ReactTestInstance) => {
-      const value = node.children.join("");
-      return matchesText(text, value);
-    }) ?? null;
+    activeRenderer.queryAllByText(stableText(text))[0] ?? null;
   const queryByA11yLabel = (label: string | RegExp) =>
-    root.findAll((node: ReactTestInstance) => {
-      const value = node.props.accessibilityLabel;
-      return typeof value === "string" && matchesText(label, value);
-    })[0] ?? null;
-  const pressableAncestor = (node: ReactTestInstance): ReactTestInstance | null => {
-    if (typeof node.props.onPress === "function") {
-      return node;
-    }
-
-    return node.parent ? pressableAncestor(node.parent) : null;
-  };
+    activeRenderer.queryAllByLabelText(stableText(label))[0] ?? null;
 
   return {
+    ...activeRenderer,
     root,
     toJSON: () => activeRenderer.toJSON(),
-    press: (node: ReactTestInstance) => {
-      act(() => {
-        node.props.onPress(pressEvent);
-      });
-    },
-    getAllByText: (text: string | RegExp) =>
-      textNodes().filter((node: ReactTestInstance) => {
-        const value = node.children.join("");
-        return matchesText(text, value);
-      }),
+    press: (node: TestNode) => fireEvent.press(node, pressEvent),
+    getAllByText: (text: string | RegExp) => activeRenderer.getAllByText(stableText(text)),
     getByText: (text: string | RegExp) => {
       const match = queryByText(text);
 
@@ -79,37 +77,15 @@ export function renderFidy(ui: ReactElement) {
       return match;
     },
     getByA11yLabel: (label: string | RegExp) => {
-      const match = queryByA11yLabel(label);
-
-      if (!match) {
-        throw new Error(`Unable to find accessibility label: ${String(label)}`);
-      }
-
-      return match;
+      return activeRenderer.getByLabelText(stableText(label));
     },
     pressByText: (text: string | RegExp) => {
-      const match = queryByText(text);
-      const pressable = match ? pressableAncestor(match) : null;
-
-      if (!pressable) {
-        throw new Error(`Unable to find pressable text: ${String(text)}`);
-      }
-
-      act(() => {
-        pressable.props.onPress(pressEvent);
-      });
+      fireEvent.press(activeRenderer.getByText(stableText(text)), pressEvent);
     },
     pressByA11yLabel: (label: string | RegExp) => {
-      const match = queryByA11yLabel(label);
-
-      if (!match || typeof match.props.onPress !== "function") {
-        throw new Error(`Unable to find pressable accessibility label: ${String(label)}`);
-      }
-
-      act(() => {
-        match.props.onPress(pressEvent);
-      });
+      fireEvent.press(activeRenderer.getByLabelText(stableText(label)), pressEvent);
     },
     queryByText,
+    queryByA11yLabel,
   };
 }
