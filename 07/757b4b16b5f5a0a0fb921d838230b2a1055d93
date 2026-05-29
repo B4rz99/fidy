@@ -1,0 +1,19 @@
+apps/mobile/__tests__/financial-accounts/accounts-screen.test.tsx
+  s_e1ee856df7b87a::t_faaa4b5317f2cd 11,77-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "07757b4b16b5f5a0a0fb921d838230b2a1055d93",
+  "prompts": {},
+  "sessions": {
+    "s_e1ee856df7b87a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e6ec5-76de-7b60-add4-43916ecedc61",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
