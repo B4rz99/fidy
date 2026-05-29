@@ -10,6 +10,14 @@ const pressEvent = {
   target: null,
 };
 
+function matchesText(text: string | RegExp, value: string) {
+  if (typeof text === "string") {
+    return value === text;
+  }
+
+  return new RegExp(text.source, text.flags.replace(/[gy]/g, "")).test(value);
+}
+
 export function renderFidy(ui: ReactElement) {
   let renderer: ReactTestRenderer | undefined;
 
@@ -33,15 +41,12 @@ export function renderFidy(ui: ReactElement) {
   const queryByText = (text: string | RegExp) =>
     textNodes().find((node: ReactTestInstance) => {
       const value = node.children.join("");
-      return typeof text === "string" ? value === text : text.test(value);
+      return matchesText(text, value);
     }) ?? null;
   const queryByA11yLabel = (label: string | RegExp) =>
     root.findAll((node: ReactTestInstance) => {
       const value = node.props.accessibilityLabel;
-      return (
-        typeof value === "string" &&
-        (typeof label === "string" ? value === label : label.test(value))
-      );
+      return typeof value === "string" && matchesText(label, value);
     })[0] ?? null;
   const pressableAncestor = (node: ReactTestInstance): ReactTestInstance | null => {
     if (typeof node.props.onPress === "function") {
@@ -62,7 +67,7 @@ export function renderFidy(ui: ReactElement) {
     getAllByText: (text: string | RegExp) =>
       textNodes().filter((node: ReactTestInstance) => {
         const value = node.children.join("");
-        return typeof text === "string" ? value === text : text.test(value);
+        return matchesText(text, value);
       }),
     getByText: (text: string | RegExp) => {
       const match = queryByText(text);

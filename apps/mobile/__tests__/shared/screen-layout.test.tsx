@@ -1,4 +1,4 @@
-import { Text } from "react-native";
+import { Platform, Text } from "react-native";
 import { describe, expect, it } from "vitest";
 import { renderFidy } from "@/__tests__/helpers/render";
 import { ScreenLayout, HEADER_HEIGHT, TAB_BAR_CLEARANCE } from "@/shared/components/ScreenLayout";
@@ -43,7 +43,7 @@ describe("ScreenLayout", () => {
   });
 
   it("exports platform-aware layout constants", () => {
-    expect(TAB_BAR_CLEARANCE).toBe(0);
+    expect(TAB_BAR_CLEARANCE).toBe(Platform.OS === "ios" ? 0 : 96);
     expect(HEADER_HEIGHT).toBe(48);
   });
 });

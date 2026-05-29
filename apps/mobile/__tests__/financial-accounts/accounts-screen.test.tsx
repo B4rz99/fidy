@@ -59,9 +59,24 @@ function hasCall(sourceFile: ts.SourceFile, calleeName: string) {
   return collectNodes(sourceFile).some(
     (node) =>
       ts.isCallExpression(node) &&
-      ((ts.isIdentifier(node.expression) && node.expression.text === calleeName) ||
-        (ts.isPropertyAccessExpression(node.expression) &&
-          node.expression.name.text === calleeName))
+      (ts.isIdentifier(node.expression)
+        ? node.expression.text === calleeName
+        : isPropertyCall(node.expression, calleeName))
+  );
+}
+
+function isPropertyCall(expression: ts.Expression, calleeName: string) {
+  if (!ts.isPropertyAccessExpression(expression) || expression.name.text !== calleeName) {
+    return false;
+  }
+
+  if (calleeName !== "push") {
+    return true;
+  }
+
+  return (
+    ts.isIdentifier(expression.expression) &&
+    ["navigation", "router"].includes(expression.expression.text)
   );
 }
 
