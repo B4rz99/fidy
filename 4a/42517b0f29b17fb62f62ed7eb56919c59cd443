@@ -1,0 +1,28 @@
+apps/mobile/__tests__/helpers/react-native-mock.ts
+  s_e1ee856df7b87a::t_925f8e043480ca 24-27
+apps/mobile/shared/i18n/locales/en.ts
+  s_e1ee856df7b87a::t_4dc483d2a8a43a 249-250
+apps/mobile/__tests__/financial-accounts/accounts-screen.test.tsx
+  s_e1ee856df7b87a::t_449f7e7018d01b 3,23,31-69,73-75,115-118,122-127
+  s_e1ee856df7b87a::t_37140bbccd9ac1 24-30,70-72
+apps/mobile/__tests__/helpers/render.tsx
+  s_e1ee856df7b87a::t_64f850e8ee0070 4-8,23-28,55,90,101
+apps/mobile/__tests__/financial-accounts/form-screen.test.tsx
+  s_e1ee856df7b87a::t_89ebec39c5b052 92-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "4a42517b0f29b17fb62f62ed7eb56919c59cd443",
+  "prompts": {},
+  "sessions": {
+    "s_e1ee856df7b87a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e6ec5-76de-7b60-add4-43916ecedc61",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
