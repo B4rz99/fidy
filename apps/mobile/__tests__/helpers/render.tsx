@@ -1,6 +1,11 @@
 import type { ReactElement } from "react";
 import TestRenderer, { act, type ReactTestInstance } from "react-test-renderer";
 
+const pressEvent = {
+  nativeEvent: {},
+  target: null,
+};
+
 export function renderFidy(ui: ReactElement) {
   let renderer: TestRenderer.ReactTestRenderer | undefined;
 
@@ -15,7 +20,12 @@ export function renderFidy(ui: ReactElement) {
   const activeRenderer = renderer;
   const root = activeRenderer.root;
   const textNodes = () =>
-    root.findAll((node: ReactTestInstance) => typeof node.children[0] === "string");
+    root.findAll(
+      (node: ReactTestInstance) =>
+        Array.isArray(node.children) &&
+        node.children.length > 0 &&
+        typeof node.children[0] === "string"
+    );
   const queryByText = (text: string | RegExp) =>
     textNodes().find((node: ReactTestInstance) => {
       const value = node.children.join("");
@@ -42,7 +52,7 @@ export function renderFidy(ui: ReactElement) {
     toJSON: () => activeRenderer.toJSON(),
     press: (node: TestRenderer.ReactTestInstance) => {
       act(() => {
-        node.props.onPress();
+        node.props.onPress(pressEvent);
       });
     },
     getAllByText: (text: string | RegExp) =>
@@ -77,7 +87,7 @@ export function renderFidy(ui: ReactElement) {
       }
 
       act(() => {
-        pressable.props.onPress();
+        pressable.props.onPress(pressEvent);
       });
     },
     pressByA11yLabel: (label: string | RegExp) => {
@@ -88,7 +98,7 @@ export function renderFidy(ui: ReactElement) {
       }
 
       act(() => {
-        match.props.onPress();
+        match.props.onPress(pressEvent);
       });
     },
     queryByText,

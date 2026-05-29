@@ -89,8 +89,8 @@ describe("FinancialAccountFormBody", () => {
     screen.pressByText(/Credit card/);
 
     expect(screen.getByText("Billing profile")).toBeTruthy();
-    expect(screen.getByText("Fecha de corte")).toBeTruthy();
-    expect(screen.getByText("Fecha limite de pago")).toBeTruthy();
+    expect(screen.getByText("Statement closing day")).toBeTruthy();
+    expect(screen.getByText("Payment due day")).toBeTruthy();
     expect(screen.getByText("Starting debt")).toBeTruthy();
   });
 

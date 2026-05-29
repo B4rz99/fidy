@@ -21,7 +21,10 @@ export const Linking = {
   openSettings: createNoop(),
   sendIntent: () => Promise.resolve(),
 };
-export const Platform = { OS: "ios", select: (obj: Record<string, unknown>) => obj.ios };
+export const Platform = {
+  OS: "ios",
+  select: (obj: Record<string, unknown>) => obj[Platform.OS] ?? obj.default,
+};
 export const useColorScheme = () => "light";
 export const useWindowDimensions = () => ({ width: 390, height: 844, scale: 3, fontScale: 1 });
 export const AccessibilityInfo = {
