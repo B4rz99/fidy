@@ -1,0 +1,55 @@
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormFields.tsx
+  s_e1ee856df7b87a::t_df6ed68a5167c5 5
+apps/mobile/__tests__/helpers/expo-glass-effect-mock.ts
+  s_e1ee856df7b87a::t_df6ed68a5167c5 1-4
+apps/mobile/__tests__/financial-accounts/form-screen.test.tsx
+  s_e1ee856df7b87a::t_df6ed68a5167c5 1-16,18-60,62,64-69,72,78-88,90-101,103-128,130-131
+  s_e1ee856df7b87a::t_95ca2e36051a04 70-71,73-77,89,102,129
+apps/mobile/__tests__/helpers/react-native-mock.ts
+  s_e1ee856df7b87a::t_df6ed68a5167c5 1-32
+apps/mobile/__tests__/helpers/render.tsx
+  s_e1ee856df7b87a::t_fceb50f012acc1 5-16,42
+  s_e1ee856df7b87a::t_4d9d42d4293fe9 28-29
+  s_e1ee856df7b87a::t_85df005187a2f4 27,30
+  s_e1ee856df7b87a::t_7fbcb9722acfd4 24-26,31-35,37-39,58-66,70-92
+  s_e1ee856df7b87a::t_df6ed68a5167c5 1-4,17-23,36,40-41,43-57,67-69,93-96
+apps/mobile/vitest.config.ts
+  s_e1ee856df7b87a::t_df6ed68a5167c5 8-16,25
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreenContent.tsx
+  s_e1ee856df7b87a::t_df6ed68a5167c5 3
+apps/mobile/__tests__/helpers/lucide-react-native-mock.ts
+  s_e1ee856df7b87a::t_df6ed68a5167c5 1-173
+apps/mobile/__tests__/financial-accounts/accounts-screen.test.tsx
+  s_e1ee856df7b87a::t_f65298b7da1a34 105-106,108,126-127
+  s_e1ee856df7b87a::t_df6ed68a5167c5 1,3-9,11-12,15-20,22-57,75-85,87-104,107,109-125,129-131
+apps/mobile/__tests__/helpers/expo-image-mock.ts
+  s_e1ee856df7b87a::t_df6ed68a5167c5 1
+apps/mobile/__tests__/setup.ts
+  s_e1ee856df7b87a::t_df6ed68a5167c5 17-19,208-210
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreen.types.ts
+  s_e1ee856df7b87a::t_df6ed68a5167c5 1
+apps/mobile/__tests__/helpers/reanimated-mock.ts
+  s_e1ee856df7b87a::t_df6ed68a5167c5 1-13
+apps/mobile/__tests__/shared/screen-layout.test.tsx
+  s_e1ee856df7b87a::t_df6ed68a5167c5 1-49
+apps/mobile/package.json
+  s_e1ee856df7b87a::t_df6ed68a5167c5 92,105
+apps/mobile/__tests__/helpers/safe-area-context-mock.ts
+  s_e1ee856df7b87a::t_df6ed68a5167c5 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "3d8a52340c10577d6d5b155ca26a4416c786016b",
+  "prompts": {},
+  "sessions": {
+    "s_e1ee856df7b87a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e6ec5-76de-7b60-add4-43916ecedc61",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
