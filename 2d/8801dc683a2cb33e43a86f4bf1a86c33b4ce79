@@ -1,0 +1,24 @@
+apps/mobile/__tests__/shared/screen-layout.test.tsx
+  s_e1ee856df7b87a::t_8d6a10322bc538 46
+  s_e1ee856df7b87a::t_3315596c70e69c 1
+apps/mobile/__tests__/financial-accounts/accounts-screen.test.tsx
+  s_e1ee856df7b87a::t_833825086e7ac3 62-79
+apps/mobile/__tests__/helpers/render.tsx
+  s_e1ee856df7b87a::t_a8563d16f992c6 13-20,44,49,70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "2d8801dc683a2cb33e43a86f4bf1a86c33b4ce79",
+  "prompts": {},
+  "sessions": {
+    "s_e1ee856df7b87a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e6ec5-76de-7b60-add4-43916ecedc61",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
