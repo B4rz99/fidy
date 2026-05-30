@@ -1,0 +1,20 @@
+apps/mobile/shared/components/Button.tsx
+  s_b8e3b23b9b623e::t_4b2613d7b8a287 55-60
+  s_b8e3b23b9b623e::t_6082619d98f1d4 70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "54664f45c036edd68ac45b70799aea0e05d1ba76",
+  "prompts": {},
+  "sessions": {
+    "s_b8e3b23b9b623e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e76e5-6005-74c3-9529-9f82873e2b89",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
