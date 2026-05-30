@@ -1,0 +1,29 @@
+apps/landing/waitlist.js
+  s_989e2ff2f9c357::t_4ec14782ca4f9e 14
+apps/landing/en/index.html
+  s_989e2ff2f9c357::t_315934ec37a675 40
+apps/landing/es/index.html
+  s_989e2ff2f9c357::t_b3323668e2ca66 40
+apps/landing/api/waitlist.js
+  s_989e2ff2f9c357::t_21a07b5f3c9e3f 4-9,11,18,21,26,41,44-45
+  s_989e2ff2f9c357::t_d058a8ecd0f5fd 29,40
+  s_989e2ff2f9c357::t_90f4066792aa51 1-3,10,12-17,19-20,22-25,27-28,30-39,42-43
+.github/workflows/ci.yml
+  s_989e2ff2f9c357::t_71dd4a65c01222 102-103,119-126,137-142
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "c186b981006b65d7e4bc99bb8970beb0b469ed55",
+  "prompts": {},
+  "sessions": {
+    "s_989e2ff2f9c357": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7aa0-0e26-70f3-b8d5-d715fafb49a6",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
