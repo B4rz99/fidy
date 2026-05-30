@@ -35,7 +35,7 @@ export default function ConnectedAccountsScreen() {
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentInset={{ bottom: bottom + 40 }}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: bottom + 40 }}
         className="flex-1 px-4"
       >
         <View style={{ gap: 24 }}>
