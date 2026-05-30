@@ -31,7 +31,7 @@ type SourceEventFinancialMeaningReviewItem = Extract<
 >;
 
 export function FinancialMeaningReviewScreen() {
-  const router = useRouter();
+  const { push, replace, back } = useRouter();
   const { processedSourceEventId, reviewCandidateId } = useLocalSearchParams<{
     processedSourceEventId?: string;
     reviewCandidateId?: string;
@@ -74,7 +74,7 @@ export function FinancialMeaningReviewScreen() {
       <ScreenLayout
         title={t("financialMeaningReview.reviewTitle")}
         variant="sub"
-        onBack={() => router.back()}
+        onBack={() => back()}
       >
         <EmptyState
           title={t("financialMeaningReview.emptyTitle")}
@@ -106,7 +106,7 @@ export function FinancialMeaningReviewScreen() {
         }
         await loadNeedsReviewEmails(db, userId);
         await refreshTransactions(db, userId);
-        router.replace("/needs-review");
+        replace("/needs-review");
       } catch {
         showErrorToast(t("financialMeaningReview.errors.resolveFailed"));
       }
@@ -126,9 +126,8 @@ export function FinancialMeaningReviewScreen() {
           reviewItem.processedSourceEvent.id,
           reviewItem.reviewCandidate.id
         );
-        await loadNeedsReviewEmails(db, userId);
-        await refreshTransactions(db, userId);
-        router.replace("/needs-review");
+        await Promise.all([loadNeedsReviewEmails(db, userId), refreshTransactions(db, userId)]);
+        replace("/needs-review");
       } catch {
         showErrorToast(t("financialMeaningReview.errors.dismissFailed"));
       }
@@ -152,7 +151,7 @@ export function FinancialMeaningReviewScreen() {
   const handleConvertToTransfer = () => {
     if (reviewItem.processedSourceEvent.transactionId == null) return;
 
-    router.push({
+    push({
       pathname: "/reclassify-transaction",
       params: {
         transactionId: reviewItem.processedSourceEvent.transactionId,
@@ -166,7 +165,7 @@ export function FinancialMeaningReviewScreen() {
     <ScreenLayout
       title={t("financialMeaningReview.reviewTitle")}
       variant="sub"
-      onBack={() => router.back()}
+      onBack={() => back()}
     >
       <ScrollView
         contentContainerStyle={[styles.container, { paddingBottom: bottom + 28 }]}

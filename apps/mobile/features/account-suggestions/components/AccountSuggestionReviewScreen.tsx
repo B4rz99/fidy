@@ -17,7 +17,7 @@ const suggestionKeyExtractor = (item: AccountCreationSuggestion) => item.fingerp
 const SuggestionItemSeparator = () => <View style={styles.itemSeparator} />;
 
 export function AccountSuggestionReviewScreen() {
-  const router = useRouter();
+  const { push, back } = useRouter();
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
@@ -32,22 +32,22 @@ export function AccountSuggestionReviewScreen() {
 
   const handleCreate = useCallback(
     (fingerprint: string) => {
-      router.push({
+      push({
         pathname: "/create-financial-account",
         params: { fingerprint },
       } as never);
     },
-    [router]
+    [push]
   );
 
   const handleLink = useCallback(
     (fingerprint: string) => {
-      router.push({
+      push({
         pathname: "/link-suggested-account",
         params: { fingerprint },
       } as never);
     },
-    [router]
+    [push]
   );
 
   const handleSkip = useCallback(
@@ -115,11 +115,7 @@ export function AccountSuggestionReviewScreen() {
     ) : null;
 
   return (
-    <ScreenLayout
-      title={t("accountSuggestions.review.title")}
-      variant="sub"
-      onBack={() => router.back()}
-    >
+    <ScreenLayout title={t("accountSuggestions.review.title")} variant="sub" onBack={() => back()}>
       <FlashList
         data={suggestions}
         renderItem={renderSuggestion}

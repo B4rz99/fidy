@@ -43,7 +43,7 @@ export const SearchTransactionItem = memo(function SearchTransactionItem({
       <View className="px-4 pb-2">
         <View
           testID="resultCard"
-          className="flex-row items-center rounded-lg bg-card/90 px-3 py-3 dark:bg-card-dark/90"
+          className="flex-row items-center rounded-lg bg-card/90 p-3 dark:bg-card-dark/90"
         >
           <View
             className="size-10 items-center justify-center rounded-icon"

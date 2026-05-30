@@ -38,7 +38,7 @@ export const KNOWN_BANK_PACKAGES: readonly {
   { packageName: "com.rappi.card", label: "RappiCard" },
 ];
 
-export const KNOWN_BANK_SMS_SENDERS = [
+const KNOWN_BANK_SMS_SENDERS = [
   "Bancolombia",
   "BBVA",
   "Davivienda",

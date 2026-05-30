@@ -13,14 +13,14 @@ const OPTIONS: { key: ThemePreference; labelKey: string }[] = [
 
 export default function ThemePickerSheet() {
   const { t } = useTranslation();
-  const router = useRouter();
+  const { back } = useRouter();
   const current = useSettingsStore((s) => s.themePreference);
   const setTheme = useSettingsStore((s) => s.setThemePreference);
   const accentGreen = useThemeColor("accentGreen");
 
   const handleSelect = (pref: ThemePreference) => {
     setTheme(pref);
-    router.back();
+    back();
   };
 
   return (

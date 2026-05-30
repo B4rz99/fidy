@@ -4,7 +4,6 @@ export { Button } from "./Button";
 export { Callout } from "./Callout";
 export { Card } from "./Card";
 export { Chip } from "./Chip";
-export { ComingSoonScreen } from "./ComingSoonScreen";
 export { EmptyState } from "./EmptyState";
 export { ErrorFallback } from "./ErrorFallback";
 export { FidyLogo } from "./FidyLogo";

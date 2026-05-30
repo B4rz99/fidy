@@ -3,33 +3,26 @@ import { type CurrencyConfig, getActiveCurrency } from "./currency";
 
 export const MAX_AMOUNT_DIGITS = 11;
 
-const makeFormatter = (config: CurrencyConfig): Intl.NumberFormat =>
-  new Intl.NumberFormat(config.locale, {
-    style: "currency",
-    currency: config.code,
-    maximumFractionDigits: config.exponent,
-    minimumFractionDigits: config.exponent,
-  });
-
 const formatterKey = (config: CurrencyConfig): string =>
   `${config.locale}:${config.code}:${config.exponent}`;
 
 const activeCurrency = getActiveCurrency();
-const formatterCache = new Map<string, Intl.NumberFormat>([
-  [formatterKey(activeCurrency), makeFormatter(activeCurrency)],
-]);
+const activeCurrencyFormatter = new Intl.NumberFormat(activeCurrency.locale, {
+  style: "currency",
+  currency: activeCurrency.code,
+  maximumFractionDigits: activeCurrency.exponent,
+  minimumFractionDigits: activeCurrency.exponent,
+});
 
-const getFormatter = (config: CurrencyConfig = activeCurrency): Intl.NumberFormat => {
-  const key = formatterKey(config);
-  const cached = formatterCache.get(key);
-  if (cached) {
-    return cached;
-  }
-
-  const formatter = makeFormatter(config);
-  formatterCache.set(key, formatter);
-  return formatter;
-};
+const formatCurrency = (amount: number, config: CurrencyConfig = activeCurrency): string =>
+  formatterKey(config) === formatterKey(activeCurrency)
+    ? activeCurrencyFormatter.format(amount)
+    : amount.toLocaleString(config.locale, {
+        style: "currency",
+        currency: config.code,
+        maximumFractionDigits: config.exponent,
+        minimumFractionDigits: config.exponent,
+      });
 
 /** Remove locale-inserted whitespace between currency symbol and number. */
 const stripCurrencySpace = (formatted: string): string => formatted.replace(/\s+/g, "");
@@ -54,7 +47,7 @@ export const parseDigitsToAmount = (digits: string): CopAmount => {
  * 50000 → "$50.000", 0 → "$0"
  */
 export const formatMoney = (amount: number, config?: CurrencyConfig): string =>
-  stripCurrencySpace(getFormatter(config).format(amount));
+  stripCurrencySpace(formatCurrency(amount, config));
 
 export function formatSignedMoney(amount: number, config?: CurrencyConfig): string;
 export function formatSignedMoney(

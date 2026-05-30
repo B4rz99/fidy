@@ -60,6 +60,8 @@ const config: ExpoConfig & { newArchEnabled?: boolean } = {
     "expo-router",
     ...(isProductionBuild ? [] : [devClientPlugin]),
     "expo-secure-store",
+    "expo-font",
+    "expo-image",
     // biome-ignore lint/style/useNamingConvention: expo-sqlite config key
     ["expo-sqlite", { useSQLCipher: true }],
     [

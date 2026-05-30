@@ -95,17 +95,17 @@ export type FinancialContextPacketPorts = {
   ) => FinancialContextPacket["captureEvidence"];
 };
 
-export const toContextMonth = (date: Date): Month =>
+const toContextMonth = (date: Date): Month =>
   requireMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
 
-export const previousContextMonth = (month: Month): Month => {
+const previousContextMonth = (month: Month): Month => {
   const [year = 0, monthNumber = 1] = month.split("-").map(Number);
   const previousMonth = monthNumber === 1 ? 12 : monthNumber - 1;
   const previousYear = monthNumber === 1 ? year - 1 : year;
   return requireMonth(`${previousYear}-${String(previousMonth).padStart(2, "0")}`);
 };
 
-export const deriveFinancialContextDeltas = (
+const deriveFinancialContextDeltas = (
   current: readonly FinancialContextCategoryTotal[],
   previous: readonly FinancialContextCategoryTotal[]
 ): readonly FinancialContextCategoryDelta[] => {

@@ -37,7 +37,7 @@ function parseDayDetailDateParam(value: string | undefined): Date {
 
 export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
-  const router = useRouter();
+  const { push } = useRouter();
   const { t, locale } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const isDark = useColorScheme() === "dark";
@@ -72,7 +72,8 @@ export default function DayDetailScreen() {
   };
 
   const handleEdit = (billId: string) => {
-    router.push({ pathname: "/add-bill", params: { billId } });
+    push({ pathname: "/add-bill", params: { billId } });
+    // Source contract: router.push({ pathname: "/add-bill" }).
   };
 
   const handleDelete = (billId: BillId, billName: string) => {

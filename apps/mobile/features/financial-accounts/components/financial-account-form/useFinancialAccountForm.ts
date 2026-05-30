@@ -185,7 +185,7 @@ export function useFinancialAccountForm({
   const [amountDigits, setAmountDigits] = useState(
     existingOpeningBalance ? String(existingOpeningBalance.amount) : ""
   );
-  const [effectiveDate, setEffectiveDate] = useState<Date | null>(
+  const [effectiveDate, setEffectiveDate] = useState<Date | null>(() =>
     parseOptionalIsoDate(existingOpeningBalance?.effectiveDate)
   );
   const [showDatePicker, setShowDatePicker] = useState(false);

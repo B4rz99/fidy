@@ -8,7 +8,7 @@ import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 export default function DeleteAccountSheet() {
   const { t } = useTranslation();
-  const router = useRouter();
+  const { back } = useRouter();
   const accessToken = useAuthStore((s) => s.session?.access_token);
   const deleteAccount = useDeleteAccountMutation();
   const accentRed = useThemeColor("accentRed");
@@ -55,7 +55,7 @@ export default function DeleteAccountSheet() {
         </Text>
         <View style={{ width: "100%", gap: 12, marginTop: 8 }}>
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => back()}
             style={{
               height: 48,
               borderRadius: 16,

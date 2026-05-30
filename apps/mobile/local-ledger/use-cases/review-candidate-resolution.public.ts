@@ -151,7 +151,7 @@ const toResolveReviewCandidateCommand = (
   now: input.now,
 });
 
-export const toAcceptReviewCandidateCommand = (
+const toAcceptReviewCandidateCommand = (
   input: ReviewCandidateResolutionCommitInput
 ): ResolveReviewCandidateCommand => toResolveReviewCandidateCommand(input, "accepted");
 

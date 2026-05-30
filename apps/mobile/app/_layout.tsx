@@ -65,7 +65,7 @@ if (SENTRY_DSN) {
   initSentry(SENTRY_DSN);
 }
 
-function AuthenticatedShell({
+export function AuthenticatedShell({
   db,
   userId,
   enableRemoteEffects,
@@ -131,7 +131,7 @@ function AuthenticatedShell({
   return null;
 }
 
-function RootLayout() {
+export function RootLayout() {
   const isAuthLoading = useAuthStore((s) => s.isLoading);
   const authMode = useAuthMode();
   const settingsHydrated = useSettingsStore((s) => s.isHydrated);
@@ -311,4 +311,6 @@ function RootLayout() {
   );
 }
 
-export default wrapWithSentry(RootLayout);
+const SentryWrappedRootLayout = wrapWithSentry(RootLayout);
+
+export default SentryWrappedRootLayout;

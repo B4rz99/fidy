@@ -1,5 +1,5 @@
 import { useAuthStore } from "@/features/auth/public";
-import { Text, View } from "@/shared/components/rn";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";
 import { useQaDevtoolsStore } from "../devtools-store";
 import { isLocalQaAvailable } from "../local-session";
@@ -14,19 +14,7 @@ export function QaStatusBanner() {
   }
 
   return (
-    <View
-      pointerEvents="none"
-      style={{
-        position: "absolute",
-        right: 12,
-        bottom: 18,
-        left: 12,
-        borderRadius: 14,
-        backgroundColor: "#161616DD",
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-      }}
-    >
+    <View pointerEvents="none" style={styles.banner}>
       <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 12, color: "#FFFFFF" }}>
         {t("qaTools.banner", {
           profile: localQaSession.profile,
@@ -38,3 +26,16 @@ export function QaStatusBanner() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  banner: {
+    position: "absolute",
+    right: 12,
+    bottom: 18,
+    left: 12,
+    borderRadius: 14,
+    backgroundColor: "#161616DD",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+});

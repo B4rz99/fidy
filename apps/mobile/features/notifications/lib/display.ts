@@ -155,7 +155,7 @@ const WEEKLY_MOVE_TYPES = new Set(["spending_anomaly", "budget_pace"]);
 const sortByCreatedAtDesc = (
   notifications: readonly NotificationDisplay[]
 ): readonly NotificationDisplay[] =>
-  [...notifications].sort(
+  notifications.toSorted(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 

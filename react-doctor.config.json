@@ -1,0 +1,80 @@
+{
+  "ignore": {
+    "rules": ["react-doctor/async-defer-await"],
+    "overrides": [
+      {
+        "files": [
+          "apps/mobile/plugins/withFidyWidget*.js",
+          "plugins/withFidyWidget*.js",
+          "apps/mobile/features/budget/components/BudgetAlertBanner.tsx",
+          "features/budget/components/BudgetAlertBanner.tsx",
+          "apps/mobile/features/budget/components/UpcomingBillsSection.tsx",
+          "features/budget/components/UpcomingBillsSection.tsx",
+          "apps/mobile/shared/components/ComingSoonScreen.tsx",
+          "shared/components/ComingSoonScreen.tsx"
+        ],
+        "rules": ["deslop/unused-file"]
+      },
+      {
+        "files": [
+          "apps/mobile/app/connected-accounts.tsx",
+          "app/connected-accounts.tsx",
+          "apps/mobile/features/ai-chat/components/ChatConversationShell.tsx",
+          "features/ai-chat/components/ChatConversationShell.tsx",
+          "apps/mobile/features/settings/components/NotificationPreferencesScreen.tsx",
+          "features/settings/components/NotificationPreferencesScreen.tsx"
+        ],
+        "rules": ["react-doctor/rn-scrollview-dynamic-padding"]
+      },
+      {
+        "files": [
+          "apps/mobile/shared/hooks/use-subscription.ts",
+          "shared/hooks/use-subscription.ts",
+          "apps/mobile/shared/hooks/use-mount-effect.ts",
+          "shared/hooks/use-mount-effect.ts"
+        ],
+        "rules": ["react-doctor/exhaustive-deps"]
+      },
+      {
+        "files": [
+          "apps/mobile/features/email-capture/services/gmail-adapter.ts",
+          "features/email-capture/services/gmail-adapter.ts"
+        ],
+        "rules": [
+          "react-doctor/async-await-in-loop",
+          "react-doctor/server-sequential-independent-await"
+        ]
+      },
+      {
+        "files": [
+          "apps/mobile/features/ai-chat/services/create-ai-chat-api-service.ts",
+          "features/ai-chat/services/create-ai-chat-api-service.ts",
+          "apps/mobile/features/capture-sources/services/widget-pipeline.ts",
+          "features/capture-sources/services/widget-pipeline.ts",
+          "apps/mobile/features/email-capture/services/email-pipeline-service/incoming-batch.ts",
+          "features/email-capture/services/email-pipeline-service/incoming-batch.ts",
+          "apps/mobile/features/email-capture/store/fetch-processing.ts",
+          "features/email-capture/store/fetch-processing.ts",
+          "apps/mobile/features/email-capture/services/email-pipeline-service/retry.ts",
+          "features/email-capture/services/email-pipeline-service/retry.ts",
+          "apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts",
+          "features/email-capture/services/email-parse-improvement-outbox.ts",
+          "apps/mobile/shared/bootstrap/registry.ts",
+          "shared/bootstrap/registry.ts",
+          "apps/mobile/shared/mutations/write-through/module.ts",
+          "shared/mutations/write-through/module.ts"
+        ],
+        "rules": ["react-doctor/async-await-in-loop"]
+      },
+      {
+        "files": [
+          "apps/mobile/features/email-capture/services/create-email-adapter.ts",
+          "features/email-capture/services/create-email-adapter.ts",
+          "apps/mobile/features/auth/store.ts",
+          "features/auth/store.ts"
+        ],
+        "rules": ["react-doctor/async-parallel", "react-doctor/server-sequential-independent-await"]
+      }
+    ]
+  }
+}

@@ -10,7 +10,7 @@ export type AnyDb = ExpoSQLiteDatabase<any>; // eslint-disable-line @typescript-
 
 const HEX_KEY_PATTERN = /^[0-9a-f]{64}$/;
 
-export function getDatabaseName(userId: string) {
+function getDatabaseName(userId: string) {
   return `fidy-${userId}.db`;
 }
 

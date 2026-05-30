@@ -86,29 +86,28 @@ export function enqueueEmailParseImprovementRequests(input: {
 
   const createdAt = toIsoDateTime(input.now ?? new Date());
   const seen = new Set<string>();
-  const rows = input.requests
-    .map((request) => {
-      const sample = buildNotificationParseImprovementSample(request);
-      return {
-        id: generateEmailParseImprovementSampleId(),
-        userId: input.userId,
-        template: sample.template,
-        senderDomain: sample.senderDomain ?? null,
-        source: sample.source,
-        status: sample.status,
-        confidence: request.confidence,
-        parseMethod: sample.parseMethod,
-        createdAt,
-        sharedAt: null,
-        deletedAt: null,
-      };
-    })
-    .filter((row) => {
-      const key = getEmailParseImprovementSampleDedupeKey(row);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return !hasEmailParseImprovementSample({ db: input.db, userId: input.userId, sample: row });
-    });
+  const rows = input.requests.flatMap((request) => {
+    const sample = buildNotificationParseImprovementSample(request);
+    const row = {
+      id: generateEmailParseImprovementSampleId(),
+      userId: input.userId,
+      template: sample.template,
+      senderDomain: sample.senderDomain ?? null,
+      source: sample.source,
+      status: sample.status,
+      confidence: request.confidence,
+      parseMethod: sample.parseMethod,
+      createdAt,
+      sharedAt: null,
+      deletedAt: null,
+    };
+    const key = getEmailParseImprovementSampleDedupeKey(row);
+    if (seen.has(key)) return [];
+    seen.add(key);
+    return hasEmailParseImprovementSample({ db: input.db, userId: input.userId, sample: row })
+      ? []
+      : [row];
+  });
 
   if (rows.length === 0) return 0;
 

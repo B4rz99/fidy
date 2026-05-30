@@ -35,9 +35,10 @@ export async function getProcessedEmailSourceEventIds(
       )
     );
   return new Set(
-    rows
-      .map((row) => `${row.sourceId}:${row.sourceEventId}`)
-      .filter((key) => requestedKeys.has(key))
+    rows.flatMap((row) => {
+      const key = `${row.sourceId}:${row.sourceEventId}`;
+      return requestedKeys.has(key) ? [key] : [];
+    })
   );
 }
 

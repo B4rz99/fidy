@@ -143,31 +143,31 @@ export function assertTransactionId(value: string): asserts value is Transaction
   assertNonEmptyString(value, "transactionId");
 }
 
-export function assertTransferId(value: string): asserts value is TransferId {
+function assertTransferId(value: string): asserts value is TransferId {
   assertNonEmptyString(value, "transferId");
 }
 
-export function assertBillId(value: string): asserts value is BillId {
+function assertBillId(value: string): asserts value is BillId {
   assertNonEmptyString(value, "billId");
 }
 
-export function assertBackupId(value: string): asserts value is BackupId {
+function assertBackupId(value: string): asserts value is BackupId {
   assertNonEmptyString(value, "backupId");
 }
 
-export function assertBudgetId(value: string): asserts value is BudgetId {
+function assertBudgetId(value: string): asserts value is BudgetId {
   assertNonEmptyString(value, "budgetId");
 }
 
-export function assertCategoryId(value: string): asserts value is CategoryId {
+function assertCategoryId(value: string): asserts value is CategoryId {
   assertNonEmptyString(value, "categoryId");
 }
 
-export function assertChatSessionId(value: string): asserts value is ChatSessionId {
+function assertChatSessionId(value: string): asserts value is ChatSessionId {
   assertNonEmptyString(value, "chatSessionId");
 }
 
-export function assertDetectedSmsEventId(value: string): asserts value is DetectedSmsEventId {
+function assertDetectedSmsEventId(value: string): asserts value is DetectedSmsEventId {
   assertNonEmptyString(value, "detectedSmsEventId");
 }
 
@@ -175,17 +175,15 @@ export function assertEmailAccountId(value: string): asserts value is EmailAccou
   assertNonEmptyString(value, "emailAccountId");
 }
 
-export function assertFinancialAccountId(value: string): asserts value is FinancialAccountId {
+function assertFinancialAccountId(value: string): asserts value is FinancialAccountId {
   assertNonEmptyString(value, "financialAccountId");
 }
 
-export function assertProcessedSourceEventId(
-  value: string
-): asserts value is ProcessedSourceEventId {
+function assertProcessedSourceEventId(value: string): asserts value is ProcessedSourceEventId {
   assertNonEmptyString(value, "processedSourceEventId");
 }
 
-export function assertReviewCandidateId(value: string): asserts value is ReviewCandidateId {
+function assertReviewCandidateId(value: string): asserts value is ReviewCandidateId {
   assertNonEmptyString(value, "reviewCandidateId");
 }
 
@@ -221,7 +219,7 @@ export function requireTransactionId(value: string): TransactionId {
   return requireValue(value, assertTransactionId);
 }
 
-export function requireTransferId(value: string): TransferId {
+function requireTransferId(value: string): TransferId {
   return requireValue(value, assertTransferId);
 }
 
@@ -245,7 +243,7 @@ export function requireBackupId(value: string): BackupId {
   return requireValue(value, assertBackupId);
 }
 
-export function requireBudgetId(value: string): BudgetId {
+function requireBudgetId(value: string): BudgetId {
   return requireValue(value, assertBudgetId);
 }
 

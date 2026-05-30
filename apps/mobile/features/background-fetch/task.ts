@@ -24,8 +24,7 @@ TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {
     const userId = requireUserId(data.session.user.id);
     const db = getDb(userId);
     initializeEmailCaptureSession(userId);
-    await loadEmailAccounts(db, userId);
-    await useSettingsStore.getState().hydrate();
+    await Promise.all([loadEmailAccounts(db, userId), useSettingsStore.getState().hydrate()]);
 
     await fetchAndProcessEmails(db, userId, getGmailClientId(), getOutlookClientId(), undefined, {
       parseProfile: "background",

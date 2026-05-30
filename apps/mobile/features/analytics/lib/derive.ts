@@ -211,9 +211,9 @@ export function derivePeriodShiftView(input: {
     input.periodDelta.categoryDeltas.map((item) => [item.categoryId, item])
   );
   const breakdownCategoryIds = new Set(input.categoryBreakdown.map((item) => item.categoryId));
-  const droppedCategoryIds = input.periodDelta.categoryDeltas
-    .map((item) => item.categoryId)
-    .filter((categoryId) => !breakdownCategoryIds.has(categoryId));
+  const droppedCategoryIds = input.periodDelta.categoryDeltas.flatMap((item) =>
+    breakdownCategoryIds.has(item.categoryId) ? [] : [item.categoryId]
+  );
   const categoryChangeIds = [
     ...droppedCategoryIds,
     ...input.categoryBreakdown.map((item) => item.categoryId),

@@ -24,7 +24,7 @@ export const CustomTabBar = ({ state, navigation }: CustomTabBarProps) => {
 
   return (
     <View
-      className="absolute left-5 right-5 flex-row items-center justify-around rounded-nav-pill bg-nav px-2 py-2 dark:bg-nav-dark"
+      className="absolute left-5 right-5 flex-row items-center justify-around rounded-nav-pill bg-nav p-2 dark:bg-nav-dark"
       style={{ bottom: Math.max(insets.bottom, 16) }}
     >
       {state.routes.map((route, index) => {

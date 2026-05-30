@@ -34,6 +34,7 @@ export default function ConnectedAccountsScreen() {
     <ScreenLayout title={t("connectedAccounts.title")} variant="sub" onBack={() => back()}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
+        contentInset={{ bottom: bottom + 40 }}
         contentContainerStyle={{ paddingBottom: bottom + 40 }}
         className="flex-1 px-4"
       >

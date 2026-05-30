@@ -99,25 +99,25 @@ export function buildCalendarMonthSummary({
   currentMonth,
   payments,
 }: CalendarMonthSummaryInput): CalendarMonthSummary {
-  const occurrences = getMonthGrid(currentMonth.getFullYear(), currentMonth.getMonth())
-    .flat()
-    .filter(
-      (cell): cell is CalendarDay & { readonly date: Date; readonly day: number } =>
-        cell.date != null && cell.day != null
-    )
-    .flatMap((cell) =>
-      getBillsForDate(bills, cell.date).map((bill) => {
-        const dueDate = toCalendarIsoDate(cell.date);
-        return {
-          bill,
-          date: cell.date,
-          dueDate,
-          isPaid: payments.some(
-            (payment) => payment.billId === bill.id && payment.dueDate === dueDate
-          ),
-        };
+  const occurrences = getMonthGrid(currentMonth.getFullYear(), currentMonth.getMonth()).flatMap(
+    (week) =>
+      week.flatMap((cell) => {
+        const date = cell.date;
+        return date == null || cell.day == null
+          ? []
+          : getBillsForDate(bills, date).map((bill) => {
+              const dueDate = toCalendarIsoDate(date);
+              return {
+                bill,
+                date,
+                dueDate,
+                isPaid: payments.some(
+                  (payment) => payment.billId === bill.id && payment.dueDate === dueDate
+                ),
+              };
+            });
       })
-    );
+  );
 
   const paidAmount = occurrences
     .filter((occurrence) => occurrence.isPaid)

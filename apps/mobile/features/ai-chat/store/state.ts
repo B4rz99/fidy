@@ -74,7 +74,7 @@ function setChatMessageActionStatus(set: ChatSetState): ChatActions["setMessageA
     }));
 }
 
-export function createChatActions(set: ChatSetState): ChatActions {
+function createChatActions(set: ChatSetState): ChatActions {
   return {
     beginSession: beginChatSession(set),
     setSessions: (sessions) => set({ sessions: [...sessions] }),

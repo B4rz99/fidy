@@ -109,8 +109,7 @@ export function createActiveStreamRun<Deps extends StreamStateDeps, Telemetry>(
   };
 }
 
-export const isCurrentRun = (run: CurrentStreamRun): boolean =>
-  run.runtime.currentRunId === run.runId;
+const isCurrentRun = (run: CurrentStreamRun): boolean => run.runtime.currentRunId === run.runId;
 
 export function resetStreamState<Deps extends StreamStateDeps>(
   runtime: StreamingRuntime,
@@ -161,7 +160,7 @@ export function setStreamOutcome(recorder: StreamRecorder, outcome: StreamOutcom
   recorder.outcome = outcome;
 }
 
-export function recordStreamChunk<Deps extends StreamStateDeps, Telemetry>(
+function recordStreamChunk<Deps extends StreamStateDeps, Telemetry>(
   run: ActiveStreamRun<Deps, Telemetry>,
   recorder: StreamRecorder,
   chunk: string

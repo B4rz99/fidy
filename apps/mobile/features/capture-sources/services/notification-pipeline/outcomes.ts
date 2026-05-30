@@ -272,8 +272,7 @@ export async function persistSuccessfulNotification(
   }
 
   const transactionId = await saveTransactionRecord(context);
-  await cacheMerchantRuleIfEligible(context);
-  await trackSuccessfulNotification(context);
+  await Promise.all([cacheMerchantRuleIfEligible(context), trackSuccessfulNotification(context)]);
 
   return {
     saved: true,

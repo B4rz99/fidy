@@ -7,11 +7,11 @@ export type AppSupabase = {
   readonly getSupabase: () => SupabaseClient;
 };
 
-export const liveAppSupabase: AppSupabase = {
+const liveAppSupabase: AppSupabase = {
   getSupabase,
 };
 
-export const AppSupabaseService = makeAppService<AppSupabase>("@/shared/effect/AppSupabase");
+const AppSupabaseService = makeAppService<AppSupabase>("@/shared/effect/AppSupabase");
 
 export const currentSupabaseClientEffect = Effect.flatMap(
   AppSupabaseService.tag,

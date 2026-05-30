@@ -6,8 +6,8 @@ import { fromBase64 } from "./local-ledger-crypto";
 import type { EncryptedLocalLedgerBackupSnapshot } from "./local-ledger-encryption";
 import { assertLocalLedgerBackupSecretSafeForRemote } from "./local-ledger-encryption";
 
-export const REMOTE_BACKUP_BUCKET = "encrypted-backups";
-export const REMOTE_BACKUP_METADATA_TABLE = "encrypted_backups";
+const REMOTE_BACKUP_BUCKET = "encrypted-backups";
+const REMOTE_BACKUP_METADATA_TABLE = "encrypted_backups";
 
 export type RemoteBackupMetadata = {
   readonly userId: UserId;

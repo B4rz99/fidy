@@ -85,8 +85,10 @@ export async function encryptLocalLedgerBackupSnapshot(
   assertRecoveryKeyConfirmation(options);
   const dataKey = getRandomBytes(DATA_KEY_BYTES);
   const nonce = getRandomBytes(GCM_NONCE_BYTES);
-  const wrappedDataKeys = await wrapDataKeyForBackup(dataKey, options);
-  const ciphertext = await encryptAesGcm(dataKey, nonce, encodeJson(snapshot));
+  const [wrappedDataKeys, ciphertext] = await Promise.all([
+    wrapDataKeyForBackup(dataKey, options),
+    encryptAesGcm(dataKey, nonce, encodeJson(snapshot)),
+  ]);
 
   return {
     version: LOCAL_LEDGER_ENCRYPTED_BACKUP_VERSION,

@@ -48,7 +48,7 @@ export function assertNullableString(value: unknown, label: string) {
   }
 }
 
-export function assertNumber(value: unknown, label: string): asserts value is number {
+function assertNumber(value: unknown, label: string): asserts value is number {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     throw new Error(`Malformed local ledger backup row: ${label} must be a number`);
   }

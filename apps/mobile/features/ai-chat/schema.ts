@@ -3,10 +3,10 @@ import { requireIsoDate, requireTransactionId } from "@/shared/types/assertions"
 import type { ChatMessageId, ChatSessionId, IsoDateTime, UserId } from "@/shared/types/branded";
 import { categoryIdSchema, transactionTypeSchema } from "../transactions/schema";
 
-export const chatRoleSchema = z.enum(["user", "assistant"]);
+const chatRoleSchema = z.enum(["user", "assistant"]);
 export type ChatRole = z.infer<typeof chatRoleSchema>;
 
-export const actionStatusSchema = z.enum(["pending", "confirmed", "dismissed"]);
+const actionStatusSchema = z.enum(["pending", "confirmed", "dismissed"]);
 export type ActionStatus = z.infer<typeof actionStatusSchema>;
 
 const actionIsoDateSchema = z.string().transform((value, ctx) => {
@@ -31,7 +31,7 @@ const actionTransactionIdSchema = z
     }
   });
 
-export const addActionSchema = z.object({
+const addActionSchema = z.object({
   type: z.literal("add"),
   data: z.object({
     type: transactionTypeSchema,
@@ -42,7 +42,7 @@ export const addActionSchema = z.object({
   }),
 });
 
-export const editActionSchema = z.object({
+const editActionSchema = z.object({
   type: z.literal("edit"),
   transactionId: actionTransactionIdSchema,
   data: z.object({
@@ -53,7 +53,7 @@ export const editActionSchema = z.object({
   }),
 });
 
-export const deleteActionSchema = z.object({
+const deleteActionSchema = z.object({
   type: z.literal("delete"),
   transactionId: actionTransactionIdSchema,
   description: z.string(),

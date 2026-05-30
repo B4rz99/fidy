@@ -1,6 +1,14 @@
 import { StyleSheet } from "@/shared/components/rn";
 
 export const sheetStyles = StyleSheet.create({
+  sheetBody: {
+    gap: 12,
+    width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
+    borderRadius: 24,
+    padding: 16,
+  },
   selectedRow: {
     flexDirection: "row",
     alignItems: "center",

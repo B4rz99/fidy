@@ -61,12 +61,12 @@ export const AmountEntry = () => {
     setDigits(cleanDigitInput(text));
   };
 
-  const handleFocus = () => {
+  const showAmountCursor = () => {
     setIsFocused(true);
     startBlink();
   };
 
-  const handleBlur = () => {
+  const hideAmountCursor = () => {
     setIsFocused(false);
     stopBlink();
   };
@@ -103,8 +103,8 @@ export const AmountEntry = () => {
         ref={inputRef}
         value={digits}
         onChangeText={handleChangeText}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
+        onFocus={showAmountCursor}
+        onBlur={hideAmountCursor}
         keyboardType="number-pad"
         caretHidden
         autoCorrect={false}

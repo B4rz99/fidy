@@ -169,7 +169,7 @@ const toEvidenceIntent = (input: CreateReviewCandidateInput, row: LocalLedgerCap
   updatedAt: input.now,
 });
 
-export function toCreateReviewCandidateCommand(
+function toCreateReviewCandidateCommand(
   input: CreateReviewCandidateInput
 ): CreateReviewCandidateCommand {
   return {

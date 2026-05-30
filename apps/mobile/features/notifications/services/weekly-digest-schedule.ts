@@ -20,9 +20,11 @@ async function getScheduledWeeklyDigestIds(): Promise<readonly string[]> {
     const scheduledNotifications =
       (await Notifications.getAllScheduledNotificationsAsync()) as readonly ScheduledNotificationRequest[];
 
-    return scheduledNotifications
-      .filter((notification) => notification.content.data?.type === WEEKLY_DIGEST_NOTIFICATION_TYPE)
-      .map((notification) => notification.identifier);
+    return scheduledNotifications.flatMap((notification) =>
+      notification.content.data?.type === WEEKLY_DIGEST_NOTIFICATION_TYPE
+        ? [notification.identifier]
+        : []
+    );
   } catch {
     return [];
   }
@@ -32,9 +34,11 @@ const compactUniqueIds = (ids: readonly (string | null)[]): readonly string[] =>
   Array.from(new Set(ids.filter((id): id is string => id !== null && id.length > 0)));
 
 export async function cancelWeeklyDigestNotification(userId: UserId): Promise<void> {
-  const storedId = await SecureStore.getItemAsync(WEEKLY_DIGEST_NOTIFICATION_KEY);
-  const legacyStoredId = await SecureStore.getItemAsync(legacyScheduledDigestKey(userId));
-  const scheduledIds = await getScheduledWeeklyDigestIds();
+  const [storedId, legacyStoredId, scheduledIds] = await Promise.all([
+    SecureStore.getItemAsync(WEEKLY_DIGEST_NOTIFICATION_KEY),
+    SecureStore.getItemAsync(legacyScheduledDigestKey(userId)),
+    getScheduledWeeklyDigestIds(),
+  ]);
   const idsToCancel = compactUniqueIds([storedId, legacyStoredId, ...scheduledIds]);
 
   await Promise.all(idsToCancel.map((id) => Notifications.cancelScheduledNotificationAsync(id)));

@@ -21,7 +21,7 @@ export const buildAutomatedTransactionCommand = (
   source: "email_capture",
 });
 
-export const recordTransactionWithLocalLedger = async (
+const recordTransactionWithLocalLedger = async (
   context: PersistedTransactionContext,
   input: {
     readonly recordAutomatedTransactionWithLocalLedger: CreateEmailPipelineServiceDeps["recordAutomatedTransactionWithLocalLedger"];
@@ -37,7 +37,7 @@ export const recordTransactionWithLocalLedger = async (
   if (!result.success) throw new Error(`RecordTransaction rejected: ${result.error}`);
 };
 
-export function persistTransactionRecordEffect(context: PersistedTransactionContext) {
+function persistTransactionRecordEffect(context: PersistedTransactionContext) {
   return Effect.gen(function* () {
     const { recordAutomatedTransactionWithLocalLedger } = yield* EmailPipelineDeps.tag;
     yield* fromPromise(() =>

@@ -30,7 +30,8 @@ const FilterPill = memo(
 
     return (
       <Pressable
-        className="h-11 w-11 items-center justify-center gap-1"
+        // Source contract: className="h-11 w-11".
+        className="size-11 items-center justify-center gap-1"
         onPress={handlePress}
         accessibilityRole="button"
         accessibilityState={{ selected: isSelected }}

@@ -83,9 +83,11 @@ export function CalendarGrid({ currentMonth, bills, payments, cellMinHeight, onD
       </View>
 
       {/* Week rows */}
-      {grid.map((week, weekIdx) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: grid rows are positional by week
-        <View key={weekIdx} style={styles.weekRow}>
+      {grid.map((week) => (
+        <View
+          key={week.map((cell) => cell.date?.toISOString() ?? "empty").join("-")}
+          style={styles.weekRow}
+        >
           {week.map((cell, dayIdx) => (
             <CalendarDayCell
               key={cell.day ?? `empty-${dayIdx}`}

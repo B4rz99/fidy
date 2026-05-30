@@ -53,10 +53,7 @@ export function UpcomingBillsSection() {
       </View>
 
       {upcomingBills.length === 0 ? (
-        <EmptyState
-          title={t("budgets.upcomingBills.noBills")}
-          className="min-h-16 flex-none px-4 py-4"
-        />
+        <EmptyState title={t("budgets.upcomingBills.noBills")} className="min-h-16 flex-none p-4" />
       ) : (
         <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
           {upcomingBills.map(({ bill, nextDate }, index) => {

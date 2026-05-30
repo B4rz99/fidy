@@ -265,6 +265,6 @@ export async function cleanupExpiredChatSessions(
   return expired;
 }
 
-export function dismissExpiredChatBanner(): void {
+function dismissExpiredChatBanner(): void {
   useChatStore.getState().dismissExpiredBanner();
 }

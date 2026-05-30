@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { deriveHomeSpendingCardModel } from "../../features/dashboard/components/home-screen/HomeSpendingCard";
+import { deriveHomeSpendingCardModel } from "../../features/dashboard/components/home-screen/HomeSpendingCard.model";
 
 describe("home spending card model", () => {
   test("summarizes monthly spend with budget-based daily allowance guidance", () => {

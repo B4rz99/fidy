@@ -17,13 +17,13 @@ export type AppTelemetry = {
   readonly capturePipelineEvent: (data: TelemetryContext) => void | Promise<void>;
 };
 
-export const liveAppTelemetry: AppTelemetry = {
+const liveAppTelemetry: AppTelemetry = {
   captureError: captureSentryError,
   captureWarning: captureSentryWarning,
   capturePipelineEvent: captureSentryPipelineEvent,
 };
 
-export const AppTelemetryService = makeAppService<AppTelemetry>("@/shared/effect/AppTelemetry");
+const AppTelemetryService = makeAppService<AppTelemetry>("@/shared/effect/AppTelemetry");
 
 export const captureErrorEffect = (error: unknown) =>
   Effect.flatMap(AppTelemetryService.tag, ({ captureError }) =>

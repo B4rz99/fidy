@@ -80,7 +80,7 @@ export function CategoriesScreen() {
           {customCategories.length === 0 ? (
             <EmptyState
               title={t("categories.noCustomCategories")}
-              className="min-h-20 flex-none px-4 py-4"
+              className="min-h-20 flex-none p-4"
             />
           ) : (
             customCategories.map((category, index) => (

@@ -107,7 +107,7 @@ function acknowledgeBudgetAlert(
     });
 }
 
-export function createBudgetActions(
+function createBudgetActions(
   set: BudgetSetState,
   budgetAlertStateManager: BudgetAlertStateManager
 ): BudgetActions {

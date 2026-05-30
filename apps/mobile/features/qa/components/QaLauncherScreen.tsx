@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import { useAuthStore } from "@/features/auth/public";
 import { ScreenLayout } from "@/shared/components";
 import { ActivityIndicator, Text, View } from "@/shared/components/rn";
@@ -13,13 +13,15 @@ import {
 import { parseLocalQaProfileRouteParam, parseQaTargetKeyRouteParam } from "../lib/route-params";
 import { recordQaLog } from "../logging";
 
+const qaLauncherErrorReducer = (_current: string | null, next: string | null) => next;
+
 export function QaLauncherScreen() {
-  const router = useRouter();
+  const { back, replace } = useRouter();
   const { t } = useTranslation();
   const localQaAvailable = isLocalQaAvailable();
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const [errorKey, setErrorKey] = useState<string | null>(null);
+  const [errorKey, dispatchQaError] = useReducer(qaLauncherErrorReducer, null);
   const lastLaunchRequest = useRef<string | null>(null);
   const { profile: rawProfile, targetKey: rawTargetKey } = useLocalSearchParams<{
     profile?: string | string[];
@@ -31,12 +33,12 @@ export function QaLauncherScreen() {
 
   useEffect(() => {
     if (!localQaAvailable) {
-      setErrorKey("qaTools.unavailable");
+      dispatchQaError("qaTools.unavailable");
       return;
     }
 
     if (!profile) {
-      setErrorKey("qaTools.unavailable");
+      dispatchQaError("qaTools.unavailable");
       return;
     }
 
@@ -49,25 +51,25 @@ export function QaLauncherScreen() {
     if (lastLaunchRequest.current === launchRequestKey) return;
 
     lastLaunchRequest.current = launchRequestKey;
-    setErrorKey(null);
+    dispatchQaError(null);
     recordQaLog("info", "qa_launcher_requested", { profile, target: nextTarget });
 
-    void launchQaScenario(profile, nextTarget, router.replace).catch((error) => {
-      setErrorKey("qaTools.startFailed");
+    void launchQaScenario(profile, nextTarget, replace).catch((error) => {
+      dispatchQaError("qaTools.startFailed");
       recordQaLog("error", "qa_launcher_failed", {
         profile,
         target: nextTarget,
         errorMessage: error instanceof Error ? error.message : "unknown",
       });
     });
-  }, [localQaAvailable, profile, target, router.replace]);
+  }, [localQaAvailable, profile, target, replace]);
 
   if (!localQaAvailable) {
     return null;
   }
 
   return (
-    <ScreenLayout variant="sub" title={t("qaTools.title")} onBack={() => router.back()}>
+    <ScreenLayout variant="sub" title={t("qaTools.title")} onBack={() => back()}>
       <View
         style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 12 }}
       >

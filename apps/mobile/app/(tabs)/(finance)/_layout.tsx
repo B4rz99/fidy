@@ -3,7 +3,8 @@ import { Platform, useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 
 export default function FinanceStackLayout() {
-  const theme = Colors[useColorScheme() === "dark" ? "dark" : "light"];
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
 
   return (
     <Stack

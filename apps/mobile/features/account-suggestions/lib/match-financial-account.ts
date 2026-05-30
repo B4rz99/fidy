@@ -10,18 +10,25 @@ import type { FinancialAccountId, UserId } from "@/shared/types/branded";
 
 type MatchableEvidence = Pick<CaptureEvidenceSeed, "scope" | "value">;
 
+const matchesEvidence = (
+  identifier: Pick<FinancialAccountIdentifierRow, "accountId" | "scope" | "value">,
+  evidence: MatchableEvidence
+) => identifier.scope === evidence.scope && identifier.value === evidence.value;
+
+const matchedAccountIdsForEvidence = (
+  identifiers: readonly Pick<FinancialAccountIdentifierRow, "accountId" | "scope" | "value">[],
+  evidence: MatchableEvidence
+) =>
+  identifiers.flatMap((identifier) =>
+    matchesEvidence(identifier, evidence) ? [identifier.accountId] : []
+  );
+
 export function matchFinancialAccountId(
   identifiers: readonly Pick<FinancialAccountIdentifierRow, "accountId" | "scope" | "value">[],
   evidence: readonly MatchableEvidence[]
 ): FinancialAccountId | null {
   const matchedAccountIds = Array.from(
-    new Set(
-      evidence.flatMap((row) =>
-        identifiers
-          .filter((identifier) => identifier.scope === row.scope && identifier.value === row.value)
-          .map((identifier) => identifier.accountId)
-      )
-    )
+    new Set(evidence.flatMap((row) => matchedAccountIdsForEvidence(identifiers, row)))
   );
 
   return matchedAccountIds.length === 1 ? (matchedAccountIds[0] ?? null) : null;

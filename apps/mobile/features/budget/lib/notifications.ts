@@ -49,8 +49,10 @@ function getImmediateScheduleResult(
 }
 
 async function getBudgetAlertAction(notificationsEnabled: boolean) {
-  const permission = await Notifications.getPermissionsAsync();
-  const hasSeenPrePermission = await readHasSeenPrePermission();
+  const [permission, hasSeenPrePermission] = await Promise.all([
+    Notifications.getPermissionsAsync(),
+    readHasSeenPrePermission(),
+  ]);
   return determineAlertAction(permission.status, hasSeenPrePermission, notificationsEnabled);
 }
 

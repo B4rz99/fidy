@@ -22,7 +22,7 @@ const transactionKeyExtractor = (
 const QueueItemSeparator = () => <View style={styles.itemSeparator} />;
 
 export function AttributionQueueScreen() {
-  const router = useRouter();
+  const { push, back } = useRouter();
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
@@ -59,22 +59,22 @@ export function AttributionQueueScreen() {
 
   const handleChooseAnother = useCallback(
     (fingerprint: string) => {
-      router.push({
+      push({
         pathname: "/link-suggested-account",
         params: { fingerprint },
       });
     },
-    [router]
+    [push]
   );
 
   const handleOpenDetails = useCallback(
     (transactionId: TransactionId) => {
-      router.push({
+      push({
         pathname: "/attribution-review",
         params: { transactionId },
       } as never);
     },
-    [router]
+    [push]
   );
 
   const handleSkip = useCallback((transactionId: TransactionId) => {
@@ -98,11 +98,7 @@ export function AttributionQueueScreen() {
   );
 
   return (
-    <ScreenLayout
-      title={t("attributionReview.queueTitle")}
-      variant="sub"
-      onBack={() => router.back()}
-    >
+    <ScreenLayout title={t("attributionReview.queueTitle")} variant="sub" onBack={() => back()}>
       {hasLoadedQueue && visibleItems.length === 0 ? (
         <EmptyState
           title={t("attributionReview.emptyTitle")}

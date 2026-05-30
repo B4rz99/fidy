@@ -19,7 +19,7 @@ export function StatusPill({ label, tone }: StatusPillProps) {
         paddingVertical: 6,
       }}
     >
-      <Text className="font-poppins-semibold" style={{ color: textColor, fontSize: 10 }}>
+      <Text className="font-poppins-semibold" style={{ color: textColor, fontSize: 12 }}>
         {label.toUpperCase()}
       </Text>
     </View>

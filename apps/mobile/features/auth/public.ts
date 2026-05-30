@@ -34,7 +34,7 @@ export const useAuthIdentity = () => {
   return { fullName, email, accountCreatedAt, profileImageUrl };
 };
 
-export const useAccountCreatedAt = () =>
+const useAccountCreatedAt = () =>
   useAuthStore((state) =>
     deriveAccountCreatedAt({ session: state.session, localQaSession: state.localQaSession })
   );

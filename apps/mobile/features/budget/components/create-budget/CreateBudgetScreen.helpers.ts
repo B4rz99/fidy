@@ -24,7 +24,5 @@ export function resolveExistingCategoryIds(
   budgets: readonly Budget[],
   budgetId: string | undefined
 ): ReadonlySet<string> {
-  return new Set(
-    budgets.filter((budget) => budget.id !== budgetId).map((budget) => budget.categoryId)
-  );
+  return new Set(budgets.flatMap((budget) => (budget.id === budgetId ? [] : [budget.categoryId])));
 }

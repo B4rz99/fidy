@@ -3,8 +3,6 @@ import type { IsoDateTime, TransactionId, TransferId } from "@/shared/types/bran
 import { getTransactionById } from "./lib/repository";
 import { markReclassificationTransactionSuperseded } from "@/infrastructure/local-ledger/public";
 
-export { getTransactionById };
-
 export function markTransactionSuperseded(
   db: AnyDb,
   input: {

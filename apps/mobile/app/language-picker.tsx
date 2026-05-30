@@ -12,13 +12,13 @@ const OPTIONS = [
 
 export default function LanguagePickerSheet() {
   const { t, locale } = useTranslation();
-  const router = useRouter();
+  const { back } = useRouter();
   const setLocale = useLocaleStore((s) => s.setLocale);
   const accentGreen = useThemeColor("accentGreen");
 
   const handleSelect = (newLocale: string) => {
     setLocale(newLocale);
-    router.back();
+    back();
   };
 
   return (

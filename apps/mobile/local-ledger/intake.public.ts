@@ -4,7 +4,6 @@ export {
   type CreateReviewCandidateCommand,
   type CreateReviewCandidateCommitPort,
   type CreateReviewCandidateInput,
-  toCreateReviewCandidateCommand,
 } from "./use-cases/intake.public";
 export type {
   IntakeLocalLedgerCandidate,

@@ -35,5 +35,5 @@ export const getDurablyProcessedFetches = async (
     result,
     isDurable: result.fetchOk && hasPersistedSourceEventsForFetch(persistedKeys, result),
   }));
-  return fetchDurability.filter((entry) => entry.isDurable).map((entry) => entry.result);
+  return fetchDurability.flatMap((entry) => (entry.isDurable ? [entry.result] : []));
 };

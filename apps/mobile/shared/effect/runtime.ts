@@ -18,11 +18,11 @@ export async function runAppEffect<A, E>(effect: AppEffect<A, E>): Promise<A> {
   return exit.value;
 }
 
-export function makeAppTag<Service>(key: string): Context.Tag<Service, Service> {
+function makeAppTag<Service>(key: string): Context.Tag<Service, Service> {
   return Context.GenericTag<Service>(key);
 }
 
-export function bindAppService<I, S>(tag: Context.Tag<I, S>, service: S): BoundAppService<I, S> {
+function bindAppService<I, S>(tag: Context.Tag<I, S>, service: S): BoundAppService<I, S> {
   return {
     provide: <A, E, R>(effect: AppEffect<A, E, I | R>) =>
       Effect.provideService(effect, tag, service),

@@ -41,7 +41,7 @@ function AddBillFormForUser({
 }
 
 export function AddBillScreen() {
-  const router = useRouter();
+  const { back } = useRouter();
   const { billId } = useLocalSearchParams<{ billId?: string | string[] }>();
   const bills = useCalendarStore((state) => state.bills);
   const userId = useOptionalUserId();
@@ -51,7 +51,8 @@ export function AddBillScreen() {
     <AddBillFormForUser
       existingBill={resolveExistingBill(bills, resolvedBillId)}
       userId={userId}
-      onDone={() => router.back()}
+      onDone={() => back()}
+      // Source contract: equivalent to router.back().
     />
   );
 }

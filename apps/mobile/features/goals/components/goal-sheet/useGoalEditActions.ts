@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { Alert } from "@/shared/components/rn";
 import type { AnyDb } from "@/shared/db/client";
@@ -99,13 +99,17 @@ export function useGoalEditActions(goal: Goal, goalId: string, form: GoalSheetFo
   const userId = useOptionalUserId();
   const { isBusy: isSaving, run: guardedSave } = useAsyncGuard();
   const { isBusy: isDeleting, run: guardedDelete } = useAsyncGuard();
-  const fields = {
-    amount: form.amount,
-    goalType: form.goalType,
-    interestRate: form.interestRate,
-    name: form.name,
-    targetDate: form.targetDate,
-  } satisfies GoalMutationFields;
+  const fields = useMemo(
+    () =>
+      ({
+        amount: form.amount,
+        goalType: form.goalType,
+        interestRate: form.interestRate,
+        name: form.name,
+        targetDate: form.targetDate,
+      }) satisfies GoalMutationFields,
+    [form.amount, form.goalType, form.interestRate, form.name, form.targetDate]
+  );
 
   return {
     isDeleting,

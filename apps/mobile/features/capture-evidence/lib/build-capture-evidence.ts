@@ -56,7 +56,7 @@ type TypedLlmHint = {
   readonly value: string;
 };
 
-export function buildLlmAccountHintCaptureEvidence(input: {
+function buildLlmAccountHintCaptureEvidence(input: {
   readonly family: string;
   readonly scopePrefix: "email" | "notification";
   readonly fromAccountHint?: string;
@@ -113,12 +113,16 @@ function extractAliasEvidence(
   family: string,
   combinedText: string
 ): readonly CaptureEvidenceSeed[] {
-  return ALIAS_TOKENS.filter((token) => combinedText.includes(token)).map((token) => ({
+  const toAliasEvidence = (token: string): CaptureEvidenceSeed => ({
     sourceFamily: family,
     evidenceType: "alias_token",
     scope: `notification:${family}:alias`,
     value: token,
-  }));
+  });
+
+  return ALIAS_TOKENS.flatMap((token) =>
+    combinedText.includes(token) ? [toAliasEvidence(token)] : []
+  );
 }
 
 function extractLast4Evidence(input: {
@@ -127,15 +131,19 @@ function extractLast4Evidence(input: {
   readonly rawText: string;
 }) {
   const values = LAST4_PATTERNS.flatMap((pattern) =>
-    Array.from(input.rawText.matchAll(pattern), (match) => match[1] ?? "")
-  )
-    .filter((value) => value.length === 4)
-    .map((value) => ({
-      sourceFamily: input.family,
-      evidenceType: "last4" as const,
-      scope: `${input.scopePrefix}:${input.family}:last4`,
-      value,
-    }));
+    Array.from(input.rawText.matchAll(pattern), (match) => match[1] ?? "").flatMap((value) =>
+      value.length === 4
+        ? [
+            {
+              sourceFamily: input.family,
+              evidenceType: "last4" as const,
+              scope: `${input.scopePrefix}:${input.family}:last4`,
+              value,
+            },
+          ]
+        : []
+    )
+  );
 
   return uniqueEvidence(values);
 }
@@ -143,15 +151,19 @@ function extractLast4Evidence(input: {
 function extractEmailLast4Evidence(input: { readonly family: string; readonly rawText: string }) {
   const evidenceText = htmlToPlainText(input.rawText);
   const values = EMAIL_LAST4_PATTERNS.flatMap((pattern) =>
-    Array.from(evidenceText.matchAll(pattern), (match) => match[1] ?? "")
-  )
-    .filter((value) => value.length === 4)
-    .map((value) => ({
-      sourceFamily: input.family,
-      evidenceType: "last4" as const,
-      scope: `email:${input.family}:last4`,
-      value,
-    }));
+    Array.from(evidenceText.matchAll(pattern), (match) => match[1] ?? "").flatMap((value) =>
+      value.length === 4
+        ? [
+            {
+              sourceFamily: input.family,
+              evidenceType: "last4" as const,
+              scope: `email:${input.family}:last4`,
+              value,
+            },
+          ]
+        : []
+    )
+  );
 
   return uniqueEvidence(values);
 }

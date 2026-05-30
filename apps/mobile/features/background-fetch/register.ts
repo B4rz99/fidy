@@ -11,7 +11,7 @@ export async function registerBackgroundTask(): Promise<void> {
   });
 }
 
-export async function unregisterBackgroundTask(): Promise<void> {
+async function unregisterBackgroundTask(): Promise<void> {
   const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_TASK_NAME);
   if (!isRegistered) return;
   await BackgroundTask.unregisterTaskAsync(BACKGROUND_TASK_NAME);

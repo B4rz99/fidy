@@ -55,20 +55,24 @@ const toParagraphSegments = (text: string, blockIndex: number): readonly Assista
   return [
     ...reduced.segments,
     { text: stripInlineMarkdown(text.slice(reduced.cursor)), strong: false },
-  ]
-    .filter((segment) => segment.text.length > 0)
-    .map((segment, segmentIndex) => ({
-      key: `${segment.strong ? "strong" : "text"}-${blockIndex}-${segmentIndex}`,
-      text: segment.text,
-      strong: segment.strong,
-    }));
+  ].flatMap((segment, segmentIndex) =>
+    segment.text.length > 0
+      ? [
+          {
+            key: `${segment.strong ? "strong" : "text"}-${blockIndex}-${segmentIndex}`,
+            text: segment.text,
+            strong: segment.strong,
+          },
+        ]
+      : []
+  );
 };
 
 const toDisplayBlock = (block: string, blockIndex: number): readonly AssistantDisplayBlock[] => {
-  const lines = block
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const lines = block.split("\n").flatMap((line) => {
+    const trimmed = line.trim();
+    return trimmed ? [trimmed] : [];
+  });
 
   return lines.map((line, lineIndex) => {
     const bulletText = line.match(/^[-*]\s+(.+)$/)?.[1];
@@ -91,6 +95,8 @@ const toDisplayBlock = (block: string, blockIndex: number): readonly AssistantDi
 export const getAssistantDisplayBlocks = (content: string): readonly AssistantDisplayBlock[] =>
   getPlainMessageText(content)
     .split(/\n{2,}/)
-    .map((block) => block.trim())
-    .filter(Boolean)
+    .flatMap((block) => {
+      const trimmed = block.trim();
+      return trimmed ? [trimmed] : [];
+    })
     .flatMap(toDisplayBlock);
