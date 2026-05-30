@@ -50,4 +50,17 @@ describe("Colors", () => {
   test("accentGreen dark is #8BC34A", () => {
     expect(Colors.dark.accentGreen).toBe("#8BC34A");
   });
+
+  test("semantic aliases preserve the existing compatibility colors", () => {
+    expect(Colors.light.background).toBe(Colors.light.page);
+    expect(Colors.dark.background).toBe(Colors.dark.page);
+    expect(Colors.light.surface).toBe(Colors.light.card);
+    expect(Colors.dark.surface).toBe(Colors.dark.card);
+    expect(Colors.light.textPrimary).toBe(Colors.light.primary);
+    expect(Colors.dark.textPrimary).toBe(Colors.dark.primary);
+    expect(Colors.light.actionPrimary).toBe(Colors.light.accentGreen);
+    expect(Colors.dark.actionPrimary).toBe(Colors.dark.accentGreen);
+    expect(Colors.light.danger).toBe(Colors.light.accentRed);
+    expect(Colors.dark.danger).toBe(Colors.dark.accentRed);
+  });
 });

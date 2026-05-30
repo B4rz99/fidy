@@ -1,4 +1,4 @@
-import { FidyLogo } from "@/shared/components";
+import { Button, FidyLogo } from "@/shared/components";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { useOnboardingStore } from "../store";
@@ -10,7 +10,6 @@ export function WelcomeStep() {
 
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
-  const accentGreen = useThemeColor("accentGreen");
 
   const { isBusy, run: guardedRun } = useAsyncGuard();
 
@@ -27,12 +26,7 @@ export function WelcomeStep() {
       </View>
 
       <View style={styles.actions}>
-        <Pressable
-          style={[styles.primaryButton, { backgroundColor: accentGreen }]}
-          onPress={nextStep}
-        >
-          <Text style={styles.primaryButtonText}>{t("onboarding.welcome.getStarted")}</Text>
-        </Pressable>
+        <Button label={t("onboarding.welcome.getStarted")} onPress={nextStep} />
         <Pressable
           onPress={() => {
             void handleAlreadyHaveAccount();
@@ -76,18 +70,6 @@ const styles = StyleSheet.create({
   actions: {
     alignItems: "center",
     gap: 16,
-  },
-  primaryButton: {
-    borderRadius: 14,
-    borderCurve: "continuous",
-    paddingVertical: 16,
-    alignItems: "center",
-    alignSelf: "stretch",
-  },
-  primaryButtonText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 16,
-    color: "#FFFFFF",
   },
   linkText: {
     fontFamily: "Poppins_500Medium",

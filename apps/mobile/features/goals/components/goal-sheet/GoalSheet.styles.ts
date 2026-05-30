@@ -61,16 +61,4 @@ export const styles = StyleSheet.create({
   interestSuffix: { fontFamily: "Poppins_700Bold", fontSize: 18 },
   cursor: { width: 2, height: 28, marginLeft: 2, borderRadius: 1 },
   projectionHint: { fontFamily: "Poppins_500Medium", fontSize: 12, textAlign: "center" },
-  actionButton: {
-    borderRadius: 10,
-    borderCurve: "continuous",
-    paddingVertical: 12,
-    alignItems: "center",
-    minHeight: 44,
-  },
-  destructiveActionButton: {
-    borderWidth: 1.5,
-  },
-  actionButtonText: { fontFamily: "Poppins_700Bold", fontSize: 16, color: "#FFFFFF" },
-  destructiveActionButtonText: { fontFamily: "Poppins_700Bold", fontSize: 16 },
 });

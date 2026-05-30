@@ -40,6 +40,23 @@ describe("tailwind <-> Colors sync", () => {
     expect(twColors["chat-user-text-dark"]).toBe(Colors.dark.chatUserText);
   });
 
+  test("semantic UI aliases match Colors", () => {
+    expect(twColors.background).toBe(Colors.light.background);
+    expect(twColors["background-dark"]).toBe(Colors.dark.background);
+    expect(twColors.surface).toBe(Colors.light.surface);
+    expect(twColors["surface-dark"]).toBe(Colors.dark.surface);
+    expect(twColors["surface-muted"]).toBe(Colors.light.surfaceMuted);
+    expect(twColors["surface-muted-dark"]).toBe(Colors.dark.surfaceMuted);
+    expect(twColors["text-primary"]).toBe(Colors.light.textPrimary);
+    expect(twColors["text-primary-dark"]).toBe(Colors.dark.textPrimary);
+    expect(twColors["text-on-accent"]).toBe(Colors.light.textOnAccent);
+    expect(twColors["text-on-accent-dark"]).toBe(Colors.dark.textOnAccent);
+    expect(twColors["action-primary"]).toBe(Colors.light.actionPrimary);
+    expect(twColors["action-primary-dark"]).toBe(Colors.dark.actionPrimary);
+    expect(twColors.danger).toBe(Colors.light.danger);
+    expect(twColors["danger-dark"]).toBe(Colors.dark.danger);
+  });
+
   test("chart-food matches Colors.chart.food", () => {
     expect(twColors["chart-food"]).toBe(Colors.chart.food);
   });

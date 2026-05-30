@@ -1,7 +1,7 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ScreenLayout } from "@/shared/components";
+import { Button, Callout, EmptyState, ScreenLayout } from "@/shared/components";
 import { TriangleAlert } from "@/shared/components/icons";
-import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { ScrollView } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import { canFinancialAccountHaveIdentifiers } from "../../lib/kind";
@@ -27,20 +27,13 @@ export function FinancialAccountDetailsScreenContent({
   onManageIdentifiers,
 }: UseFinancialAccountDetailsScreenResult) {
   const { t, locale } = useTranslation();
-  const primary = useThemeColor("primary");
-  const secondary = useThemeColor("secondary");
   const accentRed = useThemeColor("accentRed");
-  const accentGreen = useThemeColor("accentGreen");
   const { bottom } = useSafeAreaInsets();
 
   if (!accountId || !details || !kind) {
     return (
       <ScreenLayout title={t("financialAccounts.detail.title")} variant="sub" onBack={onBack}>
-        <View style={styles.emptyState}>
-          <Text style={[styles.emptyText, { color: primary }]}>
-            {t("financialAccounts.list.emptyTitle")}
-          </Text>
-        </View>
+        <EmptyState title={t("financialAccounts.list.emptyTitle")} />
       </ScreenLayout>
     );
   }
@@ -67,17 +60,12 @@ export function FinancialAccountDetailsScreenContent({
         />
 
         {details.hasBillingProfileGap ? (
-          <View style={[styles.warningBanner, { borderColor: accentRed }]}>
-            <TriangleAlert size={18} color={accentRed} />
-            <View style={styles.warningCopy}>
-              <Text style={[styles.warningTitle, { color: primary }]}>
-                {t("financialAccounts.detail.billingGapTitle")}
-              </Text>
-              <Text style={[styles.warningBody, { color: secondary }]}>
-                {t("financialAccounts.detail.billingGapBody")}
-              </Text>
-            </View>
-          </View>
+          <Callout
+            title={t("financialAccounts.detail.billingGapTitle")}
+            subtitle={t("financialAccounts.detail.billingGapBody")}
+            icon={<TriangleAlert size={18} color={accentRed} />}
+            tone="danger"
+          />
         ) : null}
 
         <FinancialAccountDetailSection title={t("financialAccounts.detail.accountSection")}>
@@ -136,12 +124,7 @@ export function FinancialAccountDetailsScreenContent({
           />
         ) : null}
 
-        <Pressable
-          style={[styles.primaryButton, { backgroundColor: accentGreen }]}
-          onPress={onEditAccount}
-        >
-          <Text style={styles.primaryButtonText}>{t("financialAccounts.detail.editCta")}</Text>
-        </Pressable>
+        <Button label={t("financialAccounts.detail.editCta")} onPress={onEditAccount} />
       </ScrollView>
     </ScreenLayout>
   );

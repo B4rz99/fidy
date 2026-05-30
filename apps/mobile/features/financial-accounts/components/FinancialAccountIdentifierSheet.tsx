@@ -5,8 +5,8 @@ import { useOptionalUserId } from "@/features/auth/public";
 import { createFinancialAccountManagementService } from "@/features/financial-accounts/lib/management-service";
 import { parseFinancialAccountRouteParam } from "@/features/financial-accounts/lib/route-params";
 import { canFinancialAccountHaveIdentifiers, readFinancialAccountKind } from "../lib/kind";
-import { ScreenLayout } from "@/shared/components";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
+import { Button, ScreenLayout } from "@/shared/components";
+import { ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
@@ -25,7 +25,6 @@ export function FinancialAccountIdentifierSheet() {
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
   const borderSubtle = useThemeColor("borderSubtle");
-  const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
   const card = useThemeColor("card");
   const [value, setValue] = useState("");
@@ -113,21 +112,12 @@ export function FinancialAccountIdentifierSheet() {
           </Text>
         </View>
 
-        <Pressable
-          style={[
-            styles.primaryButton,
-            {
-              backgroundColor: accentGreen,
-              opacity: isBusy || value.trim().length === 0 ? 0.5 : 1,
-            },
-          ]}
+        <Button
+          label={t("financialAccounts.identifierSheet.save")}
           disabled={isBusy || value.trim().length === 0}
           onPress={handleSave}
-        >
-          <Text style={styles.primaryButtonText}>
-            {t("financialAccounts.identifierSheet.save")}
-          </Text>
-        </Pressable>
+          loading={isBusy}
+        />
       </ScrollView>
     </ScreenLayout>
   );
@@ -168,17 +158,6 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     fontSize: 12,
     lineHeight: 18,
-  },
-  primaryButton: {
-    minHeight: 52,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  primaryButtonText: {
-    color: "#FFFFFF",
-    fontFamily: "Poppins_700Bold",
-    fontSize: 14,
   },
   stateContainer: {
     flex: 1,

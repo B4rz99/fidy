@@ -9,11 +9,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  actionButtonText: {
-    color: "#FFFFFF",
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 15,
-  },
   actionRow: {
     flexDirection: "row",
     gap: 8,
@@ -33,17 +28,6 @@ export const styles = StyleSheet.create({
     height: 36,
     paddingHorizontal: 10,
   },
-  deleteButton: {
-    alignItems: "center",
-    borderRadius: 12,
-    height: 48,
-    justifyContent: "center",
-    paddingHorizontal: 20,
-  },
-  deleteButtonText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 15,
-  },
   descriptionInput: {
     borderRadius: 10,
     borderWidth: 1,
@@ -52,18 +36,6 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     height: 36,
     paddingHorizontal: 12,
-  },
-  extraActionButton: {
-    alignItems: "center",
-    borderRadius: 12,
-    borderWidth: 1,
-    height: 44,
-    justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  extraActionText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 14,
   },
   headerCenter: {
     alignItems: "center",
@@ -110,13 +82,6 @@ export const styles = StyleSheet.create({
   accountRow: {
     flexDirection: "row",
     gap: 8,
-  },
-  saveButton: {
-    alignItems: "center",
-    borderRadius: 12,
-    flex: 1,
-    height: 48,
-    justifyContent: "center",
   },
   bottomZone: {
     gap: 8,

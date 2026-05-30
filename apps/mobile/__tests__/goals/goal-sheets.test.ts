@@ -64,7 +64,12 @@ test("keeps the shared goal-sheet cluster wired to the date picker and numpad fl
 
 test("goals proposal keeps the empty state and goal pulse cards wired", () => {
   expect(goalsListSource).toContain("<ScreenLayout");
-  expect(goalsListSource).toContain("emptyCard");
+  expect(goalsListSource).toContain(
+    'import { Button, EmptyState, ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";'
+  );
+  expect(goalsListSource).toContain("<EmptyState");
+  expect(goalsListSource).toContain("<Button");
+  expect(goalsListSource).not.toContain("styles.emptyCard");
   expect(goalsListSource).toContain("ItemSeparatorComponent={GoalItemSeparator}");
   expect(goalsListSource).toContain("itemSeparator");
   expect(goalCardSource).toContain("goal.iconName");
@@ -135,7 +140,8 @@ test("create-goal full screen avoids nested card and uses debt red state", () =>
   expect(frameSource).toContain('keyboardShouldPersistTaps="handled"');
   expect(frameSource).toContain("FidyNumpad compact={fullScreen}");
   expect(stylesSource).toContain('justifyContent: "space-between"');
-  expect(typeToggleSource).toContain('goalType === "debt" ? accentRed : accentGreen');
+  expect(typeToggleSource).toContain("<SegmentedControl");
+  expect(typeToggleSource).toContain('type === "debt" ? "danger" : "success"');
 });
 
 test("goal detail hides inherited tab title from the back button", () => {

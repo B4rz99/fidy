@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
-import { TAB_BAR_CLEARANCE } from "@/shared/components";
-import { ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
+import { EmptyState, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { ScrollView, StyleSheet } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
-import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useMountEffect, useTranslation } from "@/shared/hooks";
 import { captureError } from "@/shared/lib";
 import type { CategoryId } from "@/shared/types/branded";
 import type { AnalyticsPeriod } from "../lib/derive";
@@ -40,7 +40,6 @@ export function AnalyticsScreen() {
     [userId]
   );
 
-  const secondaryColor = useThemeColor("secondary");
   const shiftView = useMemo(
     () =>
       incomeExpense && periodDelta
@@ -63,9 +62,7 @@ export function AnalyticsScreen() {
       <PeriodSelector activePeriod={period} onSelect={handleSelectPeriod} />
 
       {showEmpty ? (
-        <View style={styles.emptyState}>
-          <Text style={[styles.emptyText, { color: secondaryColor }]}>{t("analytics.noData")}</Text>
-        </View>
+        <EmptyState title={t("analytics.noData")} className="pt-12" />
       ) : (
         shiftView &&
         incomeExpense &&
@@ -89,16 +86,5 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: ANALYTICS_CONTENT_PADDING,
     gap: ANALYTICS_CARD_GAP,
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 48,
-  },
-  emptyText: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 14,
-    textAlign: "center",
   },
 });

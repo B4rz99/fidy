@@ -41,7 +41,6 @@ export function TransactionFormContent({
   const { bottom: safeBottom } = useSafeAreaInsets();
   const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
-  const accentGreenLight = useThemeColor("accentGreenLight");
   const accentRed = useThemeColor("accentRed");
   const borderSubtle = useThemeColor("borderSubtle");
   const cardColor = useThemeColor("card");
@@ -49,8 +48,6 @@ export function TransactionFormContent({
   const secondaryColor = useThemeColor("secondary");
   const tertiaryColor = useThemeColor("tertiary");
   const amountColor = type === "expense" ? accentRed : accentGreen;
-  const buttonBackground = canSave ? accentGreen : "#CCCCCC";
-
   return (
     <Pressable
       style={[styles.container, { backgroundColor: cardColor }]}
@@ -83,15 +80,10 @@ export function TransactionFormContent({
         </View>
 
         <TransactionAccountSection
-          accentGreen={accentGreen}
-          accentGreenLight={accentGreenLight}
           accountId={accountId}
           accounts={accounts}
-          borderSubtle={borderSubtle}
-          cardColor={cardColor}
           label={t("common.account")}
           onAccountChange={onAccountChange}
-          primaryColor={primaryColor}
           secondaryColor={secondaryColor}
         />
 
@@ -110,19 +102,14 @@ export function TransactionFormContent({
       </View>
 
       <TransactionActionSection
-        borderSubtle={borderSubtle}
-        buttonBackground={buttonBackground}
         canSave={canSave}
-        cardColor={cardColor}
         deleteLabel={t("transactions.deleteTransaction")}
-        deleteTint={accentRed}
         extraActionLabel={extraActionLabel}
         handleKey={handleKey}
         isSaving={isSaving}
         onDelete={onDelete}
         onExtraAction={onExtraAction}
         onSave={onSave}
-        primaryColor={primaryColor}
         safeBottom={safeBottom}
         saveLabel={saveLabel}
       />

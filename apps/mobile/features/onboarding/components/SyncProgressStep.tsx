@@ -10,7 +10,8 @@ import {
 } from "@/features/email-capture/public";
 import { useSettingsStore } from "@/features/settings/hooks.public";
 import { refreshTransactions, useTransactionStore } from "@/features/transactions/store.public";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Button } from "@/shared/components";
+import { Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { SYNC_EARLY_UNLOCK_TIMEOUT_MS, shouldUnlockEmailSyncStep } from "../lib/sync-unlock";
@@ -38,7 +39,6 @@ export function SyncProgressStep() {
   );
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
-  const accentGreen = useThemeColor("accentGreen");
   const fetchStarted = useRef(false);
   const suggestionService = useMemo(() => createAccountSuggestionService(), []);
 
@@ -274,14 +274,8 @@ export function SyncProgressStep() {
         ) : null}
       </View>
 
-      <Pressable
-        style={[
-          styles.primaryButton,
-          {
-            backgroundColor: accentGreen,
-            opacity: syncOutcome !== null ? 1 : 0.5,
-          },
-        ]}
+      <Button
+        label={t("onboarding.syncing.continue")}
         onPress={() => {
           trackOnboardingEvent("email_sync_continue", {
             savedCount,
@@ -292,9 +286,7 @@ export function SyncProgressStep() {
           completeSync(hasAccountSuggestions);
         }}
         disabled={syncOutcome === null}
-      >
-        <Text style={styles.primaryButtonText}>{t("onboarding.syncing.continue")}</Text>
-      </Pressable>
+      />
     </View>
   );
 }

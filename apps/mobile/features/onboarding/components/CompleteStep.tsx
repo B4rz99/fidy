@@ -1,7 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useBudgetStore } from "@/features/budget/public";
 import { useTransactionStore } from "@/features/transactions/store.public";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Button } from "@/shared/components";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { useOnboardingStore } from "../store";
 
@@ -37,18 +38,13 @@ export function CompleteStep() {
         </Text>
       </View>
 
-      <Pressable
-        style={[
-          styles.primaryButton,
-          { backgroundColor: accentGreen, opacity: isBusy || isCompleting ? 0.5 : 1 },
-        ]}
+      <Button
+        label={t("onboarding.complete.goToDashboard")}
         onPress={() => {
           void handleComplete();
         }}
-        disabled={isBusy || isCompleting}
-      >
-        <Text style={styles.primaryButtonText}>{t("onboarding.complete.goToDashboard")}</Text>
-      </Pressable>
+        loading={isBusy || isCompleting}
+      />
     </View>
   );
 }
@@ -84,16 +80,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: "center",
     lineHeight: 22,
-  },
-  primaryButton: {
-    borderRadius: 14,
-    borderCurve: "continuous",
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-  primaryButtonText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 16,
-    color: "#FFFFFF",
   },
 });

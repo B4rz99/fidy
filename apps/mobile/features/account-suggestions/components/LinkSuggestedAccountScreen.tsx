@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import { getFinancialAccountsForUser } from "@/features/financial-accounts/public";
 import { useOnboardingStore } from "@/features/onboarding/store.public";
-import { ScreenLayout } from "@/shared/components";
+import { EmptyState, ScreenLayout } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -59,7 +59,6 @@ export default function LinkSuggestedAccountScreen() {
   const nextStep = useOnboardingStore((state) => state.nextStep);
   const { suggestions, hasLoadedSuggestions } = useAccountSuggestions({ db, userId });
   const service = useMemo(() => createAccountSuggestionService(), []);
-  const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const { run: guardedLink } = useAsyncGuard();
 
@@ -118,11 +117,7 @@ export default function LinkSuggestedAccountScreen() {
         </Text>
 
         {hasLoadedSuggestions && suggestion == null ? (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyTitle, { color: primary }]}>
-              {t("accountSuggestions.review.emptyTitle")}
-            </Text>
-          </View>
+          <EmptyState title={t("accountSuggestions.review.emptyTitle")} className="py-12" />
         ) : (
           <>
             {likelyMatches.length > 0 ? (
@@ -197,14 +192,5 @@ const styles = StyleSheet.create({
   accountSubtitle: {
     fontFamily: "Poppins_500Medium",
     fontSize: 12,
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyTitle: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 18,
   },
 });

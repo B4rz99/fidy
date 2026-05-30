@@ -105,27 +105,6 @@ export const styles = StyleSheet.create({
     fontSize: 11,
     marginLeft: 8,
   },
-  emptyText: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 13,
-    textAlign: "center",
-    paddingVertical: 16,
-  },
-  ctaButton: {
-    height: 48,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    borderRadius: 12,
-    borderCurve: "continuous",
-    marginTop: 4,
-  },
-  ctaButtonText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 15,
-    color: "#FFFFFF",
-  },
   recommendationCard: {
     flexDirection: "row",
     gap: 12,

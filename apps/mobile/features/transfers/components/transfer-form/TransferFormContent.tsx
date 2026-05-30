@@ -1,5 +1,6 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button } from "@/shared/components";
 import { TriangleAlert } from "@/shared/components/icons";
 import {
   KeyboardAvoidingView,
@@ -119,23 +120,16 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
           <Text style={[styles.hintText, { color: primary }]}>{props.form.hint}</Text>
         </View>
 
-        <Pressable
+        <Button
           testID={TRANSFER_FORM_TEST_IDS.save}
+          label={props.form.buttonLabel}
           onPress={props.form.canSave ? props.form.handleSave : undefined}
           disabled={!props.form.canSave || props.form.isSaving}
+          loading={props.form.isSaving}
           accessible
           accessibilityRole="button"
           accessibilityLabel={props.form.buttonLabel}
-          style={[
-            styles.saveButton,
-            {
-              backgroundColor: props.form.buttonBackground,
-              opacity: props.form.isSaving ? 0.6 : 1,
-            },
-          ]}
-        >
-          <Text style={styles.saveButtonText}>{props.form.buttonLabel}</Text>
-        </Pressable>
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );

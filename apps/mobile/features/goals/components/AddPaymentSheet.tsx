@@ -7,7 +7,7 @@ import {
   handleNumpadPress,
   TransactionDatePickerSheet,
 } from "@/features/transactions/display.public";
-import { AppAuroraBackground, FidyNumpad } from "@/shared/components";
+import { AppAuroraBackground, Button, FidyNumpad } from "@/shared/components";
 import {
   Keyboard,
   Pressable,
@@ -41,7 +41,6 @@ export function AddPaymentSheet() {
   const pageBg = useThemeColor("page");
   const primaryColor = useThemeColor("primary");
   const tertiaryColor = useThemeColor("tertiary");
-  const accentGreen = useThemeColor("accentGreen");
   const borderColor = useThemeColor("borderSubtle");
 
   const [digits, setDigits] = useState("");
@@ -163,15 +162,14 @@ export function AddPaymentSheet() {
           </Pressable>
         </View>
 
-        <Pressable
-          style={[styles.ctaButton, { backgroundColor: accentGreen, opacity: isAdding ? 0.5 : 1 }]}
+        <Button
+          label={t("goals.payment.addPaymentCta")}
           onPress={() => {
             void handleAddPayment();
           }}
           disabled={isAdding || userId == null}
-        >
-          <Text style={styles.ctaButtonText}>{t("goals.payment.addPaymentCta")}</Text>
-        </Pressable>
+          loading={isAdding}
+        />
 
         {numpadActive ? <FidyNumpad onKeyPress={handleKey} /> : null}
       </ScrollView>
@@ -211,12 +209,4 @@ const styles = StyleSheet.create({
   },
   dateButton: { justifyContent: "center" },
   dateText: { fontFamily: "Poppins_500Medium", fontSize: 14 },
-  ctaButton: {
-    borderRadius: 12,
-    borderCurve: "continuous",
-    paddingVertical: 14,
-    alignItems: "center",
-    minHeight: 48,
-  },
-  ctaButtonText: { fontFamily: "Poppins_700Bold", fontSize: 16, color: "#FFFFFF" },
 });

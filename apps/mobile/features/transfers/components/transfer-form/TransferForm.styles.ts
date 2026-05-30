@@ -114,17 +114,6 @@ export const styles = StyleSheet.create({
     fontSize: 28,
     lineHeight: 32,
   },
-  saveButton: {
-    height: 52,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  saveButtonText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 15,
-    color: "#FFFFFF",
-  },
   sectionLabel: {
     fontFamily: "Poppins_700Bold",
     fontSize: 16,

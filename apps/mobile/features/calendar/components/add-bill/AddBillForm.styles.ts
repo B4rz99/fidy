@@ -55,16 +55,4 @@ export const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     fontSize: 12,
   },
-  saveButton: {
-    borderRadius: 12,
-    borderCurve: "continuous",
-    paddingVertical: 14,
-    alignItems: "center",
-    minHeight: 48,
-  },
-  saveButtonText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 16,
-    color: "#FFFFFF",
-  },
 });

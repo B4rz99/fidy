@@ -1,3 +1,4 @@
+import { IconActionButton } from "@/shared/components/IconActionButton";
 import { Mail, X } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -27,9 +28,12 @@ export const EmailConnectBanner = ({
             {t("emailCapture.autoCapture")}
           </Text>
         </View>
-        <Pressable onPress={dismissBanner} hitSlop={12}>
-          <X size={18} color={closeColor} />
-        </Pressable>
+        <IconActionButton
+          accessibilityLabel={t("common.dismiss")}
+          className="size-8"
+          icon={<X size={18} color={closeColor} />}
+          onPress={dismissBanner}
+        />
       </View>
 
       <Text className="font-poppins-medium text-label text-secondary dark:text-secondary-dark leading-relaxed">

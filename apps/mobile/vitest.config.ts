@@ -12,6 +12,10 @@ export default defineConfig({
       ),
       "lucide-react-native": resolve(__dirname, "__tests__/helpers/lucide-react-native-mock.ts"),
       "react-native-reanimated": resolve(__dirname, "__tests__/helpers/reanimated-mock.ts"),
+      "@react-native-community/datetimepicker": resolve(
+        __dirname,
+        "__tests__/helpers/datetimepicker-mock.ts"
+      ),
       "expo-glass-effect": resolve(__dirname, "__tests__/helpers/expo-glass-effect-mock.ts"),
       "expo-image": resolve(__dirname, "__tests__/helpers/expo-image-mock.ts"),
     },

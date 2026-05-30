@@ -22,13 +22,14 @@ describe("calendar screen", () => {
     expect(gridSource).toContain("weekRow: {\n    flex: 1");
   });
 
-  test("calendar month label is centered between fixed navigation controls", () => {
-    expect(monthNavigatorSource).toContain('justifyContent: "center"');
-    expect(monthNavigatorSource).toContain("previousButton");
-    expect(monthNavigatorSource).toContain("nextButton");
-    expect(monthNavigatorSource).toContain('position: "absolute"');
-    expect(monthNavigatorSource).toContain('accessibilityLabel={t("calendar.previousMonth")}');
-    expect(monthNavigatorSource).toContain('accessibilityLabel={t("calendar.nextMonth")}');
+  test("calendar month navigation delegates layout to the shared navigator", () => {
+    expect(monthNavigatorSource).toContain("SharedMonthNavigator");
+    expect(monthNavigatorSource).toContain("formatMonthYear(currentMonth");
+    expect(monthNavigatorSource).toContain(
+      'previousAccessibilityLabel={t("calendar.previousMonth")}'
+    );
+    expect(monthNavigatorSource).toContain('nextAccessibilityLabel={t("calendar.nextMonth")}');
+    expect(monthNavigatorSource).not.toContain("StyleSheet");
   });
 
   test("finance analytics cards use home activity spacing", () => {

@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { useMemo } from "react";
 import { getNextOccurrence, useCalendarStore } from "@/features/calendar/public";
 import { CATEGORY_MAP } from "@/shared/categories";
+import { EmptyState } from "@/shared/components";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
@@ -14,7 +15,6 @@ export function UpcomingBillsSection() {
   const { push } = useRouter();
   const bills = useCalendarStore((s) => s.bills);
   const primaryColor = useThemeColor("primary");
-  const secondaryColor = useThemeColor("secondary");
   const cardBg = useThemeColor("card");
   const borderColor = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
@@ -53,9 +53,10 @@ export function UpcomingBillsSection() {
       </View>
 
       {upcomingBills.length === 0 ? (
-        <Text style={[styles.emptyText, { color: secondaryColor }]}>
-          {t("budgets.upcomingBills.noBills")}
-        </Text>
+        <EmptyState
+          title={t("budgets.upcomingBills.noBills")}
+          className="min-h-16 flex-none px-4 py-4"
+        />
       ) : (
         <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
           {upcomingBills.map(({ bill, nextDate }, index) => {
@@ -74,7 +75,7 @@ export function UpcomingBillsSection() {
                   {category ? <Text style={{ color: category.color }}>{category.icon}</Text> : null}
                   <View>
                     <Text style={[styles.billName, { color: primaryColor }]}>{bill.name}</Text>
-                    <Text style={[styles.billDate, { color: secondaryColor }]}>
+                    <Text className="font-poppins-medium text-[11px] text-text-secondary dark:text-text-secondary-dark">
                       {nextDate.toLocaleDateString(locale, {
                         month: "short",
                         day: "numeric",
@@ -113,12 +114,6 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     fontSize: 13,
   },
-  emptyText: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 13,
-    textAlign: "center",
-    paddingVertical: 16,
-  },
   card: {
     borderRadius: 12,
     borderCurve: "continuous",
@@ -140,10 +135,6 @@ const styles = StyleSheet.create({
   billName: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 13,
-  },
-  billDate: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 11,
   },
   billAmount: {
     fontFamily: "Poppins_600SemiBold",

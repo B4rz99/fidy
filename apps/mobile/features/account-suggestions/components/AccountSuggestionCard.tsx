@@ -1,6 +1,7 @@
 import { memo, useCallback } from "react";
+import { Button, Card, Chip } from "@/shared/components";
 import { Building2, CreditCard, Sparkles, Wallet } from "@/shared/components/icons";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { AccountCreationSuggestion } from "../lib/derive-account-suggestions";
 import { buildSuggestedFinancialAccountDraft } from "../lib/presentation";
@@ -47,28 +48,27 @@ function AccountSuggestionCardInner({
   const { t } = useTranslation();
   const draft = buildSuggestedFinancialAccountDraft(suggestion);
 
-  const card = useThemeColor("card");
-  const borderSubtle = useThemeColor("borderSubtle");
-  const primary = useThemeColor("primary");
-  const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
   const accentGreen = useThemeColor("accentGreen");
-  const accentGreenLight = useThemeColor("accentGreenLight");
-  const peachLight = useThemeColor("peachLight");
   const AccountIcon = getAccountIcon(draft.kind);
   const handleCreate = useCallback(() => onCreate(suggestion), [onCreate, suggestion]);
   const handleLink = useCallback(() => onLink(suggestion), [onLink, suggestion]);
   const handleSkip = useCallback(() => onSkip(suggestion), [onSkip, suggestion]);
 
   return (
-    <View style={[styles.card, { backgroundColor: card, borderColor: borderSubtle }]}>
-      <View style={styles.topRow}>
-        <View style={[styles.iconWrap, { backgroundColor: accentGreenLight }]}>
+    <Card
+      className="rounded-[20px] border border-border-subtle dark:border-border-subtle-dark"
+      style={{ gap: 14, padding: 18 }}
+    >
+      <View className="flex-row items-start" style={{ gap: 12 }}>
+        <View className="h-11 w-11 items-center justify-center rounded-[14px] bg-accent-green-light dark:bg-accent-green-light-dark">
           <AccountIcon size={20} color={accentGreen} />
         </View>
-        <View style={styles.textColumn}>
-          <Text style={[styles.title, { color: primary }]}>{draft.name}</Text>
-          <Text style={[styles.reason, { color: secondary }]}>
+        <View className="flex-1" style={{ gap: 2 }}>
+          <Text className="font-poppins-semibold text-section text-text-primary dark:text-text-primary-dark">
+            {draft.name}
+          </Text>
+          <Text className="font-poppins-medium text-caption text-text-secondary dark:text-text-secondary-dark">
             {t(buildReasonKey(suggestion), {
               source: draft.sourceLabel,
               value: suggestion.value,
@@ -77,150 +77,46 @@ function AccountSuggestionCardInner({
             })}
           </Text>
         </View>
-        <View style={[styles.confidencePill, { backgroundColor: peachLight }]}>
-          <Sparkles size={12} color={tertiary} />
-          <Text style={[styles.confidenceText, { color: primary }]}>
-            {t(
-              draft.confidenceLabel === "HIGH"
-                ? "accountSuggestions.card.confidenceHigh"
-                : "accountSuggestions.card.confidenceMedium"
-            )}
-          </Text>
-        </View>
+        <Chip
+          label={t(
+            draft.confidenceLabel === "HIGH"
+              ? "accountSuggestions.card.confidenceHigh"
+              : "accountSuggestions.card.confidenceMedium"
+          )}
+          leading={<Sparkles size={12} color={tertiary} />}
+          className="h-auto rounded-icon px-2 py-1.5"
+        />
       </View>
 
-      <View style={styles.evidenceRow}>
-        <View style={[styles.evidencePill, { backgroundColor: peachLight }]}>
-          <Text style={[styles.evidenceText, { color: secondary }]}>{draft.sourceLabel}</Text>
-        </View>
-        <View style={[styles.evidencePill, { backgroundColor: peachLight }]}>
-          <Text style={[styles.evidenceText, { color: secondary }]}>{draft.evidenceLabel}</Text>
-        </View>
+      <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+        <Chip label={draft.sourceLabel} className="h-auto rounded-icon px-2.5 py-1.5" />
+        <Chip label={draft.evidenceLabel} className="h-auto rounded-icon px-2.5 py-1.5" />
       </View>
 
-      <View style={styles.actionsRow}>
-        <Pressable
-          style={[styles.primaryAction, { backgroundColor: accentGreen }]}
+      <View className="flex-row items-center" style={{ gap: 10 }}>
+        <Button
+          label={t("accountSuggestions.card.create")}
           onPress={handleCreate}
-        >
-          <Text style={styles.primaryActionText}>{t("accountSuggestions.card.create")}</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.secondaryAction, { backgroundColor: peachLight }]}
+          size="compact"
+          className="flex-1 rounded-[14px]"
+        />
+        <Button
+          label={t("accountSuggestions.card.linkExisting")}
           onPress={handleLink}
-        >
-          <Text style={[styles.secondaryActionText, { color: primary }]}>
-            {t("accountSuggestions.card.linkExisting")}
-          </Text>
-        </Pressable>
-        <Pressable style={styles.skipAction} onPress={handleSkip}>
-          <Text style={[styles.skipActionText, { color: secondary }]}>
-            {t("accountSuggestions.card.skipForNow")}
-          </Text>
-        </Pressable>
+          variant="secondary"
+          size="compact"
+          className="rounded-[14px] px-3.5"
+        />
+        <Button
+          label={t("accountSuggestions.card.skipForNow")}
+          onPress={handleSkip}
+          variant="ghost"
+          size="compact"
+          className="px-1"
+        />
       </View>
-    </View>
+    </Card>
   );
 }
 
 export const AccountSuggestionCard = memo(AccountSuggestionCardInner);
-
-const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    borderRadius: 20,
-    padding: 18,
-    gap: 14,
-  },
-  topRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-  },
-  iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  textColumn: {
-    flex: 1,
-    gap: 2,
-  },
-  title: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 16,
-  },
-  reason: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  confidencePill: {
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  confidenceText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 10,
-    letterSpacing: 0.5,
-  },
-  evidenceRow: {
-    flexDirection: "row",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-  evidencePill: {
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  evidenceText: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 11,
-  },
-  actionsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  primaryAction: {
-    flex: 1,
-    minHeight: 44,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 12,
-  },
-  primaryActionText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 13,
-    color: "#FFFFFF",
-  },
-  secondaryAction: {
-    minHeight: 44,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 14,
-  },
-  secondaryActionText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 13,
-  },
-  skipAction: {
-    minHeight: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 4,
-  },
-  skipActionText: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 13,
-  },
-});

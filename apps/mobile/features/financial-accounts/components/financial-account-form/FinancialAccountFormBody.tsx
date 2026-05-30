@@ -2,6 +2,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button } from "@/shared/components/Button";
 import { X } from "@/shared/components/icons";
 import {
   Keyboard,
@@ -42,7 +43,6 @@ export function FinancialAccountFormBody({
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
   const borderSubtle = useThemeColor("borderSubtle");
-  const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
   const accentRed = useThemeColor("accentRed");
   const card = useThemeColor("card");
@@ -274,21 +274,14 @@ export function FinancialAccountFormBody({
         />
       ) : null}
 
-      <Pressable
-        style={[
-          styles.primaryButton,
-          {
-            backgroundColor: accentGreen,
-            opacity: isBusy || name.trim().length === 0 ? 0.5 : 1,
-          },
-        ]}
+      <Button
+        label={
+          isEdit ? t("financialAccounts.form.saveEdit") : t("financialAccounts.form.saveCreate")
+        }
         disabled={isBusy || name.trim().length === 0}
         onPress={handleSave}
-      >
-        <Text style={styles.primaryButtonText}>
-          {isEdit ? t("financialAccounts.form.saveEdit") : t("financialAccounts.form.saveCreate")}
-        </Text>
-      </Pressable>
+        loading={isBusy}
+      />
     </ScrollView>
   );
 }

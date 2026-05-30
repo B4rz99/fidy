@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Button, EmptyState } from "@/shared/components";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { ContributionRow } from "./ContributionRow";
 import type { ContributionWithRunning } from "./GoalDetail.helpers";
@@ -9,9 +10,7 @@ export function GoalDetailContributionsTab(props: {
   readonly onAddPayment: () => void;
 }) {
   const { t } = useTranslation();
-  const accentGreen = useThemeColor("accentGreen");
   const primaryColor = useThemeColor("primary");
-  const secondaryColor = useThemeColor("secondary");
 
   return (
     <View style={styles.tabContent}>
@@ -21,16 +20,12 @@ export function GoalDetailContributionsTab(props: {
       {props.contributions.length > 0 ? (
         props.contributions.map((row) => <ContributionRow key={row.contribution.id} row={row} />)
       ) : (
-        <Text style={[styles.emptyText, { color: secondaryColor }]}>
-          {t("goals.detail.noContributions")}
-        </Text>
+        <EmptyState
+          title={t("goals.detail.noContributions")}
+          className="min-h-24 flex-none px-4 py-6"
+        />
       )}
-      <Pressable
-        style={[styles.ctaButton, { backgroundColor: accentGreen }]}
-        onPress={props.onAddPayment}
-      >
-        <Text style={styles.ctaButtonText}>{t("goals.detail.addPayment")}</Text>
-      </Pressable>
+      <Button label={t("goals.detail.addPayment")} onPress={props.onAddPayment} />
     </View>
   );
 }

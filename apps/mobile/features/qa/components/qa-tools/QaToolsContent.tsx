@@ -1,5 +1,6 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { Button } from "@/shared/components";
+import { ActivityIndicator, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { FLAG_KEYS, QA_PROFILES, QA_TARGET_LABEL_KEYS, QA_TARGET_LIST } from "./QaTools.constants";
 import { styles } from "./QaTools.styles";
@@ -18,7 +19,6 @@ export function QaToolsContent({ qaTools }: QaToolsContentProps) {
   const secondary = useThemeColor("secondary");
   const borderSubtle = useThemeColor("borderSubtle");
   const card = useThemeColor("card");
-  const accentGreen = useThemeColor("accentGreen");
 
   return (
     <ScrollView
@@ -171,12 +171,10 @@ export function QaToolsContent({ qaTools }: QaToolsContentProps) {
       </QaToolsSection>
 
       {qaTools.activeProfile ? (
-        <Pressable
+        <Button
+          label={t("qaTools.openWithCurrentProfile")}
           onPress={qaTools.onOpenCurrentProfileTarget}
-          style={[styles.primaryButton, { backgroundColor: accentGreen }]}
-        >
-          <Text style={styles.primaryButtonText}>{t("qaTools.openWithCurrentProfile")}</Text>
-        </Pressable>
+        />
       ) : null}
     </ScrollView>
   );

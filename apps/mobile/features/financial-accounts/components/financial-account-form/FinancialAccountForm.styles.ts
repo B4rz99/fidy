@@ -30,9 +30,6 @@ export const styles = StyleSheet.create({
     lineHeight: 18,
     textAlign: "center",
   },
-  stateButton: {
-    minWidth: 180,
-  },
   formSection: {
     borderWidth: 1,
     borderRadius: 8,
@@ -149,18 +146,5 @@ export const styles = StyleSheet.create({
   manageButtonText: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 13,
-  },
-  primaryButton: {
-    minHeight: 52,
-    borderRadius: 8,
-    borderCurve: "continuous",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 2,
-  },
-  primaryButtonText: {
-    color: "#101010",
-    fontFamily: "Poppins_700Bold",
-    fontSize: 14,
   },
 });

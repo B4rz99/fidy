@@ -75,15 +75,4 @@ export const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     fontSize: 11,
   },
-  primaryButton: {
-    borderRadius: 16,
-    minHeight: 48,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  primaryButtonText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 14,
-    color: "#FFFFFF",
-  },
 });

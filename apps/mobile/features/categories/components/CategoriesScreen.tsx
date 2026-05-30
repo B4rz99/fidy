@@ -1,16 +1,16 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { ScreenLayout, SettingsSection, TAB_BAR_CLEARANCE } from "@/shared/components";
-import { Plus } from "@/shared/components/icons";
 import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+  Button,
+  EmptyState,
+  Row,
+  ScreenLayout,
+  SettingsSection,
+  TAB_BAR_CLEARANCE,
+} from "@/shared/components";
+import { Plus } from "@/shared/components/icons";
+import { ScrollView, StyleSheet, Text, useColorScheme } from "@/shared/components/rn";
+import { useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n/locale-helpers";
 import { useCategoriesStore } from "../store";
 
@@ -30,26 +30,12 @@ type CategoryRowProps = {
 };
 
 function CategoryRow({ icon, label, color, isLast }: CategoryRowProps) {
-  const borderColor = useThemeColor("borderSubtle");
-
   return (
-    <View
-      style={[
-        styles.categoryRow,
-        !isLast && {
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: borderColor,
-        },
-      ]}
-    >
-      <Text style={[styles.categoryEmoji, { color }]}>{icon}</Text>
-      <Text
-        className="font-poppins text-sm text-primary dark:text-primary-dark"
-        style={{ flex: 1 }}
-      >
-        {label}
-      </Text>
-    </View>
+    <Row
+      title={label}
+      leading={<Text style={[styles.categoryEmoji, { color }]}>{icon}</Text>}
+      isLast={isLast}
+    />
   );
 }
 
@@ -60,8 +46,6 @@ export function CategoriesScreen() {
   const { t, locale } = useTranslation();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  const accentGreen = useThemeColor("accentGreen");
-  const cardBg = useThemeColor("card");
 
   const builtInCategories = useCategoriesStore((s) => s.builtIn);
   const customCategories = useCategoriesStore((s) => s.custom);
@@ -94,14 +78,10 @@ export function CategoriesScreen() {
         {/* Custom categories */}
         <SettingsSection label={t("categories.customSection")}>
           {customCategories.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text
-                className="font-poppins-medium text-sm text-tertiary dark:text-tertiary-dark"
-                style={styles.emptyText}
-              >
-                {t("categories.noCustomCategories")}
-              </Text>
-            </View>
+            <EmptyState
+              title={t("categories.noCustomCategories")}
+              className="min-h-20 flex-none px-4 py-4"
+            />
           ) : (
             customCategories.map((category, index) => (
               <CategoryRow
@@ -116,15 +96,12 @@ export function CategoriesScreen() {
         </SettingsSection>
 
         {/* Add category button */}
-        <Pressable onPress={handleAddPress} style={[styles.addButton, { backgroundColor: cardBg }]}>
-          <Plus size={20} color={accentGreen} />
-          <Text
-            className="font-poppins-semibold"
-            style={[styles.addButtonText, { color: accentGreen }]}
-          >
-            {t("categories.addCategory")}
-          </Text>
-        </Pressable>
+        <Button
+          label={t("categories.addCategory")}
+          variant="secondary"
+          icon={<Plus size={20} />}
+          onPress={handleAddPress}
+        />
       </ScrollView>
     </ScreenLayout>
   );
@@ -137,35 +114,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24 + TAB_BAR_CLEARANCE,
     gap: 24,
   },
-  categoryRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    minHeight: 56,
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
   categoryEmoji: {
     fontSize: 24,
-  },
-  emptyContainer: {
-    height: 80,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  emptyText: {
-    textAlign: "center",
-  },
-  addButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    height: 52,
-    borderRadius: 16,
-    gap: 6,
-  },
-  addButtonText: {
-    fontSize: 15,
   },
 });

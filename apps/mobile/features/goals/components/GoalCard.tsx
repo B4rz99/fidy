@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { Button } from "@/shared/components";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
@@ -151,17 +152,19 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
       </Pressable>
 
       <View style={styles.actionRow}>
-        <Pressable
-          style={[styles.primaryButton, { backgroundColor: accentGreen }]}
+        <Button
+          label={t("goals.card.addPayment")}
+          size="compact"
+          className="h-10 flex-1 rounded-lg"
           onPress={onAddPayment}
-        >
-          <Text style={styles.primaryButtonText}>{t("goals.card.addPayment")}</Text>
-        </Pressable>
-        <Pressable style={[styles.secondaryButton, { borderColor }]} onPress={onPress}>
-          <Text style={[styles.secondaryButtonText, { color: primaryColor }]}>
-            {t("goals.card.detail")}
-          </Text>
-        </Pressable>
+        />
+        <Button
+          label={t("goals.card.detail")}
+          variant="secondary"
+          size="compact"
+          className="h-10 flex-1 rounded-lg"
+          onPress={onPress}
+        />
       </View>
     </View>
   );
@@ -250,31 +253,5 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: "row",
     gap: 8,
-  },
-  primaryButton: {
-    flex: 1,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 8,
-    borderCurve: "continuous",
-  },
-  primaryButtonText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 14,
-    color: "#FFFFFF",
-  },
-  secondaryButton: {
-    flex: 1,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 8,
-    borderCurve: "continuous",
-    borderWidth: 1,
-  },
-  secondaryButtonText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 14,
   },
 });

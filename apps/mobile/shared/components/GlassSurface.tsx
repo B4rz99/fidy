@@ -16,7 +16,7 @@ export function GlassSurface({
   style,
   ...viewProps
 }: GlassSurfaceProps) {
-  const surfaceClassName = `rounded-2xl bg-card dark:bg-card-dark ${
+  const surfaceClassName = `rounded-2xl bg-surface dark:bg-surface-dark ${
     padded ? "p-4" : ""
   } ${className ?? ""}`;
 

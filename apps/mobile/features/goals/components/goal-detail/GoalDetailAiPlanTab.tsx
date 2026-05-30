@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Button } from "@/shared/components";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { GoalProjection, Milestone } from "../../lib/derive";
 import { styles } from "./GoalDetail.styles";
@@ -36,7 +37,6 @@ export function GoalDetailAiPlanTab(props: {
   readonly recommendationText: string;
 }) {
   const { t } = useTranslation();
-  const accentGreen = useThemeColor("accentGreen");
   const primaryColor = useThemeColor("primary");
 
   return (
@@ -54,12 +54,7 @@ export function GoalDetailAiPlanTab(props: {
           ))}
         </>
       ) : null}
-      <Pressable
-        style={[styles.ctaButton, { backgroundColor: accentGreen }]}
-        onPress={props.onAskFidy}
-      >
-        <Text style={styles.ctaButtonText}>{t("goals.detail.askFidy")}</Text>
-      </Pressable>
+      <Button label={t("goals.detail.askFidy")} onPress={props.onAskFidy} />
     </View>
   );
 }
