@@ -14,6 +14,9 @@ const { createMock } = vi.hoisted(() => ({
 process.env.EXPO_PUBLIC_GMAIL_CLIENT_ID = "test-gmail-client-id.apps.googleusercontent.com";
 process.env.EXPO_PUBLIC_OUTLOOK_CLIENT_ID = "test-outlook-client-id";
 
+(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT =
+  true;
+
 const { safeAreaContextMock } = vi.hoisted(() => {
   const zeroInsets = { top: 0, bottom: 0, left: 0, right: 0 };
 
@@ -114,34 +117,6 @@ const { lucideReactNativeMock } = vi.hoisted(() => {
   };
 });
 
-// Mock react-native (Flow syntax not supported outside RN bundler)
-vi.mock("react-native", () => ({
-  View: "View",
-  Text: "Text",
-  TextInput: "TextInput",
-  Pressable: "Pressable",
-  ScrollView: "ScrollView",
-  FlatList: "FlatList",
-  Switch: "Switch",
-  Image: "Image",
-  ActivityIndicator: "ActivityIndicator",
-  ActionSheetIOS: { showActionSheetWithOptions: createMock() },
-  Alert: { alert: createMock() },
-  Appearance: { setColorScheme: createMock() },
-  StyleSheet: { create: (styles: Record<string, unknown>) => styles },
-  Keyboard: { dismiss: createMock() },
-  KeyboardAvoidingView: "KeyboardAvoidingView",
-  Linking: {
-    openSettings: createMock(),
-    sendIntent: createMock(() => Promise.resolve()),
-  },
-  Platform: { OS: "ios", select: (obj: Record<string, unknown>) => obj.ios },
-  useColorScheme: () => "light",
-  AppState: {
-    addEventListener: createMock(() => ({ remove: createMock() })),
-  },
-}));
-
 // Mock react-native-safe-area-context
 vi.mock("react-native-safe-area-context", () => safeAreaContextMock);
 
@@ -230,6 +205,9 @@ export const mockBack = createMock();
 
 vi.mock("expo-router", () => ({
   useRouter: () => ({ replace: mockReplace, push: mockPush, back: mockBack }),
+  Stack: {
+    Screen: "Stack.Screen",
+  },
 }));
 
 // Mock vector icon packages

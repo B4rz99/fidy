@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import {
   type FinancialAccountKind,
   financialAccountKindSchema,
-} from "@/features/financial-accounts/public";
+} from "@/features/financial-accounts/schema";
 import { getKindEmoji } from "@/features/financial-accounts/lib/kind-display";
 import { ChevronRight } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";

@@ -246,8 +246,8 @@ const en = {
       dayPlaceholder: "Day",
       billingHint:
         "Optional. Add the statement closing day and payment due day later if you do not have them yet.",
-      statementClosingDay: "Fecha de corte",
-      paymentDueDay: "Fecha limite de pago",
+      statementClosingDay: "Statement closing day",
+      paymentDueDay: "Payment due day",
       saveCreate: "Create account",
       saveEdit: "Save changes",
       loading: "Loading account...",
