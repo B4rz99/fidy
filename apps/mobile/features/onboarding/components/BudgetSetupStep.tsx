@@ -165,7 +165,12 @@ export function BudgetSetupStep() {
           disabled={isBusy || ((userId == null || db == null) && selectedIds.size > 0)}
           loading={isBusy}
         />
-        <Pressable onPress={handleSkip}>
+        <Pressable
+          accessible
+          accessibilityLabel={t("onboarding.budgetSetup.skipForNow")}
+          accessibilityRole="button"
+          onPress={handleSkip}
+        >
           <Text className="font-poppins-medium text-sm text-text-secondary dark:text-text-secondary-dark">
             {t("onboarding.budgetSetup.skipForNow")}
           </Text>

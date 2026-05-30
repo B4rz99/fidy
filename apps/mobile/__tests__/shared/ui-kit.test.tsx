@@ -9,6 +9,15 @@ import { EmptyState } from "@/shared/components/EmptyState";
 import { Row } from "@/shared/components/Row";
 import { Text } from "@/shared/components/rn";
 
+function expectSharedComponentImport(source: string, componentName: string) {
+  const importsFromBarrel = new RegExp(
+    `import\\s*\\{[\\s\\S]*\\b${componentName}\\b[\\s\\S]*\\}\\s*from "@/shared/components"`
+  ).test(source);
+  const importsDirectPrimitive = source.includes(`from "@/shared/components/${componentName}"`);
+
+  expect(importsFromBarrel || importsDirectPrimitive).toBe(true);
+}
+
 describe("shared UI kit", () => {
   it("exports the first-wave primitives from the shared components barrel", () => {
     const source = readFileSync(resolve(__dirname, "../../shared/components/index.ts"), "utf-8");
@@ -277,7 +286,7 @@ describe("shared UI kit", () => {
     expect(welcomeStepSource).toContain('import { Button, FidyLogo } from "@/shared/components"');
     expect(welcomeStepSource).toContain("<Button");
     expect(welcomeStepSource).not.toContain("styles.primaryButton");
-    expect(budgetSetupStepSource).toContain("Button");
+    expectSharedComponentImport(budgetSetupStepSource, "Button");
     expect(budgetSetupStepSource).toContain("<Button");
     expect(budgetSetupStepSource).not.toContain("styles.primaryButton");
     expect(syncProgressStepSource).toContain('import { Button } from "@/shared/components"');
@@ -294,9 +303,9 @@ describe("shared UI kit", () => {
       "utf-8"
     );
 
-    expect(source).toContain("Button");
-    expect(source).toContain("EmptyState");
-    expect(source).toContain("Row");
+    expectSharedComponentImport(source, "Button");
+    expectSharedComponentImport(source, "EmptyState");
+    expectSharedComponentImport(source, "Row");
     expect(source).toContain("<Button");
     expect(source).toContain("<EmptyState");
     expect(source).toContain("<Row");
@@ -360,7 +369,7 @@ describe("shared UI kit", () => {
     files.forEach((file) => {
       const source = readFileSync(resolve(__dirname, file), "utf-8");
 
-      expect(source).toContain("Button");
+      expectSharedComponentImport(source, "Button");
       expect(source).toContain("<Button");
       expect(source).not.toContain("styles.primaryButton");
       expect(source).not.toContain("styles.saveButton");
@@ -378,7 +387,7 @@ describe("shared UI kit", () => {
     files.forEach((file) => {
       const source = readFileSync(resolve(__dirname, file), "utf-8");
 
-      expect(source).toContain("EmptyState");
+      expectSharedComponentImport(source, "EmptyState");
       expect(source).toContain("<EmptyState");
       expect(source).not.toContain("styles.emptyText");
     });
