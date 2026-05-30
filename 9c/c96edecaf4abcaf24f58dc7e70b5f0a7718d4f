@@ -1,0 +1,62 @@
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_b8e3b23b9b623e::t_e2ed913e485baf 1-8,11,21-34,39-66
+  s_07f0ec25264cc5::t_93e7e55c442452 9,123-140
+  s_07f0ec25264cc5::t_c2eab0697b7250 10,141-160
+  s_07f0ec25264cc5::t_e8007b04af40cd 12,75-97
+  s_07f0ec25264cc5::t_21822b453b8a5f 13,98-122
+  s_c28e4b6a18333c::t_988346a0c2d3cf 14-15,17
+  s_c28e4b6a18333c::t_9b564c7e113af7 16
+  s_07f0ec25264cc5::t_df702492a103ca 18
+  s_c28e4b6a18333c::t_c26a4ed290a321 19-20,288,305-307,371,389
+  s_07f0ec25264cc5::t_f55f92a759bfd2 35-38,490-534
+  s_20a3b3d5fea66b::t_ffb8f4eb5e1982 67,197,224,228,230,233
+  s_20a3b3d5fea66b::t_959fb9a9db2d70 68,74
+  s_20a3b3d5fea66b::t_135ac19cda70ac 69-73,266,304
+  s_20a3b3d5fea66b::t_318e4b88cc616c 161-171,173-174,176,178,180
+  s_20a3b3d5fea66b::t_f21a332f58a5cd 172,175,177,179
+  s_20a3b3d5fea66b::t_60cbfc024fef94 181-196,198-217
+  s_20a3b3d5fea66b::t_a82252409b2556 218-223,225-227,229,231-232,234-246,393
+  s_c28e4b6a18333c::t_edadd81cd71622 267-283,285-287,289-297,299-303,308-315,317-335,337-354,356-366,368-369,372-375,377,379-384,386-387,390-391
+  s_c28e4b6a18333c::t_7ed00392f8fcb3 284,298,336,367,370,376,385,388
+  s_c28e4b6a18333c::t_24371a476f9a56 316,355,378
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "9cc96edecaf4abcaf24f58dc7e70b5f0a7718d4f",
+  "prompts": {},
+  "sessions": {
+    "s_07f0ec25264cc5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7972-facd-7343-a851-9147e60cde40",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_20a3b3d5fea66b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e771e-c9c1-7350-8451-3ed317fa1d16",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_b8e3b23b9b623e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e76e5-6005-74c3-9529-9f82873e2b89",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    },
+    "s_c28e4b6a18333c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7954-1927-74c1-a3ad-10c9d20e288b",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
