@@ -1,0 +1,19 @@
+.github/workflows/ci.yml
+  s_989e2ff2f9c357::t_7127e150f5432b 18-19,52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "3de9076996b1fc36b4b95b1c476069a9a55d4767",
+  "prompts": {},
+  "sessions": {
+    "s_989e2ff2f9c357": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7aa0-0e26-70f3-b8d5-d715fafb49a6",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
