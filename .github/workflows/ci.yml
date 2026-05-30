@@ -23,6 +23,10 @@ jobs:
             command: bun run lint:file-size
           - name: Dependencies
             command: bun run lint:dependency-policy
+          - name: Expo Doctor
+            command: bun run doctor:expo
+          - name: React Doctor
+            command: bun run doctor:react
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
