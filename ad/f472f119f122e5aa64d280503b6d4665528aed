@@ -1,0 +1,45 @@
+apps/mobile/features/analytics/components/AnalyticsScreen.tsx
+  s_20a3b3d5fea66b::t_d84fc0efadb46b 3-4,6,65
+apps/mobile/features/account-suggestions/components/AccountSuggestionReviewScreen.tsx
+  s_20a3b3d5fea66b::t_e895adf8714309 6,110-114
+apps/mobile/features/budget/components/BudgetListScreen.tsx
+  s_20a3b3d5fea66b::t_631843bdbd2e94 7,9,146-166,168
+apps/mobile/features/goals/components/goal-detail/GoalDetailAiPlanTab.tsx
+  s_20a3b3d5fea66b::t_9e90e1a816e8e6 1-2,57
+apps/mobile/features/financial-accounts/components/financial-account-details-screen/FinancialAccountDetailsScreenContent.tsx
+  s_20a3b3d5fea66b::t_62c7fc61eba08a 4
+  s_20a3b3d5fea66b::t_f450f4eab106f4 2,36,63-68,127
+apps/mobile/features/account-suggestions/components/CreateSuggestedAccountScreen.tsx
+  s_20a3b3d5fea66b::t_94f722e1309c0a 7,148-149,152-153,176
+apps/mobile/features/search/components/SearchEmptyState.tsx
+  s_20a3b3d5fea66b::t_d90edcffb85e23 1-2,12-24
+apps/mobile/features/goals/components/GoalsListScreen.tsx
+  s_20a3b3d5fea66b::t_5c477ec6b67e38 5,7,22-26,29-36
+apps/mobile/features/account-suggestions/components/LinkSuggestedAccountScreen.tsx
+  s_20a3b3d5fea66b::t_569961c8e7b31e 7,120
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreenContent.tsx
+  s_20a3b3d5fea66b::t_d70a90dd36d262 3,101-105
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_20a3b3d5fea66b::t_318e4b88cc616c 130-156,158-159,161,163,165
+  s_20a3b3d5fea66b::t_a82252409b2556 203-232
+  s_20a3b3d5fea66b::t_f21a332f58a5cd 157,160,162,164
+  s_20a3b3d5fea66b::t_60cbfc024fef94 166-202
+apps/mobile/features/goals/components/goal-detail/GoalDetailContributionsTab.tsx
+  s_20a3b3d5fea66b::t_9681d554e536f1 1-2,28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "adf472f119f122e5aa64d280503b6d4665528aed",
+  "prompts": {},
+  "sessions": {
+    "s_20a3b3d5fea66b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e771e-c9c1-7350-8451-3ed317fa1d16",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
