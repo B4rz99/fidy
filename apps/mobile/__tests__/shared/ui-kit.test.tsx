@@ -231,7 +231,6 @@ describe("shared UI kit", () => {
     expect(source).not.toContain("StyleSheet");
     expect(source).not.toContain("Pressable");
   });
-
   it("keeps account suggestion cards composed from shared primitives", () => {
     const source = readFileSync(
       resolve(__dirname, "../../features/account-suggestions/components/AccountSuggestionCard.tsx"),
