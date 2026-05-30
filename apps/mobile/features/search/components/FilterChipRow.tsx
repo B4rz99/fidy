@@ -1,6 +1,7 @@
 import * as Haptics from "expo-haptics";
-import { Pressable, ScrollView, Text } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { Chip } from "@/shared/components";
+import { ScrollView } from "@/shared/components/rn";
+import { useTranslation } from "@/shared/hooks";
 import { hasActiveFilters } from "../lib/filters";
 import type { SearchFilters } from "../lib/types";
 
@@ -49,11 +50,6 @@ export const FilterChipRow = ({
   onClearAll,
 }: FilterChipRowProps) => {
   const { t } = useTranslation();
-  const primary = useThemeColor("primary");
-  const peachLight = useThemeColor("peachLight");
-  const accentGreen = useThemeColor("accentGreen");
-  const accentRed = useThemeColor("accentRed");
-
   const showClear = hasActiveFilters(filters);
 
   return (
@@ -67,44 +63,29 @@ export const FilterChipRow = ({
         const isActive = chip.isActive(filters);
         const isOpen = activePanel === chip.key;
         return (
-          <Pressable
+          <Chip
             key={chip.key}
-            className="h-8 rounded-full px-4 items-center justify-center"
-            style={{
-              backgroundColor: isActive ? accentGreen : peachLight,
-              borderWidth: isOpen ? 1.5 : 0,
-              borderColor: isOpen ? primary : "transparent",
-              shadowColor: isOpen ? primary : "transparent",
-              shadowOpacity: isOpen ? 0.12 : 0,
-              shadowRadius: isOpen ? 8 : 0,
-              shadowOffset: { width: 0, height: 4 },
-            }}
+            label={t(chip.labelKey)}
+            tone={isActive ? "primary" : "neutral"}
+            selected={isOpen}
+            className="px-4"
             onPress={() => {
               void Haptics.selectionAsync();
               onTogglePanel(chip.key);
             }}
-          >
-            <Text
-              className="font-poppins-medium text-caption"
-              style={{ color: isActive ? "#FFFFFF" : primary }}
-            >
-              {t(chip.labelKey)}
-            </Text>
-          </Pressable>
+          />
         );
       })}
       {showClear && (
-        <Pressable
-          className="h-8 rounded-full px-4 items-center justify-center"
+        <Chip
+          label={t("search.clearAll")}
+          tone="danger"
+          className="px-4"
           onPress={() => {
             void Haptics.selectionAsync();
             onClearAll();
           }}
-        >
-          <Text className="font-poppins-medium text-caption" style={{ color: accentRed }}>
-            {t("search.clearAll")}
-          </Text>
-        </Pressable>
+        />
       )}
     </ScrollView>
   );

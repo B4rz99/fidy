@@ -102,4 +102,31 @@ describe("shared UI kit", () => {
     expect(source).not.toContain("StyleSheet");
     expect(source).not.toContain("Pressable");
   });
+
+  it("keeps account suggestion cards composed from shared primitives", () => {
+    const source = readFileSync(
+      resolve(
+        __dirname,
+        "../../features/account-suggestions/components/AccountSuggestionCard.tsx"
+      ),
+      "utf-8"
+    );
+
+    expect(source).toContain("Button");
+    expect(source).toContain("Card");
+    expect(source).toContain("Chip");
+    expect(source).not.toContain("StyleSheet");
+    expect(source).not.toContain("Pressable");
+  });
+
+  it("keeps search filter chips on the shared Chip primitive", () => {
+    const source = readFileSync(
+      resolve(__dirname, "../../features/search/components/FilterChipRow.tsx"),
+      "utf-8"
+    );
+
+    expect(source).toContain('import { Chip } from "@/shared/components"');
+    expect(source).toContain("<Chip");
+    expect(source).not.toContain("Pressable");
+  });
 });
