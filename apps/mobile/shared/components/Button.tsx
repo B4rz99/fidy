@@ -52,6 +52,12 @@ export function Button({
 }: ButtonProps) {
   const isDisabled = disabled || loading;
   const onAccent = useThemeColor("onAccent");
+  const loadingIndicatorColor =
+    variant === "secondary" || variant === "ghost"
+      ? undefined
+      : variant === "danger"
+        ? "white"
+        : onAccent;
 
   return (
     <Pressable
@@ -61,13 +67,7 @@ export function Button({
         isDisabled ? "opacity-60" : ""
       } ${className ?? ""}`}
     >
-      {loading ? (
-        <ActivityIndicator
-          color={variant === "secondary" || variant === "ghost" ? undefined : onAccent}
-        />
-      ) : (
-        icon
-      )}
+      {loading ? <ActivityIndicator color={loadingIndicatorColor} /> : icon}
       <Text
         className={`text-center font-poppins-semibold ${LABEL_SIZE_CLASS_NAMES[size]} ${LABEL_CLASS_NAMES[variant]}`}
       >
