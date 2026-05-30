@@ -15,6 +15,8 @@ jobs:
         include:
           - name: Root
             command: lint
+          - name: Branded Boundaries
+            command: lint-brands
           - name: ESLint
             command: lint-mobile
           - name: Lizard
@@ -47,6 +49,7 @@ jobs:
         run: |
           case "$CHECK_COMMAND" in
             lint) bun run lint ;;
+            lint-brands) bun run lint:brands ;;
             lint-mobile) bun run lint:mobile ;;
             lint-complexity) bun run lint:complexity ;;
             lint-file-size) bun run lint:file-size ;;

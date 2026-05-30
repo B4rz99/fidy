@@ -22,7 +22,3 @@ pre-push:
       files: git ls-files
       run: bun scripts/check-pushed-commit-messages.ts
       skip_output: false
-    branded-boundaries:
-      files: git ls-files
-      run: bun run lint:brands
-      skip_output: false
