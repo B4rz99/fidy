@@ -1,0 +1,23 @@
+apps/mobile/features/settings/components/NotificationPreferencesScreen.tsx
+  s_8be498775d6be4::t_a640be1db84c29 98
+apps/mobile/features/ai-chat/components/ChatConversationShell.tsx
+  s_8be498775d6be4::t_a640be1db84c29 163
+apps/mobile/app/connected-accounts.tsx
+  s_8be498775d6be4::t_a640be1db84c29 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "25ed8b8003c29f7cca28cc0bd47a4909f013dead",
+  "prompts": {},
+  "sessions": {
+    "s_8be498775d6be4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e79eb-992f-7d30-a756-546aeeac0abf",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
