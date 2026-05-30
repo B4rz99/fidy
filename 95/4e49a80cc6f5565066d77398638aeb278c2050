@@ -1,0 +1,72 @@
+apps/mobile/features/search/components/SearchAction.tsx
+  s_07f0ec25264cc5::t_6a7c01d84d4461 2,4,8,12-16
+apps/mobile/shared/components/SelectableChipRow.tsx
+  s_07f0ec25264cc5::t_7411243dc1819a 1-23,25-34,36-59,61-71
+  s_07f0ec25264cc5::t_561e5b0a2cb9fa 24,35,60
+apps/mobile/features/analytics/components/PeriodSelector.tsx
+  s_07f0ec25264cc5::t_6aeaf808fa848f 3,45-55
+  s_07f0ec25264cc5::t_2cc8936efb4bc9 2
+apps/mobile/features/budget/components/BudgetHeaderMonthNavigator.tsx
+  s_07f0ec25264cc5::t_a865224db3c754 1,23-31
+apps/mobile/__tests__/goals/goal-sheets.test.ts
+  s_07f0ec25264cc5::t_c3bc0b4470c398 143-144
+apps/mobile/shared/components/IconActionButton.tsx
+  s_07f0ec25264cc5::t_a48bdbb11dfcf3 1-47
+apps/mobile/features/budget/components/BudgetAlertBanner.tsx
+  s_07f0ec25264cc5::t_dab27a359acf4c 2,4,58-63
+apps/mobile/shared/components/MonthNavigator.tsx
+  s_07f0ec25264cc5::t_5418064696f9ba 1-55
+apps/mobile/__tests__/calendar/calendar-screen.test.ts
+  s_07f0ec25264cc5::t_4a655beb81e8e3 28-30
+  s_07f0ec25264cc5::t_a324dabaa17767 25-27,31-32
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_07f0ec25264cc5::t_f55f92a759bfd2 35-38,491-535
+  s_07f0ec25264cc5::t_df702492a103ca 18
+  s_07f0ec25264cc5::t_93e7e55c442452 9,123-140
+  s_07f0ec25264cc5::t_c2eab0697b7250 10,141-160
+  s_07f0ec25264cc5::t_e8007b04af40cd 12,75-97
+  s_07f0ec25264cc5::t_21822b453b8a5f 13,98-122
+apps/mobile/features/goals/components/goal-sheet/GoalTypeToggle.tsx
+  s_07f0ec25264cc5::t_74069076d7d3cd 2,14-21
+  s_07f0ec25264cc5::t_01290e60017680 1,22
+apps/mobile/shared/components/index.ts
+  s_07f0ec25264cc5::t_e73e5e9a5c282d 21-26
+  s_07f0ec25264cc5::t_ad98b19ac7205d 15-16
+  s_07f0ec25264cc5::t_1d87292b0d19c5 27-32
+  s_07f0ec25264cc5::t_b0e4a5bb123f44 13-14
+apps/mobile/features/transactions/components/transaction-form/TransactionAccountSection.tsx
+  s_07f0ec25264cc5::t_6872da61b4f0ae 2-3,30-40
+apps/mobile/features/calendar/components/add-bill/AddBillFormContent.tsx
+  s_07f0ec25264cc5::t_34b0d44bf37771 6,113-121,143-151
+apps/mobile/features/notifications/components/BellAction.tsx
+  s_07f0ec25264cc5::t_a9b607534e546c 4,9,16
+  s_07f0ec25264cc5::t_304348237597b6 2,12,15,17-18,20
+apps/mobile/features/email-capture/components/EmailConnectBanner.tsx
+  s_07f0ec25264cc5::t_a070aac88a53d1 1,31-36
+apps/mobile/features/transactions/components/TypeToggle.tsx
+  s_07f0ec25264cc5::t_2cd762e2650a8c 2
+  s_07f0ec25264cc5::t_7b33e406c5fefc 3,22-31
+apps/mobile/shared/components/SegmentedControl.tsx
+  s_07f0ec25264cc5::t_0030ea8a91c8f0 1-84
+apps/mobile/features/calendar/components/MonthNavigator.tsx
+  s_07f0ec25264cc5::t_04e88ce9748a22 1-2,16-23
+apps/mobile/features/goals/components/goal-detail/TabControl.tsx
+  s_07f0ec25264cc5::t_d455b2b62a639b 2,14-22
+  s_07f0ec25264cc5::t_e9168ff4579553 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "954e49a80cc6f5565066d77398638aeb278c2050",
+  "prompts": {},
+  "sessions": {
+    "s_07f0ec25264cc5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7972-facd-7343-a851-9147e60cde40",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
