@@ -1,0 +1,338 @@
+apps/mobile/features/onboarding/components/SyncProgressStep.helpers.ts
+  ai_agent 9
+apps/mobile/features/goals/store.ts
+  s_8be498775d6be4::t_39e233c95ca079 267
+apps/mobile/app/_layout.tsx
+  s_8be498775d6be4::t_829cf433a5613c 68,134,314-316
+apps/mobile/features/email-capture/services/email-fetch-durability.ts
+  s_8be498775d6be4::t_211e9efb0b919b 38
+apps/mobile/features/email-capture/services/email-pipeline-service/transaction-recording.ts
+  s_8be498775d6be4::t_39e233c95ca079 24,40
+apps/mobile/features/qa/components/QaStatusBanner.tsx
+  s_8be498775d6be4::t_6784a4233f6b03 2,19,32-40
+apps/mobile/features/transactions/components/TransactionDatePickerSheet.tsx
+  s_8be498775d6be4::t_221d9685eaa928 1-5,7-15,17,19-21,24-27,31-37,39,41-52,55,57-60,62-63,65-66,68,70,72
+apps/mobile/features/notifications/services/pre-permission.ts
+  s_8be498775d6be4::t_729d43e54f6d40 25-28
+apps/mobile/shared/components/PencilEntryScaffold.tsx
+  s_8be498775d6be4::t_21adc29e96dc3f 42
+apps/mobile/features/ai-chat/components/ChatConversationShell.tsx
+  s_8be498775d6be4::t_6784a4233f6b03 11,185,205-217
+  s_8be498775d6be4::t_cba6e2b309533a 40-51,145
+  s_8be498775d6be4::t_d51ea7c9185cfd 163,165
+apps/mobile/features/budget/components/UpcomingBillsSection.tsx
+  s_8be498775d6be4::t_1b8ae06d1685e1 58
+apps/mobile/app/connected-accounts.tsx
+  s_8be498775d6be4::t_268630c7277f3d 37-38
+apps/mobile/features/backup/remote-storage.ts
+  s_8be498775d6be4::t_e17ece8260524b 9-10
+apps/mobile/features/capture-sources/schema.ts
+  s_8be498775d6be4::t_e17ece8260524b 41
+apps/mobile/shared/components/SettingsSection.tsx
+  s_8be498775d6be4::t_d0dd176ca8ac24 14
+apps/mobile/local-ledger/snapshot/row-assertions.ts
+  s_8be498775d6be4::t_39e233c95ca079 51
+apps/mobile/features/notifications/components/NotificationsScreen.tsx
+  s_8be498775d6be4::t_72b621b56a20ab 62
+  s_8be498775d6be4::t_bcda3c86d04f7d 25,60,76
+apps/mobile/features/dashboard/components/home-screen/HomeSpendingCard.tsx
+  s_8be498775d6be4::t_7e9358593a857a 4
+apps/mobile/features/onboarding/components/SyncTransactionPreview.tsx
+  s_8be498775d6be4::t_b72b1fd7d79386 1,4,40-45,47
+  s_8be498775d6be4::t_6e37f38433c484 2,21-34,46
+apps/mobile/local-ledger/use-cases/intake.public.ts
+  s_8be498775d6be4::t_e17ece8260524b 172
+apps/mobile/features/capture-evidence/schema.ts
+  s_8be498775d6be4::t_e17ece8260524b 4
+apps/mobile/features/auth/public.ts
+  s_8be498775d6be4::t_e17ece8260524b 37
+apps/mobile/features/goals/lib/route-params.ts
+  s_8be498775d6be4::t_211e9efb0b919b 10-13
+apps/mobile/features/transactions/components/CategoryPill.tsx
+  s_8be498775d6be4::t_a37704de51fc27 25
+apps/mobile/features/goals/lib/derive/budget.ts
+  s_8be498775d6be4::t_5091582a537c58 58
+  ai_agent 59,61
+  s_8be498775d6be4::t_6053ab8b7ab52a 31
+apps/mobile/local-ledger/snapshot/validation.ts
+  s_8be498775d6be4::t_211e9efb0b919b 171
+apps/mobile/features/transactions/components/SheetCancelButton.tsx
+  s_8be498775d6be4::t_221d9685eaa928 1,4,7-8,11-26
+bun.lock
+  ai_agent 10,15,45,51-52,55,57,59,64,67,326,328,330,410,416,432,440,444,448,454,462,496-497,566,638-677,680-720,1036-1041,1088,1172-1173,1254,1436-1437,1566,1584,1586,1588,1592-1593,1596,1598,1604,1612,1616,1622,1626,1636,1642,1984-1985,2246-2249,2254-2255,2380-2381,2868-2869,2878-2883,2892-2893,2898-2899,2908-2911,2916,2920-2923,2926-2929,2952-2953,2994-3011,3014-3015,3020-3021,3050-3051,3066-3067,3084-3085,3090-3091,3204-3207,3216-3217,3244-3245,3360-3363,3396-3397,3408-3411,3450-3453,3494-3497,3514-3517,3528-3529,3608-3645,3710-3711,3714-3715,3724-3725,3742-3744
+apps/mobile/features/ai-chat/components/ChatInput.tsx
+  s_8be498775d6be4::t_1996ca4d04f34b 40
+apps/mobile/features/notifications/services/weekly-digest-schedule.ts
+  s_8be498775d6be4::t_58a44e1d9b8d88 37-41
+  s_8be498775d6be4::t_211e9efb0b919b 23-27
+apps/mobile/features/notifications/lib/derive.ts
+  s_8be498775d6be4::t_211e9efb0b919b 137-142
+apps/mobile/shared/lib/transaction-source.public.ts
+  s_8be498775d6be4::t_e17ece8260524b 2
+apps/mobile/features/ai-chat/store/state.ts
+  s_8be498775d6be4::t_39e233c95ca079 77
+apps/mobile/features/budget/schema.ts
+  s_8be498775d6be4::t_39e233c95ca079 14
+apps/mobile/features/budget/lib/derive.ts
+  s_8be498775d6be4::t_1eab56d204a964 175-184,240-254
+apps/mobile/features/review-queues/components/AttributionReviewScreen.tsx
+  s_8be498775d6be4::t_bcda3c86d04f7d 20,48,86,97,150
+apps/mobile/features/settings/components/NotificationPreferencesScreen.tsx
+  s_8be498775d6be4::t_bcda3c86d04f7d 49
+apps/mobile/features/ai-chat/schema.ts
+  s_8be498775d6be4::t_39e233c95ca079 6,9,34,45,56
+apps/mobile/features/email-capture/store/state.ts
+  s_8be498775d6be4::t_39e233c95ca079 67
+apps/mobile/app/delete-account.tsx
+  s_8be498775d6be4::t_bcda3c86d04f7d 11,58
+apps/mobile/features/analytics/lib/derive.ts
+  s_8be498775d6be4::t_1eab56d204a964 214-216
+apps/mobile/features/capture-evidence/lib/build-capture-evidence.ts
+  s_8be498775d6be4::t_39e233c95ca079 59
+  s_8be498775d6be4::t_042c8251186711 116-127,136-148,156-168
+apps/mobile/features/budget/components/create-budget/CreateBudgetScreen.tsx
+  s_8be498775d6be4::t_bcda3c86d04f7d 15,30
+apps/mobile/features/budget/components/create-budget/CreateBudgetScreen.helpers.ts
+  s_8be498775d6be4::t_1eab56d204a964 27
+apps/mobile/features/calendar/lib/calendar-utils.ts
+  s_8be498775d6be4::t_211e9efb0b919b 102-103,107,110-111,113-117,120
+  s_8be498775d6be4::t_ba2b9feb9216d5 104-106,108-109,112,118
+apps/mobile/features/goals/components/goal-sheet/useGoalCreateActions.ts
+  s_8be498775d6be4::t_3db911d297fd6b 2
+  s_8be498775d6be4::t_478051cf479816 62-72
+apps/mobile/features/ai-chat/components/ChatScreen.tsx
+  s_8be498775d6be4::t_ee2a5c4b957457 89-94,100,104
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountForm.styles.ts
+  s_8be498775d6be4::t_1996ca4d04f34b 39
+apps/mobile/features/transactions/components/PencilTransactionEntrySheets.tsx
+  s_8be498775d6be4::t_20d3f52d7fe1e7 4-9
+  s_8be498775d6be4::t_20df56751e8a30 13-15
+  s_8be498775d6be4::t_9c5fd882a90f73 10-12
+  s_8be498775d6be4::t_221d9685eaa928 1-3
+apps/mobile/shared/lib/format-money.ts
+  s_8be498775d6be4::t_ba5f08a1c592b2 10-25,50
+apps/mobile/features/ai-chat/components/StarterSuggestions.tsx
+  s_8be498775d6be4::t_6784a4233f6b03 3,64,79-91
+apps/mobile/app.config.ts
+  s_8be498775d6be4::t_11036a4261198b 63-64
+apps/mobile/features/transactions/components/PickerSheetFrame.tsx
+  s_8be498775d6be4::t_221d9685eaa928 1-3,5-10,12-13,16-27,29
+apps/mobile/features/capture-sources/services/notification-pipeline/context.ts
+  s_8be498775d6be4::t_39e233c95ca079 22
+apps/mobile/shared/hooks/use-animated-progress.ts
+  s_8be498775d6be4::t_073ec71dd8a556 10,27
+apps/mobile/features/account-suggestions/components/AccountSuggestionReviewScreen.tsx
+  s_8be498775d6be4::t_bcda3c86d04f7d 20,35,45
+  s_8be498775d6be4::t_72b621b56a20ab 40,50
+apps/mobile/features/settings/components/PrivateBackupStatusPill.tsx
+  s_8be498775d6be4::t_d0dd176ca8ac24 22
+apps/mobile/features/search/components/FilterChipItem.tsx
+  s_8be498775d6be4::t_6e37f38433c484 1-2,4-32,35-40
+apps/mobile/features/capture-sources/services/notification-pipeline/outcomes.ts
+  s_8be498775d6be4::t_58a44e1d9b8d88 275
+apps/mobile/features/categories/components/CategoriesScreen.tsx
+  s_8be498775d6be4::t_2434fba88a8e9e 83
+apps/mobile/features/email-capture/lib/source-event-repository.ts
+  s_8be498775d6be4::t_211e9efb0b919b 38-41
+apps/mobile/features/goals/components/GoalsListScreen.tsx
+  s_8be498775d6be4::t_bcda3c86d04f7d 58,65,74,85
+  s_8be498775d6be4::t_72b621b56a20ab 66,76,87
+apps/mobile/features/review-queues/components/FinancialMeaningQueueScreen.tsx
+  s_8be498775d6be4::t_58a44e1d9b8d88 181-185
+  s_8be498775d6be4::t_72b621b56a20ab 164
+  s_8be498775d6be4::t_bcda3c86d04f7d 141,156,215
+apps/mobile/features/review-queues/components/shared.tsx
+  s_8be498775d6be4::t_a37704de51fc27 45
+apps/mobile/features/email-capture/services/email-parse-improvement-outbox.ts
+  s_8be498775d6be4::t_5091582a537c58 89
+  ai_agent 91
+apps/mobile/shared/lib/transaction-source.ts
+  s_8be498775d6be4::t_e17ece8260524b 8
+apps/mobile/features/budget/lib/notifications.ts
+  s_8be498775d6be4::t_729d43e54f6d40 52-55
+apps/mobile/features/calendar/components/add-bill/useAddBillDraft.ts
+  s_8be498775d6be4::t_478051cf479816 49-63
+apps/mobile/features/background-fetch/task.ts
+  s_8be498775d6be4::t_58a44e1d9b8d88 27
+react-doctor.config.json
+  s_8be498775d6be4::t_bf954ae0ecf0f8 17-25
+  s_8be498775d6be4::t_729d43e54f6d40 26-35
+  s_8be498775d6be4::t_e2c130e1b4f6a3 60-61
+  s_8be498775d6be4::t_a732d20f23c6de 1-2,4-5,16,66-69
+  ai_agent 65
+  s_8be498775d6be4::t_6f348dbd582a1b 3,36-59,62-64
+  s_8be498775d6be4::t_f6c38cf985c9f1 6-15
+apps/mobile/features/notifications/lib/weekly-digest.ts
+  s_8be498775d6be4::t_ad16c0d4357808 125-126
+apps/mobile/app/language-picker.tsx
+  s_8be498775d6be4::t_bcda3c86d04f7d 15,22
+apps/mobile/features/advisor/financial-context-packet.ts
+  s_8be498775d6be4::t_e17ece8260524b 98,101,108
+apps/mobile/features/transactions/components/AmountEntry.tsx
+  s_8be498775d6be4::t_4b288853d74ed9 64,69,106-107
+apps/mobile/features/dashboard/components/home-screen/HomeSpendingCard.model.ts
+  s_8be498775d6be4::t_c04cf3b8bfe06d 1,3-4,6,8,10-11,13-16,19-26,28-35,37-39,41-42,44-45,47-54,56-69,71-105
+apps/mobile/features/settings/hooks/use-notification-preferences.ts
+  s_8be498775d6be4::t_1480ff922cecb3 1,8,18-21
+apps/mobile/shared/components/navigation/CustomTabBar.tsx
+  s_8be498775d6be4::t_2434fba88a8e9e 27
+apps/mobile/features/ai-chat/store.ts
+  s_8be498775d6be4::t_e17ece8260524b 268
+apps/mobile/features/transactions/components/PencilTransactionEntrySheets.styles.ts
+  s_8be498775d6be4::t_6784a4233f6b03 4-11
+apps/mobile/features/search/components/search-screen/SearchListHeader.tsx
+  s_8be498775d6be4::t_1996ca4d04f34b 77
+apps/mobile/local-ledger/use-cases/review-candidate-resolution.public.ts
+  s_8be498775d6be4::t_e17ece8260524b 154
+apps/mobile/features/goals/components/goal-sheet/useGoalEditActions.ts
+  s_8be498775d6be4::t_3db911d297fd6b 2
+  s_8be498775d6be4::t_478051cf479816 102-112
+apps/mobile/shared/effect/network.ts
+  s_8be498775d6be4::t_39e233c95ca079 9,16
+apps/mobile/features/search/components/FilterChipRow.tsx
+  s_8be498775d6be4::t_6e37f38433c484 2,6,58-70,80
+  s_8be498775d6be4::t_b72b1fd7d79386 1,19,21,55,57,73-74,79
+  ai_agent 56
+  s_8be498775d6be4::t_20d3f52d7fe1e7 7
+  s_8be498775d6be4::t_f26135ed1437d8 81
+apps/mobile/features/settings/components/SettingsScreen.tsx
+  s_8be498775d6be4::t_bcda3c86d04f7d 54,86-87,90,116,164,170,175,188,193,199,210,251
+apps/mobile/features/email-capture/services/create-email-adapter.ts
+  s_8be498775d6be4::t_58a44e1d9b8d88 80-81
+apps/mobile/app/theme-picker.tsx
+  s_8be498775d6be4::t_bcda3c86d04f7d 16,24
+apps/mobile/features/search/components/ResultsSummary.tsx
+  s_8be498775d6be4::t_1996ca4d04f34b 44
+apps/mobile/features/email-capture/services/email-capture-sync-policy.ts
+  s_8be498775d6be4::t_6053ab8b7ab52a 18,31
+apps/mobile/features/search/components/search-screen/SearchTransactionItem.tsx
+  s_8be498775d6be4::t_2434fba88a8e9e 46
+apps/mobile/features/background-fetch/register.ts
+  s_8be498775d6be4::t_39e233c95ca079 14
+apps/mobile/features/transactions/components/SheetTitle.tsx
+  s_8be498775d6be4::t_221d9685eaa928 1-2,5-6,9,11
+apps/mobile/features/notifications/lib/display.ts
+  s_8be498775d6be4::t_6053ab8b7ab52a 158
+apps/mobile/app/(auth)/onboarding.tsx
+  s_8be498775d6be4::t_26bec23906387d 136
+  s_8be498775d6be4::t_74d74d885cd7d5 28
+  s_8be498775d6be4::t_ee2a5c4b957457 131,137-152
+apps/mobile/features/calendar/components/CalendarGrid.tsx
+  s_8be498775d6be4::t_139258f84e205f 86-90
+apps/mobile/features/transactions/components/TransactionAccountPickerSheet.tsx
+  s_8be498775d6be4::t_221d9685eaa928 1-3,5-9,11-17,19-22,26-71,73
+apps/mobile/features/qa/components/QaLauncherScreen.tsx
+  s_8be498775d6be4::t_bcda3c86d04f7d 72
+  s_8be498775d6be4::t_1c81313cd9c5c8 19
+  s_8be498775d6be4::t_261364ea063cd8 2,16-17
+  s_8be498775d6be4::t_72b621b56a20ab 57,65
+  s_8be498775d6be4::t_b42dcef16d4724 24,36,41,54,58
+apps/mobile/features/search/lib/route-params.ts
+  s_8be498775d6be4::t_211e9efb0b919b 12-15
+apps/mobile/app/day-detail.tsx
+  s_8be498775d6be4::t_20d3f52d7fe1e7 76
+  s_8be498775d6be4::t_bcda3c86d04f7d 40,75
+apps/mobile/features/qa/components/LocalQaProfileTools.tsx
+  s_8be498775d6be4::t_20d3f52d7fe1e7 41
+  s_8be498775d6be4::t_bcda3c86d04f7d 7,40
+apps/mobile/__tests__/dashboard/home-spending-card.test.ts
+  s_8be498775d6be4::t_687493c4badf2c 2
+apps/mobile/app/(tabs)/(finance)/_layout.tsx
+  s_8be498775d6be4::t_56b8cc8479833e 6-7
+apps/mobile/features/ai-chat/services/streaming-chat-service/runtime.ts
+  ai_agent 112
+apps/mobile/features/ai-chat/lib/message-content.ts
+  s_8be498775d6be4::t_211e9efb0b919b 58-68
+apps/mobile/features/calendar/components/add-bill/AddBillScreen.tsx
+  s_8be498775d6be4::t_20d3f52d7fe1e7 55
+  s_8be498775d6be4::t_bcda3c86d04f7d 44,54
+apps/mobile/features/account-suggestions/services/create-account-suggestion-service.ts
+  s_8be498775d6be4::t_1eab56d204a964 170-172
+apps/mobile/features/account-suggestions/lib/match-financial-account.ts
+  s_8be498775d6be4::t_1eab56d204a964 20-24
+apps/mobile/features/settings/hooks/use-delete-account.ts
+  s_8be498775d6be4::t_72576c20bf49f0 1,11-12,17
+apps/mobile/features/budget/store/state.ts
+  s_8be498775d6be4::t_39e233c95ca079 110
+package.json
+  s_8be498775d6be4::t_da2fff06725c4c 43
+  s_8be498775d6be4::t_e2b94273b74012 42
+  s_8be498775d6be4::t_e84b8faec68370 54,59
+apps/mobile/features/search/components/CategoryFilter.tsx
+  s_8be498775d6be4::t_20d3f52d7fe1e7 33
+  s_8be498775d6be4::t_a37704de51fc27 34
+apps/mobile/features/transactions/components/TransactionCategoryPickerSheet.tsx
+  s_8be498775d6be4::t_221d9685eaa928 1,4-10,12-22,26-66,68-71,73
+apps/mobile/shared/effect/supabase.ts
+  s_8be498775d6be4::t_39e233c95ca079 10,14
+apps/mobile/features/budget/lib/repository.ts
+  s_8be498775d6be4::t_1eab56d204a964 67-68
+apps/mobile/shared/effect/runtime.ts
+  s_8be498775d6be4::t_39e233c95ca079 21,25
+apps/mobile/shared/components/navigation/AddNavButton.tsx
+  s_8be498775d6be4::t_a37704de51fc27 14
+apps/mobile/features/account-suggestions/lib/derive-account-suggestions.ts
+  s_8be498775d6be4::t_1eab56d204a964 199-213
+apps/mobile/shared/effect/clock.ts
+  s_8be498775d6be4::t_39e233c95ca079 11,16
+apps/mobile/features/transactions/schema.ts
+  s_8be498775d6be4::t_39e233c95ca079 17,20
+apps/mobile/features/review-queues/components/AttributionQueueScreen.tsx
+  s_8be498775d6be4::t_bcda3c86d04f7d 25,62,72
+  s_8be498775d6be4::t_72b621b56a20ab 67,77
+apps/mobile/package.json
+  s_8be498775d6be4::t_6969d6ab6de7f8 42,48-49,52,54,56,61,64
+apps/mobile/features/account-suggestions/components/AccountSuggestionCard.tsx
+  s_8be498775d6be4::t_a37704de51fc27 64
+apps/mobile/shared/db/client.ts
+  s_8be498775d6be4::t_39e233c95ca079 13
+apps/mobile/features/budget/hooks/use-suggestion-selection.ts
+  s_8be498775d6be4::t_1eab56d204a964 11,35-38
+apps/mobile/features/goals/components/AddPaymentSheet.tsx
+  s_8be498775d6be4::t_e319274ffbf709 2,31-42,44-55,58,60-67,83-91,104,149,180,190,217-218,220
+  s_8be498775d6be4::t_20d3f52d7fe1e7 59,219
+  s_8be498775d6be4::t_82fc47a221e728 43,56-57,181
+apps/mobile/features/search/lib/repository.ts
+  s_8be498775d6be4::t_211e9efb0b919b 27-30
+apps/mobile/features/goals/lib/derive/projection.ts
+  s_8be498775d6be4::t_6053ab8b7ab52a 30
+apps/mobile/shared/effect/telemetry.ts
+  s_8be498775d6be4::t_39e233c95ca079 20,26
+apps/mobile/shared/types/assertions.ts
+  s_8be498775d6be4::t_39e233c95ca079 146,150,154,158,162,166,170,178
+  ai_agent 182
+apps/mobile/features/email-capture/schema.ts
+  s_8be498775d6be4::t_39e233c95ca079 26
+apps/mobile/shared/components/ProgressBar.tsx
+  s_8be498775d6be4::t_47f6580ca485c1 5,32-46,51
+  s_8be498775d6be4::t_95c599c6b67042 77
+apps/mobile/app/analytics.tsx
+  s_8be498775d6be4::t_bcda3c86d04f7d 7,11
+apps/mobile/features/review-queues/components/FinancialMeaningReviewScreen.tsx
+  s_8be498775d6be4::t_bcda3c86d04f7d 34,77,109,130,154,168
+  s_8be498775d6be4::t_58a44e1d9b8d88 129
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreen.styles.ts
+  s_8be498775d6be4::t_1996ca4d04f34b 59
+apps/mobile/features/review-queues/lib/attribution-review-service.ts
+  s_8be498775d6be4::t_060c58525215ed 182-197
+apps/mobile/features/transactions/components/SheetBody.tsx
+  s_8be498775d6be4::t_221d9685eaa928 1-2,4,6-7,10-15,17
+apps/mobile/features/backup/local-ledger-encryption.ts
+  s_8be498775d6be4::t_729d43e54f6d40 88-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "6381c2647ce9c8d19d6692ca5acc963070ffa27b",
+  "prompts": {},
+  "sessions": {
+    "s_8be498775d6be4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e79eb-992f-7d30-a756-546aeeac0abf",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
