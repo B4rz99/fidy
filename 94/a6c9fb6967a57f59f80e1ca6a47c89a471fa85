@@ -1,0 +1,45 @@
+apps/mobile/features/qa/lib/home-activity-review-seed.ts
+  s_674d9abb97ec32::t_3a256368ed9bd7 1,44-47,55,125,127
+apps/mobile/__tests__/qa/start-local-qa-session.test.ts
+  s_674d9abb97ec32::t_ba0081832ea9c3 9-29,54-57,98-102,164,227-228
+apps/mobile/features/capture-sources/store.public.ts
+  s_674d9abb97ec32::t_3a256368ed9bd7 1
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_674d9abb97ec32::t_ddffdf181176d3 19
+apps/mobile/shared/components/Callout.tsx
+  s_674d9abb97ec32::t_49cbf161a2e8b9 42-44,49-51
+apps/mobile/shared/i18n/locales/es.ts
+  s_674d9abb97ec32::t_9b9a78fa24f9b0 545-548
+apps/mobile/__tests__/dashboard/home-screen.test.ts
+  s_674d9abb97ec32::t_ddffdf181176d3 115
+  s_674d9abb97ec32::t_ed2e802d640697 114
+apps/mobile/features/qa/start-local-qa-session.ts
+  s_674d9abb97ec32::t_9ea5d8dd38413e 20,30-58,87
+  s_674d9abb97ec32::t_3a256368ed9bd7 8,21
+apps/mobile/features/capture-sources/components/DetectedTransactionsBanner.tsx
+  s_674d9abb97ec32::t_ddffdf181176d3 20
+apps/mobile/__tests__/budget/list-screen-source.test.ts
+  s_674d9abb97ec32::t_a2a7a907125734 16
+apps/mobile/shared/i18n/locales/en.ts
+  s_674d9abb97ec32::t_9b9a78fa24f9b0 536-539
+apps/mobile/features/dashboard/components/home-screen/HomeScreenHeader.tsx
+  s_674d9abb97ec32::t_ddffdf181176d3 57-60
+apps/mobile/features/email-capture/components/EmailConnectBanner.tsx
+  s_674d9abb97ec32::t_ddffdf181176d3 46,55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "94a6c9fb6967a57f59f80e1ca6a47c89a471fa85",
+  "prompts": {},
+  "sessions": {
+    "s_674d9abb97ec32": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e79d5-8cda-7d23-ad6d-a4c225f10823",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
