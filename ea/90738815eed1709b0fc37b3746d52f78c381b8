@@ -1,0 +1,19 @@
+scripts/dependency-policy-support.ts
+  s_8be498775d6be4::t_b352770680e4db 45-46,139-140,142-153,158-181,264-267
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "ea90738815eed1709b0fc37b3746d52f78c381b8",
+  "prompts": {},
+  "sessions": {
+    "s_8be498775d6be4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e79eb-992f-7d30-a756-546aeeac0abf",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
