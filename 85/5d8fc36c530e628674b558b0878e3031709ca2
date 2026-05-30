@@ -1,0 +1,21 @@
+package.json
+  s_989e2ff2f9c357::t_4f191dfe5d168c 95-96,98-101
+  s_989e2ff2f9c357::t_7dd116bb1ea2c2 97,102
+  ai_agent 65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "855d8fc36c530e628674b558b0878e3031709ca2",
+  "prompts": {},
+  "sessions": {
+    "s_989e2ff2f9c357": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7aa0-0e26-70f3-b8d5-d715fafb49a6",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
