@@ -7,6 +7,7 @@ import {
 } from "@/features/budget/public";
 import { useEmailCaptureStore } from "@/features/email-capture/public";
 import { CATEGORY_MAP } from "@/shared/categories";
+import { Button, EmptyState } from "@/shared/components";
 import {
   Pressable,
   ScrollView,
@@ -91,7 +92,7 @@ export function BudgetSetupStep() {
         <Text style={[styles.title, { color: primaryColor }]}>
           {t("onboarding.budgetSetup.title")}
         </Text>
-        <Text style={[styles.subtitle, { color: secondaryColor }]}>
+        <Text className="text-center font-poppins-medium text-sm text-text-secondary dark:text-text-secondary-dark">
           {t("onboarding.budgetSetup.subtitle")}
         </Text>
 
@@ -114,7 +115,7 @@ export function BudgetSetupStep() {
                       <Text style={[styles.categoryName, { color: primaryColor }]}>
                         {categoryLabel}
                       </Text>
-                      <Text style={[styles.lastMonthLabel, { color: secondaryColor }]}>
+                      <Text className="font-poppins-medium text-[10px] text-text-secondary dark:text-text-secondary-dark">
                         {formatMoney(suggestion.suggestedAmount)}{" "}
                         {t("onboarding.budgetSetup.basedOnSpending").toLowerCase()}
                       </Text>
@@ -148,27 +149,24 @@ export function BudgetSetupStep() {
             })}
           </View>
         ) : (
-          <Text style={[styles.emptyText, { color: secondaryColor }]}>
-            {t("onboarding.budgetSetup.noSuggestions")}
-          </Text>
+          <EmptyState
+            title={t("onboarding.budgetSetup.noSuggestions")}
+            className="min-h-24 flex-none px-4 py-6"
+          />
         )}
       </ScrollView>
 
       <View style={styles.actions}>
-        <Pressable
-          style={[
-            styles.primaryButton,
-            { backgroundColor: accentGreen, opacity: isBusy ? 0.5 : 1 },
-          ]}
+        <Button
+          label={t("onboarding.budgetSetup.saveBudgets")}
           onPress={() => {
             void handleSave();
           }}
           disabled={isBusy || ((userId == null || db == null) && selectedIds.size > 0)}
-        >
-          <Text style={styles.primaryButtonText}>{t("onboarding.budgetSetup.saveBudgets")}</Text>
-        </Pressable>
+          loading={isBusy}
+        />
         <Pressable onPress={handleSkip}>
-          <Text style={[styles.skipText, { color: secondaryColor }]}>
+          <Text className="font-poppins-medium text-sm text-text-secondary dark:text-text-secondary-dark">
             {t("onboarding.budgetSetup.skipForNow")}
           </Text>
         </Pressable>
@@ -189,11 +187,6 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: "Poppins_700Bold",
     fontSize: 22,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 14,
     textAlign: "center",
   },
   list: {
@@ -222,10 +215,6 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_600SemiBold",
     fontSize: 14,
   },
-  lastMonthLabel: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 10,
-  },
   amountInput: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 14,
@@ -238,33 +227,11 @@ const styles = StyleSheet.create({
     textAlign: "right",
     minHeight: 36,
   },
-  emptyText: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 13,
-    textAlign: "center",
-    paddingVertical: 24,
-  },
   actions: {
     alignItems: "center",
     gap: 12,
     paddingHorizontal: 24,
     paddingBottom: 48,
     paddingTop: 16,
-  },
-  primaryButton: {
-    borderRadius: 14,
-    borderCurve: "continuous",
-    paddingVertical: 16,
-    alignItems: "center",
-    alignSelf: "stretch",
-  },
-  primaryButtonText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 16,
-    color: "#FFFFFF",
-  },
-  skipText: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 14,
   },
 });

@@ -56,15 +56,4 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: "center",
   },
-  primaryButton: {
-    borderRadius: 14,
-    borderCurve: "continuous",
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-  primaryButtonText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 16,
-    color: "#FFFFFF",
-  },
 });

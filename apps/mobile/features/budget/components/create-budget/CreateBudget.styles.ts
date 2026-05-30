@@ -21,18 +21,6 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
   container: {},
-  deleteButton: {
-    alignItems: "center",
-    borderCurve: "continuous",
-    borderRadius: 12,
-    borderWidth: 1,
-    minHeight: 48,
-    paddingVertical: 14,
-  },
-  deleteButtonText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 14,
-  },
   hint: {
     fontFamily: "Poppins_500Medium",
     fontSize: 11,
@@ -44,19 +32,6 @@ export const styles = StyleSheet.create({
   inputLabel: {
     fontFamily: "Poppins_500Medium",
     fontSize: 12,
-  },
-  saveButton: {
-    alignItems: "center",
-    backgroundColor: "transparent",
-    borderCurve: "continuous",
-    borderRadius: 12,
-    minHeight: 48,
-    paddingVertical: 14,
-  },
-  saveButtonText: {
-    color: "#FFFFFF",
-    fontFamily: "Poppins_700Bold",
-    fontSize: 16,
   },
   scrollContent: {
     gap: 16,

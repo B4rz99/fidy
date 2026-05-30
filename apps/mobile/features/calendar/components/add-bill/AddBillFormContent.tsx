@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TransactionDatePickerSheet } from "@/features/transactions/display.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
-import { AppAuroraBackground } from "@/shared/components";
+import { AppAuroraBackground, Button } from "@/shared/components";
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -182,18 +182,12 @@ export function AddBillFormContent({
           </View>
         </View>
 
-        <Pressable
-          style={[
-            styles.saveButton,
-            { backgroundColor: accentGreen, opacity: isSaving || !canSubmit ? 0.5 : 1 },
-          ]}
+        <Button
+          label={isEdit ? t("bills.saveChanges") : t("bills.add")}
           onPress={handleSave}
           disabled={isSaving || !canSubmit}
-        >
-          <Text style={styles.saveButtonText}>
-            {isEdit ? t("bills.saveChanges") : t("bills.add")}
-          </Text>
-        </Pressable>
+          loading={isSaving}
+        />
       </ScrollView>
       <TransactionDatePickerSheet
         allowFuture

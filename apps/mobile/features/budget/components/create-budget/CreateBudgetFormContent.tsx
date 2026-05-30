@@ -3,8 +3,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated from "react-native-reanimated";
 import { CategoryPill } from "@/features/transactions/display.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
-import { FidyNumpad } from "@/shared/components";
-import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { Button, FidyNumpad } from "@/shared/components";
+import { ScrollView, Text, View } from "@/shared/components/rn";
 import { useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatInputDisplay, formatMoney } from "@/shared/lib";
@@ -57,8 +57,6 @@ export function CreateBudgetFormContent({
   const { t, locale } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const { cursorStyle } = useBlinkingCursor();
-  const accentGreen = useThemeColor("accentGreen");
-  const accentRed = useThemeColor("accentRed");
   const cardBg = useThemeColor("card");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
@@ -128,22 +126,20 @@ export function CreateBudgetFormContent({
         ) : null}
       </View>
 
-      <Pressable
-        style={[styles.saveButton, { backgroundColor: accentGreen, opacity: isSaving ? 0.5 : 1 }]}
+      <Button
+        label={t("common.save")}
         onPress={handleSave}
         disabled={isSaving || !canMutate}
-      >
-        <Text style={styles.saveButtonText}>{t("common.save")}</Text>
-      </Pressable>
+        loading={isSaving}
+      />
 
       {isEdit ? (
-        <Pressable
-          style={[styles.deleteButton, { borderColor: accentRed }]}
+        <Button
+          label={t("common.delete")}
+          variant="danger"
           onPress={handleDelete}
           disabled={isSaving || !canMutate}
-        >
-          <Text style={[styles.deleteButtonText, { color: accentRed }]}>{t("common.delete")}</Text>
-        </Pressable>
+        />
       ) : null}
 
       <FidyNumpad onKeyPress={handleKey} />

@@ -7,8 +7,8 @@ import {
 } from "@/features/financial-accounts/lib/form-screen";
 import { createFinancialAccountManagementService } from "@/features/financial-accounts/lib/management-service";
 import { parseFinancialAccountRouteParam } from "@/features/financial-accounts/lib/route-params";
-import { ScreenLayout } from "@/shared/components";
-import { ActivityIndicator, Pressable, Text, View } from "@/shared/components/rn";
+import { Button, ScreenLayout } from "@/shared/components";
+import { ActivityIndicator, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { styles } from "./financial-account-form/FinancialAccountForm.styles";
@@ -34,7 +34,6 @@ function FinancialAccountFormLoadingState() {
 
 function FinancialAccountFormMissingState({ onExit }: { readonly onExit: () => void }) {
   const { t } = useTranslation();
-  const accentGreen = useThemeColor("accentGreen");
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
 
@@ -46,12 +45,11 @@ function FinancialAccountFormMissingState({ onExit }: { readonly onExit: () => v
       <Text style={[styles.stateBody, { color: secondary }]}>
         {t("financialAccounts.form.missingBody")}
       </Text>
-      <Pressable
-        style={[styles.primaryButton, styles.stateButton, { backgroundColor: accentGreen }]}
+      <Button
+        label={t("financialAccounts.form.missingCta")}
+        className="self-start"
         onPress={onExit}
-      >
-        <Text style={styles.primaryButtonText}>{t("financialAccounts.form.missingCta")}</Text>
-      </Pressable>
+      />
     </View>
   );
 }
