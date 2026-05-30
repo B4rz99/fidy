@@ -60,7 +60,6 @@ export function BudgetAlertBanner({ alert, onDismiss }: Props) {
       onDismiss={handleDismiss}
       dismissAccessibilityLabel={t("common.dismiss")}
       tone={isOverBudget ? "danger" : "warning"}
-      className="p-3"
       style={{ backgroundColor: bannerBg }}
     />
   );

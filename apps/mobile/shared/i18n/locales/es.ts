@@ -542,6 +542,10 @@ const es = {
   emailCapture: {
     autoCapture: "Auto-captura de transacciones",
     connectDescription: "Conecta tu correo para capturar transacciones bancarias automáticamente.",
+    connectProviders: {
+      gmail: "Gmail",
+      outlook: "Outlook",
+    },
   },
 
   // Progress

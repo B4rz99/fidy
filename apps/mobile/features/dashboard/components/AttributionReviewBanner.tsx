@@ -24,8 +24,6 @@ export const AttributionReviewBanner = ({ onPress }: { onPress: () => void }) =>
       icon={<Landmark size={18} color="#4A7F1B" />}
       trailing={<ChevronRight size={16} color="#55703B" />}
       onPress={onPress}
-      className="rounded-xl p-3"
-      style={{ backgroundColor: "#D4EDBA", gap: 12 }}
     />
   );
 };

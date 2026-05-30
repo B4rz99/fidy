@@ -16,7 +16,7 @@ import { Text } from "@/shared/components/rn";
 
 function expectSharedComponentImport(source: string, componentName: string) {
   const importsFromBarrel = new RegExp(
-    `import\\s*\\{[\\s\\S]*\\b${componentName}\\b[\\s\\S]*\\}\\s*from "@/shared/components"`
+    `import\\s*\\{[^}]*\\b${componentName}\\b[^}]*\\}\\s*from "@/shared/components"`
   ).test(source);
   const importsDirectPrimitive = source.includes(`from "@/shared/components/${componentName}"`);
 

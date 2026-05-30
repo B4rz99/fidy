@@ -1,7 +1,6 @@
+import type { CaptureEvidenceRow } from "@/features/capture-evidence/public";
 import type { ProcessedSourceEventRow } from "@/features/email-capture/public";
 import type { TransactionRow } from "@/features/transactions/query.public";
-import type { AnyDb } from "@/shared/db";
-import { captureEvidence, processedSourceEvents } from "@/shared/db/schema";
 import { toIsoDateTime } from "@/shared/lib";
 import {
   generateCaptureEvidenceId,
@@ -39,11 +38,13 @@ export function buildQaNeedsReviewEmailSourceEvents(input: {
 }
 
 export function seedHomeActivityAttributionReviewRows(input: {
-  readonly db: AnyDb;
   readonly userId: UserId;
   readonly transactions: readonly TransactionRow[];
   readonly now: Date;
-}): void {
+}): {
+  readonly sourceEvents: readonly ProcessedSourceEventRow[];
+  readonly evidenceRows: readonly CaptureEvidenceRow[];
+} | null {
   const unresolvedTransaction = input.transactions.find(
     (transaction) => transaction.accountAttributionState === "unresolved"
   );
@@ -51,7 +52,7 @@ export function seedHomeActivityAttributionReviewRows(input: {
     (transaction) => transaction.accountAttributionState === "confirmed"
   );
 
-  if (!unresolvedTransaction || !confirmedTransaction) return;
+  if (!unresolvedTransaction || !confirmedTransaction) return null;
 
   const createdAt = toIsoDateTime(input.now);
   const unresolvedSourceEventId = generateProcessedSourceEventId();
@@ -121,8 +122,7 @@ export function seedHomeActivityAttributionReviewRows(input: {
       updatedAt: createdAt,
       deletedAt: null,
     },
-  ];
+  ] satisfies readonly CaptureEvidenceRow[];
 
-  input.db.insert(processedSourceEvents).values(sourceEvents).onConflictDoNothing().run();
-  input.db.insert(captureEvidence).values(evidenceRows).onConflictDoNothing().run();
+  return { sourceEvents, evidenceRows };
 }

@@ -20,8 +20,6 @@ export const NeedsReviewBanner = ({ onPress }: { onPress: () => void }) => {
       icon={<TriangleAlert size={18} color="#E65100" />}
       trailing={<ChevronRight size={16} color="#6D6D6D" />}
       onPress={onPress}
-      className="rounded-xl p-3"
-      style={{ backgroundColor: "#FFF3E0", gap: 12 }}
     />
   );
 };

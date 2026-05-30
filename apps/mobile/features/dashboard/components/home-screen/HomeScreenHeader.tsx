@@ -34,7 +34,6 @@ export function HomeScreenHeader({
   const localQaProfile = useAuthStore((state) => state.localQaSession?.profile ?? null);
   const db = userId ? tryGetDb(userId) : null;
   const showSetupBanners = localQaProfile !== "home-activity";
-  const showReviewBanners = showSetupBanners || localQaProfile === "home-activity";
   const { suggestions } = useAccountSuggestions({
     db: showSetupBanners ? db : null,
     userId: showSetupBanners ? userId : null,
@@ -55,14 +54,10 @@ export function HomeScreenHeader({
           />
         </>
       ) : null}
-      {showReviewBanners ? (
-        <>
-          <NeedsReviewBanner onPress={() => push("/needs-review" as never)} />
-          <AttributionReviewBanner onPress={() => push("/attribution-review-queue" as never)} />
-          {Platform.OS === "ios" ? (
-            <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
-          ) : null}
-        </>
+      <NeedsReviewBanner onPress={() => push("/needs-review" as never)} />
+      <AttributionReviewBanner onPress={() => push("/attribution-review-queue" as never)} />
+      {Platform.OS === "ios" ? (
+        <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
       ) : null}
       {showSetupBanners ? (
         <>

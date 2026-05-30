@@ -39,16 +39,16 @@ const CALLOUT_CLASS_NAMES: Record<CalloutTone, string> = {
 
 const CALLOUT_TITLE_CLASS_NAMES: Record<CalloutTone, string> = {
   neutral: "text-text-primary dark:text-text-primary-dark",
-  success: "text-[#244A13]",
-  danger: "text-[#7A1E1E]",
-  warning: "text-[#6A4000]",
+  success: "text-[#244A13] dark:text-text-primary-dark",
+  danger: "text-[#7A1E1E] dark:text-text-primary-dark",
+  warning: "text-[#6A4000] dark:text-text-primary-dark",
 };
 
 const CALLOUT_SUBTITLE_CLASS_NAMES: Record<CalloutTone, string> = {
   neutral: "text-text-secondary dark:text-text-secondary-dark",
-  success: "text-[#3F602C]",
-  danger: "text-[#8A3A3A]",
-  warning: "text-[#6D5A3A]",
+  success: "text-[#3F602C] dark:text-text-secondary-dark",
+  danger: "text-[#8A3A3A] dark:text-text-secondary-dark",
+  warning: "text-[#6D5A3A] dark:text-text-secondary-dark",
 };
 
 export function Callout({

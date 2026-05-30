@@ -6,7 +6,27 @@ const mockClear = vi.fn<(...args: any[]) => any>(() => Promise.resolve());
 const mockSetLocalOnboardingComplete = vi.fn<(...args: any[]) => any>();
 const mockOnboardingReset = vi.fn<(...args: any[]) => any>();
 const mockResetDbForUser = vi.fn<(userId: string) => Promise<void>>(() => Promise.resolve());
-const mockDb = { _: "db", transaction: (fn: (tx: unknown) => unknown) => fn(mockDb) };
+const mockInsertProcessedSourceEvents = vi.fn<(...args: any[]) => any>();
+const mockInsertCaptureEvidence = vi.fn<(...args: any[]) => any>();
+const mockDb = {
+  _: "db",
+  insert: (table: unknown) => ({
+    values: (rows: readonly unknown[]) => ({
+      onConflictDoNothing: () => ({
+        run: () => {
+          if (table === "processedSourceEvents") {
+            mockInsertProcessedSourceEvents(rows);
+            return;
+          }
+          if (table === "captureEvidence") {
+            mockInsertCaptureEvidence(rows);
+          }
+        },
+      }),
+    }),
+  }),
+  transaction: (fn: (tx: unknown) => unknown) => fn(mockDb),
+};
 const mockGetDb = vi.fn<(userId: string) => typeof mockDb>(() => mockDb);
 const mockMigrate = vi.fn<(db: unknown, config: unknown) => Promise<void>>(() => Promise.resolve());
 const mockUpsertFinancialAccount = vi.fn<(db: unknown, row: unknown) => void>();
@@ -28,10 +48,15 @@ const mockQueryClientClear = vi.fn<(...args: any[]) => any>();
 const mockBeginEmailCaptureSession = vi.fn<(userId: string) => void>();
 const mockSetNeedsReviewEmailSourceEvents = vi.fn<(events: readonly unknown[]) => void>();
 const mockSetDetectedSmsCount = vi.fn<(count: number) => void>();
+const mockSetPersistedNotificationPreference = vi.fn<(key: string, value: boolean) => void>();
+const mockSetSessionNotificationPreference = vi.fn<(key: string, value: boolean) => void>();
 const mockBuildQaNeedsReviewEmailSourceEvents = vi.fn<(...args: any[]) => readonly unknown[]>(
   () => [{ id: "qa-review-email" }]
 );
-const mockSeedHomeActivityAttributionReviewRows = vi.fn<(...args: any[]) => void>();
+const mockSeedHomeActivityAttributionReviewRows = vi.fn<(...args: any[]) => any>(() => ({
+  sourceEvents: [{ id: "qa-source-event" }],
+  evidenceRows: [{ id: "qa-evidence" }],
+}));
 
 const session = {
   userId: "qa-local-transfer-ready" as never,
@@ -70,6 +95,11 @@ vi.mock("@/features/onboarding/lib/local-onboarding-state", () => ({
 vi.mock("@/shared/db", () => ({
   getDb: (userId: string) => mockGetDb(userId),
   resetDbForUser: (userId: string) => mockResetDbForUser(userId),
+}));
+
+vi.mock("@/shared/db/schema", () => ({
+  captureEvidence: "captureEvidence",
+  processedSourceEvents: "processedSourceEvents",
 }));
 
 vi.mock("drizzle-orm/expo-sqlite/migrator", () => ({
@@ -133,10 +163,19 @@ vi.mock("@/features/email-capture/public", () => ({
   },
 }));
 
-vi.mock("@/features/capture-sources/public", () => ({
+vi.mock("@/features/capture-sources/store.public", () => ({
   useCaptureSourcesStore: {
     getState: () => ({
       setDetectedSmsCount: mockSetDetectedSmsCount,
+    }),
+  },
+}));
+
+vi.mock("@/features/settings/public", () => ({
+  useSettingsStore: {
+    getState: () => ({
+      setNotificationPreference: mockSetPersistedNotificationPreference,
+      setNotificationPreferenceForSession: mockSetSessionNotificationPreference,
     }),
   },
 }));
@@ -165,6 +204,8 @@ describe("startLocalQaSession", () => {
     expect(mockQueryClientClear).toHaveBeenCalledOnce();
     expect(mockBeginEmailCaptureSession).toHaveBeenCalledWith("qa-local-transfer-ready");
     expect(mockSetDetectedSmsCount).toHaveBeenCalledWith(0);
+    expect(mockSetSessionNotificationPreference).toHaveBeenCalledWith("budgetAlerts", false);
+    expect(mockSetPersistedNotificationPreference).not.toHaveBeenCalled();
     expect(mockResetDbForUser).toHaveBeenCalledWith("qa-local-transfer-ready");
     expect(mockGetDb).toHaveBeenCalledWith("qa-local-transfer-ready");
     expect(mockMigrate).toHaveBeenCalledOnce();
@@ -192,10 +233,11 @@ describe("startLocalQaSession", () => {
     expect(mockSetNeedsReviewEmailSourceEvents).toHaveBeenCalledWith([{ id: "qa-review-email" }]);
     expect(mockSetDetectedSmsCount).toHaveBeenCalledWith(3);
     expect(mockSeedHomeActivityAttributionReviewRows).toHaveBeenCalledWith({
-      db: mockDb,
       userId: "qa-local-transfer-ready",
       transactions: seed.transactions,
       now: expect.any(Date),
     });
+    expect(mockInsertProcessedSourceEvents).toHaveBeenCalledWith([{ id: "qa-source-event" }]);
+    expect(mockInsertCaptureEvidence).toHaveBeenCalledWith([{ id: "qa-evidence" }]);
   });
 });

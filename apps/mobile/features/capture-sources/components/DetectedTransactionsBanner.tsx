@@ -6,7 +6,6 @@ import { useCaptureSourcesStore } from "../store";
 export const DetectedTransactionsBanner = ({ onPress }: { onPress: () => void }) => {
   const { t } = useTranslation();
   const count = useCaptureSourcesStore((s) => s.detectedSmsCount);
-  const bannerBg = useThemeColor("accentGreenLight");
   const iconColor = useThemeColor("accentGreen");
   const secondaryColor = useThemeColor("secondary");
 
@@ -18,8 +17,7 @@ export const DetectedTransactionsBanner = ({ onPress }: { onPress: () => void })
       icon={<MessageSquare size={18} color={iconColor} />}
       trailing={<ChevronRight size={16} color={secondaryColor} />}
       onPress={onPress}
-      className="rounded-xl p-3"
-      style={{ backgroundColor: bannerBg, gap: 12 }}
+      tone="success"
     />
   );
 };

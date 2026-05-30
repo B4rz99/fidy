@@ -13,6 +13,7 @@ describe("BudgetListScreen notification prompt routing", () => {
     expect(source).toContain("pendingAlerts.map");
     expect(source).toContain("onDismiss={acknowledgeAlert}");
     expect(source).toContain("<BudgetSummaryCard");
+    expect(source.indexOf("pendingAlerts.map")).toBeLessThan(source.indexOf("<BudgetSummaryCard"));
   });
 
   it("guards stale pending permission signals before opening the notification sheet", () => {

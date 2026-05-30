@@ -43,7 +43,7 @@ export const EmailConnectBanner = ({
 
       <View className="flex-row" style={{ gap: 10 }}>
         <Button
-          label="Gmail"
+          label={t("emailCapture.connectProviders.gmail")}
           onPress={() => onConnect("gmail")}
           variant="secondary"
           icon={<Mail size={18} color={iconColor} />}
@@ -52,7 +52,7 @@ export const EmailConnectBanner = ({
         />
 
         <Button
-          label="Outlook"
+          label={t("emailCapture.connectProviders.outlook")}
           onPress={() => onConnect("outlook")}
           variant="secondary"
           icon={<Mail size={18} color="#4A90D9" />}
