@@ -1,5 +1,5 @@
+import { Callout } from "@/shared/components";
 import { ChevronRight, MessageSquare } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useCaptureSourcesStore } from "../store";
 
@@ -12,23 +12,14 @@ export const DetectedTransactionsBanner = ({ onPress }: { onPress: () => void })
 
   if (count === 0) return null;
   return (
-    <Pressable
+    <Callout
+      title={t("detectedTransactions.count", { count })}
+      subtitle={t("detectedTransactions.subtitle")}
+      icon={<MessageSquare size={18} color={iconColor} />}
+      trailing={<ChevronRight size={16} color={secondaryColor} />}
       onPress={onPress}
-      className="flex-row items-center justify-between rounded-xl p-3"
+      className="rounded-xl p-3"
       style={{ backgroundColor: bannerBg, gap: 12 }}
-    >
-      <View className="flex-1 flex-row items-center" style={{ gap: 10 }}>
-        <MessageSquare size={18} color={iconColor} />
-        <View>
-          <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-            {t("detectedTransactions.count", { count })}
-          </Text>
-          <Text className="font-poppins-medium text-caption" style={{ color: secondaryColor }}>
-            {t("detectedTransactions.subtitle")}
-          </Text>
-        </View>
-      </View>
-      <ChevronRight size={16} color={secondaryColor} />
-    </Pressable>
+    />
   );
 };

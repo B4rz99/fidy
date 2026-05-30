@@ -7,7 +7,7 @@ import {
   generateBackupRecoveryKey,
   type PrivateBackupHealthStatus,
 } from "@/features/backup/public";
-import { ScreenLayout } from "@/shared/components";
+import { Card, ScreenLayout } from "@/shared/components";
 import { CheckCircle, KeyRound, RefreshCcw, Shield, Smartphone } from "@/shared/components/icons";
 import { Alert, Platform, ScrollView, Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -165,10 +165,7 @@ export function PrivateBackupScreen() {
 
         {isConfirmingKey ? (
           <>
-            <View
-              className="rounded-2xl bg-card dark:bg-card-dark"
-              style={{ borderWidth: 1, borderColor, padding: 16, gap: 8 }}
-            >
+            <Card style={{ borderWidth: 1, borderColor, gap: 8 }}>
               <Text className="font-poppins-semibold text-xs text-secondary dark:text-secondary-dark">
                 {t("privateBackup.recoveryKeyLabel").toUpperCase()}
               </Text>
@@ -182,7 +179,7 @@ export function PrivateBackupScreen() {
               <Text className="font-poppins text-xs text-secondary dark:text-secondary-dark">
                 {t("privateBackup.recoveryKeyHelper")}
               </Text>
-            </View>
+            </Card>
             <TextInput
               value={confirmation}
               onChangeText={setConfirmation}

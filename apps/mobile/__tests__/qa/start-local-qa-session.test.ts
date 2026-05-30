@@ -25,6 +25,13 @@ const mockPersistLocalQaSession = vi.fn<(session: unknown) => Promise<void>>(() 
   Promise.resolve()
 );
 const mockQueryClientClear = vi.fn<(...args: any[]) => any>();
+const mockBeginEmailCaptureSession = vi.fn<(userId: string) => void>();
+const mockSetNeedsReviewEmailSourceEvents = vi.fn<(events: readonly unknown[]) => void>();
+const mockSetDetectedSmsCount = vi.fn<(count: number) => void>();
+const mockBuildQaNeedsReviewEmailSourceEvents = vi.fn<(...args: any[]) => readonly unknown[]>(
+  () => [{ id: "qa-review-email" }]
+);
+const mockSeedHomeActivityAttributionReviewRows = vi.fn<(...args: any[]) => void>();
 
 const session = {
   userId: "qa-local-transfer-ready" as never,
@@ -110,6 +117,30 @@ vi.mock("@/features/qa/lib/build-local-qa-seed", () => ({
   buildLocalQaSeed: (profile: string, now: Date) => mockBuildLocalQaSeed(profile, now),
 }));
 
+vi.mock("@/features/qa/lib/home-activity-review-seed", () => ({
+  buildQaNeedsReviewEmailSourceEvents: (...args: any[]) =>
+    mockBuildQaNeedsReviewEmailSourceEvents(...args),
+  seedHomeActivityAttributionReviewRows: (...args: any[]) =>
+    mockSeedHomeActivityAttributionReviewRows(...args),
+}));
+
+vi.mock("@/features/email-capture/public", () => ({
+  useEmailCaptureStore: {
+    getState: () => ({
+      beginSession: mockBeginEmailCaptureSession,
+      setNeedsReviewEmailSourceEvents: mockSetNeedsReviewEmailSourceEvents,
+    }),
+  },
+}));
+
+vi.mock("@/features/capture-sources/public", () => ({
+  useCaptureSourcesStore: {
+    getState: () => ({
+      setDetectedSmsCount: mockSetDetectedSmsCount,
+    }),
+  },
+}));
+
 vi.mock("@/features/qa/local-session", async () => {
   const actual = await vi.importActual<typeof LocalSession>("@/features/qa/local-session");
 
@@ -132,6 +163,8 @@ describe("startLocalQaSession", () => {
     expect(mockSetLocalOnboardingComplete).toHaveBeenCalledWith(false);
     expect(mockOnboardingReset).toHaveBeenCalledOnce();
     expect(mockQueryClientClear).toHaveBeenCalledOnce();
+    expect(mockBeginEmailCaptureSession).toHaveBeenCalledWith("qa-local-transfer-ready");
+    expect(mockSetDetectedSmsCount).toHaveBeenCalledWith(0);
     expect(mockResetDbForUser).toHaveBeenCalledWith("qa-local-transfer-ready");
     expect(mockGetDb).toHaveBeenCalledWith("qa-local-transfer-ready");
     expect(mockMigrate).toHaveBeenCalledOnce();
@@ -143,7 +176,26 @@ describe("startLocalQaSession", () => {
     expect(mockInitializeBudgetSession).toHaveBeenCalledWith("qa-local-transfer-ready");
     expect(mockLoadInitialTransactions).toHaveBeenCalledWith(mockDb, "qa-local-transfer-ready");
     expect(mockLoadBudgetsForUser).toHaveBeenCalledWith(mockDb, "qa-local-transfer-ready");
+    expect(mockSetNeedsReviewEmailSourceEvents).not.toHaveBeenCalled();
+    expect(mockSeedHomeActivityAttributionReviewRows).not.toHaveBeenCalled();
     expect(mockPersistLocalQaSession).toHaveBeenCalledWith(session);
     expect(result).toEqual(session);
+  });
+
+  it("loads visible review banner state for the home-activity scenario", async () => {
+    await startLocalQaSession("home-activity");
+
+    expect(mockBuildQaNeedsReviewEmailSourceEvents).toHaveBeenCalledWith({
+      userId: "qa-local-transfer-ready",
+      now: expect.any(Date),
+    });
+    expect(mockSetNeedsReviewEmailSourceEvents).toHaveBeenCalledWith([{ id: "qa-review-email" }]);
+    expect(mockSetDetectedSmsCount).toHaveBeenCalledWith(3);
+    expect(mockSeedHomeActivityAttributionReviewRows).toHaveBeenCalledWith({
+      db: mockDb,
+      userId: "qa-local-transfer-ready",
+      transactions: seed.transactions,
+      now: expect.any(Date),
+    });
   });
 });

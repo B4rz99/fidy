@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
 import { type ThemePreference, useSettingsStore } from "@/features/settings/hooks.public";
-import { DialogRouteFrame } from "@/shared/components";
+import { DialogRouteFrame, Row } from "@/shared/components";
 import { Check } from "@/shared/components/icons";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 const OPTIONS: { key: ThemePreference; labelKey: string }[] = [
@@ -17,7 +17,6 @@ export default function ThemePickerSheet() {
   const current = useSettingsStore((s) => s.themePreference);
   const setTheme = useSettingsStore((s) => s.setThemePreference);
   const accentGreen = useThemeColor("accentGreen");
-  const borderColor = useThemeColor("borderSubtle");
 
   const handleSelect = (pref: ThemePreference) => {
     setTheme(pref);
@@ -33,29 +32,22 @@ export default function ThemePickerSheet() {
         >
           {t("settings.theme")}
         </Text>
-        {OPTIONS.map((option, index) => (
-          <Pressable
-            key={option.key}
-            onPress={() => handleSelect(option.key)}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              height: 52,
-              paddingHorizontal: 4,
-              borderBottomWidth: index < OPTIONS.length - 1 ? StyleSheet.hairlineWidth : 0,
-              borderBottomColor: borderColor,
-            }}
-          >
-            <Text
-              className="font-poppins-medium text-primary dark:text-primary-dark"
-              style={{ fontSize: 15 }}
-            >
-              {t(option.labelKey)}
-            </Text>
-            {current === option.key ? <Check size={22} color={accentGreen} /> : null}
-          </Pressable>
-        ))}
+        {OPTIONS.map((option, index) => {
+          const selected = current === option.key;
+
+          return (
+            <Row
+              key={option.key}
+              title={t(option.labelKey)}
+              onPress={() => handleSelect(option.key)}
+              trailing={selected ? <Check size={22} color={accentGreen} /> : null}
+              accessibilityState={{ selected }}
+              isLast={index === OPTIONS.length - 1}
+              className="px-1"
+              titleClassName="text-[15px]"
+            />
+          );
+        })}
       </View>
     </DialogRouteFrame>
   );

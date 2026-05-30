@@ -1,4 +1,5 @@
 import { useOptionalUserId } from "@/features/auth/public";
+import { Card } from "@/shared/components";
 import { Bell, ExternalLink } from "@/shared/components/icons";
 import { Linking, Platform, Pressable, Switch, Text, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
@@ -28,7 +29,7 @@ export const NotificationSetupCard = () => {
   const borderColor = useThemeColor("borderSubtle");
 
   return (
-    <View className="rounded-chart bg-card p-5 dark:bg-card-dark" style={{ gap: 14 }}>
+    <Card padded={false} className="rounded-chart" style={{ gap: 14, padding: 20 }}>
       {/* Header */}
       <View className="flex-row items-center" style={{ gap: 10 }}>
         <Bell size={22} color={iconColor} />
@@ -111,6 +112,6 @@ export const NotificationSetupCard = () => {
           );
         })}
       </View>
-    </View>
+    </Card>
   );
 };

@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { renderFidy } from "@/__tests__/helpers/render";
 import { Button } from "@/shared/components/Button";
+import { Card } from "@/shared/components/Card";
 import { Callout } from "@/shared/components/Callout";
 import { Chip } from "@/shared/components/Chip";
 import { EmptyState } from "@/shared/components/EmptyState";
@@ -70,6 +71,20 @@ describe("shared UI kit", () => {
     expect(screen.getByText("No notifications")).toBeTruthy();
     expect(screen.getByText("You are all caught up")).toBeTruthy();
     expect(screen.getByText("Continue")).toBeTruthy();
+  });
+
+  it("renders interactive cards as accessible buttons", () => {
+    const presses: string[] = [];
+    const screen = renderFidy(
+      <Card accessibilityLabel="Open card" onPress={() => presses.push("pressed")}>
+        <Text>Interactive card</Text>
+      </Card>
+    );
+
+    screen.pressByA11yLabel("Open card");
+
+    expect(screen.getByText("Interactive card")).toBeTruthy();
+    expect(presses).toEqual(["pressed"]);
   });
 
   it("selects segmented control options through accessible buttons", () => {
@@ -185,6 +200,45 @@ describe("shared UI kit", () => {
     expect(calloutButtons).toHaveLength(1);
   });
 
+  it("renders dismissible callouts with an accessible dismiss action", () => {
+    const dismisses: string[] = [];
+    const presses: string[] = [];
+    const screen = renderFidy(
+      <Callout
+        title="Dismissible callout"
+        dismissAccessibilityLabel="Dismiss callout"
+        trailing={<Text>Details</Text>}
+        onPress={() => presses.push("pressed")}
+        onDismiss={() => dismisses.push("dismissed")}
+      />
+    );
+
+    screen.pressByA11yLabel("Dismiss callout");
+
+    expect(screen.getByText("Dismissible callout")).toBeTruthy();
+    expect(screen.getByText("Details")).toBeTruthy();
+    expect(dismisses).toEqual(["dismissed"]);
+    expect(presses).toEqual([]);
+  });
+
+  it("keeps simple review and capture banners on the shared Callout primitive", () => {
+    const files = [
+      "../../features/dashboard/components/NeedsReviewBanner.tsx",
+      "../../features/dashboard/components/AttributionReviewBanner.tsx",
+      "../../features/capture-sources/components/DetectedTransactionsBanner.tsx",
+      "../../features/budget/components/BudgetAlertBanner.tsx",
+    ];
+
+    files.forEach((file) => {
+      const source = readFileSync(resolve(__dirname, file), "utf-8");
+
+      expectSharedComponentImport(source, "Callout");
+      expect(source).toContain("<Callout");
+      expect(source).not.toContain("<Pressable");
+      expect(source).not.toContain("StyleSheet.create");
+    });
+  });
+
   it("keeps SettingsRow as a wrapper around the shared Row primitive", () => {
     const source = readFileSync(
       resolve(__dirname, "../../features/settings/components/SettingsRow.tsx"),
@@ -243,6 +297,72 @@ describe("shared UI kit", () => {
     expect(source).toContain("<Chip");
     expect(source).not.toContain("StyleSheet");
     expect(source).not.toContain("Pressable");
+  });
+
+  it("keeps simple visual card containers on the shared Card primitive", () => {
+    const files = [
+      "../../app/connected-accounts.tsx",
+      "../../features/capture-sources/components/NotificationSetupCard.tsx",
+      "../../features/capture-sources/components/ApplePaySetupCard.tsx",
+      "../../features/email-capture/components/EmailConnectBanner.tsx",
+      "../../features/settings/components/BackupStatusCard.tsx",
+      "../../features/settings/components/PrivateBackupChecklist.tsx",
+      "../../features/settings/components/PrivateBackupScreen.tsx",
+      "../../features/qa/components/LocalQaProfileTools.tsx",
+      "../../features/ai-chat/components/ActionCard.tsx",
+      "../../features/ai-chat/components/ConversationList.tsx",
+    ];
+
+    files.forEach((file) => {
+      const source = readFileSync(resolve(__dirname, file), "utf-8");
+
+      expectSharedComponentImport(source, "Card");
+      expect(source).toContain("<Card");
+      expect(source).not.toContain("rounded-chart bg-card");
+      expect(source).not.toContain("rounded-2xl bg-card");
+      expect(source).not.toContain('className="bg-card dark:bg-card-dark"');
+    });
+  });
+
+  it("keeps simple local action buttons on the shared Button primitive", () => {
+    const files = [
+      "../../app/connected-accounts.tsx",
+      "../../features/email-capture/components/EmailConnectBanner.tsx",
+      "../../features/ai-chat/components/ActionCard.tsx",
+      "../../features/settings/components/PrivateBackupActionButton.tsx",
+      "../../features/qa/components/LocalQaProfileTools.tsx",
+    ];
+
+    files.forEach((file) => {
+      const source = readFileSync(resolve(__dirname, file), "utf-8");
+
+      expectSharedComponentImport(source, "Button");
+      expect(source).toContain("<Button");
+      expect(source).not.toContain("<Pressable");
+    });
+
+    const profileSource = readFileSync(
+      resolve(__dirname, "../../features/settings/components/ProfileScreen.tsx"),
+      "utf-8"
+    );
+
+    expectSharedComponentImport(profileSource, "Button");
+    expect(profileSource).toContain("<Button");
+    expect(profileSource).not.toContain("bg-card dark:bg-card-dark rounded-2xl w-full");
+  });
+
+  it("keeps simple picker option rows on the shared Row primitive", () => {
+    const files = ["../../app/language-picker.tsx", "../../app/theme-picker.tsx"];
+
+    files.forEach((file) => {
+      const source = readFileSync(resolve(__dirname, file), "utf-8");
+
+      expectSharedComponentImport(source, "Row");
+      expect(source).toContain("<Row");
+      expect(source).not.toContain("<Pressable");
+      expect(source).not.toContain("StyleSheet.hairlineWidth");
+      expect(source).not.toContain("borderBottomWidth");
+    });
   });
 
   it("keeps search filter chips on the shared Chip primitive", () => {

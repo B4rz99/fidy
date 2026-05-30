@@ -13,6 +13,7 @@ import { getDateFnsLocale } from "@/shared/i18n";
 import { captureError } from "@/shared/lib";
 import type { BudgetProgress } from "../lib/derive";
 import { nextBudgetMonth, prevBudgetMonth, useBudgetStore } from "../store";
+import { BudgetAlertBanner } from "./BudgetAlertBanner";
 import { BudgetCard } from "./BudgetCard";
 import { BudgetHeaderMonthNavigator } from "./BudgetHeaderMonthNavigator";
 import { BudgetSummaryCard } from "./BudgetSummaryCard";
@@ -51,6 +52,8 @@ export function BudgetListScreen() {
   const budgets = useBudgetStore((s) => s.budgets);
   const budgetProgress = useBudgetStore((s) => s.budgetProgress);
   const summary = useBudgetStore((s) => s.summary);
+  const pendingAlerts = useBudgetStore((s) => s.pendingAlerts);
+  const acknowledgeAlert = useBudgetStore((s) => s.acknowledgeAlert);
   const pendingPermissionRequest = useBudgetStore((s) => s.pendingPermissionRequest);
   const clearPendingPermissionRequest = useBudgetStore((s) => s.clearPendingPermissionRequest);
   const userId = useOptionalUserId();
@@ -133,13 +136,29 @@ export function BudgetListScreen() {
   const budgetSummary = useMemo(
     () =>
       hasBudgets ? (
-        <BudgetSummaryCard
-          totalBudget={summary.totalBudget}
-          totalSpent={summary.totalSpent}
-          percentUsed={summary.percentUsed}
-        />
+        <View style={styles.headerContent}>
+          {pendingAlerts.map((alert) => (
+            <BudgetAlertBanner
+              key={`${alert.budgetId}:${alert.threshold}`}
+              alert={alert}
+              onDismiss={acknowledgeAlert}
+            />
+          ))}
+          <BudgetSummaryCard
+            totalBudget={summary.totalBudget}
+            totalSpent={summary.totalSpent}
+            percentUsed={summary.percentUsed}
+          />
+        </View>
       ) : null,
-    [hasBudgets, summary.percentUsed, summary.totalBudget, summary.totalSpent]
+    [
+      acknowledgeAlert,
+      hasBudgets,
+      pendingAlerts,
+      summary.percentUsed,
+      summary.totalBudget,
+      summary.totalSpent,
+    ]
   );
   const emptyState = useMemo(
     () => (
@@ -217,6 +236,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   scrollContent: {
+    gap: 8,
+  },
+  headerContent: {
     gap: 8,
   },
   itemSeparator: {

@@ -34,6 +34,7 @@ export function HomeScreenHeader({
   const localQaProfile = useAuthStore((state) => state.localQaSession?.profile ?? null);
   const db = userId ? tryGetDb(userId) : null;
   const showSetupBanners = localQaProfile !== "home-activity";
+  const showReviewBanners = showSetupBanners || localQaProfile === "home-activity";
   const { suggestions } = useAccountSuggestions({
     db: showSetupBanners ? db : null,
     userId: showSetupBanners ? userId : null,
@@ -52,15 +53,23 @@ export function HomeScreenHeader({
               void connectEmailAccount(db, userId, provider, clientId);
             }}
           />
+        </>
+      ) : null}
+      {showReviewBanners ? (
+        <>
           <NeedsReviewBanner onPress={() => push("/needs-review" as never)} />
           <AttributionReviewBanner onPress={() => push("/attribution-review-queue" as never)} />
+          {Platform.OS === "ios" ? (
+            <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
+          ) : null}
+        </>
+      ) : null}
+      {showSetupBanners ? (
+        <>
           <AccountSuggestionsPromptBanner
             count={suggestions.length}
             onPress={() => push("/account-suggestions" as never)}
           />
-          {Platform.OS === "ios" ? (
-            <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
-          ) : null}
         </>
       ) : null}
       <HomeSpendingCard

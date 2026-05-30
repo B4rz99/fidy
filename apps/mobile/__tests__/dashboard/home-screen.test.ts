@@ -111,6 +111,8 @@ test("keeps the header wired to banners and analytics navigation", () => {
   expect(headerSource).toContain("<EmailConnectBanner");
   expect(headerSource).toContain("<DetectedTransactionsBanner");
   expect(headerSource).toContain("<HomeSpendingCard");
+  expect(headerSource).toContain('localQaProfile === "home-activity"');
+  expect(headerSource).toContain("const showReviewBanners =");
   expect(headerSource).toContain("const db = tryGetDb(userId);");
   expect(headerSource).toContain('push("/analytics" as never)');
 });

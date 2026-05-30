@@ -1,6 +1,7 @@
-import { IconActionButton } from "@/shared/components/IconActionButton";
+import { Card, IconActionButton } from "@/shared/components";
+import { Button } from "@/shared/components/Button";
 import { Mail, X } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useEmailCaptureStore } from "../store";
 
@@ -20,7 +21,7 @@ export const EmailConnectBanner = ({
   if (accounts.length > 0 || bannerDismissed) return null;
 
   return (
-    <View className="rounded-chart bg-card p-5 dark:bg-card-dark" style={{ gap: 16 }}>
+    <Card padded={false} className="rounded-chart" style={{ gap: 16, padding: 20 }}>
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center" style={{ gap: 10 }}>
           <Mail size={22} color={iconColor} />
@@ -30,9 +31,9 @@ export const EmailConnectBanner = ({
         </View>
         <IconActionButton
           accessibilityLabel={t("common.dismiss")}
-          className="size-8"
           icon={<X size={18} color={closeColor} />}
           onPress={dismissBanner}
+          size="size-8"
         />
       </View>
 
@@ -41,28 +42,24 @@ export const EmailConnectBanner = ({
       </Text>
 
       <View className="flex-row" style={{ gap: 10 }}>
-        <Pressable
+        <Button
+          label="Gmail"
           onPress={() => onConnect("gmail")}
-          className="flex-1 flex-row items-center justify-center rounded-icon bg-peach-btn dark:bg-peach-btn-dark"
-          style={{ height: 44, gap: 8, borderWidth: 1, borderColor }}
-        >
-          <Mail size={18} color={iconColor} />
-          <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-            Gmail
-          </Text>
-        </Pressable>
+          variant="secondary"
+          icon={<Mail size={18} color={iconColor} />}
+          className="h-11 flex-1 rounded-icon bg-peach-btn dark:bg-peach-btn-dark"
+          style={{ borderColor }}
+        />
 
-        <Pressable
+        <Button
+          label="Outlook"
           onPress={() => onConnect("outlook")}
-          className="flex-1 flex-row items-center justify-center rounded-icon bg-peach-btn dark:bg-peach-btn-dark"
-          style={{ height: 44, gap: 8, borderWidth: 1, borderColor }}
-        >
-          <Mail size={18} color="#4A90D9" />
-          <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-            Outlook
-          </Text>
-        </Pressable>
+          variant="secondary"
+          icon={<Mail size={18} color="#4A90D9" />}
+          className="h-11 flex-1 rounded-icon bg-peach-btn dark:bg-peach-btn-dark"
+          style={{ borderColor }}
+        />
       </View>
-    </View>
+    </Card>
   );
 };

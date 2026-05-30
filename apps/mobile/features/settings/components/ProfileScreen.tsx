@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthIdentity, useAuthMode, useAuthStore } from "@/features/auth/public";
 import { LocalQaProfileTools } from "@/features/qa/routes.public";
-import { ScreenLayout } from "@/shared/components";
+import { Button, ScreenLayout } from "@/shared/components";
 import { LogOut } from "@/shared/components/icons";
 import { Alert, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -95,21 +95,14 @@ export function ProfileScreen() {
         {/* Actions */}
         <View style={{ gap: 16, marginTop: 32 }} className="items-center">
           {/* Sign-out button */}
-          <Pressable
+          <Button
+            label={t("settings.logout")}
             onPress={handleLogOut}
-            className="flex-row items-center justify-center bg-card dark:bg-card-dark rounded-2xl w-full"
-            style={{
-              height: 52,
-              gap: 8,
-              borderWidth: 1,
-              borderColor,
-            }}
-          >
-            <LogOut size={20} color={secondaryColor} />
-            <Text className="font-poppins-semibold text-sm text-primary dark:text-primary-dark">
-              {t("settings.logout")}
-            </Text>
-          </Pressable>
+            variant="secondary"
+            icon={<LogOut size={20} color={secondaryColor} />}
+            className="w-full rounded-2xl bg-card dark:bg-card-dark"
+            style={{ borderColor }}
+          />
 
           <LocalQaProfileTools />
 
