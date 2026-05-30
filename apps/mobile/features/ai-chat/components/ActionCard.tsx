@@ -1,5 +1,6 @@
+import { Button, Card } from "@/shared/components";
 import { Trash2 } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import type { ChatAction } from "../schema";
@@ -20,8 +21,8 @@ export function ActionCard({ action, onConfirm, onDismiss }: ActionCardProps) {
   if (action.type !== "delete") return null;
 
   return (
-    <View
-      className="bg-card dark:bg-card-dark"
+    <Card
+      padded={false}
       style={{
         borderRadius: 18,
         padding: 16,
@@ -45,37 +46,21 @@ export function ActionCard({ action, onConfirm, onDismiss }: ActionCardProps) {
         </View>
       </View>
       <View style={{ flexDirection: "row", gap: 8 }}>
-        <Pressable
+        <Button
+          label={t("common.cancel")}
           onPress={onDismiss}
-          className="bg-page dark:bg-page-dark"
-          style={{
-            flex: 1,
-            height: 36,
-            borderRadius: 12,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Text className="font-poppins-semibold text-label" style={{ color: supportTextColor }}>
-            {t("common.cancel")}
-          </Text>
-        </Pressable>
-        <Pressable
+          variant="secondary"
+          size="compact"
+          className="h-9 flex-1 bg-page dark:bg-page-dark"
+        />
+        <Button
+          label={t("common.delete")}
           onPress={onConfirm}
-          style={{
-            flex: 1,
-            height: 36,
-            borderRadius: 12,
-            backgroundColor: accentRed,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Text className="font-poppins-semibold text-label" style={{ color: "#FFFFFF" }}>
-            {t("common.delete")}
-          </Text>
-        </Pressable>
+          variant="danger"
+          size="compact"
+          className="h-9 flex-1"
+        />
       </View>
-    </View>
+    </Card>
   );
 }

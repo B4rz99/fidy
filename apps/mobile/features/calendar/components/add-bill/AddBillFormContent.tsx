@@ -2,8 +2,7 @@ import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TransactionDatePickerSheet } from "@/features/transactions/display.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
-import { AppAuroraBackground, Button } from "@/shared/components";
-import { SelectableChipRow } from "@/shared/components/SelectableChipRow";
+import { AppAuroraBackground, Button, SelectableChipRow } from "@/shared/components";
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -111,13 +110,14 @@ export function AddBillFormContent({
               {t("bills.frequency")}
             </Text>
             <SelectableChipRow
+              className="flex-wrap"
               options={FREQUENCIES.map((item) => ({
                 value: item.value,
                 label: t(item.labelKey),
               }))}
               value={frequency}
               onChange={handleFrequencyPress}
-              chipClassName="h-auto rounded-full border border-border-subtle bg-page px-4 py-2 dark:border-border-subtle-dark dark:bg-page-dark"
+              chipClassName="h-auto rounded-full px-4 py-2"
             />
           </View>
 
@@ -141,13 +141,14 @@ export function AddBillFormContent({
               {t("common.category")}
             </Text>
             <SelectableChipRow
+              className="flex-wrap"
               options={CATEGORIES.map((item) => ({
                 value: item.id,
                 label: getCategoryLabel(item, locale),
               }))}
               value={category}
               onChange={handleCategoryPress}
-              chipClassName="h-auto rounded-full border border-border-subtle bg-page px-4 py-2 dark:border-border-subtle-dark dark:bg-page-dark"
+              chipClassName="h-auto rounded-full px-4 py-2"
             />
           </View>
         </View>

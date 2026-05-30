@@ -2,7 +2,7 @@ import { FlashList } from "@shopify/flash-list";
 import { format } from "date-fns";
 import { memo, useCallback, useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
-import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { Card, ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { MessageSquare, Trash2, X } from "@/shared/components/icons";
 import { Platform, Pressable, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -49,11 +49,11 @@ const SessionCard = memo(function SessionCardInner({
   });
 
   return (
-    <Pressable
+    <Card
       onPress={() => onSelectSession(session.id)}
-      className="bg-card dark:bg-card-dark"
+      padded={false}
+      className="rounded-lg"
       style={{
-        borderRadius: 8,
         paddingVertical: 13,
         paddingHorizontal: 16,
         flexDirection: "row",
@@ -76,7 +76,7 @@ const SessionCard = memo(function SessionCardInner({
       <Pressable onPress={() => onDeleteSession(session.id)} hitSlop={12} style={{ padding: 4 }}>
         <Trash2 size={18} color={accentRed} />
       </Pressable>
-    </Pressable>
+    </Card>
   );
 });
 
@@ -154,10 +154,10 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
               {t("aiChat.conversationsSubtitle")}
             </Text>
             {cleanupMessage != null ? (
-              <View
-                className="bg-card dark:bg-card-dark"
+              <Card
+                padded={false}
+                className="rounded-xl"
                 style={{
-                  borderRadius: 12,
                   borderCurve: "continuous",
                   paddingVertical: 10,
                   paddingHorizontal: 14,
@@ -175,7 +175,7 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
                 <Pressable onPress={dismissCleanup} hitSlop={12} style={{ padding: 2 }}>
                   <X size={16} color={supportTextColor} />
                 </Pressable>
-              </View>
+              </Card>
             ) : null}
           </View>
         }

@@ -5,18 +5,22 @@ import { Platform, View } from "@/shared/components/rn";
 
 type GlassSurfaceProps = ViewProps & {
   children: ReactNode;
+  background?: "surface" | "card";
   className?: string;
   padded?: boolean;
 };
 
 export function GlassSurface({
   children,
+  background = "surface",
   className,
   padded = true,
   style,
   ...viewProps
 }: GlassSurfaceProps) {
-  const surfaceClassName = `rounded-2xl bg-surface dark:bg-surface-dark ${
+  const backgroundClassName =
+    background === "card" ? "bg-card dark:bg-card-dark" : "bg-surface dark:bg-surface-dark";
+  const surfaceClassName = `rounded-2xl ${backgroundClassName} ${
     padded ? "p-4" : ""
   } ${className ?? ""}`;
 

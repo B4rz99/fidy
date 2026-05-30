@@ -1,5 +1,4 @@
-import { Pressable, Text } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { Button } from "@/shared/components";
 
 type BackupActionButtonProps = {
   readonly label: string;
@@ -8,42 +7,21 @@ type BackupActionButtonProps = {
   readonly disabled?: boolean;
 };
 
-const getButtonTextClassName = (isPrimary: boolean, isDanger: boolean) => {
-  if (isPrimary) return "font-poppins-semibold text-white";
-  if (isDanger) return "font-poppins-semibold text-accent-red dark:text-accent-red-dark";
-  return "font-poppins-semibold text-primary dark:text-primary-dark";
-};
-
 export function BackupActionButton({
   label,
   onPress,
   variant = "primary",
   disabled = false,
 }: BackupActionButtonProps) {
-  const borderColor = useThemeColor("borderSubtle");
-  const isPrimary = variant === "primary";
   return (
-    <Pressable
+    <Button
+      label={label}
       onPress={onPress}
       disabled={disabled}
-      className={
-        isPrimary
-          ? "bg-accent-green rounded-2xl items-center justify-center"
-          : "bg-card dark:bg-card-dark rounded-2xl items-center justify-center"
+      variant={
+        variant === "primary" ? "primary" : variant === "danger" ? "dangerSecondary" : "secondary"
       }
-      style={{
-        height: 52,
-        borderWidth: isPrimary ? 0 : 1,
-        borderColor,
-        opacity: disabled ? 0.6 : 1,
-      }}
-    >
-      <Text
-        className={getButtonTextClassName(isPrimary, variant === "danger")}
-        style={{ fontSize: 13 }}
-      >
-        {label}
-      </Text>
-    </Pressable>
+      className="rounded-2xl"
+    />
   );
 }

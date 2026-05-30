@@ -75,7 +75,8 @@ describe("buildLocalQaSeed", () => {
     expect(seed.session.userId).toBe("qa-local-home-activity");
     expect(seed.financialAccounts.map((account) => account.name)).toEqual(["Cash", "Bancolombia"]);
     expect(seed.budgets.reduce((total, budget) => total + budget.amount, 0)).toBe(10_000_000);
-    expect(seed.transactions).toHaveLength(7);
+    expect(seed.budgets.find((budget) => budget.categoryId === "food")?.amount).toBe(100_000);
+    expect(seed.transactions).toHaveLength(8);
     expect(seed.transactions.map((transaction) => transaction.categoryId)).toEqual([
       "food",
       "health",
@@ -84,7 +85,14 @@ describe("buildLocalQaSeed", () => {
       "clothing",
       "transport",
       "education",
+      "food",
     ]);
+    expect(seed.transactions.at(-1)).toEqual(
+      expect.objectContaining({
+        accountAttributionState: "unresolved",
+        description: "Bancolombia pending owner",
+      })
+    );
     expect(seed.transfers).toHaveLength(1);
   });
 });

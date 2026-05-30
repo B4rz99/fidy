@@ -3,7 +3,7 @@ import type { PressableProps } from "react-native";
 import { ActivityIndicator, Pressable, Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 
-type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "danger" | "dangerSecondary" | "ghost";
 type ButtonSize = "default" | "compact";
 
 type ButtonProps = Omit<PressableProps, "children"> & {
@@ -20,6 +20,8 @@ const CONTAINER_CLASS_NAMES: Record<ButtonVariant, string> = {
   secondary:
     "bg-surface dark:bg-surface-dark border border-border-subtle dark:border-border-subtle-dark",
   danger: "bg-danger dark:bg-danger-dark",
+  dangerSecondary:
+    "bg-surface dark:bg-surface-dark border border-accent-red/20 dark:border-accent-red-dark/20",
   ghost: "bg-transparent",
 };
 
@@ -27,6 +29,7 @@ const LABEL_CLASS_NAMES: Record<ButtonVariant, string> = {
   primary: "text-text-on-accent dark:text-text-on-accent-dark",
   secondary: "text-text-primary dark:text-text-primary-dark",
   danger: "text-white",
+  dangerSecondary: "text-accent-red dark:text-accent-red-dark",
   ghost: "text-text-primary dark:text-text-primary-dark",
 };
 
@@ -53,7 +56,7 @@ export function Button({
   const isDisabled = disabled || loading;
   const onAccent = useThemeColor("onAccent");
   const loadingIndicatorColor =
-    variant === "secondary" || variant === "ghost"
+    variant === "secondary" || variant === "dangerSecondary" || variant === "ghost"
       ? undefined
       : variant === "danger"
         ? "white"
@@ -62,6 +65,7 @@ export function Button({
   return (
     <Pressable
       {...pressableProps}
+      accessibilityRole={pressableProps.accessibilityRole ?? "button"}
       disabled={isDisabled}
       className={`${SIZE_CLASS_NAMES[size]} flex-row items-center justify-center gap-2 rounded-xl px-4 ${CONTAINER_CLASS_NAMES[variant]} ${
         isDisabled ? "opacity-60" : ""

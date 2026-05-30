@@ -8,6 +8,14 @@ const source = readFileSync(
 );
 
 describe("BudgetListScreen notification prompt routing", () => {
+  it("renders pending budget alerts above the monthly summary", () => {
+    expect(source).toContain("BudgetAlertBanner");
+    expect(source).toContain("pendingAlerts.map");
+    expect(source).toContain("onDismiss={acknowledgeAlert}");
+    expect(source).toContain("<BudgetSummaryCard");
+    expect(source.indexOf("pendingAlerts.map")).toBeLessThan(source.indexOf("<BudgetSummaryCard"));
+  });
+
   it("guards stale pending permission signals before opening the notification sheet", () => {
     expect(source).toContain("clearPendingPermissionRequest");
     expect(source).toContain("shouldShowNotificationPrePermissionPrompt()");

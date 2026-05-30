@@ -1,3 +1,4 @@
+import { Card } from "@/shared/components";
 import type { LucideIcon } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
@@ -20,10 +21,7 @@ export function BackupStatusCard({
   const iconColor = tone === "green" ? accentGreen : "#C46A2B";
   const iconBackground = tone === "green" ? "bg-accent-green-light" : "bg-peach-light";
   return (
-    <View
-      className="rounded-2xl bg-card dark:bg-card-dark"
-      style={{ borderWidth: 1, borderColor, padding: 16, gap: 10 }}
-    >
+    <Card style={{ borderWidth: 1, borderColor, gap: 10 }}>
       <View className="flex-row items-start" style={{ gap: 12 }}>
         <View className={iconBackground} style={{ borderRadius: 12, padding: 8 }}>
           <Icon size={20} color={iconColor} />
@@ -35,6 +33,6 @@ export function BackupStatusCard({
           </Text>
         </View>
       </View>
-    </View>
+    </Card>
   );
 }

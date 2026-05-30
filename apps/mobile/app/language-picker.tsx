@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
-import { DialogRouteFrame } from "@/shared/components";
+import { DialogRouteFrame, Row } from "@/shared/components";
 import { Check } from "@/shared/components/icons";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useLocaleStore } from "@/shared/i18n";
 
@@ -15,7 +15,6 @@ export default function LanguagePickerSheet() {
   const router = useRouter();
   const setLocale = useLocaleStore((s) => s.setLocale);
   const accentGreen = useThemeColor("accentGreen");
-  const borderColor = useThemeColor("borderSubtle");
 
   const handleSelect = (newLocale: string) => {
     setLocale(newLocale);
@@ -31,29 +30,22 @@ export default function LanguagePickerSheet() {
         >
           {t("settings.language")}
         </Text>
-        {OPTIONS.map((option, index) => (
-          <Pressable
-            key={option.locale}
-            onPress={() => handleSelect(option.locale)}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              height: 52,
-              paddingHorizontal: 4,
-              borderBottomWidth: index < OPTIONS.length - 1 ? StyleSheet.hairlineWidth : 0,
-              borderBottomColor: borderColor,
-            }}
-          >
-            <Text
-              className="font-poppins-medium text-primary dark:text-primary-dark"
-              style={{ fontSize: 15 }}
-            >
-              {option.label}
-            </Text>
-            {locale.startsWith(option.locale) ? <Check size={22} color={accentGreen} /> : null}
-          </Pressable>
-        ))}
+        {OPTIONS.map((option, index) => {
+          const selected = locale.startsWith(option.locale);
+
+          return (
+            <Row
+              key={option.locale}
+              title={option.label}
+              onPress={() => handleSelect(option.locale)}
+              trailing={selected ? <Check size={22} color={accentGreen} /> : null}
+              accessibilityState={{ selected }}
+              isLast={index === OPTIONS.length - 1}
+              className="px-1"
+              titleClassName="text-[15px]"
+            />
+          );
+        })}
       </View>
     </DialogRouteFrame>
   );

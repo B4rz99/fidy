@@ -8,6 +8,7 @@ type IconActionButtonProps = Omit<PressableProps, "children"> & {
   readonly icon: ReactNode;
   readonly badgeLabel?: string;
   readonly tone?: IconActionButtonTone;
+  readonly size?: string;
   readonly className?: string;
 };
 
@@ -20,6 +21,7 @@ export function IconActionButton({
   icon,
   badgeLabel,
   tone = "plain",
+  size = "size-10",
   className,
   accessibilityRole,
   hitSlop = 12,
@@ -30,7 +32,7 @@ export function IconActionButton({
       {...pressableProps}
       accessibilityRole={accessibilityRole ?? "button"}
       hitSlop={hitSlop}
-      className={`relative size-10 items-center justify-center rounded-full ${TONE_CLASS_NAMES[tone]} ${
+      className={`relative ${size} items-center justify-center rounded-full ${TONE_CLASS_NAMES[tone]} ${
         className ?? ""
       }`}
     >

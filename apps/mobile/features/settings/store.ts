@@ -43,6 +43,7 @@ type SetSettingsState = (partial: Partial<SettingsState>) => void;
 type SettingsActions = {
   setThemePreference: (pref: ThemePreference) => void;
   setNotificationPreference: (key: keyof NotificationPreferences, value: boolean) => void;
+  setNotificationPreferenceForSession: (key: keyof NotificationPreferences, value: boolean) => void;
   setAllNotifications: (enabled: boolean) => void;
   setShareAnonymizedParseSamples: (enabled: boolean) => void;
   beginPrivateBackupSetup: (recoveryKey: string) => void;
@@ -159,6 +160,14 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set, ge
       areAllNotificationsOff: computeAllOff(updated),
     });
     persistPreferences(updated);
+  },
+
+  setNotificationPreferenceForSession: (key, value) => {
+    const updated = { ...get().notificationPreferences, [key]: value };
+    set({
+      notificationPreferences: updated,
+      areAllNotificationsOff: computeAllOff(updated),
+    });
   },
 
   setAllNotifications: (enabled) => {

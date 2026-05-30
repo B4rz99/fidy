@@ -15,13 +15,13 @@ export function buildHomeActivityBudgets(
   const createdAt = toIsoDateTime(now);
 
   return [
-    { categoryId: "food", amount: 2_000_000 },
+    { categoryId: "food", amount: 100_000 },
     { categoryId: "health", amount: 1_000_000 },
     { categoryId: "entertainment", amount: 1_000_000 },
     { categoryId: "home", amount: 2_000_000 },
     { categoryId: "clothing", amount: 1_000_000 },
     { categoryId: "transport", amount: 1_500_000 },
-    { categoryId: "education", amount: 1_500_000 },
+    { categoryId: "education", amount: 3_400_000 },
   ].map((budget) => ({
     id: generateBudgetId(),
     userId,
@@ -158,6 +158,22 @@ export function buildHomeActivityTransactions(
       voidedAt: null,
       supersededAt: null,
       source: "manual",
+    },
+    {
+      id: generateTransactionId(),
+      userId,
+      type: "expense",
+      amount: requireCopAmount(12_500),
+      categoryId: getBuiltInCategoryId("food"),
+      description: "Bancolombia pending owner",
+      date: today,
+      accountId: defaultAccountId,
+      accountAttributionState: "unresolved",
+      createdAt,
+      updatedAt: createdAt,
+      voidedAt: null,
+      supersededAt: null,
+      source: "notification_capture",
     },
   ];
 }

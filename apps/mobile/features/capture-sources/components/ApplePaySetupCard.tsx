@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Card } from "@/shared/components";
 import { MessageSquare, Smartphone } from "@/shared/components/icons";
 import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -71,7 +72,7 @@ export const ApplePaySetupCard = () => {
   return (
     <View style={{ gap: 16 }}>
       {/* Apple Pay Capture */}
-      <View className="rounded-chart bg-card p-5 dark:bg-card-dark" style={{ gap: 14 }}>
+      <Card padded={false} className="rounded-chart" style={{ gap: 14, padding: 20 }}>
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center" style={{ gap: 10 }}>
             <Smartphone size={22} color={secondaryColor} />
@@ -102,10 +103,10 @@ export const ApplePaySetupCard = () => {
         </Text>
 
         <StepList steps={applePaySteps} circleBg={peachLightBg} circleText={primaryColor} />
-      </View>
+      </Card>
 
       {/* SMS Detection */}
-      <View className="rounded-chart bg-card p-5 dark:bg-card-dark" style={{ gap: 14 }}>
+      <Card padded={false} className="rounded-chart" style={{ gap: 14, padding: 20 }}>
         <View className="flex-row items-center" style={{ gap: 10 }}>
           <MessageSquare size={22} color={greenColor} />
           <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
@@ -118,7 +119,7 @@ export const ApplePaySetupCard = () => {
         </Text>
 
         <StepList steps={smsSteps} circleBg={greenLightBg} circleText={greenColor} />
-      </View>
+      </Card>
     </View>
   );
 };
