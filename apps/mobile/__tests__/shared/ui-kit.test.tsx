@@ -65,4 +65,27 @@ describe("shared UI kit", () => {
     expect(source).toContain("<Row");
     expect(source).not.toContain("StyleSheet");
   });
+
+  it("keeps migrated empty states and callouts on shared primitives", () => {
+    const notificationEmptyStateSource = readFileSync(
+      resolve(__dirname, "../../features/notifications/components/NotificationEmptyState.tsx"),
+      "utf-8"
+    );
+    const accountPromptSource = readFileSync(
+      resolve(
+        __dirname,
+        "../../features/account-suggestions/components/AccountSuggestionsPromptBanner.tsx"
+      ),
+      "utf-8"
+    );
+
+    expect(notificationEmptyStateSource).toContain(
+      'import { EmptyState } from "@/shared/components"'
+    );
+    expect(notificationEmptyStateSource).toContain("<EmptyState");
+    expect(notificationEmptyStateSource).not.toContain("StyleSheet");
+    expect(accountPromptSource).toContain('import { Callout } from "@/shared/components"');
+    expect(accountPromptSource).toContain("<Callout");
+    expect(accountPromptSource).not.toContain("StyleSheet");
+  });
 });
