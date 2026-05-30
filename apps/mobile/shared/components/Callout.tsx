@@ -45,7 +45,7 @@ export function Callout({
   const pressableProps = {
     accessibilityHint,
     accessibilityLabel,
-    accessibilityRole,
+    accessibilityRole: accessibilityRole ?? (onPress ? "button" : undefined),
     accessibilityState,
     accessible,
     importantForAccessibility,

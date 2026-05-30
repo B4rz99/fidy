@@ -51,7 +51,7 @@ export function Chip({
   const pressableProps = {
     accessibilityHint,
     accessibilityLabel,
-    accessibilityRole,
+    accessibilityRole: accessibilityRole ?? (onPress ? "button" : undefined),
     accessibilityState: { ...accessibilityState, selected },
     accessible,
     importantForAccessibility,

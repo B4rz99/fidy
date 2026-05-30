@@ -55,6 +55,25 @@ describe("shared UI kit", () => {
     expect(screen.getByText("Continue")).toBeTruthy();
   });
 
+  it("defaults interactive chip and callout roles to button", () => {
+    const chip = renderFidy(
+      <Chip label="Interactive chip" accessibilityLabel="Interactive chip" onPress={() => undefined} />
+    );
+    const callout = renderFidy(
+      <Callout
+        title="Interactive callout"
+        accessibilityLabel="Interactive callout"
+        onPress={() => undefined}
+      />
+    );
+
+    const chipButtons = chip.root.findAll((node) => node.props.accessibilityRole === "button");
+    const calloutButtons = callout.root.findAll((node) => node.props.accessibilityRole === "button");
+
+    expect(chipButtons).toHaveLength(1);
+    expect(calloutButtons).toHaveLength(1);
+  });
+
   it("keeps SettingsRow as a wrapper around the shared Row primitive", () => {
     const source = readFileSync(
       resolve(__dirname, "../../features/settings/components/SettingsRow.tsx"),
@@ -152,15 +171,15 @@ describe("shared UI kit", () => {
       "utf-8"
     );
 
-    expect(budgetListSource).toContain("EmptyState");
+    expect(budgetListSource).toContain("<EmptyState");
     expect(budgetListSource).toContain("<Button");
     expect(budgetListSource).not.toContain("styles.emptyTitle");
-    expect(goalsListSource).toContain("EmptyState");
+    expect(goalsListSource).toContain("<EmptyState");
     expect(goalsListSource).toContain("<Button");
     expect(goalsListSource).not.toContain("styles.emptyCard");
-    expect(financialAccountsSource).toContain("EmptyState");
+    expect(financialAccountsSource).toContain("<EmptyState");
     expect(financialAccountsSource).not.toContain("styles.emptyTitle");
-    expect(accountSuggestionsSource).toContain("EmptyState");
+    expect(accountSuggestionsSource).toContain("<EmptyState");
     expect(accountSuggestionsSource).not.toContain("styles.emptyTitle");
   });
 
@@ -188,16 +207,16 @@ describe("shared UI kit", () => {
       "utf-8"
     );
 
-    expect(createSuggestedAccountSource).toContain("EmptyState");
+    expect(createSuggestedAccountSource).toContain("<EmptyState");
     expect(createSuggestedAccountSource).toContain("<Button");
     expect(createSuggestedAccountSource).not.toContain("styles.emptyTitle");
     expect(createSuggestedAccountSource).not.toContain("styles.saveButton");
-    expect(linkSuggestedAccountSource).toContain("EmptyState");
+    expect(linkSuggestedAccountSource).toContain("<EmptyState");
     expect(linkSuggestedAccountSource).not.toContain("styles.emptyTitle");
-    expect(searchEmptyStateSource).toContain("EmptyState");
+    expect(searchEmptyStateSource).toContain("<EmptyState");
     expect(searchEmptyStateSource).toContain("<Button");
     expect(searchEmptyStateSource).not.toContain("Pressable");
-    expect(analyticsScreenSource).toContain("EmptyState");
+    expect(analyticsScreenSource).toContain("<EmptyState");
     expect(analyticsScreenSource).not.toContain("styles.emptyText");
   });
 
@@ -221,8 +240,8 @@ describe("shared UI kit", () => {
       "utf-8"
     );
 
-    expect(financialAccountDetailSource).toContain("EmptyState");
-    expect(financialAccountDetailSource).toContain("Callout");
+    expect(financialAccountDetailSource).toContain("<EmptyState");
+    expect(financialAccountDetailSource).toContain("<Callout");
     expect(financialAccountDetailSource).toContain("<Button");
     expect(financialAccountDetailSource).not.toContain("styles.primaryButton");
     expect(goalContributionsSource).toContain("<Button");
