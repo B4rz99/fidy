@@ -42,6 +42,8 @@ const IGNORED_DIRECTORIES = new Set(
 );
 const WORKSPACE_SPEC_PREFIXES = ["workspace:", "file:", "link:", "portal:"];
 const oneDayMs = 24 * 60 * 60 * 1000;
+const registryFetchConcurrency = 8;
+const registryFetchRetries = 3;
 
 const normalizePath = (path: string): string => path.replaceAll("\\", "/");
 
@@ -134,10 +136,45 @@ const isStableVersion = (value: string): boolean => /^\d+\.\d+\.\d+$/.test(value
 const compareVersions = (left: Version, right: Version): number =>
   left.major - right.major || left.minor - right.minor || left.patch - right.patch;
 
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
 const fetchPackument = async (name: string, registryUrl: string): Promise<NpmPackument> => {
-  const response = await fetch(`${registryUrl}/${encodeURIComponent(name)}`);
+  const url = `${registryUrl}/${encodeURIComponent(name)}`;
+  const fetchWithRetry = async (attempt: number): Promise<Response> => {
+    try {
+      return await fetch(url);
+    } catch (error) {
+      if (attempt >= registryFetchRetries) throw error;
+      await sleep(250 * 2 ** attempt);
+      return fetchWithRetry(attempt + 1);
+    }
+  };
+
+  const response = await fetchWithRetry(0);
   if (!response.ok) throw new Error(`npm registry returned ${response.status} for ${name}`);
   return (await response.json()) as NpmPackument;
+};
+
+const mapWithConcurrency = async <Input, Output>(
+  inputs: readonly Input[],
+  concurrency: number,
+  mapper: (input: Input) => Promise<Output>
+): Promise<readonly Output[]> => {
+  const results: Output[] = [];
+  let nextIndex = 0;
+
+  const worker = async (): Promise<void> => {
+    const currentIndex = nextIndex;
+    nextIndex += 1;
+    if (currentIndex >= inputs.length) return;
+
+    results[currentIndex] = await mapper(inputs[currentIndex] as Input);
+    await worker();
+  };
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, inputs.length) }, () => worker()));
+
+  return results;
 };
 
 const isReleasedBefore = (packument: NpmPackument, version: Version, cutoff: Date): boolean => {
@@ -222,18 +259,12 @@ export const inspectDependencies = async (
       ])
     ).values()
   );
-  const results = await Promise.all(
-    (() => {
-      const registryFor = createRegistryResolver(root);
-      return uniqueDependencies.map((dependency) =>
-        inspectDependency(
-          dependency,
-          registryFor(dependency.name),
-          minimumReleaseAgeDays,
-          staleDays
-        )
-      );
-    })()
+  const registryFor = createRegistryResolver(root);
+  const results = await mapWithConcurrency(
+    uniqueDependencies,
+    registryFetchConcurrency,
+    (dependency) =>
+      inspectDependency(dependency, registryFor(dependency.name), minimumReleaseAgeDays, staleDays)
   );
   const sortByName = (findings: readonly Violation[]): readonly Violation[] =>
     [...findings].sort((left, right) => left.dependency.name.localeCompare(right.dependency.name));
