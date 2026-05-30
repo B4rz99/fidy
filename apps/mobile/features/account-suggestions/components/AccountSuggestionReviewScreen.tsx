@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
-import { ScreenLayout } from "@/shared/components";
+import { EmptyState, ScreenLayout } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -27,7 +27,6 @@ export function AccountSuggestionReviewScreen() {
     userId,
   });
   const service = useMemo(() => createAccountSuggestionService(), []);
-  const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const { run: guardedMutation } = useAsyncGuard();
 
@@ -108,14 +107,11 @@ export function AccountSuggestionReviewScreen() {
 
   const emptyState =
     hasLoadedSuggestions && suggestions.length === 0 ? (
-      <View style={styles.emptyState}>
-        <Text style={[styles.emptyTitle, { color: primary }]}>
-          {t("accountSuggestions.review.emptyTitle")}
-        </Text>
-        <Text style={[styles.emptySubtitle, { color: secondary }]}>
-          {t("accountSuggestions.review.emptySubtitle")}
-        </Text>
-      </View>
+      <EmptyState
+        title={t("accountSuggestions.review.emptyTitle")}
+        subtitle={t("accountSuggestions.review.emptySubtitle")}
+        className="pt-12"
+      />
     ) : null;
 
   return (
@@ -152,23 +148,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     marginBottom: 16,
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 48,
-    gap: 8,
-  },
-  emptyTitle: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 18,
-    textAlign: "center",
-  },
-  emptySubtitle: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: "center",
   },
 });

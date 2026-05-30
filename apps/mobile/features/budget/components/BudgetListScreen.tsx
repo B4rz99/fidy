@@ -4,9 +4,9 @@ import { useCallback, useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import { formatMonthYear } from "@/features/calendar/public";
 import { shouldShowNotificationPrePermissionPrompt } from "@/features/notifications/public";
-import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { Button, EmptyState, ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Wallet } from "@/shared/components/icons";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Pressable, StyleSheet, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
@@ -81,9 +81,7 @@ export function BudgetListScreen() {
     pendingPermissionRequest
   );
 
-  const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
-  const accentGreen = useThemeColor("accentGreen");
 
   const monthAsDate = new Date(
     Number.parseInt(currentMonth.slice(0, 4), 10),
@@ -145,28 +143,29 @@ export function BudgetListScreen() {
   );
   const emptyState = useMemo(
     () => (
-      <View style={styles.emptyState}>
-        <Wallet size={48} color={secondaryColor} />
-        <Text style={[styles.emptyTitle, { color: primaryColor }]}>{t("budgets.empty.title")}</Text>
-        <Text style={[styles.emptySubtitle, { color: secondaryColor }]}>
-          {t("budgets.empty.subtitle")}
-        </Text>
-        <View style={styles.emptyActions}>
-          <Pressable
-            style={[styles.autoSetupButton, { backgroundColor: accentGreen }]}
-            onPress={handleAutoSetup}
-          >
-            <Text style={styles.autoSetupText}>{t("budgets.empty.autoSetup")}</Text>
-          </Pressable>
-          <Pressable onPress={handleCreateManually}>
-            <Text style={[styles.createManuallyText, { color: accentGreen }]}>
-              {t("budgets.empty.createManually")}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
+      <EmptyState
+        title={t("budgets.empty.title")}
+        subtitle={t("budgets.empty.subtitle")}
+        icon={<Wallet size={48} color={secondaryColor} />}
+        className="pt-20"
+        action={
+          <View className="mt-4 items-center" style={{ gap: 12 }}>
+            <Button
+              label={t("budgets.empty.autoSetup")}
+              onPress={handleAutoSetup}
+              className="px-8"
+            />
+            <Button
+              label={t("budgets.empty.createManually")}
+              variant="ghost"
+              size="compact"
+              onPress={handleCreateManually}
+            />
+          </View>
+        }
+      />
     ),
-    [accentGreen, handleAutoSetup, handleCreateManually, primaryColor, secondaryColor, t]
+    [handleAutoSetup, handleCreateManually, secondaryColor, t]
   );
 
   return (
@@ -222,45 +221,6 @@ const styles = StyleSheet.create({
   },
   itemSeparator: {
     height: 8,
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 80,
-    gap: 12,
-  },
-  emptyTitle: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 18,
-    marginTop: 8,
-  },
-  emptySubtitle: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 14,
-    textAlign: "center",
-    paddingHorizontal: 32,
-  },
-  emptyActions: {
-    alignItems: "center",
-    gap: 12,
-    marginTop: 16,
-  },
-  autoSetupButton: {
-    borderRadius: 12,
-    borderCurve: "continuous",
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    alignItems: "center",
-    minHeight: 48,
-  },
-  autoSetupText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 15,
-    color: "#FFFFFF",
-  },
-  createManuallyText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 14,
   },
   addButton: {
     width: 36,

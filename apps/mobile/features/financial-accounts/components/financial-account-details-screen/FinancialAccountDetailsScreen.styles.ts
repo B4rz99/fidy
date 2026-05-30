@@ -39,27 +39,6 @@ export const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textTransform: "uppercase",
   },
-  warningBanner: {
-    borderWidth: 1,
-    borderRadius: 18,
-    padding: 14,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-  },
-  warningCopy: {
-    flex: 1,
-    gap: 3,
-  },
-  warningTitle: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 13,
-  },
-  warningBody: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 12,
-    lineHeight: 18,
-  },
   section: {
     gap: 10,
   },
@@ -117,25 +96,5 @@ export const styles = StyleSheet.create({
   manageButtonText: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 13,
-  },
-  primaryButton: {
-    minHeight: 52,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  primaryButtonText: {
-    color: "#FFFFFF",
-    fontFamily: "Poppins_700Bold",
-    fontSize: 14,
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 18,
   },
 });

@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Button } from "@/shared/components";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { ContributionRow } from "./ContributionRow";
 import type { ContributionWithRunning } from "./GoalDetail.helpers";
@@ -9,7 +10,6 @@ export function GoalDetailContributionsTab(props: {
   readonly onAddPayment: () => void;
 }) {
   const { t } = useTranslation();
-  const accentGreen = useThemeColor("accentGreen");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
 
@@ -25,12 +25,7 @@ export function GoalDetailContributionsTab(props: {
           {t("goals.detail.noContributions")}
         </Text>
       )}
-      <Pressable
-        style={[styles.ctaButton, { backgroundColor: accentGreen }]}
-        onPress={props.onAddPayment}
-      >
-        <Text style={styles.ctaButtonText}>{t("goals.detail.addPayment")}</Text>
-      </Pressable>
+      <Button label={t("goals.detail.addPayment")} onPress={props.onAddPayment} />
     </View>
   );
 }

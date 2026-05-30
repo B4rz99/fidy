@@ -2,9 +2,9 @@ import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
-import { ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
+import { Button, EmptyState, ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus, Target } from "@/shared/components/icons";
-import { Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Platform, Pressable, StyleSheet, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { selectGoal, useGoalStore } from "../store";
@@ -17,28 +17,23 @@ import { GoalCard } from "./GoalCard";
 function GoalsEmpty({ onCreateGoal }: { readonly onCreateGoal: () => void }) {
   const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
-  const accentGreenLight = useThemeColor("accentGreenLight");
-  const primaryColor = useThemeColor("primary");
-  const secondaryColor = useThemeColor("secondary");
 
   return (
-    <View style={styles.emptyContainer}>
-      <View style={[styles.emptyCard, { backgroundColor: accentGreenLight }]}>
-        <View style={[styles.iconCircle, { backgroundColor: "#FFFFFF66" }]}>
+    <EmptyState
+      title={t("goals.empty.title")}
+      subtitle={t("goals.empty.subtitle")}
+      icon={
+        <View className="size-[72px] items-center justify-center rounded-full bg-white/40">
           <Target size={36} color={accentGreen} />
         </View>
-        <Text style={[styles.emptyTitle, { color: primaryColor }]}>{t("goals.empty.title")}</Text>
-        <Text style={[styles.emptySubtitle, { color: secondaryColor }]}>
-          {t("goals.empty.subtitle")}
-        </Text>
-        <Pressable
-          style={[styles.createButton, { backgroundColor: accentGreen }]}
-          onPress={onCreateGoal}
-        >
-          <Text style={styles.createButtonText}>{t("goals.empty.createGoal")}</Text>
-        </Pressable>
-      </View>
-    </View>
+      }
+      className="px-8"
+      action={
+        <View className="mt-6 self-stretch">
+          <Button label={t("goals.empty.createGoal")} onPress={onCreateGoal} />
+        </View>
+      }
+    />
   );
 }
 
@@ -138,53 +133,6 @@ const GoalItemSeparator = () => <View style={styles.itemSeparator} />;
 // ---------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
-  emptyContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 32,
-  },
-  emptyCard: {
-    alignSelf: "stretch",
-    alignItems: "center",
-    borderRadius: 12,
-    borderCurve: "continuous",
-    padding: 24,
-  },
-  iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 18,
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: 32,
-  },
-  createButton: {
-    borderRadius: 8,
-    borderCurve: "continuous",
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    alignItems: "center",
-    alignSelf: "stretch",
-    minHeight: 48,
-  },
-  createButtonText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 15,
-    color: "#FFFFFF",
-  },
   listContent: {
     padding: 16,
   },

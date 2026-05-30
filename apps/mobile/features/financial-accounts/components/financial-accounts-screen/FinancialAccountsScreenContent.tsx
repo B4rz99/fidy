@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { EmptyState } from "@/shared/components";
 import { ScreenLayout } from "@/shared/components/ScreenLayout";
 import { Plus } from "@/shared/components/icons";
 import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
@@ -97,14 +98,11 @@ export function FinancialAccountsScreenContent({
               />
             </>
           ) : (
-            <View style={styles.emptyState}>
-              <Text style={[styles.emptyTitle, { color: primary }]}>
-                {t("financialAccounts.list.emptyTitle")}
-              </Text>
-              <Text style={[styles.emptySubtitle, { color: secondary }]}>
-                {t("financialAccounts.list.emptySubtitle")}
-              </Text>
-            </View>
+            <EmptyState
+              title={t("financialAccounts.list.emptyTitle")}
+              subtitle={t("financialAccounts.list.emptySubtitle")}
+              className="py-12"
+            />
           )}
         </ScrollView>
       </ScreenLayout>

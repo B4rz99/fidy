@@ -106,21 +106,4 @@ export const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.4,
   },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 40,
-    gap: 8,
-  },
-  emptyTitle: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 18,
-    textAlign: "center",
-  },
-  emptySubtitle: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: "center",
-  },
 });

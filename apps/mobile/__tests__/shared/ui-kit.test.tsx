@@ -127,4 +127,107 @@ describe("shared UI kit", () => {
     expect(source).toContain("<Chip");
     expect(source).not.toContain("Pressable");
   });
+
+  it("keeps remaining list empty states and CTAs on shared primitives", () => {
+    const budgetListSource = readFileSync(
+      resolve(__dirname, "../../features/budget/components/BudgetListScreen.tsx"),
+      "utf-8"
+    );
+    const goalsListSource = readFileSync(
+      resolve(__dirname, "../../features/goals/components/GoalsListScreen.tsx"),
+      "utf-8"
+    );
+    const financialAccountsSource = readFileSync(
+      resolve(
+        __dirname,
+        "../../features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreenContent.tsx"
+      ),
+      "utf-8"
+    );
+    const accountSuggestionsSource = readFileSync(
+      resolve(
+        __dirname,
+        "../../features/account-suggestions/components/AccountSuggestionReviewScreen.tsx"
+      ),
+      "utf-8"
+    );
+
+    expect(budgetListSource).toContain("EmptyState");
+    expect(budgetListSource).toContain("<Button");
+    expect(budgetListSource).not.toContain("styles.emptyTitle");
+    expect(goalsListSource).toContain("EmptyState");
+    expect(goalsListSource).toContain("<Button");
+    expect(goalsListSource).not.toContain("styles.emptyCard");
+    expect(financialAccountsSource).toContain("EmptyState");
+    expect(financialAccountsSource).not.toContain("styles.emptyTitle");
+    expect(accountSuggestionsSource).toContain("EmptyState");
+    expect(accountSuggestionsSource).not.toContain("styles.emptyTitle");
+  });
+
+  it("keeps secondary empty states and simple CTAs on shared primitives", () => {
+    const createSuggestedAccountSource = readFileSync(
+      resolve(
+        __dirname,
+        "../../features/account-suggestions/components/CreateSuggestedAccountScreen.tsx"
+      ),
+      "utf-8"
+    );
+    const linkSuggestedAccountSource = readFileSync(
+      resolve(
+        __dirname,
+        "../../features/account-suggestions/components/LinkSuggestedAccountScreen.tsx"
+      ),
+      "utf-8"
+    );
+    const searchEmptyStateSource = readFileSync(
+      resolve(__dirname, "../../features/search/components/SearchEmptyState.tsx"),
+      "utf-8"
+    );
+    const analyticsScreenSource = readFileSync(
+      resolve(__dirname, "../../features/analytics/components/AnalyticsScreen.tsx"),
+      "utf-8"
+    );
+
+    expect(createSuggestedAccountSource).toContain("EmptyState");
+    expect(createSuggestedAccountSource).toContain("<Button");
+    expect(createSuggestedAccountSource).not.toContain("styles.emptyTitle");
+    expect(createSuggestedAccountSource).not.toContain("styles.saveButton");
+    expect(linkSuggestedAccountSource).toContain("EmptyState");
+    expect(linkSuggestedAccountSource).not.toContain("styles.emptyTitle");
+    expect(searchEmptyStateSource).toContain("EmptyState");
+    expect(searchEmptyStateSource).toContain("<Button");
+    expect(searchEmptyStateSource).not.toContain("Pressable");
+    expect(analyticsScreenSource).toContain("EmptyState");
+    expect(analyticsScreenSource).not.toContain("styles.emptyText");
+  });
+
+  it("keeps account detail and goal detail CTAs on shared primitives", () => {
+    const financialAccountDetailSource = readFileSync(
+      resolve(
+        __dirname,
+        "../../features/financial-accounts/components/financial-account-details-screen/FinancialAccountDetailsScreenContent.tsx"
+      ),
+      "utf-8"
+    );
+    const goalContributionsSource = readFileSync(
+      resolve(
+        __dirname,
+        "../../features/goals/components/goal-detail/GoalDetailContributionsTab.tsx"
+      ),
+      "utf-8"
+    );
+    const goalAiPlanSource = readFileSync(
+      resolve(__dirname, "../../features/goals/components/goal-detail/GoalDetailAiPlanTab.tsx"),
+      "utf-8"
+    );
+
+    expect(financialAccountDetailSource).toContain("EmptyState");
+    expect(financialAccountDetailSource).toContain("Callout");
+    expect(financialAccountDetailSource).toContain("<Button");
+    expect(financialAccountDetailSource).not.toContain("styles.primaryButton");
+    expect(goalContributionsSource).toContain("<Button");
+    expect(goalContributionsSource).not.toContain("styles.ctaButton");
+    expect(goalAiPlanSource).toContain("<Button");
+    expect(goalAiPlanSource).not.toContain("styles.ctaButton");
+  });
 });

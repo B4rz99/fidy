@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/public";
 import { useOnboardingStore } from "@/features/onboarding/store.public";
-import { ScreenLayout } from "@/shared/components";
+import { Button, EmptyState, ScreenLayout } from "@/shared/components";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
@@ -145,19 +145,12 @@ function ResolvedCreateSuggestedAccountForm({
           </View>
         </View>
 
-        <Pressable
-          style={[
-            styles.saveButton,
-            {
-              backgroundColor: accentGreen,
-              opacity: isBusy || name.trim().length === 0 ? 0.5 : 1,
-            },
-          ]}
+        <Button
+          label={t("accountSuggestions.create.save")}
           onPress={handleSave}
           disabled={isBusy || name.trim().length === 0}
-        >
-          <Text style={styles.saveButtonText}>{t("accountSuggestions.create.save")}</Text>
-        </Pressable>
+          loading={isBusy}
+        />
       </ScrollView>
     </ScreenLayout>
   );
@@ -170,7 +163,6 @@ export default function CreateSuggestedAccountScreen() {
   const userId = useOptionalUserId();
   const db = userId ? tryGetDb(userId) : null;
   const { suggestions, hasLoadedSuggestions } = useAccountSuggestions({ db, userId });
-  const primary = useThemeColor("primary");
 
   if (typeof fingerprint !== "string" || fingerprint.trim().length === 0) {
     return null;
@@ -181,11 +173,7 @@ export default function CreateSuggestedAccountScreen() {
   if (hasLoadedSuggestions && suggestion == null) {
     return (
       <ScreenLayout title={t("accountSuggestions.create.title")} variant="sub" onBack={back}>
-        <View style={styles.emptyState}>
-          <Text style={[styles.emptyTitle, { color: primary }]}>
-            {t("accountSuggestions.review.emptyTitle")}
-          </Text>
-        </View>
+        <EmptyState title={t("accountSuggestions.review.emptyTitle")} />
       </ScreenLayout>
     );
   }
@@ -256,25 +244,5 @@ const styles = StyleSheet.create({
   identifierValue: {
     fontFamily: "Poppins_700Bold",
     fontSize: 14,
-  },
-  saveButton: {
-    minHeight: 48,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  saveButtonText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 16,
-    color: "#FFFFFF",
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyTitle: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 18,
   },
 });
