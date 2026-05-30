@@ -11,6 +11,7 @@ type RowProps = Omit<ViewProps, "children"> & {
   onPress?: PressableProps["onPress"];
   disabled?: boolean;
   destructive?: boolean;
+  divider?: boolean;
   isLast?: boolean;
   titleClassName?: string;
   subtitleClassName?: string;
@@ -25,6 +26,7 @@ export function Row({
   onPress,
   disabled = false,
   destructive = false,
+  divider = true,
   isLast = false,
   titleClassName,
   subtitleClassName,
@@ -46,8 +48,8 @@ export function Row({
         {
           minHeight: 56,
           gap: 12,
-          borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
-          borderBottomColor: isLast ? "transparent" : borderColor,
+          borderBottomWidth: divider && !isLast ? StyleSheet.hairlineWidth : 0,
+          borderBottomColor: divider && !isLast ? borderColor : "transparent",
         },
         style,
       ]}

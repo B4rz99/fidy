@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
+import { Button, Callout, EmptyState as SharedEmptyState, Row } from "@/shared/components";
 import type { LucideIcon } from "@/shared/components/icons";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 
 type SummaryCardProps = {
@@ -31,38 +32,26 @@ type DetailRowProps = {
 };
 
 export function SummaryCard({ icon: Icon, title, subtitle, tone = "warning" }: SummaryCardProps) {
-  const primary = useThemeColor("primary");
-  const secondary = useThemeColor("secondary");
-  const peachLight = useThemeColor("peachLight");
   const accentGreen = useThemeColor("accentGreen");
-  const accentGreenLight = useThemeColor("accentGreenLight");
-
-  const backgroundColor = tone === "green" ? accentGreenLight : peachLight;
-  const iconColor = tone === "green" ? accentGreen : "#E67E22";
+  const warning = useThemeColor("warning");
+  const iconColor = tone === "green" ? accentGreen : warning;
 
   return (
-    <View style={[styles.summaryCard, { backgroundColor }]}>
-      <View style={[styles.summaryIconWrap, { backgroundColor: "#FFFFFFAA" }]}>
-        <Icon size={18} color={iconColor} />
-      </View>
-      <View style={styles.summaryBody}>
-        <Text style={[styles.summaryTitle, { color: primary }]}>{title}</Text>
-        <Text style={[styles.summarySubtitle, { color: secondary }]}>{subtitle}</Text>
-      </View>
-    </View>
+    <Callout
+      title={title}
+      subtitle={subtitle}
+      tone={tone === "green" ? "success" : "warning"}
+      icon={
+        <View className="h-9 w-9 items-center justify-center rounded-icon bg-white/70">
+          <Icon size={18} color={iconColor} />
+        </View>
+      }
+    />
   );
 }
 
 export function EmptyState({ title, subtitle }: EmptyStateProps) {
-  const primary = useThemeColor("primary");
-  const secondary = useThemeColor("secondary");
-
-  return (
-    <View style={styles.emptyState}>
-      <Text style={[styles.emptyTitle, { color: primary }]}>{title}</Text>
-      <Text style={[styles.emptySubtitle, { color: secondary }]}>{subtitle}</Text>
-    </View>
-  );
+  return <SharedEmptyState title={title} subtitle={subtitle} />;
 }
 
 export function ActionButton({
@@ -71,157 +60,39 @@ export function ActionButton({
   variant = "solid",
   disabled = false,
 }: ActionButtonProps) {
-  const primary = useThemeColor("primary");
-  const secondary = useThemeColor("secondary");
-  const card = useThemeColor("card");
-  const borderSubtle = useThemeColor("borderSubtle");
-  const accentGreen = useThemeColor("accentGreen");
-  const onAccent = useThemeColor("onAccent");
-  const peachLight = useThemeColor("peachLight");
-
-  const buttonStyle = (() => {
-    if (variant === "solid") return { backgroundColor: accentGreen, borderColor: accentGreen };
-    if (variant === "outline") return { backgroundColor: card, borderColor: borderSubtle };
-    return { backgroundColor: peachLight, borderColor: peachLight };
-  })();
-  const labelColor = (() => {
-    if (variant === "solid") return onAccent;
-    if (variant === "ghost") return secondary;
-    return primary;
-  })();
-
   return (
-    <Pressable
+    <Button
+      label={label}
       onPress={onPress}
       disabled={disabled}
-      style={[styles.actionButton, buttonStyle, disabled ? styles.actionButtonDisabled : null]}
-    >
-      <Text style={[styles.actionButtonLabel, { color: labelColor }]}>{label}</Text>
-    </Pressable>
+      variant={variant === "solid" ? "primary" : variant === "outline" ? "secondary" : "ghost"}
+      size="compact"
+      className="flex-1 px-2"
+    />
   );
 }
 
 export function DetailRow({ label, title, subtitle, icon, emphasis = "neutral" }: DetailRowProps) {
-  const primary = useThemeColor("primary");
-  const secondary = useThemeColor("secondary");
-  const card = useThemeColor("card");
-  const borderSubtle = useThemeColor("borderSubtle");
-  const accentGreenLight = useThemeColor("accentGreenLight");
-
   return (
-    <View
-      style={[
-        styles.detailRow,
-        {
-          backgroundColor: emphasis === "green" ? accentGreenLight : card,
-          borderColor: borderSubtle,
-        },
-      ]}
-    >
-      <View style={styles.detailIcon}>{icon}</View>
-      <View style={styles.detailBody}>
-        <Text style={[styles.detailLabel, { color: secondary }]}>{label}</Text>
-        <Text style={[styles.detailTitle, { color: primary }]}>{title}</Text>
-        <Text style={[styles.detailSubtitle, { color: secondary }]}>{subtitle}</Text>
-      </View>
-    </View>
+    <Row
+      title={
+        <View style={{ gap: 2 }}>
+          <Text className="font-poppins-bold text-[10px] uppercase text-text-secondary dark:text-text-secondary-dark">
+            {label}
+          </Text>
+          <Text className="font-poppins-semibold text-label text-text-primary dark:text-text-primary-dark">
+            {title}
+          </Text>
+        </View>
+      }
+      subtitle={subtitle}
+      leading={<View className="w-9 items-center">{icon}</View>}
+      className={`rounded-[18px] border border-border-subtle dark:border-border-subtle-dark ${
+        emphasis === "green"
+          ? "bg-accent-green-light dark:bg-accent-green-light-dark"
+          : "bg-surface dark:bg-surface-dark"
+      }`}
+      divider={false}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  summaryCard: {
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-  },
-  summaryIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  summaryBody: {
-    flex: 1,
-    gap: 2,
-  },
-  summaryTitle: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  summarySubtitle: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 32,
-    gap: 6,
-  },
-  emptyTitle: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 18,
-    textAlign: "center",
-  },
-  emptySubtitle: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: "center",
-  },
-  actionButton: {
-    flex: 1,
-    minHeight: 42,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 10,
-  },
-  actionButtonDisabled: {
-    opacity: 0.55,
-  },
-  actionButtonLabel: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 12,
-    textAlign: "center",
-  },
-  detailRow: {
-    borderRadius: 18,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  detailIcon: {
-    width: 36,
-    alignItems: "center",
-  },
-  detailBody: {
-    flex: 1,
-    gap: 2,
-  },
-  detailLabel: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 10,
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
-  },
-  detailTitle: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 15,
-  },
-  detailSubtitle: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 12,
-  },
-});

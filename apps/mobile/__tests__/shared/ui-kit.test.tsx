@@ -88,4 +88,18 @@ describe("shared UI kit", () => {
     expect(accountPromptSource).toContain("<Callout");
     expect(accountPromptSource).not.toContain("StyleSheet");
   });
+
+  it("keeps review queue helpers composed from shared primitives", () => {
+    const source = readFileSync(
+      resolve(__dirname, "../../features/review-queues/components/shared.tsx"),
+      "utf-8"
+    );
+
+    expect(source).toContain("Button");
+    expect(source).toContain("Callout");
+    expect(source).toContain("SharedEmptyState");
+    expect(source).toContain("Row");
+    expect(source).not.toContain("StyleSheet");
+    expect(source).not.toContain("Pressable");
+  });
 });

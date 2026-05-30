@@ -4,10 +4,12 @@ import { ActivityIndicator, Pressable, Text } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 
 type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
+type ButtonSize = "default" | "compact";
 
 type ButtonProps = Omit<PressableProps, "children"> & {
   label: string;
   variant?: ButtonVariant;
+  size?: ButtonSize;
   loading?: boolean;
   icon?: ReactNode;
   className?: string;
@@ -28,9 +30,20 @@ const LABEL_CLASS_NAMES: Record<ButtonVariant, string> = {
   ghost: "text-text-primary dark:text-text-primary-dark",
 };
 
+const SIZE_CLASS_NAMES: Record<ButtonSize, string> = {
+  default: "h-[52px]",
+  compact: "h-[42px]",
+};
+
+const LABEL_SIZE_CLASS_NAMES: Record<ButtonSize, string> = {
+  default: "text-section",
+  compact: "text-caption",
+};
+
 export function Button({
   label,
   variant = "primary",
+  size = "default",
   loading = false,
   icon,
   disabled,
@@ -44,7 +57,7 @@ export function Button({
     <Pressable
       {...pressableProps}
       disabled={isDisabled}
-      className={`h-[52px] flex-row items-center justify-center gap-2 rounded-xl px-4 ${CONTAINER_CLASS_NAMES[variant]} ${
+      className={`${SIZE_CLASS_NAMES[size]} flex-row items-center justify-center gap-2 rounded-xl px-4 ${CONTAINER_CLASS_NAMES[variant]} ${
         isDisabled ? "opacity-60" : ""
       } ${className ?? ""}`}
     >
@@ -53,7 +66,9 @@ export function Button({
       ) : (
         icon
       )}
-      <Text className={`font-poppins-semibold text-section ${LABEL_CLASS_NAMES[variant]}`}>
+      <Text
+        className={`text-center font-poppins-semibold ${LABEL_SIZE_CLASS_NAMES[size]} ${LABEL_CLASS_NAMES[variant]}`}
+      >
         {label}
       </Text>
     </Pressable>
