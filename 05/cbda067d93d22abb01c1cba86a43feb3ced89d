@@ -1,0 +1,52 @@
+.github/workflows/deploy-migrations.yml
+  s_a7b61d1b04963e::t_be6ec717668a06 16,18
+.github/workflows/deploy-edge-functions.yml
+  s_a7b61d1b04963e::t_be6ec717668a06 31,33
+.github/workflows/quality-nightly.yml
+  s_a7b61d1b04963e::t_591ac6ceb4c6db 23,39
+  s_a7b61d1b04963e::t_be6ec717668a06 15-16,19,31-32,35,43
+.github/workflows/ci.yml
+  s_a7b61d1b04963e::t_aa32c2b143ae90 17,19,21,23,25,27,29,45-57
+  s_989e2ff2f9c357::t_79d682d52e7a3a 103,127-132
+  s_a7b61d1b04963e::t_be6ec717668a06 31-32,36,63-64,77-78,90-91,94,106,112,120
+  s_a7b61d1b04963e::t_591ac6ceb4c6db 43,68,82,98
+package.json
+  s_a7b61d1b04963e::t_258baed57f38fb 62
+  s_a7b61d1b04963e::t_9ea894ac0718fc 64-65,67
+  s_a7b61d1b04963e::t_591ac6ceb4c6db 66
+.github/workflows/eas-build.yml
+  s_a7b61d1b04963e::t_be6ec717668a06 28,30,34,41
+  s_a7b61d1b04963e::t_591ac6ceb4c6db 39
+  s_a7b61d1b04963e::t_f51a81de52a5a7 43
+  s_989e2ff2f9c357::t_8c45e3ee4d1621 47,52-92
+.github/workflows/deploy-landing.yml
+  s_989e2ff2f9c357::t_75e11c3f0d129f 30
+  s_a7b61d1b04963e::t_be6ec717668a06 15
+  s_989e2ff2f9c357::t_50b96059488cbc 28-29,31-32,37-39
+.github/workflows/rebase-open-prs.yml
+  s_a7b61d1b04963e::t_be6ec717668a06 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "05cbda067d93d22abb01c1cba86a43feb3ced89d",
+  "prompts": {},
+  "sessions": {
+    "s_989e2ff2f9c357": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7aa0-0e26-70f3-b8d5-d715fafb49a6",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_a7b61d1b04963e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7a9f-8d5b-7290-834c-c25cab7f76c7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
