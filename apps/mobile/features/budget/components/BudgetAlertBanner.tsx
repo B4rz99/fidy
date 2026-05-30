@@ -1,6 +1,7 @@
 import { CATEGORY_MAP } from "@/shared/categories";
+import { IconActionButton } from "@/shared/components/IconActionButton";
 import { X } from "@/shared/components/icons";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useMountEffect, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney, trackBudgetAlertViewed } from "@/shared/lib";
@@ -54,9 +55,12 @@ export function BudgetAlertBanner({ alert, onDismiss }: Props) {
           </Text>
         )}
       </View>
-      <Pressable onPress={handleDismiss} hitSlop={12}>
-        <X size={16} color={secondaryColor} />
-      </Pressable>
+      <IconActionButton
+        accessibilityLabel={t("common.dismiss")}
+        className="size-8"
+        icon={<X size={16} color={secondaryColor} />}
+        onPress={handleDismiss}
+      />
     </View>
   );
 }

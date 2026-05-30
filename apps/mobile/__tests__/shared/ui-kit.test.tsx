@@ -6,12 +6,16 @@ import { Button } from "@/shared/components/Button";
 import { Callout } from "@/shared/components/Callout";
 import { Chip } from "@/shared/components/Chip";
 import { EmptyState } from "@/shared/components/EmptyState";
+import { IconActionButton } from "@/shared/components/IconActionButton";
+import { MonthNavigator } from "@/shared/components/MonthNavigator";
 import { Row } from "@/shared/components/Row";
+import { SegmentedControl } from "@/shared/components/SegmentedControl";
+import { SelectableChipRow } from "@/shared/components/SelectableChipRow";
 import { Text } from "@/shared/components/rn";
 
 function expectSharedComponentImport(source: string, componentName: string) {
   const importsFromBarrel = new RegExp(
-    `import\\s*\\{[\\s\\S]*\\b${componentName}\\b[\\s\\S]*\\}\\s*from "@/shared/components"`
+    `import\\s*\\{[^}]*\\b${componentName}\\b[^}]*\\}\\s*from "@/shared/components"`
   ).test(source);
   const importsDirectPrimitive = source.includes(`from "@/shared/components/${componentName}"`);
 
@@ -28,6 +32,10 @@ describe("shared UI kit", () => {
     expect(source).toContain('export { Chip } from "./Chip"');
     expect(source).toContain('export { Callout } from "./Callout"');
     expect(source).toContain('export { EmptyState } from "./EmptyState"');
+    expect(source).toContain('export { SegmentedControl } from "./SegmentedControl"');
+    expect(source).toContain('export { SelectableChipRow } from "./SelectableChipRow"');
+    expect(source).toContain('export { IconActionButton } from "./IconActionButton"');
+    expect(source).toContain('export { MonthNavigator } from "./MonthNavigator"');
   });
 
   it("renders primitive text content", () => {
@@ -62,6 +70,94 @@ describe("shared UI kit", () => {
     expect(screen.getByText("No notifications")).toBeTruthy();
     expect(screen.getByText("You are all caught up")).toBeTruthy();
     expect(screen.getByText("Continue")).toBeTruthy();
+  });
+
+  it("selects segmented control options through accessible buttons", () => {
+    const selections: string[] = [];
+    const screen = renderFidy(
+      <SegmentedControl
+        accessibilityLabel="Report period"
+        options={[
+          { label: "Week", value: "week", accessibilityLabel: "Week period" },
+          { label: "Month", value: "month", accessibilityLabel: "Month period" },
+        ]}
+        value="week"
+        onChange={(value) => selections.push(value)}
+      />
+    );
+
+    const weekButton = screen.getByA11yLabel("Week period");
+    const monthButton = screen.getByA11yLabel("Month period");
+
+    expect(weekButton.props.accessibilityState).toMatchObject({ selected: true });
+    expect(monthButton.props.accessibilityState).toMatchObject({ selected: false });
+
+    screen.press(monthButton);
+
+    expect(selections).toEqual(["month"]);
+  });
+
+  it("selects chip row options through accessible buttons", () => {
+    const selections: string[] = [];
+    const screen = renderFidy(
+      <SelectableChipRow
+        accessibilityLabel="Category"
+        options={[
+          { label: "Food", value: "food" },
+          { label: "Rent", value: "rent" },
+        ]}
+        value="food"
+        onChange={(value) => selections.push(value)}
+      />
+    );
+
+    const foodButton = screen.getByA11yLabel("Food");
+    const rentButton = screen.getByA11yLabel("Rent");
+
+    expect(foodButton.props.accessibilityState).toMatchObject({ selected: true });
+    expect(rentButton.props.accessibilityState).toMatchObject({ selected: false });
+
+    screen.press(rentButton);
+
+    expect(selections).toEqual(["rent"]);
+  });
+
+  it("renders icon action buttons with optional badges", () => {
+    const presses: string[] = [];
+    const screen = renderFidy(
+      <IconActionButton
+        accessibilityLabel="Open notifications"
+        badgeLabel="3"
+        icon={<Text>Bell</Text>}
+        onPress={() => presses.push("pressed")}
+      />
+    );
+
+    screen.pressByA11yLabel("Open notifications");
+
+    expect(screen.getByText("Bell")).toBeTruthy();
+    expect(screen.getByText("3")).toBeTruthy();
+    expect(presses).toEqual(["pressed"]);
+  });
+
+  it("navigates months through previous and next buttons", () => {
+    const presses: string[] = [];
+    const screen = renderFidy(
+      <MonthNavigator
+        label="May 2026"
+        previousAccessibilityLabel="Previous month"
+        nextAccessibilityLabel="Next month"
+        onPrevious={() => presses.push("previous")}
+        onNext={() => presses.push("next")}
+      />
+    );
+
+    expect(screen.getByText("May 2026")).toBeTruthy();
+
+    screen.pressByA11yLabel("Previous month");
+    screen.pressByA11yLabel("Next month");
+
+    expect(presses).toEqual(["previous", "next"]);
   });
 
   it("defaults interactive chip and callout roles to button", () => {
@@ -391,5 +487,51 @@ describe("shared UI kit", () => {
       expect(source).toContain("<EmptyState");
       expect(source).not.toContain("styles.emptyText");
     });
+  });
+
+  it("keeps repeated selectors on shared selection primitives", () => {
+    const files = [
+      "../../features/analytics/components/PeriodSelector.tsx",
+      "../../features/transactions/components/TypeToggle.tsx",
+      "../../features/goals/components/goal-sheet/GoalTypeToggle.tsx",
+      "../../features/goals/components/goal-detail/TabControl.tsx",
+    ];
+
+    files.forEach((file) => {
+      const source = readFileSync(resolve(__dirname, file), "utf-8");
+
+      expect(source).toContain("SegmentedControl");
+      expect(source).not.toContain("<Pressable");
+    });
+  });
+
+  it("keeps migrated chip rows and month navigators on shared primitives", () => {
+    const addBillSource = readFileSync(
+      resolve(__dirname, "../../features/calendar/components/add-bill/AddBillFormContent.tsx"),
+      "utf-8"
+    );
+    const transactionAccountSource = readFileSync(
+      resolve(
+        __dirname,
+        "../../features/transactions/components/transaction-form/TransactionAccountSection.tsx"
+      ),
+      "utf-8"
+    );
+    const budgetMonthSource = readFileSync(
+      resolve(__dirname, "../../features/budget/components/BudgetHeaderMonthNavigator.tsx"),
+      "utf-8"
+    );
+    const calendarMonthSource = readFileSync(
+      resolve(__dirname, "../../features/calendar/components/MonthNavigator.tsx"),
+      "utf-8"
+    );
+
+    expect(addBillSource).toContain("SelectableChipRow");
+    expect(transactionAccountSource).toContain("SelectableChipRow");
+    expect(transactionAccountSource).not.toContain("<Pressable");
+    expect(budgetMonthSource).toContain("MonthNavigator");
+    expect(budgetMonthSource).not.toContain("StyleSheet");
+    expect(calendarMonthSource).toContain("SharedMonthNavigator");
+    expect(calendarMonthSource).not.toContain("StyleSheet");
   });
 });

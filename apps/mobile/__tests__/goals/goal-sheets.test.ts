@@ -140,7 +140,8 @@ test("create-goal full screen avoids nested card and uses debt red state", () =>
   expect(frameSource).toContain('keyboardShouldPersistTaps="handled"');
   expect(frameSource).toContain("FidyNumpad compact={fullScreen}");
   expect(stylesSource).toContain('justifyContent: "space-between"');
-  expect(typeToggleSource).toContain('goalType === "debt" ? accentRed : accentGreen');
+  expect(typeToggleSource).toContain("<SegmentedControl");
+  expect(typeToggleSource).toContain('type === "debt" ? "danger" : "success"');
 });
 
 test("goal detail hides inherited tab title from the back button", () => {

@@ -41,7 +41,6 @@ export function TransactionFormContent({
   const { bottom: safeBottom } = useSafeAreaInsets();
   const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
-  const accentGreenLight = useThemeColor("accentGreenLight");
   const accentRed = useThemeColor("accentRed");
   const borderSubtle = useThemeColor("borderSubtle");
   const cardColor = useThemeColor("card");
@@ -81,15 +80,10 @@ export function TransactionFormContent({
         </View>
 
         <TransactionAccountSection
-          accentGreen={accentGreen}
-          accentGreenLight={accentGreenLight}
           accountId={accountId}
           accounts={accounts}
-          borderSubtle={borderSubtle}
-          cardColor={cardColor}
           label={t("common.account")}
           onAccountChange={onAccountChange}
-          primaryColor={primaryColor}
           secondaryColor={secondaryColor}
         />
 

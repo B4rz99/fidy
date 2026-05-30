@@ -1,49 +1,22 @@
 import { useRouter } from "expo-router";
+import { IconActionButton } from "@/shared/components/IconActionButton";
 import { Bell } from "@/shared/components/icons";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useNotificationStore } from "../store";
 
 export const BellAction = () => {
   const { push } = useRouter();
+  const { t } = useTranslation();
   const iconColor = useThemeColor("primary");
-  const accentRed = useThemeColor("accentRed");
   const newCount = useNotificationStore((s) => s.newCount);
+  const badgeLabel = newCount > 0 ? (newCount > 99 ? "99+" : String(newCount)) : undefined;
 
   return (
-    <Pressable
+    <IconActionButton
+      accessibilityLabel={t("notifications.title")}
+      badgeLabel={badgeLabel}
+      icon={<Bell size={24} color={iconColor} />}
       onPress={() => push("/notifications" as never)}
-      hitSlop={12}
-      style={styles.container}
-    >
-      <Bell size={24} color={iconColor} />
-      {newCount > 0 && (
-        <View style={[styles.badge, { backgroundColor: accentRed }]}>
-          <Text style={styles.badgeText}>{newCount > 99 ? "99+" : String(newCount)}</Text>
-        </View>
-      )}
-    </Pressable>
+    />
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    position: "relative",
-    padding: 4,
-  },
-  badge: {
-    position: "absolute",
-    top: 0,
-    right: -2,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  badgeText: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 9,
-    color: "#FFFFFF",
-  },
-});

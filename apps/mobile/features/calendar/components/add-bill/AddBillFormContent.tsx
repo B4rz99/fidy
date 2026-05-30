@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TransactionDatePickerSheet } from "@/features/transactions/display.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
 import { AppAuroraBackground, Button } from "@/shared/components";
+import { SelectableChipRow } from "@/shared/components/SelectableChipRow";
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -54,7 +55,6 @@ export function AddBillFormContent({
   const { t, locale } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const isDark = useColorScheme() === "dark";
-  const accentGreen = useThemeColor("accentGreen");
   const borderColor = useThemeColor("borderSubtle");
   const pageBg = useThemeColor("page");
   const primaryColor = useThemeColor("primary");
@@ -110,30 +110,15 @@ export function AddBillFormContent({
             <Text style={[styles.inputLabel, { color: secondaryColor }]}>
               {t("bills.frequency")}
             </Text>
-            <View style={styles.chipRow}>
-              {FREQUENCIES.map((item) => (
-                <Pressable
-                  key={item.value}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: frequency === item.value ? accentGreen : pageBg,
-                      borderColor,
-                    },
-                  ]}
-                  onPress={() => handleFrequencyPress(item.value)}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      { color: frequency === item.value ? "#FFFFFF" : primaryColor },
-                    ]}
-                  >
-                    {t(item.labelKey)}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            <SelectableChipRow
+              options={FREQUENCIES.map((item) => ({
+                value: item.value,
+                label: t(item.labelKey),
+              }))}
+              value={frequency}
+              onChange={handleFrequencyPress}
+              chipClassName="h-auto rounded-full border border-border-subtle bg-page px-4 py-2 dark:border-border-subtle-dark dark:bg-page-dark"
+            />
           </View>
 
           <Pressable
@@ -155,30 +140,15 @@ export function AddBillFormContent({
             <Text style={[styles.inputLabel, { color: secondaryColor }]}>
               {t("common.category")}
             </Text>
-            <View style={styles.chipRow}>
-              {CATEGORIES.map((item) => (
-                <Pressable
-                  key={item.id}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: category === item.id ? accentGreen : pageBg,
-                      borderColor,
-                    },
-                  ]}
-                  onPress={() => handleCategoryPress(item.id)}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      { color: category === item.id ? "#FFFFFF" : primaryColor },
-                    ]}
-                  >
-                    {getCategoryLabel(item, locale)}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            <SelectableChipRow
+              options={CATEGORIES.map((item) => ({
+                value: item.id,
+                label: getCategoryLabel(item, locale),
+              }))}
+              value={category}
+              onChange={handleCategoryPress}
+              chipClassName="h-auto rounded-full border border-border-subtle bg-page px-4 py-2 dark:border-border-subtle-dark dark:bg-page-dark"
+            />
           </View>
         </View>
 
