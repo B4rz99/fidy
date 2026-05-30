@@ -24,7 +24,10 @@ function compactSearchConditions(
 }
 
 function toCategoryIds(categoryIds: SearchFilters["categoryIds"]) {
-  return categoryIds.filter((id) => id.trim().length > 0).map((id) => requireCategoryId(id));
+  return categoryIds.flatMap((id) => {
+    const trimmed = id.trim();
+    return trimmed.length > 0 ? [requireCategoryId(trimmed)] : [];
+  });
 }
 
 const SEARCH_CONDITION_BUILDERS: readonly SearchConditionBuilder[] = [

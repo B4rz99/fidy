@@ -8,12 +8,12 @@ export type AppClock = {
   readonly nowIsoDateTime: () => IsoDateTime;
 };
 
-export const liveAppClock: AppClock = {
+const liveAppClock: AppClock = {
   now: () => new Date(),
   nowIsoDateTime: () => toIsoDateTime(new Date()),
 };
 
-export const AppClockService = makeAppService<AppClock>("@/shared/effect/AppClock");
+const AppClockService = makeAppService<AppClock>("@/shared/effect/AppClock");
 
 export const currentDateEffect = Effect.flatMap(AppClockService.tag, ({ now }) => fromSync(now));
 

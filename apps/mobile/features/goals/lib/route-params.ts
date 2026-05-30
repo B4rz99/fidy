@@ -7,7 +7,10 @@ function getFirstNonEmptyRouteParam(value: string | readonly string[] | undefine
   if (value === undefined) return null;
 
   const values = Array.isArray(value) ? value : [value];
-  const normalizedValues = values.map((entry) => entry.trim()).filter((entry) => entry.length > 0);
+  const normalizedValues = values.flatMap((entry) => {
+    const trimmed = entry.trim();
+    return trimmed.length > 0 ? [trimmed] : [];
+  });
 
   return normalizedValues[0] ?? null;
 }

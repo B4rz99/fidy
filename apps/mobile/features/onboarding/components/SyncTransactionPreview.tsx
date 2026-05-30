@@ -1,5 +1,7 @@
+import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
+import { useCallback } from "react";
 import type { StoredTransaction } from "@/features/transactions/query.public";
-import { ScrollView, Text, View } from "@/shared/components/rn";
+import { Text, View } from "@/shared/components/rn";
 import { formatMoney } from "@/shared/lib";
 import { styles } from "./SyncProgressStep.styles";
 
@@ -16,23 +18,33 @@ export function SyncTransactionPreview({
   readonly title: string;
   readonly transactions: readonly StoredTransaction[];
 }) {
+  const renderTransaction = useCallback(
+    ({ item: tx }: ListRenderItemInfo<StoredTransaction>) => (
+      <View key={tx.id} style={styles.previewRow}>
+        <Text style={[styles.previewDescription, { color: primaryColor }]} numberOfLines={1}>
+          {tx.description || fallbackLabel}
+        </Text>
+        <Text style={[styles.previewAmount, { color: primaryColor }]}>
+          {formatMoney(tx.amount)}
+        </Text>
+      </View>
+    ),
+    [fallbackLabel, primaryColor]
+  );
+
   if (transactions.length === 0) return null;
 
   return (
     <View style={styles.previewSection}>
       <Text style={[styles.previewTitle, { color: secondaryColor }]}>{title}</Text>
-      <ScrollView style={styles.previewList} nestedScrollEnabled showsVerticalScrollIndicator>
-        {transactions.map((tx) => (
-          <View key={tx.id} style={styles.previewRow}>
-            <Text style={[styles.previewDescription, { color: primaryColor }]} numberOfLines={1}>
-              {tx.description || fallbackLabel}
-            </Text>
-            <Text style={[styles.previewAmount, { color: primaryColor }]}>
-              {formatMoney(tx.amount)}
-            </Text>
-          </View>
-        ))}
-      </ScrollView>
+      <FlashList
+        data={transactions}
+        keyExtractor={(tx) => tx.id}
+        style={styles.previewList}
+        nestedScrollEnabled
+        showsVerticalScrollIndicator
+        renderItem={renderTransaction}
+      />
     </View>
   );
 }

@@ -64,20 +64,19 @@ export function copyBudgetsToMonth(
   const existingTargetBudgets = getBudgetsForMonth(db, userId, targetMonth);
   const existingCategoryIds = new Set(existingTargetBudgets.map((b) => b.categoryId));
 
-  return sourceBudgets
-    .filter((b) => !existingCategoryIds.has(b.categoryId))
-    .map((b) => {
-      const newId = generateId();
-      insertBudget(db, {
-        id: newId,
-        userId: b.userId,
-        categoryId: b.categoryId,
-        amount: b.amount,
-        month: targetMonth,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
-      });
-      return newId;
+  return sourceBudgets.flatMap((b) => {
+    if (existingCategoryIds.has(b.categoryId)) return [];
+    const newId = generateId();
+    insertBudget(db, {
+      id: newId,
+      userId: b.userId,
+      categoryId: b.categoryId,
+      amount: b.amount,
+      month: targetMonth,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
     });
+    return [newId];
+  });
 }

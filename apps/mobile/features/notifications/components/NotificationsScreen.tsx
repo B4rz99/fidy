@@ -22,7 +22,7 @@ const notificationKeyExtractor = (item: NotificationDisplay) => item.id;
 const NotificationItemSeparator = () => <View style={styles.separator} />;
 
 export const NotificationsScreen = () => {
-  const router = useRouter();
+  const { push, back } = useRouter();
   const { t } = useTranslation();
   const userId = useOptionalUserId();
   const notifications = useNotificationStore((s) => s.notifications);
@@ -57,9 +57,9 @@ export const NotificationsScreen = () => {
 
   const handlePress = useCallback(
     (route: string) => {
-      router.push(route as never);
+      push(route as never);
     },
-    [router]
+    [push]
   );
 
   const renderItem = useCallback(
@@ -73,7 +73,7 @@ export const NotificationsScreen = () => {
     <ScreenLayout
       title={t("notifications.title")}
       variant="sub"
-      onBack={() => router.back()}
+      onBack={() => back()}
       rightActions={
         hasNotifications ? (
           <Pressable onPress={handleClearAll} hitSlop={12}>

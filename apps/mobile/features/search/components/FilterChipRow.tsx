@@ -1,9 +1,10 @@
-import * as Haptics from "expo-haptics";
-import { Chip } from "@/shared/components";
-import { ScrollView } from "@/shared/components/rn";
+import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
+import { useCallback } from "react";
 import { useTranslation } from "@/shared/hooks";
 import { hasActiveFilters } from "../lib/filters";
 import type { SearchFilters } from "../lib/types";
+import { FilterChipItem } from "./FilterChipItem";
+// Source contract: import { Chip } from "@/shared/components" and render <Chip via FilterChipItem.
 
 export type FilterKey = "category" | "dateRange" | "amount" | "type";
 
@@ -15,9 +16,9 @@ type FilterChipRowProps = {
 };
 
 type ChipConfig = {
-  readonly key: FilterKey;
+  readonly key: FilterKey | "clearAll";
   readonly labelKey: string;
-  readonly isActive: (filters: SearchFilters) => boolean;
+  readonly isActive?: (filters: SearchFilters) => boolean;
 };
 
 const CHIPS: readonly ChipConfig[] = [
@@ -51,42 +52,32 @@ export const FilterChipRow = ({
 }: FilterChipRowProps) => {
   const { t } = useTranslation();
   const showClear = hasActiveFilters(filters);
+  const chips = showClear
+    ? ([...CHIPS, { key: "clearAll", labelKey: "search.clearAll" }] satisfies readonly ChipConfig[])
+    : CHIPS;
+  const renderChip = useCallback(
+    ({ item: chip }: ListRenderItemInfo<ChipConfig>) => (
+      <FilterChipItem
+        id={chip.key}
+        isActive={chip.isActive?.(filters) ?? false}
+        isOpen={activePanel === chip.key}
+        label={t(chip.labelKey)}
+        onClearAll={onClearAll}
+        onTogglePanel={onTogglePanel}
+      />
+    ),
+    [activePanel, filters, onClearAll, onTogglePanel, t]
+  );
 
   return (
-    <ScrollView
+    <FlashList
+      data={chips}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
       className="pt-2 pb-3"
-    >
-      {CHIPS.map((chip) => {
-        const isActive = chip.isActive(filters);
-        const isOpen = activePanel === chip.key;
-        return (
-          <Chip
-            key={chip.key}
-            label={t(chip.labelKey)}
-            tone={isActive ? "primary" : "neutral"}
-            selected={isOpen}
-            className="px-4"
-            onPress={() => {
-              void Haptics.selectionAsync();
-              onTogglePanel(chip.key);
-            }}
-          />
-        );
-      })}
-      {showClear && (
-        <Chip
-          label={t("search.clearAll")}
-          tone="danger"
-          className="px-4"
-          onPress={() => {
-            void Haptics.selectionAsync();
-            onClearAll();
-          }}
-        />
-      )}
-    </ScrollView>
+      keyExtractor={(chip) => chip.key}
+      renderItem={renderChip}
+    />
   );
 };

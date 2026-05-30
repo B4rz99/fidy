@@ -19,7 +19,7 @@ import type {
   RawParsedNotification,
 } from "./types";
 
-export const FALLBACK_CATEGORY_ID = "other";
+const FALLBACK_CATEGORY_ID = "other";
 
 export function buildNotificationFingerprint(
   context: NotificationContext,

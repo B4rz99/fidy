@@ -28,7 +28,7 @@ export function deriveBudgetNudges(input: BudgetNudgeInput): readonly BudgetNudg
 const getTopSpendingCategories = (
   spendingByCategory: readonly BudgetNudgeSpending[]
 ): readonly BudgetNudgeSpending[] =>
-  [...spendingByCategory].sort((left, right) => right.total - left.total).slice(0, 3);
+  spendingByCategory.toSorted((left, right) => right.total - left.total).slice(0, 3);
 
 const buildBudgetNudge = (
   category: BudgetNudgeSpending,
@@ -55,16 +55,12 @@ export function deriveGoalAlerts(
   }[],
   previousProjections: ReadonlyMap<string, number>
 ): readonly GoalAlert[] {
-  return goals
-    .filter((goal) => {
-      if (goal.currentMonthsToGo === null) return false;
-      const previous = previousProjections.get(goal.id);
-      if (previous === undefined) return false;
-      return Math.abs(goal.currentMonthsToGo - previous) >= 1;
-    })
-    .map((goal) => {
-      const current = goal.currentMonthsToGo ?? 0;
-      const previous = previousProjections.get(goal.id) ?? 0;
-      return { goalId: goal.id, goalName: goal.name, shiftMonths: current - previous };
-    });
+  return goals.flatMap((goal) => {
+    if (goal.currentMonthsToGo === null) return [];
+    const previous = previousProjections.get(goal.id);
+    if (previous === undefined || Math.abs(goal.currentMonthsToGo - previous) < 1) return [];
+    return [
+      { goalId: goal.id, goalName: goal.name, shiftMonths: goal.currentMonthsToGo - previous },
+    ];
+  });
 }

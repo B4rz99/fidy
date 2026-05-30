@@ -168,7 +168,7 @@ function assertUniqueActiveOpeningBalancePerAccount(rows: readonly OpeningBalanc
 
 function assertUniqueDefaultAccountPerUser(rows: readonly FinancialAccountSnapshotRow[]) {
   assertUniqueValues(
-    rows.filter((row) => row.deletedAt === null && row.isDefault).map((row) => row.userId),
+    rows.flatMap((row) => (row.deletedAt === null && row.isDefault ? [row.userId] : [])),
     "Local ledger backup has multiple default financial accounts for a user"
   );
 }

@@ -22,8 +22,10 @@ export async function markPrePermissionSeenAsync(): Promise<void> {
 export async function shouldShowNotificationPrePermissionPrompt(
   notificationsEnabled = true
 ): Promise<boolean> {
-  const permission = await Notifications.getPermissionsAsync();
-  const hasSeenPrePermission = await readHasSeenPrePermission();
+  const [permission, hasSeenPrePermission] = await Promise.all([
+    Notifications.getPermissionsAsync(),
+    readHasSeenPrePermission(),
+  ]);
   const action = determineAlertAction(
     permission.status,
     hasSeenPrePermission,

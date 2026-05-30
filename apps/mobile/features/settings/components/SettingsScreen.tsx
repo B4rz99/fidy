@@ -51,7 +51,7 @@ function getPrivateBackupStatusLabelKey(status: PrivateBackupHealthStatus) {
 }
 
 export function SettingsScreen() {
-  const router = useRouter();
+  const { push, replace, back, canGoBack } = useRouter();
   const { t, locale } = useTranslation();
 
   const { fullName, email, profileImageUrl } = useAuthIdentity();
@@ -83,11 +83,11 @@ export function SettingsScreen() {
 
   const version = Constants.expoConfig?.version ?? "0.0.1";
   const handleBack = () => {
-    if (router.canGoBack()) {
-      router.back();
+    if (canGoBack()) {
+      back();
       return;
     }
-    router.replace("/(tabs)/(index)");
+    replace("/(tabs)/(index)");
   };
   const handleParseImprovementSharingChange = (enabled: boolean) =>
     applyParseImprovementSharingToggle({
@@ -113,7 +113,7 @@ export function SettingsScreen() {
         {/* ACCOUNT */}
         <SettingsSection label={t("settings.accountSection")}>
           <Pressable
-            onPress={() => router.push("/profile")}
+            onPress={() => push("/profile")}
             className="flex-row items-center"
             style={{
               height: 64,
@@ -161,18 +161,18 @@ export function SettingsScreen() {
             icon={Palette}
             label={t("settings.theme")}
             subtitle={themeLabel}
-            onPress={() => router.push("/theme-picker")}
+            onPress={() => push("/theme-picker")}
           />
           <SettingsRow
             icon={Globe}
             label={t("settings.language")}
             subtitle={languageLabel}
-            onPress={() => router.push("/language-picker")}
+            onPress={() => push("/language-picker")}
           />
           <SettingsRow
             icon={Tag}
             label={t("categories.settingsRow")}
-            onPress={() => router.push("/categories")}
+            onPress={() => push("/categories")}
             isLast
           />
         </SettingsSection>
@@ -185,18 +185,18 @@ export function SettingsScreen() {
             subtitle={t("settings.connectedEmailsCount", {
               count: connectedCount,
             })}
-            onPress={() => router.push("/connected-accounts")}
+            onPress={() => push("/connected-accounts")}
           />
           <SettingsRow
             icon={Wallet}
             label={t("financialAccounts.list.settingsRow")}
-            onPress={() => router.push("/financial-accounts")}
+            onPress={() => push("/financial-accounts")}
           />
           <SettingsRow
             icon={Bell}
             label={t("settings.notifications")}
             subtitle={areAllNotificationsOff ? t("settings.off") : t("settings.on")}
-            onPress={() => router.push("/notification-preferences")}
+            onPress={() => push("/notification-preferences")}
             isLast
           />
         </SettingsSection>
@@ -207,7 +207,7 @@ export function SettingsScreen() {
             icon={KeyRound}
             label={t("settings.privateBackup")}
             subtitle={t(getPrivateBackupStatusLabelKey(privateBackupHealth))}
-            onPress={() => router.push("/private-backup")}
+            onPress={() => push("/private-backup")}
           />
           <SettingsRow
             icon={Sparkles}
@@ -248,7 +248,7 @@ export function SettingsScreen() {
               icon={Wrench}
               label={t("settings.designSystem")}
               subtitle={t("settings.designSystemSubtitle")}
-              onPress={() => router.push("/design-system")}
+              onPress={() => push("/design-system")}
             />
           ) : null}
           <SettingsRow

@@ -37,11 +37,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
         borderWidth: 1,
         borderTopColor: borderSubtle,
         borderColor: borderSubtle,
-        shadowColor: "#000",
-        shadowOpacity: 0.12,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 4,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
       }}
     >
       <View

@@ -51,7 +51,5 @@ export {
   deleteEncryptedRemoteBackup,
   downloadEncryptedRemoteBackup,
   listEncryptedRemoteBackups,
-  REMOTE_BACKUP_BUCKET,
-  REMOTE_BACKUP_METADATA_TABLE,
   uploadEncryptedRemoteBackup,
 } from "./remote-storage";

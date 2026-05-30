@@ -122,8 +122,8 @@ export function deriveLocalWeeklyDigestData(input: LocalWeeklyDigestInput): Week
 
   return {
     totalSpent: expenses.reduce((sum, transaction) => sum + transaction.amount, 0),
-    topCategories: [...categoryTotals]
-      .sort((a, b) => b.amount - a.amount)
+    topCategories: categoryTotals
+      .toSorted((a, b) => b.amount - a.amount)
       .slice(0, 2)
       .map(({ name, amount }) => ({ name, amount })),
     budgetStatus: deriveBudgetStatus(input.budgets, monthlyCategoryTotals, input.month),

@@ -25,6 +25,7 @@ import {
   useOnboardingStore,
   WelcomeStep,
 } from "@/features/onboarding";
+import type { OnboardingStep } from "@/features/onboarding/flow.public";
 import {
   initializeTransactionSession,
   loadInitialTransactions,
@@ -120,25 +121,6 @@ function AuthenticatedOnboardingScreen({
     );
   }
 
-  const renderStep = () => {
-    switch (step) {
-      case ONBOARDING_STEP.welcome:
-        return <WelcomeStep />;
-      case ONBOARDING_STEP.connectEmail:
-        return <ConnectEmailStep />;
-      case ONBOARDING_STEP.sync:
-        return <SyncProgressStep />;
-      case ONBOARDING_STEP.accountReview:
-        return <OnboardingAccountReviewStep />;
-      case ONBOARDING_STEP.budgetSetup:
-        return <BudgetSetupStep />;
-      case ONBOARDING_STEP.complete:
-        return <CompleteStep />;
-      default:
-        return <WelcomeStep />;
-    }
-  };
-
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <AppAuroraBackground isDark={isDark} />
@@ -146,9 +128,28 @@ function AuthenticatedOnboardingScreen({
         currentStep={getVisibleOnboardingStepIndex(step, shouldReviewAccounts)}
         totalSteps={getVisibleOnboardingStepCount(shouldReviewAccounts)}
       />
-      {renderStep()}
+      <OnboardingStepContent step={step} />
     </View>
   );
+}
+
+function OnboardingStepContent({ step }: { readonly step: OnboardingStep }) {
+  switch (step) {
+    case ONBOARDING_STEP.welcome:
+      return <WelcomeStep />;
+    case ONBOARDING_STEP.connectEmail:
+      return <ConnectEmailStep />;
+    case ONBOARDING_STEP.sync:
+      return <SyncProgressStep />;
+    case ONBOARDING_STEP.accountReview:
+      return <OnboardingAccountReviewStep />;
+    case ONBOARDING_STEP.budgetSetup:
+      return <BudgetSetupStep />;
+    case ONBOARDING_STEP.complete:
+      return <CompleteStep />;
+    default:
+      return <WelcomeStep />;
+  }
 }
 
 const styles = StyleSheet.create({

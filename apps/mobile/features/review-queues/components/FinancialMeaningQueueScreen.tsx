@@ -138,7 +138,7 @@ function FinancialMeaningQueueCard({
 }
 
 export function FinancialMeaningQueueScreen() {
-  const router = useRouter();
+  const { push, back } = useRouter();
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const userId = useOptionalUserId();
@@ -153,7 +153,7 @@ export function FinancialMeaningQueueScreen() {
 
   const handleReview = useCallback(
     (processedSourceEventId: ProcessedSourceEventId, reviewCandidateId: ReviewCandidateId) => {
-      router.push({
+      push({
         pathname: "/meaning-review",
         params: {
           processedSourceEventId,
@@ -161,7 +161,7 @@ export function FinancialMeaningQueueScreen() {
         },
       } as never);
     },
-    [router]
+    [push]
   );
 
   const handleDismissSourceEvent = useCallback(
@@ -178,9 +178,11 @@ export function FinancialMeaningQueueScreen() {
             processedSourceEventId,
             reviewCandidateId
           );
-          await loadNeedsReviewEmails(db, userId);
-          await refreshTransactions(db, userId);
-          await reloadQueue();
+          await Promise.all([
+            loadNeedsReviewEmails(db, userId),
+            refreshTransactions(db, userId),
+            reloadQueue(),
+          ]);
         } catch {
           showErrorToast(t("financialMeaningReview.errors.dismissFailed"));
         }
@@ -210,7 +212,7 @@ export function FinancialMeaningQueueScreen() {
     <ScreenLayout
       title={t("financialMeaningReview.queueTitle")}
       variant="sub"
-      onBack={() => router.back()}
+      onBack={() => back()}
     >
       {hasLoadedQueue && visibleItems.length === 0 ? (
         <EmptyState

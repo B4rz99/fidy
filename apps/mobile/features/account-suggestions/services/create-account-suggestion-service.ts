@@ -167,17 +167,16 @@ export function createAccountSuggestionService({
           userId,
           scope: suggestion.scope,
           value: suggestion.value,
+        }).flatMap((row) => {
+          const transactionId = row.transactionId;
+          if (transactionId == null) return [];
+          const transaction = loadTransactionById(db, transactionId);
+          return transaction?.userId === userId &&
+            isActiveTransactionRow(transaction) &&
+            transaction.accountAttributionState === "unresolved"
+            ? [transactionId]
+            : [];
         })
-          .map((row) => row.transactionId)
-          .filter((transactionId): transactionId is TransactionId => transactionId != null)
-          .filter((transactionId) => {
-            const transaction = loadTransactionById(db, transactionId);
-            return (
-              transaction?.userId === userId &&
-              isActiveTransactionRow(transaction) &&
-              transaction.accountAttributionState === "unresolved"
-            );
-          })
       )
     );
 

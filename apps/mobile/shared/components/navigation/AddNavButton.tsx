@@ -11,7 +11,7 @@ export const AddNavButton = ({ onPress }: AddNavButtonProps) => {
 
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Add transaction">
-      <View className="h-12 w-12 items-center justify-center rounded-full border-2 border-accent-green dark:border-accent-green-dark bg-nav dark:bg-nav-dark">
+      <View className="size-12 items-center justify-center rounded-full border-2 border-accent-green dark:border-accent-green-dark bg-nav dark:bg-nav-dark">
         <Plus size={22} color={iconColor} />
       </View>
     </Pressable>

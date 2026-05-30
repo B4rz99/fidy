@@ -4,9 +4,4 @@ export type {
   FinancialContextPacket,
   FinancialContextPacketPorts,
 } from "./financial-context-packet";
-export {
-  createFinancialContextPacketBuilder,
-  deriveFinancialContextDeltas,
-  previousContextMonth,
-  toContextMonth,
-} from "./financial-context-packet";
+export { createFinancialContextPacketBuilder } from "./financial-context-packet";

@@ -23,7 +23,7 @@ export const rawEmailSchema = z.object({
 });
 export type RawEmail = z.infer<typeof rawEmailSchema>;
 
-export const transactionSourceSchema = z.enum([
+const transactionSourceSchema = z.enum([
   "manual",
   "email_gmail",
   "email_outlook",

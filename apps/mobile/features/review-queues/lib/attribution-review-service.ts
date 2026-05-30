@@ -179,20 +179,22 @@ export function createAttributionReviewService({
     const accounts = getFinancialAccountsForUser(db, userId);
     const suggestions = accountSuggestionService.listSuggestions({ db, userId });
 
-    return getAllTransactions(db, userId)
-      .filter((transaction) => transaction.accountAttributionState === "unresolved")
-      .map((transaction) =>
-        toReviewItem(
-          transaction,
-          accounts,
-          getBestMatchingSuggestion({
-            suggestions,
-            transactionId: transaction.id,
-            db,
-            userId,
-          })
-        )
-      );
+    return getAllTransactions(db, userId).flatMap((transaction) =>
+      transaction.accountAttributionState === "unresolved"
+        ? [
+            toReviewItem(
+              transaction,
+              accounts,
+              getBestMatchingSuggestion({
+                suggestions,
+                transactionId: transaction.id,
+                db,
+                userId,
+              })
+            ),
+          ]
+        : []
+    );
   };
 
   const getReviewItem = ({

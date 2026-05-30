@@ -7,7 +7,7 @@ import {
 } from "react-native-reanimated";
 
 /**
- * Returns an animated style with a width percentage driven by `value` (0–1).
+ * Returns an animated style with a horizontal scale driven by `value` (0-1).
  * Use for progress bars that animate smoothly on value change.
  */
 export function useAnimatedProgress(
@@ -24,7 +24,7 @@ export function useAnimatedProgress(
   }, [value, progress, duration]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    width: `${progress.value * 100}%`,
+    transform: [{ scaleX: progress.value }],
   }));
 
   return { progress, animatedStyle };

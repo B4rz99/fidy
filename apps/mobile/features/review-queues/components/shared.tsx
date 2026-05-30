@@ -42,7 +42,7 @@ export function SummaryCard({ icon: Icon, title, subtitle, tone = "warning" }: S
       subtitle={subtitle}
       tone={tone === "green" ? "success" : "warning"}
       icon={
-        <View className="h-9 w-9 items-center justify-center rounded-icon bg-white/70">
+        <View className="size-9 items-center justify-center rounded-icon bg-white/70">
           <Icon size={18} color={iconColor} />
         </View>
       }

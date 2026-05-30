@@ -55,15 +55,15 @@ function AddGoalButton({ onPress }: { readonly onPress: () => void }) {
 // ---------------------------------------------------------------------------
 
 export function GoalsListScreen() {
-  const router = useRouter();
+  const { push } = useRouter();
   const { t } = useTranslation();
   const goals = useGoalStore((s) => s.goals);
   const isLoading = useGoalStore((s) => s.isLoading);
   const userId = useOptionalUserId();
 
   const handleCreateGoal = useCallback(() => {
-    router.push("/create-goal");
-  }, [router]);
+    push("/create-goal");
+  }, [push]);
 
   const handleGoalPress = useCallback(
     (goalId: string) => {
@@ -71,9 +71,9 @@ export function GoalsListScreen() {
       const db = tryGetDb(userId);
       if (!db) return;
       void selectGoal(db, userId, goalId);
-      router.push("/goal-detail");
+      push("/goal-detail");
     },
-    [router, userId]
+    [push, userId]
   );
 
   const handleAddPayment = useCallback(
@@ -82,9 +82,9 @@ export function GoalsListScreen() {
       const db = tryGetDb(userId);
       if (!db) return;
       void selectGoal(db, userId, goalId);
-      router.push("/add-payment");
+      push("/add-payment");
     },
-    [router, userId]
+    [push, userId]
   );
 
   const renderItem = useCallback(

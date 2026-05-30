@@ -41,9 +41,6 @@ const styles = StyleSheet.create({
   summaryCard: {
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(15, 23, 42, 0.08)",
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
+    boxShadow: "0 8px 12px rgba(15,23,42,0.05)",
   },
 });

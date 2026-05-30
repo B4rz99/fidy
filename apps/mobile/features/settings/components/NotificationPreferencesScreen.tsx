@@ -46,7 +46,7 @@ const PREFERENCE_TOGGLES: readonly PreferenceToggle[] = [
 ];
 
 export function NotificationPreferencesScreen() {
-  const router = useRouter();
+  const { back } = useRouter();
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
 
@@ -86,11 +86,7 @@ export function NotificationPreferencesScreen() {
   };
 
   return (
-    <ScreenLayout
-      title={t("notifications.preferences.title")}
-      variant="sub"
-      onBack={() => router.back()}
-    >
+    <ScreenLayout title={t("notifications.preferences.title")} variant="sub" onBack={() => back()}>
       {Platform.OS === "ios" && (
         <Stack.Screen options={{ title: t("notifications.preferences.title") }} />
       )}
@@ -99,9 +95,10 @@ export function NotificationPreferencesScreen() {
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 16,
-          paddingBottom: bottom + 40,
+          paddingBottom: 40,
           gap: 24,
         }}
+        contentInset={{ bottom }}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >

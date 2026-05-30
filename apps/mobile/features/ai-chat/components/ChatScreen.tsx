@@ -86,18 +86,22 @@ export function ChatScreen({ onBack, onNewChat }: ChatScreenProps) {
     },
     [persistActionStatus]
   );
+  const handleConfirmActionPress = useCallback(
+    (messageId: ChatMessageId) => {
+      void handleConfirmAction(messageId);
+    },
+    [handleConfirmAction]
+  );
 
   const renderItem = useCallback(
     ({ item }: { item: ChatMessage }) => (
       <MemoizedMessageBubble
         message={item}
-        onConfirm={(id) => {
-          void handleConfirmAction(id);
-        }}
+        onConfirm={handleConfirmActionPress}
         onDismiss={handleDismissAction}
       />
     ),
-    [handleConfirmAction, handleDismissAction]
+    [handleConfirmActionPress, handleDismissAction]
   );
 
   const handleSend = useCallback(

@@ -134,11 +134,12 @@ const detectAnomalies = (
 
   const anomalyContext: AnomalyContext = { priorCountByCategory, currentWeekByCategory };
 
-  return Array.from(priorWeeksByCategory.entries())
-    .map(([categoryId, weekTotalsMap]) =>
-      buildAnomalyMove(buildAnomalyCandidate(categoryId, weekTotalsMap, anomalyContext))
-    )
-    .filter(isPresent);
+  return Array.from(priorWeeksByCategory.entries()).flatMap(([categoryId, weekTotalsMap]) => {
+    const anomalyMove = buildAnomalyMove(
+      buildAnomalyCandidate(categoryId, weekTotalsMap, anomalyContext)
+    );
+    return isPresent(anomalyMove) ? [anomalyMove] : [];
+  });
 };
 
 /**

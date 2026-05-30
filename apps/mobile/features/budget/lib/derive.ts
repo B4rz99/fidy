@@ -172,12 +172,16 @@ export function deriveAutoSuggestBudgets(
   lastMonthSpending: readonly { readonly categoryId: CategoryId; readonly total: CopAmount }[],
   existingBudgetCategoryIds: ReadonlySet<CategoryId>
 ): readonly BudgetSuggestion[] {
-  return lastMonthSpending
-    .filter((s) => !existingBudgetCategoryIds.has(s.categoryId))
-    .map((s) => ({
-      categoryId: s.categoryId,
-      suggestedAmount: roundUpCop(s.total) as CopAmount,
-    }));
+  return lastMonthSpending.flatMap((s) =>
+    existingBudgetCategoryIds.has(s.categoryId)
+      ? []
+      : [
+          {
+            categoryId: s.categoryId,
+            suggestedAmount: roundUpCop(s.total) as CopAmount,
+          },
+        ]
+  );
 }
 
 /**
@@ -233,16 +237,20 @@ export function deriveBudgetAlerts(
       if (p.percentUsed >= 80) return [80] as const;
       return [] as const;
     })();
-    return applicableThresholds
-      .filter((threshold) => !acknowledgedAlerts.has(`${p.budgetId}:${threshold}`))
-      .map((threshold) => ({
-        budgetId: p.budgetId,
-        categoryId: p.categoryId,
-        threshold,
-        percentUsed: p.percentUsed,
-        suggestionKey: getSuggestionKey(threshold, p.categoryId),
-        daysLeft,
-        remainingAmount: p.remaining,
-      }));
+    return applicableThresholds.flatMap((threshold) =>
+      acknowledgedAlerts.has(`${p.budgetId}:${threshold}`)
+        ? []
+        : [
+            {
+              budgetId: p.budgetId,
+              categoryId: p.categoryId,
+              threshold,
+              percentUsed: p.percentUsed,
+              suggestionKey: getSuggestionKey(threshold, p.categoryId),
+              daysLeft,
+              remainingAmount: p.remaining,
+            },
+          ]
+    );
   });
 }

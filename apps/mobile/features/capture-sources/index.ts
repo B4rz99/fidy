@@ -6,15 +6,10 @@ export { useNotificationCapture } from "./hooks/useNotificationCapture";
 export { useSmsDetection } from "./hooks/useSmsDetection";
 export { useWidgetCapture } from "./hooks/useWidgetCapture";
 export { findDuplicateTransaction } from "./lib/dedup";
-export type {
-  ApplePayIntentData,
-  NotificationData,
-  SmsDetectionData,
-} from "./schema";
+export type { ApplePayIntentData, NotificationData, SmsDetectionData } from "./schema";
 export {
   applePayIntentDataSchema,
   KNOWN_BANK_PACKAGES,
-  KNOWN_BANK_SMS_SENDERS,
   notificationDataSchema,
   resolveSource,
   smsDetectionDataSchema,

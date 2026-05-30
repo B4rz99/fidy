@@ -8,6 +8,7 @@ import {
   Keyboard,
   Platform,
   Pressable,
+  StyleSheet,
   View,
   type LayoutChangeEvent,
   type NativeScrollEvent,
@@ -35,6 +36,18 @@ type ChatConversationShellProps = {
   readonly composer: ReactNode;
   readonly scrollToBottomLabel: string;
 };
+
+function subscribeKeyboardVisibility(setKeyboardVisible: (visible: boolean) => void) {
+  const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+  const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+  const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+  const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+
+  return () => {
+    showSub.remove();
+    hideSub.remove();
+  };
+}
 
 export function ChatConversationShell({
   messages,
@@ -129,14 +142,7 @@ export function ChatConversationShell({
   );
 
   useEffect(() => {
-    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-    const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
-    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
+    return subscribeKeyboardVisibility(setKeyboardVisible);
   }, []);
 
   return (
@@ -154,8 +160,9 @@ export function ChatConversationShell({
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: bottomInset,
+            paddingBottom: 12,
           }}
+          contentInset={{ bottom: bottomInset }}
           contentInsetAdjustmentBehavior="automatic"
           showsVerticalScrollIndicator={false}
           onLayout={handleListLayout}
@@ -175,17 +182,7 @@ export function ChatConversationShell({
           accessibilityRole="button"
           accessibilityLabel={scrollToBottomLabel}
           onPress={() => scrollToBottom()}
-          style={{
-            position: "absolute",
-            right: 16,
-            bottom: scrollButtonBottom,
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: "rgba(0,0,0,0.64)",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          style={[styles.scrollToBottomButton, { bottom: scrollButtonBottom }]}
         >
           <ChevronLeft size={20} color="#fff" style={{ transform: [{ rotate: "-90deg" }] }} />
         </Pressable>
@@ -205,3 +202,16 @@ export function ChatConversationShell({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollToBottomButton: {
+    position: "absolute",
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.64)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

@@ -4,11 +4,11 @@ import { ScreenLayout } from "@/shared/components";
 import { useTranslation } from "@/shared/hooks";
 
 export default function AnalyticsRoute() {
-  const router = useRouter();
+  const { back } = useRouter();
   const { t } = useTranslation();
 
   return (
-    <ScreenLayout title={t("analytics.title")} variant="sub" onBack={() => router.back()}>
+    <ScreenLayout title={t("analytics.title")} variant="sub" onBack={() => back()}>
       <AnalyticsScreen />
     </ScreenLayout>
   );

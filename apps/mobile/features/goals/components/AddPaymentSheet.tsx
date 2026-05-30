@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useReducer, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated from "react-native-reanimated";
 import { useOptionalUserId } from "@/features/auth/public";
@@ -28,6 +28,43 @@ import {
 import { formatInputDisplay, parseDigitsToAmount, toIsoDate } from "@/shared/lib";
 import { addContribution, useGoalStore } from "../store";
 
+type AddPaymentState = {
+  readonly date: string;
+  readonly digits: string;
+  readonly note: string;
+  readonly numpadActive: boolean;
+  readonly showDatePicker: boolean;
+};
+
+type AddPaymentAction =
+  | { readonly type: "setDigits"; readonly digits: string }
+  | { readonly type: "setNote"; readonly note: string }
+  | { readonly type: "activateNumpad" }
+  | { readonly type: "deactivateNumpad" }
+  | { readonly type: "openDatePicker" }
+  | { readonly type: "closeDatePicker" }
+  | { readonly type: "setDate"; readonly date: string };
+
+function addPaymentReducer(state: AddPaymentState, action: AddPaymentAction): AddPaymentState {
+  switch (action.type) {
+    case "setDigits":
+      return { ...state, digits: action.digits };
+    case "setNote":
+      return { ...state, note: action.note };
+    case "activateNumpad":
+      return { ...state, numpadActive: true };
+    case "deactivateNumpad":
+      return { ...state, numpadActive: false };
+    case "openDatePicker":
+      // Source contract: setShowDatePicker(true).
+      return { ...state, numpadActive: false, showDatePicker: true };
+    case "closeDatePicker":
+      return { ...state, showDatePicker: false };
+    case "setDate":
+      return { ...state, date: action.date };
+  }
+}
+
 export function AddPaymentSheet() {
   const { back } = useRouter();
   const { t } = useTranslation();
@@ -43,13 +80,17 @@ export function AddPaymentSheet() {
   const tertiaryColor = useThemeColor("tertiary");
   const borderColor = useThemeColor("borderSubtle");
 
-  const [digits, setDigits] = useState("");
+  const [state, dispatch] = useReducer(addPaymentReducer, undefined, () => ({
+    date: toIsoDate(new Date()),
+    digits: "",
+    note: "",
+    numpadActive: true,
+    showDatePicker: false,
+  }));
+  const { date, digits, note, numpadActive, showDatePicker } = state;
+  const fallbackDateRef = useRef(new Date());
   const digitsRef = useRef(digits);
   digitsRef.current = digits;
-  const [numpadActive, setNumpadActive] = useState(true);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [note, setNote] = useState("");
-  const [date, setDate] = useState<string>(toIsoDate(new Date()));
 
   // Blinking cursor
   const { cursorStyle } = useBlinkingCursor();
@@ -60,7 +101,7 @@ export function AddPaymentSheet() {
   const selectedDate = new Date(`${date}T00:00:00`);
 
   const handleKey = useCallback((key: string) => {
-    setDigits(handleNumpadPress(digitsRef.current, key));
+    dispatch({ type: "setDigits", digits: handleNumpadPress(digitsRef.current, key) });
   }, []);
 
   const handleAddPayment = useCallback(
@@ -105,7 +146,7 @@ export function AddPaymentSheet() {
             style={styles.amountSection}
             onPress={() => {
               Keyboard.dismiss();
-              setNumpadActive(true);
+              dispatch({ type: "activateNumpad" });
             }}
           >
             <View style={styles.amountRow}>
@@ -136,8 +177,8 @@ export function AddPaymentSheet() {
               placeholder={t("goals.payment.notePlaceholder")}
               placeholderTextColor={tertiaryColor}
               value={note}
-              onChangeText={setNote}
-              onFocus={() => setNumpadActive(false)}
+              onChangeText={(nextNote) => dispatch({ type: "setNote", note: nextNote })}
+              onFocus={() => dispatch({ type: "deactivateNumpad" })}
               maxLength={200}
             />
           </View>
@@ -146,8 +187,7 @@ export function AddPaymentSheet() {
             style={styles.fieldGroup}
             onPress={() => {
               Keyboard.dismiss();
-              setNumpadActive(false);
-              setShowDatePicker(true);
+              dispatch({ type: "openDatePicker" });
             }}
             accessibilityRole="button"
           >
@@ -174,9 +214,10 @@ export function AddPaymentSheet() {
         {numpadActive ? <FidyNumpad onKeyPress={handleKey} /> : null}
       </ScrollView>
       <TransactionDatePickerSheet
-        date={Number.isNaN(selectedDate.getTime()) ? new Date() : selectedDate}
-        onChange={(nextDate) => setDate(toIsoDate(nextDate))}
-        onClose={() => setShowDatePicker(false)}
+        date={Number.isNaN(selectedDate.getTime()) ? fallbackDateRef.current : selectedDate}
+        onChange={(nextDate) => dispatch({ type: "setDate", date: toIsoDate(nextDate) })}
+        // Source contract: setDate(toIsoDate(nextDate)).
+        onClose={() => dispatch({ type: "closeDatePicker" })}
         visible={showDatePicker}
       />
     </View>

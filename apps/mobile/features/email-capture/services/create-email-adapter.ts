@@ -76,10 +76,9 @@ const requestAuthorizationCode = async (input: {
   config: EmailProviderConfig;
   clientId: string;
 }): Promise<AuthorizationCodeResult> => {
-  const { openAuthSessionAsync } = await import("expo-web-browser");
   const redirectUri = input.config.getRedirectUri();
-  const { codeVerifier, codeChallenge } = await generatePkce();
-  const { codeVerifier: state } = await generatePkce();
+  const [{ openAuthSessionAsync }, { codeVerifier, codeChallenge }, { codeVerifier: state }] =
+    await Promise.all([import("expo-web-browser"), generatePkce(), generatePkce()]);
   const result = await openAuthSessionAsync(
     `${input.config.authUrl}?${buildAuthParams({
       config: input.config,

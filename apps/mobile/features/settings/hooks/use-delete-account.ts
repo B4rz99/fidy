@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/public";
 import { deleteAccountRequest } from "../data/notification-preferences";
 
@@ -8,10 +8,13 @@ type DeleteAccountInput = {
 };
 
 export function useDeleteAccountMutation() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({ supabaseUrl, token }: DeleteAccountInput) =>
       deleteAccountRequest(supabaseUrl, token),
     onSuccess: async () => {
+      queryClient.clear();
       await useAuthStore.getState().signOut();
     },
   });

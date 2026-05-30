@@ -196,15 +196,20 @@ export function deriveAccountSuggestions(
   const accountLikeSuggestionRows = suggestionRows.filter(isAccountLikeSuggestionRow);
 
   return mergeEquivalentSuggestionRows(accountLikeSuggestionRows)
-    .filter((row) => !hasStrongerSameSourceEvidence(row, accountLikeSuggestionRows))
-    .map((row) => ({
-      fingerprint: createAccountSuggestionFingerprint(row.scope, row.value),
-      scope: row.scope,
-      value: row.value,
-      sourceFamily: row.sourceFamily,
-      evidenceType: row.evidenceType,
-      occurrences: row.occurrences,
-      confidenceScore: toConfidenceScore(row.evidenceType, row.occurrences),
-    }))
+    .flatMap((row) =>
+      hasStrongerSameSourceEvidence(row, accountLikeSuggestionRows)
+        ? []
+        : [
+            {
+              fingerprint: createAccountSuggestionFingerprint(row.scope, row.value),
+              scope: row.scope,
+              value: row.value,
+              sourceFamily: row.sourceFamily,
+              evidenceType: row.evidenceType,
+              occurrences: row.occurrences,
+              confidenceScore: toConfidenceScore(row.evidenceType, row.occurrences),
+            },
+          ]
+    )
     .sort(compareSuggestions);
 }

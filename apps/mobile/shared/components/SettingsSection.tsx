@@ -11,7 +11,7 @@ export function SettingsSection({ label, children }: SettingsSectionProps) {
     <View style={{ gap: 8 }}>
       <Text
         className="font-poppins-semibold text-tertiary dark:text-tertiary-dark"
-        style={{ fontSize: 11, letterSpacing: 0.5 }}
+        style={{ fontSize: 12, letterSpacing: 0.5 }}
       >
         {label}
       </Text>

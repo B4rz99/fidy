@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
 import type { AnyDb } from "@/shared/db/client";
 import { tryGetDb } from "@/shared/db/client";
@@ -59,13 +59,17 @@ export function useGoalCreateActions(form: GoalSheetFormModel) {
   const userId = useOptionalUserId();
   const { isBusy: isCreating, run: guardedCreate } = useAsyncGuard();
   const netMonthlySavings = goals[0]?.projection.netMonthlySavings ?? 0;
-  const fields = {
-    amount: form.amount,
-    goalType: form.goalType,
-    interestRate: form.interestRate,
-    name: form.name,
-    targetDate: form.targetDate,
-  } satisfies GoalMutationFields;
+  const fields = useMemo(
+    () =>
+      ({
+        amount: form.amount,
+        goalType: form.goalType,
+        interestRate: form.interestRate,
+        name: form.name,
+        targetDate: form.targetDate,
+      }) satisfies GoalMutationFields,
+    [form.amount, form.goalType, form.interestRate, form.name, form.targetDate]
+  );
 
   return {
     estimatedMonths: getEstimatedMonths(netMonthlySavings, fields.amount),

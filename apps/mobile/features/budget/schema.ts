@@ -11,7 +11,7 @@ import type {
 } from "@/shared/types/branded";
 
 // Month format: YYYY-MM (01–12 only)
-export const monthSchema = z
+const monthSchema = z
   .string()
   .regex(/^\d{4}-(0[1-9]|1[0-2])$/)
   .transform((value) => requireMonth(value));

@@ -14,10 +14,10 @@ import type {
 export const transactionTypeSchema = z.enum(["expense", "income"]);
 export type TransactionType = z.infer<typeof transactionTypeSchema>;
 
-export const accountAttributionStateSchema = z.enum(["confirmed", "inferred", "unresolved"]);
+const accountAttributionStateSchema = z.enum(["confirmed", "inferred", "unresolved"]);
 export type AccountAttributionState = z.infer<typeof accountAttributionStateSchema>;
 
-export const financialAccountIdSchema = z
+const financialAccountIdSchema = z
   .string()
   .trim()
   .min(1, "Account is required")

@@ -64,7 +64,7 @@ function beginEmailCaptureSession(set: EmailCaptureSetState): EmailCaptureAction
   return (userId) => set(createEmailCaptureState(userId));
 }
 
-export function createEmailCaptureActions(set: EmailCaptureSetState): EmailCaptureActions {
+function createEmailCaptureActions(set: EmailCaptureSetState): EmailCaptureActions {
   return {
     beginSession: beginEmailCaptureSession(set),
     setAccounts: (accounts) => set({ accounts: [...accounts] }),

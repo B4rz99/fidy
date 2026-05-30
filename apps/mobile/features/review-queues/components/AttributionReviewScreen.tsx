@@ -17,7 +17,7 @@ import { getFinancialAccountKindIcon } from "../lib/account-presentation";
 import { ActionButton, DetailRow, EmptyState, SummaryCard } from "./shared";
 
 export function AttributionReviewScreen() {
-  const router = useRouter();
+  const { push, replace, back } = useRouter();
   const { transactionId } = useLocalSearchParams<{ transactionId?: string }>();
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
@@ -42,11 +42,7 @@ export function AttributionReviewScreen() {
 
   if (hasLoadedQueue && reviewItem == null) {
     return (
-      <ScreenLayout
-        title={t("attributionReview.reviewTitle")}
-        variant="sub"
-        onBack={() => router.back()}
-      >
+      <ScreenLayout title={t("attributionReview.reviewTitle")} variant="sub" onBack={() => back()}>
         <EmptyState
           title={t("attributionReview.emptyTitle")}
           subtitle={t("attributionReview.emptySubtitle")}
@@ -83,7 +79,7 @@ export function AttributionReviewScreen() {
         }
 
         await refreshTransactions(db, userId);
-        router.replace("/attribution-review-queue" as never);
+        replace("/attribution-review-queue" as never);
       } catch {
         showErrorToast(t("attributionReview.errors.confirmFailed"));
       }
@@ -91,11 +87,7 @@ export function AttributionReviewScreen() {
   };
 
   return (
-    <ScreenLayout
-      title={t("attributionReview.reviewTitle")}
-      variant="sub"
-      onBack={() => router.back()}
-    >
+    <ScreenLayout title={t("attributionReview.reviewTitle")} variant="sub" onBack={() => back()}>
       <ScrollView
         contentContainerStyle={[styles.container, { paddingBottom: bottom + 28 }]}
         contentInsetAdjustmentBehavior="automatic"
@@ -147,7 +139,7 @@ export function AttributionReviewScreen() {
           <ActionButton
             label={t("attributionReview.createNew")}
             onPress={() =>
-              router.push({
+              push({
                 pathname: "/create-financial-account",
                 params: { fingerprint: reviewItem.suggestion.fingerprint },
               })
@@ -157,7 +149,7 @@ export function AttributionReviewScreen() {
           />
           <ActionButton
             label={t("attributionReview.skip")}
-            onPress={() => router.back()}
+            onPress={() => back()}
             variant="ghost"
             disabled={isBusy}
           />

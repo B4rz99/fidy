@@ -36,10 +36,7 @@ export const styles = StyleSheet.create({
     borderCurve: "continuous",
     padding: 16,
     gap: 14,
-    shadowColor: "#000000",
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 12 },
+    boxShadow: "0 12px 20px rgba(0,0,0,0.18)",
   },
   sectionTitleRow: {
     flexDirection: "row",

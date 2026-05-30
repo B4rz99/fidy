@@ -22,7 +22,7 @@ export const CategoryPill = memo(({ category, isSelected, onPress }: CategoryPil
 
   return (
     <Pressable
-      className="h-8 w-8 items-center justify-center rounded-full"
+      className="size-8 items-center justify-center rounded-full"
       style={{
         backgroundColor: isSelected ? category.color : peachLight,
       }}

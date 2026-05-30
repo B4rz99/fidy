@@ -7,7 +7,6 @@ export {
   cleanupExpiredChatSessions,
   createChatSession,
   deleteChatSession,
-  dismissExpiredChatBanner,
   initializeChatSession,
   loadChatSessions,
   selectChatSession,

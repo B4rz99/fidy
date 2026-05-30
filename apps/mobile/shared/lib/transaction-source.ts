@@ -5,7 +5,7 @@ import {
 
 export { TRANSACTION_SOURCES, type NormalizedTransactionSource };
 
-export const isTransactionSource = (source: string): source is NormalizedTransactionSource =>
+const isTransactionSource = (source: string): source is NormalizedTransactionSource =>
   TRANSACTION_SOURCES.includes(source as NormalizedTransactionSource);
 
 export const normalizeTransactionSource = (

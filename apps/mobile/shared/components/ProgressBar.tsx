@@ -1,9 +1,8 @@
-import { useEffect } from "react";
 import Animated, {
   type AnimatedStyle,
   Easing,
   useAnimatedStyle,
-  useSharedValue,
+  useDerivedValue,
   withRepeat,
   withSequence,
   withTiming,
@@ -30,31 +29,26 @@ export function ProgressBar({
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
   const borderColor = useThemeColor("borderSubtle");
-  const shimmerX = useSharedValue(-SHIMMER_WIDTH);
+  const shimmerTranslateX = useDerivedValue(() =>
+    shimmering
+      ? withRepeat(
+          withSequence(
+            withTiming(width + SHIMMER_WIDTH, {
+              duration: 1300,
+              easing: Easing.inOut(Easing.quad),
+            }),
+            withTiming(-SHIMMER_WIDTH, { duration: 0 })
+          ),
+          -1,
+          false
+        )
+      : -SHIMMER_WIDTH
+  );
 
   const { animatedStyle } = useAnimatedProgress(Math.min(percent, 100) / 100, 600);
 
-  useEffect(() => {
-    if (!shimmering) {
-      shimmerX.value = -SHIMMER_WIDTH;
-      return;
-    }
-
-    shimmerX.value = withRepeat(
-      withSequence(
-        withTiming(width + SHIMMER_WIDTH, {
-          duration: 1300,
-          easing: Easing.inOut(Easing.quad),
-        }),
-        withTiming(-SHIMMER_WIDTH, { duration: 0 })
-      ),
-      -1,
-      false
-    );
-  }, [shimmerX, shimmering, width]);
-
   const shimmerStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: shimmerX.value }],
+    transform: [{ translateX: shimmerTranslateX.value }],
   }));
 
   const barColor = percent >= 100 && completeTone === "danger" ? accentRed : accentGreen;
@@ -80,7 +74,7 @@ export function ProgressBar({
 
 const styles = StyleSheet.create({
   track: { borderRadius: 4, overflow: "hidden", position: "relative" },
-  fill: { borderRadius: 4 },
+  fill: { borderRadius: 4, transformOrigin: "left center", width: "100%" },
   shimmer: {
     backgroundColor: "rgba(255, 255, 255, 0.42)",
     borderRadius: 4,

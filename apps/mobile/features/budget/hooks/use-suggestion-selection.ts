@@ -8,7 +8,7 @@ export function useSuggestionSelection(autoSuggestions: readonly BudgetSuggestio
   const [amountOverrides, setAmountOverrides] = useState<Record<string, string>>({});
 
   const selectedIds = new Set(
-    autoSuggestions.filter((s) => !deselectedIds.has(s.categoryId)).map((s) => s.categoryId)
+    autoSuggestions.flatMap((s) => (deselectedIds.has(s.categoryId) ? [] : [s.categoryId]))
   );
 
   const editedAmounts = Object.fromEntries(
@@ -32,12 +32,10 @@ export function useSuggestionSelection(autoSuggestions: readonly BudgetSuggestio
 
   const buildBudgetMap = (): ReadonlyMap<CategoryId, CopAmount> =>
     new Map(
-      Array.from(selectedIds)
-        .map(
-          (categoryId) =>
-            [categoryId, parseDigitsToAmount(editedAmounts[categoryId] ?? "0")] as const
-        )
-        .filter(([, amount]) => amount > 0)
+      Array.from(selectedIds).flatMap((categoryId) => {
+        const amount = parseDigitsToAmount(editedAmounts[categoryId] ?? "0");
+        return amount > 0 ? ([[categoryId, amount]] as const) : [];
+      })
     );
 
   return { selectedIds, editedAmounts, handleToggle, handleAmountChange, buildBudgetMap };

@@ -15,7 +15,7 @@ type EmailBatchLike = {
 };
 
 const sortNewestFirst = (emails: readonly RawEmail[]): readonly RawEmail[] =>
-  [...emails].sort((left, right) => right.receivedAt.localeCompare(left.receivedAt));
+  emails.toSorted((left, right) => right.receivedAt.localeCompare(left.receivedAt));
 
 const newestReceivedAt = (result: EmailBatchLike) =>
   result.rawEmails.reduce(
@@ -28,7 +28,7 @@ const newestReceivedAt = (result: EmailBatchLike) =>
 export const sortFetchResultsByNewestEmail = <T extends EmailBatchLike>(
   fetchResults: readonly T[]
 ): readonly T[] =>
-  [...fetchResults].sort((left, right) =>
+  fetchResults.toSorted((left, right) =>
     newestReceivedAt(right).localeCompare(newestReceivedAt(left))
   );
 

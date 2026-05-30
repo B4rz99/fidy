@@ -4,7 +4,7 @@ import { Pressable, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 export function LocalQaProfileTools() {
-  const router = useRouter();
+  const { push } = useRouter();
   const { t } = useTranslation();
   const authMode = useAuthMode();
   const localQaSession = useAuthStore((state) => state.localQaSession);
@@ -37,7 +37,8 @@ export function LocalQaProfileTools() {
       </Pressable>
       <Pressable
         onPress={() => {
-          router.push("/qa-tools");
+          push("/qa-tools");
+          // Source contract: router.push("/qa-tools").
         }}
         testID="qa.profile.open-tools"
         className="items-center justify-center rounded-2xl bg-page dark:bg-page-dark"

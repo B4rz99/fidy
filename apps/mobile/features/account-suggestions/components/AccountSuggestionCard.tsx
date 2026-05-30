@@ -61,7 +61,7 @@ function AccountSuggestionCardInner({
       style={{ gap: 14, padding: 18 }}
     >
       <View className="flex-row items-start" style={{ gap: 12 }}>
-        <View className="h-11 w-11 items-center justify-center rounded-[14px] bg-accent-green-light dark:bg-accent-green-light-dark">
+        <View className="size-11 items-center justify-center rounded-[14px] bg-accent-green-light dark:bg-accent-green-light-dark">
           <AccountIcon size={20} color={accentGreen} />
         </View>
         <View className="flex-1" style={{ gap: 2 }}>

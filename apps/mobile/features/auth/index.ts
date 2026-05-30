@@ -3,7 +3,6 @@ export { GoogleIcon } from "./components/icons/GoogleIcon";
 export { MicrosoftIcon } from "./components/icons/MicrosoftIcon";
 export { OAuthButton } from "./components/OAuthButton";
 export {
-  useAccountCreatedAt,
   useAuthIdentity,
   useAuthMode,
   useEffectiveOnboardingComplete,

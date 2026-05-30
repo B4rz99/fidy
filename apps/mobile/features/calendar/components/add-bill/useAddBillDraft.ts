@@ -1,4 +1,3 @@
-import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useRef, useState } from "react";
 import { getBuiltInCategoryId, isValidCategoryId } from "@/shared/categories";
 import type { TextInput } from "@/shared/components/rn";
@@ -39,15 +38,6 @@ function resolveInitialDraft(existingBill: Bill | undefined): AddBillDraftState 
   };
 }
 
-function updateDraft<Field extends keyof AddBillDraftState>(
-  setDraft: Dispatch<SetStateAction<AddBillDraftState>>,
-  field: Field
-) {
-  return (value: AddBillDraftState[Field]) => {
-    setDraft((current) => ({ ...current, [field]: value }));
-  };
-}
-
 export function useAddBillDraft(existingBill: Bill | undefined): AddBillDraftController {
   const amountRef = useRef<TextInput>(null);
   const [draft, setDraft] = useState(() => resolveInitialDraft(existingBill));
@@ -56,10 +46,20 @@ export function useAddBillDraft(existingBill: Bill | undefined): AddBillDraftCon
     amountRef,
     draft,
     isEdit: Boolean(existingBill),
-    setAmount: useCallback(updateDraft(setDraft, "amount"), []),
-    setCategory: useCallback(updateDraft(setDraft, "category"), []),
-    setFrequency: useCallback(updateDraft(setDraft, "frequency"), []),
-    setName: useCallback(updateDraft(setDraft, "name"), []),
-    setStartDate: useCallback(updateDraft(setDraft, "startDate"), []),
+    setAmount: useCallback((amount) => {
+      setDraft((current) => ({ ...current, amount }));
+    }, []),
+    setCategory: useCallback((category) => {
+      setDraft((current) => ({ ...current, category }));
+    }, []),
+    setFrequency: useCallback((frequency) => {
+      setDraft((current) => ({ ...current, frequency }));
+    }, []),
+    setName: useCallback((name) => {
+      setDraft((current) => ({ ...current, name }));
+    }, []),
+    setStartDate: useCallback((startDate) => {
+      setDraft((current) => ({ ...current, startDate }));
+    }, []),
   };
 }

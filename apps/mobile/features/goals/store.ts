@@ -264,7 +264,7 @@ export async function addContribution(
     : true;
 }
 
-export async function deleteContribution(db: AnyDb, userId: UserId, id: string): Promise<boolean> {
+async function deleteContribution(db: AnyDb, userId: UserId, id: string): Promise<boolean> {
   const session: GoalSessionSnapshot = { userId, sessionId: goalsSessionId };
   const didDelete = await createGoalMutationService({ db, userId }).deleteContribution(id);
   if (!didDelete) return false;

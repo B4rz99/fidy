@@ -12,7 +12,7 @@ import {
 } from "./CreateBudgetScreen.helpers";
 
 export function CreateBudgetScreen() {
-  const router = useRouter();
+  const { back } = useRouter();
   const { budgetId } = useLocalSearchParams<{ budgetId?: string | string[] }>();
   const autoSuggestions = useBudgetStore((state) => state.autoSuggestions);
   const budgets = useBudgetStore((state) => state.budgets);
@@ -27,7 +27,7 @@ export function CreateBudgetScreen() {
     autoSuggestions,
     existingBudget,
     existingCategoryIds,
-    onDone: () => router.back(),
+    onDone: () => back(),
   };
 
   if (!userId) {

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { ChevronRight } from "@/shared/components/icons";
-import { Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { useAiSupportTextColor } from "./use-ai-support-text-color";
 
@@ -61,17 +61,7 @@ export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
             key={suggestion}
             onPress={() => onSelect(suggestion)}
             className="bg-card/80 dark:bg-card-dark/80"
-            style={{
-              borderRadius: 18,
-              borderWidth: 1,
-              borderColor: borderSubtle,
-              paddingVertical: 14,
-              paddingHorizontal: 16,
-              alignItems: "center",
-              flexDirection: "row",
-              justifyContent: "center",
-              gap: 10,
-            }}
+            style={[styles.suggestionButton, { borderColor: borderSubtle }]}
           >
             <Text
               className="font-poppins-semibold text-label text-primary dark:text-primary-dark"
@@ -86,3 +76,16 @@ export function StarterSuggestions({ onSelect }: StarterSuggestionsProps) {
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  suggestionButton: {
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 10,
+  },
+});
