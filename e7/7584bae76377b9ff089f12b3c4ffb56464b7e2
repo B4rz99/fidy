@@ -1,0 +1,72 @@
+apps/mobile/features/goals/components/goal-detail/GoalDetailContributionsTab.tsx
+  s_c28e4b6a18333c::t_43bec0bb9399ca 1
+  s_c28e4b6a18333c::t_836dbf8d40e470 23-26
+apps/mobile/features/onboarding/components/SyncProgressStep.tsx
+  s_c28e4b6a18333c::t_1c4fc765248ad1 13-14,277-278,289
+apps/mobile/features/qa/components/qa-tools/QaToolsContent.tsx
+  s_c28e4b6a18333c::t_b19ebed28813ad 2,174-175,177
+  s_c28e4b6a18333c::t_84f7ff9052cd38 3
+apps/mobile/features/financial-accounts/components/FinancialAccountIdentifierSheet.tsx
+  s_c28e4b6a18333c::t_84f7ff9052cd38 9
+  s_c28e4b6a18333c::t_927bef72d89891 8,115-116,119-120
+apps/mobile/features/transactions/components/transaction-form/TransactionActionSection.tsx
+  s_c28e4b6a18333c::t_927bef72d89891 1-2,33,35-38,42,47,49-52,56,58,60-61,64,67
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_20a3b3d5fea66b::t_135ac19cda70ac 60-64,75-77,252,290-292,299-300,339,362,377
+  s_c28e4b6a18333c::t_24371a476f9a56 253-289,293-298,301-338,340-361,363-376
+apps/mobile/features/categories/components/CategoriesScreen.tsx
+  s_c28e4b6a18333c::t_836dbf8d40e470 81-84
+  s_c28e4b6a18333c::t_cf3d49508314c3 4-13,34-38,99-104
+apps/mobile/features/budget/components/create-budget/CreateBudgetFormContent.tsx
+  s_c28e4b6a18333c::t_b19ebed28813ad 6-7,129-130,133-134,137-139,142
+apps/mobile/features/onboarding/components/CompleteStep.tsx
+  s_c28e4b6a18333c::t_1c4fc765248ad1 4-5,41-42,46-47
+apps/mobile/features/goals/components/AddPaymentSheet.tsx
+  s_c28e4b6a18333c::t_b19ebed28813ad 10,165-166,171-172
+apps/mobile/features/onboarding/components/WelcomeStep.tsx
+  s_c28e4b6a18333c::t_1c4fc765248ad1 1,29
+apps/mobile/features/goals/components/GoalCard.tsx
+  s_c28e4b6a18333c::t_b19ebed28813ad 2,155-158,160-167
+apps/mobile/features/transfers/components/transfer-form/TransferFormContent.tsx
+  s_c28e4b6a18333c::t_b19ebed28813ad 3,123,125,128,132
+apps/mobile/features/financial-accounts/components/FinancialAccountFormScreen.tsx
+  s_c28e4b6a18333c::t_b19ebed28813ad 10-11,48-50,52
+apps/mobile/features/calendar/components/add-bill/AddBillFormContent.tsx
+  s_c28e4b6a18333c::t_b19ebed28813ad 5,185-186,189-190
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx
+  s_c28e4b6a18333c::t_b19ebed28813ad 5,277,283-284
+  s_c28e4b6a18333c::t_6bafeaca196537 278-280
+apps/mobile/features/onboarding/components/BudgetSetupStep.tsx
+  s_c28e4b6a18333c::t_43bec0bb9399ca 10,95,118,152-153,155,169
+  s_c28e4b6a18333c::t_836dbf8d40e470 154
+  s_c28e4b6a18333c::t_1c4fc765248ad1 160-161,166-167
+apps/mobile/features/budget/components/UpcomingBillsSection.tsx
+  s_c28e4b6a18333c::t_43bec0bb9399ca 5,78
+  s_c28e4b6a18333c::t_836dbf8d40e470 56-59
+apps/mobile/features/goals/components/goal-sheet/GoalSheetActionButton.tsx
+  s_c28e4b6a18333c::t_927bef72d89891 1,19-22,25-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "e77584bae76377b9ff089f12b3c4ffb56464b7e2",
+  "prompts": {},
+  "sessions": {
+    "s_20a3b3d5fea66b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e771e-c9c1-7350-8451-3ed317fa1d16",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    },
+    "s_c28e4b6a18333c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7954-1927-74c1-a3ad-10c9d20e288b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
