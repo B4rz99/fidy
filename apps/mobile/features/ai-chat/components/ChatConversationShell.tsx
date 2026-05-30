@@ -160,7 +160,7 @@ export function ChatConversationShell({
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: bottomInset,
+            paddingBottom: 12,
           }}
           contentInset={{ bottom: bottomInset }}
           contentInsetAdjustmentBehavior="automatic"
