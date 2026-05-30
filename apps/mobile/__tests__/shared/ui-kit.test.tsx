@@ -105,10 +105,7 @@ describe("shared UI kit", () => {
 
   it("keeps account suggestion cards composed from shared primitives", () => {
     const source = readFileSync(
-      resolve(
-        __dirname,
-        "../../features/account-suggestions/components/AccountSuggestionCard.tsx"
-      ),
+      resolve(__dirname, "../../features/account-suggestions/components/AccountSuggestionCard.tsx"),
       "utf-8"
     );
 
