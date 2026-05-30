@@ -1,0 +1,34 @@
+package.json
+  s_989e2ff2f9c357::t_09fe777b507e06 65,68-70,73-92
+bun.lock
+  ai_agent 126,129-131,345,347,349,351,353,355,357,359,361,363,365,367,369,371,373,375,377,379,381,383,385,387,389,391,393,903,905,907,909,911,913,915,917,919,921,923,925,927,929,931,933,1157,1295,1509,1707,1847,2057,2197,2315,2367,2479,2767,2813,2831,2879,3021,3133,3179,3201-3202,3237,3285,3289,3447,3449,3455,3577,3627,3665,3669,3671
+apps/landing/waitlist.js
+  s_989e2ff2f9c357::t_4ec14782ca4f9e 14
+.github/workflows/ci.yml
+  s_989e2ff2f9c357::t_71dd4a65c01222 102-103,119-126,137-142
+apps/landing/es/index.html
+  s_989e2ff2f9c357::t_b3323668e2ca66 40
+apps/landing/en/index.html
+  s_989e2ff2f9c357::t_315934ec37a675 40
+apps/landing/api/waitlist.js
+  s_989e2ff2f9c357::t_21a07b5f3c9e3f 4-8,17,55,58-59
+  s_989e2ff2f9c357::t_d058a8ecd0f5fd 54
+  s_989e2ff2f9c357::t_dc34af9fb47514 9,13-14,16,21-22,24-25,33,35-52
+  s_989e2ff2f9c357::t_90f4066792aa51 1-3,10-12,15,18-20,23,26-32,34,53,56-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "092ef80681d2c2beb45f75e4f246635a5a88c325",
+  "prompts": {},
+  "sessions": {
+    "s_989e2ff2f9c357": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7aa0-0e26-70f3-b8d5-d715fafb49a6",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
