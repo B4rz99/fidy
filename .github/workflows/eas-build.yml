@@ -25,27 +25,68 @@ jobs:
     name: EAS Build (${{ inputs.platform }} / ${{ inputs.profile }})
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: "1.3.13"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 26.1.0
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile --minimum-release-age=0
+        run: bun install --frozen-lockfile
 
-      - uses: expo/expo-github-action@v8
+      - uses: expo/expo-github-action@c7b66a9c327a43a8fa7c0158e7f30d6040d2481e # v8
         with:
-          eas-version: latest
+          eas-version: 20.0.0
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build
+        id: build
         working-directory: apps/mobile
         env:
           EAS_PLATFORM: ${{ inputs.platform }}
           EAS_PROFILE: ${{ inputs.profile }}
-        run: eas build --platform "$EAS_PLATFORM" --profile "$EAS_PROFILE" --non-interactive
+        run: |
+          eas build \
+            --platform "$EAS_PLATFORM" \
+            --profile "$EAS_PROFILE" \
+            --wait \
+            --json \
+            --non-interactive > eas-build-result.json
+          cat eas-build-result.json
+
+      - name: Download Android artifact for MAST
+        if: ${{ inputs.platform == 'android' || inputs.platform == 'all' }}
+        working-directory: apps/mobile
+        run: |
+          android_build_id="$(
+            jq -r '
+              if type == "array" then . else [.] end
+              | map(select((.platform // "" | ascii_downcase) == "android"))
+              | .[0].id // empty
+            ' eas-build-result.json
+          )"
+
+          if [ -z "$android_build_id" ]; then
+            echo "No Android build id found in EAS build result." >&2
+            exit 1
+          fi
+
+          eas build:download --build-id "$android_build_id" --non-interactive
+          apk_path="$(find . -maxdepth 2 -type f -name "*.apk" | head -n 1)"
+
+          if [ -z "$apk_path" ]; then
+            echo "MAST requires an Android APK artifact, but no .apk was downloaded." >&2
+            echo "Use an internal/distribution APK build profile or set android.buildType to apk for the profile being scanned." >&2
+            exit 1
+          fi
+
+          echo "apk_path=$apk_path" >> "$GITHUB_ENV"
+
+      - name: Fluid Attacks MAST
+        if: ${{ inputs.platform == 'android' || inputs.platform == 'all' }}
+        working-directory: apps/mobile
+        run: docker run --rm -v "$PWD:/src" docker.io/fluidattacks/mast:latest mast --strict scan "/src/${apk_path#./}"

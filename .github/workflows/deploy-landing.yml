@@ -12,7 +12,7 @@ jobs:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Install Vercel CLI
         run: npm i -g vercel
@@ -25,8 +25,15 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Deploy to production
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+        id: deploy
+        run: |
+          deployment_url="$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} | tail -n 1)"
+          echo "url=$deployment_url" >> "$GITHUB_OUTPUT"
+          echo "$deployment_url"
         working-directory: apps/landing
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Fluid Attacks DAST
+        run: docker run --rm docker.io/fluidattacks/dast:latest dast --strict scan "${{ steps.deploy.outputs.url }}"
