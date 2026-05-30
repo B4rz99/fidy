@@ -2,7 +2,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button } from "@/shared/components/Button";
+import { Button } from "@/shared/components";
 import { X } from "@/shared/components/icons";
 import {
   Keyboard,

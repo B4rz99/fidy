@@ -2,8 +2,7 @@ import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TransactionDatePickerSheet } from "@/features/transactions/display.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
-import { AppAuroraBackground, Button } from "@/shared/components";
-import { SelectableChipRow } from "@/shared/components/SelectableChipRow";
+import { AppAuroraBackground, Button, SelectableChipRow } from "@/shared/components";
 import {
   KeyboardAvoidingView,
   Pressable,

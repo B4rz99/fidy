@@ -486,7 +486,6 @@ describe("shared UI kit", () => {
       expect(source).not.toContain("styles.emptyText");
     });
   });
-
   it("keeps repeated selectors on shared selection primitives", () => {
     const files = [
       "../../features/analytics/components/PeriodSelector.tsx",
