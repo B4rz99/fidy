@@ -38,13 +38,33 @@ export function Chip({
   className,
   ...viewProps
 }: ChipProps) {
+  const {
+    accessibilityHint,
+    accessibilityLabel,
+    accessibilityRole,
+    accessibilityState,
+    accessible,
+    importantForAccessibility,
+    testID,
+    ...containerProps
+  } = viewProps;
+  const pressableProps = {
+    accessibilityHint,
+    accessibilityLabel,
+    accessibilityRole,
+    accessibilityState,
+    accessible,
+    importantForAccessibility,
+    testID,
+  };
+  const contentProps = onPress == null ? viewProps : containerProps;
   const contentClassName = `h-8 flex-row items-center justify-center rounded-full px-3 ${
     CHIP_CLASS_NAMES[tone]
   } ${selected ? "border border-border-strong dark:border-border-strong-dark" : ""} ${
     className ?? ""
   }`;
   const content = (
-    <View {...viewProps} className={contentClassName} style={[{ gap: 6 }, viewProps.style]}>
+    <View {...contentProps} className={contentClassName} style={[{ gap: 6 }, contentProps.style]}>
       {leading}
       <Text className={`font-poppins-medium text-caption ${LABEL_CLASS_NAMES[tone]}`}>{label}</Text>
     </View>
@@ -54,5 +74,9 @@ export function Chip({
     return content;
   }
 
-  return <Pressable onPress={onPress}>{content}</Pressable>;
+  return (
+    <Pressable {...pressableProps} onPress={onPress}>
+      {content}
+    </Pressable>
+  );
 }

@@ -62,7 +62,9 @@ export function Button({
       } ${className ?? ""}`}
     >
       {loading ? (
-        <ActivityIndicator color={variant === "secondary" ? undefined : onAccent} />
+        <ActivityIndicator
+          color={variant === "secondary" || variant === "ghost" ? undefined : onAccent}
+        />
       ) : (
         icon
       )}

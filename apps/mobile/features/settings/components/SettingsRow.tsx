@@ -40,7 +40,7 @@ export function SettingsRow({
       <ChevronRight size={18} color={tertiaryColor} />
     ) : accessory === "switch" ? (
       <Switch
-        value={switchValue}
+        value={switchValue ?? false}
         onValueChange={onSwitchChange}
         trackColor={{ true: accentGreen }}
       />

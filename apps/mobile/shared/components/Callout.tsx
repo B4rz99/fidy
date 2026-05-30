@@ -32,13 +32,33 @@ export function Callout({
   className,
   ...viewProps
 }: CalloutProps) {
+  const {
+    accessibilityHint,
+    accessibilityLabel,
+    accessibilityRole,
+    accessibilityState,
+    accessible,
+    importantForAccessibility,
+    testID,
+    ...containerProps
+  } = viewProps;
+  const pressableProps = {
+    accessibilityHint,
+    accessibilityLabel,
+    accessibilityRole,
+    accessibilityState,
+    accessible,
+    importantForAccessibility,
+    testID,
+  };
+  const contentProps = onPress == null ? viewProps : containerProps;
   const content = (
     <View
-      {...viewProps}
+      {...contentProps}
       className={`flex-row items-start rounded-chart px-4 py-4 ${CALLOUT_CLASS_NAMES[tone]} ${
         className ?? ""
       }`}
-      style={[{ gap: 12 }, viewProps.style]}
+      style={[{ gap: 12 }, contentProps.style]}
     >
       {icon}
       <View className="flex-1" style={{ gap: 2 }}>
@@ -59,5 +79,9 @@ export function Callout({
     return content;
   }
 
-  return <Pressable onPress={onPress}>{content}</Pressable>;
+  return (
+    <Pressable {...pressableProps} onPress={onPress}>
+      {content}
+    </Pressable>
+  );
 }

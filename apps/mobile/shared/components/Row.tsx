@@ -84,7 +84,12 @@ export function Row({
   }
 
   return (
-    <Pressable onPress={onPress} disabled={disabled}>
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+    >
       {content}
     </Pressable>
   );
