@@ -34,13 +34,24 @@ export function Row({
   style,
   ...viewProps
 }: RowProps) {
+  const {
+    accessibilityHint,
+    accessibilityLabel,
+    accessibilityRole,
+    accessibilityState,
+    accessible,
+    importantForAccessibility,
+    testID,
+    ...containerProps
+  } = viewProps;
+  const contentProps = onPress == null ? viewProps : containerProps;
   const borderColor = useThemeColor("borderSubtle");
   const titleColorClassName = destructive
     ? "text-danger dark:text-danger-dark"
     : "text-text-primary dark:text-text-primary-dark";
   const content = (
     <View
-      {...viewProps}
+      {...contentProps}
       className={`flex-row items-center px-4 py-3 ${disabled ? "opacity-50" : ""} ${
         className ?? ""
       }`}
@@ -87,8 +98,13 @@ export function Row({
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
+      accessibilityHint={accessibilityHint}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole={accessibilityRole ?? "button"}
+      accessibilityState={{ ...accessibilityState, disabled }}
+      accessible={accessible}
+      importantForAccessibility={importantForAccessibility}
+      testID={testID}
     >
       {content}
     </Pressable>

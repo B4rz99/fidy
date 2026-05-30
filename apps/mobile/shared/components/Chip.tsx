@@ -52,7 +52,7 @@ export function Chip({
     accessibilityHint,
     accessibilityLabel,
     accessibilityRole,
-    accessibilityState,
+    accessibilityState: { ...accessibilityState, selected },
     accessible,
     importantForAccessibility,
     testID,
