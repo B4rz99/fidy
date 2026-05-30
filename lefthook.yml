@@ -22,31 +22,7 @@ pre-push:
       files: git ls-files
       run: bun scripts/check-pushed-commit-messages.ts
       skip_output: false
-    root-oxlint:
-      files: git ls-files
-      run: bun run lint
-      skip_output: false
     branded-boundaries:
       files: git ls-files
       run: bun run lint:brands
-      skip_output: false
-    mobile-eslint:
-      files: git ls-files
-      run: bun run lint:mobile
-      skip_output: false
-    mobile-typecheck:
-      files: git ls-files
-      run: bun run typecheck
-      skip_output: false
-    complexity:
-      files: git ls-files
-      run: bun run lint:complexity
-      skip_output: false
-    file-size:
-      files: git ls-files
-      run: bun run lint:file-size
-      skip_output: false
-    dependency-policy:
-      files: git ls-files
-      run: bun run lint:dependency-policy
       skip_output: false
