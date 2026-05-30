@@ -14,17 +14,18 @@ type ButtonProps = Omit<PressableProps, "children"> & {
 };
 
 const CONTAINER_CLASS_NAMES: Record<ButtonVariant, string> = {
-  primary: "bg-accent-green dark:bg-accent-green-dark",
-  secondary: "bg-card dark:bg-card-dark border border-border-subtle dark:border-border-subtle-dark",
-  danger: "bg-accent-red dark:bg-accent-red-dark",
+  primary: "bg-action-primary dark:bg-action-primary-dark",
+  secondary:
+    "bg-surface dark:bg-surface-dark border border-border-subtle dark:border-border-subtle-dark",
+  danger: "bg-danger dark:bg-danger-dark",
   ghost: "bg-transparent",
 };
 
 const LABEL_CLASS_NAMES: Record<ButtonVariant, string> = {
-  primary: "text-white dark:text-page-dark",
-  secondary: "text-primary dark:text-primary-dark",
+  primary: "text-text-on-accent dark:text-text-on-accent-dark",
+  secondary: "text-text-primary dark:text-text-primary-dark",
   danger: "text-white",
-  ghost: "text-primary dark:text-primary-dark",
+  ghost: "text-text-primary dark:text-text-primary-dark",
 };
 
 export function Button({
