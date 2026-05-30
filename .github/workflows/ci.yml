@@ -99,8 +99,8 @@ jobs:
       - name: Run tests with coverage
         run: bun run test:coverage
 
-  security-sast:
-    name: SAST/SCA/Secrets
+  security-secrets:
+    name: Secrets
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -116,6 +116,14 @@ jobs:
         uses: trufflesecurity/trufflehog@041f07e9df901a1038a528e5525b0226d04dd5ea # v3.93.6
         with:
           extra_args: --only-verified
+      - name: Fluid Attacks secret scan
+        run: docker run --rm -v "$PWD:/src" docker.io/fluidattacks/ss:latest ss scan --strict /src
+
+  security-sast:
+    name: SAST
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Semgrep SAST
         uses: semgrep/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d # v1
         with:
@@ -126,7 +134,11 @@ jobs:
             p/secrets
       - name: Fluid Attacks SAST
         run: docker run --rm -v "$PWD:/src" docker.io/fluidattacks/sast:latest sast --strict scan /src
+
+  security-sca:
+    name: SCA
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Fluid Attacks SCA
         run: docker run --rm -v "$PWD:/src" docker.io/fluidattacks/sca:latest sca --strict scan /src
-      - name: Fluid Attacks secret scan
-        run: docker run --rm -v "$PWD:/src" docker.io/fluidattacks/ss:latest ss scan --strict /src

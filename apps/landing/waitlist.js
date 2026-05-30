@@ -1,8 +1,4 @@
 (() => {
-  var supabaseUrl = "https://rwnewsjvphqqzhdunwll.supabase.co";
-  var anonKey =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3bmV3c2p2cGhxcXpoZHVud2xsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzODA5MzIsImV4cCI6MjA4Nzk1NjkzMn0.wmPXL_GUjz_lO7ft4hLZQNwHtJSSgBMhGXALZubn9zE";
-
   var form = document.querySelector(".waitlist-form");
   var locale = form.getAttribute("data-locale");
   var msgSuccess = form.getAttribute("data-msg-success");
@@ -15,15 +11,10 @@
     var btn = form.querySelector('button[type="submit"]');
     btn.disabled = true;
 
-    fetch(`${supabaseUrl}/rest/v1/waitlist_emails`, {
+    fetch("/api/waitlist", {
       method: "POST",
       headers: {
-        apikey: anonKey,
-        // biome-ignore lint/style/useNamingConvention: HTTP header
-        Authorization: `Bearer ${anonKey}`,
         "Content-Type": "application/json",
-        // biome-ignore lint/style/useNamingConvention: HTTP header
-        Prefer: "return=minimal",
       },
       body: JSON.stringify({ email: email, locale: locale }),
     })
