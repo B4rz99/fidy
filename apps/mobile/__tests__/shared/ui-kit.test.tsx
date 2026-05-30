@@ -218,7 +218,6 @@ describe("shared UI kit", () => {
     expect(accountPromptSource).toContain("<Callout");
     expect(accountPromptSource).not.toContain("StyleSheet");
   });
-
   it("keeps review queue helpers composed from shared primitives", () => {
     const source = readFileSync(
       resolve(__dirname, "../../features/review-queues/components/shared.tsx"),
