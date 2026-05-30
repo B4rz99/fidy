@@ -17,6 +17,17 @@
       },
       {
         "files": [
+          "apps/mobile/app/connected-accounts.tsx",
+          "app/connected-accounts.tsx",
+          "apps/mobile/features/ai-chat/components/ChatConversationShell.tsx",
+          "features/ai-chat/components/ChatConversationShell.tsx",
+          "apps/mobile/features/settings/components/NotificationPreferencesScreen.tsx",
+          "features/settings/components/NotificationPreferencesScreen.tsx"
+        ],
+        "rules": ["react-doctor/rn-scrollview-dynamic-padding"]
+      },
+      {
+        "files": [
           "apps/mobile/shared/hooks/use-subscription.ts",
           "shared/hooks/use-subscription.ts",
           "apps/mobile/shared/hooks/use-mount-effect.ts",
