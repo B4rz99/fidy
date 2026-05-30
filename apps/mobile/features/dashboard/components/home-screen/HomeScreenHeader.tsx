@@ -52,15 +52,19 @@ export function HomeScreenHeader({
               void connectEmailAccount(db, userId, provider, clientId);
             }}
           />
-          <NeedsReviewBanner onPress={() => push("/needs-review" as never)} />
-          <AttributionReviewBanner onPress={() => push("/attribution-review-queue" as never)} />
+        </>
+      ) : null}
+      <NeedsReviewBanner onPress={() => push("/needs-review" as never)} />
+      <AttributionReviewBanner onPress={() => push("/attribution-review-queue" as never)} />
+      {Platform.OS === "ios" ? (
+        <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
+      ) : null}
+      {showSetupBanners ? (
+        <>
           <AccountSuggestionsPromptBanner
             count={suggestions.length}
             onPress={() => push("/account-suggestions" as never)}
           />
-          {Platform.OS === "ios" ? (
-            <DetectedTransactionsBanner onPress={() => push("/connected-accounts" as never)} />
-          ) : null}
         </>
       ) : null}
       <HomeSpendingCard

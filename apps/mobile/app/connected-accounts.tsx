@@ -11,9 +11,9 @@ import {
   getOutlookClientId,
   useEmailCaptureStore,
 } from "@/features/email-capture";
-import { ScreenLayout } from "@/shared/components";
+import { Button, Card, ScreenLayout } from "@/shared/components";
 import { Mail } from "@/shared/components/icons";
-import { Platform, Pressable, ScrollView, Text, View } from "@/shared/components/rn";
+import { Platform, ScrollView, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { usePulsingOpacity, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
@@ -111,7 +111,7 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
     })();
 
     return (
-      <View className="rounded-chart bg-card p-5 dark:bg-card-dark" style={{ gap: 14 }}>
+      <Card padded={false} className="rounded-chart" style={{ gap: 14, padding: 20 }}>
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center" style={{ gap: 12 }}>
             <Animated.View
@@ -139,21 +139,19 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
           {syncStatusText}
         </Text>
 
-        <Pressable
+        <Button
+          label={t("connectedAccounts.disconnect")}
           onPress={onDisconnect}
-          className="h-10 items-center justify-center rounded-[10px]"
-          style={{ borderWidth: 1, borderColor: "#D45B5B33" }}
-        >
-          <Text className="font-poppins-medium text-label text-accent-red dark:text-accent-red-dark">
-            {t("connectedAccounts.disconnect")}
-          </Text>
-        </Pressable>
-      </View>
+          variant="dangerSecondary"
+          size="compact"
+          className="h-10 rounded-[10px]"
+        />
+      </Card>
     );
   }
 
   return (
-    <View className="rounded-chart bg-card p-5 dark:bg-card-dark" style={{ gap: 14 }}>
+    <Card padded={false} className="rounded-chart" style={{ gap: 14, padding: 20 }}>
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center" style={{ gap: 12 }}>
           <View
@@ -174,16 +172,13 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
         {t("connectedAccounts.connectDescription", { provider })}
       </Text>
 
-      <Pressable
+      <Button
+        label={t("connectedAccounts.connectProvider", { provider })}
         onPress={onConnect}
-        className="h-11 flex-row items-center justify-center rounded-icon bg-peach-btn dark:bg-peach-btn-dark"
-        style={{ gap: 8 }}
-      >
-        <Mail size={18} color={iconColor} />
-        <Text className="font-poppins-semibold text-body text-primary dark:text-primary-dark">
-          {t("connectedAccounts.connectProvider", { provider })}
-        </Text>
-      </Pressable>
-    </View>
+        variant="secondary"
+        icon={<Mail size={18} color={iconColor} />}
+        className="h-11 rounded-icon bg-peach-btn dark:bg-peach-btn-dark"
+      />
+    </Card>
   );
 }

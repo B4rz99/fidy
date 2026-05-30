@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { useAuthMode, useAuthStore } from "@/features/auth/public";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Button, Card } from "@/shared/components";
+import { Text } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 
 export function LocalQaProfileTools() {
@@ -13,53 +14,41 @@ export function LocalQaProfileTools() {
   if (authMode !== "local-qa") return null;
 
   return (
-    <View
-      className="w-full rounded-2xl bg-card dark:bg-card-dark"
-      style={{ gap: 12, padding: 16, borderWidth: 1, borderColor }}
-    >
+    <Card className="w-full" style={{ gap: 12, borderWidth: 1, borderColor }}>
       <Text className="font-poppins-semibold text-sm text-primary dark:text-primary-dark">
         {t("settings.localQaTitle")}
       </Text>
       <Text className="font-poppins text-xs text-secondary dark:text-secondary-dark">
         {t("settings.localQaDescription")}
       </Text>
-      <Pressable
+      <Button
+        label={t("settings.localQaReset")}
         onPress={() => {
           void useAuthStore.getState().startLocalQaSession(localQaSession?.profile ?? "default");
         }}
         testID="qa.profile.reset-local-qa"
-        className="items-center justify-center rounded-2xl bg-page dark:bg-page-dark"
-        style={{ height: 44 }}
-      >
-        <Text className="font-poppins-semibold text-sm text-primary dark:text-primary-dark">
-          {t("settings.localQaReset")}
-        </Text>
-      </Pressable>
-      <Pressable
+        variant="secondary"
+        className="h-11 rounded-2xl bg-page dark:bg-page-dark"
+      />
+      <Button
+        label={t("settings.localQaOpenTools")}
         onPress={() => {
           push("/qa-tools");
           // Source contract: router.push("/qa-tools").
         }}
         testID="qa.profile.open-tools"
-        className="items-center justify-center rounded-2xl bg-page dark:bg-page-dark"
-        style={{ height: 44 }}
-      >
-        <Text className="font-poppins-semibold text-sm text-primary dark:text-primary-dark">
-          {t("settings.localQaOpenTools")}
-        </Text>
-      </Pressable>
-      <Pressable
+        variant="secondary"
+        className="h-11 rounded-2xl bg-page dark:bg-page-dark"
+      />
+      <Button
+        label={t("settings.localQaExit")}
         onPress={() => {
           void useAuthStore.getState().signOut();
         }}
         testID="qa.profile.exit-local-qa"
-        className="items-center justify-center rounded-2xl bg-page dark:bg-page-dark"
-        style={{ height: 44 }}
-      >
-        <Text className="font-poppins-semibold text-sm text-primary dark:text-primary-dark">
-          {t("settings.localQaExit")}
-        </Text>
-      </Pressable>
-    </View>
+        variant="secondary"
+        className="h-11 rounded-2xl bg-page dark:bg-page-dark"
+      />
+    </Card>
   );
 }

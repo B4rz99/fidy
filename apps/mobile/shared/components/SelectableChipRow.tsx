@@ -37,11 +37,7 @@ export function SelectableChipRow<TValue extends string>({
   ...viewProps
 }: SelectableChipRowProps<TValue>) {
   return (
-    <View
-      {...viewProps}
-      className={`flex-row flex-wrap ${className ?? ""}`}
-      style={[{ gap: 8 }, style]}
-    >
+    <View {...viewProps} className={`flex-row ${className ?? ""}`} style={[{ gap: 8 }, style]}>
       {options.map((option) => {
         const selected = option.value === value;
 
