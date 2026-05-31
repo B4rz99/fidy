@@ -25,19 +25,18 @@ const submitSource = readSource(
   "../../features/budget/components/create-budget/useCreateBudgetSubmit.ts"
 );
 
-test("create-budget is registered in root layout as a dialog modal", () => {
+test("create-budget is registered in root layout as a full screen route", () => {
   expect(layoutSource).toContain('"create-budget"');
-  expect(routeSource).toContain("DialogRouteFrame");
+  expect(routeSource).not.toContain("DialogRouteFrame");
+  expect(routeSource).toContain("CreateBudgetScreen");
   const createBudgetBlock = layoutSource.slice(layoutSource.indexOf('name="create-budget"'));
-  expect(createBudgetBlock.slice(0, 140)).toContain("DIALOG_MODAL");
+  expect(createBudgetBlock.slice(0, 140)).toContain("fullScreenHeaderOptions");
   expect(layoutSource).not.toContain("formSheet");
 });
 
-test("auto-suggest budgets keeps the scroll view bounded inside the dialog", () => {
-  expect(autoSuggestBudgetsSource).toContain("style={styles.flex}");
-  expect(autoSuggestBudgetsSource).toContain(
-    "style={[styles.container, { backgroundColor: cardBg }]}"
-  );
+test("auto-suggest budgets keeps the scroll view bounded inside the full screen route", () => {
+  expect(autoSuggestBudgetsSource).toContain("style={[styles.flex, { backgroundColor: cardBg }]}");
+  expect(autoSuggestBudgetsSource).toContain("style={styles.container}");
   expect(autoSuggestBudgetsSource).toContain("flex: { flex: 1 }");
   expect(autoSuggestBudgetsSource).toContain("container: { flex: 1 }");
 });
