@@ -49,7 +49,7 @@ export function BudgetAlertBanner({ alert, onDismiss }: Props) {
       }
       icon={
         <View
-          className="h-8 w-8 items-center justify-center rounded-full"
+          className="size-8 items-center justify-center rounded-full"
           style={{
             backgroundColor: circleBg,
           }}

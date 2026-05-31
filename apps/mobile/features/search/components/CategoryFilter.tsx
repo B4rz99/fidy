@@ -31,7 +31,7 @@ const CategoryFilterPill = memo(
 
     return (
       <SharedFilterPill
-        className="h-11 w-11 px-0"
+        className="size-11 px-0"
         onPress={handlePress}
         selected={isSelected}
         accessibilityLabel={getCategoryLabel(category, locale)}

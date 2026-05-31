@@ -25,7 +25,7 @@ describe("BudgetAlertBanner structure", () => {
   });
 
   it("uses 32x32 icon circle", () => {
-    expect(src).toMatch(/width.*32|height.*32|h-8 w-8/);
+    expect(src).toMatch(/width.*32|height.*32|h-8 w-8|size-8/);
   });
 
   it("no longer uses TriangleAlert icon", () => {

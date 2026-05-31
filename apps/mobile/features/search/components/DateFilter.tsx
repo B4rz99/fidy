@@ -82,9 +82,9 @@ export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps)
               selected={isActive}
               selectedColor="#2F7D32"
               className="h-8 px-2"
-              style={[preset.key === "lastMonth" ? { flex: 1.35 } : { flex: 1 }]}
+              style={preset.key === "lastMonth" ? { flex: 1.35 } : { flex: 1 }}
               onPress={() => handlePreset(preset.key)}
-              labelClassName="text-[11px]"
+              labelClassName="text-[12px]"
             />
           );
         })}

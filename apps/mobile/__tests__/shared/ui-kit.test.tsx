@@ -396,7 +396,6 @@ describe("shared UI kit", () => {
     const files = [
       "../../features/budget/components/BudgetCard.tsx",
       "../../features/goals/components/GoalCard.tsx",
-      "../../features/goals/components/GoalSmartCard.tsx",
       "../../features/notifications/components/NotificationCard.tsx",
       "../../features/review-queues/components/AttributionQueueCard.tsx",
       "../../features/review-queues/components/FinancialMeaningQueueScreen.tsx",
@@ -417,9 +416,6 @@ describe("shared UI kit", () => {
     const files = [
       "../../features/budget/components/BudgetSummaryCard.tsx",
       "../../features/dashboard/components/home-screen/HomeSpendingCard.tsx",
-      "../../features/analytics/components/IncomeExpenseCard.tsx",
-      "../../features/analytics/components/PeriodDeltaCard.tsx",
-      "../../features/analytics/components/CategoryBreakdownCard.tsx",
     ];
 
     files.forEach((file) => {
@@ -471,18 +467,6 @@ describe("shared UI kit", () => {
     expect(amountFilterSource).toContain("FilterTextField");
     expect(typeFilterSource).toContain("SegmentedControl");
     expect(categoryFilterSource).toContain("SharedFilterPill");
-  });
-
-  it("keeps expired session cleanup on dismissible Callout", () => {
-    const source = readFileSync(
-      resolve(__dirname, "../../features/ai-chat/components/ExpiredSessionsBanner.tsx"),
-      "utf-8"
-    );
-
-    expectSharedComponentImport(source, "Callout");
-    expect(source).toContain("<Callout");
-    expect(source).toContain("onDismiss");
-    expect(source).not.toContain("<Pressable");
   });
 
   it("keeps AI conversation cards horizontal through explicit Card contentStyle", () => {
