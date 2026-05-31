@@ -30,7 +30,8 @@ test("create-budget is registered in root layout as a full screen route", () => 
   expect(routeSource).not.toContain("DialogRouteFrame");
   expect(routeSource).toContain("CreateBudgetScreen");
   const createBudgetBlock = layoutSource.slice(layoutSource.indexOf('name="create-budget"'));
-  expect(createBudgetBlock.slice(0, 140)).toContain("fullScreenHeaderOptions");
+  expect(createBudgetBlock.slice(0, 140)).toContain("createBudgetRouteOptions");
+  expect(layoutSource).toContain("...fullScreenHeaderOptions");
   expect(layoutSource).not.toContain("formSheet");
 });
 

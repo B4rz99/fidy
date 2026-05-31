@@ -42,7 +42,7 @@ import {
 import { useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 import { type AnyDb, getDb } from "@/shared/db";
-import { useMountEffect, useSubscription } from "@/shared/hooks";
+import { useMountEffect, useSubscription, useTranslation } from "@/shared/hooks";
 import { useLocaleStore } from "@/shared/i18n";
 import {
   captureError,
@@ -143,6 +143,7 @@ export function RootLayout() {
   const segments = useSegments();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const { t } = useTranslation();
   const localQaAvailable = isLocalQaAvailable();
 
   useQaDevtoolsRuntime();
@@ -214,6 +215,14 @@ export function RootLayout() {
   const db = userId ? getDb(userId) : null;
   const iosHeaderOptions = createTransparentHeaderRouteOptions(theme);
   const fullScreenHeaderOptions = createFullScreenRouteOptions(theme);
+  const createBudgetRouteOptions = {
+    ...fullScreenHeaderOptions,
+    title: t("budgets.create.title"),
+  };
+  const autoSuggestBudgetsRouteOptions = {
+    ...fullScreenHeaderOptions,
+    title: t("budgets.autoSuggest.title"),
+  };
   const screenLayoutRouteOptions = createScreenLayoutRouteOptions(theme);
   const entryRouteOptions = createEntryRouteOptions();
 
@@ -246,8 +255,8 @@ export function RootLayout() {
             {__DEV__ ? <Stack.Screen name="design-system" options={iosHeaderOptions} /> : null}
             <Stack.Screen name="financial-account-identifier" options={screenLayoutRouteOptions} />
             <Stack.Screen name="link-suggested-account" options={screenLayoutRouteOptions} />
-            <Stack.Screen name="create-budget" options={fullScreenHeaderOptions} />
-            <Stack.Screen name="auto-suggest-budgets" options={fullScreenHeaderOptions} />
+            <Stack.Screen name="create-budget" options={createBudgetRouteOptions} />
+            <Stack.Screen name="auto-suggest-budgets" options={autoSuggestBudgetsRouteOptions} />
             <Stack.Screen name="goal-detail" options={fullScreenHeaderOptions} />
             <Stack.Screen name="create-goal" options={fullScreenHeaderOptions} />
             <Stack.Screen name="add-payment" options={fullScreenHeaderOptions} />

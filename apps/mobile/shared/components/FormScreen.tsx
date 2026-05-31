@@ -29,10 +29,10 @@ export function FormScreen({
         {
           paddingHorizontal: horizontalPadding,
           paddingTop: topPadding,
-          paddingBottom: bottom + 32,
           gap: 12,
         },
         contentContainerStyle,
+        { paddingBottom: bottom + 32 },
       ]}
       contentInsetAdjustmentBehavior="automatic"
       keyboardDismissMode={keyboardDismissMode}
