@@ -1,0 +1,23 @@
+apps/mobile/shared/components/NumpadFormScreen.tsx
+  s_674d9abb97ec32::t_84c7f338fb158d 63
+  s_674d9abb97ec32::t_817f1a032fdeaf 72
+  s_674d9abb97ec32::t_3580e150315449 71
+apps/mobile/__tests__/goals/goal-sheets.test.ts
+  s_674d9abb97ec32::t_817f1a032fdeaf 153
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "1ba404cfbbafdac7673ec09b38eba4fea43159c4",
+  "prompts": {},
+  "sessions": {
+    "s_674d9abb97ec32": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e79d5-8cda-7d23-ad6d-a4c225f10823",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
