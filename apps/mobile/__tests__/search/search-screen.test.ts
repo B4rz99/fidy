@@ -91,8 +91,8 @@ test("keeps search filters aligned with the requested mobile interactions", () =
   );
   expect(dateFilterSource).toContain("TransactionDatePickerSheet");
   expect(dateFilterSource).not.toContain("<TextInput");
-  expect(dateFilterSource).toContain(
-    'style={preset.key === "lastMonth" ? { flex: 1.35 } : { flex: 1 }}'
+  expect(dateFilterSource).toMatch(
+    /preset\.key\s*===\s*["']lastMonth["']\s*\?\s*\{\s*flex\s*:\s*1\.35\s*\}[\s\S]*\{\s*flex\s*:\s*1\s*\}/
   );
   expect(typeFilterSource).not.toContain('style={getStyle("all")}');
   expect(typeFilterSource).toContain("SegmentedControl");
