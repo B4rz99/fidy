@@ -1,8 +1,9 @@
 import { readFinancialAccountKind } from "@/features/financial-accounts/display.public";
 import type { FinancialAccountRow } from "@/features/financial-accounts/public";
 import type { TransferSide } from "@/features/transfers/build.public";
+import { FieldButton } from "@/shared/components";
 import { ChevronRight, ExternalLink, Landmark } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
 import { getKindIcon } from "./TransferForm.helpers";
@@ -44,7 +45,6 @@ export function TransferSideCard(props: {
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
-  const borderSubtle = useThemeColor("borderSubtle");
   const card = useThemeColor("card");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
@@ -62,53 +62,55 @@ export function TransferSideCard(props: {
 
   return (
     <View style={{ gap: 8 }}>
-      <Text style={[styles.sectionLabel, { color: primary }]}>{props.label}</Text>
-      <Pressable
-        onPress={props.onPress}
-        testID={props.testID}
-        accessible
-        accessibilityRole="button"
-        accessibilityLabel={t("transfers.a11y.selectSide", { side: props.label })}
-        accessibilityHint={subtitle}
-        style={[
-          styles.sideCard,
-          {
-            borderColor: props.isConflict ? accentRed : borderSubtle,
-            backgroundColor: props.side?.kind === "external" ? peachLight : card,
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.sideIconWrap,
-            {
-              backgroundColor: props.side?.kind === "external" ? "#FFFFFFAA" : peachLight,
-            },
-          ]}
-        >
-          <Icon size={18} color={props.side?.kind === "external" ? accentGreen : secondary} />
-        </View>
-
-        <View style={styles.sideTextWrap}>
-          <Text style={[styles.sideTitle, { color: primary }]}>{title}</Text>
-          <Text style={[styles.sideSubtitle, { color: secondary }]}>{subtitle}</Text>
-        </View>
-
-        {sideBalance != null ? (
-          <Text
+      <FieldButton
+        label={props.label}
+        value={
+          <View style={styles.sideTextWrap}>
+            <Text style={[styles.sideTitle, { color: primary }]}>{title}</Text>
+            <Text style={[styles.sideSubtitle, { color: secondary }]}>{subtitle}</Text>
+          </View>
+        }
+        leading={
+          <View
             style={[
-              styles.sideTitle,
+              styles.sideIconWrap,
               {
-                color: sideBalance < 0 ? accentRed : primary,
+                backgroundColor: props.side?.kind === "external" ? "#FFFFFFAA" : peachLight,
               },
             ]}
           >
-            {formatMoney(sideBalance)}
-          </Text>
-        ) : null}
-
-        <ChevronRight size={18} color={tertiary} />
-      </Pressable>
+            <Icon size={18} color={props.side?.kind === "external" ? accentGreen : secondary} />
+          </View>
+        }
+        trailing={
+          <View className="flex-row items-center" style={{ gap: 8 }}>
+            {sideBalance != null ? (
+              <Text
+                style={[
+                  styles.sideTitle,
+                  {
+                    color: sideBalance < 0 ? accentRed : primary,
+                  },
+                ]}
+              >
+                {formatMoney(sideBalance)}
+              </Text>
+            ) : null}
+            <ChevronRight size={18} color={tertiary} />
+          </View>
+        }
+        onPress={props.onPress}
+        testID={props.testID}
+        accessible
+        accessibilityLabel={t("transfers.a11y.selectSide", { side: props.label })}
+        accessibilityHint={subtitle}
+        buttonStyle={{
+          backgroundColor: props.side?.kind === "external" ? peachLight : card,
+          borderColor: props.isConflict ? accentRed : undefined,
+          minHeight: 74,
+          paddingVertical: 12,
+        }}
+      />
     </View>
   );
 }

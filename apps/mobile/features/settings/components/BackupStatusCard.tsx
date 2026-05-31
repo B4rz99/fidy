@@ -17,11 +17,10 @@ export function BackupStatusCard({
   tone = "green",
 }: BackupStatusCardProps) {
   const accentGreen = useThemeColor("accentGreen");
-  const borderColor = useThemeColor("borderSubtle");
   const iconColor = tone === "green" ? accentGreen : "#C46A2B";
   const iconBackground = tone === "green" ? "bg-accent-green-light" : "bg-peach-light";
   return (
-    <Card style={{ borderWidth: 1, borderColor, gap: 10 }}>
+    <Card contentStyle={{ gap: 10 }}>
       <View className="flex-row items-start" style={{ gap: 12 }}>
         <View className={iconBackground} style={{ borderRadius: 12, padding: 8 }}>
           <Icon size={20} color={iconColor} />

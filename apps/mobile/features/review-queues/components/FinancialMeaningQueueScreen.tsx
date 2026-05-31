@@ -10,7 +10,7 @@ import {
   loadNeedsReviewEmails,
 } from "@/features/email-capture/public";
 import { refreshTransactions } from "@/features/transactions/store.public";
-import { ScreenLayout } from "@/shared/components";
+import { Card, ScreenLayout } from "@/shared/components";
 import { ChevronRight, TriangleAlert } from "@/shared/components/icons";
 import { Pressable, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -48,8 +48,6 @@ function FinancialMeaningQueueCard({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
-  const card = useThemeColor("card");
-  const borderSubtle = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
   const providerLabel = getReviewQueueProviderLabel(item.processedSourceEvent, t);
@@ -78,7 +76,7 @@ function FinancialMeaningQueueCard({
   const handleSkipPress = useCallback(() => onSkip(itemId), [itemId, onSkip]);
 
   return (
-    <View style={[styles.card, { backgroundColor: card, borderColor: borderSubtle }]}>
+    <Card contentClassName="gap-3.5 p-3.5">
       <Pressable onPress={handleReviewPress} disabled={disabled} style={styles.cardPressable}>
         <View style={styles.cardMetaRow}>
           <Text style={[styles.cardMetaLabel, { color: tertiary }]}>{providerLabel}</Text>
@@ -133,7 +131,7 @@ function FinancialMeaningQueueCard({
           disabled={disabled}
         />
       </View>
-    </View>
+    </Card>
   );
 }
 

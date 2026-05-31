@@ -56,10 +56,7 @@ function AccountSuggestionCardInner({
   const handleSkip = useCallback(() => onSkip(suggestion), [onSkip, suggestion]);
 
   return (
-    <Card
-      className="rounded-[20px] border border-border-subtle dark:border-border-subtle-dark"
-      style={{ gap: 14, padding: 18 }}
-    >
+    <Card padded={false} contentStyle={{ gap: 14, padding: 18 }}>
       <View className="flex-row items-start" style={{ gap: 12 }}>
         <View className="size-11 items-center justify-center rounded-[14px] bg-accent-green-light dark:bg-accent-green-light-dark">
           <AccountIcon size={20} color={accentGreen} />

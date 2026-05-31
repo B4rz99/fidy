@@ -165,7 +165,7 @@ export function PrivateBackupScreen() {
 
         {isConfirmingKey ? (
           <>
-            <Card style={{ borderWidth: 1, borderColor, gap: 8 }}>
+            <Card contentStyle={{ gap: 8 }}>
               <Text className="font-poppins-semibold text-xs text-secondary dark:text-secondary-dark">
                 {t("privateBackup.recoveryKeyLabel").toUpperCase()}
               </Text>

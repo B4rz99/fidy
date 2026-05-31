@@ -20,7 +20,8 @@ import {
   Utensils,
   Wrench,
 } from "@/shared/components/icons";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Card } from "@/shared/components";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor } from "@/shared/hooks";
 import { trackNotificationTapped } from "@/shared/lib";
 import type { NotificationDisplay } from "../lib/types";
@@ -70,8 +71,6 @@ export const NotificationCard = React.memo(function NotificationCard({
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const tertiaryColor = useThemeColor("tertiary");
-  const cardColor = useThemeColor("card");
-  const borderColor = useThemeColor("borderSubtle");
 
   const IconComponent = ICON_MAP[notification.iconName] ?? TriangleAlert;
 
@@ -85,10 +84,10 @@ export const NotificationCard = React.memo(function NotificationCard({
   }, [notification.route, notification.type, onPress]);
 
   return (
-    <Pressable
+    <Card
       onPress={notification.route ? handlePress : undefined}
       disabled={!notification.route}
-      style={[styles.container, { backgroundColor: cardColor, borderColor }]}
+      contentClassName="flex-row items-center gap-3 p-3.5"
     >
       <View style={[styles.iconCircle, { backgroundColor: notification.iconBgColor }]}>
         <IconComponent size={16} color={notification.iconColor} />
@@ -107,19 +106,11 @@ export const NotificationCard = React.memo(function NotificationCard({
         <Text style={[styles.timestamp, { color: tertiaryColor }]}>{relativeTime}</Text>
         {notification.route ? <ChevronRight size={14} color={tertiaryColor} /> : null}
       </View>
-    </Pressable>
+    </Card>
   );
 });
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 14,
-    gap: 12,
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
   iconCircle: {
     width: 40,
     height: 40,

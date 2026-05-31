@@ -1,8 +1,9 @@
 import * as Haptics from "expo-haptics";
-import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { SegmentedControl } from "@/shared/components";
+import { useTranslation } from "@/shared/hooks";
 
 type FilterType = "all" | "expense" | "income" | "transfer";
+type SelectableFilterType = Exclude<FilterType, "all">;
 
 type TypeFilterProps = {
   value: FilterType;
@@ -11,62 +12,25 @@ type TypeFilterProps = {
 
 export const TypeFilter = ({ value, onChange }: TypeFilterProps) => {
   const { t } = useTranslation();
-  const accentRed = useThemeColor("accentRed");
-  const accentGreen = useThemeColor("accentGreen");
-  const secondary = useThemeColor("secondary");
+  const options = [
+    { value: "expense", label: t("transactions.expense") },
+    { value: "income", label: t("transactions.income") },
+    { value: "transfer", label: t("search.transfers") },
+  ] as const;
 
-  const handlePress = (type: FilterType) => {
+  const handlePress = (type: SelectableFilterType) => {
     void Haptics.selectionAsync();
     onChange(type === value ? "all" : type);
   };
 
-  const getStyle = (type: FilterType) => {
-    if (type !== value) return undefined;
-    if (type === "expense") return { backgroundColor: accentRed };
-    if (type === "income") return { backgroundColor: accentGreen };
-    return { backgroundColor: secondary };
-  };
-
-  const getColor = (type: FilterType) => {
-    if (type === value) return "#FFFFFF";
-    return secondary;
-  };
-
   return (
-    <View className="h-10 flex-row rounded-full bg-peach-light p-[3px] dark:bg-peach-light-dark">
-      <Pressable
-        className="flex-1 items-center justify-center rounded-full"
-        style={getStyle("expense")}
-        onPress={() => handlePress("expense")}
-        accessibilityRole="button"
-        accessibilityState={{ selected: value === "expense" }}
-      >
-        <Text className="font-poppins-semibold text-[14px]" style={{ color: getColor("expense") }}>
-          {t("transactions.expense")}
-        </Text>
-      </Pressable>
-      <Pressable
-        className="flex-1 items-center justify-center rounded-full"
-        style={getStyle("income")}
-        onPress={() => handlePress("income")}
-        accessibilityRole="button"
-        accessibilityState={{ selected: value === "income" }}
-      >
-        <Text className="font-poppins-semibold text-[14px]" style={{ color: getColor("income") }}>
-          {t("transactions.income")}
-        </Text>
-      </Pressable>
-      <Pressable
-        className="flex-1 items-center justify-center rounded-full"
-        style={getStyle("transfer")}
-        onPress={() => handlePress("transfer")}
-        accessibilityRole="button"
-        accessibilityState={{ selected: value === "transfer" }}
-      >
-        <Text className="font-poppins-semibold text-[14px]" style={{ color: getColor("transfer") }}>
-          {t("search.transfers")}
-        </Text>
-      </Pressable>
-    </View>
+    <SegmentedControl
+      options={options}
+      value={value === "all" ? null : value}
+      onChange={handlePress}
+      getOptionTone={(type) =>
+        type === "expense" ? "danger" : type === "income" ? "success" : "primary"
+      }
+    />
   );
 };

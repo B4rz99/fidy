@@ -2,17 +2,9 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FieldButton } from "@/shared/components";
 import { Button } from "@/shared/components/Button";
-import { X } from "@/shared/components/icons";
-import {
-  Keyboard,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "@/shared/components/rn";
+import { Keyboard, Platform, ScrollView, Text, TextInput, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getDateFnsLocale } from "@/shared/i18n";
 import { canFinancialAccountHaveIdentifiers } from "../../lib/kind";
@@ -44,7 +36,6 @@ export function FinancialAccountFormBody({
   const tertiary = useThemeColor("tertiary");
   const borderSubtle = useThemeColor("borderSubtle");
   const accentGreenLight = useThemeColor("accentGreenLight");
-  const accentRed = useThemeColor("accentRed");
   const card = useThemeColor("card");
   const {
     amountDigits,
@@ -160,36 +151,28 @@ export function FinancialAccountFormBody({
         </View>
 
         <View style={styles.fieldBlock}>
-          <FieldLabel>{t("financialAccounts.form.dateLabel")}</FieldLabel>
-          <Pressable
-            style={[
-              styles.input,
-              styles.dateButton,
-              { backgroundColor: card, borderColor: borderSubtle },
-            ]}
+          <FieldButton
+            label={t("financialAccounts.form.dateLabel")}
+            value={
+              effectiveDate
+                ? format(effectiveDate, "PPP", { locale: getDateFnsLocale(locale) })
+                : ""
+            }
+            placeholder={t("financialAccounts.form.datePlaceholder")}
             onPress={() => {
               Keyboard.dismiss();
               setShowDatePicker(true);
             }}
-          >
-            <Text style={[styles.dateText, { color: effectiveDate ? primary : tertiary }]}>
-              {effectiveDate
-                ? format(effectiveDate, "PPP", { locale: getDateFnsLocale(locale) })
-                : t("financialAccounts.form.datePlaceholder")}
-            </Text>
-
-            {effectiveDate ? (
-              <Pressable
-                onPress={() => {
-                  setEffectiveDate(null);
-                  setShowDatePicker(false);
-                }}
-                hitSlop={8}
-              >
-                <X size={16} color={accentRed} />
-              </Pressable>
-            ) : null}
-          </Pressable>
+            onClear={
+              effectiveDate
+                ? () => {
+                    setEffectiveDate(null);
+                    setShowDatePicker(false);
+                  }
+                : undefined
+            }
+            clearAccessibilityLabel={t("common.clear")}
+          />
 
           {showDatePicker ? (
             <DateTimePicker

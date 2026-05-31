@@ -14,7 +14,7 @@ type SegmentedControlOption<TValue extends string> = {
 
 type SegmentedControlProps<TValue extends string> = Omit<ViewProps, "children"> & {
   readonly options: readonly SegmentedControlOption<TValue>[];
-  readonly value: TValue;
+  readonly value: TValue | null;
   readonly onChange: (value: TValue) => void;
   readonly tone?: SegmentedControlTone;
   readonly getOptionTone?: (value: TValue) => SegmentedControlTone;

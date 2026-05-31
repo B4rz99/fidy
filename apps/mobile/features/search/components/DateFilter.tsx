@@ -1,8 +1,9 @@
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
 import { TransactionDatePickerSheet } from "@/features/transactions/display.public";
-import { Pressable, Text, View } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { FieldButton, FilterPill } from "@/shared/components";
+import { Text, View } from "@/shared/components/rn";
+import { useTranslation } from "@/shared/hooks";
 import { parseOptionalIsoDate, toIsoDate } from "@/shared/lib";
 import { DATE_PRESETS, getDatePresetRange } from "../lib/date-presets";
 
@@ -14,9 +15,6 @@ type DateFilterProps = {
 
 export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps) => {
   const { t } = useTranslation();
-  const primary = useThemeColor("primary");
-  const peachLight = useThemeColor("peachLight");
-  const accentGreen = useThemeColor("accentGreen");
   const [activePicker, setActivePicker] = useState<"from" | "to" | null>(null);
 
   const activePresetKey =
@@ -56,61 +54,38 @@ export const DateFilter = ({ dateFrom, dateTo, onChangeRange }: DateFilterProps)
       </Text>
       <View className="flex-row gap-3">
         <View className="flex-1">
-          <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark mb-1">
-            {t("search.from")}
-          </Text>
-          <Pressable
-            className="h-10 justify-center rounded-lg px-3"
-            style={{ backgroundColor: peachLight }}
+          <FieldButton
+            label={t("search.from")}
+            value={dateFrom ?? ""}
+            placeholder={t("search.chooseDate")}
             onPress={() => setActivePicker("from")}
-            accessibilityRole="button"
-          >
-            <Text className="font-poppins-medium text-body" style={{ color: primary }}>
-              {dateFrom ?? t("search.chooseDate")}
-            </Text>
-          </Pressable>
+            active={activePicker === "from"}
+          />
         </View>
         <View className="flex-1">
-          <Text className="font-poppins-medium text-caption text-secondary dark:text-secondary-dark mb-1">
-            {t("search.to")}
-          </Text>
-          <Pressable
-            className="h-10 justify-center rounded-lg px-3"
-            style={{ backgroundColor: peachLight }}
+          <FieldButton
+            label={t("search.to")}
+            value={dateTo ?? ""}
+            placeholder={t("search.chooseDate")}
             onPress={() => setActivePicker("to")}
-            accessibilityRole="button"
-          >
-            <Text className="font-poppins-medium text-body" style={{ color: primary }}>
-              {dateTo ?? t("search.chooseDate")}
-            </Text>
-          </Pressable>
+            active={activePicker === "to"}
+          />
         </View>
       </View>
       <View className="flex-row gap-2">
         {DATE_PRESETS.map((preset) => {
           const isActive = activePresetKey === preset.key;
           return (
-            <Pressable
+            <FilterPill
               key={preset.key}
-              className="h-8 items-center justify-center rounded-full px-2"
-              style={[
-                {
-                  backgroundColor: isActive ? accentGreen : peachLight,
-                },
-                preset.key === "lastMonth" ? { flex: 1.35 } : { flex: 1 },
-              ]}
+              label={t(preset.labelKey)}
+              selected={isActive}
+              selectedColor="#2F7D32"
+              className="h-8 px-2"
+              style={[preset.key === "lastMonth" ? { flex: 1.35 } : { flex: 1 }]}
               onPress={() => handlePreset(preset.key)}
-            >
-              <Text
-                className="text-center font-poppins-medium text-[11px]"
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.82}
-                style={{ color: isActive ? "#FFFFFF" : primary }}
-              >
-                {t(preset.labelKey)}
-              </Text>
-            </Pressable>
+              labelClassName="text-[11px]"
+            />
           );
         })}
       </View>

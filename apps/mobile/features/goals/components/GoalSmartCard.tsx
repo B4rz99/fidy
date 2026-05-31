@@ -1,0 +1,104 @@
+import { useRouter } from "expo-router";
+import { memo, useCallback, useMemo } from "react";
+import { useOptionalUserId } from "@/features/auth/public";
+import { Card, ProgressBar } from "@/shared/components";
+import { Text, View } from "@/shared/components/rn";
+import { tryGetDb } from "@/shared/db";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { formatMoney } from "@/shared/lib";
+import { selectGoal, useGoalStore } from "../store";
+
+export const GoalSmartCard = memo(function GoalSmartCard() {
+  const { push } = useRouter();
+  const { t } = useTranslation();
+  const goals = useGoalStore((s) => s.goals);
+  const accentGreen = useThemeColor("accentGreen");
+  const userId = useOptionalUserId();
+
+  // Find best goal to display: highest progress % among active (non-complete) goals
+  // Fallback: most recently created
+  const displayData = useMemo(() => {
+    const activeGoals = goals.filter((g) => !g.progress.isComplete);
+    if (activeGoals.length === 0) return null;
+
+    const sorted = [...activeGoals].sort(
+      (a, b) => b.progress.percentComplete - a.progress.percentComplete
+    );
+    const topGoal = sorted[0];
+    if (topGoal == null) return null;
+    return {
+      topGoal,
+      moreCount: activeGoals.length - 1,
+    };
+  }, [goals]);
+
+  const handlePress = useCallback(() => {
+    if (!displayData || !userId) return;
+    const db = tryGetDb(userId);
+    if (!db) return;
+    void selectGoal(db, userId, displayData.topGoal.goal.id);
+    push("/goal-detail" as never);
+  }, [displayData, push, userId]);
+
+  if (!displayData) return null;
+
+  const { topGoal, moreCount } = displayData;
+  const progressWidth = Math.min(topGoal.progress.percentComplete, 100);
+
+  return (
+    <Card onPress={handlePress} contentClassName="gap-2 p-4">
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <Text
+          style={{
+            fontFamily: "Poppins_600SemiBold",
+            fontSize: 14,
+            color: accentGreen,
+          }}
+        >
+          {topGoal.goal.name}
+        </Text>
+        <Text
+          style={{
+            fontFamily: "Poppins_700Bold",
+            fontSize: 14,
+            color: accentGreen,
+          }}
+        >
+          {topGoal.progress.percentComplete}%
+        </Text>
+      </View>
+
+      <ProgressBar
+        percent={progressWidth}
+        height={6}
+        fillColor={accentGreen}
+        trackColor={`${accentGreen}30`}
+      />
+
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <Text
+          style={{
+            fontFamily: "Poppins_500Medium",
+            fontSize: 12,
+            color: accentGreen,
+            opacity: 0.8,
+          }}
+        >
+          {formatMoney(topGoal.currentAmount)} / {formatMoney(topGoal.goal.targetAmount)}
+        </Text>
+        {moreCount > 0 ? (
+          <Text
+            style={{
+              fontFamily: "Poppins_500Medium",
+              fontSize: 11,
+              color: accentGreen,
+              opacity: 0.6,
+            }}
+          >
+            {t("goals.smartCard.moreGoals", { count: String(moreCount) })}
+          </Text>
+        ) : null}
+      </View>
+    </Card>
+  );
+});

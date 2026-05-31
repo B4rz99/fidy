@@ -1,14 +1,18 @@
+import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import type { ReactNode } from "react";
-import type { PressableProps, ViewProps } from "react-native";
-import { GlassSurface } from "./GlassSurface";
-import { Pressable } from "./rn";
+import type { PressableProps, StyleProp, ViewProps, ViewStyle } from "react-native";
+import { useColorScheme } from "@/shared/hooks";
+import { getSubtleGlassCardTokens } from "./card-tokens";
+import { Platform, Pressable, View } from "./rn";
 
-type CardProps = ViewProps & {
+type CardProps = Omit<ViewProps, "children" | "style"> & {
   children: ReactNode;
   onPress?: PressableProps["onPress"];
   disabled?: boolean;
   padded?: boolean;
-  className?: string;
+  contentClassName?: string;
+  contentStyle?: StyleProp<ViewStyle>;
+  surfaceStyle?: StyleProp<ViewStyle>;
 };
 
 export function Card({
@@ -16,9 +20,14 @@ export function Card({
   onPress,
   disabled = false,
   padded = true,
-  className,
+  contentClassName,
+  contentStyle,
+  surfaceStyle: surfaceStyleOverride,
   ...viewProps
 }: CardProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const tokens = getSubtleGlassCardTokens(isDark);
   const {
     accessibilityHint,
     accessibilityLabel,
@@ -38,10 +47,48 @@ export function Card({
     importantForAccessibility,
     testID,
   };
-  const content = (
-    <GlassSurface {...viewProps} background="card" padded={padded} className={className}>
-      {children}
-    </GlassSurface>
+  const cardSurfaceStyle = [
+    {
+      backgroundColor: tokens.fallbackBackgroundColor,
+      borderColor: tokens.borderColor,
+      borderCurve: "continuous" as const,
+      borderRadius: 16,
+      borderWidth: 1,
+      overflow: "hidden" as const,
+    },
+    surfaceStyleOverride,
+  ];
+  const glassStyle = [
+    {
+      borderColor: tokens.borderColor,
+      borderCurve: "continuous" as const,
+      borderRadius: 16,
+      borderWidth: 1,
+      overflow: "hidden" as const,
+    },
+    surfaceStyleOverride,
+  ];
+  const canUseLiquidGlass = Platform.OS === "ios" && isLiquidGlassAvailable();
+  const resolvedContentClassName = `${padded ? "p-4" : ""} ${contentClassName ?? ""}`;
+  const content = canUseLiquidGlass ? (
+    <GlassView
+      {...viewProps}
+      glassEffectStyle="clear"
+      tintColor={tokens.tintColor}
+      colorScheme={isDark ? "dark" : "light"}
+      isInteractive={onPress != null}
+      style={glassStyle}
+    >
+      <View className={resolvedContentClassName} style={contentStyle}>
+        {children}
+      </View>
+    </GlassView>
+  ) : (
+    <View {...viewProps} style={cardSurfaceStyle}>
+      <View className={resolvedContentClassName} style={contentStyle}>
+        {children}
+      </View>
+    </View>
   );
 
   if (onPress == null) {
@@ -50,14 +97,32 @@ export function Card({
 
   return (
     <Pressable {...pressableProps} onPress={onPress} disabled={disabled}>
-      <GlassSurface
-        {...surfaceProps}
-        background="card"
-        padded={padded}
-        className={`${disabled ? "opacity-60" : ""} ${className ?? ""}`}
-      >
-        {children}
-      </GlassSurface>
+      {canUseLiquidGlass ? (
+        <GlassView
+          {...surfaceProps}
+          glassEffectStyle="clear"
+          tintColor={tokens.tintColor}
+          colorScheme={isDark ? "dark" : "light"}
+          isInteractive
+          style={glassStyle}
+        >
+          <View
+            className={`${resolvedContentClassName} ${disabled ? "opacity-60" : ""}`}
+            style={contentStyle}
+          >
+            {children}
+          </View>
+        </GlassView>
+      ) : (
+        <View {...surfaceProps} style={cardSurfaceStyle}>
+          <View
+            className={`${resolvedContentClassName} ${disabled ? "opacity-60" : ""}`}
+            style={contentStyle}
+          >
+            {children}
+          </View>
+        </View>
+      )}
     </Pressable>
   );
 }

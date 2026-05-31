@@ -16,21 +16,11 @@ export function ActionCard({ action, onConfirm, onDismiss }: ActionCardProps) {
   const { t } = useTranslation();
   const supportTextColor = useAiSupportTextColor();
   const accentRed = useThemeColor("accentRed");
-  const borderSubtle = useThemeColor("borderSubtle");
 
   if (action.type !== "delete") return null;
 
   return (
-    <Card
-      padded={false}
-      style={{
-        borderRadius: 18,
-        padding: 16,
-        gap: 12,
-        borderWidth: 1,
-        borderColor: borderSubtle,
-      }}
-    >
+    <Card padded={false} contentStyle={{ padding: 16, gap: 12 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <Trash2 size={20} color={accentRed} />
         <View style={{ flex: 1, gap: 2 }}>

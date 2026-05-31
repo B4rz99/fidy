@@ -2,19 +2,18 @@ import { useRouter } from "expo-router";
 import { useAuthMode, useAuthStore } from "@/features/auth/public";
 import { Button, Card } from "@/shared/components";
 import { Text } from "@/shared/components/rn";
-import { useThemeColor, useTranslation } from "@/shared/hooks";
+import { useTranslation } from "@/shared/hooks";
 
 export function LocalQaProfileTools() {
   const { push } = useRouter();
   const { t } = useTranslation();
   const authMode = useAuthMode();
   const localQaSession = useAuthStore((state) => state.localQaSession);
-  const borderColor = useThemeColor("borderSubtle");
 
   if (authMode !== "local-qa") return null;
 
   return (
-    <Card className="w-full" style={{ gap: 12, borderWidth: 1, borderColor }}>
+    <Card contentClassName="w-full" contentStyle={{ gap: 12 }}>
       <Text className="font-poppins-semibold text-sm text-primary dark:text-primary-dark">
         {t("settings.localQaTitle")}
       </Text>
