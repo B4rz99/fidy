@@ -1,0 +1,27 @@
+apps/mobile/shared/components/route-options.ts
+  s_674d9abb97ec32::t_7ca03e1187ab65 31-37
+apps/mobile/__tests__/transactions/callers.test.ts
+  s_674d9abb97ec32::t_8eec2efa794b55 38
+apps/mobile/__tests__/navigation/root-layout-headers.test.ts
+  s_674d9abb97ec32::t_8eec2efa794b55 58-73
+apps/mobile/app/_layout.tsx
+  s_674d9abb97ec32::t_23414434885329 37,217,247-248,262
+apps/mobile/shared/components/index.ts
+  s_674d9abb97ec32::t_7ca03e1187ab65 54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "9b8601d147b5c63cab4c8cfec8fef6595ade6aee",
+  "prompts": {},
+  "sessions": {
+    "s_674d9abb97ec32": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e79d5-8cda-7d23-ad6d-a4c225f10823",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
