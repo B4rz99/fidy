@@ -1,0 +1,19 @@
+package.json
+  s_989e2ff2f9c357::t_a6a80db2df244f 74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "8e6df8476d247317038b3bb2c53c75d0c76982b4",
+  "prompts": {},
+  "sessions": {
+    "s_989e2ff2f9c357": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7aa0-0e26-70f3-b8d5-d715fafb49a6",
+        "model": "gpt-5.3-codex-spark"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
