@@ -10,7 +10,10 @@ const reclassifyTransactionRouteSource = readFileSync(
   resolve(__dirname, "../../app/reclassify-transaction.tsx"),
   "utf-8"
 ).replace(/\r\n/g, "\n");
-const rootLayoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8");
+const rootLayoutSource = readFileSync(resolve(__dirname, "../../app/_layout.tsx"), "utf-8").replace(
+  /\r\n/g,
+  "\n"
+);
 
 describe("transaction callers", () => {
   test("edit screen surfaces save and delete failures before navigating away when auth/db is missing", () => {
