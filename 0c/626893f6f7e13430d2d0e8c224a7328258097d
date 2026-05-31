@@ -1,0 +1,24 @@
+apps/mobile/__tests__/navigation/root-layout-headers.test.ts
+  s_674d9abb97ec32::t_45264d0d33d999 7-10,23-26,29-35,39-42
+apps/mobile/__tests__/budget/create-budget-screen.test.ts
+  s_674d9abb97ec32::t_de8a46a9a5703b 28,30-31,33,37-39
+apps/mobile/__tests__/transactions/callers.test.ts
+  s_674d9abb97ec32::t_e93066a9369383 34-37
+  s_674d9abb97ec32::t_f5826ee038cba0 31,33,38-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "0c626893f6f7e13430d2d0e8c224a7328258097d",
+  "prompts": {},
+  "sessions": {
+    "s_674d9abb97ec32": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e79d5-8cda-7d23-ad6d-a4c225f10823",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
