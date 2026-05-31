@@ -1,0 +1,22 @@
+apps/mobile/features/budget/components/BudgetAlertBanner.tsx
+  s_c8619e82bfe0dc::t_6a7fb9a9e27c0f 52
+react-doctor.config.json
+  ai_agent 31
+  s_c8619e82bfe0dc::t_ed35cc7a063113 4-6,14-15,23-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "161c39f146c9e591e541475bd219c3eb7d35fe07",
+  "prompts": {},
+  "sessions": {
+    "s_c8619e82bfe0dc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7c3a-543b-7410-8359-cd40a8ded2f3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
