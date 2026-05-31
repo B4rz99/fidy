@@ -1,5 +1,5 @@
 import { MoneyAmountDisplay } from "@/shared/components";
-import { useThemeColor } from "@/shared/hooks";
+import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { GoalFormCursorStyle } from "./useGoalForm";
 
 type GoalAmountFieldProps = {
@@ -15,10 +15,12 @@ export function GoalAmountField({
   isAmountActive,
   onPress,
 }: GoalAmountFieldProps) {
+  const { t } = useTranslation();
   const primary = useThemeColor("primary");
 
   return (
     <MoneyAmountDisplay
+      accessibilityLabel={t("goals.create.targetAmount")}
       color={primary}
       cursorStyle={cursorStyle}
       cursorVisible={isAmountActive}

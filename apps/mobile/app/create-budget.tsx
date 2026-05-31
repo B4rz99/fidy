@@ -1,9 +1,11 @@
-import { Stack } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { CreateBudgetScreen } from "@/features/budget/routes.public";
 import { useTranslation } from "@/shared/hooks";
 
 export default function CreateBudgetRoute() {
   const { t } = useTranslation();
+  const { budgetId } = useLocalSearchParams<{ budgetId?: string | string[] }>();
+  const title = budgetId != null ? t("budgets.edit.title") : t("budgets.create.title");
 
   return (
     <>
@@ -11,8 +13,8 @@ export default function CreateBudgetRoute() {
         options={{
           headerBackButtonDisplayMode: "minimal",
           headerBackTitle: "",
-          headerTitle: t("budgets.create.title"),
-          title: t("budgets.create.title"),
+          headerTitle: title,
+          title,
         }}
       />
       <CreateBudgetScreen />

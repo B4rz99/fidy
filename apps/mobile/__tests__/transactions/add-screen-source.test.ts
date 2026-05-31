@@ -103,7 +103,7 @@ test("Entry tab indicator uses a centered pill instead of an underline", () => {
   expect(scaffoldSource).toContain("totalTabGap");
   expect(scaffoldSource).toContain("transform: [{ translateX: animatedTabPillX.value }]");
   expect(scaffoldSource).toContain("{ width: tabPillWidth }");
-  expect(scaffoldSource).toContain("isActive ? onAccent : tertiary");
+  expect(scaffoldSource).toContain("isActive ? activeColor : tertiary");
   expect(scaffoldSource).not.toContain("scaleX");
   expect(scaffoldSource).not.toContain("TAB_LINE_WIDTH");
   expect(scaffoldStylesSource).toContain("tabPill");

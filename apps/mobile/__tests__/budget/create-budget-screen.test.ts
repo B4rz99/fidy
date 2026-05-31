@@ -47,7 +47,10 @@ test("create-budget route uses the budget public route surface", () => {
   expect(routeSource).toContain("CreateBudgetScreen");
   expect(routeSource).toContain('headerBackButtonDisplayMode: "minimal"');
   expect(routeSource).toContain('headerBackTitle: ""');
-  expect(routeSource).toContain('headerTitle: t("budgets.create.title")');
+  expect(routeSource).toContain(
+    'budgetId != null ? t("budgets.edit.title") : t("budgets.create.title")'
+  );
+  expect(routeSource).toContain("headerTitle: title");
 });
 
 test("create-budget screen supports edit mode via budgetId params", () => {
@@ -61,6 +64,7 @@ test("create-budget content renders category pills and numpad entry", () => {
   expect(contentSource).toContain("ChoiceTray");
   expect(contentSource).toContain("actionContent={");
   expect(contentSource).toContain("amountContent={");
+  expect(contentSource).toContain('t("budgets.create.lastMonthHint"');
   expect(contentSource).not.toContain('t("budgets.create.enterAmount")');
   expect(contentSource).not.toContain('t("budgets.create.title")');
 });

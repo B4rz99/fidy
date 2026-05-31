@@ -26,7 +26,12 @@ type NumpadActionFooterProps = {
   readonly topContent?: ReactNode;
 };
 
-function renderAction(action: FooterAction, fallbackClassName?: string) {
+type FooterActionButtonProps = {
+  readonly action: FooterAction;
+  readonly fallbackClassName?: string;
+};
+
+function FooterActionButton({ action, fallbackClassName }: FooterActionButtonProps) {
   return (
     <Button
       testID={action.testID}
@@ -57,10 +62,12 @@ export function NumpadActionFooter({
       style={[styles.footer, { paddingBottom: Platform.OS === "ios" ? safeBottom : 16 }, style]}
     >
       {topContent}
-      {extraAction ? renderAction(extraAction, "h-11") : null}
+      {extraAction ? <FooterActionButton action={extraAction} fallbackClassName="h-11" /> : null}
       <View style={styles.actionRow}>
-        {dangerAction ? renderAction(dangerAction, "px-5") : null}
-        {renderAction(primaryAction, "flex-1")}
+        {dangerAction ? (
+          <FooterActionButton action={dangerAction} fallbackClassName="px-5" />
+        ) : null}
+        <FooterActionButton action={primaryAction} fallbackClassName="flex-1" />
       </View>
       {numpadVisible && onKeyPress ? <FidyNumpad onKeyPress={onKeyPress} /> : null}
     </View>

@@ -94,7 +94,7 @@ test("goal creation and payment sheets use the shared numpad form surface", () =
   expect(addPaymentSource).not.toContain("<Card");
   expect(addPaymentSource).not.toContain("<AppAuroraBackground");
   expect(addPaymentSource).not.toContain("styles.title");
-  expect(addPaymentSource).not.toContain('t("goals.payment.amount")');
+  expect(addPaymentSource).toContain('accessibilityLabel={t("goals.payment.amount")}');
 });
 
 test("goal payment date opens the shared calendar picker instead of editing raw text", () => {
@@ -147,6 +147,9 @@ test("create-goal full screen avoids nested card and uses debt red state", () =>
   expect(frameSource).toContain("numpadVisible={numpadEnabled}");
   expect(numpadFormScreenSource).toContain("<AppAuroraBackground");
   expect(numpadFormScreenSource).toContain("<FidyNumpad");
+  expect(numpadFormScreenSource).toContain("<ScrollView");
+  expect(numpadFormScreenSource).toContain("accessible={false}");
+  expect(numpadFormScreenSource).toContain("Math.max(bottom, 16)");
   expect(numpadFormScreenSource).toContain('justifyContent: "space-between"');
   expect(numpadFormScreenSource).toContain("bottomShell");
   expect(stylesSource).toMatch(/fullScreenContainer:\s*\{\s*gap:\s*16,\s*paddingBottom:\s*12,/);

@@ -2,8 +2,10 @@ import { useMemo } from "react";
 import { CategoryPill } from "@/features/transactions/ui.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
 import { Button, ChoiceTray, MoneyAmountDisplay, MoneyEntryScreen } from "@/shared/components";
-import { View } from "@/shared/components/rn";
+import { Text, View } from "@/shared/components/rn";
 import { useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
+import { getCategoryLabel } from "@/shared/i18n";
+import { formatMoney } from "@/shared/lib";
 import type { BudgetSuggestion } from "../../lib/derive";
 import { styles } from "./CreateBudget.styles";
 
@@ -22,6 +24,7 @@ type CreateBudgetFormContentProps = {
 };
 
 export function CreateBudgetFormContent({
+  autoSuggestions,
   canMutate,
   category,
   digits,
@@ -33,14 +36,19 @@ export function CreateBudgetFormContent({
   isSaving,
   setCategory,
 }: CreateBudgetFormContentProps) {
-  const { t } = useTranslation();
+  const { locale, t } = useTranslation();
   const { cursorStyle } = useBlinkingCursor();
   const primaryColor = useThemeColor("primary");
+  const secondaryColor = useThemeColor("secondary");
 
   const availableCategories = useMemo(
     () => CATEGORIES.filter((categoryOption) => !existingCategoryIds.has(categoryOption.id)),
     [existingCategoryIds]
   );
+  const selectedSuggestion = autoSuggestions.find(
+    (suggestion) => suggestion.categoryId === category
+  );
+  const selectedCategory = CATEGORIES.find((categoryOption) => categoryOption.id === category);
 
   return (
     <MoneyEntryScreen
@@ -90,6 +98,14 @@ export function CreateBudgetFormContent({
             digits={digits}
             size="hero"
           />
+          {selectedSuggestion && selectedCategory ? (
+            <Text style={[styles.suggestionHint, { color: secondaryColor }]}>
+              {t("budgets.create.lastMonthHint", {
+                amount: formatMoney(selectedSuggestion.suggestedAmount),
+                category: getCategoryLabel(selectedCategory, locale),
+              })}
+            </Text>
+          ) : null}
         </View>
       }
       onKeyPress={handleKey}

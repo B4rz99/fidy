@@ -46,7 +46,7 @@ test("routes add tab directly to Transaction entry", () => {
 });
 
 test("exposes transaction form selectors for save, date, and account selection", () => {
-  expect(transactionFormSource.actions).toContain('testID="transaction-form.save"');
+  expect(transactionFormSource.actions).toContain('testID: "transaction-form.save"');
   expect(transactionFormSource.metadata).toContain('testID="transaction-form.date"');
   expect(transactionFormSource.accounts).toContain("transaction-form.account.");
 });

@@ -3,7 +3,7 @@ import type { StyleProp, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppAuroraBackground } from "@/shared/components/AppAuroraBackground";
 import { FidyNumpad } from "@/shared/components/FidyNumpad";
-import { Keyboard, Platform, Pressable, StyleSheet, View } from "@/shared/components/rn";
+import { Keyboard, Pressable, ScrollView, StyleSheet, View } from "@/shared/components/rn";
 import { useColorScheme, useThemeColor } from "@/shared/hooks";
 
 type NumpadFormScreenProps = {
@@ -32,17 +32,22 @@ export function NumpadFormScreen({
   const { bottom, top } = useSafeAreaInsets();
 
   return (
-    <Pressable style={[styles.shell, { backgroundColor: page }]} onPress={Keyboard.dismiss}>
+    <Pressable
+      accessible={false}
+      style={[styles.shell, { backgroundColor: page }]}
+      onPress={Keyboard.dismiss}
+    >
       <AppAuroraBackground isDark={isDark} />
-      <View style={[styles.contentShell, { paddingTop: top + 72 }, contentStyle]}>{children}</View>
-      {middle ? <View style={[styles.middleShell, middleStyle]}>{middle}</View> : null}
-      <View
-        style={[
-          styles.bottomShell,
-          { paddingBottom: Platform.OS === "ios" ? bottom : 16 },
-          footerStyle,
-        ]}
+      <ScrollView
+        style={styles.contentScroller}
+        contentContainerStyle={[styles.contentShell, { paddingTop: top + 72 }, contentStyle]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
+        {children}
+      </ScrollView>
+      {middle ? <View style={[styles.middleShell, middleStyle]}>{middle}</View> : null}
+      <View style={[styles.bottomShell, { paddingBottom: Math.max(bottom, 16) }, footerStyle]}>
         {footer}
         {numpadVisible ? <FidyNumpad onKeyPress={onKeyPress} /> : null}
       </View>
@@ -54,6 +59,9 @@ const styles = StyleSheet.create({
   shell: {
     flex: 1,
     justifyContent: "space-between",
+  },
+  contentScroller: {
+    flexShrink: 1,
   },
   contentShell: {
     gap: 12,

@@ -159,6 +159,8 @@ export function AddPaymentScreen() {
               Keyboard.dismiss();
               dispatch({ type: "activateNumpad" });
             }}
+            accessibilityRole="button"
+            accessibilityLabel={t("goals.payment.amount")}
           >
             <MoneyAmountDisplay
               color={primaryColor}
