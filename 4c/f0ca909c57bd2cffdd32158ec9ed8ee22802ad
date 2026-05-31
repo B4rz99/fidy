@@ -1,0 +1,20 @@
+.agents/skills/autoreview/scripts/autoreview
+  s_674d9abb97ec32::t_54b9040497fd4b 1019
+  s_674d9abb97ec32::t_b344404c182fa3 950-957
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "4cf0ca909c57bd2cffdd32158ec9ed8ee22802ad",
+  "prompts": {},
+  "sessions": {
+    "s_674d9abb97ec32": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e79d5-8cda-7d23-ad6d-a4c225f10823",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
