@@ -112,6 +112,40 @@ describe("shared UI kit", () => {
     expect(selections).toEqual(["month"]);
   });
 
+  it("can reselect the active segmented control option when enabled", () => {
+    const selections: string[] = [];
+    const screen = renderFidy(
+      <SegmentedControl
+        options={[{ label: "Expense", value: "expense", accessibilityLabel: "Expense type" }]}
+        value="expense"
+        onChange={(value) => selections.push(value)}
+        allowReselect
+      />
+    );
+
+    screen.pressByA11yLabel("Expense type");
+
+    expect(selections).toEqual(["expense"]);
+  });
+
+  it("forwards field button accessibility props to the pressable", () => {
+    const screen = renderFidy(
+      <FieldButton
+        label="From"
+        value="Cash"
+        onPress={() => undefined}
+        testID="from-side"
+        accessibilityLabel="Select from side"
+        accessibilityHint="Choose transfer source"
+      />
+    );
+    const button = screen.getByA11yLabel("Select from side");
+
+    expect(button.props.accessibilityRole).toBe("button");
+    expect(button.props.accessibilityHint).toBe("Choose transfer source");
+    expect(button.props.testID).toBe("from-side");
+  });
+
   it("selects chip row options through accessible buttons", () => {
     const selections: string[] = [];
     const screen = renderFidy(
