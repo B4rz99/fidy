@@ -1,0 +1,25 @@
+apps/mobile/features/search/components/TypeFilter.tsx
+  s_674d9abb97ec32::t_de5ec929fcb581 31
+apps/mobile/shared/components/SegmentedControl.tsx
+  s_674d9abb97ec32::t_de5ec929fcb581 21,37,61
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_674d9abb97ec32::t_de5ec929fcb581 183-216
+apps/mobile/shared/components/FieldButton.tsx
+  s_674d9abb97ec32::t_de5ec929fcb581 39-44,85-90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "0b7decff7f6e6696ecb6a7b1610317f175502206",
+  "prompts": {},
+  "sessions": {
+    "s_674d9abb97ec32": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e79d5-8cda-7d23-ad6d-a4c225f10823",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
