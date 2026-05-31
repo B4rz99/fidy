@@ -1,0 +1,118 @@
+apps/mobile/features/goals/components/GoalSmartCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 1-48,50-104
+  s_674d9abb97ec32::t_f942ef1bc7f400 49
+apps/mobile/features/settings/components/BackupStatusCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 23
+apps/mobile/features/notifications/components/NotificationsScreen.tsx
+  s_674d9abb97ec32::t_de3480819be600 8
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 5-6,78,86
+apps/mobile/shared/components/MetricCard.tsx
+  ai_agent 1-37
+apps/mobile/shared/components/FieldButton.tsx
+  ai_agent 1-107
+apps/mobile/features/review-queues/components/AttributionQueueCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 3,52,112
+apps/mobile/features/budget/components/BudgetSummaryCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 1,23,36-42
+apps/mobile/features/budget/components/UpcomingBillsSection.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 5-6,46,52,85
+apps/mobile/features/search/components/TypeFilter.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 2,6,15-19,21,27-34
+  s_674d9abb97ec32::t_de3480819be600 3
+apps/mobile/shared/components/card-tokens.ts
+  ai_agent 1-24
+apps/mobile/app/connected-accounts.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 114,154
+apps/mobile/features/analytics/components/IncomeExpenseCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 1-97
+apps/mobile/features/goals/components/goal-sheet/GoalDateField.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 2,4,30-36,40-43,45-47
+  s_674d9abb97ec32::t_de3480819be600 3
+apps/mobile/features/notifications/components/NotificationCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 23-24,87,90,109
+apps/mobile/features/email-capture/components/EmailConnectBanner.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 24
+apps/mobile/shared/components/ProgressBar.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 17-18,28-29,62
+  s_674d9abb97ec32::t_f942ef1bc7f400 58-59
+apps/mobile/shared/components/Card.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 1,3-6,8,13-15,23-25,28-30,50-91,100-125
+apps/mobile/features/account-suggestions/components/AccountSuggestionCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 59
+apps/mobile/features/budget/components/BudgetCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 3-4,34,52-57,70
+apps/mobile/features/analytics/components/PeriodDeltaCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 1-100
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx
+  s_674d9abb97ec32::t_f942ef1bc7f400 157-159
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 5,7,154-156,160-161,166-175
+apps/mobile/features/search/components/DateFilter.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 4-6,57-60,62-63,66-69,71-72,79,81-84,87-88
+  s_674d9abb97ec32::t_f942ef1bc7f400 85
+apps/mobile/features/search/components/CategoryFilter.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 4-5,14,33-34,36,38-52,57,64
+apps/mobile/shared/components/SegmentedControl.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 17
+apps/mobile/features/capture-sources/components/NotificationSetupCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 32
+apps/mobile/features/transfers/components/transfer-form/TransferSideCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 4,6,65-74,76,78,82-113
+apps/mobile/features/review-queues/components/FinancialMeaningQueueScreen.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 13,79,134
+apps/mobile/features/ai-chat/components/ConversationList.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 55,158
+apps/mobile/features/ai-chat/components/ActionCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 23
+apps/mobile/features/goals/components/GoalsListScreen.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 5-11,13,51,54-58
+apps/mobile/features/settings/components/PrivateBackupChecklist.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 9
+apps/mobile/features/analytics/components/CategoryBreakdownCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 1-102
+apps/mobile/shared/components/index.ts
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 6,10-11,14-17,23-24,43-44
+apps/mobile/shared/components/FilterPill.tsx
+  ai_agent 1-58
+apps/mobile/features/goals/components/goal-sheet/GoalAmountField.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 2-3,25-43
+apps/mobile/features/goals/components/GoalCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 2,90,121-127,161
+apps/mobile/shared/components/TextActionButton.tsx
+  s_674d9abb97ec32::t_f942ef1bc7f400 1-41
+apps/mobile/features/capture-sources/components/ApplePaySetupCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 75,109
+apps/mobile/features/ai-chat/components/ExpiredSessionsBanner.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 1-22
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_674d9abb97ec32::t_f942ef1bc7f400 53-56
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 10-11,13,18,36,41-43,47,49-52,57-72,123-157,395-518
+apps/mobile/features/qa/components/LocalQaProfileTools.tsx
+  s_674d9abb97ec32::t_de3480819be600 5
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 16
+apps/mobile/features/design-system/ui.public.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 79,97
+apps/mobile/features/dashboard/components/home-screen/HomeSpendingCard.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 1-3,31,35,98
+apps/mobile/features/search/components/AmountFilter.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 1-3,32-47
+apps/mobile/features/settings/components/PrivateBackupScreen.tsx
+  s_674d9abb97ec32::t_07fa4ac84f6e7a 168
+apps/mobile/shared/components/FilterTextField.tsx
+  ai_agent 1-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "9d8aabf148afc9e64a9e3ef833b614602b18651d",
+  "prompts": {},
+  "sessions": {
+    "s_674d9abb97ec32": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e79d5-8cda-7d23-ad6d-a4c225f10823",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
