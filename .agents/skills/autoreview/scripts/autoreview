@@ -947,8 +947,14 @@ def print_report(report: dict[str, Any], *, label: str = "autoreview") -> None:
 
 def start_parallel_tests(command: str, repo: Path, shell_kind: str) -> tuple[subprocess.Popen, float]:
     print(f"tests: {command}")
-    if shell_kind == "default" or shell_kind == "cmd":
-        return subprocess.Popen(command, cwd=repo, shell=True), time.time()
+    if shell_kind == "default":
+        if os.name == "nt":
+            cmd = resolve_command("cmd", repo)
+            return subprocess.Popen([cmd, "/d", "/s", "/c", command], cwd=repo), time.time()
+        return subprocess.Popen(["/bin/sh", "-lc", command], cwd=repo), time.time()
+    if shell_kind == "cmd":
+        cmd = resolve_command("cmd", repo)
+        return subprocess.Popen([cmd, "/d", "/s", "/c", command], cwd=repo), time.time()
     if shell_kind == "powershell":
         powershell = resolve_command("powershell", repo)
         return subprocess.Popen(
@@ -1010,7 +1016,7 @@ def parse_args() -> argparse.Namespace:
         "--parallel-tests-shell",
         choices=["default", "cmd", "powershell", "pwsh"],
         default=os.environ.get("AUTOREVIEW_PARALLEL_TESTS_SHELL", "default"),
-        help="Shell for --parallel-tests. Default preserves Python shell=True platform behavior; use powershell or pwsh for PowerShell-specific commands.",
+        help="Shell for --parallel-tests. Default uses the platform shell through an explicit argv; use powershell or pwsh for PowerShell-specific commands.",
     )
     parser.add_argument("--require-finding", action="append", default=[], help="Require finding text to contain this substring.")
     parser.add_argument("--expect-findings", action="store_true", help="Treat findings as success; for harness acceptance tests.")
