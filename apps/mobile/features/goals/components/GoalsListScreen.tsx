@@ -2,9 +2,15 @@ import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import { useOptionalUserId } from "@/features/auth/public";
-import { Button, EmptyState, ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";
+import {
+  Button,
+  EmptyState,
+  IconActionButton,
+  ScreenLayout,
+  TAB_BAR_CLEARANCE,
+} from "@/shared/components";
 import { Plus, Target } from "@/shared/components/icons";
-import { Platform, Pressable, StyleSheet, View } from "@/shared/components/rn";
+import { Platform, StyleSheet, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { selectGoal, useGoalStore } from "../store";
@@ -42,11 +48,14 @@ function GoalsEmpty({ onCreateGoal }: { readonly onCreateGoal: () => void }) {
 // ---------------------------------------------------------------------------
 
 function AddGoalButton({ onPress }: { readonly onPress: () => void }) {
+  const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
   return (
-    <Pressable onPress={onPress} hitSlop={12}>
-      <Plus size={24} color={accentGreen} />
-    </Pressable>
+    <IconActionButton
+      accessibilityLabel={t("goals.empty.createGoal")}
+      icon={<Plus size={24} color={accentGreen} />}
+      onPress={onPress}
+    />
   );
 }
 

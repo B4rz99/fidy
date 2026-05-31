@@ -21,7 +21,7 @@ export const EmailConnectBanner = ({
   if (accounts.length > 0 || bannerDismissed) return null;
 
   return (
-    <Card padded={false} className="rounded-chart" style={{ gap: 16, padding: 20 }}>
+    <Card padded={false} contentStyle={{ gap: 16, padding: 20 }}>
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center" style={{ gap: 10 }}>
           <Mail size={22} color={iconColor} />

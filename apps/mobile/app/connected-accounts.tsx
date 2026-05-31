@@ -111,7 +111,7 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
     })();
 
     return (
-      <Card padded={false} className="rounded-chart" style={{ gap: 14, padding: 20 }}>
+      <Card padded={false} contentStyle={{ gap: 14, padding: 20 }}>
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center" style={{ gap: 12 }}>
             <Animated.View
@@ -151,7 +151,7 @@ function AccountCard({ provider, account, isSyncing, onConnect, onDisconnect }: 
   }
 
   return (
-    <Card padded={false} className="rounded-chart" style={{ gap: 14, padding: 20 }}>
+    <Card padded={false} contentStyle={{ gap: 14, padding: 20 }}>
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center" style={{ gap: 12 }}>
           <View

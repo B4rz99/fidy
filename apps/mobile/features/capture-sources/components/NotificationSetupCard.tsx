@@ -29,7 +29,7 @@ export const NotificationSetupCard = () => {
   const borderColor = useThemeColor("borderSubtle");
 
   return (
-    <Card padded={false} className="rounded-chart" style={{ gap: 14, padding: 20 }}>
+    <Card padded={false} contentStyle={{ gap: 14, padding: 20 }}>
       {/* Header */}
       <View className="flex-row items-center" style={{ gap: 10 }}>
         <Bell size={22} color={iconColor} />

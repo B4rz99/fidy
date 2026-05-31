@@ -2,8 +2,8 @@ import { useRouter } from "expo-router";
 import { useMemo } from "react";
 import { getNextOccurrence, useCalendarStore } from "@/features/calendar/public";
 import { CATEGORY_MAP } from "@/shared/categories";
-import { EmptyState } from "@/shared/components";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Card, EmptyState, TextActionButton } from "@/shared/components";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { formatMoney } from "@/shared/lib";
@@ -15,9 +15,7 @@ export function UpcomingBillsSection() {
   const { push } = useRouter();
   const bills = useCalendarStore((s) => s.bills);
   const primaryColor = useThemeColor("primary");
-  const cardBg = useThemeColor("card");
   const borderColor = useThemeColor("borderSubtle");
-  const accentGreen = useThemeColor("accentGreen");
 
   const upcomingBills = useMemo(() => {
     const now = new Date();
@@ -45,17 +43,13 @@ export function UpcomingBillsSection() {
         <Text style={[styles.title, { color: primaryColor }]}>
           {t("budgets.upcomingBills.title")}
         </Text>
-        <Pressable onPress={handleSeeAll}>
-          <Text style={[styles.seeAll, { color: accentGreen }]}>
-            {t("budgets.upcomingBills.seeAll")}
-          </Text>
-        </Pressable>
+        <TextActionButton label={t("budgets.upcomingBills.seeAll")} onPress={handleSeeAll} />
       </View>
 
       {upcomingBills.length === 0 ? (
         <EmptyState title={t("budgets.upcomingBills.noBills")} className="min-h-16 flex-none p-4" />
       ) : (
-        <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
+        <Card padded={false}>
           {upcomingBills.map(({ bill, nextDate }, index) => {
             const category = CATEGORY_MAP[bill.categoryId] ?? null;
             const categoryLabel = category ? getCategoryLabel(category, locale) : bill.categoryId;
@@ -88,7 +82,7 @@ export function UpcomingBillsSection() {
               </View>
             );
           })}
-        </View>
+        </Card>
       )}
     </View>
   );
@@ -106,16 +100,6 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: "Poppins_600SemiBold",
     fontSize: 15,
-  },
-  seeAll: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 13,
-  },
-  card: {
-    borderRadius: 12,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    overflow: "hidden",
   },
   billRow: {
     flexDirection: "row",

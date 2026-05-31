@@ -14,6 +14,8 @@ type Props = {
   readonly percent: number;
   readonly height?: number;
   readonly completeTone?: "danger" | "success";
+  readonly fillColor?: string;
+  readonly trackColor?: string;
   readonly shimmering?: boolean;
 };
 
@@ -23,6 +25,8 @@ export function ProgressBar({
   percent,
   height = 8,
   completeTone = "danger",
+  fillColor,
+  trackColor,
   shimmering = false,
 }: Props) {
   const { width } = useWindowDimensions();
@@ -51,10 +55,11 @@ export function ProgressBar({
     transform: [{ translateX: shimmerTranslateX.value }],
   }));
 
-  const barColor = percent >= 100 && completeTone === "danger" ? accentRed : accentGreen;
+  const barColor =
+    fillColor ?? (percent >= 100 && completeTone === "danger" ? accentRed : accentGreen);
 
   return (
-    <View style={[styles.track, { height, backgroundColor: borderColor }]}>
+    <View style={[styles.track, { height, backgroundColor: trackColor ?? borderColor }]}>
       <Animated.View
         style={[
           styles.fill,

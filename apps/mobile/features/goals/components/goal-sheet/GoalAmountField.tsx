@@ -1,5 +1,6 @@
 import Animated from "react-native-reanimated";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { FieldButton } from "@/shared/components";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { styles } from "./GoalSheet.styles";
 import type { GoalSheetCursorStyle } from "./useGoalSheetForm";
@@ -21,14 +22,24 @@ export function GoalAmountField({
   const primary = useThemeColor("primary");
 
   return (
-    <Pressable style={styles.amountSection} onPress={onPress}>
-      <Text style={[styles.fieldLabel, { color: primary }]}>{t("goals.create.targetAmount")}</Text>
-      <View style={styles.amountRow}>
-        <Text style={[styles.amountDisplay, { color: primary }]}>{displayAmount}</Text>
-        {isAmountActive ? (
-          <Animated.View style={[styles.cursor, { backgroundColor: primary }, cursorStyle]} />
-        ) : null}
-      </View>
-    </Pressable>
+    <FieldButton
+      label={t("goals.create.targetAmount")}
+      onPress={onPress}
+      active={isAmountActive}
+      buttonStyle={{
+        justifyContent: "center",
+        borderColor: "transparent",
+        backgroundColor: "transparent",
+        paddingVertical: 2,
+      }}
+      value={
+        <View style={styles.amountRow}>
+          <Text style={[styles.amountDisplay, { color: primary }]}>{displayAmount}</Text>
+          {isAmountActive ? (
+            <Animated.View style={[styles.cursor, { backgroundColor: primary }, cursorStyle]} />
+          ) : null}
+        </View>
+      }
+    />
   );
 }

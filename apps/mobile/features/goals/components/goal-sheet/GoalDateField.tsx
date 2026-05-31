@@ -1,6 +1,7 @@
 import { TransactionDatePickerSheet } from "@/features/transactions/display.public";
-import { Pressable, Text, View } from "@/shared/components/rn";
-import { useCurrentDate, useThemeColor, useTranslation } from "@/shared/hooks";
+import { FieldButton } from "@/shared/components";
+import { View } from "@/shared/components/rn";
+import { useCurrentDate, useTranslation } from "@/shared/hooks";
 import { getMinimumGoalDate } from "./GoalDateField.helpers";
 import { styles } from "./GoalSheet.styles";
 
@@ -24,40 +25,26 @@ export function GoalDateField({
   targetDate,
 }: GoalDateFieldProps) {
   const { t } = useTranslation();
-  const card = useThemeColor("card");
-  const primary = useThemeColor("primary");
-  const tertiary = useThemeColor("tertiary");
-  const accentRed = useThemeColor("accentRed");
-  const borderSubtle = useThemeColor("borderSubtle");
   const currentDate = useCurrentDate();
   const minimumDate = getMinimumGoalDate(currentDate);
+  const dateLabel = targetDate
+    ? targetDate.toLocaleDateString(locale, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "";
 
   return (
     <View style={styles.fieldGroup}>
-      <Text style={[styles.fieldLabel, { color: primary }]}>{t("goals.create.targetDate")}</Text>
-      <Pressable
-        style={[
-          styles.input,
-          styles.dateButton,
-          { backgroundColor: card, borderColor: borderSubtle },
-        ]}
+      <FieldButton
+        label={t("goals.create.targetDate")}
+        value={dateLabel}
+        placeholder={t("goals.create.targetDate")}
         onPress={onPress}
-      >
-        <Text style={[styles.dateText, { color: targetDate ? primary : tertiary }]}>
-          {targetDate
-            ? targetDate.toLocaleDateString(locale, {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })
-            : t("goals.create.targetDate")}
-        </Text>
-        {targetDate != null ? (
-          <Pressable onPress={onClear} hitSlop={8}>
-            <Text style={[styles.clearDateText, { color: accentRed }]}>✕</Text>
-          </Pressable>
-        ) : null}
-      </Pressable>
+        onClear={targetDate != null ? onClear : undefined}
+        clearAccessibilityLabel={t("common.clear")}
+      />
       <TransactionDatePickerSheet
         allowFuture
         date={targetDate ?? minimumDate}

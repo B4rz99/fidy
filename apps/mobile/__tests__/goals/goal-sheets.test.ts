@@ -62,11 +62,12 @@ test("keeps the shared goal-sheet cluster wired to the date picker and numpad fl
   expect(formHookSource).toContain('setNumpadTarget("amount")');
 });
 
-test("goals proposal keeps the empty state and goal pulse cards wired", () => {
+test("goals proposal keeps the empty state and goal cards wired", () => {
   expect(goalsListSource).toContain("<ScreenLayout");
-  expect(goalsListSource).toContain(
-    'import { Button, EmptyState, ScreenLayout, TAB_BAR_CLEARANCE } from "@/shared/components";'
-  );
+  expect(goalsListSource).toContain("Button");
+  expect(goalsListSource).toContain("EmptyState");
+  expect(goalsListSource).toContain("ScreenLayout");
+  expect(goalsListSource).toContain("TAB_BAR_CLEARANCE");
   expect(goalsListSource).toContain("<EmptyState");
   expect(goalsListSource).toContain("<Button");
   expect(goalsListSource).not.toContain("styles.emptyCard");

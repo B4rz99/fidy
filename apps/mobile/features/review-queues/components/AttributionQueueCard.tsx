@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { getTransactionDisplayName } from "@/features/transactions/display.public";
+import { Card } from "@/shared/components";
 import { ChevronRight } from "@/shared/components/icons";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
@@ -31,8 +32,6 @@ export function AttributionQueueCard({
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
   const tertiary = useThemeColor("tertiary");
-  const card = useThemeColor("card");
-  const borderSubtle = useThemeColor("borderSubtle");
   const accentRed = useThemeColor("accentRed");
   const transactionId = item.transaction.id;
   const handleConfirmPress = useCallback(
@@ -50,7 +49,7 @@ export function AttributionQueueCard({
   const handleSkipPress = useCallback(() => onSkip(transactionId), [onSkip, transactionId]);
 
   return (
-    <View style={[styles.card, { backgroundColor: card, borderColor: borderSubtle }]}>
+    <Card contentClassName="gap-3.5 p-3.5">
       <Pressable onPress={handleOpenDetailsPress} disabled={disabled} style={styles.cardPressable}>
         <View style={styles.cardMetaRow}>
           <Text style={[styles.metaLabel, { color: tertiary }]}>
@@ -110,17 +109,11 @@ export function AttributionQueueCard({
           disabled={disabled}
         />
       </View>
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 14,
-    gap: 14,
-  },
   cardPressable: {
     gap: 10,
   },

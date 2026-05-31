@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
-import { useColorScheme, useTranslation } from "@/shared/hooks";
+import { MetricCard } from "@/shared/components";
+import { Text, View } from "@/shared/components/rn";
+import { useTranslation } from "@/shared/hooks";
 import type { CategorySpendingItem } from "./useHomeScreen";
 import { deriveHomeSpendingCardModel } from "./HomeSpendingCard.model";
 
@@ -17,8 +18,6 @@ export function HomeSpendingCard({
   onPress,
 }: HomeSpendingCardProps) {
   const { t, locale } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
   const model = deriveHomeSpendingCardModel({
     balance,
     categorySpending,
@@ -29,12 +28,12 @@ export function HomeSpendingCard({
   });
 
   return (
-    <Pressable
+    <MetricCard
       accessibilityRole={onPress ? "button" : undefined}
       accessibilityLabel={t("dashboard.spendingSummary")}
       onPress={onPress}
-      className="overflow-hidden rounded-chart"
-      style={[styles.card, isDark ? styles.cardDark : styles.cardLight]}
+      padded={false}
+      contentClassName="p-6"
     >
       <View className="gap-4">
         <View className="flex-row items-start justify-between gap-3">
@@ -97,22 +96,6 @@ export function HomeSpendingCard({
           </View>
         </View>
       </View>
-    </Pressable>
+    </MetricCard>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    padding: 24,
-  },
-  cardLight: {
-    backgroundColor: "rgba(255, 255, 255, 0.62)",
-    borderColor: "rgba(26, 26, 26, 0.12)",
-    borderWidth: 1,
-  },
-  cardDark: {
-    backgroundColor: "rgba(28, 28, 30, 0.86)",
-    borderColor: "rgba(240, 240, 240, 0.12)",
-    borderWidth: 1,
-  },
-});

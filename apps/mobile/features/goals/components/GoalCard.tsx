@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Button } from "@/shared/components";
+import { Button, Card, ProgressBar } from "@/shared/components";
 import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { formatMoney } from "@/shared/lib";
@@ -70,13 +70,11 @@ function GoalCardStatus(props: {
 
 function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProps) {
   const { t } = useTranslation();
-  const cardBg = useThemeColor("card");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
   const accentGreen = useThemeColor("accentGreen");
   const accentGreenLight = useThemeColor("accentGreenLight");
   const accentRed = useThemeColor("accentRed");
-  const borderColor = useThemeColor("borderSubtle");
   const peachLight = useThemeColor("peachLight");
 
   const { goal, currentAmount, progress, paceGuidance } = goalWithProgress;
@@ -89,7 +87,7 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
   const cardStatus = deriveGoalCardStatus(progress, paceGuidance);
 
   return (
-    <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
+    <Card contentClassName="gap-3 p-4">
       <Pressable style={styles.summaryArea} onPress={onPress}>
         <View style={styles.headerRow}>
           <View style={styles.titleGroup}>
@@ -120,19 +118,13 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
           </View>
         </View>
 
-        <View
-          style={[
-            styles.progressTrack,
-            { backgroundColor: goal.type === "debt" ? peachLight : accentGreenLight },
-          ]}
-        >
-          <View
-            style={[
-              styles.progressFill,
-              { backgroundColor: goalColor, width: `${progressWidth}%` },
-            ]}
-          />
-        </View>
+        <ProgressBar
+          percent={progressWidth}
+          height={8}
+          fillColor={goalColor}
+          trackColor={goal.type === "debt" ? peachLight : accentGreenLight}
+          completeTone={goal.type === "debt" ? "danger" : "success"}
+        />
 
         <View style={styles.footerRow}>
           <Text style={[styles.remainingText, { color: secondaryColor }]} numberOfLines={1}>
@@ -166,20 +158,13 @@ function GoalCardInner({ goalWithProgress, onPress, onAddPayment }: GoalCardProp
           onPress={onPress}
         />
       </View>
-    </View>
+    </Card>
   );
 }
 
 export const GoalCard = memo(GoalCardInner);
 
 const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    borderRadius: 12,
-    borderCurve: "continuous",
-    padding: 16,
-    gap: 12,
-  },
   summaryArea: {
     gap: 12,
   },
@@ -224,15 +209,6 @@ const styles = StyleSheet.create({
   percentText: {
     fontFamily: "Poppins_800ExtraBold",
     fontSize: 12,
-  },
-  progressTrack: {
-    height: 8,
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 4,
   },
   footerRow: {
     minHeight: 24,

@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { CATEGORY_MAP } from "@/shared/categories";
-import { Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { Card, ProgressBar } from "@/shared/components";
+import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 import { deriveBudgetPulseCardModel, type BudgetProgress } from "../lib/derive";
@@ -14,8 +15,6 @@ function BudgetCardInner({ progress, onPress }: Props) {
   const { t, locale } = useTranslation();
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
-  const cardBg = useThemeColor("card");
-  const borderColor = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
   const peachLight = useThemeColor("peachLight");
@@ -28,15 +27,11 @@ function BudgetCardInner({ progress, onPress }: Props) {
     model.tone === "danger" ? accentRed : model.tone === "warning" ? peachLight : accentGreen;
   const badgeTextColor = model.tone === "warning" ? "#3A2820" : "#0D0D0D";
   const progressColor = model.tone === "danger" ? accentRed : accentGreen;
-  const progressWidth = `${Math.max(0, Math.min(progress.percentUsed, 100))}%` as `${number}%`;
 
   const handlePress = () => onPress(progress.budgetId);
 
   return (
-    <Pressable
-      style={[styles.card, { backgroundColor: cardBg, borderColor }]}
-      onPress={handlePress}
-    >
+    <Card contentClassName="gap-3 p-3.5" onPress={handlePress}>
       <View style={styles.header}>
         <View style={styles.categoryRow}>
           {category && CategoryIcon ? (
@@ -54,11 +49,12 @@ function BudgetCardInner({ progress, onPress }: Props) {
         </View>
       </View>
 
-      <View style={[styles.progressTrack, { backgroundColor: borderColor }]}>
-        <View
-          style={[styles.progressFill, { backgroundColor: progressColor, width: progressWidth }]}
-        />
-      </View>
+      <ProgressBar
+        percent={progress.percentUsed}
+        height={7}
+        fillColor={progressColor}
+        completeTone={model.tone === "danger" ? "danger" : "success"}
+      />
 
       <View style={styles.footer}>
         <Text style={[styles.spentText, { color: secondaryColor }]}>{model.remainingLabel}</Text>
@@ -71,20 +67,13 @@ function BudgetCardInner({ progress, onPress }: Props) {
           {model.statusLabel}
         </Text>
       </View>
-    </Pressable>
+    </Card>
   );
 }
 
 export const BudgetCard = memo(BudgetCardInner);
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 10,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    padding: 14,
-    gap: 12,
-  },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -128,15 +117,6 @@ const styles = StyleSheet.create({
   badgeText: {
     fontFamily: "Poppins_700Bold",
     fontSize: 11,
-  },
-  progressTrack: {
-    borderRadius: 999,
-    height: 7,
-    overflow: "hidden",
-  },
-  progressFill: {
-    borderRadius: 999,
-    height: 7,
   },
   footer: {
     flexDirection: "row",

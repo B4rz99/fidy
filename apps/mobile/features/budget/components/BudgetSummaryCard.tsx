@@ -1,3 +1,4 @@
+import { MetricCard, ProgressBar } from "@/shared/components";
 import { StyleSheet, Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import type { CopAmount } from "@/shared/types/branded";
@@ -13,16 +14,13 @@ export function BudgetSummaryCard({ totalBudget, totalSpent, percentUsed }: Prop
   const { t } = useTranslation();
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
-  const cardBg = useThemeColor("card");
-  const borderColor = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
   const model = deriveBudgetPulseSummaryModel({ totalBudget, totalSpent, percentUsed, t });
   const progressColor = model.isOverBudget ? accentRed : accentGreen;
-  const progressWidth = `${Math.max(0, Math.min(percentUsed, 100))}%` as `${number}%`;
 
   return (
-    <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
+    <MetricCard contentClassName="p-[18px]">
       <View style={styles.header}>
         <Text style={[styles.label, { color: secondaryColor }]}>
           {t("budgets.summary.totalBudget")}
@@ -35,23 +33,17 @@ export function BudgetSummaryCard({ totalBudget, totalSpent, percentUsed }: Prop
       <Text style={[styles.amount, { color: primaryColor }]}>{model.totalBudgetLabel}</Text>
       <Text style={[styles.guidance, { color: secondaryColor }]}>{model.guidance}</Text>
 
-      <View style={[styles.progressTrack, { backgroundColor: borderColor }]}>
-        <View
-          style={[styles.progressFill, { backgroundColor: progressColor, width: progressWidth }]}
-        />
-      </View>
-    </View>
+      <ProgressBar
+        percent={percentUsed}
+        height={9}
+        fillColor={progressColor}
+        completeTone={model.isOverBudget ? "danger" : "success"}
+      />
+    </MetricCard>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 10,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    padding: 18,
-    gap: 12,
-  },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -80,14 +72,5 @@ const styles = StyleSheet.create({
     color: "#0D0D0D",
     fontFamily: "Poppins_700Bold",
     fontSize: 12,
-  },
-  progressTrack: {
-    borderRadius: 999,
-    height: 9,
-    overflow: "hidden",
-  },
-  progressFill: {
-    borderRadius: 999,
-    height: 9,
   },
 });

@@ -76,7 +76,7 @@ export function DesignSystemScreen() {
 
         <SettingsSection label={t("designSystem.cardsSection")}>
           <View className="p-4" style={{ gap: 12 }}>
-            <Card className="border border-border-subtle dark:border-border-subtle-dark">
+            <Card>
               <View className="flex-row items-center" style={{ gap: 12 }}>
                 <View className="size-10 items-center justify-center rounded-icon bg-accent-green-light dark:bg-accent-green-light-dark">
                   <Wallet size={20} color={accentGreen} />
@@ -94,7 +94,7 @@ export function DesignSystemScreen() {
                 </Text>
               </View>
             </Card>
-            <Card className="bg-peach-light dark:bg-peach-light-dark">
+            <Card>
               <View style={{ gap: 10 }}>
                 <View className="flex-row items-center" style={{ gap: 8 }}>
                   <Sparkles size={18} color={accentGreen} />

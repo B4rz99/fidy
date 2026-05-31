@@ -2,10 +2,10 @@ import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
-import { ScreenLayout } from "@/shared/components";
-import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";
+import { ScreenLayout, TextActionButton } from "@/shared/components";
+import { FlatList, Platform, StyleSheet, View } from "@/shared/components/rn";
 import { getDb } from "@/shared/db";
-import { useMountEffect, useSubscription, useThemeColor, useTranslation } from "@/shared/hooks";
+import { useMountEffect, useSubscription, useTranslation } from "@/shared/hooks";
 import { trackNotificationCenterOpened } from "@/shared/lib";
 import { deriveNotificationDisplay, getNotificationFeedItems } from "../lib/display";
 import type { NotificationDisplay } from "../lib/types";
@@ -27,7 +27,6 @@ export const NotificationsScreen = () => {
   const userId = useOptionalUserId();
   const notifications = useNotificationStore((s) => s.notifications);
   const isLoading = useNotificationStore((s) => s.isLoading);
-  const accentRed = useThemeColor("accentRed");
   const { bottom } = useSafeAreaInsets();
   const hasNotifications = notifications.length > 0;
 
@@ -76,9 +75,7 @@ export const NotificationsScreen = () => {
       onBack={() => back()}
       rightActions={
         hasNotifications ? (
-          <Pressable onPress={handleClearAll} hitSlop={12}>
-            <Text style={[styles.clearButton, { color: accentRed }]}>{t("common.clear")}</Text>
-          </Pressable>
+          <TextActionButton label={t("common.clear")} tone="danger" onPress={handleClearAll} />
         ) : undefined
       }
     >
@@ -86,9 +83,7 @@ export const NotificationsScreen = () => {
         <Stack.Screen
           options={{
             headerRight: () => (
-              <Pressable onPress={handleClearAll} hitSlop={12}>
-                <Text style={[styles.clearButton, { color: accentRed }]}>{t("common.clear")}</Text>
-              </Pressable>
+              <TextActionButton label={t("common.clear")} tone="danger" onPress={handleClearAll} />
             ),
           }}
         />
@@ -112,10 +107,6 @@ export const NotificationsScreen = () => {
 const styles = StyleSheet.create({
   separator: {
     height: 10,
-  },
-  clearButton: {
-    fontFamily: "Poppins_500Medium",
-    fontSize: 13,
   },
   listContent: {
     paddingHorizontal: 16,

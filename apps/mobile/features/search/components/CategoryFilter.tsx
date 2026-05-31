@@ -1,7 +1,8 @@
 import * as Haptics from "expo-haptics";
 import { memo } from "react";
 import { CATEGORIES, CATEGORY_ROWS, type Category } from "@/shared/categories";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { FilterPill as SharedFilterPill } from "@/shared/components";
+import { Text, View } from "@/shared/components/rn";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
 
@@ -10,7 +11,7 @@ type CategoryFilterProps = {
   onToggle: (categoryId: string) => void;
 };
 
-const FilterPill = memo(
+const CategoryFilterPill = memo(
   ({
     category,
     isSelected,
@@ -29,37 +30,38 @@ const FilterPill = memo(
     };
 
     return (
-      <Pressable
-        // Source contract: className="h-11 w-11".
-        className="size-11 items-center justify-center gap-1"
+      <SharedFilterPill
+        className="size-11 px-0"
         onPress={handlePress}
-        accessibilityRole="button"
-        accessibilityState={{ selected: isSelected }}
+        selected={isSelected}
         accessibilityLabel={getCategoryLabel(category, locale)}
-      >
-        <View
-          className="size-8 items-center justify-center rounded-full"
-          style={{ backgroundColor: peachLight }}
-        >
-          <Text>{category.icon}</Text>
-        </View>
-        <View
-          className="h-0.5 w-5 rounded-full"
-          style={{ backgroundColor: isSelected ? category.color : "transparent" }}
-        />
-      </Pressable>
+        leading={
+          <View className="items-center" style={{ gap: 3 }}>
+            <View
+              className="size-8 items-center justify-center rounded-full"
+              style={{ backgroundColor: peachLight }}
+            >
+              <Text>{category.icon}</Text>
+            </View>
+            <View
+              className="h-0.5 w-5 rounded-full"
+              style={{ backgroundColor: isSelected ? category.color : "transparent" }}
+            />
+          </View>
+        }
+      />
     );
   }
 );
 
-FilterPill.displayName = "FilterPill";
+CategoryFilterPill.displayName = "CategoryFilterPill";
 
 export const CategoryFilter = ({ selectedIds, onToggle }: CategoryFilterProps) => (
   <View className="gap-3 p-4">
     {CATEGORY_ROWS.map((row, rowIdx) => (
       <View key={CATEGORIES[rowIdx * 5]?.id ?? rowIdx} className="flex-row justify-around">
         {row.map((cat) => (
-          <FilterPill
+          <CategoryFilterPill
             key={cat.id}
             category={cat}
             isSelected={selectedIds.includes(cat.id)}

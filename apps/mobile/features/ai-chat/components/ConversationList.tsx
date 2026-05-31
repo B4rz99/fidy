@@ -52,8 +52,7 @@ const SessionCard = memo(function SessionCardInner({
     <Card
       onPress={() => onSelectSession(session.id)}
       padded={false}
-      className="rounded-lg"
-      style={{
+      contentStyle={{
         paddingVertical: 13,
         paddingHorizontal: 16,
         flexDirection: "row",
@@ -156,9 +155,7 @@ export function ConversationList({ onSelectSession, onNewChat }: ConversationLis
             {cleanupMessage != null ? (
               <Card
                 padded={false}
-                className="rounded-xl"
-                style={{
-                  borderCurve: "continuous",
+                contentStyle={{
                   paddingVertical: 10,
                   paddingHorizontal: 14,
                   flexDirection: "row",
