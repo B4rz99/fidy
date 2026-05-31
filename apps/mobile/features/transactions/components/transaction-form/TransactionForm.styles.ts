@@ -57,21 +57,6 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  amountCursor: {
-    borderRadius: 1,
-    height: 32,
-    marginLeft: 2,
-    width: 2,
-  },
-  amountDisplay: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 40,
-  },
-  amountRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-  },
   pillGrid: {
     flexDirection: "row",
     flexWrap: "wrap",

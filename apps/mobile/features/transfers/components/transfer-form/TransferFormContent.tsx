@@ -1,6 +1,6 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button } from "@/shared/components";
+import { Button, MoneyAmountDisplay } from "@/shared/components";
 import { TriangleAlert } from "@/shared/components/icons";
 import {
   KeyboardAvoidingView,
@@ -12,7 +12,7 @@ import {
   View,
 } from "@/shared/components/rn";
 import { useCurrentDate, useThemeColor, useTranslation } from "@/shared/hooks";
-import { cleanDigitInput, formatInputDisplay } from "@/shared/lib";
+import { cleanDigitInput } from "@/shared/lib";
 import { styles } from "./TransferForm.styles";
 import { TRANSFER_FORM_TEST_IDS } from "./TransferForm.types";
 import { TransferSideCard } from "./TransferSideCard";
@@ -47,9 +47,7 @@ export function TransferFormContent(props: { readonly form: ReturnType<typeof us
           </Text>
 
           <View accessible={false} style={styles.amountDisplayWrap}>
-            <Text style={[styles.amountDisplay, { color: primary }]}>
-              {formatInputDisplay(props.form.digits)}
-            </Text>
+            <MoneyAmountDisplay color={primary} digits={props.form.digits} size="hero" />
             <TextInput
               testID={TRANSFER_FORM_TEST_IDS.amount}
               value={props.form.digits}

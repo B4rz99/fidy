@@ -1,15 +1,6 @@
 import { StyleSheet } from "@/shared/components/rn";
 
 export const styles = StyleSheet.create({
-  amountDisplay: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 32,
-  },
-  amountRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-  },
   amountSection: {
     alignItems: "center",
     gap: 4,

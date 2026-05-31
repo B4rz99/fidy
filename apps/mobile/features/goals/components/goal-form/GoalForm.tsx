@@ -37,7 +37,7 @@ export function GoalForm({
       ) : null}
       <GoalAmountField
         cursorStyle={form.cursorStyle}
-        displayAmount={form.displayAmount}
+        digits={form.digits}
         isAmountActive={form.numpadTarget === "amount"}
         onPress={form.handleAmountPress}
       />

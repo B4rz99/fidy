@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { handleNumpadPress } from "@/features/transactions/display.public";
 import { Keyboard } from "@/shared/components/rn";
 import { useBlinkingCursor } from "@/shared/hooks";
-import { formatInputDisplay, parseDigitsToAmount } from "@/shared/lib";
+import { parseDigitsToAmount } from "@/shared/lib";
 import type { GoalType } from "../../schema";
 
 export type GoalFormCursorStyle = ReturnType<typeof useBlinkingCursor>["cursorStyle"];
@@ -11,7 +11,6 @@ export type GoalFormModel = {
   readonly amount: number;
   readonly cursorStyle: GoalFormCursorStyle;
   readonly digits: string;
-  readonly displayAmount: string;
   readonly goalType: GoalType;
   readonly handleAmountPress: () => void;
   readonly handleDateChange: (date: Date) => void;
@@ -85,7 +84,6 @@ function useGoalFormNumpad(
 
   return {
     digits,
-    displayAmount: digits.length > 0 ? formatInputDisplay(digits) : "$",
     handleAmountPress: useCallback(() => {
       Keyboard.dismiss();
       setShowDatePicker(false);
@@ -124,7 +122,6 @@ export function useGoalForm(options: GoalFormOptions): GoalFormModel {
     amount: parseDigitsToAmount(numpad.digits),
     cursorStyle,
     digits: numpad.digits,
-    displayAmount: numpad.displayAmount,
     goalType,
     handleAmountPress: numpad.handleAmountPress,
     handleDateChange: dates.handleDateChange,

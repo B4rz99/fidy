@@ -32,7 +32,6 @@ export type TransactionFormModel = {
   readonly cursorStyle: ReturnType<typeof useBlinkingCursor>["cursorStyle"];
   readonly dateLabel: string;
   readonly descriptionFocused: boolean;
-  readonly displayAmount: string;
   readonly handleDescriptionBlur: () => void;
   readonly handleDescriptionFocus: () => void;
   readonly handleKey: (key: string) => void;

@@ -54,11 +54,8 @@ export const styles = StyleSheet.create({
   dateText: { fontFamily: "Poppins_500Medium", fontSize: 14 },
   clearDateText: { fontSize: 14 },
   amountSection: { alignItems: "center", gap: 2, paddingVertical: 2 },
-  amountRow: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
-  amountDisplay: { fontFamily: "Poppins_700Bold", fontSize: 30 },
   interestInputRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   interestInput: { flex: 1 },
   interestSuffix: { fontFamily: "Poppins_700Bold", fontSize: 18 },
-  cursor: { width: 2, height: 28, marginLeft: 2, borderRadius: 1 },
   projectionHint: { fontFamily: "Poppins_500Medium", fontSize: 12, textAlign: "center" },
 });

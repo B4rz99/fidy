@@ -1,7 +1,8 @@
 import type { ComponentProps } from "react";
 import Animated from "react-native-reanimated";
+import { MoneyAmountDisplay } from "@/shared/components";
 import { X } from "@/shared/components/icons";
-import { Pressable, Text, View } from "@/shared/components/rn";
+import { Pressable, View } from "@/shared/components/rn";
 import type { TransactionType } from "../../schema";
 import { TypeToggle } from "../TypeToggle";
 import { styles } from "./TransactionForm.styles";
@@ -11,7 +12,7 @@ type TransactionFormHeaderProps = {
   readonly closeLabel: string;
   readonly cursorStyle: ComponentProps<typeof Animated.View>["style"];
   readonly descriptionFocused: boolean;
-  readonly displayAmount: string;
+  readonly digits: string;
   readonly onClose?: () => void;
   readonly onTypeChange: (type: TransactionType) => void;
   readonly secondaryColor: string;
@@ -23,7 +24,7 @@ export function TransactionFormHeader({
   closeLabel,
   cursorStyle,
   descriptionFocused,
-  displayAmount,
+  digits,
   onClose,
   onTypeChange,
   secondaryColor,
@@ -47,14 +48,13 @@ export function TransactionFormHeader({
 
       <View style={styles.headerCenter}>
         <TypeToggle value={type} onChange={onTypeChange} />
-        <View style={styles.amountRow}>
-          <Text style={[styles.amountDisplay, { color: amountColor }]}>{displayAmount}</Text>
-          {descriptionFocused ? null : (
-            <Animated.View
-              style={[styles.amountCursor, { backgroundColor: amountColor }, cursorStyle]}
-            />
-          )}
-        </View>
+        <MoneyAmountDisplay
+          color={amountColor}
+          cursorStyle={cursorStyle}
+          cursorVisible={!descriptionFocused}
+          digits={digits}
+          size="hero"
+        />
       </View>
     </>
   );

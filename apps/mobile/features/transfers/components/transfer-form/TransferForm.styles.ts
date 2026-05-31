@@ -10,10 +10,6 @@ export const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 8,
   },
-  amountDisplay: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 40,
-  },
   amountDisplayWrap: {
     position: "relative",
     justifyContent: "center",

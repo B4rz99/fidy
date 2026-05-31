@@ -1,20 +1,17 @@
-import Animated from "react-native-reanimated";
-import { FieldButton } from "@/shared/components";
-import { Text, View } from "@/shared/components/rn";
+import { FieldButton, MoneyAmountDisplay } from "@/shared/components";
 import { useThemeColor, useTranslation } from "@/shared/hooks";
-import { styles } from "./GoalForm.styles";
 import type { GoalFormCursorStyle } from "./useGoalForm";
 
 type GoalAmountFieldProps = {
   readonly cursorStyle: GoalFormCursorStyle;
-  readonly displayAmount: string;
+  readonly digits: string;
   readonly isAmountActive: boolean;
   readonly onPress: () => void;
 };
 
 export function GoalAmountField({
   cursorStyle,
-  displayAmount,
+  digits,
   isAmountActive,
   onPress,
 }: GoalAmountFieldProps) {
@@ -33,12 +30,13 @@ export function GoalAmountField({
         paddingVertical: 2,
       }}
       value={
-        <View style={styles.amountRow}>
-          <Text style={[styles.amountDisplay, { color: primary }]}>{displayAmount}</Text>
-          {isAmountActive ? (
-            <Animated.View style={[styles.cursor, { backgroundColor: primary }, cursorStyle]} />
-          ) : null}
-        </View>
+        <MoneyAmountDisplay
+          color={primary}
+          cursorStyle={cursorStyle}
+          cursorVisible={isAmountActive}
+          digits={digits}
+          size="medium"
+        />
       }
     />
   );

@@ -25,6 +25,8 @@ export { IconActionButton } from "./IconActionButton";
 export type { IconActionButtonProps, IconActionButtonTone } from "./IconActionButton";
 export { MonthNavigator } from "./MonthNavigator";
 export type { MonthNavigatorProps } from "./MonthNavigator";
+export { MoneyAmountDisplay } from "./MoneyAmountDisplay";
+export type { MoneyAmountDisplayProps } from "./MoneyAmountDisplay";
 export { MetricCard } from "./MetricCard";
 export type { MetricCardProps } from "./MetricCard";
 export { CustomTabBar } from "./navigation/CustomTabBar";

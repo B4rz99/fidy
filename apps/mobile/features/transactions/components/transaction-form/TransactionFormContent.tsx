@@ -21,7 +21,7 @@ export function TransactionFormContent({
   dateLabel,
   description,
   descriptionFocused,
-  displayAmount,
+  digits,
   extraActionLabel,
   handleDescriptionBlur,
   handleDescriptionFocus,
@@ -58,7 +58,7 @@ export function TransactionFormContent({
           closeLabel={t("common.close")}
           cursorStyle={cursorStyle}
           descriptionFocused={descriptionFocused}
-          displayAmount={displayAmount}
+          digits={digits}
           onClose={onClose}
           onTypeChange={onTypeChange}
           secondaryColor={secondaryColor}

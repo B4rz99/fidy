@@ -1,13 +1,12 @@
 import { useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated from "react-native-reanimated";
 import { CategoryPill } from "@/features/transactions/ui.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
-import { Button, FidyNumpad } from "@/shared/components";
+import { Button, FidyNumpad, MoneyAmountDisplay } from "@/shared/components";
 import { ScrollView, Text, View } from "@/shared/components/rn";
 import { useBlinkingCursor, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getCategoryLabel } from "@/shared/i18n";
-import { formatInputDisplay, formatMoney } from "@/shared/lib";
+import { formatMoney } from "@/shared/lib";
 import type { BudgetSuggestion } from "../../lib/derive";
 import { styles } from "./CreateBudget.styles";
 
@@ -65,7 +64,6 @@ export function CreateBudgetFormContent({
     () => CATEGORIES.filter((categoryOption) => !existingCategoryIds.has(categoryOption.id)),
     [existingCategoryIds]
   );
-  const displayAmount = digits.length > 0 ? formatInputDisplay(digits) : "$";
   const lastMonthHintData = useMemo(
     () => resolveLastMonthHintData(autoSuggestions, category, locale),
     [autoSuggestions, category, locale]
@@ -106,21 +104,13 @@ export function CreateBudgetFormContent({
         <Text style={[styles.inputLabel, { color: secondaryColor }]}>
           {t("budgets.create.enterAmount")}
         </Text>
-        <View style={styles.amountRow}>
-          <Text style={[styles.amountDisplay, { color: primaryColor }]}>{displayAmount}</Text>
-          <Animated.View
-            style={[
-              {
-                backgroundColor: primaryColor,
-                borderRadius: 1,
-                height: 28,
-                marginLeft: 2,
-                width: 2,
-              },
-              cursorStyle,
-            ]}
-          />
-        </View>
+        <MoneyAmountDisplay
+          color={primaryColor}
+          cursorStyle={cursorStyle}
+          cursorVisible
+          digits={digits}
+          size="large"
+        />
         {lastMonthHint ? (
           <Text style={[styles.hint, { color: secondaryColor }]}>{lastMonthHint}</Text>
         ) : null}

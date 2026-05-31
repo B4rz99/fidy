@@ -1,11 +1,16 @@
 import { useRouter } from "expo-router";
-import { useCallback, useReducer, useRef } from "react";
+import { useCallback, useReducer } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated from "react-native-reanimated";
 import { useOptionalUserId } from "@/features/auth/public";
 import { handleNumpadPress } from "@/features/transactions/display.public";
 import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
-import { AppAuroraBackground, Button, FidyNumpad, FormTextField } from "@/shared/components";
+import {
+  AppAuroraBackground,
+  Button,
+  FidyNumpad,
+  FormTextField,
+  MoneyAmountDisplay,
+} from "@/shared/components";
 import { Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import {
@@ -15,7 +20,7 @@ import {
   useThemeColor,
   useTranslation,
 } from "@/shared/hooks";
-import { formatInputDisplay, parseDigitsToAmount, toIsoDate } from "@/shared/lib";
+import { parseDigitsToAmount, toIsoDate } from "@/shared/lib";
 import { addContribution, useGoalStore } from "../store";
 
 type AddPaymentState = {
@@ -28,6 +33,7 @@ type AddPaymentState = {
 
 type AddPaymentAction =
   | { readonly type: "setDigits"; readonly digits: string }
+  | { readonly type: "pressKey"; readonly key: string }
   | { readonly type: "setNote"; readonly note: string }
   | { readonly type: "activateNumpad" }
   | { readonly type: "deactivateNumpad" }
@@ -39,6 +45,8 @@ function addPaymentReducer(state: AddPaymentState, action: AddPaymentAction): Ad
   switch (action.type) {
     case "setDigits":
       return { ...state, digits: action.digits };
+    case "pressKey":
+      return { ...state, digits: handleNumpadPress(state.digits, action.key) };
     case "setNote":
       return { ...state, note: action.note };
     case "activateNumpad":
@@ -77,20 +85,17 @@ export function AddPaymentScreen() {
     showDatePicker: false,
   }));
   const { date, digits, note, numpadActive, showDatePicker } = state;
-  const fallbackDateRef = useRef(new Date());
-  const digitsRef = useRef(digits);
-  digitsRef.current = digits;
 
   // Blinking cursor
   const { cursorStyle } = useBlinkingCursor();
 
   const { isBusy: isAdding, run: guardedAdd } = useAsyncGuard();
 
-  const displayAmount = digits.length > 0 ? formatInputDisplay(digits) : "$";
   const selectedDate = new Date(`${date}T00:00:00`);
+  const datePickerDate = Number.isNaN(selectedDate.getTime()) ? new Date() : selectedDate;
 
   const handleKey = useCallback((key: string) => {
-    dispatch({ type: "setDigits", digits: handleNumpadPress(digitsRef.current, key) });
+    dispatch({ type: "pressKey", key });
   }, []);
 
   const handleAddPayment = useCallback(
@@ -138,23 +143,13 @@ export function AddPaymentScreen() {
               dispatch({ type: "activateNumpad" });
             }}
           >
-            <View style={styles.amountRow}>
-              <Text style={[styles.amountDisplay, { color: primaryColor }]}>{displayAmount}</Text>
-              {numpadActive ? (
-                <Animated.View
-                  style={[
-                    {
-                      width: 2,
-                      height: 28,
-                      marginLeft: 2,
-                      borderRadius: 1,
-                      backgroundColor: primaryColor,
-                    },
-                    cursorStyle,
-                  ]}
-                />
-              ) : null}
-            </View>
+            <MoneyAmountDisplay
+              color={primaryColor}
+              cursorStyle={cursorStyle}
+              cursorVisible={numpadActive}
+              digits={digits}
+              size="large"
+            />
           </Pressable>
 
           <FormTextField
@@ -203,7 +198,7 @@ export function AddPaymentScreen() {
         {numpadActive ? <FidyNumpad onKeyPress={handleKey} /> : null}
       </ScrollView>
       <TransactionDatePickerDialog
-        date={Number.isNaN(selectedDate.getTime()) ? fallbackDateRef.current : selectedDate}
+        date={datePickerDate}
         onChange={(nextDate) => dispatch({ type: "setDate", date: toIsoDate(nextDate) })}
         // Source contract: setDate(toIsoDate(nextDate)).
         onClose={() => dispatch({ type: "closeDatePicker" })}
@@ -224,8 +219,6 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   amountSection: { alignItems: "center", paddingVertical: 8 },
-  amountRow: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
-  amountDisplay: { fontFamily: "Poppins_700Bold", fontSize: 32 },
   fieldGroup: { gap: 4 },
   fieldLabel: { fontFamily: "Poppins_500Medium", fontSize: 12, fontStyle: "italic" },
   input: {
