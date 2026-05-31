@@ -128,7 +128,7 @@ export function Card({
     contentClassName: innerClassName,
     contentStyle,
     glassStyle,
-    isInteractive: onPress != null,
+    isInteractive: onPress != null && !disabled,
     tintColor: tokens.tintColor,
   };
 
