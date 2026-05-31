@@ -28,6 +28,7 @@ export const TypeFilter = ({ value, onChange }: TypeFilterProps) => {
       options={options}
       value={value}
       onChange={handlePress}
+      allowReselect
       getOptionTone={(type) =>
         type === "expense" ? "danger" : type === "income" ? "success" : "primary"
       }

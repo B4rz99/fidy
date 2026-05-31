@@ -36,6 +36,12 @@ export function FieldButton({
   buttonStyle,
   valueClassName,
   style,
+  accessibilityHint,
+  accessibilityLabel,
+  accessibilityState,
+  accessible,
+  importantForAccessibility,
+  testID,
   ...viewProps
 }: FieldButtonProps) {
   const { t } = useTranslation();
@@ -76,7 +82,12 @@ export function FieldButton({
         onPress={onPress}
         disabled={disabled}
         accessibilityRole="button"
-        accessibilityState={{ disabled, selected: active }}
+        accessibilityHint={accessibilityHint}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ ...accessibilityState, disabled, selected: active }}
+        accessible={accessible}
+        importantForAccessibility={importantForAccessibility}
+        testID={testID}
         className={`min-h-10 flex-row items-center rounded-lg px-3 ${disabled ? "opacity-60" : ""}`}
         style={[
           {

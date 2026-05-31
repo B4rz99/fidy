@@ -18,6 +18,7 @@ type SegmentedControlProps<TValue extends string> = Omit<ViewProps, "children"> 
   readonly onChange: (value: TValue) => void;
   readonly tone?: SegmentedControlTone;
   readonly getOptionTone?: (value: TValue) => SegmentedControlTone;
+  readonly allowReselect?: boolean;
   readonly className?: string;
 };
 
@@ -33,6 +34,7 @@ export function SegmentedControl<TValue extends string>({
   onChange,
   tone = "primary",
   getOptionTone,
+  allowReselect = false,
   className,
   ...viewProps
 }: SegmentedControlProps<TValue>) {
@@ -56,7 +58,7 @@ export function SegmentedControl<TValue extends string>({
             accessibilityState={{ selected, disabled: option.disabled }}
             disabled={option.disabled}
             onPress={() => {
-              if (option.value !== value) {
+              if (allowReselect || option.value !== value) {
                 onChange(option.value);
               }
             }}
