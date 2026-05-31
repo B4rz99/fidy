@@ -54,6 +54,7 @@ snyk-results.json
 .turbo/
 .metro-cache/
 .cache/
+.codegraph/
 
 # Test coverage
 coverage/
