@@ -1,6 +1,6 @@
 import type { ComponentProps, ReactNode } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
-import { Platform, StyleSheet, View } from "@/shared/components/rn";
+import { StyleSheet, View } from "@/shared/components/rn";
 import { Button } from "./Button";
 import { FidyNumpad } from "./FidyNumpad";
 
@@ -58,9 +58,7 @@ export function NumpadActionFooter({
   topContent,
 }: NumpadActionFooterProps) {
   return (
-    <View
-      style={[styles.footer, { paddingBottom: Platform.OS === "ios" ? safeBottom : 16 }, style]}
-    >
+    <View style={[styles.footer, { paddingBottom: Math.max(safeBottom, 16) }, style]}>
       {topContent}
       {extraAction ? <FooterActionButton action={extraAction} fallbackClassName="h-11" /> : null}
       <View style={styles.actionRow}>

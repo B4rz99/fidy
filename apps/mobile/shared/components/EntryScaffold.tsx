@@ -22,6 +22,7 @@ import {
 } from "@/shared/components/rn";
 import { useColorScheme, useThemeColor, useTranslation } from "@/shared/hooks";
 import { getSubtleGlassCardTokens } from "./card-tokens";
+import { getEntryTabTextStyle } from "./entry-tab-text-style";
 import { styles } from "./EntryScaffold.styles";
 export { EntryField, EntryTextInputField } from "./EntryField";
 export type { EntryFieldProps } from "./EntryField";
@@ -211,13 +212,7 @@ export function EntryScaffold({
             >
               <Text
                 numberOfLines={1}
-                style={[
-                  styles.tabText,
-                  {
-                    color: isActive ? activeColor : tertiary,
-                    fontWeight: isActive ? "700" : "600",
-                  },
-                ]}
+                style={[styles.tabText, getEntryTabTextStyle({ activeColor, isActive, tertiary })]}
               >
                 {tab.label}
               </Text>
