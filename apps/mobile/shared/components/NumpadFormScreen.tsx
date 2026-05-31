@@ -38,17 +38,18 @@ export function NumpadFormScreen({
       onPress={Keyboard.dismiss}
     >
       <AppAuroraBackground isDark={isDark} />
-      <ScrollView
-        style={styles.contentScroller}
-        contentContainerStyle={[styles.contentShell, { paddingTop: top + 72 }, contentStyle]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {children}
-      </ScrollView>
+      <View style={[styles.contentShell, { paddingTop: top + 72 }, contentStyle]}>{children}</View>
       {middle ? <View style={[styles.middleShell, middleStyle]}>{middle}</View> : null}
       <View style={[styles.bottomShell, { paddingBottom: Math.max(bottom, 16) }, footerStyle]}>
-        {footer}
+        {footer ? (
+          <ScrollView
+            style={styles.footerScroller}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {footer}
+          </ScrollView>
+        ) : null}
         {numpadVisible ? <FidyNumpad onKeyPress={onKeyPress} /> : null}
       </View>
     </Pressable>
@@ -58,9 +59,6 @@ export function NumpadFormScreen({
 const styles = StyleSheet.create({
   shell: {
     flex: 1,
-  },
-  contentScroller: {
-    flex: 0,
   },
   contentShell: {
     gap: 12,
@@ -76,5 +74,9 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingTop: 8,
+  },
+  footerScroller: {
+    flexGrow: 0,
+    flexShrink: 1,
   },
 });
