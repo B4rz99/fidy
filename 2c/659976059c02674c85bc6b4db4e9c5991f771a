@@ -1,0 +1,58 @@
+apps/mobile/shared/components/route-options.ts
+  s_674d9abb97ec32::t_a16e09fed64bbb 31
+apps/mobile/app/add-transaction.tsx
+  s_674d9abb97ec32::t_a16e09fed64bbb 2,8
+apps/mobile/features/transactions/components/TransactionAccountPickerDialog.tsx
+  s_674d9abb97ec32::t_a16e09fed64bbb 6
+apps/mobile/__tests__/qa/selectors.test.ts
+  s_674d9abb97ec32::t_a16e09fed64bbb 44-45
+apps/mobile/features/transactions/components/TransactionCategoryPickerDialog.tsx
+  s_674d9abb97ec32::t_a16e09fed64bbb 7
+apps/mobile/features/transactions/display.public.ts
+  s_674d9abb97ec32::t_a16e09fed64bbb 2
+apps/mobile/features/transactions/routes.public.ts
+  s_674d9abb97ec32::t_a16e09fed64bbb 1
+apps/mobile/features/transfers/components/TransferEntryScreen.tsx
+  s_674d9abb97ec32::t_a16e09fed64bbb 1-42
+apps/mobile/features/transfers/routes.public.ts
+  s_674d9abb97ec32::t_a16e09fed64bbb 1
+apps/mobile/app/_layout.tsx
+  s_674d9abb97ec32::t_a16e09fed64bbb 36,216,253-254,259
+apps/mobile/features/transfers/ui.public.ts
+  s_674d9abb97ec32::t_a16e09fed64bbb 1
+apps/mobile/shared/components/EntryField.tsx
+  s_674d9abb97ec32::t_a16e09fed64bbb 1-92
+apps/mobile/app/add-transfer.tsx
+  s_674d9abb97ec32::t_a16e09fed64bbb 2,14
+apps/mobile/app/(tabs)/add/index.tsx
+  s_674d9abb97ec32::t_a16e09fed64bbb 1,4
+apps/mobile/features/transfers/components/TransferEntryContent.tsx
+  s_674d9abb97ec32::t_a16e09fed64bbb 1-3,5-15,17-56,58-63,65-230
+  s_674d9abb97ec32::t_196f775db6a602 16,57,64
+apps/mobile/shared/components/index.ts
+  s_674d9abb97ec32::t_a16e09fed64bbb 53
+apps/mobile/features/transactions/components/TransactionEntryScreen.tsx
+  s_674d9abb97ec32::t_a16e09fed64bbb 1-226
+apps/mobile/__tests__/transactions/add-screen-source.test.ts
+  s_674d9abb97ec32::t_24b7b5ef520de7 47,67
+  s_674d9abb97ec32::t_a16e09fed64bbb 13,15-16,19,21-23,25,33-35,41-42,46,78,89-90,98,117,124,130,141,144-146,161,164,166,169,171,174,176-178,181-185
+apps/mobile/shared/components/EntryScaffold.tsx
+  s_674d9abb97ec32::t_e3e2e88a9566bc 42,50,126,143,242
+  s_674d9abb97ec32::t_a16e09fed64bbb 1-41,43-49,51-125,127-142,144-241,243-291
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "2c659976059c02674c85bc6b4db4e9c5991f771a",
+  "prompts": {},
+  "sessions": {
+    "s_674d9abb97ec32": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e79d5-8cda-7d23-ad6d-a4c225f10823",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
