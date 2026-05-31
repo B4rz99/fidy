@@ -1,0 +1,21 @@
+apps/mobile/__tests__/search/search-screen.test.ts
+  s_674d9abb97ec32::t_bacf1050e90e10 94-96,99
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx
+  s_674d9abb97ec32::t_23df9b91a4a3c4 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "8d768aa65b8ce407eaa9c0620440c069c1e5be48",
+  "prompts": {},
+  "sessions": {
+    "s_674d9abb97ec32": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e79d5-8cda-7d23-ad6d-a4c225f10823",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
