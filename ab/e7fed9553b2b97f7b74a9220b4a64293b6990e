@@ -1,0 +1,19 @@
+apps/mobile/features/financial-accounts/components/financial-accounts-screen/FinancialAccountsScreenContent.tsx
+  s_20a3b3d5fea66b::t_d70a90dd36d262 101-105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "abe7fed9553b2b97f7b74a9220b4a64293b6990e",
+  "prompts": {},
+  "sessions": {
+    "s_20a3b3d5fea66b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e771e-c9c1-7350-8451-3ed317fa1d16",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
