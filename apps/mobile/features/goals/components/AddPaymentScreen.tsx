@@ -3,10 +3,8 @@ import { useCallback, useReducer, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated from "react-native-reanimated";
 import { useOptionalUserId } from "@/features/auth/public";
-import {
-  handleNumpadPress,
-  TransactionDatePickerDialog,
-} from "@/features/transactions/display.public";
+import { handleNumpadPress } from "@/features/transactions/display.public";
+import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
 import { AppAuroraBackground, Button, FidyNumpad, FormTextField } from "@/shared/components";
 import { Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";

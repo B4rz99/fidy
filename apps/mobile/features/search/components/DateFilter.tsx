@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { format } from "date-fns";
 import { useState } from "react";
-import { TransactionDatePickerDialog } from "@/features/transactions/display.public";
+import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
 import { FieldButton, FilterPill } from "@/shared/components";
 import { Text, View } from "@/shared/components/rn";
 import { useTranslation } from "@/shared/hooks";

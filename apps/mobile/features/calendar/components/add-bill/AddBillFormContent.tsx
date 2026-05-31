@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { TextInput as RNTextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TransactionDatePickerDialog } from "@/features/transactions/display.public";
+import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
 import { CATEGORIES, type CategoryId } from "@/shared/categories";
 import { AppAuroraBackground, Button, FormTextField, SelectableChipRow } from "@/shared/components";
 import { KeyboardAvoidingView, Pressable, ScrollView, Text, View } from "@/shared/components/rn";

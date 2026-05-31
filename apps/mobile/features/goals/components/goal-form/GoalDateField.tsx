@@ -1,4 +1,4 @@
-import { TransactionDatePickerDialog } from "@/features/transactions/display.public";
+import { TransactionDatePickerDialog } from "@/features/transactions/ui.public";
 import { FieldButton } from "@/shared/components";
 import { View } from "@/shared/components/rn";
 import { useCurrentDate, useTranslation } from "@/shared/hooks";
