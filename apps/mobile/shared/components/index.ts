@@ -51,6 +51,7 @@ export { TransactionRow } from "./TransactionRow";
 export {
   createFullScreenRouteOptions,
   createEntryRouteOptions,
+  createScreenLayoutRouteOptions,
   createTransparentHeaderRouteOptions,
   dialogRouteOptions,
 } from "./route-options";

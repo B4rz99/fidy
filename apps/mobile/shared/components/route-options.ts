@@ -28,6 +28,13 @@ export function createFullScreenRouteOptions(theme: RouteTheme) {
   } as const;
 }
 
+export function createScreenLayoutRouteOptions(theme: RouteTheme) {
+  return {
+    ...createFullScreenRouteOptions(theme),
+    headerShown: Platform.OS === "ios",
+  } as const;
+}
+
 export function createEntryRouteOptions() {
   return {
     contentStyle: { backgroundColor: "transparent" },

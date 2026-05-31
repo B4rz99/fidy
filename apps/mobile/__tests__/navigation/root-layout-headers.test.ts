@@ -55,4 +55,20 @@ describe("Root layout native headers", () => {
   test("bills-calendar uses iosHeaderOptions to enable iOS-only native header", () => {
     expect(source).toContain('<Stack.Screen name="bills-calendar" options={iosHeaderOptions} />');
   });
+
+  test("ScreenLayout full-screen routes avoid Android native header duplication", () => {
+    expect(source).toContain("createScreenLayoutRouteOptions(theme)");
+    expect(routeOptionsSource).toContain("createScreenLayoutRouteOptions");
+    expect(routeOptionsSource).toContain('headerShown: Platform.OS === "ios"');
+
+    for (const screen of [
+      "financial-account-identifier",
+      "link-suggested-account",
+      "reclassify-transaction",
+    ]) {
+      expect(source).toContain(
+        `<Stack.Screen name="${screen}" options={screenLayoutRouteOptions} />`
+      );
+    }
+  });
 });

@@ -35,7 +35,7 @@ describe("transaction callers", () => {
       routeStart,
       rootLayoutSource.indexOf("/>", routeStart)
     );
-    expect(routeBlock).toContain("fullScreenHeaderOptions");
+    expect(routeBlock).toContain("screenLayoutRouteOptions");
     expect(reclassifyTransactionRouteSource).not.toContain("DialogRouteFrame");
     expect(reclassifyTransactionRouteSource).toContain("TransferFormScreen");
   });

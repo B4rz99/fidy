@@ -34,6 +34,7 @@ import {
   AppToastHost,
   createFullScreenRouteOptions,
   createEntryRouteOptions,
+  createScreenLayoutRouteOptions,
   createTransparentHeaderRouteOptions,
   dialogRouteOptions,
   ErrorFallback,
@@ -213,6 +214,7 @@ export function RootLayout() {
   const db = userId ? getDb(userId) : null;
   const iosHeaderOptions = createTransparentHeaderRouteOptions(theme);
   const fullScreenHeaderOptions = createFullScreenRouteOptions(theme);
+  const screenLayoutRouteOptions = createScreenLayoutRouteOptions(theme);
   const entryRouteOptions = createEntryRouteOptions();
 
   return (
@@ -242,8 +244,8 @@ export function RootLayout() {
             <Stack.Screen name="profile" options={iosHeaderOptions} />
             <Stack.Screen name="settings" options={iosHeaderOptions} />
             {__DEV__ ? <Stack.Screen name="design-system" options={iosHeaderOptions} /> : null}
-            <Stack.Screen name="financial-account-identifier" options={fullScreenHeaderOptions} />
-            <Stack.Screen name="link-suggested-account" options={fullScreenHeaderOptions} />
+            <Stack.Screen name="financial-account-identifier" options={screenLayoutRouteOptions} />
+            <Stack.Screen name="link-suggested-account" options={screenLayoutRouteOptions} />
             <Stack.Screen name="create-budget" options={fullScreenHeaderOptions} />
             <Stack.Screen name="auto-suggest-budgets" options={fullScreenHeaderOptions} />
             <Stack.Screen name="goal-detail" options={fullScreenHeaderOptions} />
@@ -257,7 +259,7 @@ export function RootLayout() {
             <Stack.Screen name="categories" options={iosHeaderOptions} />
             <Stack.Screen name="create-category" options={fullScreenHeaderOptions} />
             <Stack.Screen name="edit-transaction" options={entryRouteOptions} />
-            <Stack.Screen name="reclassify-transaction" options={fullScreenHeaderOptions} />
+            <Stack.Screen name="reclassify-transaction" options={screenLayoutRouteOptions} />
             {localQaAvailable ? (
               <Stack.Screen name="qa-transfer-conflict" options={{ headerShown: false }} />
             ) : null}
