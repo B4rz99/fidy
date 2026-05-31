@@ -150,7 +150,7 @@ test("create-goal full screen avoids nested card and uses debt red state", () =>
   expect(numpadFormScreenSource).toContain("<ScrollView");
   expect(numpadFormScreenSource).toContain("accessible={false}");
   expect(numpadFormScreenSource).toContain("Math.max(bottom, 16)");
-  expect(numpadFormScreenSource).toContain('justifyContent: "space-between"');
+  expect(numpadFormScreenSource).toContain('justifyContent: "center"');
   expect(numpadFormScreenSource).toContain("bottomShell");
   expect(stylesSource).toMatch(/fullScreenContainer:\s*\{\s*gap:\s*16,\s*paddingBottom:\s*12,/);
   expect(typeToggleSource).toContain("<SegmentedControl");

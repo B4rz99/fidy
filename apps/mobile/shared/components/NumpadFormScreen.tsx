@@ -58,10 +58,9 @@ export function NumpadFormScreen({
 const styles = StyleSheet.create({
   shell: {
     flex: 1,
-    justifyContent: "space-between",
   },
   contentScroller: {
-    flexShrink: 1,
+    flex: 0,
   },
   contentShell: {
     gap: 12,
@@ -69,6 +68,8 @@ const styles = StyleSheet.create({
   },
   middleShell: {
     alignItems: "center",
+    flex: 1,
+    justifyContent: "center",
     paddingHorizontal: 16,
   },
   bottomShell: {
