@@ -1,0 +1,42 @@
+apps/mobile/features/budget/components/create-budget/CreateBudgetFormContent.tsx
+  s_674d9abb97ec32::t_21dd9b79624907 5,9,107-113
+apps/mobile/features/goals/components/goal-form/GoalAmountField.tsx
+  s_674d9abb97ec32::t_21dd9b79624907 1,7,14,33-39
+apps/mobile/features/goals/components/goal-form/useGoalForm.ts
+  s_674d9abb97ec32::t_21dd9b79624907 5
+apps/mobile/__tests__/shared/ui-kit.test.tsx
+  s_674d9abb97ec32::t_afa60057327c84 15,50,139-148
+apps/mobile/features/goals/components/AddPaymentScreen.tsx
+  s_674d9abb97ec32::t_dc781f449f1e42 2,36,48-49,95,98,201
+  s_674d9abb97ec32::t_da086196c7ec1b 7-13,23,146-152
+apps/mobile/features/transactions/components/transaction-form/useTransactionFormModel.ts
+  s_674d9abb97ec32::t_1a752177289f62 4
+apps/mobile/shared/components/index.ts
+  s_674d9abb97ec32::t_7db257c90a3568 28-29
+apps/mobile/shared/components/MoneyAmountDisplay.tsx
+  s_674d9abb97ec32::t_7db257c90a3568 1-102
+apps/mobile/features/transfers/components/transfer-form/TransferFormContent.tsx
+  s_674d9abb97ec32::t_315322b14c622f 3,15,50
+apps/mobile/features/goals/components/goal-form/GoalForm.tsx
+  s_674d9abb97ec32::t_21dd9b79624907 40
+apps/mobile/features/transactions/components/transaction-form/TransactionFormHeader.tsx
+  s_674d9abb97ec32::t_1a752177289f62 3,5,15,27,51-57
+apps/mobile/features/transactions/components/transaction-form/TransactionFormContent.tsx
+  s_674d9abb97ec32::t_1a752177289f62 24,61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "2acc6b817ae3846404761afb5292edfbe0fdd484",
+  "prompts": {},
+  "sessions": {
+    "s_674d9abb97ec32": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e79d5-8cda-7d23-ad6d-a4c225f10823",
+        "model": "gpt-5.5"
+      },
+      "human_author": "obarbozaa <obarbozaa@gmail.com>"
+    }
+  }
+}
