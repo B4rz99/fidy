@@ -1,0 +1,20 @@
+apps/mobile/features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx
+  s_c28e4b6a18333c::t_b19ebed28813ad 277,283-284
+  s_c28e4b6a18333c::t_6bafeaca196537 278-280
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "84a270e17370590c83b584b344bfde857fabb489",
+  "prompts": {},
+  "sessions": {
+    "s_c28e4b6a18333c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7954-1927-74c1-a3ad-10c9d20e288b",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
