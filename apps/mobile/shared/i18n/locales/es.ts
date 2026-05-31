@@ -289,6 +289,10 @@ const es = {
     deleteBillConfirm:
       '¿Eliminar "%{billName}"? Se detendrán los recordatorios futuros de este gasto fijo.',
     noBillsOnDay: "No hay gastos fijos este día",
+    placeholder: {
+      amount: "50000",
+      name: "Netflix",
+    },
     weekly: "Semanal",
     biweekly: "Quincenal",
     monthly: "Mensual",

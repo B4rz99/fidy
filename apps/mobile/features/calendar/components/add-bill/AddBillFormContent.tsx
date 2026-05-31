@@ -76,7 +76,7 @@ export function AddBillFormContent({
             label={t("common.name")}
             value={name}
             onChangeText={onNameChange}
-            placeholder="Netflix"
+            placeholder={t("bills.placeholder.name")}
             returnKeyType="next"
             onSubmitEditing={() => amountRef.current?.focus()}
             style={styles.inputGroup}
@@ -92,7 +92,7 @@ export function AddBillFormContent({
             label={t("common.amount")}
             value={amount}
             onChangeText={onAmountChange}
-            placeholder="50000"
+            placeholder={t("bills.placeholder.amount")}
             keyboardType="number-pad"
             returnKeyType="done"
             style={styles.inputGroup}

@@ -281,6 +281,10 @@ const en = {
     deleteBill: "Delete bill",
     deleteBillConfirm: 'Delete "%{billName}"? Future reminders for this bill will stop.',
     noBillsOnDay: "No bills on this day",
+    placeholder: {
+      amount: "50000",
+      name: "Netflix",
+    },
     weekly: "Weekly",
     biweekly: "Biweekly",
     monthly: "Monthly",
