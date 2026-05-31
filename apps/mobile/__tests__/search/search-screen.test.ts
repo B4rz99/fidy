@@ -91,10 +91,12 @@ test("keeps search filters aligned with the requested mobile interactions", () =
   );
   expect(dateFilterSource).toContain("TransactionDatePickerSheet");
   expect(dateFilterSource).not.toContain("<TextInput");
-  expect(dateFilterSource).toContain('style={preset.key === "lastMonth" ? { flex: 1.35 } : { flex: 1 }}');
+  expect(dateFilterSource).toContain(
+    'style={preset.key === "lastMonth" ? { flex: 1.35 } : { flex: 1 }}'
+  );
   expect(typeFilterSource).not.toContain('style={getStyle("all")}');
   expect(typeFilterSource).toContain("SegmentedControl");
-  expect(typeFilterSource).toContain('getOptionTone={(type) =>');
+  expect(typeFilterSource).toContain("getOptionTone={(type) =>");
   expect(typeFilterSource).toContain("search.transfers");
   expect(transactionItemSource).toContain("getTransferActivityCopy");
 });
