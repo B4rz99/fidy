@@ -1,0 +1,11 @@
+bun.lock
+  ai_agent 126,130,132,345,347,349,351,353,355,357,359,361,363,365,367,369,371,373,375,377,379,381,383,385,387,389,391,393-395,1511,2059,2761
+.github/workflows/eas-build.yml
+  ai_agent 92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "be76d12bcb64cd8737b21168ceca8019f704ab83",
+  "prompts": {}
+}
