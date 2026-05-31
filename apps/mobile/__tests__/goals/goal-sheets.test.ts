@@ -6,7 +6,7 @@ function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
 }
 
-const createSheetSource = readSource("../../features/goals/components/GoalCreateSheet.tsx");
+const createSheetSource = readSource("../../features/goals/components/GoalCreateScreen.tsx");
 const createGoalRouteSource = readSource("../../app/create-goal.tsx");
 const addPaymentRouteSource = readSource("../../app/add-payment.tsx");
 const editGoalRouteSource = readSource("../../app/edit-goal.tsx");
@@ -14,47 +14,45 @@ const rootLayoutSource = readSource("../../app/_layout.tsx");
 const goalsListSource = readSource("../../features/goals/components/GoalsListScreen.tsx");
 const goalCardSource = readSource("../../features/goals/components/GoalCard.tsx");
 const goalDetailSource = readSource("../../features/goals/components/GoalDetail.tsx");
-const addPaymentSource = readSource("../../features/goals/components/AddPaymentSheet.tsx");
-const editSheetSource = readSource("../../features/goals/components/GoalEditSheet.tsx");
+const addPaymentSource = readSource("../../features/goals/components/AddPaymentScreen.tsx");
+const editSheetSource = readSource("../../features/goals/components/GoalEditScreen.tsx");
 const editLoadedSource = readSource(
-  "../../features/goals/components/goal-sheet/GoalEditSheetLoaded.tsx"
+  "../../features/goals/components/goal-form/GoalEditScreenLoaded.tsx"
 );
-const formSource = readSource("../../features/goals/components/goal-sheet/GoalSheetForm.tsx");
-const frameSource = readSource("../../features/goals/components/goal-sheet/GoalSheetFrame.tsx");
-const stylesSource = readSource("../../features/goals/components/goal-sheet/GoalSheet.styles.ts");
-const typeToggleSource = readSource(
-  "../../features/goals/components/goal-sheet/GoalTypeToggle.tsx"
-);
-const dateFieldSource = readSource("../../features/goals/components/goal-sheet/GoalDateField.tsx");
-const formHookSource = readSource("../../features/goals/components/goal-sheet/useGoalSheetForm.ts");
+const formSource = readSource("../../features/goals/components/goal-form/GoalForm.tsx");
+const frameSource = readSource("../../features/goals/components/goal-form/GoalFormFrame.tsx");
+const stylesSource = readSource("../../features/goals/components/goal-form/GoalForm.styles.ts");
+const typeToggleSource = readSource("../../features/goals/components/goal-form/GoalTypeToggle.tsx");
+const dateFieldSource = readSource("../../features/goals/components/goal-form/GoalDateField.tsx");
+const formHookSource = readSource("../../features/goals/components/goal-form/useGoalForm.ts");
 const createActionsSource = readSource(
-  "../../features/goals/components/goal-sheet/useGoalCreateActions.ts"
+  "../../features/goals/components/goal-form/useGoalCreateActions.ts"
 );
 const editActionsSource = readSource(
-  "../../features/goals/components/goal-sheet/useGoalEditActions.ts"
+  "../../features/goals/components/goal-form/useGoalEditActions.ts"
 );
 
 test("keeps the create-goal sheet wired to the shared form without projection copy", () => {
-  expect(createSheetSource).toContain("<GoalSheetForm");
+  expect(createSheetSource).toContain("<GoalForm");
   expect(createSheetSource).not.toContain("GoalProjectionHint");
   expect(createActionsSource).toContain("createGoal(db, userId");
   expect(createActionsSource).toContain("type: form.goalType");
 });
 
 test("keeps the edit-goal sheet wired to the shared form and delete flow", () => {
-  expect(editSheetSource).toContain("<GoalEditSheetLoaded");
+  expect(editSheetSource).toContain("<GoalEditScreenLoaded");
   expect(editSheetSource).toContain("<AppAuroraBackground");
-  expect(editLoadedSource).toContain("<GoalSheetForm");
+  expect(editLoadedSource).toContain("<GoalForm");
   expect(editLoadedSource).toContain("fullScreen");
   expect(editActionsSource).toContain("Alert.alert");
   expect(editActionsSource).toContain("deleteGoal(db, userId, goalId)");
   expect(editActionsSource).toContain("updateGoal(db, userId");
 });
 
-test("keeps the shared goal-sheet cluster wired to the date picker and numpad flow", () => {
+test("keeps the shared goal-form cluster wired to the date picker and numpad flow", () => {
   expect(formSource).toContain("<GoalAmountField");
   expect(formSource).toContain("<GoalDateField");
-  expect(dateFieldSource).toContain("TransactionDatePickerSheet");
+  expect(dateFieldSource).toContain("TransactionDatePickerDialog");
   expect(dateFieldSource).not.toContain("@react-native-community/datetimepicker");
   expect(formSource).toContain("<GoalTypeToggle");
   expect(formHookSource).toContain("handleNumpadPress");
@@ -82,7 +80,7 @@ test("goals proposal keeps the empty state and goal cards wired", () => {
 });
 
 test("goal creation and payment sheets use the proposal card surface", () => {
-  expect(createSheetSource).toContain("<GoalSheetForm");
+  expect(createSheetSource).toContain("<GoalForm");
   expect(createSheetSource).toContain("fullScreen");
   expect(formSource).toContain("showGoalTypeToggle");
   expect(frameSource).toContain("fullScreenForm");
@@ -93,7 +91,7 @@ test("goal creation and payment sheets use the proposal card surface", () => {
 });
 
 test("goal payment date opens the shared calendar picker instead of editing raw text", () => {
-  expect(addPaymentSource).toContain("TransactionDatePickerSheet");
+  expect(addPaymentSource).toContain("TransactionDatePickerDialog");
   expect(addPaymentSource).toContain("showDatePicker");
   expect(addPaymentSource).toContain("setShowDatePicker(true)");
   expect(addPaymentSource).toContain("setDate(toIsoDate(nextDate))");

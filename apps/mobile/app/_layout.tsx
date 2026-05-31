@@ -30,8 +30,15 @@ import {
 import { isLocalQaAvailable, useQaDevtoolsRuntime } from "@/features/qa/hooks.public";
 import { QaStatusBanner } from "@/features/qa/ui.public";
 import { useSettingsStore } from "@/features/settings/hooks.public";
-import { AppToastHost, ErrorFallback } from "@/shared/components";
-import { Platform, useColorScheme } from "@/shared/components/rn";
+import {
+  AppToastHost,
+  createFullScreenRouteOptions,
+  createPencilEntryRouteOptions,
+  createTransparentHeaderRouteOptions,
+  dialogRouteOptions,
+  ErrorFallback,
+} from "@/shared/components";
+import { useColorScheme } from "@/shared/components/rn";
 import { Colors } from "@/shared/constants/theme";
 import { type AnyDb, getDb } from "@/shared/db";
 import { useMountEffect, useSubscription } from "@/shared/hooks";
@@ -47,12 +54,6 @@ import { QueryProvider } from "@/shared/query";
 import type { UserId } from "@/shared/types/branded";
 import migrations from "../drizzle/migrations";
 
-const DIALOG_MODAL = {
-  animation: "fade",
-  contentStyle: { backgroundColor: "transparent" },
-  headerShown: false,
-  presentation: "transparentModal",
-} as const;
 const ONBOARDING_ALLOWED_ROUTES = new Set(["create-financial-account", "link-suggested-account"]);
 
 // Init locale synchronously before first render
@@ -210,22 +211,9 @@ export function RootLayout() {
   }
 
   const db = userId ? getDb(userId) : null;
-  const iosHeaderOptions = {
-    contentStyle: { backgroundColor: "transparent" },
-    headerShadowVisible: false,
-    headerShown: Platform.OS === "ios",
-    headerStyle: { backgroundColor: "transparent" },
-    headerTransparent: true,
-    headerTintColor: theme.primary,
-  };
-  const fullScreenHeaderOptions = {
-    contentStyle: { backgroundColor: "transparent" },
-    headerShadowVisible: false,
-    headerShown: true,
-    headerStyle: { backgroundColor: Platform.OS === "ios" ? "transparent" : theme.page },
-    headerTransparent: Platform.OS === "ios",
-    headerTintColor: theme.primary,
-  };
+  const iosHeaderOptions = createTransparentHeaderRouteOptions(theme);
+  const fullScreenHeaderOptions = createFullScreenRouteOptions(theme);
+  const pencilEntryRouteOptions = createPencilEntryRouteOptions();
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -238,10 +226,10 @@ export function RootLayout() {
             {localQaAvailable ? <Stack.Screen name="qa-open" options={iosHeaderOptions} /> : null}
             <Stack.Screen name="add-bill" options={fullScreenHeaderOptions} />
             <Stack.Screen name="day-detail" options={fullScreenHeaderOptions} />
-            <Stack.Screen name="theme-picker" options={DIALOG_MODAL} />
-            <Stack.Screen name="language-picker" options={DIALOG_MODAL} />
-            <Stack.Screen name="delete-account" options={DIALOG_MODAL} />
-            <Stack.Screen name="enable-notifications" options={DIALOG_MODAL} />
+            <Stack.Screen name="theme-picker" options={dialogRouteOptions} />
+            <Stack.Screen name="language-picker" options={dialogRouteOptions} />
+            <Stack.Screen name="delete-account" options={dialogRouteOptions} />
+            <Stack.Screen name="enable-notifications" options={dialogRouteOptions} />
             <Stack.Screen name="analytics" options={iosHeaderOptions} />
             <Stack.Screen name="notifications" options={iosHeaderOptions} />
             <Stack.Screen name="search" options={iosHeaderOptions} />
@@ -254,42 +242,22 @@ export function RootLayout() {
             <Stack.Screen name="profile" options={iosHeaderOptions} />
             <Stack.Screen name="settings" options={iosHeaderOptions} />
             {__DEV__ ? <Stack.Screen name="design-system" options={iosHeaderOptions} /> : null}
-            <Stack.Screen
-              name="financial-account-identifier"
-              options={{ ...DIALOG_MODAL, ...iosHeaderOptions }}
-            />
-            <Stack.Screen
-              name="link-suggested-account"
-              options={{ ...DIALOG_MODAL, ...iosHeaderOptions }}
-            />
-            <Stack.Screen name="create-budget" options={DIALOG_MODAL} />
-            <Stack.Screen name="auto-suggest-budgets" options={DIALOG_MODAL} />
+            <Stack.Screen name="financial-account-identifier" options={fullScreenHeaderOptions} />
+            <Stack.Screen name="link-suggested-account" options={fullScreenHeaderOptions} />
+            <Stack.Screen name="create-budget" options={fullScreenHeaderOptions} />
+            <Stack.Screen name="auto-suggest-budgets" options={fullScreenHeaderOptions} />
             <Stack.Screen name="goal-detail" options={fullScreenHeaderOptions} />
             <Stack.Screen name="create-goal" options={fullScreenHeaderOptions} />
             <Stack.Screen name="add-payment" options={fullScreenHeaderOptions} />
             <Stack.Screen name="edit-goal" options={fullScreenHeaderOptions} />
-            <Stack.Screen
-              name="add-transaction"
-              options={{
-                ...DIALOG_MODAL,
-                gestureEnabled: false,
-                sheetGrabberVisible: false,
-              }}
-            />
-            <Stack.Screen name="add-transfer" options={{ headerShown: false }} />
+            <Stack.Screen name="add-transaction" options={pencilEntryRouteOptions} />
+            <Stack.Screen name="add-transfer" options={pencilEntryRouteOptions} />
             <Stack.Screen name="bills-calendar" options={iosHeaderOptions} />
             <Stack.Screen name="notification-preferences" options={iosHeaderOptions} />
             <Stack.Screen name="categories" options={iosHeaderOptions} />
-            <Stack.Screen name="create-category" options={DIALOG_MODAL} />
-            <Stack.Screen
-              name="edit-transaction"
-              options={{
-                ...DIALOG_MODAL,
-                gestureEnabled: false,
-                sheetGrabberVisible: false,
-              }}
-            />
-            <Stack.Screen name="reclassify-transaction" options={DIALOG_MODAL} />
+            <Stack.Screen name="create-category" options={fullScreenHeaderOptions} />
+            <Stack.Screen name="edit-transaction" options={pencilEntryRouteOptions} />
+            <Stack.Screen name="reclassify-transaction" options={fullScreenHeaderOptions} />
             {localQaAvailable ? (
               <Stack.Screen name="qa-transfer-conflict" options={{ headerShown: false }} />
             ) : null}

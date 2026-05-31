@@ -38,7 +38,7 @@ export function TransactionFormContent({
   saveLabel,
   type,
 }: TransactionFormContentProps) {
-  const { bottom: safeBottom } = useSafeAreaInsets();
+  const { bottom: safeBottom, top: safeTop } = useSafeAreaInsets();
   const { t } = useTranslation();
   const accentGreen = useThemeColor("accentGreen");
   const accentRed = useThemeColor("accentRed");
@@ -46,14 +46,13 @@ export function TransactionFormContent({
   const cardColor = useThemeColor("card");
   const primaryColor = useThemeColor("primary");
   const secondaryColor = useThemeColor("secondary");
-  const tertiaryColor = useThemeColor("tertiary");
   const amountColor = type === "expense" ? accentRed : accentGreen;
   return (
     <Pressable
       style={[styles.container, { backgroundColor: cardColor }]}
       onPress={Keyboard.dismiss}
     >
-      <View style={styles.headerZone}>
+      <View style={[styles.headerZone, { paddingTop: safeTop + 12 }]}>
         <TransactionFormHeader
           amountColor={amountColor}
           closeLabel={t("common.close")}
@@ -97,7 +96,6 @@ export function TransactionFormContent({
           onDescriptionFocus={handleDescriptionFocus}
           primaryColor={primaryColor}
           secondaryColor={secondaryColor}
-          tertiaryColor={tertiaryColor}
         />
       </View>
 

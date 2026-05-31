@@ -7,7 +7,7 @@ import {
   useSuggestionSelection,
 } from "@/features/budget/hooks.public";
 import { CATEGORY_MAP } from "@/features/transactions";
-import { DialogRouteFrame } from "@/shared/components";
+import { FormTextField } from "@/shared/components";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -16,7 +16,6 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TextInput,
   View,
 } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
@@ -70,102 +69,101 @@ export default function AutoSuggestBudgetsScreen() {
   };
 
   return (
-    <DialogRouteFrame>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+    <KeyboardAvoidingView
+      style={[styles.flex, { backgroundColor: cardBg }]}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 24 }]}
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView
-          style={[styles.container, { backgroundColor: cardBg }]}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 24 }]}
-          contentInsetAdjustmentBehavior="automatic"
-          keyboardShouldPersistTaps="handled"
-        >
-          <Text style={[styles.title, { color: primaryColor }]}>
-            {t("budgets.autoSuggest.title")}
-          </Text>
-          <Text style={[styles.subtitle, { color: secondaryColor }]}>
-            {t("budgets.autoSuggest.subtitle")}
-          </Text>
+        <Text style={[styles.title, { color: primaryColor }]}>
+          {t("budgets.autoSuggest.title")}
+        </Text>
+        <Text style={[styles.subtitle, { color: secondaryColor }]}>
+          {t("budgets.autoSuggest.subtitle")}
+        </Text>
 
-          <View style={styles.list}>
-            {autoSuggestions.map((suggestion) => {
-              const category = CATEGORY_MAP[suggestion.categoryId] ?? null;
-              const categoryLabel = category
-                ? getCategoryLabel(category, locale)
-                : suggestion.categoryId;
-              const isSelected = selectedIds.has(suggestion.categoryId);
+        <View style={styles.list}>
+          {autoSuggestions.map((suggestion) => {
+            const category = CATEGORY_MAP[suggestion.categoryId] ?? null;
+            const categoryLabel = category
+              ? getCategoryLabel(category, locale)
+              : suggestion.categoryId;
+            const isSelected = selectedIds.has(suggestion.categoryId);
 
-              return (
-                <View key={suggestion.categoryId} style={[styles.row, { borderColor }]}>
-                  <View style={styles.rowLeft}>
-                    {category ? (
-                      <Text style={{ color: category.color }}>{category.icon}</Text>
-                    ) : null}
-                    <View>
-                      <Text style={[styles.categoryName, { color: primaryColor }]}>
-                        {categoryLabel}
-                      </Text>
-                      <Text style={[styles.lastMonthLabel, { color: secondaryColor }]}>
-                        {formatMoney(suggestion.suggestedAmount)}{" "}
-                        {t("search.lastMonth").toLowerCase()}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.rowRight}>
-                    <TextInput
-                      style={[
-                        styles.amountInput,
-                        {
-                          backgroundColor: isSelected ? pageBg : pageBg,
-                          color: isSelected ? primaryColor : secondaryColor,
-                          borderColor,
-                          opacity: isSelected ? 1 : 0.4,
-                        },
-                      ]}
-                      value={editedAmounts[suggestion.categoryId] ?? ""}
-                      onChangeText={(v) => handleAmountChange(suggestion.categoryId, v)}
-                      keyboardType="number-pad"
-                      editable={isSelected}
-                      selectTextOnFocus
-                    />
-                    <Switch
-                      value={isSelected}
-                      onValueChange={() => handleToggle(suggestion.categoryId)}
-                      trackColor={{ true: accentGreen }}
-                    />
+            return (
+              <View key={suggestion.categoryId} style={[styles.row, { borderColor }]}>
+                <View style={styles.rowLeft}>
+                  {category ? <Text style={{ color: category.color }}>{category.icon}</Text> : null}
+                  <View>
+                    <Text style={[styles.categoryName, { color: primaryColor }]}>
+                      {categoryLabel}
+                    </Text>
+                    <Text style={[styles.lastMonthLabel, { color: secondaryColor }]}>
+                      {formatMoney(suggestion.suggestedAmount)}{" "}
+                      {t("search.lastMonth").toLowerCase()}
+                    </Text>
                   </View>
                 </View>
-              );
-            })}
-          </View>
+                <View style={styles.rowRight}>
+                  <FormTextField
+                    label={categoryLabel}
+                    labelStyle={{ display: "none" }}
+                    style={{ gap: 0 }}
+                    inputStyle={[
+                      styles.amountInput,
+                      {
+                        backgroundColor: pageBg,
+                        color: isSelected ? primaryColor : secondaryColor,
+                        borderColor,
+                        opacity: isSelected ? 1 : 0.4,
+                      },
+                    ]}
+                    value={editedAmounts[suggestion.categoryId] ?? ""}
+                    onChangeText={(v) => handleAmountChange(suggestion.categoryId, v)}
+                    keyboardType="number-pad"
+                    editable={isSelected}
+                    selectTextOnFocus
+                  />
+                  <Switch
+                    value={isSelected}
+                    onValueChange={() => handleToggle(suggestion.categoryId)}
+                    trackColor={{ true: accentGreen }}
+                  />
+                </View>
+              </View>
+            );
+          })}
+        </View>
 
-          {autoSuggestions.length === 0 && (
-            <Text style={[styles.emptyText, { color: secondaryColor }]}>
-              {t("budgets.autoSuggest.noSuggestions")}
+        {autoSuggestions.length === 0 && (
+          <Text style={[styles.emptyText, { color: secondaryColor }]}>
+            {t("budgets.autoSuggest.noSuggestions")}
+          </Text>
+        )}
+
+        <View style={styles.actions}>
+          <Pressable
+            style={[
+              styles.acceptButton,
+              { backgroundColor: accentGreen, opacity: isBusy ? 0.5 : 1 },
+            ]}
+            onPress={handleAccept}
+            disabled={isBusy || ((userId == null || db == null) && selectedIds.size > 0)}
+          >
+            <Text style={styles.acceptButtonText}>{t("budgets.autoSuggest.acceptSelected")}</Text>
+          </Pressable>
+          <Pressable onPress={handleSkip}>
+            <Text style={[styles.skipText, { color: secondaryColor }]}>
+              {t("budgets.autoSuggest.skipAll")}
             </Text>
-          )}
-
-          <View style={styles.actions}>
-            <Pressable
-              style={[
-                styles.acceptButton,
-                { backgroundColor: accentGreen, opacity: isBusy ? 0.5 : 1 },
-              ]}
-              onPress={handleAccept}
-              disabled={isBusy || ((userId == null || db == null) && selectedIds.size > 0)}
-            >
-              <Text style={styles.acceptButtonText}>{t("budgets.autoSuggest.acceptSelected")}</Text>
-            </Pressable>
-            <Pressable onPress={handleSkip}>
-              <Text style={[styles.skipText, { color: secondaryColor }]}>
-                {t("budgets.autoSuggest.skipAll")}
-              </Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </DialogRouteFrame>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

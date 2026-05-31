@@ -7,11 +7,16 @@ import { Card } from "@/shared/components/Card";
 import { Callout } from "@/shared/components/Callout";
 import { Chip } from "@/shared/components/Chip";
 import { EmptyState } from "@/shared/components/EmptyState";
+import { FieldButton } from "@/shared/components/FieldButton";
+import { FilterPill } from "@/shared/components/FilterPill";
+import { FormTextField } from "@/shared/components/FormTextField";
 import { IconActionButton } from "@/shared/components/IconActionButton";
+import { MetricCard } from "@/shared/components/MetricCard";
 import { MonthNavigator } from "@/shared/components/MonthNavigator";
 import { Row } from "@/shared/components/Row";
 import { SegmentedControl } from "@/shared/components/SegmentedControl";
 import { SelectableChipRow } from "@/shared/components/SelectableChipRow";
+import { TextActionButton } from "@/shared/components/TextActionButton";
 import { Text } from "@/shared/components/rn";
 
 function expectSharedComponentImport(source: string, componentName: string) {
@@ -33,6 +38,10 @@ describe("shared UI kit", () => {
     expect(source).toContain('export { Chip } from "./Chip"');
     expect(source).toContain('export { Callout } from "./Callout"');
     expect(source).toContain('export { EmptyState } from "./EmptyState"');
+    expect(source).toContain('export { FieldButton } from "./FieldButton"');
+    expect(source).toContain('export { FilterPill } from "./FilterPill"');
+    expect(source).toContain('export { FilterTextField } from "./FilterTextField"');
+    expect(source).toContain('export { FormTextField } from "./FormTextField"');
     expect(source).toContain('export { SegmentedControl } from "./SegmentedControl"');
     expect(source).toContain('export { SelectableChipRow } from "./SelectableChipRow"');
     expect(source).toContain('export { IconActionButton } from "./IconActionButton"');
@@ -85,6 +94,44 @@ describe("shared UI kit", () => {
 
     expect(screen.getByText("Interactive card")).toBeTruthy();
     expect(presses).toEqual(["pressed"]);
+  });
+
+  it("renders field buttons, metric cards, and filter pills as reusable primitives", () => {
+    const actions: string[] = [];
+    const screen = renderFidy(
+      <>
+        <FieldButton
+          label="Target date"
+          value=""
+          placeholder="Choose"
+          clearAccessibilityLabel="Clear date"
+          onPress={() => actions.push("field")}
+          onClear={() => actions.push("clear")}
+        />
+        <MetricCard>
+          <Text>Monthly spend</Text>
+        </MetricCard>
+        <FilterPill
+          label="This month"
+          accessibilityLabel="This month filter"
+          selected
+          onPress={() => actions.push("filter")}
+        />
+        <FormTextField label="Name" value="" onChangeText={() => undefined} placeholder="Account" />
+        <TextActionButton label="See all" onPress={() => actions.push("text-action")} />
+      </>
+    );
+
+    screen.pressByA11yLabel("Clear date");
+    screen.pressByA11yLabel("This month filter");
+    screen.press(screen.getByText("See all"));
+
+    expect(screen.getByText("Target date")).toBeTruthy();
+    expect(screen.getByText("Choose")).toBeTruthy();
+    expect(screen.getByText("Monthly spend")).toBeTruthy();
+    expect(screen.getByText("Name")).toBeTruthy();
+    expect(screen.getByA11yLabel("Name")).toBeTruthy();
+    expect(actions).toEqual(["clear", "filter", "text-action"]);
   });
 
   it("selects segmented control options through accessible buttons", () => {
@@ -358,6 +405,143 @@ describe("shared UI kit", () => {
     });
   });
 
+  it("keeps migrated entity cards on shared card primitives", () => {
+    const files = [
+      "../../features/budget/components/BudgetCard.tsx",
+      "../../features/goals/components/GoalCard.tsx",
+      "../../features/notifications/components/NotificationCard.tsx",
+      "../../features/review-queues/components/AttributionQueueCard.tsx",
+      "../../features/review-queues/components/FinancialMeaningQueueScreen.tsx",
+    ];
+
+    files.forEach((file) => {
+      const source = readFileSync(resolve(__dirname, file), "utf-8");
+
+      expect(source).toMatch(/<(?:Card|MetricCard)(?:\s|>)/);
+      expect(source).not.toContain("<Card className=");
+      expect(source).not.toContain("<MetricCard className=");
+      expect(source).not.toContain("styles.card,");
+      expect(source).not.toMatch(/<Pressable\s*\n\s*onPress=/);
+    });
+  });
+
+  it("keeps migrated metric cards on the shared MetricCard primitive", () => {
+    const files = [
+      "../../features/budget/components/BudgetSummaryCard.tsx",
+      "../../features/dashboard/components/home-screen/HomeSpendingCard.tsx",
+    ];
+
+    files.forEach((file) => {
+      const source = readFileSync(resolve(__dirname, file), "utf-8");
+
+      expectSharedComponentImport(source, "MetricCard");
+      expect(source).toContain("<MetricCard");
+      expect(source).not.toContain("<MetricCard className=");
+      expect(source).not.toContain("styles.card");
+    });
+  });
+
+  it("keeps migrated form field buttons on the shared FieldButton primitive", () => {
+    const files = [
+      "../../features/goals/components/goal-form/GoalAmountField.tsx",
+      "../../features/goals/components/goal-form/GoalDateField.tsx",
+      "../../features/transfers/components/transfer-form/TransferSideCard.tsx",
+      "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx",
+    ];
+
+    files.forEach((file) => {
+      const source = readFileSync(resolve(__dirname, file), "utf-8");
+
+      expectSharedComponentImport(source, "FieldButton");
+      expect(source).toContain("<FieldButton");
+    });
+  });
+
+  it("keeps repeated form text inputs on the shared FormTextField primitive", () => {
+    const files = [
+      "../../app/auto-suggest-budgets.tsx",
+      "../../features/account-suggestions/components/CreateSuggestedAccountScreen.tsx",
+      "../../features/calendar/components/add-bill/AddBillFormContent.tsx",
+      "../../features/categories/components/category-form/CreateCategoryScreenContent.tsx",
+      "../../features/financial-accounts/components/FinancialAccountIdentifierScreen.tsx",
+      "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx",
+      "../../features/financial-accounts/components/financial-account-form/FinancialAccountIdentifiersSection.tsx",
+      "../../features/goals/components/AddPaymentScreen.tsx",
+      "../../features/goals/components/goal-form/GoalInterestField.tsx",
+      "../../features/goals/components/goal-form/GoalNameField.tsx",
+      "../../features/onboarding/components/BudgetSetupStep.tsx",
+      "../../features/settings/components/PrivateBackupScreen.tsx",
+      "../../features/transactions/components/transaction-form/TransactionMetadataRow.tsx",
+    ];
+
+    files.forEach((file) => {
+      const source = readFileSync(resolve(__dirname, file), "utf-8");
+
+      expectSharedComponentImport(source, "FormTextField");
+      expect(source).toContain("<FormTextField");
+      expect(source).not.toContain("<FieldLabel");
+      expect(source).not.toContain("<TextInput");
+    });
+  });
+
+  it("keeps migrated search filters on shared filter primitives", () => {
+    const dateFilterSource = readFileSync(
+      resolve(__dirname, "../../features/search/components/DateFilter.tsx"),
+      "utf-8"
+    );
+    const amountFilterSource = readFileSync(
+      resolve(__dirname, "../../features/search/components/AmountFilter.tsx"),
+      "utf-8"
+    );
+    const typeFilterSource = readFileSync(
+      resolve(__dirname, "../../features/search/components/TypeFilter.tsx"),
+      "utf-8"
+    );
+    const categoryFilterSource = readFileSync(
+      resolve(__dirname, "../../features/search/components/CategoryFilter.tsx"),
+      "utf-8"
+    );
+
+    expect(dateFilterSource).toContain("FieldButton");
+    expect(dateFilterSource).toContain("FilterPill");
+    expect(amountFilterSource).toContain("FilterTextField");
+    expect(typeFilterSource).toContain("SegmentedControl");
+    expect(categoryFilterSource).toContain("SharedFilterPill");
+  });
+
+  it("keeps AI conversation cards horizontal through explicit Card contentStyle", () => {
+    const source = readFileSync(
+      resolve(__dirname, "../../features/ai-chat/components/ConversationList.tsx"),
+      "utf-8"
+    );
+
+    expect(source).toContain("contentStyle");
+    expect(source).toMatch(/flexDirection:\s*['"]row['"]/);
+    expect(source).not.toContain('className="rounded-lg"');
+  });
+
+  it("keeps inline text and icon actions on shared action primitives", () => {
+    const upcomingBillsSource = readFileSync(
+      resolve(__dirname, "../../features/budget/components/UpcomingBillsSection.tsx"),
+      "utf-8"
+    );
+    const notificationsSource = readFileSync(
+      resolve(__dirname, "../../features/notifications/components/NotificationsScreen.tsx"),
+      "utf-8"
+    );
+    const goalsListSource = readFileSync(
+      resolve(__dirname, "../../features/goals/components/GoalsListScreen.tsx"),
+      "utf-8"
+    );
+
+    expectSharedComponentImport(upcomingBillsSource, "TextActionButton");
+    expectSharedComponentImport(notificationsSource, "TextActionButton");
+    expectSharedComponentImport(goalsListSource, "IconActionButton");
+    expect(upcomingBillsSource).toContain("<TextActionButton");
+    expect(notificationsSource).toContain("<TextActionButton");
+    expect(goalsListSource).toContain("<IconActionButton");
+  });
+
   it("keeps simple local action buttons on the shared Button primitive", () => {
     const files = [
       "../../app/connected-accounts.tsx",
@@ -565,13 +749,13 @@ describe("shared UI kit", () => {
 
   it("keeps remaining repeated action buttons on the shared Button primitive", () => {
     const goalSheetActionSource = readFileSync(
-      resolve(__dirname, "../../features/goals/components/goal-sheet/GoalSheetActionButton.tsx"),
+      resolve(__dirname, "../../features/goals/components/goal-form/GoalFormActionButton.tsx"),
       "utf-8"
     );
     const financialAccountIdentifierSource = readFileSync(
       resolve(
         __dirname,
-        "../../features/financial-accounts/components/FinancialAccountIdentifierSheet.tsx"
+        "../../features/financial-accounts/components/FinancialAccountIdentifierScreen.tsx"
       ),
       "utf-8"
     );
@@ -587,9 +771,8 @@ describe("shared UI kit", () => {
     expect(goalSheetActionSource).toContain("<Button");
     expect(goalSheetActionSource).not.toContain("<Pressable");
     expect(goalSheetActionSource).not.toContain("styles.actionButton");
-    expect(financialAccountIdentifierSource).toContain(
-      'import { Button, ScreenLayout } from "@/shared/components"'
-    );
+    expectSharedComponentImport(financialAccountIdentifierSource, "Button");
+    expectSharedComponentImport(financialAccountIdentifierSource, "ScreenLayout");
     expect(financialAccountIdentifierSource).toContain("<Button");
     expect(financialAccountIdentifierSource).not.toContain("styles.primaryButton");
     expect(transactionActionSource).toContain(
@@ -606,7 +789,7 @@ describe("shared UI kit", () => {
     const files = [
       "../../features/budget/components/create-budget/CreateBudgetFormContent.tsx",
       "../../features/calendar/components/add-bill/AddBillFormContent.tsx",
-      "../../features/goals/components/AddPaymentSheet.tsx",
+      "../../features/goals/components/AddPaymentScreen.tsx",
       "../../features/goals/components/GoalCard.tsx",
       "../../features/financial-accounts/components/FinancialAccountFormScreen.tsx",
       "../../features/financial-accounts/components/financial-account-form/FinancialAccountFormBody.tsx",
@@ -644,7 +827,7 @@ describe("shared UI kit", () => {
     const files = [
       "../../features/analytics/components/PeriodSelector.tsx",
       "../../features/transactions/components/TypeToggle.tsx",
-      "../../features/goals/components/goal-sheet/GoalTypeToggle.tsx",
+      "../../features/goals/components/goal-form/GoalTypeToggle.tsx",
       "../../features/goals/components/goal-detail/TabControl.tsx",
     ];
 

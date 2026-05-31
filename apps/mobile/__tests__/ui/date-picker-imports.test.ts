@@ -40,11 +40,11 @@ describe("date picker imports", () => {
 
   it("keeps goal date selection on the shared transaction date picker sheet", () => {
     const source = readFileSync(
-      resolve(appRoot, "features/goals/components/goal-sheet/GoalDateField.tsx"),
+      resolve(appRoot, "features/goals/components/goal-form/GoalDateField.tsx"),
       "utf-8"
     );
 
-    expect(source).toContain("TransactionDatePickerSheet");
+    expect(source).toContain("TransactionDatePickerDialog");
     expect(source).toContain("allowFuture");
     expect(source).toContain("minimumDate={minimumDate}");
     expect(source).not.toContain("@react-native-community/datetimepicker");

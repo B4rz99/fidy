@@ -17,7 +17,7 @@ import {
   type CalendarBillOccurrence,
 } from "@/features/calendar/ui.public";
 import { useGoalStore } from "@/features/goals/hooks.public";
-import { GoalsListScreen } from "@/features/goals/ui.public";
+import { GoalsListScreen } from "@/features/goals/routes.public";
 import { AppAuroraBackground, TAB_BAR_CLEARANCE } from "@/shared/components";
 import { Plus } from "@/shared/components/icons";
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from "@/shared/components/rn";

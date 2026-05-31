@@ -17,7 +17,7 @@ import { captureError, captureWarning } from "@/shared/lib";
 
 const PERMISSION_REQUEST_TIMEOUT_MS = 2500;
 
-export default function EnableNotificationsSheet() {
+export default function EnableNotificationsDialogRoute() {
   const { t } = useTranslation();
   const { back } = useRouter();
   const { bottom } = useSafeAreaInsets();
@@ -32,7 +32,7 @@ export default function EnableNotificationsSheet() {
     isMountedRef.current = false;
   });
 
-  const dismissSheet = () => {
+  const dismissDialog = () => {
     try {
       markPrePermissionSeen();
     } catch (error) {
@@ -76,12 +76,12 @@ export default function EnableNotificationsSheet() {
       return;
     }
 
-    dismissSheet();
+    dismissDialog();
   };
 
   const handleNotNow = () => {
     actionVersionRef.current += 1;
-    dismissSheet();
+    dismissDialog();
   };
 
   return (

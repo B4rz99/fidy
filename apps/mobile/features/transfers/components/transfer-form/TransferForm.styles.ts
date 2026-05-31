@@ -61,18 +61,6 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
   },
-  pickerBackdrop: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-    backgroundColor: "rgba(0, 0, 0, 0.28)",
-  },
-  pickerHandle: {
-    alignSelf: "center",
-    width: 44,
-    height: 4,
-    borderRadius: 999,
-  },
   pickerHeader: {
     gap: 4,
   },
@@ -89,7 +77,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  pickerSheet: {
+  pickerDialog: {
     width: "100%",
     maxWidth: 480,
     alignSelf: "center",
@@ -97,12 +85,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     gap: 12,
-  },
-  pickerSheetAndroid: {
-    paddingBottom: 20,
-  },
-  pickerSheetIos: {
-    paddingBottom: 28,
   },
   pickerSubtitle: {
     fontFamily: "Poppins_500Medium",

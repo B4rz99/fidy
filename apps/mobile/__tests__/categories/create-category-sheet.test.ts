@@ -6,20 +6,20 @@ function readSource(relativePath: string) {
   return readFileSync(resolve(__dirname, relativePath), "utf-8");
 }
 
-const screenSource = readSource("../../features/categories/components/CreateCategorySheet.tsx");
+const screenSource = readSource("../../features/categories/components/CreateCategoryScreen.tsx");
 const contentSource = readSource(
-  "../../features/categories/components/category-sheet/CreateCategorySheetContent.tsx"
+  "../../features/categories/components/category-form/CreateCategoryScreenContent.tsx"
 );
 const hookSource = readSource(
-  "../../features/categories/components/category-sheet/useCreateCategorySheet.ts"
+  "../../features/categories/components/category-form/useCreateCategoryScreen.ts"
 );
 const submitHookSource = readSource(
-  "../../features/categories/components/category-sheet/useCreateCategorySubmit.ts"
+  "../../features/categories/components/category-form/useCreateCategorySubmit.ts"
 );
 
-test("keeps CreateCategorySheet routed through extracted category-sheet modules", () => {
-  expect(screenSource).toContain("useCreateCategorySheet");
-  expect(screenSource).toContain("<CreateCategorySheetContent");
+test("keeps CreateCategoryScreen routed through extracted category-form modules", () => {
+  expect(screenSource).toContain("useCreateCategoryScreen");
+  expect(screenSource).toContain("<CreateCategoryScreenContent");
 });
 
 test("keeps category creation wired to store submission and sheet dismissal", () => {

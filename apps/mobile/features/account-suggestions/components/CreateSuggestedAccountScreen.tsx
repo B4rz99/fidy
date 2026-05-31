@@ -4,8 +4,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOptionalUserId } from "@/features/auth/public";
 import type { FinancialAccountKind } from "@/features/financial-accounts/public";
 import { useOnboardingStore } from "@/features/onboarding/store.public";
-import { Button, EmptyState, ScreenLayout } from "@/shared/components";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "@/shared/components/rn";
+import { Button, EmptyState, FormTextField, ScreenLayout } from "@/shared/components";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "@/shared/components/rn";
 import { tryGetDb } from "@/shared/db";
 import { useAsyncGuard, useThemeColor, useTranslation } from "@/shared/hooks";
 import { showErrorToast } from "@/shared/lib";
@@ -40,7 +40,6 @@ function ResolvedCreateSuggestedAccountForm({
   const service = useMemo(() => createAccountSuggestionService(), []);
   const primary = useThemeColor("primary");
   const secondary = useThemeColor("secondary");
-  const tertiary = useThemeColor("tertiary");
   const card = useThemeColor("card");
   const borderSubtle = useThemeColor("borderSubtle");
   const accentGreen = useThemeColor("accentGreen");
@@ -96,25 +95,22 @@ function ResolvedCreateSuggestedAccountForm({
           <Text style={[styles.identifierValue, { color: primary }]}>{draft.evidenceLabel}</Text>
         </View>
 
-        <View style={styles.fieldGroup}>
-          <Text style={[styles.fieldLabel, { color: secondary }]}>
-            {t("accountSuggestions.create.nameLabel")}
-          </Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: card,
-                borderColor: borderSubtle,
-                color: primary,
-              },
-            ]}
-            value={name}
-            onChangeText={setName}
-            placeholder={draft.name}
-            placeholderTextColor={tertiary}
-          />
-        </View>
+        <FormTextField
+          label={t("accountSuggestions.create.nameLabel")}
+          value={name}
+          onChangeText={setName}
+          placeholder={draft.name}
+          style={styles.fieldGroup}
+          labelStyle={[styles.fieldLabel, { color: secondary }]}
+          inputStyle={[
+            styles.input,
+            {
+              backgroundColor: card,
+              borderColor: borderSubtle,
+              color: primary,
+            },
+          ]}
+        />
 
         <View style={styles.fieldGroup}>
           <Text style={[styles.fieldLabel, { color: secondary }]}>

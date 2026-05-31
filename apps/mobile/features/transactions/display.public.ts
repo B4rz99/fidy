@@ -1,5 +1,5 @@
 export { CategoryPill } from "./components/CategoryPill";
-export { TransactionDatePickerSheet } from "./components/PencilTransactionEntrySheets";
+export { TransactionDatePickerDialog } from "./components/PencilTransactionEntryPickers";
 export { getTransactionDisplayName } from "./lib/display-name";
 export { getDateLabel } from "./lib/format-date";
 export { makeDateLabel } from "./lib/group-by-date";

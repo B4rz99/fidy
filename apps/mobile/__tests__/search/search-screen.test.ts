@@ -89,7 +89,7 @@ test("keeps search filters aligned with the requested mobile interactions", () =
   expect(categoryFilterSource).not.toContain(
     "backgroundColor: isSelected ? category.color : peachLight"
   );
-  expect(dateFilterSource).toContain("TransactionDatePickerSheet");
+  expect(dateFilterSource).toContain("TransactionDatePickerDialog");
   expect(dateFilterSource).not.toContain("<TextInput");
   expect(dateFilterSource).toMatch(
     /preset\.key\s*===\s*["']lastMonth["']\s*\?\s*\{\s*flex\s*:\s*1\.35\s*\}\s*:\s*\{\s*flex\s*:\s*1\s*\}/

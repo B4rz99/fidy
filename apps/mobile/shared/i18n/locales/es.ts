@@ -266,7 +266,7 @@ const es = {
       invalidBillingDay: "Ingresa un día entre 1 y 31.",
       saveFailed: "La cuenta no se guardó. Revisa los datos e intenta de nuevo.",
     },
-    identifierSheet: {
+    identifierScreen: {
       title: "Agregar identificador",
       subtitle: "Guarda una pista estable que reconozcas después para esta cuenta.",
       label: "Identificador",

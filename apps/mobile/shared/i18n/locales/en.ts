@@ -259,7 +259,7 @@ const en = {
       invalidBillingDay: "Enter a day between 1 and 31.",
       saveFailed: "Account was not saved. Check the details and try again.",
     },
-    identifierSheet: {
+    identifierScreen: {
       title: "Add identifier",
       subtitle: "Save a stable hint you will recognize later for this account.",
       label: "Identifier",

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getMinimumGoalDate } from "@/features/goals/components/goal-sheet/GoalDateField.helpers";
+import { getMinimumGoalDate } from "@/features/goals/components/goal-form/GoalDateField.helpers";
 
 describe("getMinimumGoalDate", () => {
   test("normalizes the minimum date to the start of the current day", () => {

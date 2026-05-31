@@ -30,16 +30,16 @@ import { getDateLabel } from "../lib/format-date";
 import { handleNumpadPress } from "../lib/handle-numpad-press";
 import { saveCurrentTransaction, useTransactionStore } from "../store";
 import {
-  TransactionAccountPickerSheet,
-  TransactionCategoryPickerSheet,
-  TransactionDatePickerSheet,
-} from "./PencilTransactionEntrySheets";
+  TransactionAccountPickerDialog,
+  TransactionCategoryPickerDialog,
+  TransactionDatePickerDialog,
+} from "./PencilTransactionEntryPickers";
 
-type TransactionSheet = "account" | "category" | "date" | null;
+type TransactionPicker = "account" | "category" | "date" | null;
 type AddEntryUiState = {
   readonly accounts: readonly FinancialAccountRow[];
   readonly entryMode: PencilEntryTab;
-  readonly sheet: TransactionSheet;
+  readonly picker: TransactionPicker;
 };
 
 function mergeUiState(state: AddEntryUiState, patch: Partial<AddEntryUiState>): AddEntryUiState {
@@ -56,7 +56,7 @@ export function PencilTransactionEntryScreen({
   const [uiState, setUiState] = useReducer(mergeUiState, {
     accounts: [],
     entryMode: "expense",
-    sheet: null,
+    picker: null,
   });
   const { t, locale } = useTranslation();
   const userId = useOptionalUserId();
@@ -149,21 +149,21 @@ export function PencilTransactionEntryScreen({
         icon={Wallet}
         label=""
         value={selectedAccount?.name ?? t("common.account")}
-        onPress={() => setUiState({ sheet: "account" })}
+        onPress={() => setUiState({ picker: "account" })}
       />
       <View style={{ flexDirection: "row", gap: 12, height: 50 }}>
         <PencilEntryField
           icon={Calendar}
           label={dateLabel}
           valueTone="primary"
-          onPress={() => setUiState({ sheet: "date" })}
+          onPress={() => setUiState({ picker: "date" })}
         />
         <PencilEntryField
           icon={Tag}
           label={`${t("common.category")}:`}
           value={selectedCategory ? getCategoryLabel(selectedCategory, locale) : undefined}
           valueTone={selectedCategory ? "primary" : "tertiary"}
-          onPress={() => setUiState({ sheet: "category" })}
+          onPress={() => setUiState({ picker: "category" })}
         />
       </View>
     </>
@@ -195,30 +195,30 @@ export function PencilTransactionEntryScreen({
         includesNativeHeader={includesNativeHeader}
       />
       {transferEntry.overlays}
-      <TransactionAccountPickerSheet
+      <TransactionAccountPickerDialog
         accountId={accountId}
         accounts={uiState.accounts}
-        visible={uiState.sheet === "account"}
-        onClose={() => setUiState({ sheet: null })}
+        visible={uiState.picker === "account"}
+        onClose={() => setUiState({ picker: null })}
         onSelect={(nextAccountId) => {
           setAccountId(nextAccountId);
-          setUiState({ sheet: null });
+          setUiState({ picker: null });
         }}
       />
-      <TransactionDatePickerSheet
+      <TransactionDatePickerDialog
         date={date}
-        visible={uiState.sheet === "date"}
-        onClose={() => setUiState({ sheet: null })}
+        visible={uiState.picker === "date"}
+        onClose={() => setUiState({ picker: null })}
         onChange={setDate}
       />
-      <TransactionCategoryPickerSheet
+      <TransactionCategoryPickerDialog
         categoryId={categoryId}
         locale={locale}
-        visible={uiState.sheet === "category"}
-        onClose={() => setUiState({ sheet: null })}
+        visible={uiState.picker === "category"}
+        onClose={() => setUiState({ picker: null })}
         onSelect={(nextCategoryId) => {
           setCategoryId(nextCategoryId);
-          setUiState({ sheet: null });
+          setUiState({ picker: null });
         }}
       />
     </>

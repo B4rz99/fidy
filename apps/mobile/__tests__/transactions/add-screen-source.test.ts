@@ -21,12 +21,13 @@ const transferEntrySource = readSource(
 const scaffoldSource = readSource("../../shared/components/PencilEntryScaffold.tsx");
 const entryFieldSource = readSource("../../shared/components/PencilEntryField.tsx");
 const scaffoldStylesSource = readSource("../../shared/components/PencilEntryScaffold.styles.ts");
-const transactionSheetsSource = readSource(
-  "../../features/transactions/components/PencilTransactionEntrySheets.tsx"
+const transactionPickersSource = readSource(
+  "../../features/transactions/components/PencilTransactionEntryPickers.tsx"
 );
 const transferSidePickerSource = readSource(
   "../../features/transfers/components/transfer-form/TransferSidePicker.tsx"
 );
+const sharedDialogSource = readSource("../../shared/components/DialogFrame.tsx");
 const themeSource = readSource("../../shared/constants/theme.ts");
 
 test("add transaction routes use the Pencil transaction entry screen from scratch", () => {
@@ -128,16 +129,13 @@ test("Pencil entry dismisses the description keyboard from outside taps", () => 
 
 test("Pencil entry picker backdrops are translucent and do not slide the screen", () => {
   expect(themeSource).toContain('modalBackdrop: "#000000"');
-  expect(transactionSheetsSource).toContain("backgroundColor: `${modalBackdrop}40`");
-  expect(transactionSheetsSource).toContain('justifyContent: "center"');
-  expect(transactionSheetsSource).toContain("maxWidth: 480");
-  expect(pencilTransferEntrySource).toContain("backgroundColor: `${modalBackdrop}40`");
-  expect(pencilTransferEntrySource).toContain('justifyContent: "center"');
-  expect(pencilTransferEntrySource).toContain("maxWidth: 480");
-  expect(transferSidePickerSource).toContain('animationType="fade"');
+  expect(sharedDialogSource).toContain("backgroundColor: `${modalBackdrop}40`");
+  expect(sharedDialogSource).toContain('justifyContent: "center"');
+  expect(sharedDialogSource).toContain("maxWidth: 480");
+  expect(sharedDialogSource).toContain('animationType="fade"');
   expect(transferSidePickerSource).not.toContain('animationType="slide"');
-  expect(transferSidePickerSource).toContain("backgroundColor: `${modalBackdrop}40`");
-  expect(transferSidePickerSource).toContain("styles.pickerSheet");
+  expect(transferSidePickerSource).toContain("DialogFrame");
+  expect(transferSidePickerSource).toContain("DialogPanel");
 });
 
 test("Pencil transaction entry supports expense income transfer and calendar", () => {
@@ -147,15 +145,15 @@ test("Pencil transaction entry supports expense income transfer and calendar", (
   expect(transactionEntrySource).toContain("usePencilTransferEntry");
   expect(pencilTransferEntrySource).toContain("useTransferForm");
   expect(transactionEntrySource).not.toContain('push("/add-transfer');
-  expect(transactionSheetsSource).toContain("DateTimePicker");
-  expect(transactionEntrySource).toContain('uiState.sheet === "account"');
-  expect(transactionEntrySource).toContain('uiState.sheet === "category"');
-  expect(transactionSheetsSource).toContain("Modal");
-  expect(transactionSheetsSource).toContain("account-picker.backdrop");
-  expect(transactionSheetsSource).toContain("calendar-picker.backdrop");
-  expect(transactionSheetsSource).toContain("category-picker.backdrop");
-  expect(transactionSheetsSource).toContain("accounts.map");
-  expect(transactionSheetsSource).toContain("CATEGORIES.map");
+  expect(transactionPickersSource).toContain("DateTimePicker");
+  expect(transactionEntrySource).toContain('uiState.picker === "account"');
+  expect(transactionEntrySource).toContain('uiState.picker === "category"');
+  expect(transactionPickersSource).toContain("Modal");
+  expect(transactionPickersSource).toContain("account-picker.backdrop");
+  expect(transactionPickersSource).toContain("calendar-picker.backdrop");
+  expect(transactionPickersSource).toContain("category-picker.backdrop");
+  expect(transactionPickersSource).toContain("accounts.map");
+  expect(transactionPickersSource).toContain("CATEGORIES.map");
   expect(transactionEntrySource).not.toContain("getNextAccountId");
   expect(transactionEntrySource).toContain("saveCurrentTransaction");
 });
@@ -169,7 +167,7 @@ test("Pencil transaction entry confirms saves with a toast without leaving the a
 });
 
 test("Pencil add screens do not allow future transaction dates", () => {
-  expect(transactionSheetsSource).toContain("useCurrentDate");
+  expect(transactionPickersSource).toContain("useCurrentDate");
   expect(pencilTransferEntrySource).toContain("useCurrentDate");
 });
 

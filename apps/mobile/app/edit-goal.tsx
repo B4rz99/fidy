@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { GoalEditSheet } from "@/features/goals/ui.public";
+import { GoalEditScreen } from "@/features/goals/routes.public";
 import { useTranslation } from "@/shared/hooks";
 
 export default function EditGoalRoute() {
@@ -15,7 +15,7 @@ export default function EditGoalRoute() {
           title: t("goals.edit.title"),
         }}
       />
-      <GoalEditSheet />
+      <GoalEditScreen />
     </>
   );
 }

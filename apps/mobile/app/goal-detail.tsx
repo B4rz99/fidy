@@ -1,4 +1,4 @@
-import { GoalDetailScreen } from "@/features/goals/ui.public";
+import { GoalDetailScreen } from "@/features/goals/routes.public";
 
 export default function GoalDetailRoute() {
   return <GoalDetailScreen />;
