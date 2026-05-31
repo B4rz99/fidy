@@ -15,6 +15,56 @@ type CardProps = Omit<ViewProps, "children" | "style"> & {
   surfaceStyle?: StyleProp<ViewStyle>;
 };
 
+type CardSurfaceProps = ViewProps & {
+  readonly canUseLiquidGlass: boolean;
+  readonly cardSurfaceStyle: StyleProp<ViewStyle>;
+  readonly children: ReactNode;
+  readonly colorScheme: "dark" | "light";
+  readonly contentClassName: string;
+  readonly contentStyle: StyleProp<ViewStyle>;
+  readonly glassStyle: StyleProp<ViewStyle>;
+  readonly isInteractive: boolean;
+  readonly tintColor: string;
+};
+
+function CardSurface({
+  canUseLiquidGlass,
+  cardSurfaceStyle,
+  children,
+  colorScheme,
+  contentClassName,
+  contentStyle,
+  glassStyle,
+  isInteractive,
+  tintColor,
+  ...surfaceProps
+}: CardSurfaceProps) {
+  if (canUseLiquidGlass) {
+    return (
+      <GlassView
+        {...surfaceProps}
+        glassEffectStyle="clear"
+        tintColor={tintColor}
+        colorScheme={colorScheme}
+        isInteractive={isInteractive}
+        style={glassStyle}
+      >
+        <View className={contentClassName} style={contentStyle}>
+          {children}
+        </View>
+      </GlassView>
+    );
+  }
+
+  return (
+    <View {...surfaceProps} style={cardSurfaceStyle}>
+      <View className={contentClassName} style={contentStyle}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
 export function Card({
   children,
   onPress,
@@ -71,36 +121,30 @@ export function Card({
   const canUseLiquidGlass = Platform.OS === "ios" && isLiquidGlassAvailable();
   const resolvedContentClassName = `${padded ? "p-4" : ""} ${contentClassName ?? ""}`;
   const innerClassName = `${resolvedContentClassName} ${disabled ? "opacity-60" : ""}`;
-
-  const renderSurface = (props: ViewProps) =>
-    canUseLiquidGlass ? (
-      <GlassView
-        {...props}
-        glassEffectStyle="clear"
-        tintColor={tokens.tintColor}
-        colorScheme={isDark ? "dark" : "light"}
-        isInteractive={onPress != null}
-        style={glassStyle}
-      >
-        <View className={innerClassName} style={contentStyle}>
-          {children}
-        </View>
-      </GlassView>
-    ) : (
-      <View {...props} style={cardSurfaceStyle}>
-        <View className={innerClassName} style={contentStyle}>
-          {children}
-        </View>
-      </View>
-    );
+  const sharedSurfaceProps = {
+    canUseLiquidGlass,
+    cardSurfaceStyle,
+    colorScheme: isDark ? ("dark" as const) : ("light" as const),
+    contentClassName: innerClassName,
+    contentStyle,
+    glassStyle,
+    isInteractive: onPress != null,
+    tintColor: tokens.tintColor,
+  };
 
   if (onPress == null) {
-    return renderSurface(viewProps);
+    return (
+      <CardSurface {...viewProps} {...sharedSurfaceProps}>
+        {children}
+      </CardSurface>
+    );
   }
 
   return (
     <Pressable {...pressableProps} onPress={onPress} disabled={disabled}>
-      {renderSurface(surfaceProps)}
+      <CardSurface {...surfaceProps} {...sharedSurfaceProps}>
+        {children}
+      </CardSurface>
     </Pressable>
   );
 }
